@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lawn Co-Pilot — The AI office for landscaping companies</title>
+<meta name="description" content="Talk to Lawn Co-Pilot and get a real, measured lawn care price in seconds. A full AI staff for landscaping companies: receptionist, estimator, dispatcher, and administrator.">
+<meta property="og:title" content="Lawn Co-Pilot — The AI office for landscaping companies">
+<meta property="og:description" content="Say your address. Get a measured price. Book the crew. No truck roll, no waiting.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="icon" href="/lawncopilot/icon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"LocalBusiness","name":"Lawn Co-Pilot","description":"AI-powered lawn care. Measured pricing, instant estimates, 24/7 AI reception.","areaServed":{"@type":"State","name":"Florida"},"priceRange":"$$"}
+</script>
+<style>
+/* ── Hero ───────────────────────────────────────────────────────── */
+.hero { padding: var(--space-8) 0 var(--space-9); background:
+  radial-gradient(1100px 500px at 88% -10%, var(--green-100), transparent 62%),
+  linear-gradient(180deg, #fff, var(--bg-alt)); }
+.hero__grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: var(--space-7); align-items: center; }
+@media (max-width: 980px) { .hero__grid { grid-template-columns: 1fr; } }
+.hero h1 { margin-bottom: var(--space-4); }
+.hero h1 .hl { color: var(--green-700); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.hero__proof { display: flex; flex-wrap: wrap; gap: var(--space-5); margin-top: var(--space-6); color: var(--text-mut); font-size: .9rem; }
+.hero__proof b { display: block; font-size: 1.5rem; color: var(--ink-900); font-weight: 800; line-height: 1.2; }
+
+/* ── The orb ────────────────────────────────────────────────────── */
+.orbcard { background: var(--ink-900); border-radius: var(--radius-lg); padding: var(--space-6);
+  box-shadow: var(--shadow-lg); color: #fff; position: relative; overflow: hidden; }
+.orbcard::before { content:""; position:absolute; inset:-40% -10% auto -10%; height: 70%;
+  background: radial-gradient(circle at 50% 0%, rgba(34,197,94,.28), transparent 70%); pointer-events:none; }
+.orbcard__head { display: flex; align-items: center; gap: var(--space-4); position: relative; }
+.orb { position: relative; width: 84px; height: 84px; flex: 0 0 84px; border-radius: 50%; border: 0; cursor: pointer;
+  background: radial-gradient(circle at 34% 30%, #86efac, var(--green-500) 46%, var(--green-900) 100%);
+  box-shadow: 0 0 0 0 rgba(34,197,94,.55); transition: transform .18s ease; }
+.orb:hover { transform: scale(1.05); }
+.orb:focus-visible { outline: 3px solid var(--green-400); outline-offset: 4px; }
+.orb::after { content:""; position:absolute; inset:-9px; border-radius:50%; border:2px solid rgba(134,239,172,.4); }
+.orb.is-live { animation: pulse 1.35s ease-in-out infinite; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+  70% { box-shadow: 0 0 0 24px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+.orbcard__title { font-weight: 800; font-size: 1.1rem; }
+.orbcard__sub { color: var(--ink-300); font-size: .88rem; }
+.orbcard__status { margin-top: var(--space-4); font-size: .85rem; color: var(--green-200); min-height: 20px; position: relative; }
+
+.transcript { margin-top: var(--space-4); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--radius); padding: var(--space-4); max-height: 260px; overflow-y: auto; display: none; position: relative; }
+.transcript.is-open { display: block; }
+.t-line { margin-bottom: var(--space-3); font-size: .92rem; line-height: 1.55; white-space: pre-wrap; }
+.t-line b { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+.t-line.user b { color: #7dd3fc; }
+.t-line.agent b { color: var(--green-400); }
+.t-line.user { color: #e0f2fe; }
+.t-line.agent { color: #fff; }
+
+.composer { display: flex; gap: var(--space-2); margin-top: var(--space-4); position: relative; }
+.composer input { flex: 1; padding: 14px 16px; border-radius: var(--radius-full); border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07); color: #fff; font: inherit; font-size: .95rem; min-height: 48px; }
+.composer input::placeholder { color: var(--ink-400); }
+.composer input:focus { outline: 2px solid var(--green-400); outline-offset: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); position: relative; }
+.chip { padding: 7px 14px; border-radius: var(--radius-full); border: 1px solid rgba(255,255,255,.2);
+  background: transparent; color: var(--ink-200); font-size: .82rem; cursor: pointer; font-family: inherit; }
+.chip:hover { border-color: var(--green-400); color: #fff; }
+
+/* ── Result panel (map + price) ─────────────────────────────────── */
+.result { display: none; margin-top: var(--space-5); }
+.result.is-open { display: block; }
+.map { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--ink-800); aspect-ratio: 16/10; }
+.map img { width: 100%; height: 100%; object-fit: cover; }
+.map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map__empty { display:flex; align-items:center; justify-content:center; height:100%; color: var(--ink-400); font-size:.85rem; text-align:center; padding: var(--space-5); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); font-size: .82rem; color: var(--ink-200); }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+.prices { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+.price { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius);
+  padding: var(--space-3); text-align: center; cursor: pointer; }
+.price:hover, .price.is-sel { border-color: var(--green-400); background: rgba(34,197,94,.16); }
+.price b { display: block; font-size: 1.3rem; font-weight: 800; }
+.price span { font-size: .74rem; color: var(--ink-300); text-transform: uppercase; letter-spacing: .05em; }
+
+/* ── AI Crew ────────────────────────────────────────────────────── */
+.crew { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: var(--space-5); }
+.crewcard { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: var(--space-5); display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+  transition: transform .16s ease, box-shadow .16s ease; }
+.crewcard:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.crewcard__badge { width: 46px; height: 46px; border-radius: var(--radius); display: grid; place-items: center;
+  background: var(--green-100); color: var(--green-700); font-weight: 800; font-size: 1.1rem; margin-bottom: var(--space-4); }
+.crewcard h3 { margin-bottom: var(--space-2); }
+.crewcard .replaces { font-size: .82rem; color: var(--ink-400); font-style: italic; margin-bottom: var(--space-3); }
+.crewcard ul { list-style: none; padding: 0; margin: 0 0 var(--space-4); }
+.crewcard li { font-size: .89rem; color: var(--text-mut); padding-left: 18px; position: relative; margin-bottom: 5px; }
+.crewcard li::before { content: ""; position: absolute; left: 0; top: 9px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--green-500); }
+.crewcard .btn { margin-top: auto; }
+
+/* ── Before / after ─────────────────────────────────────────────── */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+@media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+.compare__col { padding: var(--space-5); border-radius: var(--radius-lg); }
+.compare__col--old { background: var(--ink-100); }
+.compare__col--new { background: var(--green-900); color: #fff; }
+.compare__col--new p, .compare__col--new li { color: var(--green-100); }
+.compare__col ol { margin: 0; padding-left: 20px; }
+.compare__col li { margin-bottom: var(--space-2); }
+
+/* ── Feature bands ──────────────────────────────────────────────── */
+.band { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-7); align-items: center; margin-bottom: var(--space-8); }
+.band:nth-child(even) .band__media { order: -1; }
+@media (max-width: 860px) { .band { grid-template-columns: 1fr; } .band:nth-child(even) .band__media { order: 0; } }
+.band__media { background: var(--ink-900); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow); }
+.mock { background: var(--ink-800); border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,.1); }
+.mock__bar { display: flex; gap: 6px; padding: 10px 13px; background: rgba(255,255,255,.05); }
+.mock__bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.2); }
+.mock__body { padding: var(--space-4); color: var(--ink-200); font-size: .85rem; }
+.mock__row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+.mock__row:last-child { border-bottom: 0; }
+.mock__row b { color: #fff; }
+.mock__kpi { display:grid; grid-template-columns: repeat(3,1fr); gap: var(--space-3); margin-bottom: var(--space-4); }
+.mock__kpi div { background: rgba(255,255,255,.05); border-radius: var(--radius-sm); padding: var(--space-3); text-align:center; }
+.mock__kpi b { display:block; font-size:1.25rem; color:#fff; }
+.mock__kpi span { font-size:.68rem; color: var(--ink-400); text-transform:uppercase; letter-spacing:.05em; }
+
+/* ── Trust bar ──────────────────────────────────────────────────── */
+.trust { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: var(--space-5); text-align: center; }
+.trust b { display: block; font-size: 2rem; font-weight: 800; color: var(--green-700); }
+.trust span { font-size: .88rem; color: var(--text-mut); }
+
+/* ── Pricing ────────────────────────────────────────────────────── */
+.tier { background: #fff; border: 2px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5); display:flex; flex-direction:column; }
+.tier--best { border-color: var(--green-600); box-shadow: var(--shadow); position: relative; }
+.tier--best::after { content: "Most popular"; position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  background: var(--green-600); color: #fff; padding: 4px 14px; border-radius: var(--radius-full); font-size: .74rem; font-weight: 700; white-space: nowrap; }
+.tier h3 { margin-bottom: var(--space-2); }
+.tier .amt { font-size: 2.1rem; font-weight: 800; margin-bottom: var(--space-1); }
+.tier ul { list-style:none; padding:0; margin: var(--space-4) 0; }
+.tier li { font-size:.9rem; color: var(--text-mut); margin-bottom: 7px; padding-left: 20px; position: relative; }
+.tier li::before { content:"+"; position:absolute; left:0; color: var(--green-600); font-weight:800; }
+.tier .btn { margin-top:auto; }
+
+/* ── FAQ ────────────────────────────────────────────────────────── */
+details { border-bottom: 1px solid var(--line); padding: var(--space-4) 0; }
+summary { cursor: pointer; font-weight: 700; font-size: 1.03rem; list-style: none; display:flex; justify-content:space-between; gap: var(--space-4); }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--green-600); font-size: 1.4rem; line-height: 1; flex: 0 0 auto; }
+details[open] summary::after { content: "\2013"; }
+details p { margin: var(--space-3) 0 0; color: var(--text-mut); }
+
+/* ── Gate modal ─────────────────────────────────────────────────── */
+.gate { position: fixed; inset: 0; z-index: 200; background: rgba(11,31,22,.72);
+  backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; padding: var(--space-4); }
+.gate.is-open { display: flex; }
+.gate__box { background: #fff; border-radius: var(--radius-lg); padding: var(--space-6); max-width: 460px; width: 100%;
+  box-shadow: var(--shadow-lg); max-height: 92vh; overflow-y: auto; }
+.gate__box h3 { margin-bottom: var(--space-2); }
+.field { margin-bottom: var(--space-4); }
+.field label { display: block; font-weight: 700; font-size: .88rem; margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--radius);
+  font: inherit; font-size: 1rem; min-height: 48px; background: #fff; color: var(--text);
+}
+.field input:focus, .field select:focus { outline: 2px solid var(--green-500); outline-offset: 0; border-color: var(--green-500); }
+.field .err { color: var(--danger); font-size: .82rem; margin-top: 5px; display: none; }
+.field.is-bad input { border-color: var(--danger); }
+.field.is-bad .err { display: block; }
+
+/* ── Sticky mobile CTA ──────────────────────────────────────────── */
+.stickycta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; background: #fff;
+  border-top: 1px solid var(--line); padding: 10px var(--space-4); display: none;
+  gap: var(--space-2); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.stickycta .btn { flex: 1; }
+@media (max-width: 700px) { .stickycta { display: flex; } body { padding-bottom: 78px; } }
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="nav__logo" href="/lawncopilot/">
+      <img src="/lawncopilot/icon.svg" alt="" width="32" height="32">
+      Lawn Co-Pilot
+    </a>
+    <div class="nav__links">
+      <a href="#crew">The AI Crew</a>
+      <a href="#how">How it works</a>
+      <a href="#services">Services</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/lawncopilot/for-companies.html">For companies</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm" href="/lawncopilot/login">Customer login</a>
+      <button class="btn btn--primary btn--sm" data-gate="hero">Get my price</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<header class="hero">
+  <div class="wrap hero__grid">
+    <div>
+      <div class="eyebrow">The AI office for landscaping companies</div>
+      <h1>Tell us your address. <span class="hl">Get a real price</span> before you finish your coffee.</h1>
+      <p class="lead">
+        No one drives out. No one calls you back Tuesday. Lawn Co-Pilot measures your actual lawn
+        from property records, prices it against a real rate card, and books the crew — while you talk.
+      </p>
+      <div class="hero__actions">
+        <button class="btn btn--primary btn--lg" data-gate="hero">Talk to Lawn Co-Pilot</button>
+        <a class="btn btn--ghost btn--lg" href="#crew">Meet the AI crew</a>
+      </div>
+      <div class="hero__proof">
+        <div><b>24/7</b><span>Every call answered</span></div>
+        <div><b>~10 sec</b><span>Address to price</span></div>
+        <div><b>0 miles</b><span>Driven to quote you</span></div>
+      </div>
+    </div>
+
+    <!-- The orb: speak or type, both gated identically -->
+    <div class="orbcard" id="orbcard">
+      <div class="orbcard__head">
+        <button class="orb" id="orb" aria-label="Talk to Lawn Co-Pilot" data-gate="orb"></button>
+        <div>
+          <div class="orbcard__title">Lawn Co-Pilot Receptionist</div>
+          <div class="orbcard__sub">Speak or type. Same answer either way.</div>
+        </div>
+      </div>
+      <div class="orbcard__status" id="status">Tap the orb to talk, or just type below.</div>
+
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+
+      <div class="composer">
+        <input id="msg" type="text" placeholder="Type your address to start..."
+               autocomplete="off" data-gate="input" aria-label="Message Lawn Co-Pilot">
+        <button class="btn btn--primary" id="send" data-gate="send">Send</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip" data-gate="chip" data-chip="1240 Palm Grove Drive, Orlando FL 32801">Try a sample address</button>
+        <button class="chip" data-gate="chip" data-chip="How much does it cost?">How much?</button>
+        <button class="chip" data-gate="chip" data-chip="What is included in a visit?">What is included?</button>
+        <button class="chip" data-gate="chip" data-chip="Am I talking to a real person?">Are you real?</button>
+      </div>
+
+      <!-- Result: map + measurement + price -->
+      <div class="result" id="result">
+        <div class="map" id="map"><div class="map__empty">Property view appears here</div></div>
+        <div class="legend">
+          <span><i style="background:#f59e0b"></i>Property line</span>
+          <span><i style="background:#94a3b8"></i>House</span>
+          <span><i style="background:#22c55e"></i>Lawn we service</span>
+        </div>
+        <div class="prices" id="prices"></div>
+        <div class="tiny mut" id="disclaimer" style="margin-top:12px;color:var(--ink-400)"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ TRUST BAR ══ -->
+<section class="section section--tint" style="padding: var(--space-6) 0">
+  <div class="wrap trust">
+    <div><b>Measured</b><span>Priced on real square footage, not a guess</span></div>
+    <div><b>No contract</b><span>Pause or cancel from your portal</span></div>
+    <div><b>Human-checked</b><span>A person signs off before you are charged</span></div>
+    <div><b>Florida</b><span>Serving Florida first, expanding next</span></div>
+  </div>
+</section>
+
+<!-- ══ THE AI CREW ══ -->
+<section class="section" id="crew">
+  <div class="wrap">
+    <div class="center" style="max-width:720px;margin:0 auto var(--space-7)">
+      <div class="eyebrow">Your staff</div>
+      <h2>A full crew of AI employees. Starting with the one who answers the phone.</h2>
+      <p class="lead">
+        Lawn Co-Pilot is not software you log into and operate. It is a staff that works
+        while you are on a mower. Every one of them reports to you.
+      </p>
+    </div>
+
+    <div class="crew">
+      <div class="crewcard">
+        <div class="crewcard__badge">01</div>
+        <h3>The Receptionist</h3>
+        <div class="replaces">Replaces the front desk, the answering service, and every call missed after 5pm</div>
+        <ul>
+          <li>Answers every call, 24 hours a day</li>
+          <li>Explains services and answers questions</li>
+          <li>Captures name, phone, email, address</li>
+          <li>Books, reschedules, and cancels</li>
+          <li>Hands off to a human on request</li>
+        </ul>
+        <button class="btn btn--ghost btn--sm" data-gate="chip" data-chip="What is included in a visit?">Meet this employee</button>
+      </div>
+
+      <div class="crewcard">
+        <div class="crewcard__badge">02</div>
+        <h3>The Estimator</h3>
+        <div class="replaces">Replaces the truck roll, the windshield time, and the three-day quote</div>
+        <ul>
+          <li>Pulls the parcel record and building footprint</li>
+          <li>Subtracts driveway, patio, and walkways</li>
+          <li>Prices against your rate card, not a hunch</li>
+          <li>Shows the math, line by line</li>
+          <li>Flags anything it is unsure of for a human</li>
+        </ul>
+        <button class="btn btn--ghost btn--sm" data-gate="chip" data-chip="1240 Palm Grove Drive, Orlando FL 32801">Meet this employee</button>
+      </div>
+
+      <div class="crewcard">
+        <div class="crewcard__badge">03</div>
+        <h3>The Dispatcher</h3>
+        <div class="replaces">Replaces the whiteboard and the truck that crosses the county twice</div>
+        <ul>
+          <li>Holds the calendar and real capacity</li>
+          <li>Offers only dates that are actually open</li>
+          <li>Assigns crews and sequences the day</li>
+          <li>Handles skips, pauses, and reschedules</li>
+          <li>Moves the whole day when weather hits</li>
+        </ul>
+        <button class="btn btn--ghost btn--sm" data-gate="chip" data-chip="When can you come out?">Meet this employee</button>
+      </div>
+
+      <div class="crewcard">
+        <div class="crewcard__badge">04</div>
+        <h3>The Administrator</h3>
+        <div class="replaces">Replaces the bookkeeper, the invoice chase, and the shoebox of receipts</div>
+        <ul>
+          <li>Invoices the moment a visit is done</li>
+          <li>Runs automatic payments</li>
+          <li>Chases failed cards so you do not</li>
+          <li>Keeps the books and the AR aging</li>
+          <li>Exports tax-ready at year end</li>
+        </ul>
+        <button class="btn btn--ghost btn--sm" data-gate="chip" data-chip="How does billing work?">Meet this employee</button>
+      </div>
+    </div>
+
+    <p class="center mut small" style="margin-top:var(--space-6)">
+      Every AI employee has a human supervisor. Every quote, schedule change, and refund is
+      reviewable, overridable, and logged. You still sign off.
+    </p>
+  </div>
+</section>
+
+<!-- ══ NO TRUCK ROLL ══ -->
+<section class="section section--tint" id="how">
+  <div class="wrap">
+    <div class="center" style="max-width:660px;margin:0 auto var(--space-7)">
+      <div class="eyebrow">The difference</div>
+      <h2>The estimate that does not need a truck</h2>
+    </div>
+    <div class="compare">
+      <div class="compare__col compare__col--old">
+        <h3>The old way</h3>
+        <ol>
+          <li>Customer calls. Nobody picks up.</li>
+          <li>Callback the next morning, maybe.</li>
+          <li>Drive 40 minutes to walk the yard.</li>
+          <li>Guess the square footage by eye.</li>
+          <li>Quote lands three days later.</li>
+          <li>Half of them already hired someone else.</li>
+        </ol>
+      </div>
+      <div class="compare__col compare__col--new">
+        <h3>With Lawn Co-Pilot</h3>
+        <ol>
+          <li>Customer talks or types, any hour.</li>
+          <li>Name, phone, and email captured first.</li>
+          <li>Property measured from real records.</li>
+          <li>Driveway and patio subtracted.</li>
+          <li>Priced and booked in one conversation.</li>
+          <li>You review the measurement before it bills.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURE BANDS ══ -->
+<section class="section" id="services">
+  <div class="wrap">
+    <div class="band">
+      <div>
+        <div class="eyebrow">Measured, not guessed</div>
+        <h3>You see exactly what we are mowing</h3>
+        <p class="mut">The lot, the house footprint, the driveway and patio we take out, and the lawn that
+        is left. Every number has a source attached, and anything we inferred rather than measured says so.</p>
+        <p class="mut">Think it is wrong? One tap sends it to a human to check, and nothing bills until they do.</p>
+      </div>
+      <div class="band__media">
+        <div class="mock">
+          <div class="mock__bar"><i></i><i></i><i></i></div>
+          <div class="mock__body">
+            <div class="mock__row"><span>Lot size</span><b>10,400 sq ft</b></div>
+            <div class="mock__row"><span>House footprint</span><b>-2,280</b></div>
+            <div class="mock__row"><span>Driveway, walk, patio</span><b>-1,150</b></div>
+            <div class="mock__row"><span>Lawn we service</span><b>6,970 sq ft</b></div>
+            <div class="mock__row"><span>Every two weeks</span><b>$59.00</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <div>
+        <div class="eyebrow">Your schedule, honest</div>
+        <h3>Real dates, real arrival windows</h3>
+        <p class="mut">The Dispatcher only offers days with actual crew capacity. Reschedule, skip a week,
+        or pause for a month from your phone. Weather delays reach you before you notice the crew did not show.</p>
+        <p class="mut">You are never charged for a visit that did not happen.</p>
+      </div>
+      <div class="band__media">
+        <div class="mock">
+          <div class="mock__bar"><i></i><i></i><i></i></div>
+          <div class="mock__body">
+            <div class="mock__row"><span>Thursday, Aug 6</span><b>8am - 12pm</b></div>
+            <div class="mock__row"><span>Thursday, Aug 20</span><b>8am - 12pm</b></div>
+            <div class="mock__row"><span>Crew</span><b>Crew A</b></div>
+            <div class="mock__row"><span>Status</span><b>Scheduled</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <div>
+        <div class="eyebrow">Billing that runs itself</div>
+        <h3>Invoiced when the work is done, not when someone remembers</h3>
+        <p class="mut">An invoice goes out the moment a visit is marked complete. Automatic payment is
+        optional, always disclosed before the charge, and off with one tap.</p>
+        <p class="mut">Card details never touch our servers — payments run through a compliant processor.</p>
+      </div>
+      <div class="band__media">
+        <div class="mock">
+          <div class="mock__bar"><i></i><i></i><i></i></div>
+          <div class="mock__body">
+            <div class="mock__kpi">
+              <div><b>$59</b><span>Last visit</span></div>
+              <div><b>$0</b><span>Balance</span></div>
+              <div><b>On</b><span>Autopay</span></div>
+            </div>
+            <div class="mock__row"><span>LC-2026-00001</span><b>Paid</b></div>
+            <div class="mock__row"><span>Next charge</span><b>Aug 21</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section class="section section--tint" id="pricing">
+  <div class="wrap">
+    <div class="center" style="max-width:640px;margin:0 auto var(--space-7)">
+      <div class="eyebrow">Pricing</div>
+      <h2>Priced on your actual lawn</h2>
+      <p class="lead">Every plan includes mowing, edging, string trimming, and blowing off the hard surfaces.
+      Your exact price depends on measured square footage.</p>
+    </div>
+    <div class="grid grid--4">
+      <div class="tier">
+        <h3>Weekly</h3>
+        <div class="amt">Best rate</div>
+        <p class="small mut">Peak growing season, always sharp.</p>
+        <ul><li>Lowest per-visit price</li><li>10% recurring discount</li><li>Same crew, same day</li></ul>
+        <button class="btn btn--ghost" data-gate="hero">Get my price</button>
+      </div>
+      <div class="tier tier--best">
+        <h3>Every two weeks</h3>
+        <div class="amt">Most chosen</div>
+        <p class="small mut">What most Florida yards actually need.</p>
+        <ul><li>5% recurring discount</li><li>Skip a visit anytime</li><li>Pause for the season</li></ul>
+        <button class="btn btn--primary" data-gate="hero">Get my price</button>
+      </div>
+      <div class="tier">
+        <h3>Monthly</h3>
+        <div class="amt">Lighter</div>
+        <p class="small mut">Slower-growing or smaller lawns.</p>
+        <ul><li>No commitment</li><li>Add services anytime</li><li>Same quality visit</li></ul>
+        <button class="btn btn--ghost" data-gate="hero">Get my price</button>
+      </div>
+      <div class="tier">
+        <h3>One-time</h3>
+        <div class="amt">No plan</div>
+        <p class="small mut">A single cut. Nothing recurring.</p>
+        <ul><li>Pay once</li><li>No account required after</li><li>Book same week</li></ul>
+        <button class="btn btn--ghost" data-gate="hero">Get my price</button>
+      </div>
+    </div>
+    <p class="center small mut" style="margin-top:var(--space-5)">
+      Add-ons available: hedge and shrub trimming, bed weed control, leaf and debris cleanup.
+      Fertilization, pest control, and irrigation are coming soon and are not sold yet.
+    </p>
+  </div>
+</section>
+
+<!-- ══ FOR COMPANIES ══ -->
+<section class="section section--ink">
+  <div class="wrap" style="display:grid;grid-template-columns:1.2fr .8fr;gap:var(--space-7);align-items:center">
+    <div>
+      <div class="eyebrow" style="color:var(--green-400)">For landscaping companies</div>
+      <h2>Run your company with a staff that never sleeps</h2>
+      <p>Every call answered. Every estimate priced without leaving the shop. Every invoice sent
+      the day the work is done. That is four employees you do not have to hire, and you still
+      approve every number before it goes out.</p>
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--lg" href="/lawncopilot/for-companies.html">See how it works</a>
+        <button class="btn btn--light btn--lg" data-gate="hero">Book a demo</button>
+      </div>
+    </div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#fff">
+      <div class="small" style="color:var(--ink-300);text-transform:uppercase;letter-spacing:.07em;margin-bottom:var(--space-3)">What it replaces</div>
+      <div class="mock__row" style="border-color:rgba(255,255,255,.1)"><span style="color:var(--ink-200)">Answering service</span><b>Receptionist</b></div>
+      <div class="mock__row" style="border-color:rgba(255,255,255,.1)"><span style="color:var(--ink-200)">Windshield time</span><b>Estimator</b></div>
+      <div class="mock__row" style="border-color:rgba(255,255,255,.1)"><span style="color:var(--ink-200)">The whiteboard</span><b>Dispatcher</b></div>
+      <div class="mock__row" style="border:0"><span style="color:var(--ink-200)">The bookkeeper</span><b>Administrator</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FAQ ══ -->
+<section class="section">
+  <div class="wrap" style="max-width:820px">
+    <div class="center" style="margin-bottom:var(--space-6)"><h2>Questions</h2></div>
+    <details><summary>Is the price real, or a rough range?</summary><p>It is a real price built from your measured lawn area and a published rate card. When we could not get a verified parcel record, we say so on the quote and mark it preliminary — and a person checks it before you are ever charged.</p></details>
+    <details><summary>How do you measure my lawn without coming out?</summary><p>Parcel records give the lot size and boundary, building footprint data gives the house, and we subtract driveway, walkways, and patio. What is left is the lawn. Every figure shows its source, and anything we inferred instead of measured is labeled.</p></details>
+    <details><summary>What if the measurement is wrong?</summary><p>Tap the correction request on your quote or in your portal. It goes to a human, who can adjust the serviceable area. The change is logged and your price updates from the corrected number.</p></details>
+    <details><summary>Am I talking to a real person?</summary><p>No. The receptionist is an AI, and it will tell you that the moment you ask. You can ask for a human at any point and it will transfer you or take a message.</p></details>
+    <details><summary>Do I have to sign a contract?</summary><p>No. Recurring plans get a better per-visit rate, but you can skip, pause, or cancel from your portal, subject to the notice period on your plan.</p></details>
+    <details><summary>What happens when it rains?</summary><p>The visit moves to the next available day and you are notified. You are not charged for a visit that did not happen.</p></details>
+    <details><summary>Is my card safe?</summary><p>We never store card numbers. Payments run through a compliant third-party processor; our records hold only the card brand, last four digits, and expiration for display.</p></details>
+    <details><summary>What areas do you serve?</summary><p>Florida to start. Enter your address and the system confirms coverage before quoting.</p></details>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <div class="nav__logo" style="color:#fff;margin-bottom:var(--space-3)">
+          <img src="/lawncopilot/icon.svg" alt="" width="30" height="30">Lawn Co-Pilot
+        </div>
+        <p class="small" style="color:var(--ink-400)">The AI office for the next generation of landscaping companies.</p>
+      </div>
+      <div><h4>Service</h4><ul>
+        <li><a href="#services">What is included</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#how">How it works</a></li>
+      </ul></div>
+      <div><h4>Company</h4><ul>
+        <li><a href="/lawncopilot/for-companies.html">For landscaping companies</a></li>
+        <li><a href="#crew">The AI crew</a></li>
+        <li><a href="/lawncopilot/admin/login">Staff login</a></li>
+      </ul></div>
+      <div><h4>Account</h4><ul>
+        <li><a href="/lawncopilot/login">Customer login</a></li>
+        <li><a href="#" data-gate="hero">Get a quote</a></li>
+      </ul></div>
+    </div>
+    <div class="footer__bottom">
+      <span>Lawn Co-Pilot. Serving Florida.</span>
+      <span>Built by Digit2AI</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══ STICKY MOBILE CTA ══ -->
+<div class="stickycta">
+  <button class="btn btn--primary" data-gate="hero">Get my price</button>
+  <a class="btn btn--ghost" href="/lawncopilot/login">Login</a>
+</div>
+
+<!-- ══ THE IDENTITY GATE — required before ANY request ══ -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate__box">
+    <h3 id="gateTitle">First, who are we quoting?</h3>
+    <p class="small mut">We need these three before we measure anything. It takes ten seconds and it is how we send you the estimate.</p>
+    <form id="gateForm" novalidate>
+      <div class="field" id="f-name">
+        <label for="g-name">Full name</label>
+        <input id="g-name" name="name" type="text" autocomplete="name" required>
+        <div class="err">Please enter your name.</div>
+      </div>
+      <div class="field" id="f-phone">
+        <label for="g-phone">Mobile number</label>
+        <input id="g-phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 305 555 0142" required>
+        <div class="err">Enter a valid mobile number with country code.</div>
+      </div>
+      <div class="field" id="f-email">
+        <label for="g-email">Email</label>
+        <input id="g-email" name="email" type="email" autocomplete="email" required>
+        <div class="err">Enter a valid email address.</div>
+      </div>
+      <label class="small mut" style="display:flex;gap:9px;align-items:flex-start;margin-bottom:var(--space-4)">
+        <input type="checkbox" id="g-marketing" style="margin-top:4px;width:auto;min-height:auto">
+        <span>Send me seasonal offers too. (Optional — we contact you about this estimate either way.)</span>
+      </label>
+      <button class="btn btn--primary" type="submit" style="width:100%" id="gateSubmit">Continue</button>
+      <p class="tiny mut center" style="margin:var(--space-3) 0 0">
+        Voice sessions are transcribed so we can send you the estimate.
+      </p>
+    </form>
+  </div>
+</div>
+
+<script src="/lawncopilot/orb.js"></script>
+</body>
+</html>

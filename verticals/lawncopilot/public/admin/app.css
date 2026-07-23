@@ -1,0 +1,28 @@
+/* Lawn Co-Pilot admin — same app shell as the portal, denser tables. */
+@import url('/lawncopilot/portal/app.css');
+
+body { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+.appmain { max-width: 1100px; }
+
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--ink-100); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-400); font-weight: 700; white-space: nowrap; }
+tbody tr:hover { background: var(--ink-50); }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.toolbar { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-4); }
+.toolbar input, .toolbar select {
+  padding: 10px 13px; border: 1px solid var(--line); border-radius: var(--radius); font: inherit; font-size: .9rem;
+}
+
+.staffcard { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-4); background: #fff; }
+.staffcard h3 { font-size: 1rem; margin-bottom: 2px; }
+.staffcard .replaces { font-size: .78rem; color: var(--ink-400); font-style: italic; margin-bottom: var(--space-3); }
+.staffcard .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: var(--space-3) 0; }
+.staffcard .stats div { background: var(--ink-50); border-radius: var(--radius-sm); padding: 9px; text-align: center; }
+.staffcard .stats b { display: block; font-size: 1.15rem; }
+.staffcard .stats span { font-size: .66rem; color: var(--ink-400); text-transform: uppercase; letter-spacing: .04em; }
+
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.dot--on { background: var(--green-500); }
+.dot--off { background: var(--ink-300); }

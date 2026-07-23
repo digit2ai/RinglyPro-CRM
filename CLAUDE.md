@@ -66,6 +66,60 @@ Self-contained sub-app auto-mounted at `/equimind-gs-engine` (from `client-build
 - `GS_PROCESSING_PROVIDER` — `mock` (default) | `procedural` (recommended cheap production path, $0/report) | `luma` | `self_hosted`. `procedural` renders a measurement-scaled horse in-engine with zero GPU cost — use this until the app gets traction, then flip to `luma` for real photoreal scans.
 - `LUMA_API_KEY` — activates the real Luma capture provider (video→gaussian). Absent = fall back to mock/procedural. See `client-builds/equimind-gs-engine/BLOCKERS.md`.
 
+## Lawn Co-Pilot — The AI office for landscaping companies
+
+**Purpose:** Digit2AI vertical rebuilding lawncopilot.com as an AI-staffed lawn care platform. A homeowner **talks or types to an orb** on the landing page and gets a measured, priced, bookable estimate in one conversation — no truck roll. Sold to landscaping companies as "a full crew of AI employees." Mounted at `/lawncopilot`. English, emoji-free, Florida first.
+
+**Location:** `verticals/lawncopilot/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/lawncopilot/migrations/20260723_lawncopilot_tables.sql` (31 tables, regenerate with `node verticals/lawncopilot/scripts/gen-migration.js`). Multi-tenant (`tenant_id`), `lc_` prefix. New columns via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in `index.js` init.
+
+**Live:** marketing site `/lawncopilot/` · B2B page `/lawncopilot/for-companies.html` · customer portal `/lawncopilot/portal` · admin portal `/lawncopilot/admin` · quote magic link `/lawncopilot/quote/:token` · Brain `/lawncopilot/mcp/tools/list` · health `/lawncopilot/health` + `/lawncopilot/mcp/health` · debug `/debug/lawncopilot-error`.
+
+### The four AI employees (one Brain, not four)
+
+| Employee | Replaces | Tools |
+|---|---|---|
+| **Receptionist** | Front desk, answering service, calls missed after 5pm | `receptionist.*` — capture_lead, identify_caller, answer_faq, get_service_status, take_message, create_ticket, send_payment_link, transfer_to_human |
+| **Estimator** | The truck roll and the 3-day quote | `estimator.*` — verify_address, measure_property, price_quote, explain_price, issue_quote, flag_for_review |
+| **Dispatcher** | The whiteboard and the double-drive | `dispatcher.*` — check_availability, book/reschedule/cancel, skip_visit, pause/resume, assign_crew, sequence_route, notify_on_the_way, weather_hold |
+| **Administrator** | The bookkeeper and the invoice chase (accounting lives here) | `administrator.*` — get_balance, get/issue_invoice, take_payment, enroll/disable_autopay, retry_failed_payment, issue_refund, ar_aging, revenue_report, run_dunning, export_books |
+
+**Brain MCP server** (`src/mcp/brain.js` + `src/mcp/employees/*.js`): EVERY channel — web orb, typed chat, phone, admin copilot — routes through `tools/call`. No channel gets a private copy of booking/pricing/billing logic. The Brain enforces role + channel authorization, injects `tenant_id` from session context (never from model arguments), audits every call to `lc_agent_calls`, guards per-tenant daily cost, and parks `requires_approval` tools (refunds) in a human queue. Adding a 5th employee = adding a profile file.
+
+**Identity gate (hard rule):** name + phone + email captured before ANY request on any public entry point — orb click, input focus, prompt chip, submit. Written to `lc_leads` before the address, before the measurement. Enforced at both the route and the Brain. Same pattern as `orbup.html` (commits `4bea226e`, `fe8cc37a`).
+
+**Measurement** (`src/services/measurement.js`), provider chain via `LAWNCOPILOT_MEASURE_PROVIDER`: `heuristic` (default, zero-key, ALWAYS `is_estimate:true` + `confidence:low` — an honest labeled placeholder, never presented as measured) → `parcel` (Regrid/ATTOM + OSM footprint, `confidence:high`) → `imagery_ai` (Phase 3). Formula per client spec: `serviceable = lot - building_footprint - excluded`. Sanity guard routes outliers to human review. Cached 180 days per address so a provider is never billed twice.
+
+**Pricing** (`src/services/pricing.js`): deterministic, rule-driven, NO LLM in the pricing path. `lc_pricing_rules` JSONB scope (state/county/city/zip/property_type/frequency), most specific wins. Line items always reconcile to the total to the cent — asserted in SIT. Florida defaults seeded on boot, fully admin-editable.
+
+**Portal + admin** follow the **Planea app shape** (`verticals/planea/portal/`): per-module HTML, one stylesheet, one live data layer (`portal/data.js` — no mock values, ever), bottom tab bar, installable PWA (`portal/manifest.webmanifest` + `portal/sw.js`, network-first, never caches `/api/`), resident AI assistant on every screen. Bump the SW `CACHE` version when editing portal JS/CSS.
+
+**Landing page** built to the getjobber.com bar: sticky nav with two CTAs, orb-led hero (not a signup form), AI Crew block, trust bar, alternating feature bands with real product mockups, open pricing, FAQ, sticky mobile CTA. Design tokens in `public/styles.css` — nothing hardcodes a color.
+
+**Voice:** phone = the existing ConversationRelay stack (`/lawncopilot/voice/incoming` returns `<Connect><ConversationRelay>` pointed at the shared `/voice-relay/ws`), web orb = a dedicated ElevenLabs convai agent, fallback = Web Speech + Claude + the free `/api/tts/edge`. **Typed chat needs no keys at all and is always fully functional** — voice is an enhancement, never a requirement.
+
+**SIT:** `node verticals/lawncopilot/sit.js` from the repo root → **89/89 with zero external keys**. Covers gate-unbypassable, typed-path-keyless, one-brain-agreement across channels, line-item reconciliation, tenant isolation, role gates, approval queue, cost guard, signed Stripe webhook idempotency, no-PAN-at-rest, TwiML, and the email autosend guard.
+
+**Environment Variables:**
+- `LAWNCOPILOT_JWT_SECRET` — signs `lawncopilot_token` (customer) and `lawncopilot_staff` (staff) cookies. Falls back to `JWT_SECRET`. SET on prod.
+- `LAWNCOPILOT_SECRET` — AES-256-GCM key material for gate codes. Falls back to `JWT_SECRET`. SET on prod.
+- `LAWNCOPILOT_MEASURE_PROVIDER` — `heuristic` (default) | `parcel` (recommended prod) | `imagery_ai`.
+- `REGRID_API_KEY` / `ATTOM_API_KEY` — parcel data for the `parcel` provider. Unset = heuristic fallback, confidence low.
+- `GOOGLE_MAPS_API_KEY` — geocoding + satellite imagery. Unset = quote still works, no map, disclaimer shown.
+- `MAPBOX_TOKEN` — alternate static imagery. Optional.
+- `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` — payments. Unset = payments-disabled mode; quoting and scheduling still work and the portal says so honestly.
+- `ELEVENLABS_CONVAI_LAWNCOPILOT_EN` / `_ES` — dedicated convai agents for the web orb (own agents, never shared across products). Unset = zero-key voice fallback, then typed.
+- `LAWNCOPILOT_ORB_ENABLED` — kill switch for the web orb without a redeploy. Default `1`.
+- `LAWNCOPILOT_MCP_KEY` — shared secret for external server-to-server calls into the Brain. Browser sessions use cookies. Unset = external callers rejected.
+- `LAWNCOPILOT_AGENT_COST_CAP_USD` — per-tenant daily AI spend cap before degrading to typed-only. Default `25`.
+- `LAWNCOPILOT_VOICE_NUMBER` / `LAWNCOPILOT_TRANSFER_NUMBER` / `LAWNCOPILOT_POLLY_VOICE` / `LAWNCOPILOT_VOICE_MODEL` — phone reception. Voice model default `claude-haiku-4-5-20251001`.
+- `LAWNCOPILOT_QUOTE_TTL_DAYS` (30) · `LAWNCOPILOT_AUTOPAY_DELAY_DAYS` (1) · `LAWNCOPILOT_MIN_CHARGE_USD` (45) · `LAWNCOPILOT_TENANT_ID` (1).
+- `LAWNCOPILOT_ADMIN_PASSWORD` — seeded staff password (mstagg@digit2ai.com owner, admin@lawncopilot.com admin). Default `lawncopilot@2026`, force-synced on boot.
+- `LAWNCOPILOT_SEED_DEMO` — `1` seeds one demo customer/property/visits/invoice. Default unset = clean.
+
+**Data Flow:**
+Orb (voice or typed) → identity gate → `lc_leads` → Brain `tools/call` → Estimator (measure + price) → `lc_quotes` → Dispatcher (real availability) → `lc_appointments` → Administrator (invoice on completion) → Stripe → `lc_payments`
+Phone → ConversationRelay → `/voice/tool` → the SAME Brain tools
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');

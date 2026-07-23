@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your estimate — Lawn Co-Pilot</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="icon" href="/lawncopilot/icon.svg" type="image/svg+xml">
+<style>
+body { background: var(--bg-alt); }
+.sheet { max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-8); }
+.propmap { position:relative; border-radius: var(--radius); overflow:hidden; background: var(--ink-800); aspect-ratio:16/10; }
+.propmap img { width:100%; height:100%; object-fit:cover; }
+.propmap svg { position:absolute; inset:0; width:100%; height:100%; }
+.line { display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--ink-100); font-size:.93rem; }
+.line:last-child { border-bottom:0; }
+.line b { font-variant-numeric: tabular-nums; }
+.total { display:flex; justify-content:space-between; padding-top:14px; margin-top:6px; border-top:2px solid var(--ink-900); font-size:1.15rem; font-weight:800; }
+@media print { .noprint { display:none !important; } body { background:#fff; } }
+</style>
+</head>
+<body>
+<div class="sheet" id="app"><div class="empty" style="text-align:center;padding:60px">Loading your estimate...</div></div>
+<script>
+var token = location.pathname.split('/').pop();
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function num(v){return Number(v||0).toLocaleString('en-US');}
+
+fetch('/lawncopilot/api/v1/quote/' + token, { credentials: 'same-origin' })
+  .then(function (r) { return r.json(); })
+  .then(function (d) {
+    var app = document.getElementById('app');
+    if (!d.success) { app.innerHTML = '<div class="card"><h2>Estimate not found</h2><p class="mut">This link may have expired. <a href="/lawncopilot/">Get a new estimate</a>.</p></div>'; return; }
+
+    var q = d.quote, p = d.property || {};
+    var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-5)">' +
+      '<img src="/lawncopilot/icon.svg" alt="" width="34" height="34">' +
+      '<b style="font-size:1.15rem">Lawn Co-Pilot</b></div>';
+
+    if (d.expired) html += '<div class="card" style="border-color:var(--accent);margin-bottom:var(--space-4)"><b>This estimate has expired.</b><p class="small mut" style="margin:6px 0 0">Prices are re-checked before booking. ' +
+      '<a href="/lawncopilot/">Get a fresh one</a>.</p></div>';
+
+    html += '<div class="card" style="margin-bottom:var(--space-4)">' +
+      '<div class="eyebrow">Your estimate</div>' +
+      '<h1 style="font-size:1.6rem">' + esc(p.address || 'Your property') + '</h1>' +
+      '<div class="propmap" id="map"></div>' +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.82rem;color:var(--text-mut)">' +
+        '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b;margin-right:5px"></i>Property line</span>' +
+        '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#94a3b8;margin-right:5px"></i>House</span>' +
+        '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#22c55e;margin-right:5px"></i>Lawn we service</span>' +
+      '</div></div>';
+
+    html += '<div class="card" style="margin-bottom:var(--space-4)"><h2 style="font-size:1.1rem">The measurement</h2>' +
+      '<div class="line"><span>Lot size</span><b>' + num(p.lot_sqft) + ' sq ft</b></div>' +
+      '<div class="line"><span>House footprint</span><b>-' + num(p.building_footprint_sqft) + '</b></div>' +
+      '<div class="line"><span>Driveway, walks, patio</span><b>-' + num(p.excluded_sqft) + '</b></div>' +
+      '<div class="line"><span><b>Lawn we service</b></span><b>' + num(q.serviceable_sqft) + ' sq ft</b></div>' +
+      (q.is_estimate ? '<p class="small mut" style="margin-top:12px">' + esc(d.disclaimer) + '</p>' : '') +
+      '</div>';
+
+    html += '<div class="card" style="margin-bottom:var(--space-4)"><h2 style="font-size:1.1rem">Your price</h2>' +
+      '<div class="mut small" style="margin-bottom:10px">' + esc(String(q.frequency || '').replace('_', ' ')) + '</div>' +
+      q.line_items.map(function (l) {
+        return '<div class="line"><span>' + esc(l.label) + (l.detail ? '<br><span class="tiny mut">' + esc(l.detail) + '</span>' : '') + '</span><b>' + esc(l.amount) + '</b></div>';
+      }).join('') +
+      '<div class="total"><span>Total ' + (q.frequency === 'one_time' ? '' : 'per visit') + '</span><span>' + esc(q.price_display) + '</span></div>' +
+      '</div>';
+
+    if (q.status === 'needs_review') {
+      html += '<div class="card" style="border-color:var(--accent);margin-bottom:var(--space-4)">' +
+        '<b>A person is checking this one.</b><p class="small mut" style="margin:6px 0 0">' +
+        'Something about this property needs a human eye before we lock the price. Nothing is charged until they confirm it.</p></div>';
+    }
+
+    html += '<div class="noprint" style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<a class="btn btn--primary btn--lg" href="/lawncopilot/#book">Accept and schedule</a>' +
+      '<button class="btn btn--ghost btn--lg" onclick="window.print()">Save as PDF</button></div>';
+
+    app.innerHTML = html;
+
+    // Map
+    var node = document.getElementById('map');
+    var g = d.geometry || {};
+    node.innerHTML = '';
+    if (p.imagery_url) {
+      var img = document.createElement('img');
+      img.src = p.imagery_url; img.alt = 'Satellite view'; node.appendChild(img);
+    }
+    var parcel = g.parcel_geojson, building = g.building_geojson;
+    var pts = [];
+    [parcel, building].forEach(function (poly) {
+      if (poly && poly.coordinates && poly.coordinates[0]) poly.coordinates[0].forEach(function (c) { pts.push(c); });
+    });
+    if (pts.length) {
+      var xs = pts.map(function (c) { return c[0]; }), ys = pts.map(function (c) { return c[1]; });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+      var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      var px = (maxX - minX) * .18 || .0002, py = (maxY - minY) * .18 || .0002;
+      minX -= px; maxX += px; minY -= py; maxY += py;
+      function pr(c) { return (((c[0]-minX)/(maxX-minX))*100).toFixed(2)+','+(100-((c[1]-minY)/(maxY-minY))*100).toFixed(2); }
+      var svg = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">';
+      if (parcel) svg += '<polygon points="'+parcel.coordinates[0].map(pr).join(' ')+'" fill="rgba(34,197,94,.26)" stroke="#f59e0b" stroke-width="0.7" vector-effect="non-scaling-stroke"/>';
+      if (building) svg += '<polygon points="'+building.coordinates[0].map(pr).join(' ')+'" fill="rgba(148,163,184,.85)" stroke="#64748b" stroke-width="0.5" vector-effect="non-scaling-stroke"/>';
+      node.insertAdjacentHTML('beforeend', svg + '</svg>');
+    }
+    document.title = 'lawncopilot-estimate-' + new Date().toISOString().slice(0, 10);
+  });
+</script>
+</body>
+</html>

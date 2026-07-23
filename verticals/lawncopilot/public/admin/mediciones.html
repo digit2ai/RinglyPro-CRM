@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Measurement review — Lawn Co-Pilot admin</title>
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Measurements</h1><div class="who" id="who"></div></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<div id="tabs"></div>
+<script src="/lawncopilot/admin/data.js"></script>
+<script>
+A.shell('mediciones');
+
+var queueOnly = true;
+
+function render() {
+  A.get('/measurements' + (queueOnly ? '?queue=1' : '')).then(function (d) {
+    var app = document.getElementById('app');
+    var html = '<div class="toolbar">' +
+      '<button class="btn btn--' + (queueOnly ? 'primary' : 'ghost') + ' btn--sm" id="toggleQ">' +
+      (queueOnly ? 'Showing review queue' : 'Showing all properties') + '</button>' +
+      '<span class="mut small" style="margin-left:auto">' + A.num((d.properties || []).length) + ' properties</span></div>';
+
+    if (!d.properties || !d.properties.length) {
+      html += A.empty(queueOnly ? 'Nothing waiting for review. Every measurement is confirmed.' : 'No properties yet.');
+    }
+
+    (d.properties || []).forEach(function (p) {
+      var eff = p.effective_sqft;
+      html += '<div class="tile">' +
+        '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">' +
+          '<div style="flex:1;min-width:220px">' +
+            '<div class="row__title">' + A.esc(p.address || 'No address') + '</div>' +
+            '<div class="row__sub">' + A.esc([p.city, p.county, p.zip].filter(Boolean).join(', ')) + '</div>' +
+            '<div style="margin-top:8px">' +
+              (p.needs_review ? '<span class="pill pill--warn">Needs review</span> ' : '') +
+              '<span class="pill ' + (p.confidence === 'high' ? '' : 'pill--muted') + '">' + A.esc(p.confidence) + ' confidence</span> ' +
+              (p.is_estimate ? '<span class="pill pill--muted">estimate</span>' : '<span class="pill">verified</span>') +
+            '</div>' +
+          '</div>' +
+          '<div class="propmap" style="flex:0 0 260px;max-width:100%" id="map-' + p.id + '"></div>' +
+        '</div>' +
+
+        '<div class="scroll-x" style="margin-top:14px"><table><tbody>' +
+          '<tr><td>Lot</td><td class="num">' + A.num(p.lot_sqft) + '</td></tr>' +
+          '<tr><td>House footprint</td><td class="num">-' + A.num(p.building_footprint_sqft) + '</td></tr>' +
+          '<tr><td>Hard surfaces</td><td class="num">-' + A.num(p.excluded_sqft) + '</td></tr>' +
+          '<tr><td><b>Serviceable</b></td><td class="num"><b>' + A.num(eff) + '</b></td></tr>' +
+        '</tbody></table></div>' +
+
+        '<div class="toolbar" style="margin-top:14px;margin-bottom:0">' +
+          '<label class="small" style="font-weight:700">Override sq ft</label>' +
+          '<input type="number" id="sqft-' + p.id + '" value="' + A.esc(eff) + '" style="width:130px">' +
+          '<input type="text" id="reason-' + p.id + '" placeholder="Reason (required)" style="flex:1;min-width:160px">' +
+          '<button class="btn btn--ghost btn--sm" data-save="' + p.id + '">Save override</button>' +
+          '<button class="btn btn--primary btn--sm" data-approve="' + p.id + '">Approve</button>' +
+        '</div>' +
+        '<div id="re-' + p.id + '" class="small mut" style="margin-top:8px"></div>' +
+      '</div>';
+    });
+
+    app.innerHTML = html;
+
+    (d.properties || []).forEach(function (p) {
+      var node = document.getElementById('map-' + p.id);
+      if (!node) return;
+      node.innerHTML = '';
+      if (p.imagery_url) {
+        var img = document.createElement('img');
+        img.src = p.imagery_url; img.alt = ''; img.loading = 'lazy';
+        node.appendChild(img);
+      } else {
+        node.innerHTML = '<div class="empty tiny" style="padding:20px">No imagery</div>';
+      }
+    });
+
+    document.getElementById('toggleQ').addEventListener('click', function () { queueOnly = !queueOnly; render(); });
+
+    document.querySelectorAll('[data-save]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.dataset.save;
+        var reason = document.getElementById('reason-' + id).value.trim();
+        if (!reason) { alert('A reason is required — the override is audited.'); return; }
+        A.patch('/measurements/' + id, {
+          approved_sqft: Number(document.getElementById('sqft-' + id).value), reason: reason
+        }).then(function (r) {
+          if (!r.success) { alert(r.error || 'Could not save.'); return; }
+          var o = r.repriced || {};
+          document.getElementById('re-' + id).textContent =
+            'Repriced: weekly ' + (o.weekly ? o.weekly.price_display : '-') +
+            ', biweekly ' + (o.biweekly ? o.biweekly.price_display : '-') +
+            ', monthly ' + (o.monthly ? o.monthly.price_display : '-');
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-approve]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.dataset.approve;
+        A.patch('/measurements/' + id, {
+          approve: true, reason: document.getElementById('reason-' + id).value.trim() || 'Reviewed and approved'
+        }).then(function (r) {
+          if (!r.success) { alert(r.error || 'Could not approve.'); return; }
+          render();
+        });
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Lawn Co-Pilot",
+  "short_name": "Lawn Co-Pilot",
+  "start_url": "/lawncopilot/portal/inicio",
+  "scope": "/lawncopilot/portal/",
+  "display": "standalone",
+  "background_color": "#f6faf8",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "/lawncopilot/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/lawncopilot/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/lawncopilot/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

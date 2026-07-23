@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Staff — Lawn Co-Pilot</title>
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+</head>
+<body>
+<header class="apphead"><h1>AI Staff</h1><div class="who" id="who"></div></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<div id="tabs"></div>
+<script src="/lawncopilot/admin/data.js"></script>
+<script>
+A.shell('ai-staff');
+
+function render() {
+  var days = document.getElementById('days') ? document.getElementById('days').value : 1;
+  Promise.all([A.get('/ai-staff?days=' + days), A.get('/ai-staff/approvals')]).then(function (res) {
+    var d = res[0], ap = res[1];
+    var app = document.getElementById('app');
+    var html = '';
+
+    html += '<div class="toolbar"><label class="small" style="font-weight:700">Period</label>' +
+      '<select id="days"><option value="1">Today</option><option value="7">7 days</option><option value="30">30 days</option></select>' +
+      '<span class="mut small" style="margin-left:auto">' + A.num(d.total_calls) + ' tool calls &middot; ' +
+      A.num(d.pending_approvals) + ' awaiting approval</span></div>';
+
+    html += '<div class="grid grid--2">';
+    (d.employees || []).forEach(function (e) {
+      html += '<div class="staffcard">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span class="dot ' + (e.enabled ? 'dot--on' : 'dot--off') + '"></span>' +
+          '<h3 style="flex:1">' + A.esc(e.name) + '</h3>' +
+          '<button class="btn btn--ghost btn--sm" data-toggle="' + A.esc(e.id) + '" data-on="' + (e.enabled ? '1' : '0') + '">' +
+            (e.enabled ? 'Switch off' : 'Switch on') + '</button>' +
+        '</div>' +
+        '<div class="replaces">' + A.esc(e.replaces || e.role) + '</div>' +
+        '<div class="stats">' +
+          '<div><b>' + A.num(e.calls) + '</b><span>Actions</span></div>' +
+          '<div><b>' + A.num(e.failures) + '</b><span>Failed</span></div>' +
+          '<div><b>' + (e.avg_latency_ms ? A.num(e.avg_latency_ms) + 'ms' : '&mdash;') + '</b><span>Avg time</span></div>' +
+        '</div>' +
+        (e.tools_used && e.tools_used.length
+          ? '<div class="tiny mut">' + e.tools_used.slice(0, 5).map(function (t) {
+              return A.esc(t.tool.split('.')[1]) + ' &times;' + t.count; }).join(' &middot; ') + '</div>'
+          : '<div class="tiny mut">No activity in this period.</div>') +
+        '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tile"><h2>Awaiting your approval</h2>';
+    if (!ap.approvals || !ap.approvals.length) {
+      html += A.empty('Nothing waiting. Anything that moves money backwards lands here first.');
+    } else {
+      html += '<table><thead><tr><th>When</th><th>Employee</th><th>Action</th><th>Why</th><th></th></tr></thead><tbody>';
+      ap.approvals.forEach(function (a) {
+        html += '<tr><td>' + A.esc(A.date(a.created_at)) + ' ' + A.esc(A.time(a.created_at)) + '</td>' +
+          '<td>' + A.esc(a.employee) + '</td><td>' + A.esc(a.tool) + '</td>' +
+          '<td class="small mut">' + A.esc(a.reason) + '</td>' +
+          '<td><button class="btn btn--primary btn--sm" data-ok="' + a.id + '">Approve</button> ' +
+          '<button class="btn btn--ghost btn--sm" data-no="' + a.id + '">Reject</button></td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+
+    html += '<div class="tile"><h2>Recent activity</h2>';
+    if (!d.recent || !d.recent.length) html += A.empty('No tool calls recorded yet.');
+    else {
+      html += '<div class="scroll-x"><table><thead><tr><th>Time</th><th>Employee</th><th>Action</th><th>Channel</th><th>Result</th></tr></thead><tbody>';
+      d.recent.forEach(function (c) {
+        html += '<tr><td>' + A.esc(A.time(c.at)) + '</td><td>' + A.esc(c.employee) + '</td>' +
+          '<td>' + A.esc(String(c.tool).split('.')[1] || c.tool) + '</td><td>' + A.esc(c.channel || '') + '</td>' +
+          '<td>' + (c.success ? '<span class="pill">ok</span>' : '<span class="pill pill--warn">' + A.esc((c.error || 'failed').slice(0, 60)) + '</span>') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    app.innerHTML = html;
+    document.getElementById('days').value = days;
+    document.getElementById('days').addEventListener('change', render);
+
+    document.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        A.patch('/ai-staff/' + b.dataset.toggle, { enabled: b.dataset.on !== '1' }).then(render);
+      });
+    });
+    document.querySelectorAll('[data-ok]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        A.post('/ai-staff/approvals/' + b.dataset.ok, { approve: true }).then(function (r) {
+          if (!r.success) alert(r.error || 'Could not run that action.');
+          render();
+        });
+      });
+    });
+    document.querySelectorAll('[data-no]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        A.post('/ai-staff/approvals/' + b.dataset.no, { approve: false }).then(render);
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>

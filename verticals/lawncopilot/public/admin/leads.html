@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leads — Lawn Co-Pilot admin</title>
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Leads</h1><div class="who" id="who"></div></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<div id="tabs"></div>
+<script src="/lawncopilot/admin/data.js"></script>
+<script>
+A.shell('leads');
+
+var STAGES = ['new', 'measured', 'quoted', 'accepted', 'lost'];
+var filter = '';
+
+function render() {
+  A.get('/leads' + (filter ? '?stage=' + filter : '')).then(function (d) {
+    var app = document.getElementById('app');
+    var c = d.counts || {};
+    var html = '<div class="kpis">' + STAGES.map(function (s) {
+      return '<div class="kpi" style="cursor:pointer" data-stage="' + s + '"><b>' + A.num(c[s] || 0) + '</b>' +
+        '<span>' + s.charAt(0).toUpperCase() + s.slice(1) + '</span></div>';
+    }).join('') + '</div>';
+
+    html += '<div class="toolbar"><button class="btn btn--ghost btn--sm" id="clear">' +
+      (filter ? 'Clear filter (' + A.esc(filter) + ')' : 'All stages') + '</button></div>';
+
+    html += '<div class="tile"><div class="scroll-x"><table><thead><tr>' +
+      '<th>Captured</th><th>Name</th><th>Contact</th><th>Address</th><th>Source</th><th>Quote</th><th>Stage</th><th></th>' +
+      '</tr></thead><tbody>';
+
+    if (!d.leads || !d.leads.length) {
+      html += '<tr><td colspan="8">' + A.empty('No leads in this view.') + '</td></tr>';
+    }
+    (d.leads || []).forEach(function (l) {
+      html += '<tr>' +
+        '<td class="small">' + A.esc(A.date(l.created_at)) + '</td>' +
+        '<td><b>' + A.esc(l.name) + '</b></td>' +
+        '<td class="small">' + A.esc(l.phone) + '<br>' + A.esc(l.email) + '</td>' +
+        '<td class="small">' + A.esc(l.address || '&mdash;') + '</td>' +
+        '<td class="small">' + A.esc((l.source || '').replace('_', ' ')) + '</td>' +
+        '<td class="num">' + (l.quote_value
+          ? '<a href="/lawncopilot/quote/' + A.esc(l.quote_token) + '" target="_blank">' + A.esc(l.quote_value) + '</a>'
+          : '&mdash;') + '</td>' +
+        '<td><span class="pill' + (l.stage === 'accepted' ? '' : ' pill--muted') + '">' + A.esc(l.stage) + '</span></td>' +
+        '<td><select data-move="' + l.id + '">' +
+          STAGES.map(function (s) { return '<option value="' + s + '"' + (s === l.stage ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+        '</select></td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    app.innerHTML = html;
+
+    document.querySelectorAll('[data-stage]').forEach(function (k) {
+      k.addEventListener('click', function () { filter = k.dataset.stage; render(); });
+    });
+    document.getElementById('clear').addEventListener('click', function () { filter = ''; render(); });
+    document.querySelectorAll('[data-move]').forEach(function (s) {
+      s.addEventListener('change', function () {
+        A.patch('/leads/' + s.dataset.move, { stage: s.value }).then(render);
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>

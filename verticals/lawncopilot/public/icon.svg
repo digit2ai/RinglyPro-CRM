@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lawn Co-Pilot">
+  <rect width="64" height="64" rx="15" fill="#14532d"/>
+  <path d="M32 13c7 6 11 12 11 18a11 11 0 0 1-22 0c0-6 4-12 11-18z" fill="#22c55e"/>
+  <path d="M32 20v22" stroke="#14532d" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M32 30l5-4M32 36l-5-4" stroke="#14532d" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="32" cy="49" r="4" fill="#86efac"/>
+</svg>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Today — Lawn Co-Pilot admin</title>
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Today</h1><div class="who" id="who"></div></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<div id="tabs"></div>
+<script src="/lawncopilot/admin/data.js"></script>
+<script>
+A.shell('inicio');
+
+var today = new Date().toISOString().slice(0, 10);
+
+Promise.all([
+  A.get('/schedule?from=' + today + '&to=' + today),
+  A.get('/leads'),
+  A.get('/reports/revenue?days=30').catch(function () { return { success: false }; }),
+  A.get('/reports/ar-aging').catch(function () { return { success: false }; }),
+  A.get('/ai-staff?days=1'),
+  A.get('/tickets?status=open')
+]).then(function (r) {
+  var sched = r[0], leads = r[1], rev = r[2], ar = r[3], staff = r[4], tickets = r[5];
+  var html = '';
+
+  html += '<div class="kpis">' +
+    '<div class="kpi"><b>' + A.num((sched.appointments || []).length) + '</b><span>Jobs today</span></div>' +
+    '<div class="kpi"><b>' + A.num((leads.counts || {}).new || 0) + '</b><span>New leads</span></div>' +
+    '<div class="kpi"><b>' + (rev.success ? A.esc(rev.display.collected) : '&mdash;') + '</b><span>Collected, 30d</span></div>' +
+    '<div class="kpi"><b>' + (ar.success ? A.esc(ar.display.current) : '&mdash;') + '</b><span>Outstanding</span></div>' +
+    '<div class="kpi"><b>' + A.num(staff.total_calls) + '</b><span>AI actions today</span></div>' +
+    '<div class="kpi"><b>' + A.num((tickets.tickets || []).length) + '</b><span>Open tickets</span></div>' +
+    '</div>';
+
+  if (staff.pending_approvals) {
+    html += '<div class="tile" style="border-color:var(--accent)">' +
+      '<span class="pill pill--warn">' + A.num(staff.pending_approvals) + ' waiting on your approval</span>' +
+      '<div style="margin-top:10px"><a class="btn btn--primary btn--sm" href="/lawncopilot/admin/ai-staff">Review now</a></div></div>';
+  }
+
+  html += '<div class="tile"><h2>Today\'s route</h2>';
+  if (!sched.appointments || !sched.appointments.length) html += A.empty('Nothing scheduled today.');
+  else {
+    html += '<div class="scroll-x"><table><thead><tr><th>#</th><th>Customer</th><th>Address</th><th>Window</th><th>Crew</th><th>Status</th><th></th></tr></thead><tbody>';
+    sched.appointments.forEach(function (a) {
+      html += '<tr><td>' + (a.route_order || '') + '</td>' +
+        '<td>' + A.esc(a.customer_name || '') + '</td>' +
+        '<td class="small">' + A.esc(a.address || '') + '</td>' +
+        '<td>' + A.esc(a.window_start) + '-' + A.esc(a.window_end) + '</td>' +
+        '<td>' + A.esc(a.crew_name || '&mdash;') + '</td>' +
+        '<td><span class="pill' + (a.status === 'completed' ? ' pill--muted' : '') + '">' + A.esc(a.status.replace('_', ' ')) + '</span></td>' +
+        '<td>' + (a.status !== 'completed'
+          ? '<button class="btn btn--ghost btn--sm" data-done="' + a.id + '">Mark done</button>' : '') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn--ghost btn--sm" id="seq">Sequence route</button>' +
+      '<button class="btn btn--ghost btn--sm" id="weather">Weather hold today</button></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="tile"><h2>AI staff today</h2><div class="grid grid--2">';
+  (staff.employees || []).forEach(function (e) {
+    html += '<div class="staffcard"><div style="display:flex;align-items:center;gap:8px">' +
+      '<span class="dot ' + (e.enabled ? 'dot--on' : 'dot--off') + '"></span>' +
+      '<h3>' + A.esc(e.name) + '</h3></div>' +
+      '<div class="replaces">' + A.esc(e.replaces || '') + '</div>' +
+      '<div class="small mut">' + A.num(e.calls) + ' actions' + (e.failures ? ', ' + A.num(e.failures) + ' failed' : '') + '</div></div>';
+  });
+  html += '</div><div style="margin-top:12px"><a class="btn btn--ghost btn--sm" href="/lawncopilot/admin/ai-staff">Full AI staff view</a></div></div>';
+
+  document.getElementById('app').innerHTML = html;
+
+  document.querySelectorAll('[data-done]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var notes = prompt('Crew notes (optional):') || '';
+      A.post('/schedule/' + b.dataset.done + '/status', { status: 'completed', technician_notes: notes })
+        .then(function (r) {
+          alert(r.success ? ('Marked complete' + (r.invoice ? '. Invoice ' + r.invoice.number + ' issued.' : '.')) : (r.error || 'Failed.'));
+          location.reload();
+        });
+    });
+  });
+  var s = document.getElementById('seq');
+  if (s) s.addEventListener('click', function () {
+    A.post('/schedule/sequence', { service_date: today }).then(function (r) {
+      alert(r.success ? ('Sequenced ' + r.stops + ' stops (' + r.method + ').') : (r.error || 'Failed.'));
+      location.reload();
+    });
+  });
+  var w = document.getElementById('weather');
+  if (w) w.addEventListener('click', function () {
+    var reason = prompt('Weather hold reason:');
+    if (!reason) return;
+    A.post('/schedule/weather-hold', { service_date: today, reason: reason }).then(function (r) {
+      alert(r.success ? ('Held ' + r.held + ' visits, notified ' + r.notified + ' customers.') : (r.error || 'Failed.'));
+      location.reload();
+    });
+  });
+});
+</script>
+</body>
+</html>

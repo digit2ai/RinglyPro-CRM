@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Service history — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Service history</h1></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">Ask me about any past visit.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('inicio');
+
+LC.history().then(function (d) {
+  var app = document.getElementById('app');
+  if (!d.success || !d.records.length) { app.innerHTML = LC.empty('No completed services yet.'); return; }
+  app.innerHTML = d.records.map(function (r) {
+    var html = '<div class="tile">' +
+      '<div class="tile__label">' + LC.esc(LC.date(r.service_date)) + '</div>' +
+      '<div class="row__title" style="margin:6px 0">' + LC.esc(r.service_type || 'Lawn service') + '</div>' +
+      '<div class="row"><div class="row__main"><div class="row__sub">Area serviced</div></div><div class="row__side">' + LC.num(r.area_serviced_sqft) + ' sq ft</div></div>' +
+      (r.crew ? '<div class="row"><div class="row__main"><div class="row__sub">Crew</div></div><div class="row__side">' + LC.esc(r.crew) + '</div></div>' : '') +
+      (r.weather ? '<div class="row"><div class="row__main"><div class="row__sub">Weather</div></div><div class="row__side">' + LC.esc(r.weather) + '</div></div>' : '') +
+      '<div class="row"><div class="row__main"><div class="row__sub">Charges</div></div><div class="row__side">' + LC.esc(r.charges_display) + '</div></div>';
+    if (r.technician_notes) {
+      html += '<p class="small mut" style="margin-top:12px"><b>Crew notes:</b> ' + LC.esc(r.technician_notes) + '</p>';
+    }
+    if (r.photos && r.photos.length) {
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px">' +
+        r.photos.map(function (p) {
+          return '<figure style="margin:0"><img src="' + LC.esc(p.url) + '" alt="' + LC.esc(p.caption || p.kind) + '" loading="lazy" style="border-radius:var(--radius-sm)">' +
+            '<figcaption class="tiny mut">' + LC.esc(p.kind) + '</figcaption></figure>';
+        }).join('') + '</div>';
+    }
+    return html + '</div>';
+  }).join('');
+});
+</script>
+</body>
+</html>

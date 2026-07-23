@@ -1683,6 +1683,38 @@ app.get('/debug/veritas-error', (req, res) => {
 });
 
 // =====================================================
+// LAWN CO-PILOT — The AI office for landscaping companies (served at /lawncopilot/)
+// =====================================================
+
+let lawncopilotApp = null;
+let lawncopilotError = null;
+try {
+  lawncopilotApp = require('../verticals/lawncopilot/src/index');
+  app.get('/lawncopilot', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/lawncopilot/');
+    next();
+  });
+  app.use('/lawncopilot', lawncopilotApp);
+  console.log('Lawn Co-Pilot mounted at /lawncopilot');
+  console.log('   - Marketing site: /lawncopilot/');
+  console.log('   - Customer portal: /lawncopilot/portal');
+  console.log('   - Admin portal: /lawncopilot/admin');
+  console.log('   - Brain (MCP): /lawncopilot/mcp/tools/list');
+  console.log('   - Health Check: /lawncopilot/health');
+} catch (error) {
+  lawncopilotError = error;
+  console.log('⚠️ Lawn Co-Pilot not available:', error.message);
+}
+
+app.get('/debug/lawncopilot-error', (req, res) => {
+  res.json({
+    service: 'Lawn Co-Pilot',
+    available: !lawncopilotError,
+    error: lawncopilotError ? { message: lawncopilotError.message, stack: lawncopilotError.stack } : null
+  });
+});
+
+// =====================================================
 // COACHTRACK — Personal AI Coaching Tracker (served at /coaching/)
 // =====================================================
 

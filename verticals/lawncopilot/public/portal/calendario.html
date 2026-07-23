@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schedule — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Schedule</h1></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">Ask me to move, skip, or pause a visit.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('calendario');
+
+var STATUS = {
+  scheduled: 'pill', en_route: 'pill pill--info', completed: 'pill pill--muted',
+  skipped: 'pill pill--muted', cancelled: 'pill pill--muted',
+  weather_hold: 'pill pill--warn', missed: 'pill pill--warn'
+};
+
+function render() {
+  LC.schedule().then(function (d) {
+    var app = document.getElementById('app');
+    if (!d.success) { app.innerHTML = LC.empty('Could not load your schedule.'); return; }
+
+    var html = '<div class="tile"><h2>Upcoming</h2>';
+    if (!d.upcoming.length) html += LC.empty('No visits scheduled.');
+    d.upcoming.forEach(function (a) {
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(LC.date(a.service_date)) + '</div>' +
+        '<div class="row__sub">' + LC.esc(a.window_start) + ' - ' + LC.esc(a.window_end) +
+        (a.crew ? ' &middot; ' + LC.esc(a.crew) : '') + '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' +
+          '<button class="btn btn--ghost btn--sm" data-move="' + a.id + '">Move</button>' +
+          '<button class="btn btn--ghost btn--sm" data-skip="' + a.id + '">Skip</button>' +
+          '<button class="btn btn--ghost btn--sm" data-cancel="' + a.id + '">Cancel</button>' +
+        '</div></div>' +
+        '<div class="row__side"><span class="' + (STATUS[a.status] || 'pill') + '">' + LC.esc(a.status.replace('_', ' ')) + '</span></div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tile"><h2>Pause service</h2>' +
+      '<p class="mut small">Going out of town? Pause and nothing is scheduled or billed until you resume.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<input type="date" id="until" style="padding:11px;border:1px solid var(--line);border-radius:var(--radius);font:inherit">' +
+      '<button class="btn btn--ghost btn--sm" id="pause">Pause</button>' +
+      '<button class="btn btn--ghost btn--sm" id="resume">Resume</button></div></div>';
+
+    html += '<div class="tile"><h2>Past</h2>';
+    if (!d.past.length) html += LC.empty('No past visits yet.');
+    d.past.slice(0, 20).forEach(function (a) {
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(LC.date(a.service_date)) + '</div>' +
+        '<div class="row__sub">' + LC.esc(a.service_type || 'Lawn service') + '</div></div>' +
+        '<div class="row__side"><span class="' + (STATUS[a.status] || 'pill') + '">' + LC.esc(a.status.replace('_', ' ')) + '</span></div></div>';
+    });
+    html += '</div>';
+
+    app.innerHTML = html;
+    wire();
+  });
+}
+
+function wire() {
+  document.querySelectorAll('[data-skip]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      LC.post('/schedule/' + b.dataset.skip + '/skip').then(function (r) {
+        alert(r.success ? (r.spoken || 'Visit skipped.') : (r.error || 'Could not skip that visit.'));
+        if (r.success) render();
+      });
+    });
+  });
+  document.querySelectorAll('[data-cancel]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var reason = prompt('Cancel this visit? Tell us why (optional):');
+      if (reason === null) return;
+      LC.post('/schedule/' + b.dataset.cancel + '/cancel', { reason: reason }).then(function (r) {
+        alert(r.success ? (r.spoken || 'Cancelled.') : (r.error || 'Could not cancel.'));
+        if (r.success) render();
+      });
+    });
+  });
+  document.querySelectorAll('[data-move]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      LC.availability().then(function (a) {
+        if (!a.success || !a.slots || !a.slots.length) { alert('No open dates right now. Message us and we will find one.'); return; }
+        var list = a.slots.slice(0, 6).map(function (s, i) { return (i + 1) + '. ' + s.display + ', ' + s.window_label; }).join('\n');
+        var pick = prompt('Pick a new date by number:\n\n' + list);
+        var idx = parseInt(pick, 10);
+        if (!idx || !a.slots[idx - 1]) return;
+        var s = a.slots[idx - 1];
+        LC.post('/schedule/' + b.dataset.move + '/reschedule', {
+          service_date: s.date, window_start: s.window_start, window_end: s.window_end
+        }).then(function (r) {
+          alert(r.success ? (r.spoken || 'Moved.') : (r.error || 'Could not move that visit.'));
+          if (r.success) render();
+        });
+      });
+    });
+  });
+  var p = document.getElementById('pause');
+  if (p) p.addEventListener('click', function () {
+    LC.post('/schedule/pause', { until: document.getElementById('until').value || null }).then(function (r) {
+      alert(r.success ? (r.spoken || 'Service paused.') : (r.error || 'Could not pause.'));
+      if (r.success) render();
+    });
+  });
+  var rs = document.getElementById('resume');
+  if (rs) rs.addEventListener('click', function () {
+    LC.post('/schedule/resume').then(function (r) {
+      alert(r.success ? (r.spoken || 'Service resumed.') : (r.error || 'Could not resume.'));
+      if (r.success) render();
+    });
+  });
+}
+
+render();
+</script>
+</body>
+</html>

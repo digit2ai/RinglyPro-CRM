@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Billing — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Billing</h1></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">Ask me about your balance or a specific invoice.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('facturacion');
+
+function render() {
+  Promise.all([LC.invoices(), LC.paymentMethods(), LC.get('/balance')]).then(function (res) {
+    var inv = res[0], pm = res[1], bal = res[2];
+    var app = document.getElementById('app');
+    var html = '';
+
+    html += '<div class="tile"><div class="tile__label">Balance</div>' +
+      '<div class="tile__big">' + LC.esc(bal.balance_display || '$0.00') + '</div>' +
+      '<div class="mut small">' + (bal.autopay_enabled
+        ? 'Automatic payment is on' + (bal.next_charge_at ? ', next charge ' + LC.date(bal.next_charge_at) : '')
+        : 'Automatic payment is off') + '</div></div>';
+
+    if (!pm.payments_configured) {
+      html += '<div class="tile"><span class="pill pill--warn">Online payment is not switched on yet</span>' +
+        '<p class="small mut" style="margin-top:10px">You can see everything you owe here. To pay, call the office until online payment is live.</p></div>';
+    }
+
+    html += '<div class="tile"><h2>Payment methods</h2>';
+    if (!pm.methods || !pm.methods.length) html += LC.empty('No card on file.');
+    (pm.methods || []).forEach(function (m) {
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(m.brand || 'Card') + ' ending ' + LC.esc(m.last4 || '') + '</div>' +
+        '<div class="row__sub">Expires ' + LC.esc(m.exp) + (m.is_default ? ' &middot; default' : '') + '</div></div>' +
+        '<div class="row__side"><button class="btn btn--ghost btn--sm" data-rm="' + m.id + '">Remove</button></div></div>';
+    });
+    html += '<p class="tiny mut" style="margin-top:10px">Card numbers are never stored on our servers. We keep only the brand, last four digits, and expiration.</p>';
+    html += '<div style="margin-top:12px"><button class="btn btn--ghost btn--sm" id="autopay">' +
+      (bal.autopay_enabled ? 'Turn off automatic payment' : 'Turn on automatic payment') + '</button></div></div>';
+
+    html += '<div class="tile"><h2>Invoices</h2>';
+    if (!inv.invoices || !inv.invoices.length) html += LC.empty('No invoices yet.');
+    (inv.invoices || []).forEach(function (i) {
+      var cls = i.status === 'paid' ? 'pill pill--muted' : (i.status === 'failed' ? 'pill pill--warn' : 'pill');
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(i.number) + '</div>' +
+        '<div class="row__sub">' + LC.esc(LC.date(i.issued_at)) + ' &middot; ' + LC.esc(i.total_display) + '</div>' +
+        (i.lines || []).map(function (l) { return '<div class="tiny mut">' + LC.esc(l.label) + ' ' + LC.esc(l.amount) + '</div>'; }).join('') +
+        (i.status === 'open' || i.status === 'failed'
+          ? '<div style="margin-top:8px"><button class="btn btn--primary btn--sm" data-pay="' + i.id + '">' +
+            (i.status === 'failed' ? 'Retry payment' : 'Pay now') + '</button></div>'
+          : '') +
+        '</div><div class="row__side"><span class="' + cls + '">' + LC.esc(i.status) + '</span></div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tile"><h2>Payment history</h2>';
+    if (!inv.payments || !inv.payments.length) html += LC.empty('No payments recorded.');
+    (inv.payments || []).forEach(function (p) {
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(p.amount_display) + '</div>' +
+        '<div class="row__sub">' + LC.esc(LC.date(p.created_at)) + (p.method ? ' &middot; ' + LC.esc(p.method) : '') +
+        (p.failure_reason ? ' &middot; ' + LC.esc(p.failure_reason) : '') + '</div></div>' +
+        '<div class="row__side"><span class="pill ' + (p.status === 'succeeded' ? '' : 'pill--warn') + '">' + LC.esc(p.status) + '</span></div></div>';
+    });
+    html += '</div>';
+
+    app.innerHTML = html;
+
+    document.querySelectorAll('[data-pay]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        b.disabled = true;
+        LC.post('/invoices/' + b.dataset.pay + '/pay').then(function (r) {
+          alert(r.success ? (r.spoken || 'Payment complete.') : (r.error || 'Payment did not go through.'));
+          render();
+        });
+      });
+    });
+    document.querySelectorAll('[data-rm]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        LC.del('/payment-methods/' + b.dataset.rm).then(function (r) {
+          if (!r.success) alert(r.error || 'Could not remove that card.');
+          render();
+        });
+      });
+    });
+    document.getElementById('autopay').addEventListener('click', function () {
+      var path = bal.autopay_enabled ? '/autopay/disable' : '/autopay/enroll';
+      LC.post(path).then(function (r) {
+        alert(r.success ? (r.spoken || 'Updated.') : (r.error || 'Could not update automatic payment.'));
+        render();
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>

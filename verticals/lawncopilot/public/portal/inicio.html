@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/lawncopilot/icon-192.png">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<div class="installbar" id="installbar">
+  <span style="flex:1">Add Lawn Co-Pilot to your home screen</span>
+  <button class="btn btn--light btn--sm" id="installbtn">Install</button>
+</div>
+<header class="apphead">
+  <h1>Home</h1>
+  <div class="who" id="who"></div>
+</header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">Ask me about your next visit, your balance, or your property.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('inicio');
+LC.dashboard().then(function (d) {
+  if (!d.success) { document.getElementById('app').innerHTML = LC.empty('Could not load your account.'); return; }
+  document.getElementById('who').textContent = d.customer.name;
+  var next = d.next_service, plan = d.plan, prop = d.property;
+
+  var html = '';
+  html += '<div class="tile">' +
+    '<div class="tile__label">Next service</div>' +
+    (next
+      ? '<div class="tile__big">' + LC.esc(LC.date(next.date)) + '</div>' +
+        '<div class="mut">' + LC.esc(next.window) + (next.crew ? ' &middot; ' + LC.esc(next.crew) : '') + '</div>' +
+        '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
+          '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/calendario">Change or skip</a></div>'
+      : '<div class="tile__big">Nothing scheduled</div><div class="mut">Ask the assistant to book a visit.</div>') +
+    '</div>';
+
+  html += '<div class="kpis">' +
+    '<div class="kpi"><b>' + LC.esc(d.balance.display) + '</b><span>Balance' + (d.balance.open_invoices ? ' &middot; ' + d.balance.open_invoices + ' open' : '') + '</span></div>' +
+    '<div class="kpi"><b>' + (plan ? LC.esc(plan.frequency.replace('_', ' ')) : 'None') + '</b><span>Plan' + (plan && plan.status !== 'active' ? ' (' + LC.esc(plan.status) + ')' : '') + '</span></div>' +
+    '<div class="kpi"><b>' + (d.autopay_enabled ? 'On' : 'Off') + '</b><span>Autopay</span></div>' +
+    '<div class="kpi"><b>' + (prop ? LC.num(prop.serviceable_sqft) : '&mdash;') + '</b><span>Sq ft serviced</span></div>' +
+    '</div>';
+
+  if (prop) {
+    html += '<div class="tile"><div class="tile__label">Property</div>' +
+      '<div class="row__title" style="margin:6px 0">' + LC.esc(prop.address) + '</div>' +
+      (prop.is_estimate ? '<span class="pill pill--warn">Area is an estimate, pending verification</span>' : '<span class="pill">Area verified</span>') +
+      '<div style="margin-top:14px"><a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/mi-propiedad">View property</a></div></div>';
+  }
+
+  if (d.last_service) {
+    html += '<div class="tile"><div class="tile__label">Last completed</div>' +
+      '<div class="row__title" style="margin:6px 0">' + LC.esc(LC.date(d.last_service.date)) + '</div>' +
+      '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/historial">Service history</a></div>';
+  }
+
+  if (d.unread_messages) {
+    html += '<div class="tile"><div class="tile__label">Messages</div>' +
+      '<div class="row__title" style="margin:6px 0">' + d.unread_messages + ' unread</div>' +
+      '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/mensajes">Open messages</a></div>';
+  }
+
+  document.getElementById('app').innerHTML = html;
+});
+
+var deferred = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault(); deferred = e;
+  document.getElementById('installbar').classList.add('is-on');
+});
+document.getElementById('installbtn').addEventListener('click', function () {
+  if (deferred) { deferred.prompt(); deferred = null; }
+  document.getElementById('installbar').classList.remove('is-on');
+});
+</script>
+</body>
+</html>

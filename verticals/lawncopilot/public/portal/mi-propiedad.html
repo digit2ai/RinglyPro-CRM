@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My property — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<header class="apphead"><h1>My property</h1></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">Ask me about the area we service or how it was measured.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('mi-propiedad');
+
+LC.property().then(function (d) {
+  var app = document.getElementById('app');
+  if (!d.success || !d.property) { app.innerHTML = LC.empty('No property on file yet.'); return; }
+  var p = d.property;
+
+  var html = '<div class="tile">' +
+    '<div class="tile__label">Service address</div>' +
+    '<div class="row__title" style="margin:6px 0 12px">' + LC.esc(p.address) + '</div>' +
+    '<div class="propmap" id="map"></div>' +
+    '<div class="legend" style="color:var(--text-mut);display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.82rem">' +
+      '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b;margin-right:5px"></i>Property line</span>' +
+      '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#94a3b8;margin-right:5px"></i>House</span>' +
+      '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#22c55e;margin-right:5px"></i>Lawn we service</span>' +
+    '</div></div>';
+
+  html += '<div class="tile"><h2>The measurement</h2>' +
+    '<div class="row"><div class="row__main"><div class="row__title">Lot size</div></div><div class="row__side">' + LC.num(p.lot_sqft) + ' sq ft</div></div>' +
+    '<div class="row"><div class="row__main"><div class="row__title">House footprint</div></div><div class="row__side">-' + LC.num(p.building_footprint_sqft) + '</div></div>' +
+    '<div class="row"><div class="row__main"><div class="row__title">Driveway, walks, patio</div></div><div class="row__side">-' + LC.num(p.excluded_sqft) + '</div></div>' +
+    '<div class="row"><div class="row__main"><div class="row__title"><b>Lawn we service</b></div></div><div class="row__side"><b>' + LC.num(p.effective_sqft) + ' sq ft</b></div></div>' +
+    '<div style="margin-top:14px">' +
+      (p.is_estimate
+        ? '<span class="pill pill--warn">Estimated from property records</span>'
+        : '<span class="pill">Verified and approved by our team</span>') +
+    '</div>' +
+    '<p class="small mut" style="margin-top:12px">' +
+      (p.is_estimate
+        ? 'This came from public property records rather than a physical measurement. A person reviews it before anything is charged.'
+        : 'A member of our team has reviewed and approved this area.') +
+    '</p>' +
+    '<button class="btn btn--ghost btn--sm" id="dispute">This does not look right</button></div>';
+
+  html += '<div class="tile"><h2>Access and instructions</h2>' +
+    '<div style="margin-bottom:14px"><label class="small" style="font-weight:700;display:block;margin-bottom:6px">Special instructions</label>' +
+    '<textarea id="special">' + LC.esc(p.special_instructions || '') + '</textarea></div>' +
+    '<div style="margin-bottom:14px"><label class="small" style="font-weight:700;display:block;margin-bottom:6px">Access instructions</label>' +
+    '<textarea id="access">' + LC.esc(p.access_instructions || '') + '</textarea></div>' +
+    '<div style="margin-bottom:14px"><label class="small" style="font-weight:700;display:block;margin-bottom:6px">Gate code (optional, stored encrypted)</label>' +
+    '<input type="text" id="gate" value="' + LC.esc(p.gate_code || '') + '" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);font:inherit"></div>' +
+    '<div style="margin-bottom:14px"><label class="small" style="font-weight:700;display:block;margin-bottom:6px">Pets or hazards we should know about</label>' +
+    '<textarea id="hazards">' + LC.esc(p.hazards || '') + '</textarea></div>' +
+    '<button class="btn btn--primary btn--sm" id="save">Save</button></div>';
+
+  if (d.photos && d.photos.length) {
+    html += '<div class="tile"><h2>Photos</h2><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">' +
+      d.photos.map(function (ph) {
+        return '<figure style="margin:0"><img src="' + LC.esc(ph.url) + '" alt="' + LC.esc(ph.caption || ph.kind) + '" loading="lazy" style="border-radius:var(--radius-sm)">' +
+          '<figcaption class="tiny mut">' + LC.esc(ph.kind) + '</figcaption></figure>';
+      }).join('') + '</div></div>';
+  }
+
+  app.innerHTML = html;
+  LC.drawMap(document.getElementById('map'), p, d.geometry);
+
+  document.getElementById('save').addEventListener('click', function () {
+    LC.patch('/property', {
+      special_instructions: document.getElementById('special').value,
+      access_instructions: document.getElementById('access').value,
+      gate_code: document.getElementById('gate').value,
+      hazards: document.getElementById('hazards').value
+    }).then(function (r) { alert(r.success ? 'Saved.' : (r.error || 'Could not save.')); });
+  });
+
+  document.getElementById('dispute').addEventListener('click', function () {
+    var reason = prompt('Tell us what looks wrong and a person will check it:');
+    if (!reason) return;
+    LC.post('/property/dispute', { reason: reason }).then(function (r) {
+      alert(r.success ? (r.message || 'Sent for review.') : (r.error || 'Could not send that.'));
+    });
+  });
+});
+</script>
+</body>
+</html>

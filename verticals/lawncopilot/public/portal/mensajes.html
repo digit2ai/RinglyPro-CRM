@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Messages — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+</head>
+<body>
+<header class="apphead"><h1>Messages</h1></header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+<button class="fab" aria-label="Ask Lawn Co-Pilot"></button>
+<div class="asst"><div class="asst__log"><div class="a">I can answer most things instantly. Use messages when you want a person.</div></div><input type="text" placeholder="Ask anything..." aria-label="Ask Lawn Co-Pilot"></div>
+<div id="tabs"></div>
+<script src="/lawncopilot/portal/data.js"></script>
+<script>
+LC.shell('mensajes');
+
+function render() {
+  LC.messages().then(function (d) {
+    var app = document.getElementById('app');
+    var html = '<div class="tile"><h2>Send a message</h2>' +
+      '<textarea id="body" placeholder="What can we help with?"></textarea>' +
+      '<div style="margin-top:10px"><button class="btn btn--primary btn--sm" id="send">Send to the office</button></div>' +
+      '<p class="tiny mut" style="margin-top:8px">A person reads every message here.</p></div>';
+
+    html += '<div class="tile"><h2>Conversation</h2>';
+    if (!d.messages || !d.messages.length) html += LC.empty('No messages yet.');
+    (d.messages || []).forEach(function (m) {
+      html += '<div class="row"><div class="row__main">' +
+        '<div class="row__title">' + LC.esc(m.direction === 'inbound' ? 'You' : (m.author || 'Lawn Co-Pilot')) + '</div>' +
+        '<div class="row__sub" style="white-space:pre-wrap">' + LC.esc(m.body) + '</div></div>' +
+        '<div class="row__side tiny mut">' + LC.esc(LC.date(m.created_at)) + '</div></div>';
+    });
+    html += '</div>';
+
+    if (d.tickets && d.tickets.length) {
+      html += '<div class="tile"><h2>Your requests</h2>';
+      d.tickets.forEach(function (t) {
+        html += '<div class="row"><div class="row__main">' +
+          '<div class="row__title">' + LC.esc(t.subject) + '</div>' +
+          '<div class="row__sub">' + LC.esc(t.type.replace('_', ' ')) + ' &middot; ' + LC.esc(LC.date(t.created_at)) + '</div></div>' +
+          '<div class="row__side"><span class="pill ' + (t.status === 'open' ? '' : 'pill--muted') + '">' + LC.esc(t.status) + '</span></div></div>';
+      });
+      html += '</div>';
+    }
+
+    app.innerHTML = html;
+    document.getElementById('send').addEventListener('click', function () {
+      var body = document.getElementById('body').value.trim();
+      if (!body) return;
+      LC.post('/messages', { body: body }).then(function (r) {
+        if (!r.success) { alert(r.error || 'Could not send that.'); return; }
+        render();
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>
