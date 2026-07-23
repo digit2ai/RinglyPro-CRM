@@ -283,7 +283,11 @@ async function transcribeBlob(blob, uiLang, background){
   setMsg(t('preparing'),null);
   const pcm = await blobToPCM(blob);
   setMsg(t('transcribing'),null);
-  const out = await asr(pcm,{ chunk_length_s:30, stride_length_s:5, language:(uiLang==='en'?'english':'spanish'), task:'transcribe', return_timestamps:false });
+  // Auto-detect the spoken language (do NOT force it): a faithful transcript of
+  // whatever was actually said. Forcing a language makes Whisper hallucinate
+  // garbage when the audio doesn't match. The UI ES/EN toggle only controls the
+  // language of generated deliverables, not the transcript.
+  const out = await asr(pcm,{ chunk_length_s:30, stride_length_s:5, task:'transcribe', return_timestamps:false });
   if(!background) hideW();
   return (out && out.text) ? out.text.trim() : '';
 }

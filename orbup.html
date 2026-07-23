@@ -118,6 +118,18 @@
 .d2b .modal-go{width:100%;justify-content:center;margin-top:4px}
 .d2b .modal-status{font-size:13px;color:var(--mut);margin-top:10px;min-height:16px;text-align:center}
 .d2b .modal-status.err{color:#ff9a8f}
+/* Required identity gate — name/email/phone/language before writing a request */
+.d2b .mf{display:flex;flex-direction:column;gap:5px}
+.d2b .mf-l{font-size:12px;color:var(--mut);font-weight:600}
+.d2b .cm-phone-row{display:flex;gap:8px}
+.d2b .cm-cc{flex:0 0 auto;max-width:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 8px;color:var(--ink);font:inherit;font-size:14px;outline:none}
+.d2b .cm-phone-row input{flex:1 1 auto}
+.d2b .cm-lang{display:flex;gap:8px}
+.d2b .cm-lang-opt{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:11px 10px;color:var(--mut);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:.12s ease}
+.d2b .cm-lang-opt:hover{border-color:rgba(139,92,246,.5);color:var(--ink)}
+.d2b .cm-lang-opt.on{background:var(--grad);color:#fff;border-color:transparent}
+.d2b .d2b-idrow{display:none}
+.d2b #d2b-input.locked{cursor:pointer;opacity:.85}
 .d2b .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
 .d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
 .d2b .slot{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:11px;padding:11px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:all .12s ease}
@@ -481,17 +493,27 @@
   <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
 
   <div class="d2b-modal" id="d2b-contact-modal" hidden>
-    <div class="d2b-modal-backdrop" data-close></div>
+    <div class="d2b-modal-backdrop"></div>
     <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Your details">
-      <button class="d2b-modal-x" data-close aria-label="Close">&times;</button>
-      <div class="modal-title">Almost there</div>
-      <div class="modal-sub">Where should we send your build plan and shareable demo?</div>
+      <div class="modal-title">Before we build &mdash; a few details</div>
+      <div class="modal-sub">Required. Your demo, plan and text updates are all built from this.</div>
       <div class="modal-fields">
-        <input type="text" id="cm-name" placeholder="Your name" autocomplete="name">
-        <input type="tel" id="cm-phone" placeholder="Phone (for your demo link)" autocomplete="tel">
-        <input type="email" id="cm-email" placeholder="Email (optional)" autocomplete="email">
+        <div class="mf"><label class="mf-l" for="cm-name">Full name *</label>
+          <input type="text" id="cm-name" placeholder="First and last name" autocomplete="name"></div>
+        <div class="mf"><label class="mf-l" for="cm-email">Work email *</label>
+          <input type="email" id="cm-email" placeholder="you@company.com" autocomplete="email"></div>
+        <div class="mf"><label class="mf-l" for="cm-phone">Mobile * &mdash; we text your demo link and confirmations</label>
+          <div class="cm-phone-row">
+            <select id="cm-cc" class="cm-cc" aria-label="Country"></select>
+            <input type="tel" inputmode="tel" id="cm-phone" placeholder="Phone number" autocomplete="tel-national">
+          </div></div>
+        <div class="mf"><label class="mf-l">Language *</label>
+          <div class="cm-lang" id="cm-lang" role="group" aria-label="Language">
+            <button type="button" class="cm-lang-opt" data-lang="en">English</button>
+            <button type="button" class="cm-lang-opt" data-lang="es">Espa&ntilde;ol</button>
+          </div></div>
       </div>
-      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Generate my plan &amp; demo</button>
+      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Continue &rarr;</button>
       <div class="modal-status" id="cm-status" aria-live="polite"></div>
     </div>
   </div>
@@ -962,11 +984,14 @@
 
   chips.forEach(function(c){
     c.addEventListener('click', function(){
-      input.value = c.getAttribute('data-p');
+      var p=c.getAttribute('data-p');
+      if(typeof identityComplete==='function' && !identityComplete()){ pendingChip=p; openGate(); return; }
+      input.value = p;
       updateHint(); input.focus();
       input.scrollIntoView({behavior:'smooth',block:'center'});
     });
   });
+  var pendingChip='';
 
   if(scroll){ scroll.addEventListener('click', function(e){
     e.preventDefault();
@@ -1132,7 +1157,7 @@
   }
 
   // ---- contact modal + booking state ----
-  var pendingProjectId=null, contact={name:'',phone:'',email:''}, selectedSlot=null;
+  var pendingProjectId=null, contact={name:'',phone:'',email:'',lang:''}, selectedSlot=null;
   var contactModal=root.querySelector('#d2b-contact-modal');
   var bookModal=root.querySelector('#d2b-book-modal');
   function openModal(m){ if(m){ m.hidden=false; document.body.style.overflow='hidden'; } }
@@ -1140,13 +1165,92 @@
   root.querySelectorAll('.d2b-modal [data-close]').forEach(function(el){
     el.addEventListener('click', function(){ closeModal(el.closest('.d2b-modal')); });
   });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(contactModal); closeModal(bookModal); } });
+  // The identity gate is REQUIRED — Esc only closes the (optional) booking modal.
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(bookModal); } });
 
-  // Submit the idea -> fold in any uploaded docs, then (inline name+email present)
-  // go straight to the plan, else open the contact box first.
+  // ---- REQUIRED IDENTITY GATE: name + email + phone + language ----
+  // Nothing (writing a request, sample prompts, submit) proceeds until these
+  // four are captured. Language then drives the whole build (triage, simulator,
+  // teaser, and SMS) — picking a different language reloads the matching page.
+  var PAGE_LANG = D2B_LANG;           // 'en' on /orbup, 'es' on /orbup-es
+  var gateLang = '';
+  var COUNTRIES = [
+    ['US','United States','+1'],['CO','Colombia','+57'],['MX','México','+52'],
+    ['ES','España','+34'],['AR','Argentina','+54'],['PE','Perú','+51'],
+    ['CL','Chile','+56'],['VE','Venezuela','+58'],['EC','Ecuador','+593'],
+    ['PA','Panamá','+507'],['GT','Guatemala','+502'],['DO','Rep. Dominicana','+1'],
+    ['CR','Costa Rica','+506'],['BO','Bolivia','+591'],['UY','Uruguay','+598'],
+    ['PY','Paraguay','+595'],['HN','Honduras','+504'],['SV','El Salvador','+503'],
+    ['PR','Puerto Rico','+1'],['CA','Canada','+1'],['BR','Brasil','+55'],['GB','United Kingdom','+44']
+  ];
+  var ccEl=root.querySelector('#cm-cc'), telEl=root.querySelector('#cm-phone');
+  (function fillCC(){
+    if(!ccEl) return;
+    var def = PAGE_LANG==='es' ? 'CO' : 'US';
+    COUNTRIES.forEach(function(c){ var o=document.createElement('option'); o.value=c[2]; o.textContent=c[1]+' ('+c[2]+')'; if(c[0]===def) o.selected=true; ccEl.appendChild(o); });
+  })();
+  function e164(){
+    var raw=(telEl&&telEl.value||'').trim(); if(!raw) return '';
+    if(raw.charAt(0)==='+') return '+'+raw.slice(1).replace(/[^0-9]/g,'');
+    var nat=raw.replace(/[^0-9]/g,'').replace(/^0+/,''); if(!nat) return '';
+    var cc=(ccEl&&ccEl.value||'+1').replace(/[^0-9+]/g,''); return cc+nat;
+  }
+  function validEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x||''); }
+  function identityComplete(){ return !!(contact.name && validEmail(contact.email) && /^\+[1-9]\d{6,15}$/.test(contact.phone||'') && contact.lang); }
+  // language chooser buttons
+  var langBtns=root.querySelectorAll('#cm-lang .cm-lang-opt');
+  function setGateLang(l){ gateLang=l; langBtns.forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-lang')===l); }); }
+  langBtns.forEach(function(b){ b.addEventListener('click', function(){ setGateLang(b.getAttribute('data-lang')); }); });
+
+  function lockInput(){ if(input){ input.readOnly=true; input.classList.add('locked'); } }
+  function unlockInput(){ if(input){ input.readOnly=false; input.classList.remove('locked'); } }
+  function openGate(){
+    var cn=root.querySelector('#cm-name'); if(cn) cn.value=contact.name||'';
+    var ce=root.querySelector('#cm-email'); if(ce) ce.value=contact.email||'';
+    setGateLang(gateLang || contact.lang || PAGE_LANG);
+    openModal(contactModal);
+    setTimeout(function(){ if(cn && !cn.value) cn.focus(); }, 60);
+  }
+  // Any attempt to start writing / use a sample / submit opens the gate first.
+  if(input){
+    input.addEventListener('mousedown', function(e){ if(!identityComplete()){ e.preventDefault(); input.blur(); openGate(); } });
+    input.addEventListener('focus', function(){ if(!identityComplete()) openGate(); });
+  }
+  // Exposed so the (separately-scoped) voice orb can enforce the same gate.
+  window.__orbupGate = function(){ if(identityComplete()) return true; openGate(); return false; };
+
+  var cmBtn=root.querySelector('#cm-continue');
+  if(cmBtn){
+    cmBtn.addEventListener('click', function(){
+      var st=root.querySelector('#cm-status');
+      var es=(PAGE_LANG==='es');
+      var name=((root.querySelector('#cm-name').value)||'').trim();
+      var email=((root.querySelector('#cm-email').value)||'').trim();
+      var phone=e164();
+      function err(m){ st.textContent=m; st.className='modal-status err'; }
+      if(!name){ return err(es?'Ingresa tu nombre.':'Enter your name.'); }
+      if(!validEmail(email)){ return err(es?'Ingresa un correo válido.':'Enter a valid email.'); }
+      if(!phone || phone.replace(/[^0-9]/g,'').length<7){ return err(es?'Ingresa un número de celular válido.':'Enter a valid mobile number.'); }
+      if(!gateLang){ return err(es?'Elige un idioma.':'Choose a language.'); }
+      st.textContent=''; st.className='modal-status';
+      contact={name:name,phone:phone,email:email,lang:gateLang};
+      saveContact(name, phone, email, gateLang);
+      // Language drives everything. If they picked the other language, load that
+      // page so the UI + all generated content match; identity persists.
+      if(gateLang!==PAGE_LANG){ location.href = (gateLang==='es' ? '/orbup-es' : '/orbup'); return; }
+      D2B_LANG = gateLang;
+      closeModal(contactModal); unlockInput();
+      if(pendingChip && input && !input.value.trim()){ input.value=pendingChip; pendingChip=''; updateHint(); }
+      if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
+      else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
+    });
+  }
+
+  // Submit the idea -> fold in any uploaded docs, then build (identity already gated).
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
+    if(!identityComplete()){ openGate(); return; }
     var desc=input.value.trim();
     if(desc.length < 30 && !selectedFiles.length){ updateHint(); input.focus(); return; }
     if(go){ go.disabled=true; }
@@ -1155,38 +1259,9 @@
       var full=(extra ? (desc + (desc?'\n\n':'') + extra) : desc).trim();
       if(full.length < 30){ updateHint(); input.focus(); return; }
       lastDescription=full;
-      var nm=((nameEl&&nameEl.value)||'').trim(), em=((emailEl&&emailEl.value)||'').trim();
-      if(nm) contact.name=nm; if(em) contact.email=em;
-      if(nm && em){                      // inline identity → skip the modal (voice-to-intake style)
-        saveContact(nm, contact.phone||'', em);
-        contact={name:nm, phone:contact.phone||'', email:em};
-        runFullFlow(full, nm, contact.phone||'', em);
-        return;
-      }
-      var cn=root.querySelector('#cm-name'); if(cn) cn.value=nm||contact.name||'';
-      var cp=root.querySelector('#cm-phone'); if(cp && contact.phone) cp.value=contact.phone;
-      var ce=root.querySelector('#cm-email'); if(ce) ce.value=em||contact.email||'';
-      openModal(contactModal);
-      setTimeout(function(){ if(cn) cn.focus(); }, 60);
+      runFullFlow(full, contact.name, contact.phone, contact.email);
     });
   });
-
-  var cmBtn=root.querySelector('#cm-continue');
-  if(cmBtn){
-    cmBtn.addEventListener('click', function(){
-      var name=((root.querySelector('#cm-name').value)||'').trim();
-      var phone=((root.querySelector('#cm-phone').value)||'').trim();
-      var email=((root.querySelector('#cm-email').value)||'').trim();
-      var st=root.querySelector('#cm-status');
-      if(!name){ st.textContent='Please add your name.'; st.className='modal-status err'; return; }
-      if(!phone){ st.textContent='Please add your phone — we send your demo link there.'; st.className='modal-status err'; return; }
-      st.textContent=''; st.className='modal-status';
-      contact={name:name,phone:phone,email:email};
-      saveContact(name, phone, email);
-      closeModal(contactModal);
-      runFullFlow(lastDescription||input.value.trim(), name, phone, email);
-    });
-  }
 
   // ---- Attachments (PDF/Word/Text) + inline identity (like /voice-to-intake) ----
   var selectedFiles = [];
@@ -1231,15 +1306,19 @@
       .then(function(j){ return (j && j.success && j.text) ? j.text : ''; })
       .catch(function(){ return ''; });
   }
-  // Remember name/email so returning visitors don't retype (like the screenshot's "not you?").
-  function saveContact(n,p,e){ try{ localStorage.setItem('d2ai_contact', JSON.stringify({name:n||'',phone:p||'',email:e||''})); }catch(x){} }
+  // Remember name/email/phone/language so returning visitors don't re-enter the gate.
+  function saveContact(n,p,e,l){ try{ localStorage.setItem('d2ai_contact', JSON.stringify({name:n||'',phone:p||'',email:e||'',lang:l||''})); }catch(x){} }
   (function prefillContact(){
     try{
       var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
-      if(c.name){ contact.name=c.name; if(nameEl) nameEl.value=c.name; }
-      if(c.email){ contact.email=c.email; if(emailEl) emailEl.value=c.email; }
+      if(c.name){ contact.name=c.name; }
+      if(c.email){ contact.email=c.email; }
       if(c.phone){ contact.phone=c.phone; }
+      if(c.lang){ contact.lang=c.lang; gateLang=c.lang; }
     }catch(x){}
+    // Lock the builder until the required identity gate is satisfied.
+    if(identityComplete()){ D2B_LANG=contact.lang||PAGE_LANG; unlockInput(); }
+    else { lockInput(); }
   })();
 
   // ---- BIG BUILD PROGRESS (backend-at-work theatre) ----
@@ -1432,7 +1511,7 @@
       bkBtn.disabled=true; bkBtn.textContent='Booking…';
       fetch('/projects/api/v1/intake/public/book/'+pendingProjectId, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ start_time:selectedSlot.start_time, end_time:selectedSlot.end_time, name:contact.name, email:contact.email, phone:contact.phone })
+        body: JSON.stringify({ start_time:selectedSlot.start_time, end_time:selectedSlot.end_time, name:contact.name, email:contact.email, phone:contact.phone, lang:D2B_LANG })
       })
       .then(function(r){ return r.json(); })
       .then(function(res){
@@ -1752,7 +1831,10 @@
     recognizing = true; setState('listening'); setCaption();
     try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
   }
-  function activateOrb() { if (recognizing) stopRec(); else startRec(); }
+  function activateOrb() {
+    if (!recognizing && window.__orbupGate && !window.__orbupGate()) return; // required identity gate
+    if (recognizing) stopRec(); else startRec();
+  }
 
   setCaption();
   wrap.addEventListener('click', activateOrb);
