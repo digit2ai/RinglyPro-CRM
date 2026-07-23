@@ -1135,7 +1135,7 @@
 
   // ---- REQUIRED IDENTITY GATE: name + email + phone + language ----
   var PAGE_LANG = D2B_LANG;           // 'en' on /orbup, 'es' on /orbup-es
-  var gateLang = '';
+  var gateLang = '', afterGate = null; // afterGate: action to resume once the gate is satisfied
   var COUNTRIES = [
     ['US','United States','+1'],['CO','Colombia','+57'],['MX','México','+52'],
     ['ES','España','+34'],['AR','Argentina','+54'],['PE','Perú','+51'],
@@ -1176,7 +1176,10 @@
     input.addEventListener('mousedown', function(e){ if(!identityComplete()){ e.preventDefault(); input.blur(); openGate(); } });
     input.addEventListener('focus', function(){ if(!identityComplete()) openGate(); });
   }
-  window.__orbupGate = function(){ if(identityComplete()) return true; openGate(); return false; };
+  // Any request entry point (voice orb, attach) enforces the same gate. Pass a
+  // callback to RESUME that action once the gate is satisfied, so voice, typing
+  // and attach all behave identically. Returns true if already complete.
+  window.__orbupGate = function(cb){ if(identityComplete()) return true; afterGate=(typeof cb==='function'?cb:null); openGate(); return false; };
 
   var cmBtn=root.querySelector('#cm-continue');
   if(cmBtn){
@@ -1197,6 +1200,7 @@
       if(gateLang!==PAGE_LANG){ location.href = (gateLang==='es' ? '/orbup-es' : '/orbup'); return; }
       D2B_LANG = gateLang;
       closeModal(contactModal); unlockInput();
+      if(afterGate){ var _cb=afterGate; afterGate=null; _cb(); return; } // resume voice/attach
       if(pendingChip && input && !input.value.trim()){ input.value=pendingChip; pendingChip=''; updateHint(); }
       if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
       else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
@@ -1250,7 +1254,10 @@
     renderFileList();
   }
   if(attachBtn && fileInput){
-    attachBtn.addEventListener('click', function(){ fileInput.click(); });
+    attachBtn.addEventListener('click', function(){
+      if(window.__orbupGate && !window.__orbupGate(function(){ fileInput.click(); })) return; // gate first, then open picker
+      fileInput.click();
+    });
     fileInput.addEventListener('change', function(){ addFiles(fileInput.files||[]); fileInput.value=''; });
   }
   function extractAttachments(){
@@ -1737,8 +1744,9 @@
     try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
   }
   function activateOrb() {
-    if (!recognizing && window.__orbupGate && !window.__orbupGate()) return; // required identity gate
-    if (recognizing) stopRec(); else startRec();
+    if (recognizing) { stopRec(); return; }
+    if (window.__orbupGate && !window.__orbupGate(startRec)) return; // gate first, then resume into startRec
+    startRec();
   }
 
   setCaption();
