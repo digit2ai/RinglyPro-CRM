@@ -394,8 +394,34 @@ async function call(method, url, body, opts = {}) {
        !failedBook.spoken && !failedBook.appointment_id);
 
     const badMeasure = await brain.callTool('estimator.verify_address', { address: 'x' },
-      { tenant_id: TENANT, channel: 'web_chat', session_id, identity_verified: true });
+      { tenant_id: TENANT, channel: 'admin', role: 'admin' });
     ok('an unusable address is rejected, not invented', badMeasure.success === false);
+
+    // The conversation must have exactly ONE path to an address, so a model
+    // can never choose "verify, then give up" over "measure and quote".
+    const orbTools = brain.listTools({ channel: 'web_orb', identity_verified: true }).map(t => t.name);
+    ok('verify_address is not offered on conversational channels',
+       !orbTools.includes('estimator.verify_address'), orbTools.join(','));
+    ok('measure_property IS the conversational path',
+       orbTools.includes('estimator.measure_property'));
+    ok('gated tools are still withheld before the gate is satisfied',
+       !brain.listTools({ channel: 'web_orb' }).map(t => t.name).includes('estimator.measure_property'));
+    ok('the identified agent can also price and book',
+       orbTools.includes('estimator.price_quote') && orbTools.includes('dispatcher.book_appointment'),
+       orbTools.join(','));
+
+    // A totally unresolvable address must still yield labeled numbers, never a
+    // dead end, when no geocoder is configured.
+    const noGeo = process.env.GOOGLE_MAPS_API_KEY;
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    const fallbackMeasure = await brain.callTool('estimator.measure_property',
+      { address: '77 Nonexistent Prairie Road, Ocala FL 34470' },
+      { tenant_id: TENANT, channel: 'web_chat', session_id, identity_verified: true });
+    if (noGeo) process.env.GOOGLE_MAPS_API_KEY = noGeo;
+    ok('unresolvable address still produces a measurement', fallbackMeasure.success === true);
+    ok('fallback measurement is labeled an estimate',
+       fallbackMeasure.is_estimate === true && !!fallbackMeasure.disclaimer);
+    ok('fallback measurement still yields serviceable sqft', fallbackMeasure.serviceable_sqft > 0);
 
     // ── 16. Payments disabled honestly ────────────────────────────────────
     console.log('\n[16] Payments and card safety');

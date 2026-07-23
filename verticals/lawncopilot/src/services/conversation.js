@@ -248,7 +248,9 @@ async function scriptedTurn({ session, text, ctx }) {
 // ── The LLM driver ─────────────────────────────────────────────────────────
 async function llmTurn({ session, text, ctx }) {
   const employee = brain.getEmployee('receptionist');
-  const tools = brain.listTools({ channel: ctx.channel })
+  // Pass the session's verified identity, or every identified-trust tool
+  // (measure_property, price_quote, book_appointment) is silently withheld.
+  const tools = brain.listTools({ channel: ctx.channel, identity_verified: ctx.identity_verified })
     .map(t => ({
       name: t.name.replace('.', '__'),
       description: `[${t.employee_name}] ${t.description}`,

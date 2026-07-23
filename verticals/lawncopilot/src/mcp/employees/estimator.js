@@ -77,9 +77,16 @@ How you work:
 - If someone challenges the number, do not argue. Offer the correction request, which puts a human on it.`,
 
   tools: {
+    // Admin/system utility ONLY. It is deliberately NOT exposed to the
+    // conversational channels: given a "could not verify" result, a model
+    // reliably chooses to stop and take a message instead of quoting, which
+    // strands the customer. measure_property already geocodes internally and
+    // falls back to a clearly-labeled estimate, so the conversation has
+    // exactly one path to an address and it always produces numbers.
     verify_address: {
-      description: 'Verify and normalize a property address, returning the resolved location.',
-      min_trust: 'public_web',
+      description: 'Verify and normalize a property address (admin utility). Conversational channels use measure_property directly.',
+      min_trust: 'staff',
+      channels: ['admin', 'system'],
       parameters: {
         type: 'object',
         properties: { address: { type: 'string', description: 'The street address as the customer said or typed it' } },

@@ -93,8 +93,17 @@ async function costGuardOk(tenant_id) {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
-function listTools({ channel, role } = {}) {
-  const trust = CHANNEL_TRUST[channel] || 'public_web';
+/**
+ * The tool catalog for a caller.
+ *
+ * identity_verified MUST be passed for a live session, or every
+ * 'identified'-trust tool is filtered out and the agent is handed a toolset it
+ * cannot do its job with — which is how a Receptionist ends up taking a message
+ * instead of quoting. Effective trust is computed exactly as callTool does.
+ */
+function listTools({ channel, role, identity_verified } = {}) {
+  const base = CHANNEL_TRUST[channel] || 'public_web';
+  const trust = (base === 'public_web' && identity_verified) ? 'identified' : base;
   return Object.keys(REGISTRY)
     .map(full => {
       const t = REGISTRY[full];
