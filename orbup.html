@@ -128,7 +128,6 @@
 .d2b .cm-lang-opt{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:11px 10px;color:var(--mut);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:.12s ease}
 .d2b .cm-lang-opt:hover{border-color:rgba(139,92,246,.5);color:var(--ink)}
 .d2b .cm-lang-opt.on{background:var(--grad);color:#fff;border-color:transparent}
-.d2b .d2b-idrow{display:none}
 .d2b #d2b-input.locked{cursor:pointer;opacity:.85}
 .d2b .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
 .d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
@@ -278,10 +277,6 @@
 .d2b .d2b-filelist{width:100%;display:flex;flex-direction:column;gap:6px}
 .d2b .d2b-filerow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--mut)}
 .d2b .d2b-filerow button{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
-.d2b .d2b-idrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.d2b .d2b-idrow input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 13px;color:var(--ink);font:inherit;font-size:16px;outline:none;transition:border-color .12s ease}
-.d2b .d2b-idrow input:focus{border-color:var(--violet)}
-@media(max-width:560px){.d2b .d2b-idrow{grid-template-columns:1fr}}
 .d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
 @media(max-width:560px){
   .d2b .builder{margin-top:28px}
@@ -686,10 +681,6 @@
             <span class="d2b-attach-hint">PDF, Word, text, CSV or RTF &mdash; up to 5 files, 10 MB each</span>
             <div class="d2b-filelist" id="d2b-filelist"></div>
           </div>
-          <div class="d2b-idrow">
-            <input type="text" id="d2b-name" placeholder="Your name" autocomplete="name">
-            <input type="email" id="d2b-email" placeholder="Email — we send your plan here" autocomplete="email">
-          </div>
         </div>
         <div class="promptbar">
           <span class="hint" id="d2b-hint">Describe your idea &mdash; the more detail, the sharper the plan.</span>
@@ -966,9 +957,6 @@
   var ENDPOINT = '/projects/api/v1/intake/public-triage-preview';
   var busy = false;
   var lastDescription = '';
-  var nameEl  = root.querySelector('#d2b-name');
-  var phoneEl = root.querySelector('#d2b-phone');
-  var emailEl = root.querySelector('#d2b-email');
   var D2B_LANG = 'en';
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
