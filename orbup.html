@@ -387,6 +387,42 @@
 .d2b .meet-step p{font-size:15px;color:var(--faint);margin-top:6px;max-width:44ch;transition:color .3s ease}
 .d2b .meet-step.active h3{color:#fff}
 .d2b .meet-step.active p{color:var(--mut)}
+.d2b .meet-sub{color:var(--mut);font-size:15px;line-height:1.55;margin:-16px 0 30px;max-width:62ch}
+/* App-tour mockup — a real built app, walked tab by tab */
+.d2b .screen.s-app{padding:0}
+.d2b .app{position:absolute;inset:0;display:flex;flex-direction:column;background:#0a0f18}
+.d2b .app-hd{padding:34px 14px 8px;font-size:15px;font-weight:800;color:#fff;letter-spacing:-.02em;flex:0 0 auto}
+.d2b .app-sc{flex:1 1 auto;overflow:hidden;padding:2px 12px 8px;display:flex;flex-direction:column;gap:8px}
+.d2b .app-hero{border-radius:13px;padding:12px;background:linear-gradient(150deg,rgba(74,222,128,.16),rgba(34,211,238,.05));border:1px solid rgba(74,222,128,.18)}
+.d2b .app-hero h4{font-size:14px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.01em}
+.d2b .app-hero p{font-size:10px;color:#b9c6d8;line-height:1.45;margin-bottom:10px}
+.d2b .app-cta{height:34px;border-radius:9px;background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+.d2b .app-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.d2b .app-stat{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 8px}
+.d2b .app-stat .v{font-size:16px;font-weight:800;color:#fff;line-height:1}
+.d2b .app-stat .k{font-size:8px;color:#8a97ab;margin-top:3px;line-height:1.25}
+.d2b .app-stat .up{font-size:8px;color:#4ade80;margin-top:2px;font-weight:700}
+.d2b .app-lbl{font-size:8.5px;letter-spacing:1.3px;text-transform:uppercase;color:#6f7d92;font-weight:700;margin-top:2px}
+.d2b .app-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.d2b .app-item .t{font-size:11px;font-weight:700;color:#fff}
+.d2b .app-item .d{font-size:8.5px;color:#8593a6;margin-top:2px;line-height:1.35}
+.d2b .app-item .chev{color:#5f6b7e;font-size:14px;flex:0 0 auto}
+.d2b .app-pill{display:inline-block;font-size:8px;font-weight:700;color:#4ade80;border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 8px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+.d2b .app-chat{display:flex;flex-direction:column;gap:7px;padding-top:2px}
+.d2b .app-msg{max-width:84%;font-size:10px;line-height:1.45;padding:8px 10px;border-radius:12px}
+.d2b .app-msg.ai{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#e6eefc;border-bottom-left-radius:4px}
+.d2b .app-msg.me{align-self:flex-end;background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c;font-weight:600;border-bottom-right-radius:4px}
+.d2b .app-chip{align-self:flex-start;font-size:8.5px;font-weight:700;color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:999px;padding:4px 9px}
+.d2b .app-flk{font-size:9px;color:#8a97ab;margin:3px 0 -3px}
+.d2b .app-fld{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 10px;font-size:10px;color:#cfd6e6}
+.d2b .app-chart{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:11px 11px 8px}
+.d2b .app-chart h5{font-size:10px;font-weight:700;color:#fff;margin-bottom:9px}
+.d2b .app-graph{display:flex;align-items:flex-end;gap:5px;height:66px}
+.d2b .app-graph i{flex:1;background:linear-gradient(180deg,#4ade80,#22d3ee);border-radius:3px 3px 0 0}
+.d2b .tabbar{flex:0 0 auto;display:flex;border-top:1px solid rgba(255,255,255,.08);background:#080d14;padding:7px 2px 9px}
+.d2b .tabbar .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:7.5px;font-weight:600;color:#768397}
+.d2b .tabbar .tb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.d2b .tabbar .tb.on{color:#4ade80}
 @media(max-width:820px){.d2b .meet-grid{grid-template-columns:1fr;gap:26px}.d2b .meet-stage{min-height:0;padding:24px}}
 @media(prefers-reduced-motion:reduce){.d2b .sim-orb{animation:none}.d2b .screen.active .sim-code>div{animation:none}}
 
@@ -662,58 +698,141 @@
   <section class="blk" id="meet">
     <div class="wrap">
       <h2 class="meet-title">Meet OrbUp</h2>
+      <p class="meet-sub">Here&rsquo;s a real app the workforce shipped &mdash; toured screen by screen. Start at login, then walk every tab, exactly as your customer would.</p>
       <div class="meet-grid">
         <div class="meet-stage">
           <div class="phone" id="d2b-sim" aria-hidden="true">
             <div class="screen s-login active" data-i="0">
-              <div class="brand-word" style="font-size:22px;margin:0 auto 20px;text-align:center">Orb<span class="up">Up</span></div>
-              <div class="lbl">Email</div><div class="fld"></div>
+              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580b27c06d2134c6e06440.png" alt="OrbUp" style="height:72px">
+              <div class="lbl">Work email</div><div class="fld"></div>
               <div class="lbl">Password</div><div class="fld"></div>
-              <div class="go">Log in</div>
+              <div class="go">Open workspace</div>
             </div>
-            <div class="screen s-dash" data-i="1">
-              <div class="sim-h">Dashboard <span class="dot"></span></div>
-              <div class="sim-tiles">
-                <div class="sim-tile"><div class="n">21</div><div class="l">Platforms</div></div>
-                <div class="sim-tile"><div class="n">18</div><div class="l">Live</div></div>
-                <div class="sim-tile"><div class="n">3</div><div class="l">This week</div></div>
+            <div class="screen s-app" data-i="1">
+              <div class="app">
+                <div class="app-hd">FormAI</div>
+                <div class="app-sc">
+                  <div class="app-hero">
+                    <h4>Good morning, Alex</h4>
+                    <p>Day 3 of Week 2 &mdash; Back &amp; Biceps. You&rsquo;re on a 5-day streak.</p>
+                    <div class="app-cta">Start today&rsquo;s session</div>
+                  </div>
+                  <div class="app-stats">
+                    <div class="app-stat"><div class="v">5</div><div class="k">Day streak</div><div class="up">+2</div></div>
+                    <div class="app-stat"><div class="v">11</div><div class="k">Sessions</div><div class="up">+3 wk</div></div>
+                    <div class="app-stat"><div class="v">7.2</div><div class="k">Avg RPE</div><div class="up">&darr;0.4</div></div>
+                  </div>
+                  <div class="app-lbl">This week</div>
+                  <div class="app-item"><div><div class="t">Mon &mdash; Chest &amp; Triceps</div><div class="d">Completed &middot; RPE 7.5</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Tue &mdash; Squat &amp; Quads</div><div class="d">Completed &middot; RPE 8.0</div></div><span class="chev">&rsaquo;</span></div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Program</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Log</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progress</div>
+                </div>
               </div>
-              <div class="sim-bars"><i style="height:42%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:92%"></i><i style="height:64%"></i></div>
-              <div class="sim-row"><span class="s"></span> RinglyPro &middot; live</div>
-              <div class="sim-row"><span class="s"></span> AgroMercado &middot; live</div>
-              <div class="sim-row"><span class="s" style="background:var(--warn)"></span> Veritas &middot; building</div>
             </div>
-            <div class="screen s-voice" data-i="2">
-              <div class="sim-orb"></div>
-              <div class="sim-cap">Listening</div>
-              <div class="sim-bubble">"An AI receptionist that answers calls in Spanish and books appointments."</div>
-              <div class="sim-note">&rarr; Voice agent &middot; bilingual &middot; booking + SMS</div>
-            </div>
-            <div class="screen s-dev" data-i="3">
-              <div class="sim-tab">&#9679; app.js &mdash; client-builds/receptionist</div>
-              <div class="sim-code">
-                <div><span class="k">router</span>.<span class="f">post</span>('/api/v1/book', <span class="k">async</span> (req,res)=&gt;{</div>
-                <div>&nbsp;&nbsp;<span class="k">const</span> slot = <span class="k">await</span> <span class="f">findSlot</span>(req.body);</div>
-                <div>&nbsp;&nbsp;<span class="k">await</span> <span class="f">bookAppointment</span>(slot);</div>
-                <div>&nbsp;&nbsp;res.<span class="f">json</span>({ <span class="s">ok</span>: <span class="k">true</span> });</div>
-                <div>});</div>
+            <div class="screen s-app" data-i="2">
+              <div class="app">
+                <div class="app-hd">My 7-Day Program</div>
+                <div class="app-sc">
+                  <div class="app-hero" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+                    <span class="app-pill">Active</span>
+                    <h4>Week 2 &mdash; Hypertrophy Block</h4>
+                    <p style="margin-bottom:0">Intermediate &middot; 5 days/week &middot; Full gym &middot; Priority: Back &amp; Arms</p>
+                  </div>
+                  <div class="app-lbl">Weekly split</div>
+                  <div class="app-item"><div><div class="t">Day 1 &mdash; Chest &amp; Triceps</div><div class="d">Bench, Incline DB, Cable Fly &middot; 5 exercises</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Day 2 &mdash; Squat &amp; Quads</div><div class="d">Back Squat, Leg Press, Hack &middot; 5 exercises</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Day 3 &mdash; Back &amp; Biceps</div><div class="d">Row, Pulldown, Hammer Curl &middot; 6 exercises</div></div><span class="chev">&rsaquo;</span></div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Program</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Log</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progress</div>
+                </div>
               </div>
-              <div class="sim-term">&#10003; tests passed &middot; deployed to production</div>
             </div>
-            <div class="screen s-done" data-i="4">
-              <div class="sim-check">&#10003;</div>
-              <div class="sim-done-t">Shipped in 1 week</div>
-              <div class="sim-done-s">Reviewed, approved, and live.</div>
-              <div class="sim-live"><span class="b"></span> receptionist.ringlypro.com</div>
+            <div class="screen s-app" data-i="3">
+              <div class="app">
+                <div class="app-hd">Coach AI</div>
+                <div class="app-sc">
+                  <div class="app-chat">
+                    <div class="app-msg ai">Your Barbell Row hit RPE 6 on the top set &mdash; you left reps in the tank.</div>
+                    <div class="app-chip">&uarr; Add 2.5 kg next session</div>
+                    <div class="app-msg me">Adjust Day 3 &mdash; my lower back feels tweaky.</div>
+                    <div class="app-msg ai">Done. Swapped Barbell Row &rarr; Chest-Supported Row and capped RPE at 7 this week.</div>
+                  </div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Program</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Log</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progress</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="4">
+              <div class="app">
+                <div class="app-hd">Log Session &mdash; Day 3</div>
+                <div class="app-sc">
+                  <div style="font-size:11px;font-weight:700;color:#fff;margin-top:2px">Barbell Row &mdash; Top Set</div>
+                  <div class="app-flk">Weight lifted (kg)</div>
+                  <div class="app-fld">80</div>
+                  <div class="app-flk">Reps completed</div>
+                  <div class="app-fld">10</div>
+                  <div class="app-flk">Perceived effort (RPE 1&ndash;10)</div>
+                  <div class="app-fld">6 &mdash; Easy</div>
+                  <div class="app-cta" style="margin-top:4px">Save &amp; analyse</div>
+                  <p style="font-size:8.5px;color:#8593a6;text-align:center;line-height:1.45;margin-top:2px">Coach AI reads every entry and auto-adjusts next week&rsquo;s loads.</p>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Program</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Log</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progress</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="5">
+              <div class="app">
+                <div class="app-hd">Progress</div>
+                <div class="app-sc">
+                  <div class="app-chart">
+                    <h5>Barbell Row &mdash; Top Set Load (kg)</h5>
+                    <div class="app-graph"><i style="height:52%"></i><i style="height:60%"></i><i style="height:66%"></i><i style="height:74%"></i><i style="height:83%"></i><i style="height:96%"></i></div>
+                  </div>
+                  <div class="app-stats">
+                    <div class="app-stat"><div class="v">11</div><div class="k">Sessions</div></div>
+                    <div class="app-stat"><div class="v">4</div><div class="k">PR lifts</div><div class="up">+2 wk</div></div>
+                    <div class="app-stat"><div class="v">+34%</div><div class="k">Volume</div><div class="up">4 wks</div></div>
+                  </div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Program</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Log</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progress</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <div class="meet-steps">
-          <div class="meet-step active" data-i="0"><h3>Log in</h3><p>Sign in to your OrbUp workspace &mdash; one home for every build.</p></div>
-          <div class="meet-step" data-i="1"><h3>See your dashboard</h3><p>Every platform, live status, and this week's builds at a glance.</p></div>
-          <div class="meet-step" data-i="2"><h3>Describe it by voice</h3><p>The Neural brain listens, transcribes, and extracts the plan in real time.</p></div>
-          <div class="meet-step" data-i="3"><h3>The workforce builds</h3><p>Watch the full stack come together in the dev space &mdash; code, tests, deploy.</p></div>
-          <div class="meet-step" data-i="4"><h3>Shipped in a week</h3><p>Reviewed, approved, and deployed live &mdash; your project, done in about a week.</p></div>
+          <div class="meet-step active" data-i="0"><h3>Log in</h3><p>Sign in to your workspace and open the app the workforce built for you.</p></div>
+          <div class="meet-step" data-i="1"><h3>Home</h3><p>The app opens to a daily snapshot &mdash; streak, effort, and today's session ready to start.</p></div>
+          <div class="meet-step" data-i="2"><h3>Program</h3><p>A structured multi-week plan, generated for the goal and split day by day.</p></div>
+          <div class="meet-step" data-i="3"><h3>Coach</h3><p>An AI coach that reads every set you log and adjusts next week's loads for you.</p></div>
+          <div class="meet-step" data-i="4"><h3>Log</h3><p>Capture weight, reps, and effort in seconds &mdash; progressive overload, enforced.</p></div>
+          <div class="meet-step" data-i="5"><h3>Progress</h3><p>Charts and personal records that prove it's working, week over week.</p></div>
         </div>
       </div>
     </div>
