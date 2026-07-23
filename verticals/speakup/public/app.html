@@ -256,11 +256,10 @@ const WHISPER_MODEL = IS_MOBILE ? 'Xenova/whisper-tiny' : 'Xenova/whisper-base';
 async function getWhisper(onProg){
   if(__whisper) return __whisper;
   const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/+esm');
-  try{
-    __whisper = await mod.pipeline('automatic-speech-recognition',WHISPER_MODEL,{ progress_callback:onProg, device:'webgpu', dtype:'q8' });
-  }catch(e){
-    __whisper = await mod.pipeline('automatic-speech-recognition',WHISPER_MODEL,{ progress_callback:onProg, dtype:'q8' });
-  }
+  // IMPORTANT: use the WASM backend (default), NOT WebGPU. WebGPU + q8 Whisper
+  // hallucinates repeating multilingual garbage in transformers.js 3.x — verified.
+  // WASM is slower but produces correct transcripts on every device.
+  __whisper = await mod.pipeline('automatic-speech-recognition', WHISPER_MODEL, { progress_callback:onProg, dtype:'q8' });
   return __whisper;
 }
 // decode any audio blob -> mono Float32 PCM @ 16kHz (what Whisper expects)
