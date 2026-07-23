@@ -610,6 +610,38 @@ router.post('/public/book/:projectId', async (req, res) => {
   }
 });
 
+// POST /public/sms-test  { to, key, lang? }
+//   Owner-only smoke test for the OrbUp toll-free SMS. DISABLED unless
+//   ORBUP_SMS_TEST_KEY is set; caller must pass the matching key. Sends
+//   synchronously and returns the real Twilio result (or error code) so
+//   you can debug (e.g. toll-free not verified => a specific Twilio code).
+router.post('/public/sms-test', async (req, res) => {
+  try {
+    const key = process.env.ORBUP_SMS_TEST_KEY;
+    const given = (req.body && req.body.key) || req.query.key;
+    if (!key || given !== key) return res.status(403).json({ success: false, error: 'forbidden (set ORBUP_SMS_TEST_KEY and pass a matching key)' });
+    const to = String((req.body && req.body.to) || '').trim();
+    if (!/^\+[1-9]\d{6,15}$/.test(to)) return res.status(400).json({ success: false, error: 'to must be E.164, e.g. +15551234567' });
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+      return res.status(500).json({ success: false, error: 'Twilio not configured (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN)' });
+    }
+    const es = String((req.body && req.body.lang) || '').toLowerCase() === 'es';
+    const from = process.env.ORBUP_SMS_FROM || '+18886103810';
+    const body = es
+      ? 'OrbUp: prueba de mensajería. Si recibes esto, tu número gratuito ya envía SMS. — OrbUp'
+      : 'OrbUp: test message. If you got this, your toll-free SMS is working. — OrbUp';
+    try {
+      const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const m = await client.messages.create({ from, to, body });
+      return res.json({ success: true, sid: m.sid, from, to, status: m.status });
+    } catch (e) {
+      return res.status(502).json({ success: false, error: e.message, code: e.code, from, to });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // PUBLIC TRIAGE PREVIEW (champion-facing demo) — no auth
 // =====================================================
