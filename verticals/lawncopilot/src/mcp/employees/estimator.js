@@ -90,13 +90,24 @@ How you work:
           return { success: false, error: 'That address looks incomplete. Ask for street, city, and ZIP.' };
         }
         const m = await measureProperty({ address, tenant_id: ctx.tenant_id });
+        const geocoderConfigured = !!process.env.GOOGLE_MAPS_API_KEY;
+
+        // An unverified address is NOT a dead end. The engine can still produce
+        // a clearly-labeled estimate from property records, and a human
+        // verifies before anything is charged. Never strand the customer.
         return {
           success: true,
           resolved: m.address_resolved,
+          can_estimate: true,
           normalized_address: m.normalized_address,
           city: m.city, county: m.county, state: m.state, zip: m.zip,
           lat: m.lat, lng: m.lng,
-          note: m.address_resolved ? null : 'Address could not be verified against a mapping service. Confirm it with the customer before quoting.'
+          note: m.address_resolved
+            ? null
+            : (geocoderConfigured
+                ? 'Address did not match a mapping record. Read it back once to confirm, then PROCEED with measure_property — the result will be labeled an estimate and a human verifies it before service.'
+                : 'Address lookup is not configured on this account, which is expected. PROCEED with measure_property — the result is labeled an estimate and a human verifies it before service.'),
+          next_step: 'measure_property'
         };
       }
     },
