@@ -461,6 +461,12 @@ app.use((req, res, next) => {
   // else on planea.vip (app, portal, /uat, etc.) stays behind the dev login.
   const op = req.path;
   if (op === '/main' || op === '/main/' || op === '/planea/portal/planea-app-sim.js') return next();
+  // Auth pages must be reachable without the dev gate: the user's own login /
+  // signup and the password-reset flow (reset links arrive by email). The app
+  // itself (portal, /uat, APIs) stays gated.
+  if (/^\/planea\/(login|signup|register|start|forgot|reset)\/?$/.test(op)) return next();
+  if (/^\/(login|signup|register|start|forgot|reset)\/?$/.test(op)) return next();
+  if (op.indexOf('/planea/api/v1/auth/') === 0) return next();
   const cookie = req.headers.cookie || '';
   const authed = cookie.split(';').some(c => c.trim() === 'planea_dev=' + PLANEA_DEV_TOKEN);
   if (authed) return next();
