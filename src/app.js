@@ -94,7 +94,12 @@ app.use((req, res, next) => {
   }
 
   if (req.url === '/lawncopilot' || req.url.startsWith('/lawncopilot/')) {
-    const clean = req.url.slice('/lawncopilot'.length) || '/';
+    // Collapse leading slashes. Stripping the prefix from '/lawncopilot//api/x'
+    // yields '//api/x', which as a Location header is PROTOCOL-RELATIVE — the
+    // browser reads it as https://api/x and fails DNS. The same shape is an
+    // open redirect ('/lawncopilot//evil.com' -> https://evil.com), so this is
+    // a correctness AND a safety fix.
+    const clean = (req.url.slice('/lawncopilot'.length) || '/').replace(/^\/{2,}/, '/');
     const pathOnly = clean.split('?')[0];
     if (LAWNCOPILOT_ASSET.test(pathOnly) || req.method !== 'GET') req.url = clean;
     else return res.redirect(301, clean);

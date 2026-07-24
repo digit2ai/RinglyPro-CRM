@@ -18,15 +18,24 @@ A.shell('inicio');
 
 var today = new Date().toISOString().slice(0, 10);
 
+/* Every call degrades on its own. A dashboard that shows five of six panels is
+   useful; one that hangs on "Loading..." because a single endpoint failed is
+   not. Each promise absorbs its own error, and the whole render is wrapped
+   below, so the owner always gets a screen. */
+function soft(p) { return p.catch(function () { return { success: false }; }); }
+
 Promise.all([
-  A.get('/schedule?from=' + today + '&to=' + today),
-  A.get('/leads'),
-  A.get('/reports/revenue?days=30').catch(function () { return { success: false }; }),
-  A.get('/reports/ar-aging').catch(function () { return { success: false }; }),
-  A.get('/ai-staff?days=1'),
-  A.get('/tickets?status=open')
+  soft(A.get('/schedule?from=' + today + '&to=' + today)),
+  soft(A.get('/leads')),
+  soft(A.get('/reports/revenue?days=30')),
+  soft(A.get('/reports/ar-aging')),
+  soft(A.get('/ai-staff?days=1')),
+  soft(A.get('/tickets?status=open'))
 ]).then(function (r) {
-  var sched = r[0], leads = r[1], rev = r[2], ar = r[3], staff = r[4], tickets = r[5];
+  // A brand-new company has none of this yet — default every shape so the
+  // first render after signup is an empty dashboard, not a crash.
+  var sched = r[0] || {}, leads = r[1] || {}, rev = r[2] || {}, ar = r[3] || {},
+      staff = r[4] || {}, tickets = r[5] || {};
   var html = '';
 
   html += '<div class="kpis">' +
@@ -34,14 +43,14 @@ Promise.all([
     '<div class="kpi"><b>' + A.num((leads.counts || {}).new || 0) + '</b><span>New leads</span></div>' +
     '<div class="kpi"><b>' + (rev.success ? A.esc(rev.display.collected) : '&mdash;') + '</b><span>Collected, 30d</span></div>' +
     '<div class="kpi"><b>' + (ar.success ? A.esc(ar.display.current) : '&mdash;') + '</b><span>Outstanding</span></div>' +
-    '<div class="kpi"><b>' + A.num(staff.total_calls) + '</b><span>AI actions today</span></div>' +
+    '<div class="kpi"><b>' + A.num(staff.total_calls || 0) + '</b><span>AI actions today</span></div>' +
     '<div class="kpi"><b>' + A.num((tickets.tickets || []).length) + '</b><span>Open tickets</span></div>' +
     '</div>';
 
   if (staff.pending_approvals) {
     html += '<div class="tile" style="border-color:var(--accent)">' +
       '<span class="pill pill--warn">' + A.num(staff.pending_approvals) + ' waiting on your approval</span>' +
-      '<div style="margin-top:10px"><a class="btn btn--primary btn--sm" href="/lawncopilot/admin/ai-staff">Review now</a></div></div>';
+      '<div style="margin-top:10px"><a class="btn btn--primary btn--sm" href="' + A.base + '/admin/ai-staff">Review now</a></div></div>';
   }
 
   html += '<div class="tile"><h2>Today\'s route</h2>';
@@ -73,14 +82,13 @@ Promise.all([
       '<div class="replaces">' + A.esc(e.replaces || '') + '</div>' +
       '<div class="small mut">' + A.num(e.calls) + ' actions' + (e.failures ? ', ' + A.num(e.failures) + ' failed' : '') + '</div></div>';
   });
-  html += '</div><div style="margin-top:12px"><a class="btn btn--ghost btn--sm" href="/lawncopilot/admin/ai-staff">Full AI staff view</a></div></div>';
+  html += '</div><div style="margin-top:12px"><a class="btn btn--ghost btn--sm" href="' + A.base + '/admin/ai-staff">Full AI staff view</a></div></div>';
 
-  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
   html += '<div class="tile"><h2>Grow your business</h2>' +
     '<div class="grid grid--2" style="gap:10px">' +
-      '<a class="staffcard" href="/lawncopilot/' + SLUG + '/admin/google-listing" style="text-decoration:none">' +
+      '<a class="staffcard" href="' + A.base + '/admin/google-listing" style="text-decoration:none">' +
         '<h3>Get on Google</h3><div class="small mut">Put your page on your Google listing — pre-filled, one-tap copy.</div></a>' +
-      '<a class="staffcard" href="/lawncopilot/' + SLUG + '/admin/billing" style="text-decoration:none">' +
+      '<a class="staffcard" href="' + A.base + '/admin/billing" style="text-decoration:none">' +
         '<h3>Plan &amp; billing</h3><div class="small mut">Manage your subscription and payment method.</div></a>' +
     '</div></div>';
 
@@ -112,6 +120,16 @@ Promise.all([
       location.reload();
     });
   });
+}).catch(function (e) {
+  // Never leave the owner staring at Loading.... Say what happened and give
+  // them a way forward.
+  document.getElementById('app').innerHTML =
+    '<div class="tile"><h2>We could not load your dashboard</h2>' +
+    '<p class="mut small">' + A.esc(e && e.message ? e.message : 'Something went wrong.') + '</p>' +
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn btn--primary btn--sm" onclick="location.reload()">Try again</button>' +
+    '<a class="btn btn--ghost btn--sm" href="' + A.base + '/admin/login">Sign in again</a></div></div>';
+  if (window.console) console.error('dashboard load failed', e);
 });
 </script>
 </body>

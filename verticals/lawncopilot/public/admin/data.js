@@ -1,8 +1,18 @@
 /* Lawn Co-Pilot admin — data layer. Live API only, no mock values. */
 (function () {
   'use strict';
-  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
-  var API = '/lawncopilot/' + SLUG + '/api/v1/admin';
+  /* The app is served under TWO shapes and the slug must resolve in both:
+   *   aiagent.ringlypro.com/lawncopilot/<slug>/admin   (path-mounted)
+   *   lawncopilot.com/<slug>/admin                     (custom domain, root)
+   * Assuming the /lawncopilot prefix left SLUG empty on the custom domain, and
+   * the resulting '/lawncopilot//api/...' got its prefix stripped down to
+   * '//api/...' — a protocol-relative URL the browser resolved as host "api".
+   * That is what made every admin call fail with ERR_NAME_NOT_RESOLVED. */
+  var PATH = location.pathname;
+  var PREFIX = /^\/lawncopilot(\/|$)/i.test(PATH) ? '/lawncopilot' : '';
+  var SLUG = (PATH.slice(PREFIX.length).match(/^\/([a-z0-9_-]+)/i) || [])[1] || '';
+  var BASE = PREFIX + '/' + SLUG;          // e.g. '/orbup' or '/lawncopilot/orbup'
+  var API = BASE + '/api/v1/admin';
 
   function req(method, path, body) {
     return fetch(API + path, {
@@ -11,12 +21,16 @@
       credentials: 'same-origin',
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) {
-      if (r.status === 401) { window.location.href = '/lawncopilot/' + SLUG + '/admin/login'; throw new Error('unauth'); }
+      if (r.status === 401) { window.location.href = BASE + '/admin/login'; throw new Error('unauth'); }
       return r.json();
     });
   }
 
   var A = {
+    // Pages build their own links from these — never hardcode /lawncopilot,
+    // it does not exist on the custom domain.
+    slug: SLUG,
+    base: BASE,
     get: function (p) { return req('GET', p); },
     post: function (p, b) { return req('POST', p, b || {}); },
     patch: function (p, b) { return req('PATCH', p, b || {}); },
@@ -50,7 +64,7 @@
         ['ai-staff', 'AI Staff', 'M12 2a5 5 0 015 5v3a5 5 0 01-10 0V7a5 5 0 015-5zM4 21a8 8 0 0116 0']
       ];
       return '<nav class="tabs">' + items.map(function (i) {
-        return '<a href="/lawncopilot/' + SLUG + '/admin/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
+        return '<a href="' + BASE + '/admin/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
           '<svg viewBox="0 0 24 24"><path d="' + i[2] + '"/></svg>' + i[1] + '</a>';
       }).join('') + '</nav>';
     },
@@ -58,7 +72,7 @@
     shell: function (active) {
       var t = document.getElementById('tabs');
       if (t) t.outerHTML = A.tabs(active);
-      fetch('/lawncopilot/' + SLUG + '/api/v1/auth/staff/me', { credentials: 'same-origin' })
+      fetch(BASE + '/api/v1/auth/staff/me', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (r) {
           var w = document.getElementById('who');

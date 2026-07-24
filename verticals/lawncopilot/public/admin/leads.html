@@ -46,7 +46,7 @@ function render() {
         '<td class="small">' + A.esc(l.address || '&mdash;') + '</td>' +
         '<td class="small">' + A.esc((l.source || '').replace('_', ' ')) + '</td>' +
         '<td class="num">' + (l.quote_value
-          ? '<a href="/lawncopilot/quote/' + A.esc(l.quote_token) + '" target="_blank">' + A.esc(l.quote_value) + '</a>'
+          ? '<a href="' + A.base + '/quote/' + A.esc(l.quote_token) + '" target="_blank">' + A.esc(l.quote_value) + '</a>'
           : '&mdash;') + '</td>' +
         '<td><span class="pill' + (l.stage === 'accepted' ? '' : ' pill--muted') + '">' + A.esc(l.stage) + '</span></td>' +
         '<td><select data-move="' + l.id + '">' +

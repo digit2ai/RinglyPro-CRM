@@ -74,7 +74,8 @@
       "Bash(sips -g pixelWidth -g pixelHeight logo-white.png)",
       "Bash(sips -g pixelWidth logo-white.png)",
       "Bash(/* quote.html shares the same look */)",
-      "Bash(filed)"
+      "Bash(filed)",
+      "Bash(wait)"
     ]
   }
 }

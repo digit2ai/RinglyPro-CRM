@@ -7,8 +7,14 @@
 (function () {
   'use strict';
 
-  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
-  var API = '/lawncopilot/' + SLUG + '/api/v1/me';
+  /* Served under two shapes — resolve the slug in both, or every call becomes
+   * '/lawncopilot//api/...', gets stripped to '//api/...' (protocol-relative)
+   * and dies with ERR_NAME_NOT_RESOLVED on the custom domain. */
+  var PATH = location.pathname;
+  var PREFIX = /^\/lawncopilot(\/|$)/i.test(PATH) ? '/lawncopilot' : '';
+  var SLUG = (PATH.slice(PREFIX.length).match(/^\/([a-z0-9_-]+)/i) || [])[1] || '';
+  var BASE = PREFIX + '/' + SLUG;
+  var API = BASE + '/api/v1/me';
 
   function req(method, path, body) {
     return fetch(API + path, {
@@ -17,12 +23,15 @@
       credentials: 'same-origin',
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) {
-      if (r.status === 401) { window.location.href = '/lawncopilot/' + SLUG + '/login'; throw new Error('unauth'); }
+      if (r.status === 401) { window.location.href = BASE + '/login'; throw new Error('unauth'); }
       return r.json();
     });
   }
 
   var LC = {
+    // Pages build links from these — /lawncopilot does not exist on the custom domain.
+    slug: SLUG,
+    base: BASE,
     get: function (p) { return req('GET', p); },
     post: function (p, b) { return req('POST', p, b || {}); },
     patch: function (p, b) { return req('PATCH', p, b || {}); },
@@ -178,7 +187,7 @@
         ['mensajes', 'Messages', 'M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z']
       ];
       return '<nav class="tabs">' + items.map(function (i) {
-        return '<a href="/lawncopilot/' + SLUG + '/portal/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
+        return '<a href="' + BASE + '/portal/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
           '<svg viewBox="0 0 24 24"><path d="' + i[2] + '"/></svg>' + i[1] + '</a>';
       }).join('') + '</nav>';
     },
@@ -188,7 +197,7 @@
       if (t) t.outerHTML = LC.tabs(activeTab);
       LC.assistant();
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/lawncopilot/portal/sw.js', { scope: '/lawncopilot/' }).catch(function () {});
+        navigator.serviceWorker.register(BASE + '/portal/sw.js', { scope: BASE + '/' }).catch(function () {});
       }
     }
   };

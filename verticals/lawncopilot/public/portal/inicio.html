@@ -6,9 +6,9 @@
 <title>Home — Lawn Co-Pilot</title>
 <link rel="icon" href="/lawncopilot/mark.png" type="image/png">
 <meta name="theme-color" content="#307f44">
-<link rel="manifest" href="/lawncopilot/portal/manifest.webmanifest">
+<link rel="manifest" href="' + LC.base + '/portal/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/lawncopilot/icon-192.png">
-<link rel="stylesheet" href="/lawncopilot/portal/app.css">
+<link rel="stylesheet" href="' + LC.base + '/portal/app.css">
 </head>
 <body>
 <div class="installbar" id="installbar">
@@ -39,7 +39,7 @@ LC.dashboard().then(function (d) {
       ? '<div class="tile__big">' + LC.esc(LC.date(next.date)) + '</div>' +
         '<div class="mut">' + LC.esc(next.window) + (next.crew ? ' &middot; ' + LC.esc(next.crew) : '') + '</div>' +
         '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
-          '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/calendario">Change or skip</a></div>'
+          '<a class="btn btn--ghost btn--sm" href="' + LC.base + '/portal/calendario">Change or skip</a></div>'
       : '<div class="tile__big">Nothing scheduled</div><div class="mut">Ask the assistant to book a visit.</div>') +
     '</div>';
 
@@ -54,19 +54,19 @@ LC.dashboard().then(function (d) {
     html += '<div class="tile"><div class="tile__label">Property</div>' +
       '<div class="row__title" style="margin:6px 0">' + LC.esc(prop.address) + '</div>' +
       (prop.is_estimate ? '<span class="pill pill--warn">Area is an estimate, pending verification</span>' : '<span class="pill">Area verified</span>') +
-      '<div style="margin-top:14px"><a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/mi-propiedad">View property</a></div></div>';
+      '<div style="margin-top:14px"><a class="btn btn--ghost btn--sm" href="' + LC.base + '/portal/mi-propiedad">View property</a></div></div>';
   }
 
   if (d.last_service) {
     html += '<div class="tile"><div class="tile__label">Last completed</div>' +
       '<div class="row__title" style="margin:6px 0">' + LC.esc(LC.date(d.last_service.date)) + '</div>' +
-      '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/historial">Service history</a></div>';
+      '<a class="btn btn--ghost btn--sm" href="' + LC.base + '/portal/historial">Service history</a></div>';
   }
 
   if (d.unread_messages) {
     html += '<div class="tile"><div class="tile__label">Messages</div>' +
       '<div class="row__title" style="margin:6px 0">' + d.unread_messages + ' unread</div>' +
-      '<a class="btn btn--ghost btn--sm" href="/lawncopilot/portal/mensajes">Open messages</a></div>';
+      '<a class="btn btn--ghost btn--sm" href="' + LC.base + '/portal/mensajes">Open messages</a></div>';
   }
 
   document.getElementById('app').innerHTML = html;
