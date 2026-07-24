@@ -396,8 +396,11 @@ function build() {
 
   // ── Password reset (email-based, with dev fallback link) ──────────────────
   async function sendResetEmail(email, link) {
-    const key = process.env.SENDGRID_API_KEY, from = process.env.SENDGRID_FROM_EMAIL;
-    if (!key || !from) return false;
+    // Mismo patrón que el resto del ecosistema: si no hay SENDGRID_FROM_EMAIL,
+    // usa el remitente verificado que ya usan los demás flujos.
+    const key = process.env.SENDGRID_API_KEY;
+    const from = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    if (!key) return false;
     try {
       const sg = require('@sendgrid/mail'); sg.setApiKey(key);
       await sg.send({
