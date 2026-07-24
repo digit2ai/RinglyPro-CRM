@@ -116,8 +116,11 @@
 .hero--saas .orbcard__sub { font-size: .84rem; line-height: 1.4; }
 
 /* ── Mobile dashboard simulator ─────────────────────────────────── */
-.simwrap { display: grid; grid-template-columns: .85fr 1.15fr; gap: var(--space-7); align-items: center; }
-@media (max-width: 900px) { .simwrap { grid-template-columns: 1fr; } }
+.estwrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-7); align-items: center; }
+@media (max-width: 900px) { .estwrap { grid-template-columns: 1fr; } }
+/* In the hero the phone is the visual, so let it fill its column */
+.hero--saas #sim { justify-self: center; }
+.hero--saas .sim-phone { height: 600px; }
 #sim { display: flex; flex-direction: column; align-items: center; }
 .sim-phone {
   width: 320px; max-width: 100%; height: 640px; position: relative;
@@ -263,9 +266,38 @@
       </div>
     </div>
 
-    <!-- THE ESTIMATOR, LIVE. This is the proof: a landscaper types a real
-         address and watches it get measured and priced, exactly as their own
-         customers would. Wired to a real tenant, not a mockup. -->
+    <!-- The phone. Tapping through the whole office is the fastest way to
+         understand what the product is, so it leads. -->
+    <div id="sim"></div>
+  </div>
+</header>
+
+<section class="section section--tint" style="padding:var(--space-8) 0">
+  <div class="wrap center" style="max-width:800px">
+    <h2>You are already doing this work. At 9pm. At the kitchen table.</h2>
+    <p class="lead">
+      Calls you missed while mowing. A yard you drove forty minutes to measure and did not win.
+      Tomorrow's route worked out on a napkin. Invoices you keep meaning to send. A customer
+      asking for a one-off cleanup that never made it onto the schedule. That is a full-time
+      office job, done after a full day of labor.
+    </p>
+  </div>
+</section>
+
+<section class="section" id="estimator">
+  <div class="wrap estwrap">
+    <div>
+      <div class="eyebrow">The part that wins the job</div>
+      <h2>Your customer types an address and gets a real price.</h2>
+      <p class="lead">No callback. No site visit. This is the live estimator running on a real
+      company account — the same thing that would sit on your page.</p>
+      <ul class="simfeat">
+        <li><b>Measured, not guessed</b><span>Lot, house and driveway from property records. The lawn is what is left.</span></li>
+        <li><b>Priced off your rate card</b><span>Your rates, by county and frequency. You set them, it applies them.</span></li>
+        <li><b>The lead is captured first</b><span>Name, phone and email before anything is measured, so nobody slips away.</span></li>
+      </ul>
+    </div>
+
     <div class="orbcard" id="orbcard">
       <div class="orbcard__head">
         <button class="orb" id="orb" aria-label="Talk to the estimator" data-gate="orb"></button>
@@ -303,18 +335,6 @@
 
       <p class="hero__try">Live demo running on a real company account.</p>
     </div>
-  </div>
-</header>
-
-<section class="section section--tint" style="padding:var(--space-8) 0">
-  <div class="wrap center" style="max-width:800px">
-    <h2>You are already doing this work. At 9pm. At the kitchen table.</h2>
-    <p class="lead">
-      Calls you missed while mowing. A yard you drove forty minutes to measure and did not win.
-      Tomorrow's route worked out on a napkin. Invoices you keep meaning to send. A customer
-      asking for a one-off cleanup that never made it onto the schedule. That is a full-time
-      office job, done after a full day of labor.
-    </p>
   </div>
 </section>
 
@@ -385,31 +405,22 @@
   </div>
 </section>
 
-<section class="section" id="dashboard">
+<section class="section section--tint" id="dashboard">
   <div class="wrap">
     <div class="center" style="max-width:720px;margin:0 auto var(--space-7)">
       <div class="eyebrow">One place</div>
       <h2>Your whole company, on the phone in your pocket</h2>
       <p class="lead">No separate answering service, scheduler, estimating app, invoicing tool or
-      spreadsheet. Open one app between jobs and see everything. Tap through it.</p>
+      spreadsheet. Five tabs, and everything is in one of them. Tap through it at the top of this page.</p>
     </div>
 
-    <div class="simwrap">
-      <div id="sim"></div>
-
-      <div>
-        <ul class="simfeat">
-          <li><b>Today</b><span>Every job in route order, the crew assigned, and who is on site right now.</span></li>
-          <li><b>Money</b><span>Collected, outstanding, and the card that failed — already being retried without you.</span></li>
-          <li><b>Inbox</b><span>New leads, quotes needing your OK, special requests, and anything the AI escalated.</span></li>
-          <li><b>Crew</b><span>Who is clocked in, hours this week, a licence about to expire, payroll waiting on approval.</span></li>
-          <li><b>AI staff</b><span>What each employee did today, and the routes they sequenced to cut drive time.</span></li>
-        </ul>
-        <div class="hero__cta">
-          <a class="btn btn--primary" href="/lawncopilot/signup">Start free</a>
-          <a class="btn btn--ghost" href="#pricing">See pricing</a>
-        </div>
-      </div>
+    <div class="grid grid--3">
+      <div class="card"><h3>Today</h3><p class="mut small">Every job in route order, the crew assigned, and who is on site right now.</p></div>
+      <div class="card"><h3>Money</h3><p class="mut small">Collected, outstanding, and the card that failed — already being retried without you.</p></div>
+      <div class="card"><h3>Inbox</h3><p class="mut small">New leads, quotes needing your OK, special requests, and anything the AI escalated.</p></div>
+      <div class="card"><h3>Crew</h3><p class="mut small">Who is clocked in, hours this week, a licence about to expire, payroll waiting on approval.</p></div>
+      <div class="card"><h3>AI staff</h3><p class="mut small">What each employee did today, and the routes they sequenced to cut drive time.</p></div>
+      <div class="card"><h3>Approvals</h3><p class="mut small">Refunds, pay runs, price changes. Nothing irreversible goes out unsigned.</p></div>
     </div>
   </div>
 </section>

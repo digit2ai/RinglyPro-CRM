@@ -540,6 +540,19 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
 
     ok('the estimator can render a result',
        ['id="map"', 'id="prices"', 'id="transcript"'].every(id => homeHtml.text.includes(id)));
+
+    // Page order: the phone leads in the hero, then the problem, then the live
+    // estimator answering it. Swapping these back would break the argument.
+    const iSim = homeHtml.text.indexOf('id="sim"');
+    const iProblem = homeHtml.text.indexOf('You are already doing this work');
+    const iOrb = homeHtml.text.indexOf('id="orbcard"');
+    const iPricing = homeHtml.text.indexOf('id="pricing"');
+    ok('the phone simulator leads in the hero', iSim > 0 && iSim < iProblem, `sim@${iSim} problem@${iProblem}`);
+    ok('the live estimator follows the problem section', iProblem < iOrb, `problem@${iProblem} orb@${iOrb}`);
+    ok('pricing comes after both demos', iOrb < iPricing);
+    ok('exactly one estimator and one simulator on the page',
+       (homeHtml.text.match(/id="orbcard"/g) || []).length === 1
+       && (homeHtml.text.match(/id="sim"/g) || []).length === 1);
     const staleLanding = await call('GET', `${ROOT}/index.html`);
     ok('no stale homeowner landing is reachable on the platform',
        staleLanding.status === 404 || !/finish your coffee/i.test(staleLanding.text || ''),
