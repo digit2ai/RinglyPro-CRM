@@ -773,60 +773,10 @@
 <script src="/lawncopilot/simulator.js" defer></script>
 
 <script>
-/* Pricing renders from the API, so a price change is one edit server-side and
-   never a number stranded in markup that drifts out of date. */
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-
-fetch('/lawncopilot/api/v1/signup/plans')
-  .then(function (r) { return r.json(); })
-  .then(function (d) {
-    if (!d.success) throw new Error('no plans');
-    document.getElementById('plans').innerHTML = d.plans.map(function (p) {
-      return '<div class="plan' + (p.popular ? ' plan--popular' : '') + '">' +
-        (p.popular ? '<span class="plan__tag">Most chosen</span>' : '') +
-        '<h3>' + esc(p.label) + '</h3>' +
-        '<div class="plan__tagline">' + esc(p.tagline) + '</div>' +
-        '<div class="plan__price"><b>' + esc(p.price_display) + '</b><span>/ ' + esc(p.period) + '</span></div>' +
-        '<div class="plan__limits">' +
-          esc(String(p.limits.crews)) + (p.limits.crews === 1 ? ' crew' : ' crews') +
-          ' &middot; up to ' + esc(String(p.limits.employees)) + ' people</div>' +
-        '<ul>' + p.highlights.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('') + '</ul>' +
-        '<a class="btn ' + (p.popular ? 'btn--primary' : 'btn--ghost') +
-          '" href="/lawncopilot/signup?plan=' + encodeURIComponent(p.id) + '">Start free</a>' +
-        '</div>';
-    }).join('');
-
-    document.getElementById('plansNote').textContent =
-      d.trial_days + '-day free trial on every plan. No card to start. Cancel any time.';
-
-    var rows = [
-      ['Your own booking page and QR code', function () { return true; }],
-      ['Receptionist, Estimator, Dispatcher, Bookkeeper', function () { return true; }],
-      ['Crew Manager and time tracking', function () { return true; }],
-      ['Payroll Officer', function (p) { return p.includes.payroll; }],
-      ['Marketing, reviews and referrals', function (p) { return p.includes.marketing; }],
-      ['The Controller: job costing and margin', function (p) { return p.includes.controller; }]
-    ];
-    document.getElementById('compare').innerHTML =
-      '<thead><tr><th>What you get</th>' +
-      d.plans.map(function (p) { return '<th class="c">' + esc(p.label) + '</th>'; }).join('') +
-      '</tr></thead><tbody>' +
-      rows.map(function (r) {
-        return '<tr><td>' + esc(r[0]) + '</td>' +
-          d.plans.map(function (p) {
-            return '<td class="c">' + (r[1](p) ? '<span class="yes">Yes</span>' : '<span class="no">&mdash;</span>') + '</td>';
-          }).join('') + '</tr>';
-      }).join('') + '</tbody>';
-  })
-  .catch(function () {
-    document.getElementById('plans').innerHTML =
-      '<div class="empty" style="grid-column:1/-1">Pricing is temporarily unavailable. ' +
-      '<a href="/lawncopilot/signup">Start free</a> and pick a plan during signup.</div>';
-  });
+/* Pricing is rendered into this page server-side from the single source in
+   services/provision.js, so the numbers are in the document rather than
+   arriving from a fetch that a stale cache could answer incorrectly. Nothing
+   to do here at runtime. */
 </script>
 <script src="/lawncopilot/pwa.js" defer></script>
 </body>

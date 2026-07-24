@@ -166,25 +166,93 @@ router.use(express.static(publicDir, { index: false }));
 router.use('/:slug', tenantMiddleware(), require('./tenant-router'));
 
 /**
- * The platform home page.
+ * The platform home page, rendered per host.
  *
- * Its orb is a LIVE demo of a real company rather than a mockup — we inject the
- * demo tenant's slug so orb.js posts to a genuine tenant API. A landscaper
- * evaluating the product watches it quote an actual property.
+ * Three things happen server-side rather than in the browser:
+ *
+ *  1. PRICING IS RENDERED INTO THE HTML. It used to arrive from a client fetch,
+ *     which meant a "Loading plans..." flash, a hard dependency on JS, and —
+ *     the real hazard — a service worker could hand back a stale copy and the
+ *     prices would silently be wrong. Now the numbers are in the document,
+ *     still read from the single source in provision.js.
+ *  2. The /lawncopilot prefix is rewritten to match the host, so on
+ *     lawncopilot.com nothing pays a 301 just to load a stylesheet or a link.
+ *  3. The orb is pointed at a real demo tenant, so the hero demo is live.
  */
-let platformHomeCache = null;
+const { PLAN_LIMITS, PLAN_ORDER } = require('./services/provision');
+
+function renderPricing(base) {
+  const trial = Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14);
+
+  const cards = PLAN_ORDER.map(id => {
+    const p = PLAN_LIMITS[id];
+    const crews = p.crews >= 999 ? 'Unlimited' : p.crews;
+    const people = p.employees >= 999 ? 'Unlimited' : p.employees;
+    return `<div class="plan${p.popular ? ' plan--popular' : ''}">`
+      + (p.popular ? '<span class="plan__tag">Most chosen</span>' : '')
+      + `<h3>${p.label}</h3>`
+      + `<div class="plan__tagline">${p.tagline}</div>`
+      + `<div class="plan__price"><b>$${Math.round(p.price_cents / 100)}</b><span>/ month</span></div>`
+      + `<div class="plan__limits">${crews}${crews === 1 ? ' crew' : ' crews'}`
+      + ` &middot; up to ${people} people</div>`
+      + '<ul>' + p.highlights.map(h => `<li>${h}</li>`).join('') + '</ul>'
+      + `<a class="btn ${p.popular ? 'btn--primary' : 'btn--ghost'}"`
+      + ` href="${base}/signup?plan=${encodeURIComponent(id)}">Start free</a>`
+      + '</div>';
+  }).join('');
+
+  const ROWS = [
+    ['Your own booking page and QR code', () => true],
+    ['Receptionist, Estimator, Dispatcher, Bookkeeper', () => true],
+    ['Crew Manager and time tracking', () => true],
+    ['Payroll Officer', p => p.payroll],
+    ['Marketing, reviews and referrals', p => p.marketing],
+    ['The Controller: job costing and margin', p => p.controller]
+  ];
+  const compare = '<thead><tr><th>What you get</th>'
+    + PLAN_ORDER.map(id => `<th class="c">${PLAN_LIMITS[id].label}</th>`).join('')
+    + '</tr></thead><tbody>'
+    + ROWS.map(([label, fn]) => '<tr><td>' + label + '</td>'
+        + PLAN_ORDER.map(id => '<td class="c">'
+            + (fn(PLAN_LIMITS[id]) ? '<span class="yes">Yes</span>' : '<span class="no">&mdash;</span>')
+            + '</td>').join('')
+        + '</tr>').join('')
+    + '</tbody>';
+
+  return { cards, compare, note: `${trial}-day free trial on every plan. No card to start. Cancel any time.` };
+}
+
+const platformHomeCache = new Map();
 router.get('/', async (req, res, next) => {
   try {
-    if (!platformHomeCache) {
+    const { basePath } = require('./tenancy');
+    const base = basePath(req);                 // '' on lawncopilot.com
+    const key = base || 'root';
+
+    if (!platformHomeCache.has(key)) {
       const { Tenant } = require('./models');
       const demoSlug = process.env.LAWNCOPILOT_DEMO_SLUG || 'green-acres';
       const demo = await Tenant.findOne({ where: { slug: demoSlug }, raw: true });
-      const html = require('fs').readFileSync(path.join(publicDir, 'platform-home.html'), 'utf8');
+      let html = require('fs').readFileSync(path.join(publicDir, 'platform-home.html'), 'utf8');
+
       // No demo tenant means no working orb — drop the attribute rather than
       // shipping a page whose orb posts nowhere.
-      platformHomeCache = html.replace('__DEMO_SLUG__', demo ? demo.slug : '');
+      html = html.replace('__DEMO_SLUG__', demo ? demo.slug : '');
+
+      const pricing = renderPricing(base);
+      html = html
+        .replace('<div class="empty" style="grid-column:1/-1">Loading plans...</div>', pricing.cards)
+        .replace('<p class="plans__note" id="plansNote"></p>',
+                 `<p class="plans__note" id="plansNote">${pricing.note}</p>`)
+        .replace('<table class="compare" id="compare"></table>',
+                 `<table class="compare" id="compare">${pricing.compare}</table>`);
+
+      // Point every absolute path at the host actually serving it.
+      if (base === '') html = html.split('/lawncopilot/').join('/');
+
+      platformHomeCache.set(key, html);
     }
-    res.type('html').send(platformHomeCache);
+    res.type('html').send(platformHomeCache.get(key));
   } catch (e) { next(e); }
 });
 

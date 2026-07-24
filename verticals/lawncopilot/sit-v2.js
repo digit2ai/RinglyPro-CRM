@@ -642,9 +642,19 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('exactly one plan is marked most-chosen', plans.filter(p => p.popular).length === 1);
     ok('higher plans unlock more AI employees',
        plans[0].includes.controller === false && plans[2].includes.controller === true);
-    ok('the landing page renders pricing from the API, not hardcoded numbers',
-       !/\$\s?(99|249|499)\b/.test(homeHtml.text),
-       'a price literal is baked into the landing markup');
+    // Pricing is server-rendered into the document now: no loading flash, no
+    // JS dependency, and no chance a stale service-worker copy shows the wrong
+    // number. The single source stays services/provision.js.
+    const shownPrices = (homeHtml.text.match(/class="plan__price"><b>\$(\d+)/g) || [])
+      .map(m => Number(m.split('$')[1]));
+    ok('prices are rendered into the HTML, not fetched',
+       shownPrices.length === 3, `${shownPrices.length} price(s) in the document`);
+    ok('the rendered prices match the plan definitions',
+       JSON.stringify(shownPrices) === JSON.stringify(plans.map(p => Math.round(p.price_cents / 100))),
+       `page ${shownPrices.join(',')} vs api ${plans.map(p => Math.round(p.price_cents / 100)).join(',')}`);
+    ok('the page no longer depends on a client fetch for pricing',
+       !homeHtml.text.includes("fetch('/lawncopilot/api/v1/signup/plans')")
+       && !homeHtml.text.includes('Loading plans...'));
 
     for (const p of plans) {
       const prov = await call('POST', `${ROOT}/api/v1/signup/slug-available?slug=x`);

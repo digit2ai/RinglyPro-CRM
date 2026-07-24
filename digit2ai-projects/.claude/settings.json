@@ -67,7 +67,14 @@
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} · %{size_download}b · %{content_type}\\\\n' https://orbup.app/orbup)",
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} · %{size_download}b · %{content_type}\\\\n' https://orbup.app/pricing)",
       "Bash(curl -s https://orbup.app/orbup)",
-      "WebFetch(domain:www.floridaortho.com)"
+      "WebFetch(domain:www.floridaortho.com)",
+      "Bash(sips -s format png -Z 512 /tmp/mark.png --out icon-512.png)",
+      "Bash(sips -s format png -Z 192 /tmp/mark.png --out icon-192.png)",
+      "Bash(sips -s format png -Z 180 /tmp/mark.png --out apple-touch-icon.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight logo-white.png)",
+      "Bash(sips -g pixelWidth logo-white.png)",
+      "Bash(/* quote.html shares the same look */)",
+      "Bash(filed)"
     ]
   }
 }
