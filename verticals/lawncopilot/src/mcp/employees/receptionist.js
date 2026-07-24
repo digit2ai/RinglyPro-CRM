@@ -14,6 +14,7 @@ const {
   ServiceRecord, Subscription, CallLog
 } = require('../../models');
 const { notify } = require('../../services/notify');
+const { toDateStr } = require('../../services/scheduling');
 
 const FAQ = [
   {
@@ -170,7 +171,7 @@ Rules you never break:
         const next = await Appointment.findOne({
           where: {
             tenant_id: ctx.tenant_id, customer_id: match.id, status: 'scheduled',
-            service_date: { [Op.gte]: new Date().toISOString().slice(0, 10) }
+            service_date: { [Op.gte]: toDateStr(new Date()) }
           },
           order: [['service_date', 'ASC']], raw: true
         });
@@ -218,7 +219,7 @@ Rules you never break:
       handler: async ({ customer_id }, ctx) => {
         const c = await Customer.findOne({ where: { id: customer_id, tenant_id: ctx.tenant_id }, raw: true });
         if (!c) return { success: false, error: 'Customer not found' };
-        const today = new Date().toISOString().slice(0, 10);
+        const today = toDateStr(new Date());
         const next = await Appointment.findOne({
           where: { tenant_id: ctx.tenant_id, customer_id, status: 'scheduled', service_date: { [Op.gte]: today } },
           order: [['service_date', 'ASC']], raw: true

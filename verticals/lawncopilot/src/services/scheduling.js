@@ -13,7 +13,18 @@ const { Appointment, Crew, Subscription, Tenant } = require('../models');
 
 const DAY_MS = 86400000;
 
-function toDateStr(d) { return new Date(d).toISOString().slice(0, 10); }
+/**
+ * Local calendar date, NOT UTC.
+ *
+ * toISOString() converts to UTC first, so after ~20:00 Eastern it returns
+ * tomorrow's date while getDay() still reports today's weekday. That mismatch
+ * made the Dispatcher offer Saturdays labeled "Friday" and then refuse to book
+ * them. Every date string in this module is the local calendar day.
+ */
+function toDateStr(d) {
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+}
 function addDays(d, n) { return new Date(new Date(d).getTime() + n * DAY_MS); }
 
 const WINDOWS = [

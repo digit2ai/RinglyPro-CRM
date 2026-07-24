@@ -17,6 +17,7 @@ const {
   PaymentMethod, Ticket, Message, Crew
 } = require('../models');
 const acct = require('../services/accounting');
+const { toDateStr } = require('../services/scheduling');
 
 router.use((req, res, next) => {
   if (!req.customer) return res.status(401).json({ success: false, error: 'Not signed in' });
@@ -61,7 +62,7 @@ router.get('/dashboard', async (req, res) => {
   const c = await Customer.findOne({ where: { id: req.customer.id, tenant_id: t }, raw: true });
   if (!c) return res.status(404).json({ success: false, error: 'Account not found' });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateStr(new Date());
   const prop = await Property.findOne({ where: scope(req), raw: true });
   const sub = await Subscription.findOne({ where: scope(req, { status: { [Op.in]: ['active', 'paused'] } }), raw: true });
   const next = await Appointment.findOne({
@@ -143,7 +144,7 @@ router.get('/schedule', async (req, res) => {
   });
   const crews = await Crew.findAll({ where: { tenant_id: t }, raw: true });
   const byCrew = {}; crews.forEach(c => { byCrew[c.id] = c.name; });
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateStr(new Date());
   res.json({
     success: true,
     upcoming: appts.filter(a => a.service_date >= today && !['cancelled', 'completed'].includes(a.status))

@@ -5,10 +5,10 @@
   "scope": "/lawncopilot/portal/",
   "display": "standalone",
   "background_color": "#f6faf8",
-  "theme_color": "#16a34a",
+  "theme_color": "#307f44",
   "icons": [
     { "src": "/lawncopilot/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/lawncopilot/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/lawncopilot/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/lawncopilot/mark.png", "sizes": "173x173", "type": "image/png" }
   ]
 }

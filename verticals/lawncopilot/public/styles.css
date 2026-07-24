@@ -2,15 +2,16 @@
    Every page consumes these. Nothing hardcodes a color. */
 
 :root {
-  /* Brand: growth green + deep field, distinct from Jobber's palette */
-  --green-50:  #f0fdf4;
-  --green-100: #dcfce7;
-  --green-200: #bbf7d0;
-  --green-400: #4ade80;
-  --green-500: #22c55e;
-  --green-600: #16a34a;
-  --green-700: #15803d;
-  --green-900: #14532d;
+  /* Brand green sampled from the Lawn Co-Pilot logo mark: #307F44.
+     The scale is built around it so the site and the logo are one system. */
+  --green-50:  #f2f8f4;
+  --green-100: #dceee2;
+  --green-200: #b4dcc2;
+  --green-400: #63be7a;
+  --green-500: #3d9c55;
+  --green-600: #307f44;   /* brand primary */
+  --green-700: #266636;
+  --green-900: #14331f;
 
   --ink-900: #0b1f16;
   --ink-800: #14301f;

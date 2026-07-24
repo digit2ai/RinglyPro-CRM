@@ -51,17 +51,68 @@
     },
     empty: function (msg) { return '<div class="empty">' + LC.esc(msg) + '</div>'; },
 
+    /**
+     * Draw the lot to scale from the measurement. Used when there is no
+     * satellite imagery, so the customer always sees the shape of what they
+     * are paying for rather than an empty box.
+     */
+    drawDiagram: function (node, p) {
+      var lot = Math.max(Number(p.lot_sqft) || 0, 1);
+      var house = Number(p.building_footprint_sqft) || 0;
+      var excl = Number(p.excluded_sqft) || 0;
+      var pad = 9, lw = 100 - pad * 2, lh = 100 - pad * 2, lotArea = lw * lh;
+      var hArea = (house / lot) * lotArea, eArea = (excl / lot) * lotArea;
+
+      var hw = Math.min(lw * 0.62, Math.sqrt(hArea * 1.7));
+      var hh = hArea / Math.max(hw, 1);
+      if (hh > lh * 0.55) { hh = lh * 0.55; hw = hArea / hh; }
+      var hx = pad + (lw - hw) / 2, hy = pad + lh * 0.12;
+
+      var dw = Math.min(lw * 0.3, Math.max(eArea / Math.max(lh * 0.5, 1), lw * 0.13));
+      var dh = Math.min(lh - (hy + hh) + 2, Math.max(eArea / Math.max(dw, 1), lh * 0.2));
+      var dx = pad + lw * 0.14, dy = pad + lh - dh;
+
+      var s = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" ' +
+        'aria-label="Scaled diagram of your lot, house, driveway and serviced lawn">';
+      s += '<rect x="' + pad + '" y="' + pad + '" width="' + lw + '" height="' + lh +
+        '" rx="1.5" fill="rgba(61,156,85,.42)" stroke="#f59e0b" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+      for (var i = 0; i < 9; i++) {
+        s += '<rect x="' + pad + '" y="' + (pad + (lh / 9) * i).toFixed(2) + '" width="' + lw +
+          '" height="' + (lh / 18).toFixed(2) + '" fill="rgba(255,255,255,.035)"/>';
+      }
+      if (excl > 0) {
+        s += '<rect x="' + dx.toFixed(2) + '" y="' + dy.toFixed(2) + '" width="' + dw.toFixed(2) +
+          '" height="' + dh.toFixed(2) + '" rx="0.8" fill="rgba(148,163,184,.55)" stroke="rgba(203,213,225,.5)" ' +
+          'stroke-width="1" vector-effect="non-scaling-stroke"/>';
+      }
+      if (house > 0) {
+        s += '<rect x="' + hx.toFixed(2) + '" y="' + hy.toFixed(2) + '" width="' + hw.toFixed(2) +
+          '" height="' + hh.toFixed(2) + '" rx="1" fill="rgba(148,163,184,.92)" stroke="#64748b" ' +
+          'stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+      }
+      node.insertAdjacentHTML('beforeend', s + '</svg>');
+    },
+
     /* Shared property map renderer — same projection as the landing orb. */
     drawMap: function (node, property, geometry) {
       if (!node) return;
       node.innerHTML = '';
-      if (property && property.imagery_url) {
+      var p = property || {};
+      if (p.imagery_url) {
         var img = document.createElement('img');
-        img.src = property.imagery_url;
-        img.alt = 'Satellite view of ' + (property.address || 'your property');
+        img.src = p.imagery_url;
+        img.alt = 'Satellite view of ' + (p.address || 'your property');
         img.loading = 'lazy';
+        img.onerror = function () { node.innerHTML = ''; LC.drawDiagram(node, p); };
         node.appendChild(img);
+      } else {
+        LC.drawDiagram(node, p);
       }
+      node.insertAdjacentHTML('beforeend',
+        '<span class="propmap__tag">' + (p.imagery_url ? 'Satellite view' : 'Scaled property diagram') + '</span>' +
+        '<div class="propmap__figure"><b>' +
+        Number(p.approved_sqft || p.effective_sqft || p.serviceable_sqft || 0).toLocaleString() +
+        '</b><span>sq ft of lawn</span></div>');
       if (!geometry) return;
       var parcel = geometry.parcel_geojson, building = geometry.building_geojson;
       var pts = [];

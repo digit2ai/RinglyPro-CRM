@@ -1,12 +1,13 @@
 /* Lawn Co-Pilot portal service worker.
    Network-first for navigations, NEVER caches /api/. Bump CACHE on every
    portal JS/CSS change or users get stale screens. */
-var CACHE = 'lawncopilot-portal-v1';
+var CACHE = 'lawncopilot-portal-v2';
 var SHELL = [
   '/lawncopilot/portal/app.css',
   '/lawncopilot/portal/data.js',
   '/lawncopilot/styles.css',
-  '/lawncopilot/icon.svg'
+  '/lawncopilot/logo.png',
+  '/lawncopilot/mark.png'
 ];
 
 self.addEventListener('install', function (e) {

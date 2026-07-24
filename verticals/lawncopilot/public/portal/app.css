@@ -96,3 +96,26 @@ textarea {
   width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius);
   font: inherit; font-size: .95rem; min-height: 90px; resize: vertical;
 }
+
+/* Brand lockup in the app header */
+.apphead__logo { height: 30px; width: auto; flex: 0 0 auto; }
+.apphead h1 { font-size: 1.05rem; }
+@media (min-width: 560px) { .apphead__logo { height: 34px; } .apphead h1 { font-size: 1.25rem; } }
+
+/* Property view: grid field so an imagery-less diagram still reads as a plot */
+.propmap {
+  background:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px) 0 0/100% 26px,
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px) 0 0/26px 100%,
+    linear-gradient(160deg, #1b3a28, #0f2419);
+  border: 1px solid var(--line);
+}
+.propmap__tag { position:absolute; left:10px; top:10px; z-index:2;
+  background: rgba(11,31,22,.72); color: var(--green-200); font-size:.66rem; font-weight:700;
+  letter-spacing:.04em; text-transform:uppercase; padding:4px 9px; border-radius: var(--radius-full);
+  border:1px solid rgba(255,255,255,.14); }
+.propmap__figure { position:absolute; right:10px; bottom:10px; z-index:2; text-align:right;
+  background: rgba(11,31,22,.72); border-radius: var(--radius-sm); padding:6px 10px;
+  border:1px solid rgba(255,255,255,.14); }
+.propmap__figure b { display:block; font-size:1.05rem; font-weight:800; color:#fff; line-height:1.15; }
+.propmap__figure span { font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; color: var(--green-200); }

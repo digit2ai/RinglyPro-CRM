@@ -212,8 +212,16 @@ async function call(method, url, body, opts = {}) {
     const avail = await call('GET', `${BASE}/api/v1/quote/availability`);
     ok('availability returns real slots', avail.data.success === true && Array.isArray(avail.data.slots));
     const slot = (avail.data.slots || [])[0];
+    // Every offered date must be a business day AND its label must match the
+    // date. A UTC/local mismatch once made this offer Saturdays labeled
+    // "Friday" after 8pm Eastern, which then failed to book.
     ok('slots are business days only',
-       !slot || [1, 2, 3, 4, 5].includes(new Date(slot.date + 'T12:00:00').getDay()));
+       (avail.data.slots || []).every(s => [1, 2, 3, 4, 5].includes(new Date(s.date + 'T12:00:00').getDay())),
+       (avail.data.slots || []).slice(0, 3).map(s => `${s.date}=${s.day_name}`).join(','));
+    ok('slot day names match their dates',
+       (avail.data.slots || []).every(s =>
+         new Date(s.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }) === s.day_name),
+       (avail.data.slots || []).slice(0, 3).map(s => `${s.date}=${s.day_name}`).join(','));
 
     const badBook = await brain.callTool('dispatcher.book_appointment',
       { service_date: '2020-01-01' },

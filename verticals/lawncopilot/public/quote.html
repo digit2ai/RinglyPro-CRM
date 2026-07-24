@@ -6,11 +6,16 @@
 <title>Your estimate — Lawn Co-Pilot</title>
 <meta name="robots" content="noindex">
 <link rel="stylesheet" href="/lawncopilot/styles.css">
-<link rel="icon" href="/lawncopilot/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
 <style>
 body { background: var(--bg-alt); }
 .sheet { max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-8); }
-.propmap { position:relative; border-radius: var(--radius); overflow:hidden; background: var(--ink-800); aspect-ratio:16/10; }
+.propmap { position:relative; border-radius: var(--radius); overflow:hidden; aspect-ratio:16/10;
+  background:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px) 0 0/100% 26px,
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px) 0 0/26px 100%,
+    linear-gradient(160deg, #1b3a28, #0f2419);
+  border:1px solid var(--line); }
 .propmap img { width:100%; height:100%; object-fit:cover; }
 .propmap svg { position:absolute; inset:0; width:100%; height:100%; }
 .line { display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--ink-100); font-size:.93rem; }
@@ -34,9 +39,9 @@ fetch('/lawncopilot/api/v1/quote/' + token, { credentials: 'same-origin' })
     if (!d.success) { app.innerHTML = '<div class="card"><h2>Estimate not found</h2><p class="mut">This link may have expired. <a href="/lawncopilot/">Get a new estimate</a>.</p></div>'; return; }
 
     var q = d.quote, p = d.property || {};
-    var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-5)">' +
-      '<img src="/lawncopilot/icon.svg" alt="" width="34" height="34">' +
-      '<b style="font-size:1.15rem">Lawn Co-Pilot</b></div>';
+    var html = '<div style="margin-bottom:var(--space-5)">' +
+      '<img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="186" height="71">' +
+      '</div>';
 
     if (d.expired) html += '<div class="card" style="border-color:var(--accent);margin-bottom:var(--space-4)"><b>This estimate has expired.</b><p class="small mut" style="margin:6px 0 0">Prices are re-checked before booking. ' +
       '<a href="/lawncopilot/">Get a fresh one</a>.</p></div>';
@@ -48,7 +53,7 @@ fetch('/lawncopilot/api/v1/quote/' + token, { credentials: 'same-origin' })
       '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.82rem;color:var(--text-mut)">' +
         '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b;margin-right:5px"></i>Property line</span>' +
         '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#94a3b8;margin-right:5px"></i>House</span>' +
-        '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#22c55e;margin-right:5px"></i>Lawn we service</span>' +
+        '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#3d9c55;margin-right:5px"></i>Lawn we service</span>' +
       '</div></div>';
 
     html += '<div class="card" style="margin-bottom:var(--space-4)"><h2 style="font-size:1.1rem">The measurement</h2>' +
@@ -100,8 +105,8 @@ fetch('/lawncopilot/api/v1/quote/' + token, { credentials: 'same-origin' })
       minX -= px; maxX += px; minY -= py; maxY += py;
       function pr(c) { return (((c[0]-minX)/(maxX-minX))*100).toFixed(2)+','+(100-((c[1]-minY)/(maxY-minY))*100).toFixed(2); }
       var svg = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">';
-      if (parcel) svg += '<polygon points="'+parcel.coordinates[0].map(pr).join(' ')+'" fill="rgba(34,197,94,.26)" stroke="#f59e0b" stroke-width="0.7" vector-effect="non-scaling-stroke"/>';
-      if (building) svg += '<polygon points="'+building.coordinates[0].map(pr).join(' ')+'" fill="rgba(148,163,184,.85)" stroke="#64748b" stroke-width="0.5" vector-effect="non-scaling-stroke"/>';
+      if (parcel) svg += '<polygon points="'+parcel.coordinates[0].map(pr).join(' ')+'" fill="rgba(61,156,85,.38)" stroke="#f59e0b" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+      if (building) svg += '<polygon points="'+building.coordinates[0].map(pr).join(' ')+'" fill="rgba(148,163,184,.9)" stroke="#64748b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
       node.insertAdjacentHTML('beforeend', svg + '</svg>');
     }
     document.title = 'lawncopilot-estimate-' + new Date().toISOString().slice(0, 10);

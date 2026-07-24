@@ -18,6 +18,7 @@ const {
 } = require('../models');
 const acct = require('../services/accounting');
 const { priceProperty } = require('../services/pricing');
+const { toDateStr } = require('../services/scheduling');
 
 const ROLES = {
   owner: 5, admin: 4, dispatcher: 3, csr: 2, tech: 1
@@ -279,8 +280,8 @@ router.get('/service-plans', async (req, res) => {
 // ── Schedule / dispatch ────────────────────────────────────────────────────
 router.get('/schedule', async (req, res) => {
   const t = T(req);
-  const from = req.query.from || new Date().toISOString().slice(0, 10);
-  const to = req.query.to || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+  const from = req.query.from || toDateStr(new Date());
+  const to = req.query.to || toDateStr(new Date(Date.now() + 14 * 86400000));
   const appts = await Appointment.findAll({
     where: { tenant_id: t, service_date: { [Op.between]: [from, to] } },
     order: [['service_date', 'ASC'], ['route_order', 'ASC']], raw: true
