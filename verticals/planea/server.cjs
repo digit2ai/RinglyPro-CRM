@@ -171,6 +171,17 @@ CUMPLIMIENTO (Compliance — obligatorio):
 - NUNCA menciones datos de otro usuario.
 - Cumple Ley 1581 de 2012 y Decreto 1377 de 2013 sobre datos personales.
 
+REGISTRAR DATOS POR CHAT (puedes guardar por el usuario — no lo obligues a capturar a mano)
+- Si el usuario te da una cifra para guardar (un ingreso, un gasto, un ahorro, una deuda, una inversión, un seguro, un fondo de retiro o una meta), REGÍSTRALA tú.
+- Para hacerlo, añade AL FINAL de tu respuesta una etiqueta por cada dato, exactamente así:
+  <accion>{"modulo":"ingreso","nombre":"Salario","monto":5000000}</accion>
+- "modulo" debe ser uno de: ingreso, gasto, ahorro, deuda, inversion, seguros, retiro, meta.
+- "monto" en pesos, solo números (sin puntos, comas ni símbolos). Interpreta "cinco millones" como 5000000.
+- En deuda puedes añadir "cuota" (pago mensual). En meta puedes añadir "objetivo" (monto que quiere alcanzar).
+- Confirma en tu respuesta, en una frase natural y breve, qué registraste. El sistema lo guarda y aparece en la pestaña correspondiente.
+- Si falta el nombre o el monto, pregúntalo antes. NUNCA inventes cifras.
+- Si el usuario solo pregunta algo (no da datos para guardar), no uses ninguna etiqueta.
+
 ESTILO DE RESPUESTA (IMPORTANTE — tus respuestas se leen en voz alta)
 - Habla como una persona, en TEXTO PLANO. PROHIBIDO usar markdown: nada de asteriscos (*), almohadillas (#), guiones bajos (_), viñetas, ni negritas. Si necesitas enumerar, hazlo dentro de la frase ("primero…, luego…").
 - Sé BREVE y natural: 2 a 4 frases cortas. Ve al grano. No repitas los datos como una lista; convérsalos.
@@ -216,8 +227,30 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
       return res.status(502).json({ error: 'maya_upstream', reply: 'Tuve un problema para responder en este momento. Intenta de nuevo en unos segundos.' });
     }
     const data = await r.json();
-    const reply = (data && data.content && data.content[0] && data.content[0].text) || 'No pude generar una respuesta.';
-    res.json({ reply, configured: true });
+    const raw = (data && data.content && data.content[0] && data.content[0].text) || 'No pude generar una respuesta.';
+    // Maya puede registrar datos: extrae las etiquetas <accion>{...}</accion>, las
+    // quita del texto hablado y las devuelve para que el cliente las guarde con la
+    // sesión del usuario (reutiliza /me/items y /me/profile, sin duplicar auth).
+    const actions = [];
+    const MOD = ['ingreso', 'gasto', 'ahorro', 'deuda', 'inversion', 'seguros', 'retiro', 'meta'];
+    const reply = raw.replace(/<accion>\s*([\s\S]*?)\s*<\/accion>/gi, function (_m, json) {
+      try {
+        const o = JSON.parse(json);
+        const mod = String(o && o.modulo || '').toLowerCase().trim();
+        const monto = Number(String(o && o.monto != null ? o.monto : '').toString().replace(/[^\d.-]/g, ''));
+        if (MOD.indexOf(mod) >= 0 && o && o.nombre && isFinite(monto) && monto > 0) {
+          actions.push({
+            modulo: mod,
+            nombre: String(o.nombre).slice(0, 120),
+            monto: Math.round(monto),
+            cuota: Math.round(Number(String(o.cuota || 0).toString().replace(/[^\d.-]/g, '')) || 0),
+            objetivo: Math.round(Number(String(o.objetivo || 0).toString().replace(/[^\d.-]/g, '')) || 0),
+          });
+        }
+      } catch (e) { /* etiqueta malformada: se ignora */ }
+      return '';
+    }).replace(/\n{3,}/g, '\n\n').trim();
+    res.json({ reply: reply || 'Listo.', actions, configured: true });
   } catch (e) {
     console.error('Maya chat error', e.message);
     res.status(500).json({ error: e.message, reply: 'Ocurrió un error. Intenta de nuevo.' });

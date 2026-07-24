@@ -331,6 +331,36 @@
     }
   }
 
+  // Maya puede registrar datos por chat: ejecuta las acciones que devuelve el
+  // backend contra los endpoints ya autenticados (sesión httpOnly), y confirma.
+  var MOD_LABEL = { ingreso: 'Ingresos', gasto: 'Gastos', ahorro: 'Ahorro', deuda: 'Deuda', inversion: 'Inversión', seguros: 'Seguros', retiro: 'Retiro', meta: 'Mis metas' };
+  function copMx(n) { return '$' + Number(n || 0).toLocaleString('es-CO'); }
+  function saveGoal(a) {
+    return fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var goals = (d && Array.isArray(d.goals)) ? d.goals.slice() : [];
+        goals.push({ name: a.nombre, target: a.objetivo || a.monto, current: a.objetivo ? a.monto : 0, created_at: new Date().toISOString() });
+        return fetch('/planea/api/v1/me/profile', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goals: goals }) });
+      });
+  }
+  function runActions(actions) {
+    var jobs = actions.map(function (a) {
+      if (a.modulo === 'meta') return saveGoal(a).then(function () { return a; });
+      return fetch('/planea/api/v1/me/items', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: a.modulo, name: a.nombre, type: a.nombre, value: a.monto, monthly: a.cuota || 0 })
+      }).then(function (r) { if (!r.ok) throw new Error('save'); return a; });
+    });
+    Promise.all(jobs).then(function (done) {
+      var txt = done.map(function (a) { return a.nombre + ' ' + copMx(a.monto) + ' en ' + (MOD_LABEL[a.modulo] || a.modulo); }).join('; ');
+      addMsg('maya', 'Registrado: ' + txt + '. Ya quedó guardado en tu cuenta.');
+      if (window.PlaneaData && typeof window.PlaneaData.reload === 'function') window.PlaneaData.reload();
+    }).catch(function () {
+      addMsg('maya', 'No pude guardar ese dato. Inicia sesión e inténtalo de nuevo.');
+    });
+  }
+
   // Core ask: append user msg, call Maya, append reply. opts.onReply(reply) lets the
   // hands-free loop chain speak→listen; opts.silentTyping hides the "pensando" bubble.
   function ask(text, opts) {
@@ -353,6 +383,7 @@
         var reply = (data && data.reply) || 'No pude responder en este momento.';
         history.push({ role: 'assistant', content: reply });
         addMsg('maya', reply);
+        if (data && data.actions && data.actions.length) runActions(data.actions);
         if (opts.onReply) opts.onReply(reply);
         else if (speaking) speak(reply);
       })
