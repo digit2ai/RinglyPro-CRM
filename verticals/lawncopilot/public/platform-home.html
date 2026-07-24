@@ -242,6 +242,132 @@
 .installbar { background: var(--green-900); color:#fff; padding: 10px var(--space-4);
   display:none; align-items:center; gap: var(--space-3); font-size:.88rem; }
 .installbar.is-on { display:flex; }
+
+/* ── MCP brain constellation ───────────────────────────────────────
+   The green counterpart of the Digit2AI field. Pure SVG + CSS, no library,
+   and it degrades to a readable grid on a phone rather than shrinking the
+   labels to nothing. */
+.mcp-section { background: radial-gradient(1200px 700px at 50% 0%, #16311f, var(--ink-900) 68%); color: #fff; }
+.mcp-section h2 { color: #fff; }
+.mcp-section .lead { color: var(--ink-200); }
+
+.mcp { position: relative; aspect-ratio: 16 / 9; max-width: 1060px; margin: 0 auto;
+  font-family: var(--font-display); }
+.mcp-field { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+.mcp-star { fill: rgba(180,220,194,.55); animation: mcpTwinkle 4s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes mcpTwinkle { 0%,100% { opacity: .25 } 50% { opacity: .85 } }
+
+.mcp-ring { fill: none; stroke: rgba(143,214,163,.13); stroke-width: .15;
+  transform-origin: 50% 50%; animation: mcpRing 9s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes mcpRing { 0%,100% { opacity: .35 } 50% { opacity: .8 } }
+
+/* Links flow inward, so the eye reads the agents feeding the brain */
+.mcp-link { fill: none; stroke: rgba(99,190,122,.42); stroke-width: .22;
+  stroke-dasharray: 1.6 1.4;
+  animation: mcpFlow 2.6s linear infinite;
+  animation-delay: calc(var(--i) * -.32s);
+}
+@keyframes mcpFlow { to { stroke-dashoffset: -6; } }
+
+.mcp-packet { fill: #8fd6a3; filter: drop-shadow(0 0 1.4px rgba(143,214,163,.9)); }
+
+/* Agent nodes */
+.mcp-node { position: absolute; transform: translate(-50%, -50%); text-align: center;
+  width: 168px; animation: mcpFloat 7s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -.7s); }
+@keyframes mcpFloat { 0%,100% { transform: translate(-50%,-50%) } 50% { transform: translate(-50%,calc(-50% - 5px)) } }
+.mcp-node b { display: block; font-size: .82rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #8fd6a3; margin-top: 9px; }
+.mcp-node i { display: block; font-style: normal; font-size: .68rem; color: rgba(212,232,219,.6);
+  font-family: var(--font); margin-top: 2px; }
+
+.mcp-chip { position: relative; height: 46px; border-radius: 11px;
+  border: 1.5px solid rgba(99,190,122,.45); background: rgba(22,49,31,.85);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  box-shadow: 0 0 18px rgba(48,127,68,.28), inset 0 0 12px rgba(99,190,122,.08);
+  transition: border-color .2s ease, box-shadow .2s ease; }
+.mcp-node:hover .mcp-chip { border-color: #8fd6a3; box-shadow: 0 0 26px rgba(143,214,163,.45); }
+.mcp-chip__n { font-size: .6rem; color: rgba(143,214,163,.75); letter-spacing: .1em; }
+.mcp-chip__bar { width: 42px; height: 2px; border-radius: 2px; background: rgba(143,214,163,.6); }
+.mcp-chip__dot { width: 5px; height: 5px; border-radius: 50%; background: #8fd6a3;
+  animation: mcpBlink 2.4s ease-in-out infinite; animation-delay: calc(var(--i) * -.3s); }
+@keyframes mcpBlink { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+/* The stalk connecting a node to its link */
+.mcp-chip::before { content: ""; position: absolute; top: -13px; left: 50%; width: 1.5px; height: 13px;
+  background: rgba(99,190,122,.45); }
+.mcp-chip::after { content: ""; position: absolute; top: -17px; left: 50%; transform: translateX(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: #63be7a; }
+
+/* The brain */
+.mcp-brain { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  width: 250px; border-radius: 16px; padding: 12px;
+  border: 1.5px solid rgba(99,190,122,.4); background: rgba(11,31,22,.94);
+  box-shadow: 0 0 46px rgba(48,127,68,.4), inset 0 0 22px rgba(99,190,122,.06); }
+.mcp-brain__row { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border: 1px solid rgba(143,214,163,.18); border-radius: 9px; padding: 7px 9px; margin-bottom: 7px; }
+.mcp-brain__lbl { font-size: .58rem; letter-spacing: .12em; color: rgba(212,232,219,.7); }
+.mcp-brain__lbl--wide { text-align: center; font-size: .55rem; margin-top: 8px; }
+.mcp-dots { display: flex; gap: 4px; }
+.mcp-dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(143,214,163,.5); }
+.mcp-dots i:last-child { background: var(--clay-300); }
+
+.mcp-brain__core { border: 1.5px solid rgba(143,214,163,.55); border-radius: 11px;
+  background: rgba(48,127,68,.16); padding: 11px 8px; text-align: center; margin: 9px 0;
+  animation: mcpCore 3.4s ease-in-out infinite; }
+@keyframes mcpCore {
+  0%,100% { box-shadow: 0 0 0 0 rgba(143,214,163,.28) }
+  50% { box-shadow: 0 0 0 9px rgba(143,214,163,0) }
+}
+.mcp-brain__kicker { display: block; font-size: .55rem; letter-spacing: .22em; color: #a9e0ba; }
+.mcp-brain__core b { display: block; font-size: 1.02rem; font-weight: 700; letter-spacing: .04em;
+  color: #fff; margin: 3px 0; }
+.mcp-brain__sub { display: block; font-size: .6rem; color: #8fd6a3; letter-spacing: .05em; }
+
+.mcp-pulse { display: flex; gap: 3px; }
+.mcp-pulse i { width: 5px; height: 5px; border-radius: 50%; background: #8fd6a3;
+  animation: mcpBlink 1.5s ease-in-out infinite; }
+.mcp-pulse i:nth-child(2){animation-delay:.12s} .mcp-pulse i:nth-child(3){animation-delay:.24s}
+.mcp-pulse i:nth-child(4){animation-delay:.36s} .mcp-pulse i:nth-child(5){animation-delay:.48s}
+.mcp-pulse i:nth-child(6){animation-delay:.6s}  .mcp-pulse i:nth-child(7){animation-delay:.72s}
+.mcp-live { display: flex; align-items: center; gap: 5px; font-size: .58rem; letter-spacing: .12em; color: #a9e0ba; }
+.mcp-live em { width: 6px; height: 6px; border-radius: 50%; background: #7bd694; font-style: normal;
+  animation: mcpBlink 1.6s ease-in-out infinite; }
+
+/* Live ticker */
+.mcp-ticker { max-width: 900px; margin: var(--space-7) auto 0;
+  border-top: 1px solid rgba(143,214,163,.16); padding-top: var(--space-5);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 10px 22px; }
+.mcp-ticker__head { grid-column: 1/-1; font-size: .6rem; letter-spacing: .16em;
+  text-transform: uppercase; color: rgba(212,232,219,.5); margin-bottom: 2px; }
+.mcp-tick { display: flex; align-items: baseline; gap: 8px; font-size: .82rem; }
+.mcp-tick__dot { width: 6px; height: 6px; border-radius: 50%; background: #63be7a; flex: 0 0 6px; }
+.mcp-tick b { color: #8fd6a3; font-weight: 700; font-size: .78rem; letter-spacing: .03em; }
+.mcp-tick i { font-style: normal; color: rgba(212,232,219,.72); font-family: var(--font); font-size: .8rem; }
+
+/* Phones: a radial field at 360px would be unreadable, so it becomes a grid
+   and the brain leads. Same information, no shrunken text. */
+@media (max-width: 820px) {
+  .mcp { aspect-ratio: auto; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); }
+  .mcp-field { display: none; }
+  .mcp-brain { position: static; transform: none; width: 100%; max-width: 320px; }
+  .mcp-node { position: static; transform: none; width: 100%; animation: none; }
+  .mcp-chip::before, .mcp-chip::after { display: none; }
+  .mcp-nodes-grid { display: grid; }
+}
+@media (max-width: 820px) {
+  .mcp { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .mcp-brain { grid-column: 1/-1; justify-self: center; }
+  .mcp-node b { font-size: .72rem; }
+  .mcp-node i { font-size: .62rem; }
+  .mcp-chip { height: 38px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcp-star, .mcp-ring, .mcp-link, .mcp-node, .mcp-chip__dot,
+  .mcp-pulse i, .mcp-live em, .mcp-brain__core { animation: none !important; }
+  .mcp-packet { display: none; }
+}
 </style>
 </head>
 <body data-slug="__DEMO_SLUG__">
@@ -362,6 +488,83 @@
       </div>
 
       <p class="hero__try">Live demo running on a real company account.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section mcp-section" id="brain">
+  <div class="wrap">
+    <div class="center" style="max-width:720px;margin:0 auto var(--space-6)">
+      <div class="eyebrow" style="color:var(--green-400)">One brain</div>
+      <h2>Eight employees. One system. Nothing works in a silo.</h2>
+      <p class="lead">The receptionist who answers at 9pm reaches the same calendar the dispatcher
+      owns and the same balance the bookkeeper owns. That is why it can finish a job instead of
+      taking a message.</p>
+    </div>
+
+    <div class="mcp" role="img"
+         aria-label="Lawn Co-Pilot MCP brain connected to eight AI employees: Receptionist, Estimator, Dispatcher, Crew Manager, Bookkeeper, Payroll, Marketer, Controller">
+      <svg class="mcp-field" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <circle cx="33.1" cy="16.5" r="0.25" class="mcp-star" style="--d:0.2s"/><circle cx="80.8" cy="11.0" r="0.25" class="mcp-star" style="--d:0.2s"/><circle cx="50.7" cy="5.6" r="0.18" class="mcp-star" style="--d:1.7s"/><circle cx="25.1" cy="54.9" r="0.12" class="mcp-star" style="--d:3.3s"/><circle cx="13.9" cy="23.4" r="0.25" class="mcp-star" style="--d:2.3s"/><circle cx="7.9" cy="58.2" r="0.12" class="mcp-star" style="--d:3.9s"/><circle cx="6.5" cy="84.4" r="0.18" class="mcp-star" style="--d:1.7s"/><circle cx="53.9" cy="56.8" r="0.25" class="mcp-star" style="--d:3.3s"/><circle cx="19.3" cy="57.8" r="0.25" class="mcp-star" style="--d:0.8s"/><circle cx="11.4" cy="70.4" r="0.25" class="mcp-star" style="--d:0.2s"/><circle cx="21.8" cy="67.3" r="0.18" class="mcp-star" style="--d:3.1s"/><circle cx="46.7" cy="90.7" r="0.18" class="mcp-star" style="--d:1.2s"/><circle cx="78.3" cy="69.1" r="0.12" class="mcp-star" style="--d:0.3s"/><circle cx="30.8" cy="49.5" r="0.18" class="mcp-star" style="--d:2.9s"/><circle cx="29.6" cy="96.1" r="0.12" class="mcp-star" style="--d:2.0s"/><circle cx="17.8" cy="34.8" r="0.18" class="mcp-star" style="--d:1.7s"/><circle cx="94.4" cy="9.5" r="0.25" class="mcp-star" style="--d:2.3s"/><circle cx="86.0" cy="32.1" r="0.25" class="mcp-star" style="--d:1.4s"/><circle cx="49.7" cy="78.5" r="0.12" class="mcp-star" style="--d:3.4s"/><circle cx="92.7" cy="47.5" r="0.25" class="mcp-star" style="--d:0.3s"/><circle cx="72.2" cy="31.7" r="0.25" class="mcp-star" style="--d:4.0s"/><circle cx="80.9" cy="29.3" r="0.18" class="mcp-star" style="--d:3.5s"/><circle cx="35.3" cy="92.3" r="0.18" class="mcp-star" style="--d:0.7s"/><circle cx="13.2" cy="7.7" r="0.18" class="mcp-star" style="--d:0.5s"/><circle cx="25.8" cy="39.5" r="0.18" class="mcp-star" style="--d:0.3s"/><circle cx="45.1" cy="54.7" r="0.12" class="mcp-star" style="--d:3.3s"/><circle cx="84.9" cy="28.7" r="0.18" class="mcp-star" style="--d:3.9s"/><circle cx="67.5" cy="38.5" r="0.12" class="mcp-star" style="--d:0.6s"/><circle cx="18.9" cy="24.3" r="0.12" class="mcp-star" style="--d:0.0s"/><circle cx="81.8" cy="19.5" r="0.18" class="mcp-star" style="--d:0.0s"/><circle cx="42.2" cy="37.4" r="0.25" class="mcp-star" style="--d:1.3s"/><circle cx="14.0" cy="84.5" r="0.25" class="mcp-star" style="--d:2.6s"/><circle cx="73.0" cy="45.8" r="0.25" class="mcp-star" style="--d:3.2s"/><circle cx="39.7" cy="40.3" r="0.12" class="mcp-star" style="--d:1.9s"/><circle cx="40.4" cy="20.3" r="0.12" class="mcp-star" style="--d:1.8s"/><circle cx="12.6" cy="59.7" r="0.12" class="mcp-star" style="--d:0.0s"/><circle cx="16.5" cy="11.7" r="0.18" class="mcp-star" style="--d:2.5s"/><circle cx="8.8" cy="22.0" r="0.18" class="mcp-star" style="--d:0.6s"/><circle cx="26.2" cy="35.3" r="0.18" class="mcp-star" style="--d:1.9s"/><circle cx="13.1" cy="48.9" r="0.18" class="mcp-star" style="--d:1.9s"/><circle cx="31.9" cy="15.8" r="0.25" class="mcp-star" style="--d:1.4s"/><circle cx="27.4" cy="81.6" r="0.12" class="mcp-star" style="--d:2.1s"/><circle cx="21.7" cy="93.4" r="0.18" class="mcp-star" style="--d:0.6s"/><circle cx="54.1" cy="4.6" r="0.25" class="mcp-star" style="--d:1.2s"/><circle cx="63.7" cy="10.7" r="0.18" class="mcp-star" style="--d:2.1s"/><circle cx="89.2" cy="36.1" r="0.12" class="mcp-star" style="--d:2.1s"/>
+        <circle cx="50" cy="50" r="18" class="mcp-ring" style="--d:0.0s"/><circle cx="50" cy="50" r="27" class="mcp-ring" style="--d:1.4s"/><circle cx="50" cy="50" r="36" class="mcp-ring" style="--d:2.8s"/>
+        <path id="mcpP0" class="mcp-link" d="M14 16 Q36.0 33.0 50.0 50.0" style="--i:0"/><path id="mcpP1" class="mcp-link" d="M6 40 Q32.0 45.0 50.0 50.0" style="--i:1"/><path id="mcpP2" class="mcp-link" d="M8 66 Q33.0 58.0 50.0 50.0" style="--i:2"/><path id="mcpP3" class="mcp-link" d="M24 88 Q41.0 69.0 50.0 50.0" style="--i:3"/><path id="mcpP4" class="mcp-link" d="M76 88 Q59.0 69.0 50.0 50.0" style="--i:4"/><path id="mcpP5" class="mcp-link" d="M92 66 Q67.0 58.0 50.0 50.0" style="--i:5"/><path id="mcpP6" class="mcp-link" d="M94 40 Q68.0 45.0 50.0 50.0" style="--i:6"/><path id="mcpP7" class="mcp-link" d="M86 16 Q64.0 33.0 50.0 50.0" style="--i:7"/>
+        <circle class="mcp-packet" r="0.55" style="--i:0"><animateMotion dur="4.50s" repeatCount="indefinite" begin="0.0s"><mpath href="#mcpP0"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:1"><animateMotion dur="4.85s" repeatCount="indefinite" begin="0.5s"><mpath href="#mcpP1"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:2"><animateMotion dur="5.20s" repeatCount="indefinite" begin="1.0s"><mpath href="#mcpP2"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:3"><animateMotion dur="5.55s" repeatCount="indefinite" begin="1.5s"><mpath href="#mcpP3"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:4"><animateMotion dur="5.90s" repeatCount="indefinite" begin="2.0s"><mpath href="#mcpP4"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:5"><animateMotion dur="6.25s" repeatCount="indefinite" begin="2.5s"><mpath href="#mcpP5"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:6"><animateMotion dur="6.60s" repeatCount="indefinite" begin="3.0s"><mpath href="#mcpP6"/></animateMotion></circle><circle class="mcp-packet" r="0.55" style="--i:7"><animateMotion dur="6.95s" repeatCount="indefinite" begin="3.5s"><mpath href="#mcpP7"/></animateMotion></circle>
+      </svg>
+
+  <div class="mcp-node mcp-node--l" style="left:14%;top:16%;--i:0">
+    <div class="mcp-chip"><span class="mcp-chip__n">01</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Receptionist</b><i>calls · booking · service</i>
+  </div>
+  <div class="mcp-node mcp-node--l" style="left:6%;top:40%;--i:1">
+    <div class="mcp-chip"><span class="mcp-chip__n">02</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Estimator</b><i>measure · price · quote</i>
+  </div>
+  <div class="mcp-node mcp-node--l" style="left:8%;top:66%;--i:2">
+    <div class="mcp-chip"><span class="mcp-chip__n">03</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Dispatcher</b><i>schedule · routes · crews</i>
+  </div>
+  <div class="mcp-node mcp-node--l" style="left:24%;top:88%;--i:3">
+    <div class="mcp-chip"><span class="mcp-chip__n">04</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Crew Manager</b><i>hours · certs · checklists</i>
+  </div>
+  <div class="mcp-node mcp-node--r" style="left:76%;top:88%;--i:4">
+    <div class="mcp-chip"><span class="mcp-chip__n">05</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Bookkeeper</b><i>invoices · payments · books</i>
+  </div>
+  <div class="mcp-node mcp-node--r" style="left:92%;top:66%;--i:5">
+    <div class="mcp-chip"><span class="mcp-chip__n">06</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Payroll</b><i>hours → gross → net</i>
+  </div>
+  <div class="mcp-node mcp-node--r" style="left:94%;top:40%;--i:6">
+    <div class="mcp-chip"><span class="mcp-chip__n">07</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Marketer</b><i>reviews · referrals · GBP</i>
+  </div>
+  <div class="mcp-node mcp-node--r" style="left:86%;top:16%;--i:7">
+    <div class="mcp-chip"><span class="mcp-chip__n">08</span><span class="mcp-chip__bar"></span><span class="mcp-chip__dot"></span></div>
+    <b>Controller</b><i>cost · margin · savings</i>
+  </div>
+
+      <div class="mcp-brain">
+        <div class="mcp-brain__row"><span class="mcp-dots"><i></i><i></i><i></i></span>
+          <span class="mcp-brain__lbl">CORE · CONTEXT</span></div>
+        <div class="mcp-brain__row"><span class="mcp-dots"><i></i><i></i><i></i></span>
+          <span class="mcp-brain__lbl">CORE · ROUTING</span></div>
+        <div class="mcp-brain__core">
+          <span class="mcp-brain__kicker">MCP</span>
+          <b>LAWN CO-PILOT</b>
+          <span class="mcp-brain__sub">8 agents · linked</span>
+        </div>
+        <div class="mcp-brain__row mcp-brain__row--live">
+          <span class="mcp-pulse"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="mcp-live"><em></em>LIVE</span>
+        </div>
+        <div class="mcp-brain__lbl mcp-brain__lbl--wide">ORCHESTRATOR · 75 TOOLS</div>
+      </div>
+    </div>
+
+    <div class="mcp-ticker">
+      <div class="mcp-ticker__head">Today, across every company</div>
+      <div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Receptionist</b><i>14 calls answered · 3 after 6pm</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Estimator</b><i>9 properties measured and priced</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Dispatcher</b><i>2 routes sequenced · 1 reschedule</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Bookkeeper</b><i>5 invoices sent · 4 collected</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Crew Manager</b><i>3 clocked in · 1 cert expiring</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Marketer</b><i>5 review requests sent</i></div><div class="mcp-tick"><span class="mcp-tick__dot"></span><b>Controller</b><i>1 underpriced customer flagged</i></div>
     </div>
   </div>
 </section>

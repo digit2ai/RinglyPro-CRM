@@ -587,6 +587,26 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
        tenantPg.text.includes('app.webmanifest') && tenantPg.text.includes('/lawncopilot/pwa.js'));
     ok('company pages get both typefaces', tenantPg.text.includes('Space+Grotesk'));
 
+    // The MCP brain constellation: the visual argument for one brain rather
+    // than eight disconnected bots.
+    ok('platform home carries the MCP brain constellation',
+       homeHtml.text.includes('id="brain"') && homeHtml.text.includes('mcp-brain__core'));
+    ok('the brain is named Lawn Co-Pilot', /LAWN CO-PILOT<\/b>/.test(homeHtml.text));
+    const agentNames = ['Receptionist', 'Estimator', 'Dispatcher', 'Crew Manager',
+                        'Bookkeeper', 'Payroll', 'Marketer', 'Controller'];
+    ok('all eight employees appear as nodes',
+       agentNames.every(n => homeHtml.text.includes('<b>' + n + '</b>')),
+       agentNames.filter(n => !homeHtml.text.includes('<b>' + n + '</b>')).join(', '));
+    ok('the constellation animates', homeHtml.text.includes('animateMotion')
+       && homeHtml.text.includes('mcp-link'));
+    ok('it reports the real activity lines',
+       homeHtml.text.includes('14 calls answered') && homeHtml.text.includes('9 properties measured')
+       && homeHtml.text.includes('1 underpriced customer flagged'));
+    ok('the constellation honours reduced motion',
+       /prefers-reduced-motion[\s\S]{0,600}mcp-packet/.test(homeHtml.text));
+    ok('the constellation is described for screen readers',
+       /role="img"[\s\S]{0,200}aria-label="Lawn Co-Pilot MCP brain/.test(homeHtml.text));
+
     ok('exactly one estimator and one simulator on the page',
        (homeHtml.text.match(/id="orbcard"/g) || []).length === 1
        && (homeHtml.text.match(/id="sim"/g) || []).length === 1);
