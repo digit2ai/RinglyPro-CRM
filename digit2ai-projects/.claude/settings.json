@@ -75,7 +75,8 @@
       "Bash(sips -g pixelWidth logo-white.png)",
       "Bash(/* quote.html shares the same look */)",
       "Bash(filed)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-pdf-header-footer --print-to-pdf=/Users/manuelstagg/Desktop/PLANEA_UAT_Respuesta_Eduardo_Juan.pdf file:///private/tmp/claude-501/-Users-manuelstagg-Documents-GitHub-RinglyPro-CRM-digit2ai-projects/c63f1f60-c1c3-4086-8225-936d06a48f50/scratchpad/planea-uat-respuesta.html)"
     ]
   }
 }
