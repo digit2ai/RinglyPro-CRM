@@ -542,11 +542,15 @@ async function handleIncomingSMS(req, res) {
     console.log(`   Body: ${Body}`);
     console.log(`   Status: ${SmsStatus}`);
 
-    // Find client by ringlypro_number
+    // Find client by ringlypro_number, or by sms_number when the client sends SMS
+    // from a dedicated (e.g. toll-free verified) DID that differs from its voice number.
+    // ringlypro_number is matched first so a client's own voice number always wins.
     const clientQuery = `
       SELECT id, business_name
       FROM clients
-      WHERE ringlypro_number = $1 AND active = TRUE
+      WHERE (ringlypro_number = $1 OR sms_number = $1) AND active = TRUE
+      ORDER BY (ringlypro_number = $1) DESC
+      LIMIT 1
     `;
 
     const [clientData] = await sequelize.query(clientQuery, {

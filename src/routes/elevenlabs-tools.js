@@ -555,14 +555,16 @@ async function handleSendSms(params) {
 
     // Get client's Twilio number
     const clients = await sequelize.query(`
-      SELECT ringlypro_number, business_name FROM clients WHERE id = :clientId
+      SELECT ringlypro_number, sms_number, business_name FROM clients WHERE id = :clientId
     `, { replacements: { clientId: client_id }, type: QueryTypes.SELECT });
 
     if (!clients || clients.length === 0) {
       return { success: false, error: 'Client not found' };
     }
 
-    const fromNumber = clients[0].ringlypro_number;
+    // Prefer a dedicated SMS DID when set. A client's voice number is often an
+    // unregistered local DID, while sms_number is the toll-free/A2P-verified sender.
+    const fromNumber = clients[0].sms_number || clients[0].ringlypro_number;
     const businessName = clients[0].business_name;
 
     // Build message if not provided
@@ -1843,6 +1845,25 @@ async function handleBookAppointmentD2AI(params) {
 
     logger.info(`[ElevenLabs Tools] [D2AI] Booked event ${eventId} on ${aptDate} ${finalTime} for ${name}`);
 
+    // Confirmation SMS. Sent from the client's dedicated sms_number (the toll-free
+    // verified DID) rather than the voice DID the caller dialled. Fire-and-forget:
+    // the appointment is already committed, so an SMS failure must not fail the
+    // booking or make the voice agent tell the caller it did not go through.
+    const smsResult = await handleSendSms({
+      client_id: D2AI_CLIENT_ID,
+      to_phone: phoneNum,
+      customer_name: name,
+      appointment_date: aptDate,
+      appointment_time: finalTime,
+      confirmation_code: `D2AI-${eventId}`
+    }).catch(e => ({ success: false, error: e.message }));
+
+    if (!smsResult.success) {
+      logger.error(`[ElevenLabs Tools] [D2AI] Confirmation SMS failed for event ${eventId}: ${smsResult.error}`);
+    } else {
+      logger.info(`[ElevenLabs Tools] [D2AI] Confirmation SMS ${smsResult.message_sid} sent from ${smsResult.from} to ${phoneNum}`);
+    }
+
     return {
       success: true,
       message: `Appointment booked successfully for ${name}`,
@@ -1852,7 +1873,8 @@ async function handleBookAppointmentD2AI(params) {
       appointment_time: finalTime,
       customer_name: name,
       customer_phone: phoneNum,
-      calendar_type: 'digit2ai_projects'
+      calendar_type: 'digit2ai_projects',
+      sms_sent: !!smsResult.success
     };
   } catch (error) {
     logger.error('[ElevenLabs Tools] [D2AI] book_appointment error:', error);
