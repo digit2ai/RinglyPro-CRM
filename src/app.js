@@ -17,6 +17,8 @@ const CLIENT_NAME = process.env.CLIENT_NAME || 'RinglyPro';
 const CLIENT_DOMAIN = process.env.CLIENT_DOMAIN || 'ringlypro.com';
 
 // Middleware - MUST COME BEFORE ROUTES
+// Detrás del proxy de Render: IP real del cliente (rate limiting) y req.secure correcto.
+app.set('trust proxy', 1);
 app.use(cors());
 
 // KanchoAI Stripe webhook - MUST be before body parser for raw body access

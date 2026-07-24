@@ -169,7 +169,7 @@ router.get('/reset', (req, res) => res.sendFile(path.join(publicDir, 'reset.html
 router.get('/platform/login', (req, res) => res.sendFile(path.join(publicDir, 'platform-login.html')));
 router.get('/platform/reset', (req, res) => res.sendFile(path.join(publicDir, 'platform-reset.html')));
 router.get(['/platform', '/platform/'], (req, res) => {
-  if (!req.platformUser) return res.redirect('/lawncopilot/platform/login');
+  if (!req.platformUser) return res.redirect(require('./tenancy').basePath(req) + '/platform/login');
   res.sendFile(path.join(publicDir, 'platform.html'));
 });
 

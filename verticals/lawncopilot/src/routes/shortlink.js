@@ -14,10 +14,10 @@ const { ShortLink, Tenant } = require('../models');
 
 router.get('/:code', async (req, res) => {
   const code = String(req.params.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (!code) return res.redirect('/lawncopilot/');
+  if (!code) return res.redirect(require('../tenancy').basePath(req) + '/');
 
   const link = await ShortLink.findOne({ where: { code } });
-  if (!link) return res.redirect('/lawncopilot/');
+  if (!link) return res.redirect(require('../tenancy').basePath(req) + '/');
 
   // Count it, but never let analytics block the redirect.
   ShortLink.update(

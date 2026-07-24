@@ -9,6 +9,9 @@
  */
 
 const express = require('express');
+// basePath() is '' on lawncopilot.com and '/lawncopilot' under aiagent — using
+// it keeps auth redirects one hop instead of two.
+const { basePath } = require('./tenancy');
 const path = require('path');
 const router = express.Router({ mergeParams: true });
 
@@ -56,26 +59,26 @@ const ASSET = /\.[a-z0-9]{2,16}$/i;
 
 // Customer portal
 router.get(['/portal', '/portal/'], (req, res) => {
-  if (!req.customer) return res.redirect(`/lawncopilot/${req.tenantSlug}/login`);
+  if (!req.customer) return res.redirect(`${basePath(req)}/${req.tenantSlug}/login`);
   res.sendFile(path.join(publicDir, 'portal', 'inicio.html'));
 });
 router.get('/portal/:page', (req, res, next) => {
   if (ASSET.test(req.params.page)) return next();
-  if (!req.customer) return res.redirect(`/lawncopilot/${req.tenantSlug}/login`);
+  if (!req.customer) return res.redirect(`${basePath(req)}/${req.tenantSlug}/login`);
   const page = String(req.params.page).replace(/[^a-z0-9-]/gi, '');
   res.sendFile(path.join(publicDir, 'portal', `${page}.html`), (err) => { if (err) next(); });
 });
 
 // Tenant admin
 router.get(['/admin', '/admin/'], (req, res) => {
-  if (!req.staff) return res.redirect(`/lawncopilot/${req.tenantSlug}/admin/login`);
+  if (!req.staff) return res.redirect(`${basePath(req)}/${req.tenantSlug}/admin/login`);
   res.sendFile(path.join(publicDir, 'admin', 'inicio.html'));
 });
 router.get('/admin/:page', (req, res, next) => {
   if (ASSET.test(req.params.page)) return next();
   const page = String(req.params.page).replace(/[^a-z0-9-]/gi, '');
   if (page === 'login') return res.sendFile(path.join(publicDir, 'admin-login.html'));
-  if (!req.staff) return res.redirect(`/lawncopilot/${req.tenantSlug}/admin/login`);
+  if (!req.staff) return res.redirect(`${basePath(req)}/${req.tenantSlug}/admin/login`);
   res.sendFile(path.join(publicDir, 'admin', `${page}.html`), (err) => { if (err) next(); });
 });
 

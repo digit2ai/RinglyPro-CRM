@@ -17,7 +17,11 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
+const security = require('./security.cjs');
+
 const router = express.Router();
+// Cabeceras de seguridad en TODA respuesta de /planea (ISO 27001 A.8.24 · SOC 2 CC6.6)
+router.use(security.headers);
 const distDir = path.join(__dirname, 'dist');
 const indexHtml = path.join(distDir, 'index.html');
 const hasBuild = fs.existsSync(indexHtml);

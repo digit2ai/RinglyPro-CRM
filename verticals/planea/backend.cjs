@@ -23,6 +23,7 @@ const crypto = require('crypto');
 const { Sequelize, DataTypes } = require('sequelize');
 const score = require('./score.cjs');
 const salud = require('./salud.cjs');
+const sec = require('./security.cjs');
 
 const SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
 const COOKIE = 'planea_session';
@@ -37,6 +38,7 @@ let Profile = null;
 let Item = null;
 let SaludH = null;
 let Uat = null;
+let Audit = null;
 let ready = false;
 let initErr = null;
 
@@ -107,7 +109,20 @@ function defineModels(sq) {
     results: { type: DataTypes.JSONB, allowNull: true },
   }, { tableName: 'planea_uat_runs', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-  return { U, P, I, H, T };
+  // Registro de eventos de seguridad (A.8.15 · SOC 2 CC7.2). Sin datos sensibles:
+  // nunca contraseña, token ni cuerpo de la petición; la IP va hasheada.
+  const L = sq.define('PlaneaAuditLog', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: true },
+    email: { type: DataTypes.STRING, allowNull: true },
+    event: { type: DataTypes.STRING, allowNull: false },
+    outcome: { type: DataTypes.STRING, allowNull: true },
+    ip_hash: { type: DataTypes.STRING, allowNull: true },
+    user_agent: { type: DataTypes.STRING, allowNull: true },
+    meta: { type: DataTypes.JSONB, allowNull: true },
+  }, { tableName: 'planea_audit_log', underscored: true, createdAt: 'created_at', updatedAt: false });
+
+  return { U, P, I, H, T, L };
 }
 
 async function init() {
@@ -120,7 +135,7 @@ async function init() {
       pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
     });
     const m = defineModels(sequelize);
-    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H; Uat = m.T;
+    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H; Uat = m.T; Audit = m.L;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
@@ -136,6 +151,7 @@ async function init() {
     await sequelize.query('ALTER TABLE planea_uat_runs ADD COLUMN IF NOT EXISTS session_key VARCHAR(120)').catch(function () {});
     await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_uat_session ON planea_uat_runs(session_key) WHERE session_key IS NOT NULL').catch(function () {});
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(80)').catch(function () {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_audit_user ON planea_audit_log(user_id, created_at)').catch(function () {});
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ').catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');

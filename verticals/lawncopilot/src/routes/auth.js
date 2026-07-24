@@ -64,11 +64,11 @@ router.get('/verify', (req, res) => {
   const rec = magicLinks.get(req.query.token);
   if (!rec || rec.expires < Date.now()) {
     magicLinks.delete(req.query.token);
-    return res.redirect('/lawncopilot/login?expired=1');
+    return res.redirect(`${require('../tenancy').basePath(req)}/${req.tenantSlug}/login?expired=1`);
   }
   magicLinks.delete(req.query.token);
   res.cookie('lawncopilot_token', sign({ id: rec.customer_id, tenant_id: T(req), kind: 'customer' }), COOKIE);
-  res.redirect('/lawncopilot/portal/');
+  res.redirect(`${require('../tenancy').basePath(req)}/${req.tenantSlug}/portal/`);
 });
 
 router.post('/logout', (req, res) => {
