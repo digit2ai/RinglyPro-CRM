@@ -553,9 +553,8 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     // Typography, second tone and PWA — verified as design-system facts, not
     // per-page styling that can drift.
     const css = (await call('GET', `${ROOT}/styles.css`)).text;
-    ok('two typefaces are defined',
-       css.includes('--font-display') && css.includes('--font:') &&
-       /Space Grotesk/.test(css) && /Inter/.test(css));
+    ok('font tokens exist so headings can be retargeted',
+       css.includes('--font-display') && css.includes('--font:'));
     ok('headings use the display face', /h1, h2, h3, h4 \{[^}]*--font-display/.test(css));
     ok('a second tone exists and is not the primary',
        css.includes('--clay-500') && css.includes('--bg-warm'));
@@ -579,13 +578,16 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('platform home is installable',
        homeHtml.text.includes('app.webmanifest') && homeHtml.text.includes('/lawncopilot/pwa.js')
        && homeHtml.text.includes('theme-color'));
-    ok('fonts load without blocking first paint',
-       homeHtml.text.includes('fonts.gstatic.com') && homeHtml.text.includes("media=\"print\""));
+    ok('no external webfont request',
+       !/fonts\.googleapis\.com|fonts\.gstatic\.com/.test(homeHtml.text));
+    ok('one system font stack, no webfont dependency',
+       /--font:\s*-apple-system/.test(css) && /--font-display:\s*var\(--font\)/.test(css));
 
     const tenantPg = await call('GET', `${ROOT}/${A.slug}`);
     ok('company pages are installable too',
        tenantPg.text.includes('app.webmanifest') && tenantPg.text.includes('/lawncopilot/pwa.js'));
-    ok('company pages get both typefaces', tenantPg.text.includes('Space+Grotesk'));
+    ok('company pages carry no webfont request either',
+       !/fonts\.googleapis\.com/.test(tenantPg.text));
 
     // The MCP brain constellation: the visual argument for one brain rather
     // than eight disconnected bots.

@@ -81,10 +81,6 @@ ${c.logo_url ? `<meta property="og:image" content="${e(c.logo_url)}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/lawncopilot/mark.png" type="image/png">
 <link rel="apple-touch-icon" href="/lawncopilot/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" media="print" onload="this.media='all'"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="/lawncopilot/styles.css">
 <link rel="stylesheet" href="/lawncopilot/tenant.css">
 <link rel="manifest" href="/lawncopilot/app.webmanifest">

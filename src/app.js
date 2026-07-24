@@ -60,6 +60,51 @@ try {
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
+// ═════════════════════════════════════════════════════════════════════════
+// CUSTOM DOMAIN: lawncopilot.com serves the Lawn Co-Pilot app at its ROOT
+//
+// Registered HERE, before any other route, because Express matches in
+// registration order — mounted after the main app's own '/' and '/health'
+// this never fires and the domain silently serves RinglyPro instead.
+//
+// The slug is a company's whole web address and goes on a truck, so it has to
+// read lawncopilot.com/green-acres, not lawncopilot.com/lawncopilot/green-acres.
+//   1. www redirects to the apex once, so links and cookies have one home
+//   2. assets carrying the /lawncopilot prefix are served silently in place,
+//      so absolute paths in the HTML resolve with no extra round trip
+//   3. prefixed PAGE urls 301 to the clean path, so the address bar ends
+//      canonical without paying a redirect on every stylesheet
+// aiagent.ringlypro.com/lawncopilot keeps working exactly as before.
+// ═════════════════════════════════════════════════════════════════════════
+const LAWNCOPILOT_HOSTS = new Set(['lawncopilot.com', 'www.lawncopilot.com']);
+const LAWNCOPILOT_ASSET = /\.[a-z0-9]{2,16}$/i;
+let lawncopilotRootApp = null;
+try {
+  lawncopilotRootApp = require('../verticals/lawncopilot/src/index');
+} catch (e) {
+  console.log('⚠️ Lawn Co-Pilot root mount unavailable:', e.message);
+}
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!LAWNCOPILOT_HOSTS.has(host) || !lawncopilotRootApp) return next();
+
+  if (host === 'www.lawncopilot.com') {
+    return res.redirect(301, 'https://lawncopilot.com' + req.originalUrl);
+  }
+
+  if (req.url === '/lawncopilot' || req.url.startsWith('/lawncopilot/')) {
+    const clean = req.url.slice('/lawncopilot'.length) || '/';
+    const pathOnly = clean.split('?')[0];
+    if (LAWNCOPILOT_ASSET.test(pathOnly) || req.method !== 'GET') req.url = clean;
+    else return res.redirect(301, clean);
+  }
+
+  req.lawncopilotRoot = true;
+  return lawncopilotRootApp(req, res, next);
+});
+
+
 // Custom domain: camaravirtual.app
 // Root '/' serves the Spanish marketing landing DIRECTLY (no rewrite to
 // /chamber/hispamind/, which would now bounce through the legacy 301
@@ -1695,41 +1740,7 @@ app.get('/debug/veritas-error', (req, res) => {
 let lawncopilotApp = null;
 let lawncopilotError = null;
 try {
-  lawncopilotApp = require('../verticals/lawncopilot/src/index');
-
-  // ── Custom domain: lawncopilot.com serves the app at its ROOT ───────────
-  // The slug is the company's whole web address, so it has to read
-  // lawncopilot.com/green-acres — not lawncopilot.com/lawncopilot/green-acres.
-  //
-  // The vertical stays mounted at /lawncopilot for aiagent.ringlypro.com, and
-  // on the custom domain we:
-  //   1. send www -> apex once, so links and cookies have one canonical home
-  //   2. serve assets carrying the /lawncopilot prefix silently, so the
-  //      absolute paths baked into the HTML resolve with no extra round trip
-  //   3. 301 prefixed PAGE urls to the clean path, so the address bar ends up
-  //      canonical without paying a redirect on every stylesheet
-  const LC_HOSTS = new Set(['lawncopilot.com', 'www.lawncopilot.com']);
-  const HAS_EXT = /\.[a-z0-9]{2,16}$/i;
-
-  app.use((req, res, next) => {
-    const host = (req.get('host') || '').toLowerCase().split(':')[0];
-    if (!LC_HOSTS.has(host)) return next();
-
-    if (host === 'www.lawncopilot.com') {
-      return res.redirect(301, 'https://lawncopilot.com' + req.originalUrl);
-    }
-
-    if (req.url === '/lawncopilot' || req.url.startsWith('/lawncopilot/')) {
-      const clean = req.url.slice('/lawncopilot'.length) || '/';
-      const path = clean.split('?')[0];
-      // Assets resolve in place; pages get one clean redirect.
-      if (HAS_EXT.test(path) || req.method !== 'GET') req.url = clean;
-      else return res.redirect(301, clean);
-    }
-
-    req.lawncopilotRoot = true;
-    return lawncopilotApp(req, res, next);
-  });
+  lawncopilotApp = lawncopilotRootApp || require('../verticals/lawncopilot/src/index');
 
   app.get('/lawncopilot', (req, res, next) => {
     if (!req.originalUrl.endsWith('/')) return res.redirect('/lawncopilot/');

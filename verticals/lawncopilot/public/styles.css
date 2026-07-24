@@ -58,11 +58,12 @@
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --space-9: 96px;
 
-  /* Two typefaces: a display grotesk with character for headings and numbers,
-     a neutral workhorse for reading. Both load with font-display:swap and a
-     full system fallback, so text paints immediately on a slow connection. */
-  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* One system stack, as before. Reverted from the webfont pairing — it also
+     removes an external request, which the mobile budget benefits from.
+     --font-display stays as a token so headings can be retargeted later
+     without touching every rule that uses it. */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font);
   --maxw: 1180px;
 }
 
