@@ -856,6 +856,35 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('it is a service-area business (no storefront address leaked)',
        listing.business_type === 'service_area');
 
+    // ── 17h. One sign-in, routed by entitlement ───────────────────────────
+    // A company owner, their homeowner customer, and the Digit2AI admin all
+    // type into the SAME form and must land somewhere different.
+    console.log('\n[17h] Entitlement routing');
+    const idsvc = require('./src/services/identity');
+
+    const staffIds = await idsvc.resolveIdentities(A.email, PW);
+    ok('a company owner resolves to their own office',
+       staffIds.length >= 1 && staffIds.some(i => i.kind === 'staff' && i.path === `/${A.slug}/admin`),
+       staffIds.map(i => i.kind + ':' + i.path).join(', '));
+    ok('the owner of company A never resolves into company B',
+       !staffIds.some(i => i.slug && i.slug !== A.slug));
+
+    const wrongPw = await idsvc.resolveIdentities(A.email, 'definitely-not-the-password');
+    ok('a wrong password resolves to nothing at all', wrongPw.length === 0);
+
+    const noSuchEmail = await idsvc.resolveIdentities('nobody-' + Date.now() + '@nowhere.test', 'x');
+    ok('an unknown email resolves to nothing at all', noSuchEmail.length === 0);
+
+    // Cross-table safety: matching an email in one table must not grant another.
+    ok('identities carry the tenant they belong to',
+       staffIds.filter(i => i.kind !== 'platform').every(i => !!i.tenant_id));
+
+    const sel = idsvc.readSelection(idsvc.selectionToken('x@y.z', staffIds));
+    ok('the chooser token round-trips only verified identities',
+       !!sel && sel.purpose === 'signin_select' && sel.ids.length === staffIds.length);
+    ok('the chooser token carries no password material',
+       JSON.stringify(sel).indexOf('password') === -1 && JSON.stringify(sel).indexOf('hash') === -1);
+
     // ── 18. Cleanup ───────────────────────────────────────────────────────
     console.log('\n[18] Cleanup');
     for (const id of [alphaId, betaId]) {

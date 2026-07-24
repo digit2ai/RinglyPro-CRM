@@ -138,6 +138,7 @@ router.get('/health', async (req, res) => {
 
 router.use('/mcp', require('./routes/mcp'));
 router.use('/api/v1/signup', require('./routes/signup'));
+router.use('/api/v1/signin', require('./routes/signin'));
 router.use('/api/v1/platform', require('./routes/platform'));
 router.use('/webhooks', require('./routes/webhooks'));
 router.use('/voice', require('./routes/voice'));
@@ -157,6 +158,14 @@ catch (e) { console.warn('  Lawn Co-Pilot: TTS route not mounted —', e.message
 
 // Platform pages
 router.get('/signup', (req, res) => res.sendFile(path.join(publicDir, 'signup.html')));
+
+/**
+ * THE ONE SIGN-IN. Company owners, crews and homeowners all land here; the
+ * account decides which dashboard opens (see services/identity.js). The three
+ * old role-specific logins still work so bookmarks and deep links don't break.
+ */
+router.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'signin.html')));
+router.get('/reset', (req, res) => res.sendFile(path.join(publicDir, 'reset.html')));
 router.get('/platform/login', (req, res) => res.sendFile(path.join(publicDir, 'platform-login.html')));
 router.get('/platform/reset', (req, res) => res.sendFile(path.join(publicDir, 'platform-reset.html')));
 router.get(['/platform', '/platform/'], (req, res) => {

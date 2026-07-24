@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in — Lawn Co-Pilot</title>
+<meta name="description" content="Sign in to Lawn Co-Pilot. Company owners, crews and homeowners all sign in here.">
+<link rel="manifest" href="/lawncopilot/app.webmanifest">
+<meta name="theme-color" content="#307f44">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<style>
+body { display:grid; place-items:center; min-height:100vh; background:
+  radial-gradient(900px 420px at 50% -10%, var(--green-100), transparent 62%), var(--bg-alt); padding: var(--space-4); }
+.box { background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg); padding:var(--space-6);
+  max-width:440px; width:100%; box-shadow:var(--shadow); }
+.brand { margin-bottom: var(--space-5); } .brand img { height:58px; width:auto; }
+.msg { padding:12px 14px; border-radius:var(--radius); font-size:.88rem; margin-bottom:var(--space-4); display:none; }
+.msg.err { background:#fef2f2; color:#991b1b; display:block; }
+.msg.ok { background:var(--green-50); color:var(--green-900); display:block; }
+.hint { font-size:.8rem; color:var(--text-mut); margin-top:5px; }
+.linkrow { text-align:center; margin-top:var(--space-4); font-size:.86rem; }
+.linkrow a { color:var(--green-700); font-weight:600; }
+.foot { text-align:center; margin-top:var(--space-5); padding-top:var(--space-4);
+  border-top:1px solid var(--line); font-size:.84rem; color:var(--text-mut); }
+/* Entitlement chooser */
+.choices { display:flex; flex-direction:column; gap:10px; }
+.choice { display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:14px;
+  font:inherit; transition:border-color .12s ease, transform .12s ease; }
+.choice:hover { border-color:var(--green-500); transform:translateX(2px); }
+.choice__ic { width:38px; height:38px; flex:0 0 38px; border-radius:10px; display:grid; place-items:center;
+  font-weight:800; font-size:.8rem; }
+.choice__ic--platform { background:var(--ink-900); color:#fff; }
+.choice__ic--staff { background:var(--green-100); color:var(--green-700); }
+.choice__ic--customer { background:var(--clay-100); color:var(--clay-700); }
+.choice__m b { display:block; font-size:.96rem; }
+.choice__m span { font-size:.8rem; color:var(--text-mut); }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="brand"><img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="200" height="76"></div>
+
+  <!-- Step 1: credentials -->
+  <div id="stepLogin">
+    <h2 style="font-size:1.4rem">Sign in</h2>
+    <p class="small mut">Company owners, crews and homeowners all sign in here — we'll take you to the right place.</p>
+    <div class="msg" id="msg"></div>
+    <form id="form">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn--primary" type="submit" style="width:100%" id="submit">Sign in</button>
+    </form>
+    <p class="linkrow"><a href="#" id="forgotLink">Forgot your password?</a></p>
+    <div class="foot">New here? <a href="/lawncopilot/signup" style="color:var(--green-700);font-weight:700">Start your company free</a></div>
+  </div>
+
+  <!-- Step 2: which account (only when one email unlocks more than one) -->
+  <div id="stepChoose" style="display:none">
+    <h2 style="font-size:1.4rem">Where are you going?</h2>
+    <p class="small mut">This email has access to more than one place.</p>
+    <div class="choices" id="choices"></div>
+    <p class="linkrow"><a href="#" id="backFromChoose">Use a different account</a></p>
+  </div>
+
+  <!-- Step 3: forgot password -->
+  <div id="stepForgot" style="display:none">
+    <h2 style="font-size:1.4rem">Reset your password</h2>
+    <p class="small mut">We'll email a reset link from info@digit2ai.com. It expires in one hour.</p>
+    <div class="msg" id="fmsg"></div>
+    <form id="forgotForm">
+      <div class="field">
+        <label for="forgotEmail">Email</label>
+        <input id="forgotEmail" type="email" autocomplete="email" required>
+      </div>
+      <button class="btn btn--primary" type="submit" style="width:100%">Send reset link</button>
+    </form>
+    <p class="linkrow"><a href="#" id="backToLogin">Back to sign in</a></p>
+  </div>
+</div>
+
+<script>
+var API = '/lawncopilot/api/v1/signin';
+var msg = document.getElementById('msg'), fmsg = document.getElementById('fmsg');
+function show(el, t, ok) { el.textContent = t; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+  return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+var stepLogin = document.getElementById('stepLogin');
+var stepChoose = document.getElementById('stepChoose');
+var stepForgot = document.getElementById('stepForgot');
+function step(which) {
+  stepLogin.style.display = which === 'login' ? 'block' : 'none';
+  stepChoose.style.display = which === 'choose' ? 'block' : 'none';
+  stepForgot.style.display = which === 'forgot' ? 'block' : 'none';
+}
+
+var ICON = { platform: 'D2AI', staff: 'CO', customer: 'ME' };
+
+document.getElementById('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  fetch(API, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+    body: JSON.stringify({
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    if (!r.success) { show(msg, r.error || 'Could not sign you in.'); return; }
+    if (r.multiple) { renderChoices(r); step('choose'); return; }
+    window.location.href = r.redirect;
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    show(msg, 'Network problem. Try again.');
+  });
+});
+
+function renderChoices(r) {
+  document.getElementById('choices').innerHTML = r.choices.map(function (c, i) {
+    return '<button class="choice" data-i="' + i + '">' +
+      '<span class="choice__ic choice__ic--' + esc(c.kind) + '">' + (ICON[c.kind] || '') + '</span>' +
+      '<span class="choice__m"><b>' + esc(c.label) + '</b><span>' + esc(c.sublabel) + '</span></span></button>';
+  }).join('');
+  document.getElementById('choices').onclick = function (ev) {
+    var b = ev.target.closest('[data-i]');
+    if (!b) return;
+    b.disabled = true;
+    fetch(API + '/select', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ selection_token: r.selection_token, index: Number(b.getAttribute('data-i')) })
+    }).then(function (x) { return x.json(); }).then(function (x) {
+      if (x.success) window.location.href = x.redirect;
+      else { b.disabled = false; step('login'); show(msg, x.error || 'Please sign in again.'); }
+    }).catch(function () { b.disabled = false; });
+  };
+}
+
+document.getElementById('forgotLink').addEventListener('click', function (e) {
+  e.preventDefault();
+  document.getElementById('forgotEmail').value = document.getElementById('email').value.trim();
+  step('forgot');
+});
+document.getElementById('backToLogin').addEventListener('click', function (e) { e.preventDefault(); step('login'); });
+document.getElementById('backFromChoose').addEventListener('click', function (e) { e.preventDefault(); step('login'); });
+
+document.getElementById('forgotForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = e.target.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  fetch(API + '/forgot', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: document.getElementById('forgotEmail').value.trim() })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    show(fmsg, r.message || 'If that email is on file, a reset link is on its way.', true);
+    if (r.dev_reset_links) {
+      r.dev_reset_links.forEach(function (l) {
+        var a = document.createElement('a');
+        a.href = l.url; a.textContent = l.label; a.style.display = 'block'; a.style.marginTop = '6px';
+        fmsg.appendChild(a);
+      });
+    }
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    show(fmsg, 'Network problem. Try again.');
+  });
+});
+
+if (new URLSearchParams(location.search).get('reset')) show(msg, 'Password reset. Sign in with your new password.', true);
+if (new URLSearchParams(location.search).get('expired')) show(msg, 'That session expired. Please sign in again.');
+</script>
+<script src="/lawncopilot/pwa.js" defer></script>
+</body>
+</html>

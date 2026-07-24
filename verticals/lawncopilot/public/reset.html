@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reset password — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#307f44">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<style>
+body { display:grid; place-items:center; min-height:100vh; background:
+  radial-gradient(900px 420px at 50% -10%, var(--green-100), transparent 62%), var(--bg-alt); padding: var(--space-4); }
+.box { background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg); padding:var(--space-6);
+  max-width:420px; width:100%; box-shadow:var(--shadow); }
+.brand { margin-bottom: var(--space-5); } .brand img { height: 58px; width: auto; }
+.msg { padding:12px 14px; border-radius:var(--radius); font-size:.88rem; margin-bottom:var(--space-4); display:none; }
+.msg.err { background:#fef2f2; color:#991b1b; display:block; }
+.msg.ok { background:var(--green-50); color:var(--green-900); display:block; }
+.hint { font-size:.8rem; color:var(--text-mut); margin-top:5px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="brand"><img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="200" height="76"></div>
+  <h2 style="font-size:1.4rem">Set a new password</h2>
+  <p class="small mut">Choose a new password for your Lawn Co-Pilot account.</p>
+  <div class="msg" id="msg"></div>
+
+  <form id="form">
+    <div class="field">
+      <label for="password">New password</label>
+      <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="hint">At least 8 characters.</div>
+    </div>
+    <div class="field">
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="hint" id="matchHint"></div>
+    </div>
+    <button class="btn btn--primary" type="submit" style="width:100%" id="submit">Reset password</button>
+  </form>
+</div>
+
+<script>
+var msg = document.getElementById('msg');
+function show(t, ok) { msg.textContent = t; msg.className = 'msg ' + (ok ? 'ok' : 'err'); }
+var token = new URLSearchParams(location.search).get('token');
+if (!token) show('This reset link is missing its token. Request a new one from the sign-in page.');
+
+var pw = document.getElementById('password'), c = document.getElementById('confirm');
+var matchHint = document.getElementById('matchHint');
+function checkMatch() {
+  if (!c.value) { matchHint.textContent = ''; return true; }
+  var ok = pw.value === c.value;
+  matchHint.innerHTML = ok ? '<span style="color:var(--green-700);font-weight:700">Passwords match</span>'
+    : '<span style="color:var(--danger);font-weight:700">Passwords do not match yet</span>';
+  return ok;
+}
+pw.addEventListener('input', checkMatch); c.addEventListener('input', checkMatch);
+
+document.getElementById('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!checkMatch()) { show('The two passwords do not match.'); return; }
+  var btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = 'Resetting...';
+  fetch('/lawncopilot/api/v1/signin/reset', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token, password: pw.value })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Reset password';
+    if (r.success) { show('Password reset. Taking you to sign in...', true);
+      setTimeout(function () { window.location.href = '/lawncopilot/login?reset=1'; }, 1200); }
+    else show(r.error || 'Could not reset your password.');
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Reset password'; show('Network problem. Try again.'); });
+});
+</script>
+</body>
+</html>
