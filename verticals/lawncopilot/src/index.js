@@ -143,6 +143,18 @@ router.use('/webhooks', require('./routes/webhooks'));
 router.use('/voice', require('./routes/voice'));
 router.use('/l', require('./routes/shortlink'));
 
+/**
+ * Neural TTS for the on-page voice orbs (the investor teaser narration).
+ *
+ * The custom domain routes ALL of lawncopilot.com into this app, so the main
+ * app's /api/tts/edge is unreachable there. Mounting the same route here makes
+ * the orb same-origin on both hosts — no CORS, no silent fallback to the robot
+ * browser voice. It is the exact route already live at aiagent.ringlypro.com;
+ * we reuse it, not regenerate the engine.
+ */
+try { router.use('/api/tts', require('../../../src/routes/presentation-tts')); }
+catch (e) { console.warn('  Lawn Co-Pilot: TTS route not mounted —', e.message); }
+
 // Platform pages
 router.get('/signup', (req, res) => res.sendFile(path.join(publicDir, 'signup.html')));
 router.get('/platform/login', (req, res) => res.sendFile(path.join(publicDir, 'platform-login.html')));
@@ -158,6 +170,26 @@ router.get(['/platform', '/platform/'], (req, res) => {
 // does not exist, so real slugs still fall through. index:false keeps it from
 // serving public/index.html at `/` instead of the platform home.
 router.use(express.static(publicDir, { index: false }));
+
+/**
+ * The investor teaser at a clean, shareable path. MUST precede /:slug — else
+ * 'investors' is read as a company slug and 404s. Prefix rewritten per host so
+ * lawncopilot.com/investors pays no redirect for its own links.
+ */
+const investorCache = new Map();
+router.get(['/investors', '/investors/'], (req, res, next) => {
+  try {
+    const { basePath } = require('./tenancy');
+    const base = basePath(req);
+    const key = base || 'root';
+    if (!investorCache.has(key)) {
+      let html = require('fs').readFileSync(path.join(publicDir, 'investors.html'), 'utf8');
+      if (base === '') html = html.split('/lawncopilot/').join('/');
+      investorCache.set(key, html);
+    }
+    res.type('html').send(investorCache.get(key));
+  } catch (e) { next(e); }
+});
 
 // ════════════════════════════════════════════════════════════════════════════
 // TENANT LAYER — everything below resolves a company from the slug

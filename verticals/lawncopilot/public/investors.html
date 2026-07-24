@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lawn Co-Pilot — The AI office for 600,000 landscapers · Pre-seed</title>
+<meta name="description" content="600,000 US landscapers run a full business from a truck cab. Lawn Co-Pilot is their entire back office, staffed by AI, from $35/mo. Built, live, and raising a marketing pre-seed.">
+<meta property="og:title" content="Lawn Co-Pilot — The AI office for 600,000 landscapers">
+<meta property="og:description" content="One brain, eight AI employees, every company isolated. Built and live. Raising a marketing pre-seed to put it in front of the market.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a1710">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<style>
+  :root {
+    --bg:#0a1710; --bg2:#0c1d13; --panel:rgba(255,255,255,.035); --panel-2:rgba(255,255,255,.055);
+    --line:rgba(120,190,140,.16); --line-2:rgba(120,190,140,.28);
+    --txt:#e9f3ec; --mut:#a3bfad; --faint:#6f8a78;
+    --green:#5fbf7c; --green-2:#3fa15a; --glow:#8fd6a3; --green-deep:#16311f;
+    --gold:#e6b566; --gold-2:#d49b45;
+    --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } }
+  body {
+    margin:0; background:var(--bg); color:var(--txt); font-family:var(--font); line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 82% -6%, rgba(63,161,90,.22), transparent 60%),
+      radial-gradient(700px 500px at 8% 22%, rgba(63,161,90,.10), transparent 55%);
+  }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 clamp(18px,4vw,40px); }
+  a { color:inherit; }
+
+  /* Top bar */
+  .bar { position:sticky; top:0; z-index:40; backdrop-filter:blur(12px);
+    background:rgba(10,23,16,.72); border-bottom:1px solid var(--line); }
+  .bar__in { display:flex; align-items:center; gap:16px; height:60px; }
+  .bar__logo { display:flex; align-items:center; gap:9px; font-weight:800; letter-spacing:-.01em; }
+  .bar__logo img { height:30px; width:auto; }
+  .bar__tag { margin-left:auto; font-family:var(--mono); font-size:.72rem; color:var(--faint);
+    letter-spacing:.04em; }
+  .bar__cta { font-size:.82rem; font-weight:700; padding:8px 16px; border-radius:999px;
+    background:var(--green); color:#062012; text-decoration:none; white-space:nowrap; }
+  @media (max-width:640px){ .bar__tag{ display:none; } }
+
+  /* Section rhythm */
+  .sec { padding:clamp(48px,7vw,88px) 0; border-top:1px solid transparent; transition:background .5s ease; }
+  .sec.active { background:linear-gradient(180deg, rgba(63,161,90,.06), transparent 40%); }
+  .eyebrow { font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--green); font-weight:700; margin-bottom:14px; }
+  h1,h2 { letter-spacing:-.028em; text-wrap:balance; margin:0; font-weight:800; }
+  h2 { font-size:clamp(1.5rem,3.4vw,2.3rem); line-height:1.1; }
+  .lead { color:var(--mut); font-size:clamp(1.02rem,1.5vw,1.18rem); max-width:60ch; margin:18px 0 0; }
+  .num-gold { color:var(--gold); font-variant-numeric:tabular-nums; }
+  .g { color:var(--glow); }
+
+  /* Hero */
+  .hero { padding:clamp(40px,6vw,64px) 0 clamp(36px,5vw,56px); }
+  .hero h1 { font-size:clamp(2.1rem,5.2vw,3.5rem); line-height:1.04; max-width:16ch; }
+  .hero .lead { font-size:clamp(1.08rem,1.8vw,1.32rem); max-width:52ch; }
+  .hero__stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:34px;
+    padding-top:26px; border-top:1px solid var(--line); }
+  .hstat b { display:block; font-size:clamp(1.35rem,2.6vw,1.9rem); font-weight:800; letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums; }
+  .hstat b.gold { color:var(--gold); } .hstat b.green { color:var(--glow); }
+  .hstat span { display:block; font-size:.76rem; color:var(--faint); margin-top:3px; line-height:1.35; }
+  @media (max-width:640px){ .hero__stats{ grid-template-columns:repeat(2,1fr); gap:18px 14px; } }
+
+  /* Orb */
+  .orbwrap { margin-top:38px; display:flex; gap:22px; align-items:center; flex-wrap:wrap;
+    background:linear-gradient(160deg, var(--panel-2), var(--panel)); border:1px solid var(--line-2);
+    border-radius:22px; padding:22px; box-shadow:0 30px 70px -34px rgba(0,0,0,.7); }
+  .orb { position:relative; width:88px; height:88px; flex:0 0 88px; border-radius:50%; border:0;
+    cursor:pointer; padding:0;
+    background:radial-gradient(circle at 34% 30%, #bff0cd, var(--green) 46%, #123f24 100%);
+    box-shadow:0 0 0 0 rgba(95,191,124,.5); }
+  .orb::after { content:""; position:absolute; inset:-9px; border-radius:50%; border:2px solid rgba(143,214,163,.32); }
+  .orb.speaking { animation:pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(95,191,124,.45)} 70%{box-shadow:0 0 0 22px rgba(95,191,124,0)} 100%{box-shadow:0 0 0 0 rgba(95,191,124,0)} }
+  .orbmeta { flex:1; min-width:220px; }
+  .orbmeta b { display:block; font-size:1.05rem; font-weight:700; }
+  .orbmeta .role { color:var(--faint); font-size:.82rem; font-family:var(--mono); margin-bottom:12px; }
+  .controls { display:flex; gap:9px; flex-wrap:wrap; }
+  .btn { font:inherit; font-size:.82rem; font-weight:700; border-radius:999px; padding:10px 18px;
+    border:1px solid var(--line-2); background:transparent; color:var(--txt); cursor:pointer; }
+  .btn.primary { background:var(--green); color:#062012; border-color:var(--green); }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .status { font-size:.8rem; color:var(--faint); margin-top:12px; min-height:18px; }
+  .voicepick { margin-top:10px; font-size:.76rem; color:var(--faint); }
+  .voicepick select { font:inherit; font-size:.76rem; background:#0e2016; color:var(--txt);
+    border:1px solid var(--line-2); border-radius:8px; padding:5px 8px; margin-left:6px; }
+
+  /* Problem: pain rows */
+  .pains { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:30px; }
+  .pain { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .pain b { display:block; font-size:1rem; margin-bottom:4px; }
+  .pain span { font-size:.88rem; color:var(--mut); }
+  @media (max-width:640px){ .pains{ grid-template-columns:1fr; } }
+
+  /* Solution: brain + employees */
+  .brainline { display:flex; align-items:center; gap:14px; margin-top:28px; flex-wrap:wrap; }
+  .brainpill { display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:14px;
+    background:linear-gradient(160deg, rgba(63,161,90,.2), rgba(11,29,19,.6)); border:1px solid var(--line-2); }
+  .brainpill .dot { width:9px; height:9px; border-radius:50%; background:var(--glow); box-shadow:0 0 10px var(--glow); }
+  .brainpill b { font-size:1rem; } .brainpill span { font-family:var(--mono); font-size:.72rem; color:var(--glow); }
+  .emps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:22px; }
+  .emp { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:13px; }
+  .emp b { display:block; font-size:.9rem; } .emp span { font-size:.74rem; color:var(--faint); }
+  @media (max-width:720px){ .emps{ grid-template-columns:repeat(2,1fr); } }
+
+  /* Generic two-col */
+  .cols { display:grid; grid-template-columns:1.05fr .95fr; gap:34px; align-items:start; }
+  @media (max-width:820px){ .cols{ grid-template-columns:1fr; gap:24px; } }
+  .points { list-style:none; padding:0; margin:22px 0 0; display:flex; flex-direction:column; gap:14px; }
+  .points li { padding-left:26px; position:relative; color:var(--mut); font-size:.96rem; }
+  .points li b { color:var(--txt); }
+  .points li::before { content:""; position:absolute; left:2px; top:7px; width:8px; height:8px; border-radius:2px;
+    background:var(--green); }
+
+  /* Live product card */
+  .livecard { background:linear-gradient(160deg, var(--panel-2), var(--panel)); border:1px solid var(--line-2);
+    border-radius:18px; padding:22px; }
+  .livecard .badge { display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:.7rem;
+    letter-spacing:.1em; color:var(--glow); border:1px solid var(--line-2); border-radius:999px; padding:5px 12px; }
+  .livecard .badge i { width:7px; height:7px; border-radius:50%; background:#7bd694; animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:.35} 50%{opacity:1} }
+  .kv { display:flex; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px solid var(--line);
+    font-size:.9rem; }
+  .kv:last-child { border-bottom:0; } .kv span { color:var(--faint); } .kv b { font-family:var(--mono); }
+  .urlpill { display:inline-flex; align-items:center; gap:8px; margin-top:16px; font-family:var(--mono);
+    font-size:.82rem; background:rgba(95,191,124,.1); border:1px solid var(--line-2); border-radius:999px;
+    padding:9px 15px; color:var(--glow); text-decoration:none; }
+
+  /* Market funnel */
+  .funnel { display:flex; flex-direction:column; gap:12px; margin-top:28px; }
+  .tier { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:var(--panel);
+    display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; }
+  .tier .t { font-family:var(--mono); font-size:.7rem; letter-spacing:.14em; color:var(--faint); }
+  .tier .m { }
+  .tier .m b { display:block; font-size:1rem; } .tier .m span { font-size:.8rem; color:var(--mut); }
+  .tier .v { font-size:clamp(1.3rem,2.6vw,1.9rem); font-weight:800; letter-spacing:-.02em; color:var(--gold);
+    font-variant-numeric:tabular-nums; text-align:right; }
+  .tier.tam { border-color:var(--line-2); background:linear-gradient(160deg, rgba(230,181,102,.09), var(--panel)); }
+  .tier.som .v { color:var(--glow); }
+  @media (max-width:560px){ .tier{ grid-template-columns:1fr auto; } .tier .t{ grid-column:1/-1; } }
+
+  /* Unit economics */
+  .plans { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:26px; }
+  .plan { border:1px solid var(--line); border-radius:14px; padding:18px; background:var(--panel); }
+  .plan.pop { border-color:var(--green); background:linear-gradient(160deg, rgba(63,161,90,.12), var(--panel)); }
+  .plan h4 { margin:0 0 10px; font-size:.92rem; display:flex; gap:8px; align-items:center; }
+  .plan h4 em { font-style:normal; font-size:.58rem; font-family:var(--mono); background:var(--green); color:#062012;
+    padding:2px 7px; border-radius:999px; letter-spacing:.05em; }
+  .plan .pr { display:flex; justify-content:space-between; font-size:.82rem; padding:4px 0; color:var(--mut);
+    font-variant-numeric:tabular-nums; }
+  .plan .pr b { color:var(--txt); font-family:var(--mono); }
+  .plan .price { display:flex; align-items:baseline; justify-content:space-between; margin-top:10px;
+    padding-top:10px; border-top:1px solid var(--line); }
+  .plan .price b { font-size:1.7rem; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .plan .price .mgn { font-family:var(--mono); font-size:.74rem; color:var(--glow); }
+  @media (max-width:640px){ .plans{ grid-template-columns:1fr; } }
+  .econnote { margin-top:18px; font-size:.82rem; color:var(--faint); }
+
+  /* The ask */
+  .ask { background:linear-gradient(160deg, rgba(63,161,90,.16), rgba(11,29,19,.5)); border:1px solid var(--line-2);
+    border-radius:22px; padding:clamp(26px,4vw,44px); }
+  .ask__num { font-size:clamp(2.6rem,7vw,4.4rem); font-weight:800; letter-spacing:-.03em; line-height:1;
+    color:var(--gold); font-variant-numeric:tabular-nums; }
+  .ask__sub { font-family:var(--mono); font-size:.8rem; color:var(--faint); letter-spacing:.06em; margin-top:6px; }
+  .use { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:30px; }
+  .use div { border:1px solid var(--line); border-radius:12px; padding:16px; background:rgba(0,0,0,.15); }
+  .use b { display:block; font-size:1.35rem; font-weight:800; color:var(--glow); font-variant-numeric:tabular-nums; }
+  .use span { font-size:.82rem; color:var(--mut); }
+  @media (max-width:640px){ .use{ grid-template-columns:1fr; } }
+
+  /* Contact / close */
+  .close { text-align:center; padding:clamp(52px,8vw,96px) 0; }
+  .close h2 { max-width:22ch; margin:0 auto; }
+  .close .cta { display:inline-flex; gap:12px; margin-top:28px; flex-wrap:wrap; justify-content:center; }
+  .foot { border-top:1px solid var(--line); padding:26px 0 40px; font-size:.76rem; color:var(--faint);
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-family:var(--mono); }
+
+  .honest { margin-top:16px; font-size:.8rem; color:var(--faint); border-left:2px solid var(--line-2);
+    padding-left:14px; max-width:60ch; }
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="wrap bar__in">
+  <a class="bar__logo" href="/lawncopilot/"><img src="/lawncopilot/logo-white.png" alt="Lawn Co-Pilot"></a>
+  <span class="bar__tag">Pre-seed · marketing round</span>
+  <a class="bar__cta" href="#ask">The ask</a>
+</div></div>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<header class="wrap hero sec" data-i="0" id="top">
+  <div class="eyebrow">The AI office for landscaping companies</div>
+  <h1>The office for <span class="num-gold">600,000</span> landscapers has never been built. So we built it.</h1>
+  <p class="lead">Small landscapers run a whole business from a truck cab. Lawn Co-Pilot is their
+    entire back office — one brain, eight AI employees — from <b class="g">$35 a month</b>.
+    It's built and live today. We're raising a marketing pre-seed to put it in front of the market.</p>
+
+  <div class="orbwrap">
+    <button class="orb" id="orb" aria-label="Play the investor narration"></button>
+    <div class="orbmeta">
+      <b>Hear the opportunity — 90 seconds</b>
+      <div class="role">Narrated by Ava, the voice of Lawn Co-Pilot</div>
+      <div class="controls">
+        <button class="btn primary" id="playAll">▶ Play the pitch</button>
+        <button class="btn" id="pause" disabled>❚❚ Pause</button>
+        <button class="btn" id="stop" disabled>■ Stop</button>
+      </div>
+      <div class="status" id="status">Press play — Ava walks you through the whole opportunity.</div>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> HD voice</label>
+        &nbsp;·&nbsp; Narrator:
+        <select id="voiceSel">
+          <option value="ava" selected>Ava (US English)</option>
+          <option value="guy">Guy (US English)</option>
+          <option value="lina">Dalia (Español)</option>
+        </select>
+        <span id="voiceMode" style="margin-left:8px;color:var(--glow)"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero__stats">
+    <div class="hstat"><b class="gold">$150B+</b><span>US landscaping services, per year</span></div>
+    <div class="hstat"><b>~600K</b><span>US landscaping businesses</span></div>
+    <div class="hstat"><b class="green">43–48%</b><span>gross margin, cost-derived</span></div>
+    <div class="hstat"><b class="green">Live</b><span>built &amp; in production today</span></div>
+  </div>
+</header>
+
+<!-- ── PROBLEM ──────────────────────────────────────────────── -->
+<section class="wrap sec" data-i="1">
+  <div class="eyebrow">The problem</div>
+  <h2>They can't afford an office. So they <em>are</em> the office — at 9pm.</h2>
+  <p class="lead">Ninety percent of landscaping companies are one to three trucks. They do a full day of
+    labor, then a second full-time job no one pays them for.</p>
+  <div class="pains">
+    <div class="pain"><b>The call goes unanswered</b><span>The phone rings while the mower is running. The lead calls the next company on the list.</span></div>
+    <div class="pain"><b>The estimate that doesn't win</b><span>A 40-minute drive to measure a yard, for a job they lose. Windshield time is the biggest hidden cost in the trade.</span></div>
+    <div class="pain"><b>The invoice that never goes out</b><span>Work done, never billed. Cash sits in a truck's glovebox as scribbled notes.</span></div>
+    <div class="pain"><b>The route worked out on a napkin</b><span>No dispatcher, no sequencing — just guesswork that burns fuel and daylight.</span></div>
+  </div>
+</section>
+
+<!-- ── SOLUTION ─────────────────────────────────────────────── -->
+<section class="wrap sec" data-i="2">
+  <div class="eyebrow">The solution</div>
+  <h2>One brain. Eight AI employees. Every company walled off.</h2>
+  <p class="lead">Not a dashboard they operate — a staff that works while they're on a mower. A single
+    MCP brain routes every call, text and web request to the right employee and does the work.</p>
+  <div class="brainline">
+    <div class="brainpill"><span class="dot"></span><b>The Brain</b><span>MCP · 75 tools</span></div>
+    <span style="color:var(--faint);font-family:var(--mono);font-size:.8rem">orchestrates →</span>
+  </div>
+  <div class="emps">
+    <div class="emp"><b>Receptionist</b><span>answers, quotes, books</span></div>
+    <div class="emp"><b>Estimator</b><span>measures from records</span></div>
+    <div class="emp"><b>Dispatcher</b><span>schedules &amp; routes</span></div>
+    <div class="emp"><b>Bookkeeper</b><span>invoices &amp; collects</span></div>
+    <div class="emp"><b>Crew Manager</b><span>hours &amp; certs</span></div>
+    <div class="emp"><b>Payroll Officer</b><span>hours → net</span></div>
+    <div class="emp"><b>Marketer</b><span>reviews &amp; referrals</span></div>
+    <div class="emp"><b>Controller</b><span>margin &amp; waste</span></div>
+  </div>
+</section>
+
+<!-- ── WHY NOW ──────────────────────────────────────────────── -->
+<section class="wrap sec" data-i="3">
+  <div class="eyebrow">Why now</div>
+  <div class="cols">
+    <div>
+      <h2>Two things just became true at once.</h2>
+      <p class="lead">The window opens when the cost curve and the incumbents' blind spot line up. They just did.</p>
+    </div>
+    <ul class="points">
+      <li><b>AI made a back office cost pennies an hour</b> — not a $45,000 salary. A full office is finally affordable for a one-truck operator.</li>
+      <li><b>The incumbents proved the category, then left the floor empty</b> — Jobber and ServiceTitan showed the trades will pay for software, but built and priced for the shop with a dozen trucks.</li>
+      <li><b>The solo operator is 90% of the market</b> — and the least served. That's the wedge.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── PRODUCT (LIVE) ───────────────────────────────────────── -->
+<section class="wrap sec" data-i="4">
+  <div class="eyebrow">The product</div>
+  <div class="cols">
+    <div>
+      <h2>This is not a slide. It's live.</h2>
+      <p class="lead">The hard part is done. A real multi-tenant platform is in production right now —
+        every landscaper gets their own page, their own AI staff, and their own walled-off data.</p>
+      <ul class="points">
+        <li><b>Built end to end</b> — 8 AI employees, 75 tools, 52 tenant-scoped tables.</li>
+        <li><b>Honest by construction</b> — payroll never self-files, savings trace to real rows, no card data at rest.</li>
+        <li><b>Distribution costs nothing to run</b> — no domains, no websites. A Google listing and a truck QR point at the page.</li>
+      </ul>
+      <a class="urlpill" href="/lawncopilot/green-acres">▶ lawncopilot.com/&lt;your-company&gt; — try a live one</a>
+    </div>
+    <div class="livecard">
+      <span class="badge"><i></i>IN PRODUCTION</span>
+      <div style="margin-top:16px">
+        <div class="kv"><span>AI employees</span><b>8</b></div>
+        <div class="kv"><span>Brain tools</span><b>75</b></div>
+        <div class="kv"><span>Tenant-scoped tables</span><b>52</b></div>
+        <div class="kv"><span>Integration tests</span><b>291 passing</b></div>
+        <div class="kv"><span>Setup time per company</span><b>~3 min</b></div>
+        <div class="kv"><span>Address → priced quote</span><b>~10 sec</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MARKET ───────────────────────────────────────────────── -->
+<section class="wrap sec" data-i="5">
+  <div class="eyebrow">The market</div>
+  <h2>A <span class="num-gold">$150B+</span> industry that never bought software built for it.</h2>
+  <p class="lead">And landscaping is only the beachhead — the same one-to-three-truck shape runs pool
+    service, pressure washing, pest control, junk removal and a dozen other trades.</p>
+  <div class="funnel">
+    <div class="tier tam">
+      <div class="t">TAM</div>
+      <div class="m"><b>US small field-service trades</b><span>Landscaping + adjacent home services that run identically</span></div>
+      <div class="v">$4B+</div>
+    </div>
+    <div class="tier">
+      <div class="t">SAM</div>
+      <div class="m"><b>~600K US landscaping firms</b><span>At ~$1,400 average revenue per company, per year</span></div>
+      <div class="v">~$700M</div>
+    </div>
+    <div class="tier som">
+      <div class="t">SOM · 5yr</div>
+      <div class="m"><b>3% of the landscaping SAM</b><span>~15,000 paying companies — a fraction of the wedge</span></div>
+      <div class="v">~$21M ARR</div>
+    </div>
+  </div>
+  <p class="honest">Market and firm counts are public US industry estimates (landscaping services revenue and
+    business counts). SAM/SOM are illustrative models at our live pricing, not forecasts.</p>
+</section>
+
+<!-- ── UNIT ECONOMICS ───────────────────────────────────────── -->
+<section class="wrap sec" data-i="6">
+  <div class="eyebrow">Unit economics</div>
+  <h2>It pays for itself on day one.</h2>
+  <p class="lead">Because we build the whole stack, the cost to run a company is known to the penny —
+    and price is <b>derived</b> from it at a fixed markup, never guessed. Every plan ships profitable.</p>
+  <div class="plans">
+    <div class="plan">
+      <h4>Solo</h4>
+      <div class="pr"><span>Cost to run / mo</span><b>$18.19</b></div>
+      <div class="pr"><span>Price</span><b>$35</b></div>
+      <div class="price"><b>$35</b><span class="mgn">48% margin</span></div>
+    </div>
+    <div class="plan pop">
+      <h4>Crew <em>most chosen</em></h4>
+      <div class="pr"><span>Cost to run / mo</span><b>$56.53</b></div>
+      <div class="pr"><span>Price</span><b>$99</b></div>
+      <div class="price"><b>$99</b><span class="mgn">43% margin</span></div>
+    </div>
+    <div class="plan">
+      <h4>Multi Trucks</h4>
+      <div class="pr"><span>Cost to run / mo</span><b>$147.68</b></div>
+      <div class="pr"><span>Price</span><b>$259</b></div>
+      <div class="price"><b>$259</b><span class="mgn">43% margin</span></div>
+    </div>
+  </div>
+  <p class="econnote">Costs built from verified provider rates (Twilio, Anthropic, Google, Stripe, hosting).
+    Payments run on Stripe Connect — money goes straight to the landscaper; we take a platform fee, not their float.</p>
+</section>
+
+<!-- ── DISTRIBUTION ─────────────────────────────────────────── -->
+<section class="wrap sec" data-i="7">
+  <div class="eyebrow">Go to market</div>
+  <div class="cols">
+    <div>
+      <h2>We acquire like Vagaro, not like a website builder.</h2>
+      <p class="lead">Small landscapers don't own domains and won't build a site. So we don't sell them one.
+        Their Google Business Profile and a QR code on the truck point straight at their Lawn Co-Pilot page.
+        Distribution is a <b>marketing motion, not an engineering one</b>.</p>
+    </div>
+    <ul class="points">
+      <li><b>The link is the address</b> — lawncopilot.com/&lt;company&gt;. No DNS, no per-tenant SSL, no domains to manage.</li>
+      <li><b>The truck is the billboard</b> — a print-resolution QR turns every job into a storefront.</li>
+      <li><b>Florida first</b> — a dense, year-round landscaping market to prove CAC before we scale nationally.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── THE ASK ──────────────────────────────────────────────── -->
+<section class="wrap sec" data-i="8" id="ask">
+  <div class="eyebrow">The ask</div>
+  <div class="ask">
+    <div class="ask__num">$750K</div>
+    <div class="ask__sub">PRE-SEED · MARKETING &amp; GO-TO-MARKET</div>
+    <p class="lead" style="margin-top:20px">The product is finished. What we're raising is the capital to
+      put it in front of the landscapers who need it, turn the distribution engine on, and prove customer
+      acquisition cost against a 43–48% margin.</p>
+    <div class="use">
+      <div><b>60%</b><span>Marketing &amp; customer acquisition — Florida-first paid, field and channel</span></div>
+      <div><b>25%</b><span>Go-to-market team — onboarding, sales, partnerships</span></div>
+      <div><b>15%</b><span>Runway &amp; ops — infrastructure and support as tenants scale</span></div>
+    </div>
+    <p class="honest">Where we are, plainly: product-complete and live, pre-revenue, pre-seed. We are not
+      raising to build — we're raising to sell. The ask and allocation are our current plan and open to
+      discussion with the right partner.</p>
+  </div>
+</section>
+
+<!-- ── CLOSE ────────────────────────────────────────────────── -->
+<section class="wrap close sec" data-i="9">
+  <h2>Own a piece of the office for <span class="num-gold">600,000</span> businesses.</h2>
+  <p class="lead" style="margin:18px auto 0">The category is proven. The product is built. The floor is empty.</p>
+  <div class="cta">
+    <a class="btn primary" href="mailto:mstagg@digit2ai.com?subject=Lawn%20Co-Pilot%20pre-seed">Talk to the founders</a>
+    <a class="btn" href="/lawncopilot/green-acres">See it live</a>
+  </div>
+</section>
+
+<div class="wrap foot">
+  <span>Lawn Co-Pilot · built by Digit2AI · Florida first</span>
+  <span>Live: lawncopilot.com/&lt;company&gt;</span>
+</div>
+
+<!-- ── Voice orb engine (Layer 3 — reuses /api/tts/edge) ──────── -->
+<script>
+(function(){
+  // Index 0 = intro; 1..N map to the .sec[data-i] sections in order.
+  var segments = [
+    "Hi, I'm Ava, the voice of Lawn Co-Pilot. In about ninety seconds, I'll show you why the office for six hundred thousand American landscapers is the most under-served market in software, and why we already built it.",
+    "Ninety percent of landscaping companies are one to three trucks. They do a full day of labor, and then a second, unpaid full-time job. The call goes unanswered while the mower runs. The estimate takes a forty-minute drive for a job they lose. The invoice never goes out. They can't afford an office, so they are the office, at nine at night.",
+    "Lawn Co-Pilot is that office, staffed by artificial intelligence. One brain orchestrates eight AI employees: a receptionist, an estimator, a dispatcher, a bookkeeper, a crew manager, a payroll officer, a marketer and a controller. They answer every call, quote from property records, route the crews and collect the money. Every company's data is walled off from every other.",
+    "Two things just became true at once. Artificial intelligence made a full back office cost pennies an hour, instead of a forty-five thousand dollar salary. And the big players, Jobber and ServiceTitan, proved the trades will pay for software, but built and priced for the shop with a dozen trucks, not the solo operator who is ninety percent of the market.",
+    "This is not a slide. It is built and live in production today. A real multi-tenant platform: eight AI employees, seventy-five tools, fifty-two tenant-scoped tables. Every landscaper gets their own page, their own staff, and their own data. The hard part is done.",
+    "The math is simple. Around six hundred thousand US landscaping firms, in an industry worth over one hundred and fifty billion dollars a year. At our pricing, that's a serviceable market near seven hundred million dollars in landscaping alone, before we cross into pool service, pest control, and the other trades that run exactly the same way.",
+    "And it pays for itself on day one. Because we build the whole stack, our cost to run a company is known to the penny, and every plan is priced at a fixed markup above it. Forty-three to forty-eight percent gross margin, on day one, with no discount to buy growth.",
+    "We acquire customers the way Vagaro did. No websites to build, no domains to sell. The landscaper's Google listing and a QR code on the truck point straight at their Lawn Co-Pilot page. Distribution is a marketing motion, not an engineering one.",
+    "So here's the ask. The product is finished. We're raising a marketing pre-seed: capital to put Lawn Co-Pilot in front of the landscapers who need it, turn the distribution engine on, and prove customer acquisition cost against that margin. We're not raising to build. We're raising to sell.",
+    "The category is proven, the product is built, and the floor is empty. If you want to own a piece of the office for six hundred thousand businesses, let's talk."
+  ];
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'ava';
+  // Narrator language follows the chosen voice; Dalia narrates in Spanish.
+  var VOICE_LANG = { ava: 'en', guy: 'en', lina: 'es' };
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices(); var want = VOICE_LANG[voiceName] || 'en';
+    var pref = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(want) === 0; });
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ browser'; }
+  setMode();
+
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); pickBrowserVoice(); });
+  neuralToggle.addEventListener('change', setMode);
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){
+    secs.forEach(function(s){ s.classList.remove('active'); });
+    var el = secs.filter(function(s){ return Number(s.getAttribute('data-i')) === i; })[0];
+    if(el){ el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'start'}); }
+  }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Ava is speaking… ('+(qi+1)+' of '+queue.length+')' : 'Playing…'; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent='Loading HD voice…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : (VOICE_LANG[voiceName]==='es'?'es-MX':'en-US');
+    u.rate=1.0; u.pitch=1.02;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.textContent='❚❚ Pause';
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking');
+    secs.forEach(function(s){ s.classList.remove('active'); });
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='That’s the pitch. Press play to hear it again — or reach out below.';
+  }
+  function playFromTop(){ start(segments.map(function(_,i){return i;}),'all'); }
+  playAll.addEventListener('click', playFromTop);
+  orb.addEventListener('click', function(){ if(playAll.disabled) return; playFromTop(); });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.textContent='▶ Resume'; orb.classList.remove('speaking'); status.textContent='Paused.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent='❚❚ Pause'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+})();
+</script>
+</body>
+</html>
