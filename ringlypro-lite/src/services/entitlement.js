@@ -14,7 +14,7 @@ function billingEnabled() {
 // Comped (perpetually-free) accounts — never charged, never suspended, may
 // provision a number. Used for other Digit2AI verticals riding on Lite.
 // Built-in list always applies; add more via LITE_COMP_EMAILS (comma-separated).
-const BUILTIN_COMP_EMAILS = ['admin@vision2ai.app'];
+const BUILTIN_COMP_EMAILS = ['admin@vision2ai.app', 'mstagg@digit2ai.com'];
 function compEmails() {
   const env = String(process.env.LITE_COMP_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   return Array.from(new Set([...BUILTIN_COMP_EMAILS, ...env]));
