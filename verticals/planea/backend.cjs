@@ -359,14 +359,31 @@ function build() {
   });
 
   // Open free signup — NO email confirmation.
-  router.post('/auth/signup', async (req, res) => {
+  // Trazabilidad de seguridad — nunca guarda contraseña, token ni cuerpo. IP hasheada.
+  async function audit(req, event, outcome, extra) {
+    try {
+      if (!Audit) return;
+      await Audit.create({
+        user_id: (extra && extra.user_id) || null,
+        email: (extra && extra.email) || null,
+        event: String(event).slice(0, 60),
+        outcome: String(outcome || '').slice(0, 30),
+        ip_hash: sec.ipHash(req),
+        user_agent: String(req.headers['user-agent'] || '').slice(0, 250),
+        meta: (extra && extra.meta) || null,
+      });
+    } catch (e) { /* la auditoría nunca debe tumbar la petición */ }
+  }
+
+  router.post('/auth/signup', sec.signupLimiter, async (req, res) => {
     if (!requireReady(res)) return;
     try {
       const email = String(req.body.email || '').toLowerCase().trim();
       const password = String(req.body.password || '');
       const full_name = String(req.body.full_name || req.body.name || '').trim().slice(0, 120);
       if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Correo inválido' });
-      if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+      const pwIssue = sec.passwordIssue(password);
+      if (pwIssue) return res.status(400).json({ error: pwIssue });
 
       const existing = await User.findOne({ where: { email } });
       if (existing) return res.status(409).json({ error: 'Ese correo ya está registrado. Inicia sesión.' });
@@ -376,6 +393,7 @@ function build() {
       await Profile.create({ user_id: user.id, full_name, assets_data: [], liabilities_data: [], goals: [] });
 
       setSession(res, user);
+      audit(req, 'signup', 'success', { user_id: user.id, email: email });
       res.json({ success: true, user: publicUser(user) });
     } catch (e) {
       console.error('Planea signup error:', e.message);
@@ -383,7 +401,7 @@ function build() {
     }
   });
 
-  router.post('/auth/login', async (req, res) => {
+  router.post('/auth/login', sec.loginLimiter, async (req, res) => {
     if (!requireReady(res)) return;
     try {
       const email = String(req.body.email || '').toLowerCase().trim();
@@ -391,13 +409,14 @@ function build() {
       if (!email || !password) return res.status(400).json({ error: 'Correo y contraseña requeridos' });
 
       const user = await User.findOne({ where: { email } });
-      if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
+      if (!user) { audit(req, 'login', 'fail_no_user', { email: email }); return res.status(401).json({ error: 'Credenciales inválidas' }); }
       const ok = await bcrypt.compare(password, user.password_hash);
-      if (!ok) return res.status(401).json({ error: 'Credenciales inválidas' });
+      if (!ok) { audit(req, 'login', 'fail_password', { user_id: user.id, email: email }); return res.status(401).json({ error: 'Credenciales inválidas' }); }
 
       user.last_login_at = new Date();
       await user.save();
       setSession(res, user);
+      audit(req, 'login', 'success', { user_id: user.id, email: email });
       res.json({ success: true, user: publicUser(user) });
     } catch (e) {
       console.error('Planea login error:', e.message);
@@ -427,7 +446,7 @@ function build() {
       return true;
     } catch (e) { console.error('Planea reset email error:', e.message); return false; }
   }
-  router.post('/auth/forgot', async (req, res) => {
+  router.post('/auth/forgot', sec.resetLimiter, async (req, res) => {
     if (!requireReady(res)) return;
     try {
       const email = String(req.body.email || '').toLowerCase().trim();
@@ -435,8 +454,11 @@ function build() {
       const user = await User.findOne({ where: { email } });
       let devLink = null;
       if (user) {
-        const token = crypto.randomBytes(24).toString('hex');
-        user.reset_token = token; user.reset_expires = new Date(Date.now() + 3600000); await user.save();
+        // Se guarda el HASH del token, nunca el token (ISO 27001 A.8.24): quien lea
+        // la base de datos no puede secuestrar una cuenta.
+        const token = sec.randomToken(24);
+        user.reset_token = sec.hashToken(token); user.reset_expires = new Date(Date.now() + 3600000); await user.save();
+        audit(req, 'password_reset_request', 'issued', { user_id: user.id, email: email });
         const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'planea.vip').split(',')[0].trim();
         const link = 'https://' + host + '/planea/reset?token=' + token;
         const sent = await sendResetEmail(email, link);
@@ -446,19 +468,21 @@ function build() {
       res.json({ ok: true, dev_link: devLink });
     } catch (e) { console.error('Planea forgot error:', e.message); res.status(500).json({ error: e.message }); }
   });
-  router.post('/auth/reset', async (req, res) => {
+  router.post('/auth/reset', sec.resetLimiter, async (req, res) => {
     if (!requireReady(res)) return;
     try {
       const token = String(req.body.token || '').trim();
       const password = String(req.body.password || '');
       if (!token) return res.status(400).json({ error: 'Enlace inválido.' });
-      if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
-      const user = await User.findOne({ where: { reset_token: token } });
+      const pwIssue = sec.passwordIssue(password);
+      if (pwIssue) return res.status(400).json({ error: pwIssue });
+      const user = await User.findOne({ where: { reset_token: sec.hashToken(token) } });
       if (!user || !user.reset_expires || new Date(user.reset_expires).getTime() < Date.now()) {
         return res.status(400).json({ error: 'El enlace no es válido o venció. Solicita uno nuevo.' });
       }
       user.password_hash = await bcrypt.hash(password, 12);
       user.reset_token = null; user.reset_expires = null; await user.save();
+      audit(req, 'password_reset', 'success', { user_id: user.id, email: user.email });
       res.json({ ok: true });
     } catch (e) { console.error('Planea reset error:', e.message); res.status(500).json({ error: e.message }); }
   });
