@@ -11,6 +11,9 @@
  *   node verticals/lawncopilot/scripts/purge-test-data.js --apply
  *
  * Matches only synthetic identities. Real customer rows are never touched.
+ *
+ * --tenants also removes whole test COMPANIES (slugs starting sit_ / acme_lawn_),
+ * which a SIT run that aborts before its own cleanup can leave behind.
  */
 
 require('dotenv').config();
@@ -18,6 +21,38 @@ const { Op } = require('sequelize');
 const m = require('../src/models');
 
 const APPLY = process.argv.includes('--apply');
+const TENANTS = process.argv.includes('--tenants');
+
+const TENANT_MODELS = ['CampaignSend', 'Campaign', 'Review', 'Referral', 'PayItem', 'PayRun',
+  'TimeEntry', 'Certification', 'Availability', 'JobChecklist', 'Employee', 'QuoteLineItem',
+  'Quote', 'PropertyGeometry', 'Measurement', 'MeasurementOverride', 'Property', 'Appointment',
+  'ServiceRecord', 'ServicePhoto', 'InvoiceLineItem', 'Invoice', 'Payment', 'PaymentMethod',
+  'AutopayEnrollment', 'Subscription', 'Ticket', 'Message', 'Notification', 'CallLog',
+  'AgentCall', 'AgentApproval', 'AgentSession', 'AuditLog', 'Lead', 'Customer', 'Crew',
+  'PricingRule', 'ServicePlan', 'AddonService', 'SiteContent', 'ShortLink',
+  'PlatformSubscription', 'ImpersonationLog', 'User', 'Expense', 'JobCost', 'Route',
+  'SupplierBill', 'TenantAlias'];
+
+async function purgeTestTenants(apply) {
+  const doomed = await m.Tenant.findAll({
+    where: { [Op.or]: [
+      { slug: { [Op.like]: 'sit\\_%' } },
+      { slug: { [Op.like]: 'acme\\_lawn\\_%' } },
+      { slug: { [Op.like]: 'sit_deep_%' } }
+    ] }, raw: true
+  });
+  console.log(`\nTest companies found: ${doomed.length}`);
+  doomed.forEach(t => console.log(`  /${t.slug} (${t.name})`));
+  if (!apply || !doomed.length) return doomed.length;
+  for (const t of doomed) {
+    for (const M of TENANT_MODELS) {
+      try { await m[M].destroy({ where: { tenant_id: t.id } }); } catch (e) { /* best effort */ }
+    }
+    await m.Tenant.destroy({ where: { id: t.id } });
+  }
+  console.log(`Removed ${doomed.length} test compan(ies).`);
+  return doomed.length;
+}
 const EMAIL_PATTERNS = [
   { [Op.like]: 'sit_%@example.com' },
   { [Op.like]: 'prodverify%@example.com' },
@@ -40,6 +75,8 @@ const EMAIL_PATTERNS = [
   customers   ${customers.length}
   leads       ${leads.length}
   properties  ${props.length}`);
+
+  if (TENANTS) await purgeTestTenants(APPLY);
 
   if (!APPLY) {
     console.log('\nDry run. Re-run with --apply to delete.');
