@@ -8,7 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { SiteContent, ShortLink, Review } = require('../models');
-const { tenantBaseUrl } = require('../tenancy');
+const { tenantBaseUrl, shortLinkUrl } = require('../tenancy');
 const { qrSvg } = require('../services/qr');
 
 function requireStaff(req, res, next) {
@@ -67,9 +67,8 @@ router.post('/revert/:version', requireStaff, async (req, res) => {
  */
 router.get('/share-kit', requireStaff, async (req, res) => {
   const base = tenantBaseUrl(req.tenant, req);
-  const root = base.replace(`/lawncopilot/${req.tenant.slug}`, '');
   let link = await ShortLink.findOne({ where: { tenant_id: req.tenant_id, source: 'signup' }, raw: true });
-  const shortUrl = link ? `${root}/lawncopilot/l/${link.code}` : base;
+  const shortUrl = link ? shortLinkUrl(link.code, req) : base;
 
   res.json({
     success: true,
@@ -94,9 +93,8 @@ router.get('/share-kit', requireStaff, async (req, res) => {
 /** Print-resolution QR for truck doors and yard signs. */
 router.get('/qr.svg', async (req, res) => {
   const base = tenantBaseUrl(req.tenant, req);
-  const root = base.replace(`/lawncopilot/${req.tenant.slug}`, '');
   const link = await ShortLink.findOne({ where: { tenant_id: req.tenant_id, source: 'signup' }, raw: true });
-  const url = link ? `${root}/lawncopilot/l/${link.code}` : base;
+  const url = link ? shortLinkUrl(link.code, req) : base;
   res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(qrSvg(url));
 });
 

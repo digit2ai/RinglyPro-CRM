@@ -150,7 +150,7 @@ Rules you never break:
           success: true,
           code: ref.code,
           reward: `$${((ref.reward_cents || 0) / 100).toFixed(2)}`,
-          share_url: `/lawncopilot/${tenant.slug}?ref=${encodeURIComponent(ref.code)}`
+          share_url: `${require('../../tenancy').tenantBaseUrl(tenant)}?ref=${encodeURIComponent(ref.code)}`
         };
       }
     },
@@ -296,10 +296,10 @@ Rules you never break:
       parameters: { type: 'object', properties: {} },
       handler: async (_a, ctx) => {
         const tenant = await Tenant.findByPk(ctx.tenant_id, { raw: true });
-        const root = process.env.LAWNCOPILOT_BASE_DOMAIN || 'https://aiagent.ringlypro.com';
-        const page = `${root}/lawncopilot/${tenant.slug}`;
+        const { tenantBaseUrl, shortLinkUrl } = require('../../tenancy');
+        const page = tenantBaseUrl(tenant);
         const link = await ShortLink.findOne({ where: { tenant_id: ctx.tenant_id, source: 'signup' }, raw: true });
-        const short = link ? `${root}/lawncopilot/l/${link.code}` : page;
+        const short = link ? shortLinkUrl(link.code) : page;
         const connected = !!process.env.GOOGLE_BUSINESS_PROFILE_KEY;
 
         return {
@@ -333,12 +333,13 @@ Rules you never break:
       handler: async (_a, ctx) => {
         const tenant = await Tenant.findByPk(ctx.tenant_id, { raw: true });
         const link = await ShortLink.findOne({ where: { tenant_id: ctx.tenant_id, source: 'signup' }, raw: true });
-        const root = process.env.LAWNCOPILOT_BASE_DOMAIN || 'https://aiagent.ringlypro.com';
+        const { tenantBaseUrl, shortLinkUrl } = require('../../tenancy');
+        const page = tenantBaseUrl(tenant);
         return {
           success: true,
-          qr_url: `/lawncopilot/${tenant.slug}/api/v1/site/qr.svg`,
-          short_url: link ? `${root}/lawncopilot/l/${link.code}` : `${root}/lawncopilot/${tenant.slug}`,
-          page_url: `${root}/lawncopilot/${tenant.slug}`,
+          qr_url: `${page}/api/v1/site/qr.svg`,
+          short_url: link ? shortLinkUrl(link.code) : page,
+          page_url: page,
           clicks: link ? link.clicks : 0,
           note: 'The QR is vector, so it prints crisp at any size — truck door, yard sign or business card.'
         };

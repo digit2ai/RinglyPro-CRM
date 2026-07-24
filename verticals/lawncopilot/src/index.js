@@ -75,6 +75,34 @@ router.use((req, res, next) => {
 // PLATFORM LAYER — no tenant in context
 // ════════════════════════════════════════════════════════════════════════════
 
+/**
+ * The web app manifest, rendered per host. On lawncopilot.com the app lives at
+ * the root, so scope and start_url must be '/' — a manifest whose scope does
+ * not cover the page silently makes the app un-installable.
+ */
+router.get('/app.webmanifest', (req, res) => {
+  const { basePath } = require('./tenancy');
+  const base = basePath(req) || '';
+  res.type('application/manifest+json').json({
+    name: 'Lawn Co-Pilot',
+    short_name: 'Lawn Co-Pilot',
+    description: 'The AI office for landscaping companies.',
+    start_url: `${base}/`,
+    scope: `${base}/`,
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#f6faf8',
+    theme_color: '#307f44',
+    categories: ['business', 'productivity'],
+    icons: [
+      { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    ]
+  });
+});
+
 router.get('/health', async (req, res) => {
   const { Tenant } = require('./models');
   const brain = require('./mcp/brain');

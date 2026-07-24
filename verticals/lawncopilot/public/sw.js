@@ -11,15 +11,18 @@
  *   - Static assets are cache-first, which is what makes a repeat visit from a
  *     truck on 4G feel instant.
  */
-var CACHE = 'lawncopilot-app-v1';
+var CACHE = 'lawncopilot-app-v2';
+// Scope-relative, so the same worker serves lawncopilot.com/ and
+// aiagent.ringlypro.com/lawncopilot/ without a second build.
+var BASE = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 var SHELL = [
-  '/lawncopilot/styles.css',
-  '/lawncopilot/tenant.css',
-  '/lawncopilot/orb.js',
-  '/lawncopilot/simulator.js',
-  '/lawncopilot/logo.png',
-  '/lawncopilot/mark.png',
-  '/lawncopilot/icon-192.png'
+  BASE + '/styles.css',
+  BASE + '/tenant.css',
+  BASE + '/orb.js',
+  BASE + '/simulator.js',
+  BASE + '/logo.png',
+  BASE + '/mark.png',
+  BASE + '/icon-192.png'
 ];
 
 self.addEventListener('install', function (e) {
@@ -47,12 +50,12 @@ self.addEventListener('fetch', function (e) {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.indexOf('/api/') !== -1) return;      // never cache data
   if (url.pathname.indexOf('/mcp') !== -1) return;
-  if (url.pathname.indexOf('/lawncopilot/') !== 0) return;
+  if (BASE && url.pathname.indexOf(BASE + '/') !== 0) return;
 
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(function () {
-        return caches.match('/lawncopilot/offline.html')
+        return caches.match(BASE + '/offline.html')
           .then(function (r) { return r || new Response('Offline', { status: 503 }); });
       })
     );

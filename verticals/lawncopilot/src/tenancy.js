@@ -144,7 +144,8 @@ function tenantMiddleware() {
 
     // If they arrived on an old alias, send them to the canonical slug.
     if (tenant.slug !== slug && req.method === 'GET') {
-      const rest = req.originalUrl.replace(`/lawncopilot/${slug}`, `/lawncopilot/${tenant.slug}`);
+      // Works under both mounts: /lawncopilot/<old> and /<old> on the custom domain.
+      const rest = req.originalUrl.replace(`/${slug}`, `/${tenant.slug}`);
       return res.redirect(301, rest);
     }
 
@@ -163,11 +164,39 @@ function requireNoTenant(req, res, next) {
   next();
 }
 
+/**
+ * The canonical public home. lawncopilot.com serves the app at its root, so a
+ * company's address is lawncopilot.com/<slug> with no path prefix. Everything
+ * that leaves the building — QR codes, short links, emails, og:url, the Google
+ * Business Profile instructions — must use that form.
+ */
+const CANONICAL = () => (process.env.LAWNCOPILOT_BASE_DOMAIN || 'https://lawncopilot.com')
+  .replace(/\/+$/, '');
+
+/**
+ * Path prefix for THIS request. Empty on the custom domain, '/lawncopilot'
+ * when served under aiagent.ringlypro.com.
+ */
+function basePath(req) {
+  return (req && req.lawncopilotRoot) ? '' : '/lawncopilot';
+}
+
+function publicRoot(req) {
+  const canonical = CANONICAL();
+  if (canonical) return { root: canonical, prefix: '' };
+  const host = req ? `${req.protocol}://${req.get('host')}` : 'https://aiagent.ringlypro.com';
+  return { root: host, prefix: basePath(req) };
+}
+
 function tenantBaseUrl(tenant, req) {
-  const base = process.env.LAWNCOPILOT_BASE_DOMAIN
-    || (req ? `${req.protocol}://${req.get('host')}` : 'https://aiagent.ringlypro.com');
-  const root = base.startsWith('http') ? base : `https://${base}`;
-  return `${root}/lawncopilot/${tenant.slug}`;
+  const { root, prefix } = publicRoot(req);
+  return `${root}${prefix}/${tenant.slug}`;
+}
+
+/** Canonical short link, e.g. https://lawncopilot.com/l/ab12cd */
+function shortLinkUrl(code, req) {
+  const { root, prefix } = publicRoot(req);
+  return `${root}${prefix}/l/${code}`;
 }
 
 function notFoundPage(slug) {
@@ -205,6 +234,7 @@ function escapeHtml(s) {
 
 module.exports = {
   tenantMiddleware, requireNoTenant, resolveTenant,
+  basePath, publicRoot, shortLinkUrl, CANONICAL,
   validateSlug, isSlugAvailable, suggestSlug, normalizeSlug,
   tenantBaseUrl, cacheBust, escapeHtml, RESERVED, SLUG_RE
 };

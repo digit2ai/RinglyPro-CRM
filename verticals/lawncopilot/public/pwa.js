@@ -4,7 +4,11 @@
   'use strict';
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/lawncopilot/sw.js', { scope: '/lawncopilot/' })
+      // On lawncopilot.com the app is at the root; under aiagent it is at
+      // /lawncopilot. Derive both from where this script was actually served.
+      var base = (location.pathname.indexOf('/lawncopilot/') === 0 ||
+                  location.pathname === '/lawncopilot') ? '/lawncopilot' : '';
+      navigator.serviceWorker.register(base + '/sw.js', { scope: base + '/' })
         .catch(function () { /* offline support is a bonus, never a blocker */ });
     });
   }

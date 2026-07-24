@@ -69,6 +69,8 @@ async function issueInvoice({ tenant_id, customer_id, service_record_id, lines, 
   await Customer.increment({ balance_cents: subtotal }, { where: { id: customer_id, tenant_id } });
 
   const customer = await Customer.findOne({ where: { id: customer_id, tenant_id }, raw: true });
+  const { Tenant } = require('../models');
+  const tenant = await Tenant.findByPk(tenant_id, { raw: true });
   await notify({
     tenant_id, customer_id, channel: 'email', template: 'invoice_issued',
     vars: {
@@ -77,7 +79,7 @@ async function issueInvoice({ tenant_id, customer_id, service_record_id, lines, 
       amount: money(subtotal),
       date_display: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
       due_display: invoice.due_at.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-      portal_url: portalUrl()
+      portal_url: portalUrl(tenant)
     }
   });
 
@@ -100,7 +102,7 @@ async function issueInvoice({ tenant_id, customer_id, service_record_id, lines, 
         amount: money(subtotal),
         date_display: chargeAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
         invoice_number: invoice.number,
-        portal_url: portalUrl()
+        portal_url: portalUrl(tenant)
       }
     });
   }
@@ -108,8 +110,9 @@ async function issueInvoice({ tenant_id, customer_id, service_record_id, lines, 
   return { success: true, invoice: invoice.toJSON(), autopay_scheduled: !!enrollment };
 }
 
-function portalUrl() {
-  return (process.env.LAWNCOPILOT_BASE_URL || 'https://aiagent.ringlypro.com') + '/lawncopilot/portal';
+function portalUrl(tenant) {
+  const { CANONICAL } = require('../tenancy');
+  return tenant && tenant.slug ? `${CANONICAL()}/${tenant.slug}/portal` : `${CANONICAL()}/`;
 }
 
 /**

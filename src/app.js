@@ -1696,12 +1696,47 @@ let lawncopilotApp = null;
 let lawncopilotError = null;
 try {
   lawncopilotApp = require('../verticals/lawncopilot/src/index');
+
+  // ── Custom domain: lawncopilot.com serves the app at its ROOT ───────────
+  // The slug is the company's whole web address, so it has to read
+  // lawncopilot.com/green-acres — not lawncopilot.com/lawncopilot/green-acres.
+  //
+  // The vertical stays mounted at /lawncopilot for aiagent.ringlypro.com, and
+  // on the custom domain we:
+  //   1. send www -> apex once, so links and cookies have one canonical home
+  //   2. serve assets carrying the /lawncopilot prefix silently, so the
+  //      absolute paths baked into the HTML resolve with no extra round trip
+  //   3. 301 prefixed PAGE urls to the clean path, so the address bar ends up
+  //      canonical without paying a redirect on every stylesheet
+  const LC_HOSTS = new Set(['lawncopilot.com', 'www.lawncopilot.com']);
+  const HAS_EXT = /\.[a-z0-9]{2,16}$/i;
+
+  app.use((req, res, next) => {
+    const host = (req.get('host') || '').toLowerCase().split(':')[0];
+    if (!LC_HOSTS.has(host)) return next();
+
+    if (host === 'www.lawncopilot.com') {
+      return res.redirect(301, 'https://lawncopilot.com' + req.originalUrl);
+    }
+
+    if (req.url === '/lawncopilot' || req.url.startsWith('/lawncopilot/')) {
+      const clean = req.url.slice('/lawncopilot'.length) || '/';
+      const path = clean.split('?')[0];
+      // Assets resolve in place; pages get one clean redirect.
+      if (HAS_EXT.test(path) || req.method !== 'GET') req.url = clean;
+      else return res.redirect(301, clean);
+    }
+
+    req.lawncopilotRoot = true;
+    return lawncopilotApp(req, res, next);
+  });
+
   app.get('/lawncopilot', (req, res, next) => {
     if (!req.originalUrl.endsWith('/')) return res.redirect('/lawncopilot/');
     next();
   });
   app.use('/lawncopilot', lawncopilotApp);
-  console.log('Lawn Co-Pilot mounted at /lawncopilot');
+  console.log('Lawn Co-Pilot mounted at /lawncopilot and at lawncopilot.com root');
   console.log('   - Marketing site: /lawncopilot/');
   console.log('   - Customer portal: /lawncopilot/portal');
   console.log('   - Admin portal: /lawncopilot/admin');

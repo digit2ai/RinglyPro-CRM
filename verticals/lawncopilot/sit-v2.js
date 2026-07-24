@@ -676,6 +676,36 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
        unstyled.length === 0, unstyled.join(', '));
     console.log(`        (${pagesUsingFields.length} pages use .field)`);
 
+    // ── 15c. Canonical domain ─────────────────────────────────────────────
+    // lawncopilot.com serves the app at its root, so a company's address is
+    // lawncopilot.com/<slug>. Everything that leaves the building must use
+    // that form — a QR code on a truck cannot carry a path prefix.
+    console.log('\n[15c] Canonical domain');
+    const tenancyMod = require('./src/tenancy');
+    const fakeTenant = { slug: A.slug };
+    const canonical = tenancyMod.tenantBaseUrl(fakeTenant);
+    ok('a company url is domain-root, not path-prefixed',
+       /^https?:\/\/[^/]+\/[^/]+$/.test(canonical) && !canonical.includes('/lawncopilot/'),
+       canonical);
+    ok('short links are canonical too',
+       !tenancyMod.shortLinkUrl('abc123').includes('/lawncopilot/'),
+       tenancyMod.shortLinkUrl('abc123'));
+    ok('basePath is empty on the custom domain and prefixed elsewhere',
+       tenancyMod.basePath({ lawncopilotRoot: true }) === ''
+       && tenancyMod.basePath({}) === '/lawncopilot');
+
+    const kitUrls = await call('GET', `${ROOT}/${A.slug}/api/v1/site/share-kit`, null, { jar: 'alpha' });
+    ok('the share kit hands out canonical links',
+       !kitUrls.data.page_url.includes('/lawncopilot/')
+       && !kitUrls.data.short_url.includes('/lawncopilot/'),
+       `${kitUrls.data.page_url} | ${kitUrls.data.short_url}`);
+    ok('Google Business Profile gets the canonical url',
+       !kitUrls.data.google_business_profile.website_field.includes('/lawncopilot/'));
+
+    const manifestHost = await call('GET', `${ROOT}/app.webmanifest`);
+    ok('the manifest is rendered per host, not static',
+       manifestHost.status === 200 && typeof manifestHost.data.scope === 'string');
+
     // ── 16. Platform layer ────────────────────────────────────────────────
     console.log('\n[16] Platform super-admin');
     const plogin = await call('POST', `${ROOT}/api/v1/platform/login`, {
