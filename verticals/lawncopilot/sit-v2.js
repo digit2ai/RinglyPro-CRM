@@ -522,6 +522,22 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('the estimator has its identity gate',
        homeHtml.text.includes('id="gateForm"')
        && ['g-name', 'g-phone', 'g-email'].every(f => homeHtml.text.includes(f)));
+    // The mobile dashboard simulator: interactive proof of the "one app"
+    // claim. It is a PREVIEW with sample data and must say so.
+    ok('platform home carries the mobile dashboard simulator',
+       homeHtml.text.includes('id="sim"') && homeHtml.text.includes('/lawncopilot/simulator.js'));
+    const simJs = await call('GET', `${ROOT}/simulator.js`);
+    ok('simulator.js serves as real javascript',
+       simJs.status === 200 && !/<!DOCTYPE html>/i.test(simJs.text));
+    ok('simulator covers every tab of the office',
+       ['today', 'money', 'requests', 'crew', 'ai'].every(t => simJs.text.includes(`'${t}'`)));
+    ok('simulator includes the drill-down screens',
+       ['job', 'invoice', 'approve', 'payroll', 'routes'].every(t => simJs.text.includes(`SCREENS.${t}`)));
+    ok('simulator labels itself a preview with sample data',
+       /sample data/i.test(simJs.text) && /sample data/i.test(homeHtml.text + simJs.text));
+    ok('simulated payroll still says it is not filed',
+       /not filed/i.test(simJs.text));
+
     ok('the estimator can render a result',
        ['id="map"', 'id="prices"', 'id="transcript"'].every(id => homeHtml.text.includes(id)));
     const staleLanding = await call('GET', `${ROOT}/index.html`);

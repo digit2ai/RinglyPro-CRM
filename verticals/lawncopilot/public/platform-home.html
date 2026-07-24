@@ -114,6 +114,108 @@
 .hero--saas .chips { margin-top: var(--space-3); }
 .hero--saas .orbcard__title { font-size: 1.02rem; }
 .hero--saas .orbcard__sub { font-size: .84rem; line-height: 1.4; }
+
+/* ── Mobile dashboard simulator ─────────────────────────────────── */
+.simwrap { display: grid; grid-template-columns: .85fr 1.15fr; gap: var(--space-7); align-items: center; }
+@media (max-width: 900px) { .simwrap { grid-template-columns: 1fr; } }
+#sim { display: flex; flex-direction: column; align-items: center; }
+.sim-phone {
+  width: 320px; max-width: 100%; height: 640px; position: relative;
+  background: #0b1f16; border-radius: 40px; padding: 12px 10px 0;
+  border: 10px solid #101d16;
+  box-shadow: 0 40px 70px -24px rgba(11,31,22,.6), inset 0 0 0 1px rgba(255,255,255,.06);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sim-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  width: 108px; height: 22px; background: #101d16; border-radius: 0 0 14px 14px; z-index: 3; }
+.sim-status { display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 14px 8px; font-size: .7rem; color: rgba(255,255,255,.55); font-weight: 700; }
+.sim-status__r { color: var(--green-400); }
+.sim-screen { flex: 1; overflow-y: auto; background: #f6faf8; border-radius: 22px 22px 0 0;
+  padding: var(--space-4) var(--space-4) var(--space-5); -webkit-overflow-scrolling: touch; }
+.sim-screen::-webkit-scrollbar { width: 0; }
+
+.sim-head { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-4); }
+.sim-head b { display: block; font-size: 1.15rem; letter-spacing: -.02em; color: var(--ink-900); line-height: 1.2; }
+.sim-head i { font-style: normal; font-size: .76rem; color: var(--ink-400); }
+.sim-back { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%; border: 1px solid var(--line);
+  background: #fff; color: var(--ink-700); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+
+.sim-strip { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: var(--space-4); }
+.sim-strip > div { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 8px; text-align: center; }
+.sim-strip b { display: block; font-size: .95rem; font-weight: 800; color: var(--green-700); line-height: 1.2; }
+.sim-strip span { font-size: .6rem; color: var(--ink-400); text-transform: uppercase; letter-spacing: .04em; }
+
+.sim-row { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  padding: 11px 12px; margin-bottom: 7px; cursor: pointer; font-family: inherit;
+  transition: border-color .12s ease, transform .12s ease; }
+.sim-row:hover { border-color: var(--green-400); transform: translateX(2px); }
+.sim-row--static { cursor: default; }
+.sim-row--static:hover { transform: none; border-color: var(--line); }
+.sim-row--stack { align-items: flex-start; }
+.sim-row__t { font-size: .72rem; font-weight: 800; color: var(--green-700); flex: 0 0 34px; }
+.sim-row__m { flex: 1; min-width: 0; }
+.sim-row__m b { display: block; font-size: .84rem; color: var(--ink-900); }
+.sim-row__m i { display: block; font-style: normal; font-size: .72rem; color: var(--ink-400); }
+.sim-row__m i.sim-dim { color: var(--ink-300); margin-top: 1px; }
+.sim-row__r { font-size: .82rem; font-weight: 800; color: var(--ink-900); }
+
+.sim-pill { font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  padding: 3px 8px; border-radius: 999px; background: var(--ink-100); color: var(--ink-600); white-space: nowrap; }
+.sim-pill--done { background: var(--green-100); color: var(--green-900); }
+.sim-pill--now { background: #fef3c7; color: #92400e; }
+.sim-pill--warn { background: #fee2e2; color: #991b1b; }
+
+.sim-kv { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--ink-100); font-size: .8rem; }
+.sim-kv span { color: var(--ink-400); }
+.sim-kv b { color: var(--ink-900); text-align: right; }
+
+.sim-map { position: relative; height: 108px; border-radius: 12px; margin-bottom: var(--space-4);
+  background:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0/100% 18px,
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0/18px 100%,
+    linear-gradient(160deg, #1b3a28, #0f2419); }
+.sim-map__tag { position: absolute; left: 8px; top: 8px; font-size: .58rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--green-200);
+  background: rgba(11,31,22,.7); padding: 3px 8px; border-radius: 999px; }
+.sim-map__fig { position: absolute; right: 8px; bottom: 8px; text-align: right; }
+.sim-map__fig b { display: block; color: #fff; font-size: .95rem; font-weight: 800; }
+.sim-map__fig span { font-size: .55rem; text-transform: uppercase; letter-spacing: .05em; color: var(--green-200); }
+
+.sim-route { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px 12px; }
+.sim-stop { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--ink-100); }
+.sim-stop:last-child { border-bottom: 0; }
+.sim-stop__n { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; background: var(--green-600);
+  color: #fff; font-size: .65rem; font-weight: 800; display: grid; place-items: center; }
+.sim-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--green-500); }
+
+.sim-note { text-align: center; font-size: .68rem; color: var(--ink-300); margin-top: var(--space-3); }
+.sim-note2 { font-size: .72rem; color: var(--ink-400); background: var(--ink-50);
+  border-radius: 10px; padding: 9px 11px; margin-top: var(--space-3); }
+.sim-warn { font-size: .7rem; color: #92400e; background: #fef3c7; border-radius: 10px;
+  padding: 9px 11px; margin-top: var(--space-3); font-weight: 600; }
+.sim-actions { display: flex; gap: 7px; margin-top: var(--space-4); flex-wrap: wrap; }
+.sim-btn { flex: 1; min-width: 120px; padding: 11px 12px; border-radius: 999px; border: 0;
+  background: var(--green-600); color: #fff; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.sim-btn--ghost { background: #fff; color: var(--ink-700); border: 1px solid var(--line); }
+
+.sim-tabs { display: grid; grid-template-columns: repeat(5, 1fr); background: #fff;
+  border-top: 1px solid var(--line); padding: 6px 2px 10px; }
+.sim-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px;
+  background: none; border: 0; cursor: pointer; color: var(--ink-300); font-family: inherit;
+  font-size: .58rem; font-weight: 700; }
+.sim-tab svg { width: 18px; height: 18px; }
+.sim-tab.is-on { color: var(--green-700); }
+.sim-caption { font-size: .74rem; color: var(--text-mut); margin-top: var(--space-4); text-align: center; max-width: 300px; }
+
+.simfeat { list-style: none; padding: 0; margin: var(--space-5) 0 0; }
+.simfeat li { padding-left: 30px; position: relative; margin-bottom: var(--space-4); }
+.simfeat li b { display: block; font-size: .98rem; color: var(--ink-900); }
+.simfeat li span { font-size: .88rem; color: var(--text-mut); }
+.simfeat li::before { content: ""; position: absolute; left: 4px; top: 6px; width: 7px; height: 12px;
+  border: solid var(--green-600); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 </style>
 </head>
 <body data-slug="__DEMO_SLUG__">
@@ -283,21 +385,31 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section" id="dashboard">
   <div class="wrap">
-    <div class="center" style="max-width:700px;margin:0 auto var(--space-6)">
+    <div class="center" style="max-width:720px;margin:0 auto var(--space-7)">
       <div class="eyebrow">One place</div>
-      <h2>Everything in a single dashboard, on the phone in your pocket</h2>
-      <p class="lead">No separate answering service, scheduler, estimating app, invoicing tool
-      or spreadsheet. Open one app between jobs and see the whole company.</p>
+      <h2>Your whole company, on the phone in your pocket</h2>
+      <p class="lead">No separate answering service, scheduler, estimating app, invoicing tool or
+      spreadsheet. Open one app between jobs and see everything. Tap through it.</p>
     </div>
-    <div class="grid grid--3">
-      <div class="card"><h3>Today</h3><p class="mut small">Every job on the schedule, in route order, with the crew assigned and where they are up to.</p></div>
-      <div class="card"><h3>Money</h3><p class="mut small">What came in, what is owed, which invoices failed, and what the day's work was actually worth.</p></div>
-      <div class="card"><h3>Requests</h3><p class="mut small">New leads, quote approvals, special requests, complaints and anything the AI escalated to you.</p></div>
-      <div class="card"><h3>Crew</h3><p class="mut small">Who is clocked in, hours this week, certifications about to expire, and the payroll waiting on your approval.</p></div>
-      <div class="card"><h3>Routes</h3><p class="mut small">Each crew's day sequenced to cut drive time, with the minutes and fuel that saved you.</p></div>
-      <div class="card"><h3>Approvals</h3><p class="mut small">Anything irreversible — refunds, pay runs, price changes — waits here for you. Nothing goes out unsigned.</p></div>
+
+    <div class="simwrap">
+      <div id="sim"></div>
+
+      <div>
+        <ul class="simfeat">
+          <li><b>Today</b><span>Every job in route order, the crew assigned, and who is on site right now.</span></li>
+          <li><b>Money</b><span>Collected, outstanding, and the card that failed — already being retried without you.</span></li>
+          <li><b>Inbox</b><span>New leads, quotes needing your OK, special requests, and anything the AI escalated.</span></li>
+          <li><b>Crew</b><span>Who is clocked in, hours this week, a licence about to expire, payroll waiting on approval.</span></li>
+          <li><b>AI staff</b><span>What each employee did today, and the routes they sequenced to cut drive time.</span></li>
+        </ul>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="/lawncopilot/signup">Start free</a>
+          <a class="btn btn--ghost" href="#pricing">See pricing</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -420,6 +532,7 @@
 </div>
 
 <script src="/lawncopilot/orb.js" defer></script>
+<script src="/lawncopilot/simulator.js" defer></script>
 
 <script>
 /* Pricing renders from the API, so a price change is one edit server-side and
