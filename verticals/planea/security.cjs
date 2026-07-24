@@ -56,20 +56,94 @@ function headers(req, res, next) {
 }
 
 // ── 2. Límites de intentos (anti fuerza bruta / enumeración) ────────────────
-function makeLimiter(windowMs, limit, msg) {
+//
+// El almacén por defecto de express-rate-limit vive en la MEMORIA DEL PROCESO.
+// Render corre varias instancias detrás del balanceador, así que cada una lleva
+// su propio contador: el límite real era 12 × N instancias. Medido en producción
+// el contador saltaba (11 → 10 → 9 → 11) confirmando el reparto entre procesos.
+//
+// Este almacén guarda el contador en Postgres con un UPSERT atómico, de modo que
+// TODAS las instancias comparten la misma ventana. Es el control que un auditor
+// espera ver (ISO 27001 A.8.5 · SOC 2 CC6.1): un límite verificable, no uno que
+// se multiplica en silencio al escalar horizontalmente.
+let db = null;
+const memFallback = new Map(); // solo hasta que la base esté lista
+
+function useDatabase(sequelize) { db = sequelize; }
+
+const sharedStore = {
+  // express-rate-limit v7 Store
+  init() {},
+  localKeys: false,
+  async increment(key) {
+    const exp = new Date(Date.now() + this.windowMs);
+    if (db) {
+      try {
+        const [rows] = await db.query(
+          'INSERT INTO planea_rate_limits (key, hits, expires_at) VALUES (:k, 1, :exp) ' +
+          'ON CONFLICT (key) DO UPDATE SET ' +
+          '  hits = CASE WHEN planea_rate_limits.expires_at < NOW() THEN 1 ELSE planea_rate_limits.hits + 1 END, ' +
+          '  expires_at = CASE WHEN planea_rate_limits.expires_at < NOW() THEN EXCLUDED.expires_at ELSE planea_rate_limits.expires_at END ' +
+          'RETURNING hits, expires_at',
+          { replacements: { k: key, exp } }
+        );
+        const r = rows && rows[0];
+        if (r) return { totalHits: Number(r.hits), resetTime: new Date(r.expires_at) };
+      } catch (e) {
+        // Si la base falla, NO se abre la puerta: se cae al contador en memoria.
+        // Degradar a "sin límite" sería el fallo de seguridad clásico.
+      }
+    }
+    const cur = memFallback.get(key);
+    if (!cur || cur.resetTime < new Date()) {
+      const fresh = { totalHits: 1, resetTime: exp };
+      memFallback.set(key, fresh);
+      return fresh;
+    }
+    cur.totalHits += 1;
+    return cur;
+  },
+  async decrement(key) {
+    if (db) { try { await db.query('UPDATE planea_rate_limits SET hits = GREATEST(hits - 1, 0) WHERE key = :k', { replacements: { k: key } }); } catch (e) {} }
+    const cur = memFallback.get(key);
+    if (cur && cur.totalHits > 0) cur.totalHits -= 1;
+  },
+  async resetKey(key) {
+    if (db) { try { await db.query('DELETE FROM planea_rate_limits WHERE key = :k', { replacements: { k: key } }); } catch (e) {} }
+    memFallback.delete(key);
+  },
+};
+
+function makeLimiter(windowMs, limit, msg, tag) {
+  const store = Object.create(sharedStore);
+  store.windowMs = windowMs;
   return rateLimit({
     windowMs,
     limit,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    store,
     // Detrás del proxy de Render: requiere app.set('trust proxy', 1) para que
     // req.ip sea la IP real del usuario y no la del balanceador.
+    keyGenerator: (req) => tag + '|' + ipHash(req),
     handler: (req, res) => res.status(429).json({ error: msg }),
   });
 }
-const loginLimiter = makeLimiter(15 * 60 * 1000, 12, 'Demasiados intentos de ingreso. Espera 15 minutos e inténtalo de nuevo.');
-const signupLimiter = makeLimiter(60 * 60 * 1000, 8, 'Demasiadas cuentas creadas desde esta conexión. Intenta más tarde.');
-const resetLimiter = makeLimiter(60 * 60 * 1000, 6, 'Demasiadas solicitudes de restablecimiento. Espera una hora.');
+const loginLimiter = makeLimiter(15 * 60 * 1000, 12, 'Demasiados intentos de ingreso. Espera 15 minutos e inténtalo de nuevo.', 'login');
+const signupLimiter = makeLimiter(60 * 60 * 1000, 8, 'Demasiadas cuentas creadas desde esta conexión. Intenta más tarde.', 'signup');
+const resetLimiter = makeLimiter(60 * 60 * 1000, 6, 'Demasiadas solicitudes de restablecimiento. Espera una hora.', 'reset');
+
+// ── 2b. Bloqueo por cuenta ──────────────────────────────────────────────────
+// El límite por IP no protege a un usuario concreto: un atacante con muchas IPs
+// (botnet, VPN rotativa) lo evade. El bloqueo por CUENTA sí, y vive en la base
+// de datos, así que es idéntico en todas las instancias. ISO 27001 A.8.5.
+const LOCK_AFTER = 8;                  // intentos fallidos seguidos
+const LOCK_MINUTES = 15;               // duración del bloqueo
+function lockRemaining(user) {
+  if (!user || !user.locked_until) return 0;
+  const ms = new Date(user.locked_until).getTime() - Date.now();
+  return ms > 0 ? Math.ceil(ms / 60000) : 0;
+}
 
 // ── 3. Política de contraseñas ──────────────────────────────────────────────
 // Alineada con NIST SP 800-63B: longitud sobre complejidad arbitraria + rechazo
@@ -142,7 +216,9 @@ function ipHash(req) {
 
 module.exports = {
   headers, CSP,
+  useDatabase,
   loginLimiter, signupLimiter, resetLimiter,
+  LOCK_AFTER, LOCK_MINUTES, lockRemaining,
   passwordIssue,
   encrypt, decrypt, hashToken, randomToken, safeEqual,
   clientIp, ipHash,

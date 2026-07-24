@@ -51,6 +51,8 @@ function defineModels(sq) {
     last_login_at: { type: DataTypes.DATE, allowNull: true },
     reset_token: { type: DataTypes.STRING, allowNull: true },
     reset_expires: { type: DataTypes.DATE, allowNull: true },
+    failed_logins: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
+    locked_until: { type: DataTypes.DATE, allowNull: true },
   }, { tableName: 'planea_users', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   const P = sq.define('PlaneaProfile', {
@@ -153,6 +155,13 @@ async function init() {
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(80)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_audit_user ON planea_audit_log(user_id, created_at)').catch(function () {});
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS failed_logins INTEGER DEFAULT 0').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ').catch(function () {});
+    // Contador de límite de peticiones COMPARTIDO entre instancias de Render.
+    await sequelize.query('CREATE TABLE IF NOT EXISTS planea_rate_limits (key TEXT PRIMARY KEY, hits INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ NOT NULL)').catch(function () {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_rate_exp ON planea_rate_limits(expires_at)').catch(function () {});
+    await sequelize.query('DELETE FROM planea_rate_limits WHERE expires_at < NOW()').catch(function () {});
+    sec.useDatabase(sequelize); // el almacén de límites deja de ser por proceso
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -410,10 +419,32 @@ function build() {
 
       const user = await User.findOne({ where: { email } });
       if (!user) { audit(req, 'login', 'fail_no_user', { email: email }); return res.status(401).json({ error: 'Credenciales inválidas' }); }
+
+      // Cuenta bloqueada: se corta ANTES de comparar la contraseña, para que el
+      // bloqueo no se pueda medir por el tiempo de respuesta de bcrypt.
+      const mins = sec.lockRemaining(user);
+      if (mins > 0) {
+        audit(req, 'login', 'blocked_locked', { user_id: user.id, email: email });
+        return res.status(429).json({ error: 'Cuenta bloqueada temporalmente por intentos fallidos. Inténtalo en ' + mins + ' minuto' + (mins === 1 ? '' : 's') + ', o restablece tu contraseña.' });
+      }
+
       const ok = await bcrypt.compare(password, user.password_hash);
-      if (!ok) { audit(req, 'login', 'fail_password', { user_id: user.id, email: email }); return res.status(401).json({ error: 'Credenciales inválidas' }); }
+      if (!ok) {
+        const fails = (user.failed_logins || 0) + 1;
+        user.failed_logins = fails;
+        if (fails >= sec.LOCK_AFTER) {
+          user.locked_until = new Date(Date.now() + sec.LOCK_MINUTES * 60000);
+          user.failed_logins = 0;
+          audit(req, 'account_lock', 'locked', { user_id: user.id, email: email, minutes: sec.LOCK_MINUTES });
+        }
+        await user.save().catch(function () {});
+        audit(req, 'login', 'fail_password', { user_id: user.id, email: email, attempt: fails });
+        return res.status(401).json({ error: 'Credenciales inválidas' });
+      }
 
       user.last_login_at = new Date();
+      user.failed_logins = 0;
+      user.locked_until = null;
       await user.save();
       setSession(res, user);
       audit(req, 'login', 'success', { user_id: user.id, email: email });
