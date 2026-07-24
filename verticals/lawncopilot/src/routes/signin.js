@@ -33,20 +33,45 @@ router.use((req, res, next) => {
 
 /**
  * Sign in. One match signs straight in; several hands back a chooser.
+ *
+ * `audience` scopes the door:
+ *   'company' — lawncopilot.com/login. This is the SUBSCRIBER entrance: the
+ *               landscaping company (and Digit2AI staff). Homeowners are NOT
+ *               served here; they belong on their own company's page. A
+ *               homeowner who lands here is redirected to it rather than
+ *               being told "invalid password" for a password that is correct.
+ *   'all'     — every identity (used by deep links / tooling).
  */
 router.post('/', async (req, res) => {
   const { email, password } = req.body || {};
+  const audience = (req.body || {}).audience === 'all' ? 'all' : 'company';
   const base = basePath(req);
 
-  let ids;
-  try { ids = await identity.resolveIdentities(email, password); }
+  let all;
+  try { all = await identity.resolveIdentities(email, password); }
   catch (e) { return res.status(500).json({ success: false, error: 'Sign-in is temporarily unavailable.' }); }
 
-  if (!ids.length) {
+  if (!all.length) {
     return res.status(401).json({ success: false, error: 'Invalid email or password' });
   }
 
   const e = String(email).toLowerCase().trim();
+  const ids = audience === 'company' ? all.filter(i => i.kind !== 'customer') : all;
+
+  // Right password, wrong door: this person is a customer of one of our
+  // companies, not a subscriber. Send them where they actually belong.
+  if (!ids.length) {
+    const homes = all.filter(i => i.kind === 'customer');
+    return res.status(403).json({
+      success: false,
+      wrong_door: true,
+      error: 'This sign-in is for landscaping companies.',
+      message: homes.length === 1
+        ? `You're a customer of ${homes[0].label}. Sign in on their page instead.`
+        : 'You are a customer of these companies. Sign in on their page instead.',
+      companies: homes.map(h => ({ name: h.label, url: `${base}/${h.slug}/login` }))
+    });
+  }
 
   if (ids.length === 1) {
     const only = ids[0];

@@ -44,9 +44,10 @@ body { display:grid; place-items:center; min-height:100vh; background:
 
   <!-- Step 1: credentials -->
   <div id="stepLogin">
-    <h2 style="font-size:1.4rem">Sign in</h2>
-    <p class="small mut">Company owners, crews and homeowners all sign in here — we'll take you to the right place.</p>
+    <h2 style="font-size:1.4rem">Sign in to your company</h2>
+    <p class="small mut">For landscaping companies on Lawn Co-Pilot. You'll land in your office dashboard.</p>
     <div class="msg" id="msg"></div>
+    <div id="wrongDoor" style="display:none"></div>
     <form id="form">
       <div class="field">
         <label for="email">Email</label>
@@ -59,7 +60,13 @@ body { display:grid; place-items:center; min-height:100vh; background:
       <button class="btn btn--primary" type="submit" style="width:100%" id="submit">Sign in</button>
     </form>
     <p class="linkrow"><a href="#" id="forgotLink">Forgot your password?</a></p>
-    <div class="foot">New here? <a href="/lawncopilot/signup" style="color:var(--green-700);font-weight:700">Start your company free</a></div>
+    <div class="foot">
+      New here? <a href="/lawncopilot/signup" style="color:var(--green-700);font-weight:700">Start your company free</a>
+      <div class="small mut" style="margin-top:10px">
+        Are you a customer of a lawn care company? Sign in on their page — the link
+        they gave you, or the one on their Google listing.
+      </div>
+    </div>
   </div>
 
   <!-- Step 2: which account (only when one email unlocks more than one) -->
@@ -104,18 +111,25 @@ function step(which) {
 
 var ICON = { platform: 'D2AI', staff: 'CO', customer: 'ME' };
 
+var wrongDoor = document.getElementById('wrongDoor');
+
 document.getElementById('form').addEventListener('submit', function (e) {
   e.preventDefault();
   var btn = document.getElementById('submit');
   btn.disabled = true; btn.textContent = 'Signing in...';
+  wrongDoor.style.display = 'none'; wrongDoor.innerHTML = '';
   fetch(API, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
     body: JSON.stringify({
       email: document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value
+      password: document.getElementById('password').value,
+      // This door is the SUBSCRIBER entrance: landscaping companies (and
+      // Digit2AI staff). Homeowners sign in on their own company's page.
+      audience: 'company'
     })
   }).then(function (r) { return r.json(); }).then(function (r) {
     btn.disabled = false; btn.textContent = 'Sign in';
+    if (r.wrong_door) { renderWrongDoor(r); return; }
     if (!r.success) { show(msg, r.error || 'Could not sign you in.'); return; }
     if (r.multiple) { renderChoices(r); step('choose'); return; }
     window.location.href = r.redirect;
@@ -124,6 +138,22 @@ document.getElementById('form').addEventListener('submit', function (e) {
     show(msg, 'Network problem. Try again.');
   });
 });
+
+/* Right password, wrong door — they're a homeowner. Hand them the link to
+   their company's page instead of a dead end. */
+function renderWrongDoor(r) {
+  msg.className = 'msg';
+  wrongDoor.style.display = 'block';
+  wrongDoor.innerHTML =
+    '<div class="msg ok" style="display:block">' + esc(r.message || r.error) + '</div>' +
+    '<div class="choices" style="margin-bottom:var(--space-4)">' +
+    (r.companies || []).map(function (c) {
+      return '<a class="choice" href="' + esc(c.url) + '">' +
+        '<span class="choice__ic choice__ic--customer">ME</span>' +
+        '<span class="choice__m"><b>' + esc(c.name) + '</b>' +
+        '<span>Sign in to your customer account</span></span></a>';
+    }).join('') + '</div>';
+}
 
 function renderChoices(r) {
   document.getElementById('choices').innerHTML = r.choices.map(function (c, i) {

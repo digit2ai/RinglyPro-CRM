@@ -885,6 +885,31 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('the chooser token carries no password material',
        JSON.stringify(sel).indexOf('password') === -1 && JSON.stringify(sel).indexOf('hash') === -1);
 
+    // The root sign-in is the SUBSCRIBER door: landscaping companies, not their
+    // homeowners. A homeowner with a correct password must be redirected to
+    // their company's page, never told the password is wrong.
+    const homeEmail = `home_${stamp}@example.com`;
+    const homeCust = await models.Customer.create({
+      tenant_id: alphaId, name: 'SIT Homeowner', email: homeEmail,
+      password_hash: await require('bcryptjs').hash(PW, 10), status: 'active'
+    });
+    const atCompanyDoor = await call('POST', `${ROOT}/api/v1/signin`,
+      { email: homeEmail, password: PW, audience: 'company' }, { jar: null });
+    ok('a homeowner at the company door is redirected, not rejected',
+       atCompanyDoor.status === 403 && atCompanyDoor.data.wrong_door === true,
+       `status=${atCompanyDoor.status}`);
+    ok('the redirect names their actual company page',
+       (atCompanyDoor.data.companies || []).some(c => (c.url || '').includes(A.slug)),
+       JSON.stringify(atCompanyDoor.data.companies || []));
+    ok('no session cookie is issued at the wrong door',
+       !(atCompanyDoor.text || '').includes('lawncopilot_token='));
+
+    const atOwnDoor = await call('POST', `${ROOT}/${A.slug}/api/v1/auth/login`,
+      { email: homeEmail, password: PW }, { jar: 'home' });
+    ok('the same homeowner signs in fine on their own company page',
+       atOwnDoor.data.success === true);
+    await models.Customer.destroy({ where: { id: homeCust.id } });
+
     // ── 18. Cleanup ───────────────────────────────────────────────────────
     console.log('\n[18] Cleanup');
     for (const id of [alphaId, betaId]) {
