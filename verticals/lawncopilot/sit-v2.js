@@ -506,7 +506,9 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     // tenant pages; a stale v1 landing once shipped alongside it saying
     // "get a real price before you finish your coffee".
     ok('platform home speaks to the landscaper, not the homeowner',
-       /answer the calls|book the jobs|route the crews/i.test(homeHtml.text)
+       /answer the calls/i.test(homeHtml.text) && /quote the work/i.test(homeHtml.text)
+       && /book the jobs/i.test(homeHtml.text) && /route the crews/i.test(homeHtml.text)
+       && /collect the money/i.test(homeHtml.text)
        && !/finish your coffee/i.test(homeHtml.text));
     ok('platform home promises the single mobile dashboard',
        /one dashboard on your phone|single dashboard/i.test(homeHtml.text));
