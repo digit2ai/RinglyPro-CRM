@@ -152,10 +152,9 @@ router.post('/', async (req, res) => {
       case 'send_sms_ringlypro':
       case 'send_sms_corvita':
       case 'send_sms_recovery':
-        if (parseInt(params.client_id, 10) === D2AI_CLIENT_ID) {
-          result = { success: true, skipped: true, reason: 'SMS disabled for Client 15 (Digit2AI)' };
-          break;
-        }
+        // Client 15 SMS was disabled when its only sender was an unregistered
+        // local DID. It now has a toll-free verified sms_number, so it sends
+        // like any other client. The GHL path below stays disabled (no GHL org).
         result = await handleSendSms(params);
         break;
       case 'send_sms_ghl':
@@ -1858,8 +1857,11 @@ async function handleBookAppointmentD2AI(params) {
       confirmation_code: `D2AI-${eventId}`
     }).catch(e => ({ success: false, error: e.message }));
 
-    if (!smsResult.success) {
-      logger.error(`[ElevenLabs Tools] [D2AI] Confirmation SMS failed for event ${eventId}: ${smsResult.error}`);
+    // A skipped send reports success:true but never reaches Twilio — only a real
+    // message_sid counts as delivered, so it must not be logged or reported as sent.
+    const smsSent = !!(smsResult.success && smsResult.message_sid);
+    if (!smsSent) {
+      logger.error(`[ElevenLabs Tools] [D2AI] Confirmation SMS not sent for event ${eventId}: ${smsResult.error || smsResult.reason || 'unknown'}`);
     } else {
       logger.info(`[ElevenLabs Tools] [D2AI] Confirmation SMS ${smsResult.message_sid} sent from ${smsResult.from} to ${phoneNum}`);
     }
@@ -1874,7 +1876,7 @@ async function handleBookAppointmentD2AI(params) {
       customer_name: name,
       customer_phone: phoneNum,
       calendar_type: 'digit2ai_projects',
-      sms_sent: !!smsResult.success
+      sms_sent: smsSent
     };
   } catch (error) {
     logger.error('[ElevenLabs Tools] [D2AI] book_appointment error:', error);
