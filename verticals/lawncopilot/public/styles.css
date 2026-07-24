@@ -149,6 +149,55 @@ p  { margin: 0 0 var(--space-4); }
 }
 @media (max-width: 760px) { .footer__grid { grid-template-columns: 1fr 1fr; } }
 
+
+/* ── Form fields ──────────────────────────────────────────────────────────
+   Part of the design system, not a page. Every login, signup and settings
+   form consumes these — defining them per-page is how the login screens ended
+   up with unstyled browser-default inputs. */
+.field { margin-bottom: var(--space-4); }
+.field label {
+  display: block; font-weight: 700; font-size: .88rem;
+  margin-bottom: 6px; color: var(--ink-800);
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%; padding: 13px 15px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font: inherit; font-size: 1rem; min-height: 48px;
+  background: #fff; color: var(--text);
+  transition: border-color .12s ease, box-shadow .12s ease;
+  -webkit-appearance: none; appearance: none;
+}
+.field textarea { min-height: 96px; resize: vertical; }
+.field select { appearance: auto; }
+.field input::placeholder, .field textarea::placeholder { color: var(--ink-300); }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px var(--green-100);
+}
+.field input:disabled { background: var(--ink-50); color: var(--ink-400); }
+.field .hint { font-size: .8rem; color: var(--text-mut); margin-top: 5px; }
+.field .err { font-size: .82rem; color: var(--danger); margin-top: 5px; display: none; }
+.field.is-bad input,
+.field.is-bad select,
+.field.is-bad textarea { border-color: var(--danger); }
+.field.is-bad .err { display: block; }
+
+/* Checkbox / radio keep their native size inside a field */
+.field input[type="checkbox"],
+.field input[type="radio"] { width: auto; min-height: auto; }
+
+/* Inline label+control rows (a checkbox with text beside it) */
+.check {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: .88rem; color: var(--text-mut);
+}
+.check input { width: auto; min-height: auto; margin-top: 3px; }
+
 /* Utility */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

@@ -509,6 +509,29 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('tenant page links its stylesheet absolutely so it resolves',
        tenantPage.text.includes('/lawncopilot/styles.css'));
 
+    // Components must live in the shared stylesheet, not in per-page <style>
+    // blocks. The login screens shipped with unstyled browser-default inputs
+    // because .field existed only inside index.html.
+    const sharedCss = (await call('GET', `${ROOT}/styles.css`)).text;
+    for (const rule of ['.field label', '.field input', '.field.is-bad', '.field .err',
+                        '.btn--primary', '.card', '.pill']) {
+      ok(`shared stylesheet defines ${rule}`, sharedCss.includes(rule));
+    }
+
+    const publicDir = path.join(__dirname, 'public');
+    const pagesUsingFields = fs.readdirSync(publicDir)
+      .filter(f => f.endsWith('.html'))
+      .filter(f => /class="field"/.test(fs.readFileSync(path.join(publicDir, f), 'utf8')));
+    const unstyled = pagesUsingFields.filter(f => {
+      const html = fs.readFileSync(path.join(publicDir, f), 'utf8');
+      const linksShared = html.includes('/lawncopilot/styles.css');
+      const definesOwn = /^\.field\b/m.test(html);
+      return !linksShared && !definesOwn;
+    });
+    ok('every page using .field gets those styles from somewhere',
+       unstyled.length === 0, unstyled.join(', '));
+    console.log(`        (${pagesUsingFields.length} pages use .field)`);
+
     // ── 16. Platform layer ────────────────────────────────────────────────
     console.log('\n[16] Platform super-admin');
     const plogin = await call('POST', `${ROOT}/api/v1/platform/login`, {
