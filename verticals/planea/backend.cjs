@@ -512,7 +512,12 @@ function build() {
         return res.status(400).json({ error: 'El enlace no es válido o venció. Solicita uno nuevo.' });
       }
       user.password_hash = await bcrypt.hash(password, 12);
-      user.reset_token = null; user.reset_expires = null; await user.save();
+      user.reset_token = null; user.reset_expires = null;
+      // El mensaje de bloqueo invita a restablecer la contraseña: si el
+      // restablecimiento no levantara el bloqueo, ese consejo sería mentira y el
+      // usuario legítimo quedaría fuera 15 minutos más sin motivo.
+      user.failed_logins = 0; user.locked_until = null;
+      await user.save();
       audit(req, 'password_reset', 'success', { user_id: user.id, email: user.email });
       res.json({ ok: true });
     } catch (e) { console.error('Planea reset error:', e.message); res.status(500).json({ error: e.message }); }

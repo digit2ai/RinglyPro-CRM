@@ -383,6 +383,11 @@ if (hasPortal) {
   if (fs.existsSync(path.join(portalDir, 'planea-ai-architecture.html'))) {
     router.get(['/planea_ai_architecture', '/planea-ai-architecture'], (req, res) => { res.sendFile(path.join(portalDir, 'planea-ai-architecture.html')); });
   }
+  // Ficha de seguridad y cumplimiento (planea.vip/seguridad) — la evidencia que
+  // pide un auditor externo, y la respuesta a "¿mis datos están seguros?".
+  if (fs.existsSync(path.join(portalDir, 'seguridad.html'))) {
+    router.get(['/seguridad', '/security'], (req, res) => { res.sendFile(path.join(portalDir, 'seguridad.html')); });
+  }
 }
 
 if (hasPortal) {

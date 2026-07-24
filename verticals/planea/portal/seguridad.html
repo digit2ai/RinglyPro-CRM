@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Seguridad y cumplimiento — Planea</title>
+<style>
+  :root{
+    --verde:#2f9e63; --verde-osc:#1f6f45; --tinta:#0f1a14; --gris:#5b6b62;
+    --linea:#e3ebe6; --fondo:#f6f9f7; --blanco:#fff;
+    --ok:#2f9e63; --parcial:#c98a12; --pend:#8a94b0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .envoltura{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  header.hero{background:linear-gradient(135deg,#0f2b1d 0%,#1f6f45 60%,#2f9e63 100%);color:#fff;padding:56px 0 44px}
+  .hero h1{margin:0 0 10px;font-size:clamp(28px,4.4vw,42px);letter-spacing:-.02em;line-height:1.15}
+  .hero p{margin:0;max-width:70ch;color:#d8ede1;font-size:17px}
+  .marca{display:inline-flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.14em;
+    font-size:12px;text-transform:uppercase;color:#a9dcc0;margin-bottom:18px}
+  .marca span.punto{width:9px;height:9px;border-radius:50%;background:#7fd6a4;display:inline-block}
+
+  main{padding:40px 0 72px}
+  section{margin:0 0 40px}
+  h2{font-size:22px;letter-spacing:-.01em;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:4px;height:20px;border-radius:2px;background:var(--verde);display:inline-block}
+  .sub{color:var(--gris);margin:0 0 18px;max-width:78ch}
+
+  .tarjetas{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+  .tarjeta{background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:18px 18px 16px}
+  .tarjeta h3{margin:0 0 6px;font-size:15px;letter-spacing:-.01em}
+  .tarjeta p{margin:0;color:var(--gris);font-size:14px;line-height:1.6}
+  .ref{display:inline-block;margin-top:10px;font-size:11.5px;letter-spacing:.05em;color:var(--verde-osc);
+    background:#eaf5ee;border:1px solid #cfe7d9;border-radius:999px;padding:3px 9px;font-weight:600}
+
+  .tablaEnv{overflow-x:auto;background:var(--blanco);border:1px solid var(--linea);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--linea);vertical-align:top}
+  th{background:#f0f5f2;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#3d574a;font-weight:700}
+  tr:last-child td{border-bottom:0}
+  td code{background:#f2f6f4;border:1px solid var(--linea);border-radius:5px;padding:1px 5px;font-size:12.5px}
+  .estado{font-weight:700;font-size:12.5px;white-space:nowrap}
+  .e-ok{color:var(--ok)} .e-parcial{color:var(--parcial)} .e-pend{color:var(--pend)}
+
+  .aviso{background:#fff8e8;border:1px solid #f0dcae;border-left:4px solid #c98a12;
+    border-radius:12px;padding:18px 20px;margin:0 0 40px}
+  .aviso h3{margin:0 0 8px;font-size:16px;color:#7a5407}
+  .aviso p{margin:0 0 8px;color:#6b5313;font-size:14.5px;line-height:1.65}
+  .aviso p:last-child{margin-bottom:0}
+
+  .lista{margin:0;padding-left:20px;color:var(--gris);font-size:14.5px}
+  .lista li{margin-bottom:7px}
+  .lista b{color:var(--tinta);font-weight:600}
+
+  footer{border-top:1px solid var(--linea);padding:26px 0 40px;color:var(--gris);font-size:13px}
+  footer a{color:var(--verde-osc)}
+  @media(max-width:640px){ header.hero{padding:40px 0 34px} th,td{padding:10px 11px} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="envoltura">
+    <div class="marca"><span class="punto"></span> Planea · Ficha técnica</div>
+    <h1>Seguridad y cumplimiento</h1>
+    <p>Cómo protegemos la información financiera de cada usuario, qué controles técnicos
+       están implementados hoy, y con qué marcos internacionales se corresponden.
+       Documento vivo, actualizado con cada despliegue.</p>
+  </div>
+</header>
+
+<main class="envoltura">
+
+  <div class="aviso">
+    <h3>Declaración honesta sobre certificaciones</h3>
+    <p>Planea <b>no está certificada en ISO/IEC 27001 ni cuenta con un informe SOC 2</b> a la fecha
+       de este documento. Una certificación ISO exige un Sistema de Gestión de Seguridad de la
+       Información auditado por un ente acreditado; un informe SOC 2 Tipo II exige que un auditor
+       independiente observe la operación de los controles durante un periodo (habitualmente de
+       6 a 12 meses).</p>
+    <p>Lo que sí afirmamos, y se puede verificar en el código y en las respuestas del servidor, es
+       que los <b>controles técnicos</b> listados abajo están implementados y activos en producción.
+       Eso es lo que deja al producto en condiciones de <b>ser auditado</b>, que es un paso distinto
+       —y previo— a estar certificado.</p>
+  </div>
+
+  <section>
+    <h2>Lo esencial, en una línea</h2>
+    <p class="sub">Si solo lees un párrafo: tus contraseñas nunca se guardan, tu sesión viaja
+       cifrada, nadie puede adivinar tu clave a fuerza bruta, y cada acceso queda registrado sin
+       almacenar tu dirección IP en claro.</p>
+    <div class="tarjetas">
+      <div class="tarjeta">
+        <h3>Contraseñas irrecuperables</h3>
+        <p>Se guardan con bcrypt y coste 12, nunca en texto. Ni el equipo de Planea puede leer tu
+           contraseña: si la olvidas, se restablece, no se consulta.</p>
+        <span class="ref">ISO A.5.17 · SOC 2 CC6.1</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Todo el tráfico cifrado</h3>
+        <p>HTTPS obligatorio con HSTS de un año e <code>includeSubDomains</code>. El navegador se
+           niega a conectarse en claro, incluso si alguien manipula el enlace.</p>
+        <span class="ref">ISO A.8.24 · SOC 2 CC6.6</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Sesión a prueba de robo</h3>
+        <p>El identificador de sesión viaja en una cookie <code>HttpOnly</code>, <code>Secure</code>
+           y <code>SameSite=Lax</code>: JavaScript no puede leerla y no se envía desde otros sitios.</p>
+        <span class="ref">ISO A.8.5 · OWASP ASVS 3.4</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Fuerza bruta cortada</h3>
+        <p>Doce intentos por conexión cada quince minutos, y bloqueo de la cuenta a los ocho fallos
+           seguidos. El contador vive en la base de datos, compartido por todos los servidores.</p>
+        <span class="ref">ISO A.8.5 · SOC 2 CC6.1</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Enlaces de recuperación de un solo uso</h3>
+        <p>El enlace para restablecer la contraseña se guarda <b>hasheado</b> y caduca en una hora.
+           Quien lea la base de datos no puede secuestrar una cuenta con él.</p>
+        <span class="ref">ISO A.8.24 · SOC 2 CC6.1</span>
+      </div>
+      <div class="tarjeta">
+        <h3>Privacidad por diseño</h3>
+        <p>La bitácora de seguridad guarda el <b>hash</b> de la dirección IP, no la IP. Permite
+           investigar un abuso sin conservar un dato personal identificable.</p>
+        <span class="ref">Ley 1581/2012 art. 4 · GDPR 5.1.c</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Controles implementados</h2>
+    <p class="sub">Cada fila corresponde a código en producción, verificable en las cabeceras de
+       respuesta o en el comportamiento del servicio. La columna de estado es deliberadamente
+       conservadora: lo parcial se declara parcial.</p>
+    <div class="tablaEnv">
+      <table>
+        <thead>
+          <tr><th>Control</th><th>Cómo está implementado</th><th>ISO/IEC 27001:2022</th><th>SOC 2</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Cifrado en tránsito</b></td>
+            <td>TLS obligatorio. <code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code> y <code>upgrade-insecure-requests</code> en la CSP.</td>
+            <td>A.8.24</td><td>CC6.6</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Almacenamiento de contraseñas</b></td>
+            <td>bcrypt con factor de coste 12. Nunca se registra ni se devuelve el hash.</td>
+            <td>A.5.17</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Política de contraseñas</b></td>
+            <td>Mínimo 8 caracteres, letras y números, y rechazo de contraseñas comunes. Alineada con NIST SP 800-63B: longitud y listas negras por encima de reglas de complejidad arbitrarias.</td>
+            <td>A.5.17</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Anti fuerza bruta por conexión</b></td>
+            <td>12 intentos / 15 min en ingreso, 8 registros / hora, 6 restablecimientos / hora. Contador en Postgres con actualización atómica, <b>compartido entre todas las instancias</b>.</td>
+            <td>A.8.5</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Bloqueo por cuenta</b></td>
+            <td>8 fallos consecutivos bloquean la cuenta 15 minutos. Se evalúa antes de comparar la contraseña, para que el bloqueo no se filtre por el tiempo de respuesta. El restablecimiento levanta el bloqueo.</td>
+            <td>A.8.5</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Secretos de un solo uso</b></td>
+            <td>El token de restablecimiento se almacena como SHA-256, se genera con <code>crypto.randomBytes</code> y caduca a los 60 minutos.</td>
+            <td>A.8.24</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Cifrado de datos sensibles en reposo</b></td>
+            <td>Utilidad AES-256-GCM (cifrado autenticado: confidencialidad más integridad) disponible en el módulo de seguridad, con clave rotable vía <code>PLANEA_ENC_KEY</code>. La base de datos gestionada ya cifra el volumen completo en reposo.</td>
+            <td>A.8.24</td><td>CC6.7</td><td class="estado e-parcial">Disponible</td>
+          </tr>
+          <tr>
+            <td><b>Protección contra clickjacking</b></td>
+            <td><code>X-Frame-Options: SAMEORIGIN</code> más <code>frame-ancestors 'self'</code> en la CSP.</td>
+            <td>A.8.26</td><td>CC6.6</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Política de seguridad de contenido</b></td>
+            <td>CSP con <code>object-src 'none'</code>, <code>base-uri 'self'</code> y <code>form-action 'self'</code>. Los scripts en línea siguen permitidos; migrar a nonces está en la hoja de ruta y se declara como pendiente.</td>
+            <td>A.8.26</td><td>CC6.6</td><td class="estado e-parcial">Parcial</td>
+          </tr>
+          <tr>
+            <td><b>Otras cabeceras de endurecimiento</b></td>
+            <td><code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy: strict-origin-when-cross-origin</code>, <code>Permissions-Policy</code> (cámara, geolocalización, pagos y USB denegados), <code>Cross-Origin-Opener-Policy: same-origin</code>.</td>
+            <td>A.8.26</td><td>CC6.6</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Registro de eventos</b></td>
+            <td>Tabla <code>planea_audit_log</code>: ingreso correcto y fallido, bloqueo de cuenta, registro, solicitud y ejecución de restablecimiento. Nunca se registra la contraseña, el token ni el cuerpo de la petición.</td>
+            <td>A.8.15</td><td>CC7.2</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Minimización de datos</b></td>
+            <td>La dirección IP se almacena hasheada con sal secreta. No se recogen datos de tarjetas ni documentos de identidad.</td>
+            <td>A.5.34</td><td>P4 (Privacy)</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Aislamiento entre usuarios</b></td>
+            <td>Cada consulta filtra por el identificador de usuario extraído del token de sesión firmado, nunca por un parámetro que el cliente pueda manipular.</td>
+            <td>A.8.3</td><td>CC6.1</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Copias de respaldo</b></td>
+            <td>Respaldos diarios automáticos del proveedor de base de datos gestionada, con recuperación a un punto en el tiempo.</td>
+            <td>A.8.13</td><td>A1.2</td><td class="estado e-ok">Activo</td>
+          </tr>
+          <tr>
+            <td><b>Segundo factor de autenticación</b></td>
+            <td>No implementado. Es la siguiente incorporación prevista al módulo de seguridad.</td>
+            <td>A.8.5</td><td>CC6.1</td><td class="estado e-pend">Pendiente</td>
+          </tr>
+          <tr>
+            <td><b>Gestión formal de riesgos y proveedores</b></td>
+            <td>Requisito organizativo, no técnico: exige políticas escritas, matriz de riesgos, acuerdos con proveedores y evidencia sostenida en el tiempo.</td>
+            <td>Cláusulas 6 y 8 · A.5.19</td><td>CC3 · CC9</td><td class="estado e-pend">Pendiente</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cumplimiento en Colombia</h2>
+    <p class="sub">Planea trata datos financieros de personas naturales en Colombia, lo que la
+       sitúa bajo el régimen de Habeas Data.</p>
+    <ul class="lista">
+      <li><b>Ley 1581 de 2012</b> y <b>Decreto 1377 de 2013</b>: el tratamiento se limita a la
+          finalidad declarada —calcular y explicar la salud financiera del titular—. No se venden
+          ni se ceden datos a terceros con fines comerciales.</li>
+      <li><b>Principio de finalidad y minimización</b>: no se solicitan números de tarjeta,
+          credenciales bancarias ni documentos de identidad. Los montos los ingresa el propio
+          usuario y puede modificarlos o eliminarlos cuando quiera.</li>
+      <li><b>Derechos del titular</b>: conocer, actualizar, rectificar y suprimir. La supresión de
+          la cuenta elimina el perfil y todas sus partidas financieras asociadas.</li>
+      <li><b>Sin decisiones automatizadas vinculantes</b>: el puntaje de salud financiera es
+          orientativo y educativo. No otorga ni niega crédito, y no se comparte con entidades
+          financieras.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Cómo verificarlo por tu cuenta</h2>
+    <p class="sub">Nada de lo anterior pide un acto de fe. Estas comprobaciones las puede correr
+       cualquier auditor desde una terminal.</p>
+    <ul class="lista">
+      <li><b>Cabeceras de seguridad</b>: <code>curl -I https://planea.vip/planea/login</code> debe
+          devolver <code>strict-transport-security</code>, <code>x-frame-options</code>,
+          <code>x-content-type-options</code>, <code>referrer-policy</code>,
+          <code>permissions-policy</code> y <code>content-security-policy</code>.</li>
+      <li><b>Política de contraseñas</b>: intentar registrarse con <code>123456</code> devuelve un
+          rechazo explícito, no una cuenta creada.</li>
+      <li><b>Límite de intentos</b>: trece intentos de ingreso seguidos devuelven HTTP 429, y la
+          cabecera <code>ratelimit</code> decrece de forma monótona (prueba de que el contador es
+          compartido y no por proceso).</li>
+      <li><b>Bloqueo de cuenta</b>: ocho contraseñas incorrectas seguidas sobre la misma cuenta
+          devuelven HTTP 429, y la contraseña correcta también es rechazada durante el bloqueo.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  <div class="envoltura">
+    Planea — Digit2AI LLC. Última revisión de esta ficha: julio de 2026.
+    Para reportar una vulnerabilidad escribe a <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>;
+    se acusa recibo en un plazo de 72 horas.
+  </div>
+</footer>
+
+</body>
+</html>
