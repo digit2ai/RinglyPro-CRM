@@ -655,11 +655,32 @@ app.use('/all-in-one', express.static(path.join(__dirname, '../all-in-one')));
 
 // Add session middleware for Rachel routes
 const session = require('express-session');
+// El secreto NUNCA puede caer en un literal del repositorio: cualquiera que lea
+// el código podría firmar una sesión válida. Se prefiere SESSION_SECRET, luego
+// JWT_SECRET (ya definido en producción) y, como último recurso, un valor
+// aleatorio por arranque — que invalida las sesiones al reiniciar, molesto pero
+// infinitamente mejor que un secreto público.
+const SESSION_SECRET = process.env.SESSION_SECRET || process.env.JWT_SECRET
+    || require('crypto').randomBytes(32).toString('hex');
+if (!process.env.SESSION_SECRET && !process.env.JWT_SECRET) {
+    console.warn('⚠️  SESSION_SECRET/JWT_SECRET sin definir: se usa un secreto aleatorio por arranque.');
+}
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'ringlypro-session-secret',
+    secret: SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true in production with HTTPS
+    // false = no se emite cookie a quien no tiene nada guardado en sesión. Antes
+    // se creaba una para CADA visitante anónimo (aparecía connect.sid incluso en
+    // llamadas a la API de Planea, que no usa sesiones). Las rutas de Ana
+    // escriben en sesión y llaman a req.session.save(), así que no se ven afectadas.
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        // 'auto' = Secure cuando la petición llega por HTTPS (producción, detrás
+        // del proxy con trust proxy activo) y sin Secure en HTTP local, para no
+        // romper el desarrollo. Antes estaba fijo en false sobre un sitio HTTPS.
+        secure: 'auto',
+        sameSite: 'lax'
+    }
 }));
 
 // Set view engine
