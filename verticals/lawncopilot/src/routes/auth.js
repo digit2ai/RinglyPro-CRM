@@ -109,9 +109,24 @@ router.post('/staff/logout', (req, res) => {
   res.json({ success: true });
 });
 
-router.get('/staff/me', (req, res) => {
+router.get('/staff/me', async (req, res) => {
   if (!req.staff) return res.status(401).json({ success: false, error: 'Not signed in' });
-  res.json({ success: true, user: req.staff });
+  // The JWT carries id/tenant/role but no display name, so returning it raw
+  // rendered "undefined (owner)" in the admin header. Read the row.
+  const u = await User.findOne({
+    where: { id: req.staff.id, tenant_id: req.staff.tenant_id }, raw: true
+  });
+  if (!u) return res.status(401).json({ success: false, error: 'Not signed in' });
+  res.json({
+    success: true,
+    user: {
+      id: u.id, tenant_id: u.tenant_id, name: u.name || u.email,
+      email: u.email, role: u.role, kind: 'staff'
+    },
+    // The admin rail shows whose office this is; it comes from the tenant, not
+    // the user, so it ships here rather than costing a second request.
+    company: req.tenant ? { name: req.tenant.name, slug: req.tenant.slug, plan: req.tenant.plan } : null
+  });
 });
 
 module.exports = router;

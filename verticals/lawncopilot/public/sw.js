@@ -11,7 +11,7 @@
  *   - Static assets are cache-first, which is what makes a repeat visit from a
  *     truck on 4G feel instant.
  */
-var CACHE = 'lawncopilot-app-v8';
+var CACHE = 'lawncopilot-app-v9';
 // Scope-relative, so the same worker serves lawncopilot.com/ and
 // aiagent.ringlypro.com/lawncopilot/ without a second build.
 var BASE = new URL(self.registration.scope).pathname.replace(/\/$/, '');

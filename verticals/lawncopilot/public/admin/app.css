@@ -4,6 +4,77 @@
 body { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
 .appmain { max-width: 1100px; }
 
+/* ── Left navigation ────────────────────────────────────────────────────────
+   The office is operated at a desk as much as on a phone, so on a wide screen
+   every function sits in one left rail instead of five crowded thumb tabs.
+   Scoped to the admin: the customer portal keeps its bottom bar, which is the
+   right control on the phone it is actually used on. Below 900px the admin
+   falls back to that same bottom bar, so nothing regresses on mobile. */
+.sidenav { display: none; }
+
+@media (min-width: 900px) {
+  body { padding-bottom: 0; padding-left: 252px; }
+  .tabs { display: none; }
+  .appmain { max-width: 1180px; padding: var(--space-5); }
+
+  .sidenav {
+    display: flex; flex-direction: column;
+    position: fixed; inset: 0 auto 0 0; width: 252px; z-index: 40;
+    background: #fff; border-right: 1px solid var(--line);
+    padding: var(--space-4) 0;
+  }
+  .sidenav__brand {
+    display: flex; align-items: center; gap: 9px;
+    padding: 0 var(--space-4) var(--space-4);
+    border-bottom: 1px solid var(--line); margin-bottom: var(--space-3);
+  }
+  .sidenav__brand img { height: 30px; width: auto; }
+  .sidenav__co {
+    padding: 0 var(--space-4) var(--space-3);
+    font-size: .82rem; font-weight: 800; color: var(--ink-900);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .sidenav__co span { display: block; font-size: .68rem; font-weight: 600; color: var(--ink-400); }
+
+  .sidenav__scroll { flex: 1; overflow-y: auto; padding-bottom: var(--space-3); }
+  .sidenav__group {
+    font-size: .64rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--ink-300); font-weight: 800;
+    padding: var(--space-4) var(--space-4) 6px;
+  }
+  .sidenav a {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px var(--space-4); margin: 1px var(--space-2);
+    border-radius: var(--radius); color: var(--ink-700);
+    font-size: .92rem; font-weight: 600; line-height: 1.2;
+  }
+  .sidenav a:hover { background: var(--ink-50); text-decoration: none; }
+  .sidenav a.is-on { background: var(--green-50); color: var(--green-800, var(--green-700)); }
+  .sidenav a.is-on svg { color: var(--green-700); }
+  .sidenav svg {
+    width: 19px; height: 19px; flex: 0 0 19px; color: var(--ink-400);
+    stroke: currentColor; fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .sidenav__foot {
+    border-top: 1px solid var(--line); padding: var(--space-3) var(--space-4) 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidenav__who { flex: 1; min-width: 0; font-size: .8rem; }
+  .sidenav__who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidenav__who span { color: var(--ink-400); font-size: .72rem; }
+  .sidenav__out {
+    font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer;
+    background: none; border: 1px solid var(--line); border-radius: var(--radius-full, 999px);
+    padding: 5px 11px; color: var(--ink-600);
+  }
+  .sidenav__out:hover { border-color: var(--ink-300); color: var(--ink-900); }
+
+  /* The header no longer needs to repeat identity the rail already shows. */
+  .apphead .who { display: none; }
+}
+
 table { width: 100%; border-collapse: collapse; font-size: .88rem; }
 th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--ink-100); vertical-align: top; }
 th { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-400); font-weight: 700; white-space: nowrap; }
