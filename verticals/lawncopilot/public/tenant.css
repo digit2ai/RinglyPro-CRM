@@ -156,3 +156,42 @@ summary::-webkit-details-marker { display:none; }
 summary::after { content:"+"; color: var(--green-600); font-size:1.4rem; line-height:1; }
 details[open] summary::after { content:"\2013"; }
 details p { margin: var(--space-3) 0 0; color: var(--text-mut); }
+
+
+/* ── Tenant page, small screens ──────────────────────────────────────────
+   From a real device: the company name wrapped to two lines, "Sign in"
+   wrapped inside its pill, and three identical "Get my price" buttons were
+   visible at once (nav, hero, sticky bar). */
+@media (max-width: 700px) {
+  .nav__logo { gap: 8px; max-width: 58%; }
+  .nav__logo span:not(.brandmark) {
+    font-size: .95rem; line-height: 1.15;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .brandmark { width: 30px; height: 30px; flex: 0 0 30px; font-size: .74rem; }
+
+  .nav__cta { gap: 6px; }
+  .nav__cta .btn { white-space: nowrap; padding: 8px 13px; min-height: 38px; font-size: .8rem; }
+  /* The sticky bar already carries the primary action on a phone. */
+  .nav__cta .btn--primary { display: none; }
+
+  .hero { padding: var(--space-5) 0 var(--space-6); }
+  .hero__actions { flex-direction: column; align-items: stretch; }
+  .hero__actions .btn { width: 100%; }
+  .hero__proof { gap: var(--space-4); }
+  .hero__proof b { font-size: 1.25rem; }
+
+  .orbcard { padding: var(--space-4); }
+  .orb { width: 54px; height: 54px; flex: 0 0 54px; }
+  .composer { flex-wrap: nowrap; }
+  .composer input { font-size: 16px; }   /* 16px stops iOS zooming on focus */
+  .chips { gap: 6px; }
+  .chip { font-size: .78rem; padding: 7px 12px; }
+
+  .gate__box { padding: var(--space-5); border-radius: var(--radius); }
+  .field input { font-size: 16px; }
+}
+
+/* The sticky bar must clear the home indicator on notched phones */
+.stickycta { box-shadow: 0 -6px 20px rgba(11,31,22,.08); }

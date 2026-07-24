@@ -81,8 +81,16 @@ ${c.logo_url ? `<meta property="og:image" content="${e(c.logo_url)}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/lawncopilot/mark.png" type="image/png">
 <link rel="apple-touch-icon" href="/lawncopilot/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="/lawncopilot/styles.css">
 <link rel="stylesheet" href="/lawncopilot/tenant.css">
+<link rel="manifest" href="/lawncopilot/app.webmanifest">
+<meta name="theme-color" content="${accent}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>:root{--green-600:${accent};--green-700:${shade(accent,-14)};--green-500:${shade(accent,16)}}</style>
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
@@ -147,6 +155,7 @@ ${body}
 
 ${gateMarkup(name)}
 <script src="/lawncopilot/orb.js" defer></script>
+<script src="/lawncopilot/pwa.js" defer></script>
 </body>
 </html>`;
 }

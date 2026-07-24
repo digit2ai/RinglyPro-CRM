@@ -550,6 +550,43 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('the phone simulator leads in the hero', iSim > 0 && iSim < iProblem, `sim@${iSim} problem@${iProblem}`);
     ok('the live estimator follows the problem section', iProblem < iOrb, `problem@${iProblem} orb@${iOrb}`);
     ok('pricing comes after both demos', iOrb < iPricing);
+    // Typography, second tone and PWA — verified as design-system facts, not
+    // per-page styling that can drift.
+    const css = (await call('GET', `${ROOT}/styles.css`)).text;
+    ok('two typefaces are defined',
+       css.includes('--font-display') && css.includes('--font:') &&
+       /Space Grotesk/.test(css) && /Inter/.test(css));
+    ok('headings use the display face', /h1, h2, h3, h4 \{[^}]*--font-display/.test(css));
+    ok('a second tone exists and is not the primary',
+       css.includes('--clay-500') && css.includes('--bg-warm'));
+    ok('touch targets are raised on coarse pointers', css.includes('pointer: coarse'));
+    ok('mobile nav rules exist', css.includes('max-width: 700px'));
+
+    const manifest = await call('GET', `${ROOT}/app.webmanifest`);
+    ok('app manifest serves', manifest.status === 200 && manifest.data.name === 'Lawn Co-Pilot');
+    ok('manifest is installable',
+       manifest.data.display === 'standalone' && manifest.data.scope === '/lawncopilot/'
+       && (manifest.data.icons || []).some(i => i.purpose && i.purpose.includes('maskable')));
+
+    const sw = await call('GET', `${ROOT}/sw.js`);
+    ok('service worker serves as javascript',
+       sw.status === 200 && !/<!DOCTYPE html>/i.test(sw.text));
+    ok('service worker never caches live data',
+       /\/api\//.test(sw.text) && /return;/.test(sw.text) && /never cache data/i.test(sw.text));
+    const offline = await call('GET', `${ROOT}/offline.html`);
+    ok('offline shell serves', offline.status === 200);
+
+    ok('platform home is installable',
+       homeHtml.text.includes('app.webmanifest') && homeHtml.text.includes('/lawncopilot/pwa.js')
+       && homeHtml.text.includes('theme-color'));
+    ok('fonts load without blocking first paint',
+       homeHtml.text.includes('fonts.gstatic.com') && homeHtml.text.includes("media=\"print\""));
+
+    const tenantPg = await call('GET', `${ROOT}/${A.slug}`);
+    ok('company pages are installable too',
+       tenantPg.text.includes('app.webmanifest') && tenantPg.text.includes('/lawncopilot/pwa.js'));
+    ok('company pages get both typefaces', tenantPg.text.includes('Space+Grotesk'));
+
     ok('exactly one estimator and one simulator on the page',
        (homeHtml.text.match(/id="orbcard"/g) || []).length === 1
        && (homeHtml.text.match(/id="sim"/g) || []).length === 1);

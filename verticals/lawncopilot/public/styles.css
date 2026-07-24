@@ -23,12 +23,23 @@
   --ink-100: #eaf1ed;
   --ink-50:  #f6faf8;
 
-  --accent:  #f59e0b;      /* used sparingly, for one thing at a time */
+  /* Second tone: a warm clay that stops the page being green-on-green. Used
+     for emphasis — numbers, eyebrows, the popular badge — never for buttons,
+     so the primary action is never ambiguous. */
+  --clay-50:  #fdf6f0;
+  --clay-100: #f8e6d6;
+  --clay-300: #e0a877;
+  --clay-500: #c2703d;
+  --clay-600: #a85c2e;
+  --clay-700: #8a4a24;
+
+  --accent:  var(--clay-500);
   --danger:  #dc2626;
   --info:    #0369a1;
 
   --bg: #ffffff;
   --bg-alt: var(--ink-50);
+  --bg-warm: #fbf7f1;      /* the second surface, alternates with --bg-alt */
   --card: #ffffff;
   --line: var(--ink-200);
   --text: var(--ink-900);
@@ -47,7 +58,11 @@
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --space-9: 96px;
 
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Two typefaces: a display grotesk with character for headings and numbers,
+     a neutral workhorse for reading. Both load with font-display:swap and a
+     full system fallback, so text paints immediately on a slow connection. */
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --maxw: 1180px;
 }
 
@@ -61,20 +76,26 @@ img { max-width: 100%; display: block; }
 a { color: var(--green-700); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-h1, h2, h3, h4 { line-height: 1.15; margin: 0 0 var(--space-4); font-weight: 800; letter-spacing: -0.02em; }
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: 1.14; margin: 0 0 var(--space-4);
+  font-weight: 700; letter-spacing: -0.025em;
+}
 h1 { font-size: clamp(2.1rem, 5.2vw, 3.75rem); }
 h2 { font-size: clamp(1.7rem, 3.6vw, 2.6rem); }
 h3 { font-size: clamp(1.15rem, 2vw, 1.45rem); font-weight: 700; }
 p  { margin: 0 0 var(--space-4); }
 .lead { font-size: clamp(1.05rem, 1.9vw, 1.3rem); color: var(--text-mut); }
 .eyebrow {
-  text-transform: uppercase; letter-spacing: .09em; font-size: .78rem;
-  font-weight: 700; color: var(--green-700); margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  text-transform: uppercase; letter-spacing: .12em; font-size: .74rem;
+  font-weight: 700; color: var(--clay-600); margin-bottom: var(--space-3);
 }
 
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--space-5); }
 .section { padding: var(--space-9) 0; }
 .section--tint { background: var(--bg-alt); }
+.section--warm { background: var(--bg-warm); }
 .section--ink { background: var(--ink-900); color: #fff; }
 .section--ink h2, .section--ink h3 { color: #fff; }
 .section--ink p { color: var(--ink-200); }
@@ -85,7 +106,7 @@ p  { margin: 0 0 var(--space-4); }
   padding: 14px 26px; border-radius: var(--radius-full); border: 2px solid transparent;
   font-weight: 700; font-size: 1rem; cursor: pointer; text-decoration: none;
   transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-  min-height: 48px; font-family: inherit;
+  min-height: 48px; font-family: var(--font-display); letter-spacing: -.01em;
 }
 .btn:hover { text-decoration: none; transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
@@ -133,6 +154,27 @@ p  { margin: 0 0 var(--space-4); }
 @media (max-width: 940px) {
   .nav__links { display: none; }
   .nav__cta { margin-left: auto; }
+}
+
+/* Mobile nav: the lockup must not wrap and the actions must stay on one line.
+   A sticky bottom CTA already carries the primary action on small screens, so
+   the nav keeps only the secondary one. */
+@media (max-width: 700px) {
+  .nav__inner { height: 62px; gap: var(--space-3); }
+  .nav__logo { font-size: 1rem; min-width: 0; }
+  .nav__logo img { height: 34px; width: auto; }
+  .nav__logo span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav__cta .btn { padding: 8px 14px; min-height: 38px; font-size: .82rem; white-space: nowrap; }
+  .nav__cta .btn--primary { display: none; }   /* lives in the sticky bar */
+  .section { padding: var(--space-7) 0; }
+  h1 { font-size: clamp(1.75rem, 8vw, 2.4rem); }
+  .wrap { padding: 0 var(--space-4); }
+}
+
+/* Every interactive target clears 44px on touch */
+@media (pointer: coarse) {
+  .btn, .nav__links a, summary { min-height: 44px; }
+  .nav__links a { display: inline-flex; align-items: center; }
 }
 
 /* Footer */

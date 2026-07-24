@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Platform — Lawn Co-Pilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&display=swap">
+<noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&display=swap"></noscript>
+<link rel="manifest" href="/lawncopilot/app.webmanifest">
+<meta name="theme-color" content="#307f44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="/lawncopilot/styles.css">
 <link rel="icon" href="/lawncopilot/mark.png" type="image/png">
 <style>
@@ -59,5 +69,6 @@ document.getElementById('form').addEventListener('submit', function (e) {
 
 if (new URLSearchParams(location.search).get('expired')) show('That sign-in link expired. Request a new one.');
 </script>
+<script src="/lawncopilot/pwa.js" defer></script>
 </body>
 </html>
