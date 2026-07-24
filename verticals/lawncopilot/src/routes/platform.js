@@ -18,7 +18,7 @@ const {
   Tenant, User, Customer, Lead, Quote, Appointment, Invoice, Payment,
   AgentCall, PlatformUser, PlatformSubscription, ImpersonationLog, sequelize
 } = require('../models');
-const { PLAN_LIMITS } = require('../services/provision');
+const { PLAN_LIMITS, normalizePlan } = require('../services/provision');
 const { cacheBust } = require('../tenancy');
 
 const SECRET = () => process.env.LAWNCOPILOT_JWT_SECRET || process.env.JWT_SECRET || 'lawncopilot-dev-secret';
@@ -149,11 +149,13 @@ router.patch('/tenants/:id', async (req, res) => {
   if (!t) return res.status(404).json({ success: false, error: 'Tenant not found' });
   const { status, plan, settings } = req.body || {};
   if (status && ['active', 'trialing', 'past_due', 'suspended'].includes(status)) t.status = status;
-  if (plan && PLAN_LIMITS[plan]) {
-    t.plan = plan;
-    t.settings = { ...(t.settings || {}), enabled_employees: require('../services/provision').enabledFor(plan) };
+  if (plan) {
+    const p = normalizePlan(plan);
+    t.plan = p;
+    t.settings = { ...(t.settings || {}), enabled_employees: require('../services/provision').enabledFor(p) };
     await PlatformSubscription.update(
-      { plan, limits: PLAN_LIMITS[plan] }, { where: { tenant_id: t.id } }
+      { plan: p, limits: PLAN_LIMITS[p], price_cents: PLAN_LIMITS[p].price_cents },
+      { where: { tenant_id: t.id } }
     );
   }
   if (settings) t.settings = { ...(t.settings || {}), ...settings };

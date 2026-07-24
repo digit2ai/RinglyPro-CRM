@@ -9,7 +9,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-const { provisionTenant, PLAN_LIMITS } = require('../services/provision');
+const { provisionTenant, PLAN_LIMITS, PLAN_ORDER } = require('../services/provision');
 const { isSlugAvailable, suggestSlug } = require('../tenancy');
 const { notify } = require('../services/notify');
 const { User } = require('../models');
@@ -29,11 +29,35 @@ router.use((req, res, next) => {
   next();
 });
 
+/**
+ * The pricing table. The landing page renders from this rather than hardcoding
+ * numbers in markup, so a price change is one edit in provision.js.
+ */
 router.get('/plans', (req, res) => {
   res.json({
     success: true,
     trial_days: Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14),
-    plans: Object.entries(PLAN_LIMITS).map(([id, limits]) => ({ id, limits }))
+    currency: 'USD',
+    plans: PLAN_ORDER.map(id => {
+      const p = PLAN_LIMITS[id];
+      return {
+        id,
+        label: p.label,
+        tagline: p.tagline,
+        price_cents: p.price_cents,
+        price_display: `$${Math.round(p.price_cents / 100)}`,
+        period: 'month',
+        popular: !!p.popular,
+        highlights: p.highlights,
+        limits: {
+          crews: p.crews >= 999 ? 'Unlimited' : p.crews,
+          employees: p.employees >= 999 ? 'Unlimited' : p.employees
+        },
+        includes: {
+          payroll: p.payroll, marketing: p.marketing, controller: p.controller
+        }
+      };
+    })
   });
 });
 

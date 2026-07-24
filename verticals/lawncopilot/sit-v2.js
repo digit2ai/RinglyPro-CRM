@@ -505,6 +505,38 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('platform home is wired to a live demo company, not a dead orb',
        !homeHtml.text.includes('__DEMO_SLUG__'));
 
+    // Pricing: exactly three plans, priced, rendered from the API so the page
+    // and the signup form can never disagree.
+    const plansRes = await call('GET', `${ROOT}/api/v1/signup/plans`);
+    const plans = plansRes.data.plans || [];
+    ok('exactly three plans are offered', plans.length === 3, `${plans.length} plans`);
+    ok('plans are Solo, Crew and Multi Trucks',
+       plans.map(p => p.label).join(', ') === 'Solo, Crew, Multi Trucks',
+       plans.map(p => p.label).join(', '));
+    ok('every plan carries a price', plans.every(p => p.price_cents > 0 && p.price_display),
+       plans.map(p => `${p.label}=${p.price_display}`).join(' '));
+    ok('plans ascend in price',
+       plans[0].price_cents < plans[1].price_cents && plans[1].price_cents < plans[2].price_cents);
+    ok('exactly one plan is marked most-chosen', plans.filter(p => p.popular).length === 1);
+    ok('higher plans unlock more AI employees',
+       plans[0].includes.controller === false && plans[2].includes.controller === true);
+    ok('the landing page renders pricing from the API, not hardcoded numbers',
+       !/\$\s?(99|249|499)\b/.test(homeHtml.text),
+       'a price literal is baked into the landing markup');
+
+    for (const p of plans) {
+      const prov = await call('POST', `${ROOT}/api/v1/signup/slug-available?slug=x`);
+      void prov;
+    }
+    const soloTenant = await models.Tenant.findOne({ where: { id: alphaId }, raw: true });
+    ok('a provisioned company records a known plan',
+       ['solo', 'crew', 'multi_trucks'].includes(soloTenant.plan), soloTenant.plan);
+
+    const { normalizePlan } = require('./src/services/provision');
+    ok('legacy plan names still resolve',
+       normalizePlan('starter') === 'solo' && normalizePlan('pro') === 'crew'
+       && normalizePlan('scale') === 'multi_trucks');
+
     const tenantPage = await call('GET', `${ROOT}/${A.slug}`);
     ok('tenant page links its stylesheet absolutely so it resolves',
        tenantPage.text.includes('/lawncopilot/styles.css'));

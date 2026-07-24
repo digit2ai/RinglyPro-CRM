@@ -105,6 +105,12 @@ body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
           </select>
         </div>
 
+        <div class="field">
+          <label for="plan">Plan</label>
+          <select id="plan"><option value="">Loading...</option></select>
+          <div class="hint" id="planhint">Free trial on every plan. Change or cancel any time.</div>
+        </div>
+
         <button class="btn btn--primary btn--lg" type="submit" id="submit" style="width:100%">
           Create my company
         </button>
@@ -167,6 +173,22 @@ function checkSlug() {
   }, 300);
 }
 
+// Plans come from the API, so the form and the pricing table can never disagree.
+var planSel = document.getElementById('plan');
+var wantPlan = new URLSearchParams(location.search).get('plan');
+fetch(API + '/plans').then(function (r) { return r.json(); }).then(function (d) {
+  if (!d.success) throw new Error('no plans');
+  planSel.innerHTML = d.plans.map(function (p) {
+    return '<option value="' + p.id + '"' +
+      ((wantPlan === p.id || (!wantPlan && p.popular)) ? ' selected' : '') + '>' +
+      p.label + ' — ' + p.price_display + '/mo · ' + p.tagline + '</option>';
+  }).join('');
+  document.getElementById('planhint').textContent =
+    d.trial_days + '-day free trial on every plan. No card required. Change or cancel any time.';
+}).catch(function () {
+  planSel.innerHTML = '<option value="crew" selected>Crew</option>';
+});
+
 document.getElementById('form').addEventListener('submit', function (e) {
   e.preventDefault();
   var payload = {
@@ -177,7 +199,8 @@ document.getElementById('form').addEventListener('submit', function (e) {
     owner_phone: document.getElementById('owner_phone').value.trim(),
     password: document.getElementById('password').value,
     counties: document.getElementById('counties').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
-    crew_count: Number(document.getElementById('crew_count').value)
+    crew_count: Number(document.getElementById('crew_count').value),
+    plan: planSel.value || undefined
   };
   var btn = document.getElementById('submit');
   btn.disabled = true; btn.textContent = 'Setting up your company...';

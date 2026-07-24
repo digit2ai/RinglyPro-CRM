@@ -20,11 +20,68 @@ const { isSlugAvailable, cacheBust } = require('../tenancy');
 
 const TRIAL_DAYS = () => Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14);
 
+/**
+ * The three plans.
+ *
+ * PRICING IS A BUSINESS DECISION — these figures are a proposal, not confirmed
+ * by the operator. They live here so changing them is one edit, and the landing
+ * page reads them from /api/v1/signup/plans rather than hardcoding numbers in
+ * markup that would drift.
+ */
 const PLAN_LIMITS = {
-  starter: { crews: 2, employees: 6, ai_actions_month: 3000, payroll: false, marketing: true, controller: false },
-  pro: { crews: 6, employees: 25, ai_actions_month: 15000, payroll: true, marketing: true, controller: true },
-  scale: { crews: 999, employees: 999, ai_actions_month: 100000, payroll: true, marketing: true, controller: true }
+  solo: {
+    label: 'Solo',
+    tagline: 'Owner-operator, one truck',
+    price_cents: 9900,                    // TODO: operator-confirmed price
+    crews: 1, employees: 3, ai_actions_month: 3000,
+    payroll: false, marketing: true, controller: false,
+    highlights: [
+      'Your own booking page and QR code',
+      'Receptionist, Estimator, Dispatcher, Bookkeeper',
+      'Instant measured quotes, no site visit',
+      'Invoicing, card payments and autopay',
+      'Customer portal with schedule and history'
+    ]
+  },
+  crew: {
+    label: 'Crew',
+    tagline: 'A few crews, growing',
+    price_cents: 24900,                   // TODO: operator-confirmed price
+    crews: 5, employees: 15, ai_actions_month: 15000,
+    payroll: true, marketing: true, controller: false,
+    popular: true,
+    highlights: [
+      'Everything in Solo',
+      'Crew Manager: time tracking and certifications',
+      'Payroll Officer',
+      'Marketing, review requests and referrals',
+      'Route sequencing and dispatch'
+    ]
+  },
+  multi_trucks: {
+    label: 'Multi Trucks',
+    tagline: 'Multiple crews and locations',
+    price_cents: 49900,                   // TODO: operator-confirmed price
+    crews: 999, employees: 999, ai_actions_month: 100000,
+    payroll: true, marketing: true, controller: true,
+    highlights: [
+      'Everything in Crew',
+      'The Controller: job costing and margin per customer',
+      'Underpriced-work and route-waste reporting',
+      'Unlimited crews and employees',
+      'Priority support'
+    ]
+  }
 };
+
+const PLAN_ORDER = ['solo', 'crew', 'multi_trucks'];
+
+// v1/v2-alpha plan names, so existing tenants keep working.
+const LEGACY_PLANS = { starter: 'solo', pro: 'crew', scale: 'multi_trucks' };
+function normalizePlan(p) {
+  const k = String(p || '').toLowerCase();
+  return PLAN_LIMITS[k] ? k : (LEGACY_PLANS[k] || 'solo');
+}
 
 function shortCode() {
   return crypto.randomBytes(4).toString('base64url').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toLowerCase();
@@ -80,7 +137,7 @@ async function provisionTenant({
     return { success: false, error: 'That email already has an account. Sign in instead.', field: 'owner_email' };
   }
 
-  const chosenPlan = PLAN_LIMITS[plan] ? plan : 'starter';
+  const chosenPlan = normalizePlan(plan);
   const t = await sequelize.transaction();
 
   try {
@@ -144,6 +201,7 @@ async function provisionTenant({
       tenant_id: tenant.id,
       plan: chosenPlan,
       status: 'trialing',
+      price_cents: PLAN_LIMITS[chosenPlan].price_cents,
       limits: PLAN_LIMITS[chosenPlan],
       current_period_end: new Date(Date.now() + TRIAL_DAYS() * 86400000)
     }, { transaction: t });
@@ -172,7 +230,7 @@ async function provisionTenant({
 }
 
 function enabledFor(plan) {
-  const l = PLAN_LIMITS[plan] || PLAN_LIMITS.starter;
+  const l = PLAN_LIMITS[normalizePlan(plan)];
   const on = ['receptionist', 'estimator', 'dispatcher', 'bookkeeper', 'crew'];
   if (l.marketing) on.push('marketer');
   if (l.payroll) on.push('payroll');
@@ -228,7 +286,7 @@ async function ensureDemoTenant() {
     state: 'FL',
     counties: ['Orange', 'Seminole'],
     crew_count: 2,
-    plan: 'scale'
+    plan: 'multi_trucks'
   });
   if (r.success) {
     await Tenant.update({ status: 'active' }, { where: { id: r.tenant_id } });
@@ -262,7 +320,7 @@ async function adoptLegacyTenant() {
   if (!legacy.settings || !legacy.settings.enabled_employees) {
     legacy.settings = { ...(legacy.settings || {}), enabled_employees: enabledFor('scale') };
   }
-  legacy.plan = legacy.plan || 'scale';
+  legacy.plan = normalizePlan(legacy.plan);
   legacy.status = 'active';
   legacy.short_code = legacy.short_code || shortCode();
   await legacy.save();
@@ -281,5 +339,5 @@ async function adoptLegacyTenant() {
 
 module.exports = {
   provisionTenant, ensurePlatform, ensureDemoTenant, adoptLegacyTenant,
-  PLAN_LIMITS, enabledFor, shortCode, defaultBrand
+  PLAN_LIMITS, PLAN_ORDER, normalizePlan, enabledFor, shortCode, defaultBrand
 };
