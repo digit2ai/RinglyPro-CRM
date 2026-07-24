@@ -132,7 +132,7 @@ function scoreFromProfile(p) {
   var inp = deriveInputs(p);
   if (inp.ingresos <= 0) return null;
   var pl = pillars(inp);
-  var score = round(pl.emergency_fund * 0.35 + pl.cash_flow * 0.25 + pl.debt_health * 0.25 + pl.stability * 0.15);
+  var score = Math.min(99, round(pl.emergency_fund * 0.35 + pl.cash_flow * 0.25 + pl.debt_health * 0.25 + pl.stability * 0.15)); // tope 99 — nunca 100
   var rec = recommendation(inp);
   return { score: score, rango: rangoDe(score), scenario: rec.scenario, pillars: pl, recommendation: rec, inputs: inp };
 }

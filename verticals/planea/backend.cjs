@@ -150,14 +150,22 @@ init();
 // Two cookies: the HttpOnly JWT (auth) + a JS-readable identity hint so the
 // portal's client scripts can detect the session synchronously (no network).
 function setSession(res, user) {
-  res.cookie(COOKIE, sign(user), { httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE, path: '/planea' });
+  // Path MUST be '/' — on planea.vip the browser sees vanity URLs ('/', '/login',
+  // '/score'); the rewrite to /planea/* happens server-side, so a Path=/planea
+  // cookie was never sent on those requests (Chrome enforced this strictly while
+  // Safari happened to work). SameSite=Lax is the correct first-party value.
+  res.clearCookie(COOKIE, { path: '/planea' });        // drop the legacy scoped cookie
+  res.clearCookie('planea_user', { path: '/planea' });
+  res.cookie(COOKIE, sign(user), { httpOnly: true, secure: true, sameSite: 'lax', maxAge: MAX_AGE, path: '/' });
   // Pass RAW JSON — Express's res.cookie URL-encodes the value itself. (Encoding
   // it here too double-encoded it, so JSON.parse threw in the browser and every
   // parse-based session check silently failed.)
   const hint = JSON.stringify({ id: user.id, email: user.email, full_name: user.full_name || '' });
-  res.cookie('planea_user', hint, { httpOnly: false, secure: true, sameSite: 'none', maxAge: MAX_AGE, path: '/planea' });
+  res.cookie('planea_user', hint, { httpOnly: false, secure: true, sameSite: 'lax', maxAge: MAX_AGE, path: '/' });
 }
 function clearSession(res) {
+  res.clearCookie(COOKIE, { path: '/' });
+  res.clearCookie('planea_user', { path: '/' });
   res.clearCookie(COOKIE, { path: '/planea' });
   res.clearCookie('planea_user', { path: '/planea' });
 }
@@ -463,13 +471,42 @@ function build() {
       // are separate — the survey never seeds items and items never touch the score.
       const rows = await Item.findAll({ where: { user_id: u.id }, order: [['created_at', 'ASC']] });
       const items = rows.map(itemOut);
+
+      // UN SOLO PUNTAJE: la encuesta solo siembra el puntaje inicial. En cuanto hay
+      // datos reales en los módulos, Salud Financiera es la única fuente de verdad y
+      // el Puntaje Planea la refleja — así nunca pueden diferir. La recomendación
+      // (meta de Maya == meta de alta prioridad) se deriva de ESOS MISMOS datos.
+      let sd = p.score_data || null;
+      const meta = p.finance_meta || {};
+      const sal = salud.computeSalud(items, meta);
+      if (sal && sal.overall != null) {
+        const t = salud.totalsFromItems(items);
+        const rec = score.recommendation({
+          ingresos: t.I, gastos: t.G, cuotas: t.C, tiene_deuda: (t.D > 0 || t.C > 0),
+          meses_cobertura: t.G > 0 ? t.A / t.G : (t.A > 0 ? 99 : 0),
+          tipo_ingreso: meta.tipo_ingreso || 'fijo', dependientes: meta.dependientes || 'nadie',
+          nombre: String(p.full_name || u.full_name || '').trim().split(/\s+/)[0] || '',
+        });
+        sd = Object.assign({}, sd || {}, {
+          score: sal.overall,
+          rango: sal.rango,
+          recommendation: rec,          // ← única fuente de la meta prioritaria
+          scenario: rec.scenario,
+          source: 'salud',              // el puntaje viene de los datos reales
+          survey_score: (p.score_data && p.score_data.score != null) ? p.score_data.score : null,
+        });
+      }
+
       res.json({
         email: u.email,
         full_name: p.full_name || u.full_name || '',
-        score_data: p.score_data || null,
+        score_data: sd,
         goals: Array.isArray(p.goals) ? p.goals : [],
+        assets_data: Array.isArray(p.assets_data) ? p.assets_data : [],
+        liabilities_data: Array.isArray(p.liabilities_data) ? p.liabilities_data : [],
         items: items,
         summary: itemsSummary(items),
+        salud: sal && sal.overall != null ? { overall: sal.overall, rango: sal.rango, net_worth: sal.net_worth } : null,
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

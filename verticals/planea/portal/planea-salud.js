@@ -197,7 +197,7 @@
     var S1 = cl01(A / (6 * I)), S2 = cl01(((I - G) / I) / 0.2), S3 = Math.max(1 - D / annual, 0);
     var S4 = totalAssets > 0 ? cl01(netWorth / totalAssets) : (D > 0 ? 0 : 1);
     var S5 = goalRet > 0 ? cl01(R / goalRet) : 0, S6 = annual > 0 ? cl01(S / (10 * annual)) : 0;
-    return Math.max(1, Math.min(100, Math.round(20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6)));
+    return Math.max(1, Math.min(99, Math.round(20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6)));
   }
 
   function wireSimulator(d) {

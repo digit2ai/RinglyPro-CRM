@@ -61,7 +61,7 @@ function scoreFromTotals(t, age) {
   var S6 = annual > 0 ? clamp01(S / (10 * annual)) : 0;
 
   var raw = 20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6;
-  var overall = I > 0 ? Math.max(1, Math.min(100, round(raw))) : null;
+  var overall = I > 0 ? Math.max(1, Math.min(99, round(raw))) : null; // tope 99 — nunca 100
   return { overall: overall, S1: S1, S2: S2, S3: S3, S4: S4, S5: S5, S6: S6, annual: annual, totalAssets: totalAssets, netWorth: netWorth, goalRet: goalRet };
 }
 

@@ -91,20 +91,26 @@
     commit();
   }
 
+  // Persist to OUR backend (planea_profiles.assets_data / liabilities_data).
+  // The old Supabase path (persons_patrimony) died with the migration — that is
+  // why "Agregar activo / pasivo" silently did nothing.
+  var API = '/planea/api/v1/me/profile';
   function commit() {
-    if (!person) { render(); return; }
     var body = { assets_data: patrimony.assets_data || [], liabilities_data: patrimony.liabilities_data || [] };
-    var pid = person.id;
-    var p = patrimony && patrimony.__exists
-      ? PlaneaSB.patch('persons_patrimony?person_id=eq.' + pid, body)
-      : PlaneaSB.get('persons_patrimony?person_id=eq.' + pid + '&select=person_id&limit=1').then(function (rows) {
-          if (rows && rows.length) return PlaneaSB.patch('persons_patrimony?person_id=eq.' + pid, body);
-          body.person_id = pid;
-          return PlaneaSB.post('persons_patrimony', body);
-        });
     closeForm();
-    p.then(function () { patrimony.__exists = true; location.reload(); })
-     .catch(function (e) { if (window.console) console.warn('[patrimonio] save failed', e && e.message); alert('No se pudo guardar. Revisa tu sesión.'); render(); });
+    fetch(API, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) {
+        if (r.status === 401) { location.href = '/planea/login'; throw new Error('401'); }
+        if (!r.ok) throw new Error('save ' + r.status);
+        return r.json();
+      })
+      .then(function () { location.reload(); })
+      .catch(function (e) {
+        if (e && /401/.test(e.message)) return;
+        if (window.console) console.warn('[patrimonio] save failed', e && e.message);
+        alert('No se pudo guardar. Intenta de nuevo.');
+        render();
+      });
   }
 
   function render() { mount.innerHTML = panel(); }
@@ -131,15 +137,15 @@
     // one document-level delegate covers both the panel (in #pat-edit) and the
     // modal form (appended to <body>). Clicking the dim backdrop closes it.
     document.addEventListener('click', function (e) { if (e.target.id === 'pe-modal') { closeForm(); return; } onClick(e); });
-    if (window.PlaneaSB && PlaneaSB.loggedIn()) {
-      PlaneaSB.person().then(function (pr) {
-        person = pr;
-        if (!pr) return;
-        return PlaneaSB.get('persons_patrimony?person_id=eq.' + pr.id + '&select=assets_data,liabilities_data&limit=1').then(function (rows) {
-          if (rows && rows[0]) { patrimony = rows[0]; patrimony.__exists = true; patrimony.assets_data = patrimony.assets_data || []; patrimony.liabilities_data = patrimony.liabilities_data || []; render(); }
-        });
-      }).catch(function () {});
-    }
+    // Load the saved activos/pasivos from our backend (httpOnly JWT session).
+    fetch(API, { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        patrimony = { assets_data: Array.isArray(d.assets_data) ? d.assets_data : [], liabilities_data: Array.isArray(d.liabilities_data) ? d.liabilities_data : [] };
+        render();
+      })
+      .catch(function () {});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
