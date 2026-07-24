@@ -14,17 +14,21 @@
 <link rel="apple-touch-icon" href="/lawncopilot/apple-touch-icon.png">
 <style>
 /* ── SaaS landing ─────────────────────────────────────────────── */
-.hero--saas { padding: var(--space-8) 0 var(--space-7); text-align: center; background:
-  radial-gradient(900px 420px at 50% -12%, var(--green-100), transparent 64%),
+.hero--saas { padding: var(--space-7) 0 var(--space-8); background:
+  radial-gradient(1100px 500px at 86% -12%, var(--green-100), transparent 62%),
   linear-gradient(180deg, #fff, var(--bg-alt)); }
-.hero--saas h1 { max-width: 16ch; margin-inline: auto; }
-.hero--saas .lead { max-width: 62ch; margin-inline: auto; }
-.hero__cta { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; margin-top: var(--space-5); }
+.hero--saas .hero__grid { display: grid; grid-template-columns: 1.05fr .95fr;
+  gap: var(--space-7); align-items: center; }
+@media (max-width: 980px) { .hero--saas .hero__grid { grid-template-columns: 1fr; } }
+.hero--saas h1 { font-size: clamp(1.9rem, 4vw, 3rem); }
+.hero__cta { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-5); }
 .hero__note { font-size: .85rem; color: var(--text-mut); margin-top: var(--space-4); }
+.hero__try { font-size: .82rem; color: var(--green-200); text-align: center;
+  margin-top: var(--space-4); position: relative; }
 
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
-  gap: var(--space-5); max-width: 840px; margin: var(--space-7) auto 0; text-align: center; }
-.metrics b { display: block; font-size: 1.9rem; font-weight: 800; color: var(--green-700); line-height: 1.1; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+  gap: var(--space-5); margin: var(--space-6) 0 0; }
+.metrics b { display: block; font-size: 1.7rem; font-weight: 800; color: var(--green-700); line-height: 1.1; }
 .metrics span { font-size: .85rem; color: var(--text-mut); }
 
 .demo { background: var(--ink-900); color: #fff; border-radius: var(--radius-lg);
@@ -110,7 +114,8 @@
 </nav>
 
 <header class="hero--saas">
-  <div class="wrap">
+  <div class="wrap hero__grid">
+    <div>
     <div class="eyebrow">For landscaping companies</div>
     <h1>We answer the calls, book the jobs, route the crews and collect the money.</h1>
     <p class="lead">
@@ -125,11 +130,53 @@
     </div>
     <p class="hero__note">14-day free trial. No card required. Live in about three minutes.</p>
 
-    <div class="metrics">
-      <div><b>24/7</b><span>Every call answered</span></div>
-      <div><b>~10 sec</b><span>Address to priced quote</span></div>
-      <div><b>0 miles</b><span>Driven to write an estimate</span></div>
-      <div><b>1 app</b><span>Your whole office, in your pocket</span></div>
+      <div class="metrics">
+        <div><b>24/7</b><span>Every call answered</span></div>
+        <div><b>~10 sec</b><span>Address to priced quote</span></div>
+        <div><b>0 miles</b><span>Driven to estimate</span></div>
+        <div><b>1 app</b><span>Your whole office</span></div>
+      </div>
+    </div>
+
+    <!-- THE ESTIMATOR, LIVE. This is the proof: a landscaper types a real
+         address and watches it get measured and priced, exactly as their own
+         customers would. Wired to a real tenant, not a mockup. -->
+    <div class="orbcard" id="orbcard">
+      <div class="orbcard__head">
+        <button class="orb" id="orb" aria-label="Talk to the estimator" data-gate="orb"></button>
+        <div>
+          <div class="orbcard__title">Try the Estimator</div>
+          <div class="orbcard__sub">Type any address. This is what your customers would see.</div>
+        </div>
+      </div>
+      <div class="orbcard__status" id="status">Type an address to see it measured and priced.</div>
+
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+
+      <div class="composer">
+        <input id="msg" type="text" placeholder="1240 Palm Grove Drive, Orlando FL 32801"
+               autocomplete="off" data-gate="input" aria-label="Address to estimate">
+        <button class="btn btn--primary" id="send" data-gate="send">Send</button>
+      </div>
+
+      <div class="chips">
+        <button class="chip" data-gate="chip" data-chip="1240 Palm Grove Drive, Orlando FL 32801">Use a sample address</button>
+        <button class="chip" data-gate="chip" data-chip="How much does it cost?">How much?</button>
+        <button class="chip" data-gate="chip" data-chip="When can you come out?">When can you come?</button>
+      </div>
+
+      <div class="result" id="result">
+        <div class="map" id="map"></div>
+        <div class="legend">
+          <span><i style="background:#f59e0b"></i>Property line</span>
+          <span><i style="background:#94a3b8"></i>House</span>
+          <span><i style="background:var(--green-500)"></i>Lawn serviced</span>
+        </div>
+        <div class="prices" id="prices"></div>
+        <div class="tiny mut" id="disclaimer" style="margin-top:12px;color:var(--ink-400)"></div>
+      </div>
+
+      <p class="hero__try">Live demo running on a real company account.</p>
     </div>
   </div>
 </header>
@@ -323,6 +370,33 @@
     </div>
   </div>
 </footer>
+
+<!-- The identity gate. Same rule as every tenant page: name, phone and email
+     before any request, on every entry point. -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate__box">
+    <h3 id="gateTitle">First, who are we quoting?</h3>
+    <p class="small mut">This is the same gate your customers would see. It captures the lead
+    before anything is measured, so you never lose one.</p>
+    <form id="gateForm" novalidate>
+      <div class="field" id="f-name"><label for="g-name">Full name</label>
+        <input id="g-name" name="name" type="text" autocomplete="name" required>
+        <div class="err">Please enter a name.</div></div>
+      <div class="field" id="f-phone"><label for="g-phone">Mobile number</label>
+        <input id="g-phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 305 555 0142" required>
+        <div class="err">Enter a valid mobile number with country code.</div></div>
+      <div class="field" id="f-email"><label for="g-email">Email</label>
+        <input id="g-email" name="email" type="email" autocomplete="email" required>
+        <div class="err">Enter a valid email address.</div></div>
+      <label class="check" style="margin-bottom:var(--space-4)">
+        <input type="checkbox" id="g-marketing">
+        <span>Send me seasonal offers too. (Optional.)</span></label>
+      <button class="btn btn--primary" type="submit" style="width:100%" id="gateSubmit">Continue</button>
+    </form>
+  </div>
+</div>
+
+<script src="/lawncopilot/orb.js" defer></script>
 
 <script>
 /* Pricing renders from the API, so a price change is one edit server-side and

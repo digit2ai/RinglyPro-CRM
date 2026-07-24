@@ -510,6 +510,18 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
        && !/finish your coffee/i.test(homeHtml.text));
     ok('platform home promises the single mobile dashboard',
        /one dashboard on your phone|single dashboard/i.test(homeHtml.text));
+
+    // The live estimator in the hero is the proof the product works. It was
+    // dropped once during a copy rewrite — keep it structurally required.
+    ok('platform home carries the working estimator',
+       homeHtml.text.includes('id="orbcard"')
+       && homeHtml.text.includes('data-gate="orb"')
+       && homeHtml.text.includes('/lawncopilot/orb.js'));
+    ok('the estimator has its identity gate',
+       homeHtml.text.includes('id="gateForm"')
+       && ['g-name', 'g-phone', 'g-email'].every(f => homeHtml.text.includes(f)));
+    ok('the estimator can render a result',
+       ['id="map"', 'id="prices"', 'id="transcript"'].every(id => homeHtml.text.includes(id)));
     const staleLanding = await call('GET', `${ROOT}/index.html`);
     ok('no stale homeowner landing is reachable on the platform',
        staleLanding.status === 404 || !/finish your coffee/i.test(staleLanding.text || ''),
