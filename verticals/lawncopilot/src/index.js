@@ -123,15 +123,42 @@ router.get(['/platform', '/platform/'], (req, res) => {
   res.sendFile(path.join(publicDir, 'platform.html'));
 });
 
+// ── Shared static assets MUST come before /:slug ──────────────────────────
+// Otherwise `/lawncopilot/styles.css` is matched as a company named
+// "styles.css", the tenant lookup fails, and every stylesheet, script and
+// image 404s into the not-found page. express.static calls next() when a file
+// does not exist, so real slugs still fall through. index:false keeps it from
+// serving public/index.html at `/` instead of the platform home.
+router.use(express.static(publicDir, { index: false }));
+
 // ════════════════════════════════════════════════════════════════════════════
 // TENANT LAYER — everything below resolves a company from the slug
 // ════════════════════════════════════════════════════════════════════════════
 
 router.use('/:slug', tenantMiddleware(), require('./tenant-router'));
 
-// ── Platform static + landing (last, so it never shadows a tenant slug) ────
-router.use(express.static(publicDir));
-router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'platform-home.html')));
+/**
+ * The platform home page.
+ *
+ * Its orb is a LIVE demo of a real company rather than a mockup — we inject the
+ * demo tenant's slug so orb.js posts to a genuine tenant API. A landscaper
+ * evaluating the product watches it quote an actual property.
+ */
+let platformHomeCache = null;
+router.get('/', async (req, res, next) => {
+  try {
+    if (!platformHomeCache) {
+      const { Tenant } = require('./models');
+      const demoSlug = process.env.LAWNCOPILOT_DEMO_SLUG || 'green-acres';
+      const demo = await Tenant.findOne({ where: { slug: demoSlug }, raw: true });
+      const html = require('fs').readFileSync(path.join(publicDir, 'platform-home.html'), 'utf8');
+      // No demo tenant means no working orb — drop the attribute rather than
+      // shipping a page whose orb posts nowhere.
+      platformHomeCache = html.replace('__DEMO_SLUG__', demo ? demo.slug : '');
+    }
+    res.type('html').send(platformHomeCache);
+  } catch (e) { next(e); }
+});
 
 // ── Init ───────────────────────────────────────────────────────────────────
 (async function initialize() {

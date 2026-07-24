@@ -488,6 +488,27 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     }
     ok('short link counts the click', clicked && clicked.clicks >= 1, `clicks=${clicked && clicked.clicks}`);
 
+    // ── 15b. Shared static assets must NOT be swallowed by /:slug ─────────
+    // This shipped broken once: /lawncopilot/styles.css was matched as a
+    // company named "styles.css", so every stylesheet, script and image on
+    // every page 404'd into the not-found template.
+    console.log('\n[15b] Shared static assets');
+    for (const asset of ['/styles.css', '/tenant.css', '/orb.js', '/logo.png', '/mark.png',
+                         '/portal/app.css', '/portal/data.js', '/admin/app.css', '/admin/data.js']) {
+      const res = await call('GET', `${ROOT}${asset}`);
+      const isHtml = /<!DOCTYPE html>/i.test(res.text || '');
+      ok(`${asset} serves the real file`, res.status === 200 && !isHtml,
+         `HTTP ${res.status}${isHtml ? ' (got the 404 page)' : ''}`);
+    }
+    const homeHtml = await call('GET', `${ROOT}/`);
+    ok('platform home renders', homeHtml.status === 200 && /AI office/i.test(homeHtml.text));
+    ok('platform home is wired to a live demo company, not a dead orb',
+       !homeHtml.text.includes('__DEMO_SLUG__'));
+
+    const tenantPage = await call('GET', `${ROOT}/${A.slug}`);
+    ok('tenant page links its stylesheet absolutely so it resolves',
+       tenantPage.text.includes('/lawncopilot/styles.css'));
+
     // ── 16. Platform layer ────────────────────────────────────────────────
     console.log('\n[16] Platform super-admin');
     const plogin = await call('POST', `${ROOT}/api/v1/platform/login`, {
