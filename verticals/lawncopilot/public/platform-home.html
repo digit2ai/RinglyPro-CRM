@@ -15,21 +15,35 @@
 <style>
 /* ── SaaS landing ─────────────────────────────────────────────── */
 .hero--saas { padding: var(--space-7) 0 var(--space-8); background:
-  radial-gradient(1100px 500px at 86% -12%, var(--green-100), transparent 62%),
+  radial-gradient(1100px 520px at 84% -14%, var(--green-100), transparent 60%),
   linear-gradient(180deg, #fff, var(--bg-alt)); }
-.hero--saas .hero__grid { display: grid; grid-template-columns: 1.05fr .95fr;
+.hero--saas .hero__grid { display: grid; grid-template-columns: 1.02fr .98fr;
   gap: var(--space-7); align-items: center; }
-@media (max-width: 980px) { .hero--saas .hero__grid { grid-template-columns: 1fr; } }
-.hero--saas h1 { font-size: clamp(1.75rem, 3.5vw, 2.7rem); text-wrap: balance; }
-.hero__cta { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-5); }
-.hero__note { font-size: .85rem; color: var(--text-mut); margin-top: var(--space-4); }
-.hero__try { font-size: .82rem; color: var(--green-200); text-align: center;
-  margin-top: var(--space-4); position: relative; }
+@media (max-width: 1000px) { .hero--saas .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); } }
 
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
-  gap: var(--space-5); margin: var(--space-6) 0 0; }
-.metrics b { display: block; font-size: 1.7rem; font-weight: 800; color: var(--green-700); line-height: 1.1; }
-.metrics span { font-size: .85rem; color: var(--text-mut); }
+/* Cap the measure so the line breaks land on phrases, not orphaned words. */
+.hero--saas h1 {
+  font-size: clamp(1.8rem, 3.2vw, 2.55rem);
+  max-width: 15ch; line-height: 1.12; letter-spacing: -.025em;
+  text-wrap: balance;
+}
+.hero--saas .lead { max-width: 46ch; font-size: clamp(1rem, 1.3vw, 1.1rem); }
+
+.hero__cta { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-5); }
+.hero__note { font-size: .84rem; color: var(--text-mut); margin-top: var(--space-4); }
+.hero__try { font-size: .78rem; color: rgba(255,255,255,.5); text-align: center;
+  margin: var(--space-4) 0 0; position: relative; }
+
+/* Four across, never 3 + 1 orphan. minmax(0,1fr) lets the labels wrap instead
+   of forcing a column wider than its share. */
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4); margin: var(--space-6) 0 0;
+  padding-top: var(--space-5); border-top: 1px solid var(--line); }
+.metrics > div { min-width: 0; }
+.metrics b { display: block; font-size: 1.45rem; font-weight: 800; color: var(--green-700);
+  line-height: 1.1; letter-spacing: -.02em; }
+.metrics span { font-size: .78rem; color: var(--text-mut); line-height: 1.35; display: block; margin-top: 2px; }
+@media (max-width: 560px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); } }
 
 .demo { background: var(--ink-900); color: #fff; border-radius: var(--radius-lg);
   padding: var(--space-6); display: grid; grid-template-columns: 1.1fr .9fr;
@@ -91,6 +105,15 @@
 .compare td.c, .compare th.c { text-align: center; }
 .compare .yes { color: var(--green-700); font-weight: 800; }
 .compare .no { color: var(--ink-300); }
+
+/* Estimator card: tighter rhythm, and a status line that does not float */
+.hero--saas .orbcard { padding: var(--space-5) var(--space-5) var(--space-4); }
+.hero--saas .orbcard__status { margin-top: var(--space-4); font-size: .84rem;
+  color: rgba(255,255,255,.62); }
+.hero--saas .composer { margin-top: var(--space-3); }
+.hero--saas .chips { margin-top: var(--space-3); }
+.hero--saas .orbcard__title { font-size: 1.02rem; }
+.hero--saas .orbcard__sub { font-size: .84rem; line-height: 1.4; }
 </style>
 </head>
 <body data-slug="__DEMO_SLUG__">
