@@ -26,6 +26,7 @@
 @media (max-width: 1000px) { .hero--saas .hero__grid { grid-template-columns: 1fr; gap: var(--space-6); } }
 
 /* Cap the measure so the line breaks land on phrases, not orphaned words. */
+.hero--saas h1 .hl { color: var(--green-600); font-weight: 800; }
 .hero--saas h1 {
   font-size: clamp(1.85rem, 3.1vw, 2.5rem);
   max-width: 17ch; line-height: 1.12; letter-spacing: -.025em;
@@ -34,7 +35,8 @@
 @media (max-width: 700px) {
   /* On a phone the column is already narrow — a ch cap on top of that forces
      five cramped lines. Let the viewport do the wrapping. */
-  .hero--saas h1 { max-width: none; font-size: clamp(1.7rem, 7.4vw, 2.2rem); }
+  .hero--saas h1 .hl { color: var(--green-600); font-weight: 800; }
+.hero--saas h1 { max-width: none; font-size: clamp(1.7rem, 7.4vw, 2.2rem); }
   .hero--saas .lead { max-width: none; }
   .hero--saas .hero__grid { gap: var(--space-5); }
   .hero--saas .sim-phone { height: 560px; }
@@ -393,7 +395,7 @@
   <div class="wrap hero__grid">
     <div>
     <div class="eyebrow">For landscaping companies</div>
-    <h1>We answer the calls, quote the work, book the jobs, route the crews and collect the money.</h1>
+    <h1>We <b class="hl">answer</b> the calls, <b class="hl">quote</b> the work, <b class="hl">book</b> the jobs, <b class="hl">route</b> the crews and <b class="hl">collect</b> the money.</h1>
     <p class="lead">
       Lawn Co-Pilot handles the entire administrative side of your company — answering every
       call, quoting, booking and scheduling jobs, optimizing your crews' routes, taking

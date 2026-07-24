@@ -505,11 +505,19 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     // The platform page sells to LANDSCAPERS. Homeowner-facing copy belongs on
     // tenant pages; a stale v1 landing once shipped alongside it saying
     // "get a real price before you finish your coffee".
+    // The verbs carry markup for emphasis, so match against the text content
+    // rather than the raw HTML.
+    const homeText = homeHtml.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
     ok('platform home speaks to the landscaper, not the homeowner',
-       /answer the calls/i.test(homeHtml.text) && /quote the work/i.test(homeHtml.text)
-       && /book the jobs/i.test(homeHtml.text) && /route the crews/i.test(homeHtml.text)
-       && /collect the money/i.test(homeHtml.text)
-       && !/finish your coffee/i.test(homeHtml.text));
+       /answer the calls/i.test(homeText) && /quote the work/i.test(homeText)
+       && /book the jobs/i.test(homeText) && /route the crews/i.test(homeText)
+       && /collect the money/i.test(homeText)
+       && !/finish your coffee/i.test(homeText));
+    ok('the five promises are visually emphasised',
+       ['answer', 'quote', 'book', 'route', 'collect']
+         .every(v => homeHtml.text.includes(`<b class="hl">${v}</b>`)),
+       ['answer', 'quote', 'book', 'route', 'collect']
+         .filter(v => !homeHtml.text.includes(`<b class="hl">${v}</b>`)).join(', '));
     ok('platform home promises the single mobile dashboard',
        /one dashboard on your phone|single dashboard/i.test(homeHtml.text));
 
