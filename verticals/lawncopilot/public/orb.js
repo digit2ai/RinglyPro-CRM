@@ -333,11 +333,18 @@
     });
     if (!pts.length) return;
 
-    var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
-    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
-    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
-    var padX = (maxX - minX) * 0.18 || 0.0002, padY = (maxY - minY) * 0.18 || 0.0002;
-    minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+    var minX, maxX, minY, maxY;
+    // Prefer the imagery frame, so the outline sits on the actual roof/yard in
+    // the satellite photo. Fall back to self-bounding the polygons.
+    if (g.bbox && g.bbox.length === 4) {
+      minX = g.bbox[0]; minY = g.bbox[1]; maxX = g.bbox[2]; maxY = g.bbox[3];
+    } else {
+      var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+      minX = Math.min.apply(null, xs); maxX = Math.max.apply(null, xs);
+      minY = Math.min.apply(null, ys); maxY = Math.max.apply(null, ys);
+      var padX = (maxX - minX) * 0.18 || 0.0002, padY = (maxY - minY) * 0.18 || 0.0002;
+      minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+    }
 
     function project(c) {
       return (((c[0] - minX) / (maxX - minX)) * 100).toFixed(2) + ',' +

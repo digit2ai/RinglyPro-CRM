@@ -30,6 +30,7 @@ router.use('/api/v1/quote', require('./routes/quote'));
 router.use('/api/v1/me', require('./routes/me'));
 router.use('/api/v1/admin', require('./routes/admin'));
 router.use('/api/v1/site', require('./routes/site'));
+router.use('/api/v1/billing', require('./routes/billing'));
 
 // The Brain, scoped to this company.
 router.use('/mcp', require('./routes/mcp'));

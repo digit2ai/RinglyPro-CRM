@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plan &amp; billing — Lawn Co-Pilot</title>
+<meta name="theme-color" content="#307f44">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+<style>
+  .bl-wrap { max-width: 680px; margin: 0 auto; padding: var(--space-4) var(--space-4) 96px; }
+  .bl-wrap h1 { font-size: 1.5rem; margin: 4px 0 var(--space-5); }
+  .status { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-5); }
+  .status .pill { font-size: .82rem; }
+  .planlist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: var(--space-5); }
+  @media (max-width: 560px) { .planlist { grid-template-columns: 1fr; } }
+  .pl { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; background: #fff; text-align: center; }
+  .pl.cur { border-color: var(--green-600); background: var(--green-50); }
+  .pl b { display: block; font-size: 1.05rem; }
+  .pl .amt { font-size: 1.5rem; font-weight: 800; margin: 6px 0; }
+  .pl .amt span { font-size: .78rem; color: var(--text-mut); font-weight: 500; }
+  .msg { padding: 12px 14px; border-radius: var(--radius); font-size: .88rem; margin-bottom: var(--space-4); display: none; }
+  .msg.err { background: #fef2f2; color: #991b1b; display: block; }
+  .msg.ok { background: var(--green-50); color: var(--green-900); display: block; }
+</style>
+</head>
+<body>
+<div class="bl-wrap">
+  <div id="tabs"></div>
+  <a href="#" onclick="history.back();return false" style="font-size:.85rem;color:var(--green-700);font-weight:700">&#8249; Back</a>
+  <h1>Plan &amp; billing</h1>
+  <div class="msg" id="msg"></div>
+  <div id="content"><div class="empty">Loading...</div></div>
+</div>
+
+<script src="/lawncopilot/admin/data.js"></script>
+<script>
+(function () {
+  if (window.A && A.shell) A.shell('inicio');
+  var content = document.getElementById('content');
+  var msg = document.getElementById('msg');
+  function show(t, ok) { msg.textContent = t; msg.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  var PLANS = [
+    { id: 'solo', label: 'Solo', price: 35 },
+    { id: 'crew', label: 'Crew', price: 99 },
+    { id: 'multi_trucks', label: 'Multi Trucks', price: 259 }
+  ];
+
+  var q = new URLSearchParams(location.search);
+  if (q.get('subscribed')) show('Your subscription is active. Thank you!', true);
+  if (q.get('billing') === 'cancelled') show('Checkout cancelled. No charge was made.');
+
+  A.get('/billing').then(function (s) {
+    var cur = s.plan;
+    var statusLabel = ({ trialing: 'Free trial', active: 'Active', past_due: 'Payment due', cancelled: 'Cancelled', suspended: 'Suspended' })[s.status] || s.status;
+    var pillCls = (s.status === 'active' || s.status === 'trialing') ? 'pill' : 'pill pill--warn';
+
+    var html = '<div class="status"><span class="' + pillCls + '">' + A.esc(statusLabel) + '</span>';
+    if (s.current_period_end) html += '<span class="small mut">Renews ' + A.date(s.current_period_end) + '</span>';
+    html += '</div>';
+
+    if (!s.billing_enabled) {
+      html += '<div class="tile"><p class="mut" style="margin:0">Online billing isn\'t enabled on this environment yet. You\'re on the <b>' +
+        A.esc(cur) + '</b> plan and your free trial is active. Card setup will appear here once payments are switched on.</p></div>';
+      content.innerHTML = html;
+      return;
+    }
+
+    html += '<div class="planlist">' + PLANS.map(function (p) {
+      return '<div class="pl' + (p.id === cur ? ' cur' : '') + '"><b>' + p.label + '</b>' +
+        '<div class="amt">$' + p.price + '<span>/mo</span></div>' +
+        (p.id === cur ? '<span class="pill">Current</span>'
+          : '<button class="btn btn--ghost btn--sm" data-plan="' + p.id + '">Choose</button>') + '</div>';
+    }).join('') + '</div>';
+
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
+    if (s.has_stripe_subscription) {
+      html += '<button class="btn btn--primary" id="portal">Manage billing &amp; card</button>';
+    } else {
+      html += '<button class="btn btn--primary" data-plan="' + cur + '">Start subscription (' + s.trial_days + '-day free trial)</button>';
+    }
+    html += '</div>';
+    html += '<p class="small mut" style="margin-top:var(--space-4)">' + s.trial_days + '-day free trial. Cancel anytime. Billed by Digit2AI.</p>';
+
+    content.innerHTML = html;
+
+    content.addEventListener('click', function (e) {
+      var pb = e.target.closest('[data-plan]');
+      if (pb) {
+        pb.disabled = true; pb.textContent = 'Opening checkout...';
+        A.post('/billing/checkout', { plan: pb.getAttribute('data-plan') }).then(function (r) {
+          if (r.success && r.url) { window.location.href = r.url; }
+          else { pb.disabled = false; show(r.message || r.error || 'Could not start checkout.'); }
+        }).catch(function () { pb.disabled = false; show('Network problem. Try again.'); });
+        return;
+      }
+      if (e.target.id === 'portal') {
+        e.target.disabled = true; e.target.textContent = 'Opening...';
+        A.post('/billing/portal', {}).then(function (r) {
+          if (r.success && r.url) window.location.href = r.url;
+          else { e.target.disabled = false; show(r.message || r.error || 'Could not open billing.'); }
+        }).catch(function () { e.target.disabled = false; show('Network problem. Try again.'); });
+      }
+    });
+  }).catch(function () { content.innerHTML = A.empty('Could not load billing.'); });
+})();
+</script>
+</body>
+</html>

@@ -158,6 +158,7 @@ catch (e) { console.warn('  Lawn Co-Pilot: TTS route not mounted —', e.message
 // Platform pages
 router.get('/signup', (req, res) => res.sendFile(path.join(publicDir, 'signup.html')));
 router.get('/platform/login', (req, res) => res.sendFile(path.join(publicDir, 'platform-login.html')));
+router.get('/platform/reset', (req, res) => res.sendFile(path.join(publicDir, 'platform-reset.html')));
 router.get(['/platform', '/platform/'], (req, res) => {
   if (!req.platformUser) return res.redirect('/lawncopilot/platform/login');
   res.sendFile(path.join(publicDir, 'platform.html'));
@@ -214,7 +215,7 @@ router.use('/:slug', tenantMiddleware(), require('./tenant-router'));
 const { PLAN_LIMITS, PLAN_ORDER } = require('./services/provision');
 
 function renderPricing(base) {
-  const trial = Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14);
+  const trial = Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 7);
 
   const cards = PLAN_ORDER.map(id => {
     const p = PLAN_LIMITS[id];

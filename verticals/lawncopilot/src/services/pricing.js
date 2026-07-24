@@ -19,8 +19,14 @@ const FREQUENCIES = ['weekly', 'biweekly', 'monthly', 'one_time'];
 // ── Florida defaults. Seeded into lc_pricing_rules on boot and editable by the
 //    admin — these constants exist only so a fresh tenant is never priceless.
 const FL_DEFAULTS = {
-  rate_per_sqft: 0.0042,          // USD per serviceable sqft, per visit
-  minimum_cents: 4500,
+  // USD per serviceable sqft, per visit. Chosen so a TYPICAL Florida lawn prices
+  // ABOVE the minimum, so area actually drives the number. At the old 0.0042 the
+  // break-even against a $45 minimum was ~10,700 sqft — above nearly every
+  // residential lawn — so the minimum floored almost everything to one price and
+  // two different-sized yards looked identical. At 0.0065 the break-even against
+  // a $40 minimum is ~6,150 sqft, so normal lawns differentiate by size.
+  rate_per_sqft: 0.0065,
+  minimum_cents: 4000,
   tiers: [
     { max_sqft: 5000, multiplier: 1.0 },
     { max_sqft: 10000, multiplier: 0.95 },
@@ -117,14 +123,16 @@ function priceOne({ sqft, frequency, rules, ctx, flags = {}, addons = [], promo 
   // Minimum charge.
   const minRule = pickRule(rules, 'minimum', fctx);
   const minimum = minRule ? Number(minRule.params.minimum_cents)
-    : (Number(process.env.LAWNCOPILOT_MIN_CHARGE_USD || 45) * 100);
+    : (Number(process.env.LAWNCOPILOT_MIN_CHARGE_USD || 40) * 100);
+  let minimumApplied = false;
   if (cents < minimum) {
     lines.push({
       kind: 'minimum', label: 'Minimum service charge applied',
-      detail: `Adjusted up to the $${(minimum / 100).toFixed(2)} minimum`,
+      detail: `This lawn measures below the $${(minimum / 100).toFixed(2)} minimum, so the minimum applies`,
       amount_cents: minimum - cents, sort_order: 20
     });
     cents = minimum;
+    minimumApplied = true;
   }
 
   // Size tier.
@@ -241,6 +249,10 @@ function priceOne({ sqft, frequency, rules, ctx, flags = {}, addons = [], promo 
     total_cents: total,
     price_display: `$${(total / 100).toFixed(2)}`,
     per_visit: frequency !== 'one_time',
+    // True when the lawn measured below the minimum, so the price is the floor,
+    // not the area. Surfaces can flag "priced at our minimum" so two small
+    // lawns priced the same don't look like a measurement error.
+    minimum_applied: minimumApplied,
     line_items: lines.sort((a, b) => a.sort_order - b.sort_order)
   };
 }
@@ -277,6 +289,9 @@ async function priceProperty({ tenant_id, serviceable_sqft, city, county, state,
     context: ctx,
     options,
     recommended: 'biweekly',
+    // Convenience for the UI: was the recommended price set by the minimum
+    // rather than the measured area?
+    minimum_applied: !!(options.biweekly && options.biweekly.minimum_applied),
     rules_applied: rules.length,
     pricing_source: rules.length ? 'tenant rules' : 'Florida defaults'
   };

@@ -60,30 +60,84 @@ function seededRatio(seed, min, max) {
 }
 
 // ── Geocoding ──────────────────────────────────────────────────────────────
+const US_STATE_ABBR = {
+  alabama:'AL',alaska:'AK',arizona:'AZ',arkansas:'AR',california:'CA',colorado:'CO',
+  connecticut:'CT',delaware:'DE',florida:'FL',georgia:'GA',hawaii:'HI',idaho:'ID',
+  illinois:'IL',indiana:'IN',iowa:'IA',kansas:'KS',kentucky:'KY',louisiana:'LA',
+  maine:'ME',maryland:'MD',massachusetts:'MA',michigan:'MI',minnesota:'MN',
+  mississippi:'MS',missouri:'MO',montana:'MT',nebraska:'NE',nevada:'NV',
+  'new hampshire':'NH','new jersey':'NJ','new mexico':'NM','new york':'NY',
+  'north carolina':'NC','north dakota':'ND',ohio:'OH',oklahoma:'OK',oregon:'OR',
+  pennsylvania:'PA','rhode island':'RI','south carolina':'SC','south dakota':'SD',
+  tennessee:'TN',texas:'TX',utah:'UT',vermont:'VT',virginia:'VA',washington:'WA',
+  'west virginia':'WV',wisconsin:'WI',wyoming:'WY'
+};
+function stateAbbr(s) {
+  if (!s) return null;
+  const t = String(s).trim();
+  if (t.length === 2) return t.toUpperCase();
+  return US_STATE_ABBR[t.toLowerCase()] || t;
+}
+
+async function googleGeocode(address, key) {
+  const url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' +
+    encodeURIComponent(address) + '&key=' + key;
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const j = await r.json();
+  if (!j.results || !j.results.length) return { ok: false, reason: 'not_found' };
+  const g = j.results[0];
+  const comp = (type) => (g.address_components.find(c => c.types.includes(type)) || {}).long_name || null;
+  return {
+    ok: true, geocoder: 'google',
+    formatted: g.formatted_address,
+    lat: g.geometry.location.lat, lng: g.geometry.location.lng,
+    city: comp('locality') || comp('sublocality'),
+    county: (comp('administrative_area_level_2') || '').replace(/ County$/i, '') || null,
+    state: (g.address_components.find(c => c.types.includes('administrative_area_level_1')) || {}).short_name || null,
+    zip: comp('postal_code'),
+    place_id: g.place_id
+  };
+}
+
+// Zero-key geocoder — OpenStreetMap Nominatim. Usage-limited and attribution-
+// required, so it is the fallback, not the default: it exists so a tenant with
+// no Google key still gets coordinates, which is what unlocks the satellite view.
+async function nominatimGeocode(address) {
+  const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&countrycodes=us&q=' +
+    encodeURIComponent(address);
+  const r = await fetch(url, {
+    headers: { 'User-Agent': 'LawnCoPilot/1.0 (https://lawncopilot.com)', 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(9000)
+  });
+  if (!r.ok) return { ok: false, reason: `nominatim_http_${r.status}` };
+  const j = await r.json();
+  if (!Array.isArray(j) || !j.length) return { ok: false, reason: 'not_found' };
+  const g = j[0]; const a = g.address || {};
+  return {
+    ok: true, geocoder: 'nominatim',
+    formatted: g.display_name,
+    lat: parseFloat(g.lat), lng: parseFloat(g.lon),
+    city: a.city || a.town || a.village || a.hamlet || a.municipality || null,
+    county: (a.county || '').replace(/ County$/i, '') || null,
+    state: stateAbbr(a.state),
+    zip: a.postcode || null,
+    place_id: null
+  };
+}
+
 async function geocode(address) {
   const key = process.env.GOOGLE_MAPS_API_KEY;
-  if (!key) return { ok: false, reason: 'no_geocoder' };
   try {
-    const url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' +
-      encodeURIComponent(address) + '&key=' + key;
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    const j = await r.json();
-    if (!j.results || !j.results.length) return { ok: false, reason: 'not_found' };
-    const g = j.results[0];
-    const comp = (type) => (g.address_components.find(c => c.types.includes(type)) || {}).long_name || null;
-    return {
-      ok: true,
-      formatted: g.formatted_address,
-      lat: g.geometry.location.lat,
-      lng: g.geometry.location.lng,
-      city: comp('locality') || comp('sublocality'),
-      county: (comp('administrative_area_level_2') || '').replace(/ County$/i, '') || null,
-      state: (g.address_components.find(c => c.types.includes('administrative_area_level_1')) || {}).short_name || null,
-      zip: comp('postal_code'),
-      place_id: g.place_id
-    };
+    if (key) {
+      const g = await googleGeocode(address, key);
+      if (g.ok) return g;
+    }
+    // No key, or Google returned nothing — try the zero-key geocoder so the
+    // satellite view still works.
+    return await nominatimGeocode(address);
   } catch (e) {
-    return { ok: false, reason: e.message };
+    try { return await nominatimGeocode(address); }
+    catch (e2) { return { ok: false, reason: e.message }; }
   }
 }
 
@@ -207,17 +261,40 @@ function syntheticParcelRing(lat, lng, sqft) {
   ];
 }
 
-function imageryUrl(geo, zoom) {
+/**
+ * A satellite image of the property, framed to `bbox` ([minLon,minLat,maxLon,maxLat])
+ * so the parcel/building overlay lines up. Three sources, best first:
+ *   Google Static Maps (key)  ·  Mapbox (token)  ·  Esri World Imagery (KEYLESS).
+ * The Esri fallback is why a tenant with no keys still sees a real satellite
+ * view instead of only the scaled diagram.
+ */
+function imageryUrl(geo, bbox) {
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (key) {
     return `https://maps.googleapis.com/maps/api/staticmap?center=${geo.lat},${geo.lng}` +
-      `&zoom=${zoom || 19}&size=640x400&scale=2&maptype=satellite&key=${key}`;
+      `&zoom=19&size=640x400&scale=2&maptype=satellite&key=${key}`;
   }
   const mb = process.env.MAPBOX_TOKEN;
   if (mb) {
-    return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${geo.lng},${geo.lat},${zoom || 18},0/640x400@2x?access_token=${mb}`;
+    return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${geo.lng},${geo.lat},18,0/640x400@2x?access_token=${mb}`;
+  }
+  if (bbox) {
+    // Esri World Imagery export — one satellite JPG for the bbox, no key.
+    return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export' +
+      `?bbox=${bbox.join(',')}&bboxSR=4326&imageSR=4326&size=640,400&format=jpg&f=image`;
   }
   return null;
+}
+
+// A padded bounding box around the lot, in [minLon,minLat,maxLon,maxLat]. The
+// imagery is framed to this, and the overlay projects against the same box, so
+// the parcel outline sits on the actual roof and yard.
+function lotBbox(lat, lng, lotSqft) {
+  const side = Math.sqrt(Math.max(lotSqft || 9000, 2000)) * 0.3048; // ft -> m
+  const half = side * 0.72;                                          // ~44% padding
+  const dLat = half / 111320;
+  const dLng = half / (111320 * Math.cos((lat * Math.PI) / 180));
+  return [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
 }
 
 /**
@@ -335,9 +412,11 @@ async function measureProperty({ address, tenant_id, lat, lng }) {
       parcel: parcelGeo,
       building: buildingGeo,
       excluded: [],
-      bbox: geo.lat ? bboxFromPoint(geo.lat, geo.lng, Math.sqrt(lotSqft) * 0.4) : null
+      // The imagery frame — the overlay projects against THIS box so the outline
+      // lands on the real roof and yard.
+      bbox: geo.lat ? lotBbox(geo.lat, geo.lng, lotSqft) : null
     },
-    imagery_url: geo.lat ? imageryUrl(geo) : null,
+    imagery_url: geo.lat ? imageryUrl(geo, geo.lat ? lotBbox(geo.lat, geo.lng, lotSqft) : null) : null,
     confidence,
     is_estimate: isEstimate,
     needs_review: needsReview,

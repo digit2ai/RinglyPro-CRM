@@ -39,6 +39,22 @@ body { display:grid; place-items:center; min-height:100vh; background:
       <input id="password" type="password" autocomplete="current-password">
     </div>
     <button class="btn btn--primary" type="submit" style="width:100%">Sign in</button>
+    <p class="small" style="text-align:center;margin-top:var(--space-4)">
+      <a href="#" id="forgotLink" style="color:var(--green-700);font-weight:600">Forgot your password?</a>
+    </p>
+  </form>
+
+  <!-- Forgot-password request, toggled in place -->
+  <form id="forgotForm" style="display:none">
+    <p class="small mut" style="margin-bottom:var(--space-4)">Enter your email and we'll send a reset link from info@digit2ai.com. It expires in one hour.</p>
+    <div class="field">
+      <label for="forgotEmail">Email</label>
+      <input id="forgotEmail" type="email" autocomplete="email" required>
+    </div>
+    <button class="btn btn--primary" type="submit" style="width:100%">Send reset link</button>
+    <p class="small" style="text-align:center;margin-top:var(--space-4)">
+      <a href="#" id="backToLogin" style="color:var(--green-700);font-weight:600">Back to sign in</a>
+    </p>
   </form>
 
 </div>
@@ -47,7 +63,18 @@ body { display:grid; place-items:center; min-height:100vh; background:
 var msg = document.getElementById('msg');
 function show(text, ok) { msg.textContent = text; msg.className = 'msg ' + (ok ? 'ok' : 'err'); }
 
-document.getElementById('form').addEventListener('submit', function (e) {
+var loginForm = document.getElementById('form');
+var forgotForm = document.getElementById('forgotForm');
+document.getElementById('forgotLink').addEventListener('click', function (e) {
+  e.preventDefault(); loginForm.style.display = 'none'; forgotForm.style.display = 'block';
+  msg.className = 'msg';
+});
+document.getElementById('backToLogin').addEventListener('click', function (e) {
+  e.preventDefault(); forgotForm.style.display = 'none'; loginForm.style.display = 'block';
+  msg.className = 'msg';
+});
+
+loginForm.addEventListener('submit', function (e) {
   e.preventDefault();
   fetch('/lawncopilot/api/v1/platform/login', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
@@ -61,7 +88,25 @@ document.getElementById('form').addEventListener('submit', function (e) {
   }).catch(function () { show('Network problem. Try again.'); });
 });
 
+forgotForm.addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = forgotForm.querySelector('button');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  fetch('/lawncopilot/api/v1/platform/forgot-password', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: document.getElementById('forgotEmail').value.trim() })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    show(r.message || 'If that email is on file, a reset link is on its way.', true);
+    if (r.dev_reset_link) { var a = document.createElement('a'); a.href = r.dev_reset_link; a.textContent = 'Open reset link'; a.style.display='block'; a.style.marginTop='8px'; msg.appendChild(document.createElement('br')); msg.appendChild(a); }
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Send reset link';
+    show('Network problem. Try again.');
+  });
+});
+
 if (new URLSearchParams(location.search).get('expired')) show('That sign-in link expired. Request a new one.');
+if (new URLSearchParams(location.search).get('reset')) show('Password reset. Sign in with your new password.', true);
 </script>
 <script src="/lawncopilot/pwa.js" defer></script>
 </body>

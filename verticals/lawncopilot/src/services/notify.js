@@ -242,20 +242,23 @@ async function notify({ tenant_id, customer_id, channel, template, vars = {}, to
   }
 }
 
-async function sendEmail(to, subject, body) {
+async function sendEmail(to, subject, body, opts = {}) {
   const key = process.env.SENDGRID_API_KEY;
-  const from = process.env.SENDGRID_FROM_EMAIL;
+  const from = opts.from || process.env.SENDGRID_FROM_EMAIL;
   if (!key || !from) return { ok: false, error: 'sendgrid_not_configured' };
   if (!to) return { ok: false, error: 'no_recipient' };
   try {
+    const content = opts.html
+      ? [{ type: 'text/plain', value: body }, { type: 'text/html', value: opts.html }]
+      : [{ type: 'text/plain', value: body }];
     const r = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: from, name: 'Lawn Co-Pilot' },
+        from: { email: from, name: opts.fromName || 'Lawn Co-Pilot' },
         subject,
-        content: [{ type: 'text/plain', value: body }]
+        content
       }),
       signal: AbortSignal.timeout(10000)
     });

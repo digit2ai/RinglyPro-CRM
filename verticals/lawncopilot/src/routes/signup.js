@@ -36,7 +36,7 @@ router.use((req, res, next) => {
 router.get('/plans', (req, res) => {
   res.json({
     success: true,
-    trial_days: Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14),
+    trial_days: Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 7),
     currency: 'USD',
     plans: PLAN_ORDER.map(id => {
       const p = PLAN_LIMITS[id];

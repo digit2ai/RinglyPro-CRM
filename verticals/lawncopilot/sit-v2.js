@@ -823,6 +823,39 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     const missing = advertised.filter(t => !brainRegistry[t]);
     ok('every advertised capability is a real Brain tool', missing.length === 0, missing.join(', '));
 
+    // ── 17e. Pricing differentiates by size (the identical-price fix) ──────
+    console.log('\n[17e] Pricing differentiation');
+    const pricing = require('./src/services/pricing');
+    const pSmall = pricing.priceOne({ sqft: 4820, frequency: 'biweekly', rules: [], ctx: { state: 'FL' } });
+    const pMid = pricing.priceOne({ sqft: 6970, frequency: 'biweekly', rules: [], ctx: { state: 'FL' } });
+    const pBig = pricing.priceOne({ sqft: 12000, frequency: 'biweekly', rules: [], ctx: { state: 'FL' } });
+    ok('typical lawns of different sizes get different prices',
+       pMid.total_cents !== pBig.total_cents && pBig.total_cents > pMid.total_cents,
+       `${pMid.price_display} vs ${pBig.price_display}`);
+    ok('a lawn below the minimum is flagged, not silently floored',
+       pSmall.minimum_applied === true && pMid.minimum_applied === false);
+
+    // ── 17f. Billing: 7-day trial on the Digit2AI account ─────────────────
+    console.log('\n[17f] Billing');
+    const billingSvc = require('./src/services/billing');
+    ok('the subscription trial is 7 days', billingSvc.TRIAL_DAYS() === 7, String(billingSvc.TRIAL_DAYS()));
+    const noStripe = await billingSvc.createCheckout(
+      { id: alphaId, plan: 'crew', settings: {}, save: async () => {} }, 'crew');
+    ok('checkout degrades honestly with no Stripe key (never a fake URL)',
+       billingSvc.enabled() ? (noStripe.success && !!noStripe.url) : (noStripe.success === false && noStripe.error === 'billing_not_configured'));
+
+    // ── 17g. Google Business Profile helper ───────────────────────────────
+    console.log('\n[17g] Google listing helper');
+    const gbp = require('./src/services/gbp');
+    const tenantA2 = await models.Tenant.findOne({ where: { id: alphaId }, raw: true });
+    const listing = gbp.buildListing(tenantA2, { lawncopilotRoot: true });
+    ok('the listing pre-fills the company website as the page URL',
+       (listing.fields.find(f => f.key === 'website') || {}).value.includes(tenantA2.slug));
+    ok('it is honest that full password-based automation is not possible',
+       listing.automation.full_auto_possible === false && !!listing.automation.reason);
+    ok('it is a service-area business (no storefront address leaked)',
+       listing.business_type === 'service_area');
+
     // ── 18. Cleanup ───────────────────────────────────────────────────────
     console.log('\n[18] Cleanup');
     for (const id of [alphaId, betaId]) {

@@ -18,7 +18,7 @@ const {
 const { seedDefaultRules, seedDefaultPlans } = require('./pricing');
 const { isSlugAvailable, cacheBust } = require('../tenancy');
 
-const TRIAL_DAYS = () => Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14);
+const TRIAL_DAYS = () => Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 7);
 
 /**
  * The three plans.
@@ -267,18 +267,29 @@ function enabledFor(plan) {
  * is never locked out of their own platform.
  */
 async function ensurePlatform() {
-  const pw = process.env.LAWNCOPILOT_PLATFORM_PASSWORD || 'lawncopilot@2026';
-  const hash = await bcrypt.hash(pw, 10);
+  const shared = process.env.LAWNCOPILOT_PLATFORM_PASSWORD || 'lawncopilot@2026';
+  // mstagg keeps a distinct password. Set at creation and NOT clobbered on every
+  // boot — otherwise the Forgot-password reset would be undone on the next
+  // redeploy. So a reset sticks; only a brand-new account gets the default.
   const accounts = [
-    { email: 'mstagg@digit2ai.com', name: 'Manuel Stagg', role: 'owner' },
-    { email: 'admin@digit2ai.com', name: 'Digit2AI Admin', role: 'admin' }
+    { email: 'mstagg@digit2ai.com', name: 'Manuel Stagg', role: 'owner',
+      password: process.env.LAWNCOPILOT_MSTAGG_PASSWORD || 'Palindrome@7' },
+    { email: 'admin@digit2ai.com', name: 'Digit2AI Admin', role: 'admin', password: shared }
   ];
   for (const a of accounts) {
     const [u, created] = await PlatformUser.findOrCreate({
       where: { email: a.email },
-      defaults: { ...a, password_hash: hash, status: 'active' }
+      defaults: { name: a.name, role: a.role, password_hash: await bcrypt.hash(a.password, 10), status: 'active' }
     });
-    if (!created) { u.password_hash = hash; u.role = a.role; await u.save(); }
+    // Keep role/status current, but never overwrite a password the owner may
+    // have changed. A one-off reset to the default is env-forced instead:
+    if (!created) {
+      u.role = a.role; u.status = 'active';
+      if (process.env.LAWNCOPILOT_FORCE_PLATFORM_PASSWORD === '1') {
+        u.password_hash = await bcrypt.hash(a.password, 10);
+      }
+      await u.save();
+    }
   }
   console.log(`  Lawn Co-Pilot platform accounts ensured (${accounts.length})`);
 }

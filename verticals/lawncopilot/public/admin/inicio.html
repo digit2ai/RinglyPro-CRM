@@ -75,6 +75,15 @@ Promise.all([
   });
   html += '</div><div style="margin-top:12px"><a class="btn btn--ghost btn--sm" href="/lawncopilot/admin/ai-staff">Full AI staff view</a></div></div>';
 
+  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
+  html += '<div class="tile"><h2>Grow your business</h2>' +
+    '<div class="grid grid--2" style="gap:10px">' +
+      '<a class="staffcard" href="/lawncopilot/' + SLUG + '/admin/google-listing" style="text-decoration:none">' +
+        '<h3>Get on Google</h3><div class="small mut">Put your page on your Google listing — pre-filled, one-tap copy.</div></a>' +
+      '<a class="staffcard" href="/lawncopilot/' + SLUG + '/admin/billing" style="text-decoration:none">' +
+        '<h3>Plan &amp; billing</h3><div class="small mut">Manage your subscription and payment method.</div></a>' +
+    '</div></div>';
+
   document.getElementById('app').innerHTML = html;
 
   document.querySelectorAll('[data-done]').forEach(function (b) {

@@ -45,6 +45,80 @@ router.post('/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// ── Password reset (unauthenticated — must precede the platform-only guard) ──
+//
+// Stateless tokens: signed with the app secret PLUS the user's current password
+// hash, so a token dies the moment the password changes and there is nothing to
+// store or clean up. Reset mail is sent from info@digit2ai.com via SendGrid.
+const { sendEmail } = require('../services/notify');
+
+function resetSecret(u) {
+  return (process.env.LAWNCOPILOT_JWT_SECRET || process.env.JWT_SECRET || 'lawncopilot-dev-secret')
+    + '|' + (u.password_hash || 'new');
+}
+function resetBaseUrl() {
+  return (process.env.LAWNCOPILOT_BASE_DOMAIN || 'https://lawncopilot.com').replace(/\/+$/, '');
+}
+
+router.post('/forgot-password', async (req, res) => {
+  const email = String((req.body || {}).email || '').toLowerCase().trim();
+  const u = email ? await PlatformUser.findOne({ where: { email } }) : null;
+
+  // Never reveal whether an email is registered.
+  const generic = { success: true, message: 'If that email is on file, a reset link is on its way.' };
+  if (!u) return res.json(generic);
+
+  const token = jwt.sign({ id: u.id, email: u.email, purpose: 'platform_pw_reset' },
+    resetSecret(u), { expiresIn: '1h' });
+  const link = `${resetBaseUrl()}/lawncopilot/platform/reset?token=${encodeURIComponent(token)}`;
+  const from = process.env.LAWNCOPILOT_RESET_FROM_EMAIL || 'info@digit2ai.com';
+
+  const body = `Hi ${u.name || 'there'},\n\n`
+    + `Reset your Lawn Co-Pilot platform password with the link below. It expires in one hour and can be used once.\n\n`
+    + `${link}\n\n`
+    + `If you did not request this, ignore this email — your password stays the same.\n\n— Lawn Co-Pilot / Digit2AI`;
+  const html = `<p>Hi ${u.name || 'there'},</p>`
+    + `<p>Reset your Lawn Co-Pilot platform password with the button below. It expires in one hour and can be used once.</p>`
+    + `<p><a href="${link}" style="display:inline-block;background:#307f44;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:700">Reset my password</a></p>`
+    + `<p style="color:#667">Or paste this link: <br>${link}</p>`
+    + `<p style="color:#667">If you did not request this, ignore this email.</p>`;
+
+  const sent = await sendEmail(u.email, 'Reset your Lawn Co-Pilot password', body,
+    { from, fromName: 'Lawn Co-Pilot', html });
+
+  // Only when email can't be sent (SendGrid not configured) do we hand the
+  // operator the link directly, so they are never locked out. Never on a
+  // configured system, where that would leak the token.
+  if (!sent.ok && !process.env.SENDGRID_API_KEY) {
+    return res.json({ ...generic, dev_reset_link: link, note: 'SendGrid not configured; link returned for setup only.' });
+  }
+  return res.json(generic);
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password) return res.status(400).json({ success: false, error: 'Token and a new password are required.' });
+  if (String(password).length < 8) return res.status(400).json({ success: false, error: 'Choose a password of at least 8 characters.' });
+
+  // Decode without verifying to find the user, then verify with their own salt.
+  let claims;
+  try { claims = jwt.decode(token); } catch (e) { claims = null; }
+  if (!claims || claims.purpose !== 'platform_pw_reset' || !claims.id) {
+    return res.status(400).json({ success: false, error: 'This reset link is invalid.' });
+  }
+  const u = await PlatformUser.findByPk(claims.id);
+  if (!u) return res.status(400).json({ success: false, error: 'This reset link is invalid.' });
+  try {
+    jwt.verify(token, resetSecret(u));
+  } catch (e) {
+    return res.status(400).json({ success: false, error: 'This reset link has expired or was already used. Request a new one.' });
+  }
+
+  u.password_hash = await bcrypt.hash(String(password), 10);
+  await u.save();
+  return res.json({ success: true, message: 'Your password was reset. Sign in with your new password.' });
+});
+
 // Everything below is platform-only.
 router.use((req, res, next) => {
   if (!req.platformUser) return res.status(401).json({ success: false, error: 'Not signed in' });

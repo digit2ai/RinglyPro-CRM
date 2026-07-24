@@ -35,7 +35,7 @@ const { provisionTenant } = require(path.join(__dirname, '..', 'src', 'services'
 const SLUG = process.env.LAWNCOPILOT_DEMO_COMPANY_SLUG || 'lawn-co-pilot';
 const OWNER_EMAIL = 'mstagg@digit2ai.com';
 const OWNER_PW = process.env.LAWNCOPILOT_DEMO_OWNER_PASSWORD
-  || process.env.LAWNCOPILOT_PLATFORM_PASSWORD || 'lawncopilot@2026';
+  || process.env.LAWNCOPILOT_MSTAGG_PASSWORD || 'Palindrome@7';
 
 // ── date helpers (local calendar dates, matching the app's toDateStr) ───────
 function dstr(d) {

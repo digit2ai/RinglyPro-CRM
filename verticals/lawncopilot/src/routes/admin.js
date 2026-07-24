@@ -548,4 +548,31 @@ router.post('/phone/number', requireRole('owner', 'admin'), async (req, res) => 
   res.json(r);
 });
 
+// ── Google Business Profile helper ──────────────────────────────────────────
+// Assembles a copy-ready, pre-filled listing from the company record. Semantics
+// (and the honest limits of automation) live in services/gbp.js.
+const gbp = require('../services/gbp');
+router.get('/google-listing', async (req, res) => {
+  const { Tenant } = require('../models');
+  const tenant = await Tenant.findByPk(T(req), { raw: true });
+  res.json({ success: true, listing: gbp.buildListing(tenant, req) });
+});
+
+// ── Billing (owner-managed subscription, Digit2AI Stripe account) ───────────
+const billingSvc = require('../services/billing');
+router.get('/billing', requireRole('owner', 'admin'), async (req, res) => {
+  const { Tenant } = require('../models');
+  res.json(await billingSvc.status(await Tenant.findByPk(T(req))));
+});
+router.post('/billing/checkout', requireRole('owner', 'admin'), async (req, res) => {
+  const { Tenant } = require('../models');
+  const r = await billingSvc.createCheckout(await Tenant.findByPk(T(req)), (req.body || {}).plan);
+  res.status(r.success ? 200 : 400).json(r);
+});
+router.post('/billing/portal', requireRole('owner', 'admin'), async (req, res) => {
+  const { Tenant } = require('../models');
+  const r = await billingSvc.createPortal(await Tenant.findByPk(T(req)));
+  res.status(r.success ? 200 : 400).json(r);
+});
+
 module.exports = router;

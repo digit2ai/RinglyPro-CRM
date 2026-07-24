@@ -87,6 +87,29 @@ router.post('/stripe', async (req, res) => {
     return res.json({ received: true, attributed: false });
   }
 
+  // PLATFORM subscription events (Digit2AI billing the landscaper) are not
+  // homeowner payments — route them to the billing service, which updates the
+  // company's plan/status. Attribution is by metadata.tenant_id we set at
+  // checkout, so nothing is guessed.
+  const SUBSCRIPTION_TYPES = [
+    'checkout.session.completed', 'customer.subscription.created',
+    'customer.subscription.updated', 'customer.subscription.deleted',
+    'customer.subscription.trial_will_end'
+  ];
+  if (SUBSCRIPTION_TYPES.includes(event.type)) {
+    try {
+      const billing = require('../services/billing');
+      await billing.applySubscriptionEvent(tenant_id, obj, event.type);
+      await Payment.create({
+        tenant_id, amount_cents: 0, status: 'pending',
+        stripe_event_id: event.id, failure_reason: `subscription:${event.type}`
+      });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+    return res.json({ received: true, type: event.type, handled: 'subscription' });
+  }
+
   try {
     if (event.type === 'payment_intent.succeeded') {
       const invoice = invoiceId ? await Invoice.findOne({ where: { id: invoiceId, tenant_id } }) : null;
