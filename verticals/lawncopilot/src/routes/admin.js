@@ -344,7 +344,7 @@ router.post('/schedule/:id/status', requireRole('owner', 'admin', 'dispatcher', 
       weather: weather || null, charges_cents: charges_cents || a.price_cents || 0
     });
     // The Administrator bills on delivery.
-    const inv = await brain.callTool('administrator.issue_invoice', {
+    const inv = await brain.callTool('bookkeeper.issue_invoice', {
       customer_id: a.customer_id, service_record_id: rec.id,
       lines: [{ label: `Lawn service ${a.service_date}`, amount_cents: charges_cents || a.price_cents || 0 }]
     }, ctxOf(req));
@@ -399,7 +399,7 @@ router.get('/payments', requireRole('owner', 'admin'), async (req, res) => {
 });
 
 router.post('/dunning/run', requireRole('owner', 'admin'), async (req, res) => {
-  res.json(await brain.callTool('administrator.run_dunning', {}, ctxOf(req)));
+  res.json(await brain.callTool('bookkeeper.run_dunning', {}, ctxOf(req)));
 });
 
 // ── Tickets and messages ───────────────────────────────────────────────────
@@ -473,10 +473,10 @@ router.get('/reports/:kind', requireRole('owner', 'admin'), async (req, res) => 
   const kind = req.params.kind;
   const ctx = ctxOf(req);
 
-  if (kind === 'revenue') return res.json(await brain.callTool('administrator.revenue_report', { days }, ctx));
-  if (kind === 'ar-aging') return res.json(await brain.callTool('administrator.ar_aging', {}, ctx));
+  if (kind === 'revenue') return res.json(await brain.callTool('bookkeeper.revenue_report', { days }, ctx));
+  if (kind === 'ar-aging') return res.json(await brain.callTool('bookkeeper.ar_aging', {}, ctx));
   if (kind === 'books') {
-    const r = await brain.callTool('administrator.export_books', { days: Number(req.query.days || 365) }, ctx);
+    const r = await brain.callTool('bookkeeper.export_books', { days: Number(req.query.days || 365) }, ctx);
     if (req.query.format === 'csv' && r.success) {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="lawncopilot-books-${new Date().toISOString().slice(0, 10)}.csv"`);

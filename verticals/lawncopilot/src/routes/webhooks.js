@@ -12,7 +12,35 @@ const router = express.Router();
 const { Payment, Invoice, Customer, Message, Ticket } = require('../models');
 const acct = require('../services/accounting');
 
-const TENANT = () => Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
+const { Tenant } = require('../models');
+
+/**
+ * A webhook has no URL slug. Resolve the tenant from the event itself:
+ * metadata we set when creating the intent, or the Connect account it came
+ * from. If neither resolves, we do NOT guess — an unattributable payment is
+ * parked, not applied to whichever tenant happens to be first.
+ */
+async function tenantFromEvent(event, obj) {
+  const meta = (obj && obj.metadata) || {};
+  if (meta.tenant_id) {
+    const t = await Tenant.findByPk(Number(meta.tenant_id), { raw: true });
+    if (t) return t.id;
+  }
+  if (event && event.account) {
+    const t = await Tenant.findOne({ where: { stripe_account_id: event.account }, raw: true });
+    if (t) return t.id;
+  }
+  return null;
+}
+
+/** Inbound SMS resolves by the number it was sent TO. */
+async function tenantFromNumber(to) {
+  const digits = String(to || '').replace(/\D/g, '').slice(-10);
+  if (!digits) return null;
+  const tenants = await Tenant.findAll({ raw: true });
+  const t = tenants.find(x => String(x.phone || '').replace(/\D/g, '').slice(-10) === digits);
+  return t ? t.id : null;
+}
 
 /**
  * Stripe. Raw body is required for signature verification, so this route is
@@ -41,15 +69,23 @@ router.post('/stripe', async (req, res) => {
     }
   }
 
-  const tenant_id = TENANT();
-
-  // Idempotency: the same event id can arrive many times. One payment row.
-  const existing = await Payment.findOne({ where: { tenant_id, stripe_event_id: event.id } });
-  if (existing) return res.json({ received: true, duplicate: true });
-
   const obj = (event.data && event.data.object) || {};
   const meta = obj.metadata || {};
   const invoiceId = meta.invoice_id ? Number(meta.invoice_id) : null;
+
+  // Idempotency FIRST, across all tenants — the same event id is one row.
+  const existing = await Payment.findOne({ where: { stripe_event_id: event.id } });
+  if (existing) return res.json({ received: true, duplicate: true });
+
+  const tenant_id = await tenantFromEvent(event, obj);
+  if (!tenant_id) {
+    // Unattributable: record it so nothing is lost, apply it to nobody.
+    await Payment.create({
+      tenant_id: 0, amount_cents: obj.amount || 0, status: 'pending',
+      stripe_event_id: event.id, failure_reason: 'unattributable_no_tenant'
+    });
+    return res.json({ received: true, attributed: false });
+  }
 
   try {
     if (event.type === 'payment_intent.succeeded') {
@@ -111,8 +147,12 @@ router.post('/stripe', async (req, res) => {
  */
 router.post('/twilio-sms', express.urlencoded({ extended: false }), async (req, res) => {
   const from = req.body.From;
+  const to = req.body.To;
   const body = String(req.body.Body || '').trim();
-  const tenant_id = TENANT();
+  const tenant_id = await tenantFromNumber(to);
+  if (!tenant_id) {
+    return res.type('text/xml').send('<?xml version="1.0" encoding="UTF-8"?><Response/>');
+  }
 
   const digits = String(from || '').replace(/\D/g, '').slice(-10);
   const customers = await Customer.findAll({ where: { tenant_id }, raw: true });

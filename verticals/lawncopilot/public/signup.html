@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start your AI office — Lawn Co-Pilot</title>
+<meta name="description" content="Get a page your customers can book on and an AI staff that runs your office. Live in three minutes.">
+<link rel="stylesheet" href="/lawncopilot/styles.css">
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<style>
+body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
+.wrap2 { max-width: 900px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-9); }
+.cols { display:grid; grid-template-columns: 1.05fr .95fr; gap: var(--space-7); align-items:start; }
+@media (max-width:860px){ .cols{grid-template-columns:1fr} }
+.card2 { background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg); padding:var(--space-6); box-shadow:var(--shadow); }
+.field { margin-bottom: var(--space-4); }
+.field label { display:block; font-weight:700; font-size:.88rem; margin-bottom:6px; }
+.field input, .field select { width:100%; padding:13px 15px; border:1px solid var(--line); border-radius:var(--radius); font:inherit; font-size:1rem; min-height:48px; }
+.field input:focus { outline:2px solid var(--green-500); border-color:var(--green-500); }
+.field .hint { font-size:.8rem; color:var(--text-mut); margin-top:5px; }
+.field .err { font-size:.82rem; color:var(--danger); margin-top:5px; display:none; }
+.field.is-bad input { border-color:var(--danger); } .field.is-bad .err { display:block; }
+.slugrow { display:flex; align-items:stretch; }
+.slugrow .pre { display:flex; align-items:center; padding:0 12px; background:var(--ink-100); border:1px solid var(--line); border-right:0;
+  border-radius:var(--radius) 0 0 var(--radius); font-size:.86rem; color:var(--text-mut); white-space:nowrap; }
+.slugrow input { border-radius:0 var(--radius) var(--radius) 0; }
+.ok { color:var(--green-700); font-weight:700; }
+.bad { color:var(--danger); font-weight:700; }
+.steps { list-style:none; padding:0; margin:0; }
+.steps li { padding-left:34px; position:relative; margin-bottom:var(--space-4); }
+.steps li b { display:block; }
+.steps li::before { content:counter(s); counter-increment:s; position:absolute; left:0; top:0;
+  width:24px; height:24px; border-radius:50%; background:var(--green-600); color:#fff;
+  display:grid; place-items:center; font-size:.78rem; font-weight:800; }
+.steps { counter-reset:s; }
+.msg { padding:12px 14px; border-radius:var(--radius); font-size:.9rem; margin-bottom:var(--space-4); display:none; }
+.msg.err { background:#fef2f2; color:#991b1b; display:block; }
+.msg.ok { background:var(--green-50); color:var(--green-900); display:block; }
+</style>
+</head>
+<body>
+<div class="wrap2">
+  <a href="/lawncopilot/" style="display:inline-block;margin-bottom:var(--space-5)">
+    <img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="180" height="68"></a>
+
+  <div class="cols">
+    <div class="card2">
+      <h1 style="font-size:1.7rem">Start your AI office</h1>
+      <p class="mut">Three minutes from here to a page your customers can book on.</p>
+      <div class="msg" id="msg"></div>
+
+      <form id="form">
+        <div class="field" id="f-company">
+          <label for="company_name">Company name</label>
+          <input id="company_name" required autocomplete="organization" placeholder="Lawn Monster">
+          <div class="err">Tell us your company name.</div>
+        </div>
+
+        <div class="field" id="f-slug">
+          <label for="slug">Your web address</label>
+          <div class="slugrow">
+            <span class="pre" id="pre">lawncopilot.com/</span>
+            <input id="slug" required autocomplete="off" spellcheck="false" placeholder="lawn_monster">
+          </div>
+          <div class="hint" id="slughint">This goes on your truck and in your Google listing. It cannot be changed later.</div>
+          <div class="err">Pick a valid address.</div>
+        </div>
+
+        <div class="field" id="f-name">
+          <label for="owner_name">Your name</label>
+          <input id="owner_name" required autocomplete="name">
+          <div class="err">Your name, please.</div>
+        </div>
+
+        <div class="field" id="f-email">
+          <label for="owner_email">Email</label>
+          <input id="owner_email" type="email" required autocomplete="email">
+          <div class="err">A valid email is required.</div>
+        </div>
+
+        <div class="field" id="f-phone">
+          <label for="owner_phone">Mobile</label>
+          <input id="owner_phone" type="tel" autocomplete="tel" placeholder="+1 305 555 0142">
+        </div>
+
+        <div class="field" id="f-password">
+          <label for="password">Password</label>
+          <input id="password" type="password" required autocomplete="new-password" minlength="8">
+          <div class="err">At least 8 characters.</div>
+        </div>
+
+        <div class="field">
+          <label for="counties">Counties you serve</label>
+          <input id="counties" placeholder="Orange, Seminole">
+          <div class="hint">Comma separated. You can change these anytime.</div>
+        </div>
+
+        <div class="field">
+          <label for="crew_count">How many crews?</label>
+          <select id="crew_count">
+            <option value="1">Just me</option>
+            <option value="2" selected>2 crews</option>
+            <option value="3">3 crews</option>
+            <option value="5">5 or more</option>
+          </select>
+        </div>
+
+        <button class="btn btn--primary btn--lg" type="submit" id="submit" style="width:100%">
+          Create my company
+        </button>
+        <p class="tiny mut center" style="margin-top:var(--space-3)">
+          Free trial. No card required.
+        </p>
+      </form>
+    </div>
+
+    <div>
+      <h2 style="font-size:1.25rem">What you get, today</h2>
+      <ol class="steps" style="margin-top:var(--space-5)">
+        <li><b>Your own page</b><span class="mut small">Customers get an instant measured price and book themselves.</span></li>
+        <li><b>A receptionist that never sleeps</b><span class="mut small">Every call answered, quoted and booked.</span></li>
+        <li><b>An estimator that never drives</b><span class="mut small">Priced from property records, not a site visit.</span></li>
+        <li><b>Scheduling and routes</b><span class="mut small">Real capacity, sequenced days.</span></li>
+        <li><b>Invoices that collect themselves</b><span class="mut small">Billed on completion, chased automatically.</span></li>
+        <li><b>A QR code for your truck</b><span class="mut small">Scan it, land on your page, get a price.</span></li>
+      </ol>
+      <div class="card" style="margin-top:var(--space-5)">
+        <b>You still sign off.</b>
+        <p class="small mut" style="margin:6px 0 0">Every quote, schedule change, refund and pay run is yours to approve. The AI does the work and shows you what it did.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = '/lawncopilot/api/v1/signup';
+var msg = document.getElementById('msg');
+var slugTouched = false;
+function show(t, ok) { msg.textContent = t; msg.className = 'msg ' + (ok ? 'ok' : 'err'); }
+function bad(id, is) { document.getElementById(id).classList[is ? 'add' : 'remove']('is-bad'); }
+
+var company = document.getElementById('company_name');
+var slug = document.getElementById('slug');
+var hint = document.getElementById('slughint');
+
+company.addEventListener('input', function () {
+  if (slugTouched) return;
+  fetch(API + '/suggest-slug?company_name=' + encodeURIComponent(company.value))
+    .then(function (r) { return r.json(); })
+    .then(function (r) { if (!slugTouched) { slug.value = r.slug; checkSlug(); } });
+});
+slug.addEventListener('input', function () { slugTouched = true; checkSlug(); });
+
+var slugTimer = null;
+function checkSlug() {
+  clearTimeout(slugTimer);
+  slugTimer = setTimeout(function () {
+    if (!slug.value) return;
+    fetch(API + '/slug-available?slug=' + encodeURIComponent(slug.value))
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        bad('f-slug', !r.available);
+        hint.innerHTML = r.available
+          ? '<span class="ok">Available</span> — your page will be lawncopilot.com/' + r.slug
+          : '<span class="bad">' + (r.error || 'Not available') + '</span>';
+      });
+  }, 300);
+}
+
+document.getElementById('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var payload = {
+    company_name: company.value.trim(),
+    slug: slug.value.trim(),
+    owner_name: document.getElementById('owner_name').value.trim(),
+    owner_email: document.getElementById('owner_email').value.trim(),
+    owner_phone: document.getElementById('owner_phone').value.trim(),
+    password: document.getElementById('password').value,
+    counties: document.getElementById('counties').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+    crew_count: Number(document.getElementById('crew_count').value)
+  };
+  var btn = document.getElementById('submit');
+  btn.disabled = true; btn.textContent = 'Setting up your company...';
+
+  fetch(API, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin', body: JSON.stringify(payload)
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Create my company';
+    if (!r.success) {
+      show(r.error || 'Could not create the account.');
+      if (r.field) bad('f-' + r.field.replace('owner_', '').replace('company_name', 'company'), true);
+      return;
+    }
+    show('Your company is live. Taking you to your office...', true);
+    setTimeout(function () { window.location.href = r.admin_url; }, 700);
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Create my company';
+    show('Network problem. Try again.');
+  });
+});
+</script>
+</body>
+</html>

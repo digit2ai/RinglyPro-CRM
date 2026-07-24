@@ -1,7 +1,13 @@
 'use strict';
 
 /**
- * Lawn Co-Pilot — System Integration Test
+ * Lawn Co-Pilot — System Integration Test (deep, single-company)
+ *
+ * v2 note: every tenant surface moved under /lawncopilot/:slug. This suite now
+ * provisions its own company and runs the full v1 depth against it — quoting,
+ * portal, admin, billing, approvals, cost guard, webhooks — so none of that
+ * coverage was lost in the multi-tenant migration. sit-v2.js covers tenancy
+ * and cross-tenant isolation.
  *
  * Run from the repo root:  node verticals/lawncopilot/sit.js
  *
@@ -17,8 +23,15 @@ const http = require('http');
 const path = require('path');
 
 const PORT = 4599;
-const BASE = `http://127.0.0.1:${PORT}/lawncopilot`;
-const TENANT = Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
+const ROOT = `http://127.0.0.1:${PORT}/lawncopilot`;
+const STAMP = Date.now();
+const SLUG = `sit_deep_${STAMP}`.slice(0, 38);
+const OWNER_EMAIL = `deep_${STAMP}@example.com`;
+const OWNER_PW = 'sitpass@2026';
+
+// Filled in once the company is provisioned.
+let BASE = null;
+let TENANT = null;
 const OTHER_TENANT = 999;
 
 let pass = 0, fail = 0;
@@ -83,13 +96,31 @@ async function call(method, url, body, opts = {}) {
   }
   console.log(' ready');
 
+  // v2: provision this suite's own company, then run everything against it.
+  const prov = await fetch(`${ROOT}/api/v1/signup`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      company_name: 'SIT Deep Lawn', slug: SLUG, owner_name: 'Deep Owner',
+      owner_email: OWNER_EMAIL, owner_phone: '+13055550100', password: OWNER_PW,
+      state: 'FL', counties: ['Orange'], crew_count: 2, plan: 'scale'
+    })
+  }).then(r => r.json());
+  if (!prov.success) {
+    console.log('  FATAL: could not provision the test company:', prov.error);
+    process.exit(1);
+  }
+  TENANT = prov.tenant_id;
+  BASE = `${ROOT}/${SLUG}`;
+  console.log(`  test company: /${SLUG} (tenant ${TENANT})`);
+
   try {
     // ── 1. Health ─────────────────────────────────────────────────────────
     console.log('\n[1] Health and brain');
-    let r = await call('GET', `${BASE}/health`);
+    let r = await call('GET', `${ROOT}/health`);
     ok('health returns ok with db ok', r.status === 200 && r.data.status === 'ok' && r.data.db === 'ok',
        JSON.stringify(r.data).slice(0, 160));
-    ok('health lists four AI employees', (r.data.employees || []).length === 4);
+    ok('health lists the full AI crew', (r.data.employees || []).length === 8,
+       `${(r.data.employees || []).length} employees`);
 
     r = await call('GET', `${BASE}/mcp/health`);
     ok('brain health returns ok', r.status === 200 && r.data.status === 'ok');
@@ -98,13 +129,13 @@ async function call(method, url, body, opts = {}) {
     console.log('\n[2] Brain tool catalog');
     r = await call('GET', `${BASE}/mcp/tools/list`);
     const names = (r.data.tools || []).map(t => t.name);
-    ok('tools/list returns all four namespaces',
-       ['receptionist', 'estimator', 'dispatcher', 'administrator']
+    ok('tools/list returns every employee namespace',
+       ['receptionist', 'estimator', 'dispatcher', 'bookkeeper', 'crew', 'payroll', 'marketer', 'controller']
          .every(ns => names.some(n => n.startsWith(ns + '.'))));
     ok('tool catalog is non-trivial', names.length >= 25, `${names.length} tools`);
 
     r = await call('GET', `${BASE}/mcp/employees`);
-    ok('employees endpoint lists the roster', (r.data.employees || []).length === 4);
+    ok('employees endpoint lists the roster', (r.data.employees || []).length === 8);
 
     // ── 3. THE IDENTITY GATE (unbypassable) ───────────────────────────────
     console.log('\n[3] Identity gate');
@@ -282,7 +313,7 @@ async function call(method, url, body, opts = {}) {
     const crossAppt = await call('POST', `${BASE}/api/v1/me/schedule/${otherAppt.id}/cancel`, {});
     ok('cannot cancel another tenant visit', crossAppt.status === 404);
 
-    const crossTool = await brain.callTool('administrator.get_balance',
+    const crossTool = await brain.callTool('bookkeeper.get_balance',
       { customer_id: otherCustomer.id },
       { tenant_id: TENANT, channel: 'portal', customer_id });
     ok('brain scopes balance lookups to the session tenant', crossTool.success === false);
@@ -296,8 +327,7 @@ async function call(method, url, body, opts = {}) {
     console.log('\n[12] Admin and role gates');
     cookieJar.staff = '';
     const login = await call('POST', `${BASE}/api/v1/auth/staff/login`, {
-      email: 'admin@lawncopilot.com',
-      password: process.env.LAWNCOPILOT_ADMIN_PASSWORD || 'lawncopilot@2026'
+      email: OWNER_EMAIL, password: OWNER_PW
     }, { jar: 'staff' });
     ok('staff login works', login.data.success === true);
 
@@ -336,19 +366,15 @@ async function call(method, url, body, opts = {}) {
 
     // CSR role must be blocked from pricing + reports
     const bcrypt = require('bcryptjs');
-    await models.User.findOrCreate({
-      where: { tenant_id: TENANT, email: 'csr@lawncopilot.com' },
-      defaults: {
-        tenant_id: TENANT, name: 'SIT CSR', role: 'csr',
-        password_hash: await bcrypt.hash('csrpass@2026', 10), status: 'active'
-      }
+    const csrEmail = `csr_${STAMP}@example.com`;
+    await models.User.create({
+      tenant_id: TENANT, name: 'SIT CSR', role: 'csr', email: csrEmail,
+      password_hash: await bcrypt.hash('csrpass@2026', 10), status: 'active'
     });
-    await models.User.update({ password_hash: await bcrypt.hash('csrpass@2026', 10), role: 'csr' },
-      { where: { tenant_id: TENANT, email: 'csr@lawncopilot.com' } });
 
     cookieJar.csr = '';
     const csrLogin = await call('POST', `${BASE}/api/v1/auth/staff/login`,
-      { email: 'csr@lawncopilot.com', password: 'csrpass@2026' }, { jar: 'csr' });
+      { email: csrEmail, password: 'csrpass@2026' }, { jar: 'csr' });
     ok('csr login works', csrLogin.data.success === true);
 
     const csrPricing = await call('POST', `${BASE}/api/v1/admin/pricing-rules`,
@@ -358,19 +384,19 @@ async function call(method, url, body, opts = {}) {
     const csrReport = await call('GET', `${BASE}/api/v1/admin/reports/revenue`, null, { jar: 'csr' });
     ok('csr blocked from reports', csrReport.status === 403);
 
-    const csrToolGate = await brain.callTool('administrator.revenue_report', {},
+    const csrToolGate = await brain.callTool('bookkeeper.revenue_report', {},
       { tenant_id: TENANT, channel: 'admin', role: 'csr' });
     ok('brain blocks the tool by role, not just the route', csrToolGate.success === false);
 
     // Public channel cannot reach an admin tool
-    const publicAdminTool = await brain.callTool('administrator.issue_invoice',
+    const publicAdminTool = await brain.callTool('bookkeeper.issue_invoice',
       { customer_id }, { tenant_id: TENANT, channel: 'web_orb', session_id, identity_verified: true });
-    ok('public web session blocked from administrator.issue_invoice',
+    ok('public web session blocked from bookkeeper.issue_invoice',
        publicAdminTool.success === false && /not authorized|not available/i.test(publicAdminTool.error || ''));
 
     // ── 13. Approval queue ────────────────────────────────────────────────
     console.log('\n[13] Human-in-the-loop approvals');
-    const refund = await brain.callTool('administrator.issue_refund',
+    const refund = await brain.callTool('bookkeeper.issue_refund',
       { payment_id: 1, reason: 'SIT' },
       { tenant_id: TENANT, channel: 'admin', role: 'admin', actor: 'sit' });
     ok('refund parks for approval instead of executing',
@@ -387,7 +413,8 @@ async function call(method, url, body, opts = {}) {
     // ── 14. AI Staff activity ─────────────────────────────────────────────
     console.log('\n[14] AI Staff visibility');
     const staff = await call('GET', `${BASE}/api/v1/admin/ai-staff?days=1`, null, { jar: 'staff' });
-    ok('AI staff screen returns the roster', (staff.data.employees || []).length === 4);
+    ok('AI staff screen returns the roster', (staff.data.employees || []).length === 8,
+       `${(staff.data.employees || []).length} employees`);
     ok('AI staff screen shows real activity', staff.data.total_calls > 0, `${staff.data.total_calls} calls`);
     const est = (staff.data.employees || []).find(e => e.id === 'estimator');
     ok('estimator activity was recorded', !!est && est.calls > 0);
@@ -455,7 +482,7 @@ async function call(method, url, body, opts = {}) {
     const eventId = `evt_sit_${Date.now()}`;
     const evt = {
       id: eventId, type: 'payment_intent.succeeded',
-      data: { object: { id: 'pi_sit_1', amount: 1000, amount_received: 1000, metadata: {} } }
+      data: { object: { id: 'pi_sit_1', amount: 1000, amount_received: 1000, metadata: { tenant_id: String(TENANT) } } }
     };
     const payload = JSON.stringify(evt);
 
@@ -471,14 +498,14 @@ async function call(method, url, body, opts = {}) {
     })();
 
     if (process.env.STRIPE_WEBHOOK_SECRET) {
-      const unsigned = await call('POST', `${BASE}/webhooks/stripe`, payload);
+      const unsigned = await call('POST', `${ROOT}/webhooks/stripe`, payload);
       ok('unsigned webhook is rejected', unsigned.status === 400);
     } else {
       ok('unsigned webhook is rejected (skipped: no secret configured)', true);
     }
 
-    const w1 = await call('POST', `${BASE}/webhooks/stripe`, payload, { headers: stripeHeaders });
-    const w2 = await call('POST', `${BASE}/webhooks/stripe`, payload, { headers: stripeHeaders });
+    const w1 = await call('POST', `${ROOT}/webhooks/stripe`, payload, { headers: stripeHeaders });
+    const w2 = await call('POST', `${ROOT}/webhooks/stripe`, payload, { headers: stripeHeaders });
     ok('first webhook accepted', w1.status === 200 && w1.data.received === true);
     ok('replayed webhook flagged duplicate', w2.status === 200 && w2.data.duplicate === true);
     const payRows = await models.Payment.count({ where: { tenant_id: TENANT, stripe_event_id: eventId } });
@@ -486,10 +513,13 @@ async function call(method, url, body, opts = {}) {
 
     // ── 18. Voice TwiML ───────────────────────────────────────────────────
     console.log('\n[18] Phone entry');
-    const twiml = await fetch(`${BASE}/voice/incoming`, {
+    // v2 resolves the tenant from the DIALED number, so give this company one.
+    const sitNumber = `+1305555${String(STAMP).slice(-4)}`;
+    await models.Tenant.update({ phone: sitNumber }, { where: { id: TENANT } });
+    const twiml = await fetch(`${ROOT}/voice/incoming`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ From: '+13055550142', To: '+13055550000', CallSid: `CA_sit_${Date.now()}` })
+      body: new URLSearchParams({ From: '+13055550142', To: sitNumber, CallSid: `CA_sit_${Date.now()}` })
     });
     const xml = await twiml.text();
     ok('voice returns ConversationRelay TwiML',
@@ -554,6 +584,18 @@ async function call(method, url, body, opts = {}) {
     await models.AgentCall.destroy({ where: { tenant_id: TENANT, cost_cents: 100000 } });
     ok('other-tenant fixtures removed',
        (await models.Customer.count({ where: { tenant_id: OTHER_TENANT } })) === 0);
+
+    // Remove this suite's whole company.
+    for (const M of ['QuoteLineItem', 'Quote', 'PropertyGeometry', 'Measurement', 'MeasurementOverride',
+      'Property', 'Appointment', 'ServiceRecord', 'ServicePhoto', 'InvoiceLineItem', 'Invoice',
+      'Payment', 'PaymentMethod', 'AutopayEnrollment', 'Subscription', 'Ticket', 'Message',
+      'Notification', 'CallLog', 'AgentCall', 'AgentApproval', 'AgentSession', 'AuditLog',
+      'Lead', 'Customer', 'Crew', 'PricingRule', 'ServicePlan', 'AddonService', 'JobChecklist',
+      'SiteContent', 'ShortLink', 'PlatformSubscription', 'User']) {
+      try { await models[M].destroy({ where: { tenant_id: TENANT } }); } catch (e) { /* best effort */ }
+    }
+    await models.Tenant.destroy({ where: { id: TENANT } });
+    ok('test company removed', !(await models.Tenant.findByPk(TENANT, { raw: true })));
 
   } catch (e) {
     fail++;

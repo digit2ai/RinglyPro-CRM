@@ -29,17 +29,35 @@ const tenantIdx = () => ({ ...base, indexes: [{ fields: ['tenant_id'] }] });
 const Tenant = sequelize.define('LcTenant', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING, allowNull: false },
+  // The slug IS the company's web address. Printed on trucks, linked from
+  // Google. Immutable after launch.
   slug: { type: DataTypes.STRING, unique: true },
-  phone: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },            // their AI receptionist number
+  owner_phone: { type: DataTypes.STRING },      // where transfers ring
   email: { type: DataTypes.STRING },
   timezone: { type: DataTypes.STRING, defaultValue: 'America/New_York' },
   state: { type: DataTypes.STRING, defaultValue: 'FL' },
+  counties: { type: DataTypes.JSONB, defaultValue: [] },
   business_hours: { type: DataTypes.JSONB, defaultValue: { start: '08:00', end: '17:00', days: [1, 2, 3, 4, 5] } },
-  brand: { type: DataTypes.JSONB, defaultValue: {} },
-  settings: { type: DataTypes.JSONB, defaultValue: {} },
-  status: { type: DataTypes.STRING, defaultValue: 'active' },
+  brand: { type: DataTypes.JSONB, defaultValue: {} },     // logo, color, copy, photos
+  settings: { type: DataTypes.JSONB, defaultValue: {} },  // feature flags, enabled employees
+  status: { type: DataTypes.STRING, defaultValue: 'active' }, // trialing|active|past_due|suspended
+  plan: { type: DataTypes.STRING, defaultValue: 'starter' },
+  trial_ends_at: { type: DataTypes.DATE },
+  stripe_account_id: { type: DataTypes.STRING },   // Connect: money goes to THEM
+  google_place_id: { type: DataTypes.STRING },
+  short_code: { type: DataTypes.STRING },          // /l/<code>
   created_at: NOW()
-}, { tableName: 'lc_tenants', ...base });
+}, { tableName: 'lc_tenants', ...base, indexes: [{ fields: ['slug'] }] });
+
+// ─── lc_tenant_aliases ──────────────────────────────────────────────────────
+// A slug goes on a truck. If one ever must change, the old one keeps working.
+const TenantAlias = sequelize.define('LcTenantAlias', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  slug: { type: DataTypes.STRING, allowNull: false, unique: true },
+  created_at: NOW()
+}, { tableName: 'lc_tenant_aliases', ...tenantIdx() });
 
 // ─── lc_users ───────────────────────────────────────────────────────────────
 // Staff. Roles: owner | admin | dispatcher | csr | tech
@@ -546,14 +564,340 @@ const AuditLog = sequelize.define('LcAuditLog', {
   created_at: NOW()
 }, { tableName: 'lc_audit_log', ...tenantIdx() });
 
+// ════════════════════════════════════════════════════════════════════════════
+// v2 — the rest of the office
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── lc_employees ───────────────────────────────────────────────────────────
+const Employee = sequelize.define('LcEmployee', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  name: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },
+  crew_id: { type: DataTypes.INTEGER },
+  role: { type: DataTypes.STRING, defaultValue: 'crew' }, // crew|lead|foreman|office
+  employment_type: { type: DataTypes.STRING, defaultValue: 'w2' }, // w2|1099
+  pay_type: { type: DataTypes.STRING, defaultValue: 'hourly' },    // hourly|salary|per_job
+  pay_rate_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  overtime_eligible: { type: DataTypes.BOOLEAN, defaultValue: true },
+  hire_date: { type: DataTypes.DATEONLY },
+  status: { type: DataTypes.STRING, defaultValue: 'active' },       // active|inactive|terminated
+  emergency_contact: { type: DataTypes.JSONB, defaultValue: {} },
+  documents: { type: DataTypes.JSONB, defaultValue: [] },
+  provider_employee_id: { type: DataTypes.STRING },   // payroll provider ref
+  notes: { type: DataTypes.TEXT },
+  created_at: NOW(),
+  updated_at: NOW()
+}, { tableName: 'lc_employees', ...tenantIdx() });
+
+// ─── lc_certifications ──────────────────────────────────────────────────────
+const Certification = sequelize.define('LcCertification', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  employee_id: { type: DataTypes.INTEGER },
+  kind: { type: DataTypes.STRING },      // pesticide|cdl|insurance|other
+  name: { type: DataTypes.STRING },
+  number: { type: DataTypes.STRING },
+  issued_on: { type: DataTypes.DATEONLY },
+  expires_on: { type: DataTypes.DATEONLY },
+  reminded_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_certifications', ...tenantIdx() });
+
+// ─── lc_availability ────────────────────────────────────────────────────────
+const Availability = sequelize.define('LcAvailability', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  employee_id: { type: DataTypes.INTEGER },
+  kind: { type: DataTypes.STRING, defaultValue: 'working_hours' }, // working_hours|time_off
+  days: { type: DataTypes.JSONB, defaultValue: [1, 2, 3, 4, 5] },
+  start_time: { type: DataTypes.STRING, defaultValue: '07:00' },
+  end_time: { type: DataTypes.STRING, defaultValue: '16:00' },
+  from_date: { type: DataTypes.DATEONLY },
+  to_date: { type: DataTypes.DATEONLY },
+  status: { type: DataTypes.STRING, defaultValue: 'approved' },
+  reason: { type: DataTypes.STRING },
+  created_at: NOW()
+}, { tableName: 'lc_availability', ...tenantIdx() });
+
+// ─── lc_time_entries ────────────────────────────────────────────────────────
+// The single source of hours. Feeds payroll with no re-entry, ever.
+const TimeEntry = sequelize.define('LcTimeEntry', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  employee_id: { type: DataTypes.INTEGER, allowNull: false },
+  appointment_id: { type: DataTypes.INTEGER },
+  crew_id: { type: DataTypes.INTEGER },
+  work_date: { type: DataTypes.DATEONLY },
+  clock_in: { type: DataTypes.DATE },
+  clock_out: { type: DataTypes.DATE },
+  break_minutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  minutes: { type: DataTypes.INTEGER },
+  clock_in_geo: { type: DataTypes.JSONB },
+  clock_out_geo: { type: DataTypes.JSONB },
+  geofence_ok: { type: DataTypes.BOOLEAN },
+  status: { type: DataTypes.STRING, defaultValue: 'open' }, // open|submitted|approved|rejected|paid
+  approved_by: { type: DataTypes.INTEGER },
+  approved_at: { type: DataTypes.DATE },
+  pay_run_id: { type: DataTypes.INTEGER },
+  notes: { type: DataTypes.TEXT },
+  created_at: NOW()
+}, { tableName: 'lc_time_entries', ...base, indexes: [{ fields: ['tenant_id'] }, { fields: ['employee_id'] }, { fields: ['work_date'] }] });
+
+// ─── lc_job_checklists ──────────────────────────────────────────────────────
+const JobChecklist = sequelize.define('LcJobChecklist', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  service_type: { type: DataTypes.STRING },
+  items: { type: DataTypes.JSONB, defaultValue: [] },
+  appointment_id: { type: DataTypes.INTEGER },
+  completed: { type: DataTypes.JSONB, defaultValue: [] },
+  completed_by: { type: DataTypes.INTEGER },
+  completed_at: { type: DataTypes.DATE },
+  is_template: { type: DataTypes.BOOLEAN, defaultValue: true },
+  created_at: NOW()
+}, { tableName: 'lc_job_checklists', ...tenantIdx() });
+
+// ─── lc_pay_runs / lc_pay_items ─────────────────────────────────────────────
+const PayRun = sequelize.define('LcPayRun', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  period_start: { type: DataTypes.DATEONLY },
+  period_end: { type: DataTypes.DATEONLY },
+  pay_date: { type: DataTypes.DATEONLY },
+  status: { type: DataTypes.STRING, defaultValue: 'draft' }, // draft|pending_approval|approved|submitted|paid|failed
+  // Honesty flag: true only when a licensed provider filed it.
+  filed: { type: DataTypes.BOOLEAN, defaultValue: false },
+  provider: { type: DataTypes.STRING },
+  provider_run_id: { type: DataTypes.STRING },
+  gross_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  deductions_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  net_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  employer_tax_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  approved_by: { type: DataTypes.INTEGER },
+  approved_at: { type: DataTypes.DATE },
+  notes: { type: DataTypes.TEXT },
+  created_at: NOW()
+}, { tableName: 'lc_pay_runs', ...tenantIdx() });
+
+const PayItem = sequelize.define('LcPayItem', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  pay_run_id: { type: DataTypes.INTEGER, allowNull: false },
+  employee_id: { type: DataTypes.INTEGER, allowNull: false },
+  regular_minutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  overtime_minutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  regular_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  overtime_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  reimbursement_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  gross_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  deductions_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  net_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  breakdown: { type: DataTypes.JSONB, defaultValue: {} }
+}, { tableName: 'lc_pay_items', ...tenantIdx() });
+
+// ─── lc_expenses / lc_supplier_bills ────────────────────────────────────────
+const Expense = sequelize.define('LcExpense', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  spent_on: { type: DataTypes.DATEONLY },
+  vendor: { type: DataTypes.STRING },
+  category: { type: DataTypes.STRING }, // fuel|materials|equipment|repairs|insurance|subscription|other
+  amount_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  appointment_id: { type: DataTypes.INTEGER },
+  crew_id: { type: DataTypes.INTEGER },
+  employee_id: { type: DataTypes.INTEGER },
+  receipt_url: { type: DataTypes.TEXT },
+  reimbursable: { type: DataTypes.BOOLEAN, defaultValue: false },
+  notes: { type: DataTypes.TEXT },
+  created_at: NOW()
+}, { tableName: 'lc_expenses', ...tenantIdx() });
+
+const SupplierBill = sequelize.define('LcSupplierBill', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  vendor: { type: DataTypes.STRING },
+  reference: { type: DataTypes.STRING },
+  amount_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  due_on: { type: DataTypes.DATEONLY },
+  status: { type: DataTypes.STRING, defaultValue: 'open' },
+  paid_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_supplier_bills', ...tenantIdx() });
+
+// ─── lc_job_costs ───────────────────────────────────────────────────────────
+// Computed truth per job: what it actually cost vs what we charged.
+const JobCost = sequelize.define('LcJobCost', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  appointment_id: { type: DataTypes.INTEGER },
+  service_record_id: { type: DataTypes.INTEGER },
+  customer_id: { type: DataTypes.INTEGER },
+  crew_id: { type: DataTypes.INTEGER },
+  labor_minutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  labor_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  drive_minutes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  drive_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  material_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  overhead_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  total_cost_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  revenue_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  margin_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  margin_pct: { type: DataTypes.DOUBLE },
+  computed_at: NOW()
+}, { tableName: 'lc_job_costs', ...tenantIdx() });
+
+// ─── lc_routes ──────────────────────────────────────────────────────────────
+const Route = sequelize.define('LcRoute', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  crew_id: { type: DataTypes.INTEGER },
+  service_date: { type: DataTypes.DATEONLY },
+  stops: { type: DataTypes.JSONB, defaultValue: [] },
+  stop_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  drive_minutes: { type: DataTypes.INTEGER },
+  drive_miles: { type: DataTypes.DOUBLE },
+  baseline_drive_minutes: { type: DataTypes.INTEGER },
+  saved_minutes: { type: DataTypes.INTEGER },
+  method: { type: DataTypes.STRING },
+  distance_source: { type: DataTypes.STRING }, // provider|haversine
+  created_at: NOW()
+}, { tableName: 'lc_routes', ...tenantIdx() });
+
+// ─── Marketing ──────────────────────────────────────────────────────────────
+const Campaign = sequelize.define('LcCampaign', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  name: { type: DataTypes.STRING },
+  kind: { type: DataTypes.STRING },  // seasonal|winback|upsell|announcement
+  channel: { type: DataTypes.STRING, defaultValue: 'email' },
+  subject: { type: DataTypes.STRING },
+  body: { type: DataTypes.TEXT },
+  audience: { type: DataTypes.JSONB, defaultValue: {} },
+  status: { type: DataTypes.STRING, defaultValue: 'draft' }, // draft|pending_approval|sending|sent|cancelled
+  scheduled_for: { type: DataTypes.DATE },
+  recipients: { type: DataTypes.INTEGER, defaultValue: 0 },
+  sent_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  suppressed_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+  created_at: NOW()
+}, { tableName: 'lc_campaigns', ...tenantIdx() });
+
+const CampaignSend = sequelize.define('LcCampaignSend', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  campaign_id: { type: DataTypes.INTEGER },
+  customer_id: { type: DataTypes.INTEGER },
+  channel: { type: DataTypes.STRING },
+  to_address: { type: DataTypes.STRING },
+  // Proof of consent AT SEND TIME, not template time.
+  consent_snapshot: { type: DataTypes.JSONB, defaultValue: {} },
+  status: { type: DataTypes.STRING, defaultValue: 'queued' }, // queued|sent|suppressed|failed
+  reason: { type: DataTypes.STRING },
+  created_at: NOW()
+}, { tableName: 'lc_campaign_sends', ...tenantIdx() });
+
+const Review = sequelize.define('LcReview', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  customer_id: { type: DataTypes.INTEGER },
+  service_record_id: { type: DataTypes.INTEGER },
+  platform: { type: DataTypes.STRING, defaultValue: 'google' },
+  status: { type: DataTypes.STRING, defaultValue: 'requested' }, // requested|clicked|left|declined
+  rating: { type: DataTypes.INTEGER },
+  text: { type: DataTypes.TEXT },
+  author: { type: DataTypes.STRING },
+  external_id: { type: DataTypes.STRING },
+  requested_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_reviews', ...tenantIdx() });
+
+const Referral = sequelize.define('LcReferral', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  code: { type: DataTypes.STRING },
+  referrer_customer_id: { type: DataTypes.INTEGER },
+  referee_customer_id: { type: DataTypes.INTEGER },
+  referee_lead_id: { type: DataTypes.INTEGER },
+  reward_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  status: { type: DataTypes.STRING, defaultValue: 'issued' }, // issued|clicked|converted|rewarded
+  converted_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_referrals', ...tenantIdx() });
+
+// ─── lc_site_content ────────────────────────────────────────────────────────
+// Their page content, versioned and revertible.
+const SiteContent = sequelize.define('LcSiteContent', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  version: { type: DataTypes.INTEGER, defaultValue: 1 },
+  content: { type: DataTypes.JSONB, defaultValue: {} },
+  published: { type: DataTypes.BOOLEAN, defaultValue: true },
+  published_by: { type: DataTypes.INTEGER },
+  created_at: NOW()
+}, { tableName: 'lc_site_content', ...tenantIdx() });
+
+// ─── lc_short_links ─────────────────────────────────────────────────────────
+// The link goes on trucks and into Google. Track how it travels.
+const ShortLink = sequelize.define('LcShortLink', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  code: { type: DataTypes.STRING, allowNull: false, unique: true },
+  target: { type: DataTypes.TEXT },
+  source: { type: DataTypes.STRING },   // truck|google|card|sms|bio
+  clicks: { type: DataTypes.INTEGER, defaultValue: 0 },
+  last_clicked_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_short_links', ...base, indexes: [{ fields: ['tenant_id'] }, { fields: ['code'] }] });
+
+// ─── Platform layer (Digit2AI, above the tenants) ───────────────────────────
+const PlatformUser = sequelize.define('LcPlatformUser', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  name: { type: DataTypes.STRING },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
+  password_hash: { type: DataTypes.STRING },
+  role: { type: DataTypes.STRING, defaultValue: 'admin' },
+  status: { type: DataTypes.STRING, defaultValue: 'active' },
+  last_login_at: { type: DataTypes.DATE },
+  created_at: NOW()
+}, { tableName: 'lc_platform_users', ...base });
+
+const PlatformSubscription = sequelize.define('LcPlatformSubscription', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  plan: { type: DataTypes.STRING, defaultValue: 'starter' },
+  status: { type: DataTypes.STRING, defaultValue: 'trialing' },
+  price_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+  stripe_subscription_id: { type: DataTypes.STRING },
+  current_period_end: { type: DataTypes.DATE },
+  limits: { type: DataTypes.JSONB, defaultValue: {} },
+  created_at: NOW()
+}, { tableName: 'lc_platform_subscriptions', ...tenantIdx() });
+
+// Audited support access into a tenant.
+const ImpersonationLog = sequelize.define('LcImpersonationLog', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: T(),
+  platform_user_id: { type: DataTypes.INTEGER },
+  reason: { type: DataTypes.TEXT },
+  started_at: NOW(),
+  ended_at: { type: DataTypes.DATE }
+}, { tableName: 'lc_impersonation_log', ...tenantIdx() });
+
 module.exports = {
   sequelize,
-  Tenant, User, Customer, Lead,
+  Tenant, TenantAlias, User, Customer, Lead,
   Property, PropertyGeometry, Measurement, MeasurementOverride,
   PricingRule, ServicePlan, AddonService,
   Quote, QuoteLineItem, Subscription,
   Crew, Appointment, ServiceRecord, ServicePhoto,
   Invoice, InvoiceLineItem, Payment, PaymentMethod, AutopayEnrollment,
   Ticket, Message, Notification, CallLog,
-  AgentSession, AgentCall, AgentApproval, AuditLog
+  AgentSession, AgentCall, AgentApproval, AuditLog,
+  // v2
+  Employee, Certification, Availability, TimeEntry, JobChecklist,
+  PayRun, PayItem, Expense, SupplierBill, JobCost, Route,
+  Campaign, CampaignSend, Review, Referral,
+  SiteContent, ShortLink,
+  PlatformUser, PlatformSubscription, ImpersonationLog
 };

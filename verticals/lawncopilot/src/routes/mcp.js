@@ -13,7 +13,6 @@ const router = express.Router();
 const brain = require('../mcp/brain');
 const { sequelize } = require('../models');
 
-const DEFAULT_TENANT = () => Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
 
 function externalAuth(req) {
   const key = process.env.LAWNCOPILOT_MCP_KEY;
@@ -36,7 +35,7 @@ function resolveContext(req) {
   const ext = externalAuth(req);
   if (ext.ok) {
     return {
-      tenant_id: Number(req.body.tenant_id || req.query.tenant_id || DEFAULT_TENANT()),
+      tenant_id: req.tenant_id || Number(req.body.tenant_id || req.query.tenant_id) || null,
       channel: (req.body.context && req.body.context.channel) || 'system',
       role: 'admin', actor: 'external_mcp'
     };

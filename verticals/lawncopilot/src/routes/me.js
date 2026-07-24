@@ -244,7 +244,7 @@ router.get('/invoices', async (req, res) => {
 router.post('/invoices/:id/pay', async (req, res) => {
   const inv = await Invoice.findOne({ where: scope(req, { id: req.params.id }), raw: true });
   if (!inv) return res.status(404).json({ success: false, error: 'Invoice not found' });
-  res.json(await brain.callTool('administrator.take_payment', {
+  res.json(await brain.callTool('bookkeeper.take_payment', {
     invoice_id: inv.id, payment_method_id: req.body.payment_method_id
   }, ctxOf(req)));
 });
@@ -288,15 +288,15 @@ router.delete('/payment-methods/:id', async (req, res) => {
 });
 
 router.post('/autopay/enroll', async (req, res) => {
-  res.json(await brain.callTool('administrator.enroll_autopay', { payment_method_id: req.body.payment_method_id }, ctxOf(req)));
+  res.json(await brain.callTool('bookkeeper.enroll_autopay', { payment_method_id: req.body.payment_method_id }, ctxOf(req)));
 });
 
 router.post('/autopay/disable', async (req, res) => {
-  res.json(await brain.callTool('administrator.disable_autopay', {}, ctxOf(req)));
+  res.json(await brain.callTool('bookkeeper.disable_autopay', {}, ctxOf(req)));
 });
 
 router.get('/balance', async (req, res) => {
-  res.json(await brain.callTool('administrator.get_balance', { customer_id: req.customer.id }, ctxOf(req)));
+  res.json(await brain.callTool('bookkeeper.get_balance', { customer_id: req.customer.id }, ctxOf(req)));
 });
 
 // ── Messages ───────────────────────────────────────────────────────────────
@@ -327,7 +327,7 @@ router.post('/assistant', async (req, res) => {
   // An authenticated customer is already identified — the assistant knows them.
   const faq = await brain.callTool('receptionist.answer_faq', { question: text }, ctx);
   if (/balance|owe|invoice|bill|pay/i.test(text)) {
-    const b = await brain.callTool('administrator.get_balance', { customer_id: req.customer.id }, ctx);
+    const b = await brain.callTool('bookkeeper.get_balance', { customer_id: req.customer.id }, ctx);
     if (b.success) return res.json({ success: true, reply: b.spoken });
   }
   if (/next|when|schedule|visit|come/i.test(text)) {

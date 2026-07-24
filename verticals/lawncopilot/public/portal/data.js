@@ -7,7 +7,8 @@
 (function () {
   'use strict';
 
-  var API = '/lawncopilot/api/v1/me';
+  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
+  var API = '/lawncopilot/' + SLUG + '/api/v1/me';
 
   function req(method, path, body) {
     return fetch(API + path, {
@@ -16,7 +17,7 @@
       credentials: 'same-origin',
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) {
-      if (r.status === 401) { window.location.href = '/lawncopilot/login'; throw new Error('unauth'); }
+      if (r.status === 401) { window.location.href = '/lawncopilot/' + SLUG + '/login'; throw new Error('unauth'); }
       return r.json();
     });
   }
@@ -177,7 +178,7 @@
         ['mensajes', 'Messages', 'M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z']
       ];
       return '<nav class="tabs">' + items.map(function (i) {
-        return '<a href="/lawncopilot/portal/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
+        return '<a href="/lawncopilot/' + SLUG + '/portal/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
           '<svg viewBox="0 0 24 24"><path d="' + i[2] + '"/></svg>' + i[1] + '</a>';
       }).join('') + '</nav>';
     },
@@ -187,7 +188,7 @@
       if (t) t.outerHTML = LC.tabs(activeTab);
       LC.assistant();
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/lawncopilot/portal/sw.js').catch(function () {});
+        navigator.serviceWorker.register('/lawncopilot/portal/sw.js', { scope: '/lawncopilot/' }).catch(function () {});
       }
     }
   };

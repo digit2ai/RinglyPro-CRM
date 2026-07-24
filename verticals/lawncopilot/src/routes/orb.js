@@ -18,7 +18,11 @@ const { turn } = require('../services/conversation');
 const { AgentSession, Lead, Quote, Property } = require('../models');
 const { notify } = require('../services/notify');
 
-const TENANT = () => Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
+// Tenant comes from the resolved request (see tenancy.js). Never from env.
+function T(req) {
+  if (!req.tenant_id) throw new Error('orb route reached without a resolved tenant');
+  return req.tenant_id;
+}
 
 // ── Rate limiting (per IP, shared bucket) ──────────────────────────────────
 const buckets = new Map();
@@ -63,7 +67,7 @@ router.get('/config', (req, res) => {
  */
 router.post('/identity', async (req, res) => {
   const { name, phone, email, address, consent, session_id } = req.body || {};
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const sid = session_id || crypto.randomBytes(12).toString('hex');
 
   const session = await brain.upsertSession({
@@ -105,7 +109,7 @@ async function requireIdentity(req, res, next) {
   if (!sid) {
     return res.status(403).json({ success: false, gate_required: true, error: 'Identity required before any request.' });
   }
-  const s = await AgentSession.findOne({ where: { tenant_id: TENANT(), session_id: sid } });
+  const s = await AgentSession.findOne({ where: { tenant_id: T(req), session_id: sid } });
   if (!s || !s.identity_verified) {
     return res.status(403).json({ success: false, gate_required: true, error: 'Name, phone, and email are required first.' });
   }
@@ -116,7 +120,7 @@ async function requireIdentity(req, res, next) {
 router.post('/session', requireIdentity, async (req, res) => {
   const s = req.orbSession;
   const out = await turn({
-    tenant_id: TENANT(), session_id: s.session_id,
+    tenant_id: T(req), session_id: s.session_id,
     text: '', channel: req.body.channel || s.channel
   });
   res.json({ ...out, session_id: s.session_id });
@@ -129,7 +133,7 @@ router.post('/message', requireIdentity, async (req, res) => {
   const s = req.orbSession;
   const text = String((req.body && req.body.text) || '').slice(0, 2000);
   const out = await turn({
-    tenant_id: TENANT(), session_id: s.session_id,
+    tenant_id: T(req), session_id: s.session_id,
     text, channel: req.body.channel || s.channel || 'web_chat'
   });
   res.json({ ...out, session_id: s.session_id });
@@ -145,7 +149,7 @@ router.post('/tool', requireIdentity, async (req, res) => {
   if (!tool) return res.status(400).json({ success: false, error: 'tool is required' });
 
   const result = await brain.callTool(tool, args || {}, {
-    tenant_id: TENANT(),
+    tenant_id: T(req),
     channel: 'web_orb',
     session_id: s.session_id,
     customer_id: s.customer_id,
@@ -182,7 +186,7 @@ router.post('/transcript/email', requireIdentity, async (req, res) => {
     .join('\n\n');
 
   const r = await notify({
-    tenant_id: TENANT(), customer_id: s.customer_id, channel: 'email',
+    tenant_id: T(req), customer_id: s.customer_id, channel: 'email',
     template: 'quote_confirmation',
     to: identity.email,
     userInitiated: true,
@@ -212,12 +216,12 @@ router.get('/summary', requireIdentity, async (req, res) => {
   const st = stateOfSession(s);
   let quote = null, property = null;
   if (st.quote_id) {
-    quote = await Quote.findOne({ where: { id: st.quote_id, tenant_id: TENANT() }, raw: true });
+    quote = await Quote.findOne({ where: { id: st.quote_id, tenant_id: T(req) }, raw: true });
   }
   if (st.property_id) {
-    property = await Property.findOne({ where: { id: st.property_id, tenant_id: TENANT() }, raw: true });
+    property = await Property.findOne({ where: { id: st.property_id, tenant_id: T(req) }, raw: true });
   }
-  const lead = s.lead_id ? await Lead.findOne({ where: { id: s.lead_id, tenant_id: TENANT() }, raw: true }) : null;
+  const lead = s.lead_id ? await Lead.findOne({ where: { id: s.lead_id, tenant_id: T(req) }, raw: true }) : null;
   res.json({
     success: true,
     identity: { name: (s.identity || {}).name, phone: (s.identity || {}).phone, email: (s.identity || {}).email },

@@ -283,8 +283,9 @@ async function priceProperty({ tenant_id, serviceable_sqft, city, county, state,
 }
 
 // ── Seeding ────────────────────────────────────────────────────────────────
-async function seedDefaultRules(tenant_id) {
-  const existing = await PricingRule.count({ where: { tenant_id } });
+async function seedDefaultRules(tenant_id, transaction) {
+  const opt = transaction ? { transaction } : {};
+  const existing = await PricingRule.count({ where: { tenant_id }, ...opt });
   if (existing > 0) return { seeded: false, count: existing };
 
   const rows = [
@@ -301,21 +302,22 @@ async function seedDefaultRules(tenant_id) {
     });
   });
 
-  await PricingRule.bulkCreate(rows.map(r => ({ ...r, tenant_id, active: true })));
+  await PricingRule.bulkCreate(rows.map(r => ({ ...r, tenant_id, active: true })), opt);
   return { seeded: true, count: rows.length };
 }
 
-async function seedDefaultPlans(tenant_id) {
-  const existing = await ServicePlan.count({ where: { tenant_id } });
+async function seedDefaultPlans(tenant_id, transaction) {
+  const opt = transaction ? { transaction } : {};
+  const existing = await ServicePlan.count({ where: { tenant_id }, ...opt });
   if (existing === 0) {
     await ServicePlan.bulkCreate([
       { tenant_id, name: 'Weekly Lawn Care', frequency: 'weekly', sort_order: 1, description: 'Mow, edge, trim and blow every week through the growing season.', included_services: ['Mowing', 'Edging', 'String trimming', 'Blowing off hard surfaces'] },
       { tenant_id, name: 'Every Two Weeks', frequency: 'biweekly', sort_order: 2, description: 'The most popular plan in Florida. Same service, every other week.', included_services: ['Mowing', 'Edging', 'String trimming', 'Blowing off hard surfaces'] },
       { tenant_id, name: 'Monthly', frequency: 'monthly', sort_order: 3, description: 'For slower-growing or smaller lawns.', included_services: ['Mowing', 'Edging', 'String trimming', 'Blowing off hard surfaces'] },
       { tenant_id, name: 'One-Time Cleanup', frequency: 'one_time', sort_order: 4, description: 'A single visit. No commitment, no recurring charge.', included_services: ['Mowing', 'Edging', 'String trimming', 'Blowing off hard surfaces'] }
-    ]);
+    ], opt);
   }
-  const addonCount = await AddonService.count({ where: { tenant_id } });
+  const addonCount = await AddonService.count({ where: { tenant_id }, ...opt });
   if (addonCount === 0) {
     await AddonService.bulkCreate([
       { tenant_id, name: 'Hedge and shrub trimming', code: 'hedges', price_cents: 6500, description: 'Shape and clean up hedges and shrubs.' },
@@ -324,7 +326,7 @@ async function seedDefaultPlans(tenant_id) {
       { tenant_id, name: 'Fertilization program', code: 'fert', price_cents: 0, coming_soon: true, description: 'Seasonal fertilization. Coming soon.' },
       { tenant_id, name: 'Pest control', code: 'pest', price_cents: 0, coming_soon: true, description: 'Lawn pest treatment. Coming soon.' },
       { tenant_id, name: 'Irrigation check', code: 'irrigation', price_cents: 0, coming_soon: true, description: 'Sprinkler inspection and adjustment. Coming soon.' }
-    ]);
+    ], opt);
   }
   return true;
 }

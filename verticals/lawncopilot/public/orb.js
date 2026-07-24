@@ -10,8 +10,13 @@
 (function () {
   'use strict';
 
-  var API = '/lawncopilot/api/v1';
-  var LS_KEY = 'lawncopilot_identity';
+  // Every call is scoped to the company whose page this is. The slug comes
+  // from the URL, so the same orb code serves every tenant with no per-tenant
+  // build and no chance of posting one company's lead to another.
+  var SLUG = (document.body && document.body.getAttribute('data-slug')) ||
+    (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
+  var API = SLUG ? '/lawncopilot/' + SLUG + '/api/v1' : '/lawncopilot/api/v1';
+  var LS_KEY = 'lawncopilot_identity_' + (SLUG || 'default');
 
   var identity = null;      // {name, phone, email}
   var sessionId = null;

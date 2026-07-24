@@ -1,7 +1,8 @@
 /* Lawn Co-Pilot admin — data layer. Live API only, no mock values. */
 (function () {
   'use strict';
-  var API = '/lawncopilot/api/v1/admin';
+  var SLUG = (location.pathname.match(/^\/lawncopilot\/([a-z0-9_-]+)/i) || [])[1] || '';
+  var API = '/lawncopilot/' + SLUG + '/api/v1/admin';
 
   function req(method, path, body) {
     return fetch(API + path, {
@@ -10,7 +11,7 @@
       credentials: 'same-origin',
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) {
-      if (r.status === 401) { window.location.href = '/lawncopilot/admin/login'; throw new Error('unauth'); }
+      if (r.status === 401) { window.location.href = '/lawncopilot/' + SLUG + '/admin/login'; throw new Error('unauth'); }
       return r.json();
     });
   }
@@ -49,7 +50,7 @@
         ['ai-staff', 'AI Staff', 'M12 2a5 5 0 015 5v3a5 5 0 01-10 0V7a5 5 0 015-5zM4 21a8 8 0 0116 0']
       ];
       return '<nav class="tabs">' + items.map(function (i) {
-        return '<a href="/lawncopilot/admin/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
+        return '<a href="/lawncopilot/' + SLUG + '/admin/' + i[0] + '"' + (i[0] === active ? ' class="is-on"' : '') + '>' +
           '<svg viewBox="0 0 24 24"><path d="' + i[2] + '"/></svg>' + i[1] + '</a>';
       }).join('') + '</nav>';
     },
@@ -57,7 +58,7 @@
     shell: function (active) {
       var t = document.getElementById('tabs');
       if (t) t.outerHTML = A.tabs(active);
-      fetch('/lawncopilot/api/v1/auth/staff/me', { credentials: 'same-origin' })
+      fetch('/lawncopilot/' + SLUG + '/api/v1/auth/staff/me', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (r) {
           var w = document.getElementById('who');

@@ -17,14 +17,45 @@
  *   - human-in-the-loop approval queue for flagged tools
  */
 
-const { AgentCall, AgentApproval, AgentSession } = require('../models');
+const { AgentCall, AgentApproval, AgentSession, Tenant } = require('../models');
+
+/**
+ * Per-tenant employee enablement.
+ *
+ * A company on a starter plan does not get the Payroll Officer, and an owner
+ * can switch any employee off. Checked HERE rather than in the UI, so a direct
+ * tool call cannot route around the plan.
+ */
+const enabledCache = new Map();
+const ENABLED_TTL = 60000;
+
+async function enabledEmployees(tenant_id) {
+  const hit = enabledCache.get(tenant_id);
+  if (hit && Date.now() - hit.at < ENABLED_TTL) return hit.list;
+  let list = null;
+  try {
+    const t = await Tenant.findByPk(tenant_id, { raw: true });
+    const s = (t && t.settings) || {};
+    list = Array.isArray(s.enabled_employees) ? s.enabled_employees : null;
+  } catch (e) { list = null; }
+  enabledCache.set(tenant_id, { list, at: Date.now() });
+  return list;
+}
+
+function bustEnabled(tenant_id) {
+  if (tenant_id) enabledCache.delete(tenant_id); else enabledCache.clear();
+}
 
 // ── Employee registry ──────────────────────────────────────────────────────
 const EMPLOYEES = [
   require('./employees/receptionist'),
   require('./employees/estimator'),
   require('./employees/dispatcher'),
-  require('./employees/administrator')
+  require('./employees/bookkeeper'),
+  require('./employees/crew'),
+  require('./employees/payroll'),
+  require('./employees/marketer'),
+  require('./employees/controller')
 ];
 
 const REGISTRY = {};
@@ -164,6 +195,15 @@ async function callTool(toolName, args = {}, context = {}) {
   if (!tenant_id) return fail('Missing tenant context');
   if (tool.employee.enabled === false) {
     return fail(`${tool.employee.name} is currently switched off by the operator.`);
+  }
+
+  // Plan / owner enablement for THIS company.
+  const enabled = await enabledEmployees(tenant_id);
+  if (enabled && !enabled.includes(tool.employee.id)) {
+    return fail(
+      `${tool.employee.name} is not enabled on this account's plan.`,
+      { code: 'employee_not_enabled', employee: tool.employee.id }
+    );
   }
 
   // Authorization — enforced HERE, not in a prompt.
@@ -352,6 +392,7 @@ async function upsertSession({ tenant_id, session_id, channel, employee, identit
 
 module.exports = {
   callTool, listTools, listEmployees, getEmployee,
+  enabledEmployees, bustEnabled,
   executeApproval, staffActivity, upsertSession,
   costGuardOk, spentToday, REGISTRY, EMPLOYEES, CHANNEL_TRUST
 };

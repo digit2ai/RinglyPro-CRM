@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Platform — Lawn Co-Pilot</title>
+<link rel="icon" href="/lawncopilot/mark.png" type="image/png">
+<link rel="stylesheet" href="/lawncopilot/admin/app.css">
+<style>
+body { padding-bottom: var(--space-8); }
+.appmain { max-width: 1240px; }
+.kpi b { font-size: 1.6rem; }
+td.slug a { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; }
+</style>
+</head>
+<body>
+<header class="apphead">
+  <img class="apphead__logo" src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="112" height="43">
+  <h1>Platform</h1>
+  <div class="who" id="who"></div>
+  <button class="btn btn--ghost btn--sm" id="logout">Sign out</button>
+</header>
+<main class="appmain" id="app"><div class="empty">Loading...</div></main>
+
+<script>
+var API = '/lawncopilot/api/v1/platform';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function money(c){return '$'+(Number(c||0)/100).toFixed(2);}
+function num(v){return Number(v||0).toLocaleString('en-US');}
+function date(d){ if(!d) return ''; var x=new Date(d); return isNaN(x)?'':x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}); }
+
+function req(m,p,b){return fetch(API+p,{method:m,headers:b?{'Content-Type':'application/json'}:{},credentials:'same-origin',body:b?JSON.stringify(b):undefined})
+  .then(function(r){ if(r.status===401){location.href='/lawncopilot/platform/login';throw new Error('unauth');} return r.json(); });}
+
+req('GET','/me').then(function(r){ if(r.success) document.getElementById('who').textContent = r.user.email; });
+document.getElementById('logout').addEventListener('click',function(){
+  req('POST','/logout').then(function(){ location.href='/lawncopilot/platform/login'; });
+});
+
+function render(){
+  Promise.all([req('GET','/overview?days=30'), req('GET','/ai-spend?days=30')]).then(function(res){
+    var d=res[0], spend=res[1], t=d.totals;
+    var html='';
+
+    html+='<div class="kpis">'+
+      '<div class="kpi"><b>'+num(t.tenants)+'</b><span>Companies</span></div>'+
+      '<div class="kpi"><b>'+num(t.live)+'</b><span>Live</span></div>'+
+      '<div class="kpi"><b>'+num(t.trialing)+'</b><span>Trialing</span></div>'+
+      '<div class="kpi"><b>'+num(t.new_this_period)+'</b><span>New, 30d</span></div>'+
+      '<div class="kpi"><b>'+num(t.customers)+'</b><span>Homeowners</span></div>'+
+      '<div class="kpi"><b>'+num(t.jobs)+'</b><span>Jobs, 30d</span></div>'+
+      '<div class="kpi"><b>'+money(t.collected_cents)+'</b><span>Collected, 30d</span></div>'+
+      '<div class="kpi"><b>'+money(t.ai_cost_cents)+'</b><span>AI spend, 30d</span></div>'+
+      '</div>';
+
+    html+='<div class="tile"><h2>Companies</h2><div class="scroll-x"><table><thead><tr>'+
+      '<th>Company</th><th>Address</th><th>Status</th><th>Plan</th><th>Setup</th>'+
+      '<th class="num">Leads</th><th class="num">Customers</th><th class="num">Jobs</th>'+
+      '<th class="num">Collected</th><th class="num">AI</th><th></th></tr></thead><tbody>';
+    if(!d.tenants.length) html+='<tr><td colspan="11"><div class="empty">No companies yet.</div></td></tr>';
+    d.tenants.forEach(function(x){
+      var setup=[];
+      if(!x.payments_connected) setup.push('no payments');
+      if(!x.phone_connected) setup.push('no phone');
+      html+='<tr>'+
+        '<td><b>'+esc(x.name)+'</b></td>'+
+        '<td class="slug"><a href="/lawncopilot/'+esc(x.slug)+'" target="_blank">/'+esc(x.slug)+'</a></td>'+
+        '<td><span class="pill'+(x.status==='active'?'':' pill--warn')+'">'+esc(x.status)+'</span></td>'+
+        '<td>'+esc(x.plan||'')+'</td>'+
+        '<td class="small mut">'+(setup.length?esc(setup.join(', ')):'complete')+'</td>'+
+        '<td class="num">'+num(x.leads)+'</td>'+
+        '<td class="num">'+num(x.customers)+'</td>'+
+        '<td class="num">'+num(x.jobs)+'</td>'+
+        '<td class="num">'+money(x.collected_cents)+'</td>'+
+        '<td class="num">'+num(x.ai_actions)+(x.ai_failures?' <span class="pill pill--warn">'+x.ai_failures+' failed</span>':'')+'</td>'+
+        '<td><button class="btn btn--ghost btn--sm" data-imp="'+x.id+'" data-name="'+esc(x.name)+'">Support</button></td>'+
+        '</tr>';
+    });
+    html+='</tbody></table></div>'+
+      '<p class="tiny mut" style="margin-top:10px">Counts and totals only. Customer names, emails and addresses are not shown here — use Support access, which is logged.</p></div>';
+
+    html+='<div class="tile"><h2>AI spend by employee, 30 days</h2><div class="scroll-x"><table><thead><tr><th>Employee</th><th class="num">Actions</th><th class="num">Cost</th></tr></thead><tbody>';
+    if(!spend.by_employee.length) html+='<tr><td colspan="3"><div class="empty">No AI activity yet.</div></td></tr>';
+    spend.by_employee.sort(function(a,b){return b.calls-a.calls;}).forEach(function(e){
+      html+='<tr><td>'+esc(e.employee)+'</td><td class="num">'+num(e.calls)+'</td><td class="num">'+money(e.cost_cents)+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+
+    document.getElementById('app').innerHTML=html;
+
+    document.querySelectorAll('[data-imp]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var reason=prompt('Support access to '+b.dataset.name+' is logged against your account.\n\nWhy do you need it?');
+        if(!reason||reason.trim().length<8){ if(reason!==null) alert('A reason of at least 8 characters is required.'); return; }
+        req('POST','/tenants/'+b.dataset.imp+'/impersonate',{reason:reason.trim()}).then(function(r){
+          if(!r.success){ alert(r.error||'Could not start support access.'); return; }
+          window.open(r.admin_url,'_blank');
+        });
+      });
+    });
+  });
+}
+render();
+</script>
+</body>
+</html>

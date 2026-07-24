@@ -21,7 +21,10 @@ const {
 const { notify } = require('../services/notify');
 const sched = require('../services/scheduling');
 
-const TENANT = () => Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
+function T(req) {
+  if (!req.tenant_id) throw new Error('quote route reached without a resolved tenant');
+  return req.tenant_id;
+}
 const SECRET = () => process.env.LAWNCOPILOT_JWT_SECRET || process.env.JWT_SECRET || 'lawncopilot-dev-secret';
 
 async function gate(req, res, next) {
@@ -29,7 +32,7 @@ async function gate(req, res, next) {
   if (!sid) {
     return res.status(403).json({ success: false, gate_required: true, error: 'Name, phone, and email are required before a quote.' });
   }
-  const s = await AgentSession.findOne({ where: { tenant_id: TENANT(), session_id: sid } });
+  const s = await AgentSession.findOne({ where: { tenant_id: T(req), session_id: sid } });
   if (!s || !s.identity_verified) {
     return res.status(403).json({ success: false, gate_required: true, error: 'Name, phone, and email are required before a quote.' });
   }
@@ -40,7 +43,7 @@ async function gate(req, res, next) {
 function ctxOf(req) {
   const s = req.orbSession;
   return {
-    tenant_id: TENANT(), channel: 'web_chat', session_id: s.session_id,
+    tenant_id: T(req), channel: 'web_chat', session_id: s.session_id,
     customer_id: s.customer_id || null, identity_verified: true,
     actor: `lead:${(s.identity || {}).email || 'unknown'}`
   };
@@ -77,14 +80,14 @@ router.post('/issue', gate, async (req, res) => {
 });
 
 router.get('/plans', async (req, res) => {
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const plans = await ServicePlan.findAll({ where: { tenant_id, active: true }, order: [['sort_order', 'ASC']], raw: true });
   const addons = await AddonService.findAll({ where: { tenant_id, active: true }, raw: true });
   res.json({ success: true, plans, addons });
 });
 
 router.get('/availability', async (req, res) => {
-  const r = await sched.checkAvailability({ tenant_id: TENANT(), from: req.query.from, days: Number(req.query.days || 14) });
+  const r = await sched.checkAvailability({ tenant_id: T(req), from: req.query.from, days: Number(req.query.days || 14) });
   res.json({ success: true, ...r });
 });
 
@@ -94,7 +97,7 @@ router.get('/availability', async (req, res) => {
  * same quote.
  */
 router.get('/:token', async (req, res) => {
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const q = await Quote.findOne({ where: { tenant_id, token: req.params.token }, raw: true });
   if (!q) return res.status(404).json({ success: false, error: 'Quote not found' });
 
@@ -127,7 +130,7 @@ router.get('/:token', async (req, res) => {
  * hand back a portal session. This is the conversion moment.
  */
 router.post('/:token/accept', gate, async (req, res) => {
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const { password, service_date, window_start, window_end, autopay } = req.body || {};
   const session = req.orbSession;
   const identity = session.identity || {};

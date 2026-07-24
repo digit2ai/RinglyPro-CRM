@@ -15,7 +15,10 @@ const router = express.Router();
 const { Customer, User } = require('../models');
 const { notify } = require('../services/notify');
 
-const TENANT = () => Number(process.env.LAWNCOPILOT_TENANT_ID || 1);
+function T(req) {
+  if (!req.tenant_id) throw new Error('auth route reached without a resolved tenant');
+  return req.tenant_id;
+}
 const SECRET = () => process.env.LAWNCOPILOT_JWT_SECRET || process.env.JWT_SECRET || 'lawncopilot-dev-secret';
 const COOKIE = { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 30 * 86400000, path: '/' };
 
@@ -26,7 +29,7 @@ function sign(payload) { return jwt.sign(payload, SECRET(), { expiresIn: '30d' }
 // ── Customer ───────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body || {};
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const c = await Customer.findOne({ where: { tenant_id, email: String(email || '').toLowerCase().trim() } });
   if (!c || !c.password_hash) return res.status(401).json({ success: false, error: 'Invalid email or password' });
   const ok = await bcrypt.compare(String(password || ''), c.password_hash);
@@ -38,7 +41,7 @@ router.post('/login', async (req, res) => {
 
 router.post('/magic-link', async (req, res) => {
   const { email } = req.body || {};
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const c = await Customer.findOne({ where: { tenant_id, email: String(email || '').toLowerCase().trim() }, raw: true });
   // Always answer the same way — never leak whether an address is on file.
   const generic = { success: true, message: 'If that email is on file, a sign-in link is on its way.' };
@@ -64,7 +67,7 @@ router.get('/verify', (req, res) => {
     return res.redirect('/lawncopilot/login?expired=1');
   }
   magicLinks.delete(req.query.token);
-  res.cookie('lawncopilot_token', sign({ id: rec.customer_id, tenant_id: TENANT(), kind: 'customer' }), COOKIE);
+  res.cookie('lawncopilot_token', sign({ id: rec.customer_id, tenant_id: T(req), kind: 'customer' }), COOKIE);
   res.redirect('/lawncopilot/portal/');
 });
 
@@ -89,7 +92,7 @@ router.get('/me', async (req, res) => {
 // ── Staff ──────────────────────────────────────────────────────────────────
 router.post('/staff/login', async (req, res) => {
   const { email, password } = req.body || {};
-  const tenant_id = TENANT();
+  const tenant_id = T(req);
   const u = await User.findOne({ where: { tenant_id, email: String(email || '').toLowerCase().trim() } });
   if (!u || !u.password_hash) return res.status(401).json({ success: false, error: 'Invalid email or password' });
   const ok = await bcrypt.compare(String(password || ''), u.password_hash);
