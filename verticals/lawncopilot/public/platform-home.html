@@ -228,6 +228,14 @@
 .sim-tab.is-on { color: var(--green-700); }
 .sim-caption { font-size: .74rem; color: var(--text-mut); margin-top: var(--space-4); text-align: center; max-width: 300px; }
 
+/* The auto-play tour: a progress bar + caption under the phone. */
+.sim-tour { width: 300px; max-width: 100%; margin-top: var(--space-4); }
+.sim-tour__bar { height: 3px; border-radius: 3px; background: var(--ink-100); overflow: hidden; }
+.sim-tour__bar i { display: block; height: 100%; width: 0; background: var(--green-500); border-radius: 3px; }
+.sim-tour__cap { font-size: .74rem; color: var(--green-700); font-weight: 700; text-align: center;
+  margin-top: 8px; min-height: 18px; letter-spacing: -.01em; }
+#sim:not(.is-touring) .sim-tour { opacity: .35; }
+
 .simfeat { list-style: none; padding: 0; margin: var(--space-5) 0 0; }
 .simfeat li { padding-left: 30px; position: relative; margin-bottom: var(--space-4); }
 .simfeat li b { display: block; font-size: .98rem; color: var(--ink-900); }
@@ -379,7 +387,8 @@
       <img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="182" height="69">
     </a>
     <div class="nav__links">
-      <a href="#crew">The AI crew</a>
+      <a href="#crew">Eight AI employees</a>
+      <a href="#brain">The Brain</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
       <a href="#demo">See it live</a>
@@ -388,8 +397,33 @@
       <a class="btn btn--ghost btn--sm" href="/lawncopilot/platform/login">Sign in</a>
       <a class="btn btn--primary btn--sm" href="/lawncopilot/signup">Start free</a>
     </div>
+    <button class="nav__burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><span></span></button>
+  </div>
+  <div class="nav__drawer" id="drawer">
+    <a href="#crew" data-close>Eight AI employees</a>
+    <a href="#brain" data-close>The Brain</a>
+    <a href="#how" data-close>How it works</a>
+    <a href="#pricing" data-close>Pricing</a>
+    <a href="#demo" data-close>See it live</a>
+    <a class="btn btn--ghost" href="/lawncopilot/platform/login">Sign in</a>
+    <a class="btn btn--primary" href="/lawncopilot/signup">Start free</a>
   </div>
 </nav>
+
+<script>
+/* Hamburger menu: toggle the drawer, close on link tap or Escape. */
+(function () {
+  var b = document.getElementById('burger'), d = document.getElementById('drawer');
+  if (!b || !d) return;
+  function set(open) {
+    document.body.classList.toggle('menu-open', open);
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  b.addEventListener('click', function () { set(!document.body.classList.contains('menu-open')); });
+  d.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+})();
+</script>
 
 <header class="hero--saas">
   <div class="wrap hero__grid">

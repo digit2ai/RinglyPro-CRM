@@ -232,4 +232,28 @@ router.get('/ai-spend', async (req, res) => {
   });
 });
 
+/**
+ * Unit economics: what each plan costs us to run and the margin behind its
+ * price. This is where the operator sees WHY Solo is $35 and Multi Trucks is
+ * $259 — the itemized cost, the markup, and the honest note about infra
+ * amortization at current scale.
+ */
+const unitEcon = require('../services/unit-economics');
+
+router.get('/economics', async (req, res) => {
+  try {
+    const plans = unitEcon.allPlans().map(p => ({
+      plan: p.plan, label: p.usage ? undefined : undefined,
+      price_usd: p.price_usd, cost_usd: p.cost_usd,
+      floor_usd: p.floor_usd, markup_target: p.markup, markup_realized: p.markup_realized,
+      gross_margin_usd: p.gross_margin_usd, gross_margin_pct: p.gross_margin_pct,
+      lines: p.lines
+    }));
+    const book = await unitEcon.platformEconomics();
+    res.json({ success: true, markup_target: unitEcon.MARKUP(), plans, book });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

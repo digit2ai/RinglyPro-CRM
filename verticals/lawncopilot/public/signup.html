@@ -90,7 +90,15 @@ body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
         <div class="field" id="f-password">
           <label for="password">Password</label>
           <input id="password" type="password" required autocomplete="new-password" minlength="8">
+          <div class="hint">At least 8 characters.</div>
           <div class="err">At least 8 characters.</div>
+        </div>
+
+        <div class="field" id="f-password_confirm">
+          <label for="password_confirm">Confirm password</label>
+          <input id="password_confirm" type="password" required autocomplete="new-password" minlength="8">
+          <div class="hint" id="pwmatch"></div>
+          <div class="err">The two passwords do not match.</div>
         </div>
 
         <div class="field">
@@ -103,9 +111,10 @@ body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
           <label for="crew_count">How many crews?</label>
           <select id="crew_count">
             <option value="1">Just me</option>
+            <option value="1">1 crew</option>
             <option value="2" selected>2 crews</option>
             <option value="3">3 crews</option>
-            <option value="5">5 or more</option>
+            <option value="5">5 or more crews</option>
           </select>
         </div>
 
@@ -126,14 +135,8 @@ body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
 
     <div>
       <h2 style="font-size:1.25rem">What you get, today</h2>
-      <ol class="steps" style="margin-top:var(--space-5)">
-        <li><b>Your own page</b><span class="mut small">Customers get an instant measured price and book themselves.</span></li>
-        <li><b>A receptionist that never sleeps</b><span class="mut small">Every call answered, quoted and booked.</span></li>
-        <li><b>An estimator that never drives</b><span class="mut small">Priced from property records, not a site visit.</span></li>
-        <li><b>Scheduling and routes</b><span class="mut small">Real capacity, sequenced days.</span></li>
-        <li><b>Invoices that collect themselves</b><span class="mut small">Billed on completion, chased automatically.</span></li>
-        <li><b>A QR code for your truck</b><span class="mut small">Scan it, land on your page, get a price.</span></li>
-      </ol>
+      <p class="mut small" id="planlabel" style="margin-top:4px">On the <b>Crew</b> plan</p>
+      <ol class="steps" id="whatyouget" style="margin-top:var(--space-4)"></ol>
       <div class="card" style="margin-top:var(--space-5)">
         <b>You still sign off.</b>
         <p class="small mut" style="margin:6px 0 0">Every quote, schedule change, refund and pay run is yours to approve. The AI does the work and shows you what it did.</p>
@@ -153,11 +156,22 @@ var company = document.getElementById('company_name');
 var slug = document.getElementById('slug');
 var hint = document.getElementById('slughint');
 
+// The web address is derived from the company name as they type: lowercased,
+// spaces become underscores, everything that is not a letter, number, dash or
+// underscore is dropped. Same rule as the server's suggestSlug, done locally
+// so it is instant.
+function slugify(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 34);
+}
 company.addEventListener('input', function () {
   if (slugTouched) return;
-  fetch(API + '/suggest-slug?company_name=' + encodeURIComponent(company.value))
-    .then(function (r) { return r.json(); })
-    .then(function (r) { if (!slugTouched) { slug.value = r.slug; checkSlug(); } });
+  slug.value = slugify(company.value);
+  checkSlug();
 });
 slug.addEventListener('input', function () { slugTouched = true; checkSlug(); });
 
@@ -177,11 +191,54 @@ function checkSlug() {
   }, 300);
 }
 
+// Confirm-password: live match feedback, and the form blocks on mismatch.
+var pw = document.getElementById('password');
+var pw2 = document.getElementById('password_confirm');
+var pwmatch = document.getElementById('pwmatch');
+function checkMatch() {
+  if (!pw2.value) { pwmatch.textContent = ''; bad('f-password_confirm', false); return true; }
+  var ok = pw.value === pw2.value;
+  pwmatch.innerHTML = ok ? '<span class="ok">Passwords match</span>' : '<span class="bad">Passwords do not match yet</span>';
+  bad('f-password_confirm', !ok);
+  return ok;
+}
+pw.addEventListener('input', checkMatch);
+pw2.addEventListener('input', checkMatch);
+
 // Plans come from the API, so the form and the pricing table can never disagree.
 var planSel = document.getElementById('plan');
 var wantPlan = new URLSearchParams(location.search).get('plan');
+var PLANS = {};
+
+// The "What you get" list mirrors the selected plan's real feature set.
+function renderWhatYouGet(id) {
+  var p = PLANS[id];
+  if (!p) return;
+  document.getElementById('planlabel').innerHTML = 'On the <b>' + p.label + '</b> plan';
+  var base = [
+    ['Your own page', 'Customers get an instant measured price and book themselves.'],
+    ['A receptionist that never sleeps', 'Every call answered, quoted and booked.'],
+    ['An estimator that never drives', 'Priced from property records, not a site visit.'],
+    ['Scheduling and routes', 'Real capacity, sequenced days.'],
+    ['Invoices that collect themselves', 'Billed on completion, chased automatically.'],
+    ['A QR code for your truck', 'Scan it, land on your page, get a price.']
+  ];
+  if (p.includes && p.includes.marketing) base.push(['Marketing and reviews', 'Review requests, referrals and win-backs, sent for you.']);
+  if (p.includes && p.includes.payroll) base.push(['Payroll Officer', 'Clocked hours to gross to net, for your approval.']);
+  if (p.includes && p.includes.controller) base.push(['The Controller', 'Job costing and margin per customer, waste flagged.']);
+  base.push([
+    p.limits.crews === 'Unlimited' ? 'Unlimited crews and employees'
+      : 'Up to ' + p.limits.crews + (p.limits.crews === 1 ? ' crew' : ' crews') + ' and ' + p.limits.employees + ' people',
+    'Grows with you — move up a plan any time.'
+  ]);
+  document.getElementById('whatyouget').innerHTML = base.map(function (x) {
+    return '<li><b>' + x[0] + '</b><span class="mut small">' + x[1] + '</span></li>';
+  }).join('');
+}
+
 fetch(API + '/plans').then(function (r) { return r.json(); }).then(function (d) {
   if (!d.success) throw new Error('no plans');
+  d.plans.forEach(function (p) { PLANS[p.id] = p; });
   planSel.innerHTML = d.plans.map(function (p) {
     return '<option value="' + p.id + '"' +
       ((wantPlan === p.id || (!wantPlan && p.popular)) ? ' selected' : '') + '>' +
@@ -189,12 +246,15 @@ fetch(API + '/plans').then(function (r) { return r.json(); }).then(function (d) 
   }).join('');
   document.getElementById('planhint').textContent =
     d.trial_days + '-day free trial on every plan. No card required. Change or cancel any time.';
+  renderWhatYouGet(planSel.value);
 }).catch(function () {
   planSel.innerHTML = '<option value="crew" selected>Crew</option>';
 });
+planSel.addEventListener('change', function () { renderWhatYouGet(this.value); });
 
 document.getElementById('form').addEventListener('submit', function (e) {
   e.preventDefault();
+  if (!checkMatch()) { show('The two passwords do not match.'); return; }
   var payload = {
     company_name: company.value.trim(),
     slug: slug.value.trim(),
@@ -202,6 +262,7 @@ document.getElementById('form').addEventListener('submit', function (e) {
     owner_email: document.getElementById('owner_email').value.trim(),
     owner_phone: document.getElementById('owner_phone').value.trim(),
     password: document.getElementById('password').value,
+    password_confirm: document.getElementById('password_confirm').value,
     counties: document.getElementById('counties').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
     crew_count: Number(document.getElementById('crew_count').value),
     plan: planSel.value || undefined

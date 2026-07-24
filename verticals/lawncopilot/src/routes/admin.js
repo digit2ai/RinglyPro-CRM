@@ -520,4 +520,32 @@ router.get('/audit', requireRole('owner', 'admin'), async (req, res) => {
   res.json({ success: true, audit: rows });
 });
 
+// ── Phone layer (RinglyPro Lite, integrated) ────────────────────────────────
+// The Receptionist can only answer if the company has a number and forwards to
+// it. These surface number provisioning + the carrier forwarding codes.
+const telephony = require('../services/telephony');
+
+router.get('/phone', async (req, res) => {
+  res.json(await telephony.phoneStatus(T(req), {
+    country: req.query.country || 'US',
+    carrier: req.query.carrier,
+    mode: req.query.mode || 'noanswer',
+    rings: req.query.rings
+  }));
+});
+
+router.post('/phone/provision', requireRole('owner', 'admin'), async (req, res) => {
+  const r = await telephony.provisionNumber(T(req), {
+    areaCode: (req.body || {}).area_code, country: (req.body || {}).country || 'US'
+  });
+  if (r.success && r.number) await audit(req, 'provision', 'phone_number', r.number, null, { number: r.number }, 'admin');
+  res.json(r);
+});
+
+router.post('/phone/number', requireRole('owner', 'admin'), async (req, res) => {
+  const r = await telephony.setNumber(T(req), (req.body || {}).number);
+  if (r.success) await audit(req, 'set', 'phone_number', r.number, null, { number: r.number }, 'manual');
+  res.json(r);
+});
+
 module.exports = router;

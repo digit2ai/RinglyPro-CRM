@@ -23,16 +23,19 @@ const TRIAL_DAYS = () => Number(process.env.LAWNCOPILOT_TRIAL_DAYS || 14);
 /**
  * The three plans.
  *
- * PRICING IS A BUSINESS DECISION — these figures are a proposal, not confirmed
- * by the operator. They live here so changing them is one edit, and the landing
- * page reads them from /api/v1/signup/plans rather than hardcoding numbers in
- * markup that would drift.
+ * PRICE IS DERIVED, NOT TYPED. Each plan's `price_cents` comes from
+ * services/unit-economics.js — what the plan costs us to run, marked up to the
+ * target margin (70% above cost by default). That is the whole point: a price
+ * can never drift away from the cost behind it, because there is no second
+ * place to change it. Everything else here (limits, features, marketing copy)
+ * is a product decision and lives here.
  */
-const PLAN_LIMITS = {
+const unitEcon = require('./unit-economics');
+
+const PLAN_FEATURES = {
   solo: {
     label: 'Solo',
-    tagline: 'Owner-operator, one truck',
-    price_cents: 9900,                    // TODO: operator-confirmed price
+    tagline: 'Just you and a truck',
     crews: 1, employees: 3, ai_actions_month: 3000,
     payroll: false, marketing: true, controller: false,
     highlights: [
@@ -46,7 +49,6 @@ const PLAN_LIMITS = {
   crew: {
     label: 'Crew',
     tagline: 'A few crews, growing',
-    price_cents: 24900,                   // TODO: operator-confirmed price
     crews: 5, employees: 15, ai_actions_month: 15000,
     payroll: true, marketing: true, controller: false,
     popular: true,
@@ -61,7 +63,6 @@ const PLAN_LIMITS = {
   multi_trucks: {
     label: 'Multi Trucks',
     tagline: 'Multiple crews and locations',
-    price_cents: 49900,                   // TODO: operator-confirmed price
     crews: 999, employees: 999, ai_actions_month: 100000,
     payroll: true, marketing: true, controller: true,
     highlights: [
@@ -75,6 +76,24 @@ const PLAN_LIMITS = {
 };
 
 const PLAN_ORDER = ['solo', 'crew', 'multi_trucks'];
+
+/**
+ * Merge the cost-derived price + fair-use allowances onto each plan's features.
+ * PLAN_LIMITS keeps the same shape the rest of the system already reads
+ * (`.price_cents`, `.crews`, `.payroll`, ...), so nothing downstream changes.
+ */
+const PLAN_LIMITS = {};
+for (const id of PLAN_ORDER) {
+  let priced;
+  try { priced = unitEcon.priceFor(id); } catch (e) { priced = { price_cents: 0, cost_usd: 0, gross_margin_pct: 0 }; }
+  PLAN_LIMITS[id] = {
+    ...PLAN_FEATURES[id],
+    price_cents: priced.price_cents,
+    cost_usd: priced.cost_usd,
+    gross_margin_pct: priced.gross_margin_pct,
+    allowances: (() => { try { return unitEcon.allowancesFor(id); } catch (e) { return null; } })()
+  };
+}
 
 // v1/v2-alpha plan names, so existing tenants keep working.
 const LEGACY_PLANS = { starter: 'solo', pro: 'crew', scale: 'multi_trucks' };
@@ -116,7 +135,7 @@ const DEFAULT_CHECKLISTS = [
  * Create a complete, working landscaping company.
  */
 async function provisionTenant({
-  company_name, slug, owner_name, owner_email, owner_phone, password,
+  company_name, slug, owner_name, owner_email, owner_phone, password, password_confirm,
   state, counties, crew_count, plan
 }) {
   const avail = await isSlugAvailable(slug);
@@ -130,6 +149,11 @@ async function provisionTenant({
   }
   if (!password || String(password).length < 8) {
     return { success: false, error: 'Choose a password of at least 8 characters.', field: 'password' };
+  }
+  // Confirm only when the caller supplied a confirmation — the API stays usable
+  // for programmatic provisioning (the demo seed, tests) that pass one password.
+  if (password_confirm !== undefined && String(password_confirm) !== String(password)) {
+    return { success: false, error: 'The two passwords do not match.', field: 'password_confirm' };
   }
 
   const existingUser = await User.findOne({ where: { email: String(owner_email).toLowerCase().trim() }, raw: true });
@@ -305,17 +329,25 @@ async function adoptLegacyTenant() {
   const legacy = await Tenant.findByPk(1);
   if (!legacy) return { adopted: false, reason: 'no tenant 1' };
 
+  // Once the tenant has an explicit, operator-chosen identity (the owner's own
+  // company name and slug), this migration must stop touching it — otherwise it
+  // fights the owner every boot. `identity_locked` is that opt-out.
+  const locked = !!(legacy.settings && legacy.settings.identity_locked);
+
   // v1 shipped tenant 1 with slug 'lawncopilot', which v2 reserves for the
   // platform itself. A reserved slug resolves to nothing, so the company would
   // be unreachable — rename it rather than leaving it stranded.
   const { RESERVED } = require('../tenancy');
   const needsSlug = !legacy.slug || RESERVED.has(legacy.slug);
-  if (needsSlug) legacy.slug = 'lawn-monster';
+  if (needsSlug && !locked) legacy.slug = 'lawn-monster';
   // v1 named tenant 1 after the platform. As a company it needs its own name,
-  // or the demo reads as if the platform is a lawn care company.
-  if (legacy.name === 'Lawn Co-Pilot') legacy.name = 'Lawn Monster';
-  if (!legacy.brand || !legacy.brand.display_name || legacy.brand.display_name === 'Lawn Co-Pilot') {
-    legacy.brand = defaultBrand('Lawn Monster');
+  // or the demo reads as if the platform is a lawn care company. Skip once the
+  // owner has locked in a real name.
+  if (!locked) {
+    if (legacy.name === 'Lawn Co-Pilot') legacy.name = 'Lawn Monster';
+    if (!legacy.brand || !legacy.brand.display_name || legacy.brand.display_name === 'Lawn Co-Pilot') {
+      legacy.brand = defaultBrand('Lawn Monster');
+    }
   }
   if (!legacy.settings || !legacy.settings.enabled_employees) {
     legacy.settings = { ...(legacy.settings || {}), enabled_employees: enabledFor('scale') };

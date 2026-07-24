@@ -90,6 +90,7 @@ router.post('/', async (req, res) => {
     owner_email: b.owner_email,
     owner_phone: b.owner_phone,
     password: b.password,
+    password_confirm: b.password_confirm,
     state: b.state || 'FL',
     counties: b.counties,
     crew_count: b.crew_count,

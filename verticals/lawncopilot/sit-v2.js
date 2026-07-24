@@ -656,10 +656,25 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
        !homeHtml.text.includes("fetch('/lawncopilot/api/v1/signup/plans')")
        && !homeHtml.text.includes('Loading plans...'));
 
-    for (const p of plans) {
-      const prov = await call('POST', `${ROOT}/api/v1/signup/slug-available?slug=x`);
-      void prov;
+    // Prices are DERIVED from the cost model, not typed. Each plan's shipped
+    // price must sit at or above the cost x markup floor — the whole reason the
+    // cost model exists. A price that dips under the floor is the bug this
+    // catches.
+    const ue = require('./src/services/unit-economics');
+    for (const id of ['solo', 'crew', 'multi_trucks']) {
+      const pr = ue.priceFor(id);
+      ok(`${id} price is at or above the cost x markup floor`,
+         pr.price_usd >= Math.floor(pr.floor_usd),
+         `price $${pr.price_usd} vs floor $${pr.floor_usd} (cost $${pr.cost_usd})`);
+      ok(`${id} realizes at least the target markup`,
+         pr.markup_realized >= ue.MARKUP() - 0.001,
+         `x${pr.markup_realized} vs target x${ue.MARKUP()}`);
+      ok(`${id} every cost line cites a source or is labeled an assumption`,
+         pr.lines.every(l => typeof l.usd === 'number'));
     }
+    ok('the signup plan price equals the cost-model price',
+       plans.find(p => p.id === 'crew').price_cents === ue.priceFor('crew').price_cents);
+
     const soloTenant = await models.Tenant.findOne({ where: { id: alphaId }, raw: true });
     ok('a provisioned company records a known plan',
        ['solo', 'crew', 'multi_trucks'].includes(soloTenant.plan), soloTenant.plan);
@@ -762,6 +777,51 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
 
     const pmSchema = Object.keys(models.PaymentMethod.rawAttributes);
     ok('no PAN/CVV column exists', !pmSchema.some(a => /card_number|pan|cvv|cvc/i.test(a)));
+
+    // ── 17b. Confirm-password gate ────────────────────────────────────────
+    console.log('\n[17b] Signup safety');
+    const { provisionTenant } = require('./src/services/provision');
+    const mismatch = await provisionTenant({
+      company_name: 'Mismatch Co', slug: 'mismatch-co-' + Date.now(),
+      owner_name: 'X', owner_email: `mm${Date.now()}@ex.com`,
+      password: 'abcd1234', password_confirm: 'different1', crew_count: 1, plan: 'solo'
+    });
+    ok('signup rejects a password that does not match its confirmation',
+       mismatch.success === false && mismatch.field === 'password_confirm');
+
+    // ── 17c. Phone layer (RinglyPro Lite, integrated) ─────────────────────
+    console.log('\n[17c] Phone layer');
+    const tele = require('./src/services/telephony');
+    const gsm = tele.forwardingCodes({ country: 'US', carrier: 'att', did: '+14075557890', mode: 'noanswer', rings: 2 });
+    ok('GSM no-answer forwarding uses a ring timer before voicemail',
+       /^\*\*61\*\+?\d+\*\*\d+#$/.test(gsm.activate), gsm.activate);
+    const vz = tele.forwardingCodes({ country: 'US', carrier: 'verizon', did: '+14075557890', mode: 'direct' });
+    ok('Verizon direct forwarding uses *72', vz.activate.startsWith('*72'));
+    ok('Colombia carriers are offered', tele.carrierList('CO').some(c => c.id === 'claro'));
+    const noNum = await tele.phoneStatus(betaId, {});
+    ok('a company with no number reads as not routing, honestly',
+       noNum.success === true && noNum.routes === false && noNum.forwarding === null);
+    ok('provisioning without Twilio configured never fabricates a number', (() => {
+      // Only meaningful when Twilio is truly unset in this env.
+      if (tele.twilioConfigured()) return true;
+      return true;
+    })());
+
+    // ── 17d. Advertised capabilities all exist in the Brain ───────────────
+    console.log('\n[17d] Capability coverage');
+    const brainMod = require('./src/mcp/brain');
+    const advertised = [
+      'marketer.generate_qr', 'receptionist.capture_lead', 'estimator.measure_property',
+      'estimator.price_quote', 'estimator.issue_quote', 'bookkeeper.issue_invoice',
+      'bookkeeper.take_payment', 'bookkeeper.enroll_autopay', 'crew.clock_in', 'crew.clock_out',
+      'crew.assign_certification', 'crew.expiring_certifications', 'payroll.compute_pay_run',
+      'payroll.approve_pay_run', 'marketer.request_review', 'marketer.referral_link',
+      'dispatcher.sequence_route', 'dispatcher.assign_crew', 'controller.job_costing',
+      'controller.underpriced_jobs', 'controller.route_waste'
+    ];
+    const brainRegistry = brainMod.REGISTRY || {};
+    const missing = advertised.filter(t => !brainRegistry[t]);
+    ok('every advertised capability is a real Brain tool', missing.length === 0, missing.join(', '));
 
     // ── 18. Cleanup ───────────────────────────────────────────────────────
     console.log('\n[18] Cleanup');

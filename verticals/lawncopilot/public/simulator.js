@@ -250,8 +250,87 @@
     var btn = e.target.closest('[data-go]');
     if (!btn) return;
     e.preventDefault();
+    stopTour();                       // a tap means the visitor is driving now
     render(btn.getAttribute('data-go'), btn.getAttribute('data-id'));
   });
 
   render('today');
+
+  /* ── The tour: play through the whole office like a short film ─────────
+     Auto-advances through the key screens with a captioned progress bar, so
+     a visitor who never touches it still sees the product work. Any tap, or
+     the tab going to the background, stops it and hands over control. */
+  var TOUR = [
+    { s: 'today', ms: 3600, cap: 'The whole day, in route order' },
+    { s: 'job', id: 3, ms: 3800, cap: 'Open a job — measured, priced, crewed' },
+    { s: 'money', ms: 3600, cap: 'Collected, outstanding, autopay' },
+    { s: 'invoice', ms: 3600, cap: 'A failed card, already being retried' },
+    { s: 'requests', ms: 3800, cap: 'Everything the AI escalated to you' },
+    { s: 'approve', ms: 3400, cap: 'Nothing moves money back without you' },
+    { s: 'routes', ms: 3800, cap: 'Sequenced to cut drive time' },
+    { s: 'crew', ms: 3600, cap: 'Who is clocked in, hours, certs' },
+    { s: 'payroll', ms: 3800, cap: 'Draft pay run — never auto-filed' },
+    { s: 'ai', ms: 4000, cap: 'What all eight employees did today' }
+  ];
+  var tourAt = 0, tourTimer = null, tourOn = false;
+  var bar, cap;
+
+  function mountTourUI() {
+    var wrap = document.createElement('div');
+    wrap.className = 'sim-tour';
+    wrap.innerHTML =
+      '<div class="sim-tour__bar"><i></i></div>' +
+      '<div class="sim-tour__cap"></div>';
+    root.insertBefore(wrap, root.querySelector('.sim-caption'));
+    bar = wrap.querySelector('.sim-tour__bar i');
+    cap = wrap.querySelector('.sim-tour__cap');
+  }
+
+  function tourStep() {
+    var step = TOUR[tourAt % TOUR.length];
+    render(step.s, step.id);
+    if (cap) cap.textContent = step.cap;
+    if (bar) {
+      bar.style.transition = 'none'; bar.style.width = '0%';
+      // next frame so the reset takes before the animated fill
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          bar.style.transition = 'width ' + step.ms + 'ms linear';
+          bar.style.width = '100%';
+        });
+      });
+    }
+    tourTimer = setTimeout(function () { tourAt++; tourStep(); }, step.ms);
+  }
+
+  function startTour() {
+    if (tourOn) return;
+    tourOn = true; root.classList.add('is-touring');
+    tourStep();
+  }
+  function stopTour() {
+    tourOn = false; root.classList.remove('is-touring');
+    clearTimeout(tourTimer);
+    if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+    if (cap) cap.textContent = '';
+  }
+
+  // Respect reduced-motion and only run while the phone is on screen.
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    mountTourUI();
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopTour();
+    });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && !tourOn && tourAt === 0) startTour();
+        });
+      }, { threshold: 0.4 });
+      io.observe(root.querySelector('.sim-phone'));
+    } else {
+      startTour();
+    }
+  }
 })();
