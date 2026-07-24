@@ -9,7 +9,18 @@
 
 ## 0. The command
 
-"Build Lawn Co-Pilot as a **multi-tenant AI office for landscaping companies**. A landscaper signs up, and minutes later has (a) a branded website their customers actually use — `lawncopilot.com/lawn_moster` — where homeowners get an automatic measured quote, book service, pay, and log in to see their schedule and billing; and (b) their **entire back office run by a crew of AI employees orchestrated by one MCP Brain**: answering service, customer service, booking, quoting, accounting, job scheduling, route optimization, cost control, marketing, crew management, employee management, and payroll. The owner does the landscaping. The system does everything else."
+"Build Lawn Co-Pilot as a **multi-tenant AI office for small landscaping companies**. A landscaper signs up, and minutes later has (a) a branded page their customers actually use — `lawncopilot.com/lawn_moster` — where homeowners get an automatic measured quote, book service, pay, and log in to see their schedule and billing; and (b) their **entire back office run by a crew of AI employees orchestrated by one MCP Brain**: answering service, customer service, booking, quoting, accounting, job scheduling, route optimization, cost control, marketing, crew management, employee management, and payroll. The owner does the landscaping. The system does everything else."
+
+### The distribution model — this is Vagaro, not Squarespace
+
+**Small landscapers do not have websites and are not going to buy domains.** They have a truck, a phone number, and a Google Business Profile. Follow the model Vagaro, Booksy and StyleSeat use for salons:
+
+- **The link IS the web presence.** `lawncopilot.com/lawn_moster` is the address they hand out. Not a preview of a real site somewhere else — it is the real thing.
+- **Google Business Profile is the front door.** That is where their customers already find them. Our page is what the "Website" and "Book" buttons on that listing point to. Winning means the handoff from the listing to a booked job is seamless.
+- **No custom domains.** No DNS, no domain verification, no per-tenant SSL. Explicitly out of scope. Do not build the seam, do not build the table.
+- **The link must travel:** QR code for the truck, trailer and yard signs, a short link, and a link-in-bio that works from Facebook and Instagram.
+
+This is a simplification, not a limitation. It removes an entire category of work and it matches how the target customer actually operates.
 
 ### The success test
 
@@ -39,7 +50,7 @@ v1 shipped a working single-tenant instance: 31 tables all scoped by `tenant_id`
 | Vertical folder | `verticals/lawncopilot/` (existing) |
 | Mount | `/lawncopilot` |
 | Platform site | `/lawncopilot/` — sells to landscapers, carries signup |
-| Tenant site | `/lawncopilot/:slug` — e.g. `/lawncopilot/lawn_moster` |
+| Tenant page | `/lawncopilot/:slug` — e.g. `/lawncopilot/lawn_moster`. Their web presence. No custom domains. |
 | Tenant portal | `/lawncopilot/:slug/portal` — the landscaper's customers |
 | Tenant admin | `/lawncopilot/:slug/admin` — the landscaper's office |
 | Platform admin | `/lawncopilot/platform` — Digit2AI only, above all tenants |
@@ -54,7 +65,7 @@ v1 shipped a working single-tenant instance: 31 tables all scoped by `tenant_id`
 ## 2. Hard constraints
 
 1. **Reuse v1.** Do not rebuild the models, Brain, measurement engine, pricing engine, scheduling service, accounting service, portal, or admin. Extend them. Rebuilding working, SIT-covered code is a build failure.
-2. **Tenancy is resolved at the edge, never hardcoded.** v1 resolves tenant from `LAWNCOPILOT_TENANT_ID` in 7 files. That is replaced by middleware that resolves the tenant from the URL slug (and `Host` for custom domains), attaches it to the request, and makes it the ONLY source. No route may read a tenant from an env var or from a request body.
+2. **Tenancy is resolved at the edge, never hardcoded.** v1 resolves tenant from `LAWNCOPILOT_TENANT_ID` in 7 files. That is replaced by middleware that resolves the tenant from the URL slug, attaches it to the request, and makes it the ONLY source. No route may read a tenant from an env var or from a request body.
 3. **The Brain still owns authorization.** `tenant_id` is injected from session context and ignored from tool arguments. Cross-tenant reads must be impossible at the Brain layer, not just the route layer. SIT asserts this per employee.
 4. **One brain per tenant, every channel.** The tenant's web orb, typed chat, phone line, portal assistant and admin copilot all call the same tools with the same tenant context. Duplicating booking, pricing, payroll or billing logic inside a channel is a build failure.
 5. **Identity before anything.** Name, phone and email captured before any request on any public entry point, per tenant, written to that tenant's `lc_leads` before the address. Already built — preserve it exactly.
@@ -107,7 +118,8 @@ crew.*           add_employee, onboard, set_availability, clock_in, clock_out,
 payroll.*        compute_pay_run, preview_pay_run, submit_pay_run, overtime_report,
                  contractor_payment, reimbursement, payroll_calendar, filing_status
 marketing.*      request_review, send_campaign, referral_link, winback_list,
-                 seasonal_offer, seo_snapshot, lead_source_report, publish_site_change
+                 seasonal_offer, lead_source_report, publish_site_change,
+                 sync_google_profile, generate_qr, get_share_kit, page_health
 controller.*     job_costing, margin_report, underpriced_jobs, route_waste,
                  overtime_waste, unbilled_work, price_recommendations, cash_forecast,
                  savings_summary
@@ -137,11 +149,12 @@ Endpoints: `GET /mcp/tools/list`, `POST /mcp/tools/call`, `GET /mcp/employees`, 
 Middleware, first in the chain:
 
 1. `/:slug/*` where slug matches a live tenant → that tenant.
-2. `Host` header matching a verified custom domain → that tenant.
-3. Platform routes (`/`, `/signup`, `/platform`, `/mcp`) → no tenant, or platform context.
-4. Unknown slug → 404 with a "no such company" page, never a silent fallback to tenant 1.
+2. Platform routes (`/`, `/signup`, `/platform`, `/mcp`) → no tenant, or platform context.
+3. Unknown slug → 404 with a "no such company" page, never a silent fallback to tenant 1.
 
-Reserved slugs: `platform`, `admin`, `portal`, `api`, `mcp`, `signup`, `login`, `health`, `webhooks`, `voice`, `assets`, `static`, `quote`, `www`, plus profanity and impersonation of known brands. Slug rules: lowercase alphanumeric, dash and underscore, 3–40 chars, immutable after first customer (changing it breaks their customers' links — allow an alias table instead).
+The slug is the whole addressing scheme. There is no domain layer.
+
+Reserved slugs: `platform`, `admin`, `portal`, `api`, `mcp`, `signup`, `login`, `health`, `webhooks`, `voice`, `assets`, `static`, `quote`, `www`, plus profanity and impersonation of known brands. Slug rules: lowercase alphanumeric, dash and underscore, 3–40 chars, immutable after launch. The slug is printed on trucks and linked from Google — changing it breaks their entire presence. Support an alias table for redirects if a change is ever unavoidable.
 
 ### 5.2 Signup and provisioning
 
@@ -166,11 +179,32 @@ Every query scoped by resolved tenant. SIT proves, for each of the eight employe
 
 ---
 
-## 6. The tenant's website — their real web presence
+## 6. The tenant's page — their entire web presence
 
-This is not a portal skin. It is the site the landscaper puts on the truck.
+This is not a portal skin and not a preview of a site hosted elsewhere. `lawncopilot.com/:slug` **is** their web presence, the way `vagaro.com/:salon` is a salon's. Most of these businesses have no website at all today — a Google listing and a phone number is the whole footprint.
 
-**Public pages** at `/lawncopilot/:slug`: home (orb-led), services, service areas, about, reviews, contact, FAQ, privacy, terms. Per-city landing pages generated from their configured service areas for local SEO.
+### 6.1 The Google Business Profile handoff is the primary funnel
+
+Design for the customer who is standing in their driveway, has just tapped "Website" or "Book" on a Google listing, and is on 4G in sunlight.
+
+- **One screen to value.** The address field and the orb are above the fold. No hero carousel, no "learn more" detour.
+- **Sub-2-second load on mobile.** No web fonts blocking render, no third-party scripts, images lazy and sized. This is a hard budget, not an aspiration.
+- **Click-to-call is a first-class action**, because half of them will call instead of type.
+- **Google Business Profile integration** (Marketer-owned): push the booking link and short link into the listing, pull reviews in, publish posts. When the API is not configured, generate exact copy-paste instructions and the correct URLs so the owner can wire it in two minutes.
+
+### 6.2 The link has to travel
+
+The slug is printed and shared, so ship the tools that carry it:
+
+- **QR code** generated per tenant, downloadable at print resolution for truck doors, trailers, yard signs and door hangers
+- **Short link** (`lawncopilot.com/l/xxxx`) for texts and business cards
+- **Link-in-bio** behavior that works when opened inside the Facebook and Instagram in-app browsers — test this explicitly, those webviews break things
+- **Open Graph card** so the link previews properly when pasted into Facebook, Nextdoor and text messages
+- A **share sheet** in the admin: "text me my link", "email me my QR", "copy for Google"
+
+### 6.3 Pages and content
+
+`/lawncopilot/:slug` plus: services, service areas, about, reviews, contact, FAQ, privacy, terms.
 
 **Must include:**
 - Their branded talking orb — speak or type, same conversation, gated on name/phone/email first (v1 behavior, preserved per tenant)
@@ -178,11 +212,13 @@ This is not a portal skin. It is the site the landscaper puts on the truck.
 - Book, create account, pay, enable autopay
 - Customer login to the client hub
 - Click-to-call their AI receptionist number
-- Real reviews pulled from the review system, not invented
-- Per-tenant SEO: title/meta/OG, JSON-LD `LocalBusiness` with their real NAP, sitemap, robots
-- Mobile sticky CTA, Lighthouse mobile performance >= 90, accessibility >= 95
+- Real reviews pulled from the review system, never invented
+- JSON-LD `LocalBusiness` with their real name, address and phone, consistent with their Google listing (NAP consistency is the one SEO factor that actually matters here)
+- Mobile sticky CTA; Lighthouse mobile performance >= 90, accessibility >= 95
 
-**Marketer-editable:** the owner can change headline, services, photos and copy from the admin, or ask the Marketer to do it in conversation. Changes publish immediately; every publish is versioned and revertible.
+**SEO expectations, honestly scoped.** These tenants are not going to outrank anyone on a shared path URL, and the brief should not pretend otherwise. The realistic wins are: the Google listing ranks and converts, NAP is consistent, the page loads fast and converts, and reviews accumulate. Do not build per-city doorway pages — they are low value on a shared domain and risk looking spammy. A platform-level directory of live tenants is worth building for internal linking and as a lead source.
+
+**Marketer-editable:** the owner changes headline, services, photos and copy from the admin, or asks the Marketer in conversation. Changes publish immediately; every publish is versioned and revertible.
 
 ---
 
@@ -255,7 +291,8 @@ Every pay run requires explicit owner approval through the queue. No pay run eve
 - **Review generation:** automatic request after a completed job, timed and consent-aware, routed to the tenant's chosen platform. No gating, no incentives, no fake reviews. Ever.
 - **Referrals:** per-customer referral codes and rewards, tracked to conversion.
 - **Campaigns:** seasonal offers, service upsells, dormant win-backs, new-neighbor targeting around existing routes (a real advantage — density lowers drive time).
-- **Their website:** SEO health, per-city pages, content updates, Google Business Profile sync when connected.
+- **Their Google Business Profile:** the front door. Keep the booking link and short link on the listing, sync reviews in, publish posts, watch for NAP drift. When the API is unavailable, hand the owner exact copy-paste values.
+- **Their page:** content updates, photos, service list, load-speed health, and the QR/short-link/share tooling.
 - **Attribution:** every lead carries source and campaign through to revenue, so the owner sees what actually works.
 
 All sends consent-gated, rate-limited, and quiet-hours-aware. Campaigns above a size threshold require owner approval.
@@ -307,7 +344,7 @@ lc_campaign_sends         per-recipient send, consent snapshot, outcome
 lc_reviews                request, platform, status, resulting rating
 lc_referrals              code, referrer, referee, reward, conversion
 lc_site_content           per-tenant page content, versioned, revertible
-lc_domains                custom domain, verification state
+lc_short_links            short code -> tenant, scan/click counts, source tag
 lc_subscriptions_platform the landscaper's own plan and billing
 lc_platform_users         Digit2AI super-admins
 lc_tenant_settings        feature flags, enabled employees, plan limits
@@ -319,13 +356,13 @@ Also: add `slug`, `status`, `plan`, `stripe_account_id`, `trial_ends_at` to `lc_
 
 ## 18. Delivery phases (weeks, not months)
 
-**Week 1 — Tenancy.** Resolution middleware replacing all 7 hardcoded env reads, signup and provisioning, slug rules and reserved words, per-tenant branding, templated tenant site, tenant-scoped customer auth, per-tenant phone routing. Existing SIT must still pass, extended for multi-tenant isolation across the whole tool registry.
+**Week 1 — Tenancy.** Resolution middleware replacing all 7 hardcoded env reads, signup and provisioning, slug rules and reserved words, per-tenant branding, templated tenant page, share kit (QR + short link + OG card), tenant-scoped customer auth, per-tenant phone routing. Existing SIT must still pass, extended for multi-tenant isolation across the whole tool registry.
 
 **Week 2 — The office deepens.** Crew Manager and time tracking, crew mobile job surface, real route optimization with measured savings, expenses and job costing, Bookkeeper extensions.
 
 **Week 3 — Money and growth.** Payroll Officer with provider integration and draft-only fallback, Stripe Connect onboarding, platform subscriptions, Marketer with reviews/referrals/campaigns, Controller with the savings digest.
 
-**Week 4 — Platform and hardening.** Super-admin, plan limits and feature flags, per-tenant cost metering, custom domains, SEO pass, load and security review, and the production cutover plan for lawncopilot.com.
+**Week 4 — Platform and hardening.** Super-admin, plan limits and feature flags, per-tenant cost metering, link distribution (QR, short link, GBP handoff), SEO pass, load and security review, and the production cutover plan for lawncopilot.com.
 
 ---
 
@@ -336,12 +373,13 @@ Existing v1 vars are preserved. New:
 | Var | Purpose | Unset behavior |
 |---|---|---|
 | `LAWNCOPILOT_PLATFORM_SECRET` | Signs platform super-admin sessions | Must be set on prod |
-| `LAWNCOPILOT_BASE_DOMAIN` | Canonical domain for tenant links | Falls back to request host |
+| `LAWNCOPILOT_BASE_DOMAIN` | Canonical host used to build shareable tenant links and QR codes | Falls back to request host |
 | `STRIPE_CONNECT_CLIENT_ID` | Stripe Connect onboarding | Payments run platform-collect, flagged in UI |
 | `STRIPE_PLATFORM_FEE_BPS` | Application fee in basis points | `0` |
 | `PAYROLL_PROVIDER` | `check` / `gusto` / unset | Unset = payroll draft-only, never represented as filed |
 | `PAYROLL_PROVIDER_KEY` | Provider credential | Draft-only |
 | `ROUTING_PROVIDER_KEY` | Real drive-time matrix | Straight-line distance, labeled as an estimate |
+| `GOOGLE_BUSINESS_PROFILE_KEY` | GBP sync: booking link, reviews, posts | Owner is given copy-paste instructions instead |
 | `REVIEW_PLATFORM_KEYS` | Google/Facebook review routing | Review requests queue with a manual link |
 | `QBO_CLIENT_ID` / `XERO_CLIENT_ID` | Accounting sync | Export CSV only |
 | `LAWNCOPILOT_SIGNUP_OPEN` | Gate public signup | `1` |
@@ -378,8 +416,11 @@ All curl- or SIT-verifiable, with zero external keys unless stated.
 23. Platform super-admin cannot read tenant customer PII without an audited impersonation session.
 24. Per-tenant AI cost is metered and the cap degrades to typed-only with a clear message.
 25. PWA and app-shell assets serve before the auth gate; pages still redirect when signed out.
-26. Tenant site mobile Lighthouse: performance >= 90, accessibility >= 95, SEO >= 95.
-27. `node verticals/lawncopilot/sit.js` passes 100% with no external keys. The existing 108 assertions must continue to pass.
+26. Tenant page mobile Lighthouse: performance >= 90, accessibility >= 95, SEO >= 95, and **first contentful paint under 2s on a simulated 4G mobile profile**.
+27. Every tenant has a working QR code, a short link that resolves to their page, and an Open Graph card that renders correctly when the link is pasted.
+28. The tenant page functions inside the Facebook and Instagram in-app browsers, including the orb's typed path.
+29. No custom-domain code, table, or DNS logic exists anywhere in the vertical.
+30. `node verticals/lawncopilot/sit.js` passes 100% with no external keys. The existing 108 assertions must continue to pass.
 
 ---
 
@@ -390,7 +431,6 @@ Build with the stated defaults; do not block. Flag these in the final report.
 - **Stripe Connect vs platform-collect.** Brief assumes Connect with an application fee.
 - **Subscription pricing.** Assume tiered flat monthly with crew/employee limits and Payroll + Marketer as higher-tier features. Real numbers needed.
 - **Payroll provider.** Assume Check or Gusto Embedded. Commercial agreement needed before it can go live.
-- **Custom domains in v1?** Brief builds the seam and the verification table; DNS automation is deferred unless stated.
 - **White-label depth.** Assume "Powered by Lawn Co-Pilot" in the tenant site footer, removable on higher tiers.
 - **Florida rate card.** Current defaults ($0.0042/sq ft, $45 minimum) are placeholders pending real numbers.
 - **Cancellation, refund and no-show policy text** for the tenant terms.
@@ -399,4 +439,4 @@ Build with the stated defaults; do not block. Flag these in the final report.
 
 ## 22. Reporting requirement
 
-On completion report: platform URL, a live demo tenant URL, super-admin URL, the commit and deploy, which of the twelve service areas shipped complete versus seam-only, SIT output, the external keys still required (parcel provider, Maps, Stripe Connect, payroll provider, routing provider, review platforms), and every operator decision still outstanding. Do not stop for those — build with the stated defaults, mark unconfirmed figures as `TODO: client-confirmed`, and list them.
+On completion report: platform URL, a live demo tenant URL and its QR/short link, super-admin URL, the commit and deploy, which of the twelve service areas shipped complete versus seam-only, SIT output, the external keys still required (parcel provider, Maps, Stripe Connect, payroll provider, routing provider, review platforms), and every operator decision still outstanding. Do not stop for those — build with the stated defaults, mark unconfirmed figures as `TODO: client-confirmed`, and list them.
