@@ -502,6 +502,18 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     }
     const homeHtml = await call('GET', `${ROOT}/`);
     ok('platform home renders', homeHtml.status === 200 && /AI office/i.test(homeHtml.text));
+    // The platform page sells to LANDSCAPERS. Homeowner-facing copy belongs on
+    // tenant pages; a stale v1 landing once shipped alongside it saying
+    // "get a real price before you finish your coffee".
+    ok('platform home speaks to the landscaper, not the homeowner',
+       /answer the calls|book the jobs|route the crews/i.test(homeHtml.text)
+       && !/finish your coffee/i.test(homeHtml.text));
+    ok('platform home promises the single mobile dashboard',
+       /one dashboard on your phone|single dashboard/i.test(homeHtml.text));
+    const staleLanding = await call('GET', `${ROOT}/index.html`);
+    ok('no stale homeowner landing is reachable on the platform',
+       staleLanding.status === 404 || !/finish your coffee/i.test(staleLanding.text || ''),
+       `HTTP ${staleLanding.status}`);
     ok('platform home is wired to a live demo company, not a dead orb',
        !homeHtml.text.includes('__DEMO_SLUG__'));
 
