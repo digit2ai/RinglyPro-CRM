@@ -79,4 +79,17 @@ const Metric = sequelize.define('gr_metric', {
   captured_at: { type: DataTypes.DATE }
 }, { tableName: 'gr_metrics', underscored: true, timestamps: true });
 
-module.exports = { sequelize, User, Brand, Draft, Run, Metric };
+// ── Channel settings (owner-level integration + prefs config) ───────────────
+// One row per owner. Each channel is a JSONB blob; secrets inside x/linkedin are
+// AES-encrypted before they land here (see services/crypto.js).
+const Setting = sequelize.define('gr_setting', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  owner_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+  seo: { type: DataTypes.JSONB, defaultValue: {} },       // gsc/ga4 property, site url, kw count
+  content: { type: DataTypes.JSONB, defaultValue: {} },   // default words, tone, cta, blog url
+  x: { type: DataTypes.JSONB, defaultValue: {} },         // handle, posts_per_run, encrypted tokens, autopost
+  linkedin: { type: DataTypes.JSONB, defaultValue: {} },  // profile/org, encrypted token, autopost
+  geo: { type: DataTypes.JSONB, defaultValue: {} }        // engines[], brand_facts
+}, { tableName: 'gr_settings', underscored: true, timestamps: true });
+
+module.exports = { sequelize, User, Brand, Draft, Run, Metric, Setting };

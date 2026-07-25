@@ -14,6 +14,7 @@
 
 const { Brand, Draft, Run } = require('../models');
 const { callClaude, extractJson } = require('./ai');
+const { getConfig } = require('./settings');
 
 const COST_CAP = parseFloat(process.env.GROWTH_COST_CAP_USD || '2.0');
 
@@ -57,9 +58,13 @@ async function seoAudit(b) {
   };
 }
 
-async function contentDraft(b) {
-  const sys = `You are a content marketer. Write a tight 250-350 word blog intro + section headers for ${b.name}, in the brand voice. No emojis. Return ONLY JSON: {"title":"","body":"markdown"}.`;
-  const r = await callClaude(sys, brandContext(b), 1200);
+async function contentDraft(b, cfg = {}) {
+  const c = cfg.content || {};
+  const words = c.default_words || 300;
+  const tone = c.tone || 'professional';
+  const cta = c.cta ? ` End with this call to action: "${c.cta}".` : '';
+  const sys = `You are a content marketer. Write a tight ~${words} word blog intro + section headers for ${b.name}, in a ${tone} tone and the brand voice. No emojis.${cta} Return ONLY JSON: {"title":"","body":"markdown"}.`;
+  const r = await callClaude(sys, brandContext(b), Math.min(2000, 700 + words * 3));
   const j = r.text && extractJson(r.text);
   if (j) {
     return { channel: 'content', kind: 'article', title: j.title || `${b.name}: article`, body: j.body || '', meta: {}, is_simulated: false, cost_usd: r.cost_usd };
@@ -72,9 +77,10 @@ async function contentDraft(b) {
   };
 }
 
-async function socialX(b) {
-  const sys = `Write 3 distinct X (Twitter) posts for ${b.name} in the brand voice. Under 280 chars each, no hashtags spam, no emojis. Return ONLY JSON: {"posts":["","",""]}.`;
-  const r = await callClaude(sys, brandContext(b), 700);
+async function socialX(b, cfg = {}) {
+  const n = (cfg.x && cfg.x.posts_per_run) || 3;
+  const sys = `Write ${n} distinct X (Twitter) posts for ${b.name} in the brand voice. Under 280 chars each, no hashtag spam, no emojis. Return ONLY JSON: {"posts":[]} with ${n} strings.`;
+  const r = await callClaude(sys, brandContext(b), 300 + n * 140);
   const j = r.text && extractJson(r.text);
   if (j && Array.isArray(j.posts)) {
     return { channel: 'x', kind: 'post', title: `${b.name}: X posts`, body: j.posts.join('\n\n---\n\n'), meta: { posts: j.posts }, is_simulated: false, cost_usd: r.cost_usd };
@@ -100,11 +106,14 @@ async function socialLinkedIn(b) {
   };
 }
 
-async function geoMonitor(b) {
+async function geoMonitor(b, cfg = {}) {
   // GEO = get cited by AI answer engines. We ask the model how it would describe
   // the brand, then flag gaps to fix on the site (the review-and-improve loop).
-  const sys = `You are a GEO (generative engine optimization) analyst. Describe how an AI assistant would currently summarize ${b.name} to a user, then list 3 concrete facts/pages the product should publish so AI engines cite it accurately. Return ONLY JSON: {"current_summary":"","gaps":["","",""]}.`;
-  const r = await callClaude(sys, brandContext(b), 800);
+  const g = cfg.geo || {};
+  const engines = (g.engines && g.engines.length) ? g.engines.join(', ') : 'ChatGPT, Perplexity, Gemini, Google AI Overviews';
+  const facts = g.brand_facts ? `\n\nGround truth the engines SHOULD reflect:\n${g.brand_facts}` : '';
+  const sys = `You are a GEO (generative engine optimization) analyst focused on these AI answer engines: ${engines}. Describe how they would currently summarize ${b.name} to a user, then list 3 concrete facts/pages the product should publish so those engines cite it accurately. Return ONLY JSON: {"current_summary":"","gaps":["","",""]}.`;
+  const r = await callClaude(sys, brandContext(b) + facts, 800);
   const j = r.text && extractJson(r.text);
   if (j) {
     return {
@@ -141,6 +150,7 @@ async function runBrand(brandId, ownerId, { agents = ALL_AGENTS, trigger = 'manu
   const brand = await Brand.findOne({ where: { id: brandId, owner_id: ownerId } });
   if (!brand) throw new Error('Brand not found');
 
+  const cfg = await getConfig(ownerId); // channel settings steer the agents
   const run = await Run.create({ owner_id: ownerId, brand_id: brandId, trigger, agents });
   let cost = 0, created = 0, errored = 0;
 
@@ -149,7 +159,7 @@ async function runBrand(brandId, ownerId, { agents = ALL_AGENTS, trigger = 'manu
     if (!fn) continue;
     if (cost >= COST_CAP) break; // cost guard
     try {
-      const out = await fn(brand);
+      const out = await fn(brand, cfg);
       cost += out.cost_usd || 0;
       await Draft.create({
         owner_id: ownerId, brand_id: brandId, agent: name,

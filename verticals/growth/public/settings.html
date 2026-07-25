@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digit2AI Growth — Configuracion</title>
+<style>
+  :root{--bg:#0b1020;--card:#141b30;--line:#26314f;--ink:#eef2ff;--mut:#93a0c4;--acc:#6d9bff;--ok:#4fd18b}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  header h1{font-size:16px;margin:0}
+  header .sub{color:var(--mut);font-size:12px}
+  a.link{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;text-decoration:none}
+  main{max-width:820px;margin:0 auto;padding:22px;display:grid;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h2{font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .chan{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .card p.hint{color:var(--mut);font-size:12px;margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--mut);margin:0 0 5px}
+  input,select,textarea{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#0d142a;color:var(--ink);font-size:13px;font-family:inherit}
+  textarea{min-height:70px;resize:vertical}
+  .full{grid-column:1/-1}
+  .set{font-size:11px;color:var(--ok);margin-left:6px}
+  .row-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);margin-top:6px}
+  .engines{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
+  .engines label{display:flex;align-items:center;gap:6px;color:var(--ink);font-size:13px;margin:0}
+  .save{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 40%);padding:16px 0 4px;display:flex;justify-content:flex-end;gap:10px}
+  .save button{background:var(--acc);color:#06122e;border:0;border-radius:10px;padding:11px 20px;font-weight:600;cursor:pointer;font-size:14px}
+  .toast{color:var(--ok);font-size:13px;align-self:center}
+</style></head>
+<body>
+  <header>
+    <div><h1>Configuracion <span class="sub">— canales de crecimiento</span></h1></div>
+    <a class="link" href="/growth/">Volver al panel</a>
+  </header>
+  <main>
+    <!-- SEO -->
+    <div class="card">
+      <h2><span class="chan">SEO</span> Search Console + palabras clave</h2>
+      <p class="hint">Conecta tus propiedades de Google para que el agente priorice por datos reales (Fase 4). Por ahora define el sitio y cuantas oportunidades sugerir.</p>
+      <div class="grid">
+        <div class="full"><label>URL del sitio (por defecto)</label><input id="seo_site_url" placeholder="https://..."></div>
+        <div><label>Propiedad Search Console</label><input id="seo_gsc_property" placeholder="sc-domain:tudominio.com"></div>
+        <div><label>ID de propiedad GA4</label><input id="seo_ga4_property_id" placeholder="properties/123456789"></div>
+        <div><label>Oportunidades por auditoria</label><input id="seo_target_keyword_count" type="number" min="3" max="12" value="6"></div>
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="card">
+      <h2><span class="chan">Contenido</span> Estilo de articulos</h2>
+      <p class="hint">Controla el largo, tono y CTA que el agente de contenido usa al redactar.</p>
+      <div class="grid">
+        <div><label>Palabras por borrador</label><input id="content_default_words" type="number" min="120" max="1200" value="300"></div>
+        <div><label>Tono</label>
+          <select id="content_tone">
+            <option value="professional">Profesional</option>
+            <option value="friendly">Cercano</option>
+            <option value="bold">Directo / audaz</option>
+            <option value="executive">Ejecutivo</option>
+          </select></div>
+        <div class="full"><label>URL del blog (donde publicas)</label><input id="content_blog_url" placeholder="https://.../blog"></div>
+        <div class="full"><label>Llamado a la accion por defecto</label><input id="content_cta" placeholder="Agenda una demo en..."></div>
+      </div>
+    </div>
+
+    <!-- X -->
+    <div class="card">
+      <h2><span class="chan">X</span> Cuenta y publicacion <span id="x_set" class="set"></span></h2>
+      <p class="hint">Guarda el handle y cuantos posts generar. Las credenciales de API se guardan cifradas (para autopublicar en el futuro). Deja un campo de token en blanco para conservar el valor actual.</p>
+      <div class="grid">
+        <div><label>Handle</label><input id="x_handle" placeholder="@digit2ai"></div>
+        <div><label>Posts por ejecucion</label><input id="x_posts_per_run" type="number" min="1" max="6" value="3"></div>
+        <div><label>API key</label><input id="x_api_key" placeholder="(sin cambios)"></div>
+        <div><label>API secret</label><input id="x_api_secret" type="password" placeholder="(sin cambios)"></div>
+        <div><label>Access token</label><input id="x_access_token" type="password" placeholder="(sin cambios)"></div>
+        <div><label>Access secret</label><input id="x_access_secret" type="password" placeholder="(sin cambios)"></div>
+      </div>
+      <div class="row-check"><input type="checkbox" id="x_autopost"><label style="margin:0">Autopublicar (Fase futura — hoy siempre revisas antes)</label></div>
+    </div>
+
+    <!-- LinkedIn -->
+    <div class="card">
+      <h2><span class="chan">LinkedIn</span> Perfil / pagina <span id="linkedin_set" class="set"></span></h2>
+      <p class="hint">Perfil u organizacion donde publicaras, y el token de acceso (cifrado) para autopublicar mas adelante.</p>
+      <div class="grid">
+        <div><label>URL de perfil / pagina</label><input id="linkedin_profile_url" placeholder="https://linkedin.com/company/..."></div>
+        <div><label>Organization ID (opcional)</label><input id="linkedin_org_id" placeholder="urn:li:organization:..."></div>
+        <div class="full"><label>Access token</label><input id="linkedin_access_token" type="password" placeholder="(sin cambios)"></div>
+      </div>
+      <div class="row-check"><input type="checkbox" id="linkedin_autopost"><label style="margin:0">Autopublicar (Fase futura)</label></div>
+    </div>
+
+    <!-- GEO -->
+    <div class="card">
+      <h2><span class="chan">GEO</span> Motores de IA + hechos de marca</h2>
+      <p class="hint">Elige que motores de respuesta IA monitorear y da los hechos que deberian reflejar para que las citas sean correctas.</p>
+      <div class="engines" id="geo_engines"></div>
+      <div style="margin-top:12px"><label>Hechos verificados de la marca</label><textarea id="geo_brand_facts" placeholder="Datos que los motores IA deben decir correctamente sobre este producto..."></textarea></div>
+    </div>
+
+    <div class="save"><span class="toast" id="toast"></span><button onclick="save()">Guardar configuracion</button></div>
+  </main>
+<script>
+const API='/growth/api/v1';
+const ENGINES=['ChatGPT','Perplexity','Gemini','Claude','Google AI Overviews'];
+const $=id=>document.getElementById(id);
+let cfg={};
+
+function renderEngines(selected){
+  $('geo_engines').innerHTML=ENGINES.map(e=>
+    `<label><input type="checkbox" class="eng" value="${e}" ${selected.includes(e)?'checked':''}> ${e}</label>`).join('');
+}
+async function load(){
+  const r=await fetch(API+'/settings'); if(r.status===401){location.href='/growth/login';return;}
+  cfg=(await r.json()).settings;
+  // SEO
+  $('seo_site_url').value=cfg.seo.site_url||''; $('seo_gsc_property').value=cfg.seo.gsc_property||'';
+  $('seo_ga4_property_id').value=cfg.seo.ga4_property_id||''; $('seo_target_keyword_count').value=cfg.seo.target_keyword_count||6;
+  // Content
+  $('content_default_words').value=cfg.content.default_words||300; $('content_tone').value=cfg.content.tone||'professional';
+  $('content_blog_url').value=cfg.content.blog_url||''; $('content_cta').value=cfg.content.cta||'';
+  // X
+  $('x_handle').value=cfg.x.handle||''; $('x_posts_per_run').value=cfg.x.posts_per_run||3; $('x_autopost').checked=!!cfg.x.autopost;
+  $('x_set').textContent=cfg.x.access_token&&cfg.x.access_token.set?('conectado '+(cfg.x.access_token.hint||'')):'';
+  // LinkedIn
+  $('linkedin_profile_url').value=cfg.linkedin.profile_url||''; $('linkedin_org_id').value=cfg.linkedin.org_id||''; $('linkedin_autopost').checked=!!cfg.linkedin.autopost;
+  $('linkedin_set').textContent=cfg.linkedin.access_token&&cfg.linkedin.access_token.set?('conectado '+(cfg.linkedin.access_token.hint||'')):'';
+  // GEO
+  renderEngines(cfg.geo.engines||ENGINES); $('geo_brand_facts').value=cfg.geo.brand_facts||'';
+}
+function val(id){return $(id).value.trim();}
+async function save(){
+  const engines=[...document.querySelectorAll('.eng:checked')].map(c=>c.value);
+  const body={
+    seo:{site_url:val('seo_site_url'),gsc_property:val('seo_gsc_property'),ga4_property_id:val('seo_ga4_property_id'),target_keyword_count:Number(val('seo_target_keyword_count'))||6},
+    content:{default_words:Number(val('content_default_words'))||300,tone:val('content_tone'),blog_url:val('content_blog_url'),cta:val('content_cta')},
+    x:{handle:val('x_handle'),posts_per_run:Number(val('x_posts_per_run'))||3,autopost:$('x_autopost').checked,
+       api_key:val('x_api_key'),api_secret:val('x_api_secret'),access_token:val('x_access_token'),access_secret:val('x_access_secret')},
+    linkedin:{profile_url:val('linkedin_profile_url'),org_id:val('linkedin_org_id'),autopost:$('linkedin_autopost').checked,access_token:val('linkedin_access_token')},
+    geo:{engines,brand_facts:val('geo_brand_facts')}
+  };
+  const r=await fetch(API+'/settings',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){$('toast').textContent='Guardado';setTimeout(()=>$('toast').textContent='',2500);
+    // clear secret inputs so they show as placeholders again
+    ['x_api_key','x_api_secret','x_access_token','x_access_secret','linkedin_access_token'].forEach(i=>$(i).value='');
+    load();}
+  else{$('toast').textContent='Error al guardar';}
+}
+load();
+</script>
+</body></html>

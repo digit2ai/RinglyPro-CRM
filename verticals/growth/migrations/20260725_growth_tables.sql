@@ -63,6 +63,18 @@ CREATE TABLE IF NOT EXISTS gr_runs (
 );
 CREATE INDEX IF NOT EXISTS idx_gr_runs_owner_brand ON gr_runs(owner_id, brand_id);
 
+CREATE TABLE IF NOT EXISTS gr_settings (
+  id SERIAL PRIMARY KEY,
+  owner_id INTEGER NOT NULL UNIQUE,
+  seo JSONB DEFAULT '{}',
+  content JSONB DEFAULT '{}',
+  x JSONB DEFAULT '{}',
+  linkedin JSONB DEFAULT '{}',
+  geo JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS gr_metrics (
   id SERIAL PRIMARY KEY,
   owner_id INTEGER NOT NULL,

@@ -17,6 +17,7 @@ const { sequelize, Brand, Draft, Run } = require('./models');
 const { seedUsers, verify } = require('./services/users');
 const { seedBrands } = require('./services/brands');
 const { runBrand, ALL_AGENTS } = require('./services/agents');
+const settingsSvc = require('./services/settings');
 const { User } = require('./models');
 
 const AUTH_SECRET = process.env.GROWTH_JWT_SECRET || process.env.JWT_SECRET || 'growth-2026-secret';
@@ -125,6 +126,19 @@ router.delete('/api/v1/drafts/:id', async (req, res) => {
   await Draft.destroy({ where: { id: req.params.id, owner_id: req.user.id } });
   res.json({ ok: true });
 });
+
+// ── Settings (per-channel config: SEO / Contenido / X / LinkedIn / GEO) ─────
+router.get('/api/v1/settings', async (req, res) => {
+  res.json({ settings: await settingsSvc.getMasked(req.user.id) });
+});
+router.put('/api/v1/settings', async (req, res) => {
+  try {
+    const saved = await settingsSvc.save(req.user.id, req.body || {});
+    res.json({ ok: true, settings: saved });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+router.get('/settings', (req, res) => res.sendFile(path.join(publicDir, 'settings.html')));
 
 // ── Static cockpit ──────────────────────────────────────────────────────────
 router.use(express.static(publicDir));

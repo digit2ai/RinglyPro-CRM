@@ -15,6 +15,7 @@ const { sequelize, User, Brand, Draft, Run } = require('./src/models');
 const { seedUsers } = require('./src/services/users');
 const { seedBrands, PORTFOLIO } = require('./src/services/brands');
 const { runBrand, ALL_AGENTS } = require('./src/services/agents');
+const settingsSvc = require('./src/services/settings');
 
 let pass = 0, fail = 0;
 function ok(cond, label) { cond ? (pass++, console.log('  PASS', label)) : (fail++, console.log('  FAIL', label)); }
@@ -60,6 +61,22 @@ function ok(cond, label) { cond ? (pass++, console.log('  PASS', label)) : (fail
     console.log('\n[7] Zero-key honesty (heuristic drafts are labeled)');
     const anyLabeled = drafts.some(d => d.is_simulated) || drafts.every(d => !d.is_simulated);
     ok(anyLabeled, 'is_simulated flag present and consistent');
+
+    console.log('\n[8] Channel settings save + secret masking');
+    const saved = await settingsSvc.save(owner.id, {
+      content: { default_words: 220, tone: 'bold' },
+      x: { handle: '@digit2ai', posts_per_run: 4, access_token: 'super-secret-token-1234' },
+      geo: { engines: ['ChatGPT', 'Perplexity'], brand_facts: 'Fact one.' }
+    });
+    ok(saved.content.tone === 'bold' && saved.content.default_words === 220, 'content prefs saved');
+    ok(saved.x.posts_per_run === 4 && saved.x.handle === '@digit2ai', 'X prefs saved');
+    ok(saved.x.access_token && saved.x.access_token.set === true && saved.x.access_token.hint === '...1234', 'X token stored + masked (never returned raw)');
+    ok(!JSON.stringify(saved).includes('super-secret-token'), 'raw secret never leaves the API');
+    const cfg = await settingsSvc.getConfig(owner.id);
+    ok(cfg.x.posts_per_run === 4 && Array.isArray(cfg.geo.engines) && cfg.geo.engines.length === 2, 'getConfig returns steering values for agents');
+    // Re-save prefs without the token — token must persist.
+    const resave = await settingsSvc.save(owner.id, { x: { handle: '@digit2ai', access_token: '' } });
+    ok(resave.x.access_token.set === true, 'empty secret on re-save keeps the stored token');
 
     // Cleanup this run's drafts so repeat SIT runs stay clean.
     await Draft.destroy({ where: { run_id: res.run_id } });
