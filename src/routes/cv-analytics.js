@@ -9,11 +9,12 @@ const { Sequelize, QueryTypes } = require('sequelize');
 
 const router = express.Router();
 
-const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
+const DB_URL = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
+const sequelize = DB_URL ? new Sequelize(DB_URL, {
   dialect: 'postgres',
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
   logging: false
-});
+}) : null;
 
 const SALT = process.env.SESSION_SALT || process.env.JWT_SECRET || 'cv-analytics-salt';
 const STATS_KEY = process.env.CV_ANALYTICS_KEY || 'stagg-cv-2026';
@@ -21,7 +22,7 @@ const ALLOWED_PAGES = new Set(['manuelstagg', 'juliana_gramowski']);
 
 let ready = false;
 async function ensureTable() {
-  if (ready) return;
+  if (ready || !sequelize) return;
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS cv_page_hits (
       id BIGSERIAL PRIMARY KEY,
@@ -37,7 +38,8 @@ async function ensureTable() {
   `);
   ready = true;
 }
-ensureTable().catch(e => console.error('cv-analytics ensureTable:', e.message));
+if (sequelize) ensureTable().catch(e => console.error('cv-analytics ensureTable:', e.message));
+else console.warn('cv-analytics: no DB URL set — analytics disabled');
 
 function clientIp(req) {
   const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
@@ -62,6 +64,7 @@ function isDupe(key) {
 router.post('/hit', async (req, res) => {
   res.status(204).end(); // ack immediately; never block the page
   try {
+    if (!sequelize) return;
     await ensureTable();
     let { page, path: pth, ref } = req.body || {};
     page = String(page || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 64);
@@ -88,6 +91,7 @@ router.post('/hit', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     if ((req.query.key || '') !== STATS_KEY) return res.status(401).json({ error: 'invalid key' });
+    if (!sequelize) return res.status(503).json({ error: 'analytics DB not configured' });
     await ensureTable();
     const page = String(req.query.page || 'manuelstagg').toLowerCase().replace(/[^a-z0-9_]/g, '');
     if (!ALLOWED_PAGES.has(page)) return res.status(400).json({ error: 'unknown page' });
