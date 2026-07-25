@@ -119,6 +119,11 @@ router.post('/public/request', async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const b = req.body || {};
+    const rl = _triageRateLimit(clientIp(req));
+    if (!rl.allowed) {
+      await t.rollback();
+      return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
     const required = ['full_name', 'email', 'project_title', 'problem'];
     for (const f of required) {
       if (!b[f] || !String(b[f]).trim()) {
@@ -126,6 +131,15 @@ router.post('/public/request', async (req, res) => {
         return res.status(400).json({ success: false, error: `${f} is required` });
       }
     }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(b.email).trim())) {
+      await t.rollback();
+      return res.status(400).json({ success: false, error: 'Invalid email' });
+    }
+    // Cap stored free-text so an anonymous caller can't flood TEXT columns.
+    if (b.problem) b.problem = String(b.problem).slice(0, 8000);
+    if (b.project_description) b.project_description = String(b.project_description).slice(0, 8000);
+    if (b.project_title) b.project_title = String(b.project_title).slice(0, 200);
+    if (b.full_name) b.full_name = String(b.full_name).slice(0, 120);
 
     const companyName = (b.company_name || b.full_name).toString().trim();
 
@@ -316,7 +330,7 @@ router.post('/public/request', async (req, res) => {
 //   IP (shared triage bucket) to cap AI-generation cost.
 router.post('/public/teaser/:projectId', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
@@ -365,7 +379,7 @@ router.post('/public/teaser/:projectId', async (req, res) => {
 // mockup aligns with the scoped build card.
 router.post('/public/simulator/:projectId', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
@@ -552,6 +566,9 @@ router.post('/public/book/:projectId', async (req, res) => {
   try {
     const { CalendarEvent } = require('../models');
     const b = req.body || {};
+    const rl = _triageRateLimit(clientIp(req));
+    if (!rl.allowed) return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    if (!/^\d+$/.test(String(req.params.projectId))) return res.status(400).json({ success: false, error: 'Invalid project' });
     const start = new Date(b.start_time), end = new Date(b.end_time);
     if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
       return res.status(400).json({ success: false, error: 'Invalid start/end times' });
@@ -559,9 +576,14 @@ router.post('/public/book/:projectId', async (req, res) => {
     if (start < new Date()) return res.status(400).json({ success: false, error: 'Cannot book a past time' });
     const project = await Project.findByPk(req.params.projectId);
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
-    const name  = String(b.name  || project.submitter_name  || '').trim();
-    const email = String(b.email || project.submitter_email || '').trim();
+    const name  = String(b.name || project.submitter_name || '').trim().replace(/[^\p{L}\p{N}\s.,'’-]/gu, '').slice(0, 60);
+    const email = String(b.email || project.submitter_email || '').trim().slice(0, 120);
     const phone = String(b.phone || project.submitter_phone || '').trim();
+    // Only ever text a valid E.164 number — blocks using this endpoint to relay
+    // SMS to arbitrary numbers from the branded toll-free line.
+    if (phone && !/^\+[1-9]\d{6,15}$/.test(phone)) {
+      return res.status(400).json({ success: false, error: 'Invalid phone number' });
+    }
 
     let event;
     try {
@@ -576,7 +598,7 @@ router.post('/public/book/:projectId', async (req, res) => {
       });
     } catch (e) {
       console.error('[D2AI-Intake] calendar create failed:', e.message);
-      return res.status(500).json({ success: false, error: 'Could not book the slot: ' + e.message });
+      return res.status(500).json({ success: false, error: 'Could not book the slot. Please try again.' });
     }
 
     try {
@@ -665,10 +687,16 @@ router.post('/public/sms-test', async (req, res) => {
 // (sufficient for v1; promote to Redis if abuse becomes a problem).
 
 const _triageBuckets = new Map();
+let _triageSweepAt = 0;
 function _triageRateLimit(ip) {
   const now = Date.now();
   const HOUR = 60 * 60 * 1000;
   const LIMIT = 10;
+  // Evict stale windows so the map can't grow unbounded (memory-DoS guard).
+  if (now - _triageSweepAt > HOUR) {
+    _triageSweepAt = now;
+    for (const [k, v] of _triageBuckets) { if (now - v.windowStart > HOUR) _triageBuckets.delete(k); }
+  }
   let b = _triageBuckets.get(ip);
   if (!b || now - b.windowStart > HOUR) {
     b = { windowStart: now, count: 0 };
@@ -680,6 +708,18 @@ function _triageRateLimit(ip) {
   }
   b.count += 1;
   return { allowed: true };
+}
+// Real client IP behind Cloudflare. NEVER key rate limiting on the leftmost
+// X-Forwarded-For value — it is client-forgeable. Prefer Cloudflare's
+// CF-Connecting-IP; fall back to the rightmost (closest trusted) XFF hop.
+function clientIp(req) {
+  const cf = req.headers['cf-connecting-ip'];
+  if (cf) return String(cf).trim();
+  const tc = req.headers['true-client-ip'];
+  if (tc) return String(tc).trim();
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) { const parts = String(xff).split(','); return parts[parts.length - 1].trim(); }
+  return (req.socket && req.socket.remoteAddress) || (req.connection && req.connection.remoteAddress) || 'unknown';
 }
 
 function _detectLang(text) {
@@ -774,7 +814,7 @@ Respond with the JSON object only.`;
 
 router.post('/public-triage-preview', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({
@@ -955,7 +995,7 @@ Respond with the JSON object only.`;
 
 router.post('/generate-request', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({
@@ -1161,7 +1201,7 @@ router.post('/funnel-event', async (req, res) => {
     const sessionId = String(b.session_id || '').trim().slice(0, 64);
     if (!sessionId || sessionId.length < 8) return res.status(400).json({ success: false, error: 'session_id required.' });
 
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const ipHash = _crypto.createHash('sha256').update(ip + (process.env.SESSION_SALT || 'd2ai-default-salt')).digest('hex').slice(0, 32);
 
     const _str = (v, max) => (v == null ? null : String(v).trim().slice(0, max || 255) || null);
@@ -1330,7 +1370,7 @@ function _slug(s) {
   return String(s || '').trim().toLowerCase().slice(0, 120).replace(/[^a-z0-9_\-\.]/g, '').replace(/^-+|-+$/g, '');
 }
 function _ipHash(req) {
-  const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+  const ip = clientIp(req);
   return _crypto.createHash('sha256').update(ip + (process.env.SESSION_SALT || 'd2ai-default-salt')).digest('hex').slice(0, 32);
 }
 function _partnerLoginRateLimit(ip) {
@@ -1345,7 +1385,7 @@ function _partnerLoginRateLimit(ip) {
 //   nature of the action bypasses EMAIL_AUTOSEND_DISABLED if SG is on).
 router.post('/partner-login', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _partnerLoginRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({ success: false, error: `Too many login attempts. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
@@ -1520,7 +1560,7 @@ router.post('/partner-logout', (req, res) => {
 //   PII baggage.
 router.post('/abandoned-conversation', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({ success: false, error: `Too many submissions. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
@@ -1595,7 +1635,7 @@ router.post('/abandoned-conversation', async (req, res) => {
 //   hour per IP to prevent abuse.
 router.post('/email-transcript', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     // Reuse the triage rate limiter buckets — same window/key shape, smaller cap.
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
@@ -2003,7 +2043,7 @@ router.get('/partnership-orb-config', (req, res) => {
 
 router.post('/voice-trigger-triage', async (req, res) => {
   try {
-    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ip = clientIp(req);
     const rl = _triageRateLimit(ip);
     if (!rl.allowed) {
       return res.status(429).json({
@@ -2163,7 +2203,7 @@ router.post('/public/extract-attachments', (req, res) => {
         const tooBig = uploadErr.code === 'LIMIT_FILE_SIZE';
         return res.status(tooBig ? 413 : 400).json({ success: false, error: tooBig ? 'A file is larger than 10 MB.' : 'Could not read the uploaded files.' });
       }
-      const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+      const ip = clientIp(req);
       const rl = _triageRateLimit(ip);
       if (!rl.allowed) return res.status(429).json({ success: false, error: 'Too many requests. Please wait a moment.' });
       const { extractText, extOf } = require('../services/documentExtract');
@@ -2195,7 +2235,7 @@ router.post('/public/transcribe-voice-note', (req, res) => {
         });
       }
 
-      const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+      const ip = clientIp(req);
       const rl = _triageRateLimit(ip);
       if (!rl.allowed) {
         return res.status(429).json({ success: false, error: `Too many requests. Try again in ${rl.retryInSec}s.` });
