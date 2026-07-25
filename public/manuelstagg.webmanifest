@@ -1,0 +1,17 @@
+{
+  "name": "Manuel Stagg — CV",
+  "short_name": "M. Stagg",
+  "description": "Manuel Stagg — Senior SME & Full-Stack AI Solutions Architect. 24 years Banking Industry + MCP Neural Intelligence.",
+  "start_url": "/manuelstagg",
+  "scope": "/manuelstagg",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05070e",
+  "theme_color": "#05070e",
+  "lang": "en",
+  "icons": [
+    { "src": "/manuelstagg-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/manuelstagg-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/manuelstagg-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
