@@ -38,6 +38,21 @@
   .liveurl a{color:var(--acc)}
   .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
   .st{font-size:11px;color:var(--mut)}
+  .addbtn{background:var(--acc);color:#06122e;border:0;border-radius:8px;padding:5px 11px;font-weight:600;cursor:pointer;font-size:12px}
+  .modal{position:fixed;inset:0;background:rgba(4,8,20,.72);display:none;place-items:center;z-index:50;padding:20px}
+  .modal.on{display:grid}
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;width:min(94vw,560px);max-height:86vh;overflow:auto}
+  .sheet h3{margin:0 0 4px;font-size:17px}
+  .sheet p.h{color:var(--mut);font-size:12px;margin:0 0 16px}
+  .sheet h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin:18px 0 8px}
+  .cand{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .cand .cn{font-weight:600;font-size:13px}
+  .cand .ch{color:var(--mut);font-size:11px;word-break:break-all}
+  .cand button{background:none;border:1px solid var(--acc);color:var(--acc);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;white-space:nowrap}
+  .frm label{display:block;font-size:12px;color:var(--mut);margin:10px 0 4px}
+  .frm input{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#0d142a;color:var(--ink);font-size:13px}
+  .frm .go{margin-top:16px;background:var(--acc);color:#06122e;border:0;border-radius:9px;padding:10px 16px;font-weight:600;cursor:pointer;width:100%}
+  .sheet .x{float:right;background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:4px 10px;cursor:pointer}
 </style></head>
 <body>
   <header>
@@ -49,7 +64,8 @@
   </header>
   <main>
     <div class="panel">
-      <h2>Nuestras marcas</h2>
+      <h2 style="display:flex;justify-content:space-between;align-items:center">Nuestras marcas
+        <button class="addbtn" onclick="openAdd()">+ Agregar</button></h2>
       <div id="brands"></div>
     </div>
     <div class="panel">
@@ -65,6 +81,23 @@
       <div id="drafts"><div class="empty">Selecciona una marca para ver o generar borradores.</div></div>
     </div>
   </main>
+
+  <div class="modal" id="addModal">
+    <div class="sheet">
+      <button class="x" onclick="closeAdd()">Cerrar</button>
+      <h3>Agregar marca</h3>
+      <p class="h">Detectadas en tu repo (verticals, dominios y landings). Toca "Agregar", o registra una manualmente abajo.</p>
+      <h4>Detectadas en el repositorio</h4>
+      <div id="cands"><div class="empty">Buscando en el repo...</div></div>
+      <h4>Agregar manualmente</h4>
+      <div class="frm">
+        <label>Nombre</label><input id="m_name" placeholder="Mi Vertical">
+        <label>URL / dominio</label><input id="m_url" placeholder="https://midominio.com">
+        <label>Palabras clave (separadas por coma)</label><input id="m_kw" placeholder="palabra uno, palabra dos">
+        <button class="go" onclick="addManual()">Agregar marca</button>
+      </div>
+    </div>
+  </div>
 <script>
 const API='/growth/api/v1';
 let brands=[], sel=null;
@@ -126,6 +159,28 @@ async function publish(id){
   else{ alert('No se pudo publicar: '+(j.error||'')); }
 }
 async function del(id){ await fetch(`${API}/drafts/${id}`,{method:'DELETE'}); await load(); await loadDrafts(); }
+// ── Add-brand utility ──────────────────────────────────────────────
+async function openAdd(){
+  $('addModal').classList.add('on');
+  $('cands').innerHTML='<div class="empty">Buscando en el repo...</div>';
+  const r=await fetch(API+'/discover'); const c=(await r.json()).candidates||[];
+  if(!c.length){$('cands').innerHTML='<div class="empty">No hay nuevas marcas por detectar.</div>';return;}
+  $('cands').innerHTML=c.map((x,i)=>`<div class="cand">
+    <div><div class="cn">${esc(x.name)} <span style="color:var(--mut);font-weight:400">· ${esc(x.source)}</span></div>
+    <div class="ch">${esc(x.url)} — ${esc(x.hint||'')}</div></div>
+    <button onclick='addCand(${JSON.stringify(x).replace(/'/g,"&#39;")})'>Agregar</button></div>`).join('');
+}
+function closeAdd(){ $('addModal').classList.remove('on'); }
+async function addCand(c){
+  const r=await fetch(API+'/brands',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(c)});
+  const j=await r.json(); if(r.ok){ await load(); openAdd(); } else { alert(j.error||'Error'); }
+}
+async function addManual(){
+  const body={name:$('m_name').value.trim(),url:$('m_url').value.trim(),keywords:$('m_kw').value,source:'manual'};
+  if(!body.name||!body.url){alert('Nombre y URL son requeridos');return;}
+  const r=await fetch(API+'/brands',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json(); if(r.ok){ $('m_name').value='';$('m_url').value='';$('m_kw').value=''; await load(); closeAdd(); } else { alert(j.error||'Error'); }
+}
 async function logout(){ await fetch(API+'/logout',{method:'POST'}); location.href='/growth/login'; }
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 load();

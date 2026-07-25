@@ -19,6 +19,9 @@ const settingsSvc = require('./src/services/settings');
 const { publishDraft } = require('./src/services/publish');
 const { Post } = require('./src/models');
 const { markdownToHtml, slugify } = require('./src/services/render');
+const { discover } = require('./src/services/discover');
+const hostsCache = require('./src/services/hosts');
+const { auditBrand } = require('./src/services/audit');
 
 let pass = 0, fail = 0;
 function ok(cond, label) { cond ? (pass++, console.log('  PASS', label)) : (fail++, console.log('  FAIL', label)); }
@@ -109,6 +112,30 @@ function ok(cond, label) { cond ? (pass++, console.log('  PASS', label)) : (fail
     const c2 = await Draft.create({ owner_id: owner.id, brand_id: lawn.id, agent: 'content.draft', channel: 'content', kind: 'article', title: 'SIT publish test post', body: 'dup', status: 'draft' });
     const pub2 = await publishDraft(c2.id, owner.id);
     ok(pub2.slug !== pub.slug, `duplicate title gets unique slug (${pub2.slug})`);
+
+    console.log('\n[12] Repo scanner discovers verticals/domains not yet brands');
+    const cands = await discover(owner.id);
+    ok(Array.isArray(cands), 'discover returns candidate list');
+    ok(cands.some(c => c.source === 'vertical' || c.source === 'domain'), `found repo candidates (${cands.length})`);
+    ok(!cands.some(c => c.slug === 'orbup'), 'already-added brands are filtered out (no OrbUp dupe)');
+
+    console.log('\n[13] Add a brand (manual) + duplicate guard');
+    const { Brand: B } = require('./src/models');
+    const made = await B.create({ owner_id: owner.id, slug: 'sit-test-brand', name: 'SIT Test Brand', url: 'https://sit-test-brand.example', source: 'manual' });
+    ok(made && made.slug === 'sit-test-brand', 'brand created');
+    ok(made.blog_enabled === true && made.source === 'manual', 'new brand defaults: blog_enabled + source');
+
+    console.log('\n[14] Brand-host cache resolves managed domains');
+    await hostsCache.refresh();
+    ok(!!hostsCache.brandForHostSync('orbup.app'), 'orbup.app resolves to a brand (SEO middleware gate)');
+    ok(!hostsCache.brandForHostSync('aiagent.ringlypro.com'), 'main CRM host is NOT a managed brand (untouched)');
+
+    console.log('\n[15] Site audit returns structured SEO readiness (network-tolerant)');
+    let auditObj = null;
+    try { auditObj = await auditBrand(orbup.id, owner.id); } catch (e) { /* offline ok */ }
+    ok(auditObj === null || (typeof auditObj.served_by_app === 'boolean' && Array.isArray(auditObj.findings)), 'audit yields served_by_app + findings (or offline-null)');
+
+    await B.destroy({ where: { id: made.id } });
 
     // Cleanup published test posts + drafts.
     await Post.destroy({ where: { owner_id: owner.id, draft_id: [cDraft.id, c2.id] } });

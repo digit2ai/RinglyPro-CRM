@@ -19,7 +19,11 @@ const { seedBrands } = require('./services/brands');
 const { runBrand, ALL_AGENTS } = require('./services/agents');
 const settingsSvc = require('./services/settings');
 const { publishDraft } = require('./services/publish');
-const { User, Post } = require('./models');
+const { discover } = require('./services/discover');
+const { auditBrand, ensureBlog } = require('./services/audit');
+const hostsCache = require('./services/hosts');
+const { slugify } = require('./services/render');
+const { User, Post, Draft: DraftModel } = require('./models');
 
 const AUTH_SECRET = process.env.GROWTH_JWT_SECRET || process.env.JWT_SECRET || 'growth-2026-secret';
 const publicDir = path.join(__dirname, '..', 'public');
@@ -31,9 +35,16 @@ let OWNER_ID = null;
     await sequelize.sync({ alter: false });
     // First boot on a fresh DB needs the tables created.
     await sequelize.sync();
+    // Idempotent column adds (sync alter:false never adds columns).
+    await sequelize.query(`
+      ALTER TABLE gr_brands ADD COLUMN IF NOT EXISTS blog_enabled BOOLEAN DEFAULT true;
+      ALTER TABLE gr_brands ADD COLUMN IF NOT EXISTS served_by_app BOOLEAN;
+      ALTER TABLE gr_brands ADD COLUMN IF NOT EXISTS source VARCHAR(32) DEFAULT 'seed';
+    `).catch(e => console.error('[growth] alter:', e.message));
     const owner = await seedUsers();
     OWNER_ID = owner.id;
     await seedBrands(owner.id);
+    await hostsCache.refresh(); // warm the brand-host cache for the SEO middleware
     console.log('[growth] ready — owner', owner.email, 'brands seeded');
   } catch (e) {
     console.error('[growth] init error:', e.message);
@@ -90,18 +101,67 @@ router.get('/api/v1/brands', async (req, res) => {
 router.patch('/api/v1/brands/:id', async (req, res) => {
   const b = await Brand.findOne({ where: { id: req.params.id, owner_id: req.user.id } });
   if (!b) return res.status(404).json({ error: 'not found' });
-  const allow = ['name', 'url', 'tagline', 'positioning', 'icp', 'voice', 'keywords', 'channels', 'active'];
+  const allow = ['name', 'url', 'tagline', 'positioning', 'icp', 'voice', 'keywords', 'channels', 'active', 'blog_enabled'];
   const patch = {}; allow.forEach(k => { if (k in req.body) patch[k] = req.body[k]; });
   await b.update(patch);
+  await hostsCache.refresh();
   res.json({ ok: true, brand: b });
+});
+
+// Repo scanner: candidate verticals/domains NOT yet in "Nuestras marcas".
+router.get('/api/v1/discover', async (req, res) => {
+  try { res.json({ candidates: await discover(req.user.id) }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Add a brand (from a discovered candidate or a manual entry).
+router.post('/api/v1/brands', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const name = (b.name || '').trim();
+    const url = (b.url || '').trim();
+    if (!name || !url) return res.status(400).json({ error: 'name y url son requeridos' });
+    const slug = (b.slug && b.slug.trim()) ? slugify(b.slug) : slugify(name);
+    const existing = await Brand.findOne({ where: { owner_id: req.user.id, slug } });
+    if (existing) return res.status(409).json({ error: 'Ya existe una marca con ese slug' });
+    const brand = await Brand.create({
+      owner_id: req.user.id, slug, name, url,
+      tagline: b.tagline || '', positioning: b.positioning || '', icp: b.icp || '', voice: b.voice || '',
+      keywords: Array.isArray(b.keywords) ? b.keywords : (b.keywords ? String(b.keywords).split(',').map(s => s.trim()).filter(Boolean) : []),
+      source: b.source || 'manual', blog_enabled: true
+    });
+    await hostsCache.refresh();
+    res.status(201).json({ ok: true, brand });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// On-demand SEO readiness audit of a brand's live domain.
+router.get('/api/v1/brands/:id/audit', async (req, res) => {
+  try { res.json({ audit: await auditBrand(Number(req.params.id), req.user.id) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 // ── Run agents over a brand ─────────────────────────────────────────────────
 router.post('/api/v1/brands/:id/run', async (req, res) => {
   try {
+    const brandId = Number(req.params.id);
     const agents = Array.isArray(req.body.agents) && req.body.agents.length ? req.body.agents : ALL_AGENTS;
-    const result = await runBrand(Number(req.params.id), req.user.id, { agents, trigger: 'manual' });
-    res.json({ ok: true, ...result });
+    // SEO-first: if SEO is in this run, ensure the brand has a working blog wired
+    // (audit the live site, enable link+sitemap+robots) and post the finding.
+    let seo_readiness = null;
+    if (agents.includes('seo.audit')) {
+      try {
+        const eb = await ensureBlog(brandId, req.user.id);
+        await DraftModel.create({
+          owner_id: req.user.id, brand_id: brandId, agent: 'seo.site_audit', channel: 'seo',
+          kind: 'site-audit', title: eb.title, body: eb.body, meta: eb.audit, is_simulated: false
+        });
+        await hostsCache.refresh();
+        seo_readiness = { served_by_app: eb.served_by_app };
+      } catch (e) { /* non-fatal */ }
+    }
+    const result = await runBrand(brandId, req.user.id, { agents, trigger: 'manual' });
+    res.json({ ok: true, seo_readiness, ...result });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 

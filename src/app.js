@@ -572,6 +572,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Digit2AI Growth — universal SEO layer for managed brand domains (orbup.app,
+// lawncopilot.com, etc.): dynamic /sitemap.xml + /robots.txt and an auto-injected
+// "Blog" link on the landing. Hard-gated to brand hosts, so the main CRM and all
+// other traffic pass through untouched.
+try {
+  app.use(require('../verticals/growth/src/seo'));           // /sitemap.xml + /robots.txt (host-aware)
+  app.use(require('../verticals/growth/src/inject'));         // inject Blog link on brand-host HTML
+  console.log('Growth SEO layer active (sitemap/robots/blog-link, brand-host gated)');
+} catch (error) {
+  console.log('⚠️ Growth SEO layer not available:', error.message);
+}
+
 // Custom domain: manuelstagg.com -> Manuel Stagg CV / resume landing
 // (public/manuelstagg.html), served IN PLACE so the address bar stays on
 // manuelstagg.com. GHL domain + Render CNAME are being configured, so this app

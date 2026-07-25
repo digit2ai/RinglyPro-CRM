@@ -38,7 +38,10 @@ const Brand = sequelize.define('gr_brand', {
   voice: { type: DataTypes.STRING },                   // brand voice hint
   keywords: { type: DataTypes.JSONB, defaultValue: [] },
   channels: { type: DataTypes.JSONB, defaultValue: ['seo', 'x', 'linkedin', 'geo', 'content'] },
-  active: { type: DataTypes.BOOLEAN, defaultValue: true }
+  active: { type: DataTypes.BOOLEAN, defaultValue: true },
+  blog_enabled: { type: DataTypes.BOOLEAN, defaultValue: true }, // inject blog link + sitemap/robots
+  served_by_app: { type: DataTypes.BOOLEAN, defaultValue: null }, // does the domain route to this app?
+  source: { type: DataTypes.STRING, defaultValue: 'seed' } // seed | discovered | manual
 }, { tableName: 'gr_brands', underscored: true, timestamps: true });
 
 // ── Drafts = every agent output, awaiting human review ──────────────────────

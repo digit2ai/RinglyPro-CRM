@@ -86,7 +86,7 @@ router.get('/', async (req, res) => {
       ? posts.map(p => `<a class="card" href="/blog/${encodeURIComponent(p.slug)}${req.query.brand ? '?brand=' + brand.slug : ''}"><h2>${escapeHtml(p.title)}</h2><p>${escapeHtml(p.meta_description || '')}</p></a>`).join('')
       : '<p style="color:var(--mut);font-family:system-ui">No posts yet.</p>';
     const canonical = canonicalHost(req, brand) + '/blog';
-    res.set('Content-Type', 'text/html; charset=utf-8')
+    res.set('Content-Type', 'text/html; charset=utf-8').set('X-Growth-Blog', '1')
       .send(SHELL(brand, `${brand.name} — Blog`, `Latest from ${brand.name}. ${brand.tagline || ''}`, canonical,
         `<h1>${escapeHtml(brand.name)} Blog</h1><div class="meta">${brand.tagline ? escapeHtml(brand.tagline) : ''}</div>${list}`, ''));
   } catch (e) { res.status(500).send('Blog error'); }
@@ -111,7 +111,7 @@ router.get('/:slug', async (req, res) => {
 <div class="meta">${escapeHtml(brand.name)} · ${new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
 <article>${post.html || ''}</article>
 <p style="font-family:system-ui;margin-top:36px"><a href="/blog${req.query.brand ? '?brand=' + brand.slug : ''}">← All posts</a></p>`;
-    res.set('Content-Type', 'text/html; charset=utf-8')
+    res.set('Content-Type', 'text/html; charset=utf-8').set('X-Growth-Blog', '1')
       .send(SHELL(brand, `${post.title} — ${brand.name}`, post.meta_description, canonical, body, jsonLd));
   } catch (e) { res.status(500).send('Blog error'); }
 });
