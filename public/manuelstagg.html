@@ -136,6 +136,20 @@ section.blk{padding:44px 0}
 .tl li{position:relative;padding-left:20px;font-size:14.5px;color:#cbd3e2}
 .tl li::before{content:"\f0da";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;left:0;top:1px;color:var(--cyan);font-size:11px}
 .tl.v li::before{color:var(--violet)}
+.tl .scope{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.tl .scope span{font-family:var(--mono);font-size:10.5px;color:var(--cyan);background:rgba(34,211,238,.06);border:1px solid var(--cyan-bd);border-radius:6px;padding:3px 8px}
+.tl.v .scope span{color:var(--violet);border-color:var(--violet-bd);background:rgba(139,92,246,.06)}
+.tl .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin:15px 0 7px;display:flex;align-items:center;gap:9px}
+.tl .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.tl .metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.tl .metrics .m{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 13px}
+.tl .metrics .m b{font-family:var(--mono);color:var(--cyan);font-weight:800}
+.tl.v .metrics .m b{color:var(--violet)}
+.hl-ribbon{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 30px}
+.hl{background:var(--grad-soft);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+.hl .n{font-family:var(--mono);font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.hl .l{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.4}
+@media(max-width:820px){.hl-ribbon{grid-template-columns:repeat(2,1fr)}}
 
 /* deliverables */
 .deliv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
@@ -301,29 +315,87 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 <section class="blk" id="experience">
   <div class="wrap">
     <div class="sec-head"><span class="k">04</span><h2 data-i18n="x_h">Experience</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="x_lead">A single, uncommon career arc: 24 years hardening the control environment of a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.</p>
+
+    <!-- career highlights ribbon -->
+    <div class="hl-ribbon">
+      <div class="hl"><div class="n">24+</div><div class="l" data-i18n="x_hl1">Years in global banking, compliance & risk</div></div>
+      <div class="hl"><div class="n">$1T+</div><div class="l" data-i18n="x_hl2">Transaction flows monitored & screened</div></div>
+      <div class="hl"><div class="n">50-75%</div><div class="l" data-i18n="x_hl3">False-positive reduction with AI reasoning</div></div>
+      <div class="hl"><div class="n">20+</div><div class="l" data-i18n="x_hl4">AI systems architected & shipped to production</div></div>
+    </div>
+
     <div class="timeline">
+
+      <!-- ROLE 1 — AI Architect -->
       <div class="tl v">
         <div class="when" data-i18n="x1_w">Present</div>
-        <h3 data-i18n="x1_t">Full-Stack AI Solutions Architect — Digit2AI</h3>
-        <div class="org" data-i18n="x1_o">MCP Neural Intelligence · Multi-vertical AI delivery</div>
+        <h3 data-i18n="x1_t">Full-Stack AI Solutions Architect</h3>
+        <div class="org" data-i18n="x1_o">Digit2AI · MCP Neural Intelligence · Multi-vertical AI delivery</div>
+        <div class="scope"><span>Model Context Protocol</span><span>Multi-Agent</span><span>Claude / Anthropic</span><span>Node.js</span><span>PostgreSQL</span><span>Voice AI</span><span>Twilio</span><span>Stripe</span><span>EN/ES</span></div>
+        <div class="grp" data-i18n="x1_g1">Architecture</div>
         <ul>
-          <li data-i18n="x1_a">Architect and ship MCP Neural Intelligence — an AI reasoning layer wired into clients' live CRM, telephony, financial and compliance systems.</li>
-          <li data-i18n="x1_b">Designed an 83-agent MCP workforce (8 core + 75 senior specialists) that converts natural-language requirements into deployed, production systems.</li>
-          <li data-i18n="x1_c">Owns the full lifecycle end-to-end: data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment.</li>
-          <li data-i18n="x1_d">Delivered 20+ production deployments across banking, freight, healthcare, retail, education and B2B chamber networks — bilingual EN/ES.</li>
+          <li data-i18n="x1_a">Architect and ship <strong>MCP Neural Intelligence</strong> — an AI reasoning layer wired directly into clients' live CRM, telephony, financial and compliance systems through the open Model Context Protocol.</li>
+          <li data-i18n="x1_b">Designed and operates an <strong>83-agent MCP workforce</strong> (8 always-on core agents + 75 senior specialists on demand) that converts natural-language requirements into deployed, production systems.</li>
+          <li data-i18n="x1_c">Engineered the diagnostic-plus-prescriptive pattern — every finding ships with the fix and the workflow that executes it — with human-in-the-loop approval and full audit trails.</li>
+        </ul>
+        <div class="grp" data-i18n="x1_g2">Delivery &amp; Scale</div>
+        <ul>
+          <li data-i18n="x1_d">Owns the full lifecycle end-to-end: requirements, data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment — solo through to production.</li>
+          <li data-i18n="x1_e">Built multi-tenant SaaS with strict tenant isolation, cost caps, model routing (Opus/Sonnet/Haiku) and observability across every deployment.</li>
+          <li data-i18n="x1_f">Delivered <strong>20+ production systems</strong> across banking, freight, healthcare, retail, education and B2B chamber networks — fully bilingual EN/ES.</li>
+        </ul>
+        <div class="metrics">
+          <div class="m"><b>83</b> <span data-i18n="x1_m1">agent workforce</span></div>
+          <div class="m"><b>20+</b> <span data-i18n="x1_m2">production deployments</span></div>
+          <div class="m"><b>6+</b> <span data-i18n="x1_m3">industry verticals</span></div>
+        </div>
+      </div>
+
+      <!-- ROLE 2 — Bridge: AI inside the bank -->
+      <div class="tl v">
+        <div class="when" data-i18n="x3_w">Transition Years</div>
+        <h3 data-i18n="x3_t">Enterprise AI &amp; Automation Integration — Banking</h3>
+        <div class="org" data-i18n="x3_o">Tier-1 Global Bank · Compliance &amp; Risk Technology</div>
+        <div class="scope"><span>AI / ML</span><span>Process Automation</span><span>Data Integration</span><span>Compliance Tech</span><span>Risk Analytics</span></div>
+        <ul>
+          <li data-i18n="x3_a">Bridged the two disciplines — introduced AI, machine-learning and automation into compliance and risk operations while still inside the bank's control environment.</li>
+          <li data-i18n="x3_b">Modernized rule-based screening and monitoring with contextual, multi-source reasoning — cutting false positives and accelerating investigations.</li>
+          <li data-i18n="x3_c">Integrated data across siloed compliance, risk and operational platforms so a single intelligence layer could reason over all of them.</li>
+          <li data-i18n="x3_d">Proved, in a regulated Tier-1 setting, that AI could recommend while humans decide — the principle now at the core of Neural Intelligence.</li>
         </ul>
       </div>
+
+      <!-- ROLE 3 — 24 years banking -->
       <div class="tl">
         <div class="when" data-i18n="x2_w">24+ Years</div>
-        <h3 data-i18n="x2_t">Banking Industry — Compliance, Risk & Technology</h3>
-        <div class="org" data-i18n="x2_o">Global Banking · Institutional scale</div>
+        <h3 data-i18n="x2_t">Banking Industry — Compliance, Risk &amp; Enterprise Technology</h3>
+        <div class="org" data-i18n="x2_o">Tier-1 Global Bank · Institutional scale · Global programs</div>
+        <div class="scope"><span>KYC / CDD / EDD</span><span>AML</span><span>Sanctions / OFAC</span><span>Transaction Monitoring</span><span>SAR / Investigations</span><span>Fraud</span><span>Regulatory Reporting</span><span>Controls &amp; Audit</span></div>
+        <div class="grp" data-i18n="x2_g1">Financial Crime &amp; Compliance</div>
         <ul>
-          <li data-i18n="x2_a">Two-plus decades leading global compliance, risk and enterprise-technology programs inside the Banking Industry.</li>
-          <li data-i18n="x2_b">Deep operational command of KYC/AML, sanctions screening, transaction monitoring, investigations and regulatory reporting at Tier-1 scale.</li>
-          <li data-i18n="x2_c">Drove technology integration across compliance and risk platforms — the control-environment expertise that now grounds his AI architecture.</li>
-          <li data-i18n="x2_d">Translated regulatory obligation into working systems, processes and measurable operational outcomes.</li>
+          <li data-i18n="x2_a">Led global <strong>KYC/AML</strong> programs — customer due diligence, enhanced due diligence, and periodic review — across institutional client portfolios.</li>
+          <li data-i18n="x2_b">Directed <strong>sanctions screening and OFAC</strong> operations, transaction monitoring, alert adjudication, SAR filing and complex financial-crime investigations at Tier-1 scale.</li>
+          <li data-i18n="x2_c">Owned regulatory reporting and examination readiness — translating obligations from FinCEN, OFAC and global regulators into working controls.</li>
         </ul>
+        <div class="grp" data-i18n="x2_g2">Risk, Controls &amp; Technology</div>
+        <ul>
+          <li data-i18n="x2_d">Drove <strong>technology integration</strong> across compliance and risk platforms — screening engines, case management, monitoring systems and data pipelines.</li>
+          <li data-i18n="x2_e">Strengthened the control environment through risk modeling, quality assurance, model tuning and audit-grade documentation.</li>
+          <li data-i18n="x2_f">Reduced investigative noise and cycle time by re-engineering detection logic and enriching it with better data — the roots of his AI approach.</li>
+        </ul>
+        <div class="grp" data-i18n="x2_g3">Leadership</div>
+        <ul>
+          <li data-i18n="x2_g">Led and mentored cross-functional teams across compliance, risk, operations and technology in a highly regulated, high-stakes environment.</li>
+          <li data-i18n="x2_h">Turned regulatory obligation into systems, processes and measurable operational outcomes — the discipline that now grounds every AI system he ships.</li>
+        </ul>
+        <div class="metrics">
+          <div class="m"><b>24+</b> <span data-i18n="x2_m1">years</span></div>
+          <div class="m"><b>5</b> <span data-i18n="x2_m2">pillars of compliance</span></div>
+          <div class="m"><b>Tier-1</b> <span data-i18n="x2_m3">institutional scale</span></div>
+        </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -409,6 +481,7 @@ window.addEventListener('message', function(ev){
 const I18N = {
   en:{
     meta_title:"Manuel Stagg — Senior SME, Full-Stack AI Solutions Architect | MCP Neural Intelligence",
+    meta_desc:"Manuel Stagg — Senior Subject-Matter Expert and Full-Stack AI Solutions Architect. 24 years in the Banking Industry (compliance, risk, KYC/AML, sanctions) and architect of MCP Neural Intelligence — an AI reasoning layer wired into real operations.",
     btn_pdf:"Download CV", eyebrow:"Senior SME · Full-Stack AI Solutions Architect",
     title_line:"Full-Stack AI Solutions Architect &middot; MCP Neural Intelligence",
     subtitle:"Senior subject-matter expert bridging 24 years inside the Banking Industry — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.",
@@ -422,16 +495,33 @@ const I18N = {
     n_cap:"MCP CORE — context · routing · orchestration &middot; diagnostic + prescriptive reasoning across every connected system.",
     e_h:"Core Expertise", e_c1:"Banking, Risk & Compliance", e_c2:"AI / LLM Architecture", e_c3:"Full-Stack Engineering", e_c4:"Delivery & Platform",
     x_h:"Experience",
-    x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect — Digit2AI", x1_o:"MCP Neural Intelligence · Multi-vertical AI delivery",
-    x1_a:"Architect and ship MCP Neural Intelligence — an AI reasoning layer wired into clients' live CRM, telephony, financial and compliance systems.",
-    x1_b:"Designed an 83-agent MCP workforce (8 core + 75 senior specialists) that converts natural-language requirements into deployed, production systems.",
-    x1_c:"Owns the full lifecycle end-to-end: data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment.",
-    x1_d:"Delivered 20+ production deployments across banking, freight, healthcare, retail, education and B2B chamber networks — bilingual EN/ES.",
-    x2_w:"24+ Years", x2_t:"Banking Industry — Compliance, Risk & Technology", x2_o:"Global Banking · Institutional scale",
-    x2_a:"Two-plus decades leading global compliance, risk and enterprise-technology programs inside the Banking Industry.",
-    x2_b:"Deep operational command of KYC/AML, sanctions screening, transaction monitoring, investigations and regulatory reporting at Tier-1 scale.",
-    x2_c:"Drove technology integration across compliance and risk platforms — the control-environment expertise that now grounds his AI architecture.",
-    x2_d:"Translated regulatory obligation into working systems, processes and measurable operational outcomes.",
+    x_lead:"A single, uncommon career arc: 24 years hardening the control environment of a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.",
+    x_hl1:"Years in global banking, compliance & risk", x_hl2:"Transaction flows monitored & screened", x_hl3:"False-positive reduction with AI reasoning", x_hl4:"AI systems architected & shipped to production",
+    x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect", x1_o:"Digit2AI · MCP Neural Intelligence · Multi-vertical AI delivery",
+    x1_g1:"Architecture", x1_g2:"Delivery & Scale",
+    x1_a:"Architect and ship <strong>MCP Neural Intelligence</strong> — an AI reasoning layer wired directly into clients' live CRM, telephony, financial and compliance systems through the open Model Context Protocol.",
+    x1_b:"Designed and operates an <strong>83-agent MCP workforce</strong> (8 always-on core agents + 75 senior specialists on demand) that converts natural-language requirements into deployed, production systems.",
+    x1_c:"Engineered the diagnostic-plus-prescriptive pattern — every finding ships with the fix and the workflow that executes it — with human-in-the-loop approval and full audit trails.",
+    x1_d:"Owns the full lifecycle end-to-end: requirements, data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment — solo through to production.",
+    x1_e:"Built multi-tenant SaaS with strict tenant isolation, cost caps, model routing (Opus/Sonnet/Haiku) and observability across every deployment.",
+    x1_f:"Delivered <strong>20+ production systems</strong> across banking, freight, healthcare, retail, education and B2B chamber networks — fully bilingual EN/ES.",
+    x1_m1:"agent workforce", x1_m2:"production deployments", x1_m3:"industry verticals",
+    x3_w:"Transition Years", x3_t:"Enterprise AI & Automation Integration — Banking", x3_o:"Tier-1 Global Bank · Compliance & Risk Technology",
+    x3_a:"Bridged the two disciplines — introduced AI, machine-learning and automation into compliance and risk operations while still inside the bank's control environment.",
+    x3_b:"Modernized rule-based screening and monitoring with contextual, multi-source reasoning — cutting false positives and accelerating investigations.",
+    x3_c:"Integrated data across siloed compliance, risk and operational platforms so a single intelligence layer could reason over all of them.",
+    x3_d:"Proved, in a regulated Tier-1 setting, that AI could recommend while humans decide — the principle now at the core of Neural Intelligence.",
+    x2_w:"24+ Years", x2_t:"Banking Industry — Compliance, Risk & Enterprise Technology", x2_o:"Tier-1 Global Bank · Institutional scale · Global programs",
+    x2_g1:"Financial Crime & Compliance", x2_g2:"Risk, Controls & Technology", x2_g3:"Leadership",
+    x2_a:"Led global <strong>KYC/AML</strong> programs — customer due diligence, enhanced due diligence, and periodic review — across institutional client portfolios.",
+    x2_b:"Directed <strong>sanctions screening and OFAC</strong> operations, transaction monitoring, alert adjudication, SAR filing and complex financial-crime investigations at Tier-1 scale.",
+    x2_c:"Owned regulatory reporting and examination readiness — translating obligations from FinCEN, OFAC and global regulators into working controls.",
+    x2_d:"Drove <strong>technology integration</strong> across compliance and risk platforms — screening engines, case management, monitoring systems and data pipelines.",
+    x2_e:"Strengthened the control environment through risk modeling, quality assurance, model tuning and audit-grade documentation.",
+    x2_f:"Reduced investigative noise and cycle time by re-engineering detection logic and enriching it with better data — the roots of his AI approach.",
+    x2_g:"Led and mentored cross-functional teams across compliance, risk, operations and technology in a highly regulated, high-stakes environment.",
+    x2_h:"Turned regulatory obligation into systems, processes and measurable operational outcomes — the discipline that now grounds every AI system he ships.",
+    x2_m1:"years", x2_m2:"pillars of compliance", x2_m3:"institutional scale",
     d_h:"Documented Outcomes",
     d_1:"Not projections — documented results from production deployments across banking, freight, healthcare and B2B networks.",
     d_a_t:"Workflow Automation", d_a_p:"Intake, screening, quoting, scheduling and reporting handled end-to-end by reasoning agents.",
@@ -453,6 +543,7 @@ const I18N = {
   },
   es:{
     meta_title:"Manuel Stagg — SME Senior, Arquitecto de Soluciones de IA Full-Stack | Inteligencia Neural MCP",
+    meta_desc:"Manuel Stagg — Experto Senior en la materia y Arquitecto de Soluciones de IA Full-Stack. 24 años en la Industria Bancaria (cumplimiento, riesgo, KYC/AML, sanciones) y arquitecto de Inteligencia Neural MCP — una capa de razonamiento de IA conectada a operaciones reales.",
     btn_pdf:"Descargar CV", eyebrow:"SME Senior · Arquitecto de Soluciones de IA Full-Stack",
     title_line:"Arquitecto de Soluciones de IA Full-Stack &middot; Inteligencia Neural MCP",
     subtitle:"Experto senior en la materia que une 24 años dentro de la Industria Bancaria — cumplimiento, riesgo, KYC/AML y sanciones — con el diseño y la entrega de sistemas de IA en producción construidos sobre el Model Context Protocol.",
@@ -466,16 +557,33 @@ const I18N = {
     n_cap:"NÚCLEO MCP — contexto · enrutamiento · orquestación &middot; razonamiento diagnóstico + prescriptivo sobre cada sistema conectado.",
     e_h:"Áreas de Especialización", e_c1:"Banca, Riesgo y Cumplimiento", e_c2:"Arquitectura de IA / LLM", e_c3:"Ingeniería Full-Stack", e_c4:"Entrega y Plataforma",
     x_h:"Experiencia",
-    x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack — Digit2AI", x1_o:"Inteligencia Neural MCP · Entrega de IA multi-vertical",
-    x1_a:"Arquitecta y despliega Inteligencia Neural MCP — una capa de razonamiento de IA conectada a los sistemas en vivo de CRM, telefonía, finanzas y cumplimiento de los clientes.",
-    x1_b:"Diseñó una fuerza MCP de 83 agentes (8 centrales + 75 especialistas senior) que convierte requerimientos en lenguaje natural en sistemas desplegados en producción.",
-    x1_c:"Responsable del ciclo completo de extremo a extremo: modelo de datos, backend, capa de voz/agentes, front end, SIT/UAT y despliegue continuo.",
-    x1_d:"Entregó más de 20 implementaciones en producción en banca, carga, salud, retail, educación y redes de cámaras B2B — bilingüe EN/ES.",
-    x2_w:"24+ Años", x2_t:"Industria Bancaria — Cumplimiento, Riesgo y Tecnología", x2_o:"Banca Global · Escala institucional",
-    x2_a:"Más de dos décadas liderando programas globales de cumplimiento, riesgo y tecnología empresarial dentro de la Industria Bancaria.",
-    x2_b:"Dominio operativo profundo de KYC/AML, screening de sanciones, monitoreo de transacciones, investigaciones y reportes regulatorios a escala Tier-1.",
-    x2_c:"Impulsó la integración tecnológica en plataformas de cumplimiento y riesgo — la experiencia en entornos de control que hoy fundamenta su arquitectura de IA.",
-    x2_d:"Tradujo la obligación regulatoria en sistemas, procesos y resultados operativos medibles.",
+    x_lead:"Una trayectoria profesional única: 24 años fortaleciendo el entorno de control de un banco global Tier-1, y luego convirtiendo esa disciplina en IA de producción. El rigor regulatorio no es un detalle — es la razón por la que se confía en su IA con dinero real, clientes reales y obligaciones de cumplimiento reales.",
+    x_hl1:"Años en banca global, cumplimiento y riesgo", x_hl2:"Flujos transaccionales monitoreados y filtrados", x_hl3:"Reducción de falsos positivos con razonamiento de IA", x_hl4:"Sistemas de IA arquitectados y llevados a producción",
+    x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack", x1_o:"Digit2AI · Inteligencia Neural MCP · Entrega de IA multi-vertical",
+    x1_g1:"Arquitectura", x1_g2:"Entrega y Escala",
+    x1_a:"Arquitecta y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA conectada directamente a los sistemas en vivo de CRM, telefonía, finanzas y cumplimiento de los clientes mediante el Model Context Protocol abierto.",
+    x1_b:"Diseñó y opera una <strong>fuerza MCP de 83 agentes</strong> (8 agentes centrales siempre activos + 75 especialistas senior bajo demanda) que convierte requerimientos en lenguaje natural en sistemas desplegados en producción.",
+    x1_c:"Diseñó el patrón diagnóstico-más-prescriptivo — cada hallazgo viene con la solución y el flujo de trabajo que la ejecuta — con aprobación humana en el circuito y trazabilidad completa.",
+    x1_d:"Responsable del ciclo completo de extremo a extremo: requerimientos, modelo de datos, backend, capa de voz/agentes, front end, SIT/UAT y despliegue continuo — en solitario hasta producción.",
+    x1_e:"Construyó SaaS multi-tenant con aislamiento estricto por cliente, topes de costo, enrutamiento de modelos (Opus/Sonnet/Haiku) y observabilidad en cada implementación.",
+    x1_f:"Entregó <strong>más de 20 sistemas en producción</strong> en banca, carga, salud, retail, educación y redes de cámaras B2B — totalmente bilingüe EN/ES.",
+    x1_m1:"fuerza de agentes", x1_m2:"despliegues en producción", x1_m3:"verticales de industria",
+    x3_w:"Años de Transición", x3_t:"Integración de IA y Automatización Empresarial — Banca", x3_o:"Banco Global Tier-1 · Tecnología de Cumplimiento y Riesgo",
+    x3_a:"Unió las dos disciplinas — introdujo IA, machine-learning y automatización en las operaciones de cumplimiento y riesgo, aún dentro del entorno de control del banco.",
+    x3_b:"Modernizó el screening y monitoreo basado en reglas con razonamiento contextual multi-fuente — reduciendo falsos positivos y acelerando investigaciones.",
+    x3_c:"Integró datos entre plataformas aisladas de cumplimiento, riesgo y operaciones para que una sola capa de inteligencia razonara sobre todas ellas.",
+    x3_d:"Demostró, en un entorno regulado Tier-1, que la IA puede recomendar mientras las personas deciden — el principio hoy central de la Inteligencia Neural.",
+    x2_w:"24+ Años", x2_t:"Industria Bancaria — Cumplimiento, Riesgo y Tecnología Empresarial", x2_o:"Banco Global Tier-1 · Escala institucional · Programas globales",
+    x2_g1:"Crimen Financiero y Cumplimiento", x2_g2:"Riesgo, Controles y Tecnología", x2_g3:"Liderazgo",
+    x2_a:"Lideró programas globales de <strong>KYC/AML</strong> — debida diligencia del cliente, debida diligencia reforzada y revisión periódica — en portafolios de clientes institucionales.",
+    x2_b:"Dirigió operaciones de <strong>screening de sanciones y OFAC</strong>, monitoreo de transacciones, adjudicación de alertas, presentación de SAR e investigaciones complejas de crimen financiero a escala Tier-1.",
+    x2_c:"Responsable del reporte regulatorio y la preparación para exámenes — traduciendo obligaciones de FinCEN, OFAC y reguladores globales en controles operativos.",
+    x2_d:"Impulsó la <strong>integración tecnológica</strong> en plataformas de cumplimiento y riesgo — motores de screening, gestión de casos, sistemas de monitoreo y pipelines de datos.",
+    x2_e:"Fortaleció el entorno de control mediante modelado de riesgo, aseguramiento de calidad, ajuste de modelos y documentación con calidad de auditoría.",
+    x2_f:"Redujo el ruido investigativo y el tiempo de ciclo rediseñando la lógica de detección y enriqueciéndola con mejores datos — el origen de su enfoque de IA.",
+    x2_g:"Lideró y formó equipos multidisciplinarios de cumplimiento, riesgo, operaciones y tecnología en un entorno altamente regulado y de alto impacto.",
+    x2_h:"Convirtió la obligación regulatoria en sistemas, procesos y resultados operativos medibles — la disciplina que hoy fundamenta cada sistema de IA que entrega.",
+    x2_m1:"años", x2_m2:"pilares de cumplimiento", x2_m3:"escala institucional",
     d_h:"Resultados Documentados",
     d_1:"No son proyecciones — son resultados documentados de implementaciones en producción en banca, carga, salud y redes B2B.",
     d_a_t:"Automatización de Flujos", d_a_p:"Admisión, screening, cotización, agendamiento y reportes gestionados de extremo a extremo por agentes de razonamiento.",
