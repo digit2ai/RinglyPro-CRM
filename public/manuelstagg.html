@@ -121,6 +121,12 @@ section.blk{padding:44px 0}
 .tag{font-family:var(--mono);font-size:11.5px;color:var(--txt);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
 .mcard.v h3 i{color:var(--violet)}
 @media(max-width:720px){.matrix{grid-template-columns:1fr}}
+.techband{margin-top:16px}
+.tech-grp{margin-top:16px}
+.tech-grp:first-of-type{margin-top:6px}
+.tech-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin-bottom:9px;display:flex;align-items:center;gap:9px}
+.tech-lab::after{content:"";flex:1;height:1px;background:var(--line)}
+.tech-lab.gc{color:var(--cyan)}.tech-lab.gv{color:var(--violet)}.tech-lab.gg{color:var(--green)}
 
 /* timeline */
 .timeline{position:relative;padding-left:30px}
@@ -261,7 +267,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 <section class="blk" id="profile">
   <div class="wrap">
     <div class="sec-head"><span class="k">01</span><h2 data-i18n="p_h">Professional Profile</h2><span class="rule"></span></div>
-    <p class="lead" data-i18n="p_1"><strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise technology programs at institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.</p>
+    <p class="lead" data-i18n="p_1"><strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise-technology programs at Citigroup, at Tier-1 institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.</p>
     <p class="lead" data-i18n="p_2">His differentiator is rare: the same person who understands a Tier-1 bank's control environment also architects, codes, tests and deploys the AI that automates it. He works end-to-end — requirements, data model, backend, voice/agent layer, front end, and production release — across banking, freight, healthcare, retail, education and B2B networks, in English and Spanish.</p>
   </div>
 </section>
@@ -308,6 +314,29 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
         </div>
       </div>
     </div>
+
+    <!-- Technical Skills & Platforms -->
+    <div class="mcard techband">
+      <h3><i class="fas fa-microchip"></i> <span data-i18n="tech_h">Technical Skills &amp; Platforms</span></h3>
+      <div class="tech-grp">
+        <div class="tech-lab gc" data-i18n="tech_l1">Financial Crime Systems</div>
+        <div class="tags">
+          <span class="tag">FircoSoft Continuity</span><span class="tag">OFSAA</span><span class="tag">Oracle Mantas (Transaction Screening)</span><span class="tag">Actimize</span><span class="tag">Appian OnDemand Party Screening</span><span class="tag">Silent Eight (Machine Learning)</span>
+        </div>
+      </div>
+      <div class="tech-grp">
+        <div class="tech-lab gg" data-i18n="tech_l2">Regulatory &amp; Frameworks</div>
+        <div class="tags">
+          <span class="tag">OFAC (SDN)</span><span class="tag">OCC</span><span class="tag">UK HMT</span><span class="tag">UN Security Council</span><span class="tag">FinCEN</span><span class="tag">Modern Solutions Framework (MSF)</span><span class="tag">Agile / SCRUM</span>
+        </div>
+      </div>
+      <div class="tech-grp">
+        <div class="tech-lab gv" data-i18n="tech_l3">Engineering, Data &amp; Tooling</div>
+        <div class="tags">
+          <span class="tag">Python</span><span class="tag">AWS Cloud Computing</span><span class="tag">SQL</span><span class="tag">MySQL</span><span class="tag">Microsoft SQL Server</span><span class="tag">Microsoft Access</span><span class="tag">BI / Data Mining</span><span class="tag">Splunk</span><span class="tag">Jira</span><span class="tag">Confluence</span><span class="tag">SharePoint Workflows</span>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -315,7 +344,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 <section class="blk" id="experience">
   <div class="wrap">
     <div class="sec-head"><span class="k">04</span><h2 data-i18n="x_h">Experience</h2><span class="rule"></span></div>
-    <p class="lead" data-i18n="x_lead">A single, uncommon career arc: 24 years hardening the control environment of a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.</p>
+    <p class="lead" data-i18n="x_lead">A single, uncommon career arc: 24 years hardening the control environment of Citigroup, a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.</p>
 
     <!-- career highlights ribbon -->
     <div class="hl-ribbon">
@@ -352,25 +381,32 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
         </div>
       </div>
 
-      <!-- ROLE 2 — Bridge: AI inside the bank -->
+      <!-- ROLE 2 — FCRM Individual Contributor SME -->
       <div class="tl v">
-        <div class="when" data-i18n="x3_w">Transition Years</div>
-        <h3 data-i18n="x3_t">Enterprise AI &amp; Automation Integration — Banking</h3>
-        <div class="org" data-i18n="x3_o">Tier-1 Global Bank · Compliance &amp; Risk Technology</div>
-        <div class="scope"><span>AI / ML</span><span>Process Automation</span><span>Data Integration</span><span>Compliance Tech</span><span>Risk Analytics</span></div>
+        <div class="when" data-i18n="x3_w">Financial Crime SME</div>
+        <h3 data-i18n="x3_t">Financial Crimes Risk Management (FCRM) — Individual Contributor SME</h3>
+        <div class="org" data-i18n="x3_o">Citigroup &middot; SolomonEdwards (Silicon Valley Bank contract)</div>
+        <div class="scope"><span>FircoSoft Continuity</span><span>OFSAA</span><span>Oracle Mantas</span><span>Actimize</span><span>Appian OnDemand</span><span>Silent Eight (ML)</span><span>MSF</span><span>Agile/SCRUM</span></div>
         <ul>
-          <li data-i18n="x3_a">Bridged the two disciplines — introduced AI, machine-learning and automation into compliance and risk operations while still inside the bank's control environment.</li>
-          <li data-i18n="x3_b">Modernized rule-based screening and monitoring with contextual, multi-source reasoning — cutting false positives and accelerating investigations.</li>
-          <li data-i18n="x3_c">Integrated data across siloed compliance, risk and operational platforms so a single intelligence layer could reason over all of them.</li>
-          <li data-i18n="x3_d">Proved, in a regulated Tier-1 setting, that AI could recommend while humans decide — the principle now at the core of Neural Intelligence.</li>
+          <li data-i18n="x3_a"><strong>Individual Contributor SME</strong> partnering with Financial Crimes teams — Fraud, Sanctions, KYC and AML — on a wide range of initiatives to build new and incremental capabilities and integrate them into FCRM systems and business processes.</li>
+          <li data-i18n="x3_b">Ensured the bank adhered to legal and regulatory requirements — <strong>OCC, OFAC, UK HMT, UN and FinCEN</strong> — and was appropriately safeguarded against financial crimes that could impact the organization or its clients.</li>
+          <li data-i18n="x3_c">Across Citigroup and SolomonEdwards (Silicon Valley Bank contract), wore multiple hats — led several project implementations and provided traceability and tracking of innovative software and data-warehousing solutions.</li>
+          <li data-i18n="x3_d">Over three years, enhanced and optimized <strong>OFSAA</strong> (Oracle Financial Services Analytics), <strong>FircoSoft Continuity</strong>, <strong>Appian OnDemand Party Screening</strong>, <strong>Silent Eight</strong> machine learning, <strong>Oracle Mantas</strong> transaction screening and <strong>Actimize</strong> — fine-tuning rule sets.</li>
+          <li data-i18n="x3_e">Tuned OFAC (Specially Designated Nationals) rule sets for <strong>North America</strong>, and EMEA (Europe, Middle East &amp; Africa) rule sets under <strong>United Nations Security Council</strong> regulatory requirements.</li>
+          <li data-i18n="x3_f">Delivered aligned with the <strong>Modern Solutions Framework (MSF)</strong> and Agile/SCRUM principles and best practices, applying solid, advanced program-management techniques.</li>
         </ul>
+        <div class="metrics">
+          <div class="m"><b>6</b> <span data-i18n="x3_m1">FCRM platforms tuned</span></div>
+          <div class="m"><b>3 yrs</b> <span data-i18n="x3_m2">systems optimization</span></div>
+          <div class="m"><b>NAM + EMEA</b> <span data-i18n="x3_m3">sanctions coverage</span></div>
+        </div>
       </div>
 
       <!-- ROLE 3 — 24 years banking -->
       <div class="tl">
         <div class="when" data-i18n="x2_w">24+ Years</div>
         <h3 data-i18n="x2_t">Banking Industry — Compliance, Risk &amp; Enterprise Technology</h3>
-        <div class="org" data-i18n="x2_o">Tier-1 Global Bank · Institutional scale · Global programs</div>
+        <div class="org" data-i18n="x2_o">Citigroup · Tier-1 institutional scale · Global programs</div>
         <div class="scope"><span>KYC / CDD / EDD</span><span>AML</span><span>Sanctions / OFAC</span><span>Transaction Monitoring</span><span>SAR / Investigations</span><span>Fraud</span><span>Regulatory Reporting</span><span>Controls &amp; Audit</span></div>
         <div class="grp" data-i18n="x2_g1">Financial Crime &amp; Compliance</div>
         <ul>
@@ -488,14 +524,15 @@ const I18N = {
     loc:"Wesley Chapel, FL", s_email:"Email Me", s_hire:"For Recruiters",
     st1:"Years Banking Industry", st2:"Agent MCP Workforce", st3:"AI Systems in Production", st4:"Fully Bilingual",
     p_h:"Professional Profile",
-    p_1:"<strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise technology programs at institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.",
+    p_1:"<strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise-technology programs at Citigroup, at Tier-1 institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.",
     p_2:"His differentiator is rare: the same person who understands a Tier-1 bank's control environment also architects, codes, tests and deploys the AI that automates it. He works end-to-end — requirements, data model, backend, voice/agent layer, front end, and production release — across banking, freight, healthcare, retail, education and B2B networks, in English and Spanish.",
     n_h:"MCP Neural Intelligence &mdash; The Technology I Build",
     n_1:"The AI reasoning technology Manuel architects: <strong>MCP Neural Intelligence</strong>. One neural core connects every system a business runs; around it sit <strong>4 core capability domains</strong> and <strong>5 specialist clusters</strong> — an 83-agent workforce — all wired through the open Model Context Protocol. This is what he can design and deliver.",
     n_cap:"MCP Neural Intelligence &middot; 4 core domains + 5 specialist clusters (39 agents), wired via the open Model Context Protocol &mdash; architected &amp; delivered by Manuel Stagg. <span style=\"color:#84cc16\">A live interactive app of this map is coming soon.</span>",
     e_h:"Core Expertise", e_c1:"Banking, Risk & Compliance", e_c2:"AI / LLM Architecture", e_c3:"Full-Stack Engineering", e_c4:"Delivery & Platform",
+    tech_h:"Technical Skills & Platforms", tech_l1:"Financial Crime Systems", tech_l2:"Regulatory & Frameworks", tech_l3:"Engineering, Data & Tooling",
     x_h:"Experience",
-    x_lead:"A single, uncommon career arc: 24 years hardening the control environment of a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.",
+    x_lead:"A single, uncommon career arc: 24 years hardening the control environment of Citigroup, a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.",
     x_hl1:"Years in global banking, compliance & risk", x_hl2:"Transaction flows monitored & screened", x_hl3:"False-positive reduction with AI reasoning", x_hl4:"AI systems architected & shipped to production",
     x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect", x1_o:"Digit2AI · MCP Neural Intelligence · Multi-vertical AI delivery",
     x1_g1:"Architecture", x1_g2:"Delivery & Scale",
@@ -506,12 +543,15 @@ const I18N = {
     x1_e:"Built multi-tenant SaaS with strict tenant isolation, cost caps, model routing (Opus/Sonnet/Haiku) and observability across every deployment.",
     x1_f:"Delivered <strong>20+ production systems</strong> across banking, freight, healthcare, retail, education and B2B chamber networks — fully bilingual EN/ES.",
     x1_m1:"agent workforce", x1_m2:"production deployments", x1_m3:"industry verticals",
-    x3_w:"Transition Years", x3_t:"Enterprise AI & Automation Integration — Banking", x3_o:"Tier-1 Global Bank · Compliance & Risk Technology",
-    x3_a:"Bridged the two disciplines — introduced AI, machine-learning and automation into compliance and risk operations while still inside the bank's control environment.",
-    x3_b:"Modernized rule-based screening and monitoring with contextual, multi-source reasoning — cutting false positives and accelerating investigations.",
-    x3_c:"Integrated data across siloed compliance, risk and operational platforms so a single intelligence layer could reason over all of them.",
-    x3_d:"Proved, in a regulated Tier-1 setting, that AI could recommend while humans decide — the principle now at the core of Neural Intelligence.",
-    x2_w:"24+ Years", x2_t:"Banking Industry — Compliance, Risk & Enterprise Technology", x2_o:"Tier-1 Global Bank · Institutional scale · Global programs",
+    x3_w:"Financial Crime SME", x3_t:"Financial Crimes Risk Management (FCRM) — Individual Contributor SME", x3_o:"Citigroup &middot; SolomonEdwards (Silicon Valley Bank contract)",
+    x3_a:"<strong>Individual Contributor SME</strong> partnering with Financial Crimes teams — Fraud, Sanctions, KYC and AML — on a wide range of initiatives to build new and incremental capabilities and integrate them into FCRM systems and business processes.",
+    x3_b:"Ensured the bank adhered to legal and regulatory requirements — <strong>OCC, OFAC, UK HMT, UN and FinCEN</strong> — and was appropriately safeguarded against financial crimes that could impact the organization or its clients.",
+    x3_c:"Across Citigroup and SolomonEdwards (Silicon Valley Bank contract), wore multiple hats — led several project implementations and provided traceability and tracking of innovative software and data-warehousing solutions.",
+    x3_d:"Over three years, enhanced and optimized <strong>OFSAA</strong> (Oracle Financial Services Analytics), <strong>FircoSoft Continuity</strong>, <strong>Appian OnDemand Party Screening</strong>, <strong>Silent Eight</strong> machine learning, <strong>Oracle Mantas</strong> transaction screening and <strong>Actimize</strong> — fine-tuning rule sets.",
+    x3_e:"Tuned OFAC (Specially Designated Nationals) rule sets for <strong>North America</strong>, and EMEA (Europe, Middle East & Africa) rule sets under <strong>United Nations Security Council</strong> regulatory requirements.",
+    x3_f:"Delivered aligned with the <strong>Modern Solutions Framework (MSF)</strong> and Agile/SCRUM principles and best practices, applying solid, advanced program-management techniques.",
+    x3_m1:"FCRM platforms tuned", x3_m2:"systems optimization", x3_m3:"sanctions coverage",
+    x2_w:"24+ Years", x2_t:"Banking Industry — Compliance, Risk & Enterprise Technology", x2_o:"Citigroup · Tier-1 institutional scale · Global programs",
     x2_g1:"Financial Crime & Compliance", x2_g2:"Risk, Controls & Technology", x2_g3:"Leadership",
     x2_a:"Led global <strong>KYC/AML</strong> programs — customer due diligence, enhanced due diligence, and periodic review — across institutional client portfolios.",
     x2_b:"Directed <strong>sanctions screening and OFAC</strong> operations, transaction monitoring, alert adjudication, SAR filing and complex financial-crime investigations at Tier-1 scale.",
@@ -550,14 +590,15 @@ const I18N = {
     loc:"Wesley Chapel, Florida", s_email:"Escríbeme", s_hire:"Para Reclutadores",
     st1:"Años en Banca", st2:"Fuerza MCP de Agentes", st3:"Sistemas de IA en Producción", st4:"Totalmente Bilingüe",
     p_h:"Perfil Profesional",
-    p_1:"<strong>Manuel Stagg</strong> es un SME senior y Arquitecto de Soluciones de IA Full-Stack con más de <strong>24 años en la Industria Bancaria</strong>, donde lideró programas globales de cumplimiento, riesgo, KYC/AML, screening de sanciones y tecnología empresarial a escala institucional. Hoy diseña y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA que conecta los sistemas reales de un negocio (CRM, telefonía, finanzas, inventario, cumplimiento y datos de proveedores) mediante el <strong>Model Context Protocol</strong> y razona sobre todos ellos para destacar lo que importa y prescribir la siguiente acción.",
+    p_1:"<strong>Manuel Stagg</strong> es un SME senior y Arquitecto de Soluciones de IA Full-Stack con más de <strong>24 años en la Industria Bancaria</strong>, donde lideró programas globales de cumplimiento, riesgo, KYC/AML, screening de sanciones y tecnología empresarial en Citigroup, a escala institucional Tier-1. Hoy diseña y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA que conecta los sistemas reales de un negocio (CRM, telefonía, finanzas, inventario, cumplimiento y datos de proveedores) mediante el <strong>Model Context Protocol</strong> y razona sobre todos ellos para destacar lo que importa y prescribir la siguiente acción.",
     p_2:"Su diferenciador es poco común: la misma persona que entiende el entorno de control de un banco Tier-1 también arquitecta, programa, prueba y despliega la IA que lo automatiza. Trabaja de extremo a extremo — requerimientos, modelo de datos, backend, capa de voz/agentes, front end y liberación a producción — en banca, transporte de carga, salud, retail, educación y redes B2B, en inglés y español.",
     n_h:"Inteligencia Neural MCP &mdash; La Tecnología que Construyo",
     n_1:"La tecnología de razonamiento de IA que Manuel arquitecta: <strong>Inteligencia Neural MCP</strong>. Un solo núcleo neural conecta cada sistema que usa un negocio; a su alrededor están los <strong>4 dominios centrales de capacidad</strong> y los <strong>5 clústeres de especialistas</strong> — una fuerza de 83 agentes — todo conectado vía el Model Context Protocol abierto. Esto es lo que puede diseñar y entregar.",
     n_cap:"Inteligencia Neural MCP &middot; 4 dominios centrales + 5 clústeres de especialistas (39 agentes), conectados vía el Model Context Protocol abierto &mdash; arquitectado y entregado por Manuel Stagg. <span style=\"color:#84cc16\">Próximamente: una app interactiva en vivo de este mapa.</span>",
     e_h:"Áreas de Especialización", e_c1:"Banca, Riesgo y Cumplimiento", e_c2:"Arquitectura de IA / LLM", e_c3:"Ingeniería Full-Stack", e_c4:"Entrega y Plataforma",
+    tech_h:"Habilidades Técnicas y Plataformas", tech_l1:"Sistemas de Crimen Financiero", tech_l2:"Regulación y Marcos de Trabajo", tech_l3:"Ingeniería, Datos y Herramientas",
     x_h:"Experiencia",
-    x_lead:"Una trayectoria profesional única: 24 años fortaleciendo el entorno de control de un banco global Tier-1, y luego convirtiendo esa disciplina en IA de producción. El rigor regulatorio no es un detalle — es la razón por la que se confía en su IA con dinero real, clientes reales y obligaciones de cumplimiento reales.",
+    x_lead:"Una trayectoria profesional única: 24 años fortaleciendo el entorno de control de Citigroup, un banco global Tier-1, y luego convirtiendo esa disciplina en IA de producción. El rigor regulatorio no es un detalle — es la razón por la que se confía en su IA con dinero real, clientes reales y obligaciones de cumplimiento reales.",
     x_hl1:"Años en banca global, cumplimiento y riesgo", x_hl2:"Flujos transaccionales monitoreados y filtrados", x_hl3:"Reducción de falsos positivos con razonamiento de IA", x_hl4:"Sistemas de IA arquitectados y llevados a producción",
     x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack", x1_o:"Digit2AI · Inteligencia Neural MCP · Entrega de IA multi-vertical",
     x1_g1:"Arquitectura", x1_g2:"Entrega y Escala",
@@ -568,12 +609,15 @@ const I18N = {
     x1_e:"Construyó SaaS multi-tenant con aislamiento estricto por cliente, topes de costo, enrutamiento de modelos (Opus/Sonnet/Haiku) y observabilidad en cada implementación.",
     x1_f:"Entregó <strong>más de 20 sistemas en producción</strong> en banca, carga, salud, retail, educación y redes de cámaras B2B — totalmente bilingüe EN/ES.",
     x1_m1:"fuerza de agentes", x1_m2:"despliegues en producción", x1_m3:"verticales de industria",
-    x3_w:"Años de Transición", x3_t:"Integración de IA y Automatización Empresarial — Banca", x3_o:"Banco Global Tier-1 · Tecnología de Cumplimiento y Riesgo",
-    x3_a:"Unió las dos disciplinas — introdujo IA, machine-learning y automatización en las operaciones de cumplimiento y riesgo, aún dentro del entorno de control del banco.",
-    x3_b:"Modernizó el screening y monitoreo basado en reglas con razonamiento contextual multi-fuente — reduciendo falsos positivos y acelerando investigaciones.",
-    x3_c:"Integró datos entre plataformas aisladas de cumplimiento, riesgo y operaciones para que una sola capa de inteligencia razonara sobre todas ellas.",
-    x3_d:"Demostró, en un entorno regulado Tier-1, que la IA puede recomendar mientras las personas deciden — el principio hoy central de la Inteligencia Neural.",
-    x2_w:"24+ Años", x2_t:"Industria Bancaria — Cumplimiento, Riesgo y Tecnología Empresarial", x2_o:"Banco Global Tier-1 · Escala institucional · Programas globales",
+    x3_w:"SME de Crimen Financiero", x3_t:"Gestión de Riesgo de Crímenes Financieros (FCRM) — SME Contribuidor Individual", x3_o:"Citigroup &middot; SolomonEdwards (contrato Silicon Valley Bank)",
+    x3_a:"<strong>SME contribuidor individual</strong> colaborando con los equipos de Crímenes Financieros — Fraude, Sanciones, KYC y AML — en una amplia gama de iniciativas para construir capacidades nuevas e incrementales e integrarlas en los sistemas y procesos de negocio de FCRM.",
+    x3_b:"Aseguró que el banco cumpliera los requisitos legales y regulatorios — <strong>OCC, OFAC, UK HMT, ONU y FinCEN</strong> — y estuviera debidamente protegido contra crímenes financieros que pudieran impactar a la organización o a sus clientes.",
+    x3_c:"En Citigroup y SolomonEdwards (contrato Silicon Valley Bank), asumió múltiples roles — lideró varias implementaciones de proyectos y aportó trazabilidad y seguimiento de soluciones innovadoras de software y data warehousing.",
+    x3_d:"Durante tres años, mejoró y optimizó <strong>OFSAA</strong> (Oracle Financial Services Analytics), <strong>FircoSoft Continuity</strong>, <strong>Appian OnDemand Party Screening</strong>, el machine learning de <strong>Silent Eight</strong>, el screening de transacciones de <strong>Oracle Mantas</strong> y <strong>Actimize</strong> — afinando conjuntos de reglas.",
+    x3_e:"Afinó conjuntos de reglas de OFAC (Specially Designated Nationals) para <strong>Norteamérica</strong>, y de EMEA (Europa, Medio Oriente y África) bajo los requisitos regulatorios del <strong>Consejo de Seguridad de las Naciones Unidas</strong>.",
+    x3_f:"Entregó alineado con el <strong>Modern Solutions Framework (MSF)</strong> y los principios y buenas prácticas de Agile/SCRUM, aplicando técnicas sólidas y avanzadas de gestión de programas.",
+    x3_m1:"plataformas FCRM afinadas", x3_m2:"optimización de sistemas", x3_m3:"cobertura de sanciones",
+    x2_w:"24+ Años", x2_t:"Industria Bancaria — Cumplimiento, Riesgo y Tecnología Empresarial", x2_o:"Citigroup · Escala institucional Tier-1 · Programas globales",
     x2_g1:"Crimen Financiero y Cumplimiento", x2_g2:"Riesgo, Controles y Tecnología", x2_g3:"Liderazgo",
     x2_a:"Lideró programas globales de <strong>KYC/AML</strong> — debida diligencia del cliente, debida diligencia reforzada y revisión periódica — en portafolios de clientes institucionales.",
     x2_b:"Dirigió operaciones de <strong>screening de sanciones y OFAC</strong>, monitoreo de transacciones, adjudicación de alertas, presentación de SAR e investigaciones complejas de crimen financiero a escala Tier-1.",
