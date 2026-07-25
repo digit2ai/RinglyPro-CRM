@@ -285,6 +285,9 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 </style>
 <script>/* set theme before paint to avoid flash */
 (function(){try{var t=localStorage.getItem('msTheme');if(!t)t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<!-- Google Analytics 4 (optional). Paste your Measurement ID below (e.g. 'G-ABC123XYZ') to activate. -->
+<script>window.__GA_ID='G-XXXXXXXXXX';</script>
+<script>(function(){var id=window.__GA_ID;if(!id||id.indexOf('G-')!==0||/XXXX/.test(id))return;var s=document.createElement('script');s.async=1;s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(id);document.head.appendChild(s);window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments);};gtag('js',new Date());gtag('config',id);})();</script>
 </head>
 <body>
 <div class="aura"></div><div class="grid-bg"></div>
@@ -1018,6 +1021,13 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('/manuelstagg-sw.js', { scope: '/manuelstagg' }).catch(function(){});
   });
 }
+
+// ---- First-party page-view beacon (no cookies, IP hashed server-side) ----
+(function(){try{
+  var body=JSON.stringify({page:'manuelstagg',path:location.pathname,ref:document.referrer||''});
+  if(navigator.sendBeacon){ navigator.sendBeacon('/api/cv/hit', new Blob([body],{type:'application/json'})); }
+  else{ fetch('/api/cv/hit',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){}); }
+}catch(e){}})();
 </script>
 </body>
 </html>

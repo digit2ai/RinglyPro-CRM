@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>CV Traffic — Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05070e;--card:rgba(255,255,255,.03);--line:rgba(255,255,255,.1);--txt:#e8ecf4;--dim:#9aa4b8;
+  --cyan:#22d3ee;--violet:#8b5cf6;--grad:linear-gradient(135deg,#22d3ee,#8b5cf6)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;
+  background-image:radial-gradient(60% 45% at 80% 5%,rgba(139,92,246,.14),transparent 60%),radial-gradient(55% 40% at 10% 15%,rgba(34,211,238,.12),transparent 60%)}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--dim);font-size:14px;margin:4px 0 22px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:24px}
+select,input,button{font:inherit;background:#0f1424;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px}
+button{background:var(--grad);color:#04121a;font-weight:700;border:none;cursor:pointer}
+input{min-width:180px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.c .n{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.c .l{color:var(--dim);font-size:12px;margin-top:6px}
+@media(max-width:680px){.cards{grid-template-columns:repeat(2,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:20px}
+.panel h2{font-size:15px;font-weight:700;margin-bottom:14px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:160px;overflow-x:auto;padding-bottom:4px}
+.col{flex:1;min-width:10px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}
+.col .bar2{width:100%;background:var(--grad);border-radius:4px 4px 0 0;min-height:2px;transition:height .3s}
+.col .d{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--dim);white-space:nowrap;transform:rotate(-60deg);transform-origin:center;height:34px}
+.reftable{width:100%;border-collapse:collapse;font-size:13.5px}
+.reftable td{padding:8px 6px;border-bottom:1px solid var(--line)}
+.reftable td:last-child{text-align:right;font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700}
+.reftable td:first-child{color:var(--dim);word-break:break-all;max-width:600px}
+.msg{color:var(--dim);font-size:13px;margin-top:8px}
+.err{color:#fca5a5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CV Traffic</h1>
+  <div class="sub">First-party analytics · no cookies · IPs hashed. Data updates on every page visit.</div>
+  <div class="bar">
+    <select id="page">
+      <option value="manuelstagg">manuelstagg.com</option>
+      <option value="juliana_gramowski">julianagramowski.com</option>
+    </select>
+    <select id="days">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="365">Last year</option>
+    </select>
+    <input id="key" type="password" placeholder="Access key" autocomplete="off">
+    <button id="load">Load</button>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <div class="cards" id="cards" style="display:none">
+    <div class="c"><div class="n" id="cViews">–</div><div class="l" id="lViews">Views (window)</div></div>
+    <div class="c"><div class="n" id="cVis">–</div><div class="l">Unique visitors (window)</div></div>
+    <div class="c"><div class="n" id="cAllV">–</div><div class="l">Views (all time)</div></div>
+    <div class="c"><div class="n" id="cAllU">–</div><div class="l">Visitors (all time)</div></div>
+  </div>
+
+  <div class="panel" id="chartPanel" style="display:none">
+    <h2 id="chartTitle">Views per day</h2>
+    <div class="chart" id="chart"></div>
+  </div>
+
+  <div class="panel" id="refPanel" style="display:none">
+    <h2>Top referrers</h2>
+    <table class="reftable"><tbody id="refBody"></tbody></table>
+  </div>
+</div>
+
+<script>
+var $=function(id){return document.getElementById(id);};
+try{ var k=localStorage.getItem('cvKey'); if(k) $('key').value=k; }catch(e){}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+async function load(){
+  var key=$('key').value.trim(), page=$('page').value, days=$('days').value;
+  try{ localStorage.setItem('cvKey',key); }catch(e){}
+  $('msg').textContent='Loading…'; $('msg').className='msg';
+  try{
+    var r=await fetch('/api/cv/stats?page='+page+'&days='+days+'&key='+encodeURIComponent(key));
+    if(r.status===401){ $('msg').textContent='Invalid access key.'; $('msg').className='msg err'; return; }
+    if(!r.ok){ throw new Error('HTTP '+r.status); }
+    var d=await r.json();
+    render(d);
+    $('msg').textContent='';
+  }catch(e){ $('msg').textContent='Error: '+e.message; $('msg').className='msg err'; }
+}
+function render(d){
+  $('cards').style.display=''; $('chartPanel').style.display=''; $('refPanel').style.display='';
+  $('cViews').textContent=(d.window&&d.window.views)||0;
+  $('cVis').textContent=(d.window&&d.window.visitors)||0;
+  $('cAllV').textContent=(d.all_time&&d.all_time.views)||0;
+  $('cAllU').textContent=(d.all_time&&d.all_time.visitors)||0;
+  $('lViews').textContent='Views (last '+d.days+'d)';
+  $('chartTitle').textContent='Views per day — last '+d.days+' days';
+  var rows=d.by_day||[]; var max=1; rows.forEach(function(x){ if(x.views>max) max=x.views; });
+  $('chart').innerHTML = rows.length ? rows.map(function(x){
+    var h=Math.round((x.views/max)*130)+2;
+    return '<div class="col" title="'+x.day+': '+x.views+' views, '+x.visitors+' visitors">'+
+      '<div class="bar2" style="height:'+h+'px"></div><div class="d">'+x.day.slice(5)+'</div></div>';
+  }).join('') : '<div class="msg">No visits yet in this window.</div>';
+  var refs=d.top_referrers||[];
+  $('refBody').innerHTML = refs.length ? refs.map(function(x){
+    return '<tr><td>'+esc(x.referrer)+'</td><td>'+x.views+'</td></tr>';
+  }).join('') : '<tr><td class="msg">No referrers yet.</td><td></td></tr>';
+}
+$('load').addEventListener('click', load);
+$('key').addEventListener('keydown', function(e){ if(e.key==='Enter') load(); });
+if($('key').value) load();
+</script>
+</body>
+</html>

@@ -992,6 +992,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
+app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/vision2ai/api', require('./routes/vision2ai')); // Vision2Ai booking calendar (web form + future Lite voice agent)
 // app.use('/api/appointment', appointmentRoutes); // REMOVED: Was loading duplicate model, not router
