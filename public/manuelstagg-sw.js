@@ -2,10 +2,11 @@
    explicit narrower scope) so it NEVER intercepts the rest of the RinglyPro CRM
    on aiagent.ringlypro.com. Offline app-shell: network-first for the page,
    cache-first for static assets. Never caches /api or non-GET. */
-const CACHE = 'mscv-v3';
+const CACHE = 'mscv-v5';
 const CORE = [
   '/manuelstagg',
   '/manuelstagg-brain.html',
+  '/manuelstagg.vcf',
   '/manuelstagg-192.png',
   '/manuelstagg-512.png',
   '/manuelstagg-apple-touch.png'
