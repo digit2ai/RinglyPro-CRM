@@ -3070,6 +3070,7 @@ app.get('/orbup', (req, res) => {
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3104,6 +3105,7 @@ app.get('/orbup/start', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-start.html'), 'utf8');
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3127,6 +3129,7 @@ app.get('/orbup/workspace', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-workspace.html'), 'utf8');
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3148,6 +3151,7 @@ app.get('/orbup/login', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-login.html'), 'utf8');
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
   res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3169,6 +3173,7 @@ app.get('/orbup-es', (req, res) => {
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
   res.send(`<!DOCTYPE html>
 <html lang="es">
 <head>

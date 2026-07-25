@@ -129,6 +129,9 @@
 .d2b .cm-lang-opt:hover{border-color:rgba(139,92,246,.5);color:var(--ink)}
 .d2b .cm-lang-opt.on{background:var(--grad);color:#fff;border-color:transparent}
 .d2b #d2b-input.locked{cursor:pointer;opacity:.85}
+.d2b .d2b-reset{text-align:center;margin-top:10px}
+.d2b .d2b-reset a{color:var(--mut);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+.d2b .d2b-reset a:hover{color:var(--ink)}
 .d2b .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
 .d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
 .d2b .slot{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:11px;padding:11px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:all .12s ease}
@@ -488,8 +491,9 @@
   <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
 
   <div class="d2b-modal" id="d2b-contact-modal" hidden>
-    <div class="d2b-modal-backdrop"></div>
+    <div class="d2b-modal-backdrop" data-gate-close></div>
     <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Your details">
+      <button class="d2b-modal-x" data-gate-close aria-label="Close">&times;</button>
       <div class="modal-title">Before we build &mdash; a few details</div>
       <div class="modal-sub">Required. Your demo, plan and text updates are all built from this.</div>
       <div class="modal-fields">
@@ -699,6 +703,7 @@
       </div>
 
       <p class="disclaim">Powered by our real triage engine (OrbUp Neural Intelligence MCP + A2A) &mdash; it returns a genuine scope, not a canned demo.</p>
+      <div class="d2b-reset" id="d2b-reset" hidden><a href="#" id="d2b-reset-link">Not you? Start over</a></div>
 
       <div id="d2b-result" aria-live="polite"></div>
     </div>
@@ -1153,8 +1158,15 @@
   root.querySelectorAll('.d2b-modal [data-close]').forEach(function(el){
     el.addEventListener('click', function(){ closeModal(el.closest('.d2b-modal')); });
   });
-  // The identity gate is REQUIRED — Esc only closes the (optional) booking modal.
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(bookModal); } });
+  // The identity gate stays REQUIRED to build, but must be dismissible (never trap
+  // the page): closing returns to the still-locked builder and drops any pending
+  // resume action.
+  function closeGate(){ closeModal(contactModal); afterGate=null; pendingChip=''; }
+  root.querySelectorAll('[data-gate-close]').forEach(function(el){ el.addEventListener('click', closeGate); });
+  // "Not you? Start over" — clear the saved profile (shared devices / change info+language).
+  var resetLink=root.querySelector('#d2b-reset-link');
+  if(resetLink){ resetLink.addEventListener('click', function(e){ e.preventDefault(); try{ localStorage.removeItem('d2ai_contact'); }catch(x){} location.reload(); }); }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(bookModal); closeGate(); } });
 
   // ---- REQUIRED IDENTITY GATE: name + email + phone + language ----
   // Nothing (writing a request, sample prompts, submit) proceeds until these
@@ -1231,7 +1243,8 @@
       D2B_LANG = gateLang;
       closeModal(contactModal); unlockInput();
       if(afterGate){ var _cb=afterGate; afterGate=null; _cb(); return; } // resume voice/attach
-      if(pendingChip && input && !input.value.trim()){ input.value=pendingChip; pendingChip=''; updateHint(); }
+      // A sample prompt only FILLS + focuses (like an ungated chip) — never auto-builds.
+      if(pendingChip && input){ input.value=pendingChip; pendingChip=''; updateHint(); input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); return; }
       if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
       else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
     });
@@ -1311,7 +1324,14 @@
       if(c.lang){ contact.lang=c.lang; gateLang=c.lang; }
     }catch(x){}
     // Lock the builder until the required identity gate is satisfied.
-    if(identityComplete()){ D2B_LANG=contact.lang||PAGE_LANG; unlockInput(); }
+    // The PAGE language is authoritative for a returning user — so the nav EN/ES
+    // toggle actually changes the generated-content language (and dictation), and
+    // update the saved record so it stays consistent.
+    if(identityComplete()){
+      if(contact.lang!==PAGE_LANG){ contact.lang=PAGE_LANG; gateLang=PAGE_LANG; saveContact(contact.name,contact.phone,contact.email,PAGE_LANG); }
+      D2B_LANG=PAGE_LANG; unlockInput();
+      var rs=root.querySelector('#d2b-reset'); if(rs) rs.hidden=false;
+    }
     else { lockInput(); }
   })();
 

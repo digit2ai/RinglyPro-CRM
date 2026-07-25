@@ -1,6 +1,6 @@
 /* OrbUp PWA service worker — root-scoped, registered ONLY on orbup.app.
    Offline shell for the landing + cached brand icons. Never touches API calls. */
-const CACHE = 'orbup-v2';
+const CACHE = 'orbup-v3';
 const ASSETS = [
   '/orbup-assets/icon-192.png',
   '/orbup-assets/icon-512.png',
@@ -26,12 +26,16 @@ self.addEventListener('fetch', function(e){
   var url = new URL(req.url);
   if(url.pathname.indexOf('/api') !== -1) return;        // never touch API/pricing/booking endpoints
 
-  // Navigations: network-first, cache the landing as the offline fallback.
+  // Navigations: always network-first. Only cache the CANONICAL landing as the
+  // offline fallback — never cache workspace/login/es/build URLs under '/orbup'
+  // (that poisoned the fallback so offline could serve a private page as home).
   if(req.mode === 'navigate'){
     e.respondWith(
       fetch(req).then(function(resp){
-        var copy = resp.clone();
-        caches.open(CACHE).then(function(c){ c.put('/orbup', copy); });
+        if(url.pathname === '/orbup' || url.pathname === '/'){
+          var copy = resp.clone();
+          caches.open(CACHE).then(function(c){ c.put('/orbup', copy); });
+        }
         return resp;
       }).catch(function(){ return caches.match('/orbup'); })
     );
