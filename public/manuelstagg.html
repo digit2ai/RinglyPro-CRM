@@ -127,6 +127,8 @@ section.blk{padding:44px 0}
 .tech-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin-bottom:9px;display:flex;align-items:center;gap:9px}
 .tech-lab::after{content:"";flex:1;height:1px;background:var(--line)}
 .tech-lab.gc{color:var(--cyan)}.tech-lab.gv{color:var(--violet)}.tech-lab.gg{color:var(--green)}
+.skillgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px 34px}
+@media(max-width:720px){.skillgrid{grid-template-columns:1fr;gap:20px}}
 
 /* timeline */
 .timeline{position:relative;padding-left:30px}
@@ -156,24 +158,6 @@ section.blk{padding:44px 0}
 .hl .n{font-family:var(--mono);font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
 .hl .l{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.4}
 @media(max-width:820px){.hl-ribbon{grid-template-columns:repeat(2,1fr)}}
-
-/* deliverables */
-.deliv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.dcard{background:var(--grad-soft);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:center}
-.dcard .n{font-family:var(--mono);font-size:24px;font-weight:800;color:#fff;line-height:1}
-.dcard .t{font-size:13px;font-weight:700;margin:10px 0 6px;color:var(--cyan)}
-.dcard .p{font-size:12px;color:var(--dim);line-height:1.5}
-@media(max-width:820px){.deliv{grid-template-columns:repeat(2,1fr)}}
-
-/* portfolio */
-.pf{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.pcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;transition:.25s;position:relative;overflow:hidden}
-.pcard:hover{transform:translateY(-3px);border-color:var(--cyan-bd)}
-.pcard .h{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
-.pcard .h i{color:var(--cyan)}
-.pcard .w{font-family:var(--mono);font-size:11px;color:var(--violet);margin:7px 0 9px;letter-spacing:.4px}
-.pcard .p{font-size:12.5px;color:var(--dim);line-height:1.55}
-@media(max-width:820px){.pf{grid-template-columns:1fr}}
 
 /* recruiter panel */
 .recruit{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));border:1px solid var(--line2);border-radius:22px;padding:38px 32px}
@@ -314,29 +298,6 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
         </div>
       </div>
     </div>
-
-    <!-- Technical Skills & Platforms -->
-    <div class="mcard techband">
-      <h3><i class="fas fa-microchip"></i> <span data-i18n="tech_h">Technical Skills &amp; Platforms</span></h3>
-      <div class="tech-grp">
-        <div class="tech-lab gc" data-i18n="tech_l1">Financial Crime Systems</div>
-        <div class="tags">
-          <span class="tag">FircoSoft Continuity</span><span class="tag">OFSAA</span><span class="tag">Oracle Mantas (Transaction Screening)</span><span class="tag">Actimize</span><span class="tag">Appian OnDemand Party Screening</span><span class="tag">Silent Eight (Machine Learning)</span>
-        </div>
-      </div>
-      <div class="tech-grp">
-        <div class="tech-lab gg" data-i18n="tech_l2">Regulatory &amp; Frameworks</div>
-        <div class="tags">
-          <span class="tag">OFAC (SDN)</span><span class="tag">OCC</span><span class="tag">UK HMT</span><span class="tag">UN Security Council</span><span class="tag">FinCEN</span><span class="tag">Modern Solutions Framework (MSF)</span><span class="tag">Agile / SCRUM</span>
-        </div>
-      </div>
-      <div class="tech-grp">
-        <div class="tech-lab gv" data-i18n="tech_l3">Engineering, Data &amp; Tooling</div>
-        <div class="tags">
-          <span class="tag">Python</span><span class="tag">AWS Cloud Computing</span><span class="tag">SQL</span><span class="tag">MySQL</span><span class="tag">Microsoft SQL Server</span><span class="tag">Microsoft Access</span><span class="tag">BI / Data Mining</span><span class="tag">Splunk</span><span class="tag">Jira</span><span class="tag">Confluence</span><span class="tag">SharePoint Workflows</span>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -436,32 +397,76 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
   </div>
 </section>
 
-<!-- OUTCOMES -->
-<section class="blk" id="outcomes">
+<!-- TECHNICAL SKILLS -->
+<section class="blk" id="skills">
   <div class="wrap">
-    <div class="sec-head"><span class="k">05</span><h2 data-i18n="d_h">Documented Outcomes</h2><span class="rule"></span></div>
-    <p class="lead" data-i18n="d_1">Not projections — documented results from production deployments across banking, freight, healthcare and B2B networks.</p>
-    <div class="deliv">
-      <div class="dcard"><div class="n">70%</div><div class="t" data-i18n="d_a_t">Workflow Automation</div><div class="p" data-i18n="d_a_p">Intake, screening, quoting, scheduling and reporting handled end-to-end by reasoning agents.</div></div>
-      <div class="dcard"><div class="n">50-75%</div><div class="t" data-i18n="d_b_t">Fewer False Positives</div><div class="p" data-i18n="d_b_p">Contextual reasoning across sources eliminates the noise rule-based systems generate.</div></div>
-      <div class="dcard"><div class="n">3-4x</div><div class="t" data-i18n="d_c_t">Capacity, Same Team</div><div class="p" data-i18n="d_c_p">Production case study: brokers moved from 12 to 50+ loads/day at the same headcount.</div></div>
-      <div class="dcard"><div class="n">40-60%</div><div class="t" data-i18n="d_d_t">Cost Reduction</div><div class="p" data-i18n="d_d_p">Within 18-24 months, with measurable impact inside the first 90 days.</div></div>
-    </div>
-  </div>
-</section>
+    <div class="sec-head"><span class="k">05</span><h2 data-i18n="tech_h">Technical Skills &amp; Platforms</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="tech_lead">The working stack behind aiagent.ringlypro.com and its sub-ecosystems &mdash; every item below is technology Manuel has personally built with and shipped to production.</p>
+    <div class="skillgrid">
 
-<!-- PORTFOLIO -->
-<section class="blk" id="portfolio">
-  <div class="wrap">
-    <div class="sec-head"><span class="k">06</span><h2 data-i18n="pf_h">Selected Production Work</h2><span class="rule"></span></div>
-    <p class="lead" data-i18n="pf_1">Flagship Neural Intelligence deployments wired into real operations.</p>
-    <div class="pf">
-      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-building-columns"></i> <span data-i18n="pf_a_h">Neural Intelligence for Banking</span></div><div class="w" data-i18n="pf_a_w">Compliance · KYC · AML · Sanctions</div><div class="p" data-i18n="pf_a_p">AI reasoning across the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, MCP-connected to 8+ specialized servers.</div></a>
-      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-truck-fast"></i> <span data-i18n="pf_b_h">CW Autopilot — FreightMind</span></div><div class="w" data-i18n="pf_b_w">Freight Brokerage · Carrier Marketplace</div><div class="p" data-i18n="pf_b_p">Contract-to-invoice in under a second. 8-stage AI pipeline, live AI broker negotiation, 3-4x broker capacity, 90-day payback.</div></a>
-      <a class="pcard" href="https://aiagent.ringlypro.com/aiastore/" target="_blank"><div class="h"><i class="fas fa-store"></i> <span data-i18n="pf_c_h">Store Health AI</span></div><div class="w" data-i18n="pf_c_w">Retail · Multi-Location Ops</div><div class="p" data-i18n="pf_c_p">Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings and prescribes the fix — not just the alert.</div></a>
-      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-user-doctor"></i> <span data-i18n="pf_d_h">SurgicalMind</span></div><div class="w" data-i18n="pf_d_w">Hospitals · Surgical Robotics</div><div class="p" data-i18n="pf_d_p">Hospital surgical-system matcher. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.</div></a>
-      <a class="pcard" href="https://aiagent.ringlypro.com" target="_blank"><div class="h"><i class="fas fa-headset"></i> <span data-i18n="pf_e_h">RinglyPro CRM</span></div><div class="w" data-i18n="pf_e_w">SMB Voice · Engagement Layer</div><div class="p" data-i18n="pf_e_p">Bilingual 24/7 voice + CRM channel feeding Neural Intelligence at the edge — Rachel, Ana and Lina, fully MCP-connected.</div></a>
-      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-people-group"></i> <span data-i18n="pf_f_h">CamaraVirtual Neural B2B</span></div><div class="w" data-i18n="pf_f_w">Chambers of Commerce · Networks</div><div class="p" data-i18n="pf_f_p">Intelligent member matching, TrustRank scoring, Health Composite Index and Monte Carlo risk simulation across 24 sectors.</div></a>
+      <div class="skcol">
+        <div class="tech-lab gv" data-i18n="tsk1">AI, LLM &amp; Agents</div>
+        <div class="tags">
+          <span class="tag">Model Context Protocol (MCP)</span><span class="tag">Anthropic Claude (Opus / Sonnet / Haiku)</span><span class="tag">Multi-Agent Orchestration</span><span class="tag">83-Agent Workforce Design</span><span class="tag">RAG / Retrieval</span><span class="tag">Prompt Engineering</span><span class="tag">AI Evals</span><span class="tag">LLMOps / Model Routing</span><span class="tag">Tool / Function Calling</span><span class="tag">Token-Cost Control</span><span class="tag">Silent Eight (ML)</span><span class="tag">Heuristic Fallbacks</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="tsk2">Voice &amp; Conversational AI</div>
+        <div class="tags">
+          <span class="tag">Twilio ConversationRelay</span><span class="tag">Twilio Voice / SMS</span><span class="tag">ElevenLabs Convai</span><span class="tag">Amazon Polly Neural</span><span class="tag">Microsoft Edge Neural TTS</span><span class="tag">Web Speech API</span><span class="tag">Whisper (transformers.js)</span><span class="tag">WebRTC</span><span class="tag">WebSocket Media Streams</span><span class="tag">Bilingual EN/ES Agents</span><span class="tag">SHAKEN/STIR · A2P 10DLC</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="tsk3">Languages &amp; Frameworks</div>
+        <div class="tags">
+          <span class="tag">JavaScript (ES6+)</span><span class="tag">Node.js</span><span class="tag">Express</span><span class="tag">Python</span><span class="tag">React</span><span class="tag">Vite</span><span class="tag">EJS</span><span class="tag">HTML5</span><span class="tag">CSS3</span><span class="tag">SQL</span><span class="tag">Bash / Shell</span><span class="tag">REST API Design</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gv" data-i18n="tsk4">Databases &amp; Data</div>
+        <div class="tags">
+          <span class="tag">PostgreSQL</span><span class="tag">Sequelize ORM</span><span class="tag">MySQL</span><span class="tag">Microsoft SQL Server</span><span class="tag">Microsoft Access</span><span class="tag">Supabase</span><span class="tag">JSONB / GIN Indexes</span><span class="tag">Multi-Tenant Schema Design</span><span class="tag">Migrations</span><span class="tag">Data Warehousing</span><span class="tag">BI / Data Mining</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gg" data-i18n="tsk5">Cloud, DevOps &amp; Integration</div>
+        <div class="tags">
+          <span class="tag">AWS Cloud Computing</span><span class="tag">Render (auto-deploy)</span><span class="tag">Git / GitHub</span><span class="tag">CI/CD</span><span class="tag">n8n</span><span class="tag">Webhooks</span><span class="tag">Server-Sent Events (SSE)</span><span class="tag">Cron / Schedulers</span><span class="tag">Splunk</span><span class="tag">Jira</span><span class="tag">Confluence</span><span class="tag">SharePoint Workflows</span><span class="tag">PWA / Service Workers</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gg" data-i18n="tsk6">Payments, Comms &amp; APIs</div>
+        <div class="tags">
+          <span class="tag">Stripe</span><span class="tag">Stripe Connect</span><span class="tag">SendGrid</span><span class="tag">WhatsApp Cloud API</span><span class="tag">IMAP (imapflow)</span><span class="tag">Gmail OAuth</span><span class="tag">Magic-Link / mailto Flows</span><span class="tag">Google Custom Search</span><span class="tag">Brave Search</span><span class="tag">Meta Ad Library API</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gv" data-i18n="tsk7">Security &amp; Compliance Engineering</div>
+        <div class="tags">
+          <span class="tag">JWT Auth</span><span class="tag">AES-256-GCM Encryption</span><span class="tag">Multi-Tenant Isolation</span><span class="tag">Rate Limiting</span><span class="tag">OAuth 2.0</span><span class="tag">HttpOnly / Secure Cookies</span><span class="tag">Session Hardening</span><span class="tag">Toll-Fraud Prevention</span><span class="tag">Audit Trails</span><span class="tag">PII / PHI Handling</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="tsk8">Financial Crime &amp; Regulatory Systems</div>
+        <div class="tags">
+          <span class="tag">FircoSoft Continuity</span><span class="tag">OFSAA</span><span class="tag">Oracle Mantas</span><span class="tag">Actimize</span><span class="tag">Appian OnDemand Party Screening</span><span class="tag">OFAC (SDN)</span><span class="tag">OCC · UK HMT · UN · FinCEN</span><span class="tag">Modern Solutions Framework (MSF)</span><span class="tag">Agile / SCRUM</span>
+        </div>
+      </div>
+
+      <div class="skcol">
+        <div class="tech-lab gg" data-i18n="tsk9">Applied AI, Geospatial &amp; Specialized</div>
+        <div class="tags">
+          <span class="tag">Monte Carlo Simulation</span><span class="tag">OEE Analytics</span><span class="tag">3D Gaussian Splatting</span><span class="tag">Deepfake Detection</span><span class="tag">Google Maps / Static Maps</span><span class="tag">OpenStreetMap Nominatim</span><span class="tag">Esri World Imagery</span><span class="tag">Mapbox</span><span class="tag">Camera-based ROM / Pose</span><span class="tag">TrustRank / Scoring Models</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -530,7 +535,9 @@ const I18N = {
     n_1:"The AI reasoning technology Manuel architects: <strong>MCP Neural Intelligence</strong>. One neural core connects every system a business runs; around it sit <strong>4 core capability domains</strong> and <strong>5 specialist clusters</strong> — an 83-agent workforce — all wired through the open Model Context Protocol. This is what he can design and deliver.",
     n_cap:"MCP Neural Intelligence &middot; 4 core domains + 5 specialist clusters (39 agents), wired via the open Model Context Protocol &mdash; architected &amp; delivered by Manuel Stagg. <span style=\"color:#84cc16\">A live interactive app of this map is coming soon.</span>",
     e_h:"Core Expertise", e_c1:"Banking, Risk & Compliance", e_c2:"AI / LLM Architecture", e_c3:"Full-Stack Engineering", e_c4:"Delivery & Platform",
-    tech_h:"Technical Skills & Platforms", tech_l1:"Financial Crime Systems", tech_l2:"Regulatory & Frameworks", tech_l3:"Engineering, Data & Tooling",
+    tech_h:"Technical Skills & Platforms",
+    tech_lead:"The working stack behind aiagent.ringlypro.com and its sub-ecosystems — every item below is technology Manuel has personally built with and shipped to production.",
+    tsk1:"AI, LLM & Agents", tsk2:"Voice & Conversational AI", tsk3:"Languages & Frameworks", tsk4:"Databases & Data", tsk5:"Cloud, DevOps & Integration", tsk6:"Payments, Comms & APIs", tsk7:"Security & Compliance Engineering", tsk8:"Financial Crime & Regulatory Systems", tsk9:"Applied AI, Geospatial & Specialized",
     x_h:"Experience",
     x_lead:"A single, uncommon career arc: 24 years hardening the control environment of Citigroup, a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.",
     x_hl1:"Years in global banking, compliance & risk", x_hl2:"Transaction flows monitored & screened", x_hl3:"False-positive reduction with AI reasoning", x_hl4:"AI systems architected & shipped to production",
@@ -562,19 +569,6 @@ const I18N = {
     x2_g:"Led and mentored cross-functional teams across compliance, risk, operations and technology in a highly regulated, high-stakes environment.",
     x2_h:"Turned regulatory obligation into systems, processes and measurable operational outcomes — the discipline that now grounds every AI system he ships.",
     x2_m1:"years", x2_m2:"pillars of compliance", x2_m3:"institutional scale",
-    d_h:"Documented Outcomes",
-    d_1:"Not projections — documented results from production deployments across banking, freight, healthcare and B2B networks.",
-    d_a_t:"Workflow Automation", d_a_p:"Intake, screening, quoting, scheduling and reporting handled end-to-end by reasoning agents.",
-    d_b_t:"Fewer False Positives", d_b_p:"Contextual reasoning across sources eliminates the noise rule-based systems generate.",
-    d_c_t:"Capacity, Same Team", d_c_p:"Production case study: brokers moved from 12 to 50+ loads/day at the same headcount.",
-    d_d_t:"Cost Reduction", d_d_p:"Within 18-24 months, with measurable impact inside the first 90 days.",
-    pf_h:"Selected Production Work", pf_1:"Flagship Neural Intelligence deployments wired into real operations.",
-    pf_a_h:"Neural Intelligence for Banking", pf_a_w:"Compliance · KYC · AML · Sanctions", pf_a_p:"AI reasoning across the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, MCP-connected to 8+ specialized servers.",
-    pf_b_h:"CW Autopilot — FreightMind", pf_b_w:"Freight Brokerage · Carrier Marketplace", pf_b_p:"Contract-to-invoice in under a second. 8-stage AI pipeline, live AI broker negotiation, 3-4x broker capacity, 90-day payback.",
-    pf_c_h:"Store Health AI", pf_c_w:"Retail · Multi-Location Ops", pf_c_p:"Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings and prescribes the fix — not just the alert.",
-    pf_d_h:"SurgicalMind", pf_d_w:"Hospitals · Surgical Robotics", pf_d_p:"Hospital surgical-system matcher. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.",
-    pf_e_h:"RinglyPro CRM", pf_e_w:"SMB Voice · Engagement Layer", pf_e_p:"Bilingual 24/7 voice + CRM channel feeding Neural Intelligence at the edge — Rachel, Ana and Lina, fully MCP-connected.",
-    pf_f_h:"CamaraVirtual Neural B2B", pf_f_w:"Chambers of Commerce · Networks", pf_f_p:"Intelligent member matching, TrustRank scoring, Health Composite Index and Monte Carlo risk simulation across 24 sectors.",
     r_h:"For Recruiters & Staffing Partners",
     r_1:"A senior architect who carries both the Banking Industry control mindset and the ability to personally build and ship the AI. Open to the right senior engagements — contract, fractional or advisory.",
     r_e1:"Full-Stack AI Solutions Architect / Lead", r_e2:"AI in Banking, Risk & Compliance (KYC/AML/Sanctions)", r_e3:"MCP / Multi-Agent Systems & LLMOps", r_e4:"Fractional CTO / AI Advisory",
@@ -596,7 +590,9 @@ const I18N = {
     n_1:"La tecnología de razonamiento de IA que Manuel arquitecta: <strong>Inteligencia Neural MCP</strong>. Un solo núcleo neural conecta cada sistema que usa un negocio; a su alrededor están los <strong>4 dominios centrales de capacidad</strong> y los <strong>5 clústeres de especialistas</strong> — una fuerza de 83 agentes — todo conectado vía el Model Context Protocol abierto. Esto es lo que puede diseñar y entregar.",
     n_cap:"Inteligencia Neural MCP &middot; 4 dominios centrales + 5 clústeres de especialistas (39 agentes), conectados vía el Model Context Protocol abierto &mdash; arquitectado y entregado por Manuel Stagg. <span style=\"color:#84cc16\">Próximamente: una app interactiva en vivo de este mapa.</span>",
     e_h:"Áreas de Especialización", e_c1:"Banca, Riesgo y Cumplimiento", e_c2:"Arquitectura de IA / LLM", e_c3:"Ingeniería Full-Stack", e_c4:"Entrega y Plataforma",
-    tech_h:"Habilidades Técnicas y Plataformas", tech_l1:"Sistemas de Crimen Financiero", tech_l2:"Regulación y Marcos de Trabajo", tech_l3:"Ingeniería, Datos y Herramientas",
+    tech_h:"Habilidades Técnicas y Plataformas",
+    tech_lead:"El stack real detrás de aiagent.ringlypro.com y sus sub-ecosistemas — cada elemento a continuación es tecnología que Manuel ha construido personalmente y llevado a producción.",
+    tsk1:"IA, LLM y Agentes", tsk2:"Voz e IA Conversacional", tsk3:"Lenguajes y Frameworks", tsk4:"Bases de Datos y Datos", tsk5:"Cloud, DevOps e Integración", tsk6:"Pagos, Comunicaciones y APIs", tsk7:"Seguridad e Ingeniería de Cumplimiento", tsk8:"Sistemas de Crimen Financiero y Regulatorios", tsk9:"IA Aplicada, Geoespacial y Especializada",
     x_h:"Experiencia",
     x_lead:"Una trayectoria profesional única: 24 años fortaleciendo el entorno de control de Citigroup, un banco global Tier-1, y luego convirtiendo esa disciplina en IA de producción. El rigor regulatorio no es un detalle — es la razón por la que se confía en su IA con dinero real, clientes reales y obligaciones de cumplimiento reales.",
     x_hl1:"Años en banca global, cumplimiento y riesgo", x_hl2:"Flujos transaccionales monitoreados y filtrados", x_hl3:"Reducción de falsos positivos con razonamiento de IA", x_hl4:"Sistemas de IA arquitectados y llevados a producción",
@@ -628,19 +624,6 @@ const I18N = {
     x2_g:"Lideró y formó equipos multidisciplinarios de cumplimiento, riesgo, operaciones y tecnología en un entorno altamente regulado y de alto impacto.",
     x2_h:"Convirtió la obligación regulatoria en sistemas, procesos y resultados operativos medibles — la disciplina que hoy fundamenta cada sistema de IA que entrega.",
     x2_m1:"años", x2_m2:"pilares de cumplimiento", x2_m3:"escala institucional",
-    d_h:"Resultados Documentados",
-    d_1:"No son proyecciones — son resultados documentados de implementaciones en producción en banca, carga, salud y redes B2B.",
-    d_a_t:"Automatización de Flujos", d_a_p:"Admisión, screening, cotización, agendamiento y reportes gestionados de extremo a extremo por agentes de razonamiento.",
-    d_b_t:"Menos Falsos Positivos", d_b_p:"El razonamiento contextual sobre múltiples fuentes elimina el ruido que generan los sistemas basados en reglas.",
-    d_c_t:"Capacidad, Mismo Equipo", d_c_p:"Caso real: los corredores pasaron de 12 a más de 50 cargas diarias con el mismo personal.",
-    d_d_t:"Reducción de Costos", d_d_p:"En 18-24 meses, con impacto medible dentro de los primeros 90 días.",
-    pf_h:"Trabajo Seleccionado en Producción", pf_1:"Implementaciones emblemáticas de Inteligencia Neural conectadas a operaciones reales.",
-    pf_a_h:"Inteligencia Neural para Banca", pf_a_w:"Cumplimiento · KYC · AML · Sanciones", pf_a_p:"Razonamiento de IA sobre los 5 pilares del cumplimiento. 50-75% menos falsos positivos, investigaciones 60% más rápidas, conectada vía MCP a más de 8 servidores especializados.",
-    pf_b_h:"CW Autopilot — FreightMind", pf_b_w:"Corretaje de Carga · Marketplace", pf_b_p:"De contrato a factura en menos de un segundo. Pipeline de IA de 8 etapas, negociación en vivo, capacidad 3-4x por corredor, retorno en 90 días.",
-    pf_c_h:"Store Health AI", pf_c_w:"Retail · Operaciones Multi-Sede", pf_c_p:"Agente de razonamiento que monitorea los KPIs de cada sede, levanta hallazgos Rojo/Amarillo/Verde y prescribe la solución — no solo la alerta.",
-    pf_d_h:"SurgicalMind", pf_d_w:"Hospitales · Robótica Quirúrgica", pf_d_p:"Emparejador hospitalario de sistemas quirúrgicos. 16 pipelines de análisis, cálculos de ROI, propuestas narradas por voz, impacto clínico en dólares.",
-    pf_e_h:"RinglyPro CRM", pf_e_w:"Voz PyME · Capa de Engagement", pf_e_p:"Canal de voz + CRM bilingüe 24/7 que alimenta la Inteligencia Neural en el borde — Rachel, Ana y Lina, totalmente conectados vía MCP.",
-    pf_f_h:"CamaraVirtual Neural B2B", pf_f_w:"Cámaras de Comercio · Redes", pf_f_p:"Emparejamiento inteligente de miembros, puntuación TrustRank, Índice Compuesto de Salud y simulación de riesgo Monte Carlo en 24 sectores.",
     r_h:"Para Reclutadores y Socios de Staffing",
     r_1:"Un arquitecto senior que reúne la mentalidad de control de la Industria Bancaria y la capacidad de construir y desplegar la IA personalmente. Abierto a los proyectos senior correctos — contrato, fraccional o asesoría.",
     r_e1:"Arquitecto/Líder de Soluciones de IA Full-Stack", r_e2:"IA en Banca, Riesgo y Cumplimiento (KYC/AML/Sanciones)", r_e3:"MCP / Sistemas Multi-Agente y LLMOps", r_e4:"CTO Fraccional / Asesoría en IA",
