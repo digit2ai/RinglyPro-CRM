@@ -119,6 +119,30 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .sbtn i{font-size:15px}
 @media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
 
+/* voice orb */
+.voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
+.voicecard::before{content:"";position:absolute;left:0;top:0;height:100%;width:3px;background:var(--grad)}
+.vorb{position:relative;width:72px;height:72px;flex:0 0 72px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#a7f0ff,#22d3ee 42%,#8b5cf6 100%);box-shadow:0 0 0 0 rgba(34,211,238,.5);cursor:pointer;transition:transform .2s}
+.vorb:hover{transform:scale(1.05)}
+.vorb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(139,92,246,.35)}
+.vorb.speaking{animation:vpulse 1.15s ease-in-out infinite}
+.vorb.loading{animation:vspin 1s linear infinite}
+@keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vmeta{flex:1;min-width:0}
+.vname{font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.vtag{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:20px;padding:3px 9px}
+.vrole{color:var(--dim);font-size:13px;margin:3px 0 12px}
+.vctrls{display:flex;gap:9px;flex-wrap:wrap}
+.vbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);padding:8px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}
+.vbtn:hover{border-color:var(--cyan-bd)}
+.vbtn.primary{background:var(--grad);border:none;color:#04121a}
+.vbtn:disabled{opacity:.45;cursor:default}
+.vstatus{font-size:12.5px;color:var(--dim);margin-top:10px;min-height:16px}
+@media(max-width:620px){.voicecard{flex-direction:column;text-align:center}.vctrls{justify-content:center}.vname{justify-content:center}.voicecard::before{width:100%;height:3px}}
+@media print{.voicebar{display:none}}
+
 /* stat strip */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 6px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
@@ -261,12 +285,28 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
       <div class="social-row">
         <a class="sbtn primary" href="https://www.linkedin.com/in/manuel-stagg-7a11a9a0" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
         <a class="sbtn" href="mailto:manuelstagg@gmail.com"><i class="fas fa-envelope"></i> <span data-i18n="s_email">Email Me</span></a>
-        <a class="sbtn" href="https://digit2ai.com" target="_blank" rel="noopener"><i class="fas fa-brain"></i> Digit2AI</a>
         <a class="sbtn accent" href="#recruiters"><i class="fas fa-briefcase"></i> <span data-i18n="s_hire">For Recruiters</span></a>
       </div>
     </div>
   </div>
 </header>
+
+<!-- VOICE ORB — AI narration of the profile (zero-key Edge neural TTS via /api/tts/edge) -->
+<div class="voicebar">
+  <div class="voicecard">
+    <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="Play profile narration"></div>
+    <div class="vmeta">
+      <div class="vname"><span id="vName">Manuel's AI Voice</span> <span class="vtag" id="vTag">EN · Ava</span></div>
+      <div class="vrole" id="vRole">A female AI voice that walks you through Manuel's profile.</div>
+      <div class="vctrls">
+        <button class="vbtn primary" id="vPlay"><i class="fas fa-play"></i> <span id="vPlayLbl">Hear my profile</span></button>
+        <button class="vbtn" id="vPause" disabled><i class="fas fa-pause"></i> <span id="vPauseLbl">Pause</span></button>
+        <button class="vbtn" id="vStop" disabled><i class="fas fa-stop"></i> <span id="vStopLbl">Stop</span></button>
+      </div>
+      <div class="vstatus" id="vStatus">Tap the orb or press play — narrated in your selected language.</div>
+    </div>
+  </div>
+</div>
 
 <!-- STATS -->
 <div class="wrap">
@@ -352,7 +392,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
       <div class="tl v">
         <div class="when" data-i18n="x1_w">Present</div>
         <h3 data-i18n="x1_t">Full-Stack AI Solutions Architect</h3>
-        <div class="org" data-i18n="x1_o">Digit2AI · MCP Neural Intelligence · Multi-vertical AI delivery</div>
+        <div class="org" data-i18n="x1_o">MCP Neural Intelligence · Multi-vertical AI delivery</div>
         <div class="scope"><span>Model Context Protocol</span><span>Multi-Agent</span><span>Claude / Anthropic</span><span>Node.js</span><span>PostgreSQL</span><span>Voice AI</span><span>Twilio</span><span>Stripe</span><span>EN/ES</span></div>
         <div class="grp" data-i18n="x1_g1">Architecture</div>
         <ul>
@@ -569,7 +609,6 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
     <div class="links">
       <a href="https://manuelstagg.com" target="_blank">manuelstagg.com</a>
       <a href="https://www.linkedin.com/in/manuel-stagg-7a11a9a0" target="_blank" rel="noopener">LinkedIn</a>
-      <a href="https://digit2ai.com" target="_blank">Digit2AI</a>
       <a href="mailto:manuelstagg@gmail.com">Email</a>
     </div>
   </div>
@@ -604,7 +643,7 @@ const I18N = {
     x_h:"Experience",
     x_lead:"A single, uncommon career arc: 24 years hardening the control environment of Citigroup, a Tier-1 global bank, then turning that discipline into production AI. The regulatory rigor is not a footnote — it is the reason the AI he ships is trusted with real money, real customers and real compliance obligations.",
     x_hl1:"Years in global banking, compliance & risk", x_hl2:"Transaction flows monitored & screened", x_hl3:"False-positive reduction with AI reasoning", x_hl4:"AI systems architected & shipped to production",
-    x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect", x1_o:"Digit2AI · MCP Neural Intelligence · Multi-vertical AI delivery",
+    x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect", x1_o:"MCP Neural Intelligence · Multi-vertical AI delivery",
     x1_g1:"Architecture", x1_g2:"Delivery & Scale",
     x1_a:"Architect and ship <strong>MCP Neural Intelligence</strong> — an AI reasoning layer wired directly into clients' live CRM, telephony, financial and compliance systems through the open Model Context Protocol.",
     x1_b:"Designed and operates an <strong>83-agent MCP workforce</strong> (8 always-on core agents + 75 senior specialists on demand) that converts natural-language requirements into deployed, production systems.",
@@ -668,7 +707,7 @@ const I18N = {
     x_h:"Experiencia",
     x_lead:"Una trayectoria profesional única: 24 años fortaleciendo el entorno de control de Citigroup, un banco global Tier-1, y luego convirtiendo esa disciplina en IA de producción. El rigor regulatorio no es un detalle — es la razón por la que se confía en su IA con dinero real, clientes reales y obligaciones de cumplimiento reales.",
     x_hl1:"Años en banca global, cumplimiento y riesgo", x_hl2:"Flujos transaccionales monitoreados y filtrados", x_hl3:"Reducción de falsos positivos con razonamiento de IA", x_hl4:"Sistemas de IA arquitectados y llevados a producción",
-    x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack", x1_o:"Digit2AI · Inteligencia Neural MCP · Entrega de IA multi-vertical",
+    x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack", x1_o:"Inteligencia Neural MCP · Entrega de IA multi-vertical",
     x1_g1:"Arquitectura", x1_g2:"Entrega y Escala",
     x1_a:"Arquitecta y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA conectada directamente a los sistemas en vivo de CRM, telefonía, finanzas y cumplimiento de los clientes mediante el Model Context Protocol abierto.",
     x1_b:"Diseñó y opera una <strong>fuerza MCP de 83 agentes</strong> (8 agentes centrales siempre activos + 75 especialistas senior bajo demanda) que convierte requerimientos en lenguaje natural en sistemas desplegados en producción.",
@@ -728,6 +767,7 @@ function setLang(lang){
   });
   if(d.meta_title) document.title=d.meta_title;
   document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-lang')===lang));
+  try{ if(window.__voiceApplyLang) window.__voiceApplyLang(lang); }catch(e){}
 }
 (function(){
   let lang;
@@ -737,6 +777,128 @@ function setLang(lang){
     lang=nav.startsWith('es')?'es':'en';
   }
   setLang(lang);
+})();
+
+// ---- Female voice orb: narrates Manuel's profile via zero-key Edge neural TTS ----
+(function(){
+  var SEG = {
+    en: [
+      "Hi, I'm Ava, Manuel's A-I voice assistant. Let me tell you about Manuel Stagg.",
+      "Manuel is a Senior Subject-Matter Expert and Full-Stack A-I Solutions Architect, with more than twenty-four years in the Banking Industry — compliance, risk, and financial-crime systems at Citigroup.",
+      "He led K-Y-C, anti-money-laundering, and sanctions-screening programs, and tuned the platforms behind them — including O-F-S-A-A, FircoSoft, Oracle Mantas, and Actimize — for North America and E-M-E-A.",
+      "Today he architects M-C-P Neural Intelligence: an A-I reasoning layer that connects a business's real systems and reasons across all of them. He designs, builds, tests, and ships production A-I, end to end.",
+      "His technical stack spans the Model Context Protocol, Claude, voice A-I, Node and PostgreSQL, cloud, and security engineering — everything behind his live ecosystems.",
+      "If you're hiring a senior A-I architect who truly understands regulated industries, connect with Manuel on LinkedIn, or email him at manuelstagg at gmail dot com. Thanks for listening."
+    ],
+    es: [
+      "Hola, soy Dalia, la asistente de voz de Manuel. Déjame contarte sobre Manuel Stagg.",
+      "Manuel es un experto senior y Arquitecto de Soluciones de I-A Full-Stack, con más de veinticuatro años en la Industria Bancaria — cumplimiento, riesgo y sistemas de crímenes financieros en Citigroup.",
+      "Lideró programas de K-Y-C, prevención de lavado de dinero y screening de sanciones, y afinó las plataformas detrás de ellos — incluyendo O-F-S-A-A, FircoSoft, Oracle Mantas y Actimize — para Norteamérica y E-M-E-A.",
+      "Hoy arquitecta la Inteligencia Neural M-C-P: una capa de razonamiento de I-A que conecta los sistemas reales de un negocio y razona sobre todos ellos. Diseña, construye, prueba y entrega I-A de producción, de extremo a extremo.",
+      "Su stack técnico abarca el Model Context Protocol, Claude, la I-A de voz, Node y PostgreSQL, la nube y la ingeniería de seguridad — todo lo que hay detrás de sus ecosistemas en vivo.",
+      "Si buscas un arquitecto de I-A senior que entiende de verdad las industrias reguladas, conéctate con Manuel en LinkedIn, o escríbele a manuelstagg arroba gmail punto com. Gracias por escuchar."
+    ]
+  };
+  var META = {
+    en: { voice:'ava', tag:'EN · Ava', name:"Manuel's AI Voice", role:"A female AI voice that walks you through Manuel's profile.",
+          play:'Hear my profile', pause:'Pause', resume:'Resume', stop:'Stop',
+          idle:'Tap the orb or press play — narrated in your selected language.',
+          loading:'Loading neural voice…', speaking:'Speaking', paused:'Paused.', done:'Done — tap play to hear it again.' },
+    es: { voice:'dalia', tag:'ES · Dalia', name:'Voz AI de Manuel', role:'Una voz de IA femenina que te presenta el perfil de Manuel.',
+          play:'Escuchar mi perfil', pause:'Pausar', resume:'Reanudar', stop:'Detener',
+          idle:'Toca el orbe o pulsa reproducir — narrado en tu idioma seleccionado.',
+          loading:'Cargando voz neural…', speaking:'Hablando', paused:'En pausa.', done:'Listo — pulsa reproducir para repetir.' }
+  };
+
+  var NEURAL_URL='/api/tts/edge';
+  var vlang = (document.documentElement.lang==='es')?'es':'en';
+  var orb=document.getElementById('vorb');
+  var elName=document.getElementById('vName'), elTag=document.getElementById('vTag'), elRole=document.getElementById('vRole');
+  var elStatus=document.getElementById('vStatus');
+  var bPlay=document.getElementById('vPlay'), bPause=document.getElementById('vPause'), bStop=document.getElementById('vStop');
+  var lPlay=document.getElementById('vPlayLbl'), lPause=document.getElementById('vPauseLbl'), lStop=document.getElementById('vStopLbl');
+  if(!orb) return;
+
+  var synth=window.speechSynthesis;
+  var queue=[], qi=0, runToken=0, paused=false, playing=false;
+  var mode=null, currentAudio=null, neuralOK=true, cache={}, bvoice=null;
+
+  function M(){ return META[vlang]; }
+  function pickBrowserVoice(){ if(!synth)return; var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0&&/female|ava|jenny|dalia|paloma|salome|elvira|zira|aria|samantha|mónica|monica|helena/i.test(v.name);});
+    bvoice=pref[0]||vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0;})[0]||vs[0]||null; }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+
+  function relabel(){ var m=M();
+    elName.textContent=m.name; elTag.textContent=m.tag; elRole.textContent=m.role;
+    lPlay.textContent=m.play; lStop.textContent=m.stop;
+    lPause.textContent= paused ? m.resume : m.pause;
+    if(!playing) elStatus.textContent=m.idle;
+  }
+  function applyLang(lang){ var nl=(lang==='es')?'es':'en'; if(nl===vlang){ relabel(); return; }
+    stop(); vlang=nl; cache={}; pickBrowserVoice(); relabel(); }
+  window.__voiceApplyLang=applyLang;
+
+  function fetchNeural(idx){
+    var key=vlang+'|'+M().voice+'|'+idx;
+    if(cache[key]) return Promise.resolve(cache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:SEG[vlang][idx],voice:M().voice})})
+      .then(function(r){ if(!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); cache[key]=u; return u; });
+  }
+  function speaking(){ elStatus.textContent=M().speaking+' ('+(qi+1)+'/'+queue.length+')'; }
+  function run(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    function advance(){ if(token!==runToken)return; qi++; run(token); }
+    if(neuralOK){
+      orb.classList.add('loading'); elStatus.textContent=M().loading;
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return; orb.classList.remove('loading');
+        mode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance; currentAudio.onerror=function(){ neuralOK=false; browserSpeak(idx,advance); };
+        orb.classList.add('speaking'); speaking();
+        currentAudio.play().catch(function(){ neuralOK=false; browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken)return; orb.classList.remove('loading'); neuralOK=false; browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    mode='browser'; var u=new SpeechSynthesisUtterance(SEG[vlang][idx].replace(/-/g,' '));
+    if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:(vlang==='es'?'es-MX':'en-US'); u.rate=1; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); speaking(); }; u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=SEG[vlang].map(function(_,i){return i;}); qi=0; paused=false; playing=true; runToken++;
+    bPause.disabled=false; bStop.disabled=false; bPlay.disabled=true; lPause.textContent=M().pause;
+    run(runToken);
+  }
+  function finish(){
+    runToken++; playing=false; paused=false; orb.classList.remove('speaking','loading');
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    bPause.disabled=true; bStop.disabled=true; bPlay.disabled=false; elStatus.textContent=M().done;
+  }
+  function stop(){ if(playing) finish(); }
+
+  bPlay.addEventListener('click', start);
+  orb.addEventListener('click', function(){ if(!playing) start(); });
+  orb.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(!playing) start(); } });
+  bStop.addEventListener('click', finish);
+  bPause.addEventListener('click', function(){
+    if(!playing) return;
+    if(!paused){ paused=true; lPause.textContent=M().resume; orb.classList.remove('speaking'); elStatus.textContent=M().paused;
+      if(mode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; lPause.textContent=M().pause; orb.classList.add('speaking'); speaking();
+      if(mode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+  relabel();
 })();
 
 // ---- Light / Dark theme ----
