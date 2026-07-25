@@ -17,7 +17,7 @@ const sequelize = DB_URL ? new Sequelize(DB_URL, {
 }) : null;
 
 const SALT = process.env.SESSION_SALT || process.env.JWT_SECRET || 'cv-analytics-salt';
-const STATS_KEY = process.env.CV_ANALYTICS_KEY || 'stagg-cv-2026';
+const STATS_KEY = process.env.CV_ANALYTICS_KEY || 'Palindrome@7';
 const ALLOWED_PAGES = new Set(['manuelstagg', 'juliana_gramowski']);
 
 let ready = false;

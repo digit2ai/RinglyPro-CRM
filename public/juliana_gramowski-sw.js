@@ -1,7 +1,7 @@
 /* Juliana Gramowski CV — service worker. Scoped to /juliana_gramowski (registered
    with an explicit narrower scope) so it NEVER intercepts the rest of the RinglyPro
    CRM. Offline app-shell: network-first for the page, cache-first for static assets. */
-const CACHE = 'jgcv-v3';
+const CACHE = 'jgcv-v4';
 const CORE = [
   '/juliana_gramowski',
   '/juliana_gramowski.vcf',
