@@ -607,6 +607,27 @@ app.get(['/manuelstagg', '/manuelstagg/', '/cv', '/resume'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'manuelstagg.html'));
 });
 
+// Custom domain: julianagramowski.com -> Juliana Gramowski CV landing
+// (public/juliana_gramowski.html), served IN PLACE so the address bar stays on
+// julianagramowski.com. GHL domain + Render CNAME are verified. Root serves the
+// CV; API and any static asset (has a file extension) pass through untouched.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'julianagramowski.com' || host === 'www.julianagramowski.com') {
+    const p = req.path;
+    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en' || p === '/es' || p === '/cv' || p === '/resume') {
+      req.url = '/juliana_gramowski.html';
+    }
+  }
+  next();
+});
+
+// Clean URL: /juliana_gramowski -> her CV page.
+app.get(['/juliana_gramowski', '/juliana_gramowski/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'juliana_gramowski.html'));
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#05070e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="J. Gramowski">
+<link rel="manifest" href="/juliana_gramowski.webmanifest">
+<link rel="icon" href="/juliana_gramowski-favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/juliana_gramowski-favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/juliana_gramowski-favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/juliana_gramowski-192.png">
+<link rel="apple-touch-icon" href="/juliana_gramowski-apple-touch.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/juliana_gramowski-apple-touch.png">
+<title data-i18n="meta_title">Juliana Gramowski — Sales Executive | Business Development & Marketing Strategist</title>
+<meta name="description" data-i18n-attr="content" data-i18n="meta_desc" content="Juliana Gramowski — Sales Executive, Business Development & Marketing Strategist. 10+ years in advertising sales and Out-of-Home (OOH) media across the US and Latin America.">
+<meta property="og:title" content="Juliana Gramowski — Sales Executive | Business Development & Marketing Strategist">
+<meta property="og:description" content="10+ years in advertising sales, OOH media and strategic marketing across the US and Latin America. Curriculum Vitae.">
+<meta property="og:image" content="/juliana_gramowski-512.png">
+<meta property="og:type" content="profile">
+<meta name="robots" content="index,follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg0:#05070e; --bg1:#0b0e1a; --bg2:#0f1424;
+  --card:rgba(255,255,255,0.028); --card2:rgba(255,255,255,0.045);
+  --line:rgba(255,255,255,0.09); --line2:rgba(255,255,255,0.16);
+  --cyan:#22d3ee; --cyan-dim:#1c93ad; --cyan-bd:rgba(34,211,238,0.34);
+  --violet:#8b5cf6; --violet-bd:rgba(139,92,246,0.34);
+  --green:#84cc16; --green-bd:rgba(132,204,22,0.40);
+  --gold:#d69e2e; --amber:#f59e0b;
+  --txt:#e8ecf4; --txt2:#cbd3e2; --dim:#9aa4b8; --dim2:#6b7386;
+  --grid-line:rgba(255,255,255,.025); --topbar-bg:rgba(5,7,14,.72);
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+  --grad:linear-gradient(135deg,#22d3ee 0%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(139,92,246,.14));
+}
+:root[data-theme="light"]{
+  --bg0:#f5f7fb; --bg1:#eef1f8; --bg2:#e7ecf5;
+  --card:rgba(15,25,55,0.030); --card2:rgba(15,25,55,0.055);
+  --line:rgba(15,25,55,0.12); --line2:rgba(15,25,55,0.20);
+  --cyan:#0e7490; --cyan-dim:#0891b2; --cyan-bd:rgba(14,116,144,0.34);
+  --violet:#6d28d9; --violet-bd:rgba(109,40,217,0.32);
+  --green:#4d7c0f; --green-bd:rgba(77,124,15,0.40);
+  --txt:#141c2e; --txt2:#38435a; --dim:#5a6478; --dim2:#8892a4;
+  --grid-line:rgba(15,25,55,.05); --topbar-bg:rgba(245,247,251,.82);
+  --grad-soft:linear-gradient(135deg,rgba(14,116,144,.10),rgba(109,40,217,.10));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg0);color:var(--txt);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.aura{position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(60% 45% at 78% 8%, rgba(139,92,246,.16), transparent 60%),
+  radial-gradient(55% 40% at 12% 20%, rgba(34,211,238,.14), transparent 60%),
+  radial-gradient(80% 60% at 50% 120%, rgba(34,211,238,.08), transparent 70%),
+  var(--bg0)}
+.grid-bg{position:fixed;inset:0;z-index:-1;opacity:.5;
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(circle at 50% 30%,#000,transparent 80%)}
+.topbar{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);background:var(--topbar-bg);border-bottom:1px solid var(--line)}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.3px;font-size:15px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--cyan)}
+.brand span.sub{color:var(--dim);font-weight:500;font-size:12px;font-family:var(--mono)}
+.tb-actions{display:flex;align-items:center;gap:9px}
+.lang-toggle{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:3px}
+.lang-btn{border:none;background:transparent;color:var(--dim);padding:5px 12px;border-radius:18px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.lang-btn.active{background:var(--grad);color:#04121a}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card);color:var(--txt);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.mini-btn.icon-only{padding:7px 10px}
+.mini-btn.icon-only i{font-size:14px}
+.mini-btn:hover{border-color:var(--cyan-bd);background:var(--grad-soft)}
+.mini-btn.li{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.mini-btn.li:hover{filter:brightness(1.12)}
+@media(max-width:720px){.brand span.sub{display:none}.mini-btn .lbl{display:none}}
+.hero{padding:56px 0 34px}
+.hero-grid{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
+.photo-wrap{position:relative;width:200px;height:200px}
+.photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
+.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
+.eyebrow b{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+@keyframes blink{50%{opacity:.3}}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.8px;line-height:1.05;margin-bottom:12px}
+h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.title-line{font-size:clamp(16px,2.4vw,20px);font-weight:600;color:var(--txt);margin-bottom:6px}
+.subtitle{font-size:15px;color:var(--dim);max-width:640px;margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:7px 13px}
+.chip i{color:var(--cyan)}
+.chip a{color:var(--txt)}
+.social-row{display:flex;flex-wrap:wrap;gap:10px}
+.sbtn{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer;transition:.2s}
+.sbtn:hover{transform:translateY(-2px);border-color:var(--cyan-bd);background:var(--grad-soft)}
+.sbtn.primary{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.sbtn.primary:hover{filter:brightness(1.12);background:#0a66c2}
+.sbtn.accent{background:var(--grad);border:none;color:#04121a}
+.sbtn i{font-size:15px}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
+.sharecard{display:flex;align-items:center;gap:16px;margin-top:20px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px}
+.qrthumb{width:96px;height:96px;flex:0 0 96px;border-radius:10px;background:#fff;padding:6px;cursor:pointer;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrthumb:hover{transform:scale(1.04)}
+.sharemeta{flex:1;min-width:0}
+.sharehint{font-size:13px;color:var(--dim);margin-bottom:10px}
+.sharebtns{display:flex;gap:9px;flex-wrap:wrap}
+.sharebtns .sbtn{padding:8px 14px;font-size:13px}
+@media(max-width:760px){.sharecard{margin-left:auto;margin-right:auto}}
+@media(max-width:420px){.sharecard{flex-direction:column;text-align:center}.sharebtns{justify-content:center}}
+.qrmodal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(3,5,12,.72);backdrop-filter:blur(6px)}
+.qrmodal.open{display:flex}
+.qrbox{position:relative;background:var(--bg1);border:1px solid var(--line2);border-radius:22px;padding:28px;max-width:340px;width:100%;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.qrclose{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--dim);font-size:26px;line-height:1;cursor:pointer}
+.qrclose:hover{color:var(--txt)}
+.qrbig{width:240px;max-width:100%;height:auto;background:#fff;padding:12px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.qrurl{font-family:var(--mono);font-size:13px;font-weight:700;margin-top:14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;word-break:break-all}
+.qrhint{font-size:12.5px;color:var(--dim);margin:8px 0 14px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:2100;background:var(--grad);color:#04121a;font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:22px;box-shadow:0 12px 34px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
+.voicecard::before{content:"";position:absolute;left:0;top:0;height:100%;width:3px;background:var(--grad)}
+.vorb{position:relative;width:72px;height:72px;flex:0 0 72px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#a7f0ff,#22d3ee 42%,#8b5cf6 100%);box-shadow:0 0 0 0 rgba(34,211,238,.5);cursor:pointer;transition:transform .2s}
+.vorb:hover{transform:scale(1.05)}
+.vorb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(139,92,246,.35)}
+.vorb.speaking{animation:vpulse 1.15s ease-in-out infinite}
+.vorb.loading{animation:vspin 1s linear infinite}
+@keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vmeta{flex:1;min-width:0}
+.vname{font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.vtag{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:20px;padding:3px 9px}
+.vrole{color:var(--dim);font-size:13px;margin:3px 0 12px}
+.vctrls{display:flex;gap:9px;flex-wrap:wrap}
+.vbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);padding:8px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}
+.vbtn:hover{border-color:var(--cyan-bd)}
+.vbtn.primary{background:var(--grad);border:none;color:#04121a}
+.vbtn:disabled{opacity:.45;cursor:default}
+.vstatus{font-size:12.5px;color:var(--dim);margin-top:10px;min-height:16px}
+@media(max-width:620px){.voicecard{flex-direction:column;text-align:center}.vctrls{justify-content:center}.vname{justify-content:center}.voicecard::before{width:100%;height:3px}}
+@media print{.voicebar{display:none}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 6px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--grad);opacity:.7}
+.stat .n{font-family:var(--mono);font-size:24px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1.05}
+.stat .l{font-size:11.5px;color:var(--dim);margin-top:8px;letter-spacing:.4px}
+@media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+section.blk{padding:44px 0}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.sec-head .k{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:2px;border:1px solid var(--cyan-bd);border-radius:8px;padding:4px 9px;white-space:nowrap}
+.sec-head h2{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.5px}
+.sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.lead{color:var(--dim);max-width:820px;font-size:15.5px;margin-bottom:24px}
+.matrix{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:.25s}
+.mcard:hover{border-color:var(--cyan-bd);transform:translateY(-3px)}
+.mcard h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mcard h3 i{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--grad-soft);border:1px solid var(--line);color:var(--cyan);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:var(--mono);font-size:11.5px;color:var(--txt);background:var(--card2);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+.mcard.v h3 i{color:var(--violet)}
+@media(max-width:720px){.matrix{grid-template-columns:1fr}}
+.tech-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin-bottom:9px;display:flex;align-items:center;gap:9px}
+.tech-lab::after{content:"";flex:1;height:1px;background:var(--line)}
+.tech-lab.gc{color:var(--cyan)}.tech-lab.gv{color:var(--violet)}.tech-lab.gg{color:var(--green)}
+.skillgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px 34px}
+@media(max-width:720px){.skillgrid{grid-template-columns:1fr;gap:20px}}
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--cyan),var(--violet),transparent)}
+.tl{position:relative;margin-bottom:26px}
+.tl::before{content:"";position:absolute;left:-30px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--bg0);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(34,211,238,.5)}
+.tl.v::before{border-color:var(--violet);box-shadow:0 0 12px rgba(139,92,246,.5)}
+.tl .when{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:1px;margin-bottom:4px}
+.tl.v .when{color:var(--violet)}
+.tl h3{font-size:18px;font-weight:700}
+.tl .org{font-size:13.5px;color:var(--dim);margin-bottom:9px;font-weight:500}
+.tl ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.tl li{position:relative;padding-left:20px;font-size:14.5px;color:var(--txt2)}
+.tl li::before{content:"\f0da";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;left:0;top:1px;color:var(--cyan);font-size:11px}
+.tl.v li::before{color:var(--violet)}
+.tl .scope{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.tl .scope span{font-family:var(--mono);font-size:10.5px;color:var(--cyan);background:rgba(34,211,238,.06);border:1px solid var(--cyan-bd);border-radius:6px;padding:3px 8px}
+.tl.v .scope span{color:var(--violet);border-color:var(--violet-bd);background:rgba(139,92,246,.06)}
+.tl .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin:15px 0 7px;display:flex;align-items:center;gap:9px}
+.tl .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.tl .metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.tl .metrics .m{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 13px}
+.tl .metrics .m b{font-family:var(--mono);color:var(--cyan);font-weight:800}
+.tl.v .metrics .m b{color:var(--violet)}
+.hl-ribbon{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 30px}
+.hl{background:var(--grad-soft);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+.hl .n{font-family:var(--mono);font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.hl .l{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.4}
+@media(max-width:820px){.hl-ribbon{grid-template-columns:repeat(2,1fr)}}
+.awards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.award{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.award i{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:12px;background:var(--grad-soft);border:1px solid var(--line);color:var(--gold);font-size:20px}
+.award .t{font-weight:700;font-size:15px}
+.award .s{color:var(--dim);font-size:13px;margin-top:2px}
+@media(max-width:620px){.awards{grid-template-columns:1fr}}
+.edu{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.educard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.educard .deg{font-weight:700;font-size:16px}
+.educard .fld{color:var(--cyan);font-size:13px;font-weight:600;margin:3px 0 8px}
+.educard .sch{color:var(--dim);font-size:13.5px}
+@media(max-width:820px){.edu{grid-template-columns:1fr}}
+.recruit{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));border:1px solid var(--line2);border-radius:22px;padding:38px 32px}
+.recruit .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:34px;align-items:center}
+.recruit h2{font-size:26px;font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.recruit p{color:var(--dim);font-size:15px;margin-bottom:16px}
+.eng{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.eng .e{display:flex;align-items:center;gap:11px;font-size:14px}
+.eng .e i{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--green)}
+.rbox{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:24px}
+.rbox .avail{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--green);border:1px solid var(--green-bd);background:rgba(132,204,22,.08);border-radius:20px;padding:6px 12px;margin-bottom:16px}
+.rbox .avail b{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+.rbox .cta{display:flex;flex-direction:column;gap:10px}
+@media(max-width:760px){.recruit{padding:28px 20px}.recruit .grid{grid-template-columns:1fr;gap:24px}}
+footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--dim);font-size:13px}
+.foot .links{display:flex;gap:16px;flex-wrap:wrap}
+.foot a:hover{color:var(--cyan)}
+@media print{
+  :root, :root[data-theme="dark"], :root[data-theme="light"]{
+    --bg0:#fff; --bg1:#fff; --bg2:#fff; --card:#ffffff; --card2:#f1f3f7;
+    --line:#cfd3da; --line2:#b6bcc7; --txt:#111418; --txt2:#242a33; --dim:#454b57; --dim2:#5a616e;
+    --cyan:#0e7490; --cyan-dim:#0b5e74; --cyan-bd:#8fbecb; --violet:#6d28d9; --violet-bd:#b4a0e6;
+    --green:#3f6212; --green-bd:#9cb87a; --grid-line:transparent; --topbar-bg:#fff;
+    --grad-soft:linear-gradient(135deg,#eef6f8,#f2eefb);
+  }
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; color:#111418}
+  .aura,.grid-bg,.topbar,.voicebar,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent,.sharebtns,.qrmodal,.toast{display:none!important}
+  .sharecard{border-color:#cfd3da!important;max-width:none;break-inside:avoid}
+  h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
+  a{color:#0a66c2!important}
+  section.blk{padding:12px 0}
+  .mcard,.stat,.hl,.tl,.recruit,.skcol,.sec-head,.award,.educard{break-inside:avoid}
+  .photo-wrap::before{display:none}
+}
+</style>
+<script>/* set theme before paint to avoid flash */
+(function(){try{var t=localStorage.getItem('jgTheme');if(!t)t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<div class="aura"></div><div class="grid-bg"></div>
+
+<div class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span> Juliana Gramowski <span class="sub">· CV</span></div>
+    <div class="tb-actions">
+      <a class="mini-btn li" href="https://www.linkedin.com/in/juliana-gramowski-6270201a4/" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i><span class="lbl">LinkedIn</span></a>
+      <button class="mini-btn" onclick="window.print()"><i class="fas fa-download"></i><span class="lbl" data-i18n="btn_pdf">Download CV</span></button>
+      <button class="mini-btn icon-only" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark theme" title="Light / Dark"><i class="fas fa-moon" id="themeIcon"></i></button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="photo-wrap">
+      <div class="ring-orbit"></div>
+      <img class="photo" src="/juliana_gramowski-512.png" alt="Juliana Gramowski">
+    </div>
+    <div>
+      <div class="eyebrow"><b></b> <span data-i18n="eyebrow">Sales Executive · Business Development</span></div>
+      <h1>Juliana Gramowski</h1>
+      <div class="title-line" data-i18n="title_line">Sales Executive &middot; Business Development &middot; Marketing Strategist</div>
+      <p class="subtitle" data-i18n="subtitle">Results-oriented sales executive with 10+ years generating new business, negotiating high-value agreements and delivering Out-of-Home (OOH) advertising solutions across the US and Latin America.</p>
+      <div class="chips">
+        <span class="chip"><i class="fas fa-location-dot"></i> <span data-i18n="loc">Tampa, Florida</span></span>
+        <span class="chip"><i class="fas fa-phone"></i> <a href="tel:+18133342244">(813) 334-2244</a></span>
+        <span class="chip"><i class="fas fa-envelope"></i> <a href="mailto:jgramowski7@gmail.com">jgramowski7@gmail.com</a></span>
+      </div>
+      <div class="social-row">
+        <a class="sbtn primary" href="https://www.linkedin.com/in/juliana-gramowski-6270201a4/" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
+        <a class="sbtn" href="mailto:jgramowski7@gmail.com"><i class="fas fa-envelope"></i> <span data-i18n="s_email">Email Me</span></a>
+      </div>
+      <div class="sharecard">
+        <img class="qrthumb" id="qrThumb" src="data:image/gif;base64,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" alt="QR code — Juliana Gramowski profile" width="96" height="96" role="button" tabindex="0" aria-label="Enlarge QR code">
+        <div class="sharemeta">
+          <div class="sharehint" data-i18n="sh_scan">Scan to open my profile &amp; save my contact</div>
+          <div class="sharebtns">
+            <button class="sbtn accent" id="shareBtn"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+            <a class="sbtn" href="/juliana_gramowski.vcf" download="Juliana-Gramowski.vcf" id="vcardBtn"><i class="fas fa-user-plus"></i> <span data-i18n="sh_save">Save contact</span></a>
+            <button class="sbtn" id="copyBtn"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+            <button class="sbtn" id="qrBtn"><i class="fas fa-qrcode"></i> <span data-i18n="sh_qr">Show QR</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- QR / share modal -->
+<div class="qrmodal" id="qrModal" role="dialog" aria-modal="true" aria-label="Share profile">
+  <div class="qrbox">
+    <button class="qrclose" id="qrClose" aria-label="Close">&times;</button>
+    <img class="qrbig" src="data:image/gif;base64,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" alt="QR code — Juliana Gramowski profile">
+    <div class="qrurl">julianagramowski.com</div>
+    <div class="qrhint" data-i18n="sh_scan_big">Point a phone camera at the code to open Juliana Gramowski's profile.</div>
+    <div class="sharebtns" style="justify-content:center;margin-top:4px">
+      <button class="sbtn accent" id="shareBtn2"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+      <a class="sbtn" href="/juliana_gramowski.vcf" download="Juliana-Gramowski.vcf"><i class="fas fa-user-plus"></i> <span data-i18n="sh_save">Save contact</span></a>
+      <button class="sbtn" id="copyBtn2"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- VOICE ORB — AI narration of the profile -->
+<div class="voicebar">
+  <div class="voicecard">
+    <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="Play profile narration"></div>
+    <div class="vmeta">
+      <div class="vname"><span id="vName">Juliana's AI Voice</span> <span class="vtag" id="vTag">EN · Ava</span></div>
+      <div class="vrole" id="vRole">A female AI voice that walks you through Juliana's profile.</div>
+      <div class="vctrls">
+        <button class="vbtn primary" id="vPlay"><i class="fas fa-play"></i> <span id="vPlayLbl">Hear my profile</span></button>
+        <button class="vbtn" id="vPause" disabled><i class="fas fa-pause"></i> <span id="vPauseLbl">Pause</span></button>
+        <button class="vbtn" id="vStop" disabled><i class="fas fa-stop"></i> <span id="vStopLbl">Stop</span></button>
+      </div>
+      <div class="vstatus" id="vStatus">Tap the orb or press play — narrated in your selected language.</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="n">10+</div><div class="l" data-i18n="st1">Years in Sales & Marketing</div></div>
+    <div class="stat"><div class="n">3x</div><div class="l" data-i18n="st2">Star of the Month</div></div>
+    <div class="stat"><div class="n">OOH</div><div class="l" data-i18n="st3">Advertising Specialist</div></div>
+    <div class="stat"><div class="n">EN/ES</div><div class="l" data-i18n="st4">Fully Bilingual</div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<section class="blk" id="profile">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">01</span><h2 data-i18n="p_h">Professional Profile</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="p_1"><strong>Juliana Gramowski</strong> is a results-oriented Sales Executive with more than <strong>10 years of experience</strong> in business development, strategic marketing, advertising sales and client relationship management across the <strong>United States and Latin America</strong>.</p>
+    <p class="lead" data-i18n="p_2">She has a proven ability to generate new business, negotiate high-value agreements and create marketing strategies that help companies increase visibility, attract customers and grow revenue. She is recognized for <strong>consultative selling</strong>, relationship building and delivering customized advertising solutions through <strong>Out-of-Home (OOH) media</strong>.</p>
+  </div>
+</section>
+
+<!-- CORE COMPETENCIES -->
+<section class="blk" id="skills">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">02</span><h2 data-i18n="c_h">Core Competencies</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="c_1">The sales, marketing and relationship skills she brings to every account &mdash; refined across leading advertising companies in two markets.</p>
+    <div class="skillgrid">
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="c_l1">Sales &amp; Business Development</div>
+        <div class="tags">
+          <span class="tag">Business Development</span><span class="tag">Strategic Sales</span><span class="tag">Consultative Selling</span><span class="tag">Lead Generation</span><span class="tag">Prospecting</span><span class="tag">Contract Negotiation</span><span class="tag">Client Relationship Management</span><span class="tag">Account Management</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gv" data-i18n="c_l2">Advertising &amp; Marketing</div>
+        <div class="tags">
+          <span class="tag">Out-of-Home (OOH) Advertising</span><span class="tag">Digital Billboards</span><span class="tag">Marketing Strategy</span><span class="tag">Brand Awareness</span><span class="tag">Campaign Management</span><span class="tag">Consumer Behavior</span><span class="tag">Public Speaking</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gg" data-i18n="c_l3">Tools &amp; Platforms</div>
+        <div class="tags">
+          <span class="tag">Salesforce CRM</span><span class="tag">Microsoft Office Suite</span><span class="tag">Google Workspace</span><span class="tag">Excel</span><span class="tag">PowerPoint</span><span class="tag">Canva</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="c_l4">Industries &amp; Languages</div>
+        <div class="tags">
+          <span class="tag">Healthcare</span><span class="tag">Legal</span><span class="tag">Real Estate</span><span class="tag">Restaurants</span><span class="tag">Retail</span><span class="tag">Bilingual EN / ES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="blk" id="experience">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">03</span><h2 data-i18n="x_h">Professional Experience</h2><span class="rule"></span></div>
+    <div class="hl-ribbon">
+      <div class="hl"><div class="n">10+</div><div class="l" data-i18n="x_hl1">Years in advertising sales &amp; marketing</div></div>
+      <div class="hl"><div class="n">2</div><div class="l" data-i18n="x_hl2">Countries: United States &amp; Colombia</div></div>
+      <div class="hl"><div class="n">3x</div><div class="l" data-i18n="x_hl3">Star of the Month recognitions</div></div>
+      <div class="hl"><div class="n">5+</div><div class="l" data-i18n="x_hl4">Industries served across accounts</div></div>
+    </div>
+    <div class="timeline">
+
+      <div class="tl v">
+        <div class="when" data-i18n="x1_w">January 2024 – Present</div>
+        <h3 data-i18n="x1_t">Sales Executive</h3>
+        <div class="org" data-i18n="x1_o">Clear Channel Outdoor &middot; Tampa, Florida</div>
+        <div class="scope"><span>OOH Advertising</span><span>Digital Billboards</span><span>Salesforce CRM</span><span>Prospecting</span><span>Consultative Selling</span></div>
+        <div class="grp" data-i18n="x1_g1">Key Responsibilities</div>
+        <ul>
+          <li data-i18n="x1_a">Develop new business through prospecting and networking with business owners, agencies and marketing executives.</li>
+          <li data-i18n="x1_b">Create customized advertising strategies using digital billboards, bulletins and posters, and present data-driven solutions that increase brand awareness.</li>
+          <li data-i18n="x1_c">Manage the sales pipeline and forecasting through Salesforce CRM, and coordinate campaign execution with creative and operations teams.</li>
+        </ul>
+        <div class="grp" data-i18n="x1_g2">Key Achievements</div>
+        <ul>
+          <li data-i18n="x1_d">Recognized as <strong>Star of the Month</strong> on two occasions.</li>
+          <li data-i18n="x1_e">Successfully brought in one of the company's largest client accounts.</li>
+          <li data-i18n="x1_f">Generated new business across healthcare, legal, real estate, restaurants and retail, consistently exceeding sales expectations through consultative selling.</li>
+        </ul>
+        <div class="metrics">
+          <div class="m"><b>2x</b> <span data-i18n="x1_m1">Star of the Month</span></div>
+          <div class="m"><b>#1</b> <span data-i18n="x1_m2">largest account won</span></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x2_w">2020 – 2022</div>
+        <h3 data-i18n="x2_t">Marketing Consultant</h3>
+        <div class="org" data-i18n="x2_o">IndoorMedia &middot; Tampa, Florida</div>
+        <ul>
+          <li data-i18n="x2_a">Developed advertising strategies for local businesses and managed customer relationships and marketing campaigns.</li>
+          <li data-i18n="x2_b">Generated new business through prospecting and consultative selling.</li>
+          <li data-i18n="x2_c">Awarded <strong>Star of the Month</strong> for outstanding performance.</li>
+        </ul>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x3_w">2018 – 2019</div>
+        <h3 data-i18n="x3_t">Marketing Director</h3>
+        <div class="org" data-i18n="x3_o">German School &middot; Cali, Colombia</div>
+        <ul>
+          <li data-i18n="x3_a">Directed the institutional marketing strategy and led branding and digital-marketing initiatives.</li>
+          <li data-i18n="x3_b">Increased student enrollment by 15% through targeted communication campaigns.</li>
+          <li data-i18n="x3_c">Led communication campaigns across online, social and video channels.</li>
+        </ul>
+        <div class="metrics"><div class="m"><b>+15%</b> <span data-i18n="x3_m1">student enrollment</span></div></div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x4_w">2017 – 2018</div>
+        <h3 data-i18n="x4_t">Advertising Sales Representative</h3>
+        <div class="org" data-i18n="x4_o">JCDecaux &middot; Cali, Colombia</div>
+        <ul>
+          <li data-i18n="x4_a">Managed Out-of-Home advertising accounts and built long-term client relationships.</li>
+          <li data-i18n="x4_b">Developed new business opportunities through prospecting and cold calling.</li>
+          <li data-i18n="x4_c">Maintained and organized a customer database of over 100 clients.</li>
+        </ul>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x5_w">2015 – 2017</div>
+        <h3 data-i18n="x5_t">Advertising Sales Executive</h3>
+        <div class="org" data-i18n="x5_o">Televisa &middot; Cali, Colombia</div>
+        <ul>
+          <li data-i18n="x5_a">Sold advertising campaigns and managed strategic accounts.</li>
+          <li data-i18n="x5_b">Developed new business opportunities and built strong client relationships.</li>
+          <li data-i18n="x5_c">Delivered high value-added service to a database of over 100 clients.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section class="blk" id="education">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">04</span><h2 data-i18n="e_h">Education</h2><span class="rule"></span></div>
+    <div class="edu">
+      <div class="educard">
+        <div class="deg" data-i18n="e_d1">Master's Degree</div>
+        <div class="fld" data-i18n="e_f1">Consumer Behavior</div>
+        <div class="sch" data-i18n="e_s1">Konrad Lorenz University &middot; Bogotá, Colombia</div>
+      </div>
+      <div class="educard">
+        <div class="deg" data-i18n="e_d2">Bachelor's Degree</div>
+        <div class="fld" data-i18n="e_f2">Social Communication</div>
+        <div class="sch" data-i18n="e_s2">Pontificia Universidad Javeriana &middot; Bogotá, Colombia</div>
+      </div>
+      <div class="educard">
+        <div class="deg" data-i18n="e_d3">Certificate</div>
+        <div class="fld" data-i18n="e_f3">Digital Marketing</div>
+        <div class="sch" data-i18n="e_s3">Universidad Pontificia Bolivariana &middot; Bogotá, Colombia</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AWARDS -->
+<section class="blk" id="awards">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">05</span><h2 data-i18n="a_h">Awards &amp; Recognition</h2><span class="rule"></span></div>
+    <div class="awards">
+      <div class="award"><i class="fas fa-trophy"></i><div><div class="t" data-i18n="a_1t">Star of the Month &mdash; Clear Channel Outdoor</div><div class="s" data-i18n="a_1s">Recognized twice for top sales performance.</div></div></div>
+      <div class="award"><i class="fas fa-trophy"></i><div><div class="t" data-i18n="a_2t">Star of the Month &mdash; IndoorMedia</div><div class="s" data-i18n="a_2s">Awarded for outstanding new-business results.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RECRUITERS -->
+<section class="blk" id="recruiters">
+  <div class="wrap">
+    <div class="recruit">
+      <div class="grid">
+        <div>
+          <h2 data-i18n="r_h">For Recruiters &amp; Hiring Partners</h2>
+          <p data-i18n="r_1">A consultative sales leader who builds lasting relationships, wins large accounts and grows revenue &mdash; bilingual and experienced across the US and Latin America. Open to the right senior sales and marketing roles.</p>
+          <div class="eng">
+            <div class="e"><i class="fas fa-briefcase"></i> <span data-i18n="r_e1">Sales Executive / Account Executive</span></div>
+            <div class="e"><i class="fas fa-bullhorn"></i> <span data-i18n="r_e2">Advertising &amp; Media Sales (OOH, digital)</span></div>
+            <div class="e"><i class="fas fa-chart-line"></i> <span data-i18n="r_e3">Business Development &amp; Marketing Strategy</span></div>
+            <div class="e"><i class="fas fa-handshake"></i> <span data-i18n="r_e4">Client Relationship &amp; Account Management</span></div>
+          </div>
+        </div>
+        <div class="rbox">
+          <div class="avail"><b></b> <span data-i18n="r_avail">Open to new opportunities</span></div>
+          <div class="cta">
+            <a class="sbtn primary" href="https://www.linkedin.com/in/juliana-gramowski-6270201a4/" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> <span data-i18n="r_li">Connect on LinkedIn</span></a>
+            <a class="sbtn" href="mailto:jgramowski7@gmail.com?subject=Opportunity%20for%20Juliana%20Gramowski"><i class="fas fa-envelope"></i> jgramowski7@gmail.com</a>
+            <a class="sbtn" href="tel:+18133342244"><i class="fas fa-phone"></i> (813) 334-2244</a>
+            <a class="sbtn accent" href="/juliana_gramowski.vcf" download="Juliana-Gramowski.vcf"><i class="fas fa-user-plus"></i> <span data-i18n="r_save">Save my contact</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>&copy; 2026 Juliana Gramowski &middot; <span data-i18n="foot_t">Sales Executive · Business Development &amp; Marketing</span></div>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/juliana-gramowski-6270201a4/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="mailto:jgramowski7@gmail.com">Email</a>
+      <a href="tel:+18133342244">Call</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  en:{
+    meta_title:"Juliana Gramowski — Sales Executive | Business Development & Marketing Strategist",
+    meta_desc:"Juliana Gramowski — Sales Executive, Business Development & Marketing Strategist. 10+ years in advertising sales and Out-of-Home (OOH) media across the US and Latin America.",
+    btn_pdf:"Download CV", eyebrow:"Sales Executive · Business Development",
+    title_line:"Sales Executive &middot; Business Development &middot; Marketing Strategist",
+    subtitle:"Results-oriented sales executive with 10+ years generating new business, negotiating high-value agreements and delivering Out-of-Home (OOH) advertising solutions across the US and Latin America.",
+    loc:"Tampa, Florida", s_email:"Email Me",
+    sh_scan:"Scan to open my profile &amp; save my contact", sh_share:"Share", sh_copy:"Copy link", sh_qr:"Show QR", sh_save:"Save contact",
+    sh_scan_big:"Point a phone camera at the code to open Juliana Gramowski's profile.",
+    st1:"Years in Sales & Marketing", st2:"Star of the Month", st3:"Advertising Specialist", st4:"Fully Bilingual",
+    p_h:"Professional Profile",
+    p_1:"<strong>Juliana Gramowski</strong> is a results-oriented Sales Executive with more than <strong>10 years of experience</strong> in business development, strategic marketing, advertising sales and client relationship management across the <strong>United States and Latin America</strong>.",
+    p_2:"She has a proven ability to generate new business, negotiate high-value agreements and create marketing strategies that help companies increase visibility, attract customers and grow revenue. She is recognized for <strong>consultative selling</strong>, relationship building and delivering customized advertising solutions through <strong>Out-of-Home (OOH) media</strong>.",
+    c_h:"Core Competencies",
+    c_1:"The sales, marketing and relationship skills she brings to every account — refined across leading advertising companies in two markets.",
+    c_l1:"Sales & Business Development", c_l2:"Advertising & Marketing", c_l3:"Tools & Platforms", c_l4:"Industries & Languages",
+    x_h:"Professional Experience",
+    x_hl1:"Years in advertising sales & marketing", x_hl2:"Countries: United States & Colombia", x_hl3:"Star of the Month recognitions", x_hl4:"Industries served across accounts",
+    x1_w:"January 2024 – Present", x1_t:"Sales Executive", x1_o:"Clear Channel Outdoor &middot; Tampa, Florida",
+    x1_g1:"Key Responsibilities", x1_g2:"Key Achievements",
+    x1_a:"Develop new business through prospecting and networking with business owners, agencies and marketing executives.",
+    x1_b:"Create customized advertising strategies using digital billboards, bulletins and posters, and present data-driven solutions that increase brand awareness.",
+    x1_c:"Manage the sales pipeline and forecasting through Salesforce CRM, and coordinate campaign execution with creative and operations teams.",
+    x1_d:"Recognized as <strong>Star of the Month</strong> on two occasions.",
+    x1_e:"Successfully brought in one of the company's largest client accounts.",
+    x1_f:"Generated new business across healthcare, legal, real estate, restaurants and retail, consistently exceeding sales expectations through consultative selling.",
+    x1_m1:"Star of the Month", x1_m2:"largest account won",
+    x2_w:"2020 – 2022", x2_t:"Marketing Consultant", x2_o:"IndoorMedia &middot; Tampa, Florida",
+    x2_a:"Developed advertising strategies for local businesses and managed customer relationships and marketing campaigns.",
+    x2_b:"Generated new business through prospecting and consultative selling.",
+    x2_c:"Awarded <strong>Star of the Month</strong> for outstanding performance.",
+    x3_w:"2018 – 2019", x3_t:"Marketing Director", x3_o:"German School &middot; Cali, Colombia",
+    x3_a:"Directed the institutional marketing strategy and led branding and digital-marketing initiatives.",
+    x3_b:"Increased student enrollment by 15% through targeted communication campaigns.",
+    x3_c:"Led communication campaigns across online, social and video channels.",
+    x3_m1:"student enrollment",
+    x4_w:"2017 – 2018", x4_t:"Advertising Sales Representative", x4_o:"JCDecaux &middot; Cali, Colombia",
+    x4_a:"Managed Out-of-Home advertising accounts and built long-term client relationships.",
+    x4_b:"Developed new business opportunities through prospecting and cold calling.",
+    x4_c:"Maintained and organized a customer database of over 100 clients.",
+    x5_w:"2015 – 2017", x5_t:"Advertising Sales Executive", x5_o:"Televisa &middot; Cali, Colombia",
+    x5_a:"Sold advertising campaigns and managed strategic accounts.",
+    x5_b:"Developed new business opportunities and built strong client relationships.",
+    x5_c:"Delivered high value-added service to a database of over 100 clients.",
+    e_h:"Education",
+    e_d1:"Master's Degree", e_f1:"Consumer Behavior", e_s1:"Konrad Lorenz University &middot; Bogotá, Colombia",
+    e_d2:"Bachelor's Degree", e_f2:"Social Communication", e_s2:"Pontificia Universidad Javeriana &middot; Bogotá, Colombia",
+    e_d3:"Certificate", e_f3:"Digital Marketing", e_s3:"Universidad Pontificia Bolivariana &middot; Bogotá, Colombia",
+    a_h:"Awards & Recognition",
+    a_1t:"Star of the Month — Clear Channel Outdoor", a_1s:"Recognized twice for top sales performance.",
+    a_2t:"Star of the Month — IndoorMedia", a_2s:"Awarded for outstanding new-business results.",
+    r_h:"For Recruiters & Hiring Partners",
+    r_1:"A consultative sales leader who builds lasting relationships, wins large accounts and grows revenue — bilingual and experienced across the US and Latin America. Open to the right senior sales and marketing roles.",
+    r_e1:"Sales Executive / Account Executive", r_e2:"Advertising & Media Sales (OOH, digital)", r_e3:"Business Development & Marketing Strategy", r_e4:"Client Relationship & Account Management",
+    r_avail:"Open to new opportunities", r_li:"Connect on LinkedIn", r_save:"Save my contact",
+    foot_t:"Sales Executive · Business Development & Marketing"
+  },
+  es:{
+    meta_title:"Juliana Gramowski — Ejecutiva de Ventas | Desarrollo de Negocios y Estrategia de Marketing",
+    meta_desc:"Juliana Gramowski — Ejecutiva de Ventas, Desarrollo de Negocios y Estratega de Marketing. Más de 10 años en venta de publicidad y medios Out-of-Home (OOH) en EE. UU. y América Latina.",
+    btn_pdf:"Descargar CV", eyebrow:"Ejecutiva de Ventas · Desarrollo de Negocios",
+    title_line:"Ejecutiva de Ventas &middot; Desarrollo de Negocios &middot; Estratega de Marketing",
+    subtitle:"Ejecutiva de ventas orientada a resultados con más de 10 años generando nuevos negocios, negociando acuerdos de alto valor y entregando soluciones de publicidad Out-of-Home (OOH) en EE. UU. y América Latina.",
+    loc:"Tampa, Florida", s_email:"Escríbeme",
+    sh_scan:"Escanea para abrir mi perfil y guardar mi contacto", sh_share:"Compartir", sh_copy:"Copiar enlace", sh_qr:"Ver QR", sh_save:"Guardar contacto",
+    sh_scan_big:"Apunta la cámara del teléfono al código para abrir el perfil de Juliana Gramowski.",
+    st1:"Años en Ventas y Marketing", st2:"Estrella del Mes", st3:"Especialista en Publicidad", st4:"Totalmente Bilingüe",
+    p_h:"Perfil Profesional",
+    p_1:"<strong>Juliana Gramowski</strong> es una Ejecutiva de Ventas orientada a resultados con más de <strong>10 años de experiencia</strong> en desarrollo de negocios, marketing estratégico, venta de publicidad y gestión de relaciones con clientes en <strong>Estados Unidos y América Latina</strong>.",
+    p_2:"Tiene una capacidad comprobada para generar nuevos negocios, negociar acuerdos de alto valor y crear estrategias de marketing que ayudan a las empresas a aumentar su visibilidad, atraer clientes y crecer en ingresos. Es reconocida por la <strong>venta consultiva</strong>, la construcción de relaciones y la entrega de soluciones publicitarias personalizadas a través de <strong>medios Out-of-Home (OOH)</strong>.",
+    c_h:"Competencias Clave",
+    c_1:"Las habilidades de ventas, marketing y relaciones que aporta a cada cuenta — perfeccionadas en compañías líderes de publicidad en dos mercados.",
+    c_l1:"Ventas y Desarrollo de Negocios", c_l2:"Publicidad y Marketing", c_l3:"Herramientas y Plataformas", c_l4:"Industrias e Idiomas",
+    x_h:"Experiencia Profesional",
+    x_hl1:"Años en venta de publicidad y marketing", x_hl2:"Países: Estados Unidos y Colombia", x_hl3:"Reconocimientos Estrella del Mes", x_hl4:"Industrias atendidas en sus cuentas",
+    x1_w:"Enero 2024 – Actualidad", x1_t:"Ejecutiva de Ventas", x1_o:"Clear Channel Outdoor &middot; Tampa, Florida",
+    x1_g1:"Responsabilidades Clave", x1_g2:"Logros Clave",
+    x1_a:"Desarrolla nuevos negocios mediante prospección y networking con dueños de negocios, agencias y ejecutivos de marketing.",
+    x1_b:"Crea estrategias publicitarias personalizadas con vallas digitales, boletines y pósters, y presenta soluciones basadas en datos que aumentan el reconocimiento de marca.",
+    x1_c:"Gestiona el pipeline de ventas y el pronóstico a través de Salesforce CRM, y coordina la ejecución de campañas con los equipos creativos y de operaciones.",
+    x1_d:"Reconocida como <strong>Estrella del Mes</strong> en dos ocasiones.",
+    x1_e:"Logró incorporar una de las cuentas de cliente más grandes de la compañía.",
+    x1_f:"Generó nuevos negocios en salud, legal, bienes raíces, restaurantes y retail, superando consistentemente las expectativas de ventas mediante venta consultiva.",
+    x1_m1:"Estrella del Mes", x1_m2:"cuenta más grande ganada",
+    x2_w:"2020 – 2022", x2_t:"Consultora de Marketing", x2_o:"IndoorMedia &middot; Tampa, Florida",
+    x2_a:"Desarrolló estrategias publicitarias para negocios locales y gestionó relaciones con clientes y campañas de marketing.",
+    x2_b:"Generó nuevos negocios mediante prospección y venta consultiva.",
+    x2_c:"Galardonada como <strong>Estrella del Mes</strong> por su desempeño sobresaliente.",
+    x3_w:"2018 – 2019", x3_t:"Directora de Marketing", x3_o:"German School &middot; Cali, Colombia",
+    x3_a:"Dirigió la estrategia de marketing institucional y lideró iniciativas de branding y marketing digital.",
+    x3_b:"Aumentó la matrícula estudiantil en un 15% mediante campañas de comunicación dirigidas.",
+    x3_c:"Lideró campañas de comunicación en canales online, sociales y de video.",
+    x3_m1:"matrícula estudiantil",
+    x4_w:"2017 – 2018", x4_t:"Representante de Ventas Publicitarias", x4_o:"JCDecaux &middot; Cali, Colombia",
+    x4_a:"Gestionó cuentas de publicidad Out-of-Home y construyó relaciones a largo plazo con clientes.",
+    x4_b:"Desarrolló nuevas oportunidades de negocio mediante prospección y llamadas en frío.",
+    x4_c:"Mantuvo y organizó una base de datos de más de 100 clientes.",
+    x5_w:"2015 – 2017", x5_t:"Ejecutiva de Ventas Publicitarias", x5_o:"Televisa &middot; Cali, Colombia",
+    x5_a:"Vendió campañas publicitarias y gestionó cuentas estratégicas.",
+    x5_b:"Desarrolló nuevas oportunidades de negocio y construyó relaciones sólidas con clientes.",
+    x5_c:"Entregó un servicio de alto valor agregado a una base de más de 100 clientes.",
+    e_h:"Educación",
+    e_d1:"Maestría", e_f1:"Comportamiento del Consumidor", e_s1:"Universidad Konrad Lorenz &middot; Bogotá, Colombia",
+    e_d2:"Pregrado", e_f2:"Comunicación Social", e_s2:"Pontificia Universidad Javeriana &middot; Bogotá, Colombia",
+    e_d3:"Certificado", e_f3:"Marketing Digital", e_s3:"Universidad Pontificia Bolivariana &middot; Bogotá, Colombia",
+    a_h:"Premios y Reconocimientos",
+    a_1t:"Estrella del Mes — Clear Channel Outdoor", a_1s:"Reconocida en dos ocasiones por su desempeño de ventas.",
+    a_2t:"Estrella del Mes — IndoorMedia", a_2s:"Galardonada por resultados sobresalientes en nuevos negocios.",
+    r_h:"Para Reclutadores y Empresas",
+    r_1:"Una líder de ventas consultiva que construye relaciones duraderas, gana grandes cuentas y hace crecer los ingresos — bilingüe y con experiencia en EE. UU. y América Latina. Abierta a los roles senior de ventas y marketing adecuados.",
+    r_e1:"Ejecutiva de Ventas / Account Executive", r_e2:"Ventas de Publicidad y Medios (OOH, digital)", r_e3:"Desarrollo de Negocios y Estrategia de Marketing", r_e4:"Relación con Clientes y Gestión de Cuentas",
+    r_avail:"Abierta a nuevas oportunidades", r_li:"Conectar en LinkedIn", r_save:"Guardar mi contacto",
+    foot_t:"Ejecutiva de Ventas · Desarrollo de Negocios y Marketing"
+  }
+};
+
+function setLang(lang){
+  if(!I18N[lang]) lang='en';
+  const d=I18N[lang];
+  document.documentElement.lang=lang;
+  try{localStorage.setItem('jgCvLang',lang);}catch(e){}
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(d[k]!==undefined) el.innerHTML=d[k];
+  });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const k=el.getAttribute('data-i18n'), a=el.getAttribute('data-i18n-attr');
+    if(d[k]!==undefined) el.setAttribute(a,d[k].replace(/<[^>]+>/g,''));
+  });
+  if(d.meta_title) document.title=d.meta_title;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-lang')===lang));
+  try{ if(window.__voiceApplyLang) window.__voiceApplyLang(lang); }catch(e){}
+}
+(function(){
+  let lang;
+  try{lang=localStorage.getItem('jgCvLang');}catch(e){}
+  if(!lang){ const nav=(navigator.language||'en').toLowerCase(); lang=nav.startsWith('es')?'es':'en'; }
+  setLang(lang);
+})();
+
+// ---- Light / Dark theme ----
+function setTheme(t){
+  if(t!=='light') t='dark';
+  document.documentElement.setAttribute('data-theme', t);
+  try{ localStorage.setItem('jgTheme', t); }catch(e){}
+  var ic=document.getElementById('themeIcon');
+  if(ic) ic.className = (t==='light') ? 'fas fa-sun' : 'fas fa-moon';
+  var m=document.querySelector('meta[name="theme-color"]:not([media])');
+  if(m) m.setAttribute('content', t==='light' ? '#f5f7fb' : '#05070e');
+}
+function toggleTheme(){ var cur=document.documentElement.getAttribute('data-theme')||'dark'; setTheme(cur==='light'?'dark':'light'); }
+setTheme(document.documentElement.getAttribute('data-theme')||'dark');
+
+// ---- Female voice orb ----
+(function(){
+  var SEG = {
+    en: [
+      "Hi, I'm Ava, Juliana's A-I voice assistant. Let me tell you about Juliana Gramowski.",
+      "Juliana is a results-oriented Sales Executive with more than ten years of experience in business development, strategic marketing and advertising sales across the United States and Latin America.",
+      "She currently drives strategic Out-of-Home advertising campaigns at Clear Channel Outdoor in Tampa, Florida — building new business and managing her pipeline through Salesforce.",
+      "Her career spans Clear Channel, IndoorMedia, JCDecaux and Televisa, and she has been recognized as Star of the Month three times for consistently exceeding sales expectations.",
+      "She holds a Master's in Consumer Behavior and a Bachelor's in Social Communication, and she is fully bilingual in English and Spanish.",
+      "If you're looking for a consultative sales leader who builds lasting relationships and grows revenue, connect with Juliana on LinkedIn, or email her at j gramowski seven at gmail dot com. Thanks for listening."
+    ],
+    es: [
+      "Hola, soy Dalia, la asistente de voz de Juliana. Déjame contarte sobre Juliana Gramowski.",
+      "Juliana es una Ejecutiva de Ventas orientada a resultados, con más de diez años de experiencia en desarrollo de negocios, marketing estratégico y venta de publicidad en Estados Unidos y América Latina.",
+      "Actualmente lidera campañas estratégicas de publicidad Out-of-Home en Clear Channel Outdoor en Tampa, Florida, generando nuevos negocios y gestionando su pipeline con Salesforce.",
+      "Su trayectoria incluye Clear Channel, IndoorMedia, JCDecaux y Televisa, y ha sido reconocida como Estrella del Mes en tres ocasiones por superar consistentemente las expectativas de ventas.",
+      "Tiene una Maestría en Comportamiento del Consumidor y un pregrado en Comunicación Social, y es totalmente bilingüe en inglés y español.",
+      "Si buscas una líder de ventas consultiva que construye relaciones duraderas y hace crecer los ingresos, conéctate con Juliana en LinkedIn, o escríbele a j gramowski siete arroba gmail punto com. Gracias por escuchar."
+    ]
+  };
+  var META = {
+    en: { voice:'ava', tag:'EN · Ava', name:"Juliana's AI Voice", role:"A female AI voice that walks you through Juliana's profile.",
+          play:'Hear my profile', pause:'Pause', resume:'Resume', stop:'Stop',
+          idle:'Tap the orb or press play — narrated in your selected language.',
+          loading:'Loading neural voice…', speaking:'Speaking', paused:'Paused.', done:'Done — tap play to hear it again.' },
+    es: { voice:'dalia', tag:'ES · Dalia', name:'Voz AI de Juliana', role:'Una voz de IA femenina que te presenta el perfil de Juliana.',
+          play:'Escuchar mi perfil', pause:'Pausar', resume:'Reanudar', stop:'Detener',
+          idle:'Toca el orbe o pulsa reproducir — narrado en tu idioma seleccionado.',
+          loading:'Cargando voz neural…', speaking:'Hablando', paused:'En pausa.', done:'Listo — pulsa reproducir para repetir.' }
+  };
+  var NEURAL_URL='/api/tts/edge';
+  var vlang = (document.documentElement.lang==='es')?'es':'en';
+  var orb=document.getElementById('vorb');
+  var elName=document.getElementById('vName'), elTag=document.getElementById('vTag'), elRole=document.getElementById('vRole');
+  var elStatus=document.getElementById('vStatus');
+  var bPlay=document.getElementById('vPlay'), bPause=document.getElementById('vPause'), bStop=document.getElementById('vStop');
+  var lPlay=document.getElementById('vPlayLbl'), lPause=document.getElementById('vPauseLbl'), lStop=document.getElementById('vStopLbl');
+  if(!orb) return;
+  var synth=window.speechSynthesis;
+  var queue=[], qi=0, runToken=0, paused=false, playing=false;
+  var mode=null, currentAudio=null, neuralOK=true, cache={}, bvoice=null;
+  function M(){ return META[vlang]; }
+  function pickBrowserVoice(){ if(!synth)return; var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0&&/female|ava|jenny|dalia|paloma|salome|elvira|zira|aria|samantha|mónica|monica|helena/i.test(v.name);});
+    bvoice=pref[0]||vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0;})[0]||vs[0]||null; }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+  function relabel(){ var m=M();
+    elName.textContent=m.name; elTag.textContent=m.tag; elRole.textContent=m.role;
+    lPlay.textContent=m.play; lStop.textContent=m.stop; lPause.textContent= paused ? m.resume : m.pause;
+    if(!playing) elStatus.textContent=m.idle; }
+  function applyLang(lang){ var nl=(lang==='es')?'es':'en'; if(nl===vlang){ relabel(); return; } stop(); vlang=nl; cache={}; pickBrowserVoice(); relabel(); }
+  window.__voiceApplyLang=applyLang;
+  function fetchNeural(idx){
+    var key=vlang+'|'+M().voice+'|'+idx;
+    if(cache[key]) return Promise.resolve(cache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SEG[vlang][idx],voice:M().voice})})
+      .then(function(r){ if(!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); cache[key]=u; return u; });
+  }
+  function speaking(){ elStatus.textContent=M().speaking+' ('+(qi+1)+'/'+queue.length+')'; }
+  function run(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    function advance(){ if(token!==runToken)return; qi++; run(token); }
+    if(neuralOK){
+      orb.classList.add('loading'); elStatus.textContent=M().loading;
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return; orb.classList.remove('loading');
+        mode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance; currentAudio.onerror=function(){ neuralOK=false; browserSpeak(idx,advance); };
+        orb.classList.add('speaking'); speaking();
+        currentAudio.play().catch(function(){ neuralOK=false; browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken)return; orb.classList.remove('loading'); neuralOK=false; browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    mode='browser'; var u=new SpeechSynthesisUtterance(SEG[vlang][idx].replace(/-/g,' '));
+    if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:(vlang==='es'?'es-MX':'en-US'); u.rate=1; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); speaking(); }; u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=SEG[vlang].map(function(_,i){return i;}); qi=0; paused=false; playing=true; runToken++;
+    bPause.disabled=false; bStop.disabled=false; bPlay.disabled=true; lPause.textContent=M().pause; run(runToken);
+  }
+  function finish(){
+    runToken++; playing=false; paused=false; orb.classList.remove('speaking','loading');
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    bPause.disabled=true; bStop.disabled=true; bPlay.disabled=false; elStatus.textContent=M().done;
+  }
+  function stop(){ if(playing) finish(); }
+  bPlay.addEventListener('click', start);
+  orb.addEventListener('click', function(){ if(!playing) start(); });
+  orb.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(!playing) start(); } });
+  bStop.addEventListener('click', finish);
+  bPause.addEventListener('click', function(){
+    if(!playing) return;
+    if(!paused){ paused=true; lPause.textContent=M().resume; orb.classList.remove('speaking'); elStatus.textContent=M().paused;
+      if(mode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; lPause.textContent=M().pause; orb.classList.add('speaking'); speaking();
+      if(mode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+  relabel();
+})();
+
+// ---- Tap-to-share + QR ----
+(function(){
+  var URL_='https://julianagramowski.com';
+  var toast=document.getElementById('toast'), tt;
+  function isEs(){ return document.documentElement.lang==='es'; }
+  function showToast(msg){ if(!toast)return; toast.textContent=msg; toast.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){toast.classList.remove('show');},2200); }
+  function shareData(){ return { title:'Juliana Gramowski — Sales Executive',
+    text: isEs()?'Juliana Gramowski — Ejecutiva de Ventas y Estratega de Marketing':'Juliana Gramowski — Sales Executive & Marketing Strategist', url:URL_ }; }
+  function doShare(){ if(navigator.share){ navigator.share(shareData()).then(function(){},function(){}); } else doCopy(); }
+  function legacyCopy(){ try{var ta=document.createElement('textarea');ta.value=URL_;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast(isEs()?'Enlace copiado':'Link copied');}catch(e){} }
+  function doCopy(){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(URL_).then(function(){showToast(isEs()?'Enlace copiado':'Link copied');},legacyCopy); } else legacyCopy(); }
+  var modal=document.getElementById('qrModal');
+  function openQR(){ if(modal) modal.classList.add('open'); }
+  function closeQR(){ if(modal) modal.classList.remove('open'); }
+  ['shareBtn','shareBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doShare);});
+  ['copyBtn','copyBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doCopy);});
+  var qb=document.getElementById('qrBtn'); if(qb) qb.addEventListener('click',openQR);
+  var qt=document.getElementById('qrThumb'); if(qt){ qt.addEventListener('click',openQR); qt.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openQR();}}); }
+  var qc=document.getElementById('qrClose'); if(qc) qc.addEventListener('click',closeQR);
+  if(modal) modal.addEventListener('click',function(e){ if(e.target===modal) closeQR(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeQR(); });
+})();
+
+// ---- PWA service worker (scoped to /juliana_gramowski only) ----
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/juliana_gramowski-sw.js', { scope: '/juliana_gramowski' }).catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
