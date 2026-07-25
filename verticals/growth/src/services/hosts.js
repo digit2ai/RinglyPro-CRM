@@ -51,4 +51,6 @@ function brandForHostSync(host) {
   return HOSTS.get(String(host).toLowerCase().replace(/^www\./, '')) || null;
 }
 
-module.exports = { refresh, brandForHostSync, hostOf };
+function dump() { return { hosts: Array.from(HOSTS.keys()), excluded: Array.from(EXCLUDED), lastRefresh, size: HOSTS.size }; }
+
+module.exports = { refresh, brandForHostSync, hostOf, dump };

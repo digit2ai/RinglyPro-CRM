@@ -12,7 +12,15 @@
 const express = require('express');
 const router = express.Router();
 const { Post } = require('./models');
-const { brandForHostSync } = require('./services/hosts');
+const hostsCache = require('./services/hosts');
+const { brandForHostSync } = hostsCache;
+
+// Temporary diagnostics: what does the host cache think this domain is?
+router.get('/__seo_debug', async (req, res) => {
+  const host = (req.get('host') || '').toLowerCase().replace(/^www\./, '');
+  await hostsCache.refresh();
+  res.json({ host, managed: !!hostsCache.brandForHostSync(host), cache: hostsCache.dump() });
+});
 
 function xmlEscape(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
