@@ -1878,6 +1878,36 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
+// DIGIT2AI GROWTH — internal owner-only AI CMO for our OWN portfolio (served at /growth/)
+// =====================================================
+
+let growthApp = null;
+let growthError = null;
+try {
+  growthApp = require('../verticals/growth/src/index');
+  app.get('/growth', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/growth/');
+    next();
+  });
+  app.use('/growth', growthApp);
+  console.log('Digit2AI Growth (AI CMO) mounted at /growth');
+  console.log('   - Cockpit: /growth/');
+  console.log('   - Health Check: /growth/health');
+  console.log('   - API: /growth/api/v1/*');
+} catch (error) {
+  growthError = error;
+  console.log('⚠️ Digit2AI Growth not available:', error.message);
+}
+
+app.get('/debug/growth-error', (req, res) => {
+  res.json({
+    service: 'Digit2AI Growth — internal AI CMO',
+    available: !growthError,
+    error: growthError ? { message: growthError.message, stack: growthError.stack } : null
+  });
+});
+
+// =====================================================
 // CASEGUARD — Administrative Review & Regulatory Escalation Case Manager (served at /caseguard/)
 // =====================================================
 

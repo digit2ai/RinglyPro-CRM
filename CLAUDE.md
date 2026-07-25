@@ -396,6 +396,31 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `COACHTRACK_DEFAULT_PASSWORD` — seeded admin password (`mstagg@digit2ai.com`). Default `coachtrack@2026`. (Regular users self-signup; no shared password.)
 - `COACHTRACK_SEED_DEMO` — `1` seeds one sample session on boot. Default unset = clean.
 
+## Digit2AI Growth — internal AI CMO for our OWN portfolio (folder: growth)
+
+**Purpose:** Internal, owner-only "AI CMO" (Okara.ai-style) that markets **our own verticals**, not a product we sell. Each **brand = one Digit2AI product** (Lawn Co-Pilot, Speakly, EquiMind, Veritas, Torna, Visionarium, RoundShare, AgroMercado, Digit2AI itself). A fleet of growth agents drafts SEO/content/social/GEO work per brand into a **review queue**; NOTHING auto-publishes (obeys the `EMAIL_AUTOSEND_DISABLED` philosophy — owner reviews, edits, and posts). Login-only, no public signup, no billing. Mounted at `/growth`. Emoji-free.
+
+**Location:** `verticals/growth/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync()`; canonical migration `verticals/growth/migrations/20260725_growth_tables.sql`. `gr_` prefix: `gr_users, gr_brands, gr_drafts, gr_runs, gr_metrics`. Rows carry `owner_id` so a second operator needs no migration.
+
+**The agent fleet** (`src/services/agents.js`) — each returns ONE draft (status `draft`), Haiku-backed with a labeled zero-key heuristic fallback (`is_simulated:true`): `seo.audit` (keyword opportunities + post outline), `content.draft` (article intro + headers in brand voice), `social.x` (3 X posts), `social.linkedin` (one professional post), `geo.monitor` (how AI engines describe the brand + gaps to publish). `runBrand()` fans a set of agents over one brand, records a `gr_run` with cost telemetry, and stops at `GROWTH_COST_CAP_USD`.
+
+**Brand registry** (`src/services/brands.js`) — the real Digit2AI portfolio seeded once per owner (idempotent by slug), each with URL/positioning/ICP/voice/keywords. Editable in the cockpit; the seed only fills gaps, never clobbers edits.
+
+**Cockpit:** `/growth/` (brand list + per-brand review queue, "Run all agents" + per-channel buttons, Approve/Mark-published/Discard) · login `/growth/login` (owner `mstagg@digit2ai.com`) · health `/growth/health` · debug `/debug/growth-error`.
+
+**REST API (`/growth/api/v1/*`):** `POST /login|logout` · `GET /brands` (+ pending-draft counts) · `PATCH /brands/:id` · `POST /brands/:id/run` (`{agents?}`) · `GET /drafts?brand_id=&status=` · `PATCH /drafts/:id` (status/title/body) · `DELETE /drafts/:id`.
+
+**SIT:** `node verticals/growth/sit.js` → **11/11** (seeds owner + brands, fans the full fleet, asserts drafts queue + owner isolation + nothing auto-publishes). Zero external keys.
+
+**Phases:** P1 engine (DONE) · P2 richer cockpit (edit-in-place, Apple-Mail/copy publish helpers) · P3 daily scheduler behind `GROWTH_GO=1` (per-brand fan-out, cost-capped, reuses the poller pattern) · P4 GSC+GA4 feedback connectors (OAuth like projects-bridge) feeding the SEO/content agents · P5 optional model router (cheap Haiku for drafts, stronger model for analysis).
+
+**Environment Variables:**
+- `GROWTH_JWT_SECRET` — signs the `growth_token` cookie (fallback `JWT_SECRET`), 30d. SET on prod.
+- `GROWTH_MODEL` — Anthropic model for the agents. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`. Unset key = labeled heuristic drafts (tool still fully runs).
+- `GROWTH_OWNER_PASSWORD` — owner password force-synced on boot (falls back to `LAWNCOPILOT_MSTAGG_PASSWORD`, default `Palindrome@7`).
+- `GROWTH_COST_CAP_USD` — max token spend per brand fan-out (default 2.0).
+- `GROWTH_GO` — (P3) set to `1` to enable the daily scheduled fan-out. Default unset = manual runs only.
+
 ## SpeakUp — Voice-to-Text + AI editing (internal team tool, folder: speakup)
 
 **Purpose:** Private, login-only voice-to-text + AI editing app for the owner + team (a self-hosted SpeakApp.com work-alike). Record or upload audio, transcribe with OUR OWN engine, then one-tap **summarize, translate (50+ langs, auto-detect), or rewrite the tone**. Records meetings by capturing the user's own device audio in the browser — **no bot joins the call**. NOT a product: no public landing, no free web tool, no pricing, no FAQ. Mounted at `/speakup`. Spanish-first, bilingual ES/EN, emoji-free.

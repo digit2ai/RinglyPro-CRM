@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digit2AI Growth — AI CMO</title>
+<style>
+  :root{--bg:#0b1020;--card:#141b30;--line:#26314f;--ink:#eef2ff;--mut:#93a0c4;--acc:#6d9bff;--ok:#4fd18b;--sim:#e8b64f}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  header h1{font-size:16px;margin:0;letter-spacing:.2px}
+  header .sub{color:var(--mut);font-size:12px}
+  a.link,button.ghost{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;text-decoration:none}
+  main{max-width:1180px;margin:0 auto;padding:22px;display:grid;grid-template-columns:340px 1fr;gap:22px}
+  @media(max-width:860px){main{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:0 0 12px}
+  .brand{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;cursor:pointer;transition:.15s}
+  .brand:hover{border-color:var(--acc)}
+  .brand.active{border-color:var(--acc);background:#17203c}
+  .brand .n{font-weight:600;font-size:14px}
+  .brand .t{color:var(--mut);font-size:12px;margin-top:2px}
+  .badge{display:inline-block;background:var(--acc);color:#06122e;border-radius:20px;font-size:11px;font-weight:700;padding:1px 8px;margin-left:6px}
+  .runbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .runbar button{background:var(--acc);color:#06122e;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:13px}
+  .runbar button.sec{background:none;border:1px solid var(--line);color:var(--ink);font-weight:500}
+  .draft{border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:12px}
+  .draft .head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .chan{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .sim{font-size:11px;color:var(--sim);border:1px solid var(--sim);border-radius:6px;padding:1px 7px}
+  .draft h3{font-size:14px;margin:0;flex:1}
+  .draft pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Menlo,monospace;background:#0d142a;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0;color:#d7e0ff;max-height:260px;overflow:auto}
+  .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .acts button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:12px}
+  .acts button.ok{border-color:var(--ok);color:var(--ok)}
+  .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
+  .st{font-size:11px;color:var(--mut)}
+</style></head>
+<body>
+  <header>
+    <div><h1>Digit2AI Growth <span class="sub">— AI CMO interno</span></h1></div>
+    <button class="ghost" onclick="logout()">Salir</button>
+  </header>
+  <main>
+    <div class="panel">
+      <h2>Nuestras marcas</h2>
+      <div id="brands"></div>
+    </div>
+    <div class="panel">
+      <div id="runbar" class="runbar" style="display:none">
+        <button onclick="runAll()">Ejecutar todos los agentes</button>
+        <button class="sec" onclick="runOne('seo.audit')">SEO</button>
+        <button class="sec" onclick="runOne('content.draft')">Contenido</button>
+        <button class="sec" onclick="runOne('social.x')">X</button>
+        <button class="sec" onclick="runOne('social.linkedin')">LinkedIn</button>
+        <button class="sec" onclick="runOne('geo.monitor')">GEO</button>
+      </div>
+      <h2 id="qhead">Cola de revision</h2>
+      <div id="drafts"><div class="empty">Selecciona una marca para ver o generar borradores.</div></div>
+    </div>
+  </main>
+<script>
+const API='/growth/api/v1';
+let brands=[], sel=null;
+const $=id=>document.getElementById(id);
+
+async function load(){
+  const r=await fetch(API+'/brands'); if(r.status===401){location.href='/growth/login';return;}
+  brands=(await r.json()).brands; renderBrands();
+}
+function renderBrands(){
+  $('brands').innerHTML=brands.map(b=>`
+    <div class="brand ${sel===b.id?'active':''}" onclick="pick(${b.id})">
+      <div class="n">${b.name}${b.pending_drafts?`<span class="badge">${b.pending_drafts}</span>`:''}</div>
+      <div class="t">${b.tagline||''}</div>
+    </div>`).join('');
+}
+async function pick(id){ sel=id; renderBrands(); $('runbar').style.display='flex';
+  const b=brands.find(x=>x.id===id); $('qhead').textContent='Cola de revision — '+b.name; await loadDrafts(); }
+
+async function loadDrafts(){
+  const r=await fetch(API+'/drafts?brand_id='+sel); const d=(await r.json()).drafts;
+  if(!d.length){$('drafts').innerHTML='<div class="empty">Sin borradores. Ejecuta los agentes arriba.</div>';return;}
+  $('drafts').innerHTML=d.map(x=>`
+    <div class="draft">
+      <div class="head">
+        <span class="chan">${x.channel||''}</span>
+        ${x.is_simulated?'<span class="sim">heuristico</span>':''}
+        <h3>${esc(x.title||'')}</h3>
+        <span class="st">${x.status}</span>
+      </div>
+      <pre>${esc(x.body||'')}</pre>
+      <div class="acts">
+        <button class="ok" onclick="setStatus(${x.id},'approved')">Aprobar</button>
+        <button onclick="setStatus(${x.id},'published')">Marcar publicado</button>
+        <button onclick="del(${x.id})">Descartar</button>
+      </div>
+    </div>`).join('');
+}
+async function runAll(){ await run(null); }
+async function runOne(a){ await run([a]); }
+async function run(agents){
+  $('drafts').innerHTML='<div class="empty">Ejecutando agentes...</div>';
+  await fetch(`${API}/brands/${sel}/run`,{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify(agents?{agents}:{})});
+  await load(); await loadDrafts();
+}
+async function setStatus(id,status){ await fetch(`${API}/drafts/${id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status})}); await load(); await loadDrafts(); }
+async function del(id){ await fetch(`${API}/drafts/${id}`,{method:'DELETE'}); await load(); await loadDrafts(); }
+async function logout(){ await fetch(API+'/logout',{method:'POST'}); location.href='/growth/login'; }
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+load();
+</script>
+</body></html>
