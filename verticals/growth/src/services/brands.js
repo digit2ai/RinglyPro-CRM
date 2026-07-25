@@ -77,6 +77,14 @@ const PORTFOLIO = [
     keywords: ['mercado agropecuario venezuela', 'subastas ganado', 'maquinaria agricola venezuela', 'insumos agricolas', 'agro marketplace']
   },
   {
+    slug: 'orbup', name: 'OrbUp', url: 'https://orbup.app',
+    tagline: 'Your business, answered by a voice-first AI orb',
+    positioning: 'A voice-orb-first AI assistant that answers calls, books appointments, and works the front desk 24/7 so nothing gets missed. Installable PWA, bilingual EN/ES.',
+    icp: 'Small service businesses and solo operators who miss calls and want an always-on AI receptionist.',
+    voice: 'Modern, friendly, confident, emoji-free.',
+    keywords: ['ai receptionist', 'voice ai assistant', 'answer calls automatically', 'ai appointment booking', 'virtual receptionist app']
+  },
+  {
     slug: 'digit2ai', name: 'Digit2AI', url: 'https://digit2ai.com',
     tagline: 'From natural language to production AI',
     positioning: 'The company behind the portfolio: 21 live platforms, 22 verticals, an 83-agent AI workforce that converts natural language into deployed software. Partnership/joint-venture model.',

@@ -410,7 +410,11 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **REST API (`/growth/api/v1/*`):** `POST /login|logout` · `GET /brands` (+ pending-draft counts) · `PATCH /brands/:id` · `POST /brands/:id/run` (`{agents?}`) · `GET /drafts?brand_id=&status=` · `PATCH /drafts/:id` (status/title/body) · `DELETE /drafts/:id`.
 
-**SIT:** `node verticals/growth/sit.js` → **11/11** (seeds owner + brands, fans the full fleet, asserts drafts queue + owner isolation + nothing auto-publishes). Zero external keys.
+**Channel settings** (`/growth/settings`, `gr_settings`, `src/services/settings.js`) — owner-level config per channel that STEERS the agents: Contenido (words/tone/CTA), X (posts-per-run), GEO (which AI engines + brand facts), plus SEO (GSC/GA4 properties — Phase-4 plumbing) and X/LinkedIn API tokens stored **AES-256-GCM encrypted** (`src/services/crypto.js`), returned masked `{set,hint}`, never raw; empty secret on re-save keeps the stored value.
+
+**Blog / publish pipeline (the SEO/Contenido destination):** approved SEO or Contenido drafts publish to the brand's blog via `POST /api/v1/drafts/:id/publish` (`src/services/publish.js`) → a `gr_posts` row rendered as crawlable HTML. Public renderer `src/blog.js` is mounted at **`/blog` on the main app** and is **host-aware**: on a brand's custom domain (e.g. `orbup.app/blog`) it serves THAT brand's posts; on the main domain use `/blog?brand=<slug>`. Full SEO head (title, meta description, canonical, OG, Article JSON-LD). Markdown→HTML by dependency-free `src/services/render.js`. The `orbup.app` host handler in `src/app.js` already passes `/blog` through untouched. X/LinkedIn drafts are NOT blog-publishable (social destination); GEO items are site to-dos, not posts.
+
+**SIT:** `node verticals/growth/sit.js` → **25/25** (seeds owner + brands incl. OrbUp, fans the full fleet, settings save + secret masking, publish→blog with slug uniqueness + markdown render + channel gating). Zero external keys.
 
 **Phases:** P1 engine (DONE) · P2 richer cockpit (edit-in-place, Apple-Mail/copy publish helpers) · P3 daily scheduler behind `GROWTH_GO=1` (per-brand fan-out, cost-capped, reuses the poller pattern) · P4 GSC+GA4 feedback connectors (OAuth like projects-bridge) feeding the SEO/content agents · P5 optional model router (cheap Haiku for drafts, stronger model for analysis).
 

@@ -92,4 +92,26 @@ const Setting = sequelize.define('gr_setting', {
   geo: { type: DataTypes.JSONB, defaultValue: {} }        // engines[], brand_facts
 }, { tableName: 'gr_settings', underscored: true, timestamps: true });
 
-module.exports = { sequelize, User, Brand, Draft, Run, Metric, Setting };
+// ── Published blog posts (the SEO/content destination on each brand site) ───
+// A draft "Published to blog" becomes one of these; the public /blog renderer
+// serves them as crawlable HTML at https://<brand host>/blog/<slug>.
+const Post = sequelize.define('gr_post', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  owner_id: { type: DataTypes.INTEGER, allowNull: false },
+  brand_id: { type: DataTypes.INTEGER, allowNull: false },
+  slug: { type: DataTypes.STRING, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: false },
+  meta_description: { type: DataTypes.STRING },   // <meta name="description">
+  html: { type: DataTypes.TEXT },                  // rendered article body
+  source_markdown: { type: DataTypes.TEXT },
+  keywords: { type: DataTypes.JSONB, defaultValue: [] },
+  status: { type: DataTypes.STRING, defaultValue: 'published' }, // published | unpublished
+  draft_id: { type: DataTypes.INTEGER },
+  published_at: { type: DataTypes.DATE },
+  views: { type: DataTypes.INTEGER, defaultValue: 0 }
+}, {
+  tableName: 'gr_posts', underscored: true, timestamps: true,
+  indexes: [{ unique: true, fields: ['brand_id', 'slug'] }]
+});
+
+module.exports = { sequelize, User, Brand, Draft, Run, Metric, Setting, Post };

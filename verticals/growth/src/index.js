@@ -18,7 +18,8 @@ const { seedUsers, verify } = require('./services/users');
 const { seedBrands } = require('./services/brands');
 const { runBrand, ALL_AGENTS } = require('./services/agents');
 const settingsSvc = require('./services/settings');
-const { User } = require('./models');
+const { publishDraft } = require('./services/publish');
+const { User, Post } = require('./models');
 
 const AUTH_SECRET = process.env.GROWTH_JWT_SECRET || process.env.JWT_SECRET || 'growth-2026-secret';
 const publicDir = path.join(__dirname, '..', 'public');
@@ -125,6 +126,22 @@ router.patch('/api/v1/drafts/:id', async (req, res) => {
 router.delete('/api/v1/drafts/:id', async (req, res) => {
   await Draft.destroy({ where: { id: req.params.id, owner_id: req.user.id } });
   res.json({ ok: true });
+});
+
+// Publish an SEO/Contenido draft to the brand's blog -> live crawlable URL.
+router.post('/api/v1/drafts/:id/publish', async (req, res) => {
+  try {
+    const result = await publishDraft(Number(req.params.id), req.user.id);
+    res.json({ ok: true, ...result });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Published posts (for the "Publicados" view / weekly cadence tracking).
+router.get('/api/v1/posts', async (req, res) => {
+  const where = { owner_id: req.user.id };
+  if (req.query.brand_id) where.brand_id = Number(req.query.brand_id);
+  const posts = await Post.findAll({ where, order: [['published_at', 'DESC']], limit: 100 });
+  res.json({ posts });
 });
 
 // ── Settings (per-channel config: SEO / Contenido / X / LinkedIn / GEO) ─────

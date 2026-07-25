@@ -33,6 +33,9 @@
   .acts{display:flex;gap:8px;flex-wrap:wrap}
   .acts button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:12px}
   .acts button.ok{border-color:var(--ok);color:var(--ok)}
+  .acts button.pub{border-color:var(--acc);color:var(--acc)}
+  .liveurl{font:12px system-ui;color:var(--ok);margin:8px 0 4px;word-break:break-all}
+  .liveurl a{color:var(--acc)}
   .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
   .st{font-size:11px;color:var(--mut)}
 </style></head>
@@ -81,8 +84,14 @@ function renderBrands(){
 async function pick(id){ sel=id; renderBrands(); $('runbar').style.display='flex';
   const b=brands.find(x=>x.id===id); $('qhead').textContent='Cola de revision — '+b.name; await loadDrafts(); }
 
+let urlByDraft={};
 async function loadDrafts(){
-  const r=await fetch(API+'/drafts?brand_id='+sel); const d=(await r.json()).drafts;
+  const [dr,pr]=await Promise.all([fetch(API+'/drafts?brand_id='+sel),fetch(API+'/posts?brand_id='+sel)]);
+  const d=(await dr.json()).drafts; const posts=(await pr.json()).posts||[];
+  const host=(brands.find(b=>b.id===sel)||{}).url; let bh='aiagent.ringlypro.com';
+  try{bh=new URL(host).host.replace(/^www\./,'');}catch(e){}
+  urlByDraft={}; posts.forEach(p=>{ if(p.draft_id) urlByDraft[p.draft_id]='https://'+bh+'/blog/'+p.slug; });
+  d.forEach(x=>{ if(urlByDraft[x.id]) x.live_url=urlByDraft[x.id]; });
   if(!d.length){$('drafts').innerHTML='<div class="empty">Sin borradores. Ejecuta los agentes arriba.</div>';return;}
   $('drafts').innerHTML=d.map(x=>`
     <div class="draft">
@@ -93,9 +102,10 @@ async function loadDrafts(){
         <span class="st">${x.status}</span>
       </div>
       <pre>${esc(x.body||'')}</pre>
+      ${x.status==='published'&&x.live_url?`<div class="liveurl">Publicado: <a href="${esc(x.live_url)}" target="_blank">${esc(x.live_url)}</a></div>`:''}
       <div class="acts">
         <button class="ok" onclick="setStatus(${x.id},'approved')">Aprobar</button>
-        <button onclick="setStatus(${x.id},'published')">Marcar publicado</button>
+        ${(x.channel==='seo'||x.channel==='content')?`<button class="pub" onclick="publish(${x.id})">Publicar al blog</button>`:'<button onclick="setStatus('+x.id+',\'published\')">Marcar publicado</button>'}
         <button onclick="del(${x.id})">Descartar</button>
       </div>
     </div>`).join('');
@@ -109,6 +119,12 @@ async function run(agents){
   await load(); await loadDrafts();
 }
 async function setStatus(id,status){ await fetch(`${API}/drafts/${id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status})}); await load(); await loadDrafts(); }
+async function publish(id){
+  const r=await fetch(`${API}/drafts/${id}/publish`,{method:'POST'});
+  const j=await r.json();
+  if(r.ok){ await load(); await loadDrafts(); alert('Publicado en:\n'+j.url); }
+  else{ alert('No se pudo publicar: '+(j.error||'')); }
+}
 async function del(id){ await fetch(`${API}/drafts/${id}`,{method:'DELETE'}); await load(); await loadDrafts(); }
 async function logout(){ await fetch(API+'/logout',{method:'POST'}); location.href='/growth/login'; }
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}

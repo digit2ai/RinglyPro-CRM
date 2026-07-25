@@ -1907,6 +1907,16 @@ app.get('/debug/growth-error', (req, res) => {
   });
 });
 
+// Public, crawlable blog for Growth-published posts. Host-aware: orbup.app/blog
+// shows OrbUp posts; on the main domain use /blog?brand=<slug>. This is the SEO
+// destination — approved SEO/Contenido drafts land here as live pages.
+try {
+  app.use('/blog', require('../verticals/growth/src/blog'));
+  console.log('Growth public blog mounted at /blog (host-aware)');
+} catch (error) {
+  console.log('⚠️ Growth blog not available:', error.message);
+}
+
 // =====================================================
 // CASEGUARD — Administrative Review & Regulatory Escalation Case Manager (served at /caseguard/)
 // =====================================================

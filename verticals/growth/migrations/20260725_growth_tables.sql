@@ -75,6 +75,25 @@ CREATE TABLE IF NOT EXISTS gr_settings (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS gr_posts (
+  id SERIAL PRIMARY KEY,
+  owner_id INTEGER NOT NULL,
+  brand_id INTEGER NOT NULL,
+  slug VARCHAR(255) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  meta_description VARCHAR(255),
+  html TEXT,
+  source_markdown TEXT,
+  keywords JSONB DEFAULT '[]',
+  status VARCHAR(32) DEFAULT 'published',
+  draft_id INTEGER,
+  published_at TIMESTAMPTZ,
+  views INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_gr_posts_brand_slug ON gr_posts(brand_id, slug);
+
 CREATE TABLE IF NOT EXISTS gr_metrics (
   id SERIAL PRIMARY KEY,
   owner_id INTEGER NOT NULL,
