@@ -119,6 +119,30 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .sbtn i{font-size:15px}
 @media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
 
+/* share + QR */
+.sharecard{display:flex;align-items:center;gap:16px;margin-top:20px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px}
+.qrthumb{width:96px;height:96px;flex:0 0 96px;border-radius:10px;background:#fff;padding:6px;cursor:pointer;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrthumb:hover{transform:scale(1.04)}
+.sharemeta{flex:1;min-width:0}
+.sharehint{font-size:13px;color:var(--dim);margin-bottom:10px}
+.sharebtns{display:flex;gap:9px;flex-wrap:wrap}
+.sharebtns .sbtn{padding:8px 14px;font-size:13px}
+@media(max-width:760px){.sharecard{margin-left:auto;margin-right:auto}}
+@media(max-width:420px){.sharecard{flex-direction:column;text-align:center}.sharebtns{justify-content:center}}
+.qrmodal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;
+  background:rgba(3,5,12,.72);backdrop-filter:blur(6px)}
+.qrmodal.open{display:flex}
+.qrbox{position:relative;background:var(--bg1);border:1px solid var(--line2);border-radius:22px;padding:28px;max-width:340px;width:100%;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.qrclose{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--dim);font-size:26px;line-height:1;cursor:pointer}
+.qrclose:hover{color:var(--txt)}
+.qrbig{width:240px;max-width:100%;height:auto;background:#fff;padding:12px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.qrurl{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.qrhint{font-size:12.5px;color:var(--dim);margin:8px 0 14px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:2100;
+  background:var(--grad);color:#04121a;font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:22px;
+  box-shadow:0 12px 34px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
 /* voice orb */
 .voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
 .voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
@@ -249,7 +273,8 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
   *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
   body{background:#fff; color:#111418}
   /* Drop screen-only chrome + the animated diagram (blank in a static PDF). */
-  .aura,.grid-bg,.topbar,.voicebar,#neural,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent{display:none!important}
+  .aura,.grid-bg,.topbar,.voicebar,#neural,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent,.sharebtns,.qrmodal,.toast{display:none!important}
+  .sharecard{border-color:#cfd3da!important;max-width:none;break-inside:avoid}
   /* Gradient-filled text → solid dark so it prints. */
   h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
   a{color:#0a66c2!important}
@@ -303,9 +328,35 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
         <a class="sbtn" href="mailto:manuelstagg@gmail.com"><i class="fas fa-envelope"></i> <span data-i18n="s_email">Email Me</span></a>
         <a class="sbtn accent" href="#recruiters"><i class="fas fa-briefcase"></i> <span data-i18n="s_hire">For Recruiters</span></a>
       </div>
+      <div class="sharecard">
+        <img class="qrthumb" id="qrThumb" src="/manuelstagg-qr.svg" alt="QR code — manuelstagg.com" width="96" height="96" role="button" tabindex="0" aria-label="Enlarge QR code">
+        <div class="sharemeta">
+          <div class="sharehint" data-i18n="sh_scan">Scan to open my profile &middot; manuelstagg.com</div>
+          <div class="sharebtns">
+            <button class="sbtn accent" id="shareBtn"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+            <button class="sbtn" id="copyBtn"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+            <button class="sbtn" id="qrBtn"><i class="fas fa-qrcode"></i> <span data-i18n="sh_qr">Show QR</span></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
+
+<!-- QR / share modal -->
+<div class="qrmodal" id="qrModal" role="dialog" aria-modal="true" aria-label="Share profile">
+  <div class="qrbox">
+    <button class="qrclose" id="qrClose" aria-label="Close">&times;</button>
+    <img class="qrbig" src="/manuelstagg-qr.svg" alt="QR code — manuelstagg.com">
+    <div class="qrurl">manuelstagg.com</div>
+    <div class="qrhint" data-i18n="sh_scan_big">Point a phone camera at the code to open Manuel Stagg's profile.</div>
+    <div class="sharebtns" style="justify-content:center;margin-top:4px">
+      <button class="sbtn accent" id="shareBtn2"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+      <button class="sbtn" id="copyBtn2"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- VOICE ORB — AI narration of the profile (zero-key Edge neural TTS via /api/tts/edge) -->
 <div class="voicebar">
@@ -645,6 +696,7 @@ const I18N = {
     title_line:"Full-Stack AI Solutions Architect &middot; MCP Neural Intelligence",
     subtitle:"Senior subject-matter expert bridging 24 years inside the Banking Industry — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.",
     loc:"Wesley Chapel, FL", s_email:"Email Me", s_hire:"For Recruiters",
+    sh_scan:"Scan to open my profile &middot; manuelstagg.com", sh_share:"Share", sh_copy:"Copy link", sh_qr:"Show QR", sh_scan_big:"Point a phone camera at the code to open Manuel Stagg's profile.",
     st1:"Years Banking Industry", st2:"Agent MCP Workforce", st3:"AI Systems in Production", st4:"Fully Bilingual",
     p_h:"Professional Profile",
     p_1:"<strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise-technology programs at Citigroup, at Tier-1 institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.",
@@ -709,6 +761,7 @@ const I18N = {
     title_line:"Arquitecto de Soluciones de IA Full-Stack &middot; Inteligencia Neural MCP",
     subtitle:"Experto senior en la materia que une 24 años dentro de la Industria Bancaria — cumplimiento, riesgo, KYC/AML y sanciones — con el diseño y la entrega de sistemas de IA en producción construidos sobre el Model Context Protocol.",
     loc:"Wesley Chapel, Florida", s_email:"Escríbeme", s_hire:"Para Reclutadores",
+    sh_scan:"Escanea para abrir mi perfil &middot; manuelstagg.com", sh_share:"Compartir", sh_copy:"Copiar enlace", sh_qr:"Ver QR", sh_scan_big:"Apunta la cámara del teléfono al código para abrir el perfil de Manuel Stagg.",
     st1:"Años en Banca", st2:"Fuerza MCP de Agentes", st3:"Sistemas de IA en Producción", st4:"Totalmente Bilingüe",
     p_h:"Perfil Profesional",
     p_1:"<strong>Manuel Stagg</strong> es un SME senior y Arquitecto de Soluciones de IA Full-Stack con más de <strong>24 años en la Industria Bancaria</strong>, donde lideró programas globales de cumplimiento, riesgo, KYC/AML, screening de sanciones y tecnología empresarial en Citigroup, a escala institucional Tier-1. Hoy diseña y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA que conecta los sistemas reales de un negocio (CRM, telefonía, finanzas, inventario, cumplimiento y datos de proveedores) mediante el <strong>Model Context Protocol</strong> y razona sobre todos ellos para destacar lo que importa y prescribir la siguiente acción.",
@@ -933,6 +986,30 @@ function toggleTheme(){
 }
 // sync the icon with the theme the early head-script already applied
 setTheme(document.documentElement.getAttribute('data-theme')||'dark');
+
+// ---- Tap-to-share + QR ----
+(function(){
+  var URL_='https://manuelstagg.com';
+  var toast=document.getElementById('toast'), tt;
+  function isEs(){ return document.documentElement.lang==='es'; }
+  function showToast(msg){ if(!toast)return; toast.textContent=msg; toast.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){toast.classList.remove('show');},2200); }
+  function shareData(){ return { title:'Manuel Stagg — Senior AI Solutions Architect',
+    text: isEs()?'Manuel Stagg — SME Senior y Arquitecto de Soluciones de IA Full-Stack':'Manuel Stagg — Senior SME & Full-Stack AI Solutions Architect',
+    url:URL_ }; }
+  function doShare(){ if(navigator.share){ navigator.share(shareData()).then(function(){},function(){}); } else doCopy(); }
+  function legacyCopy(){ try{var ta=document.createElement('textarea');ta.value=URL_;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast(isEs()?'Enlace copiado':'Link copied');}catch(e){} }
+  function doCopy(){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(URL_).then(function(){showToast(isEs()?'Enlace copiado':'Link copied');},legacyCopy); } else legacyCopy(); }
+  var modal=document.getElementById('qrModal');
+  function openQR(){ if(modal) modal.classList.add('open'); }
+  function closeQR(){ if(modal) modal.classList.remove('open'); }
+  ['shareBtn','shareBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doShare);});
+  ['copyBtn','copyBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doCopy);});
+  var qb=document.getElementById('qrBtn'); if(qb) qb.addEventListener('click',openQR);
+  var qt=document.getElementById('qrThumb'); if(qt){ qt.addEventListener('click',openQR); qt.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openQR();}}); }
+  var qc=document.getElementById('qrClose'); if(qc) qc.addEventListener('click',closeQR);
+  if(modal) modal.addEventListener('click',function(e){ if(e.target===modal) closeQR(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeQR(); });
+})();
 
 // ---- PWA service worker (scoped to /manuelstagg only) ----
 if('serviceWorker' in navigator){
