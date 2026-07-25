@@ -572,6 +572,29 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: manuelstagg.com -> Manuel Stagg CV / resume landing
+// (public/manuelstagg.html), served IN PLACE so the address bar stays on
+// manuelstagg.com. GHL domain + Render CNAME are being configured, so this app
+// will see the Host header. Root serves the CV; the embedded MCP-brain iframe,
+// API and any static asset (has a file extension) pass through untouched.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'manuelstagg.com' || host === 'www.manuelstagg.com') {
+    const p = req.path;
+    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en' || p === '/es' || p === '/cv' || p === '/resume') {
+      req.url = '/manuelstagg.html';
+    }
+  }
+  next();
+});
+
+// Clean URL: /manuelstagg (and aliases) -> the CV page. BEFORE express.static
+// so the extensionless path resolves to the resume without a .html suffix.
+app.get(['/manuelstagg', '/manuelstagg/', '/cv', '/resume'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'manuelstagg.html'));
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };

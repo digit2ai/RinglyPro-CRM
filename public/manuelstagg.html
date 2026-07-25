@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="meta_title">Manuel Stagg — Senior SME, Full-Stack AI Solutions Architect | MCP Neural Intelligence</title>
+<meta name="description" data-i18n-attr="content" data-i18n="meta_desc" content="Manuel Stagg — Senior Subject-Matter Expert and Full-Stack AI Solutions Architect. 24 years in the Banking Industry (compliance, risk, KYC/AML, sanctions) and architect of MCP Neural Intelligence — an AI reasoning layer wired into real operations.">
+<meta property="og:title" content="Manuel Stagg — Senior SME, Full-Stack AI Solutions Architect">
+<meta property="og:description" content="24 years Banking Industry + MCP Neural Intelligence Architecture. Curriculum Vitae.">
+<meta property="og:image" content="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df832b80b446d0fbac3ed4.jpg">
+<meta property="og:type" content="profile">
+<meta name="robots" content="index,follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg0:#05070e; --bg1:#0b0e1a; --bg2:#0f1424;
+  --card:rgba(255,255,255,0.028); --card2:rgba(255,255,255,0.045);
+  --line:rgba(255,255,255,0.09); --line2:rgba(255,255,255,0.16);
+  --cyan:#22d3ee; --cyan-dim:#1c93ad; --cyan-bd:rgba(34,211,238,0.34);
+  --violet:#8b5cf6; --violet-bd:rgba(139,92,246,0.34);
+  --green:#84cc16; --green-bd:rgba(132,204,22,0.40);
+  --gold:#d69e2e; --amber:#f59e0b;
+  --txt:#e8ecf4; --dim:#9aa4b8; --dim2:#6b7386;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+  --grad:linear-gradient(135deg,#22d3ee 0%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(139,92,246,.14));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg0);color:var(--txt);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* background aura */
+.aura{position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(60% 45% at 78% 8%, rgba(139,92,246,.16), transparent 60%),
+  radial-gradient(55% 40% at 12% 20%, rgba(34,211,238,.14), transparent 60%),
+  radial-gradient(80% 60% at 50% 120%, rgba(34,211,238,.08), transparent 70%),
+  var(--bg0)}
+.grid-bg{position:fixed;inset:0;z-index:-1;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(circle at 50% 30%,#000,transparent 80%)}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
+  background:rgba(5,7,14,.72);border-bottom:1px solid var(--line)}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.3px;font-size:15px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--cyan)}
+.brand span.sub{color:var(--dim);font-weight:500;font-size:12px;font-family:var(--mono)}
+.tb-actions{display:flex;align-items:center;gap:9px}
+.lang-toggle{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:3px}
+.lang-btn{border:none;background:transparent;color:var(--dim);padding:5px 12px;border-radius:18px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.lang-btn.active{background:var(--grad);color:#04121a}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card);color:var(--txt);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.mini-btn:hover{border-color:var(--cyan-bd);background:var(--grad-soft)}
+.mini-btn.li{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.mini-btn.li:hover{filter:brightness(1.12)}
+@media(max-width:720px){.brand span.sub{display:none}.mini-btn .lbl{display:none}}
+
+/* hero */
+.hero{padding:56px 0 34px}
+.hero-grid{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
+.photo-wrap{position:relative;width:200px;height:200px}
+.photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
+.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
+.eyebrow b{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+@keyframes blink{50%{opacity:.3}}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.8px;line-height:1.05;margin-bottom:12px}
+h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.title-line{font-size:clamp(16px,2.4vw,20px);font-weight:600;color:var(--txt);margin-bottom:6px}
+.subtitle{font-size:15px;color:var(--dim);max-width:640px;margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:7px 13px}
+.chip i{color:var(--cyan)}
+.chip a{color:var(--txt)}
+.social-row{display:flex;flex-wrap:wrap;gap:10px}
+.sbtn{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);transition:.2s}
+.sbtn:hover{transform:translateY(-2px);border-color:var(--cyan-bd);background:var(--grad-soft)}
+.sbtn.primary{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.sbtn.primary:hover{filter:brightness(1.12);background:#0a66c2}
+.sbtn.accent{background:var(--grad);border:none;color:#04121a}
+.sbtn i{font-size:15px}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 6px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--grad);opacity:.7}
+.stat .n{font-family:var(--mono);font-size:26px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.stat .l{font-size:11.5px;color:var(--dim);margin-top:8px;letter-spacing:.4px}
+@media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* sections */
+section.blk{padding:44px 0}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.sec-head .k{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:2px;border:1px solid var(--cyan-bd);border-radius:8px;padding:4px 9px;white-space:nowrap}
+.sec-head h2{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.5px}
+.sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.lead{color:var(--dim);max-width:820px;font-size:15.5px;margin-bottom:24px}
+
+.brain-frame{width:100%;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:radial-gradient(120% 90% at 50% 30%,#101a34,#0b1124 55%,var(--bg0));box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.brain-frame iframe{width:100%;border:0;display:block}
+.brain-cap{font-family:var(--mono);color:var(--dim);font-size:12.5px;text-align:center;margin-top:14px}
+
+/* expertise matrix */
+.matrix{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:.25s}
+.mcard:hover{border-color:var(--cyan-bd);transform:translateY(-3px)}
+.mcard h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mcard h3 i{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--grad-soft);border:1px solid var(--line);color:var(--cyan);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:var(--mono);font-size:11.5px;color:var(--txt);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+.mcard.v h3 i{color:var(--violet)}
+@media(max-width:720px){.matrix{grid-template-columns:1fr}}
+
+/* timeline */
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--cyan),var(--violet),transparent)}
+.tl{position:relative;margin-bottom:26px}
+.tl::before{content:"";position:absolute;left:-30px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--bg0);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(34,211,238,.5)}
+.tl.v::before{border-color:var(--violet);box-shadow:0 0 12px rgba(139,92,246,.5)}
+.tl .when{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:1px;margin-bottom:4px}
+.tl.v .when{color:var(--violet)}
+.tl h3{font-size:18px;font-weight:700}
+.tl .org{font-size:13.5px;color:var(--dim);margin-bottom:9px;font-weight:500}
+.tl ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.tl li{position:relative;padding-left:20px;font-size:14.5px;color:#cbd3e2}
+.tl li::before{content:"\f0da";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;left:0;top:1px;color:var(--cyan);font-size:11px}
+.tl.v li::before{color:var(--violet)}
+
+/* deliverables */
+.deliv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.dcard{background:var(--grad-soft);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:center}
+.dcard .n{font-family:var(--mono);font-size:24px;font-weight:800;color:#fff;line-height:1}
+.dcard .t{font-size:13px;font-weight:700;margin:10px 0 6px;color:var(--cyan)}
+.dcard .p{font-size:12px;color:var(--dim);line-height:1.5}
+@media(max-width:820px){.deliv{grid-template-columns:repeat(2,1fr)}}
+
+/* portfolio */
+.pf{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.pcard{display:block;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;transition:.25s;position:relative;overflow:hidden}
+.pcard:hover{transform:translateY(-3px);border-color:var(--cyan-bd)}
+.pcard .h{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
+.pcard .h i{color:var(--cyan)}
+.pcard .w{font-family:var(--mono);font-size:11px;color:var(--violet);margin:7px 0 9px;letter-spacing:.4px}
+.pcard .p{font-size:12.5px;color:var(--dim);line-height:1.55}
+@media(max-width:820px){.pf{grid-template-columns:1fr}}
+
+/* recruiter panel */
+.recruit{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));border:1px solid var(--line2);border-radius:22px;padding:38px 32px}
+.recruit .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:34px;align-items:center}
+.recruit h2{font-size:26px;font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.recruit p{color:var(--dim);font-size:15px;margin-bottom:16px}
+.eng{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.eng .e{display:flex;align-items:center;gap:11px;font-size:14px}
+.eng .e i{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--green)}
+.rbox{background:rgba(5,7,14,.55);border:1px solid var(--line);border-radius:16px;padding:24px}
+.rbox .avail{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--green);border:1px solid var(--green-bd);background:rgba(132,204,22,.08);border-radius:20px;padding:6px 12px;margin-bottom:16px}
+.rbox .avail b{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+.rbox .cta{display:flex;flex-direction:column;gap:10px}
+@media(max-width:760px){.recruit{padding:28px 20px}.recruit .grid{grid-template-columns:1fr;gap:24px}}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--dim);font-size:13px}
+.foot .links{display:flex;gap:16px;flex-wrap:wrap}
+.foot a:hover{color:var(--cyan)}
+
+/* print — recruiter-friendly PDF */
+@media print{
+  .aura,.grid-bg,.topbar,.brain-frame,.recruit .rbox .cta,.social-row .sbtn.accent,.ring-orbit{display:none!important}
+  body{background:#fff;color:#111}
+  h1 .g,.stat .n,.dcard .n{-webkit-text-fill-color:#0a2540;color:#0a2540}
+  .mcard,.stat,.pcard,.tl li,.recruit{border-color:#ccc!important;background:#fff!important;color:#111}
+  .lead,.subtitle,.pcard .p,.mcard,.dcard .p{color:#333!important}
+  section.blk{padding:14px 0;break-inside:avoid}
+  a{color:#0a66c2!important}
+}
+</style>
+</head>
+<body>
+<div class="aura"></div><div class="grid-bg"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span> Manuel Stagg <span class="sub">· CV</span></div>
+    <div class="tb-actions">
+      <a class="mini-btn li" href="https://www.linkedin.com/in/manuelstagg" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i><span class="lbl">LinkedIn</span></a>
+      <button class="mini-btn" onclick="window.print()"><i class="fas fa-download"></i><span class="lbl" data-i18n="btn_pdf">Download CV</span></button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="photo-wrap">
+      <div class="ring-orbit"></div>
+      <img class="photo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df832b80b446d0fbac3ed4.jpg" alt="Manuel Stagg">
+    </div>
+    <div>
+      <div class="eyebrow"><b></b> <span data-i18n="eyebrow">Senior SME · Full-Stack AI Solutions Architect</span></div>
+      <h1>Manuel Stagg</h1>
+      <div class="title-line" data-i18n="title_line">Full-Stack AI Solutions Architect &middot; MCP Neural Intelligence</div>
+      <p class="subtitle" data-i18n="subtitle">Senior subject-matter expert bridging 24 years inside the Banking Industry — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.</p>
+      <div class="chips">
+        <span class="chip"><i class="fas fa-location-dot"></i> <span data-i18n="loc">Wesley Chapel, FL</span></span>
+        <span class="chip"><i class="fas fa-phone"></i> <a href="tel:+16566001400">(656) 600-1400</a></span>
+        <span class="chip"><i class="fas fa-envelope"></i> <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a></span>
+        <span class="chip"><i class="fas fa-globe"></i> <a href="https://manuelstagg.com" target="_blank">manuelstagg.com</a></span>
+      </div>
+      <div class="social-row">
+        <a class="sbtn primary" href="https://www.linkedin.com/in/manuelstagg" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
+        <a class="sbtn" href="mailto:mstagg@digit2ai.com"><i class="fas fa-envelope"></i> <span data-i18n="s_email">Email Me</span></a>
+        <a class="sbtn" href="https://digit2ai.com" target="_blank" rel="noopener"><i class="fas fa-brain"></i> Digit2AI</a>
+        <a class="sbtn accent" href="#recruiters"><i class="fas fa-briefcase"></i> <span data-i18n="s_hire">For Recruiters</span></a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- STATS -->
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="n">24+</div><div class="l" data-i18n="st1">Years Banking Industry</div></div>
+    <div class="stat"><div class="n">83</div><div class="l" data-i18n="st2">Agent MCP Workforce</div></div>
+    <div class="stat"><div class="n">20+</div><div class="l" data-i18n="st3">AI Systems in Production</div></div>
+    <div class="stat"><div class="n">EN/ES</div><div class="l" data-i18n="st4">Fully Bilingual</div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<section class="blk" id="profile">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">01</span><h2 data-i18n="p_h">Professional Profile</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="p_1"><strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise technology programs at institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.</p>
+    <p class="lead" data-i18n="p_2">His differentiator is rare: the same person who understands a Tier-1 bank's control environment also architects, codes, tests and deploys the AI that automates it. He works end-to-end — requirements, data model, backend, voice/agent layer, front end, and production release — across banking, freight, healthcare, retail, education and B2B networks, in English and Spanish.</p>
+  </div>
+</section>
+
+<!-- MCP NEURAL BRAIN -->
+<section class="blk" id="neural">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">02</span><h2 data-i18n="n_h">MCP Neural Intelligence Architecture</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="n_1">One MCP Brain orchestrating an <strong>83-agent workforce</strong> — 8 always-on core agents plus 75 senior specialists spun up on demand — each wired to the customer's live systems via the open Model Context Protocol. This is the architecture Manuel designs and operates.</p>
+    <div class="brain-frame">
+      <iframe id="brainFrame" src="/digit2ai-mcp-brain.html" scrolling="no" title="MCP Neural Intelligence — 83-agent workforce" style="height:640px"></iframe>
+    </div>
+    <p class="brain-cap" data-i18n="n_cap">MCP CORE — context · routing · orchestration &middot; diagnostic + prescriptive reasoning across every connected system.</p>
+  </div>
+</section>
+
+<!-- EXPERTISE -->
+<section class="blk" id="expertise">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">03</span><h2 data-i18n="e_h">Core Expertise</h2><span class="rule"></span></div>
+    <div class="matrix">
+      <div class="mcard">
+        <h3><i class="fas fa-building-columns"></i> <span data-i18n="e_c1">Banking, Risk & Compliance</span></h3>
+        <div class="tags">
+          <span class="tag">KYC / CDD / EDD</span><span class="tag">AML</span><span class="tag">Sanctions Screening</span><span class="tag">OFAC</span><span class="tag">Transaction Monitoring</span><span class="tag">SAR / Investigations</span><span class="tag">Fraud Analytics</span><span class="tag">Regulatory Reporting</span><span class="tag">Risk Modeling</span><span class="tag">Controls & Audit</span>
+        </div>
+      </div>
+      <div class="mcard v">
+        <h3><i class="fas fa-brain"></i> <span data-i18n="e_c2">AI / LLM Architecture</span></h3>
+        <div class="tags">
+          <span class="tag">Model Context Protocol</span><span class="tag">Multi-Agent Orchestration</span><span class="tag">RAG / Retrieval</span><span class="tag">Prompt & Eval Eng.</span><span class="tag">LLMOps</span><span class="tag">Claude / Anthropic</span><span class="tag">Voice AI</span><span class="tag">Conversational UX</span><span class="tag">Agent Safety</span><span class="tag">Tool / Connector Design</span>
+        </div>
+      </div>
+      <div class="mcard">
+        <h3><i class="fas fa-code"></i> <span data-i18n="e_c3">Full-Stack Engineering</span></h3>
+        <div class="tags">
+          <span class="tag">Node.js / Express</span><span class="tag">PostgreSQL / Sequelize</span><span class="tag">REST APIs</span><span class="tag">Multi-Tenant SaaS</span><span class="tag">React</span><span class="tag">HTML/CSS/JS</span><span class="tag">Twilio</span><span class="tag">Stripe</span><span class="tag">SendGrid</span><span class="tag">Webhooks / n8n</span>
+        </div>
+      </div>
+      <div class="mcard v">
+        <h3><i class="fas fa-server"></i> <span data-i18n="e_c4">Delivery & Platform</span></h3>
+        <div class="tags">
+          <span class="tag">Solution Architecture</span><span class="tag">CI/CD</span><span class="tag">Render / Cloud Deploy</span><span class="tag">Git</span><span class="tag">SIT / UAT</span><span class="tag">Data Governance</span><span class="tag">Bilingual EN/ES</span><span class="tag">Observability</span><span class="tag">FinOps / Cost Control</span><span class="tag">Product Strategy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="blk" id="experience">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">04</span><h2 data-i18n="x_h">Experience</h2><span class="rule"></span></div>
+    <div class="timeline">
+      <div class="tl v">
+        <div class="when" data-i18n="x1_w">Present</div>
+        <h3 data-i18n="x1_t">Full-Stack AI Solutions Architect — Digit2AI</h3>
+        <div class="org" data-i18n="x1_o">MCP Neural Intelligence · Multi-vertical AI delivery</div>
+        <ul>
+          <li data-i18n="x1_a">Architect and ship MCP Neural Intelligence — an AI reasoning layer wired into clients' live CRM, telephony, financial and compliance systems.</li>
+          <li data-i18n="x1_b">Designed an 83-agent MCP workforce (8 core + 75 senior specialists) that converts natural-language requirements into deployed, production systems.</li>
+          <li data-i18n="x1_c">Owns the full lifecycle end-to-end: data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment.</li>
+          <li data-i18n="x1_d">Delivered 20+ production deployments across banking, freight, healthcare, retail, education and B2B chamber networks — bilingual EN/ES.</li>
+        </ul>
+      </div>
+      <div class="tl">
+        <div class="when" data-i18n="x2_w">24+ Years</div>
+        <h3 data-i18n="x2_t">Banking Industry — Compliance, Risk & Technology</h3>
+        <div class="org" data-i18n="x2_o">Global Banking · Institutional scale</div>
+        <ul>
+          <li data-i18n="x2_a">Two-plus decades leading global compliance, risk and enterprise-technology programs inside the Banking Industry.</li>
+          <li data-i18n="x2_b">Deep operational command of KYC/AML, sanctions screening, transaction monitoring, investigations and regulatory reporting at Tier-1 scale.</li>
+          <li data-i18n="x2_c">Drove technology integration across compliance and risk platforms — the control-environment expertise that now grounds his AI architecture.</li>
+          <li data-i18n="x2_d">Translated regulatory obligation into working systems, processes and measurable operational outcomes.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTCOMES -->
+<section class="blk" id="outcomes">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">05</span><h2 data-i18n="d_h">Documented Outcomes</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="d_1">Not projections — documented results from production deployments across banking, freight, healthcare and B2B networks.</p>
+    <div class="deliv">
+      <div class="dcard"><div class="n">70%</div><div class="t" data-i18n="d_a_t">Workflow Automation</div><div class="p" data-i18n="d_a_p">Intake, screening, quoting, scheduling and reporting handled end-to-end by reasoning agents.</div></div>
+      <div class="dcard"><div class="n">50-75%</div><div class="t" data-i18n="d_b_t">Fewer False Positives</div><div class="p" data-i18n="d_b_p">Contextual reasoning across sources eliminates the noise rule-based systems generate.</div></div>
+      <div class="dcard"><div class="n">3-4x</div><div class="t" data-i18n="d_c_t">Capacity, Same Team</div><div class="p" data-i18n="d_c_p">Production case study: brokers moved from 12 to 50+ loads/day at the same headcount.</div></div>
+      <div class="dcard"><div class="n">40-60%</div><div class="t" data-i18n="d_d_t">Cost Reduction</div><div class="p" data-i18n="d_d_p">Within 18-24 months, with measurable impact inside the first 90 days.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="blk" id="portfolio">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">06</span><h2 data-i18n="pf_h">Selected Production Work</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="pf_1">Flagship Neural Intelligence deployments wired into real operations.</p>
+    <div class="pf">
+      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-building-columns"></i> <span data-i18n="pf_a_h">Neural Intelligence for Banking</span></div><div class="w" data-i18n="pf_a_w">Compliance · KYC · AML · Sanctions</div><div class="p" data-i18n="pf_a_p">AI reasoning across the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, MCP-connected to 8+ specialized servers.</div></a>
+      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-truck-fast"></i> <span data-i18n="pf_b_h">CW Autopilot — FreightMind</span></div><div class="w" data-i18n="pf_b_w">Freight Brokerage · Carrier Marketplace</div><div class="p" data-i18n="pf_b_p">Contract-to-invoice in under a second. 8-stage AI pipeline, live AI broker negotiation, 3-4x broker capacity, 90-day payback.</div></a>
+      <a class="pcard" href="https://aiagent.ringlypro.com/aiastore/" target="_blank"><div class="h"><i class="fas fa-store"></i> <span data-i18n="pf_c_h">Store Health AI</span></div><div class="w" data-i18n="pf_c_w">Retail · Multi-Location Ops</div><div class="p" data-i18n="pf_c_p">Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings and prescribes the fix — not just the alert.</div></a>
+      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-user-doctor"></i> <span data-i18n="pf_d_h">SurgicalMind</span></div><div class="w" data-i18n="pf_d_w">Hospitals · Surgical Robotics</div><div class="p" data-i18n="pf_d_p">Hospital surgical-system matcher. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.</div></a>
+      <a class="pcard" href="https://aiagent.ringlypro.com" target="_blank"><div class="h"><i class="fas fa-headset"></i> <span data-i18n="pf_e_h">RinglyPro CRM</span></div><div class="w" data-i18n="pf_e_w">SMB Voice · Engagement Layer</div><div class="p" data-i18n="pf_e_p">Bilingual 24/7 voice + CRM channel feeding Neural Intelligence at the edge — Rachel, Ana and Lina, fully MCP-connected.</div></a>
+      <a class="pcard" href="https://digit2ai.com" target="_blank"><div class="h"><i class="fas fa-people-group"></i> <span data-i18n="pf_f_h">CamaraVirtual Neural B2B</span></div><div class="w" data-i18n="pf_f_w">Chambers of Commerce · Networks</div><div class="p" data-i18n="pf_f_p">Intelligent member matching, TrustRank scoring, Health Composite Index and Monte Carlo risk simulation across 24 sectors.</div></a>
+    </div>
+  </div>
+</section>
+
+<!-- RECRUITERS -->
+<section class="blk" id="recruiters">
+  <div class="wrap">
+    <div class="recruit">
+      <div class="grid">
+        <div>
+          <h2 data-i18n="r_h">For Recruiters &amp; Staffing Partners</h2>
+          <p data-i18n="r_1">A senior architect who carries both the Banking Industry control mindset and the ability to personally build and ship the AI. Open to the right senior engagements — contract, fractional or advisory.</p>
+          <div class="eng">
+            <div class="e"><i class="fas fa-briefcase"></i> <span data-i18n="r_e1">Full-Stack AI Solutions Architect / Lead</span></div>
+            <div class="e"><i class="fas fa-shield-halved"></i> <span data-i18n="r_e2">AI in Banking, Risk & Compliance (KYC/AML/Sanctions)</span></div>
+            <div class="e"><i class="fas fa-diagram-project"></i> <span data-i18n="r_e3">MCP / Multi-Agent Systems & LLMOps</span></div>
+            <div class="e"><i class="fas fa-user-tie"></i> <span data-i18n="r_e4">Fractional CTO / AI Advisory</span></div>
+          </div>
+        </div>
+        <div class="rbox">
+          <div class="avail"><b></b> <span data-i18n="r_avail">Open to senior engagements</span></div>
+          <div class="cta">
+            <a class="sbtn primary" href="https://www.linkedin.com/in/manuelstagg" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> <span data-i18n="r_li">Connect on LinkedIn</span></a>
+            <a class="sbtn" href="mailto:mstagg@digit2ai.com?subject=Opportunity%20for%20Manuel%20Stagg"><i class="fas fa-envelope"></i> mstagg@digit2ai.com</a>
+            <a class="sbtn" href="tel:+16566001400"><i class="fas fa-phone"></i> (656) 600-1400</a>
+            <button class="sbtn accent" onclick="window.print()"><i class="fas fa-download"></i> <span data-i18n="r_pdf">Download CV (PDF)</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>&copy; 2026 Manuel Stagg &middot; <span data-i18n="foot_t">Senior SME · Full-Stack AI Solutions Architect</span></div>
+    <div class="links">
+      <a href="https://manuelstagg.com" target="_blank">manuelstagg.com</a>
+      <a href="https://www.linkedin.com/in/manuelstagg" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://digit2ai.com" target="_blank">Digit2AI</a>
+      <a href="mailto:mstagg@digit2ai.com">Email</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Resize the MCP brain iframe to its reported content height (it postMessages __d2mcp)
+window.addEventListener('message', function(ev){
+  var d = ev && ev.data;
+  if(d && d.__d2mcp && d.height){ document.getElementById('brainFrame').style.height = d.height + 'px'; }
+});
+
+const I18N = {
+  en:{
+    meta_title:"Manuel Stagg — Senior SME, Full-Stack AI Solutions Architect | MCP Neural Intelligence",
+    btn_pdf:"Download CV", eyebrow:"Senior SME · Full-Stack AI Solutions Architect",
+    title_line:"Full-Stack AI Solutions Architect &middot; MCP Neural Intelligence",
+    subtitle:"Senior subject-matter expert bridging 24 years inside the Banking Industry — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.",
+    loc:"Wesley Chapel, FL", s_email:"Email Me", s_hire:"For Recruiters",
+    st1:"Years Banking Industry", st2:"Agent MCP Workforce", st3:"AI Systems in Production", st4:"Fully Bilingual",
+    p_h:"Professional Profile",
+    p_1:"<strong>Manuel Stagg</strong> is a Senior SME and Full-Stack AI Solutions Architect with more than <strong>24 years in the Banking Industry</strong>, where he led global compliance, risk, KYC/AML, sanctions-screening and enterprise technology programs at institutional scale. He now designs and ships <strong>MCP Neural Intelligence</strong> — an AI reasoning layer that connects a business's real systems (CRM, telephony, financials, inventory, compliance and vendor data) through the open <strong>Model Context Protocol</strong> and reasons across all of them to surface what matters and prescribe the next action.",
+    p_2:"His differentiator is rare: the same person who understands a Tier-1 bank's control environment also architects, codes, tests and deploys the AI that automates it. He works end-to-end — requirements, data model, backend, voice/agent layer, front end, and production release — across banking, freight, healthcare, retail, education and B2B networks, in English and Spanish.",
+    n_h:"MCP Neural Intelligence Architecture",
+    n_1:"One MCP Brain orchestrating an <strong>83-agent workforce</strong> — 8 always-on core agents plus 75 senior specialists spun up on demand — each wired to the customer's live systems via the open Model Context Protocol. This is the architecture Manuel designs and operates.",
+    n_cap:"MCP CORE — context · routing · orchestration &middot; diagnostic + prescriptive reasoning across every connected system.",
+    e_h:"Core Expertise", e_c1:"Banking, Risk & Compliance", e_c2:"AI / LLM Architecture", e_c3:"Full-Stack Engineering", e_c4:"Delivery & Platform",
+    x_h:"Experience",
+    x1_w:"Present", x1_t:"Full-Stack AI Solutions Architect — Digit2AI", x1_o:"MCP Neural Intelligence · Multi-vertical AI delivery",
+    x1_a:"Architect and ship MCP Neural Intelligence — an AI reasoning layer wired into clients' live CRM, telephony, financial and compliance systems.",
+    x1_b:"Designed an 83-agent MCP workforce (8 core + 75 senior specialists) that converts natural-language requirements into deployed, production systems.",
+    x1_c:"Owns the full lifecycle end-to-end: data model, backend, voice/agent layer, front end, SIT/UAT and continuous deployment.",
+    x1_d:"Delivered 20+ production deployments across banking, freight, healthcare, retail, education and B2B chamber networks — bilingual EN/ES.",
+    x2_w:"24+ Years", x2_t:"Banking Industry — Compliance, Risk & Technology", x2_o:"Global Banking · Institutional scale",
+    x2_a:"Two-plus decades leading global compliance, risk and enterprise-technology programs inside the Banking Industry.",
+    x2_b:"Deep operational command of KYC/AML, sanctions screening, transaction monitoring, investigations and regulatory reporting at Tier-1 scale.",
+    x2_c:"Drove technology integration across compliance and risk platforms — the control-environment expertise that now grounds his AI architecture.",
+    x2_d:"Translated regulatory obligation into working systems, processes and measurable operational outcomes.",
+    d_h:"Documented Outcomes",
+    d_1:"Not projections — documented results from production deployments across banking, freight, healthcare and B2B networks.",
+    d_a_t:"Workflow Automation", d_a_p:"Intake, screening, quoting, scheduling and reporting handled end-to-end by reasoning agents.",
+    d_b_t:"Fewer False Positives", d_b_p:"Contextual reasoning across sources eliminates the noise rule-based systems generate.",
+    d_c_t:"Capacity, Same Team", d_c_p:"Production case study: brokers moved from 12 to 50+ loads/day at the same headcount.",
+    d_d_t:"Cost Reduction", d_d_p:"Within 18-24 months, with measurable impact inside the first 90 days.",
+    pf_h:"Selected Production Work", pf_1:"Flagship Neural Intelligence deployments wired into real operations.",
+    pf_a_h:"Neural Intelligence for Banking", pf_a_w:"Compliance · KYC · AML · Sanctions", pf_a_p:"AI reasoning across the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, MCP-connected to 8+ specialized servers.",
+    pf_b_h:"CW Autopilot — FreightMind", pf_b_w:"Freight Brokerage · Carrier Marketplace", pf_b_p:"Contract-to-invoice in under a second. 8-stage AI pipeline, live AI broker negotiation, 3-4x broker capacity, 90-day payback.",
+    pf_c_h:"Store Health AI", pf_c_w:"Retail · Multi-Location Ops", pf_c_p:"Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings and prescribes the fix — not just the alert.",
+    pf_d_h:"SurgicalMind", pf_d_w:"Hospitals · Surgical Robotics", pf_d_p:"Hospital surgical-system matcher. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.",
+    pf_e_h:"RinglyPro CRM", pf_e_w:"SMB Voice · Engagement Layer", pf_e_p:"Bilingual 24/7 voice + CRM channel feeding Neural Intelligence at the edge — Rachel, Ana and Lina, fully MCP-connected.",
+    pf_f_h:"CamaraVirtual Neural B2B", pf_f_w:"Chambers of Commerce · Networks", pf_f_p:"Intelligent member matching, TrustRank scoring, Health Composite Index and Monte Carlo risk simulation across 24 sectors.",
+    r_h:"For Recruiters & Staffing Partners",
+    r_1:"A senior architect who carries both the Banking Industry control mindset and the ability to personally build and ship the AI. Open to the right senior engagements — contract, fractional or advisory.",
+    r_e1:"Full-Stack AI Solutions Architect / Lead", r_e2:"AI in Banking, Risk & Compliance (KYC/AML/Sanctions)", r_e3:"MCP / Multi-Agent Systems & LLMOps", r_e4:"Fractional CTO / AI Advisory",
+    r_avail:"Open to senior engagements", r_li:"Connect on LinkedIn", r_pdf:"Download CV (PDF)",
+    foot_t:"Senior SME · Full-Stack AI Solutions Architect"
+  },
+  es:{
+    meta_title:"Manuel Stagg — SME Senior, Arquitecto de Soluciones de IA Full-Stack | Inteligencia Neural MCP",
+    btn_pdf:"Descargar CV", eyebrow:"SME Senior · Arquitecto de Soluciones de IA Full-Stack",
+    title_line:"Arquitecto de Soluciones de IA Full-Stack &middot; Inteligencia Neural MCP",
+    subtitle:"Experto senior en la materia que une 24 años dentro de la Industria Bancaria — cumplimiento, riesgo, KYC/AML y sanciones — con el diseño y la entrega de sistemas de IA en producción construidos sobre el Model Context Protocol.",
+    loc:"Wesley Chapel, Florida", s_email:"Escríbeme", s_hire:"Para Reclutadores",
+    st1:"Años en Banca", st2:"Fuerza MCP de Agentes", st3:"Sistemas de IA en Producción", st4:"Totalmente Bilingüe",
+    p_h:"Perfil Profesional",
+    p_1:"<strong>Manuel Stagg</strong> es un SME senior y Arquitecto de Soluciones de IA Full-Stack con más de <strong>24 años en la Industria Bancaria</strong>, donde lideró programas globales de cumplimiento, riesgo, KYC/AML, screening de sanciones y tecnología empresarial a escala institucional. Hoy diseña y despliega <strong>Inteligencia Neural MCP</strong> — una capa de razonamiento de IA que conecta los sistemas reales de un negocio (CRM, telefonía, finanzas, inventario, cumplimiento y datos de proveedores) mediante el <strong>Model Context Protocol</strong> y razona sobre todos ellos para destacar lo que importa y prescribir la siguiente acción.",
+    p_2:"Su diferenciador es poco común: la misma persona que entiende el entorno de control de un banco Tier-1 también arquitecta, programa, prueba y despliega la IA que lo automatiza. Trabaja de extremo a extremo — requerimientos, modelo de datos, backend, capa de voz/agentes, front end y liberación a producción — en banca, transporte de carga, salud, retail, educación y redes B2B, en inglés y español.",
+    n_h:"Arquitectura de Inteligencia Neural MCP",
+    n_1:"Un solo Cerebro MCP orquestando una <strong>fuerza de 83 agentes</strong> — 8 agentes centrales siempre activos más 75 especialistas senior bajo demanda — cada uno conectado a los sistemas en vivo del cliente vía el Model Context Protocol abierto. Esta es la arquitectura que Manuel diseña y opera.",
+    n_cap:"NÚCLEO MCP — contexto · enrutamiento · orquestación &middot; razonamiento diagnóstico + prescriptivo sobre cada sistema conectado.",
+    e_h:"Áreas de Especialización", e_c1:"Banca, Riesgo y Cumplimiento", e_c2:"Arquitectura de IA / LLM", e_c3:"Ingeniería Full-Stack", e_c4:"Entrega y Plataforma",
+    x_h:"Experiencia",
+    x1_w:"Actualidad", x1_t:"Arquitecto de Soluciones de IA Full-Stack — Digit2AI", x1_o:"Inteligencia Neural MCP · Entrega de IA multi-vertical",
+    x1_a:"Arquitecta y despliega Inteligencia Neural MCP — una capa de razonamiento de IA conectada a los sistemas en vivo de CRM, telefonía, finanzas y cumplimiento de los clientes.",
+    x1_b:"Diseñó una fuerza MCP de 83 agentes (8 centrales + 75 especialistas senior) que convierte requerimientos en lenguaje natural en sistemas desplegados en producción.",
+    x1_c:"Responsable del ciclo completo de extremo a extremo: modelo de datos, backend, capa de voz/agentes, front end, SIT/UAT y despliegue continuo.",
+    x1_d:"Entregó más de 20 implementaciones en producción en banca, carga, salud, retail, educación y redes de cámaras B2B — bilingüe EN/ES.",
+    x2_w:"24+ Años", x2_t:"Industria Bancaria — Cumplimiento, Riesgo y Tecnología", x2_o:"Banca Global · Escala institucional",
+    x2_a:"Más de dos décadas liderando programas globales de cumplimiento, riesgo y tecnología empresarial dentro de la Industria Bancaria.",
+    x2_b:"Dominio operativo profundo de KYC/AML, screening de sanciones, monitoreo de transacciones, investigaciones y reportes regulatorios a escala Tier-1.",
+    x2_c:"Impulsó la integración tecnológica en plataformas de cumplimiento y riesgo — la experiencia en entornos de control que hoy fundamenta su arquitectura de IA.",
+    x2_d:"Tradujo la obligación regulatoria en sistemas, procesos y resultados operativos medibles.",
+    d_h:"Resultados Documentados",
+    d_1:"No son proyecciones — son resultados documentados de implementaciones en producción en banca, carga, salud y redes B2B.",
+    d_a_t:"Automatización de Flujos", d_a_p:"Admisión, screening, cotización, agendamiento y reportes gestionados de extremo a extremo por agentes de razonamiento.",
+    d_b_t:"Menos Falsos Positivos", d_b_p:"El razonamiento contextual sobre múltiples fuentes elimina el ruido que generan los sistemas basados en reglas.",
+    d_c_t:"Capacidad, Mismo Equipo", d_c_p:"Caso real: los corredores pasaron de 12 a más de 50 cargas diarias con el mismo personal.",
+    d_d_t:"Reducción de Costos", d_d_p:"En 18-24 meses, con impacto medible dentro de los primeros 90 días.",
+    pf_h:"Trabajo Seleccionado en Producción", pf_1:"Implementaciones emblemáticas de Inteligencia Neural conectadas a operaciones reales.",
+    pf_a_h:"Inteligencia Neural para Banca", pf_a_w:"Cumplimiento · KYC · AML · Sanciones", pf_a_p:"Razonamiento de IA sobre los 5 pilares del cumplimiento. 50-75% menos falsos positivos, investigaciones 60% más rápidas, conectada vía MCP a más de 8 servidores especializados.",
+    pf_b_h:"CW Autopilot — FreightMind", pf_b_w:"Corretaje de Carga · Marketplace", pf_b_p:"De contrato a factura en menos de un segundo. Pipeline de IA de 8 etapas, negociación en vivo, capacidad 3-4x por corredor, retorno en 90 días.",
+    pf_c_h:"Store Health AI", pf_c_w:"Retail · Operaciones Multi-Sede", pf_c_p:"Agente de razonamiento que monitorea los KPIs de cada sede, levanta hallazgos Rojo/Amarillo/Verde y prescribe la solución — no solo la alerta.",
+    pf_d_h:"SurgicalMind", pf_d_w:"Hospitales · Robótica Quirúrgica", pf_d_p:"Emparejador hospitalario de sistemas quirúrgicos. 16 pipelines de análisis, cálculos de ROI, propuestas narradas por voz, impacto clínico en dólares.",
+    pf_e_h:"RinglyPro CRM", pf_e_w:"Voz PyME · Capa de Engagement", pf_e_p:"Canal de voz + CRM bilingüe 24/7 que alimenta la Inteligencia Neural en el borde — Rachel, Ana y Lina, totalmente conectados vía MCP.",
+    pf_f_h:"CamaraVirtual Neural B2B", pf_f_w:"Cámaras de Comercio · Redes", pf_f_p:"Emparejamiento inteligente de miembros, puntuación TrustRank, Índice Compuesto de Salud y simulación de riesgo Monte Carlo en 24 sectores.",
+    r_h:"Para Reclutadores y Socios de Staffing",
+    r_1:"Un arquitecto senior que reúne la mentalidad de control de la Industria Bancaria y la capacidad de construir y desplegar la IA personalmente. Abierto a los proyectos senior correctos — contrato, fraccional o asesoría.",
+    r_e1:"Arquitecto/Líder de Soluciones de IA Full-Stack", r_e2:"IA en Banca, Riesgo y Cumplimiento (KYC/AML/Sanciones)", r_e3:"MCP / Sistemas Multi-Agente y LLMOps", r_e4:"CTO Fraccional / Asesoría en IA",
+    r_avail:"Abierto a proyectos senior", r_li:"Conectar en LinkedIn", r_pdf:"Descargar CV (PDF)",
+    foot_t:"SME Senior · Arquitecto de Soluciones de IA Full-Stack"
+  }
+};
+
+function setLang(lang){
+  if(!I18N[lang]) lang='en';
+  const d=I18N[lang];
+  document.documentElement.lang=lang;
+  try{localStorage.setItem('msCvLang',lang);}catch(e){}
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(d[k]!==undefined) el.innerHTML=d[k];
+  });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const k=el.getAttribute('data-i18n'), a=el.getAttribute('data-i18n-attr');
+    if(d[k]!==undefined) el.setAttribute(a,d[k].replace(/<[^>]+>/g,''));
+  });
+  if(d.meta_title) document.title=d.meta_title;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-lang')===lang));
+}
+(function(){
+  let lang;
+  try{lang=localStorage.getItem('msCvLang');}catch(e){}
+  if(!lang){
+    const nav=(navigator.language||'en').toLowerCase();
+    lang=nav.startsWith('es')?'es':'en';
+  }
+  setLang(lang);
+})();
+</script>
+</body>
+</html>
