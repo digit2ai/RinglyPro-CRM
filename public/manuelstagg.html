@@ -233,13 +233,29 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 
 /* print — recruiter-friendly PDF */
 @media print{
-  .aura,.grid-bg,.topbar,.brain-frame,.recruit .rbox .cta,.social-row .sbtn.accent,.ring-orbit{display:none!important}
-  body{background:#fff;color:#111}
-  h1 .g,.stat .n,.dcard .n{-webkit-text-fill-color:#0a2540;color:#0a2540}
-  .mcard,.stat,.pcard,.tl li,.recruit{border-color:#ccc!important;background:#fff!important;color:#111}
-  .lead,.subtitle,.pcard .p,.mcard,.dcard .p{color:#333!important}
-  section.blk{padding:14px 0;break-inside:avoid}
+  /* Force LIGHT values for every theme variable so nothing prints white-on-white,
+     regardless of the on-screen dark/light theme. */
+  :root, :root[data-theme="dark"], :root[data-theme="light"]{
+    --bg0:#fff; --bg1:#fff; --bg2:#fff;
+    --card:#ffffff; --card2:#f1f3f7;
+    --line:#cfd3da; --line2:#b6bcc7;
+    --txt:#111418; --txt2:#242a33; --dim:#454b57; --dim2:#5a616e;
+    --cyan:#0e7490; --cyan-dim:#0b5e74; --cyan-bd:#8fbecb;
+    --violet:#6d28d9; --violet-bd:#b4a0e6;
+    --green:#3f6212; --green-bd:#9cb87a;
+    --grid-line:transparent; --topbar-bg:#fff;
+    --grad-soft:linear-gradient(135deg,#eef6f8,#f2eefb);
+  }
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; color:#111418}
+  /* Drop screen-only chrome + the animated diagram (blank in a static PDF). */
+  .aura,.grid-bg,.topbar,.voicebar,#neural,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent{display:none!important}
+  /* Gradient-filled text → solid dark so it prints. */
+  h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
   a{color:#0a66c2!important}
+  section.blk{padding:12px 0}
+  .mcard,.stat,.hl,.tl,.recruit,.skcol,.sec-head{break-inside:avoid}
+  .photo-wrap::before{display:none}
 }
 </style>
 <script>/* set theme before paint to avoid flash */
