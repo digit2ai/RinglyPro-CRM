@@ -172,10 +172,10 @@ router.get('/dashboard', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
   const q = (sql, rep) => sequelize.query(sql, { replacements: rep, type: QueryTypes.SELECT });
-  const [win] = await q(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:s AND created_at > now()-(:d||' days')::interval`, { s:p.slug, d:days });
+  const [win] = await q(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:s AND created_at > now()-(:d * interval '1 day')`, { s:p.slug, d:days });
   const [all] = await q(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:s`, { s:p.slug });
-  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d||' days')::interval GROUP BY 1 ORDER BY 1`, { s:p.slug, d:days });
-  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d||' days')::interval GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { s:p.slug, d:days });
+  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d * interval '1 day') GROUP BY 1 ORDER BY 1`, { s:p.slug, d:days });
+  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d * interval '1 day') GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { s:p.slug, d:days });
   const opp = await q(`SELECT status, COUNT(*)::int n FROM cv_opportunities WHERE profile_id=:id GROUP BY 1`, { id:p.id });
   const oppCounts = { new:0, contacted:0, interviewing:0, offer:0, closed:0, declined:0 };
   opp.forEach(r => { oppCounts[r.status] = r.n; });
