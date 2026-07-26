@@ -45,7 +45,7 @@ const SEED = [
     pw: process.env.CV_ADMIN_PW_MANUELSTAGG || 'Palindrome@7' },
   { slug: 'anastagg', name: 'Ana I. Stagg', headline: 'Securities & Derivatives Analyst — Custody Billing & Financial Operations',
     email: 'ana.staggp@gmail.com', phone: '+18134389000', location: 'Tampa, FL',
-    site: 'https://anastagg.com', linkedin: 'https://www.linkedin.com/in/anastagg',
+    site: 'https://anastagg.com', linkedin: 'https://www.linkedin.com/in/ana-stagg6774',
     target_roles: 'Securities & Derivatives / Custody Billing Analyst; Financial Operations & Reconciliation; Billing QA, Controls & Compliance; Bilingual Institutional Client Servicing',
     summary: 'Bilingual Securities & Derivatives Analyst at Citi supporting global custody & safekeeping billing for institutional clients: fee calculation, contractual pricing validation, invoice reconciliation, billing QA and compliance. B.S. Business Administration (HRM) & Psychology.',
     pw: process.env.CV_ADMIN_PW_ANASTAGG || 'AnaStagg@2026' },
