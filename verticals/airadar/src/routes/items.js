@@ -346,7 +346,8 @@ function summarizeDraft(d) {
     source_title: d.source_title, thumbnail_url: d.thumbnail_url,
     enriched_by: d.enriched_by, is_simulated: d.is_simulated,
     needs_review: d.needs_review, reason: d.reason || null, model: d.model,
-    page_fetched: !!(d.page_meta && d.page_meta.ok)
+    page_fetched: !!(d.page_meta && d.page_meta.ok),
+    second_hop: (d.page_meta && d.page_meta.second_hop) || null
   };
 }
 

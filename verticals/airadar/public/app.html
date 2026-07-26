@@ -482,6 +482,9 @@
             ' Type what you know, or paste the caption into your notes and draft again.');
         } else if (s.is_simulated) {
           setNote('warn', '<b>Drafted without a language model.</b> ' + esc(s.reason || '') + ' Review before saving.');
+        } else if (s.second_hop) {
+          setNote('info', 'The post itself gave nothing away, so this was drafted from <b>' +
+            esc(s.second_hop.replace(/^https?:\/\//,'')) + '</b> — the link in the caption.');
         } else {
           setNote('info', 'Drafted by ' + esc(s.model) + (s.page_fetched ? ' from the live page.' : ' from the link alone (the page would not open to us).'));
         }

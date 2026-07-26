@@ -74,17 +74,33 @@ async function enrich({ url, text } = {}) {
   const candidateSites = [...new Set(candidates.filter(Boolean))].slice(0, 5);
   const companyHost = usable(source_url) ? host : null;
 
-  const evidenceThin = !meta.ok && !shared_text && candidateSites.length === 0;
+  // SECOND HOP. The shared page told us nothing — a login-walled reel, or a
+  // sponsored post — but the caption carried the advertiser's own link. Read
+  // THAT page instead: it is the thing actually worth cataloguing. The reel
+  // stays the source_url, so provenance is not lost.
+  let second_hop = null;
+  let meta2 = null;
+  if (!meta.ok && candidateSites.length) {
+    const m2 = await fetchMetadata(candidateSites[0]);
+    if (m2.ok) { meta2 = m2; second_hop = candidateSites[0]; }
+  }
+  const evidence = meta2
+    ? { ...meta, ok: true, title: meta2.title, description: meta2.description,
+        site_name: meta2.site_name, canonical: meta2.canonical || meta.canonical }
+    : meta;
+
+  const evidenceThin = !evidence.ok && !shared_text && candidateSites.length === 0;
 
   const base = {
     source_url,
     source_platform,
-    source_title: meta.title || null,
-    thumbnail_url: meta.image || null,
+    source_title: meta.title || (meta2 && meta2.title) || null,
+    thumbnail_url: meta.image || (meta2 && meta2.image) || null,
     page_meta: {
-      ok: !!meta.ok, status: meta.status || null, blocked: !!meta.blocked, error: meta.error || null,
-      title: meta.title || null, description: meta.description || null,
-      site_name: meta.site_name || null, canonical: meta.canonical || null
+      ok: !!evidence.ok, status: meta.status || null, blocked: !!meta.blocked, error: meta.error || null,
+      title: evidence.title || null, description: evidence.description || null,
+      site_name: evidence.site_name || null, canonical: evidence.canonical || null,
+      second_hop
     },
     model: activeModel()
   };
@@ -101,14 +117,14 @@ async function enrich({ url, text } = {}) {
     };
   }
 
-  if (!anthropic) return { ...base, ...heuristic({ meta, shared_text, source_platform, candidateSites, host: companyHost }) };
+  if (!anthropic) return { ...base, ...heuristic({ meta: evidence, shared_text, source_platform, candidateSites, host: companyHost, second_hop }) };
 
   try {
-    const out = await askClaude({ source_url, shared_text, meta, source_platform, candidateSites });
+    const out = await askClaude({ source_url, shared_text, meta: evidence, source_platform, candidateSites, second_hop });
     return { ...base, ...out, enriched_by: 'model', is_simulated: false };
   } catch (e) {
     console.error('AI Radar enrich error:', e.message);
-    const h = heuristic({ meta, shared_text, source_platform, candidateSites, host: companyHost });
+    const h = heuristic({ meta: evidence, shared_text, source_platform, candidateSites, host: companyHost, second_hop });
     return { ...base, ...h, reason: h.reason || ('model unavailable: ' + e.message) };
   }
 }
@@ -146,7 +162,7 @@ function reasonFor(meta, platform) {
 }
 
 // ── Model path ───────────────────────────────────────────────────────────────
-async function askClaude({ source_url, shared_text, meta, source_platform, candidateSites }) {
+async function askClaude({ source_url, shared_text, meta, source_platform, candidateSites, second_hop }) {
   const system =
     'You catalogue AI products that someone spotted on social media. ' +
     'You work ONLY from the evidence given. Never invent a company name, and never invent or guess a URL — ' +
@@ -159,6 +175,9 @@ async function askClaude({ source_url, shared_text, meta, source_platform, candi
     JSON.stringify({
       shared_link: source_url,
       platform: source_platform,
+      // When metadata_read_from is set, the title/description below came from
+      // that company site, NOT from the shared post.
+      metadata_read_from: second_hop || (source_url || null),
       page_title: meta.title || null,
       page_description: meta.description || null,
       page_site_name: meta.site_name || null,
@@ -227,11 +246,12 @@ const CATEGORY_CUES = [
 const STOP = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'you', 'are', 'was',
   'new', 'now', 'how', 'why', 'what', 'all', 'can', 'has', 'its', 'our', 'out', 'get', 'more', 'has']);
 
-function heuristic({ meta, shared_text, source_platform, candidateSites, host }) {
+function heuristic({ meta, shared_text, source_platform, candidateSites, host, second_hop }) {
   const blob = [meta.title, meta.description, meta.site_name, shared_text].filter(Boolean).join(' ');
 
   let company_name = '';
-  if (meta.site_name && !isSocial(source_platform)) company_name = meta.site_name.slice(0, 160);
+  // With a second hop the site name describes the company site, not the reel.
+  if (meta.site_name && (second_hop || !isSocial(source_platform))) company_name = meta.site_name.slice(0, 160);
   else if (candidateSites.length) company_name = titleCaseHost(safeHost(candidateSites[0])) || '';
   else if (!isSocial(source_platform) && host) company_name = titleCaseHost(host) || '';
 

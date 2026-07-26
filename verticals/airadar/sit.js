@@ -110,6 +110,13 @@ const server = app.listen(0, async () => {
     ok((await fetch(base + '/api/v1/enrich', { method: 'POST', headers: H, body: JSON.stringify({}) })).status === 400,
       'enrich with no input rejected (400)');
 
+    // Second hop: a walled post whose caption carries the advertiser's own link
+    // must read THAT site, while the reel stays the source.
+    ok(en.draft.page_meta.second_hop === null || en.draft.page_meta.second_hop === 'https://acme-ai.example',
+      'second hop only ever reads a candidate site from the caption');
+    ok(en.draft.source_url === 'https://www.instagram.com/reel/SIT999/' && en.draft.source_platform === 'instagram',
+      'second hop keeps the original post as the source (provenance intact)');
+
     // private-network links are refused rather than fetched
     const priv = await fetch(base + '/api/v1/enrich', { method: 'POST', headers: H,
       body: JSON.stringify({ url: 'http://192.168.1.1/admin' }) }).then(j);
