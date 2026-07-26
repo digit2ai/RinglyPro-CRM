@@ -170,26 +170,26 @@ router.post('/profile', async (req, res) => {
 // ================= DASHBOARD (analytics + counts) =================
 router.get('/dashboard', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
-  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30)); // validated int
-  // Inline trusted values (slug is [a-z0-9_] from our own table; days & id are integers) and use
-  // NO replacements object so Sequelize's placeholder parser never touches the interval literal.
-  const s = "'" + String(p.slug).replace(/[^a-z0-9_]/gi, '') + "'";
-  const pid = parseInt(p.id, 10) || 0;
-  const iv = `now() - interval '${days} days'`;
-  const q = (sql) => sequelize.query(sql, { type: QueryTypes.SELECT });
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
   const num = (v) => Number(v) || 0;
-  const [win] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=${s} AND created_at > ${iv}`);
-  const [all] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=${s}`);
-  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*) views FROM cv_page_hits WHERE page=${s} AND created_at > ${iv} GROUP BY 1 ORDER BY 1`);
-  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*) views FROM cv_page_hits WHERE page=${s} AND created_at > ${iv} GROUP BY 1 ORDER BY 2 DESC LIMIT 8`);
-  const opp = await q(`SELECT status, COUNT(*) n FROM cv_opportunities WHERE profile_id=${pid} GROUP BY 1`);
+  // Proven pattern (mirrors cv-analytics): multi-char named replacements + (:days || ' days')::interval.
+  // Each query is fault-tolerant so a quirk in one never errors the whole dashboard.
+  const safe = async (sql, rep, dflt) => {
+    try { return await sequelize.query(sql, { replacements: rep, type: QueryTypes.SELECT }); }
+    catch (e) { console.error('cv-engine dashboard q:', e.message); return dflt; }
+  };
+  const win = (await safe(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:page AND created_at > now() - (:days || ' days')::interval`, { page:p.slug, days }, [{ views:0, visitors:0 }]))[0] || { views:0, visitors:0 };
+  const all = (await safe(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:page`, { page:p.slug }, [{ views:0, visitors:0 }]))[0] || { views:0, visitors:0 };
+  const byDay = await safe(`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS views FROM cv_page_hits WHERE page=:page AND created_at > now() - (:days || ' days')::interval GROUP BY 1 ORDER BY 1`, { page:p.slug, days }, []);
+  const refs = await safe(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, COUNT(*)::int AS views FROM cv_page_hits WHERE page=:page AND created_at > now() - (:days || ' days')::interval GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { page:p.slug, days }, []);
+  const opp = await safe(`SELECT status, COUNT(*)::int AS n FROM cv_opportunities WHERE profile_id=:pid GROUP BY 1`, { pid:p.id }, []);
   const oppCounts = { new:0, contacted:0, interviewing:0, offer:0, closed:0, declined:0 };
   opp.forEach(r => { oppCounts[r.status] = num(r.n); });
   res.json({ profile: pub(p), days,
-    window: { views:num(win&&win.v), visitors:num(win&&win.u) },
-    all_time: { views:num(all&&all.v), visitors:num(all&&all.u) },
-    by_day: byDay.map(x => ({ day:x.day, views:num(x.views) })),
-    top_referrers: refs.map(x => ({ referrer:x.referrer, views:num(x.views) })),
+    window: { views:num(win.views), visitors:num(win.visitors) },
+    all_time: { views:num(all.views), visitors:num(all.visitors) },
+    by_day: (byDay||[]).map(x => ({ day:x.day, views:num(x.views) })),
+    top_referrers: (refs||[]).map(x => ({ referrer:x.referrer, views:num(x.views) })),
     opp_counts: oppCounts });
 });
 
