@@ -286,6 +286,141 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 .picked{margin-top:12px;font-size:.92rem;color:var(--muted)}
 .picked strong{color:var(--text)}
 .slotpick{margin-bottom:6px}
+
+/* ---------- One Brain / MCP animated hub ---------- */
+.brain-wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;margin-top:48px}
+.brain-copy h2{margin-bottom:6px}
+.brain-copy .lede{margin-top:14px}
+.brain-tag{
+  margin-top:26px;padding:22px 24px;border-radius:16px;
+  background:linear-gradient(120deg,rgba(59,130,246,.1),rgba(139,92,246,.1) 50%,rgba(217,70,168,.1));
+  border:1px solid rgba(139,92,246,.28);
+}
+.brain-tag .eq{font-family:'Comfortaa';font-weight:700;font-size:1.25rem;margin-bottom:8px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brain-tag p{color:var(--muted);font-size:.95rem}
+.brain-stage{position:relative;aspect-ratio:1/1;max-width:420px;margin:0 auto;width:100%}
+.brain-stage svg{width:100%;height:100%;overflow:visible}
+.brain-core{transform-origin:center;animation:corepulse 3.4s ease-in-out infinite}
+@keyframes corepulse{0%,100%{opacity:.9}50%{opacity:1}}
+.brain-ring{transform-origin:200px 200px;animation:spin 40s linear infinite}
+.brain-ring.rev{animation:spin 60s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brain-node{transform-origin:center;animation:nodepulse 2.6s ease-in-out infinite}
+.brain-spark{stroke-dasharray:4 8;animation:dash 1.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-24}}
+@keyframes nodepulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.brain-ring,.brain-node,.brain-core,.brain-spark{animation:none}}
+@media(max-width:820px){.brain-wrap{grid-template-columns:1fr;gap:34px}.brain-stage{order:-1;max-width:320px}}
+
+/* ---------- 83-agent workforce ---------- */
+.wf-head{text-align:center;max-width:760px;margin:0 auto}
+.wf-head .lede{margin:16px auto 0}
+.wf-eq{
+  margin:44px auto 8px;max-width:820px;display:flex;align-items:center;justify-content:center;gap:16px;
+  flex-wrap:wrap;font-family:'Comfortaa';font-weight:700;text-align:center;
+}
+.wf-eq .chip83{
+  display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:16px 22px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line);min-width:120px;
+}
+.wf-eq .chip83 b{font-size:1.9rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wf-eq .chip83 span{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:'Manrope';font-weight:800}
+.wf-eq .op{font-size:1.6rem;color:var(--muted)}
+.wf-eq .chip83.total{background:linear-gradient(120deg,rgba(59,130,246,.14),rgba(139,92,246,.14) 50%,rgba(217,70,168,.14));border-color:rgba(139,92,246,.34)}
+.core-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+.core-agent{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 16px;
+  transition:transform .2s,border-color .2s;position:relative;
+}
+.core-agent:hover{transform:translateY(-3px);border-color:rgba(56,189,248,.45)}
+.core-agent .n{font-size:.66rem;font-weight:800;letter-spacing:.12em;color:var(--cyan)}
+.core-agent h4{font-family:'Manrope';font-weight:800;font-size:.92rem;margin:6px 0 4px}
+.core-agent p{color:var(--muted);font-size:.78rem;line-height:1.45}
+@media(max-width:900px){.core-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.core-grid{grid-template-columns:1fr}}
+.spec-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:34px}
+.spec-group{background:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px 24px}
+.spec-group h4{font-family:'Manrope';font-weight:800;font-size:.9rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.spec-group h4 .cnt{font-size:.66rem;font-weight:800;letter-spacing:.1em;color:#04121a;background:var(--cyan);padding:2px 8px;border-radius:999px}
+.spec-group h4 .cnt.v{background:var(--violet);color:#fff}
+.spec-group h4 .cnt.m{background:var(--magenta);color:#fff}
+.spec-group h4 .cnt.a{background:var(--amber);color:#04121a}
+.spec-group h4 .cnt.g{background:var(--green);color:#04121a}
+.spec-list{color:var(--muted);font-size:.83rem;line-height:1.7}
+.spec-list span{display:inline}
+@media(max-width:820px){.spec-groups{grid-template-columns:1fr}}
+
+/* ---------- Neural Assessment ---------- */
+.assess-top{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:start;margin-top:44px}
+.assess-card{
+  background:linear-gradient(120deg,rgba(59,130,246,.1),rgba(139,92,246,.1) 50%,rgba(217,70,168,.1));
+  border:1px solid rgba(139,92,246,.3);border-radius:20px;padding:30px 32px;
+}
+.assess-card .pill{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);padding:6px 14px;border:1px solid rgba(56,189,248,.4);border-radius:999px;margin-bottom:16px}
+.assess-card h3{font-size:1.5rem;margin-bottom:12px}
+.assess-card p{color:var(--muted);font-size:.96rem;margin-bottom:14px}
+.assess-card p strong{color:var(--text)}
+.assess-card ul{list-style:none;margin-top:4px}
+.assess-card li{color:var(--muted);font-size:.92rem;padding:8px 0 8px 26px;position:relative}
+.assess-card li::before{content:"→";position:absolute;left:0;color:var(--cyan);font-weight:800}
+.selffund{margin-top:18px;padding:16px 18px;border-radius:12px;background:rgba(63,192,106,.08);border:1px solid rgba(63,192,106,.28);color:var(--text);font-size:.92rem}
+.selffund strong{color:var(--green)}
+/* Try-it triage form */
+.triage-box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px 28px 24px}
+.triage-box h3{font-size:1.2rem;margin-bottom:6px}
+.triage-box .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+.triage-box textarea{width:100%;background:#0d1330;border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--text);font-family:inherit;font-size:.92rem;min-height:120px;resize:vertical}
+.triage-box textarea:focus{outline:none;border-color:var(--violet)}
+.triage-box .hint{font-size:.74rem;color:var(--muted);margin:6px 0 14px}
+.triage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.triage-box input{width:100%;background:#0d1330;border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--text);font-family:inherit;font-size:.9rem}
+.triage-box input:focus{outline:none;border-color:var(--violet)}
+.triage-box .btn{width:100%;margin-top:6px}
+.triage-note{font-size:.76rem;color:var(--muted);margin-top:12px;line-height:1.5}
+.triage-msg{margin-top:12px;font-size:.9rem;min-height:18px}
+.triage-msg.err{color:#ff8f9e}
+.triage-result{margin-top:20px;border-top:1px solid var(--line);padding-top:20px;display:none}
+.triage-result.show{display:block}
+.tr-verdict{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:999px;margin-bottom:14px}
+.tr-verdict.go{background:rgba(63,192,106,.16);color:var(--green)}
+.tr-verdict.poc{background:rgba(245,169,75,.16);color:var(--amber)}
+.tr-verdict.stop{background:rgba(255,143,158,.16);color:#ff8f9e}
+.tr-score{font-family:'Comfortaa';font-weight:700}
+.tr-result h4{font-family:'Manrope';font-weight:800;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan);margin:16px 0 8px}
+.tr-result p{color:var(--muted);font-size:.92rem}
+.tr-result ul{list-style:none;margin-top:4px}
+.tr-result li{color:var(--muted);font-size:.9rem;padding:5px 0 5px 22px;position:relative}
+.tr-result li::before{content:"▹";position:absolute;left:0;color:var(--violet)}
+.tr-agents{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.tr-agents .a{font-size:.76rem;background:rgba(139,92,246,.14);color:#b79bff;border-radius:999px;padding:4px 12px}
+@media(max-width:900px){.assess-top{grid-template-columns:1fr;gap:28px}}
+@media(max-width:460px){.triage-grid{grid-template-columns:1fr}}
+
+/* ---------- Founding team ---------- */
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px}
+.team-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px;display:flex;gap:22px;align-items:flex-start}
+.team-card img{width:104px;height:104px;border-radius:16px;object-fit:cover;flex:none;border:1px solid var(--line)}
+.team-card .role{font-size:.7rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px}
+.team-card h3{font-size:1.24rem;margin-bottom:10px}
+.team-card p{color:var(--muted);font-size:.9rem;line-height:1.6}
+.team-card p + p{margin-top:10px}
+@media(max-width:820px){.team-grid{grid-template-columns:1fr}}
+@media(max-width:460px){.team-card{flex-direction:column;align-items:center;text-align:center}}
+
+/* ---------- Digit2AI about ---------- */
+.d2a-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:44px}
+.d2a-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 20px;text-align:center}
+.d2a-stat .num{font-family:'Comfortaa';font-size:1.9rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.d2a-stat .lbl{color:var(--muted);font-size:.8rem;margin-top:6px}
+.d2a-lead{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+.d2a-lead .card{background:var(--ink);border:1px solid var(--line);border-radius:16px;padding:24px}
+.d2a-lead .card .role{font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--magenta)}
+.d2a-lead .card h4{font-family:'Manrope';font-weight:800;font-size:1.05rem;margin:6px 0 4px}
+.d2a-lead .card p{color:var(--muted);font-size:.86rem}
+.d2a-gov{margin-top:24px;padding:20px 24px;border-radius:14px;background:rgba(59,130,246,.07);border:1px solid var(--line);color:var(--muted);font-size:.92rem}
+.d2a-gov strong{color:var(--text)}
+@media(max-width:820px){.d2a-stats{grid-template-columns:1fr 1fr}.d2a-lead{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="lang-en">
@@ -326,9 +461,11 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     </a>
     <div class="nav-links">
       <a href="#merger" data-i18n="nav.merger">The Merger</a>
-      <a href="#pillars" data-i18n="nav.pillars">Pillars</a>
       <a href="#factory" data-i18n="nav.factory">AI Factory</a>
+      <a href="#workforce" data-i18n="nav.workforce">The 83</a>
+      <a href="#assessment" data-i18n="nav.assessment">Assessment</a>
       <a href="#fellowship" data-i18n="nav.fellowship">Fellowship</a>
+      <a href="#team" data-i18n="nav.team">Team</a>
     </div>
     <div class="nav-right">
       <div class="lang-toggle" role="group" aria-label="Language">
@@ -470,7 +607,158 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   </div>
 </section>
 
-<section id="fellowship" class="section-alt">
+<!-- ============ ONE BRAIN · MCP ============ -->
+<section id="brain" class="section-alt">
+  <div class="wrap">
+    <div class="brain-wrap">
+      <div class="brain-copy">
+        <span class="eyebrow" data-i18n="brain.eyebrow">The Operating Model</span>
+        <h2 data-i18n="brain.h2">One brain. Every agent. Wired via open MCP.</h2>
+        <p class="lede" data-i18n="brain.lede">A single MCP Brain sits at the center and routes work to the specialist that owns it — fanning out in parallel, collecting the results, and synthesizing one answer. Every agent, every live product, and your own systems connect through the open Model Context Protocol standard. No lock-in, no glue code that rots.</p>
+        <div class="brain-tag">
+          <div class="eq">= Vision2Ai</div>
+          <p data-i18n="brain.tag">An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.</p>
+        </div>
+      </div>
+      <div class="brain-stage" aria-hidden="true">
+        <svg viewBox="0 0 400 400">
+          <!-- connective sparks -->
+          <g stroke-width="1.4" fill="none" opacity=".5">
+            <line class="brain-spark" x1="200" y1="200" x2="200" y2="60" stroke="#38bdf8"/>
+            <line class="brain-spark" x1="200" y1="200" x2="330" y2="130" stroke="#8b5cf6" style="animation-delay:.2s"/>
+            <line class="brain-spark" x1="200" y1="200" x2="330" y2="270" stroke="#d946a8" style="animation-delay:.4s"/>
+            <line class="brain-spark" x1="200" y1="200" x2="200" y2="340" stroke="#38bdf8" style="animation-delay:.6s"/>
+            <line class="brain-spark" x1="200" y1="200" x2="70" y2="270" stroke="#8b5cf6" style="animation-delay:.8s"/>
+            <line class="brain-spark" x1="200" y1="200" x2="70" y2="130" stroke="#f5a94b" style="animation-delay:1s"/>
+          </g>
+          <!-- rotating rings -->
+          <circle class="brain-ring" cx="200" cy="200" r="140" fill="none" stroke="url(#gv)" stroke-opacity=".28" stroke-width="1" stroke-dasharray="3 10"/>
+          <circle class="brain-ring rev" cx="200" cy="200" r="100" fill="none" stroke="url(#g2)" stroke-opacity=".3" stroke-width="1" stroke-dasharray="2 8"/>
+          <!-- outer agent nodes -->
+          <g>
+            <circle class="brain-node" cx="200" cy="60"  r="12" fill="#38bdf8"/>
+            <circle class="brain-node" cx="330" cy="130" r="12" fill="#8b5cf6" style="animation-delay:.3s"/>
+            <circle class="brain-node" cx="330" cy="270" r="12" fill="#d946a8" style="animation-delay:.6s"/>
+            <circle class="brain-node" cx="200" cy="340" r="12" fill="#38bdf8" style="animation-delay:.9s"/>
+            <circle class="brain-node" cx="70"  cy="270" r="12" fill="#8b5cf6" style="animation-delay:1.2s"/>
+            <circle class="brain-node" cx="70"  cy="130" r="12" fill="#f5a94b" style="animation-delay:1.5s"/>
+          </g>
+          <!-- core brain -->
+          <g class="brain-core">
+            <circle cx="200" cy="200" r="46" fill="url(#gv)" opacity=".22"/>
+            <circle cx="200" cy="200" r="34" fill="url(#g2)" opacity=".3"/>
+            <circle cx="200" cy="200" r="22" fill="url(#gv)"/>
+            <text x="200" y="205" text-anchor="middle" font-family="Comfortaa,sans-serif" font-size="12" font-weight="700" fill="#fff">MCP</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 83-AGENT WORKFORCE ============ -->
+<section id="workforce">
+  <div class="wrap">
+    <div class="wf-head">
+      <span class="eyebrow" style="justify-content:center" data-i18n="wf.eyebrow">The Workforce</span>
+      <h2 data-i18n="wf.h2">8 core + 75 specialists = an 83-agent workforce.</h2>
+      <p class="lede" data-i18n="wf.lede">Eight always-on core agents run the day-to-day. Seventy-five senior specialists spin up the moment a project needs them — engineering, data, finance, legal, AI-native, vertical SMEs. One brain routes it all, and new specialists are added every quarter. Every client inherits the full bench automatically.</p>
+    </div>
+
+    <div class="wf-eq">
+      <span class="chip83"><b>8</b><span data-i18n="wf.core.lbl">Core, always-on</span></span>
+      <span class="op">+</span>
+      <span class="chip83"><b>75</b><span data-i18n="wf.spec.lbl">Senior specialists</span></span>
+      <span class="op">=</span>
+      <span class="chip83 total"><b>83</b><span data-i18n="wf.total.lbl">Agent workforce</span></span>
+    </div>
+
+    <h3 style="text-align:center;margin-top:44px;font-family:'Comfortaa';font-weight:700;font-size:1.15rem" data-i18n="wf.core.h">The 8 always-on core agents</h3>
+    <div class="core-grid">
+      <div class="core-agent reveal"><div class="n">01</div><h4 data-i18n="wf.c1.h">Business Analyst</h4><p data-i18n="wf.c1.p">Decks, business plans, market research, strategy memos.</p></div>
+      <div class="core-agent reveal"><div class="n">02</div><h4 data-i18n="wf.c2.h">Research Brief</h4><p data-i18n="wf.c2.p">Web search + synthesis; competitive scans, regulatory checks.</p></div>
+      <div class="core-agent reveal"><div class="n">03</div><h4 data-i18n="wf.c3.h">Outreach Drafter</h4><p data-i18n="wf.c3.p">Emails, WhatsApp, follow-ups in English and Spanish.</p></div>
+      <div class="core-agent reveal"><div class="n">04</div><h4 data-i18n="wf.c4.h">Architect &amp; Builder</h4><p data-i18n="wf.c4.p">Scopes the build, writes the code, runs UAT, ships live.</p></div>
+      <div class="core-agent reveal"><div class="n">05</div><h4 data-i18n="wf.c5.h">Inbox Triage</h4><p data-i18n="wf.c5.p">Scores incoming requests, flags regulatory risk, go/no-go.</p></div>
+      <div class="core-agent reveal"><div class="n">06</div><h4 data-i18n="wf.c6.h">Minutes Synthesizer</h4><p data-i18n="wf.c6.p">Raw notes → summary + action items + auto-assigned tasks.</p></div>
+      <div class="core-agent reveal"><div class="n">07</div><h4 data-i18n="wf.c7.h">Voice AI Agents</h4><p data-i18n="wf.c7.p">Rachel, Ana &amp; Lina — 24/7 qualify, book, and log to CRM.</p></div>
+      <div class="core-agent reveal"><div class="n">08</div><h4 data-i18n="wf.c8.h">Neural Findings</h4><p data-i18n="wf.c8.p">Watches every project for stalls and slips; pings before they happen.</p></div>
+    </div>
+
+    <h3 style="text-align:center;margin-top:52px;font-family:'Comfortaa';font-weight:700;font-size:1.15rem" data-i18n="wf.spec.h">The 75 senior specialists — on demand</h3>
+    <div class="spec-groups">
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g1.h">Engineering &amp; Build</span> <span class="cnt">12</span></h4><div class="spec-list" data-i18n="wf.g1.p">Full Stack · Frontend · Backend · DevOps/SRE · Database Architect · API Designer · Mobile · SIT Tester · UAT Coordinator · Release Manager · Security · Performance</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g2.h">Data, ML &amp; Math</span> <span class="cnt v">8</span></h4><div class="spec-list" data-i18n="wf.g2.p">Data Engineer · Data Analyst · Data Scientist · Mathematics SME · ML/AI Engineer · Forecasting Analyst · BI/Dashboard Builder · Statistician</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g3.h">Business &amp; Strategy</span> <span class="cnt m">8</span></h4><div class="spec-list" data-i18n="wf.g3.p">Project Manager · Product Manager · Strategy Consultant · Operations Analyst · Process Improvement · M&amp;A Analyst · Pricing Analyst · Change Management</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g4.h">Sales, Marketing &amp; Customer</span> <span class="cnt a">9</span></h4><div class="spec-list" data-i18n="wf.g4.p">Sales Engineer · Lead Qualifier · Content Marketer · SEO · Brand Strategist · CRM Hygiene · Customer Success · Churn Prevention · Onboarding</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g5.h">Finance &amp; Risk</span> <span class="cnt g">7</span></h4><div class="spec-list" data-i18n="wf.g5.p">Accountant · FP&amp;A Analyst · Treasury · Tax Strategist · Auditor · Risk Modeler · Invoice Reconciler</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g6.h">Legal, Compliance &amp; HR</span> <span class="cnt">8</span></h4><div class="spec-list" data-i18n="wf.g6.p">Contract Drafter · NDA/IP Reviewer · Compliance Officer · Regulatory Researcher · Privacy Officer (GDPR/HIPAA) · Recruiter · Performance Reviewer · Training Designer</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g7.h">AI-Native / LLM</span> <span class="cnt v">6</span></h4><div class="spec-list" data-i18n="wf.g7.p">Prompt &amp; Eval Engineer · LLMOps / Model Router · RAG / Retrieval Engineer · AI Safety / Red-Team · Conversation &amp; Voice UX · MCP / Integration Engineer</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g8.h">Reliability &amp; Trust</span> <span class="cnt m">5</span></h4><div class="spec-list" data-i18n="wf.g8.p">Observability · FinOps / Cloud-Cost · Data Governance / MDM · Responsible-AI / Ethics · Fraud &amp; Anomaly Detection</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g9.h">Vertical SMEs</span> <span class="cnt a">4</span></h4><div class="spec-list" data-i18n="wf.g9.p">Clinical / Healthcare Informatics · Logistics &amp; Supply-Chain · Agriculture &amp; Commodities · Fintech / Payments</div></div>
+      <div class="spec-group reveal"><h4><span data-i18n="wf.g10.h">Design, Content &amp; Growth</span> <span class="cnt g">8</span></h4><div class="spec-list" data-i18n="wf.g10.p">UX/UI &amp; Design System · Localization (EN/ES) · Accessibility · Technical Writer · Conversion-Rate Optimizer · Partnerships/Channel · Solutions Architect (Pre-Sales) · Demand-Gen</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEURAL ASSESSMENT ============ -->
+<section id="assessment" class="section-alt">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="assess.eyebrow">Where It Starts</span>
+    <h2 data-i18n="assess.h2">The Neural Assessment — 2 weeks, fixed scope.</h2>
+    <p class="lede" data-i18n="assess.lede">We map your operating model and deliver a quantified cost-reduction blueprint: where the 30–50% lives, which agents capture it, and the deployment sequence.</p>
+
+    <div class="assess-top">
+      <div class="assess-card">
+        <span class="pill"><span class="pulse" style="width:8px;height:8px;border-radius:50%;background:var(--violet);display:inline-block"></span><span data-i18n="assess.pill">2 weeks · fixed scope</span></span>
+        <h3 data-i18n="assess.card.h">The only up-front commitment.</h3>
+        <p data-i18n="assess.card.p">The assessment is the only up-front commitment. Everything after it is self-funding — the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.</p>
+        <ul>
+          <li data-i18n="assess.li1">A map of your operating model, function by function.</li>
+          <li data-i18n="assess.li2">A quantified blueprint of where the 30–50% cost reduction lives.</li>
+          <li data-i18n="assess.li3">Which of the 83 agents capture each block of savings.</li>
+          <li data-i18n="assess.li4">The deployment sequence — what ships first, and what it pays back.</li>
+        </ul>
+        <div class="selffund" data-i18n="assess.self"><strong>Self-funding from month one.</strong> The savings pay for the build, so you scale on money you are already saving — not on new budget.</div>
+      </div>
+
+      <div class="triage-box">
+        <h3 data-i18n="assess.try.h">Try it right now</h3>
+        <div class="sub" data-i18n="assess.try.sub">Paste a challenge — yours or a prospect's. Our Neural Intelligence stack reads it, scores the fit, and sketches what we'd build.</div>
+        <form id="triageForm">
+          <textarea id="tg-desc" data-i18n-ph="assess.try.ph" placeholder="Example: We run a chamber of commerce with 1,200 member businesses. Members can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days…"></textarea>
+          <div class="hint" data-i18n="assess.try.hint">30–5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</div>
+          <div class="triage-grid">
+            <input type="text" id="tg-name" data-i18n-ph="assess.try.name" placeholder="Your name (optional)">
+            <input type="email" id="tg-email" data-i18n-ph="assess.try.email" placeholder="Email (required — we send you the report)" required>
+          </div>
+          <div class="triage-grid">
+            <input type="text" id="tg-company" data-i18n-ph="assess.try.company" placeholder="Company (optional)">
+            <input type="text" id="tg-country" data-i18n-ph="assess.try.country" placeholder="Country (optional)">
+          </div>
+          <button type="submit" class="btn btn-grad" id="tg-submit" data-i18n="assess.try.submit">Run AI Triage &amp; send to our team</button>
+          <div class="triage-note" data-i18n="assess.try.note">Running triage saves your request and sends it to the Digit2AI intake team — a real human follows up within 48 hours. Email is required so we can reach you.</div>
+          <div class="triage-msg" id="tg-msg"></div>
+        </form>
+        <div class="triage-result" id="tg-result">
+          <div class="tr-verdict" id="tg-verdict"></div>
+          <div class="tr-result">
+            <h4 data-i18n="assess.res.problem">The problem, in our words</h4>
+            <p id="tg-problem"></p>
+            <h4 data-i18n="assess.res.build">What we'd build</h4>
+            <ul id="tg-build"></ul>
+            <h4 data-i18n="assess.res.agents">Agents on the job</h4>
+            <div class="tr-agents" id="tg-agents"></div>
+            <h4 data-i18n="assess.res.week1">Week 1 deliverables</h4>
+            <ul id="tg-week1"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fellowship">
   <div class="wrap">
     <span class="eyebrow" data-i18n="fellow.eyebrow">The Fellowship</span>
     <h2 data-i18n="fellow.h2">From Latin American talent to global leadership.</h2>
@@ -503,6 +791,71 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<!-- ============ FOUNDING TEAM ============ -->
+<section id="team" class="section-alt">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="team.eyebrow">Founding Team &amp; Governance</span>
+    <h2 data-i18n="team.h2">The people behind Vision2Ai.</h2>
+    <p class="lede" data-i18n="team.lede">A school director who has been forming leaders for three decades, and the founder of a production AI platform company — the human pipeline and the intelligence engine, at one table.</p>
+
+    <div class="team-grid">
+      <div class="team-card reveal">
+        <img src="/vision2ai/maria-clara.png" alt="Maria Clara Garcia" loading="lazy">
+        <div>
+          <div class="role" data-i18n="team.mc.role">Founder &amp; Program Director</div>
+          <h3>Maria Clara Garcia</h3>
+          <p data-i18n="team.mc.p1">School Director and Teacher, Grades K–12. Founder of Visionarium (2015), a Leadership and Creativity incubator in New York for high school and college students from Latin America — the foundational program this platform formalizes and scales.</p>
+          <p data-i18n="team.mc.p2">30+ years in education leadership, founder of the COLMUN conferences, and board member at Marymount School of Barranquilla.</p>
+        </div>
+      </div>
+      <div class="team-card reveal">
+        <img src="/vision2ai/manuel-stagg.jpg" alt="Manuel Stagg" loading="lazy">
+        <div>
+          <div class="role" data-i18n="team.ms.role">Founding Technology Sponsor</div>
+          <h3>Manuel Stagg</h3>
+          <p data-i18n="team.ms.p1">Founder and CEO of Digit2ai, a production artificial intelligence platform company headquartered in Tampa, Florida. Digit2ai builds and operates multi-tenant AI systems across voice, CRM, education, healthcare, logistics, and industrial analytics — serving thousands of users daily across the Americas.</p>
+          <p data-i18n="team.ms.p2">As Founding Technology Sponsor, Digit2ai contributes Vision2Ai's complete technical infrastructure in-kind, including the Lina AI mentor platform.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT DIGIT2AI ============ -->
+<section id="digit2ai">
+  <div class="wrap">
+    <span class="eyebrow" data-i18n="d2a.eyebrow">The AI Factory Behind It</span>
+    <h2 data-i18n="d2a.h2">Digit2AI — production AI, at ecosystem scale.</h2>
+    <p class="lede" data-i18n="d2a.lede">Vision2Ai's intelligence engine is Digit2AI LLC (Tampa, FL): an AI-native operating model already running in production. These are the numbers behind the platform — the same infrastructure now serving Colombian companies and public institutions.</p>
+
+    <div class="d2a-stats">
+      <div class="d2a-stat reveal"><div class="num">21+</div><div class="lbl" data-i18n="d2a.s1">Live production platforms</div></div>
+      <div class="d2a-stat reveal"><div class="num">22</div><div class="lbl" data-i18n="d2a.s2">Verticals in operation</div></div>
+      <div class="d2a-stat reveal"><div class="num">99.9%</div><div class="lbl" data-i18n="d2a.s3">Uptime SLA</div></div>
+      <div class="d2a-stat reveal"><div class="num">$300B</div><div class="lbl" data-i18n="d2a.s4">Addressable market (TAM)</div></div>
+    </div>
+
+    <div class="d2a-lead">
+      <div class="card reveal">
+        <div class="role">CEO</div>
+        <h4>Lina Stagg</h4>
+        <p data-i18n="d2a.lina">Chief Executive Officer, Digit2AI LLC.</p>
+      </div>
+      <div class="card reveal">
+        <div class="role">CTO &amp; Co-Founder</div>
+        <h4>Manuel Stagg</h4>
+        <p data-i18n="d2a.manuel">Chief Technology Officer &amp; Co-Founder, Digit2AI LLC.</p>
+      </div>
+    </div>
+
+    <div class="d2a-gov" data-i18n="d2a.gov"><strong>For Colombia.</strong> Vision2Ai brings this proven AI-native operating model to Colombian businesses and government — bilingual by design, deployed on savings you are already generating, and built to keep public-sector data governed and auditable. The assessment maps the opportunity; the deployment funds itself.</div>
+
+    <div style="margin-top:28px">
+      <a class="btn btn-grad" href="https://digit2ai.com" target="_blank" rel="noopener" data-i18n="d2a.cta">Visit digit2ai.com →</a>
+    </div>
+  </div>
+</section>
+
 <section class="cta-final" id="join">
   <span class="eyebrow" style="justify-content:center" data-i18n="final.eyebrow">Be Part of the Founding Class</span>
   <h2 data-i18n="final.h2">The factory is running. The future is enrolling.</h2>
@@ -520,7 +873,10 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       Vision<span class="two">2</span><span class="ai">Ai</span>
     </a>
     <div class="foot-tag" data-i18n="foot.tag">AI Factory · Business Ecosystem · Limitless Future</div>
-    <div>Tampa · Miami · Cali · Manila — © 2026 Vision2Ai · <a href="tel:+17864602246" style="color:var(--cyan)">+1 (786) 460-2246</a></div>
+    <div style="text-align:right">
+      <div data-i18n="foot.powered">Powered by DIGIT2AI LLC — Tampa, FL · Lina Stagg, CEO · Manuel Stagg, CTO &amp; Co-Founder</div>
+      <div style="margin-top:4px">Tampa · Miami · Cali · Manila — © 2026 Vision2Ai · <a href="tel:+17864602246" style="color:var(--cyan)">+1 (786) 460-2246</a></div>
+    </div>
   </div>
 </footer>
 
@@ -570,6 +926,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 var I18N = {
   en: {
     'nav.merger':'The Merger','nav.pillars':'Pillars','nav.factory':'AI Factory','nav.fellowship':'Fellowship','nav.cta':'Join the Ecosystem',
+    'nav.workforce':'The 83','nav.assessment':'Assessment','nav.team':'Team','foot.powered':'Powered by DIGIT2AI LLC — Tampa, FL · Lina Stagg, CEO · Manuel Stagg, CTO & Co-Founder',
     'tag.factory':'AI Factory','tag.ecosystem':'Business Ecosystem','tag.future':'Limitless Future',
     'hero.sub':'The production AI platform of <strong>Digit2ai</strong> and the leadership incubator of <strong>Visionarium</strong> — now one company. We build the intelligence engines, and we build the people who will lead with them.',
     'hero.cta1':'Explore the AI Factory','hero.cta2':'Meet the Fellowship',
@@ -621,6 +978,64 @@ var I18N = {
     'final.lede':'Sponsor a fellowship, partner on a vertical, mentor a cohort, or nominate a young leader. The partners who join the founding year will be remembered for a generation.',
     'final.cta1':'Request an Introduction','final.cta2':'Back to Top',
     'foot.tag':'AI Factory · Business Ecosystem · Limitless Future',
+    'brain.eyebrow':'The Operating Model','brain.h2':'One brain. Every agent. Wired via open MCP.',
+    'brain.lede':'A single MCP Brain sits at the center and routes work to the specialist that owns it — fanning out in parallel, collecting the results, and synthesizing one answer. Every agent, every live product, and your own systems connect through the open Model Context Protocol standard. No lock-in, no glue code that rots.',
+    'brain.tag':'An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.',
+    'wf.eyebrow':'The Workforce','wf.h2':'8 core + 75 specialists = an 83-agent workforce.',
+    'wf.lede':'Eight always-on core agents run the day-to-day. Seventy-five senior specialists spin up the moment a project needs them — engineering, data, finance, legal, AI-native, vertical SMEs. One brain routes it all, and new specialists are added every quarter. Every client inherits the full bench automatically.',
+    'wf.core.lbl':'Core, always-on','wf.spec.lbl':'Senior specialists','wf.total.lbl':'Agent workforce',
+    'wf.core.h':'The 8 always-on core agents','wf.spec.h':'The 75 senior specialists — on demand',
+    'wf.c1.h':'Business Analyst','wf.c1.p':'Decks, business plans, market research, strategy memos.',
+    'wf.c2.h':'Research Brief','wf.c2.p':'Web search + synthesis; competitive scans, regulatory checks.',
+    'wf.c3.h':'Outreach Drafter','wf.c3.p':'Emails, WhatsApp, follow-ups in English and Spanish.',
+    'wf.c4.h':'Architect & Builder','wf.c4.p':'Scopes the build, writes the code, runs UAT, ships live.',
+    'wf.c5.h':'Inbox Triage','wf.c5.p':'Scores incoming requests, flags regulatory risk, go/no-go.',
+    'wf.c6.h':'Minutes Synthesizer','wf.c6.p':'Raw notes → summary + action items + auto-assigned tasks.',
+    'wf.c7.h':'Voice AI Agents','wf.c7.p':'Rachel, Ana & Lina — 24/7 qualify, book, and log to CRM.',
+    'wf.c8.h':'Neural Findings','wf.c8.p':'Watches every project for stalls and slips; pings before they happen.',
+    'wf.g1.h':'Engineering & Build','wf.g1.p':'Full Stack · Frontend · Backend · DevOps/SRE · Database Architect · API Designer · Mobile · SIT Tester · UAT Coordinator · Release Manager · Security · Performance',
+    'wf.g2.h':'Data, ML & Math','wf.g2.p':'Data Engineer · Data Analyst · Data Scientist · Mathematics SME · ML/AI Engineer · Forecasting Analyst · BI/Dashboard Builder · Statistician',
+    'wf.g3.h':'Business & Strategy','wf.g3.p':'Project Manager · Product Manager · Strategy Consultant · Operations Analyst · Process Improvement · M&A Analyst · Pricing Analyst · Change Management',
+    'wf.g4.h':'Sales, Marketing & Customer','wf.g4.p':'Sales Engineer · Lead Qualifier · Content Marketer · SEO · Brand Strategist · CRM Hygiene · Customer Success · Churn Prevention · Onboarding',
+    'wf.g5.h':'Finance & Risk','wf.g5.p':'Accountant · FP&A Analyst · Treasury · Tax Strategist · Auditor · Risk Modeler · Invoice Reconciler',
+    'wf.g6.h':'Legal, Compliance & HR','wf.g6.p':'Contract Drafter · NDA/IP Reviewer · Compliance Officer · Regulatory Researcher · Privacy Officer (GDPR/HIPAA) · Recruiter · Performance Reviewer · Training Designer',
+    'wf.g7.h':'AI-Native / LLM','wf.g7.p':'Prompt & Eval Engineer · LLMOps / Model Router · RAG / Retrieval Engineer · AI Safety / Red-Team · Conversation & Voice UX · MCP / Integration Engineer',
+    'wf.g8.h':'Reliability & Trust','wf.g8.p':'Observability · FinOps / Cloud-Cost · Data Governance / MDM · Responsible-AI / Ethics · Fraud & Anomaly Detection',
+    'wf.g9.h':'Vertical SMEs','wf.g9.p':'Clinical / Healthcare Informatics · Logistics & Supply-Chain · Agriculture & Commodities · Fintech / Payments',
+    'wf.g10.h':'Design, Content & Growth','wf.g10.p':'UX/UI & Design System · Localization (EN/ES) · Accessibility · Technical Writer · Conversion-Rate Optimizer · Partnerships/Channel · Solutions Architect (Pre-Sales) · Demand-Gen',
+    'assess.eyebrow':'Where It Starts','assess.h2':'The Neural Assessment — 2 weeks, fixed scope.',
+    'assess.lede':'We map your operating model and deliver a quantified cost-reduction blueprint: where the 30–50% lives, which agents capture it, and the deployment sequence.',
+    'assess.pill':'2 weeks · fixed scope','assess.card.h':'The only up-front commitment.',
+    'assess.card.p':'The assessment is the only up-front commitment. Everything after it is self-funding — the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.',
+    'assess.li1':'A map of your operating model, function by function.',
+    'assess.li2':'A quantified blueprint of where the 30–50% cost reduction lives.',
+    'assess.li3':'Which of the 83 agents capture each block of savings.',
+    'assess.li4':'The deployment sequence — what ships first, and what it pays back.',
+    'assess.self':'<strong>Self-funding from month one.</strong> The savings pay for the build, so you scale on money you are already saving — not on new budget.',
+    'assess.try.h':'Try it right now','assess.try.sub':"Paste a challenge — yours or a prospect's. Our Neural Intelligence stack reads it, scores the fit, and sketches what we'd build.",
+    'assess.try.ph':"Example: We run a chamber of commerce with 1,200 member businesses. Members can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days…",
+    'assess.try.hint':'30–5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.',
+    'assess.try.name':'Your name (optional)','assess.try.email':'Email (required — we send you the report)','assess.try.company':'Company (optional)','assess.try.country':'Country (optional)',
+    'assess.try.submit':'Run AI Triage & send to our team',
+    'assess.try.note':'Running triage saves your request and sends it to the Digit2AI intake team — a real human follows up within 48 hours. Email is required so we can reach you.',
+    'assess.res.problem':'The problem, in our words','assess.res.build':"What we'd build",'assess.res.agents':'Agents on the job','assess.res.week1':'Week 1 deliverables',
+    'assess.err.short':'Please describe the challenge in at least 30 characters.','assess.err.email':'A valid email is required so we can send you the report.',
+    'assess.running':'Reading your challenge and scoring the fit…','assess.sent':'Sent. A real human from our team follows up within 48 hours.','assess.err.generic':'Something went wrong running the triage. Please try again.',
+    'assess.v.go':'Strong fit','assess.v.poc':'Proof of concept','assess.v.stop':'Not a fit',
+    'team.eyebrow':'Founding Team & Governance','team.h2':'The people behind Vision2Ai.',
+    'team.lede':'A school director who has been forming leaders for three decades, and the founder of a production AI platform company — the human pipeline and the intelligence engine, at one table.',
+    'team.mc.role':'Founder & Program Director',
+    'team.mc.p1':'School Director and Teacher, Grades K–12. Founder of Visionarium (2015), a Leadership and Creativity incubator in New York for high school and college students from Latin America — the foundational program this platform formalizes and scales.',
+    'team.mc.p2':'30+ years in education leadership, founder of the COLMUN conferences, and board member at Marymount School of Barranquilla.',
+    'team.ms.role':'Founding Technology Sponsor',
+    'team.ms.p1':'Founder and CEO of Digit2ai, a production artificial intelligence platform company headquartered in Tampa, Florida. Digit2ai builds and operates multi-tenant AI systems across voice, CRM, education, healthcare, logistics, and industrial analytics — serving thousands of users daily across the Americas.',
+    'team.ms.p2':"As Founding Technology Sponsor, Digit2ai contributes Vision2Ai's complete technical infrastructure in-kind, including the Lina AI mentor platform.",
+    'd2a.eyebrow':'The AI Factory Behind It','d2a.h2':'Digit2AI — production AI, at ecosystem scale.',
+    'd2a.lede':"Vision2Ai's intelligence engine is Digit2AI LLC (Tampa, FL): an AI-native operating model already running in production. These are the numbers behind the platform — the same infrastructure now serving Colombian companies and public institutions.",
+    'd2a.s1':'Live production platforms','d2a.s2':'Verticals in operation','d2a.s3':'Uptime SLA','d2a.s4':'Addressable market (TAM)',
+    'd2a.lina':'Chief Executive Officer, Digit2AI LLC.','d2a.manuel':'Chief Technology Officer & Co-Founder, Digit2AI LLC.',
+    'd2a.gov':'<strong>For Colombia.</strong> Vision2Ai brings this proven AI-native operating model to Colombian businesses and government — bilingual by design, deployed on savings you are already generating, and built to keep public-sector data governed and auditable. The assessment maps the opportunity; the deployment funds itself.',
+    'd2a.cta':'Visit digit2ai.com →',
     'modal.eyebrow':'Book a Meeting','modal.title':'Request an Introduction',
     'modal.sub':'Pick a time and our team — or Lina, our AI assistant — will meet with you. Times shown in US Eastern.',
     'modal.name':'Full name','modal.email':'Email','modal.company':'Company (optional)','modal.phone':'Phone (optional)','modal.date':'Date','modal.time':'Time','modal.notes':'What would you like to discuss? (optional)',
@@ -630,6 +1045,7 @@ var I18N = {
   },
   es: {
     'nav.merger':'La Fusión','nav.pillars':'Pilares','nav.factory':'Fábrica de IA','nav.fellowship':'Programa','nav.cta':'Únete al Ecosistema',
+    'nav.workforce':'Los 83','nav.assessment':'Evaluación','nav.team':'Equipo','foot.powered':'Impulsado por DIGIT2AI LLC — Tampa, FL · Lina Stagg, CEO · Manuel Stagg, CTO y Cofundador',
     'tag.factory':'Fábrica de IA','tag.ecosystem':'Ecosistema de Negocios','tag.future':'Futuro Sin Límites',
     'hero.sub':'La plataforma de IA en producción de <strong>Digit2ai</strong> y la incubadora de liderazgo de <strong>Visionarium</strong> — ahora una sola compañía. Construimos los motores de inteligencia y formamos a las personas que liderarán con ellos.',
     'hero.cta1':'Explora la Fábrica de IA','hero.cta2':'Conoce el Programa',
@@ -681,6 +1097,64 @@ var I18N = {
     'final.lede':'Patrocina un programa, asóciate en un vertical, mentorea una cohorte o nomina a un joven líder. Los socios que se unan al año fundador serán recordados por una generación.',
     'final.cta1':'Solicita una Presentación','final.cta2':'Volver Arriba',
     'foot.tag':'Fábrica de IA · Ecosistema de Negocios · Futuro Sin Límites',
+    'brain.eyebrow':'El Modelo Operativo','brain.h2':'Un solo cerebro. Todos los agentes. Conectados con MCP abierto.',
+    'brain.lede':'Un único Cerebro MCP está en el centro y enruta el trabajo al especialista que lo domina — desplegándose en paralelo, recogiendo los resultados y sintetizando una sola respuesta. Cada agente, cada producto en vivo y tus propios sistemas se conectan mediante el estándar abierto Model Context Protocol. Sin ataduras, sin código de integración que se pudre.',
+    'brain.tag':'Una institución nativa de IA donde las plataformas financian e impulsan a las personas, y las personas demuestran lo que las plataformas hacen posible. Dominio tecnológico, formación de liderazgo y ejecución real — a escala de ecosistema.',
+    'wf.eyebrow':'La Fuerza de Trabajo','wf.h2':'8 core + 75 especialistas = una fuerza de 83 agentes.',
+    'wf.lede':'Ocho agentes core siempre activos manejan el día a día. Setenta y cinco especialistas senior se activan en el momento en que un proyecto los necesita — ingeniería, datos, finanzas, legal, IA nativa, expertos por vertical. Un solo cerebro lo enruta todo, y cada trimestre se añaden nuevos especialistas. Cada cliente hereda toda la banca automáticamente.',
+    'wf.core.lbl':'Core, siempre activos','wf.spec.lbl':'Especialistas senior','wf.total.lbl':'Fuerza de agentes',
+    'wf.core.h':'Los 8 agentes core siempre activos','wf.spec.h':'Los 75 especialistas senior — bajo demanda',
+    'wf.c1.h':'Analista de Negocios','wf.c1.p':'Presentaciones, planes de negocio, investigación de mercado, memos de estrategia.',
+    'wf.c2.h':'Investigación','wf.c2.p':'Búsqueda web + síntesis; análisis competitivo, verificación regulatoria.',
+    'wf.c3.h':'Redacción de Contacto','wf.c3.p':'Correos, WhatsApp y seguimientos en inglés y español.',
+    'wf.c4.h':'Arquitecto y Constructor','wf.c4.p':'Define el alcance, escribe el código, corre UAT y lo pone en vivo.',
+    'wf.c5.h':'Triaje de Solicitudes','wf.c5.p':'Puntúa las solicitudes entrantes, marca el riesgo regulatorio, go/no-go.',
+    'wf.c6.h':'Sintetizador de Actas','wf.c6.p':'Notas en crudo → resumen + tareas + asignación automática.',
+    'wf.c7.h':'Agentes de IA de Voz','wf.c7.p':'Rachel, Ana y Lina — califican, agendan y registran en el CRM 24/7.',
+    'wf.c8.h':'Hallazgos Neural','wf.c8.p':'Vigila cada proyecto ante estancamientos y retrasos; avisa antes de que ocurran.',
+    'wf.g1.h':'Ingeniería y Construcción','wf.g1.p':'Full Stack · Frontend · Backend · DevOps/SRE · Arquitecto de BD · Diseñador de API · Móvil · Tester SIT · Coordinador UAT · Release Manager · Seguridad · Rendimiento',
+    'wf.g2.h':'Datos, ML y Matemáticas','wf.g2.p':'Ingeniero de Datos · Analista de Datos · Científico de Datos · Experto en Matemáticas · Ingeniero ML/IA · Analista de Pronósticos · Constructor de Tableros BI · Estadístico',
+    'wf.g3.h':'Negocio y Estrategia','wf.g3.p':'Gerente de Proyecto · Gerente de Producto · Consultor de Estrategia · Analista de Operaciones · Mejora de Procesos · Analista M&A · Analista de Precios · Gestión del Cambio',
+    'wf.g4.h':'Ventas, Marketing y Cliente','wf.g4.p':'Ingeniero de Ventas · Calificador de Leads · Marketing de Contenido · SEO · Estratega de Marca · Higiene de CRM · Éxito del Cliente · Prevención de Fuga · Onboarding',
+    'wf.g5.h':'Finanzas y Riesgo','wf.g5.p':'Contador · Analista FP&A · Tesorería · Estratega Fiscal · Auditor · Modelador de Riesgo · Reconciliador de Facturas',
+    'wf.g6.h':'Legal, Cumplimiento y RR. HH.','wf.g6.p':'Redactor de Contratos · Revisor NDA/PI · Oficial de Cumplimiento · Investigador Regulatorio · Oficial de Privacidad (GDPR/HIPAA) · Reclutador · Evaluador de Desempeño · Diseñador de Capacitación',
+    'wf.g7.h':'IA Nativa / LLM','wf.g7.p':'Ingeniero de Prompt y Evaluación · LLMOps / Enrutador de Modelos · Ingeniero RAG / Recuperación · Seguridad de IA / Red-Team · UX de Conversación y Voz · Ingeniero MCP / Integración',
+    'wf.g8.h':'Confiabilidad y Confianza','wf.g8.p':'Observabilidad · FinOps / Costo de Nube · Gobernanza de Datos / MDM · IA Responsable / Ética · Detección de Fraude y Anomalías',
+    'wf.g9.h':'Expertos por Vertical','wf.g9.p':'Informática Clínica / Salud · Logística y Cadena de Suministro · Agricultura y Commodities · Fintech / Pagos',
+    'wf.g10.h':'Diseño, Contenido y Crecimiento','wf.g10.p':'UX/UI y Sistema de Diseño · Localización (EN/ES) · Accesibilidad · Redactor Técnico · Optimizador de Conversión · Alianzas/Canal · Arquitecto de Soluciones (Preventa) · Generación de Demanda',
+    'assess.eyebrow':'Donde Empieza','assess.h2':'La Evaluación Neural — 2 semanas, alcance fijo.',
+    'assess.lede':'Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducción de costos: dónde está el 30–50 %, qué agentes lo capturan y la secuencia de despliegue.',
+    'assess.pill':'2 semanas · alcance fijo','assess.card.h':'El único compromiso inicial.',
+    'assess.card.p':'La evaluación es el único compromiso inicial. Todo lo que viene después se autofinancia — el ahorro en costos operativos paga el despliegue desde el primer mes, así que creces sobre dinero que ya estás ahorrando.',
+    'assess.li1':'Un mapa de tu modelo operativo, función por función.',
+    'assess.li2':'Un plano cuantificado de dónde está la reducción de costos del 30–50 %.',
+    'assess.li3':'Cuáles de los 83 agentes capturan cada bloque de ahorro.',
+    'assess.li4':'La secuencia de despliegue — qué se entrega primero y qué retorna.',
+    'assess.self':'<strong>Se autofinancia desde el primer mes.</strong> El ahorro paga la construcción, así que creces sobre dinero que ya estás ahorrando — no sobre presupuesto nuevo.',
+    'assess.try.h':'Pruébalo ahora mismo','assess.try.sub':'Pega un reto — tuyo o de un prospecto. Nuestro stack de Neural Intelligence lo lee, puntúa el encaje y esboza lo que construiríamos.',
+    'assess.try.ph':'Ejemplo: Manejamos una cámara de comercio con 1.200 empresas afiliadas. Los miembros no logran encontrarse para hacer negocios entre nuestros 6 sectores. La junta quiere una plataforma digital pero no sabe qué es realista en 90 días…',
+    'assess.try.hint':'30–5000 caracteres. Cuanto más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triaje.',
+    'assess.try.name':'Tu nombre (opcional)','assess.try.email':'Correo (requerido — te enviamos el informe)','assess.try.company':'Empresa (opcional)','assess.try.country':'País (opcional)',
+    'assess.try.submit':'Ejecutar Triaje de IA y enviar a nuestro equipo',
+    'assess.try.note':'Ejecutar el triaje guarda tu solicitud y la envía al equipo de intake de Digit2AI — una persona real responde en un plazo de 48 horas. El correo es obligatorio para poder contactarte.',
+    'assess.res.problem':'El problema, en nuestras palabras','assess.res.build':'Lo que construiríamos','assess.res.agents':'Agentes en el trabajo','assess.res.week1':'Entregables de la Semana 1',
+    'assess.err.short':'Por favor describe el reto en al menos 30 caracteres.','assess.err.email':'Se requiere un correo válido para poder enviarte el informe.',
+    'assess.running':'Leyendo tu reto y puntuando el encaje…','assess.sent':'Enviado. Una persona real de nuestro equipo responde en un plazo de 48 horas.','assess.err.generic':'Algo salió mal al ejecutar el triaje. Inténtalo de nuevo.',
+    'assess.v.go':'Encaje fuerte','assess.v.poc':'Prueba de concepto','assess.v.stop':'No es un encaje',
+    'team.eyebrow':'Equipo Fundador y Gobernanza','team.h2':'Las personas detrás de Vision2Ai.',
+    'team.lede':'Una directora escolar que lleva tres décadas formando líderes, y el fundador de una compañía de plataformas de IA en producción — el semillero humano y el motor de inteligencia, en una misma mesa.',
+    'team.mc.role':'Fundadora y Directora del Programa',
+    'team.mc.p1':'Directora escolar y docente, grados K–12. Fundadora de Visionarium (2015), una incubadora de Liderazgo y Creatividad en Nueva York para estudiantes de secundaria y universidad de América Latina — el programa fundacional que esta plataforma formaliza y escala.',
+    'team.mc.p2':'Más de 30 años de liderazgo en educación, fundadora de las conferencias COLMUN y miembro de la junta del Marymount School de Barranquilla.',
+    'team.ms.role':'Patrocinador Tecnológico Fundador',
+    'team.ms.p1':'Fundador y CEO de Digit2ai, una compañía de plataformas de inteligencia artificial en producción con sede en Tampa, Florida. Digit2ai construye y opera sistemas de IA multiinquilino en voz, CRM, educación, salud, logística y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
+    'team.ms.p2':'Como Patrocinador Tecnológico Fundador, Digit2ai aporta en especie toda la infraestructura técnica de Vision2Ai, incluida la plataforma de mentoría de IA Lina.',
+    'd2a.eyebrow':'La Fábrica de IA Detrás','d2a.h2':'Digit2AI — IA en producción, a escala de ecosistema.',
+    'd2a.lede':'El motor de inteligencia de Vision2Ai es Digit2AI LLC (Tampa, FL): un modelo operativo nativo de IA que ya corre en producción. Estos son los números detrás de la plataforma — la misma infraestructura que ahora sirve a empresas e instituciones públicas de Colombia.',
+    'd2a.s1':'Plataformas en producción','d2a.s2':'Verticales en operación','d2a.s3':'SLA de disponibilidad','d2a.s4':'Mercado direccionable (TAM)',
+    'd2a.lina':'Directora Ejecutiva (CEO), Digit2AI LLC.','d2a.manuel':'Director de Tecnología (CTO) y Cofundador, Digit2AI LLC.',
+    'd2a.gov':'<strong>Para Colombia.</strong> Vision2Ai lleva este modelo operativo nativo de IA, ya probado, a las empresas y al gobierno de Colombia — bilingüe por diseño, desplegado sobre el ahorro que ya estás generando, y construido para mantener los datos del sector público gobernados y auditables. La evaluación mapea la oportunidad; el despliegue se paga solo.',
+    'd2a.cta':'Visita digit2ai.com →',
     'modal.eyebrow':'Agenda una Reunión','modal.title':'Solicita una Presentación',
     'modal.sub':'Elige un horario y nuestro equipo — o Lina, nuestra asistente de IA — te atenderá. Horarios en hora del Este de EE. UU.',
     'modal.name':'Nombre completo','modal.email':'Correo','modal.company':'Empresa (opcional)','modal.phone':'Teléfono (opcional)','modal.date':'Fecha','modal.time':'Hora','modal.notes':'¿Qué te gustaría conversar? (opcional)',
@@ -702,6 +1176,9 @@ function applyLang(lang){
     var html = t(el.getAttribute('data-i18n'));
     if (html.indexOf('{N}') >= 0) html = html.replace(/\{N\}/g, cardCount);
     el.innerHTML = html;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
+    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph')));
   });
   document.querySelectorAll('.lang-toggle button').forEach(function(b){
     b.classList.toggle('active', b.dataset.lang === LANG);
@@ -870,6 +1347,94 @@ applyLang(detectLang());
   document.getElementById('mCloseDone').addEventListener('click', closeModal);
   back.addEventListener('click', function(e){ if (e.target === back) closeModal(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+})();
+
+/* ==================== Neural Assessment · Try-it triage ==================== */
+(function(){
+  var API = 'https://aiagent.ringlypro.com/projects/api/v1/intake';
+  var form = document.getElementById('triageForm');
+  if (!form) return;
+  var desc = document.getElementById('tg-desc');
+  var email = document.getElementById('tg-email');
+  var nameEl = document.getElementById('tg-name');
+  var company = document.getElementById('tg-company');
+  var country = document.getElementById('tg-country');
+  var submit = document.getElementById('tg-submit');
+  var msg = document.getElementById('tg-msg');
+  var result = document.getElementById('tg-result');
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+  function fillList(el, arr){
+    el.innerHTML='';
+    (arr||[]).forEach(function(it){ var li=document.createElement('li'); li.textContent=String(it); el.appendChild(li); });
+    if (!(arr||[]).length){ var li=document.createElement('li'); li.style.opacity='.6'; li.textContent='—'; el.appendChild(li); }
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    msg.textContent=''; msg.className='triage-msg';
+    var d = (desc.value||'').trim();
+    var em = (email.value||'').trim();
+    if (d.length < 30){ msg.textContent = t('assess.err.short'); msg.className='triage-msg err'; desc.focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ msg.textContent = t('assess.err.email'); msg.className='triage-msg err'; email.focus(); return; }
+
+    submit.disabled = true;
+    var oldLabel = submit.textContent;
+    submit.textContent = t('assess.running');
+    msg.textContent = t('assess.running'); msg.className='triage-msg';
+
+    var body = { description: d, name: nameEl.value||'', company: company.value||'', country: country.value||'', email: em, language: LANG };
+
+    // 1) Run the live triage -> inline verdict + solution sketch.
+    fetch(API + '/voice-trigger-triage', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(res){
+        if (res.ok && res.j && res.j.success && res.j.data){
+          var out = res.j.data;
+          var v = (out.verdict==='go'||out.verdict==='poc'||out.verdict==='stop') ? out.verdict : 'poc';
+          var vEl = document.getElementById('tg-verdict');
+          vEl.className = 'tr-verdict ' + v;
+          vEl.innerHTML = '<span>'+esc(t('assess.v.'+v))+'</span> <span class="tr-score">'+esc(out.fit_score)+'/10</span>';
+          document.getElementById('tg-problem').textContent = out.problem_in_our_words || (out.technical_solution && out.technical_solution.summary) || '';
+          var ts = out.technical_solution || {};
+          fillList(document.getElementById('tg-build'), ts.what_we_build);
+          var ag = document.getElementById('tg-agents'); ag.innerHTML='';
+          (ts.agents_involved||[]).forEach(function(a){ var s=document.createElement('span'); s.className='a'; s.textContent=String(a); ag.appendChild(s); });
+          fillList(document.getElementById('tg-week1'), out.week_1_deliverables);
+          result.classList.add('show');
+          result.scrollIntoView({behavior:'smooth', block:'nearest'});
+        }
+        // 2) Regardless of the preview, persist the request + notify the team.
+        return fetch(API + '/public/request', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            full_name: nameEl.value || em.split('@')[0],
+            email: em,
+            company_name: company.value || '',
+            country: country.value || '',
+            project_title: (res.j && res.j.data && res.j.data.project_title_suggested) || 'Neural Assessment request — Vision2Ai',
+            problem: d,
+            project_description: d,
+            heard_from: 'vision2ai.app',
+            partner_slug: 'vision2ai'
+          })
+        }).catch(function(){});
+      })
+      .then(function(){
+        submit.disabled = false; submit.textContent = oldLabel;
+        msg.textContent = t('assess.sent'); msg.className='triage-msg';
+      })
+      .catch(function(){
+        submit.disabled = false; submit.textContent = oldLabel;
+        // If the triage upstream failed, still try to save the request silently.
+        fetch(API + '/public/request', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ full_name: nameEl.value || em.split('@')[0], email: em, company_name: company.value||'', country: country.value||'', project_title:'Neural Assessment request — Vision2Ai', problem:d, project_description:d, heard_from:'vision2ai.app', partner_slug:'vision2ai' })
+        }).then(function(){ msg.textContent = t('assess.sent'); msg.className='triage-msg'; })
+          .catch(function(){ msg.textContent = t('assess.err.generic'); msg.className='triage-msg err'; });
+      });
+  });
 })();
 
 /* ==================== Network constellation hero ==================== */
