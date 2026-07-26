@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#05070e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="J. Gramowski">
+<link rel="manifest" href="/anastagg.webmanifest">
+<link rel="icon" href="/anastagg-favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/anastagg-favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/anastagg-favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/anastagg-192.png">
+<link rel="apple-touch-icon" href="/anastagg-apple-touch.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/anastagg-apple-touch.png">
+<title data-i18n="meta_title">Ana I. Stagg — Business Administration | Human Resources & Organizational Psychology</title>
+<meta name="description" data-i18n-attr="content" data-i18n="meta_desc" content="Ana I. Stagg — Business Administration, Human Resources & Organizational Psychology. Bilingual professional in Tampa, FL.">
+<meta property="og:title" content="Ana I. Stagg — Business Administration, Human Resources & Organizational Psychology. Bilingual professional in Tampa, FL.">
+<meta property="og:description" content="Bilingual Business Administration and Human Resources professional in Tampa, FL. B.S. in Business Administration (HRM) and Psychology. Curriculum Vitae.">
+<meta property="og:image" content="/anastagg-512.png">
+<meta property="og:type" content="profile">
+<meta name="robots" content="index,follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg0:#05070e; --bg1:#0b0e1a; --bg2:#0f1424;
+  --card:rgba(255,255,255,0.028); --card2:rgba(255,255,255,0.045);
+  --line:rgba(255,255,255,0.09); --line2:rgba(255,255,255,0.16);
+  --cyan:#22d3ee; --cyan-dim:#1c93ad; --cyan-bd:rgba(34,211,238,0.34);
+  --violet:#8b5cf6; --violet-bd:rgba(139,92,246,0.34);
+  --green:#84cc16; --green-bd:rgba(132,204,22,0.40);
+  --gold:#d69e2e; --amber:#f59e0b;
+  --txt:#e8ecf4; --txt2:#cbd3e2; --dim:#9aa4b8; --dim2:#6b7386;
+  --grid-line:rgba(255,255,255,.025); --topbar-bg:rgba(5,7,14,.72);
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+  --grad:linear-gradient(135deg,#22d3ee 0%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(139,92,246,.14));
+}
+:root[data-theme="light"]{
+  --bg0:#f5f7fb; --bg1:#eef1f8; --bg2:#e7ecf5;
+  --card:rgba(15,25,55,0.030); --card2:rgba(15,25,55,0.055);
+  --line:rgba(15,25,55,0.12); --line2:rgba(15,25,55,0.20);
+  --cyan:#0e7490; --cyan-dim:#0891b2; --cyan-bd:rgba(14,116,144,0.34);
+  --violet:#6d28d9; --violet-bd:rgba(109,40,217,0.32);
+  --green:#4d7c0f; --green-bd:rgba(77,124,15,0.40);
+  --txt:#141c2e; --txt2:#38435a; --dim:#5a6478; --dim2:#8892a4;
+  --grid-line:rgba(15,25,55,.05); --topbar-bg:rgba(245,247,251,.82);
+  --grad-soft:linear-gradient(135deg,rgba(14,116,144,.10),rgba(109,40,217,.10));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg0);color:var(--txt);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.aura{position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(60% 45% at 78% 8%, rgba(139,92,246,.16), transparent 60%),
+  radial-gradient(55% 40% at 12% 20%, rgba(34,211,238,.14), transparent 60%),
+  radial-gradient(80% 60% at 50% 120%, rgba(34,211,238,.08), transparent 70%),
+  var(--bg0)}
+.grid-bg{position:fixed;inset:0;z-index:-1;opacity:.5;
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(circle at 50% 30%,#000,transparent 80%)}
+.topbar{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);background:var(--topbar-bg);border-bottom:1px solid var(--line)}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.3px;font-size:15px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--cyan)}
+.brand span.sub{color:var(--dim);font-weight:500;font-size:12px;font-family:var(--mono)}
+.tb-actions{display:flex;align-items:center;gap:9px}
+.lang-toggle{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:3px}
+.lang-btn{border:none;background:transparent;color:var(--dim);padding:5px 12px;border-radius:18px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.lang-btn.active{background:var(--grad);color:#04121a}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card);color:var(--txt);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.mini-btn.icon-only{padding:7px 10px}
+.mini-btn.icon-only i{font-size:14px}
+.mini-btn:hover{border-color:var(--cyan-bd);background:var(--grad-soft)}
+.mini-btn.li{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.mini-btn.li:hover{filter:brightness(1.12)}
+@media(max-width:720px){.brand span.sub{display:none}.mini-btn .lbl{display:none}}
+.hero{padding:56px 0 34px}
+.hero-grid{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
+.photo-wrap{position:relative;width:200px;height:200px}
+.photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
+.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
+.eyebrow b{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+@keyframes blink{50%{opacity:.3}}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.8px;line-height:1.05;margin-bottom:12px}
+h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.title-line{font-size:clamp(16px,2.4vw,20px);font-weight:600;color:var(--txt);margin-bottom:6px}
+.subtitle{font-size:15px;color:var(--dim);max-width:640px;margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:7px 13px}
+.chip i{color:var(--cyan)}
+.chip a{color:var(--txt)}
+.social-row{display:flex;flex-wrap:wrap;gap:10px}
+.sbtn{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer;transition:.2s}
+.sbtn:hover{transform:translateY(-2px);border-color:var(--cyan-bd);background:var(--grad-soft)}
+.sbtn.primary{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.sbtn.primary:hover{filter:brightness(1.12);background:#0a66c2}
+.sbtn.accent{background:var(--grad);border:none;color:#04121a}
+.sbtn i{font-size:15px}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
+.sharecard{display:flex;align-items:center;gap:16px;margin-top:20px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px}
+.qrthumb{width:96px;height:96px;flex:0 0 96px;border-radius:10px;background:#fff;padding:6px;cursor:pointer;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrthumb:hover{transform:scale(1.04)}
+.sharemeta{flex:1;min-width:0}
+.sharehint{font-size:13px;color:var(--dim);margin-bottom:10px}
+.sharebtns{display:flex;gap:9px;flex-wrap:wrap}
+.sharebtns .sbtn{padding:8px 14px;font-size:13px}
+@media(max-width:760px){.sharecard{margin-left:auto;margin-right:auto}}
+@media(max-width:420px){.sharecard{flex-direction:column;text-align:center}.sharebtns{justify-content:center}}
+.qrmodal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(3,5,12,.72);backdrop-filter:blur(6px)}
+.qrmodal.open{display:flex}
+.qrbox{position:relative;background:var(--bg1);border:1px solid var(--line2);border-radius:22px;padding:28px;max-width:340px;width:100%;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.qrclose{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--dim);font-size:26px;line-height:1;cursor:pointer}
+.qrclose:hover{color:var(--txt)}
+.qrbig{width:240px;max-width:100%;height:auto;background:#fff;padding:12px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.qrurl{font-family:var(--mono);font-size:13px;font-weight:700;margin-top:14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;word-break:break-all}
+.qrhint{font-size:12.5px;color:var(--dim);margin:8px 0 14px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:2100;background:var(--grad);color:#04121a;font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:22px;box-shadow:0 12px 34px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
+.voicecard::before{content:"";position:absolute;left:0;top:0;height:100%;width:3px;background:var(--grad)}
+.vorb{position:relative;width:72px;height:72px;flex:0 0 72px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#a7f0ff,#22d3ee 42%,#8b5cf6 100%);box-shadow:0 0 0 0 rgba(34,211,238,.5);cursor:pointer;transition:transform .2s}
+.vorb:hover{transform:scale(1.05)}
+.vorb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(139,92,246,.35)}
+.vorb.speaking{animation:vpulse 1.15s ease-in-out infinite}
+.vorb.loading{animation:vspin 1s linear infinite}
+@keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vmeta{flex:1;min-width:0}
+.vname{font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.vtag{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:20px;padding:3px 9px}
+.vrole{color:var(--dim);font-size:13px;margin:3px 0 12px}
+.vctrls{display:flex;gap:9px;flex-wrap:wrap}
+.vbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);padding:8px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}
+.vbtn:hover{border-color:var(--cyan-bd)}
+.vbtn.primary{background:var(--grad);border:none;color:#04121a}
+.vbtn:disabled{opacity:.45;cursor:default}
+.vstatus{font-size:12.5px;color:var(--dim);margin-top:10px;min-height:16px}
+@media(max-width:620px){.voicecard{flex-direction:column;text-align:center}.vctrls{justify-content:center}.vname{justify-content:center}.voicecard::before{width:100%;height:3px}}
+@media print{.voicebar{display:none}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 6px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--grad);opacity:.7}
+.stat .n{font-family:var(--mono);font-size:24px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1.05}
+.stat .l{font-size:11.5px;color:var(--dim);margin-top:8px;letter-spacing:.4px}
+@media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+section.blk{padding:44px 0}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.sec-head .k{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:2px;border:1px solid var(--cyan-bd);border-radius:8px;padding:4px 9px;white-space:nowrap}
+.sec-head h2{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.5px}
+.sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.lead{color:var(--dim);max-width:820px;font-size:15.5px;margin-bottom:24px}
+.matrix{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:.25s}
+.mcard:hover{border-color:var(--cyan-bd);transform:translateY(-3px)}
+.mcard h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mcard h3 i{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--grad-soft);border:1px solid var(--line);color:var(--cyan);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:var(--mono);font-size:11.5px;color:var(--txt);background:var(--card2);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+.mcard.v h3 i{color:var(--violet)}
+@media(max-width:720px){.matrix{grid-template-columns:1fr}}
+.tech-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin-bottom:9px;display:flex;align-items:center;gap:9px}
+.tech-lab::after{content:"";flex:1;height:1px;background:var(--line)}
+.tech-lab.gc{color:var(--cyan)}.tech-lab.gv{color:var(--violet)}.tech-lab.gg{color:var(--green)}
+.skillgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px 34px}
+@media(max-width:720px){.skillgrid{grid-template-columns:1fr;gap:20px}}
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--cyan),var(--violet),transparent)}
+.tl{position:relative;margin-bottom:26px}
+.tl::before{content:"";position:absolute;left:-30px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--bg0);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(34,211,238,.5)}
+.tl.v::before{border-color:var(--violet);box-shadow:0 0 12px rgba(139,92,246,.5)}
+.tl .when{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:1px;margin-bottom:4px}
+.tl.v .when{color:var(--violet)}
+.tl h3{font-size:18px;font-weight:700}
+.tl .org{font-size:13.5px;color:var(--dim);margin-bottom:9px;font-weight:500}
+.tl ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.tl li{position:relative;padding-left:20px;font-size:14.5px;color:var(--txt2)}
+.tl li::before{content:"\f0da";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;left:0;top:1px;color:var(--cyan);font-size:11px}
+.tl.v li::before{color:var(--violet)}
+.tl .scope{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.tl .scope span{font-family:var(--mono);font-size:10.5px;color:var(--cyan);background:rgba(34,211,238,.06);border:1px solid var(--cyan-bd);border-radius:6px;padding:3px 8px}
+.tl.v .scope span{color:var(--violet);border-color:var(--violet-bd);background:rgba(139,92,246,.06)}
+.tl .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim2);margin:15px 0 7px;display:flex;align-items:center;gap:9px}
+.tl .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.tl .metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.tl .metrics .m{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 13px}
+.tl .metrics .m b{font-family:var(--mono);color:var(--cyan);font-weight:800}
+.tl.v .metrics .m b{color:var(--violet)}
+.hl-ribbon{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 30px}
+.hl{background:var(--grad-soft);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+.hl .n{font-family:var(--mono);font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.hl .l{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.4}
+@media(max-width:820px){.hl-ribbon{grid-template-columns:repeat(2,1fr)}}
+.awards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.award{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.award i{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:12px;background:var(--grad-soft);border:1px solid var(--line);color:var(--gold);font-size:20px}
+.award .t{font-weight:700;font-size:15px}
+.award .s{color:var(--dim);font-size:13px;margin-top:2px}
+@media(max-width:620px){.awards{grid-template-columns:1fr}}
+.edu{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.educard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.educard .deg{font-weight:700;font-size:16px}
+.educard .fld{color:var(--cyan);font-size:13px;font-weight:600;margin:3px 0 8px}
+.educard .sch{color:var(--dim);font-size:13.5px}
+@media(max-width:820px){.edu{grid-template-columns:1fr}}
+.recruit{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));border:1px solid var(--line2);border-radius:22px;padding:38px 32px}
+.recruit .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:34px;align-items:center}
+.recruit h2{font-size:26px;font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.recruit p{color:var(--dim);font-size:15px;margin-bottom:16px}
+.eng{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.eng .e{display:flex;align-items:center;gap:11px;font-size:14px}
+.eng .e i{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--green)}
+.rbox{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:24px}
+.rbox .avail{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--green);border:1px solid var(--green-bd);background:rgba(132,204,22,.08);border-radius:20px;padding:6px 12px;margin-bottom:16px}
+.rbox .avail b{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+.rbox .cta{display:flex;flex-direction:column;gap:10px}
+@media(max-width:760px){.recruit{padding:28px 20px}.recruit .grid{grid-template-columns:1fr;gap:24px}}
+footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--dim);font-size:13px}
+.foot .links{display:flex;gap:16px;flex-wrap:wrap}
+.foot a:hover{color:var(--cyan)}
+@media print{
+  :root, :root[data-theme="dark"], :root[data-theme="light"]{
+    --bg0:#fff; --bg1:#fff; --bg2:#fff; --card:#ffffff; --card2:#f1f3f7;
+    --line:#cfd3da; --line2:#b6bcc7; --txt:#111418; --txt2:#242a33; --dim:#454b57; --dim2:#5a616e;
+    --cyan:#0e7490; --cyan-dim:#0b5e74; --cyan-bd:#8fbecb; --violet:#6d28d9; --violet-bd:#b4a0e6;
+    --green:#3f6212; --green-bd:#9cb87a; --grid-line:transparent; --topbar-bg:#fff;
+    --grad-soft:linear-gradient(135deg,#eef6f8,#f2eefb);
+  }
+  *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{background:#fff; color:#111418}
+  .aura,.grid-bg,.topbar,.voicebar,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent,.sharebtns,.qrmodal,.toast{display:none!important}
+  .sharecard{border-color:#cfd3da!important;max-width:none;break-inside:avoid}
+  h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
+  a{color:#0a66c2!important}
+  section.blk{padding:12px 0}
+  .mcard,.stat,.hl,.tl,.recruit,.skcol,.sec-head,.award,.educard{break-inside:avoid}
+  .photo-wrap::before{display:none}
+}
+</style>
+<script>/* set theme before paint to avoid flash */
+(function(){try{var t=localStorage.getItem('asTheme');if(!t)t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<!-- Google Analytics 4 (optional). Paste your Measurement ID below (e.g. 'G-ABC123XYZ') to activate. -->
+<script>window.__GA_ID='G-XXXXXXXXXX';</script>
+<script>(function(){var id=window.__GA_ID;if(!id||id.indexOf('G-')!==0||/XXXX/.test(id))return;var s=document.createElement('script');s.async=1;s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(id);document.head.appendChild(s);window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments);};gtag('js',new Date());gtag('config',id);})();</script>
+</head>
+<body>
+<div class="aura"></div><div class="grid-bg"></div>
+
+<div class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span> Ana I. Stagg <span class="sub">· CV</span></div>
+    <div class="tb-actions">
+      <button class="mini-btn" onclick="window.print()"><i class="fas fa-download"></i><span class="lbl" data-i18n="btn_pdf">Download CV</span></button>
+      <button class="mini-btn icon-only" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark theme" title="Light / Dark"><i class="fas fa-moon" id="themeIcon"></i></button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="photo-wrap">
+      <div class="ring-orbit"></div>
+      <img class="photo" src="/anastagg-512.png" alt="Ana I. Stagg">
+    </div>
+    <div>
+      <div class="eyebrow"><b></b> <span data-i18n="eyebrow">Business Administration · Human Resources · Bilingual</span></div>
+      <h1>Ana I. Stagg</h1>
+      <div class="title-line" data-i18n="title_line">Business Administration &middot; Human Resources &middot; Organizational Psychology</div>
+      <p class="subtitle" data-i18n="subtitle">Bilingual, first-generation university graduate pursuing a career in Business Administration and Human Resources, committed to inclusive, high-performing workplaces in the Tampa Bay area.</p>
+      <div class="chips">
+        <span class="chip"><i class="fas fa-location-dot"></i> <span data-i18n="loc">Tampa, Florida</span></span>
+        <span class="chip"><i class="fas fa-phone"></i> <a href="tel:+18134389000">(813) 438-9000</a></span>
+        <span class="chip"><i class="fas fa-envelope"></i> <a href="mailto:ana.staggp@gmail.com">ana.staggp@gmail.com</a></span>
+      </div>
+      <div class="social-row">
+        <a class="sbtn primary" href="tel:+18134389000"><i class="fas fa-phone"></i> Call</a>
+        <a class="sbtn" href="mailto:ana.staggp@gmail.com"><i class="fas fa-envelope"></i> <span data-i18n="s_email">Email Me</span></a>
+      </div>
+      <div class="sharecard">
+        <img class="qrthumb" id="qrThumb" src="data:image/gif;base64,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" alt="QR code — Ana I. Stagg profile" width="96" height="96" role="button" tabindex="0" aria-label="Enlarge QR code">
+        <div class="sharemeta">
+          <div class="sharehint" data-i18n="sh_scan">Scan to open my profile &amp; save my contact</div>
+          <div class="sharebtns">
+            <button class="sbtn accent" id="shareBtn"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+            <a class="sbtn" href="/anastagg.vcf" download="Ana-Stagg.vcf" id="vcardBtn"><i class="fas fa-user-plus"></i> <span data-i18n="sh_save">Save contact</span></a>
+            <button class="sbtn" id="copyBtn"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+            <button class="sbtn" id="qrBtn"><i class="fas fa-qrcode"></i> <span data-i18n="sh_qr">Show QR</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- QR / share modal -->
+<div class="qrmodal" id="qrModal" role="dialog" aria-modal="true" aria-label="Share profile">
+  <div class="qrbox">
+    <button class="qrclose" id="qrClose" aria-label="Close">&times;</button>
+    <img class="qrbig" src="data:image/gif;base64,R0lGODdhAgECAYAAAAAAAP///ywAAAAAAgECAQAC/4yPqcvtD6OctNqLs968+w+G4kiW5omm6sq27gvHAUDX9o3n+s73tsPDBFdDhu+ITCqNyqbTCdwJpUQq84nN6q7arja6vRRTY4X3nOWi10dwbhpWlRPsenthz1vxe8rc9HegN3ijRpjnhgP3VhXHdzhoCMmWWCjWdxJoMBn5yFlX+XPpiKI582knidoVWrOo2MiouprmSevVSvNqKYeJcLs2CyDz6yv4tIsbYsoSyBwLK/wsjbxs7OJ83WKKlcxqTRqTHQ7DXW2RCi5LPL4uYw41GqwezW48TabdLY8mgl96T1szfecqpAPxL1NAci/gNfH2hR4vewwTAiIYDx0oif+iiJ2qKBDaRDMF/WxEGLIXSIabTtoa2WEftYwGMc4ThrPBwZcdP8jk+U0jy483geoyOkynS5JDIfbIVUuoOzpLqa6cWoyS0qb8kkD9aXLoTqZYidYj229rWQ1grRYNu9bsGag5Zz5UezZmSbdppebN+pYvzJZiqwL+u6Ht4blde6JlXFewY8lBkfrbu1iZ38HHtEbO7AovZMsc79hd0jj0aa+iJxOOO5byUZQ0H2uuWdgzaduqkSruDPvT15S4g+vmPVt20tVI6LbuxLy3B4d9dysfXvv6cz3Y4zrtjvozcMSvqyNf7tvweNa0jQcGnRw++vO/y3O2Twj8/QzUR5//Fy9ffXK5tl5+2z1VWnzKCdgOeQNW9t+BsQVIHFwOTligdBkqSGF28ul3G30VTtBfiNpFGJ0PzqUYVXpcbUYgfhCeSKOIHm4434Lqyahigjl2eBeAD3KII4MjAnmhcKkRyWOLKNao441NOlUidMUleRyUU0qIGY5U2gTJd1xKOeSPZYJomnUWsufiexFUGZGQcDqp5ZtdNokhBHMaeRWWbm4JY5o2/vnAnneeqWaUQSYqAZ+TiMninELieahFRYJ5CKRthscoopFiGmOhlSoZKJNlOoqYoWRaSmlujy5pZquLPvmhR55eySatdbJ1ZAkN7jfQi5vuJ6mPtt5aq0es/54KqobJ+tQrCb+GGqx3Y7rnp4OavrOQtSp5O2yoxbanrUgELnuZsINmS2y0oqqrUJ/Amuusnas2a+q24nRb7rf9hlsvoJ3yCu9F8lJLb77XsiuuuytSVBa6xsI67sD8OTzxusAgOCmyu3r8rMYb8zvyqK4yHDDIXi5c8sEt5/pxxbqGrOjLEdtsMrbtnryzzjgLeunPKJsqc8z4Cu0y0jw3vHTKRSOp9KctPzzzyh2rqjSRWTd3INVGN0301j2KLLTXNJ9ttcVij11z1F2/ffXRaP58rL/+fTx3rHXvzXfQs+LNMsJ9Dw6xeYCzSHjig+epsp6HKg75Njs2/u7fkf9fLnmWaDtOJuae+zr5sgJ+TrqPqM6LeOmqG0yo6I+vDvuX9xbs97+xb84s2HTibnbaVQu8JtOWU366ibzDrbbcsOYd9+ytu/u074cnfyPWQ+8ufaPKNw/u77nfrLv1MB/P/fW9c+4z0MC3Lbzh5FOffti0rw/1uUeLz3XH5xO/Pa7tj88/57kve/aKn96ih77rTctpORsg/QpoPuR5b3+/wR8DNUfABPYsgvqTIPtSVr67aU93+hph96YXPBD674KEoiD0Xjg/ypXwYuF7XQgFZ7H96XB50Kph5zz4vgkCEYKoW6HCUii/Fg7xgRrEoRA7WCq9RTFvriMhD6d4xR7/nrCJLHRg5ThoRCku8YtFRKIYzUhFGBpwhlw8Yg6zyAELsg2NY9whFN+Ixencz4bwsx0K/xhEEvUKgWQ0ELnKKEgfDq9aYDQj49hIQwOOLh9WjOIj4agXRXKqHP1z5OQgCclLAqSSYRRlGNMlST6yrpGJfNUhndhKBaoSdKT0JAYJtkUi/s94mVsjxT6JyTju8Yej9KUlgZlHLcqSmPEyZimRecqMAWyODQndLE24TFc+U5OIbCP2ZOVHbG5wY7JLZQylZs5cejONtyyk+mrXTXfGaZpnjCY6vci8wKnQlov8Xjh12UVy/pKbsPRm8d6Jy2yGaaDp/Cc7GxrPdeqT/zsMVWhEJ8oxeqLSoobcJkQLKs9v+vOiLpxaRceZv0w+j5l0vKcIAUrN+u0zlhc9aEwTg7EbIjSAbqpiPyeZTD0SNKC7nBETQyrHerZUmSjdaVIX6EayJXGTKnVoSPOp03kGUqZTBWBCSTpGmx5QPT6lKleVSlOQSjR1WcVeWb06UrVeVZpSHetQb/rWlNZ1o2BtKyExlFenXhOmaBVnUW96VMCq0azwlKsd7anRsEJzq4Qt6UrXxtK0zpSya+3jS8GJ2b7iEZCVlWw7QzvYzhp2s5rt6mFFitrMrjaqGYwkK8/61LXxFaQSa+tDORrb3bL2qKEc5k9jy9iv8jannv99rViRa9XHcnaufm0gdHs72ulaFriIjWtw6UpYmx2LkIxsanePaVJldXJfdy0sUl823vVysr2vLJutyJswu/YTvSWLby3Z+9Hhvje9hTOve6Vl3OjSExX+dSa36MtUpDX4ttWEsFC3NmEDZ9i5zMUtqQr82g0Tdae+zW959fo1bV44VfKlpTptC9fcyra03sPuUouZXJ4utL5aazGCz3nSEGMUqJDFnY1be2AYo9jIH14xZ/DL4ySXk8Kg5aVy6wXlCAv4yt2V8X6DqWPR3riZOfZyjmeYZSc7Nsgjdq2V1IxlH4/gyLPNaI2bXFUxhzfBGq6j6a5LYi132bpCthv/oL8M50ELsM+GPjRco5zU7eq5zo62s4vLTOg2S5nNlaYtly19Vkmvmb+dnvSAA+zmVG+a1KXeMqf1i+n/rrLV5xU0qBuraenmmdZ0PjV3Yc1oSvK61rf7oKdxfWzigjmxHfYckfe6bCXn2s/FDvWrQRntNFf72cZOcq+ZLetqs9WjVv12mAstbl/XNLUyzLac041sb7Pb3H9tNua4be2g7nradxQ3vuONbX0zGcil+3eVXU1vOUM1tFiNbJRFrekKOrrh0H64aVF960pTvNvCVTXEtRpv8WJ048IMN7h7OvGRq9ziJXap/Q5NcoCDd+AYXzhmY37wZFO3uRHvksZX/+5wW38c2Lz8+bgrLvSL/9rmugU60hNNdH4vmGSjTnq/kTxlUyv76lsXNpWlrXOD73zMqgXw1wMedKijXbszr+3aOd72ssu9wg7ed9jZrWvKmru4BM8u3FleZBqDWOpqv3bcxy74B9e95C8We97d7vdZo7vwrK76EyPf7kZ7/PA4B7u8aWfmYJM95It1G9fPbVTIV3fGOV/F40M/eawPufQSpnaKvRhYVYv95ranOe5p33PWe5cWr+fzklXPc5BTGr69ry3jch915e+ZwJf3/Wczn3yR/jZTzT/572MIe4Q3/fTh37zASQ/+8WO+/NFvf8cR4fRuK7a99e57XZ9r/P83O9+aJvf88zNNfNknVo9nUPx3XNS3f6f1bq+Gf/RHVvmnaIuHU5zQeSJ3ZwrYf1lnZcPXfgwmgADofn+GgQfYXx+4aLHHeDuWdvL3gA7YfwlHgfHnYRjEfkO3fcfXdReIcefXevVXcyDIdzsYeDMogd7HfadnhBwGehB4a0kYfJdVbgo3WDWodAb2f+n3glPIhD64dEDobhYmey5HeLd3hJjnhLo3SFsohS5IglGYhTNGhS03dScofm+IaGS4gVxYhtWHh0/4T3sXbW+XglqHeGzHh5LnagToeSc2hp8mYjqniII4gUUYiCbGeZcIeIdYiHSnYEi4iJboiaGIiUOpeGmEaINWN3iQ2H2T2ImkmIOJZ3aECIiiyIPYV2ePuGpm+ImaF4KUl4q5qImOCIq6KIYBeHRhqIvsN3+A1nmnWIu8d3/Md4y3uIpniDPF6HoyCIvTpYwtyIzaOHevaH21F40ImG+uaIt9SDdzWILTuI3Ip4NZg40e6I7hmI7jaF/l2I4rSI2e2I00mHL1uInimIAYBm8HiZAJqZALyZAN6ZAPCZERmTgFAAA7" alt="QR code — Ana I. Stagg profile">
+    <div class="qrurl">anastagg.com</div>
+    <div class="qrhint" data-i18n="sh_scan_big">Point a phone camera at the code to open Ana I. Stagg's profile.</div>
+    <div class="sharebtns" style="justify-content:center;margin-top:4px">
+      <button class="sbtn accent" id="shareBtn2"><i class="fas fa-share-nodes"></i> <span data-i18n="sh_share">Share</span></button>
+      <a class="sbtn" href="/anastagg.vcf" download="Ana-Stagg.vcf"><i class="fas fa-user-plus"></i> <span data-i18n="sh_save">Save contact</span></a>
+      <button class="sbtn" id="copyBtn2"><i class="fas fa-link"></i> <span data-i18n="sh_copy">Copy link</span></button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- VOICE ORB — AI narration of the profile -->
+<div class="voicebar">
+  <div class="voicecard">
+    <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="Play profile narration"></div>
+    <div class="vmeta">
+      <div class="vname"><span id="vName">Ana's AI Voice</span> <span class="vtag" id="vTag">EN · Ava</span></div>
+      <div class="vrole" id="vRole">A female AI voice that walks you through Ana's profile.</div>
+      <div class="vctrls">
+        <button class="vbtn primary" id="vPlay"><i class="fas fa-play"></i> <span id="vPlayLbl">Hear my profile</span></button>
+        <button class="vbtn" id="vPause" disabled><i class="fas fa-pause"></i> <span id="vPauseLbl">Pause</span></button>
+        <button class="vbtn" id="vStop" disabled><i class="fas fa-stop"></i> <span id="vStopLbl">Stop</span></button>
+      </div>
+      <div class="vstatus" id="vStatus">Tap the orb or press play — narrated in your selected language.</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="n">B.S.</div><div class="l" data-i18n="st1">Business Admin (HRM) & Psychology</div></div>
+    <div class="stat"><div class="n">5+</div><div class="l" data-i18n="st2">Years of Experience</div></div>
+    <div class="stat"><div class="n">13K+</div><div class="l" data-i18n="st3">Customer Calls Handled</div></div>
+    <div class="stat"><div class="n">EN/ES</div><div class="l" data-i18n="st4">Fully Bilingual</div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<section class="blk" id="profile">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">01</span><h2 data-i18n="p_h">Professional Profile</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="p_1"><strong>Ana I. Stagg</strong> is a first-generation university graduate dedicated to a career in <strong>Business Administration</strong>, leveraging bilingual proficiency to promote inclusive workplace environments and drive organizational growth.</p>
+    <p class="lead" data-i18n="p_2">She is committed to optimizing human behavior within professional settings and passionate about integrating diversity into leadership efforts, backed by hands-on experience in compliance, quality assurance, sales leadership and client-centered service.</p>
+  </div>
+</section>
+
+<!-- CORE COMPETENCIES -->
+<section class="blk" id="skills">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">02</span><h2 data-i18n="c_h">Core Competencies</h2><span class="rule"></span></div>
+    <p class="lead" data-i18n="c_1">The human-resources, business and interpersonal skills she brings to every team, grounded in a B.S. in Business Administration and Psychology.</p>
+    <div class="skillgrid">
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="c_l1">Human Resources &amp; Business</div>
+        <div class="tags">
+          <span class="tag">HR Principles, Practices &amp; Policies</span><span class="tag">Management Law &amp; Employee Relations</span><span class="tag">Compensation, Evaluation &amp; Benefits</span><span class="tag">Performance Management</span><span class="tag">Project Management</span><span class="tag">Regulatory Compliance</span><span class="tag">Conflict Resolution</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gv" data-i18n="c_l2">Psychology &amp; Behavior</div>
+        <div class="tags">
+          <span class="tag">Organizational Psychology</span><span class="tag">Industrial &amp; Organizational Behavior</span><span class="tag">Child &amp; Developmental Psychology</span><span class="tag">Behavioral Neuroscience</span><span class="tag">Emotional &amp; Social Intelligence</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gg" data-i18n="c_l3">Operations &amp; Quality</div>
+        <div class="tags">
+          <span class="tag">Quality Assurance &amp; Control</span><span class="tag">Document Review &amp; Reporting</span><span class="tag">Screening &amp; Investigation</span><span class="tag">PII / Compliance Review</span><span class="tag">Microsoft Office</span><span class="tag">Critical &amp; Analytical Thinking</span>
+        </div>
+      </div>
+      <div class="skcol">
+        <div class="tech-lab gc" data-i18n="c_l4">Interpersonal &amp; Languages</div>
+        <div class="tags">
+          <span class="tag">Leadership &amp; Communication</span><span class="tag">Team Collaboration</span><span class="tag">Adaptability</span><span class="tag">Attention to Detail</span><span class="tag">Bilingual EN / ES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="blk" id="experience">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">03</span><h2 data-i18n="x_h">Professional Experience</h2><span class="rule"></span></div>
+    <div class="hl-ribbon">
+      <div class="hl"><div class="n">5+</div><div class="l" data-i18n="x_hl1">Years of professional experience</div></div>
+      <div class="hl"><div class="n">13K+</div><div class="l" data-i18n="x_hl2">Customer calls handled, EN &amp; ES</div></div>
+      <div class="hl"><div class="n">0</div><div class="l" data-i18n="x_hl3">PII violations — full compliance record</div></div>
+      <div class="hl"><div class="n">10+</div><div class="l" data-i18n="x_hl4">Team members trained &amp; supervised</div></div>
+    </div>
+    <div class="timeline">
+
+      <div class="tl v">
+        <div class="when" data-i18n="x1_w">March 2022 – Present</div>
+        <h3 data-i18n="x1_t">Delivery Driver / Logistics</h3>
+        <div class="org" data-i18n="x1_o">Amazon Flex &middot; Tampa, FL</div>
+        <div class="scope"><span>Route Planning</span><span>Time Management</span><span>Attention to Detail</span><span>Quality Standards</span></div>
+        <ul>
+          <li data-i18n="x1_a">Ensure timely, high-quality deliveries with strong project-management discipline while mitigating theft and loss risks.</li>
+          <li data-i18n="x1_b">Apply analytical thinking to plan the quickest, safest routes, averaging 150 miles a day in congested areas with zero concessions or traffic violations.</li>
+          <li data-i18n="x1_c">Assess drop-off locations to place packages securely and prevent theft.</li>
+        </ul>
+        <div class="metrics"><div class="m"><b>9,500</b> <span data-i18n="x1_m1">packages delivered safely</span></div></div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x2_w">April 2021 – December 2022</div>
+        <h3 data-i18n="x2_t">Bilingual Licensed Health Insurance Agent</h3>
+        <div class="org" data-i18n="x2_o">Tranzact Insurance &middot; Tampa, FL</div>
+        <div class="scope"><span>Medicare Advantage</span><span>CMS Compliance</span><span>PII Handling</span><span>Client Care</span><span>Bilingual EN/ES</span></div>
+        <ul>
+          <li data-i18n="x2_a">Served the Hispanic community of the Tampa Bay area on a cross-functional bilingual team, expanding access to better healthcare benefits for Medicare beneficiaries.</li>
+          <li data-i18n="x2_b">Managed over 5,000 inbound and outbound calls, generating an average of 35 Medicare Advantage enrollments per month.</li>
+          <li data-i18n="x2_c">Provided client-centered care — building rapport, navigating complex situations and presenting over 100 healthcare options.</li>
+          <li data-i18n="x2_d">Maintained compliance through PII review, screening and document acquisition — nearly 180 days with zero PII violations or breaches.</li>
+          <li data-i18n="x2_e">Saved approximately 200 beneficiaries an average of $2,000 a year in healthcare costs, adhering to CMS program standards.</li>
+        </ul>
+        <div class="metrics"><div class="m"><b>~$400K</b> <span data-i18n="x2_m1">annual savings for clients</span></div><div class="m"><b>0</b> <span data-i18n="x2_m2">PII violations</span></div></div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x3_w">April 2019 – June 2020</div>
+        <h3 data-i18n="x3_t">Sales Supervisor</h3>
+        <div class="org" data-i18n="x3_o">Luxottica &middot; Tampa, FL</div>
+        <div class="scope"><span>Team Leadership</span><span>Inventory Management</span><span>Coaching</span><span>Performance Reviews</span></div>
+        <ul>
+          <li data-i18n="x3_a">Supervised operations, inventory and store presentation across 5+ locations, managing action items to align with company standards.</li>
+          <li data-i18n="x3_b">Tracked monthly sales goals and coached a team of 10, rating performance on a 1–10 scale on sales and customer-interaction quality.</li>
+          <li data-i18n="x3_c">Trained and developed over 10 employees on sales methods and interpersonal customer handling.</li>
+          <li data-i18n="x3_d">Consistently achieved the $90,000 monthly sales goal through effective team collaboration.</li>
+        </ul>
+        <div class="metrics"><div class="m"><b>$90K</b> <span data-i18n="x3_m1">monthly goal met</span></div><div class="m"><b>10</b> <span data-i18n="x3_m2">team members led</span></div></div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x4_w">December 2018 – April 2019</div>
+        <h3 data-i18n="x4_t">Bilingual Call Center Agent</h3>
+        <div class="org" data-i18n="x4_o">Epic Systems &middot; Tampa, FL</div>
+        <div class="scope"><span>Customer Service</span><span>Quality Assurance</span><span>Case Management</span><span>Bilingual EN/ES</span></div>
+        <ul>
+          <li data-i18n="x4_a">Managed over 8,000 inbound and outbound calls in English and Spanish, resolving inquiries — including class-action and identity-theft cases — with professionalism.</li>
+          <li data-i18n="x4_b">Navigated multiple computer applications and Microsoft Office tools simultaneously to optimize workflow and meet objectives.</li>
+          <li data-i18n="x4_c">Ensured 100% Process Quality Assurance while auditing files and records to meet service-level agreements.</li>
+        </ul>
+        <div class="metrics"><div class="m"><b>8,000+</b> <span data-i18n="x4_m1">calls handled</span></div><div class="m"><b>100%</b> <span data-i18n="x4_m2">process quality</span></div></div>
+      </div>
+
+      <div class="tl">
+        <div class="when" data-i18n="x5_w">October 2017 – April 2018</div>
+        <h3 data-i18n="x5_t">Medical Assistant Intern</h3>
+        <div class="org" data-i18n="x5_o">Tampa Bay Nephrology &middot; Tampa, FL</div>
+        <div class="scope"><span>Record-Keeping</span><span>Patient Coordination</span><span>Cross-functional</span></div>
+        <ul>
+          <li data-i18n="x5_a">Shadowed medical specialists, building adaptability and cross-functional skills for effective coordination.</li>
+          <li data-i18n="x5_b">Organized an average of 75 dialysis patient files daily and cultivated strong rapport with providers, staff and patients.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section class="blk" id="education">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">04</span><h2 data-i18n="e_h">Education</h2><span class="rule"></span></div>
+    <div class="edu">
+      <div class="educard">
+        <div class="deg" data-i18n="e_d1">Master's Degree</div>
+        <div class="fld" data-i18n="e_f1">Consumer Behavior</div>
+        <div class="sch" data-i18n="e_s1">Konrad Lorenz University &middot; Bogotá, Colombia</div>
+      </div>
+      <div class="educard">
+        <div class="deg" data-i18n="e_d2">Bachelor's Degree</div>
+        <div class="fld" data-i18n="e_f2">Social Communication</div>
+        <div class="sch" data-i18n="e_s2">Pontificia Universidad Javeriana &middot; Bogotá, Colombia</div>
+      </div>
+      <div class="educard">
+        <div class="deg" data-i18n="e_d3">Certificate</div>
+        <div class="fld" data-i18n="e_f3">Digital Marketing</div>
+        <div class="sch" data-i18n="e_s3">Universidad Pontificia Bolivariana &middot; Bogotá, Colombia</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AWARDS -->
+<section class="blk" id="awards">
+  <div class="wrap">
+    <div class="sec-head"><span class="k">05</span><h2 data-i18n="a_h">Academic Involvement</h2><span class="rule"></span></div>
+    <div class="awards">
+      <div class="award"><i class="fas fa-trophy"></i><div><div class="t" data-i18n="a_1t">Spanish National Honor Society</div><div class="s" data-i18n="a_1s">Promoted the study of Spanish language and Hispanic culture; earned honor-roll standing.</div></div></div>
+      <div class="award"><i class="fas fa-trophy"></i><div><div class="t" data-i18n="a_2t">Cultivating Leadership, Intentional Culture (CLIC)</div><div class="s" data-i18n="a_2s">Mentored incoming freshmen through their transition to a positive, welcoming environment.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RECRUITERS -->
+<section class="blk" id="recruiters">
+  <div class="wrap">
+    <div class="recruit">
+      <div class="grid">
+        <div>
+          <h2 data-i18n="r_h">For Recruiters &amp; Hiring Partners</h2>
+          <p data-i18n="r_1">A consultative sales leader who builds lasting relationships, wins large accounts and grows revenue &mdash; bilingual and experienced across the US and Latin America. Open to the right senior sales and marketing roles.</p>
+          <div class="eng">
+            <div class="e"><i class="fas fa-briefcase"></i> <span data-i18n="r_e1">HR / People Operations Coordinator</span></div>
+            <div class="e"><i class="fas fa-bullhorn"></i> <span data-i18n="r_e2">Business Administration &amp; Operations</span></div>
+            <div class="e"><i class="fas fa-chart-line"></i> <span data-i18n="r_e3">Business Administration &amp; Operations</span></div>
+            <div class="e"><i class="fas fa-handshake"></i> <span data-i18n="r_e4">Quality Assurance &amp; Compliance</span></div>
+          </div>
+        </div>
+        <div class="rbox">
+          <div class="avail"><b></b> <span data-i18n="r_avail">Open to new opportunities</span></div>
+          <div class="cta">
+            <a class="sbtn primary" href="tel:+18134389000"><i class="fas fa-phone"></i> <span data-i18n="r_li">Call me</span></a>
+            <a class="sbtn" href="mailto:ana.staggp@gmail.com?subject=Opportunity%20for%20Ana%20Gramowski"><i class="fas fa-envelope"></i> ana.staggp@gmail.com</a>
+            <a class="sbtn" href="tel:+18134389000"><i class="fas fa-phone"></i> (813) 438-9000</a>
+            <a class="sbtn accent" href="/anastagg.vcf" download="Ana-Stagg.vcf"><i class="fas fa-user-plus"></i> <span data-i18n="r_save">Save my contact</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>&copy; 2026 Ana I. Stagg &middot; <span data-i18n="foot_t">Business Administration · Human Resources · Bilingual</span></div>
+    <div class="links">
+      <a href="mailto:ana.staggp@gmail.com">Email</a>
+      <a href="tel:+18134389000">Call</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  en:{
+    meta_title:"Ana I. Stagg — Business Administration | Human Resources & Organizational Psychology",
+    meta_desc:"Ana I. Stagg — bilingual Business Administration and Human Resources professional in Tampa, FL. B.S. in Business Administration (HRM) & Psychology, with experience in compliance, quality assurance and client care.",
+    btn_pdf:"Download CV", eyebrow:"Business Administration · Human Resources · Bilingual",
+    title_line:"Business Administration &middot; Human Resources &middot; Organizational Psychology",
+    subtitle:"Bilingual, first-generation university graduate pursuing a career in Business Administration and Human Resources — committed to inclusive, high-performing workplaces in the Tampa Bay area.",
+    loc:"Tampa, FL", s_email:"Email Me",
+    sh_scan:"Scan to open my profile &amp; save my contact", sh_share:"Share", sh_copy:"Copy link", sh_qr:"Show QR", sh_save:"Save contact",
+    sh_scan_big:"Point a phone camera at the code to open Ana I. Stagg's profile.",
+    st1:"Business Admin (HRM) & Psychology", st2:"Years of Experience", st3:"Customer Calls Handled", st4:"Fully Bilingual",
+    p_h:"Professional Profile",
+    p_1:"<strong>Ana I. Stagg</strong> is a first-generation university graduate dedicated to a career in <strong>Business Administration</strong>, leveraging bilingual proficiency to promote inclusive workplace environments and drive organizational growth.",
+    p_2:"She is committed to optimizing human behavior within professional settings and passionate about integrating diversity into leadership efforts to better serve the organization and the community — backed by hands-on experience in compliance, quality assurance, sales leadership and client-centered service.",
+    c_h:"Core Competencies",
+    c_1:"The human-resources, business and interpersonal skills she brings to every team — grounded in a B.S. in Business Administration and Psychology.",
+    c_l1:"Human Resources & Business", c_l2:"Psychology & Behavior", c_l3:"Operations & Quality", c_l4:"Interpersonal & Languages",
+    x_h:"Professional Experience",
+    x_hl1:"Years of professional experience", x_hl2:"Customer calls handled, EN & ES", x_hl3:"PII violations — full compliance record", x_hl4:"Team members trained & supervised",
+    x1_w:"March 2022 – Present", x1_t:"Delivery Driver / Logistics", x1_o:"Amazon Flex &middot; Tampa, FL",
+    x1_a:"Ensure timely, high-quality deliveries with strong project-management discipline while mitigating theft and loss risks.",
+    x1_b:"Apply analytical thinking to plan the quickest, safest routes, averaging 150 miles a day in congested areas with zero concessions or traffic violations.",
+    x1_c:"Assess drop-off locations to place packages securely and prevent theft.",
+    x1_m1:"packages delivered safely",
+    x2_w:"April 2021 – December 2022", x2_t:"Bilingual Licensed Health Insurance Agent", x2_o:"Tranzact Insurance &middot; Tampa, FL",
+    x2_a:"Served the Hispanic community of the Tampa Bay area on a cross-functional bilingual team, expanding access to better healthcare benefits for Medicare beneficiaries.",
+    x2_b:"Managed over 5,000 inbound and outbound calls, generating an average of 35 Medicare Advantage enrollments per month.",
+    x2_c:"Provided client-centered care — building rapport, navigating complex situations and presenting over 100 healthcare options.",
+    x2_d:"Maintained compliance through PII review, screening and document acquisition — nearly 180 days with zero PII violations or breaches.",
+    x2_e:"Saved approximately 200 beneficiaries an average of $2,000 a year in healthcare costs, adhering to CMS program standards.",
+    x2_m1:"annual savings for clients", x2_m2:"PII violations",
+    x3_w:"April 2019 – June 2020", x3_t:"Sales Supervisor", x3_o:"Luxottica &middot; Tampa, FL",
+    x3_a:"Supervised operations, inventory and store presentation across 5+ locations, managing action items to align with company standards.",
+    x3_b:"Tracked monthly sales goals and coached a team of 10, rating performance on a 1–10 scale on sales and customer-interaction quality.",
+    x3_c:"Trained and developed over 10 employees on sales methods and interpersonal customer handling.",
+    x3_d:"Consistently achieved the $90,000 monthly sales goal through effective team collaboration.",
+    x3_m1:"monthly goal met", x3_m2:"team members led",
+    x4_w:"December 2018 – April 2019", x4_t:"Bilingual Call Center Agent", x4_o:"Epic Systems &middot; Tampa, FL",
+    x4_a:"Managed over 8,000 inbound and outbound calls in English and Spanish, resolving inquiries — including class-action and identity-theft cases — with professionalism.",
+    x4_b:"Navigated multiple computer applications and Microsoft Office tools simultaneously to optimize workflow and meet objectives.",
+    x4_c:"Ensured 100% Process Quality Assurance while auditing files and records to meet service-level agreements.",
+    x4_m1:"calls handled", x4_m2:"process quality",
+    x5_w:"October 2017 – April 2018", x5_t:"Medical Assistant Intern", x5_o:"Tampa Bay Nephrology &middot; Tampa, FL",
+    x5_a:"Shadowed medical specialists, building adaptability and cross-functional skills for effective coordination.",
+    x5_b:"Organized an average of 75 dialysis patient files daily and cultivated strong rapport with providers, staff and patients.",
+    e_h:"Education",
+    e_d1:"Bachelor of Science", e_f1:"Interdisciplinary Studies — Business Administration (HRM) & Psychology", e_s1:"Keiser University",
+    e_d2:"Associate of Arts", e_f2:"General Studies", e_s2:"Pasco Hernando State College",
+    e_d3:"High School Diploma", e_f3:"College Preparatory", e_s3:"Brooks Debartolo Collegiate High School",
+    a_h:"Academic Involvement",
+    a_1t:"Spanish National Honor Society", a_1s:"Promoted the study of Spanish language and Hispanic culture; earned honor-roll standing.",
+    a_2t:"Cultivating Leadership, Intentional Culture (CLIC)", a_2s:"Mentored incoming freshmen through their transition to a positive, welcoming environment.",
+    r_h:"For Recruiters & Hiring Partners",
+    r_1:"A bilingual, detail-oriented professional who blends business administration, human-resources knowledge and a strong compliance record with warm, client-centered service. Open to the right entry-to-mid HR, operations and customer-experience roles.",
+    r_e1:"HR / People Operations Coordinator", r_e2:"Business Administration & Operations", r_e3:"Bilingual Customer Success / Member Services", r_e4:"Quality Assurance & Compliance",
+    r_avail:"Open to new opportunities", r_li:"Call me", r_save:"Save my contact",
+    foot_t:"Business Administration · Human Resources · Bilingual"
+  },
+  es:{
+    meta_title:"Ana I. Stagg — Administración de Empresas | Recursos Humanos y Psicología Organizacional",
+    meta_desc:"Ana I. Stagg — profesional bilingüe de Administración de Empresas y Recursos Humanos en Tampa, FL. Licenciatura en Administración de Empresas (RRHH) y Psicología, con experiencia en cumplimiento, aseguramiento de calidad y atención al cliente.",
+    btn_pdf:"Descargar CV", eyebrow:"Administración de Empresas · Recursos Humanos · Bilingüe",
+    title_line:"Administración de Empresas &middot; Recursos Humanos &middot; Psicología Organizacional",
+    subtitle:"Graduada universitaria bilingüe y de primera generación que persigue una carrera en Administración de Empresas y Recursos Humanos — comprometida con entornos laborales inclusivos y de alto desempeño en el área de Tampa Bay.",
+    loc:"Tampa, FL", s_email:"Escríbeme",
+    sh_scan:"Escanea para abrir mi perfil y guardar mi contacto", sh_share:"Compartir", sh_copy:"Copiar enlace", sh_qr:"Ver QR", sh_save:"Guardar contacto",
+    sh_scan_big:"Apunta la cámara del teléfono al código para abrir el perfil de Ana I. Stagg.",
+    st1:"Admin. de Empresas (RRHH) y Psicología", st2:"Años de Experiencia", st3:"Llamadas de Clientes Atendidas", st4:"Totalmente Bilingüe",
+    p_h:"Perfil Profesional",
+    p_1:"<strong>Ana I. Stagg</strong> es una graduada universitaria de primera generación dedicada a una carrera en <strong>Administración de Empresas</strong>, aprovechando su dominio bilingüe para promover entornos laborales inclusivos e impulsar el crecimiento organizacional.",
+    p_2:"Está comprometida con optimizar el comportamiento humano en entornos profesionales y es apasionada por integrar la diversidad en el liderazgo para servir mejor a la organización y a la comunidad — respaldada por experiencia práctica en cumplimiento, aseguramiento de calidad, liderazgo de ventas y servicio centrado en el cliente.",
+    c_h:"Competencias Clave",
+    c_1:"Las habilidades de recursos humanos, negocios e interpersonales que aporta a cada equipo — con base en una Licenciatura en Administración de Empresas y Psicología.",
+    c_l1:"Recursos Humanos y Negocios", c_l2:"Psicología y Comportamiento", c_l3:"Operaciones y Calidad", c_l4:"Interpersonal e Idiomas",
+    x_h:"Experiencia Profesional",
+    x_hl1:"Años de experiencia profesional", x_hl2:"Llamadas atendidas, EN y ES", x_hl3:"Violaciones de PII — historial de cumplimiento", x_hl4:"Personas capacitadas y supervisadas",
+    x1_w:"Marzo 2022 – Actualidad", x1_t:"Conductora de Entregas / Logística", x1_o:"Amazon Flex &middot; Tampa, FL",
+    x1_a:"Garantiza entregas puntuales y de alta calidad con disciplina de gestión de proyectos, mitigando riesgos de robo y pérdida.",
+    x1_b:"Aplica pensamiento analítico para planificar las rutas más rápidas y seguras, promediando 150 millas al día en zonas congestionadas sin concesiones ni infracciones de tránsito.",
+    x1_c:"Evalúa los puntos de entrega para colocar los paquetes de forma segura y prevenir robos.",
+    x1_m1:"paquetes entregados con seguridad",
+    x2_w:"Abril 2021 – Diciembre 2022", x2_t:"Agente Bilingüe Licenciada de Seguros de Salud", x2_o:"Tranzact Insurance &middot; Tampa, FL",
+    x2_a:"Atendió a la comunidad hispana del área de Tampa Bay en un equipo bilingüe multifuncional, ampliando el acceso a mejores beneficios de salud para beneficiarios de Medicare.",
+    x2_b:"Gestionó más de 5,000 llamadas entrantes y salientes, generando un promedio de 35 inscripciones mensuales en planes Medicare Advantage.",
+    x2_c:"Brindó atención centrada en el cliente — creando confianza, navegando situaciones complejas y presentando más de 100 opciones de salud.",
+    x2_d:"Mantuvo el cumplimiento mediante revisión de PII, screening y adquisición de documentos — casi 180 días con cero violaciones de PII o brechas.",
+    x2_e:"Ahorró a aproximadamente 200 beneficiarios un promedio de $2,000 al año en costos de salud, cumpliendo los estándares del programa CMS.",
+    x2_m1:"ahorro anual para clientes", x2_m2:"violaciones de PII",
+    x3_w:"Abril 2019 – Junio 2020", x3_t:"Supervisora de Ventas", x3_o:"Luxottica &middot; Tampa, FL",
+    x3_a:"Supervisó operaciones, inventario y presentación de tienda en más de 5 ubicaciones, gestionando acciones para alinearse con los estándares de la empresa.",
+    x3_b:"Dio seguimiento a metas mensuales de ventas y formó a un equipo de 10, evaluando el desempeño en una escala de 1 a 10 en ventas y calidad de atención.",
+    x3_c:"Capacitó y desarrolló a más de 10 empleados en métodos de ventas y trato interpersonal con clientes.",
+    x3_d:"Alcanzó consistentemente la meta mensual de ventas de $90,000 mediante la colaboración en equipo.",
+    x3_m1:"meta mensual alcanzada", x3_m2:"personas lideradas",
+    x4_w:"Diciembre 2018 – Abril 2019", x4_t:"Agente Bilingüe de Call Center", x4_o:"Epic Systems &middot; Tampa, FL",
+    x4_a:"Gestionó más de 8,000 llamadas entrantes y salientes en inglés y español, resolviendo consultas — incluidas demandas colectivas y casos de robo de identidad — con profesionalismo.",
+    x4_b:"Navegó múltiples aplicaciones y herramientas de Microsoft Office simultáneamente para optimizar el flujo de trabajo y cumplir objetivos.",
+    x4_c:"Aseguró el 100% de Process Quality Assurance auditando archivos y registros para cumplir los acuerdos de nivel de servicio.",
+    x4_m1:"llamadas atendidas", x4_m2:"calidad de proceso",
+    x5_w:"Octubre 2017 – Abril 2018", x5_t:"Pasante de Asistente Médica", x5_o:"Tampa Bay Nephrology &middot; Tampa, FL",
+    x5_a:"Acompañó a especialistas médicos, desarrollando adaptabilidad y habilidades multifuncionales para una coordinación efectiva.",
+    x5_b:"Organizó un promedio de 75 expedientes de pacientes de diálisis al día y cultivó una fuerte relación con proveedores, personal y pacientes.",
+    e_h:"Educación",
+    e_d1:"Licenciatura", e_f1:"Estudios Interdisciplinarios — Administración de Empresas (RRHH) y Psicología", e_s1:"Keiser University",
+    e_d2:"Grado Asociado", e_f2:"Estudios Generales", e_s2:"Pasco Hernando State College",
+    e_d3:"Diploma de Bachillerato", e_f3:"Preparatoria", e_s3:"Brooks Debartolo Collegiate High School",
+    a_h:"Participación Académica",
+    a_1t:"Sociedad Nacional de Honor de Español", a_1s:"Promovió el estudio del idioma español y la cultura hispana; alcanzó el cuadro de honor.",
+    a_2t:"Cultivating Leadership, Intentional Culture (CLIC)", a_2s:"Orientó a estudiantes de primer año en su transición hacia un entorno positivo y acogedor.",
+    r_h:"Para Reclutadores y Empresas",
+    r_1:"Una profesional bilingüe y detallista que combina administración de empresas, conocimiento de recursos humanos y un sólido historial de cumplimiento con un servicio cálido y centrado en el cliente. Abierta a los roles adecuados de RRHH, operaciones y experiencia del cliente de nivel inicial a intermedio.",
+    r_e1:"Coordinadora de RRHH / People Operations", r_e2:"Administración de Empresas y Operaciones", r_e3:"Éxito del Cliente Bilingüe / Servicio a Miembros", r_e4:"Aseguramiento de Calidad y Cumplimiento",
+    r_avail:"Abierta a nuevas oportunidades", r_li:"Llámame", r_save:"Guardar mi contacto",
+    foot_t:"Administración de Empresas · Recursos Humanos · Bilingüe"
+  }
+};
+
+function setLang(lang){
+  if(!I18N[lang]) lang='en';
+  const d=I18N[lang];
+  document.documentElement.lang=lang;
+  try{localStorage.setItem('asCvLang',lang);}catch(e){}
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(d[k]!==undefined) el.innerHTML=d[k];
+  });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const k=el.getAttribute('data-i18n'), a=el.getAttribute('data-i18n-attr');
+    if(d[k]!==undefined) el.setAttribute(a,d[k].replace(/<[^>]+>/g,''));
+  });
+  if(d.meta_title) document.title=d.meta_title;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-lang')===lang));
+  try{ if(window.__voiceApplyLang) window.__voiceApplyLang(lang); }catch(e){}
+}
+(function(){
+  let lang;
+  try{lang=localStorage.getItem('asCvLang');}catch(e){}
+  if(!lang){ const nav=(navigator.language||'en').toLowerCase(); lang=nav.startsWith('es')?'es':'en'; }
+  setLang(lang);
+})();
+
+// ---- Light / Dark theme ----
+function setTheme(t){
+  if(t!=='light') t='dark';
+  document.documentElement.setAttribute('data-theme', t);
+  try{ localStorage.setItem('asTheme', t); }catch(e){}
+  var ic=document.getElementById('themeIcon');
+  if(ic) ic.className = (t==='light') ? 'fas fa-sun' : 'fas fa-moon';
+  var m=document.querySelector('meta[name="theme-color"]:not([media])');
+  if(m) m.setAttribute('content', t==='light' ? '#f5f7fb' : '#05070e');
+}
+function toggleTheme(){ var cur=document.documentElement.getAttribute('data-theme')||'dark'; setTheme(cur==='light'?'dark':'light'); }
+setTheme(document.documentElement.getAttribute('data-theme')||'dark');
+
+// ---- Female voice orb ----
+(function(){
+  var SEG = {
+    en: [
+      "Hi, I'm Ava, Ana's A-I voice assistant. Let me tell you about Ana Stagg.",
+      "Ana is a bilingual, first-generation university graduate pursuing a career in Business Administration and Human Resources, based in Tampa, Florida.",
+      "She earned a Bachelor of Science in Interdisciplinary Studies, with concentrations in Business Administration, H-R Management, and Psychology, from Keiser University.",
+      "Across roles at Tranzact Insurance, Luxottica, and Epic Systems, she has managed over thirteen thousand customer calls, supervised teams, and maintained a spotless compliance record with zero P-I-I violations.",
+      "She is recognized for quality assurance, regulatory compliance, and delivering client-centered service in both English and Spanish.",
+      "If you're building an inclusive, high-performing team, connect with Ana. Email her at ana dot stagg p at gmail dot com, or call her in Tampa. Thanks for listening."
+    ],
+    es: [
+      "Hola, soy Dalia, la asistente de voz de Ana. Déjame contarte sobre Ana Stagg.",
+      "Ana es una graduada universitaria bilingüe y de primera generación que persigue una carrera en Administración de Empresas y Recursos Humanos, en Tampa, Florida.",
+      "Obtuvo una Licenciatura en Estudios Interdisciplinarios, con concentraciones en Administración de Empresas, Gestión de Recursos Humanos y Psicología, en Keiser University.",
+      "En sus roles en Tranzact Insurance, Luxottica y Epic Systems, ha gestionado más de trece mil llamadas de clientes, supervisado equipos y mantenido un historial de cumplimiento impecable, con cero violaciones de datos personales.",
+      "Es reconocida por el aseguramiento de calidad, el cumplimiento regulatorio y por brindar un servicio centrado en el cliente, en inglés y en español.",
+      "Si estás formando un equipo inclusivo y de alto desempeño, conecta con Ana. Escríbele a ana punto stagg p arroba gmail punto com, o llámala en Tampa. Gracias por escuchar."
+    ]
+  };
+  var META = {
+    en: { voice:'ava', tag:'EN · Ava', name:"Ana's AI Voice", role:"A female AI voice that walks you through Ana's profile.",
+          play:'Hear my profile', pause:'Pause', resume:'Resume', stop:'Stop',
+          idle:'Tap the orb or press play — narrated in your selected language.',
+          loading:'Loading neural voice…', speaking:'Speaking', paused:'Paused.', done:'Done — tap play to hear it again.' },
+    es: { voice:'dalia', tag:'ES · Dalia', name:'Voz AI de Ana', role:'Una voz de IA femenina que te presenta el perfil de Ana.',
+          play:'Escuchar mi perfil', pause:'Pausar', resume:'Reanudar', stop:'Detener',
+          idle:'Toca el orbe o pulsa reproducir — narrado en tu idioma seleccionado.',
+          loading:'Cargando voz neural…', speaking:'Hablando', paused:'En pausa.', done:'Listo — pulsa reproducir para repetir.' }
+  };
+  var NEURAL_URL='/api/tts/edge';
+  var vlang = (document.documentElement.lang==='es')?'es':'en';
+  var orb=document.getElementById('vorb');
+  var elName=document.getElementById('vName'), elTag=document.getElementById('vTag'), elRole=document.getElementById('vRole');
+  var elStatus=document.getElementById('vStatus');
+  var bPlay=document.getElementById('vPlay'), bPause=document.getElementById('vPause'), bStop=document.getElementById('vStop');
+  var lPlay=document.getElementById('vPlayLbl'), lPause=document.getElementById('vPauseLbl'), lStop=document.getElementById('vStopLbl');
+  if(!orb) return;
+  var synth=window.speechSynthesis;
+  var queue=[], qi=0, runToken=0, paused=false, playing=false;
+  var mode=null, currentAudio=null, neuralOK=true, cache={}, bvoice=null;
+  function M(){ return META[vlang]; }
+  function pickBrowserVoice(){ if(!synth)return; var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0&&/female|ava|jenny|dalia|paloma|salome|elvira|zira|aria|samantha|mónica|monica|helena/i.test(v.name);});
+    bvoice=pref[0]||vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(vlang)===0;})[0]||vs[0]||null; }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+  function relabel(){ var m=M();
+    elName.textContent=m.name; elTag.textContent=m.tag; elRole.textContent=m.role;
+    lPlay.textContent=m.play; lStop.textContent=m.stop; lPause.textContent= paused ? m.resume : m.pause;
+    if(!playing) elStatus.textContent=m.idle; }
+  function applyLang(lang){ var nl=(lang==='es')?'es':'en'; if(nl===vlang){ relabel(); return; } stop(); vlang=nl; cache={}; pickBrowserVoice(); relabel(); }
+  window.__voiceApplyLang=applyLang;
+  function fetchNeural(idx){
+    var key=vlang+'|'+M().voice+'|'+idx;
+    if(cache[key]) return Promise.resolve(cache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SEG[vlang][idx],voice:M().voice})})
+      .then(function(r){ if(!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); cache[key]=u; return u; });
+  }
+  function speaking(){ elStatus.textContent=M().speaking+' ('+(qi+1)+'/'+queue.length+')'; }
+  function run(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    function advance(){ if(token!==runToken)return; qi++; run(token); }
+    if(neuralOK){
+      orb.classList.add('loading'); elStatus.textContent=M().loading;
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return; orb.classList.remove('loading');
+        mode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance; currentAudio.onerror=function(){ neuralOK=false; browserSpeak(idx,advance); };
+        orb.classList.add('speaking'); speaking();
+        currentAudio.play().catch(function(){ neuralOK=false; browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken)return; orb.classList.remove('loading'); neuralOK=false; browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    mode='browser'; var u=new SpeechSynthesisUtterance(SEG[vlang][idx].replace(/-/g,' '));
+    if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:(vlang==='es'?'es-MX':'en-US'); u.rate=1; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); speaking(); }; u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=SEG[vlang].map(function(_,i){return i;}); qi=0; paused=false; playing=true; runToken++;
+    bPause.disabled=false; bStop.disabled=false; bPlay.disabled=true; lPause.textContent=M().pause; run(runToken);
+  }
+  function finish(){
+    runToken++; playing=false; paused=false; orb.classList.remove('speaking','loading');
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    bPause.disabled=true; bStop.disabled=true; bPlay.disabled=false; elStatus.textContent=M().done;
+  }
+  function stop(){ if(playing) finish(); }
+  bPlay.addEventListener('click', start);
+  orb.addEventListener('click', function(){ if(!playing) start(); });
+  orb.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(!playing) start(); } });
+  bStop.addEventListener('click', finish);
+  bPause.addEventListener('click', function(){
+    if(!playing) return;
+    if(!paused){ paused=true; lPause.textContent=M().resume; orb.classList.remove('speaking'); elStatus.textContent=M().paused;
+      if(mode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; lPause.textContent=M().pause; orb.classList.add('speaking'); speaking();
+      if(mode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+  relabel();
+})();
+
+// ---- Tap-to-share + QR ----
+(function(){
+  var URL_='https://anastagg.com';
+  var toast=document.getElementById('toast'), tt;
+  function isEs(){ return document.documentElement.lang==='es'; }
+  function showToast(msg){ if(!toast)return; toast.textContent=msg; toast.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){toast.classList.remove('show');},2200); }
+  function shareData(){ return { title:'Ana I. Stagg — Business Administration and HR',
+    text: isEs()?'Ana I. Stagg — Administracion de Empresas y Recursos Humanos':'Ana I. Stagg — Business Administration and Human Resources', url:URL_ }; }
+  function doShare(){ if(navigator.share){ navigator.share(shareData()).then(function(){},function(){}); } else doCopy(); }
+  function legacyCopy(){ try{var ta=document.createElement('textarea');ta.value=URL_;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast(isEs()?'Enlace copiado':'Link copied');}catch(e){} }
+  function doCopy(){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(URL_).then(function(){showToast(isEs()?'Enlace copiado':'Link copied');},legacyCopy); } else legacyCopy(); }
+  var modal=document.getElementById('qrModal');
+  function openQR(){ if(modal) modal.classList.add('open'); }
+  function closeQR(){ if(modal) modal.classList.remove('open'); }
+  ['shareBtn','shareBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doShare);});
+  ['copyBtn','copyBtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',doCopy);});
+  var qb=document.getElementById('qrBtn'); if(qb) qb.addEventListener('click',openQR);
+  var qt=document.getElementById('qrThumb'); if(qt){ qt.addEventListener('click',openQR); qt.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openQR();}}); }
+  var qc=document.getElementById('qrClose'); if(qc) qc.addEventListener('click',closeQR);
+  if(modal) modal.addEventListener('click',function(e){ if(e.target===modal) closeQR(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeQR(); });
+})();
+
+// ---- PWA service worker (scoped to /anastagg only) ----
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/anastagg-sw.js', { scope: '/anastagg' }).catch(function(){});
+  });
+}
+
+// ---- First-party page-view beacon (no cookies, IP hashed server-side) ----
+(function(){try{
+  var body=JSON.stringify({page:'anastagg',path:location.pathname,ref:document.referrer||''});
+  if(navigator.sendBeacon){ navigator.sendBeacon('/api/cv/hit', new Blob([body],{type:'application/json'})); }
+  else{ fetch('/api/cv/hit',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){}); }
+}catch(e){}})();
+</script>
+</body>
+</html>
