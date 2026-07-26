@@ -193,6 +193,41 @@ router.get('/dashboard', async (req, res) => {
     opp_counts: oppCounts });
 });
 
+// Drill-down behind a KPI card: who/when/where.
+router.get('/dashboard/detail', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const metric = String(req.query.metric || 'views');
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
+  const all = req.query.scope === 'all';
+  const win = all ? '' : ` AND created_at > now() - (:days || ' days')::interval`;
+  const rep = all ? { page: p.slug } : { page: p.slug, days };
+  const q = (sql, r) => sequelize.query(sql, { replacements: r, type: QueryTypes.SELECT });
+
+  if (metric === 'opps') {
+    const rows = await q(`SELECT id, source, company, contact_name, contact_email, role_title, message, created_at
+      FROM cv_opportunities WHERE profile_id=:pid AND status='new' ORDER BY created_at DESC LIMIT 100`, { pid: p.id });
+    return res.json({ metric, rows });
+  }
+  if (metric === 'visitors') {
+    const rows = await q(`SELECT substr(ip_hash,1,8) AS visitor, COUNT(*)::int AS visits,
+        to_char(min(created_at),'YYYY-MM-DD HH24:MI') AS first_seen,
+        to_char(max(created_at),'YYYY-MM-DD HH24:MI') AS last_seen,
+        max(country) AS country,
+        (array_remove(array_agg(NULLIF(referrer,'') ORDER BY created_at), NULL))[1] AS first_ref
+      FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY max(created_at) DESC LIMIT 300`, rep);
+    return res.json({ metric, rows });
+  }
+  // views — raw hit log + summaries
+  const rows = await q(`SELECT to_char(created_at,'YYYY-MM-DD HH24:MI') AS when, substr(ip_hash,1,8) AS visitor,
+      COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, country, ua
+    FROM cv_page_hits WHERE page=:page${win} ORDER BY created_at DESC LIMIT 400`, rep);
+  const byRef = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, COUNT(*)::int AS views
+    FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY 2 DESC LIMIT 25`, rep);
+  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') AS day, COUNT(*)::int AS views
+    FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY 1 DESC LIMIT 90`, rep);
+  res.json({ metric, rows, by_ref: byRef, by_day: byDay });
+});
+
 // ================= OPPORTUNITIES =================
 router.get('/opportunities', async (req, res) => {
   const p = await auth(req, res); if (!p) return;

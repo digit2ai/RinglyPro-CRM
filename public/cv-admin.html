@@ -41,7 +41,25 @@ button{cursor:pointer;width:auto}
 .pane{display:none}.pane.on{display:block}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.15s}
+.kpi:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.dmodal{position:fixed;inset:0;z-index:3000;display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;background:rgba(3,5,12,.75);backdrop-filter:blur(5px)}
+.dmodal.on{display:flex}
+.dbox{background:var(--bg);border:1px solid var(--line2);border-radius:16px;max-width:760px;width:100%;margin:4vh auto;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);border-radius:16px 16px 0 0}
+.dhead b{font-size:16px}
+.dhead .x{background:none;border:none;color:var(--dim);font-size:24px;cursor:pointer;line-height:1}
+#dBody{padding:16px 20px}
+.dsum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.dsum span{font-size:12px;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.dsub{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px}
+.dtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.dtable td,.dtable th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.dtable th{color:var(--dim);font-size:11px;font-weight:600}
+.dtable td.mono{font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--dim)}
+.minibar{display:flex;align-items:center;gap:8px}
+.minibar .track{flex:1;height:6px;background:var(--card2);border-radius:4px;overflow:hidden}
+.minibar .fill{height:100%;background:var(--grad)}
 .kpi .n{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .kpi .l{color:var(--dim);font-size:12px;margin-top:5px}
 .chart{display:flex;align-items:flex-end;gap:4px;height:130px;overflow-x:auto;margin-top:8px}
@@ -97,11 +115,16 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     <!-- ANALYTICS -->
     <div class="pane on" id="overview">
       <div class="kpis">
-        <div class="kpi"><div class="n" id="kViews">–</div><div class="l">Profile views (30d)</div></div>
-        <div class="kpi"><div class="n" id="kVis">–</div><div class="l">Unique visitors (30d)</div></div>
-        <div class="kpi"><div class="n" id="kAll">–</div><div class="l">Views (all time)</div></div>
-        <div class="kpi"><div class="n" id="kOpp">–</div><div class="l">New opportunities</div></div>
+        <div class="kpi" onclick="openDetail('views','window','Profile views — last 30 days')"><div class="n" id="kViews">–</div><div class="l">Profile views (30d) <i class="fas fa-chevron-right" style="font-size:10px;opacity:.5"></i></div></div>
+        <div class="kpi" onclick="openDetail('visitors','window','Unique visitors — last 30 days')"><div class="n" id="kVis">–</div><div class="l">Unique visitors (30d) <i class="fas fa-chevron-right" style="font-size:10px;opacity:.5"></i></div></div>
+        <div class="kpi" onclick="openDetail('views','all','Views — all time')"><div class="n" id="kAll">–</div><div class="l">Views (all time) <i class="fas fa-chevron-right" style="font-size:10px;opacity:.5"></i></div></div>
+        <div class="kpi" onclick="openDetail('opps','window','New opportunities')"><div class="n" id="kOpp">–</div><div class="l">New opportunities <i class="fas fa-chevron-right" style="font-size:10px;opacity:.5"></i></div></div>
       </div>
+
+      <div class="dmodal" id="dModal"><div class="dbox">
+        <div class="dhead"><b id="dTitle"></b><button class="x" id="dClose">&times;</button></div>
+        <div id="dBody"><div class="muted">Loading…</div></div>
+      </div></div>
       <div class="card"><b>Views per day (30d)</b><div class="chart" id="chart"></div></div>
       <div class="card"><b>Where visitors come from</b><table id="refTable"><tbody></tbody></table></div>
     </div>
@@ -215,6 +238,41 @@ async function loadDashboard(){var d=await api('/dashboard?days=30');
   $('chart').innerHTML=(d.by_day||[]).length?d.by_day.map(function(x){var h=Math.round(x.views/max*105)+2;return '<div class="col" title="'+x.day+': '+x.views+'"><div class="bar2" style="height:'+h+'px"></div><div class="d">'+x.day.slice(5)+'</div></div>';}).join(''):'<div class="muted">No visits yet.</div>';
   var tb=$('refTable').querySelector('tbody');tb.innerHTML=(d.top_referrers||[]).length?d.top_referrers.map(function(x){return '<tr><td>'+esc(x.referrer)+'</td><td class="mono">'+x.views+'</td></tr>';}).join(''):'<tr><td class="muted">No referrers yet.</td></tr>';
 }
+
+// ---- KPI drill-down ----
+function device(ua){ua=ua||'';var d=/Mobile|Android|iPhone|iPad|iPod/i.test(ua)?'Mobile':'Desktop';var b=/Edg/i.test(ua)?'Edge':/Chrome/i.test(ua)?'Chrome':/Firefox/i.test(ua)?'Firefox':/Safari/i.test(ua)?'Safari':'';return d+(b?' · '+b:'');}
+function fmtRef(r){if(!r||r==='(direct)')return '<span class="muted">Direct / typed</span>';try{var u=new URL(r);return esc(u.hostname.replace(/^www\./,''))+'<span class="muted">'+esc(u.pathname.slice(0,30))+'</span>';}catch(e){return esc(r);}}
+async function openDetail(metric,scope,title){
+  $('dTitle').textContent=title; $('dBody').innerHTML='<div class="muted">Loading…</div>'; $('dModal').classList.add('on');
+  try{
+    var d=await api('/dashboard/detail?metric='+metric+'&scope='+(scope||'window')+'&days=30');
+    if(metric==='opps') renderOpps(d); else if(metric==='visitors') renderVisitors(d); else renderViews(d);
+  }catch(e){ $('dBody').innerHTML='<div class="msg err">'+esc(e.message)+'</div>'; }
+}
+function renderViews(d){
+  var rows=d.rows||[], byRef=d.by_ref||[], byDay=d.by_day||[];
+  var maxR=1;byRef.forEach(function(x){if(x.views>maxR)maxR=x.views;});
+  var maxD=1;byDay.forEach(function(x){if(x.views>maxD)maxD=x.views;});
+  var html='<div class="dsum"><span><b>'+rows.length+'</b> visits shown</span><span><b>'+byRef.length+'</b> sources</span></div>';
+  html+='<div class="dsub">Where they came from</div><table class="dtable"><tbody>'+byRef.map(function(x){return '<tr><td style="width:55%">'+fmtRef(x.referrer)+'</td><td style="width:15%" class="mono">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxR*100)+'%"></div></div></div></td></tr>';}).join('')+'</tbody></table>';
+  html+='<div class="dsub">When (per day)</div><table class="dtable"><tbody>'+byDay.map(function(x){return '<tr><td class="mono" style="width:30%">'+x.day+'</td><td class="mono" style="width:12%">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxD*100)+'%"></div></div></div></td></tr>';}).join('')+'</tbody></table>';
+  html+='<div class="dsub">Every visit</div><table class="dtable"><thead><tr><th>When</th><th>Source</th><th>Visitor</th><th>Device</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td class="mono">'+esc(r.when)+'</td><td>'+fmtRef(r.referrer)+'</td><td class="mono">'+esc(r.visitor)+(r.country?' · '+esc(r.country):'')+'</td><td>'+esc(device(r.ua))+'</td></tr>';}).join(''):'<tr><td colspan="4" class="muted">No visits yet.</td></tr>')+'</tbody></table>';
+  $('dBody').innerHTML=html;
+}
+function renderVisitors(d){
+  var rows=d.rows||[];
+  var html='<div class="dsum"><span><b>'+rows.length+'</b> unique visitors</span></div>';
+  html+='<table class="dtable"><thead><tr><th>Visitor</th><th>Visits</th><th>First seen</th><th>Last seen</th><th>First source</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td class="mono">'+esc(r.visitor)+(r.country?' · '+esc(r.country):'')+'</td><td class="mono">'+r.visits+'</td><td class="mono">'+esc(r.first_seen)+'</td><td class="mono">'+esc(r.last_seen)+'</td><td>'+fmtRef(r.first_ref)+'</td></tr>';}).join(''):'<tr><td colspan="5" class="muted">No visitors yet.</td></tr>')+'</tbody></table><div class="muted" style="margin-top:10px;font-size:11.5px">Visitor IDs are anonymized (salted hashes) — no IP addresses are stored.</div>';
+  $('dBody').innerHTML=html;
+}
+function renderOpps(d){
+  var rows=d.rows||[];
+  var html='<div class="dsum"><span><b>'+rows.length+'</b> new opportunities</span></div><table class="dtable"><thead><tr><th>When</th><th>Company / Contact</th><th>Role</th><th>Source</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){var who=esc(r.company||'—')+(r.contact_name?'<div class="muted">'+esc(r.contact_name)+'</div>':'')+(r.contact_email?'<div><a href="mailto:'+esc(r.contact_email)+'">'+esc(r.contact_email)+'</a></div>':'')+(r.message?'<div class="muted" style="margin-top:3px">'+esc(r.message)+'</div>':'');return '<tr><td class="mono">'+(r.created_at||'').slice(0,16).replace('T',' ')+'</td><td>'+who+'</td><td>'+esc(r.role_title||'—')+'</td><td><span class="badge">'+esc(r.source)+'</span></td></tr>';}).join(''):'<tr><td colspan="4" class="muted">No new opportunities. Share your submit-opportunity link with recruiters.</td></tr>')+'</tbody></table>';
+  $('dBody').innerHTML=html;
+}
+$('dClose').onclick=function(){$('dModal').classList.remove('on');};
+$('dModal').addEventListener('click',function(e){if(e.target===$('dModal'))$('dModal').classList.remove('on');});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')$('dModal').classList.remove('on');});
 
 // ---- opportunities ----
 var STATUSES=['new','contacted','interviewing','offer','closed','declined'];
