@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit an Opportunity</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg:#05070e;--card:rgba(255,255,255,.03);--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.18);--txt:#e8ecf4;--dim:#9aa4b8;--cyan:#22d3ee;--violet:#8b5cf6;--green:#84cc16;--grad:linear-gradient(135deg,#22d3ee,#8b5cf6)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;min-height:100vh;
+  background-image:radial-gradient(60% 45% at 80% 4%,rgba(139,92,246,.16),transparent 60%),radial-gradient(55% 40% at 8% 14%,rgba(34,211,238,.13),transparent 60%)}
+.wrap{max-width:520px;margin:0 auto;padding:40px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--green);border:1px solid rgba(132,204,22,.4);background:rgba(132,204,22,.08);border-radius:20px;padding:5px 12px;margin-bottom:16px}
+.badge b{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+h1{font-size:24px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--dim);font-size:14px;margin:6px 0 20px}
+label{font-size:12px;color:var(--dim);display:block;margin:12px 0 5px}
+input,textarea{font:inherit;background:#0f1424;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14px;width:100%}
+textarea{resize:vertical;min-height:90px}
+.req{color:var(--cyan)}
+.btn{background:var(--grad);color:#04121a;font-weight:700;border:none;padding:12px 18px;border-radius:12px;font-size:15px;cursor:pointer;width:100%;margin-top:18px}
+.msg{font-size:13.5px;margin-top:12px}.err{color:#f87171}
+.done{text-align:center;padding:20px 0}
+.done .ic{width:60px;height:60px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#04121a;font-size:26px;margin:0 auto 14px}
+.foot{text-align:center;color:var(--dim);font-size:12px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="formCard">
+    <div class="badge"><b></b> <span id="availTxt">Open to opportunities</span></div>
+    <h1>Submit an opportunity<span id="toName"></span></h1>
+    <p class="sub" id="sub">Share a role or express interest. It goes straight to their private inbox — you'll hear back directly.</p>
+    <label>Your company / firm <span class="req">*</span></label><input id="company" placeholder="Company or staffing firm">
+    <label>Your name <span class="req">*</span></label><input id="cname" placeholder="Full name">
+    <label>Your email <span class="req">*</span></label><input id="cemail" type="email" placeholder="name@company.com">
+    <label>Role / title</label><input id="role" placeholder="e.g. Senior Analyst, Custody Operations">
+    <label>Message</label><textarea id="msg" placeholder="Role details, comp range, location, or a note"></textarea>
+    <button class="btn" id="send">Send opportunity</button>
+    <div class="msg err" id="err"></div>
+  </div>
+  <div class="card done" id="doneCard" style="display:none">
+    <div class="ic"><i class="fas fa-check"></i></div>
+    <h1>Sent — thank you</h1>
+    <p class="sub" id="doneSub">Your message was delivered. Expect a direct reply by email.</p>
+  </div>
+  <div class="foot">Powered by the CV Talent Engine</div>
+</div>
+<script>
+var slug=(location.search.match(/[?&]to=([a-z0-9_]+)/i)||[])[1]||'';
+function $(id){return document.getElementById(id);}
+if(slug){fetch('/api/cv-engine/candidate/'+slug).then(function(r){return r.json();}).then(function(d){if(d&&d.name){$('toName').textContent=' to '+d.name;$('sub').textContent='Share a role or express interest in '+d.name+' ('+ (d.headline||'') +'). It goes straight to their private inbox.';if(d.availability==='closed'){$('availTxt').textContent='Not actively looking';}}}).catch(function(){});}
+$('send').onclick=async function(){$('err').textContent='';
+  var body={to:slug,company:$('company').value.trim(),contact_name:$('cname').value.trim(),contact_email:$('cemail').value.trim(),role_title:$('role').value.trim(),message:$('msg').value.trim()};
+  if(!body.company||!body.contact_name||!/.+@.+\..+/.test(body.contact_email)){$('err').textContent='Please fill company, name and a valid email.';return;}
+  $('send').textContent='Sending…';$('send').disabled=true;
+  try{var r=await fetch('/api/cv-engine/opportunities/inbound',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var d=await r.json();if(!r.ok)throw new Error(d.error||'error');$('formCard').style.display='none';$('doneCard').style.display='block';}
+  catch(e){$('err').textContent='Could not send: '+e.message;$('send').textContent='Send opportunity';$('send').disabled=false;}
+};
+</script>
+</body>
+</html>

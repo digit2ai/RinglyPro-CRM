@@ -647,6 +647,14 @@ app.get(['/anastagg', '/anastagg/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'anastagg.html'));
 });
 
+// CV Talent Engine consoles (clean URLs, work on every host incl. the custom domains).
+app.get(['/cv-admin', '/cv-admin/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'cv-admin.html'));
+});
+app.get(['/cv-opportunity', '/cv-opportunity/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'cv-opportunity.html'));
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
@@ -1012,6 +1020,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
+app.use('/api/cv-engine', require('./routes/cv-engine')); // Multi-tenant CV Talent Engine (auth, analytics, opportunities, AI broadcast)
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/vision2ai/api', require('./routes/vision2ai')); // Vision2Ai booking calendar (web form + future Lite voice agent)
 // app.use('/api/appointment', appointmentRoutes); // REMOVED: Was loading duplicate model, not router

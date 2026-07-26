@@ -536,7 +536,8 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
         <div class="rbox">
           <div class="avail"><b></b> <span data-i18n="r_avail">Open to new opportunities</span></div>
           <div class="cta">
-            <a class="sbtn primary" href="https://www.linkedin.com/in/anastagg" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> <span data-i18n="r_li">Connect on LinkedIn</span></a>
+            
+            <a class="sbtn accent" href="/cv-opportunity?to=anastagg"><i class="fas fa-briefcase"></i> <span data-i18n="r_opp">Submit an opportunity</span></a><a class="sbtn primary" href="https://www.linkedin.com/in/anastagg" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> <span data-i18n="r_li">Connect on LinkedIn</span></a>
             <a class="sbtn" href="mailto:ana.staggp@gmail.com?subject=Opportunity%20for%20Ana%20Gramowski"><i class="fas fa-envelope"></i> ana.staggp@gmail.com</a>
             <a class="sbtn" href="tel:+18134389000"><i class="fas fa-phone"></i> (813) 438-9000</a>
             <a class="sbtn accent" href="/anastagg.vcf" download="Ana-Stagg.vcf"><i class="fas fa-user-plus"></i> <span data-i18n="r_save">Save my contact</span></a>
@@ -550,9 +551,11 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 <footer>
   <div class="wrap foot">
     <div>&copy; 2026 Ana I. Stagg &middot; <span data-i18n="foot_t">Business Administration · Human Resources · Bilingual</span></div>
-    $1<a href="https://www.linkedin.com/in/anastagg" target="_blank" rel="noopener">LinkedIn</a>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/anastagg" target="_blank" rel="noopener">LinkedIn</a>
       <a href="mailto:ana.staggp@gmail.com">Email</a>
       <a href="tel:+18134389000">Call</a>
+      <a href="/cv-admin?p=anastagg" title="Profile owner login">Admin</a>
     </div>
   </div>
 </footer>
@@ -617,7 +620,7 @@ const I18N = {
     r_h:"For Recruiters & Hiring Partners",
     r_1:"A bilingual financial-operations analyst with a proven record in custody billing, reconciliation, controls and compliance at a top-tier global bank. Open to Securities & Derivatives, custody / asset-servicing, billing and financial-operations roles.",
     r_e1:"Securities & Derivatives / Custody Billing Analyst", r_e2:"Financial Operations & Reconciliation", r_e3:"Billing QA, Controls & Compliance", r_e4:"Bilingual Institutional Client Servicing",
-    r_avail:"Open to new opportunities", r_li:"Connect on LinkedIn", r_save:"Save my contact",
+    r_avail:"Open to new opportunities", r_li:"Connect on LinkedIn", r_save:"Save my contact", r_opp:"Submit an opportunity",
     foot_t:"Securities & Derivatives Analyst · Custody Billing & Financial Operations"
   },
   es:{
@@ -678,7 +681,7 @@ const I18N = {
     r_h:"Para Reclutadores y Empresas",
     r_1:"Una analista bilingüe de operaciones financieras con un historial comprobado en facturación de custodia, conciliación, controles y cumplimiento en un banco global de primer nivel. Abierta a roles de Valores y Derivados, custodia / asset servicing, facturación y operaciones financieras.",
     r_e1:"Analista de Valores y Derivados / Facturación de Custodia", r_e2:"Operaciones Financieras y Conciliación", r_e3:"QA de Facturación, Controles y Cumplimiento", r_e4:"Servicio Bilingüe a Clientes Institucionales",
-    r_avail:"Abierta a nuevas oportunidades", r_li:"Conectar en LinkedIn", r_save:"Guardar mi contacto",
+    r_avail:"Abierta a nuevas oportunidades", r_li:"Conectar en LinkedIn", r_save:"Guardar mi contacto", r_opp:"Enviar una oportunidad",
     foot_t:"Analista de Valores y Derivados · Facturación de Custodia y Operaciones Financieras"
   }
 };

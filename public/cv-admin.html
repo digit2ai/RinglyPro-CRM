@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Talent Console — CV Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg:#05070e;--card:rgba(255,255,255,.03);--card2:rgba(255,255,255,.05);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.16);--txt:#e8ecf4;--dim:#9aa4b8;--cyan:#22d3ee;--violet:#8b5cf6;--green:#84cc16;--amber:#f59e0b;--red:#f87171;--grad:linear-gradient(135deg,#22d3ee,#8b5cf6)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;
+  background-image:radial-gradient(60% 45% at 80% 3%,rgba(139,92,246,.14),transparent 60%),radial-gradient(55% 40% at 8% 12%,rgba(34,211,238,.12),transparent 60%);min-height:100vh}
+a{color:var(--cyan);text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:26px 18px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.mono{font-family:'JetBrains Mono',monospace}
+input,textarea,select,button{font:inherit;background:#0f1424;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;width:100%}
+textarea{resize:vertical;min-height:80px}
+button{cursor:pointer;width:auto}
+.btn{background:var(--grad);color:#04121a;font-weight:700;border:none;padding:10px 16px;border-radius:10px}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line2)}
+.btn.sm{padding:7px 11px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.muted{color:var(--dim);font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:620px){.grid2{grid-template-columns:1fr}}
+/* login */
+#login{max-width:400px;margin:8vh auto}
+.brandmark{width:44px;height:44px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#04121a;font-weight:800;margin-bottom:14px}
+/* app */
+#app{display:none}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.who{display:flex;align-items:center;gap:12px}
+.who .av{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#04121a;font-weight:800}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{background:none;border:1px solid transparent;color:var(--dim);padding:8px 14px;border-radius:10px;font-weight:600}
+.tab.on{background:var(--card2);color:var(--txt);border-color:var(--line)}
+.pane{display:none}.pane.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.kpi .n{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.kpi .l{color:var(--dim);font-size:12px;margin-top:5px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:130px;overflow-x:auto;margin-top:8px}
+.col{flex:1;min-width:9px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.bar2{width:100%;background:var(--grad);border-radius:4px 4px 0 0;min-height:2px}
+.col .d{font-size:8px;color:var(--dim);white-space:nowrap;transform:rotate(-60deg);height:26px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td,th{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:12px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);white-space:nowrap}
+.b-new{color:var(--cyan);border-color:var(--cyan)}.b-contacted{color:var(--amber);border-color:var(--amber)}
+.b-interviewing{color:var(--violet);border-color:var(--violet)}.b-offer{color:var(--green);border-color:var(--green)}
+.b-closed,.b-declined{color:var(--dim)}
+.lbl{font-size:12px;color:var(--dim);margin:10px 0 5px;display:block}
+.draftbox{white-space:pre-wrap;background:#0b0f1a;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin-top:8px}
+.pill{display:inline-block;font-size:11px;color:var(--amber);border:1px solid var(--amber);border-radius:20px;padding:2px 8px}
+.msg{font-size:13px;margin-top:8px}.err{color:var(--red)}.ok{color:var(--green)}
+.notice{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#f6d08a;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login" class="card">
+    <div class="brandmark"><i class="fas fa-satellite-dish"></i></div>
+    <h1>Talent Console</h1>
+    <p class="muted" style="margin:6px 0 16px">Sign in to manage your profile's analytics, broadcasts and opportunities.</p>
+    <label class="lbl">Profile ID or email</label>
+    <input id="lid" placeholder="e.g. manuelstagg or your email" autocomplete="username">
+    <label class="lbl">Password</label>
+    <input id="lpw" type="password" placeholder="Password" autocomplete="current-password">
+    <div style="margin-top:14px"><button class="btn" id="loginBtn">Sign in</button></div>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app">
+    <div class="top">
+      <div class="who"><div class="av" id="avatar">?</div><div><div style="font-weight:700" id="pName"></div><div class="muted" id="pHead"></div></div></div>
+      <div class="row"><a class="btn ghost sm" id="viewProfile" target="_blank"><i class="fas fa-external-link-alt"></i> View public CV</a><button class="btn ghost sm" id="logoutBtn">Sign out</button></div>
+    </div>
+
+    <div class="notice"><b>How broadcasting works (honest by design):</b> the engine drafts personalized outreach and share-ready posts for you to review and send from your own email/LinkedIn — nothing is auto-blasted (protects your deliverability and reputation). Recruiters reach you via your public "Submit an opportunity" link, and every response lands in your inbox here. Fully-automated sending and live job-board scraping are Phase 2 (need an email-domain and a job-board API key).</div>
+
+    <div class="tabs">
+      <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
+      <button class="tab" data-pane="opps"><i class="fas fa-inbox"></i> Opportunities <span id="oppBadge" class="badge b-new" style="display:none"></span></button>
+      <button class="tab" data-pane="broadcast"><i class="fas fa-satellite-dish"></i> Broadcast</button>
+      <button class="tab" data-pane="settings"><i class="fas fa-gear"></i> Settings</button>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="pane on" id="overview">
+      <div class="kpis">
+        <div class="kpi"><div class="n" id="kViews">–</div><div class="l">Profile views (30d)</div></div>
+        <div class="kpi"><div class="n" id="kVis">–</div><div class="l">Unique visitors (30d)</div></div>
+        <div class="kpi"><div class="n" id="kAll">–</div><div class="l">Views (all time)</div></div>
+        <div class="kpi"><div class="n" id="kOpp">–</div><div class="l">New opportunities</div></div>
+      </div>
+      <div class="card"><b>Views per day (30d)</b><div class="chart" id="chart"></div></div>
+      <div class="card"><b>Where visitors come from</b><table id="refTable"><tbody></tbody></table></div>
+    </div>
+
+    <!-- OPPORTUNITIES -->
+    <div class="pane" id="opps">
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><b>Opportunities inbox</b>
+          <a class="btn ghost sm" id="shareOppLink"><i class="fas fa-link"></i> Copy "submit opportunity" link</a></div>
+        <p class="muted" style="margin-top:6px">Recruiters and companies submit here; responses to your outreach also live here. Update status as you progress.</p>
+        <table id="oppTable"><thead><tr><th>When</th><th>Company / Contact</th><th>Role</th><th>Status</th><th>Notes</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <b>Add an opportunity manually</b>
+        <div class="grid2" style="margin-top:10px">
+          <input id="mCo" placeholder="Company"><input id="mRole" placeholder="Role title">
+          <input id="mName" placeholder="Contact name"><input id="mEmail" placeholder="Contact email">
+        </div>
+        <textarea id="mMsg" placeholder="Notes / details" style="margin-top:10px"></textarea>
+        <div style="margin-top:10px"><button class="btn sm" id="addOpp">Add</button> <span class="msg" id="addOppMsg"></span></div>
+      </div>
+    </div>
+
+    <!-- BROADCAST -->
+    <div class="pane" id="broadcast">
+      <div class="card">
+        <b><i class="fas fa-bullhorn"></i> Draft outreach to a recruiter or staffing firm</b>
+        <p class="muted" style="margin-top:6px">The AI writes a tailored intro from your profile. Review, edit, then send from your email or copy it.</p>
+        <div class="grid2" style="margin-top:10px">
+          <select id="bType"><option>Staffing agency</option><option>Company / hiring manager</option><option>Recruiter</option><option>Job board / community</option></select>
+          <input id="bName" placeholder="Target name (optional, e.g. Robert Half)">
+        </div>
+        <textarea id="bNotes" placeholder="Optional: specific role, team, or angle to emphasize" style="margin-top:10px"></textarea>
+        <div style="margin-top:10px"><button class="btn" id="genOutreach"><i class="fas fa-wand-magic-sparkles"></i> Generate draft</button> <span class="msg" id="outMsg"></span></div>
+        <div id="draftWrap" style="display:none;margin-top:12px">
+          <div class="row" style="justify-content:space-between"><b>Draft</b><span id="draftSim"></span></div>
+          <div class="draftbox" id="draftText"></div>
+          <div class="row" style="margin-top:10px"><button class="btn sm" id="copyDraft"><i class="fas fa-copy"></i> Copy</button><a class="btn sm ghost" id="mailDraft"><i class="fas fa-envelope"></i> Open in email</a><button class="btn sm ghost" id="markSent">Mark as sent</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <b><i class="fas fa-share-nodes"></i> Availability announcement (LinkedIn / X)</b>
+        <div style="margin-top:10px"><button class="btn sm" id="genKit">Generate posts</button> <span class="msg" id="kitMsg"></span></div>
+        <div id="kitWrap" style="display:none;margin-top:10px">
+          <span class="lbl">LinkedIn</span><div class="draftbox" id="kitLi"></div><button class="btn sm ghost" onclick="copyText('kitLi')" style="margin-top:6px">Copy</button>
+          <span class="lbl" style="margin-top:12px">X / Twitter</span><div class="draftbox" id="kitX"></div><button class="btn sm ghost" onclick="copyText('kitX')" style="margin-top:6px">Copy</button>
+        </div>
+      </div>
+      <div class="card">
+        <b><i class="fas fa-bullseye"></i> Match a job — paste a description</b>
+        <textarea id="jd" placeholder="Paste a job posting to get a fit score and a tailored pitch for THAT role" style="margin-top:10px;min-height:120px"></textarea>
+        <div style="margin-top:10px"><button class="btn sm" id="matchBtn">Analyze fit</button> <span class="msg" id="matchMsg"></span></div>
+        <div id="matchWrap" style="display:none;margin-top:12px" class="draftbox"></div>
+      </div>
+      <div class="card">
+        <b>Recent outreach</b>
+        <table id="outTable"><thead><tr><th>When</th><th>Target</th><th>Subject</th><th>Status</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="pane" id="settings">
+      <div class="card">
+        <b>Profile for the AI agent</b>
+        <p class="muted" style="margin-top:6px">Steers the outreach and match tools. Keep it accurate.</p>
+        <span class="lbl">Availability</span>
+        <select id="sAvail"><option value="open">Open to opportunities</option><option value="closed">Not currently looking</option></select>
+        <span class="lbl">Target roles</span><textarea id="sRoles"></textarea>
+        <span class="lbl">Summary</span><textarea id="sSummary"></textarea>
+        <div style="margin-top:10px"><button class="btn sm" id="saveProfile">Save</button> <span class="msg" id="profMsg"></span></div>
+      </div>
+      <div class="card">
+        <b>Change password</b>
+        <div class="grid2" style="margin-top:10px"><input id="cpCur" type="password" placeholder="Current password"><input id="cpNew" type="password" placeholder="New password (8+ chars)"></div>
+        <div style="margin-top:10px"><button class="btn sm" id="cpBtn">Update password</button> <span class="msg" id="cpMsg"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API='/api/cv-engine';
+var me=null;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+async function api(path,opts){opts=opts||{};opts.credentials='include';if(opts.body&&typeof opts.body!=='string'){opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});opts.body=JSON.stringify(opts.body);}var r=await fetch(API+path,opts);var d=await r.json().catch(function(){return{};});if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;}
+
+// ---- login ----
+$('loginBtn').onclick=async function(){$('loginMsg').textContent='';try{await api('/login',{method:'POST',body:{id:$('lid').value.trim(),password:$('lpw').value}});await boot();}catch(e){$('loginMsg').textContent=e.message;}};
+$('lpw').addEventListener('keydown',function(e){if(e.key==='Enter')$('loginBtn').click();});
+$('logoutBtn').onclick=async function(){await api('/logout',{method:'POST'}).catch(function(){});location.reload();};
+
+function initials(n){return (n||'?').split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();}
+
+async function boot(){
+  try{ var d=await api('/me'); me=d.profile; }catch(e){ $('login').style.display='block'; $('app').style.display='none'; return; }
+  $('login').style.display='none'; $('app').style.display='block';
+  $('pName').textContent=me.name; $('pHead').textContent=me.headline; $('avatar').textContent=initials(me.name);
+  $('viewProfile').href=me.site||('/'+me.slug);
+  $('sAvail').value=me.availability||'open'; $('sRoles').value=me.target_roles||''; $('sSummary').value=me.summary||'';
+  loadDashboard(); loadOpps(); loadOutreach();
+}
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});t.classList.add('on');$(t.dataset.pane).classList.add('on');};});
+
+// ---- analytics ----
+async function loadDashboard(){var d=await api('/dashboard?days=30');
+  $('kViews').textContent=d.window.views; $('kVis').textContent=d.window.visitors; $('kAll').textContent=d.all_time.views; $('kOpp').textContent=d.opp_counts.new||0;
+  var max=1;(d.by_day||[]).forEach(function(x){if(x.views>max)max=x.views;});
+  $('chart').innerHTML=(d.by_day||[]).length?d.by_day.map(function(x){var h=Math.round(x.views/max*105)+2;return '<div class="col" title="'+x.day+': '+x.views+'"><div class="bar2" style="height:'+h+'px"></div><div class="d">'+x.day.slice(5)+'</div></div>';}).join(''):'<div class="muted">No visits yet.</div>';
+  var tb=$('refTable').querySelector('tbody');tb.innerHTML=(d.top_referrers||[]).length?d.top_referrers.map(function(x){return '<tr><td>'+esc(x.referrer)+'</td><td class="mono">'+x.views+'</td></tr>';}).join(''):'<tr><td class="muted">No referrers yet.</td></tr>';
+}
+
+// ---- opportunities ----
+var STATUSES=['new','contacted','interviewing','offer','closed','declined'];
+async function loadOpps(){var d=await api('/opportunities');var rows=d.opportunities||[];
+  var n=rows.filter(function(r){return r.status==='new';}).length;
+  if(n){$('oppBadge').style.display='';$('oppBadge').textContent=n+' new';}else{$('oppBadge').style.display='none';}
+  var tb=$('oppTable').querySelector('tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){
+    var sel='<select data-id="'+r.id+'" class="oppStatus" style="padding:5px 8px;font-size:12px;width:auto">'+STATUSES.map(function(s){return '<option'+(s===r.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
+    var who=esc(r.company||'—')+(r.contact_name?'<div class="muted">'+esc(r.contact_name)+'</div>':'')+(r.contact_email?'<div class="muted"><a href="mailto:'+esc(r.contact_email)+'">'+esc(r.contact_email)+'</a></div>':'');
+    var msg=(r.message?'<div class="muted" style="margin-bottom:5px">'+esc(r.message)+'</div>':'')+'<input class="oppNote" data-id="'+r.id+'" value="'+esc(r.notes||'')+'" placeholder="notes" style="font-size:12px;padding:5px 8px">';
+    return '<tr><td class="muted mono">'+(r.created_at||'').slice(0,10)+'<div class="badge" style="margin-top:4px">'+esc(r.source)+'</div></td><td>'+who+'</td><td>'+esc(r.role_title||'—')+'</td><td>'+sel+'</td><td style="min-width:200px">'+msg+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="muted">No opportunities yet. Share your "submit an opportunity" link with recruiters.</td></tr>';
+  tb.querySelectorAll('.oppStatus').forEach(function(s){s.onchange=function(){api('/opportunities/'+s.dataset.id,{method:'PATCH',body:{status:s.value}}).then(loadOpps);};});
+  tb.querySelectorAll('.oppNote').forEach(function(i){i.onchange=function(){api('/opportunities/'+i.dataset.id,{method:'PATCH',body:{notes:i.value}});};});
+}
+$('addOpp').onclick=async function(){try{await api('/opportunities',{method:'POST',body:{company:$('mCo').value,role_title:$('mRole').value,contact_name:$('mName').value,contact_email:$('mEmail').value,message:$('mMsg').value}});$('mCo').value=$('mRole').value=$('mName').value=$('mEmail').value=$('mMsg').value='';$('addOppMsg').textContent='Added';$('addOppMsg').className='msg ok';loadOpps();}catch(e){$('addOppMsg').textContent=e.message;$('addOppMsg').className='msg err';}};
+$('shareOppLink').onclick=function(){var url=location.origin+'/cv-opportunity?to='+me.slug;navigator.clipboard&&navigator.clipboard.writeText(url);$('shareOppLink').innerHTML='<i class="fas fa-check"></i> Copied';setTimeout(function(){$('shareOppLink').innerHTML='<i class="fas fa-link"></i> Copy "submit opportunity" link';},1500);};
+
+// ---- broadcast ----
+var lastDraft=null;
+$('genOutreach').onclick=async function(){$('outMsg').textContent='Drafting…';$('outMsg').className='msg';try{var d=await api('/outreach/draft',{method:'POST',body:{target_type:$('bType').value,target_name:$('bName').value,notes:$('bNotes').value}});lastDraft=d;$('draftWrap').style.display='block';$('draftText').textContent='Subject: '+d.subject+'\n\n'+d.body;$('draftSim').innerHTML=d.is_simulated?'<span class="pill">template (no AI key)</span>':'<span class="pill" style="color:var(--green);border-color:var(--green)">AI-written</span>';$('mailDraft').href='mailto:?subject='+encodeURIComponent(d.subject)+'&body='+encodeURIComponent(d.body);$('outMsg').textContent='';loadOutreach();}catch(e){$('outMsg').textContent=e.message;$('outMsg').className='msg err';}};
+$('copyDraft').onclick=function(){if(lastDraft)navigator.clipboard&&navigator.clipboard.writeText('Subject: '+lastDraft.subject+'\n\n'+lastDraft.body);$('copyDraft').innerHTML='<i class="fas fa-check"></i> Copied';setTimeout(function(){$('copyDraft').innerHTML='<i class="fas fa-copy"></i> Copy';},1400);};
+$('markSent').onclick=function(){if(lastDraft&&lastDraft.id){api('/outreach/'+lastDraft.id,{method:'PATCH',body:{status:'sent'}}).then(loadOutreach);}};
+$('genKit').onclick=async function(){$('kitMsg').textContent='Generating…';try{var d=await api('/broadcast/kit',{method:'POST',body:{}});$('kitWrap').style.display='block';$('kitLi').textContent=d.linkedin;$('kitX').textContent=d.x;$('kitMsg').textContent='';}catch(e){$('kitMsg').textContent=e.message;$('kitMsg').className='msg err';}};
+$('matchBtn').onclick=async function(){$('matchMsg').textContent='Analyzing…';$('matchMsg').className='msg';try{var d=await api('/match',{method:'POST',body:{job_description:$('jd').value}});$('matchWrap').style.display='block';$('matchWrap').innerHTML='<b>Fit: '+(d.fit_score!=null?d.fit_score+'/10':'n/a')+' ('+esc(d.verdict)+')</b>\n\n'+esc(d.why)+'\n\n<b>Tailored pitch:</b>\n'+esc(d.tailored_pitch);$('matchMsg').textContent='';}catch(e){$('matchMsg').textContent=e.message;$('matchMsg').className='msg err';}};
+async function loadOutreach(){var d=await api('/outreach');var tb=$('outTable').querySelector('tbody');var rows=d.outreach||[];tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="muted mono">'+(r.created_at||'').slice(0,10)+'</td><td>'+esc(r.target_type)+(r.target_name?' — '+esc(r.target_name):'')+'</td><td>'+esc(r.subject)+'</td><td><span class="badge '+(r.status==='sent'?'b-offer':'b-new')+'">'+esc(r.status)+'</span></td></tr>';}).join(''):'<tr><td colspan="4" class="muted">No drafts yet.</td></tr>';}
+function copyText(id){var t=$(id).textContent;navigator.clipboard&&navigator.clipboard.writeText(t);}
+
+// ---- settings ----
+$('saveProfile').onclick=async function(){try{await api('/profile',{method:'POST',body:{availability:$('sAvail').value,target_roles:$('sRoles').value,summary:$('sSummary').value}});$('profMsg').textContent='Saved';$('profMsg').className='msg ok';me.target_roles=$('sRoles').value;me.summary=$('sSummary').value;me.availability=$('sAvail').value;}catch(e){$('profMsg').textContent=e.message;$('profMsg').className='msg err';}};
+$('cpBtn').onclick=async function(){try{await api('/change-password',{method:'POST',body:{current:$('cpCur').value,next:$('cpNew').value}});$('cpMsg').textContent='Password updated';$('cpMsg').className='msg ok';$('cpCur').value=$('cpNew').value='';}catch(e){$('cpMsg').textContent=e.message;$('cpMsg').className='msg err';}};
+
+// prefill login id from ?p=
+(function(){var m=location.search.match(/[?&]p=([a-z0-9_]+)/i);if(m)$('lid').value=m[1];})();
+boot();
+</script>
+</body>
+</html>
