@@ -1,7 +1,7 @@
 /* Ana I. Stagg CV — service worker. Scoped to /anastagg (registered
    with an explicit narrower scope) so it NEVER intercepts the rest of the RinglyPro
    CRM. Offline app-shell: network-first for the page, cache-first for static assets. */
-const CACHE = 'ascv-v2';
+const CACHE = 'ascv-v3';
 const CORE = [
   '/anastagg',
   '/anastagg.vcf',
