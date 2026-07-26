@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Radar</title>
+<link rel="icon" href="/airadar/favicon.svg">
+<link rel="manifest" href="/airadar/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/airadar/apple-touch-icon.png">
+<meta name="theme-color" content="#00c2a8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{
+    --bg:#070b14; --bg2:#0a1120; --card:#101825; --card2:#141d2e; --line:#1e2b3f;
+    --txt:#e8f1fa; --mut:#8496ad; --acc:#4df0d0; --acc2:#00a3c4; --warn:#ffcf6b; --bad:#ff8f8f;
+    --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);
+    -webkit-font-smoothing:antialiased;padding-bottom:calc(24px + var(--safe-b))}
+  a{color:var(--acc)}
+  button,select,input,textarea{font:inherit}
+
+  /* ── top bar ─────────────────────────────────────────────────────────── */
+  header{position:sticky;top:0;z-index:40;background:rgba(7,11,20,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);padding:calc(10px + var(--safe-t)) 16px 10px}
+  .bar{display:flex;align-items:center;gap:12px;max-width:1180px;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+  .brand img{width:30px;height:30px}
+  .brand b{font-size:17px;letter-spacing:-.3px}
+  .grow{flex:1;min-width:0}
+  .search{width:100%;padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:#0a111e;color:var(--txt);outline:none}
+  .search:focus{border-color:var(--acc)}
+  .iconbtn{padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:#0d1524;color:var(--txt);cursor:pointer;white-space:nowrap}
+  .iconbtn:hover{border-color:var(--acc)}
+  .primary{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#03231f;border:0;font-weight:700}
+
+  /* ── filters ─────────────────────────────────────────────────────────── */
+  .filters{max-width:1180px;margin:0 auto;padding:12px 16px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .tab{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#0d1524;color:var(--mut);cursor:pointer;font-size:14px}
+  .tab.on{background:rgba(77,240,208,.13);border-color:var(--acc);color:var(--acc)}
+  select.f{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:#0d1524;color:var(--txt);cursor:pointer;font-size:14px}
+  .spacer{flex:1}
+  .count{color:var(--mut);font-size:13px}
+
+  /* ── grid ────────────────────────────────────────────────────────────── */
+  main{max-width:1180px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .item{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:16px;
+    padding:16px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative;overflow:hidden}
+  .item:hover{border-color:var(--acc);transform:translateY(-2px)}
+  .item h3{margin:0 0 4px;font-size:16px;letter-spacing:-.2px;line-height:1.3}
+  .item h3.unknown{color:var(--warn);font-weight:600}
+  .site{font-size:12.5px;color:var(--acc);word-break:break-all;margin-bottom:8px;display:block;text-decoration:none}
+  .desc{color:#c3d1e2;font-size:13.5px;line-height:1.5;margin:0 0 12px;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .desc.empty{color:var(--mut);font-style:italic}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .chip{font-size:11px;padding:3px 9px;border-radius:999px;background:#152134;color:var(--mut);border:1px solid var(--line)}
+  .chip.cat{background:rgba(0,163,196,.16);color:#7fdcf0;border-color:rgba(0,163,196,.35)}
+  .chip.plat{background:#1a2436;color:#b3c3d6}
+  .chip.flag{background:rgba(255,207,107,.13);color:var(--warn);border-color:rgba(255,207,107,.35)}
+  .chip.sim{background:rgba(255,143,143,.1);color:var(--bad);border-color:rgba(255,143,143,.3)}
+  .stars{color:var(--warn);font-size:12px;letter-spacing:1px}
+  .meta{margin-top:10px;font-size:11.5px;color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+  .empty-state{text-align:center;padding:70px 20px;color:var(--mut)}
+  .empty-state h2{color:var(--txt);font-size:19px;margin:0 0 10px}
+  .empty-state p{margin:0 auto 8px;max-width:440px;line-height:1.6;font-size:14px}
+
+  /* ── stat strip ──────────────────────────────────────────────────────── */
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:96px}
+  .stat b{display:block;font-size:20px;letter-spacing:-.5px}
+  .stat span{font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+  .stat.alert b{color:var(--warn)}
+
+  /* ── sheet / modal ───────────────────────────────────────────────────── */
+  .backdrop{position:fixed;inset:0;background:rgba(3,6,12,.72);backdrop-filter:blur(4px);z-index:60;display:none}
+  .backdrop.on{display:block}
+  .sheet{position:fixed;z-index:61;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 24px));
+    max-height:min(88vh,880px);overflow-y:auto;background:linear-gradient(180deg,var(--card2),var(--bg2));
+    border:1px solid var(--line);border-radius:20px;padding:22px;display:none;box-shadow:0 40px 100px rgba(0,0,0,.65)}
+  .sheet.on{display:block}
+  .sheet h2{margin:0 0 4px;font-size:19px}
+  .sheet .sub{color:var(--mut);font-size:13px;margin:0 0 18px;line-height:1.5}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:6px}
+  .fld input,.fld textarea,.fld select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
+    background:#0a111e;color:var(--txt);outline:none}
+  .fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--acc)}
+  .fld textarea{min-height:92px;resize:vertical;line-height:1.5}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1;min-width:0}
+  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .actions button{padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid var(--line);background:#0d1524;color:var(--txt)}
+  .actions .primary{border:0}
+  .actions .danger{color:var(--bad);margin-left:auto}
+  .note{border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin-bottom:14px;display:none}
+  .note.on{display:block}
+  .note.warn{background:rgba(255,207,107,.1);border:1px solid rgba(255,207,107,.3);color:#ffd98a}
+  .note.info{background:rgba(0,163,196,.1);border:1px solid rgba(0,163,196,.3);color:#8fdcf0}
+  .rate{display:flex;gap:5px}
+  .rate button{flex:0 0 auto;width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#0a111e;color:var(--mut);cursor:pointer}
+  .rate button.on{background:rgba(255,207,107,.15);border-color:var(--warn);color:var(--warn)}
+  code{background:#0a111e;border:1px solid var(--line);border-radius:8px;padding:2px 7px;font-size:12px;
+    word-break:break-all;display:inline-block;max-width:100%}
+  pre{background:#0a111e;border:1px solid var(--line);border-radius:11px;padding:12px;overflow-x:auto;font-size:12px;
+    line-height:1.5;margin:0 0 12px;white-space:pre-wrap;word-break:break-all}
+  ol.steps{padding-left:20px;line-height:1.7;font-size:13.5px;color:#c3d1e2}
+  ol.steps li{margin-bottom:7px}
+  .toast{position:fixed;left:50%;bottom:calc(22px + var(--safe-b));transform:translateX(-50%);z-index:90;
+    background:#122032;border:1px solid var(--acc);color:var(--txt);padding:11px 18px;border-radius:999px;
+    font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.on{opacity:1}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(77,240,208,.3);border-top-color:var(--acc);
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .fab{position:fixed;right:18px;bottom:calc(18px + var(--safe-b));z-index:35;width:56px;height:56px;border-radius:50%;
+    border:0;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#03231f;font-size:28px;font-weight:300;
+    cursor:pointer;box-shadow:0 12px 34px rgba(0,163,196,.4);display:none;line-height:1}
+  @media(max-width:720px){
+    .brand b{display:none}
+    .fab{display:block}
+    .hide-sm{display:none}
+    .grid{grid-template-columns:1fr}
+    .sheet{width:100vw;max-width:100vw;left:0;top:auto;bottom:0;transform:none;border-radius:20px 20px 0 0;
+      max-height:92vh;padding-bottom:calc(22px + var(--safe-b))}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><img src="/airadar/favicon.svg" alt=""><b>AI Radar</b></div>
+    <div class="grow"><input class="search" id="q" type="search" placeholder="Search company, description, notes, link"></div>
+    <button class="iconbtn primary hide-sm" id="addBtn">Add</button>
+    <button class="iconbtn" id="setupBtn" title="Share sheet setup">Setup</button>
+    <button class="iconbtn hide-sm" id="exportBtn" title="Export">Export</button>
+    <button class="iconbtn hide-sm" id="outBtn" title="Sign out">Exit</button>
+  </div>
+  <div class="filters">
+    <button class="tab on" data-status="">All</button>
+    <button class="tab" data-status="inbox">Inbox</button>
+    <button class="tab" data-status="saved">Saved</button>
+    <button class="tab" data-status="archived">Archived</button>
+    <select class="f" id="catF"><option value="">Every category</option></select>
+    <select class="f" id="platF">
+      <option value="">Every source</option>
+      <option value="instagram">Instagram</option>
+      <option value="facebook">Facebook</option>
+      <option value="tiktok">TikTok</option>
+      <option value="x">X</option>
+      <option value="youtube">YouTube</option>
+      <option value="linkedin">LinkedIn</option>
+      <option value="reddit">Reddit</option>
+      <option value="threads">Threads</option>
+      <option value="web">Web</option>
+    </select>
+    <button class="tab" id="reviewF">Needs review</button>
+    <div class="spacer"></div>
+    <span class="count" id="count"></span>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="empty" style="display:none">
+    <h2>Nothing on the radar yet</h2>
+    <p>Share a post from Instagram, Facebook, TikTok or X into AI Radar and it lands here with the company, website and description already drafted.</p>
+    <p>Open <b>Setup</b> to wire the share sheet on your phone, or press <b>Add</b> to paste a link right now.</p>
+  </div>
+</main>
+
+<button class="fab" id="fab" aria-label="Add">+</button>
+
+<div class="backdrop" id="backdrop"></div>
+
+<!-- ── item editor ──────────────────────────────────────────────────────── -->
+<div class="sheet" id="sheet">
+  <h2 id="sheetTitle">Add a discovery</h2>
+  <p class="sub" id="sheetSub">Paste the link you shared. AI Radar reads whatever the page will give it and drafts the rest.</p>
+
+  <div class="note" id="noteBox"></div>
+
+  <div class="fld">
+    <label for="f_source">Source link (the post or video)</label>
+    <div class="row">
+      <input id="f_source" type="url" placeholder="https://www.instagram.com/reel/...">
+      <button class="iconbtn" id="draftBtn" style="flex:0 0 auto">Draft with AI</button>
+    </div>
+  </div>
+
+  <div class="fld">
+    <label for="f_company">Company name</label>
+    <input id="f_company" type="text" placeholder="Who makes it">
+  </div>
+
+  <div class="fld">
+    <label for="f_url">Company website</label>
+    <input id="f_url" type="url" placeholder="https://">
+  </div>
+
+  <div class="fld">
+    <label for="f_desc">What it is</label>
+    <textarea id="f_desc" placeholder="A couple of sentences: what the AI does and why it caught your eye."></textarea>
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label for="f_cat">Category</label>
+      <select id="f_cat"></select>
+    </div>
+    <div class="fld">
+      <label for="f_status">Status</label>
+      <select id="f_status">
+        <option value="inbox">Inbox</option>
+        <option value="saved">Saved</option>
+        <option value="archived">Archived</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="fld">
+    <label for="f_tags">Tags (comma separated)</label>
+    <input id="f_tags" type="text" placeholder="video, avatar, realtime">
+  </div>
+
+  <div class="fld">
+    <label for="f_notes">Your notes</label>
+    <textarea id="f_notes" style="min-height:64px" placeholder="Why this matters to us, who to show it to, what to copy."></textarea>
+  </div>
+
+  <div class="fld">
+    <label>Interest</label>
+    <div class="rate" id="rate">
+      <button data-r="1">1</button><button data-r="2">2</button><button data-r="3">3</button>
+      <button data-r="4">4</button><button data-r="5">5</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="saveBtn">Save</button>
+    <button id="cancelBtn">Cancel</button>
+    <button class="danger" id="delBtn" style="display:none">Delete</button>
+  </div>
+</div>
+
+<!-- ── setup sheet ──────────────────────────────────────────────────────── -->
+<div class="sheet" id="setup">
+  <h2>Get it onto your phone</h2>
+  <p class="sub">Two ways in. Android and desktop Chrome use the built-in share target; iOS needs a one-time Shortcut because Safari does not implement Web Share Target.</p>
+
+  <div class="note info on" id="installNote">
+    <b>Install first.</b> On Android Chrome use the menu, then "Install app". On iPhone open this page in Safari, tap Share, then "Add to Home Screen".
+  </div>
+
+  <h3 style="font-size:15px;margin:20px 0 8px">Android / desktop Chrome</h3>
+  <ol class="steps">
+    <li>Install AI Radar as an app (above).</li>
+    <li>In Instagram, Facebook, TikTok or X, tap Share.</li>
+    <li>Pick <b>AI Radar</b>. The link arrives here with the draft already running.</li>
+  </ol>
+
+  <h3 style="font-size:15px;margin:22px 0 8px">iPhone — Shortcut (saves without opening anything)</h3>
+  <ol class="steps">
+    <li>Open the Shortcuts app, create a new shortcut, and turn on <b>Show in Share Sheet</b> under its details. Set "Receive" to <b>URLs</b>.</li>
+    <li>Add the action <b>Get Contents of URL</b>.</li>
+    <li>URL: paste the address below.</li>
+    <li>Set Method to <b>POST</b>, Request Body to <b>JSON</b>, and add one text field named <code>url</code> whose value is the <b>Shortcut Input</b>.</li>
+    <li>Name it "Save to AI Radar". From then on, Share, then that shortcut, from any app.</li>
+  </ol>
+  <pre id="captureUrl">loading</pre>
+  <div class="actions" style="margin-top:4px">
+    <button class="iconbtn" id="copyCapture">Copy address</button>
+    <button class="iconbtn" id="rotateCapture">Rotate key</button>
+  </div>
+  <p class="sub" style="margin-top:12px">Anyone holding that address can add items to your radar, so treat it as a password. Rotating it breaks any shortcut using the old key.</p>
+
+  <h3 style="font-size:15px;margin:22px 0 8px">Desktop bookmarklet</h3>
+  <p class="sub" style="margin-bottom:8px">Drag this into your bookmarks bar to capture the page you are reading.</p>
+  <pre id="bookmarklet">loading</pre>
+  <button class="iconbtn" id="copyBm">Copy bookmarklet</button>
+
+  <div class="actions">
+    <button class="primary" id="setupClose">Done</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var API = '/airadar/api/v1';
+  var CATS = ['agents','voice','video','image','coding','writing','productivity','data','search','infra',
+              'robotics','health','finance','marketing','sales','legal','education','hardware','other'];
+  var state = { status:'', category:'', platform:'', review:false, q:'', items:[], editing:null, rating:0, me:null };
+
+  var $ = function(id){ return document.getElementById(id); };
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('on'); }, 2600);
+  }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function api(path, opts){
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Content-Type':'application/json' }, opts.headers || {});
+    return fetch(API + path, opts).then(function(r){
+      if (r.status === 401) { location.href = '/airadar/login'; throw new Error('unauthorized'); }
+      return r.json().then(function(d){ if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
+    });
+  }
+
+  // ── category selects ───────────────────────────────────────────────────
+  CATS.forEach(function(c){
+    var a = document.createElement('option'); a.value = c; a.textContent = c; $('catF').appendChild(a);
+    var b = document.createElement('option'); b.value = c; b.textContent = c; $('f_cat').appendChild(b);
+  });
+  $('f_cat').insertBefore(new Option('(none)', ''), $('f_cat').firstChild);
+
+  // ── list ───────────────────────────────────────────────────────────────
+  function load(){
+    var p = new URLSearchParams();
+    if (state.status) p.set('status', state.status);
+    if (state.category) p.set('category', state.category);
+    if (state.platform) p.set('platform', state.platform);
+    if (state.review) p.set('needs_review', '1');
+    if (state.q) p.set('q', state.q);
+    return api('/items?' + p.toString()).then(function(d){
+      state.items = d.items || [];
+      render();
+      $('count').textContent = d.count + (d.count === 1 ? ' item' : ' items');
+    }).catch(function(e){ if (e.message !== 'unauthorized') toast(e.message); });
+  }
+
+  function loadStats(){
+    return api('/items/stats').then(function(s){
+      $('stats').innerHTML =
+        stat(s.total, 'on radar') +
+        stat(s.inbox, 'inbox') +
+        stat(s.saved, 'saved') +
+        (s.needs_review ? stat(s.needs_review, 'need review', true) : '');
+    }).catch(function(){});
+  }
+  function stat(n, label, alert){
+    return '<div class="stat' + (alert ? ' alert' : '') + '"><b>' + n + '</b><span>' + label + '</span></div>';
+  }
+
+  function render(){
+    var g = $('grid');
+    if (!state.items.length) {
+      g.innerHTML = '';
+      $('empty').style.display = (state.q || state.status || state.category || state.platform || state.review) ? 'none' : 'block';
+      if ($('empty').style.display === 'none') {
+        g.innerHTML = '<div class="empty-state"><h2>No matches</h2><p>Nothing here fits those filters.</p></div>';
+      }
+      return;
+    }
+    $('empty').style.display = 'none';
+    g.innerHTML = state.items.map(card).join('');
+    Array.prototype.forEach.call(g.querySelectorAll('.item'), function(el){
+      el.addEventListener('click', function(ev){
+        if (ev.target.closest('a')) return;
+        openItem(Number(el.getAttribute('data-id')));
+      });
+    });
+  }
+
+  function card(i){
+    var name = i.company_name ? esc(i.company_name) : 'Company not identified yet';
+    var d = new Date(i.created_at);
+    return '<article class="item" data-id="' + i.id + '">' +
+      '<h3 class="' + (i.company_name ? '' : 'unknown') + '">' + name + '</h3>' +
+      (i.company_url ? '<a class="site" href="' + esc(i.company_url) + '" target="_blank" rel="noopener">' + esc(i.company_url.replace(/^https?:\/\//,'')) + '</a>' : '') +
+      '<p class="desc' + (i.description ? '' : ' empty') + '">' + (i.description ? esc(i.description) : 'No description yet.') + '</p>' +
+      '<div class="chips">' +
+        (i.category ? '<span class="chip cat">' + esc(i.category) + '</span>' : '') +
+        (i.source_platform ? '<span class="chip plat">' + esc(i.source_platform) + '</span>' : '') +
+        (i.needs_review ? '<span class="chip flag">needs review</span>' : '') +
+        (i.is_simulated ? '<span class="chip sim">no model</span>' : '') +
+        (i.tags || []).slice(0,3).map(function(t){ return '<span class="chip">' + esc(t) + '</span>'; }).join('') +
+      '</div>' +
+      '<div class="meta"><span>' + esc(i.status) + ' · ' + d.toLocaleDateString() + '</span>' +
+        (i.rating ? '<span class="stars">' + '*'.repeat(i.rating) + '</span>' : '') + '</div>' +
+    '</article>';
+  }
+
+  // ── editor ─────────────────────────────────────────────────────────────
+  function showSheet(el){ $('backdrop').classList.add('on'); el.classList.add('on'); }
+  function hideSheets(){
+    $('backdrop').classList.remove('on');
+    $('sheet').classList.remove('on');
+    $('setup').classList.remove('on');
+  }
+  function setNote(kind, html){
+    var n = $('noteBox');
+    if (!html) { n.className = 'note'; n.innerHTML = ''; return; }
+    n.className = 'note on ' + kind; n.innerHTML = html;
+  }
+  function setRating(r){
+    state.rating = r;
+    Array.prototype.forEach.call($('rate').children, function(b){
+      b.classList.toggle('on', Number(b.getAttribute('data-r')) <= r);
+    });
+  }
+  Array.prototype.forEach.call($('rate').children, function(b){
+    b.addEventListener('click', function(){
+      var r = Number(b.getAttribute('data-r'));
+      setRating(state.rating === r ? 0 : r);
+    });
+  });
+
+  function openNew(prefill){
+    state.editing = null;
+    $('sheetTitle').textContent = 'Add a discovery';
+    $('sheetSub').textContent = 'Paste the link you shared. AI Radar reads whatever the page will give it and drafts the rest.';
+    $('f_source').value = (prefill && prefill.url) || '';
+    $('f_company').value = '';
+    $('f_url').value = '';
+    $('f_desc').value = '';
+    $('f_cat').value = '';
+    $('f_status').value = 'inbox';
+    $('f_tags').value = '';
+    $('f_notes').value = (prefill && prefill.text) || '';
+    setRating(0);
+    setNote(null);
+    $('delBtn').style.display = 'none';
+    showSheet($('sheet'));
+    if (prefill && prefill.url && prefill.autodraft) draft();
+  }
+
+  function openItem(id){
+    var i = state.items.filter(function(x){ return x.id === id; })[0];
+    if (!i) return;
+    state.editing = i;
+    $('sheetTitle').textContent = i.company_name || 'Untitled discovery';
+    $('sheetSub').innerHTML = i.source_url
+      ? 'Captured from ' + esc(i.source_platform || 'the web') + ' &middot; <a href="' + esc(i.source_url) + '" target="_blank" rel="noopener">open the original</a>'
+      : 'Added by hand.';
+    $('f_source').value = i.source_url || '';
+    $('f_company').value = i.company_name || '';
+    $('f_url').value = i.company_url || '';
+    $('f_desc').value = i.description || '';
+    $('f_cat').value = i.category || '';
+    $('f_status').value = i.status || 'inbox';
+    $('f_tags').value = (i.tags || []).join(', ');
+    $('f_notes').value = i.notes || '';
+    setRating(i.rating || 0);
+    if (i.is_simulated) setNote('warn', 'These fields were drafted without a language model, straight from page metadata. Check them before trusting them.');
+    else if (i.needs_review) setNote('warn', 'The company behind this one was never identified. Fill it in, or open the original and try Draft with AI again.');
+    else setNote(null);
+    $('delBtn').style.display = '';
+    showSheet($('sheet'));
+  }
+
+  function draft(){
+    var url = $('f_source').value.trim();
+    var text = $('f_notes').value.trim();
+    if (!url && !text) { toast('Paste a link first'); return; }
+    var b = $('draftBtn'); var old = b.textContent;
+    b.disabled = true; b.innerHTML = '<span class="spin"></span>Reading';
+    setNote('info', 'Fetching the page and drafting the company details.');
+    api('/enrich', { method:'POST', body: JSON.stringify({ url: url, text: text }) })
+      .then(function(d){
+        var s = d.draft;
+        if (s.company_name && !$('f_company').value) $('f_company').value = s.company_name;
+        if (s.company_url && !$('f_url').value) $('f_url').value = s.company_url;
+        if (s.description && !$('f_desc').value) $('f_desc').value = s.description;
+        if (s.category && !$('f_cat').value) $('f_cat').value = s.category;
+        if ((s.tags || []).length && !$('f_tags').value) $('f_tags').value = s.tags.join(', ');
+
+        if (s.needs_review || !s.company_name) {
+          setNote('warn', '<b>Could not identify the company.</b> ' + esc(s.reason || 'The page gave nothing away.') +
+            ' Type what you know, or paste the caption into your notes and draft again.');
+        } else if (s.is_simulated) {
+          setNote('warn', '<b>Drafted without a language model.</b> ' + esc(s.reason || '') + ' Review before saving.');
+        } else {
+          setNote('info', 'Drafted by ' + esc(s.model) + (s.page_fetched ? ' from the live page.' : ' from the link alone (the page would not open to us).'));
+        }
+      })
+      .catch(function(e){ setNote('warn', 'Draft failed: ' + esc(e.message)); })
+      .finally(function(){ b.disabled = false; b.textContent = old; });
+  }
+
+  function save(){
+    var body = {
+      source_url: $('f_source').value.trim(),
+      company_name: $('f_company').value.trim(),
+      company_url: $('f_url').value.trim(),
+      description: $('f_desc').value.trim(),
+      category: $('f_cat').value,
+      status: $('f_status').value,
+      tags: $('f_tags').value,
+      notes: $('f_notes').value.trim(),
+      rating: state.rating
+    };
+    if (!body.source_url && !body.company_name) { toast('A link or a company name is required'); return; }
+    var b = $('saveBtn'); b.disabled = true;
+    var p = state.editing
+      ? api('/items/' + state.editing.id, { method:'PATCH', body: JSON.stringify(body) })
+      : api('/items', { method:'POST', body: JSON.stringify(body) });
+    p.then(function(){
+      hideSheets(); toast(state.editing ? 'Updated' : 'Saved to the radar');
+      history.replaceState({}, '', '/airadar/');
+      return Promise.all([load(), loadStats()]);
+    }).catch(function(e){ toast(e.message); })
+      .finally(function(){ b.disabled = false; });
+  }
+
+  function del(){
+    if (!state.editing) return;
+    if (!confirm('Delete this discovery permanently?')) return;
+    api('/items/' + state.editing.id, { method:'DELETE' }).then(function(){
+      hideSheets(); toast('Deleted');
+      return Promise.all([load(), loadStats()]);
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  // ── setup sheet ────────────────────────────────────────────────────────
+  function openSetup(){
+    showSheet($('setup'));
+    api('/auth/me').then(function(d){
+      state.me = d.user;
+      if (!d.user || !d.user.capture_token) return;
+      var url = location.origin + '/airadar/api/v1/capture?key=' + d.user.capture_token;
+      $('captureUrl').textContent = url;
+      $('bookmarklet').textContent =
+        "javascript:(function(){fetch('" + url + "',{method:'POST',headers:{'Content-Type':'application/json'}," +
+        "body:JSON.stringify({url:location.href,text:document.title})}).then(function(r){return r.json()})" +
+        ".then(function(d){alert(d.message||'Saved to AI Radar')}).catch(function(e){alert('AI Radar: '+e.message)})})();";
+    }).catch(function(){});
+  }
+  function copy(text, label){
+    navigator.clipboard.writeText(text).then(function(){ toast(label + ' copied'); })
+      .catch(function(){ toast('Copy failed — select it by hand'); });
+  }
+
+  // ── wiring ─────────────────────────────────────────────────────────────
+  $('addBtn').addEventListener('click', function(){ openNew(null); });
+  $('fab').addEventListener('click', function(){ openNew(null); });
+  $('cancelBtn').addEventListener('click', function(){ hideSheets(); history.replaceState({}, '', '/airadar/'); });
+  $('backdrop').addEventListener('click', function(){ hideSheets(); });
+  $('saveBtn').addEventListener('click', save);
+  $('delBtn').addEventListener('click', del);
+  $('draftBtn').addEventListener('click', draft);
+  $('setupBtn').addEventListener('click', openSetup);
+  $('setupClose').addEventListener('click', hideSheets);
+  $('copyCapture').addEventListener('click', function(){ copy($('captureUrl').textContent, 'Address'); });
+  $('copyBm').addEventListener('click', function(){ copy($('bookmarklet').textContent, 'Bookmarklet'); });
+  $('rotateCapture').addEventListener('click', function(){
+    if (!confirm('Rotate the capture key? Any shortcut using the old one stops working.')) return;
+    api('/auth/rotate-capture-token', { method:'POST' }).then(function(){ toast('Key rotated'); openSetup(); });
+  });
+  $('exportBtn').addEventListener('click', function(){
+    var f = prompt('Export format: csv, json or md', 'csv');
+    if (!f) return;
+    location.href = API + '/items/export?format=' + encodeURIComponent(f.trim().toLowerCase());
+  });
+  $('outBtn').addEventListener('click', function(){
+    api('/auth/logout', { method:'POST' }).finally(function(){ location.href = '/airadar/login'; });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tab[data-status]'), function(t){
+    t.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tab[data-status]'), function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      state.status = t.getAttribute('data-status');
+      load();
+    });
+  });
+  $('reviewF').addEventListener('click', function(){
+    state.review = !state.review;
+    $('reviewF').classList.toggle('on', state.review);
+    load();
+  });
+  $('catF').addEventListener('change', function(){ state.category = this.value; load(); });
+  $('platF').addEventListener('change', function(){ state.platform = this.value; load(); });
+
+  var qt;
+  $('q').addEventListener('input', function(){
+    clearTimeout(qt);
+    var v = this.value;
+    qt = setTimeout(function(){ state.q = v.trim(); load(); }, 280);
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') hideSheets();
+    if (e.key === '/' && document.activeElement !== $('q') && !$('sheet').classList.contains('on')) {
+      e.preventDefault(); $('q').focus();
+    }
+  });
+
+  // ── boot: honour ?share=1 (share target) and ?item=N (deep link) ───────
+  function boot(){
+    var p = new URLSearchParams(location.search);
+    if (p.get('status')) {
+      state.status = p.get('status');
+      Array.prototype.forEach.call(document.querySelectorAll('.tab[data-status]'), function(x){
+        x.classList.toggle('on', x.getAttribute('data-status') === state.status);
+      });
+    }
+    Promise.all([load(), loadStats()]).then(function(){
+      if (p.get('share') === '1') {
+        // Android hands the link over in url, or buried inside text.
+        var url = p.get('url') || '';
+        var text = p.get('text') || '';
+        if (!url) {
+          var m = text.match(/https?:\/\/\S+/);
+          if (m) { url = m[0]; text = text.replace(m[0], '').trim(); }
+        }
+        var title = p.get('title') || '';
+        openNew({ url: url, text: [title, text].filter(Boolean).join(' — '), autodraft: !!url });
+      } else if (p.get('item')) {
+        openItem(Number(p.get('item')));
+      }
+    });
+  }
+  boot();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/airadar/sw.js').catch(function(){});
+})();
+</script>
+</body>
+</html>

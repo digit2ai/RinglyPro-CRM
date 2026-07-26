@@ -1940,6 +1940,37 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
+// AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
+// =====================================================
+
+let airadarApp = null;
+let airadarError = null;
+try {
+  airadarApp = require('../verticals/airadar/src/index');
+  app.get('/airadar', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/airadar/');
+    next();
+  });
+  app.use('/airadar', airadarApp);
+  console.log('AI Radar mounted at /airadar');
+  console.log('   - App UI: /airadar/');
+  console.log('   - Share target: /airadar/share');
+  console.log('   - Health Check: /airadar/health');
+  console.log('   - API: /airadar/api/v1/*');
+} catch (error) {
+  airadarError = error;
+  console.log('⚠️ AI Radar not available:', error.message);
+}
+
+app.get('/debug/airadar-error', (req, res) => {
+  res.json({
+    service: 'AI Radar — AI discovery capture',
+    available: !airadarError,
+    error: airadarError ? { message: airadarError.message, stack: airadarError.stack } : null
+  });
+});
+
+// =====================================================
 // DIGIT2AI GROWTH — internal owner-only AI CMO for our OWN portfolio (served at /growth/)
 // =====================================================
 

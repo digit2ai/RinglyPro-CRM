@@ -1,0 +1,29 @@
+{
+  "name": "AI Radar — track every AI release",
+  "short_name": "AI Radar",
+  "description": "Share an AI product you spotted on Instagram, Facebook, TikTok or X. AI Radar drafts the company, the website and the description, and keeps the whole log searchable.",
+  "start_url": "/airadar/",
+  "scope": "/airadar/",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#00c2a8",
+  "share_target": {
+    "action": "/airadar/share",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "shortcuts": [
+    { "name": "Quick add", "url": "/airadar/?share=1" },
+    { "name": "Inbox", "url": "/airadar/?status=inbox" }
+  ],
+  "icons": [
+    { "src": "/airadar/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/airadar/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/airadar/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

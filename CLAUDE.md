@@ -466,6 +466,34 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `SPEAKUP_TEAM_PASSWORD` — password for the seeded owner/team account(s) (`mstagg@digit2ai.com`). Default `Palindrome@7`. Force-synced on every boot for the accounts in `ACCOUNTS` (self-signup users are never touched); set this env var to override without a code change.
 - `SPEAKUP_SEED_DEMO` — `1` seeds one tenant with a sample recording + transcript + AI summary on boot. Default unset = clean.
 
+## AI Radar — capture AI discoveries from the phone share sheet (folder: airadar)
+
+**Purpose:** The owner's personal log of AI products spotted while scrolling. See something AI-shaped on Instagram / Facebook / TikTok / X, hit Share, and it lands in an inbox with **company name, company website and a short description already drafted**; you correct whatever the draft got wrong and move on. Search, filter, rate and export the whole log later. Login-only, no public signup, no billing. Mounted at `/airadar`. English, emoji-free.
+
+**Location:** `verticals/airadar/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/airadar/migrations/20260726_airadar_tables.sql`. Multi-tenant (`tenant_id` = user id), `ar_` prefix: `ar_users, ar_items, ar_enrichments`. New columns ensured via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in `index.js` init.
+
+**Live:** app `/airadar/` · login `/airadar/login` · share target `/airadar/share` · health `/airadar/health` · debug `/debug/airadar-error`. Installable PWA (manifest + sw.js; network-first, never caches `/api/`, never intercepts `/share`).
+
+**Two ways in — because iOS has no Web Share Target:**
+- **Android / desktop Chrome:** the manifest declares `share_target` → `GET /airadar/share`, which forwards `url`/`text`/`title` to the app as `?share=1&...`. The app opens the quick-add sheet pre-filled and fires the AI draft immediately.
+- **iPhone:** a one-time Shortcut POSTs to `POST /airadar/api/v1/capture?key=<capture_token>` — the only route outside the cookie gate, authenticated by the per-user `ar_users.capture_token` (rotatable from the app, unique-indexed). Saves silently without opening a browser. Same endpoint powers the desktop bookmarklet. The in-app **Setup** sheet renders the exact address, the Shortcut steps and a copy-to-clipboard bookmarklet.
+
+**AI auto-enrich** (`src/services/enrich.js` + `src/services/metadata.js`): fetches the shared page (dependency-free og:/twitter:/`<title>` parser, 9s timeout, private-IP ranges refused), then Claude Haiku drafts `{company_name, company_url, description, category, tags}`. **Honesty is enforced in code, not just the prompt:**
+- `company_url` is validated against the candidate list — the model cannot return a URL that was not in the evidence, and a social host is never proposed as a company site.
+- Login-walled reels return their own brand as the page title ("Instagram", "TikTok - Make Your Day"); that noise is scrubbed, so the draft comes back **blank with `needs_review:true`** and states why, rather than filing a company called "Instagram".
+- No `ANTHROPIC_API_KEY` = the labelled heuristic path (`enriched_by:'heuristic'`, `is_simulated:true`), shown in the UI as a "no model" chip.
+- Typing over any of the three core fields sets `enriched_by:'manual'`, clears `is_simulated` and clears the review flag — a human vouched for it. Re-enrich only ever fills fields that are still empty.
+- Every draft is written to `ar_enrichments` with the page metadata actually fetched, so a suggestion can be re-read.
+
+**REST API (`/airadar/api/v1/*`):** auth `POST /auth/login|logout`, `GET /auth/me` (returns the capture token), `POST /auth/rotate-capture-token` · items `GET /items` (q + status/category/platform/tag/needs_review filters), `POST /items` (opt `auto_enrich`), `GET /items/stats`, `GET /items/export?format=csv|json|md`, `GET|PATCH|DELETE /items/:id`, `POST /items/:id/enrich` (opt `apply`) · `POST /enrich` (draft, saves nothing) · `POST|GET /capture?key=` (token-authed).
+
+**SIT:** `node verticals/airadar/sit.js` → **54/54** (auth gate, share-target redirect chain, platform detection, honesty flags, private-network refusal, search/filter/stats, capture + rotation invalidation, all three export formats, cross-tenant 404s). Zero external keys — runs green on the heuristic path.
+
+**Environment Variables:**
+- `AIRADAR_JWT_SECRET` — signs the `airadar_token` cookie (falls back to `JWT_SECRET`), 30d. SET on prod.
+- `AIRADAR_MODEL` — Anthropic model for enrichment. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`; unset key = labelled heuristic drafts (the app still works end to end).
+- `AIRADAR_PASSWORD` — owner password force-synced on boot (falls back to `SPEAKUP_TEAM_PASSWORD`, default `Palindrome@7`).
+
 ## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)
 
 **Purpose:** Digit2AI vertical for **executive English coaching for international leadership** (trade, investment, diplomacy, press). Built from Fernando de la Espriella García's coaching program for Dr. Mauricio Gómez Amín (new Colombian Minister of Comercio, Industria y Turismo). A coach logs 1:1 sessions, records + transcribes (voice or typed), and the AI generates the program's **5 post-session deliverables** + an **"80% student speaks" meter**. Spanish-first, emoji-free. Mounted at `/coaching-english`.
