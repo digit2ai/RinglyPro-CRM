@@ -170,15 +170,19 @@ router.post('/profile', async (req, res) => {
 // ================= DASHBOARD (analytics + counts) =================
 router.get('/dashboard', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
-  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30)); // validated int, safe to inline
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30)); // validated int
+  // Inline trusted values (slug is [a-z0-9_] from our own table; days & id are integers) and use
+  // NO replacements object so Sequelize's placeholder parser never touches the interval literal.
+  const s = "'" + String(p.slug).replace(/[^a-z0-9_]/gi, '') + "'";
+  const pid = parseInt(p.id, 10) || 0;
   const iv = `now() - interval '${days} days'`;
-  const q = (sql, rep) => sequelize.query(sql, { replacements: rep, type: QueryTypes.SELECT });
+  const q = (sql) => sequelize.query(sql, { type: QueryTypes.SELECT });
   const num = (v) => Number(v) || 0;
-  const [win] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=:s AND created_at > ${iv}`, { s:p.slug });
-  const [all] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=:s`, { s:p.slug });
-  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*) views FROM cv_page_hits WHERE page=:s AND created_at > ${iv} GROUP BY 1 ORDER BY 1`, { s:p.slug });
-  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*) views FROM cv_page_hits WHERE page=:s AND created_at > ${iv} GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { s:p.slug });
-  const opp = await q(`SELECT status, COUNT(*) n FROM cv_opportunities WHERE profile_id=:id GROUP BY 1`, { id:p.id });
+  const [win] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=${s} AND created_at > ${iv}`);
+  const [all] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=${s}`);
+  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*) views FROM cv_page_hits WHERE page=${s} AND created_at > ${iv} GROUP BY 1 ORDER BY 1`);
+  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*) views FROM cv_page_hits WHERE page=${s} AND created_at > ${iv} GROUP BY 1 ORDER BY 2 DESC LIMIT 8`);
+  const opp = await q(`SELECT status, COUNT(*) n FROM cv_opportunities WHERE profile_id=${pid} GROUP BY 1`);
   const oppCounts = { new:0, contacted:0, interviewing:0, offer:0, closed:0, declined:0 };
   opp.forEach(r => { oppCounts[r.status] = num(r.n); });
   res.json({ profile: pub(p), days,
