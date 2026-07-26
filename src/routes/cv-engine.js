@@ -11,6 +11,19 @@ const { Sequelize, QueryTypes } = require('sequelize');
 const router = express.Router();
 router.use(express.json({ limit: '256kb' }));
 
+// Auto-wrap every route handler so an async rejection returns 500 (with the message)
+// instead of hanging the request → 502. Applies to all router.get/post/patch/... below.
+['get', 'post', 'patch', 'put', 'delete'].forEach((m) => {
+  const orig = router[m].bind(router);
+  router[m] = (path, ...handlers) => orig(path, ...handlers.map((fn) =>
+    (typeof fn === 'function' && fn.length <= 3)
+      ? (req, res, next) => Promise.resolve(fn(req, res, next)).catch((err) => {
+          console.error('cv-engine', req.method, req.path, err && err.message);
+          if (!res.headersSent) res.status(500).json({ error: (err && err.message) || 'server error' });
+        })
+      : fn));
+});
+
 const DB_URL = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
 const sequelize = DB_URL ? new Sequelize(DB_URL, {
   dialect: 'postgres',
@@ -110,14 +123,17 @@ function pub(p){ return { slug:p.slug, name:p.name, headline:p.headline, email:p
 async function claude(system, user, maxTokens=800){
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || typeof fetch !== 'function') return null;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 22000); // never hang the request
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST',
+    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', signal: ctl.signal,
       headers:{ 'x-api-key':key, 'anthropic-version':'2023-06-01', 'content-type':'application/json' },
       body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages:[{ role:'user', content:user }] }) });
     if (!r.ok) return null;
     const j = await r.json();
     return (j.content && j.content[0] && j.content[0].text) || null;
   } catch(e){ return null; }
+  finally { clearTimeout(timer); }
 }
 
 // ================= AUTH =================
