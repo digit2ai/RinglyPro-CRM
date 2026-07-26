@@ -170,16 +170,23 @@ router.post('/profile', async (req, res) => {
 // ================= DASHBOARD (analytics + counts) =================
 router.get('/dashboard', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
-  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30)); // validated int, safe to inline
+  const iv = `now() - interval '${days} days'`;
   const q = (sql, rep) => sequelize.query(sql, { replacements: rep, type: QueryTypes.SELECT });
-  const [win] = await q(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:s AND created_at > now()-(:d * interval '1 day')`, { s:p.slug, d:days });
-  const [all] = await q(`SELECT COUNT(*)::int views, COUNT(DISTINCT ip_hash)::int visitors FROM cv_page_hits WHERE page=:s`, { s:p.slug });
-  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d * interval '1 day') GROUP BY 1 ORDER BY 1`, { s:p.slug, d:days });
-  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*)::int views FROM cv_page_hits WHERE page=:s AND created_at>now()-(:d * interval '1 day') GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { s:p.slug, d:days });
-  const opp = await q(`SELECT status, COUNT(*)::int n FROM cv_opportunities WHERE profile_id=:id GROUP BY 1`, { id:p.id });
+  const num = (v) => Number(v) || 0;
+  const [win] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=:s AND created_at > ${iv}`, { s:p.slug });
+  const [all] = await q(`SELECT COUNT(*) v, COUNT(DISTINCT ip_hash) u FROM cv_page_hits WHERE page=:s`, { s:p.slug });
+  const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') day, COUNT(*) views FROM cv_page_hits WHERE page=:s AND created_at > ${iv} GROUP BY 1 ORDER BY 1`, { s:p.slug });
+  const refs = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') referrer, COUNT(*) views FROM cv_page_hits WHERE page=:s AND created_at > ${iv} GROUP BY 1 ORDER BY 2 DESC LIMIT 8`, { s:p.slug });
+  const opp = await q(`SELECT status, COUNT(*) n FROM cv_opportunities WHERE profile_id=:id GROUP BY 1`, { id:p.id });
   const oppCounts = { new:0, contacted:0, interviewing:0, offer:0, closed:0, declined:0 };
-  opp.forEach(r => { oppCounts[r.status] = r.n; });
-  res.json({ profile: pub(p), days, window: win, all_time: all, by_day: byDay, top_referrers: refs, opp_counts: oppCounts });
+  opp.forEach(r => { oppCounts[r.status] = num(r.n); });
+  res.json({ profile: pub(p), days,
+    window: { views:num(win&&win.v), visitors:num(win&&win.u) },
+    all_time: { views:num(all&&all.v), visitors:num(all&&all.u) },
+    by_day: byDay.map(x => ({ day:x.day, views:num(x.views) })),
+    top_referrers: refs.map(x => ({ referrer:x.referrer, views:num(x.views) })),
+    opp_counts: oppCounts });
 });
 
 // ================= OPPORTUNITIES =================
