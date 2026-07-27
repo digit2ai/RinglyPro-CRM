@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="google-site-verification" content="K7L7pMe_7_i7QLsyLkEJKSIicfoxQbKOynrvEnGLPAk" />
-<title>Lawn Co-Pilot — The AI office for landscaping companies</title>
-<meta name="description" content="Lawn Co-Pilot handles the entire admin side of your landscaping company — answering calls, booking jobs, optimizing routes, taking payments, customer service and special requests — in one dashboard on your phone.">
-<meta property="og:title" content="Lawn Co-Pilot — The AI office for landscaping companies">
-<meta property="og:description" content="We answer the calls, quote the work, book the jobs, route the crews and collect the money. All in one dashboard on your phone. You do the work.">
+<title>Lawn Co-Pilot — AI staff for landscaping companies, from $35/mo</title>
+<meta name="description" content="Not software to run. Lawn Co-Pilot is AI staff for your landscaping company: a receptionist that answers every call, plus an estimator, dispatcher and bookkeeper. From $35 a month.">
+<meta property="og:title" content="Lawn Co-Pilot — AI staff for landscaping companies">
+<meta property="og:description" content="Every other tool organizes the work and hands it back to you. Lawn Co-Pilot is a staff of eight AI employees that does it — and answers the phone at 9pm. From $35 a month.">
 <meta property="og:type" content="website">
 <link rel="manifest" href="/lawncopilot/app.webmanifest">
 <meta name="theme-color" content="#307f44">
@@ -121,6 +121,27 @@
 .compare td.c, .compare th.c { text-align: center; }
 .compare .yes { color: var(--green-700); font-weight: 800; }
 .compare .no { color: var(--ink-300); }
+
+/* Staff-vs-software contrast */
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-6); align-items: stretch; }
+@media (max-width: 760px) { .vs { grid-template-columns: 1fr; } }
+.vs__col { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5); background: #fff; }
+.vs__col--them { background: var(--bg-alt); }
+.vs__col--us { border-color: var(--green-600); box-shadow: var(--shadow); }
+.vs__tag { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.vs__col--them .vs__tag { color: var(--ink-400); }
+.vs__col--us .vs__tag { color: var(--green-700); }
+.vs__col h3 { font-size: 1.15rem; margin: 6px 0 var(--space-4); letter-spacing: -.02em; }
+.vs__col ul { list-style: none; padding: 0; margin: 0; }
+.vs__col li { font-size: .92rem; color: var(--text-mut); padding: 8px 0 8px 26px; position: relative; border-top: 1px solid var(--ink-50); }
+.vs__col li:first-child { border-top: 0; }
+.vs__col li b { color: var(--ink-900); font-weight: 700; }
+.vs__col--them li::before { content: "—"; position: absolute; left: 3px; top: 8px; color: var(--ink-300); font-weight: 700; }
+.vs__col--us li::before { content: ""; position: absolute; left: 4px; top: 14px; width: 7px; height: 12px;
+  border: solid var(--green-600); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.vs__price { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--line); font-size: .9rem; }
+.vs__price b { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+.vs__col--us .vs__price b { color: var(--green-700); }
 
 /* Estimator card: tighter rhythm, and a status line that does not float */
 .hero--saas .orbcard { padding: var(--space-5) var(--space-5) var(--space-4); }
@@ -388,8 +409,8 @@
       <img src="/lawncopilot/logo.png" alt="Lawn Co-Pilot" width="182" height="69">
     </a>
     <div class="nav__links">
+      <a href="#difference">Staff, not software</a>
       <a href="#crew">Eight AI employees</a>
-      <a href="#brain">The Brain</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
       <a href="#demo">See it live</a>
@@ -401,8 +422,8 @@
     <button class="nav__burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><span></span></button>
   </div>
   <div class="nav__drawer" id="drawer">
+    <a href="#difference" data-close>Staff, not software</a>
     <a href="#crew" data-close>Eight AI employees</a>
-    <a href="#brain" data-close>The Brain</a>
     <a href="#how" data-close>How it works</a>
     <a href="#pricing" data-close>Pricing</a>
     <a href="#demo" data-close>See it live</a>
@@ -430,12 +451,13 @@
   <div class="wrap hero__grid">
     <div>
     <div class="eyebrow">For landscaping companies</div>
-    <h1>We <b class="hl">answer</b> the calls, <b class="hl">quote</b> the work, <b class="hl">book</b> the jobs, <b class="hl">route</b> the crews and <b class="hl">collect</b> the money.</h1>
+    <h1>The AI office for your landscaping company. It <b class="hl">answers</b> the phone. It <b class="hl">does</b> the work.</h1>
     <p class="lead">
-      Lawn Co-Pilot handles the entire administrative side of your company — answering every
-      call, quoting, booking and scheduling jobs, optimizing your crews' routes, taking
-      payments, and handling customer service and special requests.
-      <b>All of it in one dashboard on your phone.</b> You do the work.
+      Every other tool organizes the work and hands it back to you. Lawn Co-Pilot is a staff of
+      eight AI employees that does it — answering every call, quoting from property records,
+      scheduling the crews and chasing the invoices. <b>For $35 a month:</b> less than an office
+      assistant's day, and a fraction of what the other tools charge. You do the work outside; it
+      runs the office.
     </p>
     <div class="hero__cta">
       <a class="btn btn--primary btn--lg" href="/lawncopilot/signup">Start free</a>
@@ -444,10 +466,10 @@
     <p class="hero__note">7-day free trial. No card required. Live in about three minutes.</p>
 
       <div class="metrics">
-        <div><b>24/7</b><span>Every call answered</span></div>
-        <div><b>~10 sec</b><span>Address to priced quote</span></div>
-        <div><b>0 miles</b><span>Driven to estimate</span></div>
-        <div><b>1 app</b><span>Your whole office</span></div>
+        <div><b>$35</b><span>A month, all in</span></div>
+        <div><b>24/7</b><span>The phone, answered</span></div>
+        <div><b>8</b><span>AI employees on staff</span></div>
+        <div><b>0 miles</b><span>Driven to quote</span></div>
       </div>
     </div>
 
@@ -461,21 +483,58 @@
   <div class="wrap center" style="max-width:800px">
     <h2>You are already doing this work. At 9pm. At the kitchen table.</h2>
     <p class="lead">
-      Calls you missed while mowing. A yard you drove forty minutes to measure and did not win.
-      Tomorrow's route worked out on a napkin. Invoices you keep meaning to send. A customer
-      asking for a one-off cleanup that never made it onto the schedule. That is a full-time
-      office job, done after a full day of labor.
+      Calls you missed while mowing. Tomorrow's route worked out on a napkin. Invoices you keep
+      meaning to send. A customer asking for a one-off cleanup that never made it onto the
+      schedule. That is a full-time office job, done after a full day of labor.
     </p>
+  </div>
+</section>
+
+<section class="section" id="difference">
+  <div class="wrap">
+    <div class="center" style="max-width:720px;margin:0 auto">
+      <div class="eyebrow">The difference</div>
+      <h2>Software you operate. Or staff that operates for you.</h2>
+      <p class="lead">Other tools are getting good at measuring a lawn and printing a quote. So are we.
+      That is table stakes now. The real question is who does the rest of the work — and who picks up
+      the phone.</p>
+    </div>
+
+    <div class="vs">
+      <div class="vs__col vs__col--them">
+        <div class="vs__tag">Software you run</div>
+        <h3>Organizes the work, then hands it back</h3>
+        <ul>
+          <li><b>You</b> still answer the phone and call people back.</li>
+          <li><b>You</b> chase the late invoice.</li>
+          <li><b>You</b> field the after-hours question and the special request.</li>
+          <li>It gives you a dashboard. The office job is still yours.</li>
+        </ul>
+        <div class="vs__price">Priced like business software — often <b>$200 to $300</b> a month.</div>
+      </div>
+
+      <div class="vs__col vs__col--us">
+        <div class="vs__tag">Staff that runs it</div>
+        <h3>Does the work, then hands you the approvals</h3>
+        <ul>
+          <li>Answers the phone at 9pm and books the job.</li>
+          <li>Sends the invoice on completion and chases it if the card fails.</li>
+          <li>Handles the after-hours question; escalates only what needs you.</li>
+          <li>You approve refunds, price changes and pay runs. It does the rest.</li>
+        </ul>
+        <div class="vs__price">All of it for <b>$35</b> a month. Less than an office assistant's day.</div>
+      </div>
+    </div>
   </div>
 </section>
 
 <section class="section" id="estimator">
   <div class="wrap estwrap">
     <div>
-      <div class="eyebrow">The part that wins the job</div>
+      <div class="eyebrow">See one of them work</div>
       <h2>Your customer types an address and gets a real price.</h2>
-      <p class="lead">No callback. No site visit. This is the live estimator running on a real
-      company account — the same thing that would sit on your page.</p>
+      <p class="lead">Not a promise — the live Estimator, running on a real company account, the same
+      one that would sit on your page. This is one of the eight. The other seven run the office.</p>
       <ul class="simfeat">
         <li><b>Measured, not guessed</b><span>Lot, house and driveway from property records. The lawn is what is left.</span></li>
         <li><b>Priced off your rate card</b><span>Your rates, by county and frequency. You set them, it applies them.</span></li>
