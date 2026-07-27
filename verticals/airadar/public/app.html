@@ -114,8 +114,8 @@
   .empty-state p{margin:0 auto 8px;max-width:440px;line-height:1.6;font-size:14px}
 
   /* ── note bar (appears right after a save) ───────────────────────────── */
-  .notebar{display:none;gap:8px;align-items:center;margin-bottom:14px;padding:11px 12px;border-radius:14px;
-    background:rgba(77,240,208,.07);border:1px solid rgba(77,240,208,.35)}
+  .notebar{display:none;gap:8px;align-items:center;max-width:820px;margin:0 auto 10px;padding:11px 12px;
+    border-radius:14px;background:rgba(77,240,208,.1);border:1px solid rgba(77,240,208,.45)}
   .notebar.on{display:flex}
   .notebar input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
     background:#0a111e;color:var(--txt);outline:none;font-size:15px}
@@ -232,14 +232,6 @@
 </header>
 
 <main>
-  <!-- Facebook and Instagram show servers a login wall, so a saved reel often has
-       no readable title. Rather than leave a bare link, offer one line of your
-       own right after saving. Optional, and it disappears if ignored. -->
-  <div class="notebar" id="noteBar">
-    <input id="noteInput" type="text" placeholder="What was it? (a few words is enough)" autocomplete="off">
-    <button class="primary" id="noteSave">Save</button>
-    <button id="noteSkip">Skip</button>
-  </div>
   <div class="stats"><span id="stats"></span><span class="count" id="count"></span></div>
   <div class="grid" id="grid"></div>
   <div class="empty-state" id="empty" style="display:none">
@@ -252,6 +244,14 @@
 <!-- Thumb-zone action bar. Paste link is the main gesture, so it lives at the
      bottom of the screen where a thumb actually reaches, not in the header. -->
 <div class="actionbar">
+  <!-- Facebook and Instagram show servers a login wall, so a saved reel often has
+       no readable title. Offer one line of your own right after saving. It lives
+       here, directly above the button you just pressed, so it cannot be missed. -->
+  <div class="notebar" id="noteBar">
+    <input id="noteInput" type="text" placeholder="What was it? (a few words is enough)" autocomplete="off">
+    <button class="primary" id="noteSave">Save</button>
+    <button id="noteSkip">Skip</button>
+  </div>
   <div class="abin">
     <button class="primary" id="pasteBtn">Paste link</button>
     <button id="addBtn" aria-label="Add by hand">+</button>
