@@ -48,6 +48,15 @@
   /* ── saved list (a bucket, read like a chat of links) ────────────────── */
   main{max-width:820px;margin:0 auto;padding:16px}
   .grid{display:flex;flex-direction:column;gap:10px}
+
+  /* swipe-to-delete: the red panel sits under the row, the row slides off it */
+  .swipe{position:relative;border-radius:14px;overflow:hidden}
+  .swipe-del{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;
+    padding-right:22px;background:linear-gradient(90deg,#4a141d,#8c2233);color:#fff;font-weight:700;font-size:15px}
+  .swipe-del button{background:none;border:0;color:#fff;font:inherit;padding:14px 8px;cursor:pointer}
+  .swipe .item{transition:transform .18s ease;will-change:transform;touch-action:pan-y}
+  .swipe.dragging .item{transition:none}
+
   .item{display:flex;gap:13px;align-items:flex-start;background:linear-gradient(180deg,var(--card),var(--bg2));
     border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer;
     transition:border-color .15s,background .15s;position:relative;overflow:hidden}
@@ -415,10 +424,84 @@
     Array.prototype.forEach.call(g.querySelectorAll('.item'), function(el){
       el.addEventListener('click', function(ev){
         if (ev.target.closest('a')) return;
+        if (el._swiped) { el._swiped = false; return; }   // a swipe is not a tap
+        if (closeAnySwipe()) return;                      // first tap just closes the open row
         openItem(Number(el.getAttribute('data-id')));
+      });
+      wireSwipe(el);
+    });
+    Array.prototype.forEach.call(g.querySelectorAll('.swipe-del button'), function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        removeItem(Number(b.getAttribute('data-id')));
       });
     });
   }
+
+  // ── swipe left to delete ───────────────────────────────────────────────
+  var REVEAL = 96;   // how far the row rests open
+  var openRow = null;
+
+  function closeAnySwipe(){
+    if (!openRow) return false;
+    openRow.style.transform = 'translateX(0)';
+    openRow = null;
+    return true;
+  }
+
+  function wireSwipe(el){
+    var x0 = 0, y0 = 0, dx = 0, dragging = false, decided = false;
+    var wrap = el.parentNode;
+
+    el.addEventListener('touchstart', function(e){
+      if (e.touches.length !== 1) return;
+      if (openRow && openRow !== el) closeAnySwipe();
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+      dx = 0; dragging = true; decided = false;
+      wrap.classList.add('dragging');
+    }, { passive: true });
+
+    el.addEventListener('touchmove', function(e){
+      if (!dragging) return;
+      var mx = e.touches[0].clientX - x0;
+      var my = e.touches[0].clientY - y0;
+      // Let a vertical scroll win; only claim the gesture once it is clearly sideways.
+      if (!decided) {
+        if (Math.abs(my) > Math.abs(mx)) { dragging = false; wrap.classList.remove('dragging'); return; }
+        if (Math.abs(mx) < 8) return;
+        decided = true;
+      }
+      var base = (openRow === el) ? -REVEAL : 0;
+      dx = Math.min(0, Math.max(-REVEAL - 40, base + mx));  // left only, with a little resistance
+      el.style.transform = 'translateX(' + dx + 'px)';
+    }, { passive: true });
+
+    function end(){
+      if (!dragging) return;
+      dragging = false;
+      wrap.classList.remove('dragging');
+      if (!decided) return;
+      el._swiped = true;                       // suppress the click this gesture would fire
+      setTimeout(function(){ el._swiped = false; }, 350);
+      if (dx < -REVEAL / 2) { el.style.transform = 'translateX(-' + REVEAL + 'px)'; openRow = el; }
+      else { el.style.transform = 'translateX(0)'; if (openRow === el) openRow = null; }
+    }
+    el.addEventListener('touchend', end, { passive: true });
+    el.addEventListener('touchcancel', end, { passive: true });
+  }
+
+  function removeItem(id){
+    api('/items/' + id, { method: 'DELETE' }).then(function(){
+      openRow = null;
+      toast('Deleted');
+      return Promise.all([load(), loadStats()]);
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  // Touching anywhere else puts an opened row back.
+  document.addEventListener('touchstart', function(e){
+    if (openRow && !e.target.closest('.swipe')) closeAnySwipe();
+  }, { passive: true });
 
   function when(iso){
     var d = new Date(iso), now = new Date();
@@ -442,7 +525,9 @@
     var h = headline(i);
     var host = i.source_url ? i.source_url.replace(/^https?:\/\/(www\.)?/,'').split('/')[0] : '';
     var pending = i.enrich_status === 'pending';
-    return '<article class="item' + (i.id === state.justSaved ? ' justsaved' : '') + '" data-id="' + i.id + '">' +
+    return '<div class="swipe">' +
+      '<div class="swipe-del"><button data-id="' + i.id + '">Delete</button></div>' +
+      '<article class="item' + (i.id === state.justSaved ? ' justsaved' : '') + '" data-id="' + i.id + '">' +
       '<div class="thumb"' + (i.thumbnail_url ? ' style="background-image:url(' + esc(i.thumbnail_url) + ')"' : '') + '>' +
         (i.thumbnail_url ? '' : esc((i.source_platform || 'link').slice(0, 2))) + '</div>' +
       '<div class="body">' +
@@ -460,7 +545,7 @@
         '<div class="meta"><span>' + (host ? esc(host) + ' · ' : '') + when(i.created_at) + '</span></div>' +
       '</div>' +
       (i.source_url ? '<a class="open" href="' + esc(i.source_url) + '" target="_blank" rel="noopener">Open</a>' : '') +
-    '</article>';
+    '</article></div>';
   }
 
   // ── editor ─────────────────────────────────────────────────────────────
