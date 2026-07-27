@@ -77,6 +77,7 @@ async function renderTenantPage(tenant, req, page) {
 <meta property="og:description" content="${e((c.hero_sub || '').slice(0, 155))}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${e(base)}">
+<link rel="canonical" href="${e(base)}">
 ${c.logo_url ? `<meta property="og:image" content="${e(c.logo_url)}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/lawncopilot/mark.png" type="image/png">

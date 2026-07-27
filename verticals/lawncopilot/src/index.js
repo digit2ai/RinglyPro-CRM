@@ -173,6 +173,24 @@ router.get(['/platform', '/platform/'], (req, res) => {
   res.sendFile(path.join(publicDir, 'platform.html'));
 });
 
+// ── Indexation: robots.txt, sitemap.xml, and a crawlable HTML hub ─────────
+// Registered BEFORE /:slug so they are not read as company slugs. All three
+// anchor to the canonical origin (lawncopilot.com), collapsing the two hosts.
+const seo = require('./seo');
+router.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send(seo.robotsTxt());
+});
+router.get('/sitemap.xml', async (req, res, next) => {
+  try { res.type('application/xml').send(await seo.sitemapXml()); }
+  catch (e) { next(e); }
+});
+router.get(['/sitemap', '/sitemap/'], async (req, res, next) => {
+  try {
+    const { basePath } = require('./tenancy');
+    res.type('html').send(await seo.hubHtml(basePath(req)));
+  } catch (e) { next(e); }
+});
+
 // ── Shared static assets MUST come before /:slug ──────────────────────────
 // Otherwise `/lawncopilot/styles.css` is matched as a company named
 // "styles.css", the tenant lookup fails, and every stylesheet, script and
@@ -180,6 +198,27 @@ router.get(['/platform', '/platform/'], (req, res) => {
 // does not exist, so real slugs still fall through. index:false keeps it from
 // serving public/index.html at `/` instead of the platform home.
 router.use(express.static(publicDir, { index: false }));
+
+/**
+ * The company positioning page at a clean, canonical path. Served through a
+ * handler (not raw static) so it carries the canonical tag + SoftwareApplication
+ * JSON-LD, and the /lawncopilot prefix is host-rewritten.
+ */
+const forCompaniesCache = new Map();
+router.get(['/for-companies', '/for-companies/'], (req, res, next) => {
+  try {
+    const { basePath } = require('./tenancy');
+    const base = basePath(req);
+    const key = base || 'root';
+    if (!forCompaniesCache.has(key)) {
+      let html = require('fs').readFileSync(path.join(publicDir, 'for-companies.html'), 'utf8');
+      html = html.replace('</head>', seo.productHead('/for-companies') + '\n</head>');
+      if (base === '') html = html.split('/lawncopilot/').join('/');
+      forCompaniesCache.set(key, html);
+    }
+    res.type('html').send(forCompaniesCache.get(key));
+  } catch (e) { next(e); }
+});
 
 /**
  * The investor teaser at a clean, shareable path. MUST precede /:slug — else
@@ -194,6 +233,8 @@ router.get(['/investors', '/investors/'], (req, res, next) => {
     const key = base || 'root';
     if (!investorCache.has(key)) {
       let html = require('fs').readFileSync(path.join(publicDir, 'investors.html'), 'utf8');
+      // Unlisted fundraising page: keep it out of the index, but canonicalize.
+      html = html.replace('</head>', seo.noindex() + '\n' + seo.canonicalHead('/investors') + '\n</head>');
       if (base === '') html = html.split('/lawncopilot/').join('/');
       investorCache.set(key, html);
     }
@@ -288,6 +329,10 @@ router.get('/', async (req, res, next) => {
                  `<p class="plans__note" id="plansNote">${pricing.note}</p>`)
         .replace('<table class="compare" id="compare"></table>',
                  `<table class="compare" id="compare">${pricing.compare}</table>`);
+
+      // Canonical + SoftwareApplication JSON-LD (with the three real price tiers).
+      const seo = require('./seo');
+      html = html.replace('</head>', seo.productHead('/') + '\n</head>');
 
       // Point every absolute path at the host actually serving it.
       if (base === '') html = html.split('/lawncopilot/').join('/');
