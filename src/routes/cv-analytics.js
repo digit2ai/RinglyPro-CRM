@@ -18,7 +18,7 @@ const sequelize = DB_URL ? new Sequelize(DB_URL, {
 
 const SALT = process.env.SESSION_SALT || process.env.JWT_SECRET || 'cv-analytics-salt';
 const STATS_KEY = process.env.CV_ANALYTICS_KEY || 'Palindrome@7';
-const ALLOWED_PAGES = new Set(['manuelstagg', 'juliana_gramowski', 'anastagg']);
+const ALLOWED_PAGES = new Set(['manuelstagg', 'juliana_gramowski', 'anastagg', 'andreastagg']);
 
 let ready = false;
 async function ensureTable() {

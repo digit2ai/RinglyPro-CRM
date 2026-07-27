@@ -647,7 +647,12 @@ const CV_SITES = {
     blurb: 'Results-oriented Sales Executive with 10+ years in business development, advertising sales (Out-of-Home) and strategic marketing across the US and Latin America. Clear Channel Outdoor, IndoorMedia, JCDecaux, Televisa. Bilingual EN/ES. Tampa, FL.',
     email: 'jgramowski7@gmail.com', phone: '+1 813-334-2244',
     links: ['https://www.linkedin.com/in/juliana-gramowski-6270201a4'],
-    topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' }
+    topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' },
+  'andreastagg.com': { name: 'Andrea Stagg', role: 'Securities & Derivatives Associate Analyst — JD · International Custody & Compliance', es: false,
+    blurb: 'Securities & Derivatives Associate Analyst at Citi and Juris Doctor — international securities settlement and global custody (INDEVAL, DTC, EUROCLEAR, CREST, IBERCLEAR), AML/BSA/OFAC compliance and international business law. Roles at Citi and J.P. Morgan. Quadrilingual (EN/ES/FR/IT). Tampa, FL.',
+    email: 'andreastagg@gmail.com', phone: '',
+    links: ['https://www.linkedin.com/in/andrea-stagg-1020718b'],
+    topics: 'securities & derivatives; international custody & settlement; income & corporate actions; AML / BSA / OFAC sanctions & KYC; international business & trade law; regulatory compliance' }
 };
 function cvSite(host) { return CV_SITES[String(host || '').toLowerCase().replace(/^www\./, '')] || null; }
 function isoDay() { return new Date().toISOString().slice(0, 10); }
@@ -720,6 +725,25 @@ app.use((req, res, next) => {
 // Clean URL: /anastagg -> her CV page.
 app.get(['/anastagg', '/anastagg/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'anastagg.html'));
+});
+
+// Custom domain: andreastagg.com -> Andrea Stagg CV landing (public/andreastagg.html),
+// served IN PLACE so the address bar stays on andreastagg.com. GHL + Render config.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'andreastagg.com' || host === 'www.andreastagg.com') {
+    const p = req.path;
+    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en' || p === '/es' || p === '/cv' || p === '/resume') {
+      req.url = '/andreastagg.html';
+    }
+  }
+  next();
+});
+
+// Clean URL: /andreastagg -> her CV page.
+app.get(['/andreastagg', '/andreastagg/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'andreastagg.html'));
 });
 
 // CV Talent Engine consoles (clean URLs, work on every host incl. the custom domains).
