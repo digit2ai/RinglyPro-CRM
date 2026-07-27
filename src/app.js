@@ -1100,6 +1100,13 @@ try {
   console.log('✅ Presentation TTS routes mounted at /api/tts');
 } catch (e) { console.log('⚠️ Presentation TTS routes not loaded:', e.message); }
 
+// Ana — cerebro conversacional del orbe de Defensores de la Patria
+try {
+  const anaChatRoutes = require('./routes/ana-chat');
+  app.use('/api/ana', anaChatRoutes);
+  console.log('✅ Ana chat routes mounted at /api/ana');
+} catch (e) { console.log('⚠️ Ana chat routes not loaded:', e.message); }
+
 // Mount Google Calendar OAuth routes
 app.use('/api/google-oauth', googleOAuthRoutes); // Google Calendar OAuth integration
 console.log('🗓️ Google Calendar OAuth routes mounted at /api/google-oauth');

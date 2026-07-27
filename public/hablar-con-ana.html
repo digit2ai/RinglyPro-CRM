@@ -8,7 +8,6 @@
 <meta name="description" content="Habla con Ana, la asistente de inteligencia artificial del Gobierno del País Milagro. Pregúntale por el plan de los primeros 100 días digitales: Blockchain 2030, Universidad Virtual en Casa, conectividad gratuita y Estado Digital.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -127,6 +126,29 @@
     font-size: 14px; font-weight: 700; color: var(--text-on-dark);
     letter-spacing: 0.02em; text-align: center; min-height: 20px;
   }
+  /* Subtítulo en vivo: lo que Ana escuchó y lo que va respondiendo */
+  .call-caption {
+    font-size: 13.5px; line-height: 1.5; color: var(--text-muted);
+    text-align: center; max-width: 340px; min-height: 20px;
+    margin: -4px auto 0;
+  }
+  .call-caption.is-user { color: var(--yellow); font-style: italic; }
+
+  /* Respaldo por teclado (navegadores sin reconocimiento de voz) */
+  .type-row { display: none; width: 100%; max-width: 360px; gap: 8px; margin-top: 18px; }
+  .type-row.on { display: flex; }
+  .type-row input {
+    flex: 1; min-width: 0; border-radius: 12px; padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+    color: var(--text-on-dark); font-family: inherit; font-size: 14px;
+  }
+  .type-row input::placeholder { color: var(--text-muted); }
+  .type-row input:focus { outline: 2px solid var(--yellow); border-color: transparent; }
+  .type-row button {
+    border: none; border-radius: 12px; padding: 0 18px; cursor: pointer;
+    background: linear-gradient(135deg, var(--flame-1), var(--flame-2));
+    color: #fff; font-family: inherit; font-weight: 700; font-size: 14px;
+  }
 
   .mic-note { margin-top: 16px; font-size: 12px; color: var(--text-muted); text-align: center; max-width: 340px; opacity: 0.85; }
   .mic-note strong { color: var(--yellow); }
@@ -178,6 +200,13 @@
       <span class="call-orb-icon" id="call-icon" aria-hidden="true">&#127908;</span>
     </button>
     <div class="call-status" id="call-status">Toca para hablar con Ana</div>
+    <div class="call-caption" id="call-caption"></div>
+
+    <div class="type-row" id="type-row">
+      <input id="type-input" type="text" autocomplete="off"
+             placeholder="Escríbele a Ana..." aria-label="Escríbele a Ana">
+      <button id="type-send" type="button">Enviar</button>
+    </div>
   </div>
 
   <p class="mic-note">Presiona el botón y permite el acceso al <strong>micrófono</strong> cuando lo solicite. Usa audífonos para una mejor calidad de llamada.</p>
@@ -189,28 +218,50 @@
   <script>
   /* Defensores de la Patria — "Habla con Ana" voice AI.
    *
-   * Migrated from the bare <elevenlabs-convai> widget embed to the
-   * @elevenlabs/client SDK so we control the microphone capture. The
-   * widget gave no access to the getUserMedia constraints, which meant
-   * we could not turn on the browser's DSP — the source of the audio
-   * interference users reported. We now request the mic with
-   * echoCancellation + noiseSuppression + autoGainControl so background
-   * noise is filtered, speaker echo is cancelled (the agent stops
-   * hearing itself), and quiet/loud voices are normalized before the
-   * audio ever reaches the convai STT. Same proven pattern as
-   * champion-teaser.html.
+   * Migrado de ElevenLabs Conversational AI a la pila propia y sin llaves
+   * de terceros que ya usa el resto del ecosistema (manuelstagg.com, los
+   * teasers, Maya en Planea):
+   *
+   *   Oído   -> Web Speech API del navegador (es-CO), en el dispositivo.
+   *   Cerebro-> POST /api/ana/chat (Claude Haiku, anclado al plan de los 100 días).
+   *   Voz    -> POST /api/tts/edge (Microsoft Edge neural, voz Salomé es-CO).
+   *
+   * ElevenLabs empaquetaba las tres capas y las cobraba por minuto; aquí
+   * las tres son nuestras y las dos externas son gratuitas. El bucle es
+   * manos libres: Ana habla, escucha, piensa y vuelve a hablar hasta que
+   * el ciudadano cuelga.
+   *
+   * El micrófono se pide con echoCancellation + noiseSuppression +
+   * autoGainControl (la corrección de interferencia que ya estaba aquí):
+   * el reconocimiento usa el mismo dispositivo, así que Ana no se oye a
+   * sí misma ni se activa con el ruido de fondo.
    */
   (function () {
-    var AGENT_ID = 'agent_7401kf279ahqe3hb1ecyct9ee1av';
+    var CHAT_URL  = '/api/ana/chat';
+    var TTS_URL   = '/api/tts/edge';
+    var TTS_VOICE = 'salome';       // es-CO Salomé (Edge neural)
+    var LANG      = 'es-CO';
+    var MAX_SILENCIOS = 3;          // cuelga tras 3 escuchas vacías seguidas
 
-    var btn    = document.getElementById('call-btn');
-    var icon   = document.getElementById('call-icon');
-    var status = document.getElementById('call-status');
+    var GREETING = 'Hola, soy Ana, la asistente de inteligencia artificial del Gobierno del País Milagro. ' +
+                   'Cuénteme, ¿qué quiere saber del plan de los primeros cien días digitales?';
 
-    var session    = null;   // active convai session
-    var micStream  = null;    // raw MediaStream so we can stop tracks
-    var connecting = false;
-    var ConversationPromise = null;
+    var btn     = document.getElementById('call-btn');
+    var icon    = document.getElementById('call-icon');
+    var status  = document.getElementById('call-status');
+    var caption = document.getElementById('call-caption');
+    var typeRow = document.getElementById('type-row');
+    var typeInput = document.getElementById('type-input');
+    var typeSend  = document.getElementById('type-send');
+
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    var live       = false;   // llamada activa
+    var micStream  = null;    // MediaStream cruda, para soltar el micrófono
+    var recog      = null;    // reconocimiento en curso
+    var recognizing = false;
+    var silencios  = 0;
+    var history    = [];      // [{role, content}] enviado al cerebro
 
     var STATUS = {
       idle:       'Toca para hablar con Ana',
@@ -230,21 +281,183 @@
       else if (s === 'speaking') { btn.classList.add('is-speaking'); icon.innerHTML = '&#128266;'; }
       else if (s === 'thinking') { btn.classList.add('is-thinking'); icon.innerHTML = '&#8230;'; }
       else { icon.innerHTML = '&#127908;'; } // idle / denied / error
-      var live = (s !== 'idle' && s !== 'denied' && s !== 'error');
-      btn.setAttribute('aria-label', live ? 'Terminar llamada con Ana' : 'Iniciar llamada con Ana');
-      btn.classList.toggle('is-live', live);
+      var activo = (s !== 'idle' && s !== 'denied' && s !== 'error');
+      btn.setAttribute('aria-label', activo ? 'Terminar llamada con Ana' : 'Iniciar llamada con Ana');
+      btn.classList.toggle('is-live', activo);
     }
 
-    function loadSdk() {
-      if (ConversationPromise) return ConversationPromise;
-      ConversationPromise = import('https://esm.sh/@elevenlabs/client@1.9.0')
-        .then(function (mod) {
-          return mod.Conversation || (mod.default && mod.default.Conversation);
+    function setCaption(text, esCiudadano) {
+      caption.textContent = text || '';
+      caption.classList.toggle('is-user', !!esCiudadano);
+    }
+
+    // ── Voz de Ana (Edge neural, troceada por frases para que arranque ya) ──
+    var actx = null, curSource = null, speakToken = 0;
+
+    function ensureCtx() {
+      if (!actx) { var C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); }
+      return actx;
+    }
+    function unlockAudio() {
+      var c = ensureCtx();
+      if (c && c.state === 'suspended') { try { c.resume(); } catch (e) {} }
+    }
+    function stopAudio() {
+      speakToken++;
+      if (curSource) {
+        try { curSource.onended = null; curSource.stop(); } catch (e) {}
+        curSource = null;
+      }
+    }
+    function cleanForTTS(t) {
+      return String(t)
+        .replace(/\*\*|\*|__|_|#+|>/g, ' ')
+        .replace(/^\s*[-•]\s+/gm, ' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    // Trocea en frases (uniendo fragmentos muy cortos) para que la primera
+    // suene ~1 segundo después de que el modelo responde.
+    function splitChunks(t) {
+      var clean = cleanForTTS(t);
+      var parts = clean.match(/[^.!?;\n]+[.!?;]?/g) || [clean];
+      var out = [], cur = '';
+      parts.forEach(function (p) {
+        p = p.trim(); if (!p) return;
+        cur = cur ? cur + ' ' + p : p;
+        if (cur.length >= 45) { out.push(cur); cur = ''; }
+      });
+      if (cur) out.push(cur);
+      return out.length ? out : [clean];
+    }
+    function fetchDecoded(text) {
+      var c = ensureCtx(); if (!c) return Promise.resolve(null);
+      return fetch(TTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, voice: TTS_VOICE })
+      })
+        .then(function (r) { return r.ok ? r.arrayBuffer() : null; })
+        .then(function (buf) {
+          if (!buf) return null;
+          return new Promise(function (res) {
+            c.decodeAudioData(buf.slice(0), function (d) { res(d); }, function () { res(null); });
+          });
         })
-        .catch(function (e) { console.error('[ana] SDK load failed', e); ConversationPromise = null; return null; });
-      return ConversationPromise;
+        .catch(function () { return null; });
+    }
+    function speak(text, onEnd) {
+      stopAudio();
+      var myToken = speakToken;  // stopAudio ya lo incrementó
+      var c = ensureCtx();
+      var chunks = splitChunks(text);
+      if (!c || !chunks.length) { if (onEnd) onEnd(); return; }
+      var i = 0;
+      var nextP = fetchDecoded(chunks[0]);  // sintetiza la primera frase ya
+      function playNext() {
+        if (myToken !== speakToken) return;             // interrumpida
+        if (i >= chunks.length) { if (onEnd) onEnd(); return; }
+        var p = nextP;
+        nextP = (i + 1 < chunks.length) ? fetchDecoded(chunks[i + 1]) : null;  // precarga
+        p.then(function (buf) {
+          if (myToken !== speakToken) return;
+          if (!buf) { i++; playNext(); return; }
+          var src = c.createBufferSource();
+          src.buffer = buf; src.connect(c.destination);
+          src.onended = function () {
+            if (myToken !== speakToken) return;
+            if (curSource === src) curSource = null;
+            i++; playNext();
+          };
+          curSource = src;
+          try { src.start(0); } catch (e) { i++; playNext(); }
+        });
+      }
+      playNext();
     }
 
+    // ── Cerebro ───────────────────────────────────────────────────────────
+    function ask(text, onReply) {
+      history.push({ role: 'user', content: text });
+      setState('thinking');
+      fetch(CHAT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history.slice(-12) })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var reply = (data && data.reply) ||
+            'Disculpe, no pude responder en este momento. ¿Me repite la pregunta?';
+          history.push({ role: 'assistant', content: reply });
+          onReply(reply);
+        })
+        .catch(function () {
+          onReply('Tuve un problema de conexión. ¿Me repite la pregunta?');
+        });
+    }
+
+    // ── Bucle manos libres: hablar → escuchar → pensar → hablar ───────────
+    function sayThenListen(text) {
+      if (!live) return;
+      setState('speaking');
+      setCaption(text, false);
+      speak(text, function () { if (live) listen(); });
+    }
+    function sayThenHangUp(text) {
+      setState('speaking');
+      setCaption(text, false);
+      speak(text, function () { endCall(); });
+    }
+
+    function listen() {
+      if (!live) return;
+      if (!SR) { setState('listening'); setCaption('Escríbele a Ana abajo.', false); return; }
+      setState('listening');
+      setCaption('', true);
+
+      recog = new SR();
+      recog.lang = LANG;
+      recog.interimResults = true;
+      recog.continuous = false;
+      recognizing = true;
+
+      var finalText = '';
+      recog.onresult = function (e) {
+        var interim = '';
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+          else interim += e.results[i][0].transcript;
+        }
+        setCaption((finalText + interim).trim(), true);
+      };
+      recog.onerror = function (e) {
+        recognizing = false;
+        if (e && e.error === 'not-allowed') { live = false; setState('denied'); showTypeRow(); }
+      };
+      recog.onend = function () {
+        recognizing = false;
+        if (!live) return;
+        var t = finalText.trim();
+        if (t) {
+          silencios = 0;
+          setCaption(t, true);
+          ask(t, function (reply) { sayThenListen(reply); });
+        } else {
+          silencios++;
+          if (silencios >= MAX_SILENCIOS) {
+            sayThenHangUp('Me quedo por aquí. Toque el botón cuando quiera seguir conversando.');
+          } else {
+            listen();
+          }
+        }
+      };
+      try { recog.start(); }
+      catch (e) { setTimeout(function () { if (live) listen(); }, 400); }
+    }
+
+    // ── Micrófono ─────────────────────────────────────────────────────────
     function releaseMic() {
       if (micStream) {
         try { micStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
@@ -252,70 +465,100 @@
       }
     }
 
+    function showTypeRow() {
+      typeRow.classList.add('on');
+    }
+
     function endCall() {
-      if (session) { try { session.endSession(); } catch (_) {} }
-      session = null;
+      live = false;
+      stopAudio();
+      if (recognizing && recog) { try { recog.abort(); } catch (_) {} }
+      recognizing = false;
       releaseMic();
+      silencios = 0;
       setState('idle');
+      setCaption('', false);
     }
 
     function startCall() {
-      if (connecting || session) return;
-      connecting = true;
+      if (live) return;
+      live = true;
+      silencios = 0;
+      history = [];
+      unlockAudio();               // el gesto del usuario desbloquea el audio en iOS
       setState('connecting');
 
-      loadSdk().then(function (Conversation) {
-        if (!Conversation) { connecting = false; setState('error'); return; }
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          connecting = false; setState('error'); return;
-        }
-
-        navigator.mediaDevices.getUserMedia({
-          // Turn on the browser's built-in DSP: suppress background noise,
-          // cancel speaker echo (so Ana doesn't hear herself), and
-          // normalize volume. This is the interference fix.
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            channelCount: 1,
-            sampleRate: 48000
-          }
-        })
-        .then(function (stream) {
-          micStream = stream;
-          return Conversation.startSession({
-            agentId: AGENT_ID,
-            onConnect: function () { connecting = false; setState('listening'); },
-            onDisconnect: function () { session = null; releaseMic(); setState('idle'); },
-            onError: function (e) {
-              console.error('[ana] convai error', e);
-              connecting = false; session = null; releaseMic(); setState('error');
-            },
-            onModeChange: function (mode) {
-              var m = mode && mode.mode;
-              if (m === 'speaking') setState('speaking');
-              else if (m === 'thinking') setState('thinking');
-              else if (m === 'listening') setState('listening');
-            }
-          });
-        })
-        .then(function (s) { if (s) { session = s; } })
-        .catch(function (err) {
-          console.error('[ana] mic / session error', err);
-          connecting = false;
-          releaseMic();
-          setState(err && err.name === 'NotAllowedError' ? 'denied' : 'error');
+      if (!SR) {
+        // Sin reconocimiento de voz (Firefox): Ana igual saluda y habla,
+        // y el ciudadano le escribe.
+        showTypeRow();
+        setState('speaking');
+        setCaption(GREETING, false);
+        history.push({ role: 'assistant', content: GREETING });
+        speak(GREETING, function () {
+          if (live) { setState('listening'); setCaption('Escríbele a Ana abajo.', false); }
         });
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        live = false; setState('error'); showTypeRow(); return;
+      }
+
+      navigator.mediaDevices.getUserMedia({
+        // DSP del navegador: filtra el ruido de fondo, cancela el eco del
+        // parlante (Ana deja de oírse a sí misma) y normaliza el volumen.
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000
+        }
+      })
+      .then(function (stream) {
+        micStream = stream;
+        if (!live) { releaseMic(); return; }
+        history.push({ role: 'assistant', content: GREETING });
+        sayThenListen(GREETING);
+      })
+      .catch(function (err) {
+        console.error('[ana] micrófono', err);
+        live = false;
+        releaseMic();
+        setState(err && err.name === 'NotAllowedError' ? 'denied' : 'error');
+        showTypeRow();
       });
     }
 
+    // ── Respaldo por teclado ──────────────────────────────────────────────
+    function sendTyped() {
+      var t = (typeInput.value || '').trim();
+      if (!t) return;
+      typeInput.value = '';
+      live = true;
+      unlockAudio();
+      setCaption(t, true);
+      ask(t, function (reply) {
+        setState('speaking');
+        setCaption(reply, false);
+        speak(reply, function () {
+          if (SR && micStream) listen();
+          else setState('listening');
+        });
+      });
+    }
+    typeSend.addEventListener('click', sendTyped);
+    typeInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); sendTyped(); }
+    });
+
     btn.addEventListener('click', function () {
-      if (session || connecting) endCall();
+      if (live) endCall();
       else startCall();
     });
 
-    // Clean up the mic + session if the page is closed/hidden.
+    // Suelta el micrófono y corta el audio si se cierra u oculta la página.
     window.addEventListener('pagehide', endCall);
 
     setState('idle');
