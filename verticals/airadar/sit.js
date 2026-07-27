@@ -6,15 +6,27 @@
  * whole flow. Runs green with NO external keys (the enricher falls back to the
  * labelled heuristic path) and tolerates a network-less environment.
  *
+ * NEVER TOUCHES A REAL ACCOUNT. The dev database IS production here, and this
+ * suite rotates capture tokens and deletes rows — doing that to the owner's row
+ * would silently break the iOS shortcut they built against the old token. So it
+ * provisions its own throwaway user, works only inside that tenant, and removes
+ * the account and everything in it at the end. Do not point it at a real login.
+ *
  * Run from the repo root:  node verticals/airadar/sit.js
  * Exit 0 = all green.
  */
 
 require('dotenv').config();
 const express = require('express');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const { User, Item, Enrichment } = require('./src/models');
 
 const app = express();
 app.use('/airadar', require('./src/index'));
+
+const SIT_EMAIL = 'sit-airadar@digit2ai.test';
+const SIT_PW = 'sit-airadar-' + process.pid;
 
 const server = app.listen(0, async () => {
   const base = 'http://127.0.0.1:' + server.address().port + '/airadar';
@@ -22,8 +34,8 @@ const server = app.listen(0, async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let pass = 0, fail = 0;
   const ok = (c, m) => { c ? (pass++, console.log('PASS ' + m)) : (fail++, console.log('FAIL ' + m)); };
-  const PW = process.env.AIRADAR_PASSWORD || process.env.SPEAKUP_TEAM_PASSWORD || 'Palindrome@7';
-  const made = [];
+  const made = [];   // ids created, reported at the end as a cleanup cross-check
+  let sitUser = null;
 
   try {
     await wait(3000); // let sync start
@@ -38,24 +50,34 @@ const server = app.listen(0, async () => {
     ok(redir.status === 302 && /\/airadar\/login\?next=/.test(redir.headers.get('location') || ''),
       'share target redirects to login with next=');
 
-    // Boot seeds the owner asynchronously against a remote database; poll for it
-    // rather than guessing a sleep length.
-    let lr = null;
-    for (let i = 0; i < 25; i++) {
-      lr = await fetch(base + '/api/v1/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'mstagg@digit2ai.com', password: PW })
-      });
-      if (lr.ok) break;
-      await wait(1200);
+    // ── provision the throwaway account (tables may still be syncing) ───
+    const hash = await bcrypt.hash(SIT_PW, 8);
+    for (let i = 0; i < 25 && !sitUser; i++) {
+      try {
+        sitUser = await User.findOne({ where: { email: SIT_EMAIL } });
+        if (sitUser) { sitUser.password_hash = hash; await sitUser.save(); }
+        else {
+          sitUser = await User.create({
+            email: SIT_EMAIL, name: 'AI Radar SIT', role: 'member', lang: 'en',
+            password_hash: hash, capture_token: crypto.randomBytes(24).toString('hex')
+          });
+        }
+        if (!sitUser.tenant_id) { sitUser.tenant_id = sitUser.id; await sitUser.save(); }
+      } catch (e) { await wait(1200); }
     }
+    ok(!!sitUser, 'throwaway SIT account provisioned (no real account is touched)');
+
+    const lr = await fetch(base + '/api/v1/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: SIT_EMAIL, password: SIT_PW })
+    });
     const cookie = (lr.headers.get('set-cookie') || '').split(';')[0];
     ok(lr.ok && cookie.includes('airadar_token'), 'login sets cookie');
     const H = { 'Content-Type': 'application/json', Cookie: cookie };
 
     ok((await fetch(base + '/api/v1/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'mstagg@digit2ai.com', password: 'wrong-' + Date.now() })
+      body: JSON.stringify({ email: SIT_EMAIL, password: 'wrong-' + Date.now() })
     })).status === 401, 'bad password rejected (401)');
 
     const me = await fetch(base + '/api/v1/auth/me', { headers: H }).then(j);
@@ -251,17 +273,16 @@ const server = app.listen(0, async () => {
     fail++;
   }
 
-  // cleanup anything the run created
+  // Remove the throwaway tenant entirely — rows first, then the account.
   try {
-    const lr2 = await fetch(base + '/api/v1/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'mstagg@digit2ai.com', password: process.env.AIRADAR_PASSWORD || process.env.SPEAKUP_TEAM_PASSWORD || 'Palindrome@7' })
-    });
-    const ck = (lr2.headers.get('set-cookie') || '').split(';')[0];
-    for (const id of made) {
-      await fetch(base + '/api/v1/items/' + id, { method: 'DELETE', headers: { Cookie: ck } }).catch(() => {});
+    if (sitUser) {
+      const tid = sitUser.tenant_id || sitUser.id;
+      const gone = await Item.destroy({ where: { tenant_id: tid } });
+      await Enrichment.destroy({ where: { tenant_id: tid } });
+      await User.destroy({ where: { id: sitUser.id } });
+      console.log(`cleanup: removed the SIT tenant (${gone} items deleted, ${made.length} created during the run, account deleted)`);
     }
-  } catch (e) { /* best effort */ }
+  } catch (e) { console.log('cleanup warning:', e.message); }
 
   console.log(`\n==== ${pass} passed, ${fail} failed ====`);
   server.close();
