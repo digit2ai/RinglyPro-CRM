@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS ar_items (
   enriched_by     VARCHAR(32) DEFAULT 'manual',
   is_simulated    BOOLEAN DEFAULT false,
   needs_review    BOOLEAN DEFAULT false,
+  enrich_status   VARCHAR(16) DEFAULT 'none',
 
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()

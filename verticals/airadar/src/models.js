@@ -57,6 +57,8 @@ const Item = sequelize.define('RadarItem', {
   enriched_by: { type: DataTypes.STRING, defaultValue: 'manual' }, // manual|model|heuristic
   is_simulated: { type: DataTypes.BOOLEAN, defaultValue: false },  // true = drafted without a live model
   needs_review: { type: DataTypes.BOOLEAN, defaultValue: false },  // AI could not identify the company
+  // Background labelling: the link is saved instantly, details arrive after.
+  enrich_status: { type: DataTypes.STRING, defaultValue: 'none' }, // none|pending|done|failed
 
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }

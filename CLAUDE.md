@@ -474,9 +474,12 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **Live:** app `/airadar/` · login `/airadar/login` · share target `/airadar/share` · health `/airadar/health` · debug `/debug/airadar-error`. Installable PWA (manifest + sw.js; network-first, never caches `/api/`, never intercepts `/share`).
 
+**IT IS A BUCKET, NOT A FORM.** The product this replaces is the owner's WhatsApp "Message yourself" chat: tap share, it is saved, back to scrolling. **Nothing blocks the save** — no form, no confirmation, no page fetch and no model call inside the request (`services/save.js` `saveLink()` inserts the row and returns; SIT asserts capture answers in well under 2.5s, typically ~70ms). Labelling happens **after** the response via `enrichLater()` fire-and-forget, which fills only fields that are still empty and flips `ar_items.enrich_status` `pending → done|failed`. The list shows "reading the link" on a pending row and quietly refreshes every 3s until nothing is pending. If enrichment fails the link is still saved — that is the whole contract. Do not reintroduce a capture-time form.
+
 **Two ways in — because iOS has no Web Share Target:**
-- **Android / desktop Chrome:** the manifest declares `share_target` → `GET /airadar/share`, which forwards `url`/`text`/`title` to the app as `?share=1&...`. The app opens the quick-add sheet pre-filled and fires the AI draft immediately.
+- **Android / desktop Chrome:** the manifest declares `share_target` → `GET /airadar/share`, which **saves server-side and redirects to `/airadar/?saved=<id>`** (toast + highlighted row). Only a share carrying no link at all falls through to the add sheet.
 - **iPhone:** a one-time Shortcut POSTs to `POST /airadar/api/v1/capture?key=<capture_token>` — the only route outside the cookie gate, authenticated by the per-user `ar_users.capture_token` (rotatable from the app, unique-indexed). Saves silently without opening a browser. Same endpoint powers the desktop bookmarklet. The in-app **Setup** sheet renders the exact address, the Shortcut steps and a copy-to-clipboard bookmarklet.
+- The list itself reads like a chat of saved links (thumbnail, headline, host, relative time, Open button). The headline degrades honestly: company name, else the post title, else the bare link — never a placeholder.
 
 **AI auto-enrich** (`src/services/enrich.js` + `src/services/metadata.js`): fetches the shared page (dependency-free og:/twitter:/`<title>` parser, 9s timeout, private-IP ranges refused), then Claude Haiku drafts `{company_name, company_url, description, category, tags}`. **Honesty is enforced in code, not just the prompt:**
 - `company_url` is validated against the candidate list — the model cannot return a URL that was not in the evidence, and a social host is never proposed as a company site.
@@ -487,7 +490,7 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **REST API (`/airadar/api/v1/*`):** auth `POST /auth/login|logout`, `GET /auth/me` (returns the capture token), `POST /auth/rotate-capture-token` · items `GET /items` (q + status/category/platform/tag/needs_review filters), `POST /items` (opt `auto_enrich`), `GET /items/stats`, `GET /items/export?format=csv|json|md`, `GET|PATCH|DELETE /items/:id`, `POST /items/:id/enrich` (opt `apply`) · `POST /enrich` (draft, saves nothing) · `POST|GET /capture?key=` (token-authed).
 
-**SIT:** `node verticals/airadar/sit.js` → **54/54** (auth gate, share-target redirect chain, platform detection, honesty flags, private-network refusal, search/filter/stats, capture + rotation invalidation, all three export formats, cross-tenant 404s). Zero external keys — runs green on the heuristic path.
+**SIT:** `node verticals/airadar/sit.js` → **60/60** (auth gate, instant-save share target, capture latency ceiling, background labelling settling out of `pending`, second-hop provenance, platform detection, honesty flags, private-network refusal, search/filter/stats, capture + rotation invalidation, all three export formats, cross-tenant 404s). Zero external keys — runs green on the heuristic path.
 
 **Environment Variables:**
 - `AIRADAR_JWT_SECRET` — signs the `airadar_token` cookie (falls back to `JWT_SECRET`), 30d. SET on prod.

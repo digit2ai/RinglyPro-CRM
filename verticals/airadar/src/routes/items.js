@@ -19,6 +19,7 @@ const { Op, fn, col } = require('sequelize');
 const router = express.Router();
 const { Item, Enrichment } = require('../models');
 const { enrich, CATEGORIES } = require('../services/enrich');
+const { enrichLater } = require('../services/save');
 const { detectPlatform } = require('../services/metadata');
 
 const STATUSES = ['inbox', 'saved', 'archived'];
@@ -200,12 +201,17 @@ router.post('/', async (req, res) => {
     // An item with no company on it is, by definition, still unfinished.
     if (body.needs_review === undefined) body.needs_review = !body.company_name;
 
+    // Pasting a bare link is the same act as sharing one: save now, label later.
+    const labelLater = !draft && body.source_url && !body.company_name;
+    if (labelLater) body.enrich_status = 'pending';
+
     const item = await Item.create({
       tenant_id, user_id,
       status: body.status || 'inbox',
       ...body,
       created_at: new Date(), updated_at: new Date()
     });
+    if (labelLater) enrichLater(item);
 
     if (draft) {
       await Enrichment.create({

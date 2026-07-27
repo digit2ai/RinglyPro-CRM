@@ -62,11 +62,23 @@ const server = app.listen(0, async () => {
     ok(me.user && me.user.capture_token && me.user.capture_token.length >= 40, 'capture token issued');
     const KEY = me.user.capture_token;
 
-    // ── share target now authenticated ──────────────────────────────────
-    const sh = await fetch(base + '/share?url=https%3A%2F%2Fexample.com%2Fx&text=hello', { headers: { Cookie: cookie }, redirect: 'manual' });
+    // ── share target: saves instantly, no form ──────────────────────────
+    const sh = await fetch(base + '/share?url=https%3A%2F%2Fexample.com%2Fsit-share&text=hello', { headers: { Cookie: cookie }, redirect: 'manual' });
     const shLoc = sh.headers.get('location') || '';
-    ok(sh.status === 302 && shLoc.includes('share=1') && shLoc.includes('example.com'),
-      'share target forwards url + share=1 to the app');
+    const shId = Number((shLoc.match(/saved=(\d+)/) || [])[1]);
+    ok(sh.status === 302 && shId > 0, 'share target saves immediately and redirects with saved=<id>');
+    if (shId) {
+      made.push(shId);
+      const shItem = await fetch(base + '/api/v1/items/' + shId, { headers: H }).then(j);
+      ok(shItem.item.source_url === 'https://example.com/sit-share', 'shared link is in the bucket');
+      ok(shItem.item.enrich_status === 'pending' || shItem.item.enrich_status === 'done' || shItem.item.enrich_status === 'failed',
+        'shared item is labelled in the background (enrich_status set)');
+    } else { fail += 2; }
+
+    // A share with no link at all is the only case that opens the add sheet.
+    const shT = await fetch(base + '/share?text=just+some+words', { headers: { Cookie: cookie }, redirect: 'manual' });
+    ok(shT.status === 302 && (shT.headers.get('location') || '').includes('share=1'),
+      'a text-only share opens the add sheet instead of saving a blank row');
 
     // ── create by hand ──────────────────────────────────────────────────
     const c1 = await fetch(base + '/api/v1/items', { method: 'POST', headers: H, body: JSON.stringify({
@@ -160,18 +172,31 @@ const server = app.listen(0, async () => {
     ok((await fetch(base + '/api/v1/capture?key=' + KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}) })).status === 400, 'capture with no link rejected (400)');
 
+    const t0 = Date.now();
     const cap = await fetch(base + '/api/v1/capture?key=' + KEY, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: 'https://x.com/someone/status/SIT777', text: 'new AI agent thing', enrich: false })
+      body: JSON.stringify({ url: 'https://x.com/someone/status/SIT777', text: 'new AI agent thing' })
     }).then(j);
+    const capMs = Date.now() - t0;
     ok(cap.success && cap.item_id, 'capture saves without a session cookie');
     ok(cap.open === '/airadar/?item=' + cap.item_id, 'capture returns the deep link back into the app');
+    // The whole point: the Shortcut must not wait on a page fetch or a model.
+    ok(capMs < 2500, `capture answers immediately (${capMs}ms, no fetch or model in the request)`);
     made.push(cap.item_id);
     const capItem = await fetch(base + '/api/v1/items/' + cap.item_id, { headers: H }).then(j);
     ok(capItem.item.source_platform === 'x' && capItem.item.shared_text === 'new AI agent thing', 'captured item keeps the shared caption');
-    ok(capItem.item.needs_review === true, 'captured item lands flagged for review');
 
-    const capGet = await fetch(base + '/api/v1/capture?key=' + KEY + '&url=https%3A%2F%2Fyoutu.be%2FSIT888&enrich=0').then(j);
+    // Background labelling settles on its own.
+    let settled = null;
+    for (let i = 0; i < 25; i++) {
+      const s = await fetch(base + '/api/v1/items/' + cap.item_id, { headers: H }).then(j);
+      if (s.item.enrich_status !== 'pending') { settled = s.item; break; }
+      await wait(700);
+    }
+    ok(settled && (settled.enrich_status === 'done' || settled.enrich_status === 'failed'),
+      'background labelling finishes on its own (enrich_status leaves pending)');
+
+    const capGet = await fetch(base + '/api/v1/capture?key=' + KEY + '&url=https%3A%2F%2Fyoutu.be%2FSIT888').then(j);
     ok(capGet.success && capGet.item_id, 'GET capture works (share targets that cannot POST)');
     made.push(capGet.item_id);
 

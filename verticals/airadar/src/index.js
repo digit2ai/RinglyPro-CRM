@@ -60,22 +60,44 @@ router.use((req, res, next) => {
 router.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
 
 // ── Web Share Target ─────────────────────────────────────────────────────────
-// The PWA manifest points share_target at /airadar/share (GET, per the manifest's
-// params). Android hands us title/text/url; we forward them to the app UI, which
-// opens the quick-add sheet pre-filled and runs the AI draft.
-router.get('/share', (req, res) => {
-  const qs = new URLSearchParams();
-  for (const k of ['url', 'text', 'title']) if (req.query[k]) qs.set(k, String(req.query[k]).slice(0, 4000));
-  qs.set('share', '1');
-  res.redirect('/airadar/?' + qs.toString());
-});
+// The manifest points share_target here. SAVE IMMEDIATELY — no form, no wait.
+// Sharing a post has to feel like sending it to yourself on WhatsApp: it is in
+// the bucket before the page finishes loading, and the details fill themselves
+// in afterwards. Only when there is no link at all do we open the add sheet.
+const { saveLink } = require('./services/save');
+const { User } = require('./models');
+
+async function handleShare(req, res, src) {
+  try {
+    const url = String(src.url || '').slice(0, 4000);
+    let text = String(src.text || '').slice(0, 4000);
+    const title = String(src.title || '').slice(0, 500);
+
+    // Android often puts the link inside `text` rather than `url`.
+    let link = url;
+    if (!link && text) {
+      const m = text.match(/https?:\/\/\S+/);
+      if (m) { link = m[0]; text = text.replace(m[0], '').trim(); }
+    }
+    if (!link) {
+      const qs = new URLSearchParams({ share: '1', text: [title, text].filter(Boolean).join(' ') });
+      return res.redirect('/airadar/?' + qs.toString());
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.redirect('/airadar/login');
+
+    const item = await saveLink({ user, url: link, text: [title, text].filter(Boolean).join(' ') });
+    return res.redirect('/airadar/?saved=' + item.id);
+  } catch (e) {
+    console.error('AI Radar share error:', e.message);
+    return res.redirect('/airadar/?share_error=1');
+  }
+}
+
+router.get('/share', (req, res) => handleShare(req, res, req.query));
 // Some platforms POST a share target even when the manifest declares GET.
-router.post('/share', (req, res) => {
-  const qs = new URLSearchParams();
-  for (const k of ['url', 'text', 'title']) if (req.body[k]) qs.set(k, String(req.body[k]).slice(0, 4000));
-  qs.set('share', '1');
-  res.redirect(303, '/airadar/?' + qs.toString());
-});
+router.post('/share', (req, res) => handleShare(req, res, req.body || {}));
 
 // ── API routes ───────────────────────────────────────────────────────────────
 router.use('/api/v1/auth', require('./routes/auth'));
@@ -110,6 +132,7 @@ router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
       await sequelize.query("ALTER TABLE ar_items ADD COLUMN IF NOT EXISTS enriched_by VARCHAR(32) DEFAULT 'manual'");
       await sequelize.query('ALTER TABLE ar_items ADD COLUMN IF NOT EXISTS is_simulated BOOLEAN DEFAULT false');
       await sequelize.query('ALTER TABLE ar_items ADD COLUMN IF NOT EXISTS needs_review BOOLEAN DEFAULT false');
+      await sequelize.query("ALTER TABLE ar_items ADD COLUMN IF NOT EXISTS enrich_status VARCHAR(16) DEFAULT 'none'");
       await sequelize.query("ALTER TABLE ar_items ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb");
       await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS ar_users_capture_token_idx ON ar_users (capture_token)');
     } catch (mErr) {
