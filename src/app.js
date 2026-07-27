@@ -593,18 +593,93 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'manuelstagg.com' || host === 'www.manuelstagg.com') {
     const p = req.path;
-    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
-    if (p === '/' || p === '' || p === '/index.html' || p === '/en' || p === '/es' || p === '/cv' || p === '/resume') {
+    // robots/sitemap/llms + /es + /cv/resume are handled by dedicated routes below — don't rewrite them.
+    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p) || p === '/es' || p === '/cv' || p === '/resume'
+        || p === '/robots.txt' || p === '/sitemap.xml' || p === '/llms.txt') return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en') {
       req.url = '/manuelstagg.html';
     }
   }
   next();
 });
 
-// Clean URL: /manuelstagg (and aliases) -> the CV page. BEFORE express.static
-// so the extensionless path resolves to the resume without a .html suffix.
-app.get(['/manuelstagg', '/manuelstagg/', '/cv', '/resume'], (req, res) => {
+// Clean URL: /manuelstagg -> the CV page. BEFORE express.static so the
+// extensionless path resolves to the resume without a .html suffix.
+app.get(['/manuelstagg', '/manuelstagg/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'manuelstagg.html'));
+});
+// Consolidate duplicate URLs onto the canonical domain (AI-search audit item 4).
+// /cv and /resume 301 to manuelstagg.com so ranking/citation signals don't split.
+app.get(['/cv', '/resume', '/manuelstagg/es', '/manuelstagg-es'], (req, res) => {
+  const host = (req.get('host') || '').toLowerCase();
+  const es = req.path.includes('es');
+  if (host === 'manuelstagg.com' || host === 'www.manuelstagg.com') {
+    // on the custom domain, serve the file in place (es -> the ES render)
+    return res.sendFile(path.join(__dirname, '..', 'public', es ? 'manuelstagg-es.html' : 'manuelstagg.html'));
+  }
+  return res.redirect(301, 'https://manuelstagg.com/' + (es ? 'es' : ''));
+});
+// Server-rendered Spanish CV (AI-search audit item 3) — real Spanish in the DOM at /es.
+app.get(['/es'], (req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'manuelstagg.com' || host === 'www.manuelstagg.com') {
+    return res.sendFile(path.join(__dirname, '..', 'public', 'manuelstagg-es.html'));
+  }
+  return next();
+});
+
+// robots.txt / sitemap.xml / llms.txt for the personal-CV custom domains (AI-search audit
+// item 5). Host-aware and registered BEFORE express.static + the API catch-all so crawlers
+// get real crawl instructions instead of the JSON "Endpoint not found" error. Only the CV
+// domains are handled; every other host falls through to existing behavior.
+const CV_SITES = {
+  'manuelstagg.com': { name: 'Manuel Stagg', role: 'Senior SME & Full-Stack AI Solutions Architect', es: true,
+    blurb: 'Senior SME and Full-Stack AI Solutions Architect. 24 years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, CEAM) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES. Wesley Chapel, FL.',
+    email: 'manuelstagg@gmail.com', phone: '+1 656-600-1400',
+    links: ['https://www.linkedin.com/in/manuel-stagg-7a11a9a0', 'https://digit2ai.com'],
+    topics: 'MCP Neural Intelligence; multi-agent AI systems; LLMOps; AI in banking, risk and compliance (KYC, AML, OFAC sanctions); Financial Crimes Risk Management; full-stack engineering' },
+  'anastagg.com': { name: 'Ana I. Stagg', role: 'Securities & Derivatives Analyst — Custody Billing & Financial Operations', es: false,
+    blurb: 'Bilingual Securities & Derivatives Analyst at Citi supporting global custody and safekeeping billing for institutional clients: fee calculation, contractual pricing validation, invoice reconciliation, billing QA and compliance. B.S. Business Administration (HRM) & Psychology. Tampa, FL.',
+    email: 'ana.staggp@gmail.com', phone: '+1 813-438-9000',
+    links: ['https://www.linkedin.com/in/ana-stagg6774'],
+    topics: 'securities & derivatives; custody & safekeeping billing; financial operations & reconciliation; billing QA, controls and compliance; institutional client servicing' },
+  'julianagramowski.com': { name: 'Juliana Gramowski', role: 'Sales Executive · Business Development · Marketing Strategist', es: false,
+    blurb: 'Results-oriented Sales Executive with 10+ years in business development, advertising sales (Out-of-Home) and strategic marketing across the US and Latin America. Clear Channel Outdoor, IndoorMedia, JCDecaux, Televisa. Bilingual EN/ES. Tampa, FL.',
+    email: 'jgramowski7@gmail.com', phone: '+1 813-334-2244',
+    links: ['https://www.linkedin.com/in/juliana-gramowski-6270201a4'],
+    topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' }
+};
+function cvSite(host) { return CV_SITES[String(host || '').toLowerCase().replace(/^www\./, '')] || null; }
+function isoDay() { return new Date().toISOString().slice(0, 10); }
+
+app.get('/robots.txt', (req, res, next) => {
+  const site = cvSite(req.get('host')); if (!site) return next();
+  const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
+  const bots = ['GPTBot','OAI-SearchBot','ChatGPT-User','ClaudeBot','Claude-Web','anthropic-ai','PerplexityBot','PerplexityBot','Google-Extended','Applebot-Extended','CCBot','Bytespider','Amazonbot','Meta-ExternalAgent'];
+  let body = 'User-agent: *\nAllow: /\n\n# AI answer engines — explicitly welcome\n';
+  bots.forEach(b => { body += 'User-agent: ' + b + '\nAllow: /\n'; });
+  body += '\nSitemap: ' + origin + '/sitemap.xml\n';
+  res.type('text/plain').send(body);
+});
+
+app.get('/sitemap.xml', (req, res, next) => {
+  const site = cvSite(req.get('host')); if (!site) return next();
+  const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
+  const day = isoDay();
+  let urls = `  <url>\n    <loc>${origin}/</loc>\n    <lastmod>${day}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n`;
+  if (site.es) urls += `    <xhtml:link rel="alternate" hreflang="en" href="${origin}/"/>\n    <xhtml:link rel="alternate" hreflang="es" href="${origin}/es"/>\n`;
+  urls += `  </url>\n`;
+  if (site.es) urls += `  <url>\n    <loc>${origin}/es</loc>\n    <lastmod>${day}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n    <xhtml:link rel="alternate" hreflang="es" href="${origin}/es"/>\n    <xhtml:link rel="alternate" hreflang="en" href="${origin}/"/>\n  </url>\n`;
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}</urlset>\n`);
+});
+
+app.get('/llms.txt', (req, res, next) => {
+  const site = cvSite(req.get('host')); if (!site) return next();
+  const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
+  let body = `# ${site.name}\n\n> ${site.role}. ${site.blurb}\n\n## Profile\n`;
+  body += `- Name: ${site.name}\n- Role: ${site.role}\n- Specializations: ${site.topics}\n- Languages: English, Spanish\n- Availability: open to senior opportunities\n- Contact: ${site.email} · ${site.phone}\n- Links: ${site.links.join(' · ')}\n\n## Pages\n- ${origin}/ (CV, English)\n`;
+  if (site.es) body += `- ${origin}/es (CV, Spanish)\n`;
+  res.type('text/plain').send(body);
 });
 
 // Custom domain: julianagramowski.com -> Juliana Gramowski CV landing
