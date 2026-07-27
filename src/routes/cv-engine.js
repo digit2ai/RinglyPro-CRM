@@ -212,20 +212,23 @@ router.get('/dashboard/detail', async (req, res) => {
     const rows = await q(`SELECT substr(ip_hash,1,8) AS visitor, COUNT(*)::int AS visits,
         to_char(min(created_at),'YYYY-MM-DD HH24:MI') AS first_seen,
         to_char(max(created_at),'YYYY-MM-DD HH24:MI') AS last_seen,
-        max(country) AS country,
-        (array_remove(array_agg(NULLIF(referrer,'') ORDER BY created_at), NULL))[1] AS first_ref
+        max(country) AS country, max(city) AS city, max(region) AS region, max(lang) AS lang,
+        (array_remove(array_agg(NULLIF(referrer,'') ORDER BY created_at), NULL))[1] AS first_ref,
+        (array_agg(ua ORDER BY created_at DESC))[1] AS ua
       FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY max(created_at) DESC LIMIT 300`, rep);
     return res.json({ metric, rows });
   }
   // views — raw hit log + summaries
   const rows = await q(`SELECT to_char(created_at,'YYYY-MM-DD HH24:MI') AS when, substr(ip_hash,1,8) AS visitor,
-      COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, country, ua
+      COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, country, city, region, lang, path, ua
     FROM cv_page_hits WHERE page=:page${win} ORDER BY created_at DESC LIMIT 400`, rep);
+  const byCity = await q(`SELECT COALESCE(NULLIF(city,'') || ', ' || NULLIF(region,''), NULLIF(city,''), NULLIF(country,''),'Unknown') AS place, COUNT(*)::int AS views
+    FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY 2 DESC LIMIT 15`, rep);
   const byRef = await q(`SELECT COALESCE(NULLIF(referrer,''),'(direct)') AS referrer, COUNT(*)::int AS views
     FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY 2 DESC LIMIT 25`, rep);
   const byDay = await q(`SELECT to_char(date_trunc('day',created_at),'YYYY-MM-DD') AS day, COUNT(*)::int AS views
     FROM cv_page_hits WHERE page=:page${win} GROUP BY 1 ORDER BY 1 DESC LIMIT 90`, rep);
-  res.json({ metric, rows, by_ref: byRef, by_day: byDay });
+  res.json({ metric, rows, by_ref: byRef, by_day: byDay, by_city: byCity });
 });
 
 // ================= OPPORTUNITIES =================

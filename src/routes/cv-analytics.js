@@ -35,8 +35,29 @@ async function ensureTable() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS idx_cv_page_hits_page_time ON cv_page_hits(page, created_at);
+    ALTER TABLE cv_page_hits ADD COLUMN IF NOT EXISTS lang VARCHAR(16);
+    ALTER TABLE cv_page_hits ADD COLUMN IF NOT EXISTS region VARCHAR(80);
+    ALTER TABLE cv_page_hits ADD COLUMN IF NOT EXISTS city VARCHAR(120);
   `);
   ready = true;
+}
+
+// Approximate location from IP (free, no key, cached, best-effort — never blocks the site).
+const geoCache = new Map();
+async function geoLookup(ip) {
+  if (!ip || /^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip)) return null;
+  if (geoCache.has(ip)) return geoCache.get(ip);
+  if (typeof fetch !== 'function') return null;
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 2500);
+  try {
+    const r = await fetch('https://ipwho.is/' + encodeURIComponent(ip) + '?fields=success,city,region,country_code', { signal: ctl.signal });
+    const j = await r.json();
+    const geo = (j && j.success) ? { city: j.city || null, region: j.region || null, country: j.country_code || null } : null;
+    geoCache.set(ip, geo);
+    if (geoCache.size > 5000) geoCache.clear();
+    return geo;
+  } catch (e) { return null; } finally { clearTimeout(t); }
 }
 if (sequelize) ensureTable().catch(e => console.error('cv-analytics ensureTable:', e.message));
 else console.warn('cv-analytics: no DB URL set — analytics disabled');
@@ -72,16 +93,21 @@ router.post('/hit', async (req, res) => {
     const ip = clientIp(req);
     const iph = hashIp(ip);
     if (isDupe(iph + '|' + page)) return;
-    const country = (req.headers['cf-ipcountry'] || req.headers['x-vercel-ip-country'] || '').toString().slice(0, 8) || null;
+    const lang = (req.headers['accept-language'] || '').toString().split(',')[0].trim().slice(0, 16) || null;
+    let country = (req.headers['cf-ipcountry'] || req.headers['x-vercel-ip-country'] || '').toString().slice(0, 8) || null;
+    const geo = await geoLookup(ip);
+    if (geo && geo.country && (!country || country === 'XX')) country = geo.country;
     await sequelize.query(
-      `INSERT INTO cv_page_hits (page, path, referrer, ua, ip_hash, country)
-       VALUES (:page, :path, :ref, :ua, :iph, :country)`,
+      `INSERT INTO cv_page_hits (page, path, referrer, ua, ip_hash, country, lang, region, city)
+       VALUES (:page, :path, :ref, :ua, :iph, :country, :lang, :region, :city)`,
       { replacements: {
           page,
           path: (pth || '').toString().slice(0, 300),
           ref: (ref || req.get('referer') || '').toString().slice(0, 500),
           ua: (req.get('user-agent') || '').toString().slice(0, 400),
-          iph, country
+          iph, country, lang,
+          region: (geo && geo.region) ? geo.region.slice(0, 80) : null,
+          city: (geo && geo.city) ? geo.city.slice(0, 120) : null
         }, type: QueryTypes.INSERT }
     );
   } catch (e) { /* swallow — analytics must never error the site */ }

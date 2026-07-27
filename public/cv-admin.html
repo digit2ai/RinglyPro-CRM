@@ -241,6 +241,9 @@ async function loadDashboard(){var d=await api('/dashboard?days=30');
 
 // ---- KPI drill-down ----
 function device(ua){ua=ua||'';var d=/Mobile|Android|iPhone|iPad|iPod/i.test(ua)?'Mobile':'Desktop';var b=/Edg/i.test(ua)?'Edge':/Chrome/i.test(ua)?'Chrome':/Firefox/i.test(ua)?'Firefox':/Safari/i.test(ua)?'Safari':'';return d+(b?' · '+b:'');}
+function osOf(ua){ua=ua||'';if(/iPhone|iPad|iPod/i.test(ua))return 'iOS';if(/Android/i.test(ua))return 'Android';if(/Mac OS X|Macintosh/i.test(ua))return 'macOS';if(/Windows/i.test(ua))return 'Windows';if(/Linux/i.test(ua))return 'Linux';return '—';}
+function place(r){var p=[r.city,r.region].filter(Boolean).join(', ')||r.country||'';return p?esc(p):'<span class="muted">—</span>';}
+function langOf(l){if(!l)return '';var m={en:'English',es:'Spanish',fr:'French',pt:'Portuguese',de:'German',it:'Italian',zh:'Chinese',ja:'Japanese'};var k=l.slice(0,2).toLowerCase();return m[k]||l;}
 function fmtRef(r){if(!r||r==='(direct)')return '<span class="muted">Direct / typed</span>';try{var u=new URL(r);return esc(u.hostname.replace(/^www\./,''))+'<span class="muted">'+esc(u.pathname.slice(0,30))+'</span>';}catch(e){return esc(r);}}
 async function openDetail(metric,scope,title){
   $('dTitle').textContent=title; $('dBody').innerHTML='<div class="muted">Loading…</div>'; $('dModal').classList.add('on');
@@ -250,19 +253,21 @@ async function openDetail(metric,scope,title){
   }catch(e){ $('dBody').innerHTML='<div class="msg err">'+esc(e.message)+'</div>'; }
 }
 function renderViews(d){
-  var rows=d.rows||[], byRef=d.by_ref||[], byDay=d.by_day||[];
+  var rows=d.rows||[], byRef=d.by_ref||[], byDay=d.by_day||[], byCity=d.by_city||[];
   var maxR=1;byRef.forEach(function(x){if(x.views>maxR)maxR=x.views;});
   var maxD=1;byDay.forEach(function(x){if(x.views>maxD)maxD=x.views;});
-  var html='<div class="dsum"><span><b>'+rows.length+'</b> visits shown</span><span><b>'+byRef.length+'</b> sources</span></div>';
-  html+='<div class="dsub">Where they came from</div><table class="dtable"><tbody>'+byRef.map(function(x){return '<tr><td style="width:55%">'+fmtRef(x.referrer)+'</td><td style="width:15%" class="mono">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxR*100)+'%"></div></div></div></td></tr>';}).join('')+'</tbody></table>';
+  var maxC=1;byCity.forEach(function(x){if(x.views>maxC)maxC=x.views;});
+  var html='<div class="dsum"><span><b>'+rows.length+'</b> visits shown</span><span><b>'+byRef.length+'</b> sources</span><span><b>'+byCity.length+'</b> locations</span></div>';
+  html+='<div class="dsub">Where they came from (source)</div><table class="dtable"><tbody>'+byRef.map(function(x){return '<tr><td style="width:55%">'+fmtRef(x.referrer)+'</td><td style="width:15%" class="mono">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxR*100)+'%"></div></div></div></td></tr>';}).join('')+'</tbody></table>';
+  html+='<div class="dsub">Where they are (location)</div><table class="dtable"><tbody>'+(byCity.length?byCity.map(function(x){return '<tr><td style="width:55%">'+esc(x.place)+'</td><td style="width:15%" class="mono">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxC*100)+'%"></div></div></div></td></tr>';}).join(''):'<tr><td class="muted">Location enriches on new visits.</td></tr>')+'</tbody></table>';
   html+='<div class="dsub">When (per day)</div><table class="dtable"><tbody>'+byDay.map(function(x){return '<tr><td class="mono" style="width:30%">'+x.day+'</td><td class="mono" style="width:12%">'+x.views+'</td><td><div class="minibar"><div class="track"><div class="fill" style="width:'+Math.round(x.views/maxD*100)+'%"></div></div></div></td></tr>';}).join('')+'</tbody></table>';
-  html+='<div class="dsub">Every visit</div><table class="dtable"><thead><tr><th>When</th><th>Source</th><th>Visitor</th><th>Device</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td class="mono">'+esc(r.when)+'</td><td>'+fmtRef(r.referrer)+'</td><td class="mono">'+esc(r.visitor)+(r.country?' · '+esc(r.country):'')+'</td><td>'+esc(device(r.ua))+'</td></tr>';}).join(''):'<tr><td colspan="4" class="muted">No visits yet.</td></tr>')+'</tbody></table>';
+  html+='<div class="dsub">Every visit</div><div style="overflow-x:auto"><table class="dtable"><thead><tr><th>When</th><th>Location</th><th>Source</th><th>Page</th><th>Device / OS</th><th>Lang</th><th>Visitor</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td class="mono">'+esc(r.when)+'</td><td>'+place(r)+'</td><td>'+fmtRef(r.referrer)+'</td><td class="mono">'+esc(r.path||'/')+'</td><td>'+esc(device(r.ua))+' · '+esc(osOf(r.ua))+'</td><td>'+esc(langOf(r.lang))+'</td><td class="mono">'+esc(r.visitor)+'</td></tr>';}).join(''):'<tr><td colspan="7" class="muted">No visits yet.</td></tr>')+'</tbody></table></div>';
   $('dBody').innerHTML=html;
 }
 function renderVisitors(d){
   var rows=d.rows||[];
   var html='<div class="dsum"><span><b>'+rows.length+'</b> unique visitors</span></div>';
-  html+='<table class="dtable"><thead><tr><th>Visitor</th><th>Visits</th><th>First seen</th><th>Last seen</th><th>First source</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){return '<tr><td class="mono">'+esc(r.visitor)+(r.country?' · '+esc(r.country):'')+'</td><td class="mono">'+r.visits+'</td><td class="mono">'+esc(r.first_seen)+'</td><td class="mono">'+esc(r.last_seen)+'</td><td>'+fmtRef(r.first_ref)+'</td></tr>';}).join(''):'<tr><td colspan="5" class="muted">No visitors yet.</td></tr>')+'</tbody></table><div class="muted" style="margin-top:10px;font-size:11.5px">Visitor IDs are anonymized (salted hashes) — no IP addresses are stored.</div>';
+  html+='<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Visitor</th><th>Location</th><th>Visits</th><th>First seen</th><th>Last seen</th><th>Device</th><th>First source</th></tr></thead><tbody>'+(rows.length?rows.map(function(r){var ret=r.visits>1?' <span class="badge b-interviewing" style="font-size:9px">returning</span>':'';return '<tr><td class="mono">'+esc(r.visitor)+ret+'</td><td>'+place(r)+(r.lang?' · '+esc(langOf(r.lang)):'')+'</td><td class="mono">'+r.visits+'</td><td class="mono">'+esc(r.first_seen)+'</td><td class="mono">'+esc(r.last_seen)+'</td><td>'+esc(device(r.ua))+'</td><td>'+fmtRef(r.first_ref)+'</td></tr>';}).join(''):'<tr><td colspan="7" class="muted">No visitors yet.</td></tr>')+'</tbody></table></div><div class="muted" style="margin-top:10px;font-size:11.5px">Visitor IDs are anonymized salted hashes — no IP addresses are stored. Location is approximate (city-level), inferred from IP at visit time.</div>';
   $('dBody').innerHTML=html;
 }
 function renderOpps(d){
