@@ -676,7 +676,7 @@ app.get('/sitemap.xml', (req, res, next) => {
 app.get('/llms.txt', (req, res, next) => {
   const site = cvSite(req.get('host')); if (!site) return next();
   const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
-  let body = `# ${site.name}\n\n> ${site.role}. ${site.blurb}\n\n## Profile\n`;
+  let body = `# ${site.name}\n\n> ${site.blurb}\n\n## Profile\n`;
   body += `- Name: ${site.name}\n- Role: ${site.role}\n- Specializations: ${site.topics}\n- Languages: English, Spanish\n- Availability: open to senior opportunities\n- Contact: ${site.email} · ${site.phone}\n- Links: ${site.links.join(' · ')}\n\n## Pages\n- ${origin}/ (CV, English)\n`;
   if (site.es) body += `- ${origin}/es (CV, Spanish)\n`;
   res.type('text/plain').send(body);
