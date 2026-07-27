@@ -128,6 +128,43 @@ async function fetchMetadata(url) {
   }
 }
 
+// ── Public oEmbed ────────────────────────────────────────────────────────────
+// Some platforms publish a keyless oEmbed endpoint that returns the real title
+// and author even when the HTML page is a login wall. Facebook and Instagram
+// removed theirs (token required since 2020), so their posts genuinely cannot
+// be read server-side — we do not pretend otherwise.
+const OEMBED = [
+  [/(^|\.)tiktok\.com$/i, (u) => 'https://www.tiktok.com/oembed?url=' + encodeURIComponent(u)],
+  [/(^|\.)(youtube\.com|youtu\.be)$/i, (u) => 'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(u)],
+  [/(^|\.)vimeo\.com$/i, (u) => 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(u)]
+];
+
+async function fetchOembed(url) {
+  if (!fetchable(url)) return null;
+  const host = safeHost(url);
+  const hit = OEMBED.find(([re]) => re.test(host || ''));
+  if (!hit) return null;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(hit[1](url), { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    const d = await res.json();
+    if (!d || !d.title) return null;
+    return {
+      title: String(d.title).slice(0, 400),
+      author: d.author_name ? String(d.author_name).slice(0, 160) : null,
+      thumbnail: d.thumbnail_url || null,
+      provider: d.provider_name || null
+    };
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Pull any company URL mentioned in a caption the user shared with us.
 // (Share sheets on iOS/Android often hand over the caption text.)
 function urlsInText(text) {
@@ -138,4 +175,4 @@ function urlsInText(text) {
   return out;
 }
 
-module.exports = { fetchMetadata, detectPlatform, isSocial, safeHost, fetchable, urlsInText };
+module.exports = { fetchMetadata, fetchOembed, detectPlatform, isSocial, safeHost, fetchable, urlsInText };

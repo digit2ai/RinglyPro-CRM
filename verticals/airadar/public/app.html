@@ -81,6 +81,17 @@
   .empty-state h2{color:var(--txt);font-size:19px;margin:0 0 10px}
   .empty-state p{margin:0 auto 8px;max-width:440px;line-height:1.6;font-size:14px}
 
+  /* ── note bar (appears right after a save) ───────────────────────────── */
+  .notebar{display:none;gap:8px;align-items:center;margin-bottom:14px;padding:11px 12px;border-radius:14px;
+    background:rgba(77,240,208,.07);border:1px solid rgba(77,240,208,.35)}
+  .notebar.on{display:flex}
+  .notebar input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:#0a111e;color:var(--txt);outline:none;font-size:15px}
+  .notebar input:focus{border-color:var(--acc)}
+  .notebar button{flex:0 0 auto;padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+    background:#0d1524;color:var(--txt);cursor:pointer;font-size:14px}
+  .notebar button.primary{border:0;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#03231f;font-weight:700}
+
   /* ── stat strip ──────────────────────────────────────────────────────── */
   .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:96px}
@@ -179,6 +190,14 @@
 </header>
 
 <main>
+  <!-- Facebook and Instagram show servers a login wall, so a saved reel often has
+       no readable title. Rather than leave a bare link, offer one line of your
+       own right after saving. Optional, and it disappears if ignored. -->
+  <div class="notebar" id="noteBar">
+    <input id="noteInput" type="text" placeholder="What was it? (a few words is enough)" autocomplete="off">
+    <button class="primary" id="noteSave">Save</button>
+    <button id="noteSkip">Skip</button>
+  </div>
   <div class="stats" id="stats"></div>
   <div class="grid" id="grid"></div>
   <div class="empty-state" id="empty" style="display:none">
@@ -316,7 +335,7 @@
   var CATS = ['agents','voice','video','image','coding','writing','productivity','data','search','infra',
               'robotics','health','finance','marketing','sales','legal','education','hardware','other'];
   var state = { status:'', category:'', platform:'', review:false, q:'', items:[], editing:null,
-                rating:0, me:null, justSaved:null, pollTimer:null };
+                rating:0, me:null, justSaved:null, pollTimer:null, noteFor:null };
 
   var $ = function(id){ return document.getElementById(id); };
   function toast(msg){
@@ -409,11 +428,12 @@
     return d.toLocaleDateString([], { month:'short', day:'numeric' });
   }
 
-  // The headline is whatever we honestly have: the company if we know it,
-  // otherwise the post title, otherwise just the link. Never a placeholder.
+  // The headline is whatever we honestly have: the company if we know it, then
+  // the post title, then your own note, then just the link. Never a placeholder.
   function headline(i){
     if (i.company_name) return { text: i.company_name, known: true };
     if (i.source_title) return { text: i.source_title, known: true };
+    if (i.notes) return { text: i.notes, known: true };
     if (i.source_url) return { text: i.source_url.replace(/^https?:\/\/(www\.)?/,''), known: false };
     return { text: 'Saved note', known: false };
   }
@@ -614,13 +634,43 @@
         .then(function(r){
           state.justSaved = r.item.id;
           toast('Saved');
-          setTimeout(function(){ state.justSaved = null; render(); }, 4000);
+          askForNote(r.item.id);
+          setTimeout(function(){ state.justSaved = null; render(); }, 6000);
           return Promise.all([load(), loadStats()]);
         });
     }).catch(function(e){
       toast(e && e.name === 'NotAllowedError' ? 'Tap Allow Paste when iOS asks' : 'Could not read the clipboard');
     }).finally(function(){ btn.disabled = false; btn.textContent = old; });
   }
+  // One optional line so a login-walled reel is not just a bare link later.
+  function askForNote(id){
+    state.noteFor = id;
+    var bar = $('noteBar');
+    bar.classList.add('on');
+    $('noteInput').value = '';
+    $('noteInput').focus();
+  }
+  function closeNote(){
+    state.noteFor = null;
+    $('noteBar').classList.remove('on');
+    $('noteInput').blur();
+  }
+  function saveNote(){
+    var text = $('noteInput').value.trim();
+    var id = state.noteFor;
+    if (!id || !text) { closeNote(); return; }
+    closeNote();
+    api('/items/' + id, { method: 'PATCH', body: JSON.stringify({ notes: text }) })
+      .then(function(){ return Promise.all([load(), loadStats()]); })
+      .catch(function(e){ toast(e.message); });
+  }
+  $('noteSave').addEventListener('click', saveNote);
+  $('noteSkip').addEventListener('click', closeNote);
+  $('noteInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') saveNote();
+    if (e.key === 'Escape') closeNote();
+  });
+
   $('pasteBtn').addEventListener('click', pasteSave);
   $('addBtn').addEventListener('click', function(){ openNew(null); });
   $('fab').addEventListener('click', function(){ openNew(null); });

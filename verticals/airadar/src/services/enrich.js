@@ -18,7 +18,7 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { fetchMetadata, detectPlatform, isSocial, safeHost, urlsInText, fetchable } = require('./metadata');
+const { fetchMetadata, fetchOembed, detectPlatform, isSocial, safeHost, urlsInText, fetchable } = require('./metadata');
 
 const MODEL = process.env.AIRADAR_MODEL || 'claude-haiku-4-5-20251001';
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
@@ -54,10 +54,25 @@ async function enrich({ url, text } = {}) {
   const shared_text = String(text || '').trim();
   const source_platform = detectPlatform(source_url) || 'web';
 
-  const meta = scrubSocialNoise(
+  let meta = scrubSocialNoise(
     source_url ? await fetchMetadata(source_url) : { ok: false, blocked: true, error: 'no_url', platform: source_platform },
     source_platform
   );
+
+  // Login wall, but the platform publishes a keyless oEmbed (TikTok, YouTube,
+  // Vimeo)? Take the real title and author from there.
+  if (!meta.ok && source_url) {
+    const oe = await fetchOembed(source_url);
+    if (oe) {
+      meta = {
+        ...meta, ok: true,
+        title: oe.title,
+        description: meta.description || (oe.author ? `Posted by ${oe.author}.` : null),
+        site_name: meta.site_name || oe.provider,
+        image: meta.image || oe.thumbnail
+      };
+    }
+  }
 
   // Any candidate company site: the shared link itself (when it is not a social
   // host), its canonical, or a link inside the caption. Evidence only.
