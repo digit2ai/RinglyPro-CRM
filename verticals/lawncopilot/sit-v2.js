@@ -505,21 +505,23 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     // The platform page sells to LANDSCAPERS. Homeowner-facing copy belongs on
     // tenant pages; a stale v1 landing once shipped alongside it saying
     // "get a real price before you finish your coffee".
-    // The verbs carry markup for emphasis, so match against the text content
-    // rather than the raw HTML.
     const homeText = homeHtml.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
     ok('platform home speaks to the landscaper, not the homeowner',
-       /answer the calls/i.test(homeText) && /quote the work/i.test(homeText)
-       && /book the jobs/i.test(homeText) && /route the crews/i.test(homeText)
-       && /collect the money/i.test(homeText)
-       && !/finish your coffee/i.test(homeText));
-    ok('the five promises are visually emphasised',
-       ['answer', 'quote', 'book', 'route', 'collect']
-         .every(v => homeHtml.text.includes(`<b class="hl">${v}</b>`)),
-       ['answer', 'quote', 'book', 'route', 'collect']
-         .filter(v => !homeHtml.text.includes(`<b class="hl">${v}</b>`)).join(', '));
-    ok('platform home promises the single mobile dashboard',
-       /one dashboard on your phone|single dashboard/i.test(homeHtml.text));
+       /landscaping company/i.test(homeText) && !/finish your coffee/i.test(homeText));
+
+    // Phase 2 repositioning: lead with STAFF-not-software and the phone, since
+    // instant quoting is now table stakes competitors match. Keep the estimator
+    // as proof (asserted below), not as the headline claim.
+    ok('the hero leads on staff-not-software, not on instant quoting',
+       /does the work/i.test(homeText)
+       && /\$35/.test(homeText)
+       && /answers? the phone/i.test(homeText));
+    ok('the staff-vs-software contrast block is present',
+       homeHtml.text.includes('id="difference"')
+       && /Software you (run|operate)/i.test(homeText)
+       && /Staff that (runs|operates)/i.test(homeText));
+    ok('at least one hero verb is still visually emphasised',
+       (homeHtml.text.match(/<b class="hl">/g) || []).length >= 1);
 
     // The live estimator in the hero is the proof the product works. It was
     // dropped once during a copy rewrite — keep it structurally required.
