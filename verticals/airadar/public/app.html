@@ -148,7 +148,8 @@
   <div class="bar">
     <div class="brand"><img src="/airadar/favicon.svg" alt=""><b>AI Radar</b></div>
     <div class="grow"><input class="search" id="q" type="search" placeholder="Search company, description, notes, link"></div>
-    <button class="iconbtn primary hide-sm" id="addBtn">Add</button>
+    <button class="iconbtn primary" id="pasteBtn" title="Save the link on your clipboard">Paste link</button>
+    <button class="iconbtn hide-sm" id="addBtn">Add</button>
     <button class="iconbtn" id="setupBtn" title="Share sheet setup">Setup</button>
     <button class="iconbtn hide-sm" id="exportBtn" title="Export">Export</button>
     <button class="iconbtn hide-sm" id="outBtn" title="Sign out">Exit</button>
@@ -182,8 +183,8 @@
   <div class="grid" id="grid"></div>
   <div class="empty-state" id="empty" style="display:none">
     <h2>Nothing saved yet</h2>
-    <p>This is your bucket for AI posts. Share a reel from Instagram, Facebook, TikTok or X and it is saved instantly — no form to fill in, nothing to confirm.</p>
-    <p>Open <b>Setup</b> to put AI Radar in your phone's share sheet, or press <b>Add</b> to paste a link right now.</p>
+    <p>This is your bucket for AI posts. The quickest way in needs no setup at all: in Instagram or Facebook tap <b>Share</b>, then <b>Copy link</b>, come back here and press <b>Paste link</b>. Saved.</p>
+    <p>Open <b>Setup</b> if you would rather put AI Radar directly in your phone's share sheet.</p>
   </div>
 </main>
 
@@ -597,6 +598,30 @@
   }
 
   // ── wiring ─────────────────────────────────────────────────────────────
+  // The no-configuration capture path: copy a link in any app, come here, one tap.
+  // iOS will not hand over the clipboard without a user gesture, so this must be
+  // a real button press — never an automatic read on load.
+  function pasteSave(){
+    var btn = $('pasteBtn'); var old = btn.textContent;
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      toast('Clipboard not available here — use Add'); openNew(null); return;
+    }
+    btn.disabled = true; btn.textContent = 'Saving';
+    navigator.clipboard.readText().then(function(text){
+      var m = String(text || '').match(/https?:\/\/\S+/);
+      if (!m) { toast('No link on the clipboard'); return null; }
+      return api('/items', { method: 'POST', body: JSON.stringify({ source_url: m[0] }) })
+        .then(function(r){
+          state.justSaved = r.item.id;
+          toast('Saved');
+          setTimeout(function(){ state.justSaved = null; render(); }, 4000);
+          return Promise.all([load(), loadStats()]);
+        });
+    }).catch(function(e){
+      toast(e && e.name === 'NotAllowedError' ? 'Tap Allow Paste when iOS asks' : 'Could not read the clipboard');
+    }).finally(function(){ btn.disabled = false; btn.textContent = old; });
+  }
+  $('pasteBtn').addEventListener('click', pasteSave);
   $('addBtn').addEventListener('click', function(){ openNew(null); });
   $('fab').addEventListener('click', function(){ openNew(null); });
   $('cancelBtn').addEventListener('click', function(){ hideSheets(); history.replaceState({}, '', '/airadar/'); });
