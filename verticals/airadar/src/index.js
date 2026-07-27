@@ -48,6 +48,7 @@ router.use((req, res, next) => {
   if (PUBLIC_EXACT.includes(p) || PUBLIC_ASSET.test(p)) return next();
   if (p.startsWith('/api/v1/auth/login') || p.startsWith('/api/v1/auth/logout')) return next();
   if (p.startsWith('/api/v1/capture')) return next(); // token-authed inside the route
+  if (p === '/s') return next();                      // one-tap save link, token in the query
   if (req.user) return next();
 
   if (p.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
@@ -98,6 +99,68 @@ async function handleShare(req, res, src) {
 router.get('/share', (req, res) => handleShare(req, res, req.query));
 // Some platforms POST a share target even when the manifest declares GET.
 router.post('/share', (req, res) => handleShare(req, res, req.body || {}));
+
+// ── /s — the dumb-client save link ───────────────────────────────────────────
+//   GET /airadar/s?k=<capture_token>&u=<the link, raw or encoded>
+//
+// Built for iOS Shortcuts. A shortcut running inside a share extension is
+// sandboxed and its own network requests are unreliable (iOS -1005 "the network
+// connection was lost"), but handing a plain URL to Safari via "Open URLs"
+// always works. So: no POST, no JSON body, no request for the shortcut to make.
+//
+// `u` is read straight off the raw query string, so the shared link does NOT
+// have to be URL-encoded — a share sheet hands over links with their own ? and
+// & intact and this must not mangle them.
+router.get('/s', async (req, res) => {
+  try {
+    const qs = String(req.originalUrl || '').split('?').slice(1).join('?');
+    const m = qs.match(/(?:^|&)u=([\s\S]*)$/);        // everything after u= is the link
+    let link = m ? m[1] : '';
+    if (link && /%[0-9a-f]{2}/i.test(link) && !/^https?:\/\/[^%]*$/i.test(link)) {
+      try { link = decodeURIComponent(link); } catch (e) { /* keep the raw form */ }
+    }
+    link = link.replace(/\+/g, ' ').trim();
+
+    const key = String(req.query.k || '').trim();
+    const user = key.length >= 20 ? await User.findOne({ where: { capture_token: key } }) : null;
+    if (!user) return res.status(401).send(page('Not saved', 'That save link is not valid. Open Setup in AI Radar and copy the address again.', false));
+    if (!/^https?:\/\//i.test(link)) return res.status(400).send(page('Not saved', 'No link came through from the share sheet.', false));
+
+    const item = await saveLink({ user, url: link, text: String(req.query.t || '') });
+    return res.send(page('Saved', link.replace(/^https?:\/\/(www\.)?/, ''), true, item.id));
+  } catch (e) {
+    console.error('AI Radar /s error:', e.message);
+    return res.status(500).send(page('Not saved', e.message, false));
+  }
+});
+
+// A deliberately tiny confirmation page: it exists only to flash "Saved" and
+// get out of the way. No auth, no app shell, no network calls.
+function page(title, detail, good, id) {
+  const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${esc(title)} — AI Radar</title>
+<link rel="icon" href="/airadar/favicon.svg">
+<style>
+ :root{color-scheme:dark}
+ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#070b14;color:#e8f1fa;text-align:center}
+ .c{max-width:340px}
+ .m{width:74px;height:74px;border-radius:50%;margin:0 auto 22px;display:flex;align-items:center;justify-content:center;
+  font-size:34px;font-weight:300;background:${good ? 'rgba(77,240,208,.14)' : 'rgba(255,143,143,.12)'};
+  border:2px solid ${good ? '#4df0d0' : '#ff8f8f'};color:${good ? '#4df0d0' : '#ff8f8f'}}
+ h1{margin:0 0 10px;font-size:25px;letter-spacing:-.4px}
+ p{margin:0 0 26px;color:#8496ad;font-size:14px;line-height:1.55;word-break:break-word}
+ a{display:inline-block;padding:13px 22px;border-radius:12px;text-decoration:none;font-weight:600;
+  background:linear-gradient(90deg,#4df0d0,#00a3c4);color:#03231f}
+</style></head><body><div class="c">
+ <div class="m">${good ? '&#10003;' : '!'}</div>
+ <h1>${esc(title)}</h1>
+ <p>${esc(detail)}</p>
+ <a href="/airadar/${id ? '?item=' + id : ''}">Open AI Radar</a>
+</div></body></html>`;
+}
 
 // ── API routes ───────────────────────────────────────────────────────────────
 router.use('/api/v1/auth', require('./routes/auth'));

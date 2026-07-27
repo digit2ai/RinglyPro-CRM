@@ -200,6 +200,27 @@ const server = app.listen(0, async () => {
     ok(capGet.success && capGet.item_id, 'GET capture works (share targets that cannot POST)');
     made.push(capGet.item_id);
 
+    // ── /s — the one-action Shortcut link (raw, unencoded shared URL) ───
+    const rawLink = 'https://www.instagram.com/reel/SITRAW/?igsh=abc&utm_source=ig';
+    const sRes = await fetch(base + '/s?k=' + KEY + '&u=' + rawLink);
+    const sHtml = await sRes.text();
+    ok(sRes.ok && /Saved/.test(sHtml), '/s saves and returns the tiny confirmation page');
+    const sList = await fetch(base + '/api/v1/items?q=SITRAW', { headers: H }).then(j);
+    ok(sList.items.length === 1 && sList.items[0].source_url === rawLink,
+      '/s keeps an unencoded link intact, query string and all');
+    if (sList.items[0]) made.push(sList.items[0].id);
+
+    // Percent-encoded links must survive too (some share sheets encode).
+    const encLink = 'https://www.tiktok.com/@a/video/SITENC?x=1';
+    await fetch(base + '/s?k=' + KEY + '&u=' + encodeURIComponent(encLink));
+    const sList2 = await fetch(base + '/api/v1/items?q=SITENC', { headers: H }).then(j);
+    ok(sList2.items.length === 1 && sList2.items[0].source_url === encLink, '/s decodes an encoded link');
+    if (sList2.items[0]) made.push(sList2.items[0].id);
+
+    ok((await fetch(base + '/s?k=badbadbadbadbadbadbad&u=https://x.com/a')).status === 401, '/s rejects a bad key (401)');
+    ok((await fetch(base + '/s?k=' + KEY + '&u=notalink')).status === 400, '/s rejects a non-link (400)');
+    ok((await fetch(base + '/s?k=' + KEY)).status === 400, '/s with no link (400)');
+
     // ── token rotation invalidates the old key ──────────────────────────
     const rot = await fetch(base + '/api/v1/auth/rotate-capture-token', { method: 'POST', headers: H }).then(j);
     ok(rot.capture_token && rot.capture_token !== KEY, 'capture token rotates');

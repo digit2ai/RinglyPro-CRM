@@ -277,20 +277,24 @@
     <li>Pick <b>AI Radar</b>. It is saved the moment you tap it — nothing to fill in.</li>
   </ol>
 
-  <h3 style="font-size:15px;margin:22px 0 8px">iPhone — Shortcut (saves without opening anything)</h3>
-  <ol class="steps">
-    <li>Open the Shortcuts app, create a new shortcut, and turn on <b>Show in Share Sheet</b> under its details. Set "Receive" to <b>URLs</b>.</li>
-    <li>Add the action <b>Get Contents of URL</b>.</li>
-    <li>URL: paste the address below.</li>
-    <li>Set Method to <b>POST</b>, Request Body to <b>JSON</b>, and add one text field named <code>url</code> whose value is the <b>Shortcut Input</b>.</li>
-    <li>Name it "Save to AI Radar". From then on, Share, then that shortcut, from any app.</li>
-  </ol>
+  <h3 style="font-size:15px;margin:22px 0 8px">iPhone — Shortcut (one action)</h3>
+  <p class="sub" style="margin-bottom:10px">Copy the address below first, then build this. It is a single action: the shortcut hands the link to Safari, which does the saving. That avoids the network errors iOS throws when a shortcut tries to make its own request from inside a share sheet.</p>
   <pre id="captureUrl">loading</pre>
-  <div class="actions" style="margin-top:4px">
+  <div class="actions" style="margin-top:4px;margin-bottom:14px">
     <button class="iconbtn" id="copyCapture">Copy address</button>
     <button class="iconbtn" id="rotateCapture">Rotate key</button>
   </div>
-  <p class="sub" style="margin-top:12px">Anyone holding that address can add items to your radar, so treat it as a password. Rotating it breaks any shortcut using the old key.</p>
+  <ol class="steps">
+    <li>Shortcuts app → <b>+</b> → search <b>Open URLs</b> and add it.</li>
+    <li>Tap the <b>ⓘ</b> in the bottom toolbar and turn on <b>Show in Share Sheet</b>. Close the panel.</li>
+    <li>Tap the <b>URL</b> field in the action and paste the address above. It must end with <code>&amp;u=</code></li>
+    <li>With the cursor still at the very end, tap <b>Shortcut Input</b> in the strip above the keyboard, so the field reads <code>...&amp;u=</code> followed by a blue chip.</li>
+    <li>Rename it "Save to AI Radar" and go back to save.</li>
+  </ol>
+  <p class="sub" style="margin-top:12px">Then: share any post, tap the shortcut, a "Saved" screen flashes up, and you are done. Anyone holding that address can add items to your radar, so treat it as a password. Rotating it breaks any shortcut using the old key.</p>
+
+  <h3 style="font-size:15px;margin:22px 0 8px">iPhone — silent version (advanced)</h3>
+  <p class="sub">If you would rather nothing opened at all, use <b>Get Contents of URL</b> pointed at <code>/api/v1/capture?key=...</code> with Method <b>POST</b>, Request Body <b>JSON</b>, and one text field <code>url</code> set to Shortcut Input. It saves without leaving the app, but iOS sometimes refuses to run it from a share sheet ("the network connection was lost"). The one-action version above is the reliable one.</p>
 
   <h3 style="font-size:15px;margin:22px 0 8px">Desktop bookmarklet</h3>
   <p class="sub" style="margin-bottom:8px">Drag this into your bookmarks bar to capture the page you are reading.</p>
@@ -579,7 +583,8 @@
       state.me = d.user;
       if (!d.user || !d.user.capture_token) return;
       var url = location.origin + '/airadar/api/v1/capture?key=' + d.user.capture_token;
-      $('captureUrl').textContent = url;
+      // The one-action Shortcut address: everything after &u= is the shared link.
+      $('captureUrl').textContent = location.origin + '/airadar/s?k=' + d.user.capture_token + '&u=';
       $('bookmarklet').textContent =
         "javascript:(function(){fetch('" + url + "',{method:'POST',headers:{'Content-Type':'application/json'}," +
         "body:JSON.stringify({url:location.href,text:document.title})}).then(function(r){return r.json()})" +
