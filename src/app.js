@@ -650,7 +650,7 @@ const CV_SITES = {
     topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' },
   'andreastagg.com': { name: 'Andrea Stagg', role: 'Securities & Derivatives Associate Analyst — JD · International Custody & Compliance', es: false,
     blurb: 'Securities & Derivatives Associate Analyst at Citi and Juris Doctor — international securities settlement and global custody (INDEVAL, DTC, EUROCLEAR, CREST, IBERCLEAR), AML/BSA/OFAC compliance and international business law. Roles at Citi and J.P. Morgan. Quadrilingual (EN/ES/FR/IT). Tampa, FL.',
-    email: 'andreastagg@gmail.com', phone: '',
+    email: 'andreastaggp@gmail.com', phone: '+1 813-502-9433',
     links: ['https://www.linkedin.com/in/andrea-stagg-1020718b'],
     topics: 'securities & derivatives; international custody & settlement; income & corporate actions; AML / BSA / OFAC sanctions & KYC; international business & trade law; regulatory compliance' }
 };

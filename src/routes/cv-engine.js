@@ -56,7 +56,7 @@ const SEED = [
     summary: 'Results-oriented Sales Executive with 10+ years in business development, advertising sales (Out-of-Home) and strategic marketing across the US and Latin America. Clear Channel Outdoor, IndoorMedia, JCDecaux, Televisa. Bilingual EN/ES.',
     pw: process.env.CV_ADMIN_PW_JULIANA || 'Juliana@2026' },
   { slug: 'andreastagg', name: 'Andrea Stagg', headline: 'Securities & Derivatives Associate Analyst — JD · International Custody & Compliance',
-    email: 'andreastagg@gmail.com', phone: '', location: 'Tampa, FL',
+    email: 'andreastaggp@gmail.com', phone: '+18135029433', location: 'Tampa, FL',
     site: 'https://andreastagg.com', linkedin: 'https://www.linkedin.com/in/andrea-stagg-1020718b',
     target_roles: 'Securities & Derivatives / Custody Operations Analyst; AML / Sanctions / Compliance Analyst; International Business & Trade / Legal Operations; Bilingual / Quadrilingual Institutional Client Servicing',
     summary: 'Securities & Derivatives Associate Analyst at Citi and Juris Doctor — international securities settlement and global custody (INDEVAL, DTC, EUROCLEAR, CREST, IBERCLEAR), AML/BSA/OFAC compliance and international business law. Roles at Citi and J.P. Morgan. Quadrilingual (EN/ES/FR/IT).',
