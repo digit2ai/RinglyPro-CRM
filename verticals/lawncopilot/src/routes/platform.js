@@ -330,4 +330,53 @@ router.get('/economics', async (req, res) => {
   }
 });
 
+/**
+ * Attribution: which page and which channel produced each trial. First-touch,
+ * captured at signup. This is the landscaper's own acquisition source, not
+ * customer PII, so the operator sees it in full.
+ */
+router.get('/attribution', async (req, res) => {
+  try {
+    const days = Number(req.query.days || 90);
+    const since = new Date(Date.now() - days * 86400000);
+    const rows = await Tenant.findAll({
+      where: { created_at: { [Op.gte]: since } },
+      attributes: ['id', 'name', 'slug', 'plan', 'status', 'created_at',
+        'utm_source', 'utm_medium', 'utm_campaign', 'first_touch_landing', 'first_touch_referrer'],
+      order: [['created_at', 'DESC']], raw: true
+    });
+
+    // Direct = no utm_source and no external referrer. A bare referrer host is
+    // a channel too, so surface it when there is no campaign tagging.
+    const channelOf = t => {
+      if (t.utm_source) return `${t.utm_source}${t.utm_medium ? ' / ' + t.utm_medium : ''}`;
+      if (t.first_touch_referrer) {
+        try { return 'ref: ' + new URL(t.first_touch_referrer).hostname.replace(/^www\./, ''); } catch (e) { return 'referral'; }
+      }
+      return 'direct';
+    };
+    const tally = (keyFn) => {
+      const m = {};
+      rows.forEach(t => { const k = keyFn(t) || '(none)'; m[k] = (m[k] || 0) + 1; });
+      return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([key, trials]) => ({ key, trials }));
+    };
+
+    res.json({
+      success: true,
+      period_days: days,
+      total_trials: rows.length,
+      by_channel: tally(channelOf),
+      by_campaign: tally(t => t.utm_campaign),
+      by_landing: tally(t => t.first_touch_landing),
+      recent: rows.slice(0, 100).map(t => ({
+        company: t.name, slug: t.slug, plan: t.plan, status: t.status,
+        channel: channelOf(t), campaign: t.utm_campaign || null,
+        landing: t.first_touch_landing || null, at: t.created_at
+      }))
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

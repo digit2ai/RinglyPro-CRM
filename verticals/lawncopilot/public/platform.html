@@ -87,7 +87,10 @@ function render(){
     });
     html+='</tbody></table></div></div>';
 
+    html+='<div class="tile" id="attribution"><h2>Where trials come from</h2><div class="empty">Loading attribution...</div></div>';
+
     document.getElementById('app').innerHTML=html;
+    renderAttribution();
 
     document.querySelectorAll('[data-imp]').forEach(function(b){
       b.addEventListener('click',function(){
@@ -101,6 +104,43 @@ function render(){
     });
   });
 }
+
+function renderAttribution(){
+  req('GET','/attribution?days=90').then(function(a){
+    var el=document.getElementById('attribution'); if(!el) return;
+    if(!a.success){ el.innerHTML='<h2>Where trials come from</h2><div class="empty">Could not load attribution.</div>'; return; }
+
+    function miniTable(title, rows){
+      var h='<div style="flex:1;min-width:220px"><div class="tile__label" style="margin-bottom:8px">'+esc(title)+'</div>';
+      if(!rows.length){ return h+'<div class="empty">None yet.</div></div>'; }
+      h+='<table><tbody>';
+      rows.slice(0,8).forEach(function(r){ h+='<tr><td>'+esc(r.key)+'</td><td class="num">'+num(r.trials)+'</td></tr>'; });
+      return h+'</tbody></table></div>';
+    }
+
+    var html='<h2>Where trials come from</h2>'+
+      '<p class="tiny mut" style="margin:-6px 0 14px">First-touch, last 90 days &middot; '+num(a.total_trials)+' trials</p>'+
+      '<div style="display:flex;gap:24px;flex-wrap:wrap">'+
+        miniTable('By channel', a.by_channel)+
+        miniTable('By campaign', a.by_campaign.filter(function(r){return r.key!=='(none)';}))+
+        miniTable('By landing page', a.by_landing.filter(function(r){return r.key!=='(none)';}))+
+      '</div>';
+
+    html+='<div style="margin-top:18px"><div class="tile__label" style="margin-bottom:8px">Recent trials</div><div class="scroll-x"><table><thead><tr>'+
+      '<th>Company</th><th>Channel</th><th>Campaign</th><th>Landing</th><th>Plan</th><th>Started</th></tr></thead><tbody>';
+    if(!a.recent.length) html+='<tr><td colspan="6"><div class="empty">No trials yet.</div></td></tr>';
+    a.recent.forEach(function(t){
+      html+='<tr><td><b>'+esc(t.company)+'</b></td><td>'+esc(t.channel)+'</td>'+
+        '<td class="small mut">'+esc(t.campaign||'—')+'</td>'+
+        '<td class="small mut">'+esc(t.landing||'—')+'</td>'+
+        '<td>'+esc(t.plan||'')+'</td><td class="small mut">'+date(t.at)+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+
+    document.getElementById('attribution').innerHTML=html;
+  }).catch(function(){});
+}
+
 render();
 </script>
 <script src="/lawncopilot/pwa.js" defer></script>

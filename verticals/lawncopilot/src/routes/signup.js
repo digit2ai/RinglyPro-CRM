@@ -94,7 +94,8 @@ router.post('/', async (req, res) => {
     state: b.state || 'FL',
     counties: b.counties,
     crew_count: b.crew_count,
-    plan: b.plan
+    plan: b.plan,
+    attribution: b.attribution
   });
 
   if (!r.success) return res.status(400).json(r);

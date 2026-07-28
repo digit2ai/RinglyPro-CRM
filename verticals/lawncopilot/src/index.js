@@ -364,6 +364,16 @@ router.get('/', async (req, res, next) => {
       `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS stripe_account_id VARCHAR(255)`,
       `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS google_place_id VARCHAR(255)`,
       `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS short_code VARCHAR(255)`,
+      // First-touch attribution (Phase 6 tracking)
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS utm_source VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS utm_content VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS utm_term VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS first_touch_landing VARCHAR(255)`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS first_touch_referrer TEXT`,
+      `ALTER TABLE lc_tenants ADD COLUMN IF NOT EXISTS first_touch_at TIMESTAMPTZ`,
+      `CREATE INDEX IF NOT EXISTS lc_tenants_utm_source_idx ON lc_tenants (utm_source)`,
       `CREATE INDEX IF NOT EXISTS lc_tenants_slug_idx ON lc_tenants (slug)`
     ];
     for (const sql of alters) {

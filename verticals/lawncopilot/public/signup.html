@@ -42,6 +42,7 @@ body { background: linear-gradient(180deg,#fff,var(--bg-alt)); }
 .msg.ok { background:var(--green-50); color:var(--green-900); display:block; }
 </style>
 <link rel="canonical" href="https://lawncopilot.com/signup"><meta property="og:url" content="https://lawncopilot.com/signup">
+<script src="/lawncopilot/attribution.js"></script>
 </head>
 <body>
 <div class="wrap2">
@@ -267,6 +268,8 @@ document.getElementById('form').addEventListener('submit', function (e) {
     crew_count: Number(document.getElementById('crew_count').value),
     plan: planSel.value || undefined
   };
+  // Fold in first-touch attribution (which page/channel produced this trial).
+  if (window.LCAttribution) window.LCAttribution.attach(payload);
   var btn = document.getElementById('submit');
   btn.disabled = true; btn.textContent = 'Setting up your company...';
 

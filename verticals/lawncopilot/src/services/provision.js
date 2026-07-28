@@ -134,9 +134,30 @@ const DEFAULT_CHECKLISTS = [
 /**
  * Create a complete, working landscaping company.
  */
+// First-touch attribution, sanitized: only known keys, length-capped, and the
+// client's timestamp is never trusted for `first_touch_at` — we clamp it to a
+// sane window so a forged payload cannot backdate a signup.
+function cleanAttribution(a) {
+  if (!a || typeof a !== 'object') return {};
+  const s = (v, n) => (v == null ? null : String(v).slice(0, n || 255));
+  let at = null;
+  const ms = Number(a.first_touch_at);
+  if (Number.isFinite(ms) && ms > Date.now() - 400 * 86400000 && ms <= Date.now() + 86400000) {
+    at = new Date(ms);
+  }
+  return {
+    utm_source: s(a.utm_source), utm_medium: s(a.utm_medium),
+    utm_campaign: s(a.utm_campaign), utm_content: s(a.utm_content), utm_term: s(a.utm_term),
+    // Click ids and a missing utm_source still tell us the channel.
+    first_touch_landing: s(a.landing_path), first_touch_referrer: s(a.referrer, 500),
+    first_touch_at: at,
+    _click: { gclid: s(a.gclid, 80), fbclid: s(a.fbclid, 120) }
+  };
+}
+
 async function provisionTenant({
   company_name, slug, owner_name, owner_email, owner_phone, password, password_confirm,
-  state, counties, crew_count, plan
+  state, counties, crew_count, plan, attribution
 }) {
   const avail = await isSlugAvailable(slug);
   if (!avail.ok) return { success: false, error: avail.error, field: 'slug' };
@@ -162,6 +183,7 @@ async function provisionTenant({
   }
 
   const chosenPlan = normalizePlan(plan);
+  const attr = cleanAttribution(attribution);
   const t = await sequelize.transaction();
 
   try {
@@ -173,11 +195,17 @@ async function provisionTenant({
       state: state || 'FL',
       counties: Array.isArray(counties) ? counties : [],
       brand: defaultBrand(String(company_name).trim()),
-      settings: { enabled_employees: enabledFor(chosenPlan) },
+      // Click ids ride in settings so no schema column is needed for them.
+      settings: { enabled_employees: enabledFor(chosenPlan), ...(attr._click && (attr._click.gclid || attr._click.fbclid) ? { click: attr._click } : {}) },
       status: 'trialing',
       plan: chosenPlan,
       trial_ends_at: new Date(Date.now() + TRIAL_DAYS() * 86400000),
-      short_code: shortCode()
+      short_code: shortCode(),
+      utm_source: attr.utm_source, utm_medium: attr.utm_medium,
+      utm_campaign: attr.utm_campaign, utm_content: attr.utm_content, utm_term: attr.utm_term,
+      first_touch_landing: attr.first_touch_landing,
+      first_touch_referrer: attr.first_touch_referrer,
+      first_touch_at: attr.first_touch_at
     }, { transaction: t });
 
     await User.create({

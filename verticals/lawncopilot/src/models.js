@@ -47,6 +47,16 @@ const Tenant = sequelize.define('LcTenant', {
   stripe_account_id: { type: DataTypes.STRING },   // Connect: money goes to THEM
   google_place_id: { type: DataTypes.STRING },
   short_code: { type: DataTypes.STRING },          // /l/<code>
+  // First-touch attribution: which page and channel produced this trial.
+  // Captured client-side at the first page view, persisted through signup.
+  utm_source: { type: DataTypes.STRING },
+  utm_medium: { type: DataTypes.STRING },
+  utm_campaign: { type: DataTypes.STRING },
+  utm_content: { type: DataTypes.STRING },
+  utm_term: { type: DataTypes.STRING },
+  first_touch_landing: { type: DataTypes.STRING },   // the path they first hit
+  first_touch_referrer: { type: DataTypes.TEXT },    // the external referrer, if any
+  first_touch_at: { type: DataTypes.DATE },
   created_at: NOW()
 }, { tableName: 'lc_tenants', ...base, indexes: [{ fields: ['slug'] }] });
 

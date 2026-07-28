@@ -858,6 +858,50 @@ const ADDRESS = '1240 Palm Grove Drive, Orlando FL 32801';
     ok('it is a service-area business (no storefront address leaked)',
        listing.business_type === 'service_area');
 
+    // ── 17g2. First-touch attribution (Phase 6 tracking) ──────────────────
+    console.log('\n[17g2] Attribution');
+    const { provisionTenant: provAttr } = require('./src/services/provision');
+    const attrSlug = `sit_attr_${stamp}`;
+    const attrRes = await provAttr({
+      company_name: 'SIT Attr', slug: attrSlug, owner_name: 'A',
+      owner_email: `sitattr_${stamp}@ex.com`, password: PW, crew_count: 1, plan: 'solo',
+      attribution: {
+        utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'fl-launch',
+        landing_path: '/lawn-care/orange-county-fl', referrer: 'https://www.google.com/',
+        gclid: 'abc123', first_touch_at: Date.now() - 3 * 86400000
+      }
+    });
+    ok('a signup persists its first-touch source', attrRes.success === true);
+    const attrTenant = await models.Tenant.findOne({ where: { slug: attrSlug }, raw: true });
+    ok('utm source/medium/campaign are stored on the company',
+       attrTenant.utm_source === 'google' && attrTenant.utm_medium === 'cpc' && attrTenant.utm_campaign === 'fl-launch');
+    ok('the landing page and referrer are stored',
+       attrTenant.first_touch_landing === '/lawn-care/orange-county-fl' && /google\.com/.test(attrTenant.first_touch_referrer || ''));
+    ok('ad click ids ride in settings, not a fabricated column',
+       ((attrTenant.settings || {}).click || {}).gclid === 'abc123');
+
+    // A forged future timestamp must not backdate/forward-date the signup.
+    const forged = await provAttr({
+      company_name: 'SIT Forge', slug: `sit_forge_${stamp}`, owner_name: 'A',
+      owner_email: `sitforge_${stamp}@ex.com`, password: PW, crew_count: 1, plan: 'solo',
+      attribution: { utm_source: 'x', first_touch_at: Date.now() + 999 * 86400000 }
+    });
+    const forgeTenant = await models.Tenant.findOne({ where: { slug: `sit_forge_${stamp}` }, raw: true });
+    ok('a forged out-of-range first_touch_at is rejected, not stored',
+       forgeTenant.first_touch_at === null && forgeTenant.utm_source === 'x');
+
+    // The platform report aggregates by channel.
+    const attrReport = await call('GET', `${ROOT}/api/v1/platform/attribution?days=365`, null, { jar: 'platform' });
+    ok('the attribution report aggregates trials by channel',
+       attrReport.data.success === true && Array.isArray(attrReport.data.by_channel)
+       && attrReport.data.by_channel.some(c => c.key.indexOf('google') === 0));
+
+    // Clean up the attribution fixtures.
+    for (const slg of [attrSlug, `sit_forge_${stamp}`]) {
+      const tt = await models.Tenant.findOne({ where: { slug: slg }, raw: true });
+      if (tt) { await models.User.destroy({ where: { tenant_id: tt.id } }); await models.Tenant.destroy({ where: { id: tt.id } }); }
+    }
+
     // ── 17h. One sign-in, routed by entitlement ───────────────────────────
     // A company owner, their homeowner customer, and the Digit2AI admin all
     // type into the SAME form and must land somewhere different.
