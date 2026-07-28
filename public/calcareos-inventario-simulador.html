@@ -120,6 +120,30 @@
   .disc b{color:var(--txt)}
   footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
   [data-i18n-hide]{display:none}
+
+  /* ---- Lina voice orb (Layer 3) ---- */
+  .lina{margin:26px 0 4px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+    border-radius:16px;padding:22px;display:flex;gap:20px;align-items:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .orb{position:relative;width:84px;height:84px;flex:0 0 84px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#f5dfae,var(--oro) 45%,#5c4114 100%);box-shadow:0 0 0 0 rgba(216,168,75,.5)}
+  .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(216,168,75,.32)}
+  .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(216,168,75,.45)}70%{box-shadow:0 0 0 22px rgba(216,168,75,0)}100%{box-shadow:0 0 0 0 rgba(216,168,75,0)}}
+  .lina-meta{flex:1;min-width:0}
+  .lina-name{font-weight:700;font-size:16px}
+  .lina-role{color:var(--mut);font-size:12.5px;margin-bottom:13px}
+  .lina .controls{display:flex;gap:10px;flex-wrap:wrap}
+  .lina .status{font-size:12px;color:var(--mut);margin-top:11px;min-height:17px}
+  .voicepick{margin-top:11px;font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .voicepick select{font:inherit;font-size:11.5px;background:#0e1420;color:var(--txt);border:1px solid var(--line2);border-radius:7px;padding:5px 8px}
+  .voicepick label{display:inline;text-transform:none;letter-spacing:0;font-size:11.5px;margin:0;color:var(--mut)}
+  #voiceMode{color:var(--verde);font-weight:700}
+  button.listen{background:transparent;border:1px solid var(--line2);color:var(--mut);font:inherit;font-size:10.5px;
+    letter-spacing:.4px;border-radius:999px;padding:3px 11px;cursor:pointer;text-transform:none;flex:0 0 auto}
+  button.listen:hover{color:var(--oro2);border-color:var(--oro)}
+  .sec{transition:box-shadow .3s,border-color .3s;border-radius:12px}
+  .sec.active{box-shadow:0 0 0 2px rgba(216,168,75,.45);outline:none}
+  @media(max-width:620px){.lina{flex-direction:column;text-align:center}.lina .controls{justify-content:center}.voicepick{justify-content:center}}
 </style>
 </head>
 <body>
@@ -142,7 +166,7 @@
 
 <div class="wrap">
 
-  <section class="hero">
+  <section class="hero sec">
     <h1 data-t="h1">Inventario en Tiempo Real — <em>del lote al corte, del corte al desperdicio</em></h1>
     <p class="lead" data-t="lead">Simulación funcional del sistema. Registre un lote de importación, registre una orden de corte, y observe cómo el motor descuenta el área usada, clasifica el retal aprovechable, contabiliza el desperdicio y actualiza el tablero — todo en el mismo instante. No hay base de datos ni backend detrás de esta página: los cálculos corren en su navegador con la misma aritmética entera en cm² que usaría producción.</p>
     <div class="flow">
@@ -150,11 +174,41 @@
       <div><b data-t="f2">2. Corte registrado</b></div><i>&rarr;</i>
       <div><b data-t="f3">3. Desperdicio calculado</b></div><i>&rarr;</i>
       <div><b data-t="f4">4. Tablero responde</b></div>
+      <button class="listen" data-play="0" data-t="listen">Escuchar</button>
     </div>
   </section>
 
+  <!-- LINA VOICE (Layer 3 — reusa /api/tts/edge, sin claves) -->
+  <div class="lina">
+    <div class="orb" id="orb"></div>
+    <div class="lina-meta">
+      <div class="lina-name">Lina · <span data-t="v_name">Voz AI de Digit2AI</span></div>
+      <div class="lina-role" data-t="v_role">Te explica el simulador completo, sección por sección.</div>
+      <div class="controls">
+        <button class="act" id="playAll" data-t="v_all">Que Lina lo explique todo</button>
+        <button class="ghost" id="pause" disabled data-t="v_pause">Pausar</button>
+        <button class="ghost" id="stop" disabled data-t="v_stop">Detener</button>
+      </div>
+      <div class="status" id="status" data-t="v_idle">Pulsa el botón para que Lina comience la explicación.</div>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> <span data-t="v_hd">Voz neural HD</span></label>
+        <span>·</span>
+        <span data-t="v_acc">Acento:</span>
+        <select id="voiceSel">
+          <option value="lina" selected>México (Dalia)</option>
+          <option value="salome">Colombia (Salomé)</option>
+          <option value="paloma">EE. UU. (Paloma)</option>
+          <option value="elvira">España (Elvira)</option>
+          <option value="ava">English (Ava)</option>
+        </select>
+        <span id="voiceMode"></span>
+      </div>
+    </div>
+  </div>
+
   <!-- KPIs -->
-  <div class="kpis">
+  <h2><span data-t="s_kpi">Indicadores de la operación</span><button class="listen" data-play="1" data-t="listen">Escuchar</button></h2>
+  <div class="kpis sec">
     <div class="kpi oro"><div class="k" data-t="k_stock">Stock real</div><div class="v"><span id="kStock">0</span> <span class="u">m²</span></div><div class="d"><span id="kSlabs">0</span> <span data-t="k_slabs">losas activas</span></div></div>
     <div class="kpi verde"><div class="k" data-t="k_cut">Área cortada</div><div class="v"><span id="kCut">0</span> <span class="u">m²</span></div><div class="d"><span id="kOrders">0</span> <span data-t="k_orders">órdenes de corte</span></div></div>
     <div class="kpi rojo"><div class="k" data-t="k_waste">Desperdicio acumulado</div><div class="v"><span id="kWaste">0</span> <span class="u">%</span></div><div class="d"><span id="kWasteM2">0</span> m² <span data-t="k_lost">no recuperables</span></div></div>
@@ -162,8 +216,8 @@
   </div>
 
   <!-- ENTRADA -->
-  <h2 data-t="s_capture">Captura de operación</h2>
-  <div class="grid2">
+  <h2><span data-t="s_capture">Captura de operación</span><button class="listen" data-play="2" data-t="listen">Escuchar</button></h2>
+  <div class="grid2 sec">
 
     <!-- LOTE -->
     <div class="panel">
@@ -216,8 +270,8 @@
   </div>
 
   <!-- VISOR DE LOSA -->
-  <h2 data-t="s_viz">Visor de losa — qué se usa, qué queda, qué se pierde</h2>
-  <div class="grid2">
+  <h2><span data-t="s_viz">Visor de losa — qué se usa, qué queda, qué se pierde</span><button class="listen" data-play="3" data-t="listen">Escuchar</button></h2>
+  <div class="grid2 sec">
     <div class="panel">
       <div class="slabviz"><canvas id="cv" width="900" height="470"></canvas></div>
       <div class="legend">
@@ -239,8 +293,8 @@
   </div>
 
   <!-- TABLERO -->
-  <h2 data-t="s_dash">Tablero en tiempo real</h2>
-  <div class="grid3">
+  <h2><span data-t="s_dash">Tablero en tiempo real</span><button class="listen" data-play="4" data-t="listen">Escuchar</button></h2>
+  <div class="grid3 sec">
     <div class="panel">
       <h3 data-t="d_stock">Stock por referencia</h3>
       <p class="sub" data-t="d_stock_s">m² reales disponibles, no los del libro.</p>
@@ -266,8 +320,8 @@
     </div>
   </div>
 
-  <h2 data-t="s_ledger">Libro de movimientos</h2>
-  <div class="panel">
+  <h2><span data-t="s_ledger">Libro de movimientos</span><button class="listen" data-play="5" data-t="listen">Escuchar</button></h2>
+  <div class="panel sec">
     <div class="tw"><table>
       <thead><tr>
         <th data-t="th_when">Momento</th><th data-t="th_type">Tipo</th><th data-t="th_det">Detalle</th>
@@ -284,10 +338,11 @@
     <div id="expResp" class="resp" style="display:none"></div>
   </div>
 
-  <div class="disc">
+  <div class="disc sec">
     <b data-t="disc_b">Sobre esta simulación.</b>
     <span data-t="disc_t">Este simulador reproduce el comportamiento del sistema propuesto con datos de demostración; no está conectado a producción, a Siigo, a World Office ni a los inventarios reales de Calcáreos S.A. La aritmética de área, la regla de retal/desperdicio y los contratos de API mostrados son los que se implementarían. Quedan explícitamente fuera de este alcance: optimización geométrica de nesting 2D, exportación PDF/Excel, migración histórica desde Excel, campos de reporte DIAN/IVA e interfaz de piso de planta para tableta.</span>
     <div style="margin-top:10px;color:var(--dim)" data-t="disc_pd">Datos operativos, no personales — Ley 1581 de 2012 (Habeas Data). Este sistema no almacena datos personales.</div>
+    <div style="margin-top:12px"><button class="listen" data-play="6" data-t="listen">Escuchar</button></div>
   </div>
 
   <footer>
@@ -348,7 +403,16 @@
     empty_alerts:"Ninguna referencia por debajo del umbral.",
     empty_ledger:"Sin movimientos. Registre un lote o cargue el escenario de demostración.",
     al_below:"por debajo del umbral",
-    now:"ahora"
+    now:"ahora",
+    /* voz */
+    listen:"Escuchar", s_kpi:"Indicadores de la operación",
+    v_name:"Voz AI de Digit2AI", v_role:"Te explica el simulador completo, sección por sección.",
+    v_all:"Que Lina lo explique todo", v_pause:"Pausar", v_stop:"Detener",
+    v_idle:"Pulsa el botón para que Lina comience la explicación.",
+    v_hd:"Voz neural HD", v_acc:"Acento:",
+    v_prep:"Preparando voz neural…", v_speak:"Lina está hablando…",
+    v_one:"Reproduciendo sección…", v_paused:"En pausa.", v_resume:"Reanudar",
+    v_done:"Explicación terminada. Pulsa de nuevo para repetirla.", v_of:"de"
   };
   var EN = {
     hdr_sub:"Intelligent Inventory and Waste Control System",
@@ -396,7 +460,16 @@
     empty_alerts:"No reference below threshold.",
     empty_ledger:"No movements. Register a lot or load the demo scenario.",
     al_below:"below threshold",
-    now:"now"
+    now:"now",
+    /* voice */
+    listen:"Listen", s_kpi:"Operation indicators",
+    v_name:"Digit2AI AI voice", v_role:"Walks you through the whole simulator, section by section.",
+    v_all:"Have Lina explain everything", v_pause:"Pause", v_stop:"Stop",
+    v_idle:"Press the button and Lina will start the walkthrough.",
+    v_hd:"HD neural voice", v_acc:"Accent:",
+    v_prep:"Preparing neural voice…", v_speak:"Lina is speaking…",
+    v_one:"Playing section…", v_paused:"Paused.", v_resume:"Resume",
+    v_done:"Walkthrough finished. Press again to replay.", v_of:"of"
   };
   var L = ES, lang = "es";
 
@@ -739,6 +812,7 @@
       : "Simulador — Sistema Inteligente de Inventario y Control de Desperdicios · Calcáreos S.A.";
     $("btnEs").className = l==="es"?"on":""; $("btnEn").className = l==="en"?"on":"";
     try{ history.replaceState(null,"", l==="en" ? "?lang=en" : location.pathname ); }catch(e){}
+    if(window.__orbLang) window.__orbLang(l);
     renderEngine(); refresh();
   }
 
@@ -767,6 +841,178 @@
   var qs = new URLSearchParams(location.search);
   applyLang(qs.get("lang")==="en" ? "en" : "es");
   seed();
+})();
+</script>
+
+<!-- ============ LINA · Layer 3 (reusa /api/tts/edge — cero claves) ============ -->
+<script>
+(function(){
+  "use strict";
+
+  /* Narración: índice 0 = intro, 1..7 = una sección cada uno */
+  var SEG_ES = [
+    "Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Voy a explicarte este simulador del Sistema Inteligente de Inventario y Control de Desperdicios que preparamos para Calcáreos Sociedad Anónima. Puedes escucharme de corrido, o pulsar el botón Escuchar que está junto a cada sección.",
+
+    "Calcáreos importa losas de piedra y las corta a medida. El inventario contable y el inventario físico no coinciden, y la razón es muy concreta: nadie contabiliza el desperdicio en el momento del corte. La losa entra al sistema como un rectángulo completo, pero sale de la planta convertida en tres cosas distintas: piezas vendibles, retales aprovechables y pérdida. Solamente la primera queda registrada. Este simulador reproduce el ciclo que cierra esa brecha: el lote entra, el corte se registra, el desperdicio se calcula y el tablero responde, todo en el mismo instante. Detrás de esta página no hay base de datos: los cálculos corren en tu navegador con la misma aritmética que usaría el sistema en producción.",
+
+    "Arriba tienes los cuatro indicadores que resumen la operación. El stock real en metros cuadrados, que es el disponible de verdad y no el del libro contable. El área cortada, es decir, lo que efectivamente se convirtió en producto vendible. El desperdicio acumulado, expresado como porcentaje del área comprometida en corte. Y el retal aprovechable: las franjas de veinte centímetros o más que todavía sirven y que hoy se pierden de vista en el patio. Cada vez que registras una operación, los cuatro se recalculan.",
+
+    "La captura tiene dos formularios. En el primero registras un lote de importación: el tipo de piedra, el proveedor, el número de lote, las dimensiones de la losa en centímetros y la cantidad de losas. El sistema escribe una fila por losa, no una por lote, porque cada losa se corta por separado. En el segundo registras una orden de corte contra una losa específica: largo, ancho, número de piezas, el espesor de la sierra y el ancho mínimo que tu planta considera retal aprovechable. Esos dos últimos valores son configurables, porque cambian de taller a taller. Prueba también el botón de corte inválido: verás que el sistema rechaza con un error cuatrocientos veintidós el corte que no cabe, en lugar de dejar el inventario en negativo.",
+
+    "El visor de la losa muestra en color lo que acaba de ocurrir: en verde el área cortada y vendible, en azul el retal aprovechable, en rojo el desperdicio, y en gris el área que todavía está libre. A la derecha está el motor completo, sin caja negra. El área usada es largo por ancho por número de piezas. La pérdida por sierra se cobra siempre, sobre el perímetro del corte. Y la franja que sobra a lo ancho se clasifica con una sola regla: si mide más que el mínimo configurado, es retal aprovechable y sigue contando como inventario; si mide menos, es desperdicio y se descuenta. El detalle técnico que de verdad importa: toda el área vive como número entero en centímetros cuadrados, y la conversión a metros cuadrados ocurre únicamente al pintar la cifra en pantalla. Esa es la diferencia entre un inventario que cuadra a los seis meses y uno que se desfasa por acumulación de decimales, que es exactamente lo que le pasa hoy a las hojas de cálculo.",
+
+    "El tablero tiene tres paneles. El primero muestra el stock real por referencia en metros cuadrados y el número de losas activas. El segundo, el porcentaje de desperdicio por material, calculado como desperdicio dividido entre el área total comprometida en corte; ahí es donde se ve qué piedra te está costando más y con qué medidas de corte. El tercero, las alertas de mínimos: cada referencia tiene un umbral que tú defines, y cuando el stock cae por debajo, la referencia se enciende en rojo. Cambia el umbral en el selector de abajo y verás la alerta aparecer o desaparecer al instante.",
+
+    "Abajo está el libro de movimientos, la trazabilidad completa: cada lote y cada corte con su hora, el detalle, el área usada, el retal, el desperdicio y el área restante de la losa. Puedes cargar un escenario de demostración con cuatro lotes y seis órdenes de corte, reiniciar el simulador para empezar de cero, o abrir el payload en formato JSON para ver exactamente lo que devolverían los servicios de stock, desperdicio y alertas.",
+
+    "Y un cierre honesto sobre el alcance. Este simulador reproduce el comportamiento del sistema propuesto con datos de demostración; no está conectado a producción, ni a Siigo, ni a World Office, ni al inventario real de Calcáreos. La lógica de negocio y los contratos de servicio que ves aquí son los que se implementarían tal cual. Quedan explícitamente fuera de este primer sprint la optimización geométrica de nesting en dos dimensiones, la exportación a PDF y Excel, la migración histórica desde Excel, los campos de reporte de la DIAN, y la interfaz de piso de planta para tableta. El sistema no almacena datos personales, solo datos operativos, conforme a la Ley mil quinientos ochenta y uno de dos mil doce. El sprint completo se entrega en dos semanas. Si quieres, pulsa otra vez y te lo explico de nuevo."
+  ];
+
+  var SEG_EN = [
+    "Hello, I am Lina, the artificial intelligence voice of Digit2AI. I will walk you through this simulator of the Intelligent Inventory and Waste Control System we prepared for Calcáreos. You can listen straight through, or press the Listen button next to any section.",
+
+    "Calcáreos imports stone slabs and cuts them to size. The book inventory and the physical inventory do not match, and the reason is very concrete: nobody books the waste at the moment of the cut. The slab enters the system as one complete rectangle, but it leaves the floor as three different things: sellable pieces, usable offcuts, and loss. Only the first one gets recorded. This simulator reproduces the cycle that closes that gap: the lot comes in, the cut is logged, the waste is computed, and the dashboard responds, all in the same instant. There is no database behind this page: the math runs in your browser using the same arithmetic the production system would use.",
+
+    "At the top you have the four indicators that summarise the operation. Real stock in square metres, which is what is actually available and not what the ledger says. Cut area, meaning what genuinely became sellable product. Cumulative waste, expressed as a percentage of the area committed to cutting. And usable offcut: the strips of twenty centimetres or more that are still good and that today get lost in the yard. Every time you log an operation, all four recalculate.",
+
+    "Capture has two forms. In the first you register an import lot: stone type, supplier, lot number, slab dimensions in centimetres, and the number of slabs. The system writes one row per slab, not one per lot, because every slab is cut separately. In the second you log a cut order against a specific slab: length, width, number of pieces, blade thickness, and the minimum width your shop considers a usable offcut. Those last two are configurable, because they change from shop to shop. Try the invalid cut button too: you will see the system reject a cut that does not fit with a four twenty two error, rather than letting the inventory go negative.",
+
+    "The slab viewer shows in colour what just happened: green is cut, sellable area; blue is usable offcut; red is waste; and grey is the area still free. On the right is the full engine, no black box. Used area is length times width times pieces. The blade loss is always charged, against the perimeter of the cut. And the leftover strip across the width is classified by a single rule: if it is wider than the configured minimum, it is a usable offcut and still counts as inventory; if it is narrower, it is waste and gets deducted. The technical detail that really matters: all area lives as a whole number in square centimetres, and conversion to square metres happens only when the figure is painted on screen. That is the difference between an inventory that reconciles six months later and one that drifts from accumulated decimals, which is exactly what happens to spreadsheets today.",
+
+    "The dashboard has three panels. The first shows real stock per reference in square metres and the number of active slabs. The second shows waste percentage by material, computed as waste divided by the total area committed to cutting; that is where you see which stone is costing you most, and at which cut sizes. The third shows low stock alerts: every reference has a threshold you define, and when stock falls below it, the reference lights up red. Change the threshold in the selector below and you will see the alert appear or disappear instantly.",
+
+    "Below is the movement ledger, the full audit trail: every lot and every cut with its timestamp, the detail, the used area, the offcut, the waste, and the slab's remaining area. You can load a demo scenario with four lots and six cut orders, reset the simulator to start from zero, or open the JSON payload to see exactly what the stock, waste and alerts services would return.",
+
+    "And an honest closing note on scope. This simulator reproduces the behaviour of the proposed system using demo data; it is not connected to production, to Siigo, to World Office, or to the real inventory of Calcáreos. The business logic and the service contracts you see here are the ones that would be implemented as is. Explicitly out of this first sprint: two dimensional geometric nesting optimisation, PDF and Excel export, historical migration from spreadsheets, Colombian tax reporting fields, and a shop floor tablet interface. The system stores no personal data, only operational data, in line with Colombian Law fifteen eighty one of two thousand and twelve. The full sprint is delivered in two weeks. Press again any time and I will explain it once more."
+  ];
+
+  var segments = SEG_ES;
+  var T = { prep:"Preparando voz neural…", speak:"Lina está hablando…", one:"Reproduciendo sección…",
+            paused:"En pausa.", resume:"Reanudar", pause:"Pausar", done:"Explicación terminada. Pulsa de nuevo para repetirla.",
+            of:"de", fb:"es-MX", pick:"es" };
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'lina';
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    var pref = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(T.pick)===0; });
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ ' + (T.pick==='en' ? 'browser' : 'navegador'); }
+  setMode();
+
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + T.pick + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text: segments[idx], voice: voiceName }) })
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b || b.size < 200) throw new Error('empty'); var u = URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){
+    secs.forEach(function(s){ s.classList.remove('active'); });
+    if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
+  }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? T.speak+' ('+(qi+1)+' '+T.of+' '+queue.length+')' : T.one; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent = T.prep;
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio = new Audio(url);
+        currentAudio.onended = advance;
+        currentAudio.onerror = function(){ neuralOK=false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u = new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice = browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : T.fb;
+    u.rate = 0.98; u.pitch = 1.05;
+    u.onstart = function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend = onEnd; u.onerror = onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.textContent=T.pause;
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); setActive(null);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent = T.done;
+  }
+
+  playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  document.querySelectorAll('[data-play]').forEach(function(b){
+    b.addEventListener('click', function(){ start([parseInt(this.getAttribute('data-play'),10)+1],'one'); });
+  });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.textContent=T.resume; orb.classList.remove('speaking'); status.textContent=T.paused;
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent=T.pause; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+
+  /* el toggle ES/EN de la página cambia guion, voz y textos del orbe */
+  window.__orbLang = function(l){
+    finish(); clearCache();
+    if(l==='en'){
+      segments = SEG_EN;
+      T = { prep:"Preparing neural voice…", speak:"Lina is speaking…", one:"Playing section…",
+            paused:"Paused.", resume:"Resume", pause:"Pause", done:"Walkthrough finished. Press again to replay.",
+            of:"of", fb:"en-US", pick:"en" };
+      if(voiceName!=='ava'){ voiceName='ava'; voiceSel.value='ava'; }
+    } else {
+      segments = SEG_ES;
+      T = { prep:"Preparando voz neural…", speak:"Lina está hablando…", one:"Reproduciendo sección…",
+            paused:"En pausa.", resume:"Reanudar", pause:"Pausar", done:"Explicación terminada. Pulsa de nuevo para repetirla.",
+            of:"de", fb:"es-MX", pick:"es" };
+      if(voiceName==='ava'){ voiceName='lina'; voiceSel.value='lina'; }
+    }
+    pickBrowserVoice(); setMode();
+  };
+  if(document.documentElement.lang === 'en') window.__orbLang('en');
 })();
 </script>
 </body>
