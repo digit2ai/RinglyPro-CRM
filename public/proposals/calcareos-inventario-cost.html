@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Costos de Entrega — Sistema Inteligente de Inventario y Control de Desperdicios · Calcáreos S.A.</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>INFORME DE COSTOS DE ENTREGA</h1>
+  <p class="sub">Sistema Inteligente de Inventario y Control de Desperdicios — Calcáreos S.A. (Colombia) · Sprint 1 (MVP / vertical slice) · Modelo de Entrega AI-Native</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO · NO DISTRIBUIR AL CLIENTE</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>Inventario de losas y control de desperdicios</td><td class="lbl">Fecha:</td><td>Julio 2026</td></tr>
+    <tr><td class="lbl">Cliente:</td><td>Calcáreos S.A. (single-tenant, <code>tenant_id = 1</code>)</td><td class="lbl">Asunto:</td><td>Costo del sprint lote &rarr; corte &rarr; desperdicio &rarr; tablero</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$70 USD/hora (tarifa cargada)</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega del sprint. <strong>No incluye margen de utilidad ni IVA.</strong> Simulador funcional entregado como evidencia de alcance.</td></tr>
+  </table>
+
+  <h2>1. Contexto y alcance</h2>
+  <p>Calcáreos S.A. importa losas de piedra y las corta a medida. El inventario contable y el inventario físico no coinciden porque <strong>nadie contabiliza el desperdicio en el momento del corte</strong>: la losa entra como un rectángulo, sale como piezas vendibles, retales aprovechables y pérdida — y solo el primero queda registrado. Este sprint cierra esa brecha con el corte más pequeño que ya produce valor: <strong>lote entra &rarr; corte registrado &rarr; desperdicio calculado &rarr; tablero responde</strong>.</p>
+  <p>El motor almacena toda el área como <strong>entero en cm²</strong> y convierte a m² únicamente en la capa de presentación, eliminando la deriva por acumulación de decimales que hace inservible el conteo en hojas de cálculo. La regla de clasificación es explícita: la franja sobrante se registra como <em>retal aprovechable</em> si supera el ancho mínimo configurado, y como <em>desperdicio</em> si no lo supera; la pérdida por sierra (kerf) se cobra siempre.</p>
+  <p><strong>Quedan FUERA</strong> de este sprint (fases posteriores): exportación PDF/Excel de informes acumulados; generación automática de cotizaciones contra stock; migración histórica desde Excel/Siigo/World Office; UI de onboarding multi-tenant (el esquema ya es multi-tenant, la interfaz es single-tenant); interfaz de piso de planta para tableta/móvil; campos de reporte DIAN/IVA; ingesta de fichas técnicas de proveedor; y optimización geométrica de nesting 2D (este sprint hace contabilidad de área, no empaquetado geométrico).</p>
+
+  <h2>2. Costo de Desarrollo (CAPEX)</h2>
+  <p>Componentes del sprint, al costo interno cargado de $70 USD/hora (sin margen ni IVA):</p>
+
+  <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y migración</h3>Sub-app Express auto-montada; modelos <code>slab</code>, <code>cut</code>, <code>reference</code>; <code>tenant_id NOT NULL</code> + índice en las tres tablas; migración SQL idempotente.<div class="price">8 hrs · Costo: $560 USD</div></div>
+  <div class="card"><h3>Componente 2: Middleware de tenant + guarda JWT</h3>Reutiliza el middleware JWT del CRM RinglyPro (sin firmante propio); inyecta y filtra por <code>tenant_id</code> en cada consulta; escritura autenticada, lectura pública.<div class="price">4 hrs · Costo: $280 USD</div></div>
+  <div class="card"><h3>Componente 3: API de lotes de importación</h3><code>POST /api/v1/lots</code> genera una fila por losa (largo × ancho × espesor, tipo de piedra, proveedor, lote); <code>GET /lots</code>; validación de dimensiones y 401 sin token.<div class="price">7 hrs · Costo: $490 USD</div></div>
+  <div class="card"><h3>Componente 4: Motor de cortes y desperdicio</h3>El núcleo del sistema. <code>POST /api/v1/cuts</code>: descuenta el rectángulo usado, calcula pérdida por sierra, clasifica la franja sobrante en retal o desperdicio, devuelve <code>{used, waste, remaining}</code>, y rechaza con 422 el corte que excede el área o el ancho disponible. Aritmética entera en cm².<div class="price">11 hrs · Costo: $770 USD</div></div>
+  <div class="card"><h3>Componente 5: Agregación de stock y alertas de mínimos</h3><code>GET /api/v1/stock</code> (m² reales y número de losas por referencia) y <code>GET /api/v1/alerts</code> (referencias por debajo del <code>min_threshold_m2</code> configurable).<div class="price">7 hrs · Costo: $490 USD</div></div>
+  <div class="card"><h3>Componente 6: Reporte de desperdicio por material y período</h3><code>GET /api/v1/waste?period=</code> — porcentaje de desperdicio por tipo de piedra sobre el área total comprometida en corte, con filtro de período.<div class="price">5 hrs · Costo: $350 USD</div></div>
+  <div class="card"><h3>Componente 7: UI de captura — lotes y órdenes de corte</h3>Formularios de registro de lote y de corte, validación en cliente, retroalimentación inmediata del cálculo (HTML + JS vanilla + Tailwind, tema oscuro monoespaciado).<div class="price">8 hrs · Costo: $560 USD</div></div>
+  <div class="card"><h3>Componente 8: Tablero en tiempo real</h3><code>dashboard.html</code>: stock en m² por referencia, % de desperdicio acumulado por material, alertas de mínimos, libro de movimientos y visor gráfico de la losa (usado / retal / desperdicio).<div class="price">9 hrs · Costo: $630 USD</div></div>
+  <div class="card"><h3>Componente 9: i18n ES/EN + aviso Ley 1581</h3>Diccionarios planos <code>es.json</code> (por defecto) y <code>en.json</code> con <code>?lang=en</code>, sin i18next; ruta <code>/privacidad</code> y nota de pie "Datos operativos, no personales".<div class="price">3 hrs · Costo: $210 USD</div></div>
+  <div class="card"><h3>Componente 10: SIT + UAT + despliegue y verificación</h3>Harness <code>sit.js</code> cubriendo los 9 criterios de aceptación (salud, lote con y sin JWT, corte + matemática de desperdicio, agregación de stock, umbral de alerta), UAT con operador y despliegue verificado en Render.<div class="price">4 hrs · Costo: $280 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Subtotal de los 10 componentes (incluye gestión, QA y UAT)</td><td class="num">66</td><td class="num">$4.620</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO — SPRINT 1 (CAPEX)</td><td class="num">66</td><td class="num">$4.620 USD</td></tr>
+  </table>
+  <p class="muted">Plazo de entrega: <span class="pill">2 semanas</span>. Banda de costo según acabado: <strong>$3.700</strong> (lean) a <strong>$5.800</strong> (pulido). Ancla: <strong>$4.620 USD</strong>.</p>
+
+  <h2>3. Wall Time — tiempo real de desarrollo</h2>
+  <p>Bajo el modelo AI-Native, las horas de ingeniería y el tiempo de reloj no son la misma cifra: el trabajo independiente se abre en paralelo sobre la fuerza de trabajo de 83 agentes y solo la ruta crítica consume calendario.</p>
+  <table class="fin">
+    <tr><th>Medida</th><th class="num">Valor</th><th>Qué significa</th></tr>
+    <tr><td>Horas de ingeniería facturables</td><td class="num">66 hrs</td><td>Base del CAPEX. Es lo que se cobra.</td></tr>
+    <tr><td>Wall time de construcción activa</td><td class="num">~26 hrs</td><td>Reloj real de build: fan-out paralelo (API, motor, UI, SIT en simultáneo) sobre una ruta crítica de ~2,5&times; de compresión.</td></tr>
+    <tr><td>Días hábiles de construcción</td><td class="num">~3,5 días</td><td>26 horas de reloj repartidas en jornadas de trabajo.</td></tr>
+    <tr><td>Ventanas de revisión, UAT y datos reales</td><td class="num">~4 días</td><td>Tiempo del cliente, no del equipo: validación de operador, carga de referencias reales, ajuste de umbrales.</td></tr>
+    <tr class="total"><td>PLAZO CALENDARIO COMPROMETIDO</td><td class="num">2 semanas</td><td>Del arranque a producción verificada.</td></tr>
+  </table>
+  <p class="muted">Referencia de contraste: el mismo alcance con un equipo tradicional de un desarrollador senior son <strong>3 a 4 semanas</strong> de calendario. La compresión no reduce las horas de ingeniería entregadas; reduce el calendario.</p>
+
+  <h2>4. Cronograma de Entrega (costo por semana)</h2>
+  <div class="twocol">
+    <div class="card"><h3>Semana 1 — Cimientos y motor</h3><ul class="tight"><li>Componente 1 (Arquitectura + datos + migración)</li><li>Componente 2 (Tenant + JWT)</li><li>Componente 3 (API de lotes)</li><li>Componente 4 (Motor de cortes y desperdicio)</li></ul><div class="price">30 hrs · Costo: $2.100 USD</div></div>
+    <div class="card"><h3>Semana 2 — Analítica, UI y entrega</h3><ul class="tight"><li>Componente 5 (Stock + alertas)</li><li>Componente 6 (Desperdicio por material)</li><li>Componente 7 (UI de captura)</li><li>Componente 8 (Tablero en tiempo real)</li><li>Componente 9 (i18n + Ley 1581)</li><li>Componente 10 (SIT + UAT + despliegue)</li></ul><div class="price">36 hrs · Costo: $2.520 USD</div></div>
+  </div>
+  <p class="muted">Suma de las 2 semanas = 66 horas = <strong>$4.620 USD</strong> de costo total de desarrollo.</p>
+
+  <h2>5. Costo Operativo (OPEX)</h2>
+  <p>Costo recurrente del sistema en producción, sobre infraestructura compartida del ecosistema RinglyPro. La línea (*) escala con el volumen de cortes registrados.</p>
+  <table class="fin">
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
+    <tr><td>Render — share de cómputo</td><td>Sub-app Express auto-montada</td><td class="num">$26</td></tr>
+    <tr><td>PostgreSQL — share multi-tenant</td><td>3 tablas <code>*_slabs / _cuts / _references</code></td><td class="num">$12</td></tr>
+    <tr><td>Respaldos + monitoreo de salud (*)</td><td>Health-poller, alertas de caída, retención de respaldos</td><td class="num">$7</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO</td><td class="num">$45</td></tr>
+  </table>
+  <p class="muted">Equivalente a <strong>$45 USD/mes</strong> = <strong>$540 USD/año</strong>. Sin claves externas de pago: el sprint no consume APIs de terceros facturables.</p>
+
+  <h2>6. Resumen de Costo — Sprint 1</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Desarrollo Sprint 1 (CAPEX) — 66 hrs</td><td class="num">$4.620</td></tr>
+    <tr><td>Operación (12 meses &times; $45)</td><td class="num">$540</td></tr>
+    <tr class="total"><td>COSTO TOTAL — AÑO 1</td><td class="num">$5.160 USD</td></tr>
+    <tr><td>Wall time de construcción</td><td class="num">~26 hrs (~3,5 días hábiles)</td></tr>
+    <tr><td>Plazo calendario de entrega</td><td class="num">2 semanas</td></tr>
+  </table>
+
+  <div class="note"><strong>Nota:</strong> Documento de costo directo. El margen de utilidad (70%) y el IVA (19%, Colombia) se aplican por separado en la propuesta dirigida al cliente; no forman parte de este informe. Simulador de alcance disponible en <code>/calcareos-inventario-simulador.html</code>.</div>
+
+  <div class="foot">Documento interno de Digit2AI. Cifras en USD a costo directo, sin margen ni IVA. Tarifa interna cargada de referencia: $70 USD/hora. No distribuir al cliente. Cliente: Calcáreos S.A. — Colombia.</div>
+
+</div>
+</body>
+</html>

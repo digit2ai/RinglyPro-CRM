@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta Técnico-Comercial — Sistema Inteligente de Inventario y Control de Desperdicios · Calcáreos S.A.</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--azul-claro);color:#0f3a66;border:1px solid var(--azul-borde);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  .cta{display:inline-block;background:#0f3a66;color:#fff;border-radius:8px;padding:11px 22px;font-weight:700;text-decoration:none;font-size:14px}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>PROPUESTA TÉCNICO-COMERCIAL</h1>
+  <p class="sub">Sistema Inteligente de Inventario y Control de Desperdicios — Calcáreos S.A. · Sprint 1 (MVP) · Modelo de Entrega AI-Native</p>
+  <span class="conf">PROPUESTA TÉCNICO-COMERCIAL · VÁLIDA 30 DÍAS</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>Inventario de losas y control de desperdicios</td><td class="lbl">Fecha:</td><td>Julio 2026</td></tr>
+    <tr><td class="lbl">Atención:</td><td>Calcáreos S.A. — Dirección de Operaciones</td><td class="lbl">País:</td><td>Colombia</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Plazo:</td><td>2 semanas a producción</td></tr>
+    <tr><td class="lbl">Alcance:</td><td colspan="3">Lote entra &rarr; corte registrado &rarr; desperdicio calculado &rarr; tablero responde. Cifras en USD, incluyen IVA (19%).</td></tr>
+  </table>
+
+  <h2>1. El problema que se está pagando hoy</h2>
+  <p>Calcáreos S.A. importa losas y las corta a medida. El inventario contable y el inventario físico no coinciden, y la razón es concreta: <strong>nadie contabiliza el desperdicio en el momento del corte</strong>. La losa entra al sistema como un rectángulo completo; sale de la planta como piezas vendibles, retales aprovechables y pérdida — y solo lo primero queda registrado. El resultado son tres costos silenciosos: se cotiza sobre stock que no existe, se vuelve a comprar material que estaba en el patio como retal, y nadie puede decir qué referencia está desperdiciando más ni por qué.</p>
+  <p>Este sprint entrega el corte más pequeño que ya resuelve eso de forma medible y auditable.</p>
+
+  <h2>2. Qué se entrega</h2>
+  <p>Una aplicación web propia de Calcáreos S.A., en español por defecto, con inglés disponible, desplegada y verificada en producción:</p>
+  <ul class="tight">
+    <li><strong>Registro de lotes de importación</strong> — cada losa con largo, ancho y espesor en centímetros, tipo de piedra, proveedor y número de lote.</li>
+    <li><strong>Registro de órdenes de corte</strong> — el motor descuenta el rectángulo usado, cobra la pérdida por sierra y clasifica la franja sobrante en retal aprovechable o desperdicio, según un ancho mínimo que ustedes configuran.</li>
+    <li><strong>Tablero en tiempo real</strong> — stock real en m² por referencia (no el del libro), porcentaje de desperdicio acumulado por material, y alertas cuando una referencia cae por debajo de su mínimo.</li>
+    <li><strong>Precisión sin deriva</strong> — toda el área vive como número entero en cm² y solo se convierte a m² al mostrarse en pantalla. Es la diferencia entre un inventario que cuadra a los seis meses y uno que no.</li>
+    <li><strong>Simulador funcional</strong> — antes de escribir la primera línea de producción, ustedes pueden operar el sistema completo en el navegador y validar la lógica de negocio contra su propia realidad de planta.</li>
+  </ul>
+  <p><strong>Fuera de este sprint</strong> (fases posteriores, cotizables aparte): exportación PDF/Excel de informes acumulados; cotización automática contra stock; migración histórica desde Excel, Siigo o World Office; interfaz de piso de planta para tableta; campos de reporte DIAN/IVA; ingesta de fichas técnicas de proveedor; y optimización geométrica de nesting 2D.</p>
+
+  <h2>3. Inversión de Desarrollo</h2>
+  <p>Componentes entregables del Sprint 1:</p>
+
+  <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y migración</h3>Aplicación desplegable, tres tablas con aislamiento por empresa e índices, migración controlada y reversible.<div class="price">8 hrs · $952 USD</div></div>
+  <div class="card"><h3>Componente 2: Control de acceso y aislamiento de datos</h3>Autenticación en toda operación de escritura reutilizando la seguridad ya certificada de la plataforma; los datos de Calcáreos S.A. no se mezclan con los de ningún otro cliente.<div class="price">4 hrs · $476 USD</div></div>
+  <div class="card"><h3>Componente 3: Registro de lotes de importación</h3>Alta de lote con N losas, validación de dimensiones y consulta del histórico de lotes.<div class="price">7 hrs · $833 USD</div></div>
+  <div class="card"><h3>Componente 4: Motor de cortes y desperdicio</h3>El corazón del sistema: descuento de área usada, pérdida por sierra, clasificación retal/desperdicio, y rechazo controlado del corte que no cabe en la losa.<div class="price">11 hrs · $1.309 USD</div></div>
+  <div class="card"><h3>Componente 5: Stock real y alertas de mínimos</h3>Metros cuadrados disponibles por referencia y aviso automático cuando una referencia baja del umbral que ustedes definan.<div class="price">7 hrs · $833 USD</div></div>
+  <div class="card"><h3>Componente 6: Informe de desperdicio por material y período</h3>Porcentaje de desperdicio por tipo de piedra sobre el área total comprometida en corte, filtrable por período.<div class="price">5 hrs · $595 USD</div></div>
+  <div class="card"><h3>Componente 7: Pantallas de captura — lotes y cortes</h3>Formularios de operación con validación y retroalimentación inmediata del cálculo.<div class="price">8 hrs · $952 USD</div></div>
+  <div class="card"><h3>Componente 8: Tablero en tiempo real</h3>Stock, desperdicio, alertas, libro de movimientos y visor gráfico de la losa mostrando qué se usó, qué queda y qué se perdió.<div class="price">9 hrs · $1.071 USD</div></div>
+  <div class="card"><h3>Componente 9: Bilingüe español/inglés y aviso legal</h3>Español por defecto, inglés en un clic, y aviso conforme a la Ley 1581 de 2012 (Habeas Data).<div class="price">3 hrs · $357 USD</div></div>
+  <div class="card"><h3>Componente 10: Pruebas, aceptación con operador y puesta en producción</h3>Batería automática que valida los nueve criterios de aceptación, sesión de aceptación con el operador de planta y despliegue verificado.<div class="price">4 hrs · $476 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
+    <tr><td>Desarrollo Sprint 1 — 10 componentes (incluye gestión, QA y aceptación)</td><td class="num">66</td><td class="num">$7.854</td></tr>
+    <tr class="total"><td>INVERSIÓN DE DESARROLLO (antes de IVA)</td><td class="num">66</td><td class="num">$7.854 USD</td></tr>
+  </table>
+  <p class="muted">Plazo de entrega: <span class="pill">2 semanas</span> del arranque a producción verificada.</p>
+
+  <h2>4. Cronograma de Entrega</h2>
+  <div class="twocol">
+    <div class="card"><h3>Semana 1 — Cimientos y motor</h3><ul class="tight"><li>Arquitectura, datos y migración</li><li>Control de acceso y aislamiento</li><li>Registro de lotes</li><li>Motor de cortes y desperdicio</li></ul><div class="price">30 hrs · $3.570 USD</div></div>
+    <div class="card"><h3>Semana 2 — Analítica, pantallas y entrega</h3><ul class="tight"><li>Stock real y alertas</li><li>Informe de desperdicio</li><li>Pantallas de captura</li><li>Tablero en tiempo real</li><li>Bilingüe + aviso legal</li><li>Pruebas, aceptación y producción</li></ul><div class="price">36 hrs · $4.284 USD</div></div>
+  </div>
+  <p class="muted">Suma de las 2 semanas = 66 horas = <strong>$7.854 USD</strong> antes de IVA. Un equipo tradicional entrega este mismo alcance en 3 a 4 semanas; el modelo AI-Native lo comprime a 2 sin reducir el trabajo entregado.</p>
+
+  <h2>5. Operación y Soporte</h2>
+  <p>Costo recurrente de mantener el sistema en línea: infraestructura, base de datos, respaldos y monitoreo de disponibilidad.</p>
+  <table class="fin">
+    <tr><th>Concepto</th><th>Incluye</th><th class="num">USD/mes</th></tr>
+    <tr><td>Operación en producción</td><td>Cómputo, base de datos, respaldos, monitoreo de salud y disponibilidad</td><td class="num">$77</td></tr>
+    <tr class="total"><td colspan="2">OPERACIÓN ANUAL (12 meses, antes de IVA)</td><td class="num">$918 USD</td></tr>
+  </table>
+  <p class="muted">Después del primer año, la operación continúa a <strong>$77 USD/mes</strong> + IVA (<strong>$92 USD/mes</strong> con IVA incluido). Sin costos variables por volumen de cortes en este alcance.</p>
+
+  <h2>6. Resumen de Inversión — Año 1</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Valor (USD)</th></tr>
+    <tr><td>Desarrollo Sprint 1 (66 horas)</td><td class="num">$7.854</td></tr>
+    <tr><td>Operación en producción (12 meses)</td><td class="num">$918</td></tr>
+    <tr class="sub"><td>Subtotal</td><td class="num">$8.772</td></tr>
+    <tr><td>IVA (19% — Colombia)</td><td class="num">$1.667</td></tr>
+    <tr class="total"><td>INVERSIÓN TOTAL AÑO 1 (IVA incluido)</td><td class="num">$10.439 USD</td></tr>
+    <tr><td>Plazo de entrega</td><td class="num">2 semanas</td></tr>
+    <tr><td>Años siguientes (solo operación)</td><td class="num">$92 USD/mes con IVA</td></tr>
+  </table>
+
+  <h2>7. Forma de pago sugerida</h2>
+  <table class="fin">
+    <tr><th>Hito</th><th>Momento</th><th class="num">Valor + IVA (USD)</th></tr>
+    <tr><td>Anticipo — inicio de sprint</td><td>Firma</td><td class="num">$4.673</td></tr>
+    <tr><td>Entrega a producción y aceptación</td><td>Semana 2</td><td class="num">$4.673</td></tr>
+    <tr><td>Operación</td><td>Mensual, desde el mes 1</td><td class="num">$92 / mes</td></tr>
+  </table>
+  <p class="muted">Cifras redondeadas al dólar. Facturación en USD; equivalente en COP a la TRM del día de facturación si así se prefiere.</p>
+
+  <h2>8. Próximo paso</h2>
+  <p>Antes de contratar, opere el sistema. El simulador reproduce el flujo completo — registre un lote, registre un corte, fuerce un corte inválido, mueva el ancho mínimo de retal y observe cómo se mueve el porcentaje de desperdicio — con la misma lógica y la misma aritmética que llevaría producción.</p>
+  <p><a class="cta" href="https://aiagent.ringlypro.com/calcareos-inventario-simulador.html">Abrir el simulador</a></p>
+
+  <div class="note"><strong>Qué necesitamos de Calcáreos S.A.:</strong> el listado de referencias de piedra con sus mínimos de stock, el ancho mínimo que la planta considera retal aprovechable, el espesor de sierra habitual, y un operador disponible dos horas en la semana 2 para la sesión de aceptación. Nada más.</div>
+
+  <div class="foot">Propuesta emitida por Digit2AI · Julio 2026 · Validez 30 días. Cifras en USD; IVA colombiano del 19% incluido en el total del Año 1. El alcance corresponde al Sprint 1 descrito; los módulos listados como fuera de alcance se cotizan por separado. Este sistema almacena datos operativos, no datos personales — Ley 1581 de 2012.</div>
+
+</div>
+</body>
+</html>

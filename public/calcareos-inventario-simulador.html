@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador — Sistema Inteligente de Inventario y Control de Desperdicios · Calcáreos S.A.</title>
+<meta name="description" content="Simulador interactivo del sistema de inventario de losas y control de desperdicios para Calcáreos S.A. Lote entra, corte se registra, desperdicio se calcula, tablero responde.">
+<style>
+  :root{
+    --bg:#0b0e13; --bg2:#111722; --card:#151d2b; --card2:#1a2434;
+    --line:#243049; --line2:#2e3d5a;
+    --txt:#e9eef7; --mut:#8a98b0; --dim:#5f6d85;
+    --oro:#d8a84b; --oro2:#f0c674; --oro-bg:rgba(216,168,75,.10);
+    --verde:#3ecf8e; --verde-bg:rgba(62,207,142,.10);
+    --rojo:#ff6b6b; --rojo-bg:rgba(255,107,107,.10);
+    --azul:#5aa9ff; --azul-bg:rgba(90,169,255,.10);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--oro2);text-decoration:none}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+
+  /* header */
+  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0d1219,#0b0e13);position:sticky;top:0;z-index:40;backdrop-filter:blur(8px)}
+  .hd{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .mark{width:34px;height:34px;flex:0 0 34px;border-radius:8px;background:linear-gradient(140deg,var(--oro2),#8a6420);position:relative;overflow:hidden}
+  .mark::after{content:"";position:absolute;inset:6px 0 auto 0;height:2px;background:rgba(11,14,19,.55);box-shadow:0 7px 0 rgba(11,14,19,.55),0 14px 0 rgba(11,14,19,.4)}
+  .brand{line-height:1.2}
+  .brand b{display:block;font-size:15px;letter-spacing:.2px}
+  .brand span{display:block;font-size:11.5px;color:var(--mut)}
+  .hd .sp{flex:1}
+  .lang{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;border:0;color:var(--mut);font:inherit;font-size:12px;padding:6px 12px;cursor:pointer}
+  .lang button.on{background:var(--oro);color:#12161d;font-weight:700}
+  .simchip{border:1px solid var(--oro);color:var(--oro2);background:var(--oro-bg);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.4px}
+
+  /* hero */
+  .hero{padding:40px 0 22px;border-bottom:1px solid var(--line)}
+  h1{font-size:30px;line-height:1.18;margin:0 0 10px;letter-spacing:-.4px;font-weight:800}
+  h1 em{font-style:normal;color:var(--oro2)}
+  .lead{color:var(--mut);max-width:840px;margin:0 0 18px;font-size:14.5px}
+  .flow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .flow div{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:8px 14px;font-size:12.5px;color:var(--mut)}
+  .flow div b{color:var(--txt)}
+  .flow i{color:var(--dim);font-style:normal;align-self:center}
+
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:26px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .kpi .k{font-size:11px;color:var(--mut);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px}
+  .kpi .v{font-size:27px;font-weight:800;letter-spacing:-.6px;line-height:1}
+  .kpi .u{font-size:13px;color:var(--dim);font-weight:600}
+  .kpi .d{font-size:11.5px;color:var(--dim);margin-top:7px}
+  .kpi.oro .v{color:var(--oro2)} .kpi.verde .v{color:var(--verde)} .kpi.rojo .v{color:var(--rojo)} .kpi.azul .v{color:var(--azul)}
+
+  h2{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin:34px 0 14px;font-weight:700;display:flex;align-items:center;gap:10px}
+  h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+  @media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .panel h3{margin:0 0 4px;font-size:15px;font-weight:700}
+  .panel .sub{color:var(--mut);font-size:12.5px;margin:0 0 16px}
+
+  label{display:block;font-size:11px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin:0 0 5px}
+  input,select{width:100%;background:#0e1420;border:1px solid var(--line2);color:var(--txt);font:inherit;font-size:13.5px;border-radius:8px;padding:9px 11px;outline:none}
+  input:focus,select:focus{border-color:var(--oro);box-shadow:0 0 0 3px var(--oro-bg)}
+  .row{display:grid;gap:12px;margin-bottom:12px}
+  .r2{grid-template-columns:1fr 1fr}.r3{grid-template-columns:1fr 1fr 1fr}.r4{grid-template-columns:1fr 1fr 1fr 1fr}
+  @media(max-width:600px){.r3,.r4{grid-template-columns:1fr 1fr}}
+
+  button.act{background:var(--oro);color:#12161d;border:0;font:inherit;font-weight:700;font-size:13.5px;border-radius:8px;padding:11px 18px;cursor:pointer;transition:.15s}
+  button.act:hover{background:var(--oro2)}
+  button.ghost{background:transparent;color:var(--mut);border:1px solid var(--line2);font:inherit;font-size:12.5px;border-radius:8px;padding:9px 14px;cursor:pointer}
+  button.ghost:hover{color:var(--txt);border-color:var(--oro)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}
+
+  .resp{margin-top:14px;border-radius:8px;padding:12px 14px;font-size:12.5px;border:1px solid var(--line2);background:#0e1420;white-space:pre-wrap;word-break:break-word}
+  .resp.ok{border-color:rgba(62,207,142,.5);background:var(--verde-bg)}
+  .resp.err{border-color:rgba(255,107,107,.5);background:var(--rojo-bg)}
+  .resp .code{color:var(--dim);font-size:11px;letter-spacing:.6px;display:block;margin-bottom:6px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--mut);font-weight:700;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;padding:9px 10px;border-bottom:1px solid var(--line2)}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .tw{max-height:330px;overflow:auto}
+  .tw::-webkit-scrollbar{width:8px}.tw::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+
+  .tag{display:inline-block;border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:700;letter-spacing:.3px;border:1px solid}
+  .tag.ok{color:var(--verde);border-color:rgba(62,207,142,.45);background:var(--verde-bg)}
+  .tag.warn{color:var(--oro2);border-color:rgba(216,168,75,.45);background:var(--oro-bg)}
+  .tag.bad{color:var(--rojo);border-color:rgba(255,107,107,.45);background:var(--rojo-bg)}
+  .tag.info{color:var(--azul);border-color:rgba(90,169,255,.45);background:var(--azul-bg)}
+
+  .bar{height:7px;border-radius:4px;background:#0e1420;overflow:hidden;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--verde),var(--oro))}
+  .bar.hot i{background:linear-gradient(90deg,var(--oro),var(--rojo))}
+
+  .slabviz{background:#0e1420;border:1px solid var(--line2);border-radius:8px;padding:14px}
+  .slabviz canvas{width:100%;height:auto;display:block}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--mut)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  .alert{border:1px solid rgba(255,107,107,.45);background:var(--rojo-bg);border-radius:8px;padding:11px 13px;margin-bottom:10px;font-size:12.5px}
+  .alert b{color:var(--rojo)}
+  .empty{color:var(--dim);font-size:12.5px;padding:16px 0;text-align:center}
+
+  .api{background:#0e1420;border:1px solid var(--line2);border-radius:8px;padding:12px 14px;font-size:11.5px;color:var(--mut);overflow-x:auto}
+  .api b{color:var(--oro2)}
+  .api .m{color:var(--verde);font-weight:700}
+  .api .m.post{color:var(--oro2)}
+
+  .disc{margin-top:34px;border:1px solid var(--line2);background:var(--card2);border-radius:12px;padding:18px 20px;font-size:12.5px;color:var(--mut)}
+  .disc b{color:var(--txt)}
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  [data-i18n-hide]{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="mark"></div>
+    <div class="brand">
+      <b>Calcáreos S.A.</b>
+      <span data-t="hdr_sub">Sistema Inteligente de Inventario y Control de Desperdicios</span>
+    </div>
+    <div class="sp"></div>
+    <span class="simchip" data-t="simchip">SIMULADOR</span>
+    <div class="lang">
+      <button id="btnEs" class="on">ES</button>
+      <button id="btnEn">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1 data-t="h1">Inventario en Tiempo Real — <em>del lote al corte, del corte al desperdicio</em></h1>
+    <p class="lead" data-t="lead">Simulación funcional del sistema. Registre un lote de importación, registre una orden de corte, y observe cómo el motor descuenta el área usada, clasifica el retal aprovechable, contabiliza el desperdicio y actualiza el tablero — todo en el mismo instante. No hay base de datos ni backend detrás de esta página: los cálculos corren en su navegador con la misma aritmética entera en cm² que usaría producción.</p>
+    <div class="flow">
+      <div><b data-t="f1">1. Lote entra</b></div><i>&rarr;</i>
+      <div><b data-t="f2">2. Corte registrado</b></div><i>&rarr;</i>
+      <div><b data-t="f3">3. Desperdicio calculado</b></div><i>&rarr;</i>
+      <div><b data-t="f4">4. Tablero responde</b></div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi oro"><div class="k" data-t="k_stock">Stock real</div><div class="v"><span id="kStock">0</span> <span class="u">m²</span></div><div class="d"><span id="kSlabs">0</span> <span data-t="k_slabs">losas activas</span></div></div>
+    <div class="kpi verde"><div class="k" data-t="k_cut">Área cortada</div><div class="v"><span id="kCut">0</span> <span class="u">m²</span></div><div class="d"><span id="kOrders">0</span> <span data-t="k_orders">órdenes de corte</span></div></div>
+    <div class="kpi rojo"><div class="k" data-t="k_waste">Desperdicio acumulado</div><div class="v"><span id="kWaste">0</span> <span class="u">%</span></div><div class="d"><span id="kWasteM2">0</span> m² <span data-t="k_lost">no recuperables</span></div></div>
+    <div class="kpi azul"><div class="k" data-t="k_retal">Retal aprovechable</div><div class="v"><span id="kRetal">0</span> <span class="u">m²</span></div><div class="d" data-t="k_retal_d">Franjas ≥ 20 cm, reutilizables</div></div>
+  </div>
+
+  <!-- ENTRADA -->
+  <h2 data-t="s_capture">Captura de operación</h2>
+  <div class="grid2">
+
+    <!-- LOTE -->
+    <div class="panel">
+      <h3 data-t="lot_h">Registrar lote de importación</h3>
+      <p class="sub" data-t="lot_s">Un lote genera una fila por losa. Las dimensiones se capturan en centímetros; el sistema nunca almacena metros cuadrados en punto flotante.</p>
+      <div class="row r2">
+        <div><label data-t="l_stone">Referencia / tipo de piedra</label>
+          <select id="lStone"></select></div>
+        <div><label data-t="l_supp">Proveedor</label>
+          <input id="lSupp" value="Marmi Toscana S.r.l."></div>
+      </div>
+      <div class="row r2">
+        <div><label data-t="l_ref">Lote (lot_ref)</label><input id="lRef" value="LOT-2026-014"></div>
+        <div><label data-t="l_thick">Espesor (cm)</label><input id="lThick" type="number" value="2" step="0.1" min="0.5"></div>
+      </div>
+      <div class="row r3">
+        <div><label data-t="l_len">Largo (cm)</label><input id="lLen" type="number" value="310" min="1"></div>
+        <div><label data-t="l_wid">Ancho (cm)</label><input id="lWid" type="number" value="160" min="1"></div>
+        <div><label data-t="l_qty">Cantidad de losas</label><input id="lQty" type="number" value="6" min="1" max="80"></div>
+      </div>
+      <div class="btnrow">
+        <button class="act" id="btnLot" data-t="l_btn">Registrar lote</button>
+        <span class="api" style="border:0;background:transparent;padding:0"><span class="m post">POST</span> /api/v1/lots</span>
+      </div>
+      <div id="lotResp" class="resp" style="display:none"></div>
+    </div>
+
+    <!-- CORTE -->
+    <div class="panel">
+      <h3 data-t="cut_h">Registrar orden de corte</h3>
+      <p class="sub" data-t="cut_s">El motor descuenta el rectángulo usado, cobra la pérdida por sierra y decide si la franja sobrante es retal aprovechable o desperdicio.</p>
+      <div class="row">
+        <div><label data-t="c_slab">Losa</label><select id="cSlab"></select></div>
+      </div>
+      <div class="row r3">
+        <div><label data-t="c_len">Largo del corte (cm)</label><input id="cLen" type="number" value="240" min="1"></div>
+        <div><label data-t="c_wid">Ancho del corte (cm)</label><input id="cWid" type="number" value="65" min="1"></div>
+        <div><label data-t="c_qty">Piezas</label><input id="cQty" type="number" value="1" min="1" max="20"></div>
+      </div>
+      <div class="row r2">
+        <div><label data-t="c_kerf">Sierra / kerf (cm)</label><input id="cKerf" type="number" value="0.4" step="0.1" min="0"></div>
+        <div><label data-t="c_min">Franja mínima aprovechable (cm)</label><input id="cMin" type="number" value="20" min="1"></div>
+      </div>
+      <div class="btnrow">
+        <button class="act" id="btnCut" data-t="c_btn">Registrar corte</button>
+        <button class="ghost" id="btnBad" data-t="c_bad">Probar corte inválido (422)</button>
+      </div>
+      <div id="cutResp" class="resp" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- VISOR DE LOSA -->
+  <h2 data-t="s_viz">Visor de losa — qué se usa, qué queda, qué se pierde</h2>
+  <div class="grid2">
+    <div class="panel">
+      <div class="slabviz"><canvas id="cv" width="900" height="470"></canvas></div>
+      <div class="legend">
+        <span><i style="background:#233149"></i><span data-t="lg_free">Área libre</span></span>
+        <span><i style="background:#3ecf8e"></i><span data-t="lg_used">Área cortada (vendible)</span></span>
+        <span><i style="background:#5aa9ff"></i><span data-t="lg_retal">Retal aprovechable</span></span>
+        <span><i style="background:#ff6b6b"></i><span data-t="lg_waste">Desperdicio</span></span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3 data-t="eng_h">El motor, sin caja negra</h3>
+      <p class="sub" data-t="eng_s">Toda el área vive como entero en cm². La conversión a m² ocurre únicamente al pintar el número en pantalla — por eso el inventario nunca se desfasa por acumulación de decimales.</p>
+      <div class="api" id="engine"></div>
+      <div style="margin-top:14px" class="api">
+        <span class="m">GET</span> <b>/api/v1/stock</b> · <span class="m">GET</span> <b>/api/v1/waste?period=month</b> · <span class="m">GET</span> <b>/api/v1/alerts</b><br>
+        <span class="m post">POST</span> <b>/api/v1/lots</b> · <span class="m post">POST</span> <b>/api/v1/cuts</b> <span style="color:var(--dim)">— JWT requerido en escritura</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLERO -->
+  <h2 data-t="s_dash">Tablero en tiempo real</h2>
+  <div class="grid3">
+    <div class="panel">
+      <h3 data-t="d_stock">Stock por referencia</h3>
+      <p class="sub" data-t="d_stock_s">m² reales disponibles, no los del libro.</p>
+      <div class="tw"><table><thead><tr><th data-t="th_ref">Referencia</th><th class="num" data-t="th_m2">m²</th><th class="num" data-t="th_slabs">Losas</th></tr></thead><tbody id="tStock"></tbody></table></div>
+    </div>
+    <div class="panel">
+      <h3 data-t="d_waste">Desperdicio por material</h3>
+      <p class="sub" data-t="d_waste_s">desperdicio ÷ área total comprometida en corte.</p>
+      <div class="tw"><table><thead><tr><th data-t="th_ref">Referencia</th><th class="num">%</th><th style="width:34%"></th></tr></thead><tbody id="tWaste"></tbody></table></div>
+    </div>
+    <div class="panel">
+      <h3 data-t="d_alerts">Alertas de mínimos</h3>
+      <p class="sub" data-t="d_alerts_s">Referencias por debajo del umbral configurado.</p>
+      <div id="tAlerts"></div>
+      <div style="margin-top:12px">
+        <label data-t="a_thr">Umbral por referencia (m²)</label>
+        <div class="row r2" style="margin-bottom:0">
+          <select id="aRef"></select>
+          <input id="aVal" type="number" value="12" min="0" step="1">
+        </div>
+        <div class="btnrow"><button class="ghost" id="btnThr" data-t="a_btn">Actualizar umbral</button></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 data-t="s_ledger">Libro de movimientos</h2>
+  <div class="panel">
+    <div class="tw"><table>
+      <thead><tr>
+        <th data-t="th_when">Momento</th><th data-t="th_type">Tipo</th><th data-t="th_det">Detalle</th>
+        <th class="num" data-t="th_used">Usado m²</th><th class="num" data-t="th_ret">Retal m²</th>
+        <th class="num" data-t="th_wst">Desp. m²</th><th class="num" data-t="th_rem">Restante m²</th>
+      </tr></thead>
+      <tbody id="tLedger"></tbody>
+    </table></div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="ghost" id="btnSeed" data-t="b_seed">Cargar escenario de demostración</button>
+      <button class="ghost" id="btnReset" data-t="b_reset">Reiniciar simulador</button>
+      <button class="ghost" id="btnExport" data-t="b_export">Ver payload JSON</button>
+    </div>
+    <div id="expResp" class="resp" style="display:none"></div>
+  </div>
+
+  <div class="disc">
+    <b data-t="disc_b">Sobre esta simulación.</b>
+    <span data-t="disc_t">Este simulador reproduce el comportamiento del sistema propuesto con datos de demostración; no está conectado a producción, a Siigo, a World Office ni a los inventarios reales de Calcáreos S.A. La aritmética de área, la regla de retal/desperdicio y los contratos de API mostrados son los que se implementarían. Quedan explícitamente fuera de este alcance: optimización geométrica de nesting 2D, exportación PDF/Excel, migración histórica desde Excel, campos de reporte DIAN/IVA e interfaz de piso de planta para tableta.</span>
+    <div style="margin-top:10px;color:var(--dim)" data-t="disc_pd">Datos operativos, no personales — Ley 1581 de 2012 (Habeas Data). Este sistema no almacena datos personales.</div>
+  </div>
+
+  <footer>
+    <span>Digit2AI · Simulador · Calcáreos S.A.</span>
+    <span data-t="ft">Aritmética entera en cm² · multi-tenant · ES/EN</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- i18n ---------------- */
+  var ES = {
+    hdr_sub:"Sistema Inteligente de Inventario y Control de Desperdicios",
+    simchip:"SIMULADOR",
+    h1:'Inventario en Tiempo Real — <em>del lote al corte, del corte al desperdicio</em>',
+    lead:"Simulación funcional del sistema. Registre un lote de importación, registre una orden de corte, y observe cómo el motor descuenta el área usada, clasifica el retal aprovechable, contabiliza el desperdicio y actualiza el tablero — todo en el mismo instante. No hay base de datos ni backend detrás de esta página: los cálculos corren en su navegador con la misma aritmética entera en cm² que usaría producción.",
+    f1:"1. Lote entra", f2:"2. Corte registrado", f3:"3. Desperdicio calculado", f4:"4. Tablero responde",
+    k_stock:"Stock real", k_slabs:"losas activas", k_cut:"Área cortada", k_orders:"órdenes de corte",
+    k_waste:"Desperdicio acumulado", k_lost:"no recuperables", k_retal:"Retal aprovechable", k_retal_d:"Franjas ≥ 20 cm, reutilizables",
+    s_capture:"Captura de operación",
+    lot_h:"Registrar lote de importación",
+    lot_s:"Un lote genera una fila por losa. Las dimensiones se capturan en centímetros; el sistema nunca almacena metros cuadrados en punto flotante.",
+    l_stone:"Referencia / tipo de piedra", l_supp:"Proveedor", l_ref:"Lote (lot_ref)", l_thick:"Espesor (cm)",
+    l_len:"Largo (cm)", l_wid:"Ancho (cm)", l_qty:"Cantidad de losas", l_btn:"Registrar lote",
+    cut_h:"Registrar orden de corte",
+    cut_s:"El motor descuenta el rectángulo usado, cobra la pérdida por sierra y decide si la franja sobrante es retal aprovechable o desperdicio.",
+    c_slab:"Losa", c_len:"Largo del corte (cm)", c_wid:"Ancho del corte (cm)", c_qty:"Piezas",
+    c_kerf:"Sierra / kerf (cm)", c_min:"Franja mínima aprovechable (cm)", c_btn:"Registrar corte", c_bad:"Probar corte inválido (422)",
+    s_viz:"Visor de losa — qué se usa, qué queda, qué se pierde",
+    lg_free:"Área libre", lg_used:"Área cortada (vendible)", lg_retal:"Retal aprovechable", lg_waste:"Desperdicio",
+    eng_h:"El motor, sin caja negra",
+    eng_s:"Toda el área vive como entero en cm². La conversión a m² ocurre únicamente al pintar el número en pantalla — por eso el inventario nunca se desfasa por acumulación de decimales.",
+    s_dash:"Tablero en tiempo real",
+    d_stock:"Stock por referencia", d_stock_s:"m² reales disponibles, no los del libro.",
+    d_waste:"Desperdicio por material", d_waste_s:"desperdicio ÷ área total comprometida en corte.",
+    d_alerts:"Alertas de mínimos", d_alerts_s:"Referencias por debajo del umbral configurado.",
+    a_thr:"Umbral por referencia (m²)", a_btn:"Actualizar umbral",
+    th_ref:"Referencia", th_m2:"m²", th_slabs:"Losas",
+    s_ledger:"Libro de movimientos",
+    th_when:"Momento", th_type:"Tipo", th_det:"Detalle", th_used:"Usado m²", th_ret:"Retal m²", th_wst:"Desp. m²", th_rem:"Restante m²",
+    b_seed:"Cargar escenario de demostración", b_reset:"Reiniciar simulador", b_export:"Ver payload JSON",
+    disc_b:"Sobre esta simulación.",
+    disc_t:"Este simulador reproduce el comportamiento del sistema propuesto con datos de demostración; no está conectado a producción, a Siigo, a World Office ni a los inventarios reales de Calcáreos S.A. La aritmética de área, la regla de retal/desperdicio y los contratos de API mostrados son los que se implementarían. Quedan explícitamente fuera de este alcance: optimización geométrica de nesting 2D, exportación PDF/Excel, migración histórica desde Excel, campos de reporte DIAN/IVA e interfaz de piso de planta para tableta.",
+    disc_pd:"Datos operativos, no personales — Ley 1581 de 2012 (Habeas Data). Este sistema no almacena datos personales.",
+    ft:"Aritmética entera en cm² · multi-tenant · ES/EN",
+    /* runtime */
+    r_lot_ok:"LOTE REGISTRADO · HTTP 201",
+    r_cut_ok:"CORTE REGISTRADO · HTTP 201",
+    r_cut_err:"CORTE RECHAZADO · HTTP 422",
+    r_err_area:"El corte solicitado excede el área disponible de la losa.",
+    r_err_dim:"El corte no cabe: el ancho solicitado supera el ancho útil de la losa.",
+    r_err_none:"Seleccione una losa activa.",
+    m_lot:"Lote", m_cut:"Corte", m_slabs:"losas", m_pieces:"piezas",
+    lbl_used:"área usada", lbl_kerf:"pérdida por sierra", lbl_trim:"franja sobrante", lbl_class:"clasificación",
+    cls_retal:"retal aprovechable", cls_waste:"desperdicio",
+    empty_alerts:"Ninguna referencia por debajo del umbral.",
+    empty_ledger:"Sin movimientos. Registre un lote o cargue el escenario de demostración.",
+    al_below:"por debajo del umbral",
+    now:"ahora"
+  };
+  var EN = {
+    hdr_sub:"Intelligent Inventory and Waste Control System",
+    simchip:"SIMULATOR",
+    h1:'Real-Time Inventory — <em>from lot to cut, from cut to waste</em>',
+    lead:"A working simulation of the system. Register an import lot, log a cut order, and watch the engine deduct the used area, classify the usable offcut, book the waste and refresh the dashboard — all in the same instant. There is no database or backend behind this page: the math runs in your browser using the exact integer cm² arithmetic production would use.",
+    f1:"1. Lot in", f2:"2. Cut logged", f3:"3. Waste computed", f4:"4. Dashboard reflects it",
+    k_stock:"Real stock", k_slabs:"active slabs", k_cut:"Cut area", k_orders:"cut orders",
+    k_waste:"Cumulative waste", k_lost:"unrecoverable", k_retal:"Usable offcut", k_retal_d:"Strips ≥ 20 cm, reusable",
+    s_capture:"Operation capture",
+    lot_h:"Register import lot",
+    lot_s:"A lot writes one row per slab. Dimensions are captured in centimetres; the system never stores square metres as floating point.",
+    l_stone:"Reference / stone type", l_supp:"Supplier", l_ref:"Lot (lot_ref)", l_thick:"Thickness (cm)",
+    l_len:"Length (cm)", l_wid:"Width (cm)", l_qty:"Slab count", l_btn:"Register lot",
+    cut_h:"Log cut order",
+    cut_s:"The engine deducts the used rectangle, charges the blade loss, and decides whether the leftover strip is a usable offcut or waste.",
+    c_slab:"Slab", c_len:"Cut length (cm)", c_wid:"Cut width (cm)", c_qty:"Pieces",
+    c_kerf:"Blade / kerf (cm)", c_min:"Minimum usable strip (cm)", c_btn:"Log cut", c_bad:"Try an invalid cut (422)",
+    s_viz:"Slab viewer — what is used, what remains, what is lost",
+    lg_free:"Free area", lg_used:"Cut area (sellable)", lg_retal:"Usable offcut", lg_waste:"Waste",
+    eng_h:"The engine, no black box",
+    eng_s:"All area lives as an integer in cm². Conversion to m² happens only when the number is painted on screen — which is why the inventory never drifts from accumulated decimals.",
+    s_dash:"Real-time dashboard",
+    d_stock:"Stock per reference", d_stock_s:"real available m², not the book's.",
+    d_waste:"Waste by material", d_waste_s:"waste ÷ total area committed to cutting.",
+    d_alerts:"Low-stock alerts", d_alerts_s:"References below the configured threshold.",
+    a_thr:"Threshold per reference (m²)", a_btn:"Update threshold",
+    th_ref:"Reference", th_m2:"m²", th_slabs:"Slabs",
+    s_ledger:"Movement ledger",
+    th_when:"When", th_type:"Type", th_det:"Detail", th_used:"Used m²", th_ret:"Offcut m²", th_wst:"Waste m²", th_rem:"Remaining m²",
+    b_seed:"Load demo scenario", b_reset:"Reset simulator", b_export:"View JSON payload",
+    disc_b:"About this simulation.",
+    disc_t:"This simulator reproduces the behaviour of the proposed system using demo data; it is not connected to production, to Siigo, to World Office, or to the real inventory of Calcáreos S.A. The area arithmetic, the offcut/waste rule and the API contracts shown are the ones that would be implemented. Explicitly out of scope here: 2D geometric nesting optimisation, PDF/Excel export, historical migration from Excel, DIAN/VAT reporting fields, and a shop-floor tablet interface.",
+    disc_pd:"Operational data, not personal data — Colombia Law 1581 of 2012 (Habeas Data). This system stores no personal data.",
+    ft:"Integer cm² arithmetic · multi-tenant · ES/EN",
+    r_lot_ok:"LOT CREATED · HTTP 201",
+    r_cut_ok:"CUT CREATED · HTTP 201",
+    r_cut_err:"CUT REJECTED · HTTP 422",
+    r_err_area:"The requested cut exceeds the slab's available area.",
+    r_err_dim:"The cut does not fit: requested width exceeds the slab's usable width.",
+    r_err_none:"Select an active slab.",
+    m_lot:"Lot", m_cut:"Cut", m_slabs:"slabs", m_pieces:"pieces",
+    lbl_used:"used area", lbl_kerf:"blade loss", lbl_trim:"leftover strip", lbl_class:"classification",
+    cls_retal:"usable offcut", cls_waste:"waste",
+    empty_alerts:"No reference below threshold.",
+    empty_ledger:"No movements. Register a lot or load the demo scenario.",
+    al_below:"below threshold",
+    now:"now"
+  };
+  var L = ES, lang = "es";
+
+  /* ---------------- state ---------------- */
+  var REFS = [
+    { name:"Mármol Blanco Carrara",     min:14 },
+    { name:"Granito Negro San Gabriel", min:12 },
+    { name:"Travertino Clásico",        min:10 },
+    { name:"Cuarzo Calacatta",          min:8  },
+    { name:"Mármol Crema Marfil",       min:10 }
+  ];
+  var S = { slabs:[], cuts:[], ledger:[], seq:1, cutSeq:1, focus:null };
+
+  /* ---------------- helpers ---------------- */
+  function $(id){ return document.getElementById(id); }
+  function m2(cm2){ return (cm2/10000); }
+  function fmt(n,d){ d = (d===undefined?2:d); return n.toLocaleString(lang==="es"?"es-CO":"en-US",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function ival(id){ var v = parseFloat($(id).value); return isNaN(v)?0:v; }
+
+  /* ---------------- the engine (integer cm²) ---------------- */
+  // Contract mirrored from POST /api/v1/cuts
+  function computeCut(slab, cutL, cutW, qty, kerfCm, minStripCm){
+    var used   = Math.round(cutL * cutW) * qty;                       // cm²
+    var kerf   = Math.round(kerfCm * (cutL + cutW)) * qty;            // cm²
+    var trimW  = slab.free_w_cm - cutW;                               // cm across the width
+    var trim   = Math.round(cutL * Math.max(trimW,0)) * qty;          // cm²
+    var isRetal = trimW >= minStripCm;
+    var retal  = isRetal ? trim : 0;
+    var waste  = kerf + (isRetal ? 0 : trim);
+    return { used_area_cm2:used, kerf_area_cm2:kerf, trim_w_cm:trimW,
+             retal_area_cm2:retal, waste_area_cm2:waste, is_retal:isRetal,
+             committed_cm2: used + waste };
+  }
+
+  function renderEngine(){
+    $("engine").innerHTML =
+      '<b>used_area_cm2</b>   = cut_L &times; cut_W &times; qty<br>'+
+      '<b>kerf_area_cm2</b>   = kerf &times; (cut_L + cut_W) &times; qty<br>'+
+      '<b>trim_w_cm</b>       = slab_free_W &minus; cut_W<br>'+
+      '<b>retal_area_cm2</b>  = trim_w &ge; min_strip ? cut_L &times; trim_w &times; qty : 0<br>'+
+      '<b>waste_area_cm2</b>  = kerf_area + (trim_w &lt; min_strip ? trim_area : 0)<br>'+
+      '<b>remaining_cm2</b>  &minus;= used_area + waste_area<br>'+
+      '<span style="color:var(--dim)">422 '+(lang==="es"?"si":"if")+' (used + waste) &gt; remaining_cm2 '+(lang==="es"?"o":"or")+' cut_W &gt; free_W</span>';
+  }
+
+  /* ---------------- actions ---------------- */
+  function addLot(){
+    var stone = $("lStone").value, supp = $("lSupp").value.trim() || "—", ref = $("lRef").value.trim() || "LOT-?";
+    var Lc = Math.round(ival("lLen")), Wc = Math.round(ival("lWid")), th = ival("lThick"), q = Math.max(1,Math.min(80,Math.round(ival("lQty"))));
+    if(Lc<1||Wc<1){ return; }
+    var area = Lc*Wc, ids=[];
+    for(var i=0;i<q;i++){
+      var s = { id:S.seq++, tenant_id:1, stone_type:stone, supplier:supp, lot_ref:ref,
+                length_cm:Lc, width_cm:Wc, thickness_cm:th,
+                area_cm2:area, remaining_area_cm2:area,
+                free_l_cm:Lc, free_w_cm:Wc,
+                used_cm2:0, retal_cm2:0, waste_cm2:0, state:"disponible" };
+      S.slabs.push(s); ids.push(s.id);
+    }
+    S.focus = ids[0];
+    push({ type:"lot", detail:ref+" · "+stone+" · "+q+" "+L.m_slabs+" "+Lc+"×"+Wc+" cm",
+           used:0, retal:0, waste:0, rem:area*q });
+    show("lotResp","ok", L.r_lot_ok,
+      "slabs_created: "+q+"\nlot_ref: "+ref+"\nstone_type: "+stone+"\nsupplier: "+supp+
+      "\nslab_area_cm2: "+area.toLocaleString()+"  ("+fmt(m2(area))+" m² c/u)"+
+      "\nlot_area_cm2: "+(area*q).toLocaleString()+"  ("+fmt(m2(area*q))+" m²)"+
+      "\nslab_ids: ["+ids.join(", ")+"]");
+    refresh();
+  }
+
+  function addCut(force){
+    var sid = parseInt($("cSlab").value,10);
+    var slab = S.slabs.filter(function(x){return x.id===sid;})[0];
+    if(!slab){ show("cutResp","err", L.r_cut_err, L.r_err_none); return; }
+    var cL = Math.round(ival("cLen")), cW = Math.round(ival("cWid")), q = Math.max(1,Math.round(ival("cQty")));
+    var kerf = ival("cKerf"), minS = ival("cMin");
+    if(cL<1||cW<1) return;
+
+    if(cW > slab.free_w_cm){
+      show("cutResp","err", L.r_cut_err,
+        L.r_err_dim+"\ncut_width_cm: "+cW+"\nslab_free_width_cm: "+slab.free_w_cm+
+        "\nslab_id: "+slab.id+"\nerror: CUT_EXCEEDS_SLAB_WIDTH");
+      return;
+    }
+    var r = computeCut(slab, cL, cW, q, kerf, minS);
+    if(r.committed_cm2 > slab.remaining_area_cm2){
+      show("cutResp","err", L.r_cut_err,
+        L.r_err_area+
+        "\nrequested_cm2: "+r.committed_cm2.toLocaleString()+"  ("+fmt(m2(r.committed_cm2))+" m²)"+
+        "\nremaining_cm2: "+slab.remaining_area_cm2.toLocaleString()+"  ("+fmt(m2(slab.remaining_area_cm2))+" m²)"+
+        "\nslab_id: "+slab.id+"\nerror: CUT_EXCEEDS_REMAINING_AREA");
+      return;
+    }
+
+    slab.remaining_area_cm2 -= r.committed_cm2;
+    slab.used_cm2  += r.used_area_cm2;
+    slab.waste_cm2 += r.waste_area_cm2;
+    slab.retal_cm2 += r.retal_area_cm2;
+    slab.free_l_cm  = Math.max(0, slab.free_l_cm - (cL*q) - Math.ceil(kerf*q));
+    if(r.is_retal){ /* the strip stays usable at full slab width for the next pass */ }
+    else { slab.free_w_cm = cW; }
+    if(slab.remaining_area_cm2 <= 0 || slab.free_l_cm < 5){ slab.state = "agotada"; }
+    else if(slab.remaining_area_cm2 < slab.area_cm2*0.25){ slab.state = "retal"; }
+
+    S.cuts.push({ id:S.cutSeq++, slab_id:slab.id, stone_type:slab.stone_type,
+                  used_area_cm2:r.used_area_cm2, waste_area_cm2:r.waste_area_cm2,
+                  retal_area_cm2:r.retal_area_cm2, committed_cm2:r.committed_cm2, qty:q });
+    S.focus = slab.id;
+
+    push({ type:"cut", detail:"#"+slab.id+" · "+slab.stone_type+" · "+cL+"×"+cW+" cm × "+q+" "+L.m_pieces,
+           used:r.used_area_cm2, retal:r.retal_area_cm2, waste:r.waste_area_cm2, rem:slab.remaining_area_cm2 });
+
+    show("cutResp","ok", L.r_cut_ok,
+      "slab_id: "+slab.id+"\n"+
+      "used_area_cm2:      "+r.used_area_cm2.toLocaleString()+"   ("+fmt(m2(r.used_area_cm2))+" m²)  ← "+L.lbl_used+"\n"+
+      "kerf_area_cm2:      "+r.kerf_area_cm2.toLocaleString()+"   ("+fmt(m2(r.kerf_area_cm2),3)+" m²)  ← "+L.lbl_kerf+"\n"+
+      "trim_w_cm:          "+r.trim_w_cm+"   ← "+L.lbl_trim+" ("+(r.is_retal?L.cls_retal:L.cls_waste)+")\n"+
+      "retal_area_cm2:     "+r.retal_area_cm2.toLocaleString()+"   ("+fmt(m2(r.retal_area_cm2))+" m²)\n"+
+      "waste_area_cm2:     "+r.waste_area_cm2.toLocaleString()+"   ("+fmt(m2(r.waste_area_cm2))+" m²)\n"+
+      "remaining_area_cm2: "+slab.remaining_area_cm2.toLocaleString()+"   ("+fmt(m2(slab.remaining_area_cm2))+" m²)\n"+
+      "slab_state:         "+slab.state);
+    refresh();
+  }
+
+  function badCut(){
+    var sid = parseInt($("cSlab").value,10);
+    var slab = S.slabs.filter(function(x){return x.id===sid;})[0];
+    if(slab){ $("cLen").value = slab.length_cm + 90; $("cWid").value = slab.width_cm + 40; $("cQty").value = 2; }
+    else { $("cLen").value = 9999; $("cWid").value = 9999; }
+    addCut();
+  }
+
+  function push(m){
+    S.ledger.unshift({ t:new Date(), type:m.type, detail:m.detail, used:m.used, retal:m.retal, waste:m.waste, rem:m.rem });
+    if(S.ledger.length>120) S.ledger.pop();
+  }
+  function show(id,kind,code,body){
+    var el = $(id); el.style.display="block"; el.className="resp "+kind;
+    el.innerHTML = '<span class="code">'+esc(code)+'</span>'+esc(body);
+  }
+
+  /* ---------------- aggregation (mirrors GET /stock, /waste, /alerts) ---------------- */
+  function stock(){
+    var map = {};
+    S.slabs.forEach(function(s){
+      if(!map[s.stone_type]) map[s.stone_type] = { stone_type:s.stone_type, cm2:0, slab_count:0 };
+      if(s.remaining_area_cm2 > 0){ map[s.stone_type].cm2 += s.remaining_area_cm2; map[s.stone_type].slab_count++; }
+    });
+    return Object.keys(map).map(function(k){ var r=map[k]; return { stone_type:r.stone_type, total_m2:m2(r.cm2), slab_count:r.slab_count }; })
+      .sort(function(a,b){ return b.total_m2-a.total_m2; });
+  }
+  function waste(){
+    var map = {};
+    S.cuts.forEach(function(c){
+      if(!map[c.stone_type]) map[c.stone_type] = { stone_type:c.stone_type, w:0, tot:0 };
+      map[c.stone_type].w += c.waste_area_cm2; map[c.stone_type].tot += c.committed_cm2;
+    });
+    return Object.keys(map).map(function(k){ var r=map[k];
+      return { stone_type:r.stone_type, waste_pct: r.tot? (r.w/r.tot*100):0, waste_m2:m2(r.w) }; })
+      .sort(function(a,b){ return b.waste_pct-a.waste_pct; });
+  }
+  function alerts(){
+    var st = {}; stock().forEach(function(r){ st[r.stone_type]=r.total_m2; });
+    var out = [];
+    REFS.forEach(function(ref){
+      var have = st[ref.name];
+      if(have===undefined) return;                 // never imported = not an alert
+      if(have < ref.min) out.push({ stone_type:ref.name, total_m2:have, min_threshold_m2:ref.min });
+    });
+    return out.sort(function(a,b){ return (a.total_m2/a.min_threshold_m2)-(b.total_m2/b.min_threshold_m2); });
+  }
+
+  /* ---------------- render ---------------- */
+  function refresh(){
+    var totRem=0, act=0, totUsed=0, totWaste=0, totRetal=0, totCommitted=0;
+    S.slabs.forEach(function(s){ totRem+=s.remaining_area_cm2; if(s.remaining_area_cm2>0) act++;
+      totUsed+=s.used_cm2; totWaste+=s.waste_cm2; totRetal+=s.retal_cm2; });
+    S.cuts.forEach(function(c){ totCommitted+=c.committed_cm2; });
+
+    $("kStock").textContent  = fmt(m2(totRem),1);
+    $("kSlabs").textContent  = act;
+    $("kCut").textContent    = fmt(m2(totUsed),1);
+    $("kOrders").textContent = S.cuts.length;
+    $("kWaste").textContent  = totCommitted ? fmt(totWaste/totCommitted*100,1) : "0,0".replace(",", lang==="es"?",":".");
+    $("kWasteM2").textContent= fmt(m2(totWaste),2);
+    $("kRetal").textContent  = fmt(m2(totRetal),1);
+
+    // slab select
+    var sel = $("cSlab"), keep = sel.value;
+    var opts = S.slabs.filter(function(s){ return s.remaining_area_cm2>0; });
+    sel.innerHTML = opts.map(function(s){
+      return '<option value="'+s.id+'">#'+s.id+' · '+esc(s.stone_type)+' · '+s.free_l_cm+'×'+s.free_w_cm+' cm · '+fmt(m2(s.remaining_area_cm2))+' m²</option>';
+    }).join("") || '<option value="">—</option>';
+    if(keep && opts.some(function(s){return String(s.id)===keep;})) sel.value = keep;
+    else if(S.focus && opts.some(function(s){return s.id===S.focus;})) sel.value = String(S.focus);
+
+    // stock table
+    var st = stock();
+    $("tStock").innerHTML = st.length ? st.map(function(r){
+      return '<tr><td>'+esc(r.stone_type)+'</td><td class="num">'+fmt(r.total_m2,1)+'</td><td class="num">'+r.slab_count+'</td></tr>';
+    }).join("") : '<tr><td colspan="3" class="empty">—</td></tr>';
+
+    // waste table
+    var w = waste();
+    $("tWaste").innerHTML = w.length ? w.map(function(r){
+      var hot = r.waste_pct>=8;
+      return '<tr><td>'+esc(r.stone_type)+'</td><td class="num" style="color:'+(hot?'var(--rojo)':'var(--oro2)')+'">'+fmt(r.waste_pct,1)+'</td>'+
+             '<td><div class="bar'+(hot?' hot':'')+'"><i style="width:'+Math.min(100,r.waste_pct*6).toFixed(0)+'%"></i></div></td></tr>';
+    }).join("") : '<tr><td colspan="3" class="empty">—</td></tr>';
+
+    // alerts
+    var al = alerts();
+    $("tAlerts").innerHTML = al.length ? al.map(function(a){
+      return '<div class="alert"><b>'+esc(a.stone_type)+'</b> — '+fmt(a.total_m2,1)+' m² · '+L.al_below+' '+fmt(a.min_threshold_m2,0)+' m² <span class="tag bad">LOW</span></div>';
+    }).join("") : '<div class="empty">'+L.empty_alerts+'</div>';
+
+    // ledger
+    $("tLedger").innerHTML = S.ledger.length ? S.ledger.map(function(m){
+      var tag = m.type==="lot" ? '<span class="tag info">'+L.m_lot+'</span>' : '<span class="tag ok">'+L.m_cut+'</span>';
+      return '<tr><td style="color:var(--dim)">'+m.t.toLocaleTimeString(lang==="es"?"es-CO":"en-US")+'</td><td>'+tag+'</td><td>'+esc(m.detail)+'</td>'+
+        '<td class="num">'+(m.used?fmt(m2(m.used)):'—')+'</td>'+
+        '<td class="num" style="color:var(--azul)">'+(m.retal?fmt(m2(m.retal)):'—')+'</td>'+
+        '<td class="num" style="color:'+(m.waste?'var(--rojo)':'var(--dim)')+'">'+(m.waste?fmt(m2(m.waste),3):'—')+'</td>'+
+        '<td class="num">'+fmt(m2(m.rem),1)+'</td></tr>';
+    }).join("") : '<tr><td colspan="7" class="empty">'+L.empty_ledger+'</td></tr>';
+
+    draw();
+  }
+
+  /* ---------------- slab canvas ---------------- */
+  function draw(){
+    var cv = $("cv"), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "#0e1420"; ctx.fillRect(0,0,W,H);
+
+    var slab = S.slabs.filter(function(x){return x.id===S.focus;})[0] ||
+               S.slabs.filter(function(x){return x.remaining_area_cm2>0;})[0] || S.slabs[0];
+    if(!slab){
+      ctx.fillStyle="#5f6d85"; ctx.font="15px ui-monospace,monospace"; ctx.textAlign="center";
+      ctx.fillText(lang==="es"?"Registre un lote para ver la losa.":"Register a lot to see the slab.", W/2, H/2);
+      return;
+    }
+
+    var pad = 46;
+    var scale = Math.min((W-pad*2)/slab.length_cm, (H-pad*2-30)/slab.width_cm);
+    var sw = slab.length_cm*scale, sh = slab.width_cm*scale;
+    var x0 = (W-sw)/2, y0 = (H-sh)/2 + 10;
+
+    // free
+    ctx.fillStyle="#233149"; ctx.fillRect(x0,y0,sw,sh);
+
+    var tot = slab.area_cm2 || 1;
+    var usedFrac  = slab.used_cm2/tot, retalFrac = slab.retal_cm2/tot, wasteFrac = slab.waste_cm2/tot;
+    var xu = x0;
+    ctx.fillStyle="#3ecf8e"; ctx.fillRect(xu, y0, sw*usedFrac, sh); xu += sw*usedFrac;
+    ctx.fillStyle="#5aa9ff"; ctx.fillRect(xu, y0, sw*retalFrac, sh); xu += sw*retalFrac;
+    ctx.fillStyle="#ff6b6b"; ctx.fillRect(xu, y0, Math.max(sw*wasteFrac, wasteFrac>0?2:0), sh);
+
+    // grid
+    ctx.strokeStyle="rgba(255,255,255,.05)"; ctx.lineWidth=1;
+    for(var gx=0; gx<=slab.length_cm; gx+=50){ ctx.beginPath(); ctx.moveTo(x0+gx*scale,y0); ctx.lineTo(x0+gx*scale,y0+sh); ctx.stroke(); }
+    for(var gy=0; gy<=slab.width_cm; gy+=50){ ctx.beginPath(); ctx.moveTo(x0,y0+gy*scale); ctx.lineTo(x0+sw,y0+gy*scale); ctx.stroke(); }
+
+    ctx.strokeStyle="#d8a84b"; ctx.lineWidth=2; ctx.strokeRect(x0,y0,sw,sh);
+
+    ctx.fillStyle="#8a98b0"; ctx.font="12px ui-monospace,monospace"; ctx.textAlign="left";
+    ctx.fillText("#"+slab.id+"  "+slab.stone_type+"  ·  "+slab.length_cm+" × "+slab.width_cm+" × "+slab.thickness_cm+" cm  ·  "+slab.lot_ref, x0, y0-14);
+    ctx.textAlign="right";
+    ctx.fillStyle="#d8a84b";
+    ctx.fillText(fmt(m2(slab.remaining_area_cm2))+" m² "+(lang==="es"?"restante":"remaining")+"  /  "+fmt(m2(slab.area_cm2))+" m²", x0+sw, y0-14);
+    ctx.textAlign="left"; ctx.fillStyle="#5f6d85";
+    ctx.fillText((lang==="es"?"estado: ":"state: ")+slab.state+"   ·   free "+slab.free_l_cm+" × "+slab.free_w_cm+" cm", x0, y0+sh+22);
+  }
+
+  /* ---------------- seed / reset / export ---------------- */
+  function seed(){
+    reset(true);
+    var plan = [
+      { stone:"Mármol Blanco Carrara",     supp:"Marmi Toscana S.r.l.",  ref:"LOT-2026-011", L:305, W:160, t:2,   q:5 },
+      { stone:"Granito Negro San Gabriel", supp:"Granitos Andinos Ltda", ref:"LOT-2026-012", L:280, W:150, t:3,   q:4 },
+      { stone:"Travertino Clásico",        supp:"Pietra Roma S.p.A.",    ref:"LOT-2026-013", L:260, W:140, t:2,   q:3 },
+      { stone:"Cuarzo Calacatta",          supp:"SileStone Ibérica",     ref:"LOT-2026-014", L:320, W:160, t:1.2, q:2 }
+    ];
+    plan.forEach(function(p){
+      $("lStone").value=p.stone; $("lSupp").value=p.supp; $("lRef").value=p.ref;
+      $("lLen").value=p.L; $("lWid").value=p.W; $("lThick").value=p.t; $("lQty").value=p.q;
+      addLot();
+    });
+    // a realistic run of cut orders — mesones, escaleras, zócalos
+    var cuts = [
+      { stone:"Mármol Blanco Carrara",     L:240, W:65,  q:1 },  // mesón: franja 95 cm = retal
+      { stone:"Mármol Blanco Carrara",     L:180, W:148, q:1 },  // franja 12 cm = desperdicio
+      { stone:"Granito Negro San Gabriel", L:210, W:60,  q:1 },
+      { stone:"Granito Negro San Gabriel", L:150, W:137, q:1 },  // franja 13 cm = desperdicio
+      { stone:"Travertino Clásico",        L:200, W:70,  q:1 },
+      { stone:"Cuarzo Calacatta",          L:280, W:63,  q:1 }
+    ];
+    cuts.forEach(function(c){
+      var slab = S.slabs.filter(function(s){ return s.stone_type===c.stone && s.remaining_area_cm2>0 && s.free_w_cm>=c.W && s.free_l_cm>=c.L; })[0];
+      if(!slab) return;
+      $("cSlab").value = String(slab.id); S.focus = slab.id;
+      $("cLen").value=c.L; $("cWid").value=c.W; $("cQty").value=c.q;
+      $("cKerf").value=0.4; $("cMin").value=20;
+      // rebuild select so the value sticks
+      refresh(); $("cSlab").value = String(slab.id);
+      addCut();
+    });
+    // drive one reference under its threshold so an alert lights up
+    REFS[3].min = 14; $("aRef").value = REFS[3].name; $("aVal").value = 14;
+    refresh();
+  }
+  function reset(silent){
+    S = { slabs:[], cuts:[], ledger:[], seq:1, cutSeq:1, focus:null };
+    ["lotResp","cutResp","expResp"].forEach(function(id){ $(id).style.display="none"; });
+    if(!silent) refresh();
+  }
+  function exportJson(){
+    var payload = {
+      tenant_id:1,
+      generated_at: new Date().toISOString(),
+      stock: stock().map(function(r){ return { stone_type:r.stone_type, total_m2:+r.total_m2.toFixed(2), slab_count:r.slab_count }; }),
+      waste: { by_material: waste().map(function(r){ return { stone_type:r.stone_type, waste_pct:+r.waste_pct.toFixed(2) }; }) },
+      alerts: alerts().map(function(a){ return { stone_type:a.stone_type, total_m2:+a.total_m2.toFixed(2), min_threshold_m2:a.min_threshold_m2 }; }),
+      slabs: S.slabs.length, cuts: S.cuts.length
+    };
+    show("expResp","ok","GET /api/v1/stock · /api/v1/waste?period=month · /api/v1/alerts", JSON.stringify(payload,null,2));
+  }
+
+  /* ---------------- i18n apply ---------------- */
+  function applyLang(l){
+    lang = l; L = (l==="en") ? EN : ES;
+    document.documentElement.lang = l;
+    document.querySelectorAll("[data-t]").forEach(function(el){
+      var k = el.getAttribute("data-t"); if(L[k]!==undefined) el.innerHTML = L[k];
+    });
+    document.title = (l==="en")
+      ? "Simulator — Intelligent Inventory and Waste Control System · Calcáreos S.A."
+      : "Simulador — Sistema Inteligente de Inventario y Control de Desperdicios · Calcáreos S.A.";
+    $("btnEs").className = l==="es"?"on":""; $("btnEn").className = l==="en"?"on":"";
+    try{ history.replaceState(null,"", l==="en" ? "?lang=en" : location.pathname ); }catch(e){}
+    renderEngine(); refresh();
+  }
+
+  /* ---------------- boot ---------------- */
+  function fillRefSelects(){
+    $("lStone").innerHTML = REFS.map(function(r){ return '<option>'+esc(r.name)+'</option>'; }).join("");
+    $("aRef").innerHTML   = REFS.map(function(r){ return '<option>'+esc(r.name)+'</option>'; }).join("");
+  }
+  fillRefSelects();
+
+  $("btnLot").addEventListener("click", addLot);
+  $("btnCut").addEventListener("click", function(){ addCut(); });
+  $("btnBad").addEventListener("click", badCut);
+  $("btnSeed").addEventListener("click", seed);
+  $("btnReset").addEventListener("click", function(){ reset(); });
+  $("btnExport").addEventListener("click", exportJson);
+  $("btnThr").addEventListener("click", function(){
+    var n = $("aRef").value, v = Math.max(0, ival("aVal"));
+    REFS.forEach(function(r){ if(r.name===n) r.min = v; });
+    refresh();
+  });
+  $("cSlab").addEventListener("change", function(){ S.focus = parseInt(this.value,10); draw(); });
+  $("btnEs").addEventListener("click", function(){ applyLang("es"); });
+  $("btnEn").addEventListener("click", function(){ applyLang("en"); });
+
+  var qs = new URLSearchParams(location.search);
+  applyLang(qs.get("lang")==="en" ? "en" : "es");
+  seed();
+})();
+</script>
+</body>
+</html>
