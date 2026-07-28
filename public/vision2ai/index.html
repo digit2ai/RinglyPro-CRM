@@ -58,7 +58,37 @@ nav{
   font-size:.83rem;font-weight:700;padding:9px 18px;border-radius:999px;
   background:var(--grad);color:#fff;white-space:nowrap;
 }
-@media(max-width:820px){.nav-links{display:none}}
+/* Mobile hamburger drawer — below 820px the links collapse into a full-width
+   sheet under the bar. The burger is 44x44 so it clears the tap-target floor. */
+.nav-burger{
+  display:none;align-items:center;justify-content:center;width:44px;height:44px;
+  flex:none;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);
+  color:var(--text);cursor:pointer;padding:0;
+}
+.nav-burger:hover{border-color:rgba(56,189,248,.5)}
+.nav-burger svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+.nav-burger .ic-x{display:none}
+nav.nav-open .nav-burger .ic-m{display:none}
+nav.nav-open .nav-burger .ic-x{display:block}
+@media(max-width:820px){
+  .nav-burger{display:inline-flex}
+  .nav-links{
+    display:none;position:absolute;top:64px;left:0;right:0;
+    flex-direction:column;gap:0;padding:8px 0 14px;
+    background:rgba(6,8,26,.97);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  nav.nav-open .nav-links{display:flex}
+  .nav-links a{padding:15px 24px;font-size:.98rem;color:var(--text);border-bottom:1px solid var(--line)}
+  .nav-links a:last-child{border-bottom:none}
+  .nav-links a:active{background:rgba(139,92,246,.14)}
+  /* the CTA rides inside the drawer instead of vanishing on small screens */
+  .nav-links .nav-cta-mobile{
+    margin:14px 24px 2px;text-align:center;border-bottom:none;
+    background:var(--grad);color:#fff;border-radius:999px;font-weight:700;padding:13px 18px;
+  }
+}
+@media(min-width:821px){.nav-links .nav-cta-mobile{display:none}}
 @media(max-width:520px){.nav-cta{display:none}}
 
 /* ---------- Hero ---------- */
@@ -501,7 +531,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <svg class="mark"><use href="#v2ai"/></svg>
       Vision<span class="two">2</span><span class="ai">Ai</span>
     </a>
-    <div class="nav-links">
+    <div class="nav-links" id="navLinks">
       <a href="#merger" data-i18n="nav.merger">The Merger</a>
       <a href="#factory" data-i18n="nav.factory">AI Factory</a>
       <a href="#workforce" data-i18n="nav.workforce">The 83</a>
@@ -509,6 +539,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <a href="#method" data-i18n="nav.method">Method</a>
       <a href="#fellowship" data-i18n="nav.fellowship">Fellowship</a>
       <a href="#team" data-i18n="nav.team">Team</a>
+      <a class="nav-cta-mobile" id="joinCtaMobile" href="/champion-teaser.html" data-i18n="nav.cta">Join the Ecosystem</a>
     </div>
     <div class="nav-right">
       <div class="lang-toggle" role="group" aria-label="Language">
@@ -516,9 +547,24 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         <button type="button" data-lang="es">ES</button>
       </div>
       <a class="nav-cta" id="joinCta" href="/champion-teaser.html" data-i18n="nav.cta">Join the Ecosystem</a>
+      <button class="nav-burger" id="navBurger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+        <svg class="ic-m" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <svg class="ic-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
   </div>
 </nav>
+<script>(function(){
+  var nav = document.querySelector('nav'), b = document.getElementById('navBurger');
+  if(!nav || !b) return;
+  function set(open){ nav.classList.toggle('nav-open', open); b.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  b.addEventListener('click', function(e){ e.stopPropagation(); set(!nav.classList.contains('nav-open')); });
+  var links = document.getElementById('navLinks');
+  if(links) links.addEventListener('click', function(e){ if(e.target.closest('a')) set(false); });
+  document.addEventListener('click', function(e){ if(nav.classList.contains('nav-open') && !nav.contains(e.target)) set(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') set(false); });
+  window.addEventListener('resize', function(){ if(window.innerWidth > 820) set(false); });
+})();</script>
 
 <header id="top">
   <canvas id="net"></canvas>
@@ -1297,6 +1343,8 @@ function applyLang(lang){
   });
   var join = document.getElementById('joinCta');
   if (join) join.href = '/champion-teaser.html?lang=' + LANG;
+  var joinM = document.getElementById('joinCtaMobile');
+  if (joinM) joinM.href = '/champion-teaser.html?lang=' + LANG;
   var neural = document.getElementById('neuralCta');
   if (neural) neural.href = 'https://digit2ai.com/neural-intelligence?lang=' + LANG;
   try { localStorage.setItem('vision2ai-lang', LANG); } catch(e){}
