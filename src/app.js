@@ -517,6 +517,9 @@ app.use((req, res, next) => {
   // else on planea.vip (app, portal, /uat, etc.) stays behind the dev login.
   const op = req.path;
   if (op === '/main' || op === '/main/' || op === '/planea/portal/planea-app-sim.js') return next();
+  // TTS neural sin llave (voz de Lina en /novedades y otras páginas): ruta stateless,
+  // sin datos de usuario, se deja abierta para que el orbe hable sin el candado.
+  if (op.indexOf('/api/tts') === 0) return next();
   // Auth pages must be reachable without the dev gate: the user's own login /
   // signup and the password-reset flow (reset links arrive by email). The app
   // itself (portal, /uat, APIs) stays gated.

@@ -388,6 +388,11 @@ if (hasPortal) {
   if (fs.existsSync(path.join(portalDir, 'seguridad.html'))) {
     router.get(['/seguridad', '/security'], (req, res) => { res.sendFile(path.join(portalDir, 'seguridad.html')); });
   }
+  // Novedades con voz (planea.vip/novedades) — Lina narra los cambios de la versión
+  // reutilizando la TTS neural sin llave de /api/tts/edge.
+  if (fs.existsSync(path.join(portalDir, 'novedades.html'))) {
+    router.get(['/novedades', '/cambios', '/actualizaciones'], (req, res) => { res.sendFile(path.join(portalDir, 'novedades.html')); });
+  }
 }
 
 if (hasPortal) {
