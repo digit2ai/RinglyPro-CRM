@@ -116,6 +116,95 @@ SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"public_directory": t
 WHERE slug = 'cv-XXX';</pre>
   <p>El resolutor de camaras cachea 60 segundos, asi que el cambio se ve al minuto.</p>
 
+  <h1 style="margin-top:70px">Direccion inversa: WordPress como sistema de registro</h1>
+  <p class="sub">Cuando los miembros VIVEN en WordPress y CamaraVirtual debe seguirlos.</p>
+
+  <p>Todo lo anterior publica el directorio <em>hacia afuera</em>. Este bloque es lo contrario: WordPress
+     es el dueno de la identidad y el perfil del miembro, y la camara se sincroniza contra el.
+     Las dos direcciones son independientes; una camara puede usar una, las dos o ninguna.</p>
+
+  <div class="note">
+    <strong>Reparto de responsabilidades.</strong> WordPress posee identidad y perfil.
+    CamaraVirtual sigue siendo dueno de lo que se gana dentro de la camara: proyectos, RFQs,
+    mensajes, <code>trust_score</code>, <code>verified</code>, <code>governance_role</code> y
+    <code>access_level</code>. Una sincronizacion nunca escribe esas columnas.
+  </div>
+
+  <div class="warn">
+    <strong>WordPress no puede otorgarse permisos.</strong> <code>access_level</code> y
+    <code>governance_role</code> estan excluidos a proposito de los campos sincronizables: un
+    WordPress comprometido o mal configurado no debe poder crear un superadmin de la camara.
+    Ademas nunca se borra a nadie — quien desaparece de WordPress pasa a <code>inactive</code>,
+    porque los miembros son autores de proyectos y mensajes.
+  </div>
+
+  <h2>Paso 1 — Instalar el conector en WordPress</h2>
+  <p><a href="/embed/wordpress-sor-plugin.php.txt" target="_blank">Ver / descargar el plugin conector</a>.
+     Guardalo como <code>wp-content/plugins/camaravirtual-connector/camaravirtual-connector.php</code>,
+     activalo, y en <strong>Ajustes &gt; CamaraVirtual</strong> pon el slug de la camara y genera un
+     secreto compartido.</p>
+  <p>El conector expone <code>/wp-json/camaravirtual/v1/members</code> (firmado con HMAC, no es publico),
+     empuja cada alta/edicion/baja de usuario a la camara, y agrega el shortcode
+     <code>[cv_login]</code> para entrar al panel con un clic.</p>
+  <p>Si usas MemberPress, Paid Memberships Pro, WooCommerce o ACF, mapea sus campos con el filtro
+     <code>cv_sor_member</code> — hay un ejemplo al final del archivo.</p>
+
+  <h2>Paso 2 — Configurar la camara</h2>
+  <p>Con un token de administrador de la camara:</p>
+  <pre><button onclick="cp(this)">Copiar</button>PUT /cv-105/api/wp/config
+Authorization: Bearer &lt;token de admin&gt;
+
+{
+  "enabled": true,
+  "mode": "plugin",
+  "site_url": "https://hispanotec.org",
+  "shared_secret": "&lt;el secreto generado en WordPress&gt;",
+  "allow_sso": true,
+  "deactivate_missing": false
+}</pre>
+  <p>El secreto se guarda cifrado (AES-256-GCM) y nunca se devuelve: la lectura solo dice si esta
+     puesto y sus ultimos 4 caracteres. Enviar el campo vacio conserva el valor guardado.</p>
+  <p>Si no quieres instalar nada en WordPress, usa <code>"mode": "wp_users"</code> con
+     <code>auth_user</code> + <code>auth_secret</code> (una Application Password de WordPress).
+     Funciona sin plugins, pero solo trae lo que expone <code>wp/v2/users</code>: sin empresa,
+     sin sector, sin telefono.</p>
+
+  <h2>Paso 3 — Ensayar antes de aplicar</h2>
+  <pre><button onclick="cp(this)">Copiar</button>POST /cv-105/api/wp/test              # solo prueba la conexion, no escribe nada
+POST /cv-105/api/wp/sync  {"dry_run": true}   # devuelve el plan: que crearia, actualizaria y desactivaria
+POST /cv-105/api/wp/sync  {}                  # aplica
+GET  /cv-105/api/wp/runs              # historial de sincronizaciones</pre>
+  <div class="warn">
+    <strong>Corre siempre el <code>dry_run</code> primero</strong> y lee el plan. La primera
+    sincronizacion contra un directorio real es el momento con mas riesgo de duplicar o desactivar
+    gente por un mapeo de campos equivocado.
+  </div>
+  <p><code>deactivate_missing</code> viene <strong>apagado</strong>. Enciendelo solo cuando el
+     <code>dry_run</code> demuestre que WordPress ya tiene a todos. Los administradores de la camara
+     y el dueno quedan protegidos aunque este encendido, para que una mala sincronizacion no deje a
+     nadie fuera del panel.</p>
+
+  <h2>Paso 4 — Tiempo real e inicio de sesion</h2>
+  <p>Con el conector instalado ya no hace falta esperar la siguiente sincronizacion: WordPress
+     notifica cada cambio a <code>POST /cv-105/api/wp/webhook</code>, autenticado por HMAC con
+     ventana de 5 minutos.</p>
+  <p>Y como los miembros creados por sincronizacion no tienen contrasena utilizable, entran por SSO.
+     Pon esto en cualquier pagina de WordPress:</p>
+  <pre><button onclick="cp(this)">Copiar</button>[cv_login label="Entrar a la camara"]</pre>
+  <p>Genera un enlace firmado, de un solo uso, valido 5 minutos, que abre el panel de la camara ya
+     autenticado. Tambien sigue funcionando el flujo normal de recuperar contrasena.</p>
+
+  <table>
+    <tr><th>Endpoint</th><th>Autenticacion</th><th>Que hace</th></tr>
+    <tr><td><code>GET /wp/config</code></td><td>Admin</td><td>Lee la configuracion (secretos enmascarados)</td></tr>
+    <tr><td><code>PUT /wp/config</code></td><td>Admin</td><td>Guarda la configuracion</td></tr>
+    <tr><td><code>POST /wp/test</code></td><td>Admin</td><td>Prueba la conexion, no escribe</td></tr>
+    <tr><td><code>POST /wp/sync</code></td><td>Admin</td><td>Reconcilia; <code>dry_run</code> solo planifica</td></tr>
+    <tr><td><code>GET /wp/runs</code></td><td>Admin</td><td>Auditoria de sincronizaciones</td></tr>
+    <tr><td><code>POST /wp/webhook</code></td><td>HMAC</td><td>Alta/edicion/baja de un miembro</td></tr>
+    <tr><td><code>GET /wp/sso</code></td><td>Token firmado</td><td>Entrada al panel desde WordPress</td></tr>
+  </table>
+
 </div>
 
 <script src="/embed/chamber-directory.js"></script>

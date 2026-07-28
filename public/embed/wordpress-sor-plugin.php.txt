@@ -1,0 +1,305 @@
+<?php
+/**
+ * Plugin Name: CamaraVirtual Connector (WordPress as System of Record)
+ * Description: Makes this WordPress site the source of truth for a CamaraVirtual chamber's members. Exposes a signed roster endpoint, pushes changes on user save, and provides one-click SSO into the chamber dashboard.
+ * Version:     1.0.0
+ * Author:      Digit2AI
+ *
+ * INSTALL
+ *   1. Save as wp-content/plugins/camaravirtual-connector/camaravirtual-connector.php
+ *   2. Activate it under Plugins.
+ *   3. Settings > CamaraVirtual: paste the chamber slug (e.g. cv-105) and generate
+ *      a shared secret. Paste the SAME secret into the chamber admin at
+ *      PUT /<slug>/api/wp/config.
+ *   4. In the chamber admin run POST /<slug>/api/wp/sync with {"dry_run": true}
+ *      FIRST and read the plan before applying it.
+ *
+ * WHAT THIS EXPOSES
+ *   GET  /wp-json/camaravirtual/v1/members   signed roster read (HMAC, not public)
+ *   Pushes to  <cv_base>/<slug>/api/wp/webhook  on profile_update / user_register /
+ *              delete_user
+ *   [cv_login] shortcode renders a signed SSO link into the chamber dashboard.
+ *
+ * FIELD MAPPING
+ *   Out of the box this reads WordPress core fields plus the user meta keys
+ *   listed in cv_sor_default_meta_map(). For MemberPress / Paid Memberships Pro
+ *   / WooCommerce / ACF, map your own fields with the `cv_sor_member` filter --
+ *   see the example at the bottom of this file.
+ *
+ * SECURITY
+ *   The roster endpoint is NOT public: every request must carry X-CV-Timestamp
+ *   and an X-CV-Signature HMAC computed with the shared secret, inside a five
+ *   minute window. Never commit the secret to a theme or a public repo.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+define( 'CV_SOR_OPT', 'cv_sor_settings' );
+
+function cv_sor_settings() {
+	$d = array( 'cv_base' => 'https://aiagent.ringlypro.com', 'slug' => '', 'secret' => '', 'push' => 1 );
+	return wp_parse_args( get_option( CV_SOR_OPT, array() ), $d );
+}
+
+function cv_sor_default_meta_map() {
+	// our_field => wordpress user meta key
+	return apply_filters( 'cv_sor_meta_map', array(
+		'company_name'     => 'company',
+		'phone'            => 'phone',
+		'country'          => 'country',
+		'sector'           => 'sector',
+		'sub_specialty'    => 'sub_specialty',
+		'years_experience' => 'years_experience',
+		'languages'        => 'languages',
+		'linkedin_url'     => 'linkedin',
+		'membership_type'  => 'membership_type',
+	) );
+}
+
+/**
+ * Build the normalized member record CamaraVirtual expects from a WP_User.
+ * Filter `cv_sor_member` to plug in a membership plugin's own fields.
+ */
+function cv_sor_member( $user ) {
+	if ( is_numeric( $user ) ) { $user = get_userdata( $user ); }
+	if ( ! $user || ! is_a( $user, 'WP_User' ) ) { return null; }
+
+	$rec = array(
+		'external_id' => (string) $user->ID,
+		'email'       => $user->user_email,
+		'first_name'  => get_user_meta( $user->ID, 'first_name', true ),
+		'last_name'   => get_user_meta( $user->ID, 'last_name', true ),
+		'name'        => $user->display_name,
+		'bio'         => get_user_meta( $user->ID, 'description', true ),
+		'website_url' => $user->user_url,
+		// A user stripped of every role is treated as no longer a member.
+		'active'      => ! empty( $user->roles ),
+	);
+
+	foreach ( cv_sor_default_meta_map() as $field => $meta_key ) {
+		$v = get_user_meta( $user->ID, $meta_key, true );
+		if ( '' !== $v && null !== $v ) { $rec[ $field ] = $v; }
+	}
+
+	if ( isset( $rec['languages'] ) && is_string( $rec['languages'] ) ) {
+		$rec['languages'] = array_values( array_filter( array_map( 'trim', explode( ',', $rec['languages'] ) ) ) );
+	}
+
+	return apply_filters( 'cv_sor_member', $rec, $user );
+}
+
+/** Constant-time HMAC check on the inbound roster request. */
+function cv_sor_verify_request( $request ) {
+	$s = cv_sor_settings();
+	if ( empty( $s['secret'] ) ) {
+		return new WP_Error( 'cv_no_secret', 'Shared secret not configured', array( 'status' => 500 ) );
+	}
+	$ts  = (int) $request->get_header( 'x-cv-timestamp' );
+	$sig = (string) $request->get_header( 'x-cv-signature' );
+	if ( ! $ts || abs( time() - $ts ) > 300 ) {
+		return new WP_Error( 'cv_stale', 'Timestamp outside the 5 minute window', array( 'status' => 401 ) );
+	}
+	$expect = hash_hmac( 'sha256', (string) $ts, $s['secret'] );
+	if ( ! hash_equals( $expect, $sig ) ) {
+		return new WP_Error( 'cv_bad_sig', 'Bad signature', array( 'status' => 401 ) );
+	}
+	return true;
+}
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'camaravirtual/v1', '/members', array(
+		'methods'             => 'GET',
+		'permission_callback' => 'cv_sor_verify_request',
+		'callback'            => function ( $request ) {
+			$page     = max( 1, (int) $request->get_param( 'page' ) );
+			$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 100 ) );
+
+			// Restrict to the roles that actually represent chamber members.
+			$roles = apply_filters( 'cv_sor_member_roles', array() );
+			$args  = array(
+				'number' => $per_page,
+				'paged'  => $page,
+				'fields' => 'all',
+				'orderby' => 'ID',
+				'order'  => 'ASC',
+			);
+			if ( $roles ) { $args['role__in'] = $roles; }
+
+			$q       = new WP_User_Query( $args );
+			$total   = (int) $q->get_total();
+			$members = array();
+			foreach ( $q->get_results() as $u ) {
+				$rec = cv_sor_member( $u );
+				if ( $rec && ! empty( $rec['email'] ) ) { $members[] = $rec; }
+			}
+
+			return array(
+				'members'     => $members,
+				'page'        => $page,
+				'per_page'    => $per_page,
+				'total'       => $total,
+				'total_pages' => (int) ceil( $total / $per_page ),
+			);
+		},
+	) );
+} );
+
+// ---------------------------------------------------------------------------
+// Push: tell CamaraVirtual the moment a user changes, so the chamber is not
+// waiting on the next scheduled pull.
+// ---------------------------------------------------------------------------
+function cv_sor_push( $event, $user ) {
+	$s = cv_sor_settings();
+	if ( empty( $s['push'] ) || empty( $s['slug'] ) || empty( $s['secret'] ) || empty( $s['cv_base'] ) ) { return; }
+
+	$rec = cv_sor_member( $user );
+	if ( ! $rec || empty( $rec['email'] ) ) { return; }
+	if ( 'user.deleted' === $event ) { $rec['active'] = false; }
+
+	$ts    = time();
+	$email = strtolower( trim( $rec['email'] ) );
+	// Sign the agreed fields, not the serialized body -- key order is not stable
+	// across PHP/JSON round trips and the receiver cannot see the raw stream.
+	$sig   = hash_hmac( 'sha256', $ts . '.' . $event . '.' . $email, $s['secret'] );
+
+	wp_remote_post(
+		untrailingslashit( $s['cv_base'] ) . '/' . rawurlencode( $s['slug'] ) . '/api/wp/webhook',
+		array(
+			'timeout'  => 6,
+			'blocking' => false, // never make an admin wait on our API
+			'headers'  => array(
+				'Content-Type'    => 'application/json',
+				'X-CV-Timestamp'  => (string) $ts,
+				'X-CV-Signature'  => $sig,
+			),
+			'body'     => wp_json_encode( array( 'event' => $event, 'member' => $rec ) ),
+		)
+	);
+}
+
+add_action( 'user_register',  function ( $id ) { cv_sor_push( 'user.created', $id ); }, 20 );
+add_action( 'profile_update', function ( $id ) { cv_sor_push( 'user.updated', $id ); }, 20 );
+add_action( 'delete_user',    function ( $id ) { cv_sor_push( 'user.deleted', $id ); }, 5 );
+
+// ---------------------------------------------------------------------------
+// SSO: [cv_login] renders a signed one-time link into the chamber dashboard.
+// ---------------------------------------------------------------------------
+function cv_sor_sso_url( $user = null ) {
+	$s = cv_sor_settings();
+	if ( empty( $s['slug'] ) || empty( $s['secret'] ) ) { return ''; }
+	$user = $user ? $user : wp_get_current_user();
+	if ( ! $user || ! $user->exists() ) { return ''; }
+
+	$payload = array(
+		'email' => strtolower( $user->user_email ),
+		'exp'   => time() + 300,
+		'nonce' => wp_generate_password( 20, false ),
+	);
+	$b64 = rtrim( strtr( base64_encode( wp_json_encode( $payload ) ), '+/', '-_' ), '=' );
+	$sig = hash_hmac( 'sha256', $b64, $s['secret'] );
+
+	return untrailingslashit( $s['cv_base'] ) . '/' . rawurlencode( $s['slug'] ) .
+		'/api/wp/sso?token=' . rawurlencode( $b64 . '.' . $sig );
+}
+
+add_shortcode( 'cv_login', function ( $atts ) {
+	$a = shortcode_atts( array( 'label' => 'Entrar a la camara', 'class' => 'button' ), $atts, 'cv_login' );
+	if ( ! is_user_logged_in() ) { return ''; }
+	$url = cv_sor_sso_url();
+	if ( ! $url ) { return ''; }
+	// Short-lived and single-use, so it must not be cached by a page cache.
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
+	return '<a class="' . esc_attr( $a['class'] ) . '" href="' . esc_url( $url ) . '">' . esc_html( $a['label'] ) . '</a>';
+} );
+
+// ---------------------------------------------------------------------------
+// Settings screen
+// ---------------------------------------------------------------------------
+add_action( 'admin_menu', function () {
+	add_options_page( 'CamaraVirtual', 'CamaraVirtual', 'manage_options', 'cv-sor', 'cv_sor_settings_page' );
+} );
+
+function cv_sor_settings_page() {
+	if ( ! current_user_can( 'manage_options' ) ) { return; }
+
+	if ( isset( $_POST['cv_sor_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['cv_sor_nonce'] ), 'cv_sor_save' ) ) {
+		$cur = cv_sor_settings();
+		$new = array(
+			'cv_base' => esc_url_raw( wp_unslash( $_POST['cv_base'] ?? $cur['cv_base'] ) ),
+			'slug'    => sanitize_key( wp_unslash( $_POST['slug'] ?? $cur['slug'] ) ),
+			'push'    => empty( $_POST['push'] ) ? 0 : 1,
+			// A blank secret field leaves the stored secret untouched.
+			'secret'  => ! empty( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : $cur['secret'],
+		);
+		update_option( CV_SOR_OPT, $new );
+		echo '<div class="notice notice-success"><p>Guardado.</p></div>';
+	}
+
+	if ( isset( $_POST['cv_gen_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['cv_gen_nonce'] ), 'cv_sor_gen' ) ) {
+		$cur           = cv_sor_settings();
+		$cur['secret'] = wp_generate_password( 48, false );
+		update_option( CV_SOR_OPT, $cur );
+		echo '<div class="notice notice-warning"><p><strong>Nuevo secreto generado. Copialo ahora y pegalo en la camara:</strong><br><code>' .
+			esc_html( $cur['secret'] ) . '</code></p></div>';
+	}
+
+	$s = cv_sor_settings();
+	?>
+	<div class="wrap">
+		<h1>CamaraVirtual Connector</h1>
+		<p>Este sitio es el sistema de registro (SOR) de los miembros de la camara.</p>
+
+		<form method="post">
+			<?php wp_nonce_field( 'cv_sor_save', 'cv_sor_nonce' ); ?>
+			<table class="form-table">
+				<tr><th scope="row">API de CamaraVirtual</th>
+					<td><input type="url" name="cv_base" class="regular-text" value="<?php echo esc_attr( $s['cv_base'] ); ?>"></td></tr>
+				<tr><th scope="row">Slug de la camara</th>
+					<td><input type="text" name="slug" class="regular-text" placeholder="cv-105" value="<?php echo esc_attr( $s['slug'] ); ?>"></td></tr>
+				<tr><th scope="row">Secreto compartido</th>
+					<td><input type="password" name="secret" class="regular-text" autocomplete="new-password"
+						placeholder="<?php echo $s['secret'] ? 'Guardado — dejar en blanco para conservarlo' : 'Sin configurar'; ?>">
+					</td></tr>
+				<tr><th scope="row">Enviar cambios al instante</th>
+					<td><label><input type="checkbox" name="push" value="1" <?php checked( $s['push'], 1 ); ?>>
+						Notificar a la camara al crear, editar o borrar un usuario</label></td></tr>
+			</table>
+			<?php submit_button( 'Guardar' ); ?>
+		</form>
+
+		<hr>
+		<form method="post" onsubmit="return confirm('Generar un secreto nuevo invalida el actual. Tendras que pegarlo tambien en la camara. Continuar?');">
+			<?php wp_nonce_field( 'cv_sor_gen', 'cv_gen_nonce' ); ?>
+			<?php submit_button( 'Generar secreto nuevo', 'secondary' ); ?>
+		</form>
+
+		<h2>Endpoint de lectura</h2>
+		<p><code><?php echo esc_html( rest_url( 'camaravirtual/v1/members' ) ); ?></code> — requiere firma HMAC, no es publico.</p>
+		<h2>Boton de acceso</h2>
+		<p>Pon <code>[cv_login]</code> en cualquier pagina para dar acceso directo al panel de la camara a los usuarios que ya iniciaron sesion aqui.</p>
+	</div>
+	<?php
+}
+
+/* ---------------------------------------------------------------------------
+ * EXAMPLE — map your membership plugin's fields. Put this in your child theme's
+ * functions.php (not here, so plugin updates do not overwrite it).
+ *
+ * add_filter( 'cv_sor_member', function ( $rec, $user ) {
+ *     // Paid Memberships Pro: only active levels count as members.
+ *     if ( function_exists( 'pmpro_getMembershipLevelForUser' ) ) {
+ *         $level = pmpro_getMembershipLevelForUser( $user->ID );
+ *         $rec['active'] = ! empty( $level );
+ *         $rec['membership_type'] = ( $level && stripos( $level->name, 'empresa' ) !== false ) ? 'company' : 'individual';
+ *     }
+ *     // Advanced Custom Fields
+ *     if ( function_exists( 'get_field' ) ) {
+ *         $rec['company_name'] = get_field( 'empresa', 'user_' . $user->ID ) ?: $rec['company_name'];
+ *         $rec['sector']       = get_field( 'sector',  'user_' . $user->ID ) ?: $rec['sector'];
+ *     }
+ *     return $rec;
+ * }, 10, 2 );
+ *
+ * // Only these WordPress roles are chamber members:
+ * add_filter( 'cv_sor_member_roles', function () { return array( 'chamber_member', 'subscriber' ); } );
+ * ------------------------------------------------------------------------- */

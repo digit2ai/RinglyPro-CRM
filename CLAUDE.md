@@ -598,3 +598,31 @@ UPDATE chambers SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"publ
 - `index.html` — integration guide at `/embed/` with copy buttons and a live preview.
 
 CORS is already open globally (`app.use(cors())` in `src/app.js`), so cross-origin fetch from any WordPress host works with no per-domain allowlist.
+
+## Chamber ← WordPress sync (WordPress as System of Record)
+
+**Purpose:** the inverse of the public directory above. WordPress OWNS member identity + profile; CamaraVirtual is the system of engagement (projects, RFQs, trust, messaging, P2B) and reconciles its `members` table against WordPress. The two directions are independent — a chamber can run either, both, or neither.
+
+- **Engine:** `src/services/chamberWpSync.js` · **Routes:** `src/routes/unified-chamber/wp.js`, mounted at `/:slug/api/wp/*` (before `core.js` in `unified-chamber/index.js`).
+- **Companion WP plugin:** `public/embed/wordpress-sor-plugin.php.txt` — signed roster endpoint `/wp-json/camaravirtual/v1/members`, push on `user_register`/`profile_update`/`delete_user`, `[cv_login]` SSO shortcode, settings screen, `cv_sor_member` filter for mapping MemberPress/PMPro/WooCommerce/ACF fields.
+- **Guide:** `/embed/` (second half of the page).
+
+**FIELD OWNERSHIP is the design.** `WP_OWNED_FIELDS` is the only set a sync may write: first/last name, company, phone, country, sector, sub_specialty, years_experience, languages, bio, linkedin, website, membership_type. **`access_level` and `governance_role` are deliberately NOT syncable** — a compromised or misconfigured WordPress must never be able to mint a chamber superadmin. `trust_score`, `verified`, `verification_level`, `region_id` and Stripe ids are equally untouched. Widening that list is a privilege-escalation change, not a feature.
+
+**Other invariants (all covered by SIT):**
+- **Never hard-deletes.** A member absent from WordPress goes `status='inactive'` — they author projects, RFQs and messages, so the row and its audit trail stay.
+- **`deactivate_missing` defaults OFF**, and even when on it skips chamber admins and `chambers.owner_member_id`, so a bad sync can't lock out whoever would have to fix it.
+- **Dry run first.** `POST /wp/sync {"dry_run":true}` returns the full plan and writes nothing.
+- **Matching** is by WordPress id via `chamber_wp_links` (falling back to email), so an upstream email change renames the member instead of creating a duplicate.
+- **Synced members get an unusable random `password_hash`** (the column is NOT NULL) — they enter via SSO or the existing forgot-password flow, never a guessable default.
+
+**Endpoints:** admin (Bearer + chamber admin) `GET|PUT /wp/config`, `POST /wp/test`, `POST /wp/sync`, `GET /wp/runs`. Machine (HMAC-authed, no session) `POST /wp/webhook`, `GET /wp/sso`. The webhook signs `timestamp + "." + event + "." + email` — a canonical field string, NOT the raw body, because Express has consumed the stream before a router sees it and JSON key order isn't stable. SSO tokens are single-use (nonce), expire in 5 min, and the redirect is forced same-site so a fresh session JWT can't be bounced off-site.
+
+**Tables** (created on demand, no migration step, additive — `members` DDL untouched): `chamber_wp_links` (provenance, unique per chamber+member and chamber+external_id), `chamber_wp_sync_runs` (audit).
+
+**Config** lives in `chambers.theme_config.wp_sync`; `shared_secret` / `auth_secret` are AES-256-GCM encrypted at rest and returned only as `{set, hint}`. Sending a blank secret keeps the stored one. `mode: 'plugin'` (companion plugin, full fields) or `'wp_users'` (core REST API + Application Password, zero install, but no company/sector/phone).
+
+**SIT:** `node scripts/test-chamber-wp-sync.js` → **53/53**. Spins a fake WordPress plus a throwaway chamber (`cv-99001`, created and dropped by the script — it never touches cv-105) and covers field ownership, privilege-escalation attempts, email renames, soft deactivation, admin protection, webhook signature/replay/staleness, and SSO forge/replay/expiry/open-redirect. Zero external keys.
+
+**Environment Variables:**
+- `CHAMBER_WP_SECRET` — key material for encrypting the per-chamber WordPress credentials. Falls back to `CHAMBER_JWT_SECRET` then `JWT_SECRET`. SET on prod: rotating it makes stored secrets undecryptable (re-enter them), and leaving it default means credentials are encrypted under a guessable key.
