@@ -1,0 +1,195 @@
+<!-- ORBUP | Signed-in user workspace (workspace-private projects) -->
+<style>
+.oww *{box-sizing:border-box}
+.oww{--bg:#0a0a0e;--panel:#0e0f15;--card:#15161e;--card2:#1a1b24;--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
+  --ink:#f2f4f8;--mut:#9aa3b2;--faint:#6b7280;--cyan:#22d3ee;--violet:#7c5cff;--magenta:#ec4899;--good:#34d399;--amber:#f59e0b;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  position:fixed;inset:0;z-index:2147483000;background:var(--bg);color:var(--ink);font-family:var(--font);display:flex}
+.oww a{color:inherit;text-decoration:none}
+/* sidebar */
+.oww-side{flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px}
+.oww-side .brand{display:flex;align-items:center;gap:9px;padding:2px 8px 18px}
+.oww-side .brand img{height:58px;width:auto;display:block}
+.oww-logout{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:11px 12px;border-radius:12px;
+  background:transparent;border:1px solid var(--line);color:var(--mut);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
+.oww-logout:hover{background:var(--card);color:var(--ink);border-color:var(--line2)}
+.oww-logout svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.oww-ws{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:14px}
+.oww-ws .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06101f;font-size:13px;flex:0 0 28px}
+.oww-ws .nm{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oww-ws .pl{font-size:11px;color:var(--mut)}
+.oww-nav{display:flex;flex-direction:column;gap:2px}
+.oww-nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;color:var(--mut);font-weight:500}
+.oww-nav a:hover{background:var(--card);color:var(--ink)}
+.oww-nav a.on{background:var(--card);color:var(--ink)}
+.oww-nav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.oww-nav .label{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:14px 11px 5px;font-weight:700}
+.oww-side .spacer{flex:1}
+.oww-upsell{background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(236,72,153,.10));border:1px solid var(--line2);border-radius:14px;padding:14px;margin-top:10px}
+.oww-upsell h4{margin:0 0 4px;font-size:13.5px}.oww-upsell p{margin:0 0 10px;font-size:12px;color:var(--mut)}
+.oww-upsell a{display:block;text-align:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f;font-weight:700;font-size:13px;padding:9px;border-radius:10px}
+/* main */
+.oww-main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.oww-hero{padding:60px 32px 30px;text-align:center;background:
+  radial-gradient(700px 340px at 50% -30%,rgba(124,92,255,.22),transparent 65%),
+  radial-gradient(500px 300px at 80% 0%,rgba(34,211,238,.10),transparent 60%)}
+.oww-hero h1{font-size:clamp(1.7rem,3.4vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
+.oww-prompt{max-width:720px;margin:0 auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.5);text-align:left}
+.oww-prompt textarea{width:100%;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;resize:none;min-height:52px;line-height:1.5}
+.oww-prompt textarea:focus{outline:none}
+.oww-prompt .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.oww-prompt .hint{color:var(--faint);font-size:12px}
+.oww-build{border:0;cursor:pointer;font-family:inherit;font-weight:800;font-size:14.5px;border-radius:999px;padding:11px 22px;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f;transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.oww-build:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(124,92,255,.35)}
+.oww-build:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.oww-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px auto 0;max-width:640px}
+.oww-chip{background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:7px 13px;font-size:12.5px;cursor:pointer;transition:.15s}
+.oww-chip:hover{border-color:var(--line2);color:var(--ink)}
+/* projects */
+.oww-projects{max-width:960px;margin:0 auto;width:100%;padding:14px 32px 60px}
+.oww-projects h2{font-size:15px;font-weight:700;margin:0 0 4px}
+.oww-projects .psub{color:var(--mut);font-size:13px;margin:0 0 18px}
+.oww-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.oww-pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:.15s}
+.oww-pcard:hover{border-color:var(--line2);transform:translateY(-2px)}
+.oww-pcard .pt{font-weight:700;font-size:15px;line-height:1.3}
+.oww-pcard .pd{color:var(--mut);font-size:12.5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.oww-pcard .pmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--faint)}
+.oww-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(124,92,255,.12);color:#c3b5ff;border:1px solid rgba(124,92,255,.28)}
+.oww-pacts{display:flex;gap:8px;margin-top:2px}
+.oww-pbtn{flex:1;text-align:center;border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;font-family:inherit}
+.oww-pbtn.solid{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f;border:0}
+.oww-pbtn:hover{filter:brightness(1.08)}
+.oww-empty{text-align:center;color:var(--mut);padding:36px 20px;border:1px dashed var(--line2);border-radius:16px;font-size:14px}
+.oww-spin{width:15px;height:15px;border:2px solid rgba(6,16,31,.35);border-top-color:#06101f;border-radius:50%;animation:owwSpin .8s linear infinite;display:inline-block}
+@keyframes owwSpin{to{transform:rotate(360deg)}}
+.oww-side-toggle{display:none}
+@media(max-width:820px){
+  .oww-side{position:fixed;left:0;top:0;bottom:0;z-index:5;transform:translateX(-100%);transition:transform .25s}
+  .oww.side-open .oww-side{transform:none}
+  .oww-side-toggle{display:inline-flex;position:absolute;top:14px;left:14px;z-index:4;background:var(--card);border:1px solid var(--line2);border-radius:10px;width:38px;height:38px;align-items:center;justify-content:center;cursor:pointer}
+  .oww-hero{padding-top:66px}
+}
+</style>
+
+<div class="oww" id="oww">
+  <button class="oww-side-toggle" id="oww-toggle" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2f4f8" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+
+  <aside class="oww-side">
+    <a class="brand" href="/torna" aria-label="Torna"><img src="/torna-assets/torna-logo.svg" alt="Torna"></a>
+    <div class="oww-ws">
+      <div class="av" id="oww-av">O</div>
+      <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl">Free plan</div></div>
+    </div>
+    <nav class="oww-nav">
+      <a href="/torna/workspace" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg> Dashboard</a>
+      <a href="#projects"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Projects</a>
+      <div class="label">Projects</div>
+      <a href="#projects"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> All projects</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="oww-logout" id="oww-logout" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Log out
+    </button>
+  </aside>
+
+  <main class="oww-main">
+    <div class="oww-hero">
+      <h1 id="oww-greet">What should we build?</h1>
+      <div class="oww-prompt">
+        <textarea id="oww-desc" rows="2" placeholder="Describe the tool your business needs…"></textarea>
+        <div class="row">
+          <span class="hint">Workspace-private · Free plan</span>
+          <button class="oww-build" id="oww-build">Build it &rarr;</button>
+        </div>
+      </div>
+      <div class="oww-chips" id="oww-chips">
+        <button class="oww-chip" data-p="An outbound AI voice agent that calls customers who missed their appointment and reschedules them.">Missed-appointment caller</button>
+        <button class="oww-chip" data-p="A dashboard that shows my store's real-time performance and alerts me when sales drop.">Store dashboard</button>
+        <button class="oww-chip" data-p="An AI that reads inbound emails, drafts replies, and books meetings on my calendar.">Inbox autopilot</button>
+      </div>
+    </div>
+
+    <section class="oww-projects" id="projects">
+      <h2>Your projects</h2>
+      <p class="psub">Private to your workspace — every build you start lives here.</p>
+      <div id="oww-list"><div class="oww-empty">Loading your projects…</div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var root=document.getElementById('oww');
+  if(!root) return;
+  var WS_URL='/projects/api/v1/intake/orbup/workspace';
+
+  // identity (passwordless free tier): email in localStorage from signup
+  var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
+  var email=(contact.email||'').trim();
+  if(!email){ window.location.replace('/torna/start'); return; }
+  var name=(contact.name||'').trim();
+  var first = name ? name.split(' ')[0] : '';
+
+  // header personalization
+  document.getElementById('oww-greet').textContent = first ? ('What should we build, '+first+'?') : 'What should we build?';
+  document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s Torna";
+  document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
+
+  document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
+
+  // Log out — clear the remembered session on this browser and return to login.
+  var logoutBtn=document.getElementById('oww-logout');
+  if(logoutBtn) logoutBtn.addEventListener('click', function(){
+    try{ localStorage.removeItem('d2ai_contact'); }catch(e){}
+    window.location.href='/torna/login';
+  });
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  // chips + build
+  document.getElementById('oww-chips').querySelectorAll('.oww-chip').forEach(function(ch){
+    ch.addEventListener('click', function(){ var d=document.getElementById('oww-desc'); d.value=ch.getAttribute('data-p'); d.focus(); });
+  });
+  var buildBtn=document.getElementById('oww-build');
+  function build(){
+    var desc=(document.getElementById('oww-desc').value||'').trim();
+    if(desc.length<20){ document.getElementById('oww-desc').focus(); return; }
+    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Opening…';
+    // Hand to the Torna build engine (contact already saved) -> build theatre.
+    window.location.href='/torna?desc='+encodeURIComponent(desc)+'&from=start';
+  }
+  buildBtn.addEventListener('click', build);
+  document.getElementById('oww-desc').addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') build(); });
+
+  // load workspace projects
+  function statusLabel(s){ return String(s||'planning').replace(/_/g,' '); }
+  fetch(WS_URL+'?email='+encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var list=document.getElementById('oww-list');
+      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
+      if(res.user && res.user.name && !name){ // backfill from server
+        document.getElementById('oww-greet').textContent='What should we build, '+res.user.name.split(' ')[0]+'?';
+      }
+      var ps=res.projects||[];
+      if(!ps.length){ list.innerHTML='<div class="oww-empty">No projects yet — describe your first build above and we’ll scope, build, and ship it.</div>'; return; }
+      list.innerHTML='<div class="oww-grid">'+ps.map(function(p){
+        var acts='';
+        if(p.teaser_url) acts+='<a class="oww-pbtn solid" href="'+esc(p.teaser_url)+'" target="_blank" rel="noopener">Open demo</a>';
+        if(p.simulator_url) acts+='<a class="oww-pbtn" href="'+esc(p.simulator_url)+'" target="_blank" rel="noopener">Simulator</a>';
+        if(!acts) acts='<span class="oww-pbtn" style="opacity:.6;cursor:default">Building…</span>';
+        var when=''; try{ when=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
+        return '<div class="oww-pcard">'
+          +'<div class="pt">'+esc(p.name||'Untitled build')+'</div>'
+          +(p.description?'<div class="pd">'+esc(p.description)+'</div>':'')
+          +'<div class="pmeta"><span class="oww-badge">'+esc(statusLabel(p.status))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
+          +'<div class="oww-pacts">'+acts+'</div>'
+          +'</div>';
+      }).join('')+'</div>';
+    })
+    .catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
+})();
+</script>

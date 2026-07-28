@@ -572,6 +572,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: torna.dev -> Torna (voice-orb-first brand, Torna-rebranded clone
+// of OrbUp), served IN PLACE so the address bar stays on torna.dev. GHL domain +
+// Render are configured. Root serves the EN landing; /es the Spanish one. /torna*,
+// /api, /projects/* and any static asset pass through untouched.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'torna.dev' || host === 'www.torna.dev') {
+    const p = req.path;
+    if (p.startsWith('/torna') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en') req.url = '/torna';
+    else if (p === '/es') req.url = '/torna-es';
+  }
+  next();
+});
+
 // Digit2AI Growth — universal SEO layer for managed brand domains (orbup.app,
 // lawncopilot.com, etc.): dynamic /sitemap.xml + /robots.txt and an auto-injected
 // "Blog" link on the landing. Hard-gated to brand hosts, so the main CRM and all
@@ -3463,6 +3478,189 @@ ${content}
 </html>`);
 });
 console.log('🔮 OrbUp brand pages mounted at /orbup and /orbup-es');
+
+// ============================================================
+// TORNA — torna.dev brand (Torna-rebranded clone of OrbUp).
+// Same voice-orb-first funnel + same live backend (triage/intake/
+// voice/booking/SMS) — new brand, served on torna.dev.
+// ============================================================
+const TORNA_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
+(function(){
+  try {
+    var TARGET = ${JSON.stringify(targetLang)};
+    var url = new URL(window.location.href);
+    var override = url.searchParams.get('lang');
+    var STORE_KEY = 'torna_lang';
+    var safeGet = function(){ try { return localStorage.getItem(STORE_KEY); } catch(e){ return null; } };
+    var safeSet = function(v){ try { localStorage.setItem(STORE_KEY, v); } catch(e){} };
+    var nav = function(path){
+      var dest = 'https://aiagent.ringlypro.com' + path;
+      try { if (window.top && window.top !== window.self) { window.top.location.replace(dest); return; } } catch(e){}
+      window.location.replace(path);
+    };
+    if (override === 'en' || override === 'es') {
+      safeSet(override);
+      if (override !== TARGET) nav(override === 'es' ? '/torna-es' : '/torna');
+      return;
+    }
+    var stored = safeGet();
+    if (stored === 'en' || stored === 'es') {
+      if (stored !== TARGET) nav(stored === 'es' ? '/torna-es' : '/torna');
+      return;
+    }
+    if (TARGET === 'es') { safeSet('es'); return; }
+    var SPANISH_COUNTRIES = ['ES','MX','AR','CO','PE','VE','CL','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PR','UY','GQ'];
+    var done = false; var html = document.documentElement; html.style.visibility = 'hidden';
+    var finish = function(toEs){ if (done) return; done = true; html.style.visibility='';
+      if (toEs) { safeSet('es'); nav('/torna-es'); } else { safeSet('en'); } };
+    setTimeout(function(){ finish(false); }, 1200);
+    fetch('https://ipapi.co/json/', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ var c = d && d.country_code ? String(d.country_code).toUpperCase() : '';
+        finish(SPANISH_COUNTRIES.indexOf(c) !== -1); })
+      .catch(function(){ finish(false); });
+  } catch(e) {}
+})();
+</script>`;
+
+const tornaFrameCsp = "frame-ancestors 'self' https://torna.dev https://*.torna.dev https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
+
+const TORNA_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
+<link rel="icon" type="image/png" sizes="32x32" href="/torna-assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/torna-assets/apple-touch-icon.png">
+<link rel="manifest" href="/torna-assets/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torna">
+<script>if('serviceWorker' in navigator && location.hostname.indexOf('torna.dev')!==-1){window.addEventListener('load',function(){navigator.serviceWorker.register('/torna-sw.js',{scope:'/'}).catch(function(){});});}</script>`;
+
+const TORNA_OG = 'https://torna.dev/torna-assets/torna-logo.svg';
+
+app.get('/torna', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${TORNA_GEO_REDIRECT_SCRIPT('en')}
+<title>Torna — Talk to it. We build it.</title>
+${TORNA_PWA_HEAD}
+<meta name="description" content="It's time to Torna. Tap the orb and talk — let your website and AI ecosystem speak for themselves. An AI-native software firm: voice agents, dashboards, automations, full platforms.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://torna.dev">
+<meta property="og:title" content="Torna — Talk to it. We build it.">
+<meta property="og:description" content="Tap the orb and describe your idea. Torna's AI workforce scopes it, builds it, and ships it live.">
+<meta property="og:image" content="${TORNA_OG}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Torna — Talk to it. We build it.">
+<meta name="twitter:image" content="${TORNA_OG}">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/torna/start', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-start.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get started — Torna</title>
+${TORNA_PWA_HEAD}
+<meta name="description" content="Create your free Torna workspace — workspace-private projects, 5 build credits a day, no credit card.">
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/torna/workspace', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-workspace.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — Torna</title>
+${TORNA_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/torna/login', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-login.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Torna</title>
+${TORNA_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/torna-es', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-es.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${TORNA_GEO_REDIRECT_SCRIPT('es')}
+<title>Torna — Háblale. Lo construimos.</title>
+${TORNA_PWA_HEAD}
+<meta name="description" content="Es hora de Torna. Toca el orbe y habla — deja que tu sitio web y tu ecosistema de IA hablen por sí mismos. Firma de software AI-native: agentes de voz, tableros, automatizaciones y plataformas completas.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://torna.dev">
+<meta property="og:title" content="Torna — Háblale. Lo construimos.">
+<meta property="og:description" content="Toca el orbe y describe tu idea. La fuerza de trabajo con IA de Torna la dimensiona, la construye y la lanza en vivo.">
+<meta property="og:image" content="${TORNA_OG}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Torna — Háblale. Lo construimos.">
+<meta name="twitter:image" content="${TORNA_OG}">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+console.log('🌀 Torna brand pages mounted at /torna and /torna-es');
 
 // Presto — 5-minute executive mini-demo (EN/ES toggle in-page)
 app.get('/presto', (req, res) => {
