@@ -1,6 +1,6 @@
 /* Torna PWA service worker — root-scoped, registered ONLY on torna.dev.
    Offline shell for the landing + cached brand icons. Never touches API calls. */
-const CACHE = 'torna-v3';
+const CACHE = 'torna-v4';
 const ASSETS = [
   '/torna-assets/icon-192.png',
   '/torna-assets/icon-512.png',
