@@ -41,7 +41,28 @@
   ul.tight li{margin:3px 0}
   .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
   .cta{display:inline-block;background:#0f3a66;color:#fff;border-radius:8px;padding:11px 22px;font-weight:700;text-decoration:none;font-size:14px}
-  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card{break-inside:avoid}}
+  /* calculadora costo-beneficio */
+  .calc{background:#0f3a66;border-radius:10px;padding:20px 22px;margin:16px 0;color:#fff}
+  .calc h3{color:#fff;margin:0 0 4px}
+  .calc .hint{color:#b9d2ec;font-size:12.5px;margin:0 0 16px}
+  .calc .inputs{display:flex;gap:16px;flex-wrap:wrap}
+  .calc .inputs>div{flex:1;min-width:150px}
+  .calc label{display:block;font-size:11.5px;color:#b9d2ec;margin-bottom:5px;font-weight:600}
+  .calc input,.calc select{width:100%;background:#0b2b4d;border:1px solid #2c5c8c;color:#fff;border-radius:7px;
+    padding:8px 10px;font:inherit;font-size:14px;font-weight:700}
+  .calc .out{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #2c5c8c;padding-top:16px}
+  .calc .out>div{flex:1;min-width:130px}
+  .calc .out .k{font-size:11px;color:#b9d2ec;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .calc .out .v{font-size:23px;font-weight:800;letter-spacing:-.5px;color:#7ee0b8}
+  .calc .out .v.warn{color:#f6c667}
+  .calc .foot2{font-size:11.5px;color:#8fb4d8;margin-top:14px}
+  .be{background:#ecfdf5;border:1px solid #99f6e4;border-left:5px solid var(--verde);border-radius:8px;padding:14px 18px;margin:16px 0}
+  .be b{color:var(--verde);font-size:16px}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card,.calc{break-inside:avoid}
+    .calc{background:#eef4fb;color:var(--tinta);border:1px solid var(--azul-borde)}.calc h3{color:#0f3a66}
+    .calc .hint,.calc label,.calc .out .k,.calc .foot2{color:var(--gris)}
+    .calc input,.calc select{background:#fff;color:var(--tinta);border-color:var(--azul-borde)}
+    .calc .out .v{color:var(--verde)}.calc .out{border-top-color:var(--azul-borde)}}
 </style>
 </head>
 <body>
@@ -111,7 +132,69 @@
   </table>
   <p class="muted">Después del primer año, la operación continúa a <strong>$77 USD/mes</strong> + IVA (<strong>$92 USD/mes</strong> con IVA incluido). Sin costos variables por volumen de cortes en este alcance.</p>
 
-  <h2>6. Resumen de Inversión — Año 1</h2>
+  <h2>6. Costo-beneficio: a partir de qué volumen el sistema se paga solo</h2>
+  <p>Este sistema <strong>no reduce el desperdicio por sí mismo</strong>. Lo hace visible y medible en el momento exacto en que ocurre, que es la única condición para poder reducirlo. El ahorro llega por tres vías concretas, y las tres dependen del volumen de corte:</p>
+  <ul class="tight">
+    <li><strong>Retal recuperado.</strong> Las franjas que hoy salen del registro y se quedan en el patio vuelven a contar como inventario disponible. Cada metro cuadrado de retal reutilizado es un metro cuadrado de losa nueva que no se compra.</li>
+    <li><strong>Cortes replanificados.</strong> El informe de desperdicio por material muestra qué referencia y qué medida de corte están generando la pérdida. Un cambio de orientación o de secuencia en los cortes más repetidos mueve el porcentaje de inmediato.</li>
+    <li><strong>Compras fantasma evitadas.</strong> Cuando el stock del libro dice que hay material y en el patio no lo hay (o al revés), se compra de más o se promete lo que no existe. El stock real en metros cuadrados corta ese error de raíz.</li>
+  </ul>
+
+  <div class="note"><strong>Sobre estas cifras:</strong> Digit2AI <u>no tiene medición del desperdicio actual de Calcáreos S.A.</u> Los valores de abajo parten de supuestos de industria claramente etiquetados; los números reales los pone usted en la calculadora. Al cabo del primer mes de operación, el propio sistema reemplaza cada supuesto por medición real de su planta — y ese es el compromiso: la cifra deja de ser una estimación nuestra y pasa a ser un dato suyo.</div>
+
+  <h3>Supuestos del modelo</h3>
+  <table class="fin">
+    <tr><th>Variable</th><th class="num">Valor usado</th><th>Origen</th></tr>
+    <tr><td>Costo promedio del material importado</td><td class="num">$55 USD/m²</td><td>Supuesto. Banda típica de losa importada: $35 a $90 USD/m² puesta en planta. Ajústelo a su costo real.</td></tr>
+    <tr><td>Desperdicio actual sin trazabilidad</td><td class="num">15% – 30%</td><td>Banda de industria en corte de losa cuando el retal no se registra. No es una medición de Calcáreos.</td></tr>
+    <tr><td>Puntos porcentuales recuperables</td><td class="num">2 / 4 / 6 pp</td><td>Escenario conservador, base y optimista. El modelo usa <strong>4 pp</strong> como caso base.</td></tr>
+    <tr><td>Costo del sistema</td><td class="num">$10.439 año 1</td><td>Cifra real de esta propuesta (desarrollo + 12 meses de operación, IVA incluido).</td></tr>
+  </table>
+
+  <h3>Retorno según el volumen de corte mensual</h3>
+  <p class="muted">Caso base: 4 puntos porcentuales de desperdicio recuperados, material a $55 USD/m². Ahorro neto = ahorro bruto menos los $92/mes de operación.</p>
+  <table class="fin">
+    <tr><th>Corte mensual</th><th class="num">Ahorro neto / mes</th><th class="num">Ahorro neto / año</th><th class="num">Se paga en</th><th class="num">Retorno año 1</th></tr>
+    <tr><td>150 m²</td><td class="num">$238</td><td class="num">$2.856</td><td class="num">44 meses</td><td class="num">-73%</td></tr>
+    <tr><td>300 m²</td><td class="num">$568</td><td class="num">$6.816</td><td class="num">18 meses</td><td class="num">-35%</td></tr>
+    <tr class="sub"><td>500 m²</td><td class="num">$1.008</td><td class="num">$12.096</td><td class="num">10 meses</td><td class="num">+16%</td></tr>
+    <tr><td>800 m²</td><td class="num">$1.668</td><td class="num">$20.016</td><td class="num">6 meses</td><td class="num">+92%</td></tr>
+    <tr><td>1.200 m²</td><td class="num">$2.548</td><td class="num">$30.576</td><td class="num">4 meses</td><td class="num">+193%</td></tr>
+    <tr><td>2.000 m²</td><td class="num">$4.308</td><td class="num">$51.696</td><td class="num">2,4 meses</td><td class="num">+395%</td></tr>
+  </table>
+
+  <div class="be">
+    <b>El punto de equilibrio está en 438 m² de corte al mes.</b><br>
+    A ese volumen, el sistema se paga completo dentro de los primeros doce meses. Por debajo de <strong>240 m²/mes</strong> el retorno se estira más allá de dos años y honestamente no recomendamos comprarlo todavía. Por encima de <strong>800 m²/mes</strong> se paga en medio año y a partir de ahí el ahorro es recurrente. Para cubrir únicamente la operación mensual de $92 bastan <strong>42 m²/mes</strong>.
+  </div>
+
+  <h3>Calculadora — ponga sus números</h3>
+  <div class="calc">
+    <h3>¿Cuánto se ahorra Calcáreos S.A.?</h3>
+    <p class="hint">Cambie los tres valores y el cálculo se actualiza al instante. Todo en USD.</p>
+    <div class="inputs">
+      <div><label>Corte mensual (m²)</label><input id="cVol" type="number" value="500" min="0" step="50"></div>
+      <div><label>Costo del material (USD/m²)</label><input id="cCost" type="number" value="55" min="1" step="5"></div>
+      <div><label>Desperdicio recuperado</label>
+        <select id="cPp">
+          <option value="2">Conservador — 2 pp</option>
+          <option value="4" selected>Base — 4 pp</option>
+          <option value="6">Optimista — 6 pp</option>
+        </select>
+      </div>
+    </div>
+    <div class="out">
+      <div><div class="k">Ahorro neto / mes</div><div class="v" id="oMes">$1.008</div></div>
+      <div><div class="k">Ahorro neto / año</div><div class="v" id="oAno">$12.096</div></div>
+      <div><div class="k">Se paga en</div><div class="v" id="oPb">10 meses</div></div>
+      <div><div class="k">Retorno año 1</div><div class="v" id="oRoi">+16%</div></div>
+    </div>
+    <p class="foot2">Ahorro neto = (m² &times; costo &times; puntos porcentuales) &minus; $92/mes de operación. "Se paga en" compara ese ahorro contra los $10.439 de inversión del año 1 con IVA.</p>
+  </div>
+
+  <p class="muted">Una nota sobre la sensibilidad: el resultado depende más del costo de su material que del volumen. A 500 m²/mes, con material a $35/m² el sistema se paga en 17 meses; a $90/m², en 6. Si Calcáreos corta mármol y granito importado de gama alta, el retorno está en la mitad alta de la tabla.</p>
+
+  <h2>7. Resumen de Inversión — Año 1</h2>
   <table class="fin">
     <tr><th>Concepto</th><th class="num">Valor (USD)</th></tr>
     <tr><td>Desarrollo Sprint 1 (66 horas)</td><td class="num">$7.854</td></tr>
@@ -123,7 +206,7 @@
     <tr><td>Años siguientes (solo operación)</td><td class="num">$92 USD/mes con IVA</td></tr>
   </table>
 
-  <h2>7. Forma de pago sugerida</h2>
+  <h2>8. Forma de pago sugerida</h2>
   <table class="fin">
     <tr><th>Hito</th><th>Momento</th><th class="num">Valor + IVA (USD)</th></tr>
     <tr><td>Anticipo — inicio de sprint</td><td>Firma</td><td class="num">$4.673</td></tr>
@@ -132,7 +215,7 @@
   </table>
   <p class="muted">Cifras redondeadas al dólar. Facturación en USD; equivalente en COP a la TRM del día de facturación si así se prefiere.</p>
 
-  <h2>8. Próximo paso</h2>
+  <h2>9. Próximo paso</h2>
   <p>Antes de contratar, opere el sistema. El simulador reproduce el flujo completo — registre un lote, registre un corte, fuerce un corte inválido, mueva el ancho mínimo de retal y observe cómo se mueve el porcentaje de desperdicio — con la misma lógica y la misma aritmética que llevaría producción.</p>
   <p><a class="cta" href="https://aiagent.ringlypro.com/calcareos-inventario-simulador.html">Abrir el simulador</a></p>
 
@@ -141,5 +224,28 @@
   <div class="foot">Propuesta emitida por Digit2AI · Julio 2026 · Validez 30 días. Cifras en USD; IVA colombiano del 19% incluido en el total del Año 1. El alcance corresponde al Sprint 1 descrito; los módulos listados como fuera de alcance se cotizan por separado. Este sistema almacena datos operativos, no datos personales — Ley 1581 de 2012.</div>
 
 </div>
+<script>
+(function(){
+  var f=function(n){return "$"+Math.round(n).toLocaleString("es-CO");};
+  var INV=10439, OPEX=92;
+  var vol=document.getElementById("cVol"), cost=document.getElementById("cCost"), pp=document.getElementById("cPp");
+  function calc(){
+    var v=parseFloat(vol.value)||0, c=parseFloat(cost.value)||0, p=parseFloat(pp.value)||0;
+    var bruto=v*c*(p/100), neto=bruto-OPEX, ano=neto*12;
+    document.getElementById("oMes").textContent = neto>0 ? f(neto) : f(0);
+    document.getElementById("oAno").textContent = ano>0 ? f(ano) : f(0);
+    var pbEl=document.getElementById("oPb"), roiEl=document.getElementById("oRoi");
+    if(neto<=0){ pbEl.textContent="no se paga"; pbEl.className="v warn"; roiEl.textContent="-100%"; roiEl.className="v warn"; return; }
+    var meses=INV/neto;
+    pbEl.textContent = meses<1 ? "menos de 1 mes" : (meses<10 ? meses.toFixed(1).replace(".",",") : Math.round(meses))+" meses";
+    pbEl.className = meses<=12 ? "v" : "v warn";
+    var roi=((ano-INV)/INV)*100;
+    roiEl.textContent=(roi>=0?"+":"")+Math.round(roi)+"%";
+    roiEl.className = roi>=0 ? "v" : "v warn";
+  }
+  [vol,cost,pp].forEach(function(el){ el.addEventListener("input",calc); el.addEventListener("change",calc); });
+  calc();
+})();
+</script>
 </body>
 </html>
