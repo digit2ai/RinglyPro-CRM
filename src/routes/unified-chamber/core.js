@@ -104,6 +104,114 @@ router.get('/public/info', async (req, res) => {
 });
 
 // =====================================================================
+// PUBLIC -- member directory (for external sites: WordPress, GHL, etc.)
+// =====================================================================
+// Unauthenticated, read-only, PII-stripped view of a chamber's active
+// members so an external CMS can render the directory. OPT-IN per chamber:
+// a chamber only appears here when its theme_config sets
+// {"public_directory": true}. Default OFF, so enabling this for one chamber
+// never exposes another chamber's roster (cv-1/cv-2/cv-3 stay private).
+//
+// NEVER selected here: email, phone, password_hash, access_level,
+// stripe_customer_id, company_registration_id. Those stay behind
+// authMiddleware on GET /members. Adding a column to this SELECT publishes
+// it to the open internet -- treat the list below as a privacy boundary.
+function publicDirectoryEnabled(chamber) {
+  let tc = chamber && chamber.theme_config;
+  if (typeof tc === 'string') { try { tc = JSON.parse(tc); } catch (e) { tc = {}; } }
+  return !!(tc && tc.public_directory === true);
+}
+
+router.get('/public/members', async (req, res) => {
+  try {
+    const chamber = req.chamber;
+    if (!publicDirectoryEnabled(chamber)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Public directory is not enabled for this chamber',
+        hint: 'Set theme_config.public_directory = true on the chambers row to enable.'
+      });
+    }
+
+    const { sector, country, search } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    const conditions = ['m.chamber_id = :c', `m.status = 'active'`];
+    const replacements = { c: req.chamber_id, limit, offset };
+    if (sector) { conditions.push('m.sector = :sector'); replacements.sector = sector; }
+    if (country) { conditions.push('m.country = :country'); replacements.country = country; }
+    if (search) {
+      // Public search deliberately omits email -- an external caller must not
+      // be able to confirm whether an address is a member by probing this.
+      conditions.push('(m.first_name ILIKE :search OR m.last_name ILIKE :search OR m.company_name ILIKE :search OR m.sector ILIKE :search)');
+      replacements.search = `%${search}%`;
+    }
+    const where = 'WHERE ' + conditions.join(' AND ');
+
+    const members = await sequelize.query(
+      `SELECT m.id, m.first_name, m.last_name, m.company_name, m.country,
+              m.sector, m.sub_specialty, m.years_experience, m.languages,
+              m.bio, m.linkedin_url, m.website_url, m.membership_type,
+              m.governance_role, m.verified, m.verification_level,
+              m.trust_score, m.created_at AS member_since, r.name AS region_name
+       FROM members m LEFT JOIN regions r ON r.id = m.region_id ${where}
+       ORDER BY m.company_name NULLS LAST, m.last_name, m.first_name
+       LIMIT :limit OFFSET :offset`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    const [{ count }] = await sequelize.query(
+      `SELECT COUNT(*) AS count FROM members m ${where}`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    const total = parseInt(count);
+
+    // Short public cache so a busy WordPress page doesn't hammer the DB.
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.json({
+      success: true,
+      data: {
+        chamber: { slug: chamber.slug, name: chamber.name, logo_url: chamber.logo_url },
+        members,
+        total,
+        pagination: { page, limit, pages: Math.max(1, Math.ceil(total / limit)) }
+      }
+    });
+  } catch (err) {
+    console.error('[/public/members]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Distinct sectors + countries present in the public directory, so an
+// external page can build filter dropdowns without listing every member.
+router.get('/public/members/facets', async (req, res) => {
+  try {
+    if (!publicDirectoryEnabled(req.chamber)) {
+      return res.status(403).json({ success: false, error: 'Public directory is not enabled for this chamber' });
+    }
+    const sectors = await sequelize.query(
+      `SELECT sector, COUNT(*) AS count FROM members
+       WHERE chamber_id = :c AND status = 'active' AND sector IS NOT NULL
+       GROUP BY sector ORDER BY count DESC`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const countries = await sequelize.query(
+      `SELECT country, COUNT(*) AS count FROM members
+       WHERE chamber_id = :c AND status = 'active' AND country IS NOT NULL
+       GROUP BY country ORDER BY count DESC`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.json({ success: true, data: { sectors, countries } });
+  } catch (err) {
+    console.error('[/public/members/facets]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
 // AUTH
 // =====================================================================
 router.post('/auth/login', async (req, res) => {

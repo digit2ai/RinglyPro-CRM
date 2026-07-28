@@ -575,3 +575,26 @@ MCP Tool Call → POST /api/oee/tools/call → OEE route handler → PostgreSQL 
 Browser → /agromercado/api/v1/* (Express Router) → Sequelize → PostgreSQL (am_* tables)
 FX poller (09:00/13:00) → AGROMERCADO_FX_SOURCE_URL → am_fx_rates ← /divisas/convert
 Bid POST → ACID txn (row-lock auction) → recompute P_min (ln formula) → am_bids → SSE broadcast to lot subscribers
+
+## Chamber public member directory (external embeds: WordPress, GHL, any CMS)
+
+**Purpose:** let an external site publish a chamber's member directory without exposing PII or requiring login. Built for `cv-105` (Hispanotec, whose marketing site is the WordPress/`/hispatec/` surface); works for any `cv-*`/`vc-*` slug.
+
+**Opt-in per chamber — this is the safety boundary.** The endpoints 403 unless the `chambers` row has `theme_config.public_directory = true`. Enabled today on **cv-105 only**; cv-1/cv-2/cv-3 and the rest stay private with no code change. Enable another with:
+```sql
+UPDATE chambers SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"public_directory": true}'::jsonb WHERE slug = 'cv-XXX';
+```
+(`chamber-resolver` caches 60s, so it takes effect within a minute.)
+
+**Endpoints** (unauthenticated, `Cache-Control: public, max-age=300`), in `src/routes/unified-chamber/core.js` immediately after `/public/info`:
+- `GET /:slug/api/public/members` — active members. Params `page`, `limit` (capped 100), `search`, `sector`, `country`.
+- `GET /:slug/api/public/members/facets` — distinct sectors + countries with counts, for filter dropdowns.
+
+**PRIVACY BOUNDARY — do not widen the SELECT.** The public projection deliberately omits `email`, `phone`, `password_hash`, `access_level`, `stripe_customer_id`, `company_registration_id`. Public `search` also omits email so the endpoint can't be used to confirm whether an address is a member. Emails stay behind `authMiddleware` on `GET /members`. Adding a column to that SELECT publishes it to the open internet.
+
+**Embeds** (`public/embed/`, served by the existing `express.static`):
+- `chamber-directory.js` — dependency-free widget. `<div data-cv-directory data-slug="cv-105"></div>` + one script tag. Search, sector filter, cards, pagination, dark mode, ES/EN. Renders only `http(s)` links (a stored `javascript:` URL can never become a clickable anchor on a customer's site).
+- `wordpress-shortcode.php.txt` — `[cv_directory slug="cv-105"]`. Server-rendered via `wp_remote_get` + WP transient cache, so the members land in the HTML Google indexes (the JS widget does not). Preferred when SEO matters.
+- `index.html` — integration guide at `/embed/` with copy buttons and a live preview.
+
+CORS is already open globally (`app.use(cors())` in `src/app.js`), so cross-origin fetch from any WordPress host works with no per-domain allowlist.

@@ -1,0 +1,175 @@
+<?php
+/**
+ * Plugin Name: CamaraVirtual Chamber Directory
+ * Description: Renders a CamaraVirtual chamber's public member directory via the [cv_directory] shortcode.
+ * Version:     1.0.0
+ * Author:      Digit2AI
+ *
+ * INSTALL (either one):
+ *   A) Save as wp-content/plugins/cv-directory/cv-directory.php and activate it
+ *      under Plugins. Recommended — survives theme changes.
+ *   B) Paste everything below the <?php line into your child theme's
+ *      functions.php, or into a new snippet in the "Code Snippets" plugin.
+ *
+ * USE — put this in any page or post:
+ *   [cv_directory slug="cv-105"]
+ *
+ * Attributes:
+ *   slug     required. Chamber slug, e.g. cv-105 (Hispanotec).
+ *   limit    members to show, 1-100. Default 24.
+ *   lang     es | en. Default es.
+ *   sector   pre-filter to one sector, e.g. sector="tecnologia".
+ *   country  pre-filter to one country, e.g. country="Espana".
+ *   base     API origin. Default https://aiagent.ringlypro.com
+ *   cache    seconds to cache the response. Default 300 (5 minutes).
+ *
+ * This renders server-side, so the member names and companies are in the HTML
+ * Google receives — unlike an iframe or a JS widget, this content is indexable.
+ * The endpoint it reads returns no email addresses and no phone numbers.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+function cv_directory_shortcode( $atts ) {
+	$a = shortcode_atts( array(
+		'slug'    => '',
+		'limit'   => 24,
+		'lang'    => 'es',
+		'sector'  => '',
+		'country' => '',
+		'base'    => 'https://aiagent.ringlypro.com',
+		'cache'   => 300,
+	), $atts, 'cv_directory' );
+
+	$slug = sanitize_key( $a['slug'] );
+	if ( ! $slug ) {
+		return '<p>cv_directory: missing slug attribute.</p>';
+	}
+
+	$lang = ( 'en' === $a['lang'] ) ? 'en' : 'es';
+	$t    = ( 'en' === $lang )
+		? array(
+			'members'  => 'members',
+			'verified' => 'Verified',
+			'website'  => 'Website',
+			'linkedin' => 'LinkedIn',
+			'empty'    => 'No members to show yet.',
+			'error'    => 'The directory could not be loaded right now.',
+			'years'    => 'years of experience',
+		)
+		: array(
+			'members'  => 'miembros',
+			'verified' => 'Verificado',
+			'website'  => 'Sitio web',
+			'linkedin' => 'LinkedIn',
+			'empty'    => 'Aun no hay miembros para mostrar.',
+			'error'    => 'No se pudo cargar el directorio en este momento.',
+			'years'    => 'anos de experiencia',
+		);
+
+	$limit = max( 1, min( 100, intval( $a['limit'] ) ) );
+	$base  = untrailingslashit( esc_url_raw( $a['base'] ) );
+
+	$url = add_query_arg(
+		array_filter( array(
+			'limit'   => $limit,
+			'sector'  => sanitize_text_field( $a['sector'] ),
+			'country' => sanitize_text_field( $a['country'] ),
+		) ),
+		$base . '/' . rawurlencode( $slug ) . '/api/public/members'
+	);
+
+	// Cache so page views do not hit the API on every request.
+	$ttl = max( 0, intval( $a['cache'] ) );
+	$key = 'cv_dir_' . md5( $url );
+	$data = $ttl ? get_transient( $key ) : false;
+
+	if ( false === $data ) {
+		$res = wp_remote_get( $url, array(
+			'timeout' => 8,
+			'headers' => array( 'Accept' => 'application/json' ),
+		) );
+		if ( is_wp_error( $res ) || 200 !== wp_remote_retrieve_response_code( $res ) ) {
+			return '<p>' . esc_html( $t['error'] ) . '</p>';
+		}
+		$json = json_decode( wp_remote_retrieve_body( $res ), true );
+		if ( empty( $json['success'] ) || empty( $json['data'] ) ) {
+			return '<p>' . esc_html( $t['error'] ) . '</p>';
+		}
+		$data = $json['data'];
+		if ( $ttl ) { set_transient( $key, $data, $ttl ); }
+	}
+
+	$members = isset( $data['members'] ) ? $data['members'] : array();
+	if ( ! $members ) {
+		return '<p>' . esc_html( $t['empty'] ) . '</p>';
+	}
+
+	$titleize = function ( $s ) {
+		return ucwords( str_replace( '_', ' ', (string) $s ) );
+	};
+
+	ob_start();
+	?>
+	<div class="cvdir-wp">
+		<p class="cvdir-wp-count"><?php echo intval( $data['total'] ) . ' ' . esc_html( $t['members'] ); ?></p>
+		<div class="cvdir-wp-grid">
+			<?php foreach ( $members as $m ) :
+				$name    = trim( ( isset( $m['first_name'] ) ? $m['first_name'] : '' ) . ' ' . ( isset( $m['last_name'] ) ? $m['last_name'] : '' ) );
+				$heading = ! empty( $m['company_name'] ) ? $m['company_name'] : $name;
+				$website = ! empty( $m['website_url'] ) ? esc_url( $m['website_url'] ) : '';
+				$li      = ! empty( $m['linkedin_url'] ) ? esc_url( $m['linkedin_url'] ) : '';
+				?>
+				<article class="cvdir-wp-card">
+					<h3><?php echo esc_html( $heading ); ?></h3>
+					<?php if ( $name && $name !== $heading ) : ?>
+						<p class="cvdir-wp-person"><?php echo esc_html( $name ); ?></p>
+					<?php endif; ?>
+					<p class="cvdir-wp-tags">
+						<?php if ( ! empty( $m['sector'] ) ) : ?>
+							<span class="cvdir-wp-tag"><?php echo esc_html( $titleize( $m['sector'] ) ); ?></span>
+						<?php endif; ?>
+						<?php if ( ! empty( $m['country'] ) ) : ?>
+							<span class="cvdir-wp-tag"><?php echo esc_html( $m['country'] ); ?></span>
+						<?php endif; ?>
+						<?php if ( ! empty( $m['verified'] ) ) : ?>
+							<span class="cvdir-wp-tag cvdir-wp-ok"><?php echo esc_html( $t['verified'] ); ?></span>
+						<?php endif; ?>
+						<?php if ( ! empty( $m['years_experience'] ) ) : ?>
+							<span class="cvdir-wp-tag"><?php echo intval( $m['years_experience'] ) . ' ' . esc_html( $t['years'] ); ?></span>
+						<?php endif; ?>
+					</p>
+					<?php if ( ! empty( $m['bio'] ) ) : ?>
+						<p class="cvdir-wp-bio"><?php echo esc_html( $m['bio'] ); ?></p>
+					<?php endif; ?>
+					<?php if ( $website || $li ) : ?>
+						<p class="cvdir-wp-links">
+							<?php if ( $website ) : ?>
+								<a href="<?php echo $website; ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html( $t['website'] ); ?></a>
+							<?php endif; ?>
+							<?php if ( $li ) : ?>
+								<a href="<?php echo $li; ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html( $t['linkedin'] ); ?></a>
+							<?php endif; ?>
+						</p>
+					<?php endif; ?>
+				</article>
+			<?php endforeach; ?>
+		</div>
+	</div>
+	<style>
+	.cvdir-wp-count{font-size:14px;opacity:.7;margin:0 0 14px}
+	.cvdir-wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+	.cvdir-wp-card{border:1px solid #e5e7eb;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+	.cvdir-wp-card h3{margin:0;font-size:17px;line-height:1.3}
+	.cvdir-wp-person{font-size:14px;opacity:.7;margin:0}
+	.cvdir-wp-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 0}
+	.cvdir-wp-tag{font-size:12px;padding:3px 9px;border-radius:999px;background:#f3f4f6;color:#374151}
+	.cvdir-wp-tag.cvdir-wp-ok{background:#ecfdf5;color:#065f46}
+	.cvdir-wp-bio{font-size:14px;line-height:1.5;margin:4px 0 0}
+	.cvdir-wp-links{display:flex;gap:14px;margin:auto 0 0;padding-top:10px;font-size:14px}
+	.cvdir-wp-links a{font-weight:600}
+	</style>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'cv_directory', 'cv_directory_shortcode' );
