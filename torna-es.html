@@ -16,10 +16,10 @@
   --mut:#a6a9b4;
   --faint:#767a86;
   --blue:#4263eb;
-  --pink:#e64980;
-  --orange:#ff922b;
-  --violet:#8b5cf6;
-  --grad:linear-gradient(120deg,#5b7bff 0%,#e64980 52%,#ff922b 100%);
+  --pink:#14b8a6;
+  --orange:#34d399;
+  --violet:#14b8a6;
+  --grad:linear-gradient(120deg,#22d3ee 0%,#14b8a6 52%,#34d399 100%);
   --grad-soft:linear-gradient(135deg,rgba(91,123,255,.16),rgba(230,73,128,.14));
   --good:#3ad07f;--good-soft:rgba(58,208,127,.14);
   --warn:#e6b45a;--warn-soft:rgba(230,180,90,.14);
@@ -31,7 +31,7 @@
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#ec4899;
+  --accent-cyan:#22d3ee;--accent-violet:#14b8a6;--accent-magenta:#10b981;
   --ink-mute:#a6a9b4;--amber:#e6b45a;--radius-sm:12px;
   font-family:var(--sans);color:var(--ink);background:var(--bg);
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
@@ -83,10 +83,10 @@
 @media(max-width:520px){.d2b .rstart-grid{grid-template-columns:1fr}}
 .d2b .d2b-contact{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:2px 8px 8px}
 .d2b .d2b-contact input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .12s ease}
-.d2b .d2b-contact input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-contact input:focus{border-color:rgba(20,184,166,.6)}
 .d2b .d2b-contact input::placeholder{color:#7c808c}
 @media(max-width:560px){.d2b .d2b-contact{grid-template-columns:1fr}}
-.d2b .poc-card{max-width:760px;margin:16px auto 0;background:linear-gradient(135deg,rgba(58,208,127,.09),rgba(139,92,246,.09));border:1px solid var(--line2);box-shadow:var(--shadow);border-radius:var(--r-lg);padding:22px 24px}
+.d2b .poc-card{max-width:760px;margin:16px auto 0;background:linear-gradient(135deg,rgba(58,208,127,.09),rgba(20,184,166,.09));border:1px solid var(--line2);box-shadow:var(--shadow);border-radius:var(--r-lg);padding:22px 24px}
 .d2b .poc-card.poc-loading{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:14.5px;background:var(--card)}
 .d2b .poc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .d2b .poc-badge{font-size:11.5px;font-weight:700;font-family:var(--mono);letter-spacing:.05em;color:var(--good);background:var(--good-soft);border:1px solid rgba(58,208,127,.35);padding:4px 10px;border-radius:999px}
@@ -96,10 +96,10 @@
 .d2b .poc-btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:transform .12s ease,filter .12s ease}
 .d2b .poc-btn:hover{transform:translateY(-1px)}
 .d2b .poc-btn.wa{background:#25d366;color:#08240f}
-.d2b .poc-btn.sms{background:#6a4bff;color:#fff}
+.d2b .poc-btn.sms{background:#0e7490;color:#fff}
 .d2b .poc-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
 .d2b .poc-note{font-size:12.5px;color:var(--good);margin-top:10px;min-height:14px}
-.d2b .spinner.dark{border:2px solid rgba(139,92,246,.3);border-top-color:var(--violet)}
+.d2b .spinner.dark{border:2px solid rgba(20,184,166,.3);border-top-color:var(--violet)}
 .d2b .demo-cd{font-variant-numeric:tabular-nums;font-weight:650;opacity:.92;white-space:nowrap}
 .d2b .poc-start{margin-top:16px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;border:none;font-weight:750;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:filter .12s ease,transform .12s ease}
 .d2b .poc-start:hover{filter:brightness(1.06);transform:translateY(-1px)}
@@ -113,7 +113,7 @@
 .d2b .modal-sub{font-size:14px;color:var(--mut);margin-top:6px}
 .d2b .modal-fields{display:flex;flex-direction:column;gap:10px;margin:18px 0}
 .d2b .modal-fields input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 14px;color:var(--ink);font:inherit;font-size:15px;outline:none;transition:border-color .12s ease}
-.d2b .modal-fields input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .modal-fields input:focus{border-color:rgba(20,184,166,.6)}
 .d2b .modal-fields input::placeholder{color:#7c808c}
 .d2b .modal-go{width:100%;justify-content:center;margin-top:4px}
 .d2b .modal-status{font-size:13px;color:var(--mut);margin-top:10px;min-height:16px;text-align:center}
@@ -126,7 +126,7 @@
 .d2b .cm-phone-row input{flex:1 1 auto}
 .d2b .cm-lang{display:flex;gap:8px}
 .d2b .cm-lang-opt{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:11px 10px;color:var(--mut);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:.12s ease}
-.d2b .cm-lang-opt:hover{border-color:rgba(139,92,246,.5);color:var(--ink)}
+.d2b .cm-lang-opt:hover{border-color:rgba(20,184,166,.5);color:var(--ink)}
 .d2b .cm-lang-opt.on{background:var(--grad);color:#fff;border-color:transparent}
 .d2b #d2b-input.locked{cursor:pointer;opacity:.85}
 .d2b .d2b-reset{text-align:center;margin-top:10px}
@@ -136,7 +136,7 @@
 .d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
 .d2b .slot{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:11px;padding:11px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:all .12s ease}
 .d2b .slot:hover{border-color:var(--violet)}
-.d2b .slot.sel{border-color:var(--violet);background:rgba(139,92,246,.18)}
+.d2b .slot.sel{border-color:var(--violet);background:rgba(20,184,166,.18)}
 .d2b .slot .d{font-weight:700;font-size:13.5px}
 .d2b .slot .t{color:var(--mut);font-size:12.5px;margin-top:2px}
 @media(max-width:480px){.d2b .slots{grid-template-columns:1fr}}
@@ -183,7 +183,7 @@
 .d2b .orb-wrap:hover{transform:scale(1.02)}
 .d2b .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
 .d2b .orb-wrap.disabled{cursor:default}
-.d2b .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.d2b .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(20,184,166,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
 .d2b .orb-wrap[data-state="listening"] .orb-svg{transform:scale(calc(1 + var(--orb-amp)*.06));transition:transform 80ms linear,filter 80ms linear}
 .d2b .orb-wrap[data-state="listening"] .orb-ring{stroke-width:calc(1.5px + var(--orb-amp)*2px)!important}
 .d2b .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
@@ -197,7 +197,7 @@
 @keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .d2b .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
 @keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
-.d2b .orb-wrap[data-state="listening"] .orb-svg{filter:drop-shadow(0 8px 32px rgba(34,211,238,.55)) drop-shadow(0 4px 18px rgba(139,92,246,.35)) brightness(1.15);transition:filter 200ms ease}
+.d2b .orb-wrap[data-state="listening"] .orb-svg{filter:drop-shadow(0 8px 32px rgba(34,211,238,.55)) drop-shadow(0 4px 18px rgba(20,184,166,.35)) brightness(1.15);transition:filter 200ms ease}
 .d2b .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
 .d2b .orb-wrap[data-state="listening"] .orb-ring{opacity:1;animation:orbRingPulse 1.6s ease-out infinite}
 .d2b .orb-wrap[data-state="listening"] .orb-ring-1{animation-delay:0s}
@@ -246,7 +246,7 @@
 .d2b .builder{position:relative;z-index:3;max-width:720px;margin:40px auto 0}
 .d2b .promptcard{background:rgba(22,22,29,.86);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-xl);
   box-shadow:var(--shadow-lg);padding:10px;transition:box-shadow .2s ease,border-color .2s ease;backdrop-filter:blur(12px)}
-.d2b .promptcard:focus-within{border-color:rgba(139,92,246,.6);box-shadow:var(--shadow-lg),0 0 0 3px rgba(139,92,246,.25)}
+.d2b .promptcard:focus-within{border-color:rgba(20,184,166,.6);box-shadow:var(--shadow-lg),0 0 0 3px rgba(20,184,166,.25)}
 .d2b textarea{width:100%;border:none;outline:none;resize:none;background:transparent;color:var(--ink);
   font-family:inherit;font-size:17px;line-height:1.5;padding:18px 18px 6px;min-height:104px}
 .d2b textarea::placeholder{color:#7c808c}
@@ -260,11 +260,11 @@
 .d2b .chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:22px}
 .d2b .chip{font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
   padding:8px 15px;border-radius:999px;transition:all .12s ease;backdrop-filter:blur(6px)}
-.d2b .chip:hover{border-color:rgba(139,92,246,.6);color:#cbb8ff;background:rgba(139,92,246,.14)}
+.d2b .chip:hover{border-color:rgba(20,184,166,.6);color:#cbb8ff;background:rgba(20,184,166,.14)}
 .d2b .d2b-extra{padding:4px 8px 8px;display:flex;flex-direction:column;gap:10px}
 .d2b .d2b-attach{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .d2b .d2b-attach-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--ink);border-radius:11px;padding:10px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .12s ease}
-.d2b .d2b-attach-btn:hover{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-attach-btn:hover{border-color:rgba(20,184,166,.6)}
 .d2b .d2b-attach-hint{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
 .d2b .d2b-filelist{width:100%;display:flex;flex-direction:column;gap:6px}
 .d2b .d2b-filerow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--mut)}
@@ -296,7 +296,7 @@
 .d2b .rlist li{position:relative;padding-left:24px;font-size:14.5px;color:var(--mut)}
 .d2b .rlist li::before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:3px;background:#6c8cff}
 .d2b .tagrow{display:flex;flex-wrap:wrap;gap:8px}
-.d2b .tag{font-size:12.5px;font-weight:600;color:#cbb8ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.32);padding:5px 12px;border-radius:8px}
+.d2b .tag{font-size:12.5px;font-weight:600;color:#cbb8ff;background:rgba(20,184,166,.16);border:1px solid rgba(20,184,166,.32);padding:5px 12px;border-radius:8px}
 .d2b .rmeta{display:flex;flex-wrap:wrap;gap:22px;padding-top:4px}
 .d2b .rmeta .m .k{font-size:11.5px;font-family:var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
 .d2b .rmeta .m .v{font-size:15px;font-weight:700;margin-top:3px}
@@ -348,11 +348,11 @@
 .d2b .sim-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#cfd3dc;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}
 .d2b .sim-row .s{width:8px;height:8px;border-radius:50%;background:var(--good);flex:0 0 auto}
 .d2b .s-voice{align-items:center;justify-content:center;text-align:center}
-.d2b .sim-orb{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#a5f3fc,#22d3ee 34%,#8b5cf6 70%,#ec4899);box-shadow:0 0 0 0 rgba(139,92,246,.5);animation:simOrb 1.8s ease-out infinite;margin-bottom:16px}
-@keyframes simOrb{0%{box-shadow:0 0 0 0 rgba(139,92,246,.5)}70%{box-shadow:0 0 0 22px rgba(139,92,246,0)}100%{box-shadow:0 0 0 0 rgba(139,92,246,0)}}
+.d2b .sim-orb{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#a5f3fc,#22d3ee 34%,#14b8a6 70%,#10b981);box-shadow:0 0 0 0 rgba(20,184,166,.5);animation:simOrb 1.8s ease-out infinite;margin-bottom:16px}
+@keyframes simOrb{0%{box-shadow:0 0 0 0 rgba(20,184,166,.5)}70%{box-shadow:0 0 0 22px rgba(20,184,166,0)}100%{box-shadow:0 0 0 0 rgba(20,184,166,0)}}
 .d2b .sim-cap{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent-cyan);margin-bottom:14px}
 .d2b .sim-bubble{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;font-size:11px;color:#e6eefc;text-align:left;line-height:1.5}
-.d2b .sim-note{margin-top:10px;font-size:10.5px;color:#cbb8ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.3);border-radius:8px;padding:7px 10px;text-align:left}
+.d2b .sim-note{margin-top:10px;font-size:10.5px;color:#cbb8ff;background:rgba(20,184,166,.16);border:1px solid rgba(20,184,166,.3);border-radius:8px;padding:7px 10px;text-align:left}
 .d2b .s-dev{background:#0a0d16}
 .d2b .sim-tab{font-family:var(--mono);font-size:10px;color:#8aa0c6;margin-bottom:10px}
 .d2b .sim-code{font-family:var(--mono);font-size:10px;line-height:1.75;color:#cfd6e6}
@@ -556,13 +556,13 @@
               <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
               <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
               <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
-              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
-              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+              <stop offset="0.82" stop-color="#14b8a6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#10b981" stop-opacity="0.5"/>
             </radialGradient>
             <radialGradient id="orbGlow" cx="0.5" cy="0.5">
               <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
-              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
-              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+              <stop offset="0.45" stop-color="#14b8a6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#10b981" stop-opacity="0"/>
             </radialGradient>
             <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
               <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
@@ -572,8 +572,8 @@
             <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stop-color="#22d3ee"/>
               <stop offset="0.4" stop-color="#3b82f6"/>
-              <stop offset="0.75" stop-color="#8b5cf6"/>
-              <stop offset="1" stop-color="#ec4899"/>
+              <stop offset="0.75" stop-color="#14b8a6"/>
+              <stop offset="1" stop-color="#10b981"/>
             </linearGradient>
             <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
@@ -589,8 +589,8 @@
             <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
             <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
             <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
-            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
-            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#10b981" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#14b8a6" opacity="0.9"/>
           </g>
           <g class="orb-ring-mid">
             <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
@@ -610,8 +610,8 @@
           <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
           <g class="orb-particles">
             <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
-            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
-            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#14b8a6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#10b981" style="animation-delay:-2.4s"/>
             <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
           </g>
           <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
@@ -1667,7 +1667,7 @@
         for (var i = 0; i < buf.length; i++) {
           var v = buf[i] / 255, barH = v * h * 0.95, x = i * barW;
           var g = ctx2d.createLinearGradient(0, h, 0, h - barH);
-          g.addColorStop(0, '#22d3ee'); g.addColorStop(0.5, '#8b5cf6'); g.addColorStop(1, '#ec4899');
+          g.addColorStop(0, '#22d3ee'); g.addColorStop(0.5, '#14b8a6'); g.addColorStop(1, '#10b981');
           ctx2d.fillStyle = g;
           ctx2d.fillRect(x, h - barH, barW * 0.7, barH);
         }

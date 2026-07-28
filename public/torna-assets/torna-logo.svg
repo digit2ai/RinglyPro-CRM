@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" role="img" aria-label="Torna">
   <defs>
     <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#8b5cf6"/>
-      <stop offset=".55" stop-color="#d946ef"/>
-      <stop offset="1" stop-color="#ec4899"/>
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset=".52" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#34d399"/>
     </linearGradient>
   </defs>
   <text x="4" y="60" font-family="'Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-weight="850" font-size="62" letter-spacing="-3" fill="url(#tg)">Torna</text>
