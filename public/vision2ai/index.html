@@ -971,7 +971,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="foot-tag" data-i18n="foot.tag">AI Factory · Business Ecosystem · Limitless Future</div>
     <div style="text-align:right">
       <div data-i18n="foot.powered">Powered by DIGIT2AI LLC — Tampa, FL</div>
-      <div style="margin-top:4px">Tampa · Miami · Cali · Barranquilla — © 2026 Vision2Ai · <a href="tel:+17864602246" style="color:var(--cyan)">+1 (786) 460-2246</a></div>
+      <div style="margin-top:4px">Tampa · Miami · Cali · Barranquilla — © 2026 Vision2Ai · <a href="tel:+16462098900" style="color:var(--cyan)">+1 (646) 209-8900</a></div>
     </div>
   </div>
 </footer>
@@ -1026,7 +1026,7 @@ var I18N = {
     'tag.factory':'AI Factory','tag.ecosystem':'Business Ecosystem','tag.future':'Limitless Future',
     'hero.sub':'The production AI platform of <strong>Digit2ai</strong> and the leadership incubator of <strong>Visionarium</strong> — now one company. We build the intelligence engines, and we build the people who will lead with them.',
     'hero.cta1':'Explore the AI Factory','hero.cta2':'Meet the Fellowship',
-    'call.label':'Call or text us:',
+    'call.label':'Send us a project request on WhatsApp:',
     'merger.eyebrow':'The Merger','merger.h2':'Two builders. One future.',
     'merger.lede':'Since 2015, Visionarium has been forming the next generation of leaders across the Americas. In 2024, Digit2ai was born to ship AI intelligence in production at scale. Vision2Ai unites both under a single roof.',
     'merger.left.h':'The AI Factory',
@@ -1153,7 +1153,7 @@ var I18N = {
     'tag.factory':'Fábrica de IA','tag.ecosystem':'Ecosistema de Negocios','tag.future':'Futuro Sin Límites',
     'hero.sub':'La plataforma de IA en producción de <strong>Digit2ai</strong> y la incubadora de liderazgo de <strong>Visionarium</strong> — ahora una sola compañía. Construimos los motores de inteligencia y formamos a las personas que liderarán con ellos.',
     'hero.cta1':'Explora la Fábrica de IA','hero.cta2':'Conoce el Programa',
-    'call.label':'Llámanos o escríbenos:',
+    'call.label':'Envíanos tu solicitud de proyecto por WhatsApp:',
     'merger.eyebrow':'La Fusión','merger.h2':'Dos creadores. Un solo futuro.',
     'merger.lede':'Desde 2015, Visionarium ha formado a la próxima generación de líderes en toda América. En 2024 nació Digit2ai para desplegar inteligencia artificial en producción y a escala. Vision2Ai une a ambas bajo un mismo techo.',
     'merger.left.h':'La Fábrica de IA',
@@ -1329,11 +1329,20 @@ applyLang(detectLang());
 
 /* ==================== Contact line ==================== */
 (function(){
-  var DEFAULT_NUM = '+17864602246';
-  var DEFAULT_DISPLAY = '+1 (786) 460-2246';
+  var DEFAULT_NUM = '+16462098900';
+  var DEFAULT_DISPLAY = '+1 (646) 209-8900';
   var chip = document.getElementById('callChip');
   var link = document.getElementById('callLink');
-  function setNum(num, disp){ if(!link) return; link.href = 'tel:' + num; link.textContent = disp || num; chip.classList.add('on'); }
+  // WhatsApp-first: the chip opens a chat pre-filled with a project request,
+  // so a tap starts the conversation instead of a cold call.
+  var WA_TEXT = { en: 'Hi Vision2Ai — I have a project request. Here is what my business needs:',
+                  es: 'Hola Vision2Ai — tengo una solicitud de proyecto. Esto es lo que mi empresa necesita:' };
+  function setNum(num, disp){
+    if(!link) return;
+    link.href = 'https://wa.me/' + num.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(WA_TEXT[LANG] || WA_TEXT.en);
+    link.target = '_blank'; link.rel = 'noopener';
+    link.textContent = disp || num; chip.classList.add('on');
+  }
   setNum(DEFAULT_NUM, DEFAULT_DISPLAY); // show immediately
   // Optional override if a voice line is configured server-side.
   fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(function(c){

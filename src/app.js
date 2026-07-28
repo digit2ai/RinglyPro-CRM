@@ -417,24 +417,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// Custom domain: vision2ai.app -> Vision2Ai corporate landing, served IN PLACE
-// so the address bar stays on vision2ai.app. Mirrors the /vision2ai path served
-// from public/vision2ai/index.html. Only exercised once vision2ai.app DNS points
-// AT THIS APP and the domain is added on Render/Cloudflare; until then this app
-// never sees the Host header and the block is a harmless no-op. The booking API
-// (/vision2ai/api/*), champion teaser, TTS and all static assets pass through.
+// Custom domain: vision2ai.app -> Vision2Ai, served IN PLACE so the address bar
+// stays on vision2ai.app. ROOT is the voice-orb-first AI-factory funnel (a
+// Vision2Ai-rebranded clone of the OrbUp funnel, /v2ai + /v2ai-es); the corporate
+// merger landing (public/vision2ai/index.html) stays reachable at /company and at
+// the /vision2ai path. Only exercised once vision2ai.app DNS points AT THIS APP
+// and the domain is added on Render/Cloudflare; until then this app never sees the
+// Host header and the block is a harmless no-op. The booking API (/vision2ai/api/*),
+// champion teaser, TTS, /projects/* and all static assets pass through.
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'vision2ai.app' || host === 'www.vision2ai.app') {
     const p = req.path;
-    // Pass API, teaser, and any static asset (has a file extension) through untouched
-    if (p.startsWith('/vision2ai/api') || p.startsWith('/api') ||
-        p.startsWith('/champion-teaser') || /\.[a-z0-9]{2,5}$/i.test(p)) {
+    // Pass funnel routes, API, teaser, and any static asset (has a file extension) through untouched
+    if (p.startsWith('/v2ai') || p.startsWith('/vision2ai') || p.startsWith('/api') ||
+        p.startsWith('/projects') || p.startsWith('/champion-teaser') ||
+        /\.[a-z0-9]{2,5}$/i.test(p)) {
       return next();
     }
-    if (p === '/' || p === '' || p === '/index.html' || p === '/vision2ai' || p === '/vision2ai/') {
-      req.url = '/vision2ai/index.html';
-    }
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en') req.url = '/v2ai';
+    else if (p === '/es') req.url = '/v2ai-es';
+    // The corporate "two builders, one future" landing keeps a home of its own
+    else if (p === '/company' || p === '/company/') req.url = '/vision2ai/index.html';
   }
   next();
 });
@@ -3661,6 +3665,191 @@ ${content}
 </html>`);
 });
 console.log('🌀 Torna brand pages mounted at /torna and /torna-es');
+
+// ============================================================
+// VISION2AI — vision2ai.app brand (Vision2Ai-rebranded clone of
+// the OrbUp funnel, positioned on the AI Factory). Same voice-orb-
+// first funnel + same live backend (triage/intake/voice/booking/
+// SMS) — new brand, served at the root of vision2ai.app. The
+// corporate merger landing lives on at /vision2ai and /company.
+// ============================================================
+const V2AI_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
+(function(){
+  try {
+    var TARGET = ${JSON.stringify(targetLang)};
+    var url = new URL(window.location.href);
+    var override = url.searchParams.get('lang');
+    var STORE_KEY = 'v2ai_lang';
+    var safeGet = function(){ try { return localStorage.getItem(STORE_KEY); } catch(e){ return null; } };
+    var safeSet = function(v){ try { localStorage.setItem(STORE_KEY, v); } catch(e){} };
+    var nav = function(path){
+      var dest = 'https://aiagent.ringlypro.com' + path;
+      try { if (window.top && window.top !== window.self) { window.top.location.replace(dest); return; } } catch(e){}
+      window.location.replace(path);
+    };
+    if (override === 'en' || override === 'es') {
+      safeSet(override);
+      if (override !== TARGET) nav(override === 'es' ? '/v2ai-es' : '/v2ai');
+      return;
+    }
+    var stored = safeGet();
+    if (stored === 'en' || stored === 'es') {
+      if (stored !== TARGET) nav(stored === 'es' ? '/v2ai-es' : '/v2ai');
+      return;
+    }
+    if (TARGET === 'es') { safeSet('es'); return; }
+    var SPANISH_COUNTRIES = ['ES','MX','AR','CO','PE','VE','CL','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PR','UY','GQ'];
+    var done = false; var html = document.documentElement; html.style.visibility = 'hidden';
+    var finish = function(toEs){ if (done) return; done = true; html.style.visibility='';
+      if (toEs) { safeSet('es'); nav('/v2ai-es'); } else { safeSet('en'); } };
+    setTimeout(function(){ finish(false); }, 1200);
+    fetch('https://ipapi.co/json/', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ var c = d && d.country_code ? String(d.country_code).toUpperCase() : '';
+        finish(SPANISH_COUNTRIES.indexOf(c) !== -1); })
+      .catch(function(){ finish(false); });
+  } catch(e) {}
+})();
+</script>`;
+
+const v2aiFrameCsp = "frame-ancestors 'self' https://vision2ai.app https://*.vision2ai.app https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
+
+const V2AI_PWA_HEAD = `<meta name="theme-color" content="#06081a">
+<link rel="icon" type="image/png" sizes="32x32" href="/v2ai-assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/v2ai-assets/apple-touch-icon.png">
+<link rel="manifest" href="/v2ai-assets/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vision2Ai">
+<script>if('serviceWorker' in navigator && location.hostname.indexOf('vision2ai.app')!==-1){window.addEventListener('load',function(){navigator.serviceWorker.register('/v2ai-sw.js',{scope:'/'}).catch(function(){});});}</script>`;
+
+const V2AI_OG = 'https://vision2ai.app/v2ai-assets/vision2ai-logo.svg';
+
+app.get('/v2ai', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${V2AI_GEO_REDIRECT_SCRIPT('en')}
+<title>Vision2Ai — Your AI factory. On call.</title>
+${V2AI_PWA_HEAD}
+<meta name="description" content="Tap the orb and describe what your business needs. The Vision2Ai AI factory scopes it, an 83-role AI workforce builds it, and we ship it live — voice agents, dashboards, automations, full platforms.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vision2ai.app">
+<meta property="og:title" content="Vision2Ai — Your AI factory. On call.">
+<meta property="og:description" content="Tap the orb and describe your idea. The factory scopes it, builds it, and ships it live.">
+<meta property="og:image" content="${V2AI_OG}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vision2Ai — Your AI factory. On call.">
+<meta name="twitter:image" content="${V2AI_OG}">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/v2ai/start', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-start.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get started — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<meta name="description" content="Create your free Vision2Ai workspace — workspace-private projects, 5 build credits a day, no credit card.">
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/v2ai/workspace', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-workspace.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/v2ai/login', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-login.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/v2ai-es', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-es.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${V2AI_GEO_REDIRECT_SCRIPT('es')}
+<title>Vision2Ai — Tu fábrica de IA. A la orden.</title>
+${V2AI_PWA_HEAD}
+<meta name="description" content="Toca el orbe y describe lo que tu empresa necesita. La fábrica de IA de Vision2Ai lo dimensiona, una fuerza de trabajo de IA con 83 roles lo construye y lo lanzamos en vivo — agentes de voz, tableros, automatizaciones y plataformas completas.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vision2ai.app">
+<meta property="og:title" content="Vision2Ai — Tu fábrica de IA. A la orden.">
+<meta property="og:description" content="Toca el orbe y describe tu idea. La fábrica la dimensiona, la construye y la lanza en vivo.">
+<meta property="og:image" content="${V2AI_OG}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vision2Ai — Tu fábrica de IA. A la orden.">
+<meta name="twitter:image" content="${V2AI_OG}">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+console.log('🛰️ Vision2Ai brand pages mounted at /v2ai and /v2ai-es');
 
 // Presto — 5-minute executive mini-demo (EN/ES toggle in-page)
 app.get('/presto', (req, res) => {

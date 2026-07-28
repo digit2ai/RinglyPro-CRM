@@ -1,0 +1,17 @@
+{
+  "name": "Vision2Ai",
+  "short_name": "Vision2Ai",
+  "description": "The AI factory. Tap the orb, describe what your business needs, and an 83-role AI workforce scopes it, builds it, and ships it live.",
+  "start_url": "/v2ai",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06081a",
+  "theme_color": "#06081a",
+  "icons": [
+    { "src": "/v2ai-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/v2ai-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/v2ai-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/v2ai-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
