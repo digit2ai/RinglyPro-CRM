@@ -1,0 +1,1803 @@
+<!-- ORBUP | Self-Serve Builder Landing | v4.1 (Lovable-style, dark aurora) -->
+<style>
+/* ============================================================
+   ORBUP — SELF-SERVE BUILDER (dark aurora, Lovable-matched)
+   All styles scoped under .d2b to avoid collisions.
+   ============================================================ */
+.d2b, .d2b *, .d2b *::before, .d2b *::after{margin:0;padding:0;box-sizing:border-box}
+.d2b{
+  --bg:#0a0a0e;
+  --bg2:#101016;
+  --card:#16161d;
+  --card2:#1c1c24;
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7;
+  --mut:#a6a9b4;
+  --faint:#767a86;
+  --blue:#4263eb;
+  --pink:#e64980;
+  --orange:#ff922b;
+  --violet:#8b5cf6;
+  --grad:linear-gradient(120deg,#5b7bff 0%,#e64980 52%,#ff922b 100%);
+  --grad-soft:linear-gradient(135deg,rgba(91,123,255,.16),rgba(230,73,128,.14));
+  --good:#3ad07f;--good-soft:rgba(58,208,127,.14);
+  --warn:#e6b45a;--warn-soft:rgba(230,180,90,.14);
+  --pill:#f4f5f7;--pill-ink:#101015;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 4px 14px rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5),0 40px 90px rgba(0,0,0,.55);
+  --r:14px;--r-lg:22px;--r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#ec4899;
+  --ink-mute:#a6a9b4;--amber:#e6b45a;--radius-sm:12px;
+  font-family:var(--sans);color:var(--ink);background:var(--bg);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  line-height:1.55;letter-spacing:-.011em;width:100%;min-height:100vh;overflow-x:hidden;position:relative;
+}
+.d2b a{color:inherit;text-decoration:none}
+.d2b button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.d2b img{max-width:100%;display:block}
+.d2b ul{list-style:none}
+.d2b h1,.d2b h2,.d2b h3{line-height:1.1;letter-spacing:-.03em;text-wrap:balance}
+.d2b .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.d2b .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* aurora ambient — blue -> pink -> orange glow behind the hero */
+.d2b .ambient{position:absolute;inset:0 0 auto 0;height:1180px;z-index:0;pointer-events:none;overflow:hidden}
+.d2b .ambient::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(58% 34% at 50% 40%, rgba(66,99,235,.60), transparent 68%),
+    radial-gradient(66% 40% at 50% 60%, rgba(230,73,128,.55), transparent 70%),
+    radial-gradient(78% 42% at 50% 82%, rgba(255,146,43,.48), transparent 74%);
+  filter:blur(28px);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 72%,transparent 100%);
+          mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 72%,transparent 100%);}
+.d2b .ambient::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 60% at 50% 30%, transparent 40%, rgba(10,10,14,.55) 100%);}
+
+/* floating dots constellation (vision2ai-style) */
+.d2b .stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* nav */
+.d2b nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:22px 24px;max-width:1120px;margin:0 auto}
+.d2b .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.04em}
+.d2b .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--grad);box-shadow:var(--shadow-sm)}
+.d2b .brand-logo{height:34px;width:auto;display:block}
+.d2b .rstart{padding:0 26px 24px}
+.d2b .rstart-form{display:flex;flex-direction:column;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.d2b .rstart-title{font-size:16px;font-weight:750}
+.d2b .rstart-sub{font-size:13.5px;color:var(--mut)}
+.d2b .rstart-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.d2b .rstart input{background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .12s ease}
+.d2b .rstart input:focus{border-color:var(--violet)}
+.d2b .rstart input::placeholder{color:var(--faint)}
+.d2b .rstart-form .btn{align-self:flex-start;margin-top:4px}
+.d2b .rstart-status{font-size:13px;color:var(--mut);min-height:16px}
+.d2b .rstart-status.err{color:#ff9a8f}
+.d2b .rstart-success{text-align:center;padding:12px 4px}
+.d2b .rs-check{width:46px;height:46px;border-radius:50%;background:var(--good-soft);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 12px;border:1px solid rgba(58,208,127,.35)}
+@media(max-width:520px){.d2b .rstart-grid{grid-template-columns:1fr}}
+.d2b .d2b-contact{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:2px 8px 8px}
+.d2b .d2b-contact input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .12s ease}
+.d2b .d2b-contact input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-contact input::placeholder{color:#7c808c}
+@media(max-width:560px){.d2b .d2b-contact{grid-template-columns:1fr}}
+.d2b .poc-card{max-width:760px;margin:16px auto 0;background:linear-gradient(135deg,rgba(58,208,127,.09),rgba(139,92,246,.09));border:1px solid var(--line2);box-shadow:var(--shadow);border-radius:var(--r-lg);padding:22px 24px}
+.d2b .poc-card.poc-loading{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:14.5px;background:var(--card)}
+.d2b .poc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.d2b .poc-badge{font-size:11.5px;font-weight:700;font-family:var(--mono);letter-spacing:.05em;color:var(--good);background:var(--good-soft);border:1px solid rgba(58,208,127,.35);padding:4px 10px;border-radius:999px}
+.d2b .poc-title{font-size:17px;font-weight:750}
+.d2b .poc-sub{font-size:14px;color:var(--mut);margin-top:8px}
+.d2b .poc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.d2b .poc-btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:transform .12s ease,filter .12s ease}
+.d2b .poc-btn:hover{transform:translateY(-1px)}
+.d2b .poc-btn.wa{background:#25d366;color:#08240f}
+.d2b .poc-btn.sms{background:#6a4bff;color:#fff}
+.d2b .poc-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.d2b .poc-note{font-size:12.5px;color:var(--good);margin-top:10px;min-height:14px}
+.d2b .spinner.dark{border:2px solid rgba(139,92,246,.3);border-top-color:var(--violet)}
+.d2b .demo-cd{font-variant-numeric:tabular-nums;font-weight:650;opacity:.92;white-space:nowrap}
+.d2b .poc-start{margin-top:16px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;border:none;font-weight:750;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:filter .12s ease,transform .12s ease}
+.d2b .poc-start:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.d2b .d2b-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.d2b .d2b-modal[hidden]{display:none}
+.d2b .d2b-modal-backdrop{position:absolute;inset:0;background:rgba(4,5,10,.74);backdrop-filter:blur(3px)}
+.d2b .d2b-modal-box{position:relative;z-index:1;width:100%;max-width:440px;background:var(--card);border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:28px 26px;animation:d2bfade .25s ease}
+.d2b .d2b-modal-x{position:absolute;top:12px;right:15px;font-size:24px;line-height:1;color:var(--faint);background:none;border:none;cursor:pointer}
+.d2b .d2b-modal-x:hover{color:var(--ink)}
+.d2b .modal-title{font-size:20px;font-weight:780}
+.d2b .modal-sub{font-size:14px;color:var(--mut);margin-top:6px}
+.d2b .modal-fields{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+.d2b .modal-fields input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 14px;color:var(--ink);font:inherit;font-size:15px;outline:none;transition:border-color .12s ease}
+.d2b .modal-fields input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .modal-fields input::placeholder{color:#7c808c}
+.d2b .modal-go{width:100%;justify-content:center;margin-top:4px}
+.d2b .modal-status{font-size:13px;color:var(--mut);margin-top:10px;min-height:16px;text-align:center}
+.d2b .modal-status.err{color:#ff9a8f}
+/* Required identity gate — name/email/phone/language before writing a request */
+.d2b .mf{display:flex;flex-direction:column;gap:5px}
+.d2b .mf-l{font-size:12px;color:var(--mut);font-weight:600}
+.d2b .cm-phone-row{display:flex;gap:8px}
+.d2b .cm-cc{flex:0 0 auto;max-width:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 8px;color:var(--ink);font:inherit;font-size:14px;outline:none}
+.d2b .cm-phone-row input{flex:1 1 auto}
+.d2b .cm-lang{display:flex;gap:8px}
+.d2b .cm-lang-opt{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:11px 10px;color:var(--mut);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:.12s ease}
+.d2b .cm-lang-opt:hover{border-color:rgba(139,92,246,.5);color:var(--ink)}
+.d2b .cm-lang-opt.on{background:var(--grad);color:#fff;border-color:transparent}
+.d2b #d2b-input.locked{cursor:pointer;opacity:.85}
+.d2b .d2b-reset{text-align:center;margin-top:10px}
+.d2b .d2b-reset a{color:var(--mut);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+.d2b .d2b-reset a:hover{color:var(--ink)}
+.d2b .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
+.d2b .slot{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:11px;padding:11px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:all .12s ease}
+.d2b .slot:hover{border-color:var(--violet)}
+.d2b .slot.sel{border-color:var(--violet);background:rgba(139,92,246,.18)}
+.d2b .slot .d{font-weight:700;font-size:13.5px}
+.d2b .slot .t{color:var(--mut);font-size:12.5px;margin-top:2px}
+@media(max-width:480px){.d2b .slots{grid-template-columns:1fr}}
+.d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
+.d2b .nav-links a:hover{color:var(--ink)}
+.d2b .lang-toggle{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:12px}
+.d2b .lang-opt{padding:6px 12px;color:var(--mut);font-weight:700;letter-spacing:.05em}
+.d2b .lang-opt.active{background:var(--grad);color:#fff}
+.d2b .lang-opt:not(.active):hover{color:var(--ink)}
+.d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+.d2b .btn:hover{transform:translateY(-1px)}
+.d2b .btn-primary{background:var(--pill);color:var(--pill-ink);padding:11px 20px;font-size:14.5px;box-shadow:var(--shadow-sm)}
+.d2b .btn-primary:hover{filter:brightness(1.05)}
+.d2b .btn-grad{background:var(--grad);color:#fff;padding:13px 24px;font-size:15px;box-shadow:var(--shadow)}
+.d2b .nav-burger{display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line2);cursor:pointer;color:var(--ink);flex:0 0 auto}
+.d2b .nav-burger svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+.d2b .nav-burger .ic-x{display:none}
+.d2b nav.nav-open .nav-burger .ic-m{display:none}
+.d2b nav.nav-open .nav-burger .ic-x{display:block}
+@media(max-width:680px){
+  .d2b .nav-burger{display:inline-flex}
+  .d2b .nav-links{position:absolute;top:calc(100% + 8px);right:16px;left:16px;flex-direction:column;align-items:stretch;
+    gap:4px;background:#14151d;border:1px solid var(--line2);border-radius:16px;padding:12px;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);display:none;z-index:30}
+  .d2b nav.nav-open .nav-links{display:flex}
+  .d2b .nav-links > a{display:block;padding:12px 12px;border-radius:10px;font-size:15.5px;color:var(--ink)}
+  .d2b .nav-links > a:hover{background:rgba(255,255,255,.06)}
+  .d2b .nav-links > a.btn{margin-top:6px;justify-content:center}
+  .d2b .nav-links .lang-toggle{align-self:flex-start;margin:4px 2px}
+}
+
+/* hero */
+.d2b .hero{position:relative;z-index:2;text-align:center;padding:44px 0 24px}
+.d2b .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#dfe3ec;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);padding:6px 14px;border-radius:999px;margin-bottom:28px;backdrop-filter:blur(6px)}
+.d2b .eyebrow .pip{width:7px;height:7px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 3px rgba(255,146,43,.25)}
+.d2b .hero h1{font-size:clamp(40px,7vw,78px);font-weight:840;letter-spacing:-.05em;color:#fff;text-shadow:0 2px 40px rgba(0,0,0,.35)}
+.d2b .hero .lede{font-size:clamp(17px,2.1vw,21px);color:#c9ccd6;max-width:52ch;margin:22px auto 0;font-weight:450}
+
+/* ===== champion-teaser voice orb (ported verbatim) ===== */
+.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:22px 0 14px;--orb-size:560px;position:relative;z-index:3}
+.d2b .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 200ms ease;user-select:none;-webkit-tap-highlight-color:transparent;--orb-amp:0;will-change:transform}
+.d2b .orb-wrap:hover{transform:scale(1.02)}
+.d2b .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
+.d2b .orb-wrap.disabled{cursor:default}
+.d2b .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.d2b .orb-wrap[data-state="listening"] .orb-svg{transform:scale(calc(1 + var(--orb-amp)*.06));transition:transform 80ms linear,filter 80ms linear}
+.d2b .orb-wrap[data-state="listening"] .orb-ring{stroke-width:calc(1.5px + var(--orb-amp)*2px)!important}
+.d2b .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.d2b .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.d2b .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.d2b .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.d2b .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.d2b .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.d2b .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.d2b .orb-wrap[data-state="listening"] .orb-svg{filter:drop-shadow(0 8px 32px rgba(34,211,238,.55)) drop-shadow(0 4px 18px rgba(139,92,246,.35)) brightness(1.15);transition:filter 200ms ease}
+.d2b .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
+.d2b .orb-wrap[data-state="listening"] .orb-ring{opacity:1;animation:orbRingPulse 1.6s ease-out infinite}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-1{animation-delay:0s}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-2{animation-delay:.5s}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-3{animation-delay:1s}
+@keyframes orbRingPulse{0%{opacity:.9;stroke-width:1.5}100%{opacity:0;stroke-width:.5}}
+.d2b .orb-particles{opacity:0}
+.d2b .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+.d2b .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+.d2b .orb-wrap[data-state="thinking"] .orb-core{animation:orbThinkSpin 6s linear infinite}
+.d2b .orb-wrap[data-state="thinking"] .orb-ring{opacity:.7;animation:orbRingTight 2.4s ease-in-out infinite}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+.d2b .orb-wrap[data-state="speaking"] .orb-core,.d2b .orb-wrap[data-state="speaking"] .orb-glow{filter:brightness(1.3) saturate(1.2)}
+.d2b .orb-wave{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:240px;height:60px;opacity:0;pointer-events:none;transition:opacity 200ms ease}
+.d2b .orb-wrap[data-state="speaking"] .orb-wave{opacity:.85}
+.d2b .orb-caption{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(360px,92vw);text-align:center;font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-mute);transition:color 200ms ease;line-height:1.4}
+.d2b .orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.d2b .orb-cap-idle,.d2b .orb-cap-active{display:none}
+.d2b .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
+.d2b .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
+.d2b .orb-wrap:hover .orb-caption{color:var(--accent-cyan)}
+.d2b .orb-wrap[data-state="listening"] .orb-caption{color:var(--accent-cyan)}
+.d2b .orb-wrap[data-state="thinking"] .orb-caption{color:var(--accent-violet)}
+.d2b .orb-wrap[data-state="speaking"] .orb-caption{color:var(--accent-magenta)}
+.d2b .orb-wrap[data-state="listening"] .orb-caption::after{content:' · listening'}
+.d2b .orb-wrap[data-state="thinking"] .orb-caption::after{content:' · analyzing'}
+.d2b .orb-wrap[data-state="speaking"] .orb-caption::after{content:' · speaking'}
+.d2b .orb-fallback[hidden]{display:none!important}
+.d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
+.d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
+@media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
+@media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
+@media(prefers-reduced-motion:reduce){
+  .d2b .orb-ring-outer,.d2b .orb-ring-mid,.d2b .orb-ring-inner,.d2b .orb-iris-outer,.d2b .orb-iris-segs,.d2b .orb-scan,.d2b .orb-crosshair,.d2b .orb-particle{animation:none!important}
+  .d2b .orb-svg animate,.d2b .orb-svg animateTransform{display:none}
+  .d2b .orb-wrap[data-state="listening"] .orb-svg{transform:none!important}
+  .d2b .orb-wrap[data-state="listening"] .orb-ring{animation:none!important;opacity:1}
+  .d2b .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+  .d2b .orb-wrap[data-state="thinking"] .orb-core{animation:none!important}
+  .d2b .orb-wrap[data-state="speaking"] .orb-wave{opacity:.5}
+}
+
+/* prompt box */
+.d2b .builder{position:relative;z-index:3;max-width:720px;margin:40px auto 0}
+.d2b .promptcard{background:rgba(22,22,29,.86);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-lg);padding:10px;transition:box-shadow .2s ease,border-color .2s ease;backdrop-filter:blur(12px)}
+.d2b .promptcard:focus-within{border-color:rgba(139,92,246,.6);box-shadow:var(--shadow-lg),0 0 0 3px rgba(139,92,246,.25)}
+.d2b textarea{width:100%;border:none;outline:none;resize:none;background:transparent;color:var(--ink);
+  font-family:inherit;font-size:17px;line-height:1.5;padding:18px 18px 6px;min-height:104px}
+.d2b textarea::placeholder{color:#7c808c}
+.d2b .promptbar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 8px 16px;gap:12px}
+.d2b .promptbar .hint{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
+.d2b .promptbar .hint.warn{color:var(--warn)}
+.d2b #d2b-go{background:var(--grad);color:#fff;font-weight:700;font-size:15px;padding:12px 22px;border-radius:13px;
+  display:inline-flex;align-items:center;gap:9px;box-shadow:var(--shadow);transition:transform .12s ease,filter .12s ease}
+.d2b #d2b-go:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.d2b #d2b-go:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.d2b .chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:22px}
+.d2b .chip{font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  padding:8px 15px;border-radius:999px;transition:all .12s ease;backdrop-filter:blur(6px)}
+.d2b .chip:hover{border-color:rgba(139,92,246,.6);color:#cbb8ff;background:rgba(139,92,246,.14)}
+.d2b .d2b-extra{padding:4px 8px 8px;display:flex;flex-direction:column;gap:10px}
+.d2b .d2b-attach{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.d2b .d2b-attach-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--ink);border-radius:11px;padding:10px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .12s ease}
+.d2b .d2b-attach-btn:hover{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-attach-hint{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
+.d2b .d2b-filelist{width:100%;display:flex;flex-direction:column;gap:6px}
+.d2b .d2b-filerow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--mut)}
+.d2b .d2b-filerow button{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
+@media(max-width:560px){
+  .d2b textarea{min-height:150px;font-size:16px;padding:20px 16px 10px}
+  .d2b .promptbar{flex-direction:column;align-items:stretch;gap:12px;padding:6px 8px 10px}
+  .d2b .promptbar .hint{text-align:center}
+  .d2b #d2b-go{width:100%;justify-content:center;padding:15px 22px;font-size:16px}
+}
+
+/* result */
+.d2b #d2b-result{max-width:760px;margin:26px auto 0;display:none}
+.d2b #d2b-result.show{display:block;animation:d2bfade .4s ease}
+@keyframes d2bfade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.d2b .rcard{background:var(--card);border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
+.d2b .rhead{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.d2b .rhead h3{font-size:20px;font-weight:760}
+.d2b .rhead .pcaption{font-size:13px;color:var(--faint);font-family:var(--mono);margin-top:5px}
+.d2b .verdict{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.d2b .verdict.go{background:var(--good-soft);color:var(--good);border-color:rgba(58,208,127,.3)}
+.d2b .verdict.poc{background:var(--warn-soft);color:var(--warn);border-color:rgba(230,180,90,.3)}
+.d2b .verdict.stop{background:rgba(230,73,73,.15);color:#ff8a7a;border-color:rgba(230,73,73,.3)}
+.d2b .rbody{padding:22px 26px;display:flex;flex-direction:column;gap:20px}
+.d2b .rblock h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700;margin-bottom:9px;font-family:var(--mono)}
+.d2b .rblock p{font-size:15px;color:var(--ink)}
+.d2b .rlist{display:flex;flex-direction:column;gap:8px}
+.d2b .rlist li{position:relative;padding-left:24px;font-size:14.5px;color:var(--mut)}
+.d2b .rlist li::before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:3px;background:#6c8cff}
+.d2b .tagrow{display:flex;flex-wrap:wrap;gap:8px}
+.d2b .tag{font-size:12.5px;font-weight:600;color:#cbb8ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.32);padding:5px 12px;border-radius:8px}
+.d2b .rmeta{display:flex;flex-wrap:wrap;gap:22px;padding-top:4px}
+.d2b .rmeta .m .k{font-size:11.5px;font-family:var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.d2b .rmeta .m .v{font-size:15px;font-weight:700;margin-top:3px}
+.d2b .rfoot{padding:20px 26px;border-top:1px solid var(--line);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.d2b .rfoot .note{font-size:13px;color:var(--mut);max-width:44ch}
+.d2b .r-err{background:rgba(230,73,73,.12);border:1px solid rgba(230,73,73,.32);color:#ff9a8f;border-radius:var(--r);padding:16px 18px;font-size:14.5px}
+.d2b .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:d2bspin .7s linear infinite}
+@keyframes d2bspin{to{transform:rotate(360deg)}}
+
+/* proof strip */
+.d2b .proof{position:relative;z-index:2;text-align:center;margin-top:52px;font-size:13.5px;color:var(--faint);font-weight:500}
+.d2b .proof b{color:var(--mut)}
+
+/* section */
+.d2b section.blk{position:relative;z-index:1;padding:80px 0}
+.d2b .blk-head{max-width:56ch;margin:0 auto 44px;text-align:center}
+.d2b .blk-head .kick{font-size:13px;font-weight:700;color:#8fa2ff;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;font-family:var(--mono)}
+.d2b .blk-head h2{font-size:clamp(28px,4vw,42px);font-weight:800}
+.d2b .blk-head p{color:var(--mut);font-size:17px;margin-top:14px}
+
+/* steps */
+.d2b .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.d2b .step{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;box-shadow:var(--shadow-sm)}
+.d2b .step .num{font-family:var(--mono);font-weight:800;font-size:14px;color:#fff;width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.d2b .step h3{font-size:19px;font-weight:740;margin-bottom:8px}
+.d2b .step p{font-size:14.5px;color:var(--mut)}
+
+/* Meet Torna — animated app simulator */
+.d2b #meet .meet-title{font-size:clamp(28px,4vw,44px);font-weight:840;letter-spacing:-.03em;margin-bottom:28px}
+.d2b .meet-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:34px;align-items:center}
+.d2b .meet-stage{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:34px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);min-height:440px}
+.d2b .phone{position:relative;width:264px;height:544px;border-radius:36px;background:#0c0c12;border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 70px rgba(0,0,0,.55),inset 0 0 0 6px #05050a;overflow:hidden}
+.d2b .phone::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#05050a;border-radius:0 0 14px 14px;z-index:5}
+.d2b .screen{position:absolute;inset:0;opacity:0;transform:scale(.985);transition:opacity .5s ease,transform .5s ease;padding:40px 16px 18px;display:flex;flex-direction:column;pointer-events:none}
+.d2b .screen.active{opacity:1;transform:none}
+.d2b .sim-h{font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.d2b .sim-h .dot{width:22px;height:22px;border-radius:50%;background:var(--grad)}
+.d2b .s-login{align-items:center;justify-content:center;text-align:left}
+.d2b .s-login img{height:22px;width:auto;margin:0 auto 20px;display:block}
+.d2b .s-login .lbl{font-size:10.5px;color:var(--faint);align-self:stretch;margin-bottom:5px}
+.d2b .s-login .fld{width:100%;height:38px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-bottom:11px}
+.d2b .s-login .go{width:100%;height:40px;border-radius:10px;background:var(--grad);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:6px}
+.d2b .sim-tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
+.d2b .sim-tile{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:9px 8px}
+.d2b .sim-tile .n{font-size:16px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.d2b .sim-tile .l{font-size:8.5px;color:var(--faint);margin-top:2px}
+.d2b .sim-bars{display:flex;align-items:flex-end;gap:6px;height:74px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px;margin-bottom:12px}
+.d2b .sim-bars i{flex:1;background:var(--grad);border-radius:3px;opacity:.85}
+.d2b .sim-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#cfd3dc;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}
+.d2b .sim-row .s{width:8px;height:8px;border-radius:50%;background:var(--good);flex:0 0 auto}
+.d2b .s-voice{align-items:center;justify-content:center;text-align:center}
+.d2b .sim-orb{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#a5f3fc,#22d3ee 34%,#8b5cf6 70%,#ec4899);box-shadow:0 0 0 0 rgba(139,92,246,.5);animation:simOrb 1.8s ease-out infinite;margin-bottom:16px}
+@keyframes simOrb{0%{box-shadow:0 0 0 0 rgba(139,92,246,.5)}70%{box-shadow:0 0 0 22px rgba(139,92,246,0)}100%{box-shadow:0 0 0 0 rgba(139,92,246,0)}}
+.d2b .sim-cap{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent-cyan);margin-bottom:14px}
+.d2b .sim-bubble{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;font-size:11px;color:#e6eefc;text-align:left;line-height:1.5}
+.d2b .sim-note{margin-top:10px;font-size:10.5px;color:#cbb8ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.3);border-radius:8px;padding:7px 10px;text-align:left}
+.d2b .s-dev{background:#0a0d16}
+.d2b .sim-tab{font-family:var(--mono);font-size:10px;color:#8aa0c6;margin-bottom:10px}
+.d2b .sim-code{font-family:var(--mono);font-size:10px;line-height:1.75;color:#cfd6e6}
+.d2b .sim-code .k{color:#c792ea}.d2b .sim-code .s{color:#7ee787}.d2b .sim-code .f{color:#79c0ff}
+.d2b .screen.active .sim-code>div{animation:simType .45s ease both}
+.d2b .screen.active .sim-code>div:nth-child(2){animation-delay:.2s}
+.d2b .screen.active .sim-code>div:nth-child(3){animation-delay:.4s}
+.d2b .screen.active .sim-code>div:nth-child(4){animation-delay:.6s}
+.d2b .screen.active .sim-code>div:nth-child(5){animation-delay:.8s}
+@keyframes simType{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.d2b .sim-term{margin-top:auto;font-family:var(--mono);font-size:10px;color:#7ee787;background:rgba(0,0,0,.4);border-radius:8px;padding:9px 10px}
+.d2b .s-done{align-items:center;justify-content:center;text-align:center}
+.d2b .sim-check{width:76px;height:76px;border-radius:50%;background:var(--good-soft);border:1px solid rgba(58,208,127,.4);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:38px;margin-bottom:16px}
+.d2b .sim-done-t{font-size:17px;font-weight:800;color:#fff;margin-bottom:6px}
+.d2b .sim-done-s{font-size:11px;color:var(--mut);margin-bottom:14px}
+.d2b .sim-live{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;color:#e6eefc;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 12px}
+.d2b .sim-live .b{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.d2b .meet-steps{display:flex;flex-direction:column;gap:26px}
+.d2b .meet-step h3{font-size:clamp(20px,2.4vw,28px);font-weight:800;color:var(--faint);transition:color .3s ease;letter-spacing:-.02em}
+.d2b .meet-step p{font-size:15px;color:var(--faint);margin-top:6px;max-width:44ch;transition:color .3s ease}
+.d2b .meet-step.active h3{color:#fff}
+.d2b .meet-step.active p{color:var(--mut)}
+.d2b .meet-sub{color:var(--mut);font-size:15px;line-height:1.55;margin:-16px 0 30px;max-width:62ch}
+/* App-tour mockup — a real built app, walked tab by tab */
+.d2b .screen.s-app{padding:0}
+.d2b .app{position:absolute;inset:0;display:flex;flex-direction:column;background:#0a0f18}
+.d2b .app-hd{padding:34px 14px 8px;font-size:15px;font-weight:800;color:#fff;letter-spacing:-.02em;flex:0 0 auto}
+.d2b .app-sc{flex:1 1 auto;overflow:hidden;padding:2px 12px 8px;display:flex;flex-direction:column;gap:8px}
+.d2b .app-hero{border-radius:13px;padding:12px;background:linear-gradient(150deg,rgba(74,222,128,.16),rgba(34,211,238,.05));border:1px solid rgba(74,222,128,.18)}
+.d2b .app-hero h4{font-size:14px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.01em}
+.d2b .app-hero p{font-size:10px;color:#b9c6d8;line-height:1.45;margin-bottom:10px}
+.d2b .app-cta{height:34px;border-radius:9px;background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+.d2b .app-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.d2b .app-stat{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 8px}
+.d2b .app-stat .v{font-size:16px;font-weight:800;color:#fff;line-height:1}
+.d2b .app-stat .k{font-size:8px;color:#8a97ab;margin-top:3px;line-height:1.25}
+.d2b .app-stat .up{font-size:8px;color:#4ade80;margin-top:2px;font-weight:700}
+.d2b .app-lbl{font-size:8.5px;letter-spacing:1.3px;text-transform:uppercase;color:#6f7d92;font-weight:700;margin-top:2px}
+.d2b .app-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.d2b .app-item .t{font-size:11px;font-weight:700;color:#fff}
+.d2b .app-item .d{font-size:8.5px;color:#8593a6;margin-top:2px;line-height:1.35}
+.d2b .app-item .chev{color:#5f6b7e;font-size:14px;flex:0 0 auto}
+.d2b .app-pill{display:inline-block;font-size:8px;font-weight:700;color:#4ade80;border:1px solid rgba(74,222,128,.4);border-radius:999px;padding:2px 8px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+.d2b .app-chat{display:flex;flex-direction:column;gap:7px;padding-top:2px}
+.d2b .app-msg{max-width:84%;font-size:10px;line-height:1.45;padding:8px 10px;border-radius:12px}
+.d2b .app-msg.ai{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#e6eefc;border-bottom-left-radius:4px}
+.d2b .app-msg.me{align-self:flex-end;background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c;font-weight:600;border-bottom-right-radius:4px}
+.d2b .app-chip{align-self:flex-start;font-size:8.5px;font-weight:700;color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:999px;padding:4px 9px}
+.d2b .app-flk{font-size:9px;color:#8a97ab;margin:3px 0 -3px}
+.d2b .app-fld{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 10px;font-size:10px;color:#cfd6e6}
+.d2b .app-chart{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:11px 11px 8px}
+.d2b .app-chart h5{font-size:10px;font-weight:700;color:#fff;margin-bottom:9px}
+.d2b .app-graph{display:flex;align-items:flex-end;gap:5px;height:66px}
+.d2b .app-graph i{flex:1;background:linear-gradient(180deg,#4ade80,#22d3ee);border-radius:3px 3px 0 0}
+.d2b .tabbar{flex:0 0 auto;display:flex;border-top:1px solid rgba(255,255,255,.08);background:#080d14;padding:7px 2px 9px}
+.d2b .tabbar .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:7.5px;font-weight:600;color:#768397}
+.d2b .tabbar .tb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.d2b .tabbar .tb.on{color:#4ade80}
+@media(max-width:820px){.d2b .meet-grid{grid-template-columns:1fr;gap:26px}.d2b .meet-stage{min-height:0;padding:24px}}
+@media(prefers-reduced-motion:reduce){.d2b .sim-orb{animation:none}.d2b .screen.active .sim-code>div{animation:none}}
+
+/* showcase */
+.d2b .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.d2b .gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column}
+.d2b .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.d2b .gcard .thumb{height:104px;background:var(--grad-soft);position:relative;border-bottom:1px solid var(--line)}
+.d2b .gcard .thumb::after{content:attr(data-i);position:absolute;left:16px;bottom:12px;font-family:var(--mono);font-size:11px;font-weight:700;color:#dfe3ec;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);padding:3px 9px;border-radius:6px;backdrop-filter:blur(4px)}
+.d2b .gcard .body{padding:16px 17px;display:flex;flex-direction:column;gap:6px;flex:1}
+.d2b .gcard h4{font-size:15.5px;font-weight:740}
+.d2b .gcard p{font-size:13px;color:var(--mut);line-height:1.45;flex:1}
+.d2b .gcard .v{font-size:11px;font-family:var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+
+/* numbers */
+.d2b .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.d2b .numcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px 24px;text-align:center;box-shadow:var(--shadow-sm)}
+.d2b .numcard .big{font-size:clamp(34px,5vw,52px);font-weight:840;letter-spacing:-.04em}
+.d2b .numcard .lab{font-size:13.5px;color:var(--mut);margin-top:6px;font-weight:500}
+
+/* final cta */
+.d2b .final{position:relative;z-index:1;padding:20px 0 100px}
+.d2b .finalcard{background:#101016;border:1px solid var(--line);border-radius:var(--r-xl);padding:60px 40px;text-align:center;color:#fff;position:relative;overflow:hidden}
+.d2b .finalcard::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:.92}
+.d2b .finalcard > *{position:relative;z-index:1}
+.d2b .finalcard h2{font-size:clamp(28px,4vw,44px);font-weight:840;color:#fff;max-width:20ch;margin:0 auto}
+.d2b .finalcard p{color:rgba(255,255,255,.92);font-size:17px;margin:16px auto 28px;max-width:52ch}
+.d2b .finalcard .btn-white{background:#fff;color:var(--pill-ink);padding:15px 30px;font-size:16px;font-weight:750;border-radius:13px;box-shadow:var(--shadow)}
+
+/* footer */
+.d2b footer.d2f{border-top:1px solid var(--line);padding:32px 0 44px;color:var(--faint);font-size:13px;position:relative;z-index:1}
+.d2b .d2f-top{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.d2b .d2f-links{display:flex;align-items:center;gap:24px;flex-wrap:wrap;font-weight:500}
+.d2b .d2f-links a{color:var(--mut)}
+.d2b .d2f-links a:hover{color:var(--ink)}
+.d2b .d2f-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:16px}
+@media(max-width:640px){.d2b .d2f-top,.d2b .d2f-bottom{flex-direction:column;align-items:flex-start;gap:14px}}
+
+@media(max-width:900px){
+  .d2b .gallery{grid-template-columns:repeat(2,1fr)}
+  .d2b .nums{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px){
+  .d2b .steps{grid-template-columns:1fr}
+  .d2b section.blk{padding:56px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  .d2b *{animation:none!important;transition:none!important}
+}
+.d2b .brand-word{font-weight:850;letter-spacing:-.045em;font-size:24px;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.d2b .brand-word .up{-webkit-text-fill-color:#fff;color:#fff}
+</style>
+
+<div class="d2b">
+  <div class="ambient"></div>
+  <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
+
+  <div class="d2b-modal" id="d2b-contact-modal" hidden>
+    <div class="d2b-modal-backdrop" data-gate-close></div>
+    <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Tus datos">
+      <button class="d2b-modal-x" data-gate-close aria-label="Cerrar">&times;</button>
+      <div class="modal-title">Antes de construir &mdash; unos datos</div>
+      <div class="modal-sub">Obligatorio. Tu demo, tu plan y los avisos por SMS se construyen a partir de esto.</div>
+      <div class="modal-fields">
+        <div class="mf"><label class="mf-l" for="cm-name">Nombre completo *</label>
+          <input type="text" id="cm-name" placeholder="Nombre y apellido" autocomplete="name"></div>
+        <div class="mf"><label class="mf-l" for="cm-email">Correo de trabajo *</label>
+          <input type="email" id="cm-email" placeholder="tu@empresa.com" autocomplete="email"></div>
+        <div class="mf"><label class="mf-l" for="cm-phone">Celular * &mdash; te enviamos el enlace demo y las confirmaciones por SMS</label>
+          <div class="cm-phone-row">
+            <select id="cm-cc" class="cm-cc" aria-label="País"></select>
+            <input type="tel" inputmode="tel" id="cm-phone" placeholder="Número de celular" autocomplete="tel-national">
+          </div></div>
+        <div class="mf"><label class="mf-l">Idioma *</label>
+          <div class="cm-lang" id="cm-lang" role="group" aria-label="Idioma">
+            <button type="button" class="cm-lang-opt" data-lang="en">English</button>
+            <button type="button" class="cm-lang-opt" data-lang="es">Espa&ntilde;ol</button>
+          </div></div>
+      </div>
+      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Continuar &rarr;</button>
+      <div class="modal-status" id="cm-status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="d2b-modal" id="d2b-book-modal" hidden>
+    <div class="d2b-modal-backdrop" data-close></div>
+    <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Agenda tu inicio">
+      <button class="d2b-modal-x" data-close aria-label="Cerrar">&times;</button>
+      <div class="modal-title">Agenda tu inicio</div>
+      <div class="modal-sub">Elige un horario disponible &mdash; en hora de Colombia (COT).</div>
+      <div class="slots" id="bk-slots"><div class="slots-loading"><span class="spinner dark"></span> Cargando horarios&hellip;</div></div>
+      <button type="button" class="btn btn-grad modal-go" id="bk-confirm" disabled>Confirmar reserva</button>
+      <div class="modal-status" id="bk-status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <nav>
+    <a class="brand" href="#" aria-label="Torna"><img class="brand-logo" src="/torna-assets/torna-logo.svg" alt="Torna"></a>
+    <div class="nav-links">
+      <a href="#how">Cómo funciona</a>
+      <a href="#platforms">Plataformas</a>
+      <a href="#numbers">Por qué nosotros</a>
+      <a href="/blog">Blog</a>
+      <span class="lang-toggle" role="group" aria-label="Idioma">
+        <a href="/torna?lang=en" class="lang-opt">EN</a>
+        <a href="/torna-es?lang=es" class="lang-opt active" aria-current="true">ES</a>
+      </span>
+      <a href="/torna/workspace">Workspace</a>
+      <a href="/torna/start" class="btn btn-primary">Empezar</a>
+    </div>
+    <button class="nav-burger" id="navBurger" aria-label="Menú" aria-expanded="false" aria-controls="navLinks">
+      <svg class="ic-m" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg class="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </nav>
+  <script>(function(){
+    var nav=document.querySelector('.d2b nav'), b=document.getElementById('navBurger');
+    if(!nav||!b) return;
+    var links=nav.querySelector('.nav-links'); if(links) links.id='navLinks';
+    function set(open){ nav.classList.toggle('nav-open',open); b.setAttribute('aria-expanded',open?'true':'false'); }
+    b.addEventListener('click', function(e){ e.stopPropagation(); set(!nav.classList.contains('nav-open')); });
+    if(links) links.addEventListener('click', function(e){ if(e.target.closest('a')) set(false); });
+    document.addEventListener('click', function(e){ if(nav.classList.contains('nav-open') && !nav.contains(e.target)) set(false); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') set(false); });
+  })();</script>
+
+  <header class="hero">
+    <div class="wrap">
+      <h1>Es hora de<br><span class="grad-text">Torna.</span></h1>
+      <p class="eyebrow" style="margin:22px 0 0"><span class="pip"></span>Inteligencia de Automatizaci&oacute;n</p>
+      <p class="lede">Toca el orbe y habla. Describe la herramienta que tu empresa necesita &mdash; nuestra fuerza de trabajo con IA la dimensiona, la construye y la lanza.</p>
+    </div>
+
+    <div class="hero-logo">
+      <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
+           aria-label="Activa el cerebro Neural — presiona Enter o Espacio para iniciar una conversación de voz"
+           aria-pressed="false" aria-describedby="orb-caption orb-sr-status"
+           data-state="idle" data-configured="false">
+        <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+        <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
+        <div class="orb-caption" id="orb-caption">
+          <span class="orb-cap-idle">Toca el orbe &mdash; deja que hable por nosotros</span>
+          <span class="orb-cap-active">Toca el orbe o presiona Esc para detener</span>
+        </div>
+      </div>
+      <div class="orb-fallback" id="orb-fallback" hidden>
+        <strong>El modo de voz se está preparando.</strong><br>
+        Escribe tu idea abajo y nuestra IA te construirá un plan real en segundos.
+      </div>
+    </div>
+
+    <div class="or-divider">— o escribe tu idea —</div>
+
+    <div class="builder wrap">
+      <form id="d2b-form" class="promptcard">
+        <textarea id="d2b-input" maxlength="5000" placeholder="Pídele a Torna que construya...  ej. &quot;Una recepcionista de IA que contesta llamadas en español, agenda citas y envía una confirmación por SMS&quot;"></textarea>
+        <div class="d2b-extra">
+          <div class="d2b-attach">
+            <input type="file" id="d2b-files" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv,.rtf" hidden>
+            <button type="button" class="d2b-attach-btn" id="d2b-attach">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Adjuntar archivos (PDF, Word, texto)
+            </button>
+            <span class="d2b-attach-hint">PDF, Word, texto, CSV o RTF &mdash; hasta 5 archivos, 10 MB cada uno</span>
+            <div class="d2b-filelist" id="d2b-filelist"></div>
+          </div>
+        </div>
+        <div class="promptbar">
+          <span class="hint" id="d2b-hint">Describe tu idea &mdash; cuanto más detalle, mejor será el plan.</span>
+          <button type="submit" id="d2b-go">Obtener mi plan y demo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </form>
+
+      <div class="chips" id="d2b-chips">
+        <button class="chip" data-p="Una IA que llama a los pacientes que faltaron a su cita y los reagenda automáticamente en inglés y español.">Recuperación de citas perdidas</button>
+        <button class="chip" data-p="Una recepcionista de IA bilingüe que contesta llamadas 24/7, agenda citas en mi calendario y envía confirmaciones por SMS.">Recepcionista telefónica IA</button>
+        <button class="chip" data-p="Un tablero que califica mis tiendas por desempeño en tiempo real y alerta a los dueños cuando un puntaje baja del objetivo.">Tablero de salud de tiendas</button>
+        <button class="chip" data-p="Un agente de IA que detecta deepfakes y suplantaciones de mi marca en línea y presenta solicitudes de retiro automáticamente.">Protección contra deepfakes</button>
+        <button class="chip" data-p="Un marketplace con subastas en vivo, conversión de divisas en tiempo real y verificación KYC para compradores y vendedores agrícolas.">Marketplace con subastas en vivo</button>
+      </div>
+
+      <p class="disclaim">Impulsado por nuestro motor de triage real (Torna Neural Intelligence MCP + A2A) &mdash; devuelve un alcance real, no una demo enlatada.</p>
+      <div class="d2b-reset" id="d2b-reset" hidden><a href="#" id="d2b-reset-link">&iquest;No eres t&uacute;? Empezar de nuevo</a></div>
+
+      <div id="d2b-result" aria-live="polite"></div>
+    </div>
+
+    <div class="proof wrap">
+      <b>Impulsando 21 plataformas en vivo en 22 verticales de la industria</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
+    </div>
+  </header>
+
+  <section class="blk" id="meet">
+    <div class="wrap">
+      <h2 class="meet-title">Conoce Torna</h2>
+      <p class="meet-sub">Esta es una app real que la fuerza de trabajo entregó &mdash; recorrida pantalla por pantalla. Empieza en el login y luego pasa por cada pestaña, tal como lo haría tu cliente.</p>
+      <div class="meet-grid">
+        <div class="meet-stage">
+          <div class="phone" id="d2b-sim" aria-hidden="true">
+            <div class="screen s-login active" data-i="0">
+              <img src="/torna-assets/torna-logo.svg" alt="Torna" style="height:30px">
+              <div class="lbl">Correo de trabajo</div><div class="fld"></div>
+              <div class="lbl">Contraseña</div><div class="fld"></div>
+              <div class="go">Abrir espacio</div>
+            </div>
+            <div class="screen s-app" data-i="1">
+              <div class="app">
+                <div class="app-hd">FormAI</div>
+                <div class="app-sc">
+                  <div class="app-hero">
+                    <h4>Buenos días, Alex</h4>
+                    <p>Día 3 de la Semana 2 &mdash; Espalda y Bíceps. Llevas una racha de 5 días.</p>
+                    <div class="app-cta">Empezar sesión de hoy</div>
+                  </div>
+                  <div class="app-stats">
+                    <div class="app-stat"><div class="v">5</div><div class="k">Racha (días)</div><div class="up">+2</div></div>
+                    <div class="app-stat"><div class="v">11</div><div class="k">Sesiones</div><div class="up">+3 sem</div></div>
+                    <div class="app-stat"><div class="v">7.2</div><div class="k">RPE prom.</div><div class="up">&darr;0.4</div></div>
+                  </div>
+                  <div class="app-lbl">Esta semana</div>
+                  <div class="app-item"><div><div class="t">Lun &mdash; Pecho y Tríceps</div><div class="d">Completado &middot; RPE 7.5</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Mar &mdash; Sentadilla y Cuádriceps</div><div class="d">Completado &middot; RPE 8.0</div></div><span class="chev">&rsaquo;</span></div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Programa</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Registro</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progreso</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="2">
+              <div class="app">
+                <div class="app-hd">Mi programa de 7 días</div>
+                <div class="app-sc">
+                  <div class="app-hero" style="background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07)">
+                    <span class="app-pill">Activo</span>
+                    <h4>Semana 2 &mdash; Bloque de Hipertrofia</h4>
+                    <p style="margin-bottom:0">Intermedio &middot; 5 días/sem &middot; Gimnasio completo &middot; Prioridad: Espalda y Brazos</p>
+                  </div>
+                  <div class="app-lbl">División semanal</div>
+                  <div class="app-item"><div><div class="t">Día 1 &mdash; Pecho y Tríceps</div><div class="d">Press banca, Incline DB, Cable Fly &middot; 5 ejercicios</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Día 2 &mdash; Sentadilla y Cuádriceps</div><div class="d">Sentadilla, Prensa, Hack &middot; 5 ejercicios</div></div><span class="chev">&rsaquo;</span></div>
+                  <div class="app-item"><div><div class="t">Día 3 &mdash; Espalda y Bíceps</div><div class="d">Remo, Jalón, Curl martillo &middot; 6 ejercicios</div></div><span class="chev">&rsaquo;</span></div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Programa</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Registro</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progreso</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="3">
+              <div class="app">
+                <div class="app-hd">Coach IA</div>
+                <div class="app-sc">
+                  <div class="app-chat">
+                    <div class="app-msg ai">Tu Remo con barra quedó en RPE 6 en la serie tope &mdash; te sobraron repeticiones.</div>
+                    <div class="app-chip">&uarr; Sube 2.5 kg la próxima sesión</div>
+                    <div class="app-msg me">Ajusta el Día 3 &mdash; siento molesta la zona lumbar.</div>
+                    <div class="app-msg ai">Listo. Cambié Remo con barra &rarr; Remo con apoyo de pecho y limité el RPE a 7 esta semana.</div>
+                  </div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Programa</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Registro</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progreso</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="4">
+              <div class="app">
+                <div class="app-hd">Registrar sesión &mdash; Día 3</div>
+                <div class="app-sc">
+                  <div style="font-size:11px;font-weight:700;color:#fff;margin-top:2px">Remo con barra &mdash; Serie tope</div>
+                  <div class="app-flk">Peso levantado (kg)</div>
+                  <div class="app-fld">80</div>
+                  <div class="app-flk">Repeticiones completadas</div>
+                  <div class="app-fld">10</div>
+                  <div class="app-flk">Esfuerzo percibido (RPE 1&ndash;10)</div>
+                  <div class="app-fld">6 &mdash; Fácil</div>
+                  <div class="app-cta" style="margin-top:4px">Guardar y analizar</div>
+                  <p style="font-size:8.5px;color:#8593a6;text-align:center;line-height:1.45;margin-top:2px">El Coach IA lee cada registro y ajusta las cargas de la próxima semana.</p>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Programa</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Registro</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progreso</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen s-app" data-i="5">
+              <div class="app">
+                <div class="app-hd">Progreso</div>
+                <div class="app-sc">
+                  <div class="app-chart">
+                    <h5>Remo con barra &mdash; Carga serie tope (kg)</h5>
+                    <div class="app-graph"><i style="height:52%"></i><i style="height:60%"></i><i style="height:66%"></i><i style="height:74%"></i><i style="height:83%"></i><i style="height:96%"></i></div>
+                  </div>
+                  <div class="app-stats">
+                    <div class="app-stat"><div class="v">11</div><div class="k">Sesiones</div></div>
+                    <div class="app-stat"><div class="v">4</div><div class="k">Récords</div><div class="up">+2 sem</div></div>
+                    <div class="app-stat"><div class="v">+34%</div><div class="k">Volumen</div><div class="up">4 sem</div></div>
+                  </div>
+                </div>
+                <div class="tabbar">
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Programa</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Coach</div>
+                  <div class="tb"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Registro</div>
+                  <div class="tb on"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.5 21a1.5 1.5 0 0 1-3 0"/></svg>Progreso</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="meet-steps">
+          <div class="meet-step active" data-i="0"><h3>Inicia sesión</h3><p>Entra a tu espacio y abre la app que la fuerza de trabajo construyó para ti.</p></div>
+          <div class="meet-step" data-i="1"><h3>Inicio</h3><p>La app abre en un resumen diario &mdash; racha, esfuerzo y la sesión de hoy lista para empezar.</p></div>
+          <div class="meet-step" data-i="2"><h3>Programa</h3><p>Un plan estructurado de varias semanas, generado según la meta y dividido día por día.</p></div>
+          <div class="meet-step" data-i="3"><h3>Coach</h3><p>Un coach de IA que lee cada serie que registras y ajusta las cargas de la próxima semana.</p></div>
+          <div class="meet-step" data-i="4"><h3>Registro</h3><p>Captura peso, repeticiones y esfuerzo en segundos &mdash; sobrecarga progresiva, garantizada.</p></div>
+          <div class="meet-step" data-i="5"><h3>Progreso</h3><p>Gráficas y récords personales que prueban que funciona, semana tras semana.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="how">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Cómo funciona</div>
+        <h2>De una idea a un producto en producción</h2>
+        <p>No es un cuadro de texto que te deja con código que mantener. Una firma que se encarga de toda la construcción por ti.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Descríbelo</h3>
+          <p>Cuéntanos el problema en lenguaje natural &mdash; por texto o voz. Nuestra IA dimensiona al instante el encaje, la v1 mínima valiosa y cualquier alerta regulatoria.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>La fuerza de trabajo construye</h3>
+          <p>Una fuerza de trabajo de IA con 83 roles &mdash; ingeniería, datos, diseño, cumplimiento y expertos de dominio &mdash; construye el stack completo y ejecuta pruebas automáticas antes de que nadie lo vea.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Previsualiza, revisa y lanza</h3>
+          <p>Navega por un simulador interactivo de tu app en segundos &mdash; luego pruebas el desarrollo real en un enlace privado y lo apruebas. Lo desplegamos en vivo en una plataforma que operamos, monitoreamos y soportamos por ti &mdash; voz, facturación y autenticación incluidas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="platforms" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Hecho con Torna</div>
+        <h2>Plataformas en vivo, industrias reales</h2>
+        <p>Cada una empezó como una frase. Esto es una muestra de lo que la fuerza de trabajo ha lanzado.</p>
+      </div>
+      <div class="gallery">
+        <div class="gcard"><div class="thumb" data-i="Telephony"></div><div class="body"><div class="v">CRM &middot; Voice AI</div><h4>RinglyPro</h4><p>Agentes de voz bilingües 24/7 que califican, agendan y registran llamadas en tu CRM.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Healthcare"></div><div class="body"><div class="v">MedTech</div><h4>SurgicalMind</h4><p>Inteligencia de crecimiento en cirugía robótica &mdash; encuestas, dolarización, planes de negocio.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Equestrian"></div><div class="body"><div class="v">Sports AI</div><h4>EquiMind</h4><p>Entrenador de salto con IA y análisis 3D del caballo desde un video del teléfono.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="AgriTech"></div><div class="body"><div class="v">Marketplace</div><h4>AgroMercado</h4><p>Marketplace agro nacional: subastas en vivo, divisa BCV, KYC.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Trust &amp; Safety"></div><div class="body"><div class="v">Security</div><h4>Veritas</h4><p>Detección de deepfakes con IA y retiros automáticos de suplantaciones.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="EdTech"></div><div class="body"><div class="v">Language</div><h4>Torna Idioma</h4><p>Plataforma de español para el trabajo con un plan de estudios SRS de 12 niveles.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Community"></div><div class="body"><div class="v">Network</div><h4>HISPATEC</h4><p>Red de profesionales hispanos en seis ejes estratégicos.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Coaching"></div><div class="body"><div class="v">Productivity</div><h4>Visionarium</h4><p>Registro de coaching con IA: graba una sesión y obtén acciones y orientación.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="numbers">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Torna en números</div>
+        <h2>Un sistema operativo para la IA vertical</h2>
+      </div>
+      <div class="nums">
+        <div class="numcard"><div class="big grad-text">21</div><div class="lab">Plataformas en vivo</div></div>
+        <div class="numcard"><div class="big grad-text">22</div><div class="lab">Verticales de la industria</div></div>
+        <div class="numcard"><div class="big grad-text">83</div><div class="lab">Roles de trabajo con IA</div></div>
+        <div class="numcard"><div class="big grad-text">99.9%</div><div class="lab">SLA de disponibilidad</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <div class="finalcard">
+        <h2>Dinos qué construir.</h2>
+        <p>Describe tu idea arriba y obtén un plan de construcción real en segundos &mdash; o habla con nosotros directamente.</p>
+        <a href="#" class="btn btn-white" id="d2b-scrolltop">Empezar a construir &uarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="d2f">
+    <div class="wrap">
+      <div class="d2f-top">
+        <span class="brand-word" style="font-size:22px">Orb<span class="up">Up</span></span>
+        <div class="d2f-links">
+          <a href="/blog">Blog</a>
+          <a href="/terms.html">Términos del Servicio</a>
+          <a href="/privacy.html">Política de Privacidad</a>
+          <a href="tel:+12232949184">223-294-9184</a>
+          <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
+          <a href="https://wa.me/18136414177" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+      <div class="d2f-bottom">
+        <span>&copy; 2026 ORBUP LLC &mdash; Todos los derechos reservados.</span>
+        <span>21 plataformas en vivo &middot; 22 verticales &middot; 99.9% SLA</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root = document.querySelector('.d2b');
+  if(!root) return;
+  var form   = root.querySelector('#d2b-form');
+  var input  = root.querySelector('#d2b-input');
+  var go     = root.querySelector('#d2b-go');
+  var hint   = root.querySelector('#d2b-hint');
+  var result = root.querySelector('#d2b-result');
+  var chips  = root.querySelectorAll('#d2b-chips .chip');
+  var scroll = root.querySelector('#d2b-scrolltop');
+  var ENDPOINT = '/projects/api/v1/intake/public-triage-preview';
+  var busy = false;
+  var lastDescription = '';
+  var D2B_LANG = 'es';
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function updateHint(){
+    var n = input.value.trim().length;
+    if(n===0){ hint.textContent='Describe tu idea — cuanto más detalle, mejor será el plan.'; hint.classList.remove('warn'); }
+    else if(n<30){ hint.textContent=(30-n)+' caracteres más para generar un plan'; hint.classList.add('warn'); }
+    else { hint.textContent=n+' caracteres'; hint.classList.remove('warn'); }
+  }
+  input.addEventListener('input', updateHint);
+
+  chips.forEach(function(c){
+    c.addEventListener('click', function(){
+      var p=c.getAttribute('data-p');
+      if(typeof identityComplete==='function' && !identityComplete()){ pendingChip=p; openGate(); return; }
+      input.value = p;
+      updateHint(); input.focus();
+      input.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  });
+  var pendingChip='';
+
+  if(scroll){ scroll.addEventListener('click', function(e){
+    e.preventDefault();
+    form.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){ input.focus(); }, 400);
+  }); }
+
+  var d2bGetStarted = root.querySelector('#d2b-getstarted');
+  if(d2bGetStarted){ d2bGetStarted.addEventListener('click', function(e){
+    e.preventDefault();
+    form.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){ input.focus(); }, 400);
+  }); }
+
+  function loading(on, label){
+    busy = on; go.disabled = on;
+    go.innerHTML = on
+      ? '<span class="spinner"></span> '+(label||'Pensando…')
+      : 'Obtener mi plan y demo <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  }
+
+  function showError(msg){
+    result.className='show';
+    result.innerHTML='<div class="r-err">'+esc(msg)+'</div>';
+  }
+
+  var VERDICT = {
+    go:  {cls:'go',  label:'Buen encaje'},
+    poc: {cls:'poc', label:'Encaje para prueba de concepto'},
+    stop:{cls:'stop',label:'Aún no encaja'}
+  };
+
+  function render(d){
+    var v = VERDICT[d.verdict] || VERDICT.poc;
+    var ts = d.technical_solution || {};
+    function list(arr){ return (arr||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join(''); }
+    function tags(arr){ return (arr||[]).map(function(x){ return '<span class="tag">'+esc(x)+'</span>'; }).join(''); }
+
+    var html = ''
+      + '<div class="rcard">'
+      +   '<div class="rhead">'
+      +     '<div><h3>'+esc(d.project_title_suggested||'Tu plan de construcción')+'</h3>'
+      +       '<div class="pcaption">Puntaje de encaje '+esc(d.fit_score)+'/10 &middot; analizado por Torna Neural Intelligence</div></div>'
+      +     '<span class="verdict '+v.cls+'">'+v.label+'</span>'
+      +   '</div>'
+      +   '<div class="rbody">';
+
+    if(d.problem_in_our_words){
+      html += '<div class="rblock"><h4>El problema, en nuestras palabras</h4><p>'+esc(d.problem_in_our_words)+'</p></div>';
+    }
+    if(ts.summary){
+      html += '<div class="rblock"><h4>Cómo lo construiríamos</h4><p>'+esc(ts.summary)+'</p></div>';
+    }
+    if(ts.what_we_build && ts.what_we_build.length){
+      html += '<div class="rblock"><h4>Qué construimos</h4><ul class="rlist">'+list(ts.what_we_build)+'</ul></div>';
+    }
+    if(ts.agents_involved && ts.agents_involved.length){
+      html += '<div class="rblock"><h4>Fuerza de trabajo en esta construcción</h4><div class="tagrow">'+tags(ts.agents_involved)+'</div></div>';
+    }
+    if(ts.data_sources_via_mcp && ts.data_sources_via_mcp.length){
+      html += '<div class="rblock"><h4>Datos e integraciones (vía MCP)</h4><div class="tagrow">'+tags(ts.data_sources_via_mcp)+'</div></div>';
+    }
+    if(d.week_1_deliverables && d.week_1_deliverables.length){
+      html += '<div class="rblock"><h4>Entregables de la semana 1</h4><ul class="rlist">'+list(d.week_1_deliverables)+'</ul></div>';
+    }
+    if(ts.delivery_window){
+      html += '<div class="rblock"><div class="rmeta"><div class="m"><div class="k">Tiempo de entrega</div><div class="v">'+esc(ts.delivery_window)+'</div></div></div></div>';
+    }
+
+    html +=   '</div>'
+      +   '<div class="rfoot">'
+      +     '<div class="note">Este es un alcance automático de primera pasada &mdash; y ya está guardado con nuestro equipo. Tu demo para compartir está abajo.</div>'
+      +   '</div>'
+      + '</div>';
+
+    result.className='show';
+    result.innerHTML = html;
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  // Expose so the voice orb can pipe its triage result into the same panel.
+  window.__d2bRenderPlan = render;
+
+  // ---- Shareable PoC teaser card (WhatsApp / SMS / Open / Copy) ----
+  var __demoCd=null;
+  function stopDemoCountdown(){ if(__demoCd){ clearInterval(__demoCd); __demoCd=null; } }
+  // Cuenta regresiva en vivo dentro del botón + tarjeta de "creando tu demo".
+  function startDemoCountdown(secs, overflowTxt){
+    stopDemoCountdown();
+    var rem=secs|0;
+    function ensureSpan(c){ if(!c) return null; var el=c.querySelector('.demo-cd'); if(!el){ el=document.createElement('span'); el.className='demo-cd'; c.appendChild(el); } return el; }
+    function paint(){ var t=rem>0?('· '+rem+'s'):('· '+(overflowTxt||'casi listo'));
+      var b=ensureSpan(go); if(b) b.textContent=' '+t;
+      var c=ensureSpan(document.getElementById('d2b-poc-loading')); if(c) c.textContent=' '+t; }
+    paint();
+    __demoCd=setInterval(function(){ if(rem>0) rem--; paint(); }, 1000);
+  }
+  function removePoc(){ stopDemoCountdown(); ['d2b-poc','d2b-poc-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
+  function appendPocLoading(){
+    removePoc();
+    var d=document.createElement('div'); d.className='poc-card poc-loading'; d.id='d2b-poc-loading';
+    d.innerHTML='<span class="spinner dark"></span> Generando tu demo para compartir… <span class="demo-cd"></span>';
+    result.appendChild(d);
+    startDemoCountdown(25, 'casi listo');
+  }
+  function renderPoc(url, name, phone){
+    removePoc();
+    var digits=(phone||'').replace(/[^0-9]/g,'');
+    var msg=encodeURIComponent((name?('Hola '+name+', '):'')+'aquí está tu demo interactiva de Torna: '+url);
+    var wa='https://wa.me/'+digits+'?text='+msg;
+    var sms='sms:'+(phone||'')+'?&body='+msg;
+    var d=document.createElement('div'); d.className='poc-card'; d.id='d2b-poc';
+    d.innerHTML=''
+      +'<div class="poc-head"><span class="poc-badge">PoC listo</span><div class="poc-title">Tu demo para compartir está lista</div></div>'
+      +'<div class="poc-sub">Una prueba de concepto interactiva'+(name?(' para '+esc(name)):'')+'. Envíala o ábrela tú mismo.</div>'
+      +'<div class="poc-actions">'
+      +'<a class="poc-btn wa" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>'
+      +'<a class="poc-btn sms" href="'+sms+'">SMS</a>'
+      +'<a class="poc-btn ghost" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir</a>'
+      +'<button type="button" class="poc-btn ghost" id="poc-copy">Copiar enlace</button>'
+      +'</div>'
+      +'<div class="poc-note" id="poc-note"></div>'
+      +'<button type="button" class="poc-start" id="poc-start">Empezar a construir &mdash; agenda tu inicio &rarr;</button>';
+    result.appendChild(d);
+    var sb=d.querySelector('#poc-start'); if(sb) sb.addEventListener('click', function(){ openBookModal(); });
+    var cp=d.querySelector('#poc-copy');
+    cp.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ d.querySelector('#poc-note').textContent='Enlace copiado.'; }).catch(function(){ window.prompt('Copia este enlace:', url); });
+      } else { window.prompt('Copia este enlace:', url); }
+    });
+    d.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // ---- simulador de app interactivo ("ve la app que pediste") ----
+  function removeSim(){ ['d2b-sim','d2b-sim-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
+  function appendSimLoading(){
+    removeSim();
+    var d=document.createElement('div'); d.className='poc-card poc-loading'; d.id='d2b-sim-loading';
+    d.innerHTML='<span class="spinner dark"></span> Construyendo un simulador interactivo de tu app&hellip;';
+    result.appendChild(d);
+  }
+  function renderSim(url, appName, platform){
+    removeSim();
+    var d=document.createElement('div'); d.className='poc-card'; d.id='d2b-sim';
+    var kind=(platform==='web')?'app web':'app móvil';
+    d.innerHTML=''
+      +'<div class="poc-head"><span class="poc-badge">Simulador</span><div class="poc-title">Ve la app que pediste</div></div>'
+      +'<div class="poc-sub">Un simulador interactivo de tu '+esc(kind)+(appName?(' &mdash; '+esc(appName)):'')+'. Navega por las pantallas; incluye un botón &ldquo;Agendar y construir&rdquo;.</div>'
+      +'<div class="poc-actions">'
+      +'<a class="poc-btn wa" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir simulador</a>'
+      +'<button type="button" class="poc-btn ghost" id="sim-copy">Copiar enlace</button>'
+      +'</div>'
+      +'<div class="poc-note" id="sim-note"></div>';
+    result.appendChild(d);
+    var cp=d.querySelector('#sim-copy');
+    cp.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ d.querySelector('#sim-note').textContent='Enlace copiado.'; }).catch(function(){ window.prompt('Copia este enlace:', url); });
+      } else { window.prompt('Copia este enlace:', url); }
+    });
+    d.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // ---- contact modal + booking state ----
+  var pendingProjectId=null, contact={name:'',phone:'',email:'',lang:''}, selectedSlot=null;
+  var contactModal=root.querySelector('#d2b-contact-modal');
+  var bookModal=root.querySelector('#d2b-book-modal');
+  function openModal(m){ if(m){ m.hidden=false; document.body.style.overflow='hidden'; } }
+  function closeModal(m){ if(m){ m.hidden=true; document.body.style.overflow=''; } }
+  root.querySelectorAll('.d2b-modal [data-close]').forEach(function(el){
+    el.addEventListener('click', function(){ closeModal(el.closest('.d2b-modal')); });
+  });
+  // The identity gate stays REQUIRED to build, but must be dismissible (never trap
+  // the page): closing returns to the still-locked builder and drops any pending
+  // resume action.
+  function closeGate(){ closeModal(contactModal); afterGate=null; pendingChip=''; }
+  root.querySelectorAll('[data-gate-close]').forEach(function(el){ el.addEventListener('click', closeGate); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(bookModal); closeGate(); } });
+  // "¿No eres tú? Empezar de nuevo" — clear the saved profile (shared devices / change info+idioma).
+  var resetLink=root.querySelector('#d2b-reset-link');
+  if(resetLink){ resetLink.addEventListener('click', function(e){ e.preventDefault(); try{ localStorage.removeItem('d2ai_contact'); }catch(x){} location.reload(); }); }
+
+  // ---- REQUIRED IDENTITY GATE: name + email + phone + language ----
+  var PAGE_LANG = D2B_LANG;           // 'en' on /torna, 'es' on /torna-es
+  var gateLang = '', afterGate = null; // afterGate: action to resume once the gate is satisfied
+  var COUNTRIES = [
+    ['US','United States','+1'],['CO','Colombia','+57'],['MX','México','+52'],
+    ['ES','España','+34'],['AR','Argentina','+54'],['PE','Perú','+51'],
+    ['CL','Chile','+56'],['VE','Venezuela','+58'],['EC','Ecuador','+593'],
+    ['PA','Panamá','+507'],['GT','Guatemala','+502'],['DO','Rep. Dominicana','+1'],
+    ['CR','Costa Rica','+506'],['BO','Bolivia','+591'],['UY','Uruguay','+598'],
+    ['PY','Paraguay','+595'],['HN','Honduras','+504'],['SV','El Salvador','+503'],
+    ['PR','Puerto Rico','+1'],['CA','Canada','+1'],['BR','Brasil','+55'],['GB','United Kingdom','+44']
+  ];
+  var ccEl=root.querySelector('#cm-cc'), telEl=root.querySelector('#cm-phone');
+  (function fillCC(){
+    if(!ccEl) return;
+    var def = PAGE_LANG==='es' ? 'CO' : 'US';
+    COUNTRIES.forEach(function(c){ var o=document.createElement('option'); o.value=c[2]; o.textContent=c[1]+' ('+c[2]+')'; if(c[0]===def) o.selected=true; ccEl.appendChild(o); });
+  })();
+  function e164(){
+    var raw=(telEl&&telEl.value||'').trim(); if(!raw) return '';
+    if(raw.charAt(0)==='+') return '+'+raw.slice(1).replace(/[^0-9]/g,'');
+    var nat=raw.replace(/[^0-9]/g,'').replace(/^0+/,''); if(!nat) return '';
+    var cc=(ccEl&&ccEl.value||'+1').replace(/[^0-9+]/g,''); return cc+nat;
+  }
+  function validEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x||''); }
+  function identityComplete(){ return !!(contact.name && validEmail(contact.email) && /^\+[1-9]\d{6,15}$/.test(contact.phone||'') && contact.lang); }
+  var langBtns=root.querySelectorAll('#cm-lang .cm-lang-opt');
+  function setGateLang(l){ gateLang=l; langBtns.forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-lang')===l); }); }
+  langBtns.forEach(function(b){ b.addEventListener('click', function(){ setGateLang(b.getAttribute('data-lang')); }); });
+
+  function lockInput(){ if(input){ input.readOnly=true; input.classList.add('locked'); } }
+  function unlockInput(){ if(input){ input.readOnly=false; input.classList.remove('locked'); } }
+  function openGate(){
+    var cn=root.querySelector('#cm-name'); if(cn) cn.value=contact.name||'';
+    var ce=root.querySelector('#cm-email'); if(ce) ce.value=contact.email||'';
+    setGateLang(gateLang || contact.lang || PAGE_LANG);
+    openModal(contactModal);
+    setTimeout(function(){ if(cn && !cn.value) cn.focus(); }, 60);
+  }
+  if(input){
+    input.addEventListener('mousedown', function(e){ if(!identityComplete()){ e.preventDefault(); input.blur(); openGate(); } });
+    input.addEventListener('focus', function(){ if(!identityComplete()) openGate(); });
+  }
+  // Any request entry point (voice orb, attach) enforces the same gate. Pass a
+  // callback to RESUME that action once the gate is satisfied, so voice, typing
+  // and attach all behave identically. Returns true if already complete.
+  window.__tornaGate = function(cb){ if(identityComplete()) return true; afterGate=(typeof cb==='function'?cb:null); openGate(); return false; };
+
+  var cmBtn=root.querySelector('#cm-continue');
+  if(cmBtn){
+    cmBtn.addEventListener('click', function(){
+      var st=root.querySelector('#cm-status');
+      var es=(PAGE_LANG==='es');
+      var name=((root.querySelector('#cm-name').value)||'').trim();
+      var email=((root.querySelector('#cm-email').value)||'').trim();
+      var phone=e164();
+      function err(m){ st.textContent=m; st.className='modal-status err'; }
+      if(!name){ return err(es?'Ingresa tu nombre.':'Enter your name.'); }
+      if(!validEmail(email)){ return err(es?'Ingresa un correo válido.':'Enter a valid email.'); }
+      if(!phone || phone.replace(/[^0-9]/g,'').length<7){ return err(es?'Ingresa un número de celular válido.':'Enter a valid mobile number.'); }
+      if(!gateLang){ return err(es?'Elige un idioma.':'Choose a language.'); }
+      st.textContent=''; st.className='modal-status';
+      contact={name:name,phone:phone,email:email,lang:gateLang};
+      saveContact(name, phone, email, gateLang);
+      if(gateLang!==PAGE_LANG){ location.href = (gateLang==='es' ? '/torna-es' : '/torna'); return; }
+      D2B_LANG = gateLang;
+      closeModal(contactModal); unlockInput();
+      if(afterGate){ var _cb=afterGate; afterGate=null; _cb(); return; } // resume voice/attach
+      // A sample prompt only FILLS + focuses (like an ungated chip) — never auto-builds.
+      if(pendingChip && input){ input.value=pendingChip; pendingChip=''; updateHint(); input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+      if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
+      else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
+    });
+  }
+
+  // Submit the idea -> build (identity already gated).
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(busy) return;
+    if(!identityComplete()){ openGate(); return; }
+    var desc=input.value.trim();
+    if(desc.length < 30 && !selectedFiles.length){ updateHint(); input.focus(); return; }
+    if(go){ go.disabled=true; }
+    extractAttachments().then(function(extra){
+      if(go){ go.disabled=false; }
+      var full=(extra ? (desc + (desc?'\n\n':'') + extra) : desc).trim();
+      if(full.length < 30){ updateHint(); input.focus(); return; }
+      lastDescription=full;
+      runFullFlow(full, contact.name, contact.phone, contact.email);
+    });
+  });
+
+  // ---- Adjuntos (PDF/Word/Texto) + identidad en línea (como /voice-to-intake) ----
+  var selectedFiles = [];
+  var MAX_FILES = 5, MAX_FILE_BYTES = 10 * 1024 * 1024;
+  var ALLOWED_EXT = ['pdf','doc','docx','txt','md','csv','rtf'];
+  var fileInput = root.querySelector('#d2b-files');
+  var attachBtn = root.querySelector('#d2b-attach');
+  var fileList  = root.querySelector('#d2b-filelist');
+  function extOf(n){ var m=String(n||'').toLowerCase().match(/\.([a-z0-9]+)$/); return m?m[1]:''; }
+  function renderFileList(){
+    if(!fileList) return;
+    fileList.innerHTML='';
+    selectedFiles.forEach(function(f,i){
+      var row=document.createElement('div'); row.className='d2b-filerow';
+      var nm=document.createElement('span'); nm.textContent=f.name+' ('+Math.round(f.size/1024)+' KB)';
+      var rm=document.createElement('button'); rm.type='button'; rm.textContent='✕'; rm.title='Quitar';
+      rm.addEventListener('click', function(){ selectedFiles.splice(i,1); renderFileList(); });
+      row.appendChild(nm); row.appendChild(rm); fileList.appendChild(row);
+    });
+  }
+  function addFiles(list){
+    for(var i=0;i<list.length;i++){
+      var f=list[i];
+      if(selectedFiles.length>=MAX_FILES) break;
+      if(ALLOWED_EXT.indexOf(extOf(f.name))===-1) continue;
+      if(f.size>MAX_FILE_BYTES) continue;
+      selectedFiles.push(f);
+    }
+    renderFileList();
+  }
+  if(attachBtn && fileInput){
+    attachBtn.addEventListener('click', function(){
+      if(window.__tornaGate && !window.__tornaGate(function(){ fileInput.click(); })) return; // gate first, then open picker
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', function(){ addFiles(fileInput.files||[]); fileInput.value=''; });
+  }
+  function extractAttachments(){
+    if(!selectedFiles.length) return Promise.resolve('');
+    var fd=new FormData();
+    selectedFiles.forEach(function(f){ fd.append('attachments', f, f.name); });
+    return fetch('/projects/api/v1/intake/public/extract-attachments', { method:'POST', body:fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j){ return (j && j.success && j.text) ? j.text : ''; })
+      .catch(function(){ return ''; });
+  }
+  function saveContact(n,p,e,l){ try{ localStorage.setItem('d2ai_contact', JSON.stringify({name:n||'',phone:p||'',email:e||'',lang:l||''})); }catch(x){} }
+  (function prefillContact(){
+    try{
+      var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
+      if(c.name){ contact.name=c.name; }
+      if(c.email){ contact.email=c.email; }
+      if(c.phone){ contact.phone=c.phone; }
+      if(c.lang){ contact.lang=c.lang; gateLang=c.lang; }
+    }catch(x){}
+    // The PAGE language is authoritative for a returning user — so the nav EN/ES
+    // toggle actually changes the generated-content language (and dictation).
+    if(identityComplete()){
+      if(contact.lang!==PAGE_LANG){ contact.lang=PAGE_LANG; gateLang=PAGE_LANG; saveContact(contact.name,contact.phone,contact.email,PAGE_LANG); }
+      D2B_LANG=PAGE_LANG; unlockInput();
+      var rs=root.querySelector('#d2b-reset'); if(rs) rs.hidden=false;
+    }
+    else { lockInput(); }
+  })();
+
+  // ---- BIG BUILD PROGRESS (teatro de "el backend trabajando") ----
+  // El cliente nunca ve la tarjeta de análisis; ve una cuenta regresiva grande +
+  // notificaciones de pasos animadas mientras la fuerza de IA construye, y luego
+  // una pantalla final que abre el teaser (con el simulador en vivo) en ventana
+  // completa y ofrece el botón grande "Agenda tu instalación".
+  var _buildTimers=[];
+  function injectBuildStyles(){
+    if(document.getElementById('d2b-build-css')) return;
+    var s=document.createElement('style'); s.id='d2b-build-css';
+    s.textContent='.d2b .d2b-build{max-width:560px;margin:6px auto 0;background:linear-gradient(180deg,rgba(20,28,46,.92),rgba(11,15,23,.92));border:1px solid var(--line,#233149);border-radius:22px;padding:34px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}'
+      +'.d2b .d2b-count{font-family:var(--font-mono,ui-monospace,monospace);font-size:74px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}'
+      +'.d2b .d2b-count-u{display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--ink-mute,#8ea0bd);margin-top:8px}'
+      +'.d2b .d2b-build-title{font-size:20px;font-weight:700;margin:20px 0 4px;color:var(--ink,#e9eef7)}'
+      +'.d2b .d2b-build-sub{font-size:13.5px;color:var(--ink-mute,#8ea0bd);margin-bottom:22px}'
+      +'.d2b .d2b-steps{list-style:none;margin:0;padding:0;text-align:left;display:flex;flex-direction:column;gap:11px;max-width:360px;margin-inline:auto}'
+      +'.d2b .d2b-steps li{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink-mute,#8ea0bd);opacity:.45;transition:opacity .45s,color .45s}'
+      +'.d2b .d2b-steps li .sdot{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:2px solid var(--line,#33405c);display:flex;align-items:center;justify-content:center;font-size:11px;color:#06101f;transition:all .45s}'
+      +'.d2b .d2b-steps li.active{opacity:1;color:var(--ink,#e9eef7)}'
+      +'.d2b .d2b-steps li.active .sdot{border-color:var(--accent-cyan,#22d3ee);box-shadow:0 0 0 4px rgba(34,211,238,.14)}'
+      +'.d2b .d2b-steps li.active .sdot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-cyan,#22d3ee);animation:d2bp 1s infinite}'
+      +'.d2b .d2b-steps li.done{opacity:1;color:#9fb2cf}'
+      +'.d2b .d2b-steps li.done .sdot{border-color:var(--good,#34d399);background:var(--good,#34d399)}'
+      +'.d2b .d2b-steps li.done .sdot::after{content:"\\2713";font-weight:800}'
+      +'@keyframes d2bp{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.5}}'
+      +'.d2b .d2b-check{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));display:flex;align-items:center;justify-content:center;font-size:36px;color:#06101f;font-weight:800}'
+      +'.d2b .d2b-open{display:block;text-decoration:none;text-align:center;border-radius:14px;padding:17px;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));color:#06101f;margin:8px 0 12px;box-shadow:0 14px 40px rgba(124,92,255,.35);animation:d2bglow 2.4s ease-in-out infinite}'
+      +'@keyframes d2bglow{0%,100%{box-shadow:0 14px 40px rgba(124,92,255,.30)}50%{box-shadow:0 14px 52px rgba(34,211,238,.45)}}'
+      +'.d2b .d2b-book2{display:block;width:100%;border:1px solid var(--line,#33405c);background:rgba(255,255,255,.05);color:var(--ink,#e9eef7);border-radius:14px;padding:15px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}'
+      +'.d2b .d2b-done-hint{font-size:12px;color:var(--ink-mute,#8ea0bd);margin-top:14px}';
+    document.head.appendChild(s);
+  }
+  function startBuild(){
+    injectBuildStyles();
+    var es=(D2B_LANG==='es');
+    var steps=es
+      ? ['Analizando tu solicitud','Organizando el desarrollo','Reuniendo la fuerza de 83 agentes de IA','Construyendo tu app interactiva','Grabando la presentación de voz','Finalizando los detalles']
+      : ['Analyzing your request','Organizing the build','Assembling the 83-agent AI workforce','Building your interactive app','Recording the voice walkthrough','Finalizing the details'];
+    var title=es?'Construyendo tu producto de IA…':'Building your AI product…';
+    var sub=es?'Nuestra fuerza de trabajo de IA está en marcha. Míralo en tiempo real.':'Our AI workforce is on it — watch it happen in real time.';
+    var lis=steps.map(function(x,i){ return '<li data-i="'+i+'"><span class="sdot"></span><span>'+x+'</span></li>'; }).join('');
+    result.className='show';
+    result.innerHTML='<div class="d2b-build" id="d2b-build"><div class="d2b-count"><span id="d2b-num">75</span><span class="d2b-count-u">'+(es?'segundos':'seconds')+'</span></div><div class="d2b-build-title">'+title+'</div><div class="d2b-build-sub">'+sub+'</div><ul class="d2b-steps" id="d2b-steps">'+lis+'</ul></div>';
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+    var left=75, numEl=document.getElementById('d2b-num');
+    _buildTimers.push(setInterval(function(){
+      left--;
+      if(left<=0){ numEl.style.fontSize='30px'; numEl.textContent=(es?'ya casi':'almost'); }
+      else numEl.textContent=left;
+    },1000));
+    var lisEls=[].slice.call(document.querySelectorAll('#d2b-steps li'));
+    var cur=0;
+    function activate(i){ lisEls.forEach(function(el,j){ el.classList.toggle('done', j<i); el.classList.toggle('active', j===i); }); }
+    activate(0);
+    var per=Math.floor((75*1000)/steps.length);
+    _buildTimers.push(setInterval(function(){ if(cur<steps.length-1){ cur++; activate(cur); } }, per));
+  }
+  function stopBuild(){ _buildTimers.forEach(function(t){ clearInterval(t); }); _buildTimers=[]; }
+  function failBuild(msg){
+    stopBuild(); loading(false);
+    showError(msg || (D2B_LANG==='es'?'No se pudo completar. Verifica tu conexión e inténtalo de nuevo.':'Could not complete. Check your connection and try again.'));
+  }
+  function finishBuild(url){
+    stopBuild(); loading(false);
+    var es=(D2B_LANG==='es');
+    try{ window.open(url,'_blank','noopener'); }catch(e){}
+    result.className='show';
+    result.innerHTML=''
+      +'<div class="d2b-build d2b-done">'
+      +'<div class="d2b-check">&#10003;</div>'
+      +'<div class="d2b-build-title">'+(es?'Tu producto de IA está listo':'Your AI product is ready')+'</div>'
+      +'<div class="d2b-build-sub">'+(es?'Ábrelo para escuchar la presentación y probar tu app — en vivo, al mismo tiempo.':'Open it to hear the walkthrough and play with your app — live, at the same time.')+'</div>'
+      +'<a class="d2b-open" id="d2b-open-btn" href="'+esc(url)+'" target="_blank" rel="noopener">'+(es?'&#9654; Abrir tu demo + simulador':'&#9654; Open your demo + simulator')+'</a>'
+      +'<button type="button" class="d2b-book2" id="d2b-book2">'+(es?'Agenda tu instalación ahora &rarr;':'Book your installation now &rarr;')+'</button>'
+      +'<div class="d2b-done-hint">'+(es?'Se abre en una ventana nueva.':'Opens in a new window.')+'</div>'
+      +'</div>';
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+    var bk=document.getElementById('d2b-book2'); if(bk) bk.addEventListener('click', function(){ openBookModal(); });
+  }
+
+  // Convierte silenciosamente la idea dictada/escrita en una solicitud
+  // ORGANIZADA y estructurada (mismo cerebro que /projects/intake/create.html).
+  // No cambia el flujo: solo enriquece lo que guardamos. Corre dentro del
+  // "teatro de construcción" para que la llamada sea invisible, y ante CUALQUIER
+  // fallo vuelve al texto crudo para que el flujo nunca se rompa.
+  function structureRequest(desc){
+    var raw = { project_title: desc.slice(0,80), problem: desc, project_description: desc };
+    return fetch('/projects/api/v1/intake/generate-request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject: desc.slice(0,2000), language: D2B_LANG })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.success || !j.data) return raw;
+      var d = j.data;
+      return {
+        project_title:       d.project_title       || raw.project_title,
+        problem:             d.problem             || raw.problem,
+        project_description: d.project_description || raw.project_description,
+        industry:            d.industry            || undefined,
+        target_users:        d.target_users        || undefined,
+        current_process:     d.current_process     || undefined,
+        data_sources:        d.data_sources        || undefined,
+        timeline:            d.timeline            || undefined,
+        budget_range:        d.budget_range        || undefined,
+        success_metrics:     d.success_metrics     || undefined,
+        ai_category:         (d.ai_category && d.ai_category.length) ? d.ai_category : undefined
+      };
+    })
+    .catch(function(){ return raw; });
+  }
+
+  // Guarda contacto + crea proyecto -> teaser (voz + simulador en vivo).
+  function runFullFlow(desc, name, phone, email){
+    removePoc(); removeSim();
+    contact.name=name||contact.name; contact.email=email||contact.email; contact.phone=phone||contact.phone;
+    loading(true, D2B_LANG==='es'?'Iniciando…':'Starting…');
+    startBuild();
+    var projectId=null;
+    structureRequest(desc).then(function(s){
+      return fetch('/projects/api/v1/intake/public/request', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(Object.assign({ full_name:name, phone:phone, email:email||undefined, heard_from:'torna self-serve builder', language: D2B_LANG }, s))
+      });
+    })
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id; } })
+    .catch(function(){})
+    .then(function(){
+      if(!projectId) throw new Error('noproject');
+      return fetch('/projects/api/v1/intake/public/teaser/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG }) }).then(function(r){ return r.json(); });
+    })
+    .then(function(tz){
+      if(tz && tz.success && tz.url){ finishBuild(tz.url); }
+      else { throw new Error('teaser'); }
+    })
+    .catch(function(){ failBuild(); });
+  }
+
+  // "Start building" -> booking modal with open calendar slots from /projects.
+  function openBookModal(){
+    selectedSlot=null;
+    var wrap=root.querySelector('#bk-slots');
+    var confirmBtn=root.querySelector('#bk-confirm');
+    var st=root.querySelector('#bk-status');
+    if(st){ st.textContent=''; st.className='modal-status'; }
+    if(confirmBtn){ confirmBtn.disabled=true; confirmBtn.style.display=''; confirmBtn.textContent='Confirmar reserva'; }
+    wrap.innerHTML='<div class="slots-loading"><span class="spinner dark"></span> Cargando horarios…</div>';
+    openModal(bookModal);
+    fetch('/projects/api/v1/intake/public/slots?count=6')
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res || !res.success || !res.data || !res.data.slots || !res.data.slots.length){
+          wrap.innerHTML='<div class="slots-loading">Sin horarios disponibles ahora — te contactaremos para agendar.</div>'; return;
+        }
+        var loc=(D2B_LANG==='es')?'es-CO':'en-US';
+        wrap.innerHTML='';
+        res.data.slots.forEach(function(sl){
+          var b=document.createElement('button'); b.type='button'; b.className='slot';
+          var dt=new Date(sl.start_time);
+          var day=dt.toLocaleString(loc,{timeZone:'America/Bogota',weekday:'short',month:'short',day:'numeric'});
+          var tim=dt.toLocaleString(loc,{timeZone:'America/Bogota',hour:'numeric',minute:'2-digit'});
+          b.innerHTML='<div class="d">'+day+'</div><div class="t">'+tim+' COT</div>';
+          b.addEventListener('click', function(){
+            root.querySelectorAll('#bk-slots .slot').forEach(function(x){ x.classList.remove('sel'); });
+            b.classList.add('sel'); selectedSlot=sl; if(confirmBtn) confirmBtn.disabled=false;
+          });
+          wrap.appendChild(b);
+        });
+      })
+      .catch(function(){ wrap.innerHTML='<div class="slots-loading">No se pudieron cargar los horarios. Inténtalo de nuevo.</div>'; });
+  }
+
+  var bkBtn=root.querySelector('#bk-confirm');
+  if(bkBtn){
+    bkBtn.addEventListener('click', function(){
+      if(!selectedSlot || !pendingProjectId) return;
+      var st=root.querySelector('#bk-status');
+      bkBtn.disabled=true; bkBtn.textContent='Reservando…';
+      fetch('/projects/api/v1/intake/public/book/'+pendingProjectId, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ start_time:selectedSlot.start_time, end_time:selectedSlot.end_time, name:contact.name, email:contact.email, phone:contact.phone, lang:D2B_LANG })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.success){
+          var loc=(D2B_LANG==='es')?'es-CO':'en-US';
+          var when=new Date(selectedSlot.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+          root.querySelector('#bk-slots').innerHTML='<div class="slots-loading" style="color:var(--good)">Reservado para '+when+' COT. Te contactaremos — ¡nos vemos!</div>';
+          bkBtn.style.display='none';
+        } else {
+          if(st){ st.textContent=(res && res.error) || 'No se pudo reservar. Inténtalo de nuevo.'; st.className='modal-status err'; }
+          bkBtn.disabled=false; bkBtn.textContent='Confirmar reserva';
+        }
+      })
+      .catch(function(){ if(st){ st.textContent='No se pudo conectar con el servidor. Inténtalo de nuevo.'; st.className='modal-status err'; } bkBtn.disabled=false; bkBtn.textContent='Confirmar reserva'; });
+    });
+  }
+
+  // Deep-link desde el simulador: /torna-es?book=1&pid=<id> abre la reserva.
+  (function handleBookDeepLink(){
+    try{
+      var q=new URLSearchParams(window.location.search);
+      if(q.get('book')!=='1') return;
+      var pid=q.get('pid');
+      if(pid && /^[0-9]+$/.test(pid)) pendingProjectId=parseInt(pid,10);
+      if(pendingProjectId){ setTimeout(function(){ openBookModal(); }, 400); }
+    }catch(x){}
+  })();
+})();
+</script>
+
+<script>
+/* Floating dots constellation — vision2ai-style particle network */
+(function(){
+  var c = document.getElementById('d2b-stars');
+  if(!c || !c.getContext) return;
+  var ctx = c.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W, H, N, pts = [];
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var COLORS = ['rgba(140,165,255,','rgba(230,73,128,','rgba(255,146,43,','rgba(190,205,255,'];
+
+  function resize(){
+    W = c.width = Math.floor(window.innerWidth * dpr);
+    H = c.height = Math.floor(window.innerHeight * dpr);
+    c.style.width = window.innerWidth + 'px';
+    c.style.height = window.innerHeight + 'px';
+    N = Math.max(40, Math.min(100, Math.floor(window.innerWidth * window.innerHeight / 15000)));
+    build();
+  }
+  function build(){
+    pts = [];
+    for(var i=0;i<N;i++){
+      pts.push({
+        x: Math.random()*W, y: Math.random()*H,
+        vx: (Math.random()-0.5)*0.16*dpr, vy: (Math.random()-0.5)*0.16*dpr,
+        r: (Math.random()*1.6+0.6)*dpr,
+        c: COLORS[Math.floor(Math.random()*COLORS.length)]
+      });
+    }
+  }
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    var maxD = 130*dpr;
+    for(var i=0;i<pts.length;i++){
+      var p = pts[i];
+      if(!reduce){
+        p.x += p.vx; p.y += p.vy;
+        if(p.x<0||p.x>W) p.vx*=-1;
+        if(p.y<0||p.y>H) p.vy*=-1;
+      }
+      for(var j=i+1;j<pts.length;j++){
+        var q = pts[j], dx = p.x-q.x, dy = p.y-q.y, d = Math.sqrt(dx*dx+dy*dy);
+        if(d < maxD){
+          var a = (1 - d/maxD) * 0.16;
+          ctx.strokeStyle = 'rgba(150,170,255,'+a+')';
+          ctx.lineWidth = dpr*0.5;
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+        }
+      }
+    }
+    for(var k=0;k<pts.length;k++){
+      var s = pts[k];
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832);
+      ctx.fillStyle = s.c + '0.8)'; ctx.fill();
+    }
+    if(!reduce) requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  frame();
+})();
+</script>
+
+<!-- ElevenLabs SDK — lazy-loaded on first orb click (T4.4) -->
+<script>
+  window.__loadElevenLabsSdk = function () {
+    if (window.__ElevenLabsConversation) return Promise.resolve(window.__ElevenLabsConversation);
+    if (window.__ElevenLabsSdkPromise) return window.__ElevenLabsSdkPromise;
+    window.__ElevenLabsSdkPromise = import('https://esm.sh/@elevenlabs/client@1.9.0')
+      .then(function (mod) {
+        var C = mod.Conversation || (mod.default && mod.default.Conversation);
+        window.__ElevenLabsConversation = C;
+        return C;
+      })
+      .catch(function (e) {
+        console.warn('[orb] ElevenLabs SDK failed to load — voice mode unavailable.', e);
+        return null;
+      });
+    return window.__ElevenLabsSdkPromise;
+  };
+</script>
+
+<!-- Champion-teaser voice orb controller (ported) -->
+<script>
+(function () {
+  var wrap = document.getElementById('orb-wrap');
+  if (!wrap) return;
+  var caption = document.getElementById('orb-caption');
+  var fallbackEl = document.getElementById('orb-fallback');
+  var waveCanvas = document.getElementById('orb-wave');
+  var srStatus = document.getElementById('orb-sr-status');
+  var API_BASE = '/projects/api/v1/intake';
+  var session = null, connecting = false, audioCtx = null, analyser = null, waveAnim = null, micStream = null, ampSmoothed = 0;
+  var SR = { idle: 'Cerebro Neural listo. Presiona Enter para iniciar una conversación de voz.', listening: 'Escuchando.', thinking: 'Analizando tu proyecto.', speaking: 'El cerebro está hablando.' };
+
+  function setState(s) {
+    wrap.setAttribute('data-state', s);
+    wrap.setAttribute('aria-pressed', s !== 'idle' ? 'true' : 'false');
+    if (srStatus) srStatus.textContent = SR[s] || '';
+  }
+  function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
+  function showFallback(reason) {
+    wrap.classList.add('disabled');
+    wrap.setAttribute('aria-disabled', 'true');
+    if (fallbackEl) {
+      if (reason === 'mic') {
+        var isES = (document.documentElement.lang || 'en').toLowerCase().indexOf('es') === 0;
+        fallbackEl.innerHTML = isES
+          ? '<strong>Activa el micrófono.</strong><br>Permite el acceso al micrófono y toca el orbe otra vez &mdash; o escribe tu idea abajo.'
+          : '<strong>Microphone access needed.</strong><br>Allow the mic, then tap the orb again &mdash; or type your idea below.';
+      }
+      fallbackEl.hidden = false;
+    }
+    connecting = false;
+  }
+  function fetchConfig() {
+    return fetch(API_BASE + '/partnership-orb-config?lang=es')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.success && j.data) {
+          wrap.dataset.configured = j.data.configured ? 'true' : 'false';
+          wrap.dataset.agentId = j.data.agent_id || '';
+          wrap.dataset.lang = j.data.language || 'en';
+          return j.data;
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  }
+  function startWaveform(stream) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var src = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128; analyser.smoothingTimeConstant = 0.6;
+      src.connect(analyser);
+      var ctx2d = waveCanvas.getContext('2d');
+      var buf = new Uint8Array(analyser.frequencyBinCount);
+      var w = waveCanvas.width, h = waveCanvas.height;
+      function paint() {
+        if (!analyser) return;
+        analyser.getByteFrequencyData(buf);
+        var sum = 0, count = 0, hi = Math.min(24, buf.length);
+        for (var k = 2; k < hi; k++) { sum += buf[k] * buf[k]; count++; }
+        var rms = count ? Math.sqrt(sum / count) / 255 : 0;
+        var b = Math.min(1, rms * 2.4);
+        ampSmoothed = ampSmoothed * 0.7 + b * 0.3;
+        setAmp(ampSmoothed);
+        ctx2d.clearRect(0, 0, w, h);
+        var barW = (w / buf.length) * 1.6;
+        for (var i = 0; i < buf.length; i++) {
+          var v = buf[i] / 255, barH = v * h * 0.95, x = i * barW;
+          var g = ctx2d.createLinearGradient(0, h, 0, h - barH);
+          g.addColorStop(0, '#22d3ee'); g.addColorStop(0.5, '#8b5cf6'); g.addColorStop(1, '#ec4899');
+          ctx2d.fillStyle = g;
+          ctx2d.fillRect(x, h - barH, barW * 0.7, barH);
+        }
+        waveAnim = requestAnimationFrame(paint);
+      }
+      paint();
+    } catch (e) { /* analyser optional */ }
+  }
+  function stopWaveform() {
+    if (waveAnim) cancelAnimationFrame(waveAnim);
+    waveAnim = null; analyser = null; ampSmoothed = 0; setAmp(0);
+    if (waveCanvas) { var c = waveCanvas.getContext('2d'); if (c) c.clearRect(0, 0, waveCanvas.width, waveCanvas.height); }
+  }
+  function releaseMic() {
+    if (micStream) { try { micStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} micStream = null; }
+  }
+
+  // The agent calls this when it has enough context. POST to the same
+  // voice-trigger-triage endpoint and render into the on-page plan panel.
+  function runTriageFromAgent(payload) {
+    setState('thinking');
+    var lang = wrap.dataset.lang || 'en';
+    return fetch(API_BASE + '/voice-trigger-triage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: (payload && payload.description) || '',
+        conversation_summary: (payload && payload.conversation_summary) || '',
+        name: payload && payload.name || undefined,
+        email: payload && payload.email || undefined,
+        company: payload && payload.company || undefined,
+        country: payload && payload.country || undefined,
+        language: lang
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      setState(session ? 'listening' : 'idle');
+      if (res && res.success && res.data) {
+        if (window.__d2bRenderPlan) window.__d2bRenderPlan(res.data);
+        var d = res.data;
+        var ts = (d.technical_solution && d.technical_solution.summary) || '';
+        if (ts.length > 200) ts = ts.slice(0, 200).replace(/\s+\S*$/, '') + '...';
+        return { ok: true, verdict: d.verdict, fit_score: d.fit_score, fit_reasoning: d.fit_reasoning || '',
+                 project_title: d.project_title_suggested || '', technical_summary: ts,
+                 delivery_window: (d.technical_solution && d.technical_solution.delivery_window) || '' };
+      }
+      return { ok: false, error: (res && res.error) || 'triage_failed' };
+    })
+    .catch(function (err) { setState(session ? 'listening' : 'idle'); return { ok: false, error: err.message }; });
+  }
+  window.runPartnershipTriage = runTriageFromAgent;
+
+  // ── Dictation engine (like /voice-to-intake): CONTINUOUS speech-to-text that
+  //    streams live into the description box. Continuous + auto-restart means it
+  //    never "cuts" after a pause. No two-way conversation, so background noise
+  //    can't interrupt it. iOS Safari has no SpeechRecognition → user types. ──
+  var recog = null, recognizing = false, committed = '';
+  function isES() { return (document.documentElement.lang || wrap.dataset.lang || 'es').toLowerCase().indexOf('es') === 0; }
+  function d2bInput() { return document.getElementById('d2b-input'); }
+  function setCaption() {
+    if (!caption) return;
+    caption.textContent = recognizing
+      ? (isES() ? 'ESCUCHANDO… HABLE AHORA — TOQUE PARA DETENER' : 'LISTENING… SPEAK NOW — TAP TO STOP')
+      : (isES() ? 'TOQUE EL ORBE Y DICTE SU SOLICITUD' : 'TAP THE ORB AND DICTATE YOUR REQUEST');
+  }
+  function stopRec() {
+    recognizing = false;
+    if (recog) { try { recog.stop(); } catch (e) {} }
+    setState('idle'); setCaption();
+  }
+  function endVoiceSession() { stopRec(); }
+  function startRec() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var input = d2bInput();
+    if (!SR) { showFallback('mic'); if (input) { input.focus(); } return; }
+    if (fallbackEl) fallbackEl.hidden = true;
+    wrap.classList.remove('disabled');
+    committed = (input && input.value ? input.value.trim() : '');
+    recog = new SR();
+    recog.continuous = true; recog.interimResults = true; recog.lang = isES() ? 'es-ES' : 'en-US';
+    recog.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var tr = e.results[i][0].transcript;
+        if (e.results[i].isFinal) committed = (committed ? committed + ' ' : '') + tr.trim();
+        else interim += tr;
+      }
+      if (input) { input.value = (committed + (interim ? ' ' + interim : '')).replace(/\s+/g, ' ').trim(); input.scrollTop = input.scrollHeight; try { input.dispatchEvent(new Event('input')); } catch (x) {} }
+    };
+    recog.onerror = function (ev) {
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
+    };
+    recog.onend = function () { if (recognizing) { try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); } } };
+    recognizing = true; setState('listening'); setCaption();
+    try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
+  }
+  function activateOrb() {
+    if (recognizing) { stopRec(); return; }
+    if (window.__tornaGate && !window.__tornaGate(startRec)) return; // gate first, then resume into startRec
+    startRec();
+  }
+
+  setCaption();
+  wrap.addEventListener('click', activateOrb);
+  wrap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateOrb(); }
+    else if (e.key === 'Escape') { endVoiceSession(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && session) endVoiceSession(); });
+})();
+</script>
+
+<script>
+/* Meet Torna — app simulator cycler */
+(function(){
+  var sim = document.getElementById('d2b-sim');
+  if(!sim) return;
+  var screens = sim.querySelectorAll('.screen');
+  var steps = document.querySelectorAll('#meet .meet-step');
+  if(!screens.length || !steps.length) return;
+  var i = 0, n = screens.length, timer = null;
+  function show(k){
+    for(var a=0;a<screens.length;a++) screens[a].classList.toggle('active', a===k);
+    for(var b=0;b<steps.length;b++) steps[b].classList.toggle('active', b===k);
+  }
+  function tick(){ i = (i+1) % n; show(i); }
+  function start(){ if(!timer) timer = setInterval(tick, 2800); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  show(0); start();
+  document.addEventListener('visibilitychange', function(){ if(document.hidden) stop(); else start(); });
+  sim.addEventListener('click', function(){ stop(); tick(); start(); });
+})();
+</script>

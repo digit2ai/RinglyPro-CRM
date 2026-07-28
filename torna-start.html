@@ -1,0 +1,225 @@
+<!-- ORBUP | Free-tier signup + onboarding wizard (workspace-private projects) -->
+<style>
+.ows *{box-sizing:border-box}
+.ows{--bg:#0a0a0e;--panel:#12131a;--card:#16171f;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.18);
+  --ink:#f2f4f8;--mut:#9aa3b2;--faint:#6b7280;--cyan:#22d3ee;--violet:#7c5cff;--magenta:#ec4899;--good:#34d399;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  position:fixed;inset:0;z-index:2147483000;background:
+    radial-gradient(900px 600px at 50% -10%,rgba(124,92,255,.20),transparent 60%),
+    radial-gradient(700px 500px at 90% 110%,rgba(236,72,153,.15),transparent 60%),var(--bg);
+  color:var(--ink);font-family:var(--font);display:flex;flex-direction:column;overflow-y:auto}
+.ows a{color:inherit;text-decoration:none}
+.ows-top{display:flex;align-items:center;justify-content:space-between;padding:20px 26px;flex:0 0 auto}
+.ows-brand{display:flex;align-items:center;gap:10px}
+.ows-brand img{height:40px;width:auto;display:block}
+.ows-exit{color:var(--mut);font-size:13.5px;font-weight:500}
+.ows-exit:hover{color:var(--ink)}
+.ows-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 22px 40px;text-align:center}
+.ows-orb{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;
+  background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);
+  box-shadow:0 0 40px rgba(124,92,255,.45),0 0 0 1px rgba(255,255,255,.08) inset;position:relative}
+.ows-orb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(124,92,255,.30)}
+.ows h1{font-size:clamp(1.9rem,4.4vw,2.7rem);font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
+.ows .sub{color:var(--mut);font-size:15px;max-width:520px;margin:0 auto 30px;line-height:1.55}
+.ows-step{display:none;width:100%;max-width:760px;animation:owsIn .35s cubic-bezier(.22,.61,.36,1)}
+.ows-step.active{display:block}
+@keyframes owsIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* form fields */
+.ows-field{max-width:440px;margin:0 auto 16px;text-align:left}
+.ows-field label{display:block;font-size:13px;color:var(--mut);margin:0 0 7px;font-weight:600}
+.ows-field input{width:100%;background:var(--card);border:1px solid var(--line2);color:var(--ink);
+  border-radius:14px;padding:15px 16px;font:inherit;font-size:15.5px;transition:border-color .15s}
+.ows-field input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+.ows-err{color:#fca5a5;font-size:12.5px;min-height:16px;margin:2px 2px 0;text-align:left;max-width:440px;margin-inline:auto}
+/* choice cards */
+.ows-grid{display:grid;gap:14px;max-width:720px;margin:0 auto}
+.ows-grid.c2{grid-template-columns:repeat(2,1fr);max-width:520px}
+.ows-grid.c4{grid-template-columns:repeat(4,1fr)}
+.ows-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:12px;transition:.15s;color:var(--ink);font-weight:600;font-size:14.5px}
+.ows-card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.ows-card.sel{border-color:var(--violet);box-shadow:0 0 0 2px rgba(124,92,255,.35),0 14px 40px rgba(124,92,255,.18);background:rgba(124,92,255,.06)}
+.ows-card svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.ows-card .thumb{width:100%;height:78px;border-radius:10px;border:1px solid var(--line);display:flex;padding:9px;gap:7px}
+.ows-card .thumb.light{background:#f4f4f2}.ows-card .thumb.dark{background:#0f0f14}
+.ows-card .thumb .bar{flex:0 0 30%;border-radius:6px}
+.ows-card .thumb .col{flex:1;display:flex;flex-direction:column;gap:6px}
+.ows-card .thumb .ln{height:9px;border-radius:4px}
+.ows-card .thumb.light .bar,.ows-card .thumb.light .ln{background:#e2e2df}
+.ows-card .thumb.dark .bar,.ows-card .thumb.dark .ln{background:#22232c}
+/* workspace prompt */
+.ows-prompt{max-width:680px;margin:0 auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;
+  padding:18px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.ows-prompt textarea{width:100%;background:transparent;border:0;color:var(--ink);font:inherit;font-size:16px;
+  resize:none;min-height:56px;line-height:1.5}
+.ows-prompt textarea:focus{outline:none}
+.ows-prompt .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.ows-chiprow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px auto 0;max-width:640px}
+.ows-chip{background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;transition:.15s}
+.ows-chip:hover{border-color:var(--line2);color:var(--ink)}
+/* buttons */
+.ows-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;cursor:pointer;font-family:inherit;
+  font-weight:700;font-size:15px;border-radius:999px;padding:14px 30px;transition:.15s}
+.ows-btn.primary{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f}
+.ows-btn.primary:hover{transform:translateY(-1px);box-shadow:0 12px 34px rgba(124,92,255,.35)}
+.ows-btn.light{background:var(--ink);color:#0a0a0e}
+.ows-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.ows-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.ows-actions{margin-top:28px;display:flex;align-items:center;justify-content:center;gap:14px}
+.ows-back{color:var(--mut);font-size:14px;font-weight:600;cursor:pointer;background:none;border:0;font-family:inherit}
+.ows-back:hover{color:var(--ink)}
+/* progress dots */
+.ows-dots{display:flex;gap:8px;justify-content:center;padding:22px 0 30px}
+.ows-dot{width:9px;height:9px;border-radius:999px;background:rgba(255,255,255,.16);transition:.25s}
+.ows-dot.on{width:26px;background:linear-gradient(90deg,var(--cyan),var(--violet))}
+.ows-spin{width:16px;height:16px;border:2px solid rgba(6,16,31,.35);border-top-color:#06101f;border-radius:50%;animation:owsSpin .8s linear infinite;display:inline-block}
+@keyframes owsSpin{to{transform:rotate(360deg)}}
+@media(max-width:640px){.ows-grid.c4{grid-template-columns:repeat(2,1fr)}.ows h1{font-size:1.7rem}}
+@media(max-width:440px){.ows-grid.c2{grid-template-columns:1fr}}
+</style>
+
+<div class="ows" id="ows">
+  <div class="ows-top">
+    <a class="ows-brand" href="/torna" aria-label="Torna"><img src="/torna-assets/torna-logo.svg" alt="Torna"></a>
+    <a class="ows-exit" href="/torna">Exit</a>
+  </div>
+
+  <div class="ows-stage">
+
+    <!-- STEP 1 — Sign up -->
+    <section class="ows-step active" data-step="0">
+      <div class="ows-orb"></div>
+      <h1>Create your free workspace</h1>
+      <p class="sub">Start building on Torna's Free plan — workspace-private projects, 5 build credits a day, no credit card. Tell us who you are.</p>
+      <div class="ows-field"><label>Full name</label><input id="ows-name" type="text" placeholder="Jane Rivera" autocomplete="name"></div>
+      <div class="ows-field"><label>Work email</label><input id="ows-email" type="email" placeholder="jane@company.com" autocomplete="email"></div>
+      <div class="ows-err" id="ows-err0"></div>
+      <div class="ows-actions"><button class="ows-btn primary" id="ows-go0">Continue &rarr;</button></div>
+    </section>
+
+    <!-- STEP 2 — Pick your style -->
+    <section class="ows-step" data-step="1">
+      <div class="ows-orb"></div>
+      <h1>Pick your style</h1>
+      <p class="sub">You can change this anytime in your workspace settings.</p>
+      <div class="ows-grid c2" id="ows-style">
+        <button class="ows-card" data-val="light"><div class="thumb light"><div class="bar"></div><div class="col"><div class="ln"></div><div class="ln"></div><div class="ln" style="width:60%"></div></div></div>Light</button>
+        <button class="ows-card sel" data-val="dark"><div class="thumb dark"><div class="bar"></div><div class="col"><div class="ln"></div><div class="ln"></div><div class="ln" style="width:60%"></div></div></div>Dark</button>
+      </div>
+      <div class="ows-actions"><button class="ows-back" data-back>&larr; Back</button><button class="ows-btn light" id="ows-go1">Next &rarr;</button></div>
+    </section>
+
+    <!-- STEP 3 — Role -->
+    <section class="ows-step" data-step="2">
+      <div class="ows-orb"></div>
+      <h1>Which role fits you best?</h1>
+      <p class="sub">We tailor the AI workforce and suggestions to how you work.</p>
+      <div class="ows-grid c4" id="ows-role">
+        <button class="ows-card" data-val="Founder"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4"/></svg>Founder</button>
+        <button class="ows-card" data-val="Product"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .5-4.5 4L18 19l-6-3.5L6 19l1.5-6.5L3 8.5 9 8z"/></svg>Product</button>
+        <button class="ows-card" data-val="Designer"><svg viewBox="0 0 24 24"><path d="M4 20l7-7M14 6l4 4M13 3l8 8-9 9H4v-8z"/></svg>Designer</button>
+        <button class="ows-card" data-val="Engineer"><svg viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14"/></svg>Engineer</button>
+        <button class="ows-card" data-val="Consultant"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Consultant</button>
+        <button class="ows-card" data-val="Marketing / Sales"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Marketing / Sales</button>
+        <button class="ows-card" data-val="Operations"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14 2h-4l-.8 2.9a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L3.1 11a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1L10 22h4l.8-2.9a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg>Operations</button>
+        <button class="ows-card" data-val="Other"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Other</button>
+      </div>
+      <div class="ows-actions"><button class="ows-back" data-back>&larr; Back</button></div>
+    </section>
+
+    <!-- STEP 4 — Company size -->
+    <section class="ows-step" data-step="3">
+      <div class="ows-orb"></div>
+      <h1>How many people work at your company?</h1>
+      <p class="sub">This stays private — it just helps us right-size the build.</p>
+      <div class="ows-grid c4" id="ows-size">
+        <button class="ows-card" data-val="Solo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>Solo</button>
+        <button class="ows-card" data-val="2-20"><svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="2.5"/><circle cx="15" cy="9" r="2.5"/><circle cx="12" cy="15" r="2.5"/></svg>2 - 20</button>
+        <button class="ows-card" data-val="21-200"><svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="2"/><circle cx="17" cy="8" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="15" r="2"/></svg>21 - 200</button>
+        <button class="ows-card" data-val="200+"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.7"/><circle cx="12" cy="6" r="1.7"/><circle cx="18" cy="7" r="1.7"/><circle cx="8" cy="13" r="1.7"/><circle cx="16" cy="13" r="1.7"/><circle cx="12" cy="12" r="1.7"/></svg>200+</button>
+      </div>
+      <div class="ows-actions"><button class="ows-back" data-back>&larr; Back</button></div>
+    </section>
+
+  </div>
+
+  <div class="ows-dots" id="ows-dots">
+    <span class="ows-dot on"></span><span class="ows-dot"></span><span class="ows-dot"></span><span class="ows-dot"></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root = document.getElementById('ows');
+  if(!root) return;
+  var steps = Array.prototype.slice.call(root.querySelectorAll('.ows-step'));
+  var dots  = Array.prototype.slice.call(root.querySelectorAll('.ows-dot'));
+  var state = { name:'', email:'', style:'dark', role:'', company_size:'', desc:'' };
+  var cur = 0, saved = false;
+  var SIGNUP_URL = '/projects/api/v1/intake/orbup/signup';
+
+  // prefill if returning
+  try{ var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
+    if(c.name){ state.name=c.name; document.getElementById('ows-name').value=c.name; }
+    if(c.email){ state.email=c.email; document.getElementById('ows-email').value=c.email; }
+  }catch(e){}
+
+  function show(i){
+    cur = Math.max(0, Math.min(steps.length-1, i));
+    steps.forEach(function(s,k){ s.classList.toggle('active', k===cur); });
+    dots.forEach(function(d,k){ d.classList.toggle('on', k<=cur); });
+    window.scrollTo(0,0);
+  }
+  root.querySelectorAll('[data-back]').forEach(function(b){ b.addEventListener('click', function(){ show(cur-1); }); });
+
+  // fire-and-forget account upsert (called after step 1, and again at the end)
+  function saveAccount(extra){
+    var body = { name:state.name, email:state.email, style:state.style, role:state.role, company_size:state.company_size };
+    if(extra) for(var k in extra) body[k]=extra[k];
+    return fetch(SIGNUP_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      .then(function(r){ return r.json().catch(function(){return{};}); }).catch(function(){ return {}; });
+  }
+
+  // STEP 1 — sign up
+  var nameEl=document.getElementById('ows-name'), emailEl=document.getElementById('ows-email'), err0=document.getElementById('ows-err0');
+  document.getElementById('ows-go0').addEventListener('click', function(){
+    var name=(nameEl.value||'').trim(), email=(emailEl.value||'').trim();
+    if(!name){ err0.textContent='Please enter your name.'; nameEl.focus(); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err0.textContent='Please enter a valid email.'; emailEl.focus(); return; }
+    err0.textContent=''; state.name=name; state.email=email;
+    try{ localStorage.setItem('d2ai_contact', JSON.stringify({name:name,email:email,phone:''})); }catch(e){}
+    saveAccount(); // create the account now
+    show(1);
+  });
+  emailEl.addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('ows-go0').click(); });
+
+  // STEP 2 — style (multi-select single)
+  function wireChoice(gridId, key, autoAdvance){
+    var grid=document.getElementById(gridId);
+    grid.querySelectorAll('.ows-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        grid.querySelectorAll('.ows-card').forEach(function(c){ c.classList.remove('sel'); });
+        card.classList.add('sel');
+        state[key]=card.getAttribute('data-val');
+        if(autoAdvance) setTimeout(function(){ show(cur+1); }, 220);
+      });
+    });
+  }
+  wireChoice('ows-style','style',false);
+  document.getElementById('ows-go1').addEventListener('click', function(){ show(2); });
+  wireChoice('ows-role','role',true);          // picking a role advances
+
+  // Company size is the last onboarding step -> save + drop into the workspace.
+  (function(){
+    var grid=document.getElementById('ows-size');
+    grid.querySelectorAll('.ows-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        grid.querySelectorAll('.ows-card').forEach(function(c){ c.classList.remove('sel'); });
+        card.classList.add('sel');
+        state.company_size=card.getAttribute('data-val');
+        saveAccount().then(function(){ window.location.href='/torna/workspace'; });
+      });
+    });
+  })();
+})();
+</script>
