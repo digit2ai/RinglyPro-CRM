@@ -188,8 +188,9 @@
       <div><div class="k">Ahorro neto / año</div><div class="v" id="oAno">$12.096</div></div>
       <div><div class="k">Se paga en</div><div class="v" id="oPb">10 meses</div></div>
       <div><div class="k">Retorno año 1</div><div class="v" id="oRoi">+16%</div></div>
+      <div><div class="k">Caja neta / mes (año 1, con financiación)</div><div class="v" id="oCaja">+$619</div></div>
     </div>
-    <p class="foot2">Ahorro neto = (m² &times; costo &times; puntos porcentuales) &minus; $92/mes de operación. "Se paga en" compara ese ahorro contra los $10.439 de inversión del año 1 con IVA.</p>
+    <p class="foot2">Ahorro neto = (m² &times; costo &times; puntos porcentuales) &minus; $92/mes de operación. "Se paga en" compara ese ahorro contra los $10.439 de inversión del año 1 con IVA. "Caja neta" descuenta además la cuota de $389/mes de la financiación a 12 meses descrita en la sección 8 — si es positiva, el sistema aporta caja desde el primer mes.</p>
   </div>
 
   <p class="muted">Una nota sobre la sensibilidad: el resultado depende más del costo de su material que del volumen. A 500 m²/mes, con material a $35/m² el sistema se paga en 17 meses; a $90/m², en 6. Si Calcáreos corta mármol y granito importado de gama alta, el retorno está en la mitad alta de la tabla.</p>
@@ -203,17 +204,28 @@
     <tr><td>IVA (19% — Colombia)</td><td class="num">$1.667</td></tr>
     <tr class="total"><td>INVERSIÓN TOTAL AÑO 1 (IVA incluido)</td><td class="num">$10.439 USD</td></tr>
     <tr><td>Plazo de entrega</td><td class="num">2 semanas</td></tr>
+    <tr><td>Desembolso mensual durante el año 1 (financiación + operación)</td><td class="num">$481 USD/mes</td></tr>
     <tr><td>Años siguientes (solo operación)</td><td class="num">$92 USD/mes con IVA</td></tr>
   </table>
+  <p class="muted">No se paga el total por adelantado: el 50% del desarrollo se financia a 12 meses sin intereses. Ver sección 8.</p>
 
-  <h2>8. Forma de pago sugerida</h2>
+  <h2>8. Forma de pago — 50% al inicio, el resto financiado a 12 meses</h2>
+  <p>Calcáreos S.A. paga la mitad del desarrollo al firmar y la otra mitad en doce cuotas mensuales iguales, <strong>sin intereses</strong>. El objetivo es explícito: que la cuota mensual quede por debajo del ahorro que el sistema genera, de modo que a partir del mes uno la operación aporte caja en lugar de consumirla.</p>
   <table class="fin">
-    <tr><th>Hito</th><th>Momento</th><th class="num">Valor + IVA (USD)</th></tr>
-    <tr><td>Anticipo — inicio de sprint</td><td>Firma</td><td class="num">$4.673</td></tr>
-    <tr><td>Entrega a producción y aceptación</td><td>Semana 2</td><td class="num">$4.673</td></tr>
-    <tr><td>Operación</td><td>Mensual, desde el mes 1</td><td class="num">$92 / mes</td></tr>
+    <tr><th>Concepto</th><th>Momento</th><th class="num">Valor + IVA (USD)</th></tr>
+    <tr><td><strong>50% del desarrollo</strong> — anticipo (Sprint 1, 10 componentes: gestión, QA y aceptación incluidas)</td><td>Firma</td><td class="num">$4.673</td></tr>
+    <tr><td><strong>50% restante del desarrollo</strong> — financiado en 12 cuotas mensuales iguales, sin intereses</td><td>Meses 1 a 12</td><td class="num">$389 / mes</td></tr>
+    <tr><td>Operación en producción</td><td>Meses 1 a 12</td><td class="num">$92 / mes</td></tr>
+    <tr class="sub"><td>Cuota mensual total durante el año 1</td><td>Meses 1 a 12</td><td class="num">$481 / mes</td></tr>
+    <tr class="total"><td>DESEMBOLSO TOTAL AÑO 1</td><td>Anticipo + 12 cuotas</td><td class="num">$10.445 USD</td></tr>
+    <tr><td>A partir del mes 13 — solo operación</td><td>Mensual</td><td class="num">$92 / mes</td></tr>
   </table>
-  <p class="muted">Cifras redondeadas al dólar. Facturación en USD; equivalente en COP a la TRM del día de facturación si así se prefiere.</p>
+  <p class="muted">El desarrollo con IVA suma $9.346; el 50% financiado son $4.673 repartidos en 12 cuotas de $389 (la última ajusta el redondeo). Cifras redondeadas al dólar, por lo que el desembolso total difiere en unos pocos dólares del total nominal de la sección 7. Facturación en USD; equivalente en COP a la TRM del día de facturación si así se prefiere. La financiación no devenga intereses; si Calcáreos prefiere pagar el saldo anticipadamente, no hay penalidad.</p>
+
+  <div class="be">
+    <b>La cuota mensual es de $481 y el ahorro estimado a 500 m²/mes es de $1.100.</b><br>
+    Con esta estructura el proyecto es <strong>caja positiva desde el primer mes a partir de 219 m² de corte mensual</strong>, y el anticipo de $4.673 se recupera con el ahorro acumulado en unos <strong>7 a 8 meses</strong> a 500 m²/mes. Las cifras de ahorro siguen siendo estimaciones sobre supuestos etiquetados (sección 6), no mediciones de su planta.
+  </div>
 
   <h2>9. Próximo paso</h2>
   <p>Antes de contratar, opere el sistema. El simulador reproduce el flujo completo — registre un lote, registre un corte, fuerce un corte inválido, mueva el ancho mínimo de retal y observe cómo se mueve el porcentaje de desperdicio — con la misma lógica y la misma aritmética que llevaría producción.</p>
@@ -227,7 +239,7 @@
 <script>
 (function(){
   var f=function(n){return "$"+Math.round(n).toLocaleString("es-CO");};
-  var INV=10439, OPEX=92;
+  var INV=10439, OPEX=92, CUOTA=389;
   var vol=document.getElementById("cVol"), cost=document.getElementById("cCost"), pp=document.getElementById("cPp");
   function calc(){
     var v=parseFloat(vol.value)||0, c=parseFloat(cost.value)||0, p=parseFloat(pp.value)||0;
@@ -235,6 +247,9 @@
     document.getElementById("oMes").textContent = neto>0 ? f(neto) : f(0);
     document.getElementById("oAno").textContent = ano>0 ? f(ano) : f(0);
     var pbEl=document.getElementById("oPb"), roiEl=document.getElementById("oRoi");
+    var caja=bruto-OPEX-CUOTA, cEl=document.getElementById("oCaja");
+    cEl.textContent=(caja>=0?"+":"-")+f(Math.abs(caja));
+    cEl.className = caja>=0 ? "v" : "v warn";
     if(neto<=0){ pbEl.textContent="no se paga"; pbEl.className="v warn"; roiEl.textContent="-100%"; roiEl.className="v warn"; return; }
     var meses=INV/neto;
     pbEl.textContent = meses<1 ? "menos de 1 mes" : (meses<10 ? meses.toFixed(1).replace(".",",") : Math.round(meses))+" meses";
