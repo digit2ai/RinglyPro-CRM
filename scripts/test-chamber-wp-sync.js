@@ -36,8 +36,42 @@ function ok(name, cond, extra) {
 // Fake WordPress
 // ---------------------------------------------------------------------------
 let WP_USERS = [];
+let WP_WRITES = [];
+let WP_NEXT_ID = 500;
 function startFakeWordPress() {
   const app = express();
+  app.use(express.json());
+
+  // Write endpoint -- used when CamaraVirtual is the system of record.
+  app.post('/wp-json/camaravirtual/v1/members', (req, res) => {
+    const ts = parseInt(req.get('X-CV-Timestamp'), 10);
+    const body = req.body || {};
+    const event = body.event || '';
+    const email = String((body.member && body.member.email) || '').toLowerCase();
+    if (!ts || Math.abs(Math.floor(Date.now() / 1000) - ts) > 300) return res.status(401).json({ message: 'stale' });
+    const expect = crypto.createHmac('sha256', SECRET).update(`${ts}.${event}.${email}`).digest('hex');
+    if (req.get('X-CV-Signature') !== expect) return res.status(401).json({ message: 'bad signature' });
+
+    WP_WRITES.push({ event, member: body.member });
+    const idx = WP_USERS.findIndex(u => String(u.email).toLowerCase() === email);
+    if (event === 'member.deactivated') {
+      if (idx >= 0) WP_USERS[idx].active = false;
+      return res.json({ ok: true, id: idx >= 0 ? WP_USERS[idx].id : null, action: idx >= 0 ? 'deactivated' : 'noop' });
+    }
+    const m = body.member || {};
+    const rec = {
+      id: idx >= 0 ? WP_USERS[idx].id : WP_NEXT_ID++,
+      email, first_name: m.first_name, last_name: m.last_name,
+      company: m.company_name, sector: m.sector, country: m.country,
+      phone: m.phone, bio: m.bio, website_url: m.website_url,
+      sub_specialty: m.sub_specialty, years_experience: m.years_experience,
+      languages: m.languages, linkedin_url: m.linkedin_url,
+      membership_type: m.membership_type, active: true
+    };
+    if (idx >= 0) WP_USERS[idx] = rec; else WP_USERS.push(rec);
+    return res.json({ ok: true, id: rec.id, action: idx >= 0 ? 'updated' : 'created' });
+  });
+
   app.get('/wp-json/camaravirtual/v1/members', (req, res) => {
     const ts = parseInt(req.get('X-CV-Timestamp'), 10);
     const sig = req.get('X-CV-Signature');
@@ -307,6 +341,86 @@ async function main() {
     // ---- audit ----
     [s, j] = await authed('GET', '/wp/runs');
     ok('sync runs are logged', s === 200 && j.data.length >= 5, 'runs=' + (j.data && j.data.length));
+
+    // =================================================================
+    // DIRECTION 2: CamaraVirtual is the system of record, WordPress follows
+    // =================================================================
+    [s, j] = await authed('POST', '/wp/push', { dry_run: true });
+    ok('push refused while direction is pull', s === 502 && /direction/i.test(j.error), j.error);
+
+    [s, j] = await authed('PUT', '/wp/config', { direction: 'push', mode: 'wp_users' });
+    ok('push mode rejects the wp_users adapter', s === 400 && /plugin/i.test(j.error), j.error);
+
+    [s, j] = await authed('PUT', '/wp/config', { direction: 'push', mode: 'plugin', push_deactivate_missing: false });
+    ok('direction switched to push', s === 200 && j.data.direction === 'push', 'status=' + s);
+
+    [s, j] = await authed('POST', '/wp/sync', { dry_run: true });
+    ok('pull refused while direction is push', s === 502 && /push/i.test(j.error), j.error);
+
+    [s, j] = await hook('user.updated', { id: 99, email: 'loop@sit.test', first_name: 'Loop', last_name: 'Back' });
+    ok('inbound webhook refused in push mode (no echo loop)', s === 409, 'status=' + s);
+
+    // WordPress starts empty; the chamber is now the source.
+    WP_USERS = [];
+    WP_WRITES = [];
+    await sequelize.query(
+      `INSERT INTO members (chamber_id, email, password_hash, first_name, last_name, company_name, sector, country, phone, status)
+       VALUES (:c, 'nueva@sit.test', 'x', 'Nueva', 'Socia', 'Socia SL', 'construccion', 'Spain', '+34600111222', 'active')`,
+      { replacements: { c: chamberId } });
+
+    [s, j] = await authed('POST', '/wp/push', { dry_run: true });
+    ok('push dry run succeeds', s === 200 && j.success, 'status=' + s);
+    const activeCount = (await members()).filter(r => r.status === 'active').length;
+    ok('push dry run plans every active member', j.data.created === activeCount,
+       `planned=${j.data.created} active=${activeCount}`);
+    ok('push dry run wrote NOTHING to WordPress', WP_WRITES.length === 0, 'writes=' + WP_WRITES.length);
+
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('push applies', s === 200 && j.data.created === activeCount && j.data.failed === 0,
+       `created=${j.data.created} failed=${j.data.failed}`);
+    ok('WordPress received the members', WP_USERS.length === activeCount, 'wp users=' + WP_USERS.length);
+    const wpNueva = WP_USERS.find(u => u.email === 'nueva@sit.test');
+    ok('profile fields carried across', wpNueva && wpNueva.company === 'Socia SL' && wpNueva.sector === 'construccion',
+       wpNueva && wpNueva.company + '/' + wpNueva.sector);
+    ok('push never sends a WordPress role or capability',
+       WP_WRITES.every(w => !('role' in w.member) && !('access_level' in w.member) &&
+                            !('trust_score' in w.member) && !('governance_role' in w.member)));
+
+    // ---- push is a diff, not a blind overwrite ----
+    WP_WRITES = [];
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('second push is a no-op', j.data.created === 0 && j.data.updated === 0 && j.data.unchanged === activeCount,
+       `created=${j.data.created} updated=${j.data.updated} unchanged=${j.data.unchanged}`);
+    ok('no-op push sent no writes', WP_WRITES.length === 0, 'writes=' + WP_WRITES.length);
+
+    await sequelize.query(
+      `UPDATE members SET company_name = 'Socia Global SL' WHERE chamber_id = :c AND email = 'nueva@sit.test'`,
+      { replacements: { c: chamberId } });
+    WP_WRITES = [];
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('push sends only the changed member', j.data.updated === 1 && WP_WRITES.length === 1,
+       `updated=${j.data.updated} writes=${WP_WRITES.length}`);
+    ok('WordPress reflects the change', WP_USERS.find(u => u.email === 'nueva@sit.test').company === 'Socia Global SL');
+
+    // ---- push deactivation ----
+    WP_USERS.push({ id: 900, email: 'stranger@sit.test', first_name: 'Stray', last_name: 'User', active: true });
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('WP-only user untouched while push_deactivate_missing is off', j.data.deactivated === 0,
+       'deactivated=' + j.data.deactivated);
+    ok('stranger still active in WordPress', WP_USERS.find(u => u.email === 'stranger@sit.test').active === true);
+
+    await authed('PUT', '/wp/config', { push_deactivate_missing: true });
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('push deactivates the WP-only user', j.data.deactivated === 1, 'deactivated=' + j.data.deactivated);
+    ok('WordPress user deactivated, not deleted',
+       WP_USERS.find(u => u.email === 'stranger@sit.test').active === false && WP_USERS.length > activeCount);
+
+    // ---- a single bad record must not abort the roster ----
+    await sequelize.query(
+      `UPDATE members SET status = 'active' WHERE chamber_id = :c AND email = 'legacy@sit.test'`,
+      { replacements: { c: chamberId } });
+    [s, j] = await authed('POST', '/wp/push', {});
+    ok('newly active member pushed', s === 200 && j.data.created === 1, 'created=' + j.data.created);
 
     // ---- isolation: sync must be off everywhere else ----
     const r105 = await fetch(cvSrv.base + '/cv-105/api/wp/config');

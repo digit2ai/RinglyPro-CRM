@@ -145,10 +145,126 @@ add_action( 'rest_api_init', function () {
 } );
 
 // ---------------------------------------------------------------------------
+// WRITE endpoint — used when CamaraVirtual is the system of record and this
+// site is the follower (chamber configured with direction = "push").
+// Signature covers timestamp + event + email, matching what the chamber sends.
+// ---------------------------------------------------------------------------
+function cv_sor_verify_write( $request ) {
+	$s = cv_sor_settings();
+	if ( empty( $s['secret'] ) ) {
+		return new WP_Error( 'cv_no_secret', 'Shared secret not configured', array( 'status' => 500 ) );
+	}
+	$ts  = (int) $request->get_header( 'x-cv-timestamp' );
+	$sig = (string) $request->get_header( 'x-cv-signature' );
+	if ( ! $ts || abs( time() - $ts ) > 300 ) {
+		return new WP_Error( 'cv_stale', 'Timestamp outside the 5 minute window', array( 'status' => 401 ) );
+	}
+	$body   = $request->get_json_params();
+	$event  = isset( $body['event'] ) ? $body['event'] : '';
+	$email  = isset( $body['member']['email'] ) ? strtolower( trim( $body['member']['email'] ) ) : '';
+	$expect = hash_hmac( 'sha256', $ts . '.' . $event . '.' . $email, $s['secret'] );
+	if ( ! hash_equals( $expect, $sig ) ) {
+		return new WP_Error( 'cv_bad_sig', 'Bad signature', array( 'status' => 401 ) );
+	}
+	return true;
+}
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'camaravirtual/v1', '/members', array(
+		'methods'             => 'POST',
+		'permission_callback' => 'cv_sor_verify_write',
+		'callback'            => function ( $request ) {
+			$body   = $request->get_json_params();
+			$event  = isset( $body['event'] ) ? $body['event'] : 'member.upsert';
+			$m      = isset( $body['member'] ) ? $body['member'] : array();
+			$email  = isset( $m['email'] ) ? sanitize_email( $m['email'] ) : '';
+			if ( ! is_email( $email ) ) {
+				return new WP_Error( 'cv_bad_email', 'A valid member.email is required', array( 'status' => 400 ) );
+			}
+
+			// Suppress our own outbound webhook for the duration of this write,
+			// otherwise applying the chamber's push fires profile_update and
+			// echoes the same record straight back at it.
+			$GLOBALS['cv_sor_applying'] = true;
+
+			try {
+				$user = get_user_by( 'email', $email );
+
+				if ( 'member.deactivated' === $event ) {
+					if ( ! $user ) { return array( 'ok' => true, 'action' => 'noop' ); }
+					// Deactivate by removing roles -- never delete. The account keeps
+					// its authorship of posts, comments and orders.
+					$u = new WP_User( $user->ID );
+					$u->set_role( '' );
+					return array( 'ok' => true, 'id' => $user->ID, 'action' => 'deactivated' );
+				}
+
+				$first = isset( $m['first_name'] ) ? sanitize_text_field( $m['first_name'] ) : '';
+				$last  = isset( $m['last_name'] ) ? sanitize_text_field( $m['last_name'] ) : '';
+
+				if ( ! $user ) {
+					$login = sanitize_user( current( explode( '@', $email ) ), true );
+					if ( empty( $login ) || username_exists( $login ) ) { $login = $login . '_' . wp_generate_password( 5, false ); }
+					$uid = wp_insert_user( array(
+						'user_login'   => $login,
+						'user_email'   => $email,
+						'user_pass'    => wp_generate_password( 32 ),
+						'first_name'   => $first,
+						'last_name'    => $last,
+						'display_name' => trim( $first . ' ' . $last ),
+						// The chamber never chooses a WordPress role. This site decides
+						// what a synced member may do here.
+						'role'         => apply_filters( 'cv_sor_default_role', get_option( 'default_role', 'subscriber' ) ),
+					) );
+					if ( is_wp_error( $uid ) ) { return $uid; }
+					$action = 'created';
+				} else {
+					$uid = $user->ID;
+					wp_update_user( array(
+						'ID'         => $uid,
+						'first_name' => $first,
+						'last_name'  => $last,
+					) );
+					// A member returning from inactive gets the default role back.
+					$u = new WP_User( $uid );
+					if ( empty( $u->roles ) ) {
+						$u->set_role( apply_filters( 'cv_sor_default_role', get_option( 'default_role', 'subscriber' ) ) );
+					}
+					$action = 'updated';
+				}
+
+				foreach ( cv_sor_default_meta_map() as $field => $meta_key ) {
+					if ( ! array_key_exists( $field, $m ) ) { continue; }
+					$v = $m[ $field ];
+					if ( is_array( $v ) ) { $v = implode( ',', $v ); }
+					update_user_meta( $uid, $meta_key, sanitize_text_field( (string) $v ) );
+				}
+				if ( isset( $m['bio'] ) ) {
+					update_user_meta( $uid, 'description', sanitize_textarea_field( $m['bio'] ) );
+				}
+				if ( isset( $m['website_url'] ) ) {
+					wp_update_user( array( 'ID' => $uid, 'user_url' => esc_url_raw( $m['website_url'] ) ) );
+				}
+				if ( isset( $m['external_id'] ) ) {
+					update_user_meta( $uid, 'cv_member_id', sanitize_text_field( (string) $m['external_id'] ) );
+				}
+
+				do_action( 'cv_sor_member_written', $uid, $m, $action );
+				return array( 'ok' => true, 'id' => $uid, 'action' => $action );
+			} finally {
+				$GLOBALS['cv_sor_applying'] = false;
+			}
+		},
+	) );
+} );
+
+// ---------------------------------------------------------------------------
 // Push: tell CamaraVirtual the moment a user changes, so the chamber is not
 // waiting on the next scheduled pull.
 // ---------------------------------------------------------------------------
 function cv_sor_push( $event, $user ) {
+	// Never echo a write that CamaraVirtual just applied.
+	if ( ! empty( $GLOBALS['cv_sor_applying'] ) ) { return; }
 	$s = cv_sor_settings();
 	if ( empty( $s['push'] ) || empty( $s['slug'] ) || empty( $s['secret'] ) || empty( $s['cv_base'] ) ) { return; }
 

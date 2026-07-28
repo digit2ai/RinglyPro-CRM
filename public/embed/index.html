@@ -194,14 +194,76 @@ GET  /cv-105/api/wp/runs              # historial de sincronizaciones</pre>
   <p>Genera un enlace firmado, de un solo uso, valido 5 minutos, que abre el panel de la camara ya
      autenticado. Tambien sigue funcionando el flujo normal de recuperar contrasena.</p>
 
+  <h1 style="margin-top:70px">Direccion 3: la camara empuja hacia WordPress</h1>
+  <p class="sub">Cuando los miembros VIVEN en CamaraVirtual y WordPress debe seguirla.</p>
+
+  <p>Aqui la camara es el sistema de registro y WordPress es el seguidor: cada miembro activo se
+     escribe como <strong>usuario real de WordPress</strong> (con su perfil en user meta), no como un
+     listado renderizado. Sirve cuando quieres que los miembros tengan cuenta en el sitio — area
+     privada, comentarios, WooCommerce, contenido restringido.</p>
+
+  <div class="warn">
+    <strong>Las direcciones son excluyentes.</strong> <code>direction</code> es <code>pull</code>
+    <em>o</em> <code>push</code>, nunca las dos. Con las dos encendidas se forma un bucle: la camara
+    escribe, WordPress dispara <code>profile_update</code>, el webhook devuelve el cambio a la camara,
+    y asi indefinidamente. Con <code>push</code> la camara rechaza el webhook entrante (409) y el
+    plugin silencia su propio aviso mientras aplica una escritura nuestra.
+  </div>
+
+  <h2>Configurar</h2>
+  <pre><button onclick="cp(this)">Copiar</button>PUT /cv-105/api/wp/config
+Authorization: Bearer &lt;token de admin&gt;
+
+{
+  "enabled": true,
+  "direction": "push",
+  "mode": "plugin",
+  "site_url": "https://hispanotec.org",
+  "shared_secret": "&lt;el secreto generado en WordPress&gt;",
+  "push_deactivate_missing": false
+}</pre>
+  <p>El modo <code>push</code> exige <code>mode: "plugin"</code>: la API nativa de WordPress no
+     transporta empresa, sector ni telefono.</p>
+
+  <h2>Ejecutar</h2>
+  <pre><button onclick="cp(this)">Copiar</button>POST /cv-105/api/wp/push  {"dry_run": true}   # que crearia, actualizaria y desactivaria
+POST /cv-105/api/wp/push  {}                  # aplica</pre>
+  <p>El push es un <strong>diff</strong>, no una reescritura: lee primero el estado de WordPress y
+     solo envia los miembros que cambiaron. Un segundo push seguido no manda ni una peticion.
+     Si un registro falla (validacion de WordPress, por ejemplo) los demas continuan y el error
+     aparece en <code>errors[]</code>.</p>
+
+  <div class="note">
+    <strong>La camara no reparte permisos en WordPress.</strong> El payload nunca lleva rol ni
+    capacidad: el rol de un usuario nuevo lo decide el sitio (<code>cv_sor_default_role</code>,
+    por defecto el rol predeterminado de WordPress). Es la contraparte exacta de la regla inversa —
+    WordPress tampoco puede fijar <code>access_level</code> dentro de la camara.
+  </div>
+  <p>Igual que en la otra direccion, nadie se borra: un usuario que ya no corresponde a un miembro
+     activo se queda <strong>sin roles</strong> (con <code>push_deactivate_missing</code> encendido),
+     conservando su autoria de entradas, comentarios y pedidos.</p>
+
+  <h2>Cual elegir</h2>
+  <table>
+    <tr><th>Escenario</th><th>Configuracion</th><th>Usalo cuando</th></tr>
+    <tr><td>WordPress solo muestra el directorio</td><td>Widget o <code>[cv_directory]</code></td>
+        <td>La web es marketing; los miembros viven en la camara y no necesitan cuenta en WordPress.</td></tr>
+    <tr><td>WordPress manda</td><td><code>direction: "pull"</code></td>
+        <td>Las altas y los pagos ya ocurren en WordPress (MemberPress, PMPro, WooCommerce).</td></tr>
+    <tr><td>La camara manda</td><td><code>direction: "push"</code></td>
+        <td>Las altas ocurren en la camara y quieres que los miembros tengan cuenta real en el sitio.</td></tr>
+  </table>
+
+  <h2>Referencia de endpoints</h2>
   <table>
     <tr><th>Endpoint</th><th>Autenticacion</th><th>Que hace</th></tr>
     <tr><td><code>GET /wp/config</code></td><td>Admin</td><td>Lee la configuracion (secretos enmascarados)</td></tr>
     <tr><td><code>PUT /wp/config</code></td><td>Admin</td><td>Guarda la configuracion</td></tr>
     <tr><td><code>POST /wp/test</code></td><td>Admin</td><td>Prueba la conexion, no escribe</td></tr>
-    <tr><td><code>POST /wp/sync</code></td><td>Admin</td><td>Reconcilia; <code>dry_run</code> solo planifica</td></tr>
+    <tr><td><code>POST /wp/sync</code></td><td>Admin</td><td>Trae desde WordPress (<code>pull</code>); <code>dry_run</code> solo planifica</td></tr>
+    <tr><td><code>POST /wp/push</code></td><td>Admin</td><td>Envia hacia WordPress (<code>push</code>); <code>dry_run</code> solo planifica</td></tr>
     <tr><td><code>GET /wp/runs</code></td><td>Admin</td><td>Auditoria de sincronizaciones</td></tr>
-    <tr><td><code>POST /wp/webhook</code></td><td>HMAC</td><td>Alta/edicion/baja de un miembro</td></tr>
+    <tr><td><code>POST /wp/webhook</code></td><td>HMAC</td><td>Alta/edicion/baja de un miembro (solo en <code>pull</code>)</td></tr>
     <tr><td><code>GET /wp/sso</code></td><td>Token firmado</td><td>Entrada al panel desde WordPress</td></tr>
   </table>
 

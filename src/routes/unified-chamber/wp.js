@@ -82,6 +82,24 @@ router.post('/sync', authMiddleware, requireAdmin, async (req, res) => {
   }
 });
 
+// Push: CamaraVirtual is the system of record and WordPress follows.
+// Refuses when the chamber is configured for 'pull', so the two directions can
+// never run against each other.
+router.post('/push', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const [chamber] = await sequelize.query(
+      `SELECT id, slug, theme_config, owner_member_id FROM chambers WHERE id = :id`,
+      { replacements: { id: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    const dryRun = req.body && (req.body.dry_run === true || req.body.dry_run === 'true');
+    const summary = await wp.pushChamber(chamber, { dryRun });
+    return res.json({ success: true, data: summary });
+  } catch (err) {
+    console.error('[/wp/push]', err.message);
+    return res.status(502).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/runs', authMiddleware, requireAdmin, async (req, res) => {
   try {
     await wp.ensureTables();
@@ -107,6 +125,12 @@ router.post('/webhook', async (req, res) => {
   try {
     const cfg = wp.readConfig(req.chamber);
     if (!cfg.enabled) return res.status(403).json({ success: false, error: 'WordPress sync is not enabled for this chamber' });
+    // In push mode CamaraVirtual is the source of truth. Accepting inbound
+    // writes here would let our own push echo back and overwrite the record
+    // we just sent.
+    if (cfg.direction !== 'pull') {
+      return res.status(409).json({ success: false, error: "This chamber is in 'push' mode; inbound member writes are refused" });
+    }
 
     const body = req.body || {};
     const event = String(body.event || '').trim();

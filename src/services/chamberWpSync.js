@@ -104,10 +104,19 @@ async function ensureTables() {
 // ---------------------------------------------------------------------------
 const DEFAULT_CONFIG = {
   enabled: false,
+  // WHO IS THE SYSTEM OF RECORD. Mutually exclusive on purpose:
+  //   'pull' -- WordPress owns members, CamaraVirtual follows (pull + webhook)
+  //   'push' -- CamaraVirtual owns members, WordPress follows
+  // Running both at once is an echo loop (CV writes -> WP fires profile_update
+  // -> webhook writes back to CV -> ...). The routes enforce the exclusivity;
+  // the companion plugin additionally suppresses its outbound webhook while it
+  // is applying a write that came from CamaraVirtual.
+  direction: 'pull',
   mode: 'plugin',            // 'plugin' (companion WP plugin) | 'wp_users' (core REST API)
   site_url: '',
   auth_user: '',             // wp_users mode: the Application Password username
   deactivate_missing: false, // OFF by default -- a first sync must not mass-deactivate
+  push_deactivate_missing: false,
   allow_sso: false,
   default_country: '',
   default_sector: ''
@@ -123,8 +132,9 @@ function readConfig(chamber) {
 function publicConfig(chamber) {
   const c = readConfig(chamber);
   return {
-    enabled: !!c.enabled, mode: c.mode, site_url: c.site_url,
+    enabled: !!c.enabled, direction: c.direction, mode: c.mode, site_url: c.site_url,
     auth_user: c.auth_user, deactivate_missing: !!c.deactivate_missing,
+    push_deactivate_missing: !!c.push_deactivate_missing,
     allow_sso: !!c.allow_sso, default_country: c.default_country,
     default_sector: c.default_sector,
     auth_secret: mask(c.auth_secret_enc),
@@ -133,8 +143,8 @@ function publicConfig(chamber) {
   };
 }
 
-const EDITABLE = ['enabled', 'mode', 'site_url', 'auth_user', 'deactivate_missing',
-                  'allow_sso', 'default_country', 'default_sector'];
+const EDITABLE = ['enabled', 'direction', 'mode', 'site_url', 'auth_user', 'deactivate_missing',
+                  'push_deactivate_missing', 'allow_sso', 'default_country', 'default_sector'];
 
 async function saveConfig(chamberId, chamber, patch) {
   const next = readConfig(chamber);
@@ -142,6 +152,10 @@ async function saveConfig(chamberId, chamber, patch) {
     if (Object.prototype.hasOwnProperty.call(patch, k)) next[k] = patch[k];
   }
   if (next.mode !== 'wp_users' && next.mode !== 'plugin') next.mode = 'plugin';
+  if (next.direction !== 'push' && next.direction !== 'pull') next.direction = 'pull';
+  if (next.direction === 'push' && next.mode !== 'plugin') {
+    throw new Error("direction 'push' requires mode 'plugin' -- the core wp/v2/users API cannot carry company, sector or phone");
+  }
   if (next.site_url) {
     const u = normalizeSiteUrl(next.site_url);
     if (!u) throw new Error('site_url must be an http(s) URL');
@@ -372,6 +386,10 @@ async function syncChamber(chamber, opts) {
   const dryRun = !!(opts && opts.dryRun);
   const cfg = readConfig(chamber);
   if (!cfg.enabled) throw new Error('WordPress sync is not enabled for this chamber');
+  if (cfg.direction === 'push') {
+    throw new Error("This chamber is configured with direction 'push' (CamaraVirtual is the system " +
+      "of record). Pulling as well would fight the push. Set direction to 'pull' first.");
+  }
   await ensureTables();
 
   const started = Date.now();
@@ -542,6 +560,185 @@ async function syncChamber(chamber, opts) {
   return summary;
 }
 
+// ---------------------------------------------------------------------------
+// PUSH -- CamaraVirtual is the system of record, WordPress follows
+// ---------------------------------------------------------------------------
+async function httpPostJson(url, headers, body) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: Object.assign({ Accept: 'application/json', 'Content-Type': 'application/json' }, headers || {}),
+      body: JSON.stringify(body),
+      signal: ctl.signal
+    });
+    const text = await res.text();
+    let parsed = null;
+    try { parsed = text ? JSON.parse(text) : null; } catch (e) { /* non-JSON */ }
+    if (!res.ok) {
+      const msg = (parsed && (parsed.message || parsed.error)) || text.slice(0, 200) || ('HTTP ' + res.status);
+      const err = new Error(`WordPress responded ${res.status}: ${msg}`);
+      err.status = res.status;
+      throw err;
+    }
+    return parsed;
+  } finally { clearTimeout(timer); }
+}
+
+/**
+ * Push the chamber's members INTO WordPress.
+ *
+ * The mirror image of syncChamber. Here CamaraVirtual owns the record and
+ * WordPress is the follower, so the ownership rule inverts for profile fields
+ * -- but only for profile fields. This never sends access_level, trust_score,
+ * governance_role or any WordPress capability: the payload cannot grant a
+ * WordPress role, and the companion plugin assigns its own default role on
+ * create. A chamber cannot escalate privilege on the WordPress site any more
+ * than WordPress can escalate inside the chamber.
+ *
+ * Requires mode 'plugin' -- the companion plugin's write endpoint is what
+ * carries company/sector/phone into user meta.
+ */
+async function pushChamber(chamber, opts) {
+  const dryRun = !!(opts && opts.dryRun);
+  const cfg = readConfig(chamber);
+  if (!cfg.enabled) throw new Error('WordPress sync is not enabled for this chamber');
+  if (cfg.direction !== 'push') {
+    throw new Error("This chamber is configured with direction '" + cfg.direction +
+      "'. Set direction to 'push' before pushing, so pull and push can never run at once.");
+  }
+  if (cfg.mode !== 'plugin') throw new Error("push requires mode 'plugin'");
+  const secret = decrypt(cfg.shared_secret_enc);
+  if (!secret) throw new Error('shared_secret is not configured');
+  await ensureTables();
+
+  const started = Date.now();
+
+  const members = await sequelize.query(
+    `SELECT m.id, m.email, m.status, ${WP_OWNED_FIELDS.map(f => 'm.' + f).join(', ')},
+            l.external_id AS wp_external_id
+     FROM members m
+     LEFT JOIN chamber_wp_links l ON l.member_id = m.id AND l.chamber_id = m.chamber_id
+     WHERE m.chamber_id = :c AND m.status = 'active'
+     ORDER BY m.id`,
+    { replacements: { c: chamber.id }, type: QueryTypes.SELECT }
+  );
+
+  // Read WordPress once so the push is a diff, not a blind overwrite of every
+  // row on every run.
+  let remote = [];
+  try { remote = await fetchRoster(cfg); } catch (e) {
+    throw new Error('Could not read the current WordPress roster before pushing: ' + e.message);
+  }
+  const remoteByEmail = new Map();
+  const remoteById = new Map();
+  for (const r of remote) {
+    const rec = normalizeRecord(r);
+    if (rec.email) remoteByEmail.set(rec.email, rec);
+    if (rec.external_id) remoteById.set(String(rec.external_id), rec);
+  }
+
+  const plan = { create: [], update: [], unchanged: 0, deactivate: [] };
+  const pushedEmails = new Set();
+
+  for (const m of members) {
+    const email = String(m.email || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) continue;
+    pushedEmails.add(email);
+
+    const payload = { external_id: String(m.id), email };
+    for (const f of WP_OWNED_FIELDS) payload[f] = m[f];
+
+    const current = (m.wp_external_id && remoteById.get(String(m.wp_external_id))) || remoteByEmail.get(email);
+    if (!current) { plan.create.push(payload); continue; }
+
+    const diff = [];
+    for (const f of WP_OWNED_FIELDS) {
+      if (!sameValue(current[f], m[f])) diff.push(f);
+    }
+    if (current.email !== email) diff.push('email');
+    if (diff.length) plan.update.push(Object.assign({ _fields: diff }, payload));
+    else plan.unchanged++;
+  }
+
+  if (cfg.push_deactivate_missing) {
+    for (const rec of remoteByEmail.values()) {
+      if (!pushedEmails.has(rec.email)) plan.deactivate.push({ email: rec.email, external_id: rec.external_id });
+    }
+  }
+
+  const summary = {
+    dry_run: dryRun, direction: 'push', site_url: cfg.site_url,
+    members: members.length, remote: remote.length,
+    created: plan.create.length, updated: plan.update.length,
+    deactivated: plan.deactivate.length, unchanged: plan.unchanged,
+    push_deactivate_missing: !!cfg.push_deactivate_missing,
+    errors: []
+  };
+
+  if (dryRun) {
+    summary.plan = {
+      create: plan.create.map(p => ({ email: p.email, name: p.first_name + ' ' + p.last_name, company: p.company_name })),
+      update: plan.update.map(p => ({ email: p.email, fields: p._fields })),
+      deactivate: plan.deactivate
+    };
+    summary.duration_ms = Date.now() - started;
+    await recordRun(chamber.id, summary, true, null);
+    return summary;
+  }
+
+  const send = async (event, payload) => {
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = crypto.createHmac('sha256', secret)
+      .update(`${ts}.${event}.${payload.email}`).digest('hex');
+    return httpPostJson(
+      `${cfg.site_url}/wp-json/camaravirtual/v1/members`,
+      { 'X-CV-Timestamp': String(ts), 'X-CV-Signature': sig },
+      { event, member: payload }
+    );
+  };
+
+  // One member failing (a WordPress validation error, say) must not abandon
+  // the rest of the roster -- collect and report instead of throwing.
+  for (const p of plan.create.concat(plan.update)) {
+    const payload = Object.assign({}, p); delete payload._fields;
+    try {
+      const out = await send('member.upsert', payload);
+      if (out && out.id) await linkExternalByEmail(chamber.id, payload.email, out.id);
+    } catch (e) {
+      summary.errors.push({ email: payload.email, error: e.message });
+    }
+  }
+  for (const d of plan.deactivate) {
+    try { await send('member.deactivated', { email: d.email, external_id: d.external_id }); }
+    catch (e) { summary.errors.push({ email: d.email, error: e.message }); }
+  }
+
+  summary.created -= summary.errors.length ? 0 : 0; // counts stay as planned; failures listed separately
+  summary.failed = summary.errors.length;
+  summary.duration_ms = Date.now() - started;
+  await recordRun(chamber.id, summary, summary.errors.length === 0, summary.errors.length ? 'partial failure' : null);
+
+  const cfgNext = readConfig(chamber);
+  cfgNext.last_run = {
+    at: new Date().toISOString(), ok: summary.errors.length === 0, direction: 'push',
+    created: summary.created, updated: summary.updated,
+    deactivated: summary.deactivated, failed: summary.failed
+  };
+  await writeConfig(chamber.id, cfgNext);
+
+  return summary;
+}
+
+async function linkExternalByEmail(chamberId, email, externalId) {
+  const [row] = await sequelize.query(
+    `SELECT id FROM members WHERE chamber_id = :c AND LOWER(email) = :e`,
+    { replacements: { c: chamberId, e: String(email).toLowerCase() }, type: QueryTypes.SELECT }
+  );
+  if (row) await linkExternal(chamberId, row.id, externalId);
+}
+
 async function linkExternal(chamberId, memberId, externalId) {
   await sequelize.query(
     `INSERT INTO chamber_wp_links (chamber_id, member_id, external_id, source, last_synced_at)
@@ -637,7 +834,7 @@ function verifySsoToken(cfg, token) {
 }
 
 module.exports = {
-  readConfig, publicConfig, saveConfig, syncChamber, fetchRoster,
+  readConfig, publicConfig, saveConfig, syncChamber, pushChamber, fetchRoster,
   verifyWebhook, verifySsoToken, normalizeRecord, ensureTables,
   encrypt, decrypt, mask, normalizeSiteUrl, pgArray,
   WP_OWNED_FIELDS

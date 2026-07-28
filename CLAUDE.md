@@ -599,9 +599,9 @@ UPDATE chambers SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"publ
 
 CORS is already open globally (`app.use(cors())` in `src/app.js`), so cross-origin fetch from any WordPress host works with no per-domain allowlist.
 
-## Chamber ← WordPress sync (WordPress as System of Record)
+## Chamber ↔ WordPress member sync (pull or push)
 
-**Purpose:** the inverse of the public directory above. WordPress OWNS member identity + profile; CamaraVirtual is the system of engagement (projects, RFQs, trust, messaging, P2B) and reconciles its `members` table against WordPress. The two directions are independent — a chamber can run either, both, or neither.
+**Purpose:** two-way integration between a chamber and a WordPress site, with an explicit choice of who is the system of record. `theme_config.wp_sync.direction` is **`pull`** (WordPress owns members, CamaraVirtual follows) **or `push`** (CamaraVirtual owns members, WordPress follows) — never both. Running both is an echo loop (CV writes → WP fires `profile_update` → webhook writes back to CV → …), so `/wp/sync` refuses in push mode, `/wp/push` refuses in pull mode, the inbound webhook 409s in push mode, and the companion plugin suppresses its own outbound webhook while applying a CV write. This is separate from the read-only directory above, which involves no member records at all.
 
 - **Engine:** `src/services/chamberWpSync.js` · **Routes:** `src/routes/unified-chamber/wp.js`, mounted at `/:slug/api/wp/*` (before `core.js` in `unified-chamber/index.js`).
 - **Companion WP plugin:** `public/embed/wordpress-sor-plugin.php.txt` — signed roster endpoint `/wp-json/camaravirtual/v1/members`, push on `user_register`/`profile_update`/`delete_user`, `[cv_login]` SSO shortcode, settings screen, `cv_sor_member` filter for mapping MemberPress/PMPro/WooCommerce/ACF fields.
@@ -622,7 +622,18 @@ CORS is already open globally (`app.use(cors())` in `src/app.js`), so cross-orig
 
 **Config** lives in `chambers.theme_config.wp_sync`; `shared_secret` / `auth_secret` are AES-256-GCM encrypted at rest and returned only as `{set, hint}`. Sending a blank secret keeps the stored one. `mode: 'plugin'` (companion plugin, full fields) or `'wp_users'` (core REST API + Application Password, zero install, but no company/sector/phone).
 
-**SIT:** `node scripts/test-chamber-wp-sync.js` → **53/53**. Spins a fake WordPress plus a throwaway chamber (`cv-99001`, created and dropped by the script — it never touches cv-105) and covers field ownership, privilege-escalation attempts, email renames, soft deactivation, admin protection, webhook signature/replay/staleness, and SSO forge/replay/expiry/open-redirect. Zero external keys.
+**SIT:** `node scripts/test-chamber-wp-sync.js` → **74/74**. Spins a fake WordPress plus a throwaway chamber (`cv-99001`, created and dropped by the script — it never touches cv-105) and covers field ownership, privilege-escalation attempts, email renames, soft deactivation, admin protection, webhook signature/replay/staleness, and SSO forge/replay/expiry/open-redirect. Zero external keys.
 
 **Environment Variables:**
 - `CHAMBER_WP_SECRET` — key material for encrypting the per-chamber WordPress credentials. Falls back to `CHAMBER_JWT_SECRET` then `JWT_SECRET`. SET on prod: rotating it makes stored secrets undecryptable (re-enter them), and leaving it default means credentials are encrypted under a guessable key.
+
+### Push direction (CamaraVirtual as System of Record)
+`pushChamber()` writes the chamber's active members into WordPress as **real WP users** (profile in user meta), for sites that need member accounts — private area, comments, WooCommerce, restricted content. `POST /:slug/api/wp/push` (admin, `{dry_run:true}` plans only). Requires `mode:'plugin'`; the core `wp/v2/users` API cannot carry company/sector/phone.
+
+- **Diff, not overwrite.** It reads the current WordPress roster first and sends only changed members; a second push in a row issues zero requests.
+- **The chamber grants no WordPress privilege.** The payload never contains a role or capability — the site decides via `cv_sor_default_role` (defaults to WordPress's own default role). Exact counterpart of the inverse rule: WordPress can't set `access_level` inside the chamber, the chamber can't set a role on the site.
+- **No deletes.** With `push_deactivate_missing` on (default off), a WP user with no matching active member has its **roles removed**, keeping authorship of posts, comments and orders.
+- **Partial failure is isolated.** One record failing WordPress validation doesn't abandon the roster; failures come back in `errors[]` and `failed`.
+- Companion plugin gained `POST /wp-json/camaravirtual/v1/members` (HMAC over `ts.event.email`) plus `$GLOBALS['cv_sor_applying']` loop suppression.
+
+**Picking a scenario:** WordPress only *displays* members → the embed widget / `[cv_directory]` (no member records move). Signups and payments already happen in WordPress → `direction:'pull'`. Signups happen in the chamber and members need site accounts → `direction:'push'`.
