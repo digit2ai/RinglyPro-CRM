@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Directorio público de miembros — CamaraVirtual</title>
+<style>
+  :root { --fg:#14213d; --muted:#6b7280; --line:#e5e7eb; --gold:#c9a227; --bg:#fff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--fg); background:var(--bg); line-height:1.6; }
+  .wrap { max-width:920px; margin:0 auto; padding:44px 22px 90px; }
+  h1 { font-size:29px; margin:0 0 6px; letter-spacing:-.02em; }
+  .sub { color:var(--muted); margin:0 0 30px; font-size:16px; }
+  h2 { font-size:20px; margin:46px 0 8px; padding-top:22px; border-top:1px solid var(--line); }
+  h3 { font-size:16px; margin:24px 0 6px; }
+  p { margin:0 0 12px; }
+  code { background:#f3f4f6; padding:2px 6px; border-radius:4px; font-size:14px;
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  pre { position:relative; background:#0f172a; color:#e2e8f0; padding:18px; border-radius:10px;
+        overflow-x:auto; font-size:13.5px; line-height:1.55;
+        font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  pre button { position:absolute; top:10px; right:10px; background:#1e293b; color:#e2e8f0;
+        border:1px solid #334155; border-radius:6px; padding:5px 11px; font-size:12px; cursor:pointer; }
+  table { width:100%; border-collapse:collapse; margin:14px 0 6px; font-size:14.5px; display:block; overflow-x:auto; }
+  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-weight:700; background:#f9fafb; white-space:nowrap; }
+  .note { border-left:3px solid var(--gold); background:#fffbeb; padding:12px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
+  .warn { border-left:3px solid #dc2626; background:#fef2f2; padding:12px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
+  .preview { border:1px dashed var(--line); border-radius:12px; padding:22px; margin-top:14px; }
+  a { color:#1d4ed8; }
+  @media (prefers-color-scheme:dark){
+    :root { --fg:#e5e7eb; --muted:#9ca3af; --line:#374151; --bg:#0b1220; }
+    code { background:#1f2937; color:#e5e7eb; } th { background:#111827; }
+    .note { background:#1f1a08; } .warn { background:#2a1214; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p style="font-size:14px"><a href="/embed/">← Integración WordPress → Plataforma</a></p>
+
+  <h1>Directorio público de miembros</h1>
+  <p class="sub">Publicar el listado de miembros de una cámara dentro de una página externa. No mueve ningún registro: solo lo muestra.</p>
+
+  <div class="note">
+    Esto es independiente de la integración de identidad. Sirve cuando la web es únicamente
+    <strong>vitrina</strong> y los miembros no necesitan cuenta en ese sitio.
+  </div>
+
+  <h2>Opción 1 — Bloque HTML (lo más rápido, sin plugins)</h2>
+  <p>En la página de WordPress, agrega un bloque <strong>HTML personalizado</strong> y pega esto:</p>
+  <pre><button onclick="cp(this)">Copiar</button>&lt;div data-cv-directory
+     data-slug="cv-105"
+     data-lang="es"
+     data-limit="24"
+     data-join-url="https://www.camaravirtual.app/cv-105/signup-member"&gt;&lt;/div&gt;
+&lt;script src="https://aiagent.ringlypro.com/embed/chamber-directory.js"&gt;&lt;/script&gt;</pre>
+  <p>Trae buscador, filtro por sector, tarjetas y paginación, hereda la tipografía del tema y se adapta al modo oscuro.</p>
+
+  <table>
+    <tr><th>Atributo</th><th>Descripción</th></tr>
+    <tr><td><code>data-slug</code></td><td>Obligatorio. Slug de la cámara, por ejemplo <code>cv-105</code>.</td></tr>
+    <tr><td><code>data-lang</code></td><td><code>es</code> o <code>en</code>. Predeterminado <code>es</code>.</td></tr>
+    <tr><td><code>data-limit</code></td><td>Miembros por página, de 1 a 100. Predeterminado 24.</td></tr>
+    <tr><td><code>data-search</code></td><td><code>0</code> oculta la barra de búsqueda y los filtros.</td></tr>
+    <tr><td><code>data-join-url</code></td><td>Dirección del botón «Únete». Omítelo para ocultarlo.</td></tr>
+    <tr><td><code>data-base</code></td><td>Origen de la API. Predeterminado <code>https://aiagent.ringlypro.com</code>.</td></tr>
+  </table>
+
+  <h3>Vista previa en vivo</h3>
+  <div class="preview">
+    <div data-cv-directory data-slug="cv-105" data-lang="es" data-limit="12"></div>
+  </div>
+
+  <h2>Opción 2 — Shortcode PHP (recomendado si importa el SEO)</h2>
+  <p>La opción 1 se dibuja con JavaScript, así que Google puede tardar en indexar los nombres.
+     Para que los miembros aparezcan en el HTML que recibe el buscador:</p>
+  <p><a href="/embed/wordpress-shortcode.php.txt" target="_blank">Ver o descargar el archivo PHP completo</a></p>
+  <ol>
+    <li>Copiarlo en <code>wp-content/plugins/cv-directory/cv-directory.php</code> y activarlo en <strong>Plugins</strong>.</li>
+    <li>En cualquier página o entrada, escribir:</li>
+  </ol>
+  <pre><button onclick="cp(this)">Copiar</button>[cv_directory slug="cv-105"]</pre>
+  <p>Atributos: <code>slug</code>, <code>limit</code>, <code>lang</code>, <code>sector</code>, <code>country</code>, <code>base</code>, <code>cache</code> (segundos, predeterminado 300). Guarda la respuesta en un <em>transient</em>, así que las visitas no golpean la API en cada carga.</p>
+
+  <h2>De dónde salen los datos</h2>
+  <pre><button onclick="cp(this)">Copiar</button>GET https://aiagent.ringlypro.com/cv-105/api/public/members
+GET https://aiagent.ringlypro.com/cv-105/api/public/members/facets</pre>
+  <p>Parámetros opcionales: <code>page</code>, <code>limit</code> (de 1 a 100), <code>search</code>, <code>sector</code>, <code>country</code>.</p>
+
+  <div class="warn">
+    <strong>Privacidad.</strong> Este endpoint NO devuelve correos ni teléfonos. Solo publica:
+    nombre, empresa, país, sector, subespecialidad, años de experiencia, idiomas, biografía,
+    LinkedIn, sitio web, tipo de membresía, rol de gobernanza, estado de verificación y trust score.
+    Los correos siguen protegidos detrás de <code>GET /members</code>, que exige autenticación.
+  </div>
+
+  <div class="note">
+    El directorio público es <strong>opcional por cámara</strong>. Solo responde si la fila de la cámara
+    tiene <code>theme_config.public_directory = true</code>. Ya está activado para <code>cv-105</code>;
+    las demás devuelven 403 hasta activarlo:
+  </div>
+  <pre><button onclick="cp(this)">Copiar</button>UPDATE chambers
+SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"public_directory": true}'::jsonb
+WHERE slug = 'cv-XXX';</pre>
+  <p>El resolutor de cámaras guarda caché 60 segundos, así que el cambio se ve al minuto.</p>
+
+</div>
+
+<script src="/embed/chamber-directory.js"></script>
+<script>
+function cp(btn){
+  var pre = btn.parentNode.cloneNode(true);
+  var b = pre.querySelector('button'); if (b) b.remove();
+  navigator.clipboard.writeText(pre.textContent.trim()).then(function(){
+    var old = btn.textContent; btn.textContent = 'Copiado';
+    setTimeout(function(){ btn.textContent = old; }, 1400);
+  });
+}
+</script>
+</body>
+</html>

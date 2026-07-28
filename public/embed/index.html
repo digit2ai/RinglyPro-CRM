@@ -4,315 +4,308 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Integración con WordPress — CamaraVirtual</title>
+<title>Integración Técnica WordPress → Plataforma</title>
 <style>
   :root { --fg:#14213d; --muted:#6b7280; --line:#e5e7eb; --gold:#c9a227; --bg:#fff; --card:#fafafa; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-         color:var(--fg); background:var(--bg); line-height:1.6; }
-  .wrap { max-width:940px; margin:0 auto; padding:44px 22px 100px; }
-  h1 { font-size:30px; margin:0 0 6px; letter-spacing:-.02em; }
-  .sub { color:var(--muted); margin:0 0 30px; font-size:16px; }
-  h2 { font-size:21px; margin:52px 0 8px; padding-top:24px; border-top:1px solid var(--line); }
-  h2.plain { border-top:0; padding-top:0; margin-top:34px; }
-  h3 { font-size:16.5px; margin:26px 0 6px; }
+         color:var(--fg); background:var(--bg); line-height:1.65; }
+  .wrap { max-width:900px; margin:0 auto; padding:44px 22px 100px; }
+  .doc-head { border-bottom:2px solid var(--fg); padding-bottom:18px; margin-bottom:30px; }
+  h1 { font-size:29px; margin:0 0 6px; letter-spacing:-.02em; }
+  .sub { color:var(--muted); margin:0; font-size:15.5px; }
+  .meta { font-size:13px; color:var(--muted); margin-top:12px; }
+  h2 { font-size:20px; margin:46px 0 10px; padding-top:22px; border-top:1px solid var(--line); }
+  h2 .n { color:var(--gold); font-variant-numeric:tabular-nums; margin-right:8px; }
+  h3 { font-size:16px; margin:26px 0 6px; }
   p { margin:0 0 12px; }
   ol, ul { margin:0 0 14px; padding-left:22px; }
-  li { margin:0 0 8px; }
-  code { background:#f3f4f6; padding:2px 6px; border-radius:4px; font-size:14px;
-         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  li { margin:0 0 9px; }
+  code { background:#f3f4f6; padding:2px 6px; border-radius:4px; font-size:13.5px;
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; word-break:break-word; }
   pre { position:relative; background:#0f172a; color:#e2e8f0; padding:18px; border-radius:10px;
-        overflow-x:auto; font-size:13.5px; line-height:1.55;
+        overflow-x:auto; font-size:13px; line-height:1.55;
         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
   pre button { position:absolute; top:10px; right:10px; background:#1e293b; color:#e2e8f0;
         border:1px solid #334155; border-radius:6px; padding:5px 11px; font-size:12px; cursor:pointer; }
   pre button:hover { background:#334155; }
-  table { width:100%; border-collapse:collapse; margin:14px 0 6px; font-size:14.5px; display:block; overflow-x:auto; }
+  .tablewrap { overflow-x:auto; margin:14px 0 6px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
   th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { font-weight:700; background:#f9fafb; white-space:nowrap; }
-  .note { border-left:3px solid var(--gold); background:#fffbeb; padding:12px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
-  .warn { border-left:3px solid #dc2626; background:#fef2f2; padding:12px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
-  .preview { border:1px dashed var(--line); border-radius:12px; padding:22px; margin-top:14px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin:22px 0 8px; }
-  .card { border:1px solid var(--line); border-radius:12px; padding:18px; background:var(--card); }
-  .card h4 { margin:0 0 6px; font-size:15.5px; }
-  .card p { font-size:14px; color:var(--muted); margin:0 0 10px; }
-  .card a { font-size:14px; font-weight:600; }
-  .who { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-         padding:3px 10px; border-radius:999px; background:#eef2ff; color:#3730a3; margin-bottom:8px; }
-  .who.you { background:#ecfdf5; color:#065f46; }
+  td code { font-size:12.5px; }
+  .note { border-left:3px solid var(--gold); background:#fffbeb; padding:13px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
+  .warn { border-left:3px solid #dc2626; background:#fef2f2; padding:13px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
+  .ok   { border-left:3px solid #059669; background:#ecfdf5; padding:13px 16px; border-radius:0 8px 8px 0; margin:16px 0; font-size:14.5px; }
+  .step { border:1px solid var(--line); border-radius:12px; padding:20px; background:var(--card); margin:16px 0; }
+  .step h3 { margin:0 0 8px; font-size:16.5px; }
+  .step .who { display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.05em;
+        text-transform:uppercase; padding:3px 10px; border-radius:999px;
+        background:#eef2ff; color:#3730a3; margin-bottom:10px; }
+  .flow { counter-reset:f; list-style:none; padding-left:0; }
+  .flow li { position:relative; padding-left:40px; margin-bottom:12px; }
+  .flow li:before { counter-increment:f; content:counter(f); position:absolute; left:0; top:1px;
+        width:26px; height:26px; border-radius:50%; background:var(--fg); color:#fff;
+        font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
   a { color:#1d4ed8; }
+  .footlinks { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); font-size:14.5px; }
+  @media print { pre button { display:none } body { color:#000 } }
   @media (prefers-color-scheme:dark){
     :root { --fg:#e5e7eb; --muted:#9ca3af; --line:#374151; --bg:#0b1220; --card:#111827; }
-    code { background:#1f2937; color:#e5e7eb; }
-    th { background:#111827; }
-    .note { background:#1f1a08; } .warn { background:#2a1214; }
-    .who { background:#1e1b4b; color:#c7d2fe; } .who.you { background:#052e21; color:#a7f3d0; }
+    code { background:#1f2937; color:#e5e7eb; } th { background:#111827; }
+    .note { background:#1f1a08; } .warn { background:#2a1214; } .ok { background:#052e21; }
+    .step .who { background:#1e1b4b; color:#c7d2fe; }
+    .flow li:before { background:#c9a227; color:#14213d; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <h1>Integración con WordPress</h1>
-  <p class="sub">Cómo conectar un sitio WordPress con una cámara de CamaraVirtual (por ejemplo <code>cv-105</code>, Hispanotec).</p>
-
-  <h2 class="plain">Empieza aquí: elige un escenario</h2>
-  <p>Solo hay tres formas de conectar, y la única pregunta que importa es <strong>quién manda sobre los miembros</strong>.</p>
-
-  <div class="cards">
-    <div class="card">
-      <h4>A. WordPress solo los muestra</h4>
-      <p>La web es marketing. Los miembros viven en la cámara y no necesitan cuenta en WordPress. Se pega un bloque y ya está.</p>
-      <a href="#a">Ir al escenario A</a>
-    </div>
-    <div class="card">
-      <h4>B. WordPress manda</h4>
-      <p>Las altas y los pagos ya ocurren en WordPress (MemberPress, Paid Memberships Pro, WooCommerce). La cámara los sigue.</p>
-      <a href="#b">Ir al escenario B</a>
-    </div>
-    <div class="card">
-      <h4>C. La cámara manda</h4>
-      <p>Las altas ocurren en la cámara y quieres que los miembros tengan cuenta real en el sitio WordPress.</p>
-      <a href="#c">Ir al escenario C</a>
-    </div>
+  <div class="doc-head">
+    <h1>Integración Técnica WordPress → Plataforma</h1>
+    <p class="sub">WordPress como System of Record de la identidad del cliente. La plataforma consume esa información mediante una integración segura basada en tokens administrados por WordPress.</p>
+    <p class="meta">Documento de conexión · Cámara <code>cv-105</code> · Plataforma <code>aiagent.ringlypro.com</code></p>
   </div>
+
+  <div class="ok">
+    <strong>Lo que hay que hacer, en una frase:</strong> instalar un plugin en WordPress, activarlo,
+    generar un secreto y enviárnoslo. El resto lo hace la plataforma. No hay que programar nada,
+    ni levantar ningún servidor, ni desarrollar el middleware.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2><span class="n">1.</span>Arquitectura</h2>
+  <ul>
+    <li><strong>WordPress es el System of Record (SoR)</strong> de la información del cliente.</li>
+    <li>WordPress administra el registro inicial del usuario y mantiene la información maestra del proceso de onboarding.</li>
+    <li>La plataforma consume la información desde WordPress mediante una integración segura y <strong>no</strong> pide un segundo registro.</li>
+  </ul>
+  <p>La integración es desacoplada: WordPress no depende de la plataforma para operar, y la plataforma
+     no escribe sobre la información maestra. Si la plataforma está caída, el registro en WordPress
+     sigue funcionando y se sincroniza después.</p>
 
   <div class="warn">
-    <strong>B y C son excluyentes.</strong> Nunca las dos a la vez. Con las dos encendidas se forma un bucle:
-    la cámara escribe, WordPress avisa del cambio, la cámara vuelve a escribir, y así indefinidamente.
-    El código lo impide, pero conviene que sepas por qué existe la restricción.
+    <strong>Una sola dirección.</strong> Al quedar WordPress como SoR, la plataforma <em>nunca</em>
+    escribe miembros hacia WordPress. Está bloqueado en el código: si alguien intentara activar las dos
+    direcciones a la vez se formaría un bucle de escrituras entre ambos sistemas.
   </div>
 
-  <!-- ================================================================= -->
-  <h1 id="a" style="margin-top:64px">Escenario A — WordPress solo muestra el directorio</h1>
-  <p class="sub">Cinco minutos. No mueve ningún registro de miembros.</p>
-
-  <h2>Opción 1 — Bloque HTML (lo más rápido, sin plugins)</h2>
-  <p>En la página de WordPress, agrega un bloque <strong>HTML personalizado</strong> y pega esto:</p>
-  <pre><button onclick="cp(this)">Copiar</button>&lt;div data-cv-directory
-     data-slug="cv-105"
-     data-lang="es"
-     data-limit="24"
-     data-join-url="https://www.camaravirtual.app/cv-105/signup-member"&gt;&lt;/div&gt;
-&lt;script src="https://aiagent.ringlypro.com/embed/chamber-directory.js"&gt;&lt;/script&gt;</pre>
-  <p>Eso es todo. El widget trae buscador, filtro por sector, tarjetas y paginación, hereda la tipografía del tema y se adapta al modo oscuro.</p>
-
-  <table>
-    <tr><th>Atributo</th><th>Descripción</th></tr>
-    <tr><td><code>data-slug</code></td><td>Obligatorio. Slug de la cámara, por ejemplo <code>cv-105</code>.</td></tr>
-    <tr><td><code>data-lang</code></td><td><code>es</code> o <code>en</code>. Predeterminado <code>es</code>.</td></tr>
-    <tr><td><code>data-limit</code></td><td>Miembros por página, de 1 a 100. Predeterminado 24.</td></tr>
-    <tr><td><code>data-search</code></td><td><code>0</code> oculta la barra de búsqueda y los filtros.</td></tr>
-    <tr><td><code>data-join-url</code></td><td>Dirección del botón «Únete». Omítelo para ocultarlo.</td></tr>
-    <tr><td><code>data-base</code></td><td>Origen de la API. Predeterminado <code>https://aiagent.ringlypro.com</code>.</td></tr>
-  </table>
-
-  <h3>Vista previa en vivo</h3>
-  <div class="preview">
-    <div data-cv-directory data-slug="cv-105" data-lang="es" data-limit="12"></div>
-  </div>
-
-  <h2>Opción 2 — Shortcode PHP (recomendado si te importa el SEO)</h2>
-  <p>La opción 1 se dibuja con JavaScript, así que Google puede tardar en indexar los nombres.
-     Si quieres que los miembros aparezcan en el HTML que recibe el buscador, instala el shortcode:</p>
-  <p><a href="/embed/wordpress-shortcode.php.txt" target="_blank">Ver o descargar el archivo PHP completo</a></p>
-  <ol>
-    <li>Copia el contenido en <code>wp-content/plugins/cv-directory/cv-directory.php</code> y actívalo en <strong>Plugins</strong>
-        (o pégalo en el <code>functions.php</code> del tema hijo, o en el plugin <em>Code Snippets</em>).</li>
-    <li>En cualquier página o entrada, escribe:</li>
+  <!-- ============================================================ -->
+  <h2><span class="n">2.</span>Flujo de autenticación</h2>
+  <ol class="flow">
+    <li>El usuario completa el formulario en WordPress.</li>
+    <li>WordPress registra la información del cliente como System of Record.</li>
+    <li>WordPress genera y administra el token de autenticación.</li>
+    <li>Mediante API o Webhook, WordPress envía el token y la información requerida a la plataforma.</li>
+    <li>La plataforma valida el token recibido.</li>
+    <li>Autenticado el usuario, obtiene acceso a la plataforma sin un segundo proceso de registro
+        (Single Sign-On).</li>
   </ol>
-  <pre><button onclick="cp(this)">Copiar</button>[cv_directory slug="cv-105"]</pre>
-  <p>Atributos: <code>slug</code>, <code>limit</code>, <code>lang</code>, <code>sector</code>, <code>country</code>, <code>base</code>, <code>cache</code> (segundos, predeterminado 300).</p>
-  <pre><button onclick="cp(this)">Copiar</button>[cv_directory slug="cv-105" lang="es" limit="48" sector="tecnologia"]</pre>
-  <p>El shortcode guarda la respuesta en un <em>transient</em> de WordPress, así que las visitas no golpean la API en cada carga.</p>
 
-  <h2>De dónde salen los datos</h2>
-  <pre><button onclick="cp(this)">Copiar</button>GET https://aiagent.ringlypro.com/cv-105/api/public/members
-GET https://aiagent.ringlypro.com/cv-105/api/public/members/facets</pre>
-  <p>Parámetros opcionales: <code>page</code>, <code>limit</code> (de 1 a 100), <code>search</code>, <code>sector</code>, <code>country</code>.</p>
-
-  <div class="warn">
-    <strong>Privacidad.</strong> Este endpoint NO devuelve correos ni teléfonos. Solo publica:
-    nombre, empresa, país, sector, subespecialidad, años de experiencia, idiomas, biografía,
-    LinkedIn, sitio web, tipo de membresía, rol de gobernanza, estado de verificación y trust score.
-    Los correos siguen protegidos detrás de <code>GET /members</code>, que exige autenticación.
+  <p>En la implementación esto ocurre por dos canales, ambos ya construidos:</p>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Canal</th><th>Quién inicia</th><th>Cuándo</th><th>Para qué</th></tr>
+    <tr><td>Webhook</td><td>WordPress</td><td>Al crear, editar o borrar un usuario</td><td>Enviar los datos del cliente a la plataforma en el momento</td></tr>
+    <tr><td>Lectura periódica</td><td>Plataforma</td><td>Bajo demanda o programada</td><td>Reconciliar el padrón completo y recuperar cualquier evento perdido</td></tr>
+    <tr><td>SSO</td><td>WordPress</td><td>Cuando el usuario pulsa «Entrar»</td><td>Token firmado de un solo uso que abre la sesión sin registro</td></tr>
+  </table>
   </div>
 
-  <div class="note">
-    El directorio público es <strong>opcional por cámara</strong>. Solo responde si la fila de la cámara
-    tiene <code>theme_config.public_directory = true</code>. Ya está activado para <code>cv-105</code>;
-    las demás cámaras devuelven 403 hasta que se active explícitamente:
+  <!-- ============================================================ -->
+  <h2><span class="n">3.</span>Lo que tiene que hacer Eduardo</h2>
+  <p>Cuatro pasos dentro de su WordPress. Ninguno requiere tocar código.</p>
+
+  <div class="step">
+    <span class="who">Paso 1 — Instalar</span>
+    <h3>Subir el plugin conector</h3>
+    <p>Descargar <a href="/embed/wordpress-sor-plugin.php.txt" target="_blank">el archivo del plugin</a> y guardarlo en el servidor como:</p>
+    <pre><button onclick="cp(this)">Copiar</button>wp-content/plugins/camaravirtual-connector/camaravirtual-connector.php</pre>
+    <p style="margin-bottom:0">También se puede comprimir esa carpeta en un <code>.zip</code> y subirla desde
+       <strong>Plugins → Añadir nuevo → Subir plugin</strong>.</p>
   </div>
-  <pre><button onclick="cp(this)">Copiar</button>UPDATE chambers
-SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"public_directory": true}'::jsonb
-WHERE slug = 'cv-XXX';</pre>
-  <p>El resolutor de cámaras guarda caché 60 segundos, así que el cambio se ve al minuto.</p>
 
-  <!-- ================================================================= -->
-  <h1 id="b" style="margin-top:70px">Escenario B — WordPress manda</h1>
-  <p class="sub">Los miembros viven en WordPress y la cámara los sigue.</p>
+  <div class="step">
+    <span class="who">Paso 2 — Activar</span>
+    <h3>Plugins → Activar «CamaraVirtual Connector»</h3>
+    <p style="margin-bottom:0">Al activarse queda disponible el endpoint de lectura y quedan registrados los
+       avisos automáticos de alta, edición y baja de usuarios.</p>
+  </div>
 
-  <h2 class="plain">Guía rápida: 4 pasos</h2>
-  <p>Tres los hace el dueño del WordPress. El cuarto es un solo comando.</p>
+  <div class="step">
+    <span class="who">Paso 3 — Configurar</span>
+    <h3>Ajustes → CamaraVirtual</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>API de CamaraVirtual:</strong> <code>https://aiagent.ringlypro.com</code></li>
+      <li><strong>Slug de la cámara:</strong> <code>cv-105</code></li>
+      <li><strong>Secreto compartido:</strong> pulsar <strong>Generar secreto nuevo</strong> y copiarlo</li>
+      <li><strong>Enviar cambios al instante:</strong> dejarlo marcado</li>
+    </ul>
+  </div>
 
-  <div class="card" style="margin:18px 0">
-    <span class="who">Lo hace el dueño del WordPress</span>
+  <div class="step">
+    <span class="who">Paso 4 — Enviar</span>
+    <h3>Pasarnos tres datos</h3>
     <ol style="margin-bottom:0">
-      <li>Descargar <a href="/embed/wordpress-sor-plugin.php.txt" target="_blank">el plugin conector</a> y guardarlo como
-          <code>wp-content/plugins/camaravirtual-connector/camaravirtual-connector.php</code></li>
-      <li><strong>Plugins → Activar</strong> «CamaraVirtual Connector»</li>
-      <li><strong>Ajustes → CamaraVirtual</strong>: escribir el slug de la cámara (<code>cv-105</code>),
-          pulsar <strong>Generar secreto nuevo</strong>, copiar el secreto y enviarlo por un canal privado</li>
+      <li>La dirección exacta del sitio (<code>https://…</code>)</li>
+      <li>El secreto generado en el paso 3, <strong>por un canal privado</strong> (no por correo abierto)</li>
+      <li>Si los miembros están en un plugin de membresías: cuál (MemberPress, Paid Memberships Pro,
+          WooCommerce Memberships) y con qué campos personalizados</li>
     </ol>
   </div>
 
-  <div class="card" style="margin:18px 0">
-    <span class="who you">Lo haces tú, desde el repositorio</span>
-    <p style="margin-bottom:10px">4. Un solo comando:</p>
-    <pre style="margin:0"><button onclick="cp(this)">Copiar</button>node scripts/setup-wp-integration.js \
-  --slug=cv-105 \
-  --site=https://elsitio.com \
-  --secret=EL_SECRETO_DE_WORDPRESS \
-  --direction=pull \
-  --email=tu@correo.com --password=TU_CLAVE</pre>
-  </div>
-
-  <p>El comando inicia sesión, guarda la conexión, prueba WordPress y hace un <strong>ensayo</strong>:
-     te dice cuántos usuarios ve y exactamente a quién daría de alta, <strong>sin cambiar nada</strong>.
-     Si el plan está bien, repites el mismo comando agregando <code>--apply</code> al final.</p>
-
-  <div class="warn">
-    <strong>Siempre el ensayo primero.</strong> El comando no aplica nada hasta que agregues <code>--apply</code>.
-    La primera sincronización contra un directorio real es donde se duplica o se desactiva gente
-    por un campo mal mapeado.
-  </div>
-
-  <h2>Qué pedirle al dueño del WordPress</h2>
-  <ol>
-    <li>La dirección exacta de la web (<code>https://…</code>)</li>
-    <li>El secreto que genera el plugin</li>
-    <li>Si sus miembros están en un plugin de membresías (MemberPress, Paid Memberships Pro, WooCommerce).
-        Si es así hay que mapear sus campos con el filtro <code>cv_sor_member</code> — hay un ejemplo de
-        diez líneas al final del archivo del plugin, va en su <code>functions.php</code>.</li>
-  </ol>
-
-  <h2>Quién es dueño de qué</h2>
-  <p>WordPress posee la identidad y el perfil. CamaraVirtual sigue siendo dueña de lo que se gana dentro
-     de la cámara: proyectos, RFQs, mensajes, <code>trust_score</code>, <code>verified</code>,
-     <code>governance_role</code> y <code>access_level</code>. Una sincronización nunca escribe esas columnas.</p>
-
-  <div class="warn">
-    <strong>WordPress no puede otorgarse permisos.</strong> <code>access_level</code> y
-    <code>governance_role</code> están excluidos a propósito de los campos sincronizables: un
-    WordPress comprometido o mal configurado no debe poder crear un superadministrador de la cámara.
-    Además nunca se borra a nadie — quien desaparece de WordPress pasa a <code>inactive</code>,
-    porque los miembros son autores de proyectos y mensajes.
-  </div>
-
-  <p><code>deactivate_missing</code> viene <strong>apagado</strong>. Enciéndelo solo cuando el ensayo
-     demuestre que WordPress ya tiene a todos. Los administradores de la cámara y el dueño quedan
-     protegidos aunque esté encendido, para que una mala sincronización no deje a nadie fuera del panel.</p>
-
-  <h2>Tiempo real e inicio de sesión</h2>
-  <p>Con el conector instalado no hace falta esperar la siguiente sincronización: WordPress notifica cada
-     cambio a la cámara, con firma HMAC y ventana de cinco minutos.</p>
-  <p>Y como los miembros creados por sincronización no tienen contraseña utilizable, entran por SSO.
-     Pon esto en cualquier página de WordPress:</p>
-  <pre><button onclick="cp(this)">Copiar</button>[cv_login label="Entrar a la cámara"]</pre>
-  <p>Genera un enlace firmado, de un solo uso, válido cinco minutos, que abre el panel de la cámara ya
-     autenticado. También sigue funcionando el flujo normal de recuperar contraseña.</p>
-
-  <h3>Si prefieres no instalar el plugin</h3>
-  <p>Usa <code>--mode=wp_users</code> con un usuario y una <em>Application Password</em> de WordPress.
-     Funciona sin plugins, pero solo trae lo que expone la API nativa <code>wp/v2/users</code>:
-     sin empresa, sin sector y sin teléfono. Tampoco hay avisos en tiempo real ni SSO.</p>
-
-  <!-- ================================================================= -->
-  <h1 id="c" style="margin-top:70px">Escenario C — La cámara manda</h1>
-  <p class="sub">Los miembros viven en CamaraVirtual y WordPress los sigue.</p>
-
-  <p>Aquí cada miembro activo se escribe como <strong>usuario real de WordPress</strong>, con su perfil en
-     user meta. Sirve cuando quieres que los miembros tengan cuenta en el sitio: área privada, comentarios,
-     WooCommerce, contenido restringido.</p>
-
-  <h2 class="plain">Guía rápida: 4 pasos</h2>
-  <p>Los tres primeros son idénticos al escenario B (instalar el plugin, activarlo, generar el secreto).
-     Solo cambia el cuarto:</p>
-  <pre><button onclick="cp(this)">Copiar</button>node scripts/setup-wp-integration.js \
-  --slug=cv-105 \
-  --site=https://elsitio.com \
-  --secret=EL_SECRETO_DE_WORDPRESS \
-  --direction=push \
-  --email=tu@correo.com --password=TU_CLAVE</pre>
-  <p>Igual que antes: primero ensayo, y solo con <code>--apply</code> se aplica.</p>
-
-  <p>El envío es un <strong>diff</strong>, no una reescritura: lee primero el estado de WordPress y solo manda
-     los miembros que cambiaron. Un segundo envío seguido no manda ni una petición. Si un registro falla
-     (una validación de WordPress, por ejemplo) los demás continúan y el error aparece en <code>errors[]</code>.</p>
-
   <div class="note">
-    <strong>La cámara tampoco reparte permisos en WordPress.</strong> El envío nunca lleva rol ni
-    capacidad: el rol de un usuario nuevo lo decide el sitio (<code>cv_sor_default_role</code>,
-    por defecto el rol predeterminado de WordPress). Es la contraparte exacta de la regla inversa.
+    Con eso la plataforma queda conectada. Antes de dar de alta a nadie se ejecuta un
+    <strong>ensayo</strong> que muestra exactamente a quién crearía, sin escribir nada.
+    Solo después de revisar ese listado se aplica.
   </div>
-  <p>Igual que en la otra dirección, nadie se borra: un usuario que ya no corresponde a un miembro activo
-     se queda <strong>sin roles</strong> (con <code>push_deactivate_missing</code> encendido), conservando
-     su autoría de entradas, comentarios y pedidos.</p>
 
-  <!-- ================================================================= -->
-  <h1 style="margin-top:70px">Referencia técnica</h1>
-  <p class="sub">Para cuando quieras saltarte el script y hablar directo con la API.</p>
+  <h3>Comprobación desde su lado (opcional)</h3>
+  <p>Para verificar que el endpoint responde antes de avisarnos, desde una terminal:</p>
+  <pre><button onclick="cp(this)">Copiar</button>SECRETO="pegar-aqui-el-secreto"
+SITIO="https://elsitio.com"
+TS=$(date +%s)
+FIRMA=$(printf "%s" "$TS" | openssl dgst -sha256 -hmac "$SECRETO" | sed 's/.* //')
+curl -s -H "X-CV-Timestamp: $TS" -H "X-CV-Signature: $FIRMA" \
+  "$SITIO/wp-json/camaravirtual/v1/members?per_page=2"</pre>
+  <p>Debe devolver un JSON con <code>members</code>, <code>total</code> y <code>total_pages</code>.
+     Si devuelve <code>401</code>, el secreto no coincide o el reloj del servidor está desfasado
+     (la firma caduca a los cinco minutos).</p>
 
-  <h2 class="plain">Configuración</h2>
-  <pre><button onclick="cp(this)">Copiar</button>PUT /cv-105/api/wp/config
-Authorization: Bearer &lt;token de administrador de la cámara&gt;
-
-{
-  "enabled": true,
-  "direction": "pull",
-  "mode": "plugin",
-  "site_url": "https://elsitio.com",
-  "shared_secret": "&lt;el secreto generado en WordPress&gt;",
-  "allow_sso": true,
-  "deactivate_missing": false
-}</pre>
-  <p>El secreto se guarda cifrado (AES-256-GCM) y nunca se devuelve: la lectura solo dice si está puesto
-     y sus últimos cuatro caracteres. Enviar el campo vacío conserva el valor guardado.
-     <code>direction: "push"</code> exige <code>mode: "plugin"</code>, porque la API nativa de WordPress
-     no transporta empresa, sector ni teléfono.</p>
-
-  <h2>Endpoints</h2>
-  <table>
-    <tr><th>Endpoint</th><th>Autenticación</th><th>Qué hace</th></tr>
-    <tr><td><code>GET /cv-105/api/public/members</code></td><td>Ninguna</td><td>Directorio público, sin datos personales</td></tr>
-    <tr><td><code>GET /cv-105/api/public/members/facets</code></td><td>Ninguna</td><td>Sectores y países con conteos</td></tr>
-    <tr><td><code>GET /wp/config</code></td><td>Admin</td><td>Lee la configuración (secretos enmascarados)</td></tr>
-    <tr><td><code>PUT /wp/config</code></td><td>Admin</td><td>Guarda la configuración</td></tr>
-    <tr><td><code>POST /wp/test</code></td><td>Admin</td><td>Prueba la conexión, no escribe nada</td></tr>
-    <tr><td><code>POST /wp/sync</code></td><td>Admin</td><td>Trae desde WordPress; <code>dry_run</code> solo planifica</td></tr>
-    <tr><td><code>POST /wp/push</code></td><td>Admin</td><td>Envía hacia WordPress; <code>dry_run</code> solo planifica</td></tr>
-    <tr><td><code>GET /wp/runs</code></td><td>Admin</td><td>Auditoría de sincronizaciones</td></tr>
-    <tr><td><code>POST /wp/webhook</code></td><td>HMAC</td><td>Alta, edición o baja de un miembro (solo en <code>pull</code>)</td></tr>
-    <tr><td><code>GET /wp/sso</code></td><td>Token firmado</td><td>Entrada al panel desde WordPress</td></tr>
-  </table>
-
-  <h2>Archivos</h2>
+  <!-- ============================================================ -->
+  <h2><span class="n">4.</span>Seguridad</h2>
   <ul>
-    <li><a href="/embed/chamber-directory.js" target="_blank">chamber-directory.js</a> — widget del directorio</li>
-    <li><a href="/embed/wordpress-shortcode.php.txt" target="_blank">wordpress-shortcode.php.txt</a> — shortcode <code>[cv_directory]</code></li>
-    <li><a href="/embed/wordpress-sor-plugin.php.txt" target="_blank">wordpress-sor-plugin.php.txt</a> — plugin conector (escenarios B y C)</li>
-    <li><code>scripts/setup-wp-integration.js</code> — el comando de conexión, en el repositorio</li>
+    <li><strong>El token es generado y administrado por WordPress.</strong> La plataforma únicamente
+        valida su autenticidad antes de permitir el acceso; no lo emite ni lo almacena.</li>
+    <li>Todas las comunicaciones son <strong>HTTPS</strong> obligatorio.</li>
+    <li>El token de SSO es <strong>de un solo uso</strong>, caduca a los <strong>cinco minutos</strong>
+        y va firmado con HMAC-SHA256. Un token reutilizado se rechaza.</li>
+    <li>El secreto compartido se guarda <strong>cifrado en reposo</strong> (AES-256-GCM) del lado de la
+        plataforma y nunca se devuelve por API: al consultarlo solo se ve si está configurado y sus
+        últimos cuatro caracteres.</li>
+    <li>WordPress <strong>no puede otorgarse permisos</strong> dentro de la plataforma. Los campos de
+        privilegio (<code>access_level</code>, <code>governance_role</code>) y de reputación
+        (<code>trust_score</code>, <code>verified</code>) están excluidos de la sincronización por diseño.</li>
+    <li>Ningún registro se borra. Un usuario dado de baja en WordPress pasa a <code>inactive</code> en la
+        plataforma, conservando su autoría de proyectos y mensajes.</li>
   </ul>
 
   <div class="note">
-    Hoy la conexión se configura por comando o por API; todavía no hay una pantalla en el panel de la
-    cámara. Si vas a conectar varias cámaras, conviene construirla.
+    <strong>Nota sobre el esquema de token.</strong> La especificación mencionaba «Bearer Token» para el
+    tráfico entre sistemas. La implementación usa <strong>firma HMAC por petición</strong>
+    (<code>X-CV-Timestamp</code> + <code>X-CV-Signature</code>) en lugar de un Bearer estático, porque un
+    Bearer capturado sirve indefinidamente mientras que una firma HMAC va atada a la petición y caduca en
+    cinco minutos. El SSO del usuario final sí es un token emitido por WordPress y validado por la
+    plataforma, exactamente como describe la especificación. Si por política se requiere Bearer estático,
+    se puede añadir, pero es un paso atrás en seguridad.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2><span class="n">5.</span>Middleware</h2>
+  <p>El microservicio de integración <strong>ya está construido y lo opera la plataforma</strong>.
+     Eduardo no tiene que desarrollarlo ni alojarlo. Sus responsabilidades:</p>
+  <ul>
+    <li>Recibir los eventos desde WordPress.</li>
+    <li>Transformar y normalizar los datos (correos a minúsculas, URLs validadas, nombres deducidos,
+        idiomas de texto a lista).</li>
+    <li>Mapear los campos al modelo de datos de la plataforma.</li>
+    <li>Manejar validaciones y errores: los registros con correo inválido se descartan y se reportan,
+        los duplicados se colapsan, y un registro que falle no interrumpe el resto del lote.</li>
+    <li>Registrar cada ejecución en una auditoría consultable.</li>
+  </ul>
+  <p>La correlación entre ambos sistemas se guarda por <strong>ID de usuario de WordPress</strong>, no por
+     correo. Así, si un cliente cambia su correo en WordPress, el registro se <em>renombra</em> en la
+     plataforma en lugar de crear un duplicado.</p>
+
+  <!-- ============================================================ -->
+  <h2><span class="n">6.</span>Mapeo de datos</h2>
+  <p>Este es el modelo que la plataforma espera. Si el WordPress de Eduardo usa otros nombres de campo,
+     se ajusta con un filtro de diez líneas incluido como ejemplo al final del plugin — no hay que
+     modificar la plataforma.</p>
+
+  <div class="tablewrap">
+  <table>
+    <tr>
+      <th>Campo en la plataforma</th><th>Origen en WordPress</th><th>Tipo</th>
+      <th>Longitud</th><th>Obligatorio</th><th>Reglas y transformaciones</th>
+    </tr>
+    <tr><td><code>email</code></td><td><code>user_email</code></td><td>Texto</td><td>255</td><td>Sí</td>
+        <td>Formato de correo válido. Se normaliza a minúsculas. Único por cámara.</td></tr>
+    <tr><td><code>external_id</code></td><td>ID de usuario</td><td>Entero</td><td>120</td><td>Sí</td>
+        <td>Clave de correlación entre los dos sistemas.</td></tr>
+    <tr><td><code>first_name</code></td><td><code>first_name</code></td><td>Texto</td><td>120</td><td>Sí</td>
+        <td>Si viene vacío se deduce partiendo <code>display_name</code>; si tampoco, la parte local del correo.</td></tr>
+    <tr><td><code>last_name</code></td><td><code>last_name</code></td><td>Texto</td><td>120</td><td>Sí</td>
+        <td>Igual que el anterior. Si no hay nada se guarda <code>-</code>.</td></tr>
+    <tr><td><code>company_name</code></td><td>meta <code>company</code></td><td>Texto</td><td>200</td><td>No</td><td>—</td></tr>
+    <tr><td><code>phone</code></td><td>meta <code>phone</code></td><td>Texto</td><td>40</td><td>No</td><td>—</td></tr>
+    <tr><td><code>country</code></td><td>meta <code>country</code></td><td>Texto</td><td>80</td><td>No</td>
+        <td>Se puede fijar un valor por defecto para toda la cámara.</td></tr>
+    <tr><td><code>sector</code></td><td>meta <code>sector</code></td><td>Texto</td><td>80</td><td>No</td>
+        <td>Alimenta los filtros y el motor de coincidencias.</td></tr>
+    <tr><td><code>sub_specialty</code></td><td>meta <code>sub_specialty</code></td><td>Texto</td><td>160</td><td>No</td><td>—</td></tr>
+    <tr><td><code>years_experience</code></td><td>meta <code>years_experience</code></td><td>Entero</td><td>0–99</td><td>No</td>
+        <td>Fuera de rango o no numérico se guarda vacío.</td></tr>
+    <tr><td><code>languages</code></td><td>meta <code>languages</code></td><td>Lista</td><td>—</td><td>No</td>
+        <td>Acepta texto separado por comas o arreglo.</td></tr>
+    <tr><td><code>bio</code></td><td>meta <code>description</code></td><td>Texto</td><td>2000</td><td>No</td><td>Se recorta al límite.</td></tr>
+    <tr><td><code>linkedin_url</code></td><td>meta <code>linkedin</code></td><td>URL</td><td>400</td><td>No</td>
+        <td>Solo <code>http</code>/<code>https</code>. Si falta el esquema se antepone <code>https://</code>.</td></tr>
+    <tr><td><code>website_url</code></td><td><code>user_url</code></td><td>URL</td><td>400</td><td>No</td><td>Igual que el anterior.</td></tr>
+    <tr><td><code>membership_type</code></td><td>meta <code>membership_type</code></td><td>Enumerado</td><td>—</td><td>No</td>
+        <td><code>individual</code> o <code>company</code>. Cualquier otro valor cae a <code>individual</code>.</td></tr>
+    <tr><td><code>active</code></td><td>Roles del usuario</td><td>Booleano</td><td>—</td><td>Sí</td>
+        <td>Un usuario sin ningún rol se interpreta como baja. Con plugin de membresías se toma el estado de la suscripción.</td></tr>
+  </table>
+  </div>
+
+  <h3>Campos que la plataforma gobierna y WordPress nunca envía</h3>
+  <p><code>access_level</code>, <code>governance_role</code>, <code>trust_score</code>,
+     <code>verified</code>, <code>verification_level</code>, <code>region_id</code> y los identificadores
+     de pago. Son propiedad de la plataforma y una sincronización jamás los escribe.</p>
+
+  <h3>Ejemplo de mapeo para un plugin de membresías</h3>
+  <p>Va en el <code>functions.php</code> del tema hijo, no en el plugin, para que no se pierda al actualizar:</p>
+  <pre><button onclick="cp(this)">Copiar</button>add_filter( 'cv_sor_member', function ( $rec, $user ) {
+    // Paid Memberships Pro: solo cuenta como miembro quien tiene nivel activo
+    if ( function_exists( 'pmpro_getMembershipLevelForUser' ) ) {
+        $level = pmpro_getMembershipLevelForUser( $user->ID );
+        $rec['active'] = ! empty( $level );
+    }
+    // Campos personalizados (ACF u otros)
+    $rec['company_name'] = get_user_meta( $user->ID, 'empresa', true ) ?: $rec['company_name'];
+    $rec['sector']       = get_user_meta( $user->ID, 'rubro',   true ) ?: $rec['sector'];
+    return $rec;
+}, 10, 2 );</pre>
+
+  <!-- ============================================================ -->
+  <h2><span class="n">7.</span>Single Sign-On</h2>
+  <p>Para que el usuario pase de WordPress a la plataforma sin volver a registrarse, basta con poner este
+     shortcode en cualquier página de WordPress:</p>
+  <pre><button onclick="cp(this)">Copiar</button>[cv_login label="Entrar a la cámara"]</pre>
+  <p>Se muestra solo a usuarios con sesión iniciada. Al pulsarlo, WordPress emite un token firmado de un
+     solo uso y la plataforma abre la sesión ya autenticada.</p>
+  <p>Los clientes creados por la integración no tienen contraseña utilizable en la plataforma: entran por
+     este botón. También queda disponible el flujo normal de recuperación de contraseña como alternativa.</p>
+
+  <!-- ============================================================ -->
+  <h2><span class="n">8.</span>Objetivo</h2>
+  <p>Implementar una integración desacoplada donde <strong>WordPress actúe como System of Record</strong>
+     de la identidad e información del cliente, mientras que la plataforma consume dicha información
+     mediante una autenticación segura basada en tokens administrados por WordPress, sin exigir un
+     segundo registro al usuario final.</p>
+
+  <div class="footlinks">
+    <p><strong>Archivos de esta integración</strong></p>
+    <ul>
+      <li><a href="/embed/wordpress-sor-plugin.php.txt" target="_blank">Plugin conector para WordPress</a> — lo único que se instala</li>
+      <li><a href="/embed/directorio.html">Directorio público de miembros</a> — anexo opcional, para mostrar el listado en una web sin mover registros</li>
+    </ul>
   </div>
 
 </div>
 
-<script src="/embed/chamber-directory.js"></script>
 <script>
 function cp(btn){
   var pre = btn.parentNode.cloneNode(true);
