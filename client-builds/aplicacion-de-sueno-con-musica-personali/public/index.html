@@ -6,7 +6,19 @@
   <meta name="theme-color" content="#07090f">
   <meta name="description" content="{{tagline}}">
   <title>{{html_title}}</title>
-  <link rel="icon" href="{{MOUNT}}/icon.svg" type="image/svg+xml">
+
+  <!-- Installable on the home screen. iOS ignores the manifest's icons and
+       reads apple-touch-icon, so both are declared; iOS also rounds the corners
+       itself, which is why the source PNG is full-bleed. -->
+  <link rel="manifest" href="{{MOUNT}}/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="{{MOUNT}}/apple-touch-icon.png">
+  <link rel="icon" href="{{MOUNT}}/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="{{MOUNT}}/favicon-32.png" sizes="32x32" type="image/png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{h1}}">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: {
@@ -103,7 +115,7 @@
                    focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-400/40 transition">
       <option value="">…</option>
     </select>
-    <p id="track-note" class="mt-2 min-h-[20px] text-[13px] leading-snug text-slate-500"></p>
+    <div id="track-note" class="mt-2 min-h-[20px] text-[13px] leading-snug text-slate-500"></div>
 
     <div class="mt-7 flex items-baseline justify-between">
       <label for="timer-input" id="label-timer"

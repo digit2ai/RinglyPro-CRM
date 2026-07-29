@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Modo Noche app mark.
+
+    Full-bleed square on purpose: iOS rounds the corners of an apple-touch-icon
+    itself, and a pre-rounded source would get double-rounded. The rounded
+    variant for browser tabs lives in favicon.svg.
+
+    Every element sits inside the central 80% (radius <= 205px from centre), so
+    the same file also works as a `maskable` PWA icon without losing the moon
+    or the outer ring.
+  -->
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0a0d1f"/>
+      <stop offset="52%"  stop-color="#161443"/>
+      <stop offset="100%" stop-color="#2a1a4e"/>
+    </linearGradient>
+    <radialGradient id="moonface" cx="34%" cy="28%" r="82%">
+      <stop offset="0%"   stop-color="#fffdf7"/>
+      <stop offset="34%"  stop-color="#efe9ff"/>
+      <stop offset="72%"  stop-color="#b7a2fb"/>
+      <stop offset="100%" stop-color="#6d5ac9"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="55%"  stop-color="#8b7bff" stop-opacity=".34"/>
+      <stop offset="100%" stop-color="#8b7bff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Crescent: the moon disc minus a disc offset to the right. -->
+    <mask id="crescent">
+      <rect width="512" height="512" fill="black"/>
+      <circle cx="300" cy="256" r="106" fill="white"/>
+      <circle cx="352" cy="252" r="96"  fill="black"/>
+    </mask>
+    <!-- Show only the left cap of each ring, so they read as radiating arcs. -->
+    <clipPath id="leftcap">
+      <rect x="66" y="62" width="164" height="388"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#night)"/>
+
+  <!-- radiating arcs: calm spreading outward from the moon -->
+  <g clip-path="url(#leftcap)" fill="none" stroke="#a996ff" stroke-linecap="round">
+    <circle cx="300" cy="256" r="150" stroke-width="13" opacity=".58"/>
+    <circle cx="300" cy="256" r="184" stroke-width="11" opacity=".34"/>
+    <circle cx="300" cy="256" r="218" stroke-width="9"  opacity=".17"/>
+  </g>
+
+  <!-- glow, then the crescent itself -->
+  <circle cx="300" cy="256" r="132" fill="url(#halo)"/>
+  <g mask="url(#crescent)">
+    <circle cx="300" cy="256" r="106" fill="url(#moonface)"/>
+  </g>
+
+  <!-- two stars, kept small so they never compete with the moon -->
+  <g fill="#e8e2ff">
+    <path d="M396 122 l6 17 17 6 -17 6 -6 17 -6-17 -17-6 17-6 z" opacity=".92"/>
+    <path d="M168 372 l4.5 12.5 12.5 4.5 -12.5 4.5 -4.5 12.5 -4.5-12.5 -12.5-4.5 12.5-4.5 z" opacity=".62"/>
+  </g>
+</svg>

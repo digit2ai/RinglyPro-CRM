@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Browser-tab variant of logo-master.svg: rounded corners (browsers do not
+       round it for us) and simplified, because at 16px the arcs and stars turn
+       to mud. Keep the crescent and one arc, nothing else. -->
+  <defs>
+    <linearGradient id="n" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0d1f"/>
+      <stop offset="55%" stop-color="#161443"/>
+      <stop offset="100%" stop-color="#2a1a4e"/>
+    </linearGradient>
+    <radialGradient id="f" cx="34%" cy="28%" r="82%">
+      <stop offset="0%" stop-color="#fffdf7"/>
+      <stop offset="38%" stop-color="#efe9ff"/>
+      <stop offset="100%" stop-color="#9b86f5"/>
+    </radialGradient>
+    <mask id="c">
+      <rect width="64" height="64" fill="black"/>
+      <circle cx="38" cy="32" r="17" fill="white"/>
+      <circle cx="46.5" cy="31.4" r="15.4" fill="black"/>
+    </mask>
+    <clipPath id="lc"><rect x="8" y="6" width="21" height="52"/></clipPath>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#n)"/>
+  <g clip-path="url(#lc)" fill="none" stroke="#a996ff" stroke-linecap="round">
+    <circle cx="38" cy="32" r="24" stroke-width="3.2" opacity=".55"/>
+  </g>
+  <g mask="url(#c)"><circle cx="38" cy="32" r="17" fill="url(#f)"/></g>
+</svg>

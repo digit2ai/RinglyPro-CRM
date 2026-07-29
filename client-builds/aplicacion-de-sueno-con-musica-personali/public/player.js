@@ -143,17 +143,38 @@
   }
 
   // --- library ---------------------------------------------------------------
+  let libMeta = null;
+
   async function loadTracks() {
-    const res = await fetch(`${MOUNT}/api/v1/tracks?lang=${encodeURIComponent(CFG.lang || 'es')}`);
+    const lang = encodeURIComponent(CFG.lang || 'es');
+    const [res, metaRes] = await Promise.all([
+      fetch(`${MOUNT}/api/v1/tracks?lang=${lang}`),
+      fetch(`${MOUNT}/api/v1/tracks/meta?lang=${lang}`),
+    ]);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     tracks = await res.json();
+    libMeta = metaRes.ok ? await metaRes.json() : null;
+
+    // With 25 tracks a flat list is unusable — group them, in library order.
     trackSelect.innerHTML = '';
+    const groups = new Map();
     for (const t of tracks) {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = `${t.title} · ${t.category}`;
-      trackSelect.appendChild(opt);
+      const key = t.category_label || t.category || '';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(t);
     }
+    for (const [label, items] of groups) {
+      const g = document.createElement('optgroup');
+      g.label = label;
+      for (const t of items) {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.title;
+        g.appendChild(opt);
+      }
+      trackSelect.appendChild(g);
+    }
+
     const preferred = (() => { try { return localStorage.getItem('sueno_last_track'); } catch (e) { return null; } })();
     if (preferred && tracks.some((t) => t.id === preferred)) trackSelect.value = preferred;
     describeTrack();
@@ -163,10 +184,46 @@
     return tracks.find((t) => t.id === trackSelect.value) || null;
   }
 
+  function badge(text, tone) {
+    const span = document.createElement('span');
+    const tones = {
+      neutral: 'border-white/12 bg-white/[.05] text-slate-300',
+      warn: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
+      info: 'border-violet-400/25 bg-violet-400/10 text-violet-200',
+    };
+    span.className = 'mono inline-block rounded-full border px-2 py-0.5 text-[10px] uppercase '
+      + 'tracking-wider mr-1.5 mb-1 ' + (tones[tone] || tones.neutral);
+    span.textContent = text;
+    return span;
+  }
+
   function describeTrack() {
     const t = selectedTrack();
-    if (!t) { trackNote.textContent = ''; return; }
-    trackNote.textContent = (t.description || '') + (t.stereo_required ? ` · ${DICT.headphones || ''}` : '');
+    trackNote.textContent = '';
+    if (!t) return;
+    const EN = CFG.lang === 'en';
+
+    const chips = document.createElement('div');
+    if (t.stereo_required) chips.appendChild(badge(DICT.headphones || 'Headphones', 'info'));
+    if (t.beat_hz != null) {
+      chips.appendChild(badge((t.band ? t.band + ' · ' : '') + t.beat_hz + ' Hz', 'info'));
+    }
+    if (t.frequency_hz != null && t.beat_hz == null) chips.appendChild(badge(t.frequency_hz + ' Hz', 'info'));
+    // Someone should not pick a 40 Hz gamma bed at bedtime by accident.
+    if (t.not_for_sleep) chips.appendChild(badge(EN ? 'Not for sleep' : 'No es para dormir', 'warn'));
+    if (chips.childNodes.length) trackNote.appendChild(chips);
+
+    const desc = document.createElement('div');
+    desc.textContent = t.description || '';
+    trackNote.appendChild(desc);
+
+    // The honesty line, shown only where a frequency claim could be inferred.
+    if ((t.beat_hz != null || t.frequency_hz != null) && libMeta && libMeta.frequency_disclaimer) {
+      const note = document.createElement('div');
+      note.className = 'mt-2 text-[12px] leading-snug text-slate-600';
+      note.textContent = libMeta.frequency_disclaimer;
+      trackNote.appendChild(note);
+    }
   }
 
   // --- session lifecycle -----------------------------------------------------
@@ -325,6 +382,15 @@
     const next = (CFG.lang === 'en') ? 'es' : 'en';
     window.location.search = '?lang=' + next;
   });
+
+  // Offline shell + audio cache, so a night already played still works with no
+  // signal. Registration failure is non-fatal — the app is fine online.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register(`${MOUNT}/sw.js`, { scope: `${MOUNT}/` })
+        .catch((err) => console.warn('[sueno] service worker not registered:', err && err.message));
+    });
+  }
 
   loadTracks().catch((err) => {
     console.error('[sueno] track library failed to load:', err && err.message);

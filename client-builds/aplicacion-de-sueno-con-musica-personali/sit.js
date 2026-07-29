@@ -23,6 +23,7 @@ const VERSION = app.VERSION;
 const SERVICE = app.SERVICE;
 
 const results = [];
+const skipped = [];   // anything not exercised is named in the summary, never hidden
 let failures = 0;
 
 function check(name, condition, detail) {
@@ -285,6 +286,141 @@ async function run() {
       'status ' + nf.status);
   }
 
+  // ------------------------------------- modalities, frequencies, honesty
+  console.log('\nLibrary · modalities and frequency honesty');
+  {
+    const r = await request('GET', '/api/v1/tracks');
+    const arr = Array.isArray(r.json) ? r.json : [];
+    const byId = new Map(arr.map((t) => [t.id, t]));
+
+    check('library carries every requested modality',
+      ['cuencos-tibetanos', 'cuenco-de-cristal-y-lluvia', 'selva-tropical', 'cascada-con-aves',
+        'amazonas', 'olas-de-playa'].every((id) => byId.has(id)),
+      'missing: ' + ['cuencos-tibetanos', 'cuenco-de-cristal-y-lluvia', 'selva-tropical',
+        'cascada-con-aves', 'amazonas', 'olas-de-playa'].filter((id) => !byId.has(id)).join(', '));
+
+    // All five brainwave bands, each with a real beat frequency in its band.
+    const BANDS = {
+      'delta-sueno-profundo': ['delta', 0.5, 4],
+      'ondas-theta': ['theta', 4, 8],
+      'alfa-relajacion': ['alfa', 8, 12],
+      'beta-concentracion': ['beta', 12, 30],
+      'gamma-claridad': ['gamma', 30, 100],
+    };
+    for (const [id, [band, lo, hi]] of Object.entries(BANDS)) {
+      const t = byId.get(id);
+      check(`band ${band} present with a beat inside ${lo}-${hi} Hz`,
+        !!t && t.band === band && t.beat_hz >= lo && t.beat_hz <= hi,
+        t ? `band=${t.band} beat=${t.beat_hz}` : 'missing');
+    }
+
+    check('purpose beds present (stress, body, focus, abundance, clarity)',
+      ['alivio-del-estres', 'bienestar-fisico', 'enfoque-profundo', 'abundancia',
+        'claridad-mental', 'frecuencia-528', 'intuicion-852', 'paz-963']
+        .every((id) => byId.has(id)));
+    check('guided 4-7-8 breathing present and one cycle long',
+      byId.has('respiracion-guiada') && byId.get('respiracion-guiada').duration_sec === 19,
+      byId.has('respiracion-guiada') ? String(byId.get('respiracion-guiada').duration_sec) : 'missing');
+
+    // Binaural tracks are useless on a speaker — they must say so.
+    const binaural = arr.filter((t) => t.beat_hz != null);
+    check('every binaural track requires headphones', binaural.length >= 12
+      && binaural.every((t) => t.stereo_required === true), 'count ' + binaural.length);
+    check('every binaural description states the frequency',
+      binaural.every((t) => new RegExp(String(t.beat_hz).replace('.', '[.,]')).test(t.description)));
+
+    // Alerting bands must not be silently offered as sleep aids.
+    check('alerting tracks are flagged not-for-sleep',
+      ['beta-concentracion', 'gamma-claridad', 'claridad-mental', 'enfoque-profundo']
+        .every((id) => byId.get(id) && byId.get(id).not_for_sleep === true));
+    check('sleep-band tracks are NOT flagged not-for-sleep',
+      ['delta-sueno-profundo', 'ondas-theta', 'alfa-relajacion']
+        .every((id) => byId.get(id) && !byId.get(id).not_for_sleep));
+
+    check('every track is grouped for the selector', arr.every((t) => !!t.category_label));
+    check('library spans at least 7 categories',
+      new Set(arr.map((t) => t.category)).size >= 7,
+      Array.from(new Set(arr.map((t) => t.category))).join(', '));
+
+    // No health, psychological or financial claim anywhere in the library.
+    const m = await request('GET', '/api/v1/tracks/meta');
+    check('meta carries the frequency disclaimer',
+      m.json && /no son un tratamiento/i.test(String(m.json.frequency_disclaimer)),
+      m.json && String(m.json.frequency_disclaimer || '').slice(0, 60));
+    check('meta states Hz, not megahertz',
+      m.json && /hercios \(Hz\), no en megahercios/i.test(String(m.json.units_note)));
+    const mEn = await request('GET', '/api/v1/tracks/meta?lang=en');
+    check('disclaimer is translated for ?lang=en',
+      mEn.json && /not a medical or psychological treatment/i.test(String(mEn.json.frequency_disclaimer)));
+    check('the abundance track disowns any financial outcome',
+      /no produce ningún resultado económico/i.test(String(byId.get('abundancia').description)));
+    const claims = arr.filter((t) => /\bcura|curar|sana\b|tratamiento de|garantiza|dinero garantizado/i
+      .test(t.description || ''));
+    check('no track description makes a curative or guarantee claim', claims.length === 0,
+      claims.map((t) => t.id).join(', '));
+    check('player surfaces the disclaimer on frequency tracks',
+      /frequency_disclaimer/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+    check('player groups the selector into optgroups',
+      /optgroup/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+
+    // Measure the audio rather than trusting the label: decode each binaural
+    // MP3 and confirm each ear carries the tone the metadata advertises. Needs
+    // ffmpeg, so it is skipped LOUDLY where ffmpeg is absent (e.g. on Render)
+    // rather than silently passing.
+    const binauralCheck = require('./tools/verify-binaural').verify();
+    if (binauralCheck.skipped) {
+      console.log(`  [SKIP] binaural frequency measurement -> ${binauralCheck.skipped}`);
+      skipped.push('binaural frequency measurement (' + binauralCheck.skipped + ')');
+    } else {
+      const bad = binauralCheck.results.filter((x) => !x.ok);
+      check(`measured: all ${binauralCheck.results.length} binaural tracks carry their labelled frequencies`,
+        bad.length === 0 && binauralCheck.results.length >= 12,
+        bad.length ? bad.map((x) => x.id + ' (' + x.detail + ')').join('; ')
+          : 'only ' + binauralCheck.results.length + ' measured');
+    }
+  }
+
+  // ---------------------------------------------- installable on the phone
+  console.log('\nPWA · home-screen install');
+  {
+    const man = await request('GET', '/manifest.webmanifest');
+    check('manifest is served', man.status === 200, 'status ' + man.status);
+    check('manifest is valid JSON', !!man.json);
+    check('manifest scope matches the mount',
+      man.json && man.json.scope === '/' + SERVICE + '/', man.json && man.json.scope);
+    check('manifest start_url matches the mount',
+      man.json && man.json.start_url === '/' + SERVICE + '/', man.json && man.json.start_url);
+    check('manifest is standalone', man.json && man.json.display === 'standalone');
+    check('manifest declares 192 and 512 icons',
+      man.json && [192, 512].every((s) => man.json.icons.some((i) => i.sizes === s + 'x' + s)));
+    check('manifest declares a maskable icon',
+      man.json && man.json.icons.some((i) => i.purpose === 'maskable'));
+
+    for (const [f, type] of [
+      ['apple-touch-icon.png', 'image/png'], ['icon-192.png', 'image/png'],
+      ['icon-512.png', 'image/png'], ['favicon-32.png', 'image/png'],
+      ['favicon.svg', 'image/svg+xml'], ['logo-master.svg', 'image/svg+xml'],
+    ]) {
+      const res = await request('GET', '/' + f);
+      check(`${f} is served`, res.status === 200 && (res.headers['content-type'] || '').includes(type),
+        'status ' + res.status + ' ' + res.headers['content-type']);
+    }
+    // iOS reads apple-touch-icon, not the manifest — a missing link tag means
+    // the home-screen icon silently falls back to a page screenshot.
+    const html = await request('GET', '/');
+    check('page links apple-touch-icon (iOS home-screen icon)',
+      /rel="apple-touch-icon"[^>]*apple-touch-icon\.png/.test(html.text));
+    check('page links the manifest', /rel="manifest"/.test(html.text));
+    check('page is marked web-app capable', /apple-mobile-web-app-capable"\s+content="yes"/.test(html.text));
+
+    const sw = await request('GET', '/sw.js');
+    check('service worker is served', sw.status === 200, 'status ' + sw.status);
+    check('service worker never caches the API', /startsWith\(BASE \+ 'api\/'\)/.test(sw.text));
+    check('service worker caches audio cache-first', /endsWith\('\.mp3'\)/.test(sw.text));
+    check('player registers the service worker',
+      /serviceWorker\.register/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+  }
+
   // --- tidy up after ourselves -------------------------------------------------
   // Repeat runs would otherwise pile synthetic rows into the real table. Only
   // ever deletes the harness's own recognisable tokens.
@@ -319,6 +455,11 @@ async function run() {
     for (const r of results.filter((x) => !x.pass)) {
       console.log(`| ${r.name} | ${String(r.detail).replace(/\|/g, '/').slice(0, 90)} |`);
     }
+    console.log('');
+  }
+  if (skipped.length) {
+    console.log('**Skipped (not covered by this run):**');
+    for (const s of skipped) console.log(`- ${s}`);
     console.log('');
   }
   console.log('Acceptance criteria 1-5 covered over real HTTP; 6-7 asserted against the served HTML.');
