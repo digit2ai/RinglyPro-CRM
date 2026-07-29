@@ -276,12 +276,19 @@
       .nav-toggle { display:flex; }
       .lang-switcher { margin-left:0; margin-top:8px; }
       .hero-pillars { gap:24px; }
-      .mission-grid,.pillars-grid,.why-grid,.economics-details,.policy-grid,.heritage-grid,.partners-provide,.people-grid,.stats-grid,.makati-stats,.platform-grid { grid-template-columns:1fr; }
+      .mission-grid,.pillars-grid,.why-grid,.economics-details,.policy-grid,.heritage-grid,.partners-provide,.people-grid,.stats-grid,.makati-stats,.platform-grid,.cities-grid { grid-template-columns:1fr; }
       .timeline::before { left:20px; }
       .timeline-dot { left:20px; }
       .timeline-content { width:calc(100% - 50px); margin-left:50px!important; }
       .timeline-item,.timeline-item:nth-child(even) { flex-direction:row; }
       section { padding:60px 16px; }
+    }
+    @media(max-width:560px) {
+      /* long values (CALABARZON, Chabacano) overflowed the flex row and were
+         clipped by .city-card{overflow:hidden} — stack value over label */
+      .city-stat-item { flex-direction:column; align-items:flex-start; gap:2px; }
+      .city-stat-item .val { font-size:1.15rem; overflow-wrap:anywhere; }
+      .city-stat-item .label { max-width:100%; }
     }
     @media(max-width:480px) {
       .hero-pillars { flex-direction:column; gap:16px; }
