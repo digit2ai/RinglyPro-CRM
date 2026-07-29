@@ -230,6 +230,17 @@
 .d2b .orb-fallback[hidden]{display:none!important}
 .d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
 .d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
+
+/* barra de narración — Edge neural TTS sin llaves (EN Ava / ES Dalia), mismas voces que manuelstagg.com */
+.d2b .vnarr{position:relative;z-index:3;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px auto 0;max-width:760px;padding:0 24px}
+.d2b .vnarr button{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-size:13.5px;font-weight:650;padding:9px 16px;border:1px solid var(--line2);background:rgba(255,255,255,.045);color:var(--ink);transition:all .18s ease}
+.d2b .vnarr button:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.28)}
+.d2b .vnarr button:disabled{opacity:.5;cursor:default}
+.d2b .vnarr .vn-primary{background:var(--grad);border-color:transparent;color:#fff}
+.d2b .vnarr .vn-primary:hover{filter:brightness(1.08)}
+.d2b .vnarr .vn-tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:#fb7185;border:1px solid rgba(251,113,133,.38);border-radius:999px;padding:6px 11px;white-space:nowrap}
+.d2b .vnarr .vn-status{flex-basis:100%;text-align:center;font-size:12.5px;color:var(--faint);margin-top:2px}
+@media(max-width:520px){.d2b .vnarr{gap:8px}.d2b .vnarr button{font-size:12.5px;padding:8px 13px}}
 @media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
 @media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
 @media(prefers-reduced-motion:reduce){
@@ -651,6 +662,18 @@
         <strong>El modo de voz se está preparando.</strong><br>
         Escribe tu idea abajo y nuestra IA te construirá un plan real en segundos.
       </div>
+    </div>
+
+    <!-- narración: Edge neural TTS sin llaves, Dalia (ES) — mismo par de voces que manuelstagg.com -->
+    <div class="vnarr" id="vnarr">
+      <button type="button" class="vn-primary" id="vnPlay">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <span id="vnPlayLbl">Escuchar la presentación</span>
+      </button>
+      <button type="button" id="vnPause" hidden>Pausar</button>
+      <button type="button" id="vnStop" hidden>Detener</button>
+      <span class="vn-tag">ES &middot; Dalia</span>
+      <div class="vn-status" id="vnStatus">¿Prefieres escuchar? Dalia te cuenta qué hace Torna.</div>
     </div>
 
     <div class="or-divider">— o escribe tu idea —</div>
@@ -1824,5 +1847,102 @@
   show(0); start();
   document.addEventListener('visibilitychange', function(){ if(document.hidden) stop(); else start(); });
   sim.addEventListener('click', function(){ stop(); tick(); start(); });
+})();
+</script>
+
+<!-- ============================================================
+     NARRACIÓN DE VOZ — Edge neural TTS sin llaves vía /api/tts/edge.
+     La página en español usa Dalia (es-MX-DaliaNeural) y la inglesa
+     usa Ava (en-US-AvaNeural) — el mismo par con el que narra
+     manuelstagg.com. Es independiente del orbe convai de arriba (eso
+     es una conversación en vivo; esto es narración). Si la ruta no
+     responde, cae a la síntesis de voz del propio navegador.
+     ============================================================ -->
+<script>
+(function(){
+  var VOICE = 'dalia', LOCALE = 'es';
+  var SEG = [
+    "Hola, soy Dalia, la voz de Torna. Te cuento en un minuto qué hace Torna.",
+    "Torna es tu fábrica de inteligencia artificial, disponible cuando la necesitas. Describe la herramienta que tu negocio necesita — en voz alta o por escrito — y una fuerza de trabajo de ochenta y tres roles la define, la construye, la prueba y la entrega.",
+    "Un solo cerebro M-C-P enruta el trabajo entre ocho agentes siempre activos y setenta y cinco especialistas a demanda, cada uno conectado a tus sistemas en vivo a través del Model Context Protocol abierto.",
+    "Recibes un producto funcionando en una plataforma que nosotros operamos, monitoreamos y soportamos — voz, facturación y autenticación incluidas. Toca el orbe para hablar con nosotros, o escribe tu idea abajo."
+  ];
+  var T = {
+    play:'Escuchar la presentación', resume:'Reanudar', pause:'Pausar', stop:'Detener',
+    idle:'¿Prefieres escuchar? Dalia te cuenta qué hace Torna.',
+    loading:'Cargando voz neural…', speaking:'Hablando', paused:'En pausa.',
+    done:'Listo — pulsa reproducir para escucharlo otra vez.', failed:'La voz no está disponible por ahora.'
+  };
+
+  var bar=document.getElementById('vnarr'); if(!bar) return;
+  var bPlay=document.getElementById('vnPlay'), bPause=document.getElementById('vnPause'), bStop=document.getElementById('vnStop');
+  var lPlay=document.getElementById('vnPlayLbl'), st=document.getElementById('vnStatus');
+  var idx=0, token=0, playing=false, paused=false, audio=null, cache={}, neuralOK=true, synth=window.speechSynthesis;
+
+  function setStatus(s){ st.textContent=s; }
+  function fetchSeg(i){
+    if(cache[i]) return Promise.resolve(cache[i]);
+    return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:SEG[i],voice:VOICE})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); cache[i]=u; return u; });
+  }
+  function browserSpeak(i,done){
+    if(!synth){ done(); return; }
+    var u=new SpeechSynthesisUtterance(SEG[i]); u.lang=(LOCALE==='es')?'es-MX':'en-US'; u.rate=1;
+    var vs=synth.getVoices()||[];
+    var pick=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(LOCALE)===0;})[0];
+    if(pick) u.voice=pick;
+    u.onend=done; u.onerror=done; synth.speak(u);
+  }
+  function run(t){
+    if(t!==token) return;
+    if(idx>=SEG.length){ finish(); return; }
+    function next(){ if(t!==token) return; idx++; run(t); }
+    setStatus(T.speaking+' ('+(idx+1)+'/'+SEG.length+')');
+    if(!neuralOK){ browserSpeak(idx,next); return; }
+    if(idx===0) setStatus(T.loading);
+    if(idx+1<SEG.length) fetchSeg(idx+1).catch(function(){});
+    fetchSeg(idx).then(function(url){
+      if(t!==token) return;
+      setStatus(T.speaking+' ('+(idx+1)+'/'+SEG.length+')');
+      audio=new Audio(url); audio.onended=next;
+      audio.onerror=function(){ neuralOK=false; browserSpeak(idx,next); };
+      audio.play().catch(function(){ neuralOK=false; browserSpeak(idx,next); });
+    }).catch(function(){ if(t!==token) return; neuralOK=false; browserSpeak(idx,next); });
+  }
+  function start(){
+    token++; idx=0; playing=true; paused=false;
+    bPause.hidden=false; bStop.hidden=false; lPlay.textContent=T.play; bPlay.disabled=true;
+    run(token);
+  }
+  function finish(){
+    playing=false; paused=false; audio=null;
+    bPause.hidden=true; bStop.hidden=true; bPlay.disabled=false;
+    setStatus(neuralOK?T.done:T.failed);
+  }
+  function stop(){
+    token++; playing=false; paused=false;
+    if(audio){ try{audio.pause();}catch(e){} audio=null; }
+    if(synth) try{ synth.cancel(); }catch(e){}
+    bPause.hidden=true; bStop.hidden=true; bPlay.disabled=false; bPause.textContent=T.pause;
+    setStatus(T.idle);
+  }
+  window.__tornaStopNarration = stop;
+
+  bPlay.addEventListener('click', function(){ if(!playing) start(); });
+  bPause.addEventListener('click', function(){
+    if(!playing) return;
+    if(!paused){ paused=true; bPause.textContent=T.resume; setStatus(T.paused);
+      if(audio) try{audio.pause();}catch(e){} if(synth) try{synth.pause();}catch(e){} }
+    else { paused=false; bPause.textContent=T.pause; setStatus(T.speaking+' ('+(idx+1)+'/'+SEG.length+')');
+      if(audio) audio.play().catch(function(){}); if(synth) try{synth.resume();}catch(e){} }
+  });
+  bStop.addEventListener('click', stop);
+  // Nunca hablar encima de la conversación en vivo del orbe.
+  var orb=document.getElementById('orb-wrap');
+  if(orb) orb.addEventListener('click', function(){ if(playing) stop(); });
+  document.addEventListener('visibilitychange', function(){ if(document.hidden && playing && !paused) bPause.click(); });
+  setStatus(T.idle);
 })();
 </script>
