@@ -32,16 +32,25 @@
       <circle cx="300" cy="256" r="106" fill="white"/>
       <circle cx="352" cy="252" r="96"  fill="black"/>
     </mask>
-    <!-- Show only the left cap of each ring, so they read as radiating arcs. -->
-    <clipPath id="leftcap">
-      <rect x="66" y="62" width="164" height="388"/>
-    </clipPath>
+    <!-- Show only the left cap of each ring, so they read as radiating arcs.
+         A horizontal gradient rather than a hard clip: because each ring is
+         centred at x=300, the gradient is opaque at the leftmost point of the
+         arc and transparent by the time the ring curves back toward the moon,
+         so the ends taper away instead of being sliced off by a straight edge. -->
+    <linearGradient id="taper" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="298" y2="0">
+      <stop offset="0%"   stop-color="#fff" stop-opacity="1"/>
+      <stop offset="42%"  stop-color="#fff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="leftcap">
+      <rect width="512" height="512" fill="url(#taper)"/>
+    </mask>
   </defs>
 
   <rect width="512" height="512" fill="url(#night)"/>
 
   <!-- radiating arcs: calm spreading outward from the moon -->
-  <g clip-path="url(#leftcap)" fill="none" stroke="#a996ff" stroke-linecap="round">
+  <g mask="url(#leftcap)" fill="none" stroke="#a996ff">
     <circle cx="300" cy="256" r="150" stroke-width="13" opacity=".58"/>
     <circle cx="300" cy="256" r="184" stroke-width="11" opacity=".34"/>
     <circle cx="300" cy="256" r="218" stroke-width="9"  opacity=".17"/>
