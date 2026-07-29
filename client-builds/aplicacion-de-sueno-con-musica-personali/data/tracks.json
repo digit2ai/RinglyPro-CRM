@@ -1,0 +1,85 @@
+{
+  "library_version": "1.0.0",
+  "license_note": "Todas las pistas fueron sintetizadas por Digit2AI para esta aplicación. Libres de regalías, sin dependencia de CDN externos. / All tracks were synthesized by Digit2AI for this app. Royalty-free, no external CDN dependency.",
+  "tracks": [
+    {
+      "id": "lluvia-suave",
+      "title": "Lluvia suave",
+      "title_en": "Gentle Rain",
+      "category": "naturaleza",
+      "category_en": "nature",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/lluvia-suave.mp3",
+      "duration_sec": 60,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "description": "Lluvia constante sobre tejado, con rachas lentas.",
+      "description_en": "Steady rain on a roof, with slow gusts."
+    },
+    {
+      "id": "olas-del-mar",
+      "title": "Olas del mar",
+      "title_en": "Ocean Waves",
+      "category": "naturaleza",
+      "category_en": "nature",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/olas-del-mar.mp3",
+      "duration_sec": 60,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "description": "Oleaje lento con dos periodos que se cruzan; ninguna ola suena igual.",
+      "description_en": "Slow swell built from two interfering periods; no two waves alike."
+    },
+    {
+      "id": "ruido-marron",
+      "title": "Ruido marrón",
+      "title_en": "Brown Noise",
+      "category": "ruido",
+      "category_en": "noise",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/ruido-marron.mp3",
+      "duration_sec": 45,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "description": "Máscara sonora plana y grave para tapar ruido del entorno.",
+      "description_en": "Flat, low-end sound mask that covers ambient noise."
+    },
+    {
+      "id": "viento-en-el-bosque",
+      "title": "Viento en el bosque",
+      "title_en": "Wind in the Forest",
+      "category": "naturaleza",
+      "category_en": "nature",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/viento-en-el-bosque.mp3",
+      "duration_sec": 60,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "description": "Viento profundo con hojas moviéndose en las crestas.",
+      "description_en": "Deep wind with leaves stirring at the crests."
+    },
+    {
+      "id": "nocturno-suave",
+      "title": "Nocturno suave",
+      "title_en": "Soft Nocturne",
+      "category": "clasica-suave",
+      "category_en": "soft-classical",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/nocturno-suave.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "description": "Notas largas en pentatónica de la menor sobre un bordón grave.",
+      "description_en": "Long notes in A minor pentatonic over a low drone."
+    },
+    {
+      "id": "ondas-theta",
+      "title": "Ondas theta",
+      "title_en": "Theta Waves",
+      "category": "binaural",
+      "category_en": "binaural",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/ondas-theta.mp3",
+      "duration_sec": 60,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "stereo_required": true,
+      "description": "Grabación binaural pregrabada: 200 Hz y 205,5 Hz, diferencia de 5,5 Hz (theta). Requiere audífonos.",
+      "description_en": "Pre-recorded binaural pair: 200 Hz and 205.5 Hz, a 5.5 Hz (theta) difference. Headphones required."
+    }
+  ]
+}

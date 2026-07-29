@@ -44,6 +44,22 @@ A test-number AI phone agent that talks to callers and books appointments at ~ha
 - `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
 - `VOICE_RELAY_TRANSFER_NUMBER` — fallback number `transfer_to_human` dials when the client has no `owner_phone` on file. Unset + no owner_phone = the agent offers to take a message instead.
 
+## Modo Noche — Aplicación de Sueño con Música Personalizada
+
+Self-contained sub-app auto-mounted at `/aplicacion-de-sueno-con-musica-personali` (from `client-builds/aplicacion-de-sueno-con-musica-personali/`). A web bedtime player: pick a track, set a shutdown timer (default 60 min), tap "Iniciar noche" — the loop plays through an HTML5 `<audio>` element, fades over the final 5 minutes via a Web Audio `GainNode`, and stops on its own at expiry. Spanish default UI, `?lang=en` for English (substituted **server-side**, so the `<h1>` is correct in the delivered HTML). No login, no PII.
+
+- **Pages:** `/` player · `/history` (alias `/historial`) session history + favourites.
+- **API:** `GET /health` · `GET /api/v1/tracks` (public, 6 tracks, `?lang=en`) · `GET /api/v1/tracks/meta` · `POST|GET /api/v1/sessions` · `GET /api/v1/sessions/favourites`.
+- **THE AUDIO IS OURS — do not swap it for a CDN link.** Every third-party ambient URL evaluated was seconds long, ogg/oga (Safari can't decode), or unclear-licence. `tools/generate-audio.js` synthesizes six seamless loops (rain, ocean, brown noise, forest wind, a soft-classical pad, and a pre-recorded 5.5 Hz theta binaural pair) and ffmpeg encodes them into `public/audio/`. Royalty-free, same-origin, nothing to 404 at bedtime. ffmpeg is a **build-time** dependency only. Noise loops are seamless via a tail-over-head crossfade; the pad and binaural tracks wrap exactly by construction.
+- **The timer ends the night, not the fade.** The fade is cosmetic; the hard stop is the countdown. On iOS `HTMLMediaElement.volume` is read-only so the `GainNode` is the only real fade path — if the AudioContext can't be created it falls back to a linear `element.volume` ramp, and the night still terminates. The player resumes an OS-suspended context on `visibilitychange` and logs via `fetch(keepalive:true)` on `pagehide` so a closed tab still records.
+- **Postgres primary, memory safety net.** `models/index.js` connects lazily and never fatally: no `DATABASE_URL` or a failed handshake degrades the session store to an in-memory `Map` behind an identical interface, so `/health` and the whole player stay up (`/health` reports which backend is live). Table `aplicacion_de_sueno_con_musica_personali_sessions`, `tenant_id NOT NULL` + `(tenant_id)` and `(tenant_id, anon_token)` indexes, applied idempotently on boot; canonical DDL in `migrations/001_create_sessions.sql`.
+- **Privacy.** Row owner is the client-generated `x-anon-token` UUID (localStorage) — never a name/email/phone. Truncated to 8 chars before any `console.log`. Reads filter on **both** `tenant_id` and `anon_token`, so one device can never see another's history. Writes validate payload shape and 400 on malformed bodies.
+- **SIT:** `node -e "require('dotenv').config();require('./client-builds/aplicacion-de-sueno-con-musica-personali/sit.js')"` → **66/66**, green on both backends (it awaits the store settle instead of racing it, and deletes its own `sit-token-%` rows afterwards). Zero external keys.
+
+**Environment Variables:**
+- `DATABASE_URL` — session store. Unset = in-memory fallback; the player still works end to end.
+- `APLICACION_SUENO_TENANT_ID` (default `1`) — tenant stamped on every session row.
+
 ## RoundShare — Ride. Improve. Share. (EquiMind community layer)
 
 Self-contained sub-app auto-mounted at `/roundshare` (from `client-builds/roundshare/`). The **community/social layer** of the EquiMind "Jump Coach" ecosystem: riders record a round, get AI feedback, then SHARE it with friends, trainers and barn circles. Same brand DNA as EquiMind (purple identity, horse-jumper mark). Static build — no DB, no new backend.

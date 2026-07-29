@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="{{lang}}" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090f">
+  <title>{{history_h1}} · {{html_title}}</title>
+  <link rel="icon" href="{{MOUNT}}/icon.svg" type="image/svg+xml">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background:
+        radial-gradient(1100px 700px at 18% -10%, #1a2144 0%, transparent 60%),
+        radial-gradient(900px 600px at 92% 8%, #2a1a44 0%, transparent 58%),
+        #07090f;
+      min-height: 100vh;
+    }
+    .card { background: rgba(16,20,32,.78); border: 1px solid rgba(255,255,255,.07); backdrop-filter: blur(14px); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
+  </style>
+</head>
+<body class="text-slate-100 antialiased">
+<div class="mx-auto max-w-xl px-5 pt-8 pb-16">
+
+  <header class="flex items-center justify-between mb-8">
+    <a href="{{MOUNT}}/?lang={{lang}}" class="mono text-[11px] uppercase tracking-[.2em] text-slate-400 hover:text-violet-300 transition">&larr; {{nav_player}}</a>
+    <a id="lang-toggle" href="#" class="mono text-[11px] uppercase tracking-wider rounded-full border border-white/10 px-2.5 py-1 text-slate-400 hover:text-violet-300 hover:border-violet-400/40 transition">ES / EN</a>
+  </header>
+
+  <h1 class="text-3xl font-semibold tracking-tight">{{history_h1}}</h1>
+  <p class="mt-3 text-[14px] leading-relaxed text-slate-400">{{history_sub}}</p>
+
+  <!-- aggregate favourites -->
+  <section id="fav-section" class="mt-8" hidden>
+    <h2 id="fav-title" class="mono text-[11px] uppercase tracking-[.2em] text-slate-500 mb-3"></h2>
+    <div id="favourites" class="grid gap-2"></div>
+  </section>
+
+  <!-- session list -->
+  <section class="mt-8">
+    <h2 id="list-title" class="mono text-[11px] uppercase tracking-[.2em] text-slate-500 mb-3"></h2>
+    <div id="sessions" class="grid gap-2"></div>
+    <p id="empty" class="card rounded-2xl px-5 py-8 text-center text-[14px] text-slate-500" hidden></p>
+  </section>
+
+  <p class="mono mt-8 text-center text-[11px] leading-relaxed text-slate-600">{{footer_privacy}}</p>
+</div>
+
+<script>
+  window.SUENO = { mount: '{{MOUNT}}', lang: '{{lang}}', version: '{{VERSION}}' };
+</script>
+<script>
+(function () {
+  const CFG = window.SUENO;
+  const EN = CFG.lang === 'en';
+  const T = {
+    favTitle:   EN ? 'Your favourites'      : 'Tus favoritas',
+    listTitle:  EN ? 'Recent nights'        : 'Noches recientes',
+    empty:      EN ? 'No nights logged yet. Start one and it will show up here.'
+                   : 'Aún no hay noches registradas. Inicia una y aparecerá aquí.',
+    failed:     EN ? 'Could not load your history.' : 'No se pudo cargar tu historial.',
+    completed:  EN ? 'completed'            : 'completada',
+    stopped:    EN ? 'stopped early'        : 'detenida antes',
+    plays:      EN ? 'nights'               : 'noches',
+    minutes:    EN ? 'min'                  : 'min',
+  };
+  const el = (id) => document.getElementById(id);
+  document.getElementById('lang-toggle').addEventListener('click', function (ev) {
+    ev.preventDefault();
+    window.location.search = '?lang=' + (EN ? 'es' : 'en');
+  });
+  el('fav-title').textContent = T.favTitle;
+  el('list-title').textContent = T.listTitle;
+  el('empty').textContent = T.empty;
+
+  // Same anonymous identifier the player uses; it owns these rows server-side.
+  let token = null;
+  try { token = localStorage.getItem('sueno_anon_token'); } catch (e) { /* private mode */ }
+  if (!token) { el('empty').hidden = false; return; }
+
+  const headers = { 'x-anon-token': token };
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString(EN ? 'en-US' : 'es-ES',
+      { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function row(inner) {
+    const div = document.createElement('div');
+    div.className = 'card rounded-2xl px-5 py-4 flex items-center justify-between gap-4';
+    div.innerHTML = inner;
+    return div;
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  Promise.all([
+    fetch(CFG.mount + '/api/v1/sessions?limit=60', { headers }).then((r) => r.json()),
+    fetch(CFG.mount + '/api/v1/sessions/favourites', { headers }).then((r) => r.json()),
+  ]).then(function (results) {
+    const sessions = Array.isArray(results[0]) ? results[0] : [];
+    const favs = Array.isArray(results[1]) ? results[1] : [];
+
+    if (favs.length) {
+      el('fav-section').hidden = false;
+      const box = el('favourites');
+      favs.slice(0, 4).forEach(function (f) {
+        box.appendChild(row(
+          '<div class="min-w-0">'
+          + '<div class="text-[15px] truncate">' + esc(f.track_title || f.track_id) + '</div>'
+          + '<div class="mono text-[11px] uppercase tracking-wider text-slate-500 mt-0.5">'
+          + f.plays + ' ' + T.plays + ' · ' + f.minutes + ' ' + T.minutes + '</div>'
+          + '</div>'
+          + '<div class="mono text-2xl font-light tabular-nums text-violet-300">' + f.plays + '</div>'
+        ));
+      });
+    }
+
+    if (!sessions.length) { el('empty').hidden = false; return; }
+    const box = el('sessions');
+    sessions.forEach(function (s) {
+      box.appendChild(row(
+        '<div class="min-w-0">'
+        + '<div class="text-[15px] truncate">' + esc(s.track_title || s.track_id) + '</div>'
+        + '<div class="mono text-[11px] uppercase tracking-wider text-slate-500 mt-0.5">'
+        + esc(fmtDate(s.created_at)) + ' · ' + (s.completed ? T.completed : T.stopped) + '</div>'
+        + '</div>'
+        + '<div class="mono text-[13px] tabular-nums text-slate-400 whitespace-nowrap">'
+        + s.timer_minutes + ' ' + T.minutes + '</div>'
+      ));
+    });
+  }).catch(function (err) {
+    console.error('[sueno] history load failed:', err && err.message);
+    el('empty').textContent = T.failed;
+    el('empty').hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
