@@ -107,6 +107,7 @@ th{color:var(--dim);font-weight:600;font-size:12px}
 
     <div class="tabs">
       <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
+      <button class="tab" data-pane="jobs"><i class="fas fa-briefcase"></i> Job Matches <span id="jobBadge" class="badge b-new" style="display:none"></span></button>
       <button class="tab" data-pane="opps"><i class="fas fa-inbox"></i> Opportunities <span id="oppBadge" class="badge b-new" style="display:none"></span></button>
       <button class="tab" data-pane="broadcast"><i class="fas fa-satellite-dish"></i> Broadcast</button>
       <button class="tab" data-pane="settings"><i class="fas fa-gear"></i> Settings</button>
@@ -127,6 +128,30 @@ th{color:var(--dim);font-weight:600;font-size:12px}
       </div></div>
       <div class="card"><b>Views per day (30d)</b><div class="chart" id="chart"></div></div>
       <div class="card"><b>Where visitors come from</b><table id="refTable"><tbody></tbody></table></div>
+    </div>
+
+    <!-- JOB MATCHES -->
+    <div class="pane" id="jobs">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div>
+            <b><i class="fas fa-briefcase"></i> Your AI job agent</b>
+            <p class="muted" style="margin-top:6px;max-width:640px">Your agent scans real, live openings from top employers and scores each against your profile. It runs while you sleep — press below to find matches now.</p>
+          </div>
+          <button class="btn" id="findJobs"><i class="fas fa-magnifying-glass"></i> Find new matches</button>
+        </div>
+        <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap;align-items:center">
+          <span class="msg" id="jobRunMsg"></span>
+          <span class="muted mono" id="jobMeta" style="font-size:12px"></span>
+        </div>
+        <div class="row" style="margin-top:10px;gap:6px;flex-wrap:wrap">
+          <button class="btn ghost sm jfilter on" data-f=""><i class="fas fa-list"></i> All</button>
+          <button class="btn ghost sm jfilter" data-f="new">New</button>
+          <button class="btn ghost sm jfilter" data-f="saved"><i class="fas fa-star"></i> Saved</button>
+          <button class="btn ghost sm jfilter" data-f="applied"><i class="fas fa-check"></i> Applied</button>
+        </div>
+      </div>
+      <div id="jobList"><div class="muted" style="padding:8px 2px">No matches yet — press "Find new matches" to run your agent.</div></div>
     </div>
 
     <!-- OPPORTUNITIES -->
@@ -225,11 +250,71 @@ async function boot(){
   $('pName').textContent=me.name; $('pHead').textContent=me.headline; $('avatar').textContent=initials(me.name);
   $('viewProfile').href=me.site||('/'+me.slug);
   $('sAvail').value=me.availability||'open'; $('sRoles').value=me.target_roles||''; $('sSummary').value=me.summary||'';
-  loadDashboard(); loadOpps(); loadOutreach();
+  loadDashboard(); loadOpps(); loadOutreach(); refreshJobBadge();
 }
 
 // ---- tabs ----
-document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});t.classList.add('on');$(t.dataset.pane).classList.add('on');};});
+var jobsLoaded=false;
+document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});t.classList.add('on');$(t.dataset.pane).classList.add('on');if(t.dataset.pane==='jobs'&&!jobsLoaded){jobsLoaded=true;loadJobs();}};});
+
+// ---- job matches (AI job agent) ----
+var jobFilter='';
+function scoreColor(s){s=s||0;return s>=80?'#84cc16':s>=55?'#22d3ee':'#f59e0b';}
+async function loadJobs(){
+  try{
+    var d=await api('/jobs/matches'+(jobFilter?('?status='+encodeURIComponent(jobFilter)):''));
+    renderJobs(d.matches||[]);
+  }catch(e){$('jobList').innerHTML='<div class="muted" style="padding:8px 2px">'+esc(e.message)+'</div>';}
+}
+function renderJobs(rows){
+  if(!rows.length){$('jobList').innerHTML='<div class="muted" style="padding:8px 2px">No matches'+(jobFilter?' in this filter':' yet — press "Find new matches"')+'.</div>';return;}
+  $('jobList').innerHTML=rows.map(function(m){
+    var col=scoreColor(m.score);
+    var loc=[m.location||'',m.remote?'Remote':''].filter(Boolean).join(' · ');
+    var sim=m.is_simulated?'<span class="badge" style="background:#3a3320;color:#e6c86a;border-color:#6b5a1f" title="AI fit-scoring offline — heuristic estimate">heuristic</span>':'';
+    var gaps=m.gaps?('<div class="muted" style="font-size:12px;margin-top:4px"><b>Gap:</b> '+esc(m.gaps)+'</div>'):'';
+    var stbadge=m.status&&m.status!=='new'?'<span class="badge '+(m.status==='applied'?'b-offer':'b-new')+'">'+esc(m.status)+'</span>':'';
+    return '<div class="card" style="margin-bottom:10px;padding:14px 16px">'+
+      '<div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px">'+
+        '<div style="display:flex;gap:12px;align-items:flex-start;min-width:0">'+
+          '<div style="flex:0 0 46px;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-family:var(--mono,monospace);font-weight:800;font-size:16px;color:#04121a;background:'+col+'">'+(m.score==null?'–':m.score)+'</div>'+
+          '<div style="min-width:0"><div style="font-weight:700;font-size:15px">'+esc(m.title)+'</div>'+
+          '<div class="muted" style="font-size:13px;margin-top:2px">'+esc(m.company)+(loc?' · '+esc(loc):'')+'</div></div>'+
+        '</div>'+
+        '<div style="text-align:right;white-space:nowrap">'+stbadge+' '+sim+'</div>'+
+      '</div>'+
+      (m.why?'<div style="font-size:13.5px;margin-top:10px;color:var(--txt2,#cbd3e2)">'+esc(m.why)+'</div>':'')+gaps+
+      '<div class="row" style="margin-top:12px;gap:6px;flex-wrap:wrap">'+
+        '<a class="btn sm" href="'+esc(m.url)+'" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open & apply</a>'+
+        '<button class="btn sm ghost" onclick="setJob('+m.id+',\'saved\')"><i class="fas fa-star"></i> Save</button>'+
+        '<button class="btn sm ghost" onclick="setJob('+m.id+',\'applied\')"><i class="fas fa-check"></i> Applied</button>'+
+        '<button class="btn sm ghost" onclick="setJob('+m.id+',\'dismissed\')"><i class="fas fa-xmark"></i> Dismiss</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+async function setJob(id,status){try{await api('/jobs/matches/'+id,{method:'PATCH',body:{status:status}});loadJobs();refreshJobBadge();}catch(e){}}
+document.querySelectorAll('.jfilter').forEach(function(b){b.onclick=function(){document.querySelectorAll('.jfilter').forEach(function(x){x.classList.remove('on');});b.classList.add('on');jobFilter=b.dataset.f;loadJobs();};});
+async function refreshJobBadge(){try{var s=await api('/jobs/status');var n=(s.counts&&s.counts.unseen)||0;var el=$('jobBadge');if(n>0){el.textContent=n;el.style.display='';}else{el.style.display='none';}}catch(e){}}
+var jobPoll=null;
+$('findJobs').onclick=async function(){
+  var btn=$('findJobs');btn.disabled=true;$('jobRunMsg').textContent='Starting your agent…';$('jobRunMsg').className='msg';
+  try{
+    var r=await api('/jobs/refresh',{method:'POST',body:{}});
+    if(jobPoll)clearInterval(jobPoll);
+    jobPoll=setInterval(async function(){
+      try{
+        var s=await api('/jobs/status');
+        $('jobMeta').textContent=(s.pool?(s.pool+' live jobs scanned · '):'')+(s.sources_count||0)+' employers'+(s.adzuna?' · Adzuna on':'');
+        if(s.running){$('jobRunMsg').textContent=s.step==='fetching'?'Scanning live job boards…':'Scoring matches against your profile…';}
+        else{clearInterval(jobPoll);jobPoll=null;btn.disabled=false;
+          var res=s.result||{};
+          $('jobRunMsg').textContent=s.error?('Error: '+s.error):('Done — '+(res.scored||0)+' scored, '+((res.matches_total)||0)+' total matches.'+(res.is_simulated?' (heuristic — AI scoring offline)':''));
+          jobsLoaded=true;loadJobs();refreshJobBadge();}
+      }catch(e){clearInterval(jobPoll);jobPoll=null;btn.disabled=false;$('jobRunMsg').textContent=e.message;}
+    },3000);
+  }catch(e){btn.disabled=false;$('jobRunMsg').textContent=e.message;$('jobRunMsg').className='msg';}
+};
 
 // ---- analytics ----
 async function loadDashboard(){var d=await api('/dashboard?days=30');

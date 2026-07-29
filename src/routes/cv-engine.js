@@ -7,6 +7,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { Sequelize, QueryTypes } = require('sequelize');
+const jobsource = require('../services/cv-jobsource');
 
 const router = express.Router();
 router.use(express.json({ limit: '256kb' }));
@@ -92,6 +93,20 @@ async function ensure(){
       status VARCHAR(24) DEFAULT 'draft', is_simulated BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS idx_cv_out_profile ON cv_outreach(profile_id, created_at);
+    CREATE TABLE IF NOT EXISTS cv_jobs (
+      id BIGSERIAL PRIMARY KEY, source VARCHAR(24), source_id TEXT UNIQUE,
+      company TEXT, title TEXT, location TEXT, remote BOOLEAN DEFAULT false,
+      url TEXT, description TEXT, posted_at TIMESTAMPTZ,
+      fetched_at TIMESTAMPTZ DEFAULT now(), created_at TIMESTAMPTZ DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_cv_jobs_fetched ON cv_jobs(fetched_at);
+    CREATE TABLE IF NOT EXISTS cv_job_matches (
+      id BIGSERIAL PRIMARY KEY, profile_id BIGINT NOT NULL, job_id BIGINT NOT NULL,
+      score INT, verdict VARCHAR(16), why TEXT, gaps TEXT, is_simulated BOOLEAN DEFAULT false,
+      status VARCHAR(16) DEFAULT 'new', created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(profile_id, job_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cv_jm_profile ON cv_job_matches(profile_id, score DESC);
   `);
   for (const p of SEED) {
     await sequelize.query(
@@ -347,5 +362,96 @@ router.post('/match', async (req, res) => {
   res.json(out);
 });
 
-router.get('/health', (req, res) => res.json({ ok: true, ready }));
+// ================= JOB DISCOVERY + MATCHING (Phase 1) =================
+// Sources real live jobs from public ATS boards, matches them to the profile with a
+// lexical-recall -> Haiku fit-score pipeline. Runs in the BACKGROUND (never blocks the
+// request past Cloudflare's ~100s ceiling): /jobs/refresh kicks off a job and returns
+// immediately; the UI polls /jobs/status and reads /jobs/matches as they land.
+const JOB_RUN = {};                 // in-memory per-profile run status
+let POOL_LAST = 0;                  // last pool-refresh timestamp (ms) — shared across profiles
+const POOL_TTL_MS = 6 * 3600 * 1000;
+
+async function runMatch(prof, force) {
+  const pid = prof.id;
+  JOB_RUN[pid] = { running: true, step: 'fetching', started: Date.now(), error: null };
+  try {
+    if (force || Date.now() - POOL_LAST > POOL_TTL_MS) {
+      const pool = await jobsource.refreshJobPool(sequelize, QueryTypes, {});
+      POOL_LAST = Date.now();
+      JOB_RUN[pid].pool = pool.pool_size; JOB_RUN[pid].sources = pool.sources;
+    }
+    JOB_RUN[pid].step = 'matching';
+    const r = await jobsource.scoreProfile(sequelize, QueryTypes, claude, prof, { limit: 12 });
+    JOB_RUN[pid] = { running: false, step: 'done', finished: Date.now(), started: JOB_RUN[pid].started,
+      pool: JOB_RUN[pid].pool, sources: JOB_RUN[pid].sources, result: r, error: null };
+  } catch (e) {
+    JOB_RUN[pid] = { running: false, step: 'error', error: (e && e.message) || 'run failed', finished: Date.now() };
+  }
+}
+
+// Kick off a background fetch+match for the logged-in profile.
+router.post('/jobs/refresh', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  if (JOB_RUN[p.id] && JOB_RUN[p.id].running) return res.json({ ok: true, running: true, already: true });
+  const force = !!req.body.force;
+  runMatch(p, force);                       // fire-and-forget (background)
+  res.json({ ok: true, running: true, adzuna: jobsource.adzunaActive() });
+});
+
+// Poll run status.
+router.get('/jobs/status', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const st = JOB_RUN[p.id] || { running: false, step: 'idle' };
+  const cnt = await sequelize.query(
+    `SELECT count(*)::int AS total,
+            count(*) FILTER (WHERE status='new')::int AS unseen,
+            max(updated_at) AS last
+       FROM cv_job_matches WHERE profile_id=:pid`, { replacements: { pid: p.id }, type: QueryTypes.SELECT });
+  res.json({ ...st, counts: cnt[0] || { total: 0, unseen: 0 }, sources_count: jobsource.SOURCES.length, adzuna: jobsource.adzunaActive() });
+});
+
+// List scored matches for the logged-in profile (joined with the job).
+router.get('/jobs/matches', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const status = String(req.query.status || '').toLowerCase();
+  const where = ['m.profile_id=:pid'];
+  const repl = { pid: p.id };
+  if (status && ['new', 'saved', 'dismissed', 'applied'].includes(status)) { where.push('m.status=:st'); repl.st = status; }
+  else where.push("m.status<>'dismissed'");
+  const rows = await sequelize.query(
+    `SELECT m.id, m.score, m.verdict, m.why, m.gaps, m.is_simulated, m.status, m.updated_at,
+            j.company, j.title, j.location, j.remote, j.url, j.source, j.posted_at
+       FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+       WHERE ${where.join(' AND ')}
+       ORDER BY m.score DESC NULLS LAST, m.updated_at DESC
+       LIMIT 100`, { replacements: repl, type: QueryTypes.SELECT });
+  res.json({ matches: rows });
+});
+
+// Save / dismiss / mark-applied a match.
+router.patch('/jobs/matches/:id', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const st = String(req.body.status || '').toLowerCase();
+  if (!['new', 'saved', 'dismissed', 'applied'].includes(st)) return res.status(400).json({ error: 'bad status' });
+  await sequelize.query(`UPDATE cv_job_matches SET status=:st, updated_at=now() WHERE id=:id AND profile_id=:pid`,
+    { replacements: { st, id: req.params.id, pid: p.id }, type: QueryTypes.UPDATE });
+  res.json({ ok: true });
+});
+
+// Optional daily auto-refresh for all profiles ("works while you sleep") — off unless CV_JOBS_GO=1.
+if (process.env.CV_JOBS_GO === '1' && sequelize) {
+  const dailyRun = async () => {
+    try {
+      await ensure();
+      await jobsource.refreshJobPool(sequelize, QueryTypes, {}); POOL_LAST = Date.now();
+      const profs = await sequelize.query('SELECT * FROM cv_profiles', { type: QueryTypes.SELECT });
+      for (const pr of profs) { try { await jobsource.scoreProfile(sequelize, QueryTypes, claude, pr, { limit: 10 }); } catch (e) {} }
+      console.log('cv-engine: daily job match complete for', profs.length, 'profiles');
+    } catch (e) { console.error('cv-engine daily run:', e.message); }
+  };
+  setTimeout(dailyRun, 90 * 1000);            // once shortly after boot
+  setInterval(dailyRun, 24 * 3600 * 1000);    // then daily
+}
+
+router.get('/health', (req, res) => res.json({ ok: true, ready, job_sources: jobsource.SOURCES.length, adzuna: jobsource.adzunaActive() }));
 module.exports = router;
