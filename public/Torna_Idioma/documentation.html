@@ -151,6 +151,12 @@
     /* Responsive */
     @media(max-width:768px) {
       .nav-links { display:none; }
+      /* the brand lockup is wider than a 390px phone, so the flex row grew
+         past the viewport and gave the whole page a sideways scroll */
+      .nav-container { padding:0 16px; }
+      .nav-brand { min-width:0; }
+      .nav-brand-text { font-size:1.1rem; letter-spacing:1px; }
+      .nav-brand-sub { letter-spacing:2px; }
       .two-col { grid-template-columns:1fr; }
       .doc-card-grid { grid-template-columns:1fr; }
       .arch-flow { flex-direction:column; }
