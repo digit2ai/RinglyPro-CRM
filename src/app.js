@@ -679,6 +679,23 @@ const CV_SITES = {
 function cvSite(host) { return CV_SITES[String(host || '').toLowerCase().replace(/^www\./, '')] || null; }
 function isoDay() { return new Date().toISOString().slice(0, 10); }
 
+// Phase 2 — machine-readable agent surface served host-aware on the CV domains:
+//   /resume.json (JSON Resume) and /.well-known/agent.json (A2A Agent Card).
+// These carry a file extension, so the per-domain rewrite middleware next()s them through.
+const cvAgent = require('./routes/cv-agent');
+const CV_HOST_SLUG = { 'manuelstagg.com': 'manuelstagg', 'anastagg.com': 'anastagg', 'andreastagg.com': 'andreastagg', 'julianagramowski.com': 'juliana_gramowski' };
+function cvHostSlug(req) { return CV_HOST_SLUG[String(req.get('host') || '').toLowerCase().replace(/^www\./, '')] || null; }
+app.get('/resume.json', (req, res, next) => {
+  const slug = cvHostSlug(req); if (!slug) return next();
+  const r = cvAgent.getResume(slug); if (!r) return next();
+  res.type('application/json').json(r);
+});
+app.get(['/.well-known/agent.json', '/agent.json'], (req, res, next) => {
+  const slug = cvHostSlug(req); if (!slug) return next();
+  const r = cvAgent.getResume(slug); if (!r) return next();
+  res.type('application/json').json(cvAgent.agentCard(r));
+});
+
 app.get('/robots.txt', (req, res, next) => {
   const site = cvSite(req.get('host')); if (!site) return next();
   const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
@@ -706,6 +723,14 @@ app.get('/llms.txt', (req, res, next) => {
   let body = `# ${site.name}\n\n> ${site.blurb}\n\n## Profile\n`;
   body += `- Name: ${site.name}\n- Role: ${site.role}\n- Specializations: ${site.topics}\n- Languages: English, Spanish\n- Availability: open to senior opportunities\n- Contact: ${site.email} · ${site.phone}\n- Links: ${site.links.join(' · ')}\n\n## Pages\n- ${origin}/ (CV, English)\n`;
   if (site.es) body += `- ${origin}/es (CV, Spanish)\n`;
+  const slug = cvHostSlug(req);
+  if (slug) {
+    body += `\n## For AI agents\nThis candidate is queryable by other AIs.\n`;
+    body += `- Résumé (JSON Resume): ${origin}/resume.json\n`;
+    body += `- Agent Card (A2A): ${origin}/.well-known/agent.json\n`;
+    body += `- MCP endpoint (JSON-RPC 2.0): ${origin}/api/agent/${slug}/mcp — tools: get_profile, get_resume, match_against_jd, check_availability, leave_message\n`;
+    body += `- REST: GET ${origin}/api/agent/${slug}/profile · POST ${origin}/api/agent/${slug}/match {"job_description"} · POST ${origin}/api/agent/${slug}/message\n`;
+  }
   res.type('text/plain').send(body);
 });
 
@@ -1149,6 +1174,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
 app.use('/api/cv-engine', require('./routes/cv-engine')); // Multi-tenant CV Talent Engine (auth, analytics, opportunities, AI broadcast)
+app.use('/api/agent', require('./routes/cv-agent').router); // Phase 2 — public agent surface (resume.json, A2A card, MCP) per CV candidate
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/vision2ai/api', require('./routes/vision2ai')); // Vision2Ai booking calendar (web form + future Lite voice agent)
 // app.use('/api/appointment', appointmentRoutes); // REMOVED: Was loading duplicate model, not router
