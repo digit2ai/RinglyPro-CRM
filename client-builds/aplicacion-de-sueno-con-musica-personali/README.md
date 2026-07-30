@@ -1,8 +1,8 @@
 # Aplicación de Sueño con Música Personalizada — Modo Noche
 
-A web bedtime player auto-mounted at **`/aplicacion-de-sueno-con-musica-personali`**: the user picks a track from a curated royalty-free library of **52 tracks in two families**, sets a shutdown timer (default 60 min), and taps *Iniciar noche*. The loop plays through an HTML5 `<audio>` element, the volume fades over the final five minutes via a Web Audio `GainNode`, and playback stops on its own at expiry — nobody touches the phone. Each finished night is logged to Postgres against a client-generated anonymous token (no login, no PII) so `/history` can show favourite selections. Spanish is the default UI; `?lang=en` serves English, substituted server-side so the `<h1>` is correct in the delivered HTML rather than swapped after paint. Installable to the iPhone home screen as a PWA.
+A web bedtime player auto-mounted at **`/aplicacion-de-sueno-con-musica-personali`**: the user picks a track from a curated royalty-free library of **60 tracks in three families**, sets a shutdown timer (default 60 min), and taps *Iniciar noche*. The loop plays through an HTML5 `<audio>` element, the volume fades over the final five minutes via a Web Audio `GainNode`, and playback stops on its own at expiry — nobody touches the phone. Each finished night is logged to Postgres against a client-generated anonymous token (no login, no PII) so `/history` can show favourite selections. Spanish is the default UI; `?lang=en` serves English, substituted server-side so the `<h1>` is correct in the delivered HTML rather than swapped after paint. Installable to the iPhone home screen as a PWA.
 
-## The library — two families
+## The library — three families
 
 **Family 1 · Música de ondas (Wave Music)** — 25 tracks
 
@@ -28,22 +28,32 @@ A web bedtime player auto-mounted at **`/aplicacion-de-sueno-con-musica-personal
 | Mundo | Gamelan ceremonial · Ney sufí · Zanfona (bordón) · Marimba y vibráfono · Oud (taqsim) · Duduk |
 | Naturaleza con instrumentos | Campanas de viento en el bosque · Handpan y lluvia |
 
-The player shows a family switch first, then groups the dropdown by category — a flat list of 52 is unusable on a phone at 2am.
+**Family 3 · Electrónica (Electronic)** — 8 tracks
+
+| Category | Tracks |
+|---|---|
+| Deep house | Clásico (122) · Nocturno (120) · Orgánico (121) · Melódico (122) · Lo-fi (118) · Soulful (124) · Y lluvia (120) · Sin batería (120, beatless) |
+
+These have a pulse, so they are flagged `not_for_sleep` — for working, driving or the evening. *Deep house sin batería* is the exception: same harmony, drums removed, and it does suit sleep.
+
+The player shows a family switch first, then groups the dropdown by category — a flat list of 60 is unusable on a phone at 2am.
 
 ## Runbook
 
 ```bash
 # SIT — boots the sub-app on an ephemeral port and drives it over real HTTP
 /opt/homebrew/bin/node -e "require('dotenv').config();require('./client-builds/aplicacion-de-sueno-con-musica-personali/sit.js')"
-# => 135/135 GREEN (also green with no DATABASE_URL, on the memory fallback)
+# => 153/153 GREEN (also green with no DATABASE_URL, on the memory fallback)
 
 # Rebuild the audio library (build-time only, needs ffmpeg on PATH)
 /opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/generate-audio.js        # wave family
 /opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/generate-instrumental.js # instrumental family
+/opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/generate-house.js        # electronic family
 
 # Measure what shipped, rather than trusting the labels
 /opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/verify-binaural.js
 /opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/verify-loudness.js
+/opt/homebrew/bin/node client-builds/aplicacion-de-sueno-con-musica-personali/tools/verify-tempo.js
 
 # Schema (optional — models/index.js applies the same DDL idempotently on boot)
 psql "$DATABASE_URL" -f client-builds/aplicacion-de-sueno-con-musica-personali/migrations/001_create_sessions.sql
@@ -54,7 +64,7 @@ psql "$DATABASE_URL" -f client-builds/aplicacion-de-sueno-con-musica-personali/m
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/health` | `{status:'ok', service, version}` plus the live session-store backend |
-| GET | `/api/v1/tracks` | Public, no auth. 52 tracks with family + category, `?lang=en` for English |
+| GET | `/api/v1/tracks` | Public, no auth. 60 tracks with family + category, `?lang=en` for English |
 | GET | `/api/v1/tracks/meta` | Version, licence + originality notes, families, categories, frequency disclaimer |
 | POST | `/api/v1/sessions` | `{track_id, timer_minutes}` + `x-anon-token` header → 201. No header → 400 |
 | GET | `/api/v1/sessions` | Only rows owned by the presented token |
@@ -65,7 +75,7 @@ psql "$DATABASE_URL" -f client-builds/aplicacion-de-sueno-con-musica-personali/m
 
 ## Decisions worth knowing
 
-**The audio is ours.** Every candidate third-party ambient URL was either a few seconds long, in a container Safari cannot decode (ogg/oga), or carried an unclear licence. Two generators synthesize all 52 seamless loops over a shared DSP floor (`tools/lib-dsp.js`) and ffmpeg encodes them to MP3 in `public/audio/` (34 MB). They are royalty-free, served from our own origin, and there is no external CDN to 404 at bedtime. Noise loops are made seamless by crossfading a generated tail back over the head; tonal and event-driven tracks wrap exactly by construction (integer cycle counts, and every bowl strike, bird call and wave crash written modulo the buffer, so an event starting near the end simply continues over the loop point).
+**The audio is ours.** Every candidate third-party ambient URL was either a few seconds long, in a container Safari cannot decode (ogg/oga), or carried an unclear licence. Three generators synthesize all 60 seamless loops over a shared DSP floor (`tools/lib-dsp.js`) and ffmpeg encodes them to MP3 in `public/audio/` (38 MB). They are royalty-free, served from our own origin, and there is no external CDN to 404 at bedtime. Noise loops are made seamless by crossfading a generated tail back over the head; tonal and event-driven tracks wrap exactly by construction (integer cycle counts, and every bowl strike, bird call and wave crash written modulo the buffer, so an event starting near the end simply continues over the loop point).
 
 **The timer, not the fade, ends the night.** The fade is cosmetic; the hard stop is driven by the countdown. On iOS `HTMLMediaElement.volume` is read-only, so the `GainNode` is the only path that can actually fade — and if the AudioContext cannot be created the player falls back to a linear `element.volume` ramp. Either way the night terminates correctly, which is the property that matters. The player also resumes a context the OS suspended on screen lock, and logs the session with `fetch(..., {keepalive:true})` on `pagehide` so a closed tab still records the night.
 
@@ -76,6 +86,10 @@ psql "$DATABASE_URL" -f client-builds/aplicacion-de-sueno-con-musica-personali/m
 The artist names in the brief were used **only** as a reference for timbre and tempo — how breathy, how slow, how sparse. No recording is sampled, no artist or album name appears anywhere in the shipped product, and SIT fails the build if one does (matched on whole words, because a substring test flags "eno" inside the Spanish "menor"). `piano-lento` is deliberately titled "in the manner of the gymnopédies" with an original melody, so nothing is misattributed to a historical composer.
 
 **One listening level across the whole library.** Peak normalisation was not enough: a plucked guqin peaked as high as a flute while averaging 16 dB quieter, so the library spanned **17.2 LUFS** end to end — pick a new track at 2am and you either hear nothing or get startled awake. `lib-dsp.js` now runs a two-pass EBU R128 match to −19 LUFS on the raw PCM before the single MP3 encode (so no generation loss), in `linear=true` mode which applies one gain and preserves each track's own dynamics. Spread is now **2.1 LUFS** with no clipping, asserted by `tools/verify-loudness.js` inside SIT.
+
+**A pulse changes the looping problem.** Everything else in the library is free-time, so it loops seamlessly because there is no beat to disturb. Deep house has one, which forces two changes. The loop length is *derived from the tempo* rather than chosen — exactly 16 bars at the declared BPM, so the downbeat after the wrap lands where the next downbeat would have. And the **MP3 encoder padding becomes audible**: measured at ~25 ms on this encoder, which is nothing under rain but reads as a stumble once per loop in a 4/4 bar. Those tracks are flagged `gapless`, and the player fetches and decodes them into an AudioBuffer, then loops *that* — `AudioBufferSourceNode.loop` is sample-exact. Pause suspends the whole AudioContext, because a buffer source cannot be paused, which also freezes the loop position so resuming picks the groove up where it stopped. If fetch or decode fails, it falls back to the `<audio>` element: a small seam, but the night still runs.
+
+`tools/verify-tempo.js` measures this from the audio. Counting kicks does **not** work — the sub bass shares the 25-120 Hz band, so an off-beat bass note is indistinguishable from a kick, and an early version of this check reported false failures on correct audio for exactly that reason. Instead it autocorrelates the onset envelope and requires a *distinct* peak at the declared beat and bar (stronger than at ±8% off-tempo), plus a comb measure of on-grid versus off-grid energy. Thresholds come from measured separation, not guesswork: beat tracks score 0.51-0.78 at the beat with comb 1.32-1.75x, while unsequenced audio scores ≤0.31 with comb ≤1.15x and never shows a distinct peak. Four unsequenced tracks are run through the same test as **negative controls and must be rejected** — a test everything passes proves nothing.
 
 **Frequencies are in hertz, and the copy makes no claims.** Brainwave bands are Hz, not megahertz — delta 0.5-4, theta 4-8, alpha 8-12, beta 12-30, gamma 30-100. A megahertz tone is radio, millions of times above hearing. What these tracks actually contain is a *binaural beat*: an audible carrier in one ear and the same tone offset by the target hertz in the other, so the difference is perceived as a slow pulse — which only works on headphones, so every such track carries `stereo_required`. The SIT measures this rather than trusting it: it decodes each MP3 and runs a Goertzel filter per channel to confirm the left ear holds the carrier and the right holds carrier+beat.
 

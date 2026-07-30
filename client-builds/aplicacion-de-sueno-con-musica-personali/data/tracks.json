@@ -1,5 +1,5 @@
 {
-  "library_version": "3.0.0",
+  "library_version": "4.0.0",
   "license_note": "Todas las pistas fueron sintetizadas por Digit2AI para esta aplicación. Libres de regalías, sin dependencia de CDN externos. / All tracks were synthesized by Digit2AI for this app. Royalty-free, no external CDN dependency.",
   "frequency_disclaimer": "Las pistas de ondas cerebrales y frecuencias son audio de relajación construido sobre la frecuencia indicada. Los latidos binaurales requieren audífonos: cada oído recibe un tono distinto y la diferencia se percibe como un pulso lento. No son un tratamiento médico ni psicológico, y no prometen ningún resultado de salud ni financiero.",
   "frequency_disclaimer_en": "The brainwave and frequency tracks are relaxation audio built on the stated frequency. Binaural beats require headphones: each ear receives a different tone and the difference is perceived as a slow pulse. They are not a medical or psychological treatment, and they promise no health or financial outcome.",
@@ -88,6 +88,12 @@
       "family": "instrumental",
       "label": "Naturaleza con instrumentos",
       "label_en": "Nature-blended"
+    },
+    {
+      "id": "deep-house",
+      "family": "electronica",
+      "label": "Deep house",
+      "label_en": "Deep house"
     }
   ],
   "tracks": [
@@ -789,6 +795,143 @@
       "tradition": "handpan",
       "description": "Handpan espaciado bajo lluvia ligera, con truenos muy lejanos.",
       "description_en": "Spacious handpan under light rain, with thunder well in the distance."
+    },
+    {
+      "id": "deep-house-clasico",
+      "title": "Deep house clásico",
+      "title_en": "Classic Deep House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-clasico.mp3",
+      "duration_sec": 31,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 122,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Bombo en cada tiempo, charles al contratiempo, acordes de novena en piano eléctrico y bajo con sidechain. 122 BPM.",
+      "description_en": "Four-on-the-floor, off-beat hats, ninth-chord electric piano and a sidechained bass. 122 BPM."
+    },
+    {
+      "id": "deep-house-nocturno",
+      "title": "Deep house nocturno",
+      "title_en": "Late Night Deep House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-nocturno.mp3",
+      "duration_sec": 32,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 120,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Más oscuro y con más espacio: menos elementos, palmada solo en el cuarto tiempo, sub sostenido. 120 BPM.",
+      "description_en": "Darker and more spacious: fewer elements, a clap only on four, and a sustained sub. 120 BPM."
+    },
+    {
+      "id": "deep-house-organico",
+      "title": "Deep house orgánico",
+      "title_en": "Organic Deep House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-organico.mp3",
+      "duration_sec": 32,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 121,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "La percusión lleva el groove: congas, maracas y charles en semicorcheas sobre el bombo. 121 BPM.",
+      "description_en": "Percussion carries the groove: congas, shaker and sixteenth hats over the kick. 121 BPM."
+    },
+    {
+      "id": "deep-house-melodico",
+      "title": "Deep house melódico",
+      "title_en": "Melodic Deep House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-melodico.mp3",
+      "duration_sec": 31,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 122,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Los acordes llevan la pieza, abiertos en el campo estéreo, sobre una progresión con séptimas. 122 BPM.",
+      "description_en": "The chords lead, spread across the stereo field, over a seventh-chord progression. 122 BPM."
+    },
+    {
+      "id": "lo-fi-house",
+      "title": "Lo-fi house",
+      "title_en": "Lo-Fi House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/lo-fi-house.mp3",
+      "duration_sec": 33,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 118,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Polvoriento y filtrado: bombo más blando, cinta de fondo y chasquidos de vinilo. 118 BPM.",
+      "description_en": "Dusty and filtered: a softer kick, tape hiss and vinyl crackle. 118 BPM."
+    },
+    {
+      "id": "soulful-house",
+      "title": "Soulful house",
+      "title_en": "Soulful House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/soulful-house.mp3",
+      "duration_sec": 31,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 124,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Voicings más jazzísticos y brillantes, con maracas y bajo sincopado. 124 BPM.",
+      "description_en": "Jazzier, brighter voicings with shaker and a syncopated bass. 124 BPM."
+    },
+    {
+      "id": "deep-house-y-lluvia",
+      "title": "Deep house y lluvia",
+      "title_en": "Deep House and Rain",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-y-lluvia.mp3",
+      "duration_sec": 32,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 120,
+      "bars": 16,
+      "gapless": true,
+      "not_for_sleep": true,
+      "description": "Deep house mínimo bajo lluvia: bombo más suave, todo con más aire. 120 BPM.",
+      "description_en": "Minimal deep house under rain: a softer kick and more air around everything. 120 BPM."
+    },
+    {
+      "id": "deep-house-sin-bateria",
+      "title": "Deep house sin batería",
+      "title_en": "Beatless Deep House",
+      "category": "deep-house",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/deep-house-sin-bateria.mp3",
+      "duration_sec": 32,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "deep house",
+      "bpm": 120,
+      "bars": 16,
+      "gapless": false,
+      "not_for_sleep": false,
+      "description": "La misma armonía sin batería: pads, acordes y sub. La única del género que sí sirve para dormir.",
+      "description_en": "The same harmony with the drums removed: pads, chords and sub. The one in this genre that does suit sleep.",
+      "beatless": true
     }
   ],
   "families": [
@@ -805,8 +948,17 @@
       "label_en": "Instrumental Music",
       "blurb": "Instrumentos acústicos sintetizados: handpan, flautas, cuerdas, piano y mundo.",
       "blurb_en": "Synthesized acoustic instruments: handpan, flutes, strings, piano and world."
+    },
+    {
+      "id": "electronica",
+      "label": "Electrónica",
+      "label_en": "Electronic",
+      "blurb": "Deep house y derivados. Con pulso: para trabajar, conducir o la tarde, no para dormir.",
+      "blurb_en": "Deep house and its variants. These have a pulse: for working, driving or the evening, not for sleeping."
     }
   ],
   "originality_note": "Las pistas instrumentales son composiciones originales de Digit2AI sintetizadas desde cero en el lenguaje de cada instrumento. No son grabaciones de ningún artista, sello o álbum, y no contienen material muestreado de terceros.",
-  "originality_note_en": "The instrumental tracks are original Digit2AI compositions, synthesized from scratch in the idiom of each instrument. They are not recordings by any artist, label or album, and contain no third-party sampled material."
+  "originality_note_en": "The instrumental tracks are original Digit2AI compositions, synthesized from scratch in the idiom of each instrument. They are not recordings by any artist, label or album, and contain no third-party sampled material.",
+  "gapless_note": "Las pistas con pulso se marcan gapless: el navegador las decodifica a un AudioBuffer y repite el buffer, porque el relleno del codificador MP3 (~25 ms) es inaudible en lluvia pero se oye como un tropiezo en un compás de 4/4.",
+  "gapless_note_en": "Tracks with a pulse are flagged gapless: the browser decodes them into an AudioBuffer and loops that, because the MP3 encoder padding (~25 ms) is inaudible under rain but reads as a stumble in a 4/4 bar."
 }

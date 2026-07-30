@@ -386,8 +386,8 @@ async function run() {
 
     check('every track belongs to a family', arr.every((t) => !!t.family && !!t.family_label),
       arr.filter((t) => !t.family).map((t) => t.id).join(', '));
-    check('exactly two families are published',
-      m.json && Array.isArray(m.json.families) && m.json.families.length === 2,
+    check('three families are published',
+      m.json && Array.isArray(m.json.families) && m.json.families.length === 3,
       m.json && JSON.stringify((m.json.families || []).map((f) => f.id)));
     check('family 1 is the wave library',
       m.json && m.json.families[0].id === 'ondas' && /ondas/i.test(m.json.families[0].label));
@@ -400,8 +400,12 @@ async function run() {
       ['handpan-metal', 'viento-flautas', 'cuerdas', 'piano-atmosferico', 'mundo', 'naturaleza-instrumentos']
         .every((c) => inst.some((t) => t.category === c)),
       'present: ' + Array.from(new Set(inst.map((t) => t.category))).join(', '));
+    check('family 3 is the electronic library',
+      m.json && m.json.families[2].id === 'electronica' && /electr/i.test(m.json.families[2].label));
+    const elec = arr.filter((t) => t.family === 'electronica');
     check('family counts in meta match the track list',
-      m.json && m.json.families[0].count === wave.length && m.json.families[1].count === inst.length);
+      m.json && m.json.families[0].count === wave.length
+      && m.json.families[1].count === inst.length && m.json.families[2].count === elec.length);
 
     // Every instrument named in the brief actually shipped.
     const WANTED = {
@@ -452,6 +456,57 @@ async function run() {
     check('the player renders a family switch', /family-tabs/.test(html.text)
       && /buildFamilyTabs/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
 
+  }
+
+  // ------------------------------------------------------------- deep house
+  console.log('\nElectronic · deep house');
+  {
+    const r = await request('GET', '/api/v1/tracks');
+    const arr = Array.isArray(r.json) ? r.json : [];
+    const byId = new Map(arr.map((t) => [t.id, t]));
+    const house = arr.filter((t) => t.category === 'deep-house');
+    const m = await request('GET', '/api/v1/tracks/meta');
+
+    const WANT = ['deep-house-clasico', 'deep-house-nocturno', 'deep-house-organico',
+      'deep-house-melodico', 'lo-fi-house', 'soulful-house', 'deep-house-y-lluvia',
+      'deep-house-sin-bateria'];
+    check('all 8 deep-house variants present',
+      WANT.every((id) => byId.has(id)), 'missing ' + WANT.filter((id) => !byId.has(id)).join(', '));
+    check('deep house is its own category under Electrónica',
+      house.length === 8 && house.every((t) => t.family === 'electronica'), 'count ' + house.length);
+    check('every deep-house track declares a tempo in the house range',
+      house.every((t) => t.bpm >= 115 && t.bpm <= 128), house.map((t) => t.bpm).join(', '));
+    check('every deep-house track declares its bar count', house.every((t) => t.bars === 16));
+    check('the declared duration matches bars x 4 x 60/bpm',
+      house.every((t) => Math.abs(t.duration_sec - (t.bars * 4 * 60) / t.bpm) < 1),
+      house.map((t) => t.id + ':' + t.duration_sec).join(', '));
+
+    // A track with a pulse is not a sleep aid — say so, except the beatless one.
+    const beaty = house.filter((t) => !t.beatless);
+    check('beat-driven house is flagged not-for-sleep',
+      beaty.length === 7 && beaty.every((t) => t.not_for_sleep === true),
+      beaty.filter((t) => !t.not_for_sleep).map((t) => t.id).join(', '));
+    check('the beatless variant is NOT flagged not-for-sleep',
+      byId.get('deep-house-sin-bateria') && !byId.get('deep-house-sin-bateria').not_for_sleep);
+    check('the electronic family blurb says it is not for sleeping',
+      m.json && /no para dormir/i.test(String(m.json.families[2].blurb)),
+      m.json && m.json.families[2].blurb);
+
+    // Gapless: the encoder pads ~25 ms, which is a stumble in a 4/4 bar.
+    check('beat-driven house is flagged gapless',
+      beaty.every((t) => t.gapless === true), beaty.filter((t) => !t.gapless).map((t) => t.id).join(', '));
+    check('nothing free-time is needlessly flagged gapless',
+      arr.filter((t) => t.gapless && t.family !== 'electronica').length === 0);
+    const pj = fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8');
+    check('player decodes gapless tracks into an AudioBuffer', /decodeAudioData/.test(pj));
+    check('player loops the buffer sample-exactly', /createBufferSource\(\)/.test(pj) && /bufferSource\.loop = true/.test(pj));
+    check('player falls back to the audio element if decode fails',
+      /gapless path unavailable/.test(pj));
+    check('pause suspends the context in buffer mode (a buffer source cannot pause)',
+      /playbackMode === 'buffer' && engine\.ctx\) engine\.ctx\.suspend/.test(pj));
+    check('meta explains the gapless flag',
+      m.json && /relleno del codificador MP3/i.test(String(m.json.gapless_note)),
+      m.json && String(m.json.gapless_note || '').slice(0, 60));
   }
 
   // ---------------------------------------------- installable on the phone
@@ -513,13 +568,31 @@ async function run() {
           : 'only ' + binaural.results.length + ' measured');
     }
 
+    const tempo = require('./tools/verify-tempo').verify();
+    if (tempo.skipped) {
+      console.log(`  [SKIP] beat-grid measurement -> ${tempo.skipped}`);
+      skipped.push('beat-grid measurement (' + tempo.skipped + ')');
+    } else {
+      const offGrid = tempo.results.filter((x) => !x.ok);
+      check(`all ${tempo.results.length} beat tracks are on the declared grid`,
+        offGrid.length === 0 && tempo.results.length >= 8,
+        offGrid.length ? offGrid.map((x) => x.id + ' (' + x.detail + ')').join('; ')
+          : 'only ' + tempo.results.length + ' measured');
+      // A test everything passes proves nothing: unsequenced audio measured
+      // against a house grid must be REJECTED by the same thresholds.
+      const leaked = (tempo.controls || []).filter((c) => !c.rejected);
+      check(`the grid test rejects all ${(tempo.controls || []).length} unsequenced controls`,
+        leaked.length === 0 && (tempo.controls || []).length >= 3,
+        leaked.map((c) => c.id + ' (' + c.detail + ')').join('; '));
+    }
+
     const loud = require('./tools/verify-loudness').verify();
     if (loud.skipped) {
       console.log(`  [SKIP] library loudness match -> ${loud.skipped}`);
       skipped.push('library loudness match (' + loud.skipped + ')');
     } else {
       check(`all ${loud.count} tracks sit within 3 LUFS of each other`,
-        loud.spread <= 3.0 && loud.count >= 52,
+        loud.spread <= 3.0 && loud.count >= 60,
         `spread ${loud.spread.toFixed(1)} LUFS across ${loud.count} files`
         + ` (quietest ${loud.quietest.id} ${loud.quietest.lufs.toFixed(1)},`
         + ` loudest ${loud.loudest.id} ${loud.loudest.lufs.toFixed(1)})`);

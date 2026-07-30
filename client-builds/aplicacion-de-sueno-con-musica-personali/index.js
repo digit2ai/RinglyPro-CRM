@@ -31,7 +31,7 @@ const healthRoutes = require('./routes/health');
 const trackRoutes = require('./routes/tracks');
 const sessionRoutes = require('./routes/sessions');
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const SERVICE = 'aplicacion-de-sueno-con-musica-personali';
 const MOUNT = '/' + SERVICE;
 
