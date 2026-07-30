@@ -170,6 +170,22 @@
     0% { transform: translate(0, 0); }
     100% { transform: translate(60px, 60px); }
   }
+  /* "We're AI-Neural Powered" badge above the headline. Served same-origin with
+     a real alpha channel — the supplied JPEG had a white box behind it. */
+  .hero-badge {
+    display: block;
+    width: min(238px, 54vw);
+    height: auto;
+    margin: 0 auto 22px;
+    filter: drop-shadow(0 14px 32px rgba(0,0,0,0.40));
+    animation: heroBadgeIn .75s cubic-bezier(.2,.7,.3,1) both;
+  }
+  @keyframes heroBadgeIn {
+    from { opacity: 0; transform: translateY(-14px) scale(.94); }
+    to   { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero-badge { animation: none; } }
+
   .hero-content {
     position: relative;
     z-index: 1;
@@ -999,6 +1015,12 @@
 <!-- ═══════ HERO ═══════ -->
 <section class="hero" id="hero">
   <div class="hero-content">
+    <img class="hero-badge" src="/pacccfl/pacc-ai-neural-badge.png" width="640" height="556"
+         fetchpriority="high" decoding="async"
+         alt="We are AI-Neural Powered — PACC-CFL 30th Anniversary"
+         data-en="We are AI-Neural Powered — PACC-CFL 30th Anniversary"
+         data-es="Somos AI-Neural Powered — 30 Aniversario de PACC-CFL"
+         data-tl="Kami ay AI-Neural Powered — Ika-30 Anibersaryo ng PACC-CFL">
     <h1 data-en="Business, <em>not just networking.</em>" data-es="Negocios, <em>no solo networking.</em>" data-tl="Negosyo, <em>hindi lang networking.</em>">Business, <em>not just networking.</em></h1>
     <p data-en="The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business." data-es="El ecosistema digital que conecta a la comunidad empresarial filipino-americana de la Florida Central -- y convierte las conexiones en negocios reales." data-tl="Ang digital na ekosistema na nag-uugnay sa komunidad ng negosyong Filipino-American sa Central Florida -- at ginagawang tunay na negosyo ang mga koneksiyon.">The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business.</p>
 
@@ -1346,6 +1368,7 @@
       if (txt === null) txt = el.getAttribute('data-en');
       if (txt === null) return;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = txt;
+      else if (el.tagName === 'IMG') el.alt = txt;   // never overwrite an <img> body
       else el.innerHTML = txt;
     });
 
