@@ -324,6 +324,11 @@
 .d2b .step h3{font-size:19px;font-weight:740;margin-bottom:8px}
 .d2b .step p{font-size:14.5px;color:var(--mut)}
 
+/* MCP brain — animated 83-agent workforce diagram (iframe, self-sizing) */
+.d2b .mcp-embed{max-width:1120px;margin:0 auto}
+.d2b .mcp-frame{display:block;width:100%;border:0;background:transparent;height:640px;transition:height .2s ease}
+@media(max-width:720px){ .d2b .mcp-frame{height:900px} }
+
 /* Meet Vision2Ai — animated app simulator */
 .d2b #meet .meet-title{font-size:clamp(28px,4vw,44px);font-weight:840;letter-spacing:-.03em;margin-bottom:28px}
 .d2b .meet-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:34px;align-items:center}
@@ -514,6 +519,7 @@
     <a class="brand" href="#" aria-label="Vision2Ai"><img class="brand-logo" src="/v2ai-assets/vision2ai-logo.svg" alt="Vision2Ai"></a>
     <div class="nav-links">
       <a href="#how">Cómo funciona</a>
+      <a href="#mcp-brain">Los 83</a>
       <a href="#platforms">Plataformas</a>
       <a href="#numbers">Por qué nosotros</a>
       <a href="/blog">Blog</a>
@@ -693,6 +699,26 @@
       <b>Impulsando 21 plataformas en vivo en 22 verticales de la industria</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
     </div>
   </header>
+
+  <section class="blk" id="mcp-brain">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Fuerza de trabajo de 83 agentes</div>
+        <h2>Un cerebro. Todos los agentes.<br>Conectados v&iacute;a MCP abierto.</h2>
+        <p>Un solo cerebro MCP enruta el trabajo entre una fuerza de trabajo de 83 agentes &mdash; 8 agentes centrales y 75 especialistas a demanda &mdash; cada uno conectado a tus sistemas en vivo a trav&eacute;s del Model Context Protocol abierto.</p>
+      </div>
+      <div class="mcp-embed">
+        <iframe id="mcp-brain-frame" class="mcp-frame" src="/v2ai-mcp-brain.html?lang=es"
+                title="Cerebro MCP de Vision2Ai &mdash; fuerza de trabajo de 83 agentes" loading="lazy" scrolling="no"></iframe>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function(){ window.addEventListener("message", function(e){
+    var d=e&&e.data; if(d&&d.__d2mcp&&typeof d.height==="number"){
+      var f=document.getElementById("mcp-brain-frame"); if(f) f.style.height=Math.max(360,d.height)+"px"; }
+  }); })();
+  </script>
 
   <section class="blk" id="meet">
     <div class="wrap">
