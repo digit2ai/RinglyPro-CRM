@@ -1,0 +1,110 @@
+<!--
+  PACC-CFL — GoHighLevel embed block for digit2ai.com/pacc-cfl
+  ============================================================
+  Paste this ENTIRE block into the page's Custom Code / Custom HTML element,
+  replacing what is there now.
+
+  It does three things:
+    1. Embeds the trilingual PACC-CFL page full-bleed, edge to edge.
+    2. Removes the 40px of white space above the blue toolbar. That gap is
+       GoHighLevel's own default padding stacked on three ancestors of this
+       block - section 20px + row 10px + column 10px - so the fix has to reach
+       up and zero them. Done three ways so it holds even if GHL regenerates
+       the element ids: by id, by :has(), and by a short script walk-up.
+    3. Carries ?lang= through, so digit2ai.com/pacc-cfl?lang=es opens in
+       Spanish and ?lang=tl in Tagalog. Visitors can still switch with the
+       EN / ES / TL buttons in the page header.
+
+  allow="autoplay" is required - without it the Lina voice tour is blocked.
+-->
+
+<style>
+  /* ── 1. Kill GHL's padding around this embed (the white space) ───────── */
+  /* By id: the exact elements on this page. */
+  #section-Q6AUmd0wJU,
+  #row-HwLyEVvuEe,
+  #col-wuqZVK97-a {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  /* By relationship: survives an id change if the element is ever rebuilt. */
+  .c-section:has(.pacc-embed),
+  .c-row:has(.pacc-embed),
+  .c-column:has(.pacc-embed),
+  .c-custom-code:has(.pacc-embed),
+  .custom-code-container:has(.pacc-embed) {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* ── 2. Full-bleed frame ─────────────────────────────────────────────── */
+  .pacc-embed {
+    position: relative;
+    width: 100vw;
+    max-width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin: 0 -50vw;
+    padding: 0;
+    line-height: 0;
+    background: #14245f;     /* PACC navy, so it never flashes white on load */
+  }
+  .pacc-embed iframe {
+    display: block;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;          /* correct height on mobile with the URL bar out */
+    border: 0;
+    margin: 0;
+  }
+</style>
+
+<div class="pacc-embed" id="paccEmbed">
+  <iframe
+    id="paccFrame"
+    src="https://aiagent.ringlypro.com/pacccfl/"
+    title="PACC-CFL — Philippine American Chamber of Commerce of Central Florida"
+    loading="eager"
+    allow="autoplay; fullscreen"
+    scrolling="yes"></iframe>
+</div>
+
+<script>
+(function () {
+  var wrap  = document.getElementById('paccEmbed');
+  var frame = document.getElementById('paccFrame');
+  if (!wrap || !frame) return;
+
+  // ── Belt and braces on the white space ────────────────────────────────
+  // Walks from the embed up to <body> and zeroes the vertical padding and
+  // margin on every GHL wrapper in between. Works in every browser, and does
+  // not depend on element ids or :has() support.
+  function trim() {
+    var el = wrap;
+    while (el && el.parentElement && el.tagName !== 'BODY') {
+      el = el.parentElement;
+      el.style.setProperty('padding-top', '0', 'important');
+      el.style.setProperty('padding-bottom', '0', 'important');
+      el.style.setProperty('margin-top', '0', 'important');
+      el.style.setProperty('margin-bottom', '0', 'important');
+    }
+  }
+  trim();
+  document.addEventListener('DOMContentLoaded', trim);
+  window.addEventListener('load', trim);
+  setTimeout(trim, 600);   // after GHL finishes hydrating the page
+
+  // ── Language deep-link: digit2ai.com/pacc-cfl?lang=es ─────────────────
+  try {
+    var lang = new URLSearchParams(window.location.search).get('lang');
+    if (lang && /^(en|es|tl|fil)$/i.test(lang)) {
+      frame.src = 'https://aiagent.ringlypro.com/pacccfl/?lang=' +
+                  encodeURIComponent(lang.toLowerCase());
+    }
+  } catch (e) {}
+})();
+</script>
