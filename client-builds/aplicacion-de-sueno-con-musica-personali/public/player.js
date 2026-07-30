@@ -5,14 +5,6 @@
 // plays through an HTML5 <audio> element, the volume fades over the final five
 // minutes, and playback stops at timer expiry with nobody touching the phone.
 //
-// Two playback paths:
-//   - <audio> element for everything free-time. Simple, streams, low memory.
-//   - a decoded AudioBuffer on loop for anything flagged `gapless` (the deep
-//     house tracks). The MP3 encoder pads roughly 25 ms of silence, which is
-//     inaudible in a rain bed but lands as an audible stumble once every loop
-//     in a 4/4 groove. AudioBufferSourceNode.loop is sample-exact, so the
-//     downbeat after the wrap arrives exactly on time.
-//
 // Fade engines, in order of preference:
 //   1. Web Audio GainNode on a MediaElementSource — the only path that can
 //      fade on iOS, where HTMLMediaElement.volume is read-only.
@@ -52,7 +44,6 @@
   const langToggle = el('lang-toggle');
 
   let tracks = [];
-  let playbackMode = null;   // 'buffer' (gapless) | 'neural' | 'element'
   const session = {
     active: false,
     paused: false,
@@ -106,10 +97,6 @@
 
   // --- audio engine ----------------------------------------------------------
   const engine = { kind: null, ctx: null, gain: null, source: null };
-  // Gapless path state. bufferCache is keyed by url; a 32 s stereo buffer is
-  // ~11 MB decoded, so only the tracks actually played are held.
-  const bufferCache = new Map();
-  let bufferSource = null;
 
   function ensureGainEngine() {
     if (engine.kind === 'gain' && engine.ctx) return true;
@@ -154,28 +141,6 @@
       }
     }
     return rampVolume(v);
-  }
-
-  // Fetch + decode a track into an AudioBuffer for sample-exact looping.
-  async function loadBuffer(url) {
-    if (bufferCache.has(url)) return bufferCache.get(url);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const bytes = await res.arrayBuffer();
-    // Safari still wants the callback form, so wrap it either way.
-    const buf = await new Promise((resolve, reject) => {
-      const p = engine.ctx.decodeAudioData(bytes, resolve, reject);
-      if (p && typeof p.then === 'function') p.then(resolve, reject);
-    });
-    bufferCache.set(url, buf);
-    return buf;
-  }
-
-  function stopBufferSource() {
-    if (!bufferSource) return;
-    try { bufferSource.stop(); } catch (e) { /* already stopped */ }
-    try { bufferSource.disconnect(); } catch (e) { /* already detached */ }
-    bufferSource = null;
   }
 
   // --- library ---------------------------------------------------------------
@@ -306,8 +271,6 @@
       chips.appendChild(badge((t.band ? t.band + ' · ' : '') + t.beat_hz + ' Hz', 'info'));
     }
     if (t.frequency_hz != null && t.beat_hz == null) chips.appendChild(badge(t.frequency_hz + ' Hz', 'info'));
-    if (t.bpm) chips.appendChild(badge(t.bpm + ' BPM', 'info'));
-    if (t.gapless) chips.appendChild(badge(EN ? 'seamless loop' : 'bucle sin cortes', 'neutral'));
     if (t.tradition) chips.appendChild(badge(t.tradition, 'neutral'));
     // Someone should not pick a 40 Hz gamma bed at bedtime by accident.
     if (t.not_for_sleep) chips.appendChild(badge(EN ? 'Not for sleep' : 'No es para dormir', 'warn'));
@@ -373,58 +336,27 @@
     try { localStorage.setItem('sueno_last_track', track.id); } catch (e) { /* ignore */ }
 
     // Must happen inside the click gesture for mobile autoplay policy.
-    const haveGain = ensureGainEngine();
-    stopBufferSource();
+    ensureGainEngine();
+    audio.src = track.url;
+    audio.loop = track.loop !== false;
+    audio.currentTime = 0;
     applyGain(1);
 
     nowPlaying.textContent = track.title;
     setRunningUI(true);
     paintCountdown();
 
-    // A beat-driven track loops from a decoded buffer; everything else streams
-    // through the <audio> element.
-    const wantGapless = !!track.gapless && haveGain && !!engine.ctx;
-    let started = false;
-
-    if (wantGapless) {
-      statusEl.textContent = CFG.lang === 'en' ? 'Preparing seamless loop…' : 'Preparando bucle sin cortes…';
-      try {
-        if (engine.ctx.state === 'suspended') await engine.ctx.resume();
-        const buf = await loadBuffer(track.url);
-        if (!session.active) return;                 // stopped while decoding
-        bufferSource = engine.ctx.createBufferSource();
-        bufferSource.buffer = buf;
-        bufferSource.loop = true;
-        bufferSource.connect(engine.gain);
-        bufferSource.start(0);
-        playbackMode = 'buffer';
-        started = true;
-        statusEl.textContent = '';
-      } catch (err) {
-        // Decode or fetch failed — fall through to the element path rather than
-        // failing the night. The loop will have a small seam; the timer is fine.
-        console.warn('[sueno] gapless path unavailable, using the audio element:', err && err.message);
-        stopBufferSource();
-      }
-    }
-
-    if (!started) {
-      audio.src = track.url;
-      audio.loop = track.loop !== false;
-      audio.currentTime = 0;
-      try {
-        if (engine.ctx && engine.ctx.state === 'suspended') await engine.ctx.resume();
-        await audio.play();
-        playbackMode = engine.kind === 'gain' ? 'neural' : 'element';
-        statusEl.textContent = '';
-      } catch (err) {
-        console.error('[sueno] playback blocked:', err && err.message);
-        statusEl.textContent = (CFG.lang === 'en')
-          ? 'The browser blocked playback. Tap Start again.'
-          : 'El navegador bloqueó la reproducción. Pulsa Iniciar de nuevo.';
-        finish(false);
-        return;
-      }
+    try {
+      if (engine.ctx && engine.ctx.state === 'suspended') await engine.ctx.resume();
+      await audio.play();
+      statusEl.textContent = '';
+    } catch (err) {
+      console.error('[sueno] playback blocked:', err && err.message);
+      statusEl.textContent = (CFG.lang === 'en')
+        ? 'The browser blocked playback. Tap Start again.'
+        : 'El navegador bloqueó la reproducción. Pulsa Iniciar de nuevo.';
+      finish(false);
+      return;
     }
 
     clearInterval(session.tick);
@@ -445,16 +377,11 @@
     if (!session.active) return;
     session.paused = !session.paused;
     if (session.paused) {
-      // An AudioBufferSourceNode cannot be paused, so suspend the whole context
-      // instead — which also freezes the loop position, so resuming picks the
-      // groove up exactly where it stopped.
-      if (playbackMode === 'buffer' && engine.ctx) engine.ctx.suspend().catch(() => {});
-      else audio.pause();
+      audio.pause();
       pauseBtn.textContent = CFG.lang === 'en' ? 'Resume' : 'Reanudar';
       if (moon) moon.classList.remove('is-playing');
     } else {
-      if (playbackMode === 'buffer' && engine.ctx) engine.ctx.resume().catch(() => {});
-      else audio.play().catch(() => {});
+      audio.play().catch(() => {});
       pauseBtn.textContent = DICT.pause || 'Pausar';
       if (moon) moon.classList.add('is-playing');
     }
@@ -467,7 +394,6 @@
     session.tick = null;
     session.active = false;
     session.paused = false;
-    stopBufferSource();
     try { audio.pause(); } catch (e) { /* ignore */ }
     applyGain(0);
     setRunningUI(false);
@@ -518,7 +444,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !session.active || session.paused) return;
     if (engine.ctx && engine.ctx.state === 'suspended') engine.ctx.resume().catch(() => {});
-    if (playbackMode !== 'buffer' && audio.paused) audio.play().catch(() => {});
+    if (audio.paused) audio.play().catch(() => {});
   });
 
   // Best-effort log if the phone is closed mid-night.

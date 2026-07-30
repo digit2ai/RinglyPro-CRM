@@ -59,13 +59,6 @@ function project(track, lang, lib) {
   // The instrument tradition a synthesized piece is written in. Never an artist
   // or album name — these are original compositions, not recordings.
   if (track.tradition) out.tradition = track.tradition;
-  // Beat metadata. `gapless` tells the player to loop a decoded AudioBuffer
-  // instead of <audio loop>: the MP3 encoder pads ~25 ms, which is nothing
-  // under rain but reads as a stumble in a 4/4 bar.
-  if (track.bpm != null) out.bpm = track.bpm;
-  if (track.bars != null) out.bars = track.bars;
-  if (track.gapless) out.gapless = true;
-  if (track.beatless) out.beatless = true;
   return out;
 }
 
@@ -101,7 +94,6 @@ module.exports = function trackRoutes() {
         // The instrumental family is synthesized, not sampled. Said out loud.
         originality_note: en ? lib.originality_note_en : lib.originality_note,
         units_note: lib.units_note,
-        gapless_note: en ? lib.gapless_note_en : lib.gapless_note,
         count: lib.tracks.length,
         families: (lib.families || []).map((f) => ({
           id: f.id,
