@@ -103,7 +103,7 @@ th{color:var(--dim);font-weight:600;font-size:12px}
       <div class="row"><a class="btn ghost sm" id="viewProfile" target="_blank"><i class="fas fa-external-link-alt"></i> View public CV</a><button class="btn ghost sm" id="logoutBtn">Sign out</button></div>
     </div>
 
-    <div class="notice"><b>How broadcasting works (honest by design):</b> the engine drafts personalized outreach and share-ready posts for you to review and send from your own email/LinkedIn — nothing is auto-blasted (protects your deliverability and reputation). Recruiters reach you via your public "Submit an opportunity" link, and every response lands in your inbox here. Fully-automated sending and live job-board scraping are Phase 2 (need an email-domain and a job-board API key).</div>
+    <div class="notice"><b>Your AI career agent (honest by design):</b> <b>Job Matches</b> scans real, live openings and scores each against your profile. On any match, <b>Draft outreach</b> writes a tailored note you review, edit and send from your own email — nothing is ever auto-blasted, so it reaches recruiters from you, not a bot (protects your deliverability and reputation). Recruiters — and their AIs — reach you via your public link and agent endpoint, and every message lands in your inbox here where you can <b>Draft reply</b> in one click.</div>
 
     <div class="tabs">
       <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
@@ -206,9 +206,31 @@ th{color:var(--dim);font-weight:600;font-size:12px}
       </div>
       <div class="card">
         <b>Recent outreach</b>
-        <table id="outTable"><thead><tr><th>When</th><th>Target</th><th>Subject</th><th>Status</th></tr></thead><tbody></tbody></table>
+        <table id="outTable"><thead><tr><th>When</th><th>Target</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
       </div>
     </div>
+
+    <!-- OUTREACH DRAFT EDITOR (shared, review-and-send) -->
+    <div class="dmodal" id="oModal"><div class="dbox">
+      <div class="dhead"><b id="oTitle">Outreach draft</b><button class="x" id="oClose">&times;</button></div>
+      <div>
+        <span id="oSim"></span>
+        <div class="grid2" style="margin-top:8px"><input id="oToName" placeholder="Recipient name (optional)"><input id="oToEmail" placeholder="Recipient email (optional)"></div>
+        <span class="lbl">Subject</span><input id="oSubject">
+        <span class="lbl">Message</span><textarea id="oBodyText" style="min-height:210px"></textarea>
+        <a id="oJobUrl" class="muted" target="_blank" rel="noopener" style="display:none;font-size:12px;margin-top:8px">View the job posting</a>
+        <div class="row" style="margin-top:12px;gap:6px;flex-wrap:wrap">
+          <button class="btn sm" id="oCopy"><i class="fas fa-copy"></i> Copy</button>
+          <a class="btn sm ghost" id="oMail" target="_blank" rel="noopener"><i class="fas fa-envelope"></i> Open in email</a>
+          <button class="btn sm ghost" id="oSave"><i class="fas fa-floppy-disk"></i> Save edits</button>
+          <button class="btn sm" id="oSent"><i class="fas fa-paper-plane"></i> Save &amp; mark sent</button>
+          <button class="btn sm ghost" id="oReplied"><i class="fas fa-reply"></i> Mark replied</button>
+          <button class="btn sm ghost" id="oFollow" style="display:none"><i class="fas fa-rotate-right"></i> Draft follow-up</button>
+          <span class="msg" id="oMsg"></span>
+        </div>
+        <p class="muted" style="font-size:11.5px;margin-top:10px">Review and edit before sending. Nothing is sent automatically — you send from your own email, so it lands in the recruiter's inbox from you, not a bot. Keep it truthful; 1:1, never bulk.</p>
+      </div>
+    </div></div>
 
     <!-- SETTINGS -->
     <div class="pane" id="settings">
@@ -286,6 +308,7 @@ function renderJobs(rows){
       (m.why?'<div style="font-size:13.5px;margin-top:10px;color:var(--txt2,#cbd3e2)">'+esc(m.why)+'</div>':'')+gaps+
       '<div class="row" style="margin-top:12px;gap:6px;flex-wrap:wrap">'+
         '<a class="btn sm" href="'+esc(m.url)+'" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open & apply</a>'+
+        '<button class="btn sm" onclick="draftForJob('+m.id+',this)"><i class="fas fa-pen-nib"></i> Draft outreach</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'saved\')"><i class="fas fa-star"></i> Save</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'applied\')"><i class="fas fa-check"></i> Applied</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'dismissed\')"><i class="fas fa-xmark"></i> Dismiss</button>'+
@@ -373,7 +396,7 @@ async function loadOpps(){var d=await api('/opportunities');var rows=d.opportuni
   tb.innerHTML=rows.length?rows.map(function(r){
     var sel='<select data-id="'+r.id+'" class="oppStatus" style="padding:5px 8px;font-size:12px;width:auto">'+STATUSES.map(function(s){return '<option'+(s===r.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
     var who=esc(r.company||'—')+(r.contact_name?'<div class="muted">'+esc(r.contact_name)+'</div>':'')+(r.contact_email?'<div class="muted"><a href="mailto:'+esc(r.contact_email)+'">'+esc(r.contact_email)+'</a></div>':'');
-    var msg=(r.message?'<div class="muted" style="margin-bottom:5px">'+esc(r.message)+'</div>':'')+'<input class="oppNote" data-id="'+r.id+'" value="'+esc(r.notes||'')+'" placeholder="notes" style="font-size:12px;padding:5px 8px">';
+    var msg=(r.message?'<div class="muted" style="margin-bottom:5px">'+esc(r.message)+'</div>':'')+'<input class="oppNote" data-id="'+r.id+'" value="'+esc(r.notes||'')+'" placeholder="notes" style="font-size:12px;padding:5px 8px"><button class="btn sm ghost" onclick="replyOpp('+r.id+',this)" style="margin-top:6px"><i class="fas fa-reply"></i> Draft reply</button>';
     return '<tr><td class="muted mono">'+(r.created_at||'').slice(0,10)+'<div class="badge" style="margin-top:4px">'+esc(r.source)+'</div></td><td>'+who+'</td><td>'+esc(r.role_title||'—')+'</td><td>'+sel+'</td><td style="min-width:200px">'+msg+'</td></tr>';
   }).join(''):'<tr><td colspan="5" class="muted">No opportunities yet. Share your "submit an opportunity" link with recruiters.</td></tr>';
   tb.querySelectorAll('.oppStatus').forEach(function(s){s.onchange=function(){api('/opportunities/'+s.dataset.id,{method:'PATCH',body:{status:s.value}}).then(loadOpps);};});
@@ -389,8 +412,54 @@ $('copyDraft').onclick=function(){if(lastDraft)navigator.clipboard&&navigator.cl
 $('markSent').onclick=function(){if(lastDraft&&lastDraft.id){api('/outreach/'+lastDraft.id,{method:'PATCH',body:{status:'sent'}}).then(loadOutreach);}};
 $('genKit').onclick=async function(){$('kitMsg').textContent='Generating…';try{var d=await api('/broadcast/kit',{method:'POST',body:{}});$('kitWrap').style.display='block';$('kitLi').textContent=d.linkedin;$('kitX').textContent=d.x;$('kitMsg').textContent='';}catch(e){$('kitMsg').textContent=e.message;$('kitMsg').className='msg err';}};
 $('matchBtn').onclick=async function(){$('matchMsg').textContent='Analyzing…';$('matchMsg').className='msg';try{var d=await api('/match',{method:'POST',body:{job_description:$('jd').value}});$('matchWrap').style.display='block';$('matchWrap').innerHTML='<b>Fit: '+(d.fit_score!=null?d.fit_score+'/10':'n/a')+' ('+esc(d.verdict)+')</b>\n\n'+esc(d.why)+'\n\n<b>Tailored pitch:</b>\n'+esc(d.tailored_pitch);$('matchMsg').textContent='';}catch(e){$('matchMsg').textContent=e.message;$('matchMsg').className='msg err';}};
-async function loadOutreach(){var d=await api('/outreach');var tb=$('outTable').querySelector('tbody');var rows=d.outreach||[];tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="muted mono">'+(r.created_at||'').slice(0,10)+'</td><td>'+esc(r.target_type)+(r.target_name?' — '+esc(r.target_name):'')+'</td><td>'+esc(r.subject)+'</td><td><span class="badge '+(r.status==='sent'?'b-offer':'b-new')+'">'+esc(r.status)+'</span></td></tr>';}).join(''):'<tr><td colspan="4" class="muted">No drafts yet.</td></tr>';}
+async function loadOutreach(){var d=await api('/outreach');var tb=$('outTable').querySelector('tbody');var rows=d.outreach||[];window.__outreach=rows;
+  tb.innerHTML=rows.length?rows.map(function(r){
+    var pill=(r.status==='sent'||r.status==='replied')?'b-offer':'b-new';
+    return '<tr><td class="muted mono">'+(r.created_at||'').slice(0,10)+'</td><td>'+esc(r.target_type)+(r.target_name?'<div class="muted">'+esc(r.target_name)+'</div>':'')+'</td><td>'+esc(r.subject||'')+'</td><td><span class="badge '+pill+'">'+esc(r.status)+'</span></td><td><button class="btn sm ghost olink" data-id="'+r.id+'">Open</button></td></tr>';
+  }).join(''):'<tr><td colspan="5" class="muted">No drafts yet.</td></tr>';
+  tb.querySelectorAll('.olink').forEach(function(b){b.onclick=function(){var r=(window.__outreach||[]).find(function(x){return String(x.id)===b.dataset.id;});if(r)openDraft({id:r.id,title:r.target_name||r.target_type,subject:r.subject,body:r.body,to_email:r.to_email||'',to_name:r.to_name||'',is_simulated:r.is_simulated,canFollow:true});};});
+}
 function copyText(id){var t=$(id).textContent;navigator.clipboard&&navigator.clipboard.writeText(t);}
+
+// ---- Phase 3: outreach draft editor (review-and-send, human-in-the-loop) ----
+var curDraft=null;
+function draftMailto(){return 'mailto:'+encodeURIComponent(($('oToEmail').value||'').trim())+'?subject='+encodeURIComponent($('oSubject').value)+'&body='+encodeURIComponent($('oBodyText').value);}
+function refreshDraftMail(){$('oMail').href=draftMailto();}
+function openDraft(d){
+  curDraft=d;
+  $('oTitle').textContent=d.title||'Outreach draft';
+  $('oToName').value=d.to_name||''; $('oToEmail').value=d.to_email||'';
+  $('oSubject').value=d.subject||''; $('oBodyText').value=d.body||'';
+  $('oSim').innerHTML=d.is_simulated?'<span class="pill">template (no AI key)</span>':'<span class="pill" style="color:var(--green);border-color:var(--green)">AI-written · review before sending</span>';
+  $('oFollow').style.display=d.canFollow?'':'none';
+  if(d.url){$('oJobUrl').style.display='';$('oJobUrl').href=d.url;$('oJobUrl').innerHTML='View the job posting <i class="fas fa-arrow-up-right-from-square"></i>';}else{$('oJobUrl').style.display='none';}
+  $('oMsg').textContent=''; refreshDraftMail(); $('oModal').classList.add('on');
+}
+['oSubject','oBodyText','oToEmail'].forEach(function(id){var el=$(id);if(el)el.addEventListener('input',refreshDraftMail);});
+if($('oClose'))$('oClose').onclick=function(){$('oModal').classList.remove('on');};
+if($('oModal'))$('oModal').addEventListener('click',function(e){if(e.target===$('oModal'))$('oModal').classList.remove('on');});
+async function saveDraft(status){
+  if(!curDraft||!curDraft.id)return;
+  var body={subject:$('oSubject').value,body:$('oBodyText').value,to_email:$('oToEmail').value,to_name:$('oToName').value};
+  if(status)body.status=status;
+  try{await api('/outreach/'+curDraft.id,{method:'PATCH',body:body});$('oMsg').textContent=status?('Marked '+status+'.'):'Saved.';$('oMsg').className='msg ok';loadOutreach();}
+  catch(e){$('oMsg').textContent=e.message;$('oMsg').className='msg err';}
+}
+if($('oSave'))$('oSave').onclick=function(){saveDraft(null);};
+if($('oSent'))$('oSent').onclick=function(){saveDraft('sent');setTimeout(function(){$('oModal').classList.remove('on');},700);};
+if($('oReplied'))$('oReplied').onclick=function(){saveDraft('replied');};
+if($('oCopy'))$('oCopy').onclick=function(){navigator.clipboard&&navigator.clipboard.writeText('Subject: '+$('oSubject').value+'\n\n'+$('oBodyText').value);$('oCopy').innerHTML='<i class="fas fa-check"></i> Copied';setTimeout(function(){$('oCopy').innerHTML='<i class="fas fa-copy"></i> Copy';},1400);};
+if($('oFollow'))$('oFollow').onclick=async function(){if(!curDraft||!curDraft.id)return;$('oMsg').textContent='Drafting follow-up…';$('oMsg').className='msg';try{var d=await api('/outreach/'+curDraft.id+'/followup',{method:'POST',body:{}});var tn=$('oToName').value,te=$('oToEmail').value;openDraft({id:d.id,title:'Follow-up',subject:d.subject,body:d.body,to_name:tn,to_email:te,is_simulated:d.is_simulated});loadOutreach();}catch(e){$('oMsg').textContent=e.message;$('oMsg').className='msg err';}};
+async function draftForJob(id,btn){var old;if(btn){old=btn.innerHTML;btn.disabled=true;btn.innerHTML='Drafting…';}
+  try{var d=await api('/jobs/matches/'+id+'/outreach',{method:'POST',body:{}});openDraft({id:d.id,title:'Application — '+(d.company||'')+' · '+(d.title||''),subject:d.subject,body:d.body,url:d.url,is_simulated:d.is_simulated,canFollow:true});}
+  catch(e){$('jobRunMsg').textContent=e.message;$('jobRunMsg').className='msg err';}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=old;}}
+}
+async function replyOpp(id,btn){var old;if(btn){old=btn.innerHTML;btn.disabled=true;btn.innerHTML='Drafting…';}
+  try{var d=await api('/opportunities/'+id+'/reply',{method:'POST',body:{}});openDraft({id:d.id,title:'Reply',subject:d.subject,body:d.body,to_email:d.to_email||'',is_simulated:d.is_simulated});}
+  catch(e){if(btn)btn.innerHTML='Error';}
+  finally{if(btn){setTimeout(function(){btn.disabled=false;btn.innerHTML=old;},500);}}
+}
 
 // ---- settings ----
 $('saveProfile').onclick=async function(){try{await api('/profile',{method:'POST',body:{availability:$('sAvail').value,target_roles:$('sRoles').value,summary:$('sSummary').value}});$('profMsg').textContent='Saved';$('profMsg').className='msg ok';me.target_roles=$('sRoles').value;me.summary=$('sSummary').value;me.availability=$('sAvail').value;}catch(e){$('profMsg').textContent=e.message;$('profMsg').className='msg err';}};

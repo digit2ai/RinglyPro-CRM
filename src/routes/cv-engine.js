@@ -107,6 +107,10 @@ async function ensure(){
       UNIQUE(profile_id, job_id)
     );
     CREATE INDEX IF NOT EXISTS idx_cv_jm_profile ON cv_job_matches(profile_id, score DESC);
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS job_id BIGINT;
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS to_email TEXT;
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS to_name TEXT;
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
   `);
   for (const p of SEED) {
     await sequelize.query(
@@ -328,10 +332,86 @@ router.get('/outreach', async (req, res) => {
 });
 router.patch('/outreach/:id', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
-  const st = ['draft','sent','archived'].includes(req.body.status) ? req.body.status : null;
-  await sequelize.query('UPDATE cv_outreach SET status=COALESCE(:st,status) WHERE id=:oid AND profile_id=:pid',
-    { replacements:{ st, oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.UPDATE });
+  const b = req.body || {};
+  const st = ['draft','sent','replied','archived'].includes(b.status) ? b.status : null;
+  await sequelize.query(
+    `UPDATE cv_outreach SET status=COALESCE(:st,status),
+       subject=COALESCE(:su,subject), body=COALESCE(:bo,body),
+       to_email=COALESCE(:te,to_email), to_name=COALESCE(:tn,to_name), updated_at=now()
+     WHERE id=:oid AND profile_id=:pid`,
+    { replacements:{ st,
+        su: b.subject!==undefined ? String(b.subject).slice(0,300) : null,
+        bo: b.body!==undefined ? String(b.body).slice(0,6000) : null,
+        te: b.to_email!==undefined ? String(b.to_email).slice(0,200) : null,
+        tn: b.to_name!==undefined ? String(b.to_name).slice(0,200) : null,
+        oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.UPDATE });
   res.json({ ok:true });
+});
+
+// ---- Phase 3: outreach FROM a job match (human-in-the-loop, review-and-send) ----
+// Drafts a tailored, first-person application/intro note for ONE specific job. Never sends
+// (respects EMAIL_AUTOSEND_DISABLED) — the candidate reviews, edits, and sends from their own
+// email or copies it. Honest: reuses the match's own why/gaps, never invents experience.
+router.post('/jobs/matches/:id/outreach', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const row = await sequelize.query(
+    `SELECT m.id, m.why, m.gaps, m.score, j.id AS job_id, j.company, j.title, j.location, j.url, j.description
+       FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+       WHERE m.id=:mid AND m.profile_id=:pid`,
+    { replacements:{ mid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
+  const j = row[0];
+  if (!j) return res.status(404).json({ error: 'match not found' });
+  const system = 'You write a concise, professional, first-person application/intro email from a job candidate for ONE specific role. Output STRICT JSON only: {"subject":"...","body":"..."}. Body 120-170 words, warm and specific to THIS role, references 1-2 genuinely relevant strengths, no fluff, no emojis, ends with the candidate name + email + profile link and a clear ask for a short conversation. Never invent employers, titles, metrics, or experience the candidate does not have. Do not overclaim on a stated gap.';
+  const user = `CANDIDATE\nName: ${p.name}\nHeadline: ${p.headline}\nLocation: ${p.location}\nEmail: ${p.email}${p.linkedin?`\nLinkedIn: ${p.linkedin}`:''}\nProfile: ${p.site}\nTarget roles: ${p.target_roles}\nSummary: ${p.summary}\n\nROLE\nTitle: ${j.title}\nCompany: ${j.company}\nLocation: ${j.location}\nWhy it fits (from prior analysis): ${j.why||''}\nKnown gap (be honest, do not overclaim): ${j.gaps||'none noted'}\nJob description: ${String(j.description||'').slice(0,1400)}`;
+  let subject, body, simulated = false;
+  const raw = await claude(system, user, 700);
+  if (raw) { try { const o = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1)); subject = o.subject; body = o.body; } catch(e){} }
+  if (!subject || !body) {
+    simulated = true;
+    subject = `${p.name} — application for ${j.title} at ${j.company}`;
+    body = `Hello ${j.company} team,\n\nI'm ${p.name}, ${p.headline}, based in ${p.location}. I'm writing about your ${j.title} role.\n\n${p.summary}\n\nMy full profile and CV are at ${p.site}. I'd welcome a short conversation about how this background fits the position.\n\nBest regards,\n${p.name}\n${p.email}${p.linkedin?`\n${p.linkedin}`:''}`;
+  }
+  const r = await sequelize.query(
+    `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,job_id,created_at,updated_at)
+     VALUES (:id,'email','job-application',:tn,:su,:bo,'draft',:sim,:jid, now(), now()) RETURNING id`,
+    { replacements:{ id:p.id, tn:`${j.company} — ${j.title}`.slice(0,200), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, jid:j.job_id }, type:QueryTypes.INSERT });
+  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, company:j.company, title:j.title, url:j.url, is_simulated:simulated });
+});
+
+// Draft a short follow-up nudge for an existing outreach that got no reply.
+router.post('/outreach/:id/followup', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query('SELECT * FROM cv_outreach WHERE id=:oid AND profile_id=:pid', { replacements:{ oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
+  const o = rows[0]; if (!o) return res.status(404).json({ error: 'outreach not found' });
+  const system = 'You write a brief, polite follow-up email (60-90 words) from a job candidate who has not heard back. Output STRICT JSON only: {"subject":"...","body":"..."}. Reference the prior note lightly, restate interest in one line, no guilt-tripping, no emojis, end with name. Never invent facts.';
+  const user = `Candidate: ${p.name} (${p.headline})\nProfile: ${p.site}\nOriginal subject: ${o.subject}\nOriginal note:\n${String(o.body||'').slice(0,1200)}`;
+  let subject, body, simulated = false;
+  const raw = await claude(system, user, 400);
+  if (raw) { try { const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1)); subject = j.subject; body = j.body; } catch(e){} }
+  if (!subject || !body) { simulated = true; subject = `Following up — ${o.subject}`; body = `Hello,\n\nJust following up on my note below — I remain very interested and would welcome a short conversation. My profile is at ${p.site}.\n\nThank you for your time,\n${p.name}`; }
+  const r = await sequelize.query(
+    `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,job_id,to_email,to_name,created_at,updated_at)
+     VALUES (:id,'email','follow-up',:tn,:su,:bo,'draft',:sim,:jid,:te,:tnm, now(), now()) RETURNING id`,
+    { replacements:{ id:p.id, tn:(o.target_name||'Follow-up'), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, jid:o.job_id||null, te:o.to_email||null, tnm:o.to_name||null }, type:QueryTypes.INSERT });
+  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, is_simulated:simulated });
+});
+
+// Draft a reply to an inbound opportunity (completes the Phase 2 agent loop).
+router.post('/opportunities/:id/reply', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query('SELECT * FROM cv_opportunities WHERE id=:oid AND profile_id=:pid', { replacements:{ oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
+  const o = rows[0]; if (!o) return res.status(404).json({ error: 'opportunity not found' });
+  const system = 'You write a warm, professional reply (90-130 words) from a job candidate to a recruiter/company who reached out. Output STRICT JSON only: {"subject":"...","body":"..."}. Thank them, express genuine interest, offer specific availability for a short call, no emojis, end with name + profile link. Never invent facts or over-commit.';
+  const user = `Candidate: ${p.name} (${p.headline})\nProfile: ${p.site}\nEmail: ${p.email}\nInbound from: ${o.contact_name||''} at ${o.company||''}\nRole: ${o.role_title||''}\nTheir message: ${String(o.message||'').slice(0,1000)}`;
+  let subject, body, simulated = false;
+  const raw = await claude(system, user, 450);
+  if (raw) { try { const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1)); subject = j.subject; body = j.body; } catch(e){} }
+  if (!subject || !body) { simulated = true; subject = `Re: ${o.role_title||'your message'}`; body = `Hi ${o.contact_name||'there'},\n\nThank you for reaching out about ${o.role_title||'the opportunity'}${o.company?` at ${o.company}`:''} — I'm very interested. I'd be glad to find 20 minutes this week for a call. My full profile is at ${p.site}.\n\nBest regards,\n${p.name}\n${p.email}`; }
+  const r = await sequelize.query(
+    `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,to_email,to_name,created_at,updated_at)
+     VALUES (:id,'email','reply',:tn,:su,:bo,'draft',:sim,:te,:tnm, now(), now()) RETURNING id`,
+    { replacements:{ id:p.id, tn:(o.company||o.contact_name||'Reply').slice(0,200), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, te:o.contact_email||null, tnm:o.contact_name||null }, type:QueryTypes.INSERT });
+  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, to_email:o.contact_email||'', is_simulated:simulated });
 });
 
 // Share kit: AI-generated post-ready snippets + the public assets
