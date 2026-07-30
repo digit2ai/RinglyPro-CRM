@@ -93,20 +93,35 @@
     transition: color 0.2s;
   }
   .header-nav a:hover { color: var(--gold); }
-  .lang-toggle {
+  /* EN / ES / TL segmented switch */
+  .lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--gold);
+    background: rgba(200,149,46,0.12);
+    border-radius: 20px;
+  }
+  .lang-opt {
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: var(--gold);
-    background: rgba(200,149,46,0.15);
-    border: 1px solid var(--gold);
-    padding: 5px 14px;
-    border-radius: 20px;
+    color: rgba(255,255,255,0.78);
+    background: none;
+    border: none;
+    padding: 4px 11px;
+    border-radius: 16px;
     cursor: pointer;
     letter-spacing: 1px;
-    transition: background 0.2s;
+    line-height: 1.4;
+    transition: background 0.2s, color 0.2s;
   }
-  .lang-toggle:hover { background: rgba(200,149,46,0.3); }
+  .lang-opt:hover { color: var(--gold); background: rgba(200,149,46,0.2); }
+  .lang-opt[aria-pressed="true"] {
+    color: #14245f;
+    background: var(--gold);
+  }
 
   .mobile-menu-btn {
     display: none;
@@ -718,6 +733,8 @@
       gap: 18px;
     }
     .mobile-menu-btn { display: block; }
+    .header-nav .lang-switch { align-self: flex-start; }
+    .lang-opt { padding: 8px 18px; font-size: 13px; }
     .hero h1 { font-size: 36px; }
     .hero p { font-size: 17px; }
     .section { padding: 64px 20px; }
@@ -787,6 +804,7 @@
   .orb-stage[data-state="listening"] .orb-cap { color: #6f9bff; }
   .orb-stage[data-state="speaking"] .orb-cap { color: #7fd9ff; }
   .orb-hint { font-family: 'Inter', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.72); max-width: 460px; text-align: center; line-height: 1.55; }
+  .orb-lang-note { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: .3px; color: rgba(245,198,63,0.85); text-align: center; }
   .orb-transcript { display: none; width: 100%; max-width: 560px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 16px; margin-top: 2px; max-height: 230px; overflow-y: auto; backdrop-filter: blur(4px); }
   .orb-transcript.show { display: block; animation: orbFade .3s ease; }
   @keyframes orbFade { from { opacity: 0; } to { opacity: 1; } }
@@ -959,14 +977,20 @@
   </a>
   <nav>
     <ul class="header-nav" id="navMenu">
-      <li><a href="#ecosystem" data-en="Ecosystem" data-tl="Ekosistema">Ecosystem</a></li>
-      <li><a href="#flow" data-en="Flow" data-tl="Daloy">Flow</a></li>
-      <li><a href="#modules" data-en="Modules" data-tl="Mga Module">Modules</a></li>
-      <li><a href="#how" data-en="How It Works" data-tl="Paano Gumagana">How It Works</a></li>
-      <li><a href="#technology" data-en="Technology" data-tl="Teknolohiya">Technology</a></li>
-      <li><a href="#access" data-en="Access" data-tl="Mag-access">Access</a></li>
-      <li><a href="https://www.camaravirtual.app/cv-2/login" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;" data-en="Log In" data-tl="Mag-log In">Log In</a></li>
-      <li><button class="lang-toggle" id="langToggle" onclick="toggleLang()">TL</button></li>
+      <li><a href="#ecosystem" data-en="Ecosystem" data-es="Ecosistema" data-tl="Ekosistema">Ecosystem</a></li>
+      <li><a href="#flow" data-en="Flow" data-es="Flujo" data-tl="Daloy">Flow</a></li>
+      <li><a href="#modules" data-en="Modules" data-es="Módulos" data-tl="Mga Module">Modules</a></li>
+      <li><a href="#how" data-en="How It Works" data-es="Cómo Funciona" data-tl="Paano Gumagana">How It Works</a></li>
+      <li><a href="#technology" data-en="Technology" data-es="Tecnología" data-tl="Teknolohiya">Technology</a></li>
+      <li><a href="#access" data-en="Access" data-es="Acceso" data-tl="Mag-access">Access</a></li>
+      <li><a href="https://www.camaravirtual.app/cv-2/login" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;" data-en="Log In" data-es="Iniciar sesión" data-tl="Mag-log In">Log In</a></li>
+      <li>
+        <span class="lang-switch" id="langSwitch" role="group" aria-label="Language / Idioma / Wika">
+          <button type="button" class="lang-opt" data-lang="en" aria-pressed="true"  onclick="setLang('en')" title="English">EN</button>
+          <button type="button" class="lang-opt" data-lang="es" aria-pressed="false" onclick="setLang('es')" title="Español">ES</button>
+          <button type="button" class="lang-opt" data-lang="tl" aria-pressed="false" onclick="setLang('tl')" title="Tagalog">TL</button>
+        </span>
+      </li>
     </ul>
   </nav>
   <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
@@ -975,8 +999,8 @@
 <!-- ═══════ HERO ═══════ -->
 <section class="hero" id="hero">
   <div class="hero-content">
-    <h1 data-en="Business, <em>not just networking.</em>" data-tl="Negosyo, <em>hindi lang networking.</em>">Business, <em>not just networking.</em></h1>
-    <p data-en="The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business." data-tl="Ang digital na ekosistema na nag-uugnay sa komunidad ng negosyong Filipino-American sa Central Florida -- at ginagawang tunay na negosyo ang mga koneksiyon.">The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business.</p>
+    <h1 data-en="Business, <em>not just networking.</em>" data-es="Negocios, <em>no solo networking.</em>" data-tl="Negosyo, <em>hindi lang networking.</em>">Business, <em>not just networking.</em></h1>
+    <p data-en="The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business." data-es="El ecosistema digital que conecta a la comunidad empresarial filipino-americana de la Florida Central -- y convierte las conexiones en negocios reales." data-tl="Ang digital na ekosistema na nag-uugnay sa komunidad ng negosyong Filipino-American sa Central Florida -- at ginagawang tunay na negosyo ang mga koneksiyon.">The digital ecosystem connecting the Filipino-American business community of Central Florida -- and turning connections into real business.</p>
 
     <div class="orb-stage" id="orbStage" data-state="idle" data-active="0">
       <button class="orb-btn" id="orbBtn" data-state="idle" type="button" aria-label="Listen to Lina, AI voice guide">
@@ -998,10 +1022,11 @@
           <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a1840" fill-opacity=".85"/>
         </svg>
       </button>
-      <div class="orb-cap" id="orbCap">Listen to Lina</div>
-      <div class="orb-hint" id="orbHint">Tap the orb and Lina will present the ecosystem section by section while the page follows along with her voice.</div>
+      <div class="orb-cap" id="orbCap" data-en="Listen to Lina" data-es="Escucha a Lina" data-tl="Makinig kay Lina">Listen to Lina</div>
+      <div class="orb-hint" id="orbHint" data-en="Tap the orb and Lina will present the ecosystem section by section while the page follows along with her voice." data-es="Toca el orbe y Lina presentará el ecosistema sección por sección mientras la página sigue su voz." data-tl="I-tap ang orb at ipapakita ni Lina ang ekosistema bahagi-bahagi habang sinusundan ng pahina ang kaniyang boses.">Tap the orb and Lina will present the ecosystem section by section while the page follows along with her voice.</div>
       <div class="orb-transcript" id="orbTranscript" aria-live="polite"></div>
-      <button class="orb-stop" id="orbStop" type="button">Stop presentation</button>
+      <button class="orb-stop" id="orbStop" type="button" data-en="Stop presentation" data-es="Detener presentación" data-tl="Itigil ang presentasyon">Stop presentation</button>
+      <div class="orb-lang-note" id="orbLangNote" data-en="Lina narrates in the language you select above: English, Español or Tagalog." data-es="Lina narra en el idioma que elijas arriba: English, Español o Tagalog." data-tl="Nagsasalaysay si Lina sa wikang pipiliin mo sa itaas: English, Español o Tagalog.">Lina narrates in the language you select above: English, Español or Tagalog.</div>
     </div>
   </div>
 </section>
@@ -1021,26 +1046,26 @@
 <!-- ═══════ DIGITAL ECOSYSTEM ═══════ -->
 <section class="section" id="ecosystem">
   <div class="gold-line"></div>
-  <h2 class="section-title" data-en="The Digital Ecosystem" data-tl="Ang Digital na Ekosistema">The Digital Ecosystem</h2>
-  <p class="section-subtitle" data-en="CamaraVirtual: the platform that turns a network of contacts into real business." data-tl="CamaraVirtual: ang plataporma na ginagawang tunay na negosyo ang network ng mga kontak.">CamaraVirtual: the platform that turns a network of contacts into real business.</p>
+  <h2 class="section-title" data-en="The Digital Ecosystem" data-es="El Ecosistema Digital" data-tl="Ang Digital na Ekosistema">The Digital Ecosystem</h2>
+  <p class="section-subtitle" data-en="CamaraVirtual: the platform that turns a network of contacts into real business." data-es="CamaraVirtual: la plataforma que convierte una red de contactos en negocios reales." data-tl="CamaraVirtual: ang plataporma na ginagawang tunay na negosyo ang network ng mga kontak.">CamaraVirtual: the platform that turns a network of contacts into real business.</p>
   <div class="quees-grid">
     <div class="quees-text">
-      <p data-en="PACC-CFL runs on CamaraVirtual, a digital ecosystem for strategic integration. It is not a static directory or a simple association: it is a living network where members, companies, and institutions discover each other, trade, and execute real projects with transparent governance and artificial intelligence." data-tl="Tumatakbo ang PACC-CFL sa CamaraVirtual, isang digital na ekosistema para sa estratehikong integrasyon. Hindi ito static na direktoryo o simpleng asosasyon: ito ay buhay na network kung saan natutuklasan ng mga miyembro, kompanya, at institusyon ang isa't isa, nagkakalakalan, at nagsasagawa ng tunay na proyekto nang may transparent na pamamahala at artificial intelligence.">PACC-CFL runs on CamaraVirtual, a digital ecosystem for strategic integration. It is not a static directory or a simple association: it is a living network where members, companies, and institutions discover each other, trade, and execute real projects with transparent governance and artificial intelligence.</p>
-      <p data-en="From registration to your first business match in under 5 minutes. Artificial intelligence connects supply and demand, computes trust indices, and simulates the viability of each project before committing real resources." data-tl="Mula sa pagrehistro hanggang sa iyong unang business match sa wala pang 5 minuto. Kinokonekta ng artificial intelligence ang supply at demand, kinokompute ang mga indeks ng tiwala, at sinisimula ang viability ng bawat proyekto bago magtalaga ng tunay na rekurso.">From registration to your first business match in under 5 minutes. Artificial intelligence connects supply and demand, computes trust indices, and simulates the viability of each project before committing real resources.</p>
-      <p style="margin-top:8px;"><a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener" class="btn-gold" style="font-size:14px;padding:12px 26px;" data-en="See the live platform" data-tl="Tingnan ang live na plataporma">See the live platform</a></p>
+      <p data-en="PACC-CFL runs on CamaraVirtual, a digital ecosystem for strategic integration. It is not a static directory or a simple association: it is a living network where members, companies, and institutions discover each other, trade, and execute real projects with transparent governance and artificial intelligence." data-es="PACC-CFL funciona sobre CamaraVirtual, un ecosistema digital de integración estratégica. No es un directorio estático ni una simple asociación: es una red viva donde miembros, empresas e instituciones se descubren, comercian y ejecutan proyectos reales con gobernanza transparente e inteligencia artificial." data-tl="Tumatakbo ang PACC-CFL sa CamaraVirtual, isang digital na ekosistema para sa estratehikong integrasyon. Hindi ito static na direktoryo o simpleng asosasyon: ito ay buhay na network kung saan natutuklasan ng mga miyembro, kompanya, at institusyon ang isa't isa, nagkakalakalan, at nagsasagawa ng tunay na proyekto nang may transparent na pamamahala at artificial intelligence.">PACC-CFL runs on CamaraVirtual, a digital ecosystem for strategic integration. It is not a static directory or a simple association: it is a living network where members, companies, and institutions discover each other, trade, and execute real projects with transparent governance and artificial intelligence.</p>
+      <p data-en="From registration to your first business match in under 5 minutes. Artificial intelligence connects supply and demand, computes trust indices, and simulates the viability of each project before committing real resources." data-es="Del registro a tu primer match de negocio en menos de 5 minutos. La inteligencia artificial conecta oferta y demanda, calcula índices de confianza y simula la viabilidad de cada proyecto antes de comprometer recursos reales." data-tl="Mula sa pagrehistro hanggang sa iyong unang business match sa wala pang 5 minuto. Kinokonekta ng artificial intelligence ang supply at demand, kinokompute ang mga indeks ng tiwala, at sinisimula ang viability ng bawat proyekto bago magtalaga ng tunay na rekurso.">From registration to your first business match in under 5 minutes. Artificial intelligence connects supply and demand, computes trust indices, and simulates the viability of each project before committing real resources.</p>
+      <p style="margin-top:8px;"><a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener" class="btn-gold" style="font-size:14px;padding:12px 26px;" data-en="See the live platform" data-es="Ver la plataforma en vivo" data-tl="Tingnan ang live na plataporma">See the live platform</a></p>
     </div>
     <div>
       <table class="comparison-table">
         <thead><tr>
-          <th class="no-col" data-en="TRADITIONAL NETWORK" data-tl="TRADISYONAL NA NETWORK">TRADITIONAL NETWORK</th>
-          <th class="si-col" data-en="DIGITAL ECOSYSTEM" data-tl="DIGITAL NA EKOSISTEMA">DIGITAL ECOSYSTEM</th>
+          <th class="no-col" data-en="TRADITIONAL NETWORK" data-es="RED TRADICIONAL" data-tl="TRADISYONAL NA NETWORK">TRADITIONAL NETWORK</th>
+          <th class="si-col" data-en="DIGITAL ECOSYSTEM" data-es="ECOSISTEMA DIGITAL" data-tl="DIGITAL NA EKOSISTEMA">DIGITAL ECOSYSTEM</th>
         </tr></thead>
         <tbody>
-          <tr><td data-en="Static directory" data-tl="Static na direktoryo">Static directory</td><td data-en="Real-time AI matching" data-tl="Real-time na AI matching">Real-time AI matching</td></tr>
-          <tr><td data-en="Loose contacts" data-tl="Magkalat na kontak">Loose contacts</td><td data-en="Verified identity (TrustRank)" data-tl="Beripikadong pagkakakilanlan (TrustRank)">Verified identity (TrustRank)</td></tr>
-          <tr><td data-en="Informal dealmaking" data-tl="Impormal na transaksiyon">Informal dealmaking</td><td data-en="Quotation marketplace (RFQs)" data-tl="Pamilihan ng quotation (RFQ)">Quotation marketplace (RFQs)</td></tr>
-          <tr><td data-en="Projects without method" data-tl="Proyektong walang pamamaraan">Projects without method</td><td data-en="Role-based teams + Monte Carlo" data-tl="Koponan ayon sa tungkulin + Monte Carlo">Role-based teams + Monte Carlo</td></tr>
-          <tr><td data-en="No impact measurement" data-tl="Walang sukatan ng epekto">No impact measurement</td><td data-en="HCI cooperation index" data-tl="HCI cooperation index">HCI cooperation index</td></tr>
+          <tr><td data-en="Static directory" data-es="Directorio estático" data-tl="Static na direktoryo">Static directory</td><td data-en="Real-time AI matching" data-es="Matching con IA en tiempo real" data-tl="Real-time na AI matching">Real-time AI matching</td></tr>
+          <tr><td data-en="Loose contacts" data-es="Contactos sueltos" data-tl="Magkalat na kontak">Loose contacts</td><td data-en="Verified identity (TrustRank)" data-es="Identidad verificada (TrustRank)" data-tl="Beripikadong pagkakakilanlan (TrustRank)">Verified identity (TrustRank)</td></tr>
+          <tr><td data-en="Informal dealmaking" data-es="Negociación informal" data-tl="Impormal na transaksiyon">Informal dealmaking</td><td data-en="Quotation marketplace (RFQs)" data-es="Mercado de cotizaciones (RFQ)" data-tl="Pamilihan ng quotation (RFQ)">Quotation marketplace (RFQs)</td></tr>
+          <tr><td data-en="Projects without method" data-es="Proyectos sin método" data-tl="Proyektong walang pamamaraan">Projects without method</td><td data-en="Role-based teams + Monte Carlo" data-es="Equipos por roles + Monte Carlo" data-tl="Koponan ayon sa tungkulin + Monte Carlo">Role-based teams + Monte Carlo</td></tr>
+          <tr><td data-en="No impact measurement" data-es="Sin medición de impacto" data-tl="Walang sukatan ng epekto">No impact measurement</td><td data-en="HCI cooperation index" data-es="Índice de cooperación HCI" data-tl="HCI cooperation index">HCI cooperation index</td></tr>
         </tbody>
       </table>
     </div>
@@ -1051,9 +1076,9 @@
 <section class="section section-full wf-section" id="flow">
   <div class="section-inner">
     <div class="gold-line" style="margin:0 auto 20px;"></div>
-    <h2 class="section-title" style="text-align:center;color:#fff;" data-en="The Ecosystem in Motion" data-tl="Ang Ekosistema sa Galaw">The Ecosystem in Motion</h2>
-    <p class="section-subtitle" style="margin:0 auto 8px;text-align:center;color:rgba(255,255,255,0.72);" data-en="Watch a project flow through the network: from idea to deal, in record time." data-tl="Panoorin ang daloy ng proyekto sa network: mula ideya hanggang deal, sa napakabilis na panahon.">Watch a project flow through the network: from idea to deal, in record time.</p>
-    <div class="wf-banner" data-en="What used to take weeks, the ecosystem coordinates in minutes." data-tl="Ang dating tumatagal nang linggo, kino-coordinate ng ekosistema sa minuto.">
+    <h2 class="section-title" style="text-align:center;color:#fff;" data-en="The Ecosystem in Motion" data-es="El Ecosistema en Movimiento" data-tl="Ang Ekosistema sa Galaw">The Ecosystem in Motion</h2>
+    <p class="section-subtitle" style="margin:0 auto 8px;text-align:center;color:rgba(255,255,255,0.72);" data-en="Watch a project flow through the network: from idea to deal, in record time." data-es="Mira cómo fluye un proyecto por la red: de la idea al negocio, en tiempo récord." data-tl="Panoorin ang daloy ng proyekto sa network: mula ideya hanggang deal, sa napakabilis na panahon.">Watch a project flow through the network: from idea to deal, in record time.</p>
+    <div class="wf-banner" data-en="What used to take weeks, the ecosystem coordinates in minutes." data-es="Lo que antes tomaba semanas, el ecosistema lo coordina en minutos." data-tl="Ang dating tumatagal nang linggo, kino-coordinate ng ekosistema sa minuto.">
       <svg class="wf-bolt" viewBox="0 0 24 24" aria-hidden="true"><polyline points="13 2 4 14 11 14 11 22 20 10 13 10 13 2"/></svg>
       <span>What used to take weeks, the ecosystem coordinates in minutes.</span>
     </div>
@@ -1063,45 +1088,45 @@
 
       <div class="wf-node" style="--d:0s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="wf-name" data-en="Members &amp; Companies" data-tl="Mga Miyembro at Kompanya">Members &amp; Companies</div>
-        <div class="wf-benefit" data-en="Verified profile" data-tl="Beripikadong profile">Verified profile</div>
+        <div class="wf-name" data-en="Members &amp; Companies" data-es="Miembros y Empresas" data-tl="Mga Miyembro at Kompanya">Members &amp; Companies</div>
+        <div class="wf-benefit" data-en="Verified profile" data-es="Perfil verificado" data-tl="Beripikadong profile">Verified profile</div>
       </div>
 
       <div class="wf-node" style="--d:.45s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div>
-        <div class="wf-name" data-en="AI Match" data-tl="AI Match">AI Match</div>
-        <div class="wf-benefit" data-en="Connected in seconds" data-tl="Konektado sa ilang segundo">Connected in seconds</div>
+        <div class="wf-name" data-en="AI Match" data-es="AI Match" data-tl="AI Match">AI Match</div>
+        <div class="wf-benefit" data-en="Connected in seconds" data-es="Conectados en segundos" data-tl="Konektado sa ilang segundo">Connected in seconds</div>
       </div>
 
       <div class="wf-node" style="--d:.9s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="wf-name" data-en="Project" data-tl="Proyekto">Project</div>
-        <div class="wf-benefit" data-en="Role-based team" data-tl="Koponan ayon sa tungkulin">Role-based team</div>
+        <div class="wf-name" data-en="Project" data-es="Proyecto" data-tl="Proyekto">Project</div>
+        <div class="wf-benefit" data-en="Role-based team" data-es="Equipo por roles" data-tl="Koponan ayon sa tungkulin">Role-based team</div>
       </div>
 
       <div class="wf-node" style="--d:1.35s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-        <div class="wf-name" data-en="Monte Carlo Validation" data-tl="Monte Carlo Validation">Monte Carlo Validation</div>
-        <div class="wf-benefit" data-en="Risk validated" data-tl="Naberipikang panganib">Risk validated</div>
+        <div class="wf-name" data-en="Monte Carlo Validation" data-es="Validación Monte Carlo" data-tl="Monte Carlo Validation">Monte Carlo Validation</div>
+        <div class="wf-benefit" data-en="Risk validated" data-es="Riesgo validado" data-tl="Naberipikang panganib">Risk validated</div>
       </div>
 
       <div class="wf-node" style="--d:1.8s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg></div>
-        <div class="wf-name" data-en="Exchange" data-tl="Palitan">Exchange</div>
-        <div class="wf-benefit" data-en="Instant quote" data-tl="Instant na quote">Instant quote</div>
+        <div class="wf-name" data-en="Exchange" data-es="Intercambio" data-tl="Palitan">Exchange</div>
+        <div class="wf-benefit" data-en="Instant quote" data-es="Cotización instantánea" data-tl="Instant na quote">Instant quote</div>
       </div>
 
       <div class="wf-node" style="--d:2.25s">
         <div class="wf-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-        <div class="wf-name" data-en="Deal in motion" data-tl="Negosyong umaandar">Deal in motion</div>
-        <div class="wf-benefit" data-en="Deal closed" data-tl="Saradong kasunduan">Deal closed</div>
+        <div class="wf-name" data-en="Deal in motion" data-es="Negocio en marcha" data-tl="Negosyong umaandar">Deal in motion</div>
+        <div class="wf-benefit" data-en="Deal closed" data-es="Negocio cerrado" data-tl="Saradong kasunduan">Deal closed</div>
       </div>
     </div>
     <div class="wf-benefits">
-      <span class="wf-chip" data-en="<b>Fewer</b> middlemen" data-tl="<b>Mas kaunti</b> na tagapamagitan"><b>Fewer</b> middlemen</span>
-      <span class="wf-chip" data-en="<b>Data-driven</b> decisions" data-tl="Desisyong batay sa <b>datos</b>"><b>Data-driven</b> decisions</span>
-      <span class="wf-chip" data-en="<b>Verifiable</b> trust" data-tl="<b>Napapatunayang</b> tiwala"><b>Verifiable</b> trust</span>
-      <span class="wf-chip" data-en="<b>More</b> closed deals" data-tl="<b>Mas marami</b> na saradong deal"><b>More</b> closed deals</span>
+      <span class="wf-chip" data-en="<b>Fewer</b> middlemen" data-es="<b>Menos</b> intermediarios" data-tl="<b>Mas kaunti</b> na tagapamagitan"><b>Fewer</b> middlemen</span>
+      <span class="wf-chip" data-en="<b>Data-driven</b> decisions" data-es="Decisiones con <b>datos</b>" data-tl="Desisyong batay sa <b>datos</b>"><b>Data-driven</b> decisions</span>
+      <span class="wf-chip" data-en="<b>Verifiable</b> trust" data-es="Confianza <b>verificable</b>" data-tl="<b>Napapatunayang</b> tiwala"><b>Verifiable</b> trust</span>
+      <span class="wf-chip" data-en="<b>More</b> closed deals" data-es="<b>Más</b> negocios cerrados" data-tl="<b>Mas marami</b> na saradong deal"><b>More</b> closed deals</span>
     </div>
   </div>
 </section>
@@ -1110,80 +1135,80 @@
 <section class="section section-alt section-full" id="modules">
   <div class="section-inner">
     <div class="gold-line"></div>
-    <h2 class="section-title" data-en="The Member Dashboard" data-tl="Ang Dashboard ng Miyembro">The Member Dashboard</h2>
-    <p class="section-subtitle" data-en="Nine integrated modules to discover, connect, and close deals within the network." data-tl="Siyam na integratadong module para tumuklas, kumonekta, at magsara ng deal sa loob ng network.">Nine integrated modules to discover, connect, and close deals within the network.</p>
+    <h2 class="section-title" data-en="The Member Dashboard" data-es="El Panel del Miembro" data-tl="Ang Dashboard ng Miyembro">The Member Dashboard</h2>
+    <p class="section-subtitle" data-en="Nine integrated modules to discover, connect, and close deals within the network." data-es="Nueve módulos integrados para descubrir, conectar y cerrar negocios dentro de la red." data-tl="Siyam na integratadong module para tumuklas, kumonekta, at magsara ng deal sa loob ng network.">Nine integrated modules to discover, connect, and close deals within the network.</p>
     <div class="cards-grid cards-grid-3">
 
       <div class="card">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
         </div>
-        <h3 data-en="Dashboard" data-tl="Dashboard">Dashboard</h3>
-        <p data-en="Your control center: active members, ongoing projects, open requests, and the network indices (Gini, Trust, HCI) in real time." data-tl="Ang iyong control center: aktibong miyembro, kasalukuyang proyekto, bukas na hiling, at ang mga indeks ng network (Gini, Tiwala, HCI) sa real time.">Your control center: active members, ongoing projects, open requests, and the network indices (Gini, Trust, HCI) in real time.</p>
+        <h3 data-en="Dashboard" data-es="Dashboard" data-tl="Dashboard">Dashboard</h3>
+        <p data-en="Your control center: active members, ongoing projects, open requests, and the network indices (Gini, Trust, HCI) in real time." data-es="Tu centro de control: miembros activos, proyectos en curso, solicitudes abiertas y los índices de la red (Gini, Confianza, HCI) en tiempo real." data-tl="Ang iyong control center: aktibong miyembro, kasalukuyang proyekto, bukas na hiling, at ang mga indeks ng network (Gini, Tiwala, HCI) sa real time.">Your control center: active members, ongoing projects, open requests, and the network indices (Gini, Trust, HCI) in real time.</p>
       </div>
 
       <div class="card">
         <div class="card-icon gold-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <h3 data-en="Inbox" data-tl="Inbox">Inbox</h3>
-        <p data-en="Threaded internal messaging between members, to coordinate deals, quotes, and invitations without leaving the platform." data-tl="Internal na mensahe sa pagitan ng mga miyembro, para mag-coordinate ng deal, quote, at imbitasyon nang hindi umaalis sa plataporma.">Threaded internal messaging between members, to coordinate deals, quotes, and invitations without leaving the platform.</p>
+        <h3 data-en="Inbox" data-es="Mensajes" data-tl="Inbox">Inbox</h3>
+        <p data-en="Threaded internal messaging between members, to coordinate deals, quotes, and invitations without leaving the platform." data-es="Mensajería interna entre miembros, para coordinar negocios, cotizaciones e invitaciones sin salir de la plataforma." data-tl="Internal na mensahe sa pagitan ng mga miyembro, para mag-coordinate ng deal, quote, at imbitasyon nang hindi umaalis sa plataporma.">Threaded internal messaging between members, to coordinate deals, quotes, and invitations without leaving the platform.</p>
       </div>
 
       <div class="card">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-        <h3 data-en="My Profile" data-tl="Aking Profile">My Profile</h3>
-        <p data-en="Your verified identity: company, sector, and region, with your Trust Score computed by the TrustRank algorithm." data-tl="Ang iyong beripikadong pagkakakilanlan: kompanya, sektor, at rehiyon, kasama ang iyong Trust Score na kinompute ng TrustRank algorithm.">Your verified identity: company, sector, and region, with your Trust Score computed by the TrustRank algorithm.</p>
+        <h3 data-en="My Profile" data-es="Mi Perfil" data-tl="Aking Profile">My Profile</h3>
+        <p data-en="Your verified identity: company, sector, and region, with your Trust Score computed by the TrustRank algorithm." data-es="Tu identidad verificada: empresa, sector y región, con tu Trust Score calculado por el algoritmo TrustRank." data-tl="Ang iyong beripikadong pagkakakilanlan: kompanya, sektor, at rehiyon, kasama ang iyong Trust Score na kinompute ng TrustRank algorithm.">Your verified identity: company, sector, and region, with your Trust Score computed by the TrustRank algorithm.</p>
       </div>
 
       <div class="card">
         <div class="card-icon gold-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-        <h3 data-en="Directory" data-tl="Direktoryo">Directory</h3>
-        <p data-en="Browse every member of the network, filtering by sector and region. Find verified partners, suppliers, and allies." data-tl="Tingnan ang bawat miyembro ng network, sinasala ayon sa sektor at rehiyon. Humanap ng beripikadong partner, supplier, at kaalyado.">Browse every member of the network, filtering by sector and region. Find verified partners, suppliers, and allies.</p>
+        <h3 data-en="Directory" data-es="Directorio" data-tl="Direktoryo">Directory</h3>
+        <p data-en="Browse every member of the network, filtering by sector and region. Find verified partners, suppliers, and allies." data-es="Explora a cada miembro de la red, filtrando por sector y región. Encuentra socios, proveedores y aliados verificados." data-tl="Tingnan ang bawat miyembro ng network, sinasala ayon sa sektor at rehiyon. Humanap ng beripikadong partner, supplier, at kaalyado.">Browse every member of the network, filtering by sector and region. Find verified partners, suppliers, and allies.</p>
       </div>
 
       <div class="card">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         </div>
-        <h3 data-en="AI Match" data-tl="AI Match">AI Match</h3>
-        <p data-en="Type what you need in natural language and the AI connects you with the most compatible partners, ranked by affinity." data-tl="I-type ang kailangan mo sa natural na wika at ikokonekta ka ng AI sa mga pinaka-compatible na partner, ayon sa pagkakatugma.">Type what you need in natural language and the AI connects you with the most compatible partners, ranked by affinity.</p>
+        <h3 data-en="AI Match" data-es="AI Match" data-tl="AI Match">AI Match</h3>
+        <p data-en="Type what you need in natural language and the AI connects you with the most compatible partners, ranked by affinity." data-es="Escribe lo que necesitas en lenguaje natural y la IA te conecta con los socios más compatibles, ordenados por afinidad." data-tl="I-type ang kailangan mo sa natural na wika at ikokonekta ka ng AI sa mga pinaka-compatible na partner, ayon sa pagkakatugma.">Type what you need in natural language and the AI connects you with the most compatible partners, ranked by affinity.</p>
       </div>
 
       <div class="card">
         <div class="card-icon gold-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </div>
-        <h3 data-en="My Searches" data-tl="Aking Paghahanap">My Searches</h3>
-        <p data-en="Save your smart searches and receive new candidates automatically as the network grows." data-tl="I-save ang iyong matatalinong paghahanap at awtomatikong tumanggap ng bagong kandidato habang lumalago ang network.">Save your smart searches and receive new candidates automatically as the network grows.</p>
+        <h3 data-en="My Searches" data-es="Mis Búsquedas" data-tl="Aking Paghahanap">My Searches</h3>
+        <p data-en="Save your smart searches and receive new candidates automatically as the network grows." data-es="Guarda tus búsquedas inteligentes y recibe nuevos candidatos automáticamente a medida que crece la red." data-tl="I-save ang iyong matatalinong paghahanap at awtomatikong tumanggap ng bagong kandidato habang lumalago ang network.">Save your smart searches and receive new candidates automatically as the network grows.</p>
       </div>
 
       <div class="card">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         </div>
-        <h3 data-en="Projects" data-tl="Mga Proyekto">Projects</h3>
-        <p data-en="Propose or join projects: role-based team assembly, milestones, documents, and Monte Carlo viability simulation before committing resources." data-tl="Magmungkahi o sumali sa proyekto: pagbuo ng koponan ayon sa tungkulin, milestone, dokumento, at Monte Carlo viability simulation bago magtalaga ng rekurso.">Propose or join projects: role-based team assembly, milestones, documents, and Monte Carlo viability simulation before committing resources.</p>
+        <h3 data-en="Projects" data-es="Proyectos" data-tl="Mga Proyekto">Projects</h3>
+        <p data-en="Propose or join projects: role-based team assembly, milestones, documents, and Monte Carlo viability simulation before committing resources." data-es="Propón proyectos o súmate a ellos: armado de equipo por roles, hitos, documentos y simulación de viabilidad Monte Carlo antes de comprometer recursos." data-tl="Magmungkahi o sumali sa proyekto: pagbuo ng koponan ayon sa tungkulin, milestone, dokumento, at Monte Carlo viability simulation bago magtalaga ng rekurso.">Propose or join projects: role-based team assembly, milestones, documents, and Monte Carlo viability simulation before committing resources.</p>
       </div>
 
       <div class="card">
         <div class="card-icon gold-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <h3 data-en="Invitations" data-tl="Mga Imbitasyon">Invitations</h3>
-        <p data-en="Receive and manage invitations to roles within projects. Accept to join the team in a single click." data-tl="Tumanggap at pamahalaan ang mga imbitasyon sa tungkulin sa loob ng proyekto. Tanggapin para sumali sa koponan sa isang click.">Receive and manage invitations to roles within projects. Accept to join the team in a single click.</p>
+        <h3 data-en="Invitations" data-es="Invitaciones" data-tl="Mga Imbitasyon">Invitations</h3>
+        <p data-en="Receive and manage invitations to roles within projects. Accept to join the team in a single click." data-es="Recibe y gestiona invitaciones a roles dentro de los proyectos. Acepta para sumarte al equipo en un solo clic." data-tl="Tumanggap at pamahalaan ang mga imbitasyon sa tungkulin sa loob ng proyekto. Tanggapin para sumali sa koponan sa isang click.">Receive and manage invitations to roles within projects. Accept to join the team in a single click.</p>
       </div>
 
       <div class="card">
         <div class="card-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
         </div>
-        <h3 data-en="Exchange" data-tl="Palitan">Exchange</h3>
-        <p data-en="The commercial marketplace of the network: post requests for quotation (RFQs) and respond to others to close deals." data-tl="Ang komersiyal na pamilihan ng network: mag-post ng request for quotation (RFQ) at sumagot sa iba para magsara ng deal.">The commercial marketplace of the network: post requests for quotation (RFQs) and respond to others to close deals.</p>
+        <h3 data-en="Exchange" data-es="Intercambio" data-tl="Palitan">Exchange</h3>
+        <p data-en="The commercial marketplace of the network: post requests for quotation (RFQs) and respond to others to close deals." data-es="El mercado comercial de la red: publica solicitudes de cotización (RFQ) y responde a las de otros para cerrar negocios." data-tl="Ang komersiyal na pamilihan ng network: mag-post ng request for quotation (RFQ) at sumagot sa iba para magsara ng deal.">The commercial marketplace of the network: post requests for quotation (RFQs) and respond to others to close deals.</p>
       </div>
 
     </div>
@@ -1194,38 +1219,38 @@
 <section class="section section-full" id="how">
   <div class="section-inner">
     <div class="gold-line"></div>
-    <h2 class="section-title" data-en="How It Works" data-tl="Paano Ito Gumagana">How It Works</h2>
-    <p class="section-subtitle" data-en="From registration to your first deal, in six steps." data-tl="Mula sa pagrehistro hanggang sa iyong unang deal, sa anim na hakbang.">From registration to your first deal, in six steps.</p>
+    <h2 class="section-title" data-en="How It Works" data-es="Cómo Funciona" data-tl="Paano Ito Gumagana">How It Works</h2>
+    <p class="section-subtitle" data-en="From registration to your first deal, in six steps." data-es="Del registro a tu primer negocio, en seis pasos." data-tl="Mula sa pagrehistro hanggang sa iyong unang deal, sa anim na hakbang.">From registration to your first deal, in six steps.</p>
     <div class="timeline">
       <div class="timeline-step">
         <div class="timeline-num">1</div>
-        <h4 data-en="Create your profile" data-tl="Gumawa ng iyong profile">Create your profile</h4>
-        <p data-en="Register by sector and region. Your business identity is verified on the network." data-tl="Magrehistro ayon sa sektor at rehiyon. Beberipikahin ang iyong pagkakakilanlan sa negosyo sa network.">Register by sector and region. Your business identity is verified on the network.</p>
+        <h4 data-en="Create your profile" data-es="Crea tu perfil" data-tl="Gumawa ng iyong profile">Create your profile</h4>
+        <p data-en="Register by sector and region. Your business identity is verified on the network." data-es="Regístrate por sector y región. Tu identidad empresarial queda verificada en la red." data-tl="Magrehistro ayon sa sektor at rehiyon. Beberipikahin ang iyong pagkakakilanlan sa negosyo sa network.">Register by sector and region. Your business identity is verified on the network.</p>
       </div>
       <div class="timeline-step">
         <div class="timeline-num">2</div>
-        <h4 data-en="Open the dashboard" data-tl="Buksan ang dashboard">Open the dashboard</h4>
-        <p data-en="See the full network, its statistics, and trust indices in real time." data-tl="Tingnan ang buong network, ang estadistika nito, at mga indeks ng tiwala sa real time.">See the full network, its statistics, and trust indices in real time.</p>
+        <h4 data-en="Open the dashboard" data-es="Abre el dashboard" data-tl="Buksan ang dashboard">Open the dashboard</h4>
+        <p data-en="See the full network, its statistics, and trust indices in real time." data-es="Observa la red completa, sus estadísticas y los índices de confianza en tiempo real." data-tl="Tingnan ang buong network, ang estadistika nito, at mga indeks ng tiwala sa real time.">See the full network, its statistics, and trust indices in real time.</p>
       </div>
       <div class="timeline-step">
         <div class="timeline-num">3</div>
-        <h4 data-en="AI Match" data-tl="AI Match">AI Match</h4>
-        <p data-en="Describe your need in natural language and the AI connects you with the right partners." data-tl="Ilarawan ang iyong pangangailangan sa natural na wika at ikokonekta ka ng AI sa tamang partner.">Describe your need in natural language and the AI connects you with the right partners.</p>
+        <h4 data-en="AI Match" data-es="AI Match" data-tl="AI Match">AI Match</h4>
+        <p data-en="Describe your need in natural language and the AI connects you with the right partners." data-es="Describe tu necesidad en lenguaje natural y la IA te conecta con los socios indicados." data-tl="Ilarawan ang iyong pangangailangan sa natural na wika at ikokonekta ka ng AI sa tamang partner.">Describe your need in natural language and the AI connects you with the right partners.</p>
       </div>
       <div class="timeline-step">
         <div class="timeline-num">4</div>
-        <h4 data-en="Exchange" data-tl="Palitan">Exchange</h4>
-        <p data-en="Post or respond to requests for quotation in the network marketplace." data-tl="Mag-post o sumagot sa request for quotation sa pamilihan ng network.">Post or respond to requests for quotation in the network marketplace.</p>
+        <h4 data-en="Exchange" data-es="Intercambio" data-tl="Palitan">Exchange</h4>
+        <p data-en="Post or respond to requests for quotation in the network marketplace." data-es="Publica o responde solicitudes de cotización en el mercado de la red." data-tl="Mag-post o sumagot sa request for quotation sa pamilihan ng network.">Post or respond to requests for quotation in the network marketplace.</p>
       </div>
       <div class="timeline-step">
         <div class="timeline-num">5</div>
-        <h4 data-en="Launch projects" data-tl="Maglunsad ng proyekto">Launch projects</h4>
-        <p data-en="Build teams by role and validate viability with Monte Carlo simulation before investing." data-tl="Bumuo ng koponan ayon sa tungkulin at beripikahin ang viability gamit ang Monte Carlo simulation bago mamuhunan.">Build teams by role and validate viability with Monte Carlo simulation before investing.</p>
+        <h4 data-en="Launch projects" data-es="Lanza proyectos" data-tl="Maglunsad ng proyekto">Launch projects</h4>
+        <p data-en="Build teams by role and validate viability with Monte Carlo simulation before investing." data-es="Arma equipos por roles y valida la viabilidad con simulación Monte Carlo antes de invertir." data-tl="Bumuo ng koponan ayon sa tungkulin at beripikahin ang viability gamit ang Monte Carlo simulation bago mamuhunan.">Build teams by role and validate viability with Monte Carlo simulation before investing.</p>
       </div>
       <div class="timeline-step">
         <div class="timeline-num">6</div>
-        <h4 data-en="Grow with trust" data-tl="Lumago nang may tiwala">Grow with trust</h4>
-        <p data-en="Measure the growth and health of the network with the HCI cooperation index." data-tl="Sukatin ang paglago at kalusugan ng network gamit ang HCI cooperation index.">Measure the growth and health of the network with the HCI cooperation index.</p>
+        <h4 data-en="Grow with trust" data-es="Crece con confianza" data-tl="Lumago nang may tiwala">Grow with trust</h4>
+        <p data-en="Measure the growth and health of the network with the HCI cooperation index." data-es="Mide el crecimiento y la salud de la red con el índice de cooperación HCI." data-tl="Sukatin ang paglago at kalusugan ng network gamit ang HCI cooperation index.">Measure the growth and health of the network with the HCI cooperation index.</p>
       </div>
     </div>
   </div>
@@ -1235,8 +1260,8 @@
 <section class="section section-alt section-full" id="technology">
   <div class="section-inner">
     <div class="gold-line"></div>
-    <h2 class="section-title" data-en="Technology Platform" data-tl="Plataporma ng Teknolohiya">Technology Platform</h2>
-    <p class="section-subtitle" data-en="Advanced digital infrastructure for community-scale coordination." data-tl="Abanteng digital na imprastraktura para sa koordinasyon sa antas ng komunidad.">Advanced digital infrastructure for community-scale coordination.</p>
+    <h2 class="section-title" data-en="Technology Platform" data-es="Plataforma Tecnológica" data-tl="Plataporma ng Teknolohiya">Technology Platform</h2>
+    <p class="section-subtitle" data-en="Advanced digital infrastructure for community-scale coordination." data-es="Infraestructura digital avanzada para la coordinación a escala de comunidad." data-tl="Abanteng digital na imprastraktura para sa koordinasyon sa antas ng komunidad.">Advanced digital infrastructure for community-scale coordination.</p>
     <div class="tech-badges">
       <span class="tech-badge">MCP Orchestrator</span>
       <span class="tech-badge">Gini Coefficient</span>
@@ -1245,7 +1270,7 @@
       <span class="tech-badge">TrustRank Algorithm</span>
       <span class="tech-badge">Zero-Knowledge Proofs</span>
     </div>
-    <p data-en="Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust indices, and simulate impact scenarios before committing real resources." data-tl="Pinagsasama ng aming plataporma ang mga modelo ng artificial intelligence at mga algorithm ng game theory para i-optimize ang alokasyon ng rekurso, kalkulahin ang mga indeks ng tiwala, at gayahin ang mga senaryo ng epekto bago magtalaga ng tunay na rekurso.">Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust indices, and simulate impact scenarios before committing real resources.</p>
+    <p data-en="Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust indices, and simulate impact scenarios before committing real resources." data-es="Nuestra plataforma integra modelos de inteligencia artificial con algoritmos de teoría de juegos para optimizar la asignación de recursos, calcular índices de confianza y simular escenarios de impacto antes de comprometer recursos reales." data-tl="Pinagsasama ng aming plataporma ang mga modelo ng artificial intelligence at mga algorithm ng game theory para i-optimize ang alokasyon ng rekurso, kalkulahin ang mga indeks ng tiwala, at gayahin ang mga senaryo ng epekto bago magtalaga ng tunay na rekurso.">Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust indices, and simulate impact scenarios before committing real resources.</p>
   </div>
 </section>
 
@@ -1253,16 +1278,16 @@
 <section class="section reg-section section-full" id="access">
   <div class="section-inner" style="text-align:center;max-width:760px;margin:0 auto;">
     <div class="gold-line" style="margin:0 auto 20px;"></div>
-    <h2 class="section-title" style="color:var(--white);" data-en="Enter the Digital Ecosystem" data-tl="Pumasok sa Digital na Ekosistema">Enter the Digital Ecosystem</h2>
-    <p style="color:rgba(255,255,255,0.78);font-size:18px;margin:16px auto 8px;max-width:560px;" data-en="Join the network, create your verified profile, and make your first business match in under 5 minutes." data-tl="Sumali sa network, gumawa ng iyong beripikadong profile, at gawin ang iyong unang business match sa wala pang 5 minuto.">Join the network, create your verified profile, and make your first business match in under 5 minutes.</p>
+    <h2 class="section-title" style="color:var(--white);" data-en="Enter the Digital Ecosystem" data-es="Entra al Ecosistema Digital" data-tl="Pumasok sa Digital na Ekosistema">Enter the Digital Ecosystem</h2>
+    <p style="color:rgba(255,255,255,0.78);font-size:18px;margin:16px auto 8px;max-width:560px;" data-en="Join the network, create your verified profile, and make your first business match in under 5 minutes." data-es="Súmate a la red, crea tu perfil verificado y haz tu primer match de negocio en menos de 5 minutos." data-tl="Sumali sa network, gumawa ng iyong beripikadong profile, at gawin ang iyong unang business match sa wala pang 5 minuto.">Join the network, create your verified profile, and make your first business match in under 5 minutes.</p>
     <ul style="list-style:none;margin:28px auto 32px;max-width:520px;text-align:left;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.8);">
-      <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="AI matching and a verified directory" data-tl="AI matching at beripikadong direktoryo">AI matching and a verified directory</span></li>
-      <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="Quotation marketplace and exchange" data-tl="Pamilihan ng quotation at palitan">Quotation marketplace and exchange</span></li>
-      <li style="display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="Projects with role-based teams and Monte Carlo viability" data-tl="Proyekto na may koponan ayon sa tungkulin at Monte Carlo viability">Projects with role-based teams and Monte Carlo viability</span></li>
+      <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="AI matching and a verified directory" data-es="Matching con IA y directorio verificado" data-tl="AI matching at beripikadong direktoryo">AI matching and a verified directory</span></li>
+      <li style="margin-bottom:10px;display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="Quotation marketplace and exchange" data-es="Mercado de cotizaciones e intercambio" data-tl="Pamilihan ng quotation at palitan">Quotation marketplace and exchange</span></li>
+      <li style="display:flex;align-items:center;gap:10px;"><span style="color:var(--gold);font-weight:700;">+</span><span data-en="Projects with role-based teams and Monte Carlo viability" data-es="Proyectos con equipos por roles y viabilidad Monte Carlo" data-tl="Proyekto na may koponan ayon sa tungkulin at Monte Carlo viability">Projects with role-based teams and Monte Carlo viability</span></li>
     </ul>
     <div class="hero-ctas" style="justify-content:center;">
-      <a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener" class="btn-gold" data-en="Join PACC-CFL" data-tl="Sumali sa PACC-CFL">Join PACC-CFL</a>
-      <a href="https://www.camaravirtual.app/cv-2/login" target="_blank" rel="noopener" class="btn-outline" data-en="Log In" data-tl="Mag-log In">Log In</a>
+      <a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener" class="btn-gold" data-en="Join PACC-CFL" data-es="Únete a PACC-CFL" data-tl="Sumali sa PACC-CFL">Join PACC-CFL</a>
+      <a href="https://www.camaravirtual.app/cv-2/login" target="_blank" rel="noopener" class="btn-outline" data-en="Log In" data-es="Iniciar sesión" data-tl="Mag-log In">Log In</a>
     </div>
   </div>
 </section>
@@ -1272,16 +1297,16 @@
   <div class="footer-inner">
     <div class="footer-brand">
       <h3>PACC<span>-CFL</span></h3>
-      <p data-en="Philippine American Chamber of Commerce of Central Florida. Connecting the Filipino-American business community." data-tl="Philippine American Chamber of Commerce of Central Florida. Inuugnay ang komunidad ng negosyong Filipino-American.">Philippine American Chamber of Commerce of Central Florida. Connecting the Filipino-American business community.</p>
+      <p data-en="Philippine American Chamber of Commerce of Central Florida. Connecting the Filipino-American business community." data-es="Cámara de Comercio Filipino-Americana de la Florida Central. Conectando a la comunidad empresarial filipino-americana." data-tl="Philippine American Chamber of Commerce of Central Florida. Inuugnay ang komunidad ng negosyong Filipino-American.">Philippine American Chamber of Commerce of Central Florida. Connecting the Filipino-American business community.</p>
     </div>
     <div class="footer-col">
-      <h4 data-en="Platform" data-tl="Plataporma">Platform</h4>
-      <a href="#ecosystem" data-en="Ecosystem" data-tl="Ekosistema">Ecosystem</a>
-      <a href="#modules" data-en="Modules" data-tl="Mga Module">Modules</a>
-      <a href="#access" data-en="Access" data-tl="Mag-access">Access</a>
+      <h4 data-en="Platform" data-es="Plataforma" data-tl="Plataporma">Platform</h4>
+      <a href="#ecosystem" data-en="Ecosystem" data-es="Ecosistema" data-tl="Ekosistema">Ecosystem</a>
+      <a href="#modules" data-en="Modules" data-es="Módulos" data-tl="Mga Module">Modules</a>
+      <a href="#access" data-en="Access" data-es="Acceso" data-tl="Mag-access">Access</a>
     </div>
     <div class="footer-col">
-      <h4 data-en="Contact" data-tl="Kontak">Contact</h4>
+      <h4 data-en="Contact" data-es="Contacto" data-tl="Kontak">Contact</h4>
       <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a>
       <a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener">camaravirtual.app/cv-2</a>
     </div>
@@ -1294,16 +1319,52 @@
 <script>
 (function () {
   'use strict';
+  // ── Language: English / Español / Tagalog ──────────────────────────────
+  // The page ships in English; ES and TL live in data-es / data-tl attributes.
+  // The Lina voice tour listens to the same switch (see the player below).
+  var LANGS = ['en', 'es', 'tl'];
   var currentLang = 'en';
-  window.toggleLang = function () {
-    currentLang = currentLang === 'en' ? 'tl' : 'en';
-    document.getElementById('langToggle').textContent = currentLang === 'en' ? 'TL' : 'EN';
-    document.querySelectorAll('[data-en][data-tl]').forEach(function (el) {
-      var txt = el.getAttribute('data-' + currentLang);
-      if (txt !== null) { if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = txt; else el.innerHTML = txt; }
+
+  function normLang(v) {
+    v = String(v || '').toLowerCase().slice(0, 2);
+    if (v === 'fil' || v === 'fi') v = 'tl';
+    return LANGS.indexOf(v) >= 0 ? v : null;
+  }
+
+  window.setLang = function (lang) {
+    lang = normLang(lang) || 'en';
+    currentLang = lang;
+    document.documentElement.lang = lang === 'tl' ? 'tl' : lang;
+
+    document.querySelectorAll('.lang-opt').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
     });
-    document.documentElement.lang = currentLang;
+
+    document.querySelectorAll('[data-en]').forEach(function (el) {
+      // Fall back to English for anything not yet translated, rather than blanking it.
+      var txt = el.getAttribute('data-' + lang);
+      if (txt === null) txt = el.getAttribute('data-en');
+      if (txt === null) return;
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = txt;
+      else el.innerHTML = txt;
+    });
+
+    try { localStorage.setItem('pacccfl_lang', lang); } catch (e) {}
+    // Let the voice tour re-label itself and swap to this language's narration.
+    if (typeof window.__linaOnLangChange === 'function') window.__linaOnLangChange(lang);
   };
+
+  // Back-compat: the old 2-way entry point some links/embeds may still call.
+  window.toggleLang = function () { window.setLang(currentLang === 'en' ? 'tl' : 'en'); };
+
+  // Initial language: ?lang= wins, then the last choice, then the browser.
+  (function () {
+    var qs = new URLSearchParams(window.location.search);
+    var initial = normLang(qs.get('lang'));
+    if (!initial) { try { initial = normLang(localStorage.getItem('pacccfl_lang')); } catch (e) {} }
+    if (!initial) initial = normLang(navigator.language);
+    if (initial && initial !== 'en') window.setLang(initial);
+  })();
   var header = document.getElementById('header');
   window.addEventListener('scroll', function () { if (window.scrollY > 40) header.classList.add('scrolled'); else header.classList.remove('scrolled'); });
   window.toggleMobileMenu = function () {
@@ -1327,15 +1388,25 @@
 </script>
 <script>
   (function () {
+    // Narration exists in all three languages. English was recorded once via
+    // ElevenLabs; Spanish (es-US) and Tagalog (fil-PH) are neural voices generated
+    // by scripts/generate-pacccfl-audio.js. Audio path follows the language switch.
+    var AUDIO_DIR = { en: '/pacccfl/audio/', es: '/pacccfl/audio/es/', tl: '/pacccfl/audio/tl/' };
     var SEGS = [
-      { f: '/pacccfl/audio/lina-1.mp3', sec: 'hero',       en: 'Welcome',              tl: 'Maligayang Pagdating' },
-      { f: '/pacccfl/audio/lina-2.mp3', sec: 'ecosystem',  en: 'The Digital Ecosystem', tl: 'Ang Digital na Ekosistema' },
-      { f: '/pacccfl/audio/lina-3.mp3', sec: 'flow',       en: 'The Ecosystem in Motion', tl: 'Ang Ekosistema sa Galaw' },
-      { f: '/pacccfl/audio/lina-4.mp3', sec: 'modules',    en: 'The Member Dashboard', tl: 'Ang Dashboard ng Miyembro' },
-      { f: '/pacccfl/audio/lina-5.mp3', sec: 'how',        en: 'How It Works',         tl: 'Paano Ito Gumagana' },
-      { f: '/pacccfl/audio/lina-6.mp3', sec: 'technology', en: 'Technology Platform',  tl: 'Plataporma ng Teknolohiya' },
-      { f: '/pacccfl/audio/lina-7.mp3', sec: 'access',     en: 'Enter the Ecosystem',  tl: 'Pumasok sa Ekosistema' }
+      { n: 1, sec: 'hero',       en: 'Welcome',                 es: 'Bienvenida',                  tl: 'Maligayang Pagdating' },
+      { n: 2, sec: 'ecosystem',  en: 'The Digital Ecosystem',   es: 'El Ecosistema Digital',       tl: 'Ang Digital na Ekosistema' },
+      { n: 3, sec: 'flow',       en: 'The Ecosystem in Motion', es: 'El Ecosistema en Movimiento', tl: 'Ang Ekosistema sa Galaw' },
+      { n: 4, sec: 'modules',    en: 'The Member Dashboard',    es: 'El Panel del Miembro',        tl: 'Ang Dashboard ng Miyembro' },
+      { n: 5, sec: 'how',        en: 'How It Works',            es: 'Cómo Funciona',               tl: 'Paano Ito Gumagana' },
+      { n: 6, sec: 'technology', en: 'Technology Platform',     es: 'Plataforma Tecnológica',      tl: 'Plataporma ng Teknolohiya' },
+      { n: 7, sec: 'access',     en: 'Enter the Ecosystem',     es: 'Entra al Ecosistema',         tl: 'Pumasok sa Ekosistema' }
     ];
+    // Player chrome, per language.
+    var UI = {
+      en: { of: function (i, n) { return 'Section ' + i + ' of ' + n; }, presenting: 'Lina presenting…', listen: 'Listen to Lina', paused: 'Paused', pause: 'Pause', resume: 'Resume', failed: 'Audio could not play. Please try again.', done: 'Presentation finished. Tap the orb to replay.' },
+      es: { of: function (i, n) { return 'Sección ' + i + ' de ' + n; }, presenting: 'Lina presentando…', listen: 'Escucha a Lina', paused: 'En pausa', pause: 'Pausar', resume: 'Reanudar', failed: 'No se pudo reproducir el audio. Inténtalo de nuevo.', done: 'Presentación finalizada. Toca el orbe para repetirla.' },
+      tl: { of: function (i, n) { return 'Bahagi ' + i + ' ng ' + n; }, presenting: 'Nagpepresenta si Lina…', listen: 'Makinig kay Lina', paused: 'Naka-pause', pause: 'I-pause', resume: 'Ituloy', failed: 'Hindi ma-play ang audio. Subukan muli.', done: 'Tapos na ang presentasyon. I-tap ang orb para ulitin.' }
+    };
     var orb = document.getElementById('orbBtn');
     var stage = document.getElementById('orbStage');
     var cap = document.getElementById('orbCap');
@@ -1350,8 +1421,9 @@
     if (!orb) return;
     var audio = new Audio(); audio.preload = 'none';
     var idx = 0, started = false, lastActive = null;
-    function isTl() { return (document.documentElement.lang || 'en') === 'tl'; }
-    function t(en, tl) { return isTl() ? tl : en; }
+    function lang() { var l = document.documentElement.lang || 'en'; return UI[l] ? l : 'en'; }
+    function ui() { return UI[lang()]; }
+    function srcFor(i) { return AUDIO_DIR[lang()] + 'lina-' + SEGS[i].n + '.mp3'; }
     function setOrb(s) { orb.dataset.state = s; stage.dataset.state = s; }
     function scrollToSec(secId) {
       var el = document.getElementById(secId); if (!el) return;
@@ -1361,51 +1433,72 @@
       void el.offsetWidth; el.classList.add('lina-active'); lastActive = el;
     }
     function updateBar() {
-      var s = SEGS[idx];
-      barSec.textContent = t('Section ' + (idx + 1) + ' of ' + SEGS.length, 'Bahagi ' + (idx + 1) + ' ng ' + SEGS.length);
-      barTitle.textContent = t(s.en, s.tl);
+      var s = SEGS[idx], u = ui();
+      barSec.textContent = u.of(idx + 1, SEGS.length);
+      barTitle.textContent = s[lang()] || s.en;
     }
     function playIdx(i) {
-      idx = i; var s = SEGS[i]; updateBar(); scrollToSec(s.sec); audio.src = s.f;
+      idx = i; updateBar(); scrollToSec(SEGS[i].sec); audio.src = srcFor(i);
       audio.play().then(function () {
         setOrb('speaking'); stage.dataset.active = '1';
-        cap.textContent = t('Lina presenting\u2026', 'Nagpepresenta si Lina\u2026');
-        bar.classList.remove('paused'); barPause.textContent = t('Pause', 'I-pause');
+        cap.textContent = ui().presenting;
+        bar.classList.remove('paused'); barPause.textContent = ui().pause;
       }).catch(function (e) {
         console.warn('[lina] play failed', e);
-        hint.textContent = t('Audio could not play. Please try again.', 'Hindi ma-play ang audio. Subukan muli.'); stop();
+        hint.textContent = ui().failed; stop();
       });
     }
     function start() { started = true; bar.classList.add('show'); playIdx(0); }
     function finish() {
       setOrb('idle'); stage.dataset.active = '0';
-      cap.textContent = t('Listen to Lina', 'Makinig kay Lina'); bar.classList.add('paused');
-      hint.textContent = t('Presentation finished. Tap the orb to replay.', 'Tapos na ang presentasyon. I-tap ang orb para ulitin.');
+      cap.textContent = ui().listen; bar.classList.add('paused');
+      hint.textContent = ui().done;
       setTimeout(function () { if (audio.paused && audio.ended) bar.classList.remove('show'); }, 1600);
       started = false;
     }
     function togglePause() {
       if (audio.paused) {
         audio.play(); setOrb('speaking'); bar.classList.remove('paused');
-        cap.textContent = t('Lina presenting\u2026', 'Nagpepresenta si Lina\u2026'); barPause.textContent = t('Pause', 'I-pause');
+        cap.textContent = ui().presenting; barPause.textContent = ui().pause;
       } else {
         audio.pause(); setOrb('idle'); bar.classList.add('paused');
-        cap.textContent = t('Paused', 'Naka-pause'); barPause.textContent = t('Resume', 'Ituloy');
+        cap.textContent = ui().paused; barPause.textContent = ui().resume;
       }
     }
     function stop() {
       audio.pause(); try { audio.currentTime = 0; } catch (e) {}
       started = false; idx = 0; setOrb('idle'); stage.dataset.active = '0';
-      cap.textContent = t('Listen to Lina', 'Makinig kay Lina');
+      cap.textContent = ui().listen;
       bar.classList.remove('show'); bar.classList.remove('paused'); barProg.style.width = '0%';
       if (lastActive) { lastActive.classList.remove('lina-active'); lastActive = null; }
     }
+
+    // The header language switch drives the voice too: relabel the player and, if
+    // Lina is mid-tour, restart the current section in the newly selected language.
+    window.__linaOnLangChange = function () {
+      var wasPlaying = started && !audio.paused;
+      if (!started) {
+        cap.textContent = ui().listen;
+        return;
+      }
+      updateBar();
+      barPause.textContent = audio.paused ? ui().resume : ui().pause;
+      cap.textContent = audio.paused ? ui().paused : ui().presenting;
+      var next = srcFor(idx);
+      // Compare against the resolved URL so we don't reload the same file.
+      if (audio.src.indexOf(next) === -1) {
+        barProg.style.width = '0%';
+        audio.src = next;
+        if (wasPlaying) audio.play().catch(function () { hint.textContent = ui().failed; stop(); });
+      }
+    };
     audio.addEventListener('ended', function () { if (idx < SEGS.length - 1) playIdx(idx + 1); else { barProg.style.width = '100%'; finish(); } });
     audio.addEventListener('timeupdate', function () { if (audio.duration) barProg.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(1) + '%'; });
     orb.addEventListener('click', function () { if (!started && audio.paused) start(); else togglePause(); });
     barPause.addEventListener('click', togglePause);
     barStop.addEventListener('click', stop);
     if (orbStop) orbStop.addEventListener('click', stop);
+    updateBar(); // label the (hidden) bar in the language the page loaded in
   })();
 </script>
 </body>
