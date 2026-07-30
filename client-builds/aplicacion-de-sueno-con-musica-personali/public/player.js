@@ -27,6 +27,7 @@
   const audio = el('sleep-audio');
   const trackSelect = el('track-select');
   const trackNote = el('track-note');
+  const familyTabs = el('family-tabs');
   const timerInput = el('timer-input');
   const timerReadout = el('timer-readout');
   const startBtn = el('start-btn');
@@ -155,10 +156,72 @@
     tracks = await res.json();
     libMeta = metaRes.ok ? await metaRes.json() : null;
 
-    // With 25 tracks a flat list is unusable — group them, in library order.
+    buildFamilyTabs();
+    const preferred = (() => { try { return localStorage.getItem('sueno_last_track'); } catch (e) { return null; } })();
+    const preferredTrack = tracks.find((t) => t.id === preferred);
+    // Land on whichever family the last-played track belongs to.
+    activeFamily = (preferredTrack && preferredTrack.family)
+      || (libMeta && libMeta.families && libMeta.families.length ? libMeta.families[0].id : null);
+    renderTrackOptions(preferred);
+  }
+
+  // --- family switch (Wave / Instrumental) -----------------------------------
+  let activeFamily = null;
+
+  function familyList() {
+    if (libMeta && Array.isArray(libMeta.families) && libMeta.families.length) return libMeta.families;
+    // Derive from the tracks if meta was unavailable, so the UI still works.
+    const seen = new Map();
+    for (const t of tracks) if (t.family && !seen.has(t.family)) seen.set(t.family, { id: t.family, label: t.family_label || t.family });
+    return Array.from(seen.values());
+  }
+
+  function buildFamilyTabs() {
+    const fams = familyList();
+    familyTabs.innerHTML = '';
+    if (fams.length < 2) { familyTabs.hidden = true; return; }
+    familyTabs.hidden = false;
+    for (const f of fams) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.family = f.id;
+      b.setAttribute('role', 'tab');
+      b.className = 'family-tab rounded-2xl border px-3 py-2.5 text-[13px] leading-tight transition';
+      b.innerHTML = '<span class="block font-medium">' + escapeHtml(f.label) + '</span>'
+        + '<span class="mono block text-[10px] uppercase tracking-wider opacity-60">'
+        + (f.count != null ? f.count : tracks.filter((t) => t.family === f.id).length) + '</span>';
+      b.addEventListener('click', () => {
+        if (session.active) return;             // never switch mid-night
+        activeFamily = f.id;
+        renderTrackOptions();
+      });
+      familyTabs.appendChild(b);
+    }
+  }
+
+  function paintFamilyTabs() {
+    for (const b of familyTabs.querySelectorAll('.family-tab')) {
+      const on = b.dataset.family === activeFamily;
+      b.className = 'family-tab rounded-2xl border px-3 py-2.5 text-[13px] leading-tight transition '
+        + (on
+          ? 'border-violet-400/50 bg-violet-500/15 text-violet-100'
+          : 'border-white/10 bg-white/[.03] text-slate-400 hover:bg-white/[.06]');
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  // Rebuild the dropdown for the active family, grouped by category.
+  function renderTrackOptions(preferId) {
+    const inFamily = activeFamily ? tracks.filter((t) => t.family === activeFamily) : tracks.slice();
     trackSelect.innerHTML = '';
     const groups = new Map();
-    for (const t of tracks) {
+    for (const t of inFamily) {
       const key = t.category_label || t.category || '';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(t);
@@ -174,9 +237,8 @@
       }
       trackSelect.appendChild(g);
     }
-
-    const preferred = (() => { try { return localStorage.getItem('sueno_last_track'); } catch (e) { return null; } })();
-    if (preferred && tracks.some((t) => t.id === preferred)) trackSelect.value = preferred;
+    if (preferId && inFamily.some((t) => t.id === preferId)) trackSelect.value = preferId;
+    paintFamilyTabs();
     describeTrack();
   }
 
@@ -209,6 +271,7 @@
       chips.appendChild(badge((t.band ? t.band + ' · ' : '') + t.beat_hz + ' Hz', 'info'));
     }
     if (t.frequency_hz != null && t.beat_hz == null) chips.appendChild(badge(t.frequency_hz + ' Hz', 'info'));
+    if (t.tradition) chips.appendChild(badge(t.tradition, 'neutral'));
     // Someone should not pick a 40 Hz gamma bed at bedtime by accident.
     if (t.not_for_sleep) chips.appendChild(badge(EN ? 'Not for sleep' : 'No es para dormir', 'warn'));
     if (chips.childNodes.length) trackNote.appendChild(chips);
@@ -216,6 +279,15 @@
     const desc = document.createElement('div');
     desc.textContent = t.description || '';
     trackNote.appendChild(desc);
+
+    // Synthesized, not sampled — stated wherever an instrument is named, so
+    // nobody assumes this is a recording of a particular player.
+    if (t.tradition && libMeta && libMeta.originality_note) {
+      const orig = document.createElement('div');
+      orig.className = 'mt-2 text-[12px] leading-snug text-slate-600';
+      orig.textContent = libMeta.originality_note;
+      trackNote.appendChild(orig);
+    }
 
     // The honesty line, shown only where a frequency claim could be inferred.
     if ((t.beat_hz != null || t.frequency_hz != null) && libMeta && libMeta.frequency_disclaimer) {
@@ -232,6 +304,7 @@
     countdownCard.hidden = !running;
     startBtn.hidden = running;
     trackSelect.disabled = running;
+    if (familyTabs) familyTabs.style.opacity = running ? '0.45' : '';
     timerInput.disabled = running;
     if (moon) moon.classList.toggle('is-playing', running);
   }

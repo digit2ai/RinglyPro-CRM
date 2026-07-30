@@ -16,108 +16,16 @@
 
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
-const SR = 44100;
+// Every DSP primitive lives in lib-dsp.js, shared with generate-instrumental.js.
+const {
+  SR, mulberry32, whiteNoise, onePoleLowpass, onePoleHighpass, brownNoise,
+  wrapCrossfade, peakNormalize, wrapAddStereo, wrapAddMono, integerize, makeEncoder,
+} = require('./lib-dsp');
+
 const OUT_DIR = path.join(__dirname, '..', 'public', 'audio');
-const TMP_DIR = path.join(require('os').tmpdir(), 'sueno-audio-build');
-
-fs.mkdirSync(OUT_DIR, { recursive: true });
-fs.mkdirSync(TMP_DIR, { recursive: true });
-
-// --- deterministic PRNG so a rebuild produces identical files ---
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// --- DSP helpers ---
-function whiteNoise(n, rnd) {
-  const x = new Float64Array(n);
-  for (let i = 0; i < n; i++) x[i] = rnd() * 2 - 1;
-  return x;
-}
-
-function onePoleLowpass(x, cutoffHz) {
-  const dt = 1 / SR;
-  const rc = 1 / (2 * Math.PI * cutoffHz);
-  const a = dt / (rc + dt);
-  const y = new Float64Array(x.length);
-  let prev = 0;
-  for (let i = 0; i < x.length; i++) { prev += a * (x[i] - prev); y[i] = prev; }
-  return y;
-}
-
-function onePoleHighpass(x, cutoffHz) {
-  const lp = onePoleLowpass(x, cutoffHz);
-  const y = new Float64Array(x.length);
-  for (let i = 0; i < x.length; i++) y[i] = x[i] - lp[i];
-  return y;
-}
-
-// Brown-ish noise: leaky integration of white noise.
-function brownNoise(n, rnd, leak) {
-  const y = new Float64Array(n);
-  let acc = 0;
-  const k = leak == null ? 0.997 : leak;
-  for (let i = 0; i < n; i++) { acc = acc * k + (rnd() * 2 - 1) * 0.05; y[i] = acc; }
-  return y;
-}
-
-// Seamless loop: generate D+T samples, then crossfade the extra tail T back
-// over the first T samples. y[D-1] and y[0] then come from adjacent samples of
-// one continuous signal, so the wrap is smooth.
-function wrapCrossfade(x, D, T) {
-  const y = new Float64Array(D);
-  for (let i = 0; i < D; i++) y[i] = x[i];
-  for (let k = 0; k < T; k++) {
-    const w = 0.5 - 0.5 * Math.cos((Math.PI * k) / T); // 0 -> 1
-    y[k] = x[k] * w + x[D + k] * (1 - w);
-  }
-  return y;
-}
-
-function peakNormalize(chans, target) {
-  let peak = 0;
-  for (const c of chans) for (let i = 0; i < c.length; i++) { const a = Math.abs(c[i]); if (a > peak) peak = a; }
-  if (peak === 0) return;
-  const g = target / peak;
-  for (const c of chans) for (let i = 0; i < c.length; i++) c[i] *= g;
-}
-
-function writeRawAndEncode(name, chans, bitrate) {
-  const n = chans[0].length;
-  const ch = chans.length;
-  const buf = Buffer.allocUnsafe(n * ch * 2);
-  let o = 0;
-  for (let i = 0; i < n; i++) {
-    for (let c = 0; c < ch; c++) {
-      let v = chans[c][i];
-      if (v > 1) v = 1; else if (v < -1) v = -1;
-      buf.writeInt16LE(Math.round(v * 32767), o); o += 2;
-    }
-  }
-  const raw = path.join(TMP_DIR, name + '.raw');
-  const mp3 = path.join(OUT_DIR, name + '.mp3');
-  fs.writeFileSync(raw, buf);
-  execFileSync('ffmpeg', [
-    '-y', '-hide_banner', '-loglevel', 'error',
-    '-f', 's16le', '-ar', String(SR), '-ac', String(ch), '-i', raw,
-    '-codec:a', 'libmp3lame', '-b:a', bitrate || '96k',
-    mp3,
-  ], { stdio: 'inherit' });
-  fs.unlinkSync(raw);
-  const kb = Math.round(fs.statSync(mp3).size / 1024);
-  console.log(`  ${name}.mp3  ${(n / SR).toFixed(0)}s  ${ch}ch  ${kb} KB`);
-}
+const writeRawAndEncode = makeEncoder(OUT_DIR, 'sueno-audio-build');
 
 // =====================================================
 // 1. Lluvia suave — filtered noise rain + sparse droplets + slow gusts
@@ -293,24 +201,6 @@ function ondasTheta(seconds) {
 // starts near the end simply continues over the loop point. That makes these
 // tracks seamless by construction: no crossfade, no seam to hide.
 // =====================================================
-
-// Add a mono event into a stereo pair at a given pan (0 = left, 1 = right).
-function wrapAddStereo(L, R, startSample, samples, pan) {
-  const D = L.length;
-  const gl = 1 - pan, gr = pan;
-  for (let k = 0; k < samples.length; k++) {
-    const idx = ((startSample + k) % D + D) % D;
-    L[idx] += samples[k] * gl;
-    R[idx] += samples[k] * gr;
-  }
-}
-
-function wrapAddMono(y, startSample, samples) {
-  const D = y.length;
-  for (let k = 0; k < samples.length; k++) {
-    y[((startSample + k) % D + D) % D] += samples[k];
-  }
-}
 
 // A struck bowl. Real singing bowls are INHARMONIC — the partials are not
 // integer multiples — and each mode is split into a close pair, which is what
@@ -673,12 +563,6 @@ function olasDePlaya(seconds) {
 // the named frequencies. The metadata describes WHAT EACH TRACK IS, never a
 // medical, psychological or financial outcome. See data/tracks.json.
 // =====================================================
-
-function integerize(f, seconds) {
-  // Snap to an exact whole number of cycles over the loop, so the wrap is
-  // sample-continuous and the tone never clicks at the loop point.
-  return Math.max(1, Math.round(f * seconds)) / seconds;
-}
 
 // One binaural voice: `carrier` in the left ear, `carrier + beat` in the right.
 // opts.sub adds a quiet octave below, which keeps high carriers from turning

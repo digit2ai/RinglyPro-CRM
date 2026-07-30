@@ -21,19 +21,27 @@ function loadLibrary() {
   return cache;
 }
 
-function categoryLabel(lib, id, en) {
-  const cat = (lib.categories || []).find((c) => c.id === id);
-  if (!cat) return id;
-  return en ? (cat.label_en || cat.label) : cat.label;
+function findCategory(lib, id) {
+  return (lib.categories || []).find((c) => c.id === id) || null;
+}
+
+function label(obj, en, fallback) {
+  if (!obj) return fallback;
+  return en ? (obj.label_en || obj.label) : obj.label;
 }
 
 function project(track, lang, lib) {
   const en = lang === 'en';
+  const cat = findCategory(lib, track.category);
+  const fam = cat ? (lib.families || []).find((f) => f.id === cat.family) : null;
   const out = {
     id: track.id,
     title: en ? (track.title_en || track.title) : track.title,
     category: track.category,
-    category_label: categoryLabel(lib, track.category, en),
+    category_label: label(cat, en, track.category),
+    // Two-level taxonomy: family (Wave / Instrumental) then category.
+    family: cat ? cat.family : null,
+    family_label: label(fam, en, cat ? cat.family : null),
     url: track.url,
     duration_sec: track.duration_sec,
     loop: track.loop !== false,
@@ -48,6 +56,9 @@ function project(track, lang, lib) {
   if (track.carrier_hz != null) out.carrier_hz = track.carrier_hz;
   if (track.frequency_hz != null) out.frequency_hz = track.frequency_hz;
   if (track.not_for_sleep) out.not_for_sleep = true;
+  // The instrument tradition a synthesized piece is written in. Never an artist
+  // or album name — these are original compositions, not recordings.
+  if (track.tradition) out.tradition = track.tradition;
   return out;
 }
 
@@ -80,10 +91,22 @@ module.exports = function trackRoutes() {
         // psychological or financial claim is made anywhere in this app.
         frequency_disclaimer: en
           ? lib.frequency_disclaimer_en : lib.frequency_disclaimer,
+        // The instrumental family is synthesized, not sampled. Said out loud.
+        originality_note: en ? lib.originality_note_en : lib.originality_note,
         units_note: lib.units_note,
         count: lib.tracks.length,
+        families: (lib.families || []).map((f) => ({
+          id: f.id,
+          label: en ? (f.label_en || f.label) : f.label,
+          blurb: en ? (f.blurb_en || f.blurb) : f.blurb,
+          count: lib.tracks.filter((t) => {
+            const c = findCategory(lib, t.category);
+            return c && c.family === f.id;
+          }).length,
+        })),
         categories: (lib.categories || []).filter((c) => used.has(c.id)).map((c) => ({
           id: c.id,
+          family: c.family,
           label: en ? (c.label_en || c.label) : c.label,
           count: lib.tracks.filter((t) => t.category === c.id).length,
         })),

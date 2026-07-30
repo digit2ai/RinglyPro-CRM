@@ -36,13 +36,24 @@ function check(name, condition, detail) {
 
 let BASE = '';
 
-function request(method, urlPath, { headers, body, raw } = {}) {
+function request(method, urlPath, opts = {}) {
+  // One retry on a transport-level reset. In a long-running harness a reset is
+  // an artefact of the harness, not a finding about the app.
+  return rawRequest(method, urlPath, opts).catch((err) => {
+    if (!/ECONNRESET|EPIPE|socket hang up/i.test(String(err && err.message))) throw err;
+    return new Promise((r) => setTimeout(r, 250)).then(() => rawRequest(method, urlPath, opts));
+  });
+}
+
+function rawRequest(method, urlPath, { headers, body, raw } = {}) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null
       : (typeof body === 'string' ? body : JSON.stringify(body));
     const hdrs = Object.assign({}, headers);
     if (payload !== null && !hdrs['Content-Type'] && !raw) hdrs['Content-Type'] = 'application/json';
-    const req = http.request(BASE + urlPath, { method, headers: hdrs }, (res) => {
+    // agent:false => a fresh connection per call, so no pooled socket can go
+    // stale between the harness's sections.
+    const req = http.request(BASE + urlPath, { method, headers: hdrs, agent: false }, (res) => {
       let data = '';
       res.setEncoding('utf8');
       res.on('data', (c) => { data += c; });
@@ -363,21 +374,84 @@ async function run() {
     check('player groups the selector into optgroups',
       /optgroup/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
 
-    // Measure the audio rather than trusting the label: decode each binaural
-    // MP3 and confirm each ear carries the tone the metadata advertises. Needs
-    // ffmpeg, so it is skipped LOUDLY where ffmpeg is absent (e.g. on Render)
-    // rather than silently passing.
-    const binauralCheck = require('./tools/verify-binaural').verify();
-    if (binauralCheck.skipped) {
-      console.log(`  [SKIP] binaural frequency measurement -> ${binauralCheck.skipped}`);
-      skipped.push('binaural frequency measurement (' + binauralCheck.skipped + ')');
-    } else {
-      const bad = binauralCheck.results.filter((x) => !x.ok);
-      check(`measured: all ${binauralCheck.results.length} binaural tracks carry their labelled frequencies`,
-        bad.length === 0 && binauralCheck.results.length >= 12,
-        bad.length ? bad.map((x) => x.id + ' (' + x.detail + ')').join('; ')
-          : 'only ' + binauralCheck.results.length + ' measured');
+  }
+
+  // ------------------------------------- two-family taxonomy + instrumental
+  console.log('\nTaxonomy · Wave Music vs Instrumental Music');
+  {
+    const r = await request('GET', '/api/v1/tracks');
+    const arr = Array.isArray(r.json) ? r.json : [];
+    const byId = new Map(arr.map((t) => [t.id, t]));
+    const m = await request('GET', '/api/v1/tracks/meta');
+
+    check('every track belongs to a family', arr.every((t) => !!t.family && !!t.family_label),
+      arr.filter((t) => !t.family).map((t) => t.id).join(', '));
+    check('exactly two families are published',
+      m.json && Array.isArray(m.json.families) && m.json.families.length === 2,
+      m.json && JSON.stringify((m.json.families || []).map((f) => f.id)));
+    check('family 1 is the wave library',
+      m.json && m.json.families[0].id === 'ondas' && /ondas/i.test(m.json.families[0].label));
+    check('family 2 is the instrumental library',
+      m.json && m.json.families[1].id === 'instrumental' && /instrumental/i.test(m.json.families[1].label));
+    const wave = arr.filter((t) => t.family === 'ondas');
+    const inst = arr.filter((t) => t.family === 'instrumental');
+    check('the original library moved wholesale into Wave Music', wave.length === 25, 'count ' + wave.length);
+    check('the instrumental family has every requested sub-family',
+      ['handpan-metal', 'viento-flautas', 'cuerdas', 'piano-atmosferico', 'mundo', 'naturaleza-instrumentos']
+        .every((c) => inst.some((t) => t.category === c)),
+      'present: ' + Array.from(new Set(inst.map((t) => t.category))).join(', '));
+    check('family counts in meta match the track list',
+      m.json && m.json.families[0].count === wave.length && m.json.families[1].count === inst.length);
+
+    // Every instrument named in the brief actually shipped.
+    const WANTED = {
+      'handpan-metal': ['handpan-kurd', 'tambor-de-lengua', 'gongs-lentos', 'kalimba', 'dulcimer-martillado'],
+      'viento-flautas': ['quena-andina', 'zampona-panpipes', 'flauta-nativa-americana', 'shakuhachi',
+        'bansuri-alap', 'silbato-irlandes'],
+      cuerdas: ['guitarra-espanola', 'arpa-celta', 'cello-ambiental', 'guqin', 'koto'],
+      'piano-atmosferico': ['piano-de-fieltro', 'piano-lento', 'ambiente-lento'],
+      mundo: ['gamelan-ceremonial', 'ney-sufi', 'zanfona-drone', 'marimba-y-vibrafono', 'oud-taqsim', 'duduk'],
+      'naturaleza-instrumentos': ['campanas-de-viento', 'handpan-y-lluvia'],
+    };
+    for (const [cat, ids] of Object.entries(WANTED)) {
+      const missing = ids.filter((id) => !byId.has(id));
+      check(`${cat}: all ${ids.length} instruments present`, missing.length === 0, 'missing ' + missing.join(', '));
+      const wrongCat = ids.filter((id) => byId.has(id) && byId.get(id).category !== cat);
+      check(`${cat}: every instrument filed under it`, wrongCat.length === 0, wrongCat.join(', '));
     }
+    check('every instrumental track names its tradition',
+      inst.every((t) => !!t.tradition), inst.filter((t) => !t.tradition).map((t) => t.id).join(', '));
+
+    // ORIGINALITY: synthesized, not sampled — and no artist or album is named,
+    // because naming one would imply a licence or an endorsement we do not have.
+    check('meta states the instrumental tracks are original, not recordings',
+      m.json && /no son grabaciones de ningún artista/i.test(String(m.json.originality_note)),
+      m.json && String(m.json.originality_note || '').slice(0, 60));
+    const mEn2 = await request('GET', '/api/v1/tracks/meta?lang=en');
+    check('originality note is translated for ?lang=en',
+      mEn2.json && /not recordings by any artist/i.test(String(mEn2.json.originality_note)));
+    const ARTISTS = ['nakai', 'einaudi', 'frahm', 'eno', 'satie', 'debussy', 'gasparyan', 'chaurasia',
+      'gregson', 'hammock', 'budd', 'richter', 'delago', 'waples', 'maher', 'marten', 'watson',
+      'hempton', 'arnalds', 'beving', 'stars of the lid', 'guðnadóttir'];
+    const nameHits = [];
+    for (const t of arr) {
+      const hay = ((t.title || '') + ' ' + (t.description || '') + ' ' + (t.tradition || '')).toLowerCase();
+      for (const a of ARTISTS) {
+        // Whole words only. A substring test matches "eno" inside the Spanish
+        // "menor" and fails on perfectly clean copy — the surname has to stand
+        // on its own to count as an attribution.
+        if (new RegExp('(^|[^\\p{L}])' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^\\p{L}]|$)', 'u').test(hay)) {
+          nameHits.push(t.id + ':' + a);
+        }
+      }
+    }
+    check('no artist or album name appears in the shipped library', nameHits.length === 0, nameHits.join(', '));
+    const html = await request('GET', '/');
+    check('the player surfaces the originality note',
+      /originality_note/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+    check('the player renders a family switch', /family-tabs/.test(html.text)
+      && /buildFamilyTabs/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+
   }
 
   // ---------------------------------------------- installable on the phone
@@ -419,6 +493,39 @@ async function run() {
     check('service worker caches audio cache-first', /endsWith\('\.mp3'\)/.test(sw.text));
     check('player registers the service worker',
       /serviceWorker\.register/.test(fs.readFileSync(path.join(__dirname, 'public', 'player.js'), 'utf8')));
+  }
+
+  // ---------------------------------------------------------------- measured
+  // Deliberately LAST: each of these spawns dozens of ffmpeg processes and
+  // blocks the event loop for minutes, which resets any HTTP socket opened
+  // afterwards. Nothing below this line talks to the server.
+  console.log('\\nMeasured audio (ffmpeg) · frequencies and loudness');
+  {
+    const binaural = require('./tools/verify-binaural').verify();
+    if (binaural.skipped) {
+      console.log(`  [SKIP] binaural frequency measurement -> ${binaural.skipped}`);
+      skipped.push('binaural frequency measurement (' + binaural.skipped + ')');
+    } else {
+      const bad = binaural.results.filter((x) => !x.ok);
+      check(`all ${binaural.results.length} binaural tracks carry their labelled frequencies`,
+        bad.length === 0 && binaural.results.length >= 13,
+        bad.length ? bad.map((x) => x.id + ' (' + x.detail + ')').join('; ')
+          : 'only ' + binaural.results.length + ' measured');
+    }
+
+    const loud = require('./tools/verify-loudness').verify();
+    if (loud.skipped) {
+      console.log(`  [SKIP] library loudness match -> ${loud.skipped}`);
+      skipped.push('library loudness match (' + loud.skipped + ')');
+    } else {
+      check(`all ${loud.count} tracks sit within 3 LUFS of each other`,
+        loud.spread <= 3.0 && loud.count >= 52,
+        `spread ${loud.spread.toFixed(1)} LUFS across ${loud.count} files`
+        + ` (quietest ${loud.quietest.id} ${loud.quietest.lufs.toFixed(1)},`
+        + ` loudest ${loud.loudest.id} ${loud.loudest.lufs.toFixed(1)})`);
+      check('no track clips', loud.maxTruePeak <= -0.5,
+        'worst true peak ' + loud.maxTruePeak.toFixed(2) + ' dBTP');
+    }
   }
 
   // --- tidy up after ourselves -------------------------------------------------

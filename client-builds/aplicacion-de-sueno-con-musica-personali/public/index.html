@@ -108,6 +108,10 @@
 
   <!-- controls -->
   <div class="card rounded-3xl p-7">
+    <!-- Family switch. With 52 tracks a single dropdown is a wall of text, so
+         the family narrows it first and the optgroups organise what is left. -->
+    <div id="family-tabs" class="mb-5 grid grid-cols-2 gap-2" role="tablist" aria-label="{{label_family}}"></div>
+
     <label for="track-select" id="label-track"
            class="mono block text-[11px] uppercase tracking-[.2em] text-slate-500 mb-2">{{label_track}}</label>
     <select id="track-select"

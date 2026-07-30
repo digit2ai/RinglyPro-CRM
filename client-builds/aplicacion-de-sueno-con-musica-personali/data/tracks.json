@@ -1,18 +1,94 @@
 {
-  "library_version": "2.0.0",
+  "library_version": "3.0.0",
   "license_note": "Todas las pistas fueron sintetizadas por Digit2AI para esta aplicación. Libres de regalías, sin dependencia de CDN externos. / All tracks were synthesized by Digit2AI for this app. Royalty-free, no external CDN dependency.",
   "frequency_disclaimer": "Las pistas de ondas cerebrales y frecuencias son audio de relajación construido sobre la frecuencia indicada. Los latidos binaurales requieren audífonos: cada oído recibe un tono distinto y la diferencia se percibe como un pulso lento. No son un tratamiento médico ni psicológico, y no prometen ningún resultado de salud ni financiero.",
   "frequency_disclaimer_en": "The brainwave and frequency tracks are relaxation audio built on the stated frequency. Binaural beats require headphones: each ear receives a different tone and the difference is perceived as a slow pulse. They are not a medical or psychological treatment, and they promise no health or financial outcome.",
   "units_note": "Las bandas cerebrales se miden en hercios (Hz), no en megahercios. Delta 0,5-4 Hz · Theta 4-8 Hz · Alfa 8-12 Hz · Beta 12-30 Hz · Gamma 30-100 Hz. / Brainwave bands are measured in hertz (Hz), not megahertz. Delta 0.5-4 Hz, theta 4-8, alpha 8-12, beta 12-30, gamma 30-100.",
   "categories": [
-    { "id": "naturaleza",       "label": "Naturaleza",            "label_en": "Nature" },
-    { "id": "playa-y-agua",     "label": "Playa y agua",          "label_en": "Beach and water" },
-    { "id": "meditacion",       "label": "Meditación y cuencos",  "label_en": "Meditation and bowls" },
-    { "id": "musica-natural",   "label": "Música de la naturaleza", "label_en": "Music from nature" },
-    { "id": "ondas-cerebrales", "label": "Ondas cerebrales",      "label_en": "Brainwave bands" },
-    { "id": "frecuencias",      "label": "Frecuencias y propósito", "label_en": "Frequencies and purpose" },
-    { "id": "respiracion",      "label": "Respiración",           "label_en": "Breathing" },
-    { "id": "ruido",            "label": "Ruido y máscaras",      "label_en": "Noise and masking" }
+    {
+      "id": "naturaleza",
+      "label": "Naturaleza",
+      "label_en": "Nature",
+      "family": "ondas"
+    },
+    {
+      "id": "playa-y-agua",
+      "label": "Playa y agua",
+      "label_en": "Beach and water",
+      "family": "ondas"
+    },
+    {
+      "id": "meditacion",
+      "label": "Meditación y cuencos",
+      "label_en": "Meditation and bowls",
+      "family": "ondas"
+    },
+    {
+      "id": "musica-natural",
+      "label": "Música de la naturaleza",
+      "label_en": "Music from nature",
+      "family": "ondas"
+    },
+    {
+      "id": "ondas-cerebrales",
+      "label": "Ondas cerebrales",
+      "label_en": "Brainwave bands",
+      "family": "ondas"
+    },
+    {
+      "id": "frecuencias",
+      "label": "Frecuencias y propósito",
+      "label_en": "Frequencies and purpose",
+      "family": "ondas"
+    },
+    {
+      "id": "respiracion",
+      "label": "Respiración",
+      "label_en": "Breathing",
+      "family": "ondas"
+    },
+    {
+      "id": "ruido",
+      "label": "Ruido y máscaras",
+      "label_en": "Noise and masking",
+      "family": "ondas"
+    },
+    {
+      "id": "handpan-metal",
+      "family": "instrumental",
+      "label": "Handpan y resonancia metálica",
+      "label_en": "Handpan and metal resonance"
+    },
+    {
+      "id": "viento-flautas",
+      "family": "instrumental",
+      "label": "Viento y flautas",
+      "label_en": "Wind and flute"
+    },
+    {
+      "id": "cuerdas",
+      "family": "instrumental",
+      "label": "Cuerdas",
+      "label_en": "Strings"
+    },
+    {
+      "id": "piano-atmosferico",
+      "family": "instrumental",
+      "label": "Piano y atmosférico",
+      "label_en": "Piano and atmospheric"
+    },
+    {
+      "id": "mundo",
+      "family": "instrumental",
+      "label": "Mundo",
+      "label_en": "World"
+    },
+    {
+      "id": "naturaleza-instrumentos",
+      "family": "instrumental",
+      "label": "Naturaleza con instrumentos",
+      "label_en": "Nature-blended"
+    }
   ],
   "tracks": [
     {
@@ -362,6 +438,375 @@
       "license": "Digit2AI original — royalty-free",
       "description": "Máscara sonora plana y grave para tapar ruido del entorno.",
       "description_en": "Flat, low-end sound mask that covers ambient noise."
+    },
+    {
+      "id": "handpan-kurd",
+      "title": "Handpan · escala Kurd",
+      "title_en": "Handpan · Kurd Scale",
+      "category": "handpan-metal",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/handpan-kurd.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "handpan",
+      "description": "Handpan en re menor. Cada nota está afinada en 1:2:3, por eso suena melódico y no atmosférico.",
+      "description_en": "Handpan in D minor. Each tonefield is tuned 1:2:3, which is why it sounds melodic rather than atmospheric."
+    },
+    {
+      "id": "tambor-de-lengua",
+      "title": "Tambor de lengua de acero",
+      "title_en": "Steel Tongue Drum",
+      "category": "handpan-metal",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/tambor-de-lengua.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "steel tongue drum",
+      "description": "Más cálido y con menos ataque que el handpan: mazo suave sobre escala akebono.",
+      "description_en": "Warmer and less percussive than a handpan: a soft mallet over an akebono scale."
+    },
+    {
+      "id": "gongs-lentos",
+      "title": "Gongs lentos",
+      "title_en": "Slow Gongs",
+      "category": "handpan-metal",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/gongs-lentos.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "gong",
+      "description": "Gongs muy inarmónicos que florecen despacio y se disuelven, sobre un bordón grave.",
+      "description_en": "Deeply inharmonic gongs that bloom slowly and dissolve, over a low drone."
+    },
+    {
+      "id": "kalimba",
+      "title": "Kalimba",
+      "title_en": "Kalimba",
+      "category": "handpan-metal",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/kalimba.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "kalimba",
+      "description": "Piano de pulgar africano: láminas metálicas cortas, patrón suave y repetitivo.",
+      "description_en": "African thumb piano: short metal tines in a gentle, repetitive pattern."
+    },
+    {
+      "id": "dulcimer-martillado",
+      "title": "Dulcimer martillado",
+      "title_en": "Hammered Dulcimer",
+      "category": "handpan-metal",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/dulcimer-martillado.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "hammered dulcimer",
+      "description": "Cuerdas golpeadas en pares ligeramente desafinados, el brillo propio del dulcimer.",
+      "description_en": "Struck strings in slightly detuned pairs, the shimmer a dulcimer gets from its paired courses."
+    },
+    {
+      "id": "quena-andina",
+      "title": "Quena andina",
+      "title_en": "Andean Quena",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/quena-andina.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "quena",
+      "description": "Flauta de muesca andina en pentatónica menor, con el soplo y el quiebre característicos.",
+      "description_en": "Andean notched flute in minor pentatonic, with its characteristic breath and edge tone."
+    },
+    {
+      "id": "zampona-panpipes",
+      "title": "Zampoña",
+      "title_en": "Zampoña Panpipes",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/zampona-panpipes.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "zampoña",
+      "description": "Tradición de zampoña: la melodía doblada en octavas, como suena un banco de tubos.",
+      "description_en": "The panpipe tradition: the melody doubled in octaves, the way a bank of tubes sounds."
+    },
+    {
+      "id": "flauta-nativa-americana",
+      "title": "Flauta nativa americana",
+      "title_en": "Native American Flute",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/flauta-nativa-americana.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "Native American flute",
+      "description": "Registro grave y aire cálido en pentatónica menor, con adornos descendentes.",
+      "description_en": "A low register and warm air in minor pentatonic, with falling ornaments."
+    },
+    {
+      "id": "shakuhachi",
+      "title": "Shakuhachi",
+      "title_en": "Shakuhachi",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/shakuhachi.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "shakuhachi",
+      "description": "Flauta japonesa: más aire que tono, notas largas y silencios que forman la frase.",
+      "description_en": "Japanese flute: more air than tone, long notes, and silences that shape the phrase."
+    },
+    {
+      "id": "bansuri-alap",
+      "title": "Bansuri · alap lento",
+      "title_en": "Bansuri · Slow Alap",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/bansuri-alap.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "bansuri",
+      "description": "Bambú indio en un alap sin pulso, con deslizamientos hacia la nota sobre tanpura.",
+      "description_en": "Indian bamboo in a pulseless alap, sliding into each note over a tanpura drone."
+    },
+    {
+      "id": "silbato-irlandes",
+      "title": "Silbato irlandés",
+      "title_en": "Irish Low Whistle",
+      "category": "viento-flautas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/silbato-irlandes.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "Irish low whistle",
+      "description": "Aire lento irlandés en re, con los cortes y adornos de la tradición.",
+      "description_en": "A slow Irish air in D, with the cuts and ornaments of the tradition."
+    },
+    {
+      "id": "guitarra-espanola",
+      "title": "Guitarra española",
+      "title_en": "Spanish Guitar",
+      "category": "cuerdas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/guitarra-espanola.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "classical guitar",
+      "description": "Cuerdas de nylon en modo frigio, pulsadas despacio.",
+      "description_en": "Nylon strings in the Phrygian mode, plucked slowly."
+    },
+    {
+      "id": "arpa-celta",
+      "title": "Arpa celta",
+      "title_en": "Celtic Harp",
+      "category": "cuerdas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/arpa-celta.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "Celtic harp",
+      "description": "Arpegios rodados en pentatónica de sol, con la caja respondiendo a cada pulsación.",
+      "description_en": "Rolling arpeggios in G pentatonic, with the soundboard answering each pluck."
+    },
+    {
+      "id": "cello-ambiental",
+      "title": "Cello ambiental",
+      "title_en": "Ambient Cello",
+      "category": "cuerdas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/cello-ambiental.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "cello",
+      "description": "Arcadas largas en re menor sobre un bordón, ataque lento y vibrato leve.",
+      "description_en": "Long bows in D minor over a drone, slow attack and light vibrato."
+    },
+    {
+      "id": "guqin",
+      "title": "Guqin",
+      "title_en": "Guqin",
+      "category": "cuerdas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/guqin.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "guqin",
+      "description": "Cítara china: casi silencio. Notas escasas, cuerdas apagadas, largas pausas.",
+      "description_en": "Chinese zither: nearly silent. Sparse notes, damped strings, long pauses."
+    },
+    {
+      "id": "koto",
+      "title": "Koto",
+      "title_en": "Koto",
+      "category": "cuerdas",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/koto.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "koto",
+      "description": "Koto japonés en escala hirajoshi, pulsación brillante y adornos cortos.",
+      "description_en": "Japanese koto in the hirajoshi scale, bright plucks and short ornaments."
+    },
+    {
+      "id": "piano-de-fieltro",
+      "title": "Piano de fieltro",
+      "title_en": "Felt Piano",
+      "category": "piano-atmosferico",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/piano-de-fieltro.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "felt piano",
+      "description": "Piano neoclásico con fieltro sobre los macillos: pocos armónicos, ruido de mecánica audible.",
+      "description_en": "A neoclassical piano with felt over the hammers: few upper partials, audible key mechanics."
+    },
+    {
+      "id": "piano-lento",
+      "title": "Piano lento",
+      "title_en": "Slow Piano",
+      "category": "piano-atmosferico",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/piano-lento.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "neoclassical piano",
+      "description": "Piezas lentas en tres tiempos, al estilo de las gymnopédies. Melodía original, no una transcripción.",
+      "description_en": "Slow pieces in three, in the manner of the gymnopédies. An original melody, not a transcription."
+    },
+    {
+      "id": "ambiente-lento",
+      "title": "Ambiente lento",
+      "title_en": "Slow Ambient",
+      "category": "piano-atmosferico",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/ambiente-lento.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "ambient",
+      "description": "Capas de seno ligeramente desafinadas, cada una con su propio reloj, sobre aire grave.",
+      "description_en": "Slightly detuned sine layers, each on its own clock, over low air."
+    },
+    {
+      "id": "gamelan-ceremonial",
+      "title": "Gamelan ceremonial",
+      "title_en": "Ceremonial Gamelan",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/gamelan-ceremonial.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "gamelan",
+      "description": "Metalófonos de bronce en escala pelog. Los pares afinados a pocos hercios producen el ombak.",
+      "description_en": "Bronze metallophones in a pelog scale. Paired instruments a few hertz apart produce the ombak shimmer."
+    },
+    {
+      "id": "ney-sufi",
+      "title": "Ney sufí",
+      "title_en": "Sufi Ney",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/ney-sufi.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "ney",
+      "description": "Flauta de caña turca en makam, muy aireada, con notas largas sobre bordón.",
+      "description_en": "Turkish reed flute in makam, very airy, long tones over a drone."
+    },
+    {
+      "id": "zanfona-drone",
+      "title": "Zanfona · bordón",
+      "title_en": "Hurdy-Gurdy Drone",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/zanfona-drone.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "hurdy-gurdy",
+      "description": "Rueda continua con el puente zumbador pulsando al giro de la manivela, no a la melodía.",
+      "description_en": "A continuous wheel drone with the buzzing bridge pulsing to the crank, not to the melody."
+    },
+    {
+      "id": "marimba-y-vibrafono",
+      "title": "Marimba y vibráfono",
+      "title_en": "Marimba and Vibraphone",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/marimba-y-vibrafono.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "marimba, vibraphone",
+      "description": "Madera rápida y metal sostenido con trémolo de motor, en pentatónica de do.",
+      "description_en": "Fast wood and sustained metal with motor tremolo, in C pentatonic."
+    },
+    {
+      "id": "oud-taqsim",
+      "title": "Oud · taqsim",
+      "title_en": "Oud Taqsim",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/oud-taqsim.mp3",
+      "duration_sec": 48,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "oud",
+      "description": "Improvisación de laúd árabe en maqam hiyaz, sostenido corto, sobre la nota de reposo.",
+      "description_en": "Arabic lute improvisation in maqam hijaz, short sustain, over the resting tone."
+    },
+    {
+      "id": "duduk",
+      "title": "Duduk",
+      "title_en": "Duduk",
+      "category": "mundo",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/duduk.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "duduk",
+      "description": "Doble caña armenia: cálido y nasal, lento, con vibrato marcado sobre un segundo duduk.",
+      "description_en": "Armenian double reed: warm and nasal, slow, with strong vibrato over a second duduk holding the tonic."
+    },
+    {
+      "id": "campanas-de-viento",
+      "title": "Campanas de viento en el bosque",
+      "title_en": "Wind Chimes in the Forest",
+      "category": "naturaleza-instrumentos",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/campanas-de-viento.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "wind chimes",
+      "description": "Tubos metálicos tocados por el viento, en rachas, sobre ambiente de bosque.",
+      "description_en": "Metal tubes played by the wind, arriving in gusts, over forest ambience."
+    },
+    {
+      "id": "handpan-y-lluvia",
+      "title": "Handpan y lluvia",
+      "title_en": "Handpan and Rain",
+      "category": "naturaleza-instrumentos",
+      "url": "/aplicacion-de-sueno-con-musica-personali/audio/handpan-y-lluvia.mp3",
+      "duration_sec": 64,
+      "loop": true,
+      "license": "Digit2AI original — royalty-free",
+      "tradition": "handpan",
+      "description": "Handpan espaciado bajo lluvia ligera, con truenos muy lejanos.",
+      "description_en": "Spacious handpan under light rain, with thunder well in the distance."
     }
-  ]
+  ],
+  "families": [
+    {
+      "id": "ondas",
+      "label": "Música de ondas",
+      "label_en": "Wave Music",
+      "blurb": "Naturaleza, ruido, ondas cerebrales y frecuencias.",
+      "blurb_en": "Nature, noise, brainwave bands and frequencies."
+    },
+    {
+      "id": "instrumental",
+      "label": "Música instrumental",
+      "label_en": "Instrumental Music",
+      "blurb": "Instrumentos acústicos sintetizados: handpan, flautas, cuerdas, piano y mundo.",
+      "blurb_en": "Synthesized acoustic instruments: handpan, flutes, strings, piano and world."
+    }
+  ],
+  "originality_note": "Las pistas instrumentales son composiciones originales de Digit2AI sintetizadas desde cero en el lenguaje de cada instrumento. No son grabaciones de ningún artista, sello o álbum, y no contienen material muestreado de terceros.",
+  "originality_note_en": "The instrumental tracks are original Digit2AI compositions, synthesized from scratch in the idiom of each instrument. They are not recordings by any artist, label or album, and contain no third-party sampled material."
 }

@@ -31,7 +31,7 @@ const healthRoutes = require('./routes/health');
 const trackRoutes = require('./routes/tracks');
 const sessionRoutes = require('./routes/sessions');
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const SERVICE = 'aplicacion-de-sueno-con-musica-personali';
 const MOUNT = '/' + SERVICE;
 
@@ -84,6 +84,7 @@ const SHELL = {
     html_title: 'Modo Noche · Música para dormir',
     h1: 'Modo Noche',
     tagline: 'Dos toques y a dormir. El audio se desvanece y se apaga solo.',
+    label_family: 'Familia',
     label_track: 'Pista',
     label_timer: 'Apagado automático (minutos)',
     hint_timer: 'La música baja de volumen durante los últimos 5 minutos y se detiene sola.',
@@ -106,6 +107,7 @@ const SHELL = {
     html_title: 'Night Mode · Sleep music',
     h1: 'Night Mode',
     tagline: 'Two taps and you are asleep. The audio fades and shuts itself off.',
+    label_family: 'Family',
     label_track: 'Track',
     label_timer: 'Auto-off (minutes)',
     hint_timer: 'Volume fades over the final 5 minutes, then playback stops on its own.',
