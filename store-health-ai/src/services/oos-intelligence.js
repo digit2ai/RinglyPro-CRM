@@ -65,12 +65,63 @@ let schemaPromise = null;
 function ensureSchema() {
   if (schemaPromise) return schemaPromise;
   schemaPromise = (async () => {
+    const sqlPath = path.join(__dirname, '..', '..', 'migrations', '20260801-oos-intelligence.sql');
+    let sql;
     try {
-      const sqlPath = path.join(__dirname, '..', '..', 'migrations', '20260801-oos-intelligence.sql');
-      await sequelize.query(fs.readFileSync(sqlPath, 'utf8'));
+      sql = fs.readFileSync(sqlPath, 'utf8');
+    } catch (err) {
+      console.error('[oos-intelligence] migration file unreadable:', err.message);
+      return false;
+    }
+
+    // Run statement by statement, each independently.
+    //
+    // Sending the whole file as one query puts every statement in a single
+    // implicit transaction: one failure rolls back ALL of them. That is exactly
+    // what happened in production — a legacy-column ALTER that does not apply to
+    // every environment aborted the batch, so `metadata` was never added and
+    // every OOS read 500'd with 'column "metadata" does not exist'. Isolating
+    // statements means an inapplicable one costs only itself.
+    const statements = sql
+      .split(/;\s*(?:\r?\n|$)/)
+      .map((s) => s.replace(/^\s*--.*$/gm, '').trim())
+      .filter((s) => s.length > 0);
+
+    let applied = 0;
+    const failures = [];
+    for (const stmt of statements) {
+      try {
+        await sequelize.query(stmt);
+        applied += 1;
+      } catch (err) {
+        failures.push(err.message.split('\n')[0]);
+      }
+    }
+
+    if (failures.length) {
+      console.error(`[oos-intelligence] schema top-up: ${applied}/${statements.length} applied, ${failures.length} skipped:`);
+      failures.forEach((f) => console.error('   - ' + f));
+    } else {
+      console.log(`[oos-intelligence] schema top-up: ${applied}/${statements.length} statements applied`);
+    }
+
+    // Success is defined by the columns the service actually needs existing,
+    // not by every statement succeeding — some are legacy fixes that simply do
+    // not apply in a given environment.
+    try {
+      const [rows] = await sequelize.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name='inventory_levels' AND column_name IN ('metadata','quantity_on_hand','average_daily_sales','snapshot_date','product_name')"
+      );
+      const have = new Set(rows.map((r) => r.column_name));
+      const need = ['metadata', 'quantity_on_hand', 'average_daily_sales', 'snapshot_date', 'product_name'];
+      const missing = need.filter((c) => !have.has(c));
+      if (missing.length) {
+        console.error('[oos-intelligence] still missing columns:', missing.join(', '));
+        return false;
+      }
       return true;
     } catch (err) {
-      console.error('[oos-intelligence] schema top-up skipped:', err.message);
+      console.error('[oos-intelligence] schema verification failed:', err.message);
       return false;
     }
   })();
