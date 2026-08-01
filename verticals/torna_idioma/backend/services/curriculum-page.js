@@ -244,7 +244,7 @@ function render({ courses, lessons, packs }, { showAnswers }) {
 
     return `<section class="module sec" id="m${c.id}" data-i="${i}">
   <header class="m-head">
-    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><button class="play-sec" data-play="${i}" type="button">&#9658; Escuchar</button><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} lessons</span>${c.is_published ? '<span class="chip live">published</span>' : '<span class="chip draft">draft</span>'}</div>
+    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><button class="play-sec" data-play="${i}" type="button"><span class="i18n" data-es="&#9658; Escuchar" data-en="&#9658; Listen">&#9658; Listen</span></button><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} lessons</span>${c.is_published ? '<span class="chip live">published</span>' : '<span class="chip draft">draft</span>'}</div>
     <h2>${esc(String(c.title_en || '').replace(/^Module \d+:\s*/, ''))}</h2>
     <p class="m-es">${esc(String(c.title_es || '').replace(/^Módulo \d+:\s*/, ''))} &middot; <span class="fil">${esc(String(c.title_fil || '').replace(/^Module \d+:\s*/, ''))}</span></p>
     <p class="m-desc">${esc(c.description_en)}</p>
@@ -261,9 +261,16 @@ function render({ courses, lessons, packs }, { showAnswers }) {
   // Index 0 is the intro. Numbers are spelled out so the voice reads them as
   // speech rather than as digits.
   const SPOKEN_N = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce'];
-  const spokenCefr = (raw) => String(raw)
-    .replace(/\+/g, ' plus').replace(/–/g, ' a ')
-    .replace(/A1/g, 'A uno').replace(/A2/g, 'A dos').replace(/B1/g, 'B uno');
+  // CEFR bands read as speech, per language: 'A1–A2' -> 'A uno a A dos' / 'A one to A two'.
+  const spokenCefr = (raw, locale) => {
+    const es = locale !== 'en';
+    return String(raw)
+      .replace(/\+/g, es ? ' plus' : ' plus')
+      .replace(/–/g, es ? ' a ' : ' to ')
+      .replace(/A1/g, es ? 'A uno' : 'A one')
+      .replace(/A2/g, es ? 'A dos' : 'A two')
+      .replace(/B1/g, es ? 'B uno' : 'B one');
+  };
 
   // The practice bank is written in English (it is authoring material for the app).
   // Isabel narrates in Spanish, so the per-module description is authored in Spanish
@@ -284,34 +291,67 @@ function render({ courses, lessons, packs }, { showAnswers }) {
     { grammar: 'los conectores de argumento y las hipótesis con si', can: 'sostener un argumento a lo largo de varios turnos y resumir dónde quedas', work: 'interpretación y liderazgo bilingüe' },
   ];
 
-  const segments = [
-    `Hola, soy la Profesora Isabel, la voz de Torna Idioma. Te voy a recorrer el programa completo: ${SPOKEN_N[courses.length] || courses.length} módulos, setenta y dos lecciones, del nivel A uno al B uno plus, unas trescientas sesenta horas de estudio. Cada lección trae un texto, práctica hablada todos los días y una evaluación al final. Desde el módulo siete se añade el español del trabajo.`,
-  ].concat(courses.map((c, i) => {
-    const ls = byCourse[c.id] || [];
-    const es = ES_MODULE[i] || {};
-    const title = String(c.title_es || c.title_en).replace(/^Módulo \d+:\s*|^Module \d+:\s*/, '');
-    const grammar = es.grammar ? ` La gramática que lo sostiene es ${es.grammar}.` : '';
-    const can = es.can ? ` Al terminar podrás ${es.can}.` : '';
-    const work = es.work ? ` Aquí se añade el español del trabajo: ${es.work}.` : '';
-    return `Módulo ${SPOKEN_N[i + 1] || (i + 1)}: ${title}. Nivel ${spokenCefr(cefr(c.description_en))}, ${ls.length === 6 ? 'seis' : ls.length} lecciones y unas treinta horas.${grammar}${can}${work}`;
-  }));
+  // The English half of the same descriptions. Ava reads these when the page is in
+  // English; Dalia reads the Spanish ones. A Spanish voice narrating an English page
+  // was the state this replaced.
+  const EN_MODULE = [
+    { grammar: 'ser and estar, and the difference between tú and usted', can: 'greet and say goodbye at the right level of formality, and introduce yourself and your family' },
+    { grammar: 'the present tense and reflexive verbs', can: 'describe your routine with times and talk about your plans for the week' },
+    { grammar: 'the verb gustar and the indirect object', can: 'order food, ask prices, and say what you like and dislike' },
+    { grammar: 'prepositions of place and the imperative', can: 'ask for and follow directions, and buy a ticket' },
+    { grammar: 'the imperfect for the habitual past', can: 'invite, accept or decline politely, and say how life used to be' },
+    { grammar: 'the verb doler, and recommendations with deber and tener que', can: 'describe a symptom and understand a health recommendation' },
+    { grammar: 'the present perfect for talking about experience', can: 'describe your role and your professional experience', work: 'contact centre and customer service' },
+    { grammar: 'the contrast between preterite and imperfect in narration', can: 'describe a Filipino tradition and compare it with a Latin American celebration', work: 'cultural register across markets' },
+    { grammar: 'the formal imperative and sequencing connectors', can: 'explain a technical problem and give step by step instructions', work: 'tier one technical support' },
+    { grammar: 'the conditional for politeness', can: 'handle a booking, a problem with it, and a complaint', work: 'travel and hospitality accounts' },
+    { grammar: 'the subjunctive after opinion and doubt', can: 'give an opinion, support it with reasons, and disagree without being rude', work: 'healthcare coordination and insurance' },
+    { grammar: 'connectors of argument and hypotheticals with si', can: 'sustain an argument over several turns and summarise where you stand', work: 'interpretation and bilingual team lead' },
+  ];
+
+  const buildSegments = (locale) => {
+    const isEs = locale === 'es';
+    const intro = isEs
+      ? `Hola, soy la Profesora Isabel, la voz de Torna Idioma. Te voy a recorrer el programa completo: ${SPOKEN_N[courses.length] || courses.length} módulos, setenta y dos lecciones, del nivel A uno al B uno plus, unas trescientas sesenta horas de estudio. Cada lección trae un texto, práctica hablada todos los días y una evaluación al final. Desde el módulo siete se añade el español del trabajo.`
+      : `Hello, I am Profesora Isabel, the voice of Torna Idioma. Let me walk you through the whole programme: ${courses.length} modules, seventy two lessons, from level A one to B one plus, about three hundred and sixty hours of study. Every lesson carries a reading, spoken practice every day, and an assessment at the end. From module seven, workplace Spanish is added.`;
+
+    return [intro].concat(courses.map((c, i) => {
+      const ls = byCourse[c.id] || [];
+      const m = (isEs ? ES_MODULE : EN_MODULE)[i] || {};
+      if (isEs) {
+        const title = String(c.title_es || c.title_en).replace(/^Módulo \d+:\s*|^Module \d+:\s*/, '');
+        return `Módulo ${SPOKEN_N[i + 1] || (i + 1)}: ${title}. Nivel ${spokenCefr(cefr(c.description_en), 'es')}, ${ls.length === 6 ? 'seis' : ls.length} lecciones y unas treinta horas.`
+          + (m.grammar ? ` La gramática que lo sostiene es ${m.grammar}.` : '')
+          + (m.can ? ` Al terminar podrás ${m.can}.` : '')
+          + (m.work ? ` Aquí se añade el español del trabajo: ${m.work}.` : '');
+      }
+      const title = String(c.title_en).replace(/^Module \d+:\s*/, '');
+      return `Module ${i + 1}: ${title}. Level ${spokenCefr(cefr(c.description_en), 'en')}, ${ls.length} lessons, about thirty hours.`
+        + (m.grammar ? ` The grammar holding it up is ${m.grammar}.` : '')
+        + (m.can ? ` By the end you will be able to ${m.can}.` : '')
+        + (m.work ? ` Workplace Spanish is added here: ${m.work}.` : '');
+    }));
+  };
+
+  const segmentsEs = buildSegments('es');
+  const segmentsEn = buildSegments('en');
 
   const orb = `
 <section class="isabel" id="isabel">
  <div class="isabel-in">
   <div class="orb" id="orb" aria-hidden="true"></div>
   <div class="i-meta">
-    <div class="i-name">Profesora Isabel &middot; Voz AI de Torna Idioma</div>
-    <div class="i-role">Tu guía por los ${courses.length} módulos del programa</div>
+    <div class="i-name i18n" data-es="Profesora Isabel &middot; Voz AI de Torna Idioma" data-en="Profesora Isabel &middot; Torna Idioma AI Voice">Profesora Isabel &middot; Torna Idioma AI Voice</div>
+    <div class="i-role i18n" data-es="Tu guía por los ${courses.length} módulos del programa" data-en="Your guide through all ${courses.length} modules">Your guide through all ${courses.length} modules</div>
     <div class="i-controls">
-      <button class="i-btn primary" id="playAll" type="button">&#9658; Que la Profesora Isabel lo explique todo</button>
-      <button class="i-btn" id="pause" type="button" disabled>&#10074;&#10074; Pausar</button>
-      <button class="i-btn" id="stop" type="button" disabled>&#9632; Detener</button>
+      <button class="i-btn primary" id="playAll" type="button">&#9658; <span class="i18n" data-es="Que la Profesora Isabel lo explique todo" data-en="Let Profesora Isabel explain it all">Let Profesora Isabel explain it all</span></button>
+      <button class="i-btn" id="pause" type="button" disabled>&#10074;&#10074; <span class="i18n" data-es="Pausar" data-en="Pause">Pause</span></button>
+      <button class="i-btn" id="stop" type="button" disabled>&#9632; <span class="i18n" data-es="Detener" data-en="Stop">Stop</span></button>
     </div>
-    <div class="i-status" id="status">Pulsa el botón y la Profesora Isabel te recorrerá el programa completo.</div>
+    <div class="i-status" id="status"></div>
     <div class="i-pick">
-      <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
-      &nbsp;&middot;&nbsp; Acento:
+      <label><input type="checkbox" id="neuralToggle" checked> <span class="i18n" data-es="Voz neural HD" data-en="HD neural voice">HD neural voice</span></label>
+      &nbsp;&middot;&nbsp; <span class="i18n" data-es="Acento:" data-en="Accent:">Accent:</span>
       <select id="voiceSel">
         <option value="dalia" selected>M&eacute;xico (Dalia)</option>
         <option value="paloma">EE. UU. (Paloma)</option>
@@ -333,45 +373,48 @@ function render({ courses, lessons, packs }, { showAnswers }) {
 <meta name="description" content="The full Torna Idioma Spanish curriculum: ${courses.length} modules, ${lessons.length} lessons, CEFR A1 to B1+.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/Torna_Idioma/favicon.ico">
+<meta name="theme-color" content="#0F1A2E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Canonical Torna Idioma theme — same tokens as /orientation and the login page. */
 :root{
-  --paper:#F3F4F7; --surface:#FFFFFF; --surface-2:#F8F9FB;
-  --ink:#141824; --ink-2:#3D4557; --muted:#6B7387;
-  --line:#DFE2EA; --line-soft:#EAECF2;
-  --accent:#2E4A8F; --accent-soft:#E7EBF6;
-  --ochre:#8A5E12; --ochre-soft:#F5EDDC;
-  --ok:#1D6B5E; --ok-soft:#E1F0EC;
-  --warn:#8E4426; --warn-soft:#F8E9E2;
-  --serif:ui-serif,"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --navy-0:#0F1A2E; --navy-1:#1B2A4A; --navy-2:#2A3F6A;
+  --gold:#C9A84C; --gold-lt:#E8D48B; --gold-dk:#8B6914;
+  --paper:#FFF8E7; --surface:#FFFFFF; --surface-2:#FFFDF6;
+  --ink:#2C2C2C; --ink-2:#5A5A5A; --muted:#8A8375;
+  --line:#F5E6C8; --line-soft:#FAF1DC;
+  --accent:#8B6914; --accent-soft:#F6EFDD;
+  --ochre:#8B6914; --ochre-soft:#F6EFDD;
+  --ok:#0F7A5A; --ok-soft:#E4F3ED;
+  --warn:#C41E3A; --warn-soft:#FBE9EC;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'Inter',system-ui,sans-serif;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --paper:#0E1017; --surface:#161923; --surface-2:#1B1F2B;
-    --ink:#E7E9F0; --ink-2:#B9BFCE; --muted:#8B93A6;
-    --line:#272C39; --line-soft:#20242F;
-    --accent:#93A9E4; --accent-soft:#1E2740;
-    --ochre:#D5A957; --ochre-soft:#2E2716;
-    --ok:#63C3B0; --ok-soft:#152A28;
-    --warn:#E0906E; --warn-soft:#2E1D16;
-  }
-}
+.masthead{background:linear-gradient(135deg,var(--navy-0) 0%,var(--navy-1) 40%,var(--navy-2) 100%);color:#fff;border-bottom:3px solid var(--gold)}
+.masthead .inner{max-width:1240px;margin:0 auto;padding:clamp(24px,5vw,40px) clamp(18px,4vw,28px) clamp(20px,4vw,30px)}
+.crest{width:66px;height:66px;border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.08);margin-bottom:18px}
+.crest span{font-family:var(--serif);font-size:10px;font-weight:700;color:var(--gold);text-align:center;line-height:1.15;letter-spacing:1.4}
+.kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-lt);margin:0 0 10px;font-weight:600}
+.masthead h1{font-family:var(--serif);font-weight:800;font-size:clamp(26px,4.4vw,40px);line-height:1.14;margin:0;text-wrap:balance}
+.sub{color:rgba(255,255,255,.72);margin:11px 0 0;max-width:64ch;font-size:clamp(14px,2.4vw,16px)}
+.stamp{font-size:12px;color:rgba(255,255,255,.45);margin:14px 0 0}
+.stamp a{color:var(--gold-lt)}
+.langbar{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0 0;align-items:center}
+.lang{font:inherit;font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid rgba(201,168,76,.45);background:rgba(201,168,76,.10);color:var(--gold-lt);cursor:pointer;min-height:38px}
+.lang:hover{border-color:var(--gold);color:#fff}
+.lang.on{background:linear-gradient(135deg,var(--gold-lt),var(--gold));border-color:transparent;color:var(--navy-0);font-weight:700}
+.lang:focus-visible{outline:2px solid var(--gold-lt);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;background:rgba(201,168,76,.30);border:1px solid rgba(201,168,76,.30);border-radius:10px;overflow:hidden;margin:22px 0 0}
+.stat{background:rgba(15,26,46,.55);padding:13px 15px}
+.stat .v{font-family:var(--serif);font-size:24px;line-height:1;font-variant-numeric:tabular-nums;color:var(--gold)}
+.stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:6px}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}
 .wrap{display:grid;grid-template-columns:264px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding:0 28px}
-.masthead{border-bottom:1px solid var(--line);background:var(--surface)}
-.masthead .inner{max-width:1240px;margin:0 auto;padding:34px 28px 26px}
-.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
-.masthead h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4vw,40px);line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.01em}
-.sub{color:var(--ink-2);margin:10px 0 0;max-width:66ch}
-.stamp{font-family:var(--mono);font-size:12px;color:var(--muted);margin:14px 0 0}
-.stamp a{color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:22px 0 0}
-.stat{background:var(--surface);padding:14px 16px}
-.stat .v{font-family:var(--serif);font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
-.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:7px}
 .rail{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;padding:28px 0 40px}
 .rail h2{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:500}
 .search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;margin-bottom:16px}
@@ -533,6 +576,11 @@ button.say.w-es{font-family:var(--serif);font-size:15px;color:var(--ink);display
     <h1>${courses.length} modules, ${lessons.length} lessons, CEFR A1 through B1+</h1>
     <p class="sub">Every module and lesson exactly as it is stored in the platform right now &mdash; lesson text, trilingual titles, and every assessment item. This page reads the live database, so it can never fall out of step with what a learner is served.</p>
     <p class="stamp">Rendered ${stamp} UTC &middot; ${published} of ${courses.length} modules published${showAnswers ? ' &middot; answer keys visible' : ''} &middot; <a href="/Torna_Idioma/">back to Torna Idioma</a></p>
+    <div class="langbar">
+      <button class="lang on" data-lang="en" type="button">English</button>
+      <button class="lang" data-lang="es" type="button">Espa&ntilde;ol</button>
+      <span class="stamp" id="langNote" style="margin:0"></span>
+    </div>
     <div class="stats">
       <div class="stat"><div class="v">${courses.length}</div><div class="k">Modules</div></div>
       <div class="stat"><div class="v">${lessons.length}</div><div class="k">Lessons</div></div>
@@ -578,7 +626,23 @@ ${orb}
    fallback so a blocked or cold endpoint degrades instead of going silent. The
    module currently being narrated is outlined and scrolled into view. */
 (function(){
-  var segments = ${JSON.stringify(segments)};
+  var SEGS = { en: ${JSON.stringify(segmentsEn)}, es: ${JSON.stringify(segmentsEs)} };
+  var NARRATION_VOICE = { en: 'ava', es: 'dalia' };   // Ava narrates English, Dalia Spanish
+  var lang = 'en';
+  var segments = SEGS[lang];
+
+  var UI = {
+    en: { idle: 'Tap the button and Profesora Isabel will walk you through the whole programme.',
+          prep: 'Preparing the neural voice…', done: 'Tour finished. Tap again to replay.',
+          paused: 'Paused.', one: 'Playing this module…',
+          speaking: function(i,n){ return 'Profesora Isabel is speaking… (' + i + ' of ' + n + ')'; },
+          note: 'Narration: Ava (English) · Spanish phrases always Dalia' },
+    es: { idle: 'Pulsa el botón y la Profesora Isabel te recorrerá el programa completo.',
+          prep: 'Preparando la voz neural…', done: 'Recorrido terminado. Pulsa de nuevo para repetir.',
+          paused: 'En pausa.', one: 'Reproduciendo este módulo…',
+          speaking: function(i,n){ return 'La Profesora Isabel está hablando… (' + i + ' de ' + n + ')'; },
+          note: 'Narración: Dalia (español) · las frases sueltas siempre en Dalia' }
+  };
 
   var synth = window.speechSynthesis;
   var orb = document.getElementById('orb');
@@ -612,10 +676,10 @@ ${orb}
   neuralToggle.addEventListener('change', setMode);
 
   function fetchNeural(idx){
-    var key = voiceName + '|' + idx;
+    var key = lang + '|' + voiceName + '|' + idx;
     if(audioCache[key]) return Promise.resolve(audioCache[key]);
     return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      body:JSON.stringify({text:segments[idx],voice:(lang==='es' ? voiceName : NARRATION_VOICE.en)})})
       .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
       .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
   }
@@ -624,9 +688,7 @@ ${orb}
     if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
   }
   function statusSpeaking(){
-    status.textContent = (mode==='all')
-      ? 'La Profesora Isabel está hablando… (' + (qi+1) + ' de ' + queue.length + ')'
-      : 'Reproduciendo este módulo…';
+    status.textContent = (mode==='all') ? UI[lang].speaking(qi+1, queue.length) : UI[lang].one;
   }
 
   function runQueue(token){
@@ -636,7 +698,7 @@ ${orb}
     if(mode==='all' || idx>0) setActive(idx);
     function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
     if(useNeural()){
-      status.textContent='Preparando la voz neural…';
+      status.textContent=UI[lang].prep;
       if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
       fetchNeural(idx).then(function(url){
         if(token!==runToken) return;
@@ -653,7 +715,7 @@ ${orb}
     playbackMode='browser';
     var u=new SpeechSynthesisUtterance(segments[idx]);
     if(browserVoice) u.voice=browserVoice;
-    u.lang = browserVoice ? browserVoice.lang : 'es-MX';
+    u.lang = lang==='es' ? 'es-MX' : 'en-US';
     u.rate=0.98; u.pitch=1.05;
     u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
     u.onend=onEnd; u.onerror=onEnd;
@@ -671,12 +733,12 @@ ${orb}
     runToken++; orb.classList.remove('speaking'); setActive(null);
     if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
     pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
-    status.textContent='Recorrido terminado. Pulsa de nuevo para repetir.';
+    status.textContent=UI[lang].done;
   }
 
   playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
   pauseBtn.addEventListener('click', function(){
-    if(!paused){ paused=true; pauseBtn.innerHTML='&#9658; Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.';
+    if(!paused){ paused=true; pauseBtn.innerHTML='&#9658; Reanudar'; orb.classList.remove('speaking'); status.textContent=UI[lang].paused;
       if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
     else { paused=false; pauseBtn.innerHTML='&#10074;&#10074; Pausar'; orb.classList.add('speaking'); statusSpeaking();
       if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
@@ -711,6 +773,31 @@ ${orb}
     u.rate=0.9;
     synth.speak(u);
   }
+
+
+  /* Language toggle — swaps the chrome, the narration script and the narration
+     voice together. Individual Spanish phrases stay in Dalia in both languages,
+     because they are Spanish either way. */
+  function applyLang(next){
+    lang = next;
+    segments = SEGS[lang];
+    document.documentElement.lang = lang;
+    Array.prototype.forEach.call(document.querySelectorAll('.i18n'), function(el){
+      var v = el.getAttribute('data-' + lang);
+      if (v != null) el.innerHTML = v;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+    });
+    var note = document.getElementById('langNote');
+    if (note) note.textContent = UI[lang].note;
+    finish();
+    status.textContent = UI[lang].idle;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.lang'), function(b){
+    b.addEventListener('click', function(){ applyLang(b.getAttribute('data-lang')); });
+  });
+  applyLang('en');
 
   window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
 })();
