@@ -184,8 +184,13 @@ app.use((req, res, next) => {
     if (p.startsWith('/api/tts')) return next();
     // Vanity path: tornaidioma.com/modules serves the curriculum in place, so the
     // address bar keeps the short URL instead of bouncing to /Torna_Idioma/modules.
-    // Same for /orientation, the student walkthrough.
-    const vanity = { '/modules': '/Torna_Idioma/modules', '/orientation': '/Torna_Idioma/orientation' };
+    // Same for /orientation, the student walkthrough, and /presentation, the
+    // Ava-narrated animated explainer.
+    const vanity = {
+      '/modules': '/Torna_Idioma/modules',
+      '/orientation': '/Torna_Idioma/orientation',
+      '/presentation': '/Torna_Idioma/presentation'
+    };
     const target = vanity[p] || vanity[p.replace(/\/$/, '')];
     if (target) {
       req.url = target + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
