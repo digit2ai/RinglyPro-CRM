@@ -180,8 +180,11 @@ app.use((req, res, next) => {
     if (p === '/Torna_Idioma' || p.startsWith('/Torna_Idioma/')) return next(); // app + SPA assets
     // Vanity path: tornaidioma.com/modules serves the curriculum in place, so the
     // address bar keeps the short URL instead of bouncing to /Torna_Idioma/modules.
-    if (p === '/modules' || p === '/modules/') {
-      req.url = '/Torna_Idioma/modules' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+    // Same for /orientation, the student walkthrough.
+    const vanity = { '/modules': '/Torna_Idioma/modules', '/orientation': '/Torna_Idioma/orientation' };
+    const target = vanity[p] || vanity[p.replace(/\/$/, '')];
+    if (target) {
+      req.url = target + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
       return next();
     }
     return res.redirect(302, '/Torna_Idioma/'); // everything else → the app

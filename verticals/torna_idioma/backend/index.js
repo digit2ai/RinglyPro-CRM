@@ -79,8 +79,11 @@ router.post('/api/activities/deepen', ownerOnly, async (req, res) => {
   }
 });
 
-// Serve React frontend
+// Student orientation walkthrough — public, unlisted (noindex), no login required.
 const distPath = path.join(__dirname, '../frontend/dist');
+router.get('/orientation', (req, res) => res.sendFile(path.join(distPath, 'orientation.html')));
+
+// Serve React frontend
 router.use(express.static(distPath));
 router.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'API endpoint not found' });

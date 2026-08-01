@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Torna Idioma — Student Orientation</title>
+<meta name="description" content="How to use Torna Idioma: a guided walkthrough of a lesson, from signing in to speaking aloud.">
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{
+  --paper:#F5F4F2; --surface:#FFFFFF; --surface-2:#FAF9F7;
+  --ink:#16161D; --ink-2:#3E3F4A; --muted:#71727E;
+  --line:#E2E0DC; --line-soft:#EDEBE7;
+  --crimson:#C41E3A; --crimson-soft:#FBE9EC;
+  --gold:#8A6D1F; --gold-soft:#F6EFDD;
+  --teal:#1D6B5E; --teal-soft:#E3F0ED;
+  --serif:ui-serif,"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#111116; --surface:#1A1A21; --surface-2:#20202A;
+    --ink:#EDECEF; --ink-2:#BFBEC7; --muted:#8D8D99;
+    --line:#2C2C36; --line-soft:#24242D;
+    --crimson:#F27A8C; --crimson-soft:#33161C;
+    --gold:#D8B65C; --gold-soft:#2C2415;
+    --teal:#5FC0AE; --teal-soft:#132925;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111116; --surface:#1A1A21; --surface-2:#20202A;
+  --ink:#EDECEF; --ink-2:#BFBEC7; --muted:#8D8D99;
+  --line:#2C2C36; --line-soft:#24242D;
+  --crimson:#F27A8C; --crimson-soft:#33161C;
+  --gold:#D8B65C; --gold-soft:#2C2415;
+  --teal:#5FC0AE; --teal-soft:#132925;
+}
+:root[data-theme="light"]{
+  --paper:#F5F4F2; --surface:#FFFFFF; --surface-2:#FAF9F7;
+  --ink:#16161D; --ink-2:#3E3F4A; --muted:#71727E;
+  --line:#E2E0DC; --line-soft:#EDEBE7;
+  --crimson:#C41E3A; --crimson-soft:#FBE9EC;
+  --gold:#8A6D1F; --gold-soft:#F6EFDD;
+  --teal:#1D6B5E; --teal-soft:#E3F0ED;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--crimson)}
+.lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+
+header{background:var(--surface);border-bottom:1px solid var(--line)}
+header .in{max-width:1180px;margin:0 auto;padding:30px 26px 24px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(27px,4.2vw,40px);line-height:1.1;margin:9px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--ink-2);margin:11px 0 0;max-width:60ch}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0;align-items:center}
+button{font:inherit;cursor:pointer}
+.btn{font-size:13.5px;padding:8px 15px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.btn:hover{border-color:var(--crimson);color:var(--crimson)}
+.btn.on{background:var(--crimson);border-color:var(--crimson);color:#fff;font-weight:600}
+.btn:focus-visible{outline:2px solid var(--crimson);outline-offset:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:26px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;align-items:start}
+
+/* credentials */
+.cred{background:var(--gold-soft);border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:24px}
+.cred h2{font-size:14px;margin:0 0 10px;font-weight:700}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-family:var(--mono);font-size:13px;align-items:center}
+.kv span:nth-child(odd){color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.copy{border:0;background:none;color:var(--crimson);font-family:var(--mono);font-size:11px;padding:0 0 0 8px}
+.cred p{font-size:12.5px;color:var(--ink-2);margin:11px 0 0}
+
+/* steps */
+.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:14px;scroll-margin-top:14px}
+.step[hidden]{display:none}
+.step-n{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--crimson);font-weight:700;margin-bottom:8px}
+.step h3{font-family:var(--serif);font-size:22px;margin:0 0 10px;font-weight:600;line-height:1.2}
+.step p{color:var(--ink-2);margin:0 0 11px;max-width:60ch}
+.step ul{margin:0 0 11px;padding-left:20px;color:var(--ink-2)}
+.step li{margin-bottom:5px}
+.say{font-family:var(--serif);font-size:17px;color:var(--ink);background:none;border:0;padding:0;text-align:left}
+.say .spk{font-size:10px;color:var(--crimson);margin-left:6px;vertical-align:middle}
+.tip{background:var(--teal-soft);border-left:3px solid var(--teal);padding:11px 14px;border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink-2);margin:12px 0 0}
+.tip strong{color:var(--teal)}
+.nav{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+/* phone simulator */
+.rail{position:sticky;top:20px}
+.phone{background:var(--ink);border-radius:32px;padding:11px;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+.screen{background:var(--surface);border-radius:23px;overflow:hidden;height:600px;display:flex;flex-direction:column}
+.notch{height:22px;display:flex;align-items:center;justify-content:center}
+.notch i{width:76px;height:5px;border-radius:99px;background:var(--line);display:block}
+.appbar{background:var(--crimson);color:#fff;padding:11px 15px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.appbar em{font-style:normal;font-size:10.5px;opacity:.85;font-family:var(--mono)}
+.view{flex:1;overflow-y:auto;padding:15px}
+.view[hidden]{display:none}
+.v-h{font-family:var(--serif);font-size:19px;margin:0 0 4px;font-weight:600}
+.v-s{font-size:12px;color:var(--muted);margin:0 0 14px}
+.field{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);margin-bottom:8px}
+.cta{background:var(--crimson);color:#fff;border:0;border-radius:8px;padding:11px;width:100%;font-size:13.5px;font-weight:600}
+.mod{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:7px;display:flex;justify-content:space-between;gap:9px;align-items:center;font-size:13px}
+.mod b{font-weight:600}
+.mod span{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.mod.on{border-color:var(--crimson);background:var(--crimson-soft)}
+.prose h4{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--crimson);margin:14px 0 6px}
+.prose .voc{font-size:13px;margin-bottom:4px;color:var(--ink-2)}
+.prose .voc b{color:var(--ink)}
+.tabs{display:flex;gap:5px;margin:0 0 12px;flex-wrap:wrap}
+.tab{font-size:11.5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.tab.on{background:var(--crimson);border-color:var(--crimson);color:#fff;font-weight:600}
+.card{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:9px;padding:12px 13px;margin-bottom:9px}
+.card .h{font-size:12.5px;font-weight:700;margin-bottom:6px}
+.card .s{font-size:12px;color:var(--ink-2);margin:0 0 7px;line-height:1.5}
+.who{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+.chip{font-family:var(--mono);font-size:10.5px;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:2px 6px;margin:0 4px 4px 0;display:inline-block}
+.pill{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;border-radius:99px}
+.pill.warn{background:var(--gold-soft);color:var(--gold)}
+.pill.ok{background:var(--teal-soft);color:var(--teal)}
+.drill{border-top:1px solid var(--line-soft);padding-top:8px;margin-top:8px}
+.drill:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.why{font-size:11.5px;color:var(--ink-2);margin:4px 0 0;line-height:1.5}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.w{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:7px;padding:8px 9px}
+.w .es{font-family:var(--serif);font-size:13.5px}
+.w .en{font-size:10.5px;color:var(--muted)}
+.w .tl{font-size:10px;color:var(--teal);margin-top:2px}
+.cap{font-size:11.5px;color:var(--muted);text-align:center;margin:11px 0 0;font-family:var(--mono)}
+
+.footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 60px}
+.checklist{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+.checklist h3{font-family:var(--serif);font-size:20px;margin:0 0 12px;font-weight:600}
+.checklist ol{margin:0;padding-left:20px;color:var(--ink-2)}
+.checklist li{margin-bottom:7px}
+
+@media (max-width:920px){
+  .wrap{grid-template-columns:1fr;gap:24px;padding:20px}
+  .rail{position:static;max-width:340px;margin:0 auto}
+  header .in{padding:24px 20px 20px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="in">
+    <p class="lab">Torna Idioma &middot; Student orientation</p>
+    <h1>How to use Torna Idioma</h1>
+    <p class="sub">A six-step walkthrough of one lesson, from signing in to speaking out loud. The phone on the right mirrors what you will actually see. Tap any Spanish and it will be read to you.</p>
+    <div class="bar">
+      <button class="btn on" id="langEn" type="button">English</button>
+      <button class="btn" id="langFil" type="button">Filipino</button>
+      <button class="btn" id="narrate" type="button">Read this step aloud</button>
+      <button class="btn" id="stopVoice" type="button" hidden>Stop</button>
+      <span class="lab" id="voiceNote"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <main>
+    <section class="cred">
+      <h2>Your demo sign-in</h2>
+      <div class="kv">
+        <span>Address</span><b id="urlV">tornaidioma.com</b>
+        <span>Email</span><b>student@tornaidioma.ph<button class="copy" data-copy="student@tornaidioma.ph" type="button">copy</button></b>
+        <span>Password</span><b>StudentDemo2026!<button class="copy" data-copy="StudentDemo2026!" type="button">copy</button></b>
+      </div>
+      <p>This is a shared demo account for reviewing the platform. Everyone using it sees the same progress, so do not treat it as your own record.</p>
+    </section>
+
+    <div id="steps"></div>
+
+    <div class="footer">
+      <div class="checklist">
+        <h3 id="clH">Your first fifteen minutes</h3>
+        <ol id="clList"></ol>
+      </div>
+    </div>
+  </main>
+
+  <aside class="rail">
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"><i></i></div>
+        <div class="appbar"><span>Torna Idioma</span><em id="simTag">sign in</em></div>
+
+        <div class="view" id="v1">
+          <p class="v-h">Bienvenido</p>
+          <p class="v-s">Sign in to continue</p>
+          <div class="field">student@tornaidioma.ph</div>
+          <div class="field">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</div>
+          <button class="cta" type="button">Iniciar sesión</button>
+          <p class="cap">Modules 1&ndash;12 &middot; A1 to B1+</p>
+        </div>
+
+        <div class="view" id="v2" hidden>
+          <p class="v-h">Your modules</p>
+          <p class="v-s">12 modules &middot; 72 lessons &middot; 360 hours</p>
+          <div class="mod on"><b>1. Introducción al Español</b><span>A1</span></div>
+          <div class="mod"><b>2. Un Día en la Vida</b><span>A1</span></div>
+          <div class="mod"><b>3. Somos lo que Consumimos</b><span>A1&ndash;A2</span></div>
+          <div class="mod"><b>4. Lugares y Transporte</b><span>A2</span></div>
+          <div class="mod"><b>7. A Qué te Dedicas</b><span>B1 &middot; work</span></div>
+          <div class="mod"><b>12. Sociedad Contemporánea</b><span>B1+</span></div>
+        </div>
+
+        <div class="view" id="v3" hidden>
+          <p class="v-h">Greetings and Farewells</p>
+          <p class="v-s">Saludos y Despedidas &middot; Lesson 1.1</p>
+          <div class="prose">
+            <h4>Formal greetings</h4>
+            <div class="voc"><b>Buenos días</b> — Good morning</div>
+            <div class="voc"><b>Buenas tardes</b> — Good afternoon</div>
+            <h4>Informal greetings</h4>
+            <div class="voc"><b>¿Qué tal?</b> — How's it going?</div>
+            <div class="voc"><b>¿Cómo estás?</b> — How are you?</div>
+            <h4>The Filipino connection</h4>
+            <p class="s">"Kumusta" comes straight from "¿Cómo está?" — one of more than 4,000 Spanish-origin words already in Filipino.</p>
+          </div>
+        </div>
+
+        <div class="view" id="v4" hidden>
+          <div class="tabs"><span class="tab on">Speak</span><span class="tab">Say it</span><span class="tab">Words</span></div>
+          <div class="card">
+            <div class="h">Roleplay &middot; First day at a language exchange</div>
+            <p class="s">You sit down next to someone you have never met.</p>
+            <span class="who">Your tutor opens</span>
+            <button class="say" data-es="Hola, buenas noches. No nos conocemos, ¿verdad? Me llamo Carmen." type="button">Hola, buenas noches. Me llamo Carmen.<span class="spk">&#9658;</span></button>
+            <div style="margin-top:8px"><span class="who">You must use</span>
+              <span class="chip">me llamo</span><span class="chip">soy de</span><span class="chip">mucho gusto</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="h">Grammar focus &middot; ser vs estar</div>
+            <p class="s">Who you are, versus how you are. Neither Tagalog nor English makes this split.</p>
+            <button class="say" data-es="Soy filipino. Estoy cansado." type="button">Soy filipino. Estoy cansado.<span class="spk">&#9658;</span></button>
+          </div>
+        </div>
+
+        <div class="view" id="v5" hidden>
+          <div class="tabs"><span class="tab">Speak</span><span class="tab on">Say it</span><span class="tab">Words</span></div>
+          <div class="card">
+            <div class="drill">
+              <button class="say" data-es="Buenos días" type="button">Buenos días<span class="spk">&#9658;</span></button>
+              <span class="pill warn">stress</span>
+              <p class="why">The accent is not decoration. Land the beat exactly where the tilde sits.</p>
+            </div>
+            <div class="drill">
+              <button class="say" data-es="Adiós" type="button">Adiós<span class="spk">&#9658;</span></button>
+              <span class="pill warn">d</span>
+              <p class="why">Between vowels the Spanish d softens toward the "th" in "this".</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="h">Sounds this lesson exercises</div>
+            <div class="drill"><span class="pill warn">needs work</span>
+              <p class="why"><b>/f/</b> — Tagalog has no native /f/, so it drifts to /p/: "familia" becomes "pamilya". Bite the lip lightly.</p></div>
+            <div class="drill"><span class="pill ok">free win from Tagalog</span>
+              <p class="why"><b>ñ</b> — this is the "ny" you already say in "niyog". Nothing new to learn.</p></div>
+            <div class="drill"><span class="pill ok">free win from Tagalog</span>
+              <p class="why"><b>b and v</b> — one single sound in Spanish. English speakers fight this for months; you never have to.</p></div>
+          </div>
+        </div>
+
+        <div class="view" id="v6" hidden>
+          <div class="tabs"><span class="tab">Speak</span><span class="tab">Say it</span><span class="tab on">Words</span></div>
+          <div class="wgrid">
+            <div class="w"><button class="say" data-es="favor" type="button"><span class="es">favor</span><span class="spk">&#9658;</span></button><div class="en">favour</div><div class="tl">Tagalog: pabor</div></div>
+            <div class="w"><button class="say" data-es="gracias" type="button"><span class="es">gracias</span><span class="spk">&#9658;</span></button><div class="en">thank you</div><div class="tl">Tagalog: grasya</div></div>
+            <div class="w"><button class="say" data-es="familia" type="button"><span class="es">familia</span><span class="spk">&#9658;</span></button><div class="en">family</div><div class="tl">Tagalog: pamilya</div></div>
+            <div class="w"><button class="say" data-es="mucho gusto" type="button"><span class="es">mucho gusto</span><span class="spk">&#9658;</span></button><div class="en">pleased to meet you</div></div>
+          </div>
+          <div class="card" style="margin-top:10px">
+            <div class="h">At work &middot; from Module 7</div>
+            <p class="s">Contact centre Spanish. Formal usted throughout — never tutear a customer.</p>
+            <button class="say" data-es="Gracias por comunicarse con nosotros. ¿Me permite confirmar su nombre?" type="button">Gracias por comunicarse con nosotros.<span class="spk">&#9658;</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="cap" id="simCap">Step 1 of 6</p>
+  </aside>
+</div>
+
+<script>
+(function(){
+  var STEPS = [
+    { view:'v1', tag:'sign in',
+      en:{ h:'Sign in', p:'Open tornaidioma.com and sign in with the demo account above. The interface is in English and Filipino — Spanish is what you are learning, not what the buttons are written in.',
+           li:['Use the email and password in the card on the left.','Allow the microphone if your browser asks. You will need it later.'],
+           tip:'<strong>Note</strong> This is a shared demo account. Your real class account will keep your own progress.' },
+      fil:{ h:'Mag-sign in', p:'Buksan ang tornaidioma.com at mag-sign in gamit ang demo account sa itaas. Ingles at Filipino ang interface — Espanyol ang inaaral mo, hindi ang mga button.',
+           li:['Gamitin ang email at password sa kaliwa.','Payagan ang mikropono kung hihingi ang browser.'],
+           tip:'<strong>Paalala</strong> Ibinabahaging demo account ito. Ang tunay mong account ang magtatago ng sarili mong progreso.' } },
+
+    { view:'v2', tag:'modules',
+      en:{ h:'Choose your module', p:'Twelve modules take you from absolute beginner (A1) to upper-intermediate (B1+) — six lessons each, seventy-two in total, about 360 hours of study. Start at Module 1 unless you have taken the placement test.',
+           li:['Modules 1 to 6 build everyday Spanish.','Modules 7 to 12 add workplace Spanish for contact centre, technical support, healthcare coordination and interpretation.'],
+           tip:'<strong>Why it matters</strong> The workplace modules are the ones employers pay a premium for. They are the reason to finish, not to stop at Module 6.' },
+      fil:{ h:'Piliin ang iyong module', p:'Labindalawang module mula A1 hanggang B1+ — anim na aralin bawat isa, pitumpu\'t dalawa lahat, humigit-kumulang 360 oras. Magsimula sa Module 1 maliban kung kumuha ka na ng placement test.',
+           li:['Module 1 hanggang 6: pang-araw-araw na Espanyol.','Module 7 hanggang 12: Espanyol sa trabaho — contact centre, technical support, healthcare, interpretation.'],
+           tip:'<strong>Bakit mahalaga</strong> Ang mga module sa trabaho ang binabayaran nang mas mataas ng mga employer.' } },
+
+    { view:'v3', tag:'read',
+      en:{ h:'Read the lesson', p:'Every lesson opens with a short passage: the vocabulary, the grammar, and a note on where Filipino and Spanish already touch. Read it once. Do not try to memorise it — the practice below is what makes it stick.',
+           li:['Bold words are your target vocabulary for the lesson.','The "Filipino connection" note appears wherever a real cognate exists.'],
+           tip:'<strong>Tap to hear</strong> Anywhere you see Spanish in this guide, tap it and it will be read aloud. Try "Buenos días" on the phone.' },
+      fil:{ h:'Basahin ang aralin', p:'Nagsisimula ang bawat aralin sa maikling babasahin: bokabularyo, gramatika, at kung saan nagtatagpo ang Filipino at Espanyol. Basahin nang isang beses. Huwag kabisaduhin — ang pagsasanay sa ibaba ang magpapatatag nito.',
+           li:['Ang mga naka-bold ay ang target na bokabularyo.','Lumalabas ang "Filipino connection" kapag may tunay na cognate.'],
+           tip:'<strong>Pindutin para marinig</strong> Kahit saang Espanyol dito, pindutin at babasahin ito nang malakas.' } },
+
+    { view:'v4', tag:'practice · speak',
+      en:{ h:'Practice — Speak', p:'Under the passage is the practice section. The first tab gives you a roleplay: the situation, the line your tutor opens with, and the exact phrases you have to produce for the turn to count. Say your part out loud, even alone.',
+           li:['Tap the tutor line to hear how it should sound, then answer aloud.','From Module 6 you also get a debate prompt with two real positions to argue.','Each module has one grammar point, chosen because it is genuinely hard for a Filipino speaker.'],
+           tip:'<strong>Speak, do not read</strong> The single biggest predictor of whether you will speak Spanish is whether you spoke it today. Ten minutes out loud beats an hour of silent reading.' },
+      fil:{ h:'Pagsasanay — Magsalita', p:'Sa ilalim ng babasahin ay ang practice. Ang unang tab ay roleplay: ang sitwasyon, ang unang linya ng tutor, at ang eksaktong parirala na dapat mong sabihin. Sabihin nang malakas, kahit mag-isa ka.',
+           li:['Pindutin ang linya ng tutor para marinig, saka sumagot nang malakas.','Mula Module 6, may debate na may dalawang panig.','May isang punto ng gramatika bawat module.'],
+           tip:'<strong>Magsalita, huwag magbasa lamang</strong> Sampung minutong pagsasalita ay mas mabisa kaysa isang oras na tahimik na pagbabasa.' } },
+
+    { view:'v5', tag:'practice · say it',
+      en:{ h:'Practice — Say it', p:'The second tab is pronunciation, built specifically for Filipino speakers. It tells you which Spanish sounds Tagalog does not give you — and, just as usefully, which ones it hands you free.',
+           li:['Sounds marked "needs work" are the ones your first language does not contain: /f/, the rolled r, the j, the soft d between vowels.','Sounds marked "free win" you already own: ñ is the "ny" in niyog, b and v are one sound, and the five Spanish vowels are the five you already use.'],
+           tip:'<strong>An advantage most learners do not have</strong> An English speaker spends months separating b from v and learning clean vowels. You start with both. Spend your effort on /f/ and the rolled r instead.' },
+      fil:{ h:'Pagsasanay — Bigkasin', p:'Ang ikalawang tab ay pagbigkas, gawa para sa mga Pilipino. Sinasabi nito kung aling tunog ng Espanyol ang wala sa Tagalog — at kung alin ang libre mo nang nakuha.',
+           li:['"Needs work": ang mga tunog na wala sa Tagalog — /f/, ang paragik na r, ang j, ang malambot na d.','"Free win": ñ ay ang "ny" sa niyog; iisa ang b at v; pareho ang limang patinig.'],
+           tip:'<strong>Bentahe mo ito</strong> Buwan-buwan ang ginugugol ng mga Ingles para paghiwalayin ang b at v. Ikaw, hindi na kailangan.' } },
+
+    { view:'v6', tag:'practice · words',
+      en:{ h:'Practice — Words, and At work', p:'The third tab is your target vocabulary. Where a word already lives in Filipino, the card shows the pair — favor and pabor, gracias and grasya, familia and pamilya. From Module 7 a fourth tab appears with workplace Spanish.',
+           li:['You are not starting from zero. Filipino carries roughly four thousand words of Spanish origin.','The "At work" tab carries the register and the compliance rules a contact centre floor actually requires.','Finish the lesson with the quiz at the bottom. Seventy per cent marks the lesson complete.'],
+           tip:'<strong>The point of the cognates</strong> They are not trivia. They are the reason a Filipino learner can move faster through Spanish than almost anyone else.' },
+      fil:{ h:'Pagsasanay — Salita, at Sa trabaho', p:'Ang ikatlong tab ay ang target na bokabularyo. Kung may katumbas na sa Filipino, ipinapakita ang pares — favor at pabor, gracias at grasya, familia at pamilya. Mula Module 7, may ikaapat na tab para sa trabaho.',
+           li:['Hindi ka nagsisimula sa wala. May humigit-kumulang apat na libong salitang mula sa Espanyol ang Filipino.','Ang "At work" ay may register at compliance na kailangan sa contact centre.','Tapusin ang aralin sa pagsusulit. Pitumpung porsyento ang pasado.'],
+           tip:'<strong>Ang silbi ng cognates</strong> Ito ang dahilan kung bakit mas mabilis matuto ng Espanyol ang Pilipino kaysa halos sinuman.' } }
+  ];
+
+  var CHECK = {
+    en: { h:'Your first fifteen minutes', li:[
+      'Sign in and open Module 1, Lesson 1.',
+      'Read the passage once, out loud where you can.',
+      'Open the Speak tab and say the roleplay line. Do not skip this because you are alone — that is exactly when to do it.',
+      'Open Say it and say the three drills, listening first each time.',
+      'Open Words and find the three cognates you already knew without knowing it.',
+      'Take the quiz. Seventy per cent completes the lesson.',
+      'Come back tomorrow. Fifteen minutes daily beats two hours on Sunday.'] },
+    fil:{ h:'Ang unang labinlimang minuto', li:[
+      'Mag-sign in at buksan ang Module 1, Aralin 1.',
+      'Basahin ang teksto nang isang beses, malakas kung kaya.',
+      'Buksan ang Speak at sabihin ang linya ng roleplay. Huwag laktawan dahil mag-isa ka — iyon ang tamang panahon.',
+      'Buksan ang Say it at bigkasin ang tatlong drill, makinig muna bawat isa.',
+      'Buksan ang Words at hanapin ang tatlong salitang alam mo na pala.',
+      'Sagutan ang pagsusulit. Pitumpung porsyento ang pasado.',
+      'Bumalik bukas. Mas mabisa ang labinlimang minuto araw-araw kaysa dalawang oras tuwing Linggo.'] }
+  };
+
+  var lang = 'en', idx = 0;
+  var stepsEl = document.getElementById('steps');
+
+  // --- voice ---
+  var voices = [];
+  function loadVoices(){ voices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; }
+  if (window.speechSynthesis) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
+  function pick(prefix){
+    return voices.filter(function(v){ return new RegExp('^'+prefix,'i').test(v.lang); })[0] || null;
+  }
+  function speak(text, kind){
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    var v = kind === 'es'
+      ? (pick('es-MX') || pick('es-419') || pick('es'))
+      : (lang === 'fil' ? (pick('fil') || pick('tl') || pick('en')) : pick('en'));
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = kind === 'es' ? 'es-MX' : 'en-US'; }
+    u.rate = kind === 'es' ? 0.9 : 1;
+    u.onend = function(){ document.getElementById('stopVoice').hidden = true; };
+    document.getElementById('stopVoice').hidden = false;
+    window.speechSynthesis.speak(u);
+  }
+  function noteVoices(){
+    var n = document.getElementById('voiceNote');
+    if (!window.speechSynthesis) { n.textContent = 'This browser cannot read aloud'; return; }
+    var es = pick('es-MX') || pick('es-419') || pick('es');
+    n.textContent = es ? 'Spanish voice: ' + es.name : 'No Spanish voice installed — text still works';
+  }
+  setTimeout(noteVoices, 700);
+
+  // --- render ---
+  function render(){
+    var t = STEPS[idx][lang];
+    stepsEl.innerHTML =
+      '<section class="step">' +
+        '<span class="step-n">Step ' + (idx+1) + ' of ' + STEPS.length + '</span>' +
+        '<h3>' + t.h + '</h3>' +
+        '<p>' + t.p + '</p>' +
+        '<ul>' + t.li.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+        '<div class="tip">' + t.tip + '</div>' +
+        '<div class="nav">' +
+          '<button class="btn" id="prev" type="button"' + (idx === 0 ? ' disabled' : '') + '>Back</button>' +
+          '<button class="btn on" id="next" type="button">' + (idx === STEPS.length-1 ? 'Start again' : 'Next step') + '</button>' +
+        '</div>' +
+      '</section>';
+
+    STEPS.forEach(function(s, i){ document.getElementById(s.view).hidden = (i !== idx); });
+    document.getElementById('simTag').textContent = STEPS[idx].tag;
+    document.getElementById('simCap').textContent = 'Step ' + (idx+1) + ' of ' + STEPS.length;
+
+    var c = CHECK[lang];
+    document.getElementById('clH').textContent = c.h;
+    document.getElementById('clList').innerHTML = c.li.map(function(x){ return '<li>' + x + '</li>'; }).join('');
+
+    document.getElementById('prev').onclick = function(){ if (idx > 0) { idx--; render(); } };
+    document.getElementById('next').onclick = function(){ idx = (idx + 1) % STEPS.length; render(); };
+  }
+
+  document.getElementById('langEn').onclick = function(){
+    lang = 'en'; this.classList.add('on'); document.getElementById('langFil').classList.remove('on'); render();
+  };
+  document.getElementById('langFil').onclick = function(){
+    lang = 'fil'; this.classList.add('on'); document.getElementById('langEn').classList.remove('on'); render();
+  };
+  document.getElementById('narrate').onclick = function(){
+    var t = STEPS[idx][lang];
+    speak(t.h + '. ' + t.p + ' ' + t.li.join(' '), 'narration');
+  };
+  document.getElementById('stopVoice').onclick = function(){
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    this.hidden = true;
+  };
+
+  document.addEventListener('click', function(e){
+    var say = e.target.closest('.say');
+    if (say) { speak(say.dataset.es, 'es'); return; }
+    var cp = e.target.closest('.copy');
+    if (cp && navigator.clipboard) {
+      navigator.clipboard.writeText(cp.dataset.copy).then(function(){
+        var was = cp.textContent; cp.textContent = 'copied';
+        setTimeout(function(){ cp.textContent = was; }, 1400);
+      });
+    }
+  });
+
+  document.getElementById('urlV').textContent = location.host || 'tornaidioma.com';
+  render();
+})();
+</script>
+</body>
+</html>
