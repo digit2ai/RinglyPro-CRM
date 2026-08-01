@@ -224,6 +224,30 @@ const TODAY = new Date().toISOString().slice(0, 10);
     ok('Chain annualizes the bleed', typeof c.annualized_lost_sales_usd === 'number',
       '$' + c.annualized_lost_sales_usd + '/yr');
 
+    // --- read-only chain preview (no JWT, persists nothing) ---
+    const cd = await request(port, 'GET', '/aiastore/api/v1/oos/chain/demo');
+    ok('Chain demo preview returns 200 without JWT', cd.status === 200, 'status=' + cd.status);
+    const cdd = (cd.body && cd.body.data) || {};
+    ok('Chain demo is flagged as generated', cdd.demo === true && !!cdd.note, 'demo=' + cdd.demo);
+    ok('Chain demo covers all seven root causes',
+      (cdd.root_cause_mix || []).length === 7, (cdd.root_cause_mix || []).length + ' categories');
+    ok('Chain demo OOS rate is realistic (3-15%)',
+      cdd.oos_rate >= 3 && cdd.oos_rate <= 15, 'oos_rate=' + cdd.oos_rate + '%');
+    ok('Chain demo in-store share near the 70-75% benchmark',
+      cdd.layer_mix && cdd.layer_mix.in_store_pct >= 60,
+      'in_store=' + (cdd.layer_mix && cdd.layer_mix.in_store_pct) + '%');
+
+    // A preview must NOT write anything.
+    const beforeCount = await InventoryLevel.count();
+    await request(port, 'GET', '/aiastore/api/v1/oos/chain/demo');
+    const afterCount = await InventoryLevel.count();
+    ok('Chain demo persists nothing', beforeCount === afterCount,
+      beforeCount + ' -> ' + afterCount + ' rows');
+
+    // --- seed endpoint must be JWT gated ---
+    const seedNoAuth = await request(port, 'POST', '/aiastore/api/v1/oos/seed-demo', {});
+    ok('Seed endpoint returns 401 without JWT', seedNoAuth.status === 401, 'status=' + seedNoAuth.status);
+
     // --- honesty: estimation must be labelled when prices are absent ---
     await InventoryLevel.update({ metadata: null }, { where: { store_id: storeId } });
     const est = await request(port, 'GET', `/aiastore/api/v1/oos/store/${storeId}?date=${TODAY}`);
