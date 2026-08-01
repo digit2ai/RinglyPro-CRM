@@ -22,6 +22,9 @@ router.get('/chain', asyncHandler(oosController.getChain));
 // POST /api/v1/oos/backfill - classify + price unattributed events
 router.post('/backfill', asyncHandler(oosController.backfill));
 
+// POST /api/v1/oos/seed-demo - JWT-gated deterministic demo day
+router.post('/seed-demo', asyncHandler(oosController.seedDemo));
+
 // GET /api/v1/oos/store/:store_id - one store, one day
 // Registered last so it cannot shadow the literal paths above.
 router.get('/store/:store_id', asyncHandler(oosController.getStore));

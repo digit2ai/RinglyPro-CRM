@@ -81,6 +81,39 @@ exports.backfill = async (req, res) => {
 };
 
 /**
+ * POST /api/v1/oos/seed-demo
+ *
+ * Lays down one deterministic, idempotent demo inventory day across every
+ * active store. JWT-gated: it writes thousands of rows, so it must never be
+ * callable anonymously.
+ *
+ * This endpoint exists because the local .env DATABASE_URL and the production
+ * DATABASE_URL are different databases — running the CLI seeder on a laptop
+ * populates dev, not prod.
+ */
+exports.seedDemo = async (req, res) => {
+  if (guard(res)) return;
+
+  const jwt = require('jsonwebtoken');
+  const secret = process.env.JWT_SECRET || '';
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+
+  if (!token || !secret) {
+    return res.status(401).json({ success: false, error: 'Bearer token required' });
+  }
+  try {
+    jwt.verify(token, secret);
+  } catch (e) {
+    return res.status(401).json({ success: false, error: 'invalid or expired token' });
+  }
+
+  const { seedDemoDay } = require('../services/oos-demo-seed');
+  const result = await seedDemoDay(req.body && req.body.date);
+  res.json({ success: true, data: result });
+};
+
+/**
  * GET /api/v1/oos/benchmarks
  * The published figures every number on this surface is measured against.
  */
