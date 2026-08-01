@@ -6,6 +6,7 @@
 // TI_MODULES_KEY is set in the environment AND the request carries ?key=<that value>.
 
 const sequelize = require('./db.ti');
+const activityPack = require('./activity-pack');
 
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -70,10 +71,96 @@ async function loadCurriculum() {
             lesson_type, sort_order, duration_minutes, exercises
        FROM ti_lessons ORDER BY course_id, sort_order, id`
   );
-  return { courses, lessons };
+  const packs = await activityPack.loadPacks(lessons.map((l) => l.id));
+  return { courses, lessons, packs };
 }
 
-function render({ courses, lessons }, { showAnswers }) {
+/** The practice layer for one lesson: speak, drill, work. */
+function renderPack(pack) {
+  if (!pack) return '';
+  const sec = [];
+
+  if (pack.can_do && pack.can_do.length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">By the end of this module I can</h4><ul class="cando">${
+      pack.can_do.map((c) => `<li>${esc(c)}</li>`).join('')
+    }</ul></div>`);
+  }
+
+  if (pack.roleplay) {
+    const r = pack.roleplay;
+    sec.push(`<div class="pk"><h4 class="pk-h">Roleplay &middot; ${esc(r.title)}</h4>
+      <p class="sit">${esc(r.situation)}</p>
+      <p class="opens"><span class="who">Tutor opens</span>${esc(r.opens)}</p>
+      <p class="must"><span class="who">You must use</span>${(r.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>
+    </div>`);
+  }
+
+  const a = pack.authored;
+  if (a && a.dialogue && (a.dialogue.lines || []).length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Listen first &middot; ${esc(a.dialogue.setting)}</h4>
+      <div class="dlg">${a.dialogue.lines.map((l) => `<div class="dlg-line"><span class="spk">${esc(l.speaker)}</span><span class="dlg-es">${esc(l.es)}</span><span class="dlg-en">${esc(l.en)}</span></div>`).join('')}</div>
+      ${a.comprehension_question ? `<p class="must"><span class="who">Answer aloud</span>${esc(a.comprehension_question)}</p>` : ''}
+    </div>`);
+  }
+
+  if (a && (a.likely_errors || []).length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">What Filipino learners get wrong here</h4>
+      ${a.likely_errors.map((e) => `<div class="drill"><span class="err">${esc(e.error)}</span><span class="fix">${esc(e.correction)}</span><p class="why">${esc(e.why)}</p></div>`).join('')}
+    </div>`);
+  }
+
+  if (pack.debate) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Debate</h4>
+      <p class="sit">${esc(pack.debate.prompt)}</p>
+      <p class="pos"><span class="who">A</span>${esc(pack.debate.position_a)}</p>
+      <p class="pos"><span class="who">B</span>${esc(pack.debate.position_b)}</p>
+    </div>`);
+  }
+
+  if (pack.grammar) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Grammar focus &middot; ${esc(pack.grammar.point)}</h4>
+      <p class="sit">${esc(pack.grammar.why)}</p>
+      ${(pack.grammar.examples || []).map((e) => `<p class="ex-line">${esc(e)}</p>`).join('')}
+    </div>`);
+  }
+
+  if (pack.sentence_mode && pack.sentence_mode.length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Say it aloud &middot; ${pack.sentence_mode.length} drills</h4>
+      ${pack.sentence_mode.map((d) => `<div class="drill"><span class="say">${esc(d.say)}</span><span class="means">${esc(d.means)}</span><span class="tgt">${esc(d.targets)}</span><p class="why">${esc(d.why)}</p></div>`).join('')}
+    </div>`);
+  }
+
+  if (pack.pronunciation_focus && pack.pronunciation_focus.length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Sounds this lesson exercises</h4>
+      ${pack.pronunciation_focus.map((f) => `<div class="phon ${f.kind}"><span class="ph-sound">${esc(f.sound)}</span><span class="ph-kind">${f.kind === 'contrast' ? 'needs work' : 'free win from Tagalog'}</span><p class="why">${esc(f.tip_en)}</p><p class="ph-ex">${(f.examples || []).map((e) => `<code>${esc(e)}</code>`).join(' ')}</p></div>`).join('')}
+    </div>`);
+  }
+
+  if (pack.word_mode && pack.word_mode.length) {
+    sec.push(`<div class="pk"><h4 class="pk-h">Target vocabulary &middot; ${pack.counts ? pack.counts.vocabulary : pack.word_mode.length} terms${
+      pack.counts && pack.counts.cognates ? `, ${pack.counts.cognates} with a Tagalog bridge` : ''
+    }</h4>
+      <div class="words">${pack.word_mode.map((w) => `<div class="word"><span class="w-es">${esc(w.term)}</span><span class="w-en">${esc(w.gloss)}</span>${
+        w.cognate ? `<span class="w-tl">Tagalog: <strong>${esc(w.cognate.tagalog)}</strong>${w.cognate.note ? ` &middot; ${esc(w.cognate.note)}` : ''}</span>` : ''
+      }</div>`).join('')}</div>
+    </div>`);
+  }
+
+  if (pack.occupational) {
+    const o = pack.occupational;
+    sec.push(`<div class="pk occ"><h4 class="pk-h">Workplace track &middot; ${esc(o.track)}</h4>
+      <p class="sit">${esc(o.register)}</p>
+      ${o.scenario ? `<p class="opens"><span class="who">${esc(o.scenario.title)}</span>${esc(o.scenario.situation)}</p>
+      <p class="must"><span class="who">You must use</span>${(o.scenario.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>` : ''}
+      ${o.compliance ? `<p class="compliance">${esc(o.compliance)}</p>` : ''}
+    </div>`);
+  }
+
+  if (!sec.length) return '';
+  return `<div class="practice"><h3 class="practice-h">Practice</h3>${sec.join('')}</div>`;
+}
+
+function render({ courses, lessons, packs }, { showAnswers }) {
   const byCourse = {};
   lessons.forEach((l) => { (byCourse[l.course_id] = byCourse[l.course_id] || []).push(l); });
 
@@ -89,10 +176,25 @@ function render({ courses, lessons }, { showAnswers }) {
   lessons.forEach((l) => { types[l.lesson_type] = (types[l.lesson_type] || 0) + 1; });
   const typeSummary = Object.entries(types).map(([k, v]) => `${v} ${k}`).join(', ');
 
+  const P = Object.values(packs || {});
+  const sum = (fn) => P.reduce((a, p) => a + (fn(p) || 0), 0);
+  const practice = {
+    packs: P.length,
+    vocabulary: sum((p) => p.counts && p.counts.vocabulary),
+    cognates: sum((p) => p.counts && p.counts.cognates),
+    drills: sum((p) => (p.sentence_mode || []).length),
+    roleplays: sum((p) => (p.all_roleplays || []).length ? 1 : 0),
+    debates: P.filter((p) => p.debate).length,
+    occupational: P.filter((p) => p.occupational).length,
+  };
+
   const flag = (ok, label, value) =>
     `<li><span class="badge ${ok ? 'ok' : 'warn'}">${ok ? 'complete' : 'gap'}</span><span><span class="lbl">${esc(label)}</span> &mdash; <span class="val">${esc(value)}</span></span></li>`;
 
   const audit = [
+    flag(practice.packs === lessons.length, 'Speaking practice', practice.packs ? `${practice.packs} of ${lessons.length} lessons carry a practice pack` : 'not built yet — run build-activity-packs.js'),
+    flag(practice.cognates > 0, 'Tagalog cognate bridge', `${practice.cognates} target words linked to their Filipino cognate`),
+    flag(practice.occupational > 0, 'Workplace (BPO) track', practice.occupational ? `${practice.occupational} lessons from Module 7 onward` : 'none'),
     flag(withEn === lessons.length, 'English lesson content', `${withEn} of ${lessons.length} lessons`),
     flag(lessons.every((l) => l.title_fil), 'Filipino lesson titles', `${lessons.filter((l) => l.title_fil).length} of ${lessons.length} lessons`),
     flag(lessons.every((l) => parseExercises(l.exercises).length > 0), 'Assessment items', `${allEx} across ${lessons.length} lessons`),
@@ -134,6 +236,7 @@ function render({ courses, lessons }, { showAnswers }) {
 <div class="l-body">
   <p class="l-fil">Filipino title: <strong>${esc(l.title_fil)}</strong></p>
   <div class="prose">${md(l.content_en)}</div>
+  ${renderPack((packs || {})[l.id])}
   <div class="ex-block"><h3 class="ex-head">Assessment &middot; ${parseExercises(l.exercises).length} items</h3>${ex}</div>
 </div>
 </details>`;
@@ -258,6 +361,45 @@ main{padding:28px 0 96px;min-width:0}
 .prose li strong{color:var(--ink)}
 .prose code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 4px;border-radius:3px}
 .prose .empty{color:var(--warn);font-style:italic}
+/* practice layer */
+.practice{margin-top:26px;border-top:2px solid var(--accent);padding-top:16px;display:grid;gap:14px}
+.practice-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0;font-weight:600}
+.pk{background:var(--surface-2);border-radius:8px;padding:14px 16px;max-width:72ch}
+.pk.occ{background:var(--ochre-soft)}
+.pk-h{font-size:13.5px;margin:0 0 8px;font-weight:600;color:var(--ink)}
+.pk .sit{margin:0 0 8px;font-size:14px;color:var(--ink-2)}
+.pk .opens,.pk .must,.pk .pos{margin:0 0 6px;font-size:14px;color:var(--ink-2);display:flex;gap:9px;flex-wrap:wrap;align-items:baseline}
+.who{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-top:2px}
+.pk code{font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--line-soft);padding:1px 6px;border-radius:4px;color:var(--ink)}
+.pk .compliance{margin:8px 0 0;font-size:13px;color:var(--warn);border-left:2px solid var(--warn);padding-left:10px}
+.cando{margin:0;padding-left:18px;display:grid;gap:3px}
+.cando li{font-size:14px;color:var(--ink-2)}
+.ex-line{margin:0 0 4px;font-family:var(--serif);font-style:italic;font-size:14.5px;color:var(--ink)}
+.drill{border-top:1px solid var(--line-soft);padding-top:9px;margin-top:9px;display:grid;gap:3px}
+.drill:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.say{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.means{font-size:13px;color:var(--muted)}
+.tgt{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);justify-self:start;background:var(--accent-soft);padding:2px 7px;border-radius:99px}
+.why{margin:2px 0 0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.phon{border-top:1px solid var(--line-soft);padding-top:9px;margin-top:9px}
+.phon:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.ph-sound{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600;margin-right:9px}
+.ph-kind{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px}
+.phon.contrast .ph-kind{background:var(--warn-soft);color:var(--warn)}
+.phon.advantage .ph-kind{background:var(--ok-soft);color:var(--ok)}
+.ph-ex{margin:5px 0 0}
+.dlg{display:grid;gap:8px}
+.dlg-line{display:grid;grid-template-columns:78px 1fr;gap:4px 10px;align-items:baseline}
+.spk{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);grid-row:span 2}
+.dlg-es{font-family:var(--serif);font-size:15.5px;color:var(--ink)}
+.dlg-en{font-size:12.5px;color:var(--muted)}
+.err{font-family:var(--serif);font-size:15px;color:var(--warn);text-decoration:line-through}
+.fix{font-family:var(--serif);font-size:15px;color:var(--ok)}
+.words{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.word{background:var(--surface);border:1px solid var(--line-soft);border-radius:6px;padding:8px 10px;display:grid;gap:2px}
+.w-es{font-family:var(--serif);font-size:15px;color:var(--ink)}
+.w-en{font-size:12.5px;color:var(--muted)}
+.w-tl{font-size:11.5px;color:var(--ok);margin-top:2px}
 .ex-block{margin-top:26px;border-top:1px solid var(--line-soft);padding-top:18px}
 .ex-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:500}
 .ex{background:var(--surface-2);border-radius:7px;padding:13px 15px;margin-bottom:9px;max-width:66ch}
@@ -299,8 +441,9 @@ main{padding:28px 0 96px;min-width:0}
       <div class="stat"><div class="v">${courses.length}</div><div class="k">Modules</div></div>
       <div class="stat"><div class="v">${lessons.length}</div><div class="k">Lessons</div></div>
       <div class="stat"><div class="v">${hours}</div><div class="k">Contact hours</div></div>
+      <div class="stat"><div class="v">${practice.drills}</div><div class="k">Speaking drills</div></div>
+      <div class="stat"><div class="v">${practice.vocabulary.toLocaleString('en-US')}</div><div class="k">Target words</div></div>
       <div class="stat"><div class="v">${allEx}</div><div class="k">Assessment items</div></div>
-      <div class="stat"><div class="v">${words.toLocaleString('en-US')}</div><div class="k">Words of content</div></div>
       <div class="stat"><div class="v">A1&ndash;B1+</div><div class="k">CEFR span</div></div>
     </div>
   </div>

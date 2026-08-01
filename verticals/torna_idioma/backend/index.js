@@ -46,6 +46,39 @@ router.get('/modules', async (req, res) => {
   }
 });
 
+// --- Practice-pack maintenance (curriculum owner only) ---
+// Gated on TI_MODULES_KEY, the same secret that unlocks the answer keys. Unset =
+// the routes do not function at all, rather than being weakly hidden.
+function ownerOnly(req, res, next) {
+  const secret = process.env.TI_MODULES_KEY;
+  if (!secret) return res.status(503).json({ error: 'TI_MODULES_KEY is not set' });
+  const given = req.query.key || req.get('x-modules-key');
+  if (String(given || '') !== secret) return res.status(403).json({ error: 'forbidden' });
+  next();
+}
+
+// Rebuild every lesson's derived pack from the current curriculum. No API key needed.
+router.post('/api/activities/rebuild', ownerOnly, async (req, res) => {
+  try {
+    const { rebuildAll } = require('./services/activity-pack');
+    res.json({ success: true, ...(await rebuildAll()) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Deepen derived packs with Claude-authored dialogue + per-lesson roleplay.
+// Bounded per call; never touches a pack a human has edited.
+router.post('/api/activities/deepen', ownerOnly, async (req, res) => {
+  try {
+    const { deepen } = require('./services/ai-activities');
+    const limit = Math.min(Number(req.body && req.body.limit) || 6, 24);
+    res.json(await deepen({ limit }));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve React frontend
 const distPath = path.join(__dirname, '../frontend/dist');
 router.use(express.static(distPath));
