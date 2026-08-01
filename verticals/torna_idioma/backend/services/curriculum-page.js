@@ -90,7 +90,7 @@ function renderPack(pack) {
     const r = pack.roleplay;
     sec.push(`<div class="pk"><h4 class="pk-h">Roleplay &middot; ${esc(r.title)}</h4>
       <p class="sit">${esc(r.situation)}</p>
-      <p class="opens"><span class="who">Tutor opens</span>${esc(r.opens)}</p>
+      <p class="opens"><span class="who">Tutor opens</span><button class="say" data-es="${esc(r.opens)}" type="button">${esc(r.opens)}<span class="spk">&#9658;</span></button></p>
       <p class="must"><span class="who">You must use</span>${(r.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>
     </div>`);
   }
@@ -120,13 +120,13 @@ function renderPack(pack) {
   if (pack.grammar) {
     sec.push(`<div class="pk"><h4 class="pk-h">Grammar focus &middot; ${esc(pack.grammar.point)}</h4>
       <p class="sit">${esc(pack.grammar.why)}</p>
-      ${(pack.grammar.examples || []).map((e) => `<p class="ex-line">${esc(e)}</p>`).join('')}
+      ${(pack.grammar.examples || []).map((e) => `<p class="ex-line"><button class="say" data-es="${esc(e)}" type="button">${esc(e)}<span class="spk">&#9658;</span></button></p>`).join('')}
     </div>`);
   }
 
   if (pack.sentence_mode && pack.sentence_mode.length) {
     sec.push(`<div class="pk"><h4 class="pk-h">Say it aloud &middot; ${pack.sentence_mode.length} drills</h4>
-      ${pack.sentence_mode.map((d) => `<div class="drill"><span class="say">${esc(d.say)}</span><span class="means">${esc(d.means)}</span><span class="tgt">${esc(d.targets)}</span><p class="why">${esc(d.why)}</p></div>`).join('')}
+      ${pack.sentence_mode.map((d) => `<div class="drill"><button class="say" data-es="${esc(d.say)}" type="button">${esc(d.say)}<span class="spk">&#9658;</span></button><span class="means">${esc(d.means)}</span><span class="tgt">${esc(d.targets)}</span><p class="why">${esc(d.why)}</p></div>`).join('')}
     </div>`);
   }
 
@@ -140,7 +140,7 @@ function renderPack(pack) {
     sec.push(`<div class="pk"><h4 class="pk-h">Target vocabulary &middot; ${pack.counts ? pack.counts.vocabulary : pack.word_mode.length} terms${
       pack.counts && pack.counts.cognates ? `, ${pack.counts.cognates} with a Tagalog bridge` : ''
     }</h4>
-      <div class="words">${pack.word_mode.map((w) => `<div class="word"><span class="w-es">${esc(w.term)}</span><span class="w-en">${esc(w.gloss)}</span>${
+      <div class="words">${pack.word_mode.map((w) => `<div class="word"><button class="say w-es" data-es="${esc(w.term)}" type="button">${esc(w.term)}<span class="spk">&#9658;</span></button><span class="w-en">${esc(w.gloss)}</span>${
         w.cognate ? `<span class="w-tl">Tagalog: <strong>${esc(w.cognate.tagalog)}</strong>${w.cognate.note ? ` &middot; ${esc(w.cognate.note)}` : ''}</span>` : ''
       }</div>`).join('')}</div>
     </div>`);
@@ -242,9 +242,9 @@ function render({ courses, lessons, packs }, { showAnswers }) {
 </details>`;
     }).join('\n');
 
-    return `<section class="module" id="m${c.id}">
+    return `<section class="module sec" id="m${c.id}" data-i="${i}">
   <header class="m-head">
-    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} lessons</span>${c.is_published ? '<span class="chip live">published</span>' : '<span class="chip draft">draft</span>'}</div>
+    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><button class="play-sec" data-play="${i}" type="button">&#9658; Escuchar</button><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} lessons</span>${c.is_published ? '<span class="chip live">published</span>' : '<span class="chip draft">draft</span>'}</div>
     <h2>${esc(String(c.title_en || '').replace(/^Module \d+:\s*/, ''))}</h2>
     <p class="m-es">${esc(String(c.title_es || '').replace(/^Módulo \d+:\s*/, ''))} &middot; <span class="fil">${esc(String(c.title_fil || '').replace(/^Module \d+:\s*/, ''))}</span></p>
     <p class="m-desc">${esc(c.description_en)}</p>
@@ -254,6 +254,75 @@ function render({ courses, lessons, packs }, { showAnswers }) {
   }).join('\n');
 
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+  // ── Profesora Isabel narration ────────────────────────────────────────────
+  // One segment per module, written from the real curriculum rather than hand-
+  // authored, so the narration can never describe a course we no longer teach.
+  // Index 0 is the intro. Numbers are spelled out so the voice reads them as
+  // speech rather than as digits.
+  const SPOKEN_N = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce'];
+  const spokenCefr = (raw) => String(raw)
+    .replace(/\+/g, ' plus').replace(/–/g, ' a ')
+    .replace(/A1/g, 'A uno').replace(/A2/g, 'A dos').replace(/B1/g, 'B uno');
+
+  // The practice bank is written in English (it is authoring material for the app).
+  // Isabel narrates in Spanish, so the per-module description is authored in Spanish
+  // here rather than read straight off the bank — a Latin American voice reading
+  // English grammar labels is worse than no narration at all.
+  const ES_MODULE = [
+    { grammar: 'ser y estar, y la diferencia entre tú y usted', can: 'saludar y despedirte con el nivel de formalidad correcto, y presentarte a ti y a tu familia' },
+    { grammar: 'el presente y los verbos reflexivos', can: 'describir tu rutina con horas y hablar de tus planes de la semana' },
+    { grammar: 'el verbo gustar y el objeto indirecto', can: 'pedir comida, preguntar precios y decir qué te gusta y qué no' },
+    { grammar: 'las preposiciones de lugar y el imperativo', can: 'pedir y seguir indicaciones, y comprar un boleto' },
+    { grammar: 'el imperfecto para el pasado habitual', can: 'invitar, aceptar o rechazar con cortesía, y contar cómo era tu vida antes' },
+    { grammar: 'el verbo doler, y las recomendaciones con deber y tener que', can: 'describir un síntoma y entender una recomendación de salud' },
+    { grammar: 'el pretérito perfecto para hablar de tu experiencia', can: 'describir tu puesto y tu experiencia profesional', work: 'centro de contacto y atención al cliente' },
+    { grammar: 'el contraste entre pretérito e imperfecto al narrar', can: 'contar una tradición filipina y compararla con una celebración latinoamericana', work: 'el registro cultural entre distintos mercados' },
+    { grammar: 'el imperativo formal y los conectores de secuencia', can: 'explicar un problema técnico y dar instrucciones paso a paso', work: 'soporte técnico de primer nivel' },
+    { grammar: 'el condicional para la cortesía', can: 'manejar una reserva, un problema con ella y una reclamación', work: 'cuentas de viajes y hostelería' },
+    { grammar: 'el subjuntivo después de opinión y duda', can: 'dar una opinión, sostenerla con razones y discrepar sin ser grosero', work: 'coordinación de salud y seguros' },
+    { grammar: 'los conectores de argumento y las hipótesis con si', can: 'sostener un argumento a lo largo de varios turnos y resumir dónde quedas', work: 'interpretación y liderazgo bilingüe' },
+  ];
+
+  const segments = [
+    `Hola, soy la Profesora Isabel, la voz de Torna Idioma. Te voy a recorrer el programa completo: ${SPOKEN_N[courses.length] || courses.length} módulos, setenta y dos lecciones, del nivel A uno al B uno plus, unas trescientas sesenta horas de estudio. Cada lección trae un texto, práctica hablada todos los días y una evaluación al final. Desde el módulo siete se añade el español del trabajo.`,
+  ].concat(courses.map((c, i) => {
+    const ls = byCourse[c.id] || [];
+    const es = ES_MODULE[i] || {};
+    const title = String(c.title_es || c.title_en).replace(/^Módulo \d+:\s*|^Module \d+:\s*/, '');
+    const grammar = es.grammar ? ` La gramática que lo sostiene es ${es.grammar}.` : '';
+    const can = es.can ? ` Al terminar podrás ${es.can}.` : '';
+    const work = es.work ? ` Aquí se añade el español del trabajo: ${es.work}.` : '';
+    return `Módulo ${SPOKEN_N[i + 1] || (i + 1)}: ${title}. Nivel ${spokenCefr(cefr(c.description_en))}, ${ls.length === 6 ? 'seis' : ls.length} lecciones y unas treinta horas.${grammar}${can}${work}`;
+  }));
+
+  const orb = `
+<section class="isabel" id="isabel">
+ <div class="isabel-in">
+  <div class="orb" id="orb" aria-hidden="true"></div>
+  <div class="i-meta">
+    <div class="i-name">Profesora Isabel &middot; Voz AI de Torna Idioma</div>
+    <div class="i-role">Tu guía por los ${courses.length} módulos del programa</div>
+    <div class="i-controls">
+      <button class="i-btn primary" id="playAll" type="button">&#9658; Que la Profesora Isabel lo explique todo</button>
+      <button class="i-btn" id="pause" type="button" disabled>&#10074;&#10074; Pausar</button>
+      <button class="i-btn" id="stop" type="button" disabled>&#9632; Detener</button>
+    </div>
+    <div class="i-status" id="status">Pulsa el botón y la Profesora Isabel te recorrerá el programa completo.</div>
+    <div class="i-pick">
+      <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
+      &nbsp;&middot;&nbsp; Acento:
+      <select id="voiceSel">
+        <option value="dalia" selected>M&eacute;xico (Dalia)</option>
+        <option value="paloma">EE. UU. (Paloma)</option>
+        <option value="salome">Colombia (Salom&eacute;)</option>
+        <option value="elvira">Espa&ntilde;a (Elvira)</option>
+      </select>
+      <span id="voiceMode" class="i-mode"></span>
+    </div>
+  </div>
+ </div>
+</section>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -361,6 +430,33 @@ main{padding:28px 0 96px;min-width:0}
 .prose li strong{color:var(--ink)}
 .prose code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 4px;border-radius:3px}
 .prose .empty{color:var(--warn);font-style:italic}
+/* Profesora Isabel voice orb */
+.isabel{max-width:1240px;margin:0 auto;padding:0 28px}
+.isabel-in{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;gap:20px;align-items:center;box-shadow:0 10px 34px rgba(0,0,0,.10)}
+.orb{position:relative;width:82px;height:82px;flex:0 0 82px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E8D48B,#C9A84C 46%,#8B6914 100%);box-shadow:0 0 0 0 rgba(201,168,76,.5)}
+.orb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(201,168,76,.35)}
+.orb.speaking{animation:i-pulse 1.2s ease-in-out infinite}
+@keyframes i-pulse{0%{box-shadow:0 0 0 0 rgba(201,168,76,.45)}70%{box-shadow:0 0 0 20px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
+.i-meta{flex:1;min-width:0}
+.i-name{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--ink)}
+.i-role{color:var(--muted);font-size:13.5px;margin-bottom:13px}
+.i-controls{display:flex;gap:8px;flex-wrap:wrap}
+.i-btn{font:inherit;font-size:12.5px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;min-height:38px}
+.i-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.i-btn:disabled{opacity:.45;cursor:default}
+.i-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.i-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.i-status{font-size:12.5px;color:var(--muted);margin-top:11px;min-height:17px}
+.i-pick{margin-top:10px;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.i-pick select{font:inherit;font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 7px}
+.i-mode{color:var(--ok);font-family:var(--mono);font-size:11px}
+.play-sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:3px 9px;border-radius:99px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.play-sec:hover{background:var(--accent);color:#fff}
+.module.active{outline:2px solid var(--accent);outline-offset:8px;border-radius:6px}
+button.say{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left}
+button.say .spk{font-size:10px;color:var(--accent);margin-left:6px;vertical-align:middle}
+button.say.w-es{font-family:var(--serif);font-size:15px;color:var(--ink);display:block}
+@media(max-width:640px){.isabel{padding:0 18px}.isabel-in{flex-direction:column;text-align:center}.i-controls,.i-pick{justify-content:center}}
 /* practice layer */
 .practice{margin-top:26px;border-top:2px solid var(--accent);padding-top:16px;display:grid;gap:14px}
 .practice-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0;font-weight:600}
@@ -449,6 +545,8 @@ main{padding:28px 0 96px;min-width:0}
   </div>
 </header>
 
+${orb}
+
 <div class="wrap">
   <nav class="rail" aria-label="Modules">
     <h2>Jump to module</h2>
@@ -473,6 +571,150 @@ main{padding:28px 0 96px;min-width:0}
     <p class="foot">Read live from ti_courses and ti_lessons. Editing a lesson in the platform changes this page immediately.${showAnswers ? '' : '<br>Answer keys are withheld on the public view.'}</p>
   </main>
 </div>
+
+<script>
+/* Profesora Isabel — narration engine.
+   Neural first over /api/tts/edge (zero key, server-cached), browser speech as the
+   fallback so a blocked or cold endpoint degrades instead of going silent. The
+   module currently being narrated is outlined and scrolled into view. */
+(function(){
+  var segments = ${JSON.stringify(segments)};
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.module'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'dalia';
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    browserVoice = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf('es')===0; })[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
+  setMode();
+
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){
+    secs.forEach(function(s){ s.classList.remove('active'); });
+    if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
+  }
+  function statusSpeaking(){
+    status.textContent = (mode==='all')
+      ? 'La Profesora Isabel está hablando… (' + (qi+1) + ' de ' + queue.length + ')'
+      : 'Reproduciendo este módulo…';
+  }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent='Preparando la voz neural…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-MX';
+    u.rate=0.98; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(qArr,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=qArr; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true;
+    pauseBtn.innerHTML='&#10074;&#10074; Pausar';
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); setActive(null);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='Recorrido terminado. Pulsa de nuevo para repetir.';
+  }
+
+  playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.innerHTML='&#9658; Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.innerHTML='&#10074;&#10074; Pausar'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+
+  /* Per-module "Escuchar", and every Spanish phrase on the page. */
+  document.addEventListener('click', function(e){
+    var sec = e.target.closest('[data-play]');
+    if(sec){ start([parseInt(sec.getAttribute('data-play'),10)+1],'one'); return; }
+    var say = e.target.closest('button.say');
+    if(say){
+      if(synth) synth.cancel();
+      if(currentAudio){ try{currentAudio.pause();}catch(e2){} currentAudio=null; }
+      runToken++;
+      var text = say.dataset.es || say.textContent;
+      if(useNeural()){
+        fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({text:text,voice:voiceName})})
+          .then(function(r){ if(!r.ok) throw new Error('x'); return r.blob(); })
+          .then(function(b){ var a=new Audio(URL.createObjectURL(b)); currentAudio=a; a.play(); })
+          .catch(function(){ neuralOK=false; setMode(); browserSpeak2(text); });
+      } else browserSpeak2(text);
+    }
+  });
+  function browserSpeak2(text){
+    if(!synth) return;
+    synth.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-MX';
+    u.rate=0.9;
+    synth.speak(u);
+  }
+
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+})();
+</script>
 
 <script>
 (function(){
