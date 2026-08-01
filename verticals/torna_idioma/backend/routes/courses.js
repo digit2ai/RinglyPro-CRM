@@ -99,6 +99,22 @@ router.get('/lessons/:id', auth.any, async (req, res) => {
       { bind: [lesson.course_id] }
     );
     lesson.course_lessons = siblings;
+
+    // The practice pack (speaking drills, roleplay, cognate bridge, pronunciation
+    // focus). Absent for a lesson that has not been built yet — the classroom
+    // renders the reading lesson exactly as before in that case.
+    try {
+      const [[activity]] = await sequelize.query(
+        `SELECT pack FROM ti_lesson_activities WHERE lesson_id = $1`,
+        { bind: [req.params.id] }
+      );
+      lesson.practice = activity
+        ? (typeof activity.pack === 'string' ? JSON.parse(activity.pack) : activity.pack)
+        : null;
+    } catch (e) {
+      lesson.practice = null; // table not migrated — never fail the lesson over this
+    }
+
     res.json({ success: true, lesson });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

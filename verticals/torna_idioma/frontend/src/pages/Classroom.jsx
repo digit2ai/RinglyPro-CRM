@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLang } from '../services/auth';
 import api from '../services/api';
+import PracticePack from '../components/PracticePack';
 
 const BASE = '/Torna_Idioma';
 
@@ -108,6 +109,9 @@ export default function Classroom() {
                 return <p key={i} style={s.para}>{line}</p>;
               })}
             </div>
+
+            {/* Practice: speak, drill, vocabulary, workplace track */}
+            <PracticePack pack={lesson.practice} />
 
             {/* Exercises */}
             {exercises.length > 0 && (
