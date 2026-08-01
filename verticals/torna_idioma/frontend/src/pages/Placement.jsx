@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tr, uiLang } from '../i18n';
+import { speakSpanish, canSpeak } from '../services/voice';
 import api from '../services/api';
 
 const GOLD = '#C9A84C', GOLD_D = '#8B6914', NAVY = '#1B2A4A', NAVY_D = '#0F1A2E', CREAM = '#FFF8E7', CREAM_L = '#FFFDF5', BORDER = '#F5E6C8', RED = '#C41E3A';
@@ -96,7 +97,13 @@ export default function Placement() {
             <p style={s.hint}>{tr('place.oralHint')}</p>
             {bank.stage_b_oral.map((q) => (
               <div key={q.id} style={s.qBlock}>
-                <div style={s.qText}>{q.es}</div>
+                <div style={s.qText}>
+                  {canSpeak() ? (
+                    <button type="button" onClick={() => speakSpanish(q.es)} style={s.qSay} title="Listen">
+                      {q.es}<span style={s.qSpk} aria-hidden="true">►</span>
+                    </button>
+                  ) : q.es}
+                </div>
                 <div style={s.qGloss}>{q[lang] || ''}</div>
                 <OralInput value={oral[q.id] || ''} onChange={(v) => setOral(o => ({ ...o, [q.id]: v }))} />
               </div>
@@ -139,6 +146,8 @@ const s = {
   hint: { fontSize: 14, color: '#6B6B6B', marginBottom: 16 },
   qBlock: { marginBottom: 18, paddingBottom: 16, borderBottom: `1px solid ${BORDER}` },
   qText: { fontSize: 16, color: NAVY, fontWeight: 600, marginBottom: 10 },
+  qSay: { font: 'inherit', color: 'inherit', background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'left' },
+  qSpk: { fontSize: 11, color: '#C9A84C', marginLeft: 8, verticalAlign: 'middle' },
   qGloss: { fontSize: 13, color: '#6B6B6B', fontStyle: 'italic', marginBottom: 10, marginTop: -6 },
   opts: { display: 'flex', flexWrap: 'wrap', gap: 8 },
   opt: { padding: '10px 16px', background: CREAM_L, border: `1px solid ${BORDER}`, borderRadius: 8, fontSize: 15, cursor: 'pointer', color: NAVY },

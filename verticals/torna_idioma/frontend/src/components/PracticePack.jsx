@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { speakSpanish, canSpeak } from '../services/voice';
 
 /**
  * The practice layer inside a lesson.
@@ -11,47 +12,16 @@ import React, { useState } from 'react';
  *   Words  — target vocabulary, with the Filipino cognate where one exists
  *   Work   — the BPO/occupational track, from Module 7 onward
  *
- * Every Spanish string is tappable and speaks aloud through the browser's own speech
- * synthesis (es-MX preferred). That is deliberate: it costs nothing, needs no key, and
- * works offline, so a learner on Philippine mobile data hears a model before they
- * speak. Where the browser has no Spanish voice we hide the speaker rather than
- * playing an English voice reading Spanish, which teaches the wrong thing.
+ * Every Spanish string is tappable and speaks in Dalia, the platform's Latin American
+ * voice, through services/voice.js — the same voice the tutor, Speak Now and Rizal
+ * Studies use, so the product sounds like one thing. A learner hears a model before
+ * they produce.
  */
 
-let cachedVoice;
-function spanishVoice() {
-  if (cachedVoice !== undefined) return cachedVoice;
-  if (typeof window === 'undefined' || !window.speechSynthesis) { cachedVoice = null; return cachedVoice; }
-  const voices = window.speechSynthesis.getVoices() || [];
-  cachedVoice =
-    voices.find(v => /^es-MX/i.test(v.lang)) ||
-    voices.find(v => /^es-(419|US|CO|AR|CL|PE)/i.test(v.lang)) ||
-    voices.find(v => /^es/i.test(v.lang)) ||
-    null;
-  return cachedVoice;
-}
-
-function speak(text) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  const voice = spanishVoice();
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  if (voice) u.voice = voice;
-  u.lang = (voice && voice.lang) || 'es-MX';
-  u.rate = 0.9; // a shade under natural — this is a model to copy, not a conversation
-  window.speechSynthesis.speak(u);
-}
-
-// Voices load asynchronously in most browsers; clear the cache when they arrive.
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => { cachedVoice = undefined; };
-}
-
 function Say({ children, text }) {
-  const canSpeak = typeof window !== 'undefined' && !!window.speechSynthesis;
-  if (!canSpeak) return <span>{children}</span>;
+  if (!canSpeak()) return <span>{children}</span>;
   return (
-    <button type="button" onClick={() => speak(text || children)} style={st.sayBtn} title="Listen">
+    <button type="button" onClick={() => speakSpanish(text || children)} style={st.sayBtn} title="Listen">
       {children}<span style={st.speaker} aria-hidden="true">►</span>
     </button>
   );

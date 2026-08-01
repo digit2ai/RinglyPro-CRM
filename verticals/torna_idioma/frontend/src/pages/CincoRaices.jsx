@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { tr, uiLang } from '../i18n';
+import { speakSpanish, canSpeak } from '../services/voice';
 
 // Cinco Raíces — five Spanish roots a night (José Rizal's spaced-repetition method).
 // Interface chrome is en|fil via tr(); the ONLY Spanish on screen is taught root data
@@ -258,8 +259,14 @@ function StudyCard({ card, index, total, revealed, grading, onReveal, onGrade })
         <span style={s.progressCount}>{index + 1} / {total}</span>
       </div>
 
-      {/* Spanish lemma (taught data) */}
-      <div style={s.lemma}>{root.root_lemma || '—'}</div>
+      {/* Spanish lemma (taught data) — tap to hear it in Dalia */}
+      <div style={s.lemma}>
+        {canSpeak() && root.root_lemma ? (
+          <button type="button" onClick={() => speakSpanish(root.root_lemma)} style={s.lemmaSay} title="Listen">
+            {root.root_lemma}<span style={s.lemmaSpk} aria-hidden="true">►</span>
+          </button>
+        ) : (root.root_lemma || '—')}
+      </div>
       {root.pos ? <div style={s.pos}>{root.pos}</div> : null}
 
       {/* Answer area */}
@@ -395,6 +402,8 @@ const s = {
   progressCount: { fontSize: 12, fontWeight: 700, color: '#8B6914' },
 
   lemma: { fontFamily: "'Playfair Display',serif", fontSize: 42, fontWeight: 800, color: '#1B2A4A', lineHeight: 1.1 },
+  lemmaSay: { font: 'inherit', color: 'inherit', background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'left' },
+  lemmaSpk: { fontSize: 16, color: '#C9A84C', marginLeft: 10, verticalAlign: 'middle' },
   pos: { fontSize: 13, color: '#8B6914', fontStyle: 'italic', marginTop: 6 },
 
   hiddenArea: { minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '22px 0' },
