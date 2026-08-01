@@ -65,6 +65,13 @@ export default function Login() {
             onClick={(e) => { e.preventDefault(); window.open(`${BASE}/orientation`, 'tornaOrientation', 'noopener,width=1180,height=1000,scrollbars=yes,resizable=yes'); }}
             style={s.guideBtn}
           >Student Orientation — How to Use Torna Idioma</a>
+          <a
+            href={`${BASE}/modules`}
+            target="_blank"
+            rel="noopener"
+            onClick={(e) => { e.preventDefault(); window.open(`${BASE}/modules`, 'tornaModules', 'noopener,width=1180,height=1000,scrollbars=yes,resizable=yes'); }}
+            style={s.modulesBtn}
+          >The 12 Modules — Full Curriculum</a>
         </div>
       </div>
       <div style={{ ...s.right, ...(mob ? s.rightMob : {}) }}>
@@ -142,6 +149,7 @@ const s = {
   demoTitle: { fontSize: 11, fontWeight: 700, color: '#8B6914', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 },
   demoItem: { fontSize: 11, color: '#6B6B6B', marginBottom: 4, wordBreak: 'break-all' },
   guideBtn: { display: 'inline-block', marginTop: 36, textAlign: 'center', fontSize: 13, color: '#0F1A2E', textDecoration: 'none', fontWeight: 700, padding: '12px 24px', background: 'linear-gradient(135deg, #E8D48B, #C9A84C)', borderRadius: 8, letterSpacing: 0.5, boxShadow: '0 4px 16px rgba(0,0,0,0.25)' },
+  modulesBtn: { display: 'inline-block', marginTop: 10, textAlign: 'center', fontSize: 13, color: '#E8D48B', textDecoration: 'none', fontWeight: 600, padding: '11px 22px', background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.45)', borderRadius: 8, letterSpacing: 0.3 },
   backLink: { display: 'block', marginTop: 12, textAlign: 'center', fontSize: 13, color: '#C9A84C', textDecoration: 'none', fontWeight: 500 },
 
   // --- Mobile / tablet (<=768px): stack the panes, compact the hero ---

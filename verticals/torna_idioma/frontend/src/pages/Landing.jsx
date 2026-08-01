@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LinaOrb from './LinaOrb';
+import ExplainerVideo from '../components/ExplainerVideo';
 
 const BASE = '/Torna_Idioma';
 
@@ -178,7 +179,9 @@ export default function Landing() {
       <section style={s.hero}>
         <div style={s.heroPattern}/>
         <div style={s.heroContent}>
-          <div style={s.crest}><div style={s.crestInner}>TORNA<br/>IDIOMA<span style={s.crestSub}>Vida · Cultura · Legado</span></div></div>
+          {/* The animated explanation stands where the crest used to: what this is,
+              who it is for, why it matters, and how we get there. */}
+          <ExplainerVideo lang={lang} />
           <div style={s.heroOverline}>{L.overline}</div>
           <h1 style={s.heroH1}>{L.h1a}<br/><span style={s.heroAccent}>{L.h1b}</span></h1>
           <div style={s.heroSubtitle}>{L.subtitle}</div>

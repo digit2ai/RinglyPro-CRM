@@ -1,7 +1,7 @@
 /* Torna Idioma — service worker (PWA shell).
    Safe by design: only caches hashed build assets + icons; navigations are
    network-first; API responses are NEVER cached (always live). */
-const CACHE = 'torna-idioma-v1';
+const CACHE = 'torna-idioma-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 

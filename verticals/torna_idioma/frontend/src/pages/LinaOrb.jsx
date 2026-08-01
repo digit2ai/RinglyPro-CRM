@@ -23,7 +23,7 @@ const ES_ACCENTS = [
 // Narration: index 0 = intro; 1..5 map to mission / why / pillars / impact / join.
 const SEGMENTS = {
   es: [
-    'Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. En pocos minutos te voy a explicar qué es Torna Idioma y por qué Makati está a punto de convertirse en la primera ciudad hispanohablante de Asia.',
+    'Hola, soy la Profesora Isabel, la voz de inteligencia artificial de Torna Idioma. En pocos minutos te voy a explicar qué es Torna Idioma y por qué Makati está a punto de convertirse en la primera ciudad hispanohablante de Asia.',
     'Nuestra misión es empoderar a la juventud filipina a través del dominio del español, restaurando dignidad, orgullo y legado. Nuestra visión es establecer a Filipinas como la primera nación hispanohablante de Asia, donde la herencia se convierte en fortaleza.',
     '¿Por qué español y por qué ahora? El español no es ajeno a Filipinas: es el idioma de Rizal, de Bonifacio y de la Constitución de Malolos. Hoy lo hablan más de seiscientos cincuenta millones de personas, y abre carreras globales con salarios mucho más altos.',
     'Torna Idioma se levanta sobre tres pilares. Dignidad: recuperar un idioma que pertenece al alma filipina. Orgullo: reconectar con una comunidad de seiscientos cincuenta millones de hispanohablantes. Y premio: desbloquear carreras internacionales y nuevas oportunidades económicas.',
@@ -31,7 +31,7 @@ const SEGMENTS = {
     'Esto es más que un programa: es un movimiento. Ya seas estudiante, profesor, profesional de un centro de servicios o funcionario del gobierno, en Torna Idioma hay un lugar para ti. Sé parte de la historia.',
   ],
   en: [
-    "Hi, I'm Lina, the artificial intelligence voice of Digit2AI. In just a few minutes I'll walk you through what Torna Idioma is, and why Makati is about to become the first Spanish-enabled city in Asia.",
+    "Hi, I'm Profesora Isabel, the artificial intelligence voice of Torna Idioma. In just a few minutes I'll walk you through what Torna Idioma is, and why Makati is about to become the first Spanish-enabled city in Asia.",
     "Our mission is to empower Filipino youth through Spanish proficiency, restoring dignity, pride, and legacy. Our vision is to establish the Philippines as Asia's first Spanish-enabled nation, where heritage becomes strength.",
     'Why Spanish, and why now? Spanish is not foreign to the Philippines. It is the language of Rizal, of Bonifacio, and of the Malolos Constitution. Today more than six hundred fifty million people speak it, and it opens global careers with significantly higher salaries.',
     'Torna Idioma stands on three pillars. Dignity: reclaiming a language that belongs to the Filipino soul. Pride: reconnecting with a community of six hundred fifty million Spanish speakers. And prize: unlocking international careers and new economic opportunity.',
@@ -39,7 +39,7 @@ const SEGMENTS = {
     "This is more than a program; it's a movement. Whether you're a student, a teacher, an outsourcing professional, or a government official, Torna Idioma has a place for you. Be part of history.",
   ],
   fil: [
-    'Kumusta, ako si Lina, ang artificial intelligence na boses ng Digit2AI. Sa loob ng ilang minuto, ipapaliwanag ko kung ano ang Torna Idioma at kung bakit malapit nang maging unang lungsod na may Espanyol sa Asya ang Makati.',
+    'Kumusta, ako si Profesora Isabel, ang artificial intelligence na boses ng Torna Idioma. Sa loob ng ilang minuto, ipapaliwanag ko kung ano ang Torna Idioma at kung bakit malapit nang maging unang lungsod na may Espanyol sa Asya ang Makati.',
     'Layunin naming palakasin ang kabataang Pilipino sa pamamagitan ng kahusayan sa Espanyol, ibinabalik ang dignidad, pagmamalaki, at pamana. Ang aming bisyon ay gawing unang bansang may Espanyol sa Asya ang Pilipinas, kung saan ang pamana ay nagiging lakas.',
     'Bakit Espanyol, at bakit ngayon? Hindi dayuhan ang Espanyol sa Pilipinas. Ito ang wika ni Rizal, ni Bonifacio, at ng Konstitusyong Malolos. Ngayon, mahigit anim na raan at limampung milyong tao ang nagsasalita nito, at nagbubukas ito ng pandaigdigang karera na may mas mataas na sahod.',
     'Nakatayo ang Torna Idioma sa tatlong haligi. Dignidad: pagbawi ng wikang pag-aari ng kaluluwa ng Pilipino. Pagmamalaki: muling pakikipag-ugnay sa anim na raan at limampung milyong nagsasalita ng Espanyol. At gantimpala: pagbubukas ng pandaigdigang karera at bagong oportunidad pang-ekonomiya.',
@@ -53,39 +53,39 @@ const SECTION_IDS = [null, 'mission', 'why', 'pillars', 'impact', 'join'];
 
 const UI = {
   es: {
-    title: 'Lina · Voz AI de Digit2AI',
+    title: 'Profesora Isabel · Voz AI de Torna Idioma',
     role: 'Tu guía de la visión Torna Idioma',
-    playAll: '▶ Que Lina lo explique todo',
+    playAll: '▶ Que la Profesora Isabel lo explique todo',
     pause: '❚❚ Pausar', resume: '▶ Reanudar', stop: '■ Detener',
-    idle: 'Pulsa el botón para que Lina te presente la visión.',
+    idle: 'Pulsa el botón para que la Profesora Isabel te presente la visión.',
     paused: 'En pausa.', prep: 'Preparando voz neural…',
     done: 'Presentación terminada. Pulsa de nuevo para repetir.',
     neural: 'Voz neural HD', accent: 'Acento',
-    speaking: (i, n) => `Lina está hablando… (${i} de ${n})`,
+    speaking: (i, n) => `La Profesora Isabel está hablando… (${i} de ${n})`,
     hd: '● HD', browser: '○ navegador',
   },
   en: {
-    title: 'Lina · Digit2AI AI Voice',
+    title: 'Profesora Isabel · Torna Idioma AI Voice',
     role: 'Your guide to the Torna Idioma vision',
-    playAll: '▶ Let Lina explain it all',
+    playAll: '▶ Let Profesora Isabel explain it all',
     pause: '❚❚ Pause', resume: '▶ Resume', stop: '■ Stop',
-    idle: 'Tap the button and let Lina walk you through the vision.',
+    idle: 'Tap the button and let Profesora Isabel walk you through the vision.',
     paused: 'Paused.', prep: 'Preparing neural voice…',
     done: 'Presentation finished. Tap again to replay.',
     neural: 'HD neural voice', accent: 'Accent',
-    speaking: (i, n) => `Lina is speaking… (${i} of ${n})`,
+    speaking: (i, n) => `Profesora Isabel is speaking… (${i} of ${n})`,
     hd: '● HD', browser: '○ browser',
   },
   fil: {
-    title: 'Lina · AI na Boses ng Digit2AI',
+    title: 'Profesora Isabel · AI na Boses ng Torna Idioma',
     role: 'Ang iyong gabay sa bisyon ng Torna Idioma',
-    playAll: '▶ Ipaliwanag ni Lina ang lahat',
+    playAll: '▶ Ipaliwanag ni Profesora Isabel ang lahat',
     pause: '❚❚ I-pause', resume: '▶ Ituloy', stop: '■ Itigil',
-    idle: 'Pindutin ang button para ipakilala ni Lina ang bisyon.',
+    idle: 'Pindutin ang button para ipakilala ni Profesora Isabel ang bisyon.',
     paused: 'Naka-pause.', prep: 'Inihahanda ang neural na boses…',
     done: 'Tapos na ang presentasyon. Pindutin muli upang ulitin.',
     neural: 'HD neural na boses', accent: 'Accent',
-    speaking: (i, n) => `Nagsasalita si Lina… (${i} ng ${n})`,
+    speaking: (i, n) => `Nagsasalita si Profesora Isabel… (${i} ng ${n})`,
     hd: '● HD', browser: '○ browser',
   },
 };
