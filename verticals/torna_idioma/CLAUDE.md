@@ -14,6 +14,17 @@ Neural AI Spanish Language Acquisition Engine. Static landing + React SPA sub-ro
 - `frontend/` — React + Vite SPA
 - `backend/` — API + services (`backend/services/`)
 
+## Curriculum page — `tornaidioma.com/modules`
+Server-rendered review of all 12 modules / 72 lessons, read live from `ti_courses` + `ti_lessons`
+(`backend/services/curriculum-page.js`, route in `backend/index.js`). Editing a lesson changes the
+page immediately — there is no build step and no copy of the content anywhere.
+`tornaidioma.com/modules` is a vanity rewrite in `src/app.js` (serves in place, URL stays short);
+the canonical path `/Torna_Idioma/modules` works on any host.
+
+**Answer keys are withheld by default** — this page is on the open internet and a learner must not
+find the key with it. Correct answers render only when `TI_MODULES_KEY` is set in the environment
+AND the request carries `?key=<that value>`. Unset env = answers unavailable, not weakly hidden.
+
 ## Build
 ```bash
 cd verticals/torna_idioma/frontend && /opt/homebrew/bin/node node_modules/.bin/vite build

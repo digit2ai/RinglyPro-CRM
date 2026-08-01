@@ -32,6 +32,20 @@ router.get('/health', (req, res) => {
   res.json({ service: 'Torna Idioma', status: 'healthy', tagline: 'Vida · Cultura · Legado', timestamp: new Date().toISOString() });
 });
 
+// --- Curriculum review page (/Torna_Idioma/modules, tornaidioma.com/modules) ---
+// Server-rendered from ti_courses + ti_lessons so it always matches what a learner
+// is served. Answer keys only render with ?key=<TI_MODULES_KEY>; see the service.
+const { curriculumPage, answersAllowed } = require('./services/curriculum-page');
+router.get('/modules', async (req, res) => {
+  try {
+    const html = await curriculumPage({ showAnswers: answersAllowed(req) });
+    res.type('html').send(html);
+  } catch (err) {
+    console.error('Torna Idioma /modules error:', err.message);
+    res.status(500).type('html').send('<h1>Curriculum unavailable</h1><p>The curriculum could not be loaded. Try again in a moment.</p>');
+  }
+});
+
 // Serve React frontend
 const distPath = path.join(__dirname, '../frontend/dist');
 router.use(express.static(distPath));
