@@ -111,6 +111,10 @@
       bits.push('Some stores have no per-SKU price on file; those dollar figures use org defaults and are estimates.');
     }
     if (d.demo) bits.push('<b>Generated preview.</b> ' + esc(d.note || ''));
+    if (d.illustrative_stores && d.illustrative_stores.length) {
+      bits.push('Rows marked <b>illustrative</b> are not in the store master: ' +
+        esc(d.illustrative_stores.join(', ')) + '.');
+    }
     if (!bits.length) { el.classList.add('hidden'); return; }
     el.innerHTML = bits.join('<br>');
     el.classList.remove('hidden');
@@ -180,7 +184,10 @@
       var nativeCell = s.fx_converted
         ? '<span class="muted">'+money(s.native.lost_sales, s.native.currency)+'</span>'
         : '<span class="muted">&mdash;</span>';
-      return '<tr class="clickable" data-store="'+s.store_id+'">' +
+      // Illustrative stores have no persisted inventory, so drilling into one
+      // would only 404. They render, but they are not clickable.
+      var drillable = s.store_id > 0;
+      return '<tr' + (drillable ? ' class="clickable" data-store="'+s.store_id+'"' : '') + '>' +
         '<td class="rank">'+(i+1)+'</td>' +
         '<td><b>'+esc(s.store_code)+'</b><div class="muted">'+esc(s.name||'')+'</div></td>' +
         '<td class="muted"><span class="flag">'+flag(s.country)+'</span> '+
@@ -189,7 +196,9 @@
         '<td class="num">'+money(s.lost_sales_usd,ccy)+'</td>' +
         '<td class="num">'+nativeCell+'</td>' +
         '<td>'+esc(s.top_root_cause||'—')+
-          (s.is_estimated?'<span class="pill flag">est</span>':'')+'</td>' +
+          (s.is_estimated?'<span class="pill flag">est</span>':'')+
+          // Negative ids are the preview's illustrative stores — never real rows.
+          (s.store_id < 0 ?'<span class="pill flag">illustrative</span>':'')+'</td>' +
         '<td class="num">'+scoreChip(s.osa_score)+'</td></tr>';
     }).join('');
 

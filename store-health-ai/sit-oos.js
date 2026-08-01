@@ -360,6 +360,28 @@ const TODAY = new Date().toISOString().slice(0, 10);
     ok('stores.country + stores.currency exist after boot', storeCols.length === 2,
       storeCols.map((c) => c.column_name).join(',') || 'MISSING — schema top-up did not run');
 
+    // --- illustrative-store honesty ---
+    // The preview may supplement a single-country chain with reference stores so
+    // the multi-country view is demonstrable. They must be NAMED, never blended
+    // in silently, and they must never reach the real /chain endpoint.
+    const prev = await request(port, 'GET', '/aiastore/api/v1/oos/chain/demo');
+    const pv = (prev.body && prev.body.data) || {};
+    ok('Preview declares illustrative stores explicitly',
+      Array.isArray(pv.illustrative_stores) && typeof pv.real_store_count === 'number',
+      (pv.illustrative_stores || []).length + ' illustrative, ' + pv.real_store_count + ' real');
+    if ((pv.illustrative_stores || []).length) {
+      ok('Preview note names the illustrative stores',
+        /NOT in the store master/i.test(pv.note || ''), 'disclosed in note');
+      ok('Illustrative stores carry negative ids (never real rows)',
+        (pv.stores_by_impact || []).filter((s) => s.store_id < 0).length === pv.illustrative_stores.length,
+        'ids are synthetic');
+    }
+    const realChain = await request(port, 'GET', '/aiastore/api/v1/oos/chain');
+    const rc = (realChain.body && realChain.body.data) || {};
+    ok('Real /chain never contains illustrative stores',
+      !(rc.stores_by_impact || []).some((s) => s.store_id < 0),
+      (rc.stores_by_impact || []).length + ' real stores only');
+
     // --- honesty: estimation must be labelled when prices are absent ---
     await InventoryLevel.update({ metadata: null }, { where: { store_id: storeId } });
     const est = await request(port, 'GET', `/aiastore/api/v1/oos/store/${storeId}?date=${TODAY}`);

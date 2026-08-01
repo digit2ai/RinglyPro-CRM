@@ -162,7 +162,32 @@ exports.getChainDemo = async (req, res) => {
   const date = req.query.date || new Date().toISOString().slice(0, 10);
   const where = { status: 'active' };
   if (req.query.country) where.country = String(req.query.country).toUpperCase();
-  const stores = await Store.findAll({ where, raw: true });
+  let stores = await Store.findAll({ where, raw: true });
+
+  // If the real chain is single-country, supplement the PREVIEW with the
+  // international reference footprint so the multi-country path (country
+  // rollup, FX normalization, currency column) is demonstrable before those
+  // stores exist in the store master.
+  //
+  // These rows are never written and are listed explicitly in `illustrative`
+  // below, so a reader can tell exactly which stores are real. This endpoint is
+  // already a labelled non-persisting preview; quietly mixing invented stores
+  // into /chain (the real endpoint) would not be acceptable and is not done.
+  const realCountries = new Set(stores.map((s) => s.country || 'US'));
+  let illustrative = [];
+  if (realCountries.size < 2 && !req.query.country) {
+    const { INTERNATIONAL_STORES } = require('../services/oos-demo-seed');
+    illustrative = INTERNATIONAL_STORES.map((s, i) => ({
+      ...s, id: -(i + 1), status: 'active', region_id: null, district_id: null
+    }));
+    stores = stores.concat(illustrative);
+  } else if (req.query.country && !stores.length) {
+    const { INTERNATIONAL_STORES } = require('../services/oos-demo-seed');
+    const cc = String(req.query.country).toUpperCase();
+    illustrative = INTERNATIONAL_STORES.filter((s) => s.country === cc)
+      .map((s, i) => ({ ...s, id: -(i + 1), status: 'active', region_id: null, district_id: null }));
+    stores = illustrative;
+  }
 
   if (!stores.length) {
     return res.status(404).json({ success: false, error: 'no active stores to preview' });
@@ -231,7 +256,12 @@ exports.getChainDemo = async (req, res) => {
     success: true,
     data: {
       demo: true,
-      note: 'Generated preview over the real store list. Nothing is persisted. Use /chain once a real POS feed has been ingested.',
+      note: illustrative.length
+        ? `Generated preview. Nothing is persisted. ${illustrative.length} illustrative international stores (${Array.from(new Set(illustrative.map((s) => s.country))).join(', ')}) are included to demonstrate the multi-country view — they are NOT in the store master. Use /chain for the real chain.`
+        : 'Generated preview over the real store list. Nothing is persisted. Use /chain once a real POS feed has been ingested.',
+      // Named explicitly so a reader can tell real stores from illustrative ones.
+      illustrative_stores: illustrative.map((s) => s.store_code),
+      real_store_count: stores.length - illustrative.length,
       snapshot_date: date,
       store_count: perStore.length,
       oos_count: allEvents.length,
