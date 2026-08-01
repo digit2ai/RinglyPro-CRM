@@ -48,6 +48,16 @@ let oosRoutes = null;
 try {
   oosRoutes = require('./routes/oos');
   console.log('✅ OOS Intelligence routes loaded (on-shelf availability)');
+
+  // Apply the schema top-up at boot rather than making the first request pay
+  // for it. The OOS models declare columns (stores.country/currency,
+  // inventory_levels.metadata) that a freshly deployed database has not got
+  // yet, and any select against them fails until the ALTER has run. Every entry
+  // point also awaits ensureSchema defensively; this just gets it done early.
+  // Non-fatal by design — a failure here must not stop /aiastore from booting.
+  require('./services/oos-intelligence').ensureSchema()
+    .then((okSchema) => console.log(`   - OOS schema: ${okSchema ? 'ready' : 'incomplete (see log)'}`))
+    .catch((e) => console.log('   - OOS schema top-up error:', e.message));
 } catch (error) {
   console.log('⚠️ OOS Intelligence routes unavailable:', error.message);
 }

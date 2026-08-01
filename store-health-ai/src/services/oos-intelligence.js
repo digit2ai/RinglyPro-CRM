@@ -260,6 +260,7 @@ async function analyzeStore(storeId, date) {
  */
 async function analyzeChain(organizationId, date, filters) {
   if (!available()) throw new Error('OOS intelligence libs unavailable: ' + libError);
+  await ensureSchema(); // stores.country/currency must exist before the select
 
   const snapshotDate = date || new Date().toISOString().slice(0, 10);
   const f = filters || {};

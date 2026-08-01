@@ -74,6 +74,12 @@ exports.getChain = async (req, res) => {
  * Cheap — no analysis, just the list needed to populate filters and navigation.
  */
 exports.getStores = async (req, res) => {
+  // The Store model declares country/currency, so any select fails until the
+  // ALTER has run. Every entry point that reads stores must top up the schema
+  // first — an earlier build only did this on analyzeStore, so this route 500'd
+  // with 'column "country" does not exist' on a fresh deploy.
+  if (oosIntelligence.available()) await oosIntelligence.ensureSchema();
+
   const { Store, Region, District } = require('../../models');
 
   const where = { status: 'active' };
@@ -141,6 +147,7 @@ exports.backfill = async (req, res) => {
  */
 exports.getChainDemo = async (req, res) => {
   if (guard(res)) return;
+  await oosIntelligence.ensureSchema(); // country/currency must exist before the select
 
   const { Store } = require('../../models');
   const { buildStoreDay } = require('../services/oos-demo-seed');

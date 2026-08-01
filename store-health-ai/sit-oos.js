@@ -350,6 +350,16 @@ const TODAY = new Date().toISOString().slice(0, 10);
     const spa = await request(port, 'GET', '/aiastore/');
     ok('Existing /aiastore/ dashboard still served', spa.status === 200, 'status=' + spa.status);
 
+    // The Store model declares country/currency, so EVERY select against stores
+    // fails until the ALTER has run. A fresh deploy 500'd with
+    // 'column "country" does not exist' because only analyzeStore topped up the
+    // schema. These columns must exist for the app to function at all.
+    const [storeCols] = await sequelize.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name='stores' AND column_name IN ('country','currency')"
+    );
+    ok('stores.country + stores.currency exist after boot', storeCols.length === 2,
+      storeCols.map((c) => c.column_name).join(',') || 'MISSING — schema top-up did not run');
+
     // --- honesty: estimation must be labelled when prices are absent ---
     await InventoryLevel.update({ metadata: null }, { where: { store_id: storeId } });
     const est = await request(port, 'GET', `/aiastore/api/v1/oos/store/${storeId}?date=${TODAY}`);
