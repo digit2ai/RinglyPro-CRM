@@ -58,7 +58,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   // Seeded from whatever the visitor chose on the landing page; a legacy 'es'
   // coerces to English rather than falling through to the account default.
-  const [lang, setLang] = useState(() => (localStorage.getItem('ti_lang') === 'fil' ? 'fil' : 'en'));
+  // Mirrors getLang() in services/auth.js: an explicit choice wins, otherwise
+  // Filipino — the primary audience — so a deep link to /login matches what the
+  // landing page would have shown.
+  const [lang, setLang] = useState(() => {
+    const stored = localStorage.getItem('ti_lang');
+    if (stored === 'en' || stored === 'fil') return stored;
+    // Anything else is a legacy value from the old three-way toggle. Clear it so
+    // the account preference governs after sign-in instead of a dead 'es'.
+    if (stored) localStorage.removeItem('ti_lang');
+    return 'fil';
+  });
   const L = T[lang] || T.en;
   const switchLang = (l) => { const v = l === 'fil' ? 'fil' : 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
 

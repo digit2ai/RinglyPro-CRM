@@ -1270,15 +1270,24 @@
     });
     document.documentElement.lang = lang === 'fil' ? 'tl' : lang;
     localStorage.setItem('torna-lang', lang);
+    // The React app (login, dashboard, every learner screen) reads `ti_lang`.
+    // This page used to write only `torna-lang`, so the language chosen here
+    // never reached the app and a visitor who picked English still landed on a
+    // Filipino login. Write both so the choice carries through the whole
+    // journey. Interface language is en|fil only — Spanish is the subject.
+    localStorage.setItem('ti_lang', lang === 'fil' ? 'fil' : 'en');
   }
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => setLang(btn.dataset.setLang));
   });
 
-  // Load saved language
-  const savedLang = localStorage.getItem('torna-lang') || 'fil';
-  setLang(savedLang);
+  // Load saved language. Either key counts as a prior choice, so returning from
+  // the app keeps the language you were already reading in. A legacy 'es' from
+  // the old three-way toggle resolves to English rather than silently flipping
+  // the visitor to Filipino.
+  const stored = localStorage.getItem('torna-lang') || localStorage.getItem('ti_lang');
+  setLang(stored === 'fil' ? 'fil' : (stored ? 'en' : 'fil'));
 
   // Nav scroll
   const navbar = document.getElementById('navbar');

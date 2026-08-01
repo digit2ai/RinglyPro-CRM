@@ -83,6 +83,10 @@ router.post('/api/activities/deepen', ownerOnly, async (req, res) => {
 const distPath = path.join(__dirname, '../frontend/dist');
 router.get('/orientation', (req, res) => res.sendFile(path.join(distPath, 'orientation.html')));
 
+// Animated explainer — public, shareable. Ten scenes narrated by Ava through the
+// zero-key /api/tts/edge route. Also reachable at tornaidioma.com/presentation.
+router.get('/presentation', (req, res) => res.sendFile(path.join(distPath, 'presentation.html')));
+
 // Serve React frontend
 router.use(express.static(distPath));
 router.get('*', (req, res) => {

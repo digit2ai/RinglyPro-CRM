@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Torna Idioma — Animated Explainer</title>
+<meta name="description" content="Torna Idioma — Vida · Cultura · Legado. The return of the cultural language: a ten-scene animated explainer, narrated by Ava.">
+<meta name="theme-color" content="#04081A">
+<meta property="og:title" content="Torna Idioma — Animated Explainer">
+<meta property="og:description" content="Vida · Cultura · Legado. The return of the cultural language.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tornaidioma.com/presentation">
+<meta property="og:image" content="https://tornaidioma.com/Torna_Idioma/torna-seal.png">
+<link rel="canonical" href="https://tornaidioma.com/presentation">
+<link rel="icon" href="/Torna_Idioma/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#04081A; --deep:#0A1330; --azure:#1E62C8; --cyan:#7FE6FF;
+  --rose:#E8479B; --violet:#8A6BFF; --gold:#E3B24A; --cream:#F3E9D6;
+  --dim:#8FA9D6;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Space Grotesk","Avenir Next",Futura,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#02050F}
+body{
+  font-family:var(--sans); color:#E7F0FF;
+  display:grid; place-items:center; padding:16px;
+}
+.player{width:min(96vw,1040px)}
+.stage{
+  position:relative; width:100%; aspect-ratio:16/9; overflow:hidden;
+  border-radius:14px; background:
+    radial-gradient(900px 520px at 26% 14%, #16255A 0%, #0A1330 52%, #04081A 100%);
+  box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 0 1px rgba(127,230,255,.14);
+}
+/* ambient */
+.grid{
+  position:absolute; inset:-20%; opacity:.16;
+  background-image:linear-gradient(rgba(127,230,255,.18) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(127,230,255,.18) 1px,transparent 1px);
+  background-size:64px 64px; transform:perspective(600px) rotateX(62deg) translateY(12%);
+  animation:drift 26s linear infinite;
+}
+@keyframes drift{to{background-position:0 64px,64px 0}}
+.stars{position:absolute; inset:0; opacity:.7}
+.stars i{position:absolute; width:2px;height:2px;border-radius:50%;background:#CFE9FF;
+  animation:tw 5s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.12}50%{opacity:.85}}
+
+/* orb: recurring narrator */
+.orb{position:absolute; left:50%; top:50%; width:230px;height:230px; margin:-115px 0 0 -115px;
+  transition:transform 1.3s cubic-bezier(.6,.05,.2,1), opacity .9s ease;}
+.orb .ring{position:absolute; inset:0; border-radius:50%; border:1.4px solid rgba(111,168,255,.5)}
+.orb .r1{animation:spin 22s linear infinite; border-style:dashed}
+.orb .r2{inset:16px; border-color:rgba(127,230,255,.55); border-style:dashed;
+  animation:spin 34s linear infinite reverse}
+.orb .r3{inset:42px; border:6px dashed rgba(159,224,255,.55); animation:spin 15s linear infinite}
+.orb .halo{position:absolute; inset:58px; border-radius:50%; filter:blur(16px);
+  background:radial-gradient(circle,rgba(240,86,127,.85) 0%,rgba(178,58,134,.45) 65%,transparent 100%);
+  animation:pulse 3.6s ease-in-out infinite}
+.orb .core{position:absolute; inset:70px; border-radius:50%; filter:blur(4px);
+  background:radial-gradient(circle at 42% 38%,#fff 0%,#C9FBFF 18%,#49C8F5 44%,rgba(42,99,224,.85) 74%,transparent 100%);
+  animation:pulse 3.6s ease-in-out infinite}
+/* while Ava speaks, the orb breathes faster — it is the voice on screen */
+.player.speaking .orb .halo,.player.speaking .orb .core{animation-duration:1.5s}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+/* scenes */
+.scene{position:absolute; inset:0; padding:5% 7%; display:flex; flex-direction:column;
+  justify-content:center; opacity:0; pointer-events:none; transition:opacity .7s ease}
+.scene.on{opacity:1}
+.scene .up{opacity:0; transform:translateY(18px); }
+.scene.on .up{animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,0s)}
+@keyframes rise{to{opacity:1;transform:none}}
+
+.eyebrow{font-size:clamp(9px,1.05vw,12px); letter-spacing:.42em; text-transform:uppercase;
+  color:var(--cyan); opacity:.85; margin-bottom:14px}
+h1{font-family:var(--display); font-weight:900; font-size:clamp(38px,7.2vw,82px);
+  line-height:.94; margin:0; letter-spacing:-.01em}
+h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px);
+  line-height:1.06; margin:0 0 14px}
+.lede{font-size:clamp(13px,1.55vw,19px); line-height:1.5; color:#C6D8F5; max-width:62ch; margin:0}
+.es{font-family:var(--display); font-style:italic; color:var(--gold); opacity:.92}
+.rule{height:1px;background:linear-gradient(90deg,var(--cyan),transparent);margin:18px 0;width:min(420px,60%)}
+
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+.chip{font-size:clamp(10px,1.15vw,13px); letter-spacing:.13em; text-transform:uppercase;
+  padding:7px 13px; border:1px solid rgba(127,230,255,.35); border-radius:999px; color:#BFE0FF;
+  background:rgba(30,98,200,.14)}
+
+.cards{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:22px}
+.card{border:1px solid rgba(127,230,255,.22); border-radius:12px; padding:16px 16px 18px;
+  background:linear-gradient(180deg,rgba(30,98,200,.20),rgba(10,19,48,.55))}
+.card h3{font-family:var(--display); font-size:clamp(16px,2.1vw,25px); margin:0 0 2px; font-weight:600}
+.card .role{font-size:clamp(9px,1vw,11px); letter-spacing:.2em; text-transform:uppercase; color:var(--cyan); opacity:.8}
+.card ul{margin:12px 0 0; padding:0; list-style:none; font-size:clamp(10px,1.2vw,13px); color:#C0D3F0; line-height:1.7}
+.card li::before{content:"—"; color:var(--rose); margin-right:8px; opacity:.8}
+
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:26px}
+.stat .n{font-family:var(--display); font-weight:900; font-size:clamp(26px,4.6vw,54px); line-height:1;
+  background:linear-gradient(180deg,#fff,#7FE6FF); -webkit-background-clip:text; background-clip:text; color:transparent}
+.stat .l{margin-top:8px; font-size:clamp(9px,1.1vw,12px); letter-spacing:.16em; text-transform:uppercase; color:var(--dim)}
+
+.pillars{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px}
+.pillar{position:relative; padding:20px 16px 18px; border-top:2px solid var(--rose)}
+.pillar .num{font-family:var(--display); font-size:clamp(22px,3.4vw,40px); color:var(--rose); line-height:1}
+.pillar h3{font-family:var(--display); font-size:clamp(17px,2.4vw,29px); margin:6px 0 8px; font-weight:600}
+.pillar p{margin:0; font-size:clamp(10px,1.2vw,13px); color:#BCCFEE; line-height:1.6}
+
+.feats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px 22px; margin-top:20px; max-width:64%}
+.feat{display:flex; gap:12px; align-items:flex-start}
+.feat .k{font-family:var(--display); font-size:clamp(12px,1.5vw,17px); color:var(--gold); min-width:2.4em}
+.feat p{margin:0; font-size:clamp(10px,1.2vw,13px); color:#C3D5F2; line-height:1.55}
+.feat b{color:#EAF3FF; font-weight:500; font-family:var(--sans)}
+
+.seal{position:absolute; right:5%; bottom:6%; width:34%; max-width:330px; opacity:0;
+  transform:scale(.86) rotate(-6deg); transition:all 1.1s cubic-bezier(.2,.8,.2,1)}
+.scene.on .seal{opacity:1; transform:none}
+.seal img{width:100%; display:block; filter:drop-shadow(0 18px 40px rgba(0,0,0,.55))}
+
+.timeline{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:22px}
+.tl{padding-top:14px; border-top:1px solid rgba(127,230,255,.3)}
+.tl .yr{font-size:clamp(9px,1vw,11px); letter-spacing:.24em; text-transform:uppercase; color:var(--cyan)}
+.tl h3{font-family:var(--display); font-size:clamp(15px,2.1vw,25px); margin:6px 0 10px; font-weight:600}
+.tl ul{margin:0; padding-left:16px; font-size:clamp(9.5px,1.15vw,12.5px); color:#BCCFEE; line-height:1.65}
+
+.partners{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; max-width:78%}
+.pt{border:1px solid rgba(227,178,74,.35); background:rgba(227,178,74,.08); border-radius:10px;
+  padding:10px 14px; font-size:clamp(10px,1.2vw,13px)}
+.pt small{display:block; color:var(--dim); font-size:.82em; letter-spacing:.1em; text-transform:uppercase; margin-top:3px}
+
+.closing{align-items:center; text-align:center}
+.closing .url{margin-top:18px; font-size:clamp(11px,1.4vw,16px); letter-spacing:.3em; color:var(--cyan)}
+
+/* captions — what Ava is saying, on screen */
+.cap{position:absolute; left:5%; right:5%; bottom:3.5%; text-align:center; pointer-events:none;
+  font-size:clamp(11px,1.35vw,16px); line-height:1.5; color:#DCEBFF; opacity:0;
+  transition:opacity .35s ease; text-shadow:0 2px 14px rgba(2,5,15,.9)}
+.cap span{background:rgba(4,8,26,.62); padding:7px 14px; border-radius:9px;
+  box-shadow:inset 0 0 0 1px rgba(127,230,255,.18); backdrop-filter:blur(6px)}
+.cap.on{opacity:1}
+/* keep the caption clear of the scene content while narration is on */
+.player.capon .scene{padding-bottom:13%}
+.player.capon .seal{bottom:15%}
+
+/* controls */
+.bar{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap}
+.btn{appearance:none; border:1px solid rgba(127,230,255,.3); background:rgba(30,98,200,.16);
+  color:#DCEBFF; font-family:var(--sans); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  padding:9px 15px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px}
+.btn:hover{background:rgba(30,98,200,.3)}
+.btn:focus-visible{outline:2px solid var(--cyan); outline-offset:2px}
+.btn.on{background:linear-gradient(90deg,rgba(232,71,155,.35),rgba(30,98,200,.35)); border-color:rgba(232,71,155,.5); color:#fff}
+.btn .dot{width:7px;height:7px;border-radius:50%;background:#4E6A9A}
+.btn.on .dot{background:var(--rose); box-shadow:0 0 8px var(--rose)}
+.track{flex:1; min-width:140px; height:3px; background:rgba(127,230,255,.16); border-radius:2px; overflow:hidden; cursor:pointer}
+.fill{height:100%; width:0; background:linear-gradient(90deg,var(--cyan),var(--rose))}
+.time{font-size:11px; letter-spacing:.12em; color:var(--dim); min-width:96px; text-align:right; font-variant-numeric:tabular-nums}
+.dots{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap}
+.dots b{width:26px; height:4px; border-radius:2px; background:rgba(127,230,255,.2); cursor:pointer; transition:background .25s ease}
+.dots b:hover{background:rgba(127,230,255,.45)}
+.dots b.on{background:linear-gradient(90deg,var(--cyan),var(--rose))}
+.note{margin-top:10px; font-size:11.5px; color:var(--dim); letter-spacing:.02em; min-height:1.3em}
+.note b{color:#BFE0FF; font-weight:500}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}
+  .scene .up{opacity:1; transform:none} .seal{opacity:1; transform:none} .cap{opacity:1}}
+@media(max-width:560px){
+  .time{min-width:0}
+  .btn{font-size:11px; padding:8px 12px; letter-spacing:.1em}
+}
+</style>
+</head>
+<body>
+<div class="player" id="player">
+  <div class="stage" id="stage">
+    <div class="grid"></div>
+    <div class="stars" id="stars"></div>
+
+    <div class="orb" id="orb">
+      <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="halo"></div><div class="core"></div>
+    </div>
+
+    <!-- 1 -->
+    <section class="scene" data-orb="0,0,1.35,.34">
+      <div class="up eyebrow" style="--d:.2s">A movement, not a course</div>
+      <h1 class="up" style="--d:.45s">TORNA<br>IDIOMA</h1>
+      <div class="up rule" style="--d:.9s"></div>
+      <p class="up lede" style="--d:1.1s"><span class="es">Vida · Cultura · Legado</span><br>
+        The return of the cultural language.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="scene" data-orb="30,-24,.62,.5">
+      <div class="up eyebrow" style="--d:.1s">The premise</div>
+      <h2 class="up" style="--d:.3s">Spanish is not foreign to us.<br><span class="es">Es un idioma filipino.</span></h2>
+      <p class="up lede" style="--d:.8s">It is the language of Rizal, Bonifacio and Aguinaldo — and of the
+        Malolos Constitution of 1899, the first republican constitution in all of Asia.</p>
+      <div class="chips">
+        <span class="chip up" style="--d:1.2s">Noli Me Tángere</span>
+        <span class="chip up" style="--d:1.35s">El Filibusterismo</span>
+        <span class="chip up" style="--d:1.5s">Malolos 1899</span>
+        <span class="chip up" style="--d:1.65s">Chabacano</span>
+        <span class="chip up" style="--d:1.8s">Galeón de Manila</span>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="scene" data-orb="34,-30,.42,.28">
+      <div class="up eyebrow" style="--d:.1s">Where it begins</div>
+      <h2 class="up" style="--d:.25s">Makati · Zamboanga · Cavite</h2>
+      <p class="up lede" style="--d:.55s">Three cities with deep Spanish roots — the first Spanish-enabled cities in Asia.</p>
+      <div class="cards">
+        <div class="card up" style="--d:.9s"><div class="role">Financial capital</div><h3>Makati</h3>
+          <ul><li>₱1.18T GDP</li><li>80,000+ businesses</li><li>120+ BPO companies</li></ul></div>
+        <div class="card up" style="--d:1.1s"><div class="role">Chabacano heritage</div><h3>Zamboanga</h3>
+          <ul><li>900K+ residents</li><li>70% speak Chabacano</li><li>400 years of heritage</li></ul></div>
+        <div class="card up" style="--d:1.3s"><div class="role">Birthplace of independence</div><h3>Cavite</h3>
+          <ul><li>4.3M+ population</li><li>CALABARZON industry</li><li>1898 revolution</li></ul></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="scene" data-orb="-32,28,.5,.3">
+      <div class="up eyebrow" style="--d:.1s">Why Spanish, why now</div>
+      <h2 class="up" style="--d:.25s">Heritage that pays.</h2>
+      <div class="stats">
+        <div class="stat up" style="--d:.7s"><div class="n" data-count="650" data-suffix="M">0</div><div class="l">Speakers worldwide</div></div>
+        <div class="stat up" style="--d:.9s"><div class="n">#3</div><div class="l">Language of the internet</div></div>
+        <div class="stat up" style="--d:1.1s"><div class="n" data-count="250" data-suffix="+">0</div><div class="l">Years of galleon trade</div></div>
+        <div class="stat up" style="--d:1.3s"><div class="n">20–40%</div><div class="l">Higher BPO salaries</div></div>
+      </div>
+      <p class="up lede" style="--d:1.6s">A Spanish-speaking agent earns ₱8,000–₱15,000 more each month.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="scene" data-orb="0,-34,.55,.26">
+      <div class="up eyebrow" style="--d:.1s">The foundation</div>
+      <h2 class="up" style="--d:.25s">Three pillars</h2>
+      <div class="pillars">
+        <div class="pillar up" style="--d:.7s"><div class="num">I</div><h3>Dignity<br><span class="es">Dignidad</span></h3>
+          <p>A language that was never foreign — only forgotten.</p></div>
+        <div class="pillar up" style="--d:.95s"><div class="num">II</div><h3>Pride<br><span class="es">Orgullo</span></h3>
+          <p>A Hispanic-Asian nation, connected to 650 million people.</p></div>
+        <div class="pillar up" style="--d:1.2s"><div class="num">III</div><h3>Prize<br><span class="es">Premio</span></h3>
+          <p>Global careers, higher salaries, international partnerships.</p></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="scene" data-orb="-40,26,.34,.22">
+      <div class="up eyebrow" style="--d:.1s">The platform · now live</div>
+      <h2 class="up" style="--d:.25s">Método Rizal</h2>
+      <p class="up lede" style="--d:.5s">Built on José Rizal's own method of mastering a language — now powered by AI and voice.</p>
+      <div class="feats">
+        <div class="feat up" style="--d:.85s"><div class="k">01</div><p><b>Cinco Raíces</b> — five root words a night, about 1,800 a year, with spaced repetition.</p></div>
+        <div class="feat up" style="--d:1.0s"><div class="k">02</div><p><b>Profesora Isabel</b> — a voice AI tutor that explains in English or Filipino, teaches in Spanish.</p></div>
+        <div class="feat up" style="--d:1.15s"><div class="k">03</div><p><b>Translation Atelier</b> — real lines, instant AI feedback.</p></div>
+        <div class="feat up" style="--d:1.3s"><div class="k">04</div><p><b>Rizal Studies</b> — learn from Noli and El Fili, earn a completion record.</p></div>
+        <div class="feat up" style="--d:1.45s"><div class="k">05</div><p><b>Emperador</b> — streaks, badges and a rotating cohort title.</p></div>
+      </div>
+      <div class="seal"><img src="/Torna_Idioma/torna-seal.png" alt="Torna Idioma Spanish Language Program seal" loading="lazy" width="440" height="389"></div>
+    </section>
+
+    <!-- 7 -->
+    <section class="scene" data-orb="36,30,.46,.3">
+      <div class="up eyebrow" style="--d:.1s">The prize</div>
+      <h2 class="up" style="--d:.25s">If one in ten BPO workers becomes proficient</h2>
+      <div class="stats">
+        <div class="stat up" style="--d:.7s"><div class="n">₱960M–1.8B</div><div class="l">Resident income, yearly</div></div>
+        <div class="stat up" style="--d:.9s"><div class="n">₱150–300M</div><div class="l">City tax revenue, yearly</div></div>
+        <div class="stat up" style="--d:1.1s"><div class="n">₱2–5B</div><div class="l">Foreign investment, 5 years</div></div>
+        <div class="stat up" style="--d:1.3s"><div class="n">10–20×</div><div class="l">Return on investment</div></div>
+      </div>
+      <p class="up lede" style="--d:1.6s">₱60M–₱100M invested a year. ₱3.6B–₱8.2B of impact over three.</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="scene" data-orb="-36,-30,.44,.26">
+      <div class="up eyebrow" style="--d:.1s">Implementation</div>
+      <h2 class="up" style="--d:.25s">A three-year vision</h2>
+      <div class="timeline">
+        <div class="tl up" style="--d:.75s"><div class="yr">Year 1</div><h3>Foundation</h3>
+          <ul><li>Pilot schools launch</li><li>Teacher training and certification</li><li>BPO certification program</li></ul></div>
+        <div class="tl up" style="--d:1.0s"><div class="yr">Year 2</div><h3>Expansion</h3>
+          <ul><li>Spanish in every public high school</li><li>2,500 BPO workers certified</li><li>City-wide bilingual signage</li></ul></div>
+        <div class="tl up" style="--d:1.25s"><div class="yr">Year 3</div><h3>Full implementation</h3>
+          <ul><li>5,000 BPO workers certified</li><li>Bilingual frontline offices</li><li>The Hispanic Gateway of Southeast Asia</li></ul></div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="scene" data-orb="38,-28,.4,.24">
+      <div class="up eyebrow" style="--d:.1s">A hemispheric alliance</div>
+      <h2 class="up" style="--d:.25s">We are not doing this alone.</h2>
+      <div class="partners">
+        <div class="pt up" style="--d:.7s">UVEG<small>Mexico · 12 modules, CEFR, MOU signed</small></div>
+        <div class="pt up" style="--d:.85s">Universidad de Medellín<small>Colombia · teacher training</small></div>
+        <div class="pt up" style="--d:1.0s">University of Makati<small>Host university</small></div>
+        <div class="pt up" style="--d:1.15s">Colegio de San Juan de Letrán<small>Heritage partner · est. 1620</small></div>
+        <div class="pt up" style="--d:1.3s">Polytechnic University of the Philippines<small>Scale · 100,000+ students</small></div>
+      </div>
+      <p class="up lede" style="--d:1.55s">Spain, Mexico, Colombia, Chile, Peru, Argentina, Panama, Costa Rica,
+        the Dominican Republic, Puerto Rico — and the Philippines.</p>
+    </section>
+
+    <!-- 10 -->
+    <section class="scene closing" data-orb="0,0,1.5,.22">
+      <div class="up eyebrow" style="--d:.15s">Vida · Cultura · Legado</div>
+      <h1 class="up" style="--d:.4s;font-size:clamp(30px,5.4vw,62px)">This is our future.</h1>
+      <p class="up lede" style="--d:.9s;text-align:center"><span class="es">Este es nuestro futuro. Ito ang ating kinabukasan.</span></p>
+      <div class="up url" style="--d:1.3s">tornaidioma.com</div>
+    </section>
+
+    <div class="cap" id="cap"><span id="capText"></span></div>
+  </div>
+
+  <div class="bar">
+    <button class="btn on" id="voice" aria-pressed="true"><span class="dot"></span><span id="voiceLbl">Narration: Ava</span></button>
+    <button class="btn" id="play">Play</button>
+    <button class="btn" id="prev" aria-label="Previous scene">‹ Prev</button>
+    <button class="btn" id="next" aria-label="Next scene">Next ›</button>
+    <button class="btn" id="restart">Restart</button>
+    <div class="track" id="track"><div class="fill" id="fill"></div></div>
+    <div class="time" id="time">0:00 / 0:00</div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="note" id="note">Press <b>Play</b> — Ava narrates all ten scenes. Space to play/pause, ← → to move between scenes.</div>
+</div>
+
+<script>
+/* ============================================================
+   Torna Idioma — animated explainer
+   Voice: zero-key Microsoft Edge neural TTS via /api/tts/edge,
+   narrated by Ava (en-US-AvaNeural) — the same voice
+   manuelstagg.com narrates with. Scene timing is driven by the
+   real audio length, so a scene never cuts Ava off mid-sentence.
+   Falls back to the browser's own speech synthesis if the route
+   is unreachable, and to fixed timings if there is no voice at all.
+   ============================================================ */
+(function(){
+'use strict';
+
+var VOICE = 'ava', RATE = '-4%', TAIL = 1.1;   // seconds of silence held after Ava finishes
+var MIN = [7,11,12,12,11,14,11,11,10,8];       // minimum seconds per scene (silent fallback timing)
+
+/* Narration script — written for the ear, not the eye: acronyms spaced so they
+   are read letter by letter, figures spelled the way a presenter would say them. */
+var NARR = [
+ "Torna Idioma. Vida, Cultura, Legado. The return of the cultural language. This is a movement, not a course.",
+ "Spanish is not foreign to us. It is a Filipino language: the language of Rizal, Bonifacio and Aguinaldo, and of the Malolos Constitution of eighteen ninety-nine, the first republican constitution in all of Asia.",
+ "It begins in three cities with deep Spanish roots. Makati, the financial capital. Zamboanga, where seven in ten people still speak Chabacano. And Cavite, the birthplace of Philippine independence.",
+ "Why Spanish, and why now? Six hundred and fifty million speakers worldwide. The third language of the internet. Two hundred and fifty years of galleon trade. And a Spanish-speaking B P O agent earns twenty to forty percent more, eight to fifteen thousand pesos every month.",
+ "The movement rests on three pillars. Dignity: a language that was never foreign, only forgotten. Pride: a Hispanic-Asian nation, connected to six hundred and fifty million people. And Prize: global careers, higher salaries, international partnerships.",
+ "The platform is live. It is built on Metodo Rizal, Jose Rizal's own method of mastering a language. Five root words a night, about eighteen hundred a year. Profesora Isabel, a voice tutor that explains in English or Filipino and teaches in Spanish. A translation atelier with instant feedback. Rizal Studies in the original Spanish. And Emperador, a rotating cohort title.",
+ "Here is the prize. If just one in ten B P O workers becomes proficient, residents earn between nine hundred sixty million and one point eight billion pesos more every year. Cities gain a hundred fifty to three hundred million in tax revenue. And two to five billion pesos of foreign investment follows over five years. A ten to twenty times return.",
+ "The rollout takes three years. Year one, foundation: pilot schools, teacher certification, and the B P O program. Year two, expansion: Spanish in every public high school. Year three, full implementation, until the three cities become the Hispanic gateway of Southeast Asia.",
+ "And we are not doing this alone. U V E G in Mexico, with twelve C E F R modules and a signed agreement. Universidad de Medellin in Colombia. The University of Makati. Letran, founded in sixteen twenty. And the Polytechnic University of the Philippines, with more than a hundred thousand students.",
+ "This is our future. Este es nuestro futuro. Ito ang ating kinabukasan. Torna Idioma dot com."
+];
+
+var player=document.getElementById('player');
+var stage=document.getElementById('stage');
+var scenes=[].slice.call(document.querySelectorAll('.scene'));
+var orb=document.getElementById('orb');
+var fill=document.getElementById('fill'), track=document.getElementById('track');
+var timeEl=document.getElementById('time'), noteEl=document.getElementById('note');
+var playBtn=document.getElementById('play'), voiceBtn=document.getElementById('voice');
+var voiceLbl=document.getElementById('voiceLbl'), dotsEl=document.getElementById('dots');
+var cap=document.getElementById('cap'), capText=document.getElementById('capText');
+var N=scenes.length;
+
+/* starfield */
+var sf=document.getElementById('stars');
+for(var i=0;i<70;i++){var s=document.createElement('i');
+  s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
+  s.style.animationDelay=(Math.random()*5)+'s'; s.style.opacity=(.2+Math.random()*.6);
+  sf.appendChild(s);}
+
+/* scene dots */
+for(var d=0;d<N;d++){(function(k){
+  var b=document.createElement('b'); b.title='Scene '+(k+1); b.setAttribute('role','button');
+  b.onclick=function(){ go(k); }; dotsEl.appendChild(b);
+})(d);}
+var dotEls=[].slice.call(dotsEl.children);
+
+/* ---------- narration engine ---------- */
+var narrate=true;               // on by default; the first Play click supplies the audio gesture
+var neuralOK=true;              // flips false once the route proves unreachable
+var seg=[];                     // per-scene { state:'pending'|'ready'|'failed', url }
+var audio=null, synth=window.speechSynthesis, token=0;
+
+function fetchSeg(i){
+  if(i<0||i>=N) return Promise.reject(new Error('range'));
+  var s=seg[i];
+  if(s&&s.state==='ready') return Promise.resolve(s.url);
+  if(s&&s.p) return s.p;
+  if(s&&s.state==='failed') return Promise.reject(new Error('failed'));
+  seg[i]={state:'pending'};
+  seg[i].p=fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:NARR[i],voice:VOICE,rate:RATE})})
+    .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+    .then(function(b){
+      if(!b||b.size<200) throw new Error('empty audio');
+      var u=URL.createObjectURL(b); seg[i]={state:'ready',url:u}; return u;
+    })
+    .catch(function(e){ seg[i]={state:'failed'}; throw e; });
+  return seg[i].p;
+}
+
+function stopVoice(){
+  if(audio){ try{audio.pause();}catch(e){} audio.onended=audio.onerror=audio.onloadedmetadata=null; audio=null; }
+  if(synth){ try{synth.cancel();}catch(e){} }
+  player.classList.remove('speaking');
+}
+
+/* Browser speech synthesis — used only when the neural route is unreachable. */
+function browserSpeak(i,onEnd){
+  if(!synth){ onEnd(); return; }
+  var u=new SpeechSynthesisUtterance(NARR[i]);
+  u.lang='en-US'; u.rate=.98; u.pitch=1;
+  var vs=synth.getVoices()||[];
+  var pick=null;
+  for(var k=0;k<vs.length;k++){
+    var nm=(vs[k].name||'').toLowerCase();
+    if(vs[k].lang&&vs[k].lang.toLowerCase().indexOf('en')===0){
+      if(!pick) pick=vs[k];
+      if(nm.indexOf('ava')>=0||nm.indexOf('samantha')>=0||nm.indexOf('jenny')>=0){ pick=vs[k]; break; }
+    }
+  }
+  if(pick) u.voice=pick;
+  u.onend=onEnd; u.onerror=onEnd;
+  player.classList.add('speaking');
+  synth.speak(u);
+}
+
+/* Start narration for scene i. Extends that scene's planned length to the real
+   audio duration + TAIL as soon as the browser knows it. */
+function speak(i){
+  if(!narrate) return;
+  var t=token;
+  stopVoice();
+  setCaption(NARR[i]);
+  if(!neuralOK){
+    plan[i]=Math.max(MIN[i], estimate(NARR[i]));
+    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); forceNext=true; } });
+    return;
+  }
+  note('Loading Ava’s voice…');
+  fetchSeg(i).then(function(url){
+    if(t!==token) return;
+    var a=new Audio(url); audio=a;
+    a.onloadedmetadata=function(){
+      if(t!==token) return;
+      if(isFinite(a.duration)&&a.duration>0) plan[i]=Math.max(MIN[i], tIn + a.duration + TAIL);
+    };
+    a.onended=function(){ if(t!==token) return; player.classList.remove('speaking'); forceNext=true; };
+    a.onerror=function(){ if(t!==token) return; neuralOK=false; note('Neural voice unavailable — using the browser voice.'); browserSpeak(i,function(){ if(t===token){ forceNext=true; } }); };
+    note('Narrated by <b>Ava</b> · scene '+(i+1)+' of '+N);
+    player.classList.add('speaking');
+    a.play().catch(function(){
+      if(t!==token) return;
+      /* Autoplay was blocked (no gesture yet) — pause and wait for the user. */
+      player.classList.remove('speaking');
+      playing=false; playBtn.textContent='Play';
+      note('Tap <b>Play</b> to let Ava speak.');
+    });
+    fetchSeg(i+1).catch(function(){});   // prefetch the next scene while this one plays
+  }).catch(function(){
+    if(t!==token) return;
+    neuralOK=false;
+    note('Neural voice unavailable — using the browser voice.');
+    plan[i]=Math.max(MIN[i], estimate(NARR[i]));
+    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); forceNext=true; } });
+  });
+}
+
+function estimate(text){ return Math.max(4, text.split(/\s+/).length/2.6 + TAIL); }
+
+/* ---------- captions ---------- */
+function setCaption(text){
+  if(!narrate||!text){ cap.classList.remove('on'); player.classList.remove('capon'); capText.textContent=''; return; }
+  capText.textContent=text; cap.classList.add('on'); player.classList.add('capon');
+}
+function note(html){ noteEl.innerHTML=html; }
+
+/* ---------- player ---------- */
+var plan=MIN.slice();      // planned seconds per scene; grows to fit the narration
+var idx=-1, tIn=0, playing=false, forceNext=false, last=performance.now();
+
+function fmt(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function elapsed(){ var e=0; for(var k=0;k<idx;k++) e+=plan[k]; return e+tIn; }
+function total(){ var e=0; for(var k=0;k<N;k++) e+=plan[k]; return e; }
+
+function countUp(scene){
+  [].forEach.call(scene.querySelectorAll('[data-count]'),function(el){
+    var target=+el.dataset.count, suf=el.dataset.suffix||'', t0=performance.now();
+    (function step(now){
+      var p=Math.min(1,(now-t0)/1400), e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(target*e)+suf;
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  });
+}
+
+function show(i){
+  idx=i; tIn=0; forceNext=false; token++;
+  scenes.forEach(function(s,k){ s.classList.toggle('on',k===i); });
+  dotEls.forEach(function(b,k){ b.classList.toggle('on',k<=i); });
+  var o=scenes[i].dataset.orb.split(',').map(Number);
+  orb.style.transform='translate('+o[0]+'%,'+o[1]+'%) scale('+o[2]+')';
+  orb.style.opacity=o[3];
+  countUp(scenes[i]);
+  if(narrate&&playing) speak(i); else { stopVoice(); setCaption(narrate?NARR[i]:''); }
+}
+
+function go(i){
+  if(i<0) i=0;
+  if(i>=N){ finish(); return; }
+  show(i);
+}
+
+function finish(){
+  playing=false; playBtn.textContent='Replay'; stopVoice();
+  note('That’s the whole story. Press <b>Replay</b> to hear it again — or visit <b>tornaidioma.com</b>.');
+}
+
+function setPlaying(v){
+  playing=v; playBtn.textContent=v?'Pause':'Play';
+  if(!v){ if(audio){ try{audio.pause();}catch(e){} } if(synth&&synth.speaking) try{synth.pause();}catch(e){} player.classList.remove('speaking'); }
+  else {
+    if(audio&&audio.paused){ player.classList.add('speaking'); audio.play().catch(function(){}); }
+    else if(synth&&synth.paused){ player.classList.add('speaking'); try{synth.resume();}catch(e){} }
+    else if(narrate&&idx>=0) speak(idx);
+  }
+}
+
+function frame(now){
+  var dt=Math.min(.25,(now-last)/1000); last=now;
+  if(playing&&idx>=0){
+    tIn+=dt;
+    var ready=forceNext||tIn>=plan[idx];
+    /* Do not advance while Ava's audio is still on the wire. */
+    if(!forceNext&&narrate&&neuralOK&&seg[idx]&&seg[idx].state==='pending'&&tIn<plan[idx]+10) ready=false;
+    if(ready){
+      if(idx+1>=N) finish(); else show(idx+1);
+    }
+  }
+  var tot=total();
+  fill.style.width=(Math.min(1,elapsed()/tot)*100)+'%';
+  timeEl.textContent=fmt(elapsed())+' / '+fmt(tot);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- controls ---------- */
+playBtn.onclick=function(){
+  if(idx<0||(!playing&&playBtn.textContent==='Replay')){ show(0); setPlaying(true); return; }
+  setPlaying(!playing);
+};
+voiceBtn.onclick=function(){
+  narrate=!narrate;
+  voiceBtn.classList.toggle('on',narrate);
+  voiceBtn.setAttribute('aria-pressed',String(narrate));
+  voiceLbl.textContent=narrate?'Narration: Ava':'Narration: off';
+  if(!narrate){ token++; stopVoice(); setCaption(''); plan=MIN.slice(); note('Silent mode — scenes advance on their own timing.'); }
+  else { note('Narrated by <b>Ava</b>.'); if(playing&&idx>=0) speak(idx); else setCaption(idx>=0?NARR[idx]:''); }
+};
+document.getElementById('restart').onclick=function(){ show(0); setPlaying(true); };
+document.getElementById('prev').onclick=function(){ go(Math.max(0,idx-1)); if(!playing) setPlaying(true); };
+document.getElementById('next').onclick=function(){ if(idx+1<N){ go(idx+1); if(!playing) setPlaying(true); } else finish(); };
+track.onclick=function(e){
+  var r=track.getBoundingClientRect(), p=(e.clientX-r.left)/r.width, tot=total(), want=p*tot, acc=0;
+  for(var k=0;k<N;k++){ acc+=plan[k]; if(want<acc){ go(k); if(!playing) setPlaying(true); return; } }
+  finish();
+};
+stage.addEventListener('click',function(){ playBtn.click(); });
+document.addEventListener('keydown',function(e){
+  if(e.key===' '){ e.preventDefault(); playBtn.click(); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); document.getElementById('next').click(); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); document.getElementById('prev').click(); }
+  else if(e.key==='r'||e.key==='R'){ document.getElementById('restart').click(); }
+  else if(e.key==='m'||e.key==='M'){ voiceBtn.click(); }
+});
+document.addEventListener('visibilitychange',function(){ if(document.hidden&&playing) setPlaying(false); });
+
+/* Poster frame: scene 1 is on screen, paused, waiting for the Play gesture that
+   browsers require before any audio may start. */
+show(0);
+setCaption(NARR[0]);
+requestAnimationFrame(function(now){ last=now; requestAnimationFrame(frame); });
+if(synth&&synth.getVoices().length===0) synth.onvoiceschanged=function(){};
+fetchSeg(0).catch(function(){});   // warm the first segment while the viewer reads
+})();
+</script>
+</body>
+</html>
