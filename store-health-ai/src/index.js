@@ -154,7 +154,17 @@ if (routesLoaded) {
 // Must be registered BEFORE the catch-all static/SPA handler below.
 if (oosRoutes) {
   app.use(`${BASE_PATH}/api/v1/oos`, oosRoutes);
-  console.log('   - OOS Intelligence: /api/v1/oos/{chain,store/:id,benchmarks,categories,backfill}');
+  console.log('   - OOS Intelligence: /api/v1/oos/{chain,store/:id,stores,benchmarks,categories,backfill}');
+}
+
+// Chain OOS dashboard (static, vanilla — no Vite build step). Registered before
+// the SPA catch-all below so /aiastore/oos resolves to this page and not to the
+// React dashboard's index.html.
+const oosUiPath = path.join(__dirname, '..', 'public', 'oos');
+if (fs.existsSync(oosUiPath)) {
+  app.use(`${BASE_PATH}/oos`, express.static(oosUiPath));
+  app.get(`${BASE_PATH}/oos`, (req, res) => res.sendFile(path.join(oosUiPath, 'index.html')));
+  console.log('   - OOS chain dashboard: /oos');
 }
 
 // ALWAYS serve dashboard - file exists, we confirmed in shell

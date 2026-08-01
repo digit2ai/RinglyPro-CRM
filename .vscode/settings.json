@@ -1,0 +1,26 @@
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.tts-cache/**": true,
+    "**/proposal-audio/**": true,
+    "**/public/audio/**": true,
+    "**/client-builds/**/public/audio/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/package-lock.json": true,
+    "**/.tts-cache": true
+  },
+  "files.exclude": {
+    "**/.DS_Store": true
+  },
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "git.autoRefresh": true,
+  "git.autofetch": false
+}

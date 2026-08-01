@@ -56,11 +56,59 @@ exports.getChain = async (req, res) => {
   if (guard(res)) return;
 
   const orgId = req.query.organization_id ? parseInt(req.query.organization_id, 10) : null;
-  const result = await oosIntelligence.analyzeChain(orgId, req.query.date);
+  const result = await oosIntelligence.analyzeChain(orgId, req.query.date, {
+    country: req.query.country,
+    region_id: req.query.region_id,
+    district_id: req.query.district_id
+  });
 
   res.json({
     success: true,
     data: { ...result, osa_score: oosIntelligence.osaScore(result.oos_rate) }
+  });
+};
+
+/**
+ * GET /api/v1/oos/stores
+ * Store directory for the drill-down picker: identity + hierarchy + currency.
+ * Cheap — no analysis, just the list needed to populate filters and navigation.
+ */
+exports.getStores = async (req, res) => {
+  const { Store, Region, District } = require('../../models');
+
+  const where = { status: 'active' };
+  if (req.query.organization_id) where.organization_id = parseInt(req.query.organization_id, 10);
+  if (req.query.country) where.country = String(req.query.country).toUpperCase();
+
+  const stores = await Store.findAll({
+    where,
+    attributes: ['id', 'store_code', 'name', 'city', 'state', 'country', 'currency',
+      'timezone', 'manager_name', 'region_id', 'district_id'],
+    order: [['store_code', 'ASC']],
+    raw: true
+  });
+
+  // Region/district names make the filter chips readable; ids alone are useless
+  // to a human. Missing tables must not break the picker.
+  let regions = [], districts = [];
+  try { regions = await Region.findAll({ attributes: ['id', 'name'], raw: true }); } catch (e) { /* optional */ }
+  try { districts = await District.findAll({ attributes: ['id', 'name', 'region_id'], raw: true }); } catch (e) { /* optional */ }
+
+  const countries = Array.from(new Set(stores.map((s) => s.country || 'US'))).sort();
+  const currencies = Array.from(new Set(stores.map((s) => s.currency || 'USD'))).sort();
+
+  res.json({
+    success: true,
+    data: {
+      stores,
+      countries,
+      currencies,
+      regions,
+      districts,
+      reporting_currency: oosIntelligence.available()
+        ? require('../../../client-builds/retail-out-of-stock-intelligence-platfor/lib/currency').reportingCurrency()
+        : 'USD'
+    }
   });
 };
 
@@ -101,8 +149,13 @@ exports.getChainDemo = async (req, res) => {
   const classifier = require(base + 'classifier');
   const costModel = require(base + 'costModel');
 
+  const currency = require(base + 'currency');
+  const reporting = currency.reportingCurrency();
+
   const date = req.query.date || new Date().toISOString().slice(0, 10);
-  const stores = await Store.findAll({ where: { status: 'active' }, raw: true });
+  const where = { status: 'active' };
+  if (req.query.country) where.country = String(req.query.country).toUpperCase();
+  const stores = await Store.findAll({ where, raw: true });
 
   if (!stores.length) {
     return res.status(404).json({ success: false, error: 'no active stores to preview' });
@@ -132,15 +185,34 @@ exports.getChainDemo = async (req, res) => {
     allEvents.push(...result.events);
     totalSkus += result.total_skus;
 
+    // Same currency normalization the real chain path uses, so the preview and
+    // a seeded day are the same numbers by construction.
+    const localCcy = (s.currency || 'USD').toUpperCase();
+    const norm = currency.normalize({
+      lost_sales: result.summary.lost_sales_usd,
+      lost_gross_profit: result.summary.lost_gross_profit_usd
+    }, localCcy, reporting);
+
     perStore.push({
       store_id: s.id, store_code: s.store_code, name: s.name,
       city: s.city, state: s.state,
+      country: s.country || 'US',
+      currency: localCcy,
+      region_id: s.region_id, district_id: s.district_id,
       oos_rate: result.summary.oos_rate,
       oos_count: result.summary.oos_count,
       total_skus: result.summary.total_skus,
-      lost_sales_usd: result.summary.lost_sales_usd,
-      lost_gross_profit_usd: result.summary.lost_gross_profit_usd,
+      lost_sales_usd: norm.values.lost_sales !== null ? norm.values.lost_sales : result.summary.lost_sales_usd,
+      lost_gross_profit_usd: norm.values.lost_gross_profit !== null ? norm.values.lost_gross_profit : result.summary.lost_gross_profit_usd,
+      native: {
+        currency: localCcy,
+        lost_sales: result.summary.lost_sales_usd,
+        lost_gross_profit: result.summary.lost_gross_profit_usd
+      },
+      fx_rate: norm.fx_rate,
+      fx_converted: norm.converted,
       in_store_pct: result.layer_mix.in_store_pct,
+      osa_score: oosIntelligence.osaScore(result.summary.oos_rate),
       top_root_cause: result.root_cause_mix[0] ? result.root_cause_mix[0].category : null
     });
   }
@@ -162,9 +234,20 @@ exports.getChainDemo = async (req, res) => {
       lost_gross_profit_usd: lostGp,
       annualized_lost_sales_usd: costModel.annualize(lostSales),
       annualized_lost_gross_profit_usd: costModel.annualize(lostGp),
+
+      reporting_currency: reporting,
+      currencies_present: Array.from(new Set(perStore.map((s) => s.currency))).sort(),
+      fx_source: 'configured',
+      fx_note: 'Store figures are normalized to the reporting currency at configured rates, not live market rates.',
+
       root_cause_mix: classifier.mix(allEvents),
       layer_mix: classifier.layerMix(allEvents),
-      stores_by_impact: perStore.sort((a, b) => b.lost_sales_usd - a.lost_sales_usd),
+
+      by_country: oosIntelligence.rollup(perStore, 'country', reporting),
+      by_region: oosIntelligence.rollup(perStore, 'region_id', reporting),
+      by_district: oosIntelligence.rollup(perStore, 'district_id', reporting),
+
+      stores_by_impact: perStore.slice().sort((a, b) => b.lost_sales_usd - a.lost_sales_usd),
       osa_score: oosIntelligence.osaScore(totalSkus ? (allEvents.length / totalSkus) * 100 : 0),
       benchmarks: oosIntelligence.BENCHMARKS
     }
@@ -200,7 +283,11 @@ exports.seedDemo = async (req, res) => {
   }
 
   const { seedDemoDay } = require('../services/oos-demo-seed');
-  const result = await seedDemoDay(req.body && req.body.date);
+  const body = req.body || {};
+  const result = await seedDemoDay(body.date, {
+    international: body.international === true,
+    organization_id: body.organization_id
+  });
   res.json({ success: true, data: result });
 };
 

@@ -33,6 +33,7 @@ const { Store, InventoryLevel, OutOfStockEvent, sequelize } = require('../../mod
 let classifier = null;
 let costModel = null;
 let pipeline = null;
+let currency = null;
 let libError = null;
 
 try {
@@ -40,13 +41,14 @@ try {
   classifier = require(base + 'classifier');
   costModel = require(base + 'costModel');
   pipeline = require(base + 'pipeline');
+  currency = require(base + 'currency');
 } catch (err) {
   libError = err.message;
   console.error('[oos-intelligence] shared OOS libs unavailable:', err.message);
 }
 
 function available() {
-  return !!(classifier && costModel && pipeline);
+  return !!(classifier && costModel && pipeline && currency);
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +198,11 @@ async function analyzeStore(storeId, date) {
 
   if (!inventory.length) return null;
 
+  // Store identity travels with the analysis: a drill-down view has to name the
+  // store, its country and the currency its figures are in, or a district
+  // manager comparing two tabs cannot tell which is which.
+  const store = await Store.findByPk(storeId, { raw: true });
+
   const rows = inventory.map(toPipelineRow);
   const result = pipeline.run(rows, { tenant_id: storeId, event_date: snapshotDate });
 
@@ -204,8 +211,34 @@ async function analyzeStore(storeId, date) {
   const priceBasis = actualPriced === rows.length ? 'actual'
     : (actualPriced === 0 ? 'default' : 'mixed');
 
+  const localCcy = (store && store.currency) || 'USD';
+
   return {
     store_id: storeId,
+    store: store ? {
+      id: store.id,
+      store_code: store.store_code,
+      name: store.name,
+      address: store.address,
+      city: store.city,
+      state: store.state,
+      country: store.country || 'US',
+      currency: localCcy,
+      timezone: store.timezone,
+      manager_name: store.manager_name,
+      manager_email: store.manager_email,
+      region_id: store.region_id,
+      district_id: store.district_id
+    } : null,
+    // Figures below are in the STORE'S OWN currency — this view belongs to the
+    // person who works that building, not to chain finance. The chain rollup is
+    // where normalization happens.
+    currency: localCcy,
+    currency_symbol: currency.symbolFor(localCcy),
+    reporting_currency: currency.reportingCurrency(),
+    fx_rate_to_reporting: currency.rateFor(currency.reportingCurrency()) && currency.rateFor(localCcy)
+      ? Math.round((currency.rateFor(currency.reportingCurrency()) / currency.rateFor(localCcy)) * 1e6) / 1e6
+      : null,
     snapshot_date: snapshotDate,
     ...result.summary,
     root_cause_mix: result.root_cause_mix,
@@ -225,13 +258,20 @@ async function analyzeStore(storeId, date) {
  * dollars bleeding out. This is what the standalone single-store platform
  * defers, and it is the reason this lives in Store Health AI.
  */
-async function analyzeChain(organizationId, date) {
+async function analyzeChain(organizationId, date, filters) {
   if (!available()) throw new Error('OOS intelligence libs unavailable: ' + libError);
 
   const snapshotDate = date || new Date().toISOString().slice(0, 10);
+  const f = filters || {};
+  const reporting = currency.reportingCurrency();
 
   const where = { status: 'active' };
   if (organizationId) where.organization_id = organizationId;
+  // Hierarchy filters — country / region / district. A chain with hundreds of
+  // stores is unreadable as one flat list; a district manager needs their slice.
+  if (f.country) where.country = String(f.country).toUpperCase();
+  if (f.region_id) where.region_id = parseInt(f.region_id, 10);
+  if (f.district_id) where.district_id = parseInt(f.district_id, 10);
   const stores = await Store.findAll({ where, raw: true });
 
   const perStore = [];
@@ -246,21 +286,50 @@ async function analyzeChain(organizationId, date) {
     const r = await analyzeStore(s.id, snapshotDate);
     if (!r) continue;
     allEvents.push(...r.events);
+
+    // Every store's figures are native to its own currency. Normalize to ONE
+    // reporting currency before they are summed or ranked — otherwise a CAD
+    // store showing 9,000 outranks a USD store showing 8,000 despite losing
+    // less money. `_native` keeps the local figure for the store detail view.
+    const localCcy = (s.currency || 'USD').toUpperCase();
+    const norm = currency.normalize({
+      lost_sales: r.lost_sales_usd,
+      lost_gross_profit: r.lost_gross_profit_usd,
+      net_retailer_loss: r.net_retailer_loss_usd
+    }, localCcy, reporting);
+
     perStore.push({
       store_id: s.id,
       store_code: s.store_code,
       name: s.name,
       city: s.city,
       state: s.state,
+      country: s.country || 'US',
+      currency: localCcy,
       region_id: s.region_id,
       district_id: s.district_id,
+      manager_name: s.manager_name,
       oos_rate: r.oos_rate,
       oos_count: r.oos_count,
       total_skus: r.total_skus,
-      lost_sales_usd: r.lost_sales_usd,
-      lost_gross_profit_usd: r.lost_gross_profit_usd,
-      net_retailer_loss_usd: r.net_retailer_loss_usd,
+
+      // normalized to the reporting currency — what the league table sorts on
+      lost_sales_usd: norm.values.lost_sales !== null ? norm.values.lost_sales : r.lost_sales_usd,
+      lost_gross_profit_usd: norm.values.lost_gross_profit !== null ? norm.values.lost_gross_profit : r.lost_gross_profit_usd,
+      net_retailer_loss_usd: norm.values.net_retailer_loss !== null ? norm.values.net_retailer_loss : r.net_retailer_loss_usd,
+
+      // native figures, for the store's own manager
+      native: {
+        currency: localCcy,
+        lost_sales: r.lost_sales_usd,
+        lost_gross_profit: r.lost_gross_profit_usd
+      },
+      fx_rate: norm.fx_rate,
+      fx_converted: norm.converted,
+      fx_source: norm.fx_source,
+
       in_store_pct: r.layer_mix.in_store_pct,
+      osa_score: osaScore(r.oos_rate),
       top_root_cause: r.top_3_root_causes[0] ? r.top_3_root_causes[0].category : null,
       is_estimated: r.is_estimated
     });
@@ -277,6 +346,11 @@ async function analyzeChain(organizationId, date) {
   return {
     organization_id: organizationId || null,
     snapshot_date: snapshotDate,
+    filters: {
+      country: f.country ? String(f.country).toUpperCase() : null,
+      region_id: f.region_id ? parseInt(f.region_id, 10) : null,
+      district_id: f.district_id ? parseInt(f.district_id, 10) : null
+    },
     store_count: perStore.length,
     oos_count: totalOos,
     total_skus: totalSkus,
@@ -286,13 +360,76 @@ async function analyzeChain(organizationId, date) {
     net_retailer_loss_usd: costModel.money(sum('net_retailer_loss_usd')),
     annualized_lost_sales_usd: costModel.annualize(lostSales),
     annualized_lost_gross_profit_usd: costModel.annualize(lostGp),
+
+    // Currency provenance for every figure above.
+    reporting_currency: reporting,
+    currencies_present: Array.from(new Set(perStore.map((s) => s.currency))).sort(),
+    fx_source: 'configured',
+    fx_note: 'Store figures are normalized to the reporting currency at configured rates, not live market rates. Override with OOS_FX_<CCY>.',
+
     root_cause_mix: classifier.mix(allEvents),
     layer_mix: classifier.layerMix(allEvents),
+
+    // Hierarchy rollups — an international chain is navigated top-down:
+    // country -> region -> district -> store, not as one flat list.
+    by_country: rollup(perStore, 'country', reporting),
+    by_region: rollup(perStore, 'region_id', reporting),
+    by_district: rollup(perStore, 'district_id', reporting),
+
     // Worst offenders first — the league table a district manager works from.
-    stores_by_impact: perStore.sort((a, b) => b.lost_sales_usd - a.lost_sales_usd),
+    stores_by_impact: perStore.slice().sort((a, b) => b.lost_sales_usd - a.lost_sales_usd),
     is_estimated: perStore.some((s) => s.is_estimated),
     benchmarks: BENCHMARKS
   };
+}
+
+/**
+ * Group the per-store rows by one key and aggregate.
+ *
+ * Rates are recomputed from summed counts, never averaged from the child rates:
+ * averaging percentages lets a 200-SKU store move the group number as hard as a
+ * 20,000-SKU one, which quietly misreports every rollup above store level.
+ */
+function rollup(perStore, key, reportingCcy) {
+  const groups = new Map();
+
+  for (const s of perStore) {
+    const k = s[key];
+    if (k === null || k === undefined) continue;
+    if (!groups.has(k)) {
+      groups.set(k, {
+        key: k, store_count: 0, oos_count: 0, total_skus: 0,
+        lost_sales_usd: 0, lost_gross_profit_usd: 0,
+        in_store_sum: 0, currencies: new Set(), estimated: false
+      });
+    }
+    const g = groups.get(k);
+    g.store_count += 1;
+    g.oos_count += s.oos_count || 0;
+    g.total_skus += s.total_skus || 0;
+    g.lost_sales_usd += s.lost_sales_usd || 0;
+    g.lost_gross_profit_usd += s.lost_gross_profit_usd || 0;
+    g.in_store_sum += (s.in_store_pct || 0) * (s.oos_count || 0);
+    g.currencies.add(s.currency);
+    if (s.is_estimated) g.estimated = true;
+  }
+
+  return Array.from(groups.values()).map((g) => ({
+    key: g.key,
+    store_count: g.store_count,
+    oos_count: g.oos_count,
+    total_skus: g.total_skus,
+    oos_rate: g.total_skus ? costModel.money((g.oos_count / g.total_skus) * 100) : 0,
+    lost_sales_usd: costModel.money(g.lost_sales_usd),
+    lost_gross_profit_usd: costModel.money(g.lost_gross_profit_usd),
+    annualized_lost_sales_usd: costModel.annualize(g.lost_sales_usd),
+    // Event-weighted, so a small store cannot swing the group's split.
+    in_store_pct: g.oos_count ? Math.round((g.in_store_sum / g.oos_count) * 10) / 10 : 0,
+    osa_score: osaScore(g.total_skus ? (g.oos_count / g.total_skus) * 100 : 0),
+    currencies: Array.from(g.currencies).sort(),
+    reporting_currency: reportingCcy,
+    is_estimated: g.estimated
+  })).sort((a, b) => b.lost_sales_usd - a.lost_sales_usd);
 }
 
 /**
@@ -386,6 +523,7 @@ function osaScore(oosRate) {
 module.exports = {
   available,
   ensureSchema,
+  rollup,
   analyzeStore,
   analyzeChain,
   backfillEvents,

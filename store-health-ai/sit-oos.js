@@ -248,6 +248,108 @@ const TODAY = new Date().toISOString().slice(0, 10);
     const seedNoAuth = await request(port, 'POST', '/aiastore/api/v1/oos/seed-demo', {});
     ok('Seed endpoint returns 401 without JWT', seedNoAuth.status === 401, 'status=' + seedNoAuth.status);
 
+    // =====================================================================
+    // INTERNATIONAL CHAIN — multi-country, multi-currency, drill-down
+    // =====================================================================
+    const cur = require('../client-builds/retail-out-of-stock-intelligence-platfor/lib/currency');
+
+    // --- currency math ---
+    ok('FX converts USD -> CAD at the configured rate',
+      cur.convert(100, 'USD', 'CAD') === Math.round(100 * cur.rateFor('CAD') * 100) / 100,
+      '100 USD = ' + cur.convert(100, 'USD', 'CAD') + ' CAD');
+    ok('FX round-trips within a cent',
+      Math.abs(cur.convert(cur.convert(100, 'USD', 'MXN'), 'MXN', 'USD') - 100) < 0.01,
+      'round trip stable');
+    // An unknown currency must NOT silently fall back to parity — that would
+    // understate or overstate the chain total with no trace.
+    ok('Unknown currency returns null, never a 1:1 assumption',
+      cur.convert(100, 'XYZ', 'USD') === null, 'null returned');
+    const normUnsupported = cur.normalize({ a: 100 }, 'XYZ', 'USD');
+    ok('Unsupported currency is flagged, not assumed',
+      normUnsupported.fx_source === 'unavailable' && normUnsupported.values.a === null,
+      'fx_source=' + normUnsupported.fx_source);
+    ok('Zero-decimal currencies format without cents',
+      cur.format(1234, 'JPY').indexOf('.') === -1 && cur.format(1234, 'USD').indexOf('.00') > -1,
+      cur.format(1234, 'JPY') + ' / ' + cur.format(1234, 'USD'));
+
+    // --- store directory ---
+    const dir = await request(port, 'GET', '/aiastore/api/v1/oos/stores');
+    ok('Store directory returns 200', dir.status === 200, 'status=' + dir.status);
+    ok('Store directory exposes countries + currencies',
+      dir.body && dir.body.data && Array.isArray(dir.body.data.countries) &&
+      Array.isArray(dir.body.data.currencies),
+      (dir.body.data.countries || []).join(',') + ' | ' + (dir.body.data.currencies || []).join(','));
+
+    // --- international footprint ---
+    const seeder = require('./src/services/oos-demo-seed');
+    const added = await seeder.ensureInternationalStores(org.id);
+    ok('International stores provisioned', added.length >= 8,
+      added.length + ' stores across ' + new Set(added.map((a) => a.country)).size + ' countries');
+
+    const intlStore = await Store.findOne({ where: { store_code: 'DT-CA-01' }, raw: true });
+    ok('International store carries country + currency',
+      intlStore && intlStore.country === 'CA' && intlStore.currency === 'CAD',
+      intlStore ? intlStore.country + '/' + intlStore.currency : 'missing');
+    // Pre-existing rows must keep working, defaulted to US/USD.
+    const legacyStore = await Store.findOne({ where: { store_code: TEST_STORE_CODE }, raw: true });
+    ok('Legacy store defaults to US/USD',
+      legacyStore && legacyStore.country === 'US' && legacyStore.currency === 'USD',
+      legacyStore ? legacyStore.country + '/' + legacyStore.currency : 'missing');
+
+    // --- chain demo now spans countries ---
+    const intl = await request(port, 'GET', '/aiastore/api/v1/oos/chain/demo');
+    const id2 = (intl.body && intl.body.data) || {};
+    ok('Chain preview spans multiple countries',
+      (id2.by_country || []).length >= 4, (id2.by_country || []).length + ' countries');
+    ok('Chain preview spans multiple currencies',
+      (id2.currencies_present || []).length >= 4, (id2.currencies_present || []).join(','));
+    ok('Chain reports its reporting currency + FX provenance',
+      id2.reporting_currency === cur.reportingCurrency() && id2.fx_source === 'configured',
+      id2.reporting_currency + ' / ' + id2.fx_source);
+
+    // Country rollup rates must be recomputed from counts, never averaged from
+    // child rates — averaging lets a small store swing the group number.
+    const ctry = (id2.by_country || [])[0];
+    ok('Country rollup recomputes rate from summed counts',
+      ctry && Math.abs(ctry.oos_rate - (ctry.oos_count / ctry.total_skus) * 100) < 0.02,
+      ctry ? ctry.key + ' ' + ctry.oos_rate + '%' : 'n/a');
+    ok('Country rollup carries an OSA score', ctry && typeof ctry.osa_score === 'number',
+      ctry ? 'osa=' + ctry.osa_score : 'n/a');
+
+    // A non-USD store's league figure must differ from its native figure.
+    const caStore = (id2.stores_by_impact || []).find((s) => s.currency === 'CAD');
+    ok('Non-USD store is normalized for the league table',
+      caStore && caStore.fx_converted === true &&
+      Math.abs(caStore.lost_sales_usd - caStore.native.lost_sales) > 0.01,
+      caStore ? caStore.native.lost_sales + ' CAD -> ' + caStore.lost_sales_usd + ' ' + id2.reporting_currency : 'no CAD store');
+
+    // --- country filter ---
+    const caOnly = await request(port, 'GET', '/aiastore/api/v1/oos/chain/demo?country=CA');
+    const cad = (caOnly.body && caOnly.body.data) || {};
+    ok('Country filter narrows the chain view',
+      (cad.stores_by_impact || []).length > 0 &&
+      cad.stores_by_impact.every((s) => s.country === 'CA'),
+      (cad.stores_by_impact || []).length + ' CA stores');
+    ok('Country filter yields fewer stores than the full chain',
+      (cad.stores_by_impact || []).length < (id2.stores_by_impact || []).length,
+      cad.stores_by_impact.length + ' < ' + id2.stores_by_impact.length);
+
+    // --- the dashboard UI itself ---
+    const ui = await request(port, 'GET', '/aiastore/oos/');
+    ok('Chain dashboard UI returns 200', ui.status === 200, 'status=' + ui.status);
+    ok('Dashboard h1 names the product',
+      /<h1[^>]*>[\s\S]*?Chain Out-of-Stock Intelligence[\s\S]*?<\/h1>/.test(ui.raw), 'h1 matched');
+    ok('Dashboard has both chain and store views',
+      /id="chainView"/.test(ui.raw) && /id="storeView"/.test(ui.raw), 'both views present');
+    const uiJs = await request(port, 'GET', '/aiastore/oos/app.js');
+    ok('Dashboard app.js served', uiJs.status === 200 && /loadStore/.test(uiJs.raw), 'status=' + uiJs.status);
+    ok('Dashboard wires store drill-down + breadcrumbs',
+      /renderStore/.test(uiJs.raw) && /renderCrumbs/.test(uiJs.raw), 'drill-down wired');
+
+    // The existing React dashboard must NOT be shadowed by the new static mount.
+    const spa = await request(port, 'GET', '/aiastore/');
+    ok('Existing /aiastore/ dashboard still served', spa.status === 200, 'status=' + spa.status);
+
     // --- honesty: estimation must be labelled when prices are absent ---
     await InventoryLevel.update({ metadata: null }, { where: { store_id: storeId } });
     const est = await request(port, 'GET', `/aiastore/api/v1/oos/store/${storeId}?date=${TODAY}`);
@@ -280,6 +382,8 @@ const TODAY = new Date().toISOString().slice(0, 10);
         await InventoryLevel.destroy({ where: { store_id: storeId } });
         await Store.destroy({ where: { store_code: TEST_STORE_CODE } });
       }
+      // The international footprint is left in place deliberately — it is demo
+      // data the chain view needs, not a SIT artifact.
     } catch (e) { /* best effort */ }
     if (server) server.close();
   }

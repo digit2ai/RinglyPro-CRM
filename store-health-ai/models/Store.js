@@ -65,6 +65,21 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    // --- international chain support ---
+    // Added via idempotent ALTER (migrations/20260801-oos-intelligence.sql).
+    // Defaults keep pre-existing rows behaving exactly as before.
+    country: {
+      type: DataTypes.STRING(2),
+      allowNull: false,
+      defaultValue: 'US',
+      comment: 'ISO 3166-1 alpha-2'
+    },
+    currency: {
+      type: DataTypes.STRING(3),
+      allowNull: false,
+      defaultValue: 'USD',
+      comment: 'ISO 4217; chain rollups normalize to OOS_REPORTING_CURRENCY'
+    },
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'closed'),
       allowNull: false,

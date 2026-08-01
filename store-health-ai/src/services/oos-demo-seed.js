@@ -89,12 +89,20 @@ function buildStoreDay(store, date) {
  * @param {string} date YYYY-MM-DD (defaults to today)
  * @returns {{seeded_rows:number, stores:number, date:string, chain:object}}
  */
-async function seedDemoDay(date) {
+async function seedDemoDay(date, opts) {
   const day = date || new Date().toISOString().slice(0, 10);
+  const o = opts || {};
 
   const schemaOk = await oos.ensureSchema();
   if (!schemaOk) {
     throw new Error('schema top-up incomplete — see logs; cannot seed');
+  }
+
+  // Opt-in: lay down the international footprint before seeding inventory, so a
+  // fresh environment can demonstrate the multi-country path in one call.
+  let internationalAdded = null;
+  if (o.international) {
+    internationalAdded = await ensureInternationalStores(o.organization_id);
   }
 
   const stores = await Store.findAll({ where: { status: 'active' }, raw: true });
@@ -117,6 +125,7 @@ async function seedDemoDay(date) {
     date: day,
     stores: stores.length,
     seeded_rows: total,
+    international_added: internationalAdded,
     per_store: perStore,
     chain: {
       oos_rate: chain.oos_rate,
@@ -131,4 +140,69 @@ async function seedDemoDay(date) {
   };
 }
 
-module.exports = { seedDemoDay, buildStoreDay, SKUS_PER_STORE };
+// ---------------------------------------------------------------------------
+// International footprint.
+//
+// The seeded chain was 10 stores, all New York, all implicitly USD — which
+// cannot demonstrate anything about a multi-country retailer. This adds stores
+// across countries and currencies so the country rollup, the FX normalization
+// and the currency column are exercised by real rows rather than argued for in
+// a comment.
+//
+// Idempotent by store_code. Existing stores are updated in place (country and
+// currency only) rather than duplicated.
+// ---------------------------------------------------------------------------
+const INTERNATIONAL_STORES = [
+  { store_code: 'DT-CA-01', name: 'Toronto Dundas',      city: 'Toronto',      state: 'ON', country: 'CA', currency: 'CAD', timezone: 'America/Toronto' },
+  { store_code: 'DT-CA-02', name: 'Vancouver Granville', city: 'Vancouver',    state: 'BC', country: 'CA', currency: 'CAD', timezone: 'America/Vancouver' },
+  { store_code: 'DT-CA-03', name: 'Calgary Stephen Ave', city: 'Calgary',      state: 'AB', country: 'CA', currency: 'CAD', timezone: 'America/Edmonton' },
+  { store_code: 'DT-MX-01', name: 'CDMX Reforma',        city: 'Ciudad de Mexico', state: 'CDMX', country: 'MX', currency: 'MXN', timezone: 'America/Mexico_City' },
+  { store_code: 'DT-MX-02', name: 'Monterrey Centro',    city: 'Monterrey',    state: 'NL', country: 'MX', currency: 'MXN', timezone: 'America/Monterrey' },
+  { store_code: 'DT-MX-03', name: 'Guadalajara Chapultepec', city: 'Guadalajara', state: 'JAL', country: 'MX', currency: 'MXN', timezone: 'America/Mexico_City' },
+  { store_code: 'DT-GB-01', name: 'London Stratford',    city: 'London',       state: 'ENG', country: 'GB', currency: 'GBP', timezone: 'Europe/London' },
+  { store_code: 'DT-GB-02', name: 'Manchester Arndale',  city: 'Manchester',   state: 'ENG', country: 'GB', currency: 'GBP', timezone: 'Europe/London' },
+  { store_code: 'DT-DO-01', name: 'Santo Domingo Piantini', city: 'Santo Domingo', state: 'DN', country: 'DO', currency: 'DOP', timezone: 'America/Santo_Domingo' },
+  { store_code: 'DT-CO-01', name: 'Bogota Chapinero',    city: 'Bogota',       state: 'DC', country: 'CO', currency: 'COP', timezone: 'America/Bogota' }
+];
+
+/**
+ * Ensure the chain has an international footprint, and stamp country/currency
+ * onto any legacy store that predates those columns.
+ */
+async function ensureInternationalStores(organizationId) {
+  const oosLib = require('./oos-intelligence');
+  const ok = await oosLib.ensureSchema();
+  if (!ok) throw new Error('schema top-up incomplete; cannot add international stores');
+
+  let orgId = organizationId;
+  if (!orgId) {
+    const { Organization } = require('../../models');
+    const org = await Organization.findOne({ order: [['id', 'ASC']], raw: true });
+    if (!org) throw new Error('no organization to attach stores to');
+    orgId = org.id;
+  }
+
+  const created = [];
+  for (const s of INTERNATIONAL_STORES) {
+    const [row, isNew] = await Store.findOrCreate({
+      where: { store_code: s.store_code },
+      defaults: { ...s, organization_id: orgId, status: 'active' }
+    });
+    // Existing rows: correct country/currency only. Never clobber a name or
+    // address someone may have edited.
+    if (!isNew && (row.country !== s.country || row.currency !== s.currency)) {
+      await row.update({ country: s.country, currency: s.currency });
+    }
+    created.push({ store_code: s.store_code, country: s.country, currency: s.currency, created: isNew });
+  }
+
+  return created;
+}
+
+module.exports = {
+  seedDemoDay,
+  buildStoreDay,
+  ensureInternationalStores,
+  INTERNATIONAL_STORES,
+  SKUS_PER_STORE
+};

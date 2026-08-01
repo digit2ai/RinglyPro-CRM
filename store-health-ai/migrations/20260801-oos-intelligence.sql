@@ -75,5 +75,26 @@ CREATE INDEX IF NOT EXISTS idx_oos_events_layer
 ALTER TABLE inventory_levels
   ADD COLUMN IF NOT EXISTS metadata JSONB;
 
+-- ---------------------------------------------------------------------------
+-- PART 3 — international chain support.
+--
+-- stores carried no country and no currency, so every figure was implicitly USD
+-- and stores in different countries could not be ranked against each other. A
+-- chain like Dollar Tree operates across countries; a league table that sorts a
+-- CAD store's lost sales against a USD store's without normalizing is simply
+-- wrong.
+--
+-- Defaults keep every existing row behaving exactly as before (US / USD).
+-- ---------------------------------------------------------------------------
+ALTER TABLE stores
+  ADD COLUMN IF NOT EXISTS country  VARCHAR(2)  NOT NULL DEFAULT 'US',
+  ADD COLUMN IF NOT EXISTS currency VARCHAR(3)  NOT NULL DEFAULT 'USD';
+
+COMMENT ON COLUMN stores.country IS 'ISO 3166-1 alpha-2 country code';
+COMMENT ON COLUMN stores.currency IS 'ISO 4217 currency the store trades in; chain rollups normalize to OOS_REPORTING_CURRENCY';
+
+CREATE INDEX IF NOT EXISTS idx_stores_country ON stores (country);
+CREATE INDEX IF NOT EXISTS idx_stores_org_country ON stores (organization_id, country);
+
 COMMENT ON COLUMN inventory_levels.metadata IS
   'Optional: unit_price, margin, oos_days, shelf_empty, planogram_violation, shelf_capacity, min_shelf_qty, po_open, po_filled, recent_delivery, forecast_velocity. Missing keys fall back to org defaults and the dollar figure is labelled as estimated.';

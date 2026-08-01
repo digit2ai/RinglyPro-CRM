@@ -16,6 +16,9 @@ router.get('/benchmarks', oosController.getBenchmarks);
 // GET /api/v1/oos/categories - the seven root causes + layer + action
 router.get('/categories', asyncHandler(oosController.getCategories));
 
+// GET /api/v1/oos/stores - store directory + hierarchy for the drill-down picker
+router.get('/stores', asyncHandler(oosController.getStores));
+
 // GET /api/v1/oos/chain/demo - read-only generated preview, persists nothing.
 // Registered before /chain so the literal path is not shadowed.
 router.get('/chain/demo', asyncHandler(oosController.getChainDemo));

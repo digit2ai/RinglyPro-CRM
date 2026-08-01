@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chain Out-of-Stock Intelligence — Store Health AI</title>
+<meta name="description" content="Every stockout, priced and root-caused, across every store in the chain.">
+<style>
+  :root{
+    --bg:#0d1320; --bg2:#0a0f1a; --card:#141b29; --line:#243049; --input:#1b2536;
+    --txt:#e9eef7; --mut:#8a98b0; --dim:#5d6b83;
+    --accent:#6a4bff; --cyan:#22d3ee;
+    --red:#ef4444; --amber:#f59e0b; --green:#22c55e;
+    --shelf:#22d3ee; --store:#6a4bff; --upstream:#f59e0b;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1280px;margin:0 auto;padding:26px 20px 80px}
+
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 5px;letter-spacing:-.4px;font-weight:700}
+  h1 .g{background:linear-gradient(135deg,var(--accent),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .tag{color:var(--mut);font-size:13px;margin:0}
+  .status{font-size:12px;color:var(--dim);margin-top:12px;min-height:16px}
+
+  select,button,input{font:inherit;background:var(--input);color:var(--txt);
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+  button.primary{background:linear-gradient(135deg,var(--accent),var(--cyan));border-color:transparent;color:#fff;font-weight:600}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* breadcrumb */
+  .crumbs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0 4px;font-size:12.5px}
+  .crumbs a{color:var(--cyan);cursor:pointer;text-decoration:none;border-bottom:1px dotted rgba(34,211,238,.4)}
+  .crumbs span.sep{color:var(--dim)}
+  .crumbs span.here{color:var(--mut)}
+
+  /* tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px;margin:18px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 17px}
+  .tile .k{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
+  .tile .v{font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+  .tile .s{font-size:11px;color:var(--dim);margin-top:5px}
+  .v.red{color:var(--red)} .v.amber{color:var(--amber)} .v.green{color:var(--green)} .v.cyan{color:var(--cyan)}
+
+  .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:15px;margin-bottom:15px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px 19px;margin-bottom:15px}
+  .panel h2{font-size:11.5px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);
+    margin:0 0 15px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .panel h2 .sub{text-transform:none;letter-spacing:0;color:var(--dim);font-weight:400;font-size:11px}
+
+  /* cause bars */
+  .cause{margin-bottom:14px}.cause:last-child{margin-bottom:0}
+  .cause-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px}
+  .cause-name{font-size:12.5px;font-weight:600}
+  .cause-n{font-size:11.5px;color:var(--mut);white-space:nowrap}
+  .bar{height:7px;background:var(--bg2);border-radius:99px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:99px}
+  .cause-act{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.45}
+  .pill{display:inline-block;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;
+    padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mut);margin-left:5px;vertical-align:1px}
+  .pill.shelf{color:var(--shelf);border-color:rgba(34,211,238,.35)}
+  .pill.store{color:#a48bff;border-color:rgba(106,75,255,.4)}
+  .pill.upstream{color:var(--upstream);border-color:rgba(245,158,11,.35)}
+  .pill.flag{color:var(--amber);border-color:rgba(245,158,11,.3)}
+
+  .split{display:flex;height:9px;border-radius:99px;overflow:hidden;margin:4px 0 11px;background:var(--bg2)}
+  .split > i{display:block;height:100%}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--mut)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .bench{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:11px;color:var(--dim);line-height:1.55}
+  .bench b{color:var(--mut);font-weight:600}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}
+  th{text-align:left;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);
+    font-weight:600;padding:0 11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:10px 11px;border-bottom:1px solid rgba(36,48,73,.5);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover{background:rgba(106,75,255,.1)}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .muted{color:var(--mut)}
+  .why{font-size:10.5px;color:var(--dim);margin-top:3px;max-width:330px;line-height:1.45}
+  .rank{color:var(--dim);font-size:11px;width:26px}
+  .flag{font-size:11px;color:var(--mut);letter-spacing:.5px}
+  .sc{font-weight:600}
+  .empty{text-align:center;color:var(--mut);padding:38px 20px;font-size:13px}
+  .empty code{background:var(--input);padding:2px 6px;border-radius:5px;color:var(--cyan);font-size:12px}
+  .hidden{display:none}
+
+  /* score chip */
+  .score{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+  .score.good{background:rgba(34,197,94,.14);color:var(--green)}
+  .score.mid{background:rgba(245,158,11,.14);color:var(--amber)}
+  .score.bad{background:rgba(239,68,68,.14);color:var(--red)}
+
+  .note{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);
+    border-radius:10px;padding:11px 14px;font-size:11.5px;color:#e8c88a;margin:14px 0;line-height:1.55}
+
+  footer{margin-top:24px;padding-top:17px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--dim);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1><span class="g">Chain Out-of-Stock Intelligence</span></h1>
+      <p class="tag">Every stockout, priced and root-caused, across every store in the chain.</p>
+    </div>
+    <div class="toolbar">
+      <select id="countrySel" aria-label="Country"><option value="">All countries</option></select>
+      <select id="storeSel" aria-label="Store"><option value="">All stores (chain view)</option></select>
+      <button id="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <div class="crumbs" id="crumbs"></div>
+  <div class="status" id="status">Loading…</div>
+  <div class="note hidden" id="fxNote"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Top root causes <span class="sub" id="causeScope"></span></h2>
+      <div id="causes"><div class="empty">No classified events yet.</div></div>
+    </div>
+    <div class="panel">
+      <h2>Store vs shelf split</h2>
+      <div id="split"></div>
+    </div>
+  </div>
+
+  <!-- CHAIN VIEW -->
+  <div id="chainView">
+    <div class="panel">
+      <h2>By country <span class="sub">normalized to <b id="repCcy">USD</b></span></h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th></th><th>Country</th><th class="num">Stores</th><th class="num">OOS rate</th>
+          <th class="num">Lost sales</th><th class="num">Annualized</th><th class="num">In-store</th><th class="num">OSA</th>
+        </tr></thead>
+        <tbody id="countryRows"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Store league table <span class="sub">worst first &middot; click a row to drill in</span></h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th></th><th>Store</th><th>Location</th><th class="num">OOS rate</th>
+          <th class="num">Lost sales</th><th class="num">Native</th><th>Top root cause</th><th class="num">OSA</th>
+        </tr></thead>
+        <tbody id="storeRows"></tbody>
+      </table></div>
+      <div class="empty hidden" id="storeEmpty">No stores with inventory for this date.</div>
+    </div>
+  </div>
+
+  <!-- STORE DRILL-DOWN -->
+  <div id="storeView" class="hidden">
+    <div class="panel" id="storeMeta"></div>
+    <div class="panel">
+      <h2>Worklist <span class="sub">ranked by dollar impact &middot; figures in <b id="localCcy">USD</b></span></h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th></th><th>SKU</th><th class="num">Lost sales</th><th class="num">Lost GP</th>
+          <th class="num">Days</th><th>Root cause &amp; action</th>
+        </tr></thead>
+        <tbody id="eventRows"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <footer>
+    Root-cause taxonomy, the 70&ndash;75% store-level finding and the five-shopper-response loss model are drawn from
+    Gruen &amp; Corsten, <i>Shelf-Confidence: A Practical Guide to Reducing Out-Of-Stocks and Improving Product
+    Availability in Retail</i> (2022), and Gruen, Corsten &amp; Bharadwaj (2002), Grocery Manufacturers of America.<br>
+    Classification is a deterministic rule engine, not a model &mdash; every verdict states the evidence that produced it.
+    Store Health AI &middot; Digit2AI
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
