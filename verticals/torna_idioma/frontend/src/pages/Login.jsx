@@ -5,6 +5,40 @@ import api from '../services/api';
 
 const BASE = '/Torna_Idioma';
 
+// The login screen is the hand-off between the landing page and the app, so it
+// reads the same ti_lang the landing page wrote and offers the same two choices.
+// Interface language is en|fil only — Spanish is the subject, not a menu language.
+const T = {
+  en: {
+    signIn: 'Sign In', register: 'Register',
+    fullName: 'Full Name', role: 'Role', org: 'Organization (optional)',
+    langPref: 'Language Preference', email: 'Email', password: 'Password',
+    submitLogin: 'Sign In', submitRegister: 'Create Account', loading: 'Loading...',
+    demo: 'Demo Accounts', back: 'Back to Landing Page',
+    heroA: 'The Return of the', heroB: 'Cultural Language',
+    heroDesc: "Makati — Asia's First Spanish-Enabled City. A movement of dignity, pride, and economic opportunity.",
+    orientation: 'Student Orientation — How to Use Torna Idioma',
+    modules: 'The 12 Modules — Full Curriculum',
+    namePh: 'Juan dela Cruz', orgPh: 'School, company, or institution',
+    emailPh: 'you@example.com',
+  },
+  fil: {
+    signIn: 'Mag-login', register: 'Magrehistro',
+    fullName: 'Buong Pangalan', role: 'Tungkulin', org: 'Organisasyon (opsyonal)',
+    langPref: 'Piniling Wika', email: 'Email', password: 'Password',
+    submitLogin: 'Mag-login', submitRegister: 'Gumawa ng Account', loading: 'Naglo-load...',
+    demo: 'Mga Demo na Account', back: 'Bumalik sa Landing Page',
+    heroA: 'Ang Pagbabalik ng', heroB: 'Kultural na Wika',
+    heroDesc: 'Makati — Ang Unang Lungsod na May Espanyol sa Asya. Isang kilusan ng dignidad, pagmamalaki, at oportunidad.',
+    orientation: 'Oryentasyon ng Mag-aaral — Paano Gamitin ang Torna Idioma',
+    modules: 'Ang 12 Module — Buong Kurikulum',
+    namePh: 'Juan dela Cruz', orgPh: 'Paaralan, kompanya, o institusyon',
+    emailPh: 'ikaw@halimbawa.com',
+  },
+};
+
+
+
 function useIsMobile() {
   const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
   useEffect(() => {
@@ -19,9 +53,14 @@ export default function Login() {
   const nav = useNavigate();
   const mob = useIsMobile();
   const [tab, setTab] = useState('login');
-  const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'student', organization: '', language_pref: 'en' });
+  const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'student', organization: '', language_pref: (localStorage.getItem('ti_lang') === 'fil' ? 'fil' : 'en') });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Seeded from whatever the visitor chose on the landing page; a legacy 'es'
+  // coerces to English rather than falling through to the account default.
+  const [lang, setLang] = useState(() => (localStorage.getItem('ti_lang') === 'fil' ? 'fil' : 'en'));
+  const L = T[lang] || T.en;
+  const switchLang = (l) => { const v = l === 'fil' ? 'fil' : 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,8 +90,8 @@ export default function Login() {
           <div style={{ ...s.crest, ...(mob ? s.crestMob : {}) }}>
             <div style={s.crestInner}>TORNA<br/>IDIOMA<span style={s.crestSub}>Vida · Cultura · Legado</span></div>
           </div>
-          <h1 style={{ ...s.leftTitle, ...(mob ? s.leftTitleMob : {}) }}>The Return of the<br/><span style={s.accent}>Cultural Language</span></h1>
-          {!mob && <p style={s.leftDesc}>Makati — Asia's First Spanish-Enabled City. A movement of dignity, pride, and economic opportunity.</p>}
+          <h1 style={{ ...s.leftTitle, ...(mob ? s.leftTitleMob : {}) }}>{L.heroA}<br/><span style={s.accent}>{L.heroB}</span></h1>
+          {!mob && <p style={s.leftDesc}>{L.heroDesc}</p>}
           <div style={{ ...s.pillars, ...(mob ? s.pillarsMob : {}) }}>
             <div style={s.pillar}><div style={s.pillarNum}>I</div><div style={s.pillarLabel}>Dignidad</div></div>
             <div style={s.pillar}><div style={s.pillarNum}>II</div><div style={s.pillarLabel}>Orgullo</div></div>
@@ -64,50 +103,55 @@ export default function Login() {
             rel="noopener"
             onClick={(e) => { e.preventDefault(); window.open(`${BASE}/orientation`, 'tornaOrientation', 'noopener,width=1180,height=1000,scrollbars=yes,resizable=yes'); }}
             style={s.guideBtn}
-          >Student Orientation — How to Use Torna Idioma</a>
+          >{L.orientation}</a>
           <a
             href={`${BASE}/modules`}
             target="_blank"
             rel="noopener"
             onClick={(e) => { e.preventDefault(); window.open(`${BASE}/modules`, 'tornaModules', 'noopener,width=1180,height=1000,scrollbars=yes,resizable=yes'); }}
             style={s.modulesBtn}
-          >The 12 Modules — Full Curriculum</a>
+          >{L.modules}</a>
         </div>
       </div>
       <div style={{ ...s.right, ...(mob ? s.rightMob : {}) }}>
         <div style={{ ...s.formBox, ...(mob ? s.formBoxMob : {}) }}>
+          <div style={s.langRow}>
+            {['en', 'fil'].map((l) => (
+              <button key={l} type="button" onClick={() => switchLang(l)}
+                style={{ ...s.langBtn, ...(lang === l ? s.langBtnOn : {}) }}>{l === 'fil' ? 'Filipino' : 'English'}</button>
+            ))}
+          </div>
           <div style={s.tabs}>
-            <button onClick={() => setTab('login')} style={{ ...s.tab, ...(tab === 'login' ? s.tabActive : {}) }}>Sign In</button>
-            <button onClick={() => setTab('register')} style={{ ...s.tab, ...(tab === 'register' ? s.tabActive : {}) }}>Register</button>
+            <button onClick={() => setTab('login')} style={{ ...s.tab, ...(tab === 'login' ? s.tabActive : {}) }}>{L.signIn}</button>
+            <button onClick={() => setTab('register')} style={{ ...s.tab, ...(tab === 'register' ? s.tabActive : {}) }}>{L.register}</button>
           </div>
           <form onSubmit={handleSubmit}>
             {tab === 'register' && (
               <>
-                <label style={s.label}>Full Name</label>
-                <input style={s.input} type="text" value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} placeholder="Juan dela Cruz" required />
-                <label style={s.label}>Role</label>
+                <label style={s.label}>{L.fullName}</label>
+                <input style={s.input} type="text" value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} placeholder={L.namePh} required />
+                <label style={s.label}>{L.role}</label>
                 <select style={s.input} value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
-                <label style={s.label}>Organization (optional)</label>
-                <input style={s.input} type="text" value={form.organization} onChange={e => setForm({...form, organization: e.target.value})} placeholder="School, company, or institution" />
-                <label style={s.label}>Language Preference</label>
+                <label style={s.label}>{L.org}</label>
+                <input style={s.input} type="text" value={form.organization} onChange={e => setForm({...form, organization: e.target.value})} placeholder={L.orgPh} />
+                <label style={s.label}>{L.langPref}</label>
                 <select style={s.input} value={form.language_pref} onChange={e => setForm({...form, language_pref: e.target.value})}>
                   <option value="en">English</option>
-                  <option value="es">Español</option>
                   <option value="fil">Filipino</option>
                 </select>
               </>
             )}
-            <label style={s.label}>Email</label>
-            <input style={s.input} type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="you@example.com" required />
-            <label style={s.label}>Password</label>
+            <label style={s.label}>{L.email}</label>
+            <input style={s.input} type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder={L.emailPh} required />
+            <label style={s.label}>{L.password}</label>
             <input style={s.input} type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="••••••••" required />
             {error && <div style={s.error}>{error}</div>}
-            <button type="submit" disabled={loading} style={s.submit}>{loading ? 'Loading...' : tab === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}</button>
+            <button type="submit" disabled={loading} style={s.submit}>{loading ? L.loading : tab === 'login' ? L.submitLogin : L.submitRegister}</button>
           </form>
           <div style={s.demo}>
-            <div style={s.demoTitle}>Demo Accounts</div>
+            <div style={s.demoTitle}>{L.demo}</div>
             <div style={s.demoItem}><strong>Admin:</strong> admin@tornaidioma.ph / TornaIdioma2026!</div>
             <div style={s.demoItem}><strong>Teacher:</strong> teacher@tornaidioma.ph / TeacherDemo2026!</div>
             <div style={s.demoItem}><strong>Student:</strong> student@tornaidioma.ph / StudentDemo2026!</div>
@@ -115,7 +159,7 @@ export default function Login() {
             <div style={s.demoItem}><strong>BPO Worker:</strong> bpo@tornaidioma.ph / BPODemo2026!</div>
             <div style={s.demoItem}><strong>Partner:</strong> partner@tornaidioma.ph / PartnerDemo2026!</div>
           </div>
-          <a href={`${BASE}/`} style={s.backLink}>&larr; Back to Landing Page</a>
+          <a href={`${BASE}/`} style={s.backLink}>&larr; {L.back}</a>
         </div>
       </div>
     </div>
@@ -138,6 +182,9 @@ const s = {
   pillarLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, textTransform: 'uppercase' },
   right: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, background: '#FFF8E7' },
   formBox: { width: '100%', maxWidth: 420, background: '#fff', padding: 36, borderRadius: 8, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', borderTop: '4px solid #C9A84C' },
+  langRow: { display: 'flex', gap: 6, justifyContent: 'flex-end', marginBottom: 14 },
+  langBtn: { font: 'inherit', fontSize: 11.5, fontWeight: 600, padding: '6px 13px', borderRadius: 99, border: '1px solid #F5E6C8', background: '#fff', color: '#8B6914', cursor: 'pointer' },
+  langBtnOn: { background: 'linear-gradient(135deg, #E8D48B, #C9A84C)', borderColor: 'transparent', color: '#0F1A2E' },
   tabs: { display: 'flex', gap: 0, marginBottom: 24, borderBottom: '2px solid #eee' },
   tab: { flex: 1, padding: '10px 0', background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#6B6B6B', cursor: 'pointer', borderBottom: '2px solid transparent', marginBottom: -2 },
   tabActive: { color: '#1B2A4A', borderBottomColor: '#C9A84C' },

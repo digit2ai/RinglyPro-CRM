@@ -6,10 +6,13 @@ function coerceLang(l) {
 export function login(token, user) {
   sessionStorage.setItem('ti_token', token);
   sessionStorage.setItem('ti_user', JSON.stringify(user));
-  // Seed the active UI language from the account preference (legacy 'es' → 'en').
-  // The toggle can still override this per-device afterwards.
-  const seed = coerceLang(user && user.language_pref) || 'fil';
-  localStorage.setItem('ti_lang', seed);
+  // Seed the UI language from the account preference ONLY when this device has
+  // not already chosen one. A visitor who picked Filipino on the landing page
+  // must still be in Filipino after signing in — clobbering that here was why
+  // the dashboard reverted to the account default on every login.
+  if (!coerceLang(localStorage.getItem('ti_lang'))) {
+    localStorage.setItem('ti_lang', coerceLang(user && user.language_pref) || 'fil');
+  }
 }
 
 export function logout() {

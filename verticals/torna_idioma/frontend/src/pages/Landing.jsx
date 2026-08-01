@@ -122,7 +122,12 @@ const whyCards = [
 ];
 
 export default function Landing() {
-  const [lang, setLang] = useState(localStorage.getItem('ti_lang') || 'en');
+  // Interface language is en|fil only — Spanish is the subject taught, never a menu
+  // language. A legacy 'es' in storage coerces to English rather than falling through.
+  const [lang, setLang] = useState(() => {
+    const stored = localStorage.getItem('ti_lang');
+    return stored === 'fil' ? 'fil' : 'en';
+  });
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const L = T[lang] || T.en;
@@ -133,7 +138,7 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const switchLang = (l) => { localStorage.setItem('ti_lang', l); setLang(l); };
+  const switchLang = (l) => { const v = l === 'fil' ? 'fil' : 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
 
   return (
     <div style={s.page}>
@@ -151,7 +156,7 @@ export default function Landing() {
             <a href="#join" style={s.navLink}>{L.navJoin}</a>
             <a href={`${BASE}/login`} style={s.navCTA}>{L.loginCta}</a>
             <div style={s.langSwitcher}>
-              {['en','es','fil'].map(l => (
+              {['en','fil'].map(l => (
                 <button key={l} onClick={() => switchLang(l)} style={{ ...s.langBtn, ...(lang === l ? s.langBtnActive : {}) }}>{l.toUpperCase()}</button>
               ))}
             </div>
@@ -167,7 +172,7 @@ export default function Landing() {
             <a href="#impact" style={s.mobileLink} onClick={() => setMobileMenu(false)}>{L.navImpact}</a>
             <a href={`${BASE}/login`} style={s.mobileCTA}>{L.loginCta}</a>
             <div style={{ ...s.langSwitcher, justifyContent: 'center', marginTop: 8 }}>
-              {['en','es','fil'].map(l => (
+              {['en','fil'].map(l => (
                 <button key={l} onClick={() => switchLang(l)} style={{ ...s.langBtn, ...(lang === l ? s.langBtnActive : {}) }}>{l.toUpperCase()}</button>
               ))}
             </div>
