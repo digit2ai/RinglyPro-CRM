@@ -40,6 +40,18 @@ try {
   console.log('   Dashboard will still be served, but API endpoints may be limited');
 }
 
+// OOS Intelligence loads in its OWN guard, deliberately. The block above is a
+// single try/catch, so folding a new require into it would mean a fault in the
+// newest module silently takes every existing endpoint offline. This one can
+// fail on its own and cost nothing but itself.
+let oosRoutes = null;
+try {
+  oosRoutes = require('./routes/oos');
+  console.log('✅ OOS Intelligence routes loaded (on-shelf availability)');
+} catch (error) {
+  console.log('⚠️ OOS Intelligence routes unavailable:', error.message);
+}
+
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -123,6 +135,7 @@ if (routesLoaded) {
   app.use(`${BASE_PATH}/api/v1/dashboard`, dashboardRoutes);
   app.use(`${BASE_PATH}/api/v1/voice`, voiceRoutes);
 } else {
+  // (OOS mounts independently below — see its own guard.)
   // Fallback health endpoint
   app.get(`${BASE_PATH}/health`, (req, res) => {
     res.json({
@@ -133,6 +146,15 @@ if (routesLoaded) {
       api: 'limited'
     });
   });
+}
+
+// OOS Intelligence — mounted independently of routesLoaded so on-shelf
+// availability stays available even in the degraded/partial mode above, and a
+// fault here never touches the routes mounted before it.
+// Must be registered BEFORE the catch-all static/SPA handler below.
+if (oosRoutes) {
+  app.use(`${BASE_PATH}/api/v1/oos`, oosRoutes);
+  console.log('   - OOS Intelligence: /api/v1/oos/{chain,store/:id,benchmarks,categories,backfill}');
 }
 
 // ALWAYS serve dashboard - file exists, we confirmed in shell

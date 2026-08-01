@@ -40,6 +40,37 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
+    },
+    // --- OOS intelligence (Shelf-Confidence attribution layer) ---
+    // Populated by src/services/oos-intelligence.js. Added via idempotent
+    // ALTER TABLE (see migrations/20260801-oos-intelligence.sql) because
+    // sync({alter:false}) never adds columns to an existing table.
+    lost_gross_profit: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    root_cause: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      comment: 'One of the seven root-cause categories'
+    },
+    oos_layer: {
+      type: DataTypes.STRING(16),
+      allowNull: true,
+      comment: 'shelf | store | upstream — the Store vs Shelf split'
+    },
+    root_cause_confidence: {
+      type: DataTypes.DECIMAL(4, 2),
+      allowNull: true
+    },
+    root_cause_why: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'The evidence sentence shown to the store manager'
+    },
+    recommended_action: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     tableName: 'out_of_stock_events',

@@ -54,6 +54,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('green', 'yellow', 'red'),
       allowNull: false,
       defaultValue: 'green'
+    },
+    // Optional per-SKU economics and attribution signals supplied by a richer
+    // feed: unit_price, margin, oos_days, shelf_empty, planogram_violation,
+    // shelf_capacity, min_shelf_qty, po_open, po_filled, recent_delivery,
+    // forecast_velocity. Absent keys fall back to org defaults and the result
+    // is LABELLED as estimated — see src/services/oos-intelligence.js.
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: true
     }
   }, {
     tableName: 'inventory_levels',
