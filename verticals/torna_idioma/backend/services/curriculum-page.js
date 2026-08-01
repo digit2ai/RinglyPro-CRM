@@ -11,6 +11,12 @@ const activityPack = require('./activity-pack');
 const esc = (s) => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+
+// Trilingual UI string. The toggle swaps every .i18n node innerHTML, so a label
+// written through t() is translated everywhere it appears, once.
+const t = (en, es, fil) =>
+  `<span class="i18n" data-en="${esc(en)}" data-es="${esc(es)}" data-fil="${esc(fil || es)}">${esc(en)}</span>`;
+
 // Minimal markdown for the lesson bodies: headings, bullets, bold, italics, code, paragraphs.
 function md(src) {
   if (!src) return '<p class="empty">No content stored for this lesson.</p>';
@@ -81,30 +87,30 @@ function renderPack(pack) {
   const sec = [];
 
   if (pack.can_do && pack.can_do.length) {
-    sec.push(`<div class="pk"><h4 class="pk-h">By the end of this module I can</h4><ul class="cando">${
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`By the end of this module I can`, `Al terminar este módulo podré`, `Sa pagtatapos ng module, kaya kong`)}</h4><ul class="cando">${
       pack.can_do.map((c) => `<li>${esc(c)}</li>`).join('')
     }</ul></div>`);
   }
 
   if (pack.roleplay) {
     const r = pack.roleplay;
-    sec.push(`<div class="pk"><h4 class="pk-h">Roleplay &middot; ${esc(r.title)}</h4>
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`Roleplay`,`Roleplay`,`Roleplay`)} &middot; ${esc(r.title)}</h4>
       <p class="sit">${esc(r.situation)}</p>
-      <p class="opens"><span class="who">Tutor opens</span><button class="say" data-es="${esc(r.opens)}" type="button">${esc(r.opens)}<span class="spk">&#9658;</span></button></p>
-      <p class="must"><span class="who">You must use</span>${(r.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>
+      <p class="opens"><span class="who">${t(`Tutor opens`, `Tu tutora abre`, `Bubuksan ng tutor`)}</span><button class="say" data-es="${esc(r.opens)}" type="button">${esc(r.opens)}<span class="spk">&#9658;</span></button></p>
+      <p class="must"><span class="who">${t(`You must use`, `Debes usar`, `Dapat mong gamitin`)}</span>${(r.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>
     </div>`);
   }
 
   const a = pack.authored;
   if (a && a.dialogue && (a.dialogue.lines || []).length) {
-    sec.push(`<div class="pk"><h4 class="pk-h">Listen first &middot; ${esc(a.dialogue.setting)}</h4>
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`Listen first`,`Escucha primero`,`Makinig muna`)} &middot; ${esc(a.dialogue.setting)}</h4>
       <div class="dlg">${a.dialogue.lines.map((l) => `<div class="dlg-line"><span class="spk">${esc(l.speaker)}</span><span class="dlg-es">${esc(l.es)}</span><span class="dlg-en">${esc(l.en)}</span></div>`).join('')}</div>
-      ${a.comprehension_question ? `<p class="must"><span class="who">Answer aloud</span>${esc(a.comprehension_question)}</p>` : ''}
+      ${a.comprehension_question ? `<p class="must"><span class="who">${t(`Answer aloud`, `Responde en voz alta`, `Sagutin nang malakas`)}</span>${esc(a.comprehension_question)}</p>` : ''}
     </div>`);
   }
 
   if (a && (a.likely_errors || []).length) {
-    sec.push(`<div class="pk"><h4 class="pk-h">What Filipino learners get wrong here</h4>
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`What Filipino learners get wrong here`, `Lo que suelen equivocar los filipinos aquí`, `Ang madalas na mali ng mga Pilipino dito`)}</h4>
       ${a.likely_errors.map((e) => `<div class="drill"><span class="err">${esc(e.error)}</span><span class="fix">${esc(e.correction)}</span><p class="why">${esc(e.why)}</p></div>`).join('')}
     </div>`);
   }
@@ -118,21 +124,21 @@ function renderPack(pack) {
   }
 
   if (pack.grammar) {
-    sec.push(`<div class="pk"><h4 class="pk-h">Grammar focus &middot; ${esc(pack.grammar.point)}</h4>
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`Grammar focus`,`Foco gramatical`,`Pokus sa gramatika`)} &middot; ${esc(pack.grammar.point)}</h4>
       <p class="sit">${esc(pack.grammar.why)}</p>
       ${(pack.grammar.examples || []).map((e) => `<p class="ex-line"><button class="say" data-es="${esc(e)}" type="button">${esc(e)}<span class="spk">&#9658;</span></button></p>`).join('')}
     </div>`);
   }
 
   if (pack.sentence_mode && pack.sentence_mode.length) {
-    sec.push(`<div class="pk"><h4 class="pk-h">Say it aloud &middot; ${pack.sentence_mode.length} drills</h4>
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`Say it aloud`,`Dilo en voz alta`,`Bigkasin nang malakas`)} &middot; ${pack.sentence_mode.length}</h4>
       ${pack.sentence_mode.map((d) => `<div class="drill"><button class="say" data-es="${esc(d.say)}" type="button">${esc(d.say)}<span class="spk">&#9658;</span></button><span class="means">${esc(d.means)}</span><span class="tgt">${esc(d.targets)}</span><p class="why">${esc(d.why)}</p></div>`).join('')}
     </div>`);
   }
 
   if (pack.pronunciation_focus && pack.pronunciation_focus.length) {
-    sec.push(`<div class="pk"><h4 class="pk-h">Sounds this lesson exercises</h4>
-      ${pack.pronunciation_focus.map((f) => `<div class="phon ${f.kind}"><span class="ph-sound">${esc(f.sound)}</span><span class="ph-kind">${f.kind === 'contrast' ? 'needs work' : 'free win from Tagalog'}</span><p class="why">${esc(f.tip_en)}</p><p class="ph-ex">${(f.examples || []).map((e) => `<code>${esc(e)}</code>`).join(' ')}</p></div>`).join('')}
+    sec.push(`<div class="pk"><h4 class="pk-h">${t(`Sounds this lesson exercises`, `Sonidos que ejercita esta lección`, `Mga tunog na sinasanay ng araling ito`)}</h4>
+      ${pack.pronunciation_focus.map((f) => `<div class="phon ${f.kind}"><span class="ph-sound">${esc(f.sound)}</span><span class="ph-kind">${f.kind === 'contrast' ? t(`needs work`, `a trabajar`, `kailangang pagbutihin`) : t(`free win from Tagalog`, `ventaja del tagalo`, `bentahe mula sa Tagalog`)}</span><p class="why">${esc(f.tip_en)}</p><p class="ph-ex">${(f.examples || []).map((e) => `<code>${esc(e)}</code>`).join(' ')}</p></div>`).join('')}
     </div>`);
   }
 
@@ -141,23 +147,23 @@ function renderPack(pack) {
       pack.counts && pack.counts.cognates ? `, ${pack.counts.cognates} with a Tagalog bridge` : ''
     }</h4>
       <div class="words">${pack.word_mode.map((w) => `<div class="word"><button class="say w-es" data-es="${esc(w.term)}" type="button">${esc(w.term)}<span class="spk">&#9658;</span></button><span class="w-en">${esc(w.gloss)}</span>${
-        w.cognate ? `<span class="w-tl">Tagalog: <strong>${esc(w.cognate.tagalog)}</strong>${w.cognate.note ? ` &middot; ${esc(w.cognate.note)}` : ''}</span>` : ''
+        w.cognate ? `<span class="w-tl">${t(`Tagalog:`,`Tagalo:`,`Tagalog:`)} <strong>${esc(w.cognate.tagalog)}</strong>${w.cognate.note ? ` &middot; ${esc(w.cognate.note)}` : ''}</span>` : ''
       }</div>`).join('')}</div>
     </div>`);
   }
 
   if (pack.occupational) {
     const o = pack.occupational;
-    sec.push(`<div class="pk occ"><h4 class="pk-h">Workplace track &middot; ${esc(o.track)}</h4>
+    sec.push(`<div class="pk occ"><h4 class="pk-h">${t(`Workplace track`,`Ruta del trabajo`,`Ruta sa trabaho`)} &middot; ${esc(o.track)}</h4>
       <p class="sit">${esc(o.register)}</p>
       ${o.scenario ? `<p class="opens"><span class="who">${esc(o.scenario.title)}</span>${esc(o.scenario.situation)}</p>
-      <p class="must"><span class="who">You must use</span>${(o.scenario.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>` : ''}
+      <p class="must"><span class="who">${t(`You must use`, `Debes usar`, `Dapat mong gamitin`)}</span>${(o.scenario.must_use || []).map((m) => `<code>${esc(m)}</code>`).join(' ')}</p>` : ''}
       ${o.compliance ? `<p class="compliance">${esc(o.compliance)}</p>` : ''}
     </div>`);
   }
 
   if (!sec.length) return '';
-  return `<div class="practice"><h3 class="practice-h">Practice</h3>${sec.join('')}</div>`;
+  return `<div class="practice"><h3 class="practice-h">${t(`Practice`, `Práctica`, `Pagsasanay`)}</h3>${sec.join('')}</div>`;
 }
 
 function render({ courses, lessons, packs }, { showAnswers }) {
@@ -215,14 +221,14 @@ function render({ courses, lessons, packs }, { showAnswers }) {
         if (e.type === 'multiple_choice') {
           const opts = (e.options || []).map((o, oi) => {
             const right = showAnswers && oi === e.answer;
-            return `<li class="${right ? 'right' : ''}">${esc(o)}${right ? '<span class="key">correct</span>' : ''}</li>`;
+            return `<li class="${right ? 'right' : ''}">${esc(o)}${right ? '<span class="key">${t(`correct`, `correcta`, `tama`)}</span>' : ''}</li>`;
           }).join('');
-          return `<div class="ex"><div class="ex-h"><span class="ex-n">${ei + 1}</span><span class="ex-t">Multiple choice</span></div><p class="q">${esc(e.q)}</p><ol class="opts">${opts}</ol></div>`;
+          return `<div class="ex"><div class="ex-h"><span class="ex-n">${ei + 1}</span><span class="ex-t">${t(`Multiple choice`, `Opción múltiple`, `Maramihang pagpipilian`)}</span></div><p class="q">${esc(e.q)}</p><ol class="opts">${opts}</ol></div>`;
         }
         const ans = showAnswers
-          ? `<p class="ans">Answer: <strong>${esc(e.answer)}</strong></p>`
-          : `<p class="ans hidden-ans">Answer withheld</p>`;
-        return `<div class="ex"><div class="ex-h"><span class="ex-n">${ei + 1}</span><span class="ex-t">Fill in the blank</span></div><p class="q">${esc(e.q)}</p>${ans}</div>`;
+          ? `<p class="ans">${t(`Answer:`,`Respuesta:`,`Sagot:`)} <strong>${esc(e.answer)}</strong></p>`
+          : `<p class="ans hidden-ans">${t(`Answer withheld`, `Respuesta oculta`, `Nakatago ang sagot`)}</p>`;
+        return `<div class="ex"><div class="ex-h"><span class="ex-n">${ei + 1}</span><span class="ex-t">${t(`Fill in the blank`, `Completa la frase`, `Punan ang patlang`)}</span></div><p class="q">${esc(e.q)}</p>${ans}</div>`;
       }).join('');
 
       const search = esc([l.title_en, l.title_es, l.title_fil, l.content_en].join(' ').toLowerCase());
@@ -230,22 +236,22 @@ function render({ courses, lessons, packs }, { showAnswers }) {
       return `<details class="lesson" data-search="${search}">
 <summary>
   <span class="l-n">${i + 1}.${li + 1}</span>
-  <span class="l-titles"><span class="l-en">${esc(l.title_en)}</span><span class="l-es">${esc(l.title_es)}</span></span>
-  <span class="l-meta"><span class="chip type">${esc(l.lesson_type)}</span><span class="chip">${esc(l.duration_minutes)} min</span></span>
+  <span class="l-titles"><span class="l-en">${t(l.title_en, l.title_es || l.title_en, l.title_fil || l.title_en)}</span><span class="l-es">${t(l.title_es || '', l.title_en || '', l.title_es || '')}</span></span>
+  <span class="l-meta"><span class="chip type">${esc(l.lesson_type)}</span><span class="chip">${esc(l.duration_minutes)} ${t(`min`,`min`,`min`)}</span></span>
 </summary>
 <div class="l-body">
-  <p class="l-fil">Filipino title: <strong>${esc(l.title_fil)}</strong></p>
+  <p class="l-fil">${t(`Filipino title:`,`Título en filipino:`,`Pamagat sa Filipino:`)} <strong>${esc(l.title_fil)}</strong></p>
   <div class="prose">${md(l.content_en)}</div>
   ${renderPack((packs || {})[l.id])}
-  <div class="ex-block"><h3 class="ex-head">Assessment &middot; ${parseExercises(l.exercises).length} items</h3>${ex}</div>
+  <div class="ex-block"><h3 class="ex-head">${t(`Assessment`,`Evaluación`,`Pagsusulit`)} &middot; ${parseExercises(l.exercises).length}</h3>${ex}</div>
 </div>
 </details>`;
     }).join('\n');
 
     return `<section class="module sec" id="m${c.id}" data-i="${i}">
   <header class="m-head">
-    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><button class="play-sec" data-play="${i}" type="button"><span class="i18n" data-es="&#9658; Escuchar" data-en="&#9658; Listen">&#9658; Listen</span></button><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} lessons</span>${c.is_published ? '<span class="chip live">published</span>' : '<span class="chip draft">draft</span>'}</div>
-    <h2>${esc(String(c.title_en || '').replace(/^Module \d+:\s*/, ''))}</h2>
+    <div class="m-eyebrow"><span class="m-num">Module ${i + 1}</span><button class="play-sec" data-play="${i}" type="button"><span class="i18n" data-es="&#9658; Escuchar" data-en="&#9658; Listen" data-fil="&#9658; Makinig">&#9658; Listen</span></button><span class="chip cefr">${esc(cefr(c.description_en))}</span><span class="chip">${esc(c.duration_hours)} h</span><span class="chip">${ls.length} ${t(`lessons`,`lecciones`,`aralin`)}</span>${c.is_published ? '<span class="chip live">' + t(`published`,`publicado`,`nailathala`) + '</span>' : '<span class="chip draft">' + t(`draft`,`borrador`,`draft`) + '</span>'}</div>
+    <h2>${t(String(c.title_en||'').replace(/^Module \d+:\s*/,''), String(c.title_es||c.title_en||'').replace(/^Módulo \d+:\s*|^Module \d+:\s*/,''), String(c.title_fil||c.title_en||'').replace(/^Module \d+:\s*/,''))}</h2>
     <p class="m-es">${esc(String(c.title_es || '').replace(/^Módulo \d+:\s*/, ''))} &middot; <span class="fil">${esc(String(c.title_fil || '').replace(/^Module \d+:\s*/, ''))}</span></p>
     <p class="m-desc">${esc(c.description_en)}</p>
   </header>
@@ -311,19 +317,29 @@ function render({ courses, lessons, packs }, { showAnswers }) {
 
   const buildSegments = (locale) => {
     const isEs = locale === 'es';
-    const intro = isEs
+    const isFil = locale === 'fil';
+    const intro = isFil
+      ? `Kumusta, ako si Profesora Isabel, ang boses ng Torna Idioma. Ilalakad kita sa buong programa: ${courses.length} module, pitumpu at dalawang aralin, mula antas A one hanggang B one plus, humigit-kumulang tatlong daan at animnapung oras ng pag-aaral. May babasahin, pagsasanay sa pagsasalita araw-araw, at pagsusulit ang bawat aralin. Mula module pito, idinaragdag ang Espanyol sa trabaho.`
+      : isEs
       ? `Hola, soy la Profesora Isabel, la voz de Torna Idioma. Te voy a recorrer el programa completo: ${SPOKEN_N[courses.length] || courses.length} módulos, setenta y dos lecciones, del nivel A uno al B uno plus, unas trescientas sesenta horas de estudio. Cada lección trae un texto, práctica hablada todos los días y una evaluación al final. Desde el módulo siete se añade el español del trabajo.`
       : `Hello, I am Profesora Isabel, the voice of Torna Idioma. Let me walk you through the whole programme: ${courses.length} modules, seventy two lessons, from level A one to B one plus, about three hundred and sixty hours of study. Every lesson carries a reading, spoken practice every day, and an assessment at the end. From module seven, workplace Spanish is added.`;
 
     return [intro].concat(courses.map((c, i) => {
       const ls = byCourse[c.id] || [];
-      const m = (isEs ? ES_MODULE : EN_MODULE)[i] || {};
+      const m = (isEs ? ES_MODULE : isFil ? FIL_MODULE : EN_MODULE)[i] || {};
       if (isEs) {
         const title = String(c.title_es || c.title_en).replace(/^Módulo \d+:\s*|^Module \d+:\s*/, '');
         return `Módulo ${SPOKEN_N[i + 1] || (i + 1)}: ${title}. Nivel ${spokenCefr(cefr(c.description_en), 'es')}, ${ls.length === 6 ? 'seis' : ls.length} lecciones y unas treinta horas.`
           + (m.grammar ? ` La gramática que lo sostiene es ${m.grammar}.` : '')
           + (m.can ? ` Al terminar podrás ${m.can}.` : '')
           + (m.work ? ` Aquí se añade el español del trabajo: ${m.work}.` : '');
+      }
+      if (isFil) {
+        const tf = String(c.title_fil || c.title_en).replace(/^Module \d+:\s*/, '');
+        return `Module ${i + 1}: ${tf}. Antas ${spokenCefr(cefr(c.description_en), 'en')}, ${ls.length} aralin, humigit-kumulang tatlumpung oras.`
+          + (m.grammar ? ` Ang gramatikang bumubuhat dito ay ${m.grammar}.` : '')
+          + (m.can ? ` Sa pagtatapos, kaya mong ${m.can}.` : '')
+          + (m.work ? ` Dito idinaragdag ang Espanyol sa trabaho: ${m.work}.` : '');
       }
       const title = String(c.title_en).replace(/^Module \d+:\s*/, '');
       return `Module ${i + 1}: ${title}. Level ${spokenCefr(cefr(c.description_en), 'en')}, ${ls.length} lessons, about thirty hours.`
@@ -333,25 +349,41 @@ function render({ courses, lessons, packs }, { showAnswers }) {
     }));
   };
 
+  const FIL_MODULE = [
+    { grammar: 'ser at estar, at ang pagkakaiba ng tu at usted', can: 'bumati at magpaalam sa tamang antas ng pormalidad, at ipakilala ang sarili at ang pamilya' },
+    { grammar: 'ang kasalukuyang panahunan at mga reflexive na pandiwa', can: 'ilarawan ang iyong rutina at pag-usapan ang plano sa linggo' },
+    { grammar: 'ang pandiwang gustar at ang indirect object', can: 'umorder ng pagkain, magtanong ng presyo, at sabihin ang gusto at ayaw' },
+    { grammar: 'mga pang-ukol ng lugar at ang imperative', can: 'magtanong at sumunod sa direksyon, at bumili ng tiket' },
+    { grammar: 'ang imperfect para sa nakagawiang nakaraan', can: 'mag-imbita, tumanggap o tumanggi nang magalang' },
+    { grammar: 'ang pandiwang doler, at ang deber at tener que', can: 'ilarawan ang sintomas at unawain ang rekomendasyon sa kalusugan' },
+    { grammar: 'ang present perfect para sa karanasan', can: 'ilarawan ang iyong tungkulin at karanasan sa trabaho', work: 'contact centre at customer service' },
+    { grammar: 'ang preterite laban sa imperfect sa pagkukuwento', can: 'ilarawan ang tradisyong Pilipino at ihambing ito sa selebrasyong Latin American', work: 'kultural na register sa iba-ibang merkado' },
+    { grammar: 'ang pormal na imperative at mga sequencing connector', can: 'ipaliwanag ang teknikal na problema at magbigay ng hakbang-hakbang na tagubilin', work: 'tier one technical support' },
+    { grammar: 'ang conditional para sa pagkamagalang', can: 'asikasuhin ang booking, ang problema nito, at ang reklamo', work: 'travel at hospitality' },
+    { grammar: 'ang subjunctive pagkatapos ng opinyon at pagdududa', can: 'magbigay ng opinyon at panindigan ito nang magalang', work: 'healthcare coordination at insurance' },
+    { grammar: 'mga connector ng argumento at hypothetical na si', can: 'panatilihin ang argumento sa maraming turn at ibuod ito', work: 'interpretasyon at bilingual team lead' },
+  ];
+
   const segmentsEs = buildSegments('es');
   const segmentsEn = buildSegments('en');
+  const segmentsFil = buildSegments('fil');
 
   const orb = `
 <section class="isabel" id="isabel">
  <div class="isabel-in">
   <div class="orb" id="orb" aria-hidden="true"></div>
   <div class="i-meta">
-    <div class="i-name i18n" data-es="Profesora Isabel &middot; Voz AI de Torna Idioma" data-en="Profesora Isabel &middot; Torna Idioma AI Voice">Profesora Isabel &middot; Torna Idioma AI Voice</div>
-    <div class="i-role i18n" data-es="Tu guía por los ${courses.length} módulos del programa" data-en="Your guide through all ${courses.length} modules">Your guide through all ${courses.length} modules</div>
+    <div class="i-name i18n" data-es="Profesora Isabel &middot; Voz AI de Torna Idioma" data-en="Profesora Isabel &middot; Torna Idioma AI Voice" data-fil="Profesora Isabel &middot; AI na Boses ng Torna Idioma">Profesora Isabel &middot; Torna Idioma AI Voice</div>
+    <div class="i-role i18n" data-es="Tu guía por los ${courses.length} módulos del programa" data-en="Your guide through all ${courses.length} modules" data-fil="Gabay mo sa lahat ng ${courses.length} module">Your guide through all ${courses.length} modules</div>
     <div class="i-controls">
-      <button class="i-btn primary" id="playAll" type="button">&#9658; <span class="i18n" data-es="Que la Profesora Isabel lo explique todo" data-en="Let Profesora Isabel explain it all">Let Profesora Isabel explain it all</span></button>
-      <button class="i-btn" id="pause" type="button" disabled>&#10074;&#10074; <span class="i18n" data-es="Pausar" data-en="Pause">Pause</span></button>
-      <button class="i-btn" id="stop" type="button" disabled>&#9632; <span class="i18n" data-es="Detener" data-en="Stop">Stop</span></button>
+      <button class="i-btn primary" id="playAll" type="button">&#9658; <span class="i18n" data-es="Que la Profesora Isabel lo explique todo" data-en="Let Profesora Isabel explain it all" data-fil="Ipaliwanag ni Profesora Isabel ang lahat">Let Profesora Isabel explain it all</span></button>
+      <button class="i-btn" id="pause" type="button" disabled>&#10074;&#10074; <span class="i18n" data-es="Pausar" data-en="Pause" data-fil="I-pause">Pause</span></button>
+      <button class="i-btn" id="stop" type="button" disabled>&#9632; <span class="i18n" data-es="Detener" data-en="Stop" data-fil="Itigil">Stop</span></button>
     </div>
     <div class="i-status" id="status"></div>
     <div class="i-pick">
-      <label><input type="checkbox" id="neuralToggle" checked> <span class="i18n" data-es="Voz neural HD" data-en="HD neural voice">HD neural voice</span></label>
-      &nbsp;&middot;&nbsp; <span class="i18n" data-es="Acento:" data-en="Accent:">Accent:</span>
+      <label><input type="checkbox" id="neuralToggle" checked> <span class="i18n" data-es="Voz neural HD" data-en="HD neural voice" data-fil="HD neural na boses">HD neural voice</span></label>
+      &nbsp;&middot;&nbsp; <span class="i18n" data-es="Acento:" data-en="Accent:" data-fil="Accent:">Accent:</span>
       <select id="voiceSel">
         <option value="dalia" selected>M&eacute;xico (Dalia)</option>
         <option value="paloma">EE. UU. (Paloma)</option>
@@ -572,23 +604,24 @@ button.say.w-es{font-family:var(--serif);font-size:15px;color:var(--ink);display
 <body>
 <header class="masthead">
   <div class="inner">
-    <p class="kicker">Torna Idioma &middot; Spanish as a Foreign Language &middot; Curriculum</p>
-    <h1>${courses.length} modules, ${lessons.length} lessons, CEFR A1 through B1+</h1>
-    <p class="sub">Every module and lesson exactly as it is stored in the platform right now &mdash; lesson text, trilingual titles, and every assessment item. This page reads the live database, so it can never fall out of step with what a learner is served.</p>
+    <p class="kicker">${t(`Torna Idioma &middot; Spanish as a Foreign Language &middot; Curriculum`,`Torna Idioma &middot; Español como Lengua Extranjera &middot; Currículo`,`Torna Idioma &middot; Espanyol bilang Banyagang Wika &middot; Kurikulum`)}</p>
+    <h1>${t(`${courses.length} modules, ${lessons.length} lessons, CEFR A1 through B1+`,`${courses.length} módulos, ${lessons.length} lecciones, del A1 al B1+`,`${courses.length} module, ${lessons.length} aralin, A1 hanggang B1+`)}</h1>
+    <p class="sub">${t(`Every module and lesson exactly as it is stored in the platform right now. This page reads the live database, so it can never fall out of step with what a learner is served.`,`Cada módulo y cada lección tal como están guardados en la plataforma ahora mismo. Esta página lee la base de datos en vivo, así que nunca puede desfasarse de lo que recibe el estudiante.`,`Bawat module at aralin gaya ng nakatago sa plataporma ngayon. Binabasa ng pahinang ito ang live na database, kaya hindi ito maaaring lumihis sa natatanggap ng mag-aaral.`)}</p>
     <p class="stamp">Rendered ${stamp} UTC &middot; ${published} of ${courses.length} modules published${showAnswers ? ' &middot; answer keys visible' : ''} &middot; <a href="/Torna_Idioma/">back to Torna Idioma</a></p>
     <div class="langbar">
-      <button class="lang on" data-lang="en" type="button">English</button>
       <button class="lang" data-lang="es" type="button">Espa&ntilde;ol</button>
-      <span class="stamp" id="langNote" style="margin:0"></span>
+      <button class="lang on" data-lang="en" type="button">English</button>
+      <button class="lang" data-lang="fil" type="button">Filipino</button>
     </div>
+    <p class="stamp" id="langNote" style="margin:8px 0 0"></p>
     <div class="stats">
-      <div class="stat"><div class="v">${courses.length}</div><div class="k">Modules</div></div>
-      <div class="stat"><div class="v">${lessons.length}</div><div class="k">Lessons</div></div>
-      <div class="stat"><div class="v">${hours}</div><div class="k">Contact hours</div></div>
-      <div class="stat"><div class="v">${practice.drills}</div><div class="k">Speaking drills</div></div>
-      <div class="stat"><div class="v">${practice.vocabulary.toLocaleString('en-US')}</div><div class="k">Target words</div></div>
-      <div class="stat"><div class="v">${allEx}</div><div class="k">Assessment items</div></div>
-      <div class="stat"><div class="v">A1&ndash;B1+</div><div class="k">CEFR span</div></div>
+      <div class="stat"><div class="v">${courses.length}</div><div class="k">${t(`Modules`, `Módulos`, `Mga module`)}</div></div>
+      <div class="stat"><div class="v">${lessons.length}</div><div class="k">${t(`Lessons`, `Lecciones`, `Mga aralin`)}</div></div>
+      <div class="stat"><div class="v">${hours}</div><div class="k">${t(`Contact hours`, `Horas de clase`, `Oras ng klase`)}</div></div>
+      <div class="stat"><div class="v">${practice.drills}</div><div class="k">${t(`Speaking drills`, `Ejercicios hablados`, `Pagsasanay sa pagsasalita`)}</div></div>
+      <div class="stat"><div class="v">${practice.vocabulary.toLocaleString('en-US')}</div><div class="k">${t(`Target words`, `Palabras objetivo`, `Target na salita`)}</div></div>
+      <div class="stat"><div class="v">${allEx}</div><div class="k">${t(`Assessment items`, `Ítems de evaluación`, `Aytem ng pagsusulit`)}</div></div>
+      <div class="stat"><div class="v">A1&ndash;B1+</div><div class="k">${t(`CEFR span`, `Rango MCER`, `Saklaw ng CEFR`)}</div></div>
     </div>
   </div>
 </header>
@@ -597,18 +630,18 @@ ${orb}
 
 <div class="wrap">
   <nav class="rail" aria-label="Modules">
-    <h2>Jump to module</h2>
+    <h2>${t(`Jump to module`, `Ir al módulo`, `Pumunta sa module`)}</h2>
     <input class="search" id="q" type="search" placeholder="Filter lessons&hellip;" aria-label="Filter lessons by keyword">
     <ul>${nav}</ul>
     <div class="tools">
-      <button type="button" id="openAll">Expand all</button>
-      <button type="button" id="closeAll">Collapse all</button>
+      <button type="button" id="openAll">${t(`Expand all`, `Abrir todo`, `Buksan lahat`)}</button>
+      <button type="button" id="closeAll">${t(`Collapse all`, `Cerrar todo`, `Isara lahat`)}</button>
     </div>
   </nav>
 
   <main>
     <section class="audit" aria-label="Content coverage">
-      <h2>Content coverage</h2>
+      <h2>${t(`Content coverage`, `Cobertura del contenido`, `Saklaw ng nilalaman`)}</h2>
       <ul>
         ${audit}
       </ul>
@@ -626,8 +659,10 @@ ${orb}
    fallback so a blocked or cold endpoint degrades instead of going silent. The
    module currently being narrated is outlined and scrolled into view. */
 (function(){
-  var SEGS = { en: ${JSON.stringify(segmentsEn)}, es: ${JSON.stringify(segmentsEs)} };
-  var NARRATION_VOICE = { en: 'ava', es: 'dalia' };   // Ava narrates English, Dalia Spanish
+  var SEGS = { en: ${JSON.stringify(segmentsEn)}, es: ${JSON.stringify(segmentsEs)}, fil: ${JSON.stringify(segmentsFil)} };
+  // Ava narrates English, Dalia Spanish, Blessica Filipino. Standalone Spanish
+  // phrases are always Dalia, whatever the page language is.
+  var NARRATION_VOICE = { en: 'ava', es: 'dalia', fil: 'fil-PH-BlessicaNeural' };
   var lang = 'en';
   var segments = SEGS[lang];
 
@@ -636,12 +671,12 @@ ${orb}
           prep: 'Preparing the neural voice…', done: 'Tour finished. Tap again to replay.',
           paused: 'Paused.', one: 'Playing this module…',
           speaking: function(i,n){ return 'Profesora Isabel is speaking… (' + i + ' of ' + n + ')'; },
-          note: 'Narration: Ava (English) · Spanish phrases always Dalia' },
-    es: { idle: 'Pulsa el botón y la Profesora Isabel te recorrerá el programa completo.',
-          prep: 'Preparando la voz neural…', done: 'Recorrido terminado. Pulsa de nuevo para repetir.',
-          paused: 'En pausa.', one: 'Reproduciendo este módulo…',
-          speaking: function(i,n){ return 'La Profesora Isabel está hablando… (' + i + ' de ' + n + ')'; },
-          note: 'Narración: Dalia (español) · las frases sueltas siempre en Dalia' }
+          note: 'Voice: Profesora Isabel · Dalia, Ava, Blessica' },
+    fil: { idle: 'Pindutin ang button at ilalakad ka ni Profesora Isabel sa buong programa.',
+          prep: 'Inihahanda ang neural na boses…', done: 'Tapos na ang paglalakad. Pindutin muli upang ulitin.',
+          paused: 'Naka-pause.', one: 'Pinapatugtog ang module na ito…',
+          speaking: function(i,n){ return 'Nagsasalita si Profesora Isabel… (' + i + ' ng ' + n + ')'; },
+          note: 'Boses: Profesora Isabel · Dalia, Ava, Blessica' }
   };
 
   var synth = window.speechSynthesis;
@@ -679,7 +714,7 @@ ${orb}
     var key = lang + '|' + voiceName + '|' + idx;
     if(audioCache[key]) return Promise.resolve(audioCache[key]);
     return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:segments[idx],voice:(lang==='es' ? voiceName : NARRATION_VOICE.en)})})
+      body:JSON.stringify({text:segments[idx],voice:(lang==='es' ? voiceName : NARRATION_VOICE[lang])})})
       .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
       .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
   }
@@ -715,7 +750,7 @@ ${orb}
     playbackMode='browser';
     var u=new SpeechSynthesisUtterance(segments[idx]);
     if(browserVoice) u.voice=browserVoice;
-    u.lang = lang==='es' ? 'es-MX' : 'en-US';
+    u.lang = lang==='es' ? 'es-MX' : (lang==='fil' ? 'fil-PH' : 'en-US');
     u.rate=0.98; u.pitch=1.05;
     u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
     u.onend=onEnd; u.onerror=onEnd;
