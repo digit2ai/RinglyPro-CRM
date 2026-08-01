@@ -178,6 +178,10 @@ app.use((req, res, next) => {
     const p = req.path;
     if (p.startsWith('/.well-known/')) return next(); // let Render issue SSL certs
     if (p === '/Torna_Idioma' || p.startsWith('/Torna_Idioma/')) return next(); // app + SPA assets
+    // Neural TTS (Ava/Dalia/Blessica) must stay same-origin on the custom domain,
+    // otherwise the orientation page's voice is a cross-origin request from a host
+    // that redirects everything else back to the app.
+    if (p.startsWith('/api/tts')) return next();
     // Vanity path: tornaidioma.com/modules serves the curriculum in place, so the
     // address bar keeps the short URL instead of bouncing to /Torna_Idioma/modules.
     // Same for /orientation, the student walkthrough.

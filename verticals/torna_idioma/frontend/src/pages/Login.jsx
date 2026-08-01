@@ -59,12 +59,12 @@ export default function Login() {
             <div style={s.pillar}><div style={s.pillarNum}>III</div><div style={s.pillarLabel}>Premio</div></div>
           </div>
           <a
-            href={`${BASE}/demo-guide.html`}
+            href={`${BASE}/orientation`}
             target="_blank"
             rel="noopener"
-            onClick={(e) => { e.preventDefault(); window.open(`${BASE}/demo-guide.html`, 'tornaDemoGuide', 'noopener,width=900,height=1000,scrollbars=yes,resizable=yes'); }}
+            onClick={(e) => { e.preventDefault(); window.open(`${BASE}/orientation`, 'tornaOrientation', 'noopener,width=1180,height=1000,scrollbars=yes,resizable=yes'); }}
             style={s.guideBtn}
-          >Demo Guide — How to Test (1·2·3)</a>
+          >Student Orientation — How to Use Torna Idioma</a>
         </div>
       </div>
       <div style={{ ...s.right, ...(mob ? s.rightMob : {}) }}>

@@ -358,14 +358,38 @@ button{font:inherit;cursor:pointer}
   var stepsEl = document.getElementById('steps');
 
   // --- voice ---
-  var voices = [];
-  function loadVoices(){ voices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; }
+  // Neural voices first, over the app's own zero-key Edge TTS endpoint:
+  //   Ava      (en-US) narrates the English steps
+  //   Blessica (fil-PH) narrates the Filipino steps
+  //   Dalia    (es-MX) speaks every Spanish phrase
+  // These are the same voices the rest of the platform uses, and they are far
+  // better than the voices a browser ships with. If the endpoint is unreachable
+  // — offline, blocked, cold — we fall back to browser speech rather than going
+  // silent, and say so in the status line.
+  var VOICE = { en: 'ava', fil: 'fil-PH-BlessicaNeural', es: 'dalia' };
+  var audio = new Audio();
+  var neuralOK = null;         // null = untested, true/false once we know
+  var busyToken = 0;
+
+  var browserVoices = [];
+  function loadVoices(){ browserVoices = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; }
   if (window.speechSynthesis) { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
   function pick(prefix){
-    return voices.filter(function(v){ return new RegExp('^'+prefix,'i').test(v.lang); })[0] || null;
+    return browserVoices.filter(function(v){ return new RegExp('^'+prefix,'i').test(v.lang); })[0] || null;
   }
-  function speak(text, kind){
-    if (!window.speechSynthesis) return;
+
+  function setStatus(msg){ document.getElementById('voiceNote').textContent = msg; }
+  function showStop(on){ document.getElementById('stopVoice').hidden = !on; }
+
+  function stopAll(){
+    busyToken++;
+    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    showStop(false);
+  }
+
+  function browserSpeak(text, kind){
+    if (!window.speechSynthesis) { setStatus('This browser cannot read aloud'); return; }
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     var v = kind === 'es'
@@ -373,17 +397,52 @@ button{font:inherit;cursor:pointer}
       : (lang === 'fil' ? (pick('fil') || pick('tl') || pick('en')) : pick('en'));
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = kind === 'es' ? 'es-MX' : 'en-US'; }
     u.rate = kind === 'es' ? 0.9 : 1;
-    u.onend = function(){ document.getElementById('stopVoice').hidden = true; };
-    document.getElementById('stopVoice').hidden = false;
+    u.onend = function(){ showStop(false); };
+    showStop(true);
     window.speechSynthesis.speak(u);
   }
-  function noteVoices(){
-    var n = document.getElementById('voiceNote');
-    if (!window.speechSynthesis) { n.textContent = 'This browser cannot read aloud'; return; }
-    var es = pick('es-MX') || pick('es-419') || pick('es');
-    n.textContent = es ? 'Spanish voice: ' + es.name : 'No Spanish voice installed — text still works';
+
+  function speak(text, kind){
+    stopAll();
+    var mine = ++busyToken;
+    var voice = kind === 'es' ? VOICE.es : (lang === 'fil' ? VOICE.fil : VOICE.en);
+
+    if (neuralOK === false) { browserSpeak(text, kind); return; }
+
+    showStop(true);
+    setStatus('Loading voice…');
+
+    fetch('/api/tts/edge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: String(text).slice(0, 2000), voice: voice })
+    }).then(function(r){
+      if (!r.ok) throw new Error('tts ' + r.status);
+      var ct = r.headers.get('content-type') || '';
+      if (ct.indexOf('audio') === -1) throw new Error('not audio');
+      return r.blob();
+    }).then(function(blob){
+      if (mine !== busyToken) return;            // superseded by a newer tap
+      neuralOK = true;
+      audio.src = URL.createObjectURL(blob);
+      audio.onended = function(){ showStop(false); };
+      audio.play().then(function(){
+        setStatus(kind === 'es' ? 'Dalia — Spanish (neural)' : (lang === 'fil' ? 'Blessica — Filipino (neural)' : 'Ava — English (neural)'));
+      }).catch(function(){
+        // Autoplay refused until the user has interacted; the tap itself counts,
+        // so this is rare. Fall back rather than leave them with silence.
+        browserSpeak(text, kind);
+        setStatus('Using the browser voice');
+      });
+    }).catch(function(){
+      if (mine !== busyToken) return;
+      neuralOK = false;
+      browserSpeak(text, kind);
+      setStatus('Neural voice unavailable — using the browser voice');
+    });
   }
-  setTimeout(noteVoices, 700);
+
+  setTimeout(function(){ setStatus('Voice: Ava (English) · Blessica (Filipino) · Dalia (Spanish)'); }, 400);
 
   // --- render ---
   function render(){
@@ -423,10 +482,7 @@ button{font:inherit;cursor:pointer}
     var t = STEPS[idx][lang];
     speak(t.h + '. ' + t.p + ' ' + t.li.join(' '), 'narration');
   };
-  document.getElementById('stopVoice').onclick = function(){
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    this.hidden = true;
-  };
+  document.getElementById('stopVoice').onclick = stopAll;
 
   document.addEventListener('click', function(e){
     var say = e.target.closest('.say');
