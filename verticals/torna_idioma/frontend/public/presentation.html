@@ -254,7 +254,7 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
 
     <!-- 6 -->
     <section class="scene" data-orb="-40,26,.34,.22">
-      <div class="up eyebrow" style="--d:.1s">The platform · now live</div>
+      <div class="up eyebrow" style="--d:.1s">The platform · built and ready</div>
       <h2 class="up" style="--d:.25s">Método Rizal</h2>
       <p class="up lede" style="--d:.5s">Built on José Rizal's own method of mastering a language — now powered by AI and voice.</p>
       <div class="feats">
@@ -357,7 +357,7 @@ var NARR = [
  "It begins in three cities with deep Spanish roots. Makati, the financial capital. Zamboanga, where seven in ten people still speak Chabacano. And Cavite, the birthplace of Philippine independence.",
  "Why Spanish, and why now? Six hundred and fifty million speakers worldwide. The third language of the internet. Two hundred and fifty years of galleon trade. And a Spanish-speaking B P O agent earns twenty to forty percent more, eight to fifteen thousand pesos every month.",
  "The movement rests on three pillars. Dignity: a language that was never foreign, only forgotten. Pride: a Hispanic-Asian nation, connected to six hundred and fifty million people. And Prize: global careers, higher salaries, international partnerships.",
- "The platform is live. It is built on Metodo Rizal, Jose Rizal's own method of mastering a language. Five root words a night, about eighteen hundred a year. Profesora Isabel, a voice tutor that explains in English or Filipino and teaches in Spanish. A translation atelier with instant feedback. Rizal Studies in the original Spanish. And Emperador, a rotating cohort title.",
+ "The platform is built. It runs on Metodo Rizal, Jose Rizal's own method of mastering a language. Five root words a night, about eighteen hundred a year. Profesora Isabel, a voice tutor that explains in English or Filipino and teaches in Spanish. A translation atelier with instant feedback. Rizal Studies in the original Spanish. And Emperador, a rotating cohort title.",
  "Here is the prize. If just one in ten B P O workers becomes proficient, residents earn between nine hundred sixty million and one point eight billion pesos more every year. Cities gain a hundred fifty to three hundred million in tax revenue. And two to five billion pesos of foreign investment follows over five years. A ten to twenty times return.",
  "The rollout takes three years. Year one, foundation: pilot schools, teacher certification, and the B P O program. Year two, expansion: Spanish in every public high school. Year three, full implementation, until the three cities become the Hispanic gateway of Southeast Asia.",
  "And we are not doing this alone. U V E G in Mexico, with twelve C E F R modules and a signed agreement. Universidad de Medellin in Colombia. The University of Makati. Letran, founded in sixteen twenty. And the Polytechnic University of the Philippines, with more than a hundred thousand students.",
@@ -448,7 +448,7 @@ function speak(i){
   setCaption(NARR[i]);
   if(!neuralOK){
     plan[i]=Math.max(MIN[i], estimate(NARR[i]));
-    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); forceNext=true; } });
+    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); tailOut(i); } });
     return;
   }
   note('Loading Ava’s voice…');
@@ -459,8 +459,8 @@ function speak(i){
       if(t!==token) return;
       if(isFinite(a.duration)&&a.duration>0) plan[i]=Math.max(MIN[i], tIn + a.duration + TAIL);
     };
-    a.onended=function(){ if(t!==token) return; player.classList.remove('speaking'); forceNext=true; };
-    a.onerror=function(){ if(t!==token) return; neuralOK=false; note('Neural voice unavailable — using the browser voice.'); browserSpeak(i,function(){ if(t===token){ forceNext=true; } }); };
+    a.onended=function(){ if(t!==token) return; player.classList.remove('speaking'); tailOut(i); };
+    a.onerror=function(){ if(t!==token) return; neuralOK=false; note('Neural voice unavailable — using the browser voice.'); browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); tailOut(i); } }); };
     note('Narrated by <b>Ava</b> · scene '+(i+1)+' of '+N);
     player.classList.add('speaking');
     a.play().catch(function(){
@@ -476,11 +476,15 @@ function speak(i){
     neuralOK=false;
     note('Neural voice unavailable — using the browser voice.');
     plan[i]=Math.max(MIN[i], estimate(NARR[i]));
-    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); forceNext=true; } });
+    browserSpeak(i,function(){ if(t===token){ player.classList.remove('speaking'); tailOut(i); } });
   });
 }
 
 function estimate(text){ return Math.max(4, text.split(/\s+/).length/2.6 + TAIL); }
+
+/* Ava finished scene i: hold one more beat of silence, then move on. Shortening
+   the plan (rather than jumping) keeps the progress bar honest. */
+function tailOut(i){ if(i===idx) plan[i]=tIn+TAIL; }
 
 /* ---------- captions ---------- */
 function setCaption(text){
@@ -491,7 +495,7 @@ function note(html){ noteEl.innerHTML=html; }
 
 /* ---------- player ---------- */
 var plan=MIN.slice();      // planned seconds per scene; grows to fit the narration
-var idx=-1, tIn=0, playing=false, forceNext=false, last=performance.now();
+var idx=-1, tIn=0, playing=false, last=performance.now();
 
 function fmt(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 function elapsed(){ var e=0; for(var k=0;k<idx;k++) e+=plan[k]; return e+tIn; }
@@ -509,7 +513,7 @@ function countUp(scene){
 }
 
 function show(i){
-  idx=i; tIn=0; forceNext=false; token++;
+  idx=i; tIn=0; token++;
   scenes.forEach(function(s,k){ s.classList.toggle('on',k===i); });
   dotEls.forEach(function(b,k){ b.classList.toggle('on',k<=i); });
   var o=scenes[i].dataset.orb.split(',').map(Number);
@@ -544,9 +548,9 @@ function frame(now){
   var dt=Math.min(.25,(now-last)/1000); last=now;
   if(playing&&idx>=0){
     tIn+=dt;
-    var ready=forceNext||tIn>=plan[idx];
+    var ready=tIn>=plan[idx];
     /* Do not advance while Ava's audio is still on the wire. */
-    if(!forceNext&&narrate&&neuralOK&&seg[idx]&&seg[idx].state==='pending'&&tIn<plan[idx]+10) ready=false;
+    if(narrate&&neuralOK&&seg[idx]&&seg[idx].state==='pending'&&tIn<plan[idx]+10) ready=false;
     if(ready){
       if(idx+1>=N) finish(); else show(idx+1);
     }
