@@ -46,7 +46,7 @@
     .lang-btn.active { background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
     .lang-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
 
-    /* Lina voice orb */
+    /* Profesora Isabel voice orb */
     .lina-section { background:linear-gradient(135deg,#0F1A2E,#1B2A4A); padding:56px 24px; display:flex; justify-content:center; }
     .lina-card { max-width:680px; width:100%; display:flex; gap:22px; align-items:center; background:rgba(255,255,255,.04); border:1px solid rgba(201,168,76,.3); border-radius:20px; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
     .lina-orb { position:relative; width:92px; height:92px; flex:0 0 92px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#F4E3A6,#C9A84C 45%,#6B4E0F 100%); box-shadow:0 0 0 0 rgba(201,168,76,.5); }
@@ -378,12 +378,12 @@
   </div>
 </section>
 
-<!-- ===== Lina — zero-key neural voice orb (Edge "Read Aloud" via /api/tts/edge) ===== -->
+<!-- ===== Profesora Isabel — zero-key neural voice orb (Edge "Read Aloud" via /api/tts/edge) ===== -->
 <section class="lina-section" id="lina">
   <div class="lina-card lina-card-flex">
     <div class="lina-orb" id="linaOrb"></div>
     <div class="lina-meta">
-      <div class="lina-name">Lina &middot; Digit2AI AI Voice</div>
+      <div class="lina-name">Profesora Isabel &middot; Torna Idioma AI Voice</div>
       <div class="lina-role">
         <span data-lang-en>Your guide to the Torna Idioma vision</span>
         <span data-lang-es>Tu gu&iacute;a de la visi&oacute;n Torna Idioma</span>
@@ -1320,7 +1320,7 @@
     observer.observe(el);
   });
 
-  // ===== Lina — neural voice orb (zero-key Edge TTS via /api/tts/edge) =====
+  // ===== Profesora Isabel — neural voice orb (zero-key Edge TTS via /api/tts/edge) =====
   (function(){
     var NEURAL_URL = '/api/tts/edge';
     var VOICE = { es:'lina', en:'ava', fil:'fil-PH-BlessicaNeural' };       // active lang -> Edge voice
@@ -1328,7 +1328,7 @@
     var SECTION_IDS = [null, 'mission', 'why', 'pillars', 'economics', 'partners'];
     var SEG = {
       es: [
-        'Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. En pocos minutos te voy a explicar qué es Torna Idioma y por qué Makati está a punto de convertirse en la primera ciudad hispanohablante de Asia.',
+        'Hola, soy la Profesora Isabel, la voz de inteligencia artificial de Torna Idioma. En pocos minutos te voy a explicar qué es Torna Idioma y por qué Makati está a punto de convertirse en la primera ciudad hispanohablante de Asia.',
         'Nuestra misión es empoderar a la juventud filipina a través del dominio del español, restaurando dignidad, orgullo y legado. Nuestra visión es establecer a Filipinas como la primera nación hispanohablante de Asia, donde la herencia se convierte en fortaleza.',
         '¿Por qué español y por qué ahora? El español no es ajeno a Filipinas: es el idioma de Rizal, de Bonifacio y de la Constitución de Malolos. Hoy lo hablan más de seiscientos cincuenta millones de personas, y abre carreras globales con salarios mucho más altos.',
         'Torna Idioma se levanta sobre tres pilares. Dignidad: recuperar un idioma que pertenece al alma filipina. Orgullo: reconectar con una comunidad de seiscientos cincuenta millones de hispanohablantes. Y premio: desbloquear carreras internacionales y nuevas oportunidades económicas.',
@@ -1336,7 +1336,7 @@
         'Esto es más que un programa: es un movimiento. Ya seas estudiante, profesor, profesional de un centro de servicios o funcionario del gobierno, en Torna Idioma hay un lugar para ti. Sé parte de la historia.'
       ],
       en: [
-        "Hi, I'm Lina, the artificial intelligence voice of Digit2AI. In just a few minutes I'll walk you through what Torna Idioma is, and why Makati is about to become the first Spanish-enabled city in Asia.",
+        "Hi, I'm Profesora Isabel, the artificial intelligence voice of Torna Idioma. In just a few minutes I'll walk you through what Torna Idioma is, and why Makati is about to become the first Spanish-enabled city in Asia.",
         "Our mission is to empower Filipino youth through Spanish proficiency, restoring dignity, pride, and legacy. Our vision is to establish the Philippines as Asia's first Spanish-enabled nation, where heritage becomes strength.",
         'Why Spanish, and why now? Spanish is not foreign to the Philippines. It is the language of Rizal, of Bonifacio, and of the Malolos Constitution. Today more than six hundred fifty million people speak it, and it opens global careers with significantly higher salaries.',
         'Torna Idioma stands on three pillars. Dignity: reclaiming a language that belongs to the Filipino soul. Pride: reconnecting with a community of six hundred fifty million Spanish speakers. And prize: unlocking international careers and new economic opportunity.',
@@ -1344,7 +1344,7 @@
         "This is more than a program; it's a movement. Whether you're a student, a teacher, an outsourcing professional, or a government official, Torna Idioma has a place for you. Be part of history."
       ],
       fil: [
-        'Kumusta, ako si Lina, ang artificial intelligence na boses ng Digit2AI. Sa loob ng ilang minuto, ipapaliwanag ko kung ano ang Torna Idioma at kung bakit malapit nang maging unang lungsod na may Espanyol sa Asya ang Makati.',
+        'Kumusta, ako si Profesora Isabel, ang artificial intelligence na boses ng Torna Idioma. Sa loob ng ilang minuto, ipapaliwanag ko kung ano ang Torna Idioma at kung bakit malapit nang maging unang lungsod na may Espanyol sa Asya ang Makati.',
         'Layunin naming palakasin ang kabataang Pilipino sa pamamagitan ng kahusayan sa Espanyol, ibinabalik ang dignidad, pagmamalaki, at pamana. Ang aming bisyon ay gawing unang bansang may Espanyol sa Asya ang Pilipinas, kung saan ang pamana ay nagiging lakas.',
         'Bakit Espanyol, at bakit ngayon? Hindi dayuhan ang Espanyol sa Pilipinas. Ito ang wika ni Rizal, ni Bonifacio, at ng Konstitusyong Malolos. Ngayon, mahigit anim na raan at limampung milyong tao ang nagsasalita nito, at nagbubukas ito ng pandaigdigang karera na may mas mataas na sahod.',
         'Nakatayo ang Torna Idioma sa tatlong haligi. Dignidad: pagbawi ng wikang pag-aari ng kaluluwa ng Pilipino. Pagmamalaki: muling pakikipag-ugnay sa anim na raan at limampung milyong nagsasalita ng Espanyol. At gantimpala: pagbubukas ng pandaigdigang karera at bagong oportunidad pang-ekonomiya.',
@@ -1353,9 +1353,9 @@
       ]
     };
     var UI = {
-      es: { playAll:'▶ Que Lina lo explique todo', pause:'❚❚ Pausar', resume:'▶ Reanudar', stop:'■ Detener', idle:'Pulsa el botón para que Lina te presente la visión.', paused:'En pausa.', prep:'Preparando voz neural…', done:'Presentación terminada. Pulsa de nuevo para repetir.', neural:'Voz neural HD', accent:'Acento', hd:'● HD', browser:'○ navegador', speaking:function(i,n){return 'Lina está hablando… ('+i+' de '+n+')';} },
-      en: { playAll:'▶ Let Lina explain it all', pause:'❚❚ Pause', resume:'▶ Resume', stop:'■ Stop', idle:'Tap the button and let Lina walk you through the vision.', paused:'Paused.', prep:'Preparing neural voice…', done:'Presentation finished. Tap again to replay.', neural:'HD neural voice', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Lina is speaking… ('+i+' of '+n+')';} },
-      fil:{ playAll:'▶ Ipaliwanag ni Lina ang lahat', pause:'❚❚ I-pause', resume:'▶ Ituloy', stop:'■ Itigil', idle:'Pindutin ang button para ipakilala ni Lina ang bisyon.', paused:'Naka-pause.', prep:'Inihahanda ang neural na boses…', done:'Tapos na ang presentasyon. Pindutin muli upang ulitin.', neural:'HD neural na boses', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Nagsasalita si Lina… ('+i+' ng '+n+')';} }
+      es: { playAll:'▶ Que la Profesora Isabel lo explique todo', pause:'❚❚ Pausar', resume:'▶ Reanudar', stop:'■ Detener', idle:'Pulsa el botón para que la Profesora Isabel te presente la visión.', paused:'En pausa.', prep:'Preparando voz neural…', done:'Presentación terminada. Pulsa de nuevo para repetir.', neural:'Voz neural HD', accent:'Acento', hd:'● HD', browser:'○ navegador', speaking:function(i,n){return 'La Profesora Isabel está hablando… ('+i+' de '+n+')';} },
+      en: { playAll:'▶ Let Profesora Isabel explain it all', pause:'❚❚ Pause', resume:'▶ Resume', stop:'■ Stop', idle:'Tap the button and let Profesora Isabel walk you through the vision.', paused:'Paused.', prep:'Preparing neural voice…', done:'Presentation finished. Tap again to replay.', neural:'HD neural voice', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Profesora Isabel is speaking… ('+i+' of '+n+')';} },
+      fil:{ playAll:'▶ Ipaliwanag ni Profesora Isabel ang lahat', pause:'❚❚ I-pause', resume:'▶ Ituloy', stop:'■ Itigil', idle:'Pindutin ang button para ipakilala ni Profesora Isabel ang bisyon.', paused:'Naka-pause.', prep:'Inihahanda ang neural na boses…', done:'Tapos na ang presentasyon. Pindutin muli upang ulitin.', neural:'HD neural na boses', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Nagsasalita si Profesora Isabel… ('+i+' ng '+n+')';} }
     };
 
     var orb = document.getElementById('linaOrb');
@@ -1455,7 +1455,7 @@
       pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
       status.textContent = L().done;
     }
-    function stopLina(){
+    function stopIsabel(){
       runToken++; playing = false; paused = false; orb.classList.remove('speaking');
       if (synth) synth.cancel();
       if (currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
@@ -1474,7 +1474,7 @@
     accentSel.addEventListener('change', clearCache);
     // Re-language the orb + stop playback when the page language changes.
     document.querySelectorAll('.lang-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){ stopLina(); pickBrowserVoice(); clearCache(); applyLang(); });
+      btn.addEventListener('click', function(){ stopIsabel(); pickBrowserVoice(); clearCache(); applyLang(); });
     });
     window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{ currentAudio.pause(); }catch(e){} } });
 
