@@ -54,3 +54,17 @@ Editing only those two needs no build, just a copy into `frontend/dist/`.
 
 ## Deploy
 Push to `main` → Render auto-deploy (~90-100s). Rebuild the frontend before pushing UI changes.
+
+**Portrait is a different layout, not a scaled-down one.** A 16:9 stage on a phone
+is ~200px tall, so under `max-width:760px` the stage becomes a tall panel, grids
+collapse, the seal is dropped and the caption moves *below* the stage (it lives in
+`.stagewrap`, outside `.stage`, for exactly this reason). Captions default off on
+phones and on above 760px, toggled by the CC button and remembered in
+localStorage. Each scene's content is wrapped in `.fit` at runtime and scaled down
+if it would overflow, so nothing is ever clipped on an unexpected viewport.
+
+Two traps already paid for: `height:min(68svh,…)` together with `aspect-ratio:auto`
+collapses the stage to **0px** wherever `svh` is unsupported (Safari <15.4, Chrome
+<108) — keep the `vh` fallback and the `@supports (height:1svh)` upgrade. And the
+time readout must be seeded from `EST[]` (measured Ava segment lengths), or it
+advertises the fixed-timing total of 1:47 against 3:13 of actual narration.
