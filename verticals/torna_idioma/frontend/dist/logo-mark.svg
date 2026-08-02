@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Torna Idioma">
+  <!-- Torna Idioma — Open Book, Rising Sun.
+       The mark alone, gold on transparent. currentColor is not used so the file
+       can be dropped into any context (img src, background, print) unchanged.
+       Geometry lives on a 100x100 grid; every other asset is derived from this. -->
+  <g fill="none" stroke="#C9A84C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the sun, rising through the gutter -->
+    <circle cx="50" cy="36" r="11.5"/>
+    <path d="M50 18 v-6"/>
+    <path d="M63.5 22.5 l4.2 -4.2"/>
+    <path d="M36.5 22.5 l-4.2 -4.2"/>
+    <path d="M71 36 h6" opacity=".8"/>
+    <path d="M23 36 h6" opacity=".8"/>
+    <!-- the open book: two pages meeting at the spine -->
+    <path d="M50 64 Q33 55 16 59 v21 Q33 76 50 85 Q67 76 84 80 V59 Q67 55 50 64 Z"/>
+    <path d="M50 64 v21"/>
+  </g>
+</svg>

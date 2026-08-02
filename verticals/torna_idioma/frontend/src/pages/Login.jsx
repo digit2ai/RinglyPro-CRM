@@ -98,7 +98,7 @@ export default function Login() {
       <div style={{ ...s.left, ...(mob ? s.leftMob : {}) }}>
         <div style={s.leftContent}>
           <div style={{ ...s.crest, ...(mob ? s.crestMob : {}) }}>
-            <div style={s.crestInner}>TORNA<br/>IDIOMA<span style={s.crestSub}>Vida · Cultura · Legado</span></div>
+            <svg width="76" height="76" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#C9A84C" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="50" cy="36" r="11"/><path d="M50 19 v-5"/><path d="M63 23 l4 -4"/><path d="M37 23 l-4 -4"/><path d="M71 36 h6" opacity=".8"/><path d="M23 36 h6" opacity=".8"/><path d="M50 63 Q33 55 17 58.5 v20.5 Q33 75 50 84 Q67 75 83 78.5 V58.5 Q67 55 50 63 Z"/><path d="M50 63 v21"/></g></svg>
           </div>
           <h1 style={{ ...s.leftTitle, ...(mob ? s.leftTitleMob : {}) }}>{L.heroA}<br/><span style={s.accent}>{L.heroB}</span></h1>
           {!mob && <p style={s.leftDesc}>{L.heroDesc}</p>}

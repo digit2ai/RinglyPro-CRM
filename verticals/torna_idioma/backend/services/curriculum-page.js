@@ -404,7 +404,8 @@ function render({ courses, lessons, packs }, { showAnswers }) {
 <title>Curriculum &mdash; Torna Idioma</title>
 <meta name="description" content="The full Torna Idioma Spanish curriculum: ${courses.length} modules, ${lessons.length} lessons, CEFR A1 to B1+.">
 <meta name="robots" content="noindex">
-<link rel="icon" href="/Torna_Idioma/favicon.ico">
+<link rel="icon" href="/Torna_Idioma/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/Torna_Idioma/favicon-32.png">
 <meta name="theme-color" content="#0F1A2E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -604,6 +605,7 @@ button.say.w-es{font-family:var(--serif);font-size:15px;color:var(--ink);display
 <body>
 <header class="masthead">
   <div class="inner">
+    <div class="crest"><svg width="50" height="50" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#C9A84C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="36" r="11"/><path d="M50 19 v-5"/><path d="M63 23 l4 -4"/><path d="M37 23 l-4 -4"/><path d="M71 36 h6" opacity=".8"/><path d="M23 36 h6" opacity=".8"/><path d="M50 63 Q33 55 17 58.5 v20.5 Q33 75 50 84 Q67 75 83 78.5 V58.5 Q67 55 50 63 Z"/><path d="M50 63 v21"/></g></svg></div>
     <p class="kicker">${t(`Torna Idioma &middot; Spanish as a Foreign Language &middot; Curriculum`,`Torna Idioma &middot; Español como Lengua Extranjera &middot; Currículo`,`Torna Idioma &middot; Espanyol bilang Banyagang Wika &middot; Kurikulum`)}</p>
     <h1>${t(`${courses.length} modules, ${lessons.length} lessons, CEFR A1 through B1+`,`${courses.length} módulos, ${lessons.length} lecciones, del A1 al B1+`,`${courses.length} module, ${lessons.length} aralin, A1 hanggang B1+`)}</h1>
     <p class="sub">${t(`Every module and lesson exactly as it is stored in the platform right now. This page reads the live database, so it can never fall out of step with what a learner is served.`,`Cada módulo y cada lección tal como están guardados en la plataforma ahora mismo. Esta página lee la base de datos en vivo, así que nunca puede desfasarse de lo que recibe el estudiante.`,`Bawat module at aralin gaya ng nakatago sa plataporma ngayon. Binabasa ng pahinang ito ang live na database, kaya hindi ito maaaring lumihis sa natatanggap ng mag-aaral.`)}</p>

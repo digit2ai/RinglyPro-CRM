@@ -99,7 +99,7 @@ function Sidebar({ open, onClose }) {
         {mob && <button onClick={onClose} style={S.closeBtn}>&times;</button>}
         <div style={S.logoArea}>
           <div style={S.logoCrest}>
-            <div style={S.logoCrestText}>TORNA<br/>IDIOMA</div>
+            <svg width="62" height="62" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#C9A84C" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"><circle cx="50" cy="36" r="11"/><path d="M50 19 v-5"/><path d="M63 23 l4 -4"/><path d="M37 23 l-4 -4"/><path d="M50 63 Q33 55 17 58.5 v20.5 Q33 75 50 84 Q67 75 83 78.5 V58.5 Q67 55 50 63 Z"/><path d="M50 63 v21"/></g></svg>
           </div>
           <div style={S.logoMotto}>Vida · Cultura · Legado</div>
         </div>
