@@ -45,16 +45,6 @@ Falls back to `speechSynthesis`, then to `MIN[]` timings, if the route is unreac
 Copy rule: the deck must not claim the programme is "live" (see Status above) — scene 6 says
 "built and ready".
 
-## Build
-```bash
-cd verticals/torna_idioma/frontend && /opt/homebrew/bin/node node_modules/.bin/vite build
-```
-`presentation.html` and `torna-seal.png` live in `frontend/public/` — Vite copies them verbatim.
-Editing only those two needs no build, just a copy into `frontend/dist/`.
-
-## Deploy
-Push to `main` → Render auto-deploy (~90-100s). Rebuild the frontend before pushing UI changes.
-
 **Portrait is a different layout, not a scaled-down one.** A 16:9 stage on a phone
 is ~200px tall, so under `max-width:760px` the stage becomes a tall panel, grids
 collapse, the seal is dropped and the caption moves *below* the stage (it lives in
@@ -68,3 +58,12 @@ collapses the stage to **0px** wherever `svh` is unsupported (Safari <15.4, Chro
 <108) — keep the `vh` fallback and the `@supports (height:1svh)` upgrade. And the
 time readout must be seeded from `EST[]` (measured Ava segment lengths), or it
 advertises the fixed-timing total of 1:47 against 3:13 of actual narration.
+## Build
+```bash
+cd verticals/torna_idioma/frontend && /opt/homebrew/bin/node node_modules/.bin/vite build
+```
+`presentation.html` and `torna-seal.png` live in `frontend/public/` — Vite copies them verbatim.
+Editing only those two needs no build, just a copy into `frontend/dist/`.
+
+## Deploy
+Push to `main` → Render auto-deploy (~90-100s). Rebuild the frontend before pushing UI changes.
