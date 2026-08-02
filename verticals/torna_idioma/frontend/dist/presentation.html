@@ -249,7 +249,8 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
     font-size:14px; line-height:1.45; text-shadow:none; max-height:0; overflow:hidden;
     transition:max-height .3s ease, margin-top .3s ease}
   .cap span{display:block; background:rgba(10,19,48,.72); padding:10px 13px; border-radius:10px}
-  .cap.on{max-height:180px}
+  /* bounded so a long paragraph cannot push the controls off the screen */
+  .cap.on{max-height:32vh; overflow-y:auto}
   .cap:not(.on){margin-top:0}
 
   /* controls: a tidy 6-column grid — Play across the top, then transport,
@@ -269,6 +270,15 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
 }
 @supports (height:1svh){
   @media(max-width:760px){ .stage{height:min(68svh,580px)} }
+}
+/* short phones (and landscape-ish heights): give the stage less so Play and the
+   scrubber stay on screen without scrolling */
+@media(max-width:760px) and (max-height:700px){
+  .stage{height:min(54vh,420px); min-height:290px}
+  .note{display:none}
+}
+@supports (height:1svh){
+  @media(max-width:760px) and (max-height:700px){ .stage{height:min(54svh,420px)} }
 }
 @media(max-width:760px) and (orientation:landscape){
   /* phone held sideways: the 16:9 frame is the right shape again */
@@ -435,7 +445,7 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
     <div class="time" id="time">0:00 / 0:00</div>
   </div>
   <div class="dots" id="dots"></div>
-  <div class="note" id="note">Press <b>Play</b> — Ava narrates all ten scenes. Space to play/pause, ← → to move between scenes, <b>C</b> for captions.</div>
+  <div class="note" id="note">Press <b>Play</b> — Ava narrates all ten scenes. <b>CC</b> shows what she is saying.</div>
 </div>
 
 <script>
@@ -628,8 +638,12 @@ function estimate(text){ return Math.max(4, text.split(/\s+/).length/2.6 + TAIL)
 function tailOut(i){ if(i===idx) plan[i]=tIn+TAIL; }
 
 /* ---------- captions ---------- */
-var capOn=true;
-try{ capOn = localStorage.getItem('torna_cap')!=='0'; }catch(e){}
+/* Captions overlay the stage on a wide screen, where there is room to spare, so
+   they are on by default. On a phone they sit below the stage and a full
+   paragraph would push the controls past the fold — so they start off there and
+   the CC button brings them in. Either way the choice is remembered. */
+var capOn = !window.matchMedia('(max-width:760px)').matches;
+try{ var capPref=localStorage.getItem('torna_cap'); if(capPref!==null) capOn = capPref!=='0'; }catch(e){}
 function setCaption(text){
   if(!capOn||!narrate||!text){ cap.classList.remove('on'); player.classList.remove('capon'); capText.textContent='';
     if(idx>=0) fitScene(idx); return; }
