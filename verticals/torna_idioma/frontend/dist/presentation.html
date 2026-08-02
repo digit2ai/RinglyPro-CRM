@@ -74,6 +74,10 @@ body{
 .scene{position:absolute; inset:0; padding:5% 7%; display:flex; flex-direction:column;
   justify-content:center; opacity:0; pointer-events:none; transition:opacity .7s ease}
 .scene.on{opacity:1}
+/* Every scene's content is wrapped in .fit at runtime. If a scene is taller than
+   the stage on a given screen, .fit is scaled down until it fits, so nothing is
+   ever clipped or hidden behind the caption — whatever the device. */
+.fit{width:100%; transform-origin:center center}
 .scene .up{opacity:0; transform:translateY(18px); }
 .scene.on .up{animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,0s)}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -144,9 +148,13 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
 .cap span{background:rgba(4,8,26,.62); padding:7px 14px; border-radius:9px;
   box-shadow:inset 0 0 0 1px rgba(127,230,255,.18); backdrop-filter:blur(6px)}
 .cap.on{opacity:1}
-/* keep the caption clear of the scene content while narration is on */
-.player.capon .scene{padding-bottom:13%}
-.player.capon .seal{bottom:15%}
+/* On a wide screen the caption sits over the stage like a subtitle, so the scene
+   content is pushed up to clear it. On a phone it drops below the stage instead
+   (see the portrait block) — overlaying a 16:9 box that is only ~200px tall
+   buries the copy underneath it. */
+.player.capon .scene{padding-bottom:14%}
+.player.capon .seal{bottom:16%}
+.stagewrap{position:relative}
 
 /* controls */
 .bar{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap}
@@ -169,14 +177,109 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
 .note b{color:#BFE0FF; font-weight:500}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}
   .scene .up{opacity:1; transform:none} .seal{opacity:1; transform:none} .cap{opacity:1}}
-@media(max-width:560px){
-  .time{min-width:0}
-  .btn{font-size:11px; padding:8px 12px; letter-spacing:.1em}
+
+/* ============================================================
+   PORTRAIT / PHONE
+   A 16:9 stage on a 390px-wide phone is ~200px tall — too short to hold a
+   headline, a paragraph and a three-column grid, which is why the copy and the
+   caption collided. On portrait the stage becomes a tall panel, every grid
+   collapses to one or two columns, type is sized off viewport width rather
+   than the stage, the decorative seal steps out, and the caption moves below
+   the stage where it cannot cover anything.
+   ============================================================ */
+@media(max-width:760px){
+  /* let the document be as tall as its content instead of a fixed 100% grid —
+     otherwise the player floats in the middle of a screen of dead space */
+  html,body{height:auto; min-height:100%}
+  body{display:block; padding:10px 10px 26px}
+  .player{width:100%; margin:0 auto}
+  /* vh first: svh is unsupported before Safari 15.4 / Chrome 108, and because
+     aspect-ratio is switched off here an invalid height collapses the stage to
+     nothing. @supports upgrades to svh where it exists (it excludes the mobile
+     browser chrome, so the stage does not jump as the URL bar hides). */
+  .stage{aspect-ratio:auto; height:min(68vh,580px); min-height:380px; border-radius:12px}
+  .scene{padding:18px 15px}
+  .player.capon .scene{padding-bottom:18px}      /* caption is outside the stage now */
+
+  /* the orb is atmosphere on a phone, not a subject — keep it behind the words */
+  .orb{width:170px;height:170px;margin:-85px 0 0 -85px}
+  .orb .halo{inset:36px}.orb .core{inset:44px}.orb .r3{inset:30px;border-width:4px}
+
+  .eyebrow{font-size:10px; letter-spacing:.3em; margin-bottom:10px}
+  h1{font-size:clamp(34px,11.5vw,58px)}
+  h2{font-size:clamp(21px,6.4vw,32px); margin-bottom:10px}
+  .lede{font-size:clamp(13.5px,4vw,17px); line-height:1.5}
+  .rule{width:60%; margin:14px 0}
+
+  .cards{grid-template-columns:1fr; gap:8px; margin-top:14px}
+  .card{padding:11px 13px 12px; border-radius:10px}
+  .card h3{font-size:19px}
+  .card .role{font-size:9.5px; letter-spacing:.16em}
+  .card ul{margin-top:6px; font-size:12px; line-height:1.55}
+  .card li{display:inline-block; margin-right:10px}   /* three facts on one line */
+
+  .stats{grid-template-columns:repeat(2,1fr); gap:14px 12px; margin-top:16px}
+  .stat .n{font-size:clamp(24px,7.6vw,34px)}
+  .stat .l{font-size:9.5px; letter-spacing:.11em; margin-top:5px}
+
+  .pillars{grid-template-columns:1fr; gap:10px; margin-top:14px}
+  .pillar{padding:10px 0 0; border-top-width:2px}
+  .pillar .num{font-size:19px; display:inline-block; margin-right:9px}
+  .pillar h3{font-size:19px; margin:2px 0 4px; display:inline-block}
+  .pillar h3 br{display:none}
+  .pillar h3 .es{margin-left:8px; font-size:.8em}
+  .pillar p{font-size:12.5px}
+
+  .feats{grid-template-columns:1fr; max-width:100%; gap:8px; margin-top:14px}
+  .feat p{font-size:12.5px; line-height:1.45}
+  .feat .k{font-size:13px; min-width:1.9em}
+  .seal{display:none}                              /* collides with the copy at this size */
+
+  .timeline{grid-template-columns:1fr; gap:10px; margin-top:14px}
+  .tl{padding-top:9px}
+  .tl h3{font-size:18px; margin:3px 0 5px}
+  .tl ul{font-size:12px; line-height:1.5}
+
+  .partners{max-width:100%; gap:7px; margin-top:14px}
+  .pt{padding:8px 11px; font-size:12px}
+  .closing .url{font-size:13px; letter-spacing:.2em}
+
+  /* caption below the stage — readable, and it covers nothing */
+  .cap{position:static; opacity:1; margin-top:10px; padding:0; text-align:left;
+    font-size:14px; line-height:1.45; text-shadow:none; max-height:0; overflow:hidden;
+    transition:max-height .3s ease, margin-top .3s ease}
+  .cap span{display:block; background:rgba(10,19,48,.72); padding:10px 13px; border-radius:10px}
+  .cap.on{max-height:180px}
+  .cap:not(.on){margin-top:0}
+
+  /* controls: a tidy 6-column grid — Play across the top, then transport,
+     then the two toggles, then the scrubber. Every target is thumb-sized. */
+  .bar{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:12px}
+  .btn{font-size:11px; padding:11px 6px; letter-spacing:.06em; justify-content:center}
+  #play{order:-2; grid-column:span 6; font-size:13px; padding:14px;
+    background:linear-gradient(90deg,rgba(127,230,255,.22),rgba(232,71,155,.22)); border-color:rgba(127,230,255,.45)}
+  #prev,#next,#restart{order:-1; grid-column:span 2}
+  #voice{order:0; grid-column:span 4}
+  #cc{order:0; grid-column:span 2}
+  .track{order:1; grid-column:span 5; height:6px; align-self:center; min-width:0}
+  .time{order:1; grid-column:span 1; min-width:0; font-size:10.5px}
+  .dots b{flex:1 1 0; width:auto; min-width:12px}
+  .dots{gap:5px}
+  .note{font-size:12px; line-height:1.45}
+}
+@supports (height:1svh){
+  @media(max-width:760px){ .stage{height:min(68svh,580px)} }
+}
+@media(max-width:760px) and (orientation:landscape){
+  /* phone held sideways: the 16:9 frame is the right shape again */
+  .stage{aspect-ratio:16/9; height:auto}
+  .seal{display:block}
 }
 </style>
 </head>
 <body>
 <div class="player" id="player">
+  <div class="stagewrap">
   <div class="stage" id="stage">
     <div class="grid"></div>
     <div class="stars" id="stars"></div>
@@ -317,11 +420,13 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
       <div class="up url" style="--d:1.3s">tornaidioma.com</div>
     </section>
 
-    <div class="cap" id="cap"><span id="capText"></span></div>
-  </div>
+  </div><!-- /stage -->
+  <div class="cap" id="cap" aria-live="polite"><span id="capText"></span></div>
+  </div><!-- /stagewrap -->
 
   <div class="bar">
     <button class="btn on" id="voice" aria-pressed="true"><span class="dot"></span><span id="voiceLbl">Narration: Ava</span></button>
+    <button class="btn on" id="cc" aria-pressed="true" title="Show or hide the on-screen captions">CC</button>
     <button class="btn" id="play">Play</button>
     <button class="btn" id="prev" aria-label="Previous scene">‹ Prev</button>
     <button class="btn" id="next" aria-label="Next scene">Next ›</button>
@@ -330,7 +435,7 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
     <div class="time" id="time">0:00 / 0:00</div>
   </div>
   <div class="dots" id="dots"></div>
-  <div class="note" id="note">Press <b>Play</b> — Ava narrates all ten scenes. Space to play/pause, ← → to move between scenes.</div>
+  <div class="note" id="note">Press <b>Play</b> — Ava narrates all ten scenes. Space to play/pause, ← → to move between scenes, <b>C</b> for captions.</div>
 </div>
 
 <script>
@@ -348,6 +453,12 @@ h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4.1vw,48px)
 
 var VOICE = 'ava', RATE = '-4%', TAIL = 1.1;   // seconds of silence held after Ava finishes
 var MIN = [7,11,12,12,11,14,11,11,10,8];       // minimum seconds per scene (silent fallback timing)
+
+/* Measured length of each Ava segment in seconds, taken from the live route.
+   Narration runs about three minutes, so seeding the clock with these keeps the
+   time readout honest from the first frame instead of promising 1:47 and then
+   drifting. Each one is replaced by the browser's real duration on loadedmetadata. */
+var EST = [8.6,15.8,15.0,19.3,18.8,28.0,23.9,21.0,22.7,9.0];
 
 /* Narration script — written for the ear, not the eye: acronyms spaced so they
    are read letter by letter, figures spelled the way a presenter would say them. */
@@ -371,6 +482,7 @@ var orb=document.getElementById('orb');
 var fill=document.getElementById('fill'), track=document.getElementById('track');
 var timeEl=document.getElementById('time'), noteEl=document.getElementById('note');
 var playBtn=document.getElementById('play'), voiceBtn=document.getElementById('voice');
+var ccBtn=document.getElementById('cc');
 var voiceLbl=document.getElementById('voiceLbl'), dotsEl=document.getElementById('dots');
 var cap=document.getElementById('cap'), capText=document.getElementById('capText');
 var N=scenes.length;
@@ -381,6 +493,35 @@ for(var i=0;i<70;i++){var s=document.createElement('i');
   s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
   s.style.animationDelay=(Math.random()*5)+'s'; s.style.opacity=(.2+Math.random()*.6);
   sf.appendChild(s);}
+
+/* Wrap each scene's content so it can be scaled to fit. Done in script rather
+   than markup so the ten sections stay plain, editable HTML. */
+scenes.forEach(function(s){
+  var f=document.createElement('div'); f.className='fit';
+  var kids=[].slice.call(s.childNodes);
+  kids.forEach(function(n){ if(!(n.nodeType===1&&n.classList.contains('seal'))) f.appendChild(n); });
+  s.insertBefore(f,s.firstChild);
+});
+
+/* Shrink a scene until it fits the stage. A phone in portrait cannot show a
+   three-column grid at desktop scale; rather than clip it or make the viewer
+   scroll inside a slide, the whole scene is scaled down proportionally. */
+function fitScene(i){
+  var s=scenes[i]; if(!s) return;
+  var f=s.querySelector('.fit'); if(!f) return;
+  f.style.transform='none';
+  var cs=getComputedStyle(s);
+  var avail=s.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  var h=f.scrollHeight;
+  if(avail>0&&h>avail){
+    var k=Math.max(.5, avail/h);
+    f.style.transform='scale('+k.toFixed(3)+')';
+  }
+}
+function fitAll(){ scenes.forEach(function(_,k){ fitScene(k); }); }
+window.addEventListener('resize',function(){ if(idx>=0) fitScene(idx); });
+window.addEventListener('orientationchange',function(){ setTimeout(function(){ if(idx>=0) fitScene(idx); },250); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ if(idx>=0) fitScene(idx); });
 
 /* scene dots */
 for(var d=0;d<N;d++){(function(k){
@@ -487,14 +628,23 @@ function estimate(text){ return Math.max(4, text.split(/\s+/).length/2.6 + TAIL)
 function tailOut(i){ if(i===idx) plan[i]=tIn+TAIL; }
 
 /* ---------- captions ---------- */
+var capOn=true;
+try{ capOn = localStorage.getItem('torna_cap')!=='0'; }catch(e){}
 function setCaption(text){
-  if(!narrate||!text){ cap.classList.remove('on'); player.classList.remove('capon'); capText.textContent=''; return; }
+  if(!capOn||!narrate||!text){ cap.classList.remove('on'); player.classList.remove('capon'); capText.textContent='';
+    if(idx>=0) fitScene(idx); return; }
   capText.textContent=text; cap.classList.add('on'); player.classList.add('capon');
+  if(idx>=0) fitScene(idx);   // the caption changes the room a scene has
 }
 function note(html){ noteEl.innerHTML=html; }
 
 /* ---------- player ---------- */
-var plan=MIN.slice();      // planned seconds per scene; grows to fit the narration
+/* Planned seconds per scene. With Ava on, it starts from the measured segment
+   lengths and is corrected by the real audio; silent mode falls back to MIN. */
+function basePlan(){
+  return narrate ? EST.map(function(s,i){ return Math.max(MIN[i], s+TAIL); }) : MIN.slice();
+}
+var plan=basePlan();
 var idx=-1, tIn=0, playing=false, last=performance.now();
 
 function fmt(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -519,6 +669,7 @@ function show(i){
   var o=scenes[i].dataset.orb.split(',').map(Number);
   orb.style.transform='translate('+o[0]+'%,'+o[1]+'%) scale('+o[2]+')';
   orb.style.opacity=o[3];
+  fitScene(i);
   countUp(scenes[i]);
   if(narrate&&playing) speak(i); else { stopVoice(); setCaption(narrate?NARR[i]:''); }
 }
@@ -571,8 +722,16 @@ voiceBtn.onclick=function(){
   voiceBtn.classList.toggle('on',narrate);
   voiceBtn.setAttribute('aria-pressed',String(narrate));
   voiceLbl.textContent=narrate?'Narration: Ava':'Narration: off';
-  if(!narrate){ token++; stopVoice(); setCaption(''); plan=MIN.slice(); note('Silent mode — scenes advance on their own timing.'); }
+  plan=basePlan();
+  if(!narrate){ token++; stopVoice(); setCaption(''); note('Silent mode — scenes advance on their own timing.'); }
   else { note('Narrated by <b>Ava</b>.'); if(playing&&idx>=0) speak(idx); else setCaption(idx>=0?NARR[idx]:''); }
+};
+ccBtn.onclick=function(){
+  capOn=!capOn;
+  ccBtn.classList.toggle('on',capOn);
+  ccBtn.setAttribute('aria-pressed',String(capOn));
+  try{ localStorage.setItem('torna_cap',capOn?'1':'0'); }catch(e){}
+  setCaption(idx>=0?NARR[idx]:'');
 };
 document.getElementById('restart').onclick=function(){ show(0); setPlaying(true); };
 document.getElementById('prev').onclick=function(){ go(Math.max(0,idx-1)); if(!playing) setPlaying(true); };
@@ -589,13 +748,17 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='ArrowLeft'){ e.preventDefault(); document.getElementById('prev').click(); }
   else if(e.key==='r'||e.key==='R'){ document.getElementById('restart').click(); }
   else if(e.key==='m'||e.key==='M'){ voiceBtn.click(); }
+  else if(e.key==='c'||e.key==='C'){ ccBtn.click(); }
 });
 document.addEventListener('visibilitychange',function(){ if(document.hidden&&playing) setPlaying(false); });
 
 /* Poster frame: scene 1 is on screen, paused, waiting for the Play gesture that
    browsers require before any audio may start. */
+ccBtn.classList.toggle('on',capOn);
+ccBtn.setAttribute('aria-pressed',String(capOn));
 show(0);
 setCaption(NARR[0]);
+fitAll();
 requestAnimationFrame(function(now){ last=now; requestAnimationFrame(frame); });
 if(synth&&synth.getVoices().length===0) synth.onvoiceschanged=function(){};
 fetchSeg(0).catch(function(){});   // warm the first segment while the viewer reads

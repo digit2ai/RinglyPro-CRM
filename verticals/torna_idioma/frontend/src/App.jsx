@@ -127,7 +127,13 @@ function Layout({ children }) {
   return (
     <div style={S.layout}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div style={S.main}>
+      {/* On mobile the sidebar is a drawer, so the main column must reclaim the
+          260px it reserves on desktop. This used to be attempted with a CSS
+          attribute selector that could never match — React renders inline styles
+          as kebab-case, so [style*="marginLeft: 260"] matched nothing and every
+          authenticated page sat 260px off-screen. minWidth:0 lets the flex child
+          actually shrink instead of forcing the page wider than the viewport. */}
+      <div style={mob ? { ...S.main, marginLeft: 0, minWidth: 0 } : { ...S.main, minWidth: 0 }}>
         {mob && (
           <div style={S.topBar}>
             <button onClick={() => setSidebarOpen(true)} style={S.hamburger}>
@@ -219,11 +225,41 @@ const S = {
   content: { padding: 0 },
 };
 
-// Mobile override
+// Mobile overrides.
+//
+// Every page in this app styles itself with inline objects, which no stylesheet
+// can reach without !important and a selector that matches what React actually
+// renders — kebab-case, with units. These rules catch the handful of patterns
+// that break a phone: the reserved sidebar gutter, fixed multi-column grids,
+// desktop padding, and anything wide enough to force a horizontal scroll.
 const style = document.createElement('style');
 style.textContent = `
+  html, body { max-width: 100%; overflow-x: hidden; }
   @media (max-width: 768px) {
-    [style*="marginLeft: 260"] { margin-left: 0 !important; }
+    /* the sidebar gutter — JS handles this too; belt and braces for any page
+       that renders its own shifted column */
+    [style*="margin-left: 260px"] { margin-left: 0 !important; }
+
+    /* fixed multi-column grids collapse to one column */
+    [style*="grid-template-columns: repeat(3, 1fr)"],
+    [style*="grid-template-columns: repeat(4, 1fr)"],
+    [style*="grid-template-columns: repeat(2, 1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* auto-fill tracks wider than a phone would otherwise overflow */
+    [style*="minmax(200px"], [style*="minmax(220px"], [style*="minmax(240px"],
+    [style*="minmax(260px"], [style*="minmax(280px"],
+    [style*="minmax(300px"], [style*="minmax(320px"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* desktop page padding is too generous at 390px wide */
+    [style*="padding: 32px 32px 48px"] { padding: 18px 16px 40px !important; }
+    [style*="padding: 48px 32px 40px"] { padding: 26px 18px 22px !important; }
+
+    /* nothing may push the page wider than the screen */
+    img, svg, table, pre { max-width: 100% !important; }
+    table { display: block; overflow-x: auto; }
   }
 `;
 if (typeof document !== 'undefined' && !document.getElementById('ti-responsive')) {
