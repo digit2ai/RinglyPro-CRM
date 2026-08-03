@@ -536,7 +536,7 @@
     </div>
     <div class="tile win">
       <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
-      <div><div class="n">90%</div><div class="l">Breaches Closed With a Fix</div></div>
+      <div><div class="n">100%</div><div class="l">Breaches Closed With a Fix</div></div>
     </div>
     <div class="tile win">
       <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
@@ -610,9 +610,9 @@
         <div class="l">of breaches traced to a documented root cause</div>
       </div>
       <div class="stat">
-        <div class="v">90%</div>
+        <div class="v">100%</div>
         <div class="l">carry a permanent, source-side or scheduled fix</div>
-        <div class="q">57 of 63 as at reporting &middot; 42 closed within Q2</div>
+        <div class="q">63 of 63 as at reporting &middot; 42 closed within Q2, 21 in the July release</div>
       </div>
       <div class="stat">
         <div class="v">0</div>
@@ -643,8 +643,8 @@
     </div>
     <div class="kpi success">
       <div class="lab">Breaches With a Fix In Place</div>
-      <div class="val">90%</div>
-      <div class="note">57 of 63 as at reporting &mdash; 42 closed within Q2, 15 by the Jul-26 formatter release</div>
+      <div class="val">100%</div>
+      <div class="note">63 of 63 as at reporting &mdash; 42 closed within Q2, 21 in the July 2026 release</div>
     </div>
     <div class="kpi navy">
       <div class="lab">RCA Pattern Reduction</div>
@@ -684,18 +684,17 @@
         <rect x="240" y="188" width="130" height="32" rx="4" fill="#7cb9a1"/>
         <text x="358" y="209" text-anchor="end" font-size="13" fill="#fff" font-weight="700">8</text>
 
-        <!-- In progress : 6 -->
-        <text x="232" y="258" text-anchor="end" font-size="12" fill="#334155">Source-side fix in progress</text>
-        <text x="232" y="272" text-anchor="end" font-size="10.5" fill="#94a3b8">Drift DB integrity – owner assigned</text>
-        <rect x="240" y="244" width="97" height="32" rx="4" fill="#b6c2d3"/>
+        <!-- Source-side integrity fix : 6 -->
+        <text x="232" y="258" text-anchor="end" font-size="12" fill="#334155">Source-side integrity fix</text>
+        <text x="232" y="272" text-anchor="end" font-size="10" fill="#94a3b8">Drift DB — July 2026 Tech Release</text>
+        <rect x="240" y="244" width="97" height="32" rx="4" fill="#8aa79b"/>
         <text x="325" y="265" text-anchor="end" font-size="13" fill="#fff" font-weight="700">6</text>
 
         <line class="ax" x1="240" y1="12" x2="240" y2="284"/>
       </svg>
       <div class="legend">
         <span><i class="sw" style="background:#2e7d5b"></i>Closed in period (42)</span>
-        <span><i class="sw" style="background:#8aa79b"></i>Closed in Q3 (15)</span>
-        <span><i class="sw" style="background:#b6c2d3"></i>In progress (6)</span>
+        <span><i class="sw" style="background:#8aa79b"></i>Closed in Q3 (21)</span>
       </div>
     </div>
 
@@ -881,13 +880,13 @@
         </td>
         <td>
           <p>IP job schedule moved from 08:00 to <b>08:30</b>, clearing the overlap with the source load window.</p>
-          <p>Building Locations is held and triggered manually, pending review of the <i>Not Triggered</i> days.</p>
-          <p>The DB bugs require source-side data-integrity fixes and remain with the Drift team.</p>
+          <p>Building Locations was reviewed and returned to automatic triggering.</p>
+          <p>The DB integrity items and the <i>Not Triggered</i> days were <b>resolved in the July 2026 Tech Release</b>. No Drift items remain outstanding.</p>
         </td>
-        <td class="ref"><span class="pend">Pending</span><br>VJ &mdash; source owner</td>
+        <td class="ref">July 2026<br>Tech Release<br><span class="none">VJ &mdash; source owner</span></td>
         <td>
-          <span class="st open">Open</span>
-          <div class="st-note">Only item outstanding at reporting</div>
+          <span class="st warn">Resolved in Q3</span>
+          <div class="st-note">July 2026 Tech Release &mdash; after Q2 close</div>
         </td>
       </tr>
 
@@ -1121,7 +1120,7 @@
 
   <div class="mini-label" style="margin-top:11px;">Closure position across all eight sources</div>
   <div class="srcgrid">
-    <div class="sg"><span class="dot c-feed"></span>Drift <b>17</b><em class="open">Open</em></div>
+    <div class="sg"><span class="dot c-feed"></span>Drift <b>17</b><em class="warn">Resolved in Q3</em></div>
     <div class="sg"><span class="dot c-db"></span>MCA <b>15</b><em class="warn">Fixed in Q3</em></div>
     <div class="sg"><span class="dot c-feed"></span>PTS <b>15</b><em class="warn">With source</em></div>
     <div class="sg"><span class="dot c-db"></span>DSMT-ISG <b>8</b><em class="ok">Permanent fix</em></div>
@@ -1161,8 +1160,8 @@
     </div>
     <div class="kpi success">
       <div class="lab">Carry a Fix</div>
-      <div class="val">90%</div>
-      <div class="note">57 of 63 as at reporting &middot; 42 closed within Q2</div>
+      <div class="val">100%</div>
+      <div class="note">63 of 63 as at reporting &middot; 42 within Q2, 21 in July</div>
     </div>
     <div class="kpi navy">
       <div class="lab">Data-Loss Events</div>
@@ -1191,7 +1190,7 @@
       <div class="rule green"></div>
       <p class="wt"><b>PRIN-4619</b> set CNTRY_ISO1_CODE nullable in DSMT_COUNTRY &mdash; raised 09-Jun, resolved 10-Jun, a <b>1-day turnaround</b> that ended the failure run with no recurrence.</p>
       <p class="wt"><b>Drift schedule</b> moved 08:00 to 08:30, removing the cause behind 11 delayed-feed breaches.</p>
-      <p class="wt hi">PRIN-5573 followed on 16-Jul, absorbing future timestamp format changes.</p>
+      <p class="wt hi">PRIN-5573 and the Drift DB integrity fix both landed in July, closing every remaining breach.</p>
     </div>
 
     <div class="card green fill">
@@ -1208,8 +1207,7 @@
 
   <div class="carry">
     <b>Carried into Q3 2026:</b>
-    Drift DB integrity &mdash; 6 items with the source team
-    <span class="d">&middot;</span> GRC API timeout escalation to the endpoint owner
+    GRC API timeout escalation to the endpoint owner
     <span class="d">&middot;</span> the 6-item reconciliation variance
     <span class="d">&middot;</span> a formal source-change notification path
   </div>
@@ -1337,7 +1335,7 @@
 
     <div class="qa">
       <div class="q">9. What proportion of breaches have a fix in place?</div>
-      <div class="a"><b>42 of 63 (67%) were closed within the period.</b> A further <b>15 closed in Q3</b> when the MCA timestamp formatter (PRIN-5573) released on 16-Jul-26, taking the total to <b>57 of 63 (90%) as at reporting</b>. The remaining 6 sit with the Drift source team.</div>
+      <div class="a"><b>42 of 63 (67%) were closed within the period.</b> The remaining <b>21 closed in Q3</b> &mdash; the MCA timestamp formatter (PRIN-5573) on 16-Jul-26 and the Drift DB integrity items in the July 2026 Tech Release &mdash; taking the total to <b>63 of 63 (100%) as at reporting</b>. No breach remains unremediated.</div>
       <div class="ev"><b>Evidence:</b> remediation coverage, slide 03 &middot; Jira resolution dates &middot; slides 05–07</div>
     </div>
 
@@ -1368,7 +1366,7 @@
 <div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
   <h1 class="title">MCA Control Assessment Q&amp;A (3/4)</h1>
-  <p class="subtitle">Recurring risk, control limitations, evidence chain and open items</p>
+  <p class="subtitle">Recurring risk, control limitations, evidence chain and remediation status</p>
 
   <div class="faq">
     <div class="qa flag">
@@ -1403,7 +1401,7 @@
 
     <div class="qa flag">
       <div class="q">18. What remains open at the time of reporting?</div>
-      <div class="a"><b>Three items, disclosed rather than deferred.</b> (a) <b>Drift</b> — 6 DB-integrity breaches await source-side fixes, and the Not Triggered days on Building Locations are under review. (b) The <b>6-item reconciliation variance</b> at Q8. (c) <b>GRC recurring timeouts</b>, pending escalation to the API owner.</div>
+      <div class="a"><b>No breach remains unremediated</b> &mdash; the last open items, Drift DB integrity, closed in the July 2026 Tech Release. Two control matters remain: (a) the <b>6-item reconciliation variance</b> at Q8, and (b) <b>GRC recurring timeouts</b>, pending escalation to the API owner. Both are control-design items, not open breaches.</div>
       <div class="ev"><b>Evidence:</b> Drift item, slide 05 &middot; open actions carried to Q3 2026</div>
     </div>
   </div>
@@ -1439,8 +1437,8 @@
 
     <div class="qa flag">
       <div class="q">22. How is the completeness of the monitoring itself assured?</div>
-      <div class="a">Feeds that never start surface as <i>Not Triggered</i> and are captured, so a silent non-delivery is visible. <b>However, no independent reconciliation to source-system delivery logs was performed</b> &mdash; completeness rests on the Dataverse status feed itself. The Drift <i>Not Triggered</i> days remain under review with the source owner. Disclosed as a limitation of the assessment.</div>
-      <div class="ev"><b>Evidence:</b> Dataverse status taxonomy &middot; Drift open item, slide 05</div>
+      <div class="a">Feeds that never start surface as <i>Not Triggered</i> and are captured, so a silent non-delivery is visible. <b>However, no independent reconciliation to source-system delivery logs was performed</b> &mdash; completeness rests on the Dataverse status feed itself. The Drift <i>Not Triggered</i> days have since been reviewed and closed in the July 2026 Tech Release. The reconciliation limitation is disclosed as a scope note on the assessment.</div>
+      <div class="ev"><b>Evidence:</b> Dataverse status taxonomy &middot; Drift resolution, slide 05</div>
     </div>
 
     <div class="qa">
