@@ -519,14 +519,19 @@ function planeaGateHtml(nextUrl, err) {
     'label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 6px}input{width:100%;background:#e9edf3;color:#0a100e;border:0;border-radius:12px;padding:13px 14px;font-size:14px}' +
     'button{width:100%;margin-top:18px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:14px;color:#06100c;background:linear-gradient(90deg,#6fce88,#3fb0a8);cursor:pointer}' +
     '.err{background:rgba(214,75,58,.15);border:1px solid rgba(214,75,58,.5);color:#f3b6ad;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;text-align:center}' +
-    '.ft{text-align:center;color:#5c7267;font-size:11px;margin-top:18px}</style></head><body><form class="card" method="POST" action="/__dev-login">' +
+    '.ft{text-align:center;color:#5c7267;font-size:11px;margin-top:18px}' +
+    '.note{background:rgba(126,224,160,.10);border:1px solid rgba(126,224,160,.28);color:#bfe6cf;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin-bottom:16px;text-align:center}</style></head><body><form class="card" method="POST" action="/__dev-login">' +
     '<div class="mark"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 12 L12 22 L2 12 Z"/><path d="M9 14 L12 8 L15 14"/></svg></div>' +
     '<h1>Planea</h1><div class="sub">Entorno de desarrollo</div>' +
     (err ? '<div class="err">Credenciales incorrectas.</div>' : '') +
+    // Aclaración: este candado NO es la cuenta de Planea del usuario. Se pre-llena
+    // el correo del sitio para que nadie escriba su propio correo aquí (fue la
+    // confusión reportada: se ingresaba mstagg@ en vez de la clave del sitio).
+    '<div class="note">Esta es la clave del <b>sitio de desarrollo</b>, no tu cuenta de Planea. Usa el acceso que te compartimos.</div>' +
     '<input type="hidden" name="next" value="' + nx + '">' +
-    '<label>Correo</label><input name="email" type="email" autocomplete="username" placeholder="test@planea.vip" required autofocus>' +
-    '<label>Contraseña</label><input name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>' +
-    '<button type="submit">Entrar</button><div class="ft">Acceso restringido · un solo ingreso para todo el sitio</div></form></body></html>';
+    '<label>Correo</label><input name="email" type="email" autocomplete="off" value="test@planea.vip" required autofocus>' +
+    '<label>Contraseña</label><input name="password" type="password" autocomplete="off" placeholder="Clave del sitio" required>' +
+    '<button type="submit">Entrar al sitio</button><div class="ft">Acceso restringido · un solo ingreso para todo el sitio. Después inicias sesión en tu cuenta de Planea.</div></form></body></html>';
 }
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase().split(':')[0];
@@ -552,7 +557,11 @@ app.use((req, res, next) => {
     const email = String(b.email || '').trim().toLowerCase();
     const pass = String(b.password || '');
     if (email === PLANEA_DEV_USER && pass === PLANEA_DEV_PASS) {
-      res.setHeader('Set-Cookie', 'planea_dev=' + PLANEA_DEV_TOKEN + '; Path=/; Domain=planea.vip; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax');
+      // Cookie HOST-ONLY (sin Domain=): los navegadores embebidos de iOS (el visor
+      // de Apple Mail, desde donde se abre el enlace de restablecimiento) guardan
+      // las cookies host-only con más fiabilidad que las de dominio explícito, que a
+      // veces tratan como de terceros y descartan. En escritorio no cambia nada.
+      res.setHeader('Set-Cookie', 'planea_dev=' + PLANEA_DEV_TOKEN + '; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax');
       let nx = String(b.next || '/'); if (!nx.startsWith('/')) nx = '/';
       return res.redirect(302, nx);
     }
