@@ -173,43 +173,105 @@
   }
   .softbox h4{margin:0 0 8px;color:var(--blue-dark);font-size:13px;font-weight:700;letter-spacing:.04em;}
 
-  /* ---------- tables ---------- */
-  table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed;}
-  th{
-    background:#eaf0fd;color:var(--blue-dark);text-align:left;
-    font-size:11.5px;letter-spacing:.05em;font-weight:700;
-    padding:9px 11px;border:1px solid #c9d7f2;
+  /* ---------- tables: editorial, not spreadsheet ---------- */
+  /* no vertical rules, no fill, no zebra - hairline horizontal rules only */
+  .tbl-pro{
+    border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;
+    margin-top:4px;
   }
-  td{
-    padding:10px 11px;border:1px solid #dbe3ef;vertical-align:top;
-    line-height:1.45;color:#27364d;
+  .tbl-pro thead th{
+    background:transparent;border:0;border-bottom:1.5px solid #16233c;
+    color:#16233c;font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;
+    font-weight:800;text-align:left;padding:0 13px 8px;
   }
-  tbody tr:nth-child(even) td{background:#f7f9fd;}
-  tbody tr.hl td{background:#eaf1ff;}
-  td.src{font-weight:700;color:#1e293b;}
-  td b{color:#0f172a;}
-  /* denser variant for the two incident tables */
-  .tbl-detail td{font-size:11px;padding:8px 9px;line-height:1.42;}
-  .tbl-detail th{font-size:11px;padding:8px 9px;}
-  td.src small{
-    display:block;font-weight:400;font-size:9.5px;color:#94a3b8;
-    margin-top:4px;line-height:1.35;letter-spacing:0;
+  .tbl-pro tbody td{
+    background:transparent;border:0;border-bottom:1px solid #e9edf3;
+    padding:12px 13px;vertical-align:top;
+    font-size:10px;line-height:1.55;color:#41506a;
   }
-  .chip{
-    display:inline-block;padding:3px 8px;border-radius:20px;
-    font-size:9.5px;font-weight:800;letter-spacing:.03em;line-height:1.3;
-    white-space:nowrap;
-  }
-  .chip.ok{background:#e0efe8;color:#153d35;}
-  .chip.warn{background:#fbe6dc;color:#a4300c;}
-  .chip.wait{background:#eaeef4;color:#5b6577;}
-  small.st{
-    display:block;font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.35;
-  }
-  code{
+  .tbl-pro tbody tr:last-child td{border-bottom:0;}
+  .tbl-pro p{margin:0 0 6px;}
+  .tbl-pro p:last-child{margin-bottom:0;}
+  .tbl-pro p.fine{color:#8a96a8;font-size:9.5px;}
+  .tbl-pro b{color:#16233c;font-weight:700;}
+  .tbl-pro i{font-style:italic;color:#5b6880;}
+  .tbl-pro code{
     font-family:"SF Mono",Menlo,Consolas,monospace;
-    background:#eef1f6;padding:1px 4px;border-radius:3px;font-size:11px;
+    font-size:9px;background:#f4f6f9;color:#5d6b82;
+    padding:1px 4px;border-radius:2px;letter-spacing:-.01em;
   }
+
+  /* source cell - category accent bar + type hierarchy */
+  .src-cell{position:relative;padding-left:15px !important;}
+  .src-cell:before{
+    content:"";position:absolute;left:0;top:13px;bottom:13px;
+    width:3px;border-radius:2px;background:#cbd5e1;
+  }
+  .src-cell.c-db:before{background:#153d35;}
+  .src-cell.c-feed:before{background:#a4300c;}
+  .src-cell.c-net:before{background:#6d1a06;}
+  .src-name{font-size:12.5px;font-weight:800;color:#0f172a;letter-spacing:-.01em;}
+  .src-count{
+    font-size:9.5px;font-weight:700;color:#8a96a8;margin-left:4px;
+    letter-spacing:.02em;
+  }
+  .src-desc{
+    font-size:8px;letter-spacing:.08em;text-transform:uppercase;
+    color:#a8b2c1;margin-top:7px;line-height:1.65;font-weight:600;
+  }
+
+  /* root-cause blocks */
+  .cause{margin-bottom:9px;}
+  .cause:last-child{margin-bottom:0;}
+  .cause p{margin:0;}
+  .cause-tag{
+    display:inline-block;font-size:8px;font-weight:800;letter-spacing:.1em;
+    text-transform:uppercase;padding:2.5px 7px;border-radius:3px;margin-bottom:5px;
+  }
+  .cause-tag.db{background:#e5ede9;color:#153d35;}
+  .cause-tag.feed{background:#fbe8e0;color:#a4300c;}
+  .cause-tag.net{background:#f6e7e1;color:#6d1a06;}
+  .cause-tag.proc{background:#eaeef4;color:#4a5769;}
+  .sub{
+    margin-top:6px;padding-left:9px;border-left:1px solid #e3e8f0;
+    font-size:9.5px;line-height:1.5;color:#5b6880;
+  }
+  .sub b{color:#16233c;}
+
+  /* reference cell */
+  td.ref{
+    font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:9px;color:#5b6880;line-height:1.85;letter-spacing:-.01em;
+  }
+  td.ref .none{color:#a8b2c1;font-style:italic;font-family:inherit;}
+  td.ref .pend{color:#8a6a3b;font-weight:700;}
+
+  /* status - dot + label, no heavy pill */
+  .st{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:9.5px;font-weight:800;letter-spacing:.03em;
+  }
+  .st:before{content:"";width:7px;height:7px;border-radius:50%;flex:none;}
+  .st.ok{color:#14513c;}   .st.ok:before{background:#2e7d5b;}
+  .st.warn{color:#a4300c;} .st.warn:before{background:#c0400f;}
+  .st.open{color:#5b6880;} .st.open:before{background:#9aa5b8;}
+  .st-note{font-size:8.5px;color:#a8b2c1;margin-top:6px;line-height:1.45;}
+
+  /* legend beneath the table */
+  .tbl-legend{
+    margin-top:auto;padding-top:12px;border-top:1px solid #eef1f6;
+    display:flex;align-items:center;gap:20px;
+    font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:#a8b2c1;font-weight:600;
+  }
+  .tbl-legend i.k{
+    display:inline-block;width:9px;height:3px;border-radius:2px;margin-right:6px;
+    vertical-align:middle;
+  }
+  .tbl-legend i.k.c-db{background:#153d35;}
+  .tbl-legend i.k.c-feed{background:#a4300c;}
+  .tbl-legend i.k.c-net{background:#6d1a06;}
+  .tbl-legend .sep{margin-left:auto;text-transform:none;letter-spacing:.02em;font-style:italic;}
 
   /* ---------- title slide ---------- */
   .eyebrow{
@@ -727,93 +789,253 @@
 
 <!-- ============ SLIDE — INCIDENTS 1/2 ============ -->
 <section class="slide" id="s6">
-  <h1 class="title">Detailed Incidents by Data Source – Q2 2026 (1/2)</h1>
-  <p class="subtitle">DRIFT, MCA, PTS, DSMT-ISG – root cause, resolution and current status, reviewed line by line with the source owner</p>
+  <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
+  <h1 class="title">Detailed Incidents by Data Source (1/2)</h1>
+  <p class="subtitle">DRIFT, MCA, PTS, DSMT-ISG &mdash; reviewed line by line with the IP source owner</p>
 
-  <table class="tbl-detail">
-    <colgroup><col style="width:15%"><col style="width:31%"><col style="width:30%"><col style="width:13%"><col style="width:11%"></colgroup>
+  <table class="tbl-pro">
+    <colgroup><col style="width:16%"><col style="width:31%"><col style="width:29%"><col style="width:12%"><col style="width:12%"></colgroup>
     <thead>
-      <tr><th>DATA SOURCE</th><th>ROOT CAUSE ANALYSIS (RCA)</th><th>RESOLUTION / FIX</th><th>JIRA / INC</th><th>STATUS</th></tr>
+      <tr>
+        <th>Data Source</th>
+        <th>Root Cause Analysis</th>
+        <th>Resolution &amp; Fix</th>
+        <th>Reference</th>
+        <th>Status</th>
+      </tr>
     </thead>
     <tbody>
-      <tr class="hl">
-        <td class="src">Drift (17)<small>Application Times Management, Building Locations &middot; consumed by CityMAP</small></td>
-        <td><b>Feed Delayed (11):</b> Drift completes its own load by 07:00 under the agreed schedule, but data and clearing issues pushed completion to 08:00–08:30. The IP job read at 08:00, before the source load had finished, returning NULLs or a "Not Triggered" status.<br>
-            <b>DB Bug (6):</b> <code>ORA-01400: cannot insert NULL</code> into "APPLICATIONID" and <code>ORA-12899: value too large</code> for "TECHNICALRECOVERYTIME", following a source-side change to the recovery-time objective.</td>
-        <td>IP job schedule moved from 08:00 to <b>08:30</b>, clearing the overlap with the source load window. Building Locations is held and triggered manually pending review of the "Not Triggered" days. The DB bugs need source-side data-integrity fixes and remain with the Drift team.</td>
-        <td>Pending (VJ)</td>
-        <td><span class="chip wait">Open</span><small class="st">Only item still pending</small></td>
-      </tr>
       <tr>
-        <td class="src">MCA (15)<small>GAU taxonomy and delegate attributes</small></td>
-        <td><b>App Bug (15):</b> Two distinct source-side changes, neither communicated in advance.<br>
-            &middot; <b>Timestamp format</b> — the source began sending timestamps in a different layout to the one previously supplied, which the parser could not read. Failures clustered in May and June.<br>
-            &middot; <b>Field length</b> — "GAU_OWNER_DELEGATES" arrived at <b>4,001 characters</b> against a 4,000-character column definition.</td>
-        <td><b>PRIN-5573</b> introduced a common timestamp layer that resolves multiple formats dynamically, so a future source-side format change no longer breaks the parse. The oversized attribute is trimmed to 4,000 characters on load under an INC; the field is not consumed downstream, so no schema change was warranted.</td>
-        <td>PRIN-5573<br>INC (GAU_OWNER_ DELEGATES)</td>
-        <td><span class="chip ok">Permanent fix</span><small class="st">Handles future format changes</small></td>
+        <td class="src-cell c-feed">
+          <div class="src-name">Drift <span class="src-count">17</span></div>
+          <div class="src-desc">Application Times Management<br>Building Locations<br>Consumed by CityMAP</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag feed">Feed Delayed &middot; 11</span>
+            <p>Drift completes its own load by <b>07:00</b> under the agreed schedule, but data and clearing issues pushed completion to <b>08:00&ndash;08:30</b>. The IP job read at 08:00, before the source load had finished, returning NULLs or a <i>Not Triggered</i> status.</p>
+          </div>
+          <div class="cause">
+            <span class="cause-tag db">DB Bug &middot; 6</span>
+            <p><code>ORA-01400</code> cannot insert NULL into APPLICATIONID, and <code>ORA-12899</code> value too large for TECHNICALRECOVERYTIME, following a source-side change to the recovery-time objective.</p>
+          </div>
+        </td>
+        <td>
+          <p>IP job schedule moved from 08:00 to <b>08:30</b>, clearing the overlap with the source load window.</p>
+          <p>Building Locations is held and triggered manually pending review of the <i>Not Triggered</i> days.</p>
+          <p>DB bugs require source-side data-integrity fixes and remain with the Drift team.</p>
+        </td>
+        <td class="ref"><span class="pend">Pending</span><br>VJ &mdash; source owner</td>
+        <td>
+          <span class="st open">Open</span>
+          <div class="st-note">Only item outstanding at reporting</div>
+        </td>
       </tr>
+
       <tr>
-        <td class="src">PTS (15)<small>PTS Smart information feed</small></td>
-        <td><b>Feed Quality (13):</b> Control-file count did not match the feed count — for example a feed of <b>7,354</b> records against a control file reporting <b>7,356</b>. A single record spanning multiple lines is counted once by IP but once per line by the source's control-file generator.<br>
-            <b>DB Bug (2):</b> <code>ORA-12899</code> — "INVESTMENT_GROUP" arrived at <b>2,741 characters</b> against a 2,500-character limit, on Jun 15 and 16.</td>
-        <td>INC raised with the PTS source team to correct control-file record counting. <b>No IP-side change applies</b> — the defect is in how the source generates the control file. A second INC covers trimming the oversized attribute on load.</td>
-        <td>INC0021438147<br>INC0023796809</td>
-        <td><span class="chip warn">With source</span><small class="st">Source-side correction</small></td>
+        <td class="src-cell c-db">
+          <div class="src-name">MCA <span class="src-count">15</span></div>
+          <div class="src-desc">GAU taxonomy<br>Delegate attributes</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag db">App Bug &middot; 15</span>
+            <p>Two distinct source-side changes, <b>neither communicated in advance</b>.</p>
+          </div>
+          <div class="sub">
+            <b>Timestamp format</b> &mdash; the source began sending a layout differing from the one previously supplied, which the parser could not read. Failures clustered in May and June.
+          </div>
+          <div class="sub">
+            <b>Field length</b> &mdash; GAU_OWNER_DELEGATES arrived at <b>4,001 characters</b> against a 4,000-character column.
+          </div>
+        </td>
+        <td>
+          <p><b>PRIN-5573</b> introduced a common timestamp layer resolving multiple formats dynamically, so a <i>future</i> source format change no longer breaks the parse.</p>
+          <p>The oversized attribute is trimmed to 4,000 characters on load under an INC. The field is not consumed downstream, so no schema change was warranted.</p>
+        </td>
+        <td class="ref">PRIN-5573<br>INC &mdash; GAU_OWNER_DELEGATES</td>
+        <td>
+          <span class="st ok">Permanent fix</span>
+          <div class="st-note">Absorbs future format changes</div>
+        </td>
       </tr>
+
       <tr>
-        <td class="src">DSMT-ISG (8)<small>COUNTRY REGION attribute</small></td>
-        <td><b>App Bug (8):</b> The source changed an attribute IP had defined as NOT NULL to nullable and did not notify the team. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</td>
-        <td>INC raised to the DSMT team, who confirmed the field is <b>no longer mandatory going forward</b>. <b>PRIN-4619</b> changed the IP code to accept the nullable attribute and was released that weekend, ending the failure run.</td>
-        <td>PRIN-4619<br>INC0023197471</td>
-        <td><span class="chip ok">Permanent fix</span><small class="st">No recurrence since</small></td>
+        <td class="src-cell c-feed">
+          <div class="src-name">PTS <span class="src-count">15</span></div>
+          <div class="src-desc">PTS Smart information feed</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag feed">Feed Quality &middot; 13</span>
+            <p>Control-file count did not match the feed count &mdash; a feed of <b>7,354</b> records against a control file reporting <b>7,356</b>. A single record spanning multiple lines is counted once by IP, but once per line by the source's control-file generator.</p>
+          </div>
+          <div class="cause">
+            <span class="cause-tag db">DB Bug &middot; 2</span>
+            <p><code>ORA-12899</code> &mdash; INVESTMENT_GROUP arrived at <b>2,741 characters</b> against a 2,500-character limit, on Jun 15 and 16.</p>
+          </div>
+        </td>
+        <td>
+          <p>INC raised with the PTS source team to correct control-file record counting.</p>
+          <p><b>No IP-side change applies</b> &mdash; the defect lies in how the source generates the control file.</p>
+          <p>A second INC covers trimming the oversized attribute on load.</p>
+        </td>
+        <td class="ref">INC0021438147<br>INC0023796809</td>
+        <td>
+          <span class="st warn">With source</span>
+          <div class="st-note">Awaiting source-side correction</div>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="src-cell c-db">
+          <div class="src-name">DSMT-ISG <span class="src-count">8</span></div>
+          <div class="src-desc">COUNTRY REGION attribute</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag db">App Bug &middot; 8</span>
+            <p>The source changed an attribute IP had defined as NOT NULL to nullable and <b>did not notify the team</b>. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</p>
+          </div>
+        </td>
+        <td>
+          <p>INC raised to the DSMT team, who confirmed the field is <b>no longer mandatory going forward</b>.</p>
+          <p><b>PRIN-4619</b> changed the IP code to accept the nullable attribute and was released that weekend, ending the failure run.</p>
+        </td>
+        <td class="ref">PRIN-4619<br>INC0023197471</td>
+        <td>
+          <span class="st ok">Permanent fix</span>
+          <div class="st-note">No recurrence since release</div>
+        </td>
       </tr>
     </tbody>
   </table>
+
+  <div class="tbl-legend">
+    <span><i class="k c-db"></i>App Bug / DB</span>
+    <span><i class="k c-feed"></i>Feed Quality / Delay</span>
+    <span><i class="k c-net"></i>External Network</span>
+    <span class="sep">Counts are breach occurrences within the quarter</span>
+  </div>
   <div class="slide-no">05</div>
 </section>
 
 <!-- ============ SLIDE — INCIDENTS 2/2 ============ -->
 <section class="slide" id="s7">
-  <h1 class="title">Detailed Incidents by Data Source – Q2 2026 (2/2)</h1>
-  <p class="subtitle">GRC, CRS, Policy, GDW_HRDW – low-volume sources, all resolved within the quarter</p>
+  <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
+  <h1 class="title">Detailed Incidents by Data Source (2/2)</h1>
+  <p class="subtitle">GRC, CRS, Policy, GDW_HRDW &mdash; low-volume sources, all closed within the quarter</p>
 
-  <table class="tbl-detail">
-    <colgroup><col style="width:15%"><col style="width:31%"><col style="width:30%"><col style="width:13%"><col style="width:11%"></colgroup>
+  <table class="tbl-pro">
+    <colgroup><col style="width:16%"><col style="width:31%"><col style="width:29%"><col style="width:12%"><col style="width:12%"></colgroup>
     <thead>
-      <tr><th>DATA SOURCE</th><th>ROOT CAUSE ANALYSIS (RCA)</th><th>RESOLUTION / FIX</th><th>JIRA / INC</th><th>STATUS</th></tr>
+      <tr>
+        <th>Data Source</th>
+        <th>Root Cause Analysis</th>
+        <th>Resolution &amp; Fix</th>
+        <th>Reference</th>
+        <th>Status</th>
+      </tr>
     </thead>
     <tbody>
       <tr>
-        <td class="src">GRC (4)<small>API-sourced risk control data</small></td>
-        <td><b>API Timeout (4):</b> The source exposes an API that is contracted to respond within <b>60 seconds</b>. Under load it exceeded that window, producing a read timeout on the pull.</td>
-        <td>The team reviews the error and retriggers the load manually — <b>the retry is not automated</b>. Each load then completed successfully the same day, but after the consumer cutoff, which is why these appear as "missed cutoff / load completed" rather than failures. Recorded resolution times reflect when the retrigger was actioned, not effort spent.</td>
-        <td>Manual retrigger<br>no INC raised</td>
-        <td><span class="chip warn">Recurring</span><small class="st">External dependency</small></td>
+        <td class="src-cell c-net">
+          <div class="src-name">GRC <span class="src-count">4</span></div>
+          <div class="src-desc">API-sourced risk control data</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag net">API Timeout &middot; 4</span>
+            <p>The source exposes an API contracted to respond within <b>60 seconds</b>. Under load it exceeded that window, producing a read timeout on the pull.</p>
+          </div>
+        </td>
+        <td>
+          <p>The team reviews the error and retriggers the load manually &mdash; <b>the retry is not automated</b>.</p>
+          <p>Each load then completed successfully the same day but after the consumer cutoff, which is why these present as <i>missed cutoff / load completed</i> rather than failures.</p>
+          <p class="fine">Recorded resolution times reflect when the retrigger was actioned, not effort expended.</p>
+        </td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+        <td>
+          <span class="st warn">Recurring</span>
+          <div class="st-note">External dependency &mdash; escalation required</div>
+        </td>
       </tr>
+
       <tr>
-        <td class="src">CRS (2)<small>Citi square footage and billing locations &middot; consumed by CityMAP</small></td>
-        <td><b>Internal Process Bug (2):</b> The weekday pull retrieved the file but did not hold read permission on it (<code>java.nio.file.AccessDeniedException</code>). This is a defect in the IP pull process, <b>not a source-side fault</b>.</td>
-        <td>Job rerun manually the following day and completed successfully. <b>No INC was raised to the source team</b>, as the fault sat with the pull process. CRS content changes only when a branch or office opens or closes, so a one-day delay carried no material impact on CityMAP downstream.</td>
-        <td>Manual rerun<br>no INC raised</td>
-        <td><span class="chip ok">Closed</span><small class="st">Did not recur after</small></td>
+        <td class="src-cell c-db">
+          <div class="src-name">CRS <span class="src-count">2</span></div>
+          <div class="src-desc">Citi square footage<br>Billing locations<br>Consumed by CityMAP</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag proc">Internal Process &middot; 2</span>
+            <p>The weekday pull retrieved the file but did not hold read permission on it &mdash; <code>java.nio.file.AccessDeniedException</code>. A defect in the IP pull process, <b>not a source-side fault</b>.</p>
+          </div>
+        </td>
+        <td>
+          <p>Job rerun manually the following day and completed successfully.</p>
+          <p><b>No INC was raised to the source team</b>, as the fault sat with the pull process.</p>
+          <p class="fine">CRS content changes only when a branch or office opens or closes, so a one-day delay carried no material impact on CityMAP downstream.</p>
+        </td>
+        <td class="ref">Manual rerun<br><span class="none">no INC raised</span></td>
+        <td>
+          <span class="st ok">Closed</span>
+          <div class="st-note">Did not recur after Q1 of the quarter</div>
+        </td>
       </tr>
-      <tr class="hl">
-        <td class="src">Policy (1)<small>policy-inventory-metadata-service</small></td>
-        <td><b>API Timeout (1):</b> A read timeout occurred posting to the policy inventory metadata service; the source could not respond inside the window. Isolated to a single run at the start of the quarter.</td>
-        <td>Retriggered manually and completed <b>the same day</b>, later than the cutoff. No INC was created, as the source responded normally on every subsequent run.</td>
-        <td>Manual retrigger<br>no INC raised</td>
-        <td><span class="chip ok">Closed</span><small class="st">Single occurrence</small></td>
-      </tr>
+
       <tr>
-        <td class="src">GDW_HRDW (1)<small>HR data warehouse feed</small></td>
-        <td><b>Feed Quality (1):</b> Record-count validation failed — the feed reported <b>2,742,409</b> records against a control file count of <b>2,742,247</b>. A source-side data quality issue.</td>
-        <td>These jobs run at <b>22:00 EST</b>. The next scheduled run completed successfully before the team began investigating, so no action was taken and <b>no INC or Jira was raised</b>. First and only occurrence in the quarter.</td>
-        <td>None<br>self-resolved</td>
-        <td><span class="chip ok">Closed</span><small class="st">Self-resolved next run</small></td>
+        <td class="src-cell c-net">
+          <div class="src-name">Policy <span class="src-count">1</span></div>
+          <div class="src-desc">policy-inventory-<br>metadata-service</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag net">API Timeout &middot; 1</span>
+            <p>A read timeout occurred posting to the policy inventory metadata service; the source could not respond inside the window. Isolated to a single run at the start of the quarter.</p>
+          </div>
+        </td>
+        <td>
+          <p>Retriggered manually and completed <b>the same day</b>, later than the cutoff.</p>
+          <p>No INC was created, as the source responded normally on every subsequent run.</p>
+        </td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+        <td>
+          <span class="st ok">Closed</span>
+          <div class="st-note">Single occurrence</div>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="src-cell c-feed">
+          <div class="src-name">GDW_HRDW <span class="src-count">1</span></div>
+          <div class="src-desc">HR data warehouse feed</div>
+        </td>
+        <td>
+          <div class="cause">
+            <span class="cause-tag feed">Feed Quality &middot; 1</span>
+            <p>Record-count validation failed &mdash; the feed reported <b>2,742,409</b> records against a control file count of <b>2,742,247</b>. A source-side data quality issue.</p>
+          </div>
+        </td>
+        <td>
+          <p>These jobs run at <b>22:00 EST</b>. The next scheduled run completed successfully before the team began investigating, so no action was taken and <b>no INC or Jira was raised</b>.</p>
+          <p class="fine">First and only occurrence in the quarter.</p>
+        </td>
+        <td class="ref"><span class="none">none &mdash; self-resolved</span></td>
+        <td>
+          <span class="st ok">Closed</span>
+          <div class="st-note">Self-resolved on next run</div>
+        </td>
       </tr>
     </tbody>
   </table>
+
+  <div class="tbl-legend">
+    <span><i class="k c-db"></i>App Bug / DB</span>
+    <span><i class="k c-feed"></i>Feed Quality / Delay</span>
+    <span><i class="k c-net"></i>External Network</span>
+    <span class="sep">Counts are breach occurrences within the quarter</span>
+  </div>
   <div class="slide-no">06</div>
 </section>
 
