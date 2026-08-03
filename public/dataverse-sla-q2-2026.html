@@ -1207,7 +1207,7 @@
 <section class="slide" id="s8">
 <div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
-  <h1 class="title">MCA Control Assessment Q&amp;A (1/3)</h1>
+  <h1 class="title">MCA Control Assessment Q&amp;A (1/4)</h1>
   <p class="subtitle">Control scope, population and operation – every answer cites the artifact supporting it</p>
 
   <div class="faq">
@@ -1255,7 +1255,7 @@
 <section class="slide" id="s9">
 <div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
-  <h1 class="title">MCA Control Assessment Q&amp;A (2/3)</h1>
+  <h1 class="title">MCA Control Assessment Q&amp;A (2/4)</h1>
   <p class="subtitle">Root cause discipline, remediation quality and data integrity</p>
 
   <div class="faq">
@@ -1303,7 +1303,7 @@
 <section class="slide" id="s10">
 <div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
-  <h1 class="title">MCA Control Assessment Q&amp;A (3/3)</h1>
+  <h1 class="title">MCA Control Assessment Q&amp;A (3/4)</h1>
   <p class="subtitle">Recurring risk, control limitations, evidence chain and open items</p>
 
   <div class="faq">
@@ -1344,6 +1344,66 @@
     </div>
   </div>
   <div class="slide-no">11</div>
+</div>
+</section>
+
+<!-- ============ SLIDE — MCA FAQ 4/4 ============ -->
+<section class="slide" id="s11">
+<div class="slide-inner">
+  <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
+  <h1 class="title">MCA Control Assessment Q&amp;A (4/4)</h1>
+  <p class="subtitle">Control design, segregation, change control, residual risk and multi-quarter trend</p>
+
+  <div class="faq">
+    <div class="qa">
+      <div class="q">19. Is there segregation between operating, reviewing and attesting the control?</div>
+      <div class="a">Yes, across three distinct roles. <b>Operation:</b> the IP Data Ingestion Team monitors daily, L2 Support raises the incident, L3 investigates and resolves. <b>Review:</b> the Control Owner reviews all breach reports quarterly and assembles the evidence. <b>Attestation:</b> the MCA Tester validates independently and records sign-off. No role validates its own work.</div>
+      <div class="ev"><b>Evidence:</b> SOP three-track workflow, slide 08 &middot; ServiceNow assignment group</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">20. Does the escalation path carry a defined response SLA?</div>
+      <div class="a">The <i>route</i> is defined and evidenced &mdash; automatic alert to L2, ServiceNow incident to L3, investigate, resolve, re-trigger. <b>A response-time SLA for each step is not evidenced in the reviewed material.</b> Elapsed time is inferable only from ticket timestamps, such as PRIN-4619's one-day turnaround. Disclosed as a design gap rather than asserted.</div>
+      <div class="ev"><b>Evidence:</b> SOP daily track, slide 08 &middot; Jira and INC timestamps</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">21. Were downstream consumers materially impacted?</div>
+      <div class="a">No material impact identified. <b>CityMAP</b> consumes CRS and Drift Application Times Management. The source owner confirmed CRS content changes only when a branch or office opens or closes, so the one-day delay carried no material effect. Items dispositioned <i>MissedCutoff &ndash; LoadCompleted</i> delivered complete data, late.</div>
+      <div class="ev"><b>Evidence:</b> source-owner review &middot; per-item dispositions, slides 05&ndash;06</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">22. How is the completeness of the monitoring itself assured?</div>
+      <div class="a">Feeds that never start surface as <i>Not Triggered</i> and are captured, so a silent non-delivery is visible. <b>However, no independent reconciliation to source-system delivery logs was performed</b> &mdash; completeness rests on the Dataverse status feed itself. The Drift <i>Not Triggered</i> days remain under review with the source owner. Disclosed as a limitation of the assessment.</div>
+      <div class="ev"><b>Evidence:</b> Dataverse status taxonomy &middot; Drift open item, slide 05</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">23. Were the remediating code changes released under change control?</div>
+      <div class="a">Yes. Both ran through Jira with documented acceptance criteria, a named assignee and reporter, and a Done resolution, under Parent Capability <b>COOPORT-193 &mdash; Level 3 production support</b>. <b>PRIN-4619</b> (Task, 2 points, Q2 epic) and <b>PRIN-5573</b> (Story, Q3 epic), both component PRIN_IP, team Bulls.</div>
+      <div class="ev"><b>Evidence:</b> PRIN-4619 &middot; PRIN-5573 &middot; COOPORT-193 / COOPORT-99</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">24. What evidence shows the fixes worked, and what residual risk remains?</div>
+      <div class="a"><b>Effectiveness:</b> DSMT-ISG has had no recurrence since PRIN-4619 released on 10-Jun; the Drift reschedule removed the pre-load read window behind 11 breaches; PRIN-5573 carries regression testing across all MCA feeds in its acceptance criteria. <b>Residual risk</b> concentrates in three places &mdash; source-side changes made without notice, external API response times, and the dependency on manual remediation.</div>
+      <div class="ev"><b>Evidence:</b> recurrence data, slides 05&ndash;06 &middot; PRIN-5573 acceptance criteria</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">25. Are manual re-runs authorised and logged?</div>
+      <div class="a">Each re-run is traceable to its ServiceNow record or, where none was raised, to the per-item reason recorded on slides 05&ndash;06. <b>The reviewed material does not evidence a separate approval step or a re-run log distinct from the incident record.</b> Given remediation is manual, this is disclosed as a control-design observation.</div>
+      <div class="ev"><b>Evidence:</b> INC records &middot; per-item resolutions, slides 05&ndash;06</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">26. Is the multi-quarter trend improving?</div>
+      <div class="a">Pattern count ran <b>3 &rarr; 5 &rarr; 3</b> across Q4 2025, Q1 and Q2 2026. The Q1 rise reflects <i>finer detection, not more failure types</i>: Q4 reported an aggregate rate with no per-source breakdown, while Q1 introduced per-source, per-date tracking. Breach rate moved <b>0.72% &rarr; 0.38% &rarr; 0.66%</b>, remaining below the Q4 2025 baseline.</div>
+      <div class="ev"><b>Evidence:</b> Q4 2025 and Q1 2026 comparative analysis &middot; Q2 export</div>
+    </div>
+  </div>
+  <div class="slide-no">12</div>
 </div>
 </section>
 
