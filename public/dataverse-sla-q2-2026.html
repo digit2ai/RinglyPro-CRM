@@ -190,8 +190,8 @@
   }
   .tbl-pro tbody td{
     background:transparent;border:0;border-bottom:1px solid #e9edf3;
-    padding:12px 12px;vertical-align:top;
-    font-size:10.5px;line-height:1.5;color:#41506a;
+    padding:10px 12px;vertical-align:top;
+    font-size:10.5px;line-height:1.45;color:#41506a;
   }
   .tbl-pro tbody tr:last-child td{border-bottom:0;}
   .tbl-pro p{margin:0 0 5px;}
@@ -225,7 +225,7 @@
   }
 
   /* root-cause blocks */
-  .cause{margin-bottom:7px;}
+  .cause{margin-bottom:6px;}
   .cause:last-child{margin-bottom:0;}
   .cause p{margin:0;}
   .cause-tag{
@@ -263,7 +263,7 @@
 
   /* legend beneath the table */
   .tbl-legend{
-    margin-top:auto;padding-top:9px;border-top:1px solid #eef1f6;
+    margin-top:auto;padding-top:7px;border-top:1px solid #eef1f6;
     display:flex;align-items:center;gap:20px;
     font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
     color:#a8b2c1;font-weight:600;
@@ -619,7 +619,7 @@
     <div class="kpi success">
       <div class="lab">Breaches With a Fix In Place</div>
       <div class="val">90%</div>
-      <div class="note">57 of 63 closed by permanent code, schedule or source-side fix</div>
+      <div class="note">57 of 63 as at reporting &mdash; 42 closed within Q2, 15 by the Jul-26 formatter release</div>
     </div>
     <div class="kpi navy">
       <div class="lab">RCA Pattern Reduction</div>
@@ -634,10 +634,12 @@
       <svg class="chart" viewBox="0 0 640 290" preserveAspectRatio="xMidYMid meet" role="img"
            aria-label="Horizontal bar chart showing how Q2 2026 breaches were remediated by fix type">
         <!-- Permanent code fix : 23 -->
-        <text x="232" y="34" text-anchor="end" font-size="12" fill="#334155">Permanent code fix deployed</text>
-        <text x="232" y="48" text-anchor="end" font-size="10.5" fill="#94a3b8">PRIN-4619 · PRIN-5573</text>
-        <rect x="240" y="20" width="373" height="32" rx="4" fill="#153d35"/>
-        <text x="601" y="41" text-anchor="end" font-size="13" fill="#fff" font-weight="700">23</text>
+        <text x="232" y="34" text-anchor="end" font-size="12" fill="#334155">Permanent code fix</text>
+        <text x="232" y="48" text-anchor="end" font-size="10" fill="#94a3b8">PRIN-4619 in period · PRIN-5573 Jul-26</text>
+        <rect x="240" y="20" width="130" height="32" rx="4" fill="#153d35"/>
+        <text x="358" y="41" text-anchor="end" font-size="13" fill="#fff" font-weight="700">8</text>
+        <rect x="373" y="20" width="242" height="32" rx="4" fill="#8aa79b"/>
+        <text x="603" y="41" text-anchor="end" font-size="13" fill="#fff" font-weight="700">15</text>
 
         <!-- Source-team data fix : 15 -->
         <text x="232" y="90" text-anchor="end" font-size="12" fill="#334155">Source-team data fix (INC)</text>
@@ -666,7 +668,8 @@
         <line class="ax" x1="240" y1="12" x2="240" y2="284"/>
       </svg>
       <div class="legend">
-        <span><i class="sw" style="background:#2e7d5b"></i>Closed with a fix (57)</span>
+        <span><i class="sw" style="background:#2e7d5b"></i>Closed in period (42)</span>
+        <span><i class="sw" style="background:#8aa79b"></i>Closed in Q3 (15)</span>
         <span><i class="sw" style="background:#b6c2d3"></i>In progress (6)</span>
       </div>
     </div>
@@ -677,7 +680,7 @@
           <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
           <div>
             <div class="card-title green">Permanent Fix Released – PRIN-4619</div>
-            <div style="font-size:12px;color:#475569;margin-top:3px;line-height:1.45;">DSMT-ISG schema change now handled in code. NULL violations stopped on deployment and have not recurred.</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;line-height:1.45;">CNTRY_ISO1_CODE set nullable in DSMT_COUNTRY. Raised 09-Jun, resolved 10-Jun — <b>1-day turnaround</b>, in period, no recurrence.</div>
           </div>
         </div>
       </div>
@@ -695,7 +698,7 @@
           <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a5 5 0 0 0 6.5 6.5L10 21a2.8 2.8 0 0 1-4-4L14.5 3.5z"/></svg></div>
           <div>
             <div class="card-title green">Parser Hardening – PRIN-5573</div>
-            <div style="font-size:12px;color:#475569;margin-top:3px;line-height:1.45;">Flexible timestamp parser raised for MCA, plus an INC to trim the unused oversized attribute at source.</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;line-height:1.45;">Flexible timestamp formatter for MCA feeds, regression-tested across all feeds. Released <b>16-Jul-26</b> under the Q3 epic — after the Q2 period closed.</div>
           </div>
         </div>
       </div>
@@ -870,13 +873,14 @@
           </div>
         </td>
         <td>
-          <p><b>PRIN-5573</b> added a common timestamp layer resolving multiple formats, so a <i>future</i> format change no longer breaks the parse.</p>
-          <p>Oversized attribute trimmed to 4,000 chars on load under an INC; the field is not consumed downstream, so no schema change was warranted.</p>
+          <p><b>PRIN-5573</b> implements a flexible timestamp formatter &mdash; values with or without fractional seconds, varying fractional lengths, and single or double-space variants; regression-tested across all MCA feeds with no change to existing parsing.</p>
+          <p>Raised <b>06-Jul-26</b>, resolved <b>16-Jul-26</b> &mdash; 1w 1d in progress.</p>
+          <p class="fine">Oversized attribute trimmed to 4,000 chars on load under an INC; the field is not consumed downstream, so no schema change was needed.</p>
         </td>
-        <td class="ref">PRIN-5573<br>INC &mdash; GAU_OWNER_DELEGATES</td>
+        <td class="ref">PRIN-5573 <span class="none">Story</span><br>INC &mdash; GAU_OWNER_DELEGATES<br><span class="none">Q3 2026 epic</span></td>
         <td>
-          <span class="st ok">Permanent fix</span>
-          <div class="st-note">Absorbs future format changes</div>
+          <span class="st warn">Fixed in Q3</span>
+          <div class="st-note">Formatter released 16-Jul-26 &mdash; after Q2 close</div>
         </td>
       </tr>
 
@@ -915,17 +919,18 @@
         <td>
           <div class="cause">
             <span class="cause-tag db">App Bug &middot; 8</span>
-            <p>The source changed an attribute IP defined as NOT NULL to nullable <b>without notice</b>. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</p>
+            <p>The source changed <code>CNTRY_ISO1_CODE</code> in DSMT_COUNTRY &mdash; defined by IP as NOT NULL &mdash; to nullable <b>without notice</b>. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</p>
           </div>
         </td>
         <td>
           <p>INC raised; DSMT confirmed the field is <b>no longer mandatory going forward</b>.</p>
-          <p><b>PRIN-4619</b> accepted the nullable attribute and was released that weekend, ending the failure run.</p>
+          <p><b>PRIN-4619</b> updated CNTRY_ISO1_CODE from not-nullable to nullable so records carrying NULLs insert cleanly.</p>
+          <p>Raised <b>09-Jun-26</b>, resolved <b>10-Jun-26</b> &mdash; <b>1-day turnaround</b>, 2 story points.</p>
         </td>
-        <td class="ref">PRIN-4619<br>INC0023197471</td>
+        <td class="ref">PRIN-4619 <span class="none">Task</span><br>INC0023197471<br><span class="none">Q2 2026 epic</span></td>
         <td>
           <span class="st ok">Permanent fix</span>
-          <div class="st-note">No recurrence since release</div>
+          <div class="st-note">In period &middot; resolved in 1 day, no recurrence</div>
         </td>
       </tr>
     </tbody>
@@ -1182,14 +1187,14 @@
 
     <div class="qa">
       <div class="q">9. What proportion of breaches have a fix in place?</div>
-      <div class="a"><b>57 of 63 categorized items (90%)</b> are closed by a permanent code change, a source-side correction, a schedule change, or confirmed non-recurrence. The remaining 6 sit with the Drift source team.</div>
-      <div class="ev"><b>Evidence:</b> remediation coverage, slide 03 &middot; per-item status, slides 05–06</div>
+      <div class="a"><b>42 of 63 (67%) were closed within the period.</b> A further <b>15 closed in Q3</b> when the MCA timestamp formatter (PRIN-5573) released on 16-Jul-26, taking the total to <b>57 of 63 (90%) as at reporting</b>. The remaining 6 sit with the Drift source team.</div>
+      <div class="ev"><b>Evidence:</b> remediation coverage, slide 03 &middot; Jira resolution dates &middot; slides 05–06</div>
     </div>
 
     <div class="qa">
       <div class="q">10. Which fixes are permanent, and which are tactical?</div>
-      <div class="a"><b>Permanent (code):</b> PRIN-4619 handles the DSMT-ISG nullable attribute; PRIN-5573 adds a multi-format timestamp layer so a <i>future</i> source format change no longer breaks the parse. <b>Permanent (process):</b> the Drift IP job moved 08:00 to 08:30. <b>Tactical:</b> manual retriggers on GRC and Policy timeouts.</div>
-      <div class="ev"><b>Evidence:</b> PRIN-4619 &middot; PRIN-5573 &middot; schedule change record</div>
+      <div class="a"><b>Permanent, in period:</b> PRIN-4619 set CNTRY_ISO1_CODE nullable in DSMT_COUNTRY — raised 09-Jun, resolved 10-Jun. <b>Permanent, Q3:</b> PRIN-5573 added the flexible timestamp formatter, released 16-Jul-26 under the Q3 epic. <b>Process:</b> the Drift IP job moved 08:00 to 08:30. <b>Tactical:</b> manual retriggers on GRC and Policy.</div>
+      <div class="ev"><b>Evidence:</b> PRIN-4619 (Q2 epic) &middot; PRIN-5573 (Q3 epic) &middot; schedule change record</div>
     </div>
 
     <div class="qa flag">
