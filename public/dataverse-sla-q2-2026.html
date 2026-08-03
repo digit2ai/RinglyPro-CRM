@@ -37,19 +37,23 @@
     padding:28px 20px 90px;
   }
   .slide{
-    width:1280px;
-    max-width:100%;
+    width:min(1280px,100%);
     aspect-ratio:16/9;
     background:var(--card);
     border:1px solid var(--line);
     border-radius:10px;
     box-shadow:0 10px 34px rgba(13,27,52,.10);
-    padding:38px 44px;
     position:relative;
     overflow:hidden;
-    display:flex;
-    flex-direction:column;
     scroll-margin-top:20px;
+  }
+  /* authored at a fixed 1280x720 and scaled to fit - text can never overflow */
+  .slide-inner{
+    position:absolute;top:0;left:0;
+    width:1280px;height:720px;
+    padding:38px 44px;
+    display:flex;flex-direction:column;
+    transform-origin:top left;
   }
   .slide.dark{
     background:var(--navy);
@@ -186,18 +190,18 @@
   }
   .tbl-pro tbody td{
     background:transparent;border:0;border-bottom:1px solid #e9edf3;
-    padding:9px 12px;vertical-align:top;
-    font-size:9.5px;line-height:1.45;color:#41506a;
+    padding:12px 12px;vertical-align:top;
+    font-size:10.5px;line-height:1.5;color:#41506a;
   }
   .tbl-pro tbody tr:last-child td{border-bottom:0;}
   .tbl-pro p{margin:0 0 5px;}
   .tbl-pro p:last-child{margin-bottom:0;}
-  .tbl-pro p.fine{color:#8a96a8;font-size:9.5px;}
+  .tbl-pro p.fine{color:#8a96a8;font-size:10px;}
   .tbl-pro b{color:#16233c;font-weight:700;}
   .tbl-pro i{font-style:italic;color:#5b6880;}
   .tbl-pro code{
     font-family:"SF Mono",Menlo,Consolas,monospace;
-    font-size:9px;background:#f4f6f9;color:#5d6b82;
+    font-size:9.5px;background:#f4f6f9;color:#5d6b82;
     padding:1px 4px;border-radius:2px;letter-spacing:-.01em;
   }
 
@@ -216,7 +220,7 @@
     letter-spacing:.02em;
   }
   .src-desc{
-    font-size:7.5px;letter-spacing:.07em;text-transform:uppercase;
+    font-size:8px;letter-spacing:.07em;text-transform:uppercase;
     color:#a8b2c1;margin-top:6px;line-height:1.55;font-weight:600;
   }
 
@@ -233,15 +237,15 @@
   .cause-tag.net{background:#f6e7e1;color:#6d1a06;}
   .cause-tag.proc{background:#eaeef4;color:#4a5769;}
   .sub{
-    margin-top:6px;padding-left:9px;border-left:1px solid #e3e8f0;
-    font-size:9.5px;line-height:1.5;color:#5b6880;
+    margin-top:7px;padding-left:10px;border-left:1px solid #e3e8f0;
+    font-size:10px;line-height:1.5;color:#5b6880;
   }
   .sub b{color:#16233c;}
 
   /* reference cell */
   td.ref{
     font-family:"SF Mono",Menlo,Consolas,monospace;
-    font-size:9px;color:#5b6880;line-height:1.85;letter-spacing:-.01em;
+    font-size:9.5px;color:#5b6880;line-height:1.85;letter-spacing:-.01em;
   }
   td.ref .none{color:#a8b2c1;font-style:italic;font-family:inherit;}
   td.ref .pend{color:#8a6a3b;font-weight:700;}
@@ -255,7 +259,7 @@
   .st.ok{color:#14513c;}   .st.ok:before{background:#2e7d5b;}
   .st.warn{color:#a4300c;} .st.warn:before{background:#c0400f;}
   .st.open{color:#5b6880;} .st.open:before{background:#9aa5b8;}
-  .st-note{font-size:8px;color:#a8b2c1;margin-top:5px;line-height:1.4;}
+  .st-note{font-size:8.5px;color:#a8b2c1;margin-top:5px;line-height:1.4;}
 
   /* legend beneath the table */
   .tbl-legend{
@@ -472,6 +476,7 @@
   .nav button:hover{background:rgba(255,255,255,.16);}
   .nav .cnt{padding:0 8px;letter-spacing:.05em;color:#cfe0ff;min-width:64px;text-align:center;}
 
+  @page{size:landscape;margin:0;}
   @media print{
     body{background:#fff;}
     .nav{display:none;}
@@ -480,6 +485,7 @@
       width:100%;max-width:none;border:0;border-radius:0;box-shadow:none;
       page-break-after:always;break-after:page;
     }
+    .slide:last-child{page-break-after:auto;break-after:auto;}
   }
   @media (max-width:1320px){
     .slide{padding:26px 28px;}
@@ -494,6 +500,7 @@
 
 <!-- ============ SLIDE 1 — TITLE ============ -->
 <section class="slide dark" id="s1">
+<div class="slide-inner">
   <div class="eyebrow">Dataverse Ingestion Control Assessment</div>
   <div class="titlebar"></div>
   <h1>Dataverse Ingestion Feed<br>SLA Monitoring</h1>
@@ -521,10 +528,12 @@
 
   <div class="deckfoot">Control Owners &nbsp;|&nbsp; MCA Testers &nbsp;|&nbsp; Senior Management &nbsp;|&nbsp; Internal – Restricted</div>
   <div class="slide-no">01</div>
+</div>
 </section>
 
 <!-- ============ SLIDE 3 — QoQ CONSOLIDATION ============ -->
 <section class="slide" id="s3">
+<div class="slide-inner">
   <h1 class="title">Quarter-over-Quarter Progress: Q1 2026 to Q2 2026</h1>
   <p class="subtitle">Root cause patterns cut 40% – from 5 distinct failure modes in Q1 to 3 fully owned categories in Q2</p>
 
@@ -592,10 +601,12 @@
     </div>
   </div>
   <div class="slide-no">02</div>
+</div>
 </section>
 
 <!-- ============ SLIDE 4 — PERFORMANCE HIGHLIGHTS ============ -->
 <section class="slide" id="s4">
+<div class="slide-inner">
   <h1 class="title">Q2 2026 Performance Highlights – Delivery and Remediation</h1>
   <p class="subtitle">April 1 to June 30, 2026 – 10,434 feeds processed across 8 ingestion pipelines</p>
 
@@ -694,10 +705,12 @@
     </div>
   </div>
   <div class="slide-no">03</div>
+</div>
 </section>
 
 <!-- ============ SLIDE 5 — RCA PATTERN INTELLIGENCE ============ -->
 <section class="slide" id="s5">
+<div class="slide-inner">
   <h1 class="title">RCA Pattern Intelligence – 3 Failure Categories</h1>
   <p class="subtitle">A 40% reduction – from 5 patterns in Q1 to 3 in Q2 – enabling targeted remediation</p>
 
@@ -790,10 +803,12 @@
     </div>
   </div>
   <div class="slide-no">04</div>
+</div>
 </section>
 
 <!-- ============ SLIDE — INCIDENTS 1/2 ============ -->
 <section class="slide compact" id="s6">
+<div class="slide-inner">
   <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
   <h1 class="title">Detailed Incidents by Data Source (1/2)</h1>
   <p class="subtitle">DRIFT, MCA, PTS, DSMT-ISG &mdash; reviewed line by line with the IP source owner</p>
@@ -923,10 +938,12 @@
     <span class="sep">Counts are breach occurrences within the quarter</span>
   </div>
   <div class="slide-no">05</div>
+</div>
 </section>
 
 <!-- ============ SLIDE — INCIDENTS 2/2 ============ -->
 <section class="slide compact" id="s7">
+<div class="slide-inner">
   <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
   <h1 class="title">Detailed Incidents by Data Source (2/2)</h1>
   <p class="subtitle">GRC, CRS, Policy, GDW_HRDW &mdash; low-volume sources, all closed within the quarter</p>
@@ -1042,10 +1059,12 @@
     <span class="sep">Counts are breach occurrences within the quarter</span>
   </div>
   <div class="slide-no">06</div>
+</div>
 </section>
 
 <!-- ============ SLIDE 9 — SOP ============ -->
 <section class="slide" id="s9">
+<div class="slide-inner">
   <h1 class="title">Standard Operating Procedure – Dataverse SLA Monitoring</h1>
   <p class="subtitle">End-to-end workflow from daily monitoring through MCA tester attestation</p>
 
@@ -1090,10 +1109,12 @@
     </div>
   </div>
   <div class="slide-no">07</div>
+</div>
 </section>
 
 <!-- ============ SLIDE — MCA FAQ 1/3 ============ -->
 <section class="slide" id="s8">
+<div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
   <h1 class="title">MCA Control Assessment Q&amp;A (1/3)</h1>
   <p class="subtitle">Control scope, population and operation – every answer cites the artifact supporting it</p>
@@ -1136,10 +1157,12 @@
     </div>
   </div>
   <div class="slide-no">08</div>
+</div>
 </section>
 
 <!-- ============ SLIDE — MCA FAQ 2/3 ============ -->
 <section class="slide" id="s9">
+<div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
   <h1 class="title">MCA Control Assessment Q&amp;A (2/3)</h1>
   <p class="subtitle">Root cause discipline, remediation quality and data integrity</p>
@@ -1182,10 +1205,12 @@
     </div>
   </div>
   <div class="slide-no">09</div>
+</div>
 </section>
 
 <!-- ============ SLIDE — MCA FAQ 3/3 ============ -->
 <section class="slide" id="s10">
+<div class="slide-inner">
   <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
   <h1 class="title">MCA Control Assessment Q&amp;A (3/3)</h1>
   <p class="subtitle">Recurring risk, control limitations, evidence chain and open items</p>
@@ -1228,6 +1253,7 @@
     </div>
   </div>
   <div class="slide-no">10</div>
+</div>
 </section>
 
 </div>
@@ -1241,6 +1267,24 @@
 
 <script>
 (function(){
+  // keep every slide scaled to its box so content can never overflow
+  function fitSlides(){
+    document.querySelectorAll(".slide").forEach(function(s){
+      var inner = s.querySelector(".slide-inner");
+      if(!inner) return;
+      inner.style.transform = "scale(" + (s.clientWidth / 1280) + ")";
+    });
+  }
+  fitSlides();
+  window.addEventListener("resize", fitSlides);
+  window.addEventListener("beforeprint", fitSlides);
+  window.addEventListener("afterprint", fitSlides);
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(fitSlides);
+    document.querySelectorAll(".slide").forEach(function(s){ ro.observe(s); });
+  }
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fitSlides); }
+
   var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
   var counter = document.getElementById('counter');
   var current = 0;
