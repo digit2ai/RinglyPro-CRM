@@ -318,96 +318,66 @@
     margin-top:auto;font-size:12px;color:#8298bd;letter-spacing:.04em;
   }
 
-  /* ---------- comparison cards ---------- */
-  .cmp{
-    flex:1;border:2px solid var(--blue);border-radius:10px;padding:14px 16px;text-align:center;min-width:0;
+  /* ---------- QoQ: one claim, told once ---------- */
+  .hero-band{
+    background:linear-gradient(115deg,#102b23 0%,#1d5142 100%);
+    border-radius:12px;padding:22px 28px;color:#fff;
+    display:flex;align-items:center;gap:28px;
   }
-  .cmp.rust{border-color:var(--rust);}
-  .cmp.green{border-color:var(--green);}
-  .cmp .lab{font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--muted);margin-bottom:12px;}
-  .cmp .nums{display:flex;align-items:center;justify-content:center;gap:14px;}
-  .cmp .old{font-size:32px;font-weight:700;color:#94a3b8;}
-  .cmp .arw{color:#94a3b8;font-size:18px;}
-  .cmp .new{font-size:32px;font-weight:800;color:var(--blue-dark);}
-  .cmp.rust .new{color:var(--rust);}
-  .cmp.green .new{color:var(--green);}
-  .cmp .subs{display:flex;justify-content:center;gap:26px;font-size:10.5px;margin-top:4px;}
-  .cmp .subs .a{color:#94a3b8;}
-  .cmp .subs .b{color:var(--blue-dark);font-weight:700;}
-  .cmp.rust .subs .b{color:var(--rust);}
-  .cmp.green .subs .b{color:var(--green);}
-  .pill{
-    margin-top:12px;border-radius:20px;padding:7px 10px;font-size:12px;font-weight:600;
-    background:#e6eeff;color:var(--blue-dark);
+  .hero-band .big{
+    font-size:52px;font-weight:800;line-height:1;letter-spacing:-.03em;
+    display:flex;align-items:center;gap:14px;flex:none;
   }
-  .pill.rust{background:#fdeae4;color:var(--rust);}
-  .pill.green{background:#e4f0eb;color:var(--green);}
-  .cmp.hero{
-    background:linear-gradient(180deg,#f2f9f6 0%,#ffffff 60%);
-    box-shadow:0 6px 18px rgba(21,61,53,.14);
+  .hero-band .big .arw{font-size:26px;color:#6fcfa6;font-weight:400;}
+  .hero-band .big .to{color:#6fcfa6;}
+  .hero-band .cap{font-size:12.5px;color:#a9d4c2;line-height:1.5;max-width:520px;}
+  .hero-band .cap b{color:#fff;display:block;font-size:15px;margin-bottom:3px;letter-spacing:.01em;}
+  .hero-band .pct{
+    margin-left:auto;flex:none;background:rgba(255,255,255,.15);
+    border-radius:24px;padding:10px 18px;font-size:16px;font-weight:800;letter-spacing:.02em;
   }
-  .cmp.hero .lab{color:var(--green);}
-  .cmp.hero .pill{background:var(--green);color:#fff;}
-  .cmp.quiet{border-color:#dbe1ea;background:#fafbfd;}
-  .cmp.quiet .new{color:#64748b;}
-  .cmp.quiet .subs .b{color:#64748b;}
-  .cmp.quiet .pill{background:#eef1f6;color:#64748b;}
 
-  /* ---------- consolidation visual ---------- */
-  .consol{display:flex;align-items:stretch;gap:16px;flex:1;min-height:0;}
-  .consol-col{flex:1;display:flex;flex-direction:column;min-width:0;}
-  .consol-head{
-    font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-    margin-bottom:9px;
+  .mini-label{
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:#a8b2c1;font-weight:800;margin-bottom:10px;
   }
-  .consol-head.q1{color:#94a3b8;}
-  .consol-head.q2{color:var(--green);}
-  .pchip{
-    display:flex;align-items:center;gap:9px;
-    border:1px solid #dbe1ea;border-radius:8px;
-    padding:9px 12px;margin-bottom:7px;
-    font-size:12.5px;color:#475569;background:#f7f9fc;
+  .catlist{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;}
+  .cr{
+    flex:1;border:1px solid var(--line);border-left-width:4px;border-radius:10px;
+    padding:14px 20px;display:flex;align-items:center;gap:22px;min-width:0;
   }
-  .pchip .dot{width:8px;height:8px;border-radius:50%;background:#b6c2d3;flex:none;}
-  .pchip .nm{display:flex;flex-direction:column;min-width:0;line-height:1.25;}
-  .pchip .nm i{font-style:normal;font-size:10.5px;color:#94a3b8;margin-top:1px;}
-  .pchip em{
-    margin-left:auto;font-style:normal;font-weight:800;font-size:13px;color:#0f172a;
-    padding-left:8px;flex:none;
+  .cr-main{flex:1;min-width:0;}
+  .cr-t{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px;}
+  .cr-s{font-size:10.5px;color:#8a96a8;line-height:1.4;margin-bottom:11px;}
+  .cr .bar{height:6px;border-radius:3px;background:rgba(15,23,42,.08);overflow:hidden;}
+  .cr .bar i{display:block;height:100%;border-radius:3px;}
+  .cr-n{font-size:32px;font-weight:800;line-height:1;flex:none;text-align:right;letter-spacing:-.02em;}
+  .cr-n em{display:block;font-size:11px;font-weight:700;font-style:normal;opacity:.55;margin-top:5px;}
+  .cr.db{border-left-color:#153d35;background:#f6faf8;}
+  .cr.db .cr-t,.cr.db .cr-n{color:#153d35;}
+  .cr.db .bar i{background:#153d35;}
+  .cr.feed{border-left-color:#a4300c;background:#fdf8f5;}
+  .cr.feed .cr-t,.cr.feed .cr-n{color:#a4300c;}
+  .cr.feed .bar i{background:#a4300c;}
+  .cr.net{border-left-color:#6d1a06;background:#fdf7f4;}
+  .cr.net .cr-t,.cr.net .cr-n{color:#6d1a06;}
+  .cr.net .bar i{background:#6d1a06;}
+
+  .statcol{display:flex;flex-direction:column;gap:12px;}
+  .stat{
+    border:1px solid var(--line);border-radius:10px;padding:14px 18px;
+    flex:1;display:flex;flex-direction:column;justify-content:center;
   }
-  .pchip.q1{border-left-width:4px;padding-left:10px;}
-  /* lineage colours — shared with the RCA categories on slide 04 */
-  .pchip.c-db{border-left-color:#153d35;}
-  .pchip.c-db .dot{background:#153d35;}
-  .pchip.c-feed{border-left-color:#a4300c;}
-  .pchip.c-feed .dot{background:#a4300c;}
-  .pchip.c-net{border-left-color:#6d1a06;}
-  .pchip.c-net .dot{background:#6d1a06;}
-  .pchip.q2{
-    border-width:1px;border-left-width:5px;font-weight:700;
-    padding:11px 13px;margin-bottom:9px;color:#14392f;
+  .stat .v{font-size:30px;font-weight:800;line-height:1;color:#1d5142;letter-spacing:-.02em;}
+  .stat .l{font-size:11px;color:#5b6880;margin-top:7px;line-height:1.4;}
+  .stat .q{font-size:9px;color:#a8b2c1;margin-top:5px;line-height:1.35;}
+
+  .foot-note{
+    margin-top:auto;padding-top:12px;border-top:1px solid #eef1f6;
+    font-size:10px;color:#8a96a8;line-height:1.5;display:flex;gap:24px;
   }
-  .pchip.q2.c-db{background:#f1f8f5;border-color:#bcdccb;border-left-color:#153d35;}
-  .pchip.q2.c-feed{background:#fdf3ef;border-color:#eccdc0;border-left-color:#a4300c;color:#5c2409;}
-  .pchip.q2.c-net{background:#fbf0ec;border-color:#e3c6bb;border-left-color:#6d1a06;color:#5c2409;}
-  .pchip.q2 .nm i{color:#8a9aa4;}
-  .consol-note{
-    margin-top:auto;padding-top:8px;font-size:11px;line-height:1.45;color:#94a3b8;
-  }
-  .consol-note.ok{color:var(--green);font-weight:600;}
-  .consol-arrow{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    width:70px;flex:none;position:relative;
-  }
-  .consol-arrow .ring{
-    width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    font-size:10px;line-height:1.15;font-weight:600;z-index:1;
-  }
-  .consol-arrow .ring b{font-size:14px;}
-  .consol-arrow .arrowline{
-    position:absolute;left:0;right:0;top:50%;height:2px;background:#cfe0d7;z-index:0;
-  }
+  .foot-note b{color:#5b6880;}
+  .foot-note .r{margin-left:auto;text-align:right;font-style:italic;}
 
   /* ---------- RCA cards ---------- */
   .bignum{font-size:40px;font-weight:800;line-height:1;margin-bottom:8px;}
@@ -534,71 +504,67 @@
 <!-- ============ SLIDE 3 — QoQ CONSOLIDATION ============ -->
 <section class="slide" id="s3">
 <div class="slide-inner">
-  <h1 class="title">Quarter-over-Quarter Progress: Q1 2026 to Q2 2026</h1>
-  <p class="subtitle">Root cause patterns cut 40% – from 5 distinct failure modes in Q1 to 3 fully owned categories in Q2</p>
+  <div class="sec-eyebrow">SECTION I &nbsp;·&nbsp; EXECUTIVE SUMMARY</div>
+  <h1 class="title">Quarter-over-Quarter Progress</h1>
+  <p class="subtitle">Q2 consolidated five separate failure modes into three owned categories</p>
 
-  <div class="row" style="margin-bottom:16px;">
-    <div class="cmp green hero">
-      <div class="lab">DISTINCT RCA PATTERNS</div>
-      <div class="nums"><span class="old">5</span><span class="arw">&#8594;</span><span class="new">3</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill green">&#9660; 40% Consolidated</div>
-    </div>
-    <div class="cmp green">
-      <div class="lab">BREACHES WITH A FIX</div>
-      <div class="nums"><span class="old">&mdash;</span><span class="arw">&#8594;</span><span class="new">90%</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill green">Permanent Fixes Landed</div>
-    </div>
-    <div class="cmp">
-      <div class="lab">SOURCES ANALYZED</div>
-      <div class="nums"><span class="old">8</span><span class="arw">&#8594;</span><span class="new">8</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill">100% RCA Coverage</div>
-    </div>
-    <div class="cmp quiet">
-      <div class="lab">RAW OCCURRENCES</div>
-      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill">All Triaged to Root Cause</div>
-    </div>
+  <div class="hero-band">
+    <div class="big"><span>5</span><span class="arw">&#8594;</span><span class="to">3</span></div>
+    <div class="cap"><b>Root cause patterns</b>Five investigation tracks in Q1 became three in Q2, each with a named owner and a documented fix path.</div>
+    <div class="pct">&#9660; 40%</div>
   </div>
 
-  <div class="row grow">
-    <div class="fill" style="flex:1.25;display:flex;flex-direction:column;">
-      <div class="chart-title" style="margin-bottom:10px;">Failure Modes Consolidated – Q1 to Q2 2026</div>
-      <div class="consol">
-        <div class="consol-col">
-          <div class="consol-head q1">Q1 2026 &nbsp;·&nbsp; 5 distinct patterns</div>
-          <div class="pchip q1 c-db"><span class="dot"></span><span class="nm">JDBC Failure<i>EUC / CASP DB unreachable</i></span><em>13</em></div>
-          <div class="pchip q1 c-db"><span class="dot"></span><span class="nm">HikariPool Saturation<i>Connection pool exhaustion</i></span><em>&mdash;</em></div>
-          <div class="pchip q1 c-db"><span class="dot"></span><span class="nm">NPE / App Bug<i>Parser and null handling</i></span><em>&mdash;</em></div>
-          <div class="pchip q1 c-feed"><span class="dot"></span><span class="nm">Feed Delay<i>Upstream files late</i></span><em>8</em></div>
-          <div class="pchip q1 c-net"><span class="dot"></span><span class="nm">API Timeout<i>GRC to riskcontrolsproxy</i></span><em>14</em></div>
-          <div class="consol-note">Five failure modes, each investigated on a separate track</div>
+  <div class="row grow" style="gap:22px;margin-top:20px;">
+    <div class="fill" style="flex:1.5;display:flex;flex-direction:column;">
+      <div class="mini-label">The three Q2 categories</div>
+      <div class="catlist">
+        <div class="cr db">
+          <div class="cr-main">
+            <div class="cr-t">App Bug / DB</div>
+            <div class="cr-s">Absorbed three Q1 patterns &mdash; JDBC Failure, HikariPool Saturation and NPE / App Bug</div>
+            <div class="bar"><i style="width:48%"></i></div>
+          </div>
+          <div class="cr-n">30<em>48%</em></div>
         </div>
-
-        <div class="consol-arrow">
-          <div class="ring">&#9660;<br><b>40%</b></div>
-          <div class="arrowline"></div>
+        <div class="cr feed">
+          <div class="cr-main">
+            <div class="cr-t">Feed Quality / Delay</div>
+            <div class="cr-s">Direct successor to Q1 Feed Delay</div>
+            <div class="bar"><i style="width:44%"></i></div>
+          </div>
+          <div class="cr-n">28<em>44%</em></div>
         </div>
-
-        <div class="consol-col">
-          <div class="consol-head q2">Q2 2026 &nbsp;·&nbsp; 3 owned categories</div>
-          <div class="pchip q2 c-db"><span class="dot"></span><span class="nm">App Bug / DB<i>Absorbed 3 Q1 patterns</i></span><em>30</em></div>
-          <div class="pchip q2 c-feed"><span class="dot"></span><span class="nm">Feed Quality / Delay<i>Direct successor</i></span><em>28</em></div>
-          <div class="pchip q2 c-net"><span class="dot"></span><span class="nm">External Network<i>Direct successor</i></span><em>5</em></div>
-          <div class="consol-note ok">Colour shows lineage &mdash; three DB-side patterns now resolve as one owned category</div>
+        <div class="cr net">
+          <div class="cr-main">
+            <div class="cr-t">External Network</div>
+            <div class="cr-s">Direct successor to Q1 API Timeout</div>
+            <div class="bar"><i style="width:8%"></i></div>
+          </div>
+          <div class="cr-n">5<em>8%</em></div>
         </div>
       </div>
     </div>
 
-    <div class="insight fill" style="flex:.85;">
-      <h4>Key Callout</h4>
-      The diagnostic surface narrowed. Q1's three DB-side patterns — <b>JDBC Failure, HikariPool Saturation and NPE / App Bug</b> — now resolve as a single owned category, taking five investigation tracks down to <b>three, a 40% reduction</b>. <b>No new failure mode emerged</b> at any point in Q2.
-      <div style="margin-top:10px;">Occurrence volume rose to 69 as coverage deepened. Every one was triaged to root cause, and <b>90% now carry a permanent, source-side or scheduled fix</b> — including PRIN-4619, released mid-quarter, which stopped the DSMT-ISG NULL violations outright.</div>
-      <span class="em">Fewer distinct problems to solve, each with a known owner — the basis for a materially lower Q3.</span>
+    <div class="statcol fill" style="flex:.75;">
+      <div class="stat">
+        <div class="v">100%</div>
+        <div class="l">of breaches traced to a documented root cause</div>
+      </div>
+      <div class="stat">
+        <div class="v">90%</div>
+        <div class="l">carry a permanent, source-side or scheduled fix</div>
+        <div class="q">57 of 63 as at reporting &middot; 42 closed within Q2</div>
+      </div>
+      <div class="stat">
+        <div class="v">0</div>
+        <div class="l">new failure modes emerged during the quarter</div>
+      </div>
     </div>
+  </div>
+
+  <div class="foot-note">
+    <b>Q1 2026 patterns:</b> JDBC Failure (13) &middot; HikariPool Saturation &middot; NPE / App Bug &middot; Feed Delay (8) &middot; API Timeout (14).
+    <span class="r">Occurrence volume 41 &rarr; 69 across a comparable feed count &mdash; every one triaged to root cause.</span>
   </div>
   <div class="slide-no">02</div>
 </div>
