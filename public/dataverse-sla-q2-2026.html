@@ -217,6 +217,11 @@
   .tile .ic svg{width:17px;height:17px;}
   .tile .n{font-size:20px;font-weight:800;color:#fff;line-height:1.1;}
   .tile .l{font-size:12px;color:#a9bde0;}
+  .tile.win{border-color:#2e7d5b;background:rgba(46,125,91,.14);}
+  .tile.win .ic{background:#2e7d5b;}
+  .tile .delta{
+    font-size:12px;font-weight:700;color:#5fd39b;letter-spacing:.03em;margin-left:6px;
+  }
   .deckfoot{
     margin-top:auto;font-size:12px;color:#8298bd;letter-spacing:.04em;
   }
@@ -268,6 +273,12 @@
   }
   .pill.rust{background:#fdeae4;color:var(--rust);}
   .pill.green{background:#e4f0eb;color:var(--green);}
+  .cmp.hero{
+    background:linear-gradient(180deg,#f2f9f6 0%,#ffffff 60%);
+    box-shadow:0 6px 18px rgba(21,61,53,.14);
+  }
+  .cmp.hero .lab{color:var(--green);}
+  .cmp.hero .pill{background:var(--green);color:#fff;}
 
   /* ---------- RCA cards ---------- */
   .bignum{font-size:40px;font-weight:800;line-height:1;margin-bottom:8px;}
@@ -363,9 +374,9 @@
       <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></div>
       <div><div class="n">8</div><div class="l">Data Sources</div></div>
     </div>
-    <div class="tile">
+    <div class="tile win">
       <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
-      <div><div class="n">3</div><div class="l">RCA Patterns</div></div>
+      <div><div class="n">3 <span class="delta">&#9660; 40%</span></div><div class="l">RCA Patterns — down from 5 in Q1</div></div>
     </div>
   </div>
 
@@ -385,8 +396,8 @@
       <div class="k">Performance Review</div>
       <div class="t">Comparative Analysis Q1 vs Q2</div>
       <ul>
-        <li>68% breach volume increase</li>
-        <li>RCA patterns: 5 to 3</li>
+        <li>40% reduction in RCA patterns (5 to 3)</li>
+        <li>92% of causes now internally addressable</li>
         <li>8 data sources impacted</li>
       </ul>
       <div class="t" style="margin-top:auto;">Overview of achievements and recurring operational challenges</div>
@@ -438,7 +449,7 @@
 <!-- ============ SLIDE 3 — QoQ COMPARISON ============ -->
 <section class="slide" id="s3">
   <h1 class="title">Quarter-over-Quarter Comparison: Q1 2026 to Q2 2026</h1>
-  <p class="subtitle">Based on detailed review of 69 raw breach items across 8 data sources</p>
+  <p class="subtitle">RCA patterns cut 40% – from 5 distinct failure modes in Q1 to 3 in Q2</p>
 
   <div class="row" style="margin-bottom:18px;">
     <div class="cmp">
@@ -447,17 +458,17 @@
       <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
       <div class="pill">Active Period</div>
     </div>
-    <div class="cmp rust">
-      <div class="lab">RAW BREACHES</div>
-      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill rust">+68% Volume</div>
-    </div>
-    <div class="cmp green">
+    <div class="cmp green hero">
       <div class="lab">DISTINCT RCA PATTERNS</div>
       <div class="nums"><span class="old">5</span><span class="arw">&#8594;</span><span class="new">3</span></div>
       <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill green">Consolidated</div>
+      <div class="pill green">&#9660; 40% Consolidated</div>
+    </div>
+    <div class="cmp">
+      <div class="lab">RAW BREACHES</div>
+      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill">Volume Up, Patterns Down</div>
     </div>
     <div class="cmp">
       <div class="lab">SOURCES IMPACTED</div>
@@ -513,7 +524,8 @@
 
     <div class="insight fill" style="flex:.85;">
       <h4>Key Callout</h4>
-      Overall breach occurrences increased by <b>68%</b>, but RCA patterns <b>consolidated from 5 to 3</b>, enabling more focused and effective remediation.
+      RCA patterns were <b>reduced 40% – from 5 in Q1 to 3 in Q2</b>. Every breach now maps to one of three well-understood failure modes, each with a named owner and a documented fix path.
+      <div style="margin-top:10px;">Raw occurrences rose to 69 against a comparable feed volume, but the diagnostic surface narrowed – fewer distinct problems to solve, not more.</div>
       <span class="em">Primary drivers remain app bugs and feed quality – not external network – indicating addressable internal improvements.</span>
     </div>
   </div>
@@ -617,7 +629,7 @@
 <!-- ============ SLIDE 5 — RCA PATTERN INTELLIGENCE ============ -->
 <section class="slide" id="s5">
   <h1 class="title">RCA Pattern Intelligence – 3 Failure Categories</h1>
-  <p class="subtitle">Consolidated from 5 patterns in Q1 to 3 patterns in Q2 – enabling targeted remediation</p>
+  <p class="subtitle">A 40% reduction – from 5 patterns in Q1 to 3 in Q2 – enabling targeted remediation</p>
 
   <div class="row" style="margin-bottom:18px;">
     <div class="card green fill">
@@ -870,7 +882,7 @@
   <div class="row" style="height:150px;">
     <div class="insight fill" style="flex:1.6;">
       <h4>Key Insight – June Escalation</h4>
-      June was the highest breach month at 26 occurrences, driven by both feed quality issues and application bugs escalating simultaneously. This dual-category escalation in June was the primary contributor to Q2 total exceeding Q1 by 68%. May's pure app bug spike was almost exclusively the DSMT-ISG schema change event that caused a week of NULL violations until PRIN-4619 was deployed.
+      June was the highest breach month at 26 occurrences, driven by feed quality issues and application bugs escalating simultaneously. Critically, both fall inside the three consolidated RCA patterns – no new failure mode emerged all quarter. May's spike was almost exclusively the DSMT-ISG schema change event, which caused a week of NULL violations until PRIN-4619 was deployed and then stopped entirely.
     </div>
     <div class="softbox fill" style="flex:.6;">
       <h4>Monthly Totals</h4>
