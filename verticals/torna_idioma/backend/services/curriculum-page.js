@@ -668,7 +668,15 @@ ${orb}
   var lang = 'en';
   var segments = SEGS[lang];
 
+  /* One entry per language offered by the toggle. A missing entry used to throw
+     inside applyLang and take the whole narrator down with it, so T() falls back
+     to English rather than letting a gap silence the voice. */
   var UI = {
+    es: { idle: 'Pulsa el botón y la Profesora Isabel te recorrerá el programa completo.',
+          prep: 'Preparando la voz neural…', done: 'Recorrido terminado. Pulsa de nuevo para repetirlo.',
+          paused: 'En pausa.', one: 'Reproduciendo este módulo…',
+          speaking: function(i,n){ return 'La Profesora Isabel está hablando… (' + i + ' de ' + n + ')'; },
+          note: 'Voz: Profesora Isabel · Dalia, Ava, Blessica' },
     en: { idle: 'Tap the button and Profesora Isabel will walk you through the whole programme.',
           prep: 'Preparing the neural voice…', done: 'Tour finished. Tap again to replay.',
           paused: 'Paused.', one: 'Playing this module…',
@@ -680,6 +688,8 @@ ${orb}
           speaking: function(i,n){ return 'Nagsasalita si Profesora Isabel… (' + i + ' ng ' + n + ')'; },
           note: 'Boses: Profesora Isabel · Dalia, Ava, Blessica' }
   };
+
+  function T(){ return UI[lang] || UI.en; }
 
   var synth = window.speechSynthesis;
   var orb = document.getElementById('orb');
@@ -725,7 +735,7 @@ ${orb}
     if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
   }
   function statusSpeaking(){
-    status.textContent = (mode==='all') ? UI[lang].speaking(qi+1, queue.length) : UI[lang].one;
+    status.textContent = (mode==='all') ? T().speaking(qi+1, queue.length) : T().one;
   }
 
   function runQueue(token){
@@ -735,7 +745,7 @@ ${orb}
     if(mode==='all' || idx>0) setActive(idx);
     function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
     if(useNeural()){
-      status.textContent=UI[lang].prep;
+      status.textContent=T().prep;
       if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
       fetchNeural(idx).then(function(url){
         if(token!==runToken) return;
@@ -770,12 +780,12 @@ ${orb}
     runToken++; orb.classList.remove('speaking'); setActive(null);
     if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
     pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
-    status.textContent=UI[lang].done;
+    status.textContent=T().done;
   }
 
   playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
   pauseBtn.addEventListener('click', function(){
-    if(!paused){ paused=true; pauseBtn.innerHTML='&#9658; Reanudar'; orb.classList.remove('speaking'); status.textContent=UI[lang].paused;
+    if(!paused){ paused=true; pauseBtn.innerHTML='&#9658; Reanudar'; orb.classList.remove('speaking'); status.textContent=T().paused;
       if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
     else { paused=false; pauseBtn.innerHTML='&#10074;&#10074; Pausar'; orb.classList.add('speaking'); statusSpeaking();
       if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
@@ -827,9 +837,9 @@ ${orb}
       b.classList.toggle('on', b.getAttribute('data-lang') === lang);
     });
     var note = document.getElementById('langNote');
-    if (note) note.textContent = UI[lang].note;
+    if (note) note.textContent = T().note;
     finish();
-    status.textContent = UI[lang].idle;
+    status.textContent = T().idle;
   }
   Array.prototype.forEach.call(document.querySelectorAll('.lang'), function(b){
     b.addEventListener('click', function(){ applyLang(b.getAttribute('data-lang')); });
