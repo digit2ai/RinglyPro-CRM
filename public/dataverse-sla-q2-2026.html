@@ -367,15 +367,29 @@
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .sw{width:12px;height:12px;border-radius:2px;display:inline-block;}
 
-  /* ---------- month cards ---------- */
-  .mo{border:2px solid var(--blue);border-radius:10px;padding:12px 15px;}
-  .mo.green{border-color:var(--green);}
-  .mo.rust{border-color:var(--rust);}
-  .mo .h{font-size:12.5px;font-weight:800;color:var(--blue-dark);margin-bottom:5px;}
-  .mo.green .h{color:var(--green);}
-  .mo.rust .h{color:var(--rust);}
-  .mo .l{font-size:12px;color:#334155;line-height:1.5;}
-  .mo .i{font-size:11.5px;color:#64748b;font-style:italic;margin-top:4px;}
+  /* ---------- MCA control Q&A ---------- */
+  .sec-eyebrow{
+    font-size:10px;letter-spacing:.16em;font-weight:800;color:#94a3b8;
+    text-transform:uppercase;margin-bottom:8px;
+  }
+  .faq{
+    display:grid;grid-template-columns:1fr 1fr;gap:15px 26px;
+    flex:1;min-height:0;align-content:start;
+  }
+  .qa{border-left:3px solid var(--blue);padding-left:13px;min-width:0;}
+  .qa .q{
+    font-size:12px;font-weight:800;color:var(--blue-dark);
+    margin-bottom:4px;line-height:1.35;
+  }
+  .qa .a{font-size:10.5px;line-height:1.5;color:#334155;}
+  .qa .a b{color:#0f172a;}
+  .qa .ev{
+    font-size:9px;color:#a3adbd;margin-top:5px;line-height:1.35;letter-spacing:.01em;
+  }
+  .qa .ev b{color:#64748b;font-weight:800;}
+  /* flagged = a disclosure or limitation, surfaced deliberately */
+  .qa.flag{border-left-color:var(--rust);}
+  .qa.flag .q{color:var(--rust);}
 
   /* ---------- nav ---------- */
   .nav{
@@ -803,97 +817,6 @@
   <div class="slide-no">06</div>
 </section>
 
-<!-- ============ SLIDE 8 — TIMELINE ============ -->
-<section class="slide" id="s8">
-  <h1 class="title">Breach Timeline by RCA Category – Apr to Jun 2026</h1>
-  <p class="subtitle">Monthly distribution showing escalation pattern across the quarter</p>
-
-  <div class="row grow" style="margin-bottom:16px;">
-    <div class="chart-wrap fill" style="flex:1.2;">
-      <div class="chart-title">Monthly Breach Count by RCA Category</div>
-      <svg class="chart" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Stacked bar chart of monthly breach counts by RCA category">
-        <line class="grid-l" x1="52" y1="250" x2="610" y2="250"/>
-        <line class="grid-l" x1="52" y1="210" x2="610" y2="210"/>
-        <line class="grid-l" x1="52" y1="170" x2="610" y2="170"/>
-        <line class="grid-l" x1="52" y1="130" x2="610" y2="130"/>
-        <line class="grid-l" x1="52" y1="90"  x2="610" y2="90"/>
-        <line class="grid-l" x1="52" y1="50"  x2="610" y2="50"/>
-        <line class="grid-l" x1="52" y1="10"  x2="610" y2="10"/>
-        <line class="ax" x1="52" y1="10" x2="52" y2="250"/>
-        <line class="ax" x1="52" y1="250" x2="610" y2="250"/>
-        <text class="tk" x="43" y="255" text-anchor="end">0</text>
-        <text class="tk" x="43" y="215" text-anchor="end">5</text>
-        <text class="tk" x="43" y="175" text-anchor="end">10</text>
-        <text class="tk" x="43" y="135" text-anchor="end">15</text>
-        <text class="tk" x="43" y="95"  text-anchor="end">20</text>
-        <text class="tk" x="43" y="55"  text-anchor="end">25</text>
-        <text class="tk" x="43" y="15"  text-anchor="end">30</text>
-
-        <!-- APR : App 1, Feed 16, API 4 (total 21) -->
-        <rect x="90" y="242" width="105" height="8"   fill="#153d35"/>
-        <rect x="90" y="114" width="105" height="128" fill="#a4300c"/>
-        <text x="142" y="184" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">16</text>
-        <rect x="90" y="82"  width="105" height="32"  fill="#6d1a06"/>
-        <text x="142" y="103" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">4</text>
-        <text x="142" y="248" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">1</text>
-        <text class="cat" x="142" y="272" text-anchor="middle">APR</text>
-
-        <!-- MAY : App 16 -->
-        <rect x="278" y="122" width="105" height="128" fill="#153d35"/>
-        <text x="330" y="192" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">16</text>
-        <text class="cat" x="330" y="272" text-anchor="middle">MAY</text>
-
-        <!-- JUN : App 13, Feed 12, API 1 (total 26) -->
-        <rect x="466" y="146" width="105" height="104" fill="#153d35"/>
-        <text x="518" y="203" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">13</text>
-        <rect x="466" y="50"  width="105" height="96"  fill="#a4300c"/>
-        <text x="518" y="103" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">12</text>
-        <rect x="466" y="42"  width="105" height="8"   fill="#6d1a06"/>
-        <text x="518" y="49" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">1</text>
-        <text class="cat" x="518" y="272" text-anchor="middle">JUN</text>
-      </svg>
-      <div class="legend">
-        <span><i class="sw" style="background:#153d35"></i>App Bug / DB</span>
-        <span><i class="sw" style="background:#a4300c"></i>Feed Quality / Delay</span>
-        <span><i class="sw" style="background:#6d1a06"></i>API Timeout</span>
-      </div>
-    </div>
-
-    <div class="col fill" style="flex:.8;">
-      <div class="mo">
-        <div class="h">APR 2026 – 21 Breaches</div>
-        <div class="l">Feed Quality: 16 &nbsp;|&nbsp; API Timeout: 4<br>App Bug: 1</div>
-        <div class="i">Feed timing and external API dominated</div>
-      </div>
-      <div class="mo green">
-        <div class="h">MAY 2026 – 16 Breaches</div>
-        <div class="l">App Bug: 16 &nbsp;|&nbsp; Feed Quality: 0<br>API Timeout: 0</div>
-        <div class="i">Pure app bug spike – DSMT-ISG schema change</div>
-      </div>
-      <div class="mo rust">
-        <div class="h">JUN 2026 – 26 Breaches</div>
-        <div class="l">App Bug: 13 &nbsp;|&nbsp; Feed Quality: 12<br>API Timeout: 1</div>
-        <div class="i">Worst month – dual escalation pattern</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row" style="height:150px;">
-    <div class="insight fill" style="flex:1.6;">
-      <h4>Key Insight – June Escalation</h4>
-      June was the highest breach month at 26 occurrences, driven by feed quality issues and application bugs escalating simultaneously. Critically, both fall inside the three consolidated RCA patterns – no new failure mode emerged all quarter. May's spike was almost exclusively the DSMT-ISG schema change event, which caused a week of NULL violations until PRIN-4619 was deployed and then stopped entirely.
-    </div>
-    <div class="softbox fill" style="flex:.6;">
-      <h4>Monthly Totals</h4>
-      APR: <b style="color:var(--rust)">21 breaches</b><br>
-      MAY: 16 breaches<br>
-      JUN: <b style="color:var(--rust)">26 breaches</b>
-      <div style="margin-top:10px;font-weight:700;color:var(--blue-dark);">Q2 TOTAL: 69 breaches</div>
-    </div>
-  </div>
-  <div class="slide-no">07</div>
-</section>
-
 <!-- ============ SLIDE 9 — SOP ============ -->
 <section class="slide" id="s9">
   <h1 class="title">Standard Operating Procedure – Dataverse SLA Monitoring</h1>
@@ -939,7 +862,145 @@
       <div class="step rust"><b>Cadence</b>Quarterly cycle – Q2 2026 attestation currently in progress</div>
     </div>
   </div>
+  <div class="slide-no">07</div>
+</section>
+
+<!-- ============ SLIDE — MCA FAQ 1/3 ============ -->
+<section class="slide" id="s8">
+  <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
+  <h1 class="title">MCA Control Assessment Q&amp;A (1/3)</h1>
+  <p class="subtitle">Control scope, population and operation – every answer cites the artifact supporting it</p>
+
+  <div class="faq">
+    <div class="qa">
+      <div class="q">1. What control is being assessed?</div>
+      <div class="a">Daily monitoring of Dataverse ingestion feed delivery against defined SLA cutoff times. The control detects feeds that miss their cutoff, routes them for resolution, and evidences that each miss was investigated and closed.</div>
+      <div class="ev"><b>Evidence:</b> SOP, slide 07 &middot; Dataverse SLA dashboard</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">2. What period and population does the assessment cover?</div>
+      <div class="a">April 1 to June 30, 2026. <b>10,434 feeds processed</b> across <b>8 in-scope data sources</b> — DRIFT, MCA, PTS, DSMT-ISG, GRC, CRS, POLICY and GDW_HRDW.</div>
+      <div class="ev"><b>Evidence:</b> Q2 2026 Dataverse export, retained in the control repository</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">3. How was the breach population derived?</div>
+      <div class="a">From the complete Q2 Dataverse export, filtered to <b>MissedCutoff</b> and <b>MissedCutoff – LoadCompleted</b> dispositions, with successful runs and duplicate rows removed. That produced <b>69 raw items</b>, then isolated to Failed and Not Triggered states for root cause review.</div>
+      <div class="ev"><b>Evidence:</b> Q2 2026 Dataverse export &middot; filter criteria retained</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">4. Was the population sampled?</div>
+      <div class="a"><b>No. This is a full population review, not a sample.</b> Every MissedCutoff and MissedCutoff – LoadCompleted row in the quarter was examined. The only exclusions were successful runs and duplicate rows — no item was excluded on materiality or judgement.</div>
+      <div class="ev"><b>Evidence:</b> Q2 2026 Dataverse export &middot; exclusion criteria documented</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">5. How is an SLA breach defined, and are all breaches equal?</div>
+      <div class="a">A feed that does not deliver to its consumer by the agreed cutoff. Two dispositions carry materially different impact: <b>MissedCutoff</b> (did not complete) and <b>MissedCutoff – LoadCompleted</b> (data completed in full, but after the cutoff). A significant share of Q2 items are the second type — delivered complete, delivered late.</div>
+      <div class="ev"><b>Evidence:</b> Dataverse status taxonomy &middot; per-item dispositions, slides 05–06</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">6. Who operates the control, and how often?</div>
+      <div class="a">The IP Data Ingestion Team monitors the dashboard <b>daily</b>. A breach triggers automatic notification to L2 Support, who raise a ServiceNow incident assigned to <b>CTI NA EX US CTI GL EX CITI DATAVERSE L3</b>. L3 investigates, resolves and re-triggers the load.</div>
+      <div class="ev"><b>Evidence:</b> SOP, slide 07 &middot; ServiceNow assignment group</div>
+    </div>
+  </div>
   <div class="slide-no">08</div>
+</section>
+
+<!-- ============ SLIDE — MCA FAQ 2/3 ============ -->
+<section class="slide" id="s9">
+  <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
+  <h1 class="title">MCA Control Assessment Q&amp;A (2/3)</h1>
+  <p class="subtitle">Root cause discipline, remediation quality and data integrity</p>
+
+  <div class="faq">
+    <div class="qa">
+      <div class="q">7. Does every breach carry a documented root cause?</div>
+      <div class="a">Yes. All 8 impacted sources were reviewed <b>line by line with the IP source owner</b>. Every item carries a root cause, a resolution and — where a ticket was warranted — a Jira or ServiceNow reference.</div>
+      <div class="ev"><b>Evidence:</b> slides 05–06 &middot; source-owner review, Q2 2026</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">8. Do the RCA category counts reconcile to the 69-item population?</div>
+      <div class="a"><b>Not fully, and the variance is disclosed rather than netted.</b> Per-source categorization accounts for <b>63 items</b> (App Bug/DB 30, Feed Quality 28, API Timeout 5). The 69 figure is the raw export count prior to categorization. The <b>6-item variance is an open reconciliation item</b>, tracked to closure alongside the Drift review.</div>
+      <div class="ev"><b>Evidence:</b> raw export vs per-source tables, slides 04–06</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">9. What proportion of breaches have a fix in place?</div>
+      <div class="a"><b>57 of 63 categorized items (90%)</b> are closed by a permanent code change, a source-side correction, a schedule change, or confirmed non-recurrence. The remaining 6 sit with the Drift source team.</div>
+      <div class="ev"><b>Evidence:</b> remediation coverage, slide 03 &middot; per-item status, slides 05–06</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">10. Which fixes are permanent, and which are tactical?</div>
+      <div class="a"><b>Permanent (code):</b> PRIN-4619 handles the DSMT-ISG nullable attribute; PRIN-5573 adds a multi-format timestamp layer so a <i>future</i> source format change no longer breaks the parse. <b>Permanent (process):</b> the Drift IP job moved 08:00 to 08:30. <b>Tactical:</b> manual retriggers on GRC and Policy timeouts.</div>
+      <div class="ev"><b>Evidence:</b> PRIN-4619 &middot; PRIN-5573 &middot; schedule change record</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">11. Were any breaches closed without a ticket, and on what basis?</div>
+      <div class="a">Yes — three. <b>CRS:</b> the fault was the IP pull process lacking file read permission, so no source INC applied. <b>Policy:</b> resolved same day on retrigger, no recurrence. <b>GDW_HRDW:</b> self-resolved on the next scheduled run before investigation began, so no action was taken. Each reason is recorded against the item.</div>
+      <div class="ev"><b>Evidence:</b> slide 06, JIRA/INC column &middot; source-owner confirmation</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">12. Did any breach cause data loss or an incorrect load?</div>
+      <div class="a"><b>No.</b> Every affected load was re-run or self-resolved and completed successfully. These were timing and validation failures, not data corruption. Where an oversized attribute was trimmed to fit its column (GAU_OWNER_DELEGATES), the source owner confirmed the attribute is <b>not consumed downstream</b>.</div>
+      <div class="ev"><b>Evidence:</b> per-item resolutions, slides 05–06 &middot; INC (GAU_OWNER_DELEGATES)</div>
+    </div>
+  </div>
+  <div class="slide-no">09</div>
+</section>
+
+<!-- ============ SLIDE — MCA FAQ 3/3 ============ -->
+<section class="slide" id="s10">
+  <div class="sec-eyebrow">SECTION III &nbsp;·&nbsp; MCA CONTROL ASSESSMENT</div>
+  <h1 class="title">MCA Control Assessment Q&amp;A (3/3)</h1>
+  <p class="subtitle">Recurring risk, control limitations, evidence chain and open items</p>
+
+  <div class="faq">
+    <div class="qa flag">
+      <div class="q">13. Is the control automated end to end?</div>
+      <div class="a"><b>Detection and alerting are automated. Remediation is not.</b> For timeout-class failures the team reviews the error and retriggers the load by hand — there is no automatic retry. Recorded resolution timestamps therefore reflect when the retrigger was actioned, not elapsed effort. Disclosed as a design characteristic, not represented as automated.</div>
+      <div class="ev"><b>Evidence:</b> source-owner review &middot; GRC and Policy items, slide 06</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">14. What is the most significant recurring risk?</div>
+      <div class="a"><b>External API response time.</b> The GRC endpoint is contracted to respond within <b>60 seconds</b> and exceeded it on 4 occasions; Policy timed out once. These sit outside IP's control and no IP-side permanent fix exists. Escalation to the API owners is the required remediation path.</div>
+      <div class="ev"><b>Evidence:</b> GRC and Policy items, slide 06 &middot; 60-second API contract</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">15. Are source-side changes communicated in advance?</div>
+      <div class="a"><b>Not consistently — this is an open control gap.</b> Both the DSMT-ISG nullable attribute change and the MCA timestamp format change were made without notice and were detected only by ingestion failure. PRIN-5573 mitigates the timestamp class specifically; reliance on informal source notification remains unaddressed.</div>
+      <div class="ev"><b>Evidence:</b> DSMT-ISG and MCA items, slide 05 &middot; source-team INC responses</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">16. What evidence chain supports this assessment?</div>
+      <div class="a">The Q2 Dataverse export (population), the per-source RCA review with the source owner, Jira records <b>PRIN-4619</b> and <b>PRIN-5573</b>, ServiceNow records <b>INC0021438147</b>, <b>INC0023796809</b> and <b>INC0023197471</b>, and source-team email confirmations for the trim actions.</div>
+      <div class="ev"><b>Evidence:</b> all artifacts archived in the control repository per SOP</div>
+    </div>
+
+    <div class="qa">
+      <div class="q">17. What is the attestation flow, and where does it stand?</div>
+      <div class="a">The Control Owner exports and reviews the quarterly report, uploads it as MCA evidence, and submits the attested snapshot to the MCA Tester. The Tester validates evidence against control requirements and records formal sign-off in the MCA system. <b>Q2 2026 attestation is in progress.</b></div>
+      <div class="ev"><b>Evidence:</b> SOP quarterly and attestation tracks, slide 07</div>
+    </div>
+
+    <div class="qa flag">
+      <div class="q">18. What remains open at the time of reporting?</div>
+      <div class="a"><b>Three items, disclosed rather than deferred.</b> (a) <b>Drift</b> — 6 DB-integrity breaches await source-side fixes, and the Not Triggered days on Building Locations are under review. (b) The <b>6-item reconciliation variance</b> at Q8. (c) <b>GRC recurring timeouts</b>, pending escalation to the API owner.</div>
+      <div class="ev"><b>Evidence:</b> Drift item, slide 05 &middot; open actions carried to Q3 2026</div>
+    </div>
+  </div>
+  <div class="slide-no">10</div>
 </section>
 
 </div>
