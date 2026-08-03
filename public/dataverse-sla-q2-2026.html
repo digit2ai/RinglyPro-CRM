@@ -186,11 +186,11 @@
   }
   .tbl-pro tbody td{
     background:transparent;border:0;border-bottom:1px solid #e9edf3;
-    padding:12px 13px;vertical-align:top;
-    font-size:10px;line-height:1.55;color:#41506a;
+    padding:9px 12px;vertical-align:top;
+    font-size:9.5px;line-height:1.45;color:#41506a;
   }
   .tbl-pro tbody tr:last-child td{border-bottom:0;}
-  .tbl-pro p{margin:0 0 6px;}
+  .tbl-pro p{margin:0 0 5px;}
   .tbl-pro p:last-child{margin-bottom:0;}
   .tbl-pro p.fine{color:#8a96a8;font-size:9.5px;}
   .tbl-pro b{color:#16233c;font-weight:700;}
@@ -216,12 +216,12 @@
     letter-spacing:.02em;
   }
   .src-desc{
-    font-size:8px;letter-spacing:.08em;text-transform:uppercase;
-    color:#a8b2c1;margin-top:7px;line-height:1.65;font-weight:600;
+    font-size:7.5px;letter-spacing:.07em;text-transform:uppercase;
+    color:#a8b2c1;margin-top:6px;line-height:1.55;font-weight:600;
   }
 
   /* root-cause blocks */
-  .cause{margin-bottom:9px;}
+  .cause{margin-bottom:7px;}
   .cause:last-child{margin-bottom:0;}
   .cause p{margin:0;}
   .cause-tag{
@@ -255,11 +255,11 @@
   .st.ok{color:#14513c;}   .st.ok:before{background:#2e7d5b;}
   .st.warn{color:#a4300c;} .st.warn:before{background:#c0400f;}
   .st.open{color:#5b6880;} .st.open:before{background:#9aa5b8;}
-  .st-note{font-size:8.5px;color:#a8b2c1;margin-top:6px;line-height:1.45;}
+  .st-note{font-size:8px;color:#a8b2c1;margin-top:5px;line-height:1.4;}
 
   /* legend beneath the table */
   .tbl-legend{
-    margin-top:auto;padding-top:12px;border-top:1px solid #eef1f6;
+    margin-top:auto;padding-top:9px;border-top:1px solid #eef1f6;
     display:flex;align-items:center;gap:20px;
     font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
     color:#a8b2c1;font-weight:600;
@@ -272,6 +272,11 @@
   .tbl-legend i.k.c-feed{background:#a4300c;}
   .tbl-legend i.k.c-net{background:#6d1a06;}
   .tbl-legend .sep{margin-left:auto;text-transform:none;letter-spacing:.02em;font-style:italic;}
+
+  /* dense slides: smaller header to buy table height */
+  .slide.compact h1.title{font-size:26px;margin-bottom:4px;}
+  .slide.compact p.subtitle{font-size:12.5px;margin-bottom:12px;}
+  .slide.compact .sec-eyebrow{margin-bottom:6px;}
 
   /* ---------- title slide ---------- */
   .eyebrow{
@@ -788,13 +793,13 @@
 </section>
 
 <!-- ============ SLIDE — INCIDENTS 1/2 ============ -->
-<section class="slide" id="s6">
+<section class="slide compact" id="s6">
   <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
   <h1 class="title">Detailed Incidents by Data Source (1/2)</h1>
   <p class="subtitle">DRIFT, MCA, PTS, DSMT-ISG &mdash; reviewed line by line with the IP source owner</p>
 
   <table class="tbl-pro">
-    <colgroup><col style="width:16%"><col style="width:31%"><col style="width:29%"><col style="width:12%"><col style="width:12%"></colgroup>
+    <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
     <thead>
       <tr>
         <th>Data Source</th>
@@ -813,17 +818,17 @@
         <td>
           <div class="cause">
             <span class="cause-tag feed">Feed Delayed &middot; 11</span>
-            <p>Drift completes its own load by <b>07:00</b> under the agreed schedule, but data and clearing issues pushed completion to <b>08:00&ndash;08:30</b>. The IP job read at 08:00, before the source load had finished, returning NULLs or a <i>Not Triggered</i> status.</p>
+            <p>Drift finishes its load by <b>07:00</b> by agreement; data and clearing issues pushed it to <b>08:00&ndash;08:30</b>. The IP job read at 08:00 &mdash; before the source finished &mdash; returning NULLs or <i>Not Triggered</i>.</p>
           </div>
           <div class="cause">
             <span class="cause-tag db">DB Bug &middot; 6</span>
-            <p><code>ORA-01400</code> cannot insert NULL into APPLICATIONID, and <code>ORA-12899</code> value too large for TECHNICALRECOVERYTIME, following a source-side change to the recovery-time objective.</p>
+            <p><code>ORA-01400</code> NULL into APPLICATIONID and <code>ORA-12899</code> value too large for TECHNICALRECOVERYTIME, after a source change to the recovery-time objective.</p>
           </div>
         </td>
         <td>
-          <p>IP job schedule moved from 08:00 to <b>08:30</b>, clearing the overlap with the source load window.</p>
-          <p>Building Locations is held and triggered manually pending review of the <i>Not Triggered</i> days.</p>
-          <p>DB bugs require source-side data-integrity fixes and remain with the Drift team.</p>
+          <p>IP job moved 08:00 to <b>08:30</b>, clearing the overlap.</p>
+          <p>Building Locations held, triggered manually pending review of the <i>Not Triggered</i> days.</p>
+          <p>DB bugs need source-side fixes &mdash; with the Drift team.</p>
         </td>
         <td class="ref"><span class="pend">Pending</span><br>VJ &mdash; source owner</td>
         <td>
@@ -840,18 +845,18 @@
         <td>
           <div class="cause">
             <span class="cause-tag db">App Bug &middot; 15</span>
-            <p>Two distinct source-side changes, <b>neither communicated in advance</b>.</p>
+            <p>Two source-side changes, <b>neither communicated in advance</b>.</p>
           </div>
           <div class="sub">
-            <b>Timestamp format</b> &mdash; the source began sending a layout differing from the one previously supplied, which the parser could not read. Failures clustered in May and June.
+            <b>Timestamp format</b> &mdash; source sent a layout the parser could not read. Clustered May&ndash;June.
           </div>
           <div class="sub">
-            <b>Field length</b> &mdash; GAU_OWNER_DELEGATES arrived at <b>4,001 characters</b> against a 4,000-character column.
+            <b>Field length</b> &mdash; GAU_OWNER_DELEGATES at <b>4,001 chars</b> against a 4,000-char column.
           </div>
         </td>
         <td>
-          <p><b>PRIN-5573</b> introduced a common timestamp layer resolving multiple formats dynamically, so a <i>future</i> source format change no longer breaks the parse.</p>
-          <p>The oversized attribute is trimmed to 4,000 characters on load under an INC. The field is not consumed downstream, so no schema change was warranted.</p>
+          <p><b>PRIN-5573</b> added a common timestamp layer resolving multiple formats, so a <i>future</i> format change no longer breaks the parse.</p>
+          <p>Oversized attribute trimmed to 4,000 chars on load under an INC; the field is not consumed downstream, so no schema change was warranted.</p>
         </td>
         <td class="ref">PRIN-5573<br>INC &mdash; GAU_OWNER_DELEGATES</td>
         <td>
@@ -868,17 +873,17 @@
         <td>
           <div class="cause">
             <span class="cause-tag feed">Feed Quality &middot; 13</span>
-            <p>Control-file count did not match the feed count &mdash; a feed of <b>7,354</b> records against a control file reporting <b>7,356</b>. A single record spanning multiple lines is counted once by IP, but once per line by the source's control-file generator.</p>
+            <p>Control-file count did not match the feed &mdash; <b>7,354</b> records against a control file reporting <b>7,356</b>. A record spanning multiple lines is counted once by IP, once per line by the source generator.</p>
           </div>
           <div class="cause">
             <span class="cause-tag db">DB Bug &middot; 2</span>
-            <p><code>ORA-12899</code> &mdash; INVESTMENT_GROUP arrived at <b>2,741 characters</b> against a 2,500-character limit, on Jun 15 and 16.</p>
+            <p><code>ORA-12899</code> &mdash; INVESTMENT_GROUP at <b>2,741 chars</b> against a 2,500 limit, Jun 15&ndash;16.</p>
           </div>
         </td>
         <td>
-          <p>INC raised with the PTS source team to correct control-file record counting.</p>
-          <p><b>No IP-side change applies</b> &mdash; the defect lies in how the source generates the control file.</p>
-          <p>A second INC covers trimming the oversized attribute on load.</p>
+          <p>INC raised with PTS to correct control-file counting.</p>
+          <p><b>No IP-side change applies</b> &mdash; the defect is in how the source generates the control file.</p>
+          <p>A second INC covers trimming the attribute on load.</p>
         </td>
         <td class="ref">INC0021438147<br>INC0023796809</td>
         <td>
@@ -895,12 +900,12 @@
         <td>
           <div class="cause">
             <span class="cause-tag db">App Bug &middot; 8</span>
-            <p>The source changed an attribute IP had defined as NOT NULL to nullable and <b>did not notify the team</b>. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</p>
+            <p>The source changed an attribute IP defined as NOT NULL to nullable <b>without notice</b>. Every run failed back to back until the fix shipped. Earlier <code>NullPointerException</code> errors also occurred.</p>
           </div>
         </td>
         <td>
-          <p>INC raised to the DSMT team, who confirmed the field is <b>no longer mandatory going forward</b>.</p>
-          <p><b>PRIN-4619</b> changed the IP code to accept the nullable attribute and was released that weekend, ending the failure run.</p>
+          <p>INC raised; DSMT confirmed the field is <b>no longer mandatory going forward</b>.</p>
+          <p><b>PRIN-4619</b> accepted the nullable attribute and was released that weekend, ending the failure run.</p>
         </td>
         <td class="ref">PRIN-4619<br>INC0023197471</td>
         <td>
@@ -921,13 +926,13 @@
 </section>
 
 <!-- ============ SLIDE — INCIDENTS 2/2 ============ -->
-<section class="slide" id="s7">
+<section class="slide compact" id="s7">
   <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
   <h1 class="title">Detailed Incidents by Data Source (2/2)</h1>
   <p class="subtitle">GRC, CRS, Policy, GDW_HRDW &mdash; low-volume sources, all closed within the quarter</p>
 
   <table class="tbl-pro">
-    <colgroup><col style="width:16%"><col style="width:31%"><col style="width:29%"><col style="width:12%"><col style="width:12%"></colgroup>
+    <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
     <thead>
       <tr>
         <th>Data Source</th>
