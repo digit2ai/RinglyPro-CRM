@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200" role="img" aria-label="Torna Idioma">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0F1A2E"/>
+      <stop offset="45%"  stop-color="#1B2A4A"/>
+      <stop offset="100%" stop-color="#2A3F6A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <rect x="0" y="1176" width="1200" height="24" fill="#C9A84C"/>
+
+  <!-- the mark, on the 100x100 grid, scaled and centred -->
+  <g transform="translate(600,455) scale(4.9) translate(-50,-50)"
+     fill="none" stroke="#C9A84C" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="50" cy="36" r="11"/>
+    <path d="M50 19 v-5"/><path d="M63 23 l4 -4"/><path d="M37 23 l-4 -4"/>
+    <path d="M71 36 h6" opacity=".8"/><path d="M23 36 h6" opacity=".8"/>
+    <path d="M50 63 Q33 55 17 58.5 v20.5 Q33 75 50 84 Q67 75 83 78.5 V58.5 Q67 55 50 63 Z"/>
+    <path d="M50 63 v21"/>
+  </g>
+
+  <text x="600" y="855" text-anchor="middle" fill="#ffffff"
+        font-family="Georgia" font-size="104" font-weight="700" letter-spacing="10">TORNA IDIOMA</text>
+  <text x="600" y="930" text-anchor="middle" fill="#E8D48B"
+        font-family="Georgia" font-size="42" font-style="italic" letter-spacing="7">Vida &#183; Cultura &#183; Legado</text>
+  <line x1="430" y1="985" x2="770" y2="985" stroke="#C9A84C" stroke-width="2" opacity=".55"/>
+  <text x="600" y="1055" text-anchor="middle" fill="rgba(255,255,255,.72)"
+        font-family="Helvetica Neue" font-size="38" letter-spacing="2">The Return of the Cultural Language</text>
+</svg>
