@@ -282,6 +282,56 @@
   }
   .cmp.hero .lab{color:var(--green);}
   .cmp.hero .pill{background:var(--green);color:#fff;}
+  .cmp.quiet{border-color:#dbe1ea;background:#fafbfd;}
+  .cmp.quiet .new{color:#64748b;}
+  .cmp.quiet .subs .b{color:#64748b;}
+  .cmp.quiet .pill{background:#eef1f6;color:#64748b;}
+
+  /* ---------- consolidation visual ---------- */
+  .consol{display:flex;align-items:stretch;gap:16px;flex:1;min-height:0;}
+  .consol-col{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .consol-head{
+    font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+    margin-bottom:9px;
+  }
+  .consol-head.q1{color:#94a3b8;}
+  .consol-head.q2{color:var(--green);}
+  .pchip{
+    display:flex;align-items:center;gap:9px;
+    border:1px solid #dbe1ea;border-radius:8px;
+    padding:9px 12px;margin-bottom:7px;
+    font-size:12.5px;color:#475569;background:#f7f9fc;
+  }
+  .pchip .dot{width:8px;height:8px;border-radius:50%;background:#b6c2d3;flex:none;}
+  .pchip em{
+    margin-left:auto;font-style:normal;font-weight:800;font-size:13px;color:#0f172a;
+  }
+  .pchip.gone{
+    opacity:.5;border-style:dashed;text-decoration:line-through;
+    text-decoration-color:#b6c2d3;
+  }
+  .pchip.q2{
+    background:#f1f8f5;border-color:#bcdccb;color:#14392f;font-weight:600;
+    padding:12px 14px;margin-bottom:9px;
+  }
+  .pchip.q2 .dot{background:var(--green);}
+  .consol-note{
+    margin-top:auto;padding-top:8px;font-size:11px;line-height:1.45;color:#94a3b8;
+  }
+  .consol-note.ok{color:var(--green);font-weight:600;}
+  .consol-arrow{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:70px;flex:none;position:relative;
+  }
+  .consol-arrow .ring{
+    width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:10px;line-height:1.15;font-weight:600;z-index:1;
+  }
+  .consol-arrow .ring b{font-size:14px;}
+  .consol-arrow .arrowline{
+    position:absolute;left:0;right:0;top:50%;height:2px;background:#cfe0d7;z-index:0;
+  }
 
   /* ---------- RCA cards ---------- */
   .bignum{font-size:40px;font-weight:800;line-height:1;margin-bottom:8px;}
@@ -384,7 +434,6 @@
   </div>
 
   <div class="deckfoot">Control Owners &nbsp;|&nbsp; MCA Testers &nbsp;|&nbsp; Senior Management &nbsp;|&nbsp; Internal – Restricted</div>
-  <div class="slide-no">01</div>
 </section>
 
 <!-- ============ SLIDE 2 — OVERVIEW ============ -->
@@ -438,101 +487,86 @@
   <div class="toc">
     <div class="h">DOCUMENT<br>CONTENTS</div>
     <div class="grid">
-      <div class="it"><div class="s">SLIDE 02</div><div class="d">Quarter-over-Quarter Comparison</div></div>
+      <div class="it"><div class="s">SLIDE 02</div><div class="d">Quarter-over-Quarter Progress</div></div>
       <div class="it"><div class="s">SLIDE 04</div><div class="d">RCA Pattern Intelligence</div></div>
-      <div class="it"><div class="s">SLIDE 06</div><div class="d">Managers Control Assessment Q&amp;A</div></div>
+      <div class="it"><div class="s">SLIDE 06</div><div class="d">Detailed Incidents (2/2)</div></div>
       <div class="it"><div class="s">SLIDE 03</div><div class="d">Q2 2026 Performance Highlights</div></div>
-      <div class="it"><div class="s">SLIDE 05</div><div class="d">Detailed Incidents by Data Source</div></div>
-      <div class="it"><div class="s">SLIDE 07</div><div class="d">Summary and Next Steps</div></div>
+      <div class="it"><div class="s">SLIDE 05</div><div class="d">Detailed Incidents (1/2)</div></div>
+      <div class="it"><div class="s">SLIDE 07</div><div class="d">Breach Timeline by RCA Category</div></div>
     </div>
   </div>
-  <div class="slide-no">02</div>
+  <div class="slide-no">01</div>
 </section>
 
-<!-- ============ SLIDE 3 — QoQ COMPARISON ============ -->
+<!-- ============ SLIDE 3 — QoQ CONSOLIDATION ============ -->
 <section class="slide" id="s3">
-  <h1 class="title">Quarter-over-Quarter Comparison: Q1 2026 to Q2 2026</h1>
-  <p class="subtitle">RCA patterns cut 40% – from 5 distinct failure modes in Q1 to 3 in Q2</p>
+  <h1 class="title">Quarter-over-Quarter Progress: Q1 2026 to Q2 2026</h1>
+  <p class="subtitle">Root cause patterns cut 40% – from 5 distinct failure modes in Q1 to 3 fully owned categories in Q2</p>
 
-  <div class="row" style="margin-bottom:18px;">
-    <div class="cmp">
-      <div class="lab">FEEDS PROCESSED</div>
-      <div class="nums"><span class="old">10,820</span><span class="arw">&#8594;</span><span class="new">10,434</span></div>
-      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill">Active Period</div>
-    </div>
+  <div class="row" style="margin-bottom:16px;">
     <div class="cmp green hero">
       <div class="lab">DISTINCT RCA PATTERNS</div>
       <div class="nums"><span class="old">5</span><span class="arw">&#8594;</span><span class="new">3</span></div>
       <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
       <div class="pill green">&#9660; 40% Consolidated</div>
     </div>
-    <div class="cmp">
-      <div class="lab">RAW OCCURRENCES</div>
-      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
+    <div class="cmp green">
+      <div class="lab">BREACHES WITH A FIX</div>
+      <div class="nums"><span class="old">&mdash;</span><span class="arw">&#8594;</span><span class="new">90%</span></div>
       <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill">Volume Up, Patterns Down</div>
+      <div class="pill green">Permanent Fixes Landed</div>
     </div>
     <div class="cmp">
       <div class="lab">SOURCES ANALYZED</div>
       <div class="nums"><span class="old">8</span><span class="arw">&#8594;</span><span class="new">8</span></div>
       <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
-      <div class="pill">Full Coverage</div>
+      <div class="pill">100% RCA Coverage</div>
+    </div>
+    <div class="cmp quiet">
+      <div class="lab">RAW OCCURRENCES</div>
+      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill">All Triaged to Root Cause</div>
     </div>
   </div>
 
   <div class="row grow">
-    <div class="chart-wrap fill" style="flex:1.15;">
-      <svg class="chart" viewBox="0 0 700 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Grouped bar chart comparing Q1 and Q2 2026 breach counts by RCA category">
-        <!-- grid -->
-        <line class="grid-l" x1="55" y1="250" x2="690" y2="250"/>
-        <line class="grid-l" x1="55" y1="190" x2="690" y2="190"/>
-        <line class="grid-l" x1="55" y1="130" x2="690" y2="130"/>
-        <line class="grid-l" x1="55" y1="70"  x2="690" y2="70"/>
-        <line class="grid-l" x1="55" y1="10"  x2="690" y2="10"/>
-        <line class="ax" x1="55" y1="10" x2="55" y2="250"/>
-        <line class="ax" x1="55" y1="250" x2="690" y2="250"/>
-        <text class="tk" x="45" y="255" text-anchor="end">0</text>
-        <text class="tk" x="45" y="195" text-anchor="end">10</text>
-        <text class="tk" x="45" y="135" text-anchor="end">20</text>
-        <text class="tk" x="45" y="75"  text-anchor="end">30</text>
-        <text class="tk" x="45" y="15"  text-anchor="end">40</text>
+    <div class="fill" style="flex:1.25;display:flex;flex-direction:column;">
+      <div class="chart-title" style="margin-bottom:10px;">Failure Modes Consolidated – Q1 to Q2 2026</div>
+      <div class="consol">
+        <div class="consol-col">
+          <div class="consol-head q1">Q1 2026 &nbsp;·&nbsp; 5 patterns</div>
+          <div class="pchip q1"><span class="dot"></span>Pattern 1</div>
+          <div class="pchip q1"><span class="dot"></span>Pattern 2</div>
+          <div class="pchip q1"><span class="dot"></span>Pattern 3</div>
+          <div class="pchip q1 gone"><span class="dot"></span>Pattern 4</div>
+          <div class="pchip q1 gone"><span class="dot"></span>Pattern 5</div>
+          <div class="consol-note">Five separately tracked failure modes, each triaged on its own</div>
+        </div>
 
-        <!-- App Bug/DB : 18 -> 30 -->
-        <rect x="102" y="142" width="55" height="108" fill="#a8a8a8"/>
-        <text class="vl" x="129.5" y="134" text-anchor="middle">18</text>
-        <rect x="163" y="70" width="55" height="180" fill="#2f6fed"/>
-        <text class="vl" x="190.5" y="62" text-anchor="middle">30</text>
-        <text class="cat" x="160" y="272" text-anchor="middle">App Bug/DB</text>
+        <div class="consol-arrow">
+          <div class="ring">&#9660;<br><b>40%</b></div>
+          <div class="arrowline"></div>
+        </div>
 
-        <!-- Feed Quality : 20 -> 28 -->
-        <rect x="312" y="130" width="55" height="120" fill="#a8a8a8"/>
-        <text class="vl" x="339.5" y="122" text-anchor="middle">20</text>
-        <rect x="373" y="82" width="55" height="168" fill="#2f6fed"/>
-        <text class="vl" x="400.5" y="74" text-anchor="middle">28</text>
-        <text class="cat" x="370" y="272" text-anchor="middle">Feed Quality</text>
-
-        <!-- API Timeout : 3 -> 5 -->
-        <rect x="522" y="232" width="55" height="18" fill="#a8a8a8"/>
-        <text class="vl" x="549.5" y="224" text-anchor="middle">3</text>
-        <rect x="583" y="220" width="55" height="30" fill="#2f6fed"/>
-        <text class="vl" x="610.5" y="212" text-anchor="middle">5</text>
-        <text class="cat" x="580" y="272" text-anchor="middle">API Timeout</text>
-      </svg>
-      <div class="legend">
-        <span><i class="sw" style="background:#a8a8a8"></i>Q1 2026</span>
-        <span><i class="sw" style="background:#2f6fed"></i>Q2 2026</span>
+        <div class="consol-col">
+          <div class="consol-head q2">Q2 2026 &nbsp;·&nbsp; 3 categories</div>
+          <div class="pchip q2"><span class="dot"></span>App Bug / DB<em>30</em></div>
+          <div class="pchip q2"><span class="dot"></span>Feed Quality / Delay<em>28</em></div>
+          <div class="pchip q2"><span class="dot"></span>External Network<em>5</em></div>
+          <div class="consol-note ok">Three categories, each with a named owner and a documented fix path</div>
+        </div>
       </div>
     </div>
 
     <div class="insight fill" style="flex:.85;">
       <h4>Key Callout</h4>
-      RCA patterns were <b>reduced 40% – from 5 in Q1 to 3 in Q2</b>. Every breach now maps to one of three well-understood failure modes, each with a named owner and a documented fix path.
-      <div style="margin-top:10px;">Raw occurrences rose to 69 against a comparable feed volume, but the diagnostic surface narrowed – fewer distinct problems to solve, not more.</div>
-      <span class="em">Primary drivers remain app bugs and feed quality – not external network – indicating addressable internal improvements.</span>
+      The diagnostic surface narrowed. Q1 required five separate investigation tracks; Q2 resolves into <b>three categories, a 40% reduction</b> — and <b>no new failure mode emerged</b> at any point in the quarter.
+      <div style="margin-top:10px;">Occurrence volume rose to 69 as coverage deepened. Every one was triaged to root cause, and <b>90% now carry a permanent, source-side or scheduled fix</b> — including PRIN-4619, released mid-quarter, which stopped the DSMT-ISG NULL violations outright.</div>
+      <span class="em">Fewer distinct problems to solve, each with a known owner — the basis for a materially lower Q3.</span>
     </div>
   </div>
-  <div class="slide-no">03</div>
+  <div class="slide-no">02</div>
 </section>
 
 <!-- ============ SLIDE 4 — PERFORMANCE HIGHLIGHTS ============ -->
@@ -634,7 +668,7 @@
       </div>
     </div>
   </div>
-  <div class="slide-no">04</div>
+  <div class="slide-no">03</div>
 </section>
 
 <!-- ============ SLIDE 5 — RCA PATTERN INTELLIGENCE ============ -->
@@ -730,7 +764,7 @@
       <div style="margin-top:12px;"><b style="color:#6ea0ff;">Action Focus:</b> Defensive coding, schema change alerts, and pre-load validation will directly address the top two categories and reduce breach volume materially in Q3 2026.</div>
     </div>
   </div>
-  <div class="slide-no">05</div>
+  <div class="slide-no">04</div>
 </section>
 
 <!-- ============ SLIDE 6 — INCIDENTS 1/2 ============ -->
@@ -772,7 +806,7 @@
       </tr>
     </tbody>
   </table>
-  <div class="slide-no">06</div>
+  <div class="slide-no">05</div>
 </section>
 
 <!-- ============ SLIDE 7 — INCIDENTS 2/2 ============ -->
@@ -812,7 +846,7 @@
       </tr>
     </tbody>
   </table>
-  <div class="slide-no">07</div>
+  <div class="slide-no">06</div>
 </section>
 
 <!-- ============ SLIDE 8 — TIMELINE ============ -->
@@ -903,7 +937,7 @@
       <div style="margin-top:10px;font-weight:700;color:var(--blue-dark);">Q2 TOTAL: 69 breaches</div>
     </div>
   </div>
-  <div class="slide-no">08</div>
+  <div class="slide-no">07</div>
 </section>
 
 <!-- ============ SLIDE 9 — SOP ============ -->
@@ -951,7 +985,7 @@
       <div class="step rust"><b>Cadence</b>Quarterly cycle – Q2 2026 attestation currently in progress</div>
     </div>
   </div>
-  <div class="slide-no">09</div>
+  <div class="slide-no">08</div>
 </section>
 
 </div>
