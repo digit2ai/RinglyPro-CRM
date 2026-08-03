@@ -136,8 +136,34 @@
       '</div>';
   }
 
+  // Cada pilar es ACCIONABLE: al abrir la tarjeta el usuario puede registrar plata
+  // en ese pilar (aportar al fondo, a retiro, etc.), se guarda en /me/items y el
+  // tablero se recalcula al instante — así usa los indicadores para subir su
+  // puntaje hacia verde. Mapa pilar -> módulo + textos.
+  var CAT = { income: 'ingreso', expenses: 'gasto', savings: 'ahorro', debt: 'deuda', investments: 'inversion', insurance: 'seguros', retirement: 'retiro' };
+  var ACT_LABEL = { income: 'Registrar un ingreso', expenses: 'Registrar un gasto', savings: 'Aportar a mi fondo de emergencia', debt: 'Registrar una deuda', investments: 'Agregar una inversión', insurance: 'Registrar un seguro', retirement: 'Aportar a mi retiro' };
+  var ACT_NAME = { income: 'Ingreso', expenses: 'Gasto', savings: 'Aporte a fondo', debt: 'Deuda', investments: 'Inversión', insurance: 'Seguro', retirement: 'Aporte a retiro' };
+  var ACT_HINT = {
+    income: 'Súmalo a tus ingresos del mes.', expenses: 'Se suma a tus gastos del mes.',
+    savings: 'Sube tu fondo de emergencia y tu solvencia.', debt: 'Registra el saldo que debes.',
+    investments: 'Suma a tu patrimonio invertido.', insurance: 'Registra el valor asegurado (cobertura).',
+    retirement: 'Aporta a tu ahorro de retiro.',
+  };
+
   function bucketCard(b) {
     var c = col(b.light), sc = b.score == null ? '—' : b.score;
+    var act = CAT[b.key] ? (
+      '<div class="sf-act">' +
+        '<button type="button" class="sf-act-btn" data-add="' + b.key + '">＋ ' + esc(ACT_LABEL[b.key]) + '</button>' +
+        '<div class="sf-act-form" hidden>' +
+          '<input class="sf-act-amt" type="text" inputmode="numeric" placeholder="Monto en pesos (ej. 100000)">' +
+          '<div class="sf-act-btns"><button type="button" class="sf-act-save" data-save="' + b.key + '">Guardar</button>' +
+          '<button type="button" class="sf-act-cancel">Cancelar</button></div>' +
+          '<div class="sf-act-hint">' + esc(ACT_HINT[b.key]) + '</div>' +
+        '</div>' +
+        '<div class="sf-act-msg" hidden></div>' +
+      '</div>'
+    ) : '';
     return '<div class="sf-b" data-k="' + b.key + '">' +
       '<div class="hd"><span class="nm"><span class="sf-tl" style="background:' + c + '"></span>' + esc(b.label) + '</span>' +
       '<span class="sc" style="color:' + c + '">' + sc + '<span class="chev">▶</span></span></div>' +
@@ -145,6 +171,7 @@
       '<div class="body"><div class="inner">' +
       '<div class="formula">' + esc(b.formula) + '</div>' +
       '<div class="tgt">Meta: ' + esc(b.target || '') + '</div>' +
+      act +
       '<div class="find load" data-find="' + b.key + '"><span class="fh">HALLAZGOS DE MAYA</span>Analizando tus datos…</div>' +
       '</div></div></div>';
   }
@@ -274,10 +301,61 @@
     (function tick(now) { var p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3); if (numEl) numEl.textContent = Math.round(score * e); if (p < 1) requestAnimationFrame(tick); })(performance.now());
   }
 
-  function bindCards() {
+  function bindCards(demo) {
     document.querySelectorAll('.sf-b .hd').forEach(function (hd) {
       hd.addEventListener('click', function () { hd.parentElement.classList.toggle('open'); });
     });
+    // Acción por pilar: abrir el mini-formulario y guardar el aporte.
+    document.querySelectorAll('.sf-act-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var form = btn.parentElement.querySelector('.sf-act-form');
+        var open = form.hasAttribute('hidden');
+        if (open) { form.removeAttribute('hidden'); var i = form.querySelector('.sf-act-amt'); if (i) i.focus(); }
+        else form.setAttribute('hidden', '');
+      });
+    });
+    document.querySelectorAll('.sf-act-cancel').forEach(function (b) {
+      b.addEventListener('click', function () { b.closest('.sf-act-form').setAttribute('hidden', ''); });
+    });
+    document.querySelectorAll('.sf-act-amt').forEach(function (inp) {
+      // Formatea con separadores de miles mientras escribe (COP).
+      inp.addEventListener('input', function () {
+        var d = inp.value.replace(/\D/g, '');
+        inp.value = d ? Number(d).toLocaleString('es-CO') : '';
+      });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var s = inp.closest('.sf-act').querySelector('.sf-act-save'); if (s) s.click(); } });
+    });
+    document.querySelectorAll('.sf-act-save').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-save');
+        var wrap = btn.closest('.sf-act');
+        var amt = parseInt((wrap.querySelector('.sf-act-amt').value || '').replace(/\D/g, ''), 10);
+        var msg = wrap.querySelector('.sf-act-msg');
+        if (!amt || amt <= 0) { wrap.querySelector('.sf-act-amt').focus(); return; }
+        if (demo) { msg.removeAttribute('hidden'); msg.textContent = 'En modo ejemplo no se guarda. Inicia sesión para registrar tus datos.'; return; }
+        btn.disabled = true; var old = btn.textContent; btn.textContent = 'Guardando…';
+        fetch('/planea/api/v1/me/items', {
+          method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: CAT[key], name: ACT_NAME[key], type: ACT_NAME[key], value: amt, monthly: 0 })
+        }).then(function (r) { if (!r.ok) throw new Error('save'); return r.json(); })
+          .then(function () { reloadSalud(true); })
+          .catch(function () { btn.disabled = false; btn.textContent = old; msg.removeAttribute('hidden'); msg.textContent = 'No se pudo guardar. Intenta de nuevo.'; });
+      });
+    });
+  }
+
+  // Re-lee la Salud y re-renderiza para que el gauge y los pilares se muevan solos.
+  // scroll=true sube al medidor para que el usuario vea el cambio.
+  function reloadSalud(scroll) {
+    fetch('/planea/api/v1/me/salud', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        render(d, false);
+        if (scroll) { var root = document.getElementById('salud-root'); if (root && root.scrollIntoView) root.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      })
+      .catch(function () {});
   }
 
   function loadFindings(demo) {
@@ -340,12 +418,12 @@
       return;
     }
     root.innerHTML = cockpit(d) + chartsBlock() +
-      '<div class="sf-card" style="border:none;background:none;padding:6px 2px"><h2>Detalle por área</h2><div class="sub">Toca una tarjeta para ver su fórmula y los hallazgos de Maya.</div></div>' +
+      '<div class="sf-card" style="border:none;background:none;padding:6px 2px"><h2>Detalle por área</h2><div class="sub">Toca una tarjeta para ver su fórmula, los hallazgos de Maya y registrar plata en ese pilar. Cada aporte actualiza tu puntaje al instante.</div></div>' +
       '<div class="sf-grid">' + d.buckets.map(bucketCard).join('') + '</div>' +
       simulator(d) + neuralFindings(d);
     animatePrimary(d.overall);
     drawCharts(d);
-    bindCards();
+    bindCards(demo);
     wireSimulator(d);
     loadFindings(demo);
   }
