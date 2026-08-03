@@ -14,18 +14,21 @@
 
   var API = '/planea/api/v1/maya/chat';
   var TTS = '/api/tts/edge';
-  var TTS_VOICE = 'salome'; // es-CO
+  // Voz de Maya: Dalia (es-MX-DaliaNeural) para español, Ava (en-US-AvaNeural) para
+  // inglés. Ambas por el motor neural sin llave /api/tts/edge. Planea es español,
+  // así que Dalia es la activa; Ava queda lista si la app agrega inglés.
+  var TTS_VOICE_ES = 'dalia';   // es-MX-DaliaNeural
+  var TTS_VOICE_EN = 'ava';     // en-US-AvaNeural
+  function ttsVoice() { return (document.documentElement.lang || 'es').slice(0, 2) === 'en' ? TTS_VOICE_EN : TTS_VOICE_ES; }
   var SUGERENCIAS = [
-    'Hola Maya, dame un resumen de mi salud financiera hoy',
-    '¿Qué debo hacer primero?',
-    '¿Cómo voy con mi fondo de emergencia?',
-    '¿Estoy listo para mi meta de vivienda?'
+    'Quiero registrar mis ingresos',
+    'Tengo una deuda que anotar',
+    'Cuánto tengo ahorrado',
+    '¿Qué datos me faltan por registrar?'
   ];
 
-  // TEMPORARY: voice disabled — text-only chatbot for now. Set to true to restore
-  // Maya's voice (mic dictation, hands-free mode, spoken replies). No voice code was
-  // removed; this flag just hides the controls and stops auto-speaking.
-  var VOICE_ENABLED = false;
+  // Maya habla: dictado por micrófono, modo manos libres y respuestas habladas.
+  var VOICE_ENABLED = true;
 
   var history = []; // {role, content}
   var speaking = VOICE_ENABLED; // auto-speak Maya replies (off while voice disabled)
@@ -339,9 +342,10 @@
     if (els.body.childElementCount === 0) {
       var p = profile();
       var nom = p.nombre ? ' ' + p.nombre : '';
+      var comoHablar = VOICE_ENABLED ? 'Escríbeme o toca el micrófono y hablamos.' : 'Escríbeme por aquí.';
       var msg = p.sin_diagnostico
-        ? 'Hola' + nom + ', soy Maya, tu guía financiera. Aún no veo tu diagnóstico. Cuando quieras, hacemos tu Planea Score en dos minutos y te digo exactamente por dónde empezar. ¿Te cuento cómo funciona?'
-        : 'Hola' + nom + ', soy Maya. Puedo explicarte tu Planea Score, revisar tus metas y decirte qué hacer primero. ' + (VOICE_ENABLED ? 'Escríbeme o toca el micrófono.' : 'Escríbeme por aquí.');
+        ? 'Hola' + nom + ', soy Maya, tu asistente. Te ayudo a registrar tu información: ingresos, gastos, ahorros, deudas, inversiones, seguros y retiro. Empecemos por lo más fácil: ¿cuánto ganas al mes? ' + comoHablar
+        : 'Hola' + nom + ', soy Maya, tu asistente. Te ayudo a mantener tu información al día. ¿Qué quieres registrar hoy: un ingreso, un gasto, un ahorro o una deuda? ' + comoHablar;
       addMsg('maya', msg);
     }
   }
@@ -499,7 +503,7 @@
   }
   function fetchDecoded(text) {
     var c = ensureCtx(); if (!c) return Promise.resolve(null);
-    return fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: TTS_VOICE }) })
+    return fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: ttsVoice() }) })
       .then(function (r) { return r.ok ? r.arrayBuffer() : null; })
       .then(function (buf) {
         if (!buf) return null;
@@ -578,7 +582,7 @@
     if (!els.panel.classList.contains('abierto')) open();
     handsFree = true; hfEmpty = 0; updateHF(); unlockAudio();
     if (els.sug) els.sug.style.display = 'none';
-    var g = 'Hola ' + (profile().nombre || '') + '. Soy Maya. Cuéntame, ¿qué quieres saber sobre tus finanzas?';
+    var g = 'Hola ' + (profile().nombre || '') + '. Soy Maya, tu asistente. Cuéntame qué dato quieres registrar: un ingreso, un gasto, un ahorro o una deuda.';
     addMsg('maya', g); history.push({ role: 'assistant', content: g });
     hfSpeakThenListen(g);
   }
