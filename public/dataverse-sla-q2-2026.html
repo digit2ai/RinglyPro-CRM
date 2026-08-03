@@ -426,6 +426,22 @@
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .sw{width:12px;height:12px;border-radius:2px;display:inline-block;}
 
+  /* ---------- quarter summary ---------- */
+  .card p.wt{
+    font-size:11.5px;line-height:1.55;color:#41506a;margin:0 0 10px;
+  }
+  .card p.wt b{color:#0f172a;}
+  .card p.wt.hi{
+    margin-top:auto;margin-bottom:0;padding-top:11px;border-top:1px solid #e6ece9;
+    color:#14513c;font-weight:700;font-size:11px;
+  }
+  .carry{
+    margin-top:16px;background:#f6f8fb;border:1px solid #e5eaf1;border-radius:10px;
+    padding:13px 18px;font-size:10.5px;color:#6b7889;line-height:1.5;
+  }
+  .carry b{color:#41506a;}
+  .carry .d{color:#c3ccd8;margin:0 5px;}
+
   /* ---------- MCA control Q&A ---------- */
   .sec-eyebrow{
     font-size:10px;letter-spacing:.16em;font-weight:800;color:#94a3b8;
@@ -571,7 +587,6 @@
           </div>
           <div class="cr-n">5<em>8%</em></div>
         </div>
-      </div>
       </div>
     </div>
 
@@ -1063,6 +1078,82 @@
 </div>
 </section>
 
+<!-- ============ SLIDE — Q2 WINS SUMMARY ============ -->
+<section class="slide" id="s7b">
+<div class="slide-inner">
+  <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; QUARTER SUMMARY</div>
+  <h1 class="title">What Q2 2026 Delivered</h1>
+  <p class="subtitle">Consolidation, permanent fixes and complete root-cause coverage across all eight sources</p>
+
+  <div class="row" style="margin-bottom:18px;">
+    <div class="kpi success">
+      <div class="lab">Fewer Root Cause Patterns</div>
+      <div class="val">40% <span style="font-size:22px;">&#9660;</span></div>
+      <div class="note">5 investigation tracks in Q1 down to 3 owned categories</div>
+    </div>
+    <div class="kpi solid">
+      <div class="lab">Traced to Root Cause</div>
+      <div class="val">100%</div>
+      <div class="note">All 8 sources reviewed line by line with the source owner</div>
+    </div>
+    <div class="kpi success">
+      <div class="lab">Carry a Fix</div>
+      <div class="val">90%</div>
+      <div class="note">57 of 63 as at reporting &middot; 42 closed within Q2</div>
+    </div>
+    <div class="kpi navy">
+      <div class="lab">Data-Loss Events</div>
+      <div class="val">0</div>
+      <div class="note">Every affected load re-ran or self-resolved to completion</div>
+    </div>
+  </div>
+
+  <div class="row grow">
+    <div class="card green fill">
+      <div class="card-head">
+        <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7M4 12h16M4 18h7"/><path d="M15 3l4 3-4 3"/></svg></div>
+        <div class="card-title green">Consolidation</div>
+      </div>
+      <div class="rule green"></div>
+      <p class="wt">Three DB-side Q1 patterns &mdash; <b>JDBC Failure, HikariPool Saturation and NPE / App Bug</b> &mdash; now resolve as a single owned category.</p>
+      <p class="wt">Five investigation tracks became three, each with a named owner and a documented fix path.</p>
+      <p class="wt hi">No new failure mode emerged at any point in the quarter.</p>
+    </div>
+
+    <div class="card green fill">
+      <div class="card-head">
+        <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
+        <div class="card-title green">Permanent Fixes Landed</div>
+      </div>
+      <div class="rule green"></div>
+      <p class="wt"><b>PRIN-4619</b> set CNTRY_ISO1_CODE nullable in DSMT_COUNTRY &mdash; raised 09-Jun, resolved 10-Jun, a <b>1-day turnaround</b> that ended the failure run with no recurrence.</p>
+      <p class="wt"><b>Drift schedule</b> moved 08:00 to 08:30, removing the cause behind 11 delayed-feed breaches.</p>
+      <p class="wt hi">PRIN-5573 followed on 16-Jul, absorbing future timestamp format changes.</p>
+    </div>
+
+    <div class="card green fill">
+      <div class="card-head">
+        <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2z"/><path d="M8 9h7M8 13h7"/></svg></div>
+        <div class="card-title green">Closure Discipline</div>
+      </div>
+      <div class="rule green"></div>
+      <p class="wt">Every breach carries a documented root cause, a named resolution and &mdash; where warranted &mdash; a Jira or INC reference.</p>
+      <p class="wt"><b>Three sources closed with no recurrence:</b> CRS, Policy and GDW_HRDW, each with the reason no ticket applied recorded against it.</p>
+      <p class="wt hi">Full population reviewed &mdash; no sampling, no materiality exclusions.</p>
+    </div>
+  </div>
+
+  <div class="carry">
+    <b>Carried into Q3 2026:</b>
+    Drift DB integrity &mdash; 6 items with the source team
+    <span class="d">&middot;</span> GRC API timeout escalation to the endpoint owner
+    <span class="d">&middot;</span> the 6-item reconciliation variance
+    <span class="d">&middot;</span> a formal source-change notification path
+  </div>
+  <div class="slide-no">07</div>
+</div>
+</section>
+
 <!-- ============ SLIDE 9 — SOP ============ -->
 <section class="slide" id="s9">
 <div class="slide-inner">
@@ -1109,7 +1200,7 @@
       <div class="step rust"><b>Cadence</b>Quarterly cycle – Q2 2026 attestation currently in progress</div>
     </div>
   </div>
-  <div class="slide-no">07</div>
+  <div class="slide-no">08</div>
 </div>
 </section>
 
@@ -1124,7 +1215,7 @@
     <div class="qa">
       <div class="q">1. What control is being assessed?</div>
       <div class="a">Daily monitoring of Dataverse ingestion feed delivery against defined SLA cutoff times. The control detects feeds that miss their cutoff, routes them for resolution, and evidences that each miss was investigated and closed.</div>
-      <div class="ev"><b>Evidence:</b> SOP, slide 07 &middot; Dataverse SLA dashboard</div>
+      <div class="ev"><b>Evidence:</b> SOP, slide 08 &middot; Dataverse SLA dashboard</div>
     </div>
 
     <div class="qa">
@@ -1154,10 +1245,10 @@
     <div class="qa">
       <div class="q">6. Who operates the control, and how often?</div>
       <div class="a">The IP Data Ingestion Team monitors the dashboard <b>daily</b>. A breach triggers automatic notification to L2 Support, who raise a ServiceNow incident assigned to <b>CTI NA EX US CTI GL EX CITI DATAVERSE L3</b>. L3 investigates, resolves and re-triggers the load.</div>
-      <div class="ev"><b>Evidence:</b> SOP, slide 07 &middot; ServiceNow assignment group</div>
+      <div class="ev"><b>Evidence:</b> SOP, slide 08 &middot; ServiceNow assignment group</div>
     </div>
   </div>
-  <div class="slide-no">08</div>
+  <div class="slide-no">09</div>
 </div>
 </section>
 
@@ -1205,7 +1296,7 @@
       <div class="ev"><b>Evidence:</b> per-item resolutions, slides 05–06 &middot; INC (GAU_OWNER_DELEGATES)</div>
     </div>
   </div>
-  <div class="slide-no">09</div>
+  <div class="slide-no">10</div>
 </div>
 </section>
 
@@ -1244,7 +1335,7 @@
     <div class="qa">
       <div class="q">17. What is the attestation flow, and where does it stand?</div>
       <div class="a">The Control Owner exports and reviews the quarterly report, uploads it as MCA evidence, and submits the attested snapshot to the MCA Tester. The Tester validates evidence against control requirements and records formal sign-off in the MCA system. <b>Q2 2026 attestation is in progress.</b></div>
-      <div class="ev"><b>Evidence:</b> SOP quarterly and attestation tracks, slide 07</div>
+      <div class="ev"><b>Evidence:</b> SOP quarterly and attestation tracks, slide 08</div>
     </div>
 
     <div class="qa flag">
@@ -1253,7 +1344,7 @@
       <div class="ev"><b>Evidence:</b> Drift item, slide 05 &middot; open actions carried to Q3 2026</div>
     </div>
   </div>
-  <div class="slide-no">10</div>
+  <div class="slide-no">11</div>
 </div>
 </section>
 
