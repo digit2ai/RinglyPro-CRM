@@ -341,14 +341,32 @@
     font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
     color:#a8b2c1;font-weight:800;margin-bottom:10px;
   }
-  .catlist{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;}
+  .collab{
+    display:flex;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:#a8b2c1;font-weight:800;margin-bottom:9px;
+  }
+  .collab .r{margin-left:auto;color:#5b6880;}
+  .catlist{display:flex;flex-direction:column;gap:11px;flex:1;min-height:0;}
+  .q1s{
+    flex:0 0 33%;display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0;
+  }
+  .chipx{
+    display:inline-block;background:#fff;border:1px solid #e2e7ee;border-radius:4px;
+    padding:3px 8px;font-size:9.5px;color:#6b7889;line-height:1.3;max-width:100%;
+  }
+  .chipx b{color:#41506a;font-weight:800;}
+  .mrg{
+    flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:64px;color:#b6c0cd;
+  }
+  .mrg span{font-size:17px;line-height:1;}
+  .mrg em{font-size:8px;font-style:normal;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;color:#b6c0cd;font-weight:700;}
+  .q2s{flex:1;min-width:0;}
   .cr{
     flex:1;border:1px solid var(--line);border-left-width:4px;border-radius:10px;
     padding:14px 20px;display:flex;align-items:center;gap:22px;min-width:0;
   }
-  .cr-main{flex:1;min-width:0;}
-  .cr-t{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px;}
-  .cr-s{font-size:10.5px;color:#8a96a8;line-height:1.4;margin-bottom:11px;}
+  .cr-t{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-bottom:9px;}
   .cr .bar{height:6px;border-radius:3px;background:rgba(15,23,42,.08);overflow:hidden;}
   .cr .bar i{display:block;height:100%;border-radius:3px;}
   .cr-n{font-size:32px;font-weight:800;line-height:1;flex:none;text-align:right;letter-spacing:-.02em;}
@@ -516,32 +534,44 @@
 
   <div class="row grow" style="gap:22px;margin-top:20px;">
     <div class="fill" style="flex:1.5;display:flex;flex-direction:column;">
-      <div class="mini-label">The three Q2 categories</div>
+      <div class="collab"><span>Q1 2026 &mdash; 5 separate patterns</span><span class="r">Q2 2026 &mdash; 3 owned categories</span></div>
       <div class="catlist">
         <div class="cr db">
-          <div class="cr-main">
+          <div class="q1s">
+            <span class="chipx">JDBC Failure <b>13</b></span>
+            <span class="chipx">HikariPool Saturation</span>
+            <span class="chipx">NPE / App Bug</span>
+          </div>
+          <div class="mrg"><span>&#8594;</span><em>3 into 1</em></div>
+          <div class="q2s">
             <div class="cr-t">App Bug / DB</div>
-            <div class="cr-s">Absorbed three Q1 patterns &mdash; JDBC Failure, HikariPool Saturation and NPE / App Bug</div>
             <div class="bar"><i style="width:48%"></i></div>
           </div>
           <div class="cr-n">30<em>48%</em></div>
         </div>
         <div class="cr feed">
-          <div class="cr-main">
+          <div class="q1s">
+            <span class="chipx">Feed Delay <b>8</b></span>
+          </div>
+          <div class="mrg"><span>&#8594;</span><em>carried</em></div>
+          <div class="q2s">
             <div class="cr-t">Feed Quality / Delay</div>
-            <div class="cr-s">Direct successor to Q1 Feed Delay</div>
             <div class="bar"><i style="width:44%"></i></div>
           </div>
           <div class="cr-n">28<em>44%</em></div>
         </div>
         <div class="cr net">
-          <div class="cr-main">
+          <div class="q1s">
+            <span class="chipx">API Timeout <b>14</b></span>
+          </div>
+          <div class="mrg"><span>&#8594;</span><em>carried</em></div>
+          <div class="q2s">
             <div class="cr-t">External Network</div>
-            <div class="cr-s">Direct successor to Q1 API Timeout</div>
             <div class="bar"><i style="width:8%"></i></div>
           </div>
           <div class="cr-n">5<em>8%</em></div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -563,7 +593,7 @@
   </div>
 
   <div class="foot-note">
-    <b>Q1 2026 patterns:</b> JDBC Failure (13) &middot; HikariPool Saturation &middot; NPE / App Bug &middot; Feed Delay (8) &middot; API Timeout (14).
+    <b>Q1 2026:</b> 5 patterns &middot; 8 sources &middot; 10,820 feeds &nbsp;&nbsp;<b>Q2 2026:</b> 3 patterns &middot; 8 sources &middot; 10,434 feeds
     <span class="r">Occurrence volume 41 &rarr; 69 across a comparable feed count &mdash; every one triaged to root cause.</span>
   </div>
   <div class="slide-no">02</div>

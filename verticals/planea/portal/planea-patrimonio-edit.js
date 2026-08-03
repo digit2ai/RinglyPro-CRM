@@ -33,7 +33,7 @@
 
     return '' +
       '<section class="sec pe-sec">' +
-      '<div class="group"><div class="group-head"><div><div class="gt">🏠 ¿Tu vivienda actual es…?</div><div class="gs">Para la mayoría de colombianos la vivienda es el activo más grande. Empieza aquí.</div></div></div>' +
+      '<div class="group"><div class="group-head"><div><div class="gt">¿Tu vivienda actual es…?</div><div class="gs">Para la mayoría de colombianos la vivienda es el activo más grande. Empieza aquí.</div></div></div>' +
       '<div class="group-body" style="padding:16px 18px"><div class="pe-vivienda">' +
       VIVIENDA.map(function (o, i) { return '<button class="pe-viv" data-viv="' + i + '">' + esc(o.v) + '<span>' + esc(o.hint) + '</span></button>'; }).join('') +
       '</div></div></div>' +
