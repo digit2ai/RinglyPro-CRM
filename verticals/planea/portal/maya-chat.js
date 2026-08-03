@@ -92,6 +92,15 @@
             var sd = d.score_data || {};
             if (sd && sd.score != null) { prof.planea_score = sd.score; prof.rango = rangoDe(sd.score); prof.score_pilares_pct = sd.pillars || null; }
             else prof.sin_diagnostico = true;
+            // HU-2: qué pilares siguen en PROXY del survey (sin dato real) para que
+            // Maya priorice sus preguntas guiadas y cierre esos vacíos primero.
+            if (sd && sd.dimensions) {
+              prof.dimensiones = sd.dimensions.map(function (x) { return { pilar: x.label, key: x.key, fuente: x.source, puntaje: x.score }; });
+              prof.pilares_en_proxy = (sd.proxy_pillars || []).slice();
+            }
+            var sum = d.summary || {};
+            prof.modulos_con_datos = ['ingreso', 'gasto', 'ahorro', 'inversion', 'deuda', 'seguros', 'retiro']
+              .filter(function (k) { return (sum[k] || 0) > 0; });
             var assets = d.assets_data || [], liab = d.liabilities_data || [];
             if (assets.length || liab.length) {
               var at = assets.reduce(function (a, x) { return a + (+x.value || 0); }, 0);
@@ -171,6 +180,12 @@
       '.maya-msg.u{align-self:flex-end;background:#16373A;color:#fff;border-bottom-right-radius:5px}',
       '.maya-msg.m{align-self:flex-start;background:#fff;color:#1E2B2C;border:1px solid #E6E9E8;border-bottom-left-radius:5px}',
       '.maya-msg.typing{color:#6E7D7B;font-style:italic}',
+      '.maya-confirm{border-color:#bfe3cf;background:#f2fbf6}',
+      '.maya-confirm .mc-item{font-size:13px;margin-bottom:4px}',
+      '.maya-confirm .mc-btns{display:flex;gap:8px;margin-top:9px}',
+      '.maya-confirm .mc-yes,.maya-confirm .mc-no{border:0;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer}',
+      '.maya-confirm .mc-yes{background:#2f9e63;color:#fff}',
+      '.maya-confirm .mc-no{background:#e6ece9;color:#33413c}',
       '.maya-sug{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 10px;background:#F7F9F8}',
       '.maya-sug button{font-family:inherit;font-size:12px;color:#16373A;background:#E7F2EC;border:1px solid #d3e6db;border-radius:99px;padding:7px 11px;cursor:pointer;text-align:left}',
       '.maya-sug button:hover{background:#d9ecdf}',
@@ -352,7 +367,7 @@
         body: JSON.stringify({ category: a.modulo, name: a.nombre, type: a.nombre, value: a.monto, monthly: a.cuota || 0 })
       }).then(function (r) { if (!r.ok) throw new Error('save'); return a; });
     });
-    Promise.all(jobs).then(function (done) {
+    return Promise.all(jobs).then(function (done) {
       var txt = done.map(function (a) { return a.nombre + ' ' + copMx(a.monto) + ' en ' + (MOD_LABEL[a.modulo] || a.modulo); }).join('; ');
       addMsg('maya', 'Registrado: ' + txt + '. Ya quedó guardado en tu cuenta.');
       if (window.PlaneaData && typeof window.PlaneaData.reload === 'function') window.PlaneaData.reload();
@@ -361,10 +376,57 @@
     });
   }
 
+  // HU-2 · Confirmación antes de guardar. Maya PROPONE; el usuario aprueba con
+  // botones (Sí/No) o de viva voz ("sí"/"no"). Nada se guarda sin confirmación.
+  var pendingProposals = [];
+  function clearProposalCard() {
+    var c = els.body && els.body.querySelector('.maya-confirm');
+    if (c) c.remove();
+    pendingProposals = [];
+  }
+  function confirmProposals() {
+    var list = pendingProposals.slice();
+    clearProposalCard();
+    if (list.length) runActions(list);
+  }
+  function rejectProposals() {
+    clearProposalCard();
+    addMsg('maya', 'Listo, no lo registro. Dime cómo lo corrijo.');
+  }
+  function renderProposals(proposals) {
+    pendingProposals = proposals.slice();
+    var wrap = document.createElement('div');
+    wrap.className = 'maya-msg m maya-confirm';
+    var resumen = proposals.map(function (p) {
+      return '<div class="mc-item"><b>' + esc(p.nombre) + '</b> ' + copMx(p.monto) + ' en ' + esc(MOD_LABEL[p.modulo] || p.modulo) +
+        (p.cuota ? ' (cuota ' + copMx(p.cuota) + ')' : '') + '</div>';
+    }).join('');
+    wrap.innerHTML = resumen +
+      '<div class="mc-btns"><button type="button" class="mc-yes">Sí, registrar</button>' +
+      '<button type="button" class="mc-no">No</button></div>';
+    wrap.querySelector('.mc-yes').addEventListener('click', confirmProposals);
+    wrap.querySelector('.mc-no').addEventListener('click', rejectProposals);
+    els.body.appendChild(wrap);
+    els.body.scrollTop = els.body.scrollHeight;
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  // ¿El texto del usuario es un sí/no a una propuesta pendiente?
+  var YES_RE = /^\s*(s[ií]|s[ií]\s|claro|dale|hazlo|reg[ií]stralo|reg[ií]stra|confirmo|correcto|as[ií] es|ok|okay|de una)\b/i;
+  var NO_RE = /^\s*(no|nop|cancela|espera|mejor no|as[ií] no|est[aá] mal)\b/i;
+  function handleConfirmReply(text) {
+    if (!pendingProposals.length) return false;
+    if (YES_RE.test(text)) { addMsg('user', text); confirmProposals(); return true; }
+    if (NO_RE.test(text)) { addMsg('user', text); rejectProposals(); return true; }
+    return false; // no es sí/no claro → deja que Maya lo maneje (aclaración)
+  }
+
   // Core ask: append user msg, call Maya, append reply. opts.onReply(reply) lets the
   // hands-free loop chain speak→listen; opts.silentTyping hides the "pensando" bubble.
   function ask(text, opts) {
     opts = opts || {};
+    // HU-2: si hay una propuesta pendiente y el usuario dice sí/no, resuélvelo
+    // localmente sin llamar a Maya (funciona igual por chat y por voz).
+    if (handleConfirmReply((text || '').trim())) { if (opts.onReply) opts.onReply(''); return; }
     text = (text || '').trim();
     if (!text) return;
     addMsg('user', text);
@@ -384,6 +446,8 @@
         history.push({ role: 'assistant', content: reply });
         addMsg('maya', reply);
         if (data && data.actions && data.actions.length) runActions(data.actions);
+        // HU-2: propuestas requieren confirmación Sí/No (no guarda todavía).
+        if (data && data.proposals && data.proposals.length) renderProposals(data.proposals);
         if (opts.onReply) opts.onReply(reply);
         else if (speaking) speak(reply);
       })

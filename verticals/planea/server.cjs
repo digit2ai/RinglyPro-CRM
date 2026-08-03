@@ -175,16 +175,24 @@ CUMPLIMIENTO (Compliance — obligatorio):
 - NUNCA menciones datos de otro usuario.
 - Cumple Ley 1581 de 2012 y Decreto 1377 de 2013 sobre datos personales.
 
-REGISTRAR DATOS POR CHAT (puedes guardar por el usuario — no lo obligues a capturar a mano)
-- Si el usuario te da una cifra para guardar (un ingreso, un gasto, un ahorro, una deuda, una inversión, un seguro, un fondo de retiro o una meta), REGÍSTRALA tú.
-- Para hacerlo, añade AL FINAL de tu respuesta una etiqueta por cada dato, exactamente así:
-  <accion>{"modulo":"ingreso","nombre":"Salario","monto":5000000}</accion>
+REGISTRAR DATOS POR CHAT O VOZ — SIEMPRE CONFIRMA ANTES DE GUARDAR
+- El usuario puede darte una cifra por texto o por voz (ej. "gasté 200 mil en mercado").
+- NO la guardes de inmediato. Primero CONFIRMA lo que entendiste y PREGUNTA si lo registras así.
+  Ejemplo: "Entendí que gastaste doscientos mil pesos en mercado. ¿Lo registro así?".
+- Para proponer el registro, añade AL FINAL de tu respuesta una etiqueta por cada dato, así:
+  <propuesta>{"modulo":"gasto","nombre":"Mercado","monto":200000}</propuesta>
+- El sistema mostrará botones "Sí, registrar" / "No" y SOLO guarda si el usuario confirma.
+  Por eso tu frase SIEMPRE debe terminar preguntando si lo registra así.
 - "modulo" debe ser uno de: ingreso, gasto, ahorro, deuda, inversion, seguros, retiro, meta.
 - "monto" en pesos, solo números (sin puntos, comas ni símbolos). Interpreta "cinco millones" como 5000000.
 - En deuda puedes añadir "cuota" (pago mensual). En meta puedes añadir "objetivo" (monto que quiere alcanzar).
-- Confirma en tu respuesta, en una frase natural y breve, qué registraste. El sistema lo guarda y aparece en la pestaña correspondiente.
-- Si falta el nombre o el monto, pregúntalo antes. NUNCA inventes cifras.
-- Si el usuario solo pregunta algo (no da datos para guardar), no uses ninguna etiqueta.
+- Si NO estás segura del monto, la categoría o la fecha, PREGUNTA para aclarar en vez de proponer. NUNCA inventes cifras ni adivines.
+- Si el usuario solo pregunta algo (no da datos), no uses ninguna etiqueta.
+
+PREGUNTAS GUIADAS — no esperes a que el usuario decida qué contarte
+- Tienes preguntas predeterminadas mapeadas a los pilares del puntaje: Fondo de Emergencia (¿cuánto tienes ahorrado?), Flujo de Caja (¿cuáles son tus ingresos y gastos del mes?), Deuda (¿qué deudas tienes hoy y cuánto pagas al mes?), Estabilidad/Patrimonio (¿qué bienes tienes: vivienda, carro, inversiones?), Retiro (¿aportas a pensión o a un fondo de retiro?), Seguros (¿tienes pólizas o seguros activos?), y Metas (¿cuál es tu meta financiera más importante?).
+- PRIORIZA las preguntas por los pilares que aparezcan en "pilares_en_proxy" del perfil (aún sin dato real) o con el puntaje más bajo. Cierra esos vacíos primero, de a UNA pregunta por turno.
+- Puedes ofrecer una pregunta guiada al cerrar una respuesta, pero el usuario siempre puede contarte algo libremente sin que preguntes primero, o dejar la pregunta pendiente. No insistas ni satures.
 
 ESTILO DE RESPUESTA (IMPORTANTE — tus respuestas se leen en voz alta)
 - Habla como una persona, en TEXTO PLANO. PROHIBIDO usar markdown: nada de asteriscos (*), almohadillas (#), guiones bajos (_), viñetas, ni negritas. Si necesitas enumerar, hazlo dentro de la frase ("primero…, luego…").
@@ -235,26 +243,31 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
     // Maya puede registrar datos: extrae las etiquetas <accion>{...}</accion>, las
     // quita del texto hablado y las devuelve para que el cliente las guarde con la
     // sesión del usuario (reutiliza /me/items y /me/profile, sin duplicar auth).
-    const actions = [];
+    const actions = [];    // guardado inmediato (compat) — el usuario ya confirmó
+    const proposals = [];  // HU-2: propuestas que requieren confirmación Sí/No antes de guardar
     const MOD = ['ingreso', 'gasto', 'ahorro', 'deuda', 'inversion', 'seguros', 'retiro', 'meta'];
-    const reply = raw.replace(/<accion>\s*([\s\S]*?)\s*<\/accion>/gi, function (_m, json) {
+    function parseDato(json) {
       try {
         const o = JSON.parse(json);
         const mod = String(o && o.modulo || '').toLowerCase().trim();
         const monto = Number(String(o && o.monto != null ? o.monto : '').toString().replace(/[^\d.-]/g, ''));
         if (MOD.indexOf(mod) >= 0 && o && o.nombre && isFinite(monto) && monto > 0) {
-          actions.push({
+          return {
             modulo: mod,
             nombre: String(o.nombre).slice(0, 120),
             monto: Math.round(monto),
             cuota: Math.round(Number(String(o.cuota || 0).toString().replace(/[^\d.-]/g, '')) || 0),
             objetivo: Math.round(Number(String(o.objetivo || 0).toString().replace(/[^\d.-]/g, '')) || 0),
-          });
+          };
         }
       } catch (e) { /* etiqueta malformada: se ignora */ }
-      return '';
-    }).replace(/\n{3,}/g, '\n\n').trim();
-    res.json({ reply: reply || 'Listo.', actions, configured: true });
+      return null;
+    }
+    let reply = raw
+      .replace(/<propuesta>\s*([\s\S]*?)\s*<\/propuesta>/gi, function (_m, json) { const d = parseDato(json); if (d) proposals.push(d); return ''; })
+      .replace(/<accion>\s*([\s\S]*?)\s*<\/accion>/gi, function (_m, json) { const d = parseDato(json); if (d) actions.push(d); return ''; })
+      .replace(/\n{3,}/g, '\n\n').trim();
+    res.json({ reply: reply || 'Listo.', actions, proposals, configured: true });
   } catch (e) {
     console.error('Maya chat error', e.message);
     res.status(500).json({ error: e.message, reply: 'Ocurrió un error. Intenta de nuevo.' });
