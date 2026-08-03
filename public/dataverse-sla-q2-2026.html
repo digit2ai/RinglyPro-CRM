@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dataverse Ingestion Feed SLA Monitoring — Q2 2026</title>
+<style>
+  :root{
+    --blue:#2f6fed;
+    --blue-dark:#1a4fd0;
+    --navy:#0d1b34;
+    --navy-2:#101f3d;
+    --green:#153d35;
+    --rust:#a4300c;
+    --rust-2:#c0400f;
+    --ink:#0f172a;
+    --muted:#5b6577;
+    --line:#d9dfe9;
+    --bg:#f1f4f9;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- deck / slide frame ---------- */
+  .deck{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:28px;
+    padding:28px 20px 90px;
+  }
+  .slide{
+    width:1280px;
+    max-width:100%;
+    aspect-ratio:16/9;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 10px 34px rgba(13,27,52,.10);
+    padding:38px 44px;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    scroll-margin-top:20px;
+  }
+  .slide.dark{
+    background:var(--navy);
+    border-color:#0a1428;
+    color:#e8eefc;
+  }
+  .slide-no{
+    position:absolute;
+    right:20px;
+    bottom:14px;
+    font-size:12px;
+    letter-spacing:.08em;
+    color:#9aa5b8;
+  }
+  .dark .slide-no{color:#4a5b7d;}
+
+  h1.title{
+    font-size:38px;
+    line-height:1.15;
+    font-weight:700;
+    color:var(--blue-dark);
+    margin:0 0 8px;
+    letter-spacing:-.01em;
+  }
+  p.subtitle{
+    font-size:16px;
+    color:#334155;
+    margin:0 0 22px;
+  }
+
+  /* ---------- generic layout helpers ---------- */
+  .row{display:flex;gap:18px;}
+  .row.grow{flex:1;min-height:0;}
+  .col{display:flex;flex-direction:column;gap:14px;}
+  .fill{flex:1;min-width:0;min-height:0;}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:#fff;
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .card.blue{border-color:var(--blue);}
+  .card.green{border-color:var(--green);}
+  .card.rust{border-color:var(--rust);}
+
+  .card-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+  .badge{
+    width:40px;height:40px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;flex:none;
+  }
+  .badge.blue{background:var(--blue);}
+  .badge.green{background:var(--green);}
+  .badge.rust{background:var(--rust);}
+  .badge svg{width:20px;height:20px;}
+  .card-title{
+    font-size:17px;font-weight:700;letter-spacing:.02em;
+  }
+  .card-title.blue{color:var(--blue-dark);}
+  .card-title.green{color:var(--green);}
+  .card-title.rust{color:var(--rust);}
+  .rule{height:7px;border-radius:4px;margin-bottom:14px;}
+  .rule.blue{background:var(--blue);}
+  .rule.green{background:var(--green);}
+  .rule.rust{background:var(--rust);}
+
+  .step{margin-bottom:11px;font-size:12.5px;line-height:1.45;color:#334155;}
+  .step b{display:block;font-size:12.5px;font-weight:700;margin-bottom:1px;}
+  .step.blue b{color:var(--blue-dark);}
+  .step.green b{color:var(--green);}
+  .step.rust b{color:var(--rust);}
+
+  /* ---------- KPI ---------- */
+  .kpi{
+    border:2px solid var(--blue);
+    border-radius:10px;
+    padding:16px 20px;
+    background:#fff;
+    flex:1;
+    min-width:0;
+  }
+  .kpi .lab{
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;margin-bottom:6px;
+  }
+  .kpi .val{font-size:46px;font-weight:800;line-height:1;color:var(--blue-dark);}
+  .kpi .note{font-size:12px;color:#475569;margin-top:8px;}
+  .kpi.solid{background:var(--blue);border-color:var(--blue);}
+  .kpi.solid .lab{color:#cfe0ff;}
+  .kpi.solid .val,.kpi.solid .note{color:#fff;}
+  .kpi.navy{background:var(--navy);border-color:var(--navy);}
+  .kpi.navy .lab{color:#7fa6ff;}
+  .kpi.navy .val,.kpi.navy .note{color:#fff;}
+
+  /* ---------- insight panel ---------- */
+  .insight{
+    background:var(--navy);
+    color:#dbe6fb;
+    border-radius:10px;
+    padding:20px 22px;
+    font-size:13px;
+    line-height:1.55;
+  }
+  .insight h4{
+    margin:0 0 10px;color:#6ea0ff;font-size:14px;font-weight:700;
+  }
+  .insight b{color:#fff;}
+  .insight .em{color:#b9c8e4;font-style:italic;display:block;margin-top:10px;}
+
+  .softbox{
+    background:#eef3fd;border:1px solid #cddcfb;border-radius:10px;
+    padding:18px 20px;font-size:13px;line-height:1.5;color:#1e293b;
+  }
+  .softbox h4{margin:0 0 8px;color:var(--blue-dark);font-size:13px;font-weight:700;letter-spacing:.04em;}
+
+  /* ---------- tables ---------- */
+  table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed;}
+  th{
+    background:#eaf0fd;color:var(--blue-dark);text-align:left;
+    font-size:11.5px;letter-spacing:.05em;font-weight:700;
+    padding:9px 11px;border:1px solid #c9d7f2;
+  }
+  td{
+    padding:10px 11px;border:1px solid #dbe3ef;vertical-align:top;
+    line-height:1.45;color:#27364d;
+  }
+  tbody tr:nth-child(even) td{background:#f7f9fd;}
+  tbody tr.hl td{background:#eaf1ff;}
+  td.src{font-weight:700;color:#1e293b;}
+  td b{color:#0f172a;}
+  code{
+    font-family:"SF Mono",Menlo,Consolas,monospace;
+    background:#eef1f6;padding:1px 4px;border-radius:3px;font-size:11px;
+  }
+
+  /* ---------- title slide ---------- */
+  .eyebrow{
+    font-size:12px;letter-spacing:.18em;font-weight:700;color:#6ea0ff;
+    text-transform:uppercase;margin-bottom:22px;
+  }
+  .titlebar{height:9px;background:var(--blue);border-radius:5px;margin-bottom:34px;}
+  .slide.dark h1{
+    font-size:56px;line-height:1.08;font-weight:800;margin:0 0 18px;color:#fff;letter-spacing:-.02em;
+  }
+  .slide.dark .quarter{font-size:26px;color:#7fb0ff;font-weight:600;margin:0 0 26px;}
+  .abstract{
+    border:1px solid #2b4372;border-radius:10px;padding:18px 20px;
+    font-size:13px;color:#c2d2ee;line-height:1.6;margin-bottom:24px;
+  }
+  .abstract .meta{color:#8aa3cc;margin-top:6px;}
+  .tilerow{display:flex;gap:18px;}
+  .tile{
+    flex:1;border:1px solid #2b4372;border-radius:10px;padding:16px 18px;
+    display:flex;align-items:center;gap:14px;background:rgba(47,111,237,.07);
+  }
+  .tile .ic{
+    width:34px;height:34px;border-radius:50%;background:var(--blue);
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .tile .ic svg{width:17px;height:17px;}
+  .tile .n{font-size:20px;font-weight:800;color:#fff;line-height:1.1;}
+  .tile .l{font-size:12px;color:#a9bde0;}
+  .deckfoot{
+    margin-top:auto;font-size:12px;color:#8298bd;letter-spacing:.04em;
+  }
+
+  /* ---------- overview slide ---------- */
+  .sect{
+    flex:1;border-radius:10px;padding:22px 22px;color:#fff;
+    display:flex;flex-direction:column;min-width:0;
+  }
+  .sect.b1{background:var(--blue);}
+  .sect.b2{background:var(--navy);}
+  .sect.b3{background:var(--green);}
+  .sect .n{font-size:11px;letter-spacing:.14em;font-weight:700;opacity:.75;margin-bottom:14px;}
+  .sect h3{margin:0 0 16px;font-size:23px;font-weight:700;}
+  .sect .k{font-size:12.5px;font-weight:700;margin-bottom:3px;}
+  .sect .t{font-size:12.5px;line-height:1.55;opacity:.92;margin-bottom:12px;}
+  .sect ul{margin:0 0 12px;padding-left:0;list-style:none;font-size:12.5px;line-height:1.7;opacity:.92;}
+  .sect ul li:before{content:"– ";}
+  .toc{
+    border:1px solid var(--line);border-radius:10px;padding:16px 20px;
+    display:flex;gap:26px;align-items:flex-start;
+  }
+  .toc .h{font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--blue-dark);width:100px;flex:none;line-height:1.4;}
+  .toc .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 26px;flex:1;}
+  .toc .it .s{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.05em;}
+  .toc .it .d{font-size:12.5px;color:#334155;}
+
+  /* ---------- comparison cards ---------- */
+  .cmp{
+    flex:1;border:2px solid var(--blue);border-radius:10px;padding:14px 16px;text-align:center;min-width:0;
+  }
+  .cmp.rust{border-color:var(--rust);}
+  .cmp.green{border-color:var(--green);}
+  .cmp .lab{font-size:10.5px;letter-spacing:.1em;font-weight:700;color:var(--muted);margin-bottom:12px;}
+  .cmp .nums{display:flex;align-items:center;justify-content:center;gap:14px;}
+  .cmp .old{font-size:32px;font-weight:700;color:#94a3b8;}
+  .cmp .arw{color:#94a3b8;font-size:18px;}
+  .cmp .new{font-size:32px;font-weight:800;color:var(--blue-dark);}
+  .cmp.rust .new{color:var(--rust);}
+  .cmp.green .new{color:var(--green);}
+  .cmp .subs{display:flex;justify-content:center;gap:26px;font-size:10.5px;margin-top:4px;}
+  .cmp .subs .a{color:#94a3b8;}
+  .cmp .subs .b{color:var(--blue-dark);font-weight:700;}
+  .cmp.rust .subs .b{color:var(--rust);}
+  .cmp.green .subs .b{color:var(--green);}
+  .pill{
+    margin-top:12px;border-radius:20px;padding:7px 10px;font-size:12px;font-weight:600;
+    background:#e6eeff;color:var(--blue-dark);
+  }
+  .pill.rust{background:#fdeae4;color:var(--rust);}
+  .pill.green{background:#e4f0eb;color:var(--green);}
+
+  /* ---------- RCA cards ---------- */
+  .bignum{font-size:40px;font-weight:800;line-height:1;margin-bottom:8px;}
+  .bignum.green{color:var(--green);}
+  .bignum.rust{color:var(--rust);}
+  .meter{height:14px;border-radius:7px;position:relative;margin-bottom:12px;background:#e8edf5;overflow:hidden;}
+  .meter i{
+    position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:9.5px;font-style:normal;font-weight:600;letter-spacing:.03em;
+  }
+  .meter i.green{background:var(--green);}
+  .meter i.rust{background:var(--rust);}
+  .meter i.dark{background:#6d1a06;}
+  .subcause{font-size:11.5px;line-height:1.65;color:#334155;}
+  .subcause .h{font-weight:700;color:#0f172a;margin-bottom:4px;font-size:11.5px;}
+  .sources{margin-top:auto;padding-top:10px;font-size:11.5px;font-weight:700;color:#0f172a;}
+
+  /* ---------- charts ---------- */
+  .chart-wrap{display:flex;flex-direction:column;min-width:0;}
+  .chart-title{font-size:15px;color:#334155;text-align:center;margin-bottom:4px;}
+  svg.chart{width:100%;height:100%;display:block;}
+  .ax{stroke:#c9d2e0;stroke-width:1;}
+  .grid-l{stroke:#e6ebf3;stroke-width:1;}
+  .tk{font-size:12px;fill:#64748b;}
+  .vl{font-size:13px;fill:#334155;font-weight:600;}
+  .cat{font-size:13px;fill:#334155;}
+  .legend{display:flex;gap:20px;justify-content:center;font-size:12px;color:#334155;margin-top:2px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .sw{width:12px;height:12px;border-radius:2px;display:inline-block;}
+
+  /* ---------- month cards ---------- */
+  .mo{border:2px solid var(--blue);border-radius:10px;padding:12px 15px;}
+  .mo.green{border-color:var(--green);}
+  .mo.rust{border-color:var(--rust);}
+  .mo .h{font-size:12.5px;font-weight:800;color:var(--blue-dark);margin-bottom:5px;}
+  .mo.green .h{color:var(--green);}
+  .mo.rust .h{color:var(--rust);}
+  .mo .l{font-size:12px;color:#334155;line-height:1.5;}
+  .mo .i{font-size:11.5px;color:#64748b;font-style:italic;margin-top:4px;}
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:50;
+    background:rgba(13,27,52,.94);color:#fff;border-radius:999px;
+    padding:8px 10px;display:flex;align-items:center;gap:6px;
+    box-shadow:0 8px 26px rgba(13,27,52,.35);font-size:13px;
+  }
+  .nav button{
+    background:transparent;border:0;color:#fff;cursor:pointer;font-size:15px;
+    width:30px;height:30px;border-radius:50%;line-height:1;
+  }
+  .nav button:hover{background:rgba(255,255,255,.16);}
+  .nav .cnt{padding:0 8px;letter-spacing:.05em;color:#cfe0ff;min-width:64px;text-align:center;}
+
+  @media print{
+    body{background:#fff;}
+    .nav{display:none;}
+    .deck{gap:0;padding:0;}
+    .slide{
+      width:100%;max-width:none;border:0;border-radius:0;box-shadow:none;
+      page-break-after:always;break-after:page;
+    }
+  }
+  @media (max-width:1320px){
+    .slide{padding:26px 28px;}
+    h1.title{font-size:30px;}
+    .slide.dark h1{font-size:42px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ============ SLIDE 1 — TITLE ============ -->
+<section class="slide dark" id="s1">
+  <div class="eyebrow">Dataverse Ingestion Control Assessment</div>
+  <div class="titlebar"></div>
+  <h1>Dataverse Ingestion Feed<br>SLA Monitoring</h1>
+  <div class="quarter">Refreshed Analysis — Q2 2026</div>
+
+  <div class="abstract">
+    A comprehensive review of data load performance, SLA breach patterns, and root cause analysis across all ingestion pipelines.
+    <div class="meta">Q2 2026 &nbsp;·&nbsp; Apr 1 to Jun 30, 2026</div>
+  </div>
+
+  <div class="tilerow">
+    <div class="tile">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+      <div><div class="n">69</div><div class="l">Breaches Logged</div></div>
+    </div>
+    <div class="tile">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></div>
+      <div><div class="n">8</div><div class="l">Data Sources</div></div>
+    </div>
+    <div class="tile">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
+      <div><div class="n">3</div><div class="l">RCA Patterns</div></div>
+    </div>
+  </div>
+
+  <div class="deckfoot">Control Owners &nbsp;|&nbsp; MCA Testers &nbsp;|&nbsp; Senior Management &nbsp;|&nbsp; Internal – Restricted</div>
+  <div class="slide-no">01</div>
+</section>
+
+<!-- ============ SLIDE 2 — OVERVIEW ============ -->
+<section class="slide" id="s2">
+  <h1 class="title">Dashboard Overview – Q2 2026</h1>
+  <p class="subtitle">Three-section structure covering performance, analysis, and control assessment</p>
+
+  <div class="row grow" style="margin-bottom:18px;">
+    <div class="sect b1">
+      <div class="n">SECTION I</div>
+      <h3>Executive Summary</h3>
+      <div class="k">Performance Review</div>
+      <div class="t">Comparative Analysis Q1 vs Q2</div>
+      <ul>
+        <li>68% breach volume increase</li>
+        <li>RCA patterns: 5 to 3</li>
+        <li>8 data sources impacted</li>
+      </ul>
+      <div class="t" style="margin-top:auto;">Overview of achievements and recurring operational challenges</div>
+    </div>
+
+    <div class="sect b2">
+      <div class="n" style="color:#6ea0ff;opacity:1;">SECTION II</div>
+      <h3>Operational Challenges</h3>
+      <div class="k">Analysis and Root Cause</div>
+      <ul>
+        <li>3 RCA pattern categories</li>
+        <li>App/DB Bugs vs Feed Quality vs API Timeouts</li>
+      </ul>
+      <div class="k">Deep Dive Sources:</div>
+      <ul>
+        <li>DRIFT, MCA, PTS</li>
+        <li>DSMT-ISG, GRC</li>
+        <li>CRS, POLICY, GDW_HRDW</li>
+      </ul>
+    </div>
+
+    <div class="sect b3">
+      <div class="n">SECTION III</div>
+      <h3>MCA Control Q&amp;A</h3>
+      <div class="k">Control Assessment</div>
+      <ul>
+        <li>Control Review Scope</li>
+        <li>Control Effectiveness and Recurring Risks</li>
+        <li>Systemic Control Context</li>
+      </ul>
+      <div class="t" style="margin-top:auto;">Targeted Q&amp;A for Control Owners and MCA Testers reviewing Dataverse pipeline performance</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="h">DOCUMENT<br>CONTENTS</div>
+    <div class="grid">
+      <div class="it"><div class="s">SLIDE 02</div><div class="d">Quarter-over-Quarter Comparison</div></div>
+      <div class="it"><div class="s">SLIDE 04</div><div class="d">RCA Pattern Intelligence</div></div>
+      <div class="it"><div class="s">SLIDE 06</div><div class="d">Managers Control Assessment Q&amp;A</div></div>
+      <div class="it"><div class="s">SLIDE 03</div><div class="d">Q2 2026 Executive Summary KPIs</div></div>
+      <div class="it"><div class="s">SLIDE 05</div><div class="d">Detailed Incidents by Data Source</div></div>
+      <div class="it"><div class="s">SLIDE 07</div><div class="d">Summary and Next Steps</div></div>
+    </div>
+  </div>
+  <div class="slide-no">02</div>
+</section>
+
+<!-- ============ SLIDE 3 — QoQ COMPARISON ============ -->
+<section class="slide" id="s3">
+  <h1 class="title">Quarter-over-Quarter Comparison: Q1 2026 to Q2 2026</h1>
+  <p class="subtitle">Based on detailed review of 69 raw breach items across 8 data sources</p>
+
+  <div class="row" style="margin-bottom:18px;">
+    <div class="cmp">
+      <div class="lab">FEEDS PROCESSED</div>
+      <div class="nums"><span class="old">10,820</span><span class="arw">&#8594;</span><span class="new">10,434</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill">Active Period</div>
+    </div>
+    <div class="cmp rust">
+      <div class="lab">RAW BREACHES</div>
+      <div class="nums"><span class="old">41</span><span class="arw">&#8594;</span><span class="new">69</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill rust">+68% Volume</div>
+    </div>
+    <div class="cmp green">
+      <div class="lab">DISTINCT RCA PATTERNS</div>
+      <div class="nums"><span class="old">5</span><span class="arw">&#8594;</span><span class="new">3</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill green">Consolidated</div>
+    </div>
+    <div class="cmp">
+      <div class="lab">SOURCES IMPACTED</div>
+      <div class="nums"><span class="old">8</span><span class="arw">&#8594;</span><span class="new">8</span></div>
+      <div class="subs"><span class="a">Q1 2026</span><span class="b">Q2 2026</span></div>
+      <div class="pill">No Change</div>
+    </div>
+  </div>
+
+  <div class="row grow">
+    <div class="chart-wrap fill" style="flex:1.15;">
+      <svg class="chart" viewBox="0 0 700 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Grouped bar chart comparing Q1 and Q2 2026 breach counts by RCA category">
+        <!-- grid -->
+        <line class="grid-l" x1="55" y1="250" x2="690" y2="250"/>
+        <line class="grid-l" x1="55" y1="190" x2="690" y2="190"/>
+        <line class="grid-l" x1="55" y1="130" x2="690" y2="130"/>
+        <line class="grid-l" x1="55" y1="70"  x2="690" y2="70"/>
+        <line class="grid-l" x1="55" y1="10"  x2="690" y2="10"/>
+        <line class="ax" x1="55" y1="10" x2="55" y2="250"/>
+        <line class="ax" x1="55" y1="250" x2="690" y2="250"/>
+        <text class="tk" x="45" y="255" text-anchor="end">0</text>
+        <text class="tk" x="45" y="195" text-anchor="end">10</text>
+        <text class="tk" x="45" y="135" text-anchor="end">20</text>
+        <text class="tk" x="45" y="75"  text-anchor="end">30</text>
+        <text class="tk" x="45" y="15"  text-anchor="end">40</text>
+
+        <!-- App Bug/DB : 18 -> 30 -->
+        <rect x="102" y="142" width="55" height="108" fill="#a8a8a8"/>
+        <text class="vl" x="129.5" y="134" text-anchor="middle">18</text>
+        <rect x="163" y="70" width="55" height="180" fill="#2f6fed"/>
+        <text class="vl" x="190.5" y="62" text-anchor="middle">30</text>
+        <text class="cat" x="160" y="272" text-anchor="middle">App Bug/DB</text>
+
+        <!-- Feed Quality : 20 -> 28 -->
+        <rect x="312" y="130" width="55" height="120" fill="#a8a8a8"/>
+        <text class="vl" x="339.5" y="122" text-anchor="middle">20</text>
+        <rect x="373" y="82" width="55" height="168" fill="#2f6fed"/>
+        <text class="vl" x="400.5" y="74" text-anchor="middle">28</text>
+        <text class="cat" x="370" y="272" text-anchor="middle">Feed Quality</text>
+
+        <!-- API Timeout : 3 -> 5 -->
+        <rect x="522" y="232" width="55" height="18" fill="#a8a8a8"/>
+        <text class="vl" x="549.5" y="224" text-anchor="middle">3</text>
+        <rect x="583" y="220" width="55" height="30" fill="#2f6fed"/>
+        <text class="vl" x="610.5" y="212" text-anchor="middle">5</text>
+        <text class="cat" x="580" y="272" text-anchor="middle">API Timeout</text>
+      </svg>
+      <div class="legend">
+        <span><i class="sw" style="background:#a8a8a8"></i>Q1 2026</span>
+        <span><i class="sw" style="background:#2f6fed"></i>Q2 2026</span>
+      </div>
+    </div>
+
+    <div class="insight fill" style="flex:.85;">
+      <h4>Key Callout</h4>
+      Overall breach occurrences increased by <b>68%</b>, but RCA patterns <b>consolidated from 5 to 3</b>, enabling more focused and effective remediation.
+      <span class="em">Primary drivers remain app bugs and feed quality – not external network – indicating addressable internal improvements.</span>
+    </div>
+  </div>
+  <div class="slide-no">03</div>
+</section>
+
+<!-- ============ SLIDE 4 — EXEC SUMMARY KPIs ============ -->
+<section class="slide" id="s4">
+  <h1 class="title">Q2 2026 Executive Summary – Breach and Incident KPIs</h1>
+  <p class="subtitle">April 1 to June 30, 2026 – Comprehensive breach analysis across all ingestion pipelines</p>
+
+  <div class="row" style="margin-bottom:18px;">
+    <div class="kpi solid">
+      <div class="lab">Total Breach Occurrences</div>
+      <div class="val">69</div>
+      <div class="note">Raw breach items Q2 2026</div>
+    </div>
+    <div class="kpi navy">
+      <div class="lab">SLA Incidents – Unique × Datasource</div>
+      <div class="val">5</div>
+      <div class="note">Distinct incident categories in ServiceNow</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Data Sources Impacted</div>
+      <div class="val" style="color:#94a3b8;">8</div>
+      <div class="note">DRIFT, MCA, PTS, DSMT-ISG, GRC, CRS, POLICY, GDW</div>
+    </div>
+  </div>
+
+  <div class="row grow">
+    <div class="chart-wrap fill">
+      <div class="chart-title">Breach Count by RCA Category – Q2 2026</div>
+      <svg class="chart" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Bar chart of Q2 2026 breach counts by RCA category">
+        <line class="grid-l" x1="52" y1="250" x2="630" y2="250"/>
+        <line class="grid-l" x1="52" y1="217" x2="630" y2="217"/>
+        <line class="grid-l" x1="52" y1="184" x2="630" y2="184"/>
+        <line class="grid-l" x1="52" y1="151" x2="630" y2="151"/>
+        <line class="grid-l" x1="52" y1="118" x2="630" y2="118"/>
+        <line class="grid-l" x1="52" y1="85"  x2="630" y2="85"/>
+        <line class="grid-l" x1="52" y1="52"  x2="630" y2="52"/>
+        <line class="grid-l" x1="52" y1="19"  x2="630" y2="19"/>
+        <line class="ax" x1="52" y1="19" x2="52" y2="250"/>
+        <line class="ax" x1="52" y1="250" x2="630" y2="250"/>
+        <text class="tk" x="43" y="255" text-anchor="end">0</text>
+        <text class="tk" x="43" y="222" text-anchor="end">5</text>
+        <text class="tk" x="43" y="189" text-anchor="end">10</text>
+        <text class="tk" x="43" y="156" text-anchor="end">15</text>
+        <text class="tk" x="43" y="123" text-anchor="end">20</text>
+        <text class="tk" x="43" y="90"  text-anchor="end">25</text>
+        <text class="tk" x="43" y="57"  text-anchor="end">30</text>
+        <text class="tk" x="43" y="24"  text-anchor="end">35</text>
+
+        <rect x="90" y="52" width="105" height="198" fill="#2f6fed"/>
+        <text class="vl" x="142" y="44" text-anchor="middle">30</text>
+        <text class="cat" x="142" y="272" text-anchor="middle">App Bug / DB (48%)</text>
+
+        <rect x="285" y="65" width="105" height="185" fill="#2f6fed"/>
+        <text class="vl" x="337" y="57" text-anchor="middle">28</text>
+        <text class="cat" x="337" y="272" text-anchor="middle">Feed Quality / Delay (44%)</text>
+
+        <rect x="480" y="217" width="105" height="33" fill="#2f6fed"/>
+        <text class="vl" x="532" y="209" text-anchor="middle">5</text>
+        <text class="cat" x="532" y="272" text-anchor="middle">API Timeout (8%)</text>
+      </svg>
+      <div class="legend"><span><i class="sw" style="background:#2f6fed"></i>Count</span></div>
+    </div>
+
+    <div class="col fill">
+      <div class="card green" style="flex:1;justify-content:center;">
+        <div class="card-head" style="margin-bottom:6px;">
+          <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 21H3l9.7-9.7a4 4 0 0 1 2-5z"/></svg></div>
+          <div>
+            <div class="card-title green">App Bug / DB – 30 (48%)</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;">NULL/ORA/Parse Errors in DSMT-ISG, MCA, PTS</div>
+          </div>
+        </div>
+      </div>
+      <div class="card rust" style="flex:1;justify-content:center;">
+        <div class="card-head" style="margin-bottom:6px;">
+          <div class="badge rust"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3 1.5 21h21L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg></div>
+          <div>
+            <div class="card-title rust">Feed Quality / Delay – 28 (44%)</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;">Delayed arrivals and record count mismatches</div>
+          </div>
+        </div>
+      </div>
+      <div class="card rust" style="flex:1;justify-content:center;">
+        <div class="card-head" style="margin-bottom:6px;">
+          <div class="badge rust" style="background:#7d2408;"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></div>
+          <div>
+            <div class="card-title rust">API Timeout – 5 (8%)</div>
+            <div style="font-size:12px;color:#475569;margin-top:3px;">External network timeouts on GRC and POLICY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-no">04</div>
+</section>
+
+<!-- ============ SLIDE 5 — RCA PATTERN INTELLIGENCE ============ -->
+<section class="slide" id="s5">
+  <h1 class="title">RCA Pattern Intelligence – 3 Failure Categories</h1>
+  <p class="subtitle">Consolidated from 5 patterns in Q1 to 3 patterns in Q2 – enabling targeted remediation</p>
+
+  <div class="row" style="margin-bottom:18px;">
+    <div class="card green fill">
+      <div class="card-head">
+        <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M14.5 3.5a5 5 0 0 0 6.5 6.5L10 21a2.8 2.8 0 0 1-4-4L14.5 3.5z"/></svg></div>
+        <div class="card-title green">APP BUG / DB</div>
+      </div>
+      <div class="rule green"></div>
+      <div class="bignum green">30</div>
+      <div class="meter"><i class="green" style="width:48%">48% of total breaches</i></div>
+      <div class="subcause">
+        <div class="h">Sub-causes:</div>
+        ORA-01400: NULL value violations<br>
+        ORA-12899: value too large for column<br>
+        Unexpected timestamp format errors<br>
+        NullPointerException in parser<br>
+        GAU_OWNER_DELEGATES field overflow
+      </div>
+      <div class="sources">Sources: DSMT-ISG, MCA, PTS, CRS</div>
+    </div>
+
+    <div class="card rust fill">
+      <div class="card-head">
+        <div class="badge rust"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3 1.5 21h21L12 3z"/><path d="M12 10v4M12 17.5v.01"/></svg></div>
+        <div class="card-title rust">FEED QUALITY / DELAY</div>
+      </div>
+      <div class="rule rust"></div>
+      <div class="bignum rust">28</div>
+      <div class="meter"><i class="rust" style="width:44%">44% of total breaches</i></div>
+      <div class="subcause">
+        <div class="h">Sub-causes:</div>
+        Source-side load not finished before job<br>
+        Control file vs record count mismatch<br>
+        INVESTMENT_GROUP column overflow<br>
+        Delayed file arrival from upstream<br>
+        Record count delta mismatch GDW_HRDW
+      </div>
+      <div class="sources">Sources: DRIFT, PTS, GDW_HRDW</div>
+    </div>
+
+    <div class="card rust fill" style="border-color:#7d2408;">
+      <div class="card-head">
+        <div class="badge rust" style="background:#7d2408;"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg></div>
+        <div class="card-title rust" style="color:#7d2408;">EXTERNAL NETWORK</div>
+      </div>
+      <div class="rule" style="background:#7d2408;"></div>
+      <div class="bignum rust" style="color:#7d2408;">5</div>
+      <div class="meter"><i class="dark" style="width:8%"></i><span style="position:absolute;left:0;right:0;text-align:center;font-size:9.5px;color:#fff;line-height:14px;">8% of total breaches</span></div>
+      <div class="subcause">
+        <div class="h">Sub-causes:</div>
+        API Timeouts on GRC and POLICY endpoints<br>
+        riskcontrolsproxy exceeded 60-second SLA<br>
+        policy-inventory-metadata-service timeout<br>
+        External dependency – no direct control<br>
+        Recurring GRC pattern – escalation needed
+      </div>
+      <div class="sources">Sources: GRC, POLICY</div>
+    </div>
+  </div>
+
+  <div class="row grow">
+    <div class="chart-wrap fill" style="flex:.6;">
+      <div class="chart-title">RCA Breakdown – Q2 2026</div>
+      <svg class="chart" viewBox="0 0 240 150" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Donut chart of Q2 2026 RCA breakdown">
+        <g transform="translate(120,72)">
+          <circle r="46" fill="none" stroke="#153d35" stroke-width="26"
+                  stroke-dasharray="138.8 150.2" transform="rotate(-90)"/>
+          <circle r="46" fill="none" stroke="#a4300c" stroke-width="26"
+                  stroke-dasharray="127.2 161.8" transform="rotate(82.8)"/>
+          <circle r="46" fill="none" stroke="#6d1a06" stroke-width="26"
+                  stroke-dasharray="23.1 265.9" transform="rotate(241.2)"/>
+          <text x="0" y="-30" text-anchor="middle" font-size="11" fill="#0f172a" font-weight="700">30</text>
+          <text x="-46" y="34" text-anchor="middle" font-size="11" fill="#0f172a" font-weight="700">28</text>
+          <text x="26" y="-38" text-anchor="middle" font-size="11" fill="#0f172a" font-weight="700">5</text>
+        </g>
+      </svg>
+      <div class="legend" style="flex-wrap:wrap;gap:12px;">
+        <span><i class="sw" style="background:#153d35"></i>App Bug/DB (48%)</span>
+        <span><i class="sw" style="background:#a4300c"></i>Feed Quality (44%)</span>
+        <span><i class="sw" style="background:#6d1a06"></i>API Timeout (8%)</span>
+      </div>
+    </div>
+
+    <div class="insight fill" style="flex:1.4;">
+      <h4>Key Insight</h4>
+      92% of Q2 breaches stem from internal, addressable causes: application bugs (48%) and feed quality issues (44%). Only 8% are external API timeouts beyond direct control.
+      <div style="margin-top:12px;"><b style="color:#6ea0ff;">Action Focus:</b> Defensive coding, schema change alerts, and pre-load validation will directly address the top two categories and reduce breach volume materially in Q3 2026.</div>
+    </div>
+  </div>
+  <div class="slide-no">05</div>
+</section>
+
+<!-- ============ SLIDE 6 — INCIDENTS 1/2 ============ -->
+<section class="slide" id="s6">
+  <h1 class="title">Detailed Incidents by Data Source – Q2 2026 (1/2)</h1>
+  <p class="subtitle">DRIFT, MCA, PTS, DSMT-ISG – breach analysis with root cause and resolution</p>
+
+  <table>
+    <colgroup><col style="width:16%"><col style="width:38%"><col style="width:28%"><col style="width:18%"></colgroup>
+    <thead>
+      <tr><th>DATA SOURCE</th><th>ROOT CAUSE ANALYSIS (RCA)</th><th>RESOLUTION / FIX</th><th>JIRA / INC</th></tr>
+    </thead>
+    <tbody>
+      <tr class="hl">
+        <td class="src">Drift (17)</td>
+        <td><b>Feed Delayed (11):</b> Jobs were triggered before the source Drift system had finished its own data load, resulting in null values or "Not Triggered" statuses.<br>
+            <b>DB Bug (6):</b> <code>ORA-01400: cannot insert NULL</code> into key fields like "APPLICATIONID" and <code>ORA-12899: value too large</code> for fields like "TECHNICALRECOVERYTIME".</td>
+        <td>The timing issue was fixed by moving the IP job schedule to 8:30 AM. The DB bugs require source-side fixes to ensure data integrity. VJ is investigating the "Not Triggered" items.</td>
+        <td>Pending (VJ)</td>
+      </tr>
+      <tr>
+        <td class="src">MCA (15)</td>
+        <td><b>App Bug (15):</b> Multiple failures caused by unexpected timestamp formats from the source and a value for "GAU_OWNER_DELEGATES" that was too large for the database column (4001 vs 4000 chars).</td>
+        <td>A Jira was created to implement a flexible timestamp parser. An INC was raised to trim the oversized attribute, as the field is unused.</td>
+        <td>PRIN-5573</td>
+      </tr>
+      <tr>
+        <td class="src">PTS (15)</td>
+        <td><b>Feed Quality (13):</b> Control-file record count did not match the feed's record count due to multi-line records being counted differently by the source.<br>
+            <b>DB Bug (2):</b> <code>ORA-12899: value too large</code> error. Incoming data for "INVESTMENT_GROUP" exceeded the max column size (e.g., received 2,741 chars for a 2,500 char limit).</td>
+        <td>Feed quality issues were resolved by raising an INC with the PTS source team. The DB bug was also resolved via an INC to have the data trimmed.</td>
+        <td>INC0021438147<br>INC0023796809</td>
+      </tr>
+      <tr>
+        <td class="src">DSMT-ISG (8)</td>
+        <td><b>App Bug (8):</b> A source-side schema change (attribute changed to nullable) caused a week of <code>ORA-01400: cannot insert NULL</code> errors. Earlier <code>NullPointerException</code> errors also occurred.</td>
+        <td>An INC was raised to the DSMT source team. A permanent code change was released via Jira PRIN-4619 to handle the new nullable attribute.</td>
+        <td>PRIN-4619<br>INC0023197471</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="slide-no">06</div>
+</section>
+
+<!-- ============ SLIDE 7 — INCIDENTS 2/2 ============ -->
+<section class="slide" id="s7">
+  <h1 class="title">Detailed Incidents by Data Source – Q2 2026 (2/2)</h1>
+  <p class="subtitle">GRC, CRS, Policy, GDW_HRDW – breach analysis with root cause and resolution</p>
+
+  <table>
+    <colgroup><col style="width:16%"><col style="width:32%"><col style="width:36%"><col style="width:16%"></colgroup>
+    <thead>
+      <tr><th>DATA SOURCE</th><th>ROOT CAUSE ANALYSIS (RCA)</th><th>RESOLUTION / FIX</th><th>JIRA / INC</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="src">GRC (4)</td>
+        <td><b>API Timeout (4):</b> The external API at <code>riskcontrolsproxy.citigroup.net</code> exceeded its 60-second response SLA, causing a "read timeout".</td>
+        <td>All incidents were resolved by manually re-triggering the job, which then completed successfully. This is a recurring external dependency issue.</td>
+        <td>manually retriggered</td>
+      </tr>
+      <tr>
+        <td class="src">CRS (2)</td>
+        <td><b>Internal Process Bug (2):</b> The file pull process failed due to a <code>java.nio.file.AccessDeniedException</code>, indicating insufficient read permissions on the source file.</td>
+        <td>The jobs were manually rerun the next day and completed successfully. This was an internal issue that did not recur. Minimal downstream impact.</td>
+        <td>manually retriggered</td>
+      </tr>
+      <tr class="hl">
+        <td class="src">Policy (1)</td>
+        <td><b>API Timeout (1):</b> A "read timeout" occurred when posting to the <code>policy-inventory-metadata-service</code>.</td>
+        <td>The job was manually retriggered and resolved on the same day. This was an isolated incident.</td>
+        <td>manually retriggered</td>
+      </tr>
+      <tr>
+        <td class="src">GDW_HRDW (1)</td>
+        <td><b>Feed Quality (1):</b> The record count in the feed (2,742,409) did not match the count in the control file (2,742,247).</td>
+        <td>The issue self-resolved with the next day's successful run before any action was taken. This was an isolated source-side data quality issue.</td>
+        <td>manually retriggered</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="slide-no">07</div>
+</section>
+
+<!-- ============ SLIDE 8 — TIMELINE ============ -->
+<section class="slide" id="s8">
+  <h1 class="title">Breach Timeline by RCA Category – Apr to Jun 2026</h1>
+  <p class="subtitle">Monthly distribution showing escalation pattern across the quarter</p>
+
+  <div class="row grow" style="margin-bottom:16px;">
+    <div class="chart-wrap fill" style="flex:1.2;">
+      <div class="chart-title">Monthly Breach Count by RCA Category</div>
+      <svg class="chart" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Stacked bar chart of monthly breach counts by RCA category">
+        <line class="grid-l" x1="52" y1="250" x2="610" y2="250"/>
+        <line class="grid-l" x1="52" y1="210" x2="610" y2="210"/>
+        <line class="grid-l" x1="52" y1="170" x2="610" y2="170"/>
+        <line class="grid-l" x1="52" y1="130" x2="610" y2="130"/>
+        <line class="grid-l" x1="52" y1="90"  x2="610" y2="90"/>
+        <line class="grid-l" x1="52" y1="50"  x2="610" y2="50"/>
+        <line class="grid-l" x1="52" y1="10"  x2="610" y2="10"/>
+        <line class="ax" x1="52" y1="10" x2="52" y2="250"/>
+        <line class="ax" x1="52" y1="250" x2="610" y2="250"/>
+        <text class="tk" x="43" y="255" text-anchor="end">0</text>
+        <text class="tk" x="43" y="215" text-anchor="end">5</text>
+        <text class="tk" x="43" y="175" text-anchor="end">10</text>
+        <text class="tk" x="43" y="135" text-anchor="end">15</text>
+        <text class="tk" x="43" y="95"  text-anchor="end">20</text>
+        <text class="tk" x="43" y="55"  text-anchor="end">25</text>
+        <text class="tk" x="43" y="15"  text-anchor="end">30</text>
+
+        <!-- APR : App 1, Feed 16, API 4 (total 21) -->
+        <rect x="90" y="242" width="105" height="8"   fill="#153d35"/>
+        <rect x="90" y="114" width="105" height="128" fill="#a4300c"/>
+        <text x="142" y="184" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">16</text>
+        <rect x="90" y="82"  width="105" height="32"  fill="#6d1a06"/>
+        <text x="142" y="103" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">4</text>
+        <text x="142" y="248" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">1</text>
+        <text class="cat" x="142" y="272" text-anchor="middle">APR</text>
+
+        <!-- MAY : App 16 -->
+        <rect x="278" y="122" width="105" height="128" fill="#153d35"/>
+        <text x="330" y="192" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">16</text>
+        <text class="cat" x="330" y="272" text-anchor="middle">MAY</text>
+
+        <!-- JUN : App 13, Feed 12, API 1 (total 26) -->
+        <rect x="466" y="146" width="105" height="104" fill="#153d35"/>
+        <text x="518" y="203" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">13</text>
+        <rect x="466" y="50"  width="105" height="96"  fill="#a4300c"/>
+        <text x="518" y="103" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">12</text>
+        <rect x="466" y="42"  width="105" height="8"   fill="#6d1a06"/>
+        <text x="518" y="49" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">1</text>
+        <text class="cat" x="518" y="272" text-anchor="middle">JUN</text>
+      </svg>
+      <div class="legend">
+        <span><i class="sw" style="background:#153d35"></i>App Bug / DB</span>
+        <span><i class="sw" style="background:#a4300c"></i>Feed Quality / Delay</span>
+        <span><i class="sw" style="background:#6d1a06"></i>API Timeout</span>
+      </div>
+    </div>
+
+    <div class="col fill" style="flex:.8;">
+      <div class="mo">
+        <div class="h">APR 2026 – 21 Breaches</div>
+        <div class="l">Feed Quality: 16 &nbsp;|&nbsp; API Timeout: 4<br>App Bug: 1</div>
+        <div class="i">Feed timing and external API dominated</div>
+      </div>
+      <div class="mo green">
+        <div class="h">MAY 2026 – 16 Breaches</div>
+        <div class="l">App Bug: 16 &nbsp;|&nbsp; Feed Quality: 0<br>API Timeout: 0</div>
+        <div class="i">Pure app bug spike – DSMT-ISG schema change</div>
+      </div>
+      <div class="mo rust">
+        <div class="h">JUN 2026 – 26 Breaches</div>
+        <div class="l">App Bug: 13 &nbsp;|&nbsp; Feed Quality: 12<br>API Timeout: 1</div>
+        <div class="i">Worst month – dual escalation pattern</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="height:150px;">
+    <div class="insight fill" style="flex:1.6;">
+      <h4>Key Insight – June Escalation</h4>
+      June was the highest breach month at 26 occurrences, driven by both feed quality issues and application bugs escalating simultaneously. This dual-category escalation in June was the primary contributor to Q2 total exceeding Q1 by 68%. May's pure app bug spike was almost exclusively the DSMT-ISG schema change event that caused a week of NULL violations until PRIN-4619 was deployed.
+    </div>
+    <div class="softbox fill" style="flex:.6;">
+      <h4>Monthly Totals</h4>
+      APR: <b style="color:var(--rust)">21 breaches</b><br>
+      MAY: 16 breaches<br>
+      JUN: <b style="color:var(--rust)">26 breaches</b>
+      <div style="margin-top:10px;font-weight:700;color:var(--blue-dark);">Q2 TOTAL: 69 breaches</div>
+    </div>
+  </div>
+  <div class="slide-no">08</div>
+</section>
+
+<!-- ============ SLIDE 9 — SOP ============ -->
+<section class="slide" id="s9">
+  <h1 class="title">Standard Operating Procedure – Dataverse SLA Monitoring</h1>
+  <p class="subtitle">End-to-end workflow from daily monitoring through MCA tester attestation</p>
+
+  <div class="row grow">
+    <div class="card blue fill">
+      <div class="card-head">
+        <div class="badge blue"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>
+        <div class="card-title blue">DAILY MONITORING</div>
+      </div>
+      <div class="rule blue"></div>
+      <div class="step blue"><b>Step 1 – Monitor</b>IP Data Ingestion Team monitors dashboard daily for SLA status</div>
+      <div class="step blue"><b>Step 2 – Alert</b>SLA breach triggers automatic notification to L2 Support</div>
+      <div class="step blue"><b>Step 3 – Ticket</b>L2 raises Incident Ticket in ServiceNow assigned to CTI NA EX US CTI GL EX CITI DATAVERSE L3</div>
+      <div class="step blue"><b>Step 4 – Resolve</b>L3 investigates and resolves root cause</div>
+      <div class="step blue"><b>Step 5 – Reload</b>Job is re-triggered to reload data</div>
+    </div>
+
+    <div class="card green fill">
+      <div class="card-head">
+        <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg></div>
+        <div class="card-title" style="color:#0f172a;">QUARTERLY REVIEW</div>
+      </div>
+      <div class="rule green"></div>
+      <div class="step"><b style="color:#0f172a;">Step 1 – Review</b>Control Owner reviews all SLA breach reports quarterly</div>
+      <div class="step"><b style="color:#0f172a;">Step 2 – Permanent Fix</b>For repeated issues, development team applies permanent fixes</div>
+      <div class="step"><b style="color:#0f172a;">Step 3 – Export</b>Control Owner exports report and reviews MissedCutoff items</div>
+      <div class="step"><b style="color:#0f172a;">Step 4 – Evidence</b>Report uploaded as MCA evidence for the quarter</div>
+      <div class="step"><b style="color:#0f172a;">Step 5 – Archive</b>Documentation archived in control repository</div>
+    </div>
+
+    <div class="card rust fill">
+      <div class="card-head">
+        <div class="badge rust"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
+        <div class="card-title rust">MCA TESTER REVIEW</div>
+      </div>
+      <div class="rule rust"></div>
+      <div class="step rust"><b>Step 1 – Submit</b>Control Owner submits attested quarterly snapshot to MCA Tester</div>
+      <div class="step rust"><b>Step 2 – Validate</b>Tester validates evidence against control requirements</div>
+      <div class="step rust"><b>Step 3 – Attest</b>MCA Tester marks attestation complete upon successful validation</div>
+      <div class="step rust"><b>Step 4 – Record</b>Formal sign-off recorded in MCA system</div>
+      <div class="step rust"><b>Cadence</b>Quarterly cycle – Q2 2026 attestation currently in progress</div>
+    </div>
+  </div>
+  <div class="slide-no">09</div>
+</section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" title="Previous slide (←)">&#8249;</button>
+  <span class="cnt" id="counter">1 / 9</span>
+  <button id="next" title="Next slide (→)">&#8250;</button>
+  <button id="print" title="Print / Save as PDF" style="font-size:12px;width:auto;padding:0 10px;">PDF</button>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var counter = document.getElementById('counter');
+  var current = 0;
+
+  function go(i){
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    slides[current].scrollIntoView({behavior:'smooth', block:'center'});
+    render();
+  }
+  function render(){ counter.textContent = (current + 1) + ' / ' + slides.length; }
+
+  document.getElementById('next').addEventListener('click', function(){ go(current + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ go(current - 1); });
+  document.getElementById('print').addEventListener('click', function(){ window.print(); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(current + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp')                    { e.preventDefault(); go(current - 1); }
+    if (e.key === 'Home') { e.preventDefault(); go(0); }
+    if (e.key === 'End')  { e.preventDefault(); go(slides.length - 1); }
+  });
+
+  // keep the counter in sync when the user scrolls manually
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting && en.intersectionRatio > 0.5) {
+          current = slides.indexOf(en.target);
+          render();
+        }
+      });
+    }, {threshold:[0.5]});
+    slides.forEach(function(s){ io.observe(s); });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
