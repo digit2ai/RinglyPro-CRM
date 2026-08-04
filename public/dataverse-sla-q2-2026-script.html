@@ -197,9 +197,9 @@
 <section>
   <div class="slug"><span class="n">01</span><span class="h">Cover — Dataverse Ingestion Feed SLA Monitoring</span></div>
   <p>Good morning. This is the Q2 2026 review of our Dataverse ingestion feeds.</p>
-  <p>Three numbers up front. We delivered <b>99.3 percent</b> of feeds within SLA &mdash; that is <b>10,365 of 10,434</b>. <b>Every breach</b> now has a fix in place, all <b>63 of 63</b>. And we cut our root cause patterns by <b>40 percent</b> &mdash; from five down to three.</p>
+  <p>Three numbers up front. We delivered <b>99.3 percent</b> of feeds within SLA &mdash; that is <b>10,365 of 10,434</b>. <b>Every breach</b> now has a fix in place, all <b>63 of 63</b> &mdash; and those sixty-three occurrences are only <b>11 distinct incidents</b>. And we cut our root cause patterns by <b>40 percent</b> &mdash; from five down to three.</p>
   <p>That last one is the story of the quarter, so let me start there.</p>
-  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>(10,434 &minus; 69) &divide; 10,434 = <b>10,365 &divide; 10,434</b></em></span><span class="row"><i>Every breach fixed</i><em><b>63 of 63</b> categorized breaches</em></span><span class="row"><i>40% fewer patterns</i><em>5 in Q1 &rarr; 3 in Q2 &mdash; <b>2 removed &divide; 5 = 40%</b></em></span></div>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>(10,434 &minus; 69) &divide; 10,434 = <b>10,365 &divide; 10,434</b></em></span><span class="row"><i>Every breach fixed</i><em><b>63 of 63</b> categorized occurrences</em></span><span class="row"><i>11 distinct incidents</i><em>Drift 2 + MCA 2 + PTS 2 + DSMT 1 + GRC 1 + CRS 1 + Policy 1 + GDW 1 = <b>11</b></em></span><span class="row"><i>40% fewer patterns</i><em>5 in Q1 &rarr; 3 in Q2 &mdash; <b>2 removed &divide; 5 = 40%</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Sixty-nine breaches does not sound like ninety-nine percent.&rdquo;</span><span class="a">Sixty-nine against <b>10,434 feeds</b>. The rate is the portfolio view; the sixty-nine are what we spent the quarter fixing. Both matter, and both are on the slide.</span></div>
 </section>
 
@@ -210,7 +210,7 @@
   <p>Feed Delay and API Timeout carried over unchanged.</p>
   <p>Alongside that: every breach traced to a root cause, every one now carries a fix, and <b>no new failure mode appeared</b> at any point in the quarter. <span class="pause">— pause —</span></p>
   <div class="cue"><span class="lab">If asked about the volume increase</span>
-    Incidents did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
+    Occurrences did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
   </div>
   <div class="math"><span class="lab">The math</span><span class="row"><i>40% consolidation</i><em>2 patterns removed &divide; 5 in Q1 = <b>40%</b></em></span><span class="row"><i>Three into one</i><em>JDBC 13 + HikariPool + NPE &rarr; App Bug / DB = <b>30</b></em></span><span class="row"><i>63 categorized</i><em>30 + 28 + 5 = <b>63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Patterns went down but breaches went up. How is that progress?&rdquo;</span><span class="a">Because the number of <b>distinct problems</b> drives the effort, not the count of instances. Five investigation tracks became three. More instances of fewer problems is the easier position to be in &mdash; each one now has an owner and a known fix.</span></div>
@@ -220,19 +220,22 @@
   <div class="slug"><span class="n">03</span><span class="h">Q2 Performance Highlights</span></div>
   <p>We processed <b>10,434 feeds</b> across eight pipelines. <b>99.3 percent</b> landed within SLA &mdash; <b>10,365</b> on time, <b>69</b> late or failed.</p>
   <p><b>63 of 63</b> breaches now carry a fix — 42 closed inside Q2, and 21 in the July releases.</p>
+  <p>And I want to be precise about what sixty-three means. Sixty-three counts <b>occurrences</b>. Behind them sit only <b>11 distinct incidents</b>.</p>
+  <p><span class="k">Drift two</span>, <span class="k">MCA two</span>, <span class="k">PTS two</span> &mdash; then <span class="k">DSMT-ISG</span>, <span class="k">GRC</span>, <span class="k">CRS</span>, <span class="k">Policy</span> and <span class="k">GDW</span> with <b>one each</b>.</p>
+  <p>So it was the same handful of problems repeating. <b>Eleven things to fix, not sixty-three.</b> <span class="pause">&mdash; pause &mdash;</span></p>
   <p><b>Zero data loss.</b> Every affected load either re-ran or self-resolved and completed.</p>
   <p>Three fixes are worth naming. <span class="k">PRIN-4619</span> — raised one day, resolved the next. The <span class="k">Drift schedule change</span>, which removed the cause behind eleven breaches. And <span class="k">PRIN-5573</span>, the timestamp formatter.</p>
-  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>10,365 &divide; 10,434 = <b>99.3%</b></em></span><span class="row"><i>100% carry a fix</i><em>63 &divide; 63 &mdash; <b>42 in Q2 + 21 in July</b></em></span><span class="row"><i>July 21</i><em>15 (PRIN-5573, 16-Jul) + 6 (Drift, 17-Jul) = <b>21</b></em></span></div>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>10,365 &divide; 10,434 = <b>99.3%</b></em></span><span class="row"><i>100% carry a fix</i><em>63 &divide; 63 &mdash; <b>42 in Q2 + 21 in July</b></em></span><span class="row"><i>63 occurrences</i><em>17+15+15+8+4+2+1+1 across the eight sources</em></span><span class="row"><i>11 incidents</i><em>2+2+2+1+1+1+1+1 &mdash; <b>5.7 occurrences each</b></em></span><span class="row"><i>July 21</i><em>15 (PRIN-5573, 16-Jul) + 6 (Drift, 17-Jul) = <b>21</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;You say a hundred percent carry a fix, but twenty-one landed in July, after the quarter closed. Is that really a Q2 result?&rdquo;</span><span class="a">Fair challenge, and no. <b>Forty-two closed inside Q2</b> &mdash; that is sixty-seven percent. The other twenty-one closed in July. Both numbers are on the slide precisely so I am not claiming July work as a Q2 result.</span></div>
 </section>
 
 <section>
   <div class="slug"><span class="n">04</span><span class="h">RCA Pattern Intelligence</span></div>
-  <p>Three categories. Application and database bugs are <b>48 percent</b> &mdash; that is <b>30 of 63</b>. Feed quality is <b>44 percent</b>, <b>28</b>. External network is <b>8 percent</b>, just <b>5 incidents</b>.</p>
+  <p>Three categories. Application and database bugs are <b>48 percent</b> &mdash; that is <b>30 of 63</b>. Feed quality is <b>44 percent</b>, <b>28</b>. External network is <b>8 percent</b>, just <b>5 occurrences</b>.</p>
   <p>The headline here: <b>92 percent</b> of our breaches &mdash; <b>58 of 63</b>, the thirty plus the twenty-eight &mdash; come from internal, addressable causes. Only <b>5</b> sit outside our direct control.</p>
   <p>That is good news. It means most of this is ours to fix, and we have been fixing it.</p>
   <div class="math"><span class="lab">The math</span><span class="row"><i>48% App Bug / DB</i><em>30 &divide; 63 = <b>47.6%</b>, stated as 48</em></span><span class="row"><i>44% Feed Quality</i><em>28 &divide; 63 = <b>44.4%</b>, stated as 44</em></span><span class="row"><i>8% External Network</i><em>5 &divide; 63 = <b>7.9%</b>, stated as 8</em></span><span class="row"><i>92% internal</i><em>(30 + 28) = 58 &divide; 63 = <b>92.1%</b></em></span></div>
-  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;If ninety-two percent is internal and addressable, why did volume go up?&rdquo;</span><span class="a">Because our detection got sharper. Q1 introduced per-source, per-date tracking where Q4 had only an aggregate rate. Finer detection surfaces more incidents of the <b>same underlying problems</b>.</span></div>
+  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;If ninety-two percent is internal and addressable, why did volume go up?&rdquo;</span><span class="a">Because our detection got sharper. Q1 introduced per-source, per-date tracking where Q4 had only an aggregate rate. Finer detection surfaces more occurrences of the <b>same underlying problems</b>.</span></div>
 </section>
 
 <section>
@@ -255,7 +258,7 @@
   <p>That is <span class="k">PRIN-4619</span>. Raised on the ninth, resolved on the tenth. <b>One day</b>, and it has not recurred since.</p>
   <p><span class="k">GRC, four.</span> Their API is contracted to answer inside sixty seconds. Under load it did not. We retrigger by hand, and all four completed the same day.</p>
   <div class="flag"><span class="lab">Volunteer this — do not wait to be asked</span>
-    That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every incident was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
+    That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every occurrence was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
   </div>
   <div class="math"><span class="lab">The math</span><span class="row"><i>PTS 15</i><em>13 feed quality + 2 DB bug = <b>15</b></em></span><span class="row"><i>Control-file gap</i><em>7,356 &minus; 7,354 = <b>2 records</b></em></span><span class="row"><i>This page</i><em>15 + 8 + 4 = <b>27 of 63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;GRC is marked resolved, but you say it will recur. Which is it?&rdquo;</span><span class="a">Both, and they are different things. Every incident was <b>resolved the day it happened</b>. There is no preventive fix on our side because the API belongs to someone else. So the breaches are closed and the risk is open.</span></div>
