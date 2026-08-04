@@ -50,6 +50,27 @@
   .inst .inst-cta{margin-top:8px;font-size:10px;font-weight:800;letter-spacing:.04em;color:#7fd6a4;opacity:.9}
   .inst.clickable:focus-visible{outline:2px solid var(--grn);outline-offset:2px}
 
+  /* Goal-seek: arrastra el puntaje a la meta y aplica el plan */
+  .gs{margin-top:16px;border-radius:20px;border:1px solid rgba(63,192,106,.30);padding:20px 20px 22px;
+    background:radial-gradient(120% 120% at 100% 0%,rgba(63,192,106,.10),transparent 55%),linear-gradient(180deg,#0e2620,#0a1a16)}
+  .gs h2{font-size:17px;font-weight:800}
+  .gs .sub{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.45}
+  .gs-target{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;font-size:13px;color:var(--mut);font-weight:700}
+  .gs-tval{font-family:'Inter';font-weight:800;font-size:34px;line-height:1}
+  #gs-range{width:100%;margin-top:8px;accent-color:var(--grn);height:6px}
+  .gs-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:6px}
+  .gs-plan{margin-top:16px}
+  .gs-hint{color:var(--mut);font-size:13px;font-style:italic}
+  .gs-head{font-size:14px;margin-bottom:10px}
+  .gs-row{display:flex;align-items:baseline;gap:7px;font-size:14px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.04);margin-bottom:7px}
+  .gs-row .gs-verb{font-size:11px;font-weight:800;letter-spacing:.04em;color:#7fd6a4;text-transform:uppercase}
+  .gs-note{font-size:12.5px;color:var(--amb);margin-top:8px;line-height:1.45}
+  .gs-actions{display:flex;gap:9px;margin-top:16px}
+  .gs-apply{flex:1;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;color:#04120c;background:linear-gradient(90deg,#6fce88,#3fb0a8);cursor:pointer}
+  .gs-apply:disabled{opacity:.5;cursor:default}
+  .gs-cancel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;font-weight:700;color:var(--mut);background:none;cursor:pointer}
+  .gs-msg{font-size:12.5px;color:var(--amb);margin-top:10px}
+
   /* Cards / charts */
   .sf-card{margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:20px}
   .sf-card h2{font-size:16px;font-weight:800}
@@ -182,7 +203,7 @@
 </div></div>
 <script src="/planea/portal/planea-nav.js?v=44" defer></script>
 <script src="/planea/portal/planea-sb.js?v=44" defer></script>
-<script src="/planea/portal/planea-salud.js?v=47" defer></script>
+<script src="/planea/portal/planea-salud.js?v=48" defer></script>
 <script src="/planea/portal/planea-patrimonio-edit.js?v=44" defer></script>
 <script src="/planea/portal/maya-chat.js?v=45" defer></script>
 </body>

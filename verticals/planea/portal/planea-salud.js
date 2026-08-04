@@ -57,7 +57,11 @@
     var needle = '<g id="sf-needle" style="transform-box:view-box;transform-origin:' + cx + 'px ' + cy + 'px;transform:rotate(0deg);transition:transform 1.1s cubic-bezier(.2,.9,.2,1)">' +
       '<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' +
       '<circle cx="' + tipTip[0].toFixed(1) + '" cy="' + tipTip[1].toFixed(1) + '" r="4.5" fill="' + c + '"/></g>';
-    return '<svg viewBox="0 0 260 250">' + bands + ticks + needle +
+    // Aguja fantasma de META: el usuario la arrastra (con el control de abajo) hacia
+    // el verde; la app calcula qué se necesita para llegar ahí. Oculta hasta usarse.
+    var tneedle = '<g id="sf-target" style="transform-box:view-box;transform-origin:' + cx + 'px ' + cy + 'px;transform:rotate(0deg);transition:transform .25s ease;opacity:0">' +
+      '<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="#7fd6a4" stroke-width="3" stroke-dasharray="3 4" stroke-linecap="round"/></g>';
+    return '<svg viewBox="0 0 260 250">' + bands + ticks + tneedle + needle +
       '<circle cx="' + cx + '" cy="' + cy + '" r="12" fill="#0a1a16" stroke="#fff" stroke-width="2"/>' +
       '<text id="sf-score" x="' + cx + '" y="' + (cy + 58) + '" fill="' + c + '" font-size="52" font-weight="800" font-family="Inter" text-anchor="middle">' + (score == null ? '--' : 0) + '</text>' +
       '<text x="' + cx + '" y="' + (cy + 76) + '" fill="rgba(255,255,255,.45)" font-size="11" letter-spacing="3" font-family="Inter" text-anchor="middle">SALUD / 100</text>' +
@@ -229,6 +233,143 @@
     var S4 = totalAssets > 0 ? cl01(netWorth / totalAssets) : (D > 0 ? 0 : 1);
     var S5 = goalRet > 0 ? cl01(R / goalRet) : 0, S6 = annual > 0 ? cl01(S / (10 * annual)) : 0;
     return Math.max(1, Math.min(99, Math.round(20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6)));
+  }
+
+  // ---- GOAL-SEEK: lleva el puntaje a una meta y calcula QUÉ se necesita ----
+  // Sub-puntajes S1..S6 con las mismas fórmulas que calcScore (para elegir el
+  // pilar más débil y financiable primero).
+  // Puntaje SIN redondear (0..100) — para medir la mejora marginal por peso en el
+  // goal-seek; con el redondeado, un paso pequeño da 0 y el plan se corta antes.
+  function calcRaw(t) {
+    var I = t.I; if (I <= 0) return 0;
+    var annual = I * 12, totalAssets = t.A + t.V + t.R, netWorth = totalAssets - t.D, goalRet = annual * retFactor(t.age || 35);
+    var S1 = cl01(t.A / (6 * I)), S2 = cl01(((I - t.G) / I) / 0.2), S3 = Math.max(1 - t.D / annual, 0);
+    var S4 = totalAssets > 0 ? cl01(netWorth / totalAssets) : (t.D > 0 ? 0 : 1);
+    var S5 = goalRet > 0 ? cl01(t.R / goalRet) : 0, S6 = annual > 0 ? cl01(t.S / (10 * annual)) : 0;
+    return 20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6;
+  }
+  // Devuelve el plan (aportes por pilar) para alcanzar `target`, llenando primero
+  // el pilar más débil que aún se pueda financiar con dinero. Honesto: si con
+  // aportes no alcanza (falta subir ingreso o bajar gasto = tasa de ahorro), lo dice.
+  // INVERSO del simulador "¿Qué pasa si…?": en vez de mover los tres controles y
+  // ver el puntaje, mueves el PUNTAJE (meta) y te decimos cuánto mover cada control.
+  // Mismos tres knobs que el simulador: ahorro extra/mes, recorte de gasto/mes,
+  // abono a la deuda (una vez). Efecto (idéntico al forward):
+  //   A = A0 + (extra + cut)*12 · G = G0 − cut · D = D0 − abono
+  function goalSeekPlan(inp, target) {
+    var i = inp, em = 0, cut = 0, abono = 0;
+    function build() { return { I: i.I, G: Math.max(0, i.G - cut), A: i.A + (em + cut) * 12, V: i.V, R: i.R, D: Math.max(0, i.D - abono), S: i.S, age: i.age }; }
+    var step = Math.max(20000, Math.round(i.I * 0.05 / 10000) * 10000);
+    var guard = 0;
+    while ((calcScore(build()) || 0) < target && guard < 4000) {
+      guard++;
+      var base = calcRaw(build()), best = null;
+      // knob 1: ahorrar más al mes
+      if (true) { em += step; var g1 = calcRaw(build()) - base; em -= step; if (g1 > 0) best = { k: 'extra', g: g1 }; }
+      // knob 2: recortar gasto al mes (no más de lo que gastas)
+      if (cut + step <= i.G) { cut += step; var g2 = calcRaw(build()) - base; cut -= step; if (g2 > 0 && (!best || g2 > best.g)) best = { k: 'cut', g: g2 }; }
+      // knob 3: abonar a la deuda (no más de lo que debes)
+      if (abono + step <= i.D) { abono += step; var g3 = calcRaw(build()) - base; abono -= step; if (g3 > 0 && (!best || g3 > best.g)) best = { k: 'abono', g: g3 }; }
+      if (!best) break; // ningún knob sube el puntaje con este paso
+      if (best.k === 'extra') em += step; else if (best.k === 'cut') cut += step; else abono += step;
+    }
+    var reached = calcScore(build()) || 0;
+    var r = function (n) { return Math.round(n / 10000) * 10000; };
+    var steps = [];
+    if (em >= 10000) steps.push({ k: 'extra', verb: 'Ahorra', tail: 'más al mes', amount: r(em), monthly: true });
+    if (cut >= 10000) steps.push({ k: 'cut', verb: 'Recorta', tail: 'de gastos al mes', amount: r(cut), monthly: true });
+    if (abono >= 10000) steps.push({ k: 'abono', verb: 'Abona', tail: 'a tu deuda (una vez)', amount: r(abono), monthly: false });
+    return { reached: reached, target: target, steps: steps, enough: reached >= target, em: em, cut: cut, abono: abono };
+  }
+
+  function goalSeek(d) {
+    var green = 70, cur = d.overall;
+    var start = Math.min(99, Math.max(cur + 1, green));
+    return '<div class="gs" id="gs">' +
+      '<h2>Lleva tu puntaje a la meta</h2>' +
+      '<div class="sub">Al revés del simulador de abajo: en vez de mover los controles, mueve tu <b>meta de puntaje</b> y Planea te dice cuánto cambiar. Con “Ajustar” lo aplica a tus datos.</div>' +
+      '<div class="gs-target"><span>Tu meta de Salud</span><span class="gs-tval" id="gs-tval" style="color:' + scoreColor(start) + '">' + start + '</span></div>' +
+      '<input type="range" id="gs-range" min="' + (cur + 1 > 99 ? 99 : cur + 1) + '" max="99" step="1" value="' + start + '">' +
+      '<div class="gs-scale"><span>hoy ' + cur + '</span><span>verde 70+</span><span>99</span></div>' +
+      '<div class="gs-plan" id="gs-plan"></div>' +
+      '<div class="gs-actions"><button class="gs-apply" id="gs-apply" disabled>Ajustar mis datos</button>' +
+      '<button class="gs-cancel" id="gs-cancel">Restablecer</button></div>' +
+      '<div class="gs-msg" id="gs-msg" hidden></div>' +
+      '</div>';
+  }
+
+  function wireGoalSeek(d, demo) {
+    var i = d.inputs, cur = d.overall;
+    var range = document.getElementById('gs-range'), tval = document.getElementById('gs-tval');
+    var planEl = document.getElementById('gs-plan'), applyB = document.getElementById('gs-apply');
+    var cancelB = document.getElementById('gs-cancel'), msg = document.getElementById('gs-msg');
+    var target = document.getElementById('sf-target');
+    if (!range) return;
+    var lastPlan = null;
+    function paint() {
+      var T = +range.value;
+      tval.textContent = T; tval.style.color = scoreColor(T);
+      if (target) { target.style.opacity = T > cur ? '1' : '0'; target.style.transform = 'rotate(' + (T / 100 * 270) + 'deg)'; }
+      var gp = goalSeekPlan(i, T); lastPlan = gp;
+      if (T <= cur) { planEl.innerHTML = '<div class="gs-hint">Mueve la meta por encima de tu puntaje actual para ver el plan.</div>'; applyB.disabled = true; return; }
+      if (!gp.steps.length) { planEl.innerHTML = '<div class="gs-hint">Ya estás en esa meta o por encima.</div>'; applyB.disabled = true; return; }
+      var rows = gp.steps.map(function (s) {
+        return '<div class="gs-row"><span class="gs-verb">' + s.verb + '</span> <b>' + cop(s.amount) + '</b> ' + s.tail + '</div>';
+      }).join('');
+      var head = '<div class="gs-head">Para llegar a <b style="color:' + scoreColor(T) + '">' + T + '</b>' + (gp.enough ? '' : ' (alcanzas ' + gp.reached + ')') + ', esto es lo que debes hacer:</div>';
+      var tail = gp.enough ? '' : '<div class="gs-note">Con estos cambios llegas a ' + gp.reached + '. Para más, sube tus ingresos.</div>';
+      planEl.innerHTML = head + rows + tail;
+      applyB.disabled = false;
+    }
+    range.addEventListener('input', paint);
+    cancelB.addEventListener('click', function () { range.value = Math.min(99, Math.max(cur + 1, 70)); paint(); if (msg) { msg.hidden = true; } });
+    applyB.addEventListener('click', function () {
+      if (!lastPlan || !lastPlan.steps.length) return;
+      if (demo) { msg.hidden = false; msg.textContent = 'En modo ejemplo no se guarda. Inicia sesión para ajustar tus datos.'; return; }
+      applyB.disabled = true; applyB.textContent = 'Ajustando…';
+      applyPlan(lastPlan).then(function () { reloadSalud(true); })
+        .catch(function () { applyB.disabled = false; applyB.textContent = 'Ajustar mis datos'; msg.hidden = false; msg.textContent = 'No se pudo aplicar. Intenta de nuevo.'; });
+    });
+    paint();
+  }
+
+  // Aplica el plan a los datos reales, fiel al modelo del simulador:
+  //  - ahorro extra/mes  -> suma un año (extra*12) al ahorro
+  //  - recorte de gasto  -> reduce ese gasto mensual Y redirige un año a ahorro
+  //  - abono a la deuda  -> reduce los saldos de deuda (de mayor a menor)
+  function applyPlan(gp) {
+    var jobs = [];
+    var addSavings = (gp.em + gp.cut) * 12;
+    if (addSavings >= 10000) {
+      jobs.push(fetch('/planea/api/v1/me/items', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: 'ahorro', name: 'Ahorro del plan (1 año)', type: 'Ahorro del plan', value: Math.round(addSavings), monthly: 0 })
+      }).then(function (r) { if (!r.ok) throw new Error('post'); }));
+    }
+    if (gp.cut >= 10000) jobs.push(reduceCategory('gasto', gp.cut));   // baja el gasto mensual
+    if (gp.abono >= 10000) jobs.push(reduceCategory('deuda', gp.abono)); // abona a la deuda
+    return Promise.all(jobs);
+  }
+  // Reduce los ítems de una categoría (de mayor a menor) en `amount` total.
+  function reduceCategory(category, amount) {
+    return fetch('/planea/api/v1/me/items?category=' + category, { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      .then(function (d) {
+        var items = (d.items || []).slice().sort(function (a, b) { return b.value - a.value; });
+        var left = amount, chain = Promise.resolve();
+        items.forEach(function (it) {
+          if (left <= 0) return;
+          var cut = Math.min(left, it.value); left -= cut;
+          var nv = Math.max(0, it.value - cut);
+          chain = chain.then(function () {
+            return fetch('/planea/api/v1/me/items/' + it.id, {
+              method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ value: nv })
+            });
+          });
+        });
+        return chain;
+      });
   }
 
   function wireSimulator(d) {
@@ -439,13 +580,14 @@
         '<div style="margin-top:10px"><a href="?demo=1" style="color:var(--mut);font-size:12.5px">Ver el tablero con datos de ejemplo →</a></div></div>';
       return;
     }
-    root.innerHTML = cockpit(d) + chartsBlock() +
+    root.innerHTML = cockpit(d) + goalSeek(d) + chartsBlock() +
       '<div class="sf-card" style="border:none;background:none;padding:6px 2px"><h2>Detalle por área</h2><div class="sub">Toca una tarjeta para ver su fórmula, los hallazgos de Maya y registrar plata en ese pilar. Cada aporte actualiza tu puntaje al instante.</div></div>' +
       '<div class="sf-grid">' + d.buckets.map(bucketCard).join('') + '</div>' +
       simulator(d) + neuralFindings(d);
     animatePrimary(d.overall);
     drawCharts(d);
     bindCards(demo);
+    wireGoalSeek(d, demo);
     wireSimulator(d);
     loadFindings(demo);
   }
