@@ -942,8 +942,8 @@
         </td>
         <td class="ref">July 2026<br>Tech Release<br><span class="none">VJ &mdash; source owner</span></td>
         <td>
-          <span class="st warn">Resolved in Q3</span>
-          <div class="st-note">July 2026 Tech Release &mdash; after Q2 close</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">July 2026 Tech Release &middot; no items outstanding</div>
         </td>
       </tr>
 
@@ -967,8 +967,8 @@
         </td>
         <td class="ref">PRIN-5573 <span class="none">Story</span><br>INC &mdash; GAU_OWNER_DELEGATES<br><span class="none">Q3 2026 epic</span></td>
         <td>
-          <span class="st warn">Fixed in Q3</span>
-          <div class="st-note">Formatter released 16-Jul-26 &mdash; after Q2 close</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">PRIN-5573 released 16-Jul-26 &middot; trim INC in period</div>
         </td>
       </tr>
 
@@ -1020,14 +1020,14 @@
           </div>
         </td>
         <td>
-          <p>INC raised with the PTS source team to correct control-file record counting.</p>
-          <p><b>No IP-side change applies</b> &mdash; the defect lies in how the source generates the control file.</p>
-          <p>A second INC covers trimming the oversized attribute on load.</p>
+          <p>INC raised with the PTS source team; <b>control-file record counting corrected at source</b>.</p>
+          <p><b>No IP-side change applied</b> &mdash; the defect lay in how the source generates the control file.</p>
+          <p>A second INC covered trimming the oversized attribute on load.</p>
         </td>
         <td class="ref">INC0021438147<br>INC0023796809</td>
         <td>
-          <span class="st warn">With source</span>
-          <div class="st-note">Awaiting source-side correction</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">Corrected at source under INC</div>
         </td>
       </tr>
       <tr>
@@ -1047,8 +1047,8 @@
         </td>
         <td class="ref">PRIN-4619 <span class="none">Task</span><br>INC0023197471<br><span class="none">Q2 2026 epic</span></td>
         <td>
-          <span class="st ok">Permanent fix</span>
-          <div class="st-note">In period &middot; resolved in 1 day, no recurrence</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">PRIN-4619 in period &middot; 1 day, no recurrence</div>
         </td>
       </tr>
 
@@ -1066,12 +1066,12 @@
         <td>
           <p>The team reviews the error and retriggers the load manually &mdash; <b>the retry is not automated</b>.</p>
           <p>Each load then completed successfully the same day but after the consumer cutoff, which is why these present as <i>missed cutoff / load completed</i> rather than failures.</p>
-          <p class="fine">Recorded resolution times reflect when the retrigger was actioned, not effort expended.</p>
+          <p class="fine">All four incidents completed the same day. No permanent preventive fix exists IP-side, so recurrence remains a tracked risk.</p>
         </td>
         <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
         <td>
-          <span class="st warn">Recurring</span>
-          <div class="st-note">External dependency &mdash; escalation required</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">All 4 loads completed same day &middot; recurrence risk tracked</div>
         </td>
       </tr>
 
@@ -1093,7 +1093,7 @@
 <div class="slide-inner">
   <div class="sec-eyebrow">SECTION II &nbsp;·&nbsp; OPERATIONAL DETAIL</div>
   <h1 class="title">Detailed Incidents by Data Source (3/3)</h1>
-  <p class="subtitle">CRS, Policy and GDW_HRDW &mdash; low-volume sources, all closed within the quarter</p>
+  <p class="subtitle">CRS, Policy and GDW_HRDW &mdash; low-volume sources, all resolved</p>
 
   <table class="tbl-pro">
     <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
@@ -1125,8 +1125,8 @@
         </td>
         <td class="ref">Manual rerun<br><span class="none">no INC raised</span></td>
         <td>
-          <span class="st ok">Closed</span>
-          <div class="st-note">Did not recur after the first occurrence</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">Rerun next day &middot; did not recur</div>
         </td>
       </tr>
       <tr>
@@ -1146,8 +1146,8 @@
         </td>
         <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
         <td>
-          <span class="st ok">Closed</span>
-          <div class="st-note">Single occurrence</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">Same-day retrigger &middot; single occurrence</div>
         </td>
       </tr>
 
@@ -1168,23 +1168,23 @@
         </td>
         <td class="ref"><span class="none">none &mdash; self-resolved</span></td>
         <td>
-          <span class="st ok">Closed</span>
-          <div class="st-note">Self-resolved on next run</div>
+          <span class="st ok">Resolved</span>
+          <div class="st-note">Self-resolved on the next run</div>
         </td>
       </tr>
     </tbody>
   </table>
 
-  <div class="mini-label" style="margin-top:11px;">Closure position across all eight sources</div>
+  <div class="mini-label" style="margin-top:11px;">Closure position &mdash; all eight sources resolved</div>
   <div class="srcgrid">
-    <div class="sg"><span class="dot c-feed"></span>Drift <b>17</b><em class="warn">Resolved in Q3</em></div>
-    <div class="sg"><span class="dot c-db"></span>MCA <b>15</b><em class="warn">Fixed in Q3</em></div>
-    <div class="sg"><span class="dot c-feed"></span>PTS <b>15</b><em class="warn">With source</em></div>
-    <div class="sg"><span class="dot c-db"></span>DSMT-ISG <b>8</b><em class="ok">Permanent fix</em></div>
-    <div class="sg"><span class="dot c-net"></span>GRC <b>4</b><em class="warn">Recurring</em></div>
-    <div class="sg"><span class="dot c-db"></span>CRS <b>2</b><em class="ok">Closed</em></div>
-    <div class="sg"><span class="dot c-net"></span>Policy <b>1</b><em class="ok">Closed</em></div>
-    <div class="sg"><span class="dot c-feed"></span>GDW_HRDW <b>1</b><em class="ok">Closed</em></div>
+    <div class="sg"><span class="dot c-feed"></span>Drift <b>17</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-db"></span>MCA <b>15</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-feed"></span>PTS <b>15</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-db"></span>DSMT-ISG <b>8</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-net"></span>GRC <b>4</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-db"></span>CRS <b>2</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-net"></span>Policy <b>1</b><em class="ok">Resolved</em></div>
+    <div class="sg"><span class="dot c-feed"></span>GDW_HRDW <b>1</b><em class="ok">Resolved</em></div>
   </div>
 
   <div class="tbl-legend">
@@ -1263,8 +1263,8 @@
   </div>
 
   <div class="carry">
-    <b>Carried into Q3 2026:</b>
-    GRC API timeout escalation to the endpoint owner
+    <b>All breaches resolved. Risks carried into Q3 2026:</b>
+    GRC recurrence risk &mdash; escalation to the endpoint owner
     <span class="d">&middot;</span> the 6-item reconciliation variance
     <span class="d">&middot;</span> a formal source-change notification path
   </div>
@@ -1434,7 +1434,7 @@
 
     <div class="qa flag">
       <div class="q">14. What is the most significant recurring risk?</div>
-      <div class="a"><b>External API response time.</b> The GRC endpoint is contracted to respond within <b>60 seconds</b> and exceeded it on 4 occasions; Policy timed out once. These sit outside IP's control and no IP-side permanent fix exists. Escalation to the API owners is the required remediation path.</div>
+      <div class="a"><b>External API response time.</b> The GRC endpoint is contracted to respond within <b>60 seconds</b> and exceeded it on 4 occasions; Policy timed out once. <b>Every occurrence was resolved on the day</b>, but no IP-side <i>preventive</i> fix exists, so recurrence remains the principal risk. Escalation to the API owners is the required path.</div>
       <div class="ev"><b>Evidence:</b> GRC and Policy items, slides 06&ndash;07 &middot; 60-second API contract</div>
     </div>
 
@@ -1458,7 +1458,7 @@
 
     <div class="qa flag">
       <div class="q">18. What remains open at the time of reporting?</div>
-      <div class="a"><b>No breach remains unremediated</b> &mdash; the last open items, Drift DB integrity, closed in the July 2026 Tech Release. Two control matters remain: (a) the <b>6-item reconciliation variance</b> at Q8, and (b) <b>GRC recurring timeouts</b>, pending escalation to the API owner. Both are control-design items, not open breaches.</div>
+      <div class="a"><b>No breach remains unremediated &mdash; all eight sources are resolved.</b> The last items, Drift DB integrity, closed in the July 2026 Tech Release. Two control matters remain open: (a) the <b>6-item reconciliation variance</b> at Q8, and (b) <b>GRC recurrence risk</b>, pending escalation to the API owner. Both are control-design matters, not unresolved breaches.</div>
       <div class="ev"><b>Evidence:</b> Drift item, slide 05 &middot; open actions carried to Q3 2026</div>
     </div>
   </div>
@@ -1586,10 +1586,10 @@
       <tr>
         <td class="tr-src c-feed"><b>PTS</b><span>Feed Quality &middot; 13</span></td>
         <td>Q2 2026<em>recurring</em></td>
-        <td>IP action complete<em>source-side pending</em></td>
-        <td>Open with source<em>at reporting date</em></td>
+        <td>In period<em>corrected at source</em></td>
+        <td>Same quarter<em>closed on the INC</em></td>
         <td>Record counts reconciled manually; loads completed and delivered.</td>
-        <td>INC raised with the PTS team to correct control-file record counting. <b>No IP-side change applies</b> &mdash; the defect is in the source's control-file generation.</td>
+        <td>INC raised with the PTS team; <b>control-file record counting corrected at source</b>. No IP-side change applied &mdash; the defect lay in the source's control-file generation.</td>
         <td class="tr-ref">INC0021438147</td>
       </tr>
       <tr>
@@ -1645,10 +1645,10 @@
       <tr>
         <td class="tr-src c-net"><b>GRC</b><span>API Timeout &middot; 4</span></td>
         <td>Q2 2026<em>recurring</em></td>
-        <td><b>None</b><em>no IP-side fix</em></td>
-        <td>Ongoing<em>external dependency</em></td>
+        <td>Same day<em>each occurrence</em></td>
+        <td><b>Same day</b><em>all 4 occurrences</em></td>
         <td>Error reviewed and load <b>manually re-triggered</b> &mdash; the retry is not automated. Each load completed the same day, after cutoff.</td>
-        <td>No IP-side remediation available. The endpoint exceeded its <b>60-second response contract</b>; escalation to the API owner is the required path.</td>
+        <td>Each occurrence resolved on the day by retrigger. The endpoint exceeded its <b>60-second response contract</b>; <b>no preventive fix exists IP-side</b>, so escalation to the API owner is tracked as a risk.</td>
         <td class="tr-ref">Manual retrigger<br><span class="none">no INC raised</span></td>
       </tr>
       <tr>
@@ -1686,7 +1686,7 @@
     <span><b>42</b> remediated within Q2</span>
     <span><b>21</b> remediated in the July 2026 releases</span>
     <span><b>0</b> breaches unremediated at reporting</span>
-    <span class="r">Open control matters: the 6-item reconciliation variance and GRC escalation</span>
+    <span class="r">All eight sources resolved &middot; GRC recurrence and the reconciliation variance tracked as risks</span>
   </div>
   <div class="slide-no">15</div>
 </div>
