@@ -210,7 +210,7 @@
   <p>Feed Delay and API Timeout carried over unchanged.</p>
   <p>Alongside that: every breach traced to a root cause, every one now carries a fix, and <b>no new failure mode appeared</b> at any point in the quarter. <span class="pause">— pause —</span></p>
   <div class="cue"><span class="lab">If asked about the volume increase</span>
-    Occurrences did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
+    Incidents did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
   </div>
   <div class="math"><span class="lab">The math</span><span class="row"><i>40% consolidation</i><em>2 patterns removed &divide; 5 in Q1 = <b>40%</b></em></span><span class="row"><i>Three into one</i><em>JDBC 13 + HikariPool + NPE &rarr; App Bug / DB = <b>30</b></em></span><span class="row"><i>63 categorized</i><em>30 + 28 + 5 = <b>63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Patterns went down but breaches went up. How is that progress?&rdquo;</span><span class="a">Because the number of <b>distinct problems</b> drives the effort, not the count of instances. Five investigation tracks became three. More instances of fewer problems is the easier position to be in &mdash; each one now has an owner and a known fix.</span></div>
@@ -228,11 +228,11 @@
 
 <section>
   <div class="slug"><span class="n">04</span><span class="h">RCA Pattern Intelligence</span></div>
-  <p>Three categories. Application and database bugs are <b>48 percent</b> &mdash; that is <b>30 of 63</b>. Feed quality is <b>44 percent</b>, <b>28</b>. External network is <b>8 percent</b>, just <b>5 occurrences</b>.</p>
+  <p>Three categories. Application and database bugs are <b>48 percent</b> &mdash; that is <b>30 of 63</b>. Feed quality is <b>44 percent</b>, <b>28</b>. External network is <b>8 percent</b>, just <b>5 incidents</b>.</p>
   <p>The headline here: <b>92 percent</b> of our breaches &mdash; <b>58 of 63</b>, the thirty plus the twenty-eight &mdash; come from internal, addressable causes. Only <b>5</b> sit outside our direct control.</p>
   <p>That is good news. It means most of this is ours to fix, and we have been fixing it.</p>
   <div class="math"><span class="lab">The math</span><span class="row"><i>48% App Bug / DB</i><em>30 &divide; 63 = <b>47.6%</b>, stated as 48</em></span><span class="row"><i>44% Feed Quality</i><em>28 &divide; 63 = <b>44.4%</b>, stated as 44</em></span><span class="row"><i>8% External Network</i><em>5 &divide; 63 = <b>7.9%</b>, stated as 8</em></span><span class="row"><i>92% internal</i><em>(30 + 28) = 58 &divide; 63 = <b>92.1%</b></em></span></div>
-  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;If ninety-two percent is internal and addressable, why did volume go up?&rdquo;</span><span class="a">Because our detection got sharper. Q1 introduced per-source, per-date tracking where Q4 had only an aggregate rate. Finer detection surfaces more occurrences of the <b>same underlying problems</b>.</span></div>
+  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;If ninety-two percent is internal and addressable, why did volume go up?&rdquo;</span><span class="a">Because our detection got sharper. Q1 introduced per-source, per-date tracking where Q4 had only an aggregate rate. Finer detection surfaces more incidents of the <b>same underlying problems</b>.</span></div>
 </section>
 
 <section>
@@ -255,10 +255,10 @@
   <p>That is <span class="k">PRIN-4619</span>. Raised on the ninth, resolved on the tenth. <b>One day</b>, and it has not recurred since.</p>
   <p><span class="k">GRC, four.</span> Their API is contracted to answer inside sixty seconds. Under load it did not. We retrigger by hand, and all four completed the same day.</p>
   <div class="flag"><span class="lab">Volunteer this — do not wait to be asked</span>
-    That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every occurrence was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
+    That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every incident was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
   </div>
   <div class="math"><span class="lab">The math</span><span class="row"><i>PTS 15</i><em>13 feed quality + 2 DB bug = <b>15</b></em></span><span class="row"><i>Control-file gap</i><em>7,356 &minus; 7,354 = <b>2 records</b></em></span><span class="row"><i>This page</i><em>15 + 8 + 4 = <b>27 of 63</b></em></span></div>
-  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;GRC is marked resolved, but you say it will recur. Which is it?&rdquo;</span><span class="a">Both, and they are different things. Every occurrence was <b>resolved the day it happened</b>. There is no preventive fix on our side because the API belongs to someone else. So the breaches are closed and the risk is open.</span></div>
+  <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;GRC is marked resolved, but you say it will recur. Which is it?&rdquo;</span><span class="a">Both, and they are different things. Every incident was <b>resolved the day it happened</b>. There is no preventive fix on our side because the API belongs to someone else. So the breaches are closed and the risk is open.</span></div>
 </section>
 
 <section>

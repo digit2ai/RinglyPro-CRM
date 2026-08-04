@@ -688,7 +688,7 @@
 
   <div class="foot-note">
     <b>Q1 2026:</b> 5 patterns &middot; 8 sources &middot; 10,820 feeds &nbsp;&nbsp;<b>Q2 2026:</b> 3 patterns &middot; 8 sources &middot; 10,434 feeds
-    <span class="r">Occurrence volume 41 &rarr; 69 across a comparable feed count &mdash; every one triaged to root cause.</span>
+    <span class="r">Incident volume 41 &rarr; 69 across a comparable feed count &mdash; every one triaged to root cause.</span>
   </div>
   <div class="slide-no">02</div>
 </div>
@@ -988,7 +988,7 @@
     <span><i class="k c-db"></i>App Bug / DB</span>
     <span><i class="k c-feed"></i>Feed Quality / Delay</span>
     <span><i class="k c-net"></i>External Network</span>
-    <span class="sep">Counts are breach occurrences within the quarter</span>
+    <span class="sep">Counts are breach incidents within the quarter</span>
   </div>
   <div class="slide-no">05</div>
 </div>
@@ -1077,7 +1077,7 @@
           <p>Each load then completed successfully the same day but after the consumer cutoff, which is why these present as <i>missed cutoff / load completed</i> rather than failures.</p>
           <p class="fine">All four incidents completed the same day. No permanent preventive fix exists IP-side, so recurrence remains a tracked risk.</p>
         </td>
-        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">4 occurrences &middot; each closed the day it arose</span></div></td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">4 incidents &middot; each closed the day it arose</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">All 4 loads completed same day &middot; recurrence risk tracked</div>
@@ -1091,7 +1091,7 @@
     <span><i class="k c-db"></i>App Bug / DB</span>
     <span><i class="k c-feed"></i>Feed Quality / Delay</span>
     <span><i class="k c-net"></i>External Network</span>
-    <span class="sep">Counts are breach occurrences within the quarter</span>
+    <span class="sep">Counts are breach incidents within the quarter</span>
   </div>
   <div class="slide-no">06</div>
 </div>
@@ -1132,7 +1132,7 @@
           <p><b>No INC was raised to the source team</b>, as the fault sat with the pull process.</p>
           <p class="fine">CRS content changes only when a branch or office opens or closes, so a one-day delay carried no material impact on CityMAP downstream.</p>
         </td>
-        <td class="ref">Manual rerun<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr &amp; Jun 26</b></span><span>Resolved <b>Next day</b></span><span class="dur">1 day per occurrence &middot; 2 occurrences</span></div></td>
+        <td class="ref">Manual rerun<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr &amp; Jun 26</b></span><span>Resolved <b>Next day</b></span><span class="dur">1 day per incident &middot; 2 incidents</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Rerun next day &middot; did not recur</div>
@@ -1153,10 +1153,10 @@
           <p>Retriggered manually and completed <b>the same day</b>, later than the cutoff.</p>
           <p>No INC was created, as the source responded normally on every subsequent run.</p>
         </td>
-        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">Single occurrence &middot; closed same day</span></div></td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">Single incident &middot; closed same day</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
-          <div class="st-note">Same-day retrigger &middot; single occurrence</div>
+          <div class="st-note">Same-day retrigger &middot; single incident</div>
         </td>
       </tr>
 
@@ -1173,7 +1173,7 @@
         </td>
         <td>
           <p>These jobs run at <b>22:00 EST</b>. The next scheduled run completed successfully before the team began investigating, so no action was taken and <b>no INC or Jira was raised</b>.</p>
-          <p class="fine">First and only occurrence in the quarter.</p>
+          <p class="fine">First and only incident in the quarter.</p>
         </td>
         <td class="ref"><span class="none">none &mdash; self-resolved</span><div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>Next run</b></span><span class="dur">1 run cycle &middot; 22:00 EST schedule</span></div></td>
         <td>
@@ -1200,7 +1200,7 @@
     <span><i class="k c-db"></i>App Bug / DB</span>
     <span><i class="k c-feed"></i>Feed Quality / Delay</span>
     <span><i class="k c-net"></i>External Network</span>
-    <span class="sep">Counts are breach occurrences within the quarter</span>
+    <span class="sep">Counts are breach incidents within the quarter</span>
   </div>
   <div class="slide-no">07</div>
 </div>
@@ -1371,7 +1371,7 @@
 
     <div class="qa">
       <div class="q">6. Who operates the control, and how often?</div>
-      <div class="a">The IP Data Ingestion Team monitors the dashboard <b>daily</b>. A breach triggers automatic notification to L2 Support, who raise a ServiceNow incident assigned to <b>CTI NA EX US CTI GL EX CITI DATAVERSE L3</b>. L3 investigates, resolves and re-triggers the load.</div>
+      <div class="a">The IP Data Ingestion Team monitors the dashboard <b>daily</b>. A breach triggers automatic notification to L2 Support, who raise a ServiceNow <b>INC ticket</b> assigned to <b>CTI NA EX US CTI GL EX CITI DATAVERSE L3</b>. L3 investigates, resolves and re-triggers the load.</div>
       <div class="ev"><b>Evidence:</b> SOP, slide 09 &middot; ServiceNow assignment group</div>
     </div>
   </div>
@@ -1443,7 +1443,7 @@
 
     <div class="qa flag">
       <div class="q">14. What is the most significant recurring risk?</div>
-      <div class="a"><b>External API response time.</b> The GRC endpoint is contracted to respond within <b>60 seconds</b> and exceeded it on 4 occasions; Policy timed out once. <b>Every occurrence was resolved on the day</b>, but no IP-side <i>preventive</i> fix exists, so recurrence remains the principal risk. Escalation to the API owners is the required path.</div>
+      <div class="a"><b>External API response time.</b> The GRC endpoint is contracted to respond within <b>60 seconds</b> and exceeded it on 4 occasions; Policy timed out once. <b>Every incident was resolved on the day</b>, but no IP-side <i>preventive</i> fix exists, so recurrence remains the principal risk. Escalation to the API owners is the required path.</div>
       <div class="ev"><b>Evidence:</b> GRC and Policy items, slides 06&ndash;07 &middot; 60-second API contract</div>
     </div>
 
@@ -1491,7 +1491,7 @@
 
     <div class="qa flag">
       <div class="q">20. Does the escalation path carry a defined response SLA?</div>
-      <div class="a">The <i>route</i> is defined and evidenced &mdash; automatic alert to L2, ServiceNow incident to L3, investigate, resolve, re-trigger. <b>A response-time SLA for each step is not evidenced in the reviewed material.</b> Elapsed time is inferable only from ticket timestamps, such as PRIN-4619's one-day turnaround. Disclosed as a design gap rather than asserted.</div>
+      <div class="a">The <i>route</i> is defined and evidenced &mdash; automatic alert to L2, ServiceNow INC ticket to L3, investigate, resolve, re-trigger. <b>A response-time SLA for each step is not evidenced in the reviewed material.</b> Elapsed time is inferable only from ticket timestamps, such as PRIN-4619's one-day turnaround. Disclosed as a design gap rather than asserted.</div>
       <div class="ev"><b>Evidence:</b> SOP daily track, slide 09 &middot; Jira and INC timestamps</div>
     </div>
 
@@ -1521,7 +1521,7 @@
 
     <div class="qa flag">
       <div class="q">25. Are manual re-runs authorised and logged?</div>
-      <div class="a">Each re-run is traceable to its ServiceNow record or, where none was raised, to the per-item reason recorded on slides 05&ndash;07. <b>The reviewed material does not evidence a separate approval step or a re-run log distinct from the incident record.</b> Given remediation is manual, this is disclosed as a control-design observation.</div>
+      <div class="a">Each re-run is traceable to its ServiceNow record or, where none was raised, to the per-item reason recorded on slides 05&ndash;07. <b>The reviewed material does not evidence a separate approval step or a re-run log distinct from the INC ticket record.</b> Given remediation is manual, this is disclosed as a control-design observation.</div>
       <div class="ev"><b>Evidence:</b> INC records &middot; per-item resolutions, slides 05&ndash;07</div>
     </div>
 
@@ -1605,7 +1605,7 @@
         <td class="tr-src c-db"><b>PTS</b><span>DB Bug &middot; 2</span></td>
         <td><b>15&ndash;16 Jun 26</b><em>INVESTMENT_GROUP</em></td>
         <td>In period<em>trim under INC</em></td>
-        <td><b>2 days</b><em>both occurrences</em></td>
+        <td><b>2 days</b><em>both incidents</em></td>
         <td>Incoming values trimmed to the 2,500-character column limit on load.</td>
         <td>INC raised for the source to trim INVESTMENT_GROUP at origin (received 2,741 chars against a 2,500 limit).</td>
         <td class="tr-ref">INC0023796809</td>
@@ -1654,33 +1654,33 @@
       <tr>
         <td class="tr-src c-net"><b>GRC</b><span>API Timeout &middot; 4</span></td>
         <td>Q2 2026<em>recurring</em></td>
-        <td>Same day<em>each occurrence</em></td>
-        <td><b>Same day</b><em>all 4 occurrences</em></td>
+        <td>Same day<em>each incident</em></td>
+        <td><b>Same day</b><em>all 4 incidents</em></td>
         <td>Error reviewed and load <b>manually re-triggered</b> &mdash; the retry is not automated. Each load completed the same day, after cutoff.</td>
-        <td>Each occurrence resolved on the day by retrigger. The endpoint exceeded its <b>60-second response contract</b>; <b>no preventive fix exists IP-side</b>, so escalation to the API owner is tracked as a risk.</td>
+        <td>Each incident resolved on the day by retrigger. The endpoint exceeded its <b>60-second response contract</b>; <b>no preventive fix exists IP-side</b>, so escalation to the API owner is tracked as a risk.</td>
         <td class="tr-ref">Manual retrigger<br><span class="none">no INC raised</span></td>
       </tr>
       <tr>
         <td class="tr-src c-db"><b>CRS</b><span>Internal Process &middot; 2</span></td>
         <td>Apr and Jun 26<em>months 1 and 3</em></td>
         <td>In period<em>did not recur</em></td>
-        <td><b>1 day</b><em>per occurrence</em></td>
+        <td><b>1 day</b><em>per incident</em></td>
         <td>Job rerun manually the following day and completed successfully.</td>
-        <td>IP pull process lacked file read permission. Did not recur after the second occurrence; <b>no source INC applicable</b>.</td>
+        <td>IP pull process lacked file read permission. Did not recur after the second incident; <b>no source INC applicable</b>.</td>
         <td class="tr-ref">Manual rerun<br><span class="none">no INC raised</span></td>
       </tr>
       <tr>
         <td class="tr-src c-net"><b>Policy</b><span>API Timeout &middot; 1</span></td>
         <td>Apr 2026<em>start of quarter</em></td>
         <td>Same day<em>on retrigger</em></td>
-        <td><b>Same day</b><em>single occurrence</em></td>
+        <td><b>Same day</b><em>single incident</em></td>
         <td>Load manually re-triggered later the same day and completed.</td>
-        <td>None required. The source responded normally on every subsequent run; isolated to one occurrence.</td>
+        <td>None required. The source responded normally on every subsequent run; isolated to one incident.</td>
         <td class="tr-ref">Manual retrigger<br><span class="none">no INC raised</span></td>
       </tr>
       <tr>
         <td class="tr-src c-feed"><b>GDW_HRDW</b><span>Feed Quality &middot; 1</span></td>
-        <td>Q2 2026<em>single occurrence</em></td>
+        <td>Q2 2026<em>single incident</em></td>
         <td>Next run<em>22:00 EST cycle</em></td>
         <td><b>1 run cycle</b><em>self-resolved</em></td>
         <td><b>None required</b> &mdash; the next scheduled run completed before investigation began.</td>
