@@ -171,6 +171,10 @@ video.photo{cursor:pointer}
 .vidsound{position:absolute;right:8px;bottom:8px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:rgba(4,12,18,.72);backdrop-filter:blur(6px);color:var(--txt);font-family:inherit;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
 .vidsound:hover{border-color:var(--cyan-bd);color:var(--cyan);transform:translateY(-1px)}
 .vidsound.on{background:var(--grad);border:none;color:#04121a}
+.photo-col{width:200px}
+.vidhint{margin-top:12px;font-size:11.5px;line-height:1.4;color:var(--dim);text-align:center}
+.vidhint[hidden]{display:none}
+@media(max-width:760px){.vidsound{width:46px;height:46px;font-size:16px;right:6px;bottom:6px}}
 .ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
@@ -191,7 +195,7 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .sbtn.primary:hover{filter:brightness(1.12);background:#0a66c2}
 .sbtn.accent{background:var(--grad);border:none;color:#04121a}
 .sbtn i{font-size:15px}
-@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap,.photo-col{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
 
 /* share + QR */
 .sharecard{display:flex;align-items:center;gap:16px;margin-top:20px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px}
@@ -394,6 +398,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
 <!-- HERO -->
 <header class="hero">
   <div class="wrap hero-grid">
+    <div class="photo-col">
     <div class="photo-wrap">
       <div class="ring-orbit"></div>
       <video class="photo" id="heroVideo"
@@ -404,6 +409,8 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
              autoplay muted loop playsinline webkit-playsinline preload="metadata"
              aria-label="Manuel Stagg — video introduction"></video>
       <button class="vidsound" id="vidSound" type="button" aria-label="Play video with sound"><i class="fas fa-volume-xmark"></i></button>
+    </div>
+      <div class="vidhint" id="vidHint" role="status" hidden></div>
     </div>
     <div>
       <div class="eyebrow"><b></b> <span data-i18n="eyebrow">Senior SME · Full-Stack AI Solutions Architect</span></div>
@@ -977,9 +984,10 @@ function setLang(lang){
 
 // ---- Hero video portrait: language-matched intro, muted autoplay, tap for sound ----
 (function(){
-  const v=document.getElementById('heroVideo'), btn=document.getElementById('vidSound');
+  const v=document.getElementById('heroVideo'), btn=document.getElementById('vidSound'), hint=document.getElementById('vidHint');
   if(!v) return;
   const LBL={en:{on:'Mute video',off:'Play video with sound'},es:{on:'Silenciar video',off:'Reproducir video con sonido'}};
+  const HINT={en:'No sound? Check the side silent switch and the volume.',es:'¿Sin sonido? Revisa el interruptor de silencio lateral y el volumen.'};
   let vlang='en';
   function relabel(){
     if(!btn) return;
@@ -989,20 +997,46 @@ function setLang(lang){
     btn.classList.toggle('on',!v.muted);
     btn.innerHTML='<i class="fas '+(v.muted?'fa-volume-xmark':'fa-volume-high')+'"></i>';
   }
-  function play(){ const p=v.play(); if(p&&p.catch) p.catch(function(){}); }
+  function play(){ const p=v.play(); return (p&&p.catch)?p.catch(function(){}):Promise.resolve(); }
+  // iOS routes a video that started muted through the "ambient" audio session, which the
+  // hardware silent switch keeps silenced even after unmuting. Claiming the playback
+  // session (Safari 16.4+) is the only way to get sound out of an inline video there.
+  function claimPlaybackSession(){
+    try{ if(navigator.audioSession && navigator.audioSession.type!=='playback') navigator.audioSession.type='playback'; }catch(e){}
+  }
+  function showHint(){
+    if(!hint || hint.dataset.shown) return;
+    if(!/iPad|iPhone|iPod/.test(navigator.userAgent) && !(navigator.platform==='MacIntel' && navigator.maxTouchPoints>1)) return;
+    hint.dataset.shown='1';
+    hint.textContent=(HINT[vlang]||HINT.en);
+    hint.hidden=false;
+    setTimeout(function(){ hint.hidden=true; }, 9000);
+  }
   window.__heroVideoLang=function(lang){
     const nl=(lang==='es')?'es':'en';
     vlang=nl;
     const url=v.getAttribute('data-video-'+nl);
     if(url && v.getAttribute('src')!==url){
       const wasMuted=v.muted;
-      v.setAttribute('src',url); v.load(); v.muted=wasMuted; play();
+      v.setAttribute('src',url); v.load();
+      v.muted=wasMuted;                      // load() restores the muted attribute; re-apply intent
+      if(!wasMuted){ v.removeAttribute('muted'); claimPlaybackSession(); }
+      play();
     }
     relabel();
   };
+  function enableSound(){
+    claimPlaybackSession();
+    v.removeAttribute('muted');              // so a later load() cannot silently re-mute
+    v.muted=false; v.volume=1;
+    // Start playing inside the tap, THEN rewind — a seek before play() can cost us the
+    // user-gesture grant on iOS and the unmute silently fails.
+    play().then(function(){ try{ v.currentTime=0; }catch(e){} });
+    showHint();
+  }
   function toggle(){
-    if(v.muted){ v.muted=false; try{v.currentTime=0;}catch(e){} play(); }
-    else { v.muted=true; }
+    if(v.muted) enableSound();
+    else { v.muted=true; v.setAttribute('muted',''); }
     relabel();
   }
   if(btn) btn.addEventListener('click',toggle);
