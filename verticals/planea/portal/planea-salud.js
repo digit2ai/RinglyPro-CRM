@@ -3,8 +3,8 @@
    flight instruments (emergency-fund fuel gauge, savings-rate VSI, DTI engine
    temp, retirement compass). Chart.js radar of the 7 buckets + net-worth trend.
    Expandable bucket cards with neural "Hallazgos" (from /me/salud/findings, with
-   fallback). Live "¿Qué pasa si...?" simulator recomputes the exact S1-S6 score
-   client-side. Auth = httpOnly JWT; 401 -> login. ?demo=1 = sample cockpit. */
+   fallback). Clickable KPI gauges open their pillar; per-pillar contribute action.
+   Auth = httpOnly JWT; 401 -> login. ?demo=1 = sample cockpit. */
 (function () {
   'use strict';
 
@@ -199,21 +199,7 @@
       '</div>';
   }
 
-  function simulator(d) {
-    var i = d.inputs;
-    return '<div class="sim"><h2>¿Qué pasa si…?</h2><div class="sub">Mueve los controles y mira cómo cambia tu puntaje al instante.</div>' +
-      '<div class="sim-grid"><div class="sim-controls">' +
-      '<div class="ctl"><div class="cl"><span>Ahorro extra al mes</span><span class="cv" id="sv-extra">' + cop(0) + '</span></div><input type="range" id="sim-extra" min="0" max="' + Math.max(500000, Math.round(i.I * 0.4)) + '" step="10000" value="0"></div>' +
-      '<div class="ctl"><div class="cl"><span>Recorte de gasto mensual</span><span class="cv" id="sv-cut">' + cop(0) + '</span></div><input type="range" id="sim-cut" min="0" max="' + Math.max(300000, Math.round(i.G * 0.5)) + '" step="10000" value="0"></div>' +
-      '<div class="ctl"><div class="cl"><span>Abono a la deuda</span><span class="cv" id="sv-abono">' + cop(0) + '</span></div><input type="range" id="sim-abono" min="0" max="' + Math.max(500000, Math.round(i.D)) + '" step="50000" value="0"></div>' +
-      '</div>' +
-      '<div class="sim-out"><div class="now">PUNTAJE PROYECTADO</div><div class="big" id="sim-score" style="color:' + scoreColor(d.overall) + '">' + d.overall + '</div>' +
-      '<div class="delta" id="sim-delta">Sin cambios</div><div class="base">Puntaje actual: ' + d.overall + '</div>' +
-      '<button class="reset" id="sim-reset">Restablecer</button></div>' +
-      '</div></div>';
-  }
-
-  // ---- exact S1..S6 score (mirror of salud.cjs) for the simulator ----
+  // Helpers de los datos de ejemplo (?demo=1) y del cálculo local.
   function retFactor(age) {
     var pts = [[30, 1], [40, 3], [50, 6], [60, 8]];
     if (age <= 30) return 1; if (age >= 60) return 8;
@@ -221,40 +207,6 @@
     return 3;
   }
   function cl01(x) { return Math.max(0, Math.min(1, x)); }
-  function calcScore(t) {
-    var I = t.I, G = t.G, A = t.A, V = t.V, R = t.R, D = t.D, S = t.S, age = t.age || 35;
-    var annual = I * 12, totalAssets = A + V + R, netWorth = totalAssets - D, goalRet = annual * retFactor(age);
-    if (I <= 0) return null;
-    var S1 = cl01(A / (6 * I)), S2 = cl01(((I - G) / I) / 0.2), S3 = Math.max(1 - D / annual, 0);
-    var S4 = totalAssets > 0 ? cl01(netWorth / totalAssets) : (D > 0 ? 0 : 1);
-    var S5 = goalRet > 0 ? cl01(R / goalRet) : 0, S6 = annual > 0 ? cl01(S / (10 * annual)) : 0;
-    return Math.max(1, Math.min(99, Math.round(20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6)));
-  }
-
-
-  function wireSimulator(d) {
-    var i = d.inputs, base = d.overall;
-    var extra = document.getElementById('sim-extra'), cut = document.getElementById('sim-cut'), abono = document.getElementById('sim-abono');
-    var out = document.getElementById('sim-score'), delta = document.getElementById('sim-delta');
-    if (!extra) return;
-    function recompute() {
-      var xe = +extra.value, xc = +cut.value, xa = +abono.value;
-      document.getElementById('sv-extra').textContent = cop(xe);
-      document.getElementById('sv-cut').textContent = cop(xc);
-      document.getElementById('sv-abono').textContent = cop(xa);
-      var t = {
-        I: i.I, G: Math.max(0, i.G - xc), A: i.A + (xe + xc) * 12, V: i.V, R: i.R,
-        D: Math.max(0, i.D - xa), S: i.S, age: i.age,
-      };
-      var ns = calcScore(t); if (ns == null) return;
-      out.textContent = ns; out.style.color = scoreColor(ns);
-      var dd = ns - base;
-      delta.textContent = dd === 0 ? 'Sin cambios' : (dd > 0 ? '+' + dd + ' puntos' : dd + ' puntos');
-      delta.style.color = dd > 0 ? GRN : dd < 0 ? RED : 'var(--mut)';
-    }
-    [extra, cut, abono].forEach(function (el) { el.addEventListener('input', recompute); });
-    document.getElementById('sim-reset').addEventListener('click', function () { extra.value = 0; cut.value = 0; abono.value = 0; recompute(); });
-  }
 
   var CHARTS = {};
   function drawCharts(d) {
@@ -443,11 +395,10 @@
     root.innerHTML = cockpit(d) + chartsBlock() +
       '<div class="sf-card" style="border:none;background:none;padding:6px 2px"><h2>Detalle por área</h2><div class="sub">Toca una tarjeta para ver su fórmula, los hallazgos de Maya y registrar plata en ese pilar. Cada aporte actualiza tu puntaje al instante.</div></div>' +
       '<div class="sf-grid">' + d.buckets.map(bucketCard).join('') + '</div>' +
-      simulator(d) + neuralFindings(d);
+      neuralFindings(d);
     animatePrimary(d.overall);
     drawCharts(d);
     bindCards(demo);
-    wireSimulator(d);
     loadFindings(demo);
   }
 
