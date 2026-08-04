@@ -43,6 +43,12 @@
   .inst .t{font-size:10.5px;letter-spacing:.1em;color:var(--mut);font-weight:800;margin-bottom:2px}
   .inst .rv{font-family:'Inter';font-weight:800;font-size:17px;margin-top:1px;font-variant-numeric:tabular-nums}
   .inst .rs{font-size:10.5px;color:var(--mut);margin-top:1px}
+  /* Medidores clicables (llevan al pilar: consejo de Maya + editar) */
+  .inst.clickable{cursor:pointer;transition:border-color .15s,background .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+  .inst.clickable:hover{border-color:rgba(63,192,106,.5);background:rgba(63,192,106,.06)}
+  .inst.clickable:active{transform:scale(.98)}
+  .inst .inst-cta{margin-top:8px;font-size:10px;font-weight:800;letter-spacing:.04em;color:#7fd6a4;opacity:.9}
+  .inst.clickable:focus-visible{outline:2px solid var(--grn);outline-offset:2px}
 
   /* Cards / charts */
   .sf-card{margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:20px}
@@ -74,7 +80,9 @@
   .sf-b .track{height:7px;border-radius:99px;background:rgba(255,255,255,.08);margin:0 18px;overflow:hidden}
   .sf-b .fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
   .sf-b .body{max-height:0;overflow:hidden;transition:max-height .28s ease;padding:0 18px}
-  .sf-b.open .body{max-height:520px}
+  .sf-b.open .body{max-height:640px}
+  .sf-b.flash{animation:sfFlash 1.4s ease}
+  @keyframes sfFlash{0%,100%{box-shadow:0 0 0 0 rgba(63,192,106,0)}30%{box-shadow:0 0 0 3px rgba(63,192,106,.55)}}
   .sf-b .body .inner{padding:14px 0 18px}
   .sf-b .formula{font-size:12.5px;color:var(--mut);line-height:1.5;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px}
   .sf-b .tgt{font-size:12px;color:var(--mut);margin-top:10px}
@@ -174,7 +182,7 @@
 </div></div>
 <script src="/planea/portal/planea-nav.js?v=44" defer></script>
 <script src="/planea/portal/planea-sb.js?v=44" defer></script>
-<script src="/planea/portal/planea-salud.js?v=46" defer></script>
+<script src="/planea/portal/planea-salud.js?v=47" defer></script>
 <script src="/planea/portal/planea-patrimonio-edit.js?v=44" defer></script>
 <script src="/planea/portal/maya-chat.js?v=45" defer></script>
 </body>

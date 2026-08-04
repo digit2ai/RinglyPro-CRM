@@ -92,13 +92,17 @@
     var dtFrac = Math.max(0, Math.min(1, dt.frac));
     var rtCol = rt.frac >= .6 ? GRN : rt.frac >= .3 ? AMB : RED;
     var items = [
-      { t: 'FONDO EMERG.', g: miniGauge({ frac: Math.min(1, em.frac), color: emCol, ends: ['E', 'F'], bands: [{ from: 0, to: .17, color: RED }, { from: .17, to: .5, color: AMB }, { from: .5, to: 1, color: GRN }] }), rv: em.meses >= 99 ? '6+ m' : em.meses.toFixed(1) + ' m', rs: 'meta 6 meses', c: emCol },
-      { t: 'TASA AHORRO', g: miniGauge({ frac: svFrac, color: svCol, ends: ['-', '+'], bands: [{ from: 0, to: .33, color: RED }, { from: .33, to: .5, color: AMB }, { from: .5, to: 1, color: GRN }] }), rv: (sv.rate >= 0 ? '+' : '') + Math.round(sv.rate * 100) + '%', rs: 'meta 20%', c: svCol },
-      { t: 'DEUDA / ING', g: miniGauge({ frac: dtFrac, color: dtCol, ends: ['0', '1'], bands: [{ from: 0, to: .35, color: GRN }, { from: .35, to: .8, color: AMB }, { from: .8, to: 1, color: RED }] }), rv: Math.round(dt.ratio * 100) + '%', rs: 'del ingreso anual', c: dtCol },
-      { t: 'RETIRO', g: miniGauge({ frac: rt.frac, color: rtCol, ends: ['0', 'Meta'], bands: [{ from: 0, to: .3, color: RED }, { from: .3, to: .6, color: AMB }, { from: .6, to: 1, color: GRN }] }), rv: rt.pct + '%', rs: 'de tu meta por edad', c: rtCol },
+      { t: 'FONDO EMERG.', goto: 'savings', g: miniGauge({ frac: Math.min(1, em.frac), color: emCol, ends: ['E', 'F'], bands: [{ from: 0, to: .17, color: RED }, { from: .17, to: .5, color: AMB }, { from: .5, to: 1, color: GRN }] }), rv: em.meses >= 99 ? '6+ m' : em.meses.toFixed(1) + ' m', rs: 'meta 6 meses', c: emCol },
+      { t: 'TASA AHORRO', goto: 'income', g: miniGauge({ frac: svFrac, color: svCol, ends: ['-', '+'], bands: [{ from: 0, to: .33, color: RED }, { from: .33, to: .5, color: AMB }, { from: .5, to: 1, color: GRN }] }), rv: (sv.rate >= 0 ? '+' : '') + Math.round(sv.rate * 100) + '%', rs: 'meta 20%', c: svCol },
+      { t: 'DEUDA / ING', goto: 'debt', g: miniGauge({ frac: dtFrac, color: dtCol, ends: ['0', '1'], bands: [{ from: 0, to: .35, color: GRN }, { from: .35, to: .8, color: AMB }, { from: .8, to: 1, color: RED }] }), rv: Math.round(dt.ratio * 100) + '%', rs: 'del ingreso anual', c: dtCol },
+      { t: 'RETIRO', goto: 'retirement', g: miniGauge({ frac: rt.frac, color: rtCol, ends: ['0', 'Meta'], bands: [{ from: 0, to: .3, color: RED }, { from: .3, to: .6, color: AMB }, { from: .6, to: 1, color: GRN }] }), rv: rt.pct + '%', rs: 'de tu meta por edad', c: rtCol },
     ];
+    // Cada instrumento es CLICABLE: lleva al pilar, muestra el consejo de Maya para
+    // ese KPI y abre la edición para subir el puntaje total.
     return '<div class="six">' + items.map(function (it) {
-      return '<div class="inst"><div class="t">' + it.t + '</div>' + it.g + '<div class="rv" style="color:' + it.c + '">' + it.rv + '</div><div class="rs">' + it.rs + '</div></div>';
+      return '<div class="inst clickable" data-goto="' + it.goto + '" role="button" tabindex="0" aria-label="' + esc(it.t) + ': abrir consejo y editar">' +
+        '<div class="t">' + it.t + '</div>' + it.g + '<div class="rv" style="color:' + it.c + '">' + it.rv + '</div><div class="rs">' + it.rs + '</div>' +
+        '<div class="inst-cta">Tocar para mejorar</div></div>';
     }).join('') + '</div>';
   }
 
@@ -301,9 +305,27 @@
     (function tick(now) { var p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3); if (numEl) numEl.textContent = Math.round(score * e); if (p < 1) requestAnimationFrame(tick); })(performance.now());
   }
 
+  // Abre el pilar (KPI): expande su tarjeta, la resalta, muestra el consejo de Maya
+  // y despliega la edición para aportar. Llamado desde los medidores de arriba.
+  function openPillar(key) {
+    var card = document.querySelector('.sf-b[data-k="' + key + '"]');
+    if (!card) return;
+    card.classList.add('open');
+    var form = card.querySelector('.sf-act-form'); if (form) form.removeAttribute('hidden');
+    if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('flash'); setTimeout(function () { card.classList.remove('flash'); }, 1400);
+    var amt = card.querySelector('.sf-act-amt'); if (amt) setTimeout(function () { try { amt.focus({ preventScroll: true }); } catch (e) { amt.focus(); } }, 500);
+  }
+
   function bindCards(demo) {
     document.querySelectorAll('.sf-b .hd').forEach(function (hd) {
       hd.addEventListener('click', function () { hd.parentElement.classList.toggle('open'); });
+    });
+    // Medidores de arriba (FONDO, TASA AHORRO, DEUDA, RETIRO) -> abren su pilar.
+    document.querySelectorAll('.inst.clickable[data-goto]').forEach(function (inst) {
+      var go = function () { openPillar(inst.getAttribute('data-goto')); };
+      inst.addEventListener('click', go);
+      inst.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
     // Acción por pilar: abrir el mini-formulario y guardar el aporte.
     document.querySelectorAll('.sf-act-btn').forEach(function (btn) {
