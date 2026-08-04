@@ -251,35 +251,52 @@
   // Devuelve el plan (aportes por pilar) para alcanzar `target`, llenando primero
   // el pilar más débil que aún se pueda financiar con dinero. Honesto: si con
   // aportes no alcanza (falta subir ingreso o bajar gasto = tasa de ahorro), lo dice.
-  // INVERSO del simulador "¿Qué pasa si…?": en vez de mover los tres controles y
-  // ver el puntaje, mueves el PUNTAJE (meta) y te decimos cuánto mover cada control.
-  // Mismos tres knobs que el simulador: ahorro extra/mes, recorte de gasto/mes,
-  // abono a la deuda (una vez). Efecto (idéntico al forward):
-  //   A = A0 + (extra + cut)*12 · G = G0 − cut · D = D0 − abono
+  // INVERSO del simulador "¿Qué pasa si…?": en vez de mover los controles y ver el
+  // puntaje, mueves el PUNTAJE (meta) y te decimos QUÉ hacer para llegar. Usa todos
+  // los pilares que se pueden financiar con dinero, eligiendo en cada paso el que
+  // más puntos da por peso (el camino más barato), y PARA cuando gastar ya casi no
+  // sube el puntaje (evita cifras absurdas y respeta el techo real de cada pilar).
   function goalSeekPlan(inp, target) {
-    var i = inp, em = 0, cut = 0, abono = 0;
-    function build() { return { I: i.I, G: Math.max(0, i.G - cut), A: i.A + (em + cut) * 12, V: i.V, R: i.R, D: Math.max(0, i.D - abono), S: i.S, age: i.age }; }
-    var step = Math.max(20000, Math.round(i.I * 0.05 / 10000) * 10000);
+    var t = { I: inp.I, G: inp.G, A: inp.A, V: inp.V, R: inp.R, D: inp.D, S: inp.S, age: inp.age };
+    var annual = t.I * 12, goalRet = annual * retFactor(t.age || 35);
+    var acc = { emergency: 0, debt: 0, retirement: 0, investment: 0, insurance: 0, expense: 0 };
+    var step = Math.max(50000, Math.round(t.I * 0.1 / 50000) * 50000);
+    var MIN_GAIN = 0.04;               // < esto por paso = el gasto ya casi no ayuda -> parar
     var guard = 0;
-    while ((calcScore(build()) || 0) < target && guard < 4000) {
+    while ((calcScore(t) || 0) < target && guard < 3000) {
       guard++;
-      var base = calcRaw(build()), best = null;
-      // knob 1: ahorrar más al mes
-      if (true) { em += step; var g1 = calcRaw(build()) - base; em -= step; if (g1 > 0) best = { k: 'extra', g: g1 }; }
-      // knob 2: recortar gasto al mes (no más de lo que gastas)
-      if (cut + step <= i.G) { cut += step; var g2 = calcRaw(build()) - base; cut -= step; if (g2 > 0 && (!best || g2 > best.g)) best = { k: 'cut', g: g2 }; }
-      // knob 3: abonar a la deuda (no más de lo que debes)
-      if (abono + step <= i.D) { abono += step; var g3 = calcRaw(build()) - base; abono -= step; if (g3 > 0 && (!best || g3 > best.g)) best = { k: 'abono', g: g3 }; }
-      if (!best) break; // ningún knob sube el puntaje con este paso
-      if (best.k === 'extra') em += step; else if (best.k === 'cut') cut += step; else abono += step;
+      // Techos reales de cada pilar (más allá no mejora, o mejora nada):
+      var levers = [
+        { k: 'emergency', room: 6 * t.I - t.A, apply: function (x) { t.A += x; }, undo: function (x) { t.A -= x; } },
+        { k: 'debt', room: t.D, apply: function (x) { t.D = Math.max(0, t.D - x); }, undo: function (x) { t.D += x; } },
+        { k: 'retirement', room: goalRet - t.R, apply: function (x) { t.R += x; }, undo: function (x) { t.R -= x; } },
+        { k: 'investment', room: annual - t.V, apply: function (x) { t.V += x; }, undo: function (x) { t.V -= x; } },
+        { k: 'insurance', room: Math.min(10 * annual - t.S, 2 * annual), apply: function (x) { t.S += x; }, undo: function (x) { t.S -= x; } },
+        { k: 'expense', room: Math.max(0, t.G * 0.4), apply: function (x) { t.G = Math.max(0, t.G - x); }, undo: function (x) { t.G += x; } },
+      ].filter(function (l) { return l.room > 1000; });
+      var base = calcRaw(t), best = null;
+      levers.forEach(function (l) {
+        var x = Math.min(step, l.room);
+        l.apply(x); var g = calcRaw(t) - base; l.undo(x);
+        if (g > 0 && (!best || g > best.g)) best = { l: l, x: x, g: g };
+      });
+      if (!best || best.g < MIN_GAIN) break;   // nada mejora lo suficiente -> techo alcanzado
+      best.l.apply(best.x); acc[best.l.k] += best.x;
     }
-    var reached = calcScore(build()) || 0;
-    var r = function (n) { return Math.round(n / 10000) * 10000; };
-    var steps = [];
-    if (em >= 10000) steps.push({ k: 'extra', verb: 'Ahorra', tail: 'más al mes', amount: r(em), monthly: true });
-    if (cut >= 10000) steps.push({ k: 'cut', verb: 'Recorta', tail: 'de gastos al mes', amount: r(cut), monthly: true });
-    if (abono >= 10000) steps.push({ k: 'abono', verb: 'Abona', tail: 'a tu deuda (una vez)', amount: r(abono), monthly: false });
-    return { reached: reached, target: target, steps: steps, enough: reached >= target, em: em, cut: cut, abono: abono };
+    var reached = calcScore(t) || 0;
+    var r = function (n) { return Math.round(n / 50000) * 50000; };
+    var META = {
+      emergency: { cat: 'ahorro', verb: 'Aporta', tail: 'a tu fondo de emergencia' },
+      debt: { cat: 'deuda', verb: 'Abona', tail: 'a tu deuda' },
+      retirement: { cat: 'retiro', verb: 'Aporta', tail: 'a tu retiro' },
+      investment: { cat: 'inversion', verb: 'Aporta', tail: 'a tus inversiones' },
+      insurance: { cat: 'seguros', verb: 'Suma', tail: 'de cobertura de seguros' },
+      expense: { cat: 'gasto', verb: 'Recorta', tail: 'de gastos al mes' },
+    };
+    var order = ['emergency', 'debt', 'retirement', 'investment', 'insurance', 'expense'];
+    var steps = order.filter(function (k) { return acc[k] >= 50000; })
+      .map(function (k) { return { k: k, cat: META[k].cat, verb: META[k].verb, tail: META[k].tail, amount: r(acc[k]) }; });
+    return { reached: reached, target: target, steps: steps, enough: reached >= target };
   }
 
   function goalSeek(d) {
@@ -327,27 +344,24 @@
       if (!lastPlan || !lastPlan.steps.length) return;
       if (demo) { msg.hidden = false; msg.textContent = 'En modo ejemplo no se guarda. Inicia sesión para ajustar tus datos.'; return; }
       applyB.disabled = true; applyB.textContent = 'Ajustando…';
-      applyPlan(lastPlan).then(function () { reloadSalud(true); })
+      applyPlan(lastPlan.steps).then(function () { reloadSalud(true); })
         .catch(function () { applyB.disabled = false; applyB.textContent = 'Ajustar mis datos'; msg.hidden = false; msg.textContent = 'No se pudo aplicar. Intenta de nuevo.'; });
     });
     paint();
   }
 
-  // Aplica el plan a los datos reales, fiel al modelo del simulador:
-  //  - ahorro extra/mes  -> suma un año (extra*12) al ahorro
-  //  - recorte de gasto  -> reduce ese gasto mensual Y redirige un año a ahorro
-  //  - abono a la deuda  -> reduce los saldos de deuda (de mayor a menor)
-  function applyPlan(gp) {
+  // Aplica el plan a los datos reales: los pilares que se llenan (fondo, retiro,
+  // inversión, seguros) son un aporte nuevo; deuda y gasto se REDUCEN de los
+  // saldos existentes (de mayor a menor).
+  function applyPlan(steps) {
     var jobs = [];
-    var addSavings = (gp.em + gp.cut) * 12;
-    if (addSavings >= 10000) {
+    steps.forEach(function (s) {
+      if (s.cat === 'deuda' || s.cat === 'gasto') { jobs.push(reduceCategory(s.cat, s.amount)); return; }
       jobs.push(fetch('/planea/api/v1/me/items', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: 'ahorro', name: 'Ahorro del plan (1 año)', type: 'Ahorro del plan', value: Math.round(addSavings), monthly: 0 })
+        body: JSON.stringify({ category: s.cat, name: 'Ajuste del plan', type: 'Ajuste del plan', value: s.amount, monthly: 0 })
       }).then(function (r) { if (!r.ok) throw new Error('post'); }));
-    }
-    if (gp.cut >= 10000) jobs.push(reduceCategory('gasto', gp.cut));   // baja el gasto mensual
-    if (gp.abono >= 10000) jobs.push(reduceCategory('deuda', gp.abono)); // abona a la deuda
+    });
     return Promise.all(jobs);
   }
   // Reduce los ítems de una categoría (de mayor a menor) en `amount` total.
