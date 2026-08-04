@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talking Points — Dataverse SLA Q2 2026</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --ink:#e9eefb;
+    --dim:#8fa1c0;
+    --num:#7fd6a8;
+    --key:#7fb0ff;
+    --warn:#ffb08a;
+    --line:#1d2a44;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);}
+  body{
+    font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:30px;
+    line-height:1.62;
+  }
+
+  /* ---------- control bar ---------- */
+  .bar{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    background:rgba(9,15,28,.94);
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;
+    padding:10px 18px;
+    font-size:13px;line-height:1;
+    backdrop-filter:blur(8px);
+  }
+  .bar .t{font-weight:800;letter-spacing:.02em;color:#fff;}
+  .bar .pos{color:var(--dim);}
+  .bar .grp{display:flex;align-items:center;gap:6px;margin-left:auto;}
+  .bar button{
+    background:#1a2740;border:1px solid #2a3c5e;color:var(--ink);
+    border-radius:7px;padding:8px 11px;font-size:13px;cursor:pointer;
+    font-family:inherit;line-height:1;
+  }
+  .bar button:hover{background:#243453;}
+  .bar button.on{background:var(--num);border-color:var(--num);color:#06231a;font-weight:800;}
+  .bar .val{min-width:44px;text-align:center;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .prog{position:fixed;top:0;left:0;height:3px;background:var(--num);z-index:60;width:0;}
+
+  /* reading guide */
+  .guide{
+    position:fixed;left:0;right:0;top:38vh;height:0;
+    border-top:1px solid rgba(127,214,168,.28);z-index:40;pointer-events:none;
+  }
+  .guide:after{
+    content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  }
+
+  /* ---------- script ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:16vh 40px 70vh;}
+  section{margin-bottom:64px;scroll-margin-top:38vh;}
+  .slug{
+    display:flex;align-items:baseline;gap:14px;
+    border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px;
+  }
+  .slug .n{
+    font-size:15px;font-weight:800;letter-spacing:.14em;color:var(--num);
+    background:rgba(127,214,168,.1);border:1px solid rgba(127,214,168,.3);
+    border-radius:6px;padding:5px 10px;line-height:1;flex:none;
+  }
+  .slug .h{font-size:19px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);}
+
+  p{margin:0 0 20px;}
+  b{color:var(--num);font-weight:700;}
+  .k{color:var(--key);font-weight:700;}
+  .pause{color:var(--dim);font-style:italic;font-size:.72em;letter-spacing:.04em;}
+
+  .cue{
+    border-left:3px solid #3a5478;padding:2px 0 2px 20px;margin:0 0 20px;
+    color:#a9bbd8;font-size:.8em;line-height:1.55;
+  }
+  .cue .lab{
+    display:block;font-size:.72em;letter-spacing:.16em;text-transform:uppercase;
+    color:#6d86ae;font-weight:800;margin-bottom:5px;
+  }
+  .flag{
+    border-left:3px solid var(--warn);padding:2px 0 2px 20px;margin:0 0 20px;
+    color:#ffcdb4;font-size:.82em;line-height:1.55;
+  }
+  .flag .lab{
+    display:block;font-size:.7em;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--warn);font-weight:800;margin-bottom:5px;
+  }
+
+  .end{
+    text-align:center;color:var(--dim);font-size:.6em;letter-spacing:.2em;
+    text-transform:uppercase;padding-top:40px;border-top:1px solid var(--line);
+  }
+
+  body.mirror .wrap{transform:scaleX(-1);}
+
+  @media print{
+    body{background:#fff;color:#111;font-size:12pt;line-height:1.5;}
+    .bar,.guide,.prog{display:none;}
+    .wrap{padding:0;max-width:none;}
+    section{page-break-inside:avoid;margin-bottom:24px;}
+    b,.k{color:#000;}
+    .cue,.flag{color:#444;}
+  }
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<div class="guide"></div>
+
+<div class="bar">
+  <span class="t">Talking Points</span>
+  <span class="pos" id="pos">Slide 01 / 15</span>
+  <span class="grp">
+    <button id="play" title="Space">▶ Scroll</button>
+    <button id="slower" title="−">Slow</button>
+    <span class="val" id="spd">1.0×</span>
+    <button id="faster" title="+">Fast</button>
+    <button id="smaller" title="[">A−</button>
+    <button id="bigger" title="]">A+</button>
+    <button id="mirror" title="M">Mirror</button>
+    <button id="full" title="F">Full</button>
+  </span>
+</div>
+
+<div class="wrap" id="wrap">
+
+<section>
+  <div class="slug"><span class="n">01</span><span class="h">Cover — Dataverse Ingestion Feed SLA Monitoring</span></div>
+  <p>Good morning. This is the Q2 2026 review of our Dataverse ingestion feeds.</p>
+  <p>Three numbers up front. We delivered <b>99.3 percent</b> of feeds within SLA. <b>Every breach</b> now has a fix in place. And we cut our root cause patterns by <b>40 percent</b>.</p>
+  <p>That last one is the story of the quarter, so let me start there.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">02</span><span class="h">Quarter over Quarter Progress</span></div>
+  <p>In Q1 we were chasing <b>five</b> separate failure modes. In Q2 that is down to <b>three</b>.</p>
+  <p>Here is what changed. Three of our database-side problems — <span class="k">JDBC failures</span>, <span class="k">HikariPool saturation</span>, and <span class="k">null pointer bugs</span> — turned out to be the same class of issue. They now resolve as one owned category, with one owner and one fix path.</p>
+  <p>Feed Delay and API Timeout carried over unchanged.</p>
+  <p>Alongside that: every breach traced to a root cause, every one now carries a fix, and <b>no new failure mode appeared</b> at any point in the quarter. <span class="pause">— pause —</span></p>
+  <div class="cue"><span class="lab">If asked about the volume increase</span>
+    Occurrences did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
+  </div>
+</section>
+
+<section>
+  <div class="slug"><span class="n">03</span><span class="h">Q2 Performance Highlights</span></div>
+  <p>We processed <b>10,434 feeds</b> across eight pipelines. <b>99.3 percent</b> landed within SLA.</p>
+  <p><b>63 of 63</b> breaches now carry a fix — 42 closed inside Q2, and 21 in the July releases.</p>
+  <p><b>Zero data loss.</b> Every affected load either re-ran or self-resolved and completed.</p>
+  <p>Three fixes are worth naming. <span class="k">PRIN-4619</span> — raised one day, resolved the next. The <span class="k">Drift schedule change</span>, which removed the cause behind eleven breaches. And <span class="k">PRIN-5573</span>, the timestamp formatter.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">04</span><span class="h">RCA Pattern Intelligence</span></div>
+  <p>Three categories. Application and database bugs are <b>48 percent</b>. Feed quality is <b>44 percent</b>. External network is <b>8 percent</b>.</p>
+  <p>The headline here: <b>92 percent</b> of our breaches come from internal, addressable causes. Only eight percent sit outside our direct control.</p>
+  <p>That is good news. It means most of this is ours to fix, and we have been fixing it.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">05</span><span class="h">Detailed Incidents 1 of 3 — Drift and MCA</span></div>
+  <p><span class="k">Drift, seventeen breaches.</span> The cause is simple. Drift finishes their load by seven. We were reading at eight. When they ran late — and they did — we read before their data was there, and got nulls.</p>
+  <p>The fix was equally simple. We moved our job to <b>8:30</b>. That window is now clear.</p>
+  <p>The database bugs went into the <b>July tech release</b> under PRIN-6166 and PRIN-5183. Resolved on the <b>17th of July</b>. Nothing outstanding on Drift.</p>
+  <p><span class="k">MCA, fifteen breaches.</span> Two source-side changes, and they told us about neither one.</p>
+  <p>They changed their timestamp format, and they sent us a field that was one character too long for our column.</p>
+  <p><span class="k">PRIN-5573</span> is the important one. Rather than patch that single format, we built a formatter that handles the variations — separators, AM/PM, fractional seconds. So the next time they change it, <b>we do not break</b>.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">06</span><span class="h">Detailed Incidents 2 of 3 — PTS, DSMT-ISG, GRC</span></div>
+  <p><span class="k">PTS, fifteen.</span> Their control file counts a multi-line record as several records. We count it as one. So the numbers disagreed — 7,354 against 7,356.</p>
+  <p>That one is theirs to fix. We raised the incident, and it was corrected at source. <b>No change was needed on our side.</b></p>
+  <p><span class="k">DSMT-ISG, eight.</span> They made a field nullable without telling us. Every run failed, back to back, until we changed our code to accept it.</p>
+  <p>That is <span class="k">PRIN-4619</span>. Raised on the ninth, resolved on the tenth. <b>One day</b>, and it has not recurred since.</p>
+  <p><span class="k">GRC, four.</span> Their API is contracted to answer inside sixty seconds. Under load it did not. We retrigger by hand, and all four completed the same day.</p>
+  <div class="flag"><span class="lab">Volunteer this — do not wait to be asked</span>
+    That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every occurrence was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
+  </div>
+</section>
+
+<section>
+  <div class="slug"><span class="n">07</span><span class="h">Detailed Incidents 3 of 3 — CRS, Policy, GDW_HRDW</span></div>
+  <p>Three low-volume ones, quickly.</p>
+  <p><span class="k">CRS, twice.</span> Our pull process did not have read permission on the file. That one is <b>ours, not theirs</b> — which is why there is no incident raised against the source. Reran the next day, and it never came back.</p>
+  <p><span class="k">Policy, once.</span> API timeout at the start of the quarter. Retriggered, completed the same day.</p>
+  <p><span class="k">GDW, once.</span> A record count mismatch that resolved itself on the next scheduled run, before we had even opened it.</p>
+  <p>Which brings us to the position on the board — <b>all eight sources resolved</b>. <span class="pause">— pause —</span></p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">08</span><span class="h">What Q2 Delivered</span></div>
+  <p>To pull it together. <b>40 percent</b> fewer root cause patterns. <b>100 percent</b> traced to root cause. <b>100 percent</b> carrying a fix. <b>Zero</b> data loss events.</p>
+  <p>Three permanent fixes landed, and none of them were one-off patches — each one stops a whole class of failure.</p>
+  <p>And I want to be straight about what we are carrying into Q3: the <span class="k">GRC recurrence risk</span>, a <span class="k">reconciliation variance</span> I will come to, and a <span class="k">formal notification path</span> so sources stop changing things without telling us.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">09</span><span class="h">Standard Operating Procedure</span></div>
+  <p>This is how the control actually runs.</p>
+  <p><b>Daily.</b> The team watches the dashboard. A breach fires an automatic alert to L2. L2 raises a ServiceNow incident to L3. L3 investigates, fixes, re-triggers the load.</p>
+  <p><b>Quarterly.</b> The control owner reviews every breach report, applies permanent fixes where something repeats, exports the report and uploads it as MCA evidence.</p>
+  <p><b>Then attestation.</b> The MCA tester validates the evidence independently and records sign-off. Three separate roles — nobody checks their own work.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">10–13</span><span class="h">MCA Control Q&amp;A — 26 questions</span></div>
+  <p>The next four slides are the questions I expect, with the evidence behind each answer. I will not read them all — let me pull out the ones that matter.</p>
+  <p><b>This is a full population review, not a sample.</b> Sixty-nine raw items from the complete quarterly export. The only things excluded were successful runs and duplicate rows. Nothing was dropped on judgement.</p>
+  <div class="flag"><span class="lab">Raise these yourself — before anyone finds them</span>
+    <p style="margin:0 0 12px;"><b>The reconciliation variance.</b> Our categories account for 63 items. The raw export says 69. That six-item gap is open, it is tracked, and I would rather put it on the table than have you find it.</p>
+    <p style="margin:0 0 12px;"><b>Remediation is manual.</b> Detection and alerting are automated. Fixing is not. That is a design characteristic and we are disclosing it, not dressing it up.</p>
+    <p style="margin:0;"><b>Completeness rests on the Dataverse status feed.</b> We did not independently reconcile against source-system delivery logs. Feeds that never start do surface as Not Triggered, so silent non-delivery is visible — but that limitation is stated.</p>
+  </div>
+  <p>Everything else on those slides carries an evidence line — the export, the Jira records, the ServiceNow numbers, the review with the source owner.</p>
+</section>
+
+<section>
+  <div class="slug"><span class="n">14–15</span><span class="h">Traceability Matrix</span></div>
+  <p>Finally, the traceability matrix. Every issue, when it was first reported, when it was remediated, <b>how long we ran on contingency</b>, what that contingency was, and what the permanent fix turned out to be.</p>
+  <p>Two things I would point out.</p>
+  <p>First, the contingency column. Nothing sat unattended. Where a fix took time — MCA took about two months to a permanent formatter — we were re-running loads and trimming values so the data kept flowing the whole way through.</p>
+  <p>Second, the dates. They are stated only to the precision we actually have. Where our records only give a month, it says a month. <b>Nothing has been inferred or back-filled</b> to make the table look tidier.</p>
+  <p>Bottom line: <b>63 categorized</b>, 42 remediated inside Q2, 21 in July, <b>zero outstanding</b>.</p>
+  <p>Happy to take questions.</p>
+</section>
+
+<div class="end">End of script</div>
+</div>
+
+<script>
+(function(){
+  var body=document.body, wrap=document.getElementById('wrap');
+  var playBtn=document.getElementById('play'), spdEl=document.getElementById('spd');
+  var posEl=document.getElementById('pos'), prog=document.getElementById('prog');
+  var secs=[].slice.call(document.querySelectorAll('section'));
+  var running=false, speed=1.0, size=30, raf=null, last=0;
+
+  function tick(ts){
+    if(!running){ last=0; return; }
+    if(!last) last=ts;
+    var dt=(ts-last)/1000; last=ts;
+    window.scrollBy(0, speed*46*dt);
+    var max=document.body.scrollHeight-window.innerHeight;
+    if(window.scrollY>=max-1){ stop(); return; }
+    raf=requestAnimationFrame(tick);
+  }
+  function start(){ running=true; last=0; playBtn.textContent='❚❚ Pause'; playBtn.classList.add('on'); raf=requestAnimationFrame(tick); }
+  function stop(){ running=false; playBtn.textContent='▶ Scroll'; playBtn.classList.remove('on'); if(raf) cancelAnimationFrame(raf); }
+  function toggle(){ running?stop():start(); }
+
+  function setSpeed(v){ speed=Math.max(0.2,Math.min(6,Math.round(v*10)/10)); spdEl.textContent=speed.toFixed(1)+'×'; }
+  function setSize(v){ size=Math.max(16,Math.min(64,v)); body.style.fontSize=size+'px'; }
+
+  playBtn.addEventListener('click',toggle);
+  document.getElementById('faster').addEventListener('click',function(){setSpeed(speed+0.2);});
+  document.getElementById('slower').addEventListener('click',function(){setSpeed(speed-0.2);});
+  document.getElementById('bigger').addEventListener('click',function(){setSize(size+2);});
+  document.getElementById('smaller').addEventListener('click',function(){setSize(size-2);});
+  document.getElementById('mirror').addEventListener('click',function(){
+    body.classList.toggle('mirror'); this.classList.toggle('on');
+  });
+  document.getElementById('full').addEventListener('click',function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  });
+
+  function jump(dir){
+    var y=window.scrollY+window.innerHeight*0.38+2, target=null;
+    for(var i=0;i<secs.length;i++){
+      var top=secs[i].getBoundingClientRect().top+window.scrollY;
+      if(dir>0 && top>y+4){ target=secs[i]; break; }
+      if(dir<0 && top<y-4) target=secs[i];
+    }
+    if(target) window.scrollTo({top:target.getBoundingClientRect().top+window.scrollY-window.innerHeight*0.38, behavior:'smooth'});
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.target.tagName==='INPUT') return;
+    switch(e.key){
+      case ' ': e.preventDefault(); toggle(); break;
+      case '+': case '=': e.preventDefault(); setSpeed(speed+0.2); break;
+      case '-': case '_': e.preventDefault(); setSpeed(speed-0.2); break;
+      case ']': e.preventDefault(); setSize(size+2); break;
+      case '[': e.preventDefault(); setSize(size-2); break;
+      case 'm': case 'M': body.classList.toggle('mirror'); document.getElementById('mirror').classList.toggle('on'); break;
+      case 'f': case 'F': document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); break;
+      case 'ArrowDown': case 'PageDown': e.preventDefault(); jump(1); break;
+      case 'ArrowUp': case 'PageUp': e.preventDefault(); jump(-1); break;
+      case 'Home': e.preventDefault(); window.scrollTo({top:0,behavior:'smooth'}); break;
+    }
+  });
+
+  function onScroll(){
+    var max=document.body.scrollHeight-window.innerHeight;
+    prog.style.width=(max>0?(window.scrollY/max*100):0)+'%';
+    var y=window.scrollY+window.innerHeight*0.38, cur=0;
+    secs.forEach(function(s,i){ if(s.getBoundingClientRect().top+window.scrollY<=y+4) cur=i; });
+    var label=secs[cur].querySelector('.n').textContent;
+    posEl.textContent='Slide '+label+'  ·  '+(cur+1)+' / '+secs.length;
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  setSpeed(1.0); setSize(30); onScroll();
+})();
+</script>
+</body>
+</html>
