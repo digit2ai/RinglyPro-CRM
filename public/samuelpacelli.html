@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- ============================================================================
+     SHELL — samuelpacelli.com
+     Cloned from the manuelstagg.com design system. EVERY person-specific string
+     lives in the PROFILE object in the script block below: fill that in and the
+     whole page populates. Nothing here is invented — empty fields render as
+     nothing rather than as placeholder biography.
+
+     PROFILE.complete === false  ->  the page shows a short "in preparation"
+     card and stays noindex. Set it to true only once the real CV content is in,
+     then remove the robots meta below.
+     ============================================================================ -->
+<meta name="robots" content="noindex,nofollow">
+
+<title>Samuel Pacelli</title>
+<meta name="description" content="Samuel Pacelli — professional profile.">
+<link rel="canonical" href="https://samuelpacelli.com/">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Samuel Pacelli">
+<meta property="og:description" content="Samuel Pacelli — professional profile.">
+<meta property="og:url" content="https://samuelpacelli.com/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+  --bg0:#05070e; --bg1:#080c16; --bg2:#0b1120;
+  --card:rgba(255,255,255,0.028); --card2:rgba(255,255,255,0.045);
+  --line:rgba(255,255,255,0.09); --line2:rgba(255,255,255,0.16);
+  --cyan:#22d3ee; --cyan-dim:#1c93ad; --cyan-bd:rgba(34,211,238,0.34);
+  --violet:#8b5cf6; --violet-bd:rgba(139,92,246,0.34);
+  --green:#84cc16; --green-bd:rgba(132,204,22,0.40);
+  --gold:#d69e2e; --amber:#f59e0b;
+  --txt:#e8ecf4; --txt2:#cbd3e2; --dim:#9aa4b8; --dim2:#6b7386;
+  --grid-line:rgba(255,255,255,.025); --topbar-bg:rgba(5,7,14,.72);
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+  --grad:linear-gradient(135deg,#22d3ee 0%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(139,92,246,.14));
+}
+:root[data-theme="light"]{
+  --bg0:#f5f7fb; --bg1:#eef1f8; --bg2:#e7ecf5;
+  --card:rgba(15,25,55,0.030); --card2:rgba(15,25,55,0.055);
+  --line:rgba(15,25,55,0.12); --line2:rgba(15,25,55,0.20);
+  --cyan:#0e7490; --cyan-dim:#0891b2; --cyan-bd:rgba(14,116,144,0.34);
+  --violet:#6d28d9; --violet-bd:rgba(109,40,217,0.32);
+  --green:#4d7c0f; --green-bd:rgba(77,124,15,0.40);
+  --txt:#141c2e; --txt2:#38435a; --dim:#5a6478; --dim2:#8892a4;
+  --grid-line:rgba(15,25,55,.05); --topbar-bg:rgba(245,247,251,.82);
+  --grad-soft:linear-gradient(135deg,rgba(14,116,144,.10),rgba(109,40,217,.10));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg0);color:var(--txt);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+
+.aura{position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(60% 45% at 78% 8%, rgba(139,92,246,.16), transparent 60%),
+  radial-gradient(55% 40% at 12% 20%, rgba(34,211,238,.14), transparent 60%),
+  radial-gradient(80% 60% at 50% 120%, rgba(34,211,238,.08), transparent 70%),
+  var(--bg0)}
+.grid-bg{position:fixed;inset:0;z-index:-1;opacity:.5;
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(circle at 50% 30%,#000,transparent 80%)}
+
+.topbar{position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);padding-top:env(safe-area-inset-top);
+  background:var(--topbar-bg);border-bottom:1px solid var(--line)}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.3px;font-size:15px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--cyan)}
+.brand span.sub{color:var(--dim);font-weight:500;font-size:12px;font-family:var(--mono)}
+.tb-actions{display:flex;align-items:center;gap:9px}
+.lang-toggle{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:22px;padding:3px}
+.lang-btn{border:none;background:transparent;color:var(--dim);padding:5px 12px;border-radius:18px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.lang-btn.active{background:var(--grad);color:#04121a}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card);color:var(--txt);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.mini-btn.icon-only{padding:7px 10px}
+.mini-btn.icon-only i{font-size:14px}
+.mini-btn:hover{border-color:var(--cyan-bd);background:var(--grad-soft)}
+.mini-btn.li{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.mini-btn.li:hover{filter:brightness(1.12)}
+@media(max-width:720px){.brand span.sub{display:none}.mini-btn .lbl{display:none}}
+
+/* hero */
+.hero{padding:56px 0 34px}
+.hero-grid{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
+.photo-col{width:200px}
+.photo-wrap{position:relative;width:200px;height:200px}
+.photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
+.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);display:block;background:#08131c}
+video.photo{cursor:pointer}
+.photo.empty{display:grid;place-items:center;color:var(--dim2);font-family:var(--mono);font-size:11px;text-align:center;padding:14px;line-height:1.5}
+.vidsound{position:absolute;right:8px;bottom:8px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:rgba(4,12,18,.72);backdrop-filter:blur(6px);color:var(--txt);font-family:inherit;font-size:14px;display:none;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
+.vidsound.on{background:var(--grad);border:none;color:#04121a}
+.ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
+.eyebrow b{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s steps(1) infinite}
+@keyframes blink{50%{opacity:.3}}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.8px;line-height:1.05;margin-bottom:12px}
+h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.title-line{font-size:clamp(16px,2.4vw,20px);font-weight:600;color:var(--txt);margin-bottom:6px}
+.subtitle{font-size:15px;color:var(--dim);max-width:640px;margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:7px 13px}
+.chip i{color:var(--cyan)}
+.social-row{display:flex;flex-wrap:wrap;gap:10px}
+.sbtn{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer;transition:.2s}
+.sbtn:hover{transform:translateY(-2px);border-color:var(--cyan-bd);background:var(--grad-soft)}
+.sbtn.primary{background:#0a66c2;border-color:#0a66c2;color:#fff}
+.sbtn.accent{background:var(--grad);border:none;color:#04121a}
+@media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap,.photo-col{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
+
+/* sections */
+.blk{padding:34px 0}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.sec-head .k{font-family:var(--mono);font-size:12px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:8px;padding:3px 9px}
+.sec-head h2{font-size:clamp(20px,3vw,27px);font-weight:800;letter-spacing:-.4px}
+.sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:16px}
+.lead{font-size:15.5px;color:var(--txt2)}
+.prep{background:var(--grad-soft);border:1px solid var(--cyan-bd);border-radius:18px;padding:28px;text-align:center}
+.prep h3{font-size:19px;font-weight:800;margin-bottom:8px}
+.prep p{color:var(--dim);font-size:14.5px;max-width:520px;margin:0 auto}
+
+.foot{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--dim2);font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="aura"></div><div class="grid-bg"></div>
+
+<nav class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span> <span id="brandName">Samuel Pacelli</span> <span class="sub" id="brandSub"></span></div>
+    <div class="tb-actions">
+      <a class="mini-btn li" id="liBtn" target="_blank" rel="noopener" style="display:none"><i class="fab fa-linkedin-in"></i> <span class="lbl">LinkedIn</span></a>
+      <button class="mini-btn icon-only" id="themeBtn" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="photo-col">
+      <div class="photo-wrap">
+        <div class="ring-orbit"></div>
+        <div id="photoSlot"></div>
+        <button class="vidsound" id="vidSound" type="button" aria-label="Play video with sound"><i class="fas fa-volume-xmark"></i></button>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow" id="eyebrowWrap" style="display:none"><b></b> <span id="eyebrow"></span></div>
+      <h1 id="heroName">Samuel Pacelli</h1>
+      <div class="title-line" id="titleLine"></div>
+      <p class="subtitle" id="subtitle"></p>
+      <div class="chips" id="chips"></div>
+      <div class="social-row" id="socialRow"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="content"></main>
+
+<footer class="wrap foot">
+  <div id="footLeft">&copy; <span id="yr"></span> Samuel Pacelli</div>
+  <div><a href="/cv-admin?p=samuelpacelli">Admin</a></div>
+</footer>
+
+<script>
+/* =============================================================================
+   PROFILE — the ONLY place person-specific content lives.
+   Fill these fields from the real CV. Anything left empty renders as nothing;
+   no field is ever filled with invented biography.
+   ============================================================================= */
+var PROFILE = {
+  complete: false,                 // flip to true once the CV content below is real
+  name: 'Samuel Pacelli',
+  slug: 'samuelpacelli',
+  site: 'https://samuelpacelli.com',
+
+  // --- identity (from the resume) ---
+  eyebrow: '',                     // e.g. 'Senior ... · ...'
+  titleLine: '',                   // the one-line professional title
+  subtitle: { en: '', es: '' },    // 1-2 sentence positioning line
+  location: '',
+  email: '',
+  phone: '',
+  linkedin: '',
+
+  // --- media ---
+  photo: '',                       // https://... image URL
+  video: { en: '', es: '' },       // optional video portrait per language
+
+  // --- chips shown under the hero (icon + label) ---
+  chips: [],                       // [{icon:'fa-location-dot', label:'City, ST'}]
+
+  // --- page sections, in order ---
+  // [{ k:'01', h:{en:'Professional Profile',es:'Perfil Profesional'},
+  //    body:{en:'<p>…</p>', es:'<p>…</p>'} }]
+  sections: []
+};
+
+var I18N = {
+  en: { prep_h: 'Profile in preparation',
+        prep_p: 'This page is being built from Samuel Pacelli’s CV. It will publish here shortly.',
+        foot: 'Profile' },
+  es: { prep_h: 'Perfil en preparación',
+        prep_p: 'Esta página se está construyendo a partir del CV de Samuel Pacelli. Se publicará aquí en breve.',
+        foot: 'Perfil' }
+};
+
+var LANG = 'en';
+function t(v){ return (v && typeof v === 'object') ? (v[LANG] || v.en || '') : (v || ''); }
+function $(id){ return document.getElementById(id); }
+
+function renderPhoto(){
+  var slot = $('photoSlot');
+  var vid = t(PROFILE.video);
+  if (vid) {
+    slot.innerHTML = '<video class="photo" id="heroVideo" src="' + vid + '"' +
+      (PROFILE.video.en ? ' data-video-en="' + PROFILE.video.en + '"' : '') +
+      (PROFILE.video.es ? ' data-video-es="' + PROFILE.video.es + '"' : '') +
+      (PROFILE.photo ? ' poster="' + PROFILE.photo + '"' : '') +
+      ' autoplay muted loop playsinline webkit-playsinline preload="metadata" aria-label="' + PROFILE.name + '"></video>';
+    $('vidSound').style.display = 'flex';
+    wireVideo();
+  } else if (PROFILE.photo) {
+    slot.innerHTML = '<img class="photo" src="' + PROFILE.photo + '" alt="' + PROFILE.name + '">';
+  } else {
+    slot.innerHTML = '<div class="photo empty">photo<br>pending</div>';
+  }
+}
+
+function wireVideo(){
+  var v = $('heroVideo'), btn = $('vidSound');
+  if (!v || !btn) return;
+  function relabel(){
+    btn.classList.toggle('on', !v.muted);
+    btn.innerHTML = '<i class="fas ' + (v.muted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
+  }
+  function play(){ var p = v.play(); return (p && p.catch) ? p.catch(function(){}) : Promise.resolve(); }
+  function toggle(){
+    if (v.muted) {
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
+      v.removeAttribute('muted'); v.muted = false; v.volume = 1;
+      play().then(function(){ try { v.currentTime = 0; } catch(e){} });
+    } else { v.muted = true; v.setAttribute('muted',''); }
+    relabel();
+  }
+  btn.addEventListener('click', toggle);
+  v.addEventListener('click', toggle);
+  v.addEventListener('volumechange', relabel);
+  v.addEventListener('loadeddata', play);
+  relabel(); play();
+}
+
+function render(){
+  document.documentElement.lang = LANG;
+  $('brandName').textContent = PROFILE.name;
+  $('heroName').textContent = PROFILE.name;
+  $('yr').textContent = new Date().getFullYear();
+
+  var eb = t(PROFILE.eyebrow);
+  if (eb) { $('eyebrow').textContent = eb; $('eyebrowWrap').style.display = ''; }
+  $('titleLine').textContent = t(PROFILE.titleLine);
+  $('subtitle').textContent = t(PROFILE.subtitle);
+  $('brandSub').textContent = PROFILE.location || '';
+
+  if (PROFILE.linkedin) { $('liBtn').href = PROFILE.linkedin; $('liBtn').style.display = ''; }
+
+  $('chips').innerHTML = (PROFILE.chips || []).map(function(c){
+    return '<span class="chip"><i class="fas ' + (c.icon || 'fa-circle-dot') + '"></i> ' + t(c.label) + '</span>';
+  }).join('');
+
+  var social = [];
+  if (PROFILE.linkedin) social.push('<a class="sbtn primary" href="' + PROFILE.linkedin + '" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>');
+  if (PROFILE.email) social.push('<a class="sbtn" href="mailto:' + PROFILE.email + '"><i class="fas fa-envelope"></i> ' + PROFILE.email + '</a>');
+  if (PROFILE.phone) social.push('<a class="sbtn" href="tel:' + PROFILE.phone + '"><i class="fas fa-phone"></i> ' + PROFILE.phone + '</a>');
+  $('socialRow').innerHTML = social.join('');
+
+  renderPhoto();
+
+  var d = I18N[LANG] || I18N.en;
+  if (!PROFILE.complete || !(PROFILE.sections || []).length) {
+    $('content').innerHTML = '<section class="blk"><div class="prep"><h3>' + d.prep_h + '</h3><p>' + d.prep_p + '</p></div></section>';
+    return;
+  }
+  $('content').innerHTML = (PROFILE.sections || []).map(function(s){
+    return '<section class="blk"><div class="sec-head"><span class="k">' + (s.k || '') + '</span>' +
+      '<h2>' + t(s.h) + '</h2><span class="rule"></span></div>' +
+      '<div class="card"><div class="lead">' + t(s.body) + '</div></div></section>';
+  }).join('');
+}
+
+function setLang(lang){
+  LANG = (lang === 'es') ? 'es' : 'en';
+  try { localStorage.setItem('spCvLang', LANG); } catch(e){}
+  document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === LANG); });
+  render();
+}
+
+(function(){
+  var saved; try { saved = localStorage.getItem('spCvLang'); } catch(e){}
+  if (!saved) { var nav = (navigator.language || 'en').toLowerCase(); saved = nav.indexOf('es') === 0 ? 'es' : 'en'; }
+  setLang(saved);
+})();
+
+/* theme toggle */
+(function(){
+  var b = $('themeBtn');
+  function apply(th){
+    document.documentElement.setAttribute('data-theme', th);
+    b.innerHTML = '<i class="fas ' + (th === 'light' ? 'fa-moon' : 'fa-sun') + '"></i>';
+    try { localStorage.setItem('spCvTheme', th); } catch(e){}
+  }
+  var saved; try { saved = localStorage.getItem('spCvTheme'); } catch(e){}
+  apply(saved || 'dark');
+  b.onclick = function(){ apply(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); };
+})();
+
+/* first-party page-view beacon (same endpoint the other CV sites use) */
+(function(){
+  try {
+    fetch('/api/cv/hit', { method:'POST', headers:{'Content-Type':'application/json'}, keepalive:true,
+      body: JSON.stringify({ page:'samuelpacelli', path: location.pathname, referrer: document.referrer || '', lang: navigator.language || '' }) });
+  } catch(e){}
+})();
+</script>
+</body>
+</html>

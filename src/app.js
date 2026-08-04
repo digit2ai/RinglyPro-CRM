@@ -652,10 +652,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: samuelpacelli.com -> Samuel Pacelli CV landing
+// (public/samuelpacelli.html), served IN PLACE like the other CV domains. Same
+// pass-through rules: /api, any file with an extension, and the crawl/agent
+// routes below are handled by their own handlers.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'samuelpacelli.com' || host === 'www.samuelpacelli.com') {
+    const p = req.path;
+    if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p) || p === '/es' || p === '/roles' || p.startsWith('/roles/')
+        || p === '/robots.txt' || p === '/sitemap.xml' || p === '/llms.txt') return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en') {
+      req.url = '/samuelpacelli.html';
+    }
+  }
+  next();
+});
+
 // Clean URL: /manuelstagg -> the CV page. BEFORE express.static so the
 // extensionless path resolves to the resume without a .html suffix.
 app.get(['/manuelstagg', '/manuelstagg/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'manuelstagg.html'));
+});
+app.get(['/samuelpacelli', '/samuelpacelli/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'samuelpacelli.html'));
 });
 // Consolidate duplicate URLs onto the canonical domain (AI-search audit item 4).
 // /cv and /resume 301 to manuelstagg.com so ranking/citation signals don't split.
@@ -697,6 +717,12 @@ const CV_SITES = {
     email: 'jgramowski7@gmail.com', phone: '+1 813-334-2244',
     links: ['https://www.linkedin.com/in/juliana-gramowski-6270201a4'],
     topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' },
+  // Samuel Pacelli — shell. The blurb/role/topics stay deliberately minimal until the real
+  // CV lands; llms.txt renders the richer facts straight from his profile settings once they
+  // exist, so nothing here has to be invented in the meantime.
+  'samuelpacelli.com': { name: 'Samuel Pacelli', role: 'Professional profile', es: true,
+    blurb: 'Professional profile of Samuel Pacelli.',
+    email: '', phone: '', links: [], topics: '' },
   'andreastagg.com': { name: 'Andrea Stagg', role: 'Securities & Derivatives Associate Analyst — JD · International Custody & Compliance', es: false,
     blurb: 'Securities & Derivatives Associate Analyst at Citi and Juris Doctor — international securities settlement and global custody (INDEVAL, DTC, EUROCLEAR, CREST, IBERCLEAR), AML/BSA/OFAC compliance and international business law. Roles at Citi and J.P. Morgan. Quadrilingual (EN/ES/FR/IT). Tampa, FL.',
     email: 'andreastaggp@gmail.com', phone: '+1 813-502-9433',
@@ -710,7 +736,7 @@ function isoDay() { return new Date().toISOString().slice(0, 10); }
 //   /resume.json (JSON Resume) and /.well-known/agent.json (A2A Agent Card).
 // These carry a file extension, so the per-domain rewrite middleware next()s them through.
 const cvAgent = require('./routes/cv-agent');
-const CV_HOST_SLUG = { 'manuelstagg.com': 'manuelstagg', 'anastagg.com': 'anastagg', 'andreastagg.com': 'andreastagg', 'julianagramowski.com': 'juliana_gramowski' };
+const CV_HOST_SLUG = { 'manuelstagg.com': 'manuelstagg', 'anastagg.com': 'anastagg', 'andreastagg.com': 'andreastagg', 'julianagramowski.com': 'juliana_gramowski', 'samuelpacelli.com': 'samuelpacelli' };
 function cvHostSlug(req) { return CV_HOST_SLUG[String(req.get('host') || '').toLowerCase().replace(/^www\./, '')] || null; }
 // Both go through publicResume() so the owner's privacy settings apply here exactly as they
 // do on /api/agent/* — a field marked private is absent, not blanked.

@@ -111,10 +111,42 @@ function confidentialNote(settings) {
   return 'This candidate has asked not to be presented to certain employers. If you represent one of them, please disregard this profile.';
 }
 
+// Build a minimal JSON Resume from the profile record alone. This is what makes adding a
+// person DATA ENTRY: a new profile gets a working /resume.json, agent card and MCP surface
+// from its settings, with no hand-authored entry in cv-resumes.js. Only states what the
+// owner actually entered — an empty profile yields an empty résumé, never a filled-in one.
+function resumeFromProfile(slug, profile, settings) {
+  if (!profile) return null;
+  const id = (settings && settings.identity) || {};
+  const t = (settings && settings.targeting) || {};
+  const loc = id.location || profile.location || '';
+  const parts = String(loc).split(',').map((x) => x.trim());
+  return {
+    basics: {
+      name: id.name || profile.name || '',
+      label: id.headline || profile.headline || '',
+      email: id.contact_email || profile.email || '',
+      phone: id.contact_phone || profile.phone || '',
+      url: profile.site || ('https://' + slug + '.com'),
+      summary: profile.summary || '',
+      location: loc ? { city: parts[0] || '', region: parts[1] || '', countryCode: 'US' } : undefined,
+      profiles: (id.links || []).map((l) => ({ network: l.label || 'Web', url: l.url }))
+    },
+    work: [], education: [], skills: [],
+    languages: (id.languages || []).map((l) => ({ language: l.language, fluency: l.fluency })),
+    meta: {
+      slug,
+      availability: (t.availability && t.availability.status) || profile.availability || 'open',
+      targetRoles: (t.roles || []).map((r) => r.title).filter(Boolean).join('; ') || profile.target_roles || '',
+      generatedFrom: 'profile settings'
+    }
+  };
+}
+
 async function publicResume(slug) {
-  const base = getResume(slug);
+  const { profile, settings } = await profileSettings(slug);
+  const base = getResume(slug) || resumeFromProfile(slug, profile, settings);
   if (!base) return null;
-  const { settings } = await profileSettings(slug);
   return applyPrivacy(base, settings);
 }
 
