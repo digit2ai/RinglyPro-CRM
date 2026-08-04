@@ -427,8 +427,10 @@ async function list(sequelize, opts = {}) {
 }
 
 async function liveEmployers(sequelize) {
+  // `status` MUST be selected: fetchEmployerJobs() gates on it, so omitting the column makes
+  // every registry employer silently return zero jobs.
   return await sequelize.query(
-    `SELECT id, slug, name, ats, cfg, industries FROM cv_employers WHERE status='live' AND enabled=true`,
+    `SELECT id, slug, name, ats, cfg, industries, status FROM cv_employers WHERE status='live' AND enabled=true`,
     { type: QueryTypes.SELECT });
 }
 

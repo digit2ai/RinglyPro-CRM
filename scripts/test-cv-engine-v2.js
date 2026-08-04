@@ -220,8 +220,12 @@ async function cleanup() {
   const unver = (await http('/employers?status=unverified', { as: 'a' })).body.employers || [];
   ok('guessed boards are held as unverified, not published as live',
     unver.every((e) => e.cfg && e.cfg.guessed === true));
-  ok('an unverified board never reaches the shared pool',
-    (await employersSvc.liveEmployers(sequelize)).every((e) => !(e.cfg && e.cfg.guessed)));
+  const liveEmps = await employersSvc.liveEmployers(sequelize);
+  ok('an unverified board never reaches the shared pool', liveEmps.every((e) => !(e.cfg && e.cfg.guessed)));
+  // Regression guard: fetchEmployerJobs() gates on emp.status, so a live-employer query that
+  // forgets the column silently returns zero jobs for the whole registry.
+  ok('liveEmployers() carries the status column fetching depends on',
+    liveEmps.every((e) => e.status === 'live'), 'status missing from the projection');
   const addW = await http('/watchlist', { method: 'POST', as: 'a', body: { employer_id: anyEmp.id, priority: 3 } });
   ok('an employer can be watchlisted', addW.status === 200);
   const wl = await http('/watchlist', { as: 'a' });

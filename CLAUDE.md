@@ -187,6 +187,54 @@ The property diagram (`orb.js drawMap`) already rendered satellite when `imagery
 **Data Flow:**
 Google listing / truck QR / short link → `/lawncopilot/<slug>` → identity gate → that company's `lc_leads` → Brain `tools/call` (tenant injected) → Estimator → Dispatcher → crew clocks in → Bookkeeper invoices on completion → Stripe Connect → Controller reports what it saved
 
+## CV Talent Engine v2 — a job-search operating system for N profiles (not one person's tool)
+
+**Purpose:** the personal CV domains (manuelstagg.com, anastagg.com, andreastagg.com, julianagramowski.com) run a shared engine that finds real US jobs, targets named employers, tracks every application, and makes each person findable by recruiters and their AI. Phases 1-3 (discovery, agent/MCP surface, outreach drafting) shipped earlier; **Phases 4-8 turn it into a PLATFORM.**
+
+**THE RULE THAT GOVERNS THE WHOLE ENGINE: nothing about a person may live in code.** No hardcoded slug, role, country, employer or biographical fact in engine logic. Adding a fifth person is data entry — create the profile, attach a résumé, optionally map a domain. Zero code edits, zero redeploys, **zero new env vars per person**. SIT provisions a throwaway profile end to end to prove it.
+
+### Shared vs per-profile (a deliberate split, not an accident)
+| Shared infrastructure | Per profile, strictly isolated |
+|---|---|
+| `cv_jobs` pool, `cv_employers` connector registry, source health, scoring machinery | `cv_profile_settings`, watchlists, matches, saved searches, pipeline, opportunities, outreach, contacts, identity facts |
+
+One profile can never see another's data, and a targeting change for one provably does not move another's matches.
+
+### Phase 4 — settings are the single source of truth
+- `src/services/cv-settings.js` — `cv_profile_settings(profile_id, settings JSONB)`, seeded from the existing profile row on first read so no owner breaks. A JSONB document, so adding a setting is not a migration.
+- **Honesty encoded in code, not prompts:** `approval_required` is TRUE and `sanitize()` forces it back on every save — nothing sends unreviewed. Contact details, compensation, work authorization and clearance are **PRIVATE by default**; the owner opts in. `employerBlocked()` / `contactBlocked()` are absolute and checked at match, alert AND draft time.
+- Work authorization, compensation and availability are **owner-entered facts** quoted VERBATIM in drafts, or omitted entirely — never paraphrased, never guessed. `outreachFacts()` returns only what the owner typed.
+- `src/services/cv-geo.js` — country policy with an explicit, overridable rule for every messy ATS location shape: `Remote - US`, `Remote (US only)`, `Remote - North America`, `Remote - Global`, multi-location, hybrid-with-office, and no location at all (`flag` by default, not silent inclusion). Manuel is US-only; the other three are unrestricted unless their own settings say otherwise.
+- **Credentials moved off `CV_ADMIN_PW_<SLUG>`** (an env var per person does not scale and blocks self-onboarding). Passwords are profile-owned in the DB; new profiles are provisioned by single-use **invite** (`POST /admin/profiles` -> `/cv-admin?p=slug&invite=token`). The four pre-existing accounts keep working via a one-time bootstrap that only fills an empty hash. Admin is chosen by a RULE (earliest profile), never by naming a person.
+
+### Phase 5 — employer/industry targeting
+- `src/services/cv-employers.js` — shared registry of company -> the ATS actually serving its career site -> the public JSON endpoint that site itself calls. Adapters: Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, **Workday** (paginated), Eightfold. Closed families (iCIMS, Taleo, Phenom, Oracle HCM, SuccessFactors) are **named as closed, not scraped around**.
+- **GUESSED TOKENS ARE NEVER TRUSTED.** Guessing a board token from a company name lands on abandoned trial accounts squatting real names — `accenture.recruitee.com` and `ey.recruitee.com` serve Amsterdam demo posts titled "Senior Marketer (Sample)". A configured token succeeds as `live`; a **guessed** one becomes `unverified` (with sample titles for the owner to judge) and **contributes nothing to the pool** until confirmed via `PATCH /employers/:id/verify`. Demo boards are rejected outright. Do not regress this into "reachable = live".
+- **Workday is paginated.** A large tenant holds thousands of postings served 20 per page; one request is page one, often sorted by an unrelated region. Citi returns **2,000** postings — capped at 200/refresh with 60 description fetches, both stated in the status, never silently truncated.
+- Measured reality (first probe): **23 live, 4 unverified, 34 no public board**. Of the money-center banks only **Citi** is reachable (Workday); JPMorgan, BofA, Wells Fargo and Goldman expose no keyless feed. That is the honest answer, not a gap to paper over.
+
+### Phase 6 — the daily operating surface
+Saved searches, a daily digest (`GET /digest`), the application **pipeline** (new/saved/applied/screening/interviewing/offer/closed with next actions), contacts, cross-source dedupe + repost/stale detection, and the `CV_JOBS_GO` auto-run fanned out per profile inside a cost ceiling **derived from each profile's dollar cap** (`cost_cap_usd / $0.003 per scoring call`). Compensation is shown **only when the posting states it** (US pay-transparency ranges are parsed) and compared to the owner's floor — never estimated. Referrals come only from people already in that profile's own inbox and outreach history; connection graphs are not scraped.
+
+### Phase 7 — discovery and broadcast
+- **Role-targeted landing pages** — `/roles` and `/roles/:role` on each CV domain (`/cv/:slug/roles/...` on the main host), generated from that profile's own role targets. Server-rendered, indexable, carrying the exact title strings a sourcer searches, with Person + `seeks`/`knowsAbout` JSON-LD, and auto-listed in the sitemap and llms.txt. **This is the item that actually moves sourcing tools** — a CV headline of "AI Solutions Architect" is invisible to anyone searching for a project manager.
+- **Privacy applies to every public surface through ONE projection** (`cv-agent.applyPrivacy`): a private field is DELETED from resume.json, the A2A card and every MCP tool response — not blanked, not merely hidden in the UI.
+- Honest framing to keep: **no recruiting product discovers candidates via MCP today.** It is differentiation once someone lands and a positional bet, not a traffic source. Discovery comes from corpora recruiter tooling already indexes — LinkedIn, Dice, GitHub, employer talent networks — which **only the owner can create**; code links and keeps them consistent.
+
+### Phase 8 — entity identity
+`GET /entity/dossier` generates a sourced Wikidata submission from the profile record and **assesses notability honestly**: with only self-published and social links on file it reports the bar is NOT met and refuses to propose an item that would be deleted. The Q-ID is a settings field (`entity.wikidata_qid`), so adding it later is data entry.
+
+**SIT:** `node scripts/test-cv-engine-v2.js` -> **115/115**, zero external keys (heuristic path). Covers cross-profile isolation, settings isolation, privacy absence on public surfaces, do-not-contact/excluded-employer enforcement, guessed-board quarantine, the messy location cases, and provisioning a new profile end to end. It creates its own `sit_*` profiles/jobs and deletes them.
+
+**Configure a profile:** `node scripts/configure-cv-profile.js <slug>` writes settings (same as the UI) and reports what only the owner can state.
+
+**Environment Variables:**
+- `CV_JOBS_GO` — `1` enables the daily auto-run across enabled profiles. State is visible at `GET /jobs/auto`, not hidden in env.
+- `CV_ENGINE_MODEL` (default `claude-haiku-4-5-20251001`) · `ANTHROPIC_API_KEY` — unset = labeled heuristic scoring (`is_simulated`), never a silent fake.
+- `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` — broader discovery beyond ATS boards. Unset = dormant.
+- `CV_ADMIN_SECRET` — session cookie signing (falls back to `JWT_SECRET`).
+- `CV_ADMIN_PW_<SLUG>` — **legacy bootstrap only**, read once for the four pre-existing profiles when their password hash is empty. New profiles use invites; do not add one per person.
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
