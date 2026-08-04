@@ -108,6 +108,11 @@
     display:block;font-size:.72em;letter-spacing:.16em;text-transform:uppercase;
     color:#6d86ae;font-weight:800;margin-bottom:5px;
   }
+  /* section currently being read aloud */
+  section.reading .slug .n{background:var(--num);color:#06231a;border-color:var(--num);}
+  section.reading > p{color:#fff;}
+  .bar button.busy{opacity:.6;}
+
   .qa{
     border-left:3px solid #4a7ab5;padding:2px 0 2px 20px;margin:26px 0 20px;
     font-size:.8em;line-height:1.55;
@@ -157,6 +162,7 @@
   <span class="pos" id="pos">Slide 01 / 15</span>
   <button id="next" class="nav" title="Next slide (↓)">▶</button>
   <span class="grp">
+    <button id="speak" title="Read aloud in Ava's voice (R)">Read aloud</button>
     <button id="play" title="Space">▶ Scroll</button>
     <button id="slower" title="−">Slow</button>
     <span class="val" id="spd">1.0×</span>
@@ -380,6 +386,97 @@
     if(i!==cur){ cur=i; paint(); }
   }
   window.addEventListener('scroll',onScroll,{passive:true});
+
+  /* ---------- read aloud, Ava voice via /api/tts/edge ---------- */
+  // opened from disk there is no origin to resolve /api against, so fall back
+  // to the deployed host (CORS is open app-wide)
+  var TTS=(location.protocol==='file:'?'https://aiagent.ringlypro.com':'')+'/api/tts/edge';
+  var speakBtn=document.getElementById('speak');
+  var audio=new Audio(); audio.preload='auto';
+  var speaking=false, cache={}, seq=0;
+
+  // only the spoken paragraphs - cues, flags and Q&A are reference, not narration
+  function narrationOf(sec){
+    return [].slice.call(sec.querySelectorAll(':scope > p'))
+      .map(function(el){return el.textContent;}).join(' ')
+      .replace(/—\s*pause\s*—/gi,' ').replace(/\s+/g,' ').trim();
+  }
+
+  function fetchAudio(i){
+    if(cache[i]) return cache[i];
+    var text=narrationOf(secs[i]);
+    if(!text) return Promise.resolve(null);
+    cache[i]=fetch(TTS,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text,voice:'ava',rate:'+0%'})
+    }).then(function(r){
+      if(!r.ok) throw new Error('tts '+r.status);
+      return r.blob();
+    }).then(function(b){ return URL.createObjectURL(b); })
+      .catch(function(e){ delete cache[i]; throw e; });
+    return cache[i];
+  }
+
+  function browserVoice(text,done){           // offline / endpoint unreachable
+    if(!window.speechSynthesis){ done(); return; }
+    var u=new SpeechSynthesisUtterance(text);
+    u.rate=1; u.onend=done; u.onerror=done;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+
+  function markReading(i){
+    secs.forEach(function(s,k){ s.classList.toggle('reading', speaking && k===i); });
+  }
+
+  function speakFrom(i){
+    if(!speaking) return;
+    if(i>=secs.length){ stopSpeak(); return; }
+    var mine=++seq;
+    goTo(i); markReading(i);
+    speakBtn.classList.add('busy');
+    fetchAudio(i).then(function(url){
+      if(!speaking || mine!==seq) return;
+      speakBtn.classList.remove('busy');
+      if(!url){ speakFrom(i+1); return; }
+      audio.src=url;
+      audio.onended=function(){ if(speaking && mine===seq) speakFrom(i+1); };
+      audio.play().catch(function(){ stopSpeak(); });
+      if(i+1<secs.length) fetchAudio(i+1).catch(function(){});   // prefetch
+    }).catch(function(){
+      if(!speaking || mine!==seq) return;
+      speakBtn.classList.remove('busy');
+      browserVoice(narrationOf(secs[i]),function(){
+        if(speaking && mine===seq) speakFrom(i+1);
+      });
+    });
+  }
+
+  function startSpeak(){
+    stop();                                   // auto-scroll and narration fight each other
+    speaking=true; speakBtn.textContent='Stop'; speakBtn.classList.add('on');
+    speakFrom(cur);
+  }
+  function stopSpeak(){
+    speaking=false; seq++;
+    audio.pause(); audio.onended=null;
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    speakBtn.textContent='Read aloud';
+    speakBtn.classList.remove('on','busy');
+    markReading(-1);
+  }
+  speakBtn.addEventListener('click',function(){ speaking?stopSpeak():startSpeak(); });
+
+  // jumping while narrating re-reads from the new section
+  var _goTo=goTo;
+  goTo=function(i){ _goTo(i); };
+  prevBtns.concat(nextBtns).forEach(function(b){
+    b.addEventListener('click',function(){ if(speaking) speakFrom(cur); });
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='r'||e.key==='R'){ e.preventDefault(); speaking?stopSpeak():startSpeak(); }
+  });
+
   setSpeed(1.0); setSize(30); paint(); onScroll();
 })();
 </script>
