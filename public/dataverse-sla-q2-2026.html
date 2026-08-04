@@ -440,6 +440,46 @@
   .legend.donut-key b{color:#0f172a;font-weight:800;margin-left:2px;}
   .sw{width:12px;height:12px;border-radius:2px;display:inline-block;}
 
+  /* ---------- traceability matrix ---------- */
+  .tbl-trace{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;margin-top:4px;}
+  .tbl-trace thead th{
+    background:transparent;border:0;border-bottom:1.5px solid #16233c;
+    color:#16233c;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+    font-weight:800;text-align:left;padding:0 9px 8px;
+  }
+  .tbl-trace tbody td{
+    background:transparent;border:0;border-bottom:1px solid #e9edf3;
+    padding:10px 9px;vertical-align:top;font-size:9.5px;line-height:1.45;color:#41506a;
+  }
+  .tbl-trace tbody tr:last-child td{border-bottom:0;}
+  .tbl-trace b{color:#16233c;font-weight:700;}
+  .tbl-trace em{
+    display:block;font-style:normal;font-size:8px;color:#a8b2c1;margin-top:3px;line-height:1.35;
+  }
+  .tr-src{position:relative;padding-left:12px !important;}
+  .tr-src:before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:2px;background:#cbd5e1;}
+  .tr-src.c-db:before{background:#153d35;}
+  .tr-src.c-feed:before{background:#a4300c;}
+  .tr-src.c-net:before{background:#6d1a06;}
+  .tr-src b{display:block;font-size:11.5px;font-weight:800;color:#0f172a;}
+  .tr-src span{
+    display:block;font-size:8px;letter-spacing:.06em;text-transform:uppercase;
+    color:#a8b2c1;font-weight:700;margin-top:4px;line-height:1.4;
+  }
+  td.tr-ref{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:8.5px;color:#5b6880;line-height:1.6;}
+  td.tr-ref .none{color:#a8b2c1;font-style:italic;font-family:inherit;}
+  .trace-note{
+    margin-top:auto;padding-top:11px;border-top:1px solid #eef1f6;
+    font-size:9.5px;color:#8a96a8;line-height:1.5;
+  }
+  .trace-note b{color:#5b6880;}
+  .trace-sum{
+    margin-top:auto;padding-top:11px;border-top:1px solid #eef1f6;
+    display:flex;gap:22px;align-items:center;font-size:9.5px;color:#8a96a8;
+  }
+  .trace-sum b{color:#14513c;font-size:13px;font-weight:800;margin-right:3px;}
+  .trace-sum .r{margin-left:auto;font-style:italic;}
+
   /* ---------- quarter summary ---------- */
   .card p.wt{
     font-size:11.5px;line-height:1.55;color:#41506a;margin:0 0 10px;
@@ -1466,6 +1506,172 @@
     </div>
   </div>
   <div class="slide-no">13</div>
+</div>
+</section>
+
+<!-- ============ SLIDE — TRACEABILITY MATRIX 1/2 ============ -->
+<section class="slide" id="s14">
+<div class="slide-inner">
+  <div class="sec-eyebrow">APPENDIX &nbsp;·&nbsp; AUDIT TRACEABILITY</div>
+  <h1 class="title">Traceability Matrix (1/2)</h1>
+  <p class="subtitle">Every issue from first report to remediation, with the contingency that held service in the interim</p>
+
+  <table class="tbl-trace">
+    <colgroup><col style="width:14%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:19%"><col style="width:23%"><col style="width:12%"></colgroup>
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>First Reported</th>
+        <th>Remediated</th>
+        <th>Contingency Window</th>
+        <th>Contingency Applied</th>
+        <th>Permanent Fix / Action</th>
+        <th>Reference</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tr-src c-feed"><b>Drift</b><span>Feed Delayed &middot; 11</span></td>
+        <td>Apr 2026<em>recurring</em></td>
+        <td>In period<em>schedule change</em></td>
+        <td>Recurring until reschedule<em>exact date not evidenced</em></td>
+        <td>Job manually re-triggered once the source load had completed; data reloaded in full.</td>
+        <td>IP job schedule moved <b>08:00 &rarr; 08:30</b>, clearing the overlap with the Drift load window.</td>
+        <td class="tr-ref">Schedule change record</td>
+      </tr>
+      <tr>
+        <td class="tr-src c-db"><b>Drift</b><span>DB Bug &middot; 6</span></td>
+        <td>Q2 2026<em>after source RTO change</em></td>
+        <td><b>Jul 2026</b><em>Tech Release</em></td>
+        <td>Carried to Q3<em>closed post-period</em></td>
+        <td>Affected loads re-run; NULL and oversized values handled on reload.</td>
+        <td>Source-side data-integrity fixes delivered in the <b>July 2026 Tech Release</b>. No Drift items outstanding.</td>
+        <td class="tr-ref">July 2026 Tech Release<br><span class="none">VJ &mdash; source owner</span></td>
+      </tr>
+      <tr>
+        <td class="tr-src c-db"><b>MCA</b><span>Timestamp format</span></td>
+        <td>May 2026<em>clustered May&ndash;Jun</em></td>
+        <td><b>16-Jul-26</b><em>PRIN-5573</em></td>
+        <td>~2 months to permanent fix<em>1w 1d in progress</em></td>
+        <td>Failed loads re-run; timestamp variants handled case by case until the formatter shipped.</td>
+        <td><b>PRIN-5573</b> flexible timestamp formatter &mdash; fractional seconds present or absent, varying lengths, single and double-space variants. Regression-tested across all MCA feeds.</td>
+        <td class="tr-ref">PRIN-5573<br><span class="none">Q3 2026 epic</span></td>
+      </tr>
+      <tr>
+        <td class="tr-src c-db"><b>MCA</b><span>Field length</span></td>
+        <td>Jun 2026<em>GAU_OWNER_DELEGATES</em></td>
+        <td>In period<em>trim under INC</em></td>
+        <td>Same quarter<em>closed on the INC</em></td>
+        <td>Attribute trimmed to 4,000 characters on load so the feed continued to process.</td>
+        <td>INC raised to trim at source. Field is <b>not consumed downstream</b>, so no schema change was warranted.</td>
+        <td class="tr-ref">INC &mdash;<br>GAU_OWNER_DELEGATES</td>
+      </tr>
+      <tr>
+        <td class="tr-src c-feed"><b>PTS</b><span>Feed Quality &middot; 13</span></td>
+        <td>Q2 2026<em>recurring</em></td>
+        <td>IP action complete<em>source-side pending</em></td>
+        <td>Open with source<em>at reporting date</em></td>
+        <td>Record counts reconciled manually; loads completed and delivered.</td>
+        <td>INC raised with the PTS team to correct control-file record counting. <b>No IP-side change applies</b> &mdash; the defect is in the source's control-file generation.</td>
+        <td class="tr-ref">INC0021438147</td>
+      </tr>
+      <tr>
+        <td class="tr-src c-db"><b>PTS</b><span>DB Bug &middot; 2</span></td>
+        <td><b>15&ndash;16 Jun 26</b><em>INVESTMENT_GROUP</em></td>
+        <td>In period<em>trim under INC</em></td>
+        <td><b>2 days</b><em>both occurrences</em></td>
+        <td>Incoming values trimmed to the 2,500-character column limit on load.</td>
+        <td>INC raised for the source to trim INVESTMENT_GROUP at origin (received 2,741 chars against a 2,500 limit).</td>
+        <td class="tr-ref">INC0023796809</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="trace-note">
+    <b>Date precision:</b> dates are stated only to the precision evidenced in the source-owner review and the Jira / ServiceNow records.
+    Where only a month or a relative period was recorded, that is what appears &mdash; <b>no date has been inferred or back-filled</b>.
+  </div>
+  <div class="slide-no">14</div>
+</div>
+</section>
+
+<!-- ============ SLIDE — TRACEABILITY MATRIX 2/2 ============ -->
+<section class="slide" id="s15">
+<div class="slide-inner">
+  <div class="sec-eyebrow">APPENDIX &nbsp;·&nbsp; AUDIT TRACEABILITY</div>
+  <h1 class="title">Traceability Matrix (2/2)</h1>
+  <p class="subtitle">DSMT-ISG, GRC, CRS, Policy and GDW_HRDW &mdash; report, contingency and remediation</p>
+
+  <table class="tbl-trace">
+    <colgroup><col style="width:14%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:19%"><col style="width:23%"><col style="width:12%"></colgroup>
+    <thead>
+      <tr>
+        <th>Issue</th>
+        <th>First Reported</th>
+        <th>Remediated</th>
+        <th>Contingency Window</th>
+        <th>Contingency Applied</th>
+        <th>Permanent Fix / Action</th>
+        <th>Reference</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tr-src c-db"><b>DSMT-ISG</b><span>App Bug &middot; 8</span></td>
+        <td>Jun 2026<em>source set field nullable</em></td>
+        <td><b>10-Jun-26</b><em>PRIN-4619</em></td>
+        <td><b>~1 week</b><em>fix resolved in 1 day</em></td>
+        <td>Loads re-run after each failure while the INC was open with the DSMT team.</td>
+        <td><b>PRIN-4619</b> updated CNTRY_ISO1_CODE in DSMT_COUNTRY from not-nullable to nullable. Raised 09-Jun, resolved 10-Jun &mdash; 2 story points.</td>
+        <td class="tr-ref">PRIN-4619<br>INC0023197471</td>
+      </tr>
+      <tr>
+        <td class="tr-src c-net"><b>GRC</b><span>API Timeout &middot; 4</span></td>
+        <td>Q2 2026<em>recurring</em></td>
+        <td><b>None</b><em>no IP-side fix</em></td>
+        <td>Ongoing<em>external dependency</em></td>
+        <td>Error reviewed and load <b>manually re-triggered</b> &mdash; the retry is not automated. Each load completed the same day, after cutoff.</td>
+        <td>No IP-side remediation available. The endpoint exceeded its <b>60-second response contract</b>; escalation to the API owner is the required path.</td>
+        <td class="tr-ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+      </tr>
+      <tr>
+        <td class="tr-src c-db"><b>CRS</b><span>Internal Process &middot; 2</span></td>
+        <td>Apr and Jun 26<em>months 1 and 3</em></td>
+        <td>In period<em>did not recur</em></td>
+        <td><b>1 day</b><em>per occurrence</em></td>
+        <td>Job rerun manually the following day and completed successfully.</td>
+        <td>IP pull process lacked file read permission. Did not recur after the second occurrence; <b>no source INC applicable</b>.</td>
+        <td class="tr-ref">Manual rerun<br><span class="none">no INC raised</span></td>
+      </tr>
+      <tr>
+        <td class="tr-src c-net"><b>Policy</b><span>API Timeout &middot; 1</span></td>
+        <td>Apr 2026<em>start of quarter</em></td>
+        <td>Same day<em>on retrigger</em></td>
+        <td><b>Same day</b><em>single occurrence</em></td>
+        <td>Load manually re-triggered later the same day and completed.</td>
+        <td>None required. The source responded normally on every subsequent run; isolated to one occurrence.</td>
+        <td class="tr-ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+      </tr>
+      <tr>
+        <td class="tr-src c-feed"><b>GDW_HRDW</b><span>Feed Quality &middot; 1</span></td>
+        <td>Q2 2026<em>single occurrence</em></td>
+        <td>Next run<em>22:00 EST cycle</em></td>
+        <td><b>1 run cycle</b><em>self-resolved</em></td>
+        <td><b>None required</b> &mdash; the next scheduled run completed before investigation began.</td>
+        <td>None. Source-side record-count mismatch (2,742,409 against 2,742,247) that did not recur.</td>
+        <td class="tr-ref"><span class="none">none &mdash; self-resolved</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="trace-sum">
+    <span><b>63</b> categorized breaches</span>
+    <span><b>42</b> remediated within Q2</span>
+    <span><b>21</b> remediated in the July 2026 releases</span>
+    <span><b>0</b> breaches unremediated at reporting</span>
+    <span class="r">Open control matters: the 6-item reconciliation variance and GRC escalation</span>
+  </div>
+  <div class="slide-no">15</div>
 </div>
 </section>
 
