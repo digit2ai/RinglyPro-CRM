@@ -113,6 +113,24 @@
   section.reading > p{color:#fff;}
   .bar button.busy{opacity:.6;}
 
+  .math{
+    border-left:3px solid #2f7f60;padding:2px 0 2px 20px;margin:22px 0 20px;
+    font-size:.72em;line-height:1.5;
+  }
+  .math .lab{
+    display:block;font-size:.8em;letter-spacing:.16em;text-transform:uppercase;
+    color:#5fbb92;font-weight:800;margin-bottom:8px;
+  }
+  .math .row{display:flex;gap:14px;align-items:baseline;margin-bottom:4px;}
+  .math .row i{
+    font-style:normal;color:#c6d6ea;font-weight:700;flex:0 0 34%;min-width:0;
+  }
+  .math .row em{
+    font-style:normal;color:#8fa8c4;flex:1;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.94em;
+  }
+  .math .row em b{color:#7fd6a8;font-weight:700;}
+
   .qa{
     border-left:3px solid #4a7ab5;padding:2px 0 2px 20px;margin:26px 0 20px;
     font-size:.8em;line-height:1.55;
@@ -179,8 +197,9 @@
 <section>
   <div class="slug"><span class="n">01</span><span class="h">Cover — Dataverse Ingestion Feed SLA Monitoring</span></div>
   <p>Good morning. This is the Q2 2026 review of our Dataverse ingestion feeds.</p>
-  <p>Three numbers up front. We delivered <b>99.3 percent</b> of feeds within SLA. <b>Every breach</b> now has a fix in place. And we cut our root cause patterns by <b>40 percent</b>.</p>
+  <p>Three numbers up front. We delivered <b>99.3 percent</b> of feeds within SLA &mdash; that is <b>10,365 of 10,434</b>. <b>Every breach</b> now has a fix in place, all <b>63 of 63</b>. And we cut our root cause patterns by <b>40 percent</b> &mdash; from five down to three.</p>
   <p>That last one is the story of the quarter, so let me start there.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>(10,434 &minus; 69) &divide; 10,434 = <b>10,365 &divide; 10,434</b></em></span><span class="row"><i>Every breach fixed</i><em><b>63 of 63</b> categorized breaches</em></span><span class="row"><i>40% fewer patterns</i><em>5 in Q1 &rarr; 3 in Q2 &mdash; <b>2 removed &divide; 5 = 40%</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Sixty-nine breaches does not sound like ninety-nine percent.&rdquo;</span><span class="a">Sixty-nine against <b>10,434 feeds</b>. The rate is the portfolio view; the sixty-nine are what we spent the quarter fixing. Both matter, and both are on the slide.</span></div>
 </section>
 
@@ -193,23 +212,26 @@
   <div class="cue"><span class="lab">If asked about the volume increase</span>
     Occurrences did go from 41 to 69, across a comparable feed count. Every single one was triaged to root cause. Fewer distinct problems, more instances of them — which is the easier problem to have.
   </div>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>40% consolidation</i><em>2 patterns removed &divide; 5 in Q1 = <b>40%</b></em></span><span class="row"><i>Three into one</i><em>JDBC 13 + HikariPool + NPE &rarr; App Bug / DB = <b>30</b></em></span><span class="row"><i>63 categorized</i><em>30 + 28 + 5 = <b>63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Patterns went down but breaches went up. How is that progress?&rdquo;</span><span class="a">Because the number of <b>distinct problems</b> drives the effort, not the count of instances. Five investigation tracks became three. More instances of fewer problems is the easier position to be in &mdash; each one now has an owner and a known fix.</span></div>
 </section>
 
 <section>
   <div class="slug"><span class="n">03</span><span class="h">Q2 Performance Highlights</span></div>
-  <p>We processed <b>10,434 feeds</b> across eight pipelines. <b>99.3 percent</b> landed within SLA.</p>
+  <p>We processed <b>10,434 feeds</b> across eight pipelines. <b>99.3 percent</b> landed within SLA &mdash; <b>10,365</b> on time, <b>69</b> late or failed.</p>
   <p><b>63 of 63</b> breaches now carry a fix — 42 closed inside Q2, and 21 in the July releases.</p>
   <p><b>Zero data loss.</b> Every affected load either re-ran or self-resolved and completed.</p>
   <p>Three fixes are worth naming. <span class="k">PRIN-4619</span> — raised one day, resolved the next. The <span class="k">Drift schedule change</span>, which removed the cause behind eleven breaches. And <span class="k">PRIN-5573</span>, the timestamp formatter.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>99.3% within SLA</i><em>10,365 &divide; 10,434 = <b>99.3%</b></em></span><span class="row"><i>100% carry a fix</i><em>63 &divide; 63 &mdash; <b>42 in Q2 + 21 in July</b></em></span><span class="row"><i>July 21</i><em>15 (PRIN-5573, 16-Jul) + 6 (Drift, 17-Jul) = <b>21</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;You say a hundred percent carry a fix, but twenty-one landed in July, after the quarter closed. Is that really a Q2 result?&rdquo;</span><span class="a">Fair challenge, and no. <b>Forty-two closed inside Q2</b> &mdash; that is sixty-seven percent. The other twenty-one closed in July. Both numbers are on the slide precisely so I am not claiming July work as a Q2 result.</span></div>
 </section>
 
 <section>
   <div class="slug"><span class="n">04</span><span class="h">RCA Pattern Intelligence</span></div>
-  <p>Three categories. Application and database bugs are <b>48 percent</b>. Feed quality is <b>44 percent</b>. External network is <b>8 percent</b>.</p>
-  <p>The headline here: <b>92 percent</b> of our breaches come from internal, addressable causes. Only eight percent sit outside our direct control.</p>
+  <p>Three categories. Application and database bugs are <b>48 percent</b> &mdash; that is <b>30 of 63</b>. Feed quality is <b>44 percent</b>, <b>28</b>. External network is <b>8 percent</b>, just <b>5 occurrences</b>.</p>
+  <p>The headline here: <b>92 percent</b> of our breaches &mdash; <b>58 of 63</b>, the thirty plus the twenty-eight &mdash; come from internal, addressable causes. Only <b>5</b> sit outside our direct control.</p>
   <p>That is good news. It means most of this is ours to fix, and we have been fixing it.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>48% App Bug / DB</i><em>30 &divide; 63 = <b>47.6%</b>, stated as 48</em></span><span class="row"><i>44% Feed Quality</i><em>28 &divide; 63 = <b>44.4%</b>, stated as 44</em></span><span class="row"><i>8% External Network</i><em>5 &divide; 63 = <b>7.9%</b>, stated as 8</em></span><span class="row"><i>92% internal</i><em>(30 + 28) = 58 &divide; 63 = <b>92.1%</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;If ninety-two percent is internal and addressable, why did volume go up?&rdquo;</span><span class="a">Because our detection got sharper. Q1 introduced per-source, per-date tracking where Q4 had only an aggregate rate. Finer detection surfaces more occurrences of the <b>same underlying problems</b>.</span></div>
 </section>
 
@@ -221,6 +243,7 @@
   <p><span class="k">MCA, fifteen breaches.</span> Two source-side changes, and they told us about neither one.</p>
   <p>They changed their timestamp format, and they sent us a field that was one character too long for our column.</p>
   <p><span class="k">PRIN-5573</span> is the important one. Rather than patch that single format, we built a formatter that handles the variations — separators, AM/PM, fractional seconds. So the next time they change it, <b>we do not break</b>.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>Drift 17</i><em>11 feed delayed + 6 DB bug = <b>17</b></em></span><span class="row"><i>MCA 15</i><em>timestamp format + field length = <b>15</b></em></span><span class="row"><i>This page</i><em>17 + 15 = <b>32 of 63</b>, just over half</em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Drift ran late repeatedly. Why did it take until July to fix?&rdquo;</span><span class="a">Two different problems. The <b>timing fix</b> &mdash; moving our job to 8:30 &mdash; was done in period and stopped the delays. The <b>database integrity items</b> needed source-side changes, and those shipped in the July release.</span></div>
 </section>
 
@@ -234,6 +257,7 @@
   <div class="flag"><span class="lab">Volunteer this — do not wait to be asked</span>
     That retry is <b>manual, not automated</b>, and there is no permanent preventive fix on our side. Every occurrence was resolved, but recurrence is a live risk. It needs an escalation to the API owner, and that is carried into Q3.
   </div>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>PTS 15</i><em>13 feed quality + 2 DB bug = <b>15</b></em></span><span class="row"><i>Control-file gap</i><em>7,356 &minus; 7,354 = <b>2 records</b></em></span><span class="row"><i>This page</i><em>15 + 8 + 4 = <b>27 of 63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;GRC is marked resolved, but you say it will recur. Which is it?&rdquo;</span><span class="a">Both, and they are different things. Every occurrence was <b>resolved the day it happened</b>. There is no preventive fix on our side because the API belongs to someone else. So the breaches are closed and the risk is open.</span></div>
 </section>
 
@@ -244,6 +268,7 @@
   <p><span class="k">Policy, once.</span> API timeout at the start of the quarter. Retriggered, completed the same day.</p>
   <p><span class="k">GDW, once.</span> A record count mismatch that resolved itself on the next scheduled run, before we had even opened it.</p>
   <p>Which brings us to the position on the board — <b>all eight sources resolved</b>. <span class="pause">— pause —</span></p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>This page</i><em>2 + 1 + 1 = <b>4 of 63</b>, about 6%</em></span><span class="row"><i>All eight sources</i><em>17+15+15+8+4+2+1+1 = <b>63</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Three of these had no incident raised. How do you evidence them?&rdquo;</span><span class="a">Each one has the <b>reason recorded against it</b>. CRS was our own pull process, so no source incident applied. Policy and GDW resolved before one was warranted. The reasoning is written down &mdash; the field is not simply blank.</span></div>
 </section>
 
@@ -252,6 +277,7 @@
   <p>To pull it together. <b>40 percent</b> fewer root cause patterns. <b>100 percent</b> traced to root cause. <b>100 percent</b> carrying a fix. <b>Zero</b> data loss events.</p>
   <p>Three permanent fixes landed, and none of them were one-off patches — each one stops a whole class of failure.</p>
   <p>And I want to be straight about what we are carrying into Q3: the <span class="k">GRC recurrence risk</span>, a <span class="k">reconciliation variance</span> I will come to, and a <span class="k">formal notification path</span> so sources stop changing things without telling us.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>40% fewer patterns</i><em>5 &rarr; 3</em></span><span class="row"><i>100% traced</i><em>63 &divide; 63</em></span><span class="row"><i>100% carry a fix</i><em>42 in Q2 + 21 in July = <b>63</b></em></span><span class="row"><i>0 data loss</i><em>every affected load re-ran or self-resolved</em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;What stops this happening again next quarter?&rdquo;</span><span class="a">Three things. PRIN-5573 absorbs <b>future</b> format changes, not just this one. The Drift schedule change removes a structural overlap. And we are putting a <b>formal source-change notification path</b> in place &mdash; that gap sits behind both the DSMT and MCA failures.</span></div>
 </section>
 
@@ -274,6 +300,7 @@
     <p style="margin:0;"><b>Completeness rests on the Dataverse status feed.</b> We did not independently reconcile against source-system delivery logs. Feeds that never start do surface as Not Triggered, so silent non-delivery is visible — but that limitation is stated.</p>
   </div>
   <p>Everything else on those slides carries an evidence line — the export, the Jira records, the ServiceNow numbers, the review with the source owner.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>The variance</i><em>69 raw &minus; 63 categorized = <b>6 items</b></em></span><span class="row"><i>63 categorized</i><em>30 + 28 + 5</em></span><span class="row"><i>67% in period</i><em>42 &divide; 63 = <b>66.7%</b></em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Why should we accept sixty-three when your own export says sixty-nine?&rdquo;</span><span class="a">You should not accept the gap without an explanation, which is exactly why it is flagged. Sixty-nine is the raw export before categorization; sixty-three is what per-source review accounts for. The <b>six-item difference is open and tracked</b>. I would rather show you an unreconciled variance than a tidy number I cannot support.</span></div>
 </section>
 
@@ -285,6 +312,7 @@
   <p>Second, the dates. They are stated only to the precision we actually have. Where our records only give a month, it says a month. <b>Nothing has been inferred or back-filled</b> to make the table look tidier.</p>
   <p>Bottom line: <b>63 categorized</b>, 42 remediated inside Q2, 21 in July, <b>zero outstanding</b>.</p>
   <p>Happy to take questions.</p>
+  <div class="math"><span class="lab">The math</span><span class="row"><i>63 accounted for</i><em>42 (Q2) + 21 (July) + <b>0 open</b></em></span><span class="row"><i>21 in July</i><em>15 PRIN-5573 + 6 Drift</em></span></div>
   <div class="qa"><span class="lab">Likely question</span><span class="q">&ldquo;Some of these dates are only a month. Why not exact dates?&rdquo;</span><span class="a">Because a month is what our records actually hold. I could have inferred dates to make the table look complete, but an <b>inferred date in a traceability matrix is worse than an honest month</b>.</span></div>
 </section>
 
