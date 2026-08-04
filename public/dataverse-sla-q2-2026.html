@@ -779,7 +779,7 @@
           <div class="badge green"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a5 5 0 0 0 6.5 6.5L10 21a2.8 2.8 0 0 1-4-4L14.5 3.5z"/></svg></div>
           <div>
             <div class="card-title green">Parser Hardening – PRIN-5573</div>
-            <div style="font-size:12px;color:#38445a;margin-top:3px;line-height:1.45;">Flexible timestamp formatter for MCA feeds, regression-tested across all feeds. Released <b>16-Jul-26</b> under the Q3 epic — after the Q2 period closed.</div>
+            <div style="font-size:12px;color:#38445a;margin-top:3px;line-height:1.45;">Common timestamp formatter handling separator, AM/PM and fractional-second variations. Regression-tested, released <b>16-Jul-26</b>.</div>
           </div>
         </div>
       </div>
@@ -961,7 +961,7 @@
           <div class="sub"><b>Field length</b> &mdash; GAU_OWNER_DELEGATES arrived at <b>4,001 characters</b> against a 4,000-character column.</div>
         </td>
         <td>
-          <p><b>PRIN-5573</b> implements a flexible timestamp formatter &mdash; values with or without fractional seconds, varying fractional lengths, and single or double-space variants; regression-tested across all MCA feeds with no change to existing parsing.</p>
+          <p><b>PRIN-5573</b> implements a <b>common timestamp formatter method</b> handling multiple formats received from MCA feeds &mdash; variations in <b>date/time separators</b>, <b>AM/PM formats</b>, and optional <b>fractional seconds of differing lengths</b>, plus single and double-space variants. Regression-tested across all MCA feeds with no change to existing parsing.</p>
           <p>Raised <b>06-Jul-26</b>, resolved <b>16-Jul-26</b> &mdash; 1w 1d 13h in progress.</p>
           <p class="fine">The oversized attribute is trimmed to 4,000 characters on load under an INC; the field is not consumed downstream, so no schema change was needed.</p>
         </td>
@@ -1571,7 +1571,7 @@
         <td><b>16-Jul-26</b><em>PRIN-5573</em></td>
         <td>~2 months to permanent fix<em>1w 1d 13h in progress</em></td>
         <td>Failed loads re-run; timestamp variants handled case by case until the formatter shipped.</td>
-        <td><b>PRIN-5573</b> flexible timestamp formatter &mdash; fractional seconds present or absent, varying lengths, single and double-space variants. Regression-tested across all MCA feeds.</td>
+        <td><b>PRIN-5573</b> common timestamp formatter method &mdash; handles variations in date/time separators, AM/PM formats and optional fractional seconds of differing lengths, plus single and double-space variants. Regression-tested across all MCA feeds.</td>
         <td class="tr-ref">PRIN-5573<br><span class="none">Q3 2026 epic</span></td>
       </tr>
       <tr>
