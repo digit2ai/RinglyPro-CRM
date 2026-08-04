@@ -37,6 +37,14 @@ $('meta[property="og:url"]').attr('content', 'https://manuelstagg.com/es');
 if (!$('meta[property="og:locale"]').length) $('meta[property="og:url"]').after('\n<meta property="og:locale" content="es_ES">');
 $('.lang-btn[data-lang="es"]').addClass('active');
 $('.lang-btn[data-lang="en"]').removeClass('active');
+// Hero video: ship the Spanish intro as the served source on the ES page.
+const heroEs = $('#heroVideo').attr('data-video-es');
+if (heroEs) {
+  $('#heroVideo').attr('src', heroEs);
+  $('#heroVideo').attr('aria-label', 'Manuel Stagg — video de presentación');
+}
+$('#vidSound').attr('aria-label', 'Reproducir video con sonido');
+
 // ProfilePage language
 $('script[type="application/ld+json"]').each((i, el) => {
   let t = $(el).html();
