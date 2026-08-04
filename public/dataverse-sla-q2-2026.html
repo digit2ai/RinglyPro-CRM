@@ -534,17 +534,34 @@
   .nav button:hover{background:rgba(255,255,255,.16);}
   .nav .cnt{padding:0 8px;letter-spacing:.05em;color:#cfe0ff;min-width:64px;text-align:center;}
 
-  @page{size:landscape;margin:0;}
+  /* ---------- print: one 1280x720 slide per page, backgrounds intact ---------- */
+  @page{ size:1280px 720px; margin:0; }
   @media print{
-    body{background:#fff;}
-    .nav{display:none;}
-    .deck{gap:0;padding:0;}
+    /* force backgrounds and colours to render - without this the dark cover
+       prints white-on-white and its text disappears */
+    *,*::before,*::after{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+      color-adjust:exact !important;
+    }
+    html,body{background:#fff !important;margin:0;padding:0;}
+    .nav{display:none !important;}
+    .deck{display:block !important;gap:0 !important;padding:0 !important;}
+    /* print at authored size and drop the screen scale transform entirely */
     .slide{
-      width:100%;max-width:none;border:0;border-radius:0;box-shadow:none;
-      page-break-after:always;break-after:page;
+      width:1280px !important;height:720px !important;
+      max-width:none !important;aspect-ratio:auto !important;
+      margin:0 !important;border:0 !important;border-radius:0 !important;
+      box-shadow:none !important;overflow:hidden !important;
+      page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid;
     }
     .slide:last-child{page-break-after:auto;break-after:auto;}
+    .slide-inner{
+      transform:none !important;position:relative !important;
+      width:1280px !important;height:720px !important;
+    }
   }
+
   @media (max-width:1320px){
     .slide{padding:26px 28px;}
     h1.title{font-size:30px;}
@@ -1688,6 +1705,7 @@
 (function(){
   // keep every slide scaled to its box so content can never overflow
   function fitSlides(){
+    if (window.matchMedia && window.matchMedia("print").matches) return;
     document.querySelectorAll(".slide").forEach(function(s){
       var inner = s.querySelector(".slide-inner");
       if(!inner) return;
