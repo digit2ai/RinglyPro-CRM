@@ -13,16 +13,33 @@ const { QueryTypes } = require('sequelize');
 
 const PROBE_TIMEOUT_MS = 9000;
 const PROBE_CONCURRENCY = 4;
-const WORKDAY_DETAIL_CAP = 25;   // per employer per refresh — documented bound, not a silent truncation
+const WORKDAY_DETAIL_CAP = 60;   // per employer per refresh — documented bound, not a silent truncation
+const WORKDAY_PAGE = 20;         // Workday's own page size
+const WORKDAY_MAX_PAGES = 10;    // 200 postings/employer/refresh. Reported, never silent.
 
 const STATUS = {
   LIVE: 'live',
+  UNVERIFIED: 'unverified',        // a board answered, but the token was GUESSED — see below
   NO_PUBLIC_ENDPOINT: 'no_public_endpoint',
   BLOCKED_TOS: 'blocked_tos',
   DORMANT_KEY: 'dormant_key',
   ERROR: 'error',
   UNPROBED: 'unprobed'
 };
+
+// Guessing a board token from a company name finds real boards — and also finds abandoned
+// trial accounts that squat the same name. Probing "accenture" and "ey" on Recruitee returns
+// demo tenants in Amsterdam whose postings are literally titled "Senior Marketer (Sample)";
+// treating those as Accenture and EY would attribute fabricated-looking jobs to real firms.
+// So: a token that was CONFIGURED (seeded or owner-entered) is trusted on success; a token
+// that was GUESSED is recorded as 'unverified' with sample titles for the owner to confirm,
+// and contributes nothing to the pool until they do.
+const SAMPLE_MARKERS = /\(sample\)|\bsample\b|\bdemo\b|\btest job\b|lorem ipsum/i;
+function looksLikeDemoBoard(jobs) {
+  if (!jobs.length) return false;
+  const sampled = jobs.slice(0, 8);
+  return sampled.filter((j) => SAMPLE_MARKERS.test(String(j.title || ''))).length >= 1 && jobs.length <= 10;
+}
 
 // ---------- http ----------
 async function httpJson(url, opts = {}) {
@@ -176,7 +193,11 @@ async function tryAdapter(kind, company, cfg) {
   let jobs = [];
   try { jobs = ad.parse(j, company, cfg) || []; } catch (e) { return { ok: false, note: `${ad.label}: parse failed`, url }; }
   if (!jobs.length) return { ok: false, note: `${ad.label}: reachable but returned 0 postings`, url };
-  return { ok: true, count: jobs.length, url, cfg, kind };
+  if (looksLikeDemoBoard(jobs)) return { ok: false, demo: true, url,
+    note: `${ad.label}: "${cfg.token}" is an abandoned trial board (sample postings), not this employer` };
+  const total = (j && (j.total || j.totalFound)) || jobs.length;
+  return { ok: true, count: total, page_count: jobs.length, url, cfg, kind,
+           samples: jobs.slice(0, 3).map((x) => x.title + (x.location ? ' — ' + x.location : '')) };
 }
 
 /**
@@ -195,21 +216,32 @@ async function probeEmployer(emp) {
   if (emp.ats && CLOSED_ATS[emp.ats]) {
     return { status: STATUS.NO_PUBLIC_ENDPOINT, ats: emp.ats, cfg: emp.cfg || {}, endpoint: null, count: 0, reason: CLOSED_ATS[emp.ats] };
   }
-  // 3) Workday needs tenant + site; only probe when hinted.
+  // 3) Workday needs tenant + site; only probe when hinted (i.e. always a CONFIGURED token).
   if (emp.cfg && emp.cfg.tenant && emp.cfg.site) {
     for (const dc of [emp.cfg.dc || 'wd1', 'wd1', 'wd3', 'wd5', 'wd103']) {
       const cfg = Object.assign({}, emp.cfg, { dc });
       const r = await tryAdapter('workday', emp.name, cfg);
       tried.push(r.note || `workday ${dc}: ok`);
-      if (r.ok) return { status: STATUS.LIVE, ats: 'workday', cfg, endpoint: r.url, count: r.count, reason: 'Workday tenant returned ' + r.count + ' postings' };
+      if (r.ok) return { status: STATUS.LIVE, ats: 'workday', cfg, endpoint: r.url, count: r.count,
+        reason: `Workday tenant "${cfg.tenant}" returned ${r.count} postings (configured tenant, ${WORKDAY_PAGE * WORKDAY_MAX_PAGES} fetched per refresh)` };
     }
   }
-  // 4) Keyless token-based boards.
-  const tokens = emp.cfg && emp.cfg.token ? [emp.cfg.token] : candidateTokens(emp.name);
+  // 4) Keyless token-based boards. A CONFIGURED token is trusted; a GUESSED one is only ever
+  //    'unverified' — see the namesquat note at the top of this file.
+  const configured = !!(emp.cfg && emp.cfg.token && !emp.cfg.guessed);
+  const tokens = configured ? [emp.cfg.token] : candidateTokens(emp.name);
   for (const kind of ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee']) {
     for (const token of tokens) {
       const r = await tryAdapter(kind, emp.name, { token });
-      if (r.ok) return { status: STATUS.LIVE, ats: kind, cfg: { token }, endpoint: r.url, count: r.count, reason: `${ADAPTERS[kind].label} board "${token}" returned ${r.count} postings` };
+      if (r.ok) {
+        const base = { ats: kind, cfg: { token }, endpoint: r.url, count: r.count };
+        if (configured) return Object.assign(base, { status: STATUS.LIVE,
+          reason: `${ADAPTERS[kind].label} board "${token}" returned ${r.count} postings` });
+        // cfg.guessed marks the token as unconfirmed so a LATER probe cannot mistake the
+        // token we stored for one the owner supplied.
+        return Object.assign(base, { status: STATUS.UNVERIFIED, cfg: { token, guessed: true },
+          reason: `Found a ${ADAPTERS[kind].label} board at the guessed token "${token}" with ${r.count} postings, but nothing proves it belongs to ${emp.name}. Confirm or reject it. Sample: ${(r.samples || []).join(' / ') || 'n/a'}` });
+      }
       tried.push(r.note);
     }
   }
@@ -222,15 +254,25 @@ async function fetchEmployerJobs(emp) {
   const ad = ADAPTERS[emp.ats];
   if (!ad || emp.status !== STATUS.LIVE) return [];
   const cfg = emp.cfg || {};
-  const j = await httpJson(ad.endpoint(cfg), { method: ad.method || 'GET', body: ad.method === 'POST' ? ad.body : undefined, timeout: 12000 });
-  if (!j || j.__error || j.__status) return [];
   let jobs = [];
-  try { jobs = ad.parse(j, emp.name, cfg) || []; } catch (e) { return []; }
-  // Workday list responses carry no description; pull a bounded number of details so the
-  // fit-scorer has real text to judge. The cap is reported, never silently applied.
+
   if (emp.ats === 'workday') {
-    const slice = jobs.slice(0, WORKDAY_DETAIL_CAP);
-    for (const job of slice) {
+    // A large Workday tenant holds thousands of postings and serves 20 per page, so a single
+    // request is not "the board" — it is page one, frequently sorted by a region that has
+    // nothing to do with the candidate. Paginate to a documented ceiling.
+    for (let page = 0; page < WORKDAY_MAX_PAGES; page++) {
+      const body = { appliedFacets: {}, limit: WORKDAY_PAGE, offset: page * WORKDAY_PAGE, searchText: '' };
+      const j = await httpJson(ad.endpoint(cfg), { method: 'POST', body, timeout: 12000 });
+      if (!j || j.__error || j.__status) break;
+      let batch = [];
+      try { batch = ad.parse(j, emp.name, cfg) || []; } catch (e) { break; }
+      if (!batch.length) break;
+      jobs = jobs.concat(batch);
+      if (batch.length < WORKDAY_PAGE) break;
+    }
+    // Workday list responses carry no description; pull a bounded number of details so the
+    // fit-scorer has real text to judge. The cap is reported, never silently applied.
+    for (const job of jobs.slice(0, WORKDAY_DETAIL_CAP)) {
       if (!job._detail) continue;
       const d = await httpJson(job._detail, { timeout: 8000 });
       const info = d && d.jobPostingInfo;
@@ -240,7 +282,12 @@ async function fetchEmployerJobs(emp) {
       }
     }
     jobs.forEach((x) => { delete x._detail; });
+    return jobs;
   }
+
+  const j = await httpJson(ad.endpoint(cfg), { method: ad.method || 'GET', body: ad.method === 'POST' ? ad.body : undefined, timeout: 12000 });
+  if (!j || j.__error || j.__status) return [];
+  try { jobs = ad.parse(j, emp.name, cfg) || []; } catch (e) { return []; }
   return jobs;
 }
 
@@ -374,7 +421,7 @@ async function list(sequelize, opts = {}) {
     `SELECT id, slug, name, ats, cfg, endpoint, industries, status, status_reason, last_probe_at,
             last_count, last_fetch_at, enabled
        FROM cv_employers ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-      ORDER BY (status='live') DESC, last_count DESC, name ASC LIMIT 500`,
+      ORDER BY (status='unverified') DESC, (status='live') DESC, last_count DESC, name ASC LIMIT 500`,
     { replacements: rep, type: QueryTypes.SELECT });
   return rows;
 }

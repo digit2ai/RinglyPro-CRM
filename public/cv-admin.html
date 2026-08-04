@@ -96,6 +96,19 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     <div class="msg err" id="loginMsg"></div>
   </div>
 
+  <!-- INVITE ACCEPTANCE (new profile sets its own password — no env var, no shared default) -->
+  <div id="invite" class="card" style="display:none;max-width:400px;margin:8vh auto">
+    <div class="brandmark"><i class="fas fa-user-plus"></i></div>
+    <h1>Set your password</h1>
+    <p class="muted" style="margin:6px 0 16px">You have been invited to <b id="invSlug"></b>. Choose a password only you know — it is stored on your profile, not in any configuration file.</p>
+    <label class="lbl">New password (8+ characters)</label>
+    <input id="invPw" type="password" autocomplete="new-password">
+    <label class="lbl">Confirm password</label>
+    <input id="invPw2" type="password" autocomplete="new-password">
+    <div style="margin-top:14px"><button class="btn" id="invBtn">Activate my console</button></div>
+    <div class="msg err" id="invMsg"></div>
+  </div>
+
   <!-- APP -->
   <div id="app">
     <div class="top">
@@ -109,6 +122,9 @@ th{color:var(--dim);font-weight:600;font-size:12px}
       <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
       <button class="tab" data-pane="jobs"><i class="fas fa-briefcase"></i> Job Matches <span id="jobBadge" class="badge b-new" style="display:none"></span></button>
       <button class="tab" data-pane="opps"><i class="fas fa-inbox"></i> Opportunities <span id="oppBadge" class="badge b-new" style="display:none"></span></button>
+      <button class="tab" data-pane="today"><i class="fas fa-sun"></i> Today</button>
+      <button class="tab" data-pane="pipeline"><i class="fas fa-diagram-project"></i> Pipeline</button>
+      <button class="tab" data-pane="targets"><i class="fas fa-bullseye"></i> Targets</button>
       <button class="tab" data-pane="broadcast"><i class="fas fa-satellite-dish"></i> Broadcast</button>
       <button class="tab" data-pane="settings"><i class="fas fa-gear"></i> Settings</button>
     </div>
@@ -210,6 +226,75 @@ th{color:var(--dim);font-weight:600;font-size:12px}
       </div>
     </div>
 
+    <!-- TODAY (daily digest) -->
+    <div class="pane" id="today">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px">
+          <div><b><i class="fas fa-sun"></i> Today</b>
+            <p class="muted" style="margin-top:6px;max-width:640px">New matches, postings from employers you target, inbound messages and follow-ups that are due. Nothing here is sent automatically — you review and send from your own inbox.</p></div>
+          <button class="btn ghost sm" id="digestRefresh"><i class="fas fa-rotate"></i> Refresh</button>
+        </div>
+        <div class="muted mono" id="digestMeta" style="font-size:12px;margin-top:8px"></div>
+      </div>
+      <div id="digestBody"><div class="muted" style="padding:8px 2px">Loading…</div></div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="pane" id="pipeline">
+      <div class="card">
+        <b><i class="fas fa-diagram-project"></i> Application pipeline</b>
+        <p class="muted" style="margin-top:6px">Every role you are actually pursuing, by stage, with the outreach thread and your next action. Move a match into a stage from the Job Matches tab.</p>
+      </div>
+      <div id="pipeBody"><div class="muted" style="padding:8px 2px">Loading…</div></div>
+    </div>
+
+    <!-- TARGETS (employers + industries + saved searches) -->
+    <div class="pane" id="targets">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div><b><i class="fas fa-building-columns"></i> Target employers</b>
+            <p class="muted" style="margin-top:6px;max-width:660px">Companies you want to work for. Postings from them are badged and boosted in your matches. The connector status is measured, not assumed — a company whose board has no public feed is shown as unreachable rather than quietly skipped.</p></div>
+          <div class="row" style="gap:6px">
+            <button class="btn ghost sm" id="probeBtn"><i class="fas fa-satellite"></i> Probe boards</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+          <input id="empSearch" placeholder="Search employers" style="max-width:240px">
+          <select id="empIndustry" style="max-width:240px;width:auto"><option value="">All industries</option></select>
+          <select id="empStatus" style="max-width:200px;width:auto">
+            <option value="">Any connector status</option><option value="live">Live</option>
+            <option value="unprobed">Not probed</option><option value="no_public_endpoint">No public board</option>
+          </select>
+          <button class="btn sm ghost" id="empReload">Apply</button>
+          <span class="msg" id="probeMsg"></span>
+        </div>
+        <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:12px">Add a whole sector:</span><span id="indChips"></span></div>
+      </div>
+      <div class="card">
+        <b>Your watchlist</b>
+        <table id="watchTable"><thead><tr><th>Employer</th><th>Connector</th><th>Priority</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <b>Registry</b>
+        <div class="muted" style="font-size:12px;margin:6px 0 8px" id="empCounts"></div>
+        <table id="empTable"><thead><tr><th>Employer</th><th>Industries</th><th>Connector</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
+          <input id="newEmpName" placeholder="Add a company by name" style="max-width:260px">
+          <button class="btn sm" id="addEmp">Add</button><span class="msg" id="addEmpMsg"></span>
+        </div>
+      </div>
+      <div class="card">
+        <b>Saved searches</b>
+        <p class="muted" style="margin-top:6px">A named, reusable query. Run it to see only its new hits.</p>
+        <table id="ssTable"><thead><tr><th>Name</th><th>Last run</th><th>New</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="grid2" style="margin-top:10px">
+          <input id="ssName" placeholder="Name (e.g. PM roles at target banks)">
+          <div class="row" style="gap:8px"><input id="ssScore" placeholder="Min score" style="max-width:110px"><label class="muted" style="font-size:12px"><input type="checkbox" id="ssTarget" style="width:auto"> target employers only</label></div>
+        </div>
+        <div style="margin-top:10px"><button class="btn sm" id="addSS">Save search</button> <span class="msg" id="ssMsg"></span></div>
+      </div>
+    </div>
+
     <!-- OUTREACH DRAFT EDITOR (shared, review-and-send) -->
     <div class="dmodal" id="oModal"><div class="dbox">
       <div class="dhead"><b id="oTitle">Outreach draft</b><button class="x" id="oClose">&times;</button></div>
@@ -234,9 +319,116 @@ th{color:var(--dim);font-weight:600;font-size:12px}
 
     <!-- SETTINGS -->
     <div class="pane" id="settings">
+      <div class="notice">Everything on this page is <b>your data</b>, not code. It steers what your agent finds, what your drafts may claim, and what the public internet is allowed to see. Facts about work authorization, compensation and availability are quoted verbatim in outreach — or omitted entirely if you leave them blank. Nothing is ever guessed on your behalf.</div>
+
       <div class="card">
-        <b>Profile for the AI agent</b>
-        <p class="muted" style="margin-top:6px">Steers the outreach and match tools. Keep it accurate.</p>
+        <b><i class="fas fa-id-card"></i> Identity and eligibility</b>
+        <div class="grid2" style="margin-top:10px">
+          <div><span class="lbl">Name</span><input data-s="identity.name"></div>
+          <div><span class="lbl">Headline</span><input data-s="identity.headline"></div>
+          <div><span class="lbl">Location</span><input data-s="identity.location"></div>
+          <div><span class="lbl">Timezone</span><input data-s="identity.timezone"></div>
+          <div><span class="lbl">Contact email</span><input data-s="identity.contact_email"></div>
+          <div><span class="lbl">Contact phone</span><input data-s="identity.contact_phone"></div>
+          <div><span class="lbl">Years of experience</span><input data-s="identity.years_experience" type="number"></div>
+          <div><span class="lbl">Experience domain</span><input data-s="identity.experience_domain" placeholder="e.g. IT integration in banking"></div>
+        </div>
+        <span class="lbl">Work authorization <span class="muted">(one per line: COUNTRY | status | note)</span></span>
+        <textarea data-s="identity.work_authorization" data-fmt="workauth" placeholder="US | authorized_no_sponsorship |"></textarea>
+        <div class="muted" style="font-size:11.5px" id="waHelp"></div>
+        <div class="grid2">
+          <div><span class="lbl">Security clearance <span class="muted">(blank = none on file)</span></span><input data-s="identity.security_clearance"></div>
+          <div><span class="lbl">Languages <span class="muted">(one per line: Language | fluency)</span></span><textarea data-s="identity.languages" data-fmt="langs" style="min-height:60px"></textarea></div>
+        </div>
+        <span class="lbl">Links <span class="muted">(one per line: Label | https://…) — these become your sameAs graph</span></span>
+        <textarea data-s="identity.links" data-fmt="links"></textarea>
+      </div>
+
+      <div class="card">
+        <b><i class="fas fa-crosshairs"></i> Targeting</b>
+        <span class="lbl">Target countries <span class="muted">(one per line: CODE | remote_ok | onsite_ok)</span></span>
+        <textarea data-s="targeting.countries" data-fmt="countries" placeholder="US | yes | yes"></textarea>
+        <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap">
+          <input id="locTest" placeholder='Test a location string, e.g. "Remote - North America"' style="max-width:340px">
+          <button class="btn sm ghost" id="locTestBtn">Test against my policy</button><span class="msg" id="locTestMsg"></span>
+        </div>
+        <span class="lbl">Target industries</span>
+        <div id="indPicker" class="row" style="gap:6px;flex-wrap:wrap"></div>
+        <span class="lbl" style="margin-top:12px">Target roles <span class="muted">(each becomes a recall target and can get its own public page)</span></span>
+        <div id="rolesWrap"></div>
+        <button class="btn sm ghost" id="addRole" style="margin-top:8px"><i class="fas fa-plus"></i> Add a role target</button>
+        <div class="grid2" style="margin-top:12px">
+          <div><span class="lbl">Employment types</span><div id="etPicker" class="row" style="gap:6px;flex-wrap:wrap"></div></div>
+          <div><span class="lbl">Match score floor <span class="muted">(0-100)</span></span><input data-s="targeting.score_floor" type="number"></div>
+        </div>
+        <div class="grid2">
+          <div><span class="lbl">Base salary floor</span><input data-s="targeting.compensation.base_floor" type="number"></div>
+          <div><span class="lbl">Hourly rate (contract)</span><input data-s="targeting.compensation.hourly" type="number"></div>
+          <div><span class="lbl">Availability</span><select data-s="targeting.availability.status"><option value="open">Open to opportunities</option><option value="selective">Selective</option><option value="closed">Not currently looking</option></select></div>
+          <div><span class="lbl">Notice period</span><input data-s="targeting.availability.notice_period"></div>
+        </div>
+        <div class="grid2">
+          <div><span class="lbl">Dealbreakers <span class="muted">(one per line — excludes a posting outright)</span></span><textarea data-s="targeting.dealbreakers" data-fmt="lines" style="min-height:70px"></textarea></div>
+          <div><span class="lbl">Excluded employers <span class="muted">(never matched, never contacted)</span></span><textarea data-s="targeting.excluded_employers" data-fmt="lines" style="min-height:70px"></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <b><i class="fas fa-envelope"></i> Outreach</b>
+        <div class="grid2" style="margin-top:10px">
+          <div><span class="lbl">From name</span><input data-s="outreach.from_name"></div>
+          <div><span class="lbl">Your own inbox address</span><input data-s="outreach.from_email"></div>
+          <div><span class="lbl">Booking / calendar link</span><input data-s="outreach.booking_url"></div>
+          <div><span class="lbl">Tone</span><select data-s="outreach.tone"><option>professional</option><option>warm</option><option>direct</option><option>formal</option></select></div>
+        </div>
+        <span class="lbl">Signature</span><textarea data-s="outreach.signature" style="min-height:70px"></textarea>
+        <div class="notice" style="margin:12px 0">These three lines are the only things a draft may state about your eligibility, pay and timing — quoted <b>verbatim</b>. Leave one blank and drafts stay silent on it rather than guessing.</div>
+        <span class="lbl">Work authorization statement</span><input data-s="outreach.boilerplate.work_authorization" placeholder="Authorized to work in the US without sponsorship.">
+        <span class="lbl">Compensation statement</span><input data-s="outreach.boilerplate.compensation">
+        <span class="lbl">Availability statement</span><input data-s="outreach.boilerplate.availability">
+        <span class="lbl">Resume variants <span class="muted">(one per line: Label | https://… | role title, role title)</span></span>
+        <textarea data-s="outreach.resume_variants" data-fmt="variants"></textarea>
+        <div class="grid2" style="margin-top:6px">
+          <div><span class="lbl">Days before first follow-up</span><input data-s="outreach.cadence.first_followup_days" type="number"></div>
+          <div><span class="lbl">Maximum follow-ups</span><input data-s="outreach.cadence.max_followups" type="number"></div>
+          <div><span class="lbl">Daily draft cap</span><input data-s="outreach.caps.daily_drafts" type="number"></div>
+          <div><span class="lbl">Daily send cap</span><input data-s="outreach.caps.daily_sends" type="number"></div>
+        </div>
+        <div class="grid2">
+          <div><span class="lbl">Do not contact — emails</span><textarea data-s="outreach.do_not_contact.emails" data-fmt="lines" style="min-height:60px"></textarea></div>
+          <div><span class="lbl">Do not contact — domains</span><textarea data-s="outreach.do_not_contact.domains" data-fmt="lines" style="min-height:60px"></textarea></div>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:8px">Approval before sending is always on and cannot be disabled. Every draft is reviewed by you and sent from your own inbox.</div>
+      </div>
+
+      <div class="card">
+        <b><i class="fas fa-eye-slash"></i> Privacy and public visibility</b>
+        <p class="muted" style="margin-top:6px">A field left off here is <b>absent</b> from your public page, resume.json, agent card and every AI tool response — not merely hidden.</p>
+        <div id="privPicker" class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px"></div>
+        <span class="lbl" style="margin-top:12px"><label><input type="checkbox" data-s="privacy.confidential_mode.enabled" style="width:auto"> Confidential mode</label></span>
+        <span class="lbl">Hide me from these employers <span class="muted">(one per line — no public surface, no outreach)</span></span>
+        <textarea data-s="privacy.confidential_mode.employers" data-fmt="lines" style="min-height:60px"></textarea>
+      </div>
+
+      <div class="card">
+        <b><i class="fas fa-gauge"></i> Notifications and engine</b>
+        <div class="grid2" style="margin-top:10px">
+          <div><span class="lbl">Digest</span><select data-s="notifications.digest"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="off">Off</option></select></div>
+          <div><span class="lbl">Digest time</span><input data-s="notifications.digest_time" placeholder="07:30"></div>
+          <div><span class="lbl">Cost cap per run (USD)</span><input data-s="engine.cost_cap_usd" type="number" step="0.05"></div>
+          <div><span class="lbl">Roles scored per run</span><input data-s="engine.match_limit" type="number"></div>
+        </div>
+        <span class="lbl"><label><input type="checkbox" data-s="engine.auto_run" style="width:auto"> Run my agent automatically each day</label></span>
+        <div class="muted mono" style="font-size:11.5px;margin-top:6px" id="autoState"></div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="gap:10px"><button class="btn" id="saveSettings"><i class="fas fa-floppy-disk"></i> Save all settings</button> <span class="msg" id="setMsg"></span></div>
+      </div>
+
+      <div class="card">
+        <b>Legacy profile fields</b>
+        <p class="muted" style="margin-top:6px">Still used by the public CV page. Target roles above are what the agent actually matches on.</p>
         <span class="lbl">Availability</span>
         <select id="sAvail"><option value="open">Open to opportunities</option><option value="closed">Not currently looking</option></select>
         <span class="lbl">Target roles</span><textarea id="sRoles"></textarea>
@@ -277,7 +469,21 @@ async function boot(){
 
 // ---- tabs ----
 var jobsLoaded=false;
-document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});t.classList.add('on');$(t.dataset.pane).classList.add('on');if(t.dataset.pane==='jobs'&&!jobsLoaded){jobsLoaded=true;loadJobs();}};});
+var PANE_LOADED={};
+var PANE_LOADERS={
+  jobs:function(){jobsLoaded=true;loadJobs();},
+  today:function(){loadDigest();},
+  pipeline:function(){loadPipeline();},
+  targets:function(){loadIndustryChips().then(function(){loadEmployers();loadWatchlist();loadSS();});},
+  settings:function(){loadSettings();}
+};
+document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
+  document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('on');});
+  t.classList.add('on');$(t.dataset.pane).classList.add('on');
+  var p=t.dataset.pane;
+  if(PANE_LOADERS[p]&&!PANE_LOADED[p]){PANE_LOADED[p]=true;try{PANE_LOADERS[p]();}catch(e){}}
+};});
 
 // ---- job matches (AI job agent) ----
 var jobFilter='';
@@ -296,6 +502,14 @@ function renderJobs(rows){
     var sim=m.is_simulated?'<span class="badge" style="background:#3a3320;color:#e6c86a;border-color:#6b5a1f" title="AI fit-scoring offline — heuristic estimate">heuristic</span>':'';
     var gaps=m.gaps?('<div class="muted" style="font-size:12px;margin-top:4px"><b>Gap:</b> '+esc(m.gaps)+'</div>'):'';
     var stbadge=m.status&&m.status!=='new'?'<span class="badge '+(m.status==='applied'?'b-offer':'b-new')+'">'+esc(m.status)+'</span>':'';
+    var tgt=m.target_employer?'<span class="badge b-offer" title="On your target-employer watchlist"><i class="fas fa-bullseye"></i> target</span> ':'';
+    var comp='';
+    if(m.compensation){
+      var c=m.compensation;var v=c.verdict||{};
+      var col=v.meets===false?'var(--amber)':'var(--green)';
+      comp='<div class="muted" style="font-size:12px;margin-top:4px"><b style="color:'+col+'">$'+c.min.toLocaleString()+'–$'+c.max.toLocaleString()+(c.period==='hour'?'/hr':'')+'</b> stated in the posting'+(v.note&&v.meets!=null?(' · '+esc(v.note)):'')+'</div>';
+    }
+    var lflag=(m.flags&&m.flags.flagged&&m.flags.location)?'<div class="muted" style="font-size:12px;margin-top:4px"><i class="fas fa-triangle-exclamation" style="color:var(--amber)"></i> '+esc(m.flags.location)+'</div>':'';
     return '<div class="card" style="margin-bottom:10px;padding:14px 16px">'+
       '<div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px">'+
         '<div style="display:flex;gap:12px;align-items:flex-start;min-width:0">'+
@@ -303,18 +517,22 @@ function renderJobs(rows){
           '<div style="min-width:0"><div style="font-weight:700;font-size:15px">'+esc(m.title)+'</div>'+
           '<div class="muted" style="font-size:13px;margin-top:2px">'+esc(m.company)+(loc?' · '+esc(loc):'')+'</div></div>'+
         '</div>'+
-        '<div style="text-align:right;white-space:nowrap">'+stbadge+' '+sim+'</div>'+
+        '<div style="text-align:right;white-space:nowrap">'+tgt+stbadge+' '+sim+'</div>'+
       '</div>'+
-      (m.why?'<div style="font-size:13.5px;margin-top:10px;color:var(--txt2,#cbd3e2)">'+esc(m.why)+'</div>':'')+gaps+
+      (m.why?'<div style="font-size:13.5px;margin-top:10px;color:var(--txt2,#cbd3e2)">'+esc(m.why)+'</div>':'')+gaps+comp+lflag+
       '<div class="row" style="margin-top:12px;gap:6px;flex-wrap:wrap">'+
         '<a class="btn sm" href="'+esc(m.url)+'" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open & apply</a>'+
         '<button class="btn sm" onclick="draftForJob('+m.id+',this)"><i class="fas fa-pen-nib"></i> Draft outreach</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'saved\')"><i class="fas fa-star"></i> Save</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'applied\')"><i class="fas fa-check"></i> Applied</button>'+
         '<button class="btn sm ghost" onclick="setJob('+m.id+',\'dismissed\')"><i class="fas fa-xmark"></i> Dismiss</button>'+
+        '<select class="stageSel" data-id="'+m.id+'" style="padding:6px 10px;font-size:12px;width:auto" title="Pipeline stage">'+
+          ['new','saved','applied','screening','interviewing','offer','closed'].map(function(s){return '<option'+(s===(m.stage||'new')?' selected':'')+'>'+s+'</option>';}).join('')+
+        '</select>'+
       '</div>'+
     '</div>';
   }).join('');
+  bindStageSelects();
 }
 async function setJob(id,status){try{await api('/jobs/matches/'+id,{method:'PATCH',body:{status:status}});loadJobs();refreshJobBadge();}catch(e){}}
 document.querySelectorAll('.jfilter').forEach(function(b){b.onclick=function(){document.querySelectorAll('.jfilter').forEach(function(x){x.classList.remove('on');});b.classList.add('on');jobFilter=b.dataset.f;loadJobs();};});
@@ -461,12 +679,297 @@ async function replyOpp(id,btn){var old;if(btn){old=btn.innerHTML;btn.disabled=t
   finally{if(btn){setTimeout(function(){btn.disabled=false;btn.innerHTML=old;},500);}}
 }
 
-// ---- settings ----
+// ================= TODAY (digest) =================
+function digestSection(title,rows,render){
+  if(!rows||!rows.length)return '';
+  return '<div class="card"><b>'+esc(title)+'</b> <span class="badge b-new">'+rows.length+'</span>'+
+    '<table style="margin-top:8px"><tbody>'+rows.map(render).join('')+'</tbody></table></div>';
+}
+async function loadDigest(){
+  $('digestBody').innerHTML='<div class="muted" style="padding:8px 2px">Loading…</div>';
+  try{
+    var d=await api('/digest');
+    $('digestMeta').textContent='Generated '+(d.generated_at||'').slice(0,16).replace('T',' ')+' · digest: '+d.digest+' at '+d.digest_time+' · score floor '+d.score_floor;
+    var html='';
+    html+=digestSection('Postings from employers you target',d.target_employer_posts,function(r){
+      return '<tr><td><b>'+esc(r.title)+'</b><div class="muted">'+esc(r.company)+'</div></td><td class="mono">'+(r.score==null?'–':r.score)+'</td><td><a class="btn sm ghost" href="'+esc(r.url)+'" target="_blank" rel="noopener">Open</a></td></tr>';});
+    html+=digestSection('New matches',d.new_matches,function(r){
+      return '<tr><td><b>'+esc(r.title)+'</b><div class="muted">'+esc(r.company)+(r.location?' · '+esc(r.location):'')+'</div>'+(r.why?'<div class="muted" style="margin-top:3px">'+esc(r.why)+'</div>':'')+'</td><td class="mono">'+(r.score==null?'–':r.score)+'</td><td><button class="btn sm" onclick="draftForJob('+r.id+',this)">Draft</button></td></tr>';});
+    html+=digestSection('Inbound messages',d.inbound_opportunities,function(r){
+      return '<tr><td><b>'+esc(r.company||r.contact_name||'—')+'</b><div class="muted">'+esc(r.role_title||'')+'</div><div class="muted">'+esc((r.message||'').slice(0,160))+'</div></td><td></td><td><button class="btn sm ghost" onclick="replyOpp('+r.id+',this)">Reply</button></td></tr>';});
+    html+=digestSection('Follow-ups due',d.followups_due,function(r){
+      return '<tr><td><b>'+esc(r.subject||'')+'</b><div class="muted">'+esc(r.target_name||'')+'</div></td><td class="mono">'+(r.created_at||'').slice(0,10)+'</td><td><button class="btn sm ghost olink2" data-id="'+r.id+'">Open</button></td></tr>';});
+    html+=digestSection('Next actions',d.next_actions,function(r){
+      return '<tr><td><b>'+esc(r.next_action||'')+'</b><div class="muted">'+esc(r.company)+' · '+esc(r.title)+'</div></td><td class="mono">'+(r.next_action_at||'').slice(0,10)+'</td><td></td></tr>';});
+    if(!html)html='<div class="card"><div class="muted">Nothing new today. Run your agent from Job Matches, or add target employers.</div></div>';
+    html+='<div class="muted" style="font-size:12px;padding:4px 2px">'+esc(d.note||'')+'</div>';
+    $('digestBody').innerHTML=html;
+    document.querySelectorAll('.olink2').forEach(function(b){b.onclick=function(){openOutreachById(b.dataset.id);};});
+  }catch(e){$('digestBody').innerHTML='<div class="msg err">'+esc(e.message)+'</div>';}
+}
+async function openOutreachById(id){
+  try{var d=await api('/outreach');var r=(d.outreach||[]).find(function(x){return String(x.id)===String(id);});
+    if(r)openDraft({id:r.id,title:r.target_name||r.target_type,subject:r.subject,body:r.body,to_email:r.to_email||'',to_name:r.to_name||'',is_simulated:r.is_simulated,canFollow:true});}catch(e){}
+}
+$('digestRefresh').onclick=loadDigest;
+
+// ================= PIPELINE =================
+async function loadPipeline(){
+  try{
+    var d=await api('/pipeline');
+    var html='';
+    d.stages.forEach(function(s){
+      var rows=(d.by_stage[s]||[]);
+      if(s==='new'||!rows.length)return;
+      html+='<div class="card"><b>'+esc(s)+'</b> <span class="badge b-new">'+rows.length+'</span><table style="margin-top:8px"><tbody>'+
+        rows.map(function(r){
+          return '<tr><td><b>'+esc(r.title)+'</b><div class="muted">'+esc(r.company)+'</div>'+
+            (r.next_action?'<div class="muted" style="margin-top:3px">Next: '+esc(r.next_action)+(r.next_action_at?' ('+String(r.next_action_at).slice(0,10)+')':'')+'</div>':'')+'</td>'+
+            '<td class="mono">'+(r.score==null?'–':r.score)+'</td>'+
+            '<td>'+(r.outreach_count?('<span class="badge">'+r.outreach_count+' note'+(r.outreach_count>1?'s':'')+'</span>'):'')+'</td>'+
+            '<td>'+stageSelect(r.id,r.stage,d.stages)+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    });
+    $('pipeBody').innerHTML=html||'<div class="card"><div class="muted">Nothing in the pipeline yet. Move a match into a stage from Job Matches.</div></div>';
+    bindStageSelects();
+  }catch(e){$('pipeBody').innerHTML='<div class="msg err">'+esc(e.message)+'</div>';}
+}
+function stageSelect(id,cur,stages){
+  return '<select class="stageSel" data-id="'+id+'" style="padding:5px 8px;font-size:12px;width:auto">'+
+    stages.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
+}
+function bindStageSelects(){
+  document.querySelectorAll('.stageSel').forEach(function(s){s.onchange=function(){
+    api('/jobs/matches/'+s.dataset.id,{method:'PATCH',body:{stage:s.value}}).then(function(){loadPipeline();loadJobs();});};});
+}
+
+// ================= TARGETS (employers, watchlist, saved searches) =================
+var META=null;
+async function loadMeta(){ if(META)return META; META=await api('/settings/meta'); return META; }
+function connBadge(e){
+  var m={live:['b-offer','live'],unverified:['b-contacted','needs your confirmation'],unprobed:['','not probed'],
+         no_public_endpoint:['','no public board'],blocked_tos:['','blocked by terms'],dormant_key:['b-contacted','needs a key'],error:['','error']};
+  var v=m[e.status]||['','?'];
+  return '<span class="badge '+v[0]+'">'+v[1]+'</span>'+(e.ats?' <span class="muted" style="font-size:11px">'+esc(e.ats)+'</span>':'');
+}
+async function loadEmployers(){
+  var qs=[];
+  if($('empSearch').value)qs.push('q='+encodeURIComponent($('empSearch').value));
+  if($('empIndustry').value)qs.push('industry='+encodeURIComponent($('empIndustry').value));
+  if($('empStatus').value)qs.push('status='+encodeURIComponent($('empStatus').value));
+  var d=await api('/employers'+(qs.length?('?'+qs.join('&')):''));
+  var counts=(d.counts||[]).map(function(c){return c.n+' '+c.status.replace(/_/g,' ');}).join(' · ');
+  $('empCounts').textContent=counts;
+  var tb=$('empTable').querySelector('tbody');
+  tb.innerHTML=(d.employers||[]).map(function(e){
+    var actions='<button class="btn sm ghost watchAdd" data-id="'+e.id+'">Watch</button>';
+    if(e.status==='unverified')actions='<button class="btn sm verifyY" data-id="'+e.id+'">Confirm</button> <button class="btn sm ghost verifyN" data-id="'+e.id+'">Not them</button>';
+    return '<tr><td><b>'+esc(e.name)+'</b>'+(e.status_reason?'<div class="muted" style="font-size:11.5px;margin-top:3px">'+esc(String(e.status_reason).slice(0,200))+'</div>':'')+'</td>'+
+      '<td class="muted" style="font-size:12px">'+esc((e.industries||[]).join(', '))+'</td>'+
+      '<td>'+connBadge(e)+(e.last_count?'<div class="muted mono" style="font-size:11px">'+e.last_count+' postings</div>':'')+'</td>'+
+      '<td style="white-space:nowrap">'+actions+'</td></tr>';
+  }).join('')||'<tr><td colspan="4" class="muted">No employers match.</td></tr>';
+  tb.querySelectorAll('.watchAdd').forEach(function(b){b.onclick=async function(){await api('/watchlist',{method:'POST',body:{employer_id:parseInt(b.dataset.id,10),priority:2}});loadWatchlist();b.textContent='Watching';};});
+  tb.querySelectorAll('.verifyY').forEach(function(b){b.onclick=async function(){await api('/employers/'+b.dataset.id+'/verify',{method:'PATCH',body:{verified:true}});loadEmployers();};});
+  tb.querySelectorAll('.verifyN').forEach(function(b){b.onclick=async function(){await api('/employers/'+b.dataset.id+'/verify',{method:'PATCH',body:{verified:false}});loadEmployers();};});
+}
+async function loadWatchlist(){
+  var d=await api('/watchlist');
+  var tb=$('watchTable').querySelector('tbody');
+  tb.innerHTML=(d.watchlist||[]).map(function(w){
+    return '<tr><td><b>'+esc(w.name)+'</b></td><td>'+connBadge(w)+'</td>'+
+      '<td><select class="wPri" data-id="'+w.employer_id+'" style="padding:4px 8px;font-size:12px;width:auto">'+
+      [1,2,3,4,5].map(function(n){return '<option'+(n===w.priority?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>'+
+      '<td><button class="btn sm ghost wDel" data-id="'+w.employer_id+'">Remove</button></td></tr>';
+  }).join('')||'<tr><td colspan="4" class="muted">No target employers yet. Add them from the registry below, or add a whole sector.</td></tr>';
+  tb.querySelectorAll('.wDel').forEach(function(b){b.onclick=async function(){await api('/watchlist/'+b.dataset.id,{method:'DELETE'});loadWatchlist();};});
+  tb.querySelectorAll('.wPri').forEach(function(s){s.onchange=async function(){await api('/watchlist',{method:'POST',body:{employer_id:parseInt(s.dataset.id,10),priority:parseInt(s.value,10)}});};});
+}
+async function loadIndustryChips(){
+  var m=await loadMeta();
+  $('empIndustry').innerHTML='<option value="">All industries</option>'+m.industries.map(function(i){return '<option value="'+esc(i.key)+'">'+esc(i.label)+'</option>';}).join('');
+  $('indChips').innerHTML=m.industries.slice(0,8).map(function(i){return '<button class="btn sm ghost indAdd" data-k="'+esc(i.key)+'" style="margin:2px">'+esc(i.label)+'</button>';}).join('');
+  document.querySelectorAll('.indAdd').forEach(function(b){b.onclick=async function(){
+    b.disabled=true;var r=await api('/watchlist',{method:'POST',body:{industry:b.dataset.k,priority:2}});
+    $('probeMsg').textContent='Added '+r.added+' employers from that sector.';$('probeMsg').className='msg ok';loadWatchlist();b.disabled=false;};});
+}
+var probePoll=null;
+$('probeBtn').onclick=async function(){
+  $('probeMsg').textContent='Probing employer boards in the background…';$('probeMsg').className='msg';
+  try{
+    await api('/employers/probe',{method:'POST',body:{only_unprobed:true}});
+    if(probePoll)clearInterval(probePoll);
+    probePoll=setInterval(async function(){
+      var s=await api('/employers/probe/status');
+      if(s.running){$('probeMsg').textContent='Probing…';return;}
+      clearInterval(probePoll);probePoll=null;
+      var r=s.result||{};
+      $('probeMsg').textContent=s.error?('Error: '+s.error):('Done — '+(r.live||0)+' live, '+(r.probed||0)+' probed. Anything unreachable is labeled, not hidden.');
+      $('probeMsg').className='msg ok';loadEmployers();
+    },4000);
+  }catch(e){$('probeMsg').textContent=e.message;$('probeMsg').className='msg err';}
+};
+$('empReload').onclick=loadEmployers;
+$('addEmp').onclick=async function(){
+  try{await api('/employers',{method:'POST',body:{name:$('newEmpName').value}});$('newEmpName').value='';$('addEmpMsg').textContent='Added — probe to find its board.';$('addEmpMsg').className='msg ok';loadEmployers();}
+  catch(e){$('addEmpMsg').textContent=e.message;$('addEmpMsg').className='msg err';}
+};
+async function loadSS(){
+  var d=await api('/saved-searches');
+  var tb=$('ssTable').querySelector('tbody');
+  tb.innerHTML=(d.saved_searches||[]).map(function(s){
+    return '<tr><td><b>'+esc(s.name)+'</b></td><td class="mono">'+(s.last_run_at?String(s.last_run_at).slice(0,10):'—')+'</td><td class="mono">'+(s.last_new_count||0)+'</td>'+
+      '<td><button class="btn sm ssRun" data-id="'+s.id+'">Run</button> <button class="btn sm ghost ssDel" data-id="'+s.id+'">Delete</button></td></tr>';
+  }).join('')||'<tr><td colspan="4" class="muted">No saved searches yet.</td></tr>';
+  tb.querySelectorAll('.ssRun').forEach(function(b){b.onclick=async function(){
+    b.disabled=true;var r=await api('/saved-searches/'+b.dataset.id+'/run',{method:'POST',body:{}});
+    $('ssMsg').textContent=r.name+': '+r.count+' matches, '+r.new_count+' new.';$('ssMsg').className='msg ok';b.disabled=false;loadSS();};});
+  tb.querySelectorAll('.ssDel').forEach(function(b){b.onclick=async function(){await api('/saved-searches/'+b.dataset.id,{method:'DELETE'});loadSS();};});
+}
+$('addSS').onclick=async function(){
+  try{await api('/saved-searches',{method:'POST',body:{name:$('ssName').value,query:{score_floor:parseInt($('ssScore').value,10)||0,target_only:$('ssTarget').checked}}});
+    $('ssName').value='';$('ssScore').value='';$('ssMsg').textContent='Saved.';$('ssMsg').className='msg ok';loadSS();}
+  catch(e){$('ssMsg').textContent=e.message;$('ssMsg').className='msg err';}
+};
+
+// ================= SETTINGS (the per-profile source of truth) =================
+var SETTINGS=null;
+function getPath(o,p){return p.split('.').reduce(function(a,k){return (a&&a[k]!==undefined)?a[k]:undefined;},o);}
+function setPath(o,p,v){var ks=p.split('.');var last=ks.pop();var t=ks.reduce(function(a,k){if(!a[k]||typeof a[k]!=='object')a[k]={};return a[k];},o);t[last]=v;}
+var FMT={
+  lines:{ to:function(v){return (v||[]).join('\n');}, from:function(s){return s.split('\n').map(function(x){return x.trim();}).filter(Boolean);} },
+  workauth:{ to:function(v){return (v||[]).map(function(w){return [w.country,w.status,w.note||''].join(' | ');}).join('\n');},
+             from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{country:p[0],status:p[1]||'',note:p[2]||''}:null;}).filter(Boolean);} },
+  langs:{ to:function(v){return (v||[]).map(function(l){return l.language+' | '+(l.fluency||'');}).join('\n');},
+          from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{language:p[0],fluency:p[1]||''}:null;}).filter(Boolean);} },
+  links:{ to:function(v){return (v||[]).map(function(l){return (l.label||'')+' | '+(l.url||'');}).join('\n');},
+          from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[1]?{label:p[0],url:p[1]}:null;}).filter(Boolean);} },
+  countries:{ to:function(v){return (v||[]).map(function(c){return c.code+' | '+(c.remote_ok===false?'no':'yes')+' | '+(c.onsite_ok===false?'no':'yes');}).join('\n');},
+              from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{code:p[0].toUpperCase(),remote_ok:(p[1]||'yes').toLowerCase()!=='no',onsite_ok:(p[2]||'yes').toLowerCase()!=='no'}:null;}).filter(Boolean);} },
+  variants:{ to:function(v){return (v||[]).map(function(x){return (x.label||'')+' | '+(x.url||'')+' | '+((x.role_titles||[]).join(', '));}).join('\n');},
+             from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{label:p[0],url:p[1]||'',role_titles:(p[2]||'').split(',').map(function(x){return x.trim();}).filter(Boolean)}:null;}).filter(Boolean);} }
+};
+function renderSettings(){
+  document.querySelectorAll('[data-s]').forEach(function(el){
+    var v=getPath(SETTINGS,el.dataset.s);
+    var f=el.dataset.fmt;
+    if(el.type==='checkbox')el.checked=!!v;
+    else if(f&&FMT[f])el.value=FMT[f].to(v);
+    else el.value=(v==null?'':v);
+  });
+  renderRoles(); renderIndustries(); renderEmploymentTypes(); renderPrivacy();
+  api('/jobs/auto').then(function(a){
+    $('autoState').textContent='Scheduler '+(a.scheduler_enabled?'ON':'OFF (set CV_JOBS_GO=1 to enable)')+
+      ' · this profile: '+(a.profile_auto_run?'auto-run on':'auto-run off')+(a.last_run?(' · last run '+String(a.last_run).slice(0,16).replace('T',' ')):' · never run');
+  }).catch(function(){});
+}
+function collectSettings(){
+  document.querySelectorAll('[data-s]').forEach(function(el){
+    var f=el.dataset.fmt;
+    if(el.type==='checkbox')setPath(SETTINGS,el.dataset.s,el.checked);
+    else if(f&&FMT[f])setPath(SETTINGS,el.dataset.s,FMT[f].from(el.value));
+    else if(el.type==='number')setPath(SETTINGS,el.dataset.s,el.value===''?null:Number(el.value));
+    else setPath(SETTINGS,el.dataset.s,el.value);
+  });
+  SETTINGS.targeting.roles=collectRoles();
+  SETTINGS.targeting.industries=Array.prototype.slice.call(document.querySelectorAll('.indChk:checked')).map(function(c){return c.value;});
+  SETTINGS.targeting.employment_types=Array.prototype.slice.call(document.querySelectorAll('.etChk:checked')).map(function(c){return c.value;});
+  var pub={};document.querySelectorAll('.privChk').forEach(function(c){pub[c.value]=c.checked;});
+  SETTINGS.privacy.public=pub;
+  return SETTINGS;
+}
+function roleRow(r){
+  r=r||{title:'',variants:[],weight:1,evidence:'',page:true};
+  return '<div class="card roleRow" style="padding:12px;margin:8px 0;background:var(--card2)">'+
+    '<div class="grid2"><div><span class="lbl">Title</span><input class="rTitle" value="'+esc(r.title)+'"></div>'+
+    '<div><span class="lbl">Weight <span class="muted">(higher = stronger recall)</span></span><input class="rWeight" type="number" step="0.5" value="'+(r.weight||1)+'"></div></div>'+
+    '<span class="lbl">Title variants <span class="muted">(comma separated)</span></span><input class="rVars" value="'+esc((r.variants||[]).join(', '))+'">'+
+    '<span class="lbl">Evidence <span class="muted">(the real experience backing this target — used by the scorer, never invented)</span></span>'+
+    '<textarea class="rEvid" style="min-height:56px">'+esc(r.evidence||'')+'</textarea>'+
+    '<div class="row" style="margin-top:8px;justify-content:space-between">'+
+    '<label class="muted" style="font-size:12px"><input type="checkbox" class="rPage" style="width:auto"'+(r.page!==false?' checked':'')+'> publish a public page for this role</label>'+
+    '<button class="btn sm ghost rDel">Remove</button></div></div>';
+}
+function renderRoles(){
+  $('rolesWrap').innerHTML=((SETTINGS.targeting||{}).roles||[]).map(roleRow).join('')||roleRow(null);
+  bindRoleRows();
+}
+function bindRoleRows(){document.querySelectorAll('.rDel').forEach(function(b){b.onclick=function(){b.closest('.roleRow').remove();};});}
+function collectRoles(){
+  return Array.prototype.slice.call(document.querySelectorAll('.roleRow')).map(function(el){
+    return { title:el.querySelector('.rTitle').value.trim(),
+      variants:el.querySelector('.rVars').value.split(',').map(function(x){return x.trim();}).filter(Boolean),
+      weight:Number(el.querySelector('.rWeight').value)||1,
+      evidence:el.querySelector('.rEvid').value.trim(),
+      page:el.querySelector('.rPage').checked };
+  }).filter(function(r){return r.title;});
+}
+$('addRole').onclick=function(){$('rolesWrap').insertAdjacentHTML('beforeend',roleRow(null));bindRoleRows();};
+function renderIndustries(){
+  var sel=((SETTINGS.targeting||{}).industries)||[];
+  $('indPicker').innerHTML=(META.industries||[]).map(function(i){
+    return '<label class="badge" style="cursor:pointer"><input type="checkbox" class="indChk" value="'+esc(i.key)+'" style="width:auto"'+(sel.indexOf(i.key)>=0?' checked':'')+'> '+esc(i.label)+'</label>';
+  }).join('');
+}
+function renderEmploymentTypes(){
+  var sel=((SETTINGS.targeting||{}).employment_types)||[];
+  $('etPicker').innerHTML=(META.employment_types||[]).map(function(k){
+    return '<label class="badge" style="cursor:pointer"><input type="checkbox" class="etChk" value="'+esc(k)+'" style="width:auto"'+(sel.indexOf(k)>=0?' checked':'')+'> '+esc(k.replace(/_/g,' '))+'</label>';
+  }).join('');
+}
+var PRIV_LABELS={email:'Email',phone:'Phone',compensation:'Compensation expectations',work_authorization:'Work authorization',
+  security_clearance:'Security clearance',availability:'Availability',location:'Location',languages:'Languages',links:'Links'};
+function renderPrivacy(){
+  var p=((SETTINGS.privacy||{}).public)||{};
+  $('privPicker').innerHTML=Object.keys(PRIV_LABELS).map(function(k){
+    return '<label class="badge" style="cursor:pointer"><input type="checkbox" class="privChk" value="'+k+'" style="width:auto"'+(p[k]?' checked':'')+'> '+esc(PRIV_LABELS[k])+'</label>';
+  }).join('');
+}
+async function loadSettings(){
+  await loadMeta();
+  var d=await api('/settings'); SETTINGS=d.settings;
+  $('waHelp').textContent='Valid statuses: '+(META.work_auth_statuses||[]).map(function(w){return w.key;}).join(', ');
+  renderSettings();
+}
+$('saveSettings').onclick=async function(){
+  $('setMsg').textContent='Saving…';$('setMsg').className='msg';
+  try{ var d=await api('/settings',{method:'PUT',body:{settings:collectSettings(),replace:true}});
+    SETTINGS=d.settings; renderSettings();
+    $('setMsg').textContent='Saved. Your agent, drafts and public pages now read these values.';$('setMsg').className='msg ok';
+  }catch(e){$('setMsg').textContent=e.message;$('setMsg').className='msg err';}
+};
+$('locTestBtn').onclick=async function(){
+  try{ var v=$('locTest').value; var d=await api('/settings/test-location',{method:'POST',body:{location:v,remote:/remote/i.test(v)}});
+    $('locTestMsg').textContent=(d.allowed?(d.flagged?'Allowed (flagged): ':'Allowed: '):'Excluded: ')+d.reason;
+    $('locTestMsg').className='msg '+(d.allowed?'ok':'err');
+  }catch(e){$('locTestMsg').textContent=e.message;$('locTestMsg').className='msg err';}
+};
+
+// ---- settings (legacy profile fields) ----
 $('saveProfile').onclick=async function(){try{await api('/profile',{method:'POST',body:{availability:$('sAvail').value,target_roles:$('sRoles').value,summary:$('sSummary').value}});$('profMsg').textContent='Saved';$('profMsg').className='msg ok';me.target_roles=$('sRoles').value;me.summary=$('sSummary').value;me.availability=$('sAvail').value;}catch(e){$('profMsg').textContent=e.message;$('profMsg').className='msg err';}};
 $('cpBtn').onclick=async function(){try{await api('/change-password',{method:'POST',body:{current:$('cpCur').value,next:$('cpNew').value}});$('cpMsg').textContent='Password updated';$('cpMsg').className='msg ok';$('cpCur').value=$('cpNew').value='';}catch(e){$('cpMsg').textContent=e.message;$('cpMsg').className='msg err';}};
 
 // prefill login id from ?p=
 (function(){var m=location.search.match(/[?&]p=([a-z0-9_]+)/i);if(m)$('lid').value=m[1];})();
+
+// ---- invite acceptance ----
+(function(){
+  var inv=location.search.match(/[?&]invite=([^&]+)/);
+  var slugM=location.search.match(/[?&]p=([a-z0-9_]+)/i);
+  if(!inv||!slugM)return;
+  var slug=slugM[1],token=decodeURIComponent(inv[1]);
+  $('login').style.display='none';$('invite').style.display='block';$('invSlug').textContent=slug;
+  $('invBtn').onclick=async function(){
+    $('invMsg').textContent='';
+    if($('invPw').value!==$('invPw2').value){$('invMsg').textContent='The two passwords do not match.';return;}
+    if(($('invPw').value||'').length<8){$('invMsg').textContent='Use at least 8 characters.';return;}
+    try{ await api('/accept-invite',{method:'POST',body:{slug:slug,invite:token,password:$('invPw').value}});
+      history.replaceState({},'',location.pathname+'?p='+slug);
+      $('invite').style.display='none'; await boot();
+    }catch(e){$('invMsg').textContent=e.message;}
+  };
+  $('invPw2').addEventListener('keydown',function(e){if(e.key==='Enter')$('invBtn').click();});
+})();
 boot();
 </script>
 </body>

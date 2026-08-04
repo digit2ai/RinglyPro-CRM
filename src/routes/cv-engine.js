@@ -717,6 +717,22 @@ router.post('/employers', async (req, res) => {
         inds: (Array.isArray(f.industries) ? f.industries.slice(0, 20) : []).join(',') }, type: QueryTypes.INSERT });
   res.json({ ok: true, id: r[0][0] && r[0][0].id, slug });
 });
+// Confirm or reject a board found by token GUESSING. Until an owner confirms it, an
+// 'unverified' employer contributes nothing to the pool — a guessed token can land on an
+// abandoned trial board that squats a real company's name.
+router.patch('/employers/:id/verify', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const yes = (req.body || {}).verified !== false;
+  const id = parseInt(req.params.id, 10) || 0;
+  const rows = await sequelize.query('SELECT name,status FROM cv_employers WHERE id=:id', { replacements: { id }, type: QueryTypes.SELECT });
+  if (!rows[0]) return res.status(404).json({ error: 'employer not found' });
+  await sequelize.query(
+    `UPDATE cv_employers SET status=:st, status_reason=:rs, updated_at=now() WHERE id=:id`,
+    { replacements: { id, st: yes ? 'live' : 'no_public_endpoint',
+        rs: yes ? `Board confirmed by ${p.slug} on ${new Date().toISOString().slice(0, 10)}.`
+                : `Board rejected by ${p.slug} as not belonging to this employer.` }, type: QueryTypes.UPDATE });
+  res.json({ ok: true, employer: rows[0].name, status: yes ? 'live' : 'no_public_endpoint' });
+});
 router.patch('/employers/:id', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   const f = req.body || {};
