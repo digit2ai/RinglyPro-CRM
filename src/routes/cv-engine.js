@@ -8,6 +8,10 @@ const express = require('express');
 const crypto = require('crypto');
 const { Sequelize, QueryTypes } = require('sequelize');
 const jobsource = require('../services/cv-jobsource');
+const settingsSvc = require('../services/cv-settings');
+const employersSvc = require('../services/cv-employers');
+const targeting = require('../services/cv-targeting');
+const geo = require('../services/cv-geo');
 
 const router = express.Router();
 router.use(express.json({ limit: '256kb' }));
@@ -111,7 +115,42 @@ async function ensure(){
     ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS to_email TEXT;
     ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS to_name TEXT;
     ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS followup_due DATE;
+    ALTER TABLE cv_outreach ADD COLUMN IF NOT EXISTS followup_count INT DEFAULT 0;
+    -- Phase 4/5/6 columns (sync({alter:false}) equivalents — additive and idempotent)
+    ALTER TABLE cv_jobs ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
+    ALTER TABLE cv_jobs ADD COLUMN IF NOT EXISTS employer_id BIGINT;
+    ALTER TABLE cv_jobs ADD COLUMN IF NOT EXISTS comp_min INT;
+    ALTER TABLE cv_jobs ADD COLUMN IF NOT EXISTS comp_max INT;
+    ALTER TABLE cv_jobs ADD COLUMN IF NOT EXISTS comp_period VARCHAR(8);
+    CREATE INDEX IF NOT EXISTS idx_cv_jobs_dedupe ON cv_jobs(dedupe_key);
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS stage VARCHAR(24) DEFAULT 'new';
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS stage_at TIMESTAMPTZ;
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS next_action TEXT;
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS next_action_at DATE;
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS target_employer BOOLEAN DEFAULT false;
+    ALTER TABLE cv_job_matches ADD COLUMN IF NOT EXISTS flags JSONB DEFAULT '{}'::jsonb;
+    ALTER TABLE cv_profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
+    ALTER TABLE cv_profiles ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT true;
+    ALTER TABLE cv_profiles ADD COLUMN IF NOT EXISTS credential_source VARCHAR(24) DEFAULT 'db';
+    ALTER TABLE cv_profiles ADD COLUMN IF NOT EXISTS invite_hash TEXT;
+    ALTER TABLE cv_profiles ADD COLUMN IF NOT EXISTS invite_expires TIMESTAMPTZ;
+    CREATE TABLE IF NOT EXISTS cv_saved_searches (
+      id BIGSERIAL PRIMARY KEY, profile_id BIGINT NOT NULL, name TEXT NOT NULL,
+      query JSONB NOT NULL DEFAULT '{}'::jsonb, last_run_at TIMESTAMPTZ, last_new_count INT DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_cv_ss_profile ON cv_saved_searches(profile_id);
+    CREATE TABLE IF NOT EXISTS cv_contacts (
+      id BIGSERIAL PRIMARY KEY, profile_id BIGINT NOT NULL, name TEXT, email TEXT, company TEXT,
+      role_title TEXT, relationship VARCHAR(48), notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_cv_contacts_profile ON cv_contacts(profile_id);
   `);
+  await settingsSvc.ensureTable(sequelize).catch((e) => console.error('cv-settings ensure:', e.message));
+  await employersSvc.ensureTables(sequelize).catch((e) => console.error('cv-employers ensure:', e.message));
+  await employersSvc.seed(sequelize).catch((e) => console.error('cv-employers seed:', e.message));
   for (const p of SEED) {
     await sequelize.query(
       `INSERT INTO cv_profiles (slug,name,headline,email,phone,location,site,linkedin,target_roles,summary,password_hash)
@@ -122,10 +161,20 @@ async function ensure(){
          summary=COALESCE(cv_profiles.summary, EXCLUDED.summary), updated_at=now()`,
       { replacements: { ...p, ph: hashPw(p.pw) }, type: QueryTypes.INSERT }
     ).catch(()=>{});
-    // set password only if missing (never clobber a changed one)
-    await sequelize.query(`UPDATE cv_profiles SET password_hash=:ph WHERE slug=:slug AND (password_hash IS NULL OR password_hash='')`,
+    // Credential migration (Phase 4): passwords are OWNED BY THE PROFILE ROW, not by an
+    // environment variable per person. The CV_ADMIN_PW_<SLUG> vars remain a one-time bootstrap
+    // for the four accounts that predate this change — they seed a hash only when the row has
+    // none, and are never read again — so no existing owner is locked out and no NEW profile
+    // needs an env var. New profiles are provisioned by invite (POST /admin/profiles).
+    await sequelize.query(
+      `UPDATE cv_profiles SET password_hash=:ph, credential_source='bootstrap'
+         WHERE slug=:slug AND (password_hash IS NULL OR password_hash='')`,
       { replacements: { slug: p.slug, ph: hashPw(p.pw) }, type: QueryTypes.UPDATE }).catch(()=>{});
   }
+  // Exactly one admin, chosen by a RULE (the earliest profile) rather than by naming a person.
+  await sequelize.query(
+    `UPDATE cv_profiles SET is_admin=true WHERE id = (SELECT id FROM cv_profiles ORDER BY id ASC LIMIT 1)
+       AND NOT EXISTS (SELECT 1 FROM cv_profiles WHERE is_admin=true)`).catch(()=>{});
   ready = true;
 }
 if (sequelize) ensure().catch(e => console.error('cv-engine ensure:', e.message));
@@ -361,21 +410,35 @@ router.post('/jobs/matches/:id/outreach', async (req, res) => {
     { replacements:{ mid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
   const j = row[0];
   if (!j) return res.status(404).json({ error: 'match not found' });
-  const system = 'You write a concise, professional, first-person application/intro email from a job candidate for ONE specific role. Output STRICT JSON only: {"subject":"...","body":"..."}. Body 120-170 words, warm and specific to THIS role, references 1-2 genuinely relevant strengths, no fluff, no emojis, ends with the candidate name + email + profile link and a clear ask for a short conversation. Never invent employers, titles, metrics, or experience the candidate does not have. Do not overclaim on a stated gap.';
-  const user = `CANDIDATE\nName: ${p.name}\nHeadline: ${p.headline}\nLocation: ${p.location}\nEmail: ${p.email}${p.linkedin?`\nLinkedIn: ${p.linkedin}`:''}\nProfile: ${p.site}\nTarget roles: ${p.target_roles}\nSummary: ${p.summary}\n\nROLE\nTitle: ${j.title}\nCompany: ${j.company}\nLocation: ${j.location}\nWhy it fits (from prior analysis): ${j.why||''}\nKnown gap (be honest, do not overclaim): ${j.gaps||'none noted'}\nJob description: ${String(j.description||'').slice(0,1400)}`;
+  // Excluded employers and confidential mode are absolute — they never receive outreach.
+  const st = await settingsSvc.get(sequelize, p);
+  const blocked = settingsSvc.employerBlocked(st, j.company);
+  if (blocked) return res.status(403).json({ error: `${j.company} is on your ${blocked.reason} list — no draft was created.` });
+  const facts = settingsSvc.outreachFacts(st);
+  const variant = settingsSvc.resumeVariantFor(st, j.title);
+  const system = `You write a concise, professional, first-person application/intro email from a job candidate for ONE specific role. Output STRICT JSON only: {"subject":"...","body":"..."}. Body 120-170 words, ${facts.tone || 'professional'} in tone, specific to THIS role, references 1-2 genuinely relevant strengths, no fluff, no emojis, ends with the candidate name + email + profile link and a clear ask for a short conversation. Never invent employers, titles, metrics, or experience the candidate does not have. Do not overclaim on a stated gap. Any statement about work authorization, compensation or availability must be quoted VERBATIM from the OWNER-STATED FACTS block — never paraphrased, never guessed, and omitted entirely if absent.`;
+  const user = `CANDIDATE\nName: ${p.name}\nHeadline: ${st.identity.headline || p.headline}\nLocation: ${p.location}\nEmail: ${facts.from_email || p.email}${p.linkedin?`\nLinkedIn: ${p.linkedin}`:''}\nProfile: ${p.site}\nTarget roles: ${((st.targeting.roles||[]).map(r=>r.title).join('; ')) || p.target_roles}\nSummary: ${p.summary}`
+    + (facts.lines.length ? `\n\nOWNER-STATED FACTS (quote verbatim if relevant, never invent)\n${facts.lines.join('\n')}` : '')
+    + (facts.booking_url ? `\nBooking link: ${facts.booking_url}` : '')
+    + `\n\nROLE\nTitle: ${j.title}\nCompany: ${j.company}\nLocation: ${j.location}\nWhy it fits (from prior analysis): ${j.why||''}\nKnown gap (be honest, do not overclaim): ${j.gaps||'none noted'}\nJob description: ${String(j.description||'').slice(0,1400)}`;
   let subject, body, simulated = false;
   const raw = await claude(system, user, 700);
   if (raw) { try { const o = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1)); subject = o.subject; body = o.body; } catch(e){} }
   if (!subject || !body) {
     simulated = true;
     subject = `${p.name} — application for ${j.title} at ${j.company}`;
-    body = `Hello ${j.company} team,\n\nI'm ${p.name}, ${p.headline}, based in ${p.location}. I'm writing about your ${j.title} role.\n\n${p.summary}\n\nMy full profile and CV are at ${p.site}. I'd welcome a short conversation about how this background fits the position.\n\nBest regards,\n${p.name}\n${p.email}${p.linkedin?`\n${p.linkedin}`:''}`;
+    body = `Hello ${j.company} team,\n\nI'm ${p.name}, ${p.headline}, based in ${p.location}. I'm writing about your ${j.title} role.\n\n${p.summary}\n\n`
+      + (facts.lines.length ? facts.lines.join('\n') + '\n\n' : '')
+      + `My full profile and CV are at ${p.site}. I'd welcome a short conversation about how this background fits the position.\n\nBest regards,\n${p.name}\n${facts.from_email || p.email}${p.linkedin?`\n${p.linkedin}`:''}`;
   }
+  if (facts.signature && body.indexOf(facts.signature) === -1) body += '\n\n' + facts.signature;
   const r = await sequelize.query(
-    `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,job_id,created_at,updated_at)
-     VALUES (:id,'email','job-application',:tn,:su,:bo,'draft',:sim,:jid, now(), now()) RETURNING id`,
-    { replacements:{ id:p.id, tn:`${j.company} — ${j.title}`.slice(0,200), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, jid:j.job_id }, type:QueryTypes.INSERT });
-  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, company:j.company, title:j.title, url:j.url, is_simulated:simulated });
+    `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,job_id,followup_due,created_at,updated_at)
+     VALUES (:id,'email','job-application',:tn,:su,:bo,'draft',:sim,:jid, CURRENT_DATE + :fd, now(), now()) RETURNING id`,
+    { replacements:{ id:p.id, tn:`${j.company} — ${j.title}`.slice(0,200), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, jid:j.job_id,
+        fd: (st.outreach.cadence || {}).first_followup_days || 5 }, type:QueryTypes.INSERT });
+  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, company:j.company, title:j.title, url:j.url, is_simulated:simulated,
+    resume_variant: variant ? { label: variant.label, url: variant.url } : null, facts_used: facts.lines });
 });
 
 // Draft a short follow-up nudge for an existing outreach that got no reply.
@@ -383,6 +446,13 @@ router.post('/outreach/:id/followup', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   const rows = await sequelize.query('SELECT * FROM cv_outreach WHERE id=:oid AND profile_id=:pid', { replacements:{ oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
   const o = rows[0]; if (!o) return res.status(404).json({ error: 'outreach not found' });
+  // Cadence stop rules are enforced here, not left to the owner's memory.
+  const stf = await settingsSvc.get(sequelize, p);
+  const cad = stf.outreach.cadence || {};
+  const dncF = settingsSvc.contactBlocked(stf, o.to_email, o.to_name);
+  if (dncF) return res.status(403).json({ error: dncF.reason + ' — no follow-up was drafted.' });
+  if (cad.stop_on_reply && o.status === 'replied') return res.status(400).json({ error: 'they already replied — cadence stops on reply.' });
+  if ((o.followup_count || 0) >= (cad.max_followups || 2)) return res.status(400).json({ error: `follow-up limit reached (${cad.max_followups || 2} per your cadence settings).` });
   const system = 'You write a brief, polite follow-up email (60-90 words) from a job candidate who has not heard back. Output STRICT JSON only: {"subject":"...","body":"..."}. Reference the prior note lightly, restate interest in one line, no guilt-tripping, no emojis, end with name. Never invent facts.';
   const user = `Candidate: ${p.name} (${p.headline})\nProfile: ${p.site}\nOriginal subject: ${o.subject}\nOriginal note:\n${String(o.body||'').slice(0,1200)}`;
   let subject, body, simulated = false;
@@ -393,7 +463,10 @@ router.post('/outreach/:id/followup', async (req, res) => {
     `INSERT INTO cv_outreach (profile_id,channel,target_type,target_name,subject,body,status,is_simulated,job_id,to_email,to_name,created_at,updated_at)
      VALUES (:id,'email','follow-up',:tn,:su,:bo,'draft',:sim,:jid,:te,:tnm, now(), now()) RETURNING id`,
     { replacements:{ id:p.id, tn:(o.target_name||'Follow-up'), su:subject.slice(0,300), bo:body.slice(0,6000), sim:simulated, jid:o.job_id||null, te:o.to_email||null, tnm:o.to_name||null }, type:QueryTypes.INSERT });
-  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, is_simulated:simulated });
+  await sequelize.query('UPDATE cv_outreach SET followup_count=COALESCE(followup_count,0)+1 WHERE id=:id AND profile_id=:pid',
+    { replacements: { id: o.id, pid: p.id }, type: QueryTypes.UPDATE }).catch(()=>{});
+  res.json({ ok:true, id:(r[0][0]&&r[0][0].id), subject, body, is_simulated:simulated,
+    followups_used: (o.followup_count || 0) + 1, followups_allowed: cad.max_followups || 2 });
 });
 
 // Draft a reply to an inbound opportunity (completes the Phase 2 agent loop).
@@ -401,6 +474,11 @@ router.post('/opportunities/:id/reply', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   const rows = await sequelize.query('SELECT * FROM cv_opportunities WHERE id=:oid AND profile_id=:pid', { replacements:{ oid:parseInt(req.params.id,10)||0, pid:p.id }, type:QueryTypes.SELECT });
   const o = rows[0]; if (!o) return res.status(404).json({ error: 'opportunity not found' });
+  const stR = await settingsSvc.get(sequelize, p);
+  const dncR = settingsSvc.contactBlocked(stR, o.contact_email, o.contact_name);
+  if (dncR) return res.status(403).json({ error: dncR.reason + ' — no reply was drafted.' });
+  const blockedR = settingsSvc.employerBlocked(stR, o.company);
+  if (blockedR) return res.status(403).json({ error: `${o.company} is on your ${blockedR.reason} list — no reply was drafted.` });
   const system = 'You write a warm, professional reply (90-130 words) from a job candidate to a recruiter/company who reached out. Output STRICT JSON only: {"subject":"...","body":"..."}. Thank them, express genuine interest, offer specific availability for a short call, no emojis, end with name + profile link. Never invent facts or over-commit.';
   const user = `Candidate: ${p.name} (${p.headline})\nProfile: ${p.site}\nEmail: ${p.email}\nInbound from: ${o.contact_name||''} at ${o.company||''}\nRole: ${o.role_title||''}\nTheir message: ${String(o.message||'').slice(0,1000)}`;
   let subject, body, simulated = false;
@@ -455,13 +533,16 @@ async function runMatch(prof, force) {
   const pid = prof.id;
   JOB_RUN[pid] = { running: true, step: 'fetching', started: Date.now(), error: null };
   try {
-    if (force || Date.now() - POOL_LAST > POOL_TTL_MS) {
+    const settings = await settingsSvc.get(sequelize, prof);
+    const ttl = Math.max(1, Number((settings.engine || {}).pool_ttl_hours) || 6) * 3600 * 1000;
+    if (force || Date.now() - POOL_LAST > ttl) {
       const pool = await jobsource.refreshJobPool(sequelize, QueryTypes, {});
       POOL_LAST = Date.now();
       JOB_RUN[pid].pool = pool.pool_size; JOB_RUN[pid].sources = pool.sources;
     }
     JOB_RUN[pid].step = 'matching';
-    const r = await jobsource.scoreProfile(sequelize, QueryTypes, claude, prof, { limit: 12 });
+    const watchByCompany = await employersSvc.watchIndex(sequelize, pid).catch(() => ({}));
+    const r = await jobsource.scoreProfile(sequelize, QueryTypes, claude, prof, { settings, watchByCompany });
     JOB_RUN[pid] = { running: false, step: 'done', finished: Date.now(), started: JOB_RUN[pid].started,
       pool: JOB_RUN[pid].pool, sources: JOB_RUN[pid].sources, result: r, error: null };
   } catch (e) {
@@ -498,40 +579,466 @@ router.get('/jobs/matches', async (req, res) => {
   const repl = { pid: p.id };
   if (status && ['new', 'saved', 'dismissed', 'applied'].includes(status)) { where.push('m.status=:st'); repl.st = status; }
   else where.push("m.status<>'dismissed'");
+  if (req.query.target === '1') where.push('m.target_employer=true');
+  if (req.query.stage) { where.push('m.stage=:stg'); repl.stg = String(req.query.stage).toLowerCase(); }
   const rows = await sequelize.query(
-    `SELECT m.id, m.score, m.verdict, m.why, m.gaps, m.is_simulated, m.status, m.updated_at,
-            j.company, j.title, j.location, j.remote, j.url, j.source, j.posted_at
+    `SELECT m.id, m.score, m.verdict, m.why, m.gaps, m.is_simulated, m.status, m.stage, m.updated_at,
+            m.target_employer, m.flags, m.next_action, m.next_action_at,
+            j.company, j.title, j.location, j.remote, j.url, j.source, j.posted_at,
+            j.comp_min, j.comp_max, j.comp_period
        FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
        WHERE ${where.join(' AND ')}
-       ORDER BY m.score DESC NULLS LAST, m.updated_at DESC
-       LIMIT 100`, { replacements: repl, type: QueryTypes.SELECT });
+       ORDER BY m.target_employer DESC, m.score DESC NULLS LAST, m.updated_at DESC
+       LIMIT 200`, { replacements: repl, type: QueryTypes.SELECT });
+  const st = await settingsSvc.get(sequelize, p);
+  rows.forEach((r) => {
+    if (r.comp_min && r.comp_max) {
+      r.compensation = { min: r.comp_min, max: r.comp_max, period: r.comp_period, stated: true };
+      r.compensation.verdict = targeting.compVerdict(r.compensation, st);
+    }
+  });
   res.json({ matches: rows });
 });
 
-// Save / dismiss / mark-applied a match.
+// Save / dismiss / mark-applied a match, and move it through the pipeline.
+const STAGES = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
 router.patch('/jobs/matches/:id', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
-  const st = String(req.body.status || '').toLowerCase();
-  if (!['new', 'saved', 'dismissed', 'applied'].includes(st)) return res.status(400).json({ error: 'bad status' });
-  await sequelize.query(`UPDATE cv_job_matches SET status=:st, updated_at=now() WHERE id=:id AND profile_id=:pid`,
-    { replacements: { st, id: req.params.id, pid: p.id }, type: QueryTypes.UPDATE });
+  const b = req.body || {};
+  const st = b.status !== undefined ? String(b.status).toLowerCase() : null;
+  const stage = b.stage !== undefined ? String(b.stage).toLowerCase() : null;
+  if (st && !['new', 'saved', 'dismissed', 'applied'].includes(st)) return res.status(400).json({ error: 'bad status' });
+  if (stage && !STAGES.includes(stage)) return res.status(400).json({ error: 'bad stage' });
+  if (!st && !stage && b.next_action === undefined && b.next_action_at === undefined) return res.status(400).json({ error: 'nothing to update' });
+  await sequelize.query(
+    `UPDATE cv_job_matches SET status=COALESCE(:st,status),
+       stage=COALESCE(:stg,stage), stage_at=CASE WHEN :stg IS NULL THEN stage_at ELSE now() END,
+       next_action=COALESCE(:na,next_action), next_action_at=COALESCE(CAST(:naa AS DATE),next_action_at),
+       updated_at=now()
+     WHERE id=:id AND profile_id=:pid`,
+    { replacements: { st, stg: stage, id: parseInt(req.params.id, 10) || 0, pid: p.id,
+        na: b.next_action !== undefined ? String(b.next_action).slice(0, 400) : null,
+        naa: b.next_action_at ? String(b.next_action_at).slice(0, 10) : null }, type: QueryTypes.UPDATE });
   res.json({ ok: true });
 });
 
-// Optional daily auto-refresh for all profiles ("works while you sleep") — off unless CV_JOBS_GO=1.
-if (process.env.CV_JOBS_GO === '1' && sequelize) {
+// Daily auto-run ("works while you sleep") — fans out across every ENABLED profile that has
+// auto_run on in its own settings, each inside its own cost ceiling. Off unless CV_JOBS_GO=1.
+// State is exposed at /jobs/auto so it is visible in the UI instead of hidden in env.
+const AUTO = { enabled: process.env.CV_JOBS_GO === '1', last_run: null, last_result: null, running: false };
+if (AUTO.enabled && sequelize) {
   const dailyRun = async () => {
+    if (AUTO.running) return;
+    AUTO.running = true;
+    const summary = { started: new Date().toISOString(), profiles: [], pool: null, error: null };
     try {
       await ensure();
-      await jobsource.refreshJobPool(sequelize, QueryTypes, {}); POOL_LAST = Date.now();
-      const profs = await sequelize.query('SELECT * FROM cv_profiles', { type: QueryTypes.SELECT });
-      for (const pr of profs) { try { await jobsource.scoreProfile(sequelize, QueryTypes, claude, pr, { limit: 10 }); } catch (e) {} }
-      console.log('cv-engine: daily job match complete for', profs.length, 'profiles');
-    } catch (e) { console.error('cv-engine daily run:', e.message); }
+      const pool = await jobsource.refreshJobPool(sequelize, QueryTypes, {});
+      POOL_LAST = Date.now(); summary.pool = pool.pool_size;
+      const profs = await sequelize.query('SELECT * FROM cv_profiles WHERE COALESCE(enabled,true)=true', { type: QueryTypes.SELECT });
+      for (const pr of profs) {
+        try {
+          const s = await settingsSvc.get(sequelize, pr);
+          if ((s.engine || {}).auto_run === false) { summary.profiles.push({ slug: pr.slug, skipped: 'auto_run off' }); continue; }
+          const w = await employersSvc.watchIndex(sequelize, pr.id).catch(() => ({}));
+          const r = await jobsource.scoreProfile(sequelize, QueryTypes, claude, pr, { settings: s, watchByCompany: w });
+          summary.profiles.push({ slug: pr.slug, scored: r.scored, total: r.matches_total, spend: r.budget.spend_estimate_usd });
+        } catch (e) { summary.profiles.push({ slug: pr.slug, error: e.message }); }
+      }
+      console.log('cv-engine: daily job match complete for', summary.profiles.length, 'profiles');
+    } catch (e) { summary.error = e.message; console.error('cv-engine daily run:', e.message); }
+    finally { summary.finished = new Date().toISOString(); AUTO.last_run = summary.finished; AUTO.last_result = summary; AUTO.running = false; }
   };
   setTimeout(dailyRun, 90 * 1000);            // once shortly after boot
   setInterval(dailyRun, 24 * 3600 * 1000);    // then daily
 }
+router.get('/jobs/auto', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const s = await settingsSvc.get(sequelize, p);
+  res.json({ scheduler_enabled: AUTO.enabled, env_var: 'CV_JOBS_GO', profile_auto_run: (s.engine || {}).auto_run !== false,
+    running: AUTO.running, last_run: AUTO.last_run,
+    last_result: AUTO.last_result ? { pool: AUTO.last_result.pool, profiles: (AUTO.last_result.profiles || []).length, error: AUTO.last_result.error } : null });
+});
+
+// ================= PHASE 4 — SETTINGS =================
+// The single source of truth for a profile. Everything downstream reads it; nothing
+// re-implements it. Adding a person is a row here, not a code change.
+router.get('/settings', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  res.json({ settings: await settingsSvc.get(sequelize, p) });
+});
+router.put('/settings', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const body = req.body || {};
+  const saved = body.replace ? await settingsSvc.save(sequelize, p.id, body.settings || {})
+                             : await settingsSvc.patch(sequelize, p, body.settings || body);
+  // Mirror the few fields the legacy profile row still serves (public page, agent card).
+  await sequelize.query(
+    `UPDATE cv_profiles SET name=COALESCE(NULLIF(:nm,''),name), headline=COALESCE(NULLIF(:hl,''),headline),
+        location=COALESCE(NULLIF(:lo,''),location), availability=:av, updated_at=now() WHERE id=:id`,
+    { replacements: { nm: saved.identity.name, hl: saved.identity.headline, lo: saved.identity.location,
+        av: saved.targeting.availability.status === 'closed' ? 'closed' : 'open', id: p.id }, type: QueryTypes.UPDATE }).catch(()=>{});
+  res.json({ ok: true, settings: saved });
+});
+// Vocabularies the settings UI renders from — data, so adding an option is not a deploy.
+router.get('/settings/meta', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  res.json({ industries: settingsSvc.INDUSTRY_TAXONOMY, employment_types: settingsSvc.EMPLOYMENT_TYPES,
+    work_auth_statuses: settingsSvc.WORK_AUTH_STATUSES, countries: geo.countryList(),
+    location_rules: geo.DEFAULT_RULES, stages: STAGES });
+});
+// Explain the country policy against a sample location string (makes the messy cases testable).
+router.post('/settings/test-location', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const s = await settingsSvc.get(sequelize, p);
+  const out = geo.evaluate(settingsSvc.countryPolicy(s), String((req.body || {}).location || ''), !!(req.body || {}).remote);
+  res.json(out);
+});
+
+// ================= PHASE 5 — EMPLOYERS + WATCHLIST =================
+router.get('/employers', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await employersSvc.list(sequelize, { status: req.query.status, industry: req.query.industry, q: req.query.q });
+  const counts = await sequelize.query(
+    `SELECT status, count(*)::int AS n FROM cv_employers GROUP BY 1`, { type: QueryTypes.SELECT }).catch(() => []);
+  res.json({ employers: rows, counts, probe: PROBE_RUN });
+});
+router.post('/employers', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const f = req.body || {};
+  const name = String(f.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const slug = employersSvc.slugify(name);
+  const r = await sequelize.query(
+    `INSERT INTO cv_employers (slug,name,ats,cfg,industries,status)
+     VALUES (:slug,:name,:ats,CAST(:cfg AS JSONB),string_to_array(:inds, ','),'unprobed')
+     ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, updated_at=now() RETURNING id`,
+    { replacements: { slug, name, ats: f.ats || null, cfg: JSON.stringify(f.cfg || {}),
+        inds: (Array.isArray(f.industries) ? f.industries.slice(0, 20) : []).join(',') }, type: QueryTypes.INSERT });
+  res.json({ ok: true, id: r[0][0] && r[0][0].id, slug });
+});
+router.patch('/employers/:id', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const f = req.body || {};
+  await sequelize.query(
+    `UPDATE cv_employers SET ats=COALESCE(:ats,ats), cfg=COALESCE(CAST(:cfg AS JSONB),cfg),
+       industries=COALESCE(string_to_array(:inds, ','),industries), enabled=COALESCE(:en,enabled), updated_at=now() WHERE id=:id`,
+    { replacements: { id: parseInt(req.params.id, 10) || 0, ats: f.ats || null,
+        cfg: f.cfg ? JSON.stringify(f.cfg) : null, inds: Array.isArray(f.industries) ? f.industries.join(',') : null,
+        en: typeof f.enabled === 'boolean' ? f.enabled : null }, type: QueryTypes.UPDATE });
+  res.json({ ok: true });
+});
+// Probing dozens of boards always exceeds Cloudflare's ~100s ceiling — background + poll.
+const PROBE_RUN = { running: false, started: null, finished: null, result: null, error: null };
+router.post('/employers/probe', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  if (PROBE_RUN.running) return res.json({ ok: true, running: true, already: true });
+  const only = !!(req.body || {}).only_unprobed;
+  const id = (req.body || {}).employer_id;
+  PROBE_RUN.running = true; PROBE_RUN.started = Date.now(); PROBE_RUN.finished = null; PROBE_RUN.error = null;
+  (async () => {
+    try {
+      if (id) {
+        const rows = await sequelize.query('SELECT id,name,ats,cfg,status FROM cv_employers WHERE id=:id', { replacements: { id }, type: QueryTypes.SELECT });
+        if (rows[0]) { const r = await employersSvc.probeEmployer(rows[0]); await employersSvc.recordProbe(sequelize, rows[0].id, r);
+          PROBE_RUN.result = { probed: 1, live: r.status === 'live' ? 1 : 0, unreachable: r.status === 'live' ? 0 : 1, details: [{ name: rows[0].name, status: r.status, ats: r.ats, count: r.count, reason: r.reason }] }; }
+      } else {
+        PROBE_RUN.result = await employersSvc.probeAll(sequelize, { only_unprobed: only });
+      }
+    } catch (e) { PROBE_RUN.error = e.message; }
+    finally { PROBE_RUN.running = false; PROBE_RUN.finished = Date.now(); }
+  })();
+  res.json({ ok: true, running: true });
+});
+router.get('/employers/probe/status', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  res.json(PROBE_RUN);
+});
+router.get('/watchlist', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  res.json({ watchlist: await employersSvc.watchlist(sequelize, p.id) });
+});
+router.post('/watchlist', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const f = req.body || {};
+  let eid = parseInt(f.employer_id, 10) || 0;
+  if (!eid && f.industry) {          // add an entire sector in one action
+    const rows = await sequelize.query('SELECT id FROM cv_employers WHERE :ind = ANY(industries)', { replacements: { ind: String(f.industry) }, type: QueryTypes.SELECT });
+    for (const r of rows) await employersSvc.watchAdd(sequelize, p.id, r.id, f).catch(() => {});
+    return res.json({ ok: true, added: rows.length });
+  }
+  if (!eid) return res.status(400).json({ error: 'employer_id or industry required' });
+  await employersSvc.watchAdd(sequelize, p.id, eid, f);
+  res.json({ ok: true });
+});
+router.delete('/watchlist/:employerId', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  await employersSvc.watchRemove(sequelize, p.id, parseInt(req.params.employerId, 10) || 0);
+  res.json({ ok: true });
+});
+
+// ================= PHASE 6 — SAVED SEARCHES, PIPELINE, DIGEST, CONTACTS =================
+function searchWhere(q, repl) {
+  const w = ['m.profile_id=:pid'];
+  if (q.score_floor) { w.push('m.score >= :sf'); repl.sf = parseInt(q.score_floor, 10) || 0; }
+  if (q.target_only) w.push('m.target_employer=true');
+  if (q.stage) { w.push('m.stage=:stg'); repl.stg = String(q.stage); }
+  if (q.status) { w.push('m.status=:st'); repl.st = String(q.status); } else w.push("m.status<>'dismissed'");
+  if (q.company) { w.push('lower(j.company) LIKE :co'); repl.co = '%' + String(q.company).toLowerCase() + '%'; }
+  if (q.title) { w.push('lower(j.title) LIKE :ti'); repl.ti = '%' + String(q.title).toLowerCase() + '%'; }
+  if (q.remote === true) w.push('j.remote=true');
+  return w;
+}
+router.get('/saved-searches', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query('SELECT * FROM cv_saved_searches WHERE profile_id=:pid ORDER BY created_at DESC LIMIT 50',
+    { replacements: { pid: p.id }, type: QueryTypes.SELECT });
+  res.json({ saved_searches: rows });
+});
+router.post('/saved-searches', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const f = req.body || {};
+  if (!f.name) return res.status(400).json({ error: 'name required' });
+  const r = await sequelize.query(
+    `INSERT INTO cv_saved_searches (profile_id,name,query) VALUES (:pid,:nm,CAST(:q AS JSONB)) RETURNING id`,
+    { replacements: { pid: p.id, nm: String(f.name).slice(0, 120), q: JSON.stringify(f.query || {}) }, type: QueryTypes.INSERT });
+  res.json({ ok: true, id: r[0][0] && r[0][0].id });
+});
+router.delete('/saved-searches/:id', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  await sequelize.query('DELETE FROM cv_saved_searches WHERE id=:id AND profile_id=:pid',
+    { replacements: { id: parseInt(req.params.id, 10) || 0, pid: p.id }, type: QueryTypes.DELETE });
+  res.json({ ok: true });
+});
+router.post('/saved-searches/:id/run', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query('SELECT * FROM cv_saved_searches WHERE id=:id AND profile_id=:pid',
+    { replacements: { id: parseInt(req.params.id, 10) || 0, pid: p.id }, type: QueryTypes.SELECT });
+  const ss = rows[0]; if (!ss) return res.status(404).json({ error: 'not found' });
+  const repl = { pid: p.id };
+  const w = searchWhere(ss.query || {}, repl);
+  const matches = await sequelize.query(
+    `SELECT m.id,m.score,m.verdict,m.why,m.gaps,m.status,m.stage,m.target_employer,m.updated_at,
+            j.company,j.title,j.location,j.remote,j.url,j.comp_min,j.comp_max,j.comp_period
+       FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+      WHERE ${w.join(' AND ')} ORDER BY m.target_employer DESC, m.score DESC NULLS LAST LIMIT 100`,
+    { replacements: repl, type: QueryTypes.SELECT });
+  const fresh = matches.filter((m) => m.status === 'new').length;
+  await sequelize.query('UPDATE cv_saved_searches SET last_run_at=now(), last_new_count=:n WHERE id=:id',
+    { replacements: { id: ss.id, n: fresh }, type: QueryTypes.UPDATE }).catch(()=>{});
+  res.json({ name: ss.name, count: matches.length, new_count: fresh, matches });
+});
+
+router.get('/pipeline', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query(
+    `SELECT m.id,m.score,m.stage,m.stage_at,m.status,m.next_action,m.next_action_at,m.target_employer,
+            j.company,j.title,j.location,j.url,
+            (SELECT count(*)::int FROM cv_outreach o WHERE o.profile_id=m.profile_id AND o.job_id=j.id) AS outreach_count,
+            (SELECT max(o.status) FROM cv_outreach o WHERE o.profile_id=m.profile_id AND o.job_id=j.id) AS outreach_status
+       FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+      WHERE m.profile_id=:pid AND m.status<>'dismissed' AND m.stage IS NOT NULL AND m.stage<>'new'
+      ORDER BY m.stage_at DESC NULLS LAST LIMIT 300`,
+    { replacements: { pid: p.id }, type: QueryTypes.SELECT });
+  const byStage = {}; STAGES.forEach((s) => { byStage[s] = []; });
+  rows.forEach((r) => { (byStage[r.stage] || (byStage[r.stage] = [])).push(r); });
+  res.json({ stages: STAGES, by_stage: byStage, total: rows.length });
+});
+
+// The morning read: what is new, what is due, what needs a decision. Drafted and shown here —
+// never auto-sent (EMAIL_AUTOSEND_DISABLED). Everything honors do-not-contact + exclusions.
+router.get('/digest', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const s = await settingsSvc.get(sequelize, p);
+  const floor = Number((s.targeting || {}).score_floor) || 0;
+  const since = `now() - interval '${Math.min(30, parseInt(req.query.days, 10) || 1)} days'`;
+  const q = (sql, rep) => sequelize.query(sql, { replacements: Object.assign({ pid: p.id }, rep || {}), type: QueryTypes.SELECT }).catch(() => []);
+  const newMatches = await q(
+    `SELECT m.id,m.score,m.verdict,m.why,m.target_employer,j.company,j.title,j.location,j.url
+       FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+      WHERE m.profile_id=:pid AND m.status='new' AND m.created_at > ${since} AND m.score >= :fl
+      ORDER BY m.target_employer DESC, m.score DESC LIMIT 25`, { fl: floor });
+  const targetPosts = await q(
+    `SELECT m.id,m.score,j.company,j.title,j.url FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+      WHERE m.profile_id=:pid AND m.target_employer=true AND m.created_at > ${since} ORDER BY m.score DESC LIMIT 25`);
+  const inbound = await q(
+    `SELECT id,company,contact_name,contact_email,role_title,message,created_at FROM cv_opportunities
+      WHERE profile_id=:pid AND status='new' ORDER BY created_at DESC LIMIT 25`);
+  const dueFollowups = await q(
+    `SELECT o.id,o.subject,o.target_name,o.to_email,o.created_at,o.followup_count
+       FROM cv_outreach o WHERE o.profile_id=:pid AND o.status='sent'
+        AND o.created_at < now() - (:d || ' days')::interval
+        AND COALESCE(o.followup_count,0) < :mx
+      ORDER BY o.created_at ASC LIMIT 25`,
+    { d: (s.outreach.cadence || {}).first_followup_days || 5, mx: (s.outreach.cadence || {}).max_followups || 2 });
+  const actions = await q(
+    `SELECT m.id,m.next_action,m.next_action_at,j.company,j.title FROM cv_job_matches m JOIN cv_jobs j ON j.id=m.job_id
+      WHERE m.profile_id=:pid AND m.next_action_at IS NOT NULL AND m.next_action_at <= CURRENT_DATE + 3
+      ORDER BY m.next_action_at ASC LIMIT 25`);
+  // Do-not-contact is absolute: a blocked address never appears in a digest that invites contact.
+  const dnc = (list, emailKey, nameKey) => list.filter((r) => !settingsSvc.contactBlocked(s, r[emailKey], r[nameKey]));
+  res.json({
+    generated_at: new Date().toISOString(),
+    digest: s.notifications.digest, digest_time: s.notifications.digest_time,
+    score_floor: floor,
+    new_matches: newMatches, target_employer_posts: targetPosts,
+    inbound_opportunities: dnc(inbound, 'contact_email', 'contact_name'),
+    followups_due: dnc(dueFollowups, 'to_email', 'target_name'),
+    next_actions: actions,
+    note: 'Nothing here is sent automatically. Review, edit, and send from your own inbox.'
+  });
+});
+
+router.get('/contacts', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const rows = await sequelize.query('SELECT * FROM cv_contacts WHERE profile_id=:pid ORDER BY created_at DESC LIMIT 500',
+    { replacements: { pid: p.id }, type: QueryTypes.SELECT });
+  const s = await settingsSvc.get(sequelize, p);
+  const watch = await employersSvc.watchlist(sequelize, p.id).catch(() => []);
+  const watchNames = new Set(watch.map((w) => String(w.name).toLowerCase()));
+  rows.forEach((r) => {
+    r.at_target_employer = !!(r.company && watchNames.has(String(r.company).toLowerCase()));
+    const b = settingsSvc.contactBlocked(s, r.email, r.name);
+    r.do_not_contact = !!b; if (b) r.do_not_contact_reason = b.reason;
+  });
+  // People who already appeared in this profile's own inbox/outreach — the only referral graph
+  // we can build honestly. Connection graphs cannot be scraped, and are not invented here.
+  const known = await sequelize.query(
+    `SELECT DISTINCT contact_name AS name, contact_email AS email, company FROM cv_opportunities
+      WHERE profile_id=:pid AND contact_email IS NOT NULL AND contact_email<>'' LIMIT 100`,
+    { replacements: { pid: p.id }, type: QueryTypes.SELECT }).catch(() => []);
+  res.json({ contacts: rows, from_inbox: known,
+    note: 'Referral suggestions come only from people already in your own inbox and outreach history. No third-party connection graph is scraped.' });
+});
+router.post('/contacts', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const f = req.body || {};
+  await sequelize.query(
+    `INSERT INTO cv_contacts (profile_id,name,email,company,role_title,relationship,notes)
+     VALUES (:pid,:nm,:em,:co,:rt,:rel,:no)`,
+    { replacements: { pid: p.id, nm: String(f.name || '').slice(0, 200), em: String(f.email || '').slice(0, 200),
+        co: String(f.company || '').slice(0, 200), rt: String(f.role_title || '').slice(0, 200),
+        rel: String(f.relationship || '').slice(0, 48), no: String(f.notes || '').slice(0, 2000) }, type: QueryTypes.INSERT });
+  res.json({ ok: true });
+});
+router.delete('/contacts/:id', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  await sequelize.query('DELETE FROM cv_contacts WHERE id=:id AND profile_id=:pid',
+    { replacements: { id: parseInt(req.params.id, 10) || 0, pid: p.id }, type: QueryTypes.DELETE });
+  res.json({ ok: true });
+});
+
+// ================= PROFILE PROVISIONING (no env var per person) =================
+router.get('/admin/profiles', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  if (!p.is_admin) return res.status(403).json({ error: 'admin only' });
+  const rows = await sequelize.query(
+    `SELECT id,slug,name,email,enabled,is_admin,credential_source,
+            (invite_hash IS NOT NULL AND invite_expires > now()) AS invite_pending, created_at
+       FROM cv_profiles ORDER BY id ASC`, { type: QueryTypes.SELECT });
+  res.json({ profiles: rows });
+});
+// Create a profile + a single-use invite. The new owner sets their own password; no env var,
+// no shared default, no redeploy.
+router.post('/admin/profiles', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  if (!p.is_admin) return res.status(403).json({ error: 'admin only' });
+  const f = req.body || {};
+  const slug = String(f.slug || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!slug || !f.name) return res.status(400).json({ error: 'slug and name required' });
+  const exists = await profileBySlug(slug);
+  if (exists) return res.status(409).json({ error: 'slug already exists' });
+  const invite = crypto.randomBytes(24).toString('base64url');
+  const r = await sequelize.query(
+    `INSERT INTO cv_profiles (slug,name,headline,email,location,site,target_roles,summary,password_hash,
+                              enabled,credential_source,invite_hash,invite_expires)
+     VALUES (:slug,:name,:hl,:em,:lo,:site,:tr,:su,'', true,'invite',:ih, now() + interval '14 days') RETURNING id`,
+    { replacements: { slug, name: String(f.name).slice(0, 200), hl: String(f.headline || '').slice(0, 400),
+        em: String(f.email || '').slice(0, 200), lo: String(f.location || '').slice(0, 200),
+        site: String(f.site || '').slice(0, 300), tr: String(f.target_roles || '').slice(0, 2000),
+        su: String(f.summary || '').slice(0, 4000),
+        ih: crypto.createHash('sha256').update(invite).digest('hex') }, type: QueryTypes.INSERT });
+  const id = r[0][0] && r[0][0].id;
+  await settingsSvc.get(sequelize, { id, name: f.name, headline: f.headline, email: f.email, location: f.location, site: f.site, target_roles: f.target_roles });
+  res.json({ ok: true, id, slug, invite_token: invite,
+    accept_url: '/cv-admin?p=' + slug + '&invite=' + invite,
+    note: 'Single-use, expires in 14 days. The new owner sets their own password — no environment variable is involved.' });
+});
+router.post('/accept-invite', async (req, res) => {
+  if (!sequelize) return res.status(503).json({ error: 'engine not configured' });
+  await ensure();
+  const f = req.body || {};
+  const slug = String(f.slug || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const tok = String(f.invite || '');
+  const pw = String(f.password || '');
+  if (pw.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
+  const rows = await sequelize.query('SELECT * FROM cv_profiles WHERE slug=:slug', { replacements: { slug }, type: QueryTypes.SELECT });
+  const prof = rows[0];
+  if (!prof || !prof.invite_hash || !prof.invite_expires || new Date(prof.invite_expires) < new Date())
+    return res.status(400).json({ error: 'invite is invalid or expired' });
+  const h = crypto.createHash('sha256').update(tok).digest('hex');
+  if (h.length !== String(prof.invite_hash).length || !crypto.timingSafeEqual(Buffer.from(h), Buffer.from(prof.invite_hash)))
+    return res.status(400).json({ error: 'invite is invalid or expired' });
+  await sequelize.query(
+    `UPDATE cv_profiles SET password_hash=:ph, credential_source='owner', invite_hash=NULL, invite_expires=NULL, updated_at=now() WHERE id=:id`,
+    { replacements: { ph: hashPw(pw), id: prof.id }, type: QueryTypes.UPDATE });
+  setCookie(res, sign({ pid: prof.id, slug: prof.slug }));
+  res.json({ ok: true, profile: pub(prof) });
+});
+
+// ================= PHASE 8 — ENTITY DOSSIER =================
+// Generated from the profile record, not hand-authored per person. Notability is assessed
+// honestly: where the bar is not met, this says so instead of proposing an item that would
+// be deleted.
+router.get('/entity/dossier', async (req, res) => {
+  const p = await auth(req, res); if (!p) return;
+  const s = await settingsSvc.get(sequelize, p);
+  const links = (s.identity.links || []).map((l) => l.url);
+  const independent = links.filter((u) => !/manuelstagg|anastagg|andreastagg|julianagramowski/i.test(u));
+  // Wikidata notability = (1) a serious, publicly available reference work already describes
+  // them, (2) they are clearly identifiable and can be described by referenced statements, or
+  // (3) they meet a structural need. A personal site plus a LinkedIn profile satisfies none.
+  const secondary = independent.filter((u) => !/linkedin\.com|github\.com|x\.com|twitter\.com/i.test(u));
+  const meets = secondary.length >= 2;
+  const statements = [
+    { property: 'P31 (instance of)', value: 'Q5 (human)', reference: 'structural' },
+    { property: 'P106 (occupation)', value: s.identity.headline || '(set a headline in Settings)', reference: links[0] || '(needs an independent source)' },
+    { property: 'P27 / P937 (country of citizenship / work location)', value: s.identity.location || '(set a location)', reference: links[0] || '(needs a source)' },
+    { property: 'P856 (official website)', value: (s.identity.links.find((l) => /profile|site/i.test(l.label)) || {}).url || '', reference: 'self' }
+  ];
+  res.json({
+    profile: p.slug,
+    wikidata: {
+      qid: s.entity.wikidata_qid || null,
+      notability: {
+        meets_bar: meets,
+        assessment: meets
+          ? 'There are at least two independent, non-self-published sources on file. A Wikidata item is defensible — submit the statements below, each with its reference.'
+          : 'Wikidata notability is NOT met with the sources currently on file. Wikidata requires description by independent, serious sources; a personal site plus social profiles does not qualify. Creating an item now would likely be deleted, which is worse than having none. Add independent coverage (press, conference programs, published work, an employer bio) to Settings > Links first.',
+        independent_sources_on_file: secondary
+      },
+      labels: { en: s.identity.name, es: s.identity.name },
+      descriptions: {
+        en: [s.identity.headline, s.identity.location].filter(Boolean).join(', '),
+        es: [s.identity.headline, s.identity.location].filter(Boolean).join(', ')
+      },
+      statements,
+      same_as: links
+    },
+    // Ships regardless of the Wikidata verdict — this is the part that actually moves
+    // AI answer engines today.
+    structured_data_shipped: {
+      person_jsonld: '/cv/' + p.slug + '/roles (each role page) and the public CV page',
+      resume_json: '/api/agent/' + p.slug + '/resume',
+      agent_card: '/api/agent/' + p.slug + '/card',
+      qid_insertion_point: 'Settings > entity.wikidata_qid — adding it is data entry, not a code change'
+    },
+    owner_actions_required: [
+      'Wikidata items must be created by a human account; this endpoint prepares the submission, it cannot file it.',
+      'Independent sources must exist before submitting — do not create an item to see if it survives.'
+    ]
+  });
+});
 
 router.get('/health', (req, res) => res.json({ ok: true, ready, job_sources: jobsource.SOURCES.length, adzuna: jobsource.adzunaActive() }));
 module.exports = router;
