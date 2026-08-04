@@ -190,8 +190,8 @@
   }
   .tbl-pro tbody td{
     background:transparent;border:0;border-bottom:1px solid #e9edf3;
-    padding:11px 14px;vertical-align:top;
-    font-size:12px;line-height:1.48;color:#333f57;
+    padding:9px 13px;vertical-align:top;
+    font-size:12px;line-height:1.45;color:#333f57;
   }
   .tbl-pro tbody tr:last-child td{border-bottom:0;}
   .tbl-pro p{margin:0 0 6px;}
@@ -225,7 +225,7 @@
   }
 
   /* root-cause blocks */
-  .cause{margin-bottom:7px;}
+  .cause{margin-bottom:6px;}
   .cause:last-child{margin-bottom:0;}
   .cause p{margin:0;}
   .cause-tag{
@@ -249,6 +249,14 @@
   }
   td.ref .none{color:#46536e;font-style:italic;font-family:inherit;}
   td.ref .pend{color:#8a6a3b;font-weight:700;}
+  td.ref .tm{
+    margin-top:7px;padding-top:6px;border-top:1px solid #e4e9f0;
+    font-family:inherit;display:block;
+    font-size:9.5px;color:#57657a;line-height:1.45;
+  }
+  td.ref .tm span{display:block;}
+  td.ref .tm b{color:#16233c;font-weight:700;}
+  td.ref .tm .dur{margin-top:3px;color:#14513c;font-weight:700;}
 
   /* status - dot + label, no heavy pill */
   .st{
@@ -909,13 +917,13 @@
   <p class="subtitle">Highest-volume sources &mdash; DRIFT and MCA account for 32 of 63 categorized breaches</p>
 
   <table class="tbl-pro">
-    <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
+    <colgroup><col style="width:14%"><col style="width:30%"><col style="width:26%"><col style="width:17%"><col style="width:13%"></colgroup>
     <thead>
       <tr>
         <th>Data Source</th>
         <th>Root Cause Analysis</th>
         <th>Resolution &amp; Fix</th>
-        <th>Reference</th>
+        <th>Reference &amp; Timing</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -941,7 +949,7 @@
           <p>The DB integrity items and the <i>Not Triggered</i> days were <b>resolved in the July 2026 Tech Release</b> under <b>PRIN-6166</b> and <b>PRIN-5183</b> &mdash; raised 05-Jul-26, resolved <b>17-Jul-26</b>. No Drift items remain outstanding.</p>
           <p class="fine"><b>Epic goals:</b> load stability and resiliency &middot; less manual intervention &middot; monitoring and observability &middot; data validation and error handling &middot; query and load performance &middot; standardized configuration.</p>
         </td>
-        <td class="ref">PRIN-6166<br>PRIN-5183<br>July 2026<br>Tech Release<br><span class="none">VJ &mdash; source owner</span></td>
+        <td class="ref">PRIN-6166<br>PRIN-5183<br><span class="none">Jul 2026 Tech Release</span><div class="tm"><span>Reported <b>Apr 2026</b></span><span>Resolved <b>17-Jul-26</b></span><span class="dur">12 days on the Jira &middot; schedule fix in period</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Resolved 17-Jul-26 &middot; July 2026 Tech Release</div>
@@ -966,7 +974,7 @@
           <p>Raised <b>06-Jul-26</b>, resolved <b>16-Jul-26</b> &mdash; 1w 1d 13h in progress.</p>
           <p class="fine">The oversized attribute is trimmed to 4,000 characters on load under an INC; the field is not consumed downstream, so no schema change was needed.</p>
         </td>
-        <td class="ref">PRIN-5573 <span class="none">Story</span><br>INC &mdash; GAU_OWNER_DELEGATES<br><span class="none">Q3 2026 epic</span></td>
+        <td class="ref">PRIN-5573 <span class="none">Story</span><br>INC &mdash; GAU_OWNER_DELEGATES<div class="tm"><span>Reported <b>May 2026</b></span><span>Resolved <b>16-Jul-26</b></span><span class="dur">10 days on the Jira &middot; 1w 1d 13h in progress</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Resolved 16-Jul-26 &middot; trim INC in period</div>
@@ -994,13 +1002,13 @@
   <p class="subtitle">PTS, DSMT-ISG and GRC &mdash; a source-side correction, a permanent code fix and a recurring external dependency</p>
 
   <table class="tbl-pro">
-    <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
+    <colgroup><col style="width:14%"><col style="width:30%"><col style="width:26%"><col style="width:17%"><col style="width:13%"></colgroup>
     <thead>
       <tr>
         <th>Data Source</th>
         <th>Root Cause Analysis</th>
         <th>Resolution &amp; Fix</th>
-        <th>Reference</th>
+        <th>Reference &amp; Timing</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -1025,7 +1033,7 @@
           <p><b>No IP-side change applied</b> &mdash; the defect lay in how the source generates the control file.</p>
           <p>A second INC covered trimming the oversized attribute on load.</p>
         </td>
-        <td class="ref">INC0021438147<br>INC0023796809</td>
+        <td class="ref">INC0021438147<br>INC0023796809<div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>In period</b></span><span class="dur">DB bug Jun 15&ndash;16 &middot; corrected at source</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Corrected at source under INC</div>
@@ -1046,7 +1054,7 @@
           <p>INC raised to the DSMT team, who confirmed the field is <b>no longer mandatory going forward</b>.</p>
           <p><b>PRIN-4619</b> updated CNTRY_ISO1_CODE from not-nullable to nullable so records carrying NULLs insert cleanly. Raised <b>09-Jun-26</b>, resolved <b>10-Jun-26</b> &mdash; a <b>1-day turnaround</b>, 2 story points.</p>
         </td>
-        <td class="ref">PRIN-4619 <span class="none">Task</span><br>INC0023197471<br><span class="none">Q2 2026 epic</span></td>
+        <td class="ref">PRIN-4619 <span class="none">Task</span><br>INC0023197471<div class="tm"><span>Reported <b>Jun 2026</b></span><span>Resolved <b>10-Jun-26</b></span><span class="dur">1 day &mdash; raised 09-Jun, fixed 10-Jun</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">PRIN-4619 in period &middot; 1 day, no recurrence</div>
@@ -1069,7 +1077,7 @@
           <p>Each load then completed successfully the same day but after the consumer cutoff, which is why these present as <i>missed cutoff / load completed</i> rather than failures.</p>
           <p class="fine">All four incidents completed the same day. No permanent preventive fix exists IP-side, so recurrence remains a tracked risk.</p>
         </td>
-        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">4 occurrences &middot; each closed the day it arose</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">All 4 loads completed same day &middot; recurrence risk tracked</div>
@@ -1097,13 +1105,13 @@
   <p class="subtitle">CRS, Policy and GDW_HRDW &mdash; low-volume sources, all resolved</p>
 
   <table class="tbl-pro">
-    <colgroup><col style="width:15%"><col style="width:33%"><col style="width:28%"><col style="width:12%"><col style="width:12%"></colgroup>
+    <colgroup><col style="width:14%"><col style="width:30%"><col style="width:26%"><col style="width:17%"><col style="width:13%"></colgroup>
     <thead>
       <tr>
         <th>Data Source</th>
         <th>Root Cause Analysis</th>
         <th>Resolution &amp; Fix</th>
-        <th>Reference</th>
+        <th>Reference &amp; Timing</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -1124,7 +1132,7 @@
           <p><b>No INC was raised to the source team</b>, as the fault sat with the pull process.</p>
           <p class="fine">CRS content changes only when a branch or office opens or closes, so a one-day delay carried no material impact on CityMAP downstream.</p>
         </td>
-        <td class="ref">Manual rerun<br><span class="none">no INC raised</span></td>
+        <td class="ref">Manual rerun<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr &amp; Jun 26</b></span><span>Resolved <b>Next day</b></span><span class="dur">1 day per occurrence &middot; 2 occurrences</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Rerun next day &middot; did not recur</div>
@@ -1145,7 +1153,7 @@
           <p>Retriggered manually and completed <b>the same day</b>, later than the cutoff.</p>
           <p>No INC was created, as the source responded normally on every subsequent run.</p>
         </td>
-        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span></td>
+        <td class="ref">Manual retrigger<br><span class="none">no INC raised</span><div class="tm"><span>Reported <b>Apr 2026</b></span><span>Resolved <b>Same day</b></span><span class="dur">Single occurrence &middot; closed same day</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Same-day retrigger &middot; single occurrence</div>
@@ -1167,7 +1175,7 @@
           <p>These jobs run at <b>22:00 EST</b>. The next scheduled run completed successfully before the team began investigating, so no action was taken and <b>no INC or Jira was raised</b>.</p>
           <p class="fine">First and only occurrence in the quarter.</p>
         </td>
-        <td class="ref"><span class="none">none &mdash; self-resolved</span></td>
+        <td class="ref"><span class="none">none &mdash; self-resolved</span><div class="tm"><span>Reported <b>Q2 2026</b></span><span>Resolved <b>Next run</b></span><span class="dur">1 run cycle &middot; 22:00 EST schedule</span></div></td>
         <td>
           <span class="st ok">Resolved</span>
           <div class="st-note">Self-resolved on the next run</div>
@@ -1544,7 +1552,7 @@
         <th>Contingency Window</th>
         <th>Contingency Applied</th>
         <th>Permanent Fix / Action</th>
-        <th>Reference</th>
+        <th>Reference &amp; Timing</th>
       </tr>
     </thead>
     <tbody>
@@ -1630,7 +1638,7 @@
         <th>Contingency Window</th>
         <th>Contingency Applied</th>
         <th>Permanent Fix / Action</th>
-        <th>Reference</th>
+        <th>Reference &amp; Timing</th>
       </tr>
     </thead>
     <tbody>
