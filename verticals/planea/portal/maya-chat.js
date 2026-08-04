@@ -169,7 +169,7 @@
   function css() {
     var s = document.createElement('style');
     s.textContent = [
-      '.maya-panel{position:fixed;right:24px;bottom:96px;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 130px);background:#fff;border:1px solid #E6E9E8;border-radius:18px;box-shadow:0 24px 60px rgba(22,55,58,.28);display:none;flex-direction:column;overflow:hidden;z-index:60;font-family:"DM Sans",system-ui,sans-serif}',
+      '.maya-panel{position:fixed;right:24px;top:130px;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 160px);background:#fff;border:1px solid #E6E9E8;border-radius:18px;box-shadow:0 24px 60px rgba(22,55,58,.28);display:none;flex-direction:column;overflow:hidden;z-index:60;font-family:"DM Sans",system-ui,sans-serif}',
       '.maya-panel.abierto{display:flex}',
       '.maya-head{background:#16373A;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}',
       '.maya-head .orb{width:30px;height:30px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}',
@@ -204,7 +204,7 @@
       // Self-injected floating launcher (used on pages that have no .chatbot button)
       // Sits ABOVE the app bottom tab bar (this launcher only appears on the app, which
       // always has the nav). Raised at all widths so it never covers Perfil.
-      '.maya-fab{position:fixed;right:20px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:55;display:flex;align-items:center;gap:11px;background:#16373A;color:#fff;border:none;cursor:pointer;padding:13px 20px 13px 15px;border-radius:99px;box-shadow:0 10px 30px rgba(22,55,58,.32);font-family:"DM Sans",system-ui,sans-serif;transition:transform .18s,box-shadow .18s}',
+      '.maya-fab{position:fixed;right:20px;top:calc(72px + env(safe-area-inset-top,0px));z-index:55;display:flex;align-items:center;gap:11px;background:#16373A;color:#fff;border:none;cursor:pointer;padding:13px 20px 13px 15px;border-radius:99px;box-shadow:0 10px 30px rgba(22,55,58,.32);font-family:"DM Sans",system-ui,sans-serif;transition:transform .18s,box-shadow .18s}',
       '.maya-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(22,55,58,.4)}',
       '.maya-fab:focus-visible{outline:3px solid #2E7D5B;outline-offset:3px}',
       '.maya-fab .orb{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;animation:mayaPulse 3s ease-in-out infinite}',
@@ -229,7 +229,7 @@
       '.stage-stop:hover{filter:brightness(1.06)}',
       '@media (prefers-reduced-motion:reduce){.stage-orb{animation:none!important}}',
       // Mobile: lift the launcher ABOVE the app bottom tab bar so it never covers it.
-      '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:calc(92px + env(safe-area-inset-bottom,0px));width:auto;height:calc(100vh - 180px)}.maya-fab .txt{display:none}.maya-fab{right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));padding:14px;border-radius:50%}}'
+      '@media (max-width:520px){.maya-panel{right:8px;left:8px;top:calc(132px + env(safe-area-inset-top,0px));bottom:auto;width:auto;height:calc(100vh - 210px)}.maya-fab .txt{display:none}.maya-fab{right:auto;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:14px;border-radius:50%}.maya-fab:hover{transform:translateX(-50%)}}'
     ].join('');
     document.head.appendChild(s);
   }
