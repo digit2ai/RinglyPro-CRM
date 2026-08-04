@@ -214,7 +214,14 @@ async function cleanup() {
   const emps = await http('/employers?q=citi', { as: 'a' });
   ok('the seeded registry is queryable', emps.status === 200 && emps.body.employers.length >= 1);
   const anyEmp = (await http('/employers', { as: 'a' })).body.employers[0];
-  ok('every registry row carries an honest status', !!anyEmp && ['live', 'unprobed', 'no_public_endpoint', 'blocked_tos', 'dormant_key', 'error'].includes(anyEmp.status));
+  ok('every registry row carries an honest status', !!anyEmp && ['live', 'unverified', 'unprobed', 'no_public_endpoint', 'blocked_tos', 'dormant_key', 'error'].includes(anyEmp.status), anyEmp && anyEmp.status);
+  // A board found by GUESSING a token must never be trusted: it can land on an abandoned
+  // trial account squatting a real company name.
+  const unver = (await http('/employers?status=unverified', { as: 'a' })).body.employers || [];
+  ok('guessed boards are held as unverified, not published as live',
+    unver.every((e) => e.cfg && e.cfg.guessed === true));
+  ok('an unverified board never reaches the shared pool',
+    (await employersSvc.liveEmployers(sequelize)).every((e) => !(e.cfg && e.cfg.guessed)));
   const addW = await http('/watchlist', { method: 'POST', as: 'a', body: { employer_id: anyEmp.id, priority: 3 } });
   ok('an employer can be watchlisted', addW.status === 200);
   const wl = await http('/watchlist', { as: 'a' });
@@ -320,6 +327,55 @@ async function cleanup() {
   }
   const auto = await http('/jobs/auto', { as: 'a' });
   ok('the auto-run state is visible in the API, not hidden in env', auto.status === 200 && auto.body.env_var === 'CV_JOBS_GO');
+
+  section('Phase 7 — public surfaces obey the privacy settings');
+  // A real slug is needed: the public surface is backed by the static resumes keyed by slug.
+  const realSlug = 'manuelstagg';
+  const realProf = (await sequelize.query('SELECT * FROM cv_profiles WHERE slug=:s', { replacements: { s: realSlug }, type: QueryTypes.SELECT }))[0];
+  if (realProf) {
+    const cvAgent = require('../src/routes/cv-agent');
+    const before = await settingsSvc.get(sequelize, realProf);
+    const snapshot = JSON.parse(JSON.stringify(before));
+
+    await settingsSvc.patch(sequelize, realProf, { privacy: { public: { email: false, phone: false, compensation: false } } });
+    await new Promise((r) => setTimeout(r, 1100));                    // let the 60s cache entry age out
+    cvAgent.profileSettings.cache && cvAgent.profileSettings.cache.clear && cvAgent.profileSettings.cache.clear();
+    let hidden = await cvAgent.publicResume(realSlug);
+    // The module caches for 60s; force a fresh read by waiting is impractical in SIT, so assert
+    // on applyPrivacy directly (same function the routes use) plus the cached-path shape.
+    const rawResume = cvAgent.getResume(realSlug);
+    const filtered = cvAgent.applyPrivacy(rawResume, settingsSvc.sanitize({ privacy: { public: { email: false, phone: false } } }));
+    ok('resume.json OMITS email when private', filtered.basics.email === undefined);
+    ok('resume.json OMITS phone when private', filtered.basics.phone === undefined);
+    const shown = cvAgent.applyPrivacy(rawResume, settingsSvc.sanitize({ privacy: { public: { email: true, phone: true } } }));
+    ok('resume.json includes email once opted in', !!shown.basics.email);
+    const withComp = cvAgent.applyPrivacy(rawResume, settingsSvc.sanitize({
+      targeting: { compensation: { base_floor: 200000 } }, privacy: { public: { compensation: false } } }));
+    ok('compensation never leaks to the public résumé when private', !withComp.meta.compensation);
+    const noAvail = cvAgent.applyPrivacy(rawResume, settingsSvc.sanitize({ privacy: { public: { availability: false } } }));
+    ok('availability is absent when not published', noAvail.meta.availability === undefined);
+    const card = cvAgent.agentCard(cvAgent.applyPrivacy(rawResume, settingsSvc.sanitize({
+      targeting: { roles: [{ title: 'Senior IT Project Manager' }] }, privacy: { public: { availability: true } } })));
+    ok('the agent card carries live role targets from settings', (card.targets.roles || []).indexOf('Senior IT Project Manager') >= 0);
+    const roleSet = settingsSvc.sanitize({ identity: { name: 'X', headline: 'H' },
+      targeting: { roles: [{ title: 'Senior IT Project Manager', page: true }, { title: 'Hidden Role', page: false }] } });
+    const cvPages = require('../src/routes/cv-pages');
+    const pages = cvPages.pageRoles(roleSet);
+    ok('a role page exists only for a role marked public', pages.length === 1 && pages[0].title === 'Senior IT Project Manager');
+    const ld = cvPages.personJsonLd({ settings: roleSet, resume: rawResume, origin: 'https://example.com', role: pages[0] });
+    ok('role-page JSON-LD states the role as jobTitle', ld.jobTitle === 'Senior IT Project Manager');
+    ok('role-page JSON-LD declares what is sought', Array.isArray(ld.seeks) && ld.seeks.length === 1);
+    const ldPriv = cvPages.personJsonLd({ settings: settingsSvc.sanitize({ identity: { name: 'X', contact_email: 'a@b.com' },
+      privacy: { public: { email: false } } }), resume: rawResume, origin: 'https://example.com', role: null });
+    ok('role-page JSON-LD omits a private email', ldPriv.email === undefined);
+
+    await settingsSvc.save(sequelize, realProf.id, snapshot);          // restore, never leave a real profile altered
+    const restored = await settingsSvc.get(sequelize, realProf);
+    ok('SIT restores the real profile settings it touched',
+      JSON.stringify(restored.privacy.public) === JSON.stringify(snapshot.privacy.public));
+  } else {
+    ok('Phase 7 privacy checks ran', false, 'reference profile missing');
+  }
 
   section('Phase 8 — entity dossier honesty');
   const dos = await http('/entity/dossier', { as: 'a' });

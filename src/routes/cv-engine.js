@@ -46,7 +46,7 @@ const SEED = [
     email: 'manuelstagg@gmail.com', phone: '+16566001400', location: 'Wesley Chapel, FL',
     site: 'https://manuelstagg.com', linkedin: 'https://www.linkedin.com/in/manuel-stagg-7a11a9a0',
     target_roles: 'Full-Stack AI Solutions Architect; AI in Banking, Risk & Compliance (KYC/AML/Sanctions); MCP / Multi-Agent Systems & LLMOps; Fractional CTO / AI Advisory',
-    summary: 'Senior SME and Full-Stack AI Solutions Architect. 24 years in the Banking Industry (Citigroup FCRM/CTI — KYC/AML, OFAC sanctions, CEAM) plus architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES.',
+    summary: 'Senior SME and Full-Stack AI Solutions Architect. 25 years in the Banking Industry (Citigroup FCRM/CTI — KYC/AML, OFAC sanctions, CEAM) plus architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES.',
     pw: process.env.CV_ADMIN_PW_MANUELSTAGG || 'Palindrome@7' },
   { slug: 'anastagg', name: 'Ana I. Stagg', headline: 'Securities & Derivatives Analyst — Custody Billing & Financial Operations',
     email: 'ana.staggp@gmail.com', phone: '+18134389000', location: 'Tampa, FL',

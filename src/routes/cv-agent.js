@@ -11,6 +11,7 @@
 const express = require('express');
 const { Sequelize, QueryTypes } = require('sequelize');
 const { getResume, RESUMES, listSlugs } = require('../data/cv-resumes');
+const settingsSvc = require('../services/cv-settings');
 
 const router = express.Router();
 router.use(express.json({ limit: '256kb' }));
@@ -34,6 +35,89 @@ async function claude(system, user, maxTokens = 600) {
   } catch (e) { return null; } finally { clearTimeout(timer); }
 }
 
+// ================= PRIVACY-AWARE PUBLIC PROJECTION (Phase 7) =================
+// The static résumé in cv-resumes.js is the base; the profile's SETTINGS decide what of it
+// may leave the building. A field the owner marked private is DELETED from the object here —
+// so it is absent from resume.json, the agent card, every MCP tool response and every role
+// page, rather than merely hidden in a UI. Settings also supply the live role targets, so the
+// public surface and the matching engine can never drift apart.
+const SETTINGS_TTL_MS = 60 * 1000;
+const settingsCache = new Map();          // slug -> { at, profile, settings }
+
+async function profileSettings(slug) {
+  const hit = settingsCache.get(slug);
+  if (hit && Date.now() - hit.at < SETTINGS_TTL_MS) return hit;
+  let profile = null, settings = null;
+  if (sequelize) {
+    try {
+      const rows = await sequelize.query('SELECT * FROM cv_profiles WHERE slug=:s', { replacements: { s: slug }, type: QueryTypes.SELECT });
+      profile = rows[0] || null;
+      if (profile) settings = await settingsSvc.get(sequelize, profile);
+    } catch (e) { /* DB down: fall back to the static résumé, never to a fabricated one */ }
+  }
+  const rec = { at: Date.now(), profile, settings };
+  settingsCache.set(slug, rec);
+  return rec;
+}
+
+// Apply the owner's visibility choices to a JSON Resume object.
+function applyPrivacy(resume, settings) {
+  const r = JSON.parse(JSON.stringify(resume));
+  if (!settings) return r;                                  // no settings row yet = unchanged
+  const pub = (settings.privacy && settings.privacy.public) || {};
+  const id = settings.identity || {};
+  const t = settings.targeting || {};
+
+  if (!pub.email) delete r.basics.email;
+  if (!pub.phone) delete r.basics.phone;
+  if (!pub.location) delete r.basics.location;
+  if (!pub.languages) delete r.languages;
+  if (!pub.links) delete r.basics.profiles;
+
+  // Owner-entered facts only appear when explicitly opted in.
+  if (pub.work_authorization && (id.work_authorization || []).length) r.meta.workAuthorization = id.work_authorization;
+  if (pub.security_clearance && id.security_clearance) r.meta.securityClearance = id.security_clearance;
+  if (pub.compensation && t.compensation) r.meta.compensation = t.compensation;
+  if (pub.availability) {
+    r.meta.availability = (t.availability && t.availability.status) || r.meta.availability;
+    if (t.availability && t.availability.start_date) r.meta.startDate = t.availability.start_date;
+  } else {
+    delete r.meta.availability;
+  }
+
+  // Live role targets from settings win over the static list.
+  const roles = (t.roles || []).map((x) => x.title).filter(Boolean);
+  if (roles.length) r.meta.targetRoles = roles.join('; ');
+  if ((t.industries || []).length) r.meta.targetIndustries = t.industries;
+  if (id.years_experience) r.meta.yearsExperience = id.years_experience;
+  if (id.experience_domain) r.meta.experienceDomain = id.experience_domain;
+  if (settings.entity && settings.entity.wikidata_qid) r.meta.wikidata = 'https://www.wikidata.org/wiki/' + settings.entity.wikidata_qid;
+
+  // sameAs graph, deduplicated against whatever the static résumé already lists.
+  const links = (id.links || []).map((l) => l.url).filter(Boolean);
+  if (links.length && pub.links) {
+    const have = new Set((r.basics.profiles || []).map((p) => p.url));
+    r.basics.profiles = (r.basics.profiles || []).concat(links.filter((u) => !have.has(u)).map((u) => ({ network: 'Web', url: u })));
+  }
+  return r;
+}
+
+// Confidential mode: the profile is suppressed from named employers. We cannot identify an
+// anonymous HTTP caller, so this is enforced where it CAN be — the owner's own outreach and
+// alerts (cv-engine) — and reported honestly here rather than pretended.
+function confidentialNote(settings) {
+  const cm = settings && settings.privacy && settings.privacy.confidential_mode;
+  if (!cm || !cm.enabled || !(cm.employers || []).length) return null;
+  return 'This candidate has asked not to be presented to certain employers. If you represent one of them, please disregard this profile.';
+}
+
+async function publicResume(slug) {
+  const base = getResume(slug);
+  if (!base) return null;
+  const { settings } = await profileSettings(slug);
+  return applyPrivacy(base, settings);
+}
+
 // ---- simple per-IP rate limit for the LLM/DB actions ----
 const RL = {};
 function limited(ip, max = 40, winMs = 3600 * 1000) {
@@ -55,8 +139,14 @@ function toolGetProfile(r) {
     resume: r.basics.url + '/resume.json' };
 }
 function toolAvailability(r) {
+  if (r.meta.availability === undefined) {
+    return { name: r.basics.name, availability: 'not published',
+      note: 'This candidate has not published their availability. Use leave_message to ask directly.',
+      target_roles: r.meta.targetRoles };
+  }
   return { name: r.basics.name, available: r.meta.availability !== 'closed', availability: r.meta.availability,
-    target_roles: r.meta.targetRoles, contact: 'Use leave_message to reach ' + r.basics.name.split(' ')[0] + ' — it lands in their private inbox.' };
+    start_date: r.meta.startDate, target_roles: r.meta.targetRoles,
+    contact: 'Use leave_message to reach ' + r.basics.name.split(' ')[0] + ' — it lands in their private inbox.' };
 }
 async function toolMatch(r, jd) {
   jd = String(jd || '').slice(0, 6000);
@@ -107,7 +197,11 @@ function agentCard(r) {
       { id: 'check_availability', name: 'Check availability', description: 'Whether this candidate is open, and the roles they target.', tags: ['availability'] },
       { id: 'leave_message', name: 'Leave an opportunity', description: `Send a role/opportunity to ${r.basics.name}; it lands in their private inbox.`, tags: ['contact', 'recruiting'] }
     ],
-    endpoints: { rest: `${url}/api/agent/${slug}`, mcp: `${url}/api/agent/${slug}/mcp`, resume: `${url}/resume.json`, card: `${url}/.well-known/agent.json` }
+    endpoints: { rest: `${url}/api/agent/${slug}`, mcp: `${url}/api/agent/${slug}/mcp`, resume: `${url}/resume.json`, card: `${url}/.well-known/agent.json` },
+    // Live from the profile's settings, so the card cannot drift from what the engine matches.
+    targets: { roles: String(r.meta.targetRoles || '').split(';').map((x) => x.trim()).filter(Boolean),
+               industries: r.meta.targetIndustries || [],
+               availability: r.meta.availability === undefined ? 'not published' : r.meta.availability }
   };
 }
 
@@ -121,7 +215,7 @@ const MCP_TOOLS = [
 ];
 async function callTool(r, name, args) {
   if (name === 'get_profile') return toolGetProfile(r);
-  if (name === 'get_resume') return getResume(r.meta.slug);
+  if (name === 'get_resume') return r;                       // already privacy-filtered
   if (name === 'match_against_jd') return await toolMatch(r, (args || {}).job_description);
   if (name === 'check_availability') return toolAvailability(r);
   if (name === 'leave_message') return await toolLeaveMessage(r, args);
@@ -129,27 +223,33 @@ async function callTool(r, name, args) {
 }
 
 // ================= REST =================
-function resolve(req, res) { const r = getResume(String(req.params.slug || '').toLowerCase()); if (!r) { res.status(404).json({ error: 'unknown candidate' }); return null; } return r; }
+// Every public read goes through publicResume() so the owner's visibility settings apply
+// uniformly. Nothing below may reach around it to the raw résumé.
+async function resolve(req, res) {
+  const r = await publicResume(String(req.params.slug || '').toLowerCase());
+  if (!r) { res.status(404).json({ error: 'unknown candidate' }); return null; }
+  return r;
+}
 
 router.get('/', (req, res) => res.json({ ok: true, candidates: listSlugs(), note: 'Each candidate exposes /card, /profile, /resume, POST /match, POST /message, and an MCP endpoint at /mcp.' }));
-router.get('/:slug/card', (req, res) => { const r = resolve(req, res); if (!r) return; res.type('application/json').json(agentCard(r)); });
-router.get('/:slug/profile', (req, res) => { const r = resolve(req, res); if (!r) return; res.json(toolGetProfile(r)); });
-router.get(['/:slug/resume', '/:slug/resume.json'], (req, res) => { const r = resolve(req, res); if (!r) return; res.type('application/json').json(getResume(r.meta.slug)); });
+router.get('/:slug/card', async (req, res) => { const r = await resolve(req, res); if (!r) return; res.type('application/json').json(agentCard(r)); });
+router.get('/:slug/profile', async (req, res) => { const r = await resolve(req, res); if (!r) return; res.json(toolGetProfile(r)); });
+router.get(['/:slug/resume', '/:slug/resume.json'], async (req, res) => { const r = await resolve(req, res); if (!r) return; res.type('application/json').json(r); });
 
 router.post('/:slug/match', async (req, res) => {
-  const r = resolve(req, res); if (!r) return;
+  const r = await resolve(req, res); if (!r) return;
   if (limited(ipOf(req))) return res.status(429).json({ error: 'rate limit — try again later' });
   res.json(await toolMatch(r, req.body && req.body.job_description));
 });
 router.post('/:slug/message', async (req, res) => {
-  const r = resolve(req, res); if (!r) return;
+  const r = await resolve(req, res); if (!r) return;
   if (limited(ipOf(req), 20)) return res.status(429).json({ error: 'rate limit — try again later' });
   res.json(await toolLeaveMessage(r, req.body || {}));
 });
 
 // ================= MCP (JSON-RPC 2.0) =================
 router.post('/:slug/mcp', async (req, res) => {
-  const r = getResume(String(req.params.slug || '').toLowerCase());
+  const r = await publicResume(String(req.params.slug || '').toLowerCase());
   const body = req.body || {};
   const id = (body.id === undefined ? null : body.id);
   const ok = (result) => res.json({ jsonrpc: '2.0', id, result });
@@ -173,4 +273,4 @@ router.post('/:slug/mcp', async (req, res) => {
   } catch (e) { return err(-32603, (e && e.message) || 'internal error'); }
 });
 
-module.exports = { router, agentCard, getResume, listSlugs };
+module.exports = { router, agentCard, getResume, listSlugs, publicResume, profileSettings, applyPrivacy, confidentialNote };

@@ -11,7 +11,7 @@ const RESUMES = {
       label: 'Senior SME & Full-Stack AI Solutions Architect',
       email: 'manuelstagg@gmail.com', phone: '+1 656-600-1400',
       url: 'https://manuelstagg.com',
-      summary: 'Senior SME and Full-Stack AI Solutions Architect. 24+ years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, Financial Crimes Risk Management, enterprise data services under the Citi Consent Order) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production across multiple verticals. Bilingual EN/ES.',
+      summary: 'Senior SME and Full-Stack AI Solutions Architect. 25+ years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, Financial Crimes Risk Management, enterprise data services under the Citi Consent Order) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production across multiple verticals. Bilingual EN/ES.',
       location: { city: 'Wesley Chapel', region: 'FL', countryCode: 'US' },
       profiles: [
         { network: 'LinkedIn', url: 'https://www.linkedin.com/in/manuel-stagg-7a11a9a0' },
@@ -26,7 +26,7 @@ const RESUMES = {
       { name: 'Citigroup — Enterprise Architecture (CEAM), Citi Consent Order', position: 'Citi Technology Infrastructure (CTI) — Data Services SME',
         summary: 'Data services subject-matter expert within Citi Technology Infrastructure and Enterprise Architecture (CEAM), supporting Consent Order remediation programs.' },
       { name: 'Citigroup', position: 'Banking Industry — Compliance, Risk & Enterprise Technology',
-        summary: '24+ years across compliance, risk and enterprise technology at tier-1 institutional scale on global programs.' }
+        summary: '25+ years across compliance, risk and enterprise technology at tier-1 institutional scale on global programs.' }
     ],
     skills: [
       { name: 'AI & MCP', keywords: ['MCP Neural Intelligence', 'Multi-agent systems', 'LLMOps', 'Full-stack engineering', 'AI solution architecture'] },

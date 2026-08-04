@@ -683,7 +683,7 @@ app.get(['/es'], (req, res, next) => {
 // domains are handled; every other host falls through to existing behavior.
 const CV_SITES = {
   'manuelstagg.com': { name: 'Manuel Stagg', role: 'Senior SME & Full-Stack AI Solutions Architect', es: true,
-    blurb: 'Senior SME and Full-Stack AI Solutions Architect. 24 years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, CEAM) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES. Wesley Chapel, FL.',
+    blurb: 'Senior SME and Full-Stack AI Solutions Architect. 25 years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, CEAM) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES. Wesley Chapel, FL.',
     email: 'manuelstagg@gmail.com', phone: '+1 656-600-1400',
     links: ['https://www.linkedin.com/in/manuel-stagg-7a11a9a0', 'https://digit2ai.com'],
     topics: 'MCP Neural Intelligence; multi-agent AI systems; LLMOps; AI in banking, risk and compliance (KYC, AML, OFAC sanctions); Financial Crimes Risk Management; full-stack engineering' },
@@ -712,15 +712,30 @@ function isoDay() { return new Date().toISOString().slice(0, 10); }
 const cvAgent = require('./routes/cv-agent');
 const CV_HOST_SLUG = { 'manuelstagg.com': 'manuelstagg', 'anastagg.com': 'anastagg', 'andreastagg.com': 'andreastagg', 'julianagramowski.com': 'juliana_gramowski' };
 function cvHostSlug(req) { return CV_HOST_SLUG[String(req.get('host') || '').toLowerCase().replace(/^www\./, '')] || null; }
-app.get('/resume.json', (req, res, next) => {
+// Both go through publicResume() so the owner's privacy settings apply here exactly as they
+// do on /api/agent/* — a field marked private is absent, not blanked.
+app.get('/resume.json', async (req, res, next) => {
   const slug = cvHostSlug(req); if (!slug) return next();
-  const r = cvAgent.getResume(slug); if (!r) return next();
+  const r = await cvAgent.publicResume(slug).catch(() => null); if (!r) return next();
   res.type('application/json').json(r);
 });
-app.get(['/.well-known/agent.json', '/agent.json'], (req, res, next) => {
+app.get(['/.well-known/agent.json', '/agent.json'], async (req, res, next) => {
   const slug = cvHostSlug(req); if (!slug) return next();
-  const r = cvAgent.getResume(slug); if (!r) return next();
+  const r = await cvAgent.publicResume(slug).catch(() => null); if (!r) return next();
   res.type('application/json').json(cvAgent.agentCard(r));
+});
+
+// Phase 7 — role-targeted landing pages, generated per profile from its own settings.
+// Host-aware: on a CV domain they live at /roles and /roles/:role. On the main host the same
+// pages are reachable at /cv/:slug/roles/... (mounted with the other API routes below).
+const cvPages = require('./routes/cv-pages');
+app.get('/roles', (req, res, next) => {
+  const slug = cvHostSlug(req); if (!slug) return next();
+  cvPages.renderRoleIndex(slug, req, res, next).catch(next);
+});
+app.get('/roles/:role', (req, res, next) => {
+  const slug = cvHostSlug(req); if (!slug) return next();
+  cvPages.renderRolePage(slug, String(req.params.role).toLowerCase(), req, res, next).catch(next);
 });
 
 app.get('/robots.txt', (req, res, next) => {
@@ -733,7 +748,7 @@ app.get('/robots.txt', (req, res, next) => {
   res.type('text/plain').send(body);
 });
 
-app.get('/sitemap.xml', (req, res, next) => {
+app.get('/sitemap.xml', async (req, res, next) => {
   const site = cvSite(req.get('host')); if (!site) return next();
   const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
   const day = isoDay();
@@ -741,16 +756,46 @@ app.get('/sitemap.xml', (req, res, next) => {
   if (site.es) urls += `    <xhtml:link rel="alternate" hreflang="en" href="${origin}/"/>\n    <xhtml:link rel="alternate" hreflang="es" href="${origin}/es"/>\n`;
   urls += `  </url>\n`;
   if (site.es) urls += `  <url>\n    <loc>${origin}/es</loc>\n    <lastmod>${day}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n    <xhtml:link rel="alternate" hreflang="es" href="${origin}/es"/>\n    <xhtml:link rel="alternate" hreflang="en" href="${origin}/"/>\n  </url>\n`;
+  // Role pages, straight from the profile's settings — a new role target appears here with
+  // no code change, and a role the owner unpublishes disappears.
+  const slug = cvHostSlug(req);
+  if (slug) {
+    try {
+      const paths = await cvPages.roleUrls(slug);
+      if (paths.length) urls += `  <url>\n    <loc>${origin}/roles</loc>\n    <lastmod>${day}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      paths.forEach((p) => { urls += `  <url>\n    <loc>${origin}${p}</loc>\n    <lastmod>${day}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`; });
+    } catch (e) { /* a settings hiccup must not break the sitemap */ }
+  }
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}</urlset>\n`);
 });
 
-app.get('/llms.txt', (req, res, next) => {
+app.get('/llms.txt', async (req, res, next) => {
   const site = cvSite(req.get('host')); if (!site) return next();
   const origin = 'https://' + String(req.get('host')).toLowerCase().replace(/^www\./, '');
-  let body = `# ${site.name}\n\n> ${site.blurb}\n\n## Profile\n`;
-  body += `- Name: ${site.name}\n- Role: ${site.role}\n- Specializations: ${site.topics}\n- Languages: English, Spanish\n- Availability: open to senior opportunities\n- Contact: ${site.email} · ${site.phone}\n- Links: ${site.links.join(' · ')}\n\n## Pages\n- ${origin}/ (CV, English)\n`;
-  if (site.es) body += `- ${origin}/es (CV, Spanish)\n`;
   const slug = cvHostSlug(req);
+  // Render the facts from the profile's settings when they exist, so llms.txt cannot state a
+  // different headline, experience count or contact rule than the page and the agent card.
+  let live = null;
+  if (slug) { try { live = (await cvAgent.profileSettings(slug)).settings; } catch (e) {} }
+  const id = (live && live.identity) || {};
+  const pub = (live && live.privacy && live.privacy.public) || {};
+  const roles = (((live || {}).targeting || {}).roles || []).map((r) => r.title).filter(Boolean);
+  const name = id.name || site.name;
+  const headline = id.headline || site.role;
+  let body = `# ${name}\n\n> ${site.blurb}\n\n## Profile\n`;
+  body += `- Name: ${name}\n- Role: ${headline}\n`;
+  if (id.years_experience) body += `- Experience: ${id.years_experience} years${id.experience_domain ? ' of ' + id.experience_domain : ''}\n`;
+  body += `- Specializations: ${roles.length ? roles.join('; ') : site.topics}\n- Languages: English, Spanish\n`;
+  if (!live || pub.availability) body += `- Availability: open to senior opportunities\n`;
+  // Contact details appear only if the owner published them.
+  if (!live || pub.email) body += `- Contact: ${id.contact_email || site.email}${(!live || pub.phone) ? ' · ' + (id.contact_phone || site.phone) : ''}\n`;
+  else body += `- Contact: send an opportunity via ${origin}/api/agent/${slug}/message — it reaches them directly\n`;
+  const links = (pub.links === false) ? [] : ((id.links || []).map((l) => l.url).filter(Boolean));
+  body += `- Links: ${(links.length ? links : site.links).join(' · ')}\n\n## Pages\n- ${origin}/ (CV, English)\n`;
+  if (site.es) body += `- ${origin}/es (CV, Spanish)\n`;
+  if (slug) {
+    try { (await cvPages.roleUrls(slug)).forEach((p) => { body += `- ${origin}${p} (role target)\n`; }); } catch (e) {}
+  }
   if (slug) {
     body += `\n## For AI agents\nThis candidate is queryable by other AIs.\n`;
     body += `- Résumé (JSON Resume): ${origin}/resume.json\n`;
@@ -1202,6 +1247,7 @@ app.use('/api/contacts', contactsRoutes);
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
 app.use('/api/cv-engine', require('./routes/cv-engine')); // Multi-tenant CV Talent Engine (auth, analytics, opportunities, AI broadcast)
 app.use('/api/agent', require('./routes/cv-agent').router); // Phase 2 — public agent surface (resume.json, A2A card, MCP) per CV candidate
+app.use('/cv', require('./routes/cv-pages').router);       // Phase 7 — role-targeted landing pages (main-host access)
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/vision2ai/api', require('./routes/vision2ai')); // Vision2Ai booking calendar (web form + future Lite voice agent)
 // app.use('/api/appointment', appointmentRoutes); // REMOVED: Was loading duplicate model, not router
