@@ -44,6 +44,32 @@
   .bar button:hover{background:#243453;}
   .bar button.on{background:var(--num);border-color:var(--num);color:#06231a;font-weight:800;}
   .bar .val{min-width:44px;text-align:center;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .bar button.nav{padding:8px 12px;font-size:12px;line-height:1;}
+  .bar button:disabled{opacity:.3;cursor:default;}
+
+  /* floating slide nav - large targets for use while presenting */
+  .deck-nav{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:55;
+    display:flex;align-items:stretch;gap:6px;
+    background:rgba(9,15,28,.94);border:1px solid #2a3c5e;border-radius:999px;
+    padding:6px;box-shadow:0 10px 34px rgba(0,0,0,.5);
+    backdrop-filter:blur(8px);
+  }
+  .deck-nav button{
+    background:#1a2740;border:1px solid #2a3c5e;color:var(--ink);
+    border-radius:999px;padding:14px 24px;font-size:16px;font-weight:700;
+    font-family:inherit;cursor:pointer;line-height:1;
+    display:flex;align-items:center;gap:10px;
+  }
+  .deck-nav button:hover{background:#2b3f63;}
+  .deck-nav button:active{background:#35507d;}
+  .deck-nav button:disabled{opacity:.28;cursor:default;background:#1a2740;}
+  .deck-nav button span{color:var(--num);font-size:14px;}
+  .deck-nav .sep{
+    display:flex;align-items:center;padding:0 16px;color:var(--dim);
+    font-size:15px;font-weight:800;letter-spacing:.1em;font-variant-numeric:tabular-nums;
+  }
+  body.mirror .deck-nav{transform:translateX(-50%) scaleX(-1);}
   .prog{position:fixed;top:0;left:0;height:3px;background:var(--num);z-index:60;width:0;}
 
   /* reading guide */
@@ -115,7 +141,9 @@
 
 <div class="bar">
   <span class="t">Talking Points</span>
+  <button id="prev" class="nav" title="Previous slide (↑)">◀</button>
   <span class="pos" id="pos">Slide 01 / 15</span>
+  <button id="next" class="nav" title="Next slide (↓)">▶</button>
   <span class="grp">
     <button id="play" title="Space">▶ Scroll</button>
     <button id="slower" title="−">Slow</button>
@@ -234,6 +262,13 @@
 <div class="end">End of script</div>
 </div>
 
+<!-- large targets for use while presenting -->
+<div class="deck-nav">
+  <button id="prevBig" title="Previous slide (↑)"><span>◀</span>Prev</button>
+  <span class="sep" id="posBig">01</span>
+  <button id="nextBig" title="Next slide (↓)">Next<span>▶</span></button>
+</div>
+
 <script>
 (function(){
   var body=document.body, wrap=document.getElementById('wrap');
@@ -271,14 +306,30 @@
     else document.documentElement.requestFullscreen();
   });
 
-  function jump(dir){
-    var y=window.scrollY+window.innerHeight*0.38+2, target=null;
-    for(var i=0;i<secs.length;i++){
-      var top=secs[i].getBoundingClientRect().top+window.scrollY;
-      if(dir>0 && top>y+4){ target=secs[i]; break; }
-      if(dir<0 && top<y-4) target=secs[i];
-    }
-    if(target) window.scrollTo({top:target.getBoundingClientRect().top+window.scrollY-window.innerHeight*0.38, behavior:'smooth'});
+  var cur=0, navLock=0;
+  function goTo(i){
+    i=Math.max(0,Math.min(secs.length-1,i));
+    cur=i;
+    var top=secs[i].getBoundingClientRect().top+window.scrollY-window.innerHeight*0.38;
+    // hold off the scroll-derived index while the smooth scroll animates,
+    // otherwise rapid clicks get overwritten mid-flight
+    navLock=Date.now()+700;
+    window.scrollTo({top:Math.max(0,top), behavior:'smooth'});
+    paint();
+  }
+  function jump(dir){ goTo(cur+dir); }
+
+  var prevBtns=[document.getElementById('prev'),document.getElementById('prevBig')];
+  var nextBtns=[document.getElementById('next'),document.getElementById('nextBig')];
+  prevBtns.forEach(function(b){ b.addEventListener('click',function(){jump(-1);}); });
+  nextBtns.forEach(function(b){ b.addEventListener('click',function(){jump(1);}); });
+
+  function paint(){
+    var label=secs[cur].querySelector('.n').textContent;
+    posEl.textContent='Slide '+label+'  ·  '+(cur+1)+' / '+secs.length;
+    document.getElementById('posBig').textContent=label;
+    prevBtns.forEach(function(b){ b.disabled = cur===0; });
+    nextBtns.forEach(function(b){ b.disabled = cur===secs.length-1; });
   }
 
   document.addEventListener('keydown',function(e){
@@ -300,13 +351,13 @@
   function onScroll(){
     var max=document.body.scrollHeight-window.innerHeight;
     prog.style.width=(max>0?(window.scrollY/max*100):0)+'%';
-    var y=window.scrollY+window.innerHeight*0.38, cur=0;
-    secs.forEach(function(s,i){ if(s.getBoundingClientRect().top+window.scrollY<=y+4) cur=i; });
-    var label=secs[cur].querySelector('.n').textContent;
-    posEl.textContent='Slide '+label+'  ·  '+(cur+1)+' / '+secs.length;
+    if(Date.now()<navLock) return;
+    var y=window.scrollY+window.innerHeight*0.38, i=0;
+    secs.forEach(function(s,k){ if(s.getBoundingClientRect().top+window.scrollY<=y+4) i=k; });
+    if(i!==cur){ cur=i; paint(); }
   }
   window.addEventListener('scroll',onScroll,{passive:true});
-  setSpeed(1.0); setSize(30); onScroll();
+  setSpeed(1.0); setSize(30); paint(); onScroll();
 })();
 </script>
 </body>
