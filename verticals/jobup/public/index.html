@@ -11,6 +11,7 @@
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://jobup.dev/">
 <style>
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden}
 /* ============================================================
    ORBUP — SELF-SERVE BUILDER (dark aurora, Lovable-matched)
    All styles scoped under .d2b to avoid collisions.
@@ -200,7 +201,7 @@
 .d2b .hero .lede{font-size:clamp(17px,2.1vw,21px);color:#c9ccd6;max-width:52ch;margin:22px auto 0;font-weight:450}
 
 /* ===== champion-teaser voice orb (ported verbatim) ===== */
-.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:22px 0 14px;--orb-size:560px;position:relative;z-index:3}
+.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:22px 0 14px;--orb-size:min(50vh,470px);position:relative;z-index:3}
 .d2b .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 200ms ease;user-select:none;-webkit-tap-highlight-color:transparent;--orb-amp:0;will-change:transform}
 .d2b .orb-wrap:hover{transform:scale(1.02)}
 .d2b .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
@@ -252,8 +253,8 @@
 .d2b .orb-fallback[hidden]{display:none!important}
 .d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
 .d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
-@media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
-@media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
+@media(max-width:900px){.d2b .hero-logo{--orb-size:min(44vh,380px)}}
+@media(max-width:480px){.d2b .hero-logo{--orb-size:min(38vh,280px)}}
 @media(prefers-reduced-motion:reduce){
   .d2b .orb-ring-outer,.d2b .orb-ring-mid,.d2b .orb-ring-inner,.d2b .orb-iris-outer,.d2b .orb-iris-segs,.d2b .orb-scan,.d2b .orb-crosshair,.d2b .orb-particle{animation:none!important}
   .d2b .orb-svg animate,.d2b .orb-svg animateTransform{display:none}
@@ -538,6 +539,47 @@
 .d2b .ju-vs .old li::before{content:"\00d7";position:absolute;left:2px;color:var(--faint)}
 .d2b .ju-vs .new li::before{content:"\2192";position:absolute;left:0;color:var(--accent-cyan)}
 @media(max-width:720px){.d2b .ju-vs{grid-template-columns:1fr}}
+
+/* ---- intake sheet -------------------------------------------------------- */
+.d2b .ju-sheet{position:fixed;inset:0;z-index:80;display:none;align-items:flex-start;justify-content:center;
+  background:rgba(6,6,10,.82);backdrop-filter:blur(10px);overflow-y:auto;padding:34px 18px}
+.d2b .ju-sheet.open{display:flex}
+.d2b .ju-panel{position:relative;width:100%;max-width:620px;background:linear-gradient(180deg,var(--card),var(--bg2));
+  border:1px solid var(--line2);border-radius:var(--r-xl);padding:34px;box-shadow:var(--shadow-lg);margin:auto}
+.d2b .ju-panel h2{font-size:27px;font-weight:810;letter-spacing:-.035em;margin:0 0 6px}
+.d2b .ju-panel .sub{color:var(--mut);font-size:15px;margin:0 0 24px}
+.d2b .ju-close{position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--line2);color:var(--mut);font-size:17px;line-height:1;display:grid;place-items:center}
+.d2b .ju-close:hover{color:var(--ink);border-color:var(--ink)}
+.d2b .ju-field{margin-bottom:15px}
+.d2b .ju-field label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.d2b .ju-field input,.d2b .ju-field select,.d2b .ju-field textarea{width:100%;background:var(--bg);
+  border:1px solid var(--line2);border-radius:12px;padding:13px 15px;color:var(--ink);font:inherit;
+  font-size:15px;outline:none;transition:border-color .15s ease}
+.d2b .ju-field input:focus,.d2b .ju-field select:focus,.d2b .ju-field textarea:focus{border-color:var(--accent-cyan)}
+.d2b .ju-field textarea{min-height:118px;resize:vertical;font-size:14px;line-height:1.5}
+.d2b .ju-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:520px){.d2b .ju-row{grid-template-columns:1fr}}
+.d2b .ju-drop{border:1.5px dashed var(--line2);border-radius:16px;padding:32px 20px;text-align:center;
+  cursor:pointer;transition:all .18s ease;background:rgba(255,255,255,.015)}
+.d2b .ju-drop:hover,.d2b .ju-drop.over{border-color:var(--accent-cyan);background:rgba(34,211,238,.07)}
+.d2b .ju-drop.has{border-style:solid;border-color:var(--accent-cyan);background:rgba(34,211,238,.09)}
+.d2b .ju-drop .big{font-size:15.5px;font-weight:650;margin-bottom:5px}
+.d2b .ju-drop .small{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.04em}
+.d2b .ju-or{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint);margin:16px 0 12px}
+.d2b .ju-err{background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:#ffa8c5;
+  border-radius:11px;padding:11px 14px;font-size:13.5px;margin-bottom:15px;display:none}
+.d2b .ju-err.show{display:block}
+.d2b .ju-submit{width:100%;margin-top:8px;justify-content:center}
+.d2b .ju-legal{color:var(--faint);font-size:11.5px;font-family:var(--mono);line-height:1.65;margin-top:15px;text-align:center}
+.d2b .ju-prog{display:none;text-align:center;padding:26px 0}
+.d2b .ju-prog.show{display:block}
+.d2b .ju-prog .bar{height:3px;background:var(--line);border-radius:99px;overflow:hidden;margin:18px 0 12px}
+.d2b .ju-prog .bar i{display:block;height:100%;width:34%;background:var(--grad);border-radius:99px;
+  animation:juslide 1.25s ease-in-out infinite}
+@keyframes juslide{0%{margin-left:-34%}100%{margin-left:100%}}
 </style>
 </head>
 <body>
@@ -717,6 +759,55 @@
   </div>
 </section>
 
+
+<div class="ju-sheet" id="ju-sheet" role="dialog" aria-modal="true" aria-labelledby="ju-sheet-title">
+  <div class="ju-panel">
+    <button class="ju-close" id="ju-x" aria-label="Close">&times;</button>
+    <h2 id="ju-sheet-title">Show me my ecosystem</h2>
+    <p class="sub">Attach your resume and we will build a live preview &mdash; your site, your web address, and the real jobs that match you right now.</p>
+
+    <div class="ju-err" id="ju-err"></div>
+
+    <form id="ju-form" novalidate>
+      <div class="ju-row">
+        <div class="ju-field"><label for="ju-name">Full name</label>
+          <input id="ju-name" name="name" type="text" autocomplete="name" placeholder="Ada Lovelace" required></div>
+        <div class="ju-field"><label for="ju-email">Email</label>
+          <input id="ju-email" name="email" type="email" autocomplete="email" placeholder="ada@example.com" required></div>
+      </div>
+      <div class="ju-row">
+        <div class="ju-field"><label for="ju-phone">Phone <span style="text-transform:none;letter-spacing:0">(optional, E.164)</span></label>
+          <input id="ju-phone" name="phone" type="tel" autocomplete="tel" placeholder="+13055551234"></div>
+        <div class="ju-field"><label for="ju-lang">Language</label>
+          <select id="ju-lang" name="language"><option value="en">English &mdash; Ava</option><option value="es">Espa&ntilde;ol &mdash; Dalia</option></select></div>
+      </div>
+
+      <div class="ju-field"><label>Your resume</label>
+        <div class="ju-drop" id="ju-drop" tabindex="0" role="button" aria-label="Choose or drop your resume">
+          <div class="big" id="ju-drop-big">Drop your resume here</div>
+          <div class="small" id="ju-drop-small">or click to browse &mdash; PDF, DOCX or TXT, up to 8 MB</div>
+        </div>
+        <input type="file" id="ju-file" accept=".pdf,.docx,.txt,.md,.rtf" hidden>
+      </div>
+
+      <div class="ju-or">or paste it instead</div>
+      <div class="ju-field">
+        <textarea id="ju-text" name="resume_text" placeholder="Paste your resume text here..."></textarea>
+      </div>
+
+      <button type="submit" class="ju-btn primary ju-submit" id="ju-go">Build my preview</button>
+      <p class="ju-legal">Free. No card. We show you real openings or none at all &mdash; never invented ones.<br>
+      You can delete everything we extracted at any time.</p>
+    </form>
+
+    <div class="ju-prog" id="ju-prog">
+      <div style="font-weight:700;font-size:16px" id="ju-prog-t">Reading your resume&hellip;</div>
+      <div class="bar"><i></i></div>
+      <div class="small" style="font-family:var(--mono);font-size:11.5px;color:var(--faint)" id="ju-prog-s">This takes about a minute.</div>
+    </div>
+  </div>
+</div>
+
 <footer class="ju-foot">
   <div>JobUp &mdash; a Digit2AI product.</div>
   <div style="display:flex;gap:18px;flex-wrap:wrap">
@@ -838,11 +929,83 @@
   window.addEventListener('beforeunload',stop);
 })();
 
-/* ---- attach-resume CTA --------------------------------------------------- */
+/* ---- intake: identity gate + resume -> teaser ---------------------------- */
 (function(){
-  function go(){ location.href='/jobup/#start'; }
+  var API=(location.hostname.indexOf('jobup.dev')>-1)?'':'/jobup';
+  var sheet=document.getElementById('ju-sheet'),form=document.getElementById('ju-form');
+  var drop=document.getElementById('ju-drop'),file=document.getElementById('ju-file');
+  var err=document.getElementById('ju-err'),prog=document.getElementById('ju-prog');
+  var big=document.getElementById('ju-drop-big'),small=document.getElementById('ju-drop-small');
+  var chosen=null,lastFocus=null;
+
+  function open(){lastFocus=document.activeElement;sheet.classList.add('open');
+    document.body.style.overflow='hidden';setTimeout(function(){document.getElementById('ju-name').focus();},60);}
+  function close(){sheet.classList.remove('open');document.body.style.overflow='';
+    if(lastFocus)lastFocus.focus();}
+  function fail(m){err.textContent=m;err.classList.add('show');
+    form.style.display='';prog.classList.remove('show');
+    err.scrollIntoView({block:'nearest',behavior:'smooth'});}
+
   ['ju-attach','ju-attach2'].forEach(function(id){
-    var b=document.getElementById(id); if(b) b.addEventListener('click',go);
+    var b=document.getElementById(id); if(b) b.addEventListener('click',open);
+  });
+  document.getElementById('ju-x').addEventListener('click',close);
+  sheet.addEventListener('click',function(e){if(e.target===sheet)close();});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&sheet.classList.contains('open'))close();});
+
+  function setFile(f){
+    if(!f)return;
+    if(f.size>8*1024*1024){fail('That file is larger than 8 MB. Try a smaller PDF, or paste the text instead.');return;}
+    chosen=f;drop.classList.add('has');
+    big.textContent=f.name;
+    small.textContent=(f.size/1024|0)+' KB — click to choose a different file';
+  }
+  drop.addEventListener('click',function(){file.click();});
+  drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();file.click();}});
+  file.addEventListener('change',function(){setFile(this.files[0]);});
+  ['dragenter','dragover'].forEach(function(ev){
+    drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');});});
+  ['dragleave','drop'].forEach(function(ev){
+    drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');});});
+  drop.addEventListener('drop',function(e){
+    if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);});
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    err.classList.remove('show');
+    var name=document.getElementById('ju-name').value.trim();
+    var email=document.getElementById('ju-email').value.trim();
+    var phone=document.getElementById('ju-phone').value.trim();
+    var lang=document.getElementById('ju-lang').value;
+    var text=document.getElementById('ju-text').value.trim();
+
+    if(name.length<2) return fail('Please enter your full name.');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Please enter a valid email address.');
+    if(phone && !/^\+[1-9]\d{6,14}$/.test(phone)) return fail('Phone must be in E.164 format, for example +13055551234.');
+    if(!chosen && text.length<60) return fail('Attach your resume, or paste at least a few lines of it.');
+
+    var fd=new FormData();
+    fd.append('name',name);fd.append('email',email);fd.append('language',lang);
+    if(phone)fd.append('phone',phone);
+    if(text)fd.append('resume_text',text);
+    if(chosen)fd.append('resume',chosen,chosen.name);
+
+    form.style.display='none';prog.classList.add('show');
+
+    fetch(API+'/api/v1/intake/teaser',{method:'POST',body:fd})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
+      .then(function(res){
+        if(!res.ok){
+          var m=(res.j.errors&&res.j.errors.join(' · '))||res.j.error||'Something went wrong.';
+          if(res.status===429) m=res.j.error||'Daily limit reached for this network. Try again tomorrow.';
+          return fail(m);
+        }
+        document.getElementById('ju-prog-t').textContent='Building your ecosystem…';
+        document.getElementById('ju-prog-s').textContent='Taking you there now.';
+        location.href=API+'/teaser/'+res.j.token;
+      })
+      .catch(function(){fail('We could not reach the server. Please try again.');});
   });
 })();
 </script>
