@@ -70,6 +70,7 @@ router.get('/health', (req, res) => {
     brain: brain.enabled() ? 'anthropic' : 'heuristic (no ANTHROPIC_API_KEY)',
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
+    admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',
     base_domain: addresses.BASE_DOMAIN,
   });
 });
@@ -80,6 +81,7 @@ router.use('/api/v1/intake', require('./routes/intake'));
 router.use('/api/v1/billing', require('./routes/billing'));
 router.use('/api/v1/engine', require('./routes/engine'));
 router.use('/teaser', require('./routes/teaser-view'));
+router.use('/admin', require('./routes/admin'));
 
 // ---- landing --------------------------------------------------------------
 router.use(express.static(publicDir));

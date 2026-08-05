@@ -644,6 +644,144 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     await models.teasers.destroy({ where: { id: keep.id } });
   });
 
+
+  // ---------------------------------------------------------------
+  section('admin console — owner only');
+  const adminRoute = require(__dirname + '/src/routes/admin');
+
+  await t('admin is CLOSED when no password is set (not open with a default)', () => {
+    const saved = process.env.JOBUP_ADMIN_PASSWORD;
+    delete process.env.JOBUP_ADMIN_PASSWORD;
+    assert.strictEqual(adminRoute.configured(), false);
+    if (saved) process.env.JOBUP_ADMIN_PASSWORD = saved;
+  });
+  await t('a short admin password does not count as configured', () => {
+    const saved = process.env.JOBUP_ADMIN_PASSWORD;
+    process.env.JOBUP_ADMIN_PASSWORD = 'short';
+    assert.strictEqual(adminRoute.configured(), false);
+    if (saved) process.env.JOBUP_ADMIN_PASSWORD = saved; else delete process.env.JOBUP_ADMIN_PASSWORD;
+  });
+  await t('owner allowlist defaults to the owner and is env-overridable', () => {
+    const saved = process.env.JOBUP_ADMIN_EMAILS;
+    delete process.env.JOBUP_ADMIN_EMAILS;
+    assert.ok(adminRoute.ownerEmails().includes('mstagg@digit2ai.com'));
+    process.env.JOBUP_ADMIN_EMAILS = 'a@x.com, B@X.com';
+    assert.deepStrictEqual(adminRoute.ownerEmails(), ['a@x.com', 'b@x.com']);
+    if (saved) process.env.JOBUP_ADMIN_EMAILS = saved; else delete process.env.JOBUP_ADMIN_EMAILS;
+  });
+
+  function fakeReqRes(cookies) {
+    const res = { code: 0, body: null,
+      status(c) { this.code = c; return this; },
+      json(b) { this.body = b; return this; } };
+    return [{ cookies: cookies || {}, headers: {}, ip: '1.2.3.4' }, res];
+  }
+
+  await t('NO admin cookie is refused', () => {
+    process.env.JOBUP_ADMIN_PASSWORD = 'sit-admin-password-long';
+    const [req, res] = fakeReqRes({});
+    let passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, false, 'must not reach the handler');
+    assert.strictEqual(res.code, 401);
+  });
+  await t('A SUBSCRIBER SESSION CANNOT BE ESCALATED to admin', () => {
+    // A perfectly valid subscriber token, presented as an admin cookie.
+    const subToken = authSvc.issueSession(subA.id);
+    const [req, res] = fakeReqRes({ jobup_admin: subToken });
+    let passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, false, 'a subscriber token must never pass the admin gate');
+    assert.ok(res.code === 401 || res.code === 403);
+  });
+  await t('a token for a NON-allowlisted email is refused', () => {
+    process.env.JOBUP_ADMIN_EMAILS = 'owner@digit2ai.com';
+    const jwtLib = require('jsonwebtoken');
+    const bad = jwtLib.sign({ adm: true, email: 'attacker@evil.com' },
+      process.env.JOBUP_JWT_SECRET, { expiresIn: '1h' });
+    const [req, res] = fakeReqRes({ jobup_admin: bad });
+    let passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, false);
+    assert.strictEqual(res.code, 403);
+  });
+  await t('removing an email from the allowlist revokes an existing token instantly', () => {
+    const jwtLib = require('jsonwebtoken');
+    process.env.JOBUP_ADMIN_EMAILS = 'owner@digit2ai.com';
+    const tok = jwtLib.sign({ adm: true, email: 'owner@digit2ai.com' },
+      process.env.JOBUP_JWT_SECRET, { expiresIn: '1h' });
+    let [req, res] = fakeReqRes({ jobup_admin: tok });
+    let passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, true, 'allowlisted owner should pass');
+
+    process.env.JOBUP_ADMIN_EMAILS = 'someone-else@digit2ai.com';
+    [req, res] = fakeReqRes({ jobup_admin: tok });
+    passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, false, 'same token must stop working once de-listed');
+  });
+  await t('a forged admin token is refused', () => {
+    process.env.JOBUP_ADMIN_EMAILS = 'owner@digit2ai.com';
+    const jwtLib = require('jsonwebtoken');
+    const forged = jwtLib.sign({ adm: true, email: 'owner@digit2ai.com' }, 'wrong-secret');
+    const [req, res] = fakeReqRes({ jobup_admin: forged });
+    let passed = false;
+    adminRoute.requireOwner(req, res, () => { passed = true; });
+    assert.strictEqual(passed, false);
+    assert.strictEqual(res.code, 401);
+  });
+  await t('impersonation is written to the audit log', async () => {
+    await adminRoute.audit('owner@digit2ai.com', 'impersonate:' + subA.id, 'SIT check of the audit path', subA.id);
+    const rows = await models.audit_log.findAll({});
+    const hit = rows.find((r) => r.action === 'impersonate:' + subA.id);
+    assert.ok(hit, 'impersonation must be logged');
+    assert.ok(hit.reason && hit.reason.length >= 15, 'a written reason must be stored');
+    assert.strictEqual(hit.actor, 'owner@digit2ai.com');
+  });
+  delete process.env.JOBUP_ADMIN_EMAILS;
+  delete process.env.JOBUP_ADMIN_PASSWORD;
+
+  // ---------------------------------------------------------------
+  section('subscriber site — the anastagg.com template');
+  await t('renders nav, hero, voice panel and numbered sections', () => {
+    const s = settingsSvc.sanitize({ privacy: { email: true } });
+    const prof = { name: 'Ada Lovelace', headline: 'Analytical Engine Architect',
+      summary: 'Built the first algorithm.', email: 'ada@example.com',
+      skills: ['Mathematics', 'Algorithms'],
+      experience: [{ title: 'Mathematician', company: 'Analytical Society', start: '1842', end: '1852',
+                     highlights: ['Published the first algorithm.'] }],
+      education: [{ institution: 'Private tuition', studyType: 'Mathematics', end: '1836' }],
+      certifications: ['Fellow'] };
+    const html = siteRender.page(prof, s, { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' });
+    for (const frag of ['class="nav"', 'ring-orbit', 'class="eyebrow"', 'title-line',
+                        'voicecard', 'sec-head', 'timeline', 'sharecard',
+                        'Professional Experience', 'Core Competencies']) {
+      assert.ok(html.includes(frag), 'missing ' + frag);
+    }
+  });
+  await t('falls back to initials when there is no photo', () => {
+    const html = siteRender.page({ name: 'Ada Lovelace' }, settingsSvc.sanitize({}),
+      { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(html.includes('photo-fallback'));
+    assert.ok(html.includes('>AL<'), 'initials should render');
+  });
+  await t('THE PRIVACY PROJECTION STILL HOLDS in the richer template', () => {
+    const s = settingsSvc.sanitize({});
+    const prof = { name: 'Ada', email: 'secret@example.com', phone: '+15550001', headline: 'Engineer' };
+    const html = siteRender.page(prof, s, { name: 'Ada', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(!html.includes('secret@example.com'), 'private email must not reach the page');
+    assert.ok(!html.includes('+15550001'), 'private phone must not reach the page');
+    assert.ok(!html.includes('EMAIL;TYPE'), 'the vCard must not carry a private email');
+  });
+  await t('the spoken walkthrough is built only from projected fields', () => {
+    const s = settingsSvc.sanitize({});
+    const p2 = identity.applyPrivacy({ name: 'Ada', headline: 'Engineer',
+      email: 'secret@example.com', skills: ['x'] }, s);
+    const lines = siteRender.narrationFor(p2, 'Ada').join(' ');
+    assert.ok(!lines.includes('secret@example.com'));
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
@@ -662,6 +800,8 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     await models.jobs.destroy({ where: { dedupe_key: 'k2' } });
     const teasers = await models.teasers.findAll({});
     for (const t2 of teasers) await models.teasers.destroy({ where: { id: t2.id } });
+    const audits = await models.audit_log.findAll({});
+    for (const a of audits) await models.audit_log.destroy({ where: { id: a.id } });
   });
 
   // ---------------------------------------------------------------

@@ -72,10 +72,40 @@ ul.inc{list-style:none;padding:0;margin:14px 0}
 ul.inc li{padding:6px 0 6px 24px;position:relative;color:var(--mut);font-size:14.5px}
 ul.inc li:before{content:"";position:absolute;left:2px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--grad)}
 .note{color:var(--faint);font-size:13px;margin-top:12px;font-family:var(--mono);line-height:1.6}
+.preview{position:relative;border:1px solid var(--line2);border-radius:var(--r-lg);overflow:hidden;
+background:#07080c;height:440px;box-shadow:var(--shadow)}
+.preview iframe{width:200%;height:880px;border:0;transform:scale(.5);transform-origin:0 0;display:block}
+.preview::after{content:"";position:absolute;inset:0;pointer-events:none;
+box-shadow:inset 0 -50px 60px -30px rgba(7,8,12,.9)}
+@media(max-width:600px){.preview{height:330px}.preview iframe{width:250%;height:1000px;transform:scale(.4)}}
 .loading{text-align:center;padding:80px 0;color:var(--mut);font-family:var(--mono)}
 @media(max-width:600px){.orbbar{flex-direction:column;text-align:center}.wrap{padding:16px 14px 70px}}
 `;
 
+
+/**
+ * Live preview of the subscriber's actual site, rendered from the teaser's own
+ * extracted profile. Screen 1 embeds this — so the visitor is looking at the
+ * REAL template, not a mock-up of it.
+ */
+router.get('/:token/site', async (req, res) => {
+  const row = await teaser.get(req.params.token);
+  if (!row || row.status !== 'ready' || !row.payload) {
+    return res.status(404).type('text/plain').send('Preview not ready.');
+  }
+  const siteRender = require('../services/site-render');
+  const settingsSvc = require('../services/settings');
+  const site = row.payload.screens && row.payload.screens.site;
+  const profile = (site && site.profile) || {};
+  const addr = (row.payload.screens && row.payload.screens.address) || {};
+  const url = addr.url || 'https://' + (row.address_offer || 'you.jobup.dev');
+  // Preview shows the profile as the SUBSCRIBER would publish it, so contact
+  // fields are opted in here. The live site still honours their own settings.
+  const settings = settingsSvc.sanitize({ privacy: { email: true, phone: true, location: true } });
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.type('html').send(siteRender.page(profile, settings,
+    { name: profile.name || row.name, url, slug: 'preview' }));
+});
 
 router.get('/:token', async (req, res) => {
   const row = await teaser.get(req.params.token);
@@ -133,12 +163,12 @@ function render(){
     '<h2>'+esc(title)+'</h2>'+(sub?'<p class="note">'+esc(sub)+'</p>':'');}
 
   var p=(s.site&&s.site.profile)||{};
-  h+=open(1,'Your personal site');
-  h+='<div style="font-size:24px;font-weight:700">'+esc(p.name||'')+'</div>';
-  if(p.headline)h+='<div style="color:var(--cy)">'+esc(p.headline)+'</div>';
-  if(p.summary)h+='<p>'+esc(p.summary)+'</p>';
-  if((p.skills||[]).length)h+='<div>'+p.skills.slice(0,14).map(function(x){
-    return '<span class="chip">'+esc(typeof x==='string'?x:x.name)+'</span>';}).join('')+'</div>';
+  h+=open(1,'Your personal site','This is the real page, rendered from your resume — not a mock-up.');
+  h+='<div class="preview"><iframe src="'+API_BASE+'/teaser/'+encodeURIComponent(TOKEN)+'/site" '+
+     'title="Preview of your personal site" loading="lazy"></iframe></div>';
+  h+='<div style="margin-top:12px"><span class="chip">'+esc(s.address&&s.address.address||'your address')+'</span>'+
+     ((p.skills||[]).length?'<span class="chip">'+p.skills.length+' skills</span>':'')+
+     ((p.experience||[]).length?'<span class="chip">'+p.experience.length+' roles</span>':'')+'</div>';
   if(s.site&&s.site.is_simulated)h+='<div class="chip sim">structured without a language model</div>';
   h+='</div>';
 
