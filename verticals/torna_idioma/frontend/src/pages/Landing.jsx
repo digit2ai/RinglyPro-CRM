@@ -121,13 +121,15 @@ const whyCards = [
   { icon: 'AI', en: 'Future-Ready', es: 'Listo para el Futuro', fil: 'Handa sa Kinabukasan' },
 ];
 
+// The public marketing surface speaks all three: English, Spanish and Filipino.
+// Inside the app the interface stays en|fil (see services/auth.js) because there is
+// no Spanish app dictionary — but a movement about reclaiming Spanish has to be
+// readable in Spanish at the front door. Restored at the project owner's request.
+const PUBLIC_LANGS = ['en', 'es', 'fil'];
+const publicLang = (l) => (PUBLIC_LANGS.indexOf(l) !== -1 ? l : 'en');
+
 export default function Landing() {
-  // Interface language is en|fil only — Spanish is the subject taught, never a menu
-  // language. A legacy 'es' in storage coerces to English rather than falling through.
-  const [lang, setLang] = useState(() => {
-    const stored = localStorage.getItem('ti_lang');
-    return stored === 'fil' ? 'fil' : 'en';
-  });
+  const [lang, setLang] = useState(() => publicLang(localStorage.getItem('ti_lang')));
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const L = T[lang] || T.en;
@@ -138,7 +140,7 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const switchLang = (l) => { const v = l === 'fil' ? 'fil' : 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
+  const switchLang = (l) => { const v = publicLang(l); localStorage.setItem('ti_lang', v); setLang(v); };
 
   return (
     <div style={s.page}>
