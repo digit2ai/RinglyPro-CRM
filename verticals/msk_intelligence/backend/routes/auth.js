@@ -205,4 +205,19 @@ router.post('/promote', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Admin: set/reset a user's password (requires API key). Same gate as /promote.
+router.post('/set-password', async (req, res) => {
+  try {
+    const { email, password, apiKey } = req.body;
+    if (apiKey !== (process.env.WEBHOOK_API_KEY || 'admin-key')) return res.status(403).json({ error: 'Forbidden' });
+    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+    if (String(password).length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
+    const [existing] = await sequelize.query(`SELECT id FROM msk_users WHERE email = $1 LIMIT 1`, { bind: [email.toLowerCase().trim()] });
+    if (existing.length === 0) return res.status(404).json({ error: 'User not found' });
+    const hash = await bcrypt.hash(password, 12);
+    await sequelize.query(`UPDATE msk_users SET password_hash = $1 WHERE email = $2`, { bind: [hash, email.toLowerCase().trim()] });
+    res.json({ success: true, email: email.toLowerCase().trim() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;
