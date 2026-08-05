@@ -314,6 +314,7 @@
       <li>
         <div class="lang-switcher">
           <button class="lang-btn active" data-set-lang="en">EN</button>
+          <button class="lang-btn" data-set-lang="es">ES</button>
           <button class="lang-btn" data-set-lang="fil">FIL</button>
         </div>
       </li>
@@ -401,7 +402,7 @@
         <span class="lina-accent" id="linaAccentWrap">
           &nbsp;&middot;&nbsp;<span id="linaAccentLbl"></span>:
           <select id="linaAccent">
-            <option value="lina">M&eacute;xico (Dalia)</option>
+            <option value="dalia">M&eacute;xico (Dalia)</option>
           </select>
         </span>
       </div>
@@ -1273,9 +1274,10 @@
     // The React app (login, dashboard, every learner screen) reads `ti_lang`.
     // This page used to write only `torna-lang`, so the language chosen here
     // never reached the app and a visitor who picked English still landed on a
-    // Filipino login. Write both so the choice carries through the whole
-    // journey. Interface language is en|fil only — Spanish is the subject.
-    localStorage.setItem('ti_lang', lang === 'fil' ? 'fil' : 'en');
+    // Filipino login. Write both so the choice carries through the whole journey.
+    // All three are valid on the public surfaces; services/auth.js narrows 'es'
+    // to English for the app interior, which ships no Spanish dictionary.
+    localStorage.setItem('ti_lang', lang);
   }
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -1283,11 +1285,12 @@
   });
 
   // Load saved language. Either key counts as a prior choice, so returning from
-  // the app keeps the language you were already reading in. A legacy 'es' from
-  // the old three-way toggle resolves to English rather than silently flipping
-  // the visitor to Filipino.
+  // the app keeps the language you were already reading in. Only a value this
+  // page can actually render counts; anything else falls back to Filipino, the
+  // primary audience, rather than leaving the body with no lang- class at all.
+  const LANGS = ['en', 'es', 'fil'];
   const stored = localStorage.getItem('torna-lang') || localStorage.getItem('ti_lang');
-  setLang(stored === 'fil' ? 'fil' : (stored ? 'en' : 'fil'));
+  setLang(LANGS.indexOf(stored) !== -1 ? stored : 'fil');
 
   // Nav scroll
   const navbar = document.getElementById('navbar');
@@ -1323,7 +1326,10 @@
   // ===== Profesora Isabel — neural voice orb (zero-key Edge TTS via /api/tts/edge) =====
   (function(){
     var NEURAL_URL = '/api/tts/edge';
-    var VOICE = { es:'lina', en:'ava', fil:'fil-PH-BlessicaNeural' };       // active lang -> Edge voice
+    // Active lang -> Edge voice. Spanish is Dalia (es-MX-DaliaNeural) everywhere:
+    // this orb, the React orb, services/voice.js and the modules page all name the
+    // same alias, so the platform has ONE Spanish voice instead of one per surface.
+    var VOICE = { es:'dalia', en:'ava', fil:'fil-PH-BlessicaNeural' };
     var FALLBACK = { es:'es-MX', en:'en-US', fil:'fil-PH' };                 // browser-speech fallback lang
     var SECTION_IDS = [null, 'mission', 'why', 'pillars', 'economics', 'partners'];
     var SEG = {
