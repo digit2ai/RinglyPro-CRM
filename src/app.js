@@ -717,12 +717,11 @@ const CV_SITES = {
     email: 'jgramowski7@gmail.com', phone: '+1 813-334-2244',
     links: ['https://www.linkedin.com/in/juliana-gramowski-6270201a4'],
     topics: 'sales executive; business development; Out-of-Home (OOH) advertising & media sales; marketing strategy; client relationship & account management' },
-  // Samuel Pacelli — shell. The blurb/role/topics stay deliberately minimal until the real
-  // CV lands; llms.txt renders the richer facts straight from his profile settings once they
-  // exist, so nothing here has to be invented in the meantime.
-  'samuelpacelli.com': { name: 'Samuel Pacelli', role: 'Professional profile', es: true,
-    blurb: 'Professional profile of Samuel Pacelli.',
-    email: '', phone: '', links: [], topics: '' },
+  'samuelpacelli.com': { name: 'Samuel Pacelli', role: 'Operations, Inventory Control and Customer Service', es: true,
+    blurb: 'Bilingual professional with experience in customer service, operations, warehouse management, inventory control and financial data. Skilled in data reconciliation, process improvement, customer support and cross-functional collaboration. NetSuite ERP/WMS/CRM. Seeking an analyst or operations position. Tampa, FL.',
+    email: 'samuelpacelli03@gmail.com', phone: '+1 813-665-4518',
+    links: ['https://samuelpacelli.com'],
+    topics: 'operations analysis; inventory control and cycle counts; data and shipment reconciliation; billing, invoices and purchase orders; warehouse and ecommerce fulfillment; NetSuite ERP/WMS/CRM; bilingual customer service' },
   'andreastagg.com': { name: 'Andrea Stagg', role: 'Securities & Derivatives Associate Analyst — JD · International Custody & Compliance', es: false,
     blurb: 'Securities & Derivatives Associate Analyst at Citi and Juris Doctor — international securities settlement and global custody (INDEVAL, DTC, EUROCLEAR, CREST, IBERCLEAR), AML/BSA/OFAC compliance and international business law. Roles at Citi and J.P. Morgan. Quadrilingual (EN/ES/FR/IT). Tampa, FL.',
     email: 'andreastaggp@gmail.com', phone: '+1 813-502-9433',

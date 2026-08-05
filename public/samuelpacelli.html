@@ -5,30 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <!-- ============================================================================
-     SHELL — samuelpacelli.com
-     Cloned from the manuelstagg.com design system. EVERY person-specific string
-     lives in the PROFILE object in the script block below: fill that in and the
-     whole page populates. Nothing here is invented — empty fields render as
-     nothing rather than as placeholder biography.
-
-     PROFILE.complete === false  ->  the page shows a short "in preparation"
-     card and stays noindex. Set it to true only once the real CV content is in,
-     then remove the robots meta below.
+     samuelpacelli.com — built on the manuelstagg.com design system.
+     EVERY person-specific string lives in the PROFILE object in the script block
+     below. Content is taken verbatim in substance from Samuel Pacelli's CV:
+     no title, employer, date, metric or credential is added that the CV does not
+     state. The Accounting and Finance studies are labelled INCOMPLETE because
+     that is what the CV says.
      ============================================================================ -->
-<meta name="robots" content="noindex,nofollow">
+<meta name="robots" content="index,follow">
 
-<title>Samuel Pacelli</title>
-<meta name="description" content="Samuel Pacelli — professional profile.">
+<title>Samuel Pacelli — Operations, Inventory Control and Customer Service Analyst</title>
+<meta name="description" content="Samuel Pacelli — bilingual operations, inventory control and customer service professional in Tampa, FL. Warehouse operations, billing and data reconciliation, NetSuite ERP/WMS. Seeking an analyst or operations role.">
 <link rel="canonical" href="https://samuelpacelli.com/">
+<meta name="author" content="Samuel Pacelli">
+
 <meta property="og:type" content="profile">
-<meta property="og:title" content="Samuel Pacelli">
-<meta property="og:description" content="Samuel Pacelli — professional profile.">
+<meta property="og:title" content="Samuel Pacelli — Operations, Inventory Control and Customer Service">
+<meta property="og:description" content="Bilingual operations and inventory professional in Tampa, FL. Warehouse operations, billing and data reconciliation, NetSuite ERP/WMS. Seeking an analyst or operations role.">
 <meta property="og:url" content="https://samuelpacelli.com/">
+<meta property="og:image" content="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a7278ce670a4ee783d2ee23.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Samuel Pacelli — Operations, Inventory Control and Customer Service">
+<meta name="twitter:description" content="Bilingual operations and inventory professional in Tampa, FL. Seeking an analyst or operations role.">
+<meta name="twitter:image" content="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a7278ce670a4ee783d2ee23.png">
+
+<link rel="alternate" type="application/json" title="Résumé (JSON Resume)" href="/resume.json">
+<link rel="alternate" type="application/json" title="AI Agent Card (A2A)" href="/.well-known/agent.json">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://samuelpacelli.com/#person",
+  "name": "Samuel Pacelli",
+  "jobTitle": "Warehouse Specialist",
+  "description": "Bilingual professional with experience in customer service, operations, warehouse management, inventory control and financial data. Skilled in data reconciliation, process improvement, customer support and cross-functional collaboration. Seeking an analyst or operations position.",
+  "url": "https://samuelpacelli.com/",
+  "image": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a7278ce670a4ee783d2ee23.png",
+  "email": "samuelpacelli03@gmail.com",
+  "telephone": "+1-813-665-4518",
+  "homeLocation": { "@type": "Place", "address": { "@type": "PostalAddress", "addressLocality": "Tampa", "addressRegion": "FL", "addressCountry": "US" } },
+  "knowsLanguage": ["English", "Spanish"],
+  "knowsAbout": ["Inventory control", "Warehouse operations", "Data reconciliation", "Billing", "Order processing", "NetSuite ERP", "NetSuite WMS", "Customer service", "Ecommerce fulfillment", "Quality assurance"],
+  "seeks": [
+    { "@type": "Demand", "name": "Operations Analyst" },
+    { "@type": "Demand", "name": "Inventory Control Analyst" },
+    { "@type": "Demand", "name": "Data Reconciliation and Billing Analyst" },
+    { "@type": "Demand", "name": "Supply Chain and Warehouse Operations" },
+    { "@type": "Demand", "name": "Bilingual Customer Service and Client Operations" }
+  ],
+  "worksFor": { "@type": "Organization", "name": "Pro City Supply" },
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "Yacambu University", "description": "Bachelor's in Accounting and Finance (incomplete)" }
+}
+</script>
 
 <style>
 :root{
@@ -86,22 +120,15 @@ a{color:inherit;text-decoration:none}
 .mini-btn.icon-only{padding:7px 10px}
 .mini-btn.icon-only i{font-size:14px}
 .mini-btn:hover{border-color:var(--cyan-bd);background:var(--grad-soft)}
-.mini-btn.li{background:#0a66c2;border-color:#0a66c2;color:#fff}
-.mini-btn.li:hover{filter:brightness(1.12)}
 @media(max-width:720px){.brand span.sub{display:none}.mini-btn .lbl{display:none}}
 
-/* hero */
 .hero{padding:56px 0 34px}
 .hero-grid{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
 .photo-col{width:200px}
 .photo-wrap{position:relative;width:200px;height:200px}
 .photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
-.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);display:block;background:#08131c}
-video.photo{cursor:pointer}
-.photo.empty{display:grid;place-items:center;color:var(--dim2);font-family:var(--mono);font-size:11px;text-align:center;padding:14px;line-height:1.5}
-.vidsound{position:absolute;right:8px;bottom:8px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:rgba(4,12,18,.72);backdrop-filter:blur(6px);color:var(--txt);font-family:inherit;font-size:14px;display:none;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
-.vidsound.on{background:var(--grad);border:none;color:#04121a}
+.photo{width:200px;height:200px;border-radius:22px;object-fit:cover;object-position:center 20%;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);display:block;background:#08131c}
 .ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);border-radius:28px;animation:spin 22s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
@@ -117,11 +144,9 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .social-row{display:flex;flex-wrap:wrap;gap:10px}
 .sbtn{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--txt);font-family:inherit;cursor:pointer;transition:.2s}
 .sbtn:hover{transform:translateY(-2px);border-color:var(--cyan-bd);background:var(--grad-soft)}
-.sbtn.primary{background:#0a66c2;border-color:#0a66c2;color:#fff}
 .sbtn.accent{background:var(--grad);border:none;color:#04121a}
 @media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:26px;text-align:center}.photo-wrap,.photo-col{margin:0 auto}.chips,.social-row{justify-content:center}.subtitle{margin-left:auto;margin-right:auto}}
 
-/* sections */
 .blk{padding:34px 0}
 .sec-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .sec-head .k{font-family:var(--mono);font-size:12px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:8px;padding:3px 9px}
@@ -129,9 +154,22 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .sec-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:16px}
 .lead{font-size:15.5px;color:var(--txt2)}
-.prep{background:var(--grad-soft);border:1px solid var(--cyan-bd);border-radius:18px;padding:28px;text-align:center}
-.prep h3{font-size:19px;font-weight:800;margin-bottom:8px}
-.prep p{color:var(--dim);font-size:14.5px;max-width:520px;margin:0 auto}
+.lead strong{color:var(--txt)}
+
+/* experience */
+.job{position:relative;padding-left:26px;margin-bottom:22px}
+.job::before{content:"";position:absolute;left:0;top:9px;width:11px;height:11px;border-radius:50%;background:var(--grad);box-shadow:0 0 10px rgba(34,211,238,.5)}
+.job::after{content:"";position:absolute;left:5px;top:24px;bottom:-22px;width:1px;background:var(--line2)}
+.job:last-child::after{display:none}
+.job h3{font-size:16.5px;font-weight:700;margin-bottom:2px}
+.job .co{font-size:14px;color:var(--cyan);font-weight:600}
+.job .when{font-family:var(--mono);font-size:12px;color:var(--dim2);margin:3px 0 9px}
+.job ul{margin-left:18px;color:var(--txt2);font-size:14.5px}
+.job li{margin:4px 0}
+
+.sgrid{display:flex;flex-wrap:wrap;gap:9px}
+.skill{font-size:13.5px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--txt2)}
+.note{font-size:13px;color:var(--dim);margin-top:10px}
 
 .foot{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--dim2);font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 </style>
@@ -143,7 +181,7 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
   <div class="wrap row">
     <div class="brand"><span class="dot"></span> <span id="brandName">Samuel Pacelli</span> <span class="sub" id="brandSub"></span></div>
     <div class="tb-actions">
-      <a class="mini-btn li" id="liBtn" target="_blank" rel="noopener" style="display:none"><i class="fab fa-linkedin-in"></i> <span class="lbl">LinkedIn</span></a>
+      <button class="mini-btn icon-only" id="vcfBtn" aria-label="Save contact"><i class="fas fa-address-card"></i></button>
       <button class="mini-btn icon-only" id="themeBtn" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
       <div class="lang-toggle">
         <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
@@ -159,12 +197,11 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
       <div class="photo-wrap">
         <div class="ring-orbit"></div>
         <div id="photoSlot"></div>
-        <button class="vidsound" id="vidSound" type="button" aria-label="Play video with sound"><i class="fas fa-volume-xmark"></i></button>
       </div>
     </div>
     <div>
-      <div class="eyebrow" id="eyebrowWrap" style="display:none"><b></b> <span id="eyebrow"></span></div>
-      <h1 id="heroName">Samuel Pacelli</h1>
+      <div class="eyebrow" id="eyebrowWrap"><b></b> <span id="eyebrow"></span></div>
+      <h1><span class="g">Samuel Pacelli</span></h1>
       <div class="title-line" id="titleLine"></div>
       <p class="subtitle" id="subtitle"></p>
       <div class="chips" id="chips"></div>
@@ -176,135 +213,212 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 <main class="wrap" id="content"></main>
 
 <footer class="wrap foot">
-  <div id="footLeft">&copy; <span id="yr"></span> Samuel Pacelli</div>
+  <div>&copy; <span id="yr"></span> Samuel Pacelli &middot; <span id="footTag"></span></div>
   <div><a href="/cv-admin?p=samuelpacelli">Admin</a></div>
 </footer>
 
 <script>
 /* =============================================================================
    PROFILE — the ONLY place person-specific content lives.
-   Fill these fields from the real CV. Anything left empty renders as nothing;
-   no field is ever filled with invented biography.
+   Every statement below is taken from Samuel Pacelli's CV. Nothing is added.
    ============================================================================= */
 var PROFILE = {
-  complete: false,                 // flip to true once the CV content below is real
+  complete: true,
   name: 'Samuel Pacelli',
   slug: 'samuelpacelli',
   site: 'https://samuelpacelli.com',
+  location: 'Tampa, FL',
+  email: 'samuelpacelli03@gmail.com',
+  phone: '+18136654518',
+  phoneDisplay: '(813) 665-4518',
+  photo: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a7278ce670a4ee783d2ee23.png',
+  video: { en: '', es: '' },
 
-  // --- identity (from the resume) ---
-  eyebrow: '',                     // e.g. 'Senior ... · ...'
-  titleLine: '',                   // the one-line professional title
-  subtitle: { en: '', es: '' },    // 1-2 sentence positioning line
-  location: '',
-  email: '',
-  phone: '',
-  linkedin: '',
+  eyebrow: { en: 'Operations · Inventory Control · Customer Service',
+             es: 'Operaciones · Control de Inventario · Servicio al Cliente' },
+  titleLine: { en: 'Warehouse Specialist at Pro City Supply — seeking an analyst or operations role',
+               es: 'Especialista de Almacén en Pro City Supply — en búsqueda de un puesto de analista u operaciones' },
+  subtitle: {
+    en: 'Bilingual professional with experience in customer service, operations, warehouse management, inventory control and financial data. Skilled in data reconciliation, process improvement, customer support and cross-functional collaboration.',
+    es: 'Profesional bilingüe con experiencia en servicio al cliente, operaciones, gestión de almacén, control de inventario y datos financieros. Con habilidades en conciliación de datos, mejora de procesos, soporte al cliente y colaboración entre áreas.'
+  },
+  chips: [
+    { icon: 'fa-location-dot', label: { en: 'Tampa, FL', es: 'Tampa, FL' } },
+    { icon: 'fa-language',     label: { en: 'Bilingual EN / ES', es: 'Bilingüe EN / ES' } },
+    { icon: 'fa-boxes-stacked', label: { en: 'NetSuite ERP / WMS / CRM', es: 'NetSuite ERP / WMS / CRM' } },
+    { icon: 'fa-briefcase',    label: { en: 'Open to analyst & operations roles', es: 'Abierto a puestos de analista y operaciones' } }
+  ],
 
-  // --- media ---
-  photo: '',                       // https://... image URL
-  video: { en: '', es: '' },       // optional video portrait per language
+  sections: [
+    { k: '01',
+      h: { en: 'Objective', es: 'Objetivo' },
+      body: {
+        en: '<p>Bilingual professional with experience in <strong>customer service, operations, warehouse management, inventory control and financial data</strong>. Skilled in data reconciliation, process improvement, customer support and cross-functional collaboration. Seeking an <strong>analyst or operations position</strong> to apply strong analytical and problem-solving skills.</p>',
+        es: '<p>Profesional bilingüe con experiencia en <strong>servicio al cliente, operaciones, gestión de almacén, control de inventario y datos financieros</strong>. Con habilidades en conciliación de datos, mejora de procesos, soporte al cliente y colaboración entre áreas. En búsqueda de un <strong>puesto de analista u operaciones</strong> donde aplicar una sólida capacidad analítica y de resolución de problemas.</p>'
+      } },
 
-  // --- chips shown under the hero (icon + label) ---
-  chips: [],                       // [{icon:'fa-location-dot', label:'City, ST'}]
+    { k: '02', type: 'jobs',
+      h: { en: 'Experience', es: 'Experiencia' },
+      jobs: [
+        { role: { en: 'Warehouse Specialist', es: 'Especialista de Almacén' },
+          co: 'Pro City Supply', place: 'Tampa, FL',
+          when: { en: 'Jul 2025 – Present', es: 'Jul 2025 – Actualidad' },
+          bullets: {
+            en: ['Manage warehouse operations, customer service, billing and inventory control in a fast-paced distribution environment.',
+                 'Process customer orders, invoices, purchase orders and billing documentation with a high level of accuracy.',
+                 'Maintain accurate inventory records through cycle counts, reconciliations and stock tracking.',
+                 'Coordinate inbound and outbound shipments, ensuring timely order fulfillment and shipping accuracy.',
+                 'Optimize warehouse organization and storage layouts to improve workflow and efficiency.',
+                 'Provide customer service by resolving inquiries and maintaining strong client relationships.',
+                 'Collaborate with vendors, carriers and internal teams to resolve shipping, inventory and order discrepancies.',
+                 'Monitor inventory levels and communicate replenishment needs to support continuous operations.',
+                 'Maintain company safety standards and warehouse procedures.'],
+            es: ['Gestiona las operaciones de almacén, el servicio al cliente, la facturación y el control de inventario en un entorno de distribución de alto ritmo.',
+                 'Procesa pedidos de clientes, facturas, órdenes de compra y documentación de facturación con un alto nivel de exactitud.',
+                 'Mantiene registros de inventario precisos mediante conteos cíclicos, conciliaciones y seguimiento de existencias.',
+                 'Coordina los envíos de entrada y salida, asegurando el cumplimiento puntual de los pedidos y la exactitud del despacho.',
+                 'Optimiza la organización del almacén y la distribución del espacio para mejorar el flujo de trabajo y la eficiencia.',
+                 'Brinda servicio al cliente resolviendo consultas y manteniendo relaciones sólidas con los clientes.',
+                 'Colabora con proveedores, transportistas y equipos internos para resolver discrepancias de envío, inventario y pedidos.',
+                 'Supervisa los niveles de inventario y comunica las necesidades de reposición para sostener la operación continua.',
+                 'Cumple con los estándares de seguridad y los procedimientos de almacén de la empresa.']
+          } },
+        { role: { en: 'Receiver', es: 'Recibidor' },
+          co: 'Sanwa Food Group', place: 'Tampa, FL',
+          when: { en: 'Feb 2025 – Jul 2025', es: 'Feb 2025 – Jul 2025' },
+          bullets: {
+            en: ['Managed incoming shipments, ensured inventory accuracy and supported warehouse operations through data reconciliation and cross-team coordination.',
+                 'Reconciled shipment discrepancies with vendors and internal teams.',
+                 'Maintained inventory and transaction records.',
+                 'Improved inbound and outbound processing efficiency.',
+                 'Collaborated across departments to resolve operational issues.'],
+            es: ['Gestionó los envíos entrantes, aseguró la exactitud del inventario y apoyó las operaciones de almacén mediante conciliación de datos y coordinación entre equipos.',
+                 'Concilió discrepancias de envíos con proveedores y equipos internos.',
+                 'Mantuvo los registros de inventario y de transacciones.',
+                 'Mejoró la eficiencia del procesamiento de entrada y salida.',
+                 'Colaboró entre departamentos para resolver incidencias operativas.']
+          } },
+        { role: { en: 'Customer Service Associate', es: 'Asociado de Servicio al Cliente' },
+          co: 'Teleperformance', place: 'Medellín, Colombia',
+          when: { en: 'Sep 2024 – Dec 2024', es: 'Sep 2024 – Dic 2024' },
+          bullets: {
+            en: ['Delivered customer support in a fast-paced environment.',
+                 'Handled high-volume customer interactions via phone and email.',
+                 'Resolved complex customer issues while meeting SLAs.',
+                 'Used CRM systems to document and resolve cases efficiently.'],
+            es: ['Brindó soporte al cliente en un entorno de alto ritmo.',
+                 'Atendió un alto volumen de interacciones con clientes por teléfono y correo electrónico.',
+                 'Resolvió incidencias complejas cumpliendo los acuerdos de nivel de servicio (SLA).',
+                 'Utilizó sistemas CRM para documentar y resolver casos de forma eficiente.']
+          } },
+        { role: { en: 'Inventory & Ecommerce Operations Specialist', es: 'Especialista de Inventario y Operaciones de Comercio Electrónico' },
+          co: 'MATEC', place: 'Medellín, Colombia',
+          when: { en: 'May 2020 – May 2024', es: 'May 2020 – May 2024' },
+          bullets: {
+            en: ['Oversaw warehouse and administrative operations, billing, inventory control and ecommerce fulfillment.',
+                 'Processed invoices and verified billing accuracy.',
+                 'Managed ecommerce order processing and inventory.',
+                 'Handled picking, packing, shipping and outbound coordination.',
+                 'Used NetSuite ERP/WMS to manage inventory and transactions.'],
+            es: ['Supervisó las operaciones de almacén y administrativas, la facturación, el control de inventario y el cumplimiento de pedidos de comercio electrónico.',
+                 'Procesó facturas y verificó la exactitud de la facturación.',
+                 'Gestionó el procesamiento de pedidos de comercio electrónico y el inventario.',
+                 'Realizó tareas de preparación, empaque, envío y coordinación de salida.',
+                 'Utilizó NetSuite ERP/WMS para gestionar inventario y transacciones.']
+          } }
+      ] },
 
-  // --- page sections, in order ---
-  // [{ k:'01', h:{en:'Professional Profile',es:'Perfil Profesional'},
-  //    body:{en:'<p>…</p>', es:'<p>…</p>'} }]
-  sections: []
+    { k: '03', type: 'skills',
+      h: { en: 'Technical Skills', es: 'Competencias Técnicas' },
+      skills: ['Microsoft Office', 'Google Workspace', 'NetSuite ERP / WMS / CRM', 'Data Analysis',
+               'Inventory Management', 'Quality Assurance', 'Customer Service'] },
+
+    { k: '04',
+      h: { en: 'Education', es: 'Educación' },
+      body: {
+        en: '<p><strong>Yacambú University</strong> — Venezuela<br>Bachelor\'s in Accounting and Finance <em>(incomplete)</em></p>',
+        es: '<p><strong>Universidad Yacambú</strong> — Venezuela<br>Licenciatura en Contaduría y Finanzas <em>(incompleta)</em></p>'
+      } },
+
+    { k: '05',
+      h: { en: 'Contact', es: 'Contacto' },
+      body: {
+        en: '<p>Tampa, FL &middot; <a href="mailto:samuelpacelli03@gmail.com" style="color:var(--cyan)">samuelpacelli03@gmail.com</a> &middot; <a href="tel:+18136654518" style="color:var(--cyan)">(813) 665-4518</a></p><p class="note">This profile is also machine-readable: <a href="/resume.json" style="color:var(--cyan)">résumé as JSON</a> and an <a href="/.well-known/agent.json" style="color:var(--cyan)">AI agent card</a>, so recruiting tools and AI assistants can read it directly.</p>',
+        es: '<p>Tampa, FL &middot; <a href="mailto:samuelpacelli03@gmail.com" style="color:var(--cyan)">samuelpacelli03@gmail.com</a> &middot; <a href="tel:+18136654518" style="color:var(--cyan)">(813) 665-4518</a></p><p class="note">Este perfil también es legible por máquinas: <a href="/resume.json" style="color:var(--cyan)">currículum en JSON</a> y una <a href="/.well-known/agent.json" style="color:var(--cyan)">tarjeta de agente de IA</a>, para que las herramientas de reclutamiento y los asistentes de IA puedan leerlo directamente.</p>'
+      } }
+  ]
 };
 
 var I18N = {
-  en: { prep_h: 'Profile in preparation',
-        prep_p: 'This page is being built from Samuel Pacelli’s CV. It will publish here shortly.',
-        foot: 'Profile' },
-  es: { prep_h: 'Perfil en preparación',
-        prep_p: 'Esta página se está construyendo a partir del CV de Samuel Pacelli. Se publicará aquí en breve.',
-        foot: 'Perfil' }
+  en: { foot: 'Operations · Inventory · Customer Service', vcf: 'Save contact', email: 'Email', call: 'Call' },
+  es: { foot: 'Operaciones · Inventario · Servicio al Cliente', vcf: 'Guardar contacto', email: 'Correo', call: 'Llamar' }
 };
 
 var LANG = 'en';
-function t(v){ return (v && typeof v === 'object') ? (v[LANG] || v.en || '') : (v || ''); }
+function t(v){ return (v && typeof v === 'object' && !Array.isArray(v)) ? (v[LANG] !== undefined ? v[LANG] : (v.en || '')) : (v || ''); }
 function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
 function renderPhoto(){
-  var slot = $('photoSlot');
-  var vid = t(PROFILE.video);
+  var slot = $('photoSlot'), vid = t(PROFILE.video);
   if (vid) {
-    slot.innerHTML = '<video class="photo" id="heroVideo" src="' + vid + '"' +
-      (PROFILE.video.en ? ' data-video-en="' + PROFILE.video.en + '"' : '') +
-      (PROFILE.video.es ? ' data-video-es="' + PROFILE.video.es + '"' : '') +
-      (PROFILE.photo ? ' poster="' + PROFILE.photo + '"' : '') +
-      ' autoplay muted loop playsinline webkit-playsinline preload="metadata" aria-label="' + PROFILE.name + '"></video>';
-    $('vidSound').style.display = 'flex';
-    wireVideo();
+    slot.innerHTML = '<video class="photo" id="heroVideo" src="' + vid + '"' + (PROFILE.photo ? ' poster="' + PROFILE.photo + '"' : '') +
+      ' autoplay muted loop playsinline webkit-playsinline preload="metadata" aria-label="' + esc(PROFILE.name) + '"></video>';
   } else if (PROFILE.photo) {
-    slot.innerHTML = '<img class="photo" src="' + PROFILE.photo + '" alt="' + PROFILE.name + '">';
-  } else {
-    slot.innerHTML = '<div class="photo empty">photo<br>pending</div>';
+    slot.innerHTML = '<img class="photo" src="' + PROFILE.photo + '" alt="' + esc(PROFILE.name) + '">';
   }
 }
 
-function wireVideo(){
-  var v = $('heroVideo'), btn = $('vidSound');
-  if (!v || !btn) return;
-  function relabel(){
-    btn.classList.toggle('on', !v.muted);
-    btn.innerHTML = '<i class="fas ' + (v.muted ? 'fa-volume-xmark' : 'fa-volume-high') + '"></i>';
+function renderSection(s){
+  var head = '<div class="sec-head"><span class="k">' + s.k + '</span><h2>' + t(s.h) + '</h2><span class="rule"></span></div>';
+  if (s.type === 'jobs') {
+    return '<section class="blk">' + head + '<div class="card">' + s.jobs.map(function(j){
+      return '<div class="job"><h3>' + t(j.role) + '</h3>' +
+        '<div class="co">' + esc(j.co) + ' &middot; ' + esc(j.place) + '</div>' +
+        '<div class="when">' + t(j.when) + '</div>' +
+        '<ul>' + t(j.bullets).map(function(b){ return '<li>' + esc(b) + '</li>'; }).join('') + '</ul></div>';
+    }).join('') + '</div></section>';
   }
-  function play(){ var p = v.play(); return (p && p.catch) ? p.catch(function(){}) : Promise.resolve(); }
-  function toggle(){
-    if (v.muted) {
-      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}
-      v.removeAttribute('muted'); v.muted = false; v.volume = 1;
-      play().then(function(){ try { v.currentTime = 0; } catch(e){} });
-    } else { v.muted = true; v.setAttribute('muted',''); }
-    relabel();
+  if (s.type === 'skills') {
+    return '<section class="blk">' + head + '<div class="card"><div class="sgrid">' +
+      s.skills.map(function(k){ return '<span class="skill">' + esc(k) + '</span>'; }).join('') + '</div></div></section>';
   }
-  btn.addEventListener('click', toggle);
-  v.addEventListener('click', toggle);
-  v.addEventListener('volumechange', relabel);
-  v.addEventListener('loadeddata', play);
-  relabel(); play();
+  return '<section class="blk">' + head + '<div class="card"><div class="lead">' + t(s.body) + '</div></div></section>';
 }
 
 function render(){
   document.documentElement.lang = LANG;
-  $('brandName').textContent = PROFILE.name;
-  $('heroName').textContent = PROFILE.name;
   $('yr').textContent = new Date().getFullYear();
-
-  var eb = t(PROFILE.eyebrow);
-  if (eb) { $('eyebrow').textContent = eb; $('eyebrowWrap').style.display = ''; }
+  $('brandSub').textContent = PROFILE.location;
+  $('eyebrow').textContent = t(PROFILE.eyebrow);
   $('titleLine').textContent = t(PROFILE.titleLine);
   $('subtitle').textContent = t(PROFILE.subtitle);
-  $('brandSub').textContent = PROFILE.location || '';
+  $('footTag').textContent = (I18N[LANG] || I18N.en).foot;
 
-  if (PROFILE.linkedin) { $('liBtn').href = PROFILE.linkedin; $('liBtn').style.display = ''; }
-
-  $('chips').innerHTML = (PROFILE.chips || []).map(function(c){
-    return '<span class="chip"><i class="fas ' + (c.icon || 'fa-circle-dot') + '"></i> ' + t(c.label) + '</span>';
+  $('chips').innerHTML = PROFILE.chips.map(function(c){
+    return '<span class="chip"><i class="fas ' + c.icon + '"></i> ' + t(c.label) + '</span>';
   }).join('');
-
-  var social = [];
-  if (PROFILE.linkedin) social.push('<a class="sbtn primary" href="' + PROFILE.linkedin + '" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i> LinkedIn</a>');
-  if (PROFILE.email) social.push('<a class="sbtn" href="mailto:' + PROFILE.email + '"><i class="fas fa-envelope"></i> ' + PROFILE.email + '</a>');
-  if (PROFILE.phone) social.push('<a class="sbtn" href="tel:' + PROFILE.phone + '"><i class="fas fa-phone"></i> ' + PROFILE.phone + '</a>');
-  $('socialRow').innerHTML = social.join('');
-
-  renderPhoto();
 
   var d = I18N[LANG] || I18N.en;
-  if (!PROFILE.complete || !(PROFILE.sections || []).length) {
-    $('content').innerHTML = '<section class="blk"><div class="prep"><h3>' + d.prep_h + '</h3><p>' + d.prep_p + '</p></div></section>';
-    return;
-  }
-  $('content').innerHTML = (PROFILE.sections || []).map(function(s){
-    return '<section class="blk"><div class="sec-head"><span class="k">' + (s.k || '') + '</span>' +
-      '<h2>' + t(s.h) + '</h2><span class="rule"></span></div>' +
-      '<div class="card"><div class="lead">' + t(s.body) + '</div></div></section>';
-  }).join('');
+  $('socialRow').innerHTML =
+    '<a class="sbtn accent" href="mailto:' + PROFILE.email + '"><i class="fas fa-envelope"></i> ' + PROFILE.email + '</a>' +
+    '<a class="sbtn" href="tel:' + PROFILE.phone + '"><i class="fas fa-phone"></i> ' + PROFILE.phoneDisplay + '</a>' +
+    '<button class="sbtn" id="vcfBtn2"><i class="fas fa-address-card"></i> ' + d.vcf + '</button>';
+  $('vcfBtn2').onclick = saveVcf;
+
+  renderPhoto();
+  $('content').innerHTML = PROFILE.sections.map(renderSection).join('');
 }
+
+function saveVcf(){
+  var v = ['BEGIN:VCARD','VERSION:3.0','N:Pacelli;Samuel;;;','FN:Samuel Pacelli',
+    'TEL;TYPE=CELL:' + PROFILE.phone, 'EMAIL:' + PROFILE.email,
+    'ADR;TYPE=HOME:;;;Tampa;FL;;USA', 'URL:' + PROFILE.site, 'END:VCARD'].join('\r\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(v);
+  a.download = 'samuel-pacelli.vcf'; document.body.appendChild(a); a.click(); a.remove();
+}
+$('vcfBtn').onclick = saveVcf;
 
 function setLang(lang){
   LANG = (lang === 'es') ? 'es' : 'en';
@@ -312,14 +426,12 @@ function setLang(lang){
   document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === LANG); });
   render();
 }
-
 (function(){
   var saved; try { saved = localStorage.getItem('spCvLang'); } catch(e){}
   if (!saved) { var nav = (navigator.language || 'en').toLowerCase(); saved = nav.indexOf('es') === 0 ? 'es' : 'en'; }
   setLang(saved);
 })();
 
-/* theme toggle */
 (function(){
   var b = $('themeBtn');
   function apply(th){
@@ -332,7 +444,6 @@ function setLang(lang){
   b.onclick = function(){ apply(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); };
 })();
 
-/* first-party page-view beacon (same endpoint the other CV sites use) */
 (function(){
   try {
     fetch('/api/cv/hit', { method:'POST', headers:{'Content-Type':'application/json'}, keepalive:true,
