@@ -6,8 +6,14 @@ import api from '../services/api';
 const BASE = '/Torna_Idioma';
 
 // The login screen is the hand-off between the landing page and the app, so it
-// reads the same ti_lang the landing page wrote and offers the same two choices.
-// Interface language is en|fil only — Spanish is the subject, not a menu language.
+// reads the same ti_lang the landing page wrote and offers the same three choices.
+// Public surfaces speak en|es|fil; the app interior behind this screen is en|fil
+// (see services/auth.js), so a visitor who chose Spanish keeps it out here and is
+// handed English inside rather than having their choice deleted at the door.
+const PUBLIC_LANGS = ['en', 'es', 'fil'];
+const publicLang = (l) => (PUBLIC_LANGS.indexOf(l) !== -1 ? l : null);
+const LANG_LABEL = { en: 'English', es: 'Español', fil: 'Filipino' };
+
 const T = {
   en: {
     signIn: 'Sign In', register: 'Register',
@@ -21,6 +27,19 @@ const T = {
     modules: 'The 12 Modules — Full Curriculum',
     namePh: 'Juan dela Cruz', orgPh: 'School, company, or institution',
     emailPh: 'you@example.com',
+  },
+  es: {
+    signIn: 'Iniciar Sesión', register: 'Registrarse',
+    fullName: 'Nombre Completo', role: 'Rol', org: 'Organización (opcional)',
+    langPref: 'Idioma Preferido', email: 'Correo Electrónico', password: 'Contraseña',
+    submitLogin: 'Iniciar Sesión', submitRegister: 'Crear Cuenta', loading: 'Cargando...',
+    demo: 'Cuentas de Demostración', back: 'Volver a la Página Principal',
+    heroA: 'El Retorno del', heroB: 'Idioma Cultural',
+    heroDesc: 'Makati — La Primera Ciudad Hispanohablante de Asia. Un movimiento de dignidad, orgullo y oportunidad económica.',
+    orientation: 'Orientación del Estudiante — Cómo Usar Torna Idioma',
+    modules: 'Los 12 Módulos — Currículo Completo',
+    namePh: 'Juan dela Cruz', orgPh: 'Escuela, empresa o institución',
+    emailPh: 'tu@ejemplo.com',
   },
   fil: {
     signIn: 'Mag-login', register: 'Magrehistro',
@@ -56,21 +75,14 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'student', organization: '', language_pref: (localStorage.getItem('ti_lang') === 'fil' ? 'fil' : 'en') });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // Seeded from whatever the visitor chose on the landing page; a legacy 'es'
-  // coerces to English rather than falling through to the account default.
-  // Mirrors getLang() in services/auth.js: an explicit choice wins, otherwise
-  // Filipino — the primary audience — so a deep link to /login matches what the
-  // landing page would have shown.
-  const [lang, setLang] = useState(() => {
-    const stored = localStorage.getItem('ti_lang');
-    if (stored === 'en' || stored === 'fil') return stored;
-    // Anything else is a legacy value from the old three-way toggle. Clear it so
-    // the account preference governs after sign-in instead of a dead 'es'.
-    if (stored) localStorage.removeItem('ti_lang');
-    return 'fil';
-  });
+  // Seeded from whatever the visitor chose on the landing page. An explicit choice
+  // wins, otherwise Filipino — the primary audience — so a deep link to /login
+  // matches what the landing page would have shown. A stored 'es' is honoured here
+  // and never deleted: erasing it was what made the Spanish choice evaporate the
+  // moment a visitor clicked through from the landing page.
+  const [lang, setLang] = useState(() => publicLang(localStorage.getItem('ti_lang')) || 'fil');
   const L = T[lang] || T.en;
-  const switchLang = (l) => { const v = l === 'fil' ? 'fil' : 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
+  const switchLang = (l) => { const v = publicLang(l) || 'en'; localStorage.setItem('ti_lang', v); setLang(v); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,9 +138,9 @@ export default function Login() {
       <div style={{ ...s.right, ...(mob ? s.rightMob : {}) }}>
         <div style={{ ...s.formBox, ...(mob ? s.formBoxMob : {}) }}>
           <div style={s.langRow}>
-            {['en', 'fil'].map((l) => (
+            {PUBLIC_LANGS.map((l) => (
               <button key={l} type="button" onClick={() => switchLang(l)}
-                style={{ ...s.langBtn, ...(lang === l ? s.langBtnOn : {}) }}>{l === 'fil' ? 'Filipino' : 'English'}</button>
+                style={{ ...s.langBtn, ...(lang === l ? s.langBtnOn : {}) }}>{LANG_LABEL[l]}</button>
             ))}
           </div>
           <div style={s.tabs}>

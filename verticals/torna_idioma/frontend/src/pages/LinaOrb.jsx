@@ -9,15 +9,19 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const NEURAL_URL = '/api/tts/edge';
 
-// Active-language -> Edge voice. Spanish uses the canonical "Lina" (Dalia);
-// the route also accepts raw Edge voice names (e.g. fil-PH-BlessicaNeural).
-const LANG_VOICE = { es: 'lina', en: 'ava', fil: 'fil-PH-BlessicaNeural' };
+// Active-language -> Edge voice. Every Spanish word on this page is Dalia
+// (es-MX-DaliaNeural), matching services/voice.js and the modules page so the
+// platform has one Spanish voice rather than a different one per surface. The
+// alias is spelled 'dalia' rather than the older 'lina' — both resolve to the
+// same Edge voice, but only one of them says which voice you are getting.
+// The route also accepts raw Edge voice names (e.g. fil-PH-BlessicaNeural).
+const LANG_VOICE = { es: 'dalia', en: 'ava', fil: 'fil-PH-BlessicaNeural' };
 const FALLBACK_LANG = { es: 'es-MX', en: 'en-US', fil: 'fil-PH' };
 
 // Spanish accent picker (only shown when the page is in Spanish).
 // México (Dalia) is the default and only AI voice.
 const ES_ACCENTS = [
-  { value: 'lina',   label: 'México (Dalia)' },
+  { value: 'dalia',   label: 'México (Dalia)' },
 ];
 
 // Narration: index 0 = intro; 1..5 map to mission / why / pillars / impact / join.
@@ -93,10 +97,9 @@ const UI = {
 export default function LinaOrb({ lang = 'es' }) {
   const L = UI[lang] || UI.es;
   const segs = SEGMENTS[lang] || SEGMENTS.es;
-  const voiceName = lang === 'es' ? null /* uses accent state */ : LANG_VOICE[lang];
 
   const [neuralOn, setNeuralOn] = useState(true);
-  const [accent, setAccent] = useState('lina');
+  const [accent, setAccent] = useState(ES_ACCENTS[0].value);
   const [status, setStatus] = useState(L.idle);
   const [speaking, setSpeaking] = useState(false);
   const [playing, setPlaying] = useState(false);

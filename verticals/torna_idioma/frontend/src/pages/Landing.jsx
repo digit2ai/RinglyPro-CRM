@@ -158,7 +158,7 @@ export default function Landing() {
             <a href="#join" style={s.navLink}>{L.navJoin}</a>
             <a href={`${BASE}/login`} style={s.navCTA}>{L.loginCta}</a>
             <div style={s.langSwitcher}>
-              {['en','fil'].map(l => (
+              {PUBLIC_LANGS.map(l => (
                 <button key={l} onClick={() => switchLang(l)} style={{ ...s.langBtn, ...(lang === l ? s.langBtnActive : {}) }}>{l.toUpperCase()}</button>
               ))}
             </div>
@@ -174,7 +174,7 @@ export default function Landing() {
             <a href="#impact" style={s.mobileLink} onClick={() => setMobileMenu(false)}>{L.navImpact}</a>
             <a href={`${BASE}/login`} style={s.mobileCTA}>{L.loginCta}</a>
             <div style={{ ...s.langSwitcher, justifyContent: 'center', marginTop: 8 }}>
-              {['en','fil'].map(l => (
+              {PUBLIC_LANGS.map(l => (
                 <button key={l} onClick={() => switchLang(l)} style={{ ...s.langBtn, ...(lang === l ? s.langBtnActive : {}) }}>{l.toUpperCase()}</button>
               ))}
             </div>
