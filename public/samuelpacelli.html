@@ -171,6 +171,23 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .skill{font-size:13.5px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--txt2)}
 .note{font-size:13px;color:var(--dim);margin-top:10px}
 
+/* share + QR */
+.sharecard{display:flex;align-items:center;gap:16px;margin-top:20px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:560px}
+.qrthumb{width:96px;height:96px;flex:0 0 96px;border-radius:10px;background:#fff;padding:6px;cursor:pointer;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrthumb:hover{transform:scale(1.04)}
+.sharemeta{flex:1;min-width:0}
+.sharehint{font-size:13px;color:var(--dim);margin-bottom:10px}
+.sharebtns{display:flex;gap:9px;flex-wrap:wrap}
+.sharebtns .sbtn{padding:8px 14px;font-size:13px}
+@media(max-width:760px){.sharecard{margin-left:auto;margin-right:auto}}
+.qrmodal{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(3,5,12,.82);backdrop-filter:blur(6px)}
+.qrmodal.on{display:flex}
+.qrbox{background:var(--bg1);border:1px solid var(--line2);border-radius:20px;padding:26px;text-align:center;max-width:380px;width:100%}
+.qrbig{width:100%;max-width:300px;border-radius:14px;background:#fff;padding:12px}
+.qrhint{font-size:13px;color:var(--dim);margin-top:14px}
+.qrclose{margin-top:16px}
+@media print{.sharecard,.qrmodal{display:none}}
+
 /* voice orb — zero-key Edge neural TTS via /api/tts/edge (Ava in English, Dalia in Spanish) */
 .voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
 .voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
@@ -231,6 +248,18 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
       <p class="subtitle" id="subtitle"></p>
       <div class="chips" id="chips"></div>
       <div class="social-row" id="socialRow"></div>
+      <div class="sharecard">
+        <img class="qrthumb" id="qrThumb" src="data:image/png;base64,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" alt="QR code — samuelpacelli.com" width="96" height="96" role="button" tabindex="0" aria-label="Enlarge QR code">
+        <div class="sharemeta">
+          <div class="sharehint" id="shareHint"></div>
+          <div class="sharebtns">
+            <button class="sbtn accent" id="shareBtn"><i class="fas fa-share-nodes"></i> <span id="shareLbl"></span></button>
+            <a class="sbtn" id="vcfLink" href="/samuelpacelli.vcf" download="samuel-pacelli.vcf"><i class="fas fa-user-plus"></i> <span id="vcfLbl"></span></a>
+            <button class="sbtn" id="copyBtn"><i class="fas fa-link"></i> <span id="copyLbl"></span></button>
+            <button class="sbtn" id="qrBtn"><i class="fas fa-qrcode"></i> <span id="qrLbl"></span></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -416,6 +445,9 @@ PROFILE.narration = {
 
 var I18N = {
   en: { foot: 'Operations · Inventory · Customer Service', vcf: 'Save contact', email: 'Email', call: 'Call',
+        shareHint: 'Scan to open my profile &middot; samuelpacelli.com', share: 'Share', copy: 'Copy link',
+        copied: 'Copied', qr: 'Show QR', qrHint: 'Point a phone camera at the code to open Samuel Pacelli’s profile.',
+        qrClose: 'Close', shareText: 'Samuel Pacelli — operations, inventory control and customer service.',
         vName: "Samuel's AI Voice", vTag: 'EN · Ava',
         vRole: "A female AI voice that walks you through Samuel's profile.",
         vPlay: 'Hear my profile', vPause: 'Pause', vResume: 'Resume', vStop: 'Stop',
@@ -424,6 +456,9 @@ var I18N = {
         vPaused: 'Paused.', vDone: 'Finished. Press play to hear it again.',
         vFallback: 'Neural voice unavailable — using your browser voice.' },
   es: { foot: 'Operaciones · Inventario · Servicio al Cliente', vcf: 'Guardar contacto', email: 'Correo', call: 'Llamar',
+        shareHint: 'Escanea para abrir mi perfil &middot; samuelpacelli.com', share: 'Compartir', copy: 'Copiar enlace',
+        copied: 'Copiado', qr: 'Ver código QR', qrHint: 'Apunta la cámara del teléfono al código para abrir el perfil de Samuel Pacelli.',
+        qrClose: 'Cerrar', shareText: 'Samuel Pacelli — operaciones, control de inventario y servicio al cliente.',
         vName: 'La voz AI de Samuel', vTag: 'ES · Dalia',
         vRole: 'Una voz femenina de inteligencia artificial que te recorre el perfil de Samuel.',
         vPlay: 'Escuchar mi perfil', vPause: 'Pausar', vResume: 'Reanudar', vStop: 'Detener',
@@ -485,19 +520,55 @@ function render(){
     '<button class="sbtn" id="vcfBtn2"><i class="fas fa-address-card"></i> ' + d.vcf + '</button>';
   $('vcfBtn2').onclick = saveVcf;
 
+  $('shareHint').innerHTML = d.shareHint;
+  $('shareLbl').textContent = d.share;
+  $('vcfLbl').textContent = d.vcf;
+  $('copyLbl').textContent = d.copy;
+  $('qrLbl').textContent = d.qr;
+  $('qrHint').textContent = d.qrHint;
+  $('qrClose').textContent = d.qrClose;
+
   renderPhoto();
   $('content').innerHTML = PROFILE.sections.map(renderSection).join('');
 }
 
-function saveVcf(){
-  var v = ['BEGIN:VCARD','VERSION:3.0','N:Pacelli;Samuel;;;','FN:Samuel Pacelli',
-    'TEL;TYPE=CELL:' + PROFILE.phone, 'EMAIL:' + PROFILE.email,
-    'ADR;TYPE=HOME:;;;Tampa;FL;;USA', 'URL:' + PROFILE.site, 'END:VCARD'].join('\r\n');
-  var a = document.createElement('a');
-  a.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(v);
-  a.download = 'samuel-pacelli.vcf'; document.body.appendChild(a); a.click(); a.remove();
-}
+/* Save contact. A `data:` URL download does NOT work on iOS Safari — it silently does
+   nothing, which is why the earlier button appeared broken. Point at a real .vcf file on
+   the server instead: iOS opens it in Contacts, desktop browsers download it. */
+function saveVcf(){ window.location.href = '/samuelpacelli.vcf'; }
 $('vcfBtn').onclick = saveVcf;
+
+/* ---- share card: native share, copy link, QR ---- */
+function shareProfile(){
+  var d = I18N[LANG] || I18N.en;
+  if (navigator.share) {
+    navigator.share({ title: PROFILE.name, text: d.shareText, url: PROFILE.site }).catch(function(){});
+  } else { copyLink(); }
+}
+function copyLink(){
+  var d = I18N[LANG] || I18N.en;
+  var done = function(){
+    var el = $('copyLbl'); var old = el.textContent;
+    el.textContent = d.copied; setTimeout(function(){ el.textContent = old; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(PROFILE.site).then(done, done);
+  else {
+    var ta = document.createElement('textarea'); ta.value = PROFILE.site;
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    ta.remove(); done();
+  }
+}
+function openQr(){ $('qrModal').classList.add('on'); }
+function closeQr(){ $('qrModal').classList.remove('on'); }
+$('shareBtn').onclick = shareProfile;
+$('copyBtn').onclick = copyLink;
+$('qrBtn').onclick = openQr;
+$('qrThumb').onclick = openQr;
+$('qrThumb').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openQr(); } });
+$('qrClose').onclick = closeQr;
+$('qrModal').addEventListener('click', function(e){ if (e.target === $('qrModal')) closeQr(); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeQr(); });
 
 function setLang(lang){
   LANG = (lang === 'es') ? 'es' : 'en';
@@ -668,5 +739,12 @@ function setLang(lang){
   } catch(e){}
 })();
 </script>
+<div class="qrmodal" id="qrModal" role="dialog" aria-modal="true" aria-label="Share profile">
+  <div class="qrbox">
+    <img class="qrbig" src="data:image/png;base64,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" alt="QR code — samuelpacelli.com">
+    <div class="qrhint" id="qrHint"></div>
+    <button class="sbtn qrclose" id="qrClose"></button>
+  </div>
+</div>
 </body>
 </html>
