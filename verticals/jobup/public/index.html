@@ -1,0 +1,89 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JobUp — Your Personal AI Career Platform</title>
+<meta name="description" content="Stop looking for jobs. Let AI find them for you. Your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.">
+<style>
+:root{--bg:#0b1220;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--cy:#22d3ee;--vi:#8b5cf6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:56px 24px}
+h1{font-size:clamp(30px,6vw,50px);line-height:1.1;margin:24px 0 14px}
+.sub{color:#cfd8e8;font-size:19px;max-width:640px}
+.orb{width:180px;height:180px;margin:0 auto;border-radius:50%;
+background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 42%,#4c1d95 100%);
+box-shadow:0 0 60px rgba(34,211,238,.35);cursor:pointer;transition:transform .2s}
+.orb:hover{transform:scale(1.03)}
+.orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 60px rgba(34,211,238,.35)}50%{box-shadow:0 0 90px rgba(139,92,246,.5)}}
+.cta{display:inline-block;background:linear-gradient(90deg,var(--cy),var(--vi));color:#08111f;
+font-weight:700;padding:14px 26px;border-radius:999px;text-decoration:none;margin:22px 10px 0 0;border:0;font-size:16px;cursor:pointer}
+.ghost{border:1px solid var(--line);color:var(--txt);background:transparent}
+section{margin:52px 0}h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);
+border-bottom:1px solid var(--line);padding-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{margin:0 0 8px;font-size:17px}.card p{margin:0;color:var(--mut);font-size:15px}
+.price{font-size:40px;font-weight:800}
+footer{color:var(--mut);font-size:13px;border-top:1px solid var(--line);padding-top:20px;margin-top:50px}
+footer a{color:var(--mut)}
+</style></head><body><div class="wrap">
+<div class="orb" id="orb" title="Talk to JobUp"></div>
+<h1>Stop Looking for Jobs.<br>Let AI Find Them for You.</h1>
+<p class="sub">Talk to the orb or attach your resume. JobUp shows you your own AI career ecosystem in minutes — your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.</p>
+<a class="cta" href="#start">Attach my resume</a>
+<a class="cta ghost" href="#how">See how JobUp works</a>
+
+<section><h2>What you receive</h2><div class="grid">
+<div class="card"><h3>Your web address</h3><p>yourname.jobup.dev, live minutes after you activate.</p></div>
+<div class="card"><h3>A professional website</h3><p>Generated from your resume and kept current automatically.</p></div>
+<div class="card"><h3>AI-readable identity</h3><p>resume.json, JSON-LD, an agent card and an MCP endpoint.</p></div>
+<div class="card"><h3>Continuous discovery</h3><p>Real openings, scored and explained — never invented.</p></div>
+<div class="card"><h3>Per-job tailoring</h3><p>Your resume rewritten for a specific posting. Never fabricated.</p></div>
+<div class="card"><h3>Three AI agents</h3><p>Hunter, Broadcaster and Presence, running for you.</p></div>
+</div></section>
+
+<section id="how"><h2>The three agents</h2><div class="grid">
+<div class="card"><h3>Opportunity Hunter</h3><p>Searches approved sources, ranks and explains every match, names what you are missing.</p></div>
+<div class="card"><h3>Career Broadcaster</h3><p>Drafts targeted outreach. Nothing leaves without your approval — enforced in code.</p></div>
+<div class="card"><h3>Professional Presence Agent</h3><p>Builds and maintains your site and your machine-readable identity.</p></div>
+</div></section>
+
+<section id="start"><h2>Pricing</h2>
+<p class="price">$97<span style="font-size:18px;color:var(--mut)"> / year</span></p>
+<p class="sub">One plan. Everything above included. Tax calculated at checkout. 14-day refund, no questions.</p>
+<p style="color:var(--mut);font-size:14px">JobUp never applies on your behalf. You review and submit every application yourself.</p>
+<a class="cta" href="#start">Show me my ecosystem</a>
+</section>
+
+<footer>
+<a href="/jobup/terms.html">Terms</a> · <a href="/jobup/privacy.html">Privacy</a> ·
+<a href="/jobup/subprocessors.html">Subprocessors</a> · <a href="/jobup/health">Status</a><br>
+JobUp — a Digit2AI product.
+</footer>
+</div>
+<script>
+// Orb narration over the keyless Edge TTS route (spec section 3).
+(function(){
+  var orb=document.getElementById('orb'),playing=false,audio=null;
+  var lines=["Hi, I'm Ava, the voice of JobUp.",
+             "Attach your resume and I will show you the career ecosystem we would build for you — your website, your web address, and the real jobs that match you right now."];
+  var i=0;
+  function speak(){
+    if(i>=lines.length){orb.classList.remove('speaking');playing=false;i=0;return;}
+    fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:lines[i],voice:'ava',lang:'en'})})
+      .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
+      .then(function(b){audio=new Audio(URL.createObjectURL(b));audio.onended=function(){i++;speak();};
+        orb.classList.add('speaking');audio.play();})
+      .catch(function(){ // graceful fallback to browser speech (spec 3.4)
+        if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(lines[i]);
+          u.onend=function(){i++;speak();};orb.classList.add('speaking');speechSynthesis.speak(u);}
+        else{orb.classList.remove('speaking');playing=false;}
+      });
+  }
+  orb.addEventListener('click',function(){
+    if(playing){if(audio)audio.pause();if(window.speechSynthesis)speechSynthesis.cancel();
+      orb.classList.remove('speaking');playing=false;i=0;return;}
+    playing=true;speak();
+  });
+})();
+</script></body></html>

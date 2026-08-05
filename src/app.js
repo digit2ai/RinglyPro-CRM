@@ -2162,6 +2162,50 @@ app.get('/debug/coachtrack-error', (req, res) => {
 });
 
 // =====================================================
+// =====================================================
+// JOBUP — AI career platform. Mounted at /jobup and served on jobup.dev.
+//
+// jobup.dev DNS points at ringlypro-crm.onrender.com (GHL CNAME), so JobUp runs
+// as a vertical on this service rather than standalone. Shares this database,
+// so all of its tables carry the `ju_` prefix. Reuses /api/tts/edge for voice.
+// =====================================================
+let jobupApp = null;
+let jobupError = null;
+try {
+  jobupApp = require('../verticals/jobup/src/index');
+
+  // 1. Subscriber sites: <name>.jobup.dev. Must run BEFORE the CRM's routes.
+  app.use(jobupApp.subscriberSite);
+
+  // 2. Apex + www: serve the JobUp app in place so the address bar stays put.
+  app.use((req, res, next) => {
+    const host = (req.get('host') || '').toLowerCase().split(':')[0];
+    if (host !== 'jobup.dev' && host !== 'www.jobup.dev') return next();
+    // /api/tts is the shared CRM voice route — let it through untouched.
+    if (req.path.startsWith('/api/tts')) return next();
+    return jobupApp(req, res, next);
+  });
+
+  // 3. Path mount, so it is reachable on aiagent.ringlypro.com too.
+  app.get('/jobup', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/jobup/');
+    next();
+  });
+  app.use('/jobup', jobupApp);
+
+  console.log('JobUp mounted at /jobup and on jobup.dev');
+  console.log('   - Landing: https://jobup.dev/  |  /jobup/');
+  console.log('   - Health:  /jobup/health');
+  console.log('   - Subscriber sites: <name>.jobup.dev');
+} catch (e) {
+  jobupError = e;
+  console.error('JobUp failed to mount:', e.message);
+}
+app.get('/debug/jobup-error', (req, res) => {
+  res.json({ mounted: Boolean(jobupApp), error: jobupError ? jobupError.message : null,
+             stack: jobupError ? String(jobupError.stack).split('\n').slice(0, 8) : null });
+});
+
 // SPEAKUP — Voice-to-Text + AI editing (internal team tool, served at /speakup/)
 // =====================================================
 
