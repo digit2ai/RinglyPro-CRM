@@ -171,6 +171,31 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
 .skill{font-size:13.5px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--txt2)}
 .note{font-size:13px;color:var(--dim);margin-top:10px}
 
+/* voice orb — zero-key Edge neural TTS via /api/tts/edge (Ava in English, Dalia in Spanish) */
+.voicebar{max-width:1120px;margin:26px auto 0;padding:0 24px;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.voicecard{display:flex;align-items:center;gap:20px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;position:relative;overflow:hidden}
+.voicecard::before{content:"";position:absolute;left:0;top:0;height:100%;width:3px;background:var(--grad)}
+.vorb{position:relative;width:72px;height:72px;flex:0 0 72px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#a7f0ff,#22d3ee 42%,#8b5cf6 100%);box-shadow:0 0 0 0 rgba(34,211,238,.5);cursor:pointer;transition:transform .2s}
+.vorb:hover{transform:scale(1.05)}
+.vorb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(139,92,246,.35)}
+.vorb.speaking{animation:vpulse 1.15s ease-in-out infinite}
+.vorb.loading{animation:vspin 1s linear infinite}
+@keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vmeta{flex:1;min-width:0}
+.vname{font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.vtag{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-bd);border-radius:20px;padding:3px 9px}
+.vrole{color:var(--dim);font-size:13px;margin:3px 0 12px}
+.vctrls{display:flex;gap:9px;flex-wrap:wrap}
+.vbtn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--card2);color:var(--txt);padding:8px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}
+.vbtn:hover{border-color:var(--cyan-bd)}
+.vbtn.primary{background:var(--grad);border:none;color:#04121a}
+.vbtn:disabled{opacity:.45;cursor:default}
+.vstatus{font-size:12.5px;color:var(--dim);margin-top:10px;min-height:16px}
+.blk.active .card{border-color:var(--cyan-bd);box-shadow:0 0 0 1px var(--cyan-bd)}
+@media(max-width:620px){.voicecard{flex-direction:column;text-align:center}.vctrls{justify-content:center}.vname{justify-content:center}.voicecard::before{width:100%;height:3px}}
+@media print{.voicebar{display:none}}
+
 .foot{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--dim2);font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
 </style>
 </head>
@@ -209,6 +234,24 @@ h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-
     </div>
   </div>
 </header>
+
+<!-- VOICE ORB — AI narration of the profile (zero-key Edge neural TTS via /api/tts/edge).
+     Ava narrates in English, Dalia in Spanish; the voice follows the page language toggle. -->
+<div class="voicebar">
+  <div class="voicecard">
+    <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="Play profile narration"></div>
+    <div class="vmeta">
+      <div class="vname"><span id="vName">Samuel's AI Voice</span> <span class="vtag" id="vTag">EN · Ava</span></div>
+      <div class="vrole" id="vRole"></div>
+      <div class="vctrls">
+        <button class="vbtn primary" id="vPlay"><i class="fas fa-play"></i> <span id="vPlayLbl">Hear my profile</span></button>
+        <button class="vbtn" id="vPause" disabled><i class="fas fa-pause"></i> <span id="vPauseLbl">Pause</span></button>
+        <button class="vbtn" id="vStop" disabled><i class="fas fa-stop"></i> <span id="vStopLbl">Stop</span></button>
+      </div>
+      <div class="vstatus" id="vStatus"></div>
+    </div>
+  </div>
+</div>
 
 <main class="wrap" id="content"></main>
 
@@ -349,9 +392,45 @@ var PROFILE = {
   ]
 };
 
+/* Narration read aloud by the voice orb. Index 0 is the intro; indexes 1..N map to the
+   sections above, in order. Every statement is the same one the page makes — numbers and the
+   email are spelled out so the neural voice reads them naturally. */
+PROFILE.narration = {
+  en: [
+    "Hi, I'm Ava, the A I voice for Samuel Pacelli's profile. In about a minute I'll walk you through his background, his experience, and the kind of role he is looking for.",
+    "Samuel is a bilingual professional with experience in customer service, operations, warehouse management, inventory control and financial data. He works in data reconciliation, process improvement, customer support and cross-functional collaboration, and he is looking for an analyst or operations position where he can apply strong analytical and problem-solving skills.",
+    "Since July of twenty twenty-five he has been a Warehouse Specialist at Pro City Supply in Tampa, Florida, where he manages warehouse operations, customer service, billing and inventory control. He processes customer orders, invoices and purchase orders with a high level of accuracy, keeps inventory records accurate through cycle counts and reconciliations, and coordinates inbound and outbound shipments. Before that he was a Receiver at Sanwa Food Group, reconciling shipment discrepancies with vendors and internal teams. Earlier he spent four months as a Customer Service Associate at Teleperformance in Medellín, Colombia, handling high volume calls and emails and resolving complex issues within service level agreements. And from twenty twenty to twenty twenty-four he was an Inventory and Ecommerce Operations Specialist at MATEC, also in Medellín, where he used Net Suite to manage inventory and transactions.",
+    "His technical toolkit includes Microsoft Office, Google Workspace, and Net Suite E R P, W M S and C R M, along with data analysis, inventory management, quality assurance and customer service.",
+    "He studied Accounting and Finance at Yacambú University in Venezuela. Those studies are incomplete.",
+    "Samuel is based in Tampa, Florida, and is open to analyst and operations roles. You can write to him at samuelpacelli zero three at gmail dot com, or call eight one three, six six five, four five one eight. This profile is also machine readable, so recruiting tools and A I assistants can read his résumé directly."
+  ],
+  es: [
+    "Hola, soy Dalia, la voz de inteligencia artificial del perfil de Samuel Pacelli. En cerca de un minuto te voy a contar su trayectoria, su experiencia y el tipo de puesto que está buscando.",
+    "Samuel es un profesional bilingüe con experiencia en servicio al cliente, operaciones, gestión de almacén, control de inventario y datos financieros. Trabaja en conciliación de datos, mejora de procesos, soporte al cliente y colaboración entre áreas, y busca un puesto de analista u operaciones donde pueda aplicar una sólida capacidad analítica y de resolución de problemas.",
+    "Desde julio de dos mil veinticinco es Especialista de Almacén en Pro City Supply, en Tampa, Florida, donde gestiona las operaciones de almacén, el servicio al cliente, la facturación y el control de inventario. Procesa pedidos de clientes, facturas y órdenes de compra con un alto nivel de exactitud, mantiene los registros de inventario mediante conteos cíclicos y conciliaciones, y coordina los envíos de entrada y de salida. Antes fue Recibidor en Sanwa Food Group, donde conciliaba discrepancias de envíos con proveedores y equipos internos. Previamente estuvo cuatro meses como Asociado de Servicio al Cliente en Teleperformance, en Medellín, Colombia, atendiendo un alto volumen de llamadas y correos y resolviendo casos complejos dentro de los acuerdos de nivel de servicio. Y de dos mil veinte a dos mil veinticuatro fue Especialista de Inventario y Operaciones de Comercio Electrónico en MATEC, también en Medellín, donde utilizó Net Suite para gestionar el inventario y las transacciones.",
+    "Sus herramientas técnicas incluyen Microsoft Office, Google Workspace y Net Suite E R P, W M S y C R M, además de análisis de datos, gestión de inventario, aseguramiento de la calidad y servicio al cliente.",
+    "Estudió Contaduría y Finanzas en la Universidad Yacambú, en Venezuela. Esos estudios están incompletos.",
+    "Samuel vive en Tampa, Florida, y está abierto a puestos de analista y de operaciones. Puedes escribirle a samuelpacelli cero tres arroba gmail punto com, o llamarlo al ocho uno tres, seis seis cinco, cuatro cinco uno ocho. Este perfil también es legible por máquinas, así que las herramientas de reclutamiento y los asistentes de inteligencia artificial pueden leer su currículum directamente."
+  ]
+};
+
 var I18N = {
-  en: { foot: 'Operations · Inventory · Customer Service', vcf: 'Save contact', email: 'Email', call: 'Call' },
-  es: { foot: 'Operaciones · Inventario · Servicio al Cliente', vcf: 'Guardar contacto', email: 'Correo', call: 'Llamar' }
+  en: { foot: 'Operations · Inventory · Customer Service', vcf: 'Save contact', email: 'Email', call: 'Call',
+        vName: "Samuel's AI Voice", vTag: 'EN · Ava',
+        vRole: "A female AI voice that walks you through Samuel's profile.",
+        vPlay: 'Hear my profile', vPause: 'Pause', vResume: 'Resume', vStop: 'Stop',
+        vIdle: 'Tap the orb or press play — narrated in your selected language.',
+        vLoading: 'Preparing the neural voice…', vSpeaking: 'Speaking', vOf: 'of',
+        vPaused: 'Paused.', vDone: 'Finished. Press play to hear it again.',
+        vFallback: 'Neural voice unavailable — using your browser voice.' },
+  es: { foot: 'Operaciones · Inventario · Servicio al Cliente', vcf: 'Guardar contacto', email: 'Correo', call: 'Llamar',
+        vName: 'La voz AI de Samuel', vTag: 'ES · Dalia',
+        vRole: 'Una voz femenina de inteligencia artificial que te recorre el perfil de Samuel.',
+        vPlay: 'Escuchar mi perfil', vPause: 'Pausar', vResume: 'Reanudar', vStop: 'Detener',
+        vIdle: 'Pulsa el orbe o el botón de reproducir — se narra en el idioma que elijas.',
+        vLoading: 'Preparando la voz neural…', vSpeaking: 'Hablando', vOf: 'de',
+        vPaused: 'En pausa.', vDone: 'Terminado. Pulsa reproducir para escucharlo de nuevo.',
+        vFallback: 'Voz neural no disponible — usando la voz del navegador.' }
 };
 
 var LANG = 'en';
@@ -425,7 +504,145 @@ function setLang(lang){
   try { localStorage.setItem('spCvLang', LANG); } catch(e){}
   document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === LANG); });
   render();
+  if (window.__voiceApplyLang) window.__voiceApplyLang(LANG);
 }
+
+/* ============================================================================
+   VOICE ORB — narrates the profile with zero-key Edge neural TTS via
+   /api/tts/edge. Ava (en-US-AvaNeural) in English, Dalia (es-MX-DaliaNeural) in
+   Spanish; the voice follows the page's language toggle. Falls back to the
+   browser's own speech synthesis if the neural route is unreachable, so the
+   feature degrades instead of breaking.
+   ============================================================================ */
+(function(){
+  var synth = window.speechSynthesis;
+  var orb = $('vorb'), playBtn = $('vPlay'), pauseBtn = $('vPause'), stopBtn = $('vStop'), statusEl = $('vStatus');
+  if (!orb) return;
+
+  var NEURAL_URL = '/api/tts/edge';
+  var VOICE_FOR = { en: 'ava', es: 'dalia' };
+  var queue = [], qi = 0, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, vlang = 'en';
+
+  function d(){ return I18N[vlang] || I18N.en; }
+  function segments(){ return (PROFILE.narration && PROFILE.narration[vlang]) || []; }
+  function voiceName(){ return VOICE_FOR[vlang] || 'ava'; }
+
+  function pickBrowserVoice(){
+    if (!synth) return;
+    var vs = synth.getVoices() || [];
+    var pref = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(vlang) === 0; });
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if (synth) { pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function clearCache(){
+    Object.keys(audioCache).forEach(function(k){ try { URL.revokeObjectURL(audioCache[k]); } catch(e){} });
+    audioCache = {};
+  }
+
+  function fetchNeural(idx){
+    var key = voiceName() + '|' + idx;
+    if (audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text: segments()[idx], voice: voiceName() }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 200) throw new Error('empty'); var u = URL.createObjectURL(b); audioCache[key] = u; return u; });
+  }
+
+  function setActive(i){
+    var blks = document.querySelectorAll('#content .blk');
+    blks.forEach(function(s){ s.classList.remove('active'); });
+    if (i != null && i > 0 && blks[i-1]) {
+      blks[i-1].classList.add('active');
+      blks[i-1].scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  }
+  function statusSpeaking(){ statusEl.textContent = d().vSpeaking + ' (' + (qi+1) + ' ' + d().vOf + ' ' + queue.length + ')'; }
+
+  function runQueue(token){
+    if (token !== runToken) return;
+    if (qi >= queue.length) { finish(); return; }
+    var idx = queue[qi];
+    setActive(idx);
+    function advance(){ if (token !== runToken) return; qi++; runQueue(token); }
+    if (neuralOK) {
+      statusEl.textContent = d().vLoading; orb.classList.add('loading');
+      if (qi + 1 < queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if (token !== runToken) return;
+        orb.classList.remove('loading');
+        playbackMode = 'neural'; currentAudio = new Audio(url);
+        currentAudio.onended = advance;
+        currentAudio.onerror = function(){ neuralOK = false; advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK = false; statusEl.textContent = d().vFallback; browserSpeak(idx, advance); });
+      }).catch(function(){
+        if (token !== runToken) return;
+        orb.classList.remove('loading'); neuralOK = false;
+        statusEl.textContent = d().vFallback; browserSpeak(idx, advance);
+      });
+    } else { browserSpeak(idx, advance); }
+  }
+
+  function browserSpeak(idx, onEnd){
+    if (!synth) { onEnd(); return; }
+    playbackMode = 'browser';
+    var u = new SpeechSynthesisUtterance(segments()[idx]);
+    if (browserVoice) u.voice = browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : (vlang === 'es' ? 'es-MX' : 'en-US');
+    u.rate = 0.98; u.pitch = 1.05;
+    u.onstart = function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend = onEnd; u.onerror = onEnd;
+    synth.speak(u);
+  }
+
+  function start(){
+    if (synth) synth.cancel();
+    if (currentAudio) { try { currentAudio.pause(); } catch(e){} currentAudio = null; }
+    queue = segments().map(function(_, i){ return i; });
+    if (!queue.length) return;
+    qi = 0; paused = false; runToken++;
+    pauseBtn.disabled = false; stopBtn.disabled = false; playBtn.disabled = true;
+    $('vPauseLbl').textContent = d().vPause;
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); orb.classList.remove('loading'); setActive(null);
+    if (currentAudio) { try { currentAudio.pause(); } catch(e){} currentAudio = null; }
+    if (synth) synth.cancel();
+    pauseBtn.disabled = true; stopBtn.disabled = true; playBtn.disabled = false;
+    statusEl.textContent = d().vDone;
+  }
+
+  playBtn.addEventListener('click', start);
+  orb.addEventListener('click', function(){ if (playBtn.disabled) finish(); else start(); });
+  orb.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
+  pauseBtn.addEventListener('click', function(){
+    if (!paused) {
+      paused = true; $('vPauseLbl').textContent = d().vResume; orb.classList.remove('speaking'); statusEl.textContent = d().vPaused;
+      if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause();
+    } else {
+      paused = false; $('vPauseLbl').textContent = d().vPause; orb.classList.add('speaking'); statusSpeaking();
+      if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume();
+    }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if (synth) synth.cancel(); if (currentAudio) { try { currentAudio.pause(); } catch(e){} } });
+
+  // Language switch: stop playback, drop cached audio (it is voice-specific) and relabel.
+  window.__voiceApplyLang = function(lang){
+    var nl = (lang === 'es') ? 'es' : 'en';
+    if (nl !== vlang) { finish(); clearCache(); vlang = nl; pickBrowserVoice(); }
+    var t = d();
+    $('vName').textContent = t.vName; $('vTag').textContent = t.vTag; $('vRole').textContent = t.vRole;
+    $('vPlayLbl').textContent = t.vPlay; $('vPauseLbl').textContent = paused ? t.vResume : t.vPause;
+    $('vStopLbl').textContent = t.vStop;
+    if (playBtn.disabled === false) statusEl.textContent = t.vIdle;
+  };
+  window.__voiceApplyLang(LANG);
+})();
 (function(){
   var saved; try { saved = localStorage.getItem('spCvLang'); } catch(e){}
   if (!saved) { var nav = (navigator.language || 'en').toLowerCase(); saved = nav.indexOf('es') === 0 ? 'es' : 'en'; }
