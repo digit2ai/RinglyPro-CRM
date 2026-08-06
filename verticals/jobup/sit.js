@@ -1617,6 +1617,46 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!es.includes('>Show QR<'), 'and not the English one');
   });
 
+
+  // ---------------------------------------------------------------
+  section('changing your profile photo');
+  await t('a photo can be REPLACED after signup, not only at intake', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.post('/photo'"), 'upload');
+    assert.ok(src.includes("router.delete('/photo'"), 'remove');
+    assert.ok(src.includes("router.get('/photo/status'"), 'and report the current one');
+  });
+  await t('replacing a photo DELETES the old asset rather than orphaning it', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(/previousId && previousId !== asset\.id/.test(src),
+      'the superseded image must be removed');
+    assert.ok(src.includes("scoped('assets', tid).destroy({ id: previousId })"));
+  });
+  await t('THE UPLOAD IS STILL JUDGED BY MAGIC BYTES', async () => {
+    // Same rule as intake: a renamed SVG must not become a hosted script on
+    // the subscriber's own origin.
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>');
+    assert.strictEqual(photosSvc.accept(svg, 'image/png').ok, false);
+    const png = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(64)]);
+    assert.strictEqual(photosSvc.accept(png).mime, 'image/png');
+  });
+  await t('a photo swap is tenant-scoped', async () => {
+    const a = await scoped('assets', subA.id).create({ kind: 'photo', mime: 'image/png', bytes: 10, data: 'x' });
+    assert.ok(await scoped('assets', subA.id).findOne({ id: a.id }), 'owner can read it');
+    assert.strictEqual(await scoped('assets', subB.id).findOne({ id: a.id }), null,
+      'another subscriber must not');
+    await scoped('assets', subA.id).destroy({ id: a.id });
+  });
+  await t('the dashboard offers add, replace and remove', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('Your profile photo'));
+    assert.ok(html.includes('loadPhoto') && html.includes('uploadPhoto'));
+    assert.ok(html.includes("method:'DELETE'"), 'removal must be reachable');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

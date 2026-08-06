@@ -117,6 +117,11 @@ transform-origin:top left;font-family:var(--mono);font-size:9.5px;color:var(--fa
 .act .b.clear{background:var(--green)}
 .panel{max-width:430px;margin:80px auto;background:var(--card);border:1px solid var(--line);
 border-radius:20px;padding:32px}
+.photorow{display:flex;align-items:center;gap:14px;margin:12px 0 4px}
+.photoprev{width:78px;height:78px;border-radius:16px;object-fit:cover;flex:0 0 78px;
+border:1px solid var(--line2)}
+.photoprev.none{display:grid;place-items:center;background:var(--card2);color:var(--faint);
+font-family:var(--mono);font-size:11px;text-align:center}
 .addrnow{font-family:var(--mono);font-size:17px;margin:10px 0 4px}
 .addrnow a{color:var(--cyan)}
 .addrrow{display:flex;align-items:center;gap:0;border:1px solid var(--line2);border-radius:12px;
@@ -607,6 +612,47 @@ function saveSettings(){
     });
 }
 
+/* ---- profile photo ---- */
+function loadPhoto(){
+  api('/api/v1/engine/photo/status').then(function(r){
+    if(!r.ok){$('photobox').innerHTML='<div class="note">Could not load.</div>';return;}
+    var s=r.j, mb=Math.round((s.max_bytes||0)/1048576);
+    $('photobox').innerHTML=
+      '<div class="photorow">'+
+        (s.has_photo
+          ? '<img class="photoprev" src="'+esc(s.url)+'" alt="Your profile photo">'
+          : '<div class="photoprev none">no photo</div>')+
+        '<div style="flex:1">'+
+          (s.has_photo?'<div class="note" style="margin:0 0 8px">'+Math.round(s.bytes/1024)+' KB · '+esc(s.mime)+'</div>':'')+
+          '<div class="acts" style="margin-top:0">'+
+            '<button class="btn primary sm" id="ph-pick">'+(s.has_photo?'Replace photo':'Add a photo')+'</button>'+
+            (s.has_photo?'<button class="btn sm" id="ph-del">Remove</button>':'')+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<input type="file" id="ph-file" accept="image/jpeg,image/png,image/webp" hidden>'+
+      '<div class="note" id="ph-msg">JPEG, PNG or WebP, up to '+mb+' MB. A square photo looks best.</div>';
+    var f=$('ph-file');
+    $('ph-pick').addEventListener('click',function(){f.click();});
+    f.addEventListener('change',function(){if(f.files[0])uploadPhoto(f.files[0]);});
+    if(s.has_photo)$('ph-del').addEventListener('click',function(){
+      if(!confirm('Remove your photo? Your page will show your initials.'))return;
+      api('/api/v1/engine/photo',{method:'DELETE'}).then(function(){loadPhoto();});
+    });
+  });
+}
+function uploadPhoto(file){
+  var msg=$('ph-msg'); msg.textContent='Uploading '+Math.round(file.size/1024)+' KB...';
+  var fd=new FormData(); fd.append('photo',file,file.name);
+  fetch(API+'/api/v1/engine/photo',{method:'POST',credentials:'same-origin',body:fd})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(r){
+      if(!r.ok){msg.textContent=r.j.error||'Could not upload that.';return;}
+      err('aerr',r.j.note||'Photo updated.');
+      loadPhoto();
+    }).catch(function(){msg.textContent='Could not reach the server.';});
+}
+
 /* ---- web address ---- */
 var ADDR=null;
 function loadAddress(){
@@ -672,6 +718,9 @@ function showAddrEdit(){
 /* ---- account ---- */
 function renderAccount(){
   $('p-account').innerHTML=
+    '<div class="card"><div class="t">Your profile photo</div>'+
+    '<div class="m">Shown on your public page. Without one we use your initials.</div>'+
+    '<div id="photobox"><div class="note">Loading...</div></div></div>'+
     '<div class="card"><div class="t">Your web address</div>'+
     '<div class="m">This is what recruiters type and what AI agents fetch.</div>'+
     '<div id="addrbox"><div class="note">Loading...</div></div></div>'+
@@ -685,7 +734,7 @@ function renderAccount(){
     '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
     '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
     '<div id="delout" class="note"></div></div>';
-  loadAddress();
+  loadAddress(); loadPhoto();
   $('del').addEventListener('click',function(){
     if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
     api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){

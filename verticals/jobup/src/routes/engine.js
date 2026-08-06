@@ -11,6 +11,12 @@ const authSvc = require('../services/auth');
 const settingsSvc = require('../services/settings');
 const addresses = require('../services/addresses');
 const mailer = require('../services/mailer');
+const photos = require('../services/photos');
+const multer = require('multer');
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: photos.MAX_BYTES },
+});
 const analytics = require('../services/analytics');
 const agents = require('../services/agents');
 const resumeSvc = require('../services/resume');
@@ -378,6 +384,57 @@ router.post('/opportunities/:id/email-me', async (req, res) => {
 router.get('/email/status', (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   res.json(mailer.status());
+});
+
+// ---------------------------------------------------------------
+// Profile photo — replace or remove it.
+//
+// It could only be set at signup, so anyone who skipped it, or wanted a better
+// one later, was stuck with initials forever.
+// ---------------------------------------------------------------
+router.post('/photo', photoUpload.single('photo'), async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  if (!req.file) return res.status(400).json({ error: 'No image received.' });
+
+  const ph = photos.accept(req.file.buffer, req.file.mimetype);
+  if (!ph.ok) return res.status(400).json({ error: ph.reason });
+
+  const asset = await scoped('assets', tid).create({
+    kind: 'photo', mime: ph.mime, bytes: ph.bytes, data: ph.base64,
+  });
+
+  const prof = await scoped('profiles', tid).findOne({});
+  const previousId = prof && prof.photo_asset_id;
+  if (prof) await scoped('profiles', tid).update({ photo_asset_id: asset.id }, { id: prof.id });
+  else await scoped('profiles', tid).create({ resume_json: {}, photo_asset_id: asset.id });
+
+  // Drop the old one rather than leaving orphaned image rows behind.
+  if (previousId && previousId !== asset.id) {
+    await scoped('assets', tid).destroy({ id: previousId });
+  }
+
+  res.json({ ok: true, bytes: ph.bytes, mime: ph.mime,
+             url: '/photo?v=' + asset.id,
+             note: 'Your photo is live. Reload your public page to see it.' });
+});
+
+router.delete('/photo', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const prof = await scoped('profiles', tid).findOne({});
+  if (!prof || !prof.photo_asset_id) return res.json({ ok: true, note: 'No photo on file.' });
+  await scoped('assets', tid).destroy({ id: prof.photo_asset_id });
+  await scoped('profiles', tid).update({ photo_asset_id: null }, { id: prof.id });
+  res.json({ ok: true, note: 'Photo removed. Your page shows your initials again.' });
+});
+
+router.get('/photo/status', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const prof = await scoped('profiles', tid).findOne({});
+  const id = prof && prof.photo_asset_id;
+  if (!id) return res.json({ has_photo: false, max_bytes: photos.MAX_BYTES });
+  const a = await scoped('assets', tid).findOne({ id });
+  res.json({ has_photo: Boolean(a), bytes: a && a.bytes, mime: a && a.mime,
+             url: '/photo?v=' + id, max_bytes: photos.MAX_BYTES });
 });
 
 // ---------------------------------------------------------------
