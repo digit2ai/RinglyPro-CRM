@@ -1649,6 +1649,16 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'another subscriber must not');
     await scoped('assets', subA.id).destroy({ id: a.id });
   });
+  await t('THE HERO PHOTO URL IS VERSIONED, or a replacement stays invisible', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // /photo is served with max-age=86400. A bare '/photo' would keep showing
+    // the previous image for a day after someone replaced theirs.
+    assert.ok(/photo\?v=\$\{p\.photo_asset_id\}/.test(src),
+      'the asset id must be in the URL');
+    assert.ok(src.includes("res.set('Cache-Control', 'public, max-age=86400')"),
+      'and it is cached, which is why that matters');
+  });
   await t('the dashboard offers add, replace and remove', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');

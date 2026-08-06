@@ -145,7 +145,11 @@ async function loadSite(label) {
     profile: {
       ...((p && p.resume_json) || {}),
       // The hero renders a photo when one exists, initials when it does not.
-      photo_url: p && p.photo_asset_id ? '/photo' : null,
+      //
+      // The asset id is in the URL on purpose. /photo is cached for a day, so
+      // a bare '/photo' would keep serving the OLD image for 24 hours after
+      // someone replaced theirs — the change would look like it had failed.
+      photo_url: p && p.photo_asset_id ? `/photo?v=${p.photo_asset_id}` : null,
       qr_data_uri: await qrFor(`https://${sub.address}`),
     },
     settings: settingsSvc.sanitize((s && s.settings) || {}),
