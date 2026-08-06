@@ -752,6 +752,18 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(html.includes(frag), 'missing ' + frag);
     }
   });
+  await t('THE HERO PHOTO MATCHES THE MARK IT MIRRORS', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page({ name: 'Ada Lovelace', photo_url: '/photo?v=1' }, st,
+      { name: 'Ada Lovelace', url: 'https://a.jobup.dev', slug: 'a' });
+    assert.ok(html.includes('class="photo-col"'), 'the column wrapper holds the width');
+    assert.ok(html.includes('ring-orbit'));
+    // The ring is the one moving element in the hero. Grey reads as a border.
+    assert.ok(html.includes('rgba(34,211,238,.28)'), 'the orbit ring must be cyan');
+    assert.ok(html.includes('width:200px;height:200px'));
+    assert.ok(html.includes('border-radius:22px'));
+    assert.ok(html.includes('prefers-reduced-motion'), 'the spin must be optional');
+  });
   await t('falls back to initials when there is no photo', () => {
     const html = siteRender.page({ name: 'Ada Lovelace' }, settingsSvc.sanitize({}),
       { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' });

@@ -55,14 +55,19 @@ background:transparent;font:inherit;font-size:13.5px;cursor:pointer;transition:a
 @media(max-width:640px){.nav .who .tag2{display:none}}
 .hero{padding:52px 0 10px}
 .hero-grid{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center}
-.photo-wrap{position:relative;width:210px;height:210px}
-.ring-orbit{position:absolute;inset:-14px;border:1px dashed var(--line2);border-radius:34px;
-animation:spin 26s linear infinite}
+.photo-col{width:200px}
+.photo-wrap{position:relative;width:200px;height:200px}
+/* The orbit ring is CYAN, not grey — it is the one moving element in the hero
+   and reading it as a border defeats the point. Geometry matches the mark it
+   was taken from: inset -14, radius 28, 22s. */
+.ring-orbit{position:absolute;inset:-14px;border:1px dashed rgba(34,211,238,.28);
+border-radius:28px;animation:spin 22s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.photo,.photo-fallback{width:210px;height:210px;border-radius:26px;object-fit:cover;display:block;
-border:1px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.photo,.photo-fallback{width:200px;height:200px;border-radius:22px;object-fit:cover;display:block;
+border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);background:#08131c}
 .photo-fallback{display:grid;place-items:center;background:var(--grad);color:#06121a;
-font-size:62px;font-weight:830;letter-spacing:-.04em}
+font-size:58px;font-weight:830;letter-spacing:-.04em}
+@media(prefers-reduced-motion:reduce){.ring-orbit{animation:none}}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
 letter-spacing:2.2px;color:var(--cyan);text-transform:uppercase;border:1px solid var(--cyan-bd);
 background:rgba(34,211,238,.06);padding:6px 12px;border-radius:20px;margin-bottom:16px}
@@ -92,7 +97,7 @@ background:transparent;color:var(--ink);font-family:inherit;cursor:pointer;trans
 .shbtn.primary{background:var(--grad);border:0;color:#06121a;font-weight:700}
 .shbtn:disabled{opacity:.4;cursor:default}
 @media(max-width:760px){.hero-grid{grid-template-columns:1fr;gap:28px;text-align:center}
-.photo-wrap{margin:0 auto}.chips,.social-row{justify-content:center}
+.photo-wrap,.photo-col{margin:0 auto}.chips,.social-row{justify-content:center}
 .subtitle{margin-left:auto;margin-right:auto}.sharecard{margin-left:auto;margin-right:auto}}
 .voicebar{margin:34px auto 0;max-width:1080px;padding:0 24px;position:relative;z-index:2}
 .voicecard{display:flex;align-items:center;gap:20px;background:linear-gradient(180deg,var(--card),var(--bg2));
@@ -294,7 +299,7 @@ function heroBlock(p, name, url, roleLine, lang) {
   social.push(`<a class="sbtn" href="${attr(url)}/resume.json">R&eacute;sum&eacute; (JSON)</a>`);
 
   return `<header class="hero"><div class="wrap hero-grid">
-  <div class="photo-wrap"><div class="ring-orbit"></div>${photo}</div>
+  <div class="photo-col"><div class="photo-wrap"><div class="ring-orbit"></div>${photo}</div></div>
   <div>
     ${roleLine ? `<div class="eyebrow"><b></b> ${esc(roleLine)}</div>` : ''}
     <h1>${esc(name)}</h1>

@@ -1,15 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<!--
+  JobUp master mark — the single source for every raster icon.
+
+  The mark is a "J" whose stem is topped by an arrowhead: Job + Up, in one
+  letterform. It spells the brand and states what the product does, and because
+  it is a single connected stroke it survives being shrunk to a 16px favicon,
+  which the previous thin-ring design did not.
+
+  FULL-BLEED SQUARE ON PURPOSE. iOS rounds apple-touch-icon itself, so a
+  pre-rounded source gets double-rounded; Android maskable icons need the
+  corners filled or they show gaps. favicon.svg is the rounded variant, for
+  browser tabs that render the SVG as-is.
+
+  MASKABLE SAFE ZONE: an Android mask can crop to the circle inscribed in the
+  central 80% (radius 205 from centre). Every point of the glyph is within 177
+  of the centre, so nothing is ever clipped.
+
+  Palette is the LANDING brand gradient (#5b7bff -> #e64980 -> #ff922b), not the
+  dashboard's cyan/violet UI accent. The icon fronts jobup.dev, so it wears the
+  brand, and the nav lockup now uses the same mark instead of a bare gradient
+  square.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="JobUp">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#22d3ee"/><stop offset="55%" stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#8b5cf6"/>
+    <!-- userSpaceOnUse so the angle matches the CSS 120deg brand gradient. -->
+    <linearGradient id="brand" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="512" y2="336">
+      <stop offset="0" stop-color="#5b7bff"/>
+      <stop offset="0.52" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/>
     </linearGradient>
+    <!-- A soft top-left lift so the tile does not read as flat colour at 512px.
+         Deliberately a gradient, not a filter: filters rasterise unevenly. -->
+    <radialGradient id="lift" cx="0.28" cy="0.2" r="0.85">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="512" height="512" fill="#07080c"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#g)" stroke-width="18" opacity=".32"/>
-  <circle cx="256" cy="256" r="104" fill="url(#g)"/>
-  <path d="M300 196v92a54 54 0 0 1-54 54 54 54 0 0 1-42-20" fill="none" stroke="#07080c"
-        stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#g)" stroke-width="6"
-          stroke-dasharray="3 22" stroke-linecap="round"/>
+
+  <rect width="512" height="512" fill="url(#brand)"/>
+  <rect width="512" height="512" fill="url(#lift)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-width="52"
+     stroke-linecap="round" stroke-linejoin="round">
+    <!-- the up arrowhead -->
+    <path d="M209 232 L283 158 L357 232"/>
+    <!-- the J: stem down from the arrow, then the hook -->
+    <path d="M283 158 V290 A64 64 0 0 1 155 290"/>
+  </g>
 </svg>
