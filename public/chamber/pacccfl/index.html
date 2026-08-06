@@ -1725,7 +1725,11 @@
 })();
 </script>
 
-<!-- ===== RACHEL VOICE AI WIDGET (ElevenLabs ConvAI) ===== -->
+<!-- ===== VOICE AI ORB (Digit2AI own stack) =====
+     Was ElevenLabs ConvAI. Now: Web Speech API (ear) + /api/voice-agent/chat
+     (brain, grounded in this page) + /api/tts/edge (Edge neural voice).
+     Positioning lives in the orb's own CSS; the block below is dead style
+     kept only so a stray legacy element would still land where it used to. -->
 <style>
   elevenlabs-convai {
     position: fixed;
@@ -1737,8 +1741,8 @@
     elevenlabs-convai { bottom: 16px; right: 16px; }
   }
 </style>
-<elevenlabs-convai agent-id="agent_1401kq0s39ysem8rcjpcw1208bt2"></elevenlabs-convai>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+<div data-voice-orb data-agent="pacccfl" data-lang="es" data-label="Hablar con Lily"></div>
+<script src="/embed/voice-orb.js" defer></script>
 
 </body>
 </html>

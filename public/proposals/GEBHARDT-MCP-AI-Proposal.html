@@ -1434,9 +1434,10 @@
   </a>
 </div>
 
-<!-- ElevenLabs Voice AI Widget -->
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" type="text/javascript"></script>
-<elevenlabs-convai agent-id="agent_0001kjqqxr4nfcxvar5ve7prp2vm"></elevenlabs-convai>
+<!-- Voice AI orb (Digit2AI own stack: Web Speech + Claude + Edge neural TTS).
+     Replaced the ElevenLabs ConvAI widget. -->
+<div data-voice-orb data-agent="gebhardt" data-lang="en" data-label="Ask about this proposal"></div>
+<script src="/embed/voice-orb.js" defer></script>
 <style>
   elevenlabs-convai {
     position: fixed !important;

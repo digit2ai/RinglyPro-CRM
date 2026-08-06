@@ -127,6 +127,13 @@ background:#07080c;height:440px;box-shadow:var(--shadow)}
 .preview::after{content:"";position:absolute;inset:0;pointer-events:none;
 box-shadow:inset 0 -50px 60px -30px rgba(7,8,12,.9)}
 @media(max-width:600px){.preview{height:330px}.preview iframe{width:250%;height:1000px;transform:scale(.4)}}
+.pclockbig{font-size:clamp(40px,9vw,66px);font-weight:830;letter-spacing:-.04em;line-height:1;
+font-variant-numeric:tabular-nums;background:linear-gradient(120deg,#22d3ee,#6366f1 55%,#8b5cf6);
+-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.pclockbig.over{background:linear-gradient(120deg,#e6b45a,#f0a04b);-webkit-background-clip:text;
+background-clip:text;-webkit-text-fill-color:transparent;font-size:clamp(20px,4.4vw,30px)}
+.pcaption{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--faint);margin-bottom:20px}
 .pbar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;
 max-width:420px;margin:0 auto 16px}
 .pbar i{display:block;height:100%;width:0%;border-radius:99px;
@@ -194,9 +201,11 @@ router.get('/:token', async (req, res) => {
 </div>
 
 <div id="body"><div class="loading" id="prog">
+  <div class="pclockbig" id="pclockbig">&mdash;</div>
+  <div class="pcaption" id="pcaption">${lang === 'es' ? 'tiempo restante aproximado' : 'estimated time remaining'}</div>
   <div class="pbar"><i id="pfill"></i></div>
-  <div class="pstage" id="pstage">Building your ecosystem&hellip;</div>
-  <div class="pmeta"><span id="pstep"></span><span id="pclock"></span></div>
+  <div class="pstage" id="pstage">${lang === 'es' ? 'Construyendo tu ecosistema' : 'Building your ecosystem'}&hellip;</div>
+  <div class="pmeta"><span id="pstep"></span><span id="ppct"></span></div>
 </div></div>
 </div>
 
@@ -211,8 +220,16 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
 // Poll until the background build finishes (Cloudflare ~100s ceiling).
-function fmtSec(ms){var s=Math.max(0,Math.round(ms/1000));
-  return s<60?(s+'s'):(Math.floor(s/60)+'m '+(s%60)+'s');}
+var T=LANG==='es'
+  ? {step:'Paso',of:'de',left:'restante',over:'Tardando mas de lo normal \u2014 seguimos trabajando',
+     elapsed:'transcurrido',remaining:'tiempo restante aproximado',almost:'Casi listo'}
+  : {step:'Step',of:'of',left:'left',over:'Taking longer than usual \u2014 still working',
+     elapsed:'elapsed',remaining:'estimated time remaining',almost:'Almost there'};
+
+function mmss(ms){
+  var s=Math.max(0,Math.round(ms/1000));
+  return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+}
 
 // Real progress: the stage the build has actually reached, plus a countdown
 // against the typical duration. When it runs long we say so rather than
@@ -227,25 +244,43 @@ function showProgress(pr){
   var pct=Math.min(96,Math.round(Math.max(byStage,byTime*0.9)*100));
   el.style.width=pct+'%';
   if(pr.label) document.getElementById('pstage').textContent=pr.label+'\u2026';
-  document.getElementById('pstep').textContent=pr.n?('Step '+pr.n+' of '+pr.total):'Starting';
+  document.getElementById('pstep').textContent=pr.n?(T.step+' '+pr.n+' '+T.of+' '+pr.total):'';
   var left=(pr.typical_ms||0)-(pr.elapsed_ms||0);
-  var clock=document.getElementById('pclock');
-  if(left>2000){clock.className='';clock.textContent='about '+fmtSec(left)+' left';}
-  else{clock.className='over';clock.textContent='taking longer than usual \u2014 still working ('+fmtSec(pr.elapsed_ms)+')';}
+  var big=document.getElementById('pclockbig'),cap=document.getElementById('pcaption');
+  var pctEl=document.getElementById('ppct');
+  if(pctEl)pctEl.textContent=pct+'%';
+  if(left>1000){
+    big.className='pclockbig'; big.textContent=mmss(left);
+    cap.textContent=T.remaining;
+  }else{
+    // Never freeze on 0:00 pretending — say plainly that it is running long.
+    big.className='pclockbig over'; big.textContent=T.over;
+    cap.textContent=mmss(pr.elapsed_ms)+' '+T.elapsed;
+  }
   var st=document.getElementById('stat');
   if(st) st.textContent=(pr.label||'Building your ecosystem')+'\u2026';
 }
 
+// The poll returns every ~1.2s; tick locally in between so the countdown
+// actually counts rather than stepping.
+var _pr=null,_prAt=0;
+setInterval(function(){
+  if(!_pr)return;
+  showProgress({stage:_pr.stage,label:_pr.label,n:_pr.n,total:_pr.total,
+    typical_ms:_pr.typical_ms,elapsed_ms:_pr.elapsed_ms+(Date.now()-_prAt)});
+},1000);
+
 function poll(){
   fetch(API_BASE+'/api/v1/intake/teaser/'+encodeURIComponent(TOKEN))
     .then(function(r){return r.json();}).then(function(j){
-    if(j.status==='pending'){showProgress(j.progress);setTimeout(poll,1200);return;}
+    if(j.status==='pending'){_pr=j.progress;_prAt=Date.now();showProgress(j.progress);setTimeout(poll,1200);return;}
     if(j.status!=='ready'||!j.payload){
       document.getElementById('body').innerHTML=
         '<div class="screen active"><h2>We could not finish this preview</h2>'+
         '<p class="note">Nothing was fabricated to fill the gap. Please try again.</p></div>';
       document.getElementById('stat').textContent='Build failed.';return;}
     // Finish the bar before swapping the content in.
+    _pr=null;
     var f=document.getElementById('pfill'); if(f)f.style.width='100%';
     payload=j.payload;narration=j.narration||[];
     try{ render(); }

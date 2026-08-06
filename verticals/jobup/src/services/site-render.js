@@ -136,6 +136,18 @@ background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(34,21
 .tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 15px;
 font-size:14px;color:var(--mut)}
 a.tag:hover{border-color:var(--cyan);color:var(--cyan)}
+.cform{margin-top:20px;text-align:left;max-width:560px;margin-left:auto;margin-right:auto}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.cform input,.cform textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line2);
+border-radius:11px;padding:12px 13px;color:var(--ink);font:inherit;font-size:16px;outline:none}
+.cform input:focus,.cform textarea:focus{border-color:var(--cyan)}
+.cform textarea{margin-bottom:12px;resize:vertical}
+.cform .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.cform .sbtn{width:100%;justify-content:center;min-height:48px}
+.cmsg{margin-top:11px;font-size:14px;min-height:20px}
+.cmsg.ok{color:#3ad07f}.cmsg.bad{color:#f87171}
+.cnote{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin-top:9px}
+@media(max-width:560px){.crow{grid-template-columns:1fr}}
 .cta-final{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line2);
 border-radius:22px;padding:30px;margin:60px 0 0;text-align:center}
 .cta-final h3{margin:0 0 8px;font-size:22px;font-weight:790;letter-spacing:-.03em}
@@ -351,6 +363,40 @@ function scripts(name, url, p, narration) {
   orb.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();on?stop():start();}});
   window.addEventListener('beforeunload',stop);
 })();
+
+/* Inbound contact. The subscriber's address is never in this page — the
+   message is routed through JobUp and appears in their Opportunities tab. */
+(function(){
+  var f=document.getElementById('cform'); if(!f) return;
+  var msg=document.getElementById('c-msg'),go=document.getElementById('c-go');
+  var SLUG=location.hostname.split('.')[0];
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=(document.getElementById('c-email').value||'').trim();
+    var note=(document.getElementById('c-note').value||'').trim();
+    if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)){
+      msg.className='cmsg bad';msg.textContent='Please enter a valid email so they can reply.';return;}
+    if(note.length<10){msg.className='cmsg bad';msg.textContent='Please write a short message.';return;}
+    go.disabled=true;go.textContent='Sending...';msg.className='cmsg';msg.textContent='';
+    fetch('/api/v1/intake/contact/'+encodeURIComponent(SLUG),{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        from_name:document.getElementById('c-name').value,
+        from_email:email,
+        company:document.getElementById('c-company').value,
+        role:document.getElementById('c-role').value,
+        note:note,
+        website:document.getElementById('c-website').value})})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(r){
+        if(!r.ok){go.disabled=false;go.textContent='Send message';
+          msg.className='cmsg bad';msg.textContent=r.j.error||'Could not send that.';return;}
+        f.innerHTML='<div class="cmsg ok" style="font-size:15px">'+
+          'Message sent. It is in their dashboard now, and they can reply to you directly.</div>';
+      }).catch(function(){go.disabled=false;go.textContent='Send message';
+        msg.className='cmsg bad';msg.textContent='Could not reach the server.';});
+  });
+})();
 </script></body></html>`;
 }
 
@@ -375,10 +421,30 @@ function page(profile, settings, ctx) {
       roles.map((r) => `<a class="tag" href="/roles/${attr(r.slug)}">${esc(r.title)}</a>`).join('') +
       '</div></section>';
   }
-  h += `<div class="cta-final"><h3>Hiring?</h3><p>${p.email
-    ? `Reach ${esc(name)} directly &mdash; every message is read.`
-    : 'Contact details are available on request.'}</p>
-    ${p.email ? `<a class="sbtn primary" href="mailto:${attr(p.email)}">Email ${esc(name.split(' ')[0])}</a>` : ''}
+  // "Contact details are available on request" was a dead end — there was no
+  // way to make the request. This routes THROUGH us, so the subscriber's
+  // address stays private and the message lands in their Opportunities tab.
+  const firstName = esc(String(name || '').split(' ')[0] || 'them');
+  h += `<div class="cta-final"><h3>Hiring?</h3>
+    <p>${p.email
+      ? `Reach ${esc(name)} directly &mdash; every message is read.`
+      : `Send ${firstName} a message. It goes straight to their dashboard.`}</p>
+    ${p.email ? `<a class="sbtn primary" href="mailto:${attr(p.email)}">Email ${firstName}</a>` : ''}
+    <form class="cform" id="cform" novalidate>
+      <div class="crow">
+        <input id="c-name" type="text" placeholder="Your name" autocomplete="name" maxlength="120">
+        <input id="c-email" type="email" placeholder="Your email (required)" autocomplete="email" maxlength="200">
+      </div>
+      <div class="crow">
+        <input id="c-company" type="text" placeholder="Company" autocomplete="organization" maxlength="160">
+        <input id="c-role" type="text" placeholder="Role you are hiring for" maxlength="160">
+      </div>
+      <textarea id="c-note" rows="4" placeholder="What would you like to talk about?" maxlength="4000"></textarea>
+      <input id="c-website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
+      <button class="sbtn primary" id="c-go" type="submit">Send message</button>
+      <div class="cmsg" id="c-msg"></div>
+      <div class="cnote">Delivered to ${firstName} through JobUp. Their address is never shared.</div>
+    </form>
   </div>`;
   h += `<footer><div>Built and maintained by JobUp &middot;
     <a href="/app">Owner sign in</a></div><div>

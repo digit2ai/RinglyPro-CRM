@@ -1059,9 +1059,11 @@
 
 <div class="voice-cta">Have this page <b>explained out loud</b> — tap the voice agent</div>
 
-<!-- ElevenLabs Conversational AI Widget -->
-<elevenlabs-convai agent-id="agent_0201kqfcxknxfjz8wf833tj0pq1t"></elevenlabs-convai>
-<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+<!-- Voice AI orb (Digit2AI own stack: Web Speech + Claude + Edge neural TTS).
+     Replaced the ElevenLabs ConvAI widget -- no hosted agent, no per-minute cost,
+     and Rachel answers only from the text of this page. -->
+<div data-voice-orb data-agent="neural" data-lang="en" data-label="Talk to Rachel"></div>
+<script src="/embed/voice-orb.js" defer></script>
 
 </body>
 </html>

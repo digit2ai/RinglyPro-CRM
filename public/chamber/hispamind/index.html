@@ -823,12 +823,21 @@
 })();
 </script>
 
-<!-- ===== CAMARAVIRTUAL VOICE ASSISTANT (ElevenLabs ConvAI) =====
-     Positioning is controlled by the agent's platform_settings.widget.placement
-     ("bottom-left"). Do NOT add host-element CSS overrides here — they break
-     the expanded panel layout. -->
-<elevenlabs-convai agent-id="agent_9801krhnapz7ft1th5n7y58jveb3"></elevenlabs-convai>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+<!-- ===== CAMARAVIRTUAL VOICE ASSISTANT (Digit2AI own stack) =====
+     Was ElevenLabs ConvAI (hosted agent, billed per conversation minute).
+     Now our own three layers, none of them rented:
+       ear   -> Web Speech API in the browser (on-device, $0)
+       brain -> /api/voice-agent/chat (Claude Haiku, grounded in THIS page)
+       voice -> /api/tts/edge (Microsoft Edge neural, $0)
+     Lily answers only from the text of this page, so editing the landing
+     updates the agent -- there is no external dashboard to keep in sync. -->
+<div data-voice-orb
+     data-agent="camaravirtual"
+     data-lang="es"
+     data-position="bottom-left"
+     data-accent="#7c3aed"
+     data-label="Hablar con Lily"></div>
+<script src="/embed/voice-orb.js" defer></script>
 
 </body>
 </html>

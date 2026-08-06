@@ -21,6 +21,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const { init, models, scoped, backend } = require('./models');
 const identity = require('./services/identity');
@@ -171,8 +172,25 @@ async function subscriberSite(req, res, next) {
     return router(req, res, next);
   }
   // PWA assets, so a subscriber can install their own dashboard.
-  if (['/manifest.webmanifest', '/sw.js', '/icon-192.png', '/icon-512.png',
+  // The manifest is REWRITTEN for this origin: the shipped one is scoped to
+  // /jobup/, which does not contain /app on a subdomain, so an install from
+  // here would be rejected outright.
+  if (p === '/manifest.webmanifest') {
+    const m = JSON.parse(fs.readFileSync(path.join(publicDir, 'manifest.webmanifest'), 'utf8'));
+    m.name = `${ctx.name || 'JobUp'} — JobUp`;
+    m.start_url = '/app';
+    m.scope = '/';
+    m.icons = m.icons.map((i) => ({ ...i, src: i.src.replace('/jobup', '') }));
+    return res.type('application/manifest+json').json(m);
+  }
+  if (['/sw.js', '/icon-192.png', '/icon-512.png',
        '/apple-touch-icon.png', '/favicon-32.png'].includes(p)) {
+    if (p === '/sw.js') {
+      // Same reason: the shipped worker caches /jobup/* paths.
+      const sw = fs.readFileSync(path.join(publicDir, 'sw.js'), 'utf8')
+        .replace(/\/jobup\//g, '/').replace(/'jobup-v(\d+)'/, "'jobup-sub-v$1'");
+      return res.type('application/javascript').send(sw);
+    }
     return res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
   }
 
@@ -181,7 +199,7 @@ async function subscriberSite(req, res, next) {
     const prof = await scoped('profiles', site.sub.id).findOne({});
     const assetId = prof && prof.photo_asset_id;
     if (!assetId) return res.status(404).type('text/plain').send('No photo on file.');
-    const a = await scoped('assets', site.sub.id).findOne({ where: { id: assetId } });
+    const a = await scoped('assets', site.sub.id).findOne({ id: assetId });
     if (!a || !a.data) return res.status(404).type('text/plain').send('No photo on file.');
     const tag = photos.etagFor(a);
     if (req.headers['if-none-match'] === tag) return res.status(304).end();

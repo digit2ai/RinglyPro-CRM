@@ -10,7 +10,7 @@
 
 const express = require('express');
 const multer = require('multer');
-const { models } = require('../models');
+const { models, scoped } = require('../models');
 const teaser = require('../services/teaser');
 const resumeSvc = require('../services/resume');
 const addresses = require('../services/addresses');
@@ -184,6 +184,60 @@ router.get('/welcome', async (req, res) => {
       { label: 'Your three agents switched on', ok: Boolean(state.agents_started) },
     ],
   });
+});
+
+/**
+ * Inbound interest from a recruiter, sent through the subscriber's public site.
+ *
+ * This is the other half of the product: the subscriber reaches out via
+ * Broadcast, and recruiters reach IN here. It lands in their Opportunities tab
+ * where they can draft a reply in one click.
+ *
+ * The subscriber's email address is NEVER exposed to do this — the message is
+ * routed through us, which is the entire point of keeping contact details
+ * private by default.
+ */
+router.post('/contact/:slug', async (req, res) => {
+  try {
+    const slug = String(req.params.slug || '').toLowerCase();
+    const sub = await models.subscribers.findOne({
+      where: { address: `${slug}.${addresses.BASE_DOMAIN}` } });
+    if (!sub || sub.status !== 'active') return res.status(404).json({ error: 'no such profile' });
+
+    const b = req.body || {};
+    const clean = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+    const from_name = clean(b.from_name, 120);
+    const from_email = clean(b.from_email, 200);
+    const company = clean(b.company, 160);
+    const role = clean(b.role, 160);
+    const note = clean(b.note, 4000);
+
+    if (!from_email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(from_email)) {
+      return res.status(400).json({ error: 'A valid email address is required so they can reply to you.' });
+    }
+    if (note.length < 10) {
+      return res.status(400).json({ error: 'Please write a short message.' });
+    }
+    // Honeypot: a field no human sees. Bots fill it in.
+    if (clean(b.website, 200)) return res.json({ ok: true });
+
+    // Same DB-backed limiter that guards the teaser, so one sender cannot
+    // flood a subscriber's inbox.
+    const rl = await limits.teaserAllowed({ ipHash: teaser.ipHash(clientIp(req)), email: from_email });
+    if (!rl.allowed) {
+      return res.status(429).json({ error: 'Too many messages from here today. Please try again tomorrow.' });
+    }
+
+    await scoped('opportunities', sub.id).create({
+      source: 'site_form', company, role, from_name, from_email, note, status: 'new',
+    });
+
+    res.json({ ok: true,
+      note: 'Your message was delivered. They will see it in their dashboard and can reply to you directly.' });
+  } catch (e) {
+    console.error('[contact] error:', e.message);
+    res.status(500).json({ error: 'Could not deliver that message.' });
+  }
 });
 
 module.exports = router;

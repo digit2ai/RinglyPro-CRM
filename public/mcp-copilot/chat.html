@@ -500,11 +500,12 @@
                     <button class="help-modal-close" onclick="toggleHelpModal()" aria-label="Close help">&times;</button>
                 </div>
                 <div class="help-modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;">
-                    <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+                    <div data-voice-orb data-agent="mcp-copilot" data-lang="en" data-label="Talk to Rachel"></div>
                 </div>
             </div>
         </div>
-        <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+        <!-- Own-stack voice orb (Web Speech + Claude + Edge neural TTS), replaces ElevenLabs ConvAI. -->
+        <script src="/embed/voice-orb.js" defer></script>
 
         <!-- Messages -->
         <div id="chatMessages" class="chat-messages">

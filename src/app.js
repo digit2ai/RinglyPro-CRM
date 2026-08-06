@@ -1251,6 +1251,17 @@ try {
   console.log('✅ Ana chat routes mounted at /api/ana');
 } catch (e) { console.log('⚠️ Ana chat routes not loaded:', e.message); }
 
+// Voice agent brain — the own-stack replacement for ElevenLabs Conversational
+// AI across every page that used to embed <elevenlabs-convai>. Persona comes
+// from src/config/voice-agents.js; the FACTS come from the page the orb sits
+// on (sent as `context` per turn), so an agent can only say what the page says.
+// Client: public/embed/voice-orb.js. Voice: /api/tts/edge. Ear: Web Speech API.
+try {
+  const voiceAgentRoutes = require('./routes/voice-agent');
+  app.use('/api/voice-agent', voiceAgentRoutes);
+  console.log('✅ Voice agent routes mounted at /api/voice-agent');
+} catch (e) { console.log('⚠️ Voice agent routes not loaded:', e.message); }
+
 // Mount Google Calendar OAuth routes
 app.use('/api/google-oauth', googleOAuthRoutes); // Google Calendar OAuth integration
 console.log('🗓️ Google Calendar OAuth routes mounted at /api/google-oauth');

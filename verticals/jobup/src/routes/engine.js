@@ -212,7 +212,7 @@ router.get('/opportunities', async (req, res) => {
 router.patch('/opportunities/:id', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const t = scoped('opportunities', tid);
-  const row = await t.findOne({ where: { id: parseInt(req.params.id, 10) } });
+  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
   if (!row) return res.status(404).json({ error: 'not found' });
   const patch = {};
   if (['new', 'read', 'replied', 'archived'].includes(req.body.status)) {
@@ -221,8 +221,8 @@ router.patch('/opportunities/:id', async (req, res) => {
     if (req.body.status === 'replied') patch.replied_at = new Date();
   }
   if (typeof req.body.reply_draft === 'string') patch.reply_draft = req.body.reply_draft.slice(0, 8000);
-  await t.update(patch, { where: { id: row.id } });
-  res.json({ ok: true, opportunity: await t.findOne({ where: { id: row.id } }) });
+  await t.update(patch, { id: row.id });
+  res.json({ ok: true, opportunity: await t.findOne({ id: row.id }) });
 });
 
 /**
@@ -233,7 +233,7 @@ router.patch('/opportunities/:id', async (req, res) => {
 router.post('/opportunities/:id/draft-reply', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const t = scoped('opportunities', tid);
-  const row = await t.findOne({ where: { id: parseInt(req.params.id, 10) } });
+  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
   if (!row) return res.status(404).json({ error: 'not found' });
 
   const pRow = await scoped('profiles', tid).findOne({});
@@ -269,7 +269,7 @@ router.post('/opportunities/:id/draft-reply', async (req, res) => {
   }
 
   await t.update({ reply_draft: body, status: row.status === 'new' ? 'read' : row.status,
-                   read_at: row.read_at || new Date() }, { where: { id: row.id } });
+                   read_at: row.read_at || new Date() }, { id: row.id });
 
   const to = row.from_email || '';
   const subject = `Re: ${row.role || 'your message'}${row.company ? ' — ' + row.company : ''}`;

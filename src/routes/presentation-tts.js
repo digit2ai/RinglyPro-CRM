@@ -15,11 +15,32 @@ const VOICES = {
   ana: 'EXAVITQu4vr4xnSDxMaL'       // Ana — alias to the Spanish voice (legacy)
 };
 
-// POST /api/tts/generate - Generate TTS audio from text
+// Legacy ElevenLabs voice/lang -> the Edge neural voice that replaced it, so a
+// page that still POSTs {voice:'rachel'} keeps its narrator without an edit.
+const LEGACY_TO_EDGE = {
+  rachel: 'ava',      // warm US-English female
+  bella: 'lina',      // es-MX Dalia
+  lina: 'lina',
+  ana: 'lina'
+};
+
+// POST /api/tts/generate — LEGACY ALIAS, now served by the Edge neural engine.
+//
+// This used to call api.elevenlabs.io per request. Every narrated presentation
+// in the repo posts here, so rather than editing each page (and missing one),
+// the endpoint itself was moved onto the zero-key engine behind /api/tts/edge:
+// same request body, same audio/mpeg response, no ELEVENLABS_API_KEY, $0.
+// Set TTS_LEGACY_ELEVENLABS=1 to fall back to the paid ElevenLabs path.
 router.post('/generate', async (req, res) => {
   try {
-    const { text, voice, lang } = req.body;
+    const { text, voice, lang } = req.body || {};
     if (!text) return res.status(400).json({ error: 'text required' });
+
+    if (process.env.TTS_LEGACY_ELEVENLABS !== '1') {
+      const edgeVoice = LEGACY_TO_EDGE[String(voice || '').toLowerCase()] ||
+                        (String(lang || 'es').toLowerCase().startsWith('en') ? 'ava' : 'lina');
+      return serveEdge(req, res, { text, voice: edgeVoice });
+    }
 
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ELEVENLABS_API_KEY not configured' });
@@ -93,9 +114,10 @@ const EDGE_VOICES = {
   sonia: 'en-GB-SoniaNeural'    // UK-English female — Sonia
 };
 
-router.post('/edge', async (req, res) => {
+// Synthesize + disk-cache + respond. Shared by POST /edge and by the legacy
+// POST /generate alias, so both paths behave identically.
+async function serveEdge(req, res, { text, voice, rate }) {
   try {
-    let { text, voice, rate } = req.body || {};
     if (!text || !String(text).trim()) return res.status(400).json({ error: 'text required' });
     text = String(text).slice(0, 2000);
 
@@ -129,7 +151,9 @@ router.post('/edge', async (req, res) => {
     console.error('Edge TTS error:', err.message);
     res.status(502).json({ error: 'edge tts failed: ' + err.message });
   }
-});
+}
+
+router.post('/edge', (req, res) => serveEdge(req, res, req.body || {}));
 
 // GET /api/tts/cached/:hash - Serve cached audio
 router.get('/cached/:hash', (req, res) => {

@@ -1183,6 +1183,75 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'it must work under /jobup AND at a subdomain root');
   });
 
+
+  // ---------------------------------------------------------------
+  section('inbound contact, and the scoped-accessor contract');
+  await t('THE SCOPED ACCESSOR TAKES A PLAIN FILTER, NOT {where:{...}}', async () => {
+    // Wrapping it produces where:{where:{...},tenant_id} which matches nothing —
+    // a silent 404 rather than an error. Assert the contract directly.
+    const row = await scoped('opportunities', subA.id).create({ source: 'sit', role: 'X' });
+    const hit = await scoped('opportunities', subA.id).findOne({ id: row.id });
+    assert.ok(hit, 'a plain filter must find the row');
+    const wrapped = await scoped('opportunities', subA.id).findOne({ where: { id: row.id } });
+    assert.strictEqual(wrapped, null, 'a wrapped filter finds nothing — this is the trap');
+    await scoped('opportunities', subA.id).destroy({ id: row.id });
+  });
+  await t('no route wraps a scoped filter', () => {
+    const fs = require('fs');
+    for (const f of ['src/routes/engine.js', 'src/index.js', 'src/services/provisioning.js']) {
+      const src = fs.readFileSync(__dirname + '/' + f, 'utf8');
+      const bad = src.match(/scoped\([^)]*\)\.(findOne|count|destroy)\(\{ where:/g) || [];
+      assert.deepStrictEqual(bad, [], f + ' wraps a scoped filter');
+    }
+  });
+  await t('a contact message becomes an Opportunity for the RIGHT subscriber', async () => {
+    const before = (await scoped('opportunities', subB.id).findAll({})).length;
+    await scoped('opportunities', subA.id).create({
+      source: 'site_form', from_name: 'R', from_email: 'r@acme.example',
+      company: 'Acme', role: 'Staff', note: 'Are you open to a conversation?', status: 'new',
+    });
+    const mine = await scoped('opportunities', subA.id).findAll({});
+    assert.ok(mine.some((o) => o.source === 'site_form'));
+    assert.strictEqual((await scoped('opportunities', subB.id).findAll({})).length, before,
+      'it must not land in another subscriber inbox');
+  });
+  await t('the contact endpoint exists and is the only thing that creates one', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(src.includes("router.post('/contact/:slug'"), 'the inbound path must exist');
+    assert.ok(src.includes('honeypot') || src.includes('b.website'), 'it needs a spam guard');
+    assert.ok(src.includes('limits.teaserAllowed'), 'and a rate limit');
+  });
+  await t('THE PUBLIC PAGE OFFERS A WAY IN WITHOUT EXPOSING AN ADDRESS', () => {
+    const st = settingsSvc.sanitize({});   // email private by default
+    const html = siteRender.page({ name: 'Ada', email: 'secret@example.com' }, st,
+      { name: 'Ada', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(html.includes('id="cform"'), 'there must be a way to make contact');
+    assert.ok(!html.includes('secret@example.com'), 'without publishing the address');
+    assert.ok(html.includes('never shared'), 'and it should say so');
+  });
+  await t('the countdown speaks the page language', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes("LANG==='es'") && src.includes("step:'Paso'"),
+      'Step/left/remaining were hardcoded English inside a Spanish page');
+    assert.ok(src.includes('function mmss'), 'a real mm:ss countdown');
+    assert.ok(src.includes('pclockbig'), 'and it should be prominent');
+  });
+  await t('the countdown never freezes at zero pretending', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('T.over'), 'past the estimate it must say it is running long');
+  });
+  await t('PWA manifest is rewritten for the subscriber origin', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // The shipped manifest is scoped to /jobup/, which does not contain /app
+    // on a subdomain — an install from there would be rejected outright.
+    assert.ok(src.includes("m.start_url = '/app'") && src.includes("m.scope = '/'"),
+      'the manifest must be rescoped for the subdomain');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
