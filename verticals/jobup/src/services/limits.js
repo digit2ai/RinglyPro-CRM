@@ -37,6 +37,37 @@ async function teaserAllowed({ ipHash, email }) {
 }
 
 /**
+ * Inbound contact messages get their OWN limit, counted against the
+ * opportunities table.
+ *
+ * Reusing the teaser limiter here was wrong: that one is a COST control for
+ * LLM calls, so a subscriber who built a few teasers had already spent the
+ * quota and their own site silently refused to accept messages. A contact
+ * message costs nothing to store, so the ceiling is about abuse, not spend —
+ * and it is counted per recipient, so one busy profile can never mute another.
+ */
+const CONTACT_PER_IP_PER_DAY = parseInt(process.env.JOBUP_CONTACT_PER_IP_PER_DAY || '20', 10);
+const CONTACT_PER_SENDER_PER_DAY = parseInt(process.env.JOBUP_CONTACT_PER_SENDER_PER_DAY || '5', 10);
+
+async function contactAllowed({ tenantId, ipHash, email }) {
+  const since = new Date(Date.now() - WINDOW_MS);
+  const rows = await models.opportunities.findAll({ where: { tenant_id: tenantId } });
+  const recent = rows.filter((o) => o.source === 'site_form' && new Date(o.created_at) >= since);
+
+  const byIp = ipHash ? recent.filter((o) => o.ip_hash === ipHash).length : 0;
+  if (byIp >= CONTACT_PER_IP_PER_DAY) {
+    return { allowed: false, reason: 'ip', count: byIp, max: CONTACT_PER_IP_PER_DAY };
+  }
+  const bySender = email
+    ? recent.filter((o) => String(o.from_email || '').toLowerCase() === String(email).toLowerCase()).length
+    : 0;
+  if (email && bySender >= CONTACT_PER_SENDER_PER_DAY) {
+    return { allowed: false, reason: 'sender', count: bySender, max: CONTACT_PER_SENDER_PER_DAY };
+  }
+  return { allowed: true, by_ip: byIp, by_sender: bySender };
+}
+
+/**
  * Purge unconverted teasers past their retention date (spec 19.1).
  * A visitor who uploaded a resume and never paid still has deletion rights, and
  * we do not keep their resume indefinitely on the chance they come back.
@@ -61,6 +92,9 @@ async function runRetention() {
 }
 
 module.exports = {
+  contactAllowed,
+  CONTACT_PER_IP_PER_DAY,
+  CONTACT_PER_SENDER_PER_DAY,
   teaserAllowed, purgeExpiredTeasers, runRetention,
   WINDOW_MS, MAX_PER_IP_PER_DAY, MAX_PER_EMAIL_PER_DAY,
 };

@@ -221,15 +221,20 @@ router.post('/contact/:slug', async (req, res) => {
     // Honeypot: a field no human sees. Bots fill it in.
     if (clean(b.website, 200)) return res.json({ ok: true });
 
-    // Same DB-backed limiter that guards the teaser, so one sender cannot
-    // flood a subscriber's inbox.
-    const rl = await limits.teaserAllowed({ ipHash: teaser.ipHash(clientIp(req)), email: from_email });
+    // Its OWN limiter — the teaser one is a cost control for LLM calls, and
+    // sharing it meant a subscriber who built teasers could no longer receive
+    // messages on their own site.
+    const ipHash = teaser.ipHash(clientIp(req));
+    const rl = await limits.contactAllowed({ tenantId: sub.id, ipHash, email: from_email });
     if (!rl.allowed) {
-      return res.status(429).json({ error: 'Too many messages from here today. Please try again tomorrow.' });
+      return res.status(429).json({
+        error: rl.reason === 'sender'
+          ? 'You have already sent several messages to this person today.'
+          : 'Too many messages from this network today. Please try again tomorrow.' });
     }
 
     await scoped('opportunities', sub.id).create({
-      source: 'site_form', company, role, from_name, from_email, note, status: 'new',
+      source: 'site_form', company, role, from_name, from_email, note, status: 'new', ip_hash: ipHash,
     });
 
     res.json({ ok: true,

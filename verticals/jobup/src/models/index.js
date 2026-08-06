@@ -166,6 +166,7 @@ const SCHEMA = {
     from_email: { type: DataTypes.STRING },
     note: { type: DataTypes.TEXT },
     status: { type: DataTypes.STRING, defaultValue: 'new' },   // new | read | replied | archived
+    ip_hash: { type: DataTypes.STRING },   // salted; never a raw IP
     reply_draft: { type: DataTypes.TEXT },
     read_at: { type: DataTypes.DATE },
     replied_at: { type: DataTypes.DATE },
@@ -353,6 +354,7 @@ const ADDED_COLUMNS = [
   ['ju_teasers',       'stage_n',      'INTEGER DEFAULT 0'],
   ['ju_teasers',       'stages_total', 'INTEGER DEFAULT 6'],
   ['ju_teasers',       'started_at',   'TIMESTAMPTZ'],
+  ['ju_opportunities', 'ip_hash',      'VARCHAR(64)'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

@@ -1044,6 +1044,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   // ---------------------------------------------------------------
   section('build progress, photo, and the walkthrough');
   const photosSvc = require(__dirname + '/src/services/photos');
+  const limitsSvc = require(__dirname + '/src/services/limits');
   const teaserSvc = require(__dirname + '/src/services/teaser');
 
   await t('the build reports every stage it passes through', async () => {
@@ -1215,6 +1216,29 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(mine.some((o) => o.source === 'site_form'));
     assert.strictEqual((await scoped('opportunities', subB.id).findAll({})).length, before,
       'it must not land in another subscriber inbox');
+  });
+  await t('CONTACT HAS ITS OWN LIMIT — not the teaser cost cap', async () => {
+    // Sharing the teaser limiter meant a subscriber who built a few teasers
+    // could no longer receive messages on their own site.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(src.includes('limits.contactAllowed'), 'it must use the contact limiter');
+    const contactBlock = src.slice(src.indexOf("router.post('/contact/:slug'"));
+    assert.ok(!contactBlock.slice(0, 3000).includes('teaserAllowed'),
+      'the teaser cost cap must not gate inbound mail');
+    assert.ok(limitsSvc.CONTACT_PER_IP_PER_DAY >= 10, 'the ceiling is about abuse, not spend');
+  });
+  await t('the contact limit is counted PER RECIPIENT', async () => {
+    // One busy profile must never be able to mute another.
+    const r = await limitsSvc.contactAllowed({ tenantId: subB.id, ipHash: 'x', email: 'a@b.com' });
+    assert.strictEqual(r.allowed, true);
+    assert.strictEqual(r.by_ip, 0, 'another subscriber traffic must not count here');
+  });
+  await t('an inbound message stores a salted hash, never a raw IP', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(src.includes('ip_hash: ipHash'), 'store the hash');
+    assert.ok(!/ip_hash: *clientIp/.test(src), 'never the address itself');
   });
   await t('the contact endpoint exists and is the only thing that creates one', () => {
     const fs = require('fs');
