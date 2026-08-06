@@ -28,6 +28,7 @@ const TENANT_SCOPED = new Set([
   'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes',
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
   'invoices', 'notification_prefs', 'audit_log', 'page_views', 'assets',
+  'address_aliases',
 ]);
 
 const SCHEMA = {
@@ -192,6 +193,14 @@ const SCHEMA = {
     mime: { type: DataTypes.STRING },
     bytes: { type: DataTypes.INTEGER },
     data: { type: DataTypes.TEXT },                // base64
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // Every address a subscriber has ever held. An old link a recruiter saved
+  // must keep working, and must never be handed to someone else.
+  address_aliases: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    address: { type: DataTypes.STRING, unique: true },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   sites: {

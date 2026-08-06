@@ -9,6 +9,8 @@ const express = require('express');
 const { models, scoped } = require('../models');
 const authSvc = require('../services/auth');
 const settingsSvc = require('../services/settings');
+const addresses = require('../services/addresses');
+const mailer = require('../services/mailer');
 const analytics = require('../services/analytics');
 const agents = require('../services/agents');
 const resumeSvc = require('../services/resume');
@@ -330,6 +332,135 @@ router.get('/targets', async (req, res) => {
     do_not_contact: settings.do_not_contact || [],
     countries: settings.countries || [],
     remote_only: Boolean(settings.remote_only),
+  });
+});
+
+/**
+ * Email an inbound message to yourself.
+ *
+ * USER-CLICKED ONLY — the subscriber presses a button, and it goes to their own
+ * address and nowhere else. Reply-To is set to the recruiter, so hitting reply
+ * in their own mail client answers the recruiter directly and the reply comes
+ * from a person rather than from us.
+ */
+router.post('/opportunities/:id/email-me', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const t = scoped('opportunities', tid);
+  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  if (!sub || !sub.email) return res.status(400).json({ error: 'no address on file' });
+
+  if (!mailer.configured()) {
+    return res.status(503).json({ ...mailer.status(),
+      error: 'Email is not configured on this deployment.' });
+  }
+
+  const body = mailer.renderOpportunity(row, sub.name);
+  const r = await mailer.send({
+    to: sub.email,
+    subject: `${row.role || 'Message'}${row.company ? ' — ' + row.company : ''}`,
+    text: body.text, html: body.html,
+    replyTo: row.from_email || null,
+  });
+  if (!r.ok) return res.status(502).json(r);
+
+  await models.audit_log.create({
+    tenant_id: tid, actor: 'subscriber', action: 'email_to_self',
+    reason: `opportunity ${row.id}`,
+  });
+  res.json({ ok: true, sent_to: sub.email,
+    note: 'Sent to your own address. Reply from there to answer them directly.' });
+});
+
+router.get('/email/status', (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  res.json(mailer.status());
+});
+
+// ---------------------------------------------------------------
+// Your web address — personalise it.
+//
+// The default comes from the person's name. If they do not like it, they set
+// their own. The OLD address is kept forever: it redirects to the new one, and
+// it can never be handed to anyone else, because a recruiter may be holding
+// that link.
+// ---------------------------------------------------------------
+router.get('/address', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  if (!sub) return res.status(404).json({ error: 'not found' });
+  const aliases = await scoped('address_aliases', tid).findAll({});
+  res.json({
+    address: sub.address || null,
+    url: sub.address ? `https://${sub.address}` : null,
+    base_domain: addresses.BASE_DOMAIN,
+    previous: aliases.map((a) => a.address),
+    note: 'Any address you have used before keeps working and redirects here.',
+  });
+});
+
+router.get('/address/check', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const v = addresses.validateLabel(req.query.label);
+  if (!v.ok) return res.json({ available: false, reason: v.reason });
+
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  const host = `${v.label}.${addresses.BASE_DOMAIN}`;
+  if (sub && sub.address === host) {
+    return res.json({ available: false, label: v.label, host, reason: 'That is already your address.' });
+  }
+  // One of their own retired addresses is free for them to take back.
+  const ownAlias = await scoped('address_aliases', tid).findOne({ address: host });
+  if (ownAlias) return res.json({ available: true, label: v.label, host, url: `https://${host}`, yours_previously: true });
+
+  const taken = await addresses.isTaken(v.label);
+  res.json(taken
+    ? { available: false, label: v.label, host, reason: 'That address is already taken.' }
+    : { available: true, label: v.label, host, url: `https://${host}` });
+});
+
+router.post('/address', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const v = addresses.validateLabel(req.body && req.body.label);
+  if (!v.ok) return res.status(400).json({ error: v.reason });
+
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  if (!sub) return res.status(404).json({ error: 'not found' });
+  if (sub.status !== 'active') return res.status(403).json({ error: 'Your subscription is not active.' });
+
+  const host = `${v.label}.${addresses.BASE_DOMAIN}`;
+  if (sub.address === host) return res.json({ ok: true, address: host, url: `https://${host}`, unchanged: true });
+
+  const ownAlias = await scoped('address_aliases', tid).findOne({ address: host });
+  if (!ownAlias && await addresses.isTaken(v.label)) {
+    return res.status(409).json({ error: 'That address is already taken.' });
+  }
+
+  const previous = sub.address;
+  // Reserve the old one BEFORE switching, so a crash cannot free it.
+  if (previous && previous !== host) {
+    const existing = await scoped('address_aliases', tid).findOne({ address: previous });
+    if (!existing) await scoped('address_aliases', tid).create({ address: previous });
+  }
+  // Taking back one of their own retired addresses releases it as an alias.
+  if (ownAlias) await scoped('address_aliases', tid).destroy({ id: ownAlias.id });
+
+  await models.subscribers.update({ address: host }, { where: { id: tid } });
+  const site = await scoped('sites', tid).findOne({});
+  if (site) await scoped('sites', tid).update({ address: host }, { id: site.id });
+
+  await models.audit_log.create({
+    tenant_id: tid, actor: 'subscriber', action: 'address_change',
+    reason: `${previous || '(none)'} -> ${host}`,
+  });
+
+  res.json({
+    ok: true, address: host, url: `https://${host}`, previous,
+    note: previous
+      ? `${previous} will keep working and now redirects here.`
+      : 'Your address is live.',
   });
 });
 

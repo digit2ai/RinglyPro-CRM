@@ -141,7 +141,22 @@ async function subscriberSite(req, res, next) {
 
   let site;
   try { site = await loadSite(label); } catch (e) { return next(); }
-  if (!site) return res.status(404).type('text/plain').send('No JobUp site at this address.');
+
+  // An address the subscriber used to hold still resolves — a recruiter may be
+  // holding that link, so it redirects rather than 404s.
+  if (!site) {
+    try {
+      const alias = await models.address_aliases.findOne({
+        where: { address: `${label}.${addresses.BASE_DOMAIN}` } });
+      if (alias) {
+        const owner = await models.subscribers.findOne({ where: { id: alias.tenant_id } });
+        if (owner && owner.address && owner.status === 'active') {
+          return res.redirect(301, `https://${owner.address}${req.originalUrl === '/' ? '' : req.originalUrl}`);
+        }
+      }
+    } catch (e) { /* fall through to the 404 */ }
+    return res.status(404).type('text/plain').send('No JobUp site at this address.');
+  }
   if (site.offline) {
     return res.status(404).type('html').send(
       '<!doctype html><meta charset="utf-8"><title>Not available</title>' +
@@ -153,7 +168,8 @@ async function subscriberSite(req, res, next) {
   analytics.record(site.sub.id, req, req.path);
 
   const url = `https://${site.sub.address}`;
-  const ctx = { name: site.profile.name || site.sub.name, url, slug: label };
+  const ctx = { name: site.profile.name || site.sub.name, url, slug: label,
+                lang: site.sub.language === 'es' ? 'es' : 'en' };
   const p = req.path;
 
   // ---- The subscriber's OWN console, on their OWN address ----------------

@@ -850,6 +850,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   // ---------------------------------------------------------------
   section('test mode, welcome, and PWA');
   const billingSvc = require(__dirname + '/src/services/billing');
+  const mailerSvc = require(__dirname + '/src/services/mailer');
   const models_mod = require(__dirname + '/src/models');
 
   await t('free activation is OFF unless explicitly switched on', () => {
@@ -1250,6 +1251,115 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // on a subdomain — an install from there would be rejected outright.
     assert.ok(src.includes("m.start_url = '/app'") && src.includes("m.scope = '/'"),
       'the manifest must be rescoped for the subdomain');
+  });
+
+
+  // ---------------------------------------------------------------
+  section('address from the name, then numbers');
+  await t('the ladder is the NAME, then 1, 2, 3, 4, 5 ...', () => {
+    const l = addresses.ladder(addresses.splitName('Manuel Stagg'));
+    assert.strictEqual(l[0], 'manuelstagg', 'the name comes first');
+    assert.strictEqual(l[1], 'manuelstagg1');
+    assert.strictEqual(l[2], 'manuelstagg2');
+    assert.strictEqual(l[3], 'manuelstagg3');
+    assert.ok(l.length > 50, 'it should not run out after three');
+  });
+  await t('NO city, profession or industry is ever put in an address', () => {
+    const l = addresses.ladder({ first: 'Manuel', last: 'Stagg',
+      city: 'Tampa', profession: 'Architect', industry: 'Banking' });
+    for (const bad of ['tampa', 'architect', 'banking']) {
+      assert.ok(!l.some((x) => x.includes(bad)),
+        'an address must not publish a fact they never chose to: ' + bad);
+    }
+  });
+  await t('a one-word name still gets an address', () => {
+    const l = addresses.ladder(addresses.splitName('Cher'));
+    assert.strictEqual(l[0], 'cher');
+    assert.strictEqual(l[1], 'cher1');
+  });
+  await t('a chosen address is validated strictly — it becomes a hostname', () => {
+    assert.strictEqual(addresses.validateLabel('manuelstagg').ok, true);
+    assert.strictEqual(addresses.validateLabel('Manuel Stagg').label, 'manuelstagg');
+    assert.strictEqual(addresses.validateLabel('ms').ok, false, 'too short');
+    assert.strictEqual(addresses.validateLabel('12345').ok, false, 'digits only');
+    assert.strictEqual(addresses.validateLabel('app').ok, false, 'reserved');
+    assert.strictEqual(addresses.validateLabel('x'.repeat(60)).ok, false, 'too long');
+  });
+  await t('A RETIRED ADDRESS IS NEVER REASSIGNED — a recruiter may hold that link', async () => {
+    await scoped('address_aliases', subA.id).create({ address: `oldname.${addresses.BASE_DOMAIN}` });
+    assert.strictEqual(await addresses.isTaken('oldname'), true,
+      'an alias must block reuse by anyone, including another subscriber');
+    for (const row of await scoped('address_aliases', subA.id).findAll({})) {
+      await scoped('address_aliases', subA.id).destroy({ id: row.id });
+    }
+  });
+
+  // ---------------------------------------------------------------
+  section('the site speaks the subscriber language');
+  await t('a Spanish profile gets a Spanish page, not English chrome', () => {
+    const st = settingsSvc.sanitize({});
+    const prof = { name: 'Manuel Stagg', headline: 'Arquitecto', summary: 'Resumen.',
+      skills: ['Node'], experience: [{ title: 'SME', company: 'Citi', start: '2019' }] };
+    const es = siteRender.page(prof, st, { name: 'Manuel Stagg', url: 'https://m.jobup.dev', slug: 'm', lang: 'es' });
+    assert.ok(es.includes('<html lang="es"'), 'the document language must be declared');
+    for (const w of ['Perfil profesional', 'Competencias principales', 'Experiencia profesional',
+                     '\u00bfContratando?', 'ES \u00b7 Dalia']) {
+      assert.ok(es.includes(w), 'missing Spanish: ' + w);
+    }
+    for (const w of ['Professional Profile', 'Hiring?', 'Owner sign in']) {
+      assert.ok(!es.includes(w), 'English leaked into the Spanish page: ' + w);
+    }
+  });
+  await t('English is still English', () => {
+    const st = settingsSvc.sanitize({});
+    const en = siteRender.page({ name: 'Ada', headline: 'Engineer', summary: 'S.' }, st,
+      { name: 'Ada', url: 'https://a.jobup.dev', slug: 'a', lang: 'en' });
+    assert.ok(en.includes('<html lang="en"'));
+    assert.ok(en.includes('Professional Profile') && en.includes('Hiring?'));
+    assert.ok(!en.includes('Perfil profesional'));
+  });
+  await t('the owner can reach their console from their own page', () => {
+    const st = settingsSvc.sanitize({});
+    const en = siteRender.page({ name: 'Ada' }, st, { name: 'Ada', url: 'https://a.jobup.dev', slug: 'a' });
+    assert.ok(en.includes('href="/app"'), 'a link to the console');
+    assert.ok(en.includes('>Manage<'), 'in the nav, not only the footer');
+    const es = siteRender.page({ name: 'Ada' }, st,
+      { name: 'Ada', url: 'https://a.jobup.dev', slug: 'a', lang: 'es' });
+    assert.ok(es.includes('>Gestionar<'), 'localised too');
+  });
+
+  // ---------------------------------------------------------------
+  section('email to yourself');
+  await t('with no key it refuses HONESTLY rather than claiming it sent', async () => {
+    const saved = process.env.SENDGRID_API_KEY;
+    delete process.env.SENDGRID_API_KEY;
+    assert.strictEqual(mailerSvc.configured(), false);
+    const r = await mailerSvc.send({ to: 'x@example.com', subject: 'x', text: 'x' });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.configured, false);
+    assert.ok(r.error, 'it must say why');
+    if (saved) process.env.SENDGRID_API_KEY = saved;
+  });
+  await t('the rendered email carries the message and ESCAPES it', () => {
+    const r = mailerSvc.renderOpportunity({
+      from_name: '<script>alert(1)</script>', from_email: 'r@acme.example',
+      company: 'Acme', role: 'Staff', note: 'Are you open?', created_at: new Date(),
+    }, 'Manuel');
+    assert.ok(r.text.includes('Are you open?'));
+    assert.ok(r.html.includes('Acme'));
+    assert.ok(!r.html.includes('<script>alert'), 'inbound text must never render as markup');
+    assert.ok(r.html.includes('&lt;script&gt;'), 'it should be escaped, not stripped silently');
+  });
+  await t('EVERY SEND IS USER-CLICKED — nothing mails on a timer or a webhook', () => {
+    const fs = require('fs');
+    for (const f of ['src/services/mailer.js', 'src/routes/engine.js', 'src/routes/intake.js',
+                     'src/services/agents/index.js']) {
+      const src = fs.readFileSync(__dirname + '/' + f, 'utf8');
+      assert.ok(!/setInterval\([^)]*mailer|cron/i.test(src), f + ' appears to send on a schedule');
+    }
+    const eng = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(eng.includes("router.post('/opportunities/:id/email-me'"), 'the send is a POST the user triggers');
+    assert.ok(eng.includes('to: sub.email'), 'and it goes to their OWN address');
   });
 
   // ---------------------------------------------------------------

@@ -117,6 +117,15 @@ transform-origin:top left;font-family:var(--mono);font-size:9.5px;color:var(--fa
 .act .b.clear{background:var(--green)}
 .panel{max-width:430px;margin:80px auto;background:var(--card);border:1px solid var(--line);
 border-radius:20px;padding:32px}
+.addrnow{font-family:var(--mono);font-size:17px;margin:10px 0 4px}
+.addrnow a{color:var(--cyan)}
+.addrrow{display:flex;align-items:center;gap:0;border:1px solid var(--line2);border-radius:12px;
+overflow:hidden;background:var(--bg)}
+.addrrow input{border:0;border-radius:0;background:transparent;flex:1;min-width:0}
+.addrrow input:focus{border:0;outline:none}
+.addrsuffix{font-family:var(--mono);font-size:14px;color:var(--faint);padding:0 13px;white-space:nowrap}
+.astat{min-height:20px;font-size:13.5px;margin-top:8px;font-family:var(--mono)}
+.astat.ok{color:var(--green)}.astat.bad{color:var(--red)}
 .danger{border-color:rgba(248,113,113,.3)}
 footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:56px 0 40px;
 border-top:1px solid var(--line);padding-top:20px}
@@ -339,6 +348,7 @@ function loadOpps(){
         '<span class="chip">'+esc(String(x.created_at||'').slice(0,10))+'</span>'+
         '<div class="acts">'+
           '<button class="btn primary sm" onclick="draftReply('+x.id+')">Draft reply</button>'+
+          '<button class="btn sm" onclick="emailMe('+x.id+')">Email it to me</button>'+
           '<button class="btn sm" onclick="oppStatus('+x.id+',\'archived\')">Archive</button>'+
         '</div><div id="opp-'+x.id+'">'+
         (x.reply_draft?'<pre>'+esc(x.reply_draft)+'</pre>':'')+'</div>'+
@@ -355,6 +365,14 @@ function draftReply(id){
       '<button class="btn sm" onclick="oppStatus('+id+',\'replied\')">Mark replied</button></div>'+
       (r.j.is_simulated?'<span class="chip sim">template — no model configured</span>':'')+
       '<div class="note">'+esc(r.j.note)+'</div>';
+  });
+}
+function emailMe(id){
+  var o=$('opp-'+id); o.innerHTML='<div class="note">Sending...</div>';
+  api('/api/v1/engine/opportunities/'+id+'/email-me',{method:'POST'}).then(function(r){
+    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not send.')+
+      (r.j.note?' '+esc(r.j.note):'')+'</div>';return;}
+    o.innerHTML='<div class="note"><span class="chip ok">sent to '+esc(r.j.sent_to)+'</span> '+esc(r.j.note)+'</div>';
   });
 }
 function oppStatus(id,st){
@@ -589,9 +607,74 @@ function saveSettings(){
     });
 }
 
+/* ---- web address ---- */
+var ADDR=null;
+function loadAddress(){
+  api('/api/v1/engine/address').then(function(r){
+    if(!r.ok){$('addrbox').innerHTML='<div class="note">Could not load your address.</div>';return;}
+    ADDR=r.j;
+    $('addrbox').innerHTML=
+      '<div class="addrnow"><a href="'+esc(ADDR.url||'#')+'" target="_blank" rel="noopener">'+
+        esc(ADDR.address||'not assigned yet')+'</a></div>'+
+      '<div class="acts"><button class="btn primary sm" id="a-edit">Personalize</button></div>'+
+      (ADDR.previous&&ADDR.previous.length
+        ? '<div class="note">Also yours, redirecting here: '+
+          ADDR.previous.map(esc).join(', ')+'</div>' : '')+
+      '<div id="addredit"></div>';
+    $('a-edit').addEventListener('click',showAddrEdit);
+  });
+}
+function showAddrEdit(){
+  var cur=(ADDR.address||'').split('.')[0];
+  $('addredit').innerHTML=
+    '<label for="a-in">Choose your address</label>'+
+    '<div class="addrrow"><input id="a-in" value="'+esc(cur)+'" maxlength="40" '+
+      'autocapitalize="none" autocorrect="off" spellcheck="false">'+
+      '<span class="addrsuffix">.'+esc(ADDR.base_domain)+'</span></div>'+
+    '<div class="astat" id="a-stat"></div>'+
+    '<div class="acts"><button class="btn primary sm" id="a-save" disabled>Save address</button>'+
+    '<button class="btn sm" id="a-cancel">Cancel</button></div>'+
+    '<div class="note">Letters and numbers only. Your current address keeps working '+
+    'and will redirect here \u2014 a link someone saved never breaks.</div>';
+  var inp=$('a-in'),stat=$('a-stat'),save=$('a-save'),timer=null;
+  function check(){
+    var v=inp.value.trim();
+    save.disabled=true;
+    if(!v){stat.className='astat';stat.textContent='';return;}
+    stat.className='astat';stat.textContent='Checking...';
+    api('/api/v1/engine/address/check?label='+encodeURIComponent(v)).then(function(r){
+      if(!r.ok)return;
+      if(r.j.available){
+        stat.className='astat ok';
+        stat.textContent=r.j.host+' is available'+(r.j.yours_previously?' (yours previously)':'');
+        save.disabled=false;
+      }else{
+        stat.className='astat bad'; stat.textContent=r.j.reason||'Not available.';
+      }
+    });
+  }
+  inp.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(check,350);});
+  inp.focus(); inp.select();
+  $('a-cancel').addEventListener('click',function(){$('addredit').innerHTML='';});
+  save.addEventListener('click',function(){
+    save.disabled=true;save.textContent='Saving...';
+    api('/api/v1/engine/address',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({label:inp.value.trim()})}).then(function(r){
+        if(!r.ok){save.disabled=false;save.textContent='Save address';
+          stat.className='astat bad';stat.textContent=r.j.error||'Could not save.';return;}
+        err('aerr','Your address is now '+r.j.address+'. '+(r.j.note||''));
+        $('addredit').innerHTML='';
+        loadAddress(); boot();
+      });
+  });
+}
+
 /* ---- account ---- */
 function renderAccount(){
   $('p-account').innerHTML=
+    '<div class="card"><div class="t">Your web address</div>'+
+    '<div class="m">This is what recruiters type and what AI agents fetch.</div>'+
+    '<div id="addrbox"><div class="note">Loading...</div></div></div>'+
     '<div class="card"><div class="t">Your data</div>'+
     '<div class="m">Everything JobUp holds about you, in one file. Yours, any time, including after you cancel.</div>'+
     '<div class="acts"><a class="btn primary sm" href="'+API+'/api/v1/engine/export">Download my data</a></div></div>'+
@@ -602,6 +685,7 @@ function renderAccount(){
     '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
     '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
     '<div id="delout" class="note"></div></div>';
+  loadAddress();
   $('del').addEventListener('click',function(){
     if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
     api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){

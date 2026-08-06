@@ -46,6 +46,8 @@ border-bottom:1px solid var(--line)}
 .nav .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.6)}
 .nav .who .tag2{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.12em}
 .nav .acts{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.nbtn.manage{border-color:rgba(255,255,255,.14);opacity:.75}
+.nbtn.manage:hover{opacity:1}
 .nbtn{border:1px solid var(--line2);border-radius:999px;padding:8px 15px;color:var(--ink);
 background:transparent;font:inherit;font-size:13.5px;cursor:pointer;transition:all .15s ease}
 .nbtn:hover{border-color:var(--cyan);color:var(--cyan)}
@@ -159,8 +161,8 @@ footer a{color:var(--faint)}footer a:hover{color:var(--ink)}
 body{background:#fff;color:#000}.title-line{-webkit-text-fill-color:#0b5}}
 `;
 
-function head(title, desc, ld, url) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+function head(title, desc, ld, url, lang) {
+  return `<!doctype html><html lang="${lang === 'es' ? 'es' : 'en'}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${attr(desc)}">
@@ -173,22 +175,82 @@ function head(title, desc, ld, url) {
 </head><body>`;
 }
 
+// =============================================================
+// The site speaks the subscriber's language. Someone whose profile and voice
+// are Spanish should not land on English chrome.
+// =============================================================
+const STR = {
+  en: {
+    resume_json: 'Résumé JSON', contact: 'Contact', email_me: 'Email me',
+    share: 'Share', save_contact: 'Save contact', copy_link: 'Copy link',
+    link_copied: 'Link copied', copied: 'Copied',
+    share_hint: 'Share this profile, or save the contact card.',
+    ai_voice: "%s's AI Voice", voice_sub: 'A voice walkthrough of this profile.',
+    voice_hint: 'Tap the orb, or press play.', play: 'Play', stop: 'Stop',
+    profile: 'Professional Profile', skills: 'Core Competencies',
+    experience: 'Professional Experience', education: 'Education',
+    extras: 'Additional Qualifications', open_to: 'Open to',
+    hiring: 'Hiring?', reach_direct: 'Reach %s directly — every message is read.',
+    send_msg: 'Send %s a message. It goes straight to their dashboard.',
+    your_name: 'Your name', your_email: 'Your email (required)',
+    company: 'Company', role_hiring: 'Role you are hiring for',
+    what_talk: 'What would you like to talk about?', send: 'Send message',
+    sending: 'Sending...', delivered_to: 'Delivered to %s through JobUp. Their address is never shared.',
+    bad_email: 'Please enter a valid email so they can reply.',
+    short_msg: 'Please write a short message.',
+    sent_ok: 'Mensaje enviado. Ya está en su panel y podrán responderte directamente.',
+    no_send: 'Could not send that.', no_server: 'Could not reach the server.',
+    built_by: 'Built and maintained by JobUp', owner_signin: 'Owner sign in', manage: 'Manage',
+    agent_card: 'agent card', full_profile: 'Full profile',
+    core_skills: 'Core skills include ', voice_tag: 'EN · Ava',
+  },
+  es: {
+    resume_json: 'Currículum JSON', contact: 'Contacto', email_me: 'Escríbeme',
+    share: 'Compartir', save_contact: 'Guardar contacto', copy_link: 'Copiar enlace',
+    link_copied: 'Enlace copiado', copied: 'Copiado',
+    share_hint: 'Comparte este perfil o guarda la tarjeta de contacto.',
+    ai_voice: 'La voz IA de %s', voice_sub: 'Un recorrido por este perfil.',
+    voice_hint: 'Toca la esfera o pulsa reproducir.', play: 'Reproducir', stop: 'Detener',
+    profile: 'Perfil profesional', skills: 'Competencias principales',
+    experience: 'Experiencia profesional', education: 'Formación',
+    extras: 'Cualificaciones adicionales', open_to: 'Abierto a',
+    hiring: '¿Contratando?', reach_direct: 'Contacta con %s directamente — lee cada mensaje.',
+    send_msg: 'Envía un mensaje a %s. Llega directo a su panel.',
+    your_name: 'Tu nombre', your_email: 'Tu correo (obligatorio)',
+    company: 'Empresa', role_hiring: 'Puesto que ofreces',
+    what_talk: '¿De qué te gustaría hablar?', send: 'Enviar mensaje',
+    sending: 'Enviando...', delivered_to: 'Se entrega a %s a través de JobUp. Su dirección nunca se comparte.',
+    bad_email: 'Escribe un correo válido para que puedan responderte.',
+    short_msg: 'Escribe un mensaje breve.',
+    sent_ok: 'Mensaje enviado. Ya está en su panel y podrán responderte directamente.',
+    no_send: 'No se pudo enviar.', no_server: 'No se pudo conectar con el servidor.',
+    built_by: 'Creado y mantenido por JobUp', owner_signin: 'Acceso del titular', manage: 'Gestionar',
+    agent_card: 'tarjeta de agente', full_profile: 'Perfil completo',
+    core_skills: 'Sus competencias principales incluyen ', voice_tag: 'ES · Dalia',
+  },
+};
+function L(lang) { return STR[lang === 'es' ? 'es' : 'en']; }
+function fmt(str, v) { return String(str).replace('%s', v); }
+
 function initials(name) {
   const p = String(name || '').trim().split(/\s+/).filter(Boolean);
   return (((p[0] || '')[0] || '') + ((p[p.length - 1] || '')[0] || '')).toUpperCase();
 }
 
-function nav(name, url, p) {
+function nav(name, url, p, lang) {
+  const t = L(lang);
   return `<div class="nav"><div class="wrap">
   <a class="who" href="/"><span class="dot"></span><span>${esc(name)}</span><span class="tag2">CV</span></a>
   <div class="acts">
-    <a class="nbtn" href="${attr(url)}/resume.json">R&eacute;sum&eacute; JSON</a>
-    ${p.email ? `<a class="nbtn primary" href="mailto:${attr(p.email)}">Contact</a>` : ''}
+    <a class="nbtn" href="${attr(url)}/resume.json">${esc(t.resume_json)}</a>
+    ${p.email ? `<a class="nbtn primary" href="mailto:${attr(p.email)}">${esc(t.contact)}</a>` : ''}
+    <a class="nbtn manage" href="/app" title="${esc(t.owner_signin)}">${esc(t.manage)}</a>
   </div>
 </div></div>`;
 }
 
-function heroBlock(p, name, url, roleLine) {
+function heroBlock(p, name, url, roleLine, lang) {
+  const t = L(lang);
   // photo_url is set by the site handler when an asset exists; p.photo covers a
   // URL carried in the resume itself. Initials remain the honest fallback.
   const src = p.photo_url || p.photo;
@@ -203,7 +265,7 @@ function heroBlock(p, name, url, roleLine) {
 
   const social = [];
   if (p.linkedin) social.push(`<a class="sbtn primary" href="${attr(p.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`);
-  if (p.email) social.push(`<a class="sbtn${p.linkedin ? '' : ' primary'}" href="mailto:${attr(p.email)}">Email me</a>`);
+  if (p.email) social.push(`<a class="sbtn${p.linkedin ? '' : ' primary'}" href="mailto:${attr(p.email)}">${esc(t.email_me)}</a>`);
   social.push(`<a class="sbtn" href="${attr(url)}/resume.json">R&eacute;sum&eacute; (JSON)</a>`);
 
   return `<header class="hero"><div class="wrap hero-grid">
@@ -216,33 +278,36 @@ function heroBlock(p, name, url, roleLine) {
     ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
     <div class="social-row">${social.join('')}</div>
     <div class="sharecard"><div>
-      <div class="sharehint">Share this profile, or save the contact card.</div>
+      <div class="sharehint">${esc(t.share_hint)}</div>
       <div class="sharebtns">
-        <button class="shbtn primary" id="sh-share">Share</button>
-        <button class="shbtn" id="sh-vcard">Save contact</button>
-        <button class="shbtn" id="sh-copy">Copy link</button>
+        <button class="shbtn primary" id="sh-share">${esc(t.share)}</button>
+        <button class="shbtn" id="sh-vcard">${esc(t.save_contact)}</button>
+        <button class="shbtn" id="sh-copy">${esc(t.copy_link)}</button>
       </div>
     </div></div>
   </div>
 </div></header>`;
 }
 
-function voiceBlock(name) {
+function voiceBlock(name, lang) {
+  const t = L(lang);
+  const first = name.split(' ')[0] || name;
   return `<div class="voicebar"><div class="voicecard">
-  <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="Play the spoken profile"></div>
+  <div class="vorb" id="vorb" role="button" tabindex="0" aria-label="${attr(t.play)}"></div>
   <div style="flex:1">
-    <div class="vname">${esc(name.split(' ')[0] || name)}'s AI Voice <span class="vtag">EN &middot; Ava</span></div>
-    <div class="vrole">A voice walkthrough of this profile.</div>
+    <div class="vname">${esc(fmt(t.ai_voice, first))} <span class="vtag">${esc(t.voice_tag)}</span></div>
+    <div class="vrole">${esc(t.voice_sub)}</div>
     <div class="sharebtns">
-      <button class="shbtn primary" id="v-play">Play</button>
-      <button class="shbtn" id="v-stop" disabled>Stop</button>
+      <button class="shbtn primary" id="v-play">${esc(t.play)}</button>
+      <button class="shbtn" id="v-stop" disabled>${esc(t.stop)}</button>
     </div>
-    <div class="vstatus" id="v-status">Tap the orb, or press play.</div>
+    <div class="vstatus" id="v-status">${esc(t.voice_hint)}</div>
   </div>
 </div></div>`;
 }
 
-function sections(p) {
+function sections(p, lang) {
+  const t = L(lang);
   let h = '<div class="wrap">';
   let n = 0;
   const sh = (t) => {
@@ -250,17 +315,17 @@ function sections(p) {
     return `<div class="sec-head"><span class="k">${String(n).padStart(2, '0')}</span><h2>${esc(t)}</h2><span class="rule"></span></div>`;
   };
 
-  if (p.summary) h += `<section>${sh('Professional Profile')}<p class="prose">${esc(p.summary)}</p></section>`;
+  if (p.summary) h += `<section>${sh(t.profile)}<p class="prose">${esc(p.summary)}</p></section>`;
 
   if (p.skills && p.skills.length) {
-    h += `<section>${sh('Core Competencies')}<div class="grid">` +
+    h += `<section>${sh(t.skills)}<div class="grid">` +
       p.skills.slice(0, 18).map((s) =>
         `<div class="gcard">${esc(typeof s === 'string' ? s : s.name)}</div>`).join('') +
       '</div></section>';
   }
 
   if (p.experience && p.experience.length) {
-    h += `<section>${sh('Professional Experience')}<div class="timeline">` +
+    h += `<section>${sh(t.experience)}<div class="timeline">` +
       p.experience.map((e) => `<div class="tl">
         <div class="role">${esc(e.title || '')}</div>
         ${e.company ? `<div class="org">${esc(e.company)}</div>` : ''}
@@ -271,7 +336,7 @@ function sections(p) {
   }
 
   if (p.education && p.education.length) {
-    h += `<section>${sh('Education')}<div class="timeline">` +
+    h += `<section>${sh(t.education)}<div class="timeline">` +
       p.education.map((e) => `<div class="tl">
         <div class="role">${esc(e.institution || '')}</div>
         ${(e.studyType || e.area) ? `<div class="org">${esc([e.studyType, e.area].filter(Boolean).join(', '))}</div>` : ''}
@@ -280,7 +345,7 @@ function sections(p) {
   }
 
   if (p.certifications && p.certifications.length) {
-    h += `<section>${sh('Additional Qualifications')}<div class="tags">` +
+    h += `<section>${sh(t.extras)}<div class="tags">` +
       p.certifications.map((c) => `<span class="tag">${esc(typeof c === 'string' ? c : c.name)}</span>`).join('') +
       '</div></section>';
   }
@@ -289,7 +354,8 @@ function sections(p) {
 }
 
 /** Spoken walkthrough, built ONLY from the privacy-projected profile. */
-function narrationFor(p, name) {
+function narrationFor(p, name, lang) {
+  const t = L(lang);
   const out = [`This is the profile of ${name}.`];
   if (p.headline) out.push(p.headline + '.');
   if (p.summary) out.push(p.summary);
@@ -298,13 +364,15 @@ function narrationFor(p, name) {
     out.push(`Most recently, ${e.title || 'working'}${e.company ? ' at ' + e.company : ''}.`);
   }
   if (p.skills && p.skills.length) {
-    out.push('Core skills include ' +
+    out.push(t.core_skills +
       p.skills.slice(0, 6).map((s) => (typeof s === 'string' ? s : s.name)).join(', ') + '.');
   }
   return out;
 }
 
-function scripts(name, url, p, narration) {
+function scripts(name, url, p, narration, lang) {
+  const t = L(lang);
+  const voice = lang === 'es' ? 'dalia' : 'ava';
   const vcard = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${name}`,
     p.headline ? `TITLE:${p.headline}` : '',
     p.email ? `EMAIL;TYPE=INTERNET:${p.email}` : '',
@@ -318,12 +386,12 @@ function scripts(name, url, p, narration) {
   var sh=document.getElementById('sh-share'),vc=document.getElementById('sh-vcard'),cp=document.getElementById('sh-copy');
   if(sh) sh.addEventListener('click',function(){
     if(navigator.share) navigator.share({title:N,url:U}).catch(function(){});
-    else if(navigator.clipboard){navigator.clipboard.writeText(U);sh.textContent='Link copied';}
+    else if(navigator.clipboard){navigator.clipboard.writeText(U);sh.textContent=${JSON.stringify(t.link_copied)};}
   });
   if(cp) cp.addEventListener('click',function(){
     if(!navigator.clipboard) return;
-    navigator.clipboard.writeText(U).then(function(){cp.textContent='Copied';
-      setTimeout(function(){cp.textContent='Copy link';},1600);});
+    navigator.clipboard.writeText(U).then(function(){cp.textContent=${JSON.stringify(t.copied)};
+      setTimeout(function(){cp.textContent=${JSON.stringify(t.copy_link)};},1600);});
   });
   if(vc) vc.addEventListener('click',function(){
     var b=new Blob([VC],{type:'text/vcard'});var a=document.createElement('a');
@@ -375,9 +443,9 @@ function scripts(name, url, p, narration) {
     var email=(document.getElementById('c-email').value||'').trim();
     var note=(document.getElementById('c-note').value||'').trim();
     if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)){
-      msg.className='cmsg bad';msg.textContent='Please enter a valid email so they can reply.';return;}
-    if(note.length<10){msg.className='cmsg bad';msg.textContent='Please write a short message.';return;}
-    go.disabled=true;go.textContent='Sending...';msg.className='cmsg';msg.textContent='';
+      msg.className='cmsg bad';msg.textContent=${JSON.stringify(t.bad_email)};return;}
+    if(note.length<10){msg.className='cmsg bad';msg.textContent=${JSON.stringify(t.short_msg)};return;}
+    go.disabled=true;go.textContent=${JSON.stringify(t.sending)};msg.className='cmsg';msg.textContent='';
     fetch('/api/v1/intake/contact/'+encodeURIComponent(SLUG),{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -389,18 +457,20 @@ function scripts(name, url, p, narration) {
         website:document.getElementById('c-website').value})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(r){
-        if(!r.ok){go.disabled=false;go.textContent='Send message';
-          msg.className='cmsg bad';msg.textContent=r.j.error||'Could not send that.';return;}
+        if(!r.ok){go.disabled=false;go.textContent=${JSON.stringify(t.send)};
+          msg.className='cmsg bad';msg.textContent=r.j.error||${JSON.stringify(t.no_send)};return;}
         f.innerHTML='<div class="cmsg ok" style="font-size:15px">'+
           'Message sent. It is in their dashboard now, and they can reply to you directly.</div>';
-      }).catch(function(){go.disabled=false;go.textContent='Send message';
-        msg.className='cmsg bad';msg.textContent='Could not reach the server.';});
+      }).catch(function(){go.disabled=false;go.textContent=${JSON.stringify(t.send)};
+        msg.className='cmsg bad';msg.textContent=${JSON.stringify(t.no_server)};});
   });
 })();
 </script></body></html>`;
 }
 
 function page(profile, settings, ctx) {
+  const lang = (ctx && ctx.lang) === 'es' ? 'es' : 'en';
+  const t = L(lang);
   const p = identity.applyPrivacy(profile, settings);
   const ld = identity.personJsonLd(profile, settings, ctx);
   const name = ctx.name || p.name || 'Professional';
@@ -408,15 +478,15 @@ function page(profile, settings, ctx) {
   const roles = settingsSvc.pageRoles(settings);
   const roleLine = p.headline || (roles[0] && roles[0].title) || '';
 
-  let h = head(`${name}${p.headline ? ' — ' + p.headline : ''}`, desc, ld, ctx.url);
-  h += nav(name, ctx.url, p);
-  h += heroBlock(p, name, ctx.url, roleLine);
-  h += voiceBlock(name);
-  h += sections(p);
+  let h = head(`${name}${p.headline ? ' — ' + p.headline : ''}`, desc, ld, ctx.url, lang);
+  h += nav(name, ctx.url, p, lang);
+  h += heroBlock(p, name, ctx.url, roleLine, lang);
+  h += voiceBlock(name, lang);
+  h += sections(p, lang);
 
   h += '<div class="wrap">';
   if (roles.length) {
-    h += '<section><div class="sec-head"><span class="k">&#9679;</span><h2>Open to</h2>' +
+    h += '<section><div class="sec-head"><span class="k">&#9679;</span><h2>' + esc(t.open_to) + '</h2>' +
       '<span class="rule"></span></div><div class="tags">' +
       roles.map((r) => `<a class="tag" href="/roles/${attr(r.slug)}">${esc(r.title)}</a>`).join('') +
       '</div></section>';
@@ -425,34 +495,34 @@ function page(profile, settings, ctx) {
   // way to make the request. This routes THROUGH us, so the subscriber's
   // address stays private and the message lands in their Opportunities tab.
   const firstName = esc(String(name || '').split(' ')[0] || 'them');
-  h += `<div class="cta-final"><h3>Hiring?</h3>
+  h += `<div class="cta-final"><h3>${esc(t.hiring)}</h3>
     <p>${p.email
-      ? `Reach ${esc(name)} directly &mdash; every message is read.`
-      : `Send ${firstName} a message. It goes straight to their dashboard.`}</p>
-    ${p.email ? `<a class="sbtn primary" href="mailto:${attr(p.email)}">Email ${firstName}</a>` : ''}
+      ? esc(fmt(t.reach_direct, name))
+      : esc(fmt(t.send_msg, firstName))}</p>
+    ${p.email ? `<a class="sbtn primary" href="mailto:${attr(p.email)}">${esc(t.email_me)}</a>` : ''}
     <form class="cform" id="cform" novalidate>
       <div class="crow">
-        <input id="c-name" type="text" placeholder="Your name" autocomplete="name" maxlength="120">
-        <input id="c-email" type="email" placeholder="Your email (required)" autocomplete="email" maxlength="200">
+        <input id="c-name" type="text" placeholder="${attr(t.your_name)}" autocomplete="name" maxlength="120">
+        <input id="c-email" type="email" placeholder="${attr(t.your_email)}" autocomplete="email" maxlength="200">
       </div>
       <div class="crow">
-        <input id="c-company" type="text" placeholder="Company" autocomplete="organization" maxlength="160">
-        <input id="c-role" type="text" placeholder="Role you are hiring for" maxlength="160">
+        <input id="c-company" type="text" placeholder="${attr(t.company)}" autocomplete="organization" maxlength="160">
+        <input id="c-role" type="text" placeholder="${attr(t.role_hiring)}" maxlength="160">
       </div>
-      <textarea id="c-note" rows="4" placeholder="What would you like to talk about?" maxlength="4000"></textarea>
+      <textarea id="c-note" rows="4" placeholder="${attr(t.what_talk)}" maxlength="4000"></textarea>
       <input id="c-website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
-      <button class="sbtn primary" id="c-go" type="submit">Send message</button>
+      <button class="sbtn primary" id="c-go" type="submit">${esc(t.send)}</button>
       <div class="cmsg" id="c-msg"></div>
-      <div class="cnote">Delivered to ${firstName} through JobUp. Their address is never shared.</div>
+      <div class="cnote">${esc(fmt(t.delivered_to, firstName))}</div>
     </form>
   </div>`;
-  h += `<footer><div>Built and maintained by JobUp &middot;
-    <a href="/app">Owner sign in</a></div><div>
+  h += `<footer><div>${esc(t.built_by)} &middot;
+    <a href="/app">${esc(t.owner_signin)}</a></div><div>
     <a href="${attr(ctx.url)}/resume.json">resume.json</a> &middot;
-    <a href="${attr(ctx.url)}/.well-known/agent.json">agent card</a> &middot;
+    <a href="${attr(ctx.url)}/.well-known/agent.json">${esc(t.agent_card)}</a> &middot;
     <a href="${attr(ctx.url)}/llms.txt">llms.txt</a></div></footer></div>`;
 
-  return h + scripts(name, ctx.url, p, narrationFor(p, name));
+  return h + scripts(name, ctx.url, p, narrationFor(p, name, lang), lang);
 }
 
 function rolePage(profile, settings, ctx, role) {

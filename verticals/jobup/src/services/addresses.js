@@ -31,17 +31,30 @@ function clean(s) {
  * The ladder, in decreasing preference (spec section 9).
  * Clean, professional, memorable only — no long or random variants.
  */
-function ladder({ first, middle, last, profession, city, industry }) {
+// How many numbered fallbacks to offer before giving up.
+const MAX_NUMERIC = parseInt(process.env.JOBUP_ADDRESS_MAX_NUMERIC || '99', 10);
+
+/**
+ * The address comes from the PERSON'S NAME, and nothing else.
+ *
+ * firstnamelastname, then firstnamelastname1, 2, 3, 4, 5 ... until one is free.
+ *
+ * Earlier versions tried profession, city and industry before numbering, which
+ * meant the second Manuel Stagg could be handed `manuelstaggtampa` — an address
+ * derived from a fact he never asked to publish, and unpredictable besides.
+ * A number is honest, predictable, and reveals nothing.
+ */
+function ladder({ first, middle, last }) {
   const f = clean(first), m = clean(middle), l = clean(last);
-  const out = [];
-  if (f && l) out.push(f + l);                                  // firstnamelastname
-  if (f && m && l) out.push(f + m[0] + l);                      // + middle initial
-  if (f && m && l) out.push(f + m + l);                         // + full middle
-  if (f && l && profession) out.push(f + l + clean(profession)); // + profession
-  if (f && l && city) out.push(f + l + clean(city));            // + city
-  if (f && l && industry) out.push(f + l + clean(industry));    // + industry
-  if (f && l) for (let i = 1; i <= 3; i++) out.push(f + l + i); // + short numeric
-  if (!out.length && f) out.push(f);
+  const base = (f && l) ? f + l : (f || l || '');
+  if (!base) return [];
+
+  const out = [base];
+  // A middle initial is still the person's own name, so it is offered once
+  // before falling back to digits.
+  if (f && m && l) out.push(f + m[0] + l);
+  for (let i = 1; i <= MAX_NUMERIC; i++) out.push(base + i);
+
   return out.filter((x) => x.length >= 3 && x.length <= 40 && !RESERVED.has(x));
 }
 
@@ -53,6 +66,8 @@ async function isTaken(label) {
     if (await models.subscribers.findOne({ where: { address: value } })) return true;
     // A retired address stays reserved — never reassign a link a recruiter holds.
     if (await models.sites.findOne({ where: { address: value } })) return true;
+    if (models.address_aliases &&
+        await models.address_aliases.findOne({ where: { address: value } })) return true;
   }
   return false;
 }
@@ -77,6 +92,27 @@ async function preview(parts) {
     : { available: false, reason: r.reason, ladder: r.ladder };
 }
 
+/**
+ * Validate an address the subscriber chose. Returns { ok, label } or a reason.
+ * Deliberately strict: this becomes a hostname, and it is the thing recruiters
+ * type and AI agents fetch.
+ */
+function validateLabel(input) {
+  const raw = String(input || '').trim().toLowerCase();
+  if (!raw) return { ok: false, reason: 'Choose an address.' };
+  const label = clean(raw);
+  if (!label) return { ok: false, reason: 'Use letters and numbers.' };
+  if (label !== raw.replace(/[^a-z0-9-]/g, '')) {
+    // clean() strips more than the user may expect; say what we would use.
+    if (label.length < 3) return { ok: false, reason: 'Use at least 3 letters or numbers.' };
+  }
+  if (label.length < 3) return { ok: false, reason: 'Use at least 3 letters or numbers.' };
+  if (label.length > 40) return { ok: false, reason: 'Keep it to 40 characters or fewer.' };
+  if (RESERVED.has(label)) return { ok: false, reason: 'That address is reserved.' };
+  if (/^\d+$/.test(label)) return { ok: false, reason: 'Use at least one letter.' };
+  return { ok: true, label };
+}
+
 function splitName(full) {
   const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { first: '', middle: '', last: '' };
@@ -85,4 +121,5 @@ function splitName(full) {
   return { first: parts[0], middle: parts.slice(1, -1).join(' '), last: parts[parts.length - 1] };
 }
 
-module.exports = { ladder, allocate, preview, isTaken, splitName, clean, BASE_DOMAIN, RESERVED };
+module.exports = { ladder, allocate, preview, isTaken, splitName, clean, validateLabel,
+                   BASE_DOMAIN, RESERVED, MAX_NUMERIC };

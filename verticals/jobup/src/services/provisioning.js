@@ -71,6 +71,11 @@ async function adoptTeaser(tenantId, teaserToken) {
   } else if (photoAssetId && !existing.photo_asset_id) {
     await scoped('profiles', tenantId).update({ photo_asset_id: photoAssetId }, { id: existing.id });
   }
+  // The site must speak the language they chose at signup.
+  if (t.language && t.language !== 'en') {
+    await models.subscribers.update({ language: t.language }, { where: { id: tenantId } });
+  }
+
   // Bind the teaser to its subscriber so the 90-day purge skips it.
   await models.teasers.update({ tenant_id: tenantId }, { where: { id: t.id } });
   return { adopted: true, headline: profile.headline || null };
