@@ -1065,6 +1065,48 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(css.includes('padding-left:calc(24px+env(safe-area-inset-left))'),
       'landscape on a notched phone clips the left gutter');
   });
+  await t('mobile: the landing nav collapses into a hamburger', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    const css = html.replace(/\s+/g, '');
+    assert.ok(html.includes('id="ju-burger"'), 'there must be a burger button');
+    assert.ok(html.includes('aria-expanded'), 'the button must report its state to a screen reader');
+    assert.ok(html.includes('aria-controls="ju-navlinks"'), 'and say what it controls');
+    // The original bug: this page has its OWN nav, so the design system's
+    // .nav-links/.nav-burger rules never applied and all five links stayed in a
+    // row — wrapping into the brand and running off the right edge.
+    assert.ok(css.includes('.d2b.ju-burger{display:none'), 'the burger is desktop-hidden by default');
+    assert.ok(/@media\(max-width:760px\)\{[^]*?\.d2b\.ju-burger\{display:inline-flex\}/.test(css),
+      'the burger must appear under the mobile breakpoint');
+    assert.ok(/\.d2bnav\.nav-open\.ju-navlinks\{display:flex/.test(css),
+      'opening the nav must reveal the drawer');
+  });
+  await t('THE NAV LINKS CARRY NO INLINE DISPLAY — it would beat the media query', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    // Anchor on the real element, not the first '<nav' substring — a CSS
+    // comment mentioning one would otherwise slice the whole stylesheet in.
+    const open = html.indexOf('<nav>');
+    assert.ok(open > -1, 'the nav element must exist');
+    assert.ok(open > html.indexOf('<div class="d2b">'),
+      'nav must sit inside .d2b or none of the .d2b-prefixed rules apply to it');
+    const nav = html.slice(open, html.indexOf('</nav>', open));
+    // This is the actual mechanism of the bug being fixed: the links sat in a
+    // <div style="display:flex"> and no stylesheet rule can override that.
+    assert.ok(!/style="[^"]*display:flex/.test(nav),
+      'an inline display:flex in the nav cannot be collapsed into a drawer');
+    assert.ok(nav.includes('class="ju-navlinks"'), 'the links need a class to be styled');
+  });
+  await t('the drawer closes on link tap, outside click and Escape', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(html.includes("!nav.contains(e.target)"), 'tapping outside must close it');
+    assert.ok(html.includes("e.key==='Escape'"), 'Escape must close it');
+    assert.ok(html.includes("a.addEventListener('click',function(){set(false);})"),
+      'an anchor jump must not leave the drawer covering the section it scrolled to');
+    assert.ok(html.includes('innerWidth>760'),
+      'rotating past the breakpoint must not leave a drawer floating over the desktop row');
+  });
   await t('mobile: the landing has real touch targets and does not zoom on focus', () => {
     const fs = require('fs');
     const css = fs.readFileSync(__dirname + '/public/index.html', 'utf8').replace(/\s+/g, '');

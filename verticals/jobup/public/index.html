@@ -607,14 +607,51 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 @media(max-width:680px){
   /* 44px is the smallest reliably tappable target. The nav pills, the language
      toggle and the footer links were all under it. */
-  .d2b .nav-links > a,.d2b .btn,.d2b .btn-primary,.d2b .chip{min-height:44px;
+  .d2b .btn,.d2b .btn-primary,.d2b .chip{min-height:44px;
     display:inline-flex;align-items:center;justify-content:center}
-  .d2b .nav-burger{min-width:44px;min-height:44px}
   .d2b .lang-opt{min-height:38px;display:inline-flex;align-items:center}
   .d2b .d2f-links a{display:inline-flex;align-items:center;min-height:40px}
   /* 16px or iOS zooms the whole page the moment a field takes focus. */
   .d2b input,.d2b select,.d2b textarea{font-size:16px}
 }
+
+/* ---- nav: row on desktop, hamburger drawer on a phone --------------------
+   This page has its own nav element; it never used the .nav-links/.nav-burger
+   markup the inherited design system styles, so on a phone all five links
+   stayed in a row — wrapping into the brand and running off the right edge. */
+.d2b .ju-navlinks{display:flex;align-items:center;gap:22px}
+.d2b .ju-navlinks > a{color:var(--mut);font-size:14.5px}
+.d2b .ju-navlinks > a:hover{color:var(--ink)}
+.d2b .ju-navlinks > a.signin{padding:9px 18px;font-size:14px;color:var(--ink)}
+.d2b .ju-burger{display:none;align-items:center;justify-content:center;
+  width:44px;height:44px;margin:-8px -6px -8px 0;border-radius:12px;
+  color:var(--ink);background:transparent;border:1px solid transparent}
+.d2b .ju-burger:hover{border-color:var(--line2)}
+.d2b .ju-burger svg{width:24px;height:24px;stroke:currentColor;stroke-width:2;
+  fill:none;stroke-linecap:round}
+.d2b .ju-burger .ic-x{display:none}
+.d2b nav.nav-open .ju-burger .ic-m{display:none}
+.d2b nav.nav-open .ju-burger .ic-x{display:block}
+
+@media(max-width:760px){
+  .d2b .ju-burger{display:inline-flex}
+  .d2b .ju-navlinks{
+    position:absolute;top:calc(100% + 6px);right:16px;left:16px;z-index:30;
+    flex-direction:column;align-items:stretch;gap:4px;
+    background:#14151d;border:1px solid var(--line2);border-radius:16px;
+    padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.65);
+    /* Animated open, but still display:none when shut so the links are not
+       focusable behind the closed menu. */
+    display:none}
+  .d2b nav.nav-open .ju-navlinks{display:flex;animation:junav .16s ease}
+  .d2b .ju-navlinks > a{display:flex;align-items:center;min-height:48px;
+    padding:0 14px;border-radius:11px;font-size:16px;color:var(--ink)}
+  .d2b .ju-navlinks > a:active{background:rgba(255,255,255,.07)}
+  .d2b .ju-navlinks > a.signin{margin-top:6px;justify-content:center;
+    border:1px solid var(--line2)}
+}
+@keyframes junav{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.d2b nav.nav-open .ju-navlinks{animation:none}}
 /* A long unbroken string (an address, an email) is the usual cause of a page
    that scrolls sideways on a phone. */
 .d2b{overflow-x:hidden}
@@ -646,12 +683,19 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 
 <nav>
   <a class="brand" href="/"><span class="mark"></span><span>JobUp<span style="color:var(--mut);font-weight:600">.dev</span></span></a>
-  <div style="display:flex;align-items:center;gap:22px">
-    <a href="#how" style="color:var(--mut);font-size:14.5px">How it works</a>
-    <a href="#receive" style="color:var(--mut);font-size:14.5px">What you get</a>
-    <a href="#agents" style="color:var(--mut);font-size:14.5px">Agents</a>
-    <a href="#pricing" style="color:var(--mut);font-size:14.5px">Pricing</a>
-    <a class="ju-btn ghost" style="padding:9px 18px;font-size:14px" href="{{BASE}}/app">Sign in</a>
+  <!-- The links carry NO inline styles: an inline display:flex cannot be
+       overridden by the media query that turns this into a drawer. -->
+  <button class="ju-burger" id="ju-burger" aria-label="Open menu"
+          aria-expanded="false" aria-controls="ju-navlinks">
+    <svg viewBox="0 0 24 24" class="ic-m" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    <svg viewBox="0 0 24 24" class="ic-x" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="ju-navlinks" id="ju-navlinks">
+    <a href="#how">How it works</a>
+    <a href="#receive">What you get</a>
+    <a href="#agents">Agents</a>
+    <a href="#pricing">Pricing</a>
+    <a class="ju-btn ghost signin" href="{{BASE}}/app">Sign in</a>
   </div>
 </nav>
 
@@ -1157,6 +1201,41 @@ function juFormatPhone(v){
   });
 })();
 </script>
+<script>
+/* Nav drawer. Kept to the same open/close contract as the rest of the site:
+   a tap anywhere that is not the menu closes it, and so does Escape. */
+(function(){
+  var nav=document.querySelector('.d2b nav')||document.querySelector('nav');
+  var btn=document.getElementById('ju-burger');
+  var links=document.getElementById('ju-navlinks');
+  if(!nav||!btn||!links) return;
+  function set(open){
+    nav.classList.toggle('nav-open',open);
+    btn.setAttribute('aria-expanded',open?'true':'false');
+    btn.setAttribute('aria-label',open?'Close menu':'Open menu');
+  }
+  btn.addEventListener('click',function(e){
+    e.stopPropagation(); set(!nav.classList.contains('nav-open'));
+  });
+  /* Every link closes it — an anchor jump leaves the drawer covering the very
+     section it just scrolled to otherwise. */
+  Array.prototype.forEach.call(links.querySelectorAll('a'),function(a){
+    a.addEventListener('click',function(){set(false);});
+  });
+  document.addEventListener('click',function(e){
+    if(nav.classList.contains('nav-open')&&!nav.contains(e.target)) set(false);
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&nav.classList.contains('nav-open')){set(false);btn.focus();}
+  });
+  /* Rotating to landscape crosses the breakpoint: the drawer would otherwise
+     stay "open" and reappear as a floating panel over the desktop row. */
+  addEventListener('resize',function(){
+    if(innerWidth>760&&nav.classList.contains('nav-open')) set(false);
+  });
+})();
+</script>
+
 <div id="ju-install">
   <div class="txt"><strong>Add JobUp to your home screen</strong><br>
     <span>Opens like an app, and keeps you signed in.</span></div>
