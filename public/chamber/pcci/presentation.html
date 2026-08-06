@@ -1546,13 +1546,7 @@
   }
   .powered-by img { height: 24px; width: auto; opacity: 0.85; filter: brightness(1.1); }
 
-  /* ===== ELEVENLABS WIDGET ===== */
-  elevenlabs-convai {
-    position: fixed;
-    bottom: 20px;
-    right: 90px;
-    z-index: 400;
-  }
+  /* ===== VOICE ORB ===== positioning lives in /embed/voice-orb.js */
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 900px) {
@@ -1607,7 +1601,7 @@
     .stat-row { gap: 16px; }
     .stat-card { min-width: 140px; padding: 20px 16px; }
     .stat-card .stat-num { font-size: 32px; }
-    elevenlabs-convai { bottom: 80px; right: 16px; }
+    .d2orb-root[data-pos="bottom-right"] { bottom: 80px; right: 16px; }
   }
 
   @media (max-width: 560px) {

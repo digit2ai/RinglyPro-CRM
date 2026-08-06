@@ -1,5 +1,10 @@
-// Voicemail Audio Service - Generate ElevenLabs audio for custom outbound voicemail messages
-const axios = require('axios');
+// Voicemail Audio Service - Generate Lina's audio for custom outbound voicemail
+// messages. The engine is our own Edge neural TTS (src/services/edge-tts.js),
+// the same one behind /api/tts/edge and the voice orb. It used to call
+// api.elevenlabs.io per generation with ELEVENLABS_API_KEY; the voice is still
+// Lina, the per-character bill is gone, and a client without an ElevenLabs key
+// can now record a custom greeting.
+const edgeTts = require('./edge-tts');
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
@@ -7,12 +12,9 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/cl
 
 class VoicemailAudioService {
     constructor() {
-        this.apiKey = process.env.ELEVENLABS_API_KEY;
-        this.baseUrl = 'https://api.elevenlabs.io/v1';
-
-        // Lina's voice ID (ElevenLabs Bella - natural Spanish/English bilingual voice)
-        // You can change this to any other ElevenLabs voice ID
-        this.linaVoiceId = 'EXAVITQu4vr4xnSDxMaL'; // Bella voice
+        // Lina's voice — an Edge neural voice, bilingual ES/EN. Override with
+        // VOICEMAIL_VOICE (any Edge voice name, e.g. en-US-AvaNeural).
+        this.linaVoice = process.env.VOICEMAIL_VOICE || 'es-MX-DaliaNeural';
 
         // AWS S3 Configuration
         this.bucketName = process.env.AWS_S3_BUCKET || 'ringlypro-uploads';
@@ -56,17 +58,12 @@ class VoicemailAudioService {
     }
 
     /**
-     * Generate voicemail audio using ElevenLabs Lina voice and upload to S3
+     * Generate voicemail audio in Lina's voice (Edge neural) and upload to S3
      * @param {string} text - Custom voicemail message text
      * @param {number} clientId - Client ID (used for filename)
      * @returns {Promise<string>} Public S3 URL to generated audio file
      */
     async generateVoicemailAudio(text, clientId) {
-        if (!this.apiKey) {
-            logger.error('❌ ElevenLabs API key not configured');
-            return null;
-        }
-
         if (!text || text.trim().length === 0) {
             logger.error('❌ No text provided for voicemail generation');
             return null;
@@ -85,32 +82,14 @@ class VoicemailAudioService {
 
             logger.info(`🎤 Generating Lina voicemail for client ${clientId}: "${speechText.substring(0, 50)}..."`);
 
-            // Call ElevenLabs API with arraybuffer response
-            const response = await axios({
-                method: 'POST',
-                url: `${this.baseUrl}/text-to-speech/${this.linaVoiceId}`,
-                headers: {
-                    'Accept': 'audio/mpeg',
-                    'Content-Type': 'application/json',
-                    'xi-api-key': this.apiKey
-                },
-                data: {
-                    text: speechText,
-                    model_id: 'eleven_multilingual_v2', // Supports English and Spanish
-                    voice_settings: {
-                        stability: 0.6,        // Slightly higher stability for voicemail
-                        similarity_boost: 0.8, // High similarity for consistent voice
-                        style: 0.3,            // Moderate style for natural delivery
-                        use_speaker_boost: true
-                    }
-                },
-                responseType: 'arraybuffer', // Get buffer for S3 upload
-                timeout: 30000 // 30 second timeout
+            // Synthesize on our own engine. Slightly slowed: a greeting read at
+            // conversational pace is hard to follow over a phone line.
+            const audioBuffer = await edgeTts.synthesize(speechText, {
+                voice: this.linaVoice,
+                rate: '-4%'
             });
-
-            const audioBuffer = Buffer.from(response.data);
             const fileSize = audioBuffer.length;
-            logger.info(`✅ ElevenLabs audio generated: ${(fileSize / 1024).toFixed(2)} KB`);
+            logger.info(`✅ Voicemail audio generated (${this.linaVoice}): ${(fileSize / 1024).toFixed(2)} KB`);
 
             // Upload to S3 if available
             if (this.s3Client) {
@@ -122,12 +101,7 @@ class VoicemailAudioService {
             }
 
         } catch (error) {
-            logger.error(`❌ ElevenLabs voicemail generation error:`, {
-                message: error.message,
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data
-            });
+            logger.error(`❌ Voicemail generation error:`, { message: error.message });
 
             // Return null to allow fallback to Twilio TTS
             return null;

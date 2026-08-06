@@ -14,11 +14,7 @@ body {
 ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-/* Position ElevenLabs ConvAI widget at bottom-left of main content area (right of sidebar) */
-elevenlabs-convai {
-  position: fixed !important;
-  bottom: 20px !important;
-  left: 240px !important;
-  right: auto !important;
-  z-index: 40 !important;
+/* Keep the voice orb clear of the sidebar in the main content area. */
+.d2orb-root[data-pos="bottom-left"] {
+  left: 240px;
 }

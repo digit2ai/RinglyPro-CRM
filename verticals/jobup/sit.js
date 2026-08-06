@@ -335,14 +335,6 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const runs = await scoped('agent_runs', subA.id).findAll({});
     assert.ok(runs.some((x) => x.agent === 'hunter'), 'run must be logged');
   });
-  await t('BROADCASTER DRAFTS BUT NEVER SENDS — approved_at and sent_at stay null', async () => {
-    const res = await agents.broadcaster(subA.id);
-    assert.strictEqual(res.sent, 0);
-    assert.strictEqual(res.approval_required, true);
-    const drafts = await scoped('outreach', subA.id).findAll({});
-    assert.ok(drafts.every((d) => d.approved_at == null), 'nothing may be pre-approved');
-    assert.ok(drafts.every((d) => d.sent_at == null), 'nothing may be pre-sent');
-  });
   await t('presence names gaps and regenerates surfaces from one source', async () => {
     const res = await agents.presence(subA.id);
     assert.ok(Array.isArray(res.gaps));
@@ -825,7 +817,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
     for (const tab of ['Analytics', 'Job Matches', 'Opportunities', 'Today',
-                       'Pipeline', 'Targets', 'Broadcast', 'Settings']) {
+                       'Pipeline', 'Targets', 'My CV', 'Settings']) {
       assert.ok(html.includes('>' + tab), 'missing tab: ' + tab);
     }
     assert.ok(html.includes('honest by design'), 'the explainer callout should be present');
@@ -1259,7 +1251,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/This is the loop, not a recording of results/.test(src),
       'it must say plainly that it is an illustration');
     // The four steps are process, never a company or a score.
-    for (const step of ['Searching', 'Scoring', 'Tailoring', 'Drafting']) {
+    for (const step of ['Searching', 'Scoring', 'Explaining', 'Waiting for you']) {
       assert.ok(src.includes('<strong>' + step + '</strong>'), 'missing step ' + step);
     }
   });
@@ -1708,8 +1700,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('every route that returns rows flattens them', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    for (const frag of ['opportunities: list', 'outreach: plain(await',
-                        'runs: plain(await', 'recent_runs: plain(runs)']) {
+    for (const frag of ['opportunities: list', 'runs: plain(await', 'recent_runs: plain(runs)']) {
       assert.ok(src.includes(frag), 'not flattened: ' + frag);
     }
   });
@@ -2211,42 +2202,61 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 
 
   // ---------------------------------------------------------------
-  section('Broadcast — drafts that can actually be sent, by you');
-  await t('THE BROADCASTER STILL CANNOT SEND', () => {
-    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
-    const block = src.slice(src.indexOf('async function broadcaster'), src.indexOf('async function presence'));
-    assert.ok(block.includes('approved_at: null'), 'never pre-approved');
-    assert.ok(block.includes('sent_at: null'), 'never pre-sent');
-    assert.ok(!/mailer|sgMail|sendgrid/i.test(block), 'the agent has no sender and must not gain one');
+  section('the agents find; the subscriber acts');
+  await t('THE BROADCASTER IS GONE', () => {
+    // It drafted messages that could never be sent — no sender, no recipient
+    // field — while approval implied they would go out. The product is
+    // sharper without it: the AI finds the work, the person takes it from there.
+    const agentsSrc = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(!/broadcaster/i.test(agentsSrc), 'the agent must not remain');
+    assert.ok(agentsSrc.includes('hunter') && agentsSrc.includes('presence'), 'the two that work remain');
+    assert.strictEqual(typeof agents.hunter, 'function');
+    assert.strictEqual(typeof agents.presence, 'function');
+    assert.strictEqual(agents.broadcaster, undefined);
   });
-  await t('APPROVING NO LONGER IMPLIES A SEND THAT NEVER HAPPENS', () => {
-    // It used to say 'Sending still respects quiet hours and a live consent
-    // check' — while nothing anywhere set sent_at. The draft simply died there.
+  await t('the agent runner refuses an unknown agent name', () => {
     const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    assert.ok(!src.includes('Sending still respects quiet hours'), 'the misleading note must be gone');
-    assert.ok(/JobUp does not send it/.test(src), 'and replaced by what actually happens');
+    assert.ok(src.includes("['hunter', 'presence'].includes(name)"),
+      'a stale button calling /agents/broadcaster/run must 400, not 500');
   });
-  await t('a draft has a recipient and knows which job it is about', () => {
-    const src = require('fs').readFileSync(__dirname + '/src/models/index.js', 'utf8');
-    const block = src.slice(src.indexOf('  outreach: {'), src.indexOf('  opportunities: {'));
-    for (const f of ['job_id', 'to_email', 'to_name']) {
-      assert.ok(block.includes(f), 'outreach is missing ' + f + ' — a draft with no recipient cannot be sent');
+  await t('NO SURFACE STILL PROMISES OUTREACH DRAFTING', () => {
+    const fs = require('fs');
+    for (const f of ['public/app.html', 'public/index.html',
+                     'src/routes/teaser-view.js', 'src/services/teaser.js']) {
+      const src = fs.readFileSync(__dirname + '/' + f, 'utf8');
+      assert.ok(!/Career Broadcaster/i.test(src), f + ' still names the removed agent');
+      assert.ok(!/three agents|tres agentes/i.test(src), f + ' still says three agents');
     }
   });
-  await t('THE MAILTO IS GATED ON APPROVAL', () => {
+  await t('the dashboard has no Broadcast tab and no dead handlers', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!html.includes('data-p="outreach"'), 'the tab is gone');
+    assert.ok(!/loadOutreach|outRow|mailOutToMe/.test(html), 'and so are its functions');
+    assert.ok(!html.includes('p-outreach'), 'and its panel');
+  });
+  await t('the promise now matches what the product does', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/From there you take over/.test(html), 'the callout states the real contract');
+    assert.ok(/Nothing is ever sent on your\s+behalf/.test(html));
+  });
+  await t('EXISTING OUTREACH ROWS ARE STILL EXPORTABLE AND DELETABLE', () => {
+    // The feature is retired, not the data. Anyone who has drafts must still be
+    // able to take them with them and to have them erased.
     const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    const block = src.slice(src.indexOf("router.get('/outreach/:id/mailto'"),
-                            src.indexOf("router.post('/outreach/:id/email-me'"));
-    assert.ok(block.includes('if (!row.approved_at)'), 'nothing leaves unreviewed');
-    assert.ok(block.includes('Approve it first'));
+    const exportBlock = src.slice(src.indexOf("router.get('/export'"));
+    assert.ok(exportBlock.includes("'outreach'"), 'export must still include them');
+    const del = src.slice(src.indexOf("router.delete('/account'"));
+    assert.ok(del.includes("'outreach'"), 'account deletion must still clear them');
   });
-  await t('the note is built only from the match and OWNER-ENTERED facts', () => {
-    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
-    const block = src.slice(src.indexOf('async function broadcaster'), src.indexOf('async function presence'));
-    assert.ok(block.includes('settingsSvc.outreachFacts(settings)'),
-      'work authorization, pay and availability must be verbatim or absent');
-    assert.ok(block.includes('m.explanation'), 'and the reason comes from the real score');
+  await t('outreachFacts survives — Opportunities still quotes verbatim or omits', () => {
+    const none = settingsSvc.outreachFacts({ facts: {} });
+    assert.deepStrictEqual(none.lines, []);
+    const some = settingsSvc.outreachFacts({ facts: { work_authorization: 'US citizen' } });
+    assert.deepStrictEqual(some.lines, ['US citizen']);
   });
+
+  // ---------------------------------------------------------------
+  section('Broadcast — drafts that can actually be sent, by you');
   await t('outreachFacts quotes or omits — it never paraphrases', () => {
     const none = settingsSvc.outreachFacts({ facts: {} });
     assert.deepStrictEqual(none.lines, [], 'nothing stated means nothing claimed');
@@ -2254,24 +2264,6 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.deepStrictEqual(some.lines, ['US citizen'], 'exactly what the owner typed');
     assert.strictEqual(some.verbatim, true);
   });
-  await t('a blocked employer never gets a draft', () => {
-    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
-    assert.ok(src.includes('settingsSvc.employerBlocked(settings, job.employer)'));
-  });
-  await t('you can record that you sent it, and un-record it', () => {
-    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    assert.ok(src.includes('if (b.sent === true) patch.sent_at = new Date()'));
-    assert.ok(src.includes('if (b.sent === false) patch.sent_at = null'), 'a mis-click must be undoable');
-  });
-  await t('the tab says plainly that JobUp does not send', () => {
-    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
-    assert.ok(html.includes('JobUp never sends these'));
-    assert.ok(html.includes('Open in my mail app'));
-    assert.ok(html.includes('I sent it'));
-  });
-
-  // ---------------------------------------------------------------
-  section('cleanup');
   await t('SIT removes its own rows', async () => {
     for (const tbl of ['profiles', 'settings', 'job_matches', 'outreach', 'agent_runs', 'sites', 'invoices', 'tailored_resumes', 'applications']) {
       await scoped(tbl, subA.id).destroy({});

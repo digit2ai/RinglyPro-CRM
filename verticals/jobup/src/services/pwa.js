@@ -74,7 +74,7 @@ function manifest(base, opts) {
     name: owner,
     short_name: 'JobUp',
     description: 'Your own job-finding ecosystem: matches scored against your real '
-      + 'resume, a public site recruiters and their AI can read, and outreach you '
+      + 'resume, a public site recruiters and their AI can read, and a pipeline you '
       + 'approve before anything sends.',
     start_url: `${b}/app`,
     scope: `${b}/`,
@@ -99,7 +99,7 @@ function manifest(base, opts) {
     shortcuts: [
       { name: 'Job Matches', short_name: 'Matches', url: `${b}/app?tab=matches` },
       { name: 'Pipeline', short_name: 'Pipeline', url: `${b}/app?tab=pipeline` },
-      { name: 'Broadcast', short_name: 'Broadcast', url: `${b}/app?tab=outreach` },
+      { name: 'Opportunities', short_name: 'Inbox', url: `${b}/app?tab=opps` },
     ],
   };
 }

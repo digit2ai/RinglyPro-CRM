@@ -4,9 +4,10 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+// Rachel's narration voice. Was an ElevenLabs voice id billed per character;
+// now an Edge neural voice on our own engine. Override with INTUITIVE_VOICE.
+const VOICE = process.env.INTUITIVE_VOICE || 'en-US-AvaNeural';
 
 // In-memory job tracker
 const proposalJobs = new Map();
@@ -15,46 +16,32 @@ const proposalJobs = new Map();
 const AUDIO_DIR = path.join(__dirname, '../../proposal-audio');
 
 /**
- * Generate TTS audio via ElevenLabs
+ * Generate the slide narration MP3.
+ *
+ * This used to POST every slide to api.elevenlabs.io with ELEVENLABS_API_KEY.
+ * Because proposal-audio/ sits on Render's ephemeral disk, it is wiped on every
+ * redeploy — so ANY code push re-billed a full deck regeneration whether or not
+ * the narration had changed. Moving to the Edge neural engine (the same one
+ * behind /api/tts/edge and the voice orb) makes that regeneration free, which
+ * removes the landmine rather than just documenting it.
+ *
+ * `speed` keeps its old caller contract: a multiplier around 1.0 where lower is
+ * slower. Edge takes a percentage delta, so it is converted here — number-dense
+ * slides still get read more slowly.
  */
 function generateTTS(text, outputPath, speed) {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) throw new Error('ELEVENLABS_API_KEY not set');
-
-  // ElevenLabs speed range is 0.7 (slowest) to 1.2. Default 0.82; callers can
-  // pass a slower value for number-dense slides so Rachel doesn't sound rushed.
   let spd = (typeof speed === 'number' && speed > 0) ? speed : 0.82;
   if (spd < 0.7) spd = 0.7;
   if (spd > 1.2) spd = 1.2;
+  const pct = Math.round((spd - 1) * 100);
+  const rate = (pct >= 0 ? '+' : '') + pct + '%';
 
-  const body = JSON.stringify({
-    text,
-    model_id: 'eleven_multilingual_v2',
-    voice_settings: { stability: 0.78, similarity_boost: 0.75, style: 0.08, use_speaker_boost: true, speed: spd }
-  });
-
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.elevenlabs.io',
-      path: `/v1/text-to-speech/${VOICE_ID}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'xi-api-key': apiKey, 'Accept': 'audio/mpeg' }
-    }, (res) => {
-      if (res.statusCode !== 200) {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => reject(new Error(`TTS failed (${res.statusCode}): ${data}`)));
-        return;
-      }
-      const ws = fs.createWriteStream(outputPath);
-      res.pipe(ws);
-      ws.on('finish', () => resolve(outputPath));
-      ws.on('error', reject);
+  const edgeTts = require('../../../../src/services/edge-tts');
+  return edgeTts.synthesize(text, { voice: VOICE, rate })
+    .then((buffer) => {
+      fs.writeFileSync(outputPath, buffer);
+      return outputPath;
     });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
 }
 
 /**

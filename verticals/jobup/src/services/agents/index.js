@@ -1,7 +1,7 @@
 'use strict';
 
 // =============================================================
-// The three agents (spec section 10). Each has a schedule, a cost cap, an
+// The two agents. Each has a schedule, a cost cap, an
 // activity log and a dashboard surface.
 //
 // GLOBAL CONCURRENCY CEILING (spec section 4): agent runs fan out per
@@ -90,63 +90,7 @@ async function hunter(tenantId, opts = {}) {
 }
 
 // ---------------------------------------------------------------
-// Agent 2 — Career Broadcaster
-//
-// approval_required is forced on in settings.sanitize(). Nothing here can send.
-// ---------------------------------------------------------------
-async function broadcaster(tenantId, opts = {}) {
-  const { settings } = await loadContext(tenantId);
-
-  // Draft only. approved_at and sent_at are left null BY CONSTRUCTION.
-  const matches = await scoped('job_matches', tenantId).findAll({
-    where: { stage: 'new' }, order: [['score', 'DESC']], limit: opts.limit || 3,
-  });
-
-  const drafted = [];
-  for (const m of matches) {
-    const job = await models.jobs.findOne({ where: { id: m.job_id } });
-    if (!job) continue;
-    if (settingsSvc.employerBlocked(settings, job.employer)) continue;  // absolute
-
-    const facts = settingsSvc.outreachFacts(settings);
-    const { profile } = await loadContext(tenantId);
-    const first = String(profile.name || '').split(' ')[0] || '';
-
-    // A note the subscriber can actually use — as an email once they have an
-    // address, or pasted into an application's 'why this role' box. Built only
-    // from the match explanation and facts the OWNER typed; outreachFacts is
-    // verbatim-or-absent, so nothing here claims an authorization, a salary or
-    // an availability they did not state themselves.
-    const body = [
-      `Hello,`,
-      '',
-      `I am writing about the ${job.title} role${job.employer ? ' at ' + job.employer : ''}.`,
-      m.explanation ? `Why I think it fits: ${m.explanation}` : '',
-      ...facts.lines,
-      '',
-      profile.name || '',
-      profile.headline || '',
-    ].filter((l) => l !== undefined).join('\n');
-
-    const row = await scoped('outreach', tenantId).create({
-      channel: 'email',
-      job_id: job.id,
-      subject: `${job.title}${job.employer ? ' — ' + job.employer : ''}${first ? ' — ' + profile.name : ''}`,
-      body,
-      approved_at: null,   // NEVER set here
-      sent_at: null,       // NEVER set here
-      consent_snapshot: null,
-    });
-    drafted.push(row.id);
-  }
-
-  await log(tenantId, 'broadcaster', 'ok',
-    `Drafted ${drafted.length} outreach messages. All awaiting subscriber approval.`, 0, false);
-  return { agent: 'broadcaster', drafted: drafted.length, approval_required: true, sent: 0 };
-}
-
-// ---------------------------------------------------------------
-// Agent 3 — Professional Presence Agent
+// Agent 2 — Professional Presence Agent
 // ---------------------------------------------------------------
 async function presence(tenantId) {
   const { profile, settings } = await loadContext(tenantId);
@@ -180,7 +124,7 @@ async function presence(tenantId) {
 
 /** Fan out across tenants inside the global concurrency ceiling. */
 async function runAll(agentName, tenantIds) {
-  const fn = { hunter, broadcaster, presence }[agentName];
+  const fn = { hunter, presence }[agentName];
   if (!fn) throw new Error('unknown agent: ' + agentName);
   const out = [];
   for (let i = 0; i < tenantIds.length; i += CONCURRENCY) {
@@ -191,4 +135,4 @@ async function runAll(agentName, tenantIds) {
   return out;
 }
 
-module.exports = { hunter, broadcaster, presence, runAll, CONCURRENCY, loadContext };
+module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext };

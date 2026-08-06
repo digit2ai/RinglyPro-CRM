@@ -493,6 +493,15 @@
     // Public handle so a host page can open the orb from its own button.
     return {
       open: open, close: close,
+      /**
+       * Override what the agent is allowed to talk about. Single-page apps
+       * (a slide deck, a dashboard route) can push structured context that is
+       * truer than scraped DOM text — e.g. the numbers behind the current
+       * slide. Pass null to go back to reading the page.
+       */
+      setContext: function (text) {
+        pageContext = text == null ? extractPageText() : String(text).slice(0, 12000);
+      },
       setLang: function (l) {
         l = (l || '').slice(0, 2).toLowerCase(); if (l !== 'es') l = 'en';
         endCall();

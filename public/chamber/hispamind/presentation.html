@@ -1625,7 +1625,7 @@
   </div>
   <img class="preplay-logo-img" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="CamaraVirtual Logo">
   <div class="preplay-title">CamaraVirtual.app // Presentacion</div>
-  <div class="preplay-subtitle">Voz generada con ElevenLabs &middot; Narrado por Lily</div>
+  <div class="preplay-subtitle">Voz AI propia de Digit2AI &middot; Narrado por Lily</div>
   <div class="preplay-subtitle2">Impulsado por Digit2AI -- Inteligencia Neural</div>
   <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentacion">&#9654;</button>
   <div class="preplay-flag">
@@ -2202,7 +2202,9 @@
   <div class="slide-info" id="slideInfo">01 / 20</div>
 </div>
 
-<!-- Lina voice narration powered by ElevenLabs TTS -->
+<!-- Narración de Lily sobre nuestro propio motor de voz (Edge neural,
+     src/services/edge-tts.js). Antes ElevenLabs. Los MP3 se regeneran con
+     node scripts/generate-hispamind-audio.js --force -->
 <script>
   // ============ SLIDE ENGINE ============
   const slides = document.querySelectorAll('.slide');
@@ -2343,7 +2345,7 @@
     show(n);
   }
 
-  // ============ RACHEL VOICE (ElevenLabs MP3) ============
+  // ============ NARRACIÓN DE LILY (MP3, motor de voz propio) ============
   // Single reusable Audio element -- critical for mobile.
   const linaAudio = new Audio();
   linaAudio.volume = 1.0;
@@ -2513,7 +2515,7 @@
     }
   });
 
-  // Rachel voice powered by ElevenLabs -- English narration
+  // Lily narration -- pre-rendered by our own Edge neural engine, no vendor.
 </script>
 
 </body>

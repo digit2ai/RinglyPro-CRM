@@ -54,7 +54,7 @@ function narration(profile, ctx, lang) {
         ? `Y este es tu currículum reescrito para una de esas vacantes en concreto. Solo reordena y reformula lo que tú ya escribiste: nunca añade un empleador, una fecha o una cifra que no esté en tu currículum original.`
         : `Cuando haya una vacante que encaje, reescribimos tu currículum para ella, usando únicamente lo que tú ya escribiste.`,
       `Aquí está tu identidad legible por máquinas: currículum estructurado, datos JSON-LD y una tarjeta de agente, para que los sistemas de reclutamiento entiendan tu trayectoria.`,
-      `Tres agentes trabajarían por ti de forma continua: el Cazador de Oportunidades, el Difusor Profesional y el Agente de Presencia.`,
+      `Dos agentes trabajarían por ti las veinticuatro horas: el Cazador de Oportunidades busca y puntúa vacantes reales, y el Agente de Presencia te mantiene visible. A partir de ahí decides tú: JobUp nunca envía nada en tu nombre.`,
       `Todo esto vive en tu panel privado: tus coincidencias, tu proceso, tus borradores pendientes de aprobación y la exportación completa de tus datos.`,
       `Son ${PRICE_USD} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
     ];
@@ -70,7 +70,7 @@ function narration(profile, ctx, lang) {
       ? `And this is your resume rewritten for one of those roles specifically. It only reorders and rephrases what you already wrote — it never adds an employer, a date or a number that is not in your own resume.`
       : `When there is a matching role, we rewrite your resume for it, using only what you already wrote.`,
     `Here is your machine-readable identity: a structured resume, JSON-LD data and an agent card, so recruiting systems can understand your career.`,
-    `Three agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings, the Career Broadcaster drafts your outreach, and the Professional Presence Agent keeps you findable. They never send anything without your approval.`,
+    `Two agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings against your resume, and the Professional Presence Agent keeps you findable. From there you take over — JobUp never applies or writes to anyone on your behalf.`,
     `All of it lives in your private dashboard: your matches, your pipeline, the drafts waiting on your approval, and a full export of everything.`,
     `It is ${PRICE_USD} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
   ];
@@ -198,8 +198,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
       tailored,
       identity: ident,
       agents: [
-        { name: 'Opportunity Hunter', does: 'Searches approved sources daily, scores and explains every match.' },
-        { name: 'Career Broadcaster', does: 'Drafts targeted outreach. Nothing sends without your approval.' },
+        { name: 'Opportunity Hunter', does: 'Searches approved sources daily, scores every match against your resume and explains why.' },
         { name: 'Professional Presence Agent', does: 'Builds and maintains your site and machine-readable identity.' },
       ],
       cta: {
@@ -207,7 +206,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
         includes: [
           'Your web address and professional website',
           'Machine-readable identity: resume.json, JSON-LD, agent card',
-          'Three AI agents running continuously',
+          'Two AI agents running continuously',
           'Job discovery, scoring and explained matching',
           'Per-job resume tailoring and cover letters',
           'Private dashboard, weekly digest, full data export',

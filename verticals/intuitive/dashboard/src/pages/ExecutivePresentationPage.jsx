@@ -79,10 +79,10 @@ export default function ExecutivePresentationPage({ projectId: propId }) {
   // Wire up Rachel voice context per-slide
   useEffect(() => {
     if (!project) return
-    const widget = document.querySelector('elevenlabs-convai')
+    const widget = window.D2AIVoiceOrb
     if (!widget) return
     const ctx = buildSlideContext(project, data, activeSlide)
-    widget.setAttribute('context', ctx)
+    widget.setContext(ctx)
   }, [activeSlide, project, data])
 
   if (!id) return <div className="p-10 text-slate-400">No project selected.</div>

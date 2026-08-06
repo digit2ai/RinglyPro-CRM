@@ -21,10 +21,23 @@ function tenantId(req) {
 }
 
 // GET /api/v1/analyst/config
+//
+// Voice is now ALWAYS available: the orb runs on our own stack (Web Speech in
+// the browser + /api/voice-agent/chat + /api/tts/edge), so there is no hosted
+// agent id to provision and nothing to gate on. This used to return the two
+// ELEVENLABS_CONVAI_VERITAS_* ids and report enabled:false without them; the
+// ids are kept in the response only so an older cached dashboard does not break.
 router.get('/config', (req, res) => {
-  const en = process.env.ELEVENLABS_CONVAI_VERITAS_EN || null;
-  const es = process.env.ELEVENLABS_CONVAI_VERITAS_ES || null;
-  res.json({ success: true, data: { enabled: !!(en || es), agent_id_en: en, agent_id_es: es } });
+  res.json({
+    success: true,
+    data: {
+      enabled: true,
+      provider: 'digit2ai-voice-orb',
+      agent: 'veritas',
+      agent_id_en: null,
+      agent_id_es: null
+    }
+  });
 });
 
 // Build a Spanish answer from the tenant's live data based on keywords.

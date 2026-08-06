@@ -245,101 +245,10 @@ router.post('/applications/:jobId/confirm', async (req, res) => {
     note: 'Recorded because you confirmed you submitted it. JobUp never submits on your behalf.' });
 });
 
-router.get('/outreach', async (req, res) => {
-  const tid = auth(req, res); if (!tid) return;
-  res.json({ outreach: plain(await scoped('outreach', tid).findAll({ order: [['created_at', 'DESC']] })) });
-});
-
-// The only path that can approve. Nothing else may set approved_at.
-router.post('/outreach/:id/approve', async (req, res) => {
-  const tid = auth(req, res); if (!tid) return;
-  await scoped('outreach', tid).update(
-    { approved_at: new Date(), consent_snapshot: { approved_by: 'subscriber', at: new Date() } },
-    { id: parseInt(req.params.id, 10) }
-  );
-  res.json({ ok: true,
-    note: 'Approved. JobUp does not send it — open it in your own mail app so it arrives from you, not from us.' });
-});
-
-/**
- * Edit a draft, or record that you sent it.
- *
- * JobUp has no sender and deliberately never will: the whole argument for this
- * product is that outreach reaches a recruiter FROM THE PERSON, not from a
- * platform. Approving used to be the end of the road — the draft simply sat
- * there while the message implied it would go out.
- */
-router.patch('/outreach/:id', async (req, res) => {
-  const tid = auth(req, res); if (!tid) return;
-  const t = scoped('outreach', tid);
-  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
-  if (!row) return res.status(404).json({ error: 'not found' });
-
-  const patch = {};
-  const b = req.body || {};
-  if (typeof b.subject === 'string') patch.subject = b.subject.slice(0, 250);
-  if (typeof b.body === 'string') patch.body = b.body.slice(0, 8000);
-  if (typeof b.to_name === 'string') patch.to_name = b.to_name.slice(0, 200);
-  if (typeof b.to_email === 'string') {
-    const v = b.to_email.trim();
-    if (v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
-      return res.status(400).json({ error: 'That does not look like an email address.' });
-    }
-    patch.to_email = v || null;
-  }
-  if (b.sent === true) patch.sent_at = new Date();
-  if (b.sent === false) patch.sent_at = null;
-  if (!Object.keys(patch).length) return res.status(400).json({ error: 'nothing to change' });
-
-  await t.update(patch, { id: row.id });
-  res.json({ ok: true, outreach: plain(await t.findOne({ id: row.id })) });
-});
-
-/** A mailto for the subscriber's own client, plus the job link. */
-router.get('/outreach/:id/mailto', async (req, res) => {
-  const tid = auth(req, res); if (!tid) return;
-  const row = await scoped('outreach', tid).findOne({ id: parseInt(req.params.id, 10) });
-  if (!row) return res.status(404).json({ error: 'not found' });
-  if (!row.approved_at) {
-    return res.status(400).json({ error: 'Approve it first — nothing leaves here unreviewed.' });
-  }
-  const job = row.job_id ? await models.jobs.findOne({ where: { id: row.job_id } }) : null;
-  res.json({
-    ok: true,
-    to: row.to_email || '',
-    subject: row.subject || '',
-    body: row.body || '',
-    job_url: (job && job.url) || null,
-    mailto: `mailto:${encodeURIComponent(row.to_email || '')}` +
-      `?subject=${encodeURIComponent(row.subject || '')}` +
-      `&body=${encodeURIComponent(row.body || '')}`,
-    note: 'Opens in your own mail client. It arrives from you, which is what keeps it out of a spam folder.',
-  });
-});
-
-/** Send the draft to YOURSELF, to finish and send from your phone or desktop. */
-router.post('/outreach/:id/email-me', async (req, res) => {
-  const tid = auth(req, res); if (!tid) return;
-  const row = await scoped('outreach', tid).findOne({ id: parseInt(req.params.id, 10) });
-  if (!row) return res.status(404).json({ error: 'not found' });
-  const sub = await models.subscribers.findOne({ where: { id: tid } });
-  if (!sub || !sub.email) return res.status(400).json({ error: 'no address on file' });
-  if (!mailer.configured()) {
-    return res.status(503).json({ ...mailer.status(), error: 'Email is not configured on this deployment.' });
-  }
-  const r = await mailer.send({
-    to: sub.email,
-    subject: `Draft: ${row.subject || 'outreach'}`,
-    text: `${row.body || ''}\n\n---\nDrafted by your JobUp Broadcaster. Edit and send it yourself.`,
-  });
-  if (!r.ok) return res.status(502).json(r);
-  res.json({ ok: true, sent_to: sub.email });
-});
-
 router.post('/agents/:name/run', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const name = req.params.name;
-  if (!['hunter', 'broadcaster', 'presence'].includes(name)) {
+  if (!['hunter', 'presence'].includes(name)) {
     return res.status(400).json({ error: 'unknown agent' });
   }
   try {
@@ -477,23 +386,19 @@ router.post('/opportunities/:id/draft-reply', async (req, res) => {
 router.get('/today', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const since = Date.now() - 86400000;
-  const [matches, opps, out, runs] = await Promise.all([
+  const [matches, opps, runs] = await Promise.all([
     scoped('job_matches', tid).findAll({}),
     scoped('opportunities', tid).findAll({}),
-    scoped('outreach', tid).findAll({}),
     scoped('agent_runs', tid).findAll({ order: [['created_at', 'DESC']], limit: 5 }),
   ]);
   const fresh = (r) => new Date(r.created_at).getTime() >= since;
   const actions = [];
   const newMatches = matches.filter(fresh);
-  const pendingOut = out.filter((o) => !o.approved_at);
   const newOpps = opps.filter((o) => o.status === 'new');
   const strong = matches.filter((m) => m.score >= 80 && m.stage === 'new');
 
   if (newOpps.length) actions.push({ kind: 'opportunity', n: newOpps.length,
     text: `${newOpps.length} inbound message${newOpps.length > 1 ? 's' : ''} waiting for a reply.` });
-  if (pendingOut.length) actions.push({ kind: 'approval', n: pendingOut.length,
-    text: `${pendingOut.length} outreach draft${pendingOut.length > 1 ? 's' : ''} need your approval before anything can send.` });
   if (strong.length) actions.push({ kind: 'match', n: strong.length,
     text: `${strong.length} strong match${strong.length > 1 ? 'es' : ''} (80+) you have not applied to yet.` });
   if (!actions.length) actions.push({ kind: 'clear', n: 0, text: 'Nothing needs you right now.' });
@@ -501,7 +406,6 @@ router.get('/today', async (req, res) => {
   res.json({
     actions,
     new_matches_24h: newMatches.length,
-    pending_approvals: pendingOut.length,
     new_opportunities: newOpps.length,
     recent_runs: plain(runs),
   });

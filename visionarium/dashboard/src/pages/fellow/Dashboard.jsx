@@ -33,7 +33,8 @@ export default function FellowDashboard() {
       <div className="p-8">
         <div className="flex flex-col items-center mb-8">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32 mb-4" />
-          <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
+          {/* Lina runs on our own voice stack (Web Speech + Claude + Edge neural TTS).
+              The orb itself is mounted once in index.html; this is its caption. */}
           <p className="text-teal-neon text-xs mt-2 tracking-wider uppercase">Lina -- AI Coach -- 24/7 Bilingual</p>
         </div>
         <h1 className="text-2xl font-bold text-white mb-4">Welcome, {user?.first_name}!</h1>
@@ -118,7 +119,7 @@ export default function FellowDashboard() {
     <div className="p-8">
       <div className="flex flex-col items-center mb-8">
         <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69dfd39cfcac588c6b2329f9.png" alt="Visionarium" className="h-32 mb-4" />
-        <elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
+        {/* Lina runs on our own voice stack; the orb is mounted in index.html. */}
         <p className="text-teal-neon text-xs mt-2 tracking-wider uppercase">Lina -- AI Coach -- 24/7 Bilingual</p>
       </div>
       <h1 className="text-2xl font-bold text-white mb-8">Fellow Dashboard</h1>

@@ -579,16 +579,22 @@ async function loadAnalyst(){
   try{
     const cfg = (await j(`${API}/analyst/config`)).data || {};
     const modeEl = document.getElementById('analystMode');
-    if(cfg.enabled && cfg.agent_id_es){
-      // Voz activa: cargar el widget convai de ElevenLabs (el agent-id es público)
+    if(cfg.enabled){
+      // Voz activa: orbe propio (Web Speech + Claude + Edge neural TTS).
+      // Antes era el widget alojado de ElevenLabs; ahora las tres capas son
+      // nuestras y el analista solo puede hablar de lo que muestra esta página.
       modeEl.textContent = 'voz + texto';
       const host = document.getElementById('analystVoice');
       host.style.display = 'block';
-      host.innerHTML = `<elevenlabs-convai agent-id="${cfg.agent_id_es}"></elevenlabs-convai>`;
-      if(!document.getElementById('convai-sdk')){
+      host.setAttribute('data-voice-orb','');
+      host.setAttribute('data-agent','veritas');
+      host.setAttribute('data-lang','es');
+      host.setAttribute('data-accent','#ef4444');
+      host.setAttribute('data-label','Hablar con el analista');
+      if(!document.getElementById('voice-orb-sdk')){
         const s = document.createElement('script');
-        s.id = 'convai-sdk'; s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-        s.async = true; s.type = 'text/javascript';
+        s.id = 'voice-orb-sdk'; s.src = '/embed/voice-orb.js';
+        s.defer = true;
         document.body.appendChild(s);
       }
     } else {

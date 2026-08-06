@@ -2,11 +2,12 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
+const edgeTts = require('../src/services/edge-tts');
 
-const API_KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Sarah - Mature, Reassuring, Confident (American)
-const MODEL_ID = 'eleven_multilingual_v2';
+// Voice engine: our own Edge neural TTS. Was an ElevenLabs voice id billed
+// per character; Sarah keeps the role, the API key requirement is gone.
+const VOICE = process.env.NARRATION_VOICE || 'en-US-AvaNeural';
+const RATE = process.env.NARRATION_RATE || '-4%';
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'chamber', 'virtualchamber', 'assets', 'audio');
 
 const slides = [
@@ -29,35 +30,9 @@ const slides = [
 ];
 
 async function generateAudio(text, outputPath) {
-  return new Promise((resolve, reject) => {
-    const postData = JSON.stringify({
-      text,
-      model_id: MODEL_ID,
-      voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3, use_speaker_boost: true }
-    });
-    const options = {
-      hostname: 'api.elevenlabs.io',
-      path: `/v1/text-to-speech/${VOICE_ID}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'xi-api-key': API_KEY, 'Accept': 'audio/mpeg' }
-    };
-    const req = https.request(options, (res) => {
-      if (res.statusCode !== 200) {
-        let body = ''; res.on('data', d => body += d);
-        res.on('end', () => reject(new Error(`HTTP ${res.statusCode}: ${body}`)));
-        return;
-      }
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => {
-        fs.writeFileSync(outputPath, Buffer.concat(chunks));
-        resolve(Buffer.concat(chunks).length);
-      });
-    });
-    req.on('error', reject);
-    req.write(postData);
-    req.end();
-  });
+  const buffer = await edgeTts.synthesize(text, { voice: VOICE, rate: RATE });
+  fs.writeFileSync(outputPath, buffer);
+  return buffer.length;
 }
 
 (async () => {

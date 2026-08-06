@@ -260,7 +260,7 @@ const STEP_DOCS = {
     how: [
       'Builds slides directly from the Project + Analysis cache so there is no manual copy-paste.',
       'Slides cover: title, hospital profile, procedure pareto, seasonality, weekday, hourly, robot matrix, design day, volume projection, financials, growth scenarios, system recommendation, next steps.',
-      'On page load, the ElevenLabs convai widget is bound to a context string containing every slide value, so Rachel can answer ad-hoc questions during the presentation.',
+      'On page load, the voice orb is bound to a context string containing every slide value, so Rachel can answer ad-hoc questions during the presentation.',
     ],
     sources: [
       'Project record',
@@ -425,10 +425,11 @@ export default function App() {
     }).catch(() => {})
   }, [location.pathname, user, currentProject])
 
-  // Dynamically pass context to ElevenLabs widget based on current page
+  // Dynamically pass context to the voice orb based on the current page.
+  // (Was the ElevenLabs convai element; the orb now owns the voice stack.)
   useEffect(() => {
     if (!user) return
-    const widget = document.querySelector('elevenlabs-convai')
+    const widget = window.D2AIVoiceOrb
     if (!widget) return
 
     const anyProjectId = location.pathname.match(/\/(?:analysis|recommendations|presentation)\/(\d+)/)?.[1]
@@ -453,10 +454,10 @@ export default function App() {
           }
         }
         const ctx = buildPresentationContext(proj, analysisMap, [])
-        widget.setAttribute('context', ctx)
+        widget.setContext(ctx)
       })
     } else {
-      widget.removeAttribute('context')
+      widget.setContext(null)   // null = fall back to reading the page itself
     }
   }, [location.pathname, currentProject, user])
 

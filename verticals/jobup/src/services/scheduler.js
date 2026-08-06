@@ -4,7 +4,7 @@
 // The daily run.
 //
 // Until now the agents only fired on demand and once at provisioning, while
-// the teaser told every visitor that "three agents would work for you around
+// the teaser told every visitor that the agents would work for them "around
 // the clock, every day". That was a promise the product could not keep. This
 // keeps it.
 //
@@ -20,7 +20,8 @@
 //   4. A DATABASE CLAIM, not an in-process flag. Render can run more than one
 //      instance; without this every instance would run the whole fleet on the
 //      same day and bill for it.
-//   5. The Broadcaster drafts and cannot send. Nothing here mails anyone.
+//   5. Nothing here mails anyone. The agents find and check; the subscriber
+//      decides and acts.
 // =============================================================
 
 const { models } = require('../models');

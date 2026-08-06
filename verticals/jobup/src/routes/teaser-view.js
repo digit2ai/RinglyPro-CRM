@@ -363,7 +363,7 @@ function render(){
   h+='<div><span class="chip">resume.json</span><span class="chip">JSON-LD</span>'+
      '<span class="chip">agent card</span><span class="chip">llms.txt</span></div></div>';
 
-  h+=open(6,'Your three agents','They run around the clock, whether or not you are looking.');
+  h+=open(6,'Your two agents','They run around the clock, whether or not you are looking. They find and check \u2014 they never act for you.');
   h+='<div class="alwayson">'+
        '<div class="ao-head"><span class="live"><i></i>ALWAYS ON</span>'+
        '<span class="ao-clock" id="ao-clock">24 / 7</span></div>'+
@@ -372,10 +372,10 @@ function render(){
            '<div class="m">Approved job boards, every day</div></div></div>'+
          '<div class="cy" data-k="1"><span class="dot"></span><div><strong>Scoring</strong>'+
            '<div class="m">Each opening against your resume</div></div></div>'+
-         '<div class="cy" data-k="2"><span class="dot"></span><div><strong>Tailoring</strong>'+
-           '<div class="m">Your resume for the ones that fit</div></div></div>'+
-         '<div class="cy" data-k="3"><span class="dot"></span><div><strong>Drafting</strong>'+
-           '<div class="m">Outreach that waits for your approval</div></div></div>'+
+         '<div class="cy" data-k="2"><span class="dot"></span><div><strong>Explaining</strong>'+
+           '<div class="m">Why it fits, and what you are missing</div></div></div>'+
+         '<div class="cy" data-k="3"><span class="dot"></span><div><strong>Waiting for you</strong>'+
+           '<div class="m">You decide what is worth pursuing</div></div></div>'+
        '</div>'+
        '<div class="ao-note">This is the loop, not a recording of results. '+
          'Real openings appear in your dashboard as the Hunter finds them &mdash; '+

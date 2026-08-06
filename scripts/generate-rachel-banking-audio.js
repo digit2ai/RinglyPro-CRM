@@ -7,10 +7,12 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
+const edgeTts = require('../src/services/edge-tts');
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const RACHEL_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+// Voice engine: our own Edge neural TTS. Was an ElevenLabs voice id billed
+// per character; Rachel keeps the role, the API key requirement is gone.
+const VOICE = process.env.NARRATION_VOICE || 'en-US-AvaNeural';
+const RATE = process.env.NARRATION_RATE || '-4%';
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'neural-intelligence-banking', 'assets', 'audio');
 
 // Narration scripts for each slide -- must match data-narration attributes in presentation.html
@@ -46,80 +48,19 @@ const narrations = [
   `To summarize: Neural Intelligence with MCP is not incremental improvement. It is a paradigm shift. From rules to reasoning. From proprietary silos to a universal open standard. From 95 percent false positives to intelligent, contextual detection. From fragmented point solutions to a unified platform that satisfies FinCEN, AMLC, CNBV, AMLA, MAS, AUSTRAC, and every major regulator simultaneously. The technology exists. The regulatory framework supports it. The economic case is clear. The question for banking leadership is no longer 'should we?' but 'how soon can we start?' Thank you. I'm Rachel, and this has been a Digit2AI technology briefing.`
 ];
 
-async function generateAudio(text, slideNum) {
-  const paddedNum = String(slideNum).padStart(2, '0');
-  const outputPath = path.join(OUTPUT_DIR, `slide-${paddedNum}.mp3`);
-
-  // Skip if already exists
-  if (fs.existsSync(outputPath)) {
-    const stats = fs.statSync(outputPath);
-    if (stats.size > 1000) {
-      console.log(`[${paddedNum}] Already exists (${(stats.size/1024).toFixed(0)}KB) -- skipping`);
-      return;
-    }
-  }
-
-  console.log(`[${paddedNum}] Generating Rachel voice (${text.length} chars)...`);
-
-  const postData = JSON.stringify({
-    text: text,
-    model_id: 'eleven_multilingual_v2',
-    voice_settings: {
-      stability: 0.65,
-      similarity_boost: 0.78,
-      style: 0.35,
-      use_speaker_boost: true
-    }
-  });
-
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.elevenlabs.io',
-      path: `/v1/text-to-speech/${RACHEL_VOICE_ID}`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Accept': 'audio/mpeg'
-      }
-    }, (res) => {
-      if (res.statusCode !== 200) {
-        let body = '';
-        res.on('data', (d) => body += d);
-        res.on('end', () => {
-          console.error(`[${paddedNum}] API error ${res.statusCode}: ${body}`);
-          reject(new Error(`API error ${res.statusCode}`));
-        });
-        return;
-      }
-
-      const fileStream = fs.createWriteStream(outputPath);
-      res.pipe(fileStream);
-      fileStream.on('finish', () => {
-        const size = fs.statSync(outputPath).size;
-        console.log(`[${paddedNum}] Saved (${(size/1024).toFixed(0)}KB)`);
-        resolve();
-      });
-      fileStream.on('error', reject);
-    });
-
-    req.on('error', reject);
-    req.write(postData);
-    req.end();
-  });
+async function generateAudio(text, outputPath) {
+  const buffer = await edgeTts.synthesize(text, { voice: VOICE, rate: RATE });
+  fs.writeFileSync(outputPath, buffer);
+  return buffer.length;
 }
 
 async function main() {
-  if (!ELEVENLABS_API_KEY) {
-    console.error('ERROR: ELEVENLABS_API_KEY not set in .env');
-    process.exit(1);
-  }
 
   // Ensure output directory exists
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   console.log(`\nGenerating ${narrations.length} Rachel Premium voice MP3s...\n`);
-  console.log(`Voice: Rachel (${RACHEL_VOICE_ID})`);
+  console.log(`Voice: Rachel (${VOICE}, ${RATE}) — Edge neural, no API key`);
   console.log(`Model: eleven_multilingual_v2`);
   console.log(`Output: ${OUTPUT_DIR}\n`);
 

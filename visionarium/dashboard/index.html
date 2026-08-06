@@ -11,6 +11,10 @@
 <body class="bg-navy-blk text-white antialiased">
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
-  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+  <!-- Own-stack voice orb (Web Speech + Claude + Edge neural TTS). Replaced the
+       ElevenLabs ConvAI SDK: no hosted agent, no per-minute cost, no third-party
+       script in the dashboard. -->
+  <div data-voice-orb data-agent="visionarium" data-lang="es" data-label="Hablar con Lina"></div>
+  <script src="/embed/voice-orb.js" defer></script>
 </body>
 </html>

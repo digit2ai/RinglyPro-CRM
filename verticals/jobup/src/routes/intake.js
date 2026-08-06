@@ -181,7 +181,7 @@ router.get('/welcome', async (req, res) => {
       { label: 'Account activated', ok: sub.status === 'active' },
       { label: sub.address ? `Web address reserved — ${sub.address}` : 'Web address reserved', ok: Boolean(state.address) },
       { label: 'Your site published', ok: Boolean(state.published) },
-      { label: 'Your three agents switched on', ok: Boolean(state.agents_started) },
+      { label: 'Your agents switched on', ok: Boolean(state.agents_started) },
     ],
   });
 });

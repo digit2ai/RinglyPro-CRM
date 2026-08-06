@@ -1438,39 +1438,6 @@
      Replaced the ElevenLabs ConvAI widget. -->
 <div data-voice-orb data-agent="gebhardt" data-lang="en" data-label="Ask about this proposal"></div>
 <script src="/embed/voice-orb.js" defer></script>
-<style>
-  elevenlabs-convai {
-    position: fixed !important;
-    bottom: 20px !important;
-    right: 20px !important;
-    z-index: 9999 !important;
-  }
-  @media print {
-    elevenlabs-convai { display: none !important; }
-  }
-</style>
-<script>
-(function() {
-  function hideText() {
-    var widget = document.querySelector('elevenlabs-convai');
-    if (!widget || !widget.shadowRoot) return;
-    var id = 'hide-pb-style';
-    if (!widget.shadowRoot.getElementById(id)) {
-      var s = document.createElement('style');
-      s.id = id;
-      s.textContent = '[class*="powered"],[class*="Powered"],a[href*="elevenlabs"],[class*="branding"]{color:transparent!important;font-size:0!important;line-height:0!important;height:0!important;overflow:hidden!important;}';
-      widget.shadowRoot.appendChild(s);
-    }
-    widget.shadowRoot.querySelectorAll('*').forEach(function(el) {
-      if (el.textContent && (el.textContent.includes('Powered') || el.textContent.includes('ElevenLabs')) && el.children.length < 4) {
-        el.style.cssText = 'color:transparent!important;font-size:0!important;line-height:0!important;height:0!important;overflow:hidden!important;';
-      }
-    });
-  }
-  var c = 0;
-  var iv = setInterval(function() { hideText(); c++; if (c > 30) clearInterval(iv); }, 500);
-})();
-</script>
 
 </body>
 </html>
