@@ -1373,6 +1373,38 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(r.error, 'it must say why');
     if (saved) process.env.SENDGRID_API_KEY = saved;
   });
+  await t('EITHER SENDER VARIABLE WORKS — this repo names it two ways', () => {
+    const keep = ['JOBUP_FROM_EMAIL', 'SENDGRID_FROM_EMAIL', 'FROM_EMAIL', 'SENDGRID_API_KEY']
+      .reduce((a, k) => { a[k] = process.env[k]; delete process.env[k]; return a; }, {});
+    process.env.SENDGRID_API_KEY = 'SG.test';
+    assert.strictEqual(mailerSvc.configured(), false, 'a key alone is not enough');
+    assert.ok(mailerSvc.status().missing.some((m) => /sender address/.test(m)));
+
+    // src/services/emailService.js uses FROM_EMAIL; 14 other places use
+    // SENDGRID_FROM_EMAIL. Reporting 'not configured' next to a working
+    // SendGrid account because we only looked at one of them is a bug.
+    process.env.FROM_EMAIL = 'noreply@ringlypro.com';
+    assert.strictEqual(mailerSvc.configured(), true, 'FROM_EMAIL must count');
+    assert.strictEqual(mailerSvc.fromSource(), 'FROM_EMAIL');
+
+    process.env.SENDGRID_FROM_EMAIL = 'sg@example.com';
+    assert.strictEqual(mailerSvc.fromSource(), 'SENDGRID_FROM_EMAIL', 'the specific one wins');
+
+    process.env.JOBUP_FROM_EMAIL = 'hello@jobup.dev';
+    assert.strictEqual(mailerSvc.fromSource(), 'JOBUP_FROM_EMAIL', 'and JobUp own wins over both');
+
+    for (const [k, v] of Object.entries(keep)) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+  await t('status names WHICH half is missing, not just "not configured"', () => {
+    const keep = process.env.SENDGRID_API_KEY;
+    delete process.env.SENDGRID_API_KEY;
+    const st = mailerSvc.status();
+    assert.ok(Array.isArray(st.missing) && st.missing.includes('SENDGRID_API_KEY'));
+    assert.strictEqual(st.api_key, 'missing');
+    if (keep) process.env.SENDGRID_API_KEY = keep;
+  });
   await t('the rendered email carries the message and ESCAPES it', () => {
     const r = mailerSvc.renderOpportunity({
       from_name: '<script>alert(1)</script>', from_email: 'r@acme.example',

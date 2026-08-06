@@ -15,17 +15,45 @@
 // honest message — never a silent drop, and never a claim that mail went out.
 // =============================================================
 
-function configured() {
-  return Boolean(process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL);
+/**
+ * The sender address. This repo names it TWO ways — SENDGRID_FROM_EMAIL in 14
+ * places and FROM_EMAIL in src/services/emailService.js — so accept either
+ * rather than reporting 'not configured' next to a working SendGrid account.
+ * JOBUP_FROM_EMAIL overrides both when JobUp should send under its own name.
+ */
+function fromAddress() {
+  return process.env.JOBUP_FROM_EMAIL ||
+         process.env.SENDGRID_FROM_EMAIL ||
+         process.env.FROM_EMAIL || null;
 }
 
+function fromSource() {
+  if (process.env.JOBUP_FROM_EMAIL) return 'JOBUP_FROM_EMAIL';
+  if (process.env.SENDGRID_FROM_EMAIL) return 'SENDGRID_FROM_EMAIL';
+  if (process.env.FROM_EMAIL) return 'FROM_EMAIL';
+  return null;
+}
+
+function configured() {
+  return Boolean(process.env.SENDGRID_API_KEY && fromAddress());
+}
+
+/** Says WHICH half is missing — 'not configured' alone is not diagnosable. */
 function status() {
+  const key = Boolean(process.env.SENDGRID_API_KEY);
+  const from = fromAddress();
+  const missing = [];
+  if (!key) missing.push('SENDGRID_API_KEY');
+  if (!from) missing.push('a sender address (JOBUP_FROM_EMAIL, SENDGRID_FROM_EMAIL or FROM_EMAIL)');
   return {
     configured: configured(),
-    from: process.env.SENDGRID_FROM_EMAIL || null,
+    api_key: key ? 'set' : 'missing',
+    from,
+    from_var: fromSource(),
+    missing,
     note: configured()
       ? 'User-clicked sends only. Nothing is sent automatically.'
-      : 'Set SENDGRID_API_KEY and SENDGRID_FROM_EMAIL to enable sending.',
+      : `Missing: ${missing.join(' and ')}.`,
   };
 }
 
@@ -48,7 +76,7 @@ async function send({ to, subject, text, html, replyTo }) {
     sg.setApiKey(process.env.SENDGRID_API_KEY);
     const msg = {
       to,
-      from: process.env.SENDGRID_FROM_EMAIL,
+      from: fromAddress(),
       subject: String(subject || 'JobUp').slice(0, 200),
       text: String(text || ''),
     };
@@ -103,4 +131,4 @@ function renderOpportunity(opp, profileName) {
   return { text, html };
 }
 
-module.exports = { send, configured, status, renderOpportunity };
+module.exports = { send, configured, status, renderOpportunity, fromAddress, fromSource };
