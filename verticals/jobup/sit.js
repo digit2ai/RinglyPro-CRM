@@ -926,18 +926,45 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(intake.includes('needs_password'), 'it must know whether a password is still needed');
   });
 
-  await t('PWA: manifest is valid, scoped, and standalone', () => {
+  const pwaSvc = require(__dirname + '/src/services/pwa');
+
+  await t('PWA: manifest is valid, scoped, and standalone at EVERY root', () => {
+    // The three roots JobUp actually answers on. A manifest is not portable
+    // across them: scope and start_url resolve against the manifest's own URL.
+    for (const base of ['', '/jobup']) {
+      const m = pwaSvc.manifest(base);
+      assert.strictEqual(m.display, 'standalone', `display at base "${base}"`);
+      assert.strictEqual(m.scope, `${base}/`, `scope must be the mount root at base "${base}"`);
+      assert.strictEqual(m.start_url, `${base}/app`, `start_url at base "${base}"`);
+      assert.ok(m.icons.some((i) => i.sizes === '512x512'), 'a 512 icon is required to install');
+      assert.ok(m.icons.some((i) => i.purpose === 'maskable'), 'a maskable icon is required on Android');
+      assert.ok(m.id, 'an id keeps installs from being orphaned when start_url changes');
+      // The bug this replaces: the apex served scope '/jobup/', which does not
+      // contain jobup.dev/, so the installed app broke out to the browser the
+      // moment someone tapped the logo.
+      assert.ok(m.start_url.startsWith(m.scope.replace(/\/$/, '') || '/'),
+        `start_url must live inside scope at base "${base}"`);
+    }
+  });
+  await t('PWA: the manifest never locks the dashboard to portrait', () => {
+    const m = pwaSvc.manifest('/jobup');
+    assert.notStrictEqual(m.orientation, 'portrait',
+      'a table-and-chart dashboard must be readable in landscape and on a tablet');
+  });
+  await t('PWA: home-screen shortcuts point at tabs the dashboard can actually open', () => {
     const fs = require('fs');
-    const m = JSON.parse(fs.readFileSync(__dirname + '/public/manifest.webmanifest', 'utf8'));
-    assert.strictEqual(m.display, 'standalone');
-    assert.ok(m.scope.startsWith('/jobup'), 'scope must not escape the mount');
-    assert.ok(m.start_url.startsWith('/jobup'), 'start_url must not escape the mount');
-    assert.ok(m.icons.some((i) => i.sizes === '512x512'), 'a 512 icon is required to install');
-    assert.ok(m.icons.some((i) => i.purpose === 'maskable'), 'a maskable icon is required on Android');
+    const m = pwaSvc.manifest('/jobup');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(m.shortcuts && m.shortcuts.length, 'shortcuts make a long-press useful');
+    assert.ok(html.includes('tabFromUrl'), 'the dashboard must read ?tab= or the shortcuts are decorative');
+    for (const s of m.shortcuts) {
+      const tab = new URL('https://x' + s.url).searchParams.get('tab');
+      assert.ok(html.includes(`data-p="${tab}"`), `shortcut targets a tab that does not exist: ${tab}`);
+    }
   });
   await t('PWA: every icon the manifest promises actually exists and is a PNG', () => {
     const fs = require('fs');
-    const m = JSON.parse(fs.readFileSync(__dirname + '/public/manifest.webmanifest', 'utf8'));
+    const m = pwaSvc.manifest('/jobup');
     for (const icon of m.icons) {
       const f = __dirname + '/public' + icon.src.replace('/jobup', '');
       assert.ok(fs.existsSync(f), 'missing icon file: ' + icon.src);
@@ -946,11 +973,68 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(fs.existsSync(__dirname + '/public/apple-touch-icon.png'), 'iOS needs apple-touch-icon');
   });
   await t('THE SERVICE WORKER NEVER CACHES /api/', () => {
-    const fs = require('fs');
-    const sw = fs.readFileSync(__dirname + '/public/sw.js', 'utf8');
+    const sw = pwaSvc.serviceWorker('/jobup');
     assert.ok(sw.includes("includes('/api/')"), 'API responses must be excluded');
     assert.ok(sw.includes("mode === 'navigate'"), 'navigations should be network-first');
-    assert.ok(/const CACHE = 'jobup-v\d+'/.test(sw), 'the cache must carry a bumpable version');
+    assert.ok(/const CACHE = 'jobup-v\d+/.test(sw), 'the cache must carry a bumpable version');
+  });
+  await t('THE SERVICE WORKER IS BUILT FOR THE ROOT IT IS SERVED FROM', () => {
+    // A worker's scope is the directory it was fetched from, so a fixed
+    // /jobup/sw.js never controlled jobup.dev/ — the landing page that
+    // registered it. Both the paths it caches and its cache name must follow
+    // the base, or the two registrations on jobup.dev fight over one cache.
+    const root = pwaSvc.serviceWorker('');
+    const mount = pwaSvc.serviceWorker('/jobup');
+    assert.ok(!root.includes('__BASE__') && !root.includes('__CACHE__'), 'tokens must be substituted');
+    assert.ok(root.includes("const BASE = ''"), 'the apex worker is rooted at /');
+    assert.ok(mount.includes("const BASE = '/jobup'"), 'the mounted worker is rooted at /jobup');
+    assert.notStrictEqual(
+      root.match(/const CACHE = '([^']+)'/)[1],
+      mount.match(/const CACHE = '([^']+)'/)[1],
+      'the two roots must not share a cache name');
+    assert.ok(mount.includes("'/jobup/offline'") || mount.includes('OFFLINE'),
+      'there must be an offline fallback');
+  });
+  await t('the service worker survives one missing shell file', () => {
+    const sw = pwaSvc.serviceWorker('/jobup');
+    assert.ok(!/addAll\(SHELL\)/.test(sw),
+      'addAll is atomic — one 404 would abort install and leave no worker at all');
+    assert.ok(/c\.add\(u\)\.catch/.test(sw), 'each shell entry must be cached independently');
+  });
+  await t('the offline page exists and never claims to hold live matches', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/offline.html', 'utf8');
+    assert.ok(html.includes('{{BASE}}/app'), 'it must link back using the mount root');
+    assert.ok(/offline/i.test(html), 'it must say what happened');
+    assert.ok(html.includes('env(safe-area-inset'), 'it renders full-screen in a standalone window');
+  });
+  await t('THE RAW SHELL IS NEVER SERVED AS A STATIC FILE', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // express.static answers '/' with publicDir/index.html by default, which
+    // handed out the untemplated shell — {{BASE}} tokens and all — before the
+    // landing route ever ran. Caught by the HTTP smoke test, guarded here.
+    assert.ok(/express\.static\(publicDir,\s*\{\s*index:\s*false\s*\}\)/.test(src),
+      'static must not auto-serve index.html over the templated route');
+    // And a direct hit on the filename must redirect rather than leak it.
+    assert.ok(src.includes("'/index.html', '/app.html', '/welcome.html'"),
+      'the .html filenames must redirect to their real routes');
+  });
+  await t('the HTML shells resolve their base server-side, not by sniffing the URL', () => {
+    const fs = require('fs');
+    for (const f of ['index.html', 'app.html', 'welcome.html']) {
+      const raw = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
+      assert.ok(raw.includes('{{BASE}}'), `${f} must carry the base token`);
+      assert.ok(!raw.includes('/jobup/sw.js'), `${f} must not hardcode the worker path`);
+      assert.ok(!raw.includes('/jobup/manifest'), `${f} must not hardcode the manifest path`);
+      // And the substitution must actually clear every token, or the browser
+      // gets a literal {{BASE}} in an href.
+      for (const base of ['', '/jobup']) {
+        const out = pwaSvc.page(f, base);
+        assert.ok(!out.includes('{{BASE}}'), `${f} still has an unsubstituted token at base "${base}"`);
+        assert.ok(out.includes(`register('${base}/sw.js')`), `${f} registers the worker at the wrong root`);
+      }
+    }
   });
   await t('mobile: dashboard sets viewport-fit, safe areas and 16px inputs', () => {
     const fs = require('fs');
@@ -968,9 +1052,35 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
   await t('the install prompt can be dismissed permanently', () => {
     const fs = require('fs');
-    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
-    assert.ok(html.includes('jobup_install_dismissed'), 'a dismissed prompt must stay dismissed');
-    assert.ok(html.includes('Add to Home Screen'), 'iOS has no beforeinstallprompt — it needs instructions');
+    // Both surfaces: the landing had no prompt at all, so the only way to
+    // install was to reach the dashboard first.
+    for (const f of ['app.html', 'index.html']) {
+      const html = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
+      assert.ok(html.includes('jobup_install_dismissed'), `${f}: a dismissed prompt must stay dismissed`);
+      assert.ok(html.includes('Add to Home Screen'), `${f}: iOS has no beforeinstallprompt`);
+      assert.ok(html.includes('beforeinstallprompt'), `${f}: Android/desktop need the real prompt`);
+    }
+  });
+  await t('mobile: the landing clears the notch and the home indicator', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(html.includes('viewport-fit=cover'), 'the page is edge-to-edge');
+    assert.ok(html.includes('env(safe-area-inset-top)'), 'the nav must clear the status bar');
+    assert.ok(html.includes('env(safe-area-inset-bottom)'), 'the footer must clear the home indicator');
+    // viewport-fit=cover without safe-area padding is the actual defect: it
+    // pushes content UNDER the notch rather than merely allowing it to.
+    const css = html.replace(/\s+/g, '');
+    assert.ok(css.includes('padding-left:calc(24px+env(safe-area-inset-left))'),
+      'landscape on a notched phone clips the left gutter');
+  });
+  await t('mobile: the landing has real touch targets and does not zoom on focus', () => {
+    const fs = require('fs');
+    const css = fs.readFileSync(__dirname + '/public/index.html', 'utf8').replace(/\s+/g, '');
+    assert.ok(css.includes('min-height:44px'), '44px is the smallest reliably tappable target');
+    assert.ok(css.includes('.d2binput,.d2bselect,.d2btextarea{font-size:16px}'),
+      'under 16px, iOS zooms the whole page when a field takes focus');
+    assert.ok(css.includes('overflow-wrap:anywhere'),
+      'a long address or email is the usual cause of sideways scroll on a phone');
   });
 
 
@@ -1188,10 +1298,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!html.includes('+15550001'));
   });
   await t('the dashboard resolves its API base to the current origin', () => {
-    const fs = require('fs');
-    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
-    assert.ok(html.includes("location.pathname.indexOf('/jobup')===0"),
-      'it must work under /jobup AND at a subdomain root');
+    const pwaS = require(__dirname + '/src/services/pwa');
+    // Sniffing location in the browser got www.jobup.dev and the subdomains
+    // subtly wrong. The mount root is substituted server-side, where it is known
+    // exactly, and it must be right under /jobup AND at a subdomain root.
+    assert.ok(pwaS.page('app.html', '/jobup').includes("var API='/jobup'"),
+      'under the path mount the API is prefixed');
+    assert.ok(pwaS.page('app.html', '').includes("var API=''"),
+      'at a subdomain root the API is at the root');
   });
 
 
@@ -1277,13 +1391,27 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
     assert.ok(src.includes('T.over'), 'past the estimate it must say it is running long');
   });
-  await t('PWA manifest is rewritten for the subscriber origin', () => {
+  await t('PWA manifest is generated for the subscriber origin', () => {
+    const pwaS = require(__dirname + '/src/services/pwa');
+    // A subdomain is rooted at /, so a manifest scoped to /jobup/ would not even
+    // contain /app — the install is rejected outright.
+    const m = pwaS.manifest('', { name: 'Manuel Stagg' });
+    assert.strictEqual(m.scope, '/');
+    assert.strictEqual(m.start_url, '/app');
+    assert.ok(m.icons.every((i) => !i.src.includes('/jobup')), 'icons must be rooted at the subdomain');
+    // Two installed JobUp sites on one home screen have to be tellable apart.
+    assert.ok(m.name.includes('Manuel Stagg'), 'the subscriber name goes on their install');
+  });
+  await t('ONE generator serves every root — the rewrite is not duplicated', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
-    // The shipped manifest is scoped to /jobup/, which does not contain /app
-    // on a subdomain — an install from there would be rejected outright.
-    assert.ok(src.includes("m.start_url = '/app'") && src.includes("m.scope = '/'"),
-      'the manifest must be rescoped for the subdomain');
+    // This used to be two separate copies of the rescoping logic, and only the
+    // subscriber one was right; the apex shipped a manifest scoped to a path it
+    // did not have. Both paths now call the same code.
+    assert.ok(!/m\.scope\s*=/.test(src), 'index.js must not hand-patch a manifest any more');
+    assert.ok(src.includes('pwa.serveAsset'), 'both roots must go through the shared generator');
+    assert.ok(!fs.existsSync(__dirname + '/public/manifest.webmanifest'),
+      'a static manifest on disk would be served verbatim to the wrong origin');
   });
 
 

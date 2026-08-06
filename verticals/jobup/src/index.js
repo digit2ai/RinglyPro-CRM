@@ -21,7 +21,6 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 
 const { init, models, scoped, backend } = require('./models');
 const identity = require('./services/identity');
@@ -33,6 +32,7 @@ const siteRender = require('./services/site-render');
 const analytics = require('./services/analytics');
 const scheduler = require('./services/scheduler');
 const photos = require('./services/photos');
+const pwa = require('./services/pwa');
 
 // QR is generated on OUR server — no third-party QR service ever sees a
 // subscriber's address. Cached per address; it only changes when they
@@ -106,20 +106,37 @@ router.use('/api/v1/engine', require('./routes/engine'));
 router.use('/teaser', require('./routes/teaser-view'));
 router.use('/admin', require('./routes/admin'));
 
+// ---- PWA ------------------------------------------------------------------
+// The manifest and the worker are GENERATED for the root this request arrived
+// on — see services/pwa.js. They sit above express.static deliberately, so the
+// stale on-disk sw.js template can never be served verbatim.
+router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html'], (req, res, next) => {
+  if (!pwa.serveAsset(req, res, pwa.basePath(req))) next();
+});
+
 // ---- subscriber dashboard --------------------------------------------------
 // Every paying subscriber signs in here with their OWN email and password.
 // No allowlist, no env var — that is only the platform owner console.
 // Aliases include /cv-admin so the muscle memory from manuelstagg.com works.
 router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
-  res.sendFile(path.join(publicDir, 'app.html')));
+  res.type('html').send(pwa.page('app.html', pwa.basePath(req))));
 
 // Where Stripe (or the test-mode bypass) sends someone after activation.
 router.get(['/welcome', '/welcome/'], (req, res) =>
-  res.sendFile(path.join(publicDir, 'welcome.html')));
+  res.type('html').send(pwa.page('welcome.html', pwa.basePath(req))));
 
 // ---- landing --------------------------------------------------------------
-router.use(express.static(publicDir));
-router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+// The three shells carry a {{BASE}} token, so serving them as raw static files
+// would ship that token to the browser. Send people to the real routes instead.
+router.get(['/index.html', '/app.html', '/welcome.html'], (req, res) => {
+  const to = { '/index.html': '/', '/app.html': '/app', '/welcome.html': '/welcome' }[req.path];
+  res.redirect(301, `${pwa.basePath(req)}${to}`);
+});
+// index:false is load-bearing. express.static serves publicDir/index.html for a
+// request to '/' by default, which would hand out the RAW shell — {{BASE}}
+// tokens and all — before the route below ever ran.
+router.use(express.static(publicDir, { index: false }));
+router.get('/', (req, res) => res.type('html').send(pwa.page('index.html', pwa.basePath(req))));
 
 // ===========================================================================
 // Subscriber-site handler for <name>.jobup.dev.
@@ -202,38 +219,24 @@ async function subscriberSite(req, res, next) {
   // jobup.dev/jobup/app. Serving it here also makes the session cookie and
   // every API call same-origin with their site.
   if (['/app', '/app/', '/dashboard', '/admin', '/cv-admin', '/login'].includes(p)) {
-    return res.sendFile(path.join(publicDir, 'app.html'));
+    return res.type('html').send(pwa.page('app.html', ''));
   }
   if (p === '/welcome' || p === '/welcome/') {
-    return res.sendFile(path.join(publicDir, 'welcome.html'));
+    return res.type('html').send(pwa.page('welcome.html', ''));
   }
   // The dashboard resolves its API base to the current origin, so the API has
   // to answer here too.
   if (p.startsWith('/api/v1/') || p === '/health') {
     return router(req, res, next);
   }
-  // PWA assets, so a subscriber can install their own dashboard.
-  // The manifest is REWRITTEN for this origin: the shipped one is scoped to
-  // /jobup/, which does not contain /app on a subdomain, so an install from
-  // here would be rejected outright.
-  if (p === '/manifest.webmanifest') {
-    const m = JSON.parse(fs.readFileSync(path.join(publicDir, 'manifest.webmanifest'), 'utf8'));
-    m.name = `${ctx.name || 'JobUp'} — JobUp`;
-    m.start_url = '/app';
-    m.scope = '/';
-    m.icons = m.icons.map((i) => ({ ...i, src: i.src.replace('/jobup', '') }));
-    return res.type('application/manifest+json').json(m);
-  }
-  if (['/sw.js', '/icon-192.png', '/icon-512.png',
-       '/apple-touch-icon.png', '/favicon-32.png'].includes(p)) {
-    if (p === '/sw.js') {
-      // Same reason: the shipped worker caches /jobup/* paths.
-      const sw = fs.readFileSync(path.join(publicDir, 'sw.js'), 'utf8')
-        .replace(/\/jobup\//g, '/').replace(/'jobup-v(\d+)'/, "'jobup-sub-v$1'");
-      return res.type('application/javascript').send(sw);
-    }
-    return res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
-  }
+  // PWA assets, so a subscriber can install their own dashboard. Generated by
+  // the SAME code that serves jobup.dev and the /jobup mount — this used to be
+  // a second, separate rewrite, which is exactly how the apex domain ended up
+  // shipping a manifest scoped to a path it does not have.
+  //
+  // The subscriber's name goes on the install so two JobUp sites are told apart
+  // on one home screen.
+  if (pwa.serveAsset(req, res, '', { name: ctx.name, lang: ctx.lang })) return undefined;
 
   // Profile photo, if the subscriber uploaded one.
   if (p === '/photo' || p === '/photo.jpg') {

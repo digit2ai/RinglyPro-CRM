@@ -6,9 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JobUp">
-<link rel="manifest" href="/jobup/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/jobup/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/jobup/favicon-32.png">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png">
 <title>JobUp — Your dashboard</title><style>
 :root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--card2:#161a24;
 --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
@@ -256,8 +256,10 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 </div>
 
 <script>
-// On <name>.jobup.dev the API is at the root; under /jobup it is prefixed.
-var API=(location.pathname.indexOf('/jobup')===0)?'/jobup':'';
+// The mount root, substituted server-side: '' on jobup.dev and on a
+// subscriber's own address, '/jobup' under the path mount. Sniffing the URL for
+// it in the browser got the www and subdomain cases subtly wrong.
+var API='{{BASE}}';
 var ME=null,MATCHES=[],OUT=[],SET=null;
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -289,14 +291,34 @@ $('signout').addEventListener('click',function(){
 });
 
 /* ---- tabs ---- */
+var PANES=['analytics','matches','opps','today','targets','pipeline','cv','outreach','settings','account'];
+
+/* Selecting a tab is a named function so the home-screen shortcuts can reach it.
+   Long-pressing the installed icon opens /app?tab=matches, and without this the
+   app would open on Analytics every time and the shortcut would be decorative. */
+function showTab(name,push){
+  if(PANES.indexOf(name)<0) name='analytics';
+  var hit=null;
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){
+    var on=x.dataset.p===name; x.classList.toggle('on',on); if(on) hit=x;});
+  PANES.forEach(function(p){$('p-'+p).classList.toggle('hidden',p!==name);});
+  /* On a phone the tab strip is one scrolling row, so the selected tab can sit
+     off-screen when it was chosen by a shortcut rather than a tap. */
+  if(hit&&hit.scrollIntoView) try{hit.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+  /* replaceState, not pushState: tabs are a view, not history the back button
+     should have to walk through one at a time. The URL still reflects the tab,
+     so it can be bookmarked and shared. */
+  if(push!==false&&history.replaceState){
+    try{history.replaceState(null,'',name==='analytics'?location.pathname:location.pathname+'?tab='+name);}catch(e){}
+  }
+}
 Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
-  t.addEventListener('click',function(){
-    Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
-    t.classList.add('on');
-    ['analytics','matches','opps','today','targets','pipeline','cv','outreach','settings','account'].forEach(function(p){
-      $('p-'+p).classList.toggle('hidden',p!==t.dataset.p);});
-  });
+  t.addEventListener('click',function(){showTab(t.dataset.p);});
 });
+function tabFromUrl(){
+  var q=new URLSearchParams(location.search).get('tab');
+  return q||(location.hash?location.hash.slice(1):'')||'analytics';
+}
 
 /* ---- boot ---- */
 function boot(){
@@ -315,6 +337,8 @@ function boot(){
     });
     loadAnalytics(); loadMatches(); loadOpps(); loadToday(); loadTargets();
     loadPipeline(); loadOutreach(); loadCV(); loadSettings(); renderAccount();
+    /* Honour ?tab= from a home-screen shortcut or a shared link. */
+    showTab(tabFromUrl(),false);
   }).catch(function(){ $('login').classList.remove('hidden'); });
 }
 
@@ -1519,7 +1543,7 @@ function renderAccount(){
 
 /* ---- PWA ---- */
 if('serviceWorker' in navigator)
-  navigator.serviceWorker.register('/jobup/sw.js').catch(function(){});
+  navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function(){});
 
 (function(){
   var deferred=null;

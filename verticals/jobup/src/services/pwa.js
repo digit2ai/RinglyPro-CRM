@@ -1,0 +1,160 @@
+'use strict';
+
+/**
+ * PWA surface — the manifest, the service worker, and the HTML shells, all
+ * generated for the ORIGIN that asked for them.
+ *
+ * JobUp answers on three different roots and the PWA has to be correct at every
+ * one of them:
+ *
+ *   https://jobup.dev/                     base ''        the flagship domain
+ *   https://<name>.jobup.dev/              base ''        a subscriber's address
+ *   https://aiagent.ringlypro.com/jobup/   base '/jobup'  the path mount
+ *
+ * A manifest is NOT portable across those. `scope` and `start_url` resolve
+ * against the manifest's own URL and define what the installed app may contain,
+ * so shipping the /jobup/ scope to jobup.dev produced an install whose scope
+ * EXCLUDED jobup.dev/ itself — tapping the logo inside the installed app dropped
+ * the user back out into the browser. The service worker had the mirror-image
+ * bug: a worker fetched from /jobup/sw.js gets scope /jobup/, so on jobup.dev it
+ * never controlled the landing page that registered it, and the site had no
+ * offline behaviour at all on its own home page.
+ *
+ * Both are therefore generated per request and never served as static files.
+ * The HTML shells carry a {{BASE}} token substituted here for the same reason —
+ * a hardcoded /jobup/ href is wrong on two of the three roots.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const publicDir = path.join(__dirname, '..', '..', 'public');
+
+/** Bump when a shell file changes, so installed clients pick it up. */
+const SHELL_VERSION = 'v3';
+
+/**
+ * The mount root for this request.
+ *
+ * Express sets `req.baseUrl` to the path a router was mounted at, which is
+ * exactly the distinction we need: '/jobup' under the path mount, '' when the
+ * app is called at the root of jobup.dev or a subscriber subdomain.
+ */
+function basePath(req) {
+  const b = String((req && req.baseUrl) || '');
+  return b === '/' ? '' : b;
+}
+
+/** Substitute the base into one of the HTML shells. */
+const htmlCache = new Map();
+function page(file, base) {
+  const key = file + '|' + base;
+  const hit = htmlCache.get(key);
+  if (hit) return hit;
+  const out = fs.readFileSync(path.join(publicDir, file), 'utf8')
+    .replace(/\{\{BASE\}\}/g, base);
+  htmlCache.set(key, out);
+  return out;
+}
+
+/**
+ * The web app manifest for a given root.
+ *
+ * `name` personalises the subscriber-subdomain install ("Manuel Stagg — JobUp"),
+ * so two installed JobUp sites are distinguishable on a home screen.
+ */
+function manifest(base, opts) {
+  const o = opts || {};
+  const b = base || '';
+  const owner = o.name ? `${o.name} — JobUp` : 'JobUp — your AI career platform';
+  return {
+    // A stable identity. Without it the install is keyed on start_url, so
+    // changing start_url later would orphan every existing install.
+    id: `${b}/`,
+    name: owner,
+    short_name: 'JobUp',
+    description: 'Your own job-finding ecosystem: matches scored against your real '
+      + 'resume, a public site recruiters and their AI can read, and outreach you '
+      + 'approve before anything sends.',
+    start_url: `${b}/app`,
+    scope: `${b}/`,
+    display: 'standalone',
+    display_override: ['standalone', 'minimal-ui'],
+    // Deliberately NOT locked to portrait. This is a dashboard with tables and
+    // a chart — a phone held sideways or a tablet is a legitimate way to read it.
+    orientation: 'any',
+    background_color: '#07080c',
+    theme_color: '#07080c',
+    categories: ['productivity', 'business'],
+    lang: o.lang === 'es' ? 'es' : 'en',
+    dir: 'ltr',
+    icons: [
+      { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+    // Long-press the home-screen icon and land straight on the tab you wanted.
+    // These depend on the ?tab= deep link the dashboard reads on boot.
+    shortcuts: [
+      { name: 'Job Matches', short_name: 'Matches', url: `${b}/app?tab=matches` },
+      { name: 'Pipeline', short_name: 'Pipeline', url: `${b}/app?tab=pipeline` },
+      { name: 'Broadcast', short_name: 'Broadcast', url: `${b}/app?tab=outreach` },
+    ],
+  };
+}
+
+/**
+ * The service worker for a given root.
+ *
+ * Read from disk with a __BASE__ token rather than assembled from strings, so it
+ * stays a readable, lintable file. The cache name carries the base because
+ * jobup.dev can legitimately hold BOTH a root-scoped and a /jobup-scoped
+ * registration, and they must not fight over one cache.
+ */
+function serviceWorker(base) {
+  const b = base || '';
+  return fs.readFileSync(path.join(publicDir, 'sw.js'), 'utf8')
+    .replace(/__BASE__/g, b)
+    .replace(/__CACHE__/g, `jobup-${SHELL_VERSION}${b ? b.replace(/\//g, '-') : '-root'}`);
+}
+
+/**
+ * Serve the manifest + worker + PWA icons for a root. Returns true when the
+ * request was one of them and has been answered.
+ *
+ * Shared by the /jobup router and the subscriber-subdomain handler so the two
+ * can never drift apart — they used to carry separate copies of this rewriting,
+ * and only one of them was correct.
+ */
+function serveAsset(req, res, base, opts) {
+  const p = req.path;
+  if (p === '/manifest.webmanifest') {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.type('application/manifest+json').json(manifest(base, opts));
+    return true;
+  }
+  if (p === '/sw.js') {
+    // No caching: a stale worker is how an app gets stuck on an old shell.
+    res.set('Cache-Control', 'no-cache');
+    // Lets a worker served from /jobup/sw.js claim a wider scope if we ever
+    // need it; harmless otherwise.
+    res.set('Service-Worker-Allowed', `${base || ''}/`);
+    res.type('application/javascript').send(serviceWorker(base));
+    return true;
+  }
+  if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png'].includes(p)) {
+    res.set('Cache-Control', 'public, max-age=604800');
+    res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
+    return true;
+  }
+  if (p === '/offline' || p === '/offline.html') {
+    res.type('html').send(page('offline.html', base));
+    return true;
+  }
+  return false;
+}
+
+module.exports = {
+  basePath, page, manifest, serviceWorker, serveAsset, publicDir, SHELL_VERSION,
+};

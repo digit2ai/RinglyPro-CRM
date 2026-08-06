@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JobUp">
-<link rel="manifest" href="/jobup/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/jobup/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/jobup/favicon-32.png">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png">
 <title>JobUp — Your Personal AI Career Platform</title>
 <meta name="description" content="Stop looking for jobs. Let AI find them for you. Your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.">
 <meta property="og:title" content="JobUp — Your Personal AI Career Platform">
@@ -594,6 +594,49 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 .d2b .ju-prog .bar i{display:block;height:100%;width:34%;background:var(--grad);border-radius:99px;
   animation:juslide 1.25s ease-in-out infinite}
 @keyframes juslide{0%{margin-left:-34%}100%{margin-left:100%}}
+
+/* ---- mobile: notch safety, touch targets, install prompt ------------------
+   Last in the sheet on purpose. The rules above set `padding` with shorthands
+   inside their own media queries, so a safe-area override placed earlier would
+   simply be overwritten further down. */
+.d2b .wrap{padding-left:calc(24px + env(safe-area-inset-left));
+  padding-right:calc(24px + env(safe-area-inset-right))}
+.d2b nav{padding-top:calc(14px + env(safe-area-inset-top))}
+.d2b .d2b-footer,.d2b footer{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+
+@media(max-width:680px){
+  /* 44px is the smallest reliably tappable target. The nav pills, the language
+     toggle and the footer links were all under it. */
+  .d2b .nav-links > a,.d2b .btn,.d2b .btn-primary,.d2b .chip{min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center}
+  .d2b .nav-burger{min-width:44px;min-height:44px}
+  .d2b .lang-opt{min-height:38px;display:inline-flex;align-items:center}
+  .d2b .d2f-links a{display:inline-flex;align-items:center;min-height:40px}
+  /* 16px or iOS zooms the whole page the moment a field takes focus. */
+  .d2b input,.d2b select,.d2b textarea{font-size:16px}
+}
+/* A long unbroken string (an address, an email) is the usual cause of a page
+   that scrolls sideways on a phone. */
+.d2b{overflow-x:hidden}
+.d2b .ju-addr,.d2b .ju-legal,.d2b .disclaim{overflow-wrap:anywhere}
+
+/* Install prompt — the landing had none, so the only way to install was to
+   reach the dashboard first. */
+#ju-install{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
+  z-index:120;background:#1c1c24;border:1px solid rgba(91,123,255,.45);border-radius:15px;
+  padding:13px 15px;display:none;align-items:center;gap:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,.6);font-family:var(--sans);color:#f5f5f7;
+  max-width:520px;margin:0 auto}
+#ju-install.show{display:flex}
+#ju-install .txt{flex:1;font-size:13.5px;line-height:1.45}
+#ju-install .txt span{color:#a6a9b4}
+#ju-install button{min-height:40px;border-radius:999px;padding:9px 16px;font-size:13px;
+  font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+#ju-install .go{background:linear-gradient(120deg,#5b7bff 0%,#e64980 52%,#ff922b 100%);
+  border:none;color:#fff}
+#ju-install .no{background:transparent;border:1px solid rgba(255,255,255,.15);color:#f5f5f7}
+@media(max-width:430px){#ju-install{flex-wrap:wrap}#ju-install .txt{flex:1 0 100%;margin-bottom:4px}
+  #ju-install button{flex:1}}
 </style>
 </head>
 <body>
@@ -608,7 +651,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
     <a href="#receive" style="color:var(--mut);font-size:14.5px">What you get</a>
     <a href="#agents" style="color:var(--mut);font-size:14.5px">Agents</a>
     <a href="#pricing" style="color:var(--mut);font-size:14.5px">Pricing</a>
-    <a class="ju-btn ghost" style="padding:9px 18px;font-size:14px" href="/jobup/app">Sign in</a>
+    <a class="ju-btn ghost" style="padding:9px 18px;font-size:14px" href="{{BASE}}/app">Sign in</a>
   </div>
 </nav>
 
@@ -834,7 +877,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <footer class="ju-foot">
   <div>JobUp &mdash; a Digit2AI product.</div>
   <div style="display:flex;gap:18px;flex-wrap:wrap">
-    <a href="/jobup/health">Status</a><a href="#pricing">Pricing</a><a href="#agents">Agents</a>
+    <a href="{{BASE}}/health">Status</a><a href="#pricing">Pricing</a><a href="#agents">Agents</a>
   </div>
 </footer>
 </div>
@@ -1002,7 +1045,7 @@ function juFormatPhone(v){
 
 /* ---- intake: identity gate + resume -> teaser ---------------------------- */
 (function(){
-  var API=(location.hostname.indexOf('jobup.dev')>-1)?'':'/jobup';
+  var API='{{BASE}}';
   var sheet=document.getElementById('ju-sheet'),form=document.getElementById('ju-form');
   // Optional profile photo. Preview locally; the server re-validates by magic
   // bytes, so a renamed file cannot slip through.
@@ -1114,6 +1157,47 @@ function juFormatPhone(v){
   });
 })();
 </script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/jobup/sw.js').catch(function(){});</script>
+<div id="ju-install">
+  <div class="txt"><strong>Add JobUp to your home screen</strong><br>
+    <span>Opens like an app, and keeps you signed in.</span></div>
+  <button class="go" id="ju-inst-go">Install</button>
+  <button class="no" id="ju-inst-no">Not now</button>
+</div>
+
+<script>
+/* The worker is registered at the MOUNT ROOT, not at a fixed path. A worker's
+   scope is the directory it was served from, so the old hardcoded path gave it
+   the mount scope even on jobup.dev — where the landing page lives at the root,
+   meaning it never controlled the very page that registered it. */
+if('serviceWorker' in navigator)
+  navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function(){});
+
+(function(){
+  var box=document.getElementById('ju-install'),deferred=null;
+  var DISMISS='jobup_install_dismissed';
+  function hide(){box.classList.remove('show');}
+  if(localStorage.getItem(DISMISS)) return;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); deferred=e; box.classList.add('show');
+  });
+  document.getElementById('ju-inst-go').addEventListener('click',function(){
+    hide(); if(deferred){deferred.prompt();deferred=null;}
+  });
+  document.getElementById('ju-inst-no').addEventListener('click',function(){
+    hide(); localStorage.setItem(DISMISS,'1');
+  });
+  window.addEventListener('appinstalled',function(){hide();localStorage.setItem(DISMISS,'1');});
+  /* iOS fires no beforeinstallprompt, so Safari users get the manual steps —
+     shown only once, and never inside an already-installed window. */
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var standalone=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(isIOS&&!standalone){
+    box.querySelector('.txt').innerHTML='<strong>Add JobUp to your home screen</strong><br>'+
+      '<span>Tap Share, then Add to Home Screen.</span>';
+    document.getElementById('ju-inst-go').style.display='none';
+    setTimeout(function(){box.classList.add('show');},2600);
+  }
+})();
+</script>
 </body>
 </html>
