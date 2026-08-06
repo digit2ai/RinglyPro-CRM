@@ -1858,6 +1858,63 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'one shape for hunter, inbound and manual entries');
   });
 
+
+  // ---------------------------------------------------------------
+  section('country policy');
+  const geoSvc = require(__dirname + '/src/services/geo');
+
+  await t('an empty list means unrestricted, not "nothing allowed"', () => {
+    const r = geoSvc.evaluate('Bengaluru, India', { allowed_countries: [] });
+    assert.strictEqual(r.verdict, geoSvc.VERDICT.ALLOW);
+  });
+  await t('US-ONLY BLOCKS THE ROLES CARLOS SHOULD NOT SEE', () => {
+    const us = { allowed_countries: ['US'] };
+    for (const loc of ['Bengaluru, India', 'IN - Bengaluru', 'Mexico City', 'Medellin, Colombia']) {
+      assert.strictEqual(geoSvc.evaluate(loc, us).verdict, geoSvc.VERDICT.BLOCK, 'should block: ' + loc);
+    }
+    for (const loc of ['San Francisco, CA', 'New York, NY', 'Remote - US', 'Remote (US only)']) {
+      assert.strictEqual(geoSvc.evaluate(loc, us).verdict, geoSvc.VERDICT.ALLOW, 'should allow: ' + loc);
+    }
+  });
+  await t('a multi-location posting survives if ONE location is in policy', () => {
+    const r = geoSvc.evaluate('San Francisco, CA or London, UK', { allowed_countries: ['US'] });
+    assert.strictEqual(r.verdict, geoSvc.VERDICT.ALLOW, r.reason);
+  });
+  await t('a posting with no location is FLAGGED, never silently dropped', () => {
+    const r = geoSvc.evaluate('', { allowed_countries: ['US'] });
+    assert.strictEqual(r.verdict, geoSvc.VERDICT.FLAG);
+    const off = geoSvc.evaluate('', { allowed_countries: ['US'], flag_unknown: false });
+    assert.strictEqual(off.verdict, geoSvc.VERDICT.ALLOW, 'and the default is overridable');
+  });
+  await t('THE BLOCK HAPPENS BEFORE ANY MODEL CALL', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/matcher.js', 'utf8');
+    // Match the CALL, not the function definition further up the file.
+    const i = src.indexOf('const g = geo.evaluate(');
+    const j = src.indexOf('await scoreOne(job');
+    assert.ok(i > 0 && j > i, 'geography is free — it must filter before spending');
+    const between = src.slice(i, j);
+    assert.ok(between.includes('VERDICT.BLOCK) continue'), 'and a blocked posting must skip the model');
+  });
+  await t('the policy is reachable from the dashboard, not only the API', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('allowed_countries'), 'Targets must write the policy');
+    assert.ok(html.includes('Where you will work'));
+    assert.ok(html.includes('saveGeo') && html.includes('ctrybox'));
+  });
+  await t('role targets and blocked employers are editable too', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('t-addrole') && html.includes('rmRole'));
+    assert.ok(html.includes('t-addblock') && html.includes('rmBlocked'));
+  });
+  await t('saving settings still forces approval_required back on', () => {
+    const out = settingsSvc.sanitize({ geo: { allowed_countries: ['US'] }, approval_required: false });
+    assert.strictEqual(out.approval_required, true, 'nothing may switch off review');
+    assert.deepStrictEqual(out.geo.allowed_countries, ['US']);
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

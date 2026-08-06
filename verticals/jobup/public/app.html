@@ -84,6 +84,12 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
 .stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
 text-transform:uppercase;color:var(--faint)}
+.ctry{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ctrybox{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;
+padding:7px 14px;cursor:pointer;font-size:13.5px;color:var(--mut);transition:all .15s ease;user-select:none}
+.ctrybox:hover{border-color:var(--line2);color:var(--ink)}
+.ctrybox.on{background:rgba(34,211,238,.1);border-color:var(--cyan-bd);color:var(--cyan)}
+.ctrybox input{width:auto;margin:0;accent-color:#22d3ee}
 .addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .addrow input{flex:1 1 150px;min-width:0;padding:9px 11px;font-size:14px}
 .addrow select{flex:0 0 auto;width:auto;padding:9px 11px;font-size:14px}
@@ -430,29 +436,100 @@ function loadToday(){
   });
 }
 
-/* ---- targets ---- */
+/* ---- targets: what your agent aims at ---- */
+var COUNTRIES=[['US','United States'],['CA','Canada'],['MX','Mexico'],['GB','United Kingdom'],
+  ['IE','Ireland'],['ES','Spain'],['DE','Germany'],['FR','France'],['NL','Netherlands'],
+  ['CO','Colombia'],['AR','Argentina'],['BR','Brazil'],['CL','Chile'],['PE','Peru'],
+  ['IN','India'],['AU','Australia'],['SG','Singapore'],['AE','United Arab Emirates']];
+
 function loadTargets(){
-  api('/api/v1/engine/targets').then(function(r){
-    if(!r.ok) return;
-    var t=r.j;
-    function list(arr,empty){ return arr&&arr.length?arr.map(function(x){
-      return '<span class="chip">'+esc(typeof x==='string'?x:(x.title||x.slug||JSON.stringify(x)))+'</span>';
-      }).join(''):'<div class="note">'+esc(empty)+'</div>'; }
+  api('/api/v1/engine/settings').then(function(r){
+    if(!r.ok)return;
+    SET=r.j.settings;
+    var geo=SET.geo||{}, allowed=(geo.allowed_countries||[]).map(function(c){return String(c).toUpperCase();});
+    var roles=(SET.targeting&&SET.targeting.roles)||[];
+    var blocked=(SET.blocked&&SET.blocked.employers)||[];
+
     $('p-targets').innerHTML=
-      '<div class="card"><div class="h2">Roles you are targeting</div>'+
-      '<div class="m">These are the exact title strings a sourcer searches. Each one also becomes an indexable page on your site.</div>'+
-      list(t.role_targets,'No role targets set. Without these your site carries no title a recruiter would search for.')+'</div>'+
-      '<div class="card"><div class="h2">Indexable role pages</div>'+
-      list(t.page_roles,'None generated yet.')+'</div>'+
-      '<div class="card"><div class="h2">Where you will work</div>'+
-      list(t.countries,'No country restriction.')+
-      (t.remote_only?'<span class="chip ok">remote only</span>':'')+'</div>'+
-      '<div class="card"><div class="h2">Employers to never contact</div>'+
+      '<div class="card"><div class="t">Where you will work</div>'+
+      '<div class="m">Tick the countries you want. A posting outside them is dropped '+
+      'before it costs anything to score \u2014 leave everything unticked for no restriction.</div>'+
+      '<div class="ctry">'+COUNTRIES.map(function(c){
+        return '<label class="ctrybox'+(allowed.indexOf(c[0])>=0?' on':'')+'">'+
+          '<input type="checkbox" value="'+c[0]+'"'+(allowed.indexOf(c[0])>=0?' checked':'')+'>'+
+          '<span>'+esc(c[1])+'</span></label>';}).join('')+'</div>'+
+      '<div class="sw" style="margin-top:12px"><div><div class="lbl">Flag postings with no location</div>'+
+      '<div class="hint">Rather than silently including or excluding them.</div></div>'+
+      '<div class="toggle'+(geo.flag_unknown!==false?' on':'')+'" id="t-flag"><i></i></div></div>'+
+      '<div class="acts"><button class="btn primary sm" id="t-savegeo">Save countries</button>'+
+      '<span class="note" id="t-geomsg" style="margin:0 0 0 10px"></span></div></div>'+
+
+      '<div class="card"><div class="t">Roles you are targeting</div>'+
+      '<div class="m">The exact title strings a sourcer searches. A title match counts double '+
+      'in the pre-filter, and each one becomes an indexable page on your site.</div>'+
+      '<div id="rolelist">'+(roles.length?roles.map(function(x,i){
+        return '<span class="chip">'+esc(x.title||x)+
+          ' <a href="#" onclick="rmRole('+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set. Without these the pre-filter ranks on skill words alone, '+
+        'so the biggest job boards dominate by volume.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-role" placeholder="e.g. Financial Analyst" maxlength="120">'+
+        '<button class="btn primary sm" id="t-addrole">Add role</button></div></div>'+
+
+      '<div class="card"><div class="t">Employers to never contact</div>'+
       '<div class="m">Absolute. Checked at match time, at alert time and at draft time.</div>'+
-      list(t.excluded_employers,'None excluded.')+'</div>'+
-      '<div class="card"><div class="h2">People to never contact</div>'+
-      list(t.do_not_contact,'None listed.')+'</div>';
+      '<div id="blocklist">'+(blocked.length?blocked.map(function(x,i){
+        return '<span class="chip warn">'+esc(x)+
+          ' <a href="#" onclick="rmBlocked('+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None excluded.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-block" placeholder="Company name" maxlength="160">'+
+        '<button class="btn sm" id="t-addblock">Exclude</button></div></div>';
+
+    Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+      cb.addEventListener('change',function(){cb.parentNode.classList.toggle('on',cb.checked);});
+    });
+    $('t-flag').addEventListener('click',function(){this.classList.toggle('on');});
+    $('t-savegeo').addEventListener('click',saveGeo);
+    $('t-addrole').addEventListener('click',function(){
+      var v=$('t-role').value.trim(); if(!v)return;
+      var next=JSON.parse(JSON.stringify(SET));
+      next.targeting=next.targeting||{}; next.targeting.roles=(next.targeting.roles||[]).concat([{title:v}]);
+      saveSettingsDoc(next,'Role target added.');
+    });
+    $('t-addblock').addEventListener('click',function(){
+      var v=$('t-block').value.trim(); if(!v)return;
+      var next=JSON.parse(JSON.stringify(SET));
+      next.blocked=next.blocked||{}; next.blocked.employers=(next.blocked.employers||[]).concat([v]);
+      saveSettingsDoc(next,'Employer excluded.');
+    });
   });
+}
+function saveGeo(){
+  var codes=[];
+  Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+    if(cb.checked)codes.push(cb.value);});
+  var next=JSON.parse(JSON.stringify(SET));
+  next.geo=next.geo||{}; next.geo.allowed_countries=codes;
+  next.geo.flag_unknown=$('t-flag').classList.contains('on');
+  saveSettingsDoc(next, codes.length
+    ? 'Saved. Your agent will only consider '+codes.join(', ')+' from the next run.'
+    : 'Saved. No country restriction.');
+}
+function rmRole(i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting.roles.splice(i,1); saveSettingsDoc(next,'Role removed.');
+}
+function rmBlocked(i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.blocked.employers.splice(i,1); saveSettingsDoc(next,'Employer un-excluded.');
+}
+function saveSettingsDoc(next,msg){
+  api('/api/v1/engine/settings',{method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({settings:next})}).then(function(r){
+      if(!r.ok)return err('aerr',r.j.error||'Could not save.');
+      SET=r.j.settings; err('aerr',msg||'Saved.'); loadTargets();
+    });
 }
 
 /* ---- matches ---- */
