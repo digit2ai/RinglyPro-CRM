@@ -91,6 +91,10 @@ router.use('/admin', require('./routes/admin'));
 router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
   res.sendFile(path.join(publicDir, 'app.html')));
 
+// Where Stripe (or the test-mode bypass) sends someone after activation.
+router.get(['/welcome', '/welcome/'], (req, res) =>
+  res.sendFile(path.join(publicDir, 'welcome.html')));
+
 // ---- landing --------------------------------------------------------------
 router.use(express.static(publicDir));
 router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));

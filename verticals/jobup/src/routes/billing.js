@@ -18,6 +18,27 @@ router.post('/checkout', async (req, res) => {
     if (!sub) sub = await models.subscribers.create({ email, name, status: 'pending' });
 
     const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+
+    // ---- TEST MODE: skip payment entirely --------------------------------
+    // Activates and provisions immediately. Off unless JOBUP_FREE_ACTIVATION=1.
+    if (billing.freeActivation()) {
+      await models.subscribers.update(
+        { status: 'active', activation: 'free_test', activated_at: new Date() },
+        { where: { id: sub.id } });
+      const provisioning = require('../services/provisioning');
+      const r2 = await provisioning.run(sub.id, { teaserToken: teaser_token });
+      await models.audit_log.create({
+        tenant_id: sub.id, actor: 'system', action: 'free_activation',
+        reason: 'JOBUP_FREE_ACTIVATION=1 — activated with no payment (test mode)',
+      });
+      return res.json({
+        ok: true, configured: true, free_activation: true,
+        url: `${base}/welcome?s=${sub.id}`,
+        provisioned: r2.ok, site: r2.url, steps: r2.steps,
+        note: 'TEST MODE — no payment was taken. This account is marked free_test.',
+      });
+    }
+
     const r = await billing.createCheckout({
       subscriberId: sub.id, email,
       successUrl: `${base}/welcome?s=${sub.id}`,

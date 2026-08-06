@@ -1,0 +1,17 @@
+{
+  "name": "JobUp — your AI career platform",
+  "short_name": "JobUp",
+  "description": "Your own job-finding ecosystem: matches scored against your real resume, a public site recruiters and their AI can read, and outreach you approve before anything sends.",
+  "start_url": "/jobup/app",
+  "scope": "/jobup/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "icons": [
+    { "src": "/jobup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/jobup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/jobup/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/jobup/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

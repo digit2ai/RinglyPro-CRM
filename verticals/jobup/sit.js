@@ -846,6 +846,115 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('/api/v1/auth/login'), 'it authenticates as the subscriber');
   });
 
+
+  // ---------------------------------------------------------------
+  section('test mode, welcome, and PWA');
+  const billingSvc = require(__dirname + '/src/services/billing');
+
+  await t('free activation is OFF unless explicitly switched on', () => {
+    const saved = process.env.JOBUP_FREE_ACTIVATION;
+    delete process.env.JOBUP_FREE_ACTIVATION;
+    assert.strictEqual(billingSvc.freeActivation(), false, 'must never be the default');
+    process.env.JOBUP_FREE_ACTIVATION = '0';
+    assert.strictEqual(billingSvc.freeActivation(), false, 'only "1" enables it');
+    process.env.JOBUP_FREE_ACTIVATION = '1';
+    assert.strictEqual(billingSvc.freeActivation(), true);
+    if (saved === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
+    else process.env.JOBUP_FREE_ACTIVATION = saved;
+  });
+  await t('status() DECLARES test mode and missing webhook verification', () => {
+    const saved = process.env.JOBUP_FREE_ACTIVATION;
+    process.env.JOBUP_FREE_ACTIVATION = '1';
+    const st = billingSvc.status();
+    assert.strictEqual(st.free_activation, true, 'test mode must be visible, never silent');
+    assert.ok(st.webhook_verification, 'webhook state must be reported');
+    if (saved === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
+    else process.env.JOBUP_FREE_ACTIVATION = saved;
+  });
+  await t('a free-test account is STAMPED so it can never be counted as revenue', async () => {
+    const s2 = await models.subscribers.create({
+      email: 'sit-free@example.com', name: 'Free Test',
+      status: 'active', activation: 'free_test',
+    });
+    const row = await models.subscribers.findOne({ where: { id: s2.id } });
+    assert.strictEqual(row.activation, 'free_test');
+    const paid = await models.subscribers.findOne({ where: { id: subA.id } });
+    assert.strictEqual(paid.activation, 'paid', 'a normal account defaults to paid');
+    await models.subscribers.destroy({ where: { id: s2.id } });
+  });
+  await t('EVERY column added after launch is in the idempotent ALTER list', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/models/index.js', 'utf8');
+    // sync({alter:false}) never adds a column; anything missing here would exist
+    // in the model and the memory backend but NOT in production Postgres.
+    for (const col of ['activation', 'activated_at', 'from_name', 'from_email',
+                       'status', 'reply_draft', 'read_at', 'replied_at']) {
+      assert.ok(src.includes(`'${col}'`), 'missing from ADDED_COLUMNS: ' + col);
+    }
+    assert.ok(src.includes('ADD COLUMN IF NOT EXISTS'), 'the ALTER must be idempotent');
+  });
+  await t('the welcome page exists — Stripe success_url must not 404', () => {
+    const fs = require('fs');
+    assert.ok(fs.existsSync(__dirname + '/public/welcome.html'));
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(idx.includes("'/welcome'"), 'the /welcome route must be mounted');
+    const bill = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(bill.includes('/welcome?s='), 'checkout should send people to it');
+  });
+  await t('the welcome page reports REAL provisioning state, not a fixed success', () => {
+    const fs = require('fs');
+    const intake = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(intake.includes('provisioning.stateOf'), 'state must come from provisioning');
+    assert.ok(intake.includes('needs_password'), 'it must know whether a password is still needed');
+  });
+
+  await t('PWA: manifest is valid, scoped, and standalone', () => {
+    const fs = require('fs');
+    const m = JSON.parse(fs.readFileSync(__dirname + '/public/manifest.webmanifest', 'utf8'));
+    assert.strictEqual(m.display, 'standalone');
+    assert.ok(m.scope.startsWith('/jobup'), 'scope must not escape the mount');
+    assert.ok(m.start_url.startsWith('/jobup'), 'start_url must not escape the mount');
+    assert.ok(m.icons.some((i) => i.sizes === '512x512'), 'a 512 icon is required to install');
+    assert.ok(m.icons.some((i) => i.purpose === 'maskable'), 'a maskable icon is required on Android');
+  });
+  await t('PWA: every icon the manifest promises actually exists and is a PNG', () => {
+    const fs = require('fs');
+    const m = JSON.parse(fs.readFileSync(__dirname + '/public/manifest.webmanifest', 'utf8'));
+    for (const icon of m.icons) {
+      const f = __dirname + '/public' + icon.src.replace('/jobup', '');
+      assert.ok(fs.existsSync(f), 'missing icon file: ' + icon.src);
+      assert.strictEqual(fs.readFileSync(f).slice(1, 4).toString(), 'PNG', 'not a PNG: ' + icon.src);
+    }
+    assert.ok(fs.existsSync(__dirname + '/public/apple-touch-icon.png'), 'iOS needs apple-touch-icon');
+  });
+  await t('THE SERVICE WORKER NEVER CACHES /api/', () => {
+    const fs = require('fs');
+    const sw = fs.readFileSync(__dirname + '/public/sw.js', 'utf8');
+    assert.ok(sw.includes("includes('/api/')"), 'API responses must be excluded');
+    assert.ok(sw.includes("mode === 'navigate'"), 'navigations should be network-first');
+    assert.ok(/const CACHE = 'jobup-v\d+'/.test(sw), 'the cache must carry a bumpable version');
+  });
+  await t('mobile: dashboard sets viewport-fit, safe areas and 16px inputs', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('viewport-fit=cover'), 'needed for notched devices');
+    assert.ok(html.includes('env(safe-area-inset'), 'content must clear the home indicator');
+    assert.ok(html.includes('apple-mobile-web-app-capable'), 'iOS standalone');
+    assert.ok(/input,select,textarea\{font-size:16px/.test(html.replace(/\s+/g, '')),
+      'inputs under 16px make iOS zoom the page on focus');
+  });
+  await t('mobile: tabs scroll in one row instead of wrapping into a block', () => {
+    const fs = require('fs');
+    const css = fs.readFileSync(__dirname + '/public/app.html', 'utf8').replace(/\s+/g, '');
+    assert.ok(css.includes('.tabs{flex-wrap:nowrap;overflow-x:auto'), 'nine tabs must not wrap on a phone');
+  });
+  await t('the install prompt can be dismissed permanently', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('jobup_install_dismissed'), 'a dismissed prompt must stay dismissed');
+    assert.ok(html.includes('Add to Home Screen'), 'iOS has no beforeinstallprompt — it needs instructions');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

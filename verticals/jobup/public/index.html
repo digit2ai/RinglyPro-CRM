@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JobUp">
+<link rel="manifest" href="/jobup/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/jobup/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/jobup/favicon-32.png">
 <title>JobUp — Your Personal AI Career Platform</title>
 <meta name="description" content="Stop looking for jobs. Let AI find them for you. Your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.">
 <meta property="og:title" content="JobUp — Your Personal AI Career Platform">
@@ -1009,5 +1017,6 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
   });
 })();
 </script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/jobup/sw.js').catch(function(){});</script>
 </body>
 </html>

@@ -33,6 +33,9 @@ const TENANT_SCOPED = new Set([
 const SCHEMA = {
   subscribers: {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    // 'paid' | 'free_test' — a test account must never be counted as revenue.
+    activation: { type: DataTypes.STRING, defaultValue: 'paid' },
+    activated_at: { type: DataTypes.DATE },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     name: { type: DataTypes.STRING },
     phone: { type: DataTypes.STRING },              // E.164
@@ -290,14 +293,43 @@ async function init() {
         indexes: TENANT_SCOPED.has(name) ? [{ fields: ['tenant_id'] }] : [],
       });
     }
-    // alter:false — new columns need an explicit migration (repo convention).
+    // alter:false — sync() creates missing TABLES but never missing COLUMNS.
     // Scoped to OUR models only; never touches another product's tables.
     for (const m of Object.values(models)) await m.sync({ alter: false });
+
+    // ...so columns added to an existing table are applied explicitly here,
+    // idempotently (repo convention). Without this a new column exists in the
+    // model and in the SIT's memory backend but NOT in production Postgres,
+    // and every read of it silently returns undefined.
+    await ensureColumns();
   } else {
     for (const name of Object.keys(SCHEMA)) models[name] = memoryTable(name);
   }
   ready = true;
   return { backend: activeBackend, tables: Object.keys(models).length };
+}
+
+// Columns added after a table first shipped. Safe to re-run forever.
+const ADDED_COLUMNS = [
+  ['ju_subscribers',   'activation',   "VARCHAR(32) DEFAULT 'paid'"],
+  ['ju_subscribers',   'activated_at', 'TIMESTAMPTZ'],
+  ['ju_opportunities', 'from_name',    'VARCHAR(255)'],
+  ['ju_opportunities', 'from_email',   'VARCHAR(255)'],
+  ['ju_opportunities', 'status',       "VARCHAR(32) DEFAULT 'new'"],
+  ['ju_opportunities', 'reply_draft',  'TEXT'],
+  ['ju_opportunities', 'read_at',      'TIMESTAMPTZ'],
+  ['ju_opportunities', 'replied_at',   'TIMESTAMPTZ'],
+];
+
+async function ensureColumns() {
+  if (!seq) return;
+  for (const [table, col, type] of ADDED_COLUMNS) {
+    try {
+      await seq.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type}`);
+    } catch (e) {
+      console.warn(`[jobup] could not ensure ${table}.${col}:`, e.message);
+    }
+  }
 }
 
 // ---------------------------------------------------------------

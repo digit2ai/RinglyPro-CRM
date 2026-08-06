@@ -1,6 +1,14 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JobUp">
+<link rel="manifest" href="/jobup/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/jobup/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/jobup/favicon-32.png">
 <title>JobUp — Your dashboard</title><style>
 :root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--card2:#161a24;
 --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
@@ -112,7 +120,40 @@ border-radius:20px;padding:32px}
 .danger{border-color:rgba(248,113,113,.3)}
 footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:56px 0 40px;
 border-top:1px solid var(--line);padding-top:20px}
-@media(max-width:600px){h1{font-size:22px}.wrap{padding:0 15px}}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media(max-width:760px){
+  .wrap{padding:0 14px}
+  h1{font-size:21px}
+  .nav .wrap{padding:11px 14px}
+  .who-h{max-width:44vw}
+  /* One scrolling row beats six wrapped lines of tabs on a phone. */
+  .tabs{flex-wrap:nowrap;overflow-x:auto;margin:20px -14px 18px;padding:0 14px 4px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;min-height:40px}
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat .v{font-size:22px}
+  .card{padding:16px;border-radius:15px}
+  .row{gap:10px}
+  .score{font-size:20px}
+  /* 16px or iOS zooms the page on focus. */
+  input,select,textarea{font-size:16px;padding:13px}
+  .btn{min-height:44px;padding:11px 17px}
+  .btn.sm{min-height:38px}
+  .acts .btn{flex:1 1 auto}
+  .stage{grid-template-columns:1fr 1fr}
+  .callout{padding:14px 15px;font-size:13.5px}
+  .chart{height:150px}
+  pre{font-size:12px}
+  .panel{margin:40px auto;padding:24px;border-radius:17px}
+}
+@media(max-width:400px){.grid{grid-template-columns:1fr}.stage{grid-template-columns:1fr}}
+/* Install prompt */
+#install{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
+z-index:60;background:var(--card2);border:1px solid var(--cyan-bd);border-radius:15px;
+padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+#install.show{display:flex}
+#install .txt{flex:1;font-size:13.5px;line-height:1.45}
 </style></head><body>
 
 <div class="nav"><div class="wrap">
@@ -171,6 +212,13 @@ border-top:1px solid var(--line);padding-top:20px}
   <div id="p-outreach" class="hidden"></div>
   <div id="p-settings" class="hidden"></div>
   <div id="p-account" class="hidden"></div>
+
+  <div id="install">
+    <div class="txt"><strong>Add JobUp to your home screen</strong><br>
+      <span style="color:var(--mut)">Opens like an app, and keeps you signed in.</span></div>
+    <button class="btn primary sm" id="inst-go">Install</button>
+    <button class="btn sm" id="inst-no">Not now</button>
+  </div>
 
   <footer>JobUp never applies on your behalf. You review and submit every application yourself.</footer>
 </div>
@@ -560,6 +608,37 @@ function renderAccount(){
     });
   });
 }
+
+/* ---- PWA ---- */
+if('serviceWorker' in navigator)
+  navigator.serviceWorker.register('/jobup/sw.js').catch(function(){});
+
+(function(){
+  var deferred=null;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); deferred=e;
+    if(localStorage.getItem('jobup_install_dismissed')) return;
+    $('install').classList.add('show');
+  });
+  $('inst-go').addEventListener('click',function(){
+    $('install').classList.remove('show');
+    if(deferred){deferred.prompt();deferred=null;}
+  });
+  $('inst-no').addEventListener('click',function(){
+    $('install').classList.remove('show');
+    localStorage.setItem('jobup_install_dismissed','1');
+  });
+  // iOS has no beforeinstallprompt — tell Safari users how, once.
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var standalone=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(isIOS&&!standalone&&!localStorage.getItem('jobup_install_dismissed')){
+    $('install').querySelector('.txt').innerHTML=
+      '<strong>Add JobUp to your home screen</strong><br>'+
+      '<span style="color:var(--mut)">Tap Share, then Add to Home Screen.</span>';
+    $('inst-go').style.display='none';
+    $('install').classList.add('show');
+  }
+})();
 
 boot();
 </script></body></html>

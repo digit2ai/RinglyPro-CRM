@@ -36,6 +36,9 @@ function enabled() {
 
 function status() {
   return {
+    free_activation: freeActivation(),
+    webhook_verification: process.env.STRIPE_WEBHOOK_SECRET ? 'configured'
+      : 'NOT configured — production refuses unverified webhooks, so a real payment would never activate an account',
     configured: enabled(),
     price_usd: PRICE_USD,
     refund_days: REFUND_DAYS,
@@ -43,6 +46,20 @@ function status() {
     tax: process.env.STRIPE_TAX_ENABLED === '1' ? 'stripe_tax' : 'not_configured',
     note: enabled() ? null : 'Checkout is not configured. Set STRIPE_SECRET_KEY to enable payments.',
   };
+}
+
+/**
+ * TEST MODE. When JOBUP_FREE_ACTIVATION=1 the payment step is skipped entirely:
+ * the subscriber is activated and provisioned immediately, with no charge.
+ *
+ * This exists so the funnel can be walked end to end without a real card, and
+ * it is deliberately NOT the default. It is reported by status(), shown on the
+ * health endpoint and on the owner console, and every account created this way
+ * is stamped `activation: 'free_test'` so it can never be mistaken for a
+ * paying subscriber in the revenue figures.
+ */
+function freeActivation() {
+  return process.env.JOBUP_FREE_ACTIVATION === '1';
 }
 
 async function createCheckout({ subscriberId, email, successUrl, cancelUrl }) {
@@ -197,6 +214,7 @@ function refundEligible(chargedAt, now = new Date()) {
 }
 
 module.exports = {
+  freeActivation,
   enabled, status, createCheckout, createPortal, applyEvent,
   renewalNoticesDue, refundEligible,
   PRICE_USD, REFUND_DAYS, RENEWAL_NOTICE_DAYS, DUNNING_STAGES,

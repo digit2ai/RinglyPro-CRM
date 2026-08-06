@@ -118,6 +118,33 @@ router.delete('/teaser/:token', async (req, res) => {
   res.json({ deleted: n, note: 'Teaser and its extracted resume text removed.' });
 });
 
+/**
+ * What the /welcome page reads after activation. Reports the real provisioning
+ * state — it never claims a site is live when it is not.
+ */
+router.get('/welcome', async (req, res) => {
+  const id = parseInt(req.query.s, 10);
+  if (!id) return res.status(400).json({ error: 'missing account reference' });
+  const sub = await models.subscribers.findOne({ where: { id } });
+  if (!sub) return res.status(404).json({ error: 'no such account' });
+
+  const provisioning = require('../services/provisioning');
+  const state = await provisioning.stateOf(sub.id);
+
+  res.json({
+    id: sub.id, email: sub.email, name: sub.name, status: sub.status,
+    activation: sub.activation || 'paid',
+    needs_password: !sub.password_hash,
+    url: state.url || (sub.address ? `https://${sub.address}` : null),
+    steps: [
+      { label: 'Account activated', ok: sub.status === 'active' },
+      { label: sub.address ? `Web address reserved — ${sub.address}` : 'Web address reserved', ok: Boolean(state.address) },
+      { label: 'Your site published', ok: Boolean(state.published) },
+      { label: 'Your three agents switched on', ok: Boolean(state.agents_started) },
+    ],
+  });
+});
+
 module.exports = router;
 module.exports.clientIp = clientIp;
 module.exports.validateGate = validateGate;
