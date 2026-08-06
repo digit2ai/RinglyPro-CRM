@@ -1792,8 +1792,70 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('the pipeline carries the job, not just an id', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    assert.ok(/\{ \.\.\.r, job: plain\(job\)/.test(src),
+    assert.ok(src.includes('display_title') && src.includes('...r, job,'),
       'a board of bare job ids is unreadable');
+  });
+
+
+  // ---------------------------------------------------------------
+  section('everything you are actually pursuing lands in one pipeline');
+  await t('AN INBOUND MESSAGE CAN ENTER THE PIPELINE', async () => {
+    // Opportunities and the pipeline were separate worlds: a recruiter could
+    // reach you, you could draft a reply, and there was nowhere to record that
+    // it went to a screen and then an interview.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.post('/opportunities/:id/track'"), 'the bridge must exist');
+    const o = await scoped('opportunities', subA.id).create({
+      source: 'site_form', company: 'Acme', role: 'Staff Engineer',
+      from_email: 'r@acme.example', note: 'Are you open?', status: 'new',
+    });
+    const entry = await scoped('job_matches', subA.id).create({
+      job_id: null, source: 'inbound', opportunity_id: o.id,
+      title: 'Staff Engineer', employer: 'Acme', stage: 'screening',
+    });
+    assert.strictEqual(entry.job_id, null, 'it has no posting in the shared pool');
+    assert.strictEqual(entry.employer, 'Acme', 'so it carries its own employer');
+    await scoped('job_matches', subA.id).destroy({ id: entry.id });
+    await scoped('opportunities', subA.id).destroy({ id: o.id });
+  });
+  await t('A PRIVATE CONVERSATION IS NEVER WRITTEN INTO THE SHARED POOL', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const block = src.slice(src.indexOf("router.post('/opportunities/:id/track'"),
+                            src.indexOf("router.post('/pipeline'"));
+    assert.ok(!/models\.jobs\.create/.test(block),
+      'ju_jobs has no tenant_id — a private inbound role there would reach every tenant matching');
+    assert.ok(block.includes('job_id: null'));
+  });
+  await t('tracking the same message twice does not duplicate it', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('m.opportunity_id === o.id'), 'it must look for an existing entry');
+    assert.ok(src.includes('already: true'));
+  });
+  await t('a role nobody found can be added by hand', async () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.post('/pipeline'"), 'half a real search is off-platform');
+    const row = await scoped('job_matches', subA.id).create({
+      job_id: null, source: 'manual', title: 'VP Finance', employer: 'Somewhere', stage: 'interviewing',
+    });
+    assert.strictEqual(row.score, undefined === row.score ? row.score : null);
+    await scoped('job_matches', subA.id).destroy({ id: row.id });
+  });
+  await t('a HUNTER match cannot be deleted, only closed', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(/row\.source === 'hunter'/.test(src),
+      'deleting one just makes the Hunter find it again next run');
+    assert.ok(src.includes('Move a found match to closed instead'));
+  });
+  await t('the board reads the same whatever the entry came from', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('display_title') && src.includes('display_employer'),
+      'one shape for hunter, inbound and manual entries');
   });
 
   // ---------------------------------------------------------------

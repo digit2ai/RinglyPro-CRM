@@ -93,6 +93,17 @@ const SCHEMA = {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     stage_changed_at: { type: DataTypes.DATE },
     note: { type: DataTypes.TEXT },
+    // Where this pipeline entry came from:
+    //   'hunter'  — the agent found the posting (job_id points into ju_jobs)
+    //   'inbound' — a recruiter contacted you (opportunity_id points at it)
+    //   'manual'  — you added it yourself
+    // job_id is NULL for the last two: ju_jobs is the SHARED pool, and writing
+    // a private conversation into it would expose it to every other tenant's
+    // matching.
+    source: { type: DataTypes.STRING, defaultValue: 'hunter' },
+    opportunity_id: { type: DataTypes.INTEGER },
+    title: { type: DataTypes.STRING },
+    employer: { type: DataTypes.STRING },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     job_id: { type: DataTypes.INTEGER, allowNull: false },
     score: { type: DataTypes.INTEGER },
@@ -365,6 +376,10 @@ const ADDED_COLUMNS = [
   ['ju_teasers',       'resume_text',  'TEXT'],
   ['ju_job_matches',   'stage_changed_at', 'TIMESTAMPTZ'],
   ['ju_job_matches',   'note',         'TEXT'],
+  ['ju_job_matches',   'source',       "VARCHAR(32) DEFAULT 'hunter'"],
+  ['ju_job_matches',   'opportunity_id', 'INTEGER'],
+  ['ju_job_matches',   'title',        'VARCHAR(250)'],
+  ['ju_job_matches',   'employer',     'VARCHAR(250)'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

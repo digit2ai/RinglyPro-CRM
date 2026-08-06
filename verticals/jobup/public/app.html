@@ -84,6 +84,9 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
 .stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
 text-transform:uppercase;color:var(--faint)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.addrow input{flex:1 1 150px;min-width:0;padding:9px 11px;font-size:14px}
+.addrow select{flex:0 0 auto;width:auto;padding:9px 11px;font-size:14px}
 .stagesel{background:var(--bg);border:1px solid var(--line2);border-radius:8px;
 color:var(--mut);font:inherit;font-size:12px;padding:5px 8px;cursor:pointer;width:auto;min-width:110px}
 .stagesel:focus{border-color:var(--cyan);outline:none}
@@ -356,6 +359,7 @@ function loadOpps(){
         '<span class="chip">'+esc(String(x.created_at||'').slice(0,10))+'</span>'+
         '<div class="acts">'+
           '<button class="btn primary sm" onclick="draftReply('+x.id+')">Draft reply</button>'+
+          '<button class="btn sm" onclick="trackOpp('+x.id+')">Track in pipeline</button>'+
           '<button class="btn sm" onclick="emailMe('+x.id+')">Email it to me</button>'+
           '<button class="btn sm" onclick="oppStatus('+x.id+',\'archived\')">Archive</button>'+
         '</div><div id="opp-'+x.id+'">'+
@@ -373,6 +377,14 @@ function draftReply(id){
       '<button class="btn sm" onclick="oppStatus('+id+',\'replied\')">Mark replied</button></div>'+
       (r.j.is_simulated?'<span class="chip sim">template — no model configured</span>':'')+
       '<div class="note">'+esc(r.j.note)+'</div>';
+  });
+}
+function trackOpp(id){
+  var o=$('opp-'+id); o.innerHTML='<div class="note">Adding...</div>';
+  api('/api/v1/engine/opportunities/'+id+'/track',{method:'POST'}).then(function(r){
+    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not track that.')+'</div>';return;}
+    o.innerHTML='<div class="note"><span class="chip ok">in your pipeline</span> '+esc(r.j.note||'')+'</div>';
+    loadPipeline(); loadToday();
   });
 }
 function emailMe(id){
@@ -536,20 +548,51 @@ function loadPipeline(){
     var p=r.j.pipeline||{},st=r.j.stages||[];
     var total=st.reduce(function(n,s){return n+((p[s]||[]).length);},0);
     $('p-pipeline').innerHTML=
-      '<div class="m" style="margin-bottom:14px">'+total+' role'+(total===1?'':'s')+
-      ' tracked. Move one with the dropdown on its card in Job Matches, or here.</div>'+
+      '<div class="m" style="margin-bottom:12px">'+total+' role'+(total===1?'':'s')+
+      ' tracked. Your agent only ever adds to <strong>new</strong> \u2014 every move after that is yours.</div>'+
+      '<div class="card" style="padding:14px 16px;margin-bottom:14px">'+
+        '<div class="t" style="font-size:15px">Add a role you are tracking</div>'+
+        '<div class="m" style="margin-bottom:9px">For interviews nobody\u2019s agent found.</div>'+
+        '<div class="addrow">'+
+          '<input id="pl-title" placeholder="Role title" maxlength="250">'+
+          '<input id="pl-emp" placeholder="Company" maxlength="250">'+
+          '<select id="pl-stage">'+STAGES.map(function(x){
+            return '<option value="'+x+'"'+(x==='screening'?' selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+          '<button class="btn primary sm" id="pl-add">Add</button>'+
+        '</div></div>'+
       '<div class="stage">'+st.map(function(s){
       var items=p[s]||[];
       return '<div class="stagecol"><h4>'+esc(s)+' ('+items.length+')</h4>'+
         (items.length?items.slice(0,12).map(function(m){
-          var j=m.job||{};
           return '<div class="mini">'+
-            '<div style="font-weight:650">'+esc(j.title||('#'+m.job_id))+'</div>'+
-            '<div class="note" style="margin:2px 0 6px">'+esc(j.employer||'')+
-              (m.score!=null?' · '+m.score:'')+'</div>'+
-            stageSelect(m)+'</div>';}).join('')
+            '<div style="font-weight:650">'+esc(m.display_title||'')+'</div>'+
+            '<div class="note" style="margin:2px 0 6px">'+esc(m.display_employer||'')+
+              (m.score!=null?' · '+m.score:'')+
+              (m.source&&m.source!=='hunter'?' · '+esc(m.source):'')+'</div>'+
+            stageSelect(m)+
+            (m.source!=='hunter'?' <button class="btn sm" style="margin-left:6px;padding:4px 9px" '+
+              'onclick="delEntry('+m.id+')">Remove</button>':'')+
+            '</div>';}).join('')
           :'<div class="note" style="margin:0">—</div>')+'</div>';
     }).join('')+'</div>';
+    var add=$('pl-add');
+    if(add) add.addEventListener('click',function(){
+      var title=$('pl-title').value.trim();
+      if(!title) return err('aerr','Give the role a title.');
+      api('/api/v1/engine/pipeline',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:title,employer:$('pl-emp').value.trim(),stage:$('pl-stage').value})})
+        .then(function(r){
+          if(!r.ok)return err('aerr',r.j.error||'Could not add that.');
+          loadPipeline(); loadToday();
+        });
+    });
+  });
+}
+function delEntry(id){
+  if(!confirm('Remove this from your pipeline?'))return;
+  api('/api/v1/engine/matches/'+id,{method:'DELETE'}).then(function(r){
+    if(!r.ok)return err('aerr',r.j.error||'Could not remove that.');
+    loadPipeline(); loadToday();
   });
 }
 

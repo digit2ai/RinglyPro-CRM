@@ -103,14 +103,85 @@ router.patch('/matches/:id', async (req, res) => {
   res.json({ ok: true, match: plain(await t.findOne({ id: row.id })) });
 });
 
+/**
+ * Track an inbound message in the pipeline.
+ *
+ * Opportunities and the pipeline were separate worlds: a recruiter could reach
+ * you, you could draft a reply, and then there was nowhere to record that it
+ * went to a screen and then an interview. Half of a real search happens in
+ * conversations nobody's agent found.
+ */
+router.post('/opportunities/:id/track', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const opps = scoped('opportunities', tid);
+  const o = await opps.findOne({ id: parseInt(req.params.id, 10) });
+  if (!o) return res.status(404).json({ error: 'not found' });
+
+  const t2 = scoped('job_matches', tid);
+  const already = (await t2.findAll({})).find((m) => m.opportunity_id === o.id);
+  if (already) {
+    return res.json({ ok: true, already: true, match: plain(already),
+                      note: 'Already in your pipeline.' });
+  }
+
+  const row = await t2.create({
+    job_id: null, source: 'inbound', opportunity_id: o.id,
+    title: o.role || 'Inbound conversation',
+    employer: o.company || o.from_name || null,
+    score: null, stage: req.body && STAGES.includes(req.body.stage) ? req.body.stage : 'screening',
+    stage_changed_at: new Date(),
+    note: o.note ? String(o.note).slice(0, 1000) : null,
+  });
+  res.json({ ok: true, match: plain(row),
+    note: 'Tracked. Move it through the stages as the conversation progresses.' });
+});
+
+/** Add a role you are tracking that nobody's agent found. */
+router.post('/pipeline', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const b = req.body || {};
+  const title = String(b.title || '').trim().slice(0, 250);
+  if (!title) return res.status(400).json({ error: 'A role title is required.' });
+  const stage = STAGES.includes(b.stage) ? b.stage : 'saved';
+
+  const row = await scoped('job_matches', tid).create({
+    job_id: null, source: 'manual', title,
+    employer: String(b.employer || '').trim().slice(0, 250) || null,
+    score: null, stage, stage_changed_at: new Date(),
+    note: typeof b.note === 'string' ? b.note.slice(0, 4000) : null,
+  });
+  res.json({ ok: true, match: plain(row) });
+});
+
+router.delete('/matches/:id', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const t2 = scoped('job_matches', tid);
+  const row = await t2.findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+  // Only entries you added yourself. A Hunter match is re-created on the next
+  // run anyway, so deleting one just makes it reappear.
+  if (row.source === 'hunter') {
+    return res.status(400).json({
+      error: 'Move a found match to closed instead — deleting it only makes the Hunter find it again.' });
+  }
+  await t2.destroy({ id: row.id });
+  res.json({ ok: true });
+});
+
 router.get('/pipeline', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const rows = plain(await scoped('job_matches', tid).findAll({}));
   const stages = STAGES;
   const by = {}; stages.forEach((s) => { by[s] = []; });
   for (const r of rows) {
-    const job = await models.jobs.findOne({ where: { id: r.job_id } });
-    (by[r.stage] || by.new).push({ ...r, job: plain(job) || null });
+    const job = r.job_id ? plain(await models.jobs.findOne({ where: { id: r.job_id } })) : null;
+    (by[r.stage] || by.new).push({
+      ...r, job,
+      // One shape for the board whether the Hunter found it, a recruiter
+      // brought it, or you typed it in.
+      display_title: (job && job.title) || r.title || `#${r.job_id || r.id}`,
+      display_employer: (job && job.employer) || r.employer || '',
+    });
   }
   res.json({ pipeline: by, stages });
 });
