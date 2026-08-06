@@ -782,6 +782,70 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!lines.includes('secret@example.com'));
   });
 
+
+  // ---------------------------------------------------------------
+  section('subscriber dashboard — one per profile');
+  const analyticsSvc = require(__dirname + '/src/services/analytics');
+
+  await t('page views are recorded WITHOUT storing an IP address', async () => {
+    const fakeReq = { get: (h) => (h === 'user-agent' ? 'Mozilla/5.0' : ''), headers: { 'x-forwarded-for': '203.0.113.9' }, ip: '203.0.113.9' };
+    analyticsSvc.record(subA.id, fakeReq, '/');
+    await new Promise((r) => setTimeout(r, 60));
+    const rows = await scoped('page_views', subA.id).findAll({});
+    assert.ok(rows.length >= 1, 'a view should be recorded');
+    const raw = JSON.stringify(rows);
+    assert.ok(!raw.includes('203.0.113.9'), 'the IP must never be stored');
+    assert.ok(rows[0].visitor_hash && rows[0].visitor_hash.length === 24, 'a salted digest instead');
+  });
+  await t('an AI crawler is counted separately from a person', async () => {
+    analyticsSvc.record(subA.id, { get: (h) => (h === 'user-agent' ? 'ClaudeBot/1.0' : ''), headers: {}, ip: '1.1.1.1' }, '/llms.txt');
+    await new Promise((r) => setTimeout(r, 60));
+    const a = await analyticsSvc.summary(subA.id, 30);
+    assert.ok(a.agent_views >= 1, 'crawler read should be counted as an agent');
+    assert.ok(a.views >= 1, 'the human view is still counted');
+    assert.ok(a.per_day.length === 30, 'the chart is zero-filled to 30 days');
+  });
+  await t('ANALYTICS ARE TENANT-ISOLATED — B never sees A traffic', async () => {
+    const b = await analyticsSvc.summary(subB.id, 30);
+    assert.strictEqual(b.views, 0);
+    assert.strictEqual(b.unique_visitors, 0);
+  });
+  await t('an inbound opportunity lands in the right subscriber inbox only', async () => {
+    await scoped('opportunities', subA.id).create({
+      source: 'site_form', company: 'Acme', role: 'Staff Engineer',
+      from_name: 'A Recruiter', from_email: 'r@acme.example', note: 'Are you open to a conversation?',
+    });
+    const mine = await scoped('opportunities', subA.id).findAll({});
+    const theirs = await scoped('opportunities', subB.id).findAll({});
+    assert.strictEqual(mine.length, 1);
+    assert.strictEqual(theirs.length, 0, 'cross-tenant leak');
+    assert.strictEqual(mine[0].status, 'new');
+  });
+  await t('the dashboard is served and carries every tab', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    for (const tab of ['Analytics', 'Job Matches', 'Opportunities', 'Today',
+                       'Pipeline', 'Targets', 'Broadcast', 'Settings']) {
+      assert.ok(html.includes('>' + tab), 'missing tab: ' + tab);
+    }
+    assert.ok(html.includes('honest by design'), 'the explainer callout should be present');
+  });
+  await t('the dashboard JS parses and references no missing element', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const js = html.split('<script>')[1].split('</script>')[0];
+    new Function(js);   // throws on a syntax error
+    const ids = [...new Set([...js.matchAll(/\$\('([a-z0-9-]+)'\)/g)].map((m) => m[1]))];
+    const missing = ids.filter((id) => !html.includes('id="' + id + '"'));
+    assert.deepStrictEqual(missing, [], 'ids referenced but absent from the DOM');
+  });
+  await t('the dashboard needs NO env var — a subscriber signs in with their own password', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!html.includes('JOBUP_ADMIN'), 'the subscriber dashboard must not reference the owner console');
+    assert.ok(html.includes('/api/v1/auth/login'), 'it authenticates as the subscriber');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
@@ -802,6 +866,10 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     for (const t2 of teasers) await models.teasers.destroy({ where: { id: t2.id } });
     const audits = await models.audit_log.findAll({});
     for (const a of audits) await models.audit_log.destroy({ where: { id: a.id } });
+    for (const tid of [subA.id, subB.id]) {
+      for (const pv of await scoped('page_views', tid).findAll({})) await scoped('page_views', tid).destroy({ where: { id: pv.id } });
+      for (const op of await scoped('opportunities', tid).findAll({})) await scoped('opportunities', tid).destroy({ where: { id: op.id } });
+    }
   });
 
   // ---------------------------------------------------------------

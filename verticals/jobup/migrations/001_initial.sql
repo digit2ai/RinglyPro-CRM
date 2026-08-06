@@ -127,3 +127,33 @@ CREATE INDEX IF NOT EXISTS idx_agent_runs_tenant ON agent_runs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_tenant ON invoices (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_notif_tenant ON notification_prefs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_log (tenant_id);
+
+-- ---------------------------------------------------------------------------
+-- Subscriber dashboard (added with the cv-admin-style console).
+-- Every subscriber gets their own dashboard; these back its Analytics and
+-- Opportunities tabs. Both are tenant-scoped.
+-- ---------------------------------------------------------------------------
+
+-- Traffic to a subscriber's own public site.
+-- NO IP ADDRESS IS EVER STORED. visitor_hash is a salted digest of
+-- (ip + user-agent + calendar day), so unique visitors can be counted for one
+-- day and the same person is unrecognisable across days.
+CREATE TABLE IF NOT EXISTS ju_page_views (
+  id            SERIAL PRIMARY KEY,
+  tenant_id     INTEGER NOT NULL,
+  path          VARCHAR(200),
+  referrer      VARCHAR(300),
+  visitor_hash  VARCHAR(64),
+  is_agent      BOOLEAN DEFAULT FALSE,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_ju_page_views_tenant ON ju_page_views (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_ju_page_views_tenant_day ON ju_page_views (tenant_id, created_at);
+
+-- Inbound interest — the subscriber's own inbox.
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS from_name   VARCHAR(255);
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS from_email  VARCHAR(255);
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS status      VARCHAR(32) DEFAULT 'new';
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS reply_draft TEXT;
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS read_at     TIMESTAMPTZ;
+ALTER TABLE ju_opportunities ADD COLUMN IF NOT EXISTS replied_at  TIMESTAMPTZ;

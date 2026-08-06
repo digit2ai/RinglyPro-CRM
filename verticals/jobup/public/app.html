@@ -1,0 +1,565 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>JobUp — Your dashboard</title><style>
+:root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--card2:#161a24;
+--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
+--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;--cyan:#22d3ee;--cyan-bd:rgba(34,211,238,.32);
+--violet:#8b5cf6;--green:#3ad07f;--warn:#e6b45a;--red:#f87171;
+--grad:linear-gradient(120deg,#22d3ee 0%,#6366f1 55%,#8b5cf6 100%);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);min-height:100%}
+body{color:var(--ink);font:15.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+letter-spacing:-.011em;-webkit-font-smoothing:antialiased;position:relative}
+body::before{content:"";position:fixed;inset:0 0 auto 0;height:520px;z-index:0;pointer-events:none;
+background:radial-gradient(56% 40% at 20% 0%,rgba(34,211,238,.13),transparent 70%),
+radial-gradient(50% 38% at 84% 8%,rgba(139,92,246,.13),transparent 72%);filter:blur(26px)}
+a{color:inherit;text-decoration:none}
+.wrap{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:0 22px}
+.nav{position:sticky;top:0;z-index:40;background:rgba(7,8,12,.85);backdrop-filter:blur(14px);
+border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.025em}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.6)}
+.btn{border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:999px;
+padding:8px 16px;font:inherit;font-size:13.5px;cursor:pointer;transition:all .15s ease}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary{background:var(--grad);border:0;color:#06121a;font-weight:730}
+.btn.primary:hover{color:#06121a;transform:translateY(-1px)}
+.btn.sm{padding:6px 13px;font-size:12.5px}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 22px}
+.tab{border:1px solid var(--line);border-radius:999px;padding:9px 17px;font-size:14px;color:var(--mut);
+cursor:pointer;background:transparent;font-family:inherit;transition:all .15s ease}
+.tab:hover{border-color:var(--line2);color:var(--ink)}
+.tab.on{background:var(--card2);border-color:var(--cyan-bd);color:var(--cyan)}
+.tab .n{font-family:var(--mono);font-size:11px;opacity:.75;margin-left:6px}
+h1{font-size:27px;font-weight:820;letter-spacing:-.035em;margin:30px 0 4px}
+.lede{color:var(--mut);font-size:14.5px;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px;margin-bottom:26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:17px}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.stat .v{font-size:26px;font-weight:820;letter-spacing:-.03em;margin-top:5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:20px;margin-bottom:13px;
+transition:border-color .16s ease}
+.card:hover{border-color:var(--line2)}
+.row{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.t{font-weight:720;font-size:16.5px}
+.m{color:var(--mut);font-size:13.5px;margin-top:2px}
+.score{font-weight:830;font-size:24px;letter-spacing:-.03em;background:var(--grad);
+-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.chip{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:999px;
+padding:4px 11px;font-size:12.5px;margin:5px 5px 0 0;color:var(--mut);font-family:var(--mono)}
+.chip.sim{border-color:rgba(230,180,90,.4);color:var(--warn)}
+.chip.ok{border-color:rgba(58,208,127,.4);color:var(--green)}
+.chip.warn{border-color:rgba(248,113,113,.4);color:var(--red)}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.empty{border:1px dashed var(--line2);border-radius:15px;padding:34px 22px;text-align:center;color:var(--mut)}
+.empty .big{font-weight:700;color:var(--ink);margin-bottom:6px}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+color:var(--faint);margin:16px 0 6px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:11px;
+padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border-bottom:0}
+.sw .lbl{font-size:14.5px}.sw .hint{color:var(--faint);font-size:12.5px;margin-top:2px}
+.toggle{width:46px;height:26px;border-radius:99px;background:var(--card2);border:1px solid var(--line2);
+position:relative;cursor:pointer;flex:0 0 46px;transition:all .16s ease}
+.toggle i{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+background:var(--faint);transition:all .16s ease}
+.toggle.on{background:rgba(34,211,238,.18);border-color:var(--cyan-bd)}
+.toggle.on i{left:23px;background:var(--cyan)}
+pre{background:#0d0d13;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;
+font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white-space:pre-wrap}
+.stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+.stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
+.stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+text-transform:uppercase;color:var(--faint)}
+.mini{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;
+font-size:13px;margin-bottom:7px}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
+border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
+.err.show{display:block}
+.note{color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.65;margin-top:12px}
+.hidden{display:none}
+.who{display:flex;align-items:center;gap:12px;min-width:0}
+.av{width:44px;height:44px;border-radius:12px;background:var(--grad);color:#06121a;font-weight:830;
+font-size:16px;display:flex;align-items:center;justify-content:center;flex:0 0 44px;letter-spacing:-.02em}
+.who-n{font-weight:790;letter-spacing:-.026em;font-size:17px;line-height:1.2}
+.who-h{color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52vw}
+.callout{background:rgba(230,180,90,.07);border:1px solid rgba(230,180,90,.3);border-radius:15px;
+padding:17px 19px;color:#f0d5a6;font-size:14px;line-height:1.62;margin:26px 0 4px}
+.callout strong{color:#ffdf9e}
+.chart{display:flex;align-items:flex-end;gap:5px;height:190px;margin-top:16px;overflow-x:auto;padding-bottom:26px}
+.bar{flex:1 0 16px;min-width:16px;background:var(--grad);border-radius:5px 5px 0 0;position:relative;
+min-height:2px;opacity:.9;transition:opacity .15s}
+.bar:hover{opacity:1}
+.bar span{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%) rotate(-45deg);
+transform-origin:top left;font-family:var(--mono);font-size:9.5px;color:var(--faint);white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+.tbl td{padding:9px 0;border-bottom:1px solid var(--line);color:var(--mut)}
+.tbl td:last-child{text-align:right;font-family:var(--mono);color:var(--ink);white-space:nowrap;padding-left:14px}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.u{color:var(--ink);word-break:break-all}
+.h2{font-size:17px;font-weight:760;letter-spacing:-.025em;margin:0 0 4px}
+.act{display:flex;gap:11px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+.act:last-child{border-bottom:0}
+.act .b{width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-top:7px;flex:0 0 8px}
+.act .b.clear{background:var(--green)}
+.panel{max-width:430px;margin:80px auto;background:var(--card);border:1px solid var(--line);
+border-radius:20px;padding:32px}
+.danger{border-color:rgba(248,113,113,.3)}
+footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:56px 0 40px;
+border-top:1px solid var(--line);padding-top:20px}
+@media(max-width:600px){h1{font-size:22px}.wrap{padding:0 15px}}
+</style></head><body>
+
+<div class="nav"><div class="wrap">
+  <div class="who">
+    <div class="av" id="av">--</div>
+    <div><div class="who-n" id="who-n">JobUp</div><div class="who-h" id="who-h"></div></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a class="btn sm" id="mysite" target="_blank" rel="noopener" style="display:none">View public CV</a>
+    <button class="btn sm" id="signout" style="display:none">Sign out</button>
+  </div>
+</div></div>
+
+<!-- sign in -->
+<div id="login" class="wrap"><div class="panel">
+  <h1 style="margin-top:0">Sign in</h1>
+  <div class="lede">Use the email and password you set after activating.</div>
+  <div class="err" id="lerr"></div>
+  <label for="le">Email</label><input id="le" type="email" autocomplete="username">
+  <label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password">
+  <button class="btn primary" id="lgo" style="width:100%;margin-top:20px;padding:12px">Sign in</button>
+  <div class="note" id="lnote">Forgot your password? <a href="#" id="forgot" style="color:var(--cyan)">Send a reset link</a></div>
+</div></div>
+
+<!-- app -->
+<div id="app" class="wrap hidden">
+  <div class="callout">
+    <strong>Your AI career agent (honest by design):</strong> <strong>Job Matches</strong> scans real, live
+    openings and scores each against your profile. On any match, <strong>Draft outreach</strong> writes a
+    tailored note you review, edit and send from your own email &mdash; nothing is ever auto-blasted, so it
+    reaches recruiters from you, not a bot (this protects your deliverability and your reputation).
+    Recruiters &mdash; and their AIs &mdash; reach you via your public link and agent endpoint, and every
+    message lands in <strong>Opportunities</strong> here where you can <strong>Draft reply</strong> in one click.
+  </div>
+
+  <div class="err" id="aerr"></div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="analytics">Analytics</button>
+    <button class="tab" data-p="matches">Job Matches<span class="n" id="c-matches"></span></button>
+    <button class="tab" data-p="opps">Opportunities<span class="n" id="c-opps"></span></button>
+    <button class="tab" data-p="today">Today</button>
+    <button class="tab" data-p="pipeline">Pipeline</button>
+    <button class="tab" data-p="targets">Targets</button>
+    <button class="tab" data-p="outreach">Broadcast<span class="n" id="c-out"></span></button>
+    <button class="tab" data-p="settings">Settings</button>
+    <button class="tab" data-p="account">Account</button>
+  </div>
+
+  <div id="p-analytics"></div>
+  <div id="p-matches" class="hidden"></div>
+  <div id="p-opps" class="hidden"></div>
+  <div id="p-today" class="hidden"></div>
+  <div id="p-targets" class="hidden"></div>
+  <div id="p-pipeline" class="hidden"></div>
+  <div id="p-outreach" class="hidden"></div>
+  <div id="p-settings" class="hidden"></div>
+  <div id="p-account" class="hidden"></div>
+
+  <footer>JobUp never applies on your behalf. You review and submit every application yourself.</footer>
+</div>
+
+<script>
+var API=(location.pathname.indexOf('/jobup')===0)?'/jobup':'';
+var ME=null,MATCHES=[],OUT=[],SET=null;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function err(el,m){var e=$(el);e.textContent=m;e.classList.add('show');
+  setTimeout(function(){e.classList.remove('show');},6000);}
+function api(path,opts){return fetch(API+path,Object.assign({credentials:'same-origin'},opts||{}))
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
+
+/* ---- sign in ---- */
+$('lgo').addEventListener('click',function(){
+  api('/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:$('le').value.trim(),password:$('lp').value})})
+    .then(function(r){ if(!r.ok) return err('lerr',r.j.error||'Sign in failed'); boot(); })
+    .catch(function(){err('lerr','Could not reach the server.');});
+});
+$('lp').addEventListener('keydown',function(e){if(e.key==='Enter')$('lgo').click();});
+$('forgot').addEventListener('click',function(e){
+  e.preventDefault();
+  var em=$('le').value.trim(); if(!em) return err('lerr','Enter your email first.');
+  api('/api/v1/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em})}).then(function(r){
+      $('lnote').textContent=r.j.note||'If that address has an account, a reset link has been sent.';
+      if(r.j.reset_url)$('lnote').innerHTML+=' <a href="'+esc(r.j.reset_url)+'" style="color:var(--cyan)">Open reset link</a>';
+    });
+});
+$('signout').addEventListener('click',function(){
+  api('/api/v1/auth/logout',{method:'POST'}).then(function(){location.reload();});
+});
+
+/* ---- tabs ---- */
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+  t.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+    t.classList.add('on');
+    ['analytics','matches','opps','today','targets','pipeline','outreach','settings','account'].forEach(function(p){
+      $('p-'+p).classList.toggle('hidden',p!==t.dataset.p);});
+  });
+});
+
+/* ---- boot ---- */
+function boot(){
+  api('/api/v1/auth/session').then(function(r){
+    if(!r.ok){ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+    ME=r.j;
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    $('signout').style.display=''; 
+    var nm=ME.name||ME.email||'';
+    $('who-n').textContent=nm;
+    $('av').textContent=(nm.trim().split(/\s+/).slice(0,2).map(function(w){return w[0];}).join('')||'?').toUpperCase();
+    if(ME.address){ $('mysite').href='https://'+ME.address; $('mysite').style.display=''; }
+    api('/api/v1/engine/me').then(function(r){
+      if(r.ok) $('who-h').textContent=[r.j.headline,ME.address].filter(Boolean).join('  ·  ')||ME.email;
+      else $('who-h').textContent=ME.email;
+    });
+    loadAnalytics(); loadMatches(); loadOpps(); loadToday(); loadTargets();
+    loadPipeline(); loadOutreach(); loadSettings(); renderAccount();
+  }).catch(function(){ $('login').classList.remove('hidden'); });
+}
+
+/* ---- analytics ---- */
+function loadAnalytics(){
+  api('/api/v1/engine/analytics?days=30').then(function(r){
+    if(!r.ok) return;
+    var a=r.j,mx=Math.max.apply(null,a.per_day.map(function(d){return d.views;}).concat([1]));
+    var html='<div class="grid">'+
+      stat('Profile views (30d)',a.views)+
+      stat('Unique visitors (30d)',a.unique_visitors)+
+      stat('Views (all time)',a.views_all_time)+
+      stat('AI agent reads (30d)',a.agent_views)+'</div>'+
+      '<div class="card"><div class="h2">Views per day (30d)</div><div class="chart">'+
+        a.per_day.map(function(d){
+          return '<div class="bar" style="height:'+Math.max(2,Math.round(d.views/mx*160))+'px" '+
+            'title="'+esc(d.date)+': '+d.views+'"><span>'+esc(d.date.slice(5))+'</span></div>';
+        }).join('')+'</div></div>';
+    html+='<div class="card"><div class="h2">Where visitors come from</div>'+
+      (a.referrers.length?'<table class="tbl">'+a.referrers.map(function(x){
+        return '<tr><td class="u">'+esc(x.url)+'</td><td>'+x.n+'</td></tr>';}).join('')+'</table>'
+        :'<div class="note">No referrers recorded yet. Most direct visits carry none.</div>')+'</div>';
+    html+='<div class="card"><div class="h2">Most-read pages</div>'+
+      (a.pages.length?'<table class="tbl">'+a.pages.map(function(x){
+        return '<tr><td class="u">'+esc(x.path)+'</td><td>'+x.n+'</td></tr>';}).join('')+'</table>'
+        :'<div class="note">No page views yet.</div>')+'</div>';
+    if(a.agents.length) html+='<div class="card"><div class="h2">What AI crawlers read</div>'+
+      '<table class="tbl">'+a.agents.map(function(x){
+        return '<tr><td class="u">'+esc(x.path)+'</td><td>'+x.n+'</td></tr>';}).join('')+'</table>'+
+      '<div class="note">Recruiting tools increasingly read resume.json, llms.txt and your agent card rather than the page.</div></div>';
+    html+='<div class="note">'+esc(a.note)+'</div>';
+    $('p-analytics').innerHTML=html;
+  });
+}
+
+/* ---- opportunities (inbound) ---- */
+function loadOpps(){
+  api('/api/v1/engine/opportunities').then(function(r){
+    if(!r.ok) return;
+    var o=r.j.opportunities||[];
+    $('c-opps').textContent=r.j.new_count?'('+r.j.new_count+' new)':'';
+    if(!o.length){
+      $('p-opps').innerHTML='<div class="empty"><div class="big">No inbound messages yet</div>'+
+        'When a recruiter — or their AI — contacts you through your public link or agent endpoint, '+
+        'it lands here. You draft a reply in one click and send it yourself.</div>';
+      return;
+    }
+    $('p-opps').innerHTML=o.map(function(x){
+      return '<div class="card"><div class="row"><div style="flex:1;min-width:220px">'+
+        '<div class="t">'+esc(x.role||'Inbound message')+(x.company?' — '+esc(x.company):'')+'</div>'+
+        '<div class="m">'+esc([x.from_name,x.from_email].filter(Boolean).join(' · ')||x.source||'')+'</div>'+
+        (x.note?'<pre>'+esc(x.note)+'</pre>':'')+
+        '<span class="chip'+(x.status==='new'?' ok':'')+'">'+esc(x.status)+'</span>'+
+        '<span class="chip">'+esc(String(x.created_at||'').slice(0,10))+'</span>'+
+        '<div class="acts">'+
+          '<button class="btn primary sm" onclick="draftReply('+x.id+')">Draft reply</button>'+
+          '<button class="btn sm" onclick="oppStatus('+x.id+',\'archived\')">Archive</button>'+
+        '</div><div id="opp-'+x.id+'">'+
+        (x.reply_draft?'<pre>'+esc(x.reply_draft)+'</pre>':'')+'</div>'+
+      '</div></div></div>';
+    }).join('');
+  });
+}
+function draftReply(id){
+  var o=$('opp-'+id); o.innerHTML='<div class="note">Drafting…</div>';
+  api('/api/v1/engine/opportunities/'+id+'/draft-reply',{method:'POST'}).then(function(r){
+    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not draft')+'</div>';return;}
+    o.innerHTML='<pre>'+esc(r.j.draft)+'</pre>'+
+      '<div class="acts"><a class="btn primary sm" href="'+esc(r.j.mailto)+'">Open in my mail app</a>'+
+      '<button class="btn sm" onclick="oppStatus('+id+',\'replied\')">Mark replied</button></div>'+
+      (r.j.is_simulated?'<span class="chip sim">template — no model configured</span>':'')+
+      '<div class="note">'+esc(r.j.note)+'</div>';
+  });
+}
+function oppStatus(id,st){
+  api('/api/v1/engine/opportunities/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status:st})}).then(function(){loadOpps();loadToday();});
+}
+
+/* ---- today ---- */
+function loadToday(){
+  api('/api/v1/engine/today').then(function(r){
+    if(!r.ok) return;
+    var d=r.j;
+    $('p-today').innerHTML='<div class="grid">'+
+      stat('New matches (24h)',d.new_matches_24h)+
+      stat('Awaiting approval',d.pending_approvals)+
+      stat('New opportunities',d.new_opportunities)+'</div>'+
+      '<div class="card"><div class="h2">What needs you</div>'+
+      d.actions.map(function(a){
+        return '<div class="act"><div class="b'+(a.kind==='clear'?' clear':'')+'"></div><div>'+esc(a.text)+'</div></div>';
+      }).join('')+'</div>'+
+      '<div class="card"><div class="h2">Your agents</div>'+
+      '<div class="m">Run any of them now. Nothing sends without your approval.</div>'+
+      '<div class="acts">'+
+        '<button class="btn primary sm" onclick="runAgent(\'hunter\')">Find jobs</button>'+
+        '<button class="btn sm" onclick="runAgent(\'broadcaster\')">Draft outreach</button>'+
+        '<button class="btn sm" onclick="runAgent(\'presence\')">Check my presence</button>'+
+      '</div></div>'+
+      '<div class="card"><div class="h2">Recent activity</div>'+
+      ((d.recent_runs||[]).length?d.recent_runs.map(function(x){
+        return '<div class="act"><div class="b"></div><div><strong>'+esc(x.agent)+'</strong> — '+
+          esc(x.summary||'')+'<div class="note" style="margin:2px 0 0">'+
+          esc(String(x.created_at||'').slice(0,16).replace('T',' '))+
+          (x.is_simulated?' · heuristic':'')+'</div></div></div>';
+      }).join(''):'<div class="note">No runs yet.</div>')+'</div>';
+  });
+}
+
+/* ---- targets ---- */
+function loadTargets(){
+  api('/api/v1/engine/targets').then(function(r){
+    if(!r.ok) return;
+    var t=r.j;
+    function list(arr,empty){ return arr&&arr.length?arr.map(function(x){
+      return '<span class="chip">'+esc(typeof x==='string'?x:(x.title||x.slug||JSON.stringify(x)))+'</span>';
+      }).join(''):'<div class="note">'+esc(empty)+'</div>'; }
+    $('p-targets').innerHTML=
+      '<div class="card"><div class="h2">Roles you are targeting</div>'+
+      '<div class="m">These are the exact title strings a sourcer searches. Each one also becomes an indexable page on your site.</div>'+
+      list(t.role_targets,'No role targets set. Without these your site carries no title a recruiter would search for.')+'</div>'+
+      '<div class="card"><div class="h2">Indexable role pages</div>'+
+      list(t.page_roles,'None generated yet.')+'</div>'+
+      '<div class="card"><div class="h2">Where you will work</div>'+
+      list(t.countries,'No country restriction.')+
+      (t.remote_only?'<span class="chip ok">remote only</span>':'')+'</div>'+
+      '<div class="card"><div class="h2">Employers to never contact</div>'+
+      '<div class="m">Absolute. Checked at match time, at alert time and at draft time.</div>'+
+      list(t.excluded_employers,'None excluded.')+'</div>'+
+      '<div class="card"><div class="h2">People to never contact</div>'+
+      list(t.do_not_contact,'None listed.')+'</div>';
+  });
+}
+
+/* ---- matches ---- */
+function loadMatches(){
+  api('/api/v1/engine/matches').then(function(r){
+    if(!r.ok) return;
+    MATCHES=r.j.matches||[];
+    $('c-matches').textContent=MATCHES.length?'('+MATCHES.length+')':'';
+    if(!MATCHES.length){
+      $('p-matches').innerHTML='<div class="empty"><div class="big">No matches yet</div>'+
+        'Your Opportunity Hunter runs daily. When it finds openings that fit, they appear here with a score '+
+        'and the reason for the match. We show real postings or none at all.'+
+        '<div class="acts" style="justify-content:center"><button class="btn primary sm" onclick="runAgent(\'hunter\')">Run the Hunter now</button></div></div>';
+      return;
+    }
+    $('p-matches').innerHTML='<div class="grid">'+
+      stat('Matches',MATCHES.length)+
+      stat('Strong (80+)',MATCHES.filter(function(m){return m.score>=80;}).length)+
+      stat('Applied',MATCHES.filter(function(m){return m.stage==='applied';}).length)+
+      '</div>'+MATCHES.map(matchCard).join('');
+  });
+}
+function stat(k,v){return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>';}
+function matchCard(m){
+  var j=m.job||{};
+  return '<div class="card"><div class="row"><div style="flex:1;min-width:220px">'+
+    '<div class="t">'+esc(j.title||'Untitled role')+'</div>'+
+    '<div class="m">'+esc(j.employer||'')+(j.location?' · '+esc(j.location):'')+'</div>'+
+    (m.explanation?'<div class="m" style="margin-top:7px">'+esc(m.explanation)+'</div>':'')+
+    (j.compensation?'<div class="m">Compensation as stated by the posting: '+esc(j.compensation)+'</div>':'')+
+    ((m.missing||[]).length?'<div>'+m.missing.slice(0,4).map(function(x){
+      return '<span class="chip">missing: '+esc(x)+'</span>';}).join('')+'</div>':'')+
+    (m.is_simulated?'<span class="chip sim">heuristic score</span>':'')+
+    '<span class="chip">'+esc(m.stage||'new')+'</span>'+
+    '<div class="acts">'+
+      (j.url?'<a class="btn sm" href="'+esc(j.url)+'" target="_blank" rel="noopener">Open posting</a>':'')+
+      '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume</button>'+
+      '<button class="btn sm" onclick="ats('+j.id+')">Keyword check</button>'+
+      '<button class="btn primary sm" onclick="applied('+j.id+')">I applied</button>'+
+    '</div><div id="out-'+j.id+'"></div>'+
+    '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
+}
+function tailor(id){
+  var o=$('out-'+id); o.innerHTML='<div class="note">Tailoring…</div>';
+  api('/api/v1/engine/tailor/'+id,{method:'POST'}).then(function(r){
+    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not tailor')+'</div>';return;}
+    var f=r.j.flagged||[];
+    o.innerHTML='<div class="note">'+
+      (r.j.changes||[]).map(function(c){return '· '+esc(c);}).join('<br>')+
+      (f.length?'<br><span class="chip warn">'+f.length+' term(s) need your confirmation — nothing is added that you did not write</span>':
+                '<br><span class="chip ok">no invented facts detected</span>')+
+      (r.j.is_simulated?'<br><span class="chip sim">returned unchanged — no model configured</span>':'')+
+      '<br>Used '+r.j.used+' of '+r.j.limit+' this month.</div>';
+  });
+}
+function ats(id){
+  var o=$('out-'+id); o.innerHTML='<div class="note">Checking…</div>';
+  api('/api/v1/engine/ats/'+id).then(function(r){
+    if(!r.ok){o.innerHTML='';return;}
+    o.innerHTML='<div class="note">ATS keyword match: <strong>'+r.j.score+'%</strong> ('+
+      r.j.matched.length+' of '+r.j.total_terms+' terms).<br>'+
+      (r.j.missing.length?'Missing: '+r.j.missing.slice(0,12).map(esc).join(', '):'Nothing obvious missing.')+
+      '<br>Deterministic — this costs nothing.</div>';
+  });
+}
+function applied(id){
+  api('/api/v1/engine/applications/'+id+'/confirm',{method:'POST'}).then(function(r){
+    if(r.ok){ $('out-'+id).innerHTML='<div class="note">'+esc(r.j.note)+'</div>';
+      loadMatches(); loadPipeline(); }
+  });
+}
+
+/* ---- pipeline ---- */
+function loadPipeline(){
+  api('/api/v1/engine/pipeline').then(function(r){
+    if(!r.ok) return;
+    var p=r.j.pipeline||{},st=r.j.stages||[];
+    $('p-pipeline').innerHTML='<div class="stage">'+st.map(function(s){
+      var items=p[s]||[];
+      return '<div class="stagecol"><h4>'+esc(s)+' ('+items.length+')</h4>'+
+        (items.length?items.slice(0,8).map(function(m){
+          return '<div class="mini">#'+m.job_id+' · score '+(m.score==null?'—':m.score)+'</div>';}).join('')
+          :'<div class="note" style="margin:0">—</div>')+'</div>';
+    }).join('')+'</div>';
+  });
+}
+
+/* ---- outreach approvals ---- */
+function loadOutreach(){
+  api('/api/v1/engine/outreach').then(function(r){
+    if(!r.ok) return;
+    OUT=r.j.outreach||[];
+    var pending=OUT.filter(function(o){return !o.approved_at;});
+    $('c-out').textContent=pending.length?'('+pending.length+')':'';
+    if(!OUT.length){
+      $('p-outreach').innerHTML='<div class="empty"><div class="big">Nothing waiting on you</div>'+
+        'Your Career Broadcaster drafts outreach here. Nothing is ever sent without your explicit approval — '+
+        'that is enforced in code, not policy.'+
+        '<div class="acts" style="justify-content:center"><button class="btn primary sm" onclick="runAgent(\'broadcaster\')">Draft some now</button></div></div>';
+      return;
+    }
+    $('p-outreach').innerHTML=OUT.map(function(o){
+      return '<div class="card"><div class="t">'+esc(o.subject||'(no subject)')+'</div>'+
+        '<div class="m">'+esc(o.channel||'email')+'</div>'+
+        '<pre>'+esc(o.body||'')+'</pre>'+
+        (o.approved_at?'<span class="chip ok">approved '+esc(String(o.approved_at).slice(0,10))+'</span>'
+          :'<div class="acts"><button class="btn primary sm" onclick="approve('+o.id+')">Approve</button>'+
+           '<span class="chip">awaiting your approval</span></div>')+
+        (o.sent_at?'<span class="chip">sent</span>':'')+'</div>';
+    }).join('');
+  });
+}
+function approve(id){
+  api('/api/v1/engine/outreach/'+id+'/approve',{method:'POST'}).then(function(){loadOutreach();});
+}
+
+function runAgent(n){
+  err('aerr','Running '+n+'…');
+  api('/api/v1/engine/agents/'+n+'/run',{method:'POST'}).then(function(r){
+    if(!r.ok) return err('aerr',r.j.error||'Run failed');
+    loadMatches(); loadOutreach(); loadToday(); loadAnalytics();
+    err('aerr',n+' finished.');
+  });
+}
+
+/* ---- settings ---- */
+function loadSettings(){
+  api('/api/v1/engine/settings').then(function(r){
+    if(!r.ok) return;
+    SET=r.j.settings;
+    var pv=SET.privacy||{};
+    function sw(k,lbl,hint){
+      return '<div class="sw"><div><div class="lbl">'+esc(lbl)+'</div><div class="hint">'+esc(hint)+'</div></div>'+
+        '<div class="toggle'+(pv[k]?' on':'')+'" data-k="'+k+'"><i></i></div></div>';
+    }
+    $('p-settings').innerHTML=
+      '<div class="card"><div class="t">What is public on your site</div>'+
+      '<div class="m" style="margin-bottom:10px">Anything off here is <strong>deleted</strong> from your page, your resume.json, your agent card and your llms.txt — not hidden.</div>'+
+      sw('email','Email address','Off by default.')+
+      sw('phone','Phone number','Off by default.')+
+      sw('location','Location','')+
+      sw('compensation','Compensation expectations','Quoted exactly as you wrote it, or omitted.')+
+      sw('work_authorization','Work authorization','Quoted exactly as you wrote it, or omitted.')+
+      sw('summary','Professional summary','')+
+      sw('experience','Employment history','')+
+      sw('education','Education','')+
+      sw('skills','Skills','')+
+      '</div>'+
+      '<div class="card"><div class="t">Approval</div>'+
+      '<div class="sw"><div><div class="lbl">Review every message before it sends</div>'+
+      '<div class="hint">Always on. This cannot be turned off.</div></div>'+
+      '<div class="toggle on" style="opacity:.6;cursor:not-allowed"><i></i></div></div></div>'+
+      '<div class="card"><div class="t">Quotas</div>'+
+      '<div class="m">Resume tailoring: '+esc(SET.quotas.tailor_monthly_limit)+' per month · '+
+      'Jobs scored: '+esc(SET.quotas.jobs_scored_per_day)+' per day</div></div>'+
+      '<button class="btn primary" id="saveset">Save settings</button>';
+    Array.prototype.forEach.call(document.querySelectorAll('.toggle[data-k]'),function(t){
+      t.addEventListener('click',function(){t.classList.toggle('on');});
+    });
+    $('saveset').addEventListener('click',saveSettings);
+  });
+}
+function saveSettings(){
+  var pv={};
+  Array.prototype.forEach.call(document.querySelectorAll('.toggle[data-k]'),function(t){
+    pv[t.dataset.k]=t.classList.contains('on');});
+  var next=JSON.parse(JSON.stringify(SET)); next.privacy=pv;
+  api('/api/v1/engine/settings',{method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({settings:next})}).then(function(r){
+      if(r.ok){SET=r.j.settings;err('aerr','Settings saved. Your public surfaces update immediately.');}
+      else err('aerr',r.j.error||'Save failed');
+    });
+}
+
+/* ---- account ---- */
+function renderAccount(){
+  $('p-account').innerHTML=
+    '<div class="card"><div class="t">Your data</div>'+
+    '<div class="m">Everything JobUp holds about you, in one file. Yours, any time, including after you cancel.</div>'+
+    '<div class="acts"><a class="btn primary sm" href="'+API+'/api/v1/engine/export">Download my data</a></div></div>'+
+    '<div class="card"><div class="t">Subscription</div>'+
+    '<div class="m">Status: '+esc(ME.status)+(ME.address?' · site live at '+esc(ME.address):'')+'</div>'+
+    '<div class="note">If you do not renew, your site goes down and your address is released. Your export stays available.</div></div>'+
+    '<div class="card danger"><div class="t">Delete my account</div>'+
+    '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
+    '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
+    '<div id="delout" class="note"></div></div>';
+  $('del').addEventListener('click',function(){
+    if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
+    api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){
+      if(r.ok){ $('delout').textContent=r.j.note||'Deleted.'; setTimeout(function(){location.href='/';},2500); }
+    });
+  });
+}
+
+boot();
+</script></body></html>

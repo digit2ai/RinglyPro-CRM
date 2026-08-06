@@ -27,7 +27,7 @@ const TABLE_PREFIX = 'ju_';
 const TENANT_SCOPED = new Set([
   'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes',
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
-  'invoices', 'notification_prefs', 'audit_log',
+  'invoices', 'notification_prefs', 'audit_log', 'page_views',
 ]);
 
 const SCHEMA = {
@@ -142,13 +142,33 @@ const SCHEMA = {
     consent_snapshot: { type: DataTypes.JSONB },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
+  // INBOUND interest — a recruiter (or their AI) reached the subscriber via
+  // the public site or the agent endpoint. The subscriber's own inbox.
   opportunities: {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
-    source: { type: DataTypes.STRING },
+    source: { type: DataTypes.STRING },          // site_form | agent_endpoint | manual
     company: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING },
+    from_name: { type: DataTypes.STRING },
+    from_email: { type: DataTypes.STRING },
     note: { type: DataTypes.TEXT },
+    status: { type: DataTypes.STRING, defaultValue: 'new' },   // new | read | replied | archived
+    reply_draft: { type: DataTypes.TEXT },
+    read_at: { type: DataTypes.DATE },
+    replied_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // Traffic to the subscriber's own public site.
+  // NO raw IP is ever stored — visitor_hash is a salted daily digest, so a
+  // unique-visitor count is possible without retaining an identifier.
+  page_views: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    path: { type: DataTypes.STRING },
+    referrer: { type: DataTypes.STRING },
+    visitor_hash: { type: DataTypes.STRING },
+    is_agent: { type: DataTypes.BOOLEAN, defaultValue: false },  // an AI crawler, not a person
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   sites: {
@@ -210,7 +230,15 @@ function memoryTable(name) {
   return {
     _name: name,
     async create(values) {
-      const row = { id: seq++, created_at: new Date(), ...values };
+      // Apply schema defaults so the memory backend behaves like Postgres.
+      const defaults = {};
+      for (const [col, def] of Object.entries(SCHEMA[name] || {})) {
+        if (def && def.defaultValue !== undefined && def.defaultValue !== DataTypes.NOW) {
+          defaults[col] = typeof def.defaultValue === 'object'
+            ? JSON.parse(JSON.stringify(def.defaultValue)) : def.defaultValue;
+        }
+      }
+      const row = { id: seq++, created_at: new Date(), ...defaults, ...values };
       rows.push(row);
       return clone(row);
     },

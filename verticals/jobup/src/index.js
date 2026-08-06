@@ -29,6 +29,7 @@ const addresses = require('./services/addresses');
 const billing = require('./services/billing');
 const brain = require('./services/brain');
 const siteRender = require('./services/site-render');
+const analytics = require('./services/analytics');
 
 const router = express.Router();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -83,6 +84,13 @@ router.use('/api/v1/engine', require('./routes/engine'));
 router.use('/teaser', require('./routes/teaser-view'));
 router.use('/admin', require('./routes/admin'));
 
+// ---- subscriber dashboard --------------------------------------------------
+// Every paying subscriber signs in here with their OWN email and password.
+// No allowlist, no env var — that is only the platform owner console.
+// Aliases include /cv-admin so the muscle memory from manuelstagg.com works.
+router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
+  res.sendFile(path.join(publicDir, 'app.html')));
+
 // ---- landing --------------------------------------------------------------
 router.use(express.static(publicDir));
 router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
@@ -129,6 +137,10 @@ async function subscriberSite(req, res, next) {
       '<!doctype html><meta charset="utf-8"><title>Not available</title>' +
       '<p style="font:16px system-ui;padding:40px">This JobUp site is not currently active.</p>');
   }
+
+  // Record the visit for the subscriber's Analytics tab. Fire-and-forget:
+  // traffic logging must never be able to break someone's public page.
+  analytics.record(site.sub.id, req, req.path);
 
   const url = `https://${site.sub.address}`;
   const ctx = { name: site.profile.name || site.sub.name, url, slug: label };
