@@ -138,6 +138,26 @@ background:var(--bg);border:2px solid var(--cyan);box-shadow:0 0 12px rgba(34,21
 .tag{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 15px;
 font-size:14px;color:var(--mut)}
 a.tag:hover{border-color:var(--cyan);color:var(--cyan)}
+.sharecard{display:flex;align-items:center;gap:16px}
+.qrthumb{width:96px;height:96px;flex:0 0 96px;border-radius:10px;background:#fff;padding:6px;
+cursor:pointer;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrthumb:hover{transform:scale(1.04)}
+.sharemeta{flex:1;min-width:0}
+.qrmodal{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;
+padding:24px;background:rgba(3,5,12,.72);backdrop-filter:blur(6px)}
+.qrmodal.open{display:flex}
+.qrbox{position:relative;background:var(--card);border:1px solid var(--line2);border-radius:22px;
+padding:28px;max-width:340px;width:100%;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.qrclose{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--mut);
+font-size:26px;line-height:1;cursor:pointer}
+.qrclose:hover{color:var(--ink)}
+.qrbig{width:240px;max-width:100%;height:auto;background:#fff;padding:12px;border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.qrurl{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:14px;background:var(--grad);
+-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.qrhint{color:var(--faint);font-size:12.5px;margin-top:8px}
+@media(max-width:420px){.sharecard{flex-direction:column;text-align:center}
+.sharebtns{justify-content:center}}
 .cform{margin-top:20px;text-align:left;max-width:560px;margin-left:auto;margin-right:auto}
 .crow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .cform input,.cform textarea{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line2);
@@ -203,6 +223,8 @@ const STR = {
     built_by: 'Built and maintained by JobUp', owner_signin: 'Owner sign in', manage: 'Manage',
     agent_card: 'agent card', full_profile: 'Full profile',
     core_skills: 'Core skills include ', voice_tag: 'EN · Ava',
+    show_qr: 'Show QR', close: 'Close', qr_alt: 'QR code for this profile',
+    qr_hint: 'Point a phone camera at this to open the profile.',
   },
   es: {
     resume_json: 'Currículum JSON', contact: 'Contacto', email_me: 'Escríbeme',
@@ -227,6 +249,8 @@ const STR = {
     built_by: 'Creado y mantenido por JobUp', owner_signin: 'Acceso del titular', manage: 'Gestionar',
     agent_card: 'tarjeta de agente', full_profile: 'Perfil completo',
     core_skills: 'Sus competencias principales incluyen ', voice_tag: 'ES · Dalia',
+    show_qr: 'Ver QR', close: 'Cerrar', qr_alt: 'Código QR de este perfil',
+    qr_hint: 'Apunta la cámara del teléfono para abrir el perfil.',
   },
 };
 function L(lang) { return STR[lang === 'es' ? 'es' : 'en']; }
@@ -258,6 +282,7 @@ function heroBlock(p, name, url, roleLine, lang) {
     ? `<img class="photo" src="${attr(src)}" alt="${attr(name)}" width="210" height="210">`
     : `<div class="photo-fallback">${esc(initials(name))}</div>`;
 
+  const qr = p.qr_data_uri || '';
   const chips = [];
   if (p.location) chips.push(`<span class="chip">${esc(p.location)}</span>`);
   if (p.phone) chips.push(`<span class="chip"><a href="tel:${attr(p.phone)}">${esc(p.phone)}</a></span>`);
@@ -277,12 +302,16 @@ function heroBlock(p, name, url, roleLine, lang) {
     ${p.summary ? `<p class="subtitle">${esc(p.summary)}</p>` : ''}
     ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
     <div class="social-row">${social.join('')}</div>
-    <div class="sharecard"><div>
+    <div class="sharecard">
+      ${qr ? `<img class="qrthumb" id="qrThumb" src="${attr(qr)}" alt="${attr(t.qr_alt)}"
+             role="button" tabindex="0" title="${attr(t.show_qr)}">` : ''}
+      <div class="sharemeta">
       <div class="sharehint">${esc(t.share_hint)}</div>
       <div class="sharebtns">
         <button class="shbtn primary" id="sh-share">${esc(t.share)}</button>
         <button class="shbtn" id="sh-vcard">${esc(t.save_contact)}</button>
         <button class="shbtn" id="sh-copy">${esc(t.copy_link)}</button>
+        ${qr ? `<button class="shbtn" id="qrBtn">${esc(t.show_qr)}</button>` : ''}
       </div>
     </div></div>
   </div>
@@ -432,6 +461,20 @@ function scripts(name, url, p, narration, lang) {
   window.addEventListener('beforeunload',stop);
 })();
 
+/* QR modal — thumbnail and button both open it; Esc and the backdrop close it. */
+(function(){
+  var modal=document.getElementById('qrModal'); if(!modal) return;
+  function open(){modal.classList.add('open');}
+  function close(){modal.classList.remove('open');}
+  var th=document.getElementById('qrThumb');
+  if(th){th.addEventListener('click',open);
+    th.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});}
+  var qb=document.getElementById('qrBtn'); if(qb) qb.addEventListener('click',open);
+  var qc=document.getElementById('qrClose'); if(qc) qc.addEventListener('click',close);
+  modal.addEventListener('click',function(e){if(e.target===modal)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+})();
+
 /* Inbound contact. The subscriber's address is never in this page — the
    message is routed through JobUp and appears in their Opportunities tab. */
 (function(){
@@ -516,6 +559,19 @@ function page(profile, settings, ctx) {
       <div class="cnote">${esc(fmt(t.delivered_to, firstName))}</div>
     </form>
   </div>`;
+  // Full-size QR, mirroring manuelstagg.com: a thumbnail in the share card
+  // that opens a modal. Generated per subscriber, served from our own origin —
+  // no third-party QR service ever sees a subscriber's address.
+  if (p.qr_data_uri) {
+    h += `<div class="qrmodal" id="qrModal" role="dialog" aria-modal="true" aria-label="${attr(t.show_qr)}">
+      <div class="qrbox">
+        <button class="qrclose" id="qrClose" aria-label="${attr(t.close)}">&times;</button>
+        <img class="qrbig" src="${attr(p.qr_data_uri)}" alt="${attr(t.qr_alt)}">
+        <div class="qrurl">${esc(String(ctx.url).replace(/^https?:\/\//, ''))}</div>
+        <div class="qrhint">${esc(t.qr_hint)}</div>
+      </div></div>`;
+  }
+
   h += `<footer><div>${esc(t.built_by)} &middot;
     <a href="/app">${esc(t.owner_signin)}</a></div><div>
     <a href="${attr(ctx.url)}/resume.json">resume.json</a> &middot;

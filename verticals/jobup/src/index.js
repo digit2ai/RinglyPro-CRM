@@ -33,6 +33,24 @@ const siteRender = require('./services/site-render');
 const analytics = require('./services/analytics');
 const photos = require('./services/photos');
 
+// QR is generated on OUR server — no third-party QR service ever sees a
+// subscriber's address. Cached per address; it only changes when they
+// personalise it, and regenerating on every page view is pure waste.
+const QRCode = require('qrcode');
+const qrCache = new Map();
+async function qrFor(url) {
+  if (qrCache.has(url)) return qrCache.get(url);
+  try {
+    const d = await QRCode.toDataURL(url, { margin: 1, width: 512, errorCorrectionLevel: 'M' });
+    if (qrCache.size > 500) qrCache.clear();
+    qrCache.set(url, d);
+    return d;
+  } catch (e) {
+    console.warn('[jobup] QR generation failed:', e.message);
+    return null;   // the page renders fine without it
+  }
+}
+
 const router = express.Router();
 const publicDir = path.join(__dirname, '..', 'public');
 
@@ -128,6 +146,7 @@ async function loadSite(label) {
       ...((p && p.resume_json) || {}),
       // The hero renders a photo when one exists, initials when it does not.
       photo_url: p && p.photo_asset_id ? '/photo' : null,
+      qr_data_uri: await qrFor(`https://${sub.address}`),
     },
     settings: settingsSvc.sanitize((s && s.settings) || {}),
   };

@@ -1577,6 +1577,46 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+
+  // ---------------------------------------------------------------
+  section('QR code on the profile');
+  await t('the share card carries a QR thumbnail and a full-size modal', async () => {
+    const QR = require('qrcode');
+    const qr = await QR.toDataURL('https://ada.jobup.dev', { margin: 1, width: 512 });
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page({ name: 'Ada Lovelace', qr_data_uri: qr }, st,
+      { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' });
+    for (const frag of ['id="qrThumb"', 'id="qrModal"', 'class="qrbig"', 'id="qrBtn"', 'id="qrClose"']) {
+      assert.ok(html.includes(frag), 'missing ' + frag);
+    }
+    assert.ok(html.includes('ada.jobup.dev</div>'), 'the modal should show the address');
+  });
+  await t('THE QR IS GENERATED ON OUR OWN SERVER', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(src.includes("require('qrcode')"), 'encoded locally');
+    // A third-party QR image service would receive every subscriber's address.
+    assert.ok(!/api\.qrserver\.com|chart\.googleapis\.com|quickchart/.test(src),
+      'no external QR service may see a subscriber address');
+    assert.ok(src.includes('qrCache'), 'and it should be cached per address');
+  });
+  await t('the page still renders when QR generation fails', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page({ name: 'Ada' }, st,
+      { name: 'Ada', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(html.includes('sharecard'), 'the share card must survive');
+    assert.ok(!html.includes('id="qrThumb"'), 'no broken image element');
+    assert.ok(!html.includes('id="qrBtn"'), 'and no button that does nothing');
+  });
+  await t('the QR label is localised', () => {
+    const st = settingsSvc.sanitize({});
+    const q = 'data:image/png;base64,AAAA';
+    const es = siteRender.page({ name: 'Ada', qr_data_uri: q }, st,
+      { name: 'Ada', url: 'https://ada.jobup.dev', slug: 'ada', lang: 'es' });
+    assert.ok(es.includes('Ver QR'), 'Spanish label');
+    assert.ok(!es.includes('>Show QR<'), 'and not the English one');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
