@@ -224,6 +224,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 </div>
 
 <script>
+// On <name>.jobup.dev the API is at the root; under /jobup it is prefixed.
 var API=(location.pathname.indexOf('/jobup')===0)?'/jobup':'';
 var ME=null,MATCHES=[],OUT=[],SET=null;
 function $(id){return document.getElementById(id);}

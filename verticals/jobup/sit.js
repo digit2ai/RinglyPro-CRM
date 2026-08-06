@@ -1149,6 +1149,40 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/render failed/.test(src), 'and reported, not swallowed into a poll loop');
   });
 
+
+  // ---------------------------------------------------------------
+  section('the console lives on the subscriber own address');
+  await t('a subscriber dashboard is served from THEIR subdomain, not the apex', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // It was only reachable at jobup.dev/jobup/app, which is not their address.
+    assert.ok(/\['\/app', '\/app\/', '\/dashboard', '\/admin', '\/cv-admin', '\/login'\]/.test(src),
+      'the subscriber-site handler must serve the console');
+    assert.ok(src.includes("p.startsWith('/api/v1/')"),
+      'the API must answer on their origin too, or the dashboard cannot call it');
+  });
+  await t('the public site links the owner to their console', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page({ name: 'Ada Lovelace' }, st,
+      { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(html.includes('Owner sign in'), 'the console must be discoverable from their page');
+    assert.ok(html.includes('href="/app"'), 'and it must point at their own origin');
+  });
+  await t('THE SIGN-IN LINK LEAKS NOTHING — it is a link, not a session', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page(
+      { name: 'Ada', email: 'secret@example.com', phone: '+15550001' }, st,
+      { name: 'Ada', url: 'https://ada.jobup.dev', slug: 'ada' });
+    assert.ok(!html.includes('secret@example.com'));
+    assert.ok(!html.includes('+15550001'));
+  });
+  await t('the dashboard resolves its API base to the current origin', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes("location.pathname.indexOf('/jobup')===0"),
+      'it must work under /jobup AND at a subdomain root');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

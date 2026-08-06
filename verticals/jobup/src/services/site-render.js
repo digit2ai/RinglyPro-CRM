@@ -380,7 +380,8 @@ function page(profile, settings, ctx) {
     : 'Contact details are available on request.'}</p>
     ${p.email ? `<a class="sbtn primary" href="mailto:${attr(p.email)}">Email ${esc(name.split(' ')[0])}</a>` : ''}
   </div>`;
-  h += `<footer><div>Built and maintained by JobUp</div><div>
+  h += `<footer><div>Built and maintained by JobUp &middot;
+    <a href="/app">Owner sign in</a></div><div>
     <a href="${attr(ctx.url)}/resume.json">resume.json</a> &middot;
     <a href="${attr(ctx.url)}/.well-known/agent.json">agent card</a> &middot;
     <a href="${attr(ctx.url)}/llms.txt">llms.txt</a></div></footer></div>`;

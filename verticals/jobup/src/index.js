@@ -155,6 +155,27 @@ async function subscriberSite(req, res, next) {
   const ctx = { name: site.profile.name || site.sub.name, url, slug: label };
   const p = req.path;
 
+  // ---- The subscriber's OWN console, on their OWN address ----------------
+  // Their dashboard belongs at manuelstagg.jobup.dev/app, not buried at
+  // jobup.dev/jobup/app. Serving it here also makes the session cookie and
+  // every API call same-origin with their site.
+  if (['/app', '/app/', '/dashboard', '/admin', '/cv-admin', '/login'].includes(p)) {
+    return res.sendFile(path.join(publicDir, 'app.html'));
+  }
+  if (p === '/welcome' || p === '/welcome/') {
+    return res.sendFile(path.join(publicDir, 'welcome.html'));
+  }
+  // The dashboard resolves its API base to the current origin, so the API has
+  // to answer here too.
+  if (p.startsWith('/api/v1/') || p === '/health') {
+    return router(req, res, next);
+  }
+  // PWA assets, so a subscriber can install their own dashboard.
+  if (['/manifest.webmanifest', '/sw.js', '/icon-192.png', '/icon-512.png',
+       '/apple-touch-icon.png', '/favicon-32.png'].includes(p)) {
+    return res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
+  }
+
   // Profile photo, if the subscriber uploaded one.
   if (p === '/photo' || p === '/photo.jpg') {
     const prof = await scoped('profiles', site.sub.id).findOne({});
