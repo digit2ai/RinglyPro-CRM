@@ -504,6 +504,39 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `GROWTH_COST_CAP_USD` — max token spend per brand fan-out (default 2.0).
 - `GROWTH_GO` — (P3) set to `1` to enable the daily scheduled fan-out. Default unset = manual runs only.
 
+## JobUp — AI career platform (folder: jobup, domain jobup.dev)
+
+Self-contained vertical at `verticals/jobup/`. Finds and scores real jobs against a subscriber's actual résumé, gives them a public CV site recruiters and their AI can read, and drafts outreach they approve before anything sends. Own Sequelize via `src/db.js`; shares the CRM database, so every table carries the `ju_` prefix. Reuses the CRM's keyless `/api/tts/edge` for voice — the voice layer is NOT duplicated.
+
+**IT ANSWERS ON THREE ROOTS, AND THAT IS THE THING TO GET RIGHT.**
+
+| Root | Base | Served by |
+|---|---|---|
+| `jobup.dev/` (+ `www`) | `''` | host handler in `src/app.js` calling `jobupApp(req,res,next)` |
+| `<name>.jobup.dev/` | `''` | `jobupApp.subscriberSite`, mounted ABOVE the CRM's routes |
+| `aiagent.ringlypro.com/jobup/` | `/jobup` | `app.use('/jobup', jobupApp)` |
+
+**NOTHING USER-FACING MAY HARDCODE `/jobup/`.** `src/services/pwa.js` is the single generator for the manifest, the service worker and the HTML shells, parameterized by `pwa.basePath(req)` (which reads `req.baseUrl`). The three shells (`index.html`, `app.html`, `welcome.html`) carry a `{{BASE}}` token substituted server-side; `offline.html` too. There is deliberately **no `public/manifest.webmanifest` on disk** — a static file would be served verbatim to the wrong origin.
+
+Why this is load-bearing, since it shipped broken once: a manifest's `scope`/`start_url` resolve against the manifest's own URL, so serving the `/jobup/` scope on jobup.dev produced an install whose scope **excluded jobup.dev/ itself** — tapping the logo inside the installed app dropped the user back into the browser. The worker had the mirror bug: its scope is the directory it was fetched from, so `/jobup/sw.js` registered from `jobup.dev/` never controlled the landing page that registered it. The subscriber handler had a *second, separate* copy of the rescoping (the only correct one); both now call `pwa.serveAsset()` so they cannot drift again.
+
+Other PWA invariants worth not undoing:
+- `express.static(publicDir, { index: false })` — without `index:false`, static answers `/` with the raw `index.html` and ships `{{BASE}}` tokens to the browser. Direct `/app.html` hits 301 to `/app`.
+- The worker caches shell entries **individually**, never `addAll` — `addAll` is atomic, so one 404 aborted the install and left the app with no worker at all.
+- It **never** caches `/api/`. A career dashboard showing yesterday's matches from cache is worse than an offline notice; navigations are network-first with `offline.html` as the last resort.
+- Manifest carries a stable `id`, `orientation:'any'` (not portrait — it is a dashboard of tables and a chart), and home-screen `shortcuts` backed by the `?tab=` deep link `app.html` reads on boot via `tabFromUrl()`/`showTab()`.
+- Bump `SHELL_VERSION` in `src/services/pwa.js` when a shell file changes.
+
+**SIT:** `node verticals/jobup/sit.js` → **262/262**, zero external keys.
+
+**Environment Variables:**
+- `JOBUP_JWT_SECRET` — signs the subscriber session cookie and the admin console token. SET on prod (falls back to a `dev-only-insecure-secret`).
+- `JOBUP_ADMIN_PASSWORD` — platform owner console at `/admin` (12+ chars). Unset = the console is **CLOSED**, deliberately, rather than open with a default password. `JOBUP_ADMIN_EMAILS` (default `mstagg@digit2ai.com`) is the allowlist.
+- `JOBUP_PUBLIC_URL` (default `https://jobup.dev`) — base used for Stripe return URLs.
+- `JOBUP_FREE_ACTIVATION` — `1` activates + provisions a subscriber with no payment (test mode). Every such row records the reason.
+- `JOBUP_DEFAULT_COUNTRY_CODE` (default `1`) — assumed dialing code when a phone is typed without one.
+- Reuses `ANTHROPIC_API_KEY` for scoring/drafting; unset = labeled heuristic path.
+
 ## SpeakUp — Voice-to-Text + AI editing (internal team tool, folder: speakup)
 
 **Purpose:** Private, login-only voice-to-text + AI editing app for the owner + team (a self-hosted SpeakApp.com work-alike). Record or upload audio, transcribe with OUR OWN engine, then one-tap **summarize, translate (50+ langs, auto-detect), or rewrite the tone**. Records meetings by capturing the user's own device audio in the browser — **no bot joins the call**. NOT a product: no public landing, no free web tool, no pricing, no FAQ. Mounted at `/speakup`. Spanish-first, bilingual ES/EN, emoji-free.
