@@ -70,7 +70,7 @@ function narration(profile, ctx, lang) {
       ? `And this is your resume rewritten for one of those roles specifically. It only reorders and rephrases what you already wrote — it never adds an employer, a date or a number that is not in your own resume.`
       : `When there is a matching role, we rewrite your resume for it, using only what you already wrote.`,
     `Here is your machine-readable identity: a structured resume, JSON-LD data and an agent card, so recruiting systems can understand your career.`,
-    `Three agents would work for you continuously: the Opportunity Hunter, the Career Broadcaster and the Professional Presence Agent.`,
+    `Three agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings, the Career Broadcaster drafts your outreach, and the Professional Presence Agent keeps you findable. They never send anything without your approval.`,
     `All of it lives in your private dashboard: your matches, your pipeline, the drafts waiting on your approval, and a full export of everything.`,
     `It is ${PRICE_USD} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
   ];
@@ -80,21 +80,43 @@ function narration(profile, ctx, lang) {
  * Build the teaser. Returns the payload the simulator renders.
  * Never throws into the request path — a failure yields status:'failed'.
  */
-async function build({ name, email, phone, language, resumeText, ip }) {
+// The stages a build actually passes through, in order. The waiting screen
+// reports these — it does not animate a bar against a guessed duration.
+const STAGES = [
+  { key: 'reading',   en: 'Reading your resume',            es: 'Leyendo tu curriculum' },
+  { key: 'structure', en: 'Understanding your experience',  es: 'Entendiendo tu experiencia' },
+  { key: 'address',   en: 'Checking your web address',      es: 'Comprobando tu direccion web' },
+  { key: 'matching',  en: 'Searching real openings',        es: 'Buscando vacantes reales' },
+  { key: 'tailoring', en: 'Tailoring your resume',          es: 'Adaptando tu curriculum' },
+  { key: 'identity',  en: 'Building your AI-readable identity', es: 'Creando tu identidad legible por IA' },
+];
+
+async function build({ name, email, phone, language, resumeText, ip, onStage }) {
   const lang = language === 'es' ? 'es' : 'en';
   let spent = 0;
   const notes = [];
+  const stage = async (key) => {
+    const i = STAGES.findIndex((s) => s.key === key);
+    if (i >= 0 && typeof onStage === 'function') {
+      try { await onStage({ key, n: i + 1, total: STAGES.length, label: STAGES[i][lang] }); }
+      catch (e) { /* progress reporting must never fail a build */ }
+    }
+  };
+  await stage('reading');
 
   // 1. Structure the resume.
+  await stage('structure');
   const structured = await resumeSvc.structure(resumeText);
   spent += structured.cost_usd || 0;
   const profile = { ...structured.profile, name: structured.profile.name || name };
 
   // 2. Real address availability against the ladder.
+  await stage('address');
   const parts = addresses.splitName(profile.name || name);
   const addr = await addresses.preview({ ...parts, city: profile.location });
 
   // 3. REAL matched jobs from the shared pool. Never fabricated.
+  await stage('matching');
   const settings = settingsSvc.sanitize({});
   let matches = [];
   let poolAvailable = true;
@@ -120,6 +142,7 @@ async function build({ name, email, phone, language, resumeText, ip }) {
   }
 
   // 4. One real tailored resume (teaser screen 4) — the tangible proof.
+  await stage('tailoring');
   let tailored = null;
   if (matches.length && spent < TEASER_COST_CAP) {
     const t = await resumeSvc.tailor(resumeText, matches[0].job);
@@ -133,6 +156,7 @@ async function build({ name, email, phone, language, resumeText, ip }) {
   }
 
   // 5. Machine-readable identity preview.
+  await stage('identity');
   const url = addr.available ? addr.url : `https://${addresses.clean(parts.first + parts.last)}.${addresses.BASE_DOMAIN}`;
   const ident = {
     resume_json: identity.resumeJson(profile, settings, { name: profile.name, url }),
@@ -197,6 +221,7 @@ async function create(input) {
     token: t, email: input.email, name: input.name,
     language: input.language === 'es' ? 'es' : 'en',
     status: 'pending', ip_hash: ipHash(input.ip),
+    started_at: new Date(), stage_n: 0, stages_total: STAGES.length,
     resume_purge_after: new Date(Date.now() + RESUME_PURGE_DAYS * 86400000),
   });
   return { id: row.id, token: t };
@@ -214,4 +239,19 @@ async function get(tokenStr) {
   return models.teasers.findOne({ where: { token: tokenStr } });
 }
 
-module.exports = { build, create, finish, get, token, ipHash, TEASER_COST_CAP, PRICE_USD, RESUME_PURGE_DAYS };
+/** Observed end-to-end build time, used only to set an expectation. */
+const TYPICAL_BUILD_MS = parseInt(process.env.JOBUP_TYPICAL_BUILD_MS || '45000', 10);
+
+/** Record which stage a build reached. Never throws into the build. */
+async function setStage(token, st) {
+  try {
+    await models.teasers.update(
+      { stage: st.key, stage_label: st.label, stage_n: st.n, stages_total: st.total },
+      { where: { token } });
+  } catch (e) { /* progress is cosmetic; a build must not fail over it */ }
+}
+
+module.exports = {
+  STAGES,
+  TYPICAL_BUILD_MS,
+  setStage, build, create, finish, get, token, ipHash, TEASER_COST_CAP, PRICE_USD, RESUME_PURGE_DAYS };

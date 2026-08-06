@@ -177,8 +177,11 @@ function nav(name, url, p) {
 }
 
 function heroBlock(p, name, url, roleLine) {
-  const photo = p.photo
-    ? `<img class="photo" src="${attr(p.photo)}" alt="${attr(name)}">`
+  // photo_url is set by the site handler when an asset exists; p.photo covers a
+  // URL carried in the resume itself. Initials remain the honest fallback.
+  const src = p.photo_url || p.photo;
+  const photo = src
+    ? `<img class="photo" src="${attr(src)}" alt="${attr(name)}" width="210" height="210">`
     : `<div class="photo-fallback">${esc(initials(name))}</div>`;
 
   const chips = [];

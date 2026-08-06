@@ -51,12 +51,25 @@ async function adoptTeaser(tenantId, teaserToken) {
   const site = t.payload.screens.site || {};
   const profile = site.profile || {};
 
+  // Carry over a photo uploaded with the teaser, if there was one.
+  let photoAssetId = null;
+  try {
+    const asset = await models.assets.findOne({ where: { teaser_token: teaserToken, kind: 'photo' } });
+    if (asset) {
+      await models.assets.update({ tenant_id: tenantId }, { where: { id: asset.id } });
+      photoAssetId = asset.id;
+    }
+  } catch (e) { /* a missing photo must never block provisioning */ }
+
   const existing = await scoped('profiles', tenantId).findOne({});
   if (!existing) {
     await scoped('profiles', tenantId).create({
       resume_json: profile,
+      photo_asset_id: photoAssetId,
       source_text: t.payload.source_text || profile.source_text || '',
     });
+  } else if (photoAssetId && !existing.photo_asset_id) {
+    await scoped('profiles', tenantId).update({ photo_asset_id: photoAssetId }, { id: existing.id });
   }
   // Bind the teaser to its subscriber so the 90-day purge skips it.
   await models.teasers.update({ tenant_id: tenantId }, { where: { id: t.id } });

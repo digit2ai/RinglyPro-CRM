@@ -30,6 +30,7 @@ const billing = require('./services/billing');
 const brain = require('./services/brain');
 const siteRender = require('./services/site-render');
 const analytics = require('./services/analytics');
+const photos = require('./services/photos');
 
 const router = express.Router();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -122,7 +123,11 @@ async function loadSite(label) {
   const s = await scoped('settings', sub.id).findOne({});
   return {
     sub, offline: false,
-    profile: (p && p.resume_json) || {},
+    profile: {
+      ...((p && p.resume_json) || {}),
+      // The hero renders a photo when one exists, initials when it does not.
+      photo_url: p && p.photo_asset_id ? '/photo' : null,
+    },
     settings: settingsSvc.sanitize((s && s.settings) || {}),
   };
 }
@@ -149,6 +154,20 @@ async function subscriberSite(req, res, next) {
   const url = `https://${site.sub.address}`;
   const ctx = { name: site.profile.name || site.sub.name, url, slug: label };
   const p = req.path;
+
+  // Profile photo, if the subscriber uploaded one.
+  if (p === '/photo' || p === '/photo.jpg') {
+    const prof = await scoped('profiles', site.sub.id).findOne({});
+    const assetId = prof && prof.photo_asset_id;
+    if (!assetId) return res.status(404).type('text/plain').send('No photo on file.');
+    const a = await scoped('assets', site.sub.id).findOne({ where: { id: assetId } });
+    if (!a || !a.data) return res.status(404).type('text/plain').send('No photo on file.');
+    const tag = photos.etagFor(a);
+    if (req.headers['if-none-match'] === tag) return res.status(304).end();
+    res.set('ETag', tag);
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.type(a.mime || 'image/jpeg').send(Buffer.from(a.data, 'base64'));
+  }
 
   if (p === '/resume.json') return res.type('application/json').json(identity.resumeJson(site.profile, site.settings, ctx));
   if (p === '/.well-known/agent.json' || p === '/agent.json') return res.type('application/json').json(identity.agentCard(site.profile, site.settings, ctx));

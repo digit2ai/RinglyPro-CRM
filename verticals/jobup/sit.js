@@ -1039,6 +1039,116 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+
+  // ---------------------------------------------------------------
+  section('build progress, photo, and the walkthrough');
+  const photosSvc = require(__dirname + '/src/services/photos');
+  const teaserSvc = require(__dirname + '/src/services/teaser');
+
+  await t('the build reports every stage it passes through', async () => {
+    assert.ok(Array.isArray(teaserSvc.STAGES) && teaserSvc.STAGES.length >= 5);
+    for (const st of teaserSvc.STAGES) {
+      assert.ok(st.key && st.en && st.es, 'each stage needs a key and both languages');
+    }
+  });
+  await t('PROGRESS REPORTING CAN NEVER FAIL A BUILD', async () => {
+    // setStage writes to a row that may not exist; it must swallow that.
+    await teaserSvc.setStage('no-such-token-' + Date.now(),
+      { key: 'reading', label: 'Reading', n: 1, total: 6 });
+    // reaching here without throwing is the assertion
+    assert.ok(true);
+  });
+  await t('a real build advances the stage counter', async () => {
+    const seen = [];
+    await teaserSvc.build({
+      name: 'Stage Probe', email: 'sit-stage@example.com', language: 'en',
+      resumeText: 'Stage Probe. Engineer. Node, Postgres, distributed systems. Ten years building platforms.',
+      onStage: (st) => { seen.push(st.n); },
+    });
+    assert.ok(seen.length >= 5, 'expected at least five stages, saw ' + seen.length);
+    assert.deepStrictEqual(seen, [...seen].sort((a, b) => a - b), 'stages must advance in order');
+    assert.strictEqual(seen[0], 1, 'the first stage should be reported immediately');
+  });
+
+  await t('a photo is identified by MAGIC BYTES, not its filename', () => {
+    const png = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(64)]);
+    const jpg = Buffer.concat([Buffer.from('ffd8ffe0', 'hex'), Buffer.alloc(64)]);
+    const webp = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBP'), Buffer.alloc(64)]);
+    assert.strictEqual(photosSvc.accept(png).mime, 'image/png');
+    assert.strictEqual(photosSvc.accept(jpg).mime, 'image/jpeg');
+    assert.strictEqual(photosSvc.accept(webp).mime, 'image/webp');
+  });
+  await t('AN SVG IS REFUSED — it would run script on the subscriber own origin', () => {
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"></svg>');
+    const r = photosSvc.accept(svg, 'image/png');   // lying about the type does not help
+    assert.strictEqual(r.ok, false);
+    assert.ok(/JPEG, PNG or WebP/.test(r.reason));
+  });
+  await t('an oversized photo is refused with the actual size', () => {
+    const big = Buffer.concat([Buffer.from('ffd8ffe0', 'hex'), Buffer.alloc(photosSvc.MAX_BYTES + 10)]);
+    const r = photosSvc.accept(big);
+    assert.strictEqual(r.ok, false);
+    assert.ok(/MB/.test(r.reason));
+  });
+  await t('the hero uses a photo when there is one and initials when there is not', () => {
+    const st = settingsSvc.sanitize({});
+    const ctx = { name: 'Ada Lovelace', url: 'https://ada.jobup.dev', slug: 'ada' };
+    const withPhoto = siteRender.page({ name: 'Ada Lovelace', photo_url: '/photo' }, st, ctx);
+    assert.ok(withPhoto.includes('class="photo"') && withPhoto.includes('src="/photo"'));
+    // Match the ELEMENT, not the stylesheet rule of the same name.
+    assert.ok(!withPhoto.includes('<div class="photo-fallback">'), 'initials should not also render');
+    const without = siteRender.page({ name: 'Ada Lovelace' }, st, ctx);
+    assert.ok(without.includes('<div class="photo-fallback">') && without.includes('>AL<'));
+    assert.ok(!without.includes('<img class="photo"'), 'no img without a photo');
+  });
+  await t('the photo lives OUTSIDE resume_json so the JSON surfaces stay small', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/models/index.js', 'utf8');
+    assert.ok(src.includes('assets: {'), 'a dedicated assets table');
+    assert.ok(src.includes('photo_asset_id'), 'the profile points at it rather than embedding it');
+  });
+
+  await t('the walkthrough can PAUSE and resume without restarting', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('function pause()') && src.includes('function resume()'));
+    assert.ok(src.includes('speechSynthesis.pause'), 'the browser-speech path must pause too');
+    assert.ok(src.includes('RESUME_LABEL'), 'the control should say Resume, not Play');
+    // A clip finishing while suspended must not advance the walkthrough.
+    assert.ok(src.includes('if(t!==token||paused)return;'), 'a paused run must not auto-advance');
+    assert.ok(src.includes("stopBtn.addEventListener('click',finish)"), 'Stop still resets to the start');
+  });
+  await t('leaving the tab pauses rather than losing your place', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('visibilitychange'));
+  });
+  await t('the orb animates and respects prefers-reduced-motion', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    for (const k of ['@keyframes breathe', '@keyframes ripple', '@keyframes eq', 'orbwrap']) {
+      assert.ok(src.includes(k), 'missing ' + k);
+    }
+    assert.ok(src.includes('prefers-reduced-motion'), 'motion must be optional');
+  });
+  await t('THE ALWAYS-ON LOOP SHOWS THE CYCLE, NOT INVENTED RESULTS', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('ALWAYS ON') && src.includes('startAlwaysOn'));
+    assert.ok(/This is the loop, not a recording of results/.test(src),
+      'it must say plainly that it is an illustration');
+    // The four steps are process, never a company or a score.
+    for (const step of ['Searching', 'Scoring', 'Tailoring', 'Drafting']) {
+      assert.ok(src.includes('<strong>' + step + '</strong>'), 'missing step ' + step);
+    }
+  });
+  await t('a render fault is NOT retried forever as if it were a network blip', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('try{ render(); }'), 'render must be guarded separately');
+    assert.ok(/render failed/.test(src), 'and reported, not swallowed into a poll loop');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

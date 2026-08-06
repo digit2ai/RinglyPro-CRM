@@ -575,7 +575,13 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b .ju-drop.has{border-style:solid;border-color:var(--accent-cyan);background:rgba(34,211,238,.09)}
 .d2b .ju-drop .big{font-size:15.5px;font-weight:650;margin-bottom:5px}
 .d2b .ju-drop .small{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.04em}
-.d2b .ju-or{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+.d2b .ju-photo{display:flex;align-items:center;gap:14px;border:1px dashed rgba(255,255,255,.18);
+border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s ease,background .15s ease}
+.ju-photo:hover,.ju-photo:focus{border-color:var(--ju-cyan,#22d3ee);background:rgba(34,211,238,.04);outline:none}
+.ju-photo.has{border-style:solid;border-color:rgba(34,211,238,.45)}
+.ju-photo img{width:62px;height:62px;border-radius:14px;object-fit:cover;flex:0 0 62px}
+.ju-photo .small{color:#9aa3b4;font-size:12.5px}
+.ju-or{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--faint);margin:16px 0 12px}
 .d2b .ju-err{background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:#ffa8c5;
   border-radius:11px;padding:11px 14px;font-size:13.5px;margin-bottom:15px;display:none}
@@ -798,6 +804,15 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
         <input type="file" id="ju-file" accept=".pdf,.docx,.txt,.md,.rtf" hidden>
       </div>
 
+      <div class="ju-field"><label>Profile photo <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <div class="ju-photo" id="ju-photo-zone" tabindex="0" role="button" aria-label="Choose a profile photo">
+          <img id="ju-photo-prev" alt="" hidden>
+          <div id="ju-photo-txt"><strong>Add a photo</strong><br>
+            <span class="small">JPEG, PNG or WebP &mdash; shown on your site. Without one we use your initials.</span></div>
+        </div>
+        <input type="file" id="ju-photo" accept="image/jpeg,image/png,image/webp" hidden>
+      </div>
+
       <div class="ju-or">or paste it instead</div>
       <div class="ju-field">
         <textarea id="ju-text" name="resume_text" placeholder="Paste your resume text here..."></textarea>
@@ -989,6 +1004,34 @@ function juFormatPhone(v){
 (function(){
   var API=(location.hostname.indexOf('jobup.dev')>-1)?'':'/jobup';
   var sheet=document.getElementById('ju-sheet'),form=document.getElementById('ju-form');
+  // Optional profile photo. Preview locally; the server re-validates by magic
+  // bytes, so a renamed file cannot slip through.
+  var photoInput=document.getElementById('ju-photo'),photoZone=document.getElementById('ju-photo-zone');
+  var chosenPhoto=null;
+  if(photoZone&&photoInput){
+    photoZone.addEventListener('click',function(){photoInput.click();});
+    photoZone.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();photoInput.click();}});
+    photoZone.addEventListener('dragover',function(e){e.preventDefault();photoZone.classList.add('has');});
+    photoZone.addEventListener('dragleave',function(){if(!chosenPhoto)photoZone.classList.remove('has');});
+    photoZone.addEventListener('drop',function(e){
+      e.preventDefault(); if(e.dataTransfer.files&&e.dataTransfer.files[0])setPhoto(e.dataTransfer.files[0]);});
+    photoInput.addEventListener('change',function(){if(photoInput.files[0])setPhoto(photoInput.files[0]);});
+  }
+  function setPhoto(f){
+    if(!/^image\/(jpeg|png|webp)$/.test(f.type)){
+      document.getElementById('ju-photo-txt').innerHTML=
+        '<strong>That is not a JPEG, PNG or WebP</strong><br><span class="small">Pick a different image.</span>';
+      return;
+    }
+    chosenPhoto=f;
+    var img=document.getElementById('ju-photo-prev'),u=URL.createObjectURL(f);
+    img.src=u; img.hidden=false; photoZone.classList.add('has');
+    document.getElementById('ju-photo-txt').innerHTML=
+      '<strong>'+f.name.replace(/[<>&]/g,'')+'</strong><br>'+
+      '<span class="small">'+Math.round(f.size/1024)+' KB &mdash; click to choose a different photo</span>';
+  }
+
   var drop=document.getElementById('ju-drop'),file=document.getElementById('ju-file');
   var err=document.getElementById('ju-err'),prog=document.getElementById('ju-prog');
   var big=document.getElementById('ju-drop-big'),small=document.getElementById('ju-drop-small');
@@ -1051,6 +1094,7 @@ function juFormatPhone(v){
     if(phone)fd.append('phone',phone);
     if(text)fd.append('resume_text',text);
     if(chosen)fd.append('resume',chosen,chosen.name);
+    if(chosenPhoto)fd.append('photo',chosenPhoto,chosenPhoto.name);
 
     form.style.display='none';prog.classList.add('show');
 

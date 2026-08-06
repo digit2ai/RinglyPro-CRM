@@ -27,7 +27,7 @@ const TABLE_PREFIX = 'ju_';
 const TENANT_SCOPED = new Set([
   'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes',
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
-  'invoices', 'notification_prefs', 'audit_log', 'page_views',
+  'invoices', 'notification_prefs', 'audit_log', 'page_views', 'assets',
 ]);
 
 const SCHEMA = {
@@ -52,6 +52,7 @@ const SCHEMA = {
   // tenant_id === subscribers.id
   profiles: {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    photo_asset_id: { type: DataTypes.INTEGER },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     resume_json: { type: DataTypes.JSONB },         // JSON Resume shape
     source_text: { type: DataTypes.TEXT },          // raw extracted resume text
@@ -128,6 +129,13 @@ const SCHEMA = {
     payload: { type: DataTypes.JSONB, defaultValue: {} },
     narration: { type: DataTypes.JSONB, defaultValue: [] },
     status: { type: DataTypes.STRING, defaultValue: 'pending' }, // pending|ready|failed
+    // Real build progress — set as each stage completes, so the waiting screen
+    // reports what is actually happening instead of animating a fake bar.
+    stage: { type: DataTypes.STRING },
+    stage_label: { type: DataTypes.STRING },
+    stage_n: { type: DataTypes.INTEGER, defaultValue: 0 },
+    stages_total: { type: DataTypes.INTEGER, defaultValue: 6 },
+    started_at: { type: DataTypes.DATE },
     cost_usd: { type: DataTypes.FLOAT, defaultValue: 0 },
     ip_hash: { type: DataTypes.STRING },
     resume_purge_after: { type: DataTypes.DATE },    // 90-day purge (spec 19.1)
@@ -172,6 +180,18 @@ const SCHEMA = {
     referrer: { type: DataTypes.STRING },
     visitor_hash: { type: DataTypes.STRING },
     is_agent: { type: DataTypes.BOOLEAN, defaultValue: false },  // an AI crawler, not a person
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // Binary a subscriber uploaded — today only a profile photo. Kept out of
+  // resume_json so the JSON surfaces stay small and cacheable.
+  assets: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER },        // null while still a teaser
+    teaser_token: { type: DataTypes.STRING },
+    kind: { type: DataTypes.STRING, defaultValue: 'photo' },
+    mime: { type: DataTypes.STRING },
+    bytes: { type: DataTypes.INTEGER },
+    data: { type: DataTypes.TEXT },                // base64
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   sites: {
@@ -319,6 +339,12 @@ const ADDED_COLUMNS = [
   ['ju_opportunities', 'reply_draft',  'TEXT'],
   ['ju_opportunities', 'read_at',      'TIMESTAMPTZ'],
   ['ju_opportunities', 'replied_at',   'TIMESTAMPTZ'],
+  ['ju_teasers',       'stage',        'VARCHAR(64)'],
+  ['ju_teasers',       'stage_label',  'VARCHAR(128)'],
+  ['ju_teasers',       'stage_n',      'INTEGER DEFAULT 0'],
+  ['ju_teasers',       'stages_total', 'INTEGER DEFAULT 6'],
+  ['ju_teasers',       'started_at',   'TIMESTAMPTZ'],
+  ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 
 async function ensureColumns(sequelize) {

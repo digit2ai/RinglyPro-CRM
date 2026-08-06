@@ -26,6 +26,7 @@ function clientIp(req) {
 const limits = require('../services/limits');
 
 const phoneSvc = require('../services/phone');
+const photos = require('../services/photos');
 
 /**
  * Returns { errs, phone } — `phone` is the NORMALISED E.164 value, so a caller
@@ -61,7 +62,7 @@ router.post('/address-preview', async (req, res) => {
  * Cloudflare's ~100s ceiling means this MUST be a background job plus a poll,
  * never a synchronous request (spec section 21).
  */
-router.post('/teaser', upload.single('resume'), async (req, res) => {
+router.post('/teaser', upload.fields([{ name: 'resume', maxCount: 1 }, { name: 'photo', maxCount: 1 }]), async (req, res) => {
   try {
     const ip = clientIp(req);
     const body = req.body || {};
@@ -80,8 +81,10 @@ router.post('/teaser', upload.single('resume'), async (req, res) => {
     }
 
     let resumeText = String(body.resume_text || '');
-    if (req.file) {
-      const ex = await resumeSvc.extractText(req.file.buffer, req.file.originalname);
+    const resumeFile = req.files && req.files.resume && req.files.resume[0];
+    const photoFile = req.files && req.files.photo && req.files.photo[0];
+    if (resumeFile) {
+      const ex = await resumeSvc.extractText(resumeFile.buffer, resumeFile.originalname);
       if (ex.ok) resumeText = ex.text;
       else if (!resumeText) return res.status(400).json({ error: 'Could not read that file: ' + ex.note });
     }
@@ -92,9 +95,26 @@ router.post('/teaser', upload.single('resume'), async (req, res) => {
     const { token } = await teaser.create({ ...body, ip });
 
     // Background build. Response returns immediately with the poll token.
+    // Optional profile photo. Stored separately from resume_json so the JSON
+    // surfaces stay small; validated by real magic bytes, not the filename.
+    if (photoFile) {
+      const ph = photos.accept(photoFile.buffer, photoFile.mimetype);
+      if (ph.ok) {
+        await models.assets.create({
+          teaser_token: token, kind: 'photo', mime: ph.mime,
+          bytes: ph.bytes, data: ph.base64,
+        });
+      } else {
+        console.warn('[intake] photo rejected:', ph.reason);
+      }
+    }
+
     setImmediate(async () => {
       try {
-        const payload = await teaser.build({ ...body, resumeText, ip });
+        const payload = await teaser.build({
+          ...body, resumeText, ip,
+          onStage: (st) => teaser.setStage(token, st),
+        });
         await teaser.finish(token, payload);
       } catch (e) {
         console.error('[teaser] build failed:', e.message);
@@ -113,11 +133,24 @@ router.post('/teaser', upload.single('resume'), async (req, res) => {
 router.get('/teaser/:token', async (req, res) => {
   const row = await teaser.get(req.params.token);
   if (!row) return res.status(404).json({ error: 'not found' });
-  res.json({
+  const out = {
     status: row.status, token: row.token, language: row.language,
     payload: row.status === 'ready' ? row.payload : null,
     narration: row.narration || [],
-  });
+  };
+  if (row.status === 'pending') {
+    // Real progress: which stage the build is actually on, and how long it has
+    // been running. No invented percentage.
+    out.progress = {
+      stage: row.stage || null,
+      label: row.stage_label || null,
+      n: row.stage_n || 0,
+      total: row.stages_total || 6,
+      elapsed_ms: row.started_at ? Date.now() - new Date(row.started_at).getTime() : 0,
+      typical_ms: teaser.TYPICAL_BUILD_MS,
+    };
+  }
+  res.json(out);
 });
 
 // A visitor who never pays still has deletion rights (spec section 19.1).
