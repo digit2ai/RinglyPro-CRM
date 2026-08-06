@@ -74,9 +74,16 @@ const STOP = new Set(['the','and','for','with','you','our','are','will','have','
 function prefilter(jobs, profile, settings, rawText) {
   const targeting = (settings || {}).targeting || {};
   const titles = (targeting.roles || []).map((r) => String(r.title || '').toLowerCase()).filter(Boolean);
+  const industries = (targeting.industries || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  const wantEmployers = (targeting.employers || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  const must = (targeting.must_include || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  const never = (targeting.exclude_keywords || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  const remotePref = targeting.remote_preference || null;
+  const seniority = String(targeting.seniority || '').toLowerCase();
+
   const skills = ((profile || {}).skills || []).map((s) =>
     String(typeof s === 'string' ? s : s.name || '').toLowerCase()).filter(Boolean);
-  let terms = [...titles, ...skills];
+  let terms = [...titles, ...skills, ...industries];
 
   // Keyless fallback: with no model the profile has no structured skills, which
   // would leave the pre-filter with nothing to match on and the teaser showing
@@ -88,18 +95,46 @@ function prefilter(jobs, profile, settings, rawText) {
       .filter((w) => !STOP.has(w)))].slice(0, 60);
   }
 
-  const scored = (jobs || []).map((j) => {
-    const hay = `${j.title || ''} ${j.description || ''}`.toLowerCase();
+  const scored = [];
+  for (const j of (jobs || [])) {
+    const title = String(j.title || '').toLowerCase();
+    const employer = String(j.employer || '').toLowerCase();
+    const location = String(j.location || '').toLowerCase();
+    const hay = `${title} ${String(j.description || '').toLowerCase()}`;
+
+    // ---- FREE EXCLUSIONS, before anything is counted or spent ----
+    // A word you never want to see costs nothing to check and saves a whole
+    // model call. This runs before scoring for exactly that reason.
+    if (never.length && never.some((w) => hay.includes(w) || employer.includes(w))) continue;
+
+    // A must-have term is a requirement, not a preference.
+    if (must.length && !must.every((w) => hay.includes(w))) continue;
+
+    // Remote preference, read off the location string.
+    if (remotePref && remotePref !== 'any') {
+      const isRemote = /\bremote\b|\bwork from home\b|\bwfh\b|\bdistributed\b/.test(location);
+      const isHybrid = /\bhybrid\b/.test(location);
+      if (remotePref === 'remote' && !isRemote) continue;
+      if (remotePref === 'onsite' && isRemote && !isHybrid) continue;
+      // 'hybrid' accepts hybrid or remote — someone open to hybrid is open to
+      // remote too, and excluding it would drop the better offer.
+    }
+
     let hits = 0;
     for (const t of terms) if (t.length > 2 && hay.includes(t)) hits++;
-    // Title matches count double — a title hit is a far stronger signal.
-    const titleHits = titles.filter((t) => t && String(j.title || '').toLowerCase().includes(t)).length;
-    return { job: j, prescore: hits + titleHits * 2 };
-  });
 
-  return scored
-    .filter((x) => x.prescore > 0)
-    .sort((a, b) => b.prescore - a.prescore);
+    // Title matches count double — a title hit is a far stronger signal.
+    const titleHits = titles.filter((t) => t && title.includes(t)).length;
+    // An employer you named is a strong signal too.
+    const employerHits = wantEmployers.filter((e) => e && employer.includes(e)).length;
+    // Seniority is a nudge, not a gate: titles word it too many ways to filter on.
+    const seniorityHit = seniority && title.includes(seniority) ? 1 : 0;
+
+    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit;
+    if (prescore > 0) scored.push({ job: j, prescore });
+  }
+
+  return scored.sort((a, b) => b.prescore - a.prescore);
 }
 
 async function markStale() {

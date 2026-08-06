@@ -64,7 +64,14 @@ async function hunter(tenantId, opts = {}) {
   const res = await matcher.scoreBatch(fresh.map((r) => r.job), profile, settings,
     { capUsd: cap, limit: perDay });
 
-  for (const m of res.matches) {
+  // Below the subscriber's floor it was still scored — that cost is already
+  // spent — but it does not get filed. This is about inbox noise, not money,
+  // and the run summary says how many were held back rather than hiding it.
+  const floor = parseInt((settings.targeting && settings.targeting.min_score) || 0, 10) || 0;
+  const keep = res.matches.filter((m) => (m.score || 0) >= floor);
+  const held = res.matches.length - keep.length;
+
+  for (const m of keep) {
     await scoped('job_matches', tenantId).create({
       job_id: m.job_id, score: m.score, explanation: m.explanation,
       missing: m.missing, stage: 'new', is_simulated: m.is_simulated,
@@ -73,10 +80,12 @@ async function hunter(tenantId, opts = {}) {
 
   const simulated = res.matches.some((m) => m.is_simulated);
   await log(tenantId, 'hunter', 'ok',
-    `Scored ${res.matches.length} new openings${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.`,
+    `Scored ${res.matches.length} new openings` +
+    (held ? `, filed ${keep.length} (${held} below your minimum score of ${floor})` : '') +
+    `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.`,
     res.cost_usd, simulated);
 
-  return { agent: 'hunter', scored: res.matches.length, cost_usd: res.cost_usd,
+  return { agent: 'hunter', scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
            stopped_for_cap: res.stopped_for_cap, is_simulated: simulated };
 }
 

@@ -2009,6 +2009,78 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/if you leave a field empty it stays empty/.test(html));
   });
 
+
+  // ---------------------------------------------------------------
+  section('Targets actually steers the daily search');
+  const FIX = [
+    { id: 1, title: 'Financial Analyst', employer: 'Stripe', location: 'Remote - US', description: 'fintech payments budgeting' },
+    { id: 2, title: 'Unpaid Intern', employer: 'Acme', location: 'New York', description: 'budgeting internship unpaid' },
+    { id: 3, title: 'Financial Analyst', employer: 'Konecta', location: 'Bogota', description: 'banking budgeting' },
+    { id: 4, title: 'Senior Financial Analyst', employer: 'Brex', location: 'Hybrid - NYC', description: 'fintech budgeting' },
+  ];
+  const PROF = { skills: ['budgeting'] };
+  const ids = (t) => jobsource.prefilter(FIX, PROF, { targeting: t }).map((x) => x.job.id);
+
+  await t('THESE FIELDS WERE DEAD — industries, employers and seniority did nothing', () => {
+    // They have been in the settings document since the beginning with no
+    // reader. A UI over an unread field is decoration.
+    const src = require('fs').readFileSync(__dirname + '/src/services/jobsource.js', 'utf8');
+    for (const k of ['targeting.industries', 'targeting.employers', 'targeting.seniority',
+                     'targeting.must_include', 'targeting.exclude_keywords',
+                     'targeting.remote_preference']) {
+      assert.ok(src.includes(k), 'prefilter still ignores ' + k);
+    }
+  });
+  await t('an industry term raises a matching job', () => {
+    const base = jobsource.prefilter(FIX, PROF, { targeting: { roles: [{ title: 'Financial Analyst' }] } });
+    const withInd = jobsource.prefilter(FIX, PROF,
+      { targeting: { roles: [{ title: 'Financial Analyst' }], industries: ['fintech'] } });
+    const b1 = base.find((x) => x.job.id === 1).prescore;
+    const a1 = withInd.find((x) => x.job.id === 1).prescore;
+    assert.ok(a1 > b1, 'a fintech job should rank higher once fintech is a target');
+  });
+  await t('a named company outranks a generic match', () => {
+    const out = ids({ roles: [{ title: 'Financial Analyst' }], employers: ['brex'] });
+    assert.strictEqual(out[0], 4, 'the Brex role should come first');
+  });
+  await t('AN EXCLUDED WORD DROPS THE JOB BEFORE IT COSTS ANYTHING', () => {
+    assert.ok(ids({ roles: [{ title: 'Financial Analyst' }] }).includes(2));
+    const out = ids({ roles: [{ title: 'Financial Analyst' }], exclude_keywords: ['unpaid'] });
+    assert.ok(!out.includes(2), 'the unpaid internship must be gone');
+    const src = require('fs').readFileSync(__dirname + '/src/services/jobsource.js', 'utf8');
+    const i = src.indexOf('never.some');
+    const j = src.indexOf('let hits = 0');
+    assert.ok(i > 0 && j > i, 'the exclusion must run before any counting or scoring');
+  });
+  await t('a must-have word is a REQUIREMENT, not a preference', () => {
+    const out = ids({ roles: [{ title: 'Financial Analyst' }], must_include: ['payments'] });
+    assert.deepStrictEqual(out, [1], 'only the payments job survives');
+  });
+  await t('remote-only keeps remote; hybrid-or-remote keeps both', () => {
+    assert.deepStrictEqual(ids({ roles: [{ title: 'Financial Analyst' }], remote_preference: 'remote' }), [1]);
+    const hy = ids({ roles: [{ title: 'Financial Analyst' }], remote_preference: 'hybrid' });
+    assert.ok(hy.includes(1) && hy.includes(4), 'someone open to hybrid is open to remote too');
+  });
+  await t('seniority is a NUDGE, not a gate', () => {
+    const out = ids({ roles: [{ title: 'Financial Analyst' }], seniority: 'senior' });
+    assert.ok(out.includes(1) && out.includes(3), 'non-senior roles must survive');
+    assert.strictEqual(out[0], 4, 'but the senior one ranks first');
+  });
+  await t('a minimum score holds a job back WITHOUT hiding that it did', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(src.includes('below your minimum score of'), 'the run summary must say how many');
+    assert.ok(src.includes('below_minimum: held'), 'and report it to the caller');
+  });
+  await t('the dashboard exposes every one of them', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    for (const sec of ['Industries', 'Companies you want', 'Words that rule a job out',
+                       'Words a job must contain', 'How you want to work']) {
+      assert.ok(html.includes(sec), 'missing: ' + sec);
+    }
+    assert.ok(html.includes('jobs_scored_per_day'), 'the pace must be settable');
+    assert.ok(html.includes('min_score'));
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

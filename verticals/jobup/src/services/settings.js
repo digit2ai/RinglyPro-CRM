@@ -29,10 +29,13 @@ const DEFAULTS = {
   },
   targeting: {
     roles: [],                      // [{ title, slug, page: true }]
-    industries: [],
-    employers: [],
-    seniority: null,
+    industries: [],                 // extra terms the pre-filter counts
+    employers: [],                  // companies you want — weighted heavily
+    must_include: [],               // a REQUIREMENT: every term must appear
+    exclude_keywords: [],           // dropped free, before any model call
+    seniority: null,                // a nudge, not a gate
     remote_preference: null,        // remote|hybrid|onsite|any
+    min_score: 0,                   // below this, do not clutter the inbox
   },
   geo: {
     allowed_countries: [],          // [] === unrestricted

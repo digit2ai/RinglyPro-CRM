@@ -453,7 +453,9 @@ function loadTargets(){
     if(!r.ok)return;
     SET=r.j.settings;
     var geo=SET.geo||{}, allowed=(geo.allowed_countries||[]).map(function(c){return String(c).toUpperCase();});
-    var roles=(SET.targeting&&SET.targeting.roles)||[];
+    var tg=SET.targeting||{};
+    var roles=tg.roles||[], inds=tg.industries||[], emps=tg.employers||[];
+    var excl=tg.exclude_keywords||[], must=tg.must_include||[], rp=tg.remote_preference||'any';
     var blocked=(SET.blocked&&SET.blocked.employers)||[];
 
     $('p-targets').innerHTML=
@@ -482,6 +484,67 @@ function loadTargets(){
         '<input id="t-role" placeholder="e.g. Financial Analyst" maxlength="120">'+
         '<button class="btn primary sm" id="t-addrole">Add role</button></div></div>'+
 
+      '<div class="card"><div class="t">Industries</div>'+
+      '<div class="m">Extra terms your agent counts when ranking. '+
+      '\u201cfintech\u201d, \u201chealthcare\u201d, \u201clogistics\u201d \u2014 whatever your world is called.</div>'+
+      '<div id="indlist">'+(inds.length?inds.map(function(x,i){
+        return '<span class="chip">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'industries\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-ind" placeholder="e.g. fintech" maxlength="80">'+
+        '<button class="btn primary sm" onclick="addList(\'industries\',\'t-ind\')">Add industry</button></div></div>'+
+
+      '<div class="card"><div class="t">Companies you want</div>'+
+      '<div class="m">Named employers are weighted heavily \u2014 a match at one of these '+
+      'outranks a generic one.</div>'+
+      '<div id="emplist">'+(emps.length?emps.map(function(x,i){
+        return '<span class="chip ok">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'employers\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-emp" placeholder="e.g. Stripe" maxlength="120">'+
+        '<button class="btn sm" onclick="addList(\'employers\',\'t-emp\')">Add company</button></div></div>'+
+
+      '<div class="card"><div class="t">Words that rule a job out</div>'+
+      '<div class="m">Checked before anything is scored, so these cost you nothing. '+
+      '\u201cunpaid\u201d, \u201cinternship\u201d, \u201cclearance\u201d.</div>'+
+      '<div id="exclist">'+(excl.length?excl.map(function(x,i){
+        return '<span class="chip warn">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'exclude_keywords\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-exc" placeholder="e.g. unpaid" maxlength="80">'+
+        '<button class="btn sm" onclick="addList(\'exclude_keywords\',\'t-exc\')">Exclude word</button></div></div>'+
+
+      '<div class="card"><div class="t">Words a job must contain</div>'+
+      '<div class="m">A requirement, not a preference \u2014 every term must appear or the job is skipped.</div>'+
+      '<div id="mustlist">'+(must.length?must.map(function(x,i){
+        return '<span class="chip">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'must_include\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set \u2014 nothing is required.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-must" placeholder="e.g. SQL" maxlength="80">'+
+        '<button class="btn sm" onclick="addList(\'must_include\',\'t-must\')">Require word</button></div></div>'+
+
+      '<div class="card"><div class="t">How you want to work</div>'+
+      '<div class="cvgrid" style="margin-top:12px">'+
+        '<div><label for="t-remote">Remote preference</label>'+
+        '<select id="t-remote">'+
+          [['any','No preference'],['remote','Remote only'],['hybrid','Hybrid or remote'],['onsite','On-site']]
+            .map(function(o){return '<option value="'+o[0]+'"'+(rp===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
+        '</select></div>'+
+        '<div><label for="t-seniority">Seniority nudge</label>'+
+        '<input id="t-seniority" value="'+esc(tg.seniority||'')+'" placeholder="senior, lead, director"></div>'+
+        '<div><label for="t-min">Minimum score to file</label>'+
+        '<input id="t-min" type="number" min="0" max="100" value="'+(tg.min_score||0)+'"></div>'+
+        '<div><label for="t-perday">Jobs scored per day</label>'+
+        '<input id="t-perday" type="number" min="1" max="40" value="'+((SET.quotas&&SET.quotas.jobs_scored_per_day)||6)+'"></div>'+
+      '</div>'+
+      '<div class="note">Seniority is a nudge, not a filter \u2014 titles word it too many ways to exclude on. '+
+      'Below the minimum score a job is still scored but not filed, and the run says how many were held back.</div>'+
+      '<div class="acts"><button class="btn primary sm" id="t-savepref">Save preferences</button></div></div>'+
+
       '<div class="card"><div class="t">Employers to never contact</div>'+
       '<div class="m">Absolute. Checked at match time, at alert time and at draft time.</div>'+
       '<div id="blocklist">'+(blocked.length?blocked.map(function(x,i){
@@ -503,6 +566,17 @@ function loadTargets(){
       next.targeting=next.targeting||{}; next.targeting.roles=(next.targeting.roles||[]).concat([{title:v}]);
       saveSettingsDoc(next,'Role target added.');
     });
+    var sp=$('t-savepref');
+    if(sp) sp.addEventListener('click',function(){
+      var next=JSON.parse(JSON.stringify(SET));
+      next.targeting=next.targeting||{};
+      next.targeting.remote_preference=$('t-remote').value;
+      next.targeting.seniority=$('t-seniority').value.trim()||null;
+      next.targeting.min_score=Math.max(0,Math.min(100,parseInt($('t-min').value,10)||0));
+      next.quotas=next.quotas||{};
+      next.quotas.jobs_scored_per_day=Math.max(1,Math.min(40,parseInt($('t-perday').value,10)||6));
+      saveSettingsDoc(next,'Preferences saved. They apply from your next run.');
+    });
     $('t-addblock').addEventListener('click',function(){
       var v=$('t-block').value.trim(); if(!v)return;
       var next=JSON.parse(JSON.stringify(SET));
@@ -521,6 +595,17 @@ function saveGeo(){
   saveSettingsDoc(next, codes.length
     ? 'Saved. Your agent will only consider '+codes.join(', ')+' from the next run.'
     : 'Saved. No country restriction.');
+}
+function addList(key,inputId){
+  var v=$(inputId).value.trim(); if(!v)return;
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting=next.targeting||{};
+  next.targeting[key]=(next.targeting[key]||[]).concat([v]);
+  saveSettingsDoc(next,'Added.');
+}
+function rmList(key,i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting[key].splice(i,1); saveSettingsDoc(next,'Removed.');
 }
 function rmRole(i){
   var next=JSON.parse(JSON.stringify(SET));
