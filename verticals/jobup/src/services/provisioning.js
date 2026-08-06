@@ -66,7 +66,7 @@ async function adoptTeaser(tenantId, teaserToken) {
     await scoped('profiles', tenantId).create({
       resume_json: profile,
       photo_asset_id: photoAssetId,
-      source_text: t.payload.source_text || profile.source_text || '',
+      source_text: t.resume_text || t.payload.source_text || profile.source_text || '',
     });
   } else if (photoAssetId && !existing.photo_asset_id) {
     await scoped('profiles', tenantId).update({ photo_asset_id: photoAssetId }, { id: existing.id });

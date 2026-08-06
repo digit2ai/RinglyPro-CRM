@@ -219,6 +219,7 @@ async function create(input) {
   const t = token();
   const row = await models.teasers.create({
     token: t, email: input.email, name: input.name,
+    resume_text: input.resumeText || null,
     language: input.language === 'es' ? 'es' : 'en',
     status: 'pending', ip_hash: ipHash(input.ip),
     started_at: new Date(), stage_n: 0, stages_total: STAGES.length,

@@ -65,27 +65,75 @@ Rules:
 - If a field is absent from the source, use an empty string or empty array.
 - Do not invent employers, dates, degrees, certifications or metrics.`;
 
-function heuristicStructure(text) {
+/**
+ * The keyless fallback.
+ *
+ * IT MUST RETURN THE SAME FLAT SHAPE AS THE MODEL PATH. It used to nest
+ * everything under `basics`, while every consumer — the site renderer,
+ * resume.json, the JSON-LD, the matcher's pre-filter — reads headline, email,
+ * phone and location at the top level. So a heuristic profile rendered as a
+ * bare name even when the extractor had correctly found the rest.
+ *
+ * `reason` says WHY this path was taken. It previously always claimed the key
+ * was missing, which sent me looking in the wrong place when the real cause was
+ * a truncated model response.
+ */
+function heuristicStructure(text, reason) {
   const lines = String(text || '').split('\n').map((l) => l.trim()).filter(Boolean);
   const email = (text.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [])[0] || '';
   const phone = (text.match(/\+?\d[\d\s().-]{7,}\d/) || [])[0] || '';
+  // Skip a line that is just contact details when guessing the headline.
+  const headline = lines.slice(1, 4).find((l) =>
+    l.length > 8 && l.length < 140 && !l.includes('@') && !/^\+?[\d\s().-]+$/.test(l)) || '';
   return {
-    basics: { name: lines[0] || '', headline: lines[1] || '', email, phone, location: '', summary: '' },
+    name: lines[0] || '',
+    headline,
+    summary: '',
+    email,
+    phone,
+    location: '',
     experience: [], education: [], skills: [], certifications: [],
     is_simulated: true,
-    note: 'Heuristic structure only — no ANTHROPIC_API_KEY. Fields left empty rather than guessed.',
+    note: reason || 'Structured without a language model. Fields left empty rather than guessed.',
   };
 }
 
 async function structure(text) {
-  if (!brain.enabled()) return { profile: heuristicStructure(text), is_simulated: true, cost_usd: 0 };
-  const res = await brain.json({
+  if (!brain.enabled()) {
+    return {
+      profile: heuristicStructure(text, 'Structured without a language model — no ANTHROPIC_API_KEY.'),
+      is_simulated: true, cost_usd: 0,
+    };
+  }
+
+  // A long CV needs room to come back as valid JSON. At 2500 the response was
+  // being cut mid-object, JSON.parse failed, and we fell back to the heuristic
+  // silently — which is exactly how a real resume rendered as a bare name.
+  const budget = parseInt(process.env.JOBUP_STRUCTURE_MAX_TOKENS || '8000', 10);
+  let res = await brain.json({
     system: STRUCTURE_SYSTEM,
     prompt: String(text || '').slice(0, 24000),
-    maxTokens: 2500,
+    maxTokens: budget,
   });
+
+  // One retry on a truncated or unparseable response, asking for less prose.
+  if ((!res.ok || !res.data) && res.raw) {
+    res = await brain.json({
+      system: STRUCTURE_SYSTEM + '\n\nBe concise. At most 6 roles, 3 bullets each, 40 skills. Return ONLY valid JSON.',
+      prompt: String(text || '').slice(0, 16000),
+      maxTokens: budget,
+    });
+  }
+
   if (!res.ok || !res.data) {
-    return { profile: heuristicStructure(text), is_simulated: true, cost_usd: res.cost_usd || 0 };
+    const why = res.reason === 'refusal' ? 'the model declined to structure this document'
+      : res.raw ? 'the model response could not be parsed'
+      : (res.reason || 'the model call failed');
+    console.warn('[jobup resume] structure fell back to heuristic:', why);
+    return {
+      profile: heuristicStructure(text, `Structured without a language model — ${why}.`),
+      is_simulated: true, cost_usd: res.cost_usd || 0,
+    };
   }
   const d = res.data;
   return {

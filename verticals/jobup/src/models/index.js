@@ -127,6 +127,11 @@ const SCHEMA = {
     name: { type: DataTypes.STRING },
     language: { type: DataTypes.STRING, defaultValue: 'en' },
     address_offer: { type: DataTypes.STRING },
+    // The extracted resume text. Kept so provisioning can carry it to the
+    // profile — the matcher's keyless pre-filter has nothing to work with
+    // without it — and expired by resume_purge_after, which exists for exactly
+    // this and previously had nothing to purge.
+    resume_text: { type: DataTypes.TEXT },
     payload: { type: DataTypes.JSONB, defaultValue: {} },
     narration: { type: DataTypes.JSONB, defaultValue: [] },
     status: { type: DataTypes.STRING, defaultValue: 'pending' }, // pending|ready|failed
@@ -355,6 +360,7 @@ const ADDED_COLUMNS = [
   ['ju_teasers',       'stages_total', 'INTEGER DEFAULT 6'],
   ['ju_teasers',       'started_at',   'TIMESTAMPTZ'],
   ['ju_opportunities', 'ip_hash',      'VARCHAR(64)'],
+  ['ju_teasers',       'resume_text',  'TEXT'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

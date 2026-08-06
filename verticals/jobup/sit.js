@@ -1420,6 +1420,64 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the error must be actionable, not the bare string "email required"');
   });
 
+
+  // ---------------------------------------------------------------
+  section('resume extraction — shape, budget, retention');
+  await t('THE HEURISTIC PATH RETURNS THE SAME FLAT SHAPE AS THE MODEL PATH', async () => {
+    // It used to nest everything under `basics`, while the site renderer,
+    // resume.json, the JSON-LD and the matcher all read the top level. A real
+    // profile therefore rendered as a bare name with the data sitting right
+    // there, unread.
+    const txt = ['CARLOS A GOMEZ MEJIA', 'carlos@example.com | 656-205-1665',
+      'Finance and Operations Professional', '', 'EXPERIENCE', 'Analyst, Acme, 2019-2024'].join('\n');
+    const out = await resumeSvc.structure(txt);
+    const pr = out.profile;
+    assert.ok(!pr.basics, 'nothing may be nested under basics');
+    for (const k of ['name', 'headline', 'email', 'phone', 'location',
+                     'summary', 'experience', 'education', 'skills', 'certifications']) {
+      assert.ok(k in pr, 'missing top-level field: ' + k);
+    }
+    assert.strictEqual(pr.name, 'CARLOS A GOMEZ MEJIA');
+    assert.ok(pr.email.includes('@'), 'the email it found must be reachable');
+    assert.ok(pr.headline.length > 5, 'and the headline');
+  });
+  await t('a heuristic profile actually RENDERS its fields', () => {
+    const txt = ['Ada Lovelace', 'ada@example.com', 'Analytical Engine Architect'].join('\n');
+    const pr = { name: 'Ada Lovelace', headline: 'Analytical Engine Architect',
+                 email: 'ada@example.com', experience: [], education: [], skills: [] };
+    const st = settingsSvc.sanitize({ privacy: { email: true } });
+    const html = siteRender.page(pr, st, { name: 'Ada Lovelace', url: 'https://a.jobup.dev', slug: 'a' });
+    assert.ok(html.includes('Analytical Engine Architect'), 'the headline must reach the page');
+  });
+  await t('the fallback says WHY it fell back, not always "no key"', async () => {
+    const saved = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    const out = await resumeSvc.structure('Someone\nsome@example.com\nA Title Here');
+    assert.ok(/no ANTHROPIC_API_KEY/.test(out.profile.note), 'keyless should say so');
+    if (saved) process.env.ANTHROPIC_API_KEY = saved;
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/resume.js', 'utf8');
+    assert.ok(src.includes('could not be parsed'), 'a parse failure must be reported as one');
+    assert.ok(src.includes('JOBUP_STRUCTURE_MAX_TOKENS'), 'the output budget must be raisable');
+    assert.ok(/maxTokens: budget/.test(src), 'and actually used');
+  });
+  await t('THE EXTRACTED RESUME IS RETAINED, or the matcher has nothing to match on', () => {
+    const fs = require('fs');
+    const models_src = fs.readFileSync(__dirname + '/src/models/index.js', 'utf8');
+    assert.ok(/resume_text: \{ type: DataTypes\.TEXT \}/.test(models_src),
+      'the teaser must keep the text it extracted');
+    const intake = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(intake.includes('ip, resumeText }'), 'and store it at creation');
+    const prov = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+    assert.ok(prov.includes('t.resume_text ||'), 'and carry it onto the profile');
+  });
+  await t('retention still applies to the text we now keep', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/models/index.js', 'utf8');
+    assert.ok(src.includes('resume_purge_after'),
+      'the purge column exists and now has something to purge');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

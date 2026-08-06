@@ -92,7 +92,7 @@ router.post('/teaser', upload.fields([{ name: 'resume', maxCount: 1 }, { name: '
       return res.status(400).json({ error: 'A resume is required — attach a file or paste the text.' });
     }
 
-    const { token } = await teaser.create({ ...body, ip });
+    const { token } = await teaser.create({ ...body, ip, resumeText });
 
     // Background build. Response returns immediately with the poll token.
     // Optional profile photo. Stored separately from resume_json so the JSON
