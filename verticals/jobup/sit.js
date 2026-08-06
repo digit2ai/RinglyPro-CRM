@@ -2081,6 +2081,67 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('min_score'));
   });
 
+
+  // ---------------------------------------------------------------
+  section('Broadcast — drafts that can actually be sent, by you');
+  await t('THE BROADCASTER STILL CANNOT SEND', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    const block = src.slice(src.indexOf('async function broadcaster'), src.indexOf('async function presence'));
+    assert.ok(block.includes('approved_at: null'), 'never pre-approved');
+    assert.ok(block.includes('sent_at: null'), 'never pre-sent');
+    assert.ok(!/mailer|sgMail|sendgrid/i.test(block), 'the agent has no sender and must not gain one');
+  });
+  await t('APPROVING NO LONGER IMPLIES A SEND THAT NEVER HAPPENS', () => {
+    // It used to say 'Sending still respects quiet hours and a live consent
+    // check' — while nothing anywhere set sent_at. The draft simply died there.
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(!src.includes('Sending still respects quiet hours'), 'the misleading note must be gone');
+    assert.ok(/JobUp does not send it/.test(src), 'and replaced by what actually happens');
+  });
+  await t('a draft has a recipient and knows which job it is about', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/models/index.js', 'utf8');
+    const block = src.slice(src.indexOf('  outreach: {'), src.indexOf('  opportunities: {'));
+    for (const f of ['job_id', 'to_email', 'to_name']) {
+      assert.ok(block.includes(f), 'outreach is missing ' + f + ' — a draft with no recipient cannot be sent');
+    }
+  });
+  await t('THE MAILTO IS GATED ON APPROVAL', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const block = src.slice(src.indexOf("router.get('/outreach/:id/mailto'"),
+                            src.indexOf("router.post('/outreach/:id/email-me'"));
+    assert.ok(block.includes('if (!row.approved_at)'), 'nothing leaves unreviewed');
+    assert.ok(block.includes('Approve it first'));
+  });
+  await t('the note is built only from the match and OWNER-ENTERED facts', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    const block = src.slice(src.indexOf('async function broadcaster'), src.indexOf('async function presence'));
+    assert.ok(block.includes('settingsSvc.outreachFacts(settings)'),
+      'work authorization, pay and availability must be verbatim or absent');
+    assert.ok(block.includes('m.explanation'), 'and the reason comes from the real score');
+  });
+  await t('outreachFacts quotes or omits — it never paraphrases', () => {
+    const none = settingsSvc.outreachFacts({ facts: {} });
+    assert.deepStrictEqual(none.lines, [], 'nothing stated means nothing claimed');
+    const some = settingsSvc.outreachFacts({ facts: { work_authorization: 'US citizen' } });
+    assert.deepStrictEqual(some.lines, ['US citizen'], 'exactly what the owner typed');
+    assert.strictEqual(some.verbatim, true);
+  });
+  await t('a blocked employer never gets a draft', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(src.includes('settingsSvc.employerBlocked(settings, job.employer)'));
+  });
+  await t('you can record that you sent it, and un-record it', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('if (b.sent === true) patch.sent_at = new Date()'));
+    assert.ok(src.includes('if (b.sent === false) patch.sent_at = null'), 'a mis-click must be undoable');
+  });
+  await t('the tab says plainly that JobUp does not send', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('JobUp never sends these'));
+    assert.ok(html.includes('Open in my mail app'));
+    assert.ok(html.includes('I sent it'));
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

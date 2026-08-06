@@ -257,7 +257,83 @@ router.post('/outreach/:id/approve', async (req, res) => {
     { approved_at: new Date(), consent_snapshot: { approved_by: 'subscriber', at: new Date() } },
     { id: parseInt(req.params.id, 10) }
   );
-  res.json({ ok: true, note: 'Approved. Sending still respects quiet hours and a live consent check.' });
+  res.json({ ok: true,
+    note: 'Approved. JobUp does not send it — open it in your own mail app so it arrives from you, not from us.' });
+});
+
+/**
+ * Edit a draft, or record that you sent it.
+ *
+ * JobUp has no sender and deliberately never will: the whole argument for this
+ * product is that outreach reaches a recruiter FROM THE PERSON, not from a
+ * platform. Approving used to be the end of the road — the draft simply sat
+ * there while the message implied it would go out.
+ */
+router.patch('/outreach/:id', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const t = scoped('outreach', tid);
+  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+
+  const patch = {};
+  const b = req.body || {};
+  if (typeof b.subject === 'string') patch.subject = b.subject.slice(0, 250);
+  if (typeof b.body === 'string') patch.body = b.body.slice(0, 8000);
+  if (typeof b.to_name === 'string') patch.to_name = b.to_name.slice(0, 200);
+  if (typeof b.to_email === 'string') {
+    const v = b.to_email.trim();
+    if (v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
+      return res.status(400).json({ error: 'That does not look like an email address.' });
+    }
+    patch.to_email = v || null;
+  }
+  if (b.sent === true) patch.sent_at = new Date();
+  if (b.sent === false) patch.sent_at = null;
+  if (!Object.keys(patch).length) return res.status(400).json({ error: 'nothing to change' });
+
+  await t.update(patch, { id: row.id });
+  res.json({ ok: true, outreach: plain(await t.findOne({ id: row.id })) });
+});
+
+/** A mailto for the subscriber's own client, plus the job link. */
+router.get('/outreach/:id/mailto', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const row = await scoped('outreach', tid).findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+  if (!row.approved_at) {
+    return res.status(400).json({ error: 'Approve it first — nothing leaves here unreviewed.' });
+  }
+  const job = row.job_id ? await models.jobs.findOne({ where: { id: row.job_id } }) : null;
+  res.json({
+    ok: true,
+    to: row.to_email || '',
+    subject: row.subject || '',
+    body: row.body || '',
+    job_url: (job && job.url) || null,
+    mailto: `mailto:${encodeURIComponent(row.to_email || '')}` +
+      `?subject=${encodeURIComponent(row.subject || '')}` +
+      `&body=${encodeURIComponent(row.body || '')}`,
+    note: 'Opens in your own mail client. It arrives from you, which is what keeps it out of a spam folder.',
+  });
+});
+
+/** Send the draft to YOURSELF, to finish and send from your phone or desktop. */
+router.post('/outreach/:id/email-me', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const row = await scoped('outreach', tid).findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  if (!sub || !sub.email) return res.status(400).json({ error: 'no address on file' });
+  if (!mailer.configured()) {
+    return res.status(503).json({ ...mailer.status(), error: 'Email is not configured on this deployment.' });
+  }
+  const r = await mailer.send({
+    to: sub.email,
+    subject: `Draft: ${row.subject || 'outreach'}`,
+    text: `${row.body || ''}\n\n---\nDrafted by your JobUp Broadcaster. Edit and send it yourself.`,
+  });
+  if (!r.ok) return res.status(502).json(r);
+  res.json({ ok: true, sent_to: sub.email });
 });
 
 router.post('/agents/:name/run', async (req, res) => {

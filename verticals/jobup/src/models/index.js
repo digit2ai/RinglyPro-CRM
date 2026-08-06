@@ -164,6 +164,9 @@ const SCHEMA = {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     channel: { type: DataTypes.STRING },
+    job_id: { type: DataTypes.INTEGER },      // what it is about
+    to_email: { type: DataTypes.STRING },     // filled in by the subscriber
+    to_name: { type: DataTypes.STRING },
     subject: { type: DataTypes.STRING },
     body: { type: DataTypes.TEXT },
     // approval is forced on in code, never a prompt (spec section 10)
@@ -380,6 +383,9 @@ const ADDED_COLUMNS = [
   ['ju_job_matches',   'opportunity_id', 'INTEGER'],
   ['ju_job_matches',   'title',        'VARCHAR(250)'],
   ['ju_job_matches',   'employer',     'VARCHAR(250)'],
+  ['ju_outreach',      'job_id',       'INTEGER'],
+  ['ju_outreach',      'to_email',     'VARCHAR(255)'],
+  ['ju_outreach',      'to_name',      'VARCHAR(255)'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

@@ -109,14 +109,30 @@ async function broadcaster(tenantId, opts = {}) {
     if (settingsSvc.employerBlocked(settings, job.employer)) continue;  // absolute
 
     const facts = settingsSvc.outreachFacts(settings);
+    const { profile } = await loadContext(tenantId);
+    const first = String(profile.name || '').split(' ')[0] || '';
+
+    // A note the subscriber can actually use — as an email once they have an
+    // address, or pasted into an application's 'why this role' box. Built only
+    // from the match explanation and facts the OWNER typed; outreachFacts is
+    // verbatim-or-absent, so nothing here claims an authorization, a salary or
+    // an availability they did not state themselves.
+    const body = [
+      `Hello,`,
+      '',
+      `I am writing about the ${job.title} role${job.employer ? ' at ' + job.employer : ''}.`,
+      m.explanation ? `Why I think it fits: ${m.explanation}` : '',
+      ...facts.lines,
+      '',
+      profile.name || '',
+      profile.headline || '',
+    ].filter((l) => l !== undefined).join('\n');
+
     const row = await scoped('outreach', tenantId).create({
       channel: 'email',
-      subject: `Interest in ${job.title} at ${job.employer}`,
-      body: [
-        `Regarding the ${job.title} role at ${job.employer}.`,
-        m.explanation || '',
-        ...facts.lines,   // owner-entered, verbatim, or absent
-      ].filter(Boolean).join('\n\n'),
+      job_id: job.id,
+      subject: `${job.title}${job.employer ? ' — ' + job.employer : ''}${first ? ' — ' + profile.name : ''}`,
+      body,
       approved_at: null,   // NEVER set here
       sent_at: null,       // NEVER set here
       consent_snapshot: null,

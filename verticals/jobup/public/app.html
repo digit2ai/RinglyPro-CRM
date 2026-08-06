@@ -764,6 +764,413 @@ function delEntry(id){
   });
 }
 
+/* ---- Broadcast: drafts you approve, edit and send YOURSELF ---- */
+function loadOutreach(){
+  api('/api/v1/engine/outreach').then(function(r){
+    if(!r.ok) return;
+    OUT=r.j.outreach||[];
+    var pending=OUT.filter(function(o){return !o.approved_at;});
+    $('c-out').textContent=pending.length?'('+pending.length+')':'';
+    var head='<div class="callout" style="margin:0 0 14px">'+
+      '<strong>JobUp never sends these.</strong> Your agent drafts a note for a strong match; you review it, '+
+      'add who it goes to, and send it from your own mail app. That is the point \u2014 it arrives from you, '+
+      'not from a platform, which is what keeps it out of a spam folder and protects your reputation.</div>';
+    if(!OUT.length){
+      $('p-outreach').innerHTML=head+'<div class="empty"><div class="big">No drafts yet</div>'+
+        'Your Career Broadcaster writes one for your strongest matches.'+
+        '<div class="acts" style="justify-content:center">'+
+        '<button class="btn primary sm" onclick="runAgent(\'broadcaster\')">Draft some now</button></div></div>';
+      return;
+    }
+    $('p-outreach').innerHTML=head+OUT.map(outRow).join('')+
+      '<div class="acts"><button class="btn sm" onclick="runAgent(\'broadcaster\')">Draft more</button></div>';
+  });
+}
+function outRow(o){
+  var state=o.sent_at?'sent':(o.approved_at?'approved':'awaiting your review');
+  return '<div class="card"><div class="row">'+
+    '<div style="flex:1;min-width:220px"><div class="t">'+esc(o.subject||'(no subject)')+'</div>'+
+    '<div class="m">'+esc(o.channel||'email')+' \u00b7 '+esc(state)+'</div></div>'+
+    '<span class="chip'+(o.sent_at?' ok':(o.approved_at?'':' warn'))+'">'+esc(state)+'</span></div>'+
+    '<div class="cvgrid" style="margin-top:12px">'+
+      '<div><label>To (name)</label><input id="o-name-'+o.id+'" value="'+esc(o.to_name||'')+'" placeholder="Hiring manager"></div>'+
+      '<div><label>To (email)</label><input id="o-mail-'+o.id+'" type="email" value="'+esc(o.to_email||'')+'" placeholder="them@company.com"></div>'+
+    '</div>'+
+    '<label>Subject</label><input id="o-subj-'+o.id+'" value="'+esc(o.subject||'')+'">'+
+    '<label>Message</label><textarea id="o-body-'+o.id+'" rows="9">'+esc(o.body||'')+'</textarea>'+
+    '<div class="acts">'+
+      '<button class="btn sm" onclick="saveOut('+o.id+')">Save edits</button>'+
+      (o.approved_at?'':'<button class="btn primary sm" onclick="approve('+o.id+')">Approve</button>')+
+      (o.approved_at?'<button class="btn primary sm" onclick="openOut('+o.id+')">Open in my mail app</button>':'')+
+      (o.approved_at?'<button class="btn sm" onclick="mailOutToMe('+o.id+')">Email it to me</button>':'')+
+      (o.approved_at&&!o.sent_at?'<button class="btn sm" onclick="markSent('+o.id+')">I sent it</button>':'')+
+    '</div><div id="o-out-'+o.id+'" class="note"></div></div>';
+}
+function outPatch(id,body,msg){
+  return api('/api/v1/engine/outreach/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)}).then(function(r){
+      if(!r.ok){err('aerr',r.j.error||'Could not save.');return false;}
+      if(msg)err('aerr',msg);
+      return true;
+    });
+}
+function saveOut(id){
+  outPatch(id,{subject:$('o-subj-'+id).value,body:$('o-body-'+id).value,
+    to_name:$('o-name-'+id).value,to_email:$('o-mail-'+id).value},'Draft saved.')
+    .then(function(ok){if(ok)loadOutreach();});
+}
+function approve(id){
+  // Save any edits first, so approval covers what is actually on screen.
+  outPatch(id,{subject:$('o-subj-'+id).value,body:$('o-body-'+id).value,
+    to_name:$('o-name-'+id).value,to_email:$('o-mail-'+id).value}).then(function(){
+    api('/api/v1/engine/outreach/'+id+'/approve',{method:'POST'}).then(function(r){
+      if(r.ok)err('aerr',r.j.note||'Approved.');
+      loadOutreach();
+    });
+  });
+}
+function openOut(id){
+  var o=$('o-out-'+id);
+  api('/api/v1/engine/outreach/'+id+'/mailto').then(function(r){
+    if(!r.ok){o.textContent=r.j.error||'Could not build that.';return;}
+    if(!r.j.to){o.innerHTML='<span style="color:var(--warn)">Add an email address above first, then Save edits.</span>';return;}
+    o.innerHTML=esc(r.j.note)+(r.j.job_url?' <a href="'+esc(r.j.job_url)+'" target="_blank" rel="noopener" style="color:var(--cyan)">the posting</a>':'');
+    location.href=r.j.mailto;
+  });
+}
+function mailOutToMe(id){
+  var o=$('o-out-'+id); o.textContent='Sending...';
+  api('/api/v1/engine/outreach/'+id+'/email-me',{method:'POST'}).then(function(r){
+    o.innerHTML=r.ok?'<span class="chip ok">sent to '+esc(r.j.sent_to)+'</span>'
+      :esc(r.j.error||'Could not send.');
+  });
+}
+function markSent(id){
+  outPatch(id,{sent:true},'Marked as sent.').then(function(ok){if(ok)loadOutreach();});
+}
+
+/* ---- targets: what your agent aims at ---- */
+var COUNTRIES=[['US','United States'],['CA','Canada'],['MX','Mexico'],['GB','United Kingdom'],
+  ['IE','Ireland'],['ES','Spain'],['DE','Germany'],['FR','France'],['NL','Netherlands'],
+  ['CO','Colombia'],['AR','Argentina'],['BR','Brazil'],['CL','Chile'],['PE','Peru'],
+  ['IN','India'],['AU','Australia'],['SG','Singapore'],['AE','United Arab Emirates']];
+
+function loadTargets(){
+  api('/api/v1/engine/settings').then(function(r){
+    if(!r.ok)return;
+    SET=r.j.settings;
+    var geo=SET.geo||{}, allowed=(geo.allowed_countries||[]).map(function(c){return String(c).toUpperCase();});
+    var tg=SET.targeting||{};
+    var roles=tg.roles||[], inds=tg.industries||[], emps=tg.employers||[];
+    var excl=tg.exclude_keywords||[], must=tg.must_include||[], rp=tg.remote_preference||'any';
+    var blocked=(SET.blocked&&SET.blocked.employers)||[];
+
+    $('p-targets').innerHTML=
+      '<div class="card"><div class="t">Where you will work</div>'+
+      '<div class="m">Tick the countries you want. A posting outside them is dropped '+
+      'before it costs anything to score \u2014 leave everything unticked for no restriction.</div>'+
+      '<div class="ctry">'+COUNTRIES.map(function(c){
+        return '<label class="ctrybox'+(allowed.indexOf(c[0])>=0?' on':'')+'">'+
+          '<input type="checkbox" value="'+c[0]+'"'+(allowed.indexOf(c[0])>=0?' checked':'')+'>'+
+          '<span>'+esc(c[1])+'</span></label>';}).join('')+'</div>'+
+      '<div class="sw" style="margin-top:12px"><div><div class="lbl">Flag postings with no location</div>'+
+      '<div class="hint">Rather than silently including or excluding them.</div></div>'+
+      '<div class="toggle'+(geo.flag_unknown!==false?' on':'')+'" id="t-flag"><i></i></div></div>'+
+      '<div class="acts"><button class="btn primary sm" id="t-savegeo">Save countries</button>'+
+      '<span class="note" id="t-geomsg" style="margin:0 0 0 10px"></span></div></div>'+
+
+      '<div class="card"><div class="t">Roles you are targeting</div>'+
+      '<div class="m">The exact title strings a sourcer searches. A title match counts double '+
+      'in the pre-filter, and each one becomes an indexable page on your site.</div>'+
+      '<div id="rolelist">'+(roles.length?roles.map(function(x,i){
+        return '<span class="chip">'+esc(x.title||x)+
+          ' <a href="#" onclick="rmRole('+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set. Without these the pre-filter ranks on skill words alone, '+
+        'so the biggest job boards dominate by volume.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-role" placeholder="e.g. Financial Analyst" maxlength="120">'+
+        '<button class="btn primary sm" id="t-addrole">Add role</button></div></div>'+
+
+      '<div class="card"><div class="t">Industries</div>'+
+      '<div class="m">Extra terms your agent counts when ranking. '+
+      '\u201cfintech\u201d, \u201chealthcare\u201d, \u201clogistics\u201d \u2014 whatever your world is called.</div>'+
+      '<div id="indlist">'+(inds.length?inds.map(function(x,i){
+        return '<span class="chip">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'industries\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-ind" placeholder="e.g. fintech" maxlength="80">'+
+        '<button class="btn primary sm" onclick="addList(\'industries\',\'t-ind\')">Add industry</button></div></div>'+
+
+      '<div class="card"><div class="t">Companies you want</div>'+
+      '<div class="m">Named employers are weighted heavily \u2014 a match at one of these '+
+      'outranks a generic one.</div>'+
+      '<div id="emplist">'+(emps.length?emps.map(function(x,i){
+        return '<span class="chip ok">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'employers\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-emp" placeholder="e.g. Stripe" maxlength="120">'+
+        '<button class="btn sm" onclick="addList(\'employers\',\'t-emp\')">Add company</button></div></div>'+
+
+      '<div class="card"><div class="t">Words that rule a job out</div>'+
+      '<div class="m">Checked before anything is scored, so these cost you nothing. '+
+      '\u201cunpaid\u201d, \u201cinternship\u201d, \u201cclearance\u201d.</div>'+
+      '<div id="exclist">'+(excl.length?excl.map(function(x,i){
+        return '<span class="chip warn">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'exclude_keywords\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-exc" placeholder="e.g. unpaid" maxlength="80">'+
+        '<button class="btn sm" onclick="addList(\'exclude_keywords\',\'t-exc\')">Exclude word</button></div></div>'+
+
+      '<div class="card"><div class="t">Words a job must contain</div>'+
+      '<div class="m">A requirement, not a preference \u2014 every term must appear or the job is skipped.</div>'+
+      '<div id="mustlist">'+(must.length?must.map(function(x,i){
+        return '<span class="chip">'+esc(x)+
+          ' <a href="#" onclick="rmList(\'must_include\','+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None set \u2014 nothing is required.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-must" placeholder="e.g. SQL" maxlength="80">'+
+        '<button class="btn sm" onclick="addList(\'must_include\',\'t-must\')">Require word</button></div></div>'+
+
+      '<div class="card"><div class="t">How you want to work</div>'+
+      '<div class="cvgrid" style="margin-top:12px">'+
+        '<div><label for="t-remote">Remote preference</label>'+
+        '<select id="t-remote">'+
+          [['any','No preference'],['remote','Remote only'],['hybrid','Hybrid or remote'],['onsite','On-site']]
+            .map(function(o){return '<option value="'+o[0]+'"'+(rp===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
+        '</select></div>'+
+        '<div><label for="t-seniority">Seniority nudge</label>'+
+        '<input id="t-seniority" value="'+esc(tg.seniority||'')+'" placeholder="senior, lead, director"></div>'+
+        '<div><label for="t-min">Minimum score to file</label>'+
+        '<input id="t-min" type="number" min="0" max="100" value="'+(tg.min_score||0)+'"></div>'+
+        '<div><label for="t-perday">Jobs scored per day</label>'+
+        '<input id="t-perday" type="number" min="1" max="40" value="'+((SET.quotas&&SET.quotas.jobs_scored_per_day)||6)+'"></div>'+
+      '</div>'+
+      '<div class="note">Seniority is a nudge, not a filter \u2014 titles word it too many ways to exclude on. '+
+      'Below the minimum score a job is still scored but not filed, and the run says how many were held back.</div>'+
+      '<div class="acts"><button class="btn primary sm" id="t-savepref">Save preferences</button></div></div>'+
+
+      '<div class="card"><div class="t">Employers to never contact</div>'+
+      '<div class="m">Absolute. Checked at match time, at alert time and at draft time.</div>'+
+      '<div id="blocklist">'+(blocked.length?blocked.map(function(x,i){
+        return '<span class="chip warn">'+esc(x)+
+          ' <a href="#" onclick="rmBlocked('+i+');return false" style="color:var(--red)">&times;</a></span>';
+        }).join(''):'<div class="note">None excluded.</div>')+'</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="t-block" placeholder="Company name" maxlength="160">'+
+        '<button class="btn sm" id="t-addblock">Exclude</button></div></div>';
+
+    Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+      cb.addEventListener('change',function(){cb.parentNode.classList.toggle('on',cb.checked);});
+    });
+    $('t-flag').addEventListener('click',function(){this.classList.toggle('on');});
+    $('t-savegeo').addEventListener('click',saveGeo);
+    $('t-addrole').addEventListener('click',function(){
+      var v=$('t-role').value.trim(); if(!v)return;
+      var next=JSON.parse(JSON.stringify(SET));
+      next.targeting=next.targeting||{}; next.targeting.roles=(next.targeting.roles||[]).concat([{title:v}]);
+      saveSettingsDoc(next,'Role target added.');
+    });
+    var sp=$('t-savepref');
+    if(sp) sp.addEventListener('click',function(){
+      var next=JSON.parse(JSON.stringify(SET));
+      next.targeting=next.targeting||{};
+      next.targeting.remote_preference=$('t-remote').value;
+      next.targeting.seniority=$('t-seniority').value.trim()||null;
+      next.targeting.min_score=Math.max(0,Math.min(100,parseInt($('t-min').value,10)||0));
+      next.quotas=next.quotas||{};
+      next.quotas.jobs_scored_per_day=Math.max(1,Math.min(40,parseInt($('t-perday').value,10)||6));
+      saveSettingsDoc(next,'Preferences saved. They apply from your next run.');
+    });
+    $('t-addblock').addEventListener('click',function(){
+      var v=$('t-block').value.trim(); if(!v)return;
+      var next=JSON.parse(JSON.stringify(SET));
+      next.blocked=next.blocked||{}; next.blocked.employers=(next.blocked.employers||[]).concat([v]);
+      saveSettingsDoc(next,'Employer excluded.');
+    });
+  });
+}
+function saveGeo(){
+  var codes=[];
+  Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+    if(cb.checked)codes.push(cb.value);});
+  var next=JSON.parse(JSON.stringify(SET));
+  next.geo=next.geo||{}; next.geo.allowed_countries=codes;
+  next.geo.flag_unknown=$('t-flag').classList.contains('on');
+  saveSettingsDoc(next, codes.length
+    ? 'Saved. Your agent will only consider '+codes.join(', ')+' from the next run.'
+    : 'Saved. No country restriction.');
+}
+function addList(key,inputId){
+  var v=$(inputId).value.trim(); if(!v)return;
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting=next.targeting||{};
+  next.targeting[key]=(next.targeting[key]||[]).concat([v]);
+  saveSettingsDoc(next,'Added.');
+}
+function rmList(key,i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting[key].splice(i,1); saveSettingsDoc(next,'Removed.');
+}
+function rmRole(i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.targeting.roles.splice(i,1); saveSettingsDoc(next,'Role removed.');
+}
+function rmBlocked(i){
+  var next=JSON.parse(JSON.stringify(SET));
+  next.blocked.employers.splice(i,1); saveSettingsDoc(next,'Employer un-excluded.');
+}
+function saveSettingsDoc(next,msg){
+  api('/api/v1/engine/settings',{method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({settings:next})}).then(function(r){
+      if(!r.ok)return err('aerr',r.j.error||'Could not save.');
+      SET=r.j.settings; err('aerr',msg||'Saved.'); loadTargets();
+    });
+}
+
+/* ---- matches ---- */
+function loadMatches(){
+  api('/api/v1/engine/matches').then(function(r){
+    if(!r.ok) return;
+    MATCHES=r.j.matches||[];
+    $('c-matches').textContent=MATCHES.length?'('+MATCHES.length+')':'';
+    if(!MATCHES.length){
+      $('p-matches').innerHTML='<div class="empty"><div class="big">No matches yet</div>'+
+        'Your Opportunity Hunter runs daily. When it finds openings that fit, they appear here with a score '+
+        'and the reason for the match. We show real postings or none at all.'+
+        '<div class="acts" style="justify-content:center"><button class="btn primary sm" onclick="runAgent(\'hunter\')">Run the Hunter now</button></div></div>';
+      return;
+    }
+    $('p-matches').innerHTML='<div class="grid">'+
+      stat('Matches',MATCHES.length)+
+      stat('Strong (80+)',MATCHES.filter(function(m){return m.score>=80;}).length)+
+      stat('Applied',MATCHES.filter(function(m){return m.stage==='applied';}).length)+
+      '</div>'+MATCHES.map(matchCard).join('');
+  });
+}
+var STAGES=['new','saved','applied','screening','interviewing','offer','closed'];
+function stageSelect(m){
+  return '<select class="stagesel" onchange="setStage('+m.id+',this.value)">'+
+    STAGES.map(function(s){
+      return '<option value="'+s+'"'+(m.stage===s?' selected':'')+'>'+s+'</option>';}).join('')+
+    '</select>';
+}
+function setStage(id,stage){
+  api('/api/v1/engine/matches/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({stage:stage})}).then(function(r){
+      if(!r.ok)return err('aerr',r.j.error||'Could not move that.');
+      err('aerr','Moved to '+stage+'.');
+      loadPipeline(); loadToday();
+    });
+}
+function stat(k,v){return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>';}
+function matchCard(m){
+  var j=m.job||{};
+  return '<div class="card"><div class="row"><div style="flex:1;min-width:220px">'+
+    '<div class="t">'+esc(j.title||'Untitled role')+'</div>'+
+    '<div class="m">'+esc(j.employer||'')+(j.location?' · '+esc(j.location):'')+'</div>'+
+    (m.explanation?'<div class="m" style="margin-top:7px">'+esc(m.explanation)+'</div>':'')+
+    (j.compensation?'<div class="m">Compensation as stated by the posting: '+esc(j.compensation)+'</div>':'')+
+    ((m.missing||[]).length?'<div>'+m.missing.slice(0,4).map(function(x){
+      return '<span class="chip">missing: '+esc(x)+'</span>';}).join('')+'</div>':'')+
+    (m.is_simulated?'<span class="chip sim">heuristic score</span>':'')+
+    '<span class="chip">'+esc(m.stage||'new')+'</span>'+
+    '<div class="acts">'+
+      (j.url?'<a class="btn sm" href="'+esc(j.url)+'" target="_blank" rel="noopener">Open posting</a>':'')+
+      '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume</button>'+
+      '<button class="btn sm" onclick="ats('+j.id+')">Keyword check</button>'+
+      '<button class="btn primary sm" onclick="applied('+j.id+')">I applied</button>'+
+      stageSelect(m)+
+    '</div><div id="out-'+j.id+'"></div>'+
+    '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
+}
+function tailor(id){
+  var o=$('out-'+id); o.innerHTML='<div class="note">Tailoring…</div>';
+  api('/api/v1/engine/tailor/'+id,{method:'POST'}).then(function(r){
+    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not tailor')+'</div>';return;}
+    var f=r.j.flagged||[];
+    o.innerHTML='<div class="note">'+
+      (r.j.changes||[]).map(function(c){return '· '+esc(c);}).join('<br>')+
+      (f.length?'<br><span class="chip warn">'+f.length+' term(s) need your confirmation — nothing is added that you did not write</span>':
+                '<br><span class="chip ok">no invented facts detected</span>')+
+      (r.j.is_simulated?'<br><span class="chip sim">returned unchanged — no model configured</span>':'')+
+      '<br>Used '+r.j.used+' of '+r.j.limit+' this month.</div>';
+  });
+}
+function ats(id){
+  var o=$('out-'+id); o.innerHTML='<div class="note">Checking…</div>';
+  api('/api/v1/engine/ats/'+id).then(function(r){
+    if(!r.ok){o.innerHTML='';return;}
+    o.innerHTML='<div class="note">ATS keyword match: <strong>'+r.j.score+'%</strong> ('+
+      r.j.matched.length+' of '+r.j.total_terms+' terms).<br>'+
+      (r.j.missing.length?'Missing: '+r.j.missing.slice(0,12).map(esc).join(', '):'Nothing obvious missing.')+
+      '<br>Deterministic — this costs nothing.</div>';
+  });
+}
+function applied(id){
+  api('/api/v1/engine/applications/'+id+'/confirm',{method:'POST'}).then(function(r){
+    if(r.ok){ $('out-'+id).innerHTML='<div class="note">'+esc(r.j.note)+'</div>';
+      loadMatches(); loadPipeline(); }
+  });
+}
+
+/* ---- pipeline ---- */
+function loadPipeline(){
+  api('/api/v1/engine/pipeline').then(function(r){
+    if(!r.ok) return;
+    var p=r.j.pipeline||{},st=r.j.stages||[];
+    var total=st.reduce(function(n,s){return n+((p[s]||[]).length);},0);
+    $('p-pipeline').innerHTML=
+      '<div class="m" style="margin-bottom:12px">'+total+' role'+(total===1?'':'s')+
+      ' tracked. Your agent only ever adds to <strong>new</strong> \u2014 every move after that is yours.</div>'+
+      '<div class="card" style="padding:14px 16px;margin-bottom:14px">'+
+        '<div class="t" style="font-size:15px">Add a role you are tracking</div>'+
+        '<div class="m" style="margin-bottom:9px">For interviews nobody\u2019s agent found.</div>'+
+        '<div class="addrow">'+
+          '<input id="pl-title" placeholder="Role title" maxlength="250">'+
+          '<input id="pl-emp" placeholder="Company" maxlength="250">'+
+          '<select id="pl-stage">'+STAGES.map(function(x){
+            return '<option value="'+x+'"'+(x==='screening'?' selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+          '<button class="btn primary sm" id="pl-add">Add</button>'+
+        '</div></div>'+
+      '<div class="stage">'+st.map(function(s){
+      var items=p[s]||[];
+      return '<div class="stagecol"><h4>'+esc(s)+' ('+items.length+')</h4>'+
+        (items.length?items.slice(0,12).map(function(m){
+          return '<div class="mini">'+
+            '<div style="font-weight:650">'+esc(m.display_title||'')+'</div>'+
+            '<div class="note" style="margin:2px 0 6px">'+esc(m.display_employer||'')+
+              (m.score!=null?' · '+m.score:'')+
+              (m.source&&m.source!=='hunter'?' · '+esc(m.source):'')+'</div>'+
+            stageSelect(m)+
+            (m.source!=='hunter'?' <button class="btn sm" style="margin-left:6px;padding:4px 9px" '+
+              'onclick="delEntry('+m.id+')">Remove</button>':'')+
+            '</div>';}).join('')
+          :'<div class="note" style="margin:0">—</div>')+'</div>';
+    }).join('')+'</div>';
+    var add=$('pl-add');
+    if(add) add.addEventListener('click',function(){
+      var title=$('pl-title').value.trim();
+      if(!title) return err('aerr','Give the role a title.');
+      api('/api/v1/engine/pipeline',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:title,employer:$('pl-emp').value.trim(),stage:$('pl-stage').value})})
+        .then(function(r){
+          if(!r.ok)return err('aerr',r.j.error||'Could not add that.');
+          loadPipeline(); loadToday();
+        });
+    });
+  });
+}
+function delEntry(id){
+  if(!confirm('Remove this from your pipeline?'))return;
+  api('/api/v1/engine/matches/'+id,{method:'DELETE'}).then(function(r){
+    if(!r.ok)return err('aerr',r.j.error||'Could not remove that.');
+    loadPipeline(); loadToday();
+  });
+}
+
 /* ---- outreach approvals ---- */
 function loadOutreach(){
   api('/api/v1/engine/outreach').then(function(r){
