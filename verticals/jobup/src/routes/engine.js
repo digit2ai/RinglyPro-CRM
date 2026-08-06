@@ -386,6 +386,22 @@ router.get('/email/status', (req, res) => {
   res.json(mailer.status());
 });
 
+/**
+ * Is the daily run on? A subscriber should be able to see whether their agents
+ * actually run on their own, or only when they press a button.
+ */
+router.get('/schedule', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const st = require('../services/scheduler').status();
+  const runs = await scoped('agent_runs', tid).findAll({ order: [['created_at', 'DESC']], limit: 1 });
+  res.json({
+    daily: st.enabled,
+    last_run_for_you: runs.length ? runs[0].created_at : null,
+    on_demand: 'Always available — the Run buttons work whether or not the daily run is on.',
+    note: st.note,
+  });
+});
+
 // ---------------------------------------------------------------
 // Profile photo — replace or remove it.
 //

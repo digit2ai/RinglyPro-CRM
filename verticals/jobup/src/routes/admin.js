@@ -375,6 +375,33 @@ load();
 </script></body></html>`);
 });
 
+/** Refresh the shared job pool now. Owner only — it costs bandwidth, not tokens. */
+router.post('/pool/refresh', requireOwner, async (req, res) => {
+  const scheduler = require('../services/scheduler');
+  try {
+    const r = await scheduler.refreshPool();
+    await audit(req.admin.email, 'pool_refresh', `+${r.added} new, ${r.refreshed} refreshed`, null);
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/** Run the whole fleet now, ignoring the once-a-day claim. */
+router.post('/fleet/run', requireOwner, async (req, res) => {
+  const scheduler = require('../services/scheduler');
+  try {
+    const r = await scheduler.runFleet();
+    await audit(req.admin.email, 'fleet_run', JSON.stringify(r), null);
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/schedule', requireOwner, (req, res) =>
+  res.json(require('../services/scheduler').status()));
+
 module.exports = router;
 module.exports.requireOwner = requireOwner;
 module.exports.configured = configured;

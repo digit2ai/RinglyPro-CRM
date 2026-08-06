@@ -31,6 +31,7 @@ const billing = require('./services/billing');
 const brain = require('./services/brain');
 const siteRender = require('./services/site-render');
 const analytics = require('./services/analytics');
+const scheduler = require('./services/scheduler');
 const photos = require('./services/photos');
 
 // QR is generated on OUR server — no third-party QR service ever sees a
@@ -76,7 +77,7 @@ router.use((req, res, next) => {
 let ready = false;
 let bootError = null;
 init()
-  .then((r) => { ready = true; console.log(`[jobup] store ready: ${r.backend}, ${r.tables} tables (ju_ prefix)`); })
+  .then((r) => { ready = true; console.log(`[jobup] store ready: ${r.backend}, ${r.tables} tables (ju_ prefix)`); scheduler.start(); })
   .catch((e) => { bootError = e.message; console.error('[jobup] init failed:', e.message); });
 
 // ---- health ---------------------------------------------------------------
@@ -92,6 +93,7 @@ router.get('/health', (req, res) => {
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
     admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',
+    scheduler: scheduler.status(),
     base_domain: addresses.BASE_DOMAIN,
   });
 });

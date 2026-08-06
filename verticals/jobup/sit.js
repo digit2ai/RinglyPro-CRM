@@ -1667,6 +1667,87 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes("method:'DELETE'"), 'removal must be reachable');
   });
 
+
+  // ---------------------------------------------------------------
+  section('the daily run');
+  const sched = require(__dirname + '/src/services/scheduler');
+
+  await t('the scheduler is OFF unless explicitly switched on', () => {
+    const saved = process.env.JOBUP_AGENTS_GO;
+    delete process.env.JOBUP_AGENTS_GO;
+    assert.strictEqual(sched.enabled(), false, 'never the default');
+    process.env.JOBUP_AGENTS_GO = '0';
+    assert.strictEqual(sched.enabled(), false, 'only "1" enables it');
+    process.env.JOBUP_AGENTS_GO = '1';
+    assert.strictEqual(sched.enabled(), true);
+    if (saved === undefined) delete process.env.JOBUP_AGENTS_GO;
+    else process.env.JOBUP_AGENTS_GO = saved;
+  });
+  await t('a tick does NOTHING while it is off', async () => {
+    const saved = process.env.JOBUP_AGENTS_GO;
+    delete process.env.JOBUP_AGENTS_GO;
+    assert.strictEqual(await sched.tick(), null, 'it must not run the fleet');
+    if (saved) process.env.JOBUP_AGENTS_GO = saved;
+  });
+  await t('THE DAY IS CLAIMED IN THE DATABASE, not in memory', async () => {
+    // Render can run more than one instance. An in-process flag would let every
+    // instance run the whole fleet on the same day and bill for all of them.
+    const first = await sched.claimDay('sit-probe');
+    const second = await sched.claimDay('sit-probe');
+    assert.strictEqual(first, true, 'the first caller wins');
+    assert.strictEqual(second, false, 'the second must not');
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(src.includes('models.audit_log.findOne'), 'the claim must be a DB read');
+  });
+  await t('the claim is per DAY, so tomorrow runs again', async () => {
+    const k = sched.dayKey();
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(k));
+    const rows = await models.audit_log.findAll({});
+    assert.ok(rows.some((r) => String(r.action).includes(k)), 'the day is part of the key');
+  });
+  await t('ONLY ACTIVE SUBSCRIBERS RUN', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(/findAll\(\{ where: \{ status: 'active' \} \}\)/.test(src),
+      'a cancelled account must cost nothing');
+  });
+  await t('the fleet respects the global concurrency ceiling', () => {
+    assert.ok(agents.CONCURRENCY >= 1 && agents.CONCURRENCY <= 16);
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(src.includes("agents.runAll('hunter'"), 'fan out through runAll, which batches');
+  });
+  await t('NOTHING IN THE DAILY RUN SENDS ANYTHING', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(!/mailer|sendgrid|broadcaster/i.test(src.replace(/\/\/.*/g, '')),
+      'the daily run must not mail or draft-and-send');
+  });
+  await t('the retention sweep finally has a caller', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(src.includes('limits.runRetention()'),
+      'it existed from day one with nothing calling it');
+  });
+  await t('status is honest about which mode it is in', () => {
+    const saved = process.env.JOBUP_AGENTS_GO;
+    delete process.env.JOBUP_AGENTS_GO;
+    const off = sched.status();
+    assert.strictEqual(off.enabled, false);
+    assert.ok(/only run when you press a button/.test(off.note));
+    process.env.JOBUP_AGENTS_GO = '1';
+    assert.ok(/once per day/.test(sched.status().note));
+    if (saved === undefined) delete process.env.JOBUP_AGENTS_GO;
+    else process.env.JOBUP_AGENTS_GO = saved;
+  });
+  await t('a subscriber can see whether their agents run on their own', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.get('/schedule'"), 'and it must not be hidden in env');
+    assert.ok(src.includes('on_demand'), 'on-demand must be stated as always available');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
