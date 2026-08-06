@@ -1548,6 +1548,35 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'and neither may put a city in an address');
   });
 
+
+  // ---------------------------------------------------------------
+  section('rows reach the client as data, not Sequelize instances');
+  await t('THE MATCHES ROUTE MUST NOT SPREAD A MODEL INSTANCE', () => {
+    // Spreading a Sequelize row yields dataValues/_previousDataValues, not the
+    // columns, so `score` arrived at the dashboard as undefined. The memory
+    // backend returns plain objects, so it works locally and fails only on
+    // Postgres — which is why every SIT passed while the UI showed a dash.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(!/out\.push\(\{ \.\.\.m, job/.test(src), 'a bare spread must not come back');
+    assert.ok(src.includes('...plain(m)'), 'rows must be flattened first');
+  });
+  await t('plain() flattens an instance, an array, and passes plain objects through', () => {
+    const fake = { dataValues: { id: 1, score: 72 }, get: ({ plain: p }) => (p ? { id: 1, score: 72 } : null) };
+    assert.deepStrictEqual(models_mod.plain(fake), { id: 1, score: 72 });
+    assert.deepStrictEqual(models_mod.plain([fake])[0].score, 72);
+    assert.deepStrictEqual(models_mod.plain({ id: 2 }), { id: 2 });
+    assert.strictEqual(models_mod.plain(null), null);
+  });
+  await t('every route that returns rows flattens them', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    for (const frag of ['opportunities: list', 'outreach: plain(await',
+                        'runs: plain(await', 'recent_runs: plain(runs)']) {
+      assert.ok(src.includes(frag), 'not flattened: ' + frag);
+    }
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

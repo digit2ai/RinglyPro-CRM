@@ -404,8 +404,24 @@ function scoped(table, tenantId) {
   };
 }
 
+/**
+ * Sequelize rows are class instances: spreading one yields dataValues,
+ * _previousDataValues and friends — NOT the columns. The memory backend
+ * returns plain objects, so a spread works there and the bug only appears on
+ * Postgres. That is exactly how `score` reached the dashboard as undefined
+ * while every SIT assertion passed.
+ */
+function plain(row) {
+  if (!row) return row;
+  if (Array.isArray(row)) return row.map(plain);
+  return typeof row.get === 'function' ? row.get({ plain: true })
+       : typeof row.toJSON === 'function' ? row.toJSON()
+       : row;
+}
+
 module.exports = {
   init,
+  plain,
   TABLE_PREFIX,
   models,
   scoped,

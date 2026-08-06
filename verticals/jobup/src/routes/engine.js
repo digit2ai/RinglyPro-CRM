@@ -6,7 +6,7 @@
 // =============================================================
 
 const express = require('express');
-const { models, scoped } = require('../models');
+const { models, scoped, plain } = require('../models');
 const authSvc = require('../services/auth');
 const settingsSvc = require('../services/settings');
 const addresses = require('../services/addresses');
@@ -61,7 +61,7 @@ router.get('/matches', async (req, res) => {
   const out = [];
   for (const m of rows) {
     const job = await models.jobs.findOne({ where: { id: m.job_id } });
-    out.push({ ...m, job: job || null });
+    out.push({ ...plain(m), job: plain(job) || null });
   }
   res.json({ matches: out });
 });
@@ -71,7 +71,7 @@ router.get('/pipeline', async (req, res) => {
   const rows = await scoped('job_matches', tid).findAll({});
   const stages = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
   const by = {}; stages.forEach((s) => { by[s] = []; });
-  rows.forEach((r) => { (by[r.stage] || by.new).push(r); });
+  plain(rows).forEach((r) => { (by[r.stage] || by.new).push(r); });
   res.json({ pipeline: by, stages });
 });
 
@@ -135,7 +135,7 @@ router.post('/applications/:jobId/confirm', async (req, res) => {
 
 router.get('/outreach', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  res.json({ outreach: await scoped('outreach', tid).findAll({ order: [['created_at', 'DESC']] }) });
+  res.json({ outreach: plain(await scoped('outreach', tid).findAll({ order: [['created_at', 'DESC']] })) });
 });
 
 // The only path that can approve. Nothing else may set approved_at.
@@ -163,7 +163,7 @@ router.post('/agents/:name/run', async (req, res) => {
 
 router.get('/agents/runs', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  res.json({ runs: await scoped('agent_runs', tid).findAll({ order: [['created_at', 'DESC']], limit: 50 }) });
+  res.json({ runs: plain(await scoped('agent_runs', tid).findAll({ order: [['created_at', 'DESC']], limit: 50 })) });
 });
 
 // Full data export — real, complete, self-service (spec 8.7 / 19.1).
@@ -208,7 +208,8 @@ router.get('/opportunities', async (req, res) => {
   const rows = await scoped('opportunities', tid).findAll({
     order: [['created_at', 'DESC']], limit: 100,
   });
-  res.json({ opportunities: rows, new_count: rows.filter((r) => r.status === 'new').length });
+  const list = plain(rows);
+  res.json({ opportunities: list, new_count: list.filter((r) => r.status === 'new').length });
 });
 
 router.patch('/opportunities/:id', async (req, res) => {
@@ -314,7 +315,7 @@ router.get('/today', async (req, res) => {
     new_matches_24h: newMatches.length,
     pending_approvals: pendingOut.length,
     new_opportunities: newOpps.length,
-    recent_runs: runs,
+    recent_runs: plain(runs),
   });
 });
 
