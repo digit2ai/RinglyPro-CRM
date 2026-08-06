@@ -1487,6 +1487,35 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the purge column exists and now has something to purge');
   });
 
+
+  // ---------------------------------------------------------------
+  section('the previewed address is the one you get');
+  await t('PROVISIONING HONOURS THE ADDRESS THE TEASER PROMISED', async () => {
+    // It was derived twice from different inputs: the teaser showed
+    // carlosgomez.jobup.dev and provisioning handed out carlosmejia.jobup.dev.
+    // Someone chose to pay having seen the first one.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+    assert.ok(src.includes('t.address_offer'), 'it must read what was offered');
+    assert.ok(/provisionAddress\(tenantId, teaserToken\)/.test(src), 'and be given the token');
+  });
+  await t('a promised address still taken by then falls through honestly', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+    assert.ok(src.includes('await addresses.isTaken(label)'),
+      'it must re-check rather than assume the offer still stands');
+    assert.ok(src.includes('Taken between preview and payment'),
+      'and allocate a fresh one rather than fail');
+  });
+  await t('the fallback also prefers the typed name', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+    assert.ok(src.includes('addresses.splitName(sub.name || profile.name'),
+      'both paths must agree on which name wins');
+    assert.ok(!/allocate\(\{ \.\.\.parts, city:/.test(src),
+      'and neither may put a city in an address');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

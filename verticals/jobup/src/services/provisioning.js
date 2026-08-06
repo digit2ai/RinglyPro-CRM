@@ -82,14 +82,34 @@ async function adoptTeaser(tenantId, teaserToken) {
 }
 
 /** Step 1 — allocate the web address. Idempotent. */
-async function provisionAddress(tenantId) {
+async function provisionAddress(tenantId, teaserToken) {
   const sub = await models.subscribers.findOne({ where: { id: tenantId } });
   if (sub.address) return { step: 'address', skipped: true, address: sub.address };
 
+  // HONOUR THE ADDRESS THE TEASER PROMISED.
+  //
+  // The address was being derived twice — once for the preview, once here —
+  // from different inputs, so the teaser could show carlosgomez.jobup.dev and
+  // provisioning then hand out carlosmejia.jobup.dev. A preview that does not
+  // bind is worse than no preview: the person chose to pay having seen it.
+  if (teaserToken) {
+    const t = await models.teasers.findOne({ where: { token: teaserToken } });
+    const offered = t && t.address_offer;
+    if (offered) {
+      const label = String(offered).split('.')[0];
+      if (!(await addresses.isTaken(label))) {
+        await models.subscribers.update({ address: offered }, { where: { id: tenantId } });
+        return { step: 'address', ok: true, address: offered,
+                 url: `https://${offered}`, from_teaser: true };
+      }
+      // Taken between preview and payment — fall through and allocate honestly.
+    }
+  }
+
   const profileRow = await scoped('profiles', tenantId).findOne({});
   const profile = (profileRow && profileRow.resume_json) || {};
-  const parts = addresses.splitName(profile.name || sub.name || sub.email.split('@')[0]);
-  const r = await addresses.allocate({ ...parts, city: profile.location });
+  const parts = addresses.splitName(sub.name || profile.name || sub.email.split('@')[0]);
+  const r = await addresses.allocate(parts);
 
   if (!r.ok) return { step: 'address', ok: false, reason: r.reason };
 
@@ -166,7 +186,7 @@ async function run(tenantId, { teaserToken } = {}) {
 
   log.push(await adoptTeaser(tenantId, teaserToken));
   log.push(await ensureSettings(tenantId));
-  log.push(await provisionAddress(tenantId));
+  log.push(await provisionAddress(tenantId, teaserToken));
   log.push(await publishSite(tenantId));
   log.push(await activateAgents(tenantId));
 
