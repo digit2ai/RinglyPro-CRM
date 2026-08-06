@@ -91,6 +91,8 @@ const SCHEMA = {
   },
   job_matches: {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    stage_changed_at: { type: DataTypes.DATE },
+    note: { type: DataTypes.TEXT },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     job_id: { type: DataTypes.INTEGER, allowNull: false },
     score: { type: DataTypes.INTEGER },
@@ -361,6 +363,8 @@ const ADDED_COLUMNS = [
   ['ju_teasers',       'started_at',   'TIMESTAMPTZ'],
   ['ju_opportunities', 'ip_hash',      'VARCHAR(64)'],
   ['ju_teasers',       'resume_text',  'TEXT'],
+  ['ju_job_matches',   'stage_changed_at', 'TIMESTAMPTZ'],
+  ['ju_job_matches',   'note',         'TEXT'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

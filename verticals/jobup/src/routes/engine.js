@@ -72,12 +72,46 @@ router.get('/matches', async (req, res) => {
   res.json({ matches: out });
 });
 
+const STAGES = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
+
+/**
+ * Move a match through the pipeline.
+ *
+ * The Pipeline tab has always shown seven columns, but only ONE transition
+ * existed — 'I applied'. Six of the seven were unreachable, so a real search
+ * (screening -> interviewing -> offer) could never be tracked, which is most of
+ * what a pipeline is for.
+ */
+router.patch('/matches/:id', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const t = scoped('job_matches', tid);
+  const row = await t.findOne({ id: parseInt(req.params.id, 10) });
+  if (!row) return res.status(404).json({ error: 'not found' });
+
+  const patch = {};
+  if (req.body && req.body.stage !== undefined) {
+    if (!STAGES.includes(req.body.stage)) {
+      return res.status(400).json({ error: 'unknown stage', stages: STAGES });
+    }
+    patch.stage = req.body.stage;
+    patch.stage_changed_at = new Date();
+  }
+  if (req.body && typeof req.body.note === 'string') patch.note = req.body.note.slice(0, 4000);
+  if (!Object.keys(patch).length) return res.status(400).json({ error: 'nothing to change' });
+
+  await t.update(patch, { id: row.id });
+  res.json({ ok: true, match: plain(await t.findOne({ id: row.id })) });
+});
+
 router.get('/pipeline', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  const rows = await scoped('job_matches', tid).findAll({});
-  const stages = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
+  const rows = plain(await scoped('job_matches', tid).findAll({}));
+  const stages = STAGES;
   const by = {}; stages.forEach((s) => { by[s] = []; });
-  plain(rows).forEach((r) => { (by[r.stage] || by.new).push(r); });
+  for (const r of rows) {
+    const job = await models.jobs.findOne({ where: { id: r.job_id } });
+    (by[r.stage] || by.new).push({ ...r, job: plain(job) || null });
+  }
   res.json({ pipeline: by, stages });
 });
 
@@ -134,7 +168,7 @@ router.post('/applications/:jobId/confirm', async (req, res) => {
     job_id: parseInt(req.params.jobId, 10),
     confirmed_by_subscriber_at: new Date(),
   });
-  await scoped('job_matches', tid).update({ stage: 'applied' }, { job_id: parseInt(req.params.jobId, 10) });
+  await scoped('job_matches', tid).update({ stage: 'applied', stage_changed_at: new Date() }, { job_id: parseInt(req.params.jobId, 10) });
   res.json({ ok: true, id: row.id,
     note: 'Recorded because you confirmed you submitted it. JobUp never submits on your behalf.' });
 });

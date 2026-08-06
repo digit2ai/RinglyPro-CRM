@@ -1748,6 +1748,54 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(src.includes('on_demand'), 'on-demand must be stated as always available');
   });
 
+
+  // ---------------------------------------------------------------
+  section('matches accumulate; the pipeline can actually be moved');
+  await t('THE DAILY RUN ADDS, IT DOES NOT OVERWRITE', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    // Yesterday's matches, and any stage you moved them to, must survive.
+    assert.ok(src.includes('const seen = new Set(existing.map((m) => m.job_id))'),
+      'already-matched jobs must be skipped');
+    assert.ok(src.includes('.filter((r) => !seen.has(r.job.id))'), 'only fresh jobs are scored');
+    for (const f of ['src/services/agents/index.js', 'src/services/scheduler.js']) {
+      const t2 = fs.readFileSync(__dirname + '/' + f, 'utf8');
+      assert.ok(!/job_matches'[^)]*\)\.destroy/.test(t2), f + ' deletes matches');
+    }
+  });
+  await t('ALL SEVEN STAGES ARE REACHABLE, not just applied', async () => {
+    // The board showed seven columns while only 'I applied' could move
+    // anything, so screening/interviewing/offer could never be tracked.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.patch('/matches/:id'"), 'a transition endpoint must exist');
+    const m = await scoped('job_matches', subA.id).create({ job_id: 999001, score: 70, stage: 'new' });
+    for (const stage of ['saved', 'applied', 'screening', 'interviewing', 'offer', 'closed']) {
+      await scoped('job_matches', subA.id).update({ stage, stage_changed_at: new Date() }, { id: m.id });
+      const back = await scoped('job_matches', subA.id).findOne({ id: m.id });
+      assert.strictEqual(back.stage, stage, 'could not reach ' + stage);
+    }
+    await scoped('job_matches', subA.id).destroy({ id: m.id });
+  });
+  await t('an unknown stage is refused with the valid list', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("error: 'unknown stage', stages: STAGES"),
+      'a typo must not silently write a junk stage');
+  });
+  await t('moving a match records WHEN it moved', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('patch.stage_changed_at = new Date()'));
+    assert.ok(/stage: 'applied', stage_changed_at/.test(src), 'including the I-applied shortcut');
+  });
+  await t('the pipeline carries the job, not just an id', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(/\{ \.\.\.r, job: plain\(job\)/.test(src),
+      'a board of bare job ids is unreadable');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

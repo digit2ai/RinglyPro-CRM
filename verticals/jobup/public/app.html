@@ -84,6 +84,9 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
 .stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
 text-transform:uppercase;color:var(--faint)}
+.stagesel{background:var(--bg);border:1px solid var(--line2);border-radius:8px;
+color:var(--mut);font:inherit;font-size:12px;padding:5px 8px;cursor:pointer;width:auto;min-width:110px}
+.stagesel:focus{border-color:var(--cyan);outline:none}
 .mini{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;
 font-size:13px;margin-bottom:7px}
 .err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
@@ -460,6 +463,21 @@ function loadMatches(){
       '</div>'+MATCHES.map(matchCard).join('');
   });
 }
+var STAGES=['new','saved','applied','screening','interviewing','offer','closed'];
+function stageSelect(m){
+  return '<select class="stagesel" onchange="setStage('+m.id+',this.value)">'+
+    STAGES.map(function(s){
+      return '<option value="'+s+'"'+(m.stage===s?' selected':'')+'>'+s+'</option>';}).join('')+
+    '</select>';
+}
+function setStage(id,stage){
+  api('/api/v1/engine/matches/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({stage:stage})}).then(function(r){
+      if(!r.ok)return err('aerr',r.j.error||'Could not move that.');
+      err('aerr','Moved to '+stage+'.');
+      loadPipeline(); loadToday();
+    });
+}
 function stat(k,v){return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>';}
 function matchCard(m){
   var j=m.job||{};
@@ -477,6 +495,7 @@ function matchCard(m){
       '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume</button>'+
       '<button class="btn sm" onclick="ats('+j.id+')">Keyword check</button>'+
       '<button class="btn primary sm" onclick="applied('+j.id+')">I applied</button>'+
+      stageSelect(m)+
     '</div><div id="out-'+j.id+'"></div>'+
     '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
 }
@@ -515,11 +534,20 @@ function loadPipeline(){
   api('/api/v1/engine/pipeline').then(function(r){
     if(!r.ok) return;
     var p=r.j.pipeline||{},st=r.j.stages||[];
-    $('p-pipeline').innerHTML='<div class="stage">'+st.map(function(s){
+    var total=st.reduce(function(n,s){return n+((p[s]||[]).length);},0);
+    $('p-pipeline').innerHTML=
+      '<div class="m" style="margin-bottom:14px">'+total+' role'+(total===1?'':'s')+
+      ' tracked. Move one with the dropdown on its card in Job Matches, or here.</div>'+
+      '<div class="stage">'+st.map(function(s){
       var items=p[s]||[];
       return '<div class="stagecol"><h4>'+esc(s)+' ('+items.length+')</h4>'+
-        (items.length?items.slice(0,8).map(function(m){
-          return '<div class="mini">#'+m.job_id+' · score '+(m.score==null?'—':m.score)+'</div>';}).join('')
+        (items.length?items.slice(0,12).map(function(m){
+          var j=m.job||{};
+          return '<div class="mini">'+
+            '<div style="font-weight:650">'+esc(j.title||('#'+m.job_id))+'</div>'+
+            '<div class="note" style="margin:2px 0 6px">'+esc(j.employer||'')+
+              (m.score!=null?' · '+m.score:'')+'</div>'+
+            stageSelect(m)+'</div>';}).join('')
           :'<div class="note" style="margin:0">—</div>')+'</div>';
     }).join('')+'</div>';
   });
