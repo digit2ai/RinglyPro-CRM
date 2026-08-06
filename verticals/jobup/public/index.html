@@ -784,7 +784,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
           <input id="ju-email" name="email" type="email" autocomplete="email" placeholder="ada@example.com" required></div>
       </div>
       <div class="ju-row">
-        <div class="ju-field"><label for="ju-phone">Phone <span style="text-transform:none;letter-spacing:0">(optional, E.164)</span></label>
+        <div class="ju-field"><label for="ju-phone">Phone <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
           <input id="ju-phone" name="phone" type="tel" autocomplete="tel" placeholder="+13055551234"></div>
         <div class="ju-field"><label for="ju-lang">Language</label>
           <select id="ju-lang" name="language"><option value="en">English &mdash; Ava</option><option value="es">Espa&ntilde;ol &mdash; Dalia</option></select></div>
@@ -825,6 +825,54 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 </div>
 
 <script>
+/* Phone: we STORE E.164 because that is what carrier APIs need, but nobody
+   should have to type it. Mirrors verticals/jobup/src/services/phone.js —
+   the server normalises again, so this is convenience, not the guarantee. */
+function juNormalizePhone(input){
+  if(input==null) return {ok:true,e164:null};
+  var raw=String(input).trim().replace(/^tel:/i,'').trim();
+  if(!raw) return {ok:true,e164:null};
+  if(/^00\d/.test(raw)) raw='+'+raw.slice(2);
+  var hadPlus=raw.charAt(0)==='+', d=raw.replace(/\D/g,'');
+  if(!d) return {ok:false,reason:'That does not look like a phone number.'};
+  if(hadPlus){
+    var e='+'+d;
+    if(!/^\+[1-9]\d{6,14}$/.test(e)) return {ok:false,reason:'That international number does not look complete.'};
+    return {ok:true,e164:e};
+  }
+  if(d.length===10){
+    if(d.charAt(0)==='0'||d.charAt(0)==='1')
+      return {ok:false,reason:'A US number cannot start with 0 or 1. Check the area code.'};
+    return {ok:true,e164:'+1'+d};
+  }
+  if(d.length===11&&d.charAt(0)==='1') return {ok:true,e164:'+'+d};
+  if(d.length<10) return {ok:false,reason:'That is '+d.length+' digit'+(d.length===1?'':'s')+' — a US number needs 10.'};
+  return {ok:false,reason:'For a number outside the US, start with + and the country code, e.g. +44 20 7946 0958.'};
+}
+function juFormatPhone(v){
+  var raw=String(v||'');
+  if(raw.trim().charAt(0)==='+') return raw;
+  var d=raw.replace(/\D/g,'').replace(/^1(?=\d)/,'');
+  if(d.length<=3) return d;
+  if(d.length<=6) return '('+d.slice(0,3)+') '+d.slice(3);
+  return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6,10);
+}
+(function(){
+  function wire(){
+    var el=document.getElementById('ju-phone'); if(!el) return;
+    el.setAttribute('type','tel');
+    el.setAttribute('inputmode','tel');
+    el.setAttribute('autocomplete','tel');
+    el.setAttribute('placeholder','(305) 555-1234');
+    el.addEventListener('input',function(){
+      var atEnd=el.selectionStart===el.value.length;
+      var f=juFormatPhone(el.value);
+      if(f!==el.value){ el.value=f; if(atEnd) el.setSelectionRange(f.length,f.length); }
+    });
+  }
+  if(document.readyState!=='loading') wire();
+  else document.addEventListener('DOMContentLoaded',wire);
+})();
 (function(){
   var c = document.getElementById('d2b-stars');
   if(!c || !c.getContext) return;
@@ -990,7 +1038,12 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 
     if(name.length<2) return fail('Please enter your full name.');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Please enter a valid email address.');
-    if(phone && !/^\+[1-9]\d{6,14}$/.test(phone)) return fail('Phone must be in E.164 format, for example +13055551234.');
+    // Accept how people actually write a phone number; normalise to E.164.
+    if(phone){
+      var np=juNormalizePhone(phone);
+      if(!np.ok) return fail(np.reason);
+      phone=np.e164;
+    }
     if(!chosen && text.length<60) return fail('Attach your resume, or paste at least a few lines of it.');
 
     var fd=new FormData();

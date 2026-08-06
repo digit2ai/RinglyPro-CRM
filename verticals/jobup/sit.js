@@ -963,6 +963,82 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('Add to Home Screen'), 'iOS has no beforeinstallprompt — it needs instructions');
   });
 
+
+  // ---------------------------------------------------------------
+  section('phone — accepted the way people actually type it');
+  const phoneSvc = require(__dirname + '/src/services/phone');
+
+  await t('a bare 10-digit US number is accepted', () => {
+    for (const v of ['6566001400', '(656) 600-1400', '656-600-1400', '656.600.1400', '656 600 1400']) {
+      const r = phoneSvc.normalize(v);
+      assert.ok(r.ok, 'rejected: ' + v);
+      assert.strictEqual(r.e164, '+16566001400', 'wrong result for ' + v);
+    }
+  });
+  await t('THE CASE THAT WAS BROKEN — 11 digits with no plus', () => {
+    const r = phoneSvc.normalize('16566001400');
+    assert.ok(r.ok, 'this is what a US user types and it must not be rejected');
+    assert.strictEqual(r.e164, '+16566001400');
+  });
+  await t('already-E.164 and 00-prefixed international both work', () => {
+    assert.strictEqual(phoneSvc.normalize('+16566001400').e164, '+16566001400');
+    assert.strictEqual(phoneSvc.normalize('+44 20 7946 0958').e164, '+442079460958');
+    assert.strictEqual(phoneSvc.normalize('00442079460958').e164, '+442079460958');
+    assert.strictEqual(phoneSvc.normalize('tel:+16566001400').e164, '+16566001400');
+  });
+  await t('phone stays OPTIONAL — empty is valid, not an error', () => {
+    for (const v of [undefined, null, '', '   ']) {
+      const r = phoneSvc.normalize(v);
+      assert.ok(r.ok, 'empty must not error');
+      assert.strictEqual(r.e164 || null, null);
+    }
+  });
+  await t('AN AMBIGUOUS NUMBER IS NEVER GUESSED INTO A COUNTRY', () => {
+    // Assuming +1 on a 12-digit string would send someone else's phone a text.
+    const r = phoneSvc.normalize('123456789012');
+    assert.strictEqual(r.ok, false);
+    assert.ok(/country code/i.test(r.reason), 'it must ask for the country code');
+  });
+  await t('bad input is refused with a reason a person can act on', () => {
+    assert.ok(/10/.test(phoneSvc.normalize('655').reason), 'should say how many digits are needed');
+    assert.ok(/area code/i.test(phoneSvc.normalize('0566001400').reason));
+    assert.strictEqual(phoneSvc.normalize('abc').ok, false);
+  });
+  await t('normalisation is idempotent', () => {
+    const once = phoneSvc.normalize('(656) 600-1400').e164;
+    assert.strictEqual(phoneSvc.normalize(once).e164, once);
+  });
+  await t('as-you-type formatting builds the familiar US shape', () => {
+    assert.strictEqual(phoneSvc.formatAsYouType('6566001400'), '(656) 600-1400');
+    assert.strictEqual(phoneSvc.formatAsYouType('656600'), '(656) 600');
+    assert.strictEqual(phoneSvc.formatAsYouType('+4420794'), '+4420794', 'international is left alone');
+  });
+  await t('the intake gate RETURNS the normalised number, so E.164 is stored', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(src.includes('phoneSvc.normalize'), 'the gate must normalise');
+    assert.ok(src.includes('body.phone = gate.phone'), 'the normalised value must be what is stored');
+    assert.ok(!src.includes('phone must be E.164'), 'the old wall must be gone');
+  });
+  await t('the client mirrors the server and no longer demands E.164', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(!html.includes('Phone must be in E.164 format'), 'the old error must be gone');
+    assert.ok(!html.includes('optional, E.164'), 'the label should not mention E.164');
+    assert.ok(html.includes('juNormalizePhone'), 'client-side normaliser');
+    assert.ok(html.includes("inputmode','tel'"), 'phones should get the numeric keypad');
+    // The client is convenience; the server is the guarantee. Both must agree.
+    // Extract just the normaliser rather than stubbing an entire browser —
+    // the surrounding block wires DOM listeners we do not care about here.
+    const js = html.split('<script>')[1].split('</script>')[0];
+    const m = js.match(/function juNormalizePhone\(input\)\{[\s\S]*?\n\}/);
+    assert.ok(m, 'juNormalizePhone should be extractable');
+    const fn = new Function(m[0] + '; return juNormalizePhone;')();
+    for (const v of ['16566001400', '6566001400', '(656) 600-1400', '+442079460958']) {
+      assert.strictEqual(fn(v).e164, phoneSvc.normalize(v).e164, 'client/server disagree on ' + v);
+    }
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {

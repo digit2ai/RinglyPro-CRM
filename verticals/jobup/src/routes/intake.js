@@ -25,15 +25,22 @@ function clientIp(req) {
 // DB-backed — correct across restarts and instances (spec section 4).
 const limits = require('../services/limits');
 
-const E164 = /^\+[1-9]\d{6,14}$/;
+const phoneSvc = require('../services/phone');
 
+/**
+ * Returns { errs, phone } — `phone` is the NORMALISED E.164 value, so a caller
+ * stores what the carrier APIs expect without the person having had to type it.
+ */
 function validateGate({ name, email, phone, language }) {
   const errs = [];
   if (!name || String(name).trim().length < 2) errs.push('name required');
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) errs.push('valid email required');
-  if (phone && !E164.test(phone)) errs.push('phone must be E.164 (e.g. +13055551234)');
   if (language && !['en', 'es'].includes(language)) errs.push('language must be en or es');
-  return errs;
+
+  // Phone is optional, and we accept how people actually write it.
+  const ph = phoneSvc.normalize(phone);
+  if (!ph.ok) errs.push(ph.reason);
+  return { errs, phone: ph.ok ? (ph.e164 || null) : null };
 }
 
 // Live address preview — used by the orb and the teaser (spec section 9).
@@ -58,8 +65,9 @@ router.post('/teaser', upload.single('resume'), async (req, res) => {
   try {
     const ip = clientIp(req);
     const body = req.body || {};
-    const errs = validateGate(body);
-    if (errs.length) return res.status(400).json({ errors: errs });
+    const gate = validateGate(body);
+    if (gate.errs.length) return res.status(400).json({ errors: gate.errs });
+    body.phone = gate.phone;   // store E.164, whatever shape it was typed in
 
     const rl = await limits.teaserAllowed({ ipHash: teaser.ipHash(ip), email: body.email });
     if (!rl.allowed) {
