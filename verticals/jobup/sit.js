@@ -1296,6 +1296,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'an address must not publish a fact they never chose to: ' + bad);
     }
   });
+  await t('THE ADDRESS USES THE NAME THEY TYPED, not the one in the CV header', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
+    assert.ok(src.includes('addresses.splitName(name || profile.name)'),
+      'a CV header often carries a fuller legal name than the person asked for');
+    // "Carlos Gomez" typed vs "CARLOS A GOMEZ MEJIA" in the document.
+    assert.strictEqual(addresses.ladder(addresses.splitName('Carlos Gomez'))[0], 'carlosgomez');
+    assert.strictEqual(addresses.ladder(addresses.splitName('CARLOS A GOMEZ MEJIA'))[0], 'carlosmejia');
+  });
   await t('a one-word name still gets an address', () => {
     const l = addresses.ladder(addresses.splitName('Cher'));
     assert.strictEqual(l[0], 'cher');

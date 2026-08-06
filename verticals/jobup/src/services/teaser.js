@@ -112,7 +112,11 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
 
   // 2. Real address availability against the ladder.
   await stage('address');
-  const parts = addresses.splitName(profile.name || name);
+  // The address uses the name THEY TYPED, falling back to the one in the CV.
+  // A resume header often carries a fuller legal name ("CARLOS A GOMEZ MEJIA"),
+  // which would hand them carlosmejia when they asked to be Carlos Gomez.
+  // Whatever they typed is what they chose to be called; Personalize covers the rest.
+  const parts = addresses.splitName(name || profile.name);
   const addr = await addresses.preview({ ...parts, city: profile.location });
 
   // 3. REAL matched jobs from the shared pool. Never fabricated.
