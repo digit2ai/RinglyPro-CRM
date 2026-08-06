@@ -84,6 +84,10 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
 .stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
 text-transform:uppercase;color:var(--faint)}
+.cvgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.cvgrid{grid-template-columns:1fr}}
+.cvrow{border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px;background:var(--card2)}
+.cvrow textarea{margin-top:6px}
 .ctry{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .ctrybox{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;
 padding:7px 14px;cursor:pointer;font-size:13.5px;color:var(--mut);transition:all .15s ease;user-select:none}
@@ -225,6 +229,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
     <button class="tab" data-p="pipeline">Pipeline</button>
     <button class="tab" data-p="targets">Targets</button>
     <button class="tab" data-p="outreach">Broadcast<span class="n" id="c-out"></span></button>
+    <button class="tab" data-p="cv">My CV</button>
     <button class="tab" data-p="settings">Settings</button>
     <button class="tab" data-p="account">Account</button>
   </div>
@@ -234,6 +239,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
   <div id="p-opps" class="hidden"></div>
   <div id="p-today" class="hidden"></div>
   <div id="p-targets" class="hidden"></div>
+  <div id="p-cv" class="hidden"></div>
   <div id="p-pipeline" class="hidden"></div>
   <div id="p-outreach" class="hidden"></div>
   <div id="p-settings" class="hidden"></div>
@@ -287,7 +293,7 @@ Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
   t.addEventListener('click',function(){
     Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
     t.classList.add('on');
-    ['analytics','matches','opps','today','targets','pipeline','outreach','settings','account'].forEach(function(p){
+    ['analytics','matches','opps','today','targets','pipeline','cv','outreach','settings','account'].forEach(function(p){
       $('p-'+p).classList.toggle('hidden',p!==t.dataset.p);});
   });
 });
@@ -308,7 +314,7 @@ function boot(){
       else $('who-h').textContent=ME.email;
     });
     loadAnalytics(); loadMatches(); loadOpps(); loadToday(); loadTargets();
-    loadPipeline(); loadOutreach(); loadSettings(); renderAccount();
+    loadPipeline(); loadOutreach(); loadCV(); loadSettings(); renderAccount();
   }).catch(function(){ $('login').classList.remove('hidden'); });
 }
 
@@ -712,6 +718,134 @@ function runAgent(n){
 }
 
 /* ---- settings ---- */
+/* ---- the resume editor: every field, yours ---- */
+var CV=null;
+function loadCV(){
+  api('/api/v1/engine/profile').then(function(r){
+    if(!r.ok)return;
+    CV=r.j.profile;
+    renderCV(r.j);
+  });
+}
+function cvField(k,label,ph,type){
+  return '<div><label for="cv-'+k+'">'+esc(label)+'</label>'+
+    '<input id="cv-'+k+'" type="'+(type||'text')+'" value="'+esc(CV[k]||'')+
+    '" placeholder="'+esc(ph||'')+'"></div>';
+}
+function renderCV(meta){
+  var h='<div class="callout" style="margin:0 0 14px">'+
+    '<strong>Everything on this page is your data, not code.</strong> It is what your public page, '+
+    'your resume.json and your agent card show, and what your agent scores jobs against. '+
+    'Nothing here is generated \u2014 if you leave a field empty it stays empty.</div>';
+
+  h+='<div class="card"><div class="t">Identity</div>'+
+    '<div class="cvgrid">'+
+      cvField('name','Full name','')+
+      cvField('headline','Headline','Finance & Operations Professional')+
+      cvField('location','Region / location','Zephyrhills, FL')+
+      cvField('email','Contact email','you@example.com','email')+
+      cvField('phone','Contact phone','(305) 555-1234','tel')+
+      cvField('linkedin','LinkedIn','linkedin.com/in/...')+
+    '</div>'+
+    '<div class="note">Email and phone are <strong>private by default</strong> \u2014 they are stored here '+
+    'but only published if you switch them on under What is public, below.</div></div>';
+
+  h+='<div class="card"><div class="t">Professional Profile</div>'+
+    '<div class="m">The introduction at the top of your page.</div>'+
+    '<textarea id="cv-summary" rows="7" placeholder="Write your summary...">'+esc(CV.summary||'')+'</textarea></div>';
+
+  h+='<div class="card"><div class="t">Core Competencies</div>'+
+    '<div class="m">One per line. These are what the matcher scores against.</div>'+
+    '<textarea id="cv-skills" rows="8" placeholder="Financial Analysis&#10;Budgeting&#10;Power BI">'+
+    esc((CV.skills||[]).join('\n'))+'</textarea>'+
+    '<div class="note"><span id="cv-skillcount">'+(CV.skills||[]).length+'</span> listed</div></div>';
+
+  h+='<div class="card"><div class="t">Professional Experience</div>'+
+    '<div class="m">Most recent first. Achievements one per line.</div>'+
+    '<div id="cv-exp">'+(CV.experience||[]).map(expRow).join('')+'</div>'+
+    '<div class="acts"><button class="btn sm" onclick="addExp()">Add a role</button></div></div>';
+
+  h+='<div class="card"><div class="t">Education</div>'+
+    '<div id="cv-edu">'+(CV.education||[]).map(eduRow).join('')+'</div>'+
+    '<div class="acts"><button class="btn sm" onclick="addEdu()">Add education</button></div></div>';
+
+  h+='<div class="card"><div class="t">Additional Qualifications</div>'+
+    '<div class="m">Certifications, training, awards \u2014 one per line.</div>'+
+    '<textarea id="cv-certs" rows="6">'+esc((CV.certifications||[]).join('\n'))+'</textarea></div>';
+
+  h+='<div class="acts" style="position:sticky;bottom:14px;z-index:5">'+
+    '<button class="btn primary" id="cv-save" style="min-width:180px">Save my CV</button>'+
+    (meta&&meta.public_url?'<a class="btn" href="'+esc(meta.public_url)+'" target="_blank" rel="noopener">View public page</a>':'')+
+    '<span class="note" id="cv-msg" style="margin:0 0 0 10px"></span></div>';
+
+  $('p-cv').innerHTML=h;
+  var sk=$('cv-skills');
+  if(sk)sk.addEventListener('input',function(){
+    $('cv-skillcount').textContent=sk.value.split('\n').map(function(x){return x.trim();}).filter(Boolean).length;});
+  $('cv-save').addEventListener('click',saveCV);
+}
+function expRow(e,i){
+  e=e||{};
+  return '<div class="cvrow" data-exp>'+
+    '<div class="cvgrid">'+
+      '<div><label>Title</label><input class="x-title" value="'+esc(e.title||'')+'"></div>'+
+      '<div><label>Company</label><input class="x-company" value="'+esc(e.company||'')+'"></div>'+
+      '<div><label>Start</label><input class="x-start" value="'+esc(e.start||'')+'" placeholder="01/2021"></div>'+
+      '<div><label>End</label><input class="x-end" value="'+esc(e.end||'')+'" placeholder="09/2023 or Present"></div>'+
+    '</div>'+
+    '<label>Location</label><input class="x-location" value="'+esc(e.location||'')+'">'+
+    '<label>Achievements (one per line)</label>'+
+    '<textarea class="x-highlights" rows="4">'+esc((e.highlights||[]).join('\n'))+'</textarea>'+
+    '<div class="acts"><button class="btn sm" onclick="this.closest(\'.cvrow\').remove()">Remove this role</button></div>'+
+  '</div>';
+}
+function eduRow(e){
+  e=e||{};
+  return '<div class="cvrow" data-edu>'+
+    '<div class="cvgrid">'+
+      '<div><label>Institution</label><input class="d-institution" value="'+esc(e.institution||'')+'"></div>'+
+      '<div><label>Qualification</label><input class="d-studyType" value="'+esc(e.studyType||'')+'"></div>'+
+      '<div><label>Start</label><input class="d-start" value="'+esc(e.start||'')+'"></div>'+
+      '<div><label>End</label><input class="d-end" value="'+esc(e.end||'')+'"></div>'+
+    '</div>'+
+    '<label>Note</label><input class="d-note" value="'+esc(e.note||'')+'" placeholder="U.S. credential evaluation completed">'+
+    '<div class="acts"><button class="btn sm" onclick="this.closest(\'.cvrow\').remove()">Remove</button></div>'+
+  '</div>';
+}
+function addExp(){ $('cv-exp').insertAdjacentHTML('beforeend',expRow({})); }
+function addEdu(){ $('cv-edu').insertAdjacentHTML('beforeend',eduRow({})); }
+function lines(v){ return String(v||'').split('\n').map(function(x){return x.trim();}).filter(Boolean); }
+
+function saveCV(){
+  var btn=$('cv-save'),msg=$('cv-msg');
+  btn.disabled=true; btn.textContent='Saving...'; msg.textContent='';
+  var payload={
+    name:$('cv-name').value, headline:$('cv-headline').value,
+    location:$('cv-location').value, email:$('cv-email').value,
+    phone:$('cv-phone').value, linkedin:$('cv-linkedin').value,
+    summary:$('cv-summary').value,
+    skills:lines($('cv-skills').value),
+    certifications:lines($('cv-certs').value),
+    experience:Array.prototype.map.call(document.querySelectorAll('[data-exp]'),function(el){
+      var g=function(c){var n=el.querySelector('.'+c);return n?n.value:'';};
+      return {title:g('x-title'),company:g('x-company'),location:g('x-location'),
+        start:g('x-start'),end:g('x-end'),highlights:lines(g('x-highlights'))};
+    }),
+    education:Array.prototype.map.call(document.querySelectorAll('[data-edu]'),function(el){
+      var g=function(c){var n=el.querySelector('.'+c);return n?n.value:'';};
+      return {institution:g('d-institution'),studyType:g('d-studyType'),
+        start:g('d-start'),end:g('d-end'),note:g('d-note')};
+    })
+  };
+  api('/api/v1/engine/profile',{method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({profile:payload})}).then(function(r){
+      btn.disabled=false; btn.textContent='Save my CV';
+      if(!r.ok){msg.textContent=r.j.error||'Could not save.';return;}
+      CV=r.j.profile; msg.textContent=r.j.note; err('aerr','CV saved.');
+      boot();
+    }).catch(function(){btn.disabled=false;btn.textContent='Save my CV';msg.textContent='Could not reach the server.';});
+}
+
 function loadSettings(){
   api('/api/v1/engine/settings').then(function(r){
     if(!r.ok) return;

@@ -12,6 +12,7 @@ const settingsSvc = require('../services/settings');
 const addresses = require('../services/addresses');
 const mailer = require('../services/mailer');
 const photos = require('../services/photos');
+const profileSvc = require('../services/profile');
 const multer = require('multer');
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -504,6 +505,54 @@ router.get('/schedule', async (req, res) => {
     last_run_for_you: runs.length ? runs[0].created_at : null,
     on_demand: 'Always available — the Run buttons work whether or not the daily run is on.',
     note: st.note,
+  });
+});
+
+// ---------------------------------------------------------------
+// The résumé record itself — every field, editable.
+//
+// This writes resume_json, which the site, resume.json, the JSON-LD, the agent
+// card, llms.txt and the matcher all read. Editing here changes what recruiters
+// see AND what the Hunter scores against, so it is bounded and shaped on the
+// way in rather than trusted.
+// ---------------------------------------------------------------
+router.get('/profile', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const row = await scoped('profiles', tid).findOne({});
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  res.json({
+    profile: profileSvc.forEditor(row && row.resume_json),
+    has_photo: Boolean(row && row.photo_asset_id),
+    photo_url: row && row.photo_asset_id ? `/photo?v=${row.photo_asset_id}` : null,
+    public_url: sub && sub.address ? `https://${sub.address}` : null,
+    limits: profileSvc.LIMITS,
+    note: 'Everything here is yours. Nothing is generated — empty stays empty.',
+  });
+});
+
+router.put('/profile', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const patch = (req.body && req.body.profile) || {};
+  if (typeof patch !== 'object' || Array.isArray(patch)) {
+    return res.status(400).json({ error: 'profile must be an object' });
+  }
+
+  const row = await scoped('profiles', tid).findOne({});
+  const next = profileSvc.applyEdit(row && row.resume_json, patch);
+
+  if (row) await scoped('profiles', tid).update({ resume_json: next }, { id: row.id });
+  else await scoped('profiles', tid).create({ resume_json: next });
+
+  // The public name follows the résumé name; the ADDRESS deliberately does not
+  // — a link someone saved must not move because a headline was retyped.
+  if (patch.name && next.name) {
+    await models.subscribers.update({ name: next.name }, { where: { id: tid } });
+  }
+
+  res.json({
+    ok: true,
+    profile: profileSvc.forEditor(next),
+    note: 'Saved. Your public page, resume.json and agent card all update immediately.',
   });
 });
 

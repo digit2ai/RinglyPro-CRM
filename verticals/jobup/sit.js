@@ -836,7 +836,16 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const js = html.split('<script>')[1].split('</script>')[0];
     new Function(js);   // throws on a syntax error
     const ids = [...new Set([...js.matchAll(/\$\('([a-z0-9-]+)'\)/g)].map((m) => m[1]))];
-    const missing = ids.filter((id) => !html.includes('id="' + id + '"'));
+    // An id counts as present if it appears literally, OR if the source builds
+    // ids with that prefix by concatenation — cvField() emits id="cv-" + key,
+    // so the literal string never exists to be found. Prefixes are collected
+    // from the source itself rather than hardcoded, so a typo in a STATIC id
+    // is still caught.
+    const builtPrefixes = [...js.matchAll(/id="([a-z0-9-]+-)'\s*\+/g)].map((m) => m[1]);
+    const missing = ids.filter((id) => {
+      if (html.includes('id="' + id + '"')) return false;
+      return !builtPrefixes.some((pre) => id.startsWith(pre));
+    });
     assert.deepStrictEqual(missing, [], 'ids referenced but absent from the DOM');
   });
   await t('the dashboard needs NO env var — a subscriber signs in with their own password', () => {
@@ -1913,6 +1922,91 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const out = settingsSvc.sanitize({ geo: { allowed_countries: ['US'] }, approval_required: false });
     assert.strictEqual(out.approval_required, true, 'nothing may switch off review');
     assert.deepStrictEqual(out.geo.allowed_countries, ['US']);
+  });
+
+
+  // ---------------------------------------------------------------
+  section('editing your own resume');
+  const profileSvc = require(__dirname + '/src/services/profile');
+
+  await t('every field is editable and bounded', () => {
+    const out = profileSvc.applyEdit({}, {
+      name: 'Carlos A Gomez Mejia', headline: 'x'.repeat(500),
+      location: 'Zephyrhills, FL', email: 'c@example.com', phone: '(656) 600-1400',
+      summary: 'Finance and operations professional.',
+      skills: ['Financial Analysis', 'Power BI'],
+      experience: [{ title: 'Account Manager', company: 'Konecta', start: '01/2021',
+                     end: '09/2023', highlights: ['Improved margin', ''] }],
+      education: [{ institution: 'ESUMER', studyType: 'BSc Finance' }],
+      certifications: ['Business Intelligence Diploma'],
+    });
+    assert.strictEqual(out.headline.length, profileSvc.LIMITS.headline, 'bounded, not rejected');
+    assert.strictEqual(out.experience[0].highlights.length, 1, 'empty lines dropped');
+    assert.strictEqual(out.skills.length, 2);
+    assert.strictEqual(out.education[0].institution, 'ESUMER');
+    assert.strictEqual(out.certifications[0], 'Business Intelligence Diploma');
+  });
+  await t('A PARTIAL EDIT CANNOT BLANK THE REST', () => {
+    const before = { name: 'Carlos', summary: 'Long summary', skills: ['A'],
+                     experience: [{ title: 'X', company: 'Y' }] };
+    const after = profileSvc.applyEdit(before, { headline: 'New headline' });
+    assert.strictEqual(after.summary, 'Long summary', 'untouched keys survive');
+    assert.strictEqual(after.skills.length, 1);
+    assert.strictEqual(after.experience.length, 1);
+  });
+  await t('but an explicit empty array DOES clear a section', () => {
+    const after = profileSvc.applyEdit({ skills: ['A', 'B'] }, { skills: [] });
+    assert.deepStrictEqual(after.skills, [], 'clearing must be possible');
+  });
+  await t('duplicate skills and certifications are collapsed', () => {
+    const out = profileSvc.applyEdit({}, {
+      skills: ['Excel', 'excel', 'EXCEL', 'SQL'],
+      certifications: ['SCRUM', 'scrum'],
+    });
+    assert.strictEqual(out.skills.length, 2);
+    assert.strictEqual(out.certifications.length, 1);
+  });
+  await t('a row with neither title nor company is dropped', () => {
+    const out = profileSvc.applyEdit({}, {
+      experience: [{ title: '', company: '', highlights: ['orphan'] }, { title: 'Real', company: 'Co' }],
+    });
+    assert.strictEqual(out.experience.length, 1);
+  });
+  await t('EDITING CLEARS THE SIMULATED MARKER — these are now the owner words', () => {
+    const out = profileSvc.applyEdit(
+      { is_simulated: true, note: 'Structured without a language model.' },
+      { headline: 'Written by me' });
+    assert.ok(!('is_simulated' in out), 'no longer a machine extraction');
+    assert.ok(!('note' in out));
+    assert.ok(out.edited_at, 'and it records when');
+  });
+  await t('control characters are stripped, accents are not', () => {
+    const out = profileSvc.applyEdit({}, { name: 'Jos\u00e9 G\u00f3mez\u0000 Mej\u00eda' });
+    assert.strictEqual(out.name, 'Jos\u00e9 G\u00f3mez Mej\u00eda');
+  });
+  await t('THE EDIT DOES NOT MOVE YOUR WEB ADDRESS', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const block = src.slice(src.indexOf("router.put('/profile'"), src.indexOf("// Profile photo"));
+    assert.ok(!/addresses\.|allocate\(/.test(block),
+      'a link someone saved must not move because a headline was retyped');
+    assert.ok(block.includes('models.subscribers.update({ name:'), 'the display name does follow');
+  });
+  await t('the editor covers every section the owner asked for', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    for (const sec of ['Identity', 'Professional Profile', 'Core Competencies',
+                       'Professional Experience', 'Education', 'Additional Qualifications']) {
+      assert.ok(html.includes('>' + sec + '<'), 'missing section: ' + sec);
+    }
+    assert.ok(html.includes('cv-phone') && html.includes('cv-email') && html.includes('cv-location'));
+    assert.ok(html.includes('addExp') && html.includes('addEdu'), 'rows must be addable');
+  });
+  await t('the editor says plainly that nothing is generated', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('your data, not code'));
+    assert.ok(/if you leave a field empty it stays empty/.test(html));
   });
 
   // ---------------------------------------------------------------
