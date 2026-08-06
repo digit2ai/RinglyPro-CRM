@@ -3,6 +3,7 @@
 const express = require('express');
 const { models } = require('../models');
 const billing = require('../services/billing');
+const teaserSvc = require('../services/teaser');
 
 const router = express.Router();
 
@@ -11,8 +12,30 @@ router.get('/status', (req, res) => res.json(billing.status()));
 // Create checkout from a completed teaser.
 router.post('/checkout', async (req, res) => {
   try {
-    const { email, name, teaser_token } = req.body || {};
-    if (!email) return res.status(400).json({ error: 'email required' });
+    const body = req.body || {};
+    const teaser_token = body.teaser_token;
+
+    // THE TEASER ROW IS AUTHORITATIVE for who this is.
+    //
+    // The client used to send the email extracted from the RESUME, which is
+    // often absent — plenty of CVs carry no address, and the privacy
+    // projection can strip it. The result was 'email required' on the Submit
+    // button and no account, even though the person had typed their address
+    // into the intake form. It is also the safer source: a token cannot be
+    // paired with somebody else's address.
+    let email = String(body.email || '').trim().toLowerCase();
+    let name = body.name;
+    if (teaser_token) {
+      const t = await teaserSvc.get(teaser_token);
+      if (t) {
+        if (t.email) email = String(t.email).trim().toLowerCase();
+        if (t.name) name = t.name;
+      }
+    }
+    if (!email) {
+      return res.status(400).json({
+        error: 'We do not have an email address for you. Start again from the home page and enter one.' });
+    }
 
     let sub = await models.subscribers.findOne({ where: { email } });
     if (!sub) sub = await models.subscribers.create({ email, name, status: 'pending' });

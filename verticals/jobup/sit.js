@@ -1386,6 +1386,40 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(eng.includes('to: sub.email'), 'and it goes to their OWN address');
   });
 
+
+  // ---------------------------------------------------------------
+  section('checkout identity comes from the teaser, not the resume');
+  await t('A RESUME WITH NO EMAIL STILL CONVERTS', async () => {
+    // Plenty of CVs carry no address. Reading the email from the extracted
+    // profile meant Submit returned 'email required' and no account was made,
+    // even though the person had typed one into the intake form.
+    const built = await teaserSvc.build({
+      name: 'Carlos Gomez', email: 'sit-noemail@example.com', language: 'en',
+      resumeText: 'Carlos Gomez. Systems Engineer. Java, Oracle, Linux. Twelve years in payments. No contact details in this document.',
+    });
+    const prof = (built.screens && built.screens.site && built.screens.site.profile) || {};
+    assert.ok(!prof.email, 'this fixture must have no email in the resume');
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(src.includes('teaserSvc.get(teaser_token)'),
+      'checkout must resolve identity from the teaser row');
+    assert.ok(!src.includes("if (!email) return res.status(400).json({ error: 'email required' });"),
+      'the old resume-derived check must be gone');
+  });
+  await t('the teaser row OVERRIDES a client-supplied address', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    const block = src.slice(src.indexOf('let email ='), src.indexOf('let sub ='));
+    assert.ok(/if \(t\.email\) email = /.test(block),
+      'a token must not be pairable with somebody else address');
+  });
+  await t('with no email anywhere it says what to do', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(/Start again from the home page/.test(src),
+      'the error must be actionable, not the bare string "email required"');
+  });
+
   // ---------------------------------------------------------------
   section('cleanup');
   await t('SIT removes its own rows', async () => {
