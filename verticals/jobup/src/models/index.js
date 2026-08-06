@@ -301,7 +301,7 @@ async function init() {
     // idempotently (repo convention). Without this a new column exists in the
     // model and in the SIT's memory backend but NOT in production Postgres,
     // and every read of it silently returns undefined.
-    await ensureColumns();
+    await ensureColumns(seq);
   } else {
     for (const name of Object.keys(SCHEMA)) models[name] = memoryTable(name);
   }
@@ -321,15 +321,21 @@ const ADDED_COLUMNS = [
   ['ju_opportunities', 'replied_at',   'TIMESTAMPTZ'],
 ];
 
-async function ensureColumns() {
-  if (!seq) return;
+async function ensureColumns(sequelize) {
+  // The instance is passed in — it is local to init(), and reaching for a
+  // module-scope `seq` here silently no-ops instead of migrating.
+  if (!sequelize) return { applied: 0, skipped: 'no connection' };
+  let applied = 0;
   for (const [table, col, type] of ADDED_COLUMNS) {
     try {
-      await seq.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type}`);
+      await sequelize.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type}`);
+      applied++;
     } catch (e) {
       console.warn(`[jobup] could not ensure ${table}.${col}:`, e.message);
     }
   }
+  console.log(`[jobup] ensured ${applied}/${ADDED_COLUMNS.length} post-launch columns`);
+  return { applied };
 }
 
 // ---------------------------------------------------------------
@@ -364,5 +370,7 @@ module.exports = {
   TENANT_SCOPED,
   isReady: () => ready,
   backend: () => activeBackend,
+  ensureColumns,
+  ADDED_COLUMNS,
   Op,
 };

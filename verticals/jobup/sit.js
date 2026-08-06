@@ -850,6 +850,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   // ---------------------------------------------------------------
   section('test mode, welcome, and PWA');
   const billingSvc = require(__dirname + '/src/services/billing');
+  const models_mod = require(__dirname + '/src/models');
 
   await t('free activation is OFF unless explicitly switched on', () => {
     const saved = process.env.JOBUP_FREE_ACTIVATION;
@@ -881,6 +882,13 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const paid = await models.subscribers.findOne({ where: { id: subA.id } });
     assert.strictEqual(paid.activation, 'paid', 'a normal account defaults to paid');
     await models.subscribers.destroy({ where: { id: s2.id } });
+  });
+  await t('ensureColumns REPORTS when it cannot migrate instead of no-opping', async () => {
+    // It previously read a module-scope `seq` that did not exist, so it
+    // silently did nothing and production was missing every new column.
+    const r = await models_mod.ensureColumns(null);
+    assert.ok(r && r.skipped, 'a missing connection must be reported, not swallowed');
+    assert.ok(Array.isArray(models_mod.ADDED_COLUMNS) && models_mod.ADDED_COLUMNS.length > 0);
   });
   await t('EVERY column added after launch is in the idempotent ALTER list', () => {
     const fs = require('fs');
