@@ -970,7 +970,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const fs = require('fs');
     const m = pwaSvc.manifest('/jobup');
     for (const icon of m.icons) {
-      const f = __dirname + '/public' + icon.src.replace('/jobup', '');
+      const f = __dirname + '/public' + icon.src.replace('/jobup', '').split('?')[0];
       assert.ok(fs.existsSync(f), 'missing icon file: ' + icon.src);
       const buf = fs.readFileSync(f);
       if (icon.type === 'image/svg+xml') {
@@ -989,8 +989,10 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = fs.readFileSync(__dirname + '/src/services/pwa.js', 'utf8');
     const served = src.slice(src.indexOf("'/icon-192.png'"), src.indexOf('].includes(p)'));
     for (const icon of pwaSvc.manifest('').icons) {
-      assert.ok(served.includes(`'${icon.src}'`),
-        `manifest promises ${icon.src} but serveAsset never returns it`);
+      // serveAsset matches on req.path, which excludes the ?v= cache-buster.
+      const p = icon.src.split('?')[0];
+      assert.ok(served.includes(`'${p}'`),
+        `manifest promises ${p} but serveAsset never returns it`);
     }
   });
   await t('THE SERVICE WORKER NEVER CACHES /api/', () => {
@@ -1162,6 +1164,75 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.deepStrictEqual(offenders, [],
       `toggled with .hidden but their own rule sets display later: ${offenders.join(', ')}`);
   });
+  await t('ICONS ARE VERSIONED, OR A REDESIGN NEVER REACHES A DEVICE', () => {
+    const fs = require('fs');
+    // Icons are served with a long max-age. Without a version in the url, a
+    // redesign is invisible to anyone holding the old file: iOS built its
+    // "Add to Home Screen" preview from Safari's cached apple-touch-icon and
+    // showed the previous mark days after the new one shipped.
+    for (const icon of pwaSvc.manifest('/jobup').icons) {
+      assert.ok(/\?v=\d+$/.test(icon.src), `manifest icon is unversioned: ${icon.src}`);
+    }
+    for (const f of ['index.html', 'app.html', 'welcome.html', 'offline.html']) {
+      const out = pwaSvc.page(f, '');
+      for (const m of out.matchAll(/href="(\/(?:apple-touch-icon|favicon-32|favicon|icon-\d+)\.[a-z]+[^"]*)"/g)) {
+        assert.ok(/\?v=\d+$/.test(m[1]), `${f} links an unversioned icon: ${m[1]}`);
+      }
+      assert.ok(!out.includes('{{V}}'), `${f} has an unsubstituted version token`);
+    }
+    // The worker must precache the same urls the pages request, not bare ones.
+    const sw = pwaSvc.serviceWorker('/jobup');
+    assert.ok(!sw.includes('__V__'), 'the worker has an unsubstituted version token');
+    assert.ok(/icon-192\.png\?v=\d+/.test(sw), 'the worker precaches an unversioned icon');
+  });
+  await t('ONLY A VERSIONED ICON URL IS CACHED HARD — asserted over real HTTP', async () => {
+    // Grepping the source cannot see this. res.sendFile writes its OWN
+    // Cache-Control from its options and silently overwrote a header set with
+    // res.set(), so every icon went out as max-age=0 while the source looked
+    // correct. Only an actual response proves the policy.
+    const express = require('express');
+    const http = require('http');
+    const app = express();
+    // Plain middleware, not a route pattern: the wildcard syntax differs
+    // between Express 4 and 5 and this must not depend on which is installed.
+    app.use((req, res, next) => { if (!pwaSvc.serveAsset(req, res, '')) next(); });
+    const srv = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+    const port = srv.address().port;
+    const head = (p) => new Promise((ok, bad) => {
+      http.get({ host: '127.0.0.1', port, path: p }, (r) => {
+        r.resume();
+        ok({ status: r.statusCode, cc: r.headers['cache-control'] || '' });
+      }).on('error', bad);
+    });
+    try {
+      const versioned = await head('/apple-touch-icon.png?v=9');
+      assert.strictEqual(versioned.status, 200);
+      assert.match(versioned.cc, /max-age=31536000/, 'a versioned icon should be cached for a year');
+      assert.match(versioned.cc, /immutable/, 'and marked immutable');
+
+      const bare = await head('/apple-touch-icon.png');
+      assert.strictEqual(bare.status, 200);
+      assert.doesNotMatch(bare.cc, /immutable/, 'a bare url can change under the same address');
+      // This is the whole fix: a device holding a pre-redesign icon at the bare
+      // url has to be able to recover without waiting out a week.
+      const maxAge = Number((bare.cc.match(/max-age=(\d+)/) || [])[1]);
+      assert.ok(maxAge > 0 && maxAge <= 3600,
+        `a bare icon url must expire soon, got "${bare.cc}"`);
+    } finally { srv.close(); }
+  });
+  await t('EVERY root routes icons through the same policy', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // The icons used to fall through to express.static on the apex and the path
+    // mount, which serves max-age=0 — so the caching policy existed only on the
+    // subscriber subdomain, the one root that already called serveAsset.
+    const route = src.slice(src.indexOf("router.get(['/manifest.webmanifest'"),
+      src.indexOf('pwa.basePath(req)'));
+    for (const f of ['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
+                     '/favicon-32.png', '/favicon.svg']) {
+      assert.ok(route.includes(`'${f}'`), `${f} is left to express.static`);
+    }
+  });
   await t('BRAND: every page links the favicon as a real tag, not a mention', () => {
     const fs = require('fs');
     // The landing shipped without the SVG favicon because a guard tested for
@@ -1169,9 +1240,9 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // logo. Assert the TAG, and on the one page most likely to be seen in a tab.
     for (const f of ['index.html', 'app.html', 'welcome.html', 'offline.html']) {
       const html = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
-      assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg">'),
+      assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">'),
         `${f} is missing the SVG favicon link`);
-      assert.ok(html.includes('sizes="32x32" href="{{BASE}}/favicon-32.png"'),
+      assert.ok(html.includes('sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}"'),
         `${f} needs the PNG fallback for browsers without SVG favicon support`);
       assert.ok(html.includes('rel="apple-touch-icon"'), `${f} is missing the iOS icon`);
     }

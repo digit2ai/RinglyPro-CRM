@@ -110,7 +110,13 @@ router.use('/admin', require('./routes/admin'));
 // The manifest and the worker are GENERATED for the root this request arrived
 // on — see services/pwa.js. They sit above express.static deliberately, so the
 // stale on-disk sw.js template can never be served verbatim.
-router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html'], (req, res, next) => {
+// The ICONS are listed here too, not left to express.static. static serves them
+// with max-age=0, so the versioned-url caching policy only ever applied on a
+// subscriber subdomain — the one root that already went through serveAsset.
+// All three roots must share one policy.
+router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html',
+            '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
+            '/favicon-32.png', '/favicon.svg', '/logo-master.svg'], (req, res, next) => {
   if (!pwa.serveAsset(req, res, pwa.basePath(req))) next();
 });
 

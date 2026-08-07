@@ -34,6 +34,20 @@ const publicDir = path.join(__dirname, '..', '..', 'public');
 const SHELL_VERSION = 'v3';
 
 /**
+ * BUMP THIS WHENEVER AN ICON FILE CHANGES.
+ *
+ * Icons are served with a long max-age, so without a version in the URL a
+ * redesign is invisible to anyone who already has the old one: Safari kept
+ * serving the previous apple-touch-icon from its own HTTP cache, and iOS reads
+ * that cache when it builds the "Add to Home Screen" preview — so the share
+ * sheet showed the new mark while the install preview still showed the old one.
+ *
+ * A version in the query makes every icon a NEW url, which no cache can have.
+ */
+const ICON_VERSION = '4';
+const V = `?v=${ICON_VERSION}`;
+
+/**
  * The mount root for this request.
  *
  * Express sets `req.baseUrl` to the path a router was mounted at, which is
@@ -52,7 +66,8 @@ function page(file, base) {
   const hit = htmlCache.get(key);
   if (hit) return hit;
   const out = fs.readFileSync(path.join(publicDir, file), 'utf8')
-    .replace(/\{\{BASE\}\}/g, base);
+    .replace(/\{\{BASE\}\}/g, base)
+    .replace(/\{\{V\}\}/g, V);
   htmlCache.set(key, out);
   return out;
 }
@@ -90,11 +105,11 @@ function manifest(base, opts) {
     dir: 'ltr',
     icons: [
       // Scalable first, so an installer that can use it does.
-      { src: `${b}/favicon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-      { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: `${b}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: `${b}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/favicon.svg${V}`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: `${b}/icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     // Long-press the home-screen icon and land straight on the tab you wanted.
     // These depend on the ?tab= deep link the dashboard reads on boot.
@@ -118,7 +133,10 @@ function serviceWorker(base) {
   const b = base || '';
   return fs.readFileSync(path.join(publicDir, 'sw.js'), 'utf8')
     .replace(/__BASE__/g, b)
-    .replace(/__CACHE__/g, `jobup-${SHELL_VERSION}${b ? b.replace(/\//g, '-') : '-root'}`);
+    .replace(/__V__/g, V)
+    // The icon version is part of the cache name too: a new icon set should
+    // retire the cache holding the old one rather than leave it orphaned.
+    .replace(/__CACHE__/g, `jobup-${SHELL_VERSION}-i${ICON_VERSION}${b ? b.replace(/\//g, '-') : '-root'}`);
 }
 
 /**
@@ -150,8 +168,19 @@ function serveAsset(req, res, base, opts) {
   // would promise an icon that 404s.
   if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png',
        '/favicon.svg', '/logo-master.svg'].includes(p)) {
-    res.set('Cache-Control', 'public, max-age=604800');
-    res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
+    // Only a VERSIONED url may be cached hard: it can never go stale, because
+    // changing the icon changes the url. A bare url gets a short life so a
+    // client holding one from before this change recovers on its own instead of
+    // sitting on last week's mark.
+    //
+    // The options go to sendFile, NOT res.set('Cache-Control'): sendFile writes
+    // its own Cache-Control from these and would overwrite a header set here,
+    // silently serving every icon as max-age=0.
+    const versioned = Boolean(req.query && req.query.v);
+    res.sendFile(path.join(publicDir, p.replace(/^\//, '')), {
+      maxAge: versioned ? '365d' : '10m',
+      immutable: versioned,
+    });
     return true;
   }
   if (p === '/offline' || p === '/offline.html') {

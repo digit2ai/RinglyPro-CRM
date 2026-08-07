@@ -17,8 +17,10 @@ const SHELL = [
   BASE + '/app',
   OFFLINE,
   BASE + '/manifest.webmanifest',
-  BASE + '/icon-192.png',
-  BASE + '/icon-512.png',
+  // Versioned, so these match the urls the pages actually request. Precaching
+  // the bare url would fill the cache with entries nothing ever asks for.
+  BASE + '/icon-192.png__V__',
+  BASE + '/icon-512.png__V__',
 ];
 
 self.addEventListener('install', (e) => {
