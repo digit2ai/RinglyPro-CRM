@@ -39,14 +39,44 @@ async function stateOf(tenantId) {
 }
 
 /**
+ * Find the preview this subscriber is paying for.
+ *
+ * The token is the reliable route and comes from the Stripe metadata. The
+ * EMAIL FALLBACK exists because that metadata was missing for a while, and
+ * without it provisioning silently built an empty site: no profile, no résumé,
+ * an address that did not match the preview. A signup must not depend on one
+ * string surviving a round trip through a payment processor — if we know who
+ * paid, we know which preview was theirs.
+ *
+ * Newest ready preview wins: someone who previewed twice bought the second one.
+ */
+async function findTeaser(tenantId, teaserToken) {
+  if (teaserToken) {
+    const byToken = await models.teasers.findOne({ where: { token: teaserToken } });
+    if (byToken) return { row: byToken, via: 'token' };
+  }
+  const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+  const email = sub && sub.email ? String(sub.email).toLowerCase() : null;
+  if (!email) return { row: null, via: 'none' };
+
+  const rows = await models.teasers.findAll({ where: { email } });
+  const ready = (rows || [])
+    .filter((r) => r && r.status === 'ready' && r.payload && r.payload.screens)
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  return ready.length ? { row: ready[0], via: 'email_fallback' } : { row: null, via: 'none' };
+}
+
+/**
  * Adopt a teaser's already-extracted profile onto the paying subscriber.
  * The teaser did the extraction before payment; re-running it would be a
  * second spend on work already done.
  */
 async function adoptTeaser(tenantId, teaserToken) {
-  if (!teaserToken) return { adopted: false, reason: 'no teaser token' };
-  const t = await models.teasers.findOne({ where: { token: teaserToken } });
-  if (!t || !t.payload || !t.payload.screens) return { adopted: false, reason: 'teaser not found or not ready' };
+  const found = await findTeaser(tenantId, teaserToken);
+  const t = found.row;
+  if (!t) return { adopted: false, reason: 'no preview found for this account' };
+  if (!t.payload || !t.payload.screens) return { adopted: false, reason: 'teaser not found or not ready' };
+  teaserToken = t.token;   // the fallback resolved it; downstream uses the real one
 
   const site = t.payload.screens.site || {};
   const profile = site.profile || {};
@@ -78,7 +108,7 @@ async function adoptTeaser(tenantId, teaserToken) {
 
   // Bind the teaser to its subscriber so the 90-day purge skips it.
   await models.teasers.update({ tenant_id: tenantId }, { where: { id: t.id } });
-  return { adopted: true, headline: profile.headline || null };
+  return { adopted: true, headline: profile.headline || null, via: found.via, token: t.token };
 }
 
 /** Step 1 — allocate the web address. Idempotent. */
@@ -92,8 +122,11 @@ async function provisionAddress(tenantId, teaserToken) {
   // from different inputs, so the teaser could show carlosgomez.jobup.dev and
   // provisioning then hand out carlosmejia.jobup.dev. A preview that does not
   // bind is worse than no preview: the person chose to pay having seen it.
-  if (teaserToken) {
-    const t = await models.teasers.findOne({ where: { token: teaserToken } });
+  // Same fallback as adoptTeaser: the promise was made by the preview, and the
+  // preview is findable by email even when the token did not survive checkout.
+  {
+    const found = await findTeaser(tenantId, teaserToken);
+    const t = found.row;
     const offered = t && t.address_offer;
     if (offered) {
       const label = String(offered).split('.')[0];

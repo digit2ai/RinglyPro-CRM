@@ -214,6 +214,9 @@ border-left:2px solid rgba(34,211,238,.35);padding-left:11px;line-height:1.6}
 </div>
 <script>
 var API='{{BASE}}',Q=new URLSearchParams(location.search),TOKEN=Q.get('t')||'';
+// Stripe puts the checkout session id in the return URL. It is how the server
+// confirms the payment with Stripe directly, without waiting on the webhook.
+var CS=Q.get('cs')||'',PAID=Q.get('paid')==='1';
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -304,6 +307,9 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
   if(j.billing_disabled){
     $('footnote').textContent='No payment is required. '+
       'You review and submit every application yourself — JobUp never applies on your behalf.';
+  } else if(PAID||j.paid){
+    document.querySelector('h1').textContent='Payment received — finish your account';
+    document.querySelector('.lede').textContent='Two last things: how you sign in, and what your agents should hunt for.';
   }
  }).catch(function(){ $('who').textContent='Could not reach the server. Refresh to try again.'; });
 
@@ -321,7 +327,7 @@ $('f').addEventListener('submit',function(ev){
   fetch(API+'/api/v1/intake/build-account',{method:'POST',credentials:'same-origin',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      teaser_token:TOKEN,
+      teaser_token:TOKEN, checkout_session_id:CS,
       password:a, password_confirm:b,
       employment_types:checked('etype'),
       work_modes:checked('wmode'),
@@ -343,6 +349,7 @@ $('f').addEventListener('submit',function(ev){
       if(!r.ok){
         $('go').disabled=false; $('go').textContent='Build my account';
         if(r.j.sign_in_url){ return fail(r.j.error+' Go to '+API+r.j.sign_in_url); }
+        if(r.j.note){ return fail(r.j.error+' '+r.j.note); }
         return fail((r.j.errors&&r.j.errors.join(' '))||r.j.error||'Could not build the account.');
       }
       location.href=API+'/welcome?s='+encodeURIComponent(r.j.tenant_id)+'&new=1';

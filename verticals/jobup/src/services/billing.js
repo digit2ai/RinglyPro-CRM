@@ -121,7 +121,21 @@ function freeActivation() {
   return disabled() || process.env.JOBUP_FREE_ACTIVATION === '1';
 }
 
-async function createCheckout({ subscriberId, email, successUrl, cancelUrl }) {
+/**
+ * THE TEASER TOKEN MUST TRAVEL WITH THE PAYMENT.
+ *
+ * applyEvent() reads obj.metadata.teaser_token to know which preview this
+ * purchase belongs to. It was never written here, so it was always undefined
+ * and every paid signup provisioned with teaserToken:null — which meant
+ * adoptTeaser() no-opped, no profile row was created, the address the preview
+ * promised was not honoured, and the site published EMPTY while /welcome showed
+ * four green ticks. The person paid and got nothing.
+ *
+ * It goes on both the session and the subscription: session metadata is what
+ * checkout.session.completed carries, subscription metadata is what every later
+ * subscription.* event carries.
+ */
+async function createCheckout({ subscriberId, email, successUrl, cancelUrl, teaserToken }) {
   if (disabled()) {
     return { ok: false, configured: false, billing_disabled: true,
              error: 'Payment is switched off on this deployment. Accounts are created for free.' };
@@ -132,6 +146,9 @@ async function createCheckout({ subscriberId, email, successUrl, cancelUrl }) {
     return { ok: false, configured: false,
              error: 'Checkout is not configured on this deployment. Set STRIPE_SECRET_KEY.' };
   }
+  const meta = { subscriber_id: String(subscriberId) };
+  if (teaserToken) meta.teaser_token = String(teaserToken);
+
   try {
     const session = await s.checkout.sessions.create({
       mode: 'subscription',
@@ -147,14 +164,47 @@ async function createCheckout({ subscriberId, email, successUrl, cancelUrl }) {
       }],
       automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === '1' },
       // Attribution by metadata — never guessed from the customer object.
-      metadata: { subscriber_id: String(subscriberId) },
-      subscription_data: { metadata: { subscriber_id: String(subscriberId) } },
+      metadata: meta,
+      subscription_data: { metadata: meta },
       success_url: successUrl,
       cancel_url: cancelUrl,
     });
     return { ok: true, configured: true, url: session.url, id: session.id };
   } catch (e) {
     return { ok: false, configured: true, error: e.message };
+  }
+}
+
+/**
+ * Ask Stripe directly whether this checkout session was paid.
+ *
+ * THE REDIRECT USUALLY BEATS THE WEBHOOK. Stripe sends the browser back the
+ * instant the card clears, while the webhook is a separate delivery that can
+ * be seconds late, retried, or — if signature verification is misconfigured —
+ * never processed at all. Gating the account form on the webhook having landed
+ * would strand a paying customer on a page that refuses to let them continue.
+ *
+ * So the form asks Stripe itself, using the session id Stripe put in the return
+ * URL. This is the authoritative answer and it cannot be forged: a made-up id
+ * does not resolve, and one that does resolve carries its own subscriber_id.
+ */
+async function verifyCheckoutSession(sessionId) {
+  if (disabled()) return { ok: false, reason: 'billing disabled' };
+  const s = client();
+  if (!s || !sessionId) return { ok: false, reason: 'not configured or no session id' };
+  try {
+    const cs = await s.checkout.sessions.retrieve(String(sessionId));
+    const paid = cs.payment_status === 'paid' || cs.status === 'complete';
+    return {
+      ok: true, paid,
+      subscriberId: parseInt((cs.metadata && cs.metadata.subscriber_id) || '', 10) || null,
+      teaserToken: (cs.metadata && cs.metadata.teaser_token) || null,
+      customerId: cs.customer || null,
+      subscriptionId: cs.subscription || null,
+      email: (cs.customer_details && cs.customer_details.email) || cs.customer_email || null,
+    };
+  } catch (e) {
+    return { ok: false, reason: e.message };
   }
 }
 
@@ -280,7 +330,7 @@ module.exports = {
   freeReason,
   disabled,
   freeActivation,
-  enabled, status, createCheckout, createPortal, applyEvent,
+  enabled, status, createCheckout, verifyCheckoutSession, createPortal, applyEvent,
   renewalNoticesDue, refundEligible,
   PRICE_USD, REFUND_DAYS, RENEWAL_NOTICE_DAYS, DUNNING_STAGES,
 };

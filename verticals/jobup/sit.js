@@ -974,6 +974,131 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     if (keepD === undefined) delete process.env.JOBUP_BILLING_DISABLED;
     else process.env.JOBUP_BILLING_DISABLED = keepD;
   });
+  // ---------------------------------------------------------------
+  // THE PAID CHAIN. This is what a real purchase does, minus the card.
+  //
+  // It shipped broken: createCheckout() never wrote teaser_token into the
+  // Stripe metadata that applyEvent() reads, so every paid signup provisioned
+  // with teaserToken:null. The resume was never adopted, the promised address
+  // was not honoured, and the site published EMPTY while the welcome screen
+  // showed four green ticks. These tests exist so that cannot come back.
+  await t('THE TEASER TOKEN TRAVELS WITH THE PAYMENT', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    assert.ok(/meta\.teaser_token = String\(teaserToken\)/.test(src),
+      'createCheckout must put the teaser token in the Stripe metadata');
+    assert.ok(/metadata: meta/.test(src) && /subscription_data: \{ metadata: meta \}/.test(src),
+      'both the session AND the subscription must carry it');
+    const route = require('fs').readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(/teaserToken: teaser_token/.test(route), 'the route must pass it in');
+  });
+
+  await t('a paid signup adopts the resume, the address AND publishes a real site', async () => {
+    const teaserSvc = require(__dirname + '/src/services/teaser');
+    const billingSvc2 = require(__dirname + '/src/services/billing');
+    const email = 'sit-paid-' + Date.now() + '@example.com';
+
+    // A finished preview, exactly as the simulator leaves one.
+    const made = await teaserSvc.create({
+      name: 'Marta Quintero', email, language: 'en', ip: '203.0.113.9',
+      resumeText: 'Marta Quintero. Operations Manager. Ten years in logistics, SAP, budgeting.',
+    });
+    await teaserSvc.finish(made.token, {
+      status: 'ready', language: 'en',
+      screens: { site: { profile: {
+        name: 'Marta Quintero', headline: 'Operations Manager',
+        skills: ['logistics', 'sap', 'budgeting'],
+      } } },
+      narration: [],
+    });
+    await models.teasers.update(
+      { address_offer: 'martaquintero.jobup.dev', status: 'ready' },
+      { where: { token: made.token } });
+
+    // What the checkout route does before handing off to Stripe.
+    const sub = await models.subscribers.create({ email, name: 'Marta Quintero', status: 'pending' });
+
+    // The webhook Stripe sends back, with the metadata createCheckout now writes.
+    const evt = {
+      customer: 'cus_SIT', subscription: 'sub_SIT',
+      metadata: { subscriber_id: String(sub.id), teaser_token: made.token },
+    };
+    const applied = await billingSvc2.applyEvent('checkout.session.completed', evt, { inline: true });
+    assert.strictEqual(applied.ok, true);
+    assert.strictEqual(applied.action, 'activated');
+
+    const after = await models.subscribers.findOne({ where: { id: sub.id } });
+    assert.strictEqual(after.status, 'active', 'payment must activate the account');
+    assert.strictEqual(after.stripe_customer_id, 'cus_SIT');
+
+    // THE RESUME MUST BE ON THE ACCOUNT — this is what was silently lost.
+    const prof = await scoped('profiles', sub.id).findOne({});
+    assert.ok(prof, 'a profile row must exist after a paid signup');
+    assert.strictEqual(prof.resume_json.headline, 'Operations Manager',
+      'the resume from the preview must be adopted, not re-extracted or dropped');
+
+    // THE ADDRESS MUST BE THE ONE THE PREVIEW PROMISED.
+    assert.strictEqual(after.address, 'martaquintero.jobup.dev',
+      'a preview that does not bind is worse than no preview');
+
+    // AND THE SITE MUST ACTUALLY BE PUBLISHED, not merely reported as such.
+    const site = await scoped('sites', sub.id).findOne({});
+    assert.ok(site && site.published_at, 'the site must be published');
+    assert.strictEqual(site.address, 'martaquintero.jobup.dev');
+  });
+
+  await t('provisioning finds the preview by EMAIL when the token is missing', async () => {
+    // Belt and braces: an account paid before the metadata fix, or a webhook
+    // whose metadata was stripped, must still get its resume.
+    const teaserSvc = require(__dirname + '/src/services/teaser');
+    const provisioning = require(__dirname + '/src/services/provisioning');
+    const email = 'sit-notoken-' + Date.now() + '@example.com';
+
+    const made = await teaserSvc.create({
+      name: 'Diego Reyes', email, language: 'en', ip: '203.0.113.10',
+      resumeText: 'Diego Reyes. Data Analyst. SQL, Python, dashboards.',
+    });
+    await teaserSvc.finish(made.token, {
+      status: 'ready', language: 'en',
+      screens: { site: { profile: { name: 'Diego Reyes', headline: 'Data Analyst' } } },
+      narration: [],
+    });
+    await models.teasers.update({ status: 'ready' }, { where: { token: made.token } });
+
+    const sub = await models.subscribers.create({ email, name: 'Diego Reyes', status: 'active' });
+    const out = await provisioning.run(sub.id, { teaserToken: null });   // the broken call
+
+    const prof = await scoped('profiles', sub.id).findOne({});
+    assert.ok(prof, 'the email fallback must find the preview');
+    assert.strictEqual(prof.resume_json.headline, 'Data Analyst');
+    assert.ok(out.steps.some((st) => st && st.via === 'email_fallback'),
+      'and it must SAY it used the fallback, not hide it');
+  });
+
+  await t('the account form REFUSES to hand out a free account while billing is on', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/verifyCheckoutSession/.test(src),
+      'the payment gate must ask Stripe directly, not trust the browser');
+    assert.ok(/status\(402\)/.test(src), 'an unpaid attempt must be refused');
+    assert.ok(/billing\.disabled\(\)/.test(src), 'and the gate must only apply when payment is on');
+  });
+
+  await t('the redirect does not depend on the webhook winning the race', () => {
+    const route = require('fs').readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(/CHECKOUT_SESSION_ID/.test(route),
+      'the return URL must carry the session id so payment can be confirmed directly');
+    const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    assert.ok(/checkout\.sessions\.retrieve/.test(src), 'and we must actually ask Stripe');
+  });
+
+  await t('there is a repair path for accounts already provisioned empty', () => {
+    const fs2 = require('fs');
+    const f = __dirname + '/scripts/repair-paid-accounts.js';
+    assert.ok(fs2.existsSync(f), 'the repair script must exist');
+    const src = fs2.readFileSync(f, 'utf8');
+    assert.ok(/--fix/.test(src), 'it must be dry-run by default');
+    assert.ok(/provisioning\.run/.test(src), 'and repair by re-running the idempotent chain');
+  });
+
   await t('a free-test account is STAMPED so it can never be counted as revenue', async () => {
     const s2 = await models.subscribers.create({
       email: 'sit-free@example.com', name: 'Free Test',

@@ -232,6 +232,9 @@ router.get('/build', async (req, res) => {
       // An account that already has a password signs in; it does not re-register.
       already_registered: Boolean(existing && existing.password_hash),
       billing_disabled: billing.disabled(),
+      // Whether we can already see the payment. The page uses this only to
+      // choose its wording — the real gate is on POST, against Stripe.
+      paid: Boolean(existing && (existing.status === 'active' || existing.stripe_customer_id)),
       employment_types: settingsSvc.EMPLOYMENT_TYPES,
       work_modes: settingsSvc.WORK_MODES,
       password_rule: 'At least 12 characters.',
@@ -278,6 +281,42 @@ router.post('/build-account', async (req, res) => {
       });
     }
 
+    // ---- PAYMENT GATE ------------------------------------------------------
+    // With billing ON this form is the step AFTER checkout, so it must confirm
+    // a payment actually happened. Without this, anyone who typed /build?t=...
+    // would get a live account for free — the form would have become a way
+    // around the paywall rather than a step behind it.
+    //
+    // Truth comes from Stripe itself, via the session id Stripe put in the
+    // return URL. The webhook is NOT relied on here: the browser redirect
+    // routinely beats it, and gating on it would strand a paying customer.
+    // A row already marked active (webhook won the race) is equally accepted.
+    let paidVia = null;
+    if (!billing.disabled()) {
+      const already = sub && (sub.status === 'active' || sub.stripe_customer_id);
+      if (already) {
+        paidVia = 'subscriber_active';
+      } else {
+        const v = await billing.verifyCheckoutSession(b.checkout_session_id);
+        if (!v.ok || !v.paid || (v.subscriberId && sub && v.subscriberId !== sub.id)) {
+          return res.status(402).json({
+            error: 'We could not confirm a payment for this account yet.',
+            note: 'If you have just paid, wait a few seconds and refresh this page.',
+            checkout_url: `/teaser/${t.token}`,
+          });
+        }
+        paidVia = 'checkout_session';
+        // The webhook may never arrive (misconfigured secret, delivery failure).
+        // Record what Stripe just told us so the account is complete either way.
+        if (sub) {
+          await models.subscribers.update(
+            { stripe_customer_id: v.customerId || sub.stripe_customer_id,
+              stripe_subscription_id: v.subscriptionId || sub.stripe_subscription_id },
+            { where: { id: sub.id } });
+        }
+      }
+    }
+
     const fields = {
       name: t.name || (sub && sub.name) || null,
       phone: t.phone || (sub && sub.phone) || null,
@@ -305,7 +344,7 @@ router.post('/build-account', async (req, res) => {
       tenant_id: tenantId, actor: 'subscriber', action: 'account_built',
       reason: billing.disabled()
         ? 'Built from the account form with the payment layer switched off (no_billing).'
-        : 'Built from the account form.',
+        : `Built from the account form after payment (confirmed via ${paidVia}).`,
     });
 
     res.cookie('jobup_token', authSvc.issueSession(tenantId), authSvc.cookieOptions());

@@ -80,9 +80,19 @@ router.post('/checkout', async (req, res) => {
       });
     }
 
+    // AFTER PAYMENT, FINISH THE ACCOUNT — do not drop them on a status page.
+    //
+    // Stripe's redirect used to land on /welcome, where the only thing left to
+    // do was pick a password. That skipped the account form entirely, so every
+    // paying subscriber ended up with empty targeting: no employment type, no
+    // work mode, no locations. The Hunter then searched against nothing.
+    // /build takes the password AND what to look for, then forwards to the
+    // confirmation screen itself.
     const r = await billing.createCheckout({
-      subscriberId: sub.id, email,
-      successUrl: `${base}/welcome?s=${sub.id}`,
+      subscriberId: sub.id, email, teaserToken: teaser_token,
+      successUrl: teaser_token
+        ? `${base}/build?t=${encodeURIComponent(teaser_token)}&s=${sub.id}&paid=1&cs={CHECKOUT_SESSION_ID}`
+        : `${base}/welcome?s=${sub.id}&paid=1&cs={CHECKOUT_SESSION_ID}`,
       cancelUrl: teaser_token ? `${base}/teaser/${teaser_token}` : `${base}/`,
     });
     // Honest when unconfigured — never a fake URL.
