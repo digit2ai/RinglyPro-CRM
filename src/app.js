@@ -2689,14 +2689,14 @@ app.get('/debug/planea-error', (req, res) => {
   });
 });
 
-// ── ImagingMind TTS — ElevenLabs Lina voice for demo narration ──
+// ── ImagingMind TTS — Lina's demo narration on our own Edge neural engine ──
+// Was a per-request call to api.elevenlabs.io with ELEVENLABS_API_KEY. Same
+// contract (POST {text, lang} -> a cached MP3 URL), same narrator, $0, and it
+// no longer 500s when no key is configured.
 const crypto = require('crypto');
 app.post('/api/imagingmind-tts', express.json(), async (req, res) => {
   try {
-    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    if (!ELEVENLABS_API_KEY) return res.status(500).json({ error: 'ElevenLabs API key not configured' });
-
-    const { text, lang } = req.body;
+    const { text, lang } = req.body || {};
     if (!text) return res.status(400).json({ error: 'text required' });
 
     // Deterministic cache key based on text + lang
@@ -2709,36 +2709,17 @@ app.post('/api/imagingmind-tts', express.json(), async (req, res) => {
       return res.json({ success: true, url: `/audio/imagingmind/${hash}.mp3`, cached: true });
     }
 
-    // Lina voice (Bella — bilingual EN/ES)
-    const LINA_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${LINA_VOICE_ID}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY
-      },
-      body: JSON.stringify({
-        text: text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.55,
-          similarity_boost: 0.8,
-          style: 0.35,
-          use_speaker_boost: true
-        }
-      })
+    // Lina in Spanish, Ava in English -- both Edge neural.
+    const voice = String(lang || 'en').toLowerCase().startsWith('es')
+      ? 'es-MX-DaliaNeural'
+      : 'en-US-AvaNeural';
+    const buffer = await require('./services/edge-tts').synthesize(String(text).slice(0, 2000), {
+      voice,
+      rate: '-2%'
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('[ImagingMind TTS] ElevenLabs error:', response.status, errText);
-      return res.status(response.status).json({ error: 'TTS generation failed' });
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(cached, buffer);
-    console.log(`[ImagingMind TTS] Generated ${lang || 'en'}: ${(buffer.length / 1024).toFixed(1)}KB -> ${hash}.mp3`);
+    console.log(`[ImagingMind TTS] Generated ${lang || 'en'} (${voice}): ${(buffer.length / 1024).toFixed(1)}KB -> ${hash}.mp3`);
     res.json({ success: true, url: `/audio/imagingmind/${hash}.mp3`, cached: false });
   } catch (err) {
     console.error('[ImagingMind TTS] Error:', err.message);
