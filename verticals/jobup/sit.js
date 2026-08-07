@@ -2101,6 +2101,45 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const rows = await models.audit_log.findAll({});
     assert.ok(rows.some((r) => String(r.action).includes(k)), 'the day is part of the key');
   });
+  await t('THE RUN HOUR IS CHOSEN, not an accident of when the process booted', () => {
+    // It used to fire at "the first tick after midnight UTC", which landed at
+    // whatever time the instance happened to start and would have shifted an
+    // hour twice a year with daylight saving.
+    const src = require('fs').readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(src.includes('JOBUP_RUN_HOUR_UTC'), 'the hour must be settable');
+    assert.ok(src.includes('new Date().getUTCHours() < RUN_HOUR_UTC'), 'and enforced');
+    assert.ok(sched.RUN_HOUR_UTC >= 0 && sched.RUN_HOUR_UTC <= 23);
+  });
+  await t('an out-of-range hour is clamped, not obeyed', () => {
+    const saved = process.env.JOBUP_RUN_HOUR_UTC;
+    for (const [set, want] of [['99', 23], ['-5', 0], ['abc', 0]]) {
+      delete require.cache[require.resolve(__dirname + '/src/services/scheduler')];
+      process.env.JOBUP_RUN_HOUR_UTC = set;
+      const fresh = require(__dirname + '/src/services/scheduler');
+      assert.strictEqual(fresh.RUN_HOUR_UTC, want, `"${set}" should clamp to ${want}`);
+    }
+    if (saved === undefined) delete process.env.JOBUP_RUN_HOUR_UTC;
+    else process.env.JOBUP_RUN_HOUR_UTC = saved;
+    delete require.cache[require.resolve(__dirname + '/src/services/scheduler')];
+  });
+  await t('THE HOUR IS A FLOOR, NOT AN APPOINTMENT', () => {
+    // If the service is down at 07:00 the run must still happen when it comes
+    // back, or a restart costs a subscriber a whole day of matches.
+    const src = require('fs').readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(src.includes('getUTCHours() < RUN_HOUR_UTC'),
+      'it must compare with <, so any later hour still qualifies');
+    assert.ok(!/getUTCHours\(\) !== RUN_HOUR_UTC|getUTCHours\(\) === RUN_HOUR_UTC/.test(src),
+      'an exact-hour match would silently skip the day after a restart');
+  });
+  await t('status reports when the run happens', () => {
+    const saved = process.env.JOBUP_AGENTS_GO;
+    process.env.JOBUP_AGENTS_GO = '1';
+    const st = sched.status();
+    assert.strictEqual(typeof st.run_hour_utc, 'number');
+    assert.ok(/UTC daily/.test(st.next_run_after), 'a subscriber should be able to see it');
+    if (saved === undefined) delete process.env.JOBUP_AGENTS_GO;
+    else process.env.JOBUP_AGENTS_GO = saved;
+  });
   await t('ONLY ACTIVE SUBSCRIBERS RUN', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');

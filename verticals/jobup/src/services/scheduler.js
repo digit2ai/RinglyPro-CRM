@@ -32,6 +32,24 @@ const limits = require('./limits');
 const TICK_MS = parseInt(process.env.JOBUP_TICK_MS || String(15 * 60 * 1000), 10);
 const POOL_REFRESH_HOURS = parseInt(process.env.JOBUP_POOL_REFRESH_HOURS || '24', 10);
 
+/**
+ * The hour (UTC) the daily run is allowed to start.
+ *
+ * Without this the run happened at "whatever time the first tick after
+ * midnight UTC lands", which was an accident of when the process booted, and
+ * would have shifted an hour twice a year with daylight saving.
+ *
+ * Default 07:00 UTC = 3am US Eastern / midnight Pacific. Matches are waiting
+ * before the working day starts, and we fetch seventeen job boards while they
+ * are quiet rather than mid-morning.
+ *
+ * It is a FLOOR, not an appointment: if the service is down at that hour the
+ * run still happens on the next tick after it comes back, so a restart cannot
+ * cost a subscriber a day.
+ */
+const RUN_HOUR_UTC = Math.max(0, Math.min(23,
+  parseInt(process.env.JOBUP_RUN_HOUR_UTC || '7', 10) || 0));
+
 let timer = null;
 let lastTick = null;
 let lastRun = null;
@@ -139,6 +157,10 @@ async function tick() {
   const out = { at: lastTick, pool: null, fleet: null, retention: null, skipped: null };
 
   try {
+    if (new Date().getUTCHours() < RUN_HOUR_UTC) {
+      out.skipped = `before the run hour (${RUN_HOUR_UTC}:00 UTC)`;
+      return out;
+    }
     // Pool first: scoring against yesterday's postings is the wrong order.
     if (await claimDay('pool')) {
       out.pool = await refreshPool();
@@ -155,6 +177,7 @@ async function tick() {
   } finally {
     running = false;
   }
+  if (out.skipped && !out.pool && !out.fleet) { out.ms = Date.now() - started; return out; }
 
   out.ms = Date.now() - started;
   if (out.pool || out.fleet) {
@@ -178,7 +201,7 @@ function start() {
   setTimeout(() => { tick().catch(() => {}); }, 60 * 1000);
   timer = setInterval(() => { tick().catch(() => {}); }, TICK_MS);
   if (timer.unref) timer.unref();
-  console.log(`[jobup] scheduler ON — tick every ${Math.round(TICK_MS / 60000)} min, one run per day`);
+  console.log(`[jobup] scheduler ON — tick every ${Math.round(TICK_MS / 60000)} min, one run per day after ${RUN_HOUR_UTC}:00 UTC`);
   return { started: true, tick_ms: TICK_MS };
 }
 
@@ -187,6 +210,8 @@ function status() {
     enabled: enabled(),
     running,
     tick_ms: TICK_MS,
+    run_hour_utc: RUN_HOUR_UTC,
+    next_run_after: `${String(RUN_HOUR_UTC).padStart(2, '0')}:00 UTC daily`,
     pool_refresh_hours: POOL_REFRESH_HOURS,
     last_tick: lastTick,
     last_run: lastRun,
@@ -196,4 +221,4 @@ function status() {
   };
 }
 
-module.exports = { start, tick, status, enabled, refreshPool, runFleet, claimDay, dayKey };
+module.exports = { start, tick, status, enabled, refreshPool, runFleet, claimDay, dayKey, RUN_HOUR_UTC };
