@@ -12,8 +12,9 @@
   browser tabs that render the SVG as-is.
 
   MASKABLE SAFE ZONE: an Android mask can crop to the circle inscribed in the
-  central 80% (radius 205 from centre). Every point of the glyph is within 177
-  of the centre, so nothing is ever clipped.
+  central 80% (radius 205 from centre). The furthest the glyph reaches, stroke
+  width included, is 133 — so nothing is ever clipped. SIT re-derives this from
+  the path data rather than trusting the number in this comment.
 
   Palette is the LANDING brand gradient (#5b7bff -> #e64980 -> #ff922b), not the
   dashboard's cyan/violet UI accent. The icon fronts jobup.dev, so it wears the
@@ -24,15 +25,17 @@
      role="img" aria-label="JobUp">
   <defs>
     <!-- userSpaceOnUse so the angle matches the CSS 120deg brand gradient. -->
-    <linearGradient id="brand" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="512" y2="336">
-      <stop offset="0" stop-color="#5b7bff"/>
-      <stop offset="0.52" stop-color="#e64980"/>
+    <linearGradient id="brand" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/>
+      <stop offset="0.5" stop-color="#e64980"/>
       <stop offset="1" stop-color="#ff922b"/>
     </linearGradient>
-    <!-- A soft top-left lift so the tile does not read as flat colour at 512px.
-         Deliberately a gradient, not a filter: filters rasterise unevenly. -->
-    <radialGradient id="lift" cx="0.28" cy="0.2" r="0.85">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+    <!-- A soft lift so the tile does not read as flat colour at 512px.
+         Deliberately a gradient, not a filter: filters rasterise unevenly.
+         Kept low and off the blue corner — at 0.22 it bleached the blue end of
+         the brand gradient out of the icon entirely. -->
+    <radialGradient id="lift" cx="0.42" cy="0.12" r="0.62">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.13"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
   </defs>

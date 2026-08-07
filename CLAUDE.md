@@ -28,6 +28,40 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 - **Deploy time**: ~2 minutes
 - **Trigger**: `git push origin main`
 
+## Voice on the WEB: the own-stack orb (replaced ElevenLabs ConvAI everywhere)
+
+Every browser voice surface in the repo used to embed `<elevenlabs-convai>` — a hosted agent per product, configured by hand in their dashboard, billed per conversation minute. That is gone. The three layers ElevenLabs bundled are now unbundled and ours:
+
+| Layer | What runs it | Cost |
+|---|---|---|
+| **Ear** (STT) | Web Speech API, on-device in the browser | $0 |
+| **Brain** (LLM) | `POST /api/voice-agent/chat` — Claude Haiku (`src/routes/voice-agent.js`) | Haiku tokens |
+| **Voice** (TTS) | `POST /api/tts/edge` — Microsoft Edge neural (`src/services/edge-tts.js`) | $0 |
+
+**THE AGENT'S FACTS COME FROM THE PAGE, NOT FROM A PROMPT.** `src/config/voice-agents.js` holds ONLY personas (name, Edge voice, greeting, standing rules) — deliberately no product facts. The orb extracts the visible text of the page it sits on and posts it as `context` every turn; the system prompt forbids answering from anything else. Consequences to preserve: editing a landing page updates its voice agent with no redeploy and no dashboard; the agent cannot quote a price or metric the page never printed; and adding the orb to a new page needs zero server-side knowledge authoring. With no `ANTHROPIC_API_KEY` it degrades to an extractive answer pulled from the page text (`source:'heuristic'`), never a fabrication.
+
+**Drop-in usage** (`public/embed/voice-orb.js`, dependency-free, no build step):
+```html
+<div data-voice-orb data-agent="camaravirtual" data-lang="es" data-label="Hablar con Lily"></div>
+<script src="/embed/voice-orb.js" defer></script>
+```
+Attributes: `data-agent` (persona id) · `data-lang` es|en · `data-voice` (Edge alias override) · `data-position` bottom-right|bottom-left · `data-accent` · `data-label` · `data-api` (origin, for cross-host embeds — otherwise inferred from the script's own src, so GHL/WordPress iframes work). SPAs push structured context with `window.D2AIVoiceOrb.setContext(str)` (`null` = back to reading the page) — that is how the Intuitive deck binds per-slide numbers.
+
+**Personas shipped:** `camaravirtual` (Lily) · `pacccfl` · `pcci` · `neural` / `mcp-copilot` (Rachel/Lina) · `rachel` · `lina` · `ronin` · `surgicalmind` · `veritas` · `visionarium` · `gebhardt` · `digit2ai` (generic fallback for any page with no pack of its own — an unknown id resolves here rather than erroring).
+
+**Endpoints:** `GET /api/voice-agent/config?agent=&lang=` (boot payload: name, voice, greeting — never leaks the prompt) · `POST /api/voice-agent/chat` · `GET /api/voice-agent/health`.
+
+**`/api/tts/generate` is now a legacy ALIAS served by the Edge engine.** Every narrated presentation posts there, so the endpoint itself was moved rather than editing each page and missing one: same body, same `audio/mpeg`, no `ELEVENLABS_API_KEY`. Legacy voice names map through (`rachel`→`ava`, `bella`/`lina`/`ana`→`lina`). `TTS_LEGACY_ELEVENLABS=1` restores the paid path.
+
+**Pre-rendered narration MP3s were regenerated on the Edge engine**, and their generator scripts no longer need a key: `generate-hispamind-audio.js` (16 tracks; Spanish text also gained proper tildes — Edge uses them for stress, so "Analitica" was being mis-stressed), `generate-delima-audio.js`, `generate-digit2ai-es-audio.js`, `generate-rachel-banking-audio.js`, `generate-virtualchamber-audio.js`. All take `--force`. `verticals/intuitive/src/routes/proposal.js` also moved off ElevenLabs — that kills a real landmine, since `proposal-audio/` sits on Render's ephemeral disk and every redeploy used to re-bill a full 11-slide deck regeneration. Same for `src/services/voicemailAudioService.js` (Lina's outbound voicemail greetings, now `VOICEMAIL_VOICE`, default `es-MX-DaliaNeural`).
+
+**STILL ON ELEVENLABS (deliberately, not an oversight):** the Twilio *phone* agents in `verticals/{freight_broker,msk_intelligence,imprint_iq,torna_idioma,cw_carriers}/**/voice.js`. Those are real-time telephony, not a web widget — their replacement path is the ConversationRelay stack documented below, and swapping them needs a live call test per vertical.
+
+**Environment Variables:**
+- `VOICE_AGENT_MODEL` — Anthropic model for the orb's brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`; unset key = labelled extractive answers, the orb still works end to end.
+- `TTS_LEGACY_ELEVENLABS` — `1` sends `/api/tts/generate` back to api.elevenlabs.io (needs `ELEVENLABS_API_KEY`). Unset = Edge neural, $0.
+- `VOICEMAIL_VOICE` (`es-MX-DaliaNeural`) · `INTUITIVE_VOICE` (`en-US-AvaNeural`) · `NARRATION_VOICE` / `NARRATION_RATE` (generator scripts).
+
 ## Voice: ConversationRelay POC (cheaper ElevenLabs alternative)
 
 A test-number AI phone agent that talks to callers and books appointments at ~half the ElevenLabs cost, by unbundling the stack: **Twilio ConversationRelay** (STT + TTS + turn-taking) + **Claude Haiku** brain + **Amazon Polly Neural** voice, reusing the existing `/api/elevenlabs/tools` booking backend UNCHANGED (appointments land in the same calendar/table).

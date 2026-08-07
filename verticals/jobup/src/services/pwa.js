@@ -89,6 +89,8 @@ function manifest(base, opts) {
     lang: o.lang === 'es' ? 'es' : 'en',
     dir: 'ltr',
     icons: [
+      // Scalable first, so an installer that can use it does.
+      { src: `${b}/favicon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
       { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: `${b}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
       { src: `${b}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -143,7 +145,11 @@ function serveAsset(req, res, base, opts) {
     res.type('application/javascript').send(serviceWorker(base));
     return true;
   }
-  if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png'].includes(p)) {
+  // favicon.svg is in this list because the manifest now advertises it — a
+  // subscriber subdomain only serves what is named here, so leaving it out
+  // would promise an icon that 404s.
+  if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png',
+       '/favicon.svg', '/logo-master.svg'].includes(p)) {
     res.set('Cache-Control', 'public, max-age=604800');
     res.sendFile(path.join(publicDir, p.replace(/^\//, '')));
     return true;

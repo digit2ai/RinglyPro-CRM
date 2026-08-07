@@ -5,10 +5,16 @@
     <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SurgicalMind AI</title>
-    <script type="module" crossorigin src="/intuitive/assets/index-1z8-U3vg.js"></script>
-    <link rel="stylesheet" crossorigin href="/intuitive/assets/index-CxmdGKig.css">
+    <script type="module" crossorigin src="/intuitive/assets/index-id7DdOQk.js"></script>
+    <link rel="stylesheet" crossorigin href="/intuitive/assets/index-C_RRBtg9.css">
   </head>
   <body>
     <div id="root"></div>
+    <!-- Rachel on our own voice stack (Web Speech + Claude + Edge neural TTS),
+         replacing the ElevenLabs ConvAI widget. App.jsx binds per-page context
+         through window.D2AIVoiceOrb.setContext(). -->
+    <div data-voice-orb data-agent="surgicalmind" data-lang="en"
+         data-position="bottom-left" data-label="Talk to Rachel"></div>
+    <script src="/embed/voice-orb.js" defer></script>
   </body>
 </html>

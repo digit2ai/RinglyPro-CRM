@@ -4,6 +4,8 @@
 <meta name="theme-color" content="#07080c">
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png">
 <title>Welcome to JobUp</title><style>
 :root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
 --line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
@@ -19,7 +21,7 @@ background:radial-gradient(56% 40% at 22% 0%,rgba(34,211,238,.14),transparent 70
 radial-gradient(50% 38% at 82% 6%,rgba(139,92,246,.14),transparent 72%);filter:blur(26px)}
 .wrap{position:relative;z-index:2;max-width:560px;margin:0 auto;padding:44px 20px 60px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.025em;margin-bottom:30px}
-.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.6)}
+.brand .mark{width:24px;height:24px;flex:0 0 24px;display:block;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 h1{font-size:clamp(26px,6vw,34px);font-weight:830;letter-spacing:-.035em;margin:0 0 8px;line-height:1.15}
 .lede{color:var(--mut);font-size:15.5px;margin-bottom:22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px}
@@ -53,7 +55,14 @@ border-radius:12px;padding:11px 15px;font-size:13.5px;margin-bottom:18px;display
 .rules{color:var(--faint);font-size:13px;margin-top:8px}
 </style></head><body>
 <div class="wrap">
-  <div class="brand"><span class="dot"></span>JobUp</div>
+  <div class="brand"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>JobUp</div>
   <div class="testbar" id="testbar"></div>
   <h1 id="h">Setting up your ecosystem</h1>
   <div class="lede" id="lede">One moment.</div>

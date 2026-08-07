@@ -1,0 +1,30 @@
+<!--
+  Tab favicon. Same mark as logo-master.svg, but two deliberate differences:
+
+  1. ROUNDED, not full-bleed. Browsers render this SVG as-is in a tab, so the
+     corners have to be rounded here. The app icons stay square because iOS
+     rounds apple-touch-icon itself and Android maskable icons need filled
+     corners.
+  2. The glyph is scaled up ~25%. logo-master keeps the mark inside the Android
+     maskable safe zone, which leaves visible padding — wasted pixels at 16px.
+     Nothing ever masks a favicon, so it can fill the tile.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="JobUp">
+  <defs>
+    <linearGradient id="brand" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/>
+      <stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="108" fill="url(#brand)"/>
+
+  <g transform="translate(256 256) scale(1.25) translate(-256 -256)"
+     fill="none" stroke="#ffffff" stroke-width="52"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M209 232 L283 158 L357 232"/>
+    <path d="M283 158 V290 A64 64 0 0 1 155 290"/>
+  </g>
+</svg>

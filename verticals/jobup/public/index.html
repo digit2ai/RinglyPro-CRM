@@ -85,7 +85,14 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
   padding:22px 24px;max-width:1120px;margin:0 auto}
 .d2b .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.04em}
-.d2b .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--grad);box-shadow:var(--shadow-sm)}
+/* The mark is now a real logo, not a blank gradient chip. Sized in one place so
+   the wordmark's optical baseline does not drift when it changes. */
+.d2b .brand .mark{width:30px;height:30px;flex:0 0 30px;display:block;
+  border-radius:9px;box-shadow:var(--shadow-sm)}
+.d2b .brand-text{white-space:nowrap}
+.d2b .brand-text .up{background:var(--grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent}
+.d2b .brand-text .tld{color:var(--mut);font-weight:600}
 .d2b .brand-logo{height:104px;width:auto;display:block}
 .d2b .rstart{padding:0 26px 24px}
 .d2b .rstart-form{display:flex;flex-direction:column;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:20px}
@@ -682,7 +689,26 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <div class="ambient"></div>
 
 <nav>
-  <a class="brand" href="/"><span class="mark"></span><span>JobUp<span style="color:var(--mut);font-weight:600">.dev</span></span></a>
+  <a class="brand" href="/" aria-label="JobUp home">
+    <!-- Inline, not an <img>: no extra request, and it stays crisp at any DPR.
+         Same geometry as logo-master.svg / favicon.svg — one mark everywhere. -->
+    <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <linearGradient id="navbrand" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+          <stop offset="0" stop-color="#4c6ef5"/>
+          <stop offset="0.5" stop-color="#e64980"/>
+          <stop offset="1" stop-color="#ff922b"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="108" fill="url(#navbrand)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)"
+         fill="none" stroke="#fff" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M209 232 L283 158 L357 232"/>
+        <path d="M283 158 V290 A64 64 0 0 1 155 290"/>
+      </g>
+    </svg>
+    <span class="brand-text">Job<span class="up">Up</span><span class="tld">.dev</span></span>
+  </a>
   <!-- The links carry NO inline styles: an inline display:flex cannot be
        overridden by the media query that turns this into a drawer. -->
   <button class="ju-burger" id="ju-burger" aria-label="Open menu"

@@ -966,15 +966,32 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(html.includes(`data-p="${tab}"`), `shortcut targets a tab that does not exist: ${tab}`);
     }
   });
-  await t('PWA: every icon the manifest promises actually exists and is a PNG', () => {
+  await t('PWA: every icon the manifest promises actually exists and is real', () => {
     const fs = require('fs');
     const m = pwaSvc.manifest('/jobup');
     for (const icon of m.icons) {
       const f = __dirname + '/public' + icon.src.replace('/jobup', '');
       assert.ok(fs.existsSync(f), 'missing icon file: ' + icon.src);
-      assert.strictEqual(fs.readFileSync(f).slice(1, 4).toString(), 'PNG', 'not a PNG: ' + icon.src);
+      const buf = fs.readFileSync(f);
+      if (icon.type === 'image/svg+xml') {
+        // Not a prefix check: the file opens with a licence/rationale comment.
+        assert.ok(buf.toString('utf8').includes('<svg'), 'not an SVG: ' + icon.src);
+      } else {
+        assert.strictEqual(buf.slice(1, 4).toString(), 'PNG', 'not a PNG: ' + icon.src);
+      }
     }
     assert.ok(fs.existsSync(__dirname + '/public/apple-touch-icon.png'), 'iOS needs apple-touch-icon');
+  });
+  await t('PWA: an advertised icon is actually SERVED at every root', () => {
+    // The subscriber subdomain only serves the paths named in serveAsset, so an
+    // icon added to the manifest but not to that list would 404 on their site.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/pwa.js', 'utf8');
+    const served = src.slice(src.indexOf("'/icon-192.png'"), src.indexOf('].includes(p)'));
+    for (const icon of pwaSvc.manifest('').icons) {
+      assert.ok(served.includes(`'${icon.src}'`),
+        `manifest promises ${icon.src} but serveAsset never returns it`);
+    }
   });
   await t('THE SERVICE WORKER NEVER CACHES /api/', () => {
     const sw = pwaSvc.serviceWorker('/jobup');
@@ -1076,6 +1093,67 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const css = html.replace(/\s+/g, '');
     assert.ok(css.includes('padding-left:calc(24px+env(safe-area-inset-left))'),
       'landscape on a notched phone clips the left gutter');
+  });
+  await t('BRAND: one mark, one palette, everywhere', () => {
+    const fs = require('fs');
+    const p = __dirname + '/public/';
+    // The glyph geometry is the identity. If a surface drifts from it there are
+    // two logos, which is how this started: a cyan "J" icon, a blank gradient
+    // square in the nav, and no favicon at all.
+    const GLYPH = 'M283 158 V290 A64 64 0 0 1 155 290';
+    for (const f of ['logo-master.svg', 'favicon.svg', 'index.html', 'welcome.html', 'offline.html']) {
+      assert.ok(fs.readFileSync(p + f, 'utf8').includes(GLYPH), `${f} does not carry the JobUp mark`);
+    }
+    // Landing brand gradient, not the dashboard's cyan/violet UI accent.
+    for (const f of ['logo-master.svg', 'favicon.svg']) {
+      const s = fs.readFileSync(p + f, 'utf8');
+      assert.ok(s.includes('#4c6ef5') && s.includes('#e64980') && s.includes('#ff922b'),
+        `${f} must use the brand gradient`);
+      assert.ok(!s.includes('#22d3ee'), `${f} must not use the dashboard cyan`);
+    }
+  });
+  await t('BRAND: the master is full-bleed and the favicon is rounded', () => {
+    const fs = require('fs');
+    const master = fs.readFileSync(__dirname + '/public/logo-master.svg', 'utf8');
+    const fav = fs.readFileSync(__dirname + '/public/favicon.svg', 'utf8');
+    // iOS rounds apple-touch-icon itself and Android maskable icons need the
+    // corners filled, so the master must NOT be pre-rounded.
+    assert.ok(/<rect width="512" height="512" fill="url\(#brand\)"\/>/.test(master),
+      'the master tile must be a square with no rx');
+    assert.ok(/<rect width="512" height="512" rx="\d+"/.test(fav),
+      'the tab favicon is rendered as-is, so it must be rounded');
+  });
+  await t('BRAND: the mark survives the Android maskable crop', () => {
+    const fs = require('fs');
+    const master = fs.readFileSync(__dirname + '/public/logo-master.svg', 'utf8');
+    // A mask can crop to the circle inscribed in the central 80% — radius 205
+    // from centre. Every drawn point plus half the stroke must fit inside it.
+    const stroke = Number(master.match(/stroke-width="(\d+)"/)[1]);
+    // Parse ONLY the path data — a naive scan for number pairs also matches
+    // width="512" height="512" and reports the tile corner as a glyph point.
+    const pts = [];
+    for (const m of master.matchAll(/ d="([^"]+)"/g)) {
+      const d = m[1];
+      let last = null;
+      for (const c of d.matchAll(/([MLA])\s*([\d\s.]+)/g)) {
+        const n = c[2].trim().split(/\s+/).map(Number);
+        // An arc's first five numbers are radii/rotation/flags — the endpoint
+        // is the last pair.
+        const pt = c[1] === 'A' ? [n[5], n[6]] : [n[0], n[1]];
+        pts.push(pt); last = pt;
+      }
+      // V is a vertical lineto: x carries over from the previous point.
+      for (const v of d.matchAll(/V\s*([\d.]+)/g)) pts.push([last ? last[0] : 256, Number(v[1])]);
+      // The J hook is a semicircle, so it dips a full radius below its chord.
+      const arc = d.match(/A(\d+) \d+ \d+ \d+ \d+ (\d+) (\d+)/);
+      if (arc) pts.push([(Number(arc[2]) + 283) / 2, Number(arc[3]) + Number(arc[1])]);
+    }
+    assert.ok(pts.length >= 6, `expected the glyph points, parsed ${pts.length}`);
+    assert.ok(!pts.some(([x, y]) => x === 512 && y === 512), 'parsed the tile, not the glyph');
+    for (const [x, y] of pts) {
+      const d = Math.hypot(x - 256, y - 256) + stroke / 2;
+      assert.ok(d <= 205, `point ${x},${y} reaches ${Math.round(d)} from centre — outside the safe zone`);
+    }
   });
   await t('mobile: the landing nav collapses into a hamburger', () => {
     const fs = require('fs');

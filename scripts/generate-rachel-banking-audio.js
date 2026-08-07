@@ -13,6 +13,7 @@ const edgeTts = require('../src/services/edge-tts');
 // per character; Rachel keeps the role, the API key requirement is gone.
 const VOICE = process.env.NARRATION_VOICE || 'en-US-AvaNeural';
 const RATE = process.env.NARRATION_RATE || '-4%';
+const FORCE = process.argv.includes('--force');
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'neural-intelligence-banking', 'assets', 'audio');
 
 // Narration scripts for each slide -- must match data-narration attributes in presentation.html
@@ -48,9 +49,17 @@ const narrations = [
   `To summarize: Neural Intelligence with MCP is not incremental improvement. It is a paradigm shift. From rules to reasoning. From proprietary silos to a universal open standard. From 95 percent false positives to intelligent, contextual detection. From fragmented point solutions to a unified platform that satisfies FinCEN, AMLC, CNBV, AMLA, MAS, AUSTRAC, and every major regulator simultaneously. The technology exists. The regulatory framework supports it. The economic case is clear. The question for banking leadership is no longer 'should we?' but 'how soon can we start?' Thank you. I'm Rachel, and this has been a Digit2AI technology briefing.`
 ];
 
-async function generateAudio(text, outputPath) {
+// slideNumber is 1-based; the deck references assets/audio/slide-NN.mp3.
+async function generateAudio(text, slideNumber) {
+  const file = `slide-${String(slideNumber).padStart(2, '0')}.mp3`;
+  const outputPath = path.join(OUTPUT_DIR, file);
+  if (!FORCE && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
+    console.log(`[${String(slideNumber).padStart(2,'0')}] SKIP ${file}`);
+    return 0;
+  }
   const buffer = await edgeTts.synthesize(text, { voice: VOICE, rate: RATE });
   fs.writeFileSync(outputPath, buffer);
+  console.log(`[${String(slideNumber).padStart(2,'0')}] OK ${file} (${(buffer.length/1024).toFixed(1)} KB)`);
   return buffer.length;
 }
 
@@ -61,7 +70,6 @@ async function main() {
 
   console.log(`\nGenerating ${narrations.length} Rachel Premium voice MP3s...\n`);
   console.log(`Voice: Rachel (${VOICE}, ${RATE}) — Edge neural, no API key`);
-  console.log(`Model: eleven_multilingual_v2`);
   console.log(`Output: ${OUTPUT_DIR}\n`);
 
   for (let i = 0; i < narrations.length; i++) {

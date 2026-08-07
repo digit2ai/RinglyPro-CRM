@@ -8,6 +8,7 @@ const edgeTts = require('../src/services/edge-tts');
 // per character; Sarah keeps the role, the API key requirement is gone.
 const VOICE = process.env.NARRATION_VOICE || 'en-US-AvaNeural';
 const RATE = process.env.NARRATION_RATE || '-4%';
+const FORCE = process.argv.includes('--force');
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'chamber', 'virtualchamber', 'assets', 'audio');
 
 const slides = [
@@ -41,7 +42,7 @@ async function generateAudio(text, outputPath) {
   for (let i = 0; i < slides.length; i++) {
     const s = slides[i];
     const outputPath = path.join(OUTPUT_DIR, s.file);
-    if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
+    if (!FORCE && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 1000) {
       console.log(`[${i+1}/${slides.length}] SKIP ${s.file}`);
       continue;
     }

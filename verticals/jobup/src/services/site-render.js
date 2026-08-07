@@ -46,6 +46,35 @@ border-bottom:1px solid var(--line)}
 .nav .dot{width:10px;height:10px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.6)}
 .nav .who .tag2{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.12em}
 .nav .acts{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+/* Hamburger + drawer. Hidden above 760px, where the inline buttons fit. */
+.burger{display:none;background:none;border:0;padding:10px;cursor:pointer;
+flex-direction:column;gap:5px;width:44px;height:44px;align-items:center;justify-content:center}
+.burger span{display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;
+transition:transform .25s ease,opacity .2s ease}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.scrim{position:fixed;inset:0;background:rgba(3,5,12,.6);backdrop-filter:blur(3px);
+opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:60}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(84vw,320px);z-index:61;
+background:var(--bg2);border-left:1px solid var(--line2);
+padding:calc(18px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.drawer.open{transform:translateX(0)}
+.dhead{font-weight:790;letter-spacing:-.025em;font-size:17px;margin-bottom:14px;
+padding-bottom:14px;border-bottom:1px solid var(--line)}
+.dlink{display:block;padding:13px 12px;border-radius:11px;color:var(--mut);font-size:15.5px;
+min-height:44px;transition:background .15s ease,color .15s ease}
+.dlink:hover,.dlink:focus{background:var(--card2);color:var(--ink);outline:none}
+.dsep{height:1px;background:var(--line);margin:10px 0}
+@media(max-width:760px){
+  .burger{display:flex}
+  .nav .acts{display:none}
+  .nav .wrap{padding:11px 16px}
+}
+@media(prefers-reduced-motion:reduce){.drawer,.scrim,.burger span{transition:none}}
 .nbtn.manage{border-color:rgba(255,255,255,.14);opacity:.75}
 .nbtn.manage:hover{opacity:1}
 .nbtn{border:1px solid var(--line2);border-radius:999px;padding:8px 15px;color:var(--ink);
@@ -228,7 +257,7 @@ const STR = {
     built_by: 'Built and maintained by JobUp', owner_signin: 'Owner sign in', manage: 'Manage',
     agent_card: 'agent card', full_profile: 'Full profile',
     core_skills: 'Core skills include ', voice_tag: 'EN · Ava',
-    show_qr: 'Show QR', close: 'Close', qr_alt: 'QR code for this profile',
+    menu: 'Menu', show_qr: 'Show QR', close: 'Close', qr_alt: 'QR code for this profile',
     qr_hint: 'Point a phone camera at this to open the profile.',
   },
   es: {
@@ -254,7 +283,7 @@ const STR = {
     built_by: 'Creado y mantenido por JobUp', owner_signin: 'Acceso del titular', manage: 'Gestionar',
     agent_card: 'tarjeta de agente', full_profile: 'Perfil completo',
     core_skills: 'Sus competencias principales incluyen ', voice_tag: 'ES · Dalia',
-    show_qr: 'Ver QR', close: 'Cerrar', qr_alt: 'Código QR de este perfil',
+    menu: 'Menú', show_qr: 'Ver QR', close: 'Cerrar', qr_alt: 'Código QR de este perfil',
     qr_hint: 'Apunta la cámara del teléfono para abrir el perfil.',
   },
 };
@@ -266,8 +295,10 @@ function initials(name) {
   return (((p[0] || '')[0] || '') + ((p[p.length - 1] || '')[0] || '')).toUpperCase();
 }
 
-function nav(name, url, p, lang) {
+function nav(name, url, p, lang, sections) {
   const t = L(lang);
+  const jump = (sections || []).map((x) =>
+    `<a class="dlink" href="#${attr(x.id)}">${esc(x.label)}</a>`).join('');
   return `<div class="nav"><div class="wrap">
   <a class="who" href="/"><span class="dot"></span><span>${esc(name)}</span><span class="tag2">CV</span></a>
   <div class="acts">
@@ -275,7 +306,19 @@ function nav(name, url, p, lang) {
     ${p.email ? `<a class="nbtn primary" href="mailto:${attr(p.email)}">${esc(t.contact)}</a>` : ''}
     <a class="nbtn manage" href="/app" title="${esc(t.owner_signin)}">${esc(t.manage)}</a>
   </div>
-</div></div>`;
+  <button class="burger" id="burger" aria-label="${attr(t.menu)}" aria-expanded="false"
+          aria-controls="drawer"><span></span><span></span><span></span></button>
+</div></div>
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" aria-label="${attr(t.menu)}">
+  <div class="dhead">${esc(name)}</div>
+  ${jump}
+  <div class="dsep"></div>
+  <a class="dlink" href="${attr(url)}/resume.json">${esc(t.resume_json)}</a>
+  ${p.email ? `<a class="dlink" href="mailto:${attr(p.email)}">${esc(t.contact)}</a>` : ''}
+  <a class="dlink" href="#contact-form">${esc(t.hiring)}</a>
+  <a class="dlink" href="/app">${esc(t.owner_signin)}</a>
+</nav>`;
 }
 
 function heroBlock(p, name, url, roleLine, lang) {
@@ -342,6 +385,10 @@ function voiceBlock(name, lang) {
 
 function sections(p, lang) {
   const t = L(lang);
+  // Ids so the mobile drawer can jump straight to a section. A long CV on a
+  // phone is otherwise a lot of scrolling to reach Experience.
+  const secId = { [t.profile]: 'profile', [t.skills]: 'skills', [t.experience]: 'experience',
+                  [t.education]: 'education', [t.extras]: 'extras' };
   let h = '<div class="wrap">';
   let n = 0;
   const sh = (t) => {
@@ -349,17 +396,17 @@ function sections(p, lang) {
     return `<div class="sec-head"><span class="k">${String(n).padStart(2, '0')}</span><h2>${esc(t)}</h2><span class="rule"></span></div>`;
   };
 
-  if (p.summary) h += `<section>${sh(t.profile)}<p class="prose">${esc(p.summary)}</p></section>`;
+  if (p.summary) h += `<section id="profile">${sh(t.profile)}<p class="prose">${esc(p.summary)}</p></section>`;
 
   if (p.skills && p.skills.length) {
-    h += `<section>${sh(t.skills)}<div class="grid">` +
+    h += `<section id="skills">${sh(t.skills)}<div class="grid">` +
       p.skills.slice(0, 18).map((s) =>
         `<div class="gcard">${esc(typeof s === 'string' ? s : s.name)}</div>`).join('') +
       '</div></section>';
   }
 
   if (p.experience && p.experience.length) {
-    h += `<section>${sh(t.experience)}<div class="timeline">` +
+    h += `<section id="experience">${sh(t.experience)}<div class="timeline">` +
       p.experience.map((e) => `<div class="tl">
         <div class="role">${esc(e.title || '')}</div>
         ${e.company ? `<div class="org">${esc(e.company)}</div>` : ''}
@@ -370,7 +417,7 @@ function sections(p, lang) {
   }
 
   if (p.education && p.education.length) {
-    h += `<section>${sh(t.education)}<div class="timeline">` +
+    h += `<section id="education">${sh(t.education)}<div class="timeline">` +
       p.education.map((e) => `<div class="tl">
         <div class="role">${esc(e.institution || '')}</div>
         ${(e.studyType || e.area) ? `<div class="org">${esc([e.studyType, e.area].filter(Boolean).join(', '))}</div>` : ''}
@@ -379,7 +426,7 @@ function sections(p, lang) {
   }
 
   if (p.certifications && p.certifications.length) {
-    h += `<section>${sh(t.extras)}<div class="tags">` +
+    h += `<section id="extras">${sh(t.extras)}<div class="tags">` +
       p.certifications.map((c) => `<span class="tag">${esc(typeof c === 'string' ? c : c.name)}</span>`).join('') +
       '</div></section>';
   }
@@ -466,6 +513,30 @@ function scripts(name, url, p, narration, lang) {
   window.addEventListener('beforeunload',stop);
 })();
 
+/* Mobile drawer. Closes on link tap, on the scrim, on Escape, and if the
+   viewport grows past the breakpoint while it is open — a drawer left hanging
+   over a desktop layout is worse than no drawer. */
+(function(){
+  var b=document.getElementById('burger'),d=document.getElementById('drawer'),
+      sc=document.getElementById('scrim');
+  if(!b||!d) return;
+  function set(open){
+    d.classList.toggle('open',open);
+    if(sc) sc.classList.toggle('open',open);
+    b.classList.toggle('open',open);
+    b.setAttribute('aria-expanded',open?'true':'false');
+    document.body.style.overflow=open?'hidden':'';
+  }
+  b.addEventListener('click',function(){set(!d.classList.contains('open'));});
+  if(sc) sc.addEventListener('click',function(){set(false);});
+  d.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
+  var mq=window.matchMedia('(min-width:761px)');
+  (mq.addEventListener?mq.addEventListener.bind(mq,'change'):mq.addListener.bind(mq))(function(){
+    if(mq.matches) set(false);
+  });
+})();
+
 /* QR modal — thumbnail and button both open it; Esc and the backdrop close it. */
 (function(){
   var modal=document.getElementById('qrModal'); if(!modal) return;
@@ -527,7 +598,15 @@ function page(profile, settings, ctx) {
   const roleLine = p.headline || (roles[0] && roles[0].title) || '';
 
   let h = head(`${name}${p.headline ? ' — ' + p.headline : ''}`, desc, ld, ctx.url, lang);
-  h += nav(name, ctx.url, p, lang);
+  // Only offer jumps to sections that actually rendered.
+  const jumps = [
+    p.summary && { id: 'profile', label: t.profile },
+    (p.skills || []).length && { id: 'skills', label: t.skills },
+    (p.experience || []).length && { id: 'experience', label: t.experience },
+    (p.education || []).length && { id: 'education', label: t.education },
+    (p.certifications || []).length && { id: 'extras', label: t.extras },
+  ].filter(Boolean);
+  h += nav(name, ctx.url, p, lang, jumps);
   h += heroBlock(p, name, ctx.url, roleLine, lang);
   h += voiceBlock(name, lang);
   h += sections(p, lang);
@@ -543,7 +622,7 @@ function page(profile, settings, ctx) {
   // way to make the request. This routes THROUGH us, so the subscriber's
   // address stays private and the message lands in their Opportunities tab.
   const firstName = esc(String(name || '').split(' ')[0] || 'them');
-  h += `<div class="cta-final"><h3>${esc(t.hiring)}</h3>
+  h += `<div class="cta-final" id="contact-form"><h3>${esc(t.hiring)}</h3>
     <p>${p.email
       ? esc(fmt(t.reach_direct, name))
       : esc(fmt(t.send_msg, firstName))}</p>
