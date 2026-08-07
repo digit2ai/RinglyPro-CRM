@@ -1112,25 +1112,55 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(!s.includes('#22d3ee'), `${f} must not use the dashboard cyan`);
     }
   });
-  await t('BRAND: the signed-out dashboard shows the logo, not a "--" chip', () => {
+  await t('BRAND: the dashboard header is the logo, and ONLY the logo', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
     assert.ok(html.includes('id="brandmark"'), 'the dashboard header needs the brand mark');
     assert.ok(html.includes('M283 158 V290 A64 64 0 0 1 155 290'), 'and it must be the JobUp mark');
-    // The initials chip starts hidden: signed out it rendered a literal "--".
-    assert.ok(/<div class="av hidden" id="av">/.test(html),
-      'the initials avatar must start hidden until a session resolves');
-    // Every signed-out path must fall back to the brand, including the one
-    // where the session request itself fails.
+    // The initials chip is gone. It rendered a literal "--" before a session
+    // resolved, and it sat right next to the same name in text. Its .av rule
+    // was declared AFTER .hidden — both single-class — so toggling `hidden`
+    // on it did nothing and the two chips showed side by side.
+    assert.ok(!/id="av"/.test(html), 'the initials chip must not come back');
+    assert.ok(!/\.av\{/.test(html), 'and neither should its CSS');
+    assert.ok(!html.includes("$('av')"), 'no script may still reach for it');
+    // Signing out must not leave the previous account's name in the header.
     const branches = html.match(/login'\)\.classList\.remove\('hidden'\)/g) || [];
     const restores = html.match(/brandOnly\(\)/g) || [];
     assert.ok(branches.length >= 2, 'expected both the unauthenticated and the network-failure path');
     assert.ok(restores.length >= branches.length,
       'every signed-out path must call brandOnly(), or a stale name survives sign-out');
-    // .hidden and .brandmark are both single-class selectors, so the pairing
-    // has to be explicit or source order decides whether it can ever hide.
-    assert.ok(html.replace(/\s+/g, '').includes('.brandmark.hidden{display:none}'),
-      '.brandmark must have an explicit .hidden rule to beat its own display:block');
+  });
+  await t('A .hidden TOGGLE ONLY WORKS IF .hidden WINS THE CASCADE', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const css = html.slice(0, html.indexOf('</style>'));
+    const hiddenAt = css.indexOf('.hidden{display:none}');
+    assert.ok(hiddenAt > -1, '.hidden must exist');
+    // Only elements the script actually toggles matter. For each of those, if
+    // one of its classes sets `display` in a single-class rule declared AFTER
+    // .hidden, that rule silently wins and the toggle does nothing. That is
+    // exactly how the "--" chip stayed on screen beside the logo.
+    const toggled = new Set(
+      [...html.matchAll(/\$\('([\w-]+)'\)\.classList\.(?:add|remove|toggle)\('hidden'/g)]
+        .map((m) => m[1]));
+    assert.ok(toggled.size > 0, 'expected to find elements toggled with .hidden');
+    const offenders = [];
+    for (const id of toggled) {
+      const el = html.match(new RegExp(`<[^>]*id="${id}"[^>]*>`));
+      if (!el) continue;
+      const cls = (el[0].match(/class="([^"]*)"/) || [, ''])[1].split(/\s+/).filter(Boolean);
+      for (const c of cls) {
+        if (c === 'hidden') continue;
+        const rule = css.match(new RegExp(`(^|\\n)\\.${c}\\{([^}]*)\\}`));
+        if (rule && css.indexOf(rule[0]) > hiddenAt && /(^|;)\s*display:/.test(rule[2])
+            && !css.replace(/\s+/g, '').includes(`.${c}.hidden{display:none}`)) {
+          offenders.push(`#${id}.${c}`);
+        }
+      }
+    }
+    assert.deepStrictEqual(offenders, [],
+      `toggled with .hidden but their own rule sets display later: ${offenders.join(', ')}`);
   });
   await t('BRAND: every page links the favicon as a real tag, not a mention', () => {
     const fs = require('fs');

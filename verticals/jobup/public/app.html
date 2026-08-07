@@ -107,13 +107,10 @@ border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none
 .note{color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.65;margin-top:12px}
 .hidden{display:none}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
-/* Matches .av exactly so the header does not shift when one swaps for the
-   other. The .hidden pairing is explicit: both rules are single-class, so
-   without it whichever came last in the sheet would win. */
+/* The header mark is the logo, permanently. There used to be an initials chip
+   beside it that rendered a literal "--" until a session resolved, and it was
+   redundant anyway: the account name sits right next to it as text. */
 .brandmark{width:44px;height:44px;flex:0 0 44px;display:block;border-radius:12px}
-.brandmark.hidden{display:none}
-.av{width:44px;height:44px;border-radius:12px;background:var(--grad);color:#06121a;font-weight:830;
-font-size:16px;display:flex;align-items:center;justify-content:center;flex:0 0 44px;letter-spacing:-.02em}
 .who-n{font-weight:790;letter-spacing:-.026em;font-size:17px;line-height:1.2}
 .who-h{color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52vw}
 .callout{background:rgba(230,180,90,.07);border:1px solid rgba(230,180,90,.3);border-radius:15px;
@@ -226,9 +223,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 
 <div class="nav"><div class="wrap">
   <div class="who">
-    <!-- Signed out there is no one to show, and the initials chip rendered a
-         literal "--". The brand mark stands in until the session resolves, then
-         swaps for the account avatar. Same geometry as favicon.svg. -->
+    <!-- The logo, always. Same geometry as favicon.svg. -->
     <svg class="brandmark" id="brandmark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
       <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
         <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
@@ -237,7 +232,6 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
         <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
-    <div class="av hidden" id="av">--</div>
     <div><div class="who-n" id="who-n">JobUp</div><div class="who-h" id="who-h"></div></div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
@@ -425,10 +419,9 @@ function tabFromUrl(){
 }
 
 /* ---- boot ---- */
-/* Signed out (or the session call failed): show the brand, and never a stale
-   name or initials left over from a previous session. */
+/* Signed out (or the session call failed): the header falls back to the plain
+   brand, so a name from a previous session cannot survive a sign-out. */
 function brandOnly(){
-  $('brandmark').classList.remove('hidden'); $('av').classList.add('hidden');
   $('who-n').textContent='JobUp'; $('who-h').textContent='';
 }
 function boot(){
@@ -439,9 +432,6 @@ function boot(){
     $('signout').style.display='';
     var nm=ME.name||ME.email||'';
     $('who-n').textContent=nm;
-    $('av').textContent=(nm.trim().split(/\s+/).slice(0,2).map(function(w){return w[0];}).join('')||'?').toUpperCase();
-    /* Signed in: the header belongs to the account, not the brand. */
-    $('brandmark').classList.add('hidden'); $('av').classList.remove('hidden');
     if(ME.address){
       $('mysite').href='https://'+ME.address; $('mysite').style.display='';
       $('d-site').href='https://'+ME.address; $('d-site').style.display='';
