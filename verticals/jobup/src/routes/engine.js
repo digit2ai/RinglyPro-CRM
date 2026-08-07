@@ -245,17 +245,63 @@ router.post('/applications/:jobId/confirm', async (req, res) => {
     note: 'Recorded because you confirmed you submitted it. JobUp never submits on your behalf.' });
 });
 
+/**
+ * A short cooldown on the button, on top of the daily ceilings in the agent.
+ *
+ * The ceilings are the real defence — they are in the database and survive a
+ * restart. This is the cheap one: a double-click, an impatient tap, or a script
+ * hammering the endpoint should not run a hundred concurrent pool scans before
+ * the first has finished reading how much is left.
+ *
+ * In memory on purpose: a cooldown that resets on deploy fails OPEN, which is
+ * the right way for a nicety to fail. Nothing about spend depends on it.
+ */
+const runCooldown = new Map();
+const RUN_COOLDOWN_MS = parseInt(process.env.JOBUP_RUN_COOLDOWN_MS || '20000', 10);
+
 router.post('/agents/:name/run', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const name = req.params.name;
   if (!['hunter', 'presence'].includes(name)) {
     return res.status(400).json({ error: 'unknown agent' });
   }
+
+  const key = `${tid}:${name}`;
+  const last = runCooldown.get(key) || 0;
+  const wait = RUN_COOLDOWN_MS - (Date.now() - last);
+  if (wait > 0) {
+    return res.status(429).json({
+      error: `That is still running, or just finished. Try again in ${Math.ceil(wait / 1000)}s.`,
+      retry_in_s: Math.ceil(wait / 1000),
+    });
+  }
+  runCooldown.set(key, Date.now());
+  if (runCooldown.size > 5000) runCooldown.clear();   // unbounded maps are a leak
+
   try {
     res.json(await agents[name](tid));
   } catch (e) {
+    runCooldown.delete(key);   // a failed run should not cost you the cooldown
     res.status(500).json({ error: e.message });
   }
+});
+
+/** What is left of today, so the dashboard can say so before you press. */
+router.get('/agents/budget', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const row = await scoped('settings', tid).findOne({});
+  const st = settingsSvc.sanitize((row && row.settings) || {});
+  const used = await agents.usedToday(tid);
+  const perDay = (st.quotas && st.quotas.jobs_scored_per_day) || 6;
+  const budget = (st.cost_cap_usd || 8) / 30;
+  res.json({
+    scored_today: used.scored, jobs_per_day: perDay,
+    jobs_left: Math.max(0, perDay - used.scored),
+    spent_today: Number(used.spent.toFixed(5)), daily_budget: Number(budget.toFixed(5)),
+    runs_today: used.runs,
+    resets: 'midnight UTC',
+    note: 'Manual runs draw on the same daily allowance as the scheduled run — pressing more often does not find more.',
+  });
 });
 
 router.get('/agents/runs', async (req, res) => {

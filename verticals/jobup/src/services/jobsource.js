@@ -78,8 +78,18 @@ function prefilter(jobs, profile, settings, rawText) {
   const wantEmployers = (targeting.employers || []).map((x) => String(x).toLowerCase()).filter(Boolean);
   const must = (targeting.must_include || []).map((x) => String(x).toLowerCase()).filter(Boolean);
   const never = (targeting.exclude_keywords || []).map((x) => String(x).toLowerCase()).filter(Boolean);
-  const remotePref = targeting.remote_preference || null;
   const seniority = String(targeting.seniority || '').toLowerCase();
+  const wantLocations = (targeting.locations || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+
+  // Multi-select is the real setting; the legacy single choice is the fallback
+  // for a profile saved before the account form existed.
+  let modes = (targeting.work_modes || []).map((x) => String(x).toLowerCase()).filter(Boolean);
+  if (!modes.length && targeting.remote_preference && targeting.remote_preference !== 'any') {
+    modes = targeting.remote_preference === 'hybrid'
+      ? ['hybrid', 'remote']            // open to hybrid means open to remote too
+      : [targeting.remote_preference];
+  }
+  const types = (targeting.employment_types || []).map((x) => String(x).toLowerCase()).filter(Boolean);
 
   const skills = ((profile || {}).skills || []).map((s) =>
     String(typeof s === 'string' ? s : s.name || '').toLowerCase()).filter(Boolean);
@@ -110,14 +120,47 @@ function prefilter(jobs, profile, settings, rawText) {
     // A must-have term is a requirement, not a preference.
     if (must.length && !must.every((w) => hay.includes(w))) continue;
 
-    // Remote preference, read off the location string.
-    if (remotePref && remotePref !== 'any') {
-      const isRemote = /\bremote\b|\bwork from home\b|\bwfh\b|\bdistributed\b/.test(location);
-      const isHybrid = /\bhybrid\b/.test(location);
-      if (remotePref === 'remote' && !isRemote) continue;
-      if (remotePref === 'onsite' && isRemote && !isHybrid) continue;
-      // 'hybrid' accepts hybrid or remote — someone open to hybrid is open to
-      // remote too, and excluding it would drop the better offer.
+    // ---- WORK MODE. Read off location AND description: plenty of postings say
+    // "Remote" only in the body, and judging on the location string alone threw
+    // away real remote roles whose location field held a head-office city.
+    //
+    // THE RULE IS ASYMMETRIC, because postings are. Remote and hybrid are
+    // selling points — a posting that offers them says so. On-site is the
+    // unstated default, so silence means on-site far more often than not.
+    //   * on-site NOT wanted -> a posting must SHOW an accepted mode. Silence
+    //     is treated as on-site and dropped. Otherwise a remote-only seeker
+    //     gets an inbox of ordinary office jobs that simply never said.
+    //   * on-site wanted     -> silence is fine; only a stated mode you
+    //     excluded drops the row.
+    if (modes.length && modes.length < 3) {
+      const where = `${location} ${hay}`;
+      const isRemote = /\bremote\b|\bwork from home\b|\bwfh\b|\bfully distributed\b/.test(where);
+      const isHybrid = /\bhybrid\b/.test(where);
+      const isOnsite = /\bon[- ]?site\b|\bin[- ]office\b|\bin person\b/.test(where);
+      const stated = isRemote || isHybrid || isOnsite;
+      const wants = (modes.includes('remote') && isRemote)
+                 || (modes.includes('hybrid') && isHybrid)
+                 || (modes.includes('onsite') && (isOnsite || !stated));
+      if (!wants) continue;
+    }
+
+    // ---- EMPLOYMENT TYPE. Same asymmetry: full-time is the unstated default,
+    // so a full-time seeker is never filtered on silence, while somebody who
+    // only wants an internship is not shown every unlabelled permanent role.
+    let typeHit = 0;
+    if (types.length) {
+      const stated = {
+        internship: /\bintern(ship)?s?\b/.test(hay),
+        part_time: /\bpart[- ]time\b/.test(hay),
+        contract: /\bcontract(or)?\b|\bfreelance\b|\bc2c\b|\bcorp[- ]to[- ]corp\b/.test(hay),
+        temporary: /\btemporary\b|\btemp\b|\bseasonal\b/.test(hay),
+        full_time: /\bfull[- ]time\b|\bpermanent\b/.test(hay),
+      };
+      const anyStated = Object.values(stated).some(Boolean);
+      const wanted = types.some((k) => stated[k]);
+      if (wanted) typeHit = 2;
+      else if (anyStated) continue;                 // states a type you ruled out
+      else if (!types.includes('full_time')) continue; // silence reads as full-time
     }
 
     let hits = 0;
@@ -129,8 +172,11 @@ function prefilter(jobs, profile, settings, rawText) {
     const employerHits = wantEmployers.filter((e) => e && employer.includes(e)).length;
     // Seniority is a nudge, not a gate: titles word it too many ways to filter on.
     const seniorityHit = seniority && title.includes(seniority) ? 1 : 0;
+    // A place you said you would work is a preference, never a gate — geo.js
+    // owns the hard country rules and it runs later.
+    const locationHit = wantLocations.some((l) => location.includes(l)) ? 2 : 0;
 
-    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit;
+    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit + locationHit + typeHit;
     if (prescore > 0) scored.push({ job: j, prescore });
   }
 

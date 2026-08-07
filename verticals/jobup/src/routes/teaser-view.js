@@ -391,11 +391,17 @@ function render(){
      '<span class="chip">pipeline</span><span class="chip">tailoring</span>'+
      '<span class="chip">approvals</span><span class="chip">export</span></div></div>';
 
-  var c=(s.cta)||{price_usd:97,includes:[],non_renewal:''};
-  h+=open(8,'Build my ecosystem');
-  h+='<div class="price">$'+c.price_usd+'<span style="font-size:17px;color:var(--mut)"> / year</span></div>';
+  var c=(s.cta)||{price_usd:null,includes:[],non_renewal:''};
+  h+=open(8,c.headline||'Build my ecosystem');
+  // A price is shown only when there is one. With payment switched off the
+  // block would otherwise read "$null / year".
+  if(c.price_usd)
+    h+='<div class="price">$'+c.price_usd+'<span style="font-size:17px;color:var(--mut)"> / year</span></div>';
+  else
+    h+='<div class="price" style="font-size:26px">Free while we are in preview</div>';
   h+='<ul class="inc">'+(c.includes||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
-  h+='<button class="btn primary" id="buy" style="font-size:16px;padding:13px 26px">Submit to build my ecosystem</button>';
+  h+='<button class="btn primary" id="buy" style="font-size:16px;padding:13px 26px">'+
+     (c.price_usd?'Submit to build my ecosystem':'Build my account')+'</button>';
   h+='<p class="note">'+esc(c.non_renewal||'')+'</p>';
   h+='<p class="note">JobUp never applies on your behalf. You review and submit every application yourself.</p>';
   h+='<div id="buyout" class="note"></div></div>';
@@ -431,17 +437,26 @@ function startAlwaysOn(){
   },1000);
 }
 
+// The CTA opens the account form, not a checkout.
+//
+// With the payment layer switched off, the next step is /build?t=<token> —
+// choose a password, tell the agents what to hunt for. If billing is ever
+// switched back on, the same button asks the server first and follows whatever
+// it is told, so this page needs no second edit.
 function checkout(){
   var out=document.getElementById('buyout');
-  out.textContent='Opening checkout...';
-  var p=(payload.screens.site&&payload.screens.site.profile)||{};
+  out.textContent='Opening...';
   fetch(API_BASE+'/api/v1/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:p.email||'',name:p.name||'',teaser_token:TOKEN})})
+    body:JSON.stringify({teaser_token:TOKEN})})
     .then(function(r){return r.json();}).then(function(j){
-      if(j.url){location.href=j.url;return;}
-      // Honest when unconfigured — never a fake URL.
-      out.textContent=j.error||'Checkout is not available right now.';
-    }).catch(function(){out.textContent='Could not reach checkout.';});
+      if(j.build_url){location.href=j.build_url;return;}   // no payment: straight to the form
+      if(j.url){location.href=j.url;return;}               // Stripe, when enabled
+      out.textContent=j.error||'Could not open the next step.';
+    }).catch(function(){
+      // The form is the destination either way — a failed status call must not
+      // strand somebody who has already decided to sign up.
+      location.href=API_BASE+'/build?t='+encodeURIComponent(TOKEN);
+    });
 }
 
 // Narration: segmented, prefetched one ahead, blob-cached, browser fallback.

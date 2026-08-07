@@ -17,8 +17,28 @@ const REFUND_DAYS = parseInt(process.env.JOBUP_REFUND_DAYS || '14', 10);
 const RENEWAL_NOTICE_DAYS = [30, 7];
 const DUNNING_STAGES = 4;
 
+/**
+ * THE PAYMENT LAYER IS OFF.
+ *
+ * JobUp is running its funnel without billing while the signup flow is proven
+ * end to end: intake -> teaser -> account form -> live account. Nothing charges,
+ * nothing calls Stripe, and no surface quotes a price.
+ *
+ * This is a SWITCH, not a deletion — every Stripe path below is intact and
+ * comes back by setting JOBUP_BILLING_ENABLED=1 (plus the usual STRIPE_* keys).
+ * Deleting the code would have meant rewriting dunning, refunds, renewal
+ * notices and webhook attribution later; disabling it costs one env var.
+ *
+ * Accounts created while this is off are stamped activation:'no_billing' so
+ * they can never be counted as revenue, exactly like the free_test stamp.
+ */
+function disabled() {
+  return process.env.JOBUP_BILLING_ENABLED !== '1';
+}
+
 let stripe = null;
 function client() {
+  if (disabled()) return null;
   if (!process.env.STRIPE_SECRET_KEY) return null;
   if (stripe) return stripe;
   try {
@@ -35,7 +55,19 @@ function enabled() {
 }
 
 function status() {
+  if (disabled()) {
+    return {
+      billing_disabled: true,
+      configured: false,
+      free_activation: true,      // every account is activated without payment
+      price_usd: null,            // no surface may quote a price while this is off
+      note: 'The payment layer is switched off on this deployment. Accounts are '
+          + 'created and activated for free and are stamped no_billing. '
+          + 'Set JOBUP_BILLING_ENABLED=1 to restore checkout.',
+    };
+  }
   return {
+    billing_disabled: false,
     free_activation: freeActivation(),
     webhook_verification: process.env.STRIPE_WEBHOOK_SECRET ? 'configured'
       : 'NOT configured — production refuses unverified webhooks, so a real payment would never activate an account',
@@ -59,10 +91,15 @@ function status() {
  * paying subscriber in the revenue figures.
  */
 function freeActivation() {
-  return process.env.JOBUP_FREE_ACTIVATION === '1';
+  // With billing off, EVERY activation is free — that is the whole point.
+  return disabled() || process.env.JOBUP_FREE_ACTIVATION === '1';
 }
 
 async function createCheckout({ subscriberId, email, successUrl, cancelUrl }) {
+  if (disabled()) {
+    return { ok: false, configured: false, billing_disabled: true,
+             error: 'Payment is switched off on this deployment. Accounts are created for free.' };
+  }
   const s = client();
   if (!s) {
     // Honest refusal. Never a fake URL.
@@ -214,6 +251,7 @@ function refundEligible(chargedAt, now = new Date()) {
 }
 
 module.exports = {
+  disabled,
   freeActivation,
   enabled, status, createCheckout, createPortal, applyEvent,
   renewalNoticesDue, refundEligible,

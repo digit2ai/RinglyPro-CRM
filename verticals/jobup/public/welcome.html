@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
-<title>Welcome to JobUp</title><style>
+<title>Your account is built — JobUp</title><style>
 :root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
 --line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
 --cyan:#22d3ee;--green:#3ad07f;--red:#f87171;--warn:#e6b45a;
@@ -19,40 +19,68 @@ padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-
 body::before{content:"";position:fixed;inset:0 0 auto 0;height:480px;z-index:0;pointer-events:none;
 background:radial-gradient(56% 40% at 22% 0%,rgba(34,211,238,.14),transparent 70%),
 radial-gradient(50% 38% at 82% 6%,rgba(139,92,246,.14),transparent 72%);filter:blur(26px)}
-.wrap{position:relative;z-index:2;max-width:560px;margin:0 auto;padding:44px 20px 60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.025em;margin-bottom:30px}
+.wrap{position:relative;z-index:2;max-width:580px;margin:0 auto;padding:44px 20px 60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.025em;margin-bottom:28px}
 .brand .mark{width:24px;height:24px;flex:0 0 24px;display:block;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.tick{width:56px;height:56px;border-radius:50%;background:rgba(58,208,127,.14);
+border:1px solid rgba(58,208,127,.4);display:flex;align-items:center;justify-content:center;
+margin-bottom:16px}
+.tick svg{width:28px;height:28px;stroke:var(--green);fill:none;stroke-width:2.6;
+stroke-linecap:round;stroke-linejoin:round}
 h1{font-size:clamp(26px,6vw,34px);font-weight:830;letter-spacing:-.035em;margin:0 0 8px;line-height:1.15}
 .lede{color:var(--mut);font-size:15.5px;margin-bottom:22px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px}
-.site{background:var(--card2);border:1px solid rgba(34,211,238,.3);border-radius:14px;padding:16px;
-margin:16px 0;text-align:center}
-.site a{color:var(--cyan);font-family:var(--mono);font-size:16px;word-break:break-all;text-decoration:none;font-weight:600}
-.steps{list-style:none;padding:0;margin:14px 0 0}
+.card h2{font-size:16.5px;font-weight:760;letter-spacing:-.02em;margin:0 0 4px}
+.card .sub{color:var(--mut);font-size:14px;margin-bottom:14px}
+.site{background:var(--card2);border:1px solid rgba(34,211,238,.3);border-radius:14px;
+padding:16px;margin:2px 0 12px;text-align:center}
+.site a{color:var(--cyan);font-family:var(--mono);font-size:15.5px;word-break:break-all;
+text-decoration:none;font-weight:600}
+.site a:hover{text-decoration:underline}
+.rowbtns{display:flex;gap:10px;flex-wrap:wrap}
+.mini{flex:1;min-width:132px;border:1px solid var(--line2);background:transparent;color:var(--ink);
+border-radius:999px;padding:11px 16px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;
+min-height:44px;transition:.14s ease}
+.mini:hover{border-color:var(--cyan);color:var(--cyan)}
+.steps{list-style:none;padding:0;margin:6px 0 0}
 .steps li{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .steps li:last-child{border-bottom:0}
 .steps .ic{width:20px;height:20px;border-radius:50%;flex:0 0 20px;display:flex;align-items:center;
 justify-content:center;font-size:12px;font-weight:800;margin-top:1px}
 .ic.ok{background:rgba(58,208,127,.16);color:var(--green)}
-.ic.no{background:rgba(248,113,113,.16);color:var(--red)}
+.ic.no{background:rgba(255,255,255,.07);color:var(--faint)}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(34,211,238,.25);
+border-top-color:var(--cyan);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
 label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
 text-transform:uppercase;color:var(--faint);margin:18px 0 6px}
 input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:12px;
 padding:14px;color:var(--ink);font:inherit;font-size:16px;outline:none}
 input:focus{border-color:var(--cyan)}
+.pwrow{position:relative}.pwrow input{padding-right:52px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:42px;height:42px;
+border:0;background:transparent;color:var(--faint);cursor:pointer;display:flex;align-items:center;
+justify-content:center;border-radius:10px;padding:0}
+.eye:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.eye svg{width:21px;height:21px;display:block}.eye .slash{display:none}
+.eye.on{color:var(--cyan)}.eye.on .slash{display:block}
 .btn{border:0;background:var(--grad);color:#06121a;border-radius:999px;padding:15px 24px;
-font:inherit;font-size:16px;font-weight:750;cursor:pointer;width:100%;margin-top:22px;
-min-height:52px;transition:transform .14s ease}
+font:inherit;font-size:16px;font-weight:750;cursor:pointer;width:100%;margin-top:20px;
+min-height:52px;transition:transform .14s ease;text-align:center;text-decoration:none;
+display:flex;align-items:center;justify-content:center}
 .btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.45;transform:none;cursor:default}
 .note{color:var(--faint);font-size:13px;font-family:var(--mono);line-height:1.65;margin-top:14px}
 .err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
 border-radius:12px;padding:12px 15px;font-size:14px;margin-top:14px;display:none}
 .err.show{display:block}
-.testbar{background:rgba(230,180,90,.12);border:1px solid rgba(230,180,90,.4);color:#f5d79c;
+.bar{background:rgba(230,180,90,.12);border:1px solid rgba(230,180,90,.4);color:#f5d79c;
 border-radius:12px;padding:11px 15px;font-size:13.5px;margin-bottom:18px;display:none}
-.testbar.show{display:block}
-.rules{color:var(--faint);font-size:13px;margin-top:8px}
+.bar.show{display:block}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+background:var(--card2);border:1px solid rgba(58,208,127,.45);color:#bff5d6;border-radius:999px;
+padding:11px 22px;font-size:14px;opacity:0;pointer-events:none;transition:.22s ease;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style></head><body>
 <div class="wrap">
   <div class="brand"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs>
@@ -63,59 +91,148 @@ border-radius:12px;padding:11px 15px;font-size:13.5px;margin-bottom:18px;display
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
       <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>JobUp</div>
-  <div class="testbar" id="testbar"></div>
-  <h1 id="h">Setting up your ecosystem</h1>
+
+  <div class="bar" id="bar"></div>
+  <div class="tick" id="tick" style="display:none">
+    <svg viewBox="0 0 24 24"><path d="M4 12.6 9.2 18 20 6.4"/></svg></div>
+  <h1 id="h">Building your account</h1>
   <div class="lede" id="lede">One moment.</div>
 
+  <!-- The bookmark. This is the thing they came for. -->
+  <div class="card" id="linkcard" style="display:none">
+    <h2>Your web address</h2>
+    <div class="sub" id="linksub">Bookmark this. It is your public profile, and it is how recruiters find you.</div>
+    <div class="site"><a id="siteurl" href="#" target="_blank" rel="noopener"></a></div>
+    <div class="rowbtns">
+      <button class="mini" id="copy">Copy link</button>
+      <button class="mini" id="share" style="display:none">Share</button>
+      <button class="mini" id="openit">Open it</button>
+    </div>
+    <div class="note" id="bmhint"></div>
+  </div>
+
   <div class="card" id="prov">
+    <h2>What we set up</h2>
+    <div class="sub" id="provsub">Your agents start hunting as soon as this finishes.</div>
     <div id="provbody"><div class="note">Checking your account...</div></div>
   </div>
 
+  <a class="btn" id="manage" href="#">Manage my account</a>
+  <p class="note" id="managenote">Sign in any time to see your matches, opportunities and your whole profile.</p>
+
+  <!-- Legacy fallback: an account created before the build form existed, which
+       therefore has no password yet. -->
   <div class="card" id="pw" style="display:none">
-    <strong>Choose a password</strong>
-    <div class="lede" style="margin:6px 0 0;font-size:14.5px">This is how you sign in to your dashboard.</div>
+    <h2>Choose a password</h2>
+    <div class="sub">This account does not have one yet. This is how you sign in.</div>
     <label for="p1">Password</label>
-    <input id="p1" type="password" autocomplete="new-password" inputmode="text">
-    <div class="rules">At least 12 characters.</div>
+    <div class="pwrow"><input id="p1" type="password" autocomplete="new-password" spellcheck="false">
+      <button type="button" class="eye" id="e1" aria-label="Show password" aria-pressed="false"></button></div>
+    <div class="note" style="margin-top:7px">At least 12 characters.</div>
     <label for="p2">Confirm password</label>
-    <input id="p2" type="password" autocomplete="new-password">
+    <div class="pwrow"><input id="p2" type="password" autocomplete="new-password" spellcheck="false">
+      <button type="button" class="eye" id="e2" aria-label="Show password" aria-pressed="false"></button></div>
     <div class="err" id="e"></div>
     <button class="btn" id="go">Save and open my dashboard</button>
   </div>
 </div>
+<div class="toast" id="toast"></div>
 <script>
-var API='{{BASE}}',Q=new URLSearchParams(location.search),SID=Q.get('s')||'';
+var API='{{BASE}}',Q=new URLSearchParams(location.search),SID=Q.get('s')||'',ISNEW=Q.get('new')==='1';
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function toast(m){var t=$('toast');t.textContent=m;t.className='toast show';
+  setTimeout(function(){t.className='toast';},1900);}
 
-fetch(API+'/api/v1/billing/status').then(function(r){return r.json();}).then(function(j){
-  if(j.free_activation){ $('testbar').className='testbar show';
-    $('testbar').textContent='TEST MODE — payment is switched off on this deployment. No card was charged.'; }
-});
+var EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" '+
+  'stroke-linecap="round" stroke-linejoin="round">'+
+  '<path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z"/>'+
+  '<circle cx="12" cy="12" r="3.2"/><line class="slash" x1="3" y1="21" x2="21" y2="3"/></svg>';
+function wireEye(b,i){var B=$(b),I=$(i);B.innerHTML=EYE;
+  B.addEventListener('click',function(){var show=I.type==='password';
+    I.type=show?'text':'password';B.classList.toggle('on',show);
+    B.setAttribute('aria-pressed',show?'true':'false');
+    B.setAttribute('aria-label',show?'Hide password':'Show password');I.focus();});}
+wireEye('e1','p1'); wireEye('e2','p2');
 
-fetch(API+'/api/v1/intake/welcome?s='+encodeURIComponent(SID))
- .then(function(r){return r.json();}).then(function(j){
+// Bookmark hint matched to the device — Cmd+D is useless advice on a phone.
+(function(){
+  var mac=/Mac|iPhone|iPad|iPod/.test(navigator.platform||navigator.userAgent);
+  var touch=matchMedia('(hover:none)').matches;
+  $('bmhint').textContent = touch
+    ? 'On your phone: tap Share, then Add Bookmark or Add to Home Screen.'
+    : ('Press '+(mac?'Command':'Ctrl')+' + D to bookmark this page.');
+  if(navigator.share) $('share').style.display='';
+})();
+
+var POLL_MS=2500, tries=0, MAX=48;   // ~2 minutes, then stop and tell the truth
+function render(j){
   if(j.error){ $('h').textContent='We could not find that account';
-    $('provbody').innerHTML='<div class="note">'+esc(j.error)+'</div>'; return; }
+    $('lede').textContent='';
+    $('provbody').innerHTML='<div class="note">'+esc(j.error)+'</div>'; return true; }
 
-  $('h').textContent='Your ecosystem is live';
-  $('lede').textContent=j.name?('Welcome, '+j.name+'.'):'Welcome.';
+  var name=j.name?(', '+String(j.name).split(' ')[0]):'';
+  if(j.complete){
+    $('tick').style.display='flex';
+    $('h').textContent='Your account is built'+name;
+    $('lede').textContent='Everything below is live. Bookmark your address and sign in whenever you like.';
+  } else {
+    $('h').textContent='Building your account'+name;
+    $('lede').innerHTML='<span class="spin"></span> Reserving your address and switching your agents on.';
+  }
 
-  var html='';
-  if(j.url) html+='<div class="site"><a href="'+esc(j.url)+'" target="_blank" rel="noopener">'+esc(j.url)+'</a></div>';
-  html+='<ul class="steps">'+(j.steps||[]).map(function(s){
-    return '<li><span class="ic '+(s.ok?'ok':'no')+'">'+(s.ok?'✓':'!')+'</span><div>'+esc(s.label)+'</div></li>';
-  }).join('')+'</ul>';
-  $('provbody').innerHTML=html;
+  if(j.url){
+    $('linkcard').style.display='';
+    var a=$('siteurl'); a.href=j.url; a.textContent=j.url;
+    window.__URL=j.url;
+  }
+  $('manage').href=j.manage_url||(API+'/app');
 
-  if(j.needs_password){ $('pw').style.display=''; $('p1').focus(); }
-  else { $('pw').style.display='none';
-    $('provbody').innerHTML+='<div class="note">This account already has a password. '+
-      '<a href="'+API+'/app" style="color:var(--cyan)">Sign in to your dashboard</a></div>'; }
-  window.__EMAIL=j.email;
-}).catch(function(){
-  $('provbody').innerHTML='<div class="note">Could not reach the server. Refresh to try again.</div>';
+  $('provbody').innerHTML='<ul class="steps">'+(j.steps||[]).map(function(s){
+    return '<li><span class="ic '+(s.ok?'ok':'no')+'">'+(s.ok?'✓':'·')+'</span><div>'+
+           esc(s.label)+'</div></li>';}).join('')+'</ul>';
+
+  if(j.billing_disabled){
+    $('bar').className='bar show';
+    $('bar').textContent='Payment is switched off on this deployment. No card was charged and none is required.';
+  }
+
+  // A legacy account with no password still needs one before it can sign in.
+  if(j.needs_password){
+    $('pw').style.display=''; $('manage').style.display='none';
+    $('managenote').style.display='none'; window.__EMAIL=j.email;
+  }
+  return Boolean(j.complete);
+}
+
+function poll(){
+  fetch(API+'/api/v1/intake/welcome?s='+encodeURIComponent(SID))
+   .then(function(r){return r.json();}).then(function(j){
+    var done=render(j);
+    if(done||j.error) return;
+    if(++tries>=MAX){
+      $('provsub').textContent='Some steps are still finishing. Your account works — refresh in a minute to see the rest.';
+      return;
+    }
+    setTimeout(poll,POLL_MS);
+  }).catch(function(){
+    $('provbody').innerHTML='<div class="note">Could not reach the server. Refresh to try again.</div>';
+  });
+}
+poll();
+
+$('copy').addEventListener('click',function(){
+  var u=window.__URL||location.href;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(u).then(function(){toast('Link copied');},function(){prompt('Copy your link:',u);});
+  } else prompt('Copy your link:',u);
+});
+$('share').addEventListener('click',function(){
+  if(navigator.share) navigator.share({title:'My JobUp profile',url:window.__URL||location.href}).catch(function(){});
+});
+$('openit').addEventListener('click',function(){
+  if(window.__URL) window.open(window.__URL,'_blank','noopener');
 });
 
 function err(m){var e=$('e');e.textContent=m;e.className='err show';}

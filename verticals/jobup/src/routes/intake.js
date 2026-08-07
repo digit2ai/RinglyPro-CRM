@@ -159,6 +159,184 @@ router.delete('/teaser/:token', async (req, res) => {
   res.json({ deleted: n, note: 'Teaser and its extracted resume text removed.' });
 });
 
+// =============================================================
+// STEP 3 OF THE FUNNEL — build the account.
+//
+//   1. jobup.dev        identity + CV        -> teaser build + magic link
+//   2. /teaser/:token   the simulator        -> "build my account"
+//   3. /build?t=token   THIS                 -> password + what to hunt for
+//   4. /welcome?s=id    the account is live  -> bookmark it, or Manage
+//
+// This is where an account actually comes into existence. It used to happen in
+// the Stripe webhook, which meant the person set a password AFTER paying and
+// told us nothing about the work they wanted. With payment switched off, the
+// form does both jobs at once: it creates the login and it tells the Hunter
+// what to look for — the fields here are the ones jobsource.prefilter() and
+// matcher.cachedPrefix() actually read, not decoration.
+// =============================================================
+
+const authSvc = require('../services/auth');
+const settingsSvc = require('../services/settings');
+const billing = require('../services/billing');
+
+/** Only what the search layer can act on; everything else is dropped. */
+function targetingFrom(body) {
+  const b = body || {};
+  return settingsSvc.sanitize({
+    targeting: {
+      roles: settingsSvc.strList(b.roles, 12),
+      employment_types: b.employment_types,
+      work_modes: b.work_modes,
+      locations: b.locations,
+      industries: b.industries,
+      employers: b.employers,
+      exclude_keywords: b.exclude_keywords,
+      must_include: b.must_include,
+      seniority: b.seniority ? String(b.seniority).slice(0, 40) : null,
+      open_to_relocation: b.open_to_relocation === true || b.open_to_relocation === 'true',
+      min_score: b.min_score,
+    },
+    // Owner-entered facts. Quoted verbatim in outreach or omitted — never
+    // paraphrased, and private until the owner opts in.
+    facts: {
+      work_authorization: b.work_authorization ? String(b.work_authorization).slice(0, 200) : null,
+      compensation_floor: b.compensation_floor ? String(b.compensation_floor).slice(0, 120) : null,
+      availability: b.availability ? String(b.availability).slice(0, 120) : null,
+      notice_period: b.notice_period ? String(b.notice_period).slice(0, 120) : null,
+    },
+  });
+}
+
+/**
+ * GET /api/v1/intake/build?t=<teaser_token>
+ * What the build form needs to render: who this is (from the teaser, which is
+ * authoritative), and whether an account already exists for that address.
+ */
+router.get('/build', async (req, res) => {
+  try {
+    const t = await teaser.get(String(req.query.t || ''));
+    if (!t) return res.status(404).json({ error: 'That preview link is not valid any more. Start again from the home page.' });
+
+    const profile = ((t.payload || {}).screens || {}).site || {};
+    const email = String(t.email || '').toLowerCase();
+    const existing = email ? await models.subscribers.findOne({ where: { email } }) : null;
+
+    res.json({
+      ok: true,
+      token: t.token,
+      email,
+      name: t.name || (profile.profile && profile.profile.name) || null,
+      language: t.language || 'en',
+      address_offer: t.address_offer || null,
+      teaser_ready: t.status === 'ready',
+      // An account that already has a password signs in; it does not re-register.
+      already_registered: Boolean(existing && existing.password_hash),
+      billing_disabled: billing.disabled(),
+      employment_types: settingsSvc.EMPLOYMENT_TYPES,
+      work_modes: settingsSvc.WORK_MODES,
+      password_rule: 'At least 12 characters.',
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * POST /api/v1/intake/build-account
+ * Creates the account, stores what to hunt for, and kicks off provisioning.
+ *
+ * Provisioning runs in the BACKGROUND. It allocates the address, renders the
+ * site and makes the first agent run — comfortably past Cloudflare's ~100s
+ * ceiling on a slow day. The response returns as soon as the account exists,
+ * and /welcome polls for the rest (same pattern as the teaser build).
+ */
+router.post('/build-account', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const t = await teaser.get(String(b.teaser_token || ''));
+    if (!t) return res.status(400).json({ error: 'That preview link is not valid any more. Start again from the home page.' });
+
+    // THE TEASER ROW IS AUTHORITATIVE for identity — a token cannot be paired
+    // with somebody else's address, and the resume often carries no email.
+    const email = String(t.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ error: 'We do not have an email address for you. Start again from the home page.' });
+    }
+
+    const password = String(b.password || '');
+    if (password !== String(b.password_confirm == null ? password : b.password_confirm)) {
+      return res.status(400).json({ errors: ['The two passwords do not match.'] });
+    }
+    const problems = authSvc.passwordProblems(password);
+    if (problems.length) return res.status(400).json({ errors: problems });
+
+    let sub = await models.subscribers.findOne({ where: { email } });
+    if (sub && sub.password_hash) {
+      return res.status(409).json({
+        error: 'An account already exists for this email address. Sign in instead.',
+        sign_in_url: '/app',
+      });
+    }
+
+    const fields = {
+      name: t.name || (sub && sub.name) || null,
+      phone: t.phone || (sub && sub.phone) || null,
+      language: t.language || 'en',
+      password_hash: authSvc.hashPassword(password),
+      status: 'active',
+      // Never countable as revenue. Mirrors the free_test stamp.
+      activation: billing.disabled() ? 'no_billing' : 'paid',
+      activated_at: new Date(),
+    };
+    if (sub) await models.subscribers.update(fields, { where: { id: sub.id } });
+    else sub = await models.subscribers.create({ email, ...fields });
+    const tenantId = sub.id;
+
+    // What the Hunter searches on. Written BEFORE provisioning so the first
+    // agent run already uses it — otherwise the first batch of matches would
+    // be scored against empty targeting and the person's answers would look
+    // like they had been ignored.
+    const cleaned = targetingFrom(b);
+    const existingSettings = await scoped('settings', tenantId).findOne({});
+    if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
+    else await scoped('settings', tenantId).create({ settings: cleaned });
+
+    await models.audit_log.create({
+      tenant_id: tenantId, actor: 'subscriber', action: 'account_built',
+      reason: billing.disabled()
+        ? 'Built from the account form with the payment layer switched off (no_billing).'
+        : 'Built from the account form.',
+    });
+
+    res.cookie('jobup_token', authSvc.issueSession(tenantId), authSvc.cookieOptions());
+
+    const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+    res.status(202).json({
+      ok: true,
+      tenant_id: tenantId,
+      email,
+      ready_url: `${base}/welcome?s=${tenantId}`,
+      manage_url: `${base}/app`,
+      poll: `/api/v1/intake/welcome?s=${tenantId}`,
+      billing_disabled: billing.disabled(),
+      targeting: cleaned.targeting,
+    });
+
+    // Background — the response above has already gone out.
+    setImmediate(async () => {
+      try {
+        const provisioning = require('../services/provisioning');
+        await provisioning.run(tenantId, { teaserToken: t.token });
+      } catch (e) {
+        console.error('[build-account] provisioning failed:', e.message);
+      }
+    });
+  } catch (e) {
+    console.error('[build-account] error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /**
  * What the /welcome page reads after activation. Reports the real provisioning
  * state — it never claims a site is live when it is not.
@@ -171,18 +349,26 @@ router.get('/welcome', async (req, res) => {
 
   const provisioning = require('../services/provisioning');
   const state = await provisioning.stateOf(sub.id);
+  const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+
+  const steps = [
+    { label: 'Account activated', ok: sub.status === 'active' },
+    { label: sub.address ? `Web address reserved — ${sub.address}` : 'Web address reserved', ok: Boolean(state.address) },
+    { label: 'Your site published', ok: Boolean(state.published) },
+    { label: 'Your agents switched on', ok: Boolean(state.agents_started) },
+  ];
 
   res.json({
     id: sub.id, email: sub.email, name: sub.name, status: sub.status,
     activation: sub.activation || 'paid',
     needs_password: !sub.password_hash,
     url: state.url || (sub.address ? `https://${sub.address}` : null),
-    steps: [
-      { label: 'Account activated', ok: sub.status === 'active' },
-      { label: sub.address ? `Web address reserved — ${sub.address}` : 'Web address reserved', ok: Boolean(state.address) },
-      { label: 'Your site published', ok: Boolean(state.published) },
-      { label: 'Your agents switched on', ok: Boolean(state.agents_started) },
-    ],
+    manage_url: `${base}/app`,
+    billing_disabled: require('../services/billing').disabled(),
+    // The page polls until this is true, then stops. Reported from the real
+    // provisioning state, so it never claims a site is live before it is.
+    complete: steps.every((s) => s.ok),
+    steps,
   });
 });
 

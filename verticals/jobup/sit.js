@@ -57,13 +57,34 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
   await t('billing reports not-configured and NEVER a fake URL', async () => {
     const s = billing.status();
-    if (!process.env.STRIPE_SECRET_KEY) {
-      assert.strictEqual(s.configured, false);
-      const c = await billing.createCheckout({ subscriberId: 1, email: 'a@b.co' });
-      assert.strictEqual(c.ok, false);
-      assert.ok(!c.url, 'must not return a URL when unconfigured');
-      assert.ok(/not configured/i.test(c.error));
+    assert.strictEqual(s.configured, false);
+    const c = await billing.createCheckout({ subscriberId: 1, email: 'a@b.co' });
+    assert.strictEqual(c.ok, false);
+    assert.ok(!c.url, 'must not return a URL when it cannot take a payment');
+    // Two honest refusals: the layer is switched off, or the key is missing.
+    assert.ok(/switched off|not configured/i.test(c.error), 'the refusal must say why');
+  });
+  await t('THE PAYMENT LAYER IS OFF, and says so on every surface', () => {
+    assert.strictEqual(billing.disabled(), true, 'default is off — JOBUP_BILLING_ENABLED=1 turns it on');
+    const s = billing.status();
+    assert.strictEqual(s.billing_disabled, true);
+    assert.strictEqual(s.price_usd, null, 'no surface may quote a price while payment is off');
+    assert.ok(/switched off/i.test(s.note));
+  });
+  await t('the teaser quotes no price and its CTA points at the account form', async () => {
+    const t2 = require(__dirname + '/src/services/teaser');
+    const src = require('fs').readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('build_url'), 'the CTA must follow the server, not hardcode Stripe');
+    assert.ok(src.includes("'/build?t='"), 'and fall back to the form if the status call fails');
+    // A null price must never render as "$null / year".
+    assert.ok(/if\(c\.price_usd\)/.test(src), 'the price block must be conditional');
+  });
+  await t('the disabled switch is a SWITCH — every Stripe path is still there', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    for (const fn of ['createCheckout', 'createPortal', 'applyEvent', 'renewalNoticesDue']) {
+      assert.ok(src.includes('function ' + fn) || src.includes(fn + ' ('), 'lost the Stripe path: ' + fn);
     }
+    assert.ok(src.includes('JOBUP_BILLING_ENABLED'), 'there must be a documented way back');
   });
 
   // ---------------------------------------------------------------
@@ -866,25 +887,42 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   const mailerSvc = require(__dirname + '/src/services/mailer');
   const models_mod = require(__dirname + '/src/models');
 
-  await t('free activation is OFF unless explicitly switched on', () => {
-    const saved = process.env.JOBUP_FREE_ACTIVATION;
+  await t('with payment ON, free activation is OFF unless explicitly switched on', () => {
+    const savedF = process.env.JOBUP_FREE_ACTIVATION;
+    const savedB = process.env.JOBUP_BILLING_ENABLED;
+    process.env.JOBUP_BILLING_ENABLED = '1';           // pretend billing is live
     delete process.env.JOBUP_FREE_ACTIVATION;
     assert.strictEqual(billingSvc.freeActivation(), false, 'must never be the default');
     process.env.JOBUP_FREE_ACTIVATION = '0';
     assert.strictEqual(billingSvc.freeActivation(), false, 'only "1" enables it');
     process.env.JOBUP_FREE_ACTIVATION = '1';
     assert.strictEqual(billingSvc.freeActivation(), true);
-    if (saved === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
-    else process.env.JOBUP_FREE_ACTIVATION = saved;
+    if (savedF === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
+    else process.env.JOBUP_FREE_ACTIVATION = savedF;
+    if (savedB === undefined) delete process.env.JOBUP_BILLING_ENABLED;
+    else process.env.JOBUP_BILLING_ENABLED = savedB;
+  });
+  await t('with payment OFF, EVERY activation is free and stamped no_billing', () => {
+    assert.strictEqual(billingSvc.disabled(), true);
+    assert.strictEqual(billingSvc.freeActivation(), true, 'nothing can be charged, so nothing is');
+    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(src.includes("'no_billing'"), 'accounts built without payment must be stamped');
   });
   await t('status() DECLARES test mode and missing webhook verification', () => {
-    const saved = process.env.JOBUP_FREE_ACTIVATION;
+    const savedF = process.env.JOBUP_FREE_ACTIVATION;
+    const savedB = process.env.JOBUP_BILLING_ENABLED;
+    process.env.JOBUP_BILLING_ENABLED = '1';
     process.env.JOBUP_FREE_ACTIVATION = '1';
     const st = billingSvc.status();
     assert.strictEqual(st.free_activation, true, 'test mode must be visible, never silent');
     assert.ok(st.webhook_verification, 'webhook state must be reported');
-    if (saved === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
-    else process.env.JOBUP_FREE_ACTIVATION = saved;
+    if (savedF === undefined) delete process.env.JOBUP_FREE_ACTIVATION;
+    else process.env.JOBUP_FREE_ACTIVATION = savedF;
+    if (savedB === undefined) delete process.env.JOBUP_BILLING_ENABLED;
+    else process.env.JOBUP_BILLING_ENABLED = savedB;
+    // And while it is off, the same call is equally explicit.
+    const off = billingSvc.status();
+    assert.strictEqual(off.billing_disabled, true, 'a disabled payment layer must never be silent');
   });
   await t('a free-test account is STAMPED so it can never be counted as revenue', async () => {
     const s2 = await models.subscribers.create({
@@ -2062,6 +2100,87 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes("method:'DELETE'"), 'removal must be reachable');
   });
 
+
+  // ---------------------------------------------------------------
+  section('pressing Run 100 times cannot cost 100 runs');
+  //
+  // Measured before the fix: the caps were per INVOCATION. jobs_scored_per_day
+  // was applied with slice(0, perDay) on EACH call despite its name, and the
+  // cost cap was min(monthly/30, $0.05) per run. So 100 presses scored 600 jobs
+  // for about $2.50 in a day — roughly nine times annual revenue if repeated —
+  // and nothing said no.
+  await t('THE CEILINGS ARE DAILY AND COUNT EVERY RUN', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(src.includes('async function usedToday'), 'spend must be measured across the day');
+    assert.ok(src.includes('const jobsLeft = Math.max(0, perDay - used.scored)'),
+      'the job ceiling must subtract what today already scored');
+    assert.ok(src.includes('const budgetLeft = Math.max(0, dailyBudget - used.spent)'),
+      'and the budget likewise');
+    assert.ok(src.includes('slice(0, jobsLeft)'), 'the slice must use what is LEFT, not the daily total');
+    // Strip comments first: the old expression survives in the note that
+    // explains why it was wrong, and matching that would be a false pass.
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+    assert.ok(!/slice\(0, perDay\)/.test(code), 'the per-invocation slice must be gone');
+  });
+  await t('usedToday sums only TODAY, and only the Hunter', async () => {
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });   // earlier tests logged runs
+    const yesterday = new Date(Date.now() - 30 * 60 * 60 * 1000);
+    await t2.create({ agent: 'hunter', status: 'ok', cost_usd: 9.99, scored: 99, created_at: yesterday });
+    await t2.create({ agent: 'presence', status: 'ok', cost_usd: 5, scored: 50 });
+    await t2.create({ agent: 'hunter', status: 'ok', cost_usd: 0.02, scored: 4 });
+    const u = await agents.usedToday(subA.id);
+    assert.strictEqual(u.scored, 4, "yesterday's runs and other agents must not count");
+    assert.ok(Math.abs(u.spent - 0.02) < 1e-9);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('AT THE CEILING THE RUN COSTS NOTHING AND SAYS SO', async () => {
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    // Burn the default allowance of 6 for today.
+    await t2.create({ agent: 'hunter', status: 'ok', cost_usd: 0.03, scored: 6 });
+    const r = await agents.hunter(subA.id);
+    assert.strictEqual(r.daily_limit_reached, true);
+    assert.strictEqual(r.scored, 0);
+    assert.strictEqual(r.cost_usd, 0, 'a refused run must not spend');
+    assert.ok(/limit/i.test(r.note), 'and must explain itself');
+    const logged = (await t2.findAll({})).find((x) => x.status === 'idle');
+    assert.ok(logged && Number(logged.cost_usd) === 0, 'the refusal is logged at zero cost');
+    for (const r2 of await t2.findAll({})) await t2.destroy({ id: r2.id });
+  });
+  await t('a partly-used allowance only buys the REMAINDER', async () => {
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    await t2.create({ agent: 'hunter', status: 'ok', cost_usd: 0.01, scored: 4 });
+    const u = await agents.usedToday(subA.id);
+    assert.strictEqual(Math.max(0, 6 - u.scored), 2, 'two left of six, not six again');
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('the manual button has a cooldown, and it fails OPEN', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('RUN_COOLDOWN_MS'), 'a double-click must not stampede');
+    assert.ok(src.includes('runCooldown.delete(key)'), 'a failed run must not cost you the cooldown');
+    assert.ok(src.includes('runCooldown.size > 5000'), 'the map must not grow without bound');
+    // In memory ON PURPOSE: a cooldown that resets on deploy fails open, which
+    // is right for a nicety. Nothing about spend depends on it.
+    assert.ok(/in memory on purpose/i.test(src), 'the reasoning should be recorded');
+  });
+  await t('the allowance is visible BEFORE you press', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.get('/agents/budget'"), 'the dashboard must be able to show it');
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('function loadBudget'));
+    assert.ok(html.includes('allowance'), 'and say so in words');
+  });
+  await t('MANUAL AND SCHEDULED DRAW ON THE SAME ALLOWANCE', async () => {
+    // Otherwise the button is a second budget and the ceiling means nothing.
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    const block = src.slice(src.indexOf('async function hunter'), src.indexOf('async function presence'));
+    assert.ok(block.includes('await usedToday(tenantId)'),
+      'the ceiling is inside the agent, so every caller is subject to it');
+    const sched = require('fs').readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(sched.includes("agents.runAll('hunter'"), 'the scheduler goes through the same agent');
+  });
 
   // ---------------------------------------------------------------
   section('the daily run');

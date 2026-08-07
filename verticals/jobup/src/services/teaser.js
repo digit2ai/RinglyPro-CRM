@@ -27,6 +27,12 @@ const settingsSvc = require('./settings');
 const TEASER_COST_CAP = parseFloat(process.env.JOBUP_TEASER_COST_CAP_USD || '0.35');
 const JOBS_PER_TEASER = 15;
 const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '97', 10);
+
+// Read at call time, not at require time, so flipping the env var takes effect
+// on the next build rather than the next restart.
+function billingOff() {
+  return require('./billing').disabled();
+}
 const RESUME_PURGE_DAYS = 90;
 
 function token() {
@@ -56,7 +62,9 @@ function narration(profile, ctx, lang) {
       `Aquí está tu identidad legible por máquinas: currículum estructurado, datos JSON-LD y una tarjeta de agente, para que los sistemas de reclutamiento entiendan tu trayectoria.`,
       `Dos agentes trabajarían por ti las veinticuatro horas: el Cazador de Oportunidades busca y puntúa vacantes reales, y el Agente de Presencia te mantiene visible. A partir de ahí decides tú: JobUp nunca envía nada en tu nombre.`,
       `Todo esto vive en tu panel privado: tus coincidencias, tu proceso, tus borradores pendientes de aprobación y la exportación completa de tus datos.`,
-      `Son ${PRICE_USD} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
+      billingOff()
+        ? `El siguiente paso es construir tu cuenta: eliges una contraseña y nos dices qué tipo de trabajo buscas. Sin pago y sin tarjeta.`
+        : `Son ${PRICE_USD} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
     ];
   }
   return [
@@ -72,7 +80,9 @@ function narration(profile, ctx, lang) {
     `Here is your machine-readable identity: a structured resume, JSON-LD data and an agent card, so recruiting systems can understand your career.`,
     `Two agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings against your resume, and the Professional Presence Agent keeps you findable. From there you take over — JobUp never applies or writes to anyone on your behalf.`,
     `All of it lives in your private dashboard: your matches, your pipeline, the drafts waiting on your approval, and a full export of everything.`,
-    `It is ${PRICE_USD} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
+    billingOff()
+      ? `The next step is to build your account: you choose a password and tell us what kind of work you want. No payment, no card.`
+      : `It is ${PRICE_USD} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
   ];
 }
 
@@ -178,7 +188,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
   return {
     status: 'ready',
     language: lang,
-    price_usd: PRICE_USD,
+    price_usd: billingOff() ? null : PRICE_USD,
     cost_usd: Number(spent.toFixed(5)),
     is_simulated: structured.is_simulated,
     notes,
@@ -202,7 +212,10 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
         { name: 'Professional Presence Agent', does: 'Builds and maintains your site and machine-readable identity.' },
       ],
       cta: {
-        price_usd: PRICE_USD,
+        // No surface may quote a price while payment is switched off.
+        price_usd: billingOff() ? null : PRICE_USD,
+        billing_disabled: billingOff(),
+        headline: billingOff() ? 'Build my account' : 'Build my ecosystem',
         includes: [
           'Your web address and professional website',
           'Machine-readable identity: resume.json, JSON-LD, agent card',
@@ -211,7 +224,9 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
           'Per-job resume tailoring and cover letters',
           'Private dashboard, weekly digest, full data export',
         ],
-        non_renewal: 'If you do not renew, the site goes down and the address is released. You can always export your data.',
+        non_renewal: billingOff()
+          ? 'Nothing to pay. You can delete your account and export everything at any time.'
+          : 'If you do not renew, the site goes down and the address is released. You can always export your data.',
       },
     },
     narration: narration(profile, ctx, lang),

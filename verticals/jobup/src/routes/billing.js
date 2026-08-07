@@ -10,10 +10,28 @@ const router = express.Router();
 router.get('/status', (req, res) => res.json(billing.status()));
 
 // Create checkout from a completed teaser.
+//
+// WITH BILLING OFF this creates nothing. It hands back the URL of the account
+// form and lets the person build an account for free. The teaser's CTA follows
+// whatever this returns, so switching payment back on (JOBUP_BILLING_ENABLED=1)
+// changes the funnel with no front-end edit.
 router.post('/checkout', async (req, res) => {
   try {
     const body = req.body || {};
     const teaser_token = body.teaser_token;
+
+    if (billing.disabled()) {
+      const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+      if (!teaser_token) {
+        return res.status(400).json({
+          error: 'We lost track of your preview. Start again from the home page.' });
+      }
+      return res.json({
+        ok: true, billing_disabled: true,
+        build_url: `${base}/build?t=${encodeURIComponent(teaser_token)}`,
+        note: 'Payment is switched off. The next step creates the account for free.',
+      });
+    }
 
     // THE TEASER ROW IS AUTHORITATIVE for who this is.
     //
@@ -76,6 +94,11 @@ router.post('/checkout', async (req, res) => {
 
 // Stripe webhook. Signature verification is required in production.
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Nothing should be sending these while payment is off. Refusing is safer
+  // than processing an event that could flip a subscriber's status.
+  if (billing.disabled()) {
+    return res.status(503).json({ error: 'billing is disabled on this deployment' });
+  }
   let event;
   try {
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body));

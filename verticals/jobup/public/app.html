@@ -556,6 +556,7 @@ function loadToday(){
       }).join('')+'</div>'+
       '<div class="card"><div class="h2">Your agents</div>'+
       '<div class="m">Run them now. They find and check &mdash; they never act for you.</div>'+
+      '<div class="note" id="budget">&nbsp;</div>'+
       '<div class="acts">'+
         '<button class="btn primary sm" onclick="runAgent(\'hunter\')">Find jobs</button>'+
         '<button class="btn sm" onclick="runAgent(\'presence\')">Check my presence</button>'+
@@ -567,6 +568,7 @@ function loadToday(){
           esc(String(x.created_at||'').slice(0,16).replace('T',' '))+
           (x.is_simulated?' · heuristic':'')+'</div></div></div>';
       }).join(''):'<div class="note">No runs yet.</div>')+'</div>';
+    loadBudget();
   });
 }
 
@@ -1538,11 +1540,25 @@ function delEntry(id){
 }
 
 
+function loadBudget(){
+  var el=$('budget'); if(!el) return;
+  api('/api/v1/engine/agents/budget').then(function(r){
+    if(!r.ok) return;
+    var b=r.j;
+    el.innerHTML=b.jobs_left>0
+      ? b.jobs_left+' of '+b.jobs_per_day+' jobs left in today\u2019s allowance ('+
+        b.runs_today+' run'+(b.runs_today===1?'':'s')+' so far). Resets at '+esc(b.resets)+'.'
+      : '<span style="color:var(--warn)">Today\u2019s allowance is used up \u2014 '+
+        b.scored_today+' scored across '+b.runs_today+' run'+(b.runs_today===1?'':'s')+
+        '. Resets at '+esc(b.resets)+'.</span>';
+  });
+}
 function runAgent(n){
   err('aerr','Running '+n+'…');
   api('/api/v1/engine/agents/'+n+'/run',{method:'POST'}).then(function(r){
-    if(!r.ok) return err('aerr',r.j.error||'Run failed');
-    loadMatches(); loadToday(); loadAnalytics();
+    if(!r.ok){ loadBudget(); return err('aerr',r.j.error||'Run failed'); }
+    if(r.j.daily_limit_reached) err('aerr',r.j.note);
+    loadMatches(); loadToday(); loadAnalytics(); loadBudget();
     err('aerr',n+' finished.');
   });
 }

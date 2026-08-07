@@ -127,15 +127,24 @@ router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html',
 router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
   res.type('html').send(pwa.page('app.html', pwa.basePath(req))));
 
-// Where Stripe (or the test-mode bypass) sends someone after activation.
-router.get(['/welcome', '/welcome/'], (req, res) =>
+// Step 3 of the funnel: the account form the teaser's CTA opens. Carries
+// ?t=<teaser_token>, which is the authoritative record of who this person is.
+router.get(['/build', '/build/'], (req, res) =>
+  res.type('html').send(pwa.page('build.html', pwa.basePath(req))));
+
+// Step 4: the account is built. Bookmark link + Manage.
+// /welcome is where Stripe used to land people, so it keeps that name for the
+// old links; /ready is the honest name now that nothing is being welcomed back
+// from a checkout page.
+router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
   res.type('html').send(pwa.page('welcome.html', pwa.basePath(req))));
 
 // ---- landing --------------------------------------------------------------
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
-router.get(['/index.html', '/app.html', '/welcome.html'], (req, res) => {
-  const to = { '/index.html': '/', '/app.html': '/app', '/welcome.html': '/welcome' }[req.path];
+router.get(['/index.html', '/app.html', '/welcome.html', '/build.html'], (req, res) => {
+  const to = { '/index.html': '/', '/app.html': '/app',
+               '/welcome.html': '/welcome', '/build.html': '/build' }[req.path];
   res.redirect(301, `${pwa.basePath(req)}${to}`);
 });
 // index:false is load-bearing. express.static serves publicDir/index.html for a

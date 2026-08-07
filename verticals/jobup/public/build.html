@@ -1,0 +1,354 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07080c">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
+<title>Build my account — JobUp</title><style>
+:root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
+--line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
+--cyan:#22d3ee;--green:#3ad07f;--red:#f87171;--warn:#e6b45a;
+--grad:linear-gradient(120deg,#22d3ee 0%,#6366f1 55%,#8b5cf6 100%);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);min-height:100%}
+body{color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+letter-spacing:-.011em;-webkit-font-smoothing:antialiased;position:relative;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+body::before{content:"";position:fixed;inset:0 0 auto 0;height:480px;z-index:0;pointer-events:none;
+background:radial-gradient(56% 40% at 22% 0%,rgba(34,211,238,.14),transparent 70%),
+radial-gradient(50% 38% at 82% 6%,rgba(139,92,246,.14),transparent 72%);filter:blur(26px)}
+.wrap{position:relative;z-index:2;max-width:620px;margin:0 auto;padding:40px 20px 70px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.025em;margin-bottom:26px}
+.brand .mark{width:24px;height:24px;flex:0 0 24px;display:block;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+h1{font-size:clamp(25px,6vw,33px);font-weight:830;letter-spacing:-.035em;margin:0 0 8px;line-height:1.15}
+.lede{color:var(--mut);font-size:15.5px;margin-bottom:8px}
+.who{font-family:var(--mono);font-size:13px;color:var(--cyan);margin-bottom:22px;word-break:break-all}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px}
+.card h2{font-size:16.5px;font-weight:760;letter-spacing:-.02em;margin:0 0 4px}
+.card .sub{color:var(--mut);font-size:14px;margin-bottom:6px}
+.step{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--faint);margin-bottom:9px}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+text-transform:uppercase;color:var(--faint);margin:18px 0 6px}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--bg);
+border:1px solid var(--line2);border-radius:12px;padding:14px;color:var(--ink);font:inherit;
+font-size:16px;outline:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+textarea{min-height:74px;resize:vertical;line-height:1.5}
+.pwrow{position:relative}
+.pwrow input{padding-right:52px}
+/* The eye. A password you cannot see is a password you mistype twice, and the
+   confirm field then hides the error instead of catching it. */
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:42px;height:42px;
+border:0;background:transparent;color:var(--faint);cursor:pointer;display:flex;
+align-items:center;justify-content:center;border-radius:10px;padding:0}
+.eye:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.eye svg{width:21px;height:21px;display:block}
+.eye .slash{display:none}
+.eye.on{color:var(--cyan)}
+.eye.on .slash{display:block}
+.match{font-family:var(--mono);font-size:12px;margin-top:8px;min-height:17px}
+.match.ok{color:var(--green)}.match.no{color:var(--red)}
+.meter{height:4px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:9px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:99px;transition:width .2s ease,background .2s ease}
+.rules{color:var(--faint);font-size:12.5px;margin-top:7px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;width:0;height:0}
+.chip span{display:inline-block;border:1px solid var(--line2);border-radius:999px;
+padding:9px 16px;font-size:14.5px;cursor:pointer;user-select:none;transition:.14s ease;
+min-height:40px;line-height:22px}
+.chip input:checked+span{border-color:var(--cyan);background:rgba(34,211,238,.13);color:#bff3fb}
+.chip input:focus-visible+span{outline:2px solid var(--cyan);outline-offset:2px}
+.chip span:hover{border-color:var(--line2);background:rgba(255,255,255,.04)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+.switch{display:flex;align-items:center;gap:11px;margin-top:16px;font-size:14.5px;color:var(--ink);cursor:pointer}
+.switch input{width:20px;height:20px;accent-color:#22d3ee;flex:0 0 20px;margin:0}
+.btn{border:0;background:var(--grad);color:#06121a;border-radius:999px;padding:15px 24px;
+font:inherit;font-size:16px;font-weight:750;cursor:pointer;width:100%;margin-top:24px;
+min-height:54px;transition:transform .14s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.45;transform:none;cursor:default}
+.note{color:var(--faint);font-size:13px;font-family:var(--mono);line-height:1.65;margin-top:14px}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
+border-radius:12px;padding:12px 15px;font-size:14px;margin-top:14px;display:none}
+.err.show{display:block}
+.bar{background:rgba(230,180,90,.12);border:1px solid rgba(230,180,90,.4);color:#f5d79c;
+border-radius:12px;padding:11px 15px;font-size:13.5px;margin-bottom:18px;display:none}
+.bar.show{display:block}
+.priv{font-size:12.5px;color:var(--faint);margin-top:10px;
+border-left:2px solid rgba(34,211,238,.35);padding-left:11px;line-height:1.6}
+</style></head><body>
+<div class="wrap">
+  <div class="brand"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>JobUp</div>
+
+  <div class="bar" id="bar"></div>
+  <h1>Build my account</h1>
+  <div class="lede">Two things: how you sign in, and what your agents should hunt for.</div>
+  <div class="who" id="who"></div>
+
+  <form id="f" autocomplete="on">
+    <!-- 1. Sign-in ------------------------------------------------------- -->
+    <div class="card">
+      <div class="step">Step 1 of 2</div>
+      <h2>How you sign in</h2>
+      <div class="sub">Your email is already on file. Choose a password.</div>
+
+      <label for="p1">Password</label>
+      <div class="pwrow">
+        <input id="p1" type="password" autocomplete="new-password" spellcheck="false">
+        <button type="button" class="eye" id="e1" aria-label="Show password" aria-pressed="false"></button>
+      </div>
+      <div class="meter"><i id="mtr"></i></div>
+      <div class="rules" id="rules">At least 12 characters.</div>
+
+      <label for="p2">Confirm password</label>
+      <div class="pwrow">
+        <input id="p2" type="password" autocomplete="new-password" spellcheck="false">
+        <button type="button" class="eye" id="e2" aria-label="Show password" aria-pressed="false"></button>
+      </div>
+      <div class="match" id="match" aria-live="polite"></div>
+    </div>
+
+    <!-- 2. What to hunt for ---------------------------------------------- -->
+    <div class="card">
+      <div class="step">Step 2 of 2</div>
+      <h2>What your agents should look for</h2>
+      <div class="sub">This is what the Hunter searches on and what the Scorer ranks against. You can change all of it later.</div>
+
+      <label>Employment type</label>
+      <div class="chips" id="etypes"></div>
+
+      <label>Where you would work</label>
+      <div class="chips" id="wmodes"></div>
+
+      <label for="roles">Job titles you want</label>
+      <input id="roles" type="text" placeholder="Project Manager, Operations Lead, Business Analyst">
+      <div class="rules">Separate with commas. These are the exact strings recruiters search.</div>
+
+      <label for="locations">Cities or regions</label>
+      <input id="locations" type="text" placeholder="Tampa, Miami, Remote US">
+
+      <label class="switch" for="reloc" style="margin-top:14px">
+        <input id="reloc" type="checkbox"><span>I would relocate for the right role</span></label>
+
+      <div class="two" style="margin-top:6px">
+        <div>
+          <label for="seniority">Seniority</label>
+          <select id="seniority">
+            <option value="">No preference</option>
+            <option value="intern">Intern</option>
+            <option value="junior">Junior</option>
+            <option value="mid">Mid-level</option>
+            <option value="senior">Senior</option>
+            <option value="lead">Lead</option>
+            <option value="principal">Principal</option>
+            <option value="director">Director</option>
+            <option value="vp">VP or above</option>
+          </select>
+        </div>
+        <div>
+          <label for="minscore">Only show me matches above</label>
+          <select id="minscore">
+            <option value="0">Everything the agents find</option>
+            <option value="50">50 — a loose fit</option>
+            <option value="65" selected>65 — a solid fit</option>
+            <option value="80">80 — a strong fit only</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="industries">Industries</label>
+      <input id="industries" type="text" placeholder="Logistics, Healthcare, Fintech">
+
+      <label for="employers">Employers you would love to work for</label>
+      <input id="employers" type="text" placeholder="Publix, Raymond James, Citi">
+      <div class="rules">Named employers are weighted heavily in ranking.</div>
+
+      <label for="exclude">Never show me</label>
+      <input id="exclude" type="text" placeholder="commission only, door to door, unpaid">
+      <div class="rules">Any posting containing one of these is dropped before it is ever scored.</div>
+    </div>
+
+    <!-- 3. Facts (verbatim or omitted) ------------------------------------ -->
+    <div class="card">
+      <h2>Facts about you</h2>
+      <div class="sub">Optional. Used word for word in outreach, or left out entirely.</div>
+
+      <label for="auth">Work authorization</label>
+      <input id="auth" type="text" placeholder="US citizen — no sponsorship required">
+
+      <label for="comp">Lowest compensation you would consider</label>
+      <input id="comp" type="text" placeholder="$95,000 base">
+
+      <div class="two">
+        <div>
+          <label for="avail">Availability</label>
+          <input id="avail" type="text" placeholder="Immediately">
+        </div>
+        <div>
+          <label for="notice">Notice period</label>
+          <input id="notice" type="text" placeholder="Two weeks">
+        </div>
+      </div>
+
+      <div class="priv">These four are <strong>private by default</strong>. Nothing here appears on your public
+        page or in a message unless you switch it on in your dashboard, and JobUp never rewords them —
+        they are quoted exactly as you typed them or omitted.</div>
+    </div>
+
+    <div class="err" id="err"></div>
+    <button class="btn" id="go" type="submit">Build my account</button>
+    <p class="note" id="footnote">You review and submit every application yourself. JobUp never applies on your behalf.</p>
+  </form>
+</div>
+<script>
+var API='{{BASE}}',Q=new URLSearchParams(location.search),TOKEN=Q.get('t')||'';
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+var LABELS={
+  full_time:'Full time', part_time:'Part time', contract:'Contract',
+  internship:'Internship', temporary:'Temporary',
+  remote:'Remote', hybrid:'Hybrid', onsite:'On site'
+};
+
+// The eye. Both fields get their own, and the icon reflects the real state of
+// the input rather than a separate flag that can drift out of sync.
+var EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" '+
+  'stroke-linecap="round" stroke-linejoin="round">'+
+  '<path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z"/>'+
+  '<circle cx="12" cy="12" r="3.2"/>'+
+  '<line class="slash" x1="3" y1="21" x2="21" y2="3"/></svg>';
+
+function wireEye(btnId,inputId){
+  var b=$(btnId),i=$(inputId);
+  b.innerHTML=EYE;
+  b.addEventListener('click',function(){
+    var show=i.type==='password';
+    i.type=show?'text':'password';
+    b.classList.toggle('on',show);
+    b.setAttribute('aria-pressed',show?'true':'false');
+    b.setAttribute('aria-label',show?'Hide password':'Show password');
+    i.focus();
+  });
+}
+wireEye('e1','p1'); wireEye('e2','p2');
+
+function strength(v){
+  var s=0;
+  if(v.length>=12)s++; if(v.length>=16)s++;
+  if(/[a-z]/.test(v)&&/[A-Z]/.test(v))s++;
+  if(/[0-9]/.test(v))s++;
+  if(/[^A-Za-z0-9]/.test(v))s++;
+  return Math.min(s,5);
+}
+function paint(){
+  var a=$('p1').value,b=$('p2').value,s=strength(a);
+  var m=$('mtr');
+  m.style.width=(a?(s/5*100):0)+'%';
+  m.style.background=s<=2?'#f87171':(s<=3?'#e6b45a':'#3ad07f');
+  var el=$('match');
+  if(!b){el.textContent='';el.className='match';return;}
+  if(a===b){el.textContent='Passwords match.';el.className='match ok';}
+  else{el.textContent='The two passwords do not match yet.';el.className='match no';}
+}
+$('p1').addEventListener('input',paint);
+$('p2').addEventListener('input',paint);
+
+function chips(hostId,values,name){
+  $(hostId).innerHTML=values.map(function(v){
+    return '<label class="chip"><input type="checkbox" name="'+name+'" value="'+esc(v)+'">'+
+           '<span>'+esc(LABELS[v]||v)+'</span></label>';
+  }).join('');
+}
+function checked(name){
+  return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked'))
+    .map(function(x){return x.value;});
+}
+function list(id){
+  return $(id).value.split(',').map(function(x){return x.trim();}).filter(Boolean);
+}
+
+// Boot: the teaser row is authoritative for who this is.
+chips('etypes',['full_time','part_time','contract','internship','temporary'],'etype');
+chips('wmodes',['remote','hybrid','onsite'],'wmode');
+
+fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
+ .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+ .then(function(r){
+  if(!r.ok){ $('who').textContent=r.j.error||'That link is not valid.';
+    $('go').disabled=true; return; }
+  var j=r.j;
+  $('who').textContent=(j.name?j.name+' · ':'')+j.email;
+  if(j.password_rule) $('rules').textContent=j.password_rule;
+  if(j.employment_types&&j.employment_types.length) chips('etypes',j.employment_types,'etype');
+  if(j.work_modes&&j.work_modes.length) chips('wmodes',j.work_modes,'wmode');
+  if(j.already_registered){
+    $('bar').className='bar show';
+    $('bar').innerHTML='You already have an account for this address. '+
+      '<a href="'+API+'/app" style="color:#f5d79c;font-weight:700">Sign in instead</a>.';
+    $('go').disabled=true;
+  }
+  if(j.billing_disabled){
+    $('footnote').textContent='No payment is required. '+
+      'You review and submit every application yourself — JobUp never applies on your behalf.';
+  }
+ }).catch(function(){ $('who').textContent='Could not reach the server. Refresh to try again.'; });
+
+function fail(m){var e=$('err');e.textContent=m;e.className='err show';
+  e.scrollIntoView({behavior:'smooth',block:'center'});}
+
+$('f').addEventListener('submit',function(ev){
+  ev.preventDefault();
+  $('err').className='err';
+  var a=$('p1').value,b=$('p2').value;
+  if(a.length<12) return fail('Use at least 12 characters for your password.');
+  if(a!==b) return fail('The two passwords do not match.');
+
+  $('go').disabled=true; $('go').textContent='Building your account...';
+  fetch(API+'/api/v1/intake/build-account',{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      teaser_token:TOKEN,
+      password:a, password_confirm:b,
+      employment_types:checked('etype'),
+      work_modes:checked('wmode'),
+      roles:list('roles'),
+      locations:list('locations'),
+      industries:list('industries'),
+      employers:list('employers'),
+      exclude_keywords:list('exclude'),
+      seniority:$('seniority').value||null,
+      min_score:$('minscore').value,
+      open_to_relocation:$('reloc').checked,
+      work_authorization:$('auth').value.trim()||null,
+      compensation_floor:$('comp').value.trim()||null,
+      availability:$('avail').value.trim()||null,
+      notice_period:$('notice').value.trim()||null
+    })})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(r){
+      if(!r.ok){
+        $('go').disabled=false; $('go').textContent='Build my account';
+        if(r.j.sign_in_url){ return fail(r.j.error+' Go to '+API+r.j.sign_in_url); }
+        return fail((r.j.errors&&r.j.errors.join(' '))||r.j.error||'Could not build the account.');
+      }
+      location.href=API+'/welcome?s='+encodeURIComponent(r.j.tenant_id)+'&new=1';
+    })
+    .catch(function(){ $('go').disabled=false; $('go').textContent='Build my account';
+      fail('Could not reach the server. Please try again.'); });
+});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function(){});
+</script></body></html>

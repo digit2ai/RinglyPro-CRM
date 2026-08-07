@@ -236,6 +236,7 @@ const SCHEMA = {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     agent: { type: DataTypes.STRING },
+    scored: { type: DataTypes.INTEGER, defaultValue: 0 },   // for the daily ceiling
     status: { type: DataTypes.STRING },
     summary: { type: DataTypes.TEXT },
     cost_usd: { type: DataTypes.FLOAT, defaultValue: 0 },
@@ -386,6 +387,7 @@ const ADDED_COLUMNS = [
   ['ju_outreach',      'job_id',       'INTEGER'],
   ['ju_outreach',      'to_email',     'VARCHAR(255)'],
   ['ju_outreach',      'to_name',      'VARCHAR(255)'],
+  ['ju_agent_runs',    'scored',       'INTEGER DEFAULT 0'],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

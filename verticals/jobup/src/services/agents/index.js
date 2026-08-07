@@ -28,10 +28,32 @@ async function loadContext(tenantId) {
   };
 }
 
-async function log(tenantId, agent, status, summary, cost, isSimulated) {
+async function log(tenantId, agent, status, summary, cost, isSimulated, scored) {
   return scoped('agent_runs', tenantId).create({
     agent, status, summary, cost_usd: cost || 0, is_simulated: Boolean(isSimulated),
+    scored: scored || 0,
   });
+}
+
+/**
+ * What this subscriber has already spent and scored TODAY, across every run —
+ * scheduled or manual.
+ *
+ * Without this the caps were per INVOCATION, not per day: `jobs_scored_per_day`
+ * was applied with slice(0, perDay) on each call despite its name, and the cost
+ * cap was min(monthly/30, $0.05) per run. So pressing Run 100 times scored 600
+ * jobs for about $2.50 in a single day — roughly nine times annual revenue if
+ * repeated — and nothing anywhere said no.
+ */
+async function usedToday(tenantId) {
+  const since = new Date(); since.setUTCHours(0, 0, 0, 0);
+  const runs = await scoped('agent_runs', tenantId).findAll({});
+  const today = runs.filter((r) => r.agent === 'hunter' && new Date(r.created_at) >= since);
+  return {
+    spent: today.reduce((n, r) => n + (Number(r.cost_usd) || 0), 0),
+    scored: today.reduce((n, r) => n + (Number(r.scored) || 0), 0),
+    runs: today.length,
+  };
 }
 
 // ---------------------------------------------------------------
@@ -40,11 +62,28 @@ async function log(tenantId, agent, status, summary, cost, isSimulated) {
 async function hunter(tenantId, opts = {}) {
   const { profile, settings, sourceText } = await loadContext(tenantId);
   const perDay = (settings.quotas && settings.quotas.jobs_scored_per_day) || 6;
-  const cap = Math.min(settings.cost_cap_usd / 30, opts.capUsd || 0.05); // monthly cap / ~30 days
+  const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
+
+  // THE CEILINGS ARE DAILY, and count every run — pressing the button cannot
+  // buy more than the schedule would have spent anyway.
+  const used = await usedToday(tenantId);
+  const jobsLeft = Math.max(0, perDay - used.scored);
+  const budgetLeft = Math.max(0, dailyBudget - used.spent);
+
+  if (jobsLeft === 0 || budgetLeft <= 0) {
+    await log(tenantId, 'hunter', 'idle',
+      `Daily limit reached: ${used.scored} of ${perDay} scored, $${used.spent.toFixed(4)} of ` +
+      `$${dailyBudget.toFixed(4)} spent across ${used.runs} run(s). Nothing charged.`, 0, false, 0);
+    return { agent: 'hunter', scored: 0, cost_usd: 0, daily_limit_reached: true,
+             used_today: used, jobs_per_day: perDay,
+             note: 'You have reached today\'s limit. It resets at midnight UTC, and the scheduled run continues as normal.' };
+  }
+
+  const cap = Math.min(budgetLeft, opts.capUsd || dailyBudget);
 
   const pool = await models.jobs.findAll({ limit: 500 });
   if (!pool.length) {
-    await log(tenantId, 'hunter', 'idle', 'Shared job pool is empty — nothing to score.', 0, false);
+    await log(tenantId, 'hunter', 'idle', 'Shared job pool is empty — nothing to score.', 0, false, 0);
     return { agent: 'hunter', scored: 0, note: 'pool empty' };
   }
 
@@ -54,15 +93,15 @@ async function hunter(tenantId, opts = {}) {
   // Skip anything already matched for this tenant.
   const existing = await scoped('job_matches', tenantId).findAll({});
   const seen = new Set(existing.map((m) => m.job_id));
-  const fresh = ranked.filter((r) => !seen.has(r.job.id)).slice(0, perDay);
+  const fresh = ranked.filter((r) => !seen.has(r.job.id)).slice(0, jobsLeft);
 
   if (!fresh.length) {
-    await log(tenantId, 'hunter', 'idle', 'No new candidates after pre-filter.', 0, false);
+    await log(tenantId, 'hunter', 'idle', 'No new candidates after pre-filter.', 0, false, 0);
     return { agent: 'hunter', scored: 0, note: 'nothing new' };
   }
 
   const res = await matcher.scoreBatch(fresh.map((r) => r.job), profile, settings,
-    { capUsd: cap, limit: perDay });
+    { capUsd: cap, limit: jobsLeft });
 
   // Below the subscriber's floor it was still scored — that cost is already
   // spent — but it does not get filed. This is about inbox noise, not money,
@@ -83,9 +122,12 @@ async function hunter(tenantId, opts = {}) {
     `Scored ${res.matches.length} new openings` +
     (held ? `, filed ${keep.length} (${held} below your minimum score of ${floor})` : '') +
     `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.`,
-    res.cost_usd, simulated);
+    res.cost_usd, simulated, res.matches.length);
 
   return { agent: 'hunter', scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
+           used_today: { scored: used.scored + res.matches.length, of: perDay,
+                         spent: Number((used.spent + (res.cost_usd || 0)).toFixed(5)),
+                         of_budget: Number(dailyBudget.toFixed(5)) },
            stopped_for_cap: res.stopped_for_cap, is_simulated: simulated };
 }
 
@@ -135,4 +177,4 @@ async function runAll(agentName, tenantIds) {
   return out;
 }
 
-module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext };
+module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext, usedToday };
