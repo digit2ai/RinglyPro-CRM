@@ -1112,6 +1112,20 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(!s.includes('#22d3ee'), `${f} must not use the dashboard cyan`);
     }
   });
+  await t('BRAND: every page links the favicon as a real tag, not a mention', () => {
+    const fs = require('fs');
+    // The landing shipped without the SVG favicon because a guard tested for
+    // the substring "favicon.svg", which also matches a comment in the inline
+    // logo. Assert the TAG, and on the one page most likely to be seen in a tab.
+    for (const f of ['index.html', 'app.html', 'welcome.html', 'offline.html']) {
+      const html = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
+      assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg">'),
+        `${f} is missing the SVG favicon link`);
+      assert.ok(html.includes('sizes="32x32" href="{{BASE}}/favicon-32.png"'),
+        `${f} needs the PNG fallback for browsers without SVG favicon support`);
+      assert.ok(html.includes('rel="apple-touch-icon"'), `${f} is missing the iOS icon`);
+    }
+  });
   await t('BRAND: the master is full-bleed and the favicon is rounded', () => {
     const fs = require('fs');
     const master = fs.readFileSync(__dirname + '/public/logo-master.svg', 'utf8');
