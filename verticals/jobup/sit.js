@@ -1112,6 +1112,26 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(!s.includes('#22d3ee'), `${f} must not use the dashboard cyan`);
     }
   });
+  await t('BRAND: the signed-out dashboard shows the logo, not a "--" chip', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('id="brandmark"'), 'the dashboard header needs the brand mark');
+    assert.ok(html.includes('M283 158 V290 A64 64 0 0 1 155 290'), 'and it must be the JobUp mark');
+    // The initials chip starts hidden: signed out it rendered a literal "--".
+    assert.ok(/<div class="av hidden" id="av">/.test(html),
+      'the initials avatar must start hidden until a session resolves');
+    // Every signed-out path must fall back to the brand, including the one
+    // where the session request itself fails.
+    const branches = html.match(/login'\)\.classList\.remove\('hidden'\)/g) || [];
+    const restores = html.match(/brandOnly\(\)/g) || [];
+    assert.ok(branches.length >= 2, 'expected both the unauthenticated and the network-failure path');
+    assert.ok(restores.length >= branches.length,
+      'every signed-out path must call brandOnly(), or a stale name survives sign-out');
+    // .hidden and .brandmark are both single-class selectors, so the pairing
+    // has to be explicit or source order decides whether it can ever hide.
+    assert.ok(html.replace(/\s+/g, '').includes('.brandmark.hidden{display:none}'),
+      '.brandmark must have an explicit .hidden rule to beat its own display:block');
+  });
   await t('BRAND: every page links the favicon as a real tag, not a mention', () => {
     const fs = require('fs');
     // The landing shipped without the SVG favicon because a guard tested for
@@ -2410,6 +2430,103 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.deepStrictEqual(some.lines, ['US citizen'], 'exactly what the owner typed');
     assert.strictEqual(some.verbatim, true);
   });
+  // ---------------------------------------------------------------
+  section('the hamburger actually opens — behaviour, not grep');
+  //
+  // The earlier tests asserted buildDrawer() EXISTED. It did. Nothing called it
+  // and nothing bound the button, so the hamburger rendered and did absolutely
+  // nothing. Grepping for a function name cannot catch that, so these drive the
+  // real DOM.
+  const { JSDOM } = require('jsdom');
+
+  function bootDom(html, url) {
+    // Swallow jsdom's resource-loader chatter: it tries to fetch external
+    // scripts we neither ship nor care about here.
+    const { VirtualConsole } = require('jsdom');
+    const vc = new VirtualConsole();
+    return new JSDOM(html, {
+      virtualConsole: vc,
+      url: url || 'https://c.jobup.dev/',
+      runScripts: 'dangerously',
+      pretendToBeVisual: true,
+      beforeParse(w) {
+        w.fetch = () => new Promise(() => {});   // only navigation is exercised
+        w.scrollTo = () => {};
+      },
+    }).window;
+  }
+  const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+
+  await t('PUBLIC SITE: tapping the hamburger opens the drawer', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page(
+      { name: 'Carlos Gomez', summary: 'S', skills: ['a'],
+        experience: [{ title: 'X', company: 'Y' }] }, st,
+      { name: 'Carlos Gomez', url: 'https://c.jobup.dev', slug: 'c' });
+    const w = bootDom(html);
+    const b = w.document.getElementById('burger');
+    const d = w.document.getElementById('drawer');
+    assert.ok(b && d, 'both elements must render');
+    assert.strictEqual(d.classList.contains('open'), false, 'starts closed');
+    click(w, b);
+    assert.strictEqual(d.classList.contains('open'), true, 'THE HAMBURGER DID NOTHING');
+    assert.strictEqual(b.getAttribute('aria-expanded'), 'true');
+    click(w, b);
+    assert.strictEqual(d.classList.contains('open'), false, 'a second tap must close it');
+    w.close();
+  });
+  await t('PUBLIC SITE: the scrim and Escape both close it', () => {
+    const st = settingsSvc.sanitize({});
+    const html = siteRender.page({ name: 'C', summary: 'S' }, st,
+      { name: 'C', url: 'https://c.jobup.dev', slug: 'c' });
+    const w = bootDom(html);
+    const b = w.document.getElementById('burger');
+    const d = w.document.getElementById('drawer');
+    click(w, b);
+    click(w, w.document.getElementById('scrim'));
+    assert.strictEqual(d.classList.contains('open'), false, 'the scrim must close it');
+    click(w, b);
+    w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert.strictEqual(d.classList.contains('open'), false, 'Escape must close it');
+    w.close();
+  });
+  await t('DASHBOARD: tapping the hamburger opens it and builds the menu', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    const w = bootDom(html, 'https://c.jobup.dev/app');
+    const b = w.document.getElementById('burger');
+    const d = w.document.getElementById('drawer');
+    assert.ok(b && d, 'both elements must render');
+    click(w, b);
+    assert.strictEqual(d.classList.contains('open'), true, 'THE HAMBURGER DID NOTHING');
+    const rows = w.document.querySelectorAll('#dnav .dlink');
+    const tabs = w.document.querySelectorAll('.tab');
+    assert.ok(rows.length >= 8, 'the drawer should list every tab, saw ' + rows.length);
+    assert.strictEqual(rows.length, tabs.length, 'drawer and tab row must not drift apart');
+    w.close();
+  });
+  await t('DASHBOARD: choosing from the drawer switches panel and closes it', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    const w = bootDom(html, 'https://c.jobup.dev/app');
+    click(w, w.document.getElementById('burger'));
+    const target = [...w.document.querySelectorAll('#dnav .dlink')]
+      .find((x) => x.dataset.p === 'pipeline');
+    assert.ok(target, 'Pipeline must be reachable from the drawer');
+    click(w, target);
+    assert.strictEqual(w.document.getElementById('drawer').classList.contains('open'), false,
+      'picking a destination should close the menu');
+    assert.strictEqual(w.document.getElementById('p-pipeline').classList.contains('hidden'), false,
+      'and actually switch to it');
+    w.close();
+  });
+  await t('there is ONE switcher, not two that can disagree', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!html.includes('function showPanel'),
+      'a second switcher existed alongside showTab and only one updated the URL');
+    assert.ok(html.includes('showTab(l.dataset.p)'), 'the drawer routes through showTab');
+  });
+
+  // ---------------------------------------------------------------
+  section('cleanup');
   await t('SIT removes its own rows', async () => {
     for (const tbl of ['profiles', 'settings', 'job_matches', 'outreach', 'agent_runs', 'sites', 'invoices', 'tailored_resumes', 'applications']) {
       await scoped(tbl, subA.id).destroy({});

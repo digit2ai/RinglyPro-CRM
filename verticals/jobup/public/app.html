@@ -107,6 +107,11 @@ border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none
 .note{color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.65;margin-top:12px}
 .hidden{display:none}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
+/* Matches .av exactly so the header does not shift when one swaps for the
+   other. The .hidden pairing is explicit: both rules are single-class, so
+   without it whichever came last in the sheet would win. */
+.brandmark{width:44px;height:44px;flex:0 0 44px;display:block;border-radius:12px}
+.brandmark.hidden{display:none}
 .av{width:44px;height:44px;border-radius:12px;background:var(--grad);color:#06121a;font-weight:830;
 font-size:16px;display:flex;align-items:center;justify-content:center;flex:0 0 44px;letter-spacing:-.02em}
 .who-n{font-weight:790;letter-spacing:-.026em;font-size:17px;line-height:1.2}
@@ -221,7 +226,18 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 
 <div class="nav"><div class="wrap">
   <div class="who">
-    <div class="av" id="av">--</div>
+    <!-- Signed out there is no one to show, and the initials chip rendered a
+         literal "--". The brand mark stands in until the session resolves, then
+         swaps for the account avatar. Same geometry as favicon.svg. -->
+    <svg class="brandmark" id="brandmark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+        <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+        <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+    <div class="av hidden" id="av">--</div>
     <div><div class="who-n" id="who-n">JobUp</div><div class="who-h" id="who-h"></div></div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
@@ -348,6 +364,9 @@ function showTab(name,push){
   /* On a phone the tab strip is one scrolling row, so the selected tab can sit
      off-screen when it was chosen by a shortcut rather than a tap. */
   if(hit&&hit.scrollIntoView) try{hit.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+  /* Keep the drawer's active row in step — it is the same navigation. */
+  Array.prototype.forEach.call(document.querySelectorAll('#dnav .dlink'),function(x){
+    x.classList.toggle('on',x.dataset.p===name);});
   /* replaceState, not pushState: tabs are a view, not history the back button
      should have to walk through one at a time. The URL still reflects the tab,
      so it can be bookmarked and shared. */
@@ -355,15 +374,6 @@ function showTab(name,push){
     try{history.replaceState(null,'',name==='analytics'?location.pathname:location.pathname+'?tab='+name);}catch(e){}
   }
 }
-function showPanel(p){
-  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){
-    x.classList.toggle('on',x.dataset.p===p);});
-  Array.prototype.forEach.call(document.querySelectorAll('#dnav .dlink'),function(x){
-    x.classList.toggle('on',x.dataset.p===p);});
-  ['analytics','matches','opps','today','targets','pipeline','cv','settings','account']
-    .forEach(function(x){ $('p-'+x).classList.toggle('hidden',x!==p); });
-}
-
 /* The drawer is BUILT FROM THE TAB ROW, so a tab added later cannot go missing
    on mobile — the two can never drift apart. */
 function buildDrawer(){
@@ -375,28 +385,63 @@ function buildDrawer(){
       '<span class="n">'+(count?count.textContent:'')+'</span></button>';
   }).join('');
   Array.prototype.forEach.call(nav.querySelectorAll('.dlink'),function(l){
-    l.addEventListener('click',function(){ showPanel(l.dataset.p); drawer(false); });
+    l.addEventListener('click',function(){ showTab(l.dataset.p); drawer(false); });
   });
 }
 
 Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
   t.addEventListener('click',function(){showTab(t.dataset.p);});
 });
+
+/* Open and close the mobile drawer. This is what was missing: buildDrawer()
+   existed but nothing ever called it, and nothing bound the button — so the
+   hamburger rendered and did nothing at all. */
+function drawer(open){
+  var d=$('drawer'),sc=$('scrim'),b=$('burger');
+  if(!d||!b) return;
+  if(open===undefined) open=!d.classList.contains('open');
+  if(open) buildDrawer();          // rebuild so badge counts are current
+  d.classList.toggle('open',open);
+  if(sc) sc.classList.toggle('open',open);
+  b.classList.toggle('open',open);
+  b.setAttribute('aria-expanded',open?'true':'false');
+  document.body.style.overflow=open?'hidden':'';
+}
+(function(){
+  var b=$('burger'); if(!b) return;
+  b.addEventListener('click',function(e){e.preventDefault();drawer();});
+  var sc=$('scrim'); if(sc) sc.addEventListener('click',function(){drawer(false);});
+  var so=$('d-signout');
+  if(so) so.addEventListener('click',function(e){e.preventDefault();drawer(false);$('signout').click();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')drawer(false);});
+  // A drawer left open over a desktop layout is worse than no drawer.
+  var mq=window.matchMedia('(min-width:761px)');
+  var onChange=function(){ if(mq.matches) drawer(false); };
+  if(mq.addEventListener) mq.addEventListener('change',onChange); else mq.addListener(onChange);
+})();
 function tabFromUrl(){
   var q=new URLSearchParams(location.search).get('tab');
   return q||(location.hash?location.hash.slice(1):'')||'analytics';
 }
 
 /* ---- boot ---- */
+/* Signed out (or the session call failed): show the brand, and never a stale
+   name or initials left over from a previous session. */
+function brandOnly(){
+  $('brandmark').classList.remove('hidden'); $('av').classList.add('hidden');
+  $('who-n').textContent='JobUp'; $('who-h').textContent='';
+}
 function boot(){
   api('/api/v1/auth/session').then(function(r){
-    if(!r.ok){ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+    if(!r.ok){ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); brandOnly(); return; }
     ME=r.j;
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
-    $('signout').style.display=''; 
+    $('signout').style.display='';
     var nm=ME.name||ME.email||'';
     $('who-n').textContent=nm;
     $('av').textContent=(nm.trim().split(/\s+/).slice(0,2).map(function(w){return w[0];}).join('')||'?').toUpperCase();
+    /* Signed in: the header belongs to the account, not the brand. */
+    $('brandmark').classList.add('hidden'); $('av').classList.remove('hidden');
     if(ME.address){
       $('mysite').href='https://'+ME.address; $('mysite').style.display='';
       $('d-site').href='https://'+ME.address; $('d-site').style.display='';
@@ -410,7 +455,7 @@ function boot(){
     loadPipeline(); loadCV(); loadSettings(); renderAccount();
     /* Honour ?tab= from a home-screen shortcut or a shared link. */
     showTab(tabFromUrl(),false);
-  }).catch(function(){ $('login').classList.remove('hidden'); });
+  }).catch(function(){ $('login').classList.remove('hidden'); brandOnly(); });
 }
 
 /* ---- analytics ---- */
