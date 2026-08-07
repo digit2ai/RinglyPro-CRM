@@ -91,6 +91,10 @@ function status() {
   return {
     billing_disabled: false,
     free_activation: freeActivation(),
+    // WHICH variable is making signups free, when billing itself is on. Without
+    // this, 'free_activation: true' next to 'billing_disabled: false' looks
+    // like a contradiction instead of a leftover override.
+    free_reason: freeReason(),
     webhook_verification: process.env.STRIPE_WEBHOOK_SECRET ? 'configured'
       : 'NOT configured — production refuses unverified webhooks, so a real payment would never activate an account',
     configured: enabled(),
