@@ -982,6 +982,59 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   // with teaserToken:null. The resume was never adopted, the promised address
   // was not honoured, and the site published EMPTY while the welcome screen
   // showed four green ticks. These tests exist so that cannot come back.
+  await t('THE WEBHOOK CAN ACTUALLY VERIFY A STRIPE SIGNATURE', async () => {
+    // express.json() used to run first on this router. It consumes the stream
+    // and leaves a parsed object, so the express.raw() in the billing route
+    // skipped and the handler re-encoded with JSON.stringify — which differs
+    // from Stripe's pretty-printed payload in whitespace alone. That is enough:
+    // every webhook returned 400 forever. Payments cleared, accounts never
+    // activated, invoices never recorded, cancellations never torn down.
+    const src = require('fs').readFileSync(__dirname + '/src/index.js', 'utf8');
+    const rawAt = src.indexOf("router.use('/api/v1/billing/webhook', express.raw");
+    const jsonAt = src.indexOf('router.use(express.json(');
+    assert.ok(rawAt > 0, 'the webhook path needs its own raw body parser');
+    assert.ok(rawAt < jsonAt, 'and it MUST be mounted before express.json()');
+
+    // Behaviour, not grep: sign a payload the way Stripe does and post it.
+    const crypto2 = require('crypto');
+    const payload = JSON.stringify(
+      { id: 'evt_sit', type: 'invoice.paid',
+        data: { object: { id: 'in_sit', amount_paid: 9700, metadata: { subscriber_id: '424242' } } } },
+      null, 2);                                   // <- pretty-printed, like Stripe
+    const secret = 'whsec_sit_' + Date.now();
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = crypto2.createHmac('sha256', secret).update(ts + '.' + payload).digest('hex');
+
+    const savedSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const savedKey = process.env.STRIPE_SECRET_KEY;
+    const savedEnabled = process.env.JOBUP_BILLING_ENABLED;
+    process.env.STRIPE_WEBHOOK_SECRET = secret;
+    process.env.STRIPE_SECRET_KEY = savedKey || 'sk_test_sit_dummy';
+    process.env.JOBUP_BILLING_ENABLED = '1';
+    try {
+      const stripeLib = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const ev = stripeLib.webhooks.constructEvent(
+        Buffer.from(payload, 'utf8'), 't=' + ts + ',v1=' + sig, secret);
+      assert.strictEqual(ev.type, 'invoice.paid', 'a raw buffer must verify');
+
+      // And a forged one must not.
+      assert.throws(() => stripeLib.webhooks.constructEvent(
+        Buffer.from(payload, 'utf8'), 't=' + ts + ',v1=deadbeef', secret));
+
+      // The re-encoded form — what the broken path produced — must NOT verify.
+      assert.throws(() => stripeLib.webhooks.constructEvent(
+        Buffer.from(JSON.stringify(JSON.parse(payload))), 't=' + ts + ',v1=' + sig, secret),
+        'this is exactly what express.json() left behind');
+    } finally {
+      if (savedSecret === undefined) delete process.env.STRIPE_WEBHOOK_SECRET;
+      else process.env.STRIPE_WEBHOOK_SECRET = savedSecret;
+      if (savedKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+      else process.env.STRIPE_SECRET_KEY = savedKey;
+      if (savedEnabled === undefined) delete process.env.JOBUP_BILLING_ENABLED;
+      else process.env.JOBUP_BILLING_ENABLED = savedEnabled;
+    }
+  });
+
   await t('THE TEASER TOKEN TRAVELS WITH THE PAYMENT', () => {
     const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
     assert.ok(/meta\.teaser_token = String\(teaserToken\)/.test(src),

@@ -55,6 +55,21 @@ async function qrFor(url) {
 const router = express.Router();
 const publicDir = path.join(__dirname, '..', 'public');
 
+// STRIPE SIGNS THE RAW BYTES — this must come BEFORE express.json().
+//
+// Stripe computes the HMAC over the exact payload it sent, which is
+// pretty-printed JSON. express.json() consumes the stream, leaves a parsed
+// object and sets req._body, so the express.raw() inside the billing route
+// skips and the handler falls back to JSON.stringify(req.body) — a re-encoding
+// that differs from the original in whitespace alone, which is enough for the
+// signature to never match. Every webhook returned 400 "No signatures found
+// matching the expected signature", forever: payments would clear and the
+// account would never be activated, invoices never recorded, cancellations
+// never torn down.
+//
+// The parser is bound to the exact path so nothing else sees a raw body.
+router.use('/api/v1/billing/webhook', express.raw({ type: 'application/json' }));
+
 // Body parsing scoped to this router.
 router.use(express.json({ limit: '2mb' }));
 router.use(express.urlencoded({ extended: true }));
