@@ -32,8 +32,22 @@ const DUNNING_STAGES = 4;
  * Accounts created while this is off are stamped activation:'no_billing' so
  * they can never be counted as revenue, exactly like the free_test stamp.
  */
+/**
+ * Billing is ON by default — you have to ASK for it to be off.
+ *
+ * This briefly worked the other way round: a change made billing opt-IN via
+ * JOBUP_BILLING_ENABLED, so a deploy silently switched payment off on a
+ * deployment that had been taking money, and removing the old bypass variable
+ * no longer restored it. A default that changes what "no configuration" means
+ * for revenue is the wrong shape, whichever way it points.
+ *
+ * JOBUP_BILLING_ENABLED=1 is still honoured so nothing that already sets it
+ * breaks; it simply is not required any more.
+ */
 function disabled() {
-  return process.env.JOBUP_BILLING_ENABLED !== '1';
+  if (process.env.JOBUP_BILLING_DISABLED === '1') return true;
+  if (process.env.JOBUP_BILLING_ENABLED === '1') return false;
+  return false;   // default: charge for it
 }
 
 let stripe = null;
@@ -54,6 +68,13 @@ function enabled() {
   return Boolean(client());
 }
 
+/** WHY signups are free, if they are — the two causes must be distinguishable. */
+function freeReason() {
+  if (process.env.JOBUP_BILLING_DISABLED === '1') return 'JOBUP_BILLING_DISABLED=1';
+  if (process.env.JOBUP_FREE_ACTIVATION === '1') return 'JOBUP_FREE_ACTIVATION=1';
+  return null;
+}
+
 function status() {
   if (disabled()) {
     return {
@@ -61,9 +82,10 @@ function status() {
       configured: false,
       free_activation: true,      // every account is activated without payment
       price_usd: null,            // no surface may quote a price while this is off
+      free_reason: freeReason(),
       note: 'The payment layer is switched off on this deployment. Accounts are '
           + 'created and activated for free and are stamped no_billing. '
-          + 'Set JOBUP_BILLING_ENABLED=1 to restore checkout.',
+          + 'Remove JOBUP_BILLING_DISABLED to restore checkout.',
     };
   }
   return {
@@ -251,6 +273,7 @@ function refundEligible(chargedAt, now = new Date()) {
 }
 
 module.exports = {
+  freeReason,
   disabled,
   freeActivation,
   enabled, status, createCheckout, createPortal, applyEvent,

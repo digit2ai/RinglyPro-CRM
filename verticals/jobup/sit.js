@@ -64,12 +64,19 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // Two honest refusals: the layer is switched off, or the key is missing.
     assert.ok(/switched off|not configured/i.test(c.error), 'the refusal must say why');
   });
-  await t('THE PAYMENT LAYER IS OFF, and says so on every surface', () => {
-    assert.strictEqual(billing.disabled(), true, 'default is off — JOBUP_BILLING_ENABLED=1 turns it on');
-    const s = billing.status();
-    assert.strictEqual(s.billing_disabled, true);
-    assert.strictEqual(s.price_usd, null, 'no surface may quote a price while payment is off');
-    assert.ok(/switched off/i.test(s.note));
+  await t('THE PAYMENT LAYER DEFAULTS TO ON, and off is explicit', () => {
+    const keep = ['JOBUP_BILLING_ENABLED', 'JOBUP_BILLING_DISABLED', 'JOBUP_FREE_ACTIVATION']
+      .reduce((a, k) => { a[k] = process.env[k]; delete process.env[k]; return a; }, {});
+    assert.strictEqual(billing.disabled(), false,
+      'default is ON — JOBUP_BILLING_DISABLED=1 turns it off');
+    process.env.JOBUP_BILLING_DISABLED = '1';
+    const st = billing.status();
+    assert.strictEqual(st.billing_disabled, true);
+    assert.strictEqual(st.price_usd, null, 'no surface may quote a price while payment is off');
+    assert.ok(/switched off/i.test(st.note), 'a disabled payment layer must never be silent');
+    for (const [k, v] of Object.entries(keep)) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
   });
   await t('the teaser quotes no price and its CTA points at the account form', async () => {
     const t2 = require(__dirname + '/src/services/teaser');
@@ -887,6 +894,39 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   const mailerSvc = require(__dirname + '/src/services/mailer');
   const models_mod = require(__dirname + '/src/models');
 
+  await t('BILLING IS ON BY DEFAULT — you have to ask for it to be off', () => {
+    // It briefly worked the other way round: a change made billing opt-IN, so a
+    // deploy switched payment off on a deployment that had been taking money,
+    // and removing the old bypass variable no longer restored it. A default
+    // that changes what "no configuration" means for revenue is the wrong
+    // shape, whichever way it points.
+    const keep = ['JOBUP_BILLING_ENABLED', 'JOBUP_BILLING_DISABLED', 'JOBUP_FREE_ACTIVATION']
+      .reduce((a, k) => { a[k] = process.env[k]; delete process.env[k]; return a; }, {});
+    assert.strictEqual(billingSvc.disabled(), false, 'no configuration must mean CHARGE');
+    assert.strictEqual(billingSvc.freeActivation(), false);
+    process.env.JOBUP_BILLING_DISABLED = '1';
+    assert.strictEqual(billingSvc.disabled(), true, 'and it must be switchable off');
+    delete process.env.JOBUP_BILLING_DISABLED;
+    process.env.JOBUP_BILLING_ENABLED = '1';   // legacy opt-in still honoured
+    assert.strictEqual(billingSvc.disabled(), false);
+    for (const [k, v] of Object.entries(keep)) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+  await t('WHY signups are free is reported, not left ambiguous', () => {
+    const keep = ['JOBUP_BILLING_DISABLED', 'JOBUP_FREE_ACTIVATION']
+      .reduce((a, k) => { a[k] = process.env[k]; delete process.env[k]; return a; }, {});
+    assert.strictEqual(billingSvc.freeReason(), null, 'nothing free, nothing to explain');
+    process.env.JOBUP_FREE_ACTIVATION = '1';
+    assert.strictEqual(billingSvc.freeReason(), 'JOBUP_FREE_ACTIVATION=1');
+    delete process.env.JOBUP_FREE_ACTIVATION;
+    process.env.JOBUP_BILLING_DISABLED = '1';
+    assert.strictEqual(billingSvc.freeReason(), 'JOBUP_BILLING_DISABLED=1',
+      'two different causes must not read the same');
+    for (const [k, v] of Object.entries(keep)) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
   await t('with payment ON, free activation is OFF unless explicitly switched on', () => {
     const savedF = process.env.JOBUP_FREE_ACTIVATION;
     const savedB = process.env.JOBUP_BILLING_ENABLED;
@@ -903,10 +943,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     else process.env.JOBUP_BILLING_ENABLED = savedB;
   });
   await t('with payment OFF, EVERY activation is free and stamped no_billing', () => {
+    const _keep = process.env.JOBUP_BILLING_DISABLED;
+    process.env.JOBUP_BILLING_DISABLED = '1';   // off is now explicit
     assert.strictEqual(billingSvc.disabled(), true);
     assert.strictEqual(billingSvc.freeActivation(), true, 'nothing can be charged, so nothing is');
     const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
     assert.ok(src.includes("'no_billing'"), 'accounts built without payment must be stamped');
+    if (_keep === undefined) delete process.env.JOBUP_BILLING_DISABLED;
+    else process.env.JOBUP_BILLING_DISABLED = _keep;
   });
   await t('status() DECLARES test mode and missing webhook verification', () => {
     const savedF = process.env.JOBUP_FREE_ACTIVATION;
@@ -920,9 +964,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     else process.env.JOBUP_FREE_ACTIVATION = savedF;
     if (savedB === undefined) delete process.env.JOBUP_BILLING_ENABLED;
     else process.env.JOBUP_BILLING_ENABLED = savedB;
-    // And while it is off, the same call is equally explicit.
+    // And when it is EXPLICITLY off, the same call is equally clear. Off is
+    // now a deliberate setting, not what you get by configuring nothing.
+    const keepD = process.env.JOBUP_BILLING_DISABLED;
+    process.env.JOBUP_BILLING_DISABLED = '1';
     const off = billingSvc.status();
     assert.strictEqual(off.billing_disabled, true, 'a disabled payment layer must never be silent');
+    assert.strictEqual(off.price_usd, null, 'and must not quote a price it cannot charge');
+    if (keepD === undefined) delete process.env.JOBUP_BILLING_DISABLED;
+    else process.env.JOBUP_BILLING_DISABLED = keepD;
   });
   await t('a free-test account is STAMPED so it can never be counted as revenue', async () => {
     const s2 = await models.subscribers.create({
