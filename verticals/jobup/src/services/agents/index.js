@@ -28,10 +28,10 @@ async function loadContext(tenantId) {
   };
 }
 
-async function log(tenantId, agent, status, summary, cost, isSimulated, scored) {
+async function log(tenantId, agent, status, summary, cost, isSimulated, scored, trigger) {
   return scoped('agent_runs', tenantId).create({
     agent, status, summary, cost_usd: cost || 0, is_simulated: Boolean(isSimulated),
-    scored: scored || 0,
+    scored: scored || 0, trigger: trigger || 'scheduled',
   });
 }
 
@@ -45,14 +45,18 @@ async function log(tenantId, agent, status, summary, cost, isSimulated, scored) 
  * jobs for about $2.50 in a single day — roughly nine times annual revenue if
  * repeated — and nothing anywhere said no.
  */
-async function usedToday(tenantId) {
+async function usedToday(tenantId, trigger) {
   const since = new Date(); since.setUTCHours(0, 0, 0, 0);
   const runs = await scoped('agent_runs', tenantId).findAll({});
   const today = runs.filter((r) => r.agent === 'hunter' && new Date(r.created_at) >= since);
+  const scope = trigger ? today.filter((r) => (r.trigger || 'scheduled') === trigger) : today;
   return {
-    spent: today.reduce((n, r) => n + (Number(r.cost_usd) || 0), 0),
-    scored: today.reduce((n, r) => n + (Number(r.scored) || 0), 0),
-    runs: today.length,
+    spent: scope.reduce((n, r) => n + (Number(r.cost_usd) || 0), 0),
+    scored: scope.reduce((n, r) => n + (Number(r.scored) || 0), 0),
+    runs: scope.length,
+    manual_runs: today.filter((r) => r.trigger === 'manual' && r.status !== 'idle').length,
+    all_scored: today.reduce((n, r) => n + (Number(r.scored) || 0), 0),
+    all_spent: today.reduce((n, r) => n + (Number(r.cost_usd) || 0), 0),
   };
 }
 
@@ -64,26 +68,44 @@ async function hunter(tenantId, opts = {}) {
   const perDay = (settings.quotas && settings.quotas.jobs_scored_per_day) || 6;
   const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
-  // THE CEILINGS ARE DAILY, and count every run — pressing the button cannot
-  // buy more than the schedule would have spent anyway.
-  const used = await usedToday(tenantId);
+  // WHAT ASKED FOR THIS RUN. Each trigger carries its OWN daily allowance:
+  // sharing one pool meant whichever ran first spent it, so a subscriber who
+  // opened the app after the 07:00 run found the button did nothing.
+  const trigger = ['signup', 'scheduled', 'manual'].includes(opts.trigger)
+    ? opts.trigger : 'scheduled';
+
+  const used = await usedToday(tenantId, trigger);
   const jobsLeft = Math.max(0, perDay - used.scored);
   const budgetLeft = Math.max(0, dailyBudget - used.spent);
 
+  // One manual search a day. The scheduled run and the signup run are not
+  // affected by it, and it is not affected by them.
+  const manualCap = (settings.quotas && settings.quotas.manual_runs_per_day) != null
+    ? settings.quotas.manual_runs_per_day : 1;
+  if (trigger === 'manual' && used.manual_runs >= manualCap) {
+    await log(tenantId, 'hunter', 'idle',
+      `Manual search already used today (${used.manual_runs} of ${manualCap}). Nothing charged.`,
+      0, false, 0, trigger);
+    return { agent: 'hunter', scored: 0, cost_usd: 0, manual_limit_reached: true,
+             manual_runs_used: used.manual_runs, manual_runs_per_day: manualCap,
+             note: `You have used today's manual search. It resets at midnight UTC — and your agent still runs on its own every morning.` };
+  }
+
   if (jobsLeft === 0 || budgetLeft <= 0) {
     await log(tenantId, 'hunter', 'idle',
-      `Daily limit reached: ${used.scored} of ${perDay} scored, $${used.spent.toFixed(4)} of ` +
-      `$${dailyBudget.toFixed(4)} spent across ${used.runs} run(s). Nothing charged.`, 0, false, 0);
-    return { agent: 'hunter', scored: 0, cost_usd: 0, daily_limit_reached: true,
+      `Daily limit reached for ${trigger}: ${used.scored} of ${perDay} scored, ` +
+      `$${used.spent.toFixed(4)} of $${dailyBudget.toFixed(4)} spent across ${used.runs} run(s). Nothing charged.`,
+      0, false, 0, trigger);
+    return { agent: 'hunter', scored: 0, cost_usd: 0, daily_limit_reached: true, trigger,
              used_today: used, jobs_per_day: perDay,
-             note: 'You have reached today\'s limit. It resets at midnight UTC, and the scheduled run continues as normal.' };
+             note: 'That allowance is used up for today. It resets at midnight UTC.' };
   }
 
   const cap = Math.min(budgetLeft, opts.capUsd || dailyBudget);
 
   const pool = await models.jobs.findAll({ limit: 500 });
   if (!pool.length) {
-    await log(tenantId, 'hunter', 'idle', 'Shared job pool is empty — nothing to score.', 0, false, 0);
+    await log(tenantId, 'hunter', 'idle', 'Shared job pool is empty — nothing to score.', 0, false, 0, trigger);
     return { agent: 'hunter', scored: 0, note: 'pool empty' };
   }
 
@@ -96,7 +118,7 @@ async function hunter(tenantId, opts = {}) {
   const fresh = ranked.filter((r) => !seen.has(r.job.id)).slice(0, jobsLeft);
 
   if (!fresh.length) {
-    await log(tenantId, 'hunter', 'idle', 'No new candidates after pre-filter.', 0, false, 0);
+    await log(tenantId, 'hunter', 'idle', 'No new candidates after pre-filter.', 0, false, 0, trigger);
     return { agent: 'hunter', scored: 0, note: 'nothing new' };
   }
 
@@ -122,9 +144,9 @@ async function hunter(tenantId, opts = {}) {
     `Scored ${res.matches.length} new openings` +
     (held ? `, filed ${keep.length} (${held} below your minimum score of ${floor})` : '') +
     `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.`,
-    res.cost_usd, simulated, res.matches.length);
+    res.cost_usd, simulated, res.matches.length, trigger);
 
-  return { agent: 'hunter', scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
+  return { agent: 'hunter', trigger, scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
            used_today: { scored: used.scored + res.matches.length, of: perDay,
                          spent: Number((used.spent + (res.cost_usd || 0)).toFixed(5)),
                          of_budget: Number(dailyBudget.toFixed(5)) },
@@ -165,13 +187,14 @@ async function presence(tenantId) {
 }
 
 /** Fan out across tenants inside the global concurrency ceiling. */
-async function runAll(agentName, tenantIds) {
+async function runAll(agentName, tenantIds, opts = {}) {
   const fn = { hunter, presence }[agentName];
   if (!fn) throw new Error('unknown agent: ' + agentName);
   const out = [];
   for (let i = 0; i < tenantIds.length; i += CONCURRENCY) {
     const slice = tenantIds.slice(i, i + CONCURRENCY);
-    const res = await Promise.all(slice.map((t) => fn(t).catch((e) => ({ error: e.message, tenant: t }))));
+    const res = await Promise.all(slice.map((t) =>
+      fn(t, opts).catch((e) => ({ error: e.message, tenant: t }))));
     out.push(...res);
   }
   return out;

@@ -2143,7 +2143,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(r.daily_limit_reached, true);
     assert.strictEqual(r.scored, 0);
     assert.strictEqual(r.cost_usd, 0, 'a refused run must not spend');
-    assert.ok(/limit/i.test(r.note), 'and must explain itself');
+    assert.ok(/used up|allowance|resets/i.test(r.note), 'and must explain itself');
     const logged = (await t2.findAll({})).find((x) => x.status === 'idle');
     assert.ok(logged && Number(logged.cost_usd) === 0, 'the refusal is logged at zero cost');
     for (const r2 of await t2.findAll({})) await t2.destroy({ id: r2.id });
@@ -2155,6 +2155,68 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const u = await agents.usedToday(subA.id);
     assert.strictEqual(Math.max(0, 6 - u.scored), 2, 'two left of six, not six again');
     for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('A SCHEDULED RUN NEVER STARVES THE MANUAL SEARCH', async () => {
+    // They shared one pool, so whoever ran first spent the day. A subscriber
+    // opening the app after the 07:00 run pressed the button and got nothing.
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    await t2.create({ agent: 'hunter', status: 'ok', scored: 6, cost_usd: 0.03, trigger: 'scheduled' });
+    const manual = await agents.usedToday(subA.id, 'manual');
+    assert.strictEqual(manual.scored, 0, 'the manual allowance must be untouched');
+    assert.strictEqual(manual.manual_runs, 0, 'and no manual run has happened');
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('ONE MANUAL SEARCH A DAY, and the refusal is free', async () => {
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    await t2.create({ agent: 'hunter', status: 'ok', scored: 3, cost_usd: 0.02, trigger: 'manual' });
+    const r = await agents.hunter(subA.id, { trigger: 'manual' });
+    assert.strictEqual(r.manual_limit_reached, true);
+    assert.strictEqual(r.cost_usd, 0, 'a refused search must not spend');
+    assert.strictEqual(r.manual_runs_per_day, 1);
+    assert.ok(/resets at midnight UTC/i.test(r.note));
+    assert.ok(/runs on its own/i.test(r.note), 'it should reassure, not just refuse');
+    for (const r2 of await t2.findAll({})) await t2.destroy({ id: r2.id });
+  });
+  await t('the SIGNUP run does not consume the manual search', async () => {
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    await t2.create({ agent: 'hunter', status: 'ok', scored: 6, cost_usd: 0.03, trigger: 'signup' });
+    const u = await agents.usedToday(subA.id);
+    assert.strictEqual(u.manual_runs, 0,
+      'a new subscriber must still have their manual search on day one');
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('an IDLE manual attempt does not burn the allowance', async () => {
+    // Refusing to spend and then counting it against them would be the worst
+    // of both.
+    const t2 = scoped('agent_runs', subA.id);
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+    await t2.create({ agent: 'hunter', status: 'idle', scored: 0, cost_usd: 0, trigger: 'manual' });
+    const u = await agents.usedToday(subA.id);
+    assert.strictEqual(u.manual_runs, 0, 'only a run that actually scored counts');
+    for (const r of await t2.findAll({})) await t2.destroy({ id: r.id });
+  });
+  await t('every caller declares what triggered it', () => {
+    const fs = require('fs');
+    assert.ok(fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8')
+      .includes("trigger: 'signup'"));
+    assert.ok(fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8')
+      .includes("{ trigger: 'scheduled' }"));
+    assert.ok(fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8')
+      .includes("{ trigger: 'manual' }"));
+  });
+  await t('an unknown trigger falls back to scheduled, never to a free pass', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(src.includes("['signup', 'scheduled', 'manual'].includes(opts.trigger)"),
+      'an arbitrary trigger string must not mint a new allowance');
+  });
+  await t('the dashboard says whether the search is available', () => {
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(html.includes('manual_runs_left'));
+    assert.ok(html.includes('own allowance'), 'and explain that the daily run does not use it');
+    assert.ok(html.includes("data-agent=\"hunter\""), 'the button must be disable-able');
   });
   await t('the manual button has a cooldown, and it fails OPEN', () => {
     const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
@@ -2172,12 +2234,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('function loadBudget'));
     assert.ok(html.includes('allowance'), 'and say so in words');
   });
-  await t('MANUAL AND SCHEDULED DRAW ON THE SAME ALLOWANCE', async () => {
-    // Otherwise the button is a second budget and the ceiling means nothing.
+  await t('EVERY TRIGGER IS CAPPED INSIDE THE AGENT', async () => {
+    // The allowances are now separate on purpose — a scheduled run must not
+    // starve the manual search — but no caller may escape a ceiling by picking
+    // its own label, so the enforcement lives in the agent, not the routes.
     const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
     const block = src.slice(src.indexOf('async function hunter'), src.indexOf('async function presence'));
-    assert.ok(block.includes('await usedToday(tenantId)'),
-      'the ceiling is inside the agent, so every caller is subject to it');
+    assert.ok(block.includes('await usedToday(tenantId, trigger)'),
+      'the ceiling is read per trigger, inside the agent');
+    assert.ok(block.includes("used.manual_runs >= manualCap"), 'and the manual cap with it');
     const sched = require('fs').readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
     assert.ok(sched.includes("agents.runAll('hunter'"), 'the scheduler goes through the same agent');
   });

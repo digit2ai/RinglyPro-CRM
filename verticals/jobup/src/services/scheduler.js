@@ -134,7 +134,7 @@ async function runFleet() {
   const ids = subs.map((s) => s.id);
   if (!ids.length) return { subscribers: 0, results: [] };
 
-  const hunted = await agents.runAll('hunter', ids);
+  const hunted = await agents.runAll('hunter', ids, { trigger: 'scheduled' });
   const seen = await agents.runAll('presence', ids);
 
   const scored = hunted.reduce((n, r) => n + ((r && r.scored) || 0), 0);

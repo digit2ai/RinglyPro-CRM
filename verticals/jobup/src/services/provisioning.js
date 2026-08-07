@@ -166,7 +166,7 @@ async function publishSite(tenantId) {
 async function activateAgents(tenantId) {
   const out = {};
   try { out.presence = await agents.presence(tenantId); } catch (e) { out.presence = { error: e.message }; }
-  try { out.hunter = await agents.hunter(tenantId); } catch (e) { out.hunter = { error: e.message }; }
+  try { out.hunter = await agents.hunter(tenantId, { trigger: 'signup' }); } catch (e) { out.hunter = { error: e.message }; }
   return { step: 'agents', ok: true, ...out };
 }
 

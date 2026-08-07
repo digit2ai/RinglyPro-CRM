@@ -237,6 +237,10 @@ const SCHEMA = {
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },
     agent: { type: DataTypes.STRING },
     scored: { type: DataTypes.INTEGER, defaultValue: 0 },   // for the daily ceiling
+    // WHAT ASKED FOR THIS RUN. Without it, the button and the scheduler drained
+    // one pool: whichever ran first spent the day's allowance and the other
+    // found nothing left.
+    trigger: { type: DataTypes.STRING, defaultValue: 'scheduled' },  // signup|scheduled|manual
     status: { type: DataTypes.STRING },
     summary: { type: DataTypes.TEXT },
     cost_usd: { type: DataTypes.FLOAT, defaultValue: 0 },
@@ -388,6 +392,7 @@ const ADDED_COLUMNS = [
   ['ju_outreach',      'to_email',     'VARCHAR(255)'],
   ['ju_outreach',      'to_name',      'VARCHAR(255)'],
   ['ju_agent_runs',    'scored',       'INTEGER DEFAULT 0'],
+  ['ju_agent_runs',    'trigger',      "VARCHAR(24) DEFAULT 'scheduled'"],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
 

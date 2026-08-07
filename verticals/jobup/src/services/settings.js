@@ -60,6 +60,10 @@ const DEFAULTS = {
   quotas: {
     tailor_monthly_limit: parseInt(process.env.JOBUP_TAILOR_MONTHLY_LIMIT || '30', 10),
     jobs_scored_per_day: 6,
+    // A manual search has its OWN allowance so it is never starved by the
+    // scheduled run. One a day: enough to act on a change of mind, not enough
+    // to turn the button into a second budget.
+    manual_runs_per_day: 1,
   },
   cost_cap_usd: parseFloat(process.env.JOBUP_SUBSCRIBER_COST_CAP_USD || '8'),
 };

@@ -279,7 +279,7 @@ router.post('/agents/:name/run', async (req, res) => {
   if (runCooldown.size > 5000) runCooldown.clear();   // unbounded maps are a leak
 
   try {
-    res.json(await agents[name](tid));
+    res.json(await agents[name](tid, { trigger: 'manual' }));
   } catch (e) {
     runCooldown.delete(key);   // a failed run should not cost you the cooldown
     res.status(500).json({ error: e.message });
@@ -291,16 +291,24 @@ router.get('/agents/budget', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const row = await scoped('settings', tid).findOne({});
   const st = settingsSvc.sanitize((row && row.settings) || {});
-  const used = await agents.usedToday(tid);
+  const all = await agents.usedToday(tid);
+  const manual = await agents.usedToday(tid, 'manual');
   const perDay = (st.quotas && st.quotas.jobs_scored_per_day) || 6;
+  const manualCap = (st.quotas && st.quotas.manual_runs_per_day) != null
+    ? st.quotas.manual_runs_per_day : 1;
   const budget = (st.cost_cap_usd || 8) / 30;
   res.json({
-    scored_today: used.scored, jobs_per_day: perDay,
-    jobs_left: Math.max(0, perDay - used.scored),
-    spent_today: Number(used.spent.toFixed(5)), daily_budget: Number(budget.toFixed(5)),
-    runs_today: used.runs,
+    manual_runs_used: all.manual_runs,
+    manual_runs_per_day: manualCap,
+    manual_runs_left: Math.max(0, manualCap - all.manual_runs),
+    manual_jobs_left: Math.max(0, perDay - manual.scored),
+    jobs_per_day: perDay,
+    scored_today: all.all_scored,
+    spent_today: Number(all.all_spent.toFixed(5)),
+    daily_budget: Number(budget.toFixed(5)),
+    runs_today: all.runs,
     resets: 'midnight UTC',
-    note: 'Manual runs draw on the same daily allowance as the scheduled run — pressing more often does not find more.',
+    note: 'Your manual search has its own daily allowance — the scheduled run never uses it up.',
   });
 });
 

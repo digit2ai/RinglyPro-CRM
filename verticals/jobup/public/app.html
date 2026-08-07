@@ -558,7 +558,7 @@ function loadToday(){
       '<div class="m">Run them now. They find and check &mdash; they never act for you.</div>'+
       '<div class="note" id="budget">&nbsp;</div>'+
       '<div class="acts">'+
-        '<button class="btn primary sm" onclick="runAgent(\'hunter\')">Find jobs</button>'+
+        '<button class="btn primary sm" data-agent="hunter" onclick="runAgent(\'hunter\')">Search for jobs now</button>'+
         '<button class="btn sm" onclick="runAgent(\'presence\')">Check my presence</button>'+
       '</div></div>'+
       '<div class="card"><div class="h2">Recent activity</div>'+
@@ -1545,19 +1545,23 @@ function loadBudget(){
   api('/api/v1/engine/agents/budget').then(function(r){
     if(!r.ok) return;
     var b=r.j;
-    el.innerHTML=b.jobs_left>0
-      ? b.jobs_left+' of '+b.jobs_per_day+' jobs left in today\u2019s allowance ('+
-        b.runs_today+' run'+(b.runs_today===1?'':'s')+' so far). Resets at '+esc(b.resets)+'.'
-      : '<span style="color:var(--warn)">Today\u2019s allowance is used up \u2014 '+
-        b.scored_today+' scored across '+b.runs_today+' run'+(b.runs_today===1?'':'s')+
-        '. Resets at '+esc(b.resets)+'.</span>';
+    var btn=document.querySelector('[data-agent="hunter"]');
+    if(b.manual_runs_left>0){
+      el.innerHTML='Your manual search is available today ('+b.manual_runs_left+' of '+
+        b.manual_runs_per_day+'). It has its own allowance \u2014 the daily run never uses it up.';
+      if(btn){btn.disabled=false;btn.textContent='Search for jobs now';}
+    }else{
+      el.innerHTML='<span style="color:var(--warn)">You have used today\u2019s manual search.</span> '+
+        'It resets at '+esc(b.resets)+' \u2014 and your agent still runs on its own every morning.';
+      if(btn){btn.disabled=true;btn.textContent='Searched today';}
+    }
   });
 }
 function runAgent(n){
   err('aerr','Running '+n+'…');
   api('/api/v1/engine/agents/'+n+'/run',{method:'POST'}).then(function(r){
     if(!r.ok){ loadBudget(); return err('aerr',r.j.error||'Run failed'); }
-    if(r.j.daily_limit_reached) err('aerr',r.j.note);
+    if(r.j.manual_limit_reached||r.j.daily_limit_reached) err('aerr',r.j.note);
     loadMatches(); loadToday(); loadAnalytics(); loadBudget();
     err('aerr',n+' finished.');
   });
