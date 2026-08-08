@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digit2AI — The 83-Agent Workforce</title>
+<meta name="description" content="Complete roster of the Digit2AI agent workforce: 8 always-on core agents and 75 senior specialists across eleven disciplines.">
+<style>
+:root{
+  --ink:#0f172a; --body:#334155; --mut:#64748b; --line:#e2e8f0; --line2:#cbd5e1;
+  --accent:#0369a1; --accent2:#0ea5e9; --lime:#4d7c0f; --bg:#ffffff; --tint:#f8fafc;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--tint);color:var(--body);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.sheet{max-width:1080px;margin:0 auto;background:var(--bg);padding:44px 52px 56px}
+
+header{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:26px}
+.brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:34px;line-height:1.1;margin:10px 0 8px;color:var(--ink);letter-spacing:-.02em;font-weight:700}
+.lede{color:var(--mut);font-size:15px;max-width:74ch;margin:0}
+.counts{display:flex;gap:26px;margin-top:20px;flex-wrap:wrap}
+.counts div{border-left:3px solid var(--accent2);padding-left:11px}
+.counts b{display:block;font-family:var(--mono);font-size:24px;color:var(--ink);line-height:1.1}
+.counts span{font-size:11.5px;color:var(--mut)}
+
+h2{font-size:13px;font-family:var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink);
+   margin:30px 0 10px;padding-bottom:7px;border-bottom:1.5px solid var(--line2);display:flex;justify-content:space-between;align-items:baseline}
+h2 em{font-style:normal;font-family:var(--sans);font-size:12px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:400}
+h2 .cnt{font-family:var(--mono);font-size:12px;color:var(--accent);background:#e0f2fe;padding:2px 9px;border-radius:99px;letter-spacing:.04em}
+
+table{width:100%;border-collapse:collapse;margin:0 0 4px}
+td{padding:5.5px 10px 5.5px 0;border-bottom:1px solid var(--line);vertical-align:baseline;font-size:13.5px}
+td.n{width:34px;font-family:var(--mono);font-size:11px;color:var(--mut);text-align:right;padding-right:12px;white-space:nowrap}
+td.r{color:var(--mut);font-size:12.5px}
+tr:last-child td{border-bottom:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 40px}
+/* screen-only: print paper computes to ~720px, which would otherwise trip this
+   breakpoint and collapse every section to a single column */
+@media screen and (max-width:760px){.two{grid-template-columns:1fr}.sheet{padding:26px 20px 36px}}
+
+.core td{padding-top:7px;padding-bottom:7px}
+.core td.role{color:var(--mut);font-size:12.5px}
+
+footer{margin-top:38px;padding-top:18px;border-top:2px solid var(--ink);color:var(--mut);font-size:11.5px;display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer .note{max-width:62ch}
+.tot{background:var(--ink);color:#fff;padding:14px 20px;border-radius:8px;margin:30px 0 0;display:flex;
+  justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.tot b{font-family:var(--mono);font-size:20px}
+.tot span{font-size:12.5px;color:#cbd5e1}
+
+@page{size:Letter;margin:14mm 13mm}
+@media print{
+  body{background:#fff;font-size:10pt}
+  .sheet{max-width:none;padding:0}
+  h1{font-size:24pt}
+  td{padding-top:3.6pt;padding-bottom:3.6pt}
+  header{margin-bottom:14pt;padding-bottom:12pt}
+  .counts{margin-top:12pt}
+  h2{break-after:avoid;page-break-after:avoid;margin-top:11pt;margin-bottom:5pt}
+  .tot{margin-top:14pt;padding:10pt 14pt}
+  footer{margin-top:16pt;padding-top:10pt}
+  table,.two{break-inside:avoid;page-break-inside:avoid}
+  section{break-inside:avoid;page-break-inside:avoid}
+  .tot{background:#0f172a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h2 .cnt{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div class="brand">Digit2AI &middot; MCP Brain</div>
+  <h1>The 83-Agent Workforce</h1>
+  <p class="lede">
+    Eight always-on core agents, plus seventy-five senior specialists dispatched on demand. The Brain routes each unit
+    of work to the agents that own it, fans out independent work in parallel, pipelines dependent work, and integrates
+    what comes back. New specialists are added each quarter and every deployment inherits them automatically.
+  </p>
+  <div class="counts">
+    <div><b>8</b><span>core, always on</span></div>
+    <div><b>75</b><span>specialists on demand</span></div>
+    <div><b>11</b><span>disciplines</span></div>
+    <div><b>83</b><span>total roster</span></div>
+  </div>
+</header>
+
+<section>
+<h2>Core &mdash; always on <span class="cnt">8</span></h2>
+<table class="core">
+  <tr><td class="n">01</td><td><strong>Senior Business Analyst</strong></td><td class="role">Decks, business plans, market research, strategy memos</td></tr>
+  <tr><td class="n">02</td><td><strong>Research Brief</strong></td><td class="role">Web search and synthesis; competitive scans, regulatory checks, shortlists</td></tr>
+  <tr><td class="n">03</td><td><strong>Outreach Drafter</strong></td><td class="role">Emails, messages, follow-ups EN/ES &mdash; drafts only, never sends</td></tr>
+  <tr><td class="n">04</td><td><strong>Architect &amp; Builder</strong></td><td class="role">Scopes the build, writes the code, runs UAT, ships it live</td></tr>
+  <tr><td class="n">05</td><td><strong>Inbox Triage</strong></td><td class="role">Scores inbound requests, flags regulatory risk, go/no-go</td></tr>
+  <tr><td class="n">06</td><td><strong>Meeting Minutes Synthesizer</strong></td><td class="role">Raw notes into summary, action items and assigned tasks</td></tr>
+  <tr><td class="n">07</td><td><strong>Voice AI Agents</strong></td><td class="role">Rachel, Ana and Lina &mdash; 24/7 qualify, book, log to CRM</td></tr>
+  <tr><td class="n">08</td><td><strong>Neural Findings</strong></td><td class="role">Watches every project for stalls, missing owners, overdue milestones</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Engineering &amp; Build <em>ships the system</em> <span class="cnt">12</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">09</td><td>Senior Full Stack Developer</td></tr>
+    <tr><td class="n">10</td><td>Senior Frontend Engineer</td></tr>
+    <tr><td class="n">11</td><td>Senior Backend Engineer</td></tr>
+    <tr><td class="n">12</td><td>Senior DevOps / SRE</td></tr>
+    <tr><td class="n">13</td><td>Senior Database Architect</td></tr>
+    <tr><td class="n">14</td><td>Senior API Designer</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">15</td><td>Senior Mobile Engineer</td></tr>
+    <tr><td class="n">16</td><td>Senior SIT Tester</td></tr>
+    <tr><td class="n">17</td><td>Senior UAT Coordinator</td></tr>
+    <tr><td class="n">18</td><td>Senior Production Release Manager</td></tr>
+    <tr><td class="n">19</td><td>Senior Security Engineer</td></tr>
+    <tr><td class="n">20</td><td>Senior Performance Engineer</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Data, ML &amp; Math <em>makes the numbers defensible</em> <span class="cnt">8</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">21</td><td>Senior Data Engineer</td></tr>
+    <tr><td class="n">22</td><td>Senior Data Analyst</td></tr>
+    <tr><td class="n">23</td><td>Senior Data Scientist</td></tr>
+    <tr><td class="n">24</td><td>Mathematics SME</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">25</td><td>Senior ML / AI Engineer</td></tr>
+    <tr><td class="n">26</td><td>Senior Forecasting Analyst</td></tr>
+    <tr><td class="n">27</td><td>Senior BI / Dashboard Builder</td></tr>
+    <tr><td class="n">28</td><td>Senior Statistician</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Business &amp; Strategy <em>decides what to build</em> <span class="cnt">8</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">29</td><td>Senior Project Manager</td></tr>
+    <tr><td class="n">30</td><td>Senior Product Manager</td></tr>
+    <tr><td class="n">31</td><td>Senior Strategy Consultant</td></tr>
+    <tr><td class="n">32</td><td>Senior Operations Analyst</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">33</td><td>Senior Process Improvement</td></tr>
+    <tr><td class="n">34</td><td>Senior M&amp;A Analyst</td></tr>
+    <tr><td class="n">35</td><td>Senior Pricing Analyst</td></tr>
+    <tr><td class="n">36</td><td>Senior Change Management</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Sales, Marketing &amp; Customer <em>finds and keeps revenue</em> <span class="cnt">9</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">37</td><td>Senior Sales Engineer</td></tr>
+    <tr><td class="n">38</td><td>Senior Lead Qualifier</td></tr>
+    <tr><td class="n">39</td><td>Senior Content Marketer</td></tr>
+    <tr><td class="n">40</td><td>Senior SEO Specialist</td></tr>
+    <tr><td class="n">41</td><td>Senior Brand Strategist</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">42</td><td>Senior CRM Hygiene Specialist</td></tr>
+    <tr><td class="n">43</td><td>Senior Customer Success Manager</td></tr>
+    <tr><td class="n">44</td><td>Senior Churn Prevention Analyst</td></tr>
+    <tr><td class="n">45</td><td>Senior Onboarding Specialist</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Finance &amp; Risk <em>guards the margin</em> <span class="cnt">7</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">46</td><td>Senior Accountant</td></tr>
+    <tr><td class="n">47</td><td>Senior FP&amp;A Analyst</td></tr>
+    <tr><td class="n">48</td><td>Senior Treasury Analyst</td></tr>
+    <tr><td class="n">49</td><td>Senior Tax Strategist</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">50</td><td>Senior Auditor</td></tr>
+    <tr><td class="n">51</td><td>Senior Risk Modeler</td></tr>
+    <tr><td class="n">52</td><td>Senior Invoice Reconciler</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Legal, Compliance &amp; HR <em>keeps it lawful</em> <span class="cnt">8</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">53</td><td>Senior Contract Drafter</td></tr>
+    <tr><td class="n">54</td><td>Senior NDA / IP Reviewer</td></tr>
+    <tr><td class="n">55</td><td>Senior Compliance Officer</td></tr>
+    <tr><td class="n">56</td><td>Senior Regulatory Researcher</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">57</td><td>Senior Privacy Officer (GDPR / HIPAA)</td></tr>
+    <tr><td class="n">58</td><td>Senior Recruiter</td></tr>
+    <tr><td class="n">59</td><td>Senior Performance Reviewer</td></tr>
+    <tr><td class="n">60</td><td>Senior Training Designer</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>AI-Native / LLM <em>the moat</em> <span class="cnt">6</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">61</td><td>Senior Prompt &amp; Eval Engineer</td></tr>
+    <tr><td class="n">62</td><td>Senior LLMOps / Model Router</td></tr>
+    <tr><td class="n">63</td><td>Senior RAG / Retrieval Engineer</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">64</td><td>Senior AI Safety / Red-Team Engineer</td></tr>
+    <tr><td class="n">65</td><td>Senior Conversation &amp; Voice UX Designer</td></tr>
+    <tr><td class="n">66</td><td>Senior MCP / Integration Engineer</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Reliability &amp; Trust <em>keeps it honest and up</em> <span class="cnt">5</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">67</td><td>Senior Observability Engineer</td></tr>
+    <tr><td class="n">68</td><td>Senior FinOps / Cloud-Cost Analyst</td></tr>
+    <tr><td class="n">69</td><td>Senior Data Governance / MDM Specialist</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">70</td><td>Senior Responsible-AI / Ethics Officer</td></tr>
+    <tr><td class="n">71</td><td>Senior Fraud &amp; Anomaly Detection Specialist</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Vertical SMEs <em>domain depth a generalist cannot carry</em> <span class="cnt">4</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">72</td><td>Clinical / Healthcare Informatics SME</td></tr>
+    <tr><td class="n">73</td><td>Logistics &amp; Supply-Chain SME</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">74</td><td>Agriculture &amp; Commodities SME</td></tr>
+    <tr><td class="n">75</td><td>Fintech / Payments SME</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Design, Content &amp; Localization <em>makes it usable</em> <span class="cnt">5</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">76</td><td>Senior UX/UI &amp; Design-System Designer</td></tr>
+    <tr><td class="n">77</td><td>Senior Localization Engineer</td></tr>
+    <tr><td class="n">78</td><td>Senior Accessibility (a11y) Specialist</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">79</td><td>Senior Technical Writer</td></tr>
+    <tr><td class="n">80</td><td>Senior Conversion-Rate Optimizer</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<h2>Growth &amp; Partnerships <em>opens the channel</em> <span class="cnt">3</span></h2>
+<div class="two">
+  <table>
+    <tr><td class="n">81</td><td>Senior Partnerships / Channel Manager</td></tr>
+    <tr><td class="n">82</td><td>Senior Solutions Architect / Pre-Sales</td></tr>
+  </table>
+  <table>
+    <tr><td class="n">83</td><td>Senior Demand-Gen / Paid-Ads Specialist</td></tr>
+  </table>
+</div>
+</section>
+
+<div class="tot">
+  <b>8 core + 75 specialists = 83</b>
+  <span>Routed by one MCP Brain &middot; wired to live systems via the open Model Context Protocol</span>
+</div>
+
+<footer>
+  <div class="note">
+    The Brain right-sizes every dispatch: a copy change needs one specialist, a new vertical may need fifteen.
+    Independent work runs in parallel; dependent work pipelines analyst &rarr; builder &rarr; tester &rarr; release.
+    Each build report names the agents actually activated.
+  </div>
+  <div>Digit2AI &middot; 83-Agent Workforce &middot; Rev 1.0</div>
+</footer>
+
+</div>
+</body>
+</html>

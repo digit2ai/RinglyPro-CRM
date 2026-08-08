@@ -121,6 +121,21 @@ ul.tick.red li::before{background:var(--red)}
 footer{padding:44px 0 0;color:var(--dim);font-size:13px}
 hr.sep{border:none;border-top:1px solid var(--line);margin:34px 0}
 
+/* ── download cards ── */
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px;margin-top:26px;max-width:900px}
+.dl-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--line2);
+  border-radius:11px;text-decoration:none;transition:border-color .16s,background .16s,transform .16s}
+.dl-card:hover{border-color:var(--cyan);background:#111e33;text-decoration:none;transform:translateY(-1px)}
+.dl-card.ghost{background:transparent}
+.dl-card.ghost:hover{background:var(--card)}
+.dl-ic{font-family:var(--mono);font-size:10px;letter-spacing:.09em;color:#7dd3fc;background:#0c2f4a;border:1px solid #1d4a6b;
+  padding:7px 9px;border-radius:7px;flex:0 0 auto}
+.dl-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dl-txt b{color:var(--txt);font-size:14px;font-weight:640;line-height:1.3}
+.dl-txt em{font-style:normal;color:var(--mut);font-size:12px;font-family:var(--mono);line-height:1.4}
+.dl-arrow{color:var(--cyan);font-size:17px;flex:0 0 auto}
+@media print{.dl{display:none}}
+
 /* ═══════════ NARRATED SIMULATOR ═══════════ */
 #sim{padding-top:44px}
 .simwrap{background:linear-gradient(180deg,#0c1424,#080d18);border:1px solid var(--line2);border-radius:16px;overflow:hidden;margin:18px 0 0}
@@ -241,6 +256,7 @@ body.simfull .simbar,body.simfull .simrail,body.simfull .simprog,body.simfull .s
 
   <div class="grp">Presentation</div>
   <a href="#sim" style="color:var(--lime);border-left-color:var(--lime)">&#9654; Narrated walkthrough</a>
+  <a href="digit2ai-83-agent-roster.pdf" download style="color:var(--cyan);border-left-color:var(--cyan)">&darr; 83-agent roster (PDF)</a>
 
   <div class="grp">Overview</div>
   <a href="#s1">1 &middot; Executive summary</a>
@@ -291,6 +307,25 @@ body.simfull .simbar,body.simfull .simrail,body.simfull .simprog,body.simfull .s
     <span>Interop: A2A Agent Card + JSON-RPC 2.0</span>
     <span>Runtime: Node.js / Express / PostgreSQL</span>
     <span>Derived from source, not from slides</span>
+  </div>
+
+  <div class="dl">
+    <a class="dl-card" href="digit2ai-83-agent-roster.pdf" download>
+      <span class="dl-ic">PDF</span>
+      <span class="dl-txt">
+        <b>The 83-Agent Workforce &mdash; complete roster</b>
+        <em>8 core + 75 specialists across 11 disciplines &middot; 3 pages, print-ready</em>
+      </span>
+      <span class="dl-arrow">&darr;</span>
+    </a>
+    <a class="dl-card ghost" href="digit2ai-83-agent-roster.html">
+      <span class="dl-ic">WEB</span>
+      <span class="dl-txt">
+        <b>View the roster in the browser</b>
+        <em>Same content, no download</em>
+      </span>
+      <span class="dl-arrow">&rarr;</span>
+    </a>
   </div>
 </header>
 
