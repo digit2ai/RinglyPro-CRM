@@ -666,7 +666,7 @@ Other PWA invariants worth not undoing:
 ### The deliverable
 A Red/Yellow/Green scorecard (Cost Comfort · Risk Comfort · Data Readiness), a three-phase roadmap where each phase carries cost, risk level, data requirements, timeline, success metrics and a **gate**, a safe next step sized under the CEO's stated exposure ceiling, and a **sponsor talk track** (what to say, what to watch for, prepared answers to the five objections that actually get raised). The talk track is deliberately **absent from the CEO's copy** — it includes how to read the room.
 
-**SIT:** `node verticals/ai-readiness/sit.js` → **88/88**, zero external keys. Asserts the invariants above, not the happy path: determinism with and without a model, the refusal on missing inputs, regulated work never entering Phase 1, the approval gate not running its handler, a model-supplied `tenant_id` reading as "not found", and denied calls still writing an audit row.
+**SIT:** `node verticals/ai-readiness/sit.js` → **95/95**, zero external keys. Asserts the invariants above, not the happy path: determinism with and without a model, the refusal on missing inputs, regulated work never entering Phase 1, the approval gate not running its handler, a model-supplied `tenant_id` reading as "not found", and denied calls still writing an audit row.
 
 **Doctrine:** `mcp-brain/agents/ai-readiness-department.md` (portable, vertical-neutral).
 
