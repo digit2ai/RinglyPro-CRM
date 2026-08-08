@@ -98,7 +98,8 @@ module.exports = defineAgent({
               pilot_weeks: assembled.phases[0].timeline_weeks,
               pilot_scope: assembled.phases[0].scope,
               data_headline: findings.data.headline,
-              safe_next_step: scorecard.safe_next_step
+              safe_next_step: scorecard.safe_next_step,
+              biggest_fear_text: (findings.risk || {}).worst_case_verbatim || null
             },
             assembled.executive_summary,
             lang

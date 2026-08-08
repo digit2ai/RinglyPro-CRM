@@ -320,6 +320,29 @@ const server = app.listen(0, async () => {
     ok(llm.deMarkdown('costs 3 * 4 dollars') === 'costs 3 * 4 dollars',
       'a lone asterisk in ordinary prose is left alone');
 
+    // Caught in production: handed a JSON bag of figures, the model wrote
+    // "your maximum exposure is $9,450 — you already spend that amount
+    // annually". Both figures were real and permitted, so the number verifier
+    // passed it; the CLAIM on one of them was false. A verifier that checks
+    // WHICH numbers appear cannot catch one attached to the wrong quantity, so
+    // the facts are handed over as labeled sentences instead.
+    const sentences = llm.factSentences({
+      company: 'X Co', cost_of_doing_nothing_annual_usd: 157768, max_exposure_usd: 9450,
+      payback_months: 7, pilot_weeks: 4, pilot_scope: ['a', 'b']
+    }, 'en');
+    const lines = sentences.split('\n');
+    const lineFor = n => lines.filter(l => l.includes(n));
+    ok(lineFor('157,768').length === 1 && lineFor('9,450').length === 1,
+      'each figure appears on exactly one labeled fact line');
+    ok(/NOT a saving and NOT an exposure/.test(lineFor('157,768')[0]) &&
+       /NOT an annual spend and NOT a saving/.test(lineFor('9,450')[0]),
+      'the two most-confusable figures each state what they are NOT');
+    ok(lines.every(l => l.startsWith('- ')) && lines.length >= 6,
+      'facts reach the model as one labeled sentence per fact, not as a JSON bag of keys');
+    const esSent = llm.factSentences({ max_exposure_usd: 9450, cost_of_doing_nothing_annual_usd: 157768 }, 'es');
+    ok(/Exposición máxima/.test(esSent) && /por año/.test(esSent),
+      'the labeled facts are produced in Spanish too');
+
     /* ══ 8. approval gate ══════════════════════════════════════════════ */
     console.log('\n-- approvals --');
     const beforeRoadmaps = await Roadmap.count({ where: { tenant_id: A.id, engagement_id: engId } });

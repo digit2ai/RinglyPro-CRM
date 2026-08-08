@@ -87,7 +87,7 @@ router.get('/health', async (req, res) => {
     note: 'Numbers are deterministic in every configuration. The model writes prose only.',
     // Named so the live guarantees are checkable from outside, and so a deploy
     // that has not picked up a change to them is visible rather than inferred.
-    narrative_guards: ['invented_figures_rejected', 'guarantee_language_rejected', 'markdown_stripped']
+    narrative_guards: ['invented_figures_rejected', 'guarantee_language_rejected', 'markdown_stripped', 'figures_labeled_one_meaning_each']
   });
 });
 

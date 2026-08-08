@@ -29,6 +29,7 @@ const SYSTEM = `You are the writing voice of the AI Readiness Department. You ar
 
 ABSOLUTE RULES:
 - You may NOT introduce any number, dollar figure, percentage, score, colour rating, timeline or metric that is not present in the FACTS given to you. Not one. If a number would help your sentence, and it is not in the FACTS, write the sentence without it.
+- EACH FIGURE HAS EXACTLY ONE MEANING, and that meaning is the sentence it appears in below. Never attach a figure to a different quantity than the one stated. Do not say a figure "is also" or "equals" or "is the same as" some other quantity. If you are not certain which quantity a number refers to, leave the number out and write the sentence qualitatively. Mixing up two correct figures is worse than omitting both, because the CEO will check one of them.
 - You may NOT promise an outcome, guarantee a saving, or characterise a result as certain. State what will be measured.
 - Do not flatter, do not sell, and do not use marketing language. This CEO reads sales copy as a warning sign.
 - Write plainly. Short sentences. No emojis. No bullet symbols.
@@ -37,6 +38,66 @@ ABSOLUTE RULES:
 - Do not restate the company name as a title. The document already carries it.
 
 You are writing one executive summary of at most 180 words, in the requested language, drawing ONLY on the FACTS.`;
+
+/**
+ * Render the facts as labeled sentences rather than a bag of JSON keys.
+ *
+ * This exists because of a real failure caught in production. Handed
+ * `{max_exposure_usd: 9450, cost_of_doing_nothing_annual_usd: 157768}`, the
+ * model wrote "your maximum exposure is $9,450 — you already spend that
+ * amount annually on this work". Both figures were real and permitted, so the
+ * number verifier passed it; the CLAIM attached to one of them was false.
+ *
+ * A verifier that checks which numbers appear cannot catch a number attached
+ * to the wrong quantity. Reducing the opportunity is more reliable than
+ * detecting the mistake: a model cross-wires adjacent JSON keys far more
+ * readily than it cross-wires two complete sentences that each state what
+ * their figure means.
+ */
+function factSentences(f = {}, lang = 'en') {
+  const es = lang === 'es';
+  const usd = n => '$' + Math.round(n).toLocaleString('en-US');
+  const L = [];
+  const push = (s) => { if (s) L.push('- ' + s); };
+
+  if (f.company) push(es ? `La empresa se llama ${f.company}.` : `The company is called ${f.company}.`);
+  if (f.cost_of_doing_nothing_annual_usd) {
+    push(es
+      ? `Costo anual actual de hacer este trabajo a mano, calculado con las horas y tarifas que el CEO dio: ${usd(f.cost_of_doing_nothing_annual_usd)} por año. Esta cifra NO es un ahorro ni una exposición.`
+      : `Current annual cost of doing this work by hand, computed from the hours and rates the CEO gave: ${usd(f.cost_of_doing_nothing_annual_usd)} per year. This figure is NOT a saving and NOT an exposure.`);
+  }
+  if (f.max_exposure_usd) {
+    push(es
+      ? `Exposición máxima del piloto: ${usd(f.max_exposure_usd)}. Es el total que la empresa puede perder si el piloto no devuelve nada y se detiene en la primera compuerta. Esta cifra NO es un gasto anual ni un ahorro.`
+      : `Maximum exposure on the pilot: ${usd(f.max_exposure_usd)}. This is the total the company can lose if the pilot returns nothing and is stopped at the first gate. This figure is NOT an annual spend and NOT a saving.`);
+  }
+  if (f.payback_months) {
+    push(es
+      ? `Meses hasta que el piloto se paga a sí mismo, con la tasa de captura conservadora: ${f.payback_months} meses.`
+      : `Months until the pilot pays for itself, at the conservative capture rate: ${f.payback_months} months.`);
+  }
+  if (f.pilot_weeks) push(es ? `Duración del piloto: ${f.pilot_weeks} semanas.` : `Pilot duration: ${f.pilot_weeks} weeks.`);
+  if (Array.isArray(f.pilot_scope) && f.pilot_scope.length) {
+    push(es ? `Procesos dentro del piloto: ${f.pilot_scope.join(', ')}.` : `Processes inside the pilot: ${f.pilot_scope.join(', ')}.`);
+  }
+  (f.lanes || []).forEach(l => {
+    push(es
+      ? `Carril "${l.title}": calificación ${l.rating}, puntaje ${l.score} sobre 100. ${l.headline || ''}`
+      : `Lane "${l.title}": rating ${l.rating}, score ${l.score} out of 100. ${l.headline || ''}`);
+  });
+  if (f.data_headline) push(es ? `Sobre los datos: ${f.data_headline}` : `On the data: ${f.data_headline}`);
+  if (f.verdict_label) push(es ? `Veredicto: ${f.verdict_label}` : `Verdict: ${f.verdict_label}`);
+  if (f.safe_next_step && f.safe_next_step.step) {
+    push(es ? `El siguiente paso recomendado: ${f.safe_next_step.step} ${f.safe_next_step.commitment || ''}`
+            : `The recommended next step: ${f.safe_next_step.step} ${f.safe_next_step.commitment || ''}`);
+    (f.safe_next_step.actions || []).forEach(a => push(es ? `Acción previa al piloto: ${a}` : `Action before the pilot starts: ${a}`));
+  }
+  if (f.biggest_fear_text) {
+    push(es ? `Lo que el CEO dijo que realmente lo frena: ${f.biggest_fear_text}.`
+            : `What the CEO said is really holding them back: ${f.biggest_fear_text}.`);
+  }
+  return L.join('\n');
+}
 
 /**
  * Strip markdown the prompt already forbids.
@@ -115,10 +176,11 @@ async function executiveSummary(facts, fallback, lang = 'en') {
         role: 'user',
         content: `LANGUAGE: ${lang === 'es' ? 'Spanish (proper orthography, tildes and ñ)' : 'English'}
 
-FACTS (the only source you may draw on):
-${JSON.stringify(facts, null, 2)}
+FACTS (the only source you may draw on). Each line states one fact and what its figure means. A figure means what its own line says it means, and nothing else:
 
-Write the executive summary now. At most 180 words. No number that is not above.`
+${factSentences(facts, lang)}
+
+Write the executive summary now. At most 180 words. No number that is not above, and no number attached to a quantity other than the one its line states.`
       }]
     };
 
@@ -163,4 +225,4 @@ Write the executive summary now. At most 180 words. No number that is not above.
 
 function available() { return !!KEY; }
 
-module.exports = { executiveSummary, available, numbersIn, allowedNumbers, deMarkdown, MODEL };
+module.exports = { executiveSummary, available, numbersIn, allowedNumbers, deMarkdown, factSentences, MODEL };
