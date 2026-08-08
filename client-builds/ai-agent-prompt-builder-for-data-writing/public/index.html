@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Agent Prompt Builder — Digit2AI</title>
+<meta name="description" content="Define a data-writing AI agent and export a valid JSON prompt in under ten minutes.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="max-w-[1500px] mx-auto px-5 py-8">
+
+  <!-- header -->
+  <header class="flex flex-wrap items-end justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-extrabold grad-title" data-i18n="app_title">AI Agent Prompt Builder</h1>
+      <p class="text-sm mt-2" style="color:var(--mut)" data-i18n="app_subtitle">Define a data-writing agent. Export a valid JSON prompt in under ten minutes.</p>
+    </div>
+    <nav class="flex items-center gap-3">
+      <a class="btn" href="gallery" data-i18n="btn_open_gallery">Browse templates</a>
+    </nav>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-6">
+
+    <!-- ============================= WIZARD ============================= -->
+    <form id="wizard" autocomplete="off" novalidate>
+
+      <!-- 1. Identity -->
+      <section class="card p-6 mb-5">
+        <div class="step-head"><span class="step-num">1</span><span data-i18n="step_identity">Identity</span></div>
+
+        <div class="field">
+          <label class="required" for="f-name" data-i18n="f_name">Agent name</label>
+          <input id="f-name" name="name" data-bind placeholder="Field Extractor" maxlength="200">
+          <div class="hint" data-i18n="f_name_hint">What this agent is called in your pipeline.</div>
+        </div>
+
+        <div class="field">
+          <label for="f-role" data-i18n="f_role">Role / persona</label>
+          <input id="f-role" name="role" data-bind placeholder="a precise data extraction specialist" maxlength="500">
+          <div class="hint" data-i18n="f_role_hint">Who the agent is. One line.</div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label for="f-description" data-i18n="f_description">Description (optional)</label>
+          <input id="f-description" name="description" data-bind placeholder="Front of the pipeline. Turns documents into rows." maxlength="1000">
+        </div>
+      </section>
+
+      <!-- 2. Context -->
+      <section class="card p-6 mb-5">
+        <div class="step-head"><span class="step-num">2</span><span data-i18n="step_context">Context</span></div>
+
+        <div class="field">
+          <label for="f-goal" data-i18n="f_goal">Goal</label>
+          <textarea id="f-goal" name="goal" data-bind rows="3" placeholder="Read a raw document and return the requested fields as strict JSON, using null where the document is silent."></textarea>
+          <div class="hint" data-i18n="f_goal_hint">The single outcome this agent is responsible for.</div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label for="f-dataSources" data-i18n="f_data_sources">Data sources</label>
+          <textarea id="f-dataSources" name="dataSources" data-bind data-list class="mono" rows="5"
+            placeholder="raw_documents table — column body_text&#10;extraction_fields config — field list per doc_type"></textarea>
+          <div class="hint" data-i18n="f_data_sources_hint">One per line. Table, file, API, or feed the agent reads.</div>
+        </div>
+      </section>
+
+      <!-- 3. Behavior -->
+      <section class="card p-6 mb-5">
+        <div class="step-head"><span class="step-num">3</span><span data-i18n="step_behavior">Behavior</span></div>
+
+        <div class="field">
+          <label for="f-instructions" data-i18n="f_instructions">Instructions</label>
+          <textarea id="f-instructions" name="instructions" data-bind data-list class="mono" rows="7"
+            placeholder="Read the full document before extracting anything.&#10;Copy values verbatim; do not normalize.&#10;If a field is not stated, return null. Never guess."></textarea>
+          <div class="hint" data-i18n="f_instructions_hint">One step per line. Ordered — they become a numbered list.</div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label for="f-constraints" data-i18n="f_constraints">Constraints</label>
+          <textarea id="f-constraints" name="constraints" data-bind data-list class="mono" rows="5"
+            placeholder="Never fabricate a value to satisfy a required field.&#10;Return JSON only. No prose, no code fences."></textarea>
+          <div class="hint" data-i18n="f_constraints_hint">One per line. What the agent must never do.</div>
+        </div>
+      </section>
+
+      <!-- 4. Output -->
+      <section class="card p-6 mb-5">
+        <div class="step-head"><span class="step-num">4</span><span data-i18n="step_output">Output</span></div>
+
+        <div class="field">
+          <label for="f-outputSchema" data-i18n="f_output_schema">Output schema (JSON)</label>
+          <textarea id="f-outputSchema" name="outputSchema" data-bind class="mono" rows="9"
+            placeholder='{ "document_id": "string", "fields": [ { "name": "string", "value": "string|null" } ] }'></textarea>
+          <div class="hint" data-i18n="f_output_schema_hint">The exact JSON shape the agent must return.</div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" style="margin-bottom:0">
+          <div class="field" style="margin-bottom:0">
+            <label for="f-model" data-i18n="f_model">Target model (optional)</label>
+            <input id="f-model" name="model" data-bind class="mono" placeholder="claude-haiku-4-5-20251001" maxlength="100">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="f-temperature" data-i18n="f_temperature">Temperature (optional)</label>
+            <input id="f-temperature" name="temperature" data-bind class="mono" type="number" step="0.1" min="0" max="2" placeholder="0.0">
+          </div>
+        </div>
+      </section>
+
+      <div class="flex flex-wrap gap-3">
+        <button type="button" class="btn" id="btn-reset" data-i18n="btn_reset">Clear form</button>
+        <a class="btn" href="gallery" data-i18n="btn_open_gallery">Browse templates</a>
+      </div>
+    </form>
+
+    <!-- ============================ PREVIEW ============================= -->
+    <aside>
+      <div class="preview-wrap">
+        <div class="card p-5">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider" style="color:var(--mut)" data-i18n="preview_title">Live JSON prompt</h2>
+            <span id="preview-status" class="status-pill status-ok" data-i18n="preview_valid">Valid JSON</span>
+          </div>
+
+          <!-- The element acceptance criterion 6 asserts on. -->
+          <pre id="json-preview" aria-live="polite"></pre>
+
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button type="button" class="btn btn-primary" id="btn-copy" data-i18n="btn_copy">Copy JSON</button>
+            <button type="button" class="btn" id="btn-download" data-i18n="btn_download">Download .json</button>
+            <button type="button" class="btn" id="btn-save" data-i18n="btn_save">Save agent</button>
+          </div>
+
+          <p class="hint" id="save-note" style="margin-top:10px"></p>
+        </div>
+
+        <div class="card p-5 mt-5">
+          <h2 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--mut)" data-i18n="saved_agents">Saved agents</h2>
+          <div id="saved-list"></div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <footer class="text-xs mt-10 pb-6" style="color:#475569">
+    This builder assembles prompt payloads. It does not execute them — the JSON is the deliverable.
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script src="promptBuilder.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

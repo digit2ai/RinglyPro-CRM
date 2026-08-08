@@ -1,0 +1,259 @@
+/* =====================================================
+   styles.css — dark theme + monospace JSON pane.
+
+   Follows digit2ai-projects/dashboard/ (same palette, same input treatment,
+   same gradient title) so this app does not look like a different product.
+   Tailwind comes from the CDN and handles layout; this file owns the tokens,
+   the form chrome and the preview pane — the parts Tailwind utilities would
+   make unreadable inline.
+   ===================================================== */
+
+:root {
+  --bg:        #05060f;
+  --bg-panel:  #0b1220;
+  --bg-raised: #0f172a;
+  --line:      #1e293b;
+  --txt:       #e6edf3;
+  --mut:       #94a3b8;
+  --accent:    #38bdf8;
+  --violet:    #a78bfa;
+  --ok:        #34d399;
+  --warn:      #fbbf24;
+  --err:       #f87171;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.grad-title {
+  background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(2, 6, 23, .85));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+/* --- form chrome --------------------------------------------------------- */
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--mut);
+  margin-bottom: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+input, textarea, select {
+  width: 100%;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  color: var(--txt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, .15);
+}
+
+textarea { resize: vertical; line-height: 1.55; }
+
+/* Multi-line list fields and the schema editor are structured data — they read
+   far better in the same monospace the preview uses. */
+textarea.mono, input.mono { font-family: var(--mono); font-size: 13px; }
+
+.field { margin-bottom: 20px; }
+
+.required::after { content: ' *'; color: var(--accent); }
+
+/* --- buttons ------------------------------------------------------------- */
+
+.btn {
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: #cbd5e1;
+  font-family: inherit;
+}
+.btn:hover { border-color: var(--accent); color: var(--txt); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #020617;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.btn-primary:hover { background: #7dd3fc; border-color: #7dd3fc; color: #020617; }
+
+.btn-ok { background: rgba(52, 211, 153, .15); color: var(--ok); border-color: rgba(52, 211, 153, .5); }
+
+/* --- section stepper ----------------------------------------------------- */
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--mut);
+}
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, .12);
+  border: 1px solid rgba(56, 189, 248, .4);
+  color: var(--accent);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+/* --- JSON preview pane ---------------------------------------------------- */
+
+.preview-wrap { position: sticky; top: 20px; }
+
+#json-preview {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  background: #020617;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 0;
+  overflow: auto;
+  max-height: 62vh;
+  white-space: pre;
+  tab-size: 2;
+  color: #cbd5e1;
+}
+
+/* Token colors for the highlighted preview. Kept low-saturation so a 200-line
+   payload does not read as confetti. */
+.tok-key    { color: #7dd3fc; }
+.tok-str    { color: #a5f3c8; }
+.tok-num    { color: #fbbf24; }
+.tok-bool   { color: #c4b5fd; }
+.tok-null   { color: #64748b; }
+.tok-punct  { color: #475569; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-family: var(--mono);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.status-ok   { color: var(--ok);   background: rgba(52, 211, 153, .1);  border-color: rgba(52, 211, 153, .35); }
+.status-bad  { color: var(--err);  background: rgba(248, 113, 113, .1); border-color: rgba(248, 113, 113, .35); }
+.status-warn { color: var(--warn); background: rgba(251, 191, 36, .1);  border-color: rgba(251, 191, 36, .35); }
+
+/* --- gallery -------------------------------------------------------------- */
+
+.tpl-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(2, 6, 23, .85));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .15s, transform .15s;
+}
+.tpl-card:hover { border-color: rgba(56, 189, 248, .5); transform: translateY(-2px); }
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(167, 139, 250, .12);
+  color: var(--violet);
+  border: 1px solid rgba(167, 139, 250, .3);
+}
+
+/* --- saved agents list ---------------------------------------------------- */
+
+.saved-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.saved-row .meta { color: var(--mut); font-size: 11px; font-family: var(--mono); }
+
+/* --- toast ---------------------------------------------------------------- */
+
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  background: var(--bg-raised);
+  border: 1px solid var(--accent);
+  color: var(--txt);
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 100;
+  transition: transform .25s ease;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .5);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* --- responsive ----------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .preview-wrap { position: static; }
+  #json-preview { max-height: 40vh; }
+}

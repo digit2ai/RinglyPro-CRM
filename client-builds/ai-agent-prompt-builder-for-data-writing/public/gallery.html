@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Template gallery — AI Agent Prompt Builder</title>
+<meta name="description" content="Six pre-built data-writing agent templates: extract, validate, classify, enrich, summarize, format.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="max-w-[1200px] mx-auto px-5 py-8">
+
+  <header class="flex flex-wrap items-end justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-extrabold grad-title" data-i18n="gallery_title">Template gallery</h1>
+      <p class="text-sm mt-2" style="color:var(--mut)" data-i18n="gallery_subtitle">Six pre-built data-writing agents. Load one and edit from there.</p>
+    </div>
+    <a class="btn" href="./" data-i18n="btn_back_wizard">Back to wizard</a>
+  </header>
+
+  <!-- The gallery is read-only and seeded this sprint; there is no publish
+       action by design, so the page is a list plus one action per card. -->
+  <div id="tpl-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+
+  <p id="tpl-empty" class="text-sm mt-6" style="color:var(--mut); display:none">
+    No templates returned. The gallery is seeded on boot — check
+    <code class="text-xs">/ai-agent-prompt-builder-for-data-writing/health</code> for the storage backend.
+  </p>
+
+  <footer class="text-xs mt-10 pb-6" style="color:#475569">
+    Templates are read-only starting points. Loading one copies it into your wizard; the gallery is never modified.
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script src="promptBuilder.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
