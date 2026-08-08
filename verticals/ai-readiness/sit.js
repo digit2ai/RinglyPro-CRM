@@ -183,6 +183,22 @@ const server = app.listen(0, async () => {
 
     /* ══ 3. auth + tenancy ═════════════════════════════════════════════ */
     console.log('\n-- auth and tenancy --');
+    // An interrupted earlier run leaves its sponsors behind, and the email
+    // column is unique — so without this the NEXT run fails on a collision and
+    // reports it as a product defect. Clear our own rows first.
+    const stale = await Sponsor.findAll({ where: { email: [SIT_A, SIT_B] } });
+    for (const s of stale) {
+      const t = s.tenant_id || s.id;
+      await Roadmap.destroy({ where: { tenant_id: t } });
+      await Finding.destroy({ where: { tenant_id: t } });
+      await Answer.destroy({ where: { tenant_id: t } });
+      await Approval.destroy({ where: { tenant_id: t } });
+      await Call.destroy({ where: { tenant_id: t } });
+      await Engagement.destroy({ where: { tenant_id: t } });
+    }
+    if (stale.length) await Sponsor.destroy({ where: { email: [SIT_A, SIT_B] } });
+    ok(true, `pre-clean removed ${stale.length} leftover SIT sponsor(s) from an earlier run`);
+
     const hash = await bcrypt.hash(SIT_PW, 10);
     A = await Sponsor.create({ email: SIT_A, name: 'SIT A', password_hash: hash, role: 'sponsor', created_at: new Date() });
     A.tenant_id = A.id; await A.save();
@@ -294,6 +310,15 @@ const server = app.listen(0, async () => {
 
     const finding = await Finding.findOne({ where: { tenant_id: A.id, engagement_id: engId, agent: 'cost_comfort' } });
     ok(finding && finding.computed_by === 'deterministic', 'lane findings record that they were computed deterministically');
+
+    // The prompt forbids markdown; this is the guarantee. Model text lands in a
+    // rendered document with HTML escaped, so a stray ** reaches the CEO as
+    // literal asterisks in the one document whose job is to look considered.
+    const md = llm.deMarkdown('## Heading\n\n**Bold** and *italic* and `code`\n- a bullet');
+    ok(!/[*#`]/.test(md) && /Bold and italic and code/.test(md),
+      'markdown is stripped from model prose before it reaches the deliverable');
+    ok(llm.deMarkdown('costs 3 * 4 dollars') === 'costs 3 * 4 dollars',
+      'a lone asterisk in ordinary prose is left alone');
 
     /* ══ 8. approval gate ══════════════════════════════════════════════ */
     console.log('\n-- approvals --');

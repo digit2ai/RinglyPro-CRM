@@ -33,8 +33,30 @@ ABSOLUTE RULES:
 - Do not flatter, do not sell, and do not use marketing language. This CEO reads sales copy as a warning sign.
 - Write plainly. Short sentences. No emojis. No bullet symbols.
 - Lead with what the CEO said worried them, and answer that first.
+- PLAIN PROSE ONLY. No markdown, no asterisks, no bold or italic markers, no headings, no lists. Your text is placed directly into a rendered document that shows those characters literally. Write flowing paragraphs separated by blank lines.
+- Do not restate the company name as a title. The document already carries it.
 
 You are writing one executive summary of at most 180 words, in the requested language, drawing ONLY on the FACTS.`;
+
+/**
+ * Strip markdown the prompt already forbids.
+ *
+ * The prompt is the request; this is the guarantee. Model text is placed
+ * directly into a rendered document with HTML escaped, so a stray `**` reaches
+ * the CEO as literal asterisks — which reads as a machine-generated artifact
+ * in precisely the document whose whole job is to look considered.
+ */
+function deMarkdown(text) {
+  return String(text || '')
+    .replace(/^\s*#{1,6}\s*/gm, '')          // headings
+    .replace(/\*\*([^*]+)\*\*/g, '$1')       // bold
+    .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s.,;:)!?]|$)/g, '$1$2')  // italic
+    .replace(/(^|[\s(])_([^_\n]+)_(?=[\s.,;:)!?]|$)/g, '$1$2')    // underscore italic
+    .replace(/^\s*[-*+]\s+/gm, '')           // bullet markers
+    .replace(/`([^`]+)`/g, '$1')             // inline code
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 /** Pull every numeric token out of a string, for the verification pass. */
 function numbersIn(text) {
@@ -115,7 +137,8 @@ Write the executive summary now. At most 180 words. No number that is not above.
 
     if (!res.ok) return safe;
     const json = await res.json();
-    const text = (json.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    const raw = (json.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    const text = deMarkdown(raw);
     if (!text || text.length < 40) return safe;
 
     // ── verification: reject invented numbers outright ──────────────────
@@ -140,4 +163,4 @@ Write the executive summary now. At most 180 words. No number that is not above.
 
 function available() { return !!KEY; }
 
-module.exports = { executiveSummary, available, numbersIn, allowedNumbers, MODEL };
+module.exports = { executiveSummary, available, numbersIn, allowedNumbers, deMarkdown, MODEL };
