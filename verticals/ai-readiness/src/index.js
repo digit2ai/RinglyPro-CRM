@@ -84,7 +84,10 @@ router.get('/health', async (req, res) => {
     agents: brain.agents.length,
     tools: brain.toolCount,
     narrative_model: llm.available() ? llm.MODEL : 'heuristic (no ANTHROPIC_API_KEY)',
-    note: 'Numbers are deterministic in every configuration. The model writes prose only.'
+    note: 'Numbers are deterministic in every configuration. The model writes prose only.',
+    // Named so the live guarantees are checkable from outside, and so a deploy
+    // that has not picked up a change to them is visible rather than inferred.
+    narrative_guards: ['invented_figures_rejected', 'guarantee_language_rejected', 'markdown_stripped']
   });
 });
 
