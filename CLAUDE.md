@@ -634,6 +634,49 @@ Other PWA invariants worth not undoing:
 - `AIRADAR_MODEL` — Anthropic model for enrichment. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`; unset key = labelled heuristic drafts (the app still works end to end).
 - `AIRADAR_PASSWORD` — owner password force-synced on boot (falls back to `SPEAKUP_TEAM_PASSWORD`, default `Palindrome@7`).
 
+## AI Readiness Department — a department inside the MCP Brain (folder: ai-readiness)
+
+**Purpose:** take a CEO from fear to confidence about adopting AI, and leave them holding a personalised AI Readiness Roadmap plus a next step small enough to say yes to in the room. Five agents behind one Brain, presented end to end by a human sponsor. Mounted at `/ai-readiness`. Bilingual EN/ES, emoji-free.
+
+**Location:** `verticals/ai-readiness/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/ai-readiness/migrations/20260808_ai_readiness_tables.sql`. Multi-tenant (`tenant_id` = sponsor id), `air_` prefix: `air_sponsors, air_engagements, air_answers, air_findings, air_roadmaps, air_calls, air_approvals`.
+
+**Live:** sponsor console `/ai-readiness/` · login `/ai-readiness/login` · the CEO's read-only roadmap `/ai-readiness/roadmap/:token` · health `/ai-readiness/health` · debug `/debug/ai-readiness-error`.
+
+### The crew — five agents, 22 tools, one gateway
+| Agent | Overcomes | Namespace |
+|---|---|---|
+| **Readiness Director** | Not knowing where to start | `readiness_director.*` |
+| **Cost Comfort Agent** | The fear of cost | `cost_comfort.*` |
+| **Risk Comfort Agent** | The fear of risk | `risk_comfort.*` |
+| **Data Readiness Agent** | The fear that the data is not good enough | `data_readiness.*` |
+| **Roadmap Builder** | Not knowing what the actual next step is | `roadmap_builder.*` |
+
+`src/brain.js` is the department gateway — same doctrine as the standalone MCP Brain (`github.com/digit2ai/mcp-brain`): five gates (agent enablement, channel allow-list, min trust, role allow-list, daily cost cap), `tenant_id` injected from session context and DELETED from tool arguments, human approval queue, full audit to `air_calls` including denials. `listTools` computes effective trust exactly as `callTool` does — do not let those drift.
+
+**THE AGENT ORDER IS LOAD-BEARING AND MUST NOT BE PARALLELISED.** Data runs first (its blocking-gap count becomes remediation hours in the cost model), then Cost (its Phase 1 scope is what Risk writes guardrails around), then Risk, then the Roadmap Builder. Fanning them out concurrently leaves each guessing at the others' output and the three lanes quietly disagree about which processes are in the pilot.
+
+### Honesty enforced in code, not in prompts
+- **The model writes prose; it never writes a number.** `src/services/llm.js` hands the engines' computed figures to Claude as facts, then verifies the output: text introducing a figure the engines did not produce, or any guarantee language, is **discarded** in favour of the deterministic prose. No `ANTHROPIC_API_KEY` = deterministic prose labeled `narrative_by:'heuristic'`; the figures are byte-identical either way (SIT asserts this).
+- **Every dollar traces to an interview answer.** No industry benchmarks in the savings math. An unstated leak is omitted, never estimated. Assumptions live in `engines/cost.js` each carrying a `basis` string rendered into the deliverable.
+- **`run_department` REFUSES to analyse while a required interview answer is missing**, and names which. This is the whole difference from the artifact the CEO was oversold last time.
+- **Phase 1 excludes regulated data, customer-facing output and zero-error-tolerance work by rule.** Phase 3 is **never priced** — costing a transformation against unknowns is the fabricated number that teaches CEOs to distrust these documents.
+- **The verdict is not an average**: a blocking data item dominates two green lanes. And there is **always a safe next step** — a red scorecard yields a smaller step, never "come back later".
+- **Mitigation vs guardrail**: every risk carries both, plus an owner and evidence. `publish_to_ceo` is approval-gated — the department obeys the "AI does not act without a human" rule it is selling.
+
+### The deliverable
+A Red/Yellow/Green scorecard (Cost Comfort · Risk Comfort · Data Readiness), a three-phase roadmap where each phase carries cost, risk level, data requirements, timeline, success metrics and a **gate**, a safe next step sized under the CEO's stated exposure ceiling, and a **sponsor talk track** (what to say, what to watch for, prepared answers to the five objections that actually get raised). The talk track is deliberately **absent from the CEO's copy** — it includes how to read the room.
+
+**SIT:** `node verticals/ai-readiness/sit.js` → **88/88**, zero external keys. Asserts the invariants above, not the happy path: determinism with and without a model, the refusal on missing inputs, regulated work never entering Phase 1, the approval gate not running its handler, a model-supplied `tenant_id` reading as "not found", and denied calls still writing an audit row.
+
+**Doctrine:** `mcp-brain/agents/ai-readiness-department.md` (portable, vertical-neutral).
+
+**Environment Variables:**
+- `AIR_JWT_SECRET` — signs the `air_token` sponsor cookie (falls back to `JWT_SECRET`), 30d. SET on prod.
+- `AIR_MODEL` — Anthropic model for the executive-summary prose. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`; unset = deterministic prose, identical figures.
+- `AIR_SPONSOR_PASSWORD` — sponsor password force-synced on boot (falls back to `SPEAKUP_TEAM_PASSWORD` / `LAWNCOPILOT_MSTAGG_PASSWORD`, default `Palindrome@7`).
+- `AIR_COST_CAP_USD` (15) — per-tenant daily Brain budget; the admin channel is exempt so an operator is never locked out by their own guard.
+- **Cost model** (`engines/cost.js`, every override changes the deliverable with no redeploy): `AIR_BUILD_RATE_USD_HR` (70) · `AIR_HOURS_PER_PROCESS` (40) · `AIR_HOURS_PER_INTEGRATION` (16) · `AIR_HOURS_PER_REMEDIATION` (12) · `AIR_CAPTURE_RATE_PILOT` (0.40) · `AIR_CAPTURE_RATE_SCALE` (0.60) · `AIR_RUN_COST_PER_PROCESS` (120) · `AIR_SUPPORT_MONTH` (250) · `AIR_COST_BAND_PCT` (0.30) · `AIR_PILOT_WEEKS` (4).
+
 ## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)
 
 **Purpose:** Digit2AI vertical for **executive English coaching for international leadership** (trade, investment, diplomacy, press). Built from Fernando de la Espriella García's coaching program for Dr. Mauricio Gómez Amín (new Colombian Minister of Comercio, Industria y Turismo). A coach logs 1:1 sessions, records + transcribes (voice or typed), and the AI generates the program's **5 post-session deliverables** + an **"80% student speaks" meter**. Spanish-first, emoji-free. Mounted at `/coaching-english`.

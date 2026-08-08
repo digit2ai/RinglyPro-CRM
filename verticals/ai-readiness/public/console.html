@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Readiness Department</title>
+<link rel="icon" href="/ai-readiness/favicon.svg">
+<style>
+  :root{
+    --bg:#0b1017; --bg2:#0f151e; --card:#131b26; --line:#22303f; --txt:#e8eef6; --mut:#8ea0b5;
+    --accent:#4f8cff; --green:#2fbf71; --yellow:#e0b341; --red:#e05c5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent)}
+  header{position:sticky;top:0;z-index:20;background:rgba(11,16,23,.94);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:13px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,#4f8cff,#2fbf71);flex:0 0 30px}
+  header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.01em}
+  header .sub{font-size:12px;color:var(--mut)}
+  .spacer{flex:1}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px 20px 80px}
+  h2{font-size:20px;margin:34px 0 6px;letter-spacing:-.015em}
+  h3{font-size:15px;margin:26px 0 10px}
+  .lead{color:var(--mut);margin:0 0 20px;max-width:70ch}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:14px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button,.btn{background:var(--accent);border:0;border-radius:9px;padding:10px 15px;color:#fff;font:inherit;
+    font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+  button.ghost,.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);font-weight:500}
+  button.ghost:hover{border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:default}
+  input,select,textarea{background:#0d141d;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    color:var(--txt);font:inherit;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:74px;resize:vertical}
+  label.q{display:block;margin:16px 0 6px;font-weight:550}
+  .why{color:var(--mut);font-size:13px;margin:-2px 0 8px;font-style:italic}
+  .muted{color:var(--mut)}
+  .small{font-size:13px}
+  .tiny{font-size:12px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;font-size:13.5px;user-select:none;background:#0d141d}
+  .chip.on{border-color:var(--accent);background:rgba(79,140,255,.14);color:#cfe0ff}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-weight:550;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:18px 0 4px}
+  .tab{padding:9px 14px;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent;font-size:14px}
+  .tab.on{color:var(--txt);border-bottom-color:var(--accent);font-weight:600}
+  .hide{display:none!important}
+  .lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+  .lane{border-radius:14px;padding:19px;border:1px solid var(--line);background:var(--card);position:relative;overflow:hidden}
+  .lane::before{content:"";position:absolute;inset:0 auto 0 0;width:5px}
+  .lane.green::before{background:var(--green)} .lane.yellow::before{background:var(--yellow)} .lane.red::before{background:var(--red)}
+  .lane h4{margin:0 0 3px;font-size:15px}
+  .rating{display:inline-flex;align-items:center;gap:7px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin:9px 0}
+  .bead{width:10px;height:10px;border-radius:50%}
+  .green .bead,.b-green{background:var(--green)} .yellow .bead,.b-yellow{background:var(--yellow)} .red .bead,.b-red{background:var(--red)}
+  .green .rating{color:var(--green)} .yellow .rating{color:var(--yellow)} .red .rating{color:var(--red)}
+  .score{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+  .verdict{border-left:4px solid var(--accent);padding:16px 19px;background:var(--bg2);border-radius:0 12px 12px 0;margin:18px 0}
+  .phase{border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:14px;background:var(--card)}
+  .phase-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .pill{font-size:11px;text-transform:uppercase;letter-spacing:.07em;border:1px solid var(--line);
+    border-radius:999px;padding:3px 10px;color:var(--mut)}
+  .pill.low{color:var(--green);border-color:rgba(47,191,113,.45)}
+  .pill.medium{color:var(--yellow);border-color:rgba(224,179,65,.45)}
+  .pill.managed{color:var(--accent);border-color:rgba(79,140,255,.45)}
+  ul{margin:8px 0;padding-left:19px} li{margin:5px 0}
+  .say{background:var(--bg2);border-left:3px solid var(--green);padding:13px 16px;border-radius:0 10px 10px 0;margin:8px 0}
+  .watch{color:var(--mut);font-size:13px;font-style:italic;margin:6px 0 0}
+  .obj{border:1px solid var(--line);border-radius:11px;padding:14px;margin:9px 0;background:var(--bg2)}
+  .obj .they{color:var(--yellow);font-weight:600;margin-bottom:6px}
+  .banner{border-radius:11px;padding:13px 16px;margin:12px 0;font-size:14px}
+  .banner.warn{background:rgba(224,179,65,.1);border:1px solid rgba(224,179,65,.4)}
+  .banner.err{background:rgba(224,92,92,.1);border:1px solid rgba(224,92,92,.4)}
+  .banner.ok{background:rgba(47,191,113,.1);border:1px solid rgba(47,191,113,.4)}
+  .proc{border:1px solid var(--line);border-radius:11px;padding:14px;margin:10px 0;background:var(--bg2)}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:11px}
+  .bar{height:5px;background:#0d141d;border-radius:99px;overflow:hidden;margin:9px 0}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .eng{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .eng:hover .en{color:var(--accent)}
+  .en{font-weight:600}
+  @media(max-width:640px){.wrap{padding:18px 14px 70px}h2{font-size:18px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <div>
+    <h1>AI Readiness Department</h1>
+    <div class="sub" id="who">Sponsor console</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="ghost" id="backBtn" style="display:none">All engagements</button>
+  <button class="ghost" id="out">Sign out</button>
+</header>
+
+<div class="wrap">
+
+  <!-- ══ LIST ══ -->
+  <section id="listView">
+    <h2>Engagements</h2>
+    <p class="lead">One engagement is one CEO, walked from whatever is holding them back to a next step small enough to decide in the room.</p>
+    <div class="card">
+      <h3 style="margin-top:0">Open a new engagement</h3>
+      <div class="grid2">
+        <div><label class="q" for="nCompany">Company</label><input id="nCompany" placeholder="Company name"></div>
+        <div><label class="q" for="nCeo">CEO</label><input id="nCeo" placeholder="Who are we walking through this?"></div>
+        <div><label class="q" for="nIndustry">Industry</label><input id="nIndustry" placeholder="Industry"></div>
+        <div><label class="q" for="nLang">Language</label><select id="nLang"><option value="en">English</option><option value="es">Español</option></select></div>
+      </div>
+      <div class="row" style="margin-top:15px"><button id="newBtn">Open engagement</button></div>
+      <div id="newErr" class="banner err hide"></div>
+    </div>
+    <div class="card"><div id="engList" class="muted">Loading…</div></div>
+  </section>
+
+  <!-- ══ ENGAGEMENT ══ -->
+  <section id="engView" class="hide">
+    <h2 id="engTitle">—</h2>
+    <p class="lead" id="engSub"></p>
+
+    <div class="tabs">
+      <div class="tab on" data-tab="interview">Interview</div>
+      <div class="tab" data-tab="scorecard">Scorecard</div>
+      <div class="tab" data-tab="roadmap">Roadmap</div>
+      <div class="tab" data-tab="present">Present</div>
+    </div>
+
+    <!-- interview -->
+    <div id="tab-interview">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <strong id="pctLabel">0% complete</strong>
+            <div class="tiny muted" id="missLabel"></div>
+          </div>
+          <button id="runBtn">Run the department</button>
+        </div>
+        <div class="bar"><i id="pctBar" style="width:0%"></i></div>
+        <div id="runMsg"></div>
+      </div>
+      <div id="sections"></div>
+    </div>
+
+    <!-- scorecard -->
+    <div id="tab-scorecard" class="hide"><div id="scorecardBody" class="muted">Run the department to produce the scorecard.</div></div>
+
+    <!-- roadmap -->
+    <div id="tab-roadmap" class="hide"><div id="roadmapBody" class="muted">Run the department to produce the roadmap.</div></div>
+
+    <!-- present -->
+    <div id="tab-present" class="hide"><div id="presentBody" class="muted">Run the department to produce the talk track.</div></div>
+  </section>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   The console is a thin client on purpose. Every action goes through the
+   Brain's /tools/call door via the convenience REST routes, so the console
+   holds no privileged path the other channels lack.
+   ───────────────────────────────────────────────────────────────────────── */
+const API='/ai-readiness/api/v1';
+let ENG=null, SECTIONS=[], ANSWERS={}, RESULT=null;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>n==null?'—':'$'+Math.round(n).toLocaleString('en-US');
+async function api(p,o){const r=await fetch(API+p,Object.assign({headers:{'Content-Type':'application/json'}},o||{}));
+  if(r.status===401){location.href='/ai-readiness/login';return{};} return r.json();}
+
+/* ── boot ── */
+(async function(){
+  const me=await api('/auth/me');
+  if(me&&me.user) $('who').textContent=(me.user.name||me.user.email)+' · Sponsor console';
+  loadList();
+})();
+
+$('out').onclick=async()=>{await api('/auth/logout',{method:'POST'});location.href='/ai-readiness/login';};
+$('backBtn').onclick=()=>showList();
+
+/* ── engagement list ── */
+async function loadList(){
+  const j=await api('/engagements');
+  const rows=(j&&j.engagements)||[];
+  $('engList').innerHTML = rows.length
+    ? rows.map(e=>`<div class="eng" data-id="${e.id}">
+        <div><div class="en">${esc(e.company_name)}</div>
+        <div class="tiny muted">${esc(e.ceo_name||'—')}${e.industry?' · '+esc(e.industry):''}</div></div>
+        <div class="tiny muted" style="text-align:right">${esc(e.stage)}${e.decision?'<br><span style="color:var(--green)">'+esc(e.decision)+'</span>':''}</div>
+      </div>`).join('')
+    : '<span class="muted">No engagements yet. Open one above.</span>';
+  document.querySelectorAll('.eng').forEach(el=>el.onclick=()=>openEng(Number(el.dataset.id)));
+}
+
+$('newBtn').onclick=async()=>{
+  const company=$('nCompany').value.trim();
+  if(!company){$('newErr').textContent='A company name is required.';$('newErr').classList.remove('hide');return;}
+  $('newBtn').disabled=true;
+  const j=await api('/engagements',{method:'POST',body:JSON.stringify({
+    company_name:company, ceo_name:$('nCeo').value.trim(), industry:$('nIndustry').value.trim(), lang:$('nLang').value })});
+  $('newBtn').disabled=false;
+  if(!j.success){$('newErr').textContent=j.error||'Could not open the engagement.';$('newErr').classList.remove('hide');return;}
+  $('newErr').classList.add('hide'); $('nCompany').value=$('nCeo').value=$('nIndustry').value='';
+  openEng(j.engagement_id);
+};
+
+function showList(){ $('listView').classList.remove('hide'); $('engView').classList.add('hide');
+  $('backBtn').style.display='none'; loadList(); }
+
+/* ── open one engagement ── */
+async function openEng(id){
+  const st=await api('/engagements/'+id);
+  if(!st.success){alert(st.error||'Not found');return;}
+  ENG=st.engagement;
+  $('listView').classList.add('hide'); $('engView').classList.remove('hide'); $('backBtn').style.display='';
+  $('engTitle').textContent=ENG.company_name;
+  $('engSub').textContent=[ENG.ceo_name,ENG.stage].filter(Boolean).join(' · ');
+  const iv=await api('/interview?engagement_id='+id);
+  SECTIONS=iv.sections||[]; ANSWERS=iv.answers||{};
+  renderInterview(iv);
+  RESULT=null;
+  const rm=await api('/engagements/'+id+'/roadmap');
+  if(rm&&rm.success){ RESULT={scorecard:rm.roadmap.scorecard,phases:rm.roadmap.phases,
+    executive_summary:rm.roadmap.executive_summary,talk_track:rm.roadmap.talk_track,
+    narrative_by:rm.roadmap.narrative_by}; renderResult(); }
+  else { $('scorecardBody').innerHTML='<span class="muted">Run the department to produce the scorecard.</span>';
+         $('roadmapBody').innerHTML='<span class="muted">Run the department to produce the roadmap.</span>';
+         $('presentBody').innerHTML='<span class="muted">Run the department to produce the talk track.</span>'; }
+  tab('interview');
+}
+
+/* ── tabs ── */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>tab(t.dataset.tab));
+function tab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
+  ['interview','scorecard','roadmap','present'].forEach(n=>$('tab-'+n).classList.toggle('hide',n!==name));
+}
+
+/* ── interview rendering ── */
+const L=o=>(o&&(o[(ENG&&ENG.lang)||'en']||o.en))||'';
+
+function renderInterview(iv){
+  $('pctLabel').textContent=(iv.completeness||0)+'% complete';
+  $('pctBar').style.width=(iv.completeness||0)+'%';
+  const miss=iv.missing_required||[];
+  $('missLabel').textContent = miss.length
+    ? miss.length+' required answer(s) outstanding — the department will not analyse until they are in.'
+    : 'Every required answer is in. Ready to analyse.';
+  $('runBtn').disabled = miss.length>0;
+
+  $('sections').innerHTML = SECTIONS.map(sec=>{
+    const a=ANSWERS[sec.id]||{};
+    return `<div class="card">
+      <h3 style="margin-top:0">${esc(L(sec.title))}</h3>
+      <p class="small muted" style="margin:0 0 4px">${esc(L(sec.intent))}</p>
+      ${sec.questions.map(q=>field(sec.id,q,a[q.key])).join('')}
+      <div class="row" style="margin-top:17px">
+        <button data-save="${sec.id}">Save section</button>
+        <span class="tiny muted" id="saved-${sec.id}"></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>saveSection(b.dataset.save));
+  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const multi=c.dataset.multi==='1';
+    if(!multi){ document.querySelectorAll(`.chip[data-k="${c.dataset.k}"]`).forEach(x=>x.classList.remove('on')); }
+    c.classList.toggle('on');
+  });
+  document.querySelectorAll('[data-addproc]').forEach(b=>b.onclick=()=>{
+    const host=$('proc-'+b.dataset.addproc);
+    host.insertAdjacentHTML('beforeend',procRow(b.dataset.addproc,host.children.length,{}));
+  });
+}
+
+function field(sid,q,val){
+  const id=`f-${sid}-${q.key}`;
+  const why=q.why?`<div class="why">${esc(L(q.why))}</div>`:'';
+  const lab=`<label class="q" for="${id}">${esc(L(q.q))}${q.required?' <span style="color:var(--accent)">*</span>':''}</label>${why}`;
+
+  if(q.type==='process_list'){
+    const list=Array.isArray(val)?val:[];
+    const rows=(list.length?list:[{}]).map((p,i)=>procRow(sid,i,p)).join('');
+    return `${lab}<div id="proc-${sid}">${rows}</div>
+      <button class="ghost" data-addproc="${sid}" style="margin-top:9px">Add another process</button>`;
+  }
+  if(q.type==='multi'||q.type==='select'){
+    const opts=q.options||[];
+    const cur=q.type==='multi'?(Array.isArray(val)?val:[]):(val?[val]:[]);
+    const labels=(q.labels&&(q.labels[(ENG&&ENG.lang)||'en']||q.labels.en))||{};
+    return `${lab}<div class="chips" data-field="${sid}|${q.key}|${q.type}">${opts.map(o=>
+      `<span class="chip${cur.includes(o)?' on':''}" data-k="${sid}|${q.key}" data-multi="${q.type==='multi'?1:0}" data-v="${esc(o)}">${esc(labels[o]||o.replace(/_/g,' '))}</span>`
+    ).join('')}</div>`;
+  }
+  if(q.type==='scale_1_5'){
+    return `${lab}<div class="chips" data-field="${sid}|${q.key}|scale">${[1,2,3,4,5].map(n=>
+      `<span class="chip${Number(val)===n?' on':''}" data-k="${sid}|${q.key}" data-multi="0" data-v="${n}">${n}</span>`
+    ).join('')}<span class="tiny muted" style="align-self:center">1 = not at all, 5 = completely</span></div>`;
+  }
+  if(q.type==='bool'){
+    return `${lab}<div class="chips" data-field="${sid}|${q.key}|bool">
+      <span class="chip${val===true?' on':''}" data-k="${sid}|${q.key}" data-multi="0" data-v="yes">Yes</span>
+      <span class="chip${val===false?' on':''}" data-k="${sid}|${q.key}" data-multi="0" data-v="no">No</span></div>`;
+  }
+  if(q.type==='textarea') return `${lab}<textarea id="${id}" data-field="${sid}|${q.key}|text">${esc(val||'')}</textarea>`;
+  if(q.type==='number') return `${lab}<input id="${id}" type="number" min="0" data-field="${sid}|${q.key}|number" value="${val==null?'':esc(val)}">`;
+  return `${lab}<input id="${id}" data-field="${sid}|${q.key}|text" value="${esc(val||'')}">`;
+}
+
+function procRow(sid,i,p){
+  return `<div class="proc" data-proc="${sid}">
+    <div class="grid2">
+      <div><label class="tiny muted">Process</label><input data-p="name" value="${esc(p.name||'')}" placeholder="e.g. quoting"></div>
+      <div><label class="tiny muted">People</label><input data-p="people" type="number" min="0" value="${p.people==null?'':esc(p.people)}"></div>
+      <div><label class="tiny muted">Hours/week each</label><input data-p="hours_per_week" type="number" min="0" value="${p.hours_per_week==null?'':esc(p.hours_per_week)}"></div>
+      <div><label class="tiny muted">Loaded $/hour</label><input data-p="loaded_hourly_cost" type="number" min="0" value="${p.loaded_hourly_cost==null?'':esc(p.loaded_hourly_cost)}"></div>
+    </div>
+    <div class="chips" style="margin-top:10px">
+      <span class="chip pchip${p.customer_facing?' on':''}" data-p="customer_facing">Customer sees the output</span>
+      <span class="chip pchip${p.involves_regulated_data?' on':''}" data-p="involves_regulated_data">Touches regulated data</span>
+    </div>
+    <label class="tiny muted" style="display:block;margin-top:10px">Cost of an error</label>
+    <select data-p="error_tolerance">
+      ${['high','medium','low','zero'].map(o=>`<option value="${o}"${p.error_tolerance===o?' selected':''}>${o==='high'?'Low cost — easily corrected':o==='medium'?'Moderate':o==='low'?'High — hard to correct':'Unrecoverable'}</option>`).join('')}
+    </select>
+  </div>`;
+}
+
+/* ── collect + save ── */
+function collect(sid){
+  const out={};
+  document.querySelectorAll(`[data-field^="${sid}|"]`).forEach(el=>{
+    const [,key,type]=el.dataset.field.split('|');
+    if(type==='number'){ if(el.value!=='') out[key]=Number(el.value); return; }
+    if(type==='text'){ if(el.value.trim()) out[key]=el.value.trim(); return; }
+    const on=[...el.querySelectorAll('.chip.on')].map(c=>c.dataset.v);
+    if(type==='multi') out[key]=on;
+    else if(type==='scale') { if(on.length) out[key]=Number(on[0]); }
+    else if(type==='bool') { if(on.length) out[key]=on[0]==='yes'; }
+    else if(on.length) out[key]=on[0];
+  });
+  const procs=[...document.querySelectorAll(`.proc[data-proc="${sid}"]`)].map(row=>{
+    const p={};
+    row.querySelectorAll('input[data-p],select[data-p]').forEach(f=>{
+      const k=f.dataset.p;
+      if(f.type==='number'){ if(f.value!=='') p[k]=Number(f.value); }
+      else if(f.value) p[k]=f.value;
+    });
+    row.querySelectorAll('.pchip').forEach(c=>{ p[c.dataset.p]=c.classList.contains('on'); });
+    return p;
+  }).filter(p=>p.name);
+  if(procs.length) out.processes=procs;
+  return out;
+}
+
+async function saveSection(sid){
+  const payload=collect(sid);
+  const j=await api('/engagements/'+ENG.id+'/answers',{method:'POST',
+    body:JSON.stringify({section:sid,payload,answered_by:'ceo'})});
+  const el=$('saved-'+sid);
+  if(!j.success){el.textContent=j.error||'Save failed';el.style.color='var(--red)';return;}
+  el.textContent='Saved'; el.style.color='var(--green)';
+  setTimeout(()=>{el.textContent='';},2200);
+  const iv=await api('/interview?engagement_id='+ENG.id);
+  ANSWERS=iv.answers||{};
+  $('pctLabel').textContent=(iv.completeness||0)+'% complete';
+  $('pctBar').style.width=(iv.completeness||0)+'%';
+  const miss=iv.missing_required||[];
+  $('missLabel').textContent=miss.length?miss.length+' required answer(s) outstanding — the department will not analyse until they are in.':'Every required answer is in. Ready to analyse.';
+  $('runBtn').disabled=miss.length>0;
+}
+
+/* ── run the department ── */
+$('runBtn').onclick=async()=>{
+  $('runBtn').disabled=true;
+  $('runMsg').innerHTML='<div class="banner warn">Running Data Readiness, then Cost Comfort, then Risk Comfort, then assembling the roadmap…</div>';
+  const j=await api('/engagements/'+ENG.id+'/run',{method:'POST',body:JSON.stringify({})});
+  $('runBtn').disabled=false;
+  if(!j.success){
+    $('runMsg').innerHTML='<div class="banner err"><strong>'+esc(j.error||'Failed')+'</strong>'+
+      (j.why?'<div class="small" style="margin-top:6px">'+esc(j.why)+'</div>':'')+
+      (j.missing_required?'<ul class="small">'+j.missing_required.map(m=>'<li>'+esc(m.section)+' — '+esc(L(m.question))+'</li>').join('')+'</ul>':'')+'</div>';
+    return;
+  }
+  $('runMsg').innerHTML='<div class="banner ok">Department run complete. '+
+    (j.agents_run||[]).map(a=>esc(a.agent)).join(', ')+'.</div>';
+  RESULT=j; renderResult(); tab('scorecard');
+};
+
+/* ── results ── */
+function renderResult(){
+  const sc=RESULT.scorecard||{}, phases=RESULT.phases||[];
+
+  /* scorecard */
+  $('scorecardBody').innerHTML=`
+    <div class="verdict">
+      <div class="tiny muted" style="text-transform:uppercase;letter-spacing:.08em">Verdict</div>
+      <div style="font-size:18px;font-weight:600;margin:5px 0 8px">${esc(sc.verdict_label||'')}</div>
+      <div class="small muted">${esc(sc.confidence_note||'')}</div>
+    </div>
+    <div class="lanes">${(sc.lanes||[]).map(l=>`
+      <div class="lane ${esc(l.rating)}">
+        <h4>${esc(l.title)}</h4>
+        <div class="tiny muted">${esc(l.question)}</div>
+        <div class="rating"><span class="bead"></span>${esc(l.rating)}</div>
+        <div class="score">${l.score==null?'—':l.score}<span class="tiny muted" style="font-weight:400">/100</span></div>
+        <p class="small" style="margin:11px 0 0">${esc(l.headline)}</p>
+        ${(l.what_would_move_it||[]).length?`<div class="tiny muted" style="margin-top:12px"><strong>What would move it:</strong><ul class="tiny">${l.what_would_move_it.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul></div>`:''}
+      </div>`).join('')}
+    </div>
+    ${sc.safe_next_step?`<div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">The safe next step</h3>
+      <p style="font-size:17px;margin:0 0 8px"><strong>${esc(sc.safe_next_step.step)}</strong></p>
+      <p class="muted small">${esc(sc.safe_next_step.why)}</p>
+      <ul class="small">${(sc.safe_next_step.actions||[]).map(a=>'<li>'+esc(a)+'</li>').join('')}</ul>
+      <p class="small"><strong>Commitment:</strong> ${esc(sc.safe_next_step.commitment)}
+      ${sc.safe_next_step.exposure_usd!=null?' · <strong>Maximum exposure:</strong> '+money(sc.safe_next_step.exposure_usd):''}</p>
+    </div>`:''}
+    <div class="card">
+      <h3 style="margin-top:0">Why each lane scored as it did</h3>
+      ${(sc.lanes||[]).map(l=>`<h4 class="small" style="margin:14px 0 4px">${esc(l.title)}</h4>
+        <ul class="small muted">${(l.reasons||[]).map(r=>'<li>'+esc(r)+'</li>').join('')}</ul>`).join('')}
+    </div>`;
+
+  /* roadmap */
+  $('roadmapBody').innerHTML=`
+    <div class="card">
+      <h3 style="margin-top:0">Executive summary</h3>
+      <p>${esc(RESULT.executive_summary||'')}</p>
+      <div class="tiny muted">Narrative: ${esc(RESULT.narrative_by||'heuristic')}${RESULT.narrative_by==='heuristic'?' (no model key — figures are identical either way)':''}</div>
+    </div>
+    ${phases.map(p=>phaseCard(p)).join('')}
+    ${(RESULT.assumptions||[]).length?`<div class="card">
+      <h3 style="margin-top:0">Every assumption used</h3>
+      <p class="small muted">Listed so the CEO can argue with them. An assumption they discover later costs the engagement.</p>
+      <table><thead><tr><th>Assumption</th><th>Value</th><th>Basis</th></tr></thead><tbody>
+      ${RESULT.assumptions.map(a=>`<tr><td>${esc(a.key.replace(/_/g,' '))}</td><td>${esc(a.value)}</td><td class="muted">${esc(a.basis)}</td></tr>`).join('')}
+      </tbody></table></div>`:''}
+    ${(RESULT.honesty_notes||[]).length?`<div class="card">
+      <h3 style="margin-top:0">What this document will not do</h3>
+      <ul class="small">${RESULT.honesty_notes.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul></div>`:''}
+    <div class="card">
+      <h3 style="margin-top:0">Hand it to the CEO</h3>
+      <p class="small muted">Publishing is approval-gated. It goes to the queue and does not run until a person signs it off — the department obeys the rule it is selling.</p>
+      <div class="row"><button id="pubBtn">Publish to the CEO</button>
+        <select id="decSel" style="max-width:210px">
+          <option value="">Record a decision…</option>
+          <option value="pilot">Pilot approved</option>
+          <option value="narrow_pilot">Narrow pilot approved</option>
+          <option value="remediate">Remediate first</option>
+          <option value="declined">Declined</option>
+        </select>
+        <button class="ghost" id="decBtn">Save decision</button></div>
+      <div id="pubMsg"></div>
+    </div>`;
+
+  $('pubBtn').onclick=async()=>{
+    const j=await api('/engagements/'+ENG.id+'/publish',{method:'POST',body:JSON.stringify({})});
+    $('pubMsg').innerHTML = j.requires_approval
+      ? '<div class="banner warn">In the approval queue (#'+esc(j.approval_id)+'). It does not run until a person signs it off.</div>'
+      : (j.success?'<div class="banner ok">Published: <a href="/ai-readiness/roadmap/'+esc(j.share_token)+'" target="_blank">read-only link</a></div>'
+                  :'<div class="banner err">'+esc(j.error||'Failed')+'</div>');
+  };
+  $('decBtn').onclick=async()=>{
+    const d=$('decSel').value; if(!d)return;
+    const j=await api('/engagements/'+ENG.id+'/decision',{method:'POST',body:JSON.stringify({decision:d})});
+    $('pubMsg').innerHTML=j.success?'<div class="banner ok">Decision recorded: '+esc(d)+'</div>':'<div class="banner err">'+esc(j.error)+'</div>';
+  };
+
+  /* present */
+  const tt=RESULT.talk_track||[];
+  $('presentBody').innerHTML=`
+    <div class="card">
+      <h3 style="margin-top:0">Presenter mode</h3>
+      <p class="small muted">What to say, section by section, and what to watch for in the room. This is the sponsor's script — it is not in the CEO's copy.</p>
+    </div>
+    ${tt.map(s=>s.objections?`<div class="card">
+        <h3 style="margin-top:0">${esc(s.section)}</h3>
+        ${s.objections.map(o=>`<div class="obj"><div class="they">"${esc(o.they_say)}"</div><div>${esc(o.you_say)}</div></div>`).join('')}
+      </div>`:`<div class="card">
+        <h3 style="margin-top:0">${esc(s.section)}</h3>
+        <div class="say">${esc(s.say)}</div>
+        ${s.watch_for?`<p class="watch">Watch for: ${esc(s.watch_for)}</p>`:''}
+      </div>`).join('')}`;
+}
+
+function phaseCard(p){
+  const c=p.cost||{};
+  return `<div class="phase">
+    <div class="phase-h">
+      <h3 style="margin:0">${esc(p.title)}</h3>
+      ${p.risk_level?`<span class="pill ${esc(p.risk_level)}">${esc(p.risk_level)} risk</span>`:''}
+      ${p.timeline_weeks?`<span class="pill">${esc(p.timeline_weeks)} weeks</span>`:''}
+      ${p.conditional?`<span class="pill">conditional</span>`:''}
+    </div>
+    <p class="small" style="margin:10px 0">${esc(p.objective)}</p>
+    ${p.condition?`<p class="small muted"><em>${esc(p.condition)}</em></p>`:''}
+    ${(p.scope||[]).length?`<p class="small"><strong>Scope:</strong> ${p.scope.map(esc).join(', ')}</p>`:''}
+    ${(p.out_of_scope||[]).length?`<p class="small muted"><strong>Deliberately out of scope:</strong> ${p.out_of_scope.map(o=>esc(o.name)+' ('+esc(o.why)+')').join('; ')}</p>`:''}
+    <div class="grid2" style="margin:13px 0">
+      ${c.build_usd_range?`<div><div class="tiny muted">Build</div><strong>${esc(c.build_usd_range)}</strong></div>`:''}
+      ${c.run_monthly_usd!=null?`<div><div class="tiny muted">Run / month</div><strong>${money(c.run_monthly_usd)}</strong></div>`:''}
+      ${c.max_exposure_usd!=null?`<div><div class="tiny muted">Maximum exposure</div><strong style="color:var(--green)">${money(c.max_exposure_usd)}</strong></div>`:''}
+      ${c.projected_annual_savings_usd!=null?`<div><div class="tiny muted">Projected annual saving</div><strong>${money(c.projected_annual_savings_usd)}</strong></div>`:''}
+    </div>
+    ${c.max_exposure_note?`<p class="tiny muted">${esc(c.max_exposure_note)}</p>`:''}
+    ${c.costed===false?`<div class="banner warn small">${esc(c.why_not_costed)}</div>`:''}
+    ${c.note?`<p class="tiny muted">${esc(c.note)}</p>`:''}
+    ${p.risk_level_why?`<p class="small"><strong>Why that risk level:</strong> ${esc(p.risk_level_why)}</p>`:''}
+    ${(p.data_requirements||[]).length?`<p class="small"><strong>Data requirements:</strong></p><ul class="small">${p.data_requirements.map(d=>'<li>'+esc(d)+'</li>').join('')}</ul>`:
+      (p.data_requirements_note?`<p class="small muted">${esc(p.data_requirements_note)}</p>`:'')}
+    ${(p.timeline_detail||[]).length?`<p class="small"><strong>Week by week:</strong></p>
+      <table><tbody>${p.timeline_detail.map(t=>`<tr><td style="width:90px">Week ${esc(t.week)}</td><td><strong>${esc(t.label)}</strong><div class="tiny muted">${esc(t.detail)}</div></td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.success_metrics||[]).length?`<p class="small"><strong>Success metrics:</strong></p>
+      <table><thead><tr><th>Metric</th><th>How measured</th><th>Target</th></tr></thead><tbody>
+      ${p.success_metrics.map(m=>`<tr><td>${esc(m.metric)}</td><td class="muted">${esc(m.how_measured)}</td><td class="muted">${esc(m.target||'—')}</td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.exit_criteria||[]).length?`<p class="small"><strong>Exit criteria — what stops it:</strong></p>
+      <table><tbody>${p.exit_criteria.map(e=>`<tr><td>${esc(e.trigger)}</td><td class="muted">${esc(e.action)}</td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.what_you_keep_if_it_fails||[]).length?`<p class="small"><strong>What you keep if it fails:</strong></p><ul class="small">${p.what_you_keep_if_it_fails.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${(p.preconditions||[]).length?`<p class="small"><strong>Preconditions:</strong></p><ul class="small">${p.preconditions.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${(p.directions||[]).length?`<ul class="small">${p.directions.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${p.gate?`<div class="banner warn"><strong>${esc(p.gate.title)}</strong>
+      <ul class="small" style="margin:7px 0">${(p.gate.conditions||[]).map(c=>'<li>'+esc(c)+'</li>').join('')}</ul>
+      <div class="small">${esc(p.gate.if_not_met)}</div></div>`:''}
+  </div>`;
+}
+</script>
+</body>
+</html>

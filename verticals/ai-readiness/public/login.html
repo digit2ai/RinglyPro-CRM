@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Readiness Department</title>
+<link rel="icon" href="/ai-readiness/favicon.svg">
+<style>
+  :root{
+    --bg:#0b1017; --card:#131b26; --line:#22303f; --txt:#e8eef6; --mut:#8ea0b5;
+    --accent:#4f8cff; --green:#2fbf71; --yellow:#e0b341; --red:#e05c5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .wrap{width:100%;max-width:420px}
+  .mark{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+  .dot{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,#4f8cff,#2fbf71);flex:0 0 38px}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px}
+  label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 7px}
+  input{width:100%;background:#0d141d;border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--txt);font:inherit;margin-bottom:17px}
+  input:focus{outline:none;border-color:var(--accent)}
+  button{width:100%;background:var(--accent);border:0;border-radius:10px;padding:13px;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  .err{color:var(--red);font-size:13px;min-height:19px;margin-top:11px}
+  .note{color:var(--mut);font-size:12px;margin-top:20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mark">
+    <div class="dot"></div>
+    <div>
+      <h1>AI Readiness Department</h1>
+      <div class="sub">Sponsor console</div>
+    </div>
+  </div>
+  <form id="f">
+    <label for="e">Email</label>
+    <input id="e" type="email" autocomplete="username" required>
+    <label for="p">Password</label>
+    <input id="p" type="password" autocomplete="current-password" required>
+    <button id="b" type="submit">Sign in</button>
+    <div class="err" id="err"></div>
+  </form>
+  <div class="note">Login only. Sponsors hold other companies' confidential interviews, so accounts are provisioned rather than self-served.</div>
+</div>
+<script>
+const f=document.getElementById('f'),b=document.getElementById('b'),err=document.getElementById('err');
+f.addEventListener('submit',async ev=>{
+  ev.preventDefault(); b.disabled=true; err.textContent='';
+  try{
+    const r=await fetch('/ai-readiness/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:document.getElementById('e').value,password:document.getElementById('p').value})});
+    const j=await r.json();
+    if(!r.ok||!j.success){err.textContent=j.error||'Sign in failed';b.disabled=false;return;}
+    const n=new URLSearchParams(location.search).get('next');
+    location.href=n||'/ai-readiness/';
+  }catch(e){err.textContent=e.message;b.disabled=false;}
+});
+</script>
+</body>
+</html>

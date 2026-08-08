@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Readiness Roadmap</title>
+<link rel="icon" href="/ai-readiness/favicon.svg">
+<style>
+  /* The CEO's copy. Light, printable, and deliberately austere: this document
+     is read by someone who treats visual salesmanship as a warning sign. */
+  :root{--bg:#fff;--ink:#12181f;--mut:#5d6b7a;--line:#dfe5ec;--accent:#2560c9;
+        --green:#1d8a52;--yellow:#a97b12;--red:#bf3b3b;--soft:#f6f8fb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 26px 90px}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut)}
+  h1{font-size:31px;margin:8px 0 4px;letter-spacing:-.02em}
+  h2{font-size:21px;margin:44px 0 8px;letter-spacing:-.015em}
+  h3{font-size:16px;margin:26px 0 7px}
+  .sub{color:var(--mut);margin:0}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+  .lead{font-size:18px;line-height:1.6}
+  .lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin:20px 0}
+  .lane{border:1px solid var(--line);border-radius:12px;padding:17px;position:relative;overflow:hidden}
+  .lane::before{content:"";position:absolute;inset:0 auto 0 0;width:5px}
+  .lane.green::before{background:var(--green)}.lane.yellow::before{background:var(--yellow)}.lane.red::before{background:var(--red)}
+  .lane h4{margin:0;font-size:15px}
+  .rating{font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:8px 0 2px}
+  .green .rating{color:var(--green)}.yellow .rating{color:var(--yellow)}.red .rating{color:var(--red)}
+  .score{font-size:25px;font-weight:700;letter-spacing:-.02em}
+  .score span{font-size:13px;font-weight:400;color:var(--mut)}
+  .verdict{border-left:4px solid var(--accent);background:var(--soft);padding:18px 22px;border-radius:0 12px 12px 0;margin:22px 0}
+  .phase{border:1px solid var(--line);border-radius:13px;padding:22px;margin:16px 0}
+  .pill{font-size:11px;text-transform:uppercase;letter-spacing:.07em;border:1px solid var(--line);
+    border-radius:999px;padding:3px 10px;color:var(--mut);margin-left:8px;white-space:nowrap}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:15px 0}
+  .grid .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+  .grid .v{font-size:18px;font-weight:650}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin:9px 0}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+  .gate{background:#fdf7e8;border:1px solid #ecd9a6;border-radius:11px;padding:15px 18px;margin:15px 0}
+  .muted{color:var(--mut)} .small{font-size:14px} .tiny{font-size:12.5px}
+  ul{padding-left:20px;margin:8px 0} li{margin:5px 0}
+  .foot{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--mut);font-size:13px}
+  .actions{margin:28px 0}
+  button{background:var(--accent);border:0;border-radius:9px;padding:11px 17px;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  @media print{
+    .actions{display:none} body{font-size:12pt} .wrap{padding:0;max-width:none}
+    .phase,.lane,.gate{break-inside:avoid} h2{break-after:avoid}
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f141a;--ink:#e8eef6;--mut:#93a3b6;--line:#25313f;--soft:#151d27;
+          --green:#38c47c;--yellow:#e0b341;--red:#e26565;--accent:#5b95ff}
+    .gate{background:rgba(224,179,65,.09);border-color:rgba(224,179,65,.35)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><p class="muted">Loading…</p></div>
+<script>
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>n==null?'—':'$'+Math.round(n).toLocaleString('en-US');
+
+(async function(){
+  const token=location.pathname.split('/').filter(Boolean).pop();
+  const r=await fetch('/ai-readiness/api/v1/public/roadmap/'+encodeURIComponent(token));
+  const root=document.getElementById('root');
+  if(!r.ok){root.innerHTML='<h1>Not found</h1><p class="muted">This link is not valid.</p>';return;}
+  const j=await r.json();
+  const e=j.engagement||{}, m=j.roadmap||{}, sc=m.scorecard||{}, phases=m.phases||[], next=m.safe_next_step||sc.safe_next_step||{};
+  const es=(e.lang==='es');
+  document.documentElement.lang=e.lang||'en';
+  document.title=(es?'Hoja de Ruta de Preparación para IA — ':'AI Readiness Roadmap — ')+(e.company_name||'');
+
+  root.innerHTML=`
+    <div class="eyebrow">${es?'Hoja de ruta de preparación para IA':'AI Readiness Roadmap'}</div>
+    <h1>${esc(e.company_name||'')}</h1>
+    <p class="sub">${[e.ceo_name,e.industry,e.country].filter(Boolean).map(esc).join(' · ')}
+      ${m.created_at?' · '+new Date(m.created_at).toLocaleDateString(es?'es-ES':'en-US',{year:'numeric',month:'long',day:'numeric'}):''}
+      · v${esc(m.version||1)}</p>
+
+    <div class="actions"><button onclick="window.print()">${es?'Guardar como PDF':'Save as PDF'}</button></div>
+
+    ${m.executive_summary?`<p class="lead">${esc(m.executive_summary)}</p>`:''}
+
+    <h2>${es?'Dónde está usted hoy':'Where you stand today'}</h2>
+    <div class="lanes">${(sc.lanes||[]).map(l=>`
+      <div class="lane ${esc(l.rating)}">
+        <h4>${esc(l.title)}</h4>
+        <div class="rating">${esc(l.rating)}</div>
+        <div class="score">${l.score==null?'—':l.score}<span>/100</span></div>
+        <p class="small" style="margin:10px 0 0">${esc(l.headline)}</p>
+      </div>`).join('')}
+    </div>
+    ${sc.legend?`<p class="tiny muted"><strong>${es?'Verde':'Green'}:</strong> ${esc(sc.legend.green)}
+      <strong style="margin-left:12px">${es?'Amarillo':'Yellow'}:</strong> ${esc(sc.legend.yellow)}
+      <strong style="margin-left:12px">${es?'Rojo':'Red'}:</strong> ${esc(sc.legend.red)}</p>`:''}
+
+    <div class="verdict">
+      <div class="eyebrow">${es?'Veredicto':'Verdict'}</div>
+      <p style="font-size:19px;font-weight:600;margin:6px 0 8px">${esc(sc.verdict_label||'')}</p>
+      <p class="small muted" style="margin:0">${esc(sc.confidence_note||'')}</p>
+    </div>
+
+    ${next.step?`<h2>${es?'El siguiente paso seguro':'The safe next step'}</h2>
+      <p class="lead">${esc(next.step)}</p>
+      <p class="muted">${esc(next.why||'')}</p>
+      ${(next.actions||[]).length?`<ul>${next.actions.map(a=>'<li>'+esc(a)+'</li>').join('')}</ul>`:''}
+      <div class="grid">
+        <div><div class="k">${es?'Compromiso':'Commitment'}</div><div class="small">${esc(next.commitment||'')}</div></div>
+        ${next.exposure_usd!=null?`<div><div class="k">${es?'Exposición máxima':'Maximum exposure'}</div><div class="v">${money(next.exposure_usd)}</div></div>`:''}
+      </div>`:''}
+
+    <hr>
+    <h2>${es?'La hoja de ruta':'The roadmap'}</h2>
+    ${phases.map(phase).join('')}
+
+    <div class="foot">
+      <p>${es
+        ? 'Cada cifra en dólares de este documento proviene de las horas, el personal y las tarifas que usted proporcionó. Los supuestos utilizados están listados con su base. La Fase 3 no está cotizada a propósito. Las métricas de éxito declaran lo que se medirá; no prometen un resultado.'
+        : 'Every dollar figure in this document comes from the hours, headcount and rates you provided. The assumptions used are listed with their basis. Phase 3 is deliberately not priced. Success metrics state what will be measured; they do not promise an outcome.'}</p>
+      <p>${es?'Preparado por el Departamento de Preparación para IA.':'Prepared by the AI Readiness Department.'}
+         ${m.narrative_by==='heuristic'?(es?'Redacción determinista.':'Deterministic drafting.'):''}</p>
+    </div>`;
+})();
+
+function phase(p){
+  const es=document.documentElement.lang==='es';
+  const c=p.cost||{};
+  return `<div class="phase">
+    <h3 style="margin-top:0;display:inline">${esc(p.title)}</h3>
+    ${p.risk_level?`<span class="pill">${esc(p.risk_level)} ${es?'riesgo':'risk'}</span>`:''}
+    ${p.timeline_weeks?`<span class="pill">${esc(p.timeline_weeks)} ${es?'semanas':'weeks'}</span>`:''}
+    <p style="margin:12px 0 0">${esc(p.objective)}</p>
+    ${p.condition?`<p class="small muted"><em>${esc(p.condition)}</em></p>`:''}
+    ${(p.scope||[]).length?`<p class="small"><strong>${es?'Alcance':'Scope'}:</strong> ${p.scope.map(esc).join(', ')}</p>`:''}
+    ${(p.out_of_scope||[]).length?`<p class="small muted"><strong>${es?'Fuera de alcance a propósito':'Deliberately out of scope'}:</strong> ${p.out_of_scope.map(o=>esc(o.name)+' — '+esc(o.why)).join('; ')}</p>`:''}
+    <div class="grid">
+      ${c.build_usd_range?`<div><div class="k">${es?'Construcción':'Build'}</div><div class="v">${esc(c.build_usd_range)}</div></div>`:''}
+      ${c.run_monthly_usd!=null?`<div><div class="k">${es?'Operación / mes':'Run / month'}</div><div class="v">${money(c.run_monthly_usd)}</div></div>`:''}
+      ${c.max_exposure_usd!=null?`<div><div class="k">${es?'Exposición máxima':'Maximum exposure'}</div><div class="v">${money(c.max_exposure_usd)}</div></div>`:''}
+      ${c.projected_annual_savings_usd!=null?`<div><div class="k">${es?'Ahorro anual proyectado':'Projected annual saving'}</div><div class="v">${money(c.projected_annual_savings_usd)}</div></div>`:''}
+    </div>
+    ${c.max_exposure_note?`<p class="tiny muted">${esc(c.max_exposure_note)}</p>`:''}
+    ${c.costed===false?`<p class="small muted"><em>${esc(c.why_not_costed)}</em></p>`:''}
+    ${c.note?`<p class="tiny muted">${esc(c.note)}</p>`:''}
+    ${p.risk_level_why?`<p class="small"><strong>${es?'Por qué ese nivel de riesgo':'Why that risk level'}:</strong> ${esc(p.risk_level_why)}</p>`:''}
+    ${(p.data_requirements||[]).length?`<p class="small"><strong>${es?'Requisitos de datos':'Data requirements'}:</strong></p><ul class="small">${p.data_requirements.map(d=>'<li>'+esc(d)+'</li>').join('')}</ul>`:
+      (p.data_requirements_note?`<p class="small muted">${esc(p.data_requirements_note)}</p>`:'')}
+    ${(p.timeline_detail||[]).length?`<table><tbody>${p.timeline_detail.map(t=>`<tr><td style="width:86px">${es?'Semana':'Week'} ${esc(t.week)}</td><td><strong>${esc(t.label)}</strong><div class="tiny muted">${esc(t.detail)}</div></td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.success_metrics||[]).length?`<p class="small"><strong>${es?'Métricas de éxito':'Success metrics'}:</strong></p>
+      <table><thead><tr><th>${es?'Métrica':'Metric'}</th><th>${es?'Cómo se mide':'How measured'}</th><th>${es?'Objetivo':'Target'}</th></tr></thead>
+      <tbody>${p.success_metrics.map(m=>`<tr><td>${esc(m.metric)}</td><td class="muted">${esc(m.how_measured)}</td><td class="muted">${esc(m.target||'—')}</td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.exit_criteria||[]).length?`<p class="small"><strong>${es?'Criterios de salida — qué lo detiene':'Exit criteria — what stops it'}:</strong></p>
+      <table><tbody>${p.exit_criteria.map(e=>`<tr><td>${esc(e.trigger)}</td><td class="muted">${esc(e.action)}</td></tr>`).join('')}</tbody></table>`:''}
+    ${(p.what_you_keep_if_it_fails||[]).length?`<p class="small"><strong>${es?'Lo que conserva si falla':'What you keep if it fails'}:</strong></p><ul class="small">${p.what_you_keep_if_it_fails.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${(p.preconditions||[]).length?`<p class="small"><strong>${es?'Precondiciones':'Preconditions'}:</strong></p><ul class="small">${p.preconditions.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${(p.directions||[]).length?`<ul class="small">${p.directions.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`:''}
+    ${p.gate?`<div class="gate"><strong>${esc(p.gate.title)}</strong>
+      <ul class="small">${(p.gate.conditions||[]).map(c=>'<li>'+esc(c)+'</li>').join('')}</ul>
+      <div class="small">${esc(p.gate.if_not_met)}</div></div>`:''}
+  </div>`;
+}
+</script>
+</body>
+</html>

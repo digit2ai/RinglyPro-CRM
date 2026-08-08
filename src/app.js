@@ -2278,6 +2278,40 @@ app.get('/debug/airadar-error', (req, res) => {
 });
 
 // =====================================================
+// AI READINESS DEPARTMENT — five agents behind one Brain (served at /ai-readiness/)
+// Takes a CEO from fear to confidence: interview, three lane assessments
+// (cost / risk / data), a Red-Yellow-Green scorecard and a three-phase roadmap
+// a human sponsor presents end to end.
+// =====================================================
+
+let aiReadinessApp = null;
+let aiReadinessError = null;
+try {
+  aiReadinessApp = require('../verticals/ai-readiness/src/index');
+  app.get('/ai-readiness', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/ai-readiness/');
+    next();
+  });
+  app.use('/ai-readiness', aiReadinessApp);
+  console.log('AI Readiness Department mounted at /ai-readiness');
+  console.log('   - Sponsor console: /ai-readiness/');
+  console.log('   - CEO roadmap link: /ai-readiness/roadmap/:token');
+  console.log('   - Health Check: /ai-readiness/health');
+  console.log('   - Brain: /ai-readiness/api/v1/tools/list + /tools/call');
+} catch (error) {
+  aiReadinessError = error;
+  console.log('⚠️ AI Readiness Department not available:', error.message);
+}
+
+app.get('/debug/ai-readiness-error', (req, res) => {
+  res.json({
+    service: 'AI Readiness Department',
+    available: !aiReadinessError,
+    error: aiReadinessError ? { message: aiReadinessError.message, stack: aiReadinessError.stack } : null
+  });
+});
+
+// =====================================================
 // DIGIT2AI GROWTH — internal owner-only AI CMO for our OWN portfolio (served at /growth/)
 // =====================================================
 
