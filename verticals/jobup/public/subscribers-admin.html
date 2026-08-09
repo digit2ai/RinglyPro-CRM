@@ -1,0 +1,294 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
+<title>JobUp — Subscribers</title><style>
+:root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
+--line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
+--cyan:#22d3ee;--green:#3ad07f;--warn:#e6b45a;--red:#f87171;
+--brand:linear-gradient(120deg,#4c6ef5 0%,#e64980 50%,#ff922b 100%);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);min-height:100%}
+body{color:var(--ink);font:15.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.nav{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.9);backdrop-filter:blur(14px);
+border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 20px}
+.who{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{width:38px;height:38px;flex:0 0 38px;display:block;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.ttl{font-weight:790;letter-spacing:-.026em;font-size:17px;line-height:1.15}
+.sub{color:var(--mut);font-size:12.5px}
+.btn{border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:999px;
+padding:9px 16px;font:inherit;font-size:13.5px;cursor:pointer;min-height:40px;
+display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary{background:var(--brand);border:0;color:#fff;font-weight:730}
+.btn:disabled{opacity:.45;cursor:default}
+h1{font-size:25px;font-weight:820;letter-spacing:-.035em;margin:28px 0 4px}
+.lede{color:var(--mut);font-size:14px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px}
+.stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.stat .v{font-size:25px;font-weight:820;letter-spacing:-.03em;margin-top:5px}
+.stat .v.money{background:var(--brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select{background:var(--bg);border:1px solid var(--line2);border-radius:11px;
+padding:11px 13px;color:var(--ink);font:inherit;font-size:15px;outline:none}
+input:focus,select:focus{border-color:var(--cyan)}
+#q{flex:1 1 240px;min-width:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+color:var(--faint);font-weight:600;padding:0 12px 10px 0;white-space:nowrap}
+td{padding:12px 12px 12px 0;border-top:1px solid var(--line);vertical-align:top}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+.nm{font-weight:700}
+.em{color:var(--mut);font-size:13px;word-break:break-all}
+.money{font-family:var(--mono);white-space:nowrap;font-weight:700}
+.money.zero{color:var(--faint);font-weight:400}
+.dt{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.dt small{display:block;color:var(--faint);font-size:11px}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;
+font-size:11.5px;font-family:var(--mono);color:var(--mut);white-space:nowrap}
+.chip.active{border-color:rgba(58,208,127,.45);color:var(--green)}
+.chip.past_due{border-color:rgba(248,113,113,.45);color:var(--red)}
+.chip.pending{border-color:rgba(230,180,90,.45);color:var(--warn)}
+.chip.canceled{border-color:var(--line2);color:var(--faint)}
+.chip.test{border-color:rgba(230,180,90,.45);color:var(--warn);margin-left:6px}
+.empty{border:1px dashed var(--line2);border-radius:15px;padding:34px 20px;text-align:center;color:var(--mut)}
+.note{color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.65;margin-top:14px}
+.banner{background:rgba(230,180,90,.09);border:1px solid rgba(230,180,90,.4);color:#f0d5a6;
+border-radius:13px;padding:13px 16px;font-size:13.5px;line-height:1.55;margin:18px 0}
+.banner strong{color:#ffdf9e}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
+border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
+.err.show{display:block}
+.hidden{display:none}
+.panel{max-width:400px;margin:70px auto;background:var(--card);border:1px solid var(--line);
+border-radius:20px;padding:30px}
+.panel .mark{width:52px;height:52px;flex:0 0 52px;border-radius:15px;margin-bottom:18px}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+text-transform:uppercase;color:var(--faint);margin:16px 0 6px}
+.panel input{width:100%}
+.panel .btn{width:100%;margin-top:22px;min-height:50px;font-size:15px}
+footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:48px 0 40px;
+border-top:1px solid var(--line);padding-top:18px}
+/* Phones: the table becomes a stack of cards. A ten-column table in a 375px
+   viewport is a horizontal-scroll trap, not a report. */
+@media(max-width:820px){
+  .wrap{padding:0 14px}
+  .nav .wrap{padding:11px 14px}
+  h1{font-size:21px}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  input,select{font-size:16px}   /* 16px or iOS zooms on focus */
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin-bottom:11px}
+  td{border:0;padding:3px 0}
+  td[data-l]::before{content:attr(data-l);display:block;font-family:var(--mono);
+    font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}
+  td.rowhead{padding-bottom:9px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+}
+@media(max-width:420px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+
+<div class="nav"><div class="wrap">
+  <div class="who">
+    <svg class="mark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+    <div><div class="ttl">Subscribers</div><div class="sub" id="who-sub">JobUp admin</div></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a class="btn hidden" id="csv" href="{{BASE}}/subscribers-admin/api/export.csv">Export CSV</a>
+    <button class="btn hidden" id="signout">Sign out</button>
+  </div>
+</div></div>
+
+<!-- sign in -->
+<div id="login" class="wrap"><div class="panel">
+  <svg class="mark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+    <linearGradient id="bm2" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+    <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+    <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+    <rect width="512" height="512" rx="108" fill="url(#bm2)"/>
+    <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+       stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+  <h1 style="margin:0 0 6px">Sign in</h1>
+  <div class="lede">Subscriber and billing records.</div>
+  <div class="err" id="lerr"></div>
+  <label for="le">Email</label>
+  <input id="le" type="email" autocomplete="username" inputmode="email" autocapitalize="none">
+  <label for="lp">Password</label>
+  <input id="lp" type="password" autocomplete="current-password">
+  <button class="btn primary" id="lgo">Sign in</button>
+</div></div>
+
+<!-- console -->
+<div id="app" class="wrap hidden">
+  <div class="banner hidden" id="pwbanner">
+    <strong>This console is using its built-in default password.</strong>
+    Anyone who can read the source can sign in. Set <code>JOBUP_SUBS_ADMIN_PASSWORD</code>
+    on Render to close it.
+  </div>
+
+  <h1>Subscribers</h1>
+  <div class="lede" id="lede">Loading…</div>
+
+  <div class="grid" id="stats"></div>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search name, email or address" autocapitalize="none">
+    <select id="fstatus">
+      <option value="">All statuses</option>
+      <option value="active">Active</option>
+      <option value="past_due">Past due</option>
+      <option value="pending">Pending</option>
+      <option value="canceled">Canceled</option>
+    </select>
+    <select id="fpaid">
+      <option value="">Paid and unpaid</option>
+      <option value="paid">Has paid</option>
+      <option value="unpaid">Never charged</option>
+    </select>
+  </div>
+
+  <div class="err" id="aerr"></div>
+  <div id="list"></div>
+  <div class="note" id="note"></div>
+
+  <footer>Billing records only. Resumes, matches, pipeline and outreach are not reachable
+    from this console. Every view and export is written to the audit log.</footer>
+</div>
+
+<script>
+var API='{{BASE}}/subscribers-admin/api';
+var ROWS=[];
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function err(el,m){var e=$(el);e.textContent=m;e.classList.add('show');
+  setTimeout(function(){e.classList.remove('show');},7000);}
+function api(path,opts){return fetch(API+path,Object.assign({credentials:'same-origin'},opts||{}))
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
+
+function money(n){return '$'+Number(n||0).toFixed(2);}
+function when(iso){
+  if(!iso) return '—';
+  var d=new Date(iso);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+}
+
+/* ---- sign in ---- */
+$('lgo').addEventListener('click',function(){
+  var b=$('lgo'); b.disabled=true; b.textContent='Signing in…';
+  api('/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:$('le').value.trim(),password:$('lp').value})})
+    .then(function(r){
+      b.disabled=false; b.textContent='Sign in';
+      if(!r.ok) return err('lerr',r.j.error==='too many attempts'
+        ? 'Too many attempts. Try again in '+Math.ceil((r.j.retry_after_s||900)/60)+' minutes.'
+        : (r.j.error||'Sign in failed'));
+      boot();
+    })
+    .catch(function(){ b.disabled=false; b.textContent='Sign in'; err('lerr','Could not reach the server.'); });
+});
+$('lp').addEventListener('keydown',function(e){if(e.key==='Enter')$('lgo').click();});
+$('signout').addEventListener('click',function(){
+  api('/logout',{method:'POST'}).then(function(){location.reload();});
+});
+
+/* ---- render ---- */
+function stat(k,v,cls){return '<div class="stat"><div class="k">'+esc(k)+'</div>'+
+  '<div class="v '+(cls||'')+'">'+esc(v)+'</div></div>';}
+
+function render(){
+  var q=$('q').value.trim().toLowerCase();
+  var fs=$('fstatus').value, fp=$('fpaid').value;
+  var rows=ROWS.filter(function(r){
+    if(fs&&r.status!==fs) return false;
+    if(fp==='paid'&&!(r.amount_paid_usd>0)) return false;
+    if(fp==='unpaid'&&r.amount_paid_usd>0) return false;
+    if(!q) return true;
+    return [r.name,r.email,r.address].some(function(v){
+      return String(v||'').toLowerCase().indexOf(q)>-1;});
+  });
+
+  if(!rows.length){
+    $('list').innerHTML='<div class="empty">'+(ROWS.length
+      ? 'No subscriber matches that filter.'
+      : 'No subscribers yet. The first paid activation will appear here.')+'</div>';
+    return;
+  }
+
+  var html='<div class="card" style="overflow-x:auto"><table><thead><tr>'+
+    '<th>Subscriber</th><th>Status</th><th>Subscribed</th><th>Amount paid</th>'+
+    '<th>Payments</th><th>Last payment</th><th>Renews</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var test = r.activation==='free_test'
+      ? '<span class="chip test">free test</span>' : '';
+    html+='<tr>'+
+      '<td class="rowhead"><div class="nm">'+esc(r.name||'(no name on file)')+test+'</div>'+
+        '<div class="em">'+esc(r.email)+'</div>'+
+        (r.address?'<div class="em">'+esc(r.address)+'</div>':'')+'</td>'+
+      '<td data-l="Status"><span class="chip '+esc(r.status)+'">'+esc(r.status)+'</span></td>'+
+      '<td data-l="Subscribed" class="dt">'+when(r.subscribed_at)+
+        '<small>'+esc(r.subscribed_at_source)+'</small></td>'+
+      '<td data-l="Amount paid" class="money'+(r.amount_paid_usd>0?'':' zero')+'">'+
+        money(r.amount_paid_usd)+'</td>'+
+      '<td data-l="Payments" class="dt">'+r.payments+
+        (r.open_invoices?'<small>'+r.open_invoices+' open</small>':'')+'</td>'+
+      '<td data-l="Last payment" class="dt">'+when(r.last_payment_at)+'</td>'+
+      '<td data-l="Renews" class="dt">'+when(r.current_period_end)+'</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table></div>';
+  $('list').innerHTML=html;
+}
+
+['q','fstatus','fpaid'].forEach(function(id){
+  $(id).addEventListener('input',render); $(id).addEventListener('change',render);
+});
+
+/* ---- boot ---- */
+function boot(){
+  api('/session').then(function(r){
+    if(!r.ok){ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    $('signout').classList.remove('hidden'); $('csv').classList.remove('hidden');
+    $('who-sub').textContent=r.j.email;
+    if(r.j.using_default_password) $('pwbanner').classList.remove('hidden');
+
+    api('/subscribers').then(function(x){
+      if(!x.ok) return err('aerr',x.j.error||'Could not load subscribers.');
+      ROWS=x.j.subscribers||[];
+      var t=x.j.totals||{};
+      $('lede').textContent=t.subscribers+' subscriber'+(t.subscribers===1?'':'s')+
+        ' · list price '+money(t.list_price_usd)+' a year';
+      $('stats').innerHTML=
+        stat('Subscribers',t.subscribers)+
+        stat('Active',t.active)+
+        stat('Collected',money(t.collected_usd),'money')+
+        stat('Free test',t.free_test);
+      $('note').textContent=x.j.note||'';
+      render();
+    }).catch(function(){ err('aerr','Could not reach the server.'); });
+  }).catch(function(){ $('login').classList.remove('hidden'); });
+}
+boot();
+</script>
+</body></html>

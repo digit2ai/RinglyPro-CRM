@@ -466,6 +466,158 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
 
   // ---------------------------------------------------------------
+  section('subscribers admin — who paid, how much, when');
+  {
+    const express = require('express');
+    const http = require('http');
+    const subsAdmin = require(__dirname + '/src/routes/subscribers-admin');
+
+    // Mounted the way the vertical mounts it, so the paths under test are real.
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => {
+      req.cookies = {};
+      for (const part of String(req.headers.cookie || '').split(';')) {
+        const i = part.indexOf('=');
+        if (i > 0) req.cookies[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+      }
+      next();
+    });
+    app.use('/subscribers-admin', subsAdmin);
+    const srv = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+    const port = srv.address().port;
+    const call = (method, path, { body, cookie } = {}) => new Promise((ok, bad) => {
+      const data = body ? JSON.stringify(body) : null;
+      const r = http.request({ host: '127.0.0.1', port, path, method,
+        headers: Object.assign({}, data ? { 'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(data) } : {}, cookie ? { Cookie: cookie } : {}) },
+        (x) => { let b = ''; x.on('data', (c) => b += c); x.on('end', () => {
+          let j = null; try { j = JSON.parse(b); } catch (e) { /* csv */ }
+          ok({ status: x.statusCode, j, body: b, setCookie: x.headers['set-cookie'] });
+        }); });
+      r.on('error', bad); if (data) r.write(data); r.end();
+    });
+
+    let session = '';
+    await t('THE CONSOLE IS CLOSED WITHOUT A SESSION', async () => {
+      for (const p of ['/subscribers-admin/api/subscribers',
+                       '/subscribers-admin/api/export.csv',
+                       '/subscribers-admin/api/subscribers/1/invoices']) {
+        const r = await call('GET', p);
+        assert.strictEqual(r.status, 401, `${p} must refuse an anonymous caller`);
+      }
+    });
+    await t('a wrong password is refused, and so is a wrong email', async () => {
+      const bad = await call('POST', '/subscribers-admin/api/login',
+        { body: { email: 'admin@jobup.dev', password: 'not-it' } });
+      assert.strictEqual(bad.status, 401);
+      const wrongUser = await call('POST', '/subscribers-admin/api/login',
+        { body: { email: 'someone@else.com', password: 'Palindrome@7' } });
+      assert.strictEqual(wrongUser.status, 401);
+      // Neither response may hint at which half was wrong.
+      assert.deepStrictEqual(bad.j, wrongUser.j);
+    });
+    await t('the configured admin can sign in', async () => {
+      const r = await call('POST', '/subscribers-admin/api/login',
+        { body: { email: 'admin@jobup.dev', password: 'Palindrome@7' } });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.j));
+      assert.ok(r.setCookie && r.setCookie[0].includes('jobup_subs_admin='), 'a session cookie is set');
+      assert.ok(/HttpOnly/i.test(r.setCookie[0]), 'the cookie must not be readable from JS');
+      assert.ok(/Secure/i.test(r.setCookie[0]) && /SameSite=Strict/i.test(r.setCookie[0]));
+      session = r.setCookie[0].split(';')[0];
+    });
+    await t('AMOUNT PAID COMES FROM INVOICES, NOT THE LIST PRICE', async () => {
+      const r = await call('GET', '/subscribers-admin/api/subscribers', { cookie: session });
+      assert.strictEqual(r.status, 200);
+      const mine = r.j.subscribers.find((s) => s.id === subB.id);
+      assert.ok(mine, 'the seeded subscriber should be listed');
+      // subB has exactly one paid $97 invoice from the renewal-notice test.
+      assert.strictEqual(mine.amount_paid_usd, 97);
+      assert.strictEqual(mine.payments, 1);
+      assert.notStrictEqual(mine.amount_paid_usd, r.j.totals.list_price_usd,
+        'the figure must trace to an invoice, not to the current price');
+      // Someone never charged reads 0.00, never the list price.
+      const unpaid = r.j.subscribers.find((s) => s.payments === 0);
+      if (unpaid) assert.strictEqual(unpaid.amount_paid_usd, 0);
+    });
+    await t('every row carries a subscription date and names its source', async () => {
+      const r = await call('GET', '/subscribers-admin/api/subscribers', { cookie: session });
+      for (const s of r.j.subscribers) {
+        assert.ok(['activated_at', 'created_at'].includes(s.subscribed_at_source),
+          'the date must say which column it came from rather than silently swapping');
+      }
+    });
+    await t('A FREE TEST ACCOUNT IS NEVER PRESENTED AS A PAYING ONE', async () => {
+      await models.subscribers.update({ activation: 'free_test' }, { where: { id: subA.id } });
+      const r = await call('GET', '/subscribers-admin/api/subscribers', { cookie: session });
+      const row = r.j.subscribers.find((s) => s.id === subA.id);
+      assert.strictEqual(row.activation, 'free_test', 'the row must be labelled');
+      assert.ok(r.j.totals.free_test >= 1, 'and counted apart from real subscribers');
+      await models.subscribers.update({ activation: 'paid' }, { where: { id: subA.id } });
+    });
+    await t('CAREER DATA IS STILL OUT OF REACH FROM THIS CONSOLE', async () => {
+      // The relaxation is billing identity only. /admin's real rule — no
+      // resumes, matches, outreach or settings — survives intact here.
+      const r = await call('GET', '/subscribers-admin/api/subscribers', { cookie: session });
+      const keys = new Set(r.j.subscribers.flatMap((s) => Object.keys(s)));
+      for (const leak of ['resume_json', 'source_text', 'matches', 'outreach',
+                          'settings', 'password_hash', 'pipeline']) {
+        assert.ok(!keys.has(leak), `the list must not expose ${leak}`);
+      }
+      const src = require('fs').readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
+      for (const table of ['profiles', 'matches', 'outreach', 'settings']) {
+        assert.ok(!src.includes(`models.${table}`), `this module must not read models.${table}`);
+      }
+    });
+    await t('the CSV export carries the same figures, and is audited', async () => {
+      const before = (await models.audit_log.findAll({})).length;
+      const r = await call('GET', '/subscribers-admin/api/export.csv', { cookie: session });
+      assert.strictEqual(r.status, 200);
+      assert.ok(r.body.startsWith('id,name,email,status,activation,subscribed_at'));
+      assert.ok(r.body.includes('97'), 'the paid amount should appear in the export');
+      const after = await models.audit_log.findAll({});
+      assert.ok(after.length > before, 'an export must leave an audit row');
+      assert.ok(after.some((a) => a.action === 'subs_admin.export.csv'));
+    });
+    await t('viewing the list is written to the audit log', async () => {
+      const rows = await models.audit_log.findAll({});
+      assert.ok(rows.some((a) => a.action === 'subs_admin.list.viewed'),
+        'a relaxed privacy boundary without a trail is just a hole');
+      assert.ok(rows.some((a) => a.action === 'subs_admin.login.failed'),
+        'failed sign-ins must be recorded too');
+    });
+    await t('the default password is REPORTED, not hidden', async () => {
+      // It ships working because the owner asked for that. The exposure is
+      // surfaced rather than buried, and the console renders a warning.
+      const h = await call('GET', '/subscribers-admin/api/health');
+      assert.strictEqual(h.j.using_default_password, !process.env.JOBUP_SUBS_ADMIN_PASSWORD);
+      const html = require('fs').readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+      assert.ok(html.includes('using_default_password'), 'the page must react to it');
+      assert.ok(html.includes('JOBUP_SUBS_ADMIN_PASSWORD'), 'and name the env var that closes it');
+    });
+    await t('signing out invalidates the console', async () => {
+      const out = await call('POST', '/subscribers-admin/api/logout', { cookie: session });
+      assert.strictEqual(out.status, 200);
+      assert.ok(/jobup_subs_admin=;/.test(String(out.setCookie)), 'the cookie is cleared');
+    });
+    srv.close();
+  }
+  await t('the console HTML renders at every root with no leftover tokens', () => {
+    // Required locally: the shared pwaSvc const is declared further down the
+    // file and is still in its temporal dead zone here.
+    const pwaLocal = require(__dirname + '/src/services/pwa');
+    for (const base of ['', '/jobup']) {
+      const out = pwaLocal.page('subscribers-admin.html', base);
+      assert.ok(!out.includes('{{BASE}}') && !out.includes('{{V}}'), `tokens left at base "${base}"`);
+      assert.ok(out.includes(`var API='${base}/subscribers-admin/api'`), 'the API base must follow the mount');
+      assert.ok(out.includes('noindex'), 'an admin console must not be indexed');
+    }
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(src.includes("'/subscribers-admin.html'"),
+      'a direct .html hit must redirect, or the raw template leaks');
+  });
+
   section('structured data surfaces');
   await t('sitemap lists the homepage and every role page', () => {
     const s = settingsSvc.sanitize({ targeting: { roles: [{ title: 'Data Engineer' }, { title: 'Analytics Lead' }] } });
@@ -1533,8 +1685,12 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // The icons used to fall through to express.static on the apex and the path
     // mount, which serves max-age=0 — so the caching policy existed only on the
     // subscriber subdomain, the one root that already called serveAsset.
-    const route = src.slice(src.indexOf("router.get(['/manifest.webmanifest'"),
-      src.indexOf('pwa.basePath(req)'));
+    // Anchor the end relative to the start, not on the first global match —
+    // any route declared earlier that also calls pwa.basePath would otherwise
+    // invert this slice and make the assertions below vacuous.
+    const from = src.indexOf("router.get(['/manifest.webmanifest'");
+    assert.ok(from > -1, 'the PWA asset route must exist');
+    const route = src.slice(from, src.indexOf('pwa.basePath(req)', from));
     for (const f of ['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
                      '/favicon-32.png', '/favicon.svg']) {
       assert.ok(route.includes(`'${f}'`), `${f} is left to express.static`);

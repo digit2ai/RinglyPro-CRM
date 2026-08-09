@@ -120,6 +120,12 @@ router.use('/api/v1/billing', require('./routes/billing'));
 router.use('/api/v1/engine', require('./routes/engine'));
 router.use('/teaser', require('./routes/teaser-view'));
 router.use('/admin', require('./routes/admin'));
+// Separate module, separate credential, separate cookie: who is subscribed,
+// what they paid and when. See routes/subscribers-admin.js for why it may show
+// billing identity where /admin deliberately will not.
+router.use('/subscribers-admin', require('./routes/subscribers-admin'));
+router.get(['/subscribers-admin', '/subscribers-admin/'], (req, res) =>
+  res.type('html').send(pwa.page('subscribers-admin.html', pwa.basePath(req))));
 
 // ---- PWA ------------------------------------------------------------------
 // The manifest and the worker are GENERATED for the root this request arrived
@@ -157,9 +163,11 @@ router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
 // ---- landing --------------------------------------------------------------
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
-router.get(['/index.html', '/app.html', '/welcome.html', '/build.html'], (req, res) => {
+router.get(['/index.html', '/app.html', '/welcome.html', '/build.html',
+            '/subscribers-admin.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
-               '/welcome.html': '/welcome', '/build.html': '/build' }[req.path];
+               '/welcome.html': '/welcome', '/build.html': '/build',
+               '/subscribers-admin.html': '/subscribers-admin' }[req.path];
   res.redirect(301, `${pwa.basePath(req)}${to}`);
 });
 // index:false is load-bearing. express.static serves publicDir/index.html for a
