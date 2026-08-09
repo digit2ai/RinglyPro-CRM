@@ -432,6 +432,17 @@ const AGENT_BODY = {
       ok('output schema field names are never flagged as unverified',
         schemaOnly.length === 0, JSON.stringify(schemaOnly));
 
+      // Noise control 3: prose abbreviations are not identifiers. Specs are
+      // full of "e.g." and "i.e."; flagging them as tables nobody can confirm
+      // trains the operator to skim the list, which defeats the whole check.
+      const prose = composer.unstatedIdentifiers(
+        { dataSources: [], instructions: ['Use the label (e.g. Invoice No.) to find it, i.e. the printed one.'],
+          constraints: [], goal: '', outputSchema: {} },
+        'pull the invoice number'
+      );
+      ok('prose abbreviations are not treated as identifiers',
+        prose.length === 0, JSON.stringify(prose));
+
       const placeholder = composer.unstatedIdentifiers(
         { dataSources: ['<source table>'], instructions: [], constraints: [], goal: '', outputSchema: {} },
         'pull the totals'

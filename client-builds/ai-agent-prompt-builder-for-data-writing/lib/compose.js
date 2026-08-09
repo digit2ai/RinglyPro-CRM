@@ -191,7 +191,11 @@ function unstatedIdentifiers(fields, input) {
     // Placeholders may contain spaces ("<source table>"), so the first branch
     // deliberately does not exclude whitespace — a placeholder that slipped
     // through unflagged is exactly the case this check exists for.
-    const re = /<[^<>]{2,60}>|\/[a-z0-9][a-z0-9/_-]{3,60}|[a-z][a-z0-9]*(?:[._][a-z0-9]+)+/gi;
+    //
+    // Every dotted/underscored segment needs two characters or more. Without
+    // that floor, ordinary prose abbreviations read as identifiers and "e.g."
+    // gets flagged as a table nobody can confirm the existence of.
+    const re = /<[^<>]{2,60}>|\/[a-z0-9][a-z0-9/_-]{3,60}|[a-z][a-z0-9]+(?:[._][a-z0-9]{2,})+/gi;
     let m;
     while ((m = re.exec(text)) !== null) {
       const tok = m[0];
