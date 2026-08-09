@@ -21,7 +21,7 @@ JSON payload  →  lib/promptBuilder.architectCommand()
 ## Run
 
 ```bash
-# SIT — 126 checks, zero external keys, green on Postgres or the in-memory fallback
+# SIT — 129 checks, zero external keys, green on Postgres or the in-memory fallback
 node client-builds/ai-agent-prompt-builder-for-data-writing/sit.js
 
 # Live (auto-mounted by src/app.js; no main-app edit)

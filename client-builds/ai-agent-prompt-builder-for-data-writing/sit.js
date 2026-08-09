@@ -443,6 +443,29 @@ const AGENT_BODY = {
       ok('prose abbreviations are not treated as identifiers',
         prose.length === 0, JSON.stringify(prose));
 
+      ok('prose slashes are not treated as endpoints',
+        composer.unstatedIdentifiers(
+          { dataSources: [], instructions: ['Capture the total/grand total and the and/or case.'],
+            constraints: [], goal: '', outputSchema: {} },
+          'pull the total'
+        ).length === 0);
+
+      ok('a real multi-segment endpoint is still flagged',
+        composer.unstatedIdentifiers(
+          { dataSources: ['POST /v1/ingest'], instructions: [], constraints: [], goal: '', outputSchema: {} },
+          'push the rows somewhere'
+        ).indexOf('/v1/ingest') !== -1);
+
+      // Noise control 4: a field the spec DEFINES is not a reference to
+      // something that must already exist, even when the procedure names it.
+      const selfDefined = composer.unstatedIdentifiers(
+        { dataSources: [], instructions: ['Record the reason in extraction_notes.'],
+          constraints: [], goal: '', outputSchema: { rows: [{ extraction_notes: 'string' }] } },
+        'pull the vendor and total'
+      );
+      ok('a name the spec defines in its own schema is not flagged',
+        selfDefined.length === 0, JSON.stringify(selfDefined));
+
       const placeholder = composer.unstatedIdentifiers(
         { dataSources: ['<source table>'], instructions: [], constraints: [], goal: '', outputSchema: {} },
         'pull the totals'

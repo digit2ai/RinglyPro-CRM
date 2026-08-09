@@ -186,6 +186,18 @@ function unstatedIdentifiers(fields, input) {
   const seen = new Set();
   const out = [];
 
+  // Names the spec DEFINES in its own output schema are not references to
+  // anything outside — the instructions naturally mention them ("record the
+  // reason in extraction_notes"), and asking whether they exist is backwards.
+  const defined = new Set();
+  (function collect(node) {
+    if (!node || typeof node !== 'object') return;
+    for (const k of Object.keys(node)) {
+      defined.add(String(k).toLowerCase());
+      collect(node[k]);
+    }
+  })(fields.outputSchema);
+
   const scan = (s) => {
     const text = typeof s === 'object' ? JSON.stringify(s) : String(s || '');
     // Placeholders may contain spaces ("<source table>"), so the first branch
@@ -195,7 +207,11 @@ function unstatedIdentifiers(fields, input) {
     // Every dotted/underscored segment needs two characters or more. Without
     // that floor, ordinary prose abbreviations read as identifiers and "e.g."
     // gets flagged as a table nobody can confirm the existence of.
-    const re = /<[^<>]{2,60}>|\/[a-z0-9][a-z0-9/_-]{3,60}|[a-z][a-z0-9]+(?:[._][a-z0-9]{2,})+/gi;
+    //
+    // A path needs two segments for the same reason: people write "total/grand
+    // total" and "and/or", and a single-segment match turns that prose into a
+    // fake endpoint. Costs us bare "/webhook", which is far rarer than the noise.
+    const re = /<[^<>]{2,60}>|\/[a-z0-9][a-z0-9_-]{1,40}(?:\/[a-z0-9][a-z0-9_-]{1,40})+|[a-z][a-z0-9]+(?:[._][a-z0-9]{2,})+/gi;
     let m;
     while ((m = re.exec(text)) !== null) {
       const tok = m[0];
@@ -204,6 +220,7 @@ function unstatedIdentifiers(fields, input) {
       seen.add(key);
       // A placeholder is honest by construction — it is visibly not a real name.
       if (/^<.*>$/.test(tok)) { out.push(tok); continue; }
+      if (defined.has(key)) continue;                      // the spec defines it
       if (hay.indexOf(key) !== -1) continue;               // the user said it
       // People write "invoice number" and schemas say `invoice_number`. Flagging
       // that as unverified would bury the real finds in noise, so a token whose
