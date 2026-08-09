@@ -172,6 +172,14 @@ function shape(obj) {
  * Identifier-shaped tokens the spec introduces: snake_case, dotted paths,
  * <placeholders>, /endpoints, *.ext. Anything of that shape which does NOT
  * appear in what the user wrote is something a human has to confirm.
+ *
+ * The question this answers is "does this thing already exist under this name?",
+ * so it scans the fields that REFER to the outside world — data sources, the
+ * goal, the procedure, the rules — and deliberately NOT the output schema. A
+ * schema names fields the agent is about to create; asking someone to confirm
+ * that `source_file` exists is nonsense, and the model already reports invented
+ * fields in `assumptions`. Scanning it once produced three noisy flags per spec
+ * and buried the one that mattered.
  */
 function unstatedIdentifiers(fields, input) {
   const hay = String(input || '').toLowerCase();
@@ -206,7 +214,6 @@ function unstatedIdentifiers(fields, input) {
   fields.instructions.forEach(scan);
   fields.constraints.forEach(scan);
   scan(fields.goal);
-  scan(fields.outputSchema);
 
   return out.slice(0, 12);
 }

@@ -413,15 +413,24 @@ const AGENT_BODY = {
       ok('an identifier the user did mention is not flagged',
         notFlagged.length === 0, JSON.stringify(notFlagged));
 
-      // Noise control: a schema field named after words the user actually used
-      // is stated, not unverified. Without this the real finds get buried.
+      // Noise control 1: separators alone are not a difference. People write
+      // "invoice number"; specs write invoice_number.
       const separators = composer.unstatedIdentifiers(
-        { dataSources: [], instructions: [], constraints: [], goal: '',
-          outputSchema: { invoice_number: 'string' } },
+        { dataSources: ['invoice_number column'], instructions: [], constraints: [], goal: '', outputSchema: {} },
         'pull the vendor and the invoice number out of each page'
       );
-      ok('a schema field matching the user words is not flagged',
+      ok('a separator-only difference is not flagged',
         separators.length === 0, JSON.stringify(separators));
+
+      // Noise control 2: the output schema is what the agent CREATES, so its
+      // field names are never "confirm this exists" material.
+      const schemaOnly = composer.unstatedIdentifiers(
+        { dataSources: [], instructions: [], constraints: [], goal: '',
+          outputSchema: { source_file: 'string', unreadable_files: 'array' } },
+        'pull the vendor and total from each invoice'
+      );
+      ok('output schema field names are never flagged as unverified',
+        schemaOnly.length === 0, JSON.stringify(schemaOnly));
 
       const placeholder = composer.unstatedIdentifiers(
         { dataSources: ['<source table>'], instructions: [], constraints: [], goal: '', outputSchema: {} },
