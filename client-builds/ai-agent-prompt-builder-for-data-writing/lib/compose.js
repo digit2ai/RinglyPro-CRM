@@ -193,6 +193,10 @@ function unstatedIdentifiers(fields, input) {
       // A placeholder is honest by construction — it is visibly not a real name.
       if (/^<.*>$/.test(tok)) { out.push(tok); continue; }
       if (hay.indexOf(key) !== -1) continue;               // the user said it
+      // People write "invoice number" and schemas say `invoice_number`. Flagging
+      // that as unverified would bury the real finds in noise, so a token whose
+      // separators are the only difference counts as stated.
+      if (hay.indexOf(key.replace(/[._/-]+/g, ' ')) !== -1) continue;
       if (/^\d/.test(tok)) continue;                        // versions, decimals
       out.push(tok);
     }

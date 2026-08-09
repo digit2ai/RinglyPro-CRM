@@ -413,6 +413,16 @@ const AGENT_BODY = {
       ok('an identifier the user did mention is not flagged',
         notFlagged.length === 0, JSON.stringify(notFlagged));
 
+      // Noise control: a schema field named after words the user actually used
+      // is stated, not unverified. Without this the real finds get buried.
+      const separators = composer.unstatedIdentifiers(
+        { dataSources: [], instructions: [], constraints: [], goal: '',
+          outputSchema: { invoice_number: 'string' } },
+        'pull the vendor and the invoice number out of each page'
+      );
+      ok('a schema field matching the user words is not flagged',
+        separators.length === 0, JSON.stringify(separators));
+
       const placeholder = composer.unstatedIdentifiers(
         { dataSources: ['<source table>'], instructions: [], constraints: [], goal: '', outputSchema: {} },
         'pull the totals'
