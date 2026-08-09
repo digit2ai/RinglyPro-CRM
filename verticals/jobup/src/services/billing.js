@@ -12,7 +12,11 @@
 
 const { models } = require('../models');
 
-const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '97', 10);
+// THE list price, in one place. Every surface that quotes a figure reads it
+// from here — the teaser, the voice lines, the admin console and the landing
+// page, which used to hardcode its own copy and could therefore disagree with
+// what Stripe actually charged.
+const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '25', 10);
 const REFUND_DAYS = parseInt(process.env.JOBUP_REFUND_DAYS || '14', 10);
 const RENEWAL_NOTICE_DAYS = [30, 7];
 const DUNNING_STAGES = 4;
@@ -313,7 +317,19 @@ async function renewalNoticesDue(now = new Date()) {
     if (!s.current_period_end) continue;
     const days = Math.round((new Date(s.current_period_end) - now) / 86400000);
     if (RENEWAL_NOTICE_DAYS.includes(days)) {
-      due.push({ subscriber_id: s.id, email: s.email, days_out: days, amount_usd: PRICE_USD });
+      // Quote what THIS subscriber is actually charged, not today's list price.
+      // Stripe keeps an existing subscription on the price it was created with,
+      // so after a price change the list figure is simply wrong for everyone who
+      // signed up before it — a renewal notice saying $25 ahead of a $97 charge
+      // is the kind of number this codebase refuses to print. Falls back to the
+      // list price only for a subscriber with no invoice on file yet.
+      const paid = await models.invoices.findAll({ where: { tenant_id: s.id, status: 'paid' } });
+      const last = paid.sort((a, b) => new Date(b.paid_at || 0) - new Date(a.paid_at || 0))[0];
+      due.push({
+        subscriber_id: s.id, email: s.email, days_out: days,
+        amount_usd: last && last.amount_cents ? last.amount_cents / 100 : PRICE_USD,
+        amount_source: last && last.amount_cents ? 'last_invoice' : 'list_price',
+      });
     }
   }
   return due;

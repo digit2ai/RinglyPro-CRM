@@ -870,7 +870,9 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <section class="ju-sec" id="pricing">
   <div class="ju-kicker">Pricing</div>
   <div class="ju-pricecard">
-    <div class="ju-price">$97<span> / year</span></div>
+    <!-- Substituted server-side from billing.PRICE_USD. It was hardcoded, so
+         the page could quote a figure the checkout did not charge. -->
+    <div class="ju-price">${{PRICE}}<span> / year</span></div>
     <p style="color:var(--mut);margin-top:14px">One plan. Everything included. Tax calculated at checkout.</p>
     <ul class="ju-inc">
       <li>Your web address and professional website</li>

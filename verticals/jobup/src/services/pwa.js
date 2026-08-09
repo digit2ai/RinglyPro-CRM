@@ -59,15 +59,19 @@ function basePath(req) {
   return b === '/' ? '' : b;
 }
 
-/** Substitute the base into one of the HTML shells. */
+/** Substitute the base, the icon version and the list price into a shell. */
 const htmlCache = new Map();
 function page(file, base) {
   const key = file + '|' + base;
   const hit = htmlCache.get(key);
   if (hit) return hit;
+  // Lazy require: billing pulls in the models, and pwa.js is loaded during
+  // route setup before the store has settled.
+  const price = require('./billing').PRICE_USD;
   const out = fs.readFileSync(path.join(publicDir, file), 'utf8')
     .replace(/\{\{BASE\}\}/g, base)
-    .replace(/\{\{V\}\}/g, V);
+    .replace(/\{\{V\}\}/g, V)
+    .replace(/\{\{PRICE\}\}/g, String(price));
   htmlCache.set(key, out);
   return out;
 }

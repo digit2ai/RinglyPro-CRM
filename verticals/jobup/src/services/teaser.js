@@ -26,7 +26,10 @@ const settingsSvc = require('./settings');
 
 const TEASER_COST_CAP = parseFloat(process.env.JOBUP_TEASER_COST_CAP_USD || '0.35');
 const JOBS_PER_TEASER = 15;
-const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '97', 10);
+// Not a second copy of the price. billing.js owns it; two constants reading the
+// same env var is one careless edit away from the teaser quoting a figure the
+// checkout does not charge. Resolved at call time, like billingOff() below.
+const price = () => require('./billing').PRICE_USD;
 
 // Read at call time, not at require time, so flipping the env var takes effect
 // on the next build rather than the next restart.
@@ -64,7 +67,7 @@ function narration(profile, ctx, lang) {
       `Todo esto vive en tu panel privado: tus coincidencias, tu proceso, tus borradores pendientes de aprobación y la exportación completa de tus datos.`,
       billingOff()
         ? `El siguiente paso es construir tu cuenta: eliges una contraseña y nos dices qué tipo de trabajo buscas. Sin pago y sin tarjeta.`
-        : `Son ${PRICE_USD} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
+        : `Son ${price()} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
     ];
   }
   return [
@@ -82,7 +85,7 @@ function narration(profile, ctx, lang) {
     `All of it lives in your private dashboard: your matches, your pipeline, the drafts waiting on your approval, and a full export of everything.`,
     billingOff()
       ? `The next step is to build your account: you choose a password and tell us what kind of work you want. No payment, no card.`
-      : `It is ${PRICE_USD} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
+      : `It is ${price()} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
   ];
 }
 
@@ -188,7 +191,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
   return {
     status: 'ready',
     language: lang,
-    price_usd: billingOff() ? null : PRICE_USD,
+    price_usd: billingOff() ? null : price(),
     cost_usd: Number(spent.toFixed(5)),
     is_simulated: structured.is_simulated,
     notes,
@@ -213,7 +216,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
       ],
       cta: {
         // No surface may quote a price while payment is switched off.
-        price_usd: billingOff() ? null : PRICE_USD,
+        price_usd: billingOff() ? null : price(),
         billing_disabled: billingOff(),
         headline: billingOff() ? 'Build my account' : 'Build my ecosystem',
         includes: [
@@ -273,4 +276,5 @@ async function setStage(token, st) {
 module.exports = {
   STAGES,
   TYPICAL_BUILD_MS,
-  setStage, build, create, finish, get, token, ipHash, TEASER_COST_CAP, PRICE_USD, RESUME_PURGE_DAYS };
+  setStage, build, create, finish, get, token, ipHash, TEASER_COST_CAP, RESUME_PURGE_DAYS,
+  get PRICE_USD() { return require('./billing').PRICE_USD; } };

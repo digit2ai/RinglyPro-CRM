@@ -420,11 +420,11 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
   await t('payment_failed escalates dunning stages', async () => {
     const a = await billing.applyEvent('invoice.payment_failed',
-      { id: 'in_1', amount_due: 9700, metadata: { subscriber_id: String(subA.id) } });
+      { id: 'in_1', amount_due: 2500, metadata: { subscriber_id: String(subA.id) } });
     assert.strictEqual(a.stage, 1);
     assert.strictEqual(a.suspend, false);
     const b = await billing.applyEvent('invoice.payment_failed',
-      { id: 'in_1', amount_due: 9700, metadata: { subscriber_id: String(subA.id) } });
+      { id: 'in_1', amount_due: 2500, metadata: { subscriber_id: String(subA.id) } });
     assert.strictEqual(b.stage, 2);
   });
   await t('trial_will_end is handled (the conversion email)', async () => {
@@ -443,6 +443,26 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       { where: { id: subB.id } });
     const due = await billing.renewalNoticesDue();
     assert.ok(due.some((d) => d.subscriber_id === subB.id && d.days_out === 30));
+  });
+  await t('A RENEWAL NOTICE QUOTES THE SUBSCRIBER\'S OWN PRICE, NOT THE LIST', async () => {
+    // Stripe keeps an existing subscription on the price it was created with,
+    // so after a price cut the list figure is wrong for every earlier signup.
+    // Telling someone "$25" days before charging them $97 is the failure here.
+    await models.subscribers.update(
+      { status: 'active', current_period_end: new Date(Date.now() + 7 * 86400000) },
+      { where: { id: subB.id } });
+    await models.invoices.create({
+      tenant_id: subB.id, stripe_invoice_id: 'in_sit_legacy',
+      amount_cents: 9700, status: 'paid', paid_at: new Date(),
+    });
+    const due = await billing.renewalNoticesDue();
+    const row = due.find((d) => d.subscriber_id === subB.id);
+    assert.ok(row, 'the subscriber should be due a notice');
+    assert.strictEqual(row.amount_usd, 97,
+      'a legacy subscriber must be quoted what they actually pay');
+    assert.strictEqual(row.amount_source, 'last_invoice');
+    assert.notStrictEqual(row.amount_usd, billing.PRICE_USD,
+      'this test is meaningless if the list price happens to equal the legacy one');
   });
 
   // ---------------------------------------------------------------
@@ -999,7 +1019,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const crypto2 = require('crypto');
     const payload = JSON.stringify(
       { id: 'evt_sit', type: 'invoice.paid',
-        data: { object: { id: 'in_sit', amount_paid: 9700, metadata: { subscriber_id: '424242' } } } },
+        data: { object: { id: 'in_sit', amount_paid: 2500, metadata: { subscriber_id: '424242' } } } },
       null, 2);                                   // <- pretty-printed, like Stripe
     const secret = 'whsec_sit_' + Date.now();
     const ts = Math.floor(Date.now() / 1000);
@@ -1361,6 +1381,27 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const css = html.replace(/\s+/g, '');
     assert.ok(css.includes('padding-left:calc(24px+env(safe-area-inset-left))'),
       'landscape on a notched phone clips the left gutter');
+  });
+  await t('THE PRICE HAS EXACTLY ONE SOURCE', () => {
+    const fs = require('fs');
+    const billingSvc = require(__dirname + '/src/services/billing');
+    const teaserSvc = require(__dirname + '/src/services/teaser');
+    // teaser.js used to declare its own `parseInt(process.env.JOBUP_PRICE_USD)`.
+    // Two constants reading one env var is one careless edit away from the
+    // teaser quoting a figure the checkout does not charge.
+    const teaserSrc = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
+    assert.ok(!/JOBUP_PRICE_USD/.test(teaserSrc), 'teaser.js must not read the price env var itself');
+    assert.strictEqual(teaserSvc.PRICE_USD, billingSvc.PRICE_USD, 'the two must agree');
+    // And the landing page must not print a number of its own.
+    const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(html.includes('${{PRICE}}<span> / year</span>'),
+      'the pricing card must be templated, not hardcoded');
+    assert.ok(!/\$\d+<span> \/ year/.test(html), 'a hardcoded price is back on the landing page');
+    // The rendered page must carry the figure billing actually charges.
+    const rendered = pwaSvc.page('index.html', '');
+    assert.ok(rendered.includes(`$${billingSvc.PRICE_USD}<span> / year</span>`),
+      `the rendered price should be $${billingSvc.PRICE_USD}`);
+    assert.ok(!rendered.includes('{{PRICE}}'), 'the price token was not substituted');
   });
   await t('BRAND: one mark, one palette, everywhere', () => {
     const fs = require('fs');

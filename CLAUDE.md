@@ -585,6 +585,7 @@ Other PWA invariants worth not undoing:
 **Environment Variables:**
 - `JOBUP_JWT_SECRET` — signs the subscriber session cookie and the admin console token. SET on prod (falls back to a `dev-only-insecure-secret`).
 - `JOBUP_ADMIN_PASSWORD` — platform owner console at `/admin` (12+ chars). Unset = the console is **CLOSED**, deliberately, rather than open with a default password. `JOBUP_ADMIN_EMAILS` (default `mstagg@digit2ai.com`) is the allowlist.
+- `JOBUP_PRICE_USD` (default **25**) — the annual list price, and the **single source** for every surface that quotes a figure: Stripe checkout (`price_data`, so there is no Stripe Price object to update), the teaser payload, the voice lines, the admin console, and the landing pricing card (substituted server-side via a `{{PRICE}}` token — it must never be hardcoded again). **An env value on Render overrides this default**, so a code change alone will not move the price if one is set. Changing it does NOT reprice existing Stripe subscriptions: they stay on the price they were created with, which is why renewal notices quote the subscriber's own last paid invoice rather than the list.
 - `JOBUP_PUBLIC_URL` (default `https://jobup.dev`) — base used for Stripe return URLs.
 - `JOBUP_FREE_ACTIVATION` — `1` activates + provisions a subscriber with no payment (test mode). Every such row records the reason.
 - `JOBUP_DEFAULT_COUNTRY_CODE` (default `1`) — assumed dialing code when a phone is typed without one.
