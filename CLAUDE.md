@@ -78,6 +78,25 @@ A test-number AI phone agent that talks to callers and books appointments at ~ha
 - `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
 - `VOICE_RELAY_TRANSFER_NUMBER` — fallback number `transfer_to_human` dials when the client has no `owner_phone` on file. Unset + no owner_phone = the agent offers to take a message instead.
 
+## AI Agent Prompt Builder — one box, then paste into VS Code
+
+Self-contained sub-app auto-mounted at `/ai-agent-prompt-builder-for-data-writing` (from `client-builds/ai-agent-prompt-builder-for-data-writing/`). **You describe an agent in one paragraph — typed or dictated — and get back a complete JSON spec plus the exact `/ringlypro-architect` command to paste into VS Code.** It replaced a four-step wizard: almost everyone describing an agent already says everything the wizard asked for, just in prose, so the model transposes the prose into the fields instead of making a person be a prompt engineer.
+
+**IT AUTHORS PROMPTS AND NEVER EXECUTES ONE.** `lib/compose.js` is the only file that reaches a model, and it uses it to *write the spec*; nothing here ever sends the assembled payload or its `system_prompt` anywhere. SIT asserts that file by file (exactly one SDK importer, and it never references `system_prompt`) — the deliverable is the JSON the user takes to their own tool.
+
+- **Pages:** `/` the one box (`#one-box`) · `/advanced` the field-by-field editor — the escape hatch for fixing a field, **do not promote it back to `/`** · `/gallery` six seeded templates.
+- **API:** `POST /api/v1/agents/compose` `{text, lang}` → `{definition, payload, command, assumptions, clarifications, unverified, composed_by, is_simulated}` (public, rate-limited, persists nothing) · `POST /api/v1/agents/generate` pure assembly, no model · `POST/GET/PUT/DELETE /api/v1/agents` JWT, tenant-scoped · `GET /health` names the model actually composing.
+- **HONESTY IS ENFORCED IN CODE, NOT IN THE PROMPT.** Every identifier-shaped token the spec introduces (`orders_2024.csv`, `/v1/ingest`, `<source table>`) is checked against what the user actually typed; anything absent comes back in `unverified[]` and renders **above** the artifact under "Confirm before you build". A spec handed to a build agent with an invented table name reading as fact is the failure this exists to prevent. Separator-only differences (`invoice number` → `invoice_number`) do not count as unverified, or the real finds drown in noise.
+- **The zero-key path is a real product, not a stub.** With no `ANTHROPIC_API_KEY` the composer assembles a usable definition from the user's own sentences and labels itself `composed_by:'heuristic'` / `is_simulated:true` on the payload, in the status pill and under the buttons. Never a silent fake.
+- **`architectCommand()` lives in the pure `promptBuilder.js`**, shipped verbatim to the browser like `buildPrompt`, so the box, the advanced editor and any API caller assemble the identical command. A payload in a clipboard is not yet something an operator can run — the command is the deliverable.
+- **Dictation is the Web Speech API, on-device** (same "ear" as the voice orb): no key, no audio upload, unmistakable listening state, disables itself with an explanation where unsupported. Typing is the primary input; nothing is gated behind the mic.
+- **SIT:** `node client-builds/ai-agent-prompt-builder-for-data-writing/sit.js` → **124/124**, zero external keys — it unsets `ANTHROPIC_API_KEY` before requiring the app and says so, so the suite is free and offline and the keyless fallback is the one under test. Consequence: the model path is only verifiable against production (`GET /health` → `composer`).
+
+**Environment Variables:**
+- `APB_MODEL` — model that authors specs. Default **`claude-opus-5`**, deliberately not the Haiku the rest of the repo uses: this is a handful of one-shot calls a day and the quality of that one call is the entire product (~1.2k output tokens/compose). Set `claude-sonnet-5` or `claude-haiku-4-5-20251001` to trade quality for cost with no redeploy.
+- `APB_COMPOSE_PER_HOUR` (30) — per-caller ceiling on `/compose`. The endpoint is ungated because it persists nothing, so this plus the 8,000-char input cap in `lib/compose.js` are what stand between a loop and a bill.
+- Reuses `ANTHROPIC_API_KEY`, `DATABASE_URL`, `JWT_SECRET`.
+
 ## Modo Noche — Aplicación de Sueño con Música Personalizada
 
 Self-contained sub-app auto-mounted at `/aplicacion-de-sueno-con-musica-personali` (from `client-builds/aplicacion-de-sueno-con-musica-personali/`). A web bedtime player, 52 tracks in two families: pick a track, set a shutdown timer (default 60 min), tap "Iniciar noche" — the loop plays through an HTML5 `<audio>` element, fades over the final 5 minutes via a Web Audio `GainNode`, and stops on its own at expiry. Spanish default UI, `?lang=en` for English (substituted **server-side**, so the `<h1>` is correct in the delivered HTML). No login, no PII. Installable to the iPhone home screen (PWA).
