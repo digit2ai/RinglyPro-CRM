@@ -120,6 +120,134 @@ textarea.mono, input.mono { font-family: var(--mono); font-size: 13px; }
 
 .btn-ok { background: rgba(52, 211, 153, .15); color: var(--ok); border-color: rgba(52, 211, 153, .5); }
 
+/* --- the one box ---------------------------------------------------------- */
+
+/* The mic sits inside the textarea's bottom-right corner rather than beside it,
+   so the box reads as one input with two ways in (type or speak) instead of a
+   field plus an unrelated control. */
+.box-wrap { position: relative; }
+
+.box-wrap textarea {
+  font-size: 16px;          /* 16px stops iOS zooming the page on focus */
+  line-height: 1.6;
+  padding: 16px 60px 16px 16px;
+  min-height: 150px;
+}
+
+.mic {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--mut);
+  cursor: pointer;
+  transition: all .15s;
+}
+.mic:hover { color: var(--txt); border-color: var(--accent); }
+.mic:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Listening is a state the user must be able to see at a glance — a mic that
+   looks identical whether or not it is recording is a privacy problem, not just
+   a UI one. */
+.mic.listening {
+  color: #020617;
+  background: var(--err);
+  border-color: var(--err);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, .55); }
+  50%      { box-shadow: 0 0 0 10px rgba(248, 113, 113, 0); }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mic.listening { animation: none; }
+  .spinner { animation-duration: 2.4s; }
+}
+
+/* --- result tabs ---------------------------------------------------------- */
+
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mut);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.tab:hover { color: var(--txt); }
+.tab.is-on {
+  color: var(--accent);
+  background: rgba(56, 189, 248, .1);
+  border-color: rgba(56, 189, 248, .35);
+}
+
+/* --- assumption / how-to lists -------------------------------------------- */
+
+.note-list { margin: 0; padding: 0; list-style: none; }
+.note-list li {
+  position: relative;
+  padding: 8px 0 8px 22px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(30, 41, 59, .7);
+}
+.note-list li:last-child { border-bottom: 0; }
+.note-list li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--warn);
+}
+.note-list.ordered { counter-reset: step; }
+.note-list.ordered li::before {
+  counter-increment: step;
+  content: counter(step);
+  left: 0;
+  top: 8px;
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.note-list code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--violet);
+}
+
 /* --- section stepper ----------------------------------------------------- */
 
 .step-head {
@@ -165,6 +293,10 @@ textarea.mono, input.mono { font-family: var(--mono); font-size: 13px; }
   tab-size: 2;
   color: #cbd5e1;
 }
+
+/* The command and system-prompt views are prose, not a data structure — they
+   have to wrap, or the pane scrolls sideways for every sentence. */
+#json-preview.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Token colors for the highlighted preview. Kept low-saturation so a 200-line
    payload does not read as confetti. */

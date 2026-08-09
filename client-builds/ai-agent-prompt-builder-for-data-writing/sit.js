@@ -24,6 +24,17 @@ if (!process.env.JWT_SECRET) {
   console.log('[sit] JWT_SECRET not set — using a SIT-local secret for this run');
 }
 
+// The composer reads its API key at require-time, and a dev box's .env usually
+// has one. Unsetting it BEFORE the sub-app is required forces the zero-key
+// heuristic path for the whole run: the SIT bills nobody, never depends on a
+// live API, and proves the fallback a keyless deploy actually runs. Said loudly
+// because a silently-skipped model path is the kind of gap SITs are for.
+if (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY) {
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.CLAUDE_API_KEY;
+  console.log('[sit] ANTHROPIC_API_KEY unset for this run — compose is exercised on the heuristic path only');
+}
+
 const express = require('express');
 const http = require('http');
 const jwt = require('jsonwebtoken');
@@ -31,6 +42,7 @@ const jwt = require('jsonwebtoken');
 const subApp = require('./index');
 const store = require('./lib/store');
 const pb = require('./lib/promptBuilder');
+const composer = require('./lib/compose');
 const seeds = require('./seeds/templates');
 
 const MOUNT = '/ai-agent-prompt-builder-for-data-writing';
@@ -290,13 +302,145 @@ const AGENT_BODY = {
       ok('every seeded template generates a clean payload', allGood, firstBad ? 'failed on ' + firstBad : '');
     }
 
-    // --------------------------------------------------------- the wizard UI
+    // ---------------------------------------------------------- THE ONE BOX
+    // The whole point of the redesign: one sentence in, a complete, buildable
+    // spec out, with no wizard step in between.
     {
+      const DESCRIPTION =
+        'Read the invoice PDFs that land in raw_documents and pull out the vendor, ' +
+        'invoice number, date and total, one row per invoice. Copy the numbers exactly ' +
+        'as printed. If a field is not on the page leave it null and never guess.';
+
       const r = await request(port, 'GET', MOUNT + '/');
-      ok('AC6 wizard page returns 200', r.status === 200, 'got ' + r.status);
-      ok('AC6 wizard page contains id="json-preview"', r.raw.indexOf('id="json-preview"') !== -1);
-      ok('wizard page has no unsubstituted template tokens', r.raw.indexOf('{{') === -1);
-      ok('wizard page loads the shared promptBuilder bundle', r.raw.indexOf('promptBuilder.js') !== -1);
+      ok('AC6 home page returns 200', r.status === 200, 'got ' + r.status);
+      ok('AC6 home page contains id="json-preview"', r.raw.indexOf('id="json-preview"') !== -1);
+      ok('home page has no unsubstituted template tokens', r.raw.indexOf('{{') === -1);
+      ok('home page loads the shared promptBuilder bundle', r.raw.indexOf('promptBuilder.js') !== -1);
+      ok('home page is ONE box, not a multi-step form',
+        r.raw.indexOf('id="one-box"') !== -1 && r.raw.indexOf('class="step-num"') === -1);
+      ok('home page offers dictation as well as typing', r.raw.indexOf('id="btn-mic"') !== -1);
+
+      const c = await request(port, 'POST', MOUNT + '/api/v1/agents/compose', { text: DESCRIPTION });
+      ok('compose returns 200', c.status === 200, 'got ' + c.status + ' ' + c.raw.slice(0, 200));
+      ok('compose needs no auth (nothing is persisted)', c.status === 200);
+
+      const b = c.body || {};
+      ok('compose returns a definition, a payload and a command',
+        !!(b.definition && b.payload && typeof b.command === 'string'));
+      ok('compose payload carries all three prompt keys',
+        !!(b.payload && b.payload.agent && b.payload.instructions && b.payload.output_schema));
+      ok('compose named the agent from the description',
+        !!(b.definition && b.definition.name && b.definition.name !== 'Untitled Agent'),
+        b.definition && b.definition.name);
+      ok('compose produced ordered instructions',
+        !!(b.definition && Array.isArray(b.definition.instructions) && b.definition.instructions.length),
+        String(b.definition && b.definition.instructions && b.definition.instructions.length));
+      ok('compose always constrains fabrication',
+        !!(b.definition && b.definition.constraints.some((x) => /fabricate|invent/i.test(x))),
+        JSON.stringify(b.definition && b.definition.constraints));
+
+      // The command is the deliverable — a JSON payload sitting in a clipboard
+      // is not yet something an operator can run.
+      ok('command invokes the architect', b.command && b.command.indexOf('/ringlypro-architect') === 0);
+      ok('command embeds the payload as a fenced JSON block',
+        b.command && b.command.indexOf('```json') !== -1 && b.command.trim().endsWith('```'));
+      {
+        const m = /```json\n([\s\S]*?)\n```/.exec(b.command || '');
+        let reparsed = null;
+        try { reparsed = m ? JSON.parse(m[1]) : null; } catch (e) { /* leave null */ }
+        ok('the JSON inside the command parses', reparsed !== null);
+        ok('the JSON inside the command is the same payload',
+          !!(reparsed && reparsed.agent && reparsed.agent.name === b.payload.agent.name));
+      }
+
+      // Honesty: with no key the answer must SAY it was not authored by a model.
+      ok('keyless compose labels itself heuristic',
+        b.composed_by === 'heuristic' && b.is_simulated === true,
+        b.composed_by + '/' + b.is_simulated);
+      ok('keyless compose says so in the payload source block',
+        !!(b.payload.source && b.payload.source.is_simulated === true && b.payload.source.model === 'heuristic'));
+      ok('keyless compose surfaces assumptions rather than hiding them',
+        Array.isArray(b.assumptions) && b.assumptions.length > 0,
+        String(b.assumptions && b.assumptions.length));
+      ok('the command repeats the assumptions for the build agent',
+        b.command.indexOf('assumptions') !== -1);
+
+      // An empty box is a 400, not an invented agent.
+      const empty = await request(port, 'POST', MOUNT + '/api/v1/agents/compose', { text: '   ' });
+      ok('compose on an empty description returns 400', empty.status === 400, 'got ' + empty.status);
+
+      // Input is capped — an unbounded body is a cost incident, not a feature.
+      const huge = await request(port, 'POST', MOUNT + '/api/v1/agents/compose',
+        { text: 'extract fields from documents. '.repeat(2000) });
+      ok('compose accepts an oversized body by truncating, not erroring', huge.status === 200, 'got ' + huge.status);
+      ok('compose caps the recorded description at MAX_INPUT',
+        huge.body && huge.body.payload.source.described_as.length <= composer.MAX_INPUT,
+        String(huge.body && huge.body.payload.source.described_as.length));
+
+      // The composed definition must round-trip into the persistence layer —
+      // "compose then save" cannot fail validation on its own output.
+      const saved = await request(port, 'POST', MOUNT + '/api/v1/agents', b.definition, authA);
+      ok('a composed definition saves without further editing', saved.status === 201,
+        'got ' + saved.status + ' ' + saved.raw.slice(0, 160));
+      if (saved.status === 201) {
+        await request(port, 'DELETE', MOUNT + '/api/v1/agents/' + saved.body.id, undefined, authA);
+      }
+    }
+
+    // -------------------------------------------- compose internals (pure)
+    {
+      ok('extractJson survives a code fence',
+        composer.extractJson('```json\n{"name":"X"}\n```').name === 'X');
+      ok('extractJson survives a leading sentence',
+        composer.extractJson('Here you go: {"name":"X"} — enjoy').name === 'X');
+      ok('extractJson handles braces inside strings',
+        composer.extractJson('{"name":"a{b}c","k":1}').name === 'a{b}c');
+      ok('extractJson returns null on junk', composer.extractJson('no json here') === null);
+
+      // The honesty check that matters: a table name the user never said must
+      // come back flagged, and one they did say must not.
+      const flagged = composer.unstatedIdentifiers(
+        { dataSources: ['orders_2024.csv'], instructions: [], constraints: [], goal: '', outputSchema: {} },
+        'read the invoices in raw_documents'
+      );
+      ok('an identifier the user never mentioned is flagged',
+        flagged.indexOf('orders_2024.csv') !== -1, JSON.stringify(flagged));
+
+      const notFlagged = composer.unstatedIdentifiers(
+        { dataSources: ['raw_documents.body_text'], instructions: [], constraints: [], goal: '', outputSchema: {} },
+        'read raw_documents.body_text'
+      );
+      ok('an identifier the user did mention is not flagged',
+        notFlagged.length === 0, JSON.stringify(notFlagged));
+
+      const placeholder = composer.unstatedIdentifiers(
+        { dataSources: ['<source table>'], instructions: [], constraints: [], goal: '', outputSchema: {} },
+        'pull the totals'
+      );
+      ok('a visible placeholder is surfaced for confirmation',
+        placeholder.indexOf('<source table>') !== -1, JSON.stringify(placeholder));
+
+      const h = composer.heuristic('Read the invoices in raw_documents and write the vendor and total to a table.', 'en');
+      ok('the heuristic path builds from the user own words',
+        h.goal.indexOf('invoices') !== -1, h.goal);
+      ok('the heuristic path never claims to be a model',
+        h.assumptions.some((a) => /no model/i.test(a)), JSON.stringify(h.assumptions));
+
+      ok('architectCommand is deterministic',
+        pb.architectCommand({ agent: { name: 'X' } }) === pb.architectCommand({ agent: { name: 'X' } }));
+      ok('architectCommand names the agent it is asking for',
+        pb.architectCommand({ agent: { name: 'Field Extractor' } }).indexOf('"Field Extractor"') !== -1);
+    }
+
+    // ----------------------------------------------------- the advanced editor
+    {
+      const r = await request(port, 'GET', MOUNT + '/advanced');
+      ok('advanced editor returns 200', r.status === 200, 'got ' + r.status);
+      ok('advanced editor still carries the full field form',
+        r.raw.indexOf('id="wizard"') !== -1 && r.raw.indexOf('id="f-outputSchema"') !== -1);
+      ok('advanced editor exposes the same paste-ready command',
+        r.raw.indexOf('id="btn-copy-command"') !== -1);
+      ok('advanced editor links back to the box', r.raw.indexOf('href="./"') !== -1);
     }
     {
       const r = await request(port, 'GET', MOUNT + '/gallery');
@@ -323,22 +467,34 @@ const AGENT_BODY = {
 
     // ------------------------------------------- the app executes no prompts
     {
-      // The sprint's hardest boundary: this app ASSEMBLES payloads and does not
-      // run them. Asserted against the source so a future "just add a preview
-      // run button" cannot slip past review.
+      // The hardest boundary in this app, and a subtle one now that a model is
+      // involved: the composer uses a model to WRITE the spec, and nothing here
+      // ever RUNS the spec it wrote. The deliverable is the JSON the user takes
+      // elsewhere. Asserted against the source so a future "add a little Try it
+      // button" has to change this test on the way in.
       const fs = require('fs');
       const path = require('path');
       const dirs = ['lib', 'routes', 'models', 'seeds'];
-      let offender = '';
+      const importers = [];
       for (const d of dirs) {
         for (const f of fs.readdirSync(path.join(__dirname, d))) {
           if (!f.endsWith('.js')) continue;
           const src = fs.readFileSync(path.join(__dirname, d, f), 'utf8');
-          if (/require\(['"](openai|@anthropic-ai\/sdk|langchain)/.test(src)) { offender = d + '/' + f; break; }
+          if (/require\(['"](openai|@anthropic-ai\/sdk|langchain)/.test(src)) importers.push(d + '/' + f);
         }
-        if (offender) break;
       }
-      ok('no model-execution SDK is imported anywhere in the app', !offender, offender);
+      ok('exactly one file may reach a model, and it is the composer',
+        importers.length === 1 && importers[0] === 'lib/compose.js', importers.join(','));
+
+      const composeSrc = fs.readFileSync(path.join(__dirname, 'lib', 'compose.js'), 'utf8');
+      ok('the composer authors a specification (not an answer)',
+        composeSrc.indexOf('You are a specification author') !== -1);
+      ok('the composer never feeds the assembled prompt back to a model',
+        composeSrc.indexOf('system_prompt') === -1);
+
+      const routeSrc = fs.readFileSync(path.join(__dirname, 'routes', 'agents.js'), 'utf8');
+      ok('no route sends output_schema or system_prompt to a model',
+        !/messages\.create|\.completions\./.test(routeSrc));
     }
 
     // ------------------------------------------------- update + delete round

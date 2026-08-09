@@ -4,150 +4,116 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Agent Prompt Builder — Digit2AI</title>
-<meta name="description" content="Define a data-writing AI agent and export a valid JSON prompt in under ten minutes.">
+<meta name="description" content="Say what the agent should do. Get a JSON spec and a command you paste into VS Code to build it.">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="max-w-[1500px] mx-auto px-5 py-8">
+<div class="max-w-[1100px] mx-auto px-5 py-10">
 
   <!-- header -->
   <header class="flex flex-wrap items-end justify-between gap-4 mb-8">
     <div>
       <h1 class="text-3xl font-extrabold grad-title" data-i18n="app_title">AI Agent Prompt Builder</h1>
-      <p class="text-sm mt-2" style="color:var(--mut)" data-i18n="app_subtitle">Define a data-writing agent. Export a valid JSON prompt in under ten minutes.</p>
+      <p class="text-sm mt-2" style="color:var(--mut)" data-i18n="box_subtitle">
+        Say what the agent should do. Get back a JSON spec and one command to paste into VS Code.
+      </p>
     </div>
     <nav class="flex items-center gap-3">
       <a class="btn" href="gallery" data-i18n="btn_open_gallery">Browse templates</a>
+      <a class="btn" href="advanced" data-i18n="btn_advanced">Advanced editor</a>
     </nav>
   </header>
 
-  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-6">
+  <!-- ============================== THE ONE BOX ============================== -->
+  <section class="card p-6 mb-6">
+    <label for="one-box" class="required" data-i18n="box_label">Describe the agent</label>
 
-    <!-- ============================= WIZARD ============================= -->
-    <form id="wizard" autocomplete="off" novalidate>
+    <div class="box-wrap">
+      <textarea id="one-box" rows="6" maxlength="8000" autofocus
+        data-i18n-placeholder="box_placeholder"
+        placeholder="Read the invoice PDFs that land in raw_documents and pull out the vendor, invoice number, date and total into a row per invoice. Copy the numbers exactly as printed, and if a field isn't on the page leave it null — never guess."></textarea>
+      <button type="button" id="btn-mic" class="mic" aria-label="Dictate" title="Dictate">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+          <path d="M5 10a7 7 0 0 0 14 0"></path>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </button>
+    </div>
 
-      <!-- 1. Identity -->
-      <section class="card p-6 mb-5">
-        <div class="step-head"><span class="step-num">1</span><span data-i18n="step_identity">Identity</span></div>
+    <div class="flex flex-wrap items-center gap-3 mt-4">
+      <button type="button" class="btn btn-primary" id="btn-compose" data-i18n="btn_compose">Build the prompt</button>
+      <button type="button" class="btn" id="btn-clear" data-i18n="btn_clear">Clear</button>
+      <span class="hint" id="mic-note" style="margin:0"></span>
+    </div>
 
-        <div class="field">
-          <label class="required" for="f-name" data-i18n="f_name">Agent name</label>
-          <input id="f-name" name="name" data-bind placeholder="Field Extractor" maxlength="200">
-          <div class="hint" data-i18n="f_name_hint">What this agent is called in your pipeline.</div>
+    <p class="hint" id="box-hint" style="margin-top:12px" data-i18n="box_hint">
+      Plain language is enough. Name the source and the fields if you know them; anything you leave out
+      comes back listed as an assumption to confirm.
+    </p>
+  </section>
+
+  <!-- =============================== THINKING =============================== -->
+  <section class="card p-6 mb-6" id="thinking" hidden>
+    <div class="flex items-center gap-3">
+      <span class="spinner" aria-hidden="true"></span>
+      <span class="text-sm" style="color:var(--mut)" data-i18n="composing">Writing the spec…</span>
+    </div>
+  </section>
+
+  <!-- ================================ RESULT ================================ -->
+  <section id="result" hidden>
+
+    <!-- what the composer assumed -->
+    <div class="card p-5 mb-5" id="assumptions-card" hidden>
+      <h2 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--warn)" data-i18n="assumptions_title">
+        Confirm before you build
+      </h2>
+      <ul id="assumptions-list" class="note-list"></ul>
+    </div>
+
+    <!-- the deliverable -->
+    <div class="card p-5 mb-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab is-on" data-tab="command" data-i18n="tab_command">VS Code command</button>
+          <button type="button" class="tab" data-tab="json" data-i18n="tab_json">JSON</button>
+          <button type="button" class="tab" data-tab="prompt" data-i18n="tab_prompt">System prompt</button>
         </div>
-
-        <div class="field">
-          <label for="f-role" data-i18n="f_role">Role / persona</label>
-          <input id="f-role" name="role" data-bind placeholder="a precise data extraction specialist" maxlength="500">
-          <div class="hint" data-i18n="f_role_hint">Who the agent is. One line.</div>
-        </div>
-
-        <div class="field" style="margin-bottom:0">
-          <label for="f-description" data-i18n="f_description">Description (optional)</label>
-          <input id="f-description" name="description" data-bind placeholder="Front of the pipeline. Turns documents into rows." maxlength="1000">
-        </div>
-      </section>
-
-      <!-- 2. Context -->
-      <section class="card p-6 mb-5">
-        <div class="step-head"><span class="step-num">2</span><span data-i18n="step_context">Context</span></div>
-
-        <div class="field">
-          <label for="f-goal" data-i18n="f_goal">Goal</label>
-          <textarea id="f-goal" name="goal" data-bind rows="3" placeholder="Read a raw document and return the requested fields as strict JSON, using null where the document is silent."></textarea>
-          <div class="hint" data-i18n="f_goal_hint">The single outcome this agent is responsible for.</div>
-        </div>
-
-        <div class="field" style="margin-bottom:0">
-          <label for="f-dataSources" data-i18n="f_data_sources">Data sources</label>
-          <textarea id="f-dataSources" name="dataSources" data-bind data-list class="mono" rows="5"
-            placeholder="raw_documents table — column body_text&#10;extraction_fields config — field list per doc_type"></textarea>
-          <div class="hint" data-i18n="f_data_sources_hint">One per line. Table, file, API, or feed the agent reads.</div>
-        </div>
-      </section>
-
-      <!-- 3. Behavior -->
-      <section class="card p-6 mb-5">
-        <div class="step-head"><span class="step-num">3</span><span data-i18n="step_behavior">Behavior</span></div>
-
-        <div class="field">
-          <label for="f-instructions" data-i18n="f_instructions">Instructions</label>
-          <textarea id="f-instructions" name="instructions" data-bind data-list class="mono" rows="7"
-            placeholder="Read the full document before extracting anything.&#10;Copy values verbatim; do not normalize.&#10;If a field is not stated, return null. Never guess."></textarea>
-          <div class="hint" data-i18n="f_instructions_hint">One step per line. Ordered — they become a numbered list.</div>
-        </div>
-
-        <div class="field" style="margin-bottom:0">
-          <label for="f-constraints" data-i18n="f_constraints">Constraints</label>
-          <textarea id="f-constraints" name="constraints" data-bind data-list class="mono" rows="5"
-            placeholder="Never fabricate a value to satisfy a required field.&#10;Return JSON only. No prose, no code fences."></textarea>
-          <div class="hint" data-i18n="f_constraints_hint">One per line. What the agent must never do.</div>
-        </div>
-      </section>
-
-      <!-- 4. Output -->
-      <section class="card p-6 mb-5">
-        <div class="step-head"><span class="step-num">4</span><span data-i18n="step_output">Output</span></div>
-
-        <div class="field">
-          <label for="f-outputSchema" data-i18n="f_output_schema">Output schema (JSON)</label>
-          <textarea id="f-outputSchema" name="outputSchema" data-bind class="mono" rows="9"
-            placeholder='{ "document_id": "string", "fields": [ { "name": "string", "value": "string|null" } ] }'></textarea>
-          <div class="hint" data-i18n="f_output_schema_hint">The exact JSON shape the agent must return.</div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" style="margin-bottom:0">
-          <div class="field" style="margin-bottom:0">
-            <label for="f-model" data-i18n="f_model">Target model (optional)</label>
-            <input id="f-model" name="model" data-bind class="mono" placeholder="claude-haiku-4-5-20251001" maxlength="100">
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label for="f-temperature" data-i18n="f_temperature">Temperature (optional)</label>
-            <input id="f-temperature" name="temperature" data-bind class="mono" type="number" step="0.1" min="0" max="2" placeholder="0.0">
-          </div>
-        </div>
-      </section>
-
-      <div class="flex flex-wrap gap-3">
-        <button type="button" class="btn" id="btn-reset" data-i18n="btn_reset">Clear form</button>
-        <a class="btn" href="gallery" data-i18n="btn_open_gallery">Browse templates</a>
+        <span id="preview-status" class="status-pill status-ok" data-i18n="preview_valid">Valid JSON</span>
       </div>
-    </form>
 
-    <!-- ============================ PREVIEW ============================= -->
-    <aside>
-      <div class="preview-wrap">
-        <div class="card p-5">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <h2 class="text-sm font-bold uppercase tracking-wider" style="color:var(--mut)" data-i18n="preview_title">Live JSON prompt</h2>
-            <span id="preview-status" class="status-pill status-ok" data-i18n="preview_valid">Valid JSON</span>
-          </div>
+      <!-- One pane, three views. `json-preview` is the element the JSON view
+           renders into and the id the acceptance criteria assert on. -->
+      <pre id="json-preview" aria-live="polite"></pre>
 
-          <!-- The element acceptance criterion 6 asserts on. -->
-          <pre id="json-preview" aria-live="polite"></pre>
-
-          <div class="flex flex-wrap gap-2 mt-4">
-            <button type="button" class="btn btn-primary" id="btn-copy" data-i18n="btn_copy">Copy JSON</button>
-            <button type="button" class="btn" id="btn-download" data-i18n="btn_download">Download .json</button>
-            <button type="button" class="btn" id="btn-save" data-i18n="btn_save">Save agent</button>
-          </div>
-
-          <p class="hint" id="save-note" style="margin-top:10px"></p>
-        </div>
-
-        <div class="card p-5 mt-5">
-          <h2 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--mut)" data-i18n="saved_agents">Saved agents</h2>
-          <div id="saved-list"></div>
-        </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <button type="button" class="btn btn-primary" id="btn-copy" data-i18n="btn_copy_command">Copy VS Code command</button>
+        <button type="button" class="btn" id="btn-download" data-i18n="btn_download">Download .json</button>
+        <button type="button" class="btn" id="btn-edit" data-i18n="btn_edit">Edit the fields</button>
+        <button type="button" class="btn" id="btn-save" data-i18n="btn_save">Save agent</button>
       </div>
-    </aside>
 
-  </div>
+      <p class="hint" id="save-note" style="margin-top:10px"></p>
+      <p class="hint" id="source-note" style="margin-top:4px"></p>
+    </div>
+
+    <!-- how to run it -->
+    <div class="card p-5 mb-5">
+      <h2 class="text-sm font-bold uppercase tracking-wider mb-3" style="color:var(--mut)" data-i18n="howto_title">Run it</h2>
+      <ol class="note-list ordered">
+        <li data-i18n="howto_1">Copy the command above.</li>
+        <li data-i18n="howto_2">Open the RinglyPro-CRM repo in VS Code and start Claude Code.</li>
+        <li data-i18n="howto_3">Paste and press enter. The architect builds, tests and deploys the agent.</li>
+      </ol>
+    </div>
+  </section>
 
   <footer class="text-xs mt-10 pb-6" style="color:#475569">
-    This builder assembles prompt payloads. It does not execute them — the JSON is the deliverable.
+    This builder writes prompt payloads. It does not execute them — the JSON is the deliverable.
   </footer>
 </div>
 

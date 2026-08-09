@@ -15,6 +15,38 @@ const en = {
   app_title: 'AI Agent Prompt Builder',
   app_subtitle: 'Define a data-writing agent. Export a valid JSON prompt in under ten minutes.',
 
+  box_subtitle: 'Say what the agent should do. Get back a JSON spec and one command to paste into VS Code.',
+  box_label: 'Describe the agent',
+  box_placeholder: "Read the invoice PDFs that land in raw_documents and pull out the vendor, invoice number, date and total into a row per invoice. Copy the numbers exactly as printed, and if a field isn't on the page leave it null — never guess.",
+  box_hint: 'Plain language is enough. Name the source and the fields if you know them; anything you leave out comes back listed as an assumption to confirm.',
+
+  btn_compose: 'Build the prompt',
+  btn_clear: 'Clear',
+  btn_advanced: 'Advanced editor',
+  btn_back_box: 'Back to the box',
+  btn_edit: 'Edit the fields',
+  composing: 'Writing the spec…',
+
+  mic_listening: 'Listening — tap the mic again to stop.',
+  mic_unsupported: 'Dictation needs Chrome, Edge or Safari. Typing works everywhere.',
+  mic_denied: 'Microphone blocked. Allow it in the address bar, or just type.',
+  mic_failed: 'Dictation stopped. You can keep typing.',
+
+  tab_command: 'VS Code command',
+  tab_json: 'JSON',
+  tab_prompt: 'System prompt',
+
+  assumptions_title: 'Confirm before you build',
+  unverified_prefix: 'Not in your description — confirm this name exists: ',
+
+  howto_title: 'Run it',
+  howto_1: 'Copy the command above.',
+  howto_2: 'Open the RinglyPro-CRM repo in VS Code and start Claude Code.',
+  howto_3: 'Paste and press enter. The architect builds, tests and deploys the agent.',
+
+  adv_title: 'Advanced editor',
+  adv_subtitle: 'Field-by-field control. Everything the composer wrote lands here, editable.',
+
   nav_wizard: 'Wizard',
   nav_gallery: 'Templates',
 
@@ -44,8 +76,13 @@ const en = {
   preview_title: 'Live JSON prompt',
   preview_valid: 'Valid JSON',
   preview_invalid: 'Schema is not valid JSON',
+  preview_heuristic: 'Written without a model',
+  source_model: 'Composed by ',
+  source_heuristic: 'No model key is configured, so this was assembled from your own sentences. Read it before you run it.',
 
   btn_copy: 'Copy JSON',
+  btn_copy_command: 'Copy VS Code command',
+  btn_copy_prompt: 'Copy system prompt',
   btn_copied: 'Copied',
   btn_download: 'Download .json',
   btn_save: 'Save agent',
@@ -65,6 +102,9 @@ const en = {
   err_name_required: 'Agent name is required before saving.',
   err_save_failed: 'Save failed',
   err_auth_required: 'A CRM session is required to save. Copy or download instead.',
+  err_empty: 'Describe the agent first.',
+  err_compose: 'Could not build the prompt',
+  err_rate: 'Too many compositions this hour. Try again later.',
 
   toast_loaded: 'Template loaded into the wizard.'
 };
@@ -72,11 +112,57 @@ const en = {
 // Spanish stub — deliberately partial. Fill it to enable ?lang=es.
 const es = {
   app_title: 'Constructor de Prompts para Agentes de IA',
+  box_subtitle: 'Di qué debe hacer el agente. Recibe una especificación JSON y un comando para pegar en VS Code.',
+  box_label: 'Describe el agente',
+  box_placeholder: 'Lee los PDF de facturas que llegan a raw_documents y extrae el proveedor, el número de factura, la fecha y el total, una fila por factura. Copia las cifras tal como aparecen impresas y, si un campo no está en la página, déjalo en null — nunca lo adivines.',
+  box_hint: 'Basta con lenguaje natural. Nombra la fuente y los campos si los conoces; todo lo que omitas vuelve listado como un supuesto por confirmar.',
+
+  btn_compose: 'Construir el prompt',
+  btn_clear: 'Limpiar',
+  btn_advanced: 'Editor avanzado',
+  btn_back_box: 'Volver a la caja',
+  btn_edit: 'Editar los campos',
+  composing: 'Escribiendo la especificación…',
+
+  mic_listening: 'Escuchando — toca el micrófono otra vez para detener.',
+  mic_unsupported: 'El dictado requiere Chrome, Edge o Safari. Escribir funciona en todos.',
+  mic_denied: 'Micrófono bloqueado. Permítelo en la barra de direcciones, o simplemente escribe.',
+  mic_failed: 'El dictado se detuvo. Puedes seguir escribiendo.',
+
+  tab_command: 'Comando VS Code',
+  tab_json: 'JSON',
+  tab_prompt: 'Prompt de sistema',
+
+  assumptions_title: 'Confirma antes de construir',
+  unverified_prefix: 'No está en tu descripción — confirma que este nombre existe: ',
+
+  howto_title: 'Ejecútalo',
+  howto_1: 'Copia el comando de arriba.',
+  howto_2: 'Abre el repositorio RinglyPro-CRM en VS Code e inicia Claude Code.',
+  howto_3: 'Pega y presiona enter. El arquitecto construye, prueba y despliega el agente.',
+
+  adv_title: 'Editor avanzado',
+  adv_subtitle: 'Control campo por campo. Todo lo que escribió el compositor llega aquí, editable.',
+
+  preview_valid: 'JSON válido',
+  preview_invalid: 'El esquema no es JSON válido',
+  preview_heuristic: 'Escrito sin modelo',
+  source_model: 'Compuesto por ',
+  source_heuristic: 'No hay clave de modelo configurada, así que esto se armó con tus propias frases. Léelo antes de ejecutarlo.',
+
   nav_wizard: 'Asistente',
   nav_gallery: 'Plantillas',
   btn_copy: 'Copiar JSON',
+  btn_copy_command: 'Copiar comando VS Code',
+  btn_copy_prompt: 'Copiar prompt de sistema',
+  btn_copied: 'Copiado',
   btn_download: 'Descargar .json',
-  btn_save: 'Guardar agente'
+  btn_save: 'Guardar agente',
+  btn_open_gallery: 'Ver plantillas',
+
+  err_empty: 'Describe el agente primero.',
+  err_compose: 'No se pudo construir el prompt',
+  err_rate: 'Demasiadas composiciones esta hora. Inténtalo más tarde.'
 };
 
 const dict = { en, es };

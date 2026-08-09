@@ -26,6 +26,7 @@ const router = express.Router();
 const store = require('../lib/store');
 const { requireJwt } = require('../lib/auth');
 const pb = require('../lib/promptBuilder');
+const composer = require('../lib/compose');
 
 /** Log ids, counts and lengths — never user free text. */
 function logShape(action, tenantId, body, extra) {
@@ -47,6 +48,56 @@ function parseId(v) {
   const n = parseInt(v, 10);
   return isFinite(n) && n > 0 ? n : null;
 }
+
+// --- POST /compose — ONE BOX in, a complete spec out ------------------------
+// The main entry point of the app. Ungated like /generate (it persists nothing),
+// but unlike /generate it costs money, so it carries its own guard rails: a
+// hard input cap in lib/compose.js and a per-caller hourly ceiling here.
+//
+// The ceiling is in-memory on purpose. A shared counter would need a store, and
+// the thing being defended against is a loop or a bored visitor, not a
+// distributed attacker — a per-process bound is the right size for that.
+const RATE_MAX = parseInt(process.env.APB_COMPOSE_PER_HOUR || '30', 10);
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const rate = new Map();
+
+function overLimit(key) {
+  const now = Date.now();
+  const hits = (rate.get(key) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (hits.length >= RATE_MAX) { rate.set(key, hits); return true; }
+  hits.push(now);
+  rate.set(key, hits);
+  // Cheap sweep so a long-lived process does not accumulate dead keys.
+  if (rate.size > 5000) {
+    for (const [k, v] of rate) if (!v.some((t) => now - t < RATE_WINDOW_MS)) rate.delete(k);
+  }
+  return false;
+}
+
+router.post('/compose', async (req, res) => {
+  const body = req.body || {};
+  const key = (req.ip || req.connection?.remoteAddress || 'unknown');
+
+  const text = String(body.text || body.description || '').trim();
+  if (!text) {
+    return res.status(400).json({ error: 'empty_description', detail: 'Describe the agent you want in the box.' });
+  }
+  if (overLimit(key)) {
+    return res.status(429).json({ error: 'rate_limited', detail: `Limit is ${RATE_MAX} compositions per hour.` });
+  }
+
+  try {
+    const out = await composer.compose({ text, lang: body.lang });
+    // ids, counts and lengths only — the description is the user's free text.
+    console.log(`[ai-agent-prompt-builder] compose by=${out.composed_by} chars=${text.length}` +
+      ` instructions=${out.definition.instructions.length} assumptions=${out.assumptions.length}` +
+      ` unverified=${out.unverified.length}`);
+    res.status(200).json(out);
+  } catch (err) {
+    console.error('[ai-agent-prompt-builder] compose failed:', err.message);
+    res.status(500).json({ error: 'compose_failed', detail: err.message });
+  }
+});
 
 // --- POST /generate — pure assembly, no persistence, no model call ----------
 // Registered BEFORE /:id so the literal path is never captured as an id.

@@ -5,21 +5,28 @@
 // (the client-builds auto-mount loop). No edit to the main app.
 //
 //   GET  /health                    -> {status:'ok', service, version}
-//   GET  /                          -> the wizard (live JSON preview)
+//   GET  /                          -> the one box (describe -> spec -> command)
+//   GET  /advanced                  -> the field-by-field editor
 //   GET  /gallery                   -> the template gallery
 //   GET  /api/v1/templates          -> 6 seeded templates (public)
 //   GET  /api/v1/templates/:slug    -> one template (public)
 //   POST /api/v1/agents             -> save an agent definition (JWT)
 //   GET  /api/v1/agents             -> list this tenant's agents (JWT)
+//   POST /api/v1/agents/compose     -> plain language -> a complete spec
 //   POST /api/v1/agents/generate    -> assemble the JSON prompt payload
 //   GET  /api/v1/i18n               -> the UI string dictionary
 //
-// "Configure a complete data-writing agent and export valid JSON in under ten
-// minutes." Everything here serves that one number.
+// ONE BOX, NOT FOUR STEPS. The wizard asked a person to be a prompt engineer
+// across four sections; almost everyone describing an agent already says all of
+// it in one paragraph. `/api/v1/agents/compose` transposes that paragraph into
+// the fields, and the page hands back the exact command to paste into VS Code.
+// The wizard survives at /advanced as the editor you reach for when a field
+// came back wrong — do not promote it back to `/`.
 //
-// The app ASSEMBLES prompt payloads; it does not execute them. There is no
-// OpenAI/Anthropic client anywhere in this directory, and adding one would be a
-// scope change, not an enhancement — the deliverable is the JSON.
+// THE APP AUTHORS PROMPTS; IT NEVER EXECUTES ONE. `lib/compose.js` is the only
+// file that talks to a model, and it uses it to WRITE the spec. Nothing here
+// ever sends the assembled payload or its system_prompt to a model — that is
+// the user's job, in their own tool, which is why the JSON is the deliverable.
 // =====================================================
 
 'use strict';
@@ -31,6 +38,7 @@ const store = require('./lib/store');
 const agentRoutes = require('./routes/agents');
 const templateRoutes = require('./routes/templates');
 const i18n = require('./lib/i18n');
+const composer = require('./lib/compose');
 
 const VERSION = '1.0.0';
 const SERVICE = 'ai-agent-prompt-builder-for-data-writing';
@@ -63,6 +71,10 @@ app.get('/health', async (req, res) => {
     version: VERSION,
     storage: s.backend,
     storage_error: s.error || null,
+    // Which brain is composing. The app works either way, so this is the one
+    // place an operator can tell whether specs are being authored or assembled
+    // from the user's own sentences.
+    composer: composer.activeModel(),
     time: new Date().toISOString()
   });
 });
@@ -110,6 +122,12 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 app.get('/gallery', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'gallery.html'));
+});
+
+// The field-by-field editor. It used to BE the app; it is now the escape hatch
+// the composer hands off to, so it keeps a stable extensionless URL.
+app.get('/advanced', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'advanced.html'));
 });
 
 app.get('/', (req, res) => {

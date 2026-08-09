@@ -165,6 +165,55 @@ function composeSystemPrompt(p) {
 }
 
 /**
+ * The paste-ready block for VS Code.
+ *
+ * The JSON payload is the artifact, but a payload sitting in a clipboard is not
+ * yet a command. This wraps it in the exact line the operator runs in Claude
+ * Code — `/ringlypro-architect` followed by the spec — so the whole flow is
+ * describe -> copy -> paste -> enter, with no editing step in between where a
+ * field can be lost.
+ *
+ * Pure string assembly, shared by the server and the browser like everything
+ * else here, so the button and the API can never disagree about what gets run.
+ */
+function architectCommand(payload, opts) {
+  const o = opts || {};
+  const command = str(o.command, 60) || '/ringlypro-architect';
+  const p = payload || {};
+  const name = (p.agent && p.agent.name) || 'Untitled Agent';
+
+  const lines = [
+    command,
+    '',
+    `Build the AI agent specified below and take it to production. Its name is "${name}".`,
+    '',
+    'The spec is JSON. Treat every field as a hard requirement:',
+    '- `agent` is the identity and the goal.',
+    '- `data_sources` is what it reads. `instructions` is the ordered procedure.',
+    '- `constraints` are absolute — enforce them in code, not only in the prompt.',
+    '- `output_schema` is the exact shape it must return.',
+    '- `system_prompt` is a ready-to-use assembly of the same fields.'
+  ];
+
+  if (Array.isArray(p.assumptions) && p.assumptions.length) {
+    lines.push('',
+      'The spec carries assumptions its author did not state explicitly. Confirm each',
+      'against the real system before you build on it, and say which ones you changed:');
+    p.assumptions.forEach((a) => lines.push('- ' + (typeof a === 'object' ? JSON.stringify(a) : a)));
+  }
+
+  lines.push('',
+    'Follow the repo conventions: multi-tenant with tenant_id on every table, a SIT',
+    'that proves the constraints hold, and deploy when it is green.',
+    '',
+    '```json',
+    JSON.stringify(p, null, 2),
+    '```');
+
+  return lines.join('\n');
+}
+
+/**
  * Validate an agent definition for persistence. Returns {valid, errors[]}.
  * `name` is the only hard requirement — a saved draft with everything else
  * blank is a legitimate state in a wizard.
@@ -201,6 +250,7 @@ function normalizeAgent(input) {
 module.exports = {
   buildPrompt,
   composeSystemPrompt,
+  architectCommand,
   validateAgent,
   normalizeAgent,
   toList,
