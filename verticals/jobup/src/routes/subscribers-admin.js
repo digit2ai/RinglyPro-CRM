@@ -29,6 +29,7 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const { models } = require('../models');
 const billing = require('../services/billing');
+const provisioning = require('../services/provisioning');
 
 const router = express.Router();
 
@@ -265,6 +266,34 @@ router.get('/api/subscribers/:id/invoices', requireAdmin, async (req, res) => {
           created_at: i.created_at || null,
         })),
     });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/**
+ * Delete an account and everything belonging to it. Irreversible.
+ *
+ * A WRITTEN REASON IS REQUIRED, the same rule /admin puts on impersonation.
+ * The audit row is what turns an irreversible action into an accountable one,
+ * and a reason typed at the moment of deletion is the only version anyone will
+ * ever have — nobody reconstructs it afterwards.
+ */
+router.delete('/api/subscribers/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad id' });
+    const reason = String((req.body || {}).reason || '').trim();
+    if (reason.length < 8) {
+      return res.status(400).json({
+        error: 'a written reason is required',
+        note: 'Deletion is irreversible and is recorded against your admin email.',
+      });
+    }
+    const sub = await models.subscribers.findOne({ where: { id } });
+    if (!sub) return res.status(404).json({ error: 'no such subscriber' });
+
+    const r = await provisioning.purge(id, { actor: req.admin.email, reason });
+    if (!r.ok) return res.status(400).json({ error: r.reason });
+    res.json(r);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

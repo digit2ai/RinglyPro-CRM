@@ -649,6 +649,72 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(html.includes('weak_password'), 'the console must react to it');
       assert.ok(html.includes('JOBUP_SUBS_ADMIN_PASSWORD'), 'and name the env var that fixes it');
     });
+    await t('DELETION REFUSES WITHOUT A WRITTEN REASON', async () => {
+      const r = await call('DELETE', `/subscribers-admin/api/subscribers/${subB.id}`,
+        { cookie: session, body: { reason: 'oops' } });
+      assert.strictEqual(r.status, 400, 'a token reason must not be accepted');
+      const none = await call('DELETE', `/subscribers-admin/api/subscribers/${subB.id}`,
+        { cookie: session, body: {} });
+      assert.strictEqual(none.status, 400);
+      // And it must not have deleted anything on the way to refusing.
+      assert.ok(await models.subscribers.findOne({ where: { id: subB.id } }),
+        'a refused deletion must leave the account intact');
+    });
+    await t('deletion is gated by the session like everything else', async () => {
+      const r = await call('DELETE', `/subscribers-admin/api/subscribers/${subB.id}`,
+        { body: { reason: 'anonymous attempt at deletion' } });
+      assert.strictEqual(r.status, 401);
+    });
+    await t('PURGE ERASES EVERY TENANT-SCOPED TABLE, AND ONLY THOSE', async () => {
+      const victim = await models.subscribers.create({
+        email: `sit-purge-${Date.now()}@example.com`, name: 'SIT Purge Target',
+        status: 'active', activation: 'free_test', address: 'sitpurge.jobup.dev',
+      });
+      // Give it rows in a spread of tenant-scoped tables.
+      await models.profiles.create({ tenant_id: victim.id, resume_json: { name: 'x' } });
+      await models.settings.create({ tenant_id: victim.id, settings: {} });
+      await models.page_views.create({ tenant_id: victim.id, path: '/' });
+      await models.invoices.create({ tenant_id: victim.id, amount_cents: 100, status: 'paid' });
+
+      const jobsBefore = (await models.jobs.findAll({})).length;
+      const employersBefore = (await models.employers.findAll({})).length;
+
+      const r = await call('DELETE', `/subscribers-admin/api/subscribers/${victim.id}`,
+        { cookie: session, body: { reason: 'SIT verification of the purge path' } });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.j));
+
+      assert.strictEqual(await models.subscribers.findOne({ where: { id: victim.id } }), null,
+        'the subscriber row must be gone');
+      for (const table of ['profiles', 'settings', 'page_views', 'invoices']) {
+        const left = await models[table].findAll({ where: { tenant_id: victim.id } });
+        assert.strictEqual(left.length, 0, `${table} still holds rows for the purged tenant`);
+      }
+      // The shared pool belongs to everyone. Purging one account must not take
+      // postings away from the others.
+      assert.strictEqual((await models.jobs.findAll({})).length, jobsBefore, 'ju_jobs must be untouched');
+      assert.strictEqual((await models.employers.findAll({})).length, employersBefore,
+        'ju_employers must be untouched');
+    });
+    await t('the purge audit row OUTLIVES the tenant it describes', async () => {
+      const rows = await models.audit_log.findAll({});
+      const purges = rows.filter((a) => a.action === 'account.purged');
+      assert.ok(purges.length, 'a purge must be recorded');
+      const last = purges[purges.length - 1];
+      assert.strictEqual(last.tenant_id, null,
+        'stored under the purged tenant it would have been deleted with it');
+      assert.ok(/SIT verification of the purge path/.test(last.reason), 'the reason is kept');
+      assert.ok(/sit-purge-/.test(last.reason), 'and a snapshot of who was erased');
+    });
+    await t('THE PURGE TABLE LIST IS DERIVED, NOT TYPED', () => {
+      const fs = require('fs');
+      const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+      // A hardcoded list goes stale the moment a table is added, leaving orphan
+      // rows answering to a tenant_id nobody owns.
+      assert.ok(/for \(const table of TENANT_SCOPED\)/.test(src),
+        'purge must walk models.TENANT_SCOPED');
+      assert.ok(!/'profiles', 'settings', 'teasers'/.test(src.slice(src.indexOf('async function purge'))),
+        'no literal table list inside purge');
+    });
     await t('signing out invalidates the console', async () => {
       const out = await call('POST', '/subscribers-admin/api/logout', { cookie: session });
       assert.strictEqual(out.status, 200);

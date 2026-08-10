@@ -12,7 +12,7 @@
 // idempotent, because Stripe retries webhooks.
 // =============================================================
 
-const { models, scoped } = require('../models');
+const { models, scoped, TENANT_SCOPED } = require('../models');
 const addresses = require('./addresses');
 const settingsSvc = require('./settings');
 const identity = require('./identity');
@@ -246,4 +246,60 @@ async function teardown(tenantId) {
   };
 }
 
-module.exports = { run, teardown, stateOf, provisionAddress, publishSite, activateAgents, adoptTeaser, ensureSettings, STEPS };
+/**
+ * PURGE — erase an account and everything belonging to it.
+ *
+ * Not the same thing as teardown(), and the difference matters. teardown() is
+ * cancellation: the site goes dark and the address is released, but the
+ * subscriber's data is deliberately KEPT so they can still export it. purge()
+ * is the deletion an owner means when they say remove this account, and it is
+ * irreversible.
+ *
+ * THE TABLE LIST IS DERIVED, NOT TYPED. It walks models.TENANT_SCOPED, so a
+ * table added later is purged automatically instead of quietly surviving as an
+ * orphan that still answers to a tenant_id nobody owns any more.
+ *
+ * WHAT IT MUST NOT TOUCH: ju_jobs and ju_employers are the SHARED pool. They
+ * carry no tenant_id precisely because every subscriber scores against the same
+ * postings; deleting from them would take work away from everyone else.
+ *
+ * The audit row is written with tenant_id NULL on purpose — a trail stored
+ * under the tenant being erased would be erased along with it.
+ */
+async function purge(tenantId, { actor, reason } = {}) {
+  const id = parseInt(tenantId, 10);
+  if (!Number.isInteger(id)) return { ok: false, reason: 'bad tenant id' };
+
+  const sub = await models.subscribers.findOne({ where: { id } });
+  if (!sub) return { ok: false, reason: 'no such subscriber' };
+
+  // Recorded BEFORE the delete, so the trail survives a failure midway.
+  const snapshot = { id: sub.id, email: sub.email, name: sub.name || null,
+                     address: sub.address || null, status: sub.status,
+                     activation: sub.activation || null };
+  try {
+    await models.audit_log.create({
+      tenant_id: null,
+      actor: String(actor || 'system').slice(0, 200),
+      action: 'account.purged',
+      reason: `${reason ? String(reason).slice(0, 700) : 'no reason given'} | ${JSON.stringify(snapshot)}`,
+    });
+  } catch (e) { console.warn('[purge] audit write failed:', e.message); }
+
+  const deleted = {};
+  for (const table of TENANT_SCOPED) {
+    const m = models[table];
+    if (!m) continue;
+    try {
+      deleted[table] = await m.destroy({ where: { tenant_id: id } });
+    } catch (e) {
+      // One table failing must not leave the rest behind; report it instead.
+      deleted[table] = `error: ${e.message}`;
+    }
+  }
+  deleted.subscribers = await models.subscribers.destroy({ where: { id } });
+
+  return { ok: true, purged: snapshot, deleted };
+}
+
+module.exports = { run, teardown, purge, stateOf, provisionAddress, publishSite, activateAgents, adoptTeaser, ensureSettings, STEPS };
