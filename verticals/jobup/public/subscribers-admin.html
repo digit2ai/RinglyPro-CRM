@@ -140,9 +140,12 @@ border-top:1px solid var(--line);padding-top:18px}
 <!-- console -->
 <div id="app" class="wrap hidden">
   <div class="banner hidden" id="pwbanner">
-    <strong>This console is using its built-in default password.</strong>
-    Anyone who can read the source can sign in. Set <code>JOBUP_SUBS_ADMIN_PASSWORD</code>
-    on Render to close it.
+    <strong>This console&rsquo;s password is one published in the source.</strong>
+    Setting the environment variable to the same well-known string moves it from the
+    code into the config without changing who can sign in. Set
+    <code>JOBUP_SUBS_ADMIN_PASSWORD</code> on Render to a value that appears nowhere
+    in the repository &mdash; or delete it, and this console will use
+    <code>JOBUP_ADMIN_PASSWORD</code> instead.
   </div>
 
   <h1>Subscribers</h1>
@@ -271,7 +274,7 @@ function boot(){
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     $('signout').classList.remove('hidden'); $('csv').classList.remove('hidden');
     $('who-sub').textContent=r.j.email;
-    if(r.j.using_default_password) $('pwbanner').classList.remove('hidden');
+    if(r.j.weak_password) $('pwbanner').classList.remove('hidden');
 
     api('/subscribers').then(function(x){
       if(!x.ok) return err('aerr',x.j.error||'Could not load subscribers.');

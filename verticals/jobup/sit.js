@@ -470,6 +470,9 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   {
     const express = require('express');
     const http = require('http');
+    // No hardcoded default any more: configure it the way production must.
+    // A distinct value, so a test passing does not depend on a published one.
+    process.env.JOBUP_SUBS_ADMIN_PASSWORD = 'sit-only-console-secret';
     const subsAdmin = require(__dirname + '/src/routes/subscribers-admin');
 
     // Mounted the way the vertical mounts it, so the paths under test are real.
@@ -509,17 +512,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
     await t('a wrong password is refused, and so is a wrong email', async () => {
       const bad = await call('POST', '/subscribers-admin/api/login',
-        { body: { email: 'admin@jobup.dev', password: 'not-it' } });
+        { body: { email: 'admin@jobup.dev', password: 'not-it-at-all' } });
       assert.strictEqual(bad.status, 401);
       const wrongUser = await call('POST', '/subscribers-admin/api/login',
-        { body: { email: 'someone@else.com', password: 'Palindrome@7' } });
+        { body: { email: 'someone@else.com', password: 'sit-only-console-secret' } });
       assert.strictEqual(wrongUser.status, 401);
       // Neither response may hint at which half was wrong.
       assert.deepStrictEqual(bad.j, wrongUser.j);
     });
     await t('the configured admin can sign in', async () => {
       const r = await call('POST', '/subscribers-admin/api/login',
-        { body: { email: 'admin@jobup.dev', password: 'Palindrome@7' } });
+        { body: { email: 'admin@jobup.dev', password: 'sit-only-console-secret' } });
       assert.strictEqual(r.status, 200, JSON.stringify(r.j));
       assert.ok(r.setCookie && r.setCookie[0].includes('jobup_subs_admin='), 'a session cookie is set');
       assert.ok(/HttpOnly/i.test(r.setCookie[0]), 'the cookie must not be readable from JS');
@@ -586,14 +589,65 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(rows.some((a) => a.action === 'subs_admin.login.failed'),
         'failed sign-ins must be recorded too');
     });
-    await t('the default password is REPORTED, not hidden', async () => {
-      // It ships working because the owner asked for that. The exposure is
-      // surfaced rather than buried, and the console renders a warning.
-      const h = await call('GET', '/subscribers-admin/api/health');
-      assert.strictEqual(h.j.using_default_password, !process.env.JOBUP_SUBS_ADMIN_PASSWORD);
+    await t('THE REPO NO LONGER SHIPS A WORKING PASSWORD', () => {
+      const src = require('fs').readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
+      // It shipped with one, at the owner's request. The credential now lives in
+      // the environment, so publishing a key in a public repo buys nothing.
+      assert.ok(!/JOBUP_SUBS_ADMIN_PASSWORD \|\| '[^']+'/.test(src),
+        'no literal password may back the env var');
+      assert.ok(src.includes("|| process.env.JOBUP_ADMIN_PASSWORD || ''"),
+        'unset must mean CLOSED, with the platform secret as the only fallback');
+    });
+    await t('unset credentials CLOSE the console rather than open it', async () => {
+      const subs = process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+      const plat = process.env.JOBUP_ADMIN_PASSWORD;
+      delete process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+      delete process.env.JOBUP_ADMIN_PASSWORD;
+      try {
+        assert.strictEqual(subsAdmin.configured(), false);
+        const r = await call('POST', '/subscribers-admin/api/login',
+          { body: { email: 'admin@jobup.dev', password: 'anything' } });
+        assert.strictEqual(r.status, 503, 'a console with no password must refuse to sign anyone in');
+      } finally {
+        if (subs) process.env.JOBUP_SUBS_ADMIN_PASSWORD = subs;
+        if (plat) process.env.JOBUP_ADMIN_PASSWORD = plat;
+      }
+    });
+    await t('ONE SECRET CAN SECURE BOTH CONSOLES', async () => {
+      // Two near-identical variable names is a trap: setting the obvious one and
+      // believing you were done is exactly what happened in production.
+      const subs = process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+      delete process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+      process.env.JOBUP_ADMIN_PASSWORD = 'platform-only-secret-value';
+      try {
+        assert.strictEqual(subsAdmin.configured(), true, 'it must fall back to the platform secret');
+        const r = await call('POST', '/subscribers-admin/api/login',
+          { body: { email: 'admin@jobup.dev', password: 'platform-only-secret-value' } });
+        assert.strictEqual(r.status, 200, 'the platform password should open this console too');
+      } finally {
+        delete process.env.JOBUP_ADMIN_PASSWORD;
+        if (subs) process.env.JOBUP_SUBS_ADMIN_PASSWORD = subs;
+      }
+    });
+    await t('A PUBLISHED PASSWORD IS DETECTED BY VALUE, NOT BY PRESENCE', async () => {
+      // The first version of this check asked "is the env var set?", which
+      // answered reassuringly for JOBUP_SUBS_ADMIN_PASSWORD=Palindrome@7 while
+      // the console stayed openable by anyone who had read the repo.
+      const keep = process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+      try {
+        for (const published of subsAdmin.PUBLISHED_PASSWORDS.filter((p) => p.length >= 12)) {
+          process.env.JOBUP_SUBS_ADMIN_PASSWORD = published;
+          assert.strictEqual(subsAdmin.weakPassword(), true,
+            `setting the env var to the published "${published}" must still report weak`);
+          const h = await call('GET', '/subscribers-admin/api/health');
+          assert.strictEqual(h.j.weak_password, true);
+        }
+        process.env.JOBUP_SUBS_ADMIN_PASSWORD = 'a-value-that-appears-nowhere';
+        assert.strictEqual(subsAdmin.weakPassword(), false);
+      } finally { process.env.JOBUP_SUBS_ADMIN_PASSWORD = keep; }
       const html = require('fs').readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
-      assert.ok(html.includes('using_default_password'), 'the page must react to it');
-      assert.ok(html.includes('JOBUP_SUBS_ADMIN_PASSWORD'), 'and name the env var that closes it');
+      assert.ok(html.includes('weak_password'), 'the console must react to it');
+      assert.ok(html.includes('JOBUP_SUBS_ADMIN_PASSWORD'), 'and name the env var that fixes it');
     });
     await t('signing out invalidates the console', async () => {
       const out = await call('POST', '/subscribers-admin/api/logout', { cookie: session });

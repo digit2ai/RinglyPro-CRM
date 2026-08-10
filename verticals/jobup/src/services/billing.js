@@ -16,7 +16,7 @@ const { models } = require('../models');
 // from here — the teaser, the voice lines, the admin console and the landing
 // page, which used to hardcode its own copy and could therefore disagree with
 // what Stripe actually charged.
-const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '25', 10);
+const PRICE_USD = parseInt(process.env.JOBUP_PRICE_USD || '59', 10);
 const REFUND_DAYS = parseInt(process.env.JOBUP_REFUND_DAYS || '14', 10);
 const RENEWAL_NOTICE_DAYS = [30, 7];
 const DUNNING_STAGES = 4;

@@ -39,18 +39,41 @@ const TTL_H = 8;   // an admin session is not a 30-day one
 function adminEmail() {
   return String(process.env.JOBUP_SUBS_ADMIN_EMAIL || 'admin@jobup.dev').toLowerCase().trim();
 }
-function adminPassword() {
-  return String(process.env.JOBUP_SUBS_ADMIN_PASSWORD || 'Palindrome@7');
-}
 /**
- * Unlike /admin, this console ships with a working default credential because
- * the owner asked for one. That is a real exposure on a public domain: set
- * JOBUP_SUBS_ADMIN_PASSWORD on Render and the default stops being a key anyone
- * who reads this file can use. `usingDefaultPassword` is surfaced in /session
- * and rendered as a warning banner so the risk is visible, not buried.
+ * NO HARDCODED DEFAULT. This module shipped with one because the owner asked
+ * for a console that worked out of the box; the credential is now set in the
+ * environment, so the repo no longer needs to publish a working key and does
+ * not. Unset = CLOSED, the same rule /admin has always had.
+ *
+ * Falls back to JOBUP_ADMIN_PASSWORD so one secret can secure both consoles.
+ * Two near-identical variable names is a trap — setting the obvious one and
+ * believing you were done is exactly what happened here.
  */
-function usingDefaultPassword() {
-  return !process.env.JOBUP_SUBS_ADMIN_PASSWORD;
+function adminPassword() {
+  return String(process.env.JOBUP_SUBS_ADMIN_PASSWORD
+             || process.env.JOBUP_ADMIN_PASSWORD || '');
+}
+function configured() {
+  return adminPassword().length >= 12;
+}
+
+/**
+ * Passwords this repo publishes. Setting the env var to one of these is not
+ * security — it just moves a public string from the source into the config.
+ *
+ * The previous check asked "is the env var set?", which returned a reassuring
+ * false for `JOBUP_SUBS_ADMIN_PASSWORD=Palindrome@7` while the console was
+ * still openable by anyone who had read the repo. It now compares the VALUE.
+ */
+const PUBLISHED_PASSWORDS = [
+  'Palindrome@7', 'lawncopilot@2026', 'coachtrack@2026', 'exec@2026',
+  'defensoresdelapatria@7', 'jobup@2026', 'changeme', 'password', 'admin',
+];
+function weakPassword() {
+  const p = adminPassword();
+  if (!p) return false;                       // closed, not weak
+  return PUBLISHED_PASSWORDS.some((known) =>
+    p.toLowerCase() === known.toLowerCase());
 }
 
 function issue(email) {
@@ -89,6 +112,14 @@ async function audit(actor, action, reason) {
 const attempts = new Map();
 
 router.post('/api/login', async (req, res) => {
+  if (!configured()) {
+    return res.status(503).json({
+      error: 'this console is not configured',
+      note: 'Set JOBUP_SUBS_ADMIN_PASSWORD (12+ chars), or JOBUP_ADMIN_PASSWORD to share one '
+          + 'secret with the platform console. Closed by default rather than open with a '
+          + 'password that is printed in the source.',
+    });
+  }
   const key = (req.headers['cf-connecting-ip'] || req.ip || '') + '|subs-admin';
   const now = Date.now();
   const rec = attempts.get(key) || { n: 0, until: 0 };
@@ -131,7 +162,7 @@ router.get('/api/session', requireAdmin, (req, res) => {
   res.json({
     ok: true, email: req.admin.email,
     scope: 'billing identity only — no resumes, matches or outreach',
-    using_default_password: usingDefaultPassword(),
+    weak_password: weakPassword(),
   });
 });
 
@@ -259,10 +290,18 @@ router.get('/api/health', (req, res) => {
   res.json({
     ok: true, module: 'subscribers-admin',
     admin_email: adminEmail(),
-    using_default_password: usingDefaultPassword(),
+    configured: configured(),
+    // True when the configured password is one this repo publishes. Reported
+    // rather than blocked: refusing to start would lock the owner out of their
+    // own billing register without warning.
+    weak_password: weakPassword(),
+    shares_platform_secret: !process.env.JOBUP_SUBS_ADMIN_PASSWORD
+                         && Boolean(process.env.JOBUP_ADMIN_PASSWORD),
   });
 });
 
 module.exports = router;
 module.exports.requireAdmin = requireAdmin;
-module.exports.usingDefaultPassword = usingDefaultPassword;
+module.exports.configured = configured;
+module.exports.weakPassword = weakPassword;
+module.exports.PUBLISHED_PASSWORDS = PUBLISHED_PASSWORDS;
