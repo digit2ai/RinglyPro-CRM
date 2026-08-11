@@ -533,45 +533,12 @@ function planeaGateHtml(nextUrl, err) {
     '<label>Contraseña</label><input name="password" type="password" autocomplete="off" placeholder="Clave del sitio" required>' +
     '<button type="submit">Entrar al sitio</button><div class="ft">Acceso restringido · un solo ingreso para todo el sitio. Después inicias sesión en tu cuenta de Planea.</div></form></body></html>';
 }
-app.use((req, res, next) => {
-  const host = (req.get('host') || '').toLowerCase().split(':')[0];
-  if (host !== 'planea.vip' && host !== 'www.planea.vip') return next();
-  // OPEN (no gate): the public landing /main + its simulator asset. Everything
-  // else on planea.vip (app, portal, /uat, etc.) stays behind the dev login.
-  const op = req.path;
-  if (op === '/main' || op === '/main/' || op === '/planea/portal/planea-app-sim.js') return next();
-  // Imágenes del landing público (/main): p.ej. la ilustración de Maya. Son assets
-  // de marketing sin datos de usuario; se dejan pasar para que /main se vea completo.
-  if (op.indexOf('/planea/portal/images/') === 0) return next();
-  // TTS neural sin llave (voz de Lina en /novedades y otras páginas): ruta stateless,
-  // sin datos de usuario, se deja abierta para que el orbe hable sin el candado.
-  if (op.indexOf('/api/tts') === 0) return next();
-  // Auth pages must be reachable without the dev gate: the user's own login /
-  // signup and the password-reset flow (reset links arrive by email). The app
-  // itself (portal, /uat, APIs) stays gated.
-  if (/^\/planea\/(login|signup|register|start|forgot|reset)\/?$/.test(op)) return next();
-  if (/^\/(login|signup|register|start|forgot|reset)\/?$/.test(op)) return next();
-  if (op.indexOf('/planea/api/v1/auth/') === 0) return next();
-  const cookie = req.headers.cookie || '';
-  const authed = cookie.split(';').some(c => c.trim() === 'planea_dev=' + PLANEA_DEV_TOKEN);
-  if (authed) return next();
-  if (req.method === 'POST' && req.path === '/__dev-login') {
-    const b = req.body || {};
-    const email = String(b.email || '').trim().toLowerCase();
-    const pass = String(b.password || '');
-    if (email === PLANEA_DEV_USER && pass === PLANEA_DEV_PASS) {
-      // Cookie HOST-ONLY (sin Domain=): los navegadores embebidos de iOS (el visor
-      // de Apple Mail, desde donde se abre el enlace de restablecimiento) guardan
-      // las cookies host-only con más fiabilidad que las de dominio explícito, que a
-      // veces tratan como de terceros y descartan. En escritorio no cambia nada.
-      res.setHeader('Set-Cookie', 'planea_dev=' + PLANEA_DEV_TOKEN + '; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax');
-      let nx = String(b.next || '/'); if (!nx.startsWith('/')) nx = '/';
-      return res.redirect(302, nx);
-    }
-    return res.status(401).send(planeaGateHtml(String(b.next || '/'), true));
-  }
-  return res.status(401).send(planeaGateHtml(req.originalUrl || '/', false));
-});
+// CANDADO DEL ENTORNO DE DESARROLLO — RETIRADO (a pedido del owner).
+// planea.vip ahora va directo al login de la cuenta, sin la clave de sitio. La
+// app sigue protegida por el login normal de cada usuario. Para volver a activar
+// el candado, restaurar este middleware desde el historial de git.
+// Retención de compatibilidad: un POST viejo a /__dev-login simplemente sigue de
+// largo (ya no hay pantalla que lo produzca).
 
 // Custom domain: planea.vip -> Planea (personal-finance app), served IN PLACE so the
 // address bar stays on planea.vip. GHL domain + Render are configured, so this app
