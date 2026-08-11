@@ -1,0 +1,393 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
+<title>JobUp — Social Poster</title><style>
+:root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
+--line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
+--cyan:#22d3ee;--green:#3ad07f;--warn:#e6b45a;--red:#f87171;
+--brand:linear-gradient(120deg,#4c6ef5 0%,#e64980 50%,#ff922b 100%);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);min-height:100%}
+body{color:var(--ink);font:15.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.nav{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 20px}
+.who{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{width:38px;height:38px;flex:0 0 38px;display:block;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.ttl{font-weight:790;letter-spacing:-.026em;font-size:17px;line-height:1.15}
+.sub{color:var(--mut);font-size:12.5px}
+.btn{border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:999px;
+padding:9px 16px;font:inherit;font-size:13.5px;cursor:pointer;min-height:40px;
+display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary{background:var(--brand);border:0;color:#fff;font-weight:730}
+.btn.sm{min-height:34px;padding:6px 12px;font-size:12.5px}
+.btn.danger{border-color:rgba(248,113,113,.4);color:#ffb4b4}
+.btn:disabled{opacity:.45;cursor:default}
+h1{font-size:24px;font-weight:820;letter-spacing:-.035em;margin:26px 0 4px}
+h2{font-size:17px;font-weight:770;letter-spacing:-.025em;margin:0 0 12px}
+.lede{color:var(--mut);font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:20px 0 18px}
+.tab{border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:14px;color:var(--mut);
+cursor:pointer;background:transparent;font-family:inherit;min-height:40px}
+.tab.on{background:var(--card2);border-color:rgba(34,211,238,.32);color:var(--cyan)}
+label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:11px;
+padding:11px 13px;color:var(--ink);font:inherit;font-size:15px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+textarea{min-height:96px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;
+font-size:11.5px;font-family:var(--mono);color:var(--mut);white-space:nowrap}
+.chip.ok{border-color:rgba(58,208,127,.45);color:var(--green)}
+.chip.no{border-color:rgba(248,113,113,.45);color:var(--red)}
+.chip.warn{border-color:rgba(230,180,90,.45);color:var(--warn)}
+.dest{border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:10px;background:var(--card2)}
+.dest.pick{cursor:pointer}
+.dest.sel{border-color:rgba(34,211,238,.5);background:rgba(34,211,238,.06)}
+.dest .n{font-weight:700}
+.dest .m{color:var(--mut);font-size:13px;margin-top:2px}
+.banner{background:rgba(230,180,90,.09);border:1px solid rgba(230,180,90,.4);color:#f0d5a6;
+border-radius:13px;padding:13px 16px;font-size:13.5px;line-height:1.55;margin:16px 0}
+.banner strong{color:#ffdf9e}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
+border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
+.err.show{display:block}
+.ok{background:rgba(58,208,127,.1);border:1px solid rgba(58,208,127,.35);color:#b6f0d0;
+border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
+.ok.show{display:block}
+.hidden{display:none}
+pre{background:#0d0d13;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;
+font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:420px;white-space:pre-wrap}
+.panel{max-width:400px;margin:70px auto;background:var(--card);border:1px solid var(--line);
+border-radius:20px;padding:30px}
+.panel .mark{width:52px;height:52px;flex:0 0 52px;border-radius:15px;margin-bottom:18px}
+.panel .btn{width:100%;margin-top:20px;min-height:50px;font-size:15px}
+.res{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:9px;background:var(--card2)}
+.res .h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.res .why{color:var(--mut);font-size:13px;margin-top:6px}
+.res a{color:var(--cyan);font-family:var(--mono);font-size:12.5px;word-break:break-all}
+footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:44px 0 40px;
+border-top:1px solid var(--line);padding-top:18px}
+@media(max-width:760px){
+  .wrap{padding:0 14px}.nav .wrap{padding:11px 14px}
+  h1{font-size:20px}.grid2{grid-template-columns:1fr}
+  input,select,textarea{font-size:16px}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;margin:16px -14px 14px;padding:0 14px 4px;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto}
+}
+</style></head><body>
+
+<div class="nav"><div class="wrap">
+  <div class="who">
+    <svg class="mark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+    <div><div class="ttl">Social Poster</div><div class="sub" id="who-sub">JobUp marketing</div></div>
+  </div>
+  <div class="row">
+    <a class="btn sm" href="{{BASE}}/subscribers-admin">Subscribers</a>
+    <button class="btn sm hidden" id="signout">Sign out</button>
+  </div>
+</div></div>
+
+<!-- sign in -->
+<div id="login" class="wrap"><div class="panel">
+  <svg class="mark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+    <linearGradient id="bm2" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+    <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+    <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+    <rect width="512" height="512" rx="108" fill="url(#bm2)"/>
+    <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+       stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+  <h1 style="margin:0 0 6px">Sign in</h1>
+  <div class="lede">Same credential as the subscribers console.</div>
+  <div class="err" id="lerr"></div>
+  <label for="le">Email</label>
+  <input id="le" type="email" autocomplete="username" inputmode="email" autocapitalize="none">
+  <label for="lp">Password</label>
+  <input id="lp" type="password" autocomplete="current-password">
+  <button class="btn primary" id="lgo">Sign in</button>
+</div></div>
+
+<div id="app" class="wrap hidden">
+  <h1>Social Media Image Poster</h1>
+  <div class="lede">Publish an approved JobUp image with its caption to the destinations you pick.</div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="post">Post</button>
+    <button class="tab" data-p="dests">Destinations</button>
+    <button class="tab" data-p="copy">Copy library</button>
+    <button class="tab" data-p="runs">Runs</button>
+  </div>
+
+  <!-- POST -->
+  <div id="p-post">
+    <div class="card">
+      <h2>1. The image</h2>
+      <label for="img">Public image URL (https, the platform fetches it)</label>
+      <input id="img" type="url" placeholder="https://jobup.dev/marketing/launch.jpg">
+      <label for="cap">Caption — posted verbatim, only shortened to fit</label>
+      <textarea id="cap" placeholder="What JobUp does, in your own words."></textarea>
+      <div class="row" style="margin-top:10px">
+        <select id="copysel" style="flex:1 1 220px"><option value="">Or load from the copy library…</option></select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Destinations</h2>
+      <div class="lede" style="margin:0 0 12px">Only the ones you tick are ever touched.</div>
+      <div id="picklist"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Publish</h2>
+      <div class="row">
+        <button class="btn" id="dry">Dry run — validate only</button>
+        <button class="btn primary" id="go">Post now</button>
+      </div>
+      <div class="err" id="perr"></div>
+      <div class="ok" id="pok"></div>
+      <div id="results" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- DESTINATIONS -->
+  <div id="p-dests" class="hidden">
+    <div class="banner" id="grpbanner"></div>
+    <div class="card">
+      <h2>Add a destination</h2>
+      <div class="grid2">
+        <div><label for="dn">Name</label><input id="dn" placeholder="Winter Park Chamber of Commerce"></div>
+        <div><label for="dp">Platform</label><select id="dp"></select></div>
+      </div>
+      <div class="grid2">
+        <div><label for="di">Page / account ID</label><input id="di" placeholder="1234567890"></div>
+        <div><label for="dx">Token expires (optional)</label><input id="dx" type="date"></div>
+      </div>
+      <label for="dt">Access token — stored encrypted, never shown again</label>
+      <input id="dt" type="password" autocomplete="off" placeholder="EAA…">
+      <div class="err" id="derr"></div>
+      <button class="btn primary" id="dadd" style="margin-top:16px">Add destination</button>
+    </div>
+    <div id="destlist"></div>
+  </div>
+
+  <!-- COPY -->
+  <div id="p-copy" class="hidden">
+    <div class="card">
+      <h2>Add marketing copy</h2>
+      <label for="cl">Label</label><input id="cl" placeholder="Launch — short">
+      <label for="cb">Body</label><textarea id="cb"></textarea>
+      <button class="btn primary" id="cadd" style="margin-top:14px">Save copy</button>
+    </div>
+    <div id="copylist"></div>
+  </div>
+
+  <!-- RUNS -->
+  <div id="p-runs" class="hidden"><div id="runlist"></div></div>
+
+  <footer>The agent never invents a post ID, URL or timestamp — every one comes back from the
+    platform. A destination it cannot reach is reported as failed or skipped with the reason.</footer>
+</div>
+
+<script>
+var API='{{BASE}}/social-admin/api';
+var AUTH='{{BASE}}/subscribers-admin/api';
+var ACCOUNTS=[],PLATFORMS=[],COPY=[],PICKED={};
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function show(el,m,cls){var e=$(el);e.textContent=m;e.classList.add('show');
+  setTimeout(function(){e.classList.remove('show');},8000);}
+function api(p,o){return fetch(API+p,Object.assign({credentials:'same-origin'},o||{}))
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
+function jpost(p,body,method){return api(p,{method:method||'POST',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
+
+/* sign in */
+$('lgo').addEventListener('click',function(){
+  var b=$('lgo');b.disabled=true;b.textContent='Signing in…';
+  fetch(AUTH+'/login',{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:$('le').value.trim(),password:$('lp').value})})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(r){b.disabled=false;b.textContent='Sign in';
+      if(!r.ok) return show('lerr',r.j.error||'Sign in failed');
+      boot();})
+    .catch(function(){b.disabled=false;b.textContent='Sign in';show('lerr','Could not reach the server.');});
+});
+$('lp').addEventListener('keydown',function(e){if(e.key==='Enter')$('lgo').click();});
+$('signout').addEventListener('click',function(){
+  fetch(AUTH+'/logout',{method:'POST',credentials:'same-origin'}).then(function(){location.reload();});
+});
+
+/* tabs */
+var PANES=['post','dests','copy','runs'];
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+  t.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+    t.classList.add('on');
+    PANES.forEach(function(p){$('p-'+p).classList.toggle('hidden',p!==t.dataset.p);});
+    if(t.dataset.p==='runs') loadRuns();
+  });
+});
+
+/* destinations */
+function renderPlatforms(){
+  $('dp').innerHTML=PLATFORMS.map(function(p){
+    return '<option value="'+esc(p.key)+'">'+esc(p.label)+(p.supported?'':' — no API')+'</option>';}).join('');
+  var un=PLATFORMS.filter(function(p){return !p.supported;});
+  $('grpbanner').innerHTML='<strong>Some destination types have no posting API.</strong><br>'+
+    un.map(function(p){return esc(p.label)+' — '+esc(p.unsupported_reason);}).join('<br>');
+}
+function renderDests(){
+  $('destlist').innerHTML=ACCOUNTS.length?ACCOUNTS.map(function(a){
+    return '<div class="dest"><div class="row" style="justify-content:space-between">'+
+      '<div><div class="n">'+esc(a.name)+'</div>'+
+      '<div class="m">'+esc(a.platform_label)+' · id '+esc(a.account_or_page_id||'—')+'</div></div>'+
+      '<div class="row">'+
+        '<span class="chip '+(a.supported?'ok':'warn')+'">'+(a.supported?'API':'manual only')+'</span>'+
+        '<span class="chip '+(a.token.set?'ok':'no')+'">'+(a.token.set?'token stored':'no token')+'</span>'+
+        (a.supported?'<button class="btn sm" data-verify="'+a.id+'">Verify</button>':'')+
+        '<button class="btn sm danger" data-del="'+a.id+'">Delete</button>'+
+      '</div></div>'+
+      (a.supported?'':'<div class="m" style="margin-top:8px">'+esc(a.unsupported_reason)+'</div>')+
+      '</div>';
+  }).join(''):'<div class="card">No destinations yet. Add one above.</div>';
+  Array.prototype.forEach.call($('destlist').querySelectorAll('[data-del]'),function(b){
+    b.addEventListener('click',function(){
+      if(!confirm('Delete this destination?'))return;
+      api('/accounts/'+b.dataset.del,{method:'DELETE'}).then(loadAccounts);});});
+  Array.prototype.forEach.call($('destlist').querySelectorAll('[data-verify]'),function(b){
+    b.addEventListener('click',function(){
+      b.disabled=true;b.textContent='…';
+      jpost('/accounts/'+b.dataset.verify+'/verify',{}).then(function(r){
+        b.disabled=false;b.textContent='Verify';
+        alert(r.j.ok?('Connected: '+(r.j.name||r.j.id)):('Not connected — '+(r.j.error||'unknown')));});});});
+}
+function renderPick(){
+  $('picklist').innerHTML=ACCOUNTS.length?ACCOUNTS.map(function(a){
+    return '<div class="dest pick'+(PICKED[a.id]?' sel':'')+'" data-pick="'+a.id+'">'+
+      '<div class="row" style="justify-content:space-between">'+
+      '<div><div class="n">'+(PICKED[a.id]?'✓ ':'')+esc(a.name)+'</div>'+
+      '<div class="m">'+esc(a.platform_label)+'</div></div>'+
+      '<span class="chip '+(a.supported?(a.token.set?'ok':'no'):'warn')+'">'+
+        (a.supported?(a.token.set?'ready':'no token'):'manual only')+'</span>'+
+      '</div></div>';}).join(''):'<div class="lede">Add a destination first.</div>';
+  Array.prototype.forEach.call($('picklist').querySelectorAll('[data-pick]'),function(d){
+    d.addEventListener('click',function(){
+      var id=d.dataset.pick;PICKED[id]=!PICKED[id];renderPick();});});
+}
+function loadAccounts(){
+  return api('/accounts').then(function(r){
+    ACCOUNTS=(r.j&&r.j.accounts)||[];renderDests();renderPick();});
+}
+$('dadd').addEventListener('click',function(){
+  jpost('/accounts',{name:$('dn').value,platform:$('dp').value,
+    account_or_page_id:$('di').value,access_token:$('dt').value,
+    token_expires_at:$('dx').value||null}).then(function(r){
+      if(!r.ok) return show('derr',r.j.error||'Could not add that destination');
+      $('dn').value='';$('di').value='';$('dt').value='';$('dx').value='';
+      loadAccounts();});
+});
+
+/* copy */
+function renderCopy(){
+  $('copysel').innerHTML='<option value="">Or load from the copy library…</option>'+
+    COPY.map(function(c){return '<option value="'+c.id+'">'+esc(c.label)+'</option>';}).join('');
+  $('copylist').innerHTML=COPY.map(function(c){
+    return '<div class="card"><div class="row" style="justify-content:space-between">'+
+      '<strong>'+esc(c.label)+'</strong>'+
+      '<button class="btn sm danger" data-cdel="'+c.id+'">Delete</button></div>'+
+      '<div class="lede" style="margin:8px 0 0;white-space:pre-wrap">'+esc(c.body)+'</div></div>';}).join('');
+  Array.prototype.forEach.call($('copylist').querySelectorAll('[data-cdel]'),function(b){
+    b.addEventListener('click',function(){
+      api('/copy/'+b.dataset.cdel,{method:'DELETE'}).then(loadCopy);});});
+}
+function loadCopy(){return api('/copy').then(function(r){COPY=(r.j&&r.j.copy)||[];renderCopy();});}
+$('cadd').addEventListener('click',function(){
+  jpost('/copy',{label:$('cl').value,body:$('cb').value}).then(function(){
+    $('cl').value='';$('cb').value='';loadCopy();});});
+$('copysel').addEventListener('change',function(){
+  var c=COPY.filter(function(x){return String(x.id)===this.value;}.bind(this))[0];
+  if(c) $('cap').value=c.body;});
+
+/* run */
+function renderResults(out){
+  var s=out.summary;
+  $('results').innerHTML='<div class="row" style="margin-bottom:12px">'+
+    '<span class="chip ok">'+s.posted+' posted</span>'+
+    '<span class="chip no">'+s.failed+' failed</span>'+
+    '<span class="chip warn">'+s.skipped+' skipped</span>'+
+    '<span class="chip">'+esc(out.campaign_id)+'</span></div>'+
+    out.posts.map(function(p){
+      var cls=p.status==='posted'?'ok':(p.status==='failed'?'no':'warn');
+      return '<div class="res"><div class="h"><strong>'+esc(p.destination_name)+'</strong>'+
+        '<span class="chip '+cls+'">'+esc(p.status)+'</span></div>'+
+        (p.post_url?'<div style="margin-top:6px"><a href="'+esc(p.post_url)+'" target="_blank" rel="noopener">'+esc(p.post_url)+'</a></div>':'')+
+        (p.failure_reason?'<div class="why">'+esc(p.failure_reason)+'</div>':'')+
+        '</div>';}).join('')+
+    '<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--mut);font-size:13px">Raw JSON</summary>'+
+    '<pre>'+esc(JSON.stringify(out,null,2))+'</pre></details>';
+}
+function runPost(dry){
+  var ids=Object.keys(PICKED).filter(function(k){return PICKED[k];}).map(Number);
+  if(!ids.length) return show('perr','Pick at least one destination.');
+  if(!$('img').value.trim()) return show('perr','An image URL is required.');
+  var b=dry?$('dry'):$('go');var was=b.textContent;b.disabled=true;b.textContent='Working…';
+  jpost('/post',{image:{url:$('img').value.trim()},caption:$('cap').value,
+    destination_ids:ids,dry_run:dry}).then(function(r){
+      b.disabled=false;b.textContent=was;
+      if(!r.ok) return show('perr',r.j.error||'The run failed.');
+      renderResults(r.j);
+      show('pok',dry?'Dry run complete — nothing was sent.':'Run complete.');
+    }).catch(function(){b.disabled=false;b.textContent=was;show('perr','Could not reach the server.');});
+}
+$('dry').addEventListener('click',function(){runPost(true);});
+$('go').addEventListener('click',function(){runPost(false);});
+
+function loadRuns(){
+  api('/runs').then(function(r){
+    var runs=(r.j&&r.j.runs)||[];
+    $('runlist').innerHTML=runs.length?runs.map(function(x){
+      var s=x.summary||{};
+      return '<div class="card"><div class="row" style="justify-content:space-between">'+
+        '<div><strong>'+esc(x.campaign_id)+'</strong>'+(x.dry_run?' <span class="chip warn">dry run</span>':'')+
+        '<div class="lede" style="margin:4px 0 0">'+esc(x.image_reference||'')+'</div></div>'+
+        '<div class="row"><span class="chip ok">'+(s.posted||0)+'</span>'+
+        '<span class="chip no">'+(s.failed||0)+'</span>'+
+        '<span class="chip warn">'+(s.skipped||0)+'</span></div></div></div>';
+    }).join(''):'<div class="card">No runs yet.</div>';});
+}
+
+function boot(){
+  fetch(AUTH+'/session',{credentials:'same-origin'}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+   .then(function(r){
+    if(!r.ok){$('login').classList.remove('hidden');$('app').classList.add('hidden');return;}
+    $('login').classList.add('hidden');$('app').classList.remove('hidden');
+    $('signout').classList.remove('hidden');
+    $('who-sub').textContent=r.j.email;
+    api('/platforms').then(function(p){PLATFORMS=(p.j&&p.j.platforms)||[];renderPlatforms();});
+    loadAccounts();loadCopy();
+  }).catch(function(){$('login').classList.remove('hidden');});
+}
+boot();
+</script>
+</body></html>

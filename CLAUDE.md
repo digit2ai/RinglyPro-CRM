@@ -582,7 +582,19 @@ Other PWA invariants worth not undoing:
 
 **Two admin consoles, and the difference is the point.** `/admin` (`routes/admin.js`) is aggregates-only — its own subscriber list is pseudonymised to an email hash plus domain, and reaching career data needs audited impersonation with a written reason. `/subscribers-admin` (`routes/subscribers-admin.js` + `public/subscribers-admin.html`) is the billing register: name, email, amount paid, subscribed-on date, renewal date, payment count. It relaxes the identity boundary **only** for billing — you cannot run a paid product without answering "who is this charge from" — and keeps the part that matters: it never touches `models.profiles`/`matches`/`outreach`/`settings`, and SIT greps the file to prove it. Every list view and CSV export writes an `audit_log` row. Separate credential, separate cookie (`jobup_subs_admin`), 8h TTL, so neither a subscriber session nor an `/admin` session grants access. **Amounts come from paid invoice rows, never from the list price** — a subscriber with no invoice reads `0.00`, meaning not yet charged, and `free_test` activations are labelled and counted apart.
 
-**SIT:** `node verticals/jobup/sit.js` → **327/327**, zero external keys.
+### JobUp Social Media Image Poster (`/social-admin`)
+
+Publishes an approved JobUp marketing image + caption to chosen destinations and returns one record per destination. `services/social-poster.js` (agent) · `social-connectors.js` (Graph API) · `social-rules.js` (per-platform limits) · `crypto.js` (AES-256-GCM tokens) · `routes/social-admin.js` + `public/social-admin.html`. Tables `ju_social_accounts` / `_copy` / `_campaigns` / `_posts`, all `tenant_id`-scoped and owned by `JOBUP_PLATFORM_TENANT_ID` (default 0).
+
+**IT IS DELIBERATELY NOT AN LLM AGENT.** Every constraint in the spec is an absolute about what must never be invented, and a model asked for a post id can produce a plausible one when the call failed. The procedure runs as code: `post_id`/`post_url`/`posted_at` are copied from a connector result and are `null` on every path that did not reach the platform; `shape()` builds the declared JSON key by key and cannot construct them. Captions are **truncated, never rewritten** — that is how "invent no claims" is guaranteed rather than requested. Destinations are loaded **by id from the request**, so there is no "all accounts" path to fall through to. Retry is once, transient only (429/5xx/network); a permission or policy refusal is never retried.
+
+**FACEBOOK GROUPS CANNOT BE POSTED TO, AND THE AGENT SAYS SO.** Meta deprecated the Groups API in Graph v19 and removed it from all versions on 2024-04-22; `publish_to_groups` no longer exists. HOA and Chamber **Groups** are therefore `skipped` with that reason and handed back for manual posting — never reported as posted. Chamber/HOA **Pages** work normally. Supported: `facebook_page`, `instagram` (Business, two-step container→publish). Unsupported by design: `facebook_group`, `other`.
+
+Auth **reuses the subscribers console credential and cookie** rather than minting a third `JOBUP_*_ADMIN_PASSWORD` — two similar names already left one console open in production.
+
+**Environment Variables:** `JOBUP_SOCIAL_SECRET` (token encryption; falls back to `JOBUP_JWT_SECRET`/`JWT_SECRET` — rotating it makes stored tokens undecryptable, which is reported, not silently ignored) · `JOBUP_PLATFORM_TENANT_ID` (0) · `JOBUP_GRAPH_VERSION` (v21.0) · `JOBUP_GRAPH_BASE` · `JOBUP_GRAPH_TIMEOUT_MS` (20000) · `JOBUP_FB_CAPTION_MAX` / `_MAX_BYTES` / `_RATE_DELAY_MS` · `JOBUP_IG_*` equivalents. **No Meta credentials exist in this repo** — tokens are entered per destination in the console and stored encrypted.
+
+**SIT:** `node verticals/jobup/sit.js` → **348/348**, zero external keys.
 
 **Environment Variables:**
 - `JOBUP_JWT_SECRET` — signs the subscriber session cookie and the admin console token. SET on prod (falls back to a `dev-only-insecure-secret`).

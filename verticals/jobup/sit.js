@@ -466,6 +466,274 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
 
   // ---------------------------------------------------------------
+  section('social media image poster — the eight constraints');
+  {
+    const poster = require(__dirname + '/src/services/social-poster');
+    const socialRules = require(__dirname + '/src/services/social-rules');
+    const cryptoSvc = require(__dirname + '/src/services/crypto');
+    const T = poster.PLATFORM_TENANT;
+    const IMG = 'https://jobup.dev/marketing/launch.jpg';
+
+    // Point the connectors at a local stub so nothing in SIT can reach Meta.
+    const http = require('http');
+    let graphCalls = [];
+    let graphMode = 'ok';
+    const graph = http.createServer((rq, rs) => {
+      let body = ''; rq.on('data', (c) => body += c);
+      rq.on('end', () => {
+        graphCalls.push({ path: rq.url.split('?')[0], body });
+        rs.setHeader('Content-Type', 'application/json');
+        if (graphMode === 'permission') {
+          rs.statusCode = 403;
+          return rs.end(JSON.stringify({ error: { message: 'permission denied', code: 200 } }));
+        }
+        if (graphMode === 'transient') {
+          rs.statusCode = 500;
+          return rs.end(JSON.stringify({ error: { message: 'temporarily unavailable', code: 2 } }));
+        }
+        if (/media_publish/.test(rq.url)) return rs.end(JSON.stringify({ id: 'ig_media_1' }));
+        if (/\/media$/.test(rq.url)) return rs.end(JSON.stringify({ id: 'ig_container_1' }));
+        if (/permalink/.test(rq.url) || rq.method === 'GET') {
+          return rs.end(JSON.stringify({ id: 'x', permalink: 'https://instagram.com/p/REAL' }));
+        }
+        return rs.end(JSON.stringify({ id: 'photo_1', post_id: 'page_1_post_1' }));
+      });
+    });
+    await new Promise((r) => graph.listen(0, r));
+    process.env.JOBUP_GRAPH_BASE = `http://127.0.0.1:${graph.address().port}`;
+    process.env.JOBUP_FB_RATE_DELAY_MS = '0';
+    process.env.JOBUP_IG_RATE_DELAY_MS = '0';
+    delete require.cache[require.resolve(__dirname + '/src/services/social-connectors')];
+    delete require.cache[require.resolve(__dirname + '/src/services/social-rules')];
+    delete require.cache[require.resolve(__dirname + '/src/services/social-poster')];
+    const poster2 = require(__dirname + '/src/services/social-poster');
+
+    const TOKEN = 'EAAsecrettokenvalue1234567890';
+    const mk = (over) => models.social_accounts.create(Object.assign({
+      tenant_id: T, name: 'SIT Page', platform: 'facebook_page',
+      account_or_page_id: '111', access_token_enc: cryptoSvc.encrypt(TOKEN), enabled: true,
+    }, over));
+
+    const fbPage = await mk({ name: 'SIT FB Page' });
+    const ig = await mk({ name: 'SIT Instagram', platform: 'instagram', account_or_page_id: '222' });
+    const group = await mk({ name: 'SIT HOA Group', platform: 'facebook_group', account_or_page_id: '333' });
+    const noTok = await mk({ name: 'SIT No Token', access_token_enc: null });
+    const expired = await mk({ name: 'SIT Expired', token_expires_at: new Date(Date.now() - 86400000) });
+    const untouched = await mk({ name: 'SIT MUST NOT BE TOUCHED', account_or_page_id: '999' });
+
+    await t('the token is encrypted at rest and never stored in the clear', async () => {
+      const row = await models.social_accounts.findOne({ where: { id: fbPage.id } });
+      assert.ok(row.access_token_enc.startsWith('v1:'), 'stored value must be a ciphertext envelope');
+      assert.ok(!row.access_token_enc.includes(TOKEN), 'the raw token must not appear in the column');
+      assert.strictEqual(cryptoSvc.decrypt(row.access_token_enc), TOKEN, 'and it must round-trip');
+    });
+
+    await t('CONSTRAINT 3: it never touches a destination outside the supplied list', async () => {
+      graphCalls = [];
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp finds you jobs.',
+        destination_ids: [fbPage.id] });
+      assert.strictEqual(out.posts.length, 1, 'exactly one destination was asked for');
+      assert.strictEqual(out.posts[0].destination_name, 'SIT FB Page');
+      // The decisive check: the account id of the untouched destination must
+      // never appear in any call that reached the platform.
+      assert.ok(!graphCalls.some((c) => c.path.includes('999')),
+        'a destination not in the request was contacted');
+    });
+
+    await t('CONSTRAINT 1: nothing is fabricated when the platform is unreachable', async () => {
+      graphMode = 'permission';
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id] });
+      graphMode = 'ok';
+      const p = out.posts[0];
+      assert.strictEqual(p.status, 'failed');
+      assert.strictEqual(p.post_id, null, 'a failed post must not carry an id');
+      assert.strictEqual(p.post_url, null, 'nor a url');
+      assert.strictEqual(p.posted_at, null, 'nor a timestamp');
+      assert.ok(p.failure_reason, 'and it must say why');
+    });
+
+    await t('CONSTRAINT 1: a posted result carries ONLY what the platform returned', async () => {
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id, ig.id] });
+      const fb = out.posts.find((p) => p.destination_name === 'SIT FB Page');
+      const insta = out.posts.find((p) => p.destination_name === 'SIT Instagram');
+      assert.strictEqual(fb.status, 'posted');
+      assert.strictEqual(fb.post_id, 'page_1_post_1', 'the id must be the one the API returned');
+      assert.strictEqual(insta.post_id, 'ig_media_1');
+      // Instagram's permalink came from a real lookup, not from the id.
+      assert.strictEqual(insta.post_url, 'https://instagram.com/p/REAL');
+      assert.ok(Date.parse(fb.posted_at) > 0, 'posted_at is a real timestamp');
+    });
+
+    await t('CONSTRAINT 8: a missing or expired credential is a failure, never an attempt', async () => {
+      graphCalls = [];
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [noTok.id, expired.id] });
+      assert.strictEqual(out.summary.posted, 0);
+      assert.strictEqual(out.summary.failed, 2);
+      assert.ok(/no access token/i.test(out.posts[0].failure_reason));
+      assert.ok(/expired/i.test(out.posts[1].failure_reason));
+      assert.strictEqual(graphCalls.length, 0, 'no call may be made without a live credential');
+    });
+
+    await t('A FACEBOOK GROUP IS SKIPPED WITH THE REASON, NOT SILENTLY FAILED', async () => {
+      // Meta removed the Groups API from all versions on 2024-04-22, so the
+      // spec's assumption that HOA groups are reachable is not true. The agent
+      // says so instead of reporting a post that never happened.
+      graphCalls = [];
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [group.id] });
+      const p = out.posts[0];
+      assert.strictEqual(p.status, 'skipped');
+      assert.strictEqual(p.post_id, null);
+      assert.match(p.failure_reason, /Groups API/i);
+      assert.match(p.failure_reason, /2024-04-22/);
+      assert.strictEqual(graphCalls.length, 0, 'it must not even try');
+    });
+
+    await t('CONSTRAINT 6: the same image never goes to one destination twice in a run', async () => {
+      graphCalls = [];
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id, fbPage.id, fbPage.id] });
+      assert.strictEqual(out.summary.posted, 1, 'only the first attempt may post');
+      assert.strictEqual(out.summary.skipped, 2);
+      assert.strictEqual(graphCalls.filter((c) => c.path.includes('/photos')).length, 1,
+        'the platform must be called once, not three times');
+    });
+
+    await t('CONSTRAINT 5: captions are TRUNCATED, never rewritten', () => {
+      const long = 'JobUp finds you jobs. '.repeat(400);   // over Instagram's 2200
+      const r = socialRules.adaptCaption(long, 'instagram');
+      assert.ok(r.truncated);
+      assert.ok(r.text.length <= socialRules.forPlatform('instagram').caption_max);
+      // Every character must have come from the input — a prefix plus an ellipsis.
+      const body = r.text.replace(/…$/, '');
+      assert.ok(long.startsWith(body), 'the adapted caption must be a prefix of the original');
+      // Nothing invented: no word appears that was not in the source.
+      const src = new Set(long.toLowerCase().match(/[a-z]+/g));
+      for (const w of (body.toLowerCase().match(/[a-z]+/g) || [])) {
+        assert.ok(src.has(w), `adaptation introduced a word that was not supplied: ${w}`);
+      }
+    });
+
+    await t('CONSTRAINT 4: there is no image processing anywhere in this vertical', () => {
+      const fs = require('fs');
+      // The image is handed to the platform as a URL and is never opened, so
+      // "never alter the image" is guaranteed by there being no code that could.
+      for (const f of ['social-poster.js', 'social-connectors.js', 'social-rules.js']) {
+        const src = fs.readFileSync(`${__dirname}/src/services/${f}`, 'utf8');
+        for (const lib of ['sharp', 'jimp', 'canvas', 'gm(', 'imagemagick']) {
+          assert.ok(!src.includes(lib), `${f} must not process images (found ${lib})`);
+        }
+      }
+      // sharp IS a dependency of the monorepo, used by other verticals. What
+      // matters is that nothing in this agent's path requires it, or reads the
+      // image bytes at all — the URL is handed to the platform untouched.
+      for (const f of ['social-poster.js', 'social-connectors.js', 'social-rules.js']) {
+        const src = fs.readFileSync(`${__dirname}/src/services/${f}`, 'utf8');
+        const requires = [...src.matchAll(/require\('([^']+)'\)/g)].map((m) => m[1]);
+        for (const r of requires) {
+          assert.ok(!/sharp|jimp|canvas|image/i.test(r),
+            `${f} requires ${r}, which could alter the image`);
+        }
+        assert.ok(!/readFile|createReadStream/.test(src),
+          `${f} reads a file — the image must only ever be passed on as a URL`);
+      }
+    });
+
+    await t('CONSTRAINT 7: no token or secret ever appears in the output', async () => {
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id, ig.id, group.id, noTok.id, expired.id] });
+      const blob = JSON.stringify(out);
+      assert.ok(!blob.includes(TOKEN), 'the access token leaked into the result');
+      assert.ok(!blob.includes('access_token'), 'no credential field may appear');
+      assert.ok(!/EAA[A-Za-z0-9]{10,}/.test(blob), 'no token-shaped string may appear');
+    });
+
+    await t('CONSTRAINT 2: the result is EXACTLY the declared shape', async () => {
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id] });
+      assert.deepStrictEqual(Object.keys(out).sort(),
+        ['campaign_id', 'image_reference', 'posts', 'run_timestamp', 'summary']);
+      assert.deepStrictEqual(Object.keys(out.posts[0]).sort(),
+        ['account_or_page_id', 'caption_posted', 'destination_name', 'failure_reason',
+         'platform', 'post_id', 'post_url', 'posted_at', 'status']);
+      assert.deepStrictEqual(Object.keys(out.summary).sort(),
+        ['failed', 'posted', 'skipped', 'total_destinations']);
+      assert.ok(['facebook', 'instagram', 'other'].includes(out.posts[0].platform),
+        'platform must be one of the three the schema allows');
+      assert.ok(['posted', 'failed', 'skipped'].includes(out.posts[0].status));
+      // The internal bookkeeping fields must not survive into the output.
+      assert.ok(!('_account_id' in out.posts[0]) && !('_attempts' in out.posts[0]));
+    });
+
+    await t('the retry fires ONCE on a transient error and never on a refusal', async () => {
+      graphCalls = []; graphMode = 'transient';
+      await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.', destination_ids: [fbPage.id] });
+      const transientCalls = graphCalls.filter((c) => c.path.includes('/photos')).length;
+      assert.strictEqual(transientCalls, 2, 'a transient failure gets exactly one retry');
+
+      graphCalls = []; graphMode = 'permission';
+      await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.', destination_ids: [fbPage.id] });
+      const refusalCalls = graphCalls.filter((c) => c.path.includes('/photos')).length;
+      assert.strictEqual(refusalCalls, 1, 'a permission refusal must NOT be retried');
+      graphMode = 'ok';
+    });
+
+    await t('per-destination image validation rejects what a platform cannot accept', async () => {
+      // A PNG Facebook takes happily is rejected by Instagram's publishing API.
+      const out = await poster2.run({ tenant_id: T, image: { url: 'https://jobup.dev/a.png' },
+        caption: 'JobUp.', destination_ids: [fbPage.id, ig.id] });
+      const fb = out.posts.find((p) => p.platform === 'facebook');
+      const insta = out.posts.find((p) => p.platform === 'instagram');
+      assert.strictEqual(fb.status, 'posted', 'Facebook accepts png');
+      assert.strictEqual(insta.status, 'failed');
+      assert.match(insta.failure_reason, /format \.png/);
+      // And a non-https url is refused everywhere, since Meta must fetch it.
+      const insecure = await poster2.run({ tenant_id: T, image: { url: 'http://jobup.dev/a.jpg' },
+        caption: 'JobUp.', destination_ids: [fbPage.id] });
+      assert.match(insecure.posts[0].failure_reason, /https/);
+    });
+
+    await t('a dry run validates and sends NOTHING', async () => {
+      graphCalls = [];
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id, ig.id], dry_run: true });
+      assert.strictEqual(out.summary.posted, 0);
+      assert.strictEqual(out.summary.skipped, 2);
+      assert.strictEqual(graphCalls.length, 0, 'a dry run must not call the platform');
+    });
+
+    await t('every run is persisted with a row per destination', async () => {
+      const out = await poster2.run({ tenant_id: T, image: { url: IMG }, caption: 'JobUp.',
+        destination_ids: [fbPage.id, group.id] });
+      const camp = await models.social_campaigns.findOne({ where: { campaign_id: out.campaign_id } });
+      assert.ok(camp, 'the run must be recorded');
+      assert.deepStrictEqual(camp.result.summary, out.summary);
+      const rows = await models.social_posts.findAll({ where: { campaign_id: out.campaign_id } });
+      assert.strictEqual(rows.length, 2, 'one row per destination attempt');
+      assert.ok(!JSON.stringify(rows).includes(TOKEN), 'no token in the stored rows either');
+    });
+
+    await t('the social tables are tenant-scoped like every other table', () => {
+      const { TENANT_SCOPED, SCHEMA } = require(__dirname + '/src/models');
+      for (const tbl of ['social_accounts', 'social_copy', 'social_campaigns', 'social_posts']) {
+        assert.ok(SCHEMA[tbl], `${tbl} must exist`);
+        assert.ok(SCHEMA[tbl].tenant_id, `${tbl} must carry tenant_id`);
+        assert.ok(TENANT_SCOPED.has(tbl), `${tbl} must be tenant-scoped`);
+      }
+    });
+
+    // Clean up after ourselves.
+    for (const a of [fbPage, ig, group, noTok, expired, untouched]) {
+      await models.social_accounts.destroy({ where: { id: a.id } });
+    }
+    await models.social_campaigns.destroy({ where: { tenant_id: T } });
+    await models.social_posts.destroy({ where: { tenant_id: T } });
+    graph.close();
+  }
+
   section('subscribers admin — who paid, how much, when');
   {
     const express = require('express');

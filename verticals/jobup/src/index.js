@@ -126,6 +126,11 @@ router.use('/admin', require('./routes/admin'));
 router.use('/subscribers-admin', require('./routes/subscribers-admin'));
 router.get(['/subscribers-admin', '/subscribers-admin/'], (req, res) =>
   res.type('html').send(pwa.page('subscribers-admin.html', pwa.basePath(req))));
+// Social Media Image Poster. Shares the subscribers console credential rather
+// than minting a third admin password — see routes/social-admin.js.
+router.use('/social-admin', require('./routes/social-admin'));
+router.get(['/social-admin', '/social-admin/'], (req, res) =>
+  res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req))));
 
 // ---- PWA ------------------------------------------------------------------
 // The manifest and the worker are GENERATED for the root this request arrived
@@ -164,10 +169,11 @@ router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
 router.get(['/index.html', '/app.html', '/welcome.html', '/build.html',
-            '/subscribers-admin.html'], (req, res) => {
+            '/subscribers-admin.html', '/social-admin.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
                '/welcome.html': '/welcome', '/build.html': '/build',
-               '/subscribers-admin.html': '/subscribers-admin' }[req.path];
+               '/subscribers-admin.html': '/subscribers-admin',
+               '/social-admin.html': '/social-admin' }[req.path];
   res.redirect(301, `${pwa.basePath(req)}${to}`);
 });
 // index:false is load-bearing. express.static serves publicDir/index.html for a

@@ -29,6 +29,13 @@ const TENANT_SCOPED = new Set([
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
   'invoices', 'notification_prefs', 'audit_log', 'page_views', 'assets',
   'address_aliases',
+  // The social poster's tables. They are owned by the PLATFORM tenant
+  // (JOBUP_PLATFORM_TENANT_ID, default 0) rather than by a subscriber, but they
+  // are listed here for two reasons: scoped() refuses any table not in this
+  // set, and purge() walks it — so if a social account ever were attached to a
+  // subscriber, deleting that subscriber would take it with them instead of
+  // leaving a live credential behind owned by nobody.
+  'social_accounts', 'social_copy', 'social_campaigns', 'social_posts',
 ]);
 
 const SCHEMA = {
@@ -269,6 +276,63 @@ const SCHEMA = {
     actor: { type: DataTypes.STRING },
     action: { type: DataTypes.STRING },
     reason: { type: DataTypes.TEXT },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+
+  // ---- Social Media Image Poster -----------------------------------------
+  // The destination registry. This IS the "<social account credentials store>"
+  // the spec left as a placeholder.
+  social_accounts: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    name: { type: DataTypes.STRING, allowNull: false },   // "Orlando HOA", "Kissimmee Chamber"
+    // facebook_page | instagram | facebook_group | other
+    platform: { type: DataTypes.STRING, allowNull: false },
+    account_or_page_id: { type: DataTypes.STRING },
+    // AES-256-GCM. The raw token is never stored and never returned.
+    access_token_enc: { type: DataTypes.TEXT },
+    token_expires_at: { type: DataTypes.DATE },
+    enabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+    notes: { type: DataTypes.TEXT },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // The "<JobUp marketing copy library>".
+  social_copy: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    label: { type: DataTypes.STRING },
+    body: { type: DataTypes.TEXT },
+    lang: { type: DataTypes.STRING, defaultValue: 'en' },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // One agent run.
+  social_campaigns: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    campaign_id: { type: DataTypes.STRING },
+    image_reference: { type: DataTypes.TEXT },
+    caption: { type: DataTypes.TEXT },
+    dry_run: { type: DataTypes.BOOLEAN, defaultValue: false },
+    run_timestamp: { type: DataTypes.DATE },
+    result: { type: DataTypes.JSONB },     // the declared output shape, verbatim
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // One row per destination attempt — the audit behind every posts[] entry.
+  social_posts: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    campaign_id: { type: DataTypes.STRING },
+    account_id: { type: DataTypes.INTEGER },
+    destination_name: { type: DataTypes.STRING },
+    platform: { type: DataTypes.STRING },
+    account_or_page_id: { type: DataTypes.STRING },
+    caption_posted: { type: DataTypes.TEXT },
+    status: { type: DataTypes.STRING },    // posted | failed | skipped
+    post_id: { type: DataTypes.STRING },
+    post_url: { type: DataTypes.TEXT },
+    posted_at: { type: DataTypes.DATE },
+    failure_reason: { type: DataTypes.TEXT },
+    attempts: { type: DataTypes.INTEGER, defaultValue: 0 },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
 };
