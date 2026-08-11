@@ -540,6 +540,9 @@ app.use((req, res, next) => {
   // else on planea.vip (app, portal, /uat, etc.) stays behind the dev login.
   const op = req.path;
   if (op === '/main' || op === '/main/' || op === '/planea/portal/planea-app-sim.js') return next();
+  // Imágenes del landing público (/main): p.ej. la ilustración de Maya. Son assets
+  // de marketing sin datos de usuario; se dejan pasar para que /main se vea completo.
+  if (op.indexOf('/planea/portal/images/') === 0) return next();
   // TTS neural sin llave (voz de Lina en /novedades y otras páginas): ruta stateless,
   // sin datos de usuario, se deja abierta para que el orbe hable sin el candado.
   if (op.indexOf('/api/tts') === 0) return next();
