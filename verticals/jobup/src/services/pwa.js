@@ -31,7 +31,7 @@ const path = require('path');
 const publicDir = path.join(__dirname, '..', '..', 'public');
 
 /** Bump when a shell file changes, so installed clients pick it up. */
-const SHELL_VERSION = 'v3';
+const SHELL_VERSION = 'v4';
 
 /**
  * BUMP THIS WHENEVER AN ICON FILE CHANGES.

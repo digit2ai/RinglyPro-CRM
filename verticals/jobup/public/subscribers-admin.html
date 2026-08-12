@@ -506,9 +506,13 @@ function paintBadgeState() {
 
 function initPWA() {
   if (!('serviceWorker' in navigator)) { paintBadgeState(); return; }
-  navigator.serviceWorker.register(API.replace(/\/api$/,'') + '/sw.js')
+  /* updateViaCache:'none' plus an explicit update() — an installed PWA will
+     otherwise keep running a cached worker, which is why a fixed push handler
+     did not reach the phone and iOS fell back to its generic "Notification". */
+  navigator.serviceWorker.register(API.replace(/\/api$/,'') + '/sw.js', { updateViaCache: 'none' })
     .then(function(reg){
       SWREG = reg;
+      try { reg.update(); } catch (e) {}
       /* The worker relays a push to any open window so the pill updates
          without a refresh. */
       navigator.serviceWorker.addEventListener('message', function(e){

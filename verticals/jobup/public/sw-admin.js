@@ -56,11 +56,14 @@ self.addEventListener('push', (e) => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; } catch (err) { data = {}; }
   const count = Number(data.count || 0);
+  // What actually goes on the icon. For a test this is deliberately >= 1 so the
+  // operator can SEE the badge; for a real push it is the true count.
+  const badge = Number(data.badge != null ? data.badge : count);
 
   e.waitUntil((async () => {
     if (self.navigator && self.navigator.setAppBadge) {
       try {
-        if (count > 0) await self.navigator.setAppBadge(count);
+        if (badge > 0) await self.navigator.setAppBadge(badge);
         else await self.navigator.clearAppBadge();
       } catch (err) { /* badging unsupported here; the notification still lands */ }
     }
@@ -72,12 +75,13 @@ self.addEventListener('push', (e) => {
     // cannot be told apart from a broken one.
     if ((count > 0 || data.test) && self.registration.showNotification) {
       const title = data.test
-        ? (count === 1 ? 'Badge test — 1 new subscriber'
-                       : `Badge test — ${count} new subscriber${count === 1 ? '' : 's'}`)
+        ? 'Badge test'
         : (count === 1 ? 'New JobUp subscriber' : `${count} new JobUp subscribers`);
       await self.registration.showNotification(title,
         {
-          body: data.test ? 'Push is working on this device.' : (data.reason || 'Open the console to see who.'),
+          body: data.test
+            ? `The icon should now show ${badge}. This is a test — opening the console clears it.`
+            : (data.reason || 'Open the console to see who.'),
           icon: BASE + '/icon-192.png__V__',
           badge: BASE + '/icon-192.png__V__',
           tag: 'jobup-new-subscriber',   // collapses, never stacks up

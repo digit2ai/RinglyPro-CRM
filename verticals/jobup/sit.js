@@ -1014,6 +1014,31 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/return \{ ok:false, why:/.test(html), 'enablePush must report WHY it failed');
     assert.ok(html.includes("'Could not turn the badge on: '"), 'and the card must show it');
   });
+  await t('A TEST PUSH PUTS A NUMBER ON THE ICON', () => {
+    const fs = require('fs');
+    const sw = fs.readFileSync(__dirname + '/public/sw-admin.js', 'utf8');
+    const svc = fs.readFileSync(__dirname + '/src/services/admin-notify.js', 'utf8');
+    // The first version sent the REAL count, which is 0 when nothing is new —
+    // and 0 means clearAppBadge. The test therefore proved delivery and nothing
+    // else, and the icon stayed blank exactly as reported.
+    assert.ok(/badge: opts\.test \? Math\.max\(count, 1\) : count/.test(svc),
+      'a test must carry a badge value of at least 1');
+    assert.ok(/const badge = Number\(data\.badge/.test(sw),
+      'the worker must paint `badge`, not the raw count');
+    assert.ok(/if \(badge > 0\) await self\.navigator\.setAppBadge\(badge\)/.test(sw),
+      'and set it from that value');
+    // Honest about what the number means.
+    assert.ok(sw.includes('This is a test'), 'the notification must say it is a demonstration');
+  });
+  await t('AN INSTALLED APP CANNOT SIT ON A STALE WORKER', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    // A PWA keeps its cached service worker unless told otherwise. That is why
+    // a fixed push handler never reached the phone, and iOS fell back to its
+    // own generic "Notification" because the old worker showed none.
+    assert.ok(/updateViaCache: 'none'/.test(html), 'the worker must not be served from cache');
+    assert.ok(/reg\.update\(\)/.test(html), 'and an update must be requested on every load');
+  });
   await t('a test push is VISIBLE even when the count is zero', () => {
     const fs = require('fs');
     const sw = fs.readFileSync(__dirname + '/public/sw-admin.js', 'utf8');

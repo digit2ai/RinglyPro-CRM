@@ -154,8 +154,16 @@ async function pushBadge(reason = 'new subscriber', opts = {}) {
     // A test that is invisible at zero is indistinguishable from a broken one,
     // and iOS treats a push that shows no notification as a silent push — which
     // it drops, and eventually revokes the permission for.
+    // A TEST MUST PUT A NUMBER ON THE ICON, or it proves delivery and nothing
+    // else. With no new subscribers the real count is 0, and 0 means
+    // clearAppBadge — so the previous test could never show anything by
+    // construction. `badge` is what the worker paints; for a test it is at
+    // least 1 and the notification says plainly that it is a demonstration.
     const payload = JSON.stringify({
-      type: 'new_subscriber', count, reason, test: Boolean(opts.test) });
+      type: 'new_subscriber', count, reason,
+      test: Boolean(opts.test),
+      badge: opts.test ? Math.max(count, 1) : count,
+    });
     try {
       await wp.sendNotification(
         { endpoint: s.endpoint, keys: s.keys_json || undefined }, payload, { TTL: 3600 });
