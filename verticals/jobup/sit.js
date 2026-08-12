@@ -960,6 +960,23 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'a ten-column table on a phone is a horizontal-scroll trap, not a report');
     assert.ok(html.includes('env(safe-area-inset'), 'it must clear the notch and home indicator');
   });
+  await t('THE BADGE CARD TELLS THE TRUTH ABOUT WHY IT IS OFF', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    // Every state an operator can actually be in gets its own message. Telling
+    // an iPhone user in Safari to "allow notifications" sends them round a loop
+    // that cannot succeed — iOS badges installed web apps only.
+    for (const state of ['Add to Home Screen first', 'Badge is on', 'Badge blocked',
+                         'Badge is off', 'Badge not available in this browser']) {
+      assert.ok(html.includes(state), `the card must handle the "${state}" case`);
+    }
+    assert.ok(/IS_IOS && !STANDALONE/.test(html),
+      'the iOS-not-installed case must be detected, not lumped in with "off"');
+    assert.ok(html.includes("perm === 'denied'"),
+      'a blocked permission needs its own instructions, not the enable button');
+    // And a way to prove it end to end without waiting for a real signup.
+    assert.ok(html.includes("jpost('/push/test'"), 'there must be a test that exercises the real chain');
+  });
   await t('the badge clears by READING the list, not a separate button', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');

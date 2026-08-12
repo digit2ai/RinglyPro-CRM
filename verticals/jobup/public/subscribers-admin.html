@@ -105,6 +105,15 @@ border-top:1px solid var(--line);padding-top:18px}
 .newpill{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
 padding:0 7px;border-radius:999px;background:var(--brand);color:#fff;font-size:12px;font-weight:800;
 vertical-align:middle;margin-left:7px}
+.badgecard{background:var(--card2);border:1px solid rgba(76,110,245,.5);border-radius:15px;
+padding:15px 17px;margin:16px 0}
+.badgecard.on{border-color:rgba(58,208,127,.5)}
+.bc-h{display:flex;align-items:center;gap:9px;font-size:15px}
+.bc-dot{width:9px;height:9px;border-radius:50%;background:var(--warn);flex:0 0 9px}
+.badgecard.on .bc-dot{background:var(--green)}
+.bc-b{color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:7px}
+.bc-a{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.bc-n{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin-top:10px;line-height:1.55}
 .instbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card2);
 border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margin:16px 0}
 .instbar .itxt{flex:1 1 220px;font-size:13.5px;line-height:1.45}
@@ -176,10 +185,16 @@ border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margi
     <button class="btn primary sm" id="inst-go">Install</button>
     <button class="btn sm" id="inst-no">Not now</button>
   </div>
-  <div class="banner hidden" id="notifbar">
-    <strong>Turn on the badge.</strong> Allow notifications and the icon shows how many
-    subscribers arrived while the console was closed.
-    <div style="margin-top:10px"><button class="btn sm" id="notif-go">Enable badge</button></div>
+  <div class="badgecard hidden" id="notifbar">
+    <div class="bc-h"><span class="bc-dot" id="bc-dot"></span>
+      <strong id="bc-title">Badge is off</strong></div>
+    <div class="bc-b" id="bc-body">Allow notifications and the home-screen icon shows how many
+      subscribers arrived while the console was closed.</div>
+    <div class="bc-a">
+      <button class="btn primary sm" id="notif-go">Turn on the badge</button>
+      <button class="btn sm hidden" id="badge-test">Send a test</button>
+    </div>
+    <div class="bc-n hidden" id="bc-note"></div>
   </div>
   <div class="banner hidden" id="pwbanner">
     <strong>This console&rsquo;s password is one published in the source.</strong>
@@ -395,8 +410,69 @@ function enablePush() {
   }).catch(function(){ return false; });
 }
 
+var STANDALONE = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+var IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+/* One honest status line. The operator should be able to tell at a glance
+   whether the icon will actually carry a number, and if not, why not. */
+function paintBadgeState() {
+  var card = $('notifbar'), dot = $('bc-dot'), title = $('bc-title');
+  var body = $('bc-body'), note = $('bc-note'), test = $('badge-test'), go = $('notif-go');
+  var supported = ('Notification' in window) && ('PushManager' in window) && ('serviceWorker' in navigator);
+  var perm = supported ? Notification.permission : 'unsupported';
+
+  card.classList.remove('hidden');
+
+  if (!supported) {
+    card.classList.remove('on'); title.textContent = 'Badge not available in this browser';
+    body.textContent = 'This browser has no Push or Notification API, so the icon cannot carry a number.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.remove('hidden');
+    note.textContent = 'The count still shows next to the title while the console is open.';
+    return;
+  }
+
+  /* iOS badges INSTALLED web apps only. Saying "allow notifications" to
+     someone in Safari sends them round a loop that cannot succeed. */
+  if (IS_IOS && !STANDALONE) {
+    card.classList.remove('on'); title.textContent = 'Add to Home Screen first';
+    body.textContent = 'On iPhone the badge only works from an installed icon. '
+      + 'Tap Share, then Add to Home Screen, then open it from there and come back to this card.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.add('hidden');
+    return;
+  }
+
+  if (perm === 'granted') {
+    card.classList.add('on'); title.textContent = 'Badge is on';
+    body.textContent = 'The icon shows the number of subscribers who arrived since you last read the list.';
+    go.classList.add('hidden'); test.classList.remove('hidden');
+    note.classList.remove('hidden');
+    note.textContent = navigator.setAppBadge
+      ? 'This device supports icon badging.'
+      : 'This device shows a notification instead of a number on the icon.';
+    return;
+  }
+
+  if (perm === 'denied') {
+    card.classList.remove('on'); title.textContent = 'Badge blocked';
+    body.textContent = 'Notifications are blocked for this app, so nothing can update the icon.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.remove('hidden');
+    note.textContent = IS_IOS
+      ? 'iOS Settings > Notifications > Subscribers > Allow Notifications.'
+      : 'Re-allow notifications for this site in your browser settings.';
+    return;
+  }
+
+  card.classList.remove('on'); title.textContent = 'Badge is off';
+  body.textContent = 'Allow notifications and the home-screen icon shows how many subscribers '
+    + 'arrived while the console was closed.';
+  go.classList.remove('hidden'); test.classList.add('hidden'); note.classList.add('hidden');
+}
+
 function initPWA() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) { paintBadgeState(); return; }
   navigator.serviceWorker.register(API.replace(/\/api$/,'') + '/sw.js')
     .then(function(reg){
       SWREG = reg;
@@ -405,12 +481,12 @@ function initPWA() {
       navigator.serviceWorker.addEventListener('message', function(e){
         if (e.data && e.data.type === 'new_subscriber') paintCount(e.data.count || 0);
       });
-      if ('Notification' in window && Notification.permission === 'default') {
-        $('notifbar').classList.remove('hidden');
-      } else if ('Notification' in window && Notification.permission === 'granted') {
-        enablePush();
+      if ('Notification' in window && Notification.permission === 'granted') {
+        enablePush().then(paintBadgeState);
+      } else {
+        paintBadgeState();
       }
-    }).catch(function(){});
+    }).catch(function(){ paintBadgeState(); });
 }
 
 window.addEventListener('beforeinstallprompt', function(e){
@@ -425,7 +501,19 @@ $('inst-no').addEventListener('click', function(){
   $('instbar').classList.add('hidden');
   localStorage.setItem('jobup_admin_install_dismissed','1');
 });
-$('notif-go').addEventListener('click', function(){ enablePush(); });
+$('notif-go').addEventListener('click', function(){
+  enablePush().then(function(){ paintBadgeState(); refreshCount(); });
+});
+$('badge-test').addEventListener('click', function(){
+  var b=$('badge-test'); b.disabled=true; b.textContent='Sending…';
+  jpost('/push/test', {}).then(function(r){
+    b.disabled=false; b.textContent='Send a test';
+    $('bc-note').classList.remove('hidden');
+    $('bc-note').textContent = r.ok
+      ? 'Sent to ' + (r.j.sent||0) + ' device(s). Close the app and the icon should carry the number.'
+      : 'Could not send: ' + ((r.j&&r.j.error)||'unknown');
+  }).catch(function(){ b.disabled=false; b.textContent='Send a test'; });
+});
 window.addEventListener('appinstalled', function(){ $('instbar').classList.add('hidden'); });
 
 /* iOS has no beforeinstallprompt: tell Safari users how, once. */
