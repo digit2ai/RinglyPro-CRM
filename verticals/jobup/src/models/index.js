@@ -36,6 +36,7 @@ const TENANT_SCOPED = new Set([
   // subscriber, deleting that subscriber would take it with them instead of
   // leaving a live credential behind owned by nobody.
   'social_accounts', 'social_copy', 'social_campaigns', 'social_posts',
+  'admin_state', 'admin_push_subs',
 ]);
 
 const SCHEMA = {
@@ -276,6 +277,31 @@ const SCHEMA = {
     actor: { type: DataTypes.STRING },
     action: { type: DataTypes.STRING },
     reason: { type: DataTypes.TEXT },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+
+  // ---- Admin console state (watermarks, VAPID keys, push subscriptions) ---
+  // Keyed by the admin's own identity so two operators do not clear each
+  // other's badge. tenant_id is the platform tenant, like the social tables.
+  admin_state: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    actor: { type: DataTypes.STRING },        // admin email, or '' for shared keys
+    key: { type: DataTypes.STRING, allowNull: false },
+    value: { type: DataTypes.JSONB, defaultValue: {} },
+    updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // One row per installed console. A push subscription is a capability URL:
+  // anyone holding it can push to that device, so it is never returned by a read.
+  admin_push_subs: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    actor: { type: DataTypes.STRING },
+    endpoint: { type: DataTypes.TEXT },
+    keys_json: { type: DataTypes.JSONB },
+    user_agent: { type: DataTypes.STRING },
+    failures: { type: DataTypes.INTEGER, defaultValue: 0 },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
 

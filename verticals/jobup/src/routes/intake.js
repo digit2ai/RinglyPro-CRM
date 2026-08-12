@@ -329,6 +329,9 @@ router.post('/build-account', async (req, res) => {
     };
     if (sub) await models.subscribers.update(fields, { where: { id: sub.id } });
     else sub = await models.subscribers.create({ email, ...fields });
+    // Badge the admin console. Fire-and-forget by design: a push that fails
+    // must never break the signup that triggered it.
+    try { require('../services/admin-notify').onNewSubscriber(sub); } catch (e) { /* non-fatal */ }
     const tenantId = sub.id;
 
     // What the Hunter searches on. Written BEFORE provisioning so the first

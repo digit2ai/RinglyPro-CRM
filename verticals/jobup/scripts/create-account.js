@@ -133,6 +133,9 @@ const arg = (k, d = null) => {
     reason: 'Created from the backend with no payment (free_test).',
   });
 
+  // Badge the admin console, same as a real signup would.
+  try { require('../src/services/admin-notify').onNewSubscriber(sub); } catch (e) { /* non-fatal */ }
+
   const prov = await provisioning.run(tenantId, {
     preferredAddress: arg('address') || undefined,
   });

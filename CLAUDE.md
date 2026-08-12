@@ -594,7 +594,19 @@ Auth **reuses the subscribers console credential and cookie** rather than mintin
 
 **Environment Variables:** `JOBUP_SOCIAL_SECRET` (token encryption; falls back to `JOBUP_JWT_SECRET`/`JWT_SECRET` — rotating it makes stored tokens undecryptable, which is reported, not silently ignored) · `JOBUP_PLATFORM_TENANT_ID` (0) · `JOBUP_GRAPH_VERSION` (v21.0) · `JOBUP_GRAPH_BASE` · `JOBUP_GRAPH_TIMEOUT_MS` (20000) · `JOBUP_FB_CAPTION_MAX` / `_MAX_BYTES` / `_RATE_DELAY_MS` · `JOBUP_IG_*` equivalents. **No Meta credentials exist in this repo** — tokens are entered per destination in the console and stored encrypted.
 
-**SIT:** `node verticals/jobup/sit.js` → **348/348**, zero external keys.
+### Subscribers console is an installable PWA with a live badge (`/subscribers-admin`)
+
+Its own app, not the subscriber one: `pwa.adminManifest()` gives it a distinct `id`, `scope:/subscribers-admin/`, a separate roster-motif icon (`admin-icon.svg`), and `sw-admin.js` scoped to the console. Sharing the subscriber manifest (`scope:"/"`, `start_url:"/app"`) would have put the SUBSCRIBER dashboard on the home screen under the console's name. **`start_url` carries a trailing slash on purpose** — scope matches by path prefix, so `/subscribers-admin?src=pwa` resolves outside `/subscribers-admin/` and opens in a browser tab.
+
+**The badge is a count of real rows, never a stored counter.** `services/admin-notify.js` keeps a `last_seen_subscriber_id` watermark **per admin email**, so "new" means "since you last looked" and one operator clearing it does not clear another's. Deleting a subscriber lowers the count, which only holds because it is derived — SIT asserts exactly that.
+
+**Three delivery paths, because each covers what the others cannot:** an in-page pill (always), `navigator.setAppBadge` (the installed icon), and **Web Push** (the only thing that updates a CLOSED app). The worker's `push` handler sets the badge and shows a notification — iOS drops silent pushes and eventually revokes permission, so the notification is not optional there. iPhone requires the console be installed to the home screen first.
+
+**VAPID keys generate themselves on first use and live in `ju_admin_state`.** Web Push needs a keypair, not an account, so requiring an env var before the badge worked would be configuration that buys nothing. `JOBUP_VAPID_PUBLIC`/`JOBUP_VAPID_PRIVATE` override when present. A push subscription is a capability URL — anyone holding it can push to that device — so subscriptions are never returned by any read endpoint.
+
+The badge clears by **reading the list**, not a separate button: `markSeen()` fires once the rows render. Tables collapse to cards under 820px, 44px targets, 16px inputs.
+
+**SIT:** `node verticals/jobup/sit.js` → **356/356**, zero external keys.
 
 **Environment Variables:**
 - `JOBUP_JWT_SECRET` — signs the subscriber session cookie and the admin console token. SET on prod (falls back to a `dev-only-insecure-secret`).

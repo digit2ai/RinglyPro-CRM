@@ -857,7 +857,110 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(rows.some((a) => a.action === 'subs_admin.login.failed'),
         'failed sign-ins must be recorded too');
     });
-    await t('THE REPO NO LONGER SHIPS A WORKING PASSWORD', () => {
+    await t('THE CONSOLE IS ITS OWN INSTALLED APP, NOT THE SUBSCRIBER ONE', () => {
+    const pwaL = require(__dirname + '/src/services/pwa');
+    for (const base of ['', '/jobup']) {
+      const sub = pwaL.manifest(base);
+      const adm = pwaL.adminManifest(base);
+      // Installing from /subscribers-admin must not put the SUBSCRIBER
+      // dashboard on the home screen under the wrong name.
+      assert.notStrictEqual(adm.id, sub.id, 'the two installs need distinct identities');
+      assert.ok(adm.start_url.includes('/subscribers-admin'), 'it must open the console');
+      assert.ok(!adm.icons.some((i) => /\/(icon|favicon)-?\d*\.(png|svg)/.test(i.src.split('?')[0])
+        && !i.src.includes('admin')), 'the console needs its own icon, or two identical ones sit side by side');
+      // The trailing-slash trap: a start_url outside its own scope opens in a
+      // browser tab instead of the app.
+      const startPath = new URL('https://x' + adm.start_url).pathname;
+      assert.ok(startPath.startsWith(adm.scope),
+        `start_url ${startPath} is outside scope ${adm.scope}`);
+    }
+  });
+  await t('the console worker is scoped to the console, and never caches /api/', () => {
+    const pwaL = require(__dirname + '/src/services/pwa');
+    const sw = pwaL.adminServiceWorker('/jobup');
+    assert.ok(!sw.includes('__BASE__') && !sw.includes('__CACHE__') && !sw.includes('__V__'),
+      'tokens must be substituted');
+    assert.ok(sw.includes("includes('/api/')"), 'a billing register must never render from cache');
+    assert.ok(!/addAll\(SHELL\)/.test(sw), 'addAll is atomic — one 404 would leave no worker at all');
+    assert.ok(sw.includes('setAppBadge'), 'the push handler is what puts the number on the icon');
+    assert.ok(sw.includes('showNotification'),
+      'iOS drops a silent push and eventually revokes permission, so it is not optional');
+  });
+  await t('THE BADGE COUNTS REAL ROWS, NOT A STORED COUNTER', async () => {
+    const notify = require(__dirname + '/src/services/admin-notify');
+    const actor = 'sit-badge@example.com';
+    await notify.markSeen(actor);
+    const before = await notify.newCountFor(actor);
+    assert.strictEqual(before.count, 0, 'just-seen means zero');
+
+    const s1 = await models.subscribers.create({ email: `sit-badge-${Date.now()}@example.com`, name: 'SIT Badge' });
+    const after = await notify.newCountFor(actor);
+    assert.strictEqual(after.count, 1, 'a new subscriber raises the count');
+    assert.ok(after.newest.some((n) => n.id === s1.id), 'and names who');
+
+    // A counter that drifts from the table is worse than no badge: deleting the
+    // row must drop the count, which only holds if it is derived.
+    await models.subscribers.destroy({ where: { id: s1.id } });
+    const gone = await notify.newCountFor(actor);
+    assert.strictEqual(gone.count, 0, 'the count is derived from rows, not incremented');
+  });
+  await t('one admin clearing the badge does NOT clear another admin’s', async () => {
+    const notify = require(__dirname + '/src/services/admin-notify');
+    const a = 'sit-a@example.com'; const b = 'sit-b@example.com';
+    await notify.markSeen(a); await notify.markSeen(b);
+    const s1 = await models.subscribers.create({ email: `sit-two-${Date.now()}@example.com`, name: 'SIT Two' });
+    await notify.markSeen(a);
+    assert.strictEqual((await notify.newCountFor(a)).count, 0, 'A read it');
+    assert.strictEqual((await notify.newCountFor(b)).count, 1, 'B has not, and still sees it');
+    await models.subscribers.destroy({ where: { id: s1.id } });
+  });
+  await t('VAPID KEYS GENERATE THEMSELVES — the badge needs no configuration', async () => {
+    const notify = require(__dirname + '/src/services/admin-notify');
+    const st = await notify.status();
+    assert.ok(st.push_available, 'web-push must be installed');
+    assert.ok(st.vapid_public_key, 'a keypair must exist without anyone setting an env var');
+    assert.ok(['generated', 'database', 'env'].includes(st.vapid_source));
+    // Stable across calls, or every device would need to re-subscribe.
+    const again = await notify.publicKey();
+    assert.strictEqual(again, st.vapid_public_key, 'the key must not regenerate per call');
+  });
+  await t('A PUSH SUBSCRIPTION IS NEVER HANDED BACK OUT', async () => {
+    const fs = require('fs');
+    const notify = require(__dirname + '/src/services/admin-notify');
+    const endpoint = `https://push.example.com/sit-${Date.now()}`;
+    await notify.saveSubscription('sit@example.com',
+      { endpoint, keys: { p256dh: 'SECRETKEYMATERIAL', auth: 'SECRETAUTH' } }, 'SIT');
+    const st = await notify.status();
+    const blob = JSON.stringify(st);
+    assert.ok(!blob.includes('SECRETKEYMATERIAL') && !blob.includes(endpoint),
+      'anyone holding the endpoint can push to that device — it must not be readable');
+    // And no route may return them.
+    const src = fs.readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
+    assert.ok(!/res\.json\([^)]*admin_push_subs/.test(src), 'no endpoint may return subscriptions');
+    await notify.removeSubscription(endpoint);
+  });
+  await t('mobile: the console is installable and thumb-sized', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    const css = html.replace(/\s+/g, '');
+    assert.ok(html.includes('rel="manifest" href="{{BASE}}/subscribers-admin/manifest.webmanifest"'),
+      'it must link its OWN manifest, not the subscriber one');
+    assert.ok(html.includes('apple-mobile-web-app-capable'), 'iOS standalone');
+    assert.ok(css.includes('input,select{font-size:16px}'), 'under 16px iOS zooms the page on focus');
+    assert.ok(css.includes('min-height:44px'), '44px is the smallest reliably tappable target');
+    assert.ok(css.includes('thead{display:none}'),
+      'a ten-column table on a phone is a horizontal-scroll trap, not a report');
+    assert.ok(html.includes('env(safe-area-inset'), 'it must clear the notch and home indicator');
+  });
+  await t('the badge clears by READING the list, not a separate button', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(/render\(\);\s*\n\s*\/\/[^\n]*\n\s*markSeen\(\);/.test(html),
+      'seen must fire once the rows are actually on screen');
+    assert.ok(html.includes('visibilitychange'),
+      'coming back to the app must refresh the count without waiting for a poll tick');
+  });
+  await t('THE REPO NO LONGER SHIPS A WORKING PASSWORD', () => {
       const src = require('fs').readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
       // It shipped with one, at the owner's request. The credential now lives in
       // the environment, so publishing a key in a public repo buys nothing.

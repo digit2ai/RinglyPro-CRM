@@ -30,6 +30,8 @@ const express = require('express');
 const { models } = require('../models');
 const billing = require('../services/billing');
 const provisioning = require('../services/provisioning');
+const pwa = require('../services/pwa');
+const notify = require('../services/admin-notify');
 
 const router = express.Router();
 
@@ -106,6 +108,33 @@ async function audit(actor, action, reason) {
     });
   } catch (e) { console.warn('[subs-admin] audit write failed:', e.message); }
 }
+
+// ---------------------------------------------------------------
+// PWA surface — the console is its own installed app.
+//
+// Its manifest CANNOT be the subscriber one: that is scope "/" with start_url
+// "/app", so installing from here would put the subscriber dashboard on the
+// home screen under the wrong name.
+//
+// jobupBase strips this router's own mount off req.baseUrl, because the icons
+// live at the vertical root while the manifest and worker live under the
+// console path (which is what scopes the badge to this app).
+// ---------------------------------------------------------------
+function jobupBase(req) {
+  return String(req.baseUrl || '').replace(/\/subscribers-admin$/, '');
+}
+
+router.get('/manifest.webmanifest', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/manifest+json').json(pwa.adminManifest(jobupBase(req)));
+});
+
+router.get('/sw.js', (req, res) => {
+  // A stale worker is how an installed app gets stuck without a badge.
+  res.set('Cache-Control', 'no-cache');
+  res.set('Service-Worker-Allowed', `${jobupBase(req)}/subscribers-admin/`);
+  res.type('application/javascript').send(pwa.adminServiceWorker(jobupBase(req)));
+});
 
 // ---------------------------------------------------------------
 // Sign in / out
@@ -315,10 +344,60 @@ router.get('/api/export.csv', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ---------------------------------------------------------------
+// The badge: how many subscribers arrived since THIS admin last looked.
+// ---------------------------------------------------------------
+router.get('/api/new-count', requireAdmin, async (req, res) => {
+  try { res.json(await notify.newCountFor(req.admin.email)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/** Called when the list is actually read. Clears the badge for this admin only. */
+router.post('/api/seen', requireAdmin, async (req, res) => {
+  try { res.json(await notify.markSeen(req.admin.email)); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/api/push/key', requireAdmin, async (req, res) => {
+  try {
+    const key = await notify.publicKey();
+    // The public half is what the browser subscribes with; the private half is
+    // never exposed by any endpoint.
+    res.json({ key, available: Boolean(key) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/api/push/subscribe', requireAdmin, async (req, res) => {
+  try {
+    const r = await notify.saveSubscription(req.admin.email, (req.body || {}).subscription,
+      req.headers['user-agent']);
+    if (!r.ok) return res.status(400).json(r);
+    await audit(req.admin.email, 'admin.push.subscribed', 'console installed on a device');
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/api/push/unsubscribe', requireAdmin, async (req, res) => {
+  try {
+    await notify.removeSubscription(String((req.body || {}).endpoint || ''));
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/** Push the current count to every installed console — verifies the whole chain. */
+router.post('/api/push/test', requireAdmin, async (req, res) => {
+  try {
+    const r = await notify.pushBadge('test from the console');
+    await audit(req.admin.email, 'admin.push.test', JSON.stringify(r));
+    res.json(r);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/api/health', (req, res) => {
   res.json({
     ok: true, module: 'subscribers-admin',
     admin_email: adminEmail(),
+    pwa: 'installable — own manifest, scope /subscribers-admin/',
     configured: configured(),
     // True when the configured password is one this repo publishes. Reported
     // rather than blocked: refusing to start would lock the owner out of their

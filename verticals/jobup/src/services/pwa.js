@@ -144,6 +144,60 @@ function serviceWorker(base) {
 }
 
 /**
+ * THE ADMIN CONSOLE IS ITS OWN INSTALLED APP.
+ *
+ * It cannot share the subscriber manifest. That one is `scope:"/"` with
+ * `start_url:"/app"`, so installing from /subscribers-admin would put the
+ * SUBSCRIBER dashboard on the home screen — the wrong app under the right name.
+ * A distinct `id` also keeps the two installs separate rather than one
+ * replacing the other.
+ *
+ * The scope is the console path, which is what makes the badge meaningful: the
+ * worker registered at /subscribers-admin/sw.js controls only this console.
+ */
+function adminManifest(base) {
+  const b = base || '';
+  const root = `${b}/subscribers-admin`;
+  return {
+    id: `${root}/`,
+    name: 'JobUp Subscribers',
+    short_name: 'Subscribers',
+    description: 'Who is subscribed to JobUp, what they paid, and when.',
+    // The trailing slash is load-bearing. Scope matches by path prefix, so with
+    // scope "/subscribers-admin/" a start_url of "/subscribers-admin?src=pwa"
+    // resolves to the path "/subscribers-admin" — OUTSIDE its own scope, and the
+    // install opens in a browser tab instead of the app. Same trap that broke
+    // the subscriber manifest on jobup.dev.
+    start_url: `${root}/?src=pwa`,
+    scope: `${root}/`,
+    display: 'standalone',
+    display_override: ['standalone', 'minimal-ui'],
+    orientation: 'any',
+    background_color: '#07080c',
+    theme_color: '#07080c',
+    categories: ['business', 'productivity'],
+    lang: 'en',
+    dir: 'ltr',
+    icons: [
+      { src: `${b}/admin-icon.svg${V}`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: `${b}/admin-icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${b}/admin-icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/admin-icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${b}/admin-icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  };
+}
+
+/** The console's own worker: caches its shell, and turns a push into a badge. */
+function adminServiceWorker(base) {
+  const b = base || '';
+  return fs.readFileSync(path.join(publicDir, 'sw-admin.js'), 'utf8')
+    .replace(/__BASE__/g, b)
+    .replace(/__V__/g, V)
+    .replace(/__CACHE__/g, `jobup-admin-${SHELL_VERSION}-i${ICON_VERSION}${b ? b.replace(/\//g, '-') : '-root'}`);
+}
+
+/**
  * Serve the manifest + worker + PWA icons for a root. Returns true when the
  * request was one of them and has been answered.
  *
@@ -171,7 +225,9 @@ function serveAsset(req, res, base, opts) {
   // subscriber subdomain only serves what is named here, so leaving it out
   // would promise an icon that 404s.
   if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png',
-       '/favicon.svg', '/logo-master.svg'].includes(p)) {
+       '/favicon.svg', '/logo-master.svg',
+       '/admin-icon.svg', '/admin-icon-192.png', '/admin-icon-512.png',
+       '/admin-apple-touch-icon.png'].includes(p)) {
     // Only a VERSIONED url may be cached hard: it can never go stale, because
     // changing the icon changes the url. A bare url gets a short life so a
     // client holding one from before this change recovers on its own instead of
@@ -196,4 +252,5 @@ function serveAsset(req, res, base, opts) {
 
 module.exports = {
   basePath, page, manifest, serviceWorker, serveAsset, publicDir, SHELL_VERSION,
+  adminManifest, adminServiceWorker, ICON_VERSION, V,
 };

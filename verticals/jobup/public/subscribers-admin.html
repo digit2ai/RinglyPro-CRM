@@ -2,7 +2,12 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
-<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Subscribers">
+<link rel="manifest" href="{{BASE}}/subscribers-admin/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{BASE}}/admin-apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
 <title>JobUp — Subscribers</title><style>
@@ -97,6 +102,32 @@ border-top:1px solid var(--line);padding-top:18px}
   td.rowhead{padding-bottom:9px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 }
 @media(max-width:420px){.grid{grid-template-columns:1fr}}
+.newpill{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
+padding:0 7px;border-radius:999px;background:var(--brand);color:#fff;font-size:12px;font-weight:800;
+vertical-align:middle;margin-left:7px}
+.instbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card2);
+border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margin:16px 0}
+.instbar .itxt{flex:1 1 220px;font-size:13.5px;line-height:1.45}
+.instbar .itxt span{color:var(--mut)}
+/* Standalone: the OS already draws a title bar, so reclaim the space and keep
+   the sticky nav clear of the status bar. */
+@media(display-mode:standalone){
+  .nav{padding-top:env(safe-area-inset-top)}
+  #instbar{display:none!important}
+}
+@media(max-width:760px){
+  h1{font-size:20px}
+  .nav .wrap{gap:10px}
+  .ttl{font-size:16px}
+  .sub{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+  .toolbar{gap:8px}
+  .btn{min-height:44px}          /* real touch targets */
+  .btn.sm{min-height:38px}
+  .stat{padding:14px}
+  .stat .v{font-size:22px}
+  /* The nav actions wrap rather than squeezing the identity off-screen. */
+  .nav .wrap>.row{flex-wrap:wrap;justify-content:flex-end}
+}
 </style></head><body>
 
 <div class="nav"><div class="wrap">
@@ -109,7 +140,7 @@ border-top:1px solid var(--line);padding-top:18px}
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
       <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
-    <div><div class="ttl">Subscribers</div><div class="sub" id="who-sub">JobUp admin</div></div>
+    <div><div class="ttl">Subscribers <span class="newpill hidden" id="newpill">0</span></div><div class="sub" id="who-sub">JobUp admin</div></div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <a class="btn hidden" id="csv" href="{{BASE}}/subscribers-admin/api/export.csv">Export CSV</a>
@@ -139,6 +170,17 @@ border-top:1px solid var(--line);padding-top:18px}
 
 <!-- console -->
 <div id="app" class="wrap hidden">
+  <div class="instbar hidden" id="instbar">
+    <div class="itxt"><strong>Install this console</strong><br>
+      <span>Home-screen icon with a live count of new subscribers.</span></div>
+    <button class="btn primary sm" id="inst-go">Install</button>
+    <button class="btn sm" id="inst-no">Not now</button>
+  </div>
+  <div class="banner hidden" id="notifbar">
+    <strong>Turn on the badge.</strong> Allow notifications and the icon shows how many
+    subscribers arrived while the console was closed.
+    <div style="margin-top:10px"><button class="btn sm" id="notif-go">Enable badge</button></div>
+  </div>
   <div class="banner hidden" id="pwbanner">
     <strong>This console&rsquo;s password is one published in the source.</strong>
     Setting the environment variable to the same well-known string moves it from the
@@ -289,9 +331,122 @@ function boot(){
         stat('Free test',t.free_test);
       $('note').textContent=x.j.note||'';
       render();
+      // The rows are on screen — that is what "seen" means.
+      markSeen();
     }).catch(function(){ err('aerr','Could not reach the server.'); });
   }).catch(function(){ $('login').classList.remove('hidden'); });
 }
+
+/* ---------------- PWA + BADGE ----------------
+   Three ways the count reaches you, because each covers what the others cannot:
+     1. In-page pill      — always, whenever the console is open.
+     2. navigator.setAppBadge — the number on the installed icon.
+     3. Web Push          — the only mechanism that updates a CLOSED app.
+   Badging without push goes stale the moment you close the app; push without
+   badging is a notification you have to read. Both, or neither is much use. */
+var SWREG = null, DEFERRED_INSTALL = null;
+
+function paintCount(n) {
+  var pill = $('newpill');
+  if (n > 0) { pill.textContent = n > 99 ? '99+' : n; pill.classList.remove('hidden'); }
+  else pill.classList.add('hidden');
+  if (navigator.setAppBadge) {
+    if (n > 0) navigator.setAppBadge(n).catch(function(){});
+    else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(function(){});
+  }
+  if (SWREG && SWREG.active) SWREG.active.postMessage({ type:'set_badge', count:n });
+}
+
+function refreshCount() {
+  return api('/new-count').then(function(r){
+    if (r.ok) paintCount(r.j.count || 0);
+    return r.ok ? r.j : null;
+  }).catch(function(){ return null; });
+}
+
+/* Reading the list IS seeing them. The badge clears when the rows are on
+   screen, not on a separate "mark as read" the operator has to remember. */
+function markSeen() {
+  return api('/seen', { method:'POST' }).then(function(){ paintCount(0); }).catch(function(){});
+}
+
+function urlB64ToUint8(b64) {
+  var pad = '='.repeat((4 - b64.length % 4) % 4);
+  var raw = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
+  var out = new Uint8Array(raw.length);
+  for (var i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+function enablePush() {
+  if (!SWREG || !('PushManager' in window)) return Promise.resolve(false);
+  return Notification.requestPermission().then(function(perm){
+    if (perm !== 'granted') return false;
+    return api('/push/key').then(function(r){
+      if (!r.ok || !r.j.key) return false;
+      return SWREG.pushManager.getSubscription().then(function(existing){
+        return existing || SWREG.pushManager.subscribe({
+          userVisibleOnly: true, applicationServerKey: urlB64ToUint8(r.j.key) });
+      }).then(function(sub){
+        return jpost('/push/subscribe', { subscription: sub.toJSON() }).then(function(){
+          $('notifbar').classList.add('hidden'); return true; });
+      });
+    });
+  }).catch(function(){ return false; });
+}
+
+function initPWA() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register(API.replace(/\/api$/,'') + '/sw.js')
+    .then(function(reg){
+      SWREG = reg;
+      /* The worker relays a push to any open window so the pill updates
+         without a refresh. */
+      navigator.serviceWorker.addEventListener('message', function(e){
+        if (e.data && e.data.type === 'new_subscriber') paintCount(e.data.count || 0);
+      });
+      if ('Notification' in window && Notification.permission === 'default') {
+        $('notifbar').classList.remove('hidden');
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        enablePush();
+      }
+    }).catch(function(){});
+}
+
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); DEFERRED_INSTALL = e;
+  if (!localStorage.getItem('jobup_admin_install_dismissed')) $('instbar').classList.remove('hidden');
+});
+$('inst-go').addEventListener('click', function(){
+  $('instbar').classList.add('hidden');
+  if (DEFERRED_INSTALL) { DEFERRED_INSTALL.prompt(); DEFERRED_INSTALL = null; }
+});
+$('inst-no').addEventListener('click', function(){
+  $('instbar').classList.add('hidden');
+  localStorage.setItem('jobup_admin_install_dismissed','1');
+});
+$('notif-go').addEventListener('click', function(){ enablePush(); });
+window.addEventListener('appinstalled', function(){ $('instbar').classList.add('hidden'); });
+
+/* iOS has no beforeinstallprompt: tell Safari users how, once. */
+(function(){
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !standalone && !localStorage.getItem('jobup_admin_install_dismissed')) {
+    $('instbar').querySelector('.itxt').innerHTML =
+      '<strong>Install this console</strong><br><span>Tap Share, then Add to Home Screen. '
+      + 'On iPhone the badge only works once installed.</span>';
+    $('inst-go').style.display = 'none';
+    $('instbar').classList.remove('hidden');
+  }
+})();
+
+/* Poll while open, and re-check the moment the app comes back to the front —
+   a phone that was asleep gets the current number without waiting for a tick. */
+setInterval(function(){ if (!document.hidden) refreshCount(); }, 60000);
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) refreshCount(); });
+
+initPWA();
 boot();
 </script>
 </body></html>
