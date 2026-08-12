@@ -227,9 +227,9 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
     if (!r.ok) {
       const t = await r.text().catch(() => '');
       console.error('Maya Anthropic error', r.status, t.slice(0, 300));
-      let etype = '';
-      try { const ej = JSON.parse(t); etype = (ej && ej.error && (ej.error.type || ej.error.message)) || ''; } catch (e) {}
-      return res.status(502).json({ error: 'maya_upstream', upstream_status: r.status, upstream_type: String(etype).slice(0, 120), reply: 'Tuve un problema para responder en este momento. Intenta de nuevo en unos segundos.' });
+      let emsg = '';
+      try { const ej = JSON.parse(t); emsg = (ej && ej.error && (ej.error.message || ej.error.type)) || ''; } catch (e) { emsg = t.slice(0, 200); }
+      return res.status(502).json({ error: 'maya_upstream', upstream_status: r.status, upstream_msg: String(emsg).slice(0, 220), used_model: MAYA_MODEL, reply: 'Tuve un problema para responder en este momento. Intenta de nuevo en unos segundos.' });
     }
     const data = await r.json();
     const raw = (data && data.content && data.content[0] && data.content[0].text) || 'No pude generar una respuesta.';
