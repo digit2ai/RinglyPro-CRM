@@ -136,6 +136,21 @@ router.use('/social-admin', require('./routes/social-admin'));
 router.get(['/social-admin', '/social-admin/'], (req, res) =>
   res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req))));
 
+// ---- Referral magic link ---------------------------------------------------
+// /r/CODE is the whole share mechanism: it logs the click, drops the
+// attribution cookie, and sends the visitor to the landing page. It redirects
+// even for an unknown code — a broken link should still show someone JobUp
+// rather than an error, and an unknown code simply earns nobody anything.
+router.get('/r/:code', async (req, res) => {
+  const referrals = require('./services/referrals');
+  const base = pwa.basePath(req);
+  try {
+    const hit = await referrals.recordClick(req.params.code, req);
+    if (hit.ok) res.cookie(referrals.COOKIE, hit.code, referrals.cookieOptions());
+  } catch (e) { /* attribution must never block the visit */ }
+  res.redirect(302, `${base}/?ref=${encodeURIComponent(referrals.normalise(req.params.code))}`);
+});
+
 // ---- PWA ------------------------------------------------------------------
 // The manifest and the worker are GENERATED for the root this request arrived
 // on — see services/pwa.js. They sit above express.static deliberately, so the

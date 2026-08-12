@@ -550,6 +550,21 @@ router.get('/schedule', async (req, res) => {
 // see AND what the Hunter scores against, so it is bounded and shaped on the
 // way in rather than trusted.
 // ---------------------------------------------------------------
+/**
+ * The subscriber's own referral link and results.
+ *
+ * Deliberately returns NO referee names or emails. A referrer is owed a
+ * commission, not a list of who their friends are — the invitee's identity is
+ * not the referrer's to see.
+ */
+router.get('/referral', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  try {
+    const referrals = require('../services/referrals');
+    res.json(await referrals.statsFor(tid));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/profile', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const row = await scoped('profiles', tid).findOne({});

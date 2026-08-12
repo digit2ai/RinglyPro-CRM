@@ -332,6 +332,15 @@ router.post('/build-account', async (req, res) => {
     // Badge the admin console. Fire-and-forget by design: a push that fails
     // must never break the signup that triggered it.
     try { require('../services/admin-notify').onNewSubscriber(sub); } catch (e) { /* non-fatal */ }
+
+    // Referral attribution. Cookie first (set by /r/CODE), then an explicit
+    // ?ref= in the body. Creates a PENDING row only — a commission can be born
+    // solely from a paid invoice, never from a signup.
+    try {
+      const referrals = require('../services/referrals');
+      const code = (req.cookies && req.cookies[referrals.COOKIE]) || b.ref || b.referral_code || '';
+      if (code) await referrals.attachOnSignup(sub, code);
+    } catch (e) { console.warn('[intake] referral attach failed:', e.message); }
     const tenantId = sub.id;
 
     // What the Hunter searches on. Written BEFORE provisioning so the first

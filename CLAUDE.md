@@ -606,7 +606,19 @@ Its own app, not the subscriber one: `pwa.adminManifest()` gives it a distinct `
 
 The badge clears by **reading the list**, not a separate button: `markSeen()` fires once the rows render. Tables collapse to cards under 820px, 44px targets, 16px inputs.
 
-**SIT:** `node verticals/jobup/sit.js` → **356/356**, zero external keys.
+### Referrals and profit sharing (`/r/CODE`)
+
+Every subscriber gets a shareable code (`services/referrals.js`). `/r/CODE` logs the click, drops a 60-day `jobup_ref` cookie and redirects to the landing page — an unknown code still redirects, it just earns nobody anything. Signup reads the cookie (or `?ref=`) and creates a **pending** row. Tables `ju_referrals` / `ju_referral_clicks`, both `tenant_id`-scoped on the REFERRER.
+
+**A COMMISSION IS BORN FROM A PAID INVOICE AND FROM NOTHING ELSE.** `qualifyFromInvoice()` is the only function that can set one, it is called from the `invoice.paid` branch of `billing.applyEvent`, and it reads `invoices.amount_cents` — so the figure traces to money that arrived rather than to a signup or the list price. Paying on signup is how a referral programme becomes a fraud surface: `free_test`/`no_billing` referees are voided, self-referral is refused by both id and email, an already-attributed signup cannot be stolen by a second code, and a qualified referral cannot re-qualify.
+
+**IT DOES NOT SEND MONEY.** There are no payout rails in this repo. The ledger computes what is owed; "mark paid" records that the owner settled it elsewhere, with who and when. SIT greps the service to prove nothing in it looks like a transfer — a button labelled "pay" that does not pay is worse than no button.
+
+**A referrer sees their earnings, not who their referees are.** `statsFor()` returns counts, dates and amounts with no referee name or email; the invitee's identity is not the referrer's to see. Clicks store a salted `ip_hash`, never a raw IP. Attribution is last-touch and *claimed*, not proven — both the raw code and the resolved referrer are stored so a dispute is checkable.
+
+**Env:** `JOBUP_REFERRAL_PCT` (0.20) · `JOBUP_REFERRAL_COOKIE_DAYS` (60).
+
+**SIT:** `node verticals/jobup/sit.js` → **379/379**, zero external keys.
 
 **Environment Variables:**
 - `JOBUP_JWT_SECRET` — signs the subscriber session cookie and the admin console token. SET on prod (falls back to a `dev-only-insecure-secret`).

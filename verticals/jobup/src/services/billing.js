@@ -280,12 +280,21 @@ async function applyEvent(type, obj, opts = {}) {
       return { ok: true, action: 'torn_down', subscriberId, ...r };
     }
 
-    case 'invoice.paid':
-      await models.invoices.create({
+    case 'invoice.paid': {
+      const inv = await models.invoices.create({
         tenant_id: subscriberId, stripe_invoice_id: obj.id,
         amount_cents: obj.amount_paid, status: 'paid', dunning_stage: 0, paid_at: new Date(),
       });
-      return { ok: true, action: 'invoice_recorded', subscriberId };
+      // THE ONLY PLACE A REFERRAL COMMISSION IS EVER CREATED. It reads this
+      // invoice row, so the figure traces to money that actually arrived
+      // rather than to a signup or to the list price. Non-fatal on purpose: a
+      // referral bug must never make a real payment look unrecorded.
+      let referral = null;
+      try {
+        referral = await require('./referrals').qualifyFromInvoice(inv);
+      } catch (e) { console.warn('[billing] referral qualify failed:', e.message); }
+      return { ok: true, action: 'invoice_recorded', subscriberId, referral };
+    }
 
     case 'invoice.payment_failed': {
       const existing = await models.invoices.findOne({ where: { stripe_invoice_id: obj.id } });

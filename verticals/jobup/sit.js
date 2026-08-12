@@ -734,6 +734,190 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     graph.close();
   }
 
+  await t('A NEW COLUMN ON AN EXISTING TABLE MUST BE REGISTERED FOR ALTER', () => {
+    const { SCHEMA, ADDED_COLUMNS, TABLE_PREFIX } = require(__dirname + '/src/models');
+    // sync({alter:false}) never adds a column to a table that already exists, so
+    // a field added to SCHEMA alone is invisible to Postgres and every INSERT
+    // naming it fails outright. That is exactly what the referral columns did.
+    const registered = new Set(ADDED_COLUMNS.map(([t, c]) => `${t}.${c}`));
+    const LONG_LIVED = ['subscribers', 'profiles', 'settings', 'invoices', 'teasers'];
+    const BASELINE = {   // columns that existed when the table was first created
+      subscribers: ['id', 'email', 'name', 'phone', 'language', 'password_hash',
+        'email_verified_at', 'address', 'status', 'stripe_customer_id',
+        'stripe_subscription_id', 'current_period_end', 'created_at'],
+    };
+    for (const table of LONG_LIVED) {
+      const base = BASELINE[table];
+      if (!base) continue;
+      for (const col of Object.keys(SCHEMA[table])) {
+        if (base.includes(col)) continue;
+        assert.ok(registered.has(`${TABLE_PREFIX}${table}.${col}`),
+          `${table}.${col} is in SCHEMA but not in ADDED_COLUMNS — Postgres will not have it`);
+      }
+    }
+  });
+
+  section('referrals — profit sharing that only pays on real money');
+  {
+    const referrals = require(__dirname + '/src/services/referrals');
+    const mk = (over) => models.subscribers.create(Object.assign({
+      email: `sit-ref-${Date.now()}-${Math.round(Math.random() * 1e6)}@example.com`,
+      name: 'SIT Ref', status: 'active', activation: 'paid',
+    }, over));
+
+    let alice; let bob;
+    await t('every subscriber gets a shareable code, stable across calls', async () => {
+      alice = await mk({ name: 'SIT Alice' });
+      const c1 = await referrals.codeFor(alice.id);
+      const c2 = await referrals.codeFor(alice.id);
+      assert.ok(c1 && c1.length >= 6, 'a code must be generated');
+      assert.strictEqual(c1, c2, 'the code must not regenerate — a shared link has to keep working');
+      // No 0/O/1/I: a referral code gets read aloud and typed by hand.
+      assert.ok(!/[01OIL]/.test(c1), `ambiguous characters in ${c1}`);
+      assert.ok(referrals.shareUrl(c1).endsWith('/r/' + c1), 'the share url is the magic link');
+    });
+
+    await t('SELF-REFERRAL IS REFUSED', async () => {
+      const code = await referrals.codeFor(alice.id);
+      const r = await referrals.attachOnSignup(alice, code);
+      assert.strictEqual(r.ok, false, 'referring yourself must not create a referral');
+      assert.match(r.reason, /self-referral/i);
+      const rows = await models.referrals.findAll({ where: { referee_tenant_id: alice.id } });
+      assert.strictEqual(rows.length, 0, 'and it must leave no row behind');
+    });
+
+    await t('a signup creates a PENDING referral and NO commission', async () => {
+      bob = await mk({ name: 'SIT Bob' });
+      const code = await referrals.codeFor(alice.id);
+      const r = await referrals.attachOnSignup(bob, code);
+      assert.strictEqual(r.ok, true, JSON.stringify(r));
+      const row = await models.referrals.findOne({ where: { referee_tenant_id: bob.id } });
+      assert.strictEqual(row.status, 'pending');
+      assert.strictEqual(row.commission_cents || 0, 0,
+        'a signup on its own must never be worth money');
+      // Both the code and the resolved referrer are kept, so a dispute is checkable.
+      const fresh = await models.subscribers.findOne({ where: { id: bob.id } });
+      assert.strictEqual(fresh.referred_by_tenant, alice.id);
+      assert.strictEqual(fresh.referred_by_code, code);
+    });
+
+    await t('a second code cannot steal an already-attributed signup', async () => {
+      const carol = await mk({ name: 'SIT Carol' });
+      const carolCode = await referrals.codeFor(carol.id);
+      const r = await referrals.attachOnSignup(bob, carolCode);
+      assert.strictEqual(r.ok, false);
+      assert.match(r.reason, /already attributed/);
+      await models.subscribers.destroy({ where: { id: carol.id } });
+    });
+
+    await t('COMMISSION IS BORN FROM A PAID INVOICE, AND ONLY FROM ONE', async () => {
+      const before = await models.referrals.findOne({ where: { referee_tenant_id: bob.id } });
+      assert.strictEqual(before.status, 'pending');
+
+      // An UNPAID invoice must change nothing.
+      const unpaid = await models.invoices.create({
+        tenant_id: bob.id, amount_cents: 5900, status: 'past_due' });
+      const noGo = await referrals.qualifyFromInvoice(unpaid);
+      assert.strictEqual(noGo.ok, false, 'an unpaid invoice must not create a commission');
+
+      const paid = await models.invoices.create({
+        tenant_id: bob.id, amount_cents: 5900, status: 'paid', paid_at: new Date() });
+      const go = await referrals.qualifyFromInvoice(paid);
+      assert.strictEqual(go.ok, true, JSON.stringify(go));
+      // The figure traces to what was CHARGED, not to the list price.
+      assert.strictEqual(go.invoice_cents, 5900);
+      assert.strictEqual(go.commission_cents, Math.round(5900 * referrals.PCT));
+
+      const after = await models.referrals.findOne({ where: { referee_tenant_id: bob.id } });
+      assert.strictEqual(after.status, 'qualified');
+      assert.strictEqual(after.invoice_id, paid.id, 'the qualifying invoice must be recorded');
+    });
+
+    await t('the same invoice cannot pay a commission twice', async () => {
+      const row = await models.referrals.findOne({ where: { referee_tenant_id: bob.id } });
+      const inv = await models.invoices.findOne({ where: { id: row.invoice_id } });
+      const again = await referrals.qualifyFromInvoice(inv);
+      assert.strictEqual(again.ok, false, 'a qualified referral must not re-qualify');
+      assert.match(again.reason, /already qualified/);
+    });
+
+    await t('A FREE_TEST REFEREE EARNS NOBODY ANYTHING', async () => {
+      // The obvious fraud: sign up through your own link on a free activation.
+      const dave = await mk({ name: 'SIT Dave', activation: 'free_test' });
+      await referrals.attachOnSignup(dave, await referrals.codeFor(alice.id));
+      const inv = await models.invoices.create({
+        tenant_id: dave.id, amount_cents: 5900, status: 'paid', paid_at: new Date() });
+      const r = await referrals.qualifyFromInvoice(inv);
+      assert.strictEqual(r.ok, false, 'an account that never paid must not qualify');
+      const row = await models.referrals.findOne({ where: { referee_tenant_id: dave.id } });
+      assert.strictEqual(row.status, 'void');
+      assert.strictEqual(row.commission_cents || 0, 0);
+      await models.invoices.destroy({ where: { tenant_id: dave.id } });
+      await models.referrals.destroy({ where: { referee_tenant_id: dave.id } });
+      await models.subscribers.destroy({ where: { id: dave.id } });
+    });
+
+    await t('a referrer sees their earnings but NOT who their referees are', async () => {
+      const stats = await referrals.statsFor(alice.id);
+      assert.ok(stats.code && stats.share_url, 'they need their link');
+      assert.strictEqual(stats.qualified, 1);
+      assert.strictEqual(stats.owed_usd, Number(((5900 * referrals.PCT) / 100).toFixed(2)));
+      // The invitee's identity is not the referrer's to see.
+      const blob = JSON.stringify(stats);
+      assert.ok(!blob.includes(bob.email), 'a referee email must not leak to the referrer');
+      assert.ok(!blob.includes('SIT Bob'), 'nor their name');
+    });
+
+    await t('"mark paid" RECORDS a settlement, it does not send money', async () => {
+      const fs = require('fs');
+      const src = fs.readFileSync(__dirname + '/src/services/referrals.js', 'utf8');
+      // There are no payout rails in this repo. A function that looked like it
+      // paid would be the worst possible lie in a money feature.
+      assert.ok(!/stripe|paypal|transfer|payout_method/i.test(src.replace(/\*[\s\S]*?\*\//g, '')),
+        'nothing here may look like it moves money');
+      const row = await models.referrals.findOne({ where: { referee_tenant_id: bob.id } });
+      const r = await referrals.markPaidOut(row.id, 'sit@example.com', 'paid by bank transfer');
+      assert.strictEqual(r.ok, true);
+      const after = await models.referrals.findOne({ where: { id: row.id } });
+      assert.strictEqual(after.status, 'paid_out');
+      assert.ok(after.paid_out_at, 'and when');
+      assert.match(after.note, /sit@example\.com/, 'and who recorded it');
+    });
+
+    await t('the owner ledger totals only what is genuinely owed', async () => {
+      const led = await referrals.ledger();
+      assert.ok(led.totals.total >= 1);
+      // Paid-out and void rows must not still read as owed.
+      const owed = led.referrals.filter((r) => r.status === 'qualified')
+        .reduce((a, r) => a + r.commission_usd, 0);
+      assert.strictEqual(led.totals.owed_usd, Number(owed.toFixed(2)));
+      assert.match(led.note, /does not send money/i, 'the ledger must say what it is not');
+    });
+
+    await t('an unknown code earns nobody anything, and never 500s', async () => {
+      const r = await referrals.attachOnSignup(bob, 'ZZZZZZZZ');
+      assert.strictEqual(r.ok, false);
+      const click = await referrals.recordClick('ZZZZZZZZ', { headers: {}, ip: '1.2.3.4' });
+      assert.strictEqual(click.ok, false, 'an unknown code logs no click');
+    });
+
+    await t('a click is logged without ever storing a raw IP', async () => {
+      const code = await referrals.codeFor(alice.id);
+      await referrals.recordClick(code, { headers: { 'user-agent': 'SIT' }, ip: '203.0.113.9' });
+      const clicks = await models.referral_clicks.findAll({ where: { tenant_id: alice.id } });
+      assert.ok(clicks.length >= 1);
+      const blob = JSON.stringify(clicks);
+      assert.ok(!blob.includes('203.0.113.9'), 'a raw IP must never be stored');
+      assert.ok(clicks[0].ip_hash && clicks[0].ip_hash.length >= 16, 'only a salted hash');
+    });
+
+    // clean up
+    await models.referral_clicks.destroy({ where: { tenant_id: alice.id } });
+    await models.referrals.destroy({ where: { tenant_id: alice.id } });
+    await models.invoices.destroy({ where: { tenant_id: bob.id } });
+    for (const x of [alice, bob]) await models.subscribers.destroy({ where: { id: x.id } });
+  }
+
   section('subscribers admin — who paid, how much, when');
   {
     const express = require('express');

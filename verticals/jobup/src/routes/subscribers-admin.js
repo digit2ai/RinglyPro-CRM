@@ -452,6 +452,34 @@ router.post('/api/plan/reset', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ---------------------------------------------------------------
+// Referral ledger — what is owed, and to whom.
+// ---------------------------------------------------------------
+router.get('/api/referrals', requireAdmin, async (req, res) => {
+  try {
+    const referrals = require('../services/referrals');
+    const out = await referrals.ledger();
+    await audit(req.admin.email, 'referrals.ledger.viewed', `${out.totals.total} rows`);
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/**
+ * Record that a commission was settled. It does NOT send money — there are no
+ * payout rails here, and a button that says "pay" without paying is worse than
+ * no button.
+ */
+router.post('/api/referrals/:id/paid', requireAdmin, async (req, res) => {
+  try {
+    const referrals = require('../services/referrals');
+    const r = await referrals.markPaidOut(parseInt(req.params.id, 10), req.admin.email,
+      String((req.body || {}).note || '').slice(0, 400));
+    if (!r.ok) return res.status(400).json(r);
+    await audit(req.admin.email, 'referrals.marked_paid', `referral ${req.params.id}`);
+    res.json(r);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/api/health', (req, res) => {
   res.json({
     ok: true, module: 'subscribers-admin',

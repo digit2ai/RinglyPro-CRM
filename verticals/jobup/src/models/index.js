@@ -37,6 +37,7 @@ const TENANT_SCOPED = new Set([
   // leaving a live credential behind owned by nobody.
   'social_accounts', 'social_copy', 'social_campaigns', 'social_posts',
   'admin_state', 'admin_push_subs',
+  'referrals', 'referral_clicks',
 ]);
 
 const SCHEMA = {
@@ -56,6 +57,13 @@ const SCHEMA = {
     stripe_customer_id: { type: DataTypes.STRING },
     stripe_subscription_id: { type: DataTypes.STRING },
     current_period_end: { type: DataTypes.DATE },
+    // The subscriber's own shareable code. Generated on first use, never reused.
+    referral_code: { type: DataTypes.STRING, unique: true },
+    // Where this subscriber came from. Kept as BOTH the raw code and the
+    // resolved tenant: the code is what they actually clicked and survives even
+    // if the referrer is later deleted, which is what makes a dispute checkable.
+    referred_by_code: { type: DataTypes.STRING },
+    referred_by_tenant: { type: DataTypes.INTEGER },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   // tenant_id === subscribers.id
@@ -280,6 +288,38 @@ const SCHEMA = {
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
 
+  // ---- Referral programme --------------------------------------------------
+  // One row per referred signup. tenant_id is the REFERRER, so a referrer can
+  // read their own rows through the same scoped accessor as everything else.
+  referrals: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },   // the referrer
+    referee_tenant_id: { type: DataTypes.INTEGER },
+    code: { type: DataTypes.STRING },
+    // pending  -> signed up, has not paid
+    // qualified-> a REAL paid invoice exists; commission is owed
+    // void     -> disqualified (self-referral, refund, duplicate)
+    // paid_out -> the owner recorded a payment to the referrer
+    status: { type: DataTypes.STRING, defaultValue: 'pending' },
+    invoice_id: { type: DataTypes.INTEGER },          // the invoice that qualified it
+    invoice_cents: { type: DataTypes.INTEGER },       // what the referee actually paid
+    commission_cents: { type: DataTypes.INTEGER, defaultValue: 0 },
+    commission_pct: { type: DataTypes.FLOAT },
+    note: { type: DataTypes.TEXT },
+    qualified_at: { type: DataTypes.DATE },
+    paid_out_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // Clicks on a share link. Never stores a raw IP.
+  referral_clicks: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },   // the referrer
+    code: { type: DataTypes.STRING },
+    ip_hash: { type: DataTypes.STRING },
+    user_agent: { type: DataTypes.STRING },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+
   // ---- Admin console state (watermarks, VAPID keys, push subscriptions) ---
   // Keyed by the admin's own identity so two operators do not clear each
   // other's badge. tenant_id is the platform tenant, like the social tables.
@@ -457,6 +497,12 @@ async function init() {
 
 // Columns added after a table first shipped. Safe to re-run forever.
 const ADDED_COLUMNS = [
+  // Referral programme. sync({alter:false}) never adds a column to an existing
+  // table, so a new field is invisible to Postgres until it is listed here —
+  // and every INSERT naming it fails outright, which is what happened.
+  ['ju_subscribers',   'referral_code',      'VARCHAR(32)'],
+  ['ju_subscribers',   'referred_by_code',   'VARCHAR(32)'],
+  ['ju_subscribers',   'referred_by_tenant', 'INTEGER'],
   ['ju_subscribers',   'activation',   "VARCHAR(32) DEFAULT 'paid'"],
   ['ju_subscribers',   'activated_at', 'TIMESTAMPTZ'],
   ['ju_opportunities', 'from_name',    'VARCHAR(255)'],
