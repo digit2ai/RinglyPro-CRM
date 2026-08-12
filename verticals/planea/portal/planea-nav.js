@@ -121,6 +121,12 @@
 
     // Onboarding lock state (mutable — flipped when the survey completes)
     var locked = ourCookie() && !onboardedFlag();
+    // "Mi Puntaje" (diagnostico) es la foto ÚNICA del onboarding. Una vez hecho el
+    // diagnóstico, se OCULTA del menú por defecto: la Salud Financiera toma el relevo
+    // y el puntaje original queda como referencia de Maya. Configuración puede volver
+    // a mostrarlo (finance_meta.mi_puntaje_visible === true). Arranca visible para no
+    // parpadear durante el onboarding; se recalcula cuando llega el perfil.
+    var hideMiPuntaje = false;
     var lockStyle = document.createElement('style');
     lockStyle.textContent = '.dnav a.locked{opacity:.36;pointer-events:none} .dnav a.locked .lockic{margin-left:auto;width:15px;height:15px;flex-shrink:0;opacity:.85}';
     document.head.appendChild(lockStyle);
@@ -139,7 +145,10 @@
     var scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.id = 'pl-scrim';
     var d = document.createElement('aside'); d.className = 'drawer'; d.id = 'pl-drawer';
     function navHtml() {
-      return ITEMS.filter(function (it) { return !it.module || isActive(it.k); }).map(function (it) {
+      return ITEMS.filter(function (it) {
+        if (it.k === 'diagnostico' && hideMiPuntaje) return false; // oculto tras el onboarding
+        return !it.module || isActive(it.k);
+      }).map(function (it) {
         var on = (it.k === current) ? ' on' : '';
         var disabled = locked && it.k !== 'diagnostico';
         var href = disabled ? '#' : (it.action === 'maya' ? '#' : BASE + it.k);
@@ -213,13 +222,23 @@
         .then(function (data) {
           var done = !!(data && data.score_data && data.score_data.score != null);
           try { done ? localStorage.setItem('planea-onboarded', '1') : localStorage.removeItem('planea-onboarded'); } catch (e) {}
-          applyLock(ourCookie() && !done);
+          // Tras el onboarding, ocultar Mi Puntaje salvo que el usuario lo active en Configuración.
+          var fm = (data && data.finance_meta) || {};
+          hideMiPuntaje = done && fm.mi_puntaje_visible !== true;
+          try { localStorage.setItem('planea-mipuntaje-visible', fm.mi_puntaje_visible === true ? '1' : '0'); } catch (e) {}
+          applyLock(ourCookie() && !done); // renderNav() usa hideMiPuntaje ya actualizado
         }).catch(function () {});
     }
     // Unlock live the moment the survey is completed (fired by planea-diagnostico.js).
     window.addEventListener('planea:onboarded', function () {
       try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
+      hideMiPuntaje = true;                 // recién diagnosticado: la Salud Financiera toma el relevo
       applyLock(false);
+    });
+    // Toggle en vivo desde Configuración (mostrar/ocultar Mi Puntaje).
+    window.addEventListener('planea:mipuntaje', function (e) {
+      hideMiPuntaje = !(e && e.detail && e.detail.visible);
+      renderNav();
     });
     // Logout: clear the Supabase session + local tokens, back to login.
     document.getElementById('pl-logout').addEventListener('click', function () {

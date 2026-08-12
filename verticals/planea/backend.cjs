@@ -590,6 +590,7 @@ function build() {
         liabilities_data: Array.isArray(p.liabilities_data) ? p.liabilities_data : [],
         items: items,
         summary: itemsSummary(items),
+        finance_meta: p.finance_meta || {},   // incluye preferencias UI (p.ej. mi_puntaje_visible)
         salud: uni && uni.overall != null ? { overall: uni.overall, rango: uni.rango, net_worth: uni.net_worth, source: uni.score_source } : null,
       });
     } catch (e) { res.status(500).json({ error: e.message }); }

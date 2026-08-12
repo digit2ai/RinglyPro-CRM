@@ -94,6 +94,9 @@
             var prof = { nombre: firstName(d.full_name, d.email), email: d.email || '' };
             var sd = d.score_data || {};
             if (sd && sd.score != null) { prof.planea_score = sd.score; prof.rango = rangoDe(sd.score); prof.score_pilares_pct = sd.pillars || null; }
+            // Puntaje del diagnóstico inicial (foto única del onboarding). Se guarda
+            // como referencia de Maya aunque "Mi Puntaje" esté oculto del menú.
+            if (sd && sd.survey_score != null) prof.puntaje_inicial_onboarding = sd.survey_score;
             else prof.sin_diagnostico = true;
             // HU-2: qué pilares siguen en PROXY del survey (sin dato real) para que
             // Maya priorice sus preguntas guiadas y cierre esos vacíos primero.

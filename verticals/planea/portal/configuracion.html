@@ -39,13 +39,20 @@
 
   </div>
 
-  <div class="groupt" id="perfil">Perfil</div>
-  <div class="subt">Datos personales, seguridad y preferencias — próximamente.</div>
+  <div class="groupt" id="perfil">Mi Puntaje</div>
+  <div class="subt">El puntaje de tu diagnóstico inicial es una foto única. Una vez completado, la Salud Financiera toma el relevo y el puntaje queda como referencia de Maya.</div>
+
+  <div class="grid2">
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Mostrar Mi Puntaje en el menú</h3><span class="sw" role="switch" aria-checked="false" aria-label="Mostrar Mi Puntaje en el menú lateral" tabindex="0" data-pref="mi_puntaje"></span></div><p>Actívalo si quieres volver a ver tu puntaje del diagnóstico en la barra lateral. Por defecto se oculta cuando ya tienes tu Salud Financiera.</p></div>
+  </div>
+
+  <div class="groupt">Perfil</div>
+  <div class="subt">Datos personales, seguridad y más preferencias — próximamente.</div>
 
 </div></div>
-<script src="/planea/portal/planea-nav.js?v=38" defer></script>
-<script src="/planea/portal/planea-data.js?v=38" defer></script>
-<script src="/planea/portal/maya-chat.js?v=53" defer></script>
+<script src="/planea/portal/planea-nav.js?v=41" defer></script>
+<script src="/planea/portal/planea-data.js?v=41" defer></script>
+<script src="/planea/portal/maya-chat.js?v=54" defer></script>
 <script defer>
 (function () {
   'use strict';
@@ -86,6 +93,41 @@
     window.addEventListener('planea:modules', paint);
     paint();
     if (PM && PM.reload) PM.reload();
+
+    // ── Preferencia: Mostrar/Ocultar "Mi Puntaje" ──────────────────────────────
+    // Lee/escribe finance_meta.mi_puntaje_visible en nuestro backend y avisa al nav
+    // en vivo (evento planea:mipuntaje). El puntaje NO se borra: solo se muestra u
+    // oculta del menú; queda como referencia de Maya.
+    var pref = document.querySelector('.sw[data-pref="mi_puntaje"]');
+    if (pref) {
+      var savingPref = false;
+      function paintPref(visible) { pref.classList.toggle('on', !!visible); pref.setAttribute('aria-checked', visible ? 'true' : 'false'); }
+      // estado inicial optimista desde localStorage (lo deja el nav)
+      try { paintPref(localStorage.getItem('planea-mipuntaje-visible') === '1'); } catch (e) {}
+      // estado autoritativo desde el backend
+      fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { var fm = (d && d.finance_meta) || {}; paintPref(fm.mi_puntaje_visible === true); })
+        .catch(function () {});
+      function flipPref() {
+        if (savingPref) return;
+        var next = !pref.classList.contains('on');
+        paintPref(next); savingPref = true;
+        try { localStorage.setItem('planea-mipuntaje-visible', next ? '1' : '0'); } catch (e) {}
+        try { window.dispatchEvent(new CustomEvent('planea:mipuntaje', { detail: { visible: next } })); } catch (e) {}
+        // merge en finance_meta para no pisar otras claves
+        fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+          .then(function (r) { return r.ok ? r.json() : {}; })
+          .then(function (d) {
+            var fm = (d && d.finance_meta) || {}; fm.mi_puntaje_visible = next;
+            return fetch('/planea/api/v1/me/profile', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ finance_meta: fm }) });
+          })
+          .then(function () { savingPref = false; })
+          .catch(function () { savingPref = false; });
+      }
+      pref.addEventListener('click', flipPref);
+      pref.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipPref(); } });
+    }
   }
   // planea-nav.js (defer) exposes window.PlaneaModules; wait for it if needed.
   function wait(n) {
