@@ -685,7 +685,7 @@ router.get('/settings/meta', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   res.json({ industries: settingsSvc.INDUSTRY_TAXONOMY, employment_types: settingsSvc.EMPLOYMENT_TYPES,
     work_auth_statuses: settingsSvc.WORK_AUTH_STATUSES, countries: geo.countryList(),
-    location_rules: geo.DEFAULT_RULES, stages: STAGES });
+    us_states: geo.stateList(), location_rules: geo.DEFAULT_RULES, stages: STAGES });
 });
 // Explain the country policy against a sample location string (makes the messy cases testable).
 router.post('/settings/test-location', async (req, res) => {

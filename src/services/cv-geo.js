@@ -71,6 +71,29 @@ const COUNTRIES = {
   UA: { name:'Ukraine', patterns:['ukraine'], cities:['kyiv','kiev','lviv'] }
 };
 
+// City -> US state, for the very common posting that names a city and no state ("Miami",
+// "New York"). Only unambiguous-enough-for-a-job-board cities; a city missing here degrades to
+// "state not stated", which is FLAGGED, never silently included.
+const CITY_STATE = {
+  'new york':'NY','brooklyn':'NY','manhattan':'NY','san francisco':'CA','los angeles':'CA','san diego':'CA',
+  'san jose':'CA','sunnyvale':'CA','palo alto':'CA','irvine':'CA','sacramento':'CA','chicago':'IL','boston':'MA',
+  'cambridge, ma':'MA','austin':'TX','dallas':'TX','houston':'TX','plano':'TX','san antonio':'TX','fort worth':'TX',
+  'seattle':'WA','bellevue':'WA','redmond':'WA','atlanta':'GA','denver':'CO','boulder':'CO',
+  'miami':'FL','tampa':'FL','orlando':'FL','jacksonville':'FL','fort lauderdale':'FL','ft. lauderdale':'FL',
+  'st. petersburg':'FL','saint petersburg':'FL','boca raton':'FL','wesley chapel':'FL','clearwater':'FL',
+  'sarasota':'FL','naples':'FL','west palm beach':'FL','palm beach':'FL','doral':'FL','coral gables':'FL',
+  'brickell':'FL','hialeah':'FL','kissimmee':'FL','lakeland':'FL','gainesville, fl':'FL','tallahassee':'FL',
+  'charlotte':'NC','raleigh':'NC','durham':'NC','phoenix':'AZ','tempe':'AZ','scottsdale':'AZ',
+  'philadelphia':'PA','pittsburgh':'PA','jersey city':'NJ','newark':'NJ','princeton':'NJ','wilmington':'DE',
+  'salt lake city':'UT','washington dc':'DC','washington, d.c':'DC','minneapolis':'MN','detroit':'MI',
+  'columbus':'OH','cleveland':'OH','cincinnati':'OH','nashville':'TN','memphis':'TN','st. louis':'MO',
+  'kansas city':'MO','las vegas':'NV','reno':'NV','portland':'OR','richmond':'VA','arlington, va':'VA',
+  'mclean':'VA','reston':'VA','baltimore':'MD','bethesda':'MD','new orleans':'LA','indianapolis':'IN',
+  'milwaukee':'WI','madison, wi':'WI','omaha':'NE','oklahoma city':'OK','louisville':'KY','birmingham, al':'AL',
+  'charleston, sc':'SC','columbia, sc':'SC','hartford':'CT','stamford':'CT','providence':'RI','albany':'NY',
+  'buffalo':'NY','rochester, ny':'NY'
+};
+
 // Named remote regions and the countries they cover.
 const REGIONS = {
   'north america': ['US','CA','MX'],
@@ -120,6 +143,46 @@ function countriesIn(seg) {
   return Array.from(found);
 }
 
+// US states named by a posting, as codes.
+//
+// Two-letter codes are matched against the RAW string, case-sensitively, and only where the
+// code stands as its own field ("Tampa, FL", "US-FL-Tampa", "Remote - FL"). Matching them on
+// the lowercased text would read "work IN office" as Indiana and "remote OR hybrid" as Oregon.
+// Full state names and the city lexicon are matched on the normalized text.
+function statesIn(raw) {
+  const found = new Set();
+  const s = String(raw || '');
+
+  const EDGE = /[,;|/\-–—()[\]]/;
+  const re = /(^|[^A-Za-z])([A-Z]{2})(?![A-Za-z])/g;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    const code = m[2];
+    if (!US_STATES[code]) continue;                          // "US"/"UK"/"HR" are not states
+    const prev = m[1];                                       // '' at start, else one non-letter
+    const next = s.charAt(m.index + m[0].length);            // '' at end of string
+    if (prev === '' || next === '' || EDGE.test(prev) || EDGE.test(next)) found.add(code);
+  }
+
+  let n = norm(s);
+  if (/\bwashington,?\s*d\.?\s?c\b|\bwashington dc\b|\bdistrict of columbia\b/.test(n)) {
+    found.add('DC');
+    n = n.replace(/\bwashington\b/g, ' ');
+  }
+  // Longest name first so "West Virginia" is consumed before "Virginia" can match it.
+  Object.entries(US_STATES)
+    .sort((a, b) => b[1].length - a[1].length)
+    .forEach(([code, name]) => {
+      const nm = name.toLowerCase();
+      if (new RegExp('(^|[^a-z])' + nm + '([^a-z]|$)').test(n)) { found.add(code); n = n.split(nm).join(' '); }
+    });
+
+  for (const [city, code] of Object.entries(CITY_STATE)) {
+    if (new RegExp('(^|[^a-z])' + city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z]|$)').test(n)) found.add(code);
+  }
+  return Array.from(found);
+}
+
 function regionIn(seg) {
   for (const key of Object.keys(REGIONS)) {
     if (new RegExp('(^|[^a-z])' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z]|$)').test(seg)) return key;
@@ -129,7 +192,7 @@ function regionIn(seg) {
 
 /**
  * Classify a raw ATS location string.
- * Returns { raw, remote, countries[], region, region_countries[], scope, multi, unknown }
+ * Returns { raw, remote, countries[], states[], region, region_countries[], scope, multi, unknown }
  *   scope: 'country'  the posting names one or more countries
  *          'region'   remote scoped to a named region ("Remote - North America")
  *          'global'   remote with no geographic limit ("Remote - Anywhere")
@@ -139,13 +202,15 @@ function classify(text, opts = {}) {
   const raw = String(text || '').trim();
   const n = norm(raw);
   const remoteFlag = !!opts.remote || /\bremote\b|\bwork from home\b|\bwfh\b|\bdistributed\b/.test(n);
-  if (!n) return { raw, remote: remoteFlag, countries: [], region: null, region_countries: [], scope: 'none', multi: false, unknown: true };
+  if (!n) return { raw, remote: remoteFlag, countries: [], states: [], region: null, region_countries: [], scope: 'none', multi: false, unknown: true };
 
   const segs = segments(n);
   const countrySet = new Set();
   let region = null;
   segs.forEach((s) => { countriesIn(s).forEach((c) => countrySet.add(c)); if (!region) region = regionIn(s); });
 
+  const states = statesIn(raw);
+  if (states.length) countrySet.add('US');            // a named US state IS a US location
   const countries = Array.from(countrySet);
   const multi = segs.length > 1 || countries.length > 1 || /\bmultiple locations\b|\bvarious\b/.test(n);
 
@@ -155,7 +220,7 @@ function classify(text, opts = {}) {
   else if (remoteFlag) scope = 'global';           // bare "Remote" with no qualifier
 
   const region_countries = region && REGIONS[region] ? REGIONS[region] : [];
-  return { raw, remote: remoteFlag, countries, region, region_countries, scope, multi,
+  return { raw, remote: remoteFlag, countries, states, region, region_countries, scope, multi,
            unknown: scope === 'none' };
 }
 
@@ -165,7 +230,11 @@ const DEFAULT_RULES = {
   remote_region: 'allow',        // allow | flag | exclude   (allowed only if a target country is IN the region)
   multi_location: 'allow',       // allow | flag | exclude   (allowed if ANY named place matches)
   unknown_location: 'flag',      // allow | flag | exclude   (no parseable location at all)
-  hybrid_in_country: 'allow'     // an on-site/hybrid role inside a target country
+  hybrid_in_country: 'allow',    // an on-site/hybrid role inside a target country
+  // State/province narrowing — only consulted when a country entry carries a `states` list.
+  out_of_state: 'exclude',       // on-site/hybrid, and every state it names is outside the list
+  remote_out_of_state: 'flag',   // remote but tied to another state ("Remote - New York")
+  state_unspecified: 'flag'      // on-site/hybrid in the country, no state stated at all
 };
 
 /**
@@ -195,6 +264,27 @@ function allows(policy, cls) {
     const wantsRemote = cls.remote;
     if (wantsRemote && conf.remote_ok === false) return { allowed: false, flagged: false, reason: 'remote not accepted for ' + hit, matched_country: hit };
     if (!wantsRemote && conf.onsite_ok === false) return { allowed: false, flagged: false, reason: 'on-site not accepted for ' + hit, matched_country: hit };
+
+    // State narrowing (e.g. Florida only). Applies ONLY to the country carrying the list, and
+    // only to postings tied to a place: a fully-remote posting with no state named is scoped
+    // 'region'/'global' below and stays allowed — it is workable from the target state.
+    const wantStates = (conf.states || []).map((x) => String(x || '').toUpperCase()).filter(Boolean);
+    if (wantStates.length) {
+      const named = cls.states || [];
+      const inState = named.find((x) => wantStates.includes(x));
+      if (!inState) {
+        const want = wantStates.join('/');
+        if (named.length) {
+          return verdict(cls.remote ? rules.remote_out_of_state : rules.out_of_state,
+            (cls.remote ? 'remote but tied to ' : 'on-site in ') + named.join(', ') + ', outside ' + want, hit);
+        }
+        return verdict(cls.remote ? rules.remote_global : rules.state_unspecified,
+          'in ' + hit + ' but no state stated (targeting ' + want + ')', hit);
+      }
+      if (cls.multi) return verdict(rules.multi_location, 'multi-location posting including ' + inState, hit);
+      return { allowed: true, flagged: false, reason: 'in ' + inState, matched_country: hit };
+    }
+
     if (cls.multi) return verdict(rules.multi_location, 'multi-location posting including ' + hit, hit);
     return { allowed: true, flagged: false, reason: 'in ' + hit, matched_country: hit };
   }
@@ -225,4 +315,8 @@ function evaluate(policy, locationText, remoteFlag) {
 function countryName(code) { return (COUNTRIES[String(code || '').toUpperCase()] || {}).name || String(code || ''); }
 function countryList() { return Object.entries(COUNTRIES).map(([code, c]) => ({ code, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)); }
 
-module.exports = { classify, allows, evaluate, countryName, countryList, US_STATES, REGIONS, DEFAULT_RULES };
+function stateName(code) { return US_STATES[String(code || '').toUpperCase()] || String(code || ''); }
+function stateList() { return Object.entries(US_STATES).map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name)); }
+
+module.exports = { classify, allows, evaluate, statesIn, countryName, countryList, stateName, stateList,
+                   US_STATES, CITY_STATE, REGIONS, DEFAULT_RULES };

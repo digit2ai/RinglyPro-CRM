@@ -80,7 +80,8 @@ const CONFIG = {
 
   console.log('Configured ' + slug);
   console.log('  years of experience : ' + saved.identity.years_experience + ' (' + saved.identity.experience_domain + ')');
-  console.log('  target countries    : ' + saved.targeting.countries.map((c) => c.code).join(', '));
+  console.log('  target countries    : ' + saved.targeting.countries
+    .map((c) => c.code + ((c.states || []).length ? ' (' + c.states.join('/') + ' only)' : '')).join(', '));
   console.log('  industries          : ' + saved.targeting.industries.join(', '));
   console.log('  role targets        : ' + saved.targeting.roles.length);
   saved.targeting.roles.forEach((r) => console.log('    - ' + r.title + (r.page ? '  -> /roles/' + r.slug : '  (no public page)')));

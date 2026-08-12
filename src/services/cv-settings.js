@@ -33,7 +33,7 @@ function defaults() {
       links: []                         // [{label, url}] -> sameAs graph
     },
     targeting: {
-      countries: [],                    // [{code:'US', remote_ok:true, onsite_ok:true}]
+      countries: [],                    // [{code:'US', remote_ok:true, onsite_ok:true, states:['FL']}]
       country_rules: {},                // overrides for cv-geo DEFAULT_RULES
       regions: [],                      // states/metros within those countries
       relocation: { willing: false, targets: [] },
@@ -124,6 +124,19 @@ function deepMerge(base, patch) {
   return out;
 }
 
+// "florida" / "FL" / "Fla." -> "FL". Anything unrecognized is kept uppercased and trimmed to 2-8
+// chars, so a non-US subdivision can be entered without this file knowing about it.
+const US_STATES = require('./cv-geo').US_STATES;
+function stateCode(v) {
+  const raw = String(v || '').trim();
+  if (!raw) return '';
+  const up = raw.toUpperCase();
+  if (US_STATES[up]) return up;
+  const lower = raw.toLowerCase();
+  const hit = Object.keys(US_STATES).find((k) => US_STATES[k].toLowerCase() === lower);
+  return hit || up.slice(0, 8);
+}
+
 function slugifyRole(title) {
   return String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 }
@@ -155,7 +168,10 @@ function sanitize(input) {
   t.countries = arr(t.countries, 40).map((c) => ({
     code: str(c && c.code, 8).toUpperCase(),
     remote_ok: bool(c && c.remote_ok, true),
-    onsite_ok: bool(c && c.onsite_ok, true)
+    onsite_ok: bool(c && c.onsite_ok, true),
+    // Optional narrowing INSIDE a country (US states today). Empty = the whole country.
+    // Accepts a code or a full name; stored as codes so cv-geo can compare them directly.
+    states: strList(c && c.states, 60, 40).map(stateCode).filter(Boolean)
   })).filter((c) => c.code);
   t.country_rules = isObj(t.country_rules) ? t.country_rules : {};
   t.regions = strList(t.regions, 60);
@@ -420,7 +436,7 @@ function resumeVariantFor(settings, jobTitle) {
 }
 
 module.exports = {
-  defaults, sanitize, seedFromProfile, ensureTable, get, save, patch, deepMerge, slugifyRole,
+  defaults, sanitize, seedFromProfile, ensureTable, get, save, patch, deepMerge, slugifyRole, stateCode,
   countryPolicy, employerBlocked, contactBlocked, publicView, outreachFacts, resumeVariantFor,
   INDUSTRY_TAXONOMY, EMPLOYMENT_TYPES, WORK_AUTH_STATUSES
 };

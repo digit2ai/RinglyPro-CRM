@@ -346,8 +346,9 @@ th{color:var(--dim);font-weight:600;font-size:12px}
 
       <div class="card">
         <b><i class="fas fa-crosshairs"></i> Targeting</b>
-        <span class="lbl">Target countries <span class="muted">(one per line: CODE | remote_ok | onsite_ok)</span></span>
-        <textarea data-s="targeting.countries" data-fmt="countries" placeholder="US | yes | yes"></textarea>
+        <span class="lbl">Target countries <span class="muted">(one per line: CODE | remote_ok | onsite_ok | states)</span></span>
+        <textarea data-s="targeting.countries" data-fmt="countries" placeholder="US | yes | yes | FL"></textarea>
+        <span class="muted" style="display:block;margin-top:4px;font-size:12px">Leave the 4th field empty for the whole country. List states to narrow it: <code>US | yes | yes | FL</code> keeps on-site work in Florida only. Remote roles with no state named still pass — you can work those from Florida.</span>
         <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap">
           <input id="locTest" placeholder='Test a location string, e.g. "Remote - North America"' style="max-width:340px">
           <button class="btn sm ghost" id="locTestBtn">Test against my policy</button><span class="msg" id="locTestMsg"></span>
@@ -844,8 +845,8 @@ var FMT={
           from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{language:p[0],fluency:p[1]||''}:null;}).filter(Boolean);} },
   links:{ to:function(v){return (v||[]).map(function(l){return (l.label||'')+' | '+(l.url||'');}).join('\n');},
           from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[1]?{label:p[0],url:p[1]}:null;}).filter(Boolean);} },
-  countries:{ to:function(v){return (v||[]).map(function(c){return c.code+' | '+(c.remote_ok===false?'no':'yes')+' | '+(c.onsite_ok===false?'no':'yes');}).join('\n');},
-              from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{code:p[0].toUpperCase(),remote_ok:(p[1]||'yes').toLowerCase()!=='no',onsite_ok:(p[2]||'yes').toLowerCase()!=='no'}:null;}).filter(Boolean);} },
+  countries:{ to:function(v){return (v||[]).map(function(c){var st=(c.states||[]).join(', ');return c.code+' | '+(c.remote_ok===false?'no':'yes')+' | '+(c.onsite_ok===false?'no':'yes')+(st?' | '+st:'');}).join('\n');},
+              from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{code:p[0].toUpperCase(),remote_ok:(p[1]||'yes').toLowerCase()!=='no',onsite_ok:(p[2]||'yes').toLowerCase()!=='no',states:(p[3]||'').split(/[,;/]/).map(function(x){return x.trim();}).filter(Boolean)}:null;}).filter(Boolean);} },
   variants:{ to:function(v){return (v||[]).map(function(x){return (x.label||'')+' | '+(x.url||'')+' | '+((x.role_titles||[]).join(', '));}).join('\n');},
              from:function(s){return s.split('\n').map(function(l){var p=l.split('|').map(function(x){return x.trim();});return p[0]?{label:p[0],url:p[1]||'',role_titles:(p[2]||'').split(',').map(function(x){return x.trim();}).filter(Boolean)}:null;}).filter(Boolean);} }
 };

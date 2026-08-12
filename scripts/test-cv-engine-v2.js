@@ -103,6 +103,33 @@ async function cleanup() {
   ok('no policy configured = everything allowed (other profiles unaffected)',
     geo.evaluate({ enabled: false, countries: [] }, 'London, United Kingdom', false).allowed === true);
 
+  // ---------------------------------------------------------------- pure: state narrowing
+  section('Phase 4 — state narrowing (a country policy scoped to one state)');
+  const flOnly = { enabled: true, countries: [{ code: 'US', remote_ok: true, onsite_ok: true, states: ['FL'] }], rules: {} };
+  [['Tampa, FL', true], ['Miami, Florida', true], ['Orlando', true], ['US-FL-Tampa', true],
+   ['New York, NY', false], ['Atlanta, GA', false], ['Austin, TX', false]].forEach(([loc, want]) => {
+    ok(`FL-only: "${loc}" -> ${want ? 'allowed' : 'excluded'}`, geo.evaluate(flOnly, loc, false).allowed === want,
+      geo.evaluate(flOnly, loc, false).reason);
+  });
+  ok('FL-only: multi-location keeps the posting that includes Florida',
+    geo.evaluate(flOnly, 'Austin, TX | Tampa, FL', false).allowed === true);
+  ok('FL-only: remote with no state named still passes (workable from Florida)',
+    geo.evaluate(flOnly, 'Remote - US', true).allowed === true);
+  const rOut = geo.evaluate(flOnly, 'Remote - New York, NY', true);
+  ok('FL-only: remote tied to another state is FLAGGED, not silently dropped', rOut.allowed === true && rOut.flagged === true, rOut.reason);
+  const onsiteNoState = geo.evaluate(flOnly, 'United States', false);
+  ok('FL-only: on-site with no state stated is FLAGGED', onsiteNoState.allowed === true && onsiteNoState.flagged === true);
+  ok('FL-only: out_of_state:flag keeps out-of-state roles visible when the owner asks',
+    geo.evaluate({ enabled: true, countries: [{ code: 'US', states: ['FL'] }], rules: { out_of_state: 'flag' } }, 'New York, NY', false).flagged === true);
+  ok('a state list on ONE country never narrows another country',
+    geo.evaluate({ enabled: true, countries: [{ code: 'US', states: ['FL'] }, { code: 'CO' }] }, 'Bogotá, Colombia', false).allowed === true);
+  ok('no states listed = the whole country, unchanged', geo.evaluate(usOnly, 'New York, NY', false).allowed === true);
+  ok('lowercase "work in office" is not read as Indiana', geo.statesIn('Work in office, full-time').length === 0);
+  ok('"Remote or Hybrid" is not read as Oregon', geo.statesIn('Remote or Hybrid').length === 0);
+  ok('"Charleston, WV" is West Virginia, not Virginia', JSON.stringify(geo.statesIn('Charleston, WV')) === '["WV"]');
+  ok('settings normalize a full state name to its code',
+    settingsSvc.sanitize({ targeting: { countries: [{ code: 'US', states: ['florida', 'GA'] }] } }).targeting.countries[0].states.join(',') === 'FL,GA');
+
   // ---------------------------------------------------------------- pure: settings
   section('Phase 4 — settings model, privacy defaults, locked approval');
   const s0 = settingsSvc.sanitize({ outreach: { approval_required: false }, targeting: { score_floor: 999 } });
