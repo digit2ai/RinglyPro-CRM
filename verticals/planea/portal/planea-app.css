@@ -235,6 +235,7 @@ a{color:inherit;text-decoration:none}
      izquierdo del contenido (sidebar 280px + centrado de .app máx 940 + padding 44). */
   .chatbot{top:22px;left:calc((100vw - 280px - min(940px, 100vw - 280px))/2 + 324px);transform:none}
   .chatbot .orbe{width:52px;height:52px}
+  .chatbot .txt{display:flex}               /* escritorio: texto completo */
   .chatbot .txt-short{display:none}         /* escritorio: texto completo, no la version corta */
   body{padding-left:280px}
   .app{max-width:940px;margin:0 auto;padding-top:14px;padding-bottom:80px}
