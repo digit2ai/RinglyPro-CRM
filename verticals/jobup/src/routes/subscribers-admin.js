@@ -32,6 +32,7 @@ const billing = require('../services/billing');
 const provisioning = require('../services/provisioning');
 const pwa = require('../services/pwa');
 const notify = require('../services/admin-notify');
+const plan = require('../services/plan');
 
 const router = express.Router();
 
@@ -390,6 +391,64 @@ router.post('/api/push/test', requireAdmin, async (req, res) => {
     const r = await notify.pushBadge('test from the console', { test: true });
     await audit(req.admin.email, 'admin.push.test', JSON.stringify(r));
     res.json(r);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---------------------------------------------------------------
+// The growth plan — a checklist whose ticks persist per admin.
+// ---------------------------------------------------------------
+async function progressFor(actor) {
+  return (await notify.getState('plan_progress', actor)) || { done: {} };
+}
+
+router.get('/api/plan', requireAdmin, async (req, res) => {
+  try {
+    const p = await progressFor(req.admin.email);
+    const done = p.done || {};
+    const total = plan.TASKS.length;
+    const complete = plan.TASKS.filter((t) => done[t.id]).length;
+    // Habits are daily and recurring, so they are ticked per DATE rather than
+    // once forever — a habit you can permanently complete is not a habit.
+    const today = new Date().toISOString().slice(0, 10);
+    res.json({
+      phases: plan.PHASES,
+      habits: plan.HABITS.map((h) => ({ ...h, done: Boolean(done[`${h.id}:${today}`]) })),
+      tasks: plan.TASKS.map((t) => ({ ...t, done: Boolean(done[t.id]), done_at: done[t.id] || null })),
+      promise: plan.PROMISE,
+      today,
+      progress: { complete, total, pct: total ? Math.round((complete / total) * 100) : 0 },
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/api/plan/task', requireAdmin, async (req, res) => {
+  try {
+    const id = String((req.body || {}).id || '');
+    const wantDone = Boolean((req.body || {}).done);
+    if (!id) return res.status(400).json({ error: 'task id required' });
+    // A habit id carries a date suffix; a plan task must exist in the plan, so
+    // an unknown id cannot quietly inflate the progress figure.
+    const isHabit = /:\d{4}-\d{2}-\d{2}$/.test(id);
+    if (!isHabit && !plan.TASKS.some((t) => t.id === id)) {
+      return res.status(404).json({ error: 'no such task' });
+    }
+    const p = await progressFor(req.admin.email);
+    const done = p.done || {};
+    if (wantDone) done[id] = new Date().toISOString();
+    else delete done[id];
+    await notify.setState('plan_progress', { done }, req.admin.email);
+    const complete = plan.TASKS.filter((t) => done[t.id]).length;
+    res.json({ ok: true, id, done: wantDone,
+      progress: { complete, total: plan.TASKS.length,
+        pct: Math.round((complete / plan.TASKS.length) * 100) } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/api/plan/reset', requireAdmin, async (req, res) => {
+  try {
+    await notify.setState('plan_progress', { done: {} }, req.admin.email);
+    await audit(req.admin.email, 'plan.reset', 'checklist cleared');
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -857,7 +857,66 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(rows.some((a) => a.action === 'subs_admin.login.failed'),
         'failed sign-ins must be recorded too');
     });
-    await t('THE CONSOLE IS ITS OWN INSTALLED APP, NOT THE SUBSCRIBER ONE', () => {
+    await t('THE GROWTH PLAN IS A REAL PLAN, NOT FILLER', () => {
+    const planSvc = require(__dirname + '/src/services/plan');
+    assert.ok(planSvc.TASKS.length >= 60, 'a six-month plan needs real substance');
+    const ids = planSvc.TASKS.map((t) => t.id);
+    assert.strictEqual(new Set(ids).size, ids.length, 'ids must be unique or ticks collide');
+    // Every task must say who does it. An agent cannot open a Reddit account,
+    // and a plan that pretends otherwise wastes the owner's week.
+    for (const t of planSvc.TASKS) {
+      assert.ok(['you', 'me'].includes(t.owner), `task ${t.id} has no owner`);
+      assert.ok(t.text && t.text.length > 12, `task ${t.id} is filler`);
+    }
+    assert.ok(planSvc.TASKS.some((t) => t.owner === 'me'), 'some of it must be buildable');
+    assert.ok(planSvc.TASKS.some((t) => t.owner === 'you'), 'and some can only be done by a human');
+    // Month 1 day by day; the later months weekly.
+    assert.ok(planSvc.TASKS.filter((t) => t.kind === 'day').length >= 30, 'month 1 must be daily');
+    assert.ok(planSvc.TASKS.filter((t) => t.kind === 'week').length >= 20, 'months 2-6 must be covered');
+  });
+  await t('THE PLAN PROMISES WHAT IT CAN AND REFUSES WHAT IT CANNOT', () => {
+    const fs = require('fs');
+    const planSvc = require(__dirname + '/src/services/plan');
+    // The owner asked for a plan that makes the product go viral in six months.
+    // No plan can promise that, and saying so on the dashboard itself — not in
+    // a footnote — is the difference between a tool and a horoscope.
+    assert.ok(/cannot/i.test(Object.keys(planSvc.PROMISE).join(' ')), 'there must be a "cannot"');
+    assert.match(planSvc.PROMISE.cannot, /viral/i, 'and it must name virality specifically');
+    assert.ok(planSvc.PROMISE.gate, 'the blocking phase must be stated');
+    const html = fs.readFileSync(__dirname + '/public/plan.html', 'utf8');
+    assert.ok(html.includes('promise.cannot') || html.includes("d.promise.cannot"),
+      'the dashboard must render the "cannot" as prominently as the "can"');
+  });
+  await t('ticking a task persists, and an unknown id cannot inflate progress', async () => {
+    const notify = require(__dirname + '/src/services/admin-notify');
+    const planSvc = require(__dirname + '/src/services/plan');
+    const actor = 'sit-plan@example.com';
+    await notify.setState('plan_progress', { done: {} }, actor);
+    const first = planSvc.TASKS[0].id;
+    await notify.setState('plan_progress', { done: { [first]: new Date().toISOString(),
+      'not-a-real-task': new Date().toISOString() } }, actor);
+    const st = await notify.getState('plan_progress', actor);
+    // Progress counts only ids that exist in the plan, so a stray key cannot
+    // make the bar read higher than the work actually done.
+    const complete = planSvc.TASKS.filter((t) => st.done[t.id]).length;
+    assert.strictEqual(complete, 1, 'an unknown id must not count toward progress');
+    await notify.setState('plan_progress', { done: {} }, actor);
+  });
+  await t('the plan dashboard lives INSIDE the console PWA scope', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    const html = fs.readFileSync(__dirname + '/public/plan.html', 'utf8');
+    // Outside /subscribers-admin/ the installed app would kick out to a browser
+    // tab when the link is tapped.
+    assert.ok(src.includes("'/subscribers-admin/plan'"), 'the route must sit under the console path');
+    assert.ok(html.includes('{{BASE}}/subscribers-admin/manifest.webmanifest'),
+      'and it must claim the same manifest');
+    assert.ok(src.includes("'/plan.html': '/subscribers-admin/plan'"),
+      'a direct .html hit must redirect, or the raw template leaks');
+    const console_ = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(console_.includes('{{BASE}}/subscribers-admin/plan'), 'the console must link to it');
+  });
+  await t('THE CONSOLE IS ITS OWN INSTALLED APP, NOT THE SUBSCRIBER ONE', () => {
     const pwaL = require(__dirname + '/src/services/pwa');
     for (const base of ['', '/jobup']) {
       const sub = pwaL.manifest(base);

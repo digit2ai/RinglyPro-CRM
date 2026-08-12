@@ -1,0 +1,234 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Subscribers">
+<link rel="manifest" href="{{BASE}}/subscribers-admin/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
+<title>JobUp — Growth Plan</title><style>
+:root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
+--line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
+--cyan:#22d3ee;--green:#3ad07f;--warn:#e6b45a;--red:#f87171;
+--brand:linear-gradient(120deg,#4c6ef5 0%,#e64980 50%,#ff922b 100%);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);min-height:100%}
+body{color:var(--ink);font:15.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+letter-spacing:-.011em;-webkit-font-smoothing:antialiased;
+padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+.nav{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.93);backdrop-filter:blur(14px);
+border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.who{display:flex;align-items:center;gap:11px;min-width:0}
+.mark{width:36px;height:36px;flex:0 0 36px;display:block;border-radius:11px}
+.ttl{font-weight:790;letter-spacing:-.026em;font-size:16.5px;line-height:1.15}
+.sub{color:var(--mut);font-size:12px}
+.btn{border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:999px;
+padding:9px 15px;font:inherit;font-size:13px;cursor:pointer;min-height:40px;
+display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.sm{min-height:34px;padding:6px 12px;font-size:12.5px}
+h1{font-size:25px;font-weight:830;letter-spacing:-.035em;margin:26px 0 6px}
+.lede{color:var(--mut);font-size:14.5px;margin-bottom:16px}
+.bar{height:10px;border-radius:99px;background:var(--card2);overflow:hidden;margin:14px 0 8px}
+.bar i{display:block;height:100%;background:var(--brand);width:0;transition:width .3s ease}
+.barlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.promise{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:17px 19px;margin:18px 0}
+.promise .r{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px;font-size:13.5px;line-height:1.55}
+.promise .r:last-child{margin-bottom:0}
+.promise .k{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+flex:0 0 62px;padding-top:3px}
+.promise .k.can{color:var(--green)}.promise .k.cant{color:var(--red)}.promise .k.gate{color:var(--warn)}
+.promise .v{color:var(--mut);flex:1}
+.phase{margin:26px 0 0}
+.phead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+.phead h2{font-size:18px;font-weight:790;letter-spacing:-.028em;margin:0}
+.pwin{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.pwhy{color:var(--mut);font-size:13.5px;line-height:1.55;margin-bottom:12px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.day.done{border-color:rgba(58,208,127,.3)}
+.dh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.dnum{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.dtheme{font-size:13.5px;font-weight:700}
+.t{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);cursor:pointer}
+.t:first-of-type{border-top:0}
+.box{width:22px;height:22px;flex:0 0 22px;border-radius:7px;border:1.5px solid var(--line2);
+margin-top:1px;display:grid;place-items:center;transition:all .14s ease}
+.t.on .box{background:var(--brand);border-color:transparent}
+.box svg{width:13px;height:13px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
+.t.on .box svg{opacity:1}
+.tx{flex:1;font-size:14.5px;line-height:1.5}
+.t.on .tx{color:var(--faint);text-decoration:line-through}
+.meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
+.tag{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line);border-radius:999px;
+padding:2px 8px;color:var(--faint)}
+.tag.you{border-color:rgba(230,180,90,.4);color:var(--warn)}
+.tag.me{border-color:rgba(34,211,238,.4);color:var(--cyan)}
+.habits{background:var(--card2);border:1px solid rgba(76,110,245,.4);border-radius:15px;padding:15px 17px;margin:18px 0}
+.habits h3{margin:0 0 4px;font-size:15px;font-weight:780}
+.habits .hs{color:var(--mut);font-size:13px;margin-bottom:8px}
+.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
+border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
+.err.show{display:block}
+.hidden{display:none}
+footer{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin:40px 0 40px;
+border-top:1px solid var(--line);padding-top:18px;line-height:1.7}
+@media(max-width:760px){
+  .wrap{padding:0 14px}.nav .wrap{padding:11px 14px}
+  h1{font-size:21px}.ttl{font-size:15px}
+  .sub{max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .promise .k{flex:0 0 100%;margin-bottom:2px}
+  .promise .r{flex-wrap:wrap}
+  .box{width:26px;height:26px;flex:0 0 26px}  /* thumb-sized */
+  .t{padding:11px 0}
+}
+</style></head><body>
+
+<div class="nav"><div class="wrap">
+  <div class="who">
+    <svg class="mark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+      <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+      <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
+      <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#bm)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
+         stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
+    <div><div class="ttl">Growth Plan</div><div class="sub" id="who-sub">JobUp</div></div>
+  </div>
+  <a class="btn sm" href="{{BASE}}/subscribers-admin">Subscribers</a>
+</div></div>
+
+<div id="login" class="wrap hidden">
+  <h1>Sign in first</h1>
+  <div class="lede">Open the <a href="{{BASE}}/subscribers-admin" style="color:var(--cyan)">Subscribers console</a>
+    and sign in, then come back.</div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <h1>Six months, one day at a time</h1>
+  <div class="lede" id="lede">Loading…</div>
+
+  <div class="bar"><i id="barfill"></i></div>
+  <div class="barlab"><span id="barn">0 of 0</span><span id="barpct">0%</span></div>
+
+  <div class="promise" id="promise"></div>
+  <div class="habits" id="habits"></div>
+  <div class="err" id="err"></div>
+  <div id="phases"></div>
+
+  <footer>
+    Ticks are saved against your admin account, so the list is the same on your phone and your laptop.<br>
+    <button class="btn sm" id="reset" style="margin-top:12px">Reset the whole checklist</button>
+  </footer>
+</div>
+
+<script>
+var API='{{BASE}}/subscribers-admin/api';
+var DATA=null;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function api(p,o){return fetch(API+p,Object.assign({credentials:'same-origin'},o||{}))
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
+function jpost(p,b){return api(p,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b||{})});}
+function err(m){var e=$('err');e.textContent=m;e.classList.add('show');
+  setTimeout(function(){e.classList.remove('show');},6000);}
+
+var TICK='<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
+
+function taskRow(t){
+  return '<div class="t'+(t.done?' on':'')+'" data-id="'+esc(t.id)+'">'+
+    '<div class="box">'+TICK+'</div>'+
+    '<div class="tx">'+esc(t.text)+
+      '<div class="meta">'+
+        '<span class="tag '+(t.owner==='me'?'me':'you')+'">'+(t.owner==='me'?'I build this':'you')+'</span>'+
+        (t.minutes?'<span class="tag">'+t.minutes+' min</span>':'')+
+      '</div>'+
+    '</div></div>';
+}
+
+function render(){
+  var d=DATA;
+  $('lede').textContent='Month 1 is day by day. Months 2 to 6 are weekly themes on top of the daily habits.';
+  $('barfill').style.width=d.progress.pct+'%';
+  $('barn').textContent=d.progress.complete+' of '+d.progress.total+' done';
+  $('barpct').textContent=d.progress.pct+'%';
+
+  $('promise').innerHTML=
+    '<div class="r"><div class="k can">Can</div><div class="v">'+esc(d.promise.can)+'</div></div>'+
+    '<div class="r"><div class="k cant">Cannot</div><div class="v">'+esc(d.promise.cannot)+'</div></div>'+
+    '<div class="r"><div class="k gate">Gate</div><div class="v">'+esc(d.promise.gate)+'</div></div>';
+
+  $('habits').innerHTML='<h3>Every working day</h3>'+
+    '<div class="hs">Ticked per day. These are the compounding part — the phases below are scaffolding.</div>'+
+    d.habits.map(function(h){
+      return taskRow({ id:h.id+':'+d.today, text:h.text, owner:h.owner, minutes:h.minutes, done:h.done });
+    }).join('');
+
+  var byPhase={};
+  d.tasks.forEach(function(t){ (byPhase[t.phase]=byPhase[t.phase]||[]).push(t); });
+
+  $('phases').innerHTML=d.phases.map(function(p){
+    var ts=byPhase[p.id]||[];
+    var groups={};
+    ts.forEach(function(t){
+      var key = t.kind==='day' ? ('Day '+t.day) : ('Week '+t.week+' · '+(t.theme||''));
+      (groups[key]=groups[key]||[]).push(t);
+    });
+    var doneN=ts.filter(function(t){return t.done;}).length;
+    return '<div class="phase"><div class="phead"><h2>'+esc(p.title)+'</h2>'+
+      '<span class="pwin">'+esc(p.window)+' · '+doneN+'/'+ts.length+'</span></div>'+
+      '<div class="pwhy">'+esc(p.why)+'</div>'+
+      Object.keys(groups).map(function(g){
+        var all=groups[g].every(function(t){return t.done;});
+        return '<div class="day'+(all?' done':'')+'">'+
+          '<div class="dh"><span class="dnum">'+esc(g)+'</span></div>'+
+          groups[g].map(taskRow).join('')+'</div>';
+      }).join('')+'</div>';
+  }).join('');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.t'),function(el){
+    el.addEventListener('click',function(){ toggle(el); });
+  });
+}
+
+function toggle(el){
+  var id=el.dataset.id, want=!el.classList.contains('on');
+  el.classList.toggle('on',want);              // optimistic
+  jpost('/plan/task',{id:id,done:want}).then(function(r){
+    if(!r.ok){ el.classList.toggle('on',!want); return err((r.j&&r.j.error)||'Could not save that tick.'); }
+    if(r.j.progress){
+      DATA.progress=r.j.progress;
+      $('barfill').style.width=r.j.progress.pct+'%';
+      $('barn').textContent=r.j.progress.complete+' of '+r.j.progress.total+' done';
+      $('barpct').textContent=r.j.progress.pct+'%';
+    }
+    var t=DATA.tasks.filter(function(x){return x.id===id;})[0];
+    if(t) t.done=want;
+  }).catch(function(){ el.classList.toggle('on',!want); err('Could not reach the server.'); });
+}
+
+$('reset').addEventListener('click',function(){
+  if(!confirm('Clear every tick? This cannot be undone.')) return;
+  jpost('/plan/reset',{}).then(function(){ load(); });
+});
+
+function load(){
+  api('/plan').then(function(r){
+    if(!r.ok){ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+    DATA=r.j; render();
+    api('/session').then(function(s){ if(s.ok) $('who-sub').textContent=s.j.email; });
+  }).catch(function(){ $('login').classList.remove('hidden'); });
+}
+load();
+</script>
+</body></html>
