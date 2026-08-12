@@ -231,12 +231,8 @@ a{color:inherit;text-decoration:none}
   .topbar{display:none}
   .scrim{display:none !important}
   .drawer{transform:none !important;box-shadow:none;width:280px}
-  /* sin barra superior: el botón de Maya se alinea con "Hola, Manuel" — el borde
-     izquierdo del contenido (sidebar 280px + centrado de .app máx 940 + padding 44). */
-  .chatbot{top:22px;left:calc((100vw - 280px - min(940px, 100vw - 280px))/2 + 324px);transform:none}
-  .chatbot .orbe{width:52px;height:52px}
-  .chatbot .txt{display:flex}               /* escritorio: texto completo */
-  .chatbot .txt-short{display:none}         /* escritorio: texto completo, no la version corta */
+  /* El botón de Maya en escritorio se define al final del archivo (para ganar en
+     orden de cascada a las reglas base de móvil). */
   body{padding-left:280px}
   .app{max-width:940px;margin:0 auto;padding-top:14px;padding-bottom:80px}
   .wrap{padding:26px 44px 0}
@@ -258,6 +254,16 @@ a{color:inherit;text-decoration:none}
 .chatbot .txt{display:none;flex-direction:column;text-align:left} /* móvil: solo 'Maya' (txt-short) */
 .chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
 .chatbot .t2{font-size:11.5px;color:var(--mut)}
+/* ESCRITORIO (>=1024): botón de Maya ARRIBA-CENTRO sobre el contenido (a la derecha
+   de la barra lateral de 280px -> +140px), con el texto completo. Va al final para
+   ganar en cascada a las reglas base de móvil. */
+@media (min-width:1024px){
+  .chatbot{top:20px;left:calc(50% + 140px);transform:translateX(-50%)}
+  .chatbot:hover{transform:translateX(-50%) translateY(-2px)}
+  .chatbot .orbe{width:52px;height:52px}
+  .chatbot .txt{display:flex}
+  .chatbot .txt-short{display:none}
+}
 
 /* ── Patrimonio editor (planea-patrimonio-edit.js) ────────────────────────── */
 .pe-sec{margin-top:8px}
