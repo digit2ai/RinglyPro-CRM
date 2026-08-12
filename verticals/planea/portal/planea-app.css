@@ -231,9 +231,11 @@ a{color:inherit;text-decoration:none}
   .topbar{display:none}
   .scrim{display:none !important}
   .drawer{transform:none !important;box-shadow:none;width:280px}
-  /* sin barra superior: sube el botón de Maya y céntralo sobre el contenido
-     (a la derecha de la barra lateral de 280px -> +140px). */
-  .chatbot{top:20px;left:calc(50% + 140px)}
+  /* sin barra superior: el botón de Maya se alinea con "Hola, Manuel" — el borde
+     izquierdo del contenido (sidebar 280px + centrado de .app máx 940 + padding 44). */
+  .chatbot{top:22px;left:calc((100vw - 280px - min(940px, 100vw - 280px))/2 + 324px)}
+  .chatbot .orbe{width:52px;height:52px}
+  .chatbot .txt{display:flex}
   body{padding-left:280px}
   .app{max-width:940px;margin:0 auto;padding-top:14px;padding-bottom:80px}
   .wrap{padding:26px 44px 0}
@@ -243,18 +245,18 @@ a{color:inherit;text-decoration:none}
 @media (min-width:1500px){ .app{max-width:1080px} }
 
 /* Maya floating button */
-/* Botón de Maya: arriba-centro. En móvil, debajo de la barra superior; en
-   escritorio (con la barra lateral de 280px) centrado sobre el contenido. */
-.chatbot{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
-.chatbot:hover{transform:translateX(-50%) translateY(-2px)}
-.chatbot .orbe{width:52px;height:52px;border-radius:50%;background:#fff;overflow:hidden;flex-shrink:0;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
+/* Botón de Maya. MÓVIL/TABLET (barra superior centrada, máx 560): el avatar va
+   justo a la derecha del logo, así el logo queda visible; sin texto para que quepa.
+   ESCRITORIO (abajo, ≥1024): alineado con "Hola, Manuel" (borde del contenido). */
+.chatbot{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(max(0px,(100vw - 560px)/2) + 190px);right:auto;transform:none;z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
+.chatbot:hover{transform:translateY(-2px)}
+.chatbot .orbe{width:44px;height:44px;border-radius:50%;background:#fff;overflow:hidden;flex-shrink:0;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
 .chatbot .orbe img{width:100%;height:100%;object-fit:cover;object-position:52% 8%;display:block}
 @keyframes mpulse{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 0 rgba(143,217,172,.4)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 10px rgba(143,217,172,0)}}
 @media (prefers-reduced-motion:reduce){.chatbot .orbe{animation:none}}
-.chatbot .txt{display:flex;flex-direction:column;text-align:left}
+.chatbot .txt{display:none;flex-direction:column;text-align:left}
 .chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
 .chatbot .t2{font-size:11.5px;color:var(--mut)}
-@media (max-width:420px){.chatbot .txt{display:none}}
 
 /* ── Patrimonio editor (planea-patrimonio-edit.js) ────────────────────────── */
 .pe-sec{margin-top:8px}

@@ -242,6 +242,8 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function err(el,m){var e=$(el);e.textContent=m;e.classList.add('show');
   setTimeout(function(){e.classList.remove('show');},7000);}
+function jpost(path,body,method){return api(path,{method:method||'POST',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
 function api(path,opts){return fetch(API+path,Object.assign({credentials:'same-origin'},opts||{}))
   .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
 
@@ -394,81 +396,38 @@ function urlB64ToUint8(b64) {
 }
 
 function enablePush() {
-  if (!SWREG || !('PushManager' in window)) return Promise.resolve(false);
+  if (!SWREG) return Promise.resolve({ ok:false, why:'the service worker is not registered yet' });
+  if (!('PushManager' in window)) return Promise.resolve({ ok:false, why:'this browser has no Push API' });
   return Notification.requestPermission().then(function(perm){
-    if (perm !== 'granted') return false;
+    if (perm !== 'granted') return { ok:false, why:'notification permission was not granted' };
     return api('/push/key').then(function(r){
-      if (!r.ok || !r.j.key) return false;
+      if (!r.ok || !r.j.key) return { ok:false, why:'the server has no VAPID key' };
       return SWREG.pushManager.getSubscription().then(function(existing){
         return existing || SWREG.pushManager.subscribe({
           userVisibleOnly: true, applicationServerKey: urlB64ToUint8(r.j.key) });
       }).then(function(sub){
-        return jpost('/push/subscribe', { subscription: sub.toJSON() }).then(function(){
-          $('notifbar').classList.add('hidden'); return true; });
+        /* Registering with the browser is only half of it — the server has to
+           HOLD the subscription or nothing can ever be pushed to this device.
+           Reporting success on permission alone is what hid this for a whole
+           install cycle. */
+        return jpost('/push/subscribe', { subscription: sub.toJSON() }).then(function(r2){
+          if (!r2.ok) return { ok:false, why:(r2.j && r2.j.error) || 'the server rejected the subscription' };
+          return { ok:true };
+        });
       });
     });
-  }).catch(function(){ return false; });
+  }).catch(function(e){
+    // Surfaced, never swallowed. A silent catch here is what made a broken
+    // subscription look like a working badge.
+    return { ok:false, why: (e && e.message) || 'subscription failed' };
+  });
 }
 
-var STANDALONE = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-var IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-/* One honest status line. The operator should be able to tell at a glance
-   whether the icon will actually carry a number, and if not, why not. */
-function paintBadgeState() {
-  var card = $('notifbar'), dot = $('bc-dot'), title = $('bc-title');
-  var body = $('bc-body'), note = $('bc-note'), test = $('badge-test'), go = $('notif-go');
-  var supported = ('Notification' in window) && ('PushManager' in window) && ('serviceWorker' in navigator);
-  var perm = supported ? Notification.permission : 'unsupported';
-
-  card.classList.remove('hidden');
-
-  if (!supported) {
-    card.classList.remove('on'); title.textContent = 'Badge not available in this browser';
-    body.textContent = 'This browser has no Push or Notification API, so the icon cannot carry a number.';
-    go.classList.add('hidden'); test.classList.add('hidden');
-    note.classList.remove('hidden');
-    note.textContent = 'The count still shows next to the title while the console is open.';
-    return;
-  }
-
-  /* iOS badges INSTALLED web apps only. Saying "allow notifications" to
-     someone in Safari sends them round a loop that cannot succeed. */
-  if (IS_IOS && !STANDALONE) {
-    card.classList.remove('on'); title.textContent = 'Add to Home Screen first';
-    body.textContent = 'On iPhone the badge only works from an installed icon. '
-      + 'Tap Share, then Add to Home Screen, then open it from there and come back to this card.';
-    go.classList.add('hidden'); test.classList.add('hidden');
-    note.classList.add('hidden');
-    return;
-  }
-
-  if (perm === 'granted') {
-    card.classList.add('on'); title.textContent = 'Badge is on';
-    body.textContent = 'The icon shows the number of subscribers who arrived since you last read the list.';
-    go.classList.add('hidden'); test.classList.remove('hidden');
-    note.classList.remove('hidden');
-    note.textContent = navigator.setAppBadge
-      ? 'This device supports icon badging.'
-      : 'This device shows a notification instead of a number on the icon.';
-    return;
-  }
-
-  if (perm === 'denied') {
-    card.classList.remove('on'); title.textContent = 'Badge blocked';
-    body.textContent = 'Notifications are blocked for this app, so nothing can update the icon.';
-    go.classList.add('hidden'); test.classList.add('hidden');
-    note.classList.remove('hidden');
-    note.textContent = IS_IOS
-      ? 'iOS Settings > Notifications > Subscribers > Allow Notifications.'
-      : 'Re-allow notifications for this site in your browser settings.';
-    return;
-  }
-
-  card.classList.remove('on'); title.textContent = 'Badge is off';
-  body.textContent = 'Allow notifications and the home-screen icon shows how many subscribers '
-    + 'arrived while the console was closed.';
-  go.classList.remove('hidden'); test.classList.add('hidden'); note.classList.add('hidden');
+/** Does the SERVER hold a live subscription for this device? */
+function pushRegistered() {
+  if (!SWREG || !SWREG.pushManager) return Promise.resolve(false);
+  return SWREG.pushManager.getSubscription()
+    .then(function(sub){ return Boolean(sub); }).catch(function(){ return false; });
 }
 
 function initPWA() {
@@ -502,17 +461,34 @@ $('inst-no').addEventListener('click', function(){
   localStorage.setItem('jobup_admin_install_dismissed','1');
 });
 $('notif-go').addEventListener('click', function(){
-  enablePush().then(function(){ paintBadgeState(); refreshCount(); });
+  var b=$('notif-go'); b.disabled=true; var was=b.textContent; b.textContent='Connecting…';
+  enablePush().then(function(r){
+    b.disabled=false; b.textContent=was;
+    if (!r.ok) {
+      $('bc-note').classList.remove('hidden');
+      $('bc-note').textContent = 'Could not turn the badge on: ' + r.why;
+    }
+    paintBadgeState(); refreshCount();
+  });
 });
 $('badge-test').addEventListener('click', function(){
   var b=$('badge-test'); b.disabled=true; b.textContent='Sending…';
   jpost('/push/test', {}).then(function(r){
     b.disabled=false; b.textContent='Send a test';
     $('bc-note').classList.remove('hidden');
-    $('bc-note').textContent = r.ok
-      ? 'Sent to ' + (r.j.sent||0) + ' device(s). Close the app and the icon should carry the number.'
-      : 'Could not send: ' + ((r.j&&r.j.error)||'unknown');
-  }).catch(function(){ b.disabled=false; b.textContent='Send a test'; });
+    if (!r.ok) { $('bc-note').textContent='Could not send: ' + ((r.j&&r.j.error)||'unknown'); return; }
+    if (!r.j.devices) {
+      // The honest answer, rather than "sent to 0 devices" reading as success.
+      $('bc-note').textContent = 'No device is registered for push yet — tap "Connect this device" first.';
+      paintBadgeState(); return;
+    }
+    $('bc-note').textContent = 'Sent to ' + r.j.sent + ' of ' + r.j.devices
+      + ' device(s). Close the app; the icon should show the number.';
+  }).catch(function(e){
+    b.disabled=false; b.textContent='Send a test';
+    $('bc-note').classList.remove('hidden');
+    $('bc-note').textContent='Could not send: ' + ((e&&e.message)||'unknown');
+  });
 });
 window.addEventListener('appinstalled', function(){ $('instbar').classList.add('hidden'); });
 
