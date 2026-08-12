@@ -866,8 +866,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       // dashboard on the home screen under the wrong name.
       assert.notStrictEqual(adm.id, sub.id, 'the two installs need distinct identities');
       assert.ok(adm.start_url.includes('/subscribers-admin'), 'it must open the console');
-      assert.ok(!adm.icons.some((i) => /\/(icon|favicon)-?\d*\.(png|svg)/.test(i.src.split('?')[0])
-        && !i.src.includes('admin')), 'the console needs its own icon, or two identical ones sit side by side');
+      // The console deliberately wears the JOBUP MARK, at the owner's request.
+      // An earlier build gave it a separate roster icon so the two apps could be
+      // told apart on one home screen; the owner installs the console and not
+      // the subscriber app, so that distinction bought nothing. `id` is what
+      // keeps the two installs separate, and it still differs.
+      assert.ok(adm.icons.every((i) => !i.src.includes('admin-icon')),
+        'the console uses the JobUp mark, not a separate admin icon');
+      assert.ok(adm.icons.some((i) => i.src.includes('icon-512.png')), 'and a 512 to install with');
+      assert.ok(adm.icons.some((i) => i.purpose === 'maskable'), 'maskable for Android');
       // The trailing-slash trap: a start_url outside its own scope opens in a
       // browser tab instead of the app.
       const startPath = new URL('https://x' + adm.start_url).pathname;
@@ -885,6 +892,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(sw.includes('setAppBadge'), 'the push handler is what puts the number on the icon');
     assert.ok(sw.includes('showNotification'),
       'iOS drops a silent push and eventually revokes permission, so it is not optional');
+    assert.ok(!sw.includes('admin-icon'), 'the worker must reference the shipped JobUp icons');
   });
   await t('THE BADGE COUNTS REAL ROWS, NOT A STORED COUNTER', async () => {
     const notify = require(__dirname + '/src/services/admin-notify');

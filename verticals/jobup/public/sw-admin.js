@@ -11,7 +11,7 @@ const CACHE = '__CACHE__';
 const BASE = '__BASE__';
 const ROOT = BASE + '/subscribers-admin';
 const SHELL = [ROOT + '/', ROOT + '/manifest.webmanifest',
-  BASE + '/admin-icon-192.png__V__', BASE + '/admin-icon-512.png__V__'];
+  BASE + '/icon-192.png__V__', BASE + '/icon-512.png__V__'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) =>
@@ -72,8 +72,8 @@ self.addEventListener('push', (e) => {
         count === 1 ? 'New JobUp subscriber' : `${count} new JobUp subscribers`,
         {
           body: data.reason || 'Open the console to see who.',
-          icon: BASE + '/admin-icon-192.png__V__',
-          badge: BASE + '/admin-icon-192.png__V__',
+          icon: BASE + '/icon-192.png__V__',
+          badge: BASE + '/icon-192.png__V__',
           tag: 'jobup-new-subscriber',   // collapses, never stacks up
           renotify: false,
           data: { url: ROOT + '/' },

@@ -44,7 +44,7 @@ const SHELL_VERSION = 'v3';
  *
  * A version in the query makes every icon a NEW url, which no cache can have.
  */
-const ICON_VERSION = '4';
+const ICON_VERSION = '5';
 const V = `?v=${ICON_VERSION}`;
 
 /**
@@ -178,12 +178,18 @@ function adminManifest(base) {
     categories: ['business', 'productivity'],
     lang: 'en',
     dir: 'ltr',
+    // THE JOBUP MARK, at the owner's request — not a separate admin icon.
+    // The trade-off is real and accepted: install both apps on one device and
+    // the two home-screen icons are identical. The owner installs the console,
+    // not the subscriber app, so in practice there is nothing to confuse it
+    // with. `id` still keeps the two installs distinct, so one never replaces
+    // the other.
     icons: [
-      { src: `${b}/admin-icon.svg${V}`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-      { src: `${b}/admin-icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: `${b}/admin-icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: `${b}/admin-icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: `${b}/admin-icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/favicon.svg${V}`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: `${b}/icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-192.png${V}`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: `${b}/icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${b}/icon-512.png${V}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 }
