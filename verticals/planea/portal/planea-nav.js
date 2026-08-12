@@ -174,7 +174,7 @@
     var maya = document.createElement('button');
     maya.className = 'chatbot';
     maya.setAttribute('aria-label', 'Abrir chat con Maya, tu guía financiera IA');
-    maya.innerHTML = '<span class="orbe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span><span class="txt"><span class="t1">Pregúntale a Maya</span><span class="t2">Tu guía financiera IA</span></span>';
+    maya.innerHTML = '<span class="orbe"><img src="' + BASE + 'images/maya.png" alt="Maya" aria-hidden="true"></span><span class="txt"><span class="t1">Pregúntale a Maya</span><span class="t2">Tu guía financiera IA</span></span>';
     document.body.appendChild(maya);
 
     // Wiring
