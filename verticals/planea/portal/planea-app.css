@@ -245,7 +245,7 @@ a{color:inherit;text-decoration:none}
 /* Maya floating button */
 /* Botón de Maya: arriba-centro. En móvil, debajo de la barra superior; en
    escritorio (con la barra lateral de 280px) centrado sobre el contenido. */
-.chatbot{position:fixed;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
+.chatbot{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
 .chatbot:hover{transform:translateX(-50%) translateY(-2px)}
 .chatbot .orbe{width:52px;height:52px;border-radius:50%;background:#fff;overflow:hidden;flex-shrink:0;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
 .chatbot .orbe img{width:100%;height:100%;object-fit:cover;object-position:52% 8%;display:block}
