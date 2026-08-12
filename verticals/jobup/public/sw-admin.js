@@ -67,11 +67,17 @@ self.addEventListener('push', (e) => {
     // iOS only delivers a push to an installed PWA if a notification is shown.
     // Silent pushes are dropped and repeated silent pushes cost the site its
     // push permission, so this is not optional there.
-    if (count > 0 && self.registration.showNotification) {
-      await self.registration.showNotification(
-        count === 1 ? 'New JobUp subscriber' : `${count} new JobUp subscribers`,
+    // ALWAYS show something. iOS drops a push that renders no notification and
+    // eventually revokes the permission, and a test that is silent at zero
+    // cannot be told apart from a broken one.
+    if ((count > 0 || data.test) && self.registration.showNotification) {
+      const title = data.test
+        ? (count === 1 ? 'Badge test — 1 new subscriber'
+                       : `Badge test — ${count} new subscriber${count === 1 ? '' : 's'}`)
+        : (count === 1 ? 'New JobUp subscriber' : `${count} new JobUp subscribers`);
+      await self.registration.showNotification(title,
         {
-          body: data.reason || 'Open the console to see who.',
+          body: data.test ? 'Push is working on this device.' : (data.reason || 'Open the console to see who.'),
           icon: BASE + '/icon-192.png__V__',
           badge: BASE + '/icon-192.png__V__',
           tag: 'jobup-new-subscriber',   // collapses, never stacks up

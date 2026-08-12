@@ -430,6 +430,80 @@ function pushRegistered() {
     .then(function(sub){ return Boolean(sub); }).catch(function(){ return false; });
 }
 
+var STANDALONE = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+var IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+/* One honest status line. The operator should be able to tell at a glance
+   whether the icon will actually carry a number, and if not, why not. */
+function paintBadgeState() {
+  var card = $('notifbar'), dot = $('bc-dot'), title = $('bc-title');
+  var body = $('bc-body'), note = $('bc-note'), test = $('badge-test'), go = $('notif-go');
+  var supported = ('Notification' in window) && ('PushManager' in window) && ('serviceWorker' in navigator);
+  var perm = supported ? Notification.permission : 'unsupported';
+
+  card.classList.remove('hidden');
+
+  if (!supported) {
+    card.classList.remove('on'); title.textContent = 'Badge not available in this browser';
+    body.textContent = 'This browser has no Push or Notification API, so the icon cannot carry a number.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.remove('hidden');
+    note.textContent = 'The count still shows next to the title while the console is open.';
+    return;
+  }
+
+  /* iOS badges INSTALLED web apps only. Saying "allow notifications" to
+     someone in Safari sends them round a loop that cannot succeed. */
+  if (IS_IOS && !STANDALONE) {
+    card.classList.remove('on'); title.textContent = 'Add to Home Screen first';
+    body.textContent = 'On iPhone the badge only works from an installed icon. '
+      + 'Tap Share, then Add to Home Screen, then open it from there and come back to this card.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.add('hidden');
+    return;
+  }
+
+  if (perm === 'granted') {
+    /* Permission alone is NOT the badge working. Without a subscription the
+       server holds, nothing can ever be pushed here — which is exactly the
+       state that previously reported itself as "on". */
+    pushRegistered().then(function(reg){
+      if (reg) {
+        card.classList.add('on'); title.textContent = 'Badge is on';
+        body.textContent = 'The icon shows the number of subscribers who arrived since you last read the list.';
+        go.classList.add('hidden'); test.classList.remove('hidden');
+        note.classList.remove('hidden');
+        note.textContent = navigator.setAppBadge
+          ? 'This device supports icon badging.'
+          : 'This device shows a notification instead of a number on the icon.';
+      } else {
+        card.classList.remove('on'); title.textContent = 'Almost — finish connecting';
+        body.textContent = 'Notifications are allowed, but this device is not registered for push yet, '
+          + 'so nothing can update the icon.';
+        go.classList.remove('hidden'); go.textContent = 'Connect this device';
+        test.classList.add('hidden'); note.classList.add('hidden');
+      }
+    });
+    return;
+  }
+
+  if (perm === 'denied') {
+    card.classList.remove('on'); title.textContent = 'Badge blocked';
+    body.textContent = 'Notifications are blocked for this app, so nothing can update the icon.';
+    go.classList.add('hidden'); test.classList.add('hidden');
+    note.classList.remove('hidden');
+    note.textContent = IS_IOS
+      ? 'iOS Settings > Notifications > Subscribers > Allow Notifications.'
+      : 'Re-allow notifications for this site in your browser settings.';
+    return;
+  }
+
+  card.classList.remove('on'); title.textContent = 'Badge is off';
+  body.textContent = 'Allow notifications and the home-screen icon shows how many subscribers '
+    + 'arrived while the console was closed.';
+  go.classList.remove('hidden'); test.classList.add('hidden'); note.classList.add('hidden');
+}
+
 function initPWA() {
   if (!('serviceWorker' in navigator)) { paintBadgeState(); return; }
   navigator.serviceWorker.register(API.replace(/\/api$/,'') + '/sw.js')

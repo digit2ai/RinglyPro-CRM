@@ -136,7 +136,7 @@ async function removeSubscription(endpoint) {
  * computed per subscription actor. A 404/410 from the push service means the
  * subscription is dead and is deleted rather than retried forever.
  */
-async function pushBadge(reason = 'new subscriber') {
+async function pushBadge(reason = 'new subscriber', opts = {}) {
   const wp = webpush();
   const keys = await vapid();
   if (!wp || !keys) return { ok: false, error: 'web-push unavailable' };
@@ -150,7 +150,12 @@ async function pushBadge(reason = 'new subscriber') {
     const actor = s.actor || '';
     if (!counts.has(actor)) counts.set(actor, (await newCountFor(actor)).count);
     const count = counts.get(actor);
-    const payload = JSON.stringify({ type: 'new_subscriber', count, reason });
+    // `test` makes the worker render something even when the count is zero.
+    // A test that is invisible at zero is indistinguishable from a broken one,
+    // and iOS treats a push that shows no notification as a silent push — which
+    // it drops, and eventually revokes the permission for.
+    const payload = JSON.stringify({
+      type: 'new_subscriber', count, reason, test: Boolean(opts.test) });
     try {
       await wp.sendNotification(
         { endpoint: s.endpoint, keys: s.keys_json || undefined }, payload, { TTL: 3600 });

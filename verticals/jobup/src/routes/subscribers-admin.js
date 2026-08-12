@@ -387,7 +387,7 @@ router.post('/api/push/unsubscribe', requireAdmin, async (req, res) => {
 /** Push the current count to every installed console — verifies the whole chain. */
 router.post('/api/push/test', requireAdmin, async (req, res) => {
   try {
-    const r = await notify.pushBadge('test from the console');
+    const r = await notify.pushBadge('test from the console', { test: true });
     await audit(req.admin.email, 'admin.push.test', JSON.stringify(r));
     res.json(r);
   } catch (e) { res.status(500).json({ error: e.message }); }

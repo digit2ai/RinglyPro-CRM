@@ -960,6 +960,74 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'a ten-column table on a phone is a horizontal-scroll trap, not a report');
     assert.ok(html.includes('env(safe-area-inset'), 'it must clear the notch and home indicator');
   });
+  await t('NO CONSOLE PAGE CALLS A FUNCTION IT NEVER DEFINES', () => {
+    const fs = require('fs');
+    // jpost() was copied into subscribers-admin.html from the social console
+    // and never defined there. It threw inside enablePush's promise chain,
+    // where a catch-all swallowed it — so the device was never registered for
+    // push while the card cheerfully reported "Badge is on" — and it threw
+    // synchronously in the test handler, leaving the button on "Sending…"
+    // forever. A page-local helper that does not exist is invisible until a
+    // human taps the exact button.
+    const BROWSER = new Set(['fetch','setTimeout','setInterval','clearTimeout','clearInterval',
+      'alert','confirm','prompt','atob','btoa','encodeURIComponent','decodeURIComponent',
+      'parseInt','parseFloat','isNaN','String','Number','Boolean','Array','Object','JSON',
+      'Date','Math','Promise','Error','URL','URLSearchParams','Uint8Array','Set','Map',
+      'require','matchMedia','addEventListener','removeEventListener','postMessage','if',
+      'for','while','switch','catch','return','function','typeof','new','else','do',
+      // Browser globals Node has no equivalent for.
+      'requestAnimationFrame','cancelAnimationFrame','getComputedStyle','structuredClone',
+      'queueMicrotask','IntersectionObserver','MutationObserver','ResizeObserver',
+      'Audio','Image','FormData','Headers','Request','Response','AbortController',
+      'Notification','SpeechSynthesisUtterance','WebSocket','Worker','Blob','FileReader']);
+    for (const f of ['subscribers-admin.html', 'social-admin.html', 'app.html', 'index.html']) {
+      const html = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
+      const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
+        .map((m) => m[1]).join('\n')
+        // Strip strings, template literals, regexes and comments first — a
+        // literal like 'device(s)' otherwise reads as a call to device().
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/\/\/[^\n]*/g, ' ')
+        .replace(/'(?:\\.|[^'\\])*'/g, "''")
+        .replace(/"(?:\\.|[^"\\])*"/g, '""')
+        .replace(/`(?:\\.|[^`\\])*`/g, '``');
+      const defined = new Set([
+        ...[...scripts.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]),
+        ...[...scripts.matchAll(/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function|\()/g)].map((m) => m[1]),
+      ]);
+      // Only bare calls at statement/expression level — not obj.method(...).
+      const called = new Set([...scripts.matchAll(/(^|[^.\w$])([a-z][\w$]{2,})\s*\(/g)].map((m) => m[2]));
+      const missing = [...called].filter((n) => !defined.has(n) && !BROWSER.has(n)
+        && !(typeof globalThis[n] === 'function'));
+      assert.deepStrictEqual(missing, [], `${f} calls undefined function(s): ${missing.join(', ')}`);
+    }
+  });
+  await t('"BADGE IS ON" MEANS SUBSCRIBED, NOT MERELY PERMITTED', () => {
+    const fs = require('fs');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    // Permission granted with no subscription stored on the server is a device
+    // nothing can ever be pushed to. It reported itself as working.
+    assert.ok(html.includes('function pushRegistered'), 'the page must check for a real subscription');
+    assert.ok(/pushRegistered\(\)\.then/.test(html), 'and gate the green state on it');
+    assert.ok(html.includes('Almost — finish connecting'), 'the half-connected state needs its own message');
+    // And failures must surface rather than being swallowed.
+    assert.ok(/return \{ ok:false, why:/.test(html), 'enablePush must report WHY it failed');
+    assert.ok(html.includes("'Could not turn the badge on: '"), 'and the card must show it');
+  });
+  await t('a test push is VISIBLE even when the count is zero', () => {
+    const fs = require('fs');
+    const sw = fs.readFileSync(__dirname + '/public/sw-admin.js', 'utf8');
+    const svc = fs.readFileSync(__dirname + '/src/services/admin-notify.js', 'utf8');
+    // A silent push is dropped by iOS and repeated silent pushes cost the site
+    // its permission — and a test that shows nothing at zero cannot be told
+    // apart from a broken one.
+    assert.ok(/count > 0 \|\| data\.test/.test(sw), 'a test must render even at zero');
+    assert.ok(sw.includes('Badge test'), 'and say that it is a test');
+    assert.ok(svc.includes('test: Boolean(opts.test)'), 'the flag must reach the payload');
+    const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(html.includes('No device is registered for push yet'),
+      '"sent to 0 devices" must not read as success');
+  });
   await t('THE BADGE CARD TELLS THE TRUTH ABOUT WHY IT IS OFF', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
