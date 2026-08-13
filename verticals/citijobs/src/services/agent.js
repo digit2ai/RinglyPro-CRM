@@ -1,0 +1,307 @@
+'use strict';
+
+/**
+ * The daily hunter.
+ *
+ * Off by default behind CITIJOBS_GO=1; state is visible at /citi-tracker/health
+ * and /api/v1/agent/status, never hidden in env.
+ *
+ * SAFETY, in the order each could go wrong:
+ *  1. A DATABASE CLAIM, not an in-process flag. Render runs more than one
+ *     instance; without the claim every instance runs the whole thing and bills
+ *     for it. Enforced by a unique index on (tenant_id, run_date) for scheduled
+ *     runs; manual runs are always allowed.
+ *  2. A hard HTTP request budget. Exhausting it STOPS the run and says so.
+ *  3. A hard model cost cap, per run.
+ *  4. It never applies to anything and never contacts anyone.
+ *  5. It may set exactly ONE status automatically — see closeSweep().
+ */
+
+const { Op } = require('sequelize');
+const { Profile, Req, Tracked, Match, Query, Run } = require('../models');
+const workday = require('./workday');
+const prefilter = require('./prefilter');
+const matcher = require('./matcher');
+const skills = require('./skills');
+
+const DETAIL_CAP = Number(process.env.CITIJOBS_DETAIL_CAP || 40);
+const COST_CAP_CENTS = Number(process.env.CITIJOBS_COST_CAP_USD || 0.5) * 100;
+
+function today() { return new Date().toISOString().slice(0, 10); }
+function enabled() { return String(process.env.CITIJOBS_GO || '') === '1'; }
+
+/** Claim the day. Returns the Run row, or null when another instance holds it. */
+async function claim(tenant_id, trigger) {
+  try {
+    return await Run.create({ tenant_id, run_date: today(), trigger: trigger || 'manual' });
+  } catch (e) {
+    if (e && e.name === 'SequelizeUniqueConstraintError') return null;
+    throw e;
+  }
+}
+
+/** Upsert one posting into the shared pool. */
+async function upsertReq(tenant_id, norm, { source = 'agent' } = {}) {
+  if (!norm || !norm.req_id) return { row: null, created: false };
+  let row = await Req.findOne({ where: { tenant_id, req_id: norm.req_id } });
+  if (!row) {
+    row = await Req.create(Object.assign({ tenant_id, source }, norm));
+    return { row, created: true };
+  }
+  row.last_seen_at = new Date();
+  // Only overwrite with better information; a list-only refresh must not blank
+  // out the detail fields a previous run paid for.
+  for (const k of ['title', 'external_path', 'url_workday', 'location']) {
+    if (norm[k] && !row[k]) row[k] = norm[k];
+  }
+  if (norm.detail_fetched) {
+    for (const k of ['address', 'remote_type', 'time_type', 'posted_on', 'close_date',
+      'salary_min_cents', 'salary_max_cents', 'salary_source', 'description_text',
+      'job_family', 'job_family_group', 'raw']) {
+      if (norm[k] !== null && norm[k] !== undefined) row[k] = norm[k];
+    }
+    row.detail_fetched = true;
+    row.feed_status = norm.feed_status || 'open';
+  }
+  await row.save();
+  return { row, created: false };
+}
+
+/** Pull the detail payload for reqs that have never had one. */
+async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
+  const pending = await Req.findAll({
+    where: { tenant_id, detail_fetched: false, external_path: { [Op.ne]: null } },
+    order: [['first_seen_at', 'DESC']],
+    limit: cap
+  });
+  let filled = 0;
+  for (const row of pending) {
+    try {
+      const detail = await workday.getDetail(row.external_path, { budget });
+      if (!detail) continue;
+      const norm = workday.normalize({ externalPath: row.external_path, bulletFields: [row.req_id] }, detail);
+      await upsertReq(tenant_id, norm);
+      filled++;
+    } catch (e) {
+      if (e.budget) { run.budget_hit = true; break; }
+      run.errors = (run.errors || []).concat([{ step: 'detail', req_id: row.req_id, error: e.message }]);
+    }
+  }
+  return filled;
+}
+
+/**
+ * THE ONE AUTOMATIC STATUS CHANGE THIS AGENT IS ALLOWED.
+ *
+ * A requisition on the board at New or Saved whose posting has left the feed or
+ * flipped canApply:false is closed as expired, with a note and a date.
+ *
+ * It must never auto-advance Applied -> Interview -> Offer, and must never
+ * auto-close something already applied to: that outcome comes from a human at
+ * Citi, not from a missing row in a JSON feed.
+ */
+async function closeSweep(tenant_id, budget, run) {
+  const open = await Tracked.findAll({
+    where: { tenant_id, status: { [Op.in]: ['new', 'saved'] }, archived: false },
+    limit: 60
+  });
+  let closed = 0;
+  for (const t of open) {
+    const req = await Req.findOne({ where: { tenant_id, req_id: t.req_id } });
+    if (!req) continue;
+
+    // Re-check the specific requisition rather than inferring absence from a
+    // query that simply did not match it today.
+    let gone = false;
+    try {
+      const found = await workday.findByReqId(t.req_id, { budget, withDetail: false });
+      gone = !found;
+      if (!gone && req.feed_status === 'cannot_apply') gone = true;
+    } catch (e) {
+      if (e.budget) { run.budget_hit = true; break; }
+      continue; // a transport error is not evidence that a job is gone
+    }
+    if (!gone) continue;
+
+    req.feed_status = 'gone_from_feed';
+    await req.save();
+    t.status = 'closed';
+    t.status_reason = 'expired';
+    t.status_changed_at = new Date();
+    t.notes = [t.notes, `Auto-closed ${today()}: the posting is no longer in Citi's feed.`]
+      .filter(Boolean).join('\n');
+    await t.save();
+    closed++;
+  }
+  return closed;
+}
+
+/** Score and board one profile's fresh candidates. */
+async function scoreProfile(tenant_id, profile, run, budgetCents) {
+  const tracked = await Tracked.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id'] });
+  const already = new Set(tracked.map((t) => t.req_id));
+  const scored = await Match.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id'] });
+  const seen = new Set(scored.map((m) => m.req_id));
+
+  const pool = await Req.findAll({
+    where: { tenant_id, detail_fetched: true, feed_status: 'open' },
+    order: [['first_seen_at', 'DESC']],
+    limit: 400
+  });
+
+  const terms = await skills.searchTerms(profile.id);
+  const claimable = await skills.claimable(profile.id);
+
+  const candidates = [];
+  for (const req of pool) {
+    if (already.has(req.req_id) || seen.has(req.req_id)) continue;
+    const pre = prefilter.score(req, profile, terms);
+    if (!prefilter.shouldScore(pre, profile)) {
+      // Still record the deterministic verdict so the pool is explainable and
+      // the same requisition is not re-evaluated tomorrow for free.
+      await Match.create({
+        tenant_id, profile_id: profile.id, req_id: req.req_id,
+        score: pre.score, rationale: pre.reasons.slice(0, 2).join('; ') || 'below pre-filter floor',
+        scored_by: 'heuristic', is_simulated: true, cost_cents: 0
+      });
+      continue;
+    }
+    candidates.push(req);
+  }
+
+  const { results, spent_cents, capped } = await matcher.scoreBatch(
+    candidates, profile, terms, claimable, { capCents: budgetCents }
+  );
+  if (capped) run.notes = [run.notes, `Model cost cap reached while scoring ${profile.slug}.`].filter(Boolean).join(' ');
+
+  let boarded = 0;
+  for (const r of results) {
+    await Match.create({
+      tenant_id, profile_id: profile.id, req_id: r.req_id,
+      score: r.score, rationale: r.rationale,
+      scored_by: r.scored_by, is_simulated: r.is_simulated, model: r.model,
+      cost_cents: r.cost_cents || 0
+    });
+    if (r.score >= (profile.score_threshold || 70)) {
+      const exists = await Tracked.findOne({ where: { tenant_id, profile_id: profile.id, req_id: r.req_id } });
+      if (!exists) {
+        await Tracked.create({
+          tenant_id, profile_id: profile.id, req_id: r.req_id,
+          status: 'new', source: 'agent'
+        });
+        boarded++;
+      }
+    }
+  }
+  return { scored: results.length, boarded, spent_cents };
+}
+
+/** One full pass. */
+async function runDaily(tenant_id, { trigger = 'manual', maxRequests, force = false } = {}) {
+  if (trigger === 'schedule' && !enabled() && !force) {
+    return { skipped: true, reason: 'CITIJOBS_GO is not 1' };
+  }
+  const run = await claim(tenant_id, trigger);
+  if (!run) return { skipped: true, reason: 'another instance already claimed today' };
+
+  const budget = workday.newBudget(maxRequests);
+  let costCents = 0;
+
+  try {
+    const queries = await Query.findAll({ where: { tenant_id, enabled: true }, order: [['weight', 'DESC']] });
+    const profiles = await Profile.findAll({ where: { tenant_id, active: true } });
+
+    let seen = 0, created = 0;
+    for (const q of queries) {
+      if (budget.hit) break;
+      try {
+        const { total, postings } = await workday.listAll({
+          searchText: q.search_text, maxPages: q.max_pages || 5, budget
+        });
+        q.last_run_at = new Date();
+        q.last_total = total;
+        await q.save();
+        run.queries_run += 1;
+
+        for (const p of postings) {
+          const norm = workday.normalize(p, null);
+          if (!norm.req_id) continue;
+          const { created: isNew } = await upsertReq(tenant_id, norm);
+          seen++;
+          if (isNew) created++;
+        }
+      } catch (e) {
+        if (e.budget) { run.budget_hit = true; break; }
+        run.errors = (run.errors || []).concat([{ step: 'query', label: q.label, error: e.message }]);
+      }
+    }
+    run.reqs_seen = seen;
+    run.reqs_new = created;
+
+    if (!budget.hit) await fillDetails(tenant_id, budget, run);
+
+    let scoredTotal = 0, boardedTotal = 0;
+    for (const profile of profiles) {
+      const remaining = Math.max(0, COST_CAP_CENTS - costCents);
+      if (remaining <= 0) break;
+      const r = await scoreProfile(tenant_id, profile, run, remaining);
+      scoredTotal += r.scored;
+      boardedTotal += r.boarded;
+      costCents += r.spent_cents || 0;
+    }
+    run.scored = scoredTotal;
+    run.boarded = boardedTotal;
+
+    if (!budget.hit) run.closed_swept = await closeSweep(tenant_id, budget, run);
+
+    run.http_requests = budget.used;
+    run.budget_hit = run.budget_hit || budget.hit;
+    run.cost_cents = costCents;
+    run.ok = true;
+    run.finished_at = new Date();
+    await run.save();
+
+    return {
+      ok: true, run_id: run.id, queries_run: run.queries_run, http_requests: run.http_requests,
+      reqs_seen: run.reqs_seen, reqs_new: run.reqs_new, scored: run.scored, boarded: run.boarded,
+      closed_swept: run.closed_swept, cost_usd: Number((costCents / 100).toFixed(4)),
+      budget_hit: run.budget_hit, errors: run.errors || []
+    };
+  } catch (e) {
+    run.ok = false;
+    run.finished_at = new Date();
+    run.errors = (run.errors || []).concat([{ step: 'run', error: e.message }]);
+    run.http_requests = budget.used;
+    await run.save();
+    throw e;
+  }
+}
+
+/** Import one requisition by req id or by any URL a human might paste. */
+async function importReq(tenant_id, input, { source = 'manual' } = {}) {
+  const reqId = workday.reqIdFromInput(input);
+  if (!reqId) {
+    const e = new Error('No Citi requisition id found in that input. Paste a req id (for example 26974948) or a Workday job URL.');
+    e.code = 'NO_REQ_ID';
+    throw e;
+  }
+  const budget = workday.newBudget(6);
+  const found = await workday.findByReqId(reqId, { budget });
+  if (!found) {
+    const e = new Error(`Requisition ${reqId} was not found in Citi's feed. It may have closed.`);
+    e.code = 'NOT_FOUND';
+    throw e;
+  }
+  const { row } = await upsertReq(tenant_id, found.normalized, { source });
+
+  // A jobs.citi.com deep link is KEPT when a human pastes one, and never
+  // constructed: its Phenom posting id exists nowhere in the Workday payload.
+  const careers = workday.citiCareersUrl(input);
+  if (careers && row && !row.url_citi_careers) {
+    row.url_citi_careers = careers;
+    await row.save();
+  }
+  return row;
+}
+
+module.exports = { runDaily, claim, upsertReq, fillDetails, closeSweep, scoreProfile, importReq, enabled, today };

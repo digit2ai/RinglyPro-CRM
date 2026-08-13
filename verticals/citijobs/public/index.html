@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Citi Opportunity Tracker</title>
+<style>
+  :root { --bg:#0b1220; --card:#121a2b; --card2:#0e1626; --line:#22304a; --txt:#e9eef7;
+          --mut:#8a98b0; --accent:#2f6fed; --ok:#3fb950; --warn:#d29922; --bad:#f85149; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-size:14px;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  a { color:#7aa2f7; }
+  header { position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#101a2e,#0d1526);
+           border-bottom:1px solid var(--line); padding:10px 16px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .brand { font-weight:700; font-size:15px; margin-right:4px; white-space:nowrap; }
+  .grow { flex:1 1 260px; min-width:200px; }
+  input, select, textarea, button { font:inherit; color:var(--txt); }
+  input, select, textarea { background:var(--card2); border:1px solid var(--line); border-radius:9px; padding:9px 11px; width:100%; }
+  textarea { min-height:70px; resize:vertical; }
+  button { background:var(--accent); border:0; border-radius:9px; padding:9px 14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  button.ghost { background:transparent; border:1px solid var(--line); font-weight:500; }
+  button.sm { padding:5px 10px; font-size:12px; }
+  button:disabled { opacity:.55; cursor:default; }
+  .pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--mut);
+          border:1px solid var(--line); border-radius:999px; padding:5px 11px; white-space:nowrap; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--mut); }
+  .dot.on { background:var(--ok); } .dot.off { background:var(--warn); }
+  nav { display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+  nav button { background:transparent; border:1px solid transparent; color:var(--mut); padding:6px 12px; border-radius:8px; }
+  nav button.active { background:var(--card); border-color:var(--line); color:var(--txt); }
+  main { padding:16px; max-width:1500px; margin:0 auto; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .chip { font-size:12px; padding:6px 12px; border-radius:999px; border:1px solid var(--line);
+          background:transparent; color:var(--mut); cursor:pointer; }
+  .chip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--mut);
+       padding:8px 10px; border-bottom:1px solid var(--line); font-weight:600; }
+  td { padding:11px 10px; border-bottom:1px solid #1a2438; vertical-align:top; }
+  tr.row:hover { background:#0f1829; }
+  .t { font-weight:600; cursor:pointer; }
+  .sub { color:var(--mut); font-size:12px; margin-top:3px; }
+  .score { font-weight:700; font-size:15px; }
+  .sim { font-size:10px; color:var(--warn); border:1px solid var(--warn); border-radius:4px; padding:1px 5px; margin-left:6px; }
+  .urgent { color:var(--bad); font-weight:700; }
+  .soon { color:var(--warn); font-weight:600; }
+  .muted { color:var(--mut); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .drawer { position:fixed; inset:0; background:rgba(4,8,16,.72); display:none; z-index:40; }
+  .drawer.open { display:block; }
+  .panel { position:absolute; right:0; top:0; bottom:0; width:min(720px,100%); background:var(--bg);
+           border-left:1px solid var(--line); overflow:auto; padding:20px; }
+  .close { position:absolute; right:14px; top:12px; }
+  pre.desc { white-space:pre-wrap; font-family:inherit; font-size:13px; line-height:1.5; color:#cdd6e6;
+             background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:14px; max-height:340px; overflow:auto; }
+  .gap { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:9px 0; border-bottom:1px solid #1a2438; }
+  .gap b { min-width:190px; }
+  .kv { display:flex; gap:8px; font-size:13px; padding:4px 0; }
+  .kv span:first-child { color:var(--mut); min-width:150px; }
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:22px; background:#16233c;
+           border:1px solid var(--line); border-radius:10px; padding:12px 18px; z-index:60; display:none; max-width:90vw; }
+  .cov { height:6px; background:#1a2438; border-radius:4px; overflow:hidden; margin-top:6px; }
+  .cov i { display:block; height:100%; background:var(--ok); }
+  @media (max-width:820px){ th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5){ display:none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand">Citi Opportunity Tracker</div>
+    <select id="profileSel" style="width:auto; min-width:170px"></select>
+    <a class="pill" href="https://jobs.citi.com/job/tampa" target="_blank" rel="noopener">Browse jobs.citi.com/job/tampa</a>
+    <div class="grow"><input id="importBox" placeholder="Paste a Citi req id (26974948) or a job URL, then press Enter"></div>
+    <button id="importBtn">Import</button>
+    <span class="pill" id="agentPill"><span class="dot" id="agentDot"></span><span id="agentTxt">loading</span></span>
+    <button class="ghost" id="runBtn">Run agent</button>
+  </div>
+  <nav>
+    <button data-tab="board" class="active">Board</button>
+    <button data-tab="pool">Pool</button>
+    <button data-tab="skills">Skills</button>
+    <button data-tab="queries">Searches</button>
+    <button data-tab="agent">Agent</button>
+  </nav>
+</header>
+
+<main>
+  <section id="tab-board">
+    <div class="chips" id="statusChips"></div>
+    <table><thead><tr>
+      <th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th>Status</th><th>Résumé</th>
+    </tr></thead><tbody id="boardBody"></tbody></table>
+    <p class="muted" id="boardEmpty" style="display:none">Nothing on the board yet. Run the agent, or paste a req id above.</p>
+  </section>
+
+  <section id="tab-pool" style="display:none">
+    <div class="card"><input id="poolQ" placeholder="Search the requisition pool by title, location or req id"></div>
+    <table><thead><tr>
+      <th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th></th>
+    </tr></thead><tbody id="poolBody"></tbody></table>
+  </section>
+
+  <section id="tab-skills" style="display:none">
+    <div class="card">
+      <b>Verified skills may appear on a résumé. Vocabulary only widens the daily search.</b>
+      <div class="sub">Nothing automated can move a term from vocabulary to verified — that takes you, with evidence.
+      This is what keeps the loop pointed at your real record instead of at whatever ten postings happened to ask for.</div>
+    </div>
+    <div class="chips" id="skillChips"></div>
+    <div id="skillList"></div>
+  </section>
+
+  <section id="tab-queries" style="display:none">
+    <div class="card">
+      <b>Saved searches</b>
+      <div class="sub">Workday caps any single search at 2,000 reported results, so discovery is many targeted
+      queries deduped by requisition id — never one firehose.</div>
+      <div class="bar" style="margin-top:12px">
+        <div class="grow"><input id="qText" placeholder="New search text, e.g. data lineage"></div>
+        <button id="qAdd">Add search</button>
+      </div>
+    </div>
+    <table><thead><tr><th>Label</th><th>Search text</th><th>Pages</th><th>Last total</th><th>On</th><th></th></tr></thead>
+      <tbody id="queryBody"></tbody></table>
+  </section>
+
+  <section id="tab-agent" style="display:none">
+    <div class="card" id="agentCard"></div>
+    <div class="card"><b>Recent runs</b><table><thead><tr><th>Date</th><th>OK</th><th>New</th><th>Boarded</th><th>Requests</th></tr></thead><tbody id="runBody"></tbody></table></div>
+  </section>
+</main>
+
+<div class="drawer" id="drawer"><div class="panel" id="panel"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var API = '/citi-tracker/api/v1';
+var state = { profile: null, profiles: [], status: '', skillKind: '' };
+var STATUSES = ['new','saved','applied','interview','offer','closed'];
+var CLOSE_REASONS = ['rejected','withdrawn','filled','expired','not_interested'];
+
+function toast(m, ms) {
+  var t = document.getElementById('toast');
+  t.textContent = m; t.style.display = 'block';
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.style.display='none'; }, ms || 3800);
+}
+async function api(path, opts) {
+  var r = await fetch(API + path, Object.assign({ credentials:'include', headers:{'Content-Type':'application/json'} }, opts||{}));
+  if (r.status === 401) { location.href = '/citi-tracker/login'; throw new Error('unauthorized'); }
+  var j = await r.json().catch(function(){ return {}; });
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function money(c){ return c==null ? null : '$' + Number(c/100).toLocaleString('en-US',{maximumFractionDigits:0}); }
+
+function salaryCell(r) {
+  if (r.salary_source !== 'stated' || r.salary_min_cents == null) {
+    return '<span class="muted">not stated</span>';
+  }
+  return money(r.salary_min_cents) + ' – ' + money(r.salary_max_cents);
+}
+function closesCell(r) {
+  if (r.close_date == null) return '<span class="muted">not stated</span>';
+  var d = r.days_to_close;
+  var cls = d != null && d <= 3 ? 'urgent' : (d != null && d <= 7 ? 'soon' : '');
+  var txt = d == null ? r.close_date : (d < 0 ? 'closed' : (d === 0 ? 'today' : d + ' days'));
+  return '<span class="'+cls+'">'+esc(txt)+'</span><div class="sub">'+esc(r.close_date)+'</div>';
+}
+function matchCell(r) {
+  if (!r.match) return '<span class="muted">—</span>';
+  var sim = r.match.is_simulated ? '<span class="sim">no model</span>' : '';
+  return '<span class="score">'+r.match.score+'</span>'+sim+'<div class="sub">'+esc((r.match.rationale||'').slice(0,110))+'</div>';
+}
+
+// ── Board ────────────────────────────────────────────────────────────────────
+async function loadBoard() {
+  var q = '?profile_id=' + state.profile.id + (state.status ? '&status=' + state.status : '');
+  var d = await api('/board' + q);
+  var b = document.getElementById('boardBody');
+  b.innerHTML = '';
+  document.getElementById('boardEmpty').style.display = d.items.length ? 'none' : 'block';
+  d.items.forEach(function (it) {
+    var r = it.req;
+    var tr = document.createElement('tr');
+    tr.className = 'row';
+    tr.innerHTML =
+      '<td><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">'+esc(r.req_id)+'</a>'+
+        '<div class="sub">'+esc(r.remote_type||'')+' '+esc(r.time_type||'')+'</div></td>'+
+      '<td><div class="t" data-req="'+esc(r.req_id)+'">'+esc(r.title)+'</div>'+
+        '<div class="sub">'+esc(r.location||'')+'</div></td>'+
+      '<td>'+closesCell(r)+'</td>'+
+      '<td>'+salaryCell(r)+'</td>'+
+      '<td>'+matchCell(r)+'</td>'+
+      '<td>'+statusSelect(it)+'</td>'+
+      '<td>'+(it.tailoring
+        ? '<a href="/citi-tracker'+esc(it.tailoring.pdf_url||('/api/v1/tailorings/'+it.tailoring.id+'/pdf'))+'" target="_blank" rel="noopener">PDF v'+it.tailoring.version+'</a>'+
+          '<div class="sub">'+(it.tailoring.coverage_pct!=null?it.tailoring.coverage_pct+'% keywords':'')+'</div>'
+        : '<button class="ghost sm" data-tailor="'+esc(r.req_id)+'">Tailor</button>')+'</td>';
+    b.appendChild(tr);
+  });
+  b.querySelectorAll('[data-req]').forEach(function (el) {
+    el.onclick = function () { openReq(el.getAttribute('data-req')); };
+  });
+  b.querySelectorAll('[data-tailor]').forEach(function (el) {
+    el.onclick = function () { doTailor(el.getAttribute('data-tailor'), el); };
+  });
+  b.querySelectorAll('select[data-track]').forEach(function (el) {
+    el.onchange = function () { changeStatus(el.getAttribute('data-track'), el.value); };
+  });
+}
+function statusSelect(it) {
+  var o = STATUSES.map(function (s) {
+    return '<option value="'+s+'"'+(s===it.status?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  var reason = it.status === 'closed' && it.status_reason ? '<div class="sub">'+esc(it.status_reason)+'</div>' : '';
+  return '<select data-track="'+it.id+'" style="width:auto">'+o+'</select>'+reason;
+}
+async function changeStatus(id, status) {
+  var body = { status: status };
+  if (status === 'closed') {
+    var reason = prompt('Why closed? ' + CLOSE_REASONS.join(' / '), 'rejected');
+    if (!reason || CLOSE_REASONS.indexOf(reason) === -1) { toast('Closing needs a reason. Nothing changed.'); loadBoard(); return; }
+    body.status_reason = reason;
+  }
+  try {
+    var r = await api('/board/' + id, { method:'PATCH', body: JSON.stringify(body) });
+    toast('Status: ' + r.status + (r.terms_retrained ? ' — ' + r.terms_retrained + ' search terms re-weighted' : ''));
+    loadBoard();
+  } catch (e) { toast(e.message); loadBoard(); }
+}
+
+// ── Pool ─────────────────────────────────────────────────────────────────────
+async function loadPool() {
+  var q = document.getElementById('poolQ').value.trim();
+  var d = await api('/reqs?profile_id=' + state.profile.id + (q ? '&q=' + encodeURIComponent(q) : ''));
+  var b = document.getElementById('poolBody');
+  b.innerHTML = '';
+  d.items.forEach(function (r) {
+    var tr = document.createElement('tr');
+    tr.className = 'row';
+    tr.innerHTML =
+      '<td><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">'+esc(r.req_id)+'</a></td>'+
+      '<td><div class="t" data-req="'+esc(r.req_id)+'">'+esc(r.title)+'</div><div class="sub">'+esc(r.location||'')+'</div></td>'+
+      '<td>'+closesCell(r)+'</td><td>'+salaryCell(r)+'</td><td>'+matchCell(r)+'</td>'+
+      '<td>'+(r.tracked ? '<span class="muted">on board</span>' : '<button class="ghost sm" data-add="'+esc(r.req_id)+'">Save</button>')+'</td>';
+    b.appendChild(tr);
+  });
+  b.querySelectorAll('[data-req]').forEach(function (el) { el.onclick = function(){ openReq(el.getAttribute('data-req')); }; });
+  b.querySelectorAll('[data-add]').forEach(function (el) {
+    el.onclick = async function () {
+      await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: el.getAttribute('data-add'), status:'saved' }) });
+      toast('Saved to the board'); loadPool();
+    };
+  });
+}
+
+// ── Requisition drawer ───────────────────────────────────────────────────────
+async function openReq(reqId) {
+  var r = await api('/reqs/' + encodeURIComponent(reqId) + '?profile_id=' + state.profile.id);
+  var tl = await api('/tailorings?profile_id=' + state.profile.id + '&req_id=' + encodeURIComponent(reqId));
+  var p = document.getElementById('panel');
+  p.innerHTML =
+    '<button class="ghost close" id="x">Close</button>'+
+    '<h2 style="margin:0 30px 4px 0">'+esc(r.title)+'</h2>'+
+    '<div class="sub">Req '+esc(r.req_id)+' · '+esc(r.location||'')+' · '+esc(r.remote_type||'')+' · '+esc(r.time_type||'')+'</div>'+
+    '<div class="card" style="margin-top:14px">'+
+      '<div class="kv"><span>Posted</span><span>'+esc(r.posted_on||'not stated')+'</span></div>'+
+      '<div class="kv"><span>Anticipated close</span><span>'+esc(r.close_date||'not stated')+
+        (r.days_to_close!=null?' ('+r.days_to_close+' days)':'')+'</span></div>'+
+      '<div class="kv"><span>Salary range</span><span>'+salaryCell(r)+'</span></div>'+
+      '<div class="kv"><span>Apply (canonical)</span><span><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">Workday posting</a></span></div>'+
+      '<div class="kv"><span>Citi careers link</span><span>'+(r.url_citi_careers
+          ? '<a href="'+esc(r.url_citi_careers)+'" target="_blank" rel="noopener">pasted deep link</a>'
+          : '<span class="muted">none pasted</span> · <a href="'+esc(r.url_citi_search)+'" target="_blank" rel="noopener">search jobs.citi.com</a>')+'</span></div>'+
+      '<div class="kv"><span>Feed status</span><span>'+esc(r.feed_status)+'</span></div>'+
+    '</div>'+
+    '<div class="bar" style="margin-bottom:12px"><button id="tailorBtn">Tailor my résumé for this req</button>'+
+      '<button class="ghost" id="saveBtn">Save to board</button></div>'+
+    '<div id="tailorOut"></div>'+
+    (tl.items.length ? '<div class="card"><b>Tailorings</b>'+tl.items.map(function(t){
+        return '<div class="kv"><span>v'+t.version+' · '+(t.coverage&&t.coverage.pct!=null?t.coverage.pct+'% keywords':'')+
+          (t.is_simulated?' <span class="sim">no model</span>':'')+'</span>'+
+          '<span><a href="/citi-tracker/api/v1/tailorings/'+t.id+'/pdf" target="_blank" rel="noopener">Open PDF</a> · '+
+          '<a href="/citi-tracker/api/v1/tailorings/'+t.id+'/pdf?dl=1">Download</a></span></div>';
+      }).join('')+'</div>' : '')+
+    '<h3>Posting</h3><pre class="desc">'+esc(r.description_text||'(no description captured yet)')+'</pre>';
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('x').onclick = closeDrawer;
+  document.getElementById('saveBtn').onclick = async function () {
+    await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: r.req_id, status:'saved' }) });
+    toast('Saved to the board'); loadBoard();
+  };
+  document.getElementById('tailorBtn').onclick = function (e) { doTailor(r.req_id, e.target, true); };
+}
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
+document.getElementById('drawer').onclick = function (e) { if (e.target.id === 'drawer') closeDrawer(); };
+
+// ── Tailoring ────────────────────────────────────────────────────────────────
+async function doTailor(reqId, btn, inDrawer) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Tailoring…'; }
+  try {
+    var out = await api('/tailor', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: reqId }) });
+    toast('Résumé v' + out.version + ' ready — ' + out.keyword_coverage.pct + '% keyword coverage, ' + out.vocabulary_learned + ' new search terms learned');
+    if (inDrawer) renderTailorOut(out, reqId);
+    loadBoard();
+    if (!inDrawer) window.open('/citi-tracker/api/v1/tailorings/' + out.id + '/pdf', '_blank');
+  } catch (e) { toast(e.message); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Tailor'; } }
+}
+function renderTailorOut(out, reqId) {
+  var cov = out.keyword_coverage;
+  var el = document.getElementById('tailorOut');
+  el.innerHTML =
+    '<div class="card"><b>Résumé v'+out.version+'</b>'+(out.is_simulated?' <span class="sim">no model — deterministic selection</span>':'')+
+    '<div class="sub">'+cov.covered_count+' of '+cov.total+' posting keywords present in the tailored résumé.</div>'+
+    '<div class="cov"><i style="width:'+cov.pct+'%"></i></div>'+
+    '<div class="bar" style="margin-top:12px">'+
+      '<a href="/citi-tracker/api/v1/tailorings/'+out.id+'/pdf" target="_blank" rel="noopener"><button>Open PDF</button></a>'+
+      '<a href="/citi-tracker/api/v1/tailorings/'+out.id+'/pdf?dl=1"><button class="ghost">Download</button></a>'+
+    '</div>'+
+    (out.dropped && out.dropped.length ? '<div class="sub" style="margin-top:10px">Refused verification and dropped: '+
+      esc(JSON.stringify(out.dropped).slice(0,300))+'</div>' : '')+
+    (cov.missing && cov.missing.length ? '<div class="sub" style="margin-top:10px">Not covered: '+esc(cov.missing.slice(0,12).join(', '))+'</div>' : '')+
+    '</div>'+
+    (out.gaps && out.gaps.length ? '<div class="card"><b>Confirm before you claim it</b>'+
+      '<div class="sub">This posting asks for the following, and your profile has no evidence of it. Saying "I did this" makes it claimable on every future résumé.</div>'+
+      out.gaps.map(function (g) {
+        return '<div class="gap"><b>'+esc(g.term)+'</b>'+
+          '<button class="sm" data-gap-yes="'+esc(g.term)+'">I did this</button>'+
+          '<button class="ghost sm" data-gap-adj="'+esc(g.term)+'">Adjacent</button>'+
+          '<button class="ghost sm" data-gap-no="'+esc(g.term)+'">No</button></div>';
+      }).join('')+'</div>' : '');
+
+  el.querySelectorAll('[data-gap-yes]').forEach(function (b) {
+    b.onclick = async function () {
+      var term = b.getAttribute('data-gap-yes');
+      var ev = prompt('Where did you do "' + term + '"? One sentence — this is what has to survive an interview.');
+      if (!ev) return;
+      try {
+        await api('/skills/confirm', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, term: term, evidence: ev, req_id: reqId }) });
+        toast('"' + term + '" is now claimable on every future résumé');
+        b.parentElement.innerHTML = '<b>' + esc(term) + '</b><span class="muted">verified</span>';
+      } catch (e) { toast(e.message); }
+    };
+  });
+  el.querySelectorAll('[data-gap-adj]').forEach(function (b) {
+    b.onclick = async function () {
+      await api('/skills/adjacent', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, term: b.getAttribute('data-gap-adj') }) });
+      toast('Added to search vocabulary only'); b.parentElement.innerHTML = '<b>'+esc(b.getAttribute('data-gap-adj'))+'</b><span class="muted">search only</span>';
+    };
+  });
+  el.querySelectorAll('[data-gap-no]').forEach(function (b) {
+    b.onclick = async function () {
+      await api('/skills/reject', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, term: b.getAttribute('data-gap-no') }) });
+      toast('Never suggested again'); b.parentElement.innerHTML = '<b>'+esc(b.getAttribute('data-gap-no'))+'</b><span class="muted">rejected</span>';
+    };
+  });
+}
+
+// ── Skills ───────────────────────────────────────────────────────────────────
+async function loadSkills() {
+  var d = await api('/skills?profile_id=' + state.profile.id + (state.skillKind ? '&kind=' + state.skillKind : ''));
+  var chips = document.getElementById('skillChips');
+  var counts = d.counts || {};
+  chips.innerHTML = [['','All'],['verified','Verified '+(counts.verified||0)],['vocabulary','Vocabulary '+(counts.vocabulary||0)],['rejected','Rejected '+(counts.rejected||0)]]
+    .map(function (k) { return '<button class="chip'+(state.skillKind===k[0]?' active':'')+'" data-k="'+k[0]+'">'+k[1]+'</button>'; }).join('');
+  chips.querySelectorAll('[data-k]').forEach(function (b) {
+    b.onclick = function () { state.skillKind = b.getAttribute('data-k'); loadSkills(); };
+  });
+  document.getElementById('skillList').innerHTML = '<table><thead><tr><th>Term</th><th>Kind</th><th>Weight</th><th>Evidence</th><th></th></tr></thead><tbody>' +
+    d.items.map(function (s) {
+      return '<tr><td><b>'+esc(s.term)+'</b><div class="sub">'+esc(s.source)+(s.first_seen_req_id?' · req '+esc(s.first_seen_req_id):'')+'</div></td>'+
+        '<td>'+esc(s.kind)+'</td><td>'+Number(s.weight).toFixed(2)+'</td>'+
+        '<td class="sub">'+esc(s.evidence||'')+'</td>'+
+        '<td>'+(s.kind !== 'verified' ? '<button class="ghost sm" data-v="'+esc(s.term)+'">Verify</button>' : '')+'</td></tr>';
+    }).join('') + '</tbody></table>';
+  document.querySelectorAll('[data-v]').forEach(function (b) {
+    b.onclick = async function () {
+      var term = b.getAttribute('data-v');
+      var ev = prompt('Where did you do "' + term + '"?');
+      if (!ev) return;
+      try { await api('/skills/confirm', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, term: term, evidence: ev }) }); loadSkills(); }
+      catch (e) { toast(e.message); }
+    };
+  });
+}
+
+// ── Searches ─────────────────────────────────────────────────────────────────
+async function loadQueries() {
+  var d = await api('/queries');
+  document.getElementById('queryBody').innerHTML = d.items.map(function (q) {
+    return '<tr><td>'+esc(q.label)+'</td><td class="muted">'+esc(q.search_text)+'</td><td>'+q.max_pages+'</td>'+
+      '<td>'+(q.last_total==null?'—':q.last_total)+'</td>'+
+      '<td><input type="checkbox" data-qe="'+q.id+'" '+(q.enabled?'checked':'')+' style="width:auto"></td>'+
+      '<td><button class="ghost sm" data-qd="'+q.id+'">Delete</button></td></tr>';
+  }).join('');
+  document.querySelectorAll('[data-qe]').forEach(function (c) {
+    c.onchange = function () { api('/queries/' + c.getAttribute('data-qe'), { method:'PATCH', body: JSON.stringify({ enabled: c.checked }) }); };
+  });
+  document.querySelectorAll('[data-qd]').forEach(function (b) {
+    b.onclick = async function () { await api('/queries/' + b.getAttribute('data-qd'), { method:'DELETE' }); loadQueries(); };
+  });
+}
+document.getElementById('qAdd').onclick = async function () {
+  var t = document.getElementById('qText').value.trim();
+  if (!t) return;
+  await api('/queries', { method:'POST', body: JSON.stringify({ search_text: t, label: t }) });
+  document.getElementById('qText').value = ''; loadQueries();
+};
+
+// ── Agent ────────────────────────────────────────────────────────────────────
+async function loadAgent() {
+  var s = await api('/agent/status');
+  document.getElementById('agentDot').className = 'dot ' + (s.enabled ? 'on' : 'off');
+  document.getElementById('agentTxt').textContent = s.last_run
+    ? ('last run ' + s.last_run.run_date + ' · ' + s.last_run.reqs_new + ' new')
+    : (s.enabled ? 'daily run on' : 'daily run off');
+  document.getElementById('agentCard').innerHTML =
+    '<div class="kv"><span>Daily run</span><span>'+(s.enabled?'enabled':'off (set CITIJOBS_GO=1)')+'</span></div>'+
+    '<div class="kv"><span>Scoring</span><span>'+esc(s.scoring_mode)+'</span></div>'+
+    '<div class="kv"><span>Feed</span><span>'+esc(s.feed.tenant+'.'+s.feed.dc+' site '+s.feed.site)+'</span></div>'+
+    '<div class="kv"><span>Requisition pool</span><span>'+s.pool_size+'</span></div>'+
+    (s.last_run ? '<div class="kv"><span>Last run</span><span>'+esc(s.last_run.started_at)+' · '+
+      s.last_run.http_requests+' requests · '+s.last_run.scored+' scored · '+s.last_run.boarded+' boarded · $'+
+      s.last_run.cost_usd+(s.last_run.budget_hit?' · REQUEST BUDGET HIT':'')+'</span></div>' : '')+
+    (s.last_run && s.last_run.errors && s.last_run.errors.length
+      ? '<div class="sub" style="margin-top:8px">Errors: '+esc(JSON.stringify(s.last_run.errors).slice(0,400))+'</div>' : '');
+  document.getElementById('runBody').innerHTML = s.runs.map(function (r) {
+    return '<tr><td>'+esc(r.run_date)+'</td><td>'+(r.ok?'yes':'no')+'</td><td>'+r.reqs_new+'</td><td>'+r.boarded+'</td><td>'+r.http_requests+'</td></tr>';
+  }).join('');
+}
+document.getElementById('runBtn').onclick = async function () {
+  var b = this; b.disabled = true; b.textContent = 'Running…';
+  try {
+    var out = await api('/agent/run', { method:'POST', body: '{}' });
+    toast(out.skipped ? ('Skipped: ' + out.reason)
+      : (out.reqs_new + ' new requisitions, ' + out.scored + ' scored, ' + out.boarded + ' added to the board, ' +
+         out.http_requests + ' requests' + (out.budget_hit ? ' (request budget hit — run again to continue)' : '')), 7000);
+    loadBoard(); loadAgent();
+  } catch (e) { toast(e.message); }
+  finally { b.disabled = false; b.textContent = 'Run agent'; }
+};
+
+// ── Import ───────────────────────────────────────────────────────────────────
+async function doImport() {
+  var v = document.getElementById('importBox').value.trim();
+  if (!v) return;
+  var btn = document.getElementById('importBtn');
+  btn.disabled = true;
+  try {
+    var out = await api('/reqs/import', { method:'POST', body: JSON.stringify({ input: v, profile_id: state.profile.id }) });
+    document.getElementById('importBox').value = '';
+    toast('Imported req ' + out.req.req_id + ' — ' + out.req.title);
+    loadBoard(); openReq(out.req.req_id);
+  } catch (e) { toast(e.message, 6000); }
+  finally { btn.disabled = false; }
+}
+document.getElementById('importBtn').onclick = doImport;
+document.getElementById('importBox').addEventListener('keydown', function (e) { if (e.key === 'Enter') doImport(); });
+document.getElementById('poolQ') && document.getElementById('poolQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') loadPool(); });
+
+// ── Tabs / boot ──────────────────────────────────────────────────────────────
+document.querySelectorAll('nav button').forEach(function (b) {
+  b.onclick = function () {
+    document.querySelectorAll('nav button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+    var t = b.getAttribute('data-tab');
+    ['board','pool','skills','queries','agent'].forEach(function (n) {
+      document.getElementById('tab-' + n).style.display = (n === t ? 'block' : 'none');
+    });
+    if (t === 'pool') loadPool();
+    if (t === 'skills') loadSkills();
+    if (t === 'queries') loadQueries();
+    if (t === 'agent') loadAgent();
+  };
+});
+
+function renderStatusChips() {
+  var c = document.getElementById('statusChips');
+  c.innerHTML = [['','All']].concat(STATUSES.map(function (s) { return [s, s]; }))
+    .map(function (k) { return '<button class="chip'+(state.status===k[0]?' active':'')+'" data-s="'+k[0]+'">'+k[1]+'</button>'; }).join('');
+  c.querySelectorAll('[data-s]').forEach(function (b) {
+    b.onclick = function () { state.status = b.getAttribute('data-s'); renderStatusChips(); loadBoard(); };
+  });
+}
+
+(async function boot() {
+  try {
+    var p = await api('/profiles');
+    state.profiles = p.profiles;
+    state.profile = p.profiles[0];
+    if (!state.profile) { toast('No profile yet — the app is still initialising.'); return; }
+    var sel = document.getElementById('profileSel');
+    sel.innerHTML = p.profiles.map(function (x) { return '<option value="'+x.id+'">'+esc(x.display_name)+'</option>'; }).join('');
+    sel.onchange = function () {
+      state.profile = state.profiles.filter(function (x) { return x.id === Number(sel.value); })[0];
+      loadBoard();
+    };
+    renderStatusChips();
+    await loadBoard();
+    await loadAgent();
+  } catch (e) { toast(e.message); }
+})();
+</script>
+</body>
+</html>
