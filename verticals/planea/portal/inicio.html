@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/planea/portal/planea-app.css?v=49">
+<link rel="stylesheet" href="/planea/portal/planea-app.css?v=50">
 <style>
   .hero{position:relative;border-radius:22px;overflow:hidden;min-height:340px;display:flex;flex-direction:column;
     background:
@@ -18,7 +18,9 @@
   /* Brand mark watermark, bottom-right */
   .hero::after{content:"";position:absolute;right:-40px;bottom:-46px;width:280px;height:280px;z-index:0;pointer-events:none;
     background:url('/planea/portal/planea-mark-white.png') no-repeat center/contain;opacity:.06;transform:rotate(-8deg)}
-  @media(min-width:1024px){.hero{min-height:400px}}
+  @media(min-width:1024px){.hero{min-height:400px}
+    /* Item 8 del acta: agrandar el elemento de fondo (guacamaya / marca) SOLO en escritorio */
+    .hero::after{width:520px;height:520px;right:-70px;bottom:-90px;opacity:.08}}
   .hero-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
   .hero h1{font-family:'Inter',sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;line-height:1.05;color:#fff}
   .hero .lede{color:rgba(234,241,236,.82);font-size:14.5px;margin-top:8px;max-width:230px}
@@ -42,7 +44,7 @@
   <section class="hero">
     <div class="hero-top">
       <div><h1 data-pl="saludo">Hola</h1><p class="lede">Tus propias finanzas en un solo lugar.</p></div>
-      <div class="ringw">
+      <div class="ringw" id="hero-score" style="display:none">
         <div class="ring">
           <svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/></svg>
           <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
@@ -105,8 +107,24 @@
       f.textContent = s.charAt(0).toUpperCase() + s.slice(1);
     } catch (e) {}
   })();
+
+  // Item 2 del acta: tras el onboarding el Puntaje Planea se OCULTA del panel. Persiste
+  // en la base de datos y solo se vuelve a mostrar si el usuario lo activa
+  // (finance_meta.mi_puntaje_visible === true) desde Maya. La Salud Financiera gobierna
+  // el panel. Arranca oculto para no parpadear; se revela si el flag lo pide.
+  (function () {
+    var el = document.getElementById('hero-score'); if (!el) return;
+    function show(v) { el.style.display = v ? '' : 'none'; }
+    try { if (localStorage.getItem('planea-mipuntaje-visible') === '1') show(true); } catch (e) {}
+    try {
+      fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { var fm = (d && d.finance_meta) || {}; show(fm.mi_puntaje_visible === true); })
+        .catch(function () {});
+    } catch (e) {}
+  })();
 </script>
-<script src="/planea/portal/planea-nav.js?v=43" defer></script>
+<script src="/planea/portal/planea-nav.js?v=44" defer></script>
 <script src="/planea/portal/planea-data.js?v=41" defer></script>
 <script src="/planea/portal/maya-chat.js?v=54" defer></script>
 </body>

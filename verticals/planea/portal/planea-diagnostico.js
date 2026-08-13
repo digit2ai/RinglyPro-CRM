@@ -284,9 +284,13 @@
       '<div class="dg-res-num"><b id="dg-score">0</b><small>PUNTAJE</small></div></div>' +
       '<div class="dg-res-badge" style="border-color:' + label.color + ';color:' + label.color + '">' + label.name + '</div>' +
       '<div class="dg-res-sub">DESGLOSE POR PILARES</div><div class="dg-pilares">' + prows + '</div>' +
-      '<div class="dg-rec"><div class="dg-rec-av">🦜</div><div><div class="dg-rec-goal">' + esc(rec.goalText) + '</div><p class="dg-rec-msg">' + esc(rec.mayaMessage) + '</p><div class="dg-rec-time">⏱ ' + esc(rec.timeline) + '</div></div></div>' +
-      '<button class="dg-calc" id="dg-amend">✎ Editar mis respuestas</button>' +
-      '<div class="dg-res-links"><a href="/planea/portal/inicio" id="dg-done">Ir a mi panel →</a><a href="#" id="dg-maya-btn">Hablar con Maya</a> · <a href="#" id="dg-retake">Empezar de cero</a></div>' +
+      // Item 6: se elimina el mensaje post-puntaje (recomendación de Maya). Maya es
+      // asistente de captura, no asesora; los consejos no van aquí.
+      // Item 5: CTA principal "Próximo paso" -> empezar a registrar (ingresos y gastos).
+      '<a class="dg-cta" href="/planea/portal/ingreso" id="dg-next-step">Próximo paso</a>' +
+      // Item 4: "Ir al panel" (reemplaza "Editar mis respuestas"), grande, mobile-first.
+      '<a class="dg-panel" href="/planea/portal/inicio" id="dg-done">Ir al panel</a>' +
+      '<div class="dg-res-links"><a href="#" id="dg-maya-btn">Hablar con Maya</a> · <a href="#" id="dg-retake">Empezar de cero</a></div>' +
       '<div class="dg-saved" id="dg-saved"></div>' +
       '</div>';
   }

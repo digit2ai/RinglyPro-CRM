@@ -254,16 +254,33 @@ a{color:inherit;text-decoration:none}
 .chatbot .txt{display:none;flex-direction:column;text-align:left} /* móvil: solo 'Maya' (txt-short) */
 .chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
 .chatbot .t2{font-size:11.5px;color:var(--mut)}
-/* ESCRITORIO (>=1024): botón de Maya ARRIBA-CENTRO sobre el contenido (a la derecha
-   de la barra lateral de 280px -> +140px), con el texto completo. Va al final para
+/* ESCRITORIO (>=1024) — item 7 del acta: Maya FLOTANTE abajo a la derecha, a tres
+   cuartos de tamaño, la guacamaya SIN fondo (sin el círculo blanco), flotando con
+   sombra suave. Móvil no se toca (queda "Maya" junto al logo). Va al final para
    ganar en cascada a las reglas base de móvil. */
 @media (min-width:1024px){
-  .chatbot{top:20px;left:calc(50% + 140px);transform:translateX(-50%)}
-  .chatbot:hover{transform:translateX(-50%) translateY(-2px)}
-  .chatbot .orbe{width:52px;height:52px}
+  .chatbot{top:auto;left:auto;bottom:24px;right:24px;transform:none;gap:11px;align-items:center}
+  .chatbot:hover{transform:translateY(-2px)}
+  .chatbot .orbe{width:66px;height:66px;background:transparent;box-shadow:none;overflow:visible;animation:none}
+  .chatbot .orbe img{object-fit:contain;object-position:center;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45));animation:mFloat 5s ease-in-out infinite}
   .chatbot .txt{display:flex}
   .chatbot .txt-short{display:none}
 }
+@keyframes mFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media (prefers-reduced-motion:reduce){.chatbot .orbe img{animation:none}}
+
+/* ITEM 9 (SOLO MÓVIL): el ícono "Habla con Maya" emite una onda de TRES anillos
+   amarillos que salen hacia afuera, para que sea inconfundible que ahí se toca
+   para hablar con Maya. En escritorio no aplica (queda arriba, ver bloque >=1024). */
+@media (max-width:1023px){
+  .chatbot .orbe{position:relative;overflow:visible;animation:mayaWave3 2.1s ease-out infinite 1.4s}
+  .chatbot .orbe img{border-radius:50%}
+  .chatbot .orbe::before,.chatbot .orbe::after{content:"";position:absolute;inset:0;border-radius:50%;border:2.5px solid #F5C518;pointer-events:none;animation:mayaWave 2.1s ease-out infinite}
+  .chatbot .orbe::after{animation-delay:.7s}
+}
+@keyframes mayaWave{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.4);opacity:0}}
+@keyframes mayaWave3{0%{box-shadow:0 0 0 0 rgba(245,197,24,.6)}100%{box-shadow:0 0 0 20px rgba(245,197,24,0)}}
+@media (prefers-reduced-motion:reduce){.chatbot .orbe,.chatbot .orbe::before,.chatbot .orbe::after{animation:none}}
 
 /* ── Patrimonio editor (planea-patrimonio-edit.js) ────────────────────────── */
 .pe-sec{margin-top:8px}

@@ -146,6 +146,9 @@
     var d = document.createElement('aside'); d.className = 'drawer'; d.id = 'pl-drawer';
     function navHtml() {
       return ITEMS.filter(function (it) {
+        // Item 1 del acta: durante el onboarding se OCULTA (no solo se deshabilita) todo
+        // el menú salvo "Mi Puntaje" (diagnostico), hasta completar el cuestionario.
+        if (locked) return it.k === 'diagnostico';
         if (it.k === 'diagnostico' && hideMiPuntaje) return false; // oculto tras el onboarding
         return !it.module || isActive(it.k);
       }).map(function (it) {
