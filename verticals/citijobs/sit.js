@@ -275,6 +275,24 @@ async function cleanup() {
   ok('the reason is stated, not silent', /outside/.test(preP.reasons.join(' ')));
 
   // ── 9. Tailoring ──────────────────────────────────────────────────────────
+  section('8b. The pay floor');
+  const hi = Req.build({ req_id: 'x1', salary_source: 'stated', salary_min_cents: 14144000, salary_max_cents: 21216000 });
+  const lo = Req.build({ req_id: 'x2', salary_source: 'stated', salary_min_cents: 9000000, salary_max_cents: 12000000 });
+  const straddle = Req.build({ req_id: 'x3', salary_source: 'stated', salary_min_cents: 13000000, salary_max_cents: 16000000 });
+  const unpriced = Req.build({ req_id: 'x4', salary_source: null, salary_min_cents: null, salary_max_cents: null });
+  const withFloor = Object.assign({}, profileA.get({ plain: true }), { min_salary_cents: 14000000, hide_unpriced: false });
+  ok('a range above the floor passes', prefilter.salaryAllowed(hi, withFloor).ok);
+  ok('a range entirely below the floor is refused', !prefilter.salaryAllowed(lo, withFloor).ok);
+  ok('...and says why, with the figure', /below the floor/.test(prefilter.salaryAllowed(lo, withFloor).reason || ''));
+  ok('a range STRADDLING the floor passes on its top end', prefilter.salaryAllowed(straddle, withFloor).ok);
+  ok('a posting with no stated range is shown by default', prefilter.salaryAllowed(unpriced, withFloor).ok);
+  ok('...and is labelled as unpriced rather than passed silently',
+    prefilter.salaryAllowed(unpriced, withFloor).reason === 'no salary stated');
+  const strict = Object.assign({}, withFloor, { hide_unpriced: true });
+  ok('hide_unpriced hides it only when explicitly turned on', !prefilter.salaryAllowed(unpriced, strict).ok);
+  const noFloor = Object.assign({}, withFloor, { min_salary_cents: 0 });
+  ok('no floor set means nothing is filtered', prefilter.salaryAllowed(lo, noFloor).ok);
+
   section('9. Tailoring selects evidence and cannot author a claim');
   const claim = await skills.claimable(profileA.id);
   const out = await tailorSvc.tailor(profileA, tampaReq, { claimableTerms: claim, rejectedNorms: new Set(['tableau']) });

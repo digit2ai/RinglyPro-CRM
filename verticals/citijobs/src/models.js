@@ -57,6 +57,12 @@ const Profile = sequelize.define('CjProfile', {
   countries: { type: DataTypes.JSONB, defaultValue: ['United States'] },
   internal: { type: DataTypes.BOOLEAN, defaultValue: false }, // already at Citi?
   score_threshold: { type: DataTypes.INTEGER, defaultValue: 70 },
+  // Pay floor, compared against the TOP of a stated range (a 130k-160k role is
+  // worth seeing). Most Citi postings state no range at all — only some US
+  // states require it — so `hide_unpriced` is OFF by default: hiding what we
+  // merely do not know would bury good roles and look like the filter working.
+  min_salary_cents: { type: DataTypes.BIGINT, defaultValue: 14000000 },
+  hide_unpriced: { type: DataTypes.BOOLEAN, defaultValue: false },
   active: { type: DataTypes.BOOLEAN, defaultValue: true },
   settings: { type: DataTypes.JSONB, defaultValue: {} },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }

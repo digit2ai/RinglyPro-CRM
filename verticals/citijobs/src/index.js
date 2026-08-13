@@ -36,6 +36,9 @@ async function init() {
   await sequelize.sync({ alter: false });
 
   const ddl = [
+    // New columns arrive here, because sync({alter:false}) never adds them.
+    `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS min_salary_cents BIGINT DEFAULT 14000000`,
+    `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS hide_unpriced BOOLEAN DEFAULT FALSE`,
     `CREATE UNIQUE INDEX IF NOT EXISTS cj_reqs_tenant_req_uq ON cj_reqs (tenant_id, req_id)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS cj_profiles_tenant_slug_uq ON cj_profiles (tenant_id, slug)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS cj_tracked_profile_req_uq ON cj_tracked (profile_id, req_id)`,

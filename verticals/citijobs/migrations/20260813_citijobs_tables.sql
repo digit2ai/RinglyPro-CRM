@@ -25,6 +25,11 @@ CREATE TABLE IF NOT EXISTS cj_profiles (
   countries         JSONB DEFAULT '["United States"]'::jsonb,
   internal          BOOLEAN DEFAULT FALSE,
   score_threshold   INTEGER DEFAULT 70,
+  -- Pay floor, compared against the TOP of a stated range. hide_unpriced is
+  -- FALSE by default: a posting with no stated range is not known to be below
+  -- the floor, and most Citi postings state nothing.
+  min_salary_cents  BIGINT DEFAULT 14000000,
+  hide_unpriced     BOOLEAN DEFAULT FALSE,
   active            BOOLEAN DEFAULT TRUE,
   settings          JSONB DEFAULT '{}'::jsonb,
   created_at        TIMESTAMPTZ DEFAULT NOW()

@@ -90,6 +90,7 @@
 <main>
   <section id="tab-board">
     <div class="chips" id="statusChips"></div>
+    <div class="card" id="payFilter" style="padding:10px 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap"></div>
     <table><thead><tr>
       <th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th>Status</th><th>Résumé</th>
     </tr></thead><tbody id="boardBody"></tbody></table>
@@ -180,6 +181,8 @@ function matchCell(r) {
 async function loadBoard() {
   var q = '?profile_id=' + state.profile.id + (state.status ? '&status=' + state.status : '');
   var d = await api('/board' + q);
+  state.profileMeta = d.profile;
+  renderPayFilter(d);
   var b = document.getElementById('boardBody');
   b.innerHTML = '';
   document.getElementById('boardEmpty').style.display = d.items.length ? 'none' : 'block';
@@ -212,6 +215,31 @@ async function loadBoard() {
     el.onchange = function () { changeStatus(el.getAttribute('data-track'), el.value); };
   });
 }
+// The pay floor is shown, never applied silently: a board that hides rows
+// without saying so looks like an agent that found nothing.
+function renderPayFilter(d) {
+  var p = d.profile || {};
+  var floor = Number(p.min_salary_cents || 0);
+  var el = document.getElementById('payFilter');
+  el.innerHTML =
+    '<span>Pay floor</span>' +
+    '<input id="payFloor" style="width:130px" value="' + (floor ? '$' + Math.round(floor/100).toLocaleString('en-US') : '') + '" placeholder="none">' +
+    '<label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--mut)">' +
+      '<input type="checkbox" id="hideUnpriced" style="width:auto"' + (p.hide_unpriced ? ' checked' : '') + '> also hide postings with no stated range</label>' +
+    '<span class="sub">' + (d.filtered_out != null && d.items
+      ? (d.filtered_out - d.items.length) + ' of ' + d.filtered_out + ' hidden by this filter' : '') + '</span>';
+  document.getElementById('payFloor').onchange = savePay;
+  document.getElementById('hideUnpriced').onchange = savePay;
+}
+async function savePay() {
+  var raw = document.getElementById('payFloor').value.replace(/[^0-9.]/g, '');
+  var cents = raw ? Math.round(parseFloat(raw) * 100) : 0;
+  await api('/profiles/' + state.profile.id, { method:'PATCH', body: JSON.stringify({
+    min_salary_cents: cents, hide_unpriced: document.getElementById('hideUnpriced').checked }) });
+  toast(cents ? ('Hiding anything stated below $' + Math.round(cents/100).toLocaleString('en-US')) : 'Pay floor removed');
+  loadBoard();
+}
+
 function statusSelect(it) {
   var o = STATUSES.map(function (s) {
     return '<option value="'+s+'"'+(s===it.status?' selected':'')+'>'+s+'</option>';

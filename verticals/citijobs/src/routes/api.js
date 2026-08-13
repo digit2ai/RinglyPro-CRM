@@ -20,6 +20,7 @@ const tailorSvc = require('../services/tailor');
 const pdf = require('../services/pdf');
 const agent = require('../services/agent');
 const matcher = require('../services/matcher');
+const prefilter = require('../services/prefilter');
 
 const SECRET = process.env.CITIJOBS_JWT_SECRET || process.env.JWT_SECRET || 'citijobs-2026-secret';
 const COOKIE = 'citijobs_token';
@@ -119,7 +120,9 @@ router.get('/profiles', async (req, res) => {
       id: p.id, slug: p.slug, display_name: p.display_name, headline: p.headline,
       target_titles: p.target_titles, target_locations: p.target_locations,
       countries: p.countries, internal: p.internal,
-      score_threshold: p.score_threshold, active: p.active
+      score_threshold: p.score_threshold, active: p.active,
+      min_salary_cents: p.min_salary_cents ? Number(p.min_salary_cents) : 0,
+      hide_unpriced: !!p.hide_unpriced
     }))
   });
 });
@@ -127,7 +130,7 @@ router.get('/profiles', async (req, res) => {
 router.patch('/profiles/:id', async (req, res) => {
   const p = await ownProfile(req, req.params.id);
   if (!p) return res.status(404).json({ error: 'Not found' });
-  for (const k of ['display_name', 'headline', 'target_titles', 'target_locations', 'countries', 'internal', 'score_threshold', 'active']) {
+  for (const k of ['display_name', 'headline', 'target_titles', 'target_locations', 'countries', 'internal', 'score_threshold', 'active', 'min_salary_cents', 'hide_unpriced']) {
     if (req.body[k] !== undefined) p[k] = req.body[k];
   }
   await p.save();
@@ -168,7 +171,14 @@ router.get('/board', async (req, res) => {
     };
 
     res.json({
-      profile: { id: profile.id, slug: profile.slug, display_name: profile.display_name, score_threshold: profile.score_threshold },
+      profile: {
+        id: profile.id, slug: profile.slug, display_name: profile.display_name,
+        score_threshold: profile.score_threshold,
+        min_salary_cents: profile.min_salary_cents ? Number(profile.min_salary_cents) : 0,
+        hide_unpriced: !!profile.hide_unpriced
+      },
+      // Stated so the board can never look empty for a reason it does not show.
+      filtered_out: rows.length,
       items: rows.map((t) => {
         const r = byId.get(t.req_id);
         const tl = tById.get(t.req_id);
@@ -180,7 +190,12 @@ router.get('/board', async (req, res) => {
           req: r ? reqPayload(r, mById.get(t.req_id)) : { req_id: t.req_id, title: '(requisition not in pool)' },
           tailoring: tl ? { id: tl.id, version: tl.version, sent: tl.sent, coverage_pct: (tl.keyword_coverage || {}).pct, generated_at: tl.generated_at } : null
         };
-      }).sort(byMatch)
+      })
+        // Pay floor. A requisition already APPLIED to is never hidden — you
+        // cannot track an application you can no longer see.
+        .filter((it) => ['applied', 'interview', 'offer'].includes(it.status)
+          || prefilter.salaryAllowed(it.req, profile).ok)
+        .sort(byMatch)
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -281,6 +296,7 @@ router.get('/reqs', async (req, res) => {
     res.json({
       items: rows
         .map((r) => Object.assign(reqPayload(r, mById.get(r.req_id)), { tracked: tracked.has(r.req_id) }))
+        .filter((r) => !profile || prefilter.salaryAllowed(r, profile).ok)
         .sort((a, b) => {
           const sa = a.match ? a.match.score : -1;
           const sb = b.match ? b.match.score : -1;

@@ -36,6 +36,32 @@ function locationAllowed(req, profile) {
 }
 
 /**
+ * The pay floor. Compared against the TOP of a stated range, so a 130k-160k
+ * posting still shows.
+ *
+ * A requisition with no stated range is NOT known to be below the floor, and
+ * most Citi postings state nothing (only some US states require it). Treating
+ * silence as "too low" would bury good roles while looking like the filter
+ * working correctly, so unpriced postings pass unless the owner explicitly
+ * turns `hide_unpriced` on — and they carry the reason either way.
+ */
+function salaryAllowed(req, profile) {
+  const floor = Number(profile.min_salary_cents || 0);
+  if (!floor) return { ok: true, reason: null };
+
+  const stated = req.salary_source === 'stated' && req.salary_max_cents != null;
+  if (!stated) {
+    return profile.hide_unpriced
+      ? { ok: false, reason: 'no salary stated' }
+      : { ok: true, reason: 'no salary stated' };
+  }
+  const max = Number(req.salary_max_cents);
+  return max >= floor
+    ? { ok: true, reason: null }
+    : { ok: false, reason: `stated maximum $${Math.round(max / 100).toLocaleString('en-US')} is below the floor` };
+}
+
+/**
  * Score 0-100 from evidence only: title overlap with target titles, skill-term
  * hits weighted by the skill store, seniority alignment, location.
  */
@@ -112,4 +138,4 @@ function shouldScore(pre, profile) {
   return pre.score >= floor;
 }
 
-module.exports = { score, shouldScore, locationAllowed, tokens };
+module.exports = { score, shouldScore, locationAllowed, salaryAllowed, tokens };

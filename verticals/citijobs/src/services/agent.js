@@ -239,7 +239,12 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
     const floor = r.is_simulated
       ? Math.round((profile.score_threshold || 70) * 0.7)
       : (profile.score_threshold || 70);
-    if (r.score >= floor) {
+    // A requisition whose STATED pay tops out below the floor never reaches
+    // the board, however well it scores. Silence about pay is not a reason to
+    // exclude — see prefilter.salaryAllowed.
+    const reqRow = candidates.find((c) => c.req_id === r.req_id);
+    const payOk = !reqRow || prefilter.salaryAllowed(reqRow, profile).ok;
+    if (r.score >= floor && payOk) {
       const exists = await Tracked.findOne({ where: { tenant_id, profile_id: profile.id, req_id: r.req_id } });
       if (!exists) {
         await Tracked.create({
