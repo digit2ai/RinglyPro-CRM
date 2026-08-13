@@ -606,6 +606,55 @@ router.put('/profile', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
+// GET FOUND — where their address has actually been put.
+//
+// A site nothing links to is a site Google has no reason to crawl. Measured on
+// production: 1,353 page views, every external referrer '(direct)', zero
+// arrivals from search. We cannot place these links; we can only track them and
+// be honest that they are the prerequisite.
+// ---------------------------------------------------------------
+router.get('/presence', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  const row = await scoped('settings', tid).findOne({});
+  const out = settingsSvc.presenceChecklist((row && row.settings) || {}, sub && sub.language);
+  out.address = sub && sub.address ? `https://${sub.address}` : null;
+  // Role pages are the thing these links make rank, so report them together.
+  const roles = settingsSvc.pageRoles((row && row.settings) || {});
+  out.role_pages = roles.map((r) => ({
+    title: r.title, url: out.address ? `${out.address}/roles/${r.slug}` : null }));
+  out.role_pages_note = roles.length ? null
+    : 'You have no target job titles set, so you have no role pages. Those pages carry the '
+      + 'exact titles a recruiter searches — set them under what your agents hunt for.';
+  res.json(out);
+});
+
+router.post('/presence', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const b = req.body || {};
+  const row = await scoped('settings', tid).findOne({});
+  const cur = settingsSvc.sanitize((row && row.settings) || {});
+
+  if (typeof b.slug === 'string') {
+    const known = settingsSvc.PLACEMENTS.some((p) => p.slug === b.slug);
+    if (!known) return res.status(400).json({ error: 'unknown placement' });
+    const set = new Set(cur.presence.placed);
+    if (b.done === false) set.delete(b.slug); else set.add(b.slug);
+    cur.presence.placed = Array.from(set);
+  }
+  if (b.directory_opt_in !== undefined) {
+    cur.presence.directory_opt_in = b.directory_opt_in === true || b.directory_opt_in === 'true';
+  }
+
+  const clean = settingsSvc.sanitize(cur);
+  if (row) await scoped('settings', tid).update({ settings: clean }, { id: row.id });
+  else await scoped('settings', tid).create({ settings: clean });
+
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  res.json(settingsSvc.presenceChecklist(clean, sub && sub.language));
+});
+
+// ---------------------------------------------------------------
 // REPLACE THE RESUME, AT ANY TIME, IN ANY FORMAT.
 //
 // The resume could only ever be supplied once, at the teaser. Whatever the

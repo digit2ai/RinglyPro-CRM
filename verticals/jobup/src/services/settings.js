@@ -27,6 +27,15 @@ const DEFAULTS = {
     education: true,
     skills: true,
   },
+  // WHERE THEIR ADDRESS HAS ACTUALLY BEEN PUT.
+  //
+  // A site nothing links to is a site Google has no reason to crawl. Every
+  // placement here is also a backlink, which is what makes the role pages rank.
+  // The product cannot do these for them — only track which are done.
+  presence: {
+    placed: [],                     // slugs from PLACEMENTS below
+    directory_opt_in: false,        // opt-in, never assumed
+  },
   targeting: {
     roles: [],                      // [{ title, slug, page: true }]
     industries: [],                 // extra terms the pre-filter counts
@@ -129,6 +138,15 @@ function sanitize(s) {
   t.employment_types = enumList(t.employment_types, EMPLOYMENT_TYPES);
   t.work_modes = enumList(t.work_modes, WORK_MODES);
   t.remote_preference = deriveRemotePreference(t.work_modes, t.remote_preference);
+  const pr = out.presence || (out.presence = { ...DEFAULTS.presence });
+  const known = new Set(PLACEMENTS.map((x) => x.slug));
+  pr.placed = (Array.isArray(pr.placed) ? pr.placed : [])
+    .filter((x) => known.has(x)).slice(0, PLACEMENTS.length);
+  // Opt-in means opt-in: anything but an explicit yes is no.
+  pr.directory_opt_in = pr.directory_opt_in === true
+    || pr.directory_opt_in === 'true' || pr.directory_opt_in === 'on';
+
+  t.roles = roleList(t.roles, 12);
   t.locations = strList(t.locations, 15);
   t.industries = strList(t.industries, 15);
   t.employers = strList(t.employers, 25);
@@ -152,6 +170,96 @@ function sanitize(s) {
   out.quotas.tailor_monthly_limit = Math.max(0, Math.min(500, out.quotas.tailor_monthly_limit | 0));
   out.cost_cap_usd = Math.max(0, Math.min(100, Number(out.cost_cap_usd) || 0));
   return out;
+}
+
+/**
+ * ROLE TARGETS ARRIVE AS STRINGS AND WERE READ AS OBJECTS.
+ *
+ * The signup form has always asked "Job titles you want" and stored the answer
+ * via strList() — an array of plain strings. pageRoles() filters on `r.title`,
+ * so `'Sales Executive'.title` was undefined and EVERY role was dropped. The
+ * consequence was silent and total: no subscriber has ever had a /roles/:role
+ * page, and every sitemap contained exactly one url.
+ *
+ * Normalising here, at the boundary, means every downstream reader gets the
+ * canonical shape and neither surface has to know the other's format.
+ */
+/**
+ * The five places worth putting the address, in the order that matters.
+ *
+ * Each is a real backlink AND somewhere a recruiter already looks. These are
+ * PREREQUISITES, not guarantees — nothing here promises anyone will search.
+ */
+const PLACEMENTS = [
+  { slug: 'linkedin', order: 1,
+    en: { title: 'LinkedIn profile', what: 'Paste it into the Website field on your profile.',
+          why: 'The first place a recruiter opens, and the strongest link you can give us.' },
+    es: { title: 'Perfil de LinkedIn', what: 'Pégalo en el campo Sitio web de tu perfil.',
+          why: 'El primer lugar que abre un reclutador, y el enlace más fuerte que puedes darnos.' },
+    href: 'https://www.linkedin.com/in/me/edit/forms/contact-info/' },
+  { slug: 'email_signature', order: 2,
+    en: { title: 'Email signature', what: 'Add it under your name, on every message you send.',
+          why: 'Every email becomes an invitation to look you up properly.' },
+    es: { title: 'Firma de correo', what: 'Agrégalo debajo de tu nombre, en cada mensaje que envíes.',
+          why: 'Cada correo se convierte en una invitación a conocerte mejor.' },
+    href: null },
+  { slug: 'job_boards', order: 3,
+    en: { title: 'Indeed, Dice or your job board', what: 'Put it in the personal website field of your profile.',
+          why: 'Recruiters sourcing there can reach the full picture in one click.' },
+    es: { title: 'Indeed, Dice u otro portal', what: 'Ponlo en el campo de sitio web personal de tu perfil.',
+          why: 'Quien busque ahí llega al panorama completo con un clic.' },
+    href: null },
+  { slug: 'github', order: 4,
+    en: { title: 'GitHub or portfolio bio', what: 'Add it to your bio or README.',
+          why: 'A public profile that links to you is a link search engines follow.' },
+    es: { title: 'Bio de GitHub o portafolio', what: 'Agrégalo a tu bio o README.',
+          why: 'Un perfil público que te enlaza es un enlace que los buscadores siguen.' },
+    href: null },
+  { slug: 'qr', order: 5,
+    en: { title: 'Your QR code, printed', what: 'On a card, a CV footer, or a conference badge.',
+          why: 'The only one that works on paper, where a URL cannot be clicked.' },
+    es: { title: 'Tu código QR, impreso', what: 'En una tarjeta, el pie de tu CV o una credencial.',
+          why: 'El único que funciona en papel, donde una URL no se puede pulsar.' },
+    href: null },
+];
+
+/** The checklist for one subscriber, in their language, with progress. */
+function presenceChecklist(settings, lang) {
+  const st = sanitize(settings);
+  const done = new Set(st.presence.placed);
+  const l = lang === 'es' ? 'es' : 'en';
+  const items = PLACEMENTS.slice().sort((a, b) => a.order - b.order).map((p) => ({
+    slug: p.slug, title: p[l].title, what: p[l].what, why: p[l].why,
+    href: p.href, done: done.has(p.slug),
+  }));
+  return {
+    items,
+    done_count: items.filter((i) => i.done).length,
+    total: items.length,
+    directory_opt_in: st.presence.directory_opt_in,
+    // Said once, here, so no surface has to remember to say it.
+    note: l === 'es'
+      ? 'Estos son requisitos, no garantías. Ponen tu dirección donde los reclutadores ya miran '
+        + 'y son los enlaces que hacen que tus páginas aparezcan en buscadores.'
+      : 'These are prerequisites, not guarantees. They put your address where recruiters already '
+        + 'look, and they are the links that make your pages rank.',
+  };
+}
+
+function roleList(v, max) {
+  const seen = new Set();
+  return (Array.isArray(v) ? v : [])
+    .map((r) => {
+      if (typeof r === 'string') return { title: r.trim(), page: true };
+      if (r && typeof r === 'object' && r.title) {
+        return { ...r, title: String(r.title).trim(), page: r.page !== false };
+      }
+      return null;
+    })
+    .filter((r) => r && r.title && r.title.length >= 2 && r.title.length <= 80)
+    .map((r) => ({ ...r, slug: r.slug || slugify(r.title) }))
+    .filter((r) => r.slug && !seen.has(r.slug) && seen.add(r.slug))
+    .slice(0, max || 12);
 }
 
 function slugify(s) {
@@ -183,12 +291,14 @@ function outreachFacts(settings) {
 
 // Which roles get a public indexable page. Never invents one.
 function pageRoles(settings) {
-  return (((settings || {}).targeting || {}).roles || [])
-    .filter((r) => r && r.title && r.page !== false)
-    .map((r) => ({ ...r, slug: r.slug || slugify(r.title) }));
+  // roleList() handles both shapes, so a row written before the fix still
+  // renders its pages without waiting for a backfill or a re-save.
+  return roleList(((settings || {}).targeting || {}).roles, 12)
+    .filter((r) => r.page !== false);
 }
 
 module.exports = {
+  roleList, PLACEMENTS, presenceChecklist,
   DEFAULTS, sanitize, deepMerge, slugify,
   employerBlocked, contactBlocked, outreachFacts, pageRoles,
   EMPLOYMENT_TYPES, WORK_MODES, enumList, strList, deriveRemotePreference,

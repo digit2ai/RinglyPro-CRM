@@ -207,6 +207,115 @@ router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
 
 // Step 3 of the funnel: the account form the teaser's CTA opens. Carries
 // ?t=<teaser_token>, which is the authoritative record of who this person is.
+/**
+ * THE PUBLIC DIRECTORY — the only thing that links to a subscriber site.
+ *
+ * Measured: 1,353 page views and every external referrer is '(direct)'. Every
+ * site is an island, which is precisely why Google has no reason to crawl one.
+ *
+ * OPT-IN, DEFAULT OFF. Nobody is listed because we decided it would help them.
+ * Server-rendered real <a href> links — a link a crawler cannot see is not a
+ * backlink — and only fields their own privacy projection already makes public.
+ */
+async function directoryEntries() {
+  const subs = await models.subscribers.findAll({ where: { status: 'active' } });
+  const billing = require('./services/billing');
+  const out = [];
+  for (const sub of subs) {
+    if (!sub.address) continue;
+    const sRow = await scoped('settings', sub.id).findOne({});
+    const st = settingsSvc.sanitize((sRow && sRow.settings) || {});
+    if (!st.presence.directory_opt_in) continue;          // opt-in means opt-in
+    const pRow = await scoped('profiles', sub.id).findOne({});
+    const profile = (pRow && pRow.resume_json) || {};
+    out.push({
+      // NOTHING here is a private field: a name, a headline they chose, and the
+      // role titles they asked to be found for. No email, no phone, no location.
+      name: profile.name || sub.name || sub.address.split('.')[0],
+      headline: profile.headline || null,
+      url: `https://${sub.address}`,
+      roles: settingsSvc.pageRoles(st).slice(0, 4).map((r) => r.title),
+      test: billing.isNonRevenue(sub.activation),
+    });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * jobup.dev had NO robots.txt and NO sitemap.xml — both 404. Subscriber sites
+ * each carry their own, but the apex told crawlers nothing at all, so the one
+ * page that links to every subscriber site had no machine-readable route in.
+ *
+ * Subscriber subdomains are served by subscriberSite, which is mounted ABOVE
+ * this and answers these paths itself, so these only ever apply to the apex.
+ */
+router.get('/robots.txt', (req, res) => {
+  const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+  res.type('text/plain').send(
+    `User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /admin\n`
+    + `Disallow: /subscribers-admin\nDisallow: /teaser/\nDisallow: /build\n`
+    + `\nSitemap: ${base}/sitemap.xml\n`);
+});
+
+router.get('/sitemap.xml', async (req, res) => {
+  const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+  // Every listed subscriber, so a crawler reaching the sitemap reaches them all.
+  let sites = [];
+  try { sites = (await directoryEntries()).map((e) => e.url); } catch (e) { /* apex still valid */ }
+  const urls = [`${base}/`, `${base}/directory`, ...sites]
+    .map((u) => `<url><loc>${u}</loc></url>`).join('\n');
+  res.type('application/xml').send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n`
+    + `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+});
+
+router.get(['/directory', '/directory/'], async (req, res) => {
+  try {
+    const rows = await directoryEntries();
+    const esc = (x) => String(x == null ? '' : x)
+      .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                                     '"': '&quot;', "'": '&#39;' }[c]));
+    const items = rows.map((r) => `<li class="e">
+      <a class="n" href="${esc(r.url)}">${esc(r.name)}</a>
+      ${r.headline ? `<div class="h">${esc(r.headline)}</div>` : ''}
+      ${r.roles.length ? `<div class="r">${r.roles.map((t) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+      <div class="u">${esc(r.url.replace(/^https:\/\//, ''))}</div></li>`).join('');
+    res.type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Directory — JobUp</title>
+<meta name="description" content="People building their careers with JobUp. Each has a public, machine-readable profile.">
+<link rel="canonical" href="https://jobup.dev/directory">
+<style>:root{--bg:#07080c;--card:#11141c;--line:rgba(255,255,255,.08);--ink:#eef2f8;
+--mut:#9aa3b4;--faint:#6b7385;--cy:#22d3ee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.011em}
+.w{max-width:820px;margin:0 auto;padding:48px 20px 80px}
+h1{font-size:clamp(26px,6vw,36px);font-weight:830;letter-spacing:-.035em;margin:0 0 8px}
+.lede{color:var(--mut);margin-bottom:32px}
+ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.e{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.n{font-size:18px;font-weight:760;color:var(--ink);text-decoration:none}
+.n:hover{color:var(--cy)}
+.h{color:var(--mut);font-size:14.5px;margin-top:2px}
+.r{margin-top:9px;display:flex;flex-wrap:wrap;gap:7px}
+.r span{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--mut)}
+.u{color:var(--faint);font-size:12.5px;margin-top:8px;font-family:ui-monospace,Menlo,monospace}
+.empty{border:1px dashed rgba(255,255,255,.15);border-radius:16px;padding:26px;color:var(--mut)}
+.foot{margin-top:34px;color:var(--faint);font-size:13px}
+.foot a{color:var(--cy)}</style></head><body><div class="w">
+<h1>Directory</h1>
+<p class="lede">People building their careers with JobUp. Every profile below is public and
+machine-readable &mdash; a recruiter, a search engine or an AI assistant can read it.</p>
+${rows.length ? `<ul>${items}</ul>`
+  : `<div class="empty">Nobody has listed themselves yet. Subscribers choose whether to appear
+     here; it is off unless they turn it on.</div>`}
+<p class="foot">Listing is opt-in. <a href="https://jobup.dev/">What JobUp is</a></p>
+</div></body></html>`);
+  } catch (e) {
+    res.status(500).type('text/plain').send('Directory unavailable.');
+  }
+});
+
 router.get(['/build', '/build/'], (req, res) =>
   res.type('html').send(pwa.page('build.html', pwa.basePath(req))));
 

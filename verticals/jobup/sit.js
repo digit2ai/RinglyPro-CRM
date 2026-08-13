@@ -4887,6 +4887,108 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'both the probe and the real call path must record why they failed');
   });
 
+  section('getting found — the half of the product that did not work');
+
+  await t('role targets normalise from BOTH shapes, and do not regress', () => {
+    const st = require(__dirname + '/src/services/settings');
+    // Signup writes strings; the settings editor writes objects. Both must
+    // produce the same canonical role, or a subscriber gets pages depending on
+    // which surface they last saved from.
+    assert.deepStrictEqual(
+      st.pageRoles({ targeting: { roles: ['Sales Executive'] } }).map((r) => r.slug),
+      ['sales-executive']);
+    assert.deepStrictEqual(
+      st.pageRoles({ targeting: { roles: [{ title: 'Sales Executive' }] } }).map((r) => r.slug),
+      ['sales-executive']);
+    // page:false is how somebody hides a role without deleting the target.
+    assert.strictEqual(st.pageRoles({ targeting: { roles: [{ title: 'X Y', page: false }] } }).length, 0);
+    // Two spellings of one title must not become two pages competing to rank.
+    assert.strictEqual(
+      st.pageRoles({ targeting: { roles: ['Sales Executive', 'sales executive'] } }).length, 1);
+    // REGRESSION GUARD: this is what carlosgomez.jobup.dev serves in production
+    // today. Role pages already worked; the change must not alter one slug.
+    const carlos = { targeting: { roles: [
+      { title: 'Financial Analyst' }, { title: 'Business Analyst' }, { title: 'FP&A Analyst' },
+      { title: 'Operations Analyst' }, { title: 'Account Manager' }, { title: 'Project Manager' }] } };
+    assert.deepStrictEqual(st.pageRoles(carlos).map((r) => r.slug),
+      ['financial-analyst', 'business-analyst', 'fp-a-analyst',
+       'operations-analyst', 'account-manager', 'project-manager']);
+  });
+
+  await t('an empty role list is REPORTED, not silently skipped', () => {
+    const st = require(__dirname + '/src/services/settings');
+    // The real cause of a one-url sitemap is a blank field at signup, not a
+    // parser bug. Nobody was ever told.
+    assert.strictEqual(st.pageRoles({ targeting: { roles: [] } }).length, 0);
+    const fs = require('fs');
+    const eng = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(eng.includes('role_pages_note'), 'the API must say when there are none');
+    assert.ok(/no target job titles set/.test(eng), 'and say what that costs them');
+    // Never invent role titles from the resume — a page claiming they want a job
+    // they never asked for is worse than no page.
+    assert.ok(!/roles\s*=\s*.*profile\.(headline|experience)/.test(eng),
+      'role titles must never be derived from the resume');
+  });
+
+  await t('the Get Found checklist is five real places, bilingual', () => {
+    const st = require(__dirname + '/src/services/settings');
+    assert.strictEqual(st.PLACEMENTS.length, 5);
+    const en = st.presenceChecklist({}, 'en');
+    const es = st.presenceChecklist({}, 'es');
+    assert.strictEqual(en.total, 5);
+    assert.strictEqual(en.done_count, 0, 'nothing is done until they say so');
+    assert.notStrictEqual(en.items[0].title, es.items[0].title, 'both languages');
+    assert.ok(/tilde|Perfil|Pégalo/.test(es.items[0].what + es.items[0].title),
+      'Spanish must carry proper orthography');
+    // The honesty line, once, where every surface reads it.
+    assert.ok(/prerequisites, not guarantees/.test(en.note));
+    assert.ok(/requisitos, no garantías/.test(es.note));
+    // Progress is counted, not claimed.
+    assert.strictEqual(st.presenceChecklist({ presence: { placed: ['linkedin', 'github'] } }, 'en').done_count, 2);
+    // An unknown slug cannot inflate the count.
+    assert.strictEqual(st.presenceChecklist({ presence: { placed: ['made-up'] } }, 'en').done_count, 0);
+  });
+
+  await t('THE DIRECTORY IS OPT-IN AND LEAKS NOTHING', () => {
+    const st = require(__dirname + '/src/services/settings');
+    // Default OFF. Nobody is published because we decided it would help them.
+    assert.strictEqual(st.sanitize({}).presence.directory_opt_in, false);
+    assert.strictEqual(st.sanitize({ presence: { directory_opt_in: 'yes' } }).presence.directory_opt_in,
+      false, 'anything but an explicit true is no');
+    assert.strictEqual(st.sanitize({ presence: { directory_opt_in: true } }).presence.directory_opt_in, true);
+
+    const fs = require('fs');
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    const dir = idx.slice(idx.indexOf('async function directoryEntries'),
+                          idx.indexOf("router.get(['/build'"));
+    assert.ok(dir.includes('directory_opt_in'), 'the listing must check the flag');
+    // Name, headline and the role titles they asked to be found for. Nothing else.
+    for (const leak of ['profile.email', 'profile.phone', 'profile.location',
+                        'sub.email', 'facts', 'compensation']) {
+      assert.ok(!dir.includes(leak), `the directory must never publish ${leak}`);
+    }
+    // Real anchors, server-rendered — a link a crawler cannot see is not a link.
+    assert.ok(/<a class="n" href=/.test(idx), 'entries must be real <a href> links');
+  });
+
+  await t('the apex tells crawlers anything at all', () => {
+    const fs = require('fs');
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    // Both were 404 on jobup.dev. Subscriber sites had their own; the apex —
+    // the one page that links to every subscriber — had none.
+    assert.ok(idx.includes("router.get('/robots.txt'"), 'apex robots.txt');
+    assert.ok(idx.includes("router.get('/sitemap.xml'"), 'apex sitemap.xml');
+    const sm = idx.slice(idx.indexOf("router.get('/sitemap.xml'"), idx.indexOf("router.get(['/directory'"));
+    assert.ok(sm.includes('/directory'), 'the sitemap must include the directory');
+    assert.ok(sm.includes('directoryEntries()'),
+      'and every listed subscriber, so one fetch reaches them all');
+    // The dashboard and the consoles are not for crawlers.
+    const rb = idx.slice(idx.indexOf("router.get('/robots.txt'"), idx.indexOf("router.get('/sitemap.xml'"));
+    for (const priv of ['/app', '/admin', '/subscribers-admin', '/teaser/']) {
+      assert.ok(rb.includes(`Disallow: ${priv}`), `${priv} must be disallowed`);
+    }
+  });
+
   section('nobody should close the tab mid-build');
 
   await t('the teaser countdown is 70 seconds', () => {

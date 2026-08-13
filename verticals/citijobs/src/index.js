@@ -17,7 +17,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-const { sequelize } = require('./models');
+const { sequelize, User } = require('./models');
 const { seedAll } = require('./services/seed');
 const workday = require('./services/workday');
 const agent = require('./services/agent');
@@ -25,6 +25,19 @@ const matcher = require('./services/matcher');
 
 const AUTH_SECRET = process.env.CITIJOBS_JWT_SECRET || process.env.JWT_SECRET || 'citijobs-2026-secret';
 const publicDir = path.join(__dirname, '..', 'public');
+
+// ── Single sign-on from the CV admin console ─────────────────────────────────
+// The tracker is embedded as a "Citi Jobs" tab inside /cv-admin, and two logins
+// for one person is the kind of friction that gets a tool abandoned. The CV
+// console's cookie is Path=/, so it already arrives here; this verifies it with
+// the CV console's own secret and issues a tracker session.
+//
+// It is an ALLOWLIST, not a trust-anything bridge: only the named CV profiles
+// can cross, so a console session for another person's CV grants nothing here.
+// The tracker's own login still works standalone.
+const CV_ADMIN_SECRET = process.env.CV_ADMIN_SECRET || process.env.JWT_SECRET || 'cv-engine-secret';
+const SSO_SLUGS = String(process.env.CITIJOBS_SSO_SLUGS || 'manuelstagg')
+  .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 
 let initState = { ready: false, error: null, seeded: null };
 
@@ -76,17 +89,50 @@ function getCookie(req, name) {
   const m = h.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
+const COOKIE_NAME = 'citijobs_token';
 const PUBLIC_EXACT = ['/login', '/health', '/favicon.svg'];
 const PUBLIC_ASSET = /\.(png|svg|css|js|woff2?|ico)$/i;
 
-router.use((req, res, next) => {
-  const token = getCookie(req, 'citijobs_token');
+/** Accept a CV-admin console session for an allowlisted profile. */
+async function trySsoFromCvAdmin(req, res) {
+  const raw = getCookie(req, 'cv_admin_token');
+  if (!raw) return null;
+  let payload;
+  try { payload = jwt.verify(raw, CV_ADMIN_SECRET); } catch (e) { return null; }
+  const slug = String((payload && payload.slug) || '').toLowerCase();
+  if (!slug || !SSO_SLUGS.includes(slug)) return null;
+
+  const owner = await User.findOne({ order: [['id', 'ASC']] });
+  if (!owner) return null;
+  const tenant_id = owner.tenant_id || owner.id;
+
+  const token = jwt.sign(
+    { id: owner.id, tenant_id, email: owner.email, name: owner.name, role: owner.role, via: 'cv-admin:' + slug },
+    AUTH_SECRET, { expiresIn: '30d' }
+  );
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true, secure: true, sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 30, path: '/citi-tracker'
+  });
+  return jwt.verify(token, AUTH_SECRET);
+}
+
+router.use(async (req, res, next) => {
+  const token = getCookie(req, COOKIE_NAME);
   if (token) { try { req.user = jwt.verify(token, AUTH_SECRET); } catch (e) { /* invalid */ } }
 
   const p = req.path;
   if (PUBLIC_EXACT.includes(p) || PUBLIC_ASSET.test(p)) return next();
   if (p.startsWith('/api/v1/auth/login') || p.startsWith('/api/v1/auth/logout')) return next();
   if (req.user) return next();
+
+  // No tracker session — see whether the CV console already vouched for them.
+  try {
+    const sso = await trySsoFromCvAdmin(req, res);
+    if (sso) { req.user = sso; return next(); }
+  } catch (e) {
+    console.warn('[citijobs] sso check failed:', e.message);
+  }
 
   if (p.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
   return res.redirect('/citi-tracker/login');

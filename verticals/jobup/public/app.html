@@ -1853,6 +1853,10 @@ function renderAccount(){
     '<div class="card"><div class="t">Your profile photo</div>'+
     '<div class="m">Shown on your public page. Without one we use your initials.</div>'+
     '<div id="photobox"><div class="note">Loading...</div></div></div>'+
+    '<div class="card"><div class="t">Get found</div>'+
+    '<div class="m">Your page cannot be found by a search engine that has never seen a link to it. '+
+      'These are the five places worth putting your address.</div>'+
+    '<div id="foundbox"><div class="note">Loading...</div></div></div>'+
     '<div class="card"><div class="t">Your resume</div>'+
     '<div class="m">Everything on your page and every job score is read from this. '+
       'Upload a new one whenever your career moves &mdash; PDF, DOCX, TXT, MD or RTF.</div>'+
@@ -1870,13 +1874,79 @@ function renderAccount(){
     '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
     '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
     '<div id="delout" class="note"></div></div>';
-  loadAddress(); loadPhoto(); loadResume();
+  loadAddress(); loadPhoto(); loadResume(); loadFound();
   $('del').addEventListener('click',function(){
     if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
     api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){
       if(r.ok){ $('delout').textContent=r.j.note||'Deleted.'; setTimeout(function(){location.href='/';},2500); }
     });
   });
+}
+
+/* ---- get found: where the address has actually been put ----
+   Measured on production: every external referrer is '(direct)'. Nothing links
+   to a subscriber site, which is exactly why search engines ignore them. We
+   cannot place these links; we can track which are done and be honest that they
+   are the prerequisite, not the promise. */
+function loadFound(){
+  var box=$('foundbox'); if(!box) return;
+  api('/api/v1/engine/presence').then(function(r){
+    var d=r.j||{};
+    var addr=d.address||'';
+    var rows=(d.items||[]).map(function(i){
+      return '<div class="fitem" data-slug="'+esc(i.slug)+'" style="display:flex;gap:11px;'+
+        'align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)">'+
+        '<input type="checkbox" class="fchk" '+(i.done?'checked':'')+
+          ' style="width:19px;height:19px;accent-color:#22d3ee;flex:0 0 19px;margin-top:2px">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:700;font-size:14.5px">'+esc(i.title)+'</div>'+
+          '<div class="m" style="font-size:13.5px">'+esc(i.what)+'</div>'+
+          '<div class="note" style="margin-top:3px">'+esc(i.why)+'</div>'+
+        '</div>'+
+        (i.href?'<a class="btn sm" href="'+esc(i.href)+'" target="_blank" rel="noopener">Open</a>':'')+
+      '</div>';
+    }).join('');
+
+    var roles=(d.role_pages||[]);
+    box.innerHTML=
+      (addr?'<div class="acts" style="margin-bottom:6px">'+
+        '<button class="btn primary sm" id="fcopy">Copy my address</button>'+
+        '<span class="note" style="margin-left:10px">'+esc(addr.replace(/^https:\/\//,''))+'</span></div>':'')+
+      '<div class="note" style="margin:8px 0"><strong>'+d.done_count+' of '+d.total+'</strong> places done</div>'+
+      rows+
+      '<div class="note" style="margin-top:14px">'+esc(d.note||'')+'</div>'+
+      (roles.length
+        ? '<div class="note" style="margin-top:12px">These links make your '+roles.length+
+          ' role page'+(roles.length===1?'':'s')+' rank: '+
+          roles.map(function(x){return esc(x.title);}).join(', ')+'</div>'
+        : '<div class="note" style="margin-top:12px;color:var(--warn)">'+esc(d.role_pages_note||'')+'</div>')+
+      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">'+
+        '<label class="switch" style="margin:0"><input type="checkbox" id="fdir" '+
+          (d.directory_opt_in?'checked':'')+'>'+
+          '<span>List me in the public JobUp directory</span></label>'+
+        '<div class="note">Off unless you turn it on. It shows your name, your headline and the '+
+          'job titles you want &mdash; never your email, phone or location. It is a real link to '+
+          'your page from jobup.dev, which is what gives a search engine a reason to visit.</div>'+
+      '</div>';
+
+    if($('fcopy')) $('fcopy').addEventListener('click',function(){
+      navigator.clipboard.writeText(addr).then(function(){
+        $('fcopy').textContent='Copied'; setTimeout(function(){$('fcopy').textContent='Copy my address';},1600);
+      }).catch(function(){});
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('.fitem'),function(el){
+      el.querySelector('.fchk').addEventListener('change',function(){
+        save({slug:el.getAttribute('data-slug'),done:this.checked});
+      });
+    });
+    $('fdir').addEventListener('change',function(){ save({directory_opt_in:this.checked}); });
+  });
+
+  function save(body){
+    fetch(API+'/api/v1/engine/presence',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(){ loadFound(); }).catch(function(){});
+  }
 }
 
 /* ---- resume: replace it, or re-read the one on file ----
