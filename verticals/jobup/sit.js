@@ -4233,6 +4233,47 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(r2.text.includes('NUMERIANO BOUFFARD'));
   });
 
+  await t('a filter CASCADE is unwrapped — ASCII85 over Flate', async () => {
+    // ReportLab writes `/Filter [/ASCII85Decode /FlateDecode]` by default, so
+    // the stream bytes are printable ASCII wrapping a deflate stream. The first
+    // version of the recovery only tried to inflate: inflate failed, the raw
+    // ASCII85 held no text operators, and the whole page was skipped in
+    // silence. A real subscriber's CV is exactly this shape.
+    const zlib = require('zlib');
+    const rec = require(__dirname + '/src/services/pdf-recover');
+    const content = 'BT /F1 12 Tf 72 720 Td (NUMERIANO V. BOUFFARD) Tj T* '
+      + '(International Business Executive and Chamber of Commerce leader) Tj T* '
+      + '(Multi-Travel Connection, President and Founder, Florida, 1988) Tj ET';
+    const a85 = (buf) => {
+      let out = '';
+      for (let i = 0; i < buf.length; i += 4) {
+        const slice = buf.slice(i, i + 4);
+        const pad = 4 - slice.length;
+        let n = 0;
+        for (let j = 0; j < 4; j++) n = n * 256 + (slice[j] || 0);
+        if (n === 0 && pad === 0) { out += 'z'; continue; }
+        const c = [];
+        for (let j = 0; j < 5; j++) { c.unshift(String.fromCharCode(33 + (n % 85))); n = Math.floor(n / 85); }
+        out += c.join('').slice(0, 5 - pad);
+      }
+      return out + '~>';
+    };
+    const wrapped = a85(zlib.deflateSync(Buffer.from(content, 'latin1')));
+    const pdf = Buffer.from(
+      '%PDF-1.4\n4 0 obj\n<< /Filter [ /ASCII85Decode /FlateDecode ] >>\nstream\n'
+      + wrapped + '\nendstream\nendobj\ntrailer\n<< >>\nstartxref\n999999\n%%EOF\n', 'latin1');
+
+    const out = rec.scavenge(pdf);
+    assert.ok(out.quality.ok, 'the cascade must be unwrapped, not skipped');
+    assert.ok(out.text.includes('NUMERIANO V. BOUFFARD'), 'and the text must come back');
+    assert.ok(out.text.includes('Multi-Travel Connection'));
+
+    // The decoder itself, both directions.
+    assert.strictEqual(rec.ascii85Decode(a85(Buffer.from('hello world'))).toString(), 'hello world');
+    // Something that is plainly not ASCII85 must be refused, not mangled.
+    assert.strictEqual(rec.ascii85Decode('  not ascii85 ÿ'), null);
+  });
+
   await t('RECOVERY NEVER RETURNS GLYPH SOUP', () => {
     // THE ONE THAT MATTERS. A subsetted font stores glyph ids, not characters;
     // decoded blind they are 60-73% junk (measured on our own PDFs). Handing
