@@ -360,15 +360,56 @@ async function createPortal({ customerId, returnUrl }) {
  * Apply a Stripe webhook event. Attribution comes from metadata ONLY —
  * an unattributable event is parked, never guessed onto a subscriber.
  */
-async function applyEvent(type, obj, opts = {}) {
-  const subscriberId = parseInt(
+/**
+ * WHO IS THIS EVENT ABOUT?
+ *
+ * STRIPE MOVED THE FIELD. On current API versions an Invoice no longer carries
+ * `subscription` or the subscription's metadata at the top level — both now sit
+ * under `parent.subscription_details`. A real test payment proved the damage:
+ * `checkout.session.completed` resolved fine and the account went active, while
+ * `invoice.paid` resolved to nothing and was parked. Consequences, all silent:
+ * no invoice row, so the billing register reads $0.00 for a customer who paid;
+ * and `qualifyFromInvoice` never runs, so NO REFERRAL COMMISSION IS EVER
+ * CREATED — the whole profit-sharing programme would have paid out nothing
+ * while looking perfectly healthy.
+ *
+ * The stored Stripe ids are the last resort, and they are not a guess: they
+ * were written onto the subscriber row by the checkout event itself, so they
+ * are an authoritative link rather than an inference.
+ */
+async function resolveSubscriberId(obj) {
+  const fromMeta = parseInt(
     (obj.metadata && obj.metadata.subscriber_id) ||
-    (obj.subscription_details && obj.subscription_details.metadata && obj.subscription_details.metadata.subscriber_id) ||
+    (obj.subscription_details && obj.subscription_details.metadata
+      && obj.subscription_details.metadata.subscriber_id) ||
+    // Current API version: Invoice.parent.subscription_details.
+    (obj.parent && obj.parent.subscription_details && obj.parent.subscription_details.metadata
+      && obj.parent.subscription_details.metadata.subscriber_id) ||
     '', 10
   );
+  if (Number.isInteger(fromMeta)) return { id: fromMeta, via: 'metadata' };
+
+  const subId = obj.subscription
+    || (obj.parent && obj.parent.subscription_details && obj.parent.subscription_details.subscription)
+    || null;
+  if (subId) {
+    const row = await models.subscribers.findOne({ where: { stripe_subscription_id: subId } });
+    if (row) return { id: row.id, via: 'stripe_subscription_id' };
+  }
+  if (obj.customer) {
+    const row = await models.subscribers.findOne({ where: { stripe_customer_id: obj.customer } });
+    if (row) return { id: row.id, via: 'stripe_customer_id' };
+  }
+  return { id: null, via: null };
+}
+
+async function applyEvent(type, obj, opts = {}) {
+  const resolved = await resolveSubscriberId(obj);
+  const subscriberId = resolved.id;
 
   if (!Number.isInteger(subscriberId)) {
-    return { ok: false, parked: true, reason: 'no subscriber_id in metadata — parked rather than guessed', type };
+    return { ok: false, parked: true,
+             reason: 'could not attribute this event to a subscriber — parked rather than guessed', type };
   }
 
   switch (type) {
@@ -414,10 +455,19 @@ async function applyEvent(type, obj, opts = {}) {
     }
 
     case 'invoice.paid': {
-      const inv = await models.invoices.create({
+      // IDEMPOTENT. Stripe retries a webhook until it gets a 2xx, and it also
+      // fires invoice.paid alongside invoice_payment.paid and
+      // invoice.payment_succeeded. Creating a row per delivery would inflate
+      // the revenue figures on the billing register for a single payment.
+      const already = await models.invoices.findOne({ where: { stripe_invoice_id: obj.id } });
+      const inv = already || await models.invoices.create({
         tenant_id: subscriberId, stripe_invoice_id: obj.id,
         amount_cents: obj.amount_paid, status: 'paid', dunning_stage: 0, paid_at: new Date(),
       });
+      if (already) {
+        return { ok: true, action: 'invoice_already_recorded', subscriberId,
+                 attributed_via: resolved.via };
+      }
       // THE ONLY PLACE A REFERRAL COMMISSION IS EVER CREATED. It reads this
       // invoice row, so the figure traces to money that actually arrived
       // rather than to a signup or to the list price. Non-fatal on purpose: a
@@ -426,7 +476,8 @@ async function applyEvent(type, obj, opts = {}) {
       try {
         referral = await require('./referrals').qualifyFromInvoice(inv);
       } catch (e) { console.warn('[billing] referral qualify failed:', e.message); }
-      return { ok: true, action: 'invoice_recorded', subscriberId, referral };
+      return { ok: true, action: 'invoice_recorded', subscriberId,
+               attributed_via: resolved.via, amount_cents: obj.amount_paid, referral };
     }
 
     case 'invoice.payment_failed': {

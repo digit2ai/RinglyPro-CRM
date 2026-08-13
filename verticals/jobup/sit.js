@@ -4323,6 +4323,73 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the landing page must open and focus the paste box');
   });
 
+  section('invoice.paid must attribute, or the money is invisible');
+
+  await t('STRIPE MOVED THE FIELD — invoice.paid resolves on the current shape', async () => {
+    // A real test payment proved this. On current API versions an Invoice no
+    // longer carries `subscription` or the subscription metadata at the top
+    // level; both moved under `parent.subscription_details`. The old resolver
+    // parked the event, so: no invoice row, the billing register read $0.00 for
+    // somebody who had paid, and qualifyFromInvoice never ran — meaning NO
+    // REFERRAL COMMISSION WOULD EVER HAVE BEEN CREATED.
+    const b = require(__dirname + '/src/services/billing');
+    const sub = await models.subscribers.create({
+      email: 'sit-invshape@example.com', status: 'active', activation: 'paid',
+      stripe_customer_id: 'cus_sit_shape', stripe_subscription_id: 'sub_sit_shape',
+    });
+    try {
+      const modern = {
+        id: 'in_sit_modern', amount_paid: 5900, customer: 'cus_sit_shape', metadata: {},
+        parent: { type: 'subscription_details', subscription_details: {
+          subscription: 'sub_sit_shape', metadata: { subscriber_id: String(sub.id) } } },
+      };
+      const r = await b.applyEvent('invoice.paid', modern);
+      assert.strictEqual(r.ok, true, 'THE PAYMENT WAS INVISIBLE');
+      assert.strictEqual(r.subscriberId, sub.id);
+      assert.strictEqual(r.attributed_via, 'metadata');
+      assert.strictEqual(r.amount_cents, 5900);
+
+      // Retried delivery must not create a second row — Stripe retries until 2xx
+      // and fires sibling events, and a duplicate inflates the revenue figures.
+      const again = await b.applyEvent('invoice.paid', modern);
+      assert.strictEqual(again.action, 'invoice_already_recorded');
+      const rows = await models.invoices.findAll({ where: { stripe_invoice_id: 'in_sit_modern' } });
+      assert.strictEqual(rows.length, 1, 'one payment, one invoice row');
+
+      // No metadata at all: the stored Stripe ids are an authoritative link
+      // written by the checkout event, not a guess.
+      const bare = { id: 'in_sit_bare', amount_paid: 5900, customer: 'cus_sit_shape', metadata: {} };
+      const r2 = await b.applyEvent('invoice.paid', bare);
+      assert.strictEqual(r2.ok, true);
+      assert.strictEqual(r2.attributed_via, 'stripe_customer_id');
+
+      // And something belonging to nobody is still parked, never guessed on.
+      const orphan = { id: 'in_sit_orphan', amount_paid: 5900, customer: 'cus_nobody', metadata: {} };
+      const r3 = await b.applyEvent('invoice.paid', orphan);
+      assert.strictEqual(r3.ok, false);
+      assert.strictEqual(r3.parked, true);
+    } finally {
+      await models.invoices.destroy({ where: { tenant_id: sub.id } });
+      await models.subscribers.destroy({ where: { id: sub.id } });
+    }
+  });
+
+  await t('the old top-level shape still works — do not break what shipped', async () => {
+    const b = require(__dirname + '/src/services/billing');
+    const sub = await models.subscribers.create({
+      email: 'sit-invold@example.com', status: 'active', activation: 'paid' });
+    try {
+      const legacy = { id: 'in_sit_legacy', amount_paid: 5900,
+        metadata: { subscriber_id: String(sub.id) } };
+      const r = await b.applyEvent('invoice.paid', legacy);
+      assert.strictEqual(r.ok, true);
+      assert.strictEqual(r.attributed_via, 'metadata');
+    } finally {
+      await models.invoices.destroy({ where: { tenant_id: sub.id } });
+      await models.subscribers.destroy({ where: { id: sub.id } });
+    }
+  });
+
   section('test mode moves JobUp alone, and can never read as revenue');
 
   await t('JobUp has its own Stripe key, so the estate-wide one is untouchable', () => {
