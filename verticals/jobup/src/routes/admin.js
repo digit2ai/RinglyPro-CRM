@@ -262,6 +262,25 @@ router.post('/impersonate/:tenantId', requireOwner, async (req, res) => {
   });
 });
 
+/**
+ * Pull what Stripe already knows and record anything the webhook missed.
+ *
+ * This is the recovery path for a webhook that is not verifying: the money is
+ * real, Stripe has it, and nothing here has to be taken on trust — it replays
+ * through the same applyEvent, which is idempotent.
+ */
+router.post('/reconcile', requireOwner, async (req, res) => {
+  const days = Math.max(1, Math.min(90, parseInt((req.body || {}).days, 10) || 7));
+  try {
+    const r = await require('../services/billing').reconcile({ days });
+    await audit(req.admin.email, 'billing.reconcile',
+      `days=${days} applied=${(r.applied || []).length}`);
+    res.json(r);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get('/audit', requireOwner, async (req, res) => {
   const rows = await models.audit_log.findAll({ order: [['created_at', 'DESC']], limit: 200 });
   res.json({ audit: rows });

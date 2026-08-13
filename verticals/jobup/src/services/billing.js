@@ -372,6 +372,64 @@ async function createCheckout({ subscriberId, email, successUrl, cancelUrl, teas
  * URL. This is the authoritative answer and it cannot be forged: a made-up id
  * does not resolve, and one that does resolve carries its own subscriber_id.
  */
+/**
+ * RECONCILE FROM STRIPE — the webhook is not the only way money can be recorded.
+ *
+ * A signing secret from the wrong endpoint fails EVERY signature, and the
+ * symptom is silence: the customer is charged, the account may still activate
+ * through the build form, and only the invoice row and the referral commission
+ * go missing. That happened here — two webhooks rejected, a real $59 taken,
+ * and no invoice row anywhere.
+ *
+ * So we ask Stripe directly rather than waiting to be told. Stripe is the
+ * authority on what was paid; this pulls what it already knows and replays it
+ * through the SAME applyEvent the webhook uses, so there is one code path and
+ * no second interpretation of what a payment means. applyEvent is idempotent,
+ * which is what makes running this safe at any time, as often as you like.
+ */
+async function reconcile({ days = 7, limit = 100 } = {}) {
+  const c = client();
+  if (!c) return { ok: false, reason: 'Stripe is not configured on this deployment' };
+  if (disabled()) return { ok: false, reason: 'billing is switched off' };
+
+  const since = Math.floor((Date.now() - days * 86400000) / 1000);
+  const out = { ok: true, days, checked: 0, applied: [], parked: [], errors: [] };
+
+  const replay = async (type, obj, label) => {
+    out.checked++;
+    try {
+      const r = await applyEvent(type, obj);
+      if (r && r.ok) out.applied.push({ type, id: obj.id, label, action: r.action,
+                                        subscriber: r.subscriberId, via: r.attributed_via || null });
+      else out.parked.push({ type, id: obj.id, label, reason: (r && r.reason) || 'not applied' });
+    } catch (e) {
+      out.errors.push({ type, id: obj.id, error: e.message });
+    }
+  };
+
+  // Paid invoices are the money. These create the invoice rows the register
+  // reads and are the ONLY thing that can qualify a referral commission.
+  try {
+    const invs = await c.invoices.list({ limit, created: { gte: since }, status: 'paid' });
+    for (const inv of invs.data) await replay('invoice.paid', inv, `$${(inv.amount_paid / 100).toFixed(2)}`);
+  } catch (e) { out.errors.push({ stage: 'invoices', error: e.message }); }
+
+  // Completed checkouts are the ACTIVATION. Somebody charged but left pending
+  // has paid for an account they cannot use.
+  try {
+    const sessions = await c.checkout.sessions.list({ limit, created: { gte: since } });
+    for (const cs of sessions.data) {
+      if (cs.payment_status !== 'paid') continue;
+      await replay('checkout.session.completed', cs, cs.customer_details && cs.customer_details.email);
+    }
+  } catch (e) { out.errors.push({ stage: 'sessions', error: e.message }); }
+
+  out.note = out.applied.length
+    ? 'Replayed through the same handler the webhook uses. Safe to run again — it is idempotent.'
+    : 'Nothing to apply: everything Stripe knows about is already recorded.';
+  return out;
+}
+
 async function verifyCheckoutSession(sessionId) {
   if (disabled()) return { ok: false, reason: 'billing disabled' };
   const s = client();
@@ -591,7 +649,7 @@ module.exports = {
   freeReason,
   disabled,
   freeActivation,
-  enabled, status, createCheckout, verifyCheckoutSession, createPortal, applyEvent,
+  enabled, status, createCheckout, verifyCheckoutSession, createPortal, applyEvent, reconcile,
   renewalNoticesDue, refundEligible,
   PRICE_USD, REFUND_DAYS, RENEWAL_NOTICE_DAYS, DUNNING_STAGES,
 };
