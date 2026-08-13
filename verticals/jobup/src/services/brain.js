@@ -39,6 +39,76 @@ function enabled() {
   return Boolean(process.env.ANTHROPIC_API_KEY) && Boolean(anthropic());
 }
 
+// ---- WHY THE LAST CALL FAILED ----------------------------------------------
+//
+// `enabled()` only proves a key STRING exists and the SDK loaded. It cannot
+// tell you the key was revoked, the credit ran out, or the model id stopped
+// resolving — and every one of those lands in the catch below, returns a
+// labelled heuristic result, and lets the funnel keep serving degraded
+// previews while /health cheerfully reports "anthropic".
+//
+// That happened: four teasers in a row came back is_simulated with cost 0 and
+// nothing anywhere recorded the reason. So the last failure is remembered, and
+// probe() will actually spend a fraction of a cent to ask.
+let lastFailure = null;   // { at, message, status, type }
+
+function noteFailure(e) {
+  lastFailure = {
+    at: new Date().toISOString(),
+    message: String((e && e.message) || e).slice(0, 300),
+    status: (e && (e.status || e.statusCode)) || null,
+    type: (e && e.error && e.error.error && e.error.error.type) || (e && e.name) || null,
+  };
+  return lastFailure;
+}
+
+function health() {
+  return {
+    key_present: Boolean(process.env.ANTHROPIC_API_KEY),
+    sdk_loaded: Boolean(anthropic()),
+    model: MODEL,
+    teaser_model: TEASER_MODEL,
+    last_failure: lastFailure,
+    note: lastFailure
+      ? 'The key is set but calls have been FAILING — previews are running on the '
+        + 'heuristic path and are labelled is_simulated. Add ?probe=1 for the live reason.'
+      : 'No call has failed since this instance started.',
+  };
+}
+
+/**
+ * One real, minimal call. Costs a few thousandths of a cent and is the only
+ * thing that can distinguish "configured" from "working". Cached briefly so a
+ * monitor cannot turn it into a bill.
+ */
+let probeCache = null;
+async function probe({ maxAgeMs = 60000 } = {}) {
+  if (probeCache && Date.now() - probeCache.at < maxAgeMs) {
+    return { ...probeCache.result, cached: true };
+  }
+  const c = anthropic();
+  if (!c) {
+    const r = { ok: false, reason: 'no ANTHROPIC_API_KEY', model: MODEL };
+    probeCache = { at: Date.now(), result: r };
+    return r;
+  }
+  let result;
+  try {
+    const res = await c.messages.create({
+      model: MODEL, max_tokens: 8,
+      messages: [{ role: 'user', content: 'Reply with the single word: ok' }],
+    });
+    const text = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+    result = { ok: true, model: MODEL, replied: text.trim().slice(0, 20), cost_usd: costOf(res.usage) };
+    lastFailure = null;                       // it works now; stop implying it does not
+  } catch (e) {
+    const f = noteFailure(e);
+    result = { ok: false, model: MODEL, status: f.status, type: f.type, reason: f.message };
+  }
+  probeCache = { at: Date.now(), result };
+  return result;
+}
+
 function costOf(usage) {
   if (!usage) return 0;
   const i = (usage.input_tokens || 0) / 1e6 * RATE_IN;
@@ -81,9 +151,11 @@ async function json({ system, cachedPrefix, prompt, maxTokens = 1024, model = MO
       cost_usd: costOf(res.usage), usage: res.usage, model,
     };
   } catch (e) {
-    console.warn('[brain] call failed:', e.message);
-    return { ok: false, reason: e.message, is_simulated: true, cost_usd: 0 };
+    const f = noteFailure(e);
+    console.warn('[brain] call failed:', f.status || '', f.type || '', f.message);
+    return { ok: false, reason: f.message, status: f.status, type: f.type,
+             is_simulated: true, cost_usd: 0 };
   }
 }
 
-module.exports = { json, enabled, costOf, MODEL, TEASER_MODEL, RATE_IN, RATE_OUT };
+module.exports = { json, enabled, health, probe, costOf, MODEL, TEASER_MODEL, RATE_IN, RATE_OUT };

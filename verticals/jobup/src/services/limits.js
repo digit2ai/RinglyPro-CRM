@@ -11,29 +11,71 @@
 const { models } = require('../models');
 
 const WINDOW_MS = 24 * 3600 * 1000;
-const MAX_PER_IP_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_IP_PER_DAY || '3', 10);
+
+// THE NETWORK CAP IS PER CONNECTION, NOT PER PERSON.
+//
+// It was 3, which is one household, one office, or anyone behind carrier NAT
+// running out of previews before the second person has tried. A real prospect
+// hit it: two attempts under one email plus one under another, twelve minutes
+// apart, and the fourth visitor on that Wi-Fi was refused. At roughly seven
+// cents a preview, ten costs at most seventy cents to an abusive network per
+// day — cheap next to the funnel it was closing. The per-EMAIL cap is the one
+// that actually stops a loop, and it stays tight.
+const MAX_PER_IP_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_IP_PER_DAY || '10', 10);
 const MAX_PER_EMAIL_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_EMAIL_PER_DAY || '2', 10);
 
 /**
  * Counts real teaser rows in the window rather than keeping a counter, so it is
  * correct across restarts and instances by construction.
+ *
+ * A refusal now carries a way forward: WHEN it clears (the moment the oldest
+ * counted row leaves the window, not a vague "tomorrow"), and the preview this
+ * person ALREADY has, if one is ready. Somebody re-running because they lost
+ * the tab should get their preview back — they can subscribe from it — instead
+ * of a wall that reads as a broken product.
  */
 async function teaserAllowed({ ipHash, email }) {
-  const since = new Date(Date.now() - WINDOW_MS);
+  const now = Date.now();
+  const since = new Date(now - WINDOW_MS);
   const all = await models.teasers.findAll({});
   const recent = all.filter((t) => new Date(t.created_at) >= since);
+  const mine = email
+    ? all.filter((t) => String(t.email || '').toLowerCase() === String(email).toLowerCase())
+    : [];
 
-  const byIp = recent.filter((t) => t.ip_hash && t.ip_hash === ipHash).length;
-  if (byIp >= MAX_PER_IP_PER_DAY) {
-    return { allowed: false, reason: 'ip', count: byIp, max: MAX_PER_IP_PER_DAY };
+  // Their most recent finished preview, at any age — the point is to hand back
+  // something usable, and a preview from last week is still theirs.
+  const ready = mine
+    .filter((t) => t.status === 'ready')
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
+  const existing = ready
+    ? { token: ready.token, built_at: ready.created_at,
+        url: `${process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev'}/teaser/${ready.token}` }
+    : null;
+
+  // The window is rolling, so it frees up one row at a time.
+  const clearsAt = (rows) => {
+    const oldest = rows.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
+    return oldest ? new Date(new Date(oldest.created_at).getTime() + WINDOW_MS).toISOString() : null;
+  };
+
+  const ipRows = recent.filter((t) => t.ip_hash && t.ip_hash === ipHash);
+  const emailRows = email
+    ? recent.filter((t) => String(t.email || '').toLowerCase() === String(email).toLowerCase())
+    : [];
+
+  // Email first: it is the more specific and more explicable refusal. Told
+  // "this network is busy" when the truth is "you personally ran two", a
+  // visitor blames us; told the truth, they open the preview they already have.
+  if (email && emailRows.length >= MAX_PER_EMAIL_PER_DAY) {
+    return { allowed: false, reason: 'email', count: emailRows.length,
+             max: MAX_PER_EMAIL_PER_DAY, retry_after: clearsAt(emailRows), existing };
   }
-  const byEmail = email
-    ? recent.filter((t) => String(t.email || '').toLowerCase() === String(email).toLowerCase()).length
-    : 0;
-  if (email && byEmail >= MAX_PER_EMAIL_PER_DAY) {
-    return { allowed: false, reason: 'email', count: byEmail, max: MAX_PER_EMAIL_PER_DAY };
+  if (ipRows.length >= MAX_PER_IP_PER_DAY) {
+    return { allowed: false, reason: 'ip', count: ipRows.length,
+             max: MAX_PER_IP_PER_DAY, retry_after: clearsAt(ipRows), existing };
   }
-  return { allowed: true, by_ip: byIp, by_email: byEmail };
+  return { allowed: true, by_ip: ipRows.length, by_email: emailRows.length, existing };
 }
 
 /**

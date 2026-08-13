@@ -4182,6 +4182,88 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
 
+  section('a rate limit must not read as a broken product');
+
+  await t('the network cap counts a connection, so it cannot be three', () => {
+    const lim = require(__dirname + '/src/services/limits');
+    assert.ok(lim.MAX_PER_IP_PER_DAY >= 8,
+      'one household or office behind one NAT must not run out in three previews');
+    assert.strictEqual(lim.MAX_PER_EMAIL_PER_DAY, 2,
+      'the per-person cap is the one that stops a loop, and it stays tight');
+  });
+
+  await t('a refusal carries when it clears and the preview they already have', async () => {
+    const lim = require(__dirname + '/src/services/limits');
+    const email = 'sit-limit@example.com';
+    const ipHash = 'sit-limit-hash';
+    const made = [];
+    for (let i = 0; i < lim.MAX_PER_EMAIL_PER_DAY; i++) {
+      made.push(await models.teasers.create({
+        token: 'sit-limit-' + i, email, ip_hash: ipHash, status: 'ready',
+      }));
+    }
+    try {
+      const rl = await lim.teaserAllowed({ ipHash, email });
+      assert.strictEqual(rl.allowed, false, 'the cap must still bite');
+      assert.strictEqual(rl.reason, 'email',
+        'the specific refusal is the explicable one — blaming the network here is a lie');
+      assert.ok(rl.retry_after, '"try again tomorrow" is usually wrong by hours');
+      // Rolling window: it frees up when the OLDEST counted row ages out.
+      const gap = new Date(rl.retry_after) - new Date(made[0].created_at);
+      assert.ok(Math.abs(gap - lim.WINDOW_MS) < 5000, 'retry_after must track the oldest row');
+      assert.ok(rl.existing && rl.existing.token,
+        'they already have a preview — handing it back is the whole point');
+      assert.ok(rl.existing.url.includes('/teaser/'), 'and it must be openable');
+
+      // A different person on the same Wi-Fi is NOT blocked at two.
+      const other = await lim.teaserAllowed({ ipHash, email: 'someone-else@example.com' });
+      assert.strictEqual(other.allowed, true,
+        'the per-email cap must never leak into a refusal for the next visitor');
+    } finally {
+      await models.teasers.destroy({ where: { email } });
+    }
+  });
+
+  await t('an active subscriber never meets a rate limit', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    const gate = src.indexOf("already_registered: true");
+    const limit = src.indexOf('limits.teaserAllowed');
+    assert.ok(gate > -1 && limit > -1);
+    assert.ok(gate < limit,
+      'the person who already paid must be sent to sign in BEFORE any cap is counted');
+    assert.ok(src.includes("sign_in_url: '/app'"), 'and given the way in');
+  });
+
+  await t('the landing page turns a refusal into a way forward', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(src.includes('function failWithWay'), 'a dead red string converts nobody');
+    assert.ok(src.includes('Open my preview') && src.includes("'Sign in'"),
+      'both recoverable cases need a real button');
+    assert.ok(src.includes('function clearsAt'), 'and the exact time it clears');
+    // A link built from a server field must never be able to leave the site.
+    assert.ok(/\^\\\/\[A-Za-z0-9/.test(src),
+      'only a same-origin path may be rendered as a button');
+  });
+
+  await t('the brain reports whether it WORKS, not whether a key exists', async () => {
+    const b = require(__dirname + '/src/services/brain');
+    assert.strictEqual(typeof b.probe, 'function', 'a real call is the only proof');
+    assert.strictEqual(typeof b.health, 'function');
+    const h = b.health();
+    assert.ok('key_present' in h && 'last_failure' in h,
+      'four previews degraded silently because nothing recorded the reason');
+    // With no key the probe must say so rather than pretend or throw.
+    const p = await b.probe({ maxAgeMs: 0 });
+    assert.strictEqual(p.ok, false);
+    assert.match(p.reason, /ANTHROPIC_API_KEY/);
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/brain.js', 'utf8');
+    assert.ok(src.includes('noteFailure(e)') && src.match(/noteFailure\(e\)/g).length >= 2,
+      'both the probe and the real call path must record why they failed');
+  });
+
   section('subscribe and submit — behaviour, not grep');
   // ---- the four subscribe buttons, driven for real -----------------------
   // Grepping for data-cta proves the markup exists. It cannot prove the

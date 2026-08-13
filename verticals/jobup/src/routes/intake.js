@@ -70,12 +70,39 @@ router.post('/teaser', upload.fields([{ name: 'resume', maxCount: 1 }, { name: '
     if (gate.errs.length) return res.status(400).json({ errors: gate.errs });
     body.phone = gate.phone;   // store E.164, whatever shape it was typed in
 
+    // SOMEONE WHO ALREADY PAID MUST NEVER MEET A RATE LIMIT.
+    //
+    // An active subscriber typing their address into the landing page is trying
+    // to get IN, not to build a preview. Sending them to sign in is both the
+    // truth and the thing they wanted; "daily limit reached" reads as a broken
+    // product to the one person who has already given us money.
+    const known = body.email
+      ? await models.subscribers.findOne({ where: { email: String(body.email).trim().toLowerCase() } })
+      : null;
+    if (known && known.status === 'active') {
+      return res.status(409).json({
+        error: 'You already have a JobUp account for this address.',
+        already_registered: true,
+        sign_in_url: '/app',
+        note: 'Sign in and your dashboard is exactly where you left it.',
+      });
+    }
+
     const rl = await limits.teaserAllowed({ ipHash: teaser.ipHash(ip), email: body.email });
     if (!rl.allowed) {
+      // A refusal with no way forward is a lost customer. This one carries the
+      // exact moment it clears and, when there is one, the preview they already
+      // have — which they can subscribe from right now.
       return res.status(429).json({
         error: rl.reason === 'email'
-          ? 'Daily teaser limit reached for this email address.'
-          : 'Daily teaser limit reached for this network.',
+          ? `You have already built ${rl.count} previews for this email address today.`
+          : 'This network has already built its previews for today.',
+        note: rl.existing
+          ? 'Your most recent preview is still here, and you can subscribe from it.'
+          : (rl.reason === 'ip'
+            ? 'The limit counts the connection, not the person, so someone else on '
+              + 'this Wi-Fi may have used it. A phone on mobile data will work now.'
+            : 'Nothing was lost. You can build another one shortly.'),
         ...rl,
       });
     }

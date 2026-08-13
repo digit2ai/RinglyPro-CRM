@@ -594,6 +594,15 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 .d2b .ju-err{background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:#ffa8c5;
   border-radius:11px;padding:11px 14px;font-size:13.5px;margin-bottom:15px;display:none}
 .d2b .ju-err.show{display:block}
+/* A refusal that offers something is not really a refusal. When the visitor
+   already has a preview, or already has an account, the panel turns from a
+   dead red error into the way forward — amber, with a real button. */
+.d2b .ju-err.helpful{background:rgba(34,211,238,.09);border-color:rgba(34,211,238,.38);color:#bfe9f5}
+.d2b .ju-err .ju-err-sub{display:block;margin-top:6px;opacity:.85;font-size:12.8px;line-height:1.55}
+.d2b .ju-err .ju-errbtn{display:inline-block;margin-top:11px;background:linear-gradient(120deg,#5b7bff,#e64980);
+  color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:999px;
+  padding:11px 20px;min-height:44px;line-height:22px}
+.d2b .ju-err .ju-errbtn:hover{filter:brightness(1.08)}
 .d2b .ju-submit{width:100%;margin-top:8px;justify-content:center}
 .d2b .ju-legal{color:var(--faint);font-size:11.5px;font-family:var(--mono);line-height:1.65;margin-top:15px;text-align:center}
 .d2b .ju-prog{display:none;text-align:center;padding:26px 0}
@@ -1157,9 +1166,36 @@ function juFormatPhone(v){
     document.body.style.overflow='hidden';setTimeout(function(){document.getElementById('ju-name').focus();},60);}
   function close(){sheet.classList.remove('open');document.body.style.overflow='';
     if(lastFocus)lastFocus.focus();}
-  function fail(m){err.textContent=m;err.classList.add('show');
+  function fail(m){err.className='ju-err show';err.textContent=m;
     form.style.display='';prog.classList.remove('show');
     err.scrollIntoView({block:'nearest',behavior:'smooth'});}
+
+  function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  // A blocked visitor who is handed a working link is not a lost visitor. Only
+  // a same-origin path is ever rendered as a button, so a server field can
+  // never become an off-site or javascript: link on this page.
+  function failWithWay(head,sub,href,label){
+    var safe=/^\/[A-Za-z0-9_\-\/?=&.]*$/.test(String(href||''))?href:null;
+    err.className='ju-err show'+(safe?' helpful':'');
+    err.innerHTML='<strong>'+esc(head)+'</strong>'+
+      (sub?'<span class="ju-err-sub">'+esc(sub)+'</span>':'')+
+      (safe?'<a class="ju-errbtn" href="'+esc(API+safe)+'">'+esc(label)+'</a>':'');
+    form.style.display='';prog.classList.remove('show');
+    err.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+
+  // "after 11:12 PM" beats "try again tomorrow": the window is rolling, and
+  // tomorrow is usually wrong by many hours.
+  function clearsAt(iso){
+    if(!iso) return '';
+    var d=new Date(iso); if(isNaN(d)) return '';
+    var today=new Date().toDateString()===d.toDateString();
+    var t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+    return today?('You can build another after '+t+'.')
+                :('You can build another after '+t+' on '+d.toLocaleDateString([], {month:'short',day:'numeric'})+'.');
+  }
 
   ['ju-attach','ju-attach2'].forEach(function(id){
     var b=document.getElementById(id); if(b) b.addEventListener('click',open);
@@ -1218,9 +1254,21 @@ function juFormatPhone(v){
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
       .then(function(res){
         if(!res.ok){
-          var m=(res.j.errors&&res.j.errors.join(' · '))||res.j.error||'Something went wrong.';
-          if(res.status===429) m=res.j.error||'Daily limit reached for this network. Try again tomorrow.';
-          return fail(m);
+          var j=res.j||{};
+          // Already a customer: they were trying to get in, not to build a preview.
+          if(res.status===409&&j.already_registered)
+            return failWithWay(j.error||'You already have a JobUp account.',
+              j.note||'', j.sign_in_url||'/app', 'Sign in');
+          // Rate limited: hand back the preview they already have, or at least
+          // the exact time it clears.
+          if(res.status===429){
+            var sub=[j.note,clearsAt(j.retry_after)].filter(Boolean).join(' ');
+            if(j.existing&&j.existing.token)
+              return failWithWay(j.error||'You have already built a preview today.',
+                sub,'/teaser/'+j.existing.token,'Open my preview');
+            return failWithWay(j.error||'Daily limit reached for this network.',sub,null,null);
+          }
+          return fail((j.errors&&j.errors.join(' · '))||j.error||'Something went wrong.');
         }
         document.getElementById('ju-prog-t').textContent='Building your ecosystem…';
         document.getElementById('ju-prog-s').textContent='Taking you there now.';

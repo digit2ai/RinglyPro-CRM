@@ -96,7 +96,15 @@ init()
   .catch((e) => { bootError = e.message; console.error('[jobup] init failed:', e.message); });
 
 // ---- health ---------------------------------------------------------------
-router.get('/health', (req, res) => {
+router.get('/health', async (req, res) => {
+  // ?probe=1 spends a fraction of a cent to find out whether the key WORKS.
+  // "brain: anthropic" only ever meant a key string was present, which is how
+  // four previews in a row went out on the heuristic path unnoticed.
+  const brainHealth = brain.health();
+  if (req.query && req.query.probe) {
+    try { brainHealth.probe = await brain.probe(); }
+    catch (e) { brainHealth.probe = { ok: false, reason: e.message }; }
+  }
   res.json({
     ok: true,
     service: 'jobup',
@@ -105,6 +113,7 @@ router.get('/health', (req, res) => {
     db: backend(),
     table_prefix: 'ju_',
     brain: brain.enabled() ? 'anthropic' : 'heuristic (no ANTHROPIC_API_KEY)',
+    brain_detail: brainHealth,
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
     admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',
