@@ -1,4 +1,8 @@
--- Citi Opportunity Tracker — canonical schema.
+-- Bank Opportunity Tracker — canonical schema.
+-- Multi-employer: `employer` scopes every requisition-bearing table, and
+-- uniqueness is keyed on (…, employer, req_id). Citi ids are 8 digits and
+-- JPMorgan's are 9, but a scheme that merely happens not to collide today is
+-- not an invariant.
 -- Applied idempotently on boot by verticals/citijobs/src/index.js init().
 -- This file is the source of truth for a manual/DBA apply.
 
@@ -41,6 +45,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS cj_profiles_tenant_slug_uq ON cj_profiles (ten
 CREATE TABLE IF NOT EXISTS cj_reqs (
   id                SERIAL PRIMARY KEY,
   tenant_id         INTEGER NOT NULL DEFAULT 1,
+  employer          VARCHAR(40) NOT NULL DEFAULT 'citi',
   req_id            VARCHAR(40) NOT NULL,
   title             TEXT,
   external_path     TEXT,
@@ -65,13 +70,14 @@ CREATE TABLE IF NOT EXISTS cj_reqs (
   source            VARCHAR(20) DEFAULT 'agent',
   raw               JSONB DEFAULT '{}'::jsonb
 );
-CREATE UNIQUE INDEX IF NOT EXISTS cj_reqs_tenant_req_uq ON cj_reqs (tenant_id, req_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cj_reqs_tenant_emp_req_uq ON cj_reqs (tenant_id, employer, req_id);
 CREATE INDEX IF NOT EXISTS cj_reqs_close_idx ON cj_reqs (tenant_id, close_date);
 
 CREATE TABLE IF NOT EXISTS cj_tracked (
   id                SERIAL PRIMARY KEY,
   tenant_id         INTEGER NOT NULL,
   profile_id        INTEGER NOT NULL,
+  employer          VARCHAR(40) NOT NULL DEFAULT 'citi',
   req_id            VARCHAR(40) NOT NULL,
   status            VARCHAR(30) DEFAULT 'new',
   status_reason     VARCHAR(40),
@@ -85,13 +91,14 @@ CREATE TABLE IF NOT EXISTS cj_tracked (
   archived          BOOLEAN DEFAULT FALSE,
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS cj_tracked_profile_req_uq ON cj_tracked (profile_id, req_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cj_tracked_prof_emp_req_uq ON cj_tracked (profile_id, employer, req_id);
 CREATE INDEX IF NOT EXISTS cj_tracked_status_idx ON cj_tracked (tenant_id, profile_id, status);
 
 CREATE TABLE IF NOT EXISTS cj_matches (
   id            SERIAL PRIMARY KEY,
   tenant_id     INTEGER NOT NULL,
   profile_id    INTEGER NOT NULL,
+  employer      VARCHAR(40) NOT NULL DEFAULT 'citi',
   req_id        VARCHAR(40) NOT NULL,
   score         INTEGER DEFAULT 0,
   rationale     TEXT,
@@ -101,12 +108,13 @@ CREATE TABLE IF NOT EXISTS cj_matches (
   cost_cents    REAL DEFAULT 0,
   scored_at     TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS cj_matches_profile_req_uq ON cj_matches (profile_id, req_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cj_matches_prof_emp_req_uq ON cj_matches (profile_id, employer, req_id);
 
 CREATE TABLE IF NOT EXISTS cj_queries (
   id           SERIAL PRIMARY KEY,
   tenant_id    INTEGER NOT NULL,
   profile_id   INTEGER,
+  employer     VARCHAR(40) NOT NULL DEFAULT 'citi',
   label        VARCHAR(160),
   search_text  VARCHAR(200) NOT NULL,
   max_pages    INTEGER DEFAULT 5,
@@ -117,7 +125,7 @@ CREATE TABLE IF NOT EXISTS cj_queries (
   last_total   INTEGER,
   created_at   TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS cj_queries_tenant_text_uq ON cj_queries (tenant_id, search_text);
+CREATE UNIQUE INDEX IF NOT EXISTS cj_queries_tenant_emp_text_uq ON cj_queries (tenant_id, employer, search_text);
 
 CREATE TABLE IF NOT EXISTS cj_runs (
   id             SERIAL PRIMARY KEY,
@@ -172,6 +180,8 @@ CREATE TABLE IF NOT EXISTS cj_tailorings (
   id                SERIAL PRIMARY KEY,
   tenant_id         INTEGER NOT NULL,
   profile_id        INTEGER NOT NULL,
+  employer          VARCHAR(40) NOT NULL DEFAULT 'citi',
+  employer          VARCHAR(40) NOT NULL DEFAULT 'citi',
   req_id            VARCHAR(40) NOT NULL,
   version           INTEGER DEFAULT 1,
   content           JSONB DEFAULT '{}'::jsonb,
@@ -185,4 +195,4 @@ CREATE TABLE IF NOT EXISTS cj_tailorings (
   sent_at           TIMESTAMPTZ,
   generated_at      TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS cj_tailorings_pr_v_uq ON cj_tailorings (profile_id, req_id, version);
+CREATE UNIQUE INDEX IF NOT EXISTS cj_tail_prof_emp_req_v_uq ON cj_tailorings (profile_id, employer, req_id, version);

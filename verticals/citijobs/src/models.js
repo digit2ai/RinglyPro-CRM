@@ -121,6 +121,7 @@ const Tracked = sequelize.define('CjTracked', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
   profile_id: { type: DataTypes.INTEGER, allowNull: false },
+  employer: { type: DataTypes.STRING, allowNull: false, defaultValue: 'citi' },
   req_id: { type: DataTypes.STRING, allowNull: false },
   status: { type: DataTypes.STRING, defaultValue: 'new' },
   status_reason: { type: DataTypes.STRING },
@@ -140,6 +141,7 @@ const Match = sequelize.define('CjMatch', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
   profile_id: { type: DataTypes.INTEGER, allowNull: false },
+  employer: { type: DataTypes.STRING, allowNull: false, defaultValue: 'citi' },
   req_id: { type: DataTypes.STRING, allowNull: false },
   score: { type: DataTypes.INTEGER, defaultValue: 0 },
   rationale: { type: DataTypes.TEXT },
@@ -223,6 +225,7 @@ const Tailoring = sequelize.define('CjTailoring', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
   profile_id: { type: DataTypes.INTEGER, allowNull: false },
+  employer: { type: DataTypes.STRING, allowNull: false, defaultValue: 'citi' },
   req_id: { type: DataTypes.STRING, allowNull: false },
   version: { type: DataTypes.INTEGER, defaultValue: 1 },
   content: { type: DataTypes.JSONB, defaultValue: {} },   // the tailored résumé, structured

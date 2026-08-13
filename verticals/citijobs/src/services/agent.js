@@ -102,10 +102,10 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
         // requisition quietly never appear. Skipping something silently reads
         // as "we looked at everything" when we did not. Title and location are
         // enough to decide this, so it costs no HTTP request and no tokens.
-        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, employer: row.employer, req_id: row.req_id } });
+        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, employer: row.employer || 'citi', req_id: row.req_id } });
         if (!had) {
           await Match.create({
-            tenant_id, profile_id: p.id, employer: row.employer, req_id: row.req_id,
+            tenant_id, profile_id: p.id, employer: row.employer || 'citi', req_id: row.req_id,
             score: 0, rationale: pre.location_reason || 'outside the profile\'s countries',
             scored_by: 'heuristic', is_simulated: true, cost_cents: 0
           });
@@ -128,8 +128,9 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
   let filled = 0;
   for (const row of pending) {
     try {
-      const emp = employers.get(row.employer);
-      const ad = employers.adapterFor(row.employer);
+      const empKey = row.employer || 'citi';
+      const emp = employers.get(empKey);
+      const ad = employers.adapterFor(empKey);
       if (!emp || !ad) continue;   // an employer switched off keeps its rows, unfetched
       // Each adapter is asked for detail in its own dialect: Workday keys off
       // the external path, Oracle off the requisition id.
@@ -140,7 +141,7 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
         ? { Id: row.req_id, Title: row.title, PrimaryLocation: row.location }
         : { externalPath: row.external_path, bulletFields: [row.req_id] };
       const norm = ad.normalize(listShape, detail, emp.cfg);
-      await upsertReq(tenant_id, norm, { employer: row.employer });
+      await upsertReq(tenant_id, norm, { employer: empKey });
       filled++;
     } catch (e) {
       if (e.budget) { run.budget_hit = true; break; }
@@ -167,10 +168,11 @@ async function closeSweep(tenant_id, budget, run) {
   });
   let closed = 0;
   for (const t of open) {
-    const req = await Req.findOne({ where: { tenant_id, employer: t.employer, req_id: t.req_id } });
+    const tEmp = t.employer || 'citi';
+    const req = await Req.findOne({ where: { tenant_id, employer: tEmp, req_id: t.req_id } });
     if (!req) continue;
-    const emp = employers.get(t.employer);
-    const ad = employers.adapterFor(t.employer);
+    const emp = employers.get(tEmp);
+    const ad = employers.adapterFor(tEmp);
     if (!emp || !ad) continue;
 
     // Re-check the specific requisition rather than inferring absence from a
@@ -361,21 +363,32 @@ async function runDaily(tenant_id, { trigger = 'manual', maxRequests, force = fa
 }
 
 /** Import one requisition by req id or by any URL a human might paste. */
-async function importReq(tenant_id, input, { source = 'manual' } = {}) {
-  const reqId = workday.reqIdFromInput(input);
+async function importReq(tenant_id, input, { source = 'manual', employer = null } = {}) {
+  // WHICH BANK THIS BELONGS TO IS DETECTED, NEVER DEFAULTED. Filing a JPMorgan
+  // requisition under Citi would be silently wrong forever, and an ambiguous
+  // paste is refused rather than resolved to whichever bank was checked first.
+  const emp = employer ? employers.get(employer) : employers.detect(input);
+  if (!emp) {
+    const e = new Error('Could not tell which bank that is. Paste a Citi req id (8 digits, e.g. 26974948), '
+      + 'a JPMorgan req id (9 digits, e.g. 210712563), or the job URL.');
+    e.code = 'NO_REQ_ID';
+    throw e;
+  }
+  const ad = employers.adapterFor(emp.key);
+  const reqId = ad.reqIdFromInput(input);
   if (!reqId) {
-    const e = new Error('No Citi requisition id found in that input. Paste a req id (for example 26974948) or a Workday job URL.');
+    const e = new Error(`No ${emp.name} requisition id found in that input.`);
     e.code = 'NO_REQ_ID';
     throw e;
   }
   const budget = workday.newBudget(6);
-  const found = await workday.findByReqId(reqId, { budget });
+  const found = await ad.findByReqId(reqId, { cfg: emp.cfg, budget });
   if (!found) {
-    const e = new Error(`Requisition ${reqId} was not found in Citi's feed. It may have closed.`);
+    const e = new Error(`Requisition ${reqId} was not found in ${emp.name}'s feed. It may have closed.`);
     e.code = 'NOT_FOUND';
     throw e;
   }
-  const { row } = await upsertReq(tenant_id, found.normalized, { source });
+  const { row } = await upsertReq(tenant_id, found.normalized, { source, employer: emp.key });
 
   // A jobs.citi.com deep link is KEPT when a human pastes one, and never
   // constructed: its Phenom posting id exists nowhere in the Workday payload.
