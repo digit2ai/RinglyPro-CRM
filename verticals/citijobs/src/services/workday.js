@@ -39,6 +39,7 @@ const DEFAULT_WORKDAY = 'citi:wd5:2';
 const UA_CONTACT = process.env.CITIJOBS_UA_CONTACT || 'manuelstagg@gmail.com';
 const USER_AGENT = `Digit2AI-CitiTracker/1.0 (personal job search; ${UA_CONTACT})`;
 const TIMEOUT_MS = Number(process.env.CITIJOBS_TIMEOUT_MS || 20000);
+const DEFAULT_MAX_REQUESTS = 120;
 
 // Injectable so SIT runs offline against recorded fixtures of the real payloads.
 let _fetch = (...a) => fetch(...a);
@@ -61,8 +62,15 @@ function base(cfg) {
  * as "we covered everything" when we did not.
  */
 function newBudget(max) {
+  // `max ?? default`, not `max || default`: a caller asking for a budget of 0
+  // must get 0. With `||` it silently fell through to 60, which is the exact
+  // shape of bug a request ceiling exists to prevent.
+  const requested = (max === undefined || max === null || max === '')
+    ? (process.env.CITIJOBS_MAX_REQUESTS !== undefined ? process.env.CITIJOBS_MAX_REQUESTS : DEFAULT_MAX_REQUESTS)
+    : max;
+  const n = Number(requested);
   return {
-    max: Number(max || process.env.CITIJOBS_MAX_REQUESTS || 60),
+    max: Number.isFinite(n) && n >= 0 ? n : DEFAULT_MAX_REQUESTS,
     used: 0,
     hit: false,
     take() {

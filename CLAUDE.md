@@ -738,6 +738,51 @@ A Red/Yellow/Green scorecard (Cost Comfort · Risk Comfort · Data Readiness), a
 - `AIR_COST_CAP_USD` (15) — per-tenant daily Brain budget; the admin channel is exempt so an operator is never locked out by their own guard.
 - **Cost model** (`engines/cost.js`, every override changes the deliverable with no redeploy): `AIR_BUILD_RATE_USD_HR` (70) · `AIR_HOURS_PER_PROCESS` (40) · `AIR_HOURS_PER_INTEGRATION` (16) · `AIR_HOURS_PER_REMEDIATION` (12) · `AIR_CAPTURE_RATE_PILOT` (0.40) · `AIR_CAPTURE_RATE_SCALE` (0.60) · `AIR_RUN_COST_PER_PROCESS` (120) · `AIR_SUPPORT_MONTH` (250) · `AIR_COST_BAND_PCT` (0.30) · `AIR_PILOT_WEEKS` (4).
 
+## Citi Opportunity Tracker — a private job hunter for Citi requisitions (folder: citijobs)
+
+**Purpose:** the owner's own job hunt, as software. It watches Citigroup's careers feed every day, scores each new requisition against a résumé profile, tailors a résumé (and a real PDF) per requisition, and tracks the board through New → Saved → Applied → Interview → Offer → Closed. Owner-only, login-gated, no public signup, no billing. Mounted at `/citi-tracker`. English, emoji-free.
+
+**Location:** `verticals/citijobs/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/citijobs/migrations/20260813_citijobs_tables.sql`. Multi-tenant (`tenant_id` = owner user id), `cj_` prefix: `cj_users, cj_profiles, cj_reqs, cj_tracked, cj_matches, cj_queries, cj_runs, cj_skills, cj_tailorings`.
+
+**THE FEED IS CITI'S OWN WORKDAY JSON, AND THE COORDINATES ARE VERIFIED.** Tenant `citi`, datacenter **`wd5`**, site `2` (`CITIJOBS_WORKDAY`, default `citi:wd5:2`). `wd1`/`wd3`/`wd103` return **422** — the CV engine's `cv-employers.js` seed omits `dc` and probes upward; this module does not repeat that. `bulletFields[0]` IS the requisition id, and `searchText:"<req id>"` returns exactly one posting, which is what makes paste-to-import reliable rather than a guess. Detail gives `startDate` (Posted), `endDate` (Anticipated Close), `remoteType`, `timeType`, `canApply` and the description the salary range is parsed out of.
+
+**A SEARCH'S REPORTED `total` IS CAPPED AT 2000 BY WORKDAY** — a response ceiling, not Citi's opening count. You therefore *cannot* page through "all of Citi", which is why discovery is **many targeted saved queries deduped by req id** and never one firehose.
+
+**`jobs.citi.com` IS A DIFFERENT SURFACE AND IS NEVER CRAWLED OR CONSTRUCTED.** It is Phenom People; the posting id in `…/287/99038749520` appears nowhere in the Workday payload and cannot be derived. The tracker stores the canonical Workday apply URL (always), a `jobs.citi.com` deep link **only when a human pastes one**, and offers a `search-jobs/<req id>` click-out for the owner to use by hand. `jobs.citi.com/robots.txt` disallows `/search-jobs/` and the Workday host disallows `/2/`, so only `/wday/cxs/` is used — SIT greps the source and fails if any path builds a `jobs.citi.com/job/` URL.
+
+### The compounding loop, and the wire that must never be connected
+Every tailoring makes the hunter smarter. But if "tailoring adds skills to my profile" meant *skills harvested from the posting*, then after ten tailorings the profile claims Snowflake and Tableau because ten postings asked for them — and the agent would then hunt for that fabricated profile, compounding **away** from the owner, silently, growing more confident daily. So `cj_skills.kind` splits the loop in two:
+
+| kind | may appear on a résumé | may widen the search | how it is reached |
+|---|---|---|---|
+| `verified` | **yes** | yes | ONLY `confirmVerified()`, which **requires an evidence string** |
+| `vocabulary` | no | yes | harvested automatically from tailored postings |
+| `rejected` | no | no | the owner said no; never suggested again |
+
+**Nothing automated may promote `vocabulary` → `verified`** — not a model call, not a status change, not a weight update. Search widens fast and automatically; the résumé widens deliberately. Board movement is the third signal (`applied` +0.5, `interview` +1.5, `not_interested` −0.75) and moves **ranking weight only** — it can never change `kind`.
+
+### Tailoring selects; it cannot author
+`services/tailor.js` hands the model a pool of bullets from `cj_profiles.resume_json` and it may return **only their ids**, so every bullet that reaches a PDF is verbatim from the base résumé. The one free-text field it may write — the summary — is verified afterwards against the evidence corpus and **discarded in favour of the base summary** if it introduces a domain term, an acronym, or a **number** the corpus does not contain (numbers being the classic fabrication). Re-wording individual bullets is deliberately not offered: verbatim selection is what makes each line defensible in an interview. Unknown bullet ids are dropped and reported in `dropped[]`.
+
+**PDFs are `pdfkit`, not headless Chrome** — Render has no Chrome binary, and a feature that works on the laptop and 500s in production is worse than no feature. The PDF is re-rendered on demand **from the stored `content` JSONB**, never read off Render's ephemeral disk, so the exact document sent to Citi for a req id is always recoverable. Tailorings are versioned and immutable (unique on `profile_id, req_id, version`).
+
+### The daily agent
+Off by default behind `CITIJOBS_GO=1`; state visible at `/citi-tracker/health`. Claims the day via a **partial unique index** on `(tenant_id, run_date) WHERE trigger='schedule'` (Render runs more than one instance; manual runs are never locked out). Bounded by an HTTP request budget that **stops the run and says it stopped**, and a model cost cap. `fillDetails()` ranks pending requisitions by the **free** pre-filter before spending a request — ordering matters more than the cap, since a broad query set surfaces hundreds of new requisitions a day and newest-first burns the budget on postings a US-only profile can never take; a location-excluded requisition gets a recorded `cj_matches` row rather than silently never appearing. **It may set exactly ONE status automatically**: a `new`/`saved` requisition that has left the feed becomes `closed/expired` with a dated note. It never advances Applied → Interview → Offer, never auto-closes something already applied to, never applies, and never contacts anyone.
+
+**A heuristic score and a model score are not the same scale**, so with no `ANTHROPIC_API_KEY` the board floor is `threshold × 0.7` — comparing a deterministic score topping out in the 60s to a threshold calibrated for an LLM silently produces an empty board on an app that is working correctly.
+
+**UI:** `/citi-tracker/` — top bar carries the `jobs.citi.com/job/tampa` browse link, a paste-to-import box (req id, Workday URL or careers URL), the agent status pill and Run. Tabs: Board (honest close-date countdown, red under 3 days; salary only when stated) · Pool · Skills · Searches · Agent. The requisition drawer carries **"Tailor my résumé for this req"** and the gap triage (`I did this` / `Adjacent` / `No`).
+
+**SIT:** `node verticals/citijobs/sit.js` → **99/99**, zero external keys, offline against recorded fixtures of the real payloads. Asserts the invariants, not the happy path: the six field mappings, salary copied-or-absent, vocabulary never self-promoting, a rejected term staying dead, bullets verbatim from the pool, the summary verifier catching an invented number/acronym/tool, the single permitted auto-transition, an APPLIED row never auto-closing, the daily claim refusing a second scheduled run, the request budget, and cross-profile isolation.
+
+**Environment Variables:**
+- `CITIJOBS_JWT_SECRET` — signs the `citijobs_token` cookie (falls back to `JWT_SECRET`), 30d. SET on prod.
+- `CITIJOBS_PASSWORD` — owner password, force-synced on boot (falls back to `SPEAKUP_TEAM_PASSWORD` / `LAWNCOPILOT_MSTAGG_PASSWORD`, default `Palindrome@7`). `CITIJOBS_OWNER_EMAIL` default `mstagg@digit2ai.com`.
+- `CITIJOBS_GO` — `1` enables the daily scheduled run. Unset = manual runs only.
+- `CITIJOBS_MODEL` — scoring/tailoring model. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`; unset = labelled heuristic path, app fully usable. `CITIJOBS_TAILOR_MODEL` overrides for tailoring alone.
+- `CITIJOBS_WORKDAY` (`citi:wd5:2`) — tenant:datacenter:site. A Citi migration is a config change, not a redeploy.
+- `CITIJOBS_MAX_REQUESTS` (120) · `CITIJOBS_DETAIL_CAP` (60) · `CITIJOBS_COST_CAP_USD` (0.5) · `CITIJOBS_MAX_BULLETS` (7) · `CITIJOBS_UA_CONTACT` (embedded in the User-Agent).
+
 ## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)
 
 **Purpose:** Digit2AI vertical for **executive English coaching for international leadership** (trade, investment, diplomacy, press). Built from Fernando de la Espriella García's coaching program for Dr. Mauricio Gómez Amín (new Colombian Minister of Comercio, Industria y Turismo). A coach logs 1:1 sessions, records + transcribes (voice or typed), and the AI generates the program's **5 post-session deliverables** + an **"80% student speaks" meter**. Spanish-first, emoji-free. Mounted at `/coaching-english`.

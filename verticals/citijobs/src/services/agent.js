@@ -24,7 +24,7 @@ const prefilter = require('./prefilter');
 const matcher = require('./matcher');
 const skills = require('./skills');
 
-const DETAIL_CAP = Number(process.env.CITIJOBS_DETAIL_CAP || 40);
+const DETAIL_CAP = Number(process.env.CITIJOBS_DETAIL_CAP || 60);
 const COST_CAP_CENTS = Number(process.env.CITIJOBS_COST_CAP_USD || 0.5) * 100;
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -67,13 +67,61 @@ async function upsertReq(tenant_id, norm, { source = 'agent' } = {}) {
   return { row, created: false };
 }
 
-/** Pull the detail payload for reqs that have never had one. */
+/**
+ * Pull the detail payload for requisitions that have never had one.
+ *
+ * ORDER MATTERS MORE THAN THE CAP. A broad query set surfaces hundreds of new
+ * requisitions a day and each detail costs one HTTP request, so taking them
+ * newest-first spends the whole budget on Pune postings a US-only profile will
+ * never see. The pre-filter runs on title and location alone — no description
+ * needed, and free — so it decides which requisitions are worth a request.
+ */
 async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
-  const pending = await Req.findAll({
+  const candidates = await Req.findAll({
     where: { tenant_id, detail_fetched: false, external_path: { [Op.ne]: null } },
     order: [['first_seen_at', 'DESC']],
-    limit: cap
+    limit: 800
   });
+  const profiles = await Profile.findAll({ where: { tenant_id, active: true } });
+
+  const termsByProfile = new Map();
+  for (const p of profiles) termsByProfile.set(p.id, await skills.searchTerms(p.id));
+
+  const ranked = [];
+  for (const row of candidates) {
+    let best = -1;
+    let anyAllowed = false;
+    for (const p of profiles) {
+      const pre = prefilter.score(row, p, termsByProfile.get(p.id));
+      if (pre.location_ok) { anyAllowed = true; }
+      else {
+        // A permanent exclusion, so RECORD IT rather than letting the
+        // requisition quietly never appear. Skipping something silently reads
+        // as "we looked at everything" when we did not. Title and location are
+        // enough to decide this, so it costs no HTTP request and no tokens.
+        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, req_id: row.req_id } });
+        if (!had) {
+          await Match.create({
+            tenant_id, profile_id: p.id, req_id: row.req_id,
+            score: 0, rationale: pre.location_reason || 'outside the profile\'s countries',
+            scored_by: 'heuristic', is_simulated: true, cost_cents: 0
+          });
+        }
+      }
+      if (pre.score > best) best = pre.score;
+    }
+    // A requisition no active profile could take is not worth a request. It
+    // stays in the pool, unfetched and visible, rather than being deleted.
+    if (!anyAllowed) continue;
+    ranked.push({ row, best });
+  }
+  ranked.sort((a, b) => b.best - a.best);
+  const pending = ranked.slice(0, cap).map((r) => r.row);
+  if (ranked.length > cap) {
+    run.notes = [run.notes, `${ranked.length - cap} requisitions deferred to the next run (detail cap ${cap}).`]
+      .filter(Boolean).join(' ');
+  }
+
   let filled = 0;
   for (const row of pending) {
     try {
@@ -182,7 +230,16 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
       scored_by: r.scored_by, is_simulated: r.is_simulated, model: r.model,
       cost_cents: r.cost_cents || 0
     });
-    if (r.score >= (profile.score_threshold || 70)) {
+    // A heuristic score and a model score are NOT the same scale, so comparing
+    // both to one threshold is a category error: the deterministic score tops
+    // out around the 60s on a genuinely strong match, and with no API key that
+    // silently produces an empty board on an app that is working correctly.
+    // The keyless path therefore boards against its own floor, and the UI says
+    // which mode produced each score.
+    const floor = r.is_simulated
+      ? Math.round((profile.score_threshold || 70) * 0.7)
+      : (profile.score_threshold || 70);
+    if (r.score >= floor) {
       const exists = await Tracked.findOne({ where: { tenant_id, profile_id: profile.id, req_id: r.req_id } });
       if (!exists) {
         await Tracked.create({

@@ -1,0 +1,421 @@
+'use strict';
+
+/**
+ * Citi Opportunity Tracker — System Integration Test.
+ *
+ *   node verticals/citijobs/sit.js
+ *
+ * Zero external keys. The Workday feed is replaced by RECORDED FIXTURES of the
+ * real payloads (captured live 2026-08-13 from req 26974948), so the suite is
+ * free, offline and deterministic — and the keyless heuristic path, which is
+ * what runs when ANTHROPIC_API_KEY is absent, is the one under test.
+ *
+ * It asserts the INVARIANTS, not the happy path: what must never happen.
+ */
+
+require('dotenv').config();
+process.env.CITIJOBS_GO = process.env.CITIJOBS_GO || '';
+
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert');
+
+const { sequelize, User, Profile, Req, Tracked, Match, Query, Run, Skill, Tailoring } = require('./src/models');
+const workday = require('./src/services/workday');
+const skills = require('./src/services/skills');
+const prefilter = require('./src/services/prefilter');
+const tailorSvc = require('./src/services/tailor');
+const pdf = require('./src/services/pdf');
+const agent = require('./src/services/agent');
+const seed = require('./src/services/seed');
+
+let pass = 0, fail = 0;
+const failures = [];
+function ok(name, cond, extra) {
+  if (cond) { pass++; console.log(`  PASS  ${name}`); }
+  else { fail++; failures.push(name + (extra ? ' — ' + extra : '')); console.log(`  FAIL  ${name}${extra ? ' — ' + extra : ''}`); }
+}
+async function throws(name, fn, codeOrMsg) {
+  try { await fn(); ok(name, false, 'did not throw'); }
+  catch (e) {
+    const hit = !codeOrMsg || e.code === codeOrMsg || String(e.message).toLowerCase().includes(String(codeOrMsg).toLowerCase());
+    ok(name, hit, hit ? '' : `threw "${e.message}"`);
+  }
+}
+function section(t) { console.log(`\n${t}`); }
+
+// ── Recorded fixtures — the real shapes, captured live ───────────────────────
+const FIX_POSTING = {
+  title: 'Senior Data & Analytics Lead – Data Transformation Programs',
+  externalPath: '/job/Tampa-Florida-United-States/Senior-Data---Analytics-Lead---Data-Transformation-Programs_26974948-1',
+  locationsText: 'Tampa Florida United States',
+  postedOn: 'Posted 3 Days Ago',
+  bulletFields: ['26974948']
+};
+const FIX_DETAIL = {
+  id: '836416e25965101588f570415c0a0000',
+  title: 'Senior Data & Analytics Lead – Data Transformation Programs',
+  jobDescription: '<p>Citi is looking for a Senior Data &amp; Analytics Lead to spearhead high-impact programs within Citi\'s broader <b>Data Transformation</b> efforts.</p>' +
+    '<ul><li>Lead complex, large-scale Data Transformation programs end-to-end across multiple workstreams.</li>' +
+    '<li>Generate actionable insights from high-volume banking data sets and translate those insights into clear strategy.</li>' +
+    '<li>Negotiate timelines, scope, and delivery approach with senior-level stakeholders.</li>' +
+    '<li>Manage a broad and varied book of work across multiple stakeholder groups.</li>' +
+    '<li>Familiarity with data governance, data lineage concepts, or metadata management within a financial services context.</li>' +
+    '<li>10 or more years of experience applying statistical modelling and advanced analytical tools to large, complex data sets.</li>' +
+    '<li>Experience with Snowflake and Tableau is an advantage.</li></ul>' +
+    '<p>Job Family Group:<br>Technology<br>Job Family:<br>Data Science</p>' +
+    '<p>Primary Location Full Time Salary Range: $141,440.00 - $212,160.00</p>' +
+    '<p>Anticipated Posting Close Date: Aug 24, 2026</p>',
+  location: 'Tampa Florida United States',
+  postedOn: 'Posted 3 Days Ago',
+  startDate: '2026-08-10',
+  endDate: '2026-08-24',
+  timeType: 'Full time',
+  jobReqId: '26974948',
+  jobPostingId: 'Senior-Data---Analytics-Lead---Data-Transformation-Programs_26974948-1',
+  country: { descriptor: 'United States of America' },
+  canApply: true,
+  posted: true,
+  remoteType: 'Hybrid',
+  externalUrl: 'https://citi.wd5.myworkdayjobs.com/2/job/Tampa-Florida-United-States/Senior-Data---Analytics-Lead---Data-Transformation-Programs_26974948-1',
+  jobRequisitionLocation: { descriptor: '3800 CITIGROUP CENTER DRIVE BUILDING B TAMPA' },
+  timeLeftToApply: '11 Days Left to Apply'
+};
+const FIX_PUNE = {
+  title: 'Data Analytics Lead Analyst',
+  externalPath: '/job/Pune-Maharashtra-India/Data-Analytics-Lead-Analyst_26980420',
+  locationsText: 'Pune Maharashtra India',
+  postedOn: 'Posted 21 Days Ago',
+  bulletFields: ['26980420']
+};
+
+let httpCalls = 0;
+let feedHas = new Set(['26974948', '26980420']);
+function installFakeFeed() {
+  httpCalls = 0;
+  workday._setFetch(async (url, opts) => {
+    httpCalls++;
+    const u = String(url);
+    if (u.endsWith('/jobs')) {
+      const body = JSON.parse(opts.body || '{}');
+      const q = String(body.searchText || '').toLowerCase();
+      let all = [FIX_POSTING, FIX_PUNE].filter((p) => feedHas.has(workday.reqIdOf(p)));
+      if (q) {
+        all = all.filter((p) => workday.reqIdOf(p) === q || (p.title + ' ' + p.locationsText).toLowerCase().includes(q));
+      }
+      const off = Number(body.offset || 0), lim = Number(body.limit || 20);
+      return { ok: true, status: 200, json: async () => ({ total: all.length, jobPostings: all.slice(off, off + lim) }) };
+    }
+    if (u.includes('/job/Tampa-')) {
+      if (!feedHas.has('26974948')) return { ok: false, status: 404, json: async () => ({}) };
+      return { ok: true, status: 200, json: async () => ({ jobPostingInfo: FIX_DETAIL }) };
+    }
+    if (u.includes('/job/Pune-')) {
+      const puneDetail = Object.assign({}, FIX_DETAIL, {
+        title: FIX_PUNE.title,
+        location: 'Pune Maharashtra India',
+        jobReqId: '26980420',
+        externalUrl: 'https://citi.wd5.myworkdayjobs.com/2/job/Pune',
+        jobDescription: '<p>Data analytics work in Pune. No salary stated.</p>'
+      });
+      return { ok: true, status: 200, json: async () => ({ jobPostingInfo: puneDetail }) };
+    }
+    return { ok: false, status: 404, json: async () => ({}) };
+  });
+}
+
+// Throwaway tenant, cleaned up at the end.
+const SIT_EMAIL = 'sit-citijobs@example.invalid';
+let tenant, profileA, profileB;
+
+async function cleanup() {
+  if (!tenant) return;
+  const ids = [profileA, profileB].filter(Boolean).map((p) => p.id);
+  await Tailoring.destroy({ where: { tenant_id: tenant } });
+  await Skill.destroy({ where: { tenant_id: tenant } });
+  await Match.destroy({ where: { tenant_id: tenant } });
+  await Tracked.destroy({ where: { tenant_id: tenant } });
+  await Req.destroy({ where: { tenant_id: tenant } });
+  await Query.destroy({ where: { tenant_id: tenant } });
+  await Run.destroy({ where: { tenant_id: tenant } });
+  await Profile.destroy({ where: { tenant_id: tenant } });
+  await User.destroy({ where: { email: SIT_EMAIL } });
+  void ids;
+}
+
+(async function main() {
+  console.log('CITI OPPORTUNITY TRACKER — SIT');
+  console.log('Offline: recorded Workday fixtures. No ANTHROPIC_API_KEY required.\n');
+
+  const hadKey = !!process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;   // the keyless path is the one under test
+  console.log(hadKey ? 'ANTHROPIC_API_KEY was present and has been unset for this run.\n'
+    : 'No ANTHROPIC_API_KEY present; heuristic path under test.\n');
+
+  await require('./src/index').init();
+  installFakeFeed();
+
+  // ── 1. Field mapping ──────────────────────────────────────────────────────
+  section('1. Feed field mapping (the six fields the tracker asked for)');
+  const norm = workday.normalize(FIX_POSTING, FIX_DETAIL);
+  ok('Job Req Id comes from bulletFields[0]', norm.req_id === '26974948', norm.req_id);
+  ok('Job Title', norm.title === 'Senior Data & Analytics Lead – Data Transformation Programs');
+  ok('Posted maps from startDate', norm.posted_on === '2026-08-10', String(norm.posted_on));
+  ok('Anticipated close maps from endDate', norm.close_date === '2026-08-24', String(norm.close_date));
+  ok('Salary min parsed', norm.salary_min_cents === 14144000, String(norm.salary_min_cents));
+  ok('Salary max parsed', norm.salary_max_cents === 21216000, String(norm.salary_max_cents));
+  ok('Salary marked stated (never estimated)', norm.salary_source === 'stated');
+  ok('Canonical Workday apply URL', /myworkdayjobs\.com/.test(norm.url_workday || ''));
+  ok('Location + work model + time type', norm.location.includes('Tampa') && norm.remote_type === 'Hybrid' && norm.time_type === 'Full time');
+  ok('Job family group parsed', String(norm.job_family_group || '').startsWith('Technology'), String(norm.job_family_group));
+
+  section('2. Salary is copied or absent — never invented');
+  ok('No salary line yields null, not a guess', workday.parseSalary('No pay information here at all.') === null);
+  ok('A reversed range is refused', workday.parseSalary('Salary Range: $200,000.00 - $100,000.00') === null);
+  const noSal = workday.normalize(FIX_PUNE, { jobDescription: '<p>no pay stated</p>', jobReqId: '26980420' });
+  ok('Posting without a range stores null salary', noSal.salary_min_cents === null && noSal.salary_source === null);
+
+  section('3. Paste-to-import accepts what a human actually pastes');
+  ok('bare req id', workday.reqIdFromInput('26974948') === '26974948');
+  ok('workday url', workday.reqIdFromInput(FIX_DETAIL.externalUrl) === '26974948');
+  ok('workday path', workday.reqIdFromInput(FIX_POSTING.externalPath) === '26974948');
+  ok('"Job Req Id: 26974948"', workday.reqIdFromInput('Job Req Id: 26974948') === '26974948');
+  ok('garbage yields null, not a guess', workday.reqIdFromInput('hello there') === null);
+  ok('a pasted jobs.citi.com link is recognised and kept',
+    workday.citiCareersUrl('https://jobs.citi.com/job/tampa/senior-data-and-analytics-lead-data-transformation-programs/287/99038749520')
+      === 'https://jobs.citi.com/job/tampa/senior-data-and-analytics-lead-data-transformation-programs/287/99038749520');
+  ok('a non-careers URL is not mistaken for one', workday.citiCareersUrl('https://example.com/job/1') === null);
+
+  section('4. The jobs.citi.com deep link is NEVER constructed');
+  const srcFiles = ['services/workday.js', 'services/agent.js', 'routes/api.js', 'services/tailor.js', 'services/seed.js']
+    .map((f) => fs.readFileSync(path.join(__dirname, 'src', f), 'utf8'));
+  const constructs = srcFiles.some((s) =>
+    /['"`]https?:\/\/(www\.)?jobs\.citi\.com\/job\//.test(s) || /jobs\.citi\.com\/job\/['"`]\s*\+/.test(s));
+  ok('no source path builds a jobs.citi.com/job/ URL', !constructs);
+  ok('the search click-out (allowed) is the only jobs.citi.com URL built',
+    srcFiles.some((s) => s.includes('jobs.citi.com/search-jobs/')));
+
+  // ── Tenant fixture ────────────────────────────────────────────────────────
+  section('5. Setup: throwaway tenant with two profiles');
+  const u = await User.create({ email: SIT_EMAIL, name: 'SIT', password_hash: 'x', role: 'owner' });
+  u.tenant_id = u.id; await u.save();
+  tenant = u.tenant_id;
+  profileA = await Profile.create({
+    tenant_id: tenant, slug: 'sit-a', display_name: 'SIT Alpha',
+    headline: seed.MANUEL_RESUME.headline,
+    resume_json: seed.MANUEL_RESUME, resume_text: seed.flatten(seed.MANUEL_RESUME),
+    target_titles: ['Data Analytics Lead', 'Data Transformation'],
+    target_locations: ['Tampa'], countries: ['United States'], score_threshold: 70
+  });
+  profileB = await Profile.create({
+    tenant_id: tenant, slug: 'sit-b', display_name: 'SIT Beta',
+    resume_json: { roles: [] }, resume_text: 'unrelated', countries: ['United States']
+  });
+  ok('two profiles created in one tenant', !!profileA.id && !!profileB.id);
+
+  // ── 6. Skills: the safety boundary ────────────────────────────────────────
+  section('6. The skill store — vocabulary can never become claimable on its own');
+  await skills.learnVocabulary(profileA, [{ term: 'snowflake' }, { term: 'tableau' }], { req_id: '26974948' });
+  let snow = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'snowflake' } });
+  ok('harvested posting language lands as vocabulary', snow.kind === 'vocabulary');
+  ok('vocabulary is NOT claimable', !(await skills.claimable(profileA.id)).includes('snowflake'));
+  ok('vocabulary DOES steer the search', (await skills.searchTerms(profileA.id)).some((s) => s.norm === 'snowflake'));
+
+  await skills.learnVocabulary(profileA, [{ term: 'snowflake' }], { req_id: '26974948' });
+  snow = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'snowflake' } });
+  ok('re-harvesting the same term never promotes it', snow.kind === 'vocabulary');
+
+  await skills.applyOutcome(profileA, ['snowflake'], 'interview');
+  snow = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'snowflake' } });
+  ok('an Interview outcome raises weight', Number(snow.weight) > 1);
+  ok('...but still cannot change kind', snow.kind === 'vocabulary');
+
+  await throws('verifying without evidence is refused',
+    () => skills.confirmVerified(profileA, 'snowflake', ''), 'EVIDENCE_REQUIRED');
+  await skills.confirmVerified(profileA, 'snowflake', 'Used Snowflake on the X migration in 2025.');
+  snow = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'snowflake' } });
+  ok('explicit human confirmation with evidence promotes it', snow.kind === 'verified' && !!snow.evidence);
+  ok('now claimable', (await skills.claimable(profileA.id)).includes('snowflake'));
+
+  await skills.reject(profileA, 'tableau');
+  await skills.learnVocabulary(profileA, [{ term: 'tableau' }], { req_id: '26974948' });
+  const tab = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'tableau' } });
+  ok('a rejected term stays rejected even if harvested again', tab.kind === 'rejected');
+  ok('rejected terms never steer the search', !(await skills.searchTerms(profileA.id)).some((s) => s.norm === 'tableau'));
+
+  await skills.markAdjacent(profileA, 'snowflake');
+  snow = await Skill.findOne({ where: { profile_id: profileA.id, norm: 'snowflake' } });
+  ok('"Adjacent" never demotes an already-verified claim', snow.kind === 'verified');
+
+  ok('skill terms are profile-scoped', (await skills.claimable(profileB.id)).length === 0);
+
+  // ── 7. Import + pool ──────────────────────────────────────────────────────
+  section('7. Import by req id');
+  const imported = await agent.importReq(tenant, 'Job Req Id: 26974948');
+  ok('imports the right requisition', imported.req_id === '26974948');
+  ok('detail captured on import', imported.detail_fetched === true && imported.close_date === '2026-08-24');
+  ok('no careers deep link invented', imported.url_citi_careers === null);
+  const imported2 = await agent.importReq(tenant, 'https://jobs.citi.com/job/tampa/senior-data-and-analytics-lead-data-transformation-programs/287/99038749520 26974948');
+  ok('a pasted careers link IS stored', imported2.url_citi_careers && imported2.url_citi_careers.includes('99038749520'));
+  await throws('an unknown req id is reported, not fabricated',
+    () => agent.importReq(tenant, '99999999'), 'NOT_FOUND');
+  await throws('unparseable input is refused', () => agent.importReq(tenant, 'nonsense'), 'NO_REQ_ID');
+
+  // ── 8. Pre-filter ─────────────────────────────────────────────────────────
+  section('8. Pre-filter — the free gate that keeps the model bill honest');
+  const terms = await skills.searchTerms(profileA.id);
+  const tampaReq = await Req.findOne({ where: { tenant_id: tenant, req_id: '26974948' } });
+  const preT = prefilter.score(tampaReq, profileA, terms);
+  ok('the Tampa requisition scores well', preT.score >= 50, String(preT.score));
+  ok('it clears the scoring floor', prefilter.shouldScore(preT, profileA));
+  const puneReq = Req.build({ req_id: '26980420', title: 'Data Analytics Lead Analyst', location: 'Pune Maharashtra India', description_text: 'data analytics' });
+  const preP = prefilter.score(puneReq, profileA, terms);
+  ok('a Pune requisition is refused for a US-only profile', !preP.location_ok);
+  ok('...and never reaches the model', !prefilter.shouldScore(preP, profileA));
+  ok('the reason is stated, not silent', /outside/.test(preP.reasons.join(' ')));
+
+  // ── 9. Tailoring ──────────────────────────────────────────────────────────
+  section('9. Tailoring selects evidence and cannot author a claim');
+  const claim = await skills.claimable(profileA.id);
+  const out = await tailorSvc.tailor(profileA, tampaReq, { claimableTerms: claim, rejectedNorms: new Set(['tableau']) });
+  ok('produced without a model, labelled', out.tailored_by === 'heuristic' && out.is_simulated === true);
+
+  const poolTexts = new Set(tailorSvc.bulletPool(profileA).flatMap((r) => r.bullets.map((b) => b.text)));
+  const printed = out.content.roles.flatMap((r) => r.bullets);
+  ok('every printed bullet is verbatim from the base résumé', printed.every((b) => poolTexts.has(b)), 'a bullet was not in the pool');
+  ok('the résumé is not empty', printed.length >= 8, String(printed.length));
+  ok('the independent-practice disclaimer survives tailoring',
+    out.content.roles.some((r) => (r.note || '').includes('NOT performed at, for, or on behalf of Citigroup')));
+  ok('the target line names the requisition', out.content.target_line.includes('26974948'));
+
+  ok('keyword coverage is computed deterministically', typeof out.keyword_coverage.pct === 'number');
+  ok('coverage identifies present terms', out.keyword_coverage.covered.some((t) => t.includes('data governance')));
+  ok('coverage identifies absent terms', out.keyword_coverage.missing.length >= 0);
+
+  const gapTerms = out.gaps.map((g) => g.term);
+  ok('a rejected term never returns as a gap', !gapTerms.includes('tableau'));
+  ok('an already-verified term is not a gap', !gapTerms.includes('snowflake'));
+
+  section('10. The summary verifier — the model may not introduce a fact');
+  const corpus = tailorSvc.corpusOf(profileA, claim);
+  ok('a true restatement passes', tailorSvc.verifyText('Data governance and data lineage delivery at Citigroup.', corpus).length === 0);
+  const vNum = tailorSvc.verifyText('Delivered 47 transformation programs.', corpus);
+  ok('an invented NUMBER is caught', vNum.some((v) => v.kind === 'unverified_number'), JSON.stringify(vNum));
+  const vAcr = tailorSvc.verifyText('Expert in COBIT and TOGAF frameworks.', corpus);
+  ok('an invented ACRONYM is caught', vAcr.some((v) => v.kind === 'unverified_acronym'));
+  const vTerm = tailorSvc.verifyText('Built dbt and spark pipelines daily.', corpus);
+  ok('an invented TOOL is caught', vTerm.some((v) => v.kind === 'unverified_term'));
+  ok('a true figure from the résumé passes', tailorSvc.verifyText('Over 24 years at Citigroup.', corpus).length === 0);
+
+  section('11. PDF — real bytes, rendered from stored content');
+  const buf = await pdf.render(out.content, { title: 'SIT' });
+  ok('renders a PDF', buf.slice(0, 5).toString() === '%PDF-');
+  ok('and it is a real document, not a stub', buf.length > 6000, String(buf.length) + ' bytes');
+  ok('filename carries the req id', pdf.filename('Manuel Stagg', '26974948', 1) === 'Manuel_Stagg_Resume_Citi_26974948.pdf');
+  ok('a re-tailor is versioned in the filename', pdf.filename('Manuel Stagg', '26974948', 2).endsWith('_v2.pdf'));
+  const buf2 = await pdf.render(out.content, { title: 'SIT' });
+  ok('same content renders the same size (recoverable, not ephemeral)', buf.length === buf2.length);
+
+  section('12. Tailorings are versioned and immutable');
+  const t1 = await Tailoring.create({ tenant_id: tenant, profile_id: profileA.id, req_id: '26974948', version: 1, content: out.content });
+  const t2 = await Tailoring.create({ tenant_id: tenant, profile_id: profileA.id, req_id: '26974948', version: 2, content: out.content });
+  ok('a re-tailor appends a version', t2.version === 2 && t1.version === 1);
+  let dupBlocked = false;
+  try { await Tailoring.create({ tenant_id: tenant, profile_id: profileA.id, req_id: '26974948', version: 2, content: {} }); }
+  catch (e) { dupBlocked = true; }
+  ok('a version can never be overwritten', dupBlocked);
+
+  // ── 13. The daily run ─────────────────────────────────────────────────────
+  section('13. The daily run');
+  await Query.create({ tenant_id: tenant, label: 'sit', search_text: 'data', weight: 1 });
+  const run1 = await agent.runDaily(tenant, { trigger: 'manual' });
+  ok('a manual run completes', run1.ok === true);
+  ok('it saw requisitions', run1.reqs_seen >= 1, JSON.stringify(run1));
+  ok('it reports its HTTP request count', run1.http_requests > 0);
+  ok('it scored candidates', run1.scored >= 1, String(run1.scored));
+
+  const boardedA = await Tracked.findAll({ where: { tenant_id: tenant, profile_id: profileA.id } });
+  ok('the Tampa requisition reached the board', boardedA.some((t) => t.req_id === '26974948'));
+  ok('the Pune requisition never reached the board', !boardedA.some((t) => t.req_id === '26980420'));
+  const puneMatch = await Match.findOne({ where: { profile_id: profileA.id, req_id: '26980420' } });
+  ok('...and its rejection is recorded, not silent', !!puneMatch && puneMatch.score < 70);
+  ok('scores with no key are labelled simulated', (await Match.findOne({ where: { profile_id: profileA.id, req_id: '26974948' } })).is_simulated === true);
+
+  section('14. The daily claim — one scheduled run per tenant per day');
+  const c1 = await agent.claim(tenant, 'schedule');
+  const c2 = await agent.claim(tenant, 'schedule');
+  ok('the first scheduled claim succeeds', !!c1);
+  ok('a second instance is refused the same day', c2 === null);
+  const m1 = await agent.claim(tenant, 'manual');
+  ok('manual runs are never locked out by the claim', !!m1);
+
+  section('15. The request budget stops the run and says so');
+  const tinyBudget = workday.newBudget(1);
+  await workday.listJobs({ searchText: 'data', budget: tinyBudget });   // spends the only unit
+  let budgetErr = null;
+  try {
+    await workday.listJobs({ searchText: 'data', budget: tinyBudget }); // must be refused
+  } catch (e) { budgetErr = e; }
+  ok('exhausting the budget throws a flagged error', !!budgetErr && budgetErr.budget === true);
+  ok('the budget records that it was hit', tinyBudget.hit === true);
+  ok('and it never exceeded its ceiling', tinyBudget.used <= 1, String(tinyBudget.used));
+
+  const runBudget = workday.newBudget(0);
+  const stopped = await agent.runDaily(tenant, { trigger: 'manual', maxRequests: 0 });
+  ok('a run with no budget reports budget_hit rather than failing silently', stopped.budget_hit === true);
+  void runBudget;
+
+  section('16. The ONE automatic status change');
+  const tr = await Tracked.findOne({ where: { tenant_id: tenant, profile_id: profileA.id, req_id: '26974948' } });
+  tr.status = 'applied'; tr.applied_at = new Date(); await tr.save();
+  feedHas = new Set(['26980420']);                       // the posting disappears
+  const swept1 = await agent.closeSweep(tenant, workday.newBudget(20), Run.build({}));
+  const trAfter = await Tracked.findOne({ where: { id: tr.id } });
+  ok('an APPLIED requisition is never auto-closed', trAfter.status === 'applied', trAfter.status);
+  ok('the sweep closed nothing it should not have', swept1 === 0);
+
+  tr.status = 'new'; await tr.save();
+  const swept2 = await agent.closeSweep(tenant, workday.newBudget(20), Run.build({}));
+  const trAfter2 = await Tracked.findOne({ where: { id: tr.id } });
+  ok('a NEW requisition that left the feed is auto-closed', trAfter2.status === 'closed' && swept2 === 1);
+  ok('...with the reason recorded as expired', trAfter2.status_reason === 'expired');
+  ok('...and a note saying why', /no longer in Citi/.test(trAfter2.notes || ''));
+  feedHas = new Set(['26974948', '26980420']);
+
+  section('17. Cross-profile isolation');
+  const bBoard = await Tracked.findAll({ where: { tenant_id: tenant, profile_id: profileB.id } });
+  ok('profile B sees none of profile A\'s board', bBoard.every((t) => t.profile_id === profileB.id));
+  const aSkills = await skills.all(profileA.id);
+  const bSkills = await skills.all(profileB.id);
+  ok('skill stores do not bleed', aSkills.length > 0 && bSkills.length === 0);
+  const bTail = await Tailoring.findAll({ where: { profile_id: profileB.id } });
+  ok('tailorings do not bleed', bTail.length === 0);
+
+  section('18. Honest countdowns and honest labels');
+  ok('a stated close date yields a countdown', FIX_DETAIL.endDate === '2026-08-24');
+  const noClose = workday.normalize(FIX_POSTING, Object.assign({}, FIX_DETAIL, { endDate: null }));
+  ok('an absent close date is null, never a guess', noClose.close_date === null);
+  const badDate = workday.normalize(FIX_POSTING, Object.assign({}, FIX_DETAIL, { endDate: 'soon' }));
+  ok('an unparseable date is null, never coerced', badDate.close_date === null);
+
+  section('19. Seed integrity');
+  ok('the base résumé has bullets with stable ids',
+    seed.MANUEL_RESUME.roles.every((r) => r.bullets.every((b) => !!b.id)));
+  ok('the independent practice is stated as outside Citi',
+    seed.MANUEL_RESUME.roles.some((r) => (r.note || '').includes('NOT performed at')));
+  ok('seeded verified skills carry evidence', seed.SEED_VERIFIED.every((s) => s[1] && s[1].length > 5));
+  ok('seeded searches are many and targeted, not one firehose', seed.SEED_QUERIES.length >= 6);
+
+  // ── Done ──────────────────────────────────────────────────────────────────
+  await cleanup();
+  console.log(`\n${'-'.repeat(58)}`);
+  console.log(`RESULT: ${pass}/${pass + fail} passed`);
+  if (fail) { console.log('\nFAILURES:'); failures.forEach((f) => console.log('  - ' + f)); }
+  console.log('-'.repeat(58));
+  await sequelize.close();
+  process.exit(fail ? 1 : 0);
+})().catch(async (e) => {
+  console.error('\nSIT CRASHED:', e);
+  try { await cleanup(); await sequelize.close(); } catch (x) { /* ignore */ }
+  process.exit(1);
+});

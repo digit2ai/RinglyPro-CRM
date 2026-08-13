@@ -2271,6 +2271,39 @@ app.get('/debug/airadar-error', (req, res) => {
 });
 
 // =====================================================
+// CITI OPPORTUNITY TRACKER — private job hunter for Citi requisitions (/citi-tracker/)
+// Watches Citi's Workday feed daily, scores each requisition against the owner's
+// own résumé, tailors a résumé + PDF per requisition, and tracks the board from
+// New through Applied, Interview, Offer and Closed.
+// =====================================================
+
+let citijobsApp = null;
+let citijobsError = null;
+try {
+  citijobsApp = require('../verticals/citijobs/src/index');
+  app.get('/citi-tracker', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/citi-tracker/');
+    next();
+  });
+  app.use('/citi-tracker', citijobsApp);
+  console.log('Citi Opportunity Tracker mounted at /citi-tracker');
+  console.log('   - App UI: /citi-tracker/');
+  console.log('   - Health Check: /citi-tracker/health');
+  console.log('   - API: /citi-tracker/api/v1/*');
+} catch (error) {
+  citijobsError = error;
+  console.log('⚠️ Citi Opportunity Tracker not available:', error.message);
+}
+
+app.get('/debug/citijobs-error', (req, res) => {
+  res.json({
+    service: 'Citi Opportunity Tracker',
+    available: !citijobsError,
+    error: citijobsError ? { message: citijobsError.message, stack: citijobsError.stack } : null
+  });
+});
+
+// =====================================================
 // AI READINESS DEPARTMENT — five agents behind one Brain (served at /ai-readiness/)
 // Takes a CEO from fear to confidence: interview, three lane assessments
 // (cost / risk / data), a Red-Yellow-Green scorecard and a three-phase roadmap

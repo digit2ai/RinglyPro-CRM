@@ -145,7 +145,7 @@ const Query = sequelize.define('CjQuery', {
   profile_id: { type: DataTypes.INTEGER },        // null = shared across profiles
   label: { type: DataTypes.STRING },
   search_text: { type: DataTypes.STRING, allowNull: false },
-  max_pages: { type: DataTypes.INTEGER, defaultValue: 5 },
+  max_pages: { type: DataTypes.INTEGER, defaultValue: 3 },
   enabled: { type: DataTypes.BOOLEAN, defaultValue: true },
   weight: { type: DataTypes.FLOAT, defaultValue: 1.0 },
   source: { type: DataTypes.STRING, defaultValue: 'seed' },  // seed|manual|learned

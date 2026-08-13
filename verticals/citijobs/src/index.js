@@ -103,7 +103,7 @@ router.get('/health', async (req, res) => {
     feed_note: 'Workday CXS JSON only. jobs.citi.com is never crawled (its robots.txt disallows /search-jobs/), and a jobs.citi.com deep link is only ever stored when a human pastes one.',
     agent_enabled: agent.enabled(),
     scoring: matcher.hasModel() ? matcher.MODEL : 'heuristic (no ANTHROPIC_API_KEY; scores labelled simulated)',
-    request_budget_per_run: Number(process.env.CITIJOBS_MAX_REQUESTS || 60),
+    request_budget_per_run: Number(process.env.CITIJOBS_MAX_REQUESTS || 120),
     cost_cap_usd_per_run: Number(process.env.CITIJOBS_COST_CAP_USD || 0.5)
   });
 });

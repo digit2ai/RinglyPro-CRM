@@ -12,7 +12,7 @@
  * IDS. It has no channel through which to emit a new claim, because the bullets
  * that reach the PDF are copied verbatim from the profile. The one piece of
  * free text it may write — the summary — is verified afterwards against the
- * évidence corpus, and discarded in favour of the base summary if it introduces
+ * evidence corpus, and discarded in favour of the base summary if it introduces
  * a domain term, an acronym or a NUMBER that the corpus does not contain.
  * Numbers are the classic fabrication and the cheapest thing to check.
  *
