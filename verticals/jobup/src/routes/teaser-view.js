@@ -289,6 +289,14 @@ router.get('/:token', async (req, res) => {
 var API_BASE=(location.hostname.endsWith('jobup.dev')?'':'/jobup');
 var TOKEN=${JSON.stringify(req.params.token)};
 var VOICE=${JSON.stringify(lang === 'es' ? 'dalia' : 'ava')};
+// TEST MODE IS LIVE SERVER STATE, NOT A PROPERTY OF THIS PREVIEW.
+//
+// The payload is built once and stored, so a teaser created before the switch
+// carries no test_mode and would offer a $59 button with nothing saying the
+// card is never charged. Which Stripe account the NEXT click will hit is known
+// only now, at render time, so it is injected rather than read back out of a
+// row that was frozen days ago.
+var TEST_MODE=${JSON.stringify(require('../services/billing').isTestMode())};
 var LANG=${JSON.stringify(lang)};
 var payload=null,narration=[];
 
@@ -412,7 +420,7 @@ function render(){
     : T.freePrice;
   var SB_NOTE=c.price_usd?T.sbNotePaid:T.sbNoteFree;
 
-  var TEST=Boolean(c.test_mode);
+  var TEST=TEST_MODE||Boolean(c.test_mode);
   var TEST_CHIP=TEST?'<div class="testchip">'+esc(T.testChip)+'</div>':'';
 
   function strip(where,head,sub){

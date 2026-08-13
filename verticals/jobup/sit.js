@@ -4304,6 +4304,39 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+  await t('a preview built BEFORE the switch still shows the test-mode chip', async () => {
+    // The payload is built once and stored. Reading test_mode out of it means a
+    // teaser from last week offers a $59 button with nothing saying the card is
+    // never charged — the exact case that makes somebody believe they paid.
+    const express = require('express');
+    const http = require('http');
+    const b = require(__dirname + '/src/services/billing');
+    const teaserSvc4 = require(__dirname + '/src/services/teaser');
+    const origGet = teaserSvc4.get;
+    const savedKey = process.env.JOBUP_STRIPE_SECRET_KEY;
+    teaserSvc4.get = async () => ({ token: 'sit-old', language: 'en', status: 'ready' });
+    process.env.JOBUP_STRIPE_SECRET_KEY = 'sk_test_' + 'a1B2c3D4e5'.repeat(10);
+    const app = express();
+    app.use('/teaser', require(__dirname + '/src/routes/teaser-view'));
+    const srv = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+    try {
+      assert.strictEqual(b.isTestMode(), true);
+      const html = await new Promise((ok, bad) => {
+        http.get({ host: '127.0.0.1', port: srv.address().port, path: '/teaser/sit-old' }, (r) => {
+          let x = ''; r.on('data', (d) => { x += d; }); r.on('end', () => ok(x));
+        }).on('error', bad);
+      });
+      assert.ok(/var TEST_MODE=true/.test(html),
+        'the page must carry LIVE server state, not whatever the stored row froze');
+      assert.ok(html.includes('TEST_MODE||Boolean(c.test_mode)'),
+        'and the live value must win over the payload');
+    } finally {
+      srv.close(); teaserSvc4.get = origGet;
+      if (savedKey === undefined) delete process.env.JOBUP_STRIPE_SECRET_KEY;
+      else process.env.JOBUP_STRIPE_SECRET_KEY = savedKey;
+    }
+  });
+
   await t('test mode is visible on every surface that offers to take money', () => {
     const fs = require('fs');
     const teaserSvc = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
