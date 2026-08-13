@@ -92,12 +92,48 @@ async function adoptTeaser(tenantId, teaserToken) {
   } catch (e) { /* a missing photo must never block provisioning */ }
 
   const existing = await scoped('profiles', tenantId).findOne({});
+  const sourceText = t.resume_text || t.payload.source_text || profile.source_text || '';
+
+  // A PAYING ACCOUNT MUST NEVER BE BORN FROM A DEGRADED PARSE.
+  //
+  // The teaser's profile is whatever the structurer managed at preview time,
+  // and this used to be copied in verbatim. When the model was unreachable —
+  // an empty Anthropic balance did exactly this — the heuristic path produced
+  // a name, a guessed headline and NOTHING else, and the first real subscriber
+  // paid $59 for a profile with zero experience and zero skills. The preview
+  // being degraded is a bad demo; the paid account inheriting it is a refund.
+  //
+  // So at the moment money is involved, if the stored parse is simulated and
+  // the model is reachable NOW, structure it again from the source text.
+  let finalProfile = profile;
+  let restructured = null;
+  if (profile.is_simulated && sourceText.length > 60) {
+    try {
+      const resumeSvc = require('./resume');
+      const again = await resumeSvc.structure(sourceText);
+      if (again && again.profile && !again.profile.is_simulated) {
+        finalProfile = { ...again.profile, name: again.profile.name || profile.name };
+        restructured = { cost_usd: again.cost_usd };
+        console.log(`[jobup provisioning] tenant ${tenantId}: re-structured a simulated profile`);
+      }
+    } catch (e) {
+      // Never block provisioning on this — a thin profile beats no account.
+      console.warn('[jobup provisioning] re-structure failed:', e.message);
+    }
+  }
+
   if (!existing) {
     await scoped('profiles', tenantId).create({
-      resume_json: profile,
+      resume_json: finalProfile,
       photo_asset_id: photoAssetId,
-      source_text: t.resume_text || t.payload.source_text || profile.source_text || '',
+      source_text: sourceText,
     });
+  } else if (existing.resume_json && existing.resume_json.is_simulated && restructured) {
+    // Re-running provisioning must be able to REPAIR a profile that was
+    // written while the model was down, not skip it because a row exists.
+    await scoped('profiles', tenantId).update(
+      { resume_json: finalProfile, source_text: sourceText || existing.source_text },
+      { id: existing.id });
   } else if (photoAssetId && !existing.photo_asset_id) {
     await scoped('profiles', tenantId).update({ photo_asset_id: photoAssetId }, { id: existing.id });
   }

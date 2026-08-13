@@ -4194,6 +4194,89 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
 
+  section('a paid profile must never inherit a degraded parse');
+
+  // Juliana Gramowski's real CV, in the shape that broke: a banner on line one,
+  // her name on line two, and a phone in brackets.
+  const JULIANA = [
+    'SALES EXECUTIVE · BUSINESS DEVELOPMENT',
+    'Juliana Gramowski',
+    'Sales Executive · Business Development · Marketing Strategist',
+    'Results-oriented sales executive with 10+ years generating new business.',
+    'Tampa, Florida  (813) 334-2244  jgramowski7@gmail.com',
+    'Sales Executive, Clear Channel Outdoor, Tampa Florida, January 2024 to Present',
+  ].join('\n');
+
+  await t('LINE ONE IS NOT ALWAYS THE NAME', async () => {
+    const r = require(__dirname + '/src/services/resume');
+    const out = await r.structure(JULIANA);
+    const p = out.profile;
+    // This shipped to a paying subscriber: the banner in the name field and
+    // her actual name demoted to the headline.
+    assert.notStrictEqual(p.name, 'SALES EXECUTIVE · BUSINESS DEVELOPMENT',
+      'a banner line must not be read as somebody\'s name');
+    assert.strictEqual(p.name, 'Juliana Gramowski');
+    assert.notStrictEqual(p.headline, p.name, 'the headline must not repeat the name');
+  });
+
+  await t('a bracketed phone keeps its bracket', async () => {
+    const r = require(__dirname + '/src/services/resume');
+    const out = await r.structure(JULIANA);
+    // The old pattern started at a DIGIT, so "(813) 334-2244" was stored as
+    // "813) 334-2244" — a stray bracket on a live public profile.
+    assert.ok(!/^\d+\)/.test(out.profile.phone || ''),
+      `phone lost its opening bracket: ${out.profile.phone}`);
+    assert.ok(String(out.profile.phone || '').includes('334-2244'));
+    assert.strictEqual(out.profile.email, 'jgramowski7@gmail.com');
+  });
+
+  await t('provisioning RE-STRUCTURES a simulated profile rather than copying it', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+    // The teaser's profile used to be copied in verbatim. A preview built while
+    // the model was unreachable is a bad demo; the paid account inheriting it
+    // is a refund.
+    assert.ok(src.includes('profile.is_simulated && sourceText.length > 60'),
+      'a simulated parse must be re-run at the moment money is involved');
+    assert.ok(src.includes("require('./resume')") && src.includes('resumeSvc.structure('),
+      'and re-structured from the source text');
+    assert.ok(src.includes('existing.resume_json.is_simulated'),
+      're-running provisioning must REPAIR an existing damaged profile, not skip it');
+    assert.ok(/never block provisioning/i.test(src),
+      'and a failure here must not cost somebody their account');
+  });
+
+  await t('a resume can be replaced at any time, in any supported format', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes("router.post('/resume'"), 'upload a new one');
+    assert.ok(src.includes("router.post('/resume/reparse'"),
+      'and re-read the text already on file — the repair door, when only the structuring failed');
+    assert.ok(src.includes('resumeUpload.single('), 'as a real file upload');
+    assert.ok(src.includes('publishSite('),
+      'the public page, resume.json and the agent card must be republished or nothing really changed');
+    // Both doors are behind the session, and tenant_id comes from it.
+    const seg = src.slice(src.indexOf("router.post('/resume'"));
+    assert.ok(seg.includes('auth(req, res)'), 'gated by the session');
+    assert.ok(!/req\.(body|query|params)\.tenant_id/.test(seg),
+      'tenant_id must never come from the request');
+  });
+
+  await t('a thin result is REPORTED, never dressed up', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(src.includes('is_simulated: Boolean(profile.is_simulated)'),
+      'the caller must be told the model was unreachable');
+    assert.ok(/Nothing was invented/.test(src), 'and told nothing was fabricated to fill the gap');
+    // Re-reading with no model would produce the identical thin result, so it
+    // refuses instead of pretending it did something.
+    assert.ok(src.includes('brain.enabled()') && /would produce the same thin result/.test(src),
+      'reparse must refuse when the model is not configured');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(page.includes('loadResume()') && page.includes("id=\"rfile\""),
+      'and the dashboard must actually offer it');
+  });
+
   section('a PDF we cannot open is not a PDF we cannot read');
 
   // Build a real PDF in memory. pdfkit output is exactly what pdf-parse 1.1.1

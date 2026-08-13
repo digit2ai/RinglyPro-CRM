@@ -1853,6 +1853,10 @@ function renderAccount(){
     '<div class="card"><div class="t">Your profile photo</div>'+
     '<div class="m">Shown on your public page. Without one we use your initials.</div>'+
     '<div id="photobox"><div class="note">Loading...</div></div></div>'+
+    '<div class="card"><div class="t">Your resume</div>'+
+    '<div class="m">Everything on your page and every job score is read from this. '+
+      'Upload a new one whenever your career moves &mdash; PDF, DOCX, TXT, MD or RTF.</div>'+
+    '<div id="resumebox"><div class="note">Loading...</div></div></div>'+
     '<div class="card"><div class="t">Your web address</div>'+
     '<div class="m">This is what recruiters type and what AI agents fetch.</div>'+
     '<div id="addrbox"><div class="note">Loading...</div></div></div>'+
@@ -1866,13 +1870,68 @@ function renderAccount(){
     '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
     '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
     '<div id="delout" class="note"></div></div>';
-  loadAddress(); loadPhoto();
+  loadAddress(); loadPhoto(); loadResume();
   $('del').addEventListener('click',function(){
     if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
     api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){
       if(r.ok){ $('delout').textContent=r.j.note||'Deleted.'; setTimeout(function(){location.href='/';},2500); }
     });
   });
+}
+
+/* ---- resume: replace it, or re-read the one on file ----
+   The resume could only ever be given once, at signup. When the model was
+   unreachable during that one preview, a paying subscriber was left with a
+   profile holding no experience and no skills and no way to fix it from
+   inside the product. Both doors live here. */
+function loadResume(){
+  var box=$('resumebox'); if(!box) return;
+  api('/api/v1/engine/profile').then(function(r){
+    var p=(r.j&&r.j.profile)||{};
+    var thin=p.is_simulated||((p.experience||[]).length===0&&(p.skills||[]).length===0);
+    box.innerHTML=
+      '<div class="note" id="rsum">'+
+        'On file: '+esc(p.name||'no name read')+
+        ' &middot; '+((p.experience||[]).length)+' roles'+
+        ' &middot; '+((p.skills||[]).length)+' skills'+
+        ' &middot; '+((p.education||[]).length)+' education'+
+      '</div>'+
+      (thin?'<div class="note" style="color:var(--warn)">This looks thin. If your resume has more in it '+
+        'than the numbers above, re-read it &mdash; the text is already on file.</div>':'')+
+      '<div class="acts" style="margin-top:10px">'+
+        '<label class="btn sm" style="cursor:pointer">Upload a new resume'+
+          '<input type="file" id="rfile" accept=".pdf,.docx,.txt,.md,.rtf,.csv,.json" style="display:none"></label>'+
+        '<button class="btn sm" id="rre">Re-read the one on file</button>'+
+      '</div>'+
+      '<div id="rout" class="note"></div>';
+    $('rfile').addEventListener('change',function(){
+      if(!this.files||!this.files[0]) return;
+      var fd=new FormData(); fd.append('resume',this.files[0]);
+      send(fd,null);
+    });
+    $('rre').addEventListener('click',function(){ send(null,'/resume/reparse'); });
+  });
+
+  function send(fd,path){
+    var out=$('rout'); out.style.color=''; out.textContent='Reading...';
+    var opts=fd?{method:'POST',credentials:'same-origin',body:fd}
+               :{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'};
+    fetch(API+'/api/v1/engine'+(path||'/resume'),opts)
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(r){
+        if(!r.ok){
+          out.style.color='var(--red)';
+          out.textContent=(r.j.error||'Could not read that.')+(r.j.note?' '+r.j.note:'');
+          return;
+        }
+        var p=r.j.parsed||{};
+        out.style.color=r.j.is_simulated?'var(--warn)':'var(--green)';
+        out.textContent=(r.j.warning||('Read: '+p.experience+' roles, '+p.skills+' skills, '+
+          p.education+' education.'+(r.j.republished?' Your page has been updated.':'')));
+        loadResume();
+      })
+      .catch(function(){ out.style.color='var(--red)'; out.textContent='Could not reach the server.'; });
+  }
 }
 
 /* ---- PWA ---- */

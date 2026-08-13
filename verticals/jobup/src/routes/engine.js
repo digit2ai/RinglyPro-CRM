@@ -606,6 +606,140 @@ router.put('/profile', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
+// REPLACE THE RESUME, AT ANY TIME, IN ANY FORMAT.
+//
+// The resume could only ever be supplied once, at the teaser. Whatever the
+// structurer managed in that one moment was the profile forever — and when the
+// model was unreachable during a preview, a paying subscriber ended up with a
+// profile holding zero experience and zero skills, with no way to fix it from
+// inside the product. Careers also change; a CV is not a one-time artifact.
+//
+// Two doors, because they solve different problems:
+//   POST /resume          upload a new file
+//   POST /resume/reparse  re-read the text already on file (no upload)
+// ---------------------------------------------------------------
+const resumeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+});
+
+/** Structure text, write the profile, and republish every derived surface. */
+async function applyResume(tid, sourceText, note) {
+  const structured = await resumeSvc.structure(sourceText);
+  const profile = structured.profile || {};
+
+  const row = await scoped('profiles', tid).findOne({});
+  if (row) {
+    await scoped('profiles', tid).update(
+      { resume_json: profile, source_text: sourceText }, { id: row.id });
+  } else {
+    await scoped('profiles', tid).create({ resume_json: profile, source_text: sourceText });
+  }
+
+  // The public site, resume.json, the JSON-LD and the agent card are all
+  // rendered FROM the profile — republishing is what makes the change real
+  // rather than only true in the dashboard.
+  let republished = false;
+  try {
+    const r = await require('../services/provisioning').publishSite(tid);
+    republished = Boolean(r && r.ok !== false);
+  } catch (e) { console.warn('[jobup resume] republish failed:', e.message); }
+
+  return {
+    ok: true,
+    note,
+    republished,
+    // NEVER claim a good parse when the model was unreachable. A thin profile
+    // that says so is recoverable; one that pretends is not.
+    is_simulated: Boolean(profile.is_simulated),
+    warning: profile.is_simulated
+      ? 'The language model was unreachable, so this was structured without it: '
+        + 'your experience and skills could not be extracted. Nothing was invented. '
+        + 'Try again shortly and it will be read properly.'
+      : null,
+    cost_usd: structured.cost_usd || 0,
+    parsed: {
+      name: profile.name || null,
+      headline: profile.headline || null,
+      experience: (profile.experience || []).length,
+      education: (profile.education || []).length,
+      skills: (profile.skills || []).length,
+      certifications: (profile.certifications || []).length,
+    },
+    characters: sourceText.length,
+  };
+}
+
+router.post('/resume', resumeUpload.single('resume'), async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  try {
+    let text = String((req.body && req.body.resume_text) || '');
+
+    if (req.file) {
+      const ex = await resumeSvc.extractText(req.file.buffer, req.file.originalname);
+      if (ex.ok) text = ex.text;
+      else if (!text) {
+        // Say which failure it is: re-exporting fixes one and cannot fix a scan.
+        return res.status(400).json({
+          error: ex.scanned
+            ? 'That file is a scan — a picture of a document — so there is no text in it to read.'
+            : 'We could not read the text out of that file.',
+          paste_instead: true,
+          note: 'Paste the text instead, or export it again as PDF, DOCX, TXT, MD or RTF.',
+          detail: ex.note || null,
+        });
+      }
+    }
+
+    if (!text || text.trim().length < 60) {
+      return res.status(400).json({
+        error: 'A resume is required — attach a file or paste the text.',
+        paste_instead: true,
+      });
+    }
+
+    const out = await applyResume(tid, text.trim(),
+      req.file ? `Read from ${req.file.originalname}.` : 'Read from the text you pasted.');
+    await models.audit_log.create({
+      tenant_id: tid, actor: 'subscriber', action: 'resume_replaced',
+      reason: out.is_simulated ? 'structured without a model' : 'structured with the model',
+    }).catch(() => {});
+    res.json(out);
+  } catch (e) {
+    console.error('[jobup resume] replace failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * Re-read the text already on file. This is the repair door: the text was
+ * always fine, only the structuring failed, so there is nothing to re-upload.
+ */
+router.post('/resume/reparse', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  try {
+    const row = await scoped('profiles', tid).findOne({});
+    const text = (row && row.source_text) || '';
+    if (text.trim().length < 60) {
+      return res.status(400).json({
+        error: 'We do not have your resume text on file, so there is nothing to re-read.',
+        note: 'Upload the file and it will be read from scratch.',
+      });
+    }
+    if (!brain.enabled()) {
+      return res.status(503).json({
+        error: 'The language model is not configured, so re-reading would produce the same thin result.',
+        note: 'Nothing was changed.',
+      });
+    }
+    res.json(await applyResume(tid, text.trim(), 'Re-read the resume already on file.'));
+  } catch (e) {
+    console.error('[jobup resume] reparse failed:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------
 // Profile photo — replace or remove it.
 //
 // It could only be set at signup, so anyone who skipped it, or wanted a better

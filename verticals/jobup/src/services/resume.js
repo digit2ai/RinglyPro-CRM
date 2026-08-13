@@ -122,15 +122,43 @@ Rules:
  * was missing, which sent me looking in the wrong place when the real cause was
  * a truncated model response.
  */
+/**
+ * LINE ONE IS OFTEN NOT THE NAME.
+ *
+ * A real subscriber's CV opened with the banner "SALES EXECUTIVE · BUSINESS
+ * DEVELOPMENT" and her actual name on line two. Taking line 0 verbatim put the
+ * banner in the name field and her name in the headline — on a PAYING account.
+ * A person's name is two to four capitalised words with no digits and no
+ * punctuation soup, so score the first few lines instead of trusting position.
+ */
+function looksLikeName(l) {
+  if (!l || l.length < 4 || l.length > 60) return false;
+  if (/[@\d]/.test(l)) return false;
+  if (/[·|•]/.test(l)) return false;                 // banner separators
+  const words = l.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 5) return false;
+  // ALL CAPS across the whole line reads as a banner, not a signature.
+  if (l === l.toUpperCase() && /[A-Z]{4,}/.test(l)) return false;
+  return words.every((w) => /^[A-ZÁÉÍÓÚÑÜ][\p{L}'.-]*$/u.test(w));
+}
+
 function heuristicStructure(text, reason) {
   const lines = String(text || '').split('\n').map((l) => l.trim()).filter(Boolean);
   const email = (text.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [])[0] || '';
-  const phone = (text.match(/\+?\d[\d\s().-]{7,}\d/) || [])[0] || '';
-  // Skip a line that is just contact details when guessing the headline.
-  const headline = lines.slice(1, 4).find((l) =>
-    l.length > 8 && l.length < 140 && !l.includes('@') && !/^\+?[\d\s().-]+$/.test(l)) || '';
+  // The old pattern started at a DIGIT, so "(813) 334-2244" came back as
+  // "813) 334-2244" — a phone number with a stray bracket, on a live profile.
+  const phone = (text.match(/\+?\(?\d[\d\s().-]{7,}\d/) || [])[0] || '';
+
+  const head = lines.slice(0, 6);
+  const nameIdx = head.findIndex(looksLikeName);
+  const name = nameIdx >= 0 ? head[nameIdx] : (lines[0] || '');
+  // The headline is the next descriptive line AFTER the name — never the name
+  // itself, which is what happened when the name was misread off line 0.
+  const headline = lines.slice(Math.max(nameIdx, 0) + 1, Math.max(nameIdx, 0) + 5).find((l) =>
+    l.length > 8 && l.length < 140 && !l.includes('@')
+    && !/^\+?[\d\s().-]+$/.test(l) && l !== name) || '';
   return {
-    name: lines[0] || '',
+    name,
     headline,
     summary: '',
     email,
