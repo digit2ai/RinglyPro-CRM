@@ -157,6 +157,16 @@ router.get('/board', async (req, res) => {
     const tById = new Map();
     for (const t of tailorings) if (!tById.has(t.req_id)) tById.set(t.req_id, t);
 
+    // Ranked by match, best first. An unscored row sorts last rather than as a
+    // zero, so "not scored yet" never reads as "scored badly"; ties fall back
+    // to most recent movement.
+    const byMatch = (a, b) => {
+      const sa = a.req.match ? a.req.match.score : -1;
+      const sb = b.req.match ? b.req.match.score : -1;
+      if (sb !== sa) return sb - sa;
+      return new Date(b.status_changed_at) - new Date(a.status_changed_at);
+    };
+
     res.json({
       profile: { id: profile.id, slug: profile.slug, display_name: profile.display_name, score_threshold: profile.score_threshold },
       items: rows.map((t) => {
@@ -170,7 +180,7 @@ router.get('/board', async (req, res) => {
           req: r ? reqPayload(r, mById.get(t.req_id)) : { req_id: t.req_id, title: '(requisition not in pool)' },
           tailoring: tl ? { id: tl.id, version: tl.version, sent: tl.sent, coverage_pct: (tl.keyword_coverage || {}).pct, generated_at: tl.generated_at } : null
         };
-      })
+      }).sort(byMatch)
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -269,7 +279,14 @@ router.get('/reqs', async (req, res) => {
       tracked = new Set(ts.map((t) => t.req_id));
     }
     res.json({
-      items: rows.map((r) => Object.assign(reqPayload(r, mById.get(r.req_id)), { tracked: tracked.has(r.req_id) }))
+      items: rows
+        .map((r) => Object.assign(reqPayload(r, mById.get(r.req_id)), { tracked: tracked.has(r.req_id) }))
+        .sort((a, b) => {
+          const sa = a.match ? a.match.score : -1;
+          const sb = b.match ? b.match.score : -1;
+          if (sb !== sa) return sb - sa;
+          return new Date(b.first_seen_at) - new Date(a.first_seen_at);
+        })
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
