@@ -81,6 +81,76 @@ function isTestMode() { return mode() === 'test'; }
 /** True when JobUp is on its own key rather than the estate-wide one. */
 function isolated() { return Boolean(process.env.JOBUP_STRIPE_SECRET_KEY); }
 
+// ---- IS THIS ACTUALLY A KEY? -----------------------------------------------
+//
+// A key pasted from an abbreviated form — "sk_test_51RHs2a…00Mm2rz8E0" — still
+// starts with sk_test_, so mode() reads "test", the SDK constructs happily and
+// /health looks configured. The first sign of trouble is a customer's checkout
+// failing. A Stripe key is a prefix plus base62 and nothing else, so a single
+// character outside that set proves the paste was truncated, with no API call
+// and no waiting for a real payment to expose it.
+function keyShape(key) {
+  const k = key === undefined ? secretKey() : String(key || '');
+  if (!k) return { present: false };
+  const body = k.replace(/^(sk|rk)_(test|live)_/, '');
+  const bad = body.match(/[^A-Za-z0-9]/g) || [];
+  return {
+    present: true,
+    length: k.length,
+    prefix: k.slice(0, 8),
+    // Live keys and test keys are both ~100+ characters.
+    looks_truncated: k.length < 60 || bad.length > 0,
+    illegal_characters: bad.length ? Array.from(new Set(bad)) : null,
+    hint: bad.length
+      ? 'This key contains characters a Stripe key cannot contain — it was almost '
+        + 'certainly pasted from an abbreviated or ellipsised copy. Paste the whole value.'
+      : (k.length < 60 ? 'This key is far shorter than a real Stripe key.' : null),
+  };
+}
+
+/**
+ * One real call to Stripe. It is the only thing that can tell "a key string is
+ * set" from "Stripe accepts this key", and `livemode` comes back from Stripe
+ * itself rather than from our own reading of the prefix.
+ */
+let probeCache = null;
+async function probe({ maxAgeMs = 60000 } = {}) {
+  if (probeCache && Date.now() - probeCache.at < maxAgeMs) {
+    return { ...probeCache.result, cached: true };
+  }
+  const shape = keyShape();
+  let result;
+  if (!shape.present) result = { ok: false, reason: 'no Stripe key configured', shape };
+  else if (disabled()) result = { ok: false, reason: 'billing is switched off', shape };
+  else {
+    const c = client();
+    if (!c) result = { ok: false, reason: 'Stripe SDK unavailable', shape };
+    else {
+      try {
+        const bal = await c.balance.retrieve();     // cheap, read-only, no side effect
+        result = {
+          ok: true, shape,
+          // STRIPE'S answer, not our prefix guess. If these ever disagree,
+          // trust this one.
+          livemode: bal.livemode === true,
+          mode_per_stripe: bal.livemode ? 'live' : 'test',
+          mode_per_key_prefix: mode(),
+          agrees: (bal.livemode ? 'live' : 'test') === mode(),
+        };
+      } catch (e) {
+        result = {
+          ok: false, shape,
+          status: e && (e.statusCode || e.status) || null,
+          type: (e && e.type) || null,
+          reason: String((e && e.message) || e).slice(0, 300),
+        };
+      }
+    }
+  }
+  probeCache = { at: Date.now(), result };
+  return result;
+}
+
 // A TEST-MODE CHECKOUT PRODUCES A REAL ROW AND A REAL INVOICE.
 //
 // Stripe test mode issues genuine invoice objects with genuine amounts; nothing
@@ -417,7 +487,7 @@ function refundEligible(chargedAt, now = new Date()) {
 module.exports = {
   // Test-vs-live and WHICH account, so the webhook route cannot verify a
   // test-mode signature against the estate-wide live secret.
-  secretKey, webhookSecret, mode, isTestMode, isolated,
+  secretKey, webhookSecret, mode, isTestMode, isolated, keyShape, probe,
   TEST_ACTIVATION, NON_REVENUE_ACTIVATIONS, isNonRevenue, activationStamp,
   freeReason,
   disabled,

@@ -101,9 +101,12 @@ router.get('/health', async (req, res) => {
   // "brain: anthropic" only ever meant a key string was present, which is how
   // four previews in a row went out on the heuristic path unnoticed.
   const brainHealth = brain.health();
+  let stripeProbe = null;
   if (req.query && req.query.probe) {
     try { brainHealth.probe = await brain.probe(); }
     catch (e) { brainHealth.probe = { ok: false, reason: e.message }; }
+    try { stripeProbe = await billing.probe(); }
+    catch (e) { stripeProbe = { ok: false, reason: e.message }; }
   }
   res.json({
     ok: true,
@@ -114,6 +117,16 @@ router.get('/health', async (req, res) => {
     table_prefix: 'ju_',
     brain: brain.enabled() ? 'anthropic' : 'heuristic (no ANTHROPIC_API_KEY)',
     brain_detail: brainHealth,
+    // Always report the SHAPE of the key (free, no API call) — that alone
+    // catches a value pasted from an abbreviated copy. ?probe=1 additionally
+    // asks Stripe whether it accepts it.
+    stripe_key: billing.keyShape(),
+    stripe_webhook_secret: (function () {
+      const w = billing.webhookSecret();
+      return { present: Boolean(w), length: w.length,
+               looks_truncated: Boolean(w) && (w.length < 24 || /[^A-Za-z0-9_]/.test(w)) };
+    }()),
+    stripe_probe: stripeProbe,
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
     admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',

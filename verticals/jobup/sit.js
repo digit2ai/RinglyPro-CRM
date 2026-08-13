@@ -4226,6 +4226,39 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+  await t('a key pasted from an abbreviated copy is caught before a customer is', () => {
+    const b = require(__dirname + '/src/services/billing');
+    // "sk_test_51RHs2a…00Mm2rz8E0" still starts with sk_test_, so mode() reads
+    // 'test', the SDK constructs happily and /health looks configured. Without
+    // this check the first symptom is a real checkout failing.
+    const bad = b.keyShape('sk_test_51RHs2a 00Mm2rz8E0'.replace(' ', '…'));
+    assert.strictEqual(bad.looks_truncated, true, 'an ellipsised key must be caught');
+    assert.deepStrictEqual(bad.illegal_characters, ['…']);
+    assert.ok(/pasted from an abbreviated/.test(bad.hint), 'and it must say what to do');
+
+    // A real key is ~107 chars of base62 and must pass cleanly.
+    const good = b.keyShape('sk_test_' + 'a1B2c3D4e5'.repeat(10));
+    assert.strictEqual(good.looks_truncated, false);
+    assert.strictEqual(good.illegal_characters, null);
+    // Shortened by hand rather than ellipsised — still not a key.
+    assert.strictEqual(b.keyShape('sk_test_abc').looks_truncated, true);
+    assert.strictEqual(b.keyShape('').present, false);
+  });
+
+  await t('the probe asks STRIPE which mode it is in, not the key prefix', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    assert.ok(src.includes('balance.retrieve()'), 'a real read-only call is the only proof');
+    assert.ok(src.includes('mode_per_stripe') && src.includes('mode_per_key_prefix')
+           && src.includes('agrees:'),
+      'if our prefix reading and Stripe ever disagree, that must be visible');
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(idx.includes('billing.keyShape()'),
+      'the shape check costs nothing and must always be reported');
+    assert.ok(idx.includes('stripe_webhook_secret'),
+      'a truncated whsec fails signature verification, and the symptom is silence');
+  });
+
   await t('the webhook verifies against JobUp\'s OWN secret', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
