@@ -28,14 +28,58 @@ try { pdfParse = require('pdf-parse/lib/pdf-parse.js'); } catch (_) { /* optiona
 let mammoth = null;
 try { mammoth = require('mammoth'); } catch (_) { /* optional */ }
 
+const pdfRecover = require('./pdf-recover');
+
+/**
+ * PDF text, with a recovery path.
+ *
+ * pdf-parse 1.1.1 vendors a 2018 pdf.js that throws `bad XRef entry` on files
+ * that are not actually broken — a freshly generated pdfkit PDF fails, and so
+ * did a real subscriber's CV. The xref is only an index, so when the parser
+ * will not open the container we read the content streams directly.
+ *
+ * The recovery is only ever used when it is CONFIDENTLY text: a subsetted-font
+ * PDF yields glyph ids, and handing those to the model would produce a
+ * fabricated résumé out of noise. Silence beats invention.
+ */
+async function extractPdf(buffer) {
+  let firstError = null;
+  if (pdfParse) {
+    try {
+      const r = await pdfParse(buffer);
+      const t = cleanText(r && r.text);
+      if (t.length >= 60) return { text: t.slice(0, PER_FILE_CHAR_CAP), ok: true };
+      firstError = 'the parser opened it but found no selectable text';
+    } catch (e) {
+      firstError = e.message;
+    }
+  } else {
+    firstError = 'pdf-parse not installed';
+  }
+
+  const rec = pdfRecover.scavenge(buffer);
+  if (rec.quality.ok) {
+    return {
+      text: cleanText(rec.text).slice(0, PER_FILE_CHAR_CAP), ok: true,
+      recovered: true,
+      note: `Read directly from the page contents — the PDF index was unreadable (${firstError}).`,
+    };
+  }
+
+  // Say which of the two failures this is: re-exporting fixes one and not the
+  // other, and "could not read it" sends somebody to do the wrong thing.
+  if (pdfRecover.looksScanned(buffer)) {
+    return { text: '', ok: false, scanned: true,
+      note: 'this PDF is a scan or a picture of a document, so there is no text in it to read' };
+  }
+  return { text: '', ok: false, note: firstError || 'could not read this PDF',
+    recovery_quality: rec.quality };
+}
+
 async function extractText(buffer, filename) {
   const ext = String(filename || '').split('.').pop().toLowerCase();
   try {
-    if (ext === 'pdf') {
-      if (!pdfParse) return { text: '', ok: false, note: 'pdf-parse not installed' };
-      const r = await pdfParse(buffer);
-      return { text: cleanText(r && r.text).slice(0, PER_FILE_CHAR_CAP), ok: true };
-    }
+    if (ext === 'pdf') return await extractPdf(buffer);
     if (ext === 'docx') {
       if (!mammoth) return { text: '', ok: false, note: 'mammoth not installed' };
       const r = await mammoth.extractRawText({ buffer });

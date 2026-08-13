@@ -1268,6 +1268,15 @@ function juFormatPhone(v){
                 sub,'/teaser/'+j.existing.token,'Open my preview');
             return failWithWay(j.error||'Daily limit reached for this network.',sub,null,null);
           }
+          // A file we cannot read is not a dead end: the paste box is already
+          // on this screen. Point at it and open it, rather than printing a
+          // parser's own words and leaving the visitor to work it out.
+          if(j.paste_instead){
+            failWithWay(j.error||'We could not read that file.', j.note||'', null, null);
+            var ta=document.getElementById('ju-text');
+            if(ta){ ta.scrollIntoView({block:'center',behavior:'smooth'}); ta.focus(); }
+            return;
+          }
           return fail((j.errors&&j.errors.join(' · '))||j.error||'Something went wrong.');
         }
         document.getElementById('ju-prog-t').textContent='Building your ecosystem…';

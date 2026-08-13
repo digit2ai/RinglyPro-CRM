@@ -113,7 +113,23 @@ router.post('/teaser', upload.fields([{ name: 'resume', maxCount: 1 }, { name: '
     if (resumeFile) {
       const ex = await resumeSvc.extractText(resumeFile.buffer, resumeFile.originalname);
       if (ex.ok) resumeText = ex.text;
-      else if (!resumeText) return res.status(400).json({ error: 'Could not read that file: ' + ex.note });
+      else if (!resumeText) {
+        // "bad XRef entry" is a sentence about our parser, not about anything
+        // the visitor can act on. The box that solves it is already on screen —
+        // say so, and say which of the two failures this is, because
+        // re-exporting fixes one and cannot fix the other.
+        return res.status(400).json({
+          error: ex.scanned
+            ? 'That PDF is a scan — a picture of a document — so there is no text in it to read.'
+            : 'We could not read the text out of that file.',
+          paste_instead: true,
+          note: ex.scanned
+            ? 'Paste the text into the box below and everything else works exactly the same.'
+            : 'Paste the text into the box below, or export it again as a PDF or DOCX. '
+              + 'Nothing else about your preview changes.',
+          detail: ex.note || null,
+        });
+      }
     }
     if (!resumeText || resumeText.length < 60) {
       return res.status(400).json({ error: 'A resume is required — attach a file or paste the text.' });

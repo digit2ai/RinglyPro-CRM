@@ -4194,6 +4194,94 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
 
+  section('a PDF we cannot open is not a PDF we cannot read');
+
+  // Build a real PDF in memory. pdfkit output is exactly what pdf-parse 1.1.1
+  // throws "bad XRef entry" on, which is the bug a subscriber actually hit.
+  async function makePdf(lines) {
+    const PDFDocument = require('pdfkit');
+    const d = new PDFDocument();
+    const chunks = [];
+    const done = new Promise((r) => { d.on('data', (b) => chunks.push(b)); d.on('end', () => r()); });
+    d.fontSize(12);
+    for (const l of lines) d.text(l);
+    d.end();
+    await done;
+    return Buffer.concat(chunks);
+  }
+
+  await t('a PDF whose index will not parse is still read', async () => {
+    const resumeSvc2 = require(__dirname + '/src/services/resume');
+    const pdf = await makePdf([
+      'NUMERIANO BOUFFARD', 'Executive Director, Operations',
+      'nvbouffard@gmail.com', 'EXPERIENCE',
+      'Vice President, Global Logistics, Acme Corp, 2018 to 2024',
+      'Directed distribution across eleven regional centres and a fleet of two hundred vehicles.',
+    ]);
+    const r = await resumeSvc2.extractText(pdf, 'cv.pdf');
+    assert.strictEqual(r.ok, true, 'THE VISITOR WAS TOLD "bad XRef entry" FOR A VALID FILE');
+    assert.ok(r.text.includes('NUMERIANO BOUFFARD'), 'and the name must survive');
+    assert.ok(r.text.includes('Acme Corp'), 'along with the body');
+
+    // Break the cross-reference table outright — the text lives in the content
+    // streams and the index is never needed to reach it.
+    const s = pdf.toString('latin1');
+    const cut = s.lastIndexOf('startxref');
+    const broken = Buffer.from(s.slice(0, cut) + 'startxref\n999999\n%%EOF\n', 'latin1');
+    const r2 = await resumeSvc2.extractText(broken, 'cv.pdf');
+    assert.strictEqual(r2.ok, true, 'a damaged index must not lose the document');
+    assert.ok(r2.text.includes('NUMERIANO BOUFFARD'));
+  });
+
+  await t('RECOVERY NEVER RETURNS GLYPH SOUP', () => {
+    // THE ONE THAT MATTERS. A subsetted font stores glyph ids, not characters;
+    // decoded blind they are 60-73% junk (measured on our own PDFs). Handing
+    // that to the model would produce a confidently fabricated résumé out of
+    // noise — far worse than saying we could not read the file.
+    const rec = require(__dirname + '/src/services/pdf-recover');
+    const soup = '$,y0&3%5$,1Ô¦+,'.repeat(40);
+    assert.strictEqual(rec.readable(soup).ok, false, 'symbol soup must be refused');
+    assert.ok(/subsetted|glyph/.test(rec.readable(soup).reason || ''), 'and explain itself');
+    assert.strictEqual(rec.readable('short').ok, false);
+
+    const real = 'NUMERIANO BOUFFARD Executive Director of Operations with twenty years '
+      + 'directing distribution networks across eleven regional centres and a fleet '
+      + 'of two hundred vehicles for national retail accounts.';
+    assert.strictEqual(rec.readable(real).ok, true, 'genuine text must pass');
+    assert.ok(rec.readable(real).ratio >= 0.9);
+
+    // And against a real subsetted-font PDF from this repo, if it is here.
+    const fs = require('fs');
+    const p = __dirname + '/../../public/architecture/digit2ai-agent-roster.pdf';
+    if (fs.existsSync(p)) {
+      const q = rec.scavenge(fs.readFileSync(p)).quality;
+      assert.strictEqual(q.ok, false,
+        `a subsetted-font PDF scavenged to ratio ${q.ratio} and must be refused`);
+    } else {
+      console.log('      (skipped the real subsetted-font PDF — file not present)');
+    }
+  });
+
+  await t('a scan is named a scan, because re-exporting cannot fix it', async () => {
+    const resumeSvc2 = require(__dirname + '/src/services/resume');
+    const r = await resumeSvc2.extractText(Buffer.from('not a pdf at all'), 'cv.pdf');
+    assert.strictEqual(r.ok, false, 'garbage in must not come back ok');
+    assert.ok(r.note, 'and it must say why');
+  });
+
+  await t('the visitor is pointed at the paste box that is already on screen', () => {
+    const fs = require('fs');
+    const route = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(route.includes('paste_instead: true'),
+      '"bad XRef entry" is a sentence about our parser, not something to act on');
+    assert.ok(!route.includes("'Could not read that file: '"),
+      'the raw parser message must not be shown as the error');
+    assert.ok(route.includes('ex.scanned'), 'a scan and an unreadable file need different advice');
+    const page = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(page.includes('j.paste_instead') && page.includes("getElementById('ju-text')"),
+      'the landing page must open and focus the paste box');
+  });
+
   section('test mode moves JobUp alone, and can never read as revenue');
 
   await t('JobUp has its own Stripe key, so the estate-wide one is untouchable', () => {
