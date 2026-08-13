@@ -59,6 +59,29 @@ try {
   console.log('⚠️ Pricing credit webhook not available:', e.message);
 }
 
+// JobUp Stripe webhook — MUST be before the body parser for raw body access.
+//
+// JobUp's own router already mounts express.raw() on this path, but that router
+// is mounted ~2,100 lines below, long after the global express.json() here.
+// By then the stream is consumed and req._body is set, so the inner raw()
+// SKIPS and the handler falls back to re-serialising the parsed object. Stripe
+// signs the exact bytes it sent — pretty-printed JSON — so a re-encode that
+// differs only in whitespace fails the signature EVERY time.
+//
+// This was live: two webhooks rejected, a real $59 taken, no invoice row and
+// no referral commission, with a perfectly correct signing secret configured.
+// The error text ("Are you passing the raw request body?") says exactly this,
+// and it was read as a wrong secret for hours.
+//
+// Both roots need it: jobup.dev/... (host handler) and /jobup/... (path mount).
+app.use(['/api/v1/billing/webhook', '/jobup/api/v1/billing/webhook'], (req, res, next) => {
+  const host = String(req.headers.host || '').toLowerCase().split(':')[0];
+  const isJobUpHost = host === 'jobup.dev' || host === 'www.jobup.dev';
+  // On the shared CRM host, only the /jobup-prefixed path is JobUp's.
+  if (!isJobUpHost && !req.originalUrl.startsWith('/jobup/')) return next();
+  return express.raw({ type: 'application/json' })(req, res, next);
+});
+
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 

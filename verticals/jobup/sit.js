@@ -4670,6 +4670,50 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'a truncated whsec fails signature verification, and the symptom is silence');
   });
 
+  await t('THE HOST APP MUST NOT EAT THE RAW BODY BEFORE JOBUP SEES IT', () => {
+    const fs = require('fs');
+    const app = fs.readFileSync(__dirname + '/../../src/app.js', 'utf8');
+    const carve = app.indexOf('/api/v1/billing/webhook');
+    const json = app.indexOf("app.use(express.json({ limit: '500mb' }))");
+    assert.ok(carve > -1, 'src/app.js must carve out JobUp\'s webhook path');
+    assert.ok(json > -1, 'the global body parser should still be there');
+    // JobUp mounts express.raw() on this path in its OWN router — but that
+    // router loads ~2,100 lines below the global express.json(). By then the
+    // stream is consumed and req._body is set, so the inner raw() SKIPS and the
+    // handler re-serialises the parsed object. Stripe signs the exact bytes it
+    // sent, so a re-encode differing only in whitespace fails EVERY signature.
+    // This was live: two rejected webhooks, a real $59 taken, no invoice row,
+    // with a perfectly correct signing secret.
+    assert.ok(carve < json,
+      'the raw-body carve-out must come BEFORE the global express.json()');
+    // Both roots: the custom domain and the path mount.
+    assert.ok(app.includes("'/jobup/api/v1/billing/webhook'"),
+      'the path mount needs it too, not just jobup.dev');
+    assert.ok(/jobup\.dev/.test(app.slice(carve, json)),
+      'and the host must be checked so the shared CRM host is not affected');
+  });
+
+  await t('a re-serialised body can never verify — this is the failure mode', () => {
+    const crypto = require('crypto');
+    const secret = 'whsec_sit_fixture_secret';
+    // Stripe sends PRETTY-PRINTED json and signs those exact bytes.
+    const raw = JSON.stringify({ id: 'evt_sit', type: 'invoice.paid' }, null, 2);
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = crypto.createHmac('sha256', secret).update(`${ts}.${raw}`).digest('hex');
+    const header = `t=${ts},v1=${sig}`;
+    const stripe = require('stripe')('sk_test_fixture');
+
+    // Raw bytes: verifies.
+    stripe.webhooks.constructEvent(Buffer.from(raw), header, secret);
+
+    // What express.json() leaves behind: same object, different bytes.
+    assert.throws(
+      () => stripe.webhooks.constructEvent(
+        Buffer.from(JSON.stringify(JSON.parse(raw))), header, secret),
+      /No signatures found matching/,
+      'a re-encoded body must fail — this is what a correct secret looked like');
+  });
+
   await t('the webhook verifies against JobUp\'s OWN secret', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
