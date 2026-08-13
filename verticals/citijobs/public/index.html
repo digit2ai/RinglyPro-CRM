@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Citi Opportunity Tracker</title>
+<title>Bank Opportunity Tracker</title>
 <style>
   :root { --bg:#0b1220; --card:#121a2b; --card2:#0e1626; --line:#22304a; --txt:#e9eef7;
           --mut:#8a98b0; --accent:#2f6fed; --ok:#3fb950; --warn:#d29922; --bad:#f85149; }
@@ -70,10 +70,11 @@
 
 <header>
   <div class="bar">
-    <div class="brand">Citi Opportunity Tracker</div>
+    <div class="brand">Bank Opportunity Tracker</div>
     <select id="profileSel" style="width:auto; min-width:170px"></select>
-    <a class="pill" href="https://jobs.citi.com/job/tampa" target="_blank" rel="noopener">Browse jobs.citi.com/job/tampa</a>
-    <div class="grow"><input id="importBox" placeholder="Paste a Citi req id (26974948) or a job URL, then press Enter"></div>
+    <a class="pill" href="https://jobs.citi.com/job/tampa" target="_blank" rel="noopener">Citi careers</a>
+    <a class="pill" href="https://www.jpmorganchase.com/careers" target="_blank" rel="noopener">JPMorgan careers</a>
+    <div class="grow"><input id="importBox" placeholder="Paste a req id — Citi 26974948 or JPMorgan 210712563 — or a job URL"></div>
     <button id="importBtn">Import</button>
     <span class="pill" id="agentPill"><span class="dot" id="agentDot"></span><span id="agentTxt">loading</span></span>
     <button class="ghost" id="runBtn">Run agent</button>
@@ -89,10 +90,11 @@
 
 <main>
   <section id="tab-board">
+    <div class="chips" id="employerChips"></div>
     <div class="chips" id="statusChips"></div>
     <div class="card" id="payFilter" style="padding:10px 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap"></div>
     <table><thead><tr>
-      <th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th>Status</th><th>Résumé</th>
+      <th>Bank</th><th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th>Status</th><th>Résumé</th>
     </tr></thead><tbody id="boardBody"></tbody></table>
     <p class="muted" id="boardEmpty" style="display:none">Nothing on the board yet. Run the agent, or paste a req id above.</p>
   </section>
@@ -100,7 +102,7 @@
   <section id="tab-pool" style="display:none">
     <div class="card"><input id="poolQ" placeholder="Search the requisition pool by title, location or req id"></div>
     <table><thead><tr>
-      <th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th></th>
+      <th>Bank</th><th>Req</th><th>Role</th><th>Closes</th><th>Salary</th><th>Match</th><th></th>
     </tr></thead><tbody id="poolBody"></tbody></table>
   </section>
 
@@ -139,7 +141,7 @@
 
 <script>
 var API = '/citi-tracker/api/v1';
-var state = { profile: null, profiles: [], status: '', skillKind: '' };
+var state = { profile: null, profiles: [], status: '', skillKind: '', employer: '', employers: [] };
 var STATUSES = ['new','saved','applied','screening','interview','offer','closed'];
 var CLOSE_REASONS = ['rejected','withdrawn','filled','expired','not_interested','unspecified'];
 
@@ -179,7 +181,8 @@ function matchCell(r) {
 
 // ── Board ────────────────────────────────────────────────────────────────────
 async function loadBoard() {
-  var q = '?profile_id=' + state.profile.id + (state.status ? '&status=' + state.status : '');
+  var q = '?profile_id=' + state.profile.id + (state.status ? '&status=' + state.status : '')
+        + (state.employer ? '&employer=' + encodeURIComponent(state.employer) : '');
   var d = await api('/board' + q);
   state.profileMeta = d.profile;
   renderPayFilter(d);
@@ -191,6 +194,7 @@ async function loadBoard() {
     var tr = document.createElement('tr');
     tr.className = 'row';
     tr.innerHTML =
+      '<td><span class="pill" style="padding:3px 9px">'+esc(r.employer_name||'')+'</span></td>'+
       '<td><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">'+esc(r.req_id)+'</a>'+
         '<div class="sub">'+esc(r.remote_type||'')+' '+esc(r.time_type||'')+'</div></td>'+
       '<td><div class="t" data-req="'+esc(r.req_id)+'">'+esc(r.title)+'</div>'+
@@ -202,14 +206,14 @@ async function loadBoard() {
       '<td>'+(it.tailoring
         ? '<a href="/citi-tracker'+esc(it.tailoring.pdf_url||('/api/v1/tailorings/'+it.tailoring.id+'/pdf'))+'" target="_blank" rel="noopener">PDF v'+it.tailoring.version+'</a>'+
           '<div class="sub">'+(it.tailoring.coverage_pct!=null?it.tailoring.coverage_pct+'% keywords':'')+'</div>'
-        : '<button class="ghost sm" data-tailor="'+esc(r.req_id)+'">Tailor</button>')+'</td>';
+        : '<button class="ghost sm" data-tailor="'+esc(r.req_id)+'" data-emp="'+esc(r.employer||'')+'">Tailor</button>')+'</td>';
     b.appendChild(tr);
   });
   b.querySelectorAll('[data-req]').forEach(function (el) {
-    el.onclick = function () { openReq(el.getAttribute('data-req')); };
+    el.onclick = function () { openReq(el.getAttribute('data-req'), el.getAttribute('data-emp')); };
   });
   b.querySelectorAll('[data-tailor]').forEach(function (el) {
-    el.onclick = function () { doTailor(el.getAttribute('data-tailor'), el); };
+    el.onclick = function () { doTailor(el.getAttribute('data-tailor'), el, false, el.getAttribute('data-emp')); };
   });
   b.querySelectorAll('select[data-track]').forEach(function (el) {
     el.onchange = function () { changeStatus(el.getAttribute('data-track'), el.value); };
@@ -264,46 +268,51 @@ async function changeStatus(id, status) {
 // ── Pool ─────────────────────────────────────────────────────────────────────
 async function loadPool() {
   var q = document.getElementById('poolQ').value.trim();
-  var d = await api('/reqs?profile_id=' + state.profile.id + (q ? '&q=' + encodeURIComponent(q) : ''));
+  var d = await api('/reqs?profile_id=' + state.profile.id + (q ? '&q=' + encodeURIComponent(q) : '')
+    + (state.employer ? '&employer=' + encodeURIComponent(state.employer) : ''));
   var b = document.getElementById('poolBody');
   b.innerHTML = '';
   d.items.forEach(function (r) {
     var tr = document.createElement('tr');
     tr.className = 'row';
     tr.innerHTML =
+      '<td><span class="pill" style="padding:3px 9px">'+esc(r.employer_name||'')+'</span></td>'+
       '<td><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">'+esc(r.req_id)+'</a></td>'+
       '<td><div class="t" data-req="'+esc(r.req_id)+'">'+esc(r.title)+'</div><div class="sub">'+esc(r.location||'')+'</div></td>'+
       '<td>'+closesCell(r)+'</td><td>'+salaryCell(r)+'</td><td>'+matchCell(r)+'</td>'+
-      '<td>'+(r.tracked ? '<span class="muted">on board</span>' : '<button class="ghost sm" data-add="'+esc(r.req_id)+'">Save</button>')+'</td>';
+      '<td>'+(r.tracked ? '<span class="muted">on board</span>' : '<button class="ghost sm" data-add="'+esc(r.req_id)+'" data-emp="'+esc(r.employer||'')+'">Save</button>')+'</td>';
     b.appendChild(tr);
   });
-  b.querySelectorAll('[data-req]').forEach(function (el) { el.onclick = function(){ openReq(el.getAttribute('data-req')); }; });
+  b.querySelectorAll('[data-req]').forEach(function (el) { el.onclick = function(){ openReq(el.getAttribute('data-req'), el.getAttribute('data-emp')); }; });
   b.querySelectorAll('[data-add]').forEach(function (el) {
     el.onclick = async function () {
-      await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: el.getAttribute('data-add'), status:'saved' }) });
+      await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: el.getAttribute('data-add'), employer: el.getAttribute('data-emp'), status:'saved' }) });
       toast('Saved to the board'); loadPool();
     };
   });
 }
 
 // ── Requisition drawer ───────────────────────────────────────────────────────
-async function openReq(reqId) {
-  var r = await api('/reqs/' + encodeURIComponent(reqId) + '?profile_id=' + state.profile.id);
+async function openReq(reqId, employerKey) {
+  var r = await api('/reqs/' + encodeURIComponent(reqId) + '?profile_id=' + state.profile.id
+    + (employerKey ? '&employer=' + encodeURIComponent(employerKey) : ''));
   var tl = await api('/tailorings?profile_id=' + state.profile.id + '&req_id=' + encodeURIComponent(reqId));
   var p = document.getElementById('panel');
   p.innerHTML =
     '<button class="ghost close" id="x">Close</button>'+
     '<h2 style="margin:0 30px 4px 0">'+esc(r.title)+'</h2>'+
-    '<div class="sub">Req '+esc(r.req_id)+' · '+esc(r.location||'')+' · '+esc(r.remote_type||'')+' · '+esc(r.time_type||'')+'</div>'+
+    '<div class="sub">'+esc(r.employer_name||'')+' · Req '+esc(r.req_id)+' · '+esc(r.location||'')+' · '+esc(r.remote_type||'')+' · '+esc(r.time_type||'')+'</div>'+
     '<div class="card" style="margin-top:14px">'+
       '<div class="kv"><span>Posted</span><span>'+esc(r.posted_on||'not stated')+'</span></div>'+
       '<div class="kv"><span>Anticipated close</span><span>'+esc(r.close_date||'not stated')+
         (r.days_to_close!=null?' ('+r.days_to_close+' days)':'')+'</span></div>'+
       '<div class="kv"><span>Salary range</span><span>'+salaryCell(r)+'</span></div>'+
       '<div class="kv"><span>Apply (canonical)</span><span><a href="'+esc(r.url_workday||'#')+'" target="_blank" rel="noopener">Workday posting</a></span></div>'+
-      '<div class="kv"><span>Citi careers link</span><span>'+(r.url_citi_careers
+      '<div class="kv"><span>Careers link</span><span>'+(r.url_citi_careers
           ? '<a href="'+esc(r.url_citi_careers)+'" target="_blank" rel="noopener">pasted deep link</a>'
-          : '<span class="muted">none pasted</span> · <a href="'+esc(r.url_citi_search)+'" target="_blank" rel="noopener">search jobs.citi.com</a>')+'</span></div>'+
+          : (r.url_citi_search
+              ? '<span class="muted">none pasted</span> · <a href="'+esc(r.url_citi_search)+'" target="_blank" rel="noopener">search jobs.citi.com</a>'
+              : '<span class="muted">not applicable for this bank</span>'))+'</span></div>'+
       '<div class="kv"><span>Feed status</span><span>'+esc(r.feed_status)+'</span></div>'+
     '</div>'+
     '<div class="bar" style="margin-bottom:12px"><button id="tailorBtn">Tailor my résumé for this req</button>'+
@@ -320,19 +329,19 @@ async function openReq(reqId) {
   document.getElementById('drawer').classList.add('open');
   document.getElementById('x').onclick = closeDrawer;
   document.getElementById('saveBtn').onclick = async function () {
-    await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: r.req_id, status:'saved' }) });
+    await api('/board', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: r.req_id, employer: r.employer, status:'saved' }) });
     toast('Saved to the board'); loadBoard();
   };
-  document.getElementById('tailorBtn').onclick = function (e) { doTailor(r.req_id, e.target, true); };
+  document.getElementById('tailorBtn').onclick = function (e) { doTailor(r.req_id, e.target, true, r.employer); };
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
 document.getElementById('drawer').onclick = function (e) { if (e.target.id === 'drawer') closeDrawer(); };
 
 // ── Tailoring ────────────────────────────────────────────────────────────────
-async function doTailor(reqId, btn, inDrawer) {
+async function doTailor(reqId, btn, inDrawer, employerKey) {
   if (btn) { btn.disabled = true; btn.textContent = 'Tailoring…'; }
   try {
-    var out = await api('/tailor', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: reqId }) });
+    var out = await api('/tailor', { method:'POST', body: JSON.stringify({ profile_id: state.profile.id, req_id: reqId, employer: employerKey || undefined }) });
     toast('Résumé v' + out.version + ' ready — ' + out.keyword_coverage.pct + '% keyword coverage, ' + out.vocabulary_learned + ' new search terms learned');
     if (inDrawer) renderTailorOut(out, reqId);
     loadBoard();
@@ -483,8 +492,8 @@ async function doImport() {
   try {
     var out = await api('/reqs/import', { method:'POST', body: JSON.stringify({ input: v, profile_id: state.profile.id }) });
     document.getElementById('importBox').value = '';
-    toast('Imported req ' + out.req.req_id + ' — ' + out.req.title);
-    loadBoard(); openReq(out.req.req_id);
+    toast('Imported ' + (out.req.employer_name || '') + ' req ' + out.req.req_id + ' — ' + out.req.title);
+    loadBoard(); openReq(out.req.req_id, out.req.employer);
   } catch (e) { toast(e.message, 6000); }
   finally { btn.disabled = false; }
 }
@@ -508,6 +517,18 @@ document.querySelectorAll('nav button').forEach(function (b) {
   };
 });
 
+function renderEmployerChips() {
+  var c = document.getElementById('employerChips');
+  if (!c) return;
+  var opts = [['', 'All banks']].concat(state.employers.map(function (e) { return [e.key, e.name]; }));
+  c.innerHTML = opts.map(function (k) {
+    return '<button class="chip' + (state.employer === k[0] ? ' active' : '') + '" data-e="' + k[0] + '">' + esc(k[1]) + '</button>';
+  }).join('');
+  c.querySelectorAll('[data-e]').forEach(function (b) {
+    b.onclick = function () { state.employer = b.getAttribute('data-e'); renderEmployerChips(); loadBoard(); };
+  });
+}
+
 function renderStatusChips() {
   var c = document.getElementById('statusChips');
   c.innerHTML = [['','All']].concat(STATUSES.map(function (s) { return [s, s]; }))
@@ -529,6 +550,8 @@ function renderStatusChips() {
       state.profile = state.profiles.filter(function (x) { return x.id === Number(sel.value); })[0];
       loadBoard();
     };
+    try { var st = await api('/agent/status'); state.employers = st.employers || []; } catch (e) { state.employers = []; }
+    renderEmployerChips();
     renderStatusChips();
     await loadBoard();
     await loadAgent();

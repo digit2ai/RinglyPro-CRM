@@ -76,6 +76,10 @@ const Profile = sequelize.define('CjProfile', {
 const Req = sequelize.define('CjReq', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  // Which bank. Uniqueness is (tenant_id, employer, req_id): Citi ids are 8
+  // digits and JPMorgan's are 9, but a scheme that merely happens not to
+  // collide today is not an invariant.
+  employer: { type: DataTypes.STRING, allowNull: false, defaultValue: 'citi' },
   req_id: { type: DataTypes.STRING, allowNull: false },
   title: { type: DataTypes.TEXT },
   external_path: { type: DataTypes.TEXT },
@@ -154,6 +158,7 @@ const Query = sequelize.define('CjQuery', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
   profile_id: { type: DataTypes.INTEGER },        // null = shared across profiles
+  employer: { type: DataTypes.STRING, allowNull: false, defaultValue: 'citi' },
   label: { type: DataTypes.STRING },
   search_text: { type: DataTypes.STRING, allowNull: false },
   max_pages: { type: DataTypes.INTEGER, defaultValue: 3 },

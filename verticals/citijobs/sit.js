@@ -89,6 +89,37 @@ const FIX_PUNE = {
   bulletFields: ['26980420']
 };
 
+// ── JPMorgan Chase (Oracle Fusion) fixtures, captured live 2026-08-13 ────────
+const FIX_JPMC_LIST = {
+  Id: '210712563',
+  Title: 'Lead Software Engineer - Observability Platform Cloud Developer',
+  PrimaryLocation: 'Columbus, OH, United States',
+  PostedDate: '2026-08-13',
+  PostingEndDate: null,
+  JobFamily: 'Software Engineering',
+  JobFunction: 'Technology',
+  ShortDescriptionStr: 'Carry out critical tech solutions across multiple technical areas'
+};
+const FIX_JPMC_DETAIL = {
+  Id: '210712563',
+  Title: 'Lead Software Engineer - Observability Platform Cloud Developer',
+  PrimaryLocation: 'Columbus, OH, United States',
+  ExternalPostedStartDate: '2026-08-13',
+  ExternalPostedEndDate: null,
+  JobFamily: 'Software Engineering',
+  JobFunction: 'Technology',
+  JobSchedule: 'Full time',
+  WorkplaceType: 'Hybrid',
+  LegalEmployer: 'JPMorgan Chase Bank, N.A.',
+  ExternalDescriptionStr: '<p>Lead <b>data governance</b> and data lineage work across the platform.</p>',
+  ExternalQualificationsStr: '<ul><li>10+ years applying statistical modelling to large data sets</li></ul>',
+  ExternalResponsibilitiesStr: '<p>Own program delivery end to end.</p>'
+};
+const FIX_JPMC_PAID = Object.assign({}, FIX_JPMC_DETAIL, {
+  Id: '210999001', Title: 'Data Governance Lead',
+  ExternalDescriptionStr: '<p>Base Pay Range: $150,000.00 - $190,000.00 per year</p><p>data governance</p>'
+});
+
 let httpCalls = 0;
 let feedHas = new Set(['26974948', '26980420']);
 function installFakeFeed() {
@@ -119,6 +150,20 @@ function installFakeFeed() {
         jobDescription: '<p>Data analytics work in Pune. No salary stated.</p>'
       });
       return { ok: true, status: 200, json: async () => ({ jobPostingInfo: puneDetail }) };
+    }
+    // ── Oracle (JPMorgan) ────────────────────────────────────────────────────
+    if (u.includes('recruitingCEJobRequisitions')) {
+      const kw = (decodeURIComponent(u).match(/keyword="([^"]*)"/) || [])[1] || '';
+      const all = [FIX_JPMC_LIST].filter((r) => !kw
+        || (r.Title + ' ' + r.PrimaryLocation).toLowerCase().includes(kw.toLowerCase()));
+      return { ok: true, status: 200,
+        json: async () => ({ items: [{ TotalJobsCount: 7456, requisitionList: all }] }) };
+    }
+    if (u.includes('recruitingCEJobRequisitionDetails')) {
+      const id = (decodeURIComponent(u).match(/Id="(\d+)"/) || [])[1];
+      if (id === '210712563') return { ok: true, status: 200, json: async () => ({ items: [FIX_JPMC_DETAIL] }) };
+      if (id === '210999001') return { ok: true, status: 200, json: async () => ({ items: [FIX_JPMC_PAID] }) };
+      return { ok: true, status: 200, json: async () => ({ items: [] }) };
     }
     return { ok: false, status: 404, json: async () => ({}) };
   });
@@ -423,6 +468,73 @@ async function cleanup() {
     seed.MANUEL_RESUME.roles.some((r) => (r.note || '').includes('NOT performed at')));
   ok('seeded verified skills carry evidence', seed.SEED_VERIFIED.every((s) => s[1] && s[1].length > 5));
   ok('seeded searches are many and targeted, not one firehose', seed.SEED_QUERIES.length >= 6);
+
+  section('18b. JPMorgan Chase (Oracle Fusion) — a second bank, same board');
+  {
+    const employers = require('./src/services/employers');
+    const oracle = require('./src/services/oracle');
+
+    ok('both banks are registered', employers.list().map((e) => e.key).sort().join(',') === 'citi,jpmorgan');
+    ok('Citi speaks Workday and JPMorgan speaks Oracle',
+      employers.get('citi').adapter === 'workday' && employers.get('jpmorgan').adapter === 'oracle');
+    ok('Workday\'s 2000 cap is recorded; Oracle\'s real total is not',
+      employers.get('citi').total_is_capped === true && employers.get('jpmorgan').total_is_capped === false);
+
+    // WHICH BANK A PASTED ID BELONGS TO IS DETECTED, NEVER DEFAULTED. Filing a
+    // JPMorgan requisition under Citi would be silently wrong forever.
+    ok('an 8-digit id is Citi', (employers.detect('26974948') || {}).key === 'citi');
+    ok('a 9-digit id is JPMorgan', (employers.detect('210712563') || {}).key === 'jpmorgan');
+    ok('a Workday URL is Citi', (employers.detect('https://citi.wd5.myworkdayjobs.com/2/job/X_26974948-1') || {}).key === 'citi');
+    ok('an Oracle URL is JPMorgan',
+      (employers.detect('https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210712563') || {}).key === 'jpmorgan');
+    ok('an ambiguous number resolves to NOTHING rather than a guess', employers.detect('12345') === null);
+    ok('junk resolves to nothing', employers.detect('hello there') === null);
+
+    const jl = await oracle.listAll({ searchText: 'observability', maxPages: 1, cfg: employers.get('jpmorgan').cfg,
+      budget: workday.newBudget(5) });
+    ok('the Oracle list returns the TRUE total, not a 2000 cap', jl.total === 7456, String(jl.total));
+    ok('...and the postings', jl.postings.length === 1);
+
+    const jd = await oracle.getDetail('210712563', { cfg: employers.get('jpmorgan').cfg, budget: workday.newBudget(5) });
+    const jn = oracle.normalize(FIX_JPMC_LIST, jd, employers.get('jpmorgan').cfg);
+    ok('JPMorgan req id', jn.req_id === '210712563');
+    ok('title, location, work model, schedule', jn.title.startsWith('Lead Software Engineer')
+      && jn.location.includes('Columbus') && jn.remote_type === 'Hybrid' && jn.time_type === 'Full time');
+    ok('posted date', jn.posted_on === '2026-08-13');
+    ok('an absent close date stays null, never a guess', jn.close_date === null);
+    ok('the apply URL is Oracle\'s, derived from the id it returned', /oraclecloud\.com\/hcmUI/.test(jn.url_workday));
+    ok('no jobs.citi.com link is ever attached to a JPMorgan row', jn.url_citi_careers === null);
+    // Oracle splits the posting across fields; the qualifications block is where
+    // the requirements a score depends on actually live.
+    ok('description joins description + qualifications + responsibilities',
+      /data governance/.test(jn.description_text) && /statistical modelling/.test(jn.description_text)
+      && /program delivery/i.test(jn.description_text));
+    ok('salary absent when the posting is silent', jn.salary_min_cents === null && jn.salary_source === null);
+
+    const paid = oracle.normalize({ Id: '210999001' },
+      await oracle.getDetail('210999001', { cfg: employers.get('jpmorgan').cfg, budget: workday.newBudget(5) }),
+      employers.get('jpmorgan').cfg);
+    ok('a stated "Base Pay Range" IS parsed', paid.salary_min_cents === 15000000 && paid.salary_max_cents === 19000000);
+    ok('...and marked stated', paid.salary_source === 'stated');
+
+    // Import routes to the right bank without being told which.
+    const jrow = await agent.importReq(tenant, '210712563');
+    ok('importing a JPMorgan id files it under JPMorgan', jrow.employer === 'jpmorgan', jrow.employer);
+    ok('...with its own detail', jrow.detail_fetched === true && jrow.title.startsWith('Lead Software'));
+    await throws('an unresolvable paste is refused, not filed under a default bank',
+      () => agent.importReq(tenant, '12345'), 'NO_REQ_ID');
+
+    // Two banks could one day issue the same requisition number.
+    const citiRow = await Req.findOne({ where: { tenant_id: tenant, employer: 'citi', req_id: '26974948' } });
+    ok('Citi and JPMorgan rows coexist in one pool', !!citiRow && !!jrow && citiRow.employer !== jrow.employer);
+    const clash = await Req.create({ tenant_id: tenant, employer: 'jpmorgan', req_id: '26974948', title: 'same number, other bank' });
+    ok('the same req number under a DIFFERENT bank is allowed', !!clash.id);
+    let dupe = false;
+    try { await Req.create({ tenant_id: tenant, employer: 'jpmorgan', req_id: '26974948', title: 'dupe' }); }
+    catch (e) { dupe = true; }
+    ok('...but a duplicate within the same bank is refused', dupe);
+    await clash.destroy();
+  }
 
   section('19b. Host lock — the tracker exists only on the console\'s domain');
   {

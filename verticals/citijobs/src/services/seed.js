@@ -123,15 +123,24 @@ function flatten(rj) {
 
 // Saved searches. Many targeted queries, deduped by req id — never one
 // firehose, because Workday caps a search's reported total at 2000.
+// Citi's Workday caps a search total at 2000, so its set is deliberately many
+// narrow queries. JPMorgan's Oracle feed reports the true count and can be
+// paged, so its set is fewer, broader queries — same coverage, fewer requests.
 const SEED_QUERIES = [
-  { label: 'Data transformation', search_text: 'data transformation', weight: 3 },
-  { label: 'Data governance', search_text: 'data governance', weight: 3 },
-  { label: 'Data analytics lead', search_text: 'data analytics lead', weight: 3 },
-  { label: 'Program delivery', search_text: 'program delivery', weight: 2 },
-  { label: 'Data lineage / metadata', search_text: 'data lineage metadata', weight: 2 },
-  { label: 'AML / sanctions analytics', search_text: 'sanctions screening analytics', weight: 2 },
-  { label: 'Enterprise architecture', search_text: 'enterprise architecture', weight: 1.5 },
-  { label: 'Tampa', search_text: 'Tampa data', weight: 1.5 }
+  { employer: 'citi', label: 'Data transformation', search_text: 'data transformation', weight: 3 },
+  { employer: 'citi', label: 'Data governance', search_text: 'data governance', weight: 3 },
+  { employer: 'citi', label: 'Data analytics lead', search_text: 'data analytics lead', weight: 3 },
+  { employer: 'citi', label: 'Program delivery', search_text: 'program delivery', weight: 2 },
+  { employer: 'citi', label: 'Data lineage / metadata', search_text: 'data lineage metadata', weight: 2 },
+  { employer: 'citi', label: 'AML / sanctions analytics', search_text: 'sanctions screening analytics', weight: 2 },
+  { employer: 'citi', label: 'Enterprise architecture', search_text: 'enterprise architecture', weight: 1.5 },
+  { employer: 'citi', label: 'Tampa', search_text: 'Tampa data', weight: 1.5 },
+
+  { employer: 'jpmorgan', label: 'JPMC data governance', search_text: 'data governance', weight: 3 },
+  { employer: 'jpmorgan', label: 'JPMC data transformation', search_text: 'data transformation', weight: 3 },
+  { employer: 'jpmorgan', label: 'JPMC program delivery', search_text: 'program delivery', weight: 2 },
+  { employer: 'jpmorgan', label: 'JPMC data lineage', search_text: 'data lineage', weight: 2 },
+  { employer: 'jpmorgan', label: 'JPMC sanctions / AML', search_text: 'sanctions compliance', weight: 2 }
 ];
 
 // Verified skills lifted from the owner's own résumé (source:'resume').
@@ -223,9 +232,11 @@ async function seedAll() {
 
   // Saved searches (idempotent by search_text)
   for (const q of SEED_QUERIES) {
-    const exists = await Query.findOne({ where: { tenant_id, search_text: q.search_text } });
+    const employer = q.employer || 'citi';
+    const exists = await Query.findOne({ where: { tenant_id, employer, search_text: q.search_text } });
     if (!exists) {
-      await Query.create({ tenant_id, profile_id: null, label: q.label, search_text: q.search_text, weight: q.weight, source: 'seed' });
+      await Query.create({ tenant_id, profile_id: null, employer, label: q.label,
+        search_text: q.search_text, weight: q.weight, max_pages: employer === 'citi' ? 3 : 4, source: 'seed' });
     }
   }
 

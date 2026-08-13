@@ -121,7 +121,7 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     <div class="tabs">
       <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
       <button class="tab" data-pane="jobs"><i class="fas fa-briefcase"></i> Job Matches <span id="jobBadge" class="badge b-new" style="display:none"></span></button>
-      <button class="tab" data-pane="citi" id="citiTab" style="display:none"><i class="fas fa-building-columns"></i> Citi Jobs</button>
+      <button class="tab" data-pane="citi" id="citiTab" style="display:none"><i class="fas fa-building-columns"></i> Bank Jobs</button>
       <button class="tab" data-pane="opps"><i class="fas fa-inbox"></i> Opportunities <span id="oppBadge" class="badge b-new" style="display:none"></span></button>
       <button class="tab" data-pane="today"><i class="fas fa-sun"></i> Today</button>
       <button class="tab" data-pane="pipeline"><i class="fas fa-diagram-project"></i> Pipeline</button>
@@ -174,12 +174,12 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     <!-- OPPORTUNITIES -->
     <div class="pane" id="citi">
       <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div><b>Citi Opportunity Tracker</b>
-          <div class="muted" style="font-size:12px">Watches Citi's Workday feed, scores every requisition against your resume, and tailors a resume per req id.</div>
+        <div><b>Bank Opportunity Tracker</b>
+          <div class="muted" style="font-size:12px">Watches Citi and JPMorgan Chase for openings, scores every requisition against your resume, and tailors a resume per req id.</div>
         </div>
         <a class="btn ghost sm" href="/citi-tracker/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open full screen</a>
       </div>
-      <iframe id="citiFrame" title="Citi Opportunity Tracker"
+      <iframe id="citiFrame" title="Bank Opportunity Tracker"
               style="width:100%;height:calc(100vh - 210px);min-height:560px;border:1px solid var(--line);border-radius:12px;background:#0b1220"></iframe>
     </div>
 
@@ -746,7 +746,7 @@ async function loadPipeline(){
       html+='<div class="card"><b>'+esc(s)+'</b> <span class="badge b-new">'+rows.length+'</span><table style="margin-top:8px"><tbody>'+
         rows.map(function(r){
           var badge = r.source==='citi'
-            ? ' <span class="badge b-new" title="From the Citi Jobs tracker">Citi req '+esc(r.req_id)+'</span>' : '';
+            ? ' <span class="badge b-new" title="From the Bank Jobs tracker">req '+esc(r.req_id)+'</span>' : '';
           var link = (r.source==='citi'&&r.url) ? ' <a href="'+esc(r.url)+'" target="_blank" rel="noopener">posting</a>' : '';
           var pay = (r.salary_min_cents!=null)
             ? '<div class="muted" style="margin-top:3px">$'+Math.round(r.salary_min_cents/100).toLocaleString('en-US')+
@@ -761,8 +761,8 @@ async function loadPipeline(){
         }).join('')+'</tbody></table></div>';
     });
     if(html && d.citi_count) html='<div class="muted" style="margin-bottom:10px">'+d.citi_count+
-      ' of these came from the Citi Jobs tracker. Changing a stage here writes straight back to that board \u2014 one board, two windows.</div>'+html;
-    $('pipeBody').innerHTML=html||'<div class="card"><div class="muted">Nothing in the pipeline yet. Move a match into a stage from Job Matches, or set a Citi requisition to Saved in the Citi Jobs tab.</div></div>';
+      ' of these came from the Bank Jobs tracker. Changing a stage here writes straight back to that board \u2014 one board, two windows.</div>'+html;
+    $('pipeBody').innerHTML=html||'<div class="card"><div class="muted">Nothing in the pipeline yet. Move a match into a stage from Job Matches, or set a requisition to Saved in the Bank Jobs tab.</div></div>';
     bindStageSelects();
   }catch(e){$('pipeBody').innerHTML='<div class="msg err">'+esc(e.message)+'</div>';}
 }

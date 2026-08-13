@@ -4984,6 +4984,36 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'unlinked fields must link straight to the field');
   });
 
+  await t('the five places are ordered by how recruiters actually search', () => {
+    const st = require(__dirname + '/src/services/settings');
+    const order = st.presenceChecklist({}, 'en').items.map((i) => i.slug);
+    // Evidence, not a guess: LinkedIn is the spine every sourcing tool merges
+    // against; job boards count twice (paid resume search AND an aggregator
+    // source); SeekOut and hireEZ crawl GitHub explicitly. Email and print
+    // reach a human directly but feed no index.
+    assert.deepStrictEqual(order,
+      ['linkedin', 'job_boards', 'github', 'email_signature', 'qr']);
+    const why = st.PLACEMENTS.map((p) => p.en.why).join(' ');
+    assert.ok(/SeekOut and hireEZ crawl GitHub/.test(why), 'name the tools, so the order is checkable');
+    assert.ok(/counts twice/.test(why), 'and say why a job board outranks GitHub');
+    // Both languages carry the same reasoning.
+    const es = st.PLACEMENTS.map((p) => p.es.why).join(' ');
+    assert.ok(/SeekOut y hireEZ/.test(es) && /cuenta doble/.test(es));
+  });
+
+  await t('the guide explains how the other side searches', () => {
+    const fs = require('fs');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const guide = page.slice(page.indexOf('function loadGuide'), page.indexOf('function gRmRole'));
+    assert.ok(/How recruiters actually search/.test(guide));
+    assert.ok(/SeekOut, hireEZ, Pin/.test(guide), 'name the aggregators');
+    assert.ok(/LinkedIn\s*alone stopped winning/.test(guide.replace(/'\+\s*'/g, '')),
+      'and why that category exists at all');
+    // The limit that keeps this honest: an aggregator cannot merge a page it
+    // has never crawled, so the links remain the prerequisite.
+    assert.ok(/cannot merge a page/.test(guide.replace(/'\+\s*'/g, '')));
+  });
+
   await t('the guide states the limits it cannot change', () => {
     const fs = require('fs');
     const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');

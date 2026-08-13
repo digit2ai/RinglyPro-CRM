@@ -21,6 +21,7 @@ const pdf = require('../services/pdf');
 const agent = require('../services/agent');
 const matcher = require('../services/matcher');
 const prefilter = require('../services/prefilter');
+const employers = require('../services/employers');
 
 const SECRET = process.env.CITIJOBS_JWT_SECRET || process.env.JWT_SECRET || 'citijobs-2026-secret';
 const COOKIE = 'citijobs_token';
@@ -80,6 +81,8 @@ function daysUntil(dateOnly) {
 
 function reqPayload(r, match) {
   return {
+    employer: r.employer || 'citi',
+    employer_name: employers.nameOf(r.employer || 'citi'),
     req_id: r.req_id,
     title: r.title,
     location: r.location,
@@ -99,7 +102,10 @@ function reqPayload(r, match) {
     url_citi_careers: r.url_citi_careers,
     // Offered as a click-out for a human. The agent never fetches it —
     // jobs.citi.com/robots.txt disallows /search-jobs/.
-    url_citi_search: `https://jobs.citi.com/search-jobs/${encodeURIComponent(r.req_id)}`,
+    // Citi-only click-out. Offering it for a JPMorgan requisition would send
+    // the owner to a search that cannot possibly find it.
+    url_citi_search: (r.employer || 'citi') === 'citi'
+      ? `https://jobs.citi.com/search-jobs/${encodeURIComponent(r.req_id)}` : null,
     feed_status: r.feed_status,
     detail_fetched: r.detail_fetched,
     first_seen_at: r.first_seen_at,
@@ -145,20 +151,21 @@ router.get('/board', async (req, res) => {
     if (!profile) return res.status(404).json({ error: 'No profile' });
     const where = { tenant_id: tid(req), profile_id: profile.id };
     if (req.query.status) where.status = String(req.query.status);
+    if (req.query.employer) where.employer = String(req.query.employer);
     if (String(req.query.archived || '0') !== '1') where.archived = false;
 
     const rows = await Tracked.findAll({ where, order: [['status_changed_at', 'DESC']], limit: 500 });
     const ids = rows.map((r) => r.req_id);
     const reqs = await Req.findAll({ where: { tenant_id: tid(req), req_id: { [Op.in]: ids.length ? ids : ['__none__'] } } });
-    const byId = new Map(reqs.map((r) => [r.req_id, r]));
+    const byId = new Map(reqs.map((r) => [(r.employer || 'citi') + ':' + r.req_id, r]));
     const matches = await Match.findAll({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } } });
-    const mById = new Map(matches.map((m) => [m.req_id, m]));
+    const mById = new Map(matches.map((m) => [(m.employer || 'citi') + ':' + m.req_id, m]));
     const tailorings = await Tailoring.findAll({
       where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } },
       order: [['version', 'DESC']]
     });
     const tById = new Map();
-    for (const t of tailorings) if (!tById.has(t.req_id)) tById.set(t.req_id, t);
+    for (const t of tailorings) { const k2 = (t.employer || 'citi') + ':' + t.req_id; if (!tById.has(k2)) tById.set(k2, t); }
 
     // Ranked by match, best first. An unscored row sorts last rather than as a
     // zero, so "not scored yet" never reads as "scored badly"; ties fall back
@@ -180,14 +187,16 @@ router.get('/board', async (req, res) => {
       // Stated so the board can never look empty for a reason it does not show.
       filtered_out: rows.length,
       items: rows.map((t) => {
-        const r = byId.get(t.req_id);
-        const tl = tById.get(t.req_id);
+        const k = (t.employer || 'citi') + ':' + t.req_id;
+        const r = byId.get(k);
+        const tl = tById.get(k);
         return {
           id: t.id, status: t.status, status_reason: t.status_reason,
           status_changed_at: t.status_changed_at, applied_at: t.applied_at,
           next_action: t.next_action, next_action_due: t.next_action_due,
           notes: t.notes, source: t.source, archived: t.archived,
-          req: r ? reqPayload(r, mById.get(t.req_id)) : { req_id: t.req_id, title: '(requisition not in pool)' },
+          req: r ? reqPayload(r, mById.get(k))
+            : { req_id: t.req_id, employer: t.employer, employer_name: employers.nameOf(t.employer), title: '(requisition not in pool)' },
           tailoring: tl ? { id: tl.id, version: tl.version, sent: tl.sent, coverage_pct: (tl.keyword_coverage || {}).pct, generated_at: tl.generated_at } : null
         };
       })
@@ -208,10 +217,11 @@ router.post('/board', async (req, res) => {
     if (!profile) return res.status(404).json({ error: 'No profile' });
     const req_id = String(req.body.req_id || '').trim();
     if (!req_id) return res.status(400).json({ error: 'req_id required' });
-    const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, req_id } });
+    const employer = String(req.body.employer || 'citi');
+    const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, employer, req_id } });
     if (exists) return res.json({ success: true, id: exists.id, already: true });
     const row = await Tracked.create({
-      tenant_id: tid(req), profile_id: profile.id, req_id,
+      tenant_id: tid(req), profile_id: profile.id, employer, req_id,
       status: String(req.body.status || 'saved'), source: 'manual'
     });
     res.status(201).json({ success: true, id: row.id });
@@ -259,7 +269,7 @@ router.patch('/board/:id', async (req, res) => {
     let retrained = 0;
     if (req.body.status !== undefined && row.status !== prev) {
       const outcome = row.status === 'closed' ? row.status_reason : row.status;
-      const r = await Req.findOne({ where: { tenant_id: tid(req), req_id: row.req_id } });
+      const r = await Req.findOne({ where: { tenant_id: tid(req), employer: row.employer, req_id: row.req_id } });
       if (r && r.description_text) {
         const terms = skills.extractTerms([r.title, r.description_text].join('\n'), { max: 25 })
           .filter((t) => t.weight >= 3);
@@ -283,19 +293,21 @@ router.get('/reqs', async (req, res) => {
       where[Op.or] = [{ title: { [Op.iLike]: q } }, { req_id: { [Op.iLike]: q } }, { location: { [Op.iLike]: q } }];
     }
     if (String(req.query.open_only || '1') === '1') where.feed_status = 'open';
+    if (req.query.employer) where.employer = String(req.query.employer);
     const rows = await Req.findAll({ where, order: [['first_seen_at', 'DESC']], limit: Math.min(200, Number(req.query.limit || 60)) });
     let mById = new Map();
     let tracked = new Set();
     if (profile) {
       const ids = rows.map((r) => r.req_id);
       const ms = await Match.findAll({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } } });
-      mById = new Map(ms.map((m) => [m.req_id, m]));
-      const ts = await Tracked.findAll({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } }, attributes: ['req_id'] });
-      tracked = new Set(ts.map((t) => t.req_id));
+      mById = new Map(ms.map((m) => [(m.employer || 'citi') + ':' + m.req_id, m]));
+      const ts = await Tracked.findAll({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } }, attributes: ['req_id', 'employer'] });
+      tracked = new Set(ts.map((t) => (t.employer || 'citi') + ':' + t.req_id));
     }
     res.json({
       items: rows
-        .map((r) => Object.assign(reqPayload(r, mById.get(r.req_id)), { tracked: tracked.has(r.req_id) }))
+        .map((r) => Object.assign(reqPayload(r, mById.get((r.employer || 'citi') + ':' + r.req_id)),
+          { tracked: tracked.has((r.employer || 'citi') + ':' + r.req_id) }))
         .filter((r) => !profile || prefilter.salaryAllowed(r, profile).ok)
         .sort((a, b) => {
           const sa = a.match ? a.match.score : -1;
@@ -310,10 +322,12 @@ router.get('/reqs', async (req, res) => {
 });
 
 router.get('/reqs/:reqId', async (req, res) => {
-  const r = await Req.findOne({ where: { tenant_id: tid(req), req_id: String(req.params.reqId) } });
+  const w = { tenant_id: tid(req), req_id: String(req.params.reqId) };
+  if (req.query.employer) w.employer = String(req.query.employer);
+  const r = await Req.findOne({ where: w });
   if (!r) return res.status(404).json({ error: 'Not found' });
   const profile = await ownProfile(req, req.query.profile_id);
-  const m = profile ? await Match.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: r.req_id } }) : null;
+  const m = profile ? await Match.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, employer: r.employer, req_id: r.req_id } }) : null;
   res.json(Object.assign(reqPayload(r, m), { description_text: r.description_text }));
 });
 
@@ -325,9 +339,9 @@ router.post('/reqs/import', async (req, res) => {
     if (req.body.board !== false) {
       const profile = await ownProfile(req, req.body.profile_id);
       if (profile) {
-        const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: row.req_id } });
+        const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, employer: row.employer, req_id: row.req_id } });
         boarded = exists || await Tracked.create({
-          tenant_id: tid(req), profile_id: profile.id, req_id: row.req_id,
+          tenant_id: tid(req), profile_id: profile.id, employer: row.employer, req_id: row.req_id,
           status: String(req.body.status || 'saved'), source: 'manual'
         });
       }
@@ -345,7 +359,9 @@ router.post('/tailor', async (req, res) => {
   try {
     const profile = await ownProfile(req, req.body.profile_id);
     if (!profile) return res.status(404).json({ error: 'No profile' });
-    const r = await Req.findOne({ where: { tenant_id: tid(req), req_id: String(req.body.req_id || '') } });
+    const rw = { tenant_id: tid(req), req_id: String(req.body.req_id || '') };
+    if (req.body.employer) rw.employer = String(req.body.employer);
+    const r = await Req.findOne({ where: rw });
     if (!r) return res.status(404).json({ error: 'Requisition not found' });
     if (!r.description_text) return res.status(400).json({ error: 'This requisition has no description yet. Run the agent or re-import it.' });
 
@@ -360,22 +376,22 @@ router.post('/tailor', async (req, res) => {
     const learned = await skills.learnVocabulary(profile, out.jd_terms.filter((t) => t.weight >= 3), { req_id: r.req_id });
 
     const last = await Tailoring.findOne({
-      where: { tenant_id: tid(req), profile_id: profile.id, req_id: r.req_id },
+      where: { tenant_id: tid(req), profile_id: profile.id, employer: r.employer, req_id: r.req_id },
       order: [['version', 'DESC']]
     });
     const version = last ? last.version + 1 : 1;
 
     const row = await Tailoring.create({
-      tenant_id: tid(req), profile_id: profile.id, req_id: r.req_id, version,
+      tenant_id: tid(req), profile_id: profile.id, employer: r.employer, req_id: r.req_id, version,
       content: out.content, keyword_coverage: out.keyword_coverage, gaps: out.gaps,
       tailored_by: out.tailored_by, is_simulated: out.is_simulated, model: out.model,
       dropped: out.dropped
     });
 
     // A tailoring implies interest; put it on the board if it is not already.
-    const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: r.req_id } });
+    const exists = await Tracked.findOne({ where: { tenant_id: tid(req), profile_id: profile.id, employer: r.employer, req_id: r.req_id } });
     if (!exists) {
-      await Tracked.create({ tenant_id: tid(req), profile_id: profile.id, req_id: r.req_id, status: 'saved', source: 'manual' });
+      await Tracked.create({ tenant_id: tid(req), profile_id: profile.id, employer: r.employer, req_id: r.req_id, status: 'saved', source: 'manual' });
     }
 
     res.status(201).json({
@@ -511,6 +527,8 @@ router.get('/agent/status', async (req, res) => {
     model: matcher.hasModel() ? matcher.MODEL : null,
     scoring_mode: matcher.hasModel() ? 'model' : 'heuristic (no ANTHROPIC_API_KEY — scores are labelled simulated)',
     feed: workday.config(),
+    employers: employers.list().map((e) => ({ key: e.key, name: e.name, adapter: e.adapter,
+      total_is_capped: e.total_is_capped, careers_url: e.careers_url })),
     pool_size: pool,
     last_run: last ? {
       id: last.id, run_date: last.run_date, started_at: last.started_at, finished_at: last.finished_at,
@@ -532,10 +550,11 @@ router.post('/queries', async (req, res) => {
   try {
     const search_text = String(req.body.search_text || '').trim();
     if (!search_text) return res.status(400).json({ error: 'search_text required' });
-    const exists = await Query.findOne({ where: { tenant_id: tid(req), search_text } });
+    const exists = await Query.findOne({ where: { tenant_id: tid(req), employer: String(req.body.employer || 'citi'), search_text } });
     if (exists) return res.json({ success: true, id: exists.id, already: true });
     const row = await Query.create({
-      tenant_id: tid(req), label: String(req.body.label || search_text),
+      tenant_id: tid(req), employer: String(req.body.employer || 'citi'),
+      label: String(req.body.label || search_text),
       search_text, weight: Number(req.body.weight || 1), max_pages: Number(req.body.max_pages || 5),
       source: 'manual'
     });
@@ -546,7 +565,7 @@ router.post('/queries', async (req, res) => {
 router.patch('/queries/:id', async (req, res) => {
   const row = await Query.findOne({ where: { id: Number(req.params.id), tenant_id: tid(req) } });
   if (!row) return res.status(404).json({ error: 'Not found' });
-  for (const k of ['label', 'search_text', 'enabled', 'weight', 'max_pages']) {
+  for (const k of ['label', 'search_text', 'enabled', 'weight', 'max_pages', 'employer']) {
     if (req.body[k] !== undefined) row[k] = req.body[k];
   }
   await row.save();

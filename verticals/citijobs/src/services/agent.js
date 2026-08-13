@@ -20,6 +20,7 @@
 const { Op } = require('sequelize');
 const { Profile, Req, Tracked, Match, Query, Run } = require('../models');
 const workday = require('./workday');
+const employers = require('./employers');
 const prefilter = require('./prefilter');
 const matcher = require('./matcher');
 const skills = require('./skills');
@@ -41,11 +42,11 @@ async function claim(tenant_id, trigger) {
 }
 
 /** Upsert one posting into the shared pool. */
-async function upsertReq(tenant_id, norm, { source = 'agent' } = {}) {
+async function upsertReq(tenant_id, norm, { source = 'agent', employer = 'citi' } = {}) {
   if (!norm || !norm.req_id) return { row: null, created: false };
-  let row = await Req.findOne({ where: { tenant_id, req_id: norm.req_id } });
+  let row = await Req.findOne({ where: { tenant_id, employer, req_id: norm.req_id } });
   if (!row) {
-    row = await Req.create(Object.assign({ tenant_id, source }, norm));
+    row = await Req.create(Object.assign({ tenant_id, employer, source }, norm));
     return { row, created: true };
   }
   row.last_seen_at = new Date();
@@ -78,7 +79,9 @@ async function upsertReq(tenant_id, norm, { source = 'agent' } = {}) {
  */
 async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
   const candidates = await Req.findAll({
-    where: { tenant_id, detail_fetched: false, external_path: { [Op.ne]: null } },
+    // Workday needs an external path to fetch detail; Oracle keys off the req id
+    // alone, so requiring a path here would silently starve every JPMorgan row.
+    where: { tenant_id, detail_fetched: false },
     order: [['first_seen_at', 'DESC']],
     limit: 800
   });
@@ -99,10 +102,10 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
         // requisition quietly never appear. Skipping something silently reads
         // as "we looked at everything" when we did not. Title and location are
         // enough to decide this, so it costs no HTTP request and no tokens.
-        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, req_id: row.req_id } });
+        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, employer: row.employer, req_id: row.req_id } });
         if (!had) {
           await Match.create({
-            tenant_id, profile_id: p.id, req_id: row.req_id,
+            tenant_id, profile_id: p.id, employer: row.employer, req_id: row.req_id,
             score: 0, rationale: pre.location_reason || 'outside the profile\'s countries',
             scored_by: 'heuristic', is_simulated: true, cost_cents: 0
           });
@@ -125,10 +128,19 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
   let filled = 0;
   for (const row of pending) {
     try {
-      const detail = await workday.getDetail(row.external_path, { budget });
+      const emp = employers.get(row.employer);
+      const ad = employers.adapterFor(row.employer);
+      if (!emp || !ad) continue;   // an employer switched off keeps its rows, unfetched
+      // Each adapter is asked for detail in its own dialect: Workday keys off
+      // the external path, Oracle off the requisition id.
+      const ref = ad.kind === 'oracle' ? row.req_id : row.external_path;
+      const detail = await ad.getDetail(ref, { cfg: emp.cfg, budget });
       if (!detail) continue;
-      const norm = workday.normalize({ externalPath: row.external_path, bulletFields: [row.req_id] }, detail);
-      await upsertReq(tenant_id, norm);
+      const listShape = ad.kind === 'oracle'
+        ? { Id: row.req_id, Title: row.title, PrimaryLocation: row.location }
+        : { externalPath: row.external_path, bulletFields: [row.req_id] };
+      const norm = ad.normalize(listShape, detail, emp.cfg);
+      await upsertReq(tenant_id, norm, { employer: row.employer });
       filled++;
     } catch (e) {
       if (e.budget) { run.budget_hit = true; break; }
@@ -155,14 +167,17 @@ async function closeSweep(tenant_id, budget, run) {
   });
   let closed = 0;
   for (const t of open) {
-    const req = await Req.findOne({ where: { tenant_id, req_id: t.req_id } });
+    const req = await Req.findOne({ where: { tenant_id, employer: t.employer, req_id: t.req_id } });
     if (!req) continue;
+    const emp = employers.get(t.employer);
+    const ad = employers.adapterFor(t.employer);
+    if (!emp || !ad) continue;
 
     // Re-check the specific requisition rather than inferring absence from a
     // query that simply did not match it today.
     let gone = false;
     try {
-      const found = await workday.findByReqId(t.req_id, { budget, withDetail: false });
+      const found = await ad.findByReqId(t.req_id, { cfg: emp.cfg, budget, withDetail: false });
       gone = !found;
       if (!gone && req.feed_status === 'cannot_apply') gone = true;
     } catch (e) {
@@ -186,10 +201,10 @@ async function closeSweep(tenant_id, budget, run) {
 
 /** Score and board one profile's fresh candidates. */
 async function scoreProfile(tenant_id, profile, run, budgetCents) {
-  const tracked = await Tracked.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id'] });
-  const already = new Set(tracked.map((t) => t.req_id));
-  const scored = await Match.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id'] });
-  const seen = new Set(scored.map((m) => m.req_id));
+  const tracked = await Tracked.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id', 'employer'] });
+  const already = new Set(tracked.map((t) => t.employer + ':' + t.req_id));
+  const scored = await Match.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id', 'employer'] });
+  const seen = new Set(scored.map((m) => m.employer + ':' + m.req_id));
 
   const pool = await Req.findAll({
     where: { tenant_id, detail_fetched: true, feed_status: 'open' },
@@ -202,13 +217,14 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
 
   const candidates = [];
   for (const req of pool) {
-    if (already.has(req.req_id) || seen.has(req.req_id)) continue;
+    const key = req.employer + ':' + req.req_id;
+    if (already.has(key) || seen.has(key)) continue;
     const pre = prefilter.score(req, profile, terms);
     if (!prefilter.shouldScore(pre, profile)) {
       // Still record the deterministic verdict so the pool is explainable and
       // the same requisition is not re-evaluated tomorrow for free.
       await Match.create({
-        tenant_id, profile_id: profile.id, req_id: req.req_id,
+        tenant_id, profile_id: profile.id, employer: req.employer, req_id: req.req_id,
         score: pre.score, rationale: pre.reasons.slice(0, 2).join('; ') || 'below pre-filter floor',
         scored_by: 'heuristic', is_simulated: true, cost_cents: 0
       });
@@ -224,8 +240,9 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
 
   let boarded = 0;
   for (const r of results) {
+    const scoredReq = candidates.find((c) => c.req_id === r.req_id);
     await Match.create({
-      tenant_id, profile_id: profile.id, req_id: r.req_id,
+      tenant_id, profile_id: profile.id, employer: (scoredReq && scoredReq.employer) || 'citi', req_id: r.req_id,
       score: r.score, rationale: r.rationale,
       scored_by: r.scored_by, is_simulated: r.is_simulated, model: r.model,
       cost_cents: r.cost_cents || 0
@@ -245,10 +262,11 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
     const reqRow = candidates.find((c) => c.req_id === r.req_id);
     const payOk = !reqRow || prefilter.salaryAllowed(reqRow, profile).ok;
     if (r.score >= floor && payOk) {
-      const exists = await Tracked.findOne({ where: { tenant_id, profile_id: profile.id, req_id: r.req_id } });
+      const emp = (scoredReq && scoredReq.employer) || 'citi';
+      const exists = await Tracked.findOne({ where: { tenant_id, profile_id: profile.id, employer: emp, req_id: r.req_id } });
       if (!exists) {
         await Tracked.create({
-          tenant_id, profile_id: profile.id, req_id: r.req_id,
+          tenant_id, profile_id: profile.id, employer: emp, req_id: r.req_id,
           status: 'new', source: 'agent'
         });
         boarded++;
@@ -277,8 +295,11 @@ async function runDaily(tenant_id, { trigger = 'manual', maxRequests, force = fa
     for (const q of queries) {
       if (budget.hit) break;
       try {
-        const { total, postings } = await workday.listAll({
-          searchText: q.search_text, maxPages: q.max_pages || 5, budget
+        const emp = employers.get(q.employer);
+        const ad = employers.adapterFor(q.employer);
+        if (!emp || !ad) continue;      // a query for a switched-off bank is skipped, not guessed at
+        const { total, postings } = await ad.listAll({
+          searchText: q.search_text, maxPages: q.max_pages || 3, cfg: emp.cfg, budget
         });
         q.last_run_at = new Date();
         q.last_total = total;
@@ -286,9 +307,9 @@ async function runDaily(tenant_id, { trigger = 'manual', maxRequests, force = fa
         run.queries_run += 1;
 
         for (const p of postings) {
-          const norm = workday.normalize(p, null);
+          const norm = ad.normalize(p, null, emp.cfg);
           if (!norm.req_id) continue;
-          const { created: isNew } = await upsertReq(tenant_id, norm);
+          const { created: isNew } = await upsertReq(tenant_id, norm, { employer: q.employer });
           seen++;
           if (isNew) created++;
         }
@@ -358,7 +379,7 @@ async function importReq(tenant_id, input, { source = 'manual' } = {}) {
 
   // A jobs.citi.com deep link is KEPT when a human pastes one, and never
   // constructed: its Phenom posting id exists nowhere in the Workday payload.
-  const careers = workday.citiCareersUrl(input);
+  const careers = emp.key === 'citi' ? workday.citiCareersUrl(input) : null;
   if (careers && row && !row.url_citi_careers) {
     row.url_citi_careers = careers;
     await row.save();

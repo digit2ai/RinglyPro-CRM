@@ -53,13 +53,26 @@ async function init() {
     // New columns arrive here, because sync({alter:false}) never adds them.
     `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS min_salary_cents BIGINT DEFAULT 14000000`,
     `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS hide_unpriced BOOLEAN DEFAULT FALSE`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS cj_reqs_tenant_req_uq ON cj_reqs (tenant_id, req_id)`,
+    // Multi-employer. Existing rows are all Citi, so the default backfills them.
+    `ALTER TABLE cj_reqs ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
+    `ALTER TABLE cj_tracked ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
+    `ALTER TABLE cj_matches ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
+    `ALTER TABLE cj_tailorings ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
+    `ALTER TABLE cj_queries ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
+    // Uniqueness is re-keyed on (…, employer, req_id). The old indexes must go
+    // first or two banks sharing a requisition number could never coexist.
+    `DROP INDEX IF EXISTS cj_reqs_tenant_req_uq`,
+    `DROP INDEX IF EXISTS cj_tracked_profile_req_uq`,
+    `DROP INDEX IF EXISTS cj_matches_profile_req_uq`,
+    `DROP INDEX IF EXISTS cj_tailorings_pr_v_uq`,
+    `DROP INDEX IF EXISTS cj_queries_tenant_text_uq`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS cj_reqs_tenant_emp_req_uq ON cj_reqs (tenant_id, employer, req_id)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS cj_tracked_prof_emp_req_uq ON cj_tracked (profile_id, employer, req_id)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS cj_matches_prof_emp_req_uq ON cj_matches (profile_id, employer, req_id)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS cj_tail_prof_emp_req_v_uq ON cj_tailorings (profile_id, employer, req_id, version)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS cj_queries_tenant_emp_text_uq ON cj_queries (tenant_id, employer, search_text)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS cj_profiles_tenant_slug_uq ON cj_profiles (tenant_id, slug)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS cj_tracked_profile_req_uq ON cj_tracked (profile_id, req_id)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS cj_matches_profile_req_uq ON cj_matches (profile_id, req_id)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS cj_skills_profile_norm_uq ON cj_skills (profile_id, norm)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS cj_queries_tenant_text_uq ON cj_queries (tenant_id, search_text)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS cj_tailorings_pr_v_uq ON cj_tailorings (profile_id, req_id, version)`,
     // THE DAILY CLAIM. Partial, so a scheduled run can be claimed exactly once
     // per tenant per day across every Render instance, while manual runs stay
     // unrestricted — an operator must never be locked out of their own tool.
@@ -201,12 +214,13 @@ router.get('/health', async (req, res) => {
   let db = false;
   try { await sequelize.authenticate(); db = true; } catch (e) { db = false; }
   res.json({
-    service: 'citi-opportunity-tracker',
+    service: 'bank-opportunity-tracker',
     status: initState.ready && db ? 'ok' : 'degraded',
     database: db,
     initialized: initState.ready,
     init_error: initState.error ? initState.error.message : null,
     feed: workday.config(),
+    employers: require('./services/employers').list().map((e) => ({ key: e.key, name: e.name, adapter: e.adapter })),
     feed_note: 'Workday CXS JSON only. jobs.citi.com is never crawled (its robots.txt disallows /search-jobs/), and a jobs.citi.com deep link is only ever stored when a human pastes one.',
     agent_enabled: agent.enabled(),
     scoring: matcher.hasModel() ? matcher.MODEL : 'heuristic (no ANTHROPIC_API_KEY; scores labelled simulated)',

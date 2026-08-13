@@ -35,15 +35,17 @@
  * queries deduped by req id, and never one firehose.
  */
 
-const DEFAULT_WORKDAY = 'citi:wd5:2';
-const UA_CONTACT = process.env.CITIJOBS_UA_CONTACT || 'manuelstagg@gmail.com';
-const USER_AGENT = `Digit2AI-CitiTracker/1.0 (personal job search; ${UA_CONTACT})`;
-const TIMEOUT_MS = Number(process.env.CITIJOBS_TIMEOUT_MS || 20000);
-const DEFAULT_MAX_REQUESTS = 120;
+const budget = require('./budget');
 
-// Injectable so SIT runs offline against recorded fixtures of the real payloads.
-let _fetch = (...a) => fetch(...a);
-function _setFetch(fn) { _fetch = fn || ((...a) => fetch(...a)); }
+const DEFAULT_WORKDAY = 'citi:wd5:2';
+
+// The HTTP floor (budget, timeout, User-Agent, test injection) moved to
+// budget.js when JPMorgan's Oracle adapter arrived. Re-exported here so callers
+// and the suite keep one entry point rather than two that can drift.
+const newBudget = budget.newBudget;
+const httpJson = budget.httpJson;
+const _setFetch = budget._setFetch;
+const USER_AGENT = budget.USER_AGENT;
 
 function config() {
   const raw = String(process.env.CITIJOBS_WORKDAY || DEFAULT_WORKDAY);
@@ -54,58 +56,6 @@ function config() {
 function base(cfg) {
   const c = cfg || config();
   return `https://${c.tenant}.${c.dc}.myworkdayjobs.com`;
-}
-
-/**
- * A request budget carried through a run. Every HTTP call decrements it, and
- * exhausting it stops the run and SAYS it stopped — a silent truncation reads
- * as "we covered everything" when we did not.
- */
-function newBudget(max) {
-  // `max ?? default`, not `max || default`: a caller asking for a budget of 0
-  // must get 0. With `||` it silently fell through to 60, which is the exact
-  // shape of bug a request ceiling exists to prevent.
-  const requested = (max === undefined || max === null || max === '')
-    ? (process.env.CITIJOBS_MAX_REQUESTS !== undefined ? process.env.CITIJOBS_MAX_REQUESTS : DEFAULT_MAX_REQUESTS)
-    : max;
-  const n = Number(requested);
-  return {
-    max: Number.isFinite(n) && n >= 0 ? n : DEFAULT_MAX_REQUESTS,
-    used: 0,
-    hit: false,
-    take() {
-      if (this.used >= this.max) { this.hit = true; return false; }
-      this.used++;
-      return true;
-    }
-  };
-}
-
-async function httpJson(url, opts, budget) {
-  if (budget && !budget.take()) {
-    const e = new Error('request budget exhausted');
-    e.budget = true;
-    throw e;
-  }
-  const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
-  try {
-    const res = await _fetch(url, Object.assign({
-      signal: ctl.signal,
-      headers: Object.assign({
-        'Accept': 'application/json',
-        'User-Agent': USER_AGENT
-      }, (opts && opts.headers) || {})
-    }, opts || {}));
-    if (!res.ok) {
-      const e = new Error(`HTTP ${res.status} from ${url}`);
-      e.status = res.status;
-      throw e;
-    }
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
 }
 
 // ── List ─────────────────────────────────────────────────────────────────────
@@ -151,39 +101,14 @@ async function getDetail(externalPath, { cfg, budget } = {}) {
 
 // ── Parsing ──────────────────────────────────────────────────────────────────
 
-function stripHtml(html) {
-  return String(html || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|h\d)>/gi, '\n')
-    .replace(/<li>/gi, '- ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#39;|&rsquo;/g, "'")
-    .replace(/&quot;|&ldquo;|&rdquo;/g, '"')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n\s*\n\s*\n+/g, '\n\n')
-    .trim();
-}
+const stripHtml = budget.stripHtml;
 
 /**
  * Salary is COPIED OR ABSENT. Never estimated, never interpolated from a
  * sibling requisition in another city. Returns null when the posting is silent,
  * which is the correct answer and not a failure.
  */
-function parseSalary(text) {
-  const t = String(text || '');
-  const re = /Salary\s+Range:?\s*\$\s*([\d,]+(?:\.\d{2})?)\s*(?:-|–|—|to)\s*\$\s*([\d,]+(?:\.\d{2})?)/i;
-  const m = t.match(re);
-  if (!m) return null;
-  const toCents = (s) => Math.round(parseFloat(String(s).replace(/,/g, '')) * 100);
-  const min = toCents(m[1]);
-  const max = toCents(m[2]);
-  if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max < min) return null;
-  return { min_cents: min, max_cents: max, source: 'stated' };
-}
+const parseSalary = budget.parseSalary;
 
 /** Pull the req id out of a posting: bulletFields first, then the path suffix. */
 function reqIdOf(posting) {
@@ -196,19 +121,30 @@ function reqIdOf(posting) {
   return m ? m[1] : null;
 }
 
-/** Extract a req id from anything a human might paste. */
+/**
+ * Extract a Citi req id from anything a human might paste.
+ *
+ * A BARE NUMBER MUST BE EXACTLY 8 DIGITS. Citi requisition ids are 8 digits
+ * (26974948); JPMorgan's are 9 (210712563). When this matched `\d{5,}` it also
+ * claimed JPMC ids, so the employer registry could not tell the two apart and
+ * correctly refused to guess — which meant pasting a JPMC id did nothing. The
+ * Workday-shaped path forms below stay permissive: their shape already proves
+ * which feed they came from.
+ */
+const CITI_BARE = /^\d{8}$/;
+
 function reqIdFromInput(input) {
   const s = String(input || '').trim();
   if (!s) return null;
-  if (/^\d{5,}$/.test(s)) return s;
+  if (CITI_BARE.test(s)) return s;
   // Workday path or URL:  ..._26974948-1
   let m = s.match(/_(\d{5,})(?:-\d+)?(?:[/?#]|$)/);
   if (m) return m[1];
   // jobs.citi.com deep links carry a Phenom id, not the req id — but people
-  // often paste a URL with the req id in the query or the slug tail.
-  m = s.match(/(?:req|requisition|job)[-_ ]?(?:id)?[-_ =:]*(\d{6,})/i);
+  // often paste text with the req id labelled.
+  m = s.match(/(?:req|requisition|job)[-_ ]?(?:id)?[-_ =:]*(\d{8})\b/i);
   if (m) return m[1];
-  const nums = s.match(/\b\d{7,9}\b/g);
+  const nums = s.match(/\b\d{8}\b/g);
   return nums && nums.length === 1 ? nums[0] : null;
 }
 
@@ -218,11 +154,7 @@ function citiCareersUrl(input) {
   return /^https?:\/\/(www\.)?jobs\.citi\.com\/job\//i.test(s) ? s.split('#')[0] : null;
 }
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
-function dateOnly(v) {
-  const s = String(v || '').slice(0, 10);
-  return DATE_ONLY.test(s) ? s : null;
-}
+const dateOnly = budget.dateOnly;
 
 /**
  * Normalize a list posting + (optional) detail into a cj_reqs shaped object.

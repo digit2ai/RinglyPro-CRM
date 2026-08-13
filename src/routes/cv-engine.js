@@ -621,6 +621,15 @@ const CITI_PROFILE_BY_CV_SLUG = (() => {
   });
   return out;
 })();
+// The tracker's employer registry, so the pipeline names the right bank. Loaded
+// defensively: a missing vertical must not take the console's pipeline down.
+let CJ_EMPLOYERS = null;
+try { CJ_EMPLOYERS = require('../../verticals/citijobs/src/services/employers'); } catch (e) { CJ_EMPLOYERS = null; }
+function cjEmployerName(key) {
+  if (CJ_EMPLOYERS) return CJ_EMPLOYERS.nameOf(key);
+  return key === 'jpmorgan' ? 'JPMorgan Chase' : 'Citi';
+}
+
 const CITI_STAGE_FROM_STATUS = { saved: 'saved', applied: 'applied', screening: 'screening',
   interview: 'interviewing', offer: 'offer', closed: 'closed' };
 const CITI_STATUS_FROM_STAGE = { saved: 'saved', applied: 'applied', screening: 'screening',
@@ -633,12 +642,12 @@ async function citiPipelineRows(profile) {
   try {
     const rows = await sequelize.query(
       `SELECT t.id, t.status, t.status_changed_at, t.next_action, t.next_action_due, t.notes,
-              t.status_reason, r.req_id, r.title, r.location, r.url_workday, r.close_date,
+              t.status_reason, t.employer, r.req_id, r.title, r.location, r.url_workday, r.close_date,
               r.salary_min_cents, r.salary_max_cents, r.salary_source, m.score
          FROM cj_tracked t
          JOIN cj_profiles p ON p.id = t.profile_id
-         LEFT JOIN cj_reqs r ON r.tenant_id = t.tenant_id AND r.req_id = t.req_id
-         LEFT JOIN cj_matches m ON m.profile_id = t.profile_id AND m.req_id = t.req_id
+         LEFT JOIN cj_reqs r ON r.tenant_id = t.tenant_id AND r.employer = t.employer AND r.req_id = t.req_id
+         LEFT JOIN cj_matches m ON m.profile_id = t.profile_id AND m.employer = t.employer AND m.req_id = t.req_id
         WHERE lower(p.slug) = :cjslug AND t.archived = false AND t.status <> 'new'
         ORDER BY t.status_changed_at DESC NULLS LAST LIMIT 300`,
       { replacements: { cjslug: cjSlug }, type: QueryTypes.SELECT });
@@ -652,13 +661,14 @@ async function citiPipelineRows(profile) {
       next_action: r.next_action,
       next_action_at: r.next_action_due,
       target_employer: true,
-      company: 'Citi',
+      employer: r.employer || 'citi',
+      company: cjEmployerName(r.employer || 'citi'),
       title: r.title || ('Requisition ' + r.req_id),
       location: r.location,
       url: r.url_workday,
       outreach_count: 0,
       outreach_status: null,
-      source: 'citi',
+      source: 'citi',   // came from the bank tracker, whichever bank
       req_id: r.req_id,
       close_date: r.close_date,
       // Compensation is shown only when the posting stated it — same rule the
