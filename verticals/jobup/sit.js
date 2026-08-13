@@ -1218,6 +1218,9 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'Date','Math','Promise','Error','URL','URLSearchParams','Uint8Array','Set','Map',
       'require','matchMedia','addEventListener','removeEventListener','postMessage','if',
       'for','while','switch','catch','return','function','typeof','new','else','do',
+      // Keywords, not calls. `if`/`for`/`catch` were already here; the rest were
+      // missing, so a plain `var (` read as a call to a function named var.
+      'var','let','const','await','delete','void','in','of','case','yield','throw','with',
       // Browser globals Node has no equivalent for.
       'requestAnimationFrame','cancelAnimationFrame','getComputedStyle','structuredClone',
       'queueMicrotask','IntersectionObserver','MutationObserver','ResizeObserver',
@@ -1225,21 +1228,71 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'Notification','SpeechSynthesisUtterance','WebSocket','Worker','Blob','FileReader']);
     for (const f of ['subscribers-admin.html', 'social-admin.html', 'app.html', 'index.html']) {
       const html = fs.readFileSync(`${__dirname}/public/${f}`, 'utf8');
-      const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
-        .map((m) => m[1]).join('\n')
-        // Strip strings, template literals, regexes and comments first — a
-        // literal like 'device(s)' otherwise reads as a call to device().
-        .replace(/\/\*[\s\S]*?\*\//g, ' ')
-        .replace(/\/\/[^\n]*/g, ' ')
-        .replace(/'(?:\\.|[^'\\])*'/g, "''")
-        .replace(/"(?:\\.|[^"\\])*"/g, '""')
-        .replace(/`(?:\\.|[^`\\])*`/g, '``');
+      const scriptSrc = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
+        .map((m) => m[1]).join('\n');
+      // STRIP IN ONE PASS, NOT AS CHAINED REGEXES.
+      //
+      // The chained version stripped line comments BEFORE strings, so the '//'
+      // inside any string literal — every https:// url on the page — ate the
+      // rest of that line and desynchronised every quote after it. The symptom
+      // was a list of "undefined" functions that were plainly defined two
+      // screens up (showTab, api, boot), which reads as a real bug and is not
+      // one. A tokenizer cannot desynchronise this way.
+      const stripped = (function (src) {
+        let out = ''; let i = 0;
+        const n = src.length;
+        while (i < n) {
+          const c = src[i], d = src[i + 1];
+          if (c === '/' && d === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out += ' '; continue; }
+          if (c === '/' && d === '/') { const e = src.indexOf('\n', i); i = e < 0 ? n : e; out += ' '; continue; }
+          if (c === "'" || c === '"' || c === '`') {
+            const q = c; i++;
+            while (i < n && src[i] !== q) { if (src[i] === '\\') i++; i++; }
+            i++; out += q + q; continue;
+          }
+          // REGEX LITERALS MUST BE SKIPPED TOO. esc() is written
+          // .replace(/[&<>"']/g, ...) on every one of these pages, and those
+          // quote characters inside the character class opened a phantom string
+          // that swallowed the next few hundred lines — hiding the definitions
+          // of api, showTab, boot and reporting them as undefined.
+          if (c === '/') {
+            // A '/' is a regex only where a value may begin; after a value it
+            // is division. Look back at the last significant character.
+            let k = out.length - 1;
+            while (k >= 0 && /\s/.test(out[k])) k--;
+            const prev = k >= 0 ? out[k] : '';
+            if (prev === '' || '(,=:[!&|?{};+-*%~^<>'.includes(prev)) {
+              i++; let cls = false;
+              while (i < n) {
+                const r = src[i];
+                if (r === '\\') { i += 2; continue; }
+                if (r === '[') cls = true;
+                else if (r === ']') cls = false;
+                else if (r === '/' && !cls) break;
+                else if (r === '\n') break;      // not a regex after all
+                i++;
+              }
+              i++; out += ' '; continue;
+            }
+          }
+          out += c; i++;
+        }
+        return out;
+      }(scriptSrc));
       const defined = new Set([
-        ...[...scripts.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]),
-        ...[...scripts.matchAll(/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function|\()/g)].map((m) => m[1]),
+        ...[...stripped.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]),
+        ...[...stripped.matchAll(/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function|\()/g)].map((m) => m[1]),
+        // PARAMETERS ARE BINDINGS TOO. browserSpeak(n, done) calls done() — a
+        // callback passed in, not a missing global. Without these the scanner
+        // reports every callback-style helper as undefined, and a test that
+        // cries wolf gets muted, which costs more than it ever saves.
+        ...[...stripped.matchAll(/function\s*[\w$]*\s*\(([^)]*)\)/g)]
+          .flatMap((m) => m[1].split(',')
+            .map((x) => x.trim().replace(/=.*$/, '').trim())
+            .filter((x) => /^[A-Za-z_$][\w$]*$/.test(x))),
       ]);
       // Only bare calls at statement/expression level — not obj.method(...).
-      const called = new Set([...scripts.matchAll(/(^|[^.\w$])([a-z][\w$]{2,})\s*\(/g)].map((m) => m[2]));
+      const called = new Set([...stripped.matchAll(/(^|[^.\w$])([a-z][\w$]{2,})\s*\(/g)].map((m) => m[2]));
       const missing = [...called].filter((n) => !defined.has(n) && !BROWSER.has(n)
         && !(typeof globalThis[n] === 'function'));
       assert.deepStrictEqual(missing, [], `${f} calls undefined function(s): ${missing.join(', ')}`);
@@ -4885,6 +4938,62 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = fs.readFileSync(__dirname + '/src/services/brain.js', 'utf8');
     assert.ok(src.includes('noteFailure(e)') && src.match(/noteFailure\(e\)/g).length >= 2,
       'both the probe and the real call path must record why they failed');
+  });
+
+  section('the guide IS the form');
+
+  await t('Getting found is a real pane, wired into the app', () => {
+    const fs = require('fs');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/PANES=\[[^\]]*'guide'/.test(page), 'registered as a pane');
+    assert.ok(page.includes('data-p="guide"'), 'has a tab');
+    assert.ok(page.includes('id="p-guide"'), 'has a container');
+    assert.ok(/renderAccount\(\); loadGuide\(\)/.test(page), 'rendered on boot');
+    // ?tab=guide must deep-link, which is what a hyperlink from anywhere needs.
+    assert.ok(page.includes('function tabFromUrl'), 'and reachable by ?tab=');
+  });
+
+  await t('it follows the app theme rather than inventing one', () => {
+    const fs = require('fs');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const guide = page.slice(page.indexOf('function loadGuide'), page.indexOf('function gRmRole'));
+    // Reuses the app's own components, so it cannot drift from the rest of the UI.
+    for (const cls of ['class="card"', 'class="t"', 'class="chip"', 'class="addrow"',
+                       'class="sw', 'class="toggle', 'class="note"', 'btn primary sm']) {
+      assert.ok(guide.includes(cls), `must reuse ${cls}`);
+    }
+    // No literal colours: a hardcoded hex is how a panel stops matching the theme.
+    const hexes = guide.match(/#[0-9a-fA-F]{3,6}\b/g) || [];
+    assert.strictEqual(hexes.length, 0, `hardcoded colours found: ${hexes.join(', ')}`);
+  });
+
+  await t('THE FIELDS WRITE TO THE SAME RECORD AS THE TARGETS TAB', () => {
+    const fs = require('fs');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const guide = page.slice(page.indexOf('function loadGuide'), page.indexOf('function gRmRole'));
+    // A guide with its own copy of the data is a second source of truth that
+    // quietly disagrees with the real one. It must PUT the same settings doc.
+    assert.ok(/api\('\/api\/v1\/engine\/settings',\{method:'PUT'/.test(page),
+      'adding a title must save the real settings document');
+    assert.ok(/next\.targeting\.roles/.test(page), 'into targeting.roles, the same field');
+    assert.ok(/loadGuide\(\); loadTargets\(\)/.test(page),
+      'and refresh BOTH surfaces, so they can never show different truths');
+    // Where a control is not inlined, the field NAME is the link — not prose
+    // telling somebody where to go looking.
+    assert.ok(/showTab\(\\?'targets\\?'\)/.test(guide),
+      'unlinked fields must link straight to the field');
+  });
+
+  await t('the guide states the limits it cannot change', () => {
+    const fs = require('fs');
+    const page = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    const guide = page.slice(page.indexOf('function loadGuide'), page.indexOf('function gRmRole'));
+    assert.ok(/does not post your profile to LinkedIn/.test(guide),
+      'the closed-platform limit must be stated in the product, not only in chat');
+    assert.ok(/guarantees a recruiter will search/.test(guide), 'and the absence of a guarantee');
+    assert.ok(/two to eight weeks/.test(guide), 'and the real timescale');
+    // An empty role list is the actual cause of a one-page site. Say so.
+    assert.ok(/almost nothing to match you against/.test(guide));
   });
 
   section('getting found — the half of the product that did not work');

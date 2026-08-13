@@ -275,6 +275,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
     <button class="tab" data-p="pipeline">Pipeline</button>
     <button class="tab" data-p="targets">Targets</button>
     <button class="tab" data-p="cv">My CV</button>
+    <button class="tab" data-p="guide">Getting found</button>
     <button class="tab" data-p="settings">Settings</button>
     <button class="tab" data-p="account">Account</button>
   </div>
@@ -295,6 +296,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
   <div id="p-targets" class="hidden"></div>
   <div id="p-cv" class="hidden"></div>
   <div id="p-pipeline" class="hidden"></div>
+  <div id="p-guide" class="hidden"></div>
   <div id="p-settings" class="hidden"></div>
   <div id="p-account" class="hidden"></div>
 
@@ -344,7 +346,7 @@ $('signout').addEventListener('click',function(){
 });
 
 /* ---- tabs ---- */
-var PANES=['analytics','matches','opps','today','targets','pipeline','cv','settings','account'];
+var PANES=['analytics','matches','opps','today','targets','pipeline','cv','guide','settings','account'];
 
 /* Selecting a tab is a named function so the home-screen shortcuts can reach it.
    Long-pressing the installed icon opens /app?tab=matches, and without this the
@@ -442,7 +444,7 @@ function boot(){
       else $('who-h').textContent=ME.email;
     });
     loadAnalytics(); loadMatches(); loadOpps(); loadToday(); loadTargets();
-    loadPipeline(); loadCV(); loadSettings(); renderAccount();
+    loadPipeline(); loadCV(); loadSettings(); renderAccount(); loadGuide();
     /* Honour ?tab= from a home-screen shortcut or a shared link. */
     showTab(tabFromUrl(),false);
   }).catch(function(){ $('login').classList.remove('hidden'); brandOnly(); });
@@ -1881,6 +1883,181 @@ function renderAccount(){
       if(r.ok){ $('delout').textContent=r.j.note||'Deleted.'; setTimeout(function(){location.href='/';},2500); }
     });
   });
+}
+
+/* ---- GETTING FOUND: a guide you complete, not one you memorise ----
+   A conventional guide makes somebody read an instruction, hold it in their
+   head, navigate to another screen and find the field. Most people stop at step
+   two. So the fields ARE the guide: every control below writes to the same
+   settings the Targets tab writes to, and the sentence that explains a field
+   sits directly above it. Where a control genuinely belongs elsewhere, the name
+   of the field is a link straight to it rather than a description of where to
+   look. */
+function loadGuide(){
+  var host=$('p-guide'); if(!host) return;
+
+  Promise.all([
+    api('/api/v1/engine/presence'),
+    api('/api/v1/engine/settings'),
+    api('/api/v1/engine/me')
+  ]).then(function(res){
+    var P=(res[0].j)||{}, ST=(res[1].j&&res[1].j.settings)||{}, ME2=(res[2].j)||{};
+    if(res[1].j&&res[1].j.settings) SET=res[1].j.settings;
+    var roles=((ST.targeting||{}).roles)||[];
+    var addr=P.address||(ME2.address?'https://'+ME2.address:'');
+    var bare=addr.replace(/^https:\/\//,'');
+    var done=P.done_count||0, total=P.total||5;
+
+    /* Progress is counted from real state — roles that exist, boxes actually
+       ticked. Nothing here is a claim about what it achieves. */
+    var stepsDone=(roles.length?1:0)+(done>=total?1:0)+(P.directory_opt_in?1:0);
+
+    var h=''+
+    '<div class="card">'+
+      '<div class="t">Getting found</div>'+
+      '<div class="m">Your page is live, but no search engine has seen a link to it yet. '+
+        'Three things fix that, and you can do all of them right here &mdash; the fields below '+
+        'are the real ones, not a copy.</div>'+
+      '<div class="note" style="margin-top:10px">Step '+stepsDone+' of 3 complete'+
+        (addr?' &middot; <a href="'+esc(addr)+'" target="_blank" rel="noopener">'+esc(bare)+'</a>':'')+
+      '</div>'+
+    '</div>'+
+
+    /* ---- 1 ---- */
+    '<div class="card">'+
+      '<div class="t">1. Set the job titles you want</div>'+
+      '<div class="m">Write three to six, worded the way a recruiter searches: '+
+        '<em>Sales Executive</em>, <em>Account Executive</em>, <em>Business Development Manager</em>. '+
+        'Each one becomes its own page on your site carrying that exact phrase, which is what a '+
+        'search engine matches against. This is the single biggest thing you can do.</div>'+
+      '<div id="g-roles" style="margin-top:12px">'+(roles.length
+        ? roles.map(function(x,i){ return '<span class="chip">'+esc(x.title||x)+
+            ' <a href="#" class="g-rm" data-i="'+i+'" style="color:var(--red)">&times;</a></span>'; }).join('')
+        : '<div class="note" style="color:var(--warn)">You have none set, so your whole site is a '+
+          'single page. That gives a search engine almost nothing to match you against.</div>')+
+      '</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="g-role" placeholder="e.g. Sales Executive" maxlength="120">'+
+        '<button class="btn primary sm" id="g-addrole">Add title</button></div>'+
+      '<div class="note" style="margin-top:9px">These are the same targets on '+
+        '<a href="?tab=targets" id="g-totargets">Roles you are targeting</a>. '+
+        'Adding one here adds it there.</div>'+
+      (roles.length&&addr?'<div class="note" style="margin-top:8px">Your pages: '+
+        roles.map(function(x){var t=(x.title||x);var sl=(x.slug||t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''));
+          return '<a href="'+esc(addr)+'/roles/'+esc(sl)+'" target="_blank" rel="noopener">'+esc(t)+'</a>';}).join(' &middot; ')+
+        '</div>':'')+
+    '</div>'+
+
+    /* ---- 2 ---- */
+    '<div class="card">'+
+      '<div class="t">2. Put your address in these five places</div>'+
+      '<div class="m">Every one is somewhere a recruiter already looks, and every one is a link &mdash; '+
+        'which is what gives a search engine a reason to visit the pages you just made. '+
+        'Copy it once, then tick each place as you go.</div>'+
+      (addr?'<div class="acts" style="margin:12px 0 4px">'+
+        '<button class="btn primary sm" id="g-copy">Copy my address</button>'+
+        '<span class="note" style="margin-left:10px">'+esc(bare)+'</span></div>':'')+
+      '<div class="note" style="margin:8px 0"><strong>'+done+' of '+total+'</strong> done</div>'+
+      (P.items||[]).map(function(i){
+        return '<div class="sw g-place" data-slug="'+esc(i.slug)+'" style="align-items:flex-start">'+
+          '<div><div class="lbl">'+esc(i.title)+'</div>'+
+          '<div class="hint">'+esc(i.what)+' &mdash; '+esc(i.why)+'</div></div>'+
+          '<div style="display:flex;align-items:center;gap:10px">'+
+            (i.href?'<a class="btn sm" href="'+esc(i.href)+'" target="_blank" rel="noopener">Open</a>':'')+
+            '<div class="toggle'+(i.done?' on':'')+'"><i></i></div>'+
+          '</div></div>';
+      }).join('')+
+      '<div class="note" style="margin-top:12px">'+esc(P.note||'')+'</div>'+
+    '</div>'+
+
+    /* ---- 3 ---- */
+    '<div class="card">'+
+      '<div class="t">3. List yourself in the JobUp directory</div>'+
+      '<div class="m">One switch. It publishes your name, your headline and the titles from step one '+
+        'to <a href="https://jobup.dev/directory" target="_blank" rel="noopener">jobup.dev/directory</a> '+
+        '&mdash; never your email, phone or location. Smaller effect than the other two, because it is a '+
+        'link from our own site rather than an independent one, but it costs one click.</div>'+
+      '<div class="sw" style="margin-top:12px"><div><div class="lbl">List me in the public directory</div>'+
+        '<div class="hint">Off unless you turn it on. Reversible at any time.</div></div>'+
+        '<div class="toggle'+(P.directory_opt_in?' on':'')+'" id="g-dir"><i></i></div></div>'+
+    '</div>'+
+
+    /* ---- honest limits ---- */
+    '<div class="card">'+
+      '<div class="t">What this does not do</div>'+
+      '<div class="m">JobUp does not post your profile to LinkedIn, Indeed or any job board &mdash; '+
+        'those are closed platforms and only you can create a profile there, which is exactly why '+
+        'step two matters. None of this guarantees a recruiter will search for you; it makes being '+
+        'found possible. A new address with few links typically takes two to eight weeks to appear '+
+        'in search results at all.</div>'+
+      '<div class="note" style="margin-top:10px">The reliable path is still you using the link &mdash; '+
+        'in applications, in messages, in your signature. Search and AI discovery are the upside on '+
+        'top of that, not a replacement for it.</div>'+
+    '</div>';
+
+    host.innerHTML=h;
+
+    /* --- wiring: every control writes to the real record --- */
+    var add=$('g-addrole');
+    if(add) add.addEventListener('click',function(){
+      var v=$('g-role').value.trim(); if(!v) return;
+      var next=JSON.parse(JSON.stringify(SET||{}));
+      next.targeting=next.targeting||{};
+      next.targeting.roles=(next.targeting.roles||[]).concat([{title:v}]);
+      gSaveSettings(next);
+    });
+    var ri=$('g-role');
+    if(ri) ri.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();add.click();} });
+
+    var cp=$('g-copy');
+    if(cp) cp.addEventListener('click',function(){
+      navigator.clipboard.writeText(addr).then(function(){
+        cp.textContent='Copied'; setTimeout(function(){cp.textContent='Copy my address';},1600);
+      }).catch(function(){});
+    });
+
+    Array.prototype.forEach.call(host.querySelectorAll('.g-rm'),function(el){
+      el.addEventListener('click',function(e){
+        e.preventDefault(); gRmRole(parseInt(el.getAttribute('data-i'),10));
+      });
+    });
+    var tt=$('g-totargets');
+    if(tt) tt.addEventListener('click',function(e){ e.preventDefault(); showTab('targets'); });
+
+    Array.prototype.forEach.call(host.querySelectorAll('.g-place'),function(el){
+      el.querySelector('.toggle').addEventListener('click',function(){
+        var on=!this.classList.contains('on');
+        this.classList.toggle('on',on);          // optimistic, then reconciled
+        gSavePresence({slug:el.getAttribute('data-slug'),done:on});
+      });
+    });
+    var dir=$('g-dir');
+    if(dir) dir.addEventListener('click',function(){
+      var on=!this.classList.contains('on');
+      this.classList.toggle('on',on);
+      gSavePresence({directory_opt_in:on});
+    });
+  });
+}
+
+/* Adding a title here must move the SAME record the Targets tab moves, or the
+   guide becomes a second source of truth that quietly disagrees with it. */
+function gSaveSettings(next){
+  api('/api/v1/engine/settings',{method:'PUT',body:JSON.stringify({settings:next})}).then(function(r){
+    if(r.ok&&r.j.settings) SET=r.j.settings;
+    loadGuide(); loadTargets();
+  });
+}
+function gSavePresence(body){
+  fetch(API+'/api/v1/engine/presence',{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){ loadGuide(); }).catch(function(){});
+}
+function gRmRole(i){
+  var next=JSON.parse(JSON.stringify(SET||{}));
+  next.targeting=next.targeting||{};
+  next.targeting.roles=(next.targeting.roles||[]).filter(function(_,k){return k!==i;});
+  gSaveSettings(next);
 }
 
 /* ---- get found: where the address has actually been put ----
