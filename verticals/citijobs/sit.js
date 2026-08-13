@@ -444,6 +444,34 @@ async function cleanup() {
       rq.end();
     });
 
+    // META-TEST, and the reason this section can be trusted at all.
+    // The host lock was first tested with fetch(), which SILENTLY DROPS a Host
+    // header because it is a forbidden header name. Every assertion below then
+    // ran against 127.0.0.1 and passed while proving nothing. Before testing
+    // the lock, prove the harness can actually deliver the header — and pin the
+    // fetch behaviour so a future rewrite back to fetch fails loudly here
+    // instead of quietly turning this whole section into theatre.
+    const echo = http.createServer((rq2, rs2) => {
+      rs2.writeHead(200, { 'content-type': 'application/json' });
+      rs2.end(JSON.stringify({ host: rq2.headers.host }));
+    });
+    await new Promise((r) => echo.listen(0, r));
+    const echoPort = echo.address().port;
+
+    const viaHttp = await new Promise((resolve, reject) => {
+      const rq2 = http.request({ host: '127.0.0.1', port: echoPort, path: '/', headers: { Host: 'manuelstagg.com' } },
+        (rs2) => { let b = ''; rs2.on('data', (d) => { b += d; }); rs2.on('end', () => resolve(JSON.parse(b))); });
+      rq2.on('error', reject);
+      rq2.end();
+    });
+    ok('the harness really does deliver the Host header it claims to send',
+      viaHttp.host === 'manuelstagg.com', 'server saw ' + viaHttp.host);
+
+    const viaFetch = await (await fetch(`http://127.0.0.1:${echoPort}/`, { headers: { Host: 'manuelstagg.com' } })).json();
+    ok('...and fetch() still drops it, which is the trap this guards against',
+      viaFetch.host !== 'manuelstagg.com', 'fetch unexpectedly delivered ' + viaFetch.host);
+    await new Promise((r) => echo.close(r));
+
     const wrong = await hit('/', 'aiagent.ringlypro.com');
     ok('the CRM host does not serve the tracker at all', wrong.status === 404, 'HTTP ' + wrong.status);
     ok('...and answers 404, not 403 (a 403 confirms there is something here)', wrong.status !== 403);
@@ -485,6 +513,19 @@ async function cleanup() {
     ok('...and its match score', row && row.score != null);
     ok('...with a compound id the console can route back', row && row.id === 'citi:' + tr2.id);
     ok('salary shown only when the posting stated it', row && row.salary_min_cents === 14144000);
+
+    // The 'applied' branch is the one carrying the timestamp CAST, which is
+    // exactly where the original UPDATE ... FROM syntax error lived. Left
+    // untested, that statement could break again and no assertion would notice.
+    tr2.applied_at = null; await tr2.save();
+    const appliedMove = await bridge.citiSetStage(cvProfile, tr2.id, 'applied', {});
+    ok('the console can mark it applied', appliedMove.ok);
+    await tr2.reload();
+    ok('...and applied_at is stamped by that statement', tr2.status === 'applied' && !!tr2.applied_at);
+    const firstApplied = tr2.applied_at;
+    await bridge.citiSetStage(cvProfile, tr2.id, 'applied', {});
+    await tr2.reload();
+    ok('...but never re-stamped on a second pass', String(tr2.applied_at) === String(firstApplied));
 
     const moved = await bridge.citiSetStage(cvProfile, tr2.id, 'interviewing', {});
     ok('the console can move it forward', moved.ok);
