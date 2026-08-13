@@ -197,6 +197,13 @@ border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margi
     </div>
     <div class="bc-n hidden" id="bc-note"></div>
   </div>
+  <div class="banner hidden" id="testbanner">
+    <strong>Stripe is in TEST mode.</strong>
+    Checkouts complete without charging a card, and any subscriber created this way is
+    stamped <code>stripe_test</code> and excluded from the paying counts and totals below.
+    Card <code>4242 4242 4242 4242</code>, any future expiry, any CVC.
+    <span id="testacct"></span>
+  </div>
   <div class="banner hidden" id="pwbanner">
     <strong>This console&rsquo;s password is one published in the source.</strong>
     Setting the environment variable to the same well-known string moves it from the
@@ -336,6 +343,10 @@ function boot(){
     $('planlink').classList.remove('hidden');
     $('who-sub').textContent=r.j.email;
     if(r.j.weak_password) $('pwbanner').classList.remove('hidden');
+    if(r.j.stripe_test){
+      $('testbanner').classList.remove('hidden');
+      $('testacct').textContent='Reading '+(r.j.stripe_account||'')+'.';
+    }
 
     api('/subscribers').then(function(x){
       if(!x.ok) return err('aerr',x.j.error||'Could not load subscribers.');

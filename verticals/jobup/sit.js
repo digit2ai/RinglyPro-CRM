@@ -1969,12 +1969,24 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('with payment OFF, EVERY activation is free and stamped no_billing', () => {
     const _keep = process.env.JOBUP_BILLING_DISABLED;
     process.env.JOBUP_BILLING_DISABLED = '1';   // off is now explicit
-    assert.strictEqual(billingSvc.disabled(), true);
-    assert.strictEqual(billingSvc.freeActivation(), true, 'nothing can be charged, so nothing is');
-    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
-    assert.ok(src.includes("'no_billing'"), 'accounts built without payment must be stamped');
-    if (_keep === undefined) delete process.env.JOBUP_BILLING_DISABLED;
-    else process.env.JOBUP_BILLING_DISABLED = _keep;
+    // try/finally, because a bare restore after a failing assert never runs:
+    // JOBUP_BILLING_DISABLED then leaks into every later test and one real
+    // failure is reported as three.
+    try {
+      assert.strictEqual(billingSvc.disabled(), true);
+      assert.strictEqual(billingSvc.freeActivation(), true, 'nothing can be charged, so nothing is');
+      // The stamp is decided in ONE place now — there are three of them
+      // (no_billing, stripe_test, paid) and a route picking with its own
+      // ternary was how a test-mode row would have been recorded as revenue.
+      assert.strictEqual(billingSvc.activationStamp(), 'no_billing',
+        'accounts built without payment must be stamped');
+      const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+      assert.ok(src.includes('billing.activationStamp()'),
+        'the route must ask billing rather than decide the stamp itself');
+    } finally {
+      if (_keep === undefined) delete process.env.JOBUP_BILLING_DISABLED;
+      else process.env.JOBUP_BILLING_DISABLED = _keep;
+    }
   });
   await t('status() DECLARES test mode and missing webhook verification', () => {
     const savedF = process.env.JOBUP_FREE_ACTIVATION;
@@ -4181,6 +4193,96 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }).window;
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+
+  section('test mode moves JobUp alone, and can never read as revenue');
+
+  await t('JobUp has its own Stripe key, so the estate-wide one is untouchable', () => {
+    const b = require(__dirname + '/src/services/billing');
+    const savedOwn = process.env.JOBUP_STRIPE_SECRET_KEY;
+    const savedShared = process.env.STRIPE_SECRET_KEY;
+    try {
+      // STRIPE_SECRET_KEY is read by 38 files here — chambers, HISPATEC,
+      // credits, LawnCopilot, TunjoRacing. Pointing it at a test key to try
+      // something in JobUp would stop all of them taking real money.
+      process.env.STRIPE_SECRET_KEY = 'sk_live_shared_estate';
+      delete process.env.JOBUP_STRIPE_SECRET_KEY;
+      assert.strictEqual(b.secretKey(), 'sk_live_shared_estate', 'falls back when unset');
+      assert.strictEqual(b.mode(), 'live');
+      assert.strictEqual(b.isolated(), false);
+
+      process.env.JOBUP_STRIPE_SECRET_KEY = 'sk_test_jobup_only';
+      assert.strictEqual(b.secretKey(), 'sk_test_jobup_only', 'JobUp key must win');
+      assert.strictEqual(b.mode(), 'test', 'the mode is read off the key, never configured apart');
+      assert.strictEqual(b.isTestMode(), true);
+      assert.strictEqual(b.isolated(), true);
+      // The shared key is still exactly what it was.
+      assert.strictEqual(process.env.STRIPE_SECRET_KEY, 'sk_live_shared_estate',
+        'switching JobUp must not disturb the rest of the estate');
+    } finally {
+      if (savedOwn === undefined) delete process.env.JOBUP_STRIPE_SECRET_KEY;
+      else process.env.JOBUP_STRIPE_SECRET_KEY = savedOwn;
+      if (savedShared === undefined) delete process.env.STRIPE_SECRET_KEY;
+      else process.env.STRIPE_SECRET_KEY = savedShared;
+    }
+  });
+
+  await t('the webhook verifies against JobUp\'s OWN secret', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    // Verifying a test-mode signature against the estate-wide live secret fails
+    // every time, so a real payment would never activate an account and the
+    // only symptom is silence.
+    assert.ok(src.includes('billing.webhookSecret()') && src.includes('billing.secretKey()'),
+      'the webhook must go through the service, not process.env');
+    assert.ok(!/process\.env\.STRIPE_(SECRET|WEBHOOK)/.test(src),
+      'no route may read the shared Stripe env vars directly');
+    const svc = fs.readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    const direct = (svc.match(/process\.env\.STRIPE_(SECRET|WEBHOOK)_[A-Z_]+/g) || []).length;
+    assert.strictEqual(direct, 2, 'only the two fallbacks may name the shared vars');
+  });
+
+  await t('a test-mode signup is stamped, and never counted as money', () => {
+    const b = require(__dirname + '/src/services/billing');
+    const saved = process.env.JOBUP_STRIPE_SECRET_KEY;
+    try {
+      process.env.JOBUP_STRIPE_SECRET_KEY = 'sk_test_x';
+      assert.strictEqual(b.activationStamp(), b.TEST_ACTIVATION,
+        'Stripe test mode issues REAL invoice objects with real amounts');
+      assert.ok(b.isNonRevenue(b.TEST_ACTIVATION));
+      process.env.JOBUP_STRIPE_SECRET_KEY = 'sk_live_x';
+      assert.strictEqual(b.activationStamp(), 'paid');
+      assert.strictEqual(b.isNonRevenue('paid'), false);
+    } finally {
+      if (saved === undefined) delete process.env.JOBUP_STRIPE_SECRET_KEY;
+      else process.env.JOBUP_STRIPE_SECRET_KEY = saved;
+    }
+    for (const a of ['free_test', 'no_billing']) assert.ok(b.isNonRevenue(a));
+  });
+
+  await t('ONE list decides what is not revenue — no surface repeats the literal', () => {
+    const fs = require('fs');
+    // A fourth surface added later must not be able to forget stripe_test.
+    for (const f of ['src/routes/subscribers-admin.js', 'src/services/referrals.js']) {
+      const src = fs.readFileSync(__dirname + '/' + f, 'utf8');
+      assert.ok(src.includes('isNonRevenue('), `${f} must ask billing, not compare a string`);
+      assert.ok(!/activation\s*!==\s*'free_test'/.test(src)
+             && !/\['free_test',\s*'no_billing'\]\.includes/.test(src),
+        `${f} still hardcodes the old list and would miss a test-mode row`);
+    }
+  });
+
+  await t('test mode is visible on every surface that offers to take money', () => {
+    const fs = require('fs');
+    const teaserSvc = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
+    assert.ok(teaserSvc.includes('test_mode:'), 'the CTA payload must carry it');
+    const view = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(view.includes('TEST_CHIP') && view.includes("testChip:'Test mode'")
+           && view.includes("testChip:'Modo de prueba'"),
+      'a checkout that looks real and charges nothing must say so, in both languages');
+    const console_ = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(console_.includes('id="testbanner"') && console_.includes('stripe_test'),
+      'the billing register must not silently mix test rows with real revenue');
+  });
 
   section('a rate limit must not read as a broken product');
 

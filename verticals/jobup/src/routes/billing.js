@@ -112,9 +112,14 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   let event;
   try {
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body));
-    if (process.env.STRIPE_WEBHOOK_SECRET && billing.enabled()) {
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-      event = stripe.webhooks.constructEvent(raw, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
+    // MUST go through the service, not process.env. JobUp can be on its own
+    // Stripe account (JOBUP_STRIPE_*), and verifying a test-mode signature
+    // against the estate-wide live secret fails every time — so a real payment
+    // would never activate an account, and the only symptom is silence.
+    const whSecret = billing.webhookSecret();
+    if (whSecret && billing.enabled()) {
+      const stripe = require('stripe')(billing.secretKey());
+      event = stripe.webhooks.constructEvent(raw, req.headers['stripe-signature'], whSecret);
     } else if (process.env.NODE_ENV === 'production') {
       // REFUSE rather than trust an unverified body. An unauthenticated webhook
       // that flips subscribers to active is a free-subscription vulnerability.

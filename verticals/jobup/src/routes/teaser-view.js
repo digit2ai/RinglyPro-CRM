@@ -202,6 +202,12 @@ border:1px solid rgba(248,113,113,.5);color:#ffc9c9;border-radius:14px;
 padding:13px 18px;font-size:14px;line-height:1.5;box-shadow:var(--shadow);
 transition:transform .28s cubic-bezier(.4,0,.2,1)}
 .toast.on{transform:translate(-50%,0)}
+/* Stripe test mode. The checkout that follows is pixel-identical to the real
+   one and takes no money, so every place that offers it says so. */
+.testchip{display:inline-block;background:rgba(230,180,90,.14);border:1px solid rgba(230,180,90,.45);
+color:#f0d5a6;border-radius:999px;padding:4px 11px;font-family:var(--mono);font-size:11px;
+letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px}
+.sb-note.test{color:#f0d5a6}
 @media(prefers-reduced-motion:reduce){.toast{transition:none}}
 `;
 
@@ -302,6 +308,7 @@ var T=LANG==='es'
      sbNotePaid:'Pago seguro, luego tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
      sbNoteFree:'Sin pago. Solo tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
      opening:'Abriendo\u2026',
+     testChip:'Modo de prueba', testNote:'Modo de prueba: no se cobra ninguna tarjeta.',
      ctaFail:'No pudimos abrir el siguiente paso. Int\u00e9ntalo de nuevo.'}
   : {step:'Step',of:'of',left:'left',over:'Taking longer than usual \u2014 still working',
      elapsed:'elapsed',remaining:'estimated time remaining',almost:'Almost there',
@@ -313,6 +320,7 @@ var T=LANG==='es'
      sbNotePaid:'Secure checkout, then your password and what your agents should hunt for.',
      sbNoteFree:'No payment. Just your password and what your agents should hunt for.',
      opening:'Opening\u2026',
+     testChip:'Test mode', testNote:'Test mode \u2014 no card is charged.',
      ctaFail:'We could not open the next step. Please try again.'};
 
 function mmss(ms){
@@ -404,8 +412,11 @@ function render(){
     : T.freePrice;
   var SB_NOTE=c.price_usd?T.sbNotePaid:T.sbNoteFree;
 
+  var TEST=Boolean(c.test_mode);
+  var TEST_CHIP=TEST?'<div class="testchip">'+esc(T.testChip)+'</div>':'';
+
   function strip(where,head,sub){
-    return '<div class="ctastrip"><div><div class="cs-price">'+
+    return '<div class="ctastrip"><div>'+TEST_CHIP+'<div class="cs-price">'+
       (head||PRICE_HTML)+'</div><div class="cs-sub">'+esc(sub||'')+'</div></div>'+
       '<button class="btn primary cta" type="button" data-cta="'+where+'">'+
       esc(CTA_LABEL)+'</button></div>';
@@ -506,6 +517,7 @@ function render(){
      '<span class="chip">approvals</span><span class="chip">export</span></div></div>';
 
   h+=open(8,c.headline||'Build my ecosystem');
+  h+=TEST_CHIP;
   // A price is shown only when there is one. With payment switched off the
   // block would otherwise read "$null / year".
   if(c.price_usd)
@@ -527,7 +539,9 @@ function render(){
   // The pinned bar carries the same label and the same price as the rest.
   var sb=document.getElementById('stickybuy');
   document.getElementById('sb-price').innerHTML=PRICE_HTML;
-  document.getElementById('sb-note').textContent=SB_NOTE;
+  var sbn=document.getElementById('sb-note');
+  sbn.textContent=TEST?T.testNote:SB_NOTE;
+  sbn.className='sb-note'+(TEST?' test':'');
   document.getElementById('sb-btn').textContent=CTA_LABEL;
 
   // ONE handler for all four. Attached by class, so a button added later

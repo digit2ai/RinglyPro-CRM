@@ -54,13 +54,64 @@ function disabled() {
   return false;   // default: charge for it
 }
 
+// ---- WHICH STRIPE ACCOUNT, AND WHOSE ---------------------------------------
+//
+// `STRIPE_SECRET_KEY` is shared by THIRTY-EIGHT files across this repo —
+// chamber signups, HISPATEC, Lina's Treasures, credits, LawnCopilot's platform
+// subscriptions, TunjoRacing checkout, EquiMind. Pointing that variable at a
+// test key to try something in JobUp would silently stop every one of them
+// taking real money, and nothing would look broken until a customer's card was
+// never charged.
+//
+// So JobUp reads its OWN pair first and falls back to the shared one. Setting
+// JOBUP_STRIPE_SECRET_KEY moves JobUp alone; leaving it unset changes nothing.
+function secretKey() {
+  return process.env.JOBUP_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || '';
+}
+function webhookSecret() {
+  return process.env.JOBUP_STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET || '';
+}
+/** 'test' | 'live' | null — read off the key itself, never configured separately. */
+function mode() {
+  const k = secretKey();
+  if (!k) return null;
+  return k.startsWith('sk_test_') || k.startsWith('rk_test_') ? 'test' : 'live';
+}
+function isTestMode() { return mode() === 'test'; }
+/** True when JobUp is on its own key rather than the estate-wide one. */
+function isolated() { return Boolean(process.env.JOBUP_STRIPE_SECRET_KEY); }
+
+// A TEST-MODE CHECKOUT PRODUCES A REAL ROW AND A REAL INVOICE.
+//
+// Stripe test mode issues genuine invoice objects with genuine amounts; nothing
+// about the row says the money was imaginary. Left alone it would read as
+// revenue in the billing register and, worse, qualify a referral commission —
+// the ledger would owe somebody real money for a card that was never charged.
+// So a test-mode signup is stamped, and every surface that means "not revenue"
+// reads ONE list rather than repeating a literal it can forget to update.
+const TEST_ACTIVATION = 'stripe_test';
+const NON_REVENUE_ACTIVATIONS = ['free_test', 'no_billing', TEST_ACTIVATION];
+function isNonRevenue(activation) {
+  return NON_REVENUE_ACTIVATIONS.includes(String(activation || ''));
+}
+/** What to stamp on a subscriber activated through checkout right now. */
+function activationStamp() {
+  if (disabled()) return 'no_billing';
+  return isTestMode() ? TEST_ACTIVATION : 'paid';
+}
+
 let stripe = null;
+let stripeKey = null;
 function client() {
   if (disabled()) return null;
-  if (!process.env.STRIPE_SECRET_KEY) return null;
-  if (stripe) return stripe;
+  const key = secretKey();
+  if (!key) return null;
+  // Rebuild if the key changed under us, or a restart would be needed to swap
+  // between test and live.
+  if (stripe && stripeKey === key) return stripe;
   try {
-    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    stripe = require('stripe')(key);
+    stripeKey = key;
     return stripe;
   } catch (e) {
     console.warn('[billing] stripe SDK unavailable:', e.message);
@@ -99,9 +150,21 @@ function status() {
     // this, 'free_activation: true' next to 'billing_disabled: false' looks
     // like a contradiction instead of a leftover override.
     free_reason: freeReason(),
-    webhook_verification: process.env.STRIPE_WEBHOOK_SECRET ? 'configured'
+    webhook_verification: webhookSecret() ? 'configured'
       : 'NOT configured — production refuses unverified webhooks, so a real payment would never activate an account',
     configured: enabled(),
+    // TEST MODE MUST BE IMPOSSIBLE TO MISS. A checkout that looks exactly like
+    // the real one but takes no money is worse than one that is switched off:
+    // somebody believes they subscribed.
+    mode: mode(),
+    test_mode: isTestMode(),
+    stripe_account: isolated() ? 'JOBUP_STRIPE_SECRET_KEY (JobUp only)'
+                               : 'STRIPE_SECRET_KEY (shared with the rest of the estate)',
+    mode_note: isTestMode()
+      ? 'TEST MODE — no real card is charged. Use 4242 4242 4242 4242, any future '
+        + 'expiry and any CVC. Subscribers created here are real rows against a test '
+        + 'Stripe account and should be purged before going live.'
+      : null,
     price_usd: PRICE_USD,
     refund_days: REFUND_DAYS,
     renewal_notice_days: RENEWAL_NOTICE_DAYS,
@@ -352,6 +415,10 @@ function refundEligible(chargedAt, now = new Date()) {
 }
 
 module.exports = {
+  // Test-vs-live and WHICH account, so the webhook route cannot verify a
+  // test-mode signature against the estate-wide live secret.
+  secretKey, webhookSecret, mode, isTestMode, isolated,
+  TEST_ACTIVATION, NON_REVENUE_ACTIVATIONS, isNonRevenue, activationStamp,
   freeReason,
   disabled,
   freeActivation,

@@ -351,7 +351,7 @@ router.post('/build-account', async (req, res) => {
       password_hash: authSvc.hashPassword(password),
       status: 'active',
       // Never countable as revenue. Mirrors the free_test stamp.
-      activation: billing.disabled() ? 'no_billing' : 'paid',
+      activation: billing.activationStamp(),
       activated_at: new Date(),
     };
     if (sub) await models.subscribers.update(fields, { where: { id: sub.id } });

@@ -153,11 +153,11 @@ async function qualifyFromInvoice(invoice) {
   if (!Number.isInteger(cents) || cents <= 0) {
     return { ok: false, reason: 'invoice carries no amount' };
   }
-  // A free_test or no_billing activation cannot produce a paid invoice, so it
+  // A free_test, no_billing or TEST-MODE activation must never mint a commission
   // can never reach here — but assert it, because the whole programme rests on
   // commission only ever tracking real money.
   const referee = await models.subscribers.findOne({ where: { id: invoice.tenant_id } });
-  if (referee && ['free_test', 'no_billing'].includes(referee.activation)) {
+  if (referee && require('./billing').isNonRevenue(referee.activation)) {
     await models.referrals.update({ status: 'void',
       note: `Referee activation is ${referee.activation} — no money changed hands.` },
       { where: { id: ref.id } });

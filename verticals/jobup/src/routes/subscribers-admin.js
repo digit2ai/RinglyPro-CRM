@@ -194,6 +194,11 @@ router.get('/api/session', requireAdmin, (req, res) => {
     ok: true, email: req.admin.email,
     scope: 'billing identity only — no resumes, matches or outreach',
     weak_password: weakPassword(),
+    // A billing register that silently mixes test-mode rows with real revenue
+    // is a register you cannot trust. Say which Stripe account it is reading.
+    stripe_mode: billing.mode(),
+    stripe_test: billing.isTestMode(),
+    stripe_account: billing.isolated() ? 'JOBUP_STRIPE_SECRET_KEY' : 'STRIPE_SECRET_KEY (shared)',
   });
 });
 
@@ -251,7 +256,7 @@ router.get('/api/subscribers', requireAdmin, async (req, res) => {
     const rows = await buildRows();
     await audit(req.admin.email, 'subs_admin.list.viewed', `${rows.length} rows`);
 
-    const paying = rows.filter((r) => r.activation !== 'free_test');
+    const paying = rows.filter((r) => !require('../services/billing').isNonRevenue(r.activation));
     const byStatus = {};
     rows.forEach((r) => { byStatus[r.status] = (byStatus[r.status] || 0) + 1; });
 

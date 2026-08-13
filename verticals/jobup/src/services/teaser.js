@@ -218,6 +218,9 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
         // No surface may quote a price while payment is switched off.
         price_usd: billingOff() ? null : price(),
         billing_disabled: billingOff(),
+        // A test-mode checkout looks EXACTLY like the real one. Someone would
+        // walk out believing they had subscribed, so the page says otherwise.
+        test_mode: require('./billing').isTestMode(),
         headline: billingOff() ? 'Build my account' : 'Build my ecosystem',
         includes: [
           'Your web address and professional website',
