@@ -433,8 +433,18 @@ async function cleanup() {
     const server = await new Promise((r) => { const s2 = app.listen(0, () => r(s2)); });
     const port = server.address().port;
     const BASE = `http://127.0.0.1:${port}/citi-tracker`;
+    const crypto = require('crypto');
     const CV_SECRET = process.env.CV_ADMIN_SECRET || process.env.JWT_SECRET || 'cv-engine-secret';
-    const cvToken = (slug, secret) => jwt.sign({ pid: 1, slug }, secret || CV_SECRET, { expiresIn: '1h' });
+    // EXACTLY what src/routes/cv-engine.js sign() produces: base64url(JSON)
+    // plus an HMAC-SHA256, with exp in epoch MILLISECONDS. Minting it any other
+    // way is how a broken verifier passed its own test once.
+    const cvToken = (slug, secret, expMs) => {
+      const body = Buffer.from(JSON.stringify({
+        pid: 1, slug, exp: expMs === undefined ? Date.now() + 3600000 : expMs
+      })).toString('base64url');
+      const mac = crypto.createHmac('sha256', secret || CV_SECRET).update(body).digest('base64url');
+      return body + '.' + mac;
+    };
     const get = (path_, cookie) => fetch(BASE + path_, {
       redirect: 'manual', headers: cookie ? { cookie } : {}
     });
@@ -453,8 +463,23 @@ async function cleanup() {
     const forged = await get('/api/v1/profiles', 'cv_admin_token=' + cvToken('manuelstagg', 'the-wrong-secret'));
     ok('a forged console token is refused', forged.status === 401, 'HTTP ' + forged.status);
 
-    const garbage = await get('/api/v1/profiles', 'cv_admin_token=not-a-jwt');
+    const garbage = await get('/api/v1/profiles', 'cv_admin_token=not-a-token');
     ok('a garbage cookie is refused, not crashed on', garbage.status === 401);
+
+    const expired = await get('/api/v1/profiles', 'cv_admin_token=' + cvToken('manuelstagg', null, Date.now() - 1000));
+    ok('an expired console session is refused', expired.status === 401, 'HTTP ' + expired.status);
+
+    // The console signs its OWN token format, not a JWT. Reading it as a JWT
+    // rejects every real session, and shipped once because the test minted a
+    // JWT too. A JWT arriving here must be refused, and this locks that.
+    const asJwt = await get('/api/v1/profiles', 'cv_admin_token=' + jwt.sign({ pid: 1, slug: 'manuelstagg' }, CV_SECRET));
+    ok('a JWT is NOT the console format and is refused', asJwt.status === 401, 'HTTP ' + asJwt.status);
+
+    const tampered = (() => { const t = cvToken('anastagg'); const [b] = t.split('.');
+      const evil = Buffer.from(JSON.stringify({ pid: 1, slug: 'manuelstagg', exp: Date.now() + 3600000 })).toString('base64url');
+      return evil + '.' + t.split('.')[1] + (b ? '' : ''); })();
+    const swapped = await get('/api/v1/profiles', 'cv_admin_token=' + tampered);
+    ok('a body swapped onto a valid signature is refused', swapped.status === 401, 'HTTP ' + swapped.status);
 
     const page = await get('/', 'cv_admin_token=' + cvToken('manuelstagg'));
     ok('the app page itself loads inside the console (no login bounce)', page.status === 200, 'HTTP ' + page.status);

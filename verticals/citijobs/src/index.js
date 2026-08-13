@@ -15,6 +15,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const router = express.Router();
 
 const { sequelize, User } = require('./models');
@@ -93,12 +94,41 @@ const COOKIE_NAME = 'citijobs_token';
 const PUBLIC_EXACT = ['/login', '/health', '/favicon.svg'];
 const PUBLIC_ASSET = /\.(png|svg|css|js|woff2?|ico)$/i;
 
+/**
+ * Verify a CV console cookie.
+ *
+ * THE CONSOLE DOES NOT ISSUE JWTs. src/routes/cv-engine.js signs its own
+ * `base64url(JSON).hmac-sha256` token with `exp` in EPOCH MILLISECONDS. Reading
+ * it as a JWT parses nothing and rejects every real session — which is exactly
+ * what shipped once, because the test minted the token the same wrong way the
+ * verifier read it and so agreed with the bug. The SIT now mints it the way the
+ * console actually does and asserts a JWT is refused.
+ */
+function verifyCvAdminToken(raw) {
+  try {
+    const parts = String(raw || '').split('.');
+    if (parts.length !== 2) return null;         // a JWT has three; refuse it
+    const [body, mac] = parts;
+    if (!body || !mac) return null;
+    const expected = crypto.createHmac('sha256', CV_ADMIN_SECRET).update(body).digest('base64url');
+    const a = Buffer.from(mac);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length) return null;      // timingSafeEqual throws on a length mismatch
+    if (!crypto.timingSafeEqual(a, b)) return null;
+    const p = JSON.parse(Buffer.from(body, 'base64url').toString());
+    if (!p || typeof p.exp !== 'number' || p.exp < Date.now()) return null;
+    return p;
+  } catch (e) {
+    return null;
+  }
+}
+
 /** Accept a CV-admin console session for an allowlisted profile. */
 async function trySsoFromCvAdmin(req, res) {
   const raw = getCookie(req, 'cv_admin_token');
   if (!raw) return null;
-  let payload;
-  try { payload = jwt.verify(raw, CV_ADMIN_SECRET); } catch (e) { return null; }
+  const payload = verifyCvAdminToken(raw);
+  if (!payload) return null;
   const slug = String((payload && payload.slug) || '').toLowerCase();
   if (!slug || !SSO_SLUGS.includes(slug)) return null;
 
