@@ -342,15 +342,41 @@
     return d;
   }
 
+  // Orden fijo del acompañamiento de Maya (espejo del BUCKET_FLOW del backend). Antes
+  // del puntaje, Maya solo guía el cuestionario; después llena los buckets EN ORDEN,
+  // empezando por ingresos y saltándose lo que ya tenga datos.
+  var BUCKET_FLOW = [
+    { k: 'ingreso', label: 'ingresos', q: 'Empecemos por tus ingresos: ¿cuánto recibes al mes en total?' },
+    { k: 'gasto', label: 'gastos', q: 'Sigamos con tus gastos: ¿en qué se te va la plata cada mes?' },
+    { k: 'ahorro', label: 'ahorro', q: 'Ahora tu ahorro: ¿tienes algo guardado hoy, aunque sea poco?' },
+    { k: 'deuda', label: 'deudas', q: 'Hablemos de deudas: ¿tienes alguna hoy, como tarjeta o crédito?' },
+    { k: 'inversion', label: 'inversiones', q: 'Pasemos a inversiones: ¿tienes alguna, como un CDT, acciones o una finca?' },
+    { k: 'seguros', label: 'seguros', q: 'Ahora los seguros: ¿tienes alguna póliza activa, de salud, vida o carro?' },
+    { k: 'retiro', label: 'retiro', q: 'Casi terminamos: ¿aportas a pensión o a un fondo para tu retiro?' },
+    { k: 'meta', label: 'metas', q: 'Por último, tu meta: ¿cuál es tu objetivo financiero más importante hoy?' }
+  ];
+  function flowState(p) {
+    var onboarded = !p.sin_diagnostico && (p.puntaje_inicial_onboarding != null || p.planea_score != null);
+    var filled = Object.prototype.toString.call(p.modulos_con_datos) === '[object Array]' ? p.modulos_con_datos : [];
+    var hasMeta = !!(p.metas && p.metas.length);
+    var pending = BUCKET_FLOW.filter(function (b) { return b.k === 'meta' ? !hasMeta : filled.indexOf(b.k) < 0; });
+    return { onboarded: onboarded, next: pending[0] || null, allDone: onboarded && pending.length === 0 };
+  }
+  function openingLine(p, comoHablar) {
+    var nom = p.nombre ? ' ' + p.nombre : '';
+    var st = flowState(p);
+    if (!st.onboarded) {
+      return 'Hola' + nom + ', soy Maya, tu asistente. Antes de todo, terminemos tu cuestionario Mi Puntaje para conocer tu punto de partida. Cuando lo completes, te ayudo a registrar el resto, paso a paso. ' + comoHablar;
+    }
+    if (st.allDone) {
+      return 'Hola' + nom + ', soy Maya. Ya tienes tu foto financiera completa. ¿Quieres actualizar algún dato o revisar tu Salud Financiera? ' + comoHablar;
+    }
+    return 'Hola' + nom + ', soy Maya, tu asistente. Ya con tu puntaje listo, vamos llenando tu foto financiera paso a paso. ' + st.next.q + ' ' + comoHablar;
+  }
   function greet() {
     if (els.body.childElementCount === 0) {
-      var p = profile();
-      var nom = p.nombre ? ' ' + p.nombre : '';
       var comoHablar = VOICE_ENABLED ? 'Escríbeme o toca el micrófono y hablamos.' : 'Escríbeme por aquí.';
-      var msg = p.sin_diagnostico
-        ? 'Hola' + nom + ', soy Maya, tu asistente. Te ayudo a registrar tu información: ingresos, gastos, ahorros, deudas, inversiones, seguros y retiro. Empecemos por lo más fácil: ¿cuánto ganas al mes? ' + comoHablar
-        : 'Hola' + nom + ', soy Maya, tu asistente. Te ayudo a mantener tu información al día. ¿Qué quieres registrar hoy: un ingreso, un gasto, un ahorro o una deuda? ' + comoHablar;
-      addMsg('maya', msg);
+      addMsg('maya', openingLine(profile(), comoHablar));
     }
   }
 
@@ -378,6 +404,19 @@
     return Promise.all(jobs).then(function (done) {
       var txt = done.map(function (a) { return a.nombre + ' ' + copMx(a.monto) + ' en ' + (MOD_LABEL[a.modulo] || a.modulo); }).join('; ');
       addMsg('maya', 'Registrado: ' + txt + '. Ya quedó guardado en tu cuenta.');
+      // Avanza el acompañamiento EN VIVO: marca el bucket como lleno en el perfil que
+      // se envía a Maya cada turno, para que no vuelva a pedir lo ya registrado y siga
+      // al siguiente en orden. (El backend es la fuente de verdad; esto solo adelanta
+      // el estado dentro de la conversación.)
+      try {
+        var pr = window.PLANEA_PROFILE; if (pr) {
+          if (!Array.isArray(pr.modulos_con_datos)) pr.modulos_con_datos = [];
+          done.forEach(function (a) {
+            if (a.modulo === 'meta') { pr.metas = pr.metas || []; pr.metas.push({ nombre: a.nombre, objetivo_cop: a.objetivo || a.monto }); }
+            else if (pr.modulos_con_datos.indexOf(a.modulo) < 0) pr.modulos_con_datos.push(a.modulo);
+          });
+        }
+      } catch (e) {}
       if (window.PlaneaData && typeof window.PlaneaData.reload === 'function') window.PlaneaData.reload();
     }).catch(function () {
       addMsg('maya', 'No pude guardar ese dato. Inicia sesión e inténtalo de nuevo.');
@@ -586,7 +625,7 @@
     if (!els.panel.classList.contains('abierto')) open();
     handsFree = true; hfEmpty = 0; updateHF(); unlockAudio();
     if (els.sug) els.sug.style.display = 'none';
-    var g = 'Hola ' + (profile().nombre || '') + '. Soy Maya, tu asistente. Cuéntame qué dato quieres registrar: un ingreso, un gasto, un ahorro o una deuda.';
+    var g = openingLine(profile(), VOICE_ENABLED ? 'Cuéntame por voz cuando quieras.' : '');
     addMsg('maya', g); history.push({ role: 'assistant', content: g });
     hfSpeakThenListen(g);
   }
