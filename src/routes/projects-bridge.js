@@ -21,6 +21,32 @@ const emailReconcile = require('../services/emailReconcile');
 // in routes/elevenlabs-tools.js (Lina's Projects-calendar carve-out).
 const D2AI_CLIENT_ID = 15;
 
+/**
+ * EVERY DATA ROUTE HERE IS GATED. Only /version is public.
+ *
+ * The email routes carried this from the start; the calls, messages, follow-ups
+ * and Neural routes did not, and a live check found
+ * GET /api/projects-bridge/messages answering ANYONE on the internet with 40
+ * inbound messages — customer phone numbers and message bodies — plus POST and
+ * DELETE routes that let a stranger mark them read or drop a follow-up.
+ *
+ * Being hard-scoped to client 15 was never authentication. It only ever meant
+ * that whoever asked got client 15's data.
+ */
+function requireClient15(req, res, next) {
+  try {
+    const h = req.headers.authorization || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : (req.query.token || '');
+    if (!token) return res.status(401).json({ success: false, error: 'auth required' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+    const cid = parseInt(decoded.clientId || decoded.client_id, 10);
+    if (cid !== D2AI_CLIENT_ID) return res.status(403).json({ success: false, error: 'forbidden' });
+    next();
+  } catch (e) {
+    return res.status(401).json({ success: false, error: 'invalid token' });
+  }
+}
+
 // Deploy marker — returns the live git commit (Render sets RENDER_GIT_COMMIT),
 // so we can confirm which build is actually serving.
 router.get('/version', (req, res) => {
@@ -58,7 +84,7 @@ async function ensureFlagsTable() {
  *   - follow_ups_pending : leads in lead_tracker not yet marked in lead_followups
  *   - unread_messages    : incoming messages/voicemails not yet marked read
  */
-router.get('/call-stats', async (req, res) => {
+router.get('/call-stats', requireClient15, async (req, res) => {
   try {
     const [callsRow] = await sequelize.query(
       `SELECT COUNT(*)::int AS n
@@ -104,7 +130,7 @@ router.get('/call-stats', async (req, res) => {
  * The actual recent leads (last 7 days, not yet followed up) behind the
  * "Calls To Follow Up" KPI — phone, date, type, and Lina's call summary.
  */
-router.get('/follow-ups', async (req, res) => {
+router.get('/follow-ups', requireClient15, async (req, res) => {
   try {
     const leads = await sequelize.query(
       `SELECT lt.conversation_id, lt.lead_date, lt.lead_type, lt.subcategory,
@@ -129,7 +155,7 @@ router.get('/follow-ups', async (req, res) => {
  * POST /api/projects-bridge/follow-ups/:conversationId/done
  * Mark a lead as followed up (drops it from the worklist + KPI).
  */
-router.post('/follow-ups/:conversationId/done', async (req, res) => {
+router.post('/follow-ups/:conversationId/done', requireClient15, async (req, res) => {
   try {
     const convId = req.params.conversationId;
     const [lead] = await sequelize.query(
@@ -155,7 +181,7 @@ router.post('/follow-ups/:conversationId/done', async (req, res) => {
  * Remove a lead from the follow-up worklist entirely (not a lead / dismiss).
  * Drops the lead_tracker row; the underlying call still exists in Messages.
  */
-router.delete('/follow-ups/:conversationId', async (req, res) => {
+router.delete('/follow-ups/:conversationId', requireClient15, async (req, res) => {
   try {
     await sequelize.query(
       `DELETE FROM lead_tracker WHERE client_id = $1 AND conversation_id = $2`,
@@ -176,7 +202,7 @@ router.delete('/follow-ups/:conversationId', async (req, res) => {
  * where the `read` flag lives, so every item is markable. Powers the embedded
  * Messages view at /projects-messages.html.
  */
-router.get('/messages', async (req, res) => {
+router.get('/messages', requireClient15, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 40, 100);
     const followupsOnly = req.query.mode === 'followups';
@@ -216,7 +242,7 @@ router.get('/messages', async (req, res) => {
  * POST /api/projects-bridge/messages/:id/read
  * Mark one inbound message (client 15) as read.
  */
-router.post('/messages/:id/read', async (req, res) => {
+router.post('/messages/:id/read', requireClient15, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (!id) return res.json({ success: false, error: 'invalid id' });
@@ -235,7 +261,7 @@ router.post('/messages/:id/read', async (req, res) => {
  * POST /api/projects-bridge/messages/:id/flag  — flag a call/message for follow-up
  * DELETE /api/projects-bridge/messages/:id/flag — unflag it
  */
-router.post('/messages/:id/flag', async (req, res) => {
+router.post('/messages/:id/flag', requireClient15, async (req, res) => {
   try {
     await ensureFlagsTable();
     const id = parseInt(req.params.id, 10);
@@ -251,7 +277,7 @@ router.post('/messages/:id/flag', async (req, res) => {
   }
 });
 
-router.delete('/messages/:id/flag', async (req, res) => {
+router.delete('/messages/:id/flag', requireClient15, async (req, res) => {
   try {
     await ensureFlagsTable();
     const id = parseInt(req.params.id, 10);
@@ -270,7 +296,7 @@ router.delete('/messages/:id/flag', async (req, res) => {
  * POST /api/projects-bridge/messages/read-all
  * Mark every inbound message (client 15) as read.
  */
-router.post('/messages/read-all', async (req, res) => {
+router.post('/messages/read-all', requireClient15, async (req, res) => {
   try {
     await sequelize.query(
       `UPDATE messages SET read = true WHERE client_id = $1 AND direction = 'incoming' AND read = false`,
@@ -289,7 +315,7 @@ router.post('/messages/read-all', async (req, res) => {
  * Proxies the main CRM's /api/neural/dashboard/15 server-side so the admin key
  * is never exposed to the browser.
  */
-router.get('/neural', async (req, res) => {
+router.get('/neural', requireClient15, async (req, res) => {
   try {
     const port = process.env.PORT || 10000;
     const key = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
@@ -309,21 +335,8 @@ router.get('/neural', async (req, res) => {
 });
 
 // =====================================================
-// EMAIL RECONCILIATION (client 15) — JWT-gated; inbox content is sensitive.
+// EMAIL RECONCILIATION (client 15) — all JWT-gated; inbox content is sensitive.
 // =====================================================
-function requireClient15(req, res, next) {
-  try {
-    const h = req.headers.authorization || '';
-    const token = h.startsWith('Bearer ') ? h.slice(7) : (req.query.token || '');
-    if (!token) return res.status(401).json({ success: false, error: 'auth required' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
-    const cid = parseInt(decoded.clientId || decoded.client_id, 10);
-    if (cid !== D2AI_CLIENT_ID) return res.status(403).json({ success: false, error: 'forbidden' });
-    next();
-  } catch (e) {
-    return res.status(401).json({ success: false, error: 'invalid token' });
-  }
-}
 
 // Unread totals + per-account breakdown (for the Email badge/card).
 router.get('/email-stats', requireClient15, async (req, res) => {

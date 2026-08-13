@@ -6,6 +6,16 @@
 const BASE = '/projects';
 const API = `${BASE}/api/v1`;
 let TOKEN = localStorage.getItem('d2ai_token') || '';
+
+// THE BRIDGE IS JWT-GATED. It validates a CRM token with clientId 15 — which is
+// localStorage['token'], the mirrored CRM JWT, not the Hub's own d2ai_token.
+// Same fallback fetchLinaExtras() already proved works.
+function bridgeToken() {
+  try { return (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : (localStorage.getItem('token') || ''); }
+  catch (e) { return ''; }
+}
+function bridgeHeaders() { return { Authorization: 'Bearer ' + bridgeToken() }; }
+
 let USER = JSON.parse(localStorage.getItem('d2ai_user') || 'null');
 let VERTICALS = [];
 let currentView = 'overview';
@@ -154,7 +164,7 @@ function setMessagesBadge(unread) {
 
 async function refreshMessagesBadge() {
   try {
-    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`);
+    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`, { headers: bridgeHeaders() });
     const d = await res.json();
     setMessagesBadge(d.unread_messages ?? 0);
   } catch (e) { /* silent */ }
@@ -1150,7 +1160,7 @@ async function loadNeuralKpis() {
   const panel = document.getElementById('neural-kpi-panel');
   if (!panel) return;
   try {
-    const res = await fetch(`${location.origin}/api/projects-bridge/neural`);
+    const res = await fetch(`${location.origin}/api/projects-bridge/neural`, { headers: bridgeHeaders() });
     const d = await res.json();
     if (!d || !d.success) { panel.style.display = 'none'; return; }
 
@@ -1197,7 +1207,7 @@ async function loadNeuralKpis() {
 // Fills: #kpi-calls-today, #kpi-followups, and the Messages quick-action badge.
 async function loadCrmCallStats() {
   try {
-    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`);
+    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`, { headers: bridgeHeaders() });
     const d = await res.json();
     const callsEl = document.getElementById('kpi-calls-today');
     const followEl = document.getElementById('kpi-followups');

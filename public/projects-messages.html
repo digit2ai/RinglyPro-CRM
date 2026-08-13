@@ -163,7 +163,7 @@
       if (!id) return;
       item.classList.add('read');                 // optimistic — CSS swaps button → "Read"
       try {
-        await fetch(`${ORIGIN}/api/projects-bridge/messages/${encodeURIComponent(id)}/read`, { method: 'POST' });
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/${encodeURIComponent(id)}/read`, { method: 'POST', headers: authHeaders() });
       } catch (e) { /* keep optimistic state */ }
       notifyParent();
     }
@@ -171,16 +171,23 @@
     async function markAllRead() {
       document.querySelectorAll('.item:not(.read)').forEach(el => el.classList.add('read'));
       try {
-        await fetch(`${ORIGIN}/api/projects-bridge/messages/read-all`, { method: 'POST' });
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/read-all`, { method: 'POST', headers: authHeaders() });
       } catch (e) {}
       notifyParent();
     }
+
+    // The bridge is JWT-gated (it was not, and was serving customer phone
+    // numbers and message bodies to anyone). Same helper the emails view uses;
+    // the Hub mirrors its JWT to localStorage['token'] and this page is
+    // same-origin, so the iframe can read it.
+    function token() { return localStorage.getItem('token') || localStorage.getItem('d2ai_token') || ''; }
+    function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
 
     async function load() {
       const list = document.getElementById('list');
       list.innerHTML = '<div class="spinner"></div>';
       try {
-        const res = await fetch(`${ORIGIN}/api/projects-bridge/messages?limit=60${FOLLOWUPS ? '&mode=followups' : ''}`);
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/messages?limit=60${FOLLOWUPS ? '&mode=followups' : ''}`, { headers: authHeaders() });
         const data = await res.json();
         if (!data.success) {
           list.innerHTML = `<div class="err">Could not load messages: ${esc(data.error || 'unknown error')}</div>`;
@@ -237,7 +244,7 @@
       if (!id) return;
       if (btn) btn.disabled = true;
       try {
-        await fetch(`${ORIGIN}/api/projects-bridge/messages/${id}/flag`, { method: isFlagged ? 'DELETE' : 'POST' });
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/${id}/flag`, { method: isFlagged ? 'DELETE' : 'POST', headers: authHeaders() });
       } catch (e) { /* optimistic */ }
       notifyParent();   // refresh the "Calls To Follow Up" KPI on Home
       load();           // re-render with fresh flag state
