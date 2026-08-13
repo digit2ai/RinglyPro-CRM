@@ -140,8 +140,8 @@
 <script>
 var API = '/citi-tracker/api/v1';
 var state = { profile: null, profiles: [], status: '', skillKind: '' };
-var STATUSES = ['new','saved','applied','interview','offer','closed'];
-var CLOSE_REASONS = ['rejected','withdrawn','filled','expired','not_interested'];
+var STATUSES = ['new','saved','applied','screening','interview','offer','closed'];
+var CLOSE_REASONS = ['rejected','withdrawn','filled','expired','not_interested','unspecified'];
 
 function toast(m, ms) {
   var t = document.getElementById('toast');

@@ -105,8 +105,13 @@ const Req = sequelize.define('CjReq', {
 
 // ─── cj_tracked ──────────────────────────────────────────────────────────────
 // The per-profile board.
-const STATUSES = ['new', 'saved', 'applied', 'interview', 'offer', 'closed'];
-const CLOSE_REASONS = ['rejected', 'withdrawn', 'filled', 'expired', 'not_interested'];
+// Deliberately the SAME vocabulary as the CV console's pipeline (cv-engine
+// STAGES), because the two are now one board seen through two windows.
+// 'interview' maps to the console's 'interviewing'; everything else is 1:1.
+const STATUSES = ['new', 'saved', 'applied', 'screening', 'interview', 'offer', 'closed'];
+// 'unspecified' exists so a close performed from the pipeline — which has no
+// reason picker — records that no reason was given, rather than inventing one.
+const CLOSE_REASONS = ['rejected', 'withdrawn', 'filled', 'expired', 'not_interested', 'unspecified'];
 
 const Tracked = sequelize.define('CjTracked', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

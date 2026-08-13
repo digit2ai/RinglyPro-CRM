@@ -80,6 +80,34 @@ init().catch((e) => {
   console.error('[citijobs] init failed:', e.message);
 });
 
+// ── Host lock ────────────────────────────────────────────────────────────────
+// The tracker is reachable ONLY on the CV console's own domain. On
+// aiagent.ringlypro.com — where the rest of the CRM lives and where the URL
+// could be guessed — it does not exist at all.
+//
+// It answers 404, not 403: a 403 confirms there is something here worth
+// finding. /health stays open on every host so deploy verification and uptime
+// monitoring keep working; it exposes service state, never a requisition.
+//
+// Loopback is allowed only outside production, so the SIT can drive the router
+// on 127.0.0.1 without opening a hole on the live origin.
+const ALLOWED_HOSTS = String(process.env.CITIJOBS_ALLOWED_HOSTS || 'manuelstagg.com,www.manuelstagg.com')
+  .split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+const LOOPBACK = ['localhost', '127.0.0.1', '[::1]'];
+
+function hostAllowed(req) {
+  const host = String(req.headers.host || '').toLowerCase().split(':')[0];
+  if (ALLOWED_HOSTS.includes(host)) return true;
+  if (process.env.NODE_ENV !== 'production' && LOOPBACK.includes(host)) return true;
+  return false;
+}
+
+router.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  if (hostAllowed(req)) return next();
+  return res.status(404).json({ error: 'Not found' });
+});
+
 // ── Body parsing (scoped to this router) ─────────────────────────────────────
 router.use(express.json({ limit: '1mb' }));
 router.use(express.urlencoded({ extended: true }));

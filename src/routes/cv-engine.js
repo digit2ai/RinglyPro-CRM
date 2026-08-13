@@ -602,11 +602,127 @@ router.get('/jobs/matches', async (req, res) => {
 
 // Save / dismiss / mark-applied a match, and move it through the pipeline.
 const STAGES = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
+
+// ── Citi Opportunity Tracker rows in this pipeline ───────────────────────────
+// The tracker (verticals/citijobs, /citi-tracker) keeps its own board of Citi
+// requisitions. Rather than COPYING those rows into cv_job_matches — which
+// would immediately drift the moment either side changed a status — the
+// pipeline READS them live and writes straight back. One board, two windows.
+//
+// Both modules already share CRM_DATABASE_URL, so this is a join, not a sync.
+// The stage vocabularies were deliberately aligned; only 'interview' differs,
+// which the console spells 'interviewing'.
+const CITI_PROFILE_BY_CV_SLUG = (() => {
+  const raw = process.env.CITIJOBS_CV_PROFILE_MAP || 'manuelstagg:manuel-stagg';
+  const out = {};
+  raw.split(',').forEach((pair) => {
+    const [cv, cj] = pair.split(':').map((x) => (x || '').trim().toLowerCase());
+    if (cv && cj) out[cv] = cj;
+  });
+  return out;
+})();
+const CITI_STAGE_FROM_STATUS = { saved: 'saved', applied: 'applied', screening: 'screening',
+  interview: 'interviewing', offer: 'offer', closed: 'closed' };
+const CITI_STATUS_FROM_STAGE = { saved: 'saved', applied: 'applied', screening: 'screening',
+  interviewing: 'interview', offer: 'offer', closed: 'closed', new: 'new' };
+
+/** Live Citi rows for this profile, shaped exactly like a pipeline row. */
+async function citiPipelineRows(profile) {
+  const cjSlug = CITI_PROFILE_BY_CV_SLUG[String(profile.slug || '').toLowerCase()];
+  if (!cjSlug || !sequelize) return [];
+  try {
+    const rows = await sequelize.query(
+      `SELECT t.id, t.status, t.status_changed_at, t.next_action, t.next_action_due, t.notes,
+              t.status_reason, r.req_id, r.title, r.location, r.url_workday, r.close_date,
+              r.salary_min_cents, r.salary_max_cents, r.salary_source, m.score
+         FROM cj_tracked t
+         JOIN cj_profiles p ON p.id = t.profile_id
+         LEFT JOIN cj_reqs r ON r.tenant_id = t.tenant_id AND r.req_id = t.req_id
+         LEFT JOIN cj_matches m ON m.profile_id = t.profile_id AND m.req_id = t.req_id
+        WHERE lower(p.slug) = :cjslug AND t.archived = false AND t.status <> 'new'
+        ORDER BY t.status_changed_at DESC NULLS LAST LIMIT 300`,
+      { replacements: { cjslug: cjSlug }, type: QueryTypes.SELECT });
+    return rows.map((r) => ({
+      id: 'citi:' + r.id,
+      score: r.score == null ? null : Number(r.score),
+      stage: CITI_STAGE_FROM_STATUS[r.status] || r.status,
+      stage_at: r.status_changed_at,
+      status: r.status,
+      status_reason: r.status_reason,
+      next_action: r.next_action,
+      next_action_at: r.next_action_due,
+      target_employer: true,
+      company: 'Citi',
+      title: r.title || ('Requisition ' + r.req_id),
+      location: r.location,
+      url: r.url_workday,
+      outreach_count: 0,
+      outreach_status: null,
+      source: 'citi',
+      req_id: r.req_id,
+      close_date: r.close_date,
+      // Compensation is shown only when the posting stated it — same rule the
+      // tracker enforces. Never estimated here either.
+      salary_min_cents: r.salary_source === 'stated' && r.salary_min_cents != null ? Number(r.salary_min_cents) : null,
+      salary_max_cents: r.salary_source === 'stated' && r.salary_max_cents != null ? Number(r.salary_max_cents) : null
+    }));
+  } catch (e) {
+    // The tracker's tables may not exist in every environment. A missing
+    // tracker must never take the whole pipeline down.
+    console.warn('[cv-engine] citi pipeline rows unavailable:', e.message);
+    return [];
+  }
+}
+
+/** Move a Citi requisition through the board from the console's pipeline. */
+async function citiSetStage(profile, trackedId, stage, extra) {
+  const cjSlug = CITI_PROFILE_BY_CV_SLUG[String(profile.slug || '').toLowerCase()];
+  if (!cjSlug) return { ok: false, error: 'not found' };
+  const status = CITI_STATUS_FROM_STAGE[stage];
+  if (!status) return { ok: false, error: 'bad stage' };
+  // Closing from the pipeline records 'unspecified' rather than inventing a
+  // reason; the tracker's own board is where a real one gets chosen.
+  const reason = status === 'closed' ? 'unspecified' : null;
+
+  // Ownership is checked first and the UPDATE is plain. An UPDATE ... FROM with
+  // the target aliased and a parameter reused inside a CASE is where this broke.
+  const owned = await sequelize.query(
+    `SELECT t.id FROM cj_tracked t JOIN cj_profiles p ON p.id = t.profile_id
+      WHERE t.id = :id AND lower(p.slug) = :cjslug`,
+    { replacements: { id: trackedId, cjslug: cjSlug }, type: QueryTypes.SELECT });
+  if (!owned.length) return { ok: false, error: 'not found' };
+
+  await sequelize.query(
+    `UPDATE cj_tracked SET status = :status, status_reason = :reason, status_changed_at = now(),
+            applied_at = COALESCE(applied_at, CAST(:appliedAt AS TIMESTAMPTZ)),
+            next_action = COALESCE(:na, next_action),
+            next_action_due = COALESCE(CAST(:naa AS DATE), next_action_due)
+      WHERE id = :id`,
+    { replacements: {
+        id: trackedId, status, reason,
+        appliedAt: status === 'applied' ? new Date().toISOString() : null,
+        na: extra && extra.next_action !== undefined ? String(extra.next_action).slice(0, 400) : null,
+        naa: extra && extra.next_action_at ? String(extra.next_action_at).slice(0, 10) : null },
+      type: QueryTypes.UPDATE });
+  return { ok: true };
+}
+
 router.patch('/jobs/matches/:id', async (req, res) => {
   const p = await auth(req, res); if (!p) return;
   const b = req.body || {};
   const st = b.status !== undefined ? String(b.status).toLowerCase() : null;
   const stage = b.stage !== undefined ? String(b.stage).toLowerCase() : null;
+
+  // A Citi row lives in the tracker, not in cv_job_matches. Writing back there
+  // is what keeps the two windows showing the same board.
+  const citiId = /^citi:(\d+)$/.exec(String(req.params.id || ''));
+  if (citiId) {
+    if (!stage) return res.status(400).json({ error: 'stage required for a Citi requisition' });
+    if (!STAGES.includes(stage)) return res.status(400).json({ error: 'bad stage' });
+    const r = await citiSetStage(p, parseInt(citiId[1], 10), stage, b);
+    if (!r.ok) return res.status(r.error === 'bad stage' ? 400 : 404).json({ error: r.error });
+    return res.json({ ok: true, source: 'citi' });
+  }
   if (st && !['new', 'saved', 'dismissed', 'applied'].includes(st)) return res.status(400).json({ error: 'bad status' });
   if (stage && !STAGES.includes(stage)) return res.status(400).json({ error: 'bad stage' });
   if (!st && !stage && b.next_action === undefined && b.next_action_at === undefined) return res.status(400).json({ error: 'nothing to update' });
@@ -856,9 +972,12 @@ router.get('/pipeline', async (req, res) => {
       WHERE m.profile_id=:pid AND m.status<>'dismissed' AND m.stage IS NOT NULL AND m.stage<>'new'
       ORDER BY m.stage_at DESC NULLS LAST LIMIT 300`,
     { replacements: { pid: p.id }, type: QueryTypes.SELECT });
+  const citi = await citiPipelineRows(p);
+  const all = rows.map((r) => Object.assign({ source: 'cv' }, r)).concat(citi)
+    .sort((a, b2) => new Date(b2.stage_at || 0) - new Date(a.stage_at || 0));
   const byStage = {}; STAGES.forEach((s) => { byStage[s] = []; });
-  rows.forEach((r) => { (byStage[r.stage] || (byStage[r.stage] = [])).push(r); });
-  res.json({ stages: STAGES, by_stage: byStage, total: rows.length });
+  all.forEach((r) => { (byStage[r.stage] || (byStage[r.stage] = [])).push(r); });
+  res.json({ stages: STAGES, by_stage: byStage, total: all.length, citi_count: citi.length });
 });
 
 // The morning read: what is new, what is due, what needs a decision. Drafted and shown here —
@@ -1058,3 +1177,6 @@ router.get('/entity/dossier', async (req, res) => {
 
 router.get('/health', (req, res) => res.json({ ok: true, ready, job_sources: jobsource.SOURCES.length, adzuna: jobsource.adzunaActive() }));
 module.exports = router;
+// Exposed for the Citi tracker's SIT so the pipeline bridge is tested as the
+// real functions rather than as a hand-copied SQL string that can drift.
+module.exports._citi = { citiPipelineRows, citiSetStage, CITI_STAGE_FROM_STATUS, CITI_STATUS_FROM_STAGE, CITI_PROFILE_BY_CV_SLUG };

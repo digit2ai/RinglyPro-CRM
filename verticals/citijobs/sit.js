@@ -424,6 +424,87 @@ async function cleanup() {
   ok('seeded verified skills carry evidence', seed.SEED_VERIFIED.every((s) => s[1] && s[1].length > 5));
   ok('seeded searches are many and targeted, not one firehose', seed.SEED_QUERIES.length >= 6);
 
+  section('19b. Host lock — the tracker exists only on the console\'s domain');
+  {
+    const express = require('express');
+    const app = express();
+    app.use('/citi-tracker', require('./src/index'));
+    const server = await new Promise((r) => { const s2 = app.listen(0, () => r(s2)); });
+    const port = server.address().port;
+    // fetch() silently DROPS a Host header (it is a forbidden header name), so
+    // a host-lock test written with fetch always passes against the wrong host.
+    const http = require('http');
+    const hit = (p_, host) => new Promise((resolve, reject) => {
+      const rq = http.request({ host: '127.0.0.1', port, path: '/citi-tracker' + p_, method: 'GET',
+        headers: host ? { Host: host } : {} }, (rs) => {
+        rs.resume();
+        rs.on('end', () => resolve({ status: rs.statusCode }));
+      });
+      rq.on('error', reject);
+      rq.end();
+    });
+
+    const wrong = await hit('/', 'aiagent.ringlypro.com');
+    ok('the CRM host does not serve the tracker at all', wrong.status === 404, 'HTTP ' + wrong.status);
+    ok('...and answers 404, not 403 (a 403 confirms there is something here)', wrong.status !== 403);
+    const wrongApi = await hit('/api/v1/board', 'aiagent.ringlypro.com');
+    ok('the API is gone on that host too', wrongApi.status === 404);
+
+    const right = await hit('/', 'manuelstagg.com');
+    ok('the console domain still reaches it', right.status !== 404, 'HTTP ' + right.status);
+    const health = await hit('/health', 'aiagent.ringlypro.com');
+    ok('health stays reachable everywhere for monitoring', health.status === 200);
+
+    await new Promise((r) => server.close(r));
+  }
+
+  section('19c. Citi requisitions in the console pipeline (one board, two windows)');
+  {
+    const cv = require('../../src/routes/cv-engine');
+    const bridge = cv._citi;
+    ok('the pipeline bridge is wired', !!bridge && typeof bridge.citiPipelineRows === 'function');
+    ok('interview maps to the console\'s "interviewing"', bridge.CITI_STAGE_FROM_STATUS.interview === 'interviewing');
+    ok('...and back again', bridge.CITI_STATUS_FROM_STAGE.interviewing === 'interview');
+    ok('every other stage is 1:1', ['saved', 'applied', 'screening', 'offer', 'closed']
+      .every((x) => bridge.CITI_STAGE_FROM_STATUS[x] === x));
+
+    const cvProfile = { id: 999, slug: 'sit-cv-' + profileA.id };
+    bridge.CITI_PROFILE_BY_CV_SLUG[cvProfile.slug] = profileA.slug;
+
+    const tr2 = await Tracked.findOne({ where: { tenant_id: tenant, profile_id: profileA.id, req_id: '26974948' } });
+    tr2.status = 'new'; tr2.status_reason = null; await tr2.save();
+    let rows = await bridge.citiPipelineRows(cvProfile);
+    ok('a NEW requisition is not in the pipeline yet', !rows.some((r) => r.req_id === '26974948'));
+
+    tr2.status = 'saved'; tr2.status_changed_at = new Date(); await tr2.save();
+    rows = await bridge.citiPipelineRows(cvProfile);
+    const row = rows.find((r) => r.req_id === '26974948');
+    ok('setting it to SAVED puts it in the pipeline', !!row);
+    ok('...tagged as a Citi row', row && row.source === 'citi' && row.company === 'Citi');
+    ok('...carrying the requisition title and apply link', row && !!row.title && !!row.url);
+    ok('...and its match score', row && row.score != null);
+    ok('...with a compound id the console can route back', row && row.id === 'citi:' + tr2.id);
+    ok('salary shown only when the posting stated it', row && row.salary_min_cents === 14144000);
+
+    const moved = await bridge.citiSetStage(cvProfile, tr2.id, 'interviewing', {});
+    ok('the console can move it forward', moved.ok);
+    await tr2.reload();
+    ok('...and the tracker board is what actually changed', tr2.status === 'interview', tr2.status);
+
+    await bridge.citiSetStage(cvProfile, tr2.id, 'closed', {});
+    await tr2.reload();
+    ok('closing from the pipeline records a reason of "unspecified", not an invented one',
+      tr2.status === 'closed' && tr2.status_reason === 'unspecified');
+
+    const otherProfile = { id: 998, slug: 'sit-cv-nobody' };
+    const none = await bridge.citiPipelineRows(otherProfile);
+    ok('an unmapped CV profile sees no Citi rows', none.length === 0);
+    const refused = await bridge.citiSetStage(otherProfile, tr2.id, 'saved', {});
+    ok('...and cannot move one either', refused.ok === false);
+
+    tr2.status = 'saved'; tr2.status_reason = null; await tr2.save();
+  }
+
   section('20. Single sign-on from the CV admin console');
   {
     const express = require('express');
