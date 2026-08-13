@@ -127,6 +127,10 @@ router.get('/health', async (req, res) => {
                looks_truncated: Boolean(w) && (w.length < 24 || /[^A-Za-z0-9_]/.test(w)) };
     }()),
     stripe_probe: stripeProbe,
+    // Whether webhooks are ARRIVING and VERIFYING. A signing secret from the
+    // wrong endpoint is perfectly well formed and fails every signature; this
+    // is the only place that shows it.
+    stripe_webhooks: billing.webhookHealth(),
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
     admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',

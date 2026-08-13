@@ -131,10 +131,15 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       event = JSON.parse(raw.toString('utf8'));
     }
   } catch (e) {
+    // Record the rejection: this is the ONLY visible trace that a wrong-endpoint
+    // signing secret leaves behind.
+    billing.noteWebhook({ verified: false, error: e.message });
     return res.status(400).json({ error: 'signature verification failed: ' + e.message });
   }
   try {
     const r = await billing.applyEvent(event.type, event.data && event.data.object ? event.data.object : {});
+    billing.noteWebhook({ verified: true, type: event.type,
+      action: r && (r.action || (r.parked ? 'parked' : null)) });
     res.json(r);
   } catch (e) {
     res.status(500).json({ error: e.message });

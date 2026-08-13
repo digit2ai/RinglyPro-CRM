@@ -151,6 +151,53 @@ async function probe({ maxAgeMs = 60000 } = {}) {
   return result;
 }
 
+// ---- ARE WEBHOOKS ACTUALLY ARRIVING, AND DO THEY VERIFY? -------------------
+//
+// The one thing no amount of config inspection can answer. A signing secret
+// from the WRONG endpoint is perfectly well formed — right prefix, right
+// length, right character set — and fails every signature. Nothing visible
+// breaks: the account still activates through the build form, and only the
+// invoice row and the referral commission go missing, quietly.
+//
+// So the webhook route records what actually happened. Combined with Stripe's
+// "Send test event" button this turns "I hope the secret is right" into one
+// curl, before a real customer pays.
+const webhookLog = {
+  received: 0, verified: 0, rejected: 0,
+  last_at: null, last_type: null, last_verified: null, last_error: null, last_action: null,
+};
+/** Counters are owned here so a caller cannot corrupt them by passing undefined. */
+function noteWebhook({ verified, type = null, error = null, action = null } = {}) {
+  webhookLog.received += 1;
+  if (verified) webhookLog.verified += 1; else webhookLog.rejected += 1;
+  webhookLog.last_at = new Date().toISOString();
+  webhookLog.last_verified = Boolean(verified);
+  webhookLog.last_type = type;
+  webhookLog.last_error = error ? String(error).slice(0, 200) : null;
+  webhookLog.last_action = action;
+}
+function webhookHealth() {
+  const w = { ...webhookLog };
+  const secret = webhookSecret();
+  w.secret_present = Boolean(secret);
+  w.secret_shape_ok = Boolean(secret) && /^whsec_[A-Za-z0-9_-]{16,}$/.test(secret);
+  w.secret_from = process.env.JOBUP_STRIPE_WEBHOOK_SECRET
+    ? 'JOBUP_STRIPE_WEBHOOK_SECRET' : 'STRIPE_WEBHOOK_SECRET (shared)';
+  w.note = !w.secret_present
+    ? 'No signing secret — production refuses unverified webhooks, so nothing will ever activate.'
+    : !w.secret_shape_ok
+      ? 'This does not look like a signing secret. A Stripe webhook secret starts with whsec_ — '
+        + 'an API key (sk_live_/sk_test_) pasted here fails every signature, silently.'
+      : (webhookLog.received === 0
+        ? 'Well formed, but nothing has arrived yet. Send a test event from the Stripe dashboard '
+          + 'and check back — a secret from the WRONG endpoint looks identical to a right one.'
+        : (webhookLog.rejected > 0 && webhookLog.verified === 0
+          ? 'EVERY webhook has failed verification. The secret almost certainly belongs to a '
+            + 'different endpoint than the one Stripe is posting to.'
+          : null));
+  return w;
+}
+
 // A TEST-MODE CHECKOUT PRODUCES A REAL ROW AND A REAL INVOICE.
 //
 // Stripe test mode issues genuine invoice objects with genuine amounts; nothing
@@ -539,6 +586,7 @@ module.exports = {
   // Test-vs-live and WHICH account, so the webhook route cannot verify a
   // test-mode signature against the estate-wide live secret.
   secretKey, webhookSecret, mode, isTestMode, isolated, keyShape, probe,
+  noteWebhook, webhookHealth,
   TEST_ACTIVATION, NON_REVENUE_ACTIVATIONS, isNonRevenue, activationStamp,
   freeReason,
   disabled,

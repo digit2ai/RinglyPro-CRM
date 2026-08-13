@@ -4323,6 +4323,57 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the landing page must open and focus the paste box');
   });
 
+  await t('an API key pasted as the webhook secret is called out', () => {
+    const b = require(__dirname + '/src/services/billing');
+    const saved = process.env.JOBUP_STRIPE_WEBHOOK_SECRET;
+    try {
+      // The confusion is real and the failure is silent: sk_live_ here fails
+      // every signature, the account still activates through the build form,
+      // and only the invoice and the referral commission go missing.
+      process.env.JOBUP_STRIPE_WEBHOOK_SECRET = 'sk_live_' + 'a1B2c3D4e5'.repeat(10);
+      let w = b.webhookHealth();
+      assert.strictEqual(w.secret_present, true);
+      assert.strictEqual(w.secret_shape_ok, false, 'an API key is not a signing secret');
+      assert.ok(/whsec_/.test(w.note), 'and the note must say what one looks like');
+
+      process.env.JOBUP_STRIPE_WEBHOOK_SECRET = 'whsec_TT2EC2LchmudkTsIEDilwzujH43CWouG';
+      w = b.webhookHealth();
+      assert.strictEqual(w.secret_shape_ok, true);
+      assert.strictEqual(w.secret_from, 'JOBUP_STRIPE_WEBHOOK_SECRET');
+      // Well formed is NOT the same as correct — the note must keep saying so
+      // until something has actually arrived.
+      assert.ok(/nothing has arrived yet|WRONG endpoint/.test(w.note),
+        'shape can never prove the secret belongs to the right endpoint');
+
+      delete process.env.JOBUP_STRIPE_WEBHOOK_SECRET;
+      assert.strictEqual(b.webhookHealth().secret_from, 'STRIPE_WEBHOOK_SECRET (shared)');
+    } finally {
+      if (saved === undefined) delete process.env.JOBUP_STRIPE_WEBHOOK_SECRET;
+      else process.env.JOBUP_STRIPE_WEBHOOK_SECRET = saved;
+    }
+  });
+
+  await t('every webhook is counted, verified or rejected', () => {
+    const b = require(__dirname + '/src/services/billing');
+    const before = b.webhookHealth();
+    b.noteWebhook({ verified: false, error: 'No signatures found matching the expected signature' });
+    b.noteWebhook({ verified: true, type: 'invoice.paid', action: 'invoice_recorded' });
+    const after = b.webhookHealth();
+    assert.strictEqual(after.received, before.received + 2);
+    assert.strictEqual(after.rejected, before.rejected + 1);
+    assert.strictEqual(after.verified, before.verified + 1);
+    assert.strictEqual(after.last_type, 'invoice.paid');
+    assert.strictEqual(after.last_action, 'invoice_recorded');
+    // A rejection message must be recorded — it is the only trace a
+    // wrong-endpoint secret leaves anywhere.
+    b.noteWebhook({ verified: false, error: 'No signatures found matching the expected signature' });
+    assert.match(b.webhookHealth().last_error, /No signatures found/);
+    const fs = require('fs');
+    const route = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+    assert.ok(route.includes('noteWebhook({ verified: false'),
+      'the rejection path must record, not just return 400');
+  });
+
   section('invoice.paid must attribute, or the money is invisible');
 
   await t('STRIPE MOVED THE FIELD — invoice.paid resolves on the current shape', async () => {
