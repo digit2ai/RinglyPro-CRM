@@ -239,6 +239,20 @@ function targetingFrom(body) {
       open_to_relocation: b.open_to_relocation === true || b.open_to_relocation === 'true',
       min_score: b.min_score,
     },
+    // THE LISTING DECISION IS MADE HERE, AT BUILD TIME, OR IT IS NEVER MADE.
+    //
+    // Being listed in the public directory is the ONLY thing that puts a
+    // subscriber's site in a sitemap and gives it an inbound link — without it
+    // the site is an island no crawler has a route to. It is opt-in and stays
+    // opt-in; what changed is that the question is now ASKED while the account
+    // is being built instead of waiting on a dashboard toggle nobody found.
+    //
+    // Measured before this shipped: 4 of 5 active subscribers were unlisted,
+    // including the only paying one. That is not five people choosing privacy,
+    // that is a switch nobody was shown.
+    presence: {
+      directory_opt_in: b.directory_opt_in === true || b.directory_opt_in === 'true',
+    },
     // Owner-entered facts. Quoted verbatim in outreach or omitted — never
     // paraphrased, and private until the owner opts in.
     facts: {

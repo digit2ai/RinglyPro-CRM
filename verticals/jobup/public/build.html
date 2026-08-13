@@ -250,6 +250,27 @@ body.hasgo .wrap{padding-bottom:140px}
         they are quoted exactly as you typed them or omitted.</div>
     </div>
 
+    <!-- 4. Being found ---------------------------------------------------
+         Deliberately the LAST card and the only one framed as a question.
+         Nothing else on this page decides whether a crawler can reach the
+         site at all, so it does not belong buried among the targeting
+         fields. Default is off, exactly as it was; the change is that it
+         is now asked instead of waiting to be discovered. -->
+    <div class="card">
+      <h2>Should recruiters be able to find you?</h2>
+      <div class="sub">Your site works either way. This decides whether anything links to it.</div>
+
+      <label class="switch" for="dir" style="margin-top:14px">
+        <input id="dir" type="checkbox"><span>List me in the public JobUp directory</span></label>
+
+      <div class="priv">Listing you adds your page to the directory and to the sitemap search
+        engines read, which is how a page gets crawled at all. It publishes three things:
+        <strong>your name, the headline you wrote, and the role titles you want</strong>.
+        Never your email, phone, location, compensation or work authorization — those stay
+        private under the same switches as everything else. You can turn this off at any
+        time in your dashboard.</div>
+    </div>
+
     <div class="err" id="err"></div>
     <button class="btn go" id="go" type="submit" data-go="bottom">Build my account</button>
     <p class="note" id="footnote">You review and submit every application yourself. JobUp never applies on your behalf.</p>
@@ -421,6 +442,7 @@ $('f').addEventListener('submit',function(ev){
       seniority:$('seniority').value||null,
       min_score:$('minscore').value,
       open_to_relocation:$('reloc').checked,
+      directory_opt_in:$('dir').checked,
       work_authorization:$('auth').value.trim()||null,
       compensation_floor:$('comp').value.trim()||null,
       availability:$('avail').value.trim()||null,

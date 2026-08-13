@@ -5328,6 +5328,59 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     } finally { w.close(); }
   });
 
+  // THE LISTING QUESTION MUST BE ASKED, AND ITS ANSWER MUST TRAVEL.
+  //
+  // Being in the directory is the only thing that puts a subscriber in a
+  // sitemap, and it was a dashboard toggle nobody found: 4 of 5 active
+  // subscribers were unlisted, the paying one among them. It is now asked
+  // during the build. Two ways that silently reverts — the field stops being
+  // rendered, or it renders but is never put in the POST body — so this drives
+  // the real form and reads the real request.
+  await t('BUILD FORM: the directory question is asked, and the answer is sent', async () => {
+    const fs = require('fs');
+    const raw = fs.readFileSync(__dirname + '/public/build.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '');
+
+    async function submitWith(optIn) {
+      let body = null;
+      const w = bootDom(raw, 'https://jobup.dev/build?t=tok');
+      w.fetch = (url, init) => {
+        if (String(url).includes('build-account')) body = JSON.parse(init.body);
+        return new Promise(() => {});
+      };
+      try {
+        const dir = w.document.getElementById('dir');
+        assert.ok(dir, 'the listing question must be ON the build form, not only in the dashboard');
+        assert.strictEqual(dir.checked, false, 'it is opt-in: it must start OFF');
+        if (optIn) dir.checked = true;
+        w.document.getElementById('p1').value = 'a-very-long-password';
+        w.document.getElementById('p2').value = 'a-very-long-password';
+        click(w, w.document.getElementById('go3'));
+        assert.ok(body, 'the form must have posted');
+        return body;
+      } finally { w.close(); }
+    }
+
+    assert.strictEqual((await submitWith(false)).directory_opt_in, false,
+      'left alone it must send false — never omitted, or the server cannot tell '
+      + '"declined" from "never asked"');
+    assert.strictEqual((await submitWith(true)).directory_opt_in, true,
+      'ticked, it must reach the server');
+
+    // And the server must honour it rather than drop it on the floor.
+    const intake = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/presence:\s*\{[\s\S]{0,300}directory_opt_in/.test(intake),
+      'targetingFrom() must carry the answer into settings');
+    const on = settingsSvc.sanitize({ presence: { directory_opt_in: true } });
+    assert.strictEqual(on.presence.directory_opt_in, true, 'and sanitize must preserve a yes');
+    // Anything that is not an explicit yes stays a no, whatever shape it arrives in.
+    for (const bad of [undefined, null, 0, 'no', 'false', 1, 'yes']) {
+      assert.strictEqual(
+        settingsSvc.sanitize({ presence: { directory_opt_in: bad } }).presence.directory_opt_in,
+        false, 'opt-in means opt-in: ' + JSON.stringify(bad) + ' must not list somebody');
+    }
+  });
+
   section('the hamburger actually opens — behaviour, not grep');
 
   await t('PUBLIC SITE: tapping the hamburger opens the drawer', () => {
