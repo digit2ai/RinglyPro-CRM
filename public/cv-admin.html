@@ -121,6 +121,7 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     <div class="tabs">
       <button class="tab on" data-pane="overview"><i class="fas fa-chart-line"></i> Analytics</button>
       <button class="tab" data-pane="jobs"><i class="fas fa-briefcase"></i> Job Matches <span id="jobBadge" class="badge b-new" style="display:none"></span></button>
+      <button class="tab" data-pane="citi" id="citiTab" style="display:none"><i class="fas fa-building-columns"></i> Citi Jobs</button>
       <button class="tab" data-pane="opps"><i class="fas fa-inbox"></i> Opportunities <span id="oppBadge" class="badge b-new" style="display:none"></span></button>
       <button class="tab" data-pane="today"><i class="fas fa-sun"></i> Today</button>
       <button class="tab" data-pane="pipeline"><i class="fas fa-diagram-project"></i> Pipeline</button>
@@ -171,6 +172,17 @@ th{color:var(--dim);font-weight:600;font-size:12px}
     </div>
 
     <!-- OPPORTUNITIES -->
+    <div class="pane" id="citi">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div><b>Citi Opportunity Tracker</b>
+          <div class="muted" style="font-size:12px">Watches Citi's Workday feed, scores every requisition against your resume, and tailors a resume per req id.</div>
+        </div>
+        <a class="btn ghost sm" href="/citi-tracker/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open full screen</a>
+      </div>
+      <iframe id="citiFrame" title="Citi Opportunity Tracker"
+              style="width:100%;height:calc(100vh - 210px);min-height:560px;border:1px solid var(--line);border-radius:12px;background:#0b1220"></iframe>
+    </div>
+
     <div class="pane" id="opps">
       <div class="card">
         <div class="row" style="justify-content:space-between"><b>Opportunities inbox</b>
@@ -447,6 +459,9 @@ th{color:var(--dim);font-weight:600;font-size:12px}
 
 <script>
 var API='/api/cv-engine';
+// Mirrors CITIJOBS_SSO_SLUGS on the server. Cosmetic only — the tracker
+// refuses a console session that is not on its own list.
+var CITI_SLUGS=['manuelstagg'];
 var me=null;
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -465,6 +480,9 @@ async function boot(){
   $('pName').textContent=me.name; $('pHead').textContent=me.headline; $('avatar').textContent=initials(me.name);
   $('viewProfile').href=me.site||('/'+me.slug);
   $('sAvail').value=me.availability||'open'; $('sRoles').value=me.target_roles||''; $('sSummary').value=me.summary||'';
+  // The tracker enforces its own allowlist server-side; this only decides
+  // whether the tab is worth showing.
+  if(CITI_SLUGS.indexOf((me.slug||'').toLowerCase())!==-1) $('citiTab').style.display='';
   loadDashboard(); loadOpps(); loadOutreach(); refreshJobBadge();
 }
 
@@ -473,6 +491,9 @@ var jobsLoaded=false;
 var PANE_LOADED={};
 var PANE_LOADERS={
   jobs:function(){jobsLoaded=true;loadJobs();},
+  // Loaded on first open, never on boot: the tracker boots its own session and
+  // there is no reason to pay for that on a page the owner may not visit.
+  citi:function(){var f=$('citiFrame'); if(f&&!f.src) f.src='/citi-tracker/';},
   today:function(){loadDigest();},
   pipeline:function(){loadPipeline();},
   targets:function(){loadIndustryChips().then(function(){loadEmployers();loadWatchlist();loadSS();});},

@@ -424,6 +424,47 @@ async function cleanup() {
   ok('seeded verified skills carry evidence', seed.SEED_VERIFIED.every((s) => s[1] && s[1].length > 5));
   ok('seeded searches are many and targeted, not one firehose', seed.SEED_QUERIES.length >= 6);
 
+  section('20. Single sign-on from the CV admin console');
+  {
+    const express = require('express');
+    const jwt = require('jsonwebtoken');
+    const app = express();
+    app.use('/citi-tracker', require('./src/index'));
+    const server = await new Promise((r) => { const s2 = app.listen(0, () => r(s2)); });
+    const port = server.address().port;
+    const BASE = `http://127.0.0.1:${port}/citi-tracker`;
+    const CV_SECRET = process.env.CV_ADMIN_SECRET || process.env.JWT_SECRET || 'cv-engine-secret';
+    const cvToken = (slug, secret) => jwt.sign({ pid: 1, slug }, secret || CV_SECRET, { expiresIn: '1h' });
+    const get = (path_, cookie) => fetch(BASE + path_, {
+      redirect: 'manual', headers: cookie ? { cookie } : {}
+    });
+
+    const anon = await get('/api/v1/profiles');
+    ok('no cookie is refused', anon.status === 401);
+
+    const good = await get('/api/v1/profiles', 'cv_admin_token=' + cvToken('manuelstagg'));
+    ok('an allowlisted CV console session is accepted', good.status === 200, 'HTTP ' + good.status);
+    ok('...and it issues a tracker cookie so the next request is cheap',
+      /citijobs_token=/.test(good.headers.get('set-cookie') || ''));
+
+    const other = await get('/api/v1/profiles', 'cv_admin_token=' + cvToken('anastagg'));
+    ok('a CV session for another person grants nothing here', other.status === 401, 'HTTP ' + other.status);
+
+    const forged = await get('/api/v1/profiles', 'cv_admin_token=' + cvToken('manuelstagg', 'the-wrong-secret'));
+    ok('a forged console token is refused', forged.status === 401, 'HTTP ' + forged.status);
+
+    const garbage = await get('/api/v1/profiles', 'cv_admin_token=not-a-jwt');
+    ok('a garbage cookie is refused, not crashed on', garbage.status === 401);
+
+    const page = await get('/', 'cv_admin_token=' + cvToken('manuelstagg'));
+    ok('the app page itself loads inside the console (no login bounce)', page.status === 200, 'HTTP ' + page.status);
+
+    const health = await get('/health');
+    ok('health stays public', health.status === 200);
+
+    await new Promise((r) => server.close(r));
+  }
+
   // ── Done ──────────────────────────────────────────────────────────────────
   await cleanup();
   console.log(`\n${'-'.repeat(58)}`);
