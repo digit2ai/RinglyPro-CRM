@@ -334,7 +334,7 @@ router.get('/reqs/:reqId', async (req, res) => {
 /** Paste a req id, a Workday URL, or a jobs.citi.com link. */
 router.post('/reqs/import', async (req, res) => {
   try {
-    const row = await agent.importReq(tid(req), req.body.input);
+    const row = await agent.importReq(tid(req), req.body.input, { employer: req.body.employer || null });
     let boarded = null;
     if (req.body.board !== false) {
       const profile = await ownProfile(req, req.body.profile_id);
@@ -348,6 +348,11 @@ router.post('/reqs/import', async (req, res) => {
     }
     res.status(201).json({ success: true, req: reqPayload(row, null), tracked_id: boarded ? boarded.id : null });
   } catch (e) {
+    if (e.code === 'AMBIGUOUS') {
+      // Not an error the user caused — the id shape genuinely belongs to more
+      // than one bank. Hand back the candidates so they can name it.
+      return res.status(409).json({ error: e.message, code: 'AMBIGUOUS', candidates: e.candidates || [] });
+    }
     const code = e.code === 'NOT_FOUND' ? 404 : (e.code === 'NO_REQ_ID' ? 400 : 500);
     res.status(code).json({ error: e.message });
   }

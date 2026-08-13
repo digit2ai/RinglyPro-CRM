@@ -140,7 +140,19 @@ const SEED_QUERIES = [
   { employer: 'jpmorgan', label: 'JPMC data transformation', search_text: 'data transformation', weight: 3 },
   { employer: 'jpmorgan', label: 'JPMC program delivery', search_text: 'program delivery', weight: 2 },
   { employer: 'jpmorgan', label: 'JPMC data lineage', search_text: 'data lineage', weight: 2 },
-  { employer: 'jpmorgan', label: 'JPMC sanctions / AML', search_text: 'sanctions compliance', weight: 2 }
+  { employer: 'jpmorgan', label: 'JPMC sanctions / AML', search_text: 'sanctions compliance', weight: 2 },
+
+  { employer: 'pnc', label: 'PNC data governance', search_text: 'data governance', weight: 3 },
+  { employer: 'pnc', label: 'PNC data analytics', search_text: 'data analytics', weight: 3 },
+  { employer: 'pnc', label: 'PNC program delivery', search_text: 'program manager', weight: 2 },
+
+  { employer: 'capitalone', label: 'Capital One data governance', search_text: 'data governance', weight: 3 },
+  { employer: 'capitalone', label: 'Capital One data analytics', search_text: 'data analytics', weight: 3 },
+  { employer: 'capitalone', label: 'Capital One risk / compliance', search_text: 'risk management', weight: 2 },
+
+  { employer: 'usbank', label: 'U.S. Bank data governance', search_text: 'data governance', weight: 3 },
+  { employer: 'usbank', label: 'U.S. Bank data analytics', search_text: 'data analytics', weight: 3 },
+  { employer: 'usbank', label: 'U.S. Bank AML / BSA', search_text: 'BSA AML', weight: 2 }
 ];
 
 // Verified skills lifted from the owner's own résumé (source:'resume').

@@ -74,7 +74,7 @@
     <select id="profileSel" style="width:auto; min-width:170px"></select>
     <a class="pill" href="https://jobs.citi.com/job/tampa" target="_blank" rel="noopener">Citi careers</a>
     <a class="pill" href="https://www.jpmorganchase.com/careers" target="_blank" rel="noopener">JPMorgan careers</a>
-    <div class="grow"><input id="importBox" placeholder="Paste a req id — Citi 26974948 or JPMorgan 210712563 — or a job URL"></div>
+    <div class="grow"><input id="importBox" placeholder="Paste a requisition id or a job URL (a URL always names its bank)"></div>
     <button id="importBtn">Import</button>
     <span class="pill" id="agentPill"><span class="dot" id="agentDot"></span><span id="agentTxt">loading</span></span>
     <button class="ghost" id="runBtn">Run agent</button>
@@ -154,7 +154,7 @@ async function api(path, opts) {
   var r = await fetch(API + path, Object.assign({ credentials:'include', headers:{'Content-Type':'application/json'} }, opts||{}));
   if (r.status === 401) { location.href = '/citi-tracker/login'; throw new Error('unauthorized'); }
   var j = await r.json().catch(function(){ return {}; });
-  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  if (!r.ok) { var e = new Error(j.error || ('HTTP ' + r.status)); e.code = j.code; e.candidates = j.candidates; throw e; }
   return j;
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -494,7 +494,25 @@ async function doImport() {
     document.getElementById('importBox').value = '';
     toast('Imported ' + (out.req.employer_name || '') + ' req ' + out.req.req_id + ' — ' + out.req.title);
     loadBoard(); openReq(out.req.req_id, out.req.employer);
-  } catch (e) { toast(e.message, 6000); }
+  } catch (e) {
+    // PNC and Capital One share an id shape, so the server refuses to guess.
+    // Ask rather than dead-end.
+    if (e.code === 'AMBIGUOUS' && e.candidates && e.candidates.length) {
+      var names = e.candidates.map(function (c, i) { return (i + 1) + ') ' + c.name; }).join('  ');
+      var pick = prompt('That id could be ' + e.candidates.map(function (c) { return c.name; }).join(' or ')
+        + '. Which bank?\n' + names, '1');
+      var chosen = e.candidates[(parseInt(pick, 10) || 0) - 1];
+      if (chosen) {
+        try {
+          var out2 = await api('/reqs/import', { method:'POST',
+            body: JSON.stringify({ input: v, profile_id: state.profile.id, employer: chosen.key }) });
+          document.getElementById('importBox').value = '';
+          toast('Imported ' + (out2.req.employer_name || '') + ' req ' + out2.req.req_id);
+          loadBoard(); openReq(out2.req.req_id, out2.req.employer);
+        } catch (e2) { toast(e2.message, 6000); }
+      }
+    } else { toast(e.message, 6000); }
+  }
   finally { btn.disabled = false; }
 }
 document.getElementById('importBtn').onclick = doImport;

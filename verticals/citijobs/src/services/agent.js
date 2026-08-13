@@ -367,15 +367,24 @@ async function importReq(tenant_id, input, { source = 'manual', employer = null 
   // WHICH BANK THIS BELONGS TO IS DETECTED, NEVER DEFAULTED. Filing a JPMorgan
   // requisition under Citi would be silently wrong forever, and an ambiguous
   // paste is refused rather than resolved to whichever bank was checked first.
-  const emp = employer ? employers.get(employer) : employers.detect(input);
+  let emp;
+  if (employer) {
+    emp = employers.get(employer);
+  } else {
+    // detect() THROWS on a shape two banks share (PNC and Capital One both
+    // issue R######). That is deliberate: the caller is told to name the bank
+    // rather than having one picked, because a requisition filed under the
+    // wrong bank is wrong silently and forever.
+    emp = employers.detect(input);
+  }
   if (!emp) {
-    const e = new Error('Could not tell which bank that is. Paste a Citi req id (8 digits, e.g. 26974948), '
-      + 'a JPMorgan req id (9 digits, e.g. 210712563), or the job URL.');
+    const e = new Error('Could not tell which bank that is. Paste a requisition id or the job URL — '
+      + 'a URL always names its own bank.');
     e.code = 'NO_REQ_ID';
     throw e;
   }
   const ad = employers.adapterFor(emp.key);
-  const reqId = ad.reqIdFromInput(input);
+  const reqId = employers.reqIdFrom(emp.key, input);
   if (!reqId) {
     const e = new Error(`No ${emp.name} requisition id found in that input.`);
     e.code = 'NO_REQ_ID';

@@ -474,7 +474,14 @@ async function cleanup() {
     const employers = require('./src/services/employers');
     const oracle = require('./src/services/oracle');
 
-    ok('both banks are registered', employers.list().map((e) => e.key).sort().join(',') === 'citi,jpmorgan');
+    ok('five banks are registered',
+      employers.list().map((e) => e.key).sort().join(',') === 'capitalone,citi,jpmorgan,pnc,usbank',
+      employers.list().map((e) => e.key).join(','));
+    ok('four speak Workday, one speaks Oracle',
+      employers.list().filter((e) => e.adapter === 'workday').length === 4
+      && employers.list().filter((e) => e.adapter === 'oracle').length === 1);
+    ok('every bank declares the id shape read off its live feed',
+      employers.list().every((e) => e.id_pattern instanceof RegExp));
     ok('Citi speaks Workday and JPMorgan speaks Oracle',
       employers.get('citi').adapter === 'workday' && employers.get('jpmorgan').adapter === 'oracle');
     ok('Workday\'s 2000 cap is recorded; Oracle\'s real total is not',
@@ -487,6 +494,27 @@ async function cleanup() {
     ok('a Workday URL is Citi', (employers.detect('https://citi.wd5.myworkdayjobs.com/2/job/X_26974948-1') || {}).key === 'citi');
     ok('an Oracle URL is JPMorgan',
       (employers.detect('https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210712563') || {}).key === 'jpmorgan');
+    ok('a U.S. Bank id is U.S. Bank', (employers.detect('2026-0025089') || {}).key === 'usbank');
+    ok('a PNC URL is PNC',
+      (employers.detect('https://pnc.wd5.myworkdayjobs.com/External/job/PA/Data-Manager_R223512-1') || {}).key === 'pnc');
+    ok('a Capital One URL is Capital One',
+      (employers.detect('https://capitalone.wd12.myworkdayjobs.com/Capital_One/job/McLean-VA/X_R249146-1') || {}).key === 'capitalone');
+    ok('a U.S. Bank URL is U.S. Bank',
+      (employers.detect('https://usbank.wd1.myworkdayjobs.com/US_Bank_Careers/job/MO/Data-Scientist_2026-0018812') || {}).key === 'usbank');
+
+    // PNC AND CAPITAL ONE BOTH ISSUE R######. The registry must say so rather
+    // than pick one — a requisition filed under the wrong bank is wrong
+    // silently and forever.
+    let amb = null;
+    try { employers.detect('R224025'); } catch (e) { amb = e; }
+    ok('a shape two banks share raises AMBIGUOUS, never a guess', amb && amb.code === 'AMBIGUOUS');
+    ok('...and names both candidates so a human can choose',
+      amb && amb.candidates.map((c) => c.key).sort().join(',') === 'capitalone,pnc');
+    ok('naming the bank resolves it', employers.reqIdFrom('pnc', 'R224025') === 'R224025');
+    ok('...for either bank', employers.reqIdFrom('capitalone', 'R247988') === 'R247988');
+    ok('a Workday path id survives the non-numeric form',
+      employers.reqIdFrom('pnc', '/job/PA---Pittsburgh-15222/Data-Manager_R223512-1') === 'R223512');
+
     ok('an ambiguous number resolves to NOTHING rather than a guess', employers.detect('12345') === null);
     ok('junk resolves to nothing', employers.detect('hello there') === null);
 

@@ -137,6 +137,12 @@ function reqIdFromInput(input) {
   const s = String(input || '').trim();
   if (!s) return null;
   if (CITI_BARE.test(s)) return s;
+  // A Workday requisition id can be any token the tenant chooses (R224025,
+  // 2026-0025089). The employer registry owns the per-bank bare-id shapes; this
+  // stays with the PATH forms, whose shape already proves which feed they came
+  // from.
+  let rw = s.match(/_([A-Za-z0-9-]{4,})(?:-\d+)?(?:[/?#]|$)/);
+  if (rw && /[A-Za-z]/.test(rw[1])) return rw[1].replace(/-\d+$/, '');
   // Workday path or URL:  ..._26974948-1
   let m = s.match(/_(\d{5,})(?:-\d+)?(?:[/?#]|$)/);
   if (m) return m[1];
