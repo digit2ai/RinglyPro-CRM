@@ -157,6 +157,16 @@ async function tick() {
   const out = { at: lastTick, pool: null, fleet: null, retention: null, skipped: null };
 
   try {
+    // SELF-HEAL RUNS EVERY TICK, NOT ONCE A DAY.
+    //
+    // A profile frozen by an outage is live and wrong for every minute it
+    // exists — a paying subscriber's public page and machine-readable identity
+    // both render from it. Waiting for the daily run hour would have left the
+    // first real customer's page empty for another twenty hours. It is cheap
+    // and it no-ops when there is nothing degraded.
+    try { out.self_heal = await require('./self-heal').sweep(); }
+    catch (e) { out.self_heal = { ran: false, reason: e.message }; }
+
     if (new Date().getUTCHours() < RUN_HOUR_UTC) {
       out.skipped = `before the run hour (${RUN_HOUR_UTC}:00 UTC)`;
       return out;
@@ -177,7 +187,11 @@ async function tick() {
   } finally {
     running = false;
   }
-  if (out.skipped && !out.pool && !out.fleet) { out.ms = Date.now() - started; return out; }
+  if (out.skipped && !out.pool && !out.fleet) {
+    out.ms = Date.now() - started;
+    if (out.self_heal && out.self_heal.healed && out.self_heal.healed.length) lastRun = out;
+    return out;
+  }
 
   out.ms = Date.now() - started;
   if (out.pool || out.fleet) {

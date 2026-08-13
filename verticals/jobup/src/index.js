@@ -131,6 +131,13 @@ router.get('/health', async (req, res) => {
     // wrong endpoint is perfectly well formed and fails every signature; this
     // is the only place that shows it.
     stripe_webhooks: billing.webhookHealth(),
+    // How many LIVE profiles are currently degraded because the model was
+    // unreachable when they were built. This is the number that was silently
+    // 1 while a paying subscriber's page sat empty.
+    degraded_profiles: await (async () => {
+      try { return await require('./services/self-heal').pending(); }
+      catch (e) { return { error: e.message }; }
+    })(),
     billing: billing.status(),
     voice: 'reuses the CRM /api/tts/edge (keyless Edge neural TTS)',
     admin: require('./routes/admin').configured() ? 'configured' : 'CLOSED — set JOBUP_ADMIN_PASSWORD',

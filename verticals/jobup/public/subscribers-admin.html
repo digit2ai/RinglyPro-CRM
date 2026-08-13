@@ -197,6 +197,17 @@ border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margi
     </div>
     <div class="bc-n hidden" id="bc-note"></div>
   </div>
+  <div class="banner hidden" id="brainbanner">
+    <strong>The language model is unreachable.</strong>
+    Every preview and every new profile is being structured WITHOUT it &mdash; no experience,
+    no skills, no job scoring. Subscribers are seeing a degraded product right now.
+    <span id="brainwhy"></span>
+  </div>
+  <div class="banner hidden" id="degradedbanner">
+    <strong><span id="degcount"></span></strong>
+    They were built while the model was down. The resume text is on file, so they repair
+    themselves automatically once the model is reachable &mdash; usually within 15 minutes.
+  </div>
   <div class="banner hidden" id="testbanner">
     <strong>Stripe is in TEST mode.</strong>
     Checkouts complete without charging a card, and any subscriber created this way is
@@ -343,6 +354,20 @@ function boot(){
     $('planlink').classList.remove('hidden');
     $('who-sub').textContent=r.j.email;
     if(r.j.weak_password) $('pwbanner').classList.remove('hidden');
+    // The model going down is invisible from every other surface, and it is
+    // what emptied a paying subscriber's profile.
+    var b=r.j.brain||{};
+    if(b.key_present&&b.ok===false){
+      $('brainbanner').classList.remove('hidden');
+      $('brainwhy').textContent=b.last_failure?('Last error: '+b.last_failure):'';
+    }
+    var d=r.j.degraded_profiles||{};
+    if(d.degraded>0){
+      $('degradedbanner').classList.remove('hidden');
+      $('degcount').textContent=d.degraded+' profile'+(d.degraded===1?'':'s')+
+        ' currently have no experience or skills'+
+        (d.degraded_paying>0?(' \u2014 '+d.degraded_paying+' of them PAYING.'):'.');
+    }
     if(r.j.stripe_test){
       $('testbanner').classList.remove('hidden');
       $('testacct').textContent='Reading '+(r.j.stripe_account||'')+'.';

@@ -189,7 +189,7 @@ router.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/api/session', requireAdmin, (req, res) => {
+router.get('/api/session', requireAdmin, async (req, res) => {
   res.json({
     ok: true, email: req.admin.email,
     scope: 'billing identity only — no resumes, matches or outreach',
@@ -199,6 +199,18 @@ router.get('/api/session', requireAdmin, (req, res) => {
     stripe_mode: billing.mode(),
     stripe_test: billing.isTestMode(),
     stripe_account: billing.isolated() ? 'JOBUP_STRIPE_SECRET_KEY' : 'STRIPE_SECRET_KEY (shared)',
+    // THE MODEL IS THE PRODUCT. When it is unreachable every preview and every
+    // profile degrades, and the only reason the last outage was ever found is
+    // that the owner happened to look. Now the console says so.
+    brain: (function () {
+      const h = require('../services/brain').health();
+      return { ok: !h.last_failure, key_present: h.key_present,
+               last_failure: h.last_failure ? h.last_failure.message : null };
+    }()),
+    degraded_profiles: await (async () => {
+      try { return await require('../services/self-heal').pending(); }
+      catch (e) { return { degraded: 0, degraded_paying: 0, error: e.message }; }
+    })(),
   });
 });
 

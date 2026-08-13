@@ -4194,6 +4194,87 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
 
+  section('an outage must not be permanent, and must not be invisible');
+
+  await t('the sweep repairs a degraded profile and republishes it', async () => {
+    const heal = require(__dirname + '/src/services/self-heal');
+    const SRC = [
+      'Juliana Gramowski', 'Sales Executive and Business Development',
+      'Tampa, Florida  (813) 334-2244  jgramowski7@gmail.com',
+      'Sales Executive, Clear Channel Outdoor, January 2024 to Present',
+    ].join('\n');
+    const sub = await models.subscribers.create({
+      email: 'sit-heal@example.com', status: 'active', activation: 'paid' });
+    const good = await models.subscribers.create({
+      email: 'sit-heal-ok@example.com', status: 'active', activation: 'paid' });
+    try {
+      // Exactly the shape the outage left behind: a name, nothing else, and
+      // the full source text sitting right there unused.
+      await scoped('profiles', sub.id).create({
+        resume_json: { name: 'A Person', experience: [], skills: [], is_simulated: true },
+        source_text: SRC,
+      });
+      // A profile structured WITH the model is not ours to touch — a human's
+      // own edits look identical to a good parse.
+      await scoped('profiles', good.id).create({
+        resume_json: { name: 'Edited By Hand', experience: [], skills: [], is_simulated: false },
+        source_text: SRC,
+      });
+
+      const p = await heal.pending();
+      assert.ok(p.tenant_ids.includes(sub.id), 'the degraded one must be found');
+      assert.ok(!p.tenant_ids.includes(good.id), 'a good parse must NEVER be overwritten');
+      assert.ok(p.degraded_paying >= 1, 'and paying accounts counted separately');
+
+      // With no key the sweep must decline rather than burn the cap producing
+      // the same thin result over and over.
+      const r = await heal.sweep();
+      assert.strictEqual(r.ran, false);
+      assert.match(r.reason, /no model configured|unreachable/);
+    } finally {
+      await models.profiles.destroy({ where: { tenant_id: sub.id } });
+      await models.profiles.destroy({ where: { tenant_id: good.id } });
+      await models.subscribers.destroy({ where: { id: sub.id } });
+      await models.subscribers.destroy({ where: { id: good.id } });
+    }
+  });
+
+  await t('it refuses to heal what it cannot re-read', async () => {
+    const heal = require(__dirname + '/src/services/self-heal');
+    // No source text means the difference could only be invented, which is the
+    // one unacceptable outcome.
+    assert.strictEqual(heal.needsHealing({ resume_json: { is_simulated: true }, source_text: '' }), false);
+    assert.strictEqual(heal.needsHealing({ resume_json: { is_simulated: true }, source_text: 'x'.repeat(80) }), true);
+    assert.strictEqual(heal.needsHealing({ resume_json: { is_simulated: false }, source_text: 'x'.repeat(80) }), false);
+  });
+
+  await t('the sweep runs every tick, not once a day', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    const heal = src.indexOf("require('./self-heal')");
+    const hour = src.indexOf('before the run hour');
+    assert.ok(heal > -1 && hour > -1);
+    // A frozen profile is live and wrong every minute it exists. Waiting for
+    // the daily hour would have left a paying subscriber's page empty for
+    // another twenty hours.
+    assert.ok(heal < hour, 'self-heal must run BEFORE the once-a-day gate');
+    assert.ok(/JOBUP_SELFHEAL_MAX/.test(fs.readFileSync(__dirname + '/src/services/self-heal.js', 'utf8')),
+      'and be capped so an ended outage is not a thousand calls in one tick');
+  });
+
+  await t('an outage is VISIBLE to the owner, not discovered by a customer', () => {
+    const fs = require('fs');
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(idx.includes('degraded_profiles'), '/health must count degraded profiles');
+    const con = fs.readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
+    assert.ok(con.includes('degraded_profiles') && con.includes('last_failure'),
+      'the console session must carry both the model state and the damage');
+    const page = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(page.includes('id="brainbanner"') && page.includes('id="degradedbanner"'),
+      'and both must render as banners');
+    assert.ok(/PAYING/.test(page), 'a paying subscriber being affected must be called out');
+  });
+
   section('a paid profile must never inherit a degraded parse');
 
   // Juliana Gramowski's real CV, in the shape that broke: a banner on line one,
