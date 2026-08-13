@@ -40,7 +40,9 @@ border-radius:var(--r-lg);padding:18px 20px;position:sticky;top:12px;z-index:20;
 background:radial-gradient(circle at 38% 32%,#a5f3fc,#22d3ee 30%,#3b82f6 58%,#8b5cf6 80%,#ec4899 100%);
 box-shadow:0 8px 32px rgba(34,211,238,.28);transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 animation:breathe 4.5s ease-in-out infinite}
-.orb:hover{transform:scale(1.07)}
+.orb{cursor:default}
+.orb.ready{cursor:pointer}
+.orb.ready:hover{transform:scale(1.07)}
 .orb::after{content:"";position:absolute;inset:0;border-radius:50%;
 background:conic-gradient(from 0deg,transparent 0deg,rgba(255,255,255,.42) 60deg,transparent 130deg);
 opacity:0;transition:opacity .3s}
@@ -249,14 +251,18 @@ router.get('/:token', async (req, res) => {
 
 <div class="orbbar">
   <div class="orbwrap">
-    <div class="orb" id="orb" title="Play the walkthrough" role="button" tabindex="0"
-         aria-label="Play the walkthrough"></div>
+    <div class="orb" id="orb" title="Building your preview" role="img" tabindex="-1"
+         aria-label="Building your preview"></div>
     <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
   </div>
   <div style="flex:1">
     <div class="obtitle">${lang === 'es' ? 'Dalia' : 'Ava'} &mdash; JobUp</div>
     <div class="obstat" id="stat">Building your ecosystem&hellip;</div>
-    <div style="margin-top:10px">
+    <!-- THE VOICE CANNOT BE OFFERED BEFORE THERE IS ANYTHING TO NARRATE.
+         While the resume is being read this row was already showing "Play the
+         walkthrough", so people pressed it, nothing happened, and the wait
+         read as a broken page. It is revealed by render(). -->
+    <div style="margin-top:10px;display:none" id="voicerow">
       <button class="btn primary" id="play">Play the walkthrough</button>
       <button class="btn" id="stop" disabled>Stop</button>
       <span class="seg" id="seg"></span>
@@ -557,6 +563,18 @@ function render(){
   var all=document.querySelectorAll('.cta');
   for(var q=0;q<all.length;q++) all[q].addEventListener('click',checkout);
 
+  // Now — and only now — the voice is real: there is a payload and narration.
+  var vr=document.getElementById('voicerow');
+  if(vr) vr.style.display='';
+  var orbEl=document.getElementById('orb');
+  if(orbEl){
+    orbEl.setAttribute('role','button');
+    orbEl.setAttribute('tabindex','0');
+    orbEl.setAttribute('aria-label','Play the walkthrough');
+    orbEl.title='Play the walkthrough';
+    orbEl.classList.add('ready');
+  }
+
   showStickyBuy(sb);
   startAlwaysOn();
 }
@@ -776,6 +794,11 @@ function checkout(){
 
   // One primary control: play -> pause -> resume.
   function toggle(){
+    // Bound at boot, so it must refuse until there is something to say.
+    if(!narration.length){
+      stat.textContent='Still building your preview. The walkthrough starts when it is ready.';
+      return;
+    }
     if(paused){resume();return;}
     if(stopBtn.disabled){start();return;}   // idle
     pause();

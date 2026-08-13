@@ -265,7 +265,7 @@ async function get(tokenStr) {
 }
 
 /** Observed end-to-end build time, used only to set an expectation. */
-const TYPICAL_BUILD_MS = parseInt(process.env.JOBUP_TYPICAL_BUILD_MS || '45000', 10);
+const TYPICAL_BUILD_MS = parseInt(process.env.JOBUP_TYPICAL_BUILD_MS || '70000', 10);
 
 /** Record which stage a build reached. Never throws into the build. */
 async function setStage(token, st) {

@@ -435,6 +435,10 @@ router.post('/build-account', async (req, res) => {
  * What the /welcome page reads after activation. Reports the real provisioning
  * state — it never claims a site is live when it is not.
  */
+// What the wait FEELS like end to end (provisioning + a poll + first byte),
+// not how long the server works. Override without a redeploy.
+const TYPICAL_PROVISION_MS = parseInt(process.env.JOBUP_TYPICAL_PROVISION_MS || '15000', 10);
+
 router.get('/welcome', async (req, res) => {
   const id = parseInt(req.query.s, 10);
   if (!id) return res.status(400).json({ error: 'missing account reference' });
@@ -452,6 +456,17 @@ router.get('/welcome', async (req, res) => {
     { label: 'Your agents switched on', ok: Boolean(state.agents_started) },
   ];
 
+  // A COUNTDOWN, SO NOBODY CLOSES THE TAB MID-BUILD.
+  //
+  // Measured on real accounts, provisioning finishes 0-2 seconds after
+  // activation; the wait a subscriber actually feels is the poll interval plus
+  // the site's first byte. TYPICAL_PROVISION_MS is that felt time, not the
+  // server work, and elapsed is real — so the client can count down honestly
+  // and say plainly when it runs long instead of freezing at zero.
+  const done = steps.every((s) => s.ok);
+  const startedAt = sub.activated_at || sub.updated_at || sub.created_at;
+  const elapsedMs = startedAt ? Math.max(0, Date.now() - new Date(startedAt).getTime()) : 0;
+
   res.json({
     id: sub.id, email: sub.email, name: sub.name, status: sub.status,
     activation: sub.activation || 'paid',
@@ -461,8 +476,19 @@ router.get('/welcome', async (req, res) => {
     billing_disabled: require('../services/billing').disabled(),
     // The page polls until this is true, then stops. Reported from the real
     // provisioning state, so it never claims a site is live before it is.
-    complete: steps.every((s) => s.ok),
+    complete: done,
     steps,
+    progress: {
+      done_steps: steps.filter((s) => s.ok).length,
+      total_steps: steps.length,
+      elapsed_ms: elapsedMs,
+      typical_ms: TYPICAL_PROVISION_MS,
+      label: done ? 'Everything is live'
+        : (steps[3].ok ? 'Starting your agents'
+        : (steps[2].ok ? 'Publishing your site'
+        : (steps[1].ok ? 'Building your page'
+        : 'Reserving your web address'))),
+    },
   });
 });
 

@@ -4887,6 +4887,90 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'both the probe and the real call path must record why they failed');
   });
 
+  section('nobody should close the tab mid-build');
+
+  await t('the teaser countdown is 70 seconds', () => {
+    const teaserSvc = require(__dirname + '/src/services/teaser');
+    assert.strictEqual(teaserSvc.TYPICAL_BUILD_MS, 70000,
+      'the estimate people watch must match the build they actually get');
+    const fs = require('fs');
+    assert.ok(fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8')
+      .includes('JOBUP_TYPICAL_BUILD_MS'), 'and stay overridable without a redeploy');
+  });
+
+  await t('the post-payment wait has its own countdown', () => {
+    const fs = require('fs');
+    const route = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(route.includes('JOBUP_TYPICAL_PROVISION_MS'), 'with its own tunable estimate');
+    assert.ok(route.includes('progress: {') && route.includes('elapsed_ms')
+           && route.includes('typical_ms') && route.includes('done_steps'),
+      '/welcome must report real elapsed time and real step progress');
+    // Measured on live accounts: provisioning finishes 0-2s after activation.
+    // The estimate is the FELT wait, and elapsed is real, so the clock can be
+    // honest rather than theatre.
+    assert.ok(/elapsed.*Date\.now\(\)/s.test(route), 'elapsed must be measured, not invented');
+
+    const page = fs.readFileSync(__dirname + '/public/welcome.html', 'utf8');
+    assert.ok(page.includes('id="pclock"') && page.includes('id="pfill"'), 'a clock and a bar');
+    assert.ok(page.includes('Taking longer than usual'),
+      'past the estimate it must SAY SO, never freeze at 0:00');
+    assert.ok(/Math\.min\(96/.test(page),
+      'and the bar must never reach 100 before the site really is live');
+    assert.ok(page.includes('finishProgress('), 'and it must resolve to the live address');
+  });
+
+  await t('THE VOICE IS NOT OFFERED BEFORE THERE IS ANYTHING TO SAY', async () => {
+    // While the resume was being read, the bar already showed "Play the
+    // walkthrough". People pressed it, nothing happened, and the wait read as
+    // a broken page.
+    const express = require('express');
+    const http = require('http');
+    const teaserSvc5 = require(__dirname + '/src/services/teaser');
+    const origGet = teaserSvc5.get;
+    teaserSvc5.get = async () => ({ token: 'sit-voice', language: 'en', status: 'ready' });
+    const app = express();
+    app.use('/teaser', require(__dirname + '/src/routes/teaser-view'));
+    const srv = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+    const html = await new Promise((ok, bad) => {
+      http.get({ host: '127.0.0.1', port: srv.address().port, path: '/teaser/sit-voice' }, (r) => {
+        let b = ''; r.on('data', (d) => { b += d; }); r.on('end', () => ok(b));
+      }).on('error', bad);
+    });
+
+    const READY = { status: 'ready', narration: ['one', 'two'], payload: { screens: {
+      site: { profile: { name: 'Ada', skills: [], experience: [] } },
+      address: { available: true, address: 'ada.jobup.dev' },
+      matches: { pool_available: false, items: [] },
+      tailored: null, identity: { json_ld: {} }, agents: [],
+      cta: { price_usd: 59, includes: [], non_renewal: '' } } } };
+
+    const w = bootDom(html, 'https://jobup.dev/teaser/sit-voice');
+    w.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(READY) });
+    try {
+      const row = w.document.getElementById('voicerow');
+      const orb = w.document.getElementById('orb');
+      assert.ok(row, 'the controls must live in their own row so they can be hidden');
+      assert.strictEqual(row.style.display, 'none', 'THE PLAY BUTTON WAS VISIBLE MID-BUILD');
+      // The orb is itself a play button — it must not invite a press either.
+      assert.strictEqual(orb.getAttribute('role'), 'img');
+      assert.strictEqual(orb.getAttribute('tabindex'), '-1');
+      assert.ok(!orb.classList.contains('ready'));
+
+      // Pressing it anyway must explain, not fail silently.
+      click(w, orb);
+      assert.match(w.document.getElementById('stat').textContent, /Still building/);
+
+      w.eval('poll()');
+      await new Promise((r) => setTimeout(r, 60));
+
+      assert.notStrictEqual(w.document.getElementById('voicerow').style.display, 'none',
+        'and it must appear once the preview is ready');
+      const orb2 = w.document.getElementById('orb');
+      assert.strictEqual(orb2.getAttribute('role'), 'button');
+      assert.ok(orb2.classList.contains('ready'), 'the orb becomes clickable only now');
+    } finally { w.close(); srv.close(); teaserSvc5.get = origGet; }
+  });
+
   section('subscribe and submit — behaviour, not grep');
   // ---- the four subscribe buttons, driven for real -----------------------
   // Grepping for data-cta proves the markup exists. It cannot prove the

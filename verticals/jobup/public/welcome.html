@@ -114,6 +114,21 @@ padding:11px 22px;font-size:14px;opacity:0;pointer-events:none;transition:.22s e
   <div class="card" id="prov">
     <h2>What we set up</h2>
     <div class="sub" id="provsub">Your agents start hunting as soon as this finishes.</div>
+    <!-- KEEPS PEOPLE FROM CLOSING THE TAB MID-BUILD. Server-fed: elapsed is
+         real and the estimate is the felt wait, so it counts down honestly and
+         says so when it runs long rather than freezing at zero. -->
+    <div id="pwrap" style="margin:4px 0 16px">
+      <div id="pclock" style="font-size:clamp(30px,7vw,46px);font-weight:830;letter-spacing:-.04em;
+        line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(120deg,#22d3ee,#6366f1 55%,#8b5cf6);
+        -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">&mdash;</div>
+      <div id="pcap" style="font-family:var(--mono,monospace);font-size:11px;letter-spacing:.14em;
+        text-transform:uppercase;color:var(--faint,#6b7385);margin:6px 0 12px">building your page</div>
+      <div style="height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;max-width:420px">
+        <i id="pfill" style="display:block;height:100%;width:0;border-radius:99px;
+          background:linear-gradient(90deg,#22d3ee,#6366f1,#8b5cf6);transition:width .6s cubic-bezier(.4,0,.2,1)"></i>
+      </div>
+      <div id="pstage" style="font-size:14.5px;margin-top:10px">Starting&hellip;</div>
+    </div>
     <div id="provbody"><div class="note">Checking your account...</div></div>
   </div>
 
@@ -167,6 +182,50 @@ wireEye('e1','p1'); wireEye('e2','p2');
 })();
 
 var POLL_MS=2500, tries=0, MAX=48;   // ~2 minutes, then stop and tell the truth
+function mmss(ms){var x=Math.max(0,Math.round(ms/1000));
+  return Math.floor(x/60)+':'+String(x%60).padStart(2,'0');}
+
+// Local tick between polls so the clock counts rather than steps.
+var _pr=null,_prAt=0;
+setInterval(function(){
+  if(!_pr) return;
+  paintProgress({done_steps:_pr.done_steps,total_steps:_pr.total_steps,label:_pr.label,
+    typical_ms:_pr.typical_ms,elapsed_ms:_pr.elapsed_ms+(Date.now()-_prAt)});
+},1000);
+
+function paintProgress(p){
+  if(!p) return;
+  var clock=$('pclock'),cap=$('pcap'),fill=$('pfill'),stage=$('pstage');
+  if(!clock) return;
+  var byStep=p.total_steps?(p.done_steps/p.total_steps):0;
+  var byTime=p.typical_ms?Math.min(p.elapsed_ms/p.typical_ms,1):0;
+  // Never let the bar outrun what the steps justify, and never hit 100 before
+  // the site really is live.
+  fill.style.width=Math.min(96,Math.round(Math.max(byStep,byTime*0.9)*100))+'%';
+  if(p.label) stage.textContent=p.label+'\u2026';
+  var left=(p.typical_ms||0)-(p.elapsed_ms||0);
+  if(left>1000){
+    clock.style.fontSize=''; clock.textContent=mmss(left);
+    cap.textContent='estimated time remaining';
+  }else{
+    // Say plainly that it is running long. Never freeze on 0:00 pretending.
+    clock.style.fontSize='clamp(15px,3.4vw,20px)';
+    clock.textContent='Taking longer than usual \u2014 still working';
+    cap.textContent=mmss(p.elapsed_ms)+' elapsed';
+  }
+}
+
+function finishProgress(url){
+  _pr=null;
+  var clock=$('pclock'),cap=$('pcap'),fill=$('pfill'),stage=$('pstage');
+  if(!clock) return;
+  fill.style.width='100%';
+  clock.style.fontSize='clamp(20px,4.6vw,30px)';
+  clock.textContent='Your page is live';
+  cap.textContent=url?url.replace(/^https?:\/\//,''):'ready';
+  stage.textContent='Everything is set up. Open it below.';
+}
+
 function render(j){
   if(j.error){ $('h').textContent='We could not find that account';
     $('lede').textContent='';
@@ -203,6 +262,8 @@ function render(j){
     $('pw').style.display=''; $('manage').style.display='none';
     $('managenote').style.display='none'; window.__EMAIL=j.email;
   }
+  if(j.complete){ finishProgress(j.url); }
+  else if(j.progress){ _pr=j.progress; _prAt=Date.now(); paintProgress(j.progress); }
   return Boolean(j.complete);
 }
 
@@ -212,6 +273,7 @@ function poll(){
     var done=render(j);
     if(done||j.error) return;
     if(++tries>=MAX){
+      _pr=null;
       $('provsub').textContent='Some steps are still finishing. Your account works — refresh in a minute to see the rest.';
       return;
     }
