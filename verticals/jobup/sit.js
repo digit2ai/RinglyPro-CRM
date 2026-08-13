@@ -2965,6 +2965,130 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
     assert.ok(src.includes('T.over'), 'past the estimate it must say it is running long');
   });
+
+  // ---- SUBSCRIBING IS REACHABLE FROM ANYWHERE ON THE PAGE -----------------
+  // Somebody genuinely failed to subscribe because the only button sat below
+  // eight screens of preview. These assertions are about that person.
+  section('the subscribe button is findable');
+
+  await t('the teaser carries a CTA at the top, the middle, the bottom and pinned', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    // top and middle are drawn by strip(); bottom and sticky are literal markup.
+    for (const where of ['top', 'middle']) {
+      assert.ok(src.includes(`strip('${where}'`), `no ${where} subscribe button`);
+    }
+    for (const where of ['bottom', 'sticky']) {
+      assert.ok(src.includes(`data-cta="${where}"`), `no ${where} subscribe button`);
+    }
+    assert.ok(src.includes('data-cta="\'+where+\'"'),
+      'strip() must stamp the placement onto the button it draws');
+    assert.ok(src.includes('id="stickybuy"'), 'the pinned bar must exist in the shell');
+    assert.ok(/body\.hasbuy \.wrap\{padding-bottom/.test(src),
+      'the pinned bar must reserve its own room or it covers the last screen');
+  });
+
+  await t('all four buttons are ONE code path to ONE checkout', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    const calls = (src.match(/billing\/checkout/g) || []).length;
+    assert.strictEqual(calls, 1,
+      'a second checkout call is a second funnel that can drift from the first');
+    // Wired by class, so a button added later cannot get its own behaviour.
+    assert.ok(src.includes("querySelectorAll('.cta')"),
+      'buttons must be bound by class, not one id at a time');
+  });
+
+  await t('four buttons cannot mint four Stripe sessions', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('CTA_BUSY') && src.includes('if(CTA_BUSY)return;'),
+      'a second tap while the first request is in flight must be refused');
+    assert.ok(src.includes('function ctaBusy'), 'and every button locks together');
+  });
+
+  await t('the price is resolved once, so no two buttons can disagree', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('var CTA_LABEL=') && src.includes('var PRICE_HTML='),
+      'label and price must be computed once for every placement');
+    // "/ year" may appear ONCE, in the T table. Anywhere else is a second
+    // English string that a Spanish page would print untranslated.
+    assert.strictEqual((src.match(/' \/ year'/g) || []).length, 1,
+      'the period must come from T.perYear, not a repeated literal');
+    assert.strictEqual((src.match(/T\.perYear/g) || []).length, 2,
+      'both the pinned bar and screen 8 read the same period string');
+    // Payment off must still not print "$null / year" anywhere.
+    assert.ok(src.includes('c.price_usd?') && src.includes('T.freePrice'),
+      'a price is shown only when there is one');
+  });
+
+  await t('a failed checkout is visible from the button that was pressed', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    // The old message printed at the foot of screen 8. Anyone who tapped the
+    // top of the page never scrolled to it and just saw nothing happen.
+    assert.ok(src.includes('function toast(') && src.includes('toast(msg)'),
+      'the error has to surface where the eye already is');
+    assert.ok(src.includes('id="toast"'), 'and the element must exist in the shell');
+  });
+
+  await t('the pinned bar steps aside for the real CTA', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    assert.ok(src.includes('IntersectionObserver') && src.includes("getElementById('buy')"),
+      'showing the same button twice at once is noise');
+    assert.ok(src.includes("if(!target||!('IntersectionObserver' in window))return;"),
+      'without an observer the bar must stay up rather than vanish');
+  });
+
+  await t('the new subscribe copy speaks Spanish too', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+    // The file writes accents as \uXXXX escapes, which Node resolves inside the
+    // template literal — so test what the BROWSER receives, not the source.
+    const shipped = src.replace(/\\u([0-9a-fA-F]{4})/g,
+      (_, h) => String.fromCharCode(parseInt(h, 16)));
+    assert.ok(shipped.includes("ctaPaid:'Crear mi ecosistema'"), 'ES label missing');
+    assert.ok(shipped.includes(' / año'), 'ES period missing its tilde');
+    assert.ok(shipped.includes('¿Ya lo tienes claro?'), 'ES mid-page prompt missing');
+    assert.ok(shipped.includes('contraseña'), 'ES pinned-bar note missing its tilde');
+  });
+
+  await t('the account form can be submitted from three places, and one handler', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
+    for (const where of ['middle', 'bottom', 'sticky']) {
+      assert.ok(src.includes(`data-go="${where}"`), `no ${where} submit button`);
+    }
+    assert.strictEqual((src.match(/addEventListener\('submit'/g) || []).length, 1,
+      'three buttons, one submit handler — validation must not be duplicated');
+    assert.ok(src.includes('function submitForm') && src.includes('requestSubmit'),
+      'the pinned button forwards to the form rather than POSTing itself');
+    assert.ok(src.includes("$('go').click()"), 'with a fallback for older Safari');
+  });
+
+  await t('the three submit buttons can never disagree about being disabled', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
+    assert.ok(src.includes('function setGo('), 'one setter for all of them');
+    // An enabled pinned button beside a disabled bottom one is a duplicate
+    // account attempt waiting to happen.
+    assert.ok(!/\$\('go'\)\.disabled\s*=/.test(src),
+      'nothing may set a single button\'s disabled state directly');
+    assert.ok(!/\$\('go'\)\.textContent\s*=/.test(src),
+      'nor relabel one button on its own');
+  });
+
+  await t('the pinned bar says what is missing instead of failing silently', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
+    assert.ok(src.includes('function hint('), 'the bar must explain itself');
+    assert.ok(src.includes('at least 12 characters') && src.includes('Ready to build'),
+      'both the blocked and the ready state');
+    assert.ok(src.includes('lockHint('),
+      'an invalid link or an existing account must override the password hint');
+  });
   await t('PWA manifest is generated for the subscriber origin', () => {
     const pwaS = require(__dirname + '/src/services/pwa');
     // A subdomain is rooted at /, so a manifest scoped to /jobup/ would not even
@@ -4057,6 +4181,124 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }).window;
   }
   const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+
+  section('subscribe and submit — behaviour, not grep');
+  // ---- the four subscribe buttons, driven for real -----------------------
+  // Grepping for data-cta proves the markup exists. It cannot prove the
+  // buttons were ever bound, and an unbound subscribe button is exactly the
+  // failure this whole change is about.
+  await t('TEASER: all four subscribe buttons render and are wired', async () => {
+    const express = require('express');
+    const http = require('http');
+    const teaserSvc3 = require(__dirname + '/src/services/teaser');
+    const origGet = teaserSvc3.get;
+    teaserSvc3.get = async () => ({ token: 'sit-cta', language: 'en', status: 'ready' });
+
+    const app = express();
+    app.use('/teaser', require(__dirname + '/src/routes/teaser-view'));
+    const srv = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+    const port = srv.address().port;
+    const html = await new Promise((ok, bad) => {
+      http.get({ host: '127.0.0.1', port, path: '/teaser/sit-cta' }, (r) => {
+        let b = ''; r.on('data', (d) => { b += d; }); r.on('end', () => ok(b));
+      }).on('error', bad);
+    });
+
+    const READY = {
+      status: 'ready', narration: [],
+      payload: { screens: {
+        site: { profile: { name: 'Ada', skills: ['a'], experience: [] } },
+        address: { available: true, address: 'ada.jobup.dev', exact_match: true },
+        matches: { pool_available: false, items: [] },
+        tailored: null, identity: { json_ld: {} }, agents: [],
+        cta: { price_usd: 59, includes: ['x'], non_renewal: 'terms', headline: 'Build my ecosystem' },
+      } },
+    };
+    let checkoutCalls = 0;
+    const w = bootDom(html, 'https://jobup.dev/teaser/sit-cta');
+    w.fetch = (url) => {
+      if (String(url).includes('/billing/checkout')) {
+        checkoutCalls++;
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ error: 'declined for the test' }) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(READY) });
+    };
+    try {
+      w.eval('poll()');
+      await new Promise((r) => setTimeout(r, 60));
+
+      const ctas = w.document.querySelectorAll('.cta');
+      assert.strictEqual(ctas.length, 4,
+        'top, middle, bottom and pinned — got ' + ctas.length);
+      const where = Array.from(ctas).map((b) => b.getAttribute('data-cta')).sort();
+      assert.deepStrictEqual(where, ['bottom', 'middle', 'sticky', 'top']);
+      // Every one of them must carry the same price and the same label.
+      const labels = new Set(Array.from(ctas).map((b) => b.textContent.trim()));
+      assert.strictEqual(labels.size, 1, 'the four buttons must say the same thing');
+      assert.ok(w.document.getElementById('sb-price').textContent.includes('59'),
+        'the pinned bar must quote the real price');
+      assert.ok(w.document.getElementById('stickybuy').classList.contains('on'),
+        'the pinned bar must actually be revealed once the preview is ready');
+
+      // THE ACTUAL BUG: press the TOP one, the one nobody had before.
+      click(w, ctas[0]);
+      assert.strictEqual(checkoutCalls, 1, 'THE TOP BUTTON DID NOTHING');
+      // A second press while the first is in flight must be refused, or four
+      // buttons become four Stripe sessions for one person.
+      click(w, ctas[1]);
+      click(w, ctas[3]);
+      assert.strictEqual(checkoutCalls, 1, 'a second tap opened a second checkout');
+
+      await new Promise((r) => setTimeout(r, 40));
+      assert.ok(w.document.getElementById('toast').classList.contains('on'),
+        'the failure must be visible from the button that was pressed');
+      assert.strictEqual(w.document.querySelector('.cta').disabled, false,
+        'and the buttons must come back');
+    } finally {
+      w.close(); srv.close(); teaserSvc3.get = origGet;
+    }
+  });
+
+  await t('BUILD FORM: three buttons, one submit, no duplicate POST', async () => {
+    const fs = require('fs');
+    const raw = fs.readFileSync(__dirname + '/public/build.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '');
+    let posts = 0;
+    const w = bootDom(raw, 'https://jobup.dev/build?t=tok');
+    w.fetch = (url) => {
+      if (String(url).includes('build-account')) posts++;
+      return new Promise(() => {});     // never settles: the button stays busy
+    };
+    try {
+      const gos = w.document.querySelectorAll('.go');
+      assert.strictEqual(gos.length, 3, 'middle, bottom and pinned — got ' + gos.length);
+      assert.ok(w.document.getElementById('stickygo').classList.contains('on'),
+        'the pinned bar must be up before the form is touched');
+      assert.ok(w.document.getElementById('sghint').textContent.includes('12'),
+        'and it must say what is still missing');
+
+      // Submitting from the PINNED button must run the same validation as the
+      // one at the foot of the form — not skip it.
+      click(w, w.document.getElementById('go3'));
+      assert.strictEqual(posts, 0, 'an empty form must not POST');
+      assert.ok(w.document.getElementById('err').className.includes('show'),
+        'and the same error surface must explain why');
+
+      w.document.getElementById('p1').value = 'a-very-long-password';
+      w.document.getElementById('p2').value = 'a-very-long-password';
+      w.document.getElementById('p1').dispatchEvent(new w.Event('input', { bubbles: true }));
+      assert.ok(w.document.getElementById('sghint').className.includes('ready'),
+        'the hint must flip once the form is actually valid');
+
+      click(w, w.document.getElementById('go3'));
+      assert.strictEqual(posts, 1, 'the pinned button must submit the real form');
+      const states = Array.from(w.document.querySelectorAll('.go')).map((b) => b.disabled);
+      assert.deepStrictEqual(states, [true, true, true],
+        'all three must lock together, or one of them invites a second account');
+    } finally { w.close(); }
+  });
+
+  section('the hamburger actually opens — behaviour, not grep');
 
   await t('PUBLIC SITE: tapping the hamburger opens the drawer', () => {
     const st = settingsSvc.sanitize({});

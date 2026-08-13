@@ -144,6 +144,65 @@ font-size:12px;color:var(--faint);flex-wrap:wrap}
 .pmeta .over{color:var(--cyan)}
 .loading{text-align:center;padding:80px 0;color:var(--mut);font-family:var(--mono)}
 @media(max-width:600px){.orbbar{flex-direction:column;text-align:center}.wrap{padding:16px 14px 70px}}
+
+/* ===== SUBSCRIBE FROM WHEREVER YOU ARE ==============================
+   This preview is eight screens long, and it used to carry exactly one
+   button, at the bottom of the last one. A visitor who had decided by
+   screen two had no way to act on it, and a visitor on a phone had to
+   scroll past a 440px site preview, a JSON block and a code sample to
+   find the thing they came to press. Somebody genuinely gave up.
+
+   So the CTA now exists in four places that all call the SAME function:
+   a strip above the fold, a strip at the halfway mark, the full pitch on
+   screen 8, and a bar pinned to the bottom of the viewport that never
+   scrolls away. Four buttons, one code path — there is no arrangement of
+   clicks that reaches a different checkout.                            */
+.ctastrip{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+background:linear-gradient(135deg,rgba(91,123,255,.16),rgba(230,73,128,.10) 60%,rgba(255,146,43,.08));
+border:1px solid var(--line2);border-radius:var(--r-lg);padding:18px 20px;margin:20px 0;
+box-shadow:var(--shadow)}
+.ctastrip .cs-price{font-size:27px;font-weight:830;letter-spacing:-.035em;line-height:1.15}
+.ctastrip .cs-price em{font-style:normal;font-size:14px;font-weight:500;color:var(--mut);letter-spacing:0}
+.ctastrip .cs-sub{color:var(--mut);font-size:13.5px;margin-top:3px;max-width:46ch}
+.ctastrip .btn{margin-right:0;white-space:nowrap;font-size:15.5px;padding:13px 24px;min-height:50px}
+@media(max-width:620px){.ctastrip{flex-direction:column;align-items:stretch;text-align:center}
+.ctastrip .cs-sub{max-width:none}.ctastrip .btn{width:100%}}
+
+/* The bar that never scrolls away. It slides in once the preview is real
+   — never while the build is still running, because there is nothing to
+   buy yet — and slides out again when the full CTA on screen 8 is on
+   screen, so you are never shown the same button twice at once. */
+.stickybuy{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;
+gap:14px;align-items:center;justify-content:space-between;
+background:rgba(14,14,19,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+border-top:1px solid var(--line2);
+padding:11px 18px calc(11px + env(safe-area-inset-bottom));
+box-shadow:0 -10px 34px rgba(0,0,0,.55);
+transform:translateY(135%);pointer-events:none;
+transition:transform .32s cubic-bezier(.4,0,.2,1)}
+.stickybuy.on{transform:translateY(0);pointer-events:auto}
+.sb-left{min-width:0}
+.sb-price{font-weight:820;font-size:17.5px;letter-spacing:-.025em;white-space:nowrap}
+.sb-price em{font-style:normal;font-weight:500;font-size:12.5px;color:var(--mut)}
+.sb-note{font-family:var(--mono);font-size:11px;color:var(--faint);line-height:1.5;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stickybuy .btn{margin-right:0;white-space:nowrap;font-size:15px;padding:12px 22px;min-height:48px}
+@media(max-width:430px){.sb-note{display:none}.stickybuy{padding-left:14px;padding-right:14px}
+.stickybuy .btn{padding:12px 16px;font-size:14.5px}}
+@media(prefers-reduced-motion:reduce){.stickybuy{transition:none}}
+/* Room for the bar, added once and never removed, so hiding it on screen 8
+   does not shift the page under the reader's thumb. */
+body.hasbuy .wrap{padding-bottom:150px}
+
+/* Errors land next to the eye, not at the bottom of screen 8. A person who
+   pressed the button at the top would never have seen the old message. */
+.toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);z-index:80;
+max-width:min(560px,calc(100vw - 28px));background:rgba(35,18,24,.97);
+border:1px solid rgba(248,113,113,.5);color:#ffc9c9;border-radius:14px;
+padding:13px 18px;font-size:14px;line-height:1.5;box-shadow:var(--shadow);
+transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.toast.on{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
 `;
 
 
@@ -209,6 +268,17 @@ router.get('/:token', async (req, res) => {
 </div></div>
 </div>
 
+<!-- Pinned to the viewport, filled in and revealed only once the preview is
+     really ready. Before that it sits off-screen with pointer-events off. -->
+<div class="stickybuy" id="stickybuy" aria-hidden="true">
+  <div class="sb-left">
+    <div class="sb-price" id="sb-price"></div>
+    <div class="sb-note" id="sb-note"></div>
+  </div>
+  <button class="btn primary cta" id="sb-btn" data-cta="sticky" type="button"></button>
+</div>
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
 <script>
 var API_BASE=(location.hostname.endsWith('jobup.dev')?'':'/jobup');
 var TOKEN=${JSON.stringify(req.params.token)};
@@ -222,9 +292,28 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
 // Poll until the background build finishes (Cloudflare ~100s ceiling).
 var T=LANG==='es'
   ? {step:'Paso',of:'de',left:'restante',over:'Tardando mas de lo normal \u2014 seguimos trabajando',
-     elapsed:'transcurrido',remaining:'tiempo restante aproximado',almost:'Casi listo'}
+     elapsed:'transcurrido',remaining:'tiempo restante aproximado',almost:'Casi listo',
+     // --- the subscribe controls -------------------------------------
+     ctaPaid:'Crear mi ecosistema', ctaFree:'Crear mi cuenta',
+     perYear:' / a\u00f1o', freePrice:'Gratis mientras estamos en vista previa',
+     topSub:'Todo lo que sigue se construy\u00f3 a partir de tu hoja de vida. '+
+            'Puedes crear tu cuenta desde aqu\u00ed, desde la mitad o desde el final.',
+     midHead:'\u00bfYa lo tienes claro?',
+     sbNotePaid:'Pago seguro, luego tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
+     sbNoteFree:'Sin pago. Solo tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
+     opening:'Abriendo\u2026',
+     ctaFail:'No pudimos abrir el siguiente paso. Int\u00e9ntalo de nuevo.'}
   : {step:'Step',of:'of',left:'left',over:'Taking longer than usual \u2014 still working',
-     elapsed:'elapsed',remaining:'estimated time remaining',almost:'Almost there'};
+     elapsed:'elapsed',remaining:'estimated time remaining',almost:'Almost there',
+     ctaPaid:'Build my ecosystem', ctaFree:'Build my account',
+     perYear:' / year', freePrice:'Free while we are in preview',
+     topSub:'Everything below was built from your resume. '+
+            'You can create your account from here, from the middle, or from the end.',
+     midHead:'Seen enough?',
+     sbNotePaid:'Secure checkout, then your password and what your agents should hunt for.',
+     sbNoteFree:'No payment. Just your password and what your agents should hunt for.',
+     opening:'Opening\u2026',
+     ctaFail:'We could not open the next step. Please try again.'};
 
 function mmss(ms){
   var s=Math.max(0,Math.round(ms/1000));
@@ -305,6 +394,26 @@ function render(){
   function open(n,title,sub){return '<div class="screen" id="sc'+n+'"><div class="num">Screen '+n+' of 8</div>'+
     '<h2>'+esc(title)+'</h2>'+(sub?'<p class="note">'+esc(sub)+'</p>':'');}
 
+  // The CTA is resolved ONCE, here, and every one of the four buttons is drawn
+  // from these three values. A price that appeared on one button and not
+  // another would be the worst possible bug in this file.
+  var c=(s.cta)||{price_usd:null,includes:[],non_renewal:''};
+  var CTA_LABEL=c.price_usd?T.ctaPaid:T.ctaFree;
+  var PRICE_HTML=c.price_usd
+    ? '$'+c.price_usd+'<em>'+T.perYear+'</em>'
+    : T.freePrice;
+  var SB_NOTE=c.price_usd?T.sbNotePaid:T.sbNoteFree;
+
+  function strip(where,head,sub){
+    return '<div class="ctastrip"><div><div class="cs-price">'+
+      (head||PRICE_HTML)+'</div><div class="cs-sub">'+esc(sub||'')+'</div></div>'+
+      '<button class="btn primary cta" type="button" data-cta="'+where+'">'+
+      esc(CTA_LABEL)+'</button></div>';
+  }
+
+  // TOP — above the fold, before a single screen has been scrolled past.
+  h+=strip('top',null,T.topSub);
+
   var p=(s.site&&s.site.profile)||{};
   h+=open(1,'Your personal site','This is the real page, rendered from your resume — not a mock-up.');
   h+='<div class="preview"><iframe src="'+API_BASE+'/teaser/'+encodeURIComponent(TOKEN)+'/site" '+
@@ -357,6 +466,11 @@ function render(){
   }
   h+='</div>';
 
+  // MIDDLE — the halfway mark. Four screens is where most people have made up
+  // their mind; the honest renewal terms ride along so the decision is informed
+  // rather than merely convenient.
+  h+=strip('middle',T.midHead,c.non_renewal||'');
+
   h+=open(5,'Your AI-readable identity',
     'This is what a recruiting system, a search engine or an AI assistant reads when it looks you up.');
   h+='<pre>'+esc(JSON.stringify((s.identity||{}).json_ld||{},null,2))+'</pre>';
@@ -391,17 +505,17 @@ function render(){
      '<span class="chip">pipeline</span><span class="chip">tailoring</span>'+
      '<span class="chip">approvals</span><span class="chip">export</span></div></div>';
 
-  var c=(s.cta)||{price_usd:null,includes:[],non_renewal:''};
   h+=open(8,c.headline||'Build my ecosystem');
   // A price is shown only when there is one. With payment switched off the
   // block would otherwise read "$null / year".
   if(c.price_usd)
-    h+='<div class="price">$'+c.price_usd+'<span style="font-size:17px;color:var(--mut)"> / year</span></div>';
+    h+='<div class="price">$'+c.price_usd+'<span style="font-size:17px;color:var(--mut)">'+T.perYear+'</span></div>';
   else
-    h+='<div class="price" style="font-size:26px">Free while we are in preview</div>';
+    h+='<div class="price" style="font-size:26px">'+esc(T.freePrice)+'</div>';
   h+='<ul class="inc">'+(c.includes||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
-  h+='<button class="btn primary" id="buy" style="font-size:16px;padding:13px 26px">'+
-     (c.price_usd?'Submit to build my ecosystem':'Build my account')+'</button>';
+  // BOTTOM \u2014 the full pitch. Same class, same handler as the other three.
+  h+='<button class="btn primary cta" id="buy" type="button" data-cta="bottom" '+
+     'style="font-size:16px;padding:13px 26px">'+esc(CTA_LABEL)+'</button>';
   h+='<p class="note">'+esc(c.non_renewal||'')+'</p>';
   h+='<p class="note">JobUp never applies on your behalf. You review and submit every application yourself.</p>';
   h+='<div id="buyout" class="note"></div></div>';
@@ -409,9 +523,50 @@ function render(){
   document.getElementById('body').innerHTML=h;
   document.getElementById('stat').textContent='Ready \u2014 press play and I will walk you through it.';
   try{window.dispatchEvent(new Event('jobup:ready'));}catch(e){}
-  var b=document.getElementById('buy');
-  if(b)b.addEventListener('click',checkout);
+
+  // The pinned bar carries the same label and the same price as the rest.
+  var sb=document.getElementById('stickybuy');
+  document.getElementById('sb-price').innerHTML=PRICE_HTML;
+  document.getElementById('sb-note').textContent=SB_NOTE;
+  document.getElementById('sb-btn').textContent=CTA_LABEL;
+
+  // ONE handler for all four. Attached by class, so a button added later
+  // cannot accidentally be wired to something else.
+  var all=document.querySelectorAll('.cta');
+  for(var q=0;q<all.length;q++) all[q].addEventListener('click',checkout);
+
+  showStickyBuy(sb);
   startAlwaysOn();
+}
+
+/**
+ * Reveal the pinned bar, then keep it out of the way of the real thing: while
+ * the screen-8 button is actually on screen there is no reason to show a second
+ * copy of it directly underneath.
+ */
+function showStickyBuy(sb){
+  if(!sb)return;
+  document.body.classList.add('hasbuy');
+  function on(v){
+    sb.classList.toggle('on',v);
+    sb.setAttribute('aria-hidden',v?'false':'true');
+  }
+  on(true);
+  var target=document.getElementById('buy');
+  if(!target||!('IntersectionObserver' in window))return;   // no observer: leave it up
+  try{
+    new IntersectionObserver(function(entries){
+      for(var i=0;i<entries.length;i++) on(!entries[i].isIntersecting);
+    },{threshold:0.55}).observe(target);
+  }catch(e){/* the bar simply stays visible */}
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  if(!t){alert(msg);return;}
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(function(){t.classList.remove('on');},7000);
 }
 
 // The always-on loop: steps through Searching -> Scoring -> Tailoring ->
@@ -443,15 +598,43 @@ function startAlwaysOn(){
 // choose a password, tell the agents what to hunt for. If billing is ever
 // switched back on, the same button asks the server first and follows whatever
 // it is told, so this page needs no second edit.
+var CTA_BUSY=false;
+
+/**
+ * Every subscribe button on the page ends up here. They are locked together
+ * while a checkout is opening: four buttons that each mint their own Stripe
+ * session would be four sessions for one person, and a second tap while the
+ * first request is in flight is the most likely way to do it.
+ */
+function ctaBusy(on){
+  CTA_BUSY=on;
+  var all=document.querySelectorAll('.cta');
+  for(var i=0;i<all.length;i++){
+    var b=all[i];
+    b.disabled=on;
+    if(on){ if(!b.getAttribute('data-label')) b.setAttribute('data-label',b.textContent);
+            b.textContent=T.opening; }
+    else if(b.getAttribute('data-label')) b.textContent=b.getAttribute('data-label');
+  }
+}
+
 function checkout(){
+  if(CTA_BUSY)return;
   var out=document.getElementById('buyout');
-  out.textContent='Opening...';
+  if(out) out.textContent=T.opening;
+  ctaBusy(true);
   fetch(API_BASE+'/api/v1/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({teaser_token:TOKEN})})
     .then(function(r){return r.json();}).then(function(j){
       if(j.build_url){location.href=j.build_url;return;}   // no payment: straight to the form
       if(j.url){location.href=j.url;return;}               // Stripe, when enabled
-      out.textContent=j.error||'Could not open the next step.';
+      // The failure has to be visible from wherever the button was pressed.
+      // It used to print at the foot of screen 8, which the person who tapped
+      // the top of the page would never scroll to.
+      ctaBusy(false);
+      var msg=j.error||T.ctaFail;
+      if(out) out.textContent=msg;
+      toast(msg);
     }).catch(function(){
       // The form is the destination either way — a failed status call must not
       // strand somebody who has already decided to sign up.
