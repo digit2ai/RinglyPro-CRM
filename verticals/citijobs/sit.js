@@ -250,7 +250,7 @@ async function cleanup() {
     headline: seed.MANUEL_RESUME.headline,
     resume_json: seed.MANUEL_RESUME, resume_text: seed.flatten(seed.MANUEL_RESUME),
     target_titles: ['Data Analytics Lead', 'Data Transformation'],
-    target_locations: ['Tampa'], countries: ['United States'], score_threshold: 70
+    target_locations: ['Tampa'], countries: ['United States'], score_threshold: 60
   });
   profileB = await Profile.create({
     tenant_id: tenant, slug: 'sit-b', display_name: 'SIT Beta',
@@ -419,6 +419,20 @@ async function cleanup() {
   const puneMatch = await Match.findOne({ where: { profile_id: profileA.id, req_id: '26980420' } });
   ok('...and its rejection is recorded, not silent', !!puneMatch && puneMatch.score < 70);
   ok('scores with no key are labelled simulated', (await Match.findOne({ where: { profile_id: profileA.id, req_id: '26974948' } })).is_simulated === true);
+
+  // ONE FLOOR, ALWAYS — the heuristic path gets no discount. It used to board at
+  // 70% of the threshold, which put 71 sub-threshold rows on the real board.
+  {
+    const boarded = await Tracked.findAll({ where: { tenant_id: tenant, profile_id: profileA.id } });
+    const scores = await Match.findAll({ where: { tenant_id: tenant, profile_id: profileA.id } });
+    const byKey = new Map(scores.map((m) => [m.employer + ':' + m.req_id, m.score]));
+    const below = boarded.filter((t) => {
+      const sc = byKey.get(t.employer + ':' + t.req_id);
+      return t.source === 'agent' && sc != null && sc < profileA.score_threshold;
+    });
+    ok('nothing the agent boarded scores below the threshold', below.length === 0,
+      below.map((b) => b.req_id + '=' + byKey.get(b.employer + ':' + b.req_id)).join(','));
+  }
 
   section('14. The daily claim — one scheduled run per tenant per day');
   const c1 = await agent.claim(tenant, 'schedule');

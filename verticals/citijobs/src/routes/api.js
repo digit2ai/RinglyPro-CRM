@@ -200,10 +200,12 @@ router.get('/board', async (req, res) => {
           tailoring: tl ? { id: tl.id, version: tl.version, sent: tl.sent, coverage_pct: (tl.keyword_coverage || {}).pct, generated_at: tl.generated_at } : null
         };
       })
-        // Pay floor. A requisition already APPLIED to is never hidden — you
-        // cannot track an application you can no longer see.
-        .filter((it) => ['applied', 'interview', 'offer'].includes(it.status)
-          || prefilter.salaryAllowed(it.req, profile).ok)
+        // Pay floor AND match floor. A requisition you have acted on is never
+        // hidden — you cannot track an application you can no longer see — but
+        // an untouched row below the threshold has no business on the board.
+        .filter((it) => ['applied', 'interview', 'offer', 'closed'].includes(it.status)
+          || (prefilter.salaryAllowed(it.req, profile).ok
+              && (!it.req.match || it.req.match.score >= (profile.score_threshold || 70))))
         .sort(byMatch)
     });
   } catch (e) {

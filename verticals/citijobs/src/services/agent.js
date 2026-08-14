@@ -269,15 +269,15 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
       scored_by: r.scored_by, is_simulated: r.is_simulated, model: r.model,
       cost_cents: r.cost_cents || 0
     });
-    // A heuristic score and a model score are NOT the same scale, so comparing
-    // both to one threshold is a category error: the deterministic score tops
-    // out around the 60s on a genuinely strong match, and with no API key that
-    // silently produces an empty board on an app that is working correctly.
-    // The keyless path therefore boards against its own floor, and the UI says
-    // which mode produced each score.
-    const floor = r.is_simulated
-      ? Math.round((profile.score_threshold || 70) * 0.7)
-      : (profile.score_threshold || 70);
+    // ONE FLOOR, ALWAYS. The keyless heuristic path used to board at 70% of the
+    // threshold, on the reasoning that the two scales differ — true, but it put
+    // 71 sub-threshold rows on the board. The owner asked for a strict floor and
+    // it applies to both scoring modes.
+    //
+    // Consequence, stated rather than discovered later: with no
+    // ANTHROPIC_API_KEY the deterministic score rarely clears 70, so a keyless
+    // run boards little or nothing. Production has the key.
+    const floor = profile.score_threshold || 70;
     // A requisition whose STATED pay tops out below the floor never reaches
     // the board, however well it scores. Silence about pay is not a reason to
     // exclude — see prefilter.salaryAllowed.
