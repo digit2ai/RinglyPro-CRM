@@ -313,6 +313,22 @@ async function cleanup() {
   const preT = prefilter.score(tampaReq, profileA, terms);
   ok('the Tampa requisition scores well', preT.score >= 50, String(preT.score));
   ok('it clears the scoring floor', prefilter.shouldScore(preT, profileA));
+  // A US POSTING DOES NOT HAVE TO SAY "UNITED STATES". Citi and JPMorgan spell
+  // the country out; PNC, Capital One and U.S. Bank name only a state. Gating on
+  // the country name silently excluded every posting from those three banks as
+  // foreign — 524 US jobs dropped without a trace, on an app that looked like it
+  // was working.
+  const usProfile = { countries: ['United States'], target_titles: [], target_locations: [] };
+  [['Tampa Florida United States', true], ['Columbus, OH, United States', true],
+    ['PA - Pittsburgh 15222', true], ['McLean, VA', true], ['Saint Paul, MN', true],
+    ['Data Center PA690', true], ['Plano, TX', true],
+    ['Pune Maharashtra India', false], ['Bangalore, Karnataka, India', false],
+    ['London, United Kingdom', false], ['Toronto, ON', false]
+  ].forEach(([loc, want]) => {
+    const r = prefilter.locationAllowed({ location: loc }, usProfile);
+    ok(`"${loc}" reads as ${want ? 'US' : 'outside the US'}`, r.ok === want);
+  });
+
   const puneReq = Req.build({ req_id: '26980420', title: 'Data Analytics Lead Analyst', location: 'Pune Maharashtra India', description_text: 'data analytics' });
   const preP = prefilter.score(puneReq, profileA, terms);
   ok('a Pune requisition is refused for a US-only profile', !preP.location_ok);

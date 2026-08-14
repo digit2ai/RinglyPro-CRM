@@ -18,10 +18,36 @@ function tokens(s) {
   return normalize(s).split(' ').filter((w) => w.length > 2);
 }
 
+// A US posting does not have to say "United States". Citi writes "Tampa Florida
+// United States" and JPMorgan writes "Columbus, OH, United States", but PNC
+// writes "PA - Pittsburgh 15222", Capital One "McLean, VA" and U.S. Bank
+// "Saint Paul, MN". Matching only the country name silently excluded EVERY
+// posting from those three banks as foreign — 524 US jobs, dropped without a
+// trace, on an app that looked like it was working.
+const US_STATE_CODES = new Set(('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT '
+  + 'NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC PR').split(' '));
+const US_NAME_LIST = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware',
+  'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine',
+  'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada',
+  'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma',
+  'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont',
+  'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming', 'district of columbia', 'puerto rico'];
+
+/** Does this location string read as a US one, even without the country? */
+function looksUS(loc) {
+  const l = String(loc || '');
+  const lower = l.toLowerCase();
+  if (US_NAME_LIST.some((n) => lower.includes(n))) return true;
+  // A bare two-letter state token: "McLean, VA", "PA - Pittsburgh 15222".
+  if ((l.match(/\b[A-Z]{2}\b/g) || []).some((t) => US_STATE_CODES.has(t))) return true;
+  // PNC names facilities "Data Center PA690" — a state code glued to a building
+  // number, so the word boundary above never fires.
+  return (l.match(/\b([A-Z]{2})\d{2,}\b/g) || []).some((t) => US_STATE_CODES.has(t.slice(0, 2)));
+}
+
 /**
- * Country gate. A US-only profile must never be shown Pune, and the location
- * strings Citi emits are plain ("Tampa Florida United States"), so a substring
- * test on the profile's country list is honest and sufficient.
+ * Country gate. A US-only profile must never be shown Pune — but it must be
+ * shown Pittsburgh, and a posting that names only a state is still US.
  */
 function locationAllowed(req, profile) {
   const countries = (profile.countries && profile.countries.length)
@@ -29,10 +55,12 @@ function locationAllowed(req, profile) {
     : ['United States'];
   const loc = String(req.location || '');
   if (!loc) return { ok: true, reason: 'no location stated' };  // flag, do not silently drop
-  const hit = countries.some((c) => loc.toLowerCase().includes(String(c).toLowerCase()));
-  return hit
-    ? { ok: true, reason: null }
-    : { ok: false, reason: `location "${loc}" outside ${countries.join(', ')}` };
+  const lower = loc.toLowerCase();
+  if (countries.some((c) => lower.includes(String(c).toLowerCase()))) return { ok: true, reason: null };
+  if (countries.some((c) => /united states|usa|u\.s\./i.test(c)) && looksUS(loc)) {
+    return { ok: true, reason: null };
+  }
+  return { ok: false, reason: `location "${loc}" outside ${countries.join(', ')}` };
 }
 
 /**
@@ -138,4 +166,4 @@ function shouldScore(pre, profile) {
   return pre.score >= floor;
 }
 
-module.exports = { score, shouldScore, locationAllowed, salaryAllowed, tokens };
+module.exports = { score, shouldScore, locationAllowed, looksUS, salaryAllowed, tokens };
