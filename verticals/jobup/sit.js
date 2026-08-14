@@ -5526,6 +5526,44 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(one('Tampa, FL / Austin, TX'), null, 'ambiguous — whole country');
   });
 
+  // A COLUMN HEADED (48) THAT SHOWS 12 IS A LIE, NOT A LAYOUT CHOICE.
+  //
+  // The board rendered items.slice(0,12) under a heading printing the real
+  // count, so 36 tracked roles were invisible with nothing saying so — and
+  // because the rows arrived in insertion order, the strongest match was hidden
+  // whenever it happened to sit at position thirteen. Ordering is now
+  // best-score-first and done on the SERVER, so every reader of the endpoint
+  // gets the same board.
+  await t('PIPELINE: every tracked role renders, best score first', () => {
+    const fs = require('fs');
+    const app = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!/items\.slice\(0,\s*\d+\)/.test(app),
+      'THE BOARD MUST NOT SILENTLY TRUNCATE A COLUMN');
+    assert.ok(/\.stagecol\{[^}]*overflow-y:\s*auto/.test(app),
+      'a long column scrolls instead — long is fine, secretly cut is not');
+    assert.ok(/class="mscore/.test(app), 'the score must render as a badge');
+
+    // The ordering itself, run against the comparator the route uses.
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const i = src.indexOf("router.get('/pipeline'");
+    const body = src.slice(i, src.indexOf('res.json({ pipeline: by, stages })', i));
+    assert.ok(/\.sort\(/.test(body), 'the route must sort, not the browser');
+
+    const rows = [
+      { id: 1, score: 41 }, { id: 2, score: 92 }, { id: 3, score: null },
+      { id: 4, score: 78 }, { id: 5, score: 0 },
+    ];
+    rows.sort((a, b) => {
+      const as = a.score == null ? -1 : a.score;
+      const bs = b.score == null ? -1 : b.score;
+      if (bs !== as) return bs - as;
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    });
+    assert.deepStrictEqual(rows.map((r) => r.id), [2, 4, 1, 5, 3],
+      'highest first, and an UNSCORED row sorts last — a missing score is not a '
+      + 'zero, but it is not a reason to outrank something measured either');
+  });
+
   // NOBODY IS BLOCKED FOR ROLE TITLES, AND NOBODY ENDS UP WITH NONE.
   //
   // Without titles pageRoles() is empty, no /roles/:role page exists, the

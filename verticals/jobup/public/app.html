@@ -80,7 +80,19 @@ background:var(--faint);transition:all .16s ease}
 pre{background:#0d0d13;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;
 font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white-space:pre-wrap}
 .stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
-.stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:90px}
+/* The column scrolls rather than being truncated. A stage holding 48 roles is
+   allowed to be long — what it must never do is show twelve under a heading
+   that says 48. The heading is sticky so you always know which stage you are
+   scrolled inside. */
+.stagecol{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;
+  min-height:90px;max-height:min(70vh,720px);overflow-y:auto}
+.stagecol h4{position:sticky;top:-13px;background:var(--card);padding-top:2px;z-index:1}
+/* The score, as a badge rather than a suffix on the employer line: it is the
+   thing the board is now ordered by, so it has to be readable at a glance. */
+.mscore{float:right;margin:-1px 0 0 8px;font-family:var(--mono);font-size:11px;font-weight:700;
+  padding:2px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--mut)}
+.mscore.mid{border-color:rgba(230,180,90,.45);color:#e6b45a}
+.mscore.hi{border-color:rgba(58,208,127,.5);color:#3ad07f}
 .stagecol h4{margin:0 0 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
 text-transform:uppercase;color:var(--faint)}
 .cvgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -887,12 +899,19 @@ function loadPipeline(){
         '</div></div>'+
       '<div class="stage">'+st.map(function(s){
       var items=p[s]||[];
+      /* NO slice(). The board rendered only the first twelve of a column whose
+         own heading said 48 — a silent truncation, which is the worst kind:
+         it reads as "that is all there is", and it hid the best match whenever
+         the strongest score happened to sit at position thirteen. The column
+         scrolls instead, so a long list is long rather than secretly cut.
+         Order is best-score-first and comes from the server. */
       return '<div class="stagecol"><h4>'+esc(s)+' ('+items.length+')</h4>'+
-        (items.length?items.slice(0,12).map(function(m){
+        (items.length?items.map(function(m){
           return '<div class="mini">'+
+            (m.score!=null?'<div class="mscore'+(m.score>=80?' hi':(m.score>=60?' mid':''))+'">'+
+              esc(String(m.score))+'</div>':'')+
             '<div style="font-weight:650">'+esc(m.display_title||'')+'</div>'+
             '<div class="note" style="margin:2px 0 6px">'+esc(m.display_employer||'')+
-              (m.score!=null?' · '+m.score:'')+
               (m.source&&m.source!=='hunter'?' · '+esc(m.source):'')+'</div>'+
             stageSelect(m)+
             (m.source!=='hunter'?' <button class="btn sm" style="margin-left:6px;padding:4px 9px" '+

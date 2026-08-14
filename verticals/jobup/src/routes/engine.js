@@ -184,6 +184,25 @@ router.get('/pipeline', async (req, res) => {
       display_employer: (job && job.employer) || r.employer || '',
     });
   }
+  // BEST MATCH FIRST, SERVER-SIDE.
+  //
+  // The board arrived in insertion order, so the strongest match could be
+  // anywhere in the column — and the dashboard then rendered only the first
+  // twelve of it, which meant a 92 could be invisible while a 41 was on screen.
+  // Sorting here rather than in the browser means every reader of this endpoint
+  // gets the same order, including the mobile shell and anything added later.
+  //
+  // Unscored rows (typed in by hand, or brought by a recruiter) sort last
+  // rather than first: a missing score is not a zero, but it is also not a
+  // reason to outrank something measured.
+  for (const s of stages) {
+    by[s].sort((a, b) => {
+      const as = a.score == null ? -1 : a.score;
+      const bs = b.score == null ? -1 : b.score;
+      if (bs !== as) return bs - as;
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    });
+  }
   res.json({ pipeline: by, stages });
 });
 
