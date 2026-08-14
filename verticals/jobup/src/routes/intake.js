@@ -265,6 +265,30 @@ function targetingFrom(body) {
 }
 
 /**
+ * Titles this person has actually held, from the résumé already parsed for the
+ * teaser. Headline first — it is the one line they wrote about themselves —
+ * then job titles most recent first, deduped case-insensitively.
+ *
+ * Nothing is invented: if the résumé states no titles this returns nothing and
+ * the field stays a plain text input.
+ */
+function suggestedRoles(site) {
+  const p = (site && site.profile) || {};
+  const out = [];
+  const seen = new Set();
+  const add = (v) => {
+    const s = String(v == null ? '' : v).trim().replace(/\s+/g, ' ');
+    if (!s || s.length < 2 || s.length > 60) return;
+    const k = s.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k); out.push(s);
+  };
+  add(p.headline);
+  for (const e of (Array.isArray(p.experience) ? p.experience : [])) add(e && e.title);
+  return out.slice(0, 6);
+}
+
+/**
  * GET /api/v1/intake/build?t=<teaser_token>
  * What the build form needs to render: who this is (from the teaser, which is
  * authoritative), and whether an account already exists for that address.
@@ -294,6 +318,16 @@ router.get('/build', async (req, res) => {
       paid: Boolean(existing && (existing.status === 'active' || existing.stripe_customer_id)),
       employment_types: settingsSvc.EMPLOYMENT_TYPES,
       work_modes: settingsSvc.WORK_MODES,
+      // TITLES WE CAN ALREADY SEE, OFFERED AS ONE-TAP CHIPS.
+      //
+      // Role titles are now required, and a required empty text field is how a
+      // signup gets abandoned. But the resume was already parsed for the teaser,
+      // so the titles this person has actually held are sitting right there —
+      // suggesting them turns typing into tapping. They are SUGGESTIONS: nothing
+      // is preselected, because the title someone held is not always the title
+      // they want next, and quietly targeting their old job would be worse than
+      // asking.
+      suggested_roles: suggestedRoles(profile),
       password_rule: 'At least 12 characters.',
     });
   } catch (e) {
@@ -329,6 +363,20 @@ router.post('/build-account', async (req, res) => {
     }
     const problems = authSvc.passwordProblems(password);
     if (problems.length) return res.status(400).json({ errors: problems });
+
+    // ROLE TITLES ARE REQUIRED, AND ENFORCED HERE TOO — NOT ONLY IN THE FORM.
+    //
+    // With none, pageRoles() is empty, no /roles/:role page is generated, the
+    // sitemap holds one url, and the site carries not one phrase a recruiter
+    // would ever type. Measured: 2 of 5 subscribers had zero, including the
+    // paying one, and their entire site was a single page. A client-side check
+    // alone is a suggestion; this is the boundary that makes it a rule.
+    if (!settingsSvc.roleList(b.roles, 12).length) {
+      return res.status(400).json({
+        errors: ['Add at least one job title you want. Each becomes a page on your site carrying '
+               + 'that exact phrase — with none, there is nothing for a recruiter to match.'],
+      });
+    }
 
     let sub = await models.subscribers.findOne({ where: { email } });
     if (sub && sub.password_hash) {

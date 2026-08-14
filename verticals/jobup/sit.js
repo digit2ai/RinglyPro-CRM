@@ -5304,8 +5304,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.strictEqual(gos.length, 3, 'middle, bottom and pinned — got ' + gos.length);
       assert.ok(w.document.getElementById('stickygo').classList.contains('on'),
         'the pinned bar must be up before the form is touched');
+      // It must name the FIRST thing still missing, and role titles now come
+      // before the password — they are the field most likely to be skipped and
+      // the one whose absence quietly breaks the product.
+      assert.match(w.document.getElementById('sghint').textContent, /job title/i,
+        'the pinned bar must say what is still missing, starting with the titles');
+      w.document.getElementById('roles').value = 'Sales Executive';
+      w.document.getElementById('roles').dispatchEvent(new w.Event('input', { bubbles: true }));
       assert.ok(w.document.getElementById('sghint').textContent.includes('12'),
-        'and it must say what is still missing');
+        'and then move on to the next missing thing');
 
       // Submitting from the PINNED button must run the same validation as the
       // one at the foot of the form — not skip it.
@@ -5316,6 +5323,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 
       w.document.getElementById('p1').value = 'a-very-long-password';
       w.document.getElementById('p2').value = 'a-very-long-password';
+      w.document.getElementById('roles').value = 'Sales Executive';   // now required
       w.document.getElementById('p1').dispatchEvent(new w.Event('input', { bubbles: true }));
       assert.ok(w.document.getElementById('sghint').className.includes('ready'),
         'the hint must flip once the form is actually valid');
@@ -5355,6 +5363,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         if (optIn) dir.checked = true;
         w.document.getElementById('p1').value = 'a-very-long-password';
         w.document.getElementById('p2').value = 'a-very-long-password';
+        w.document.getElementById('roles').value = 'Sales Executive';   // now required
         click(w, w.document.getElementById('go3'));
         assert.ok(body, 'the form must have posted');
         return body;
@@ -5379,6 +5388,49 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         settingsSvc.sanitize({ presence: { directory_opt_in: bad } }).presence.directory_opt_in,
         false, 'opt-in means opt-in: ' + JSON.stringify(bad) + ' must not list somebody');
     }
+  });
+
+  // NO ROLE TITLES = A ONE-PAGE SITE NOBODY CAN MATCH.
+  //
+  // Without them pageRoles() is empty, no /roles/:role page exists, the sitemap
+  // holds a single url and the site carries not one phrase a sourcer would
+  // type. Measured before this shipped: 2 of 5 subscribers had zero, the paying
+  // one among them. The field is now required — with one-tap suggestions read
+  // off the résumé, because a required EMPTY text field is how a signup is
+  // abandoned.
+  await t('BUILD FORM: role titles are required, and suggested from the résumé', async () => {
+    const fs = require('fs');
+    const raw = fs.readFileSync(__dirname + '/public/build.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '');
+    let posted = null;
+    const w = bootDom(raw, 'https://jobup.dev/build?t=tok');
+    w.fetch = (url, init) => {
+      if (String(url).includes('build-account')) posted = JSON.parse(init.body);
+      return new Promise(() => {});
+    };
+    try {
+      w.document.getElementById('p1').value = 'a-very-long-password';
+      w.document.getElementById('p2').value = 'a-very-long-password';
+      w.document.getElementById('roles').value = '';
+      click(w, w.document.getElementById('go3'));
+      assert.strictEqual(posted, null, 'an account with no role titles must not be created');
+      assert.ok(w.document.getElementById('err').className.includes('show'),
+        'and the form must say why rather than sitting inert');
+
+      w.document.getElementById('roles').value = 'Sales Executive, Account Executive';
+      click(w, w.document.getElementById('go3'));
+      assert.ok(posted, 'with a title it must submit');
+      assert.deepStrictEqual(posted.roles, ['Sales Executive', 'Account Executive']);
+    } finally { w.close(); }
+
+    // The server is the boundary, not the form — a client-side check alone is
+    // a suggestion. Assert the route refuses, and that roleList agrees.
+    const intakeSrc = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/roleList\(b\.roles[\s\S]{0,80}length\)\s*\{[\s\S]{0,400}errors:/.test(intakeSrc),
+      'build-account must reject a payload carrying no role titles');
+    assert.strictEqual(settingsSvc.roleList([], 12).length, 0);
+    assert.strictEqual(settingsSvc.roleList(['  ', ''], 12).length, 0,
+      'whitespace is not a job title');
   });
 
   // ONE SUBSCRIBER'S SETTINGS MUST NEVER TOUCH ANOTHER'S.
