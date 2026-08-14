@@ -6,7 +6,7 @@
 // =============================================================
 
 const express = require('express');
-const { models, scoped, plain } = require('../models');
+const { models, scoped, plain, TENANT_SCOPED } = require('../models');
 const authSvc = require('../services/auth');
 const settingsSvc = require('../services/settings');
 const addresses = require('../services/addresses');
@@ -588,15 +588,53 @@ router.get('/export', async (req, res) => {
 });
 
 // Account deletion — removes the resume text itself, not only the row.
+/**
+ * DELETE EVERYTHING, AND MEAN IT.
+ *
+ * This used to name ELEVEN tables by hand while the tenant-scoped set held
+ * more, so page_views, audit_log, assets, address_aliases and tailor_credits
+ * survived a deletion that told the subscriber "all personal data deleted".
+ * A hand-maintained list next to a registry is a promise that decays every
+ * time somebody adds a table — so it now walks the registry, and SIT fails if
+ * that ever stops being true.
+ *
+ * THE TEASER ROW WAS THE REAL LEAK. ju_teasers holds `resume_text` — the
+ * extracted résumé — plus the name and email, and it is NOT tenant-scoped
+ * (tenant_id is null until payment). So the one thing the note explicitly
+ * promised, "including stored resume text", was the one thing left behind.
+ * Matched on BOTH tenant_id and email: the first covers rows created after
+ * payment, the second the previews built before the account existed.
+ */
 router.delete('/account', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  for (const t of ['profiles', 'settings', 'job_matches', 'tailored_resumes',
-                   'applications', 'opportunities', 'outreach', 'agent_runs',
-                   'invoices', 'sites', 'notification_prefs']) {
-    await scoped(t, tid).destroy({});
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  const email = String((sub && sub.email) || '').toLowerCase();
+
+  for (const t of Array.from(TENANT_SCOPED)) {
+    try { await scoped(t, tid).destroy({}); } catch (e) {
+      // One table failing must not abandon the rest half-deleted.
+      console.warn('[delete-account] %s: %s', t, e.message);
+    }
   }
+
+  // The résumé previews. Not tenant-scoped, and the only place the raw
+  // extracted text lived after the profile row went.
+  for (const row of await models.teasers.findAll({})) {
+    if (row.tenant_id === tid || (email && String(row.email || '').toLowerCase() === email)) {
+      await models.teasers.destroy({ where: { id: row.id } });
+    }
+  }
+
   await models.subscribers.destroy({ where: { id: tid } });
-  res.json({ ok: true, note: 'Account and all personal data deleted, including stored resume text.' });
+  res.json({
+    ok: true,
+    note: 'Account and all personal data deleted, including stored resume text and any previews.',
+    // Said plainly rather than quietly omitted: if somebody referred this
+    // person, the commission on THEIR ledger is the referrer's record of money
+    // owed, and is not this person's to erase. It holds no résumé, no contact
+    // detail and no name — only that a referral qualified.
+    retained: 'If another subscriber referred you, their own commission record remains on their account.',
+  });
 });
 
 // ---------------------------------------------------------------

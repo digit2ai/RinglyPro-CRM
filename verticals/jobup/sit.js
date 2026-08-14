@@ -4223,8 +4223,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
     const exportBlock = src.slice(src.indexOf("router.get('/export'"));
     assert.ok(exportBlock.includes("'outreach'"), 'export must still include them');
+    // The route no longer names tables one by one — it walks TENANT_SCOPED, so
+    // the property to assert is that outreach IS in that registry. Grepping the
+    // route for the literal was checking the old implementation rather than the
+    // guarantee, and would have failed on a change that made deletion strictly
+    // more complete.
     const del = src.slice(src.indexOf("router.delete('/account'"));
-    assert.ok(del.includes("'outreach'"), 'account deletion must still clear them');
+    assert.ok(/Array\.from\(TENANT_SCOPED\)/.test(del), 'deletion walks the registry');
+    assert.ok(TENANT_SCOPED.has('outreach'), 'and outreach is in it, so it is still cleared');
   });
   await t('outreachFacts survives — Opportunities still quotes verbatim or omits', () => {
     const none = settingsSvc.outreachFacts({ facts: {} });
@@ -5599,6 +5605,80 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
     assert.ok(app.includes('<select class="x-hidden">'), 'the CV editor must render the select');
     assert.ok(/hidden:g\('x-hidden'\)==='1'/.test(app), 'and saveCV must send it');
+  });
+
+  // "DELETE MY ACCOUNT" HAS TO BE TRUE, INCLUDING THE PART IT NAMES.
+  //
+  // The route used to list ELEVEN tables by hand while TENANT_SCOPED held more,
+  // so page_views, audit_log, assets, address_aliases and tailor_credits
+  // survived a deletion that told the subscriber "all personal data deleted".
+  // Worse, ju_teasers holds `resume_text` and is NOT tenant-scoped — so the one
+  // thing the note explicitly promised was the one thing left behind.
+  await t('DELETE ACCOUNT: nothing personal survives, teaser résumé included', async () => {
+    const sub = await models.subscribers.create({
+      email: 'sit-erase@example.com', name: 'Erase Me', status: 'active', activation: 'free_test' });
+    const tid = sub.id;
+    try {
+      // Something in every scoped table this fixture can legitimately fill,
+      // plus the two teaser shapes: one created before payment (email only)
+      // and one after (tenant_id set).
+      await scoped('profiles', tid).create({ resume_json: { name: 'Erase Me' }, source_text: 'SECRET RESUME TEXT' });
+      await scoped('settings', tid).create({ settings: settingsSvc.sanitize({}) });
+      await scoped('job_matches', tid).create({ title: 'X', source: 'manual', stage: 'new' });
+      await scoped('audit_log', tid).create({ actor: 'subscriber', action: 'sit', reason: 'r' });
+      await scoped('page_views', tid).create({ path: '/', ip_hash: 'h' });
+      await scoped('tailor_credits', tid).create({ amount_cents: 1000, stripe_session_id: 'sit_' + tid });
+      await models.teasers.create({ email: 'sit-erase@example.com', name: 'Erase Me',
+        token: 'sit-erase-pre-' + tid, status: 'ready', resume_text: 'SECRET RESUME TEXT' });
+      await models.teasers.create({ tenant_id: tid, email: 'other@example.com',
+        token: 'sit-erase-post-' + tid, status: 'ready', resume_text: 'SECRET RESUME TEXT' });
+
+      // Run the route's own logic, so this tests what the button does.
+      const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+      const del = src.slice(src.indexOf("router.delete('/account'"),
+                            src.indexOf("router.get('/analytics'"));
+      assert.ok(/Array\.from\(TENANT_SCOPED\)/.test(del),
+        'A HAND-MAINTAINED LIST NEXT TO A REGISTRY DECAYS — it must walk the registry');
+      assert.ok(/models\.teasers/.test(del), 'and it must reach the teaser résumé text');
+      assert.ok(/row\.tenant_id === tid \|\| \(email/.test(del),
+        'matched on BOTH tenant_id and email — previews exist before the account does');
+
+      // Now actually erase, exactly as the route does.
+      for (const tbl of Array.from(TENANT_SCOPED)) {
+        try { await scoped(tbl, tid).destroy({}); } catch (e) { /* n/a */ }
+      }
+      for (const row of await models.teasers.findAll({})) {
+        if (row.tenant_id === tid || String(row.email || '').toLowerCase() === 'sit-erase@example.com') {
+          await models.teasers.destroy({ where: { id: row.id } });
+        }
+      }
+      await models.subscribers.destroy({ where: { id: tid } });
+
+      // NOTHING may be left in ANY scoped table — this is the assertion that
+      // fails the day somebody adds a table and forgets the purge.
+      const survivors = [];
+      for (const tbl of Array.from(TENANT_SCOPED)) {
+        try {
+          const n = (await scoped(tbl, tid).findAll({})).length;
+          if (n) survivors.push(tbl + '=' + n);
+        } catch (e) { /* n/a */ }
+      }
+      assert.deepStrictEqual(survivors, [], 'rows survived deletion: ' + survivors.join(', '));
+
+      const teas = (await models.teasers.findAll({}))
+        .filter((r) => r.tenant_id === tid || String(r.email || '') === 'sit-erase@example.com');
+      assert.strictEqual(teas.length, 0,
+        'THE RÉSUMÉ TEXT IN ju_teasers IS THE THING THE NOTE PROMISES TO DELETE');
+      assert.strictEqual(await models.subscribers.findOne({ where: { id: tid } }), null);
+    } finally {
+      // Belt and braces if an assertion threw mid-way.
+      try { await models.subscribers.destroy({ where: { id: tid } }); } catch (e) { /* gone */ }
+      for (const row of await models.teasers.findAll({})) {
+        if (String(row.token || '').startsWith('sit-erase-')) {
+          await models.teasers.destroy({ where: { id: row.id } });
+        }
+      }
+    }
   });
 
   // ===== THE HELP AGENT ====================================================

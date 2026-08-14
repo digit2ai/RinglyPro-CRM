@@ -180,6 +180,8 @@
     'View public CV': 'Ver mi CV público',
 
     // ---------- dashboard: the standing explainer ------------------------
+    'What JobUp does, and what it never does':
+      'Qué hace JobUp, y qué nunca hace',
     'Your AI career agent (honest by design):': 'Tu agente de carrera con IA (honesto por diseño):',
     'scans real, live openings every day and scores each one against your profile, with the reasoning and the gaps.':
       'revisa vacantes reales cada día y puntúa cada una contra tu perfil, con el razonamiento y lo que te falta.',
