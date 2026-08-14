@@ -91,6 +91,7 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
   for (const p of profiles) termsByProfile.set(p.id, await skills.searchTerms(p.id));
 
   const ranked = [];
+  const exclusions = [];
   for (const row of candidates) {
     let best = -1;
     let anyAllowed = false;
@@ -102,14 +103,16 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
         // requisition quietly never appear. Skipping something silently reads
         // as "we looked at everything" when we did not. Title and location are
         // enough to decide this, so it costs no HTTP request and no tokens.
-        const had = await Match.findOne({ where: { tenant_id, profile_id: p.id, employer: row.employer || 'citi', req_id: row.req_id } });
-        if (!had) {
-          await Match.create({
-            tenant_id, profile_id: p.id, employer: row.employer || 'citi', req_id: row.req_id,
-            score: 0, rationale: pre.location_reason || 'outside the profile\'s countries',
-            scored_by: 'heuristic', is_simulated: true, cost_cents: 0
-          });
-        }
+        //
+        // COLLECTED, NOT WRITTEN ONE BY ONE. At five banks the pool passes a
+        // thousand rows, and a findOne+create per excluded row is a couple of
+        // thousand sequential round trips to a remote database — the run stops
+        // being bounded by its HTTP budget and starts being bounded by this.
+        exclusions.push({
+          tenant_id, profile_id: p.id, employer: row.employer || 'citi', req_id: row.req_id,
+          score: 0, rationale: pre.location_reason || 'outside the profile\'s countries',
+          scored_by: 'heuristic', is_simulated: true, cost_cents: 0
+        });
       }
       if (pre.score > best) best = pre.score;
     }
@@ -118,6 +121,14 @@ async function fillDetails(tenant_id, budget, run, cap = DETAIL_CAP) {
     if (!anyAllowed) continue;
     ranked.push({ row, best });
   }
+  if (exclusions.length) {
+    // The unique index on (profile_id, employer, req_id) makes this idempotent,
+    // so re-recording an exclusion is free rather than a duplicate.
+    await Match.bulkCreate(exclusions, { ignoreDuplicates: true }).catch((e) => {
+      run.errors = (run.errors || []).concat([{ step: 'exclusions', error: e.message }]);
+    });
+  }
+
   ranked.sort((a, b) => b.best - a.best);
   const pending = ranked.slice(0, cap).map((r) => r.row);
   if (ranked.length > cap) {
