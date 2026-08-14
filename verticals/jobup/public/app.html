@@ -274,11 +274,13 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
     <button class="tab on" data-p="analytics">Analytics</button>
     <button class="tab" data-p="matches">Job Matches<span class="n" id="c-matches"></span></button>
     <button class="tab" data-p="opps">Opportunities<span class="n" id="c-opps"></span></button>
-    <button class="tab" data-p="today">Today</button>
     <button class="tab" data-p="pipeline">Pipeline</button>
+    <!-- The two guides sit together on purpose: one decides which jobs reach
+         you, the other whether recruiters reach you. Separated by My CV they
+         read as unrelated screens rather than as a pair. -->
     <button class="tab" data-p="targets">Getting job matches</button>
-    <button class="tab" data-p="cv">My CV</button>
     <button class="tab" data-p="guide">Getting found</button>
+    <button class="tab" data-p="cv">My CV</button>
     <button class="tab" data-p="settings">Settings</button>
     <button class="tab" data-p="account">Account</button>
   </div>
@@ -295,7 +297,6 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
   <div id="p-analytics"></div>
   <div id="p-matches" class="hidden"></div>
   <div id="p-opps" class="hidden"></div>
-  <div id="p-today" class="hidden"></div>
   <div id="p-targets" class="hidden"></div>
   <div id="p-cv" class="hidden"></div>
   <div id="p-pipeline" class="hidden"></div>
@@ -349,7 +350,7 @@ $('signout').addEventListener('click',function(){
 });
 
 /* ---- tabs ---- */
-var PANES=['analytics','matches','opps','today','targets','pipeline','cv','guide','settings','account'];
+var PANES=['analytics','matches','opps','targets','pipeline','cv','guide','settings','account'];
 
 /* Selecting a tab is a named function so the home-screen shortcuts can reach it.
    Long-pressing the installed icon opens /app?tab=matches, and without this the
@@ -446,7 +447,7 @@ function boot(){
       if(r.ok) $('who-h').textContent=[r.j.headline,ME.address].filter(Boolean).join('  ·  ')||ME.email;
       else $('who-h').textContent=ME.email;
     });
-    loadAnalytics(); loadMatches(); loadOpps(); loadToday(); loadTargets();
+    loadAnalytics(); loadMatches(); loadOpps(); loadTargets();
     loadPipeline(); loadCV(); loadSettings(); renderAccount(); loadGuide();
     /* Honour ?tab= from a home-screen shortcut or a shared link. */
     showTab(tabFromUrl(),false);
@@ -458,7 +459,19 @@ function loadAnalytics(){
   api('/api/v1/engine/analytics?days=30').then(function(r){
     if(!r.ok) return;
     var a=r.j,mx=Math.max.apply(null,a.per_day.map(function(d){return d.views;}).concat([1]));
-    var html='<div class="grid">'+
+    /* THE AGENT CONTROLS LIVE HERE NOW.
+       They used to sit on a "Today" tab that was removed for carrying nothing
+       else of use — but "Search for jobs now" is the only manual run in the
+       product, and deleting a tab must not quietly delete a capability. This is
+       the landing tab, which is a better home for them anyway. */
+    var html='<div class="card"><div class="h2">Your agents</div>'+
+      '<div class="m">Run them now. They find and check &mdash; they never act for you.</div>'+
+      '<div class="note" id="budget">&nbsp;</div>'+
+      '<div class="acts">'+
+        '<button class="btn primary sm" data-agent="hunter" onclick="runAgent(\'hunter\')">Search for jobs now</button>'+
+        '<button class="btn sm" onclick="runAgent(\'presence\')">Check my presence</button>'+
+      '</div></div>'+
+      '<div class="grid">'+
       stat('Profile views (30d)',a.views)+
       stat('Unique visitors (30d)',a.unique_visitors)+
       stat('Views (all time)',a.views_all_time)+
@@ -482,6 +495,7 @@ function loadAnalytics(){
       '<div class="note">Recruiting tools increasingly read resume.json, llms.txt and your agent card rather than the page.</div></div>';
     html+='<div class="note">'+esc(a.note)+'</div>';
     $('p-analytics').innerHTML=html;
+    loadBudget();
   });
 }
 
@@ -531,7 +545,7 @@ function trackOpp(id){
   api('/api/v1/engine/opportunities/'+id+'/track',{method:'POST'}).then(function(r){
     if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not track that.')+'</div>';return;}
     o.innerHTML='<div class="note"><span class="chip ok">in your pipeline</span> '+esc(r.j.note||'')+'</div>';
-    loadPipeline(); loadToday();
+    loadPipeline();
   });
 }
 function emailMe(id){
@@ -544,37 +558,7 @@ function emailMe(id){
 }
 function oppStatus(id,st){
   api('/api/v1/engine/opportunities/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status:st})}).then(function(){loadOpps();loadToday();});
-}
-
-/* ---- today ---- */
-function loadToday(){
-  api('/api/v1/engine/today').then(function(r){
-    if(!r.ok) return;
-    var d=r.j;
-    $('p-today').innerHTML='<div class="grid">'+
-      stat('New matches (24h)',d.new_matches_24h)+
-      stat('New opportunities',d.new_opportunities)+'</div>'+
-      '<div class="card"><div class="h2">What needs you</div>'+
-      d.actions.map(function(a){
-        return '<div class="act"><div class="b'+(a.kind==='clear'?' clear':'')+'"></div><div>'+esc(a.text)+'</div></div>';
-      }).join('')+'</div>'+
-      '<div class="card"><div class="h2">Your agents</div>'+
-      '<div class="m">Run them now. They find and check &mdash; they never act for you.</div>'+
-      '<div class="note" id="budget">&nbsp;</div>'+
-      '<div class="acts">'+
-        '<button class="btn primary sm" data-agent="hunter" onclick="runAgent(\'hunter\')">Search for jobs now</button>'+
-        '<button class="btn sm" onclick="runAgent(\'presence\')">Check my presence</button>'+
-      '</div></div>'+
-      '<div class="card"><div class="h2">Recent activity</div>'+
-      ((d.recent_runs||[]).length?d.recent_runs.map(function(x){
-        return '<div class="act"><div class="b"></div><div><strong>'+esc(x.agent)+'</strong> — '+
-          esc(x.summary||'')+'<div class="note" style="margin:2px 0 0">'+
-          esc(String(x.created_at||'').slice(0,16).replace('T',' '))+
-          (x.is_simulated?' · heuristic':'')+'</div></div></div>';
-      }).join(''):'<div class="note">No runs yet.</div>')+'</div>';
-    loadBudget();
-  });
+    body:JSON.stringify({status:st})}).then(function(){loadOpps();});
 }
 
 /* ---- getting job matches: the interactive half that decides what arrives ---- */
@@ -832,7 +816,7 @@ function setStage(id,stage){
     body:JSON.stringify({stage:stage})}).then(function(r){
       if(!r.ok)return err('aerr',r.j.error||'Could not move that.');
       err('aerr','Moved to '+stage+'.');
-      loadPipeline(); loadToday();
+      loadPipeline();
     });
 }
 function stat(k,v){return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>';}
@@ -928,7 +912,7 @@ function loadPipeline(){
         body:JSON.stringify({title:title,employer:$('pl-emp').value.trim(),stage:$('pl-stage').value})})
         .then(function(r){
           if(!r.ok)return err('aerr',r.j.error||'Could not add that.');
-          loadPipeline(); loadToday();
+          loadPipeline();
         });
     });
   });
@@ -937,7 +921,7 @@ function delEntry(id){
   if(!confirm('Remove this from your pipeline?'))return;
   api('/api/v1/engine/matches/'+id,{method:'DELETE'}).then(function(r){
     if(!r.ok)return err('aerr',r.j.error||'Could not remove that.');
-    loadPipeline(); loadToday();
+    loadPipeline();
   });
 }
 
@@ -964,7 +948,7 @@ function runAgent(n){
   api('/api/v1/engine/agents/'+n+'/run',{method:'POST'}).then(function(r){
     if(!r.ok){ loadBudget(); return err('aerr',r.j.error||'Run failed'); }
     if(r.j.manual_limit_reached||r.j.daily_limit_reached) err('aerr',r.j.note);
-    loadMatches(); loadToday(); loadAnalytics(); loadBudget();
+    loadMatches(); loadAnalytics(); loadBudget();
     err('aerr',n+' finished.');
   });
 }

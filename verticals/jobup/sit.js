@@ -1933,10 +1933,23 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('the dashboard is served and carries every tab', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
-    for (const tab of ['Analytics', 'Job Matches', 'Opportunities', 'Today',
-                       'Pipeline', 'Getting job matches', 'My CV', 'Settings']) {
+    for (const tab of ['Analytics', 'Job Matches', 'Opportunities',
+                       'Pipeline', 'Getting job matches', 'Getting found', 'My CV', 'Settings']) {
       assert.ok(html.includes('>' + tab), 'missing tab: ' + tab);
     }
+    assert.ok(!html.includes('>Today'), 'Today was removed — it carried nothing of its own');
+    // The two guides are a PAIR and must stay adjacent: one decides which jobs
+    // reach you, the other whether recruiters reach you. Split apart they read
+    // as unrelated screens.
+    assert.ok(/data-p="targets">Getting job matches<\/button>\s*<button class="tab" data-p="guide">/
+      .test(html), 'the two guides must sit next to each other');
+    // Removing a tab must not remove a capability: 'Search for jobs now' was
+    // the only manual agent run in the product and lived on Today.
+    assert.ok(html.includes('data-agent="hunter"') && /runAgent\(\\?'hunter\\?'\)/.test(html),
+      'the manual hunt must survive');
+    assert.ok(html.includes('id="budget"'), 'and its budget line with it');
+    assert.ok(html.includes("$('p-analytics').innerHTML=html") && /Your agents/.test(html),
+      'the agent card must now render inside Analytics, which is the landing tab');
     assert.ok(html.includes('honest by design'), 'the explainer callout should be present');
   });
   await t('the dashboard JS parses and references no missing element', () => {
