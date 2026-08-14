@@ -605,24 +605,27 @@ function loadTargets(){
       '<a href="?tab=guide" id="t-toguide">Getting found</a> \u2014 this one decides which jobs '+
       'reach you, that one decides whether recruiters reach you.</div></div>'+
 
-      '<div class="card"><div class="t">Which states</div>'+
-      '<div class="m">Tick the states you would work in. Leave everything unticked and you '+
-      'get the whole country \u2014 which is the right answer for most people, so only narrow '+
-      'this if a commute is genuinely the constraint.</div>'+
-      '<div class="note" style="margin-top:8px;line-height:1.7">'+
+      /* A DROPDOWN, NOT 51 CHECKBOXES.
+         The grid pushed everything else on this page below the fold and made a
+         one-line answer look like a configuration exercise. Almost nobody wants
+         a set of states; they want the one they live in, or the whole country. */
+      '<div class="card"><div class="t">Which state</div>'+
+      '<div class="m">Set from your r&eacute;sum&eacute;. Change it if you would work '+
+      'somewhere else, or choose the whole country &mdash; which is the right answer for '+
+      'anyone willing to move.</div>'+
+      '<label for="t-state">State</label>'+
+      '<select id="t-state">'+
+        '<option value=""'+(st.length?'':' selected')+'>Whole country \u2014 every state</option>'+
+        US_STATES.map(function(c){
+          return '<option value="'+c[0]+'"'+(st.indexOf(c[0])>=0?' selected':'')+'>'+
+            esc(c[1])+'</option>';}).join('')+
+      '</select>'+
+      '<div class="note" style="margin-top:10px;line-height:1.7">'+
       '<strong>Remote roles are never filtered out by this.</strong> A posting that says '+
-      '"Remote \u2014 US" can be taken from any state, so it reaches you whatever you tick here. '+
+      '"Remote \u2014 US" can be taken from any state, so it reaches you whatever you pick. '+
       'A US posting that does not say where is flagged for you to judge, not dropped.</div>'+
-      '<div class="acts" style="margin:11px 0 2px">'+
-      '<button class="btn sm" id="t-allstates">Whole country</button>'+
-      '<span class="note" style="margin-left:10px">'+
-        (st.length? esc(String(st.length))+' selected' : 'Whole country')+'</span></div>'+
-      '<div class="ctry">'+US_STATES.map(function(c){
-        return '<label class="ctrybox'+(st.indexOf(c[0])>=0?' on':'')+'">'+
-          '<input type="checkbox" value="'+c[0]+'"'+(st.indexOf(c[0])>=0?' checked':'')+'>'+
-          '<span>'+esc(c[1])+'</span></label>';}).join('')+'</div>'+
       '<div class="acts" style="margin-top:12px">'+
-      '<button class="btn primary sm" id="t-savestates">Save states</button>'+
+      '<button class="btn primary sm" id="t-savestates">Save state</button>'+
       '<span class="note" id="t-statemsg" style="margin:0 0 0 10px"></span></div></div>'+
 
       '<div class="card"><div class="t">Roles you are targeting</div>'+
@@ -711,15 +714,6 @@ function loadTargets(){
     var tg2=$('t-toguide');
     if(tg2) tg2.addEventListener('click',function(e){ e.preventDefault(); showTab('guide'); });
 
-    Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
-      cb.addEventListener('change',function(){cb.parentNode.classList.toggle('on',cb.checked);});
-    });
-    var sa=$('t-allstates');
-    if(sa) sa.addEventListener('click',function(){
-      Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
-        cb.checked=false; cb.parentNode.classList.remove('on');});
-      saveStates();
-    });
     $('t-savestates').addEventListener('click',saveStates);
     $('t-addrole').addEventListener('click',function(){
       var v=$('t-role').value.trim(); if(!v)return;
@@ -747,14 +741,16 @@ function loadTargets(){
   });
 }
 function saveStates(){
-  var codes=[];
-  Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
-    if(cb.checked)codes.push(cb.value);});
+  /* The store stays an ARRAY even though the control offers one state. The
+     engine already reads a list, and a future "and also Georgia" is then a UI
+     change rather than a migration. Empty === whole country. */
+  var v=$('t-state').value;
+  var codes=v?[v]:[];
   var next=JSON.parse(JSON.stringify(SET));
   next.geo=next.geo||{}; next.geo.allowed_states=codes;
-  saveSettingsDoc(next, codes.length
-    ? 'Saved. From your next run: '+codes.length+' state'+(codes.length>1?'s':'')+
-      ', plus every remote-US role.'
+  var label=v?(US_STATES.filter(function(c){return c[0]===v;})[0]||['',v])[1]:'';
+  saveSettingsDoc(next, v
+    ? 'Saved. From your next run: '+label+' roles, plus every remote-US role.'
     : 'Saved. The whole country.');
 }
 function addList(key,inputId){
@@ -1239,10 +1235,10 @@ function renderAccount(){
     '<div class="card"><div class="t">Your profile photo</div>'+
     '<div class="m">Shown on your public page. Without one we use your initials.</div>'+
     '<div id="photobox"><div class="note">Loading...</div></div></div>'+
-    '<div class="card"><div class="t">Get found</div>'+
-    '<div class="m">Your page cannot be found by a search engine that has never seen a link to it. '+
-      'These are the five places worth putting your address.</div>'+
-    '<div id="foundbox"><div class="note">Loading...</div></div></div>'+
+    /* The five-places checklist used to be duplicated here. It is the whole of
+       step 2 on the "Getting found" tab, where it sits with the context that
+       makes it make sense — two copies of one checklist, each writing the same
+       record, is a screen that can disagree with itself. */
     '<div class="card"><div class="t">Your resume</div>'+
     '<div class="m">Everything on your page and every job score is read from this. '+
       'Upload a new one whenever your career moves &mdash; PDF, DOCX, TXT, MD or RTF.</div>'+
@@ -1260,7 +1256,7 @@ function renderAccount(){
     '<div class="m">Removes everything, including the resume text we extracted. This cannot be undone.</div>'+
     '<div class="acts"><button class="btn sm" id="del" style="border-color:rgba(248,113,113,.4);color:var(--red)">Delete permanently</button></div>'+
     '<div id="delout" class="note"></div></div>';
-  loadAddress(); loadPhoto(); loadResume(); loadFound();
+  loadAddress(); loadPhoto(); loadResume();
   $('del').addEventListener('click',function(){
     if(!confirm('Delete your account and all your data permanently? This cannot be undone.')) return;
     api('/api/v1/engine/account',{method:'DELETE'}).then(function(r){
@@ -1543,71 +1539,6 @@ function gRmRole(i){
   gSaveSettings(next);
 }
 
-/* ---- get found: where the address has actually been put ----
-   Measured on production: every external referrer is '(direct)'. Nothing links
-   to a subscriber site, which is exactly why search engines ignore them. We
-   cannot place these links; we can track which are done and be honest that they
-   are the prerequisite, not the promise. */
-function loadFound(){
-  var box=$('foundbox'); if(!box) return;
-  api('/api/v1/engine/presence').then(function(r){
-    var d=r.j||{};
-    var addr=d.address||'';
-    var rows=(d.items||[]).map(function(i){
-      return '<div class="fitem" data-slug="'+esc(i.slug)+'" style="display:flex;gap:11px;'+
-        'align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)">'+
-        '<input type="checkbox" class="fchk" '+(i.done?'checked':'')+
-          ' style="width:19px;height:19px;accent-color:#22d3ee;flex:0 0 19px;margin-top:2px">'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-weight:700;font-size:14.5px">'+esc(i.title)+'</div>'+
-          '<div class="m" style="font-size:13.5px">'+esc(i.what)+'</div>'+
-          '<div class="note" style="margin-top:3px">'+esc(i.why)+'</div>'+
-        '</div>'+
-        (i.href?'<a class="btn sm" href="'+esc(i.href)+'" target="_blank" rel="noopener">Open</a>':'')+
-      '</div>';
-    }).join('');
-
-    var roles=(d.role_pages||[]);
-    box.innerHTML=
-      (addr?'<div class="acts" style="margin-bottom:6px">'+
-        '<button class="btn primary sm" id="fcopy">Copy my address</button>'+
-        '<span class="note" style="margin-left:10px">'+esc(addr.replace(/^https:\/\//,''))+'</span></div>':'')+
-      '<div class="note" style="margin:8px 0"><strong>'+d.done_count+' of '+d.total+'</strong> places done</div>'+
-      rows+
-      '<div class="note" style="margin-top:14px">'+esc(d.note||'')+'</div>'+
-      (roles.length
-        ? '<div class="note" style="margin-top:12px">These links make your '+roles.length+
-          ' role page'+(roles.length===1?'':'s')+' rank: '+
-          roles.map(function(x){return esc(x.title);}).join(', ')+'</div>'
-        : '<div class="note" style="margin-top:12px;color:var(--warn)">'+esc(d.role_pages_note||'')+'</div>')+
-      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">'+
-        '<label class="switch" style="margin:0"><input type="checkbox" id="fdir" '+
-          (d.directory_opt_in?'checked':'')+'>'+
-          '<span>List me in the public JobUp directory</span></label>'+
-        '<div class="note">Off unless you turn it on. It shows your name, your headline and the '+
-          'job titles you want &mdash; never your email, phone or location. It is a real link to '+
-          'your page from jobup.dev, which is what gives a search engine a reason to visit.</div>'+
-      '</div>';
-
-    if($('fcopy')) $('fcopy').addEventListener('click',function(){
-      navigator.clipboard.writeText(addr).then(function(){
-        $('fcopy').textContent='Copied'; setTimeout(function(){$('fcopy').textContent='Copy my address';},1600);
-      }).catch(function(){});
-    });
-    Array.prototype.forEach.call(box.querySelectorAll('.fitem'),function(el){
-      el.querySelector('.fchk').addEventListener('change',function(){
-        save({slug:el.getAttribute('data-slug'),done:this.checked});
-      });
-    });
-    $('fdir').addEventListener('change',function(){ save({directory_opt_in:this.checked}); });
-  });
-
-  function save(body){
-    fetch(API+'/api/v1/engine/presence',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-      .then(function(){ loadFound(); }).catch(function(){});
-  }
-}
 
 /* ---- resume: replace it, or re-read the one on file ----
    The resume could only ever be given once, at signup. When the model was

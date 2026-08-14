@@ -5485,6 +5485,45 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.deepStrictEqual(geo.statesIn('washington, d.c.'), ['dc'],
       'DC must not read as Washington state');
     assert.deepStrictEqual(geo.statesIn('seattle, wa'), ['wa']);
+
+    // ONE DROPDOWN, NOT 51 CHECKBOXES. The grid pushed the rest of the page
+    // below the fold and made a one-line answer look like configuration.
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/<select id="t-state">/.test(app), 'the state control must be a dropdown');
+    assert.ok(/Whole country (—|\\u2014) every state/.test(app),
+      'and "everywhere" must be an option in it, not a separate button');
+    assert.ok(!/id="t-allstates"/.test(app), 'the old checkbox grid controls must be gone');
+
+    // THE CHECKLIST LIVES IN ONE PLACE. It was rendered on Account AND on the
+    // Getting-found tab, both writing the same record — a screen that can
+    // disagree with itself.
+    assert.ok(!/loadFound|foundbox/.test(app), 'the duplicated Get found block must be gone');
+    assert.ok(/id="g-place"|class="sw g-place"/.test(app),
+      'and the one on the Getting found tab must remain');
+  });
+
+  // THE STATE IS SET FROM THE RÉSUMÉ, AND ONLY WHEN IT IS UNAMBIGUOUS.
+  await t('MATCHES: the state defaults to the one the résumé states', () => {
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/function resumeState\(/.test(src), 'build-account must derive it');
+    assert.ok(/hits\.length === 1 \? hits\[0\] : null/.test(src),
+      'TWO states on a résumé is not a preference — picking one would be a guess '
+      + 'presented as a setting, and too-narrow hides real jobs silently');
+    assert.ok(/geo: resumeState \? \{ allowed_states: \[resumeState\] \} : \{\}/.test(src),
+      'and it must reach the settings document');
+
+    // The real shapes, against the real résumé values on file.
+    const geo = require('./src/services/geo');
+    const one = (loc) => {
+      const h = geo.statesIn(String(loc || '').toLowerCase());
+      return h.length === 1 ? h[0] : null;
+    };
+    assert.strictEqual(one('Tampa, Florida'), 'fl');
+    assert.strictEqual(one('Wesley Chapel, FL'), 'fl');
+    assert.strictEqual(one('Philippines'), null, 'not a US state — whole country');
+    assert.strictEqual(one(''), null);
+    assert.strictEqual(one('Tampa, FL / Austin, TX'), null, 'ambiguous — whole country');
   });
 
   // NOBODY IS BLOCKED FOR ROLE TITLES, AND NOBODY ENDS UP WITH NONE.

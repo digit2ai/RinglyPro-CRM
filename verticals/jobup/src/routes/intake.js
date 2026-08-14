@@ -220,13 +220,19 @@ router.delete('/teaser/:token', async (req, res) => {
 
 const authSvc = require('../services/auth');
 const settingsSvc = require('../services/settings');
+const geo = require('../services/geo');
 const billing = require('../services/billing');
 
 /** Only what the search layer can act on; everything else is dropped. */
-function targetingFrom(body, fallbackRoles) {
+function targetingFrom(body, fallbackRoles, resumeState) {
   const b = body || {};
   const roles = settingsSvc.strList(b.roles, 12);
   return settingsSvc.sanitize({
+    // The state the résumé says they live in, so the board is local from day
+    // one without asking. One state, never a guess at a second — and the whole
+    // country stays one dropdown change away. Remote-US roles are exempt from
+    // the filter entirely, which is what makes defaulting to a state safe.
+    geo: resumeState ? { allowed_states: [resumeState] } : {},
     targeting: {
       // Fall back to the titles the résumé states rather than to nothing.
       roles: roles.length ? roles : settingsSvc.strList(fallbackRoles || [], 12),
@@ -288,6 +294,20 @@ function suggestedRoles(site) {
   add(p.headline);
   for (const e of (Array.isArray(p.experience) ? p.experience : [])) add(e && e.title);
   return out.slice(0, 6);
+}
+
+/**
+ * The US state the résumé states, or null.
+ *
+ * Exactly one, and only when it is unambiguous — a résumé listing two states is
+ * not a preference, and picking one of them would be a guess presented as a
+ * setting. Null means the whole country, which is the safe direction to be
+ * wrong in: too wide shows extra jobs, too narrow hides real ones silently.
+ */
+function resumeState(site) {
+  const loc = (((site || {}).profile) || {}).location;
+  const hits = geo.statesIn(String(loc || '').toLowerCase());
+  return hits.length === 1 ? hits[0] : null;
 }
 
 /**
@@ -453,7 +473,8 @@ router.post('/build-account', async (req, res) => {
     // agent run already uses it — otherwise the first batch of matches would
     // be scored against empty targeting and the person's answers would look
     // like they had been ignored.
-    const cleaned = targetingFrom(b, suggestedRoles(((t.payload || {}).screens || {}).site || {}));
+    const site = ((t.payload || {}).screens || {}).site || {};
+    const cleaned = targetingFrom(b, suggestedRoles(site), resumeState(site));
     const existingSettings = await scoped('settings', tenantId).findOne({});
     if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
     else await scoped('settings', tenantId).create({ settings: cleaned });
