@@ -216,8 +216,17 @@ async function closeSweep(tenant_id, budget, run) {
 async function scoreProfile(tenant_id, profile, run, budgetCents) {
   const tracked = await Tracked.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id', 'employer'] });
   const already = new Set(tracked.map((t) => t.employer + ':' + t.req_id));
-  const scored = await Match.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id', 'employer'] });
-  const seen = new Set(scored.map((m) => m.employer + ':' + m.req_id));
+  const scored = await Match.findAll({ where: { tenant_id, profile_id: profile.id },
+    attributes: ['req_id', 'employer', 'score', 'scored_by', 'rationale'] });
+  // A LOCATION VETO IS A CACHED DECISION BY CODE THAT CHANGES, not a fact about
+  // the requisition. When the country gate learned that "McLean, VA" is a US
+  // address, 934 requisitions stayed excluded forever because a previous run had
+  // already written the verdict. Vetoes are therefore re-evaluated every run —
+  // it costs no HTTP request and no tokens, and a still-foreign posting is
+  // simply re-vetoed.
+  const seen = new Set(scored
+    .filter((m) => !(Number(m.score) === 0 && /outside/i.test(m.rationale || '')))
+    .map((m) => m.employer + ':' + m.req_id));
 
   const pool = await Req.findAll({
     where: { tenant_id, detail_fetched: true, feed_status: 'open' },
