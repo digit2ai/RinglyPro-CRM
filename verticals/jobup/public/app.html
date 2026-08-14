@@ -96,11 +96,17 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
    circle, so wrapping it in the button's gradient pill would have put two
    competing gradients on top of each other. */
 .askfab{position:fixed;right:16px;bottom:16px;z-index:60;display:block;padding:0;border:0;
+  transition:bottom .2s ease;
   width:60px;height:60px;border-radius:50%;cursor:pointer;background:transparent;
   box-shadow:0 10px 30px rgba(0,0,0,.5);transition:transform .15s ease,box-shadow .15s ease}
 .askfab img{display:block;width:60px;height:60px;border-radius:50%}
 .askfab:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.6)}
 .askfab:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+/* El FAB se aparta mientras el aviso de instalación está en pantalla. Con el
+   mismo z-index y la misma esquina, el círculo quedaba encima de "Not now" y
+   el toque abría el chat en lugar de cerrar el aviso: el botón parecía roto. */
+body.has-install .askfab{bottom:calc(112px + env(safe-area-inset-bottom))}
+@media(max-width:520px){ body.has-install .askfab{bottom:calc(132px + env(safe-area-inset-bottom))} }
 .askmark{flex:0 0 34px;border-radius:50%;margin-top:1px}
 .askpanel{position:fixed;right:16px;bottom:16px;z-index:61;width:min(400px,calc(100vw - 32px));
   max-height:min(74vh,640px);display:flex;flex-direction:column;
@@ -281,7 +287,7 @@ transition:background .15s ease,color .15s ease}
 }
 @media(prefers-reduced-motion:reduce){.drawer,.scrim,.burger span{transition:none}}
 #install{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
-z-index:60;background:var(--card2);border:1px solid var(--cyan-bd);border-radius:15px;
+z-index:70;background:var(--card2);border:1px solid var(--cyan-bd);border-radius:15px;
 padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 #install.show{display:flex}
 #install .txt{flex:1;font-size:13.5px;line-height:1.45}
@@ -1911,14 +1917,18 @@ if('serviceWorker' in navigator)
   window.addEventListener('beforeinstallprompt',function(e){
     e.preventDefault(); deferred=e;
     if(localStorage.getItem('jobup_install_dismissed')) return;
-    $('install').classList.add('show');
+    setInstallVisible(true);   // Android: mismo camino, para que el FAB también se aparte
   });
+  function setInstallVisible(on){
+    $('install').classList.toggle('show',!!on);
+    document.body.classList.toggle('has-install',!!on);
+  }
   $('inst-go').addEventListener('click',function(){
-    $('install').classList.remove('show');
+    setInstallVisible(false);
     if(deferred){deferred.prompt();deferred=null;}
   });
   $('inst-no').addEventListener('click',function(){
-    $('install').classList.remove('show');
+    setInstallVisible(false);
     localStorage.setItem('jobup_install_dismissed','1');
   });
   // iOS has no beforeinstallprompt — tell Safari users how, once.
@@ -1929,7 +1939,7 @@ if('serviceWorker' in navigator)
       '<strong>Add JobUp to your home screen</strong><br>'+
       '<span style="color:var(--mut)">Tap Share, then Add to Home Screen.</span>';
     $('inst-go').style.display='none';
-    $('install').classList.add('show');
+    setInstallVisible(true);
   }
 })();
 
