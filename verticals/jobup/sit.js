@@ -5381,6 +5381,48 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+  // ONE SUBSCRIBER'S SETTINGS MUST NEVER TOUCH ANOTHER'S.
+  //
+  // deepMerge() shallow-copied, so a key a stored document did not override came
+  // back as the SHARED DEFAULTS object. sanitize() and its callers mutate what
+  // they are handed — engine.js does `cur.presence.directory_opt_in = true` —
+  // so one subscriber saving an opt-in wrote straight into the module defaults,
+  // and every other subscriber whose row omitted `presence` then sanitized as
+  // opted-in: published to the directory and the sitemap without saying yes.
+  // Observed live before the fix.
+  await t('SETTINGS: sanitize() cannot leak one subscriber into another', () => {
+    // A row that omits the sub-objects entirely — the shape that triggered it.
+    const bare = () => settingsSvc.sanitize({});
+
+    const a = bare();
+    assert.strictEqual(a.presence.directory_opt_in, false, 'baseline: opt-in is off');
+    // Do exactly what the route does to the object sanitize handed back.
+    a.presence.directory_opt_in = true;
+    a.privacy.email = true;
+    a.targeting.roles.push({ title: 'Injected', slug: 'injected', page: true });
+    a.identity_links.push({ network: 'other', url: 'https://leak.example' });
+
+    const b = bare();
+    assert.strictEqual(b.presence.directory_opt_in, false,
+      'A SECOND SUBSCRIBER WAS PUBLISHED BY THE FIRST ONE OPTING IN');
+    assert.strictEqual(b.privacy.email, false,
+      "and their email would have been made public by someone else's choice");
+    assert.deepStrictEqual(b.targeting.roles, [], 'no borrowed role targets');
+    assert.deepStrictEqual(b.identity_links, [], 'no borrowed identity links');
+
+    // Distinct object identities, not merely equal values.
+    assert.notStrictEqual(a.presence, b.presence);
+    assert.notStrictEqual(a.privacy, b.privacy);
+    assert.notStrictEqual(a.targeting.roles, b.targeting.roles);
+
+    // And the defaults are frozen, so the next version of this throws at the
+    // point of the mistake instead of publishing somebody three calls later.
+    assert.ok(Object.isFrozen(settingsSvc.DEFAULTS), 'DEFAULTS must be frozen');
+    assert.ok(Object.isFrozen(settingsSvc.DEFAULTS.presence), 'and frozen deeply');
+    assert.throws(() => { settingsSvc.DEFAULTS.presence.directory_opt_in = true; },
+      TypeError, 'writing to DEFAULTS must throw, not succeed');
+  });
+
   // ENTITY RESOLUTION — the only thing on a subscriber page an AI sourcing
   // aggregator (SeekOut, hireEZ, Pin) can act on. They accept no submissions and
   // expose no push API; they crawl and MERGE. `sameAs` is the merge claim.

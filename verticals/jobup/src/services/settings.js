@@ -93,16 +93,51 @@ const DEFAULTS = {
   cost_cap_usd: parseFloat(process.env.JOBUP_SUBSCRIBER_COST_CAP_USD || '8'),
 };
 
+/**
+ * MERGE MUST DEEP-COPY THE BASE. THIS IS A PRIVACY BOUNDARY, NOT A STYLE POINT.
+ *
+ * `{ ...base }` copies references, so a key the stored document does NOT
+ * override came back as the SAME object every caller shares. sanitize() then
+ * mutates what it was handed (`pr.directory_opt_in = …`, `out.privacy[k] = …`),
+ * and callers mutate it further — `engine.js` does exactly
+ * `cur.presence.directory_opt_in = true` before saving.
+ *
+ * So one subscriber whose settings row happened to omit `presence` would write
+ * `true` straight into the module-wide DEFAULTS, and from that moment every
+ * OTHER subscriber whose row also omitted it sanitized as opted-in — published
+ * to the public directory and the sitemap without ever having said yes. The
+ * same mechanism applies to `privacy`, where it would make one person's email
+ * public because a different person opted theirs in.
+ *
+ * Observed live: setting one subscriber's opt-in flipped two others' reads in
+ * the same process. Deep-copying the base is what stops it.
+ */
 function deepMerge(base, over) {
-  const out = Array.isArray(base) ? base.slice() : { ...base };
+  if (Array.isArray(base)) return base.slice();
+  const out = {};
+  for (const [k, v] of Object.entries(base || {})) {
+    out[k] = (v && typeof v === 'object') ? deepMerge(v, {}) : v;
+  }
   for (const [k, v] of Object.entries(over || {})) {
-    if (v && typeof v === 'object' && !Array.isArray(v) && base && typeof base[k] === 'object' && !Array.isArray(base[k])) {
+    if (v && typeof v === 'object' && !Array.isArray(v)
+        && base && typeof base[k] === 'object' && !Array.isArray(base[k])) {
       out[k] = deepMerge(base[k], v);
     } else if (v !== undefined) {
-      out[k] = v;
+      out[k] = Array.isArray(v) ? v.slice() : v;
     }
   }
   return out;
+}
+
+/**
+ * And freeze the defaults, so the next version of this bug throws instead of
+ * silently publishing somebody. The module is strict-mode, so an assignment to
+ * a frozen object is a TypeError at the point of the mistake rather than a
+ * wrong answer three subscribers later.
+ */
+function deepFreeze(o) {
+  for (const v of Object.values(o)) if (v && typeof v === 'object') deepFreeze(v);
+  return Object.freeze(o);
 }
 
 // The only values the search layer knows how to act on. Anything else is
@@ -192,6 +227,8 @@ function deriveRemotePreference(modes, legacy) {
   if (modes.length === 1) return modes[0];
   return 'any';
 }
+
+deepFreeze(DEFAULTS);
 
 // Forced invariants, applied on EVERY save. Not advisory.
 function sanitize(s) {
