@@ -188,6 +188,17 @@ border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none
 .callout{background:rgba(230,180,90,.07);border:1px solid rgba(230,180,90,.3);border-radius:15px;
 padding:17px 19px;color:#f0d5a6;font-size:14px;line-height:1.62;margin:26px 0 4px}
 .callout strong{color:#ffdf9e}
+/* El aviso se muestra una vez por cuenta. Se cierra, pero NO desaparece para
+   siempre: queda un enlace discreto en su lugar, porque explica lo que el
+   producto nunca hace en tu nombre y eso debe seguir siendo consultable. */
+.callout{position:relative}
+.introx{position:absolute;top:9px;right:11px;background:none;border:0;color:#e6b45a;
+  font-size:20px;line-height:1;padding:2px 6px;cursor:pointer;opacity:.65}
+.introx:hover{opacity:1}
+.introx:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+.introshow{display:block;background:none;border:0;padding:0;margin:22px 0 0;cursor:pointer;
+  color:var(--mut);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.introshow:hover{color:#f0d5a6}
 .chart{display:flex;align-items:flex-end;gap:5px;height:190px;margin-top:16px;overflow-x:auto;padding-bottom:26px}
 .bar{flex:1 0 16px;min-width:16px;background:var(--grad);border-radius:5px 5px 0 0;position:relative;
 min-height:2px;opacity:.9;transition:opacity .15s}
@@ -331,7 +342,9 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 
 <!-- app -->
 <div id="app" class="wrap hidden">
-  <div class="callout">
+  <button class="introshow hidden" id="introShow" type="button">What JobUp does, and what it never does</button>
+  <div class="callout" id="introBox">
+    <button class="introx" id="introClose" type="button" aria-label="Dismiss">&times;</button>
     <strong>Your AI career agent (honest by design):</strong> it finds the work &mdash;
     <strong>Job Matches</strong> scans real, live openings every day and scores each one against your
     profile, with the reasoning and the gaps. <strong>From there you take over:</strong> you decide what is
@@ -580,6 +593,27 @@ function juWatchPanes(){
   function go(){ obs.observe(document.body,{childList:true,subtree:true,characterData:false}); }
   go();
 }
+/* ── El aviso de bienvenida ──────────────────────────────────────────────────
+   Se muestra la primera vez que esta cuenta abre el panel y no vuelve a
+   aparecer. La marca se guarda POR CORREO: un segundo suscriptor que use el
+   mismo navegador tiene derecho a leerlo igual que el primero.               */
+function introKey(){ return 'jobup_intro_seen:' + ((ME && ME.email) || 'anon'); }
+function introSet(seen){
+  var box=$('introBox'), link=$('introShow');
+  if(!box||!link) return;
+  box.classList.toggle('hidden',!!seen);
+  link.classList.toggle('hidden',!seen);
+}
+function introInit(){
+  var box=$('introBox'), link=$('introShow');
+  if(!box||!link) return;
+  introSet(!!localStorage.getItem(introKey()));
+  var x=$('introClose');
+  if(x) x.onclick=function(){ localStorage.setItem(introKey(),'1'); introSet(true); };
+  // Volver a abrirlo no borra la marca: es una consulta puntual, no un reinicio.
+  link.onclick=function(){ introSet(false); };
+}
+
 function showTab(name,push){
   if(PANES.indexOf(name)<0) name='analytics';
   var hit=null;
@@ -676,6 +710,7 @@ function boot(){
       // opens the dashboard on a different device must still get Spanish.
       if(r.ok) juSetLang(r.j.language||'en',false);
     });
+    introInit();
     loadAnalytics(); loadTailorings().then(loadMatches); loadOpps(); loadTargets();
     loadPipeline(); loadCV(); loadSettings(); renderAccount(); loadGuide(); claimTailorPayment();
     /* Honour ?tab= from a home-screen shortcut or a shared link. */
