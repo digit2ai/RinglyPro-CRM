@@ -1910,26 +1910,35 @@ function loadGuide(){
 
     /* Progress is counted from real state — roles that exist, boxes actually
        ticked. Nothing here is a claim about what it achieves. */
-    var stepsDone=(roles.length?1:0)+(done>=total?1:0)+(P.directory_opt_in?1:0);
+    var links=P.identity_links||[];
+    var stepsDone=(roles.length?1:0)+(done>=total?1:0)+(P.directory_opt_in?1:0)+(links.length?1:0);
 
     var h=''+
     '<div class="card">'+
       '<div class="t">Getting found</div>'+
-      '<div class="m">Your page is live, but no search engine has seen a link to it yet. '+
-        'Three things fix that, and you can do all of them right here &mdash; the fields below '+
-        'are the real ones, not a copy.</div>'+
-      '<div class="note" style="margin-top:10px">Step '+stepsDone+' of 3 complete'+
+      '<div class="m">Signing up gave you a working, discoverable profile. This page is where you '+
+        'make it better. Every field below is the real one, not a copy of it &mdash; change '+
+        'something here and your site changes.</div>'+
+      '<div class="note" style="margin-top:10px;line-height:1.7">'+
+        '<strong>Already done for you:</strong> your job titles were read off your r&eacute;sum&eacute; '+
+        'and each one has its own page; jobup.dev is verified with Google and its sitemap &mdash; which '+
+        'lists your site &mdash; has been submitted. Search engines can reach you. '+
+        'The four steps below are what make them, and the recruiters using them, actually find you.</div>'+
+      '<div class="note" style="margin-top:10px">Step '+stepsDone+' of 4 complete'+
         (addr?' &middot; <a href="'+esc(addr)+'" target="_blank" rel="noopener">'+esc(bare)+'</a>':'')+
       '</div>'+
     '</div>'+
 
     /* ---- 1 ---- */
     '<div class="card">'+
-      '<div class="t">1. Set the job titles you want</div>'+
-      '<div class="m">Write three to six, worded the way a recruiter searches: '+
-        '<em>Sales Executive</em>, <em>Account Executive</em>, <em>Business Development Manager</em>. '+
-        'Each one becomes its own page on your site carrying that exact phrase, which is what a '+
-        'search engine matches against. This is the single biggest thing you can do.</div>'+
+      '<div class="t">1. Check the job titles you are targeting</div>'+
+      '<div class="m">These were taken from your r&eacute;sum&eacute; word for word, and each one '+
+        'already has its own page on your site carrying that exact phrase &mdash; which is what a '+
+        'search matches against. <strong>Taken verbatim means some are worth removing.</strong> '+
+        'A title only earns its page if a recruiter would type it: <em>Sales Executive</em> would, '+
+        '<em>Secretary</em> or <em>Chairman / Former President</em> would not. Delete the ones nobody '+
+        'searches for and add the ones you actually want next &mdash; three to six is the sweet spot, '+
+        'and this remains the single biggest thing you can do.</div>'+
       '<div id="g-roles" style="margin-top:12px">'+(roles.length
         ? roles.map(function(x,i){ return '<span class="chip">'+esc(x.title||x)+
             ' <a href="#" class="g-rm" data-i="'+i+'" style="color:var(--red)">&times;</a></span>'; }).join('')
@@ -2030,6 +2039,27 @@ function loadGuide(){
       '<div class="note" style="margin-top:12px">The catch is simple: those tools cannot merge a page '+
         'they have never crawled. They reach you through the links above, not by finding your '+
         'address on their own.</div>'+
+    '</div>'+
+
+    /* ---- the two routes that are actually live ---- */
+    '<div class="card">'+
+      '<div class="t">The two routes that work today</div>'+
+      '<div class="m">Of everything above, exactly two can bring a recruiter to you right now. '+
+        'Both are already built; both are waiting on you.</div>'+
+      '<div class="note" style="margin-top:10px;line-height:1.75">'+
+        '<strong>1. Through a profile you already have.</strong> A sourcing tool that already holds '+
+          'your GitHub or LinkedIn follows the address you put there, reads your page, and the '+
+          '<code>sameAs</code> from step 4 tells it this is the same person &mdash; so your titles, '+
+          'skills and availability get merged into the record recruiters search. You never appear as '+
+          'a JobUp entry; you appear as yourself, better described. <em>Needs steps 2 and 4.</em><br>'+
+        '<strong>2. Through a plain search.</strong> Your role pages carry the exact phrases a sourcer '+
+          'types. jobup.dev is verified and its sitemap submitted, so this route is open &mdash; but '+
+          'only for titles you actually target. <em>Needs step 1.</em>'+
+      '</div>'+
+      '<div class="note" style="margin-top:12px">There is deliberately no third route where we submit '+
+        'you somewhere. SeekOut, hireEZ and Pin take no submissions and publish no API to push to '+
+        '&mdash; recruiters pay them precisely because their index holds people who never signed up. '+
+        'Anyone claiming to list you inside them is selling something that does not exist.</div>'+
     '</div>'+
 
     /* ---- honest limits ---- */
