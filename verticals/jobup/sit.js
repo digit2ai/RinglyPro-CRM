@@ -2476,12 +2476,16 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(teaserSvc.PRICE_USD, billingSvc.PRICE_USD, 'the two must agree');
     // And the landing page must not print a number of its own.
     const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
-    assert.ok(html.includes('${{PRICE}}<span> / year</span>'),
+    // The invariant is that the figure is TEMPLATED, not that the markup around
+    // it never changes — the span now carries an i18n key so ' / year' can
+    // become ' / año'. Asserting the exact byte string made a legitimate
+    // translation look like a regression.
+    assert.ok(/\$\{\{PRICE\}\}<span[^>]*> \/ year<\/span>/.test(html),
       'the pricing card must be templated, not hardcoded');
     assert.ok(!/\$\d+<span> \/ year/.test(html), 'a hardcoded price is back on the landing page');
     // The rendered page must carry the figure billing actually charges.
     const rendered = pwaSvc.page('index.html', '');
-    assert.ok(rendered.includes(`$${billingSvc.PRICE_USD}<span> / year</span>`),
+    assert.ok(new RegExp(`\\$${billingSvc.PRICE_USD}<span[^>]*> / year</span>`).test(rendered),
       `the rendered price should be $${billingSvc.PRICE_USD}`);
     assert.ok(!rendered.includes('{{PRICE}}'), 'the price token was not substituted');
   });
@@ -5524,6 +5528,119 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(one('Philippines'), null, 'not a US state — whole country');
     assert.strictEqual(one(''), null);
     assert.strictEqual(one('Tampa, FL / Austin, TX'), null, 'ambiguous — whole country');
+  });
+
+  // ===== EN / ES ===========================================================
+  section('the whole funnel speaks Spanish');
+
+  await t('LANDING: the toggle translates everything and round-trips exactly', () => {
+    const fs = require('fs');
+    const raw = fs.readFileSync(__dirname + '/public/index.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '').replace(/\{\{PRICE\}\}/g, '59');
+    const w = bootDom(raw, 'https://jobup.dev/');
+    try {
+      const d = w.document;
+      const txt = (s) => (d.querySelector(s) || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
+
+      // ENGLISH IS IN THE MARKUP, NOT INJECTED. A shell filled in by script
+      // would ship a blank page to every crawler — on a product whose entire
+      // purpose is being found.
+      assert.match(raw, /Stop Looking for Jobs/, 'the English hero must be static HTML');
+      assert.strictEqual(d.querySelectorAll('[data-setlang]').length, 2, 'EN and ES');
+
+      const enH1 = txt('h1'), enLede = txt('.lede');
+      assert.match(enH1, /Stop Looking for Jobs/);
+
+      w.juApplyLang('es', false);
+      assert.strictEqual(d.documentElement.getAttribute('lang'), 'es');
+      assert.strictEqual(d.querySelector('.d2b').getAttribute('data-lang'), 'es',
+        'the CSS hook must flip too — the orb state suffixes are ::after content');
+      assert.match(txt('h1'), /Deja de buscar empleo/);
+      assert.match(txt('.lede'), /Habla con el Orbe/);
+      assert.match(txt('#orb-caption'), /Dalia/, 'the caption must name the Spanish voice');
+      assert.match(txt('#ju-go'), /Construir mi vista previa/);
+      assert.strictEqual(d.getElementById('ju-text').getAttribute('placeholder'),
+        'Pega aquí el texto de tu currículum...');
+      // A SPANISH VISITOR MUST NOT BE CREATED AS AN ENGLISH ACCOUNT.
+      assert.strictEqual(d.getElementById('ju-lang').value, 'es',
+        'the form language must follow the page, or somebody who never opened '
+        + 'the field gets an English onboarding');
+      assert.strictEqual(d.querySelector('[data-setlang="es"]').getAttribute('aria-pressed'), 'true');
+
+      // Switching back must restore the ORIGINAL bytes, not a second table.
+      w.juApplyLang('en', false);
+      assert.strictEqual(txt('h1'), enH1, 'EN must round-trip exactly');
+      assert.strictEqual(txt('.lede'), enLede);
+      assert.strictEqual(d.getElementById('ju-lang').value, 'en');
+
+      // Nothing may be left untranslated by accident: every key the markup
+      // names must exist in the Spanish table.
+      const keys = new Set();
+      ['data-i18n', 'data-i18n-html', 'data-i18n-ph'].forEach((a) => {
+        d.querySelectorAll('[' + a + ']').forEach((el) => keys.add(el.getAttribute(a)));
+      });
+      const missing = Array.from(keys).filter((k) => w.JU_T.es[k] === undefined);
+      assert.deepStrictEqual(missing, [], 'untranslated keys: ' + missing.join(', '));
+      assert.ok(keys.size >= 50, 'the whole page is tagged, not just the hero — got ' + keys.size);
+    } finally { w.close(); }
+  });
+
+  await t('LANDING: the orb speaks Spanish with Dalia', () => {
+    const src = require('fs').readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(/VOICE=\{en:'ava',es:'dalia'\}/.test(src), 'Dalia is the ES voice');
+    assert.ok(/voice:VOICE\[olang\]/.test(src), 'and the request must use it');
+    assert.ok(/u\.lang=LOCALE\[olang\]/.test(src), 'the browser fallback too');
+    assert.ok(/Hola, soy Dalia, la voz de JobUp\./.test(src), 'with a Spanish script');
+    // Switching language mid-sentence must stop the old voice and drop the
+    // cached audio, or Ava finishes an English line on a Spanish page.
+    assert.ok(/window\.__juOrbLang=function[\s\S]{0,400}cache=\{\}[\s\S]{0,80}if\(playing\) stop\(\)/.test(src),
+      'a language switch must reset the orb');
+    // dalia must be a real alias in the shared TTS route, not a hopeful string.
+    const tts = require('fs').readFileSync(__dirname + '/../../src/routes/presentation-tts.js', 'utf8');
+    assert.ok(/dalia:\s*'es-MX-DaliaNeural'/.test(tts), 'the alias must exist server-side');
+  });
+
+  await t('ONBOARDING: the account form is Spanish when the teaser was', () => {
+    const fs = require('fs');
+    const i18n = fs.readFileSync(__dirname + '/public/i18n-onboarding.js', 'utf8');
+    const build = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
+    const welcome = fs.readFileSync(__dirname + '/public/welcome.html', 'utf8');
+    assert.ok(build.includes('i18n-onboarding.js') && welcome.includes('i18n-onboarding.js'));
+    // THE LANGUAGE COMES FROM THE TEASER ROW, not from a second question. The
+    // preview and the account must not disagree about who this person is.
+    assert.ok(/JobUpI18n\.apply\(j\.language/.test(build),
+      'build.html must take the language from the /build payload');
+    assert.ok(/language: t\.language \|\| 'en'/.test(
+      fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8')),
+      'and the payload must carry it');
+
+    // Behaviour, in a real DOM.
+    const raw = build.replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '');
+    const w = bootDom(raw, 'https://jobup.dev/build?t=tok');
+    try {
+      const s = w.document.createElement('script');
+      s.textContent = i18n;
+      w.document.head.appendChild(s);
+      w.JobUpI18n.apply('es');
+      const d = w.document;
+      const txt = (x) => (d.querySelector(x) || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
+      assert.strictEqual(txt('h1'), 'Crear mi cuenta');
+      assert.match(txt('.lede'), /Dos cosas/);
+      assert.strictEqual(d.documentElement.getAttribute('lang'), 'es');
+      assert.strictEqual(d.getElementById('roles').getAttribute('placeholder'),
+        'Jefe de Proyecto, Responsable de Operaciones, Analista de Negocio');
+      // Chips are painted by script AFTER the first pass; refresh() must catch
+      // them or half the form stays English.
+      w.chips('etypes', ['full_time', 'part_time'], 'etype');
+      assert.match(d.getElementById('etypes').textContent, /Jornada completa/);
+      // An UNKNOWN string must stay English rather than going blank — that is
+      // the whole reason this matches text instead of keys.
+      const el = d.createElement('p'); el.textContent = 'A string nobody translated';
+      d.body.appendChild(el);
+      w.JobUpI18n.refresh(d.body);
+      assert.strictEqual(el.textContent, 'A string nobody translated',
+        'a missing translation must never produce an empty label');
+    } finally { w.close(); }
   });
 
   // ===== PAID TAILORING ====================================================

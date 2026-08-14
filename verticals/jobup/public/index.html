@@ -640,6 +640,21 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 .d2b .ju-navlinks > a{color:var(--mut);font-size:14.5px}
 .d2b .ju-navlinks > a:hover{color:var(--ink)}
 .d2b .ju-navlinks > a.signin{padding:9px 18px;font-size:14px;color:var(--ink)}
+/* EN / ES. A segmented pair rather than a select: the choice is binary, and a
+   native select on a dark nav needs per-browser styling to not look pasted on.
+   44px minimum on the touch target, same rule as the nav pills. */
+.d2b .ju-lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.d2b .ju-lang button{appearance:none;background:transparent;border:0;cursor:pointer;
+  font:inherit;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  color:var(--faint);padding:8px 12px;min-height:36px;transition:background .15s,color .15s}
+.d2b .ju-lang button:hover{color:var(--ink)}
+.d2b .ju-lang button[aria-pressed="true"]{background:rgba(34,211,238,.13);color:var(--accent-cyan)}
+.d2b .ju-lang button:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:-2px}
+@media(max-width:900px){.d2b .ju-lang button{min-height:44px;padding:10px 16px}}
+/* The orb state suffixes are CSS content, so they need their own translation. */
+.d2b[data-lang="es"] .orb-wrap[data-state="listening"] .orb-caption::after{content:' · escuchando'}
+.d2b[data-lang="es"] .orb-wrap[data-state="thinking"] .orb-caption::after{content:' · analizando'}
+.d2b[data-lang="es"] .orb-wrap[data-state="speaking"] .orb-caption::after{content:' · hablando'}
 .d2b .ju-burger{display:none;align-items:center;justify-content:center;
   width:44px;height:44px;margin:-8px -6px -8px 0;border-radius:12px;
   color:var(--ink);background:transparent;border:1px solid transparent}
@@ -727,18 +742,24 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
     <svg viewBox="0 0 24 24" class="ic-x" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
   </button>
   <div class="ju-navlinks" id="ju-navlinks">
-    <a href="#how">How it works</a>
-    <a href="#receive">What you get</a>
-    <a href="#agents">Agents</a>
-    <a href="#pricing">Pricing</a>
-    <a class="ju-btn ghost signin" href="{{BASE}}/app">Sign in</a>
+    <a href="#how" data-i18n="nav.how">How it works</a>
+    <a href="#receive" data-i18n="nav.get">What you get</a>
+    <a href="#agents" data-i18n="nav.agents">Agents</a>
+    <a href="#pricing" data-i18n="nav.pricing">Pricing</a>
+    <!-- EN/ES. Two buttons rather than a select: the choice is binary, and a
+         select on a dark nav is one more thing to style on every browser. -->
+    <div class="ju-lang" id="ju-langtoggle" role="group" aria-label="Language / Idioma">
+      <button type="button" data-setlang="en" aria-pressed="true">EN</button>
+      <button type="button" data-setlang="es" aria-pressed="false">ES</button>
+    </div>
+    <a class="ju-btn ghost signin" href="{{BASE}}/app" data-i18n="nav.signin">Sign in</a>
   </div>
 </nav>
 
 <header class="ju-hero">
-  <div class="ju-eyebrow"><i></i> Career Intelligence</div>
-  <h1>Stop Looking for Jobs.<br><span class="grad-text">Let AI Find Them.</span></h1>
-  <p class="lede">Talk to the Orb or simply upload your resume. In minutes, JobUp builds your AI-powered career ecosystem &mdash; your personal website, custom web address, AI-readable professional profile, and real-time job matches tailored to your experience.</p>
+  <div class="ju-eyebrow"><i></i> <span data-i18n="hero.eyebrow">Career Intelligence</span></div>
+  <h1 data-i18n-html="hero.h1">Stop Looking for Jobs.<br><span class="grad-text">Let AI Find Them.</span></h1>
+  <p class="lede" data-i18n="hero.lede">Talk to the Orb or simply upload your resume. In minutes, JobUp builds your AI-powered career ecosystem &mdash; your personal website, custom web address, AI-readable professional profile, and real-time job matches tailored to your experience.</p>
 </header>
 
 <div class="hero-logo">
@@ -832,69 +853,69 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
             <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
           </g>
         </svg>
-    <div class="orb-caption" id="orb-caption">Tap the orb and let Ava explain<br>&mdash; or attach your resume &mdash;</div>
+    <div class="orb-caption" id="orb-caption" data-i18n-html="orb.caption">Tap the orb and let Ava explain<br>&mdash; or attach your resume &mdash;</div>
   </div>
 </div>
 
 <div class="ju-cta" id="start">
-  <button class="ju-btn primary" id="ju-attach">Attach my resume</button>
-  <a class="ju-btn ghost" href="#how">See how JobUp works</a>
+  <button class="ju-btn primary" id="ju-attach" data-i18n="cta.attach">Attach my resume</button>
+  <a class="ju-btn ghost" href="#how" data-i18n="cta.how">See how JobUp works</a>
 </div>
 
 <section class="ju-sec" id="receive">
-  <div class="ju-kicker">What you receive</div>
+  <div class="ju-kicker" data-i18n="receive.kicker">What you receive</div>
   <div class="ju-grid">
-    <div class="ju-card"><div class="n">01</div><h3>Your web address</h3><p>yourname.jobup.dev, live minutes after you activate.</p></div>
-    <div class="ju-card"><div class="n">02</div><h3>A professional website</h3><p>Generated from your own resume and kept current automatically.</p></div>
-    <div class="ju-card"><div class="n">03</div><h3>AI-readable identity</h3><p>resume.json, JSON-LD, an agent card and an MCP endpoint, so machines understand your career.</p></div>
-    <div class="ju-card"><div class="n">04</div><h3>Continuous discovery</h3><p>Real openings from eight ATS platforms, scored and explained. Never invented.</p></div>
-    <div class="ju-card"><div class="n">05</div><h3>Per-job tailoring</h3><p>Your resume rewritten for a specific posting &mdash; using only what you already wrote.</p></div>
-    <div class="ju-card"><div class="n">06</div><h3>A private dashboard</h3><p>Matches, pipeline, approvals, agent activity and a full export. Yours alone.</p></div>
+    <div class="ju-card"><div class="n">01</div><h3 data-i18n="receive.01.h">Your web address</h3><p data-i18n="receive.01.p">yourname.jobup.dev, live minutes after you activate.</p></div>
+    <div class="ju-card"><div class="n">02</div><h3 data-i18n="receive.02.h">A professional website</h3><p data-i18n="receive.02.p">Generated from your own resume and kept current automatically.</p></div>
+    <div class="ju-card"><div class="n">03</div><h3 data-i18n="receive.03.h">AI-readable identity</h3><p data-i18n="receive.03.p">resume.json, JSON-LD, an agent card and an MCP endpoint, so machines understand your career.</p></div>
+    <div class="ju-card"><div class="n">04</div><h3 data-i18n="receive.04.h">Continuous discovery</h3><p data-i18n="receive.04.p">Real openings from eight ATS platforms, scored and explained. Never invented.</p></div>
+    <div class="ju-card"><div class="n">05</div><h3 data-i18n="receive.05.h">Per-job tailoring</h3><p data-i18n="receive.05.p">Your resume rewritten for a specific posting &mdash; using only what you already wrote.</p></div>
+    <div class="ju-card"><div class="n">06</div><h3 data-i18n="receive.06.h">A private dashboard</h3><p data-i18n="receive.06.p">Matches, pipeline, approvals, agent activity and a full export. Yours alone.</p></div>
   </div>
 </section>
 
 <section class="ju-sec" id="agents">
-  <div class="ju-kicker">Two agents, working continuously</div>
+  <div class="ju-kicker" data-i18n="agents.kicker">Two agents, working continuously</div>
   <div class="ju-grid">
-    <div class="ju-card"><div class="n">AGENT ONE</div><h3>Opportunity Hunter</h3><p>Searches approved sources every day, ranks and scores each opening, explains why it matches and names what you are missing.</p></div>
+    <div class="ju-card"><div class="n" data-i18n="agents.one.n">AGENT ONE</div><h3 data-i18n="agents.one.h">Opportunity Hunter</h3><p data-i18n="agents.one.p">Searches approved sources every day, ranks and scores each opening, explains why it matches and names what you are missing.</p></div>
     
-    <div class="ju-card"><div class="n">AGENT TWO</div><h3>Professional Presence</h3><p>Builds and maintains your website, your structured data and your recruiter-facing language. Keeps every surface consistent.</p></div>
+    <div class="ju-card"><div class="n" data-i18n="agents.two.n">AGENT TWO</div><h3 data-i18n="agents.two.h">Professional Presence</h3><p data-i18n="agents.two.p">Builds and maintains your website, your structured data and your recruiter-facing language. Keeps every surface consistent.</p></div>
   </div>
 </section>
 
 <section class="ju-sec" id="how">
-  <div class="ju-kicker">Traditional search vs JobUp</div>
+  <div class="ju-kicker" data-i18n="vs.kicker">Traditional search vs JobUp</div>
   <div class="ju-vs">
-    <div><h4>The old way</h4><ul class="old">
-      <li>Search manually, every day</li><li>Review hundreds of listings</li>
-      <li>Re-upload the same resume</li><li>Depend on job boards</li>
-      <li>Wait to be discovered</li><li>Disconnected profiles everywhere</li></ul></div>
-    <div><h4>With JobUp</h4><ul class="new">
-      <li>AI searches continuously</li><li>Opportunities ranked and explained</li>
-      <li>A tailored resume per role</li><li>Your own site, always available</li>
-      <li>Structured so AI can find you</li><li>One dashboard for everything</li></ul></div>
+    <div><h4 data-i18n="vs.old.h">The old way</h4><ul class="old">
+      <li data-i18n="vs.old.0">Search manually, every day</li><li data-i18n="vs.old.1">Review hundreds of listings</li>
+      <li data-i18n="vs.old.2">Re-upload the same resume</li><li data-i18n="vs.old.3">Depend on job boards</li>
+      <li data-i18n="vs.old.4">Wait to be discovered</li><li data-i18n="vs.old.5">Disconnected profiles everywhere</li></ul></div>
+    <div><h4 data-i18n="vs.new.h">With JobUp</h4><ul class="new">
+      <li data-i18n="vs.new.0">AI searches continuously</li><li data-i18n="vs.new.1">Opportunities ranked and explained</li>
+      <li data-i18n="vs.new.2">A tailored resume per role</li><li data-i18n="vs.new.3">Your own site, always available</li>
+      <li data-i18n="vs.new.4">Structured so AI can find you</li><li data-i18n="vs.new.5">One dashboard for everything</li></ul></div>
   </div>
 </section>
 
 <section class="ju-sec" id="pricing">
-  <div class="ju-kicker">Pricing</div>
+  <div class="ju-kicker" data-i18n="price.kicker">Pricing</div>
   <div class="ju-pricecard">
     <!-- Substituted server-side from billing.PRICE_USD. It was hardcoded, so
          the page could quote a figure the checkout did not charge. -->
-    <div class="ju-price">${{PRICE}}<span> / year</span></div>
-    <p style="color:var(--mut);margin-top:14px">One plan. Everything included. Tax calculated at checkout.</p>
+    <div class="ju-price">${{PRICE}}<span data-i18n="price.per"> / year</span></div>
+    <p style="color:var(--mut);margin-top:14px" data-i18n="price.sub">One plan. Everything included. Tax calculated at checkout.</p>
     <ul class="ju-inc">
-      <li>Your web address and professional website</li>
-      <li>Machine-readable identity: resume.json, JSON-LD, agent card</li>
-      <li>Three AI agents running continuously</li>
-      <li>Job discovery, scoring and explained matching</li>
-      <li>Per-job resume tailoring and cover letters</li>
-      <li>Private dashboard, weekly digest, full data export</li>
+      <li data-i18n="price.inc.0">Your web address and professional website</li>
+      <li data-i18n="price.inc.1">Machine-readable identity: resume.json, JSON-LD, agent card</li>
+      <li data-i18n="price.inc.2">Two AI agents running continuously</li>
+      <li data-i18n="price.inc.3">Job discovery, scoring and explained matching</li>
+      <li data-i18n="price.inc.4">Per-job resume tailoring and cover letters</li>
+      <li data-i18n="price.inc.5">Private dashboard, weekly digest, full data export</li>
     </ul>
     <div class="ju-cta" style="margin-top:30px">
-      <button class="ju-btn primary" id="ju-attach2">Show me my ecosystem</button>
+      <button class="ju-btn primary" id="ju-attach2" data-i18n="cta.show">Show me my ecosystem</button>
     </div>
-    <p class="ju-note">14-day refund, no questions. JobUp never applies on your behalf &mdash;<br>you review and submit every application yourself.</p>
+    <p class="ju-note" data-i18n-html="price.note">14-day refund, no questions. JobUp never applies on your behalf &mdash;<br>you review and submit every application yourself.</p>
   </div>
 </section>
 
@@ -902,64 +923,64 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <div class="ju-sheet" id="ju-sheet" role="dialog" aria-modal="true" aria-labelledby="ju-sheet-title">
   <div class="ju-panel">
     <button class="ju-close" id="ju-x" aria-label="Close">&times;</button>
-    <h2 id="ju-sheet-title">Show me my ecosystem</h2>
-    <p class="sub">Attach your resume and we will build a live preview &mdash; your site, your web address, and the real jobs that match you right now.</p>
+    <h2 id="ju-sheet-title" data-i18n="cta.show">Show me my ecosystem</h2>
+    <p class="sub" data-i18n="sheet.sub">Attach your resume and we will build a live preview &mdash; your site, your web address, and the real jobs that match you right now.</p>
 
     <div class="ju-err" id="ju-err"></div>
 
     <form id="ju-form" novalidate>
       <div class="ju-row">
-        <div class="ju-field"><label for="ju-name">Full name</label>
+        <div class="ju-field"><label for="ju-name" data-i18n="form.name">Full name</label>
           <input id="ju-name" name="name" type="text" autocomplete="name" placeholder="Ada Lovelace" required></div>
-        <div class="ju-field"><label for="ju-email">Email</label>
+        <div class="ju-field"><label for="ju-email" data-i18n="form.email">Email</label>
           <input id="ju-email" name="email" type="email" autocomplete="email" placeholder="ada@example.com" required></div>
       </div>
       <div class="ju-row">
-        <div class="ju-field"><label for="ju-phone">Phone <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <div class="ju-field"><label for="ju-phone"><span data-i18n="form.phone">Phone</span> <span style="text-transform:none;letter-spacing:0" data-i18n="form.optional">(optional)</span></label>
           <input id="ju-phone" name="phone" type="tel" autocomplete="tel" placeholder="+13055551234"></div>
-        <div class="ju-field"><label for="ju-lang">Language</label>
+        <div class="ju-field"><label for="ju-lang" data-i18n="form.lang">Language</label>
           <select id="ju-lang" name="language"><option value="en">English &mdash; Ava</option><option value="es">Espa&ntilde;ol &mdash; Dalia</option></select></div>
       </div>
 
-      <div class="ju-field"><label>Your resume</label>
+      <div class="ju-field"><label data-i18n="form.resume">Your resume</label>
         <div class="ju-drop" id="ju-drop" tabindex="0" role="button" aria-label="Choose or drop your resume">
-          <div class="big" id="ju-drop-big">Drop your resume here</div>
-          <div class="small" id="ju-drop-small">or click to browse &mdash; PDF, DOCX or TXT, up to 8 MB</div>
+          <div class="big" id="ju-drop-big" data-i18n="form.drop">Drop your resume here</div>
+          <div class="small" id="ju-drop-small" data-i18n="form.browse">or click to browse &mdash; PDF, DOCX or TXT, up to 8 MB</div>
         </div>
         <input type="file" id="ju-file" accept=".pdf,.docx,.txt,.md,.rtf" hidden>
       </div>
 
-      <div class="ju-field"><label>Profile photo <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+      <div class="ju-field"><label><span data-i18n="form.photo">Profile photo</span> <span style="text-transform:none;letter-spacing:0" data-i18n="form.optional">(optional)</span></label>
         <div class="ju-photo" id="ju-photo-zone" tabindex="0" role="button" aria-label="Choose a profile photo">
           <img id="ju-photo-prev" alt="" hidden>
-          <div id="ju-photo-txt"><strong>Add a photo</strong><br>
-            <span class="small">JPEG, PNG or WebP &mdash; shown on your site. Without one we use your initials.</span></div>
+          <div id="ju-photo-txt"><strong data-i18n="form.addphoto">Add a photo</strong><br>
+            <span class="small" data-i18n="form.photohint">JPEG, PNG or WebP &mdash; shown on your site. Without one we use your initials.</span></div>
         </div>
         <input type="file" id="ju-photo" accept="image/jpeg,image/png,image/webp" hidden>
       </div>
 
-      <div class="ju-or">or paste it instead</div>
+      <div class="ju-or" data-i18n="form.or">or paste it instead</div>
       <div class="ju-field">
-        <textarea id="ju-text" name="resume_text" placeholder="Paste your resume text here..."></textarea>
+        <textarea id="ju-text" name="resume_text" placeholder="Paste your resume text here..." data-i18n-ph="form.paste"></textarea>
       </div>
 
-      <button type="submit" class="ju-btn primary ju-submit" id="ju-go">Build my preview</button>
-      <p class="ju-legal">Free. No card. We show you real openings or none at all &mdash; never invented ones.<br>
+      <button type="submit" class="ju-btn primary ju-submit" id="ju-go" data-i18n="form.go">Build my preview</button>
+      <p class="ju-legal" data-i18n-html="form.legal">Free. No card. We show you real openings or none at all &mdash; never invented ones.<br>
       You can delete everything we extracted at any time.</p>
     </form>
 
     <div class="ju-prog" id="ju-prog">
-      <div style="font-weight:700;font-size:16px" id="ju-prog-t">Reading your resume&hellip;</div>
+      <div style="font-weight:700;font-size:16px" id="ju-prog-t" data-i18n="prog.t">Reading your resume&hellip;</div>
       <div class="bar"><i></i></div>
-      <div class="small" style="font-family:var(--mono);font-size:11.5px;color:var(--faint)" id="ju-prog-s">This takes about a minute.</div>
+      <div class="small" style="font-family:var(--mono);font-size:11.5px;color:var(--faint)" id="ju-prog-s" data-i18n="prog.s">This takes about a minute.</div>
     </div>
   </div>
 </div>
 
 <footer class="ju-foot">
-  <div>JobUp &mdash; a Digit2AI product.</div>
+  <div data-i18n="foot.by">JobUp &mdash; a Digit2AI product.</div>
   <div style="display:flex;gap:18px;flex-wrap:wrap">
-    <a href="{{BASE}}/directory">Directory</a><a href="{{BASE}}/health">Status</a><a href="#pricing">Pricing</a><a href="#agents">Agents</a>
+    <a href="{{BASE}}/directory" data-i18n="foot.dir">Directory</a><a href="{{BASE}}/health" data-i18n="foot.status">Status</a><a href="#pricing" data-i18n="nav.pricing">Pricing</a><a href="#agents" data-i18n="nav.agents">Agents</a>
   </div>
 </footer>
 </div>
@@ -1073,28 +1094,149 @@ function juFormatPhone(v){
   frame();
 })();
 
-/* ---- orb: Ava narrates over the shared keyless /api/tts/edge ------------- */
+/* ---- ES / EN ------------------------------------------------------------
+   ONE DICTIONARY, KEYED OFF THE MARKUP.
+   Every visible string carries data-i18n (textContent), data-i18n-html (may
+   contain <br>/<span>) or data-i18n-ph (a placeholder). English lives in the
+   HTML itself and is therefore what a crawler and a no-JS reader see; Spanish
+   is applied over it. That ordering is deliberate: the alternative — an empty
+   shell filled in by script — would ship a blank page to anything that does not
+   run JS, including the search engines this product exists to be found by.
+
+   The choice persists in localStorage and is honoured from ?lang=es, so a
+   Spanish link can be shared and lands in Spanish. It also decides which voice
+   the orb speaks with and which language the account is created in: a Spanish
+   visitor who never opens the Language field must not end up with an English
+   onboarding. */
+var JU_LANG='en';
+var JU_T={
+ es:{
+  'nav.how':'Cómo funciona','nav.get':'Qué recibes','nav.agents':'Agentes',
+  'nav.pricing':'Precio','nav.signin':'Iniciar sesión',
+  'hero.eyebrow':'Inteligencia de carrera',
+  'hero.h1':'Deja de buscar empleo.<br><span class="grad-text">Deja que la IA lo encuentre.</span>',
+  'hero.lede':'Habla con el Orbe o simplemente sube tu currículum. En minutos, JobUp construye tu ecosistema profesional con IA: tu sitio web personal, tu dirección web propia, tu perfil profesional legible por IA y ofertas reales seleccionadas según tu experiencia.',
+  'orb.caption':'Toca el orbe y deja que Dalia te explique<br>&mdash; o sube tu currículum &mdash;',
+  'cta.attach':'Subir mi currículum','cta.how':'Ver cómo funciona JobUp',
+  'cta.show':'Muéstrame mi ecosistema',
+  'receive.kicker':'Qué recibes',
+  'receive.01.h':'Tu dirección web','receive.01.p':'tunombre.jobup.dev, en línea minutos después de activarla.',
+  'receive.02.h':'Un sitio web profesional','receive.02.p':'Generado a partir de tu propio currículum y actualizado automáticamente.',
+  'receive.03.h':'Identidad legible por IA','receive.03.p':'resume.json, JSON-LD, una tarjeta de agente y un punto MCP, para que las máquinas entiendan tu trayectoria.',
+  'receive.04.h':'Búsqueda continua','receive.04.p':'Vacantes reales de ocho plataformas ATS, puntuadas y explicadas. Nunca inventadas.',
+  'receive.05.h':'Currículum por vacante','receive.05.p':'Tu currículum reescrito para una oferta concreta, usando únicamente lo que tú ya escribiste.',
+  'receive.06.h':'Un panel privado','receive.06.p':'Coincidencias, proceso, aprobaciones, actividad de los agentes y exportación completa. Solo tuyo.',
+  'agents.kicker':'Dos agentes trabajando sin parar',
+  'agents.one.n':'AGENTE UNO','agents.one.h':'Cazador de oportunidades',
+  'agents.one.p':'Busca cada día en fuentes aprobadas, clasifica y puntúa cada vacante, explica por qué encaja y te dice qué te falta.',
+  'agents.two.n':'AGENTE DOS','agents.two.h':'Presencia profesional',
+  'agents.two.p':'Construye y mantiene tu sitio web, tus datos estructurados y el lenguaje con el que te leen los reclutadores. Mantiene todo coherente.',
+  'vs.kicker':'Búsqueda tradicional frente a JobUp',
+  'vs.old.h':'La forma antigua',
+  'vs.old.0':'Buscar a mano, todos los días','vs.old.1':'Revisar cientos de anuncios',
+  'vs.old.2':'Volver a subir el mismo currículum','vs.old.3':'Depender de los portales de empleo',
+  'vs.old.4':'Esperar a que te descubran','vs.old.5':'Perfiles desconectados por todas partes',
+  'vs.new.h':'Con JobUp',
+  'vs.new.0':'La IA busca de forma continua','vs.new.1':'Oportunidades clasificadas y explicadas',
+  'vs.new.2':'Un currículum adaptado a cada puesto','vs.new.3':'Tu propio sitio, siempre disponible',
+  'vs.new.4':'Estructurado para que la IA te encuentre','vs.new.5':'Un solo panel para todo',
+  'price.kicker':'Precio','price.per':' / año',
+  'price.sub':'Un solo plan. Todo incluido. Los impuestos se calculan al pagar.',
+  'price.inc.0':'Tu dirección web y tu sitio profesional',
+  'price.inc.1':'Identidad legible por máquinas: resume.json, JSON-LD, tarjeta de agente',
+  'price.inc.2':'Dos agentes de IA funcionando sin parar',
+  'price.inc.3':'Búsqueda de empleo, puntuación y coincidencias explicadas',
+  'price.inc.4':'Currículum adaptado por vacante y cartas de presentación',
+  'price.inc.5':'Panel privado, resumen semanal y exportación completa de tus datos',
+  'price.note':'Reembolso de 14 días, sin preguntas. JobUp nunca postula por ti:<br>tú revisas y envías cada postulación.',
+  'sheet.sub':'Sube tu currículum y construiremos una vista previa en vivo: tu sitio, tu dirección web y las ofertas reales que encajan contigo ahora mismo.',
+  'form.name':'Nombre completo','form.email':'Correo electrónico','form.phone':'Teléfono',
+  'form.optional':'(opcional)','form.lang':'Idioma','form.resume':'Tu currículum',
+  'form.drop':'Suelta aquí tu currículum',
+  'form.browse':'o haz clic para buscarlo &mdash; PDF, DOCX o TXT, hasta 8 MB',
+  'form.photo':'Foto de perfil','form.addphoto':'Añadir una foto',
+  'form.photohint':'JPEG, PNG o WebP &mdash; se muestra en tu sitio. Sin foto usamos tus iniciales.',
+  'form.or':'o pégalo aquí','form.paste':'Pega aquí el texto de tu currículum...',
+  'form.go':'Construir mi vista previa',
+  'form.legal':'Gratis. Sin tarjeta. Te mostramos vacantes reales o ninguna &mdash; nunca inventadas.<br>      Puedes borrar todo lo que extrajimos cuando quieras.',
+  'prog.t':'Leyendo tu currículum…','prog.s':'Esto tarda alrededor de un minuto.',
+  'foot.by':'JobUp &mdash; un producto de Digit2AI.',
+  'foot.dir':'Directorio','foot.status':'Estado'
+ }
+};
+function juApplyLang(l,persist){
+  JU_LANG=(l==='es')?'es':'en';
+  var d=JU_T[JU_LANG]||null;                   // null === English, already in the HTML
+  document.documentElement.setAttribute('lang',JU_LANG);
+  var root=document.querySelector('.d2b'); if(root) root.setAttribute('data-lang',JU_LANG);
+  ['data-i18n','data-i18n-html','data-i18n-ph'].forEach(function(attr){
+    Array.prototype.forEach.call(document.querySelectorAll('['+attr+']'),function(el){
+      var key=el.getAttribute(attr), store='_en_'+attr.replace(/-/g,'_');
+      // The English original is stashed on first run, so switching BACK is
+      // exact rather than a second table that could drift out of step.
+      if(el.dataset[store]===undefined){
+        el.dataset[store]= attr==='data-i18n-ph' ? (el.getAttribute('placeholder')||'') : el.innerHTML;
+      }
+      var v=(d&&d[key]!==undefined)?d[key]:el.dataset[store];
+      if(attr==='data-i18n-ph') el.setAttribute('placeholder',v);
+      else el.innerHTML=v;   // entities (&mdash;) must render, not print literally
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-setlang]'),function(b){
+    b.setAttribute('aria-pressed', b.getAttribute('data-setlang')===JU_LANG ? 'true':'false');
+  });
+  // A Spanish visitor who never opens the Language field must not be created as
+  // an English account, so the form follows the page.
+  var sel=document.getElementById('ju-lang'); if(sel) sel.value=JU_LANG;
+  if(persist){ try{localStorage.setItem('jobup_lang',JU_LANG);}catch(e){} }
+  if(window.__juOrbLang) window.__juOrbLang(JU_LANG);
+}
+(function(){
+  var q=new URLSearchParams(location.search).get('lang');
+  var stored=null; try{stored=localStorage.getItem('jobup_lang');}catch(e){}
+  // An explicit link beats a remembered choice, which beats the browser.
+  var nav=(navigator.language||'').toLowerCase().indexOf('es')===0?'es':'en';
+  juApplyLang(q||stored||nav,Boolean(q));
+  Array.prototype.forEach.call(document.querySelectorAll('[data-setlang]'),function(b){
+    b.addEventListener('click',function(){ juApplyLang(b.getAttribute('data-setlang'),true); });
+  });
+})();
+
+/* ---- orb: Ava (EN) / Dalia (ES) over the shared keyless /api/tts/edge ---- */
 (function(){
   var wrap=document.getElementById('orb-wrap');
   if(!wrap) return;
-  var lines=[
-    "Hi, I'm Ava, the voice of JobUp.",
-    "Attach your resume and I will show you the career ecosystem we would build for you \u2014 your own website, your web address, and the real jobs that match you right now.",
-    "Two agents then work for you continuously — they find the openings and keep you findable. From there you take over."
-  ];
+  var SCRIPTS={
+    en:[
+      "Hi, I'm Ava, the voice of JobUp.",
+      "Attach your resume and I will show you the career ecosystem we would build for you — your own website, your web address, and the real jobs that match you right now.",
+      "Two agents then work for you continuously — they find the openings and keep you findable. From there you take over."
+    ],
+    es:[
+      "Hola, soy Dalia, la voz de JobUp.",
+      "Sube tu currículum y te mostraré el ecosistema profesional que construiríamos para ti: tu propio sitio web, tu dirección web y las ofertas reales que encajan contigo ahora mismo.",
+      "Después, dos agentes trabajan para ti sin parar: encuentran las vacantes y hacen que los reclutadores te encuentren. A partir de ahí, tú decides."
+    ]
+  };
+  // Dalia is the canonical LATAM Spanish voice in the shared alias map
+  // (dalia -> es-MX-DaliaNeural). Ava is en-US-AvaNeural.
+  var VOICE={en:'ava',es:'dalia'};
+  var LOCALE={en:'en-US',es:'es-MX'};
+  var olang='en';
+  var lines=SCRIPTS.en;
   var i=0,audio=null,playing=false,cache={},neuralOK=true,token=0;
   function state(s){wrap.setAttribute('data-state',s);}
   function fetchSeg(n){
     if(cache[n]) return Promise.resolve(cache[n]);
     return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:lines[n],voice:'ava',lang:'en'})})
+      body:JSON.stringify({text:lines[n],voice:VOICE[olang],lang:olang})})
       .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
       .then(function(b){if(!b||b.size<200)throw new Error('empty');
         var u=URL.createObjectURL(b);cache[n]=u;return u;});
   }
   function browserSpeak(n,done){
     if(!window.speechSynthesis){done();return;}
-    var u=new SpeechSynthesisUtterance(lines[n]);u.lang='en-US';
+    var u=new SpeechSynthesisUtterance(lines[n]);u.lang=LOCALE[olang];
     u.onend=done;u.onerror=done;state('speaking');speechSynthesis.speak(u);
   }
   function run(t){
@@ -1118,6 +1260,18 @@ function juFormatPhone(v){
     if(audio){try{audio.pause();}catch(e){}audio=null;}
     if(window.speechSynthesis)speechSynthesis.cancel();
   }
+  // Switching language mid-narration must stop the current voice and drop the
+  // cached audio — otherwise Ava finishes an English sentence on a Spanish page,
+  // and the cache would replay it on the next click.
+  window.__juOrbLang=function(l){
+    var next=(l==='es')?'es':'en';
+    if(next===olang) return;
+    olang=next; lines=SCRIPTS[olang];
+    Object.keys(cache).forEach(function(k){try{URL.revokeObjectURL(cache[k]);}catch(e){}});
+    cache={}; neuralOK=true;
+    if(playing) stop();
+  };
+  if(typeof JU_LANG!=='undefined') window.__juOrbLang(JU_LANG);
   wrap.addEventListener('click',function(){playing?stop():start();});
   wrap.addEventListener('keydown',function(e){
     if(e.key==='Enter'||e.key===' '){e.preventDefault();playing?stop():start();}

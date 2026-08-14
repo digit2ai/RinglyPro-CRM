@@ -286,6 +286,7 @@ body.hasgo .wrap{padding-bottom:140px}
   <div class="sg-hint" id="sghint">Choose a password to finish</div>
   <button class="btn go" id="go3" type="button" data-go="sticky">Build my account</button>
 </div>
+<script src="{{BASE}}/i18n-onboarding.js"></script>
 <script>
 var API='{{BASE}}',Q=new URLSearchParams(location.search),TOKEN=Q.get('t')||'';
 // Stripe puts the checkout session id in the return URL. It is how the server
@@ -391,6 +392,7 @@ function roleChips(vals){
   host.innerHTML='<div class="rules" style="margin:0 0 7px">From your r&eacute;sum&eacute;:</div>'+
     vals.map(function(v,i){ return '<label class="chip" data-r="'+i+'"><input type="checkbox"'+
       (i<3?' checked':'')+'><span>'+esc(v)+'</span></label>'; }).join('');
+  if(window.JobUpI18n) JobUpI18n.refresh(host);
   Array.prototype.forEach.call(host.querySelectorAll('.chip'),function(el,i){
     el.querySelector('input').addEventListener('change',function(){
       var cur=list('roles'), v=vals[i];
@@ -407,6 +409,7 @@ function chips(hostId,values,name){
     return '<label class="chip"><input type="checkbox" name="'+name+'" value="'+esc(v)+'">'+
            '<span>'+esc(LABELS[v]||v)+'</span></label>';
   }).join('');
+  if(window.JobUpI18n) JobUpI18n.refresh($(hostId));
 }
 function checked(name){
   return Array.prototype.slice.call(document.querySelectorAll('input[name="'+name+'"]:checked'))
@@ -431,6 +434,12 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
   if(j.employment_types&&j.employment_types.length) chips('etypes',j.employment_types,'etype');
   if(j.work_modes&&j.work_modes.length) chips('wmodes',j.work_modes,'wmode');
   roleChips(j.suggested_roles);
+  // THE LANGUAGE COMES FROM THE TEASER ROW, not from this page.
+  // Somebody who switched the landing page to Spanish and uploaded a résumé has
+  // already told us; asking again here would be the second time, and getting a
+  // different answer than the teaser would mean the preview and the account
+  // disagreed about who this person is.
+  if(window.JobUpI18n) JobUpI18n.apply(j.language||JobUpI18n.detect());
   paint();
   if(j.already_registered){
     $('bar').className='bar show';

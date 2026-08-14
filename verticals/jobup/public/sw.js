@@ -21,6 +21,10 @@ const SHELL = [
   // the bare url would fill the cache with entries nothing ever asks for.
   BASE + '/icon-192.png__V__',
   BASE + '/icon-512.png__V__',
+  // The onboarding translator. Without it in the shell, a Spanish visitor on a
+  // poor connection gets the account form in English — the one moment where
+  // being confused costs a signup.
+  BASE + '/i18n-onboarding.js',
 ];
 
 self.addEventListener('install', (e) => {
