@@ -515,6 +515,30 @@ async function cleanup() {
     ok('a Workday path id survives the non-numeric form',
       employers.reqIdFrom('pnc', '/job/PA---Pittsburgh-15222/Data-Manager_R223512-1') === 'R223512');
 
+    // WORKDAY REQ IDS ARE NOT NUMBERS, and assuming they were dropped every PNC
+    // and U.S. Bank posting silently: 620 read, zero stored, no error raised.
+    // A feed that yields no id must never look like a feed with no jobs.
+    const shapes = [
+      ['citi', { bulletFields: ['26974948'], externalPath: '/job/Tampa/X_26974948-1' }, '26974948'],
+      ['pnc', { bulletFields: ['R224025'], externalPath: '/job/PA/Security-Analyst_R224025' }, 'R224025'],
+      ['capitalone', { bulletFields: ['R249146'], externalPath: '/job/McLean-VA/Eng_R249146-1' }, 'R249146'],
+      ['usbank', { bulletFields: ['2026-0025089'], externalPath: '/job/MN/DBA_2026-0025089' }, '2026-0025089']
+    ];
+    shapes.forEach(([k, posting, want]) => {
+      ok(`${k} requisition id is read, not assumed numeric`,
+        workday.reqIdOf(posting, employers.get(k).cfg) === want,
+        String(workday.reqIdOf(posting, employers.get(k).cfg)));
+    });
+    // The dangerous half: a greedy path parse turns 2026-0025089 into "2026",
+    // which is a confidently WRONG id rather than a missing one.
+    ok('a dashed id is never truncated by the path fallback',
+      workday.reqIdOf({ externalPath: '/job/MO/Data-Scientist_2026-0018812' }, employers.get('usbank').cfg) === '2026-0018812');
+    ok('a repost suffix (-1) is stripped, the id is not',
+      workday.reqIdOf({ externalPath: '/job/McLean-VA/Eng_R249146-1' }, employers.get('capitalone').cfg) === 'R249146');
+    const normPnc = workday.normalize({ bulletFields: ['R224025'], externalPath: '/job/PA/X_R224025', title: 'Sec Analyst', locationsText: 'Pittsburgh PA' },
+      null, employers.get('pnc').cfg);
+    ok('...so a PNC posting normalizes to a storable row', normPnc.req_id === 'R224025' && !!normPnc.url_workday);
+
     ok('an ambiguous number resolves to NOTHING rather than a guess', employers.detect('12345') === null);
     ok('junk resolves to nothing', employers.detect('hello there') === null);
 

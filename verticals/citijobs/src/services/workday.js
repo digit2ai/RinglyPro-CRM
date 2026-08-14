@@ -110,15 +110,40 @@ const stripHtml = budget.stripHtml;
  */
 const parseSalary = budget.parseSalary;
 
-/** Pull the req id out of a posting: bulletFields first, then the path suffix. */
-function reqIdOf(posting) {
+/**
+ * Pull the requisition id out of a list posting.
+ *
+ * WORKDAY REQ IDS ARE NOT NUMBERS. Citi issues 26974948, but PNC issues
+ * R224025 and U.S. Bank issues 2026-0025089. This originally accepted only
+ * all-digit ids, so every PNC and U.S. Bank posting produced no id and was
+ * silently dropped — 620 postings read, zero rows stored, no error anywhere.
+ *
+ * Worse, the path fallback would have parsed U.S. Bank's `_2026-0025089` as
+ * "2026" and stored a confidently wrong id. So candidates are now validated
+ * against the EMPLOYER'S OWN id pattern when the registry supplies one, rather
+ * than trusting whichever regex happens to match first.
+ */
+function reqIdOf(posting, cfg) {
+  const cands = [];
   if (posting && Array.isArray(posting.bulletFields) && posting.bulletFields[0]) {
     const b = String(posting.bulletFields[0]).trim();
-    if (/^\d{5,}$/.test(b)) return b;
+    if (b) cands.push(b);
   }
   const path = String((posting && posting.externalPath) || '');
-  const m = path.match(/_(\d{5,})(?:-\d+)?$/);
-  return m ? m[1] : null;
+  const m = path.match(/_([A-Za-z0-9][\w-]*)$/);
+  if (m) {
+    cands.push(m[1]);
+    cands.push(m[1].replace(/-\d+$/, ''));   // Workday appends -1 / -2 on repost
+  }
+  const pat = cfg && cfg.id_pattern;
+  if (pat) {
+    const hit = cands.find((c) => pat.test(c));
+    if (hit) return hit;
+  }
+  // No pattern registered: bulletFields[0] is Workday's own answer, so trust it
+  // over anything scraped out of a slug.
+  const first = cands.find((c) => /\d/.test(c) && c.length >= 4);
+  return first || null;
 }
 
 /**
@@ -168,7 +193,7 @@ const dateOnly = budget.dateOnly;
  */
 function normalize(posting, detail, cfg) {
   const c = cfg || config();
-  const req_id = reqIdOf(posting) || (detail && detail.jobReqId) || null;
+  const req_id = reqIdOf(posting, c) || (detail && detail.jobReqId) || null;
   const external_path = (posting && posting.externalPath) || null;
   const url_workday = detail && detail.externalUrl
     ? detail.externalUrl

@@ -90,6 +90,11 @@ function enabledKeys() {
   return raw.split(',').map((s) => s.trim().toLowerCase()).filter((k) => REGISTRY[k]);
 }
 
+// The adapter needs the bank's id shape to pick the right candidate out of a
+// posting, so it travels with the connection config rather than being a second
+// argument every call site has to remember.
+Object.values(REGISTRY).forEach((e) => { if (e.cfg && e.id_pattern) e.cfg.id_pattern = e.id_pattern; });
+
 function list() { return enabledKeys().map((k) => REGISTRY[k]); }
 function get(key) { return REGISTRY[String(key || '').toLowerCase()] || null; }
 function adapterFor(key) {
