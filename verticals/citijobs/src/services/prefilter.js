@@ -50,6 +50,12 @@ function looksUS(loc) {
  * shown Pittsburgh, and a posting that names only a state is still US.
  */
 function locationAllowed(req, profile) {
+  // An EXPLICITLY EMPTY list means "anywhere". Only an absent list falls back to
+  // US-only. Collapsing the two would make the United-States-only switch
+  // impossible to turn off — it would keep filtering while claiming not to.
+  if (Array.isArray(profile.countries) && profile.countries.length === 0) {
+    return { ok: true, reason: null };
+  }
   const countries = (profile.countries && profile.countries.length)
     ? profile.countries
     : ['United States'];

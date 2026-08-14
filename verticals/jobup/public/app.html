@@ -578,10 +578,23 @@ function loadToday(){
 }
 
 /* ---- getting job matches: the interactive half that decides what arrives ---- */
+var US_STATES=[['al','Alabama'],['ak','Alaska'],['az','Arizona'],['ar','Arkansas'],['ca','California'],
+  ['co','Colorado'],['ct','Connecticut'],['de','Delaware'],['dc','District of Columbia'],['fl','Florida'],
+  ['ga','Georgia'],['hi','Hawaii'],['id','Idaho'],['il','Illinois'],['in','Indiana'],['ia','Iowa'],
+  ['ks','Kansas'],['ky','Kentucky'],['la','Louisiana'],['me','Maine'],['md','Maryland'],
+  ['ma','Massachusetts'],['mi','Michigan'],['mn','Minnesota'],['ms','Mississippi'],['mo','Missouri'],
+  ['mt','Montana'],['ne','Nebraska'],['nv','Nevada'],['nh','New Hampshire'],['nj','New Jersey'],
+  ['nm','New Mexico'],['ny','New York'],['nc','North Carolina'],['nd','North Dakota'],['oh','Ohio'],
+  ['ok','Oklahoma'],['or','Oregon'],['pa','Pennsylvania'],['ri','Rhode Island'],['sc','South Carolina'],
+  ['sd','South Dakota'],['tn','Tennessee'],['tx','Texas'],['ut','Utah'],['vt','Vermont'],['va','Virginia'],
+  ['wa','Washington'],['wv','West Virginia'],['wi','Wisconsin'],['wy','Wyoming']];
+
 function loadTargets(){
   api('/api/v1/engine/settings').then(function(r){
     if(!r.ok)return;
     SET=r.j.settings;
+    var geo=SET.geo||{};
+    var st=(geo.allowed_states||[]).map(function(x){return String(x).toLowerCase();});
     var tg=SET.targeting||{};
     var roles=tg.roles||[], inds=tg.industries||[], emps=tg.employers||[];
     var excl=tg.exclude_keywords||[], must=tg.must_include||[], rp=tg.remote_preference||'any';
@@ -601,12 +614,32 @@ function loadTargets(){
       'preference we might apply later \u2014 every field below is the live record the hunt runs '+
       'against, so what you change now changes what arrives tomorrow.</div>'+
       '<div class="note" style="margin-top:10px;line-height:1.7">'+
-      '<strong>In order below:</strong> the job titles you want \u00b7 industries \u00b7 employers '+
-      'to chase \u00b7 words that must appear \u00b7 words that rule a posting out \u00b7 employers to '+
-      'never show you.<br>'+
+      '<strong>In order below:</strong> which states \u00b7 the job titles you want \u00b7 industries \u00b7 '+
+      'employers to chase \u00b7 words that must appear \u00b7 words that rule a posting out \u00b7 employers '+
+      'to never show you.<br>'+
       'Searching <strong>United States</strong> roles. The companion to this page is '+
       '<a href="?tab=guide" id="t-toguide">Getting found</a> \u2014 this one decides which jobs '+
       'reach you, that one decides whether recruiters reach you.</div></div>'+
+
+      '<div class="card"><div class="t">Which states</div>'+
+      '<div class="m">Tick the states you would work in. Leave everything unticked and you '+
+      'get the whole country \u2014 which is the right answer for most people, so only narrow '+
+      'this if a commute is genuinely the constraint.</div>'+
+      '<div class="note" style="margin-top:8px;line-height:1.7">'+
+      '<strong>Remote roles are never filtered out by this.</strong> A posting that says '+
+      '"Remote \u2014 US" can be taken from any state, so it reaches you whatever you tick here. '+
+      'A US posting that does not say where is flagged for you to judge, not dropped.</div>'+
+      '<div class="acts" style="margin:11px 0 2px">'+
+      '<button class="btn sm" id="t-allstates">Whole country</button>'+
+      '<span class="note" style="margin-left:10px">'+
+        (st.length? esc(String(st.length))+' selected' : 'Whole country')+'</span></div>'+
+      '<div class="ctry">'+US_STATES.map(function(c){
+        return '<label class="ctrybox'+(st.indexOf(c[0])>=0?' on':'')+'">'+
+          '<input type="checkbox" value="'+c[0]+'"'+(st.indexOf(c[0])>=0?' checked':'')+'>'+
+          '<span>'+esc(c[1])+'</span></label>';}).join('')+'</div>'+
+      '<div class="acts" style="margin-top:12px">'+
+      '<button class="btn primary sm" id="t-savestates">Save states</button>'+
+      '<span class="note" id="t-statemsg" style="margin:0 0 0 10px"></span></div></div>'+
 
       '<div class="card"><div class="t">Roles you are targeting</div>'+
       '<div class="m">The exact title strings a sourcer searches. A title match counts double '+
@@ -693,6 +726,17 @@ function loadTargets(){
 
     var tg2=$('t-toguide');
     if(tg2) tg2.addEventListener('click',function(e){ e.preventDefault(); showTab('guide'); });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+      cb.addEventListener('change',function(){cb.parentNode.classList.toggle('on',cb.checked);});
+    });
+    var sa=$('t-allstates');
+    if(sa) sa.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+        cb.checked=false; cb.parentNode.classList.remove('on');});
+      saveStates();
+    });
+    $('t-savestates').addEventListener('click',saveStates);
     $('t-addrole').addEventListener('click',function(){
       var v=$('t-role').value.trim(); if(!v)return;
       var next=JSON.parse(JSON.stringify(SET));
@@ -717,6 +761,17 @@ function loadTargets(){
       saveSettingsDoc(next,'Employer excluded.');
     });
   });
+}
+function saveStates(){
+  var codes=[];
+  Array.prototype.forEach.call(document.querySelectorAll('.ctrybox input'),function(cb){
+    if(cb.checked)codes.push(cb.value);});
+  var next=JSON.parse(JSON.stringify(SET));
+  next.geo=next.geo||{}; next.geo.allowed_states=codes;
+  saveSettingsDoc(next, codes.length
+    ? 'Saved. From your next run: '+codes.length+' state'+(codes.length>1?'s':'')+
+      ', plus every remote-US role.'
+    : 'Saved. The whole country.');
 }
 function addList(key,inputId){
   var v=$(inputId).value.trim(); if(!v)return;

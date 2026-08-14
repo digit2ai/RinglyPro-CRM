@@ -5425,6 +5425,55 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!/var COUNTRIES=/.test(app), 'and the country list it rendered');
   });
 
+  // STATE POLICY — the subscriber's to choose, unlike the country.
+  //
+  // THE RULE THAT MAKES IT USABLE: a remote-national posting is takeable from
+  // any state, so a state filter must never touch it. Getting that wrong
+  // deletes the best matches on the board — remote roles are exactly the ones a
+  // state-restricted subscriber can take — and it fails SILENTLY, looking like
+  // a thin week rather than a broken filter.
+  await t('MATCHES: a state filter narrows the map without eating remote roles', () => {
+    const geo = require('./src/services/geo');
+    const pol = settingsSvc.sanitize({ geo: { allowed_states: ['fl', 'ga'] } }).geo;
+    assert.deepStrictEqual(pol.allowed_states, ['fl', 'ga']);
+    const v = (raw) => geo.evaluate(raw, pol);
+
+    assert.strictEqual(v('Tampa, FL').verdict, 'allow');
+    assert.strictEqual(v('Atlanta, Georgia').verdict, 'allow', 'the full name counts too');
+    assert.strictEqual(v('Austin, TX').verdict, 'block');
+    assert.strictEqual(v('London, United Kingdom').verdict, 'block', 'country still wins first');
+
+    // The exemptions, each for a different reason.
+    assert.strictEqual(v('Remote - US').verdict, 'allow', 'REMOTE-US MUST SURVIVE A STATE FILTER');
+    assert.strictEqual(v('Remote (US only)').verdict, 'allow');
+    assert.strictEqual(v('Remote - Global').verdict, 'allow');
+    assert.strictEqual(v('United States').verdict, 'flag',
+      'US but state unstated is judged by the subscriber, never silently dropped');
+    assert.strictEqual(v('').verdict, 'flag');
+    // Multi-location: one in policy is enough.
+    assert.strictEqual(v('Miami, FL or Austin, TX').verdict, 'allow');
+
+    // Unticked means the whole country, not "nowhere".
+    const none = settingsSvc.sanitize({}).geo;
+    assert.deepStrictEqual(none.allowed_states, []);
+    assert.strictEqual(geo.evaluate('Austin, TX', none).verdict, 'allow',
+      'AN EMPTY LIST MUST MEAN THE WHOLE COUNTRY');
+
+    // Junk cannot become a filter that matches nothing.
+    assert.deepStrictEqual(
+      settingsSvc.sanitize({ geo: { allowed_states: ['FL', 'fl', 'zz', '', null, 'florida'] } })
+        .geo.allowed_states, ['fl'], 'deduped, normalised, unknown codes dropped');
+
+    // Two-letter codes must only be read after a comma: half of them are
+    // ordinary English words, and a bare scan turns "Remote or hybrid" into
+    // Oregon and "Bengaluru, India" into Indiana.
+    assert.deepStrictEqual(geo.statesIn('remote or hybrid'), []);
+    assert.deepStrictEqual(geo.statesIn('bengaluru, india'), []);
+    assert.deepStrictEqual(geo.statesIn('washington, d.c.'), ['dc'],
+      'DC must not read as Washington state');
+    assert.deepStrictEqual(geo.statesIn('seattle, wa'), ['wa']);
+  });
+
   // NOBODY IS BLOCKED FOR ROLE TITLES, AND NOBODY ENDS UP WITH NONE.
   //
   // Without titles pageRoles() is empty, no /roles/:role page exists, the

@@ -329,6 +329,13 @@ async function cleanup() {
     ok(`"${loc}" reads as ${want ? 'US' : 'outside the US'}`, r.ok === want);
   });
 
+  // An empty country list means "anywhere" — the US-only switch turning off
+  // must not become a filter that silently keeps filtering.
+  ok('no countries set means no country gate',
+    prefilter.locationAllowed({ location: 'Pune Maharashtra India' }, { countries: [] }).ok === true);
+  ok('...while United States set still excludes Pune',
+    prefilter.locationAllowed({ location: 'Pune Maharashtra India' }, { countries: ['United States'] }).ok === false);
+
   const puneReq = Req.build({ req_id: '26980420', title: 'Data Analytics Lead Analyst', location: 'Pune Maharashtra India', description_text: 'data analytics' });
   const preP = prefilter.score(puneReq, profileA, terms);
   ok('a Pune requisition is refused for a US-only profile', !preP.location_ok);

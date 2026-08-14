@@ -182,7 +182,8 @@ router.get('/board', async (req, res) => {
         id: profile.id, slug: profile.slug, display_name: profile.display_name,
         score_threshold: profile.score_threshold,
         min_salary_cents: profile.min_salary_cents ? Number(profile.min_salary_cents) : 0,
-        hide_unpriced: !!profile.hide_unpriced
+        hide_unpriced: !!profile.hide_unpriced,
+        countries: profile.countries || []
       },
       // Stated so the board can never look empty for a reason it does not show.
       filtered_out: rows.length,
@@ -204,7 +205,8 @@ router.get('/board', async (req, res) => {
         // hidden — you cannot track an application you can no longer see — but
         // an untouched row below the threshold has no business on the board.
         .filter((it) => ['applied', 'interview', 'offer', 'closed'].includes(it.status)
-          || (prefilter.salaryAllowed(it.req, profile).ok
+          || (prefilter.locationAllowed(it.req, profile).ok
+              && prefilter.salaryAllowed(it.req, profile).ok
               && (!it.req.match || it.req.match.score >= (profile.score_threshold || 70))))
         .sort(byMatch)
     });
@@ -306,10 +308,17 @@ router.get('/reqs', async (req, res) => {
       const ts = await Tracked.findAll({ where: { tenant_id: tid(req), profile_id: profile.id, req_id: { [Op.in]: ids.length ? ids : ['__none__'] } }, attributes: ['req_id', 'employer'] });
       tracked = new Set(ts.map((t) => (t.employer || 'citi') + ':' + t.req_id));
     }
+    const shaped = rows
+      .map((r) => Object.assign(reqPayload(r, mById.get((r.employer || 'citi') + ':' + r.req_id)),
+        { tracked: tracked.has((r.employer || 'citi') + ':' + r.req_id) }));
     res.json({
-      items: rows
-        .map((r) => Object.assign(reqPayload(r, mById.get((r.employer || 'citi') + ':' + r.req_id)),
-          { tracked: tracked.has((r.employer || 'citi') + ':' + r.req_id) }))
+      total_before_filters: shaped.length,
+      countries: profile ? (profile.countries || []) : [],
+      items: shaped
+        // COUNTRY GATE ON THE READ, not only in the agent. The agent already
+        // refuses to score or board a posting outside the profile's countries,
+        // but the pool is the raw find list and was showing every one of them.
+        .filter((r) => !profile || prefilter.locationAllowed(r, profile).ok)
         .filter((r) => !profile || prefilter.salaryAllowed(r, profile).ok)
         .sort((a, b) => {
           const sa = a.match ? a.match.score : -1;

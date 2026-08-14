@@ -12,6 +12,11 @@
 //     quoted verbatim in drafts or omitted entirely. Never paraphrased.
 // =============================================================
 
+// The US state vocabulary lives with the matcher that reads locations, so the
+// list a subscriber can pick from and the list the engine can recognise are the
+// same list. geo.js requires nothing back, so this cannot cycle.
+const geoSvc = require('./geo');
+
 const DEFAULTS = {
   approval_required: true,          // forced — see sanitize()
   privacy: {
@@ -78,6 +83,10 @@ const DEFAULTS = {
   // product instead of asking everyone to make the same one.
   geo: {
     allowed_countries: ['US'],
+    // [] === anywhere in the US. Restricting is the subscriber's choice and
+    // starts OFF: guessing a state from a résumé address would quietly hide
+    // most of the board from someone who is willing to move or work remotely.
+    allowed_states: [],
     flag_unknown: true,             // neither silently included nor excluded
   },
   facts: {                          // owner-entered, quoted verbatim or omitted
@@ -265,6 +274,17 @@ function sanitize(s) {
   out.geo = out.geo || {};
   out.geo.allowed_countries = ['US'];
   out.geo.flag_unknown = out.geo.flag_unknown !== false;
+  // States ARE the subscriber's to choose, unlike the country. Unknown codes are
+  // dropped rather than stored, so a typo can never become a filter that
+  // silently matches nothing.
+  {
+    const seen = new Set();
+    out.geo.allowed_states = (Array.isArray(out.geo.allowed_states) ? out.geo.allowed_states : [])
+      .map((x) => String(x || '').toLowerCase().trim())
+      .filter((x) => geoSvc.US_STATES.has(x))
+      .filter((x) => (seen.has(x) ? false : (seen.add(x), true)))
+      .slice(0, 51);
+  }
   out.identity_links = identityLinks(out.identity_links);
 
   const t = out.targeting || (out.targeting = { ...DEFAULTS.targeting });

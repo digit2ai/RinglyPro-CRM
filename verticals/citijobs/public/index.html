@@ -185,6 +185,7 @@ async function loadBoard() {
         + (state.employer ? '&employer=' + encodeURIComponent(state.employer) : '');
   var d = await api('/board' + q);
   state.profileMeta = d.profile;
+  state.usOnly = !!(d.profile.countries || []).length;
   renderPayFilter(d);
   var b = document.getElementById('boardBody');
   b.innerHTML = '';
@@ -230,11 +231,24 @@ function renderPayFilter(d) {
     '<input id="payFloor" style="width:130px" value="' + (floor ? '$' + Math.round(floor/100).toLocaleString('en-US') : '') + '" placeholder="none">' +
     '<label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--mut)">' +
       '<input type="checkbox" id="hideUnpriced" style="width:auto"' + (p.hide_unpriced ? ' checked' : '') + '> also hide postings with no stated range</label>' +
+    '<label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--mut)">' +
+      '<input type="checkbox" id="usOnly" style="width:auto"' + (state.usOnly ? ' checked' : '') + '> United States only</label>' +
     '<span class="sub">' + (d.filtered_out != null && d.items
       ? (d.filtered_out - d.items.length) + ' of ' + d.filtered_out + ' hidden by this filter' : '') + '</span>';
   document.getElementById('payFloor').onchange = savePay;
   document.getElementById('hideUnpriced').onchange = savePay;
+  document.getElementById('usOnly').onchange = saveCountries;
 }
+async function saveCountries() {
+  var on = document.getElementById('usOnly').checked;
+  // Empty list = no country gate at all; the pre-filter treats it as "anywhere".
+  await api('/profiles/' + state.profile.id, { method:'PATCH',
+    body: JSON.stringify({ countries: on ? ['United States'] : [] }) });
+  state.usOnly = on;
+  toast(on ? 'Showing United States only' : 'Showing every country');
+  loadBoard(); if (document.getElementById('tab-pool').style.display !== 'none') loadPool();
+}
+
 async function savePay() {
   var raw = document.getElementById('payFloor').value.replace(/[^0-9.]/g, '');
   var cents = raw ? Math.round(parseFloat(raw) * 100) : 0;
@@ -272,6 +286,13 @@ async function loadPool() {
     + (state.employer ? '&employer=' + encodeURIComponent(state.employer) : ''));
   var b = document.getElementById('poolBody');
   b.innerHTML = '';
+  if (d.total_before_filters != null && d.total_before_filters > d.items.length) {
+    var note = document.createElement('tr');
+    note.innerHTML = '<td colspan="7" class="sub">' + (d.total_before_filters - d.items.length)
+      + ' of ' + d.total_before_filters + ' hidden by the country and pay filters'
+      + ((d.countries || []).length ? ' (' + esc(d.countries.join(', ')) + ' only)' : '') + '</td>';
+    b.appendChild(note);
+  }
   d.items.forEach(function (r) {
     var tr = document.createElement('tr');
     tr.className = 'row';
