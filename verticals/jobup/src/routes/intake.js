@@ -223,11 +223,13 @@ const settingsSvc = require('../services/settings');
 const billing = require('../services/billing');
 
 /** Only what the search layer can act on; everything else is dropped. */
-function targetingFrom(body) {
+function targetingFrom(body, fallbackRoles) {
   const b = body || {};
+  const roles = settingsSvc.strList(b.roles, 12);
   return settingsSvc.sanitize({
     targeting: {
-      roles: settingsSvc.strList(b.roles, 12),
+      // Fall back to the titles the résumé states rather than to nothing.
+      roles: roles.length ? roles : settingsSvc.strList(fallbackRoles || [], 12),
       employment_types: b.employment_types,
       work_modes: b.work_modes,
       locations: b.locations,
@@ -364,19 +366,18 @@ router.post('/build-account', async (req, res) => {
     const problems = authSvc.passwordProblems(password);
     if (problems.length) return res.status(400).json({ errors: problems });
 
-    // ROLE TITLES ARE REQUIRED, AND ENFORCED HERE TOO — NOT ONLY IN THE FORM.
+    // NOBODY IS BLOCKED FOR THIS, AND NOBODY ENDS UP WITH NOTHING.
     //
-    // With none, pageRoles() is empty, no /roles/:role page is generated, the
+    // With no role titles pageRoles() is empty, no /roles/:role page exists, the
     // sitemap holds one url, and the site carries not one phrase a recruiter
-    // would ever type. Measured: 2 of 5 subscribers had zero, including the
-    // paying one, and their entire site was a single page. A client-side check
-    // alone is a suggestion; this is the boundary that makes it a rule.
-    if (!settingsSvc.roleList(b.roles, 12).length) {
-      return res.status(400).json({
-        errors: ['Add at least one job title you want. Each becomes a page on your site carrying '
-               + 'that exact phrase — with none, there is nothing for a recruiter to match.'],
-      });
-    }
+    // would type — measured at 2 of 5 subscribers, the paying one among them.
+    //
+    // The fix is NOT to make it a required field. Onboarding is where people
+    // leave, and this repo already made that mistake once with the subscribe
+    // button. The résumé was parsed minutes ago and states the titles this
+    // person has actually held, so we fill them in and let the Guide be where
+    // discoverability is refined. Silence means "use what the résumé says",
+    // never "publish a one-page site nobody can match".
 
     let sub = await models.subscribers.findOne({ where: { email } });
     if (sub && sub.password_hash) {
@@ -452,7 +453,7 @@ router.post('/build-account', async (req, res) => {
     // agent run already uses it — otherwise the first batch of matches would
     // be scored against empty targeting and the person's answers would look
     // like they had been ignored.
-    const cleaned = targetingFrom(b);
+    const cleaned = targetingFrom(b, suggestedRoles(((t.payload || {}).screens || {}).site || {}));
     const existingSettings = await scoped('settings', tenantId).findOne({});
     if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
     else await scoped('settings', tenantId).create({ settings: cleaned });

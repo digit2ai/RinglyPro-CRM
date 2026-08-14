@@ -167,13 +167,12 @@ body.hasgo .wrap{padding-bottom:140px}
       <label>Where you would work</label>
       <div class="chips" id="wmodes"></div>
 
-      <label for="roles">Job titles you want <span style="color:var(--red)">*</span></label>
+      <label for="roles">Job titles you want</label>
       <div class="chips" id="rolesugg" style="margin-bottom:9px"></div>
       <input id="roles" type="text" placeholder="Project Manager, Operations Lead, Business Analyst">
-      <div class="rules">Separate with commas. <strong>Required.</strong> Each title becomes its own
-        page on your site carrying that exact phrase &mdash; which is the thing a recruiter's search
-        actually matches. With none, your whole site is a single page and there is nothing to find.
-        Three to six works best.</div>
+      <div class="rules">Filled in from your r&eacute;sum&eacute;. Change or add any, separated by
+        commas &mdash; or leave it and refine later in your dashboard. Each title becomes its own
+        page carrying that exact phrase, which is what a recruiter's search matches.</div>
 
       <label for="locations">Cities or regions</label>
       <input id="locations" type="text" placeholder="Tampa, Miami, Remote US">
@@ -370,11 +369,7 @@ function lockHint(msg){ HINT_LOCK=msg; var el=$('sghint');
 function hint(){
   var el=$('sghint'); if(!el||HINT_LOCK)return;
   var a=$('p1').value,b=$('p2').value;
-  // Role titles are named FIRST when missing. They are the field a subscriber
-  // is most likely to skip and the one whose absence quietly breaks the whole
-  // product — no titles, no role pages, nothing for a search to match.
-  if(!list('roles').length){el.textContent='Add at least one job title';el.className='sg-hint';}
-  else if(a.length<12){el.textContent='Choose a password of at least 12 characters';el.className='sg-hint';}
+  if(a.length<12){el.textContent='Choose a password of at least 12 characters';el.className='sg-hint';}
   else if(a!==b){el.textContent='Confirm your password to finish';el.className='sg-hint';}
   else{el.textContent='Ready to build';el.className='sg-hint ready';}
 }
@@ -382,14 +377,20 @@ $('p1').addEventListener('input',paint);
 $('p2').addEventListener('input',paint);
 $('roles').addEventListener('input',paint);
 
-/* Tap a title we already read off the résumé instead of typing it. Toggling a
-   chip edits the same comma list the field holds, so there is ONE value — a
-   chip set that could disagree with the text box is a bug waiting to happen. */
+/* THE FIELD ARRIVES FILLED IN, NOT EMPTY.
+   Onboarding is where people leave, so nothing here is required and nothing has
+   to be typed: the résumé was parsed minutes ago and states the titles this
+   person has held. The first three are applied for them and shown ticked; the
+   rest are one tap away. Untick to remove.
+   Chips edit the same comma list the text field holds, so there is ONE value —
+   a chip set that could disagree with the box is a bug waiting to happen. */
 function roleChips(vals){
   var host=$('rolesugg'); if(!host||!vals||!vals.length) return;
-  host.innerHTML='<div class="rules" style="margin:0 0 7px">From your r&eacute;sum&eacute; &mdash; tap to add:</div>'+
-    vals.map(function(v,i){ return '<label class="chip" data-r="'+i+'"><input type="checkbox">'+
-      '<span>'+esc(v)+'</span></label>'; }).join('');
+  var on=vals.slice(0,3);
+  if(!list('roles').length) $('roles').value=on.join(', ');
+  host.innerHTML='<div class="rules" style="margin:0 0 7px">From your r&eacute;sum&eacute;:</div>'+
+    vals.map(function(v,i){ return '<label class="chip" data-r="'+i+'"><input type="checkbox"'+
+      (i<3?' checked':'')+'><span>'+esc(v)+'</span></label>'; }).join('');
   Array.prototype.forEach.call(host.querySelectorAll('.chip'),function(el,i){
     el.querySelector('input').addEventListener('change',function(){
       var cur=list('roles'), v=vals[i];
@@ -453,11 +454,6 @@ $('f').addEventListener('submit',function(ev){
   ev.preventDefault();
   $('err').className='err';
   var a=$('p1').value,b=$('p2').value;
-  if(!list('roles').length){
-    $('roles').focus();
-    return fail('Add at least one job title you want. Each one becomes a page on your site — '
-      +'with none, there is nothing for a recruiter’s search to match.');
-  }
   if(a.length<12) return fail('Use at least 12 characters for your password.');
   if(a!==b) return fail('The two passwords do not match.');
 

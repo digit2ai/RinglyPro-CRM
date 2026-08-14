@@ -5304,15 +5304,8 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.strictEqual(gos.length, 3, 'middle, bottom and pinned — got ' + gos.length);
       assert.ok(w.document.getElementById('stickygo').classList.contains('on'),
         'the pinned bar must be up before the form is touched');
-      // It must name the FIRST thing still missing, and role titles now come
-      // before the password — they are the field most likely to be skipped and
-      // the one whose absence quietly breaks the product.
-      assert.match(w.document.getElementById('sghint').textContent, /job title/i,
-        'the pinned bar must say what is still missing, starting with the titles');
-      w.document.getElementById('roles').value = 'Sales Executive';
-      w.document.getElementById('roles').dispatchEvent(new w.Event('input', { bubbles: true }));
       assert.ok(w.document.getElementById('sghint').textContent.includes('12'),
-        'and then move on to the next missing thing');
+        'and it must say what is still missing');
 
       // Submitting from the PINNED button must run the same validation as the
       // one at the foot of the form — not skip it.
@@ -5390,15 +5383,18 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
-  // NO ROLE TITLES = A ONE-PAGE SITE NOBODY CAN MATCH.
+  // NOBODY IS BLOCKED FOR ROLE TITLES, AND NOBODY ENDS UP WITH NONE.
   //
-  // Without them pageRoles() is empty, no /roles/:role page exists, the sitemap
-  // holds a single url and the site carries not one phrase a sourcer would
-  // type. Measured before this shipped: 2 of 5 subscribers had zero, the paying
-  // one among them. The field is now required — with one-tap suggestions read
-  // off the résumé, because a required EMPTY text field is how a signup is
-  // abandoned.
-  await t('BUILD FORM: role titles are required, and suggested from the résumé', async () => {
+  // Without titles pageRoles() is empty, no /roles/:role page exists, the
+  // sitemap holds a single url and the site carries not one phrase a sourcer
+  // would type — measured at 2 of 5 subscribers, the paying one among them.
+  //
+  // The fix is deliberately NOT a required field: onboarding is where people
+  // leave, and this repo already made that mistake once with the subscribe
+  // button. The résumé states the titles they have held, so the field arrives
+  // filled in, and the server falls back to the same source if it somehow
+  // arrives empty. Refinement belongs in the Guide, not the signup form.
+  await t('BUILD FORM: titles arrive prefilled and never block the signup', async () => {
     const fs = require('fs');
     const raw = fs.readFileSync(__dirname + '/public/build.html', 'utf8')
       .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '');
@@ -5409,28 +5405,39 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       return new Promise(() => {});
     };
     try {
+      // What the /build payload would have carried.
+      w.roleChips(['Sales Executive', 'Account Executive', 'Business Development Manager',
+                   'Territory Manager']);
+      assert.strictEqual(w.document.getElementById('roles').value,
+        'Sales Executive, Account Executive, Business Development Manager',
+        'the top three must be applied FOR them — an empty required box is how a signup is lost');
+      const boxes = w.document.querySelectorAll('#rolesugg input');
+      assert.strictEqual(boxes.length, 4, 'every suggestion is offered');
+      assert.deepStrictEqual(Array.from(boxes).map((b) => b.checked), [true, true, true, false]);
+
+      // Unticking must remove it from the one value, not leave the two views
+      // disagreeing about what will be submitted.
+      boxes[0].checked = false;
+      boxes[0].dispatchEvent(new w.Event('change', { bubbles: true }));
+      assert.strictEqual(w.document.getElementById('roles').value,
+        'Account Executive, Business Development Manager');
+
+      // And an empty box must still submit. It is not a gate.
+      w.document.getElementById('roles').value = '';
       w.document.getElementById('p1').value = 'a-very-long-password';
       w.document.getElementById('p2').value = 'a-very-long-password';
-      w.document.getElementById('roles').value = '';
       click(w, w.document.getElementById('go3'));
-      assert.strictEqual(posted, null, 'an account with no role titles must not be created');
-      assert.ok(w.document.getElementById('err').className.includes('show'),
-        'and the form must say why rather than sitting inert');
-
-      w.document.getElementById('roles').value = 'Sales Executive, Account Executive';
-      click(w, w.document.getElementById('go3'));
-      assert.ok(posted, 'with a title it must submit');
-      assert.deepStrictEqual(posted.roles, ['Sales Executive', 'Account Executive']);
+      assert.ok(posted, 'ROLE TITLES MUST NEVER BLOCK AN ACCOUNT BEING CREATED');
+      assert.deepStrictEqual(posted.roles, []);
     } finally { w.close(); }
 
-    // The server is the boundary, not the form — a client-side check alone is
-    // a suggestion. Assert the route refuses, and that roleList agrees.
+    // The server backstop: silence means "use what the résumé says", never
+    // "publish a one-page site nobody can match".
     const intakeSrc = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
-    assert.ok(/roleList\(b\.roles[\s\S]{0,80}length\)\s*\{[\s\S]{0,400}errors:/.test(intakeSrc),
-      'build-account must reject a payload carrying no role titles');
-    assert.strictEqual(settingsSvc.roleList([], 12).length, 0);
-    assert.strictEqual(settingsSvc.roleList(['  ', ''], 12).length, 0,
-      'whitespace is not a job title');
+    assert.ok(/roles\.length \? roles : settingsSvc\.strList\(fallbackRoles/.test(intakeSrc),
+      'targetingFrom() must fall back to the résumé titles when the form sends none');
+    assert.ok(!/errors: \['Add at least one job title/.test(intakeSrc),
+      'and must NOT reject the signup for it');
   });
 
   // ONE SUBSCRIBER'S SETTINGS MUST NEVER TOUCH ANOTHER'S.
