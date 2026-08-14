@@ -645,6 +645,18 @@ router.post('/presence', async (req, res) => {
   if (b.directory_opt_in !== undefined) {
     cur.presence.directory_opt_in = b.directory_opt_in === true || b.directory_opt_in === 'true';
   }
+  // Add or remove one identity link. Sent one at a time rather than as a whole
+  // array, so two tabs open on the same account cannot silently overwrite each
+  // other's list — the classic last-write-wins data loss on a settings doc.
+  if (typeof b.add_link === 'string') {
+    const url = settingsSvc.publicUrl(b.add_link);
+    if (!url) return res.status(400).json({ error: 'That does not look like a web address. It must start with http or https.' });
+    cur.identity_links = settingsSvc.identityLinks([...(cur.identity_links || []), { url }]);
+  }
+  if (typeof b.remove_link === 'string') {
+    const gone = b.remove_link.toLowerCase();
+    cur.identity_links = (cur.identity_links || []).filter((l) => l.url.toLowerCase() !== gone);
+  }
 
   const clean = settingsSvc.sanitize(cur);
   if (row) await scoped('settings', tid).update({ settings: clean }, { id: row.id });

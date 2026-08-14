@@ -26,7 +26,23 @@ const DEFAULTS = {
     experience: true,
     education: true,
     skills: true,
+    identity_links: true,           // the subscriber typed them TO be found
   },
+  // WHERE ELSE THIS PERSON ALREADY EXISTS ON THE OPEN WEB.
+  //
+  // This is the entity-resolution layer, and it is the only thing on this page
+  // an AI sourcing aggregator (SeekOut, hireEZ, Pin) can actually use.
+  //
+  // Those tools do not accept submissions and have no API to push to. They crawl
+  // seed sources they already trust — GitHub, publications, professional
+  // communities — and then MERGE what they find into one candidate record. A
+  // page they cannot tie to a person they already hold is a page they cannot
+  // merge, so it enriches nobody and is discarded.
+  //
+  // `sameAs` is the standard way to say "this page and that profile are the same
+  // human". Emitting it costs nothing and is the difference between a crawler
+  // reading an orphan page and a crawler attaching it to an existing record.
+  identity_links: [],               // [{ network, url }]
   // WHERE THEIR ADDRESS HAS ACTUALLY BEEN PUT.
   //
   // A site nothing links to is a site Google has no reason to crawl. Every
@@ -102,6 +118,59 @@ function enumList(v, allowed) {
     .filter((x) => allowed.includes(x) && !seen.has(x) && seen.add(x));
 }
 
+/**
+ * The networks worth naming, and how a pasted url is recognised as one.
+ *
+ * `label` is what a human sees; `host` is matched against the url's hostname so
+ * the subscriber never has to pick from a dropdown — they paste, we classify.
+ * Anything unrecognised is kept as `other` rather than rejected: a personal
+ * site, a conference bio or a company team page are all legitimate identities,
+ * and refusing them would quietly drop the most distinctive ones.
+ */
+const NETWORKS = [
+  { id: 'linkedin', label: 'LinkedIn', host: /(^|\.)linkedin\.com$/ },
+  { id: 'github', label: 'GitHub', host: /(^|\.)github\.(com|io)$/ },
+  { id: 'orcid', label: 'ORCID', host: /(^|\.)orcid\.org$/ },
+  { id: 'scholar', label: 'Google Scholar', host: /(^|\.)scholar\.google\.[a-z.]+$/ },
+  { id: 'stackoverflow', label: 'Stack Overflow', host: /(^|\.)stackoverflow\.com$/ },
+  { id: 'x', label: 'X', host: /(^|\.)(x|twitter)\.com$/ },
+  { id: 'other', label: 'Website', host: null },
+];
+
+/**
+ * A url we are willing to publish as this person's identity.
+ *
+ * http(s) ONLY. These strings are rendered into JSON-LD and into an <a href> on
+ * a public page, so a `javascript:` or `data:` url here would be a stored XSS
+ * on every visitor's browser. Parsing with URL rather than a regex means the
+ * scheme check cannot be walked around with whitespace or case.
+ */
+function publicUrl(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || s.length > 300) return null;
+  let u;
+  try { u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`); } catch (e) { return null; }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  if (!u.hostname || u.hostname.indexOf('.') < 0) return null;
+  return u.toString();
+}
+
+/** Classify a url, normalise it, drop anything unusable. Deduped by url. */
+function identityLinks(v, max = 8) {
+  const seen = new Set();
+  return (Array.isArray(v) ? v : [])
+    .map((x) => publicUrl(x && typeof x === 'object' ? x.url : x))
+    .filter(Boolean)
+    .filter((u) => { const k = u.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+    .slice(0, max)
+    .map((url) => {
+      let host = '';
+      try { host = new URL(url).hostname.toLowerCase(); } catch (e) { /* validated above */ }
+      const hit = NETWORKS.find((n) => n.host && n.host.test(host));
+      return { network: hit ? hit.id : 'other', url };
+    });
+}
+
 function strList(v, max = 25, len = 120) {
   const seen = new Set();
   return (Array.isArray(v) ? v : String(v == null ? '' : v).split(','))
@@ -133,6 +202,11 @@ function sanitize(s) {
   for (const k of ['email', 'phone', 'compensation', 'work_authorization', 'clearance']) {
     out.privacy[k] = out.privacy[k] === true;
   }
+  // Public unless explicitly switched off — unlike the five above, these are
+  // urls the subscriber typed for the express purpose of being found, so a
+  // default of "private" would silently defeat the reason they entered them.
+  out.privacy.identity_links = out.privacy.identity_links !== false;
+  out.identity_links = identityLinks(out.identity_links);
 
   const t = out.targeting || (out.targeting = { ...DEFAULTS.targeting });
   t.employment_types = enumList(t.employment_types, EMPLOYMENT_TYPES);
@@ -243,6 +317,10 @@ function presenceChecklist(settings, lang) {
     done_count: items.filter((i) => i.done).length,
     total: items.length,
     directory_opt_in: st.presence.directory_opt_in,
+    identity_links: st.identity_links.map((l) => ({
+      ...l,
+      label: (NETWORKS.find((n) => n.id === l.network) || {}).label || 'Website',
+    })),
     // Said once, here, so no surface has to remember to say it.
     note: l === 'es'
       ? 'Estos son requisitos, no garantías. Ponen tu dirección donde los reclutadores ya miran '
@@ -304,7 +382,7 @@ function pageRoles(settings) {
 }
 
 module.exports = {
-  roleList, PLACEMENTS, presenceChecklist,
+  roleList, PLACEMENTS, presenceChecklist, NETWORKS, identityLinks, publicUrl,
   DEFAULTS, sanitize, deepMerge, slugify,
   employerBlocked, contactBlocked, outreachFacts, pageRoles,
   EMPLOYMENT_TYPES, WORK_MODES, enumList, strList, deriveRemotePreference,

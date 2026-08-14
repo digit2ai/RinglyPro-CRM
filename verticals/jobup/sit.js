@@ -5381,6 +5381,70 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     }
   });
 
+  // ENTITY RESOLUTION — the only thing on a subscriber page an AI sourcing
+  // aggregator (SeekOut, hireEZ, Pin) can act on. They accept no submissions and
+  // expose no push API; they crawl and MERGE. `sameAs` is the merge claim.
+  await t('IDENTITY LINKS: sameAs reaches every machine-readable surface', () => {
+    const st = settingsSvc.sanitize({ identity_links: [
+      { url: 'https://www.linkedin.com/in/carlosgomez' },
+      { url: 'github.com/carlosgomez' },              // no scheme — must be fixed up
+      { url: 'https://orcid.org/0000-0002-1825-0097' },
+      { url: 'https://carlosgomez.example' },          // unrecognised host is still valid
+    ] });
+    assert.strictEqual(st.identity_links.length, 4);
+    assert.deepStrictEqual(st.identity_links.map((l) => l.network),
+      ['linkedin', 'github', 'orcid', 'other'],
+      'a pasted url must be classified, never demanded from a dropdown');
+    assert.ok(st.identity_links[1].url.startsWith('https://'),
+      'a bare host must be normalised, not rejected — people paste without the scheme');
+
+    const profile = { name: 'Carlos Gomez', headline: 'Sales Executive', skills: ['B2B'] };
+    const ld = identity.personJsonLd(profile, st, { name: 'Carlos Gomez', url: 'https://c.jobup.dev' });
+    assert.deepStrictEqual(ld.sameAs, st.identity_links.map((l) => l.url),
+      'JSON-LD sameAs IS the entity-resolution claim — without it the page merges with nobody');
+
+    const rj = identity.resumeJson(profile, st, { name: 'Carlos Gomez', url: 'https://c.jobup.dev' });
+    assert.strictEqual(rj.basics.profiles.length, 4, 'resume.json carries the same identity set');
+    assert.strictEqual(rj.basics.profiles[0].network, 'LinkedIn');
+
+    const txt = identity.llmsTxt(profile, st, { name: 'Carlos Gomez', url: 'https://c.jobup.dev' });
+    assert.ok(txt.includes('https://orcid.org/0000-0002-1825-0097'),
+      'and so does llms.txt — the three surfaces may never disagree');
+  });
+
+  await t('IDENTITY LINKS: only http(s), deduped, capped, and private on request', () => {
+    // These strings are rendered into JSON-LD AND into an <a href> on a public
+    // page. A javascript:/data: url surviving here is stored XSS on every
+    // visitor, so the scheme check is a security boundary, not tidiness.
+    for (const bad of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,<script>',
+                       'vbscript:x', 'file:///etc/passwd', 'notaurl', '', null, 'http://nodot']) {
+      assert.strictEqual(settingsSvc.publicUrl(bad), null,
+        JSON.stringify(bad) + ' must never become a published link');
+    }
+    assert.strictEqual(
+      settingsSvc.sanitize({ identity_links: [{ url: 'javascript:alert(1)' }] }).identity_links.length,
+      0, 'and sanitize must drop it rather than store it for a later render');
+
+    // Same profile twice, differing only in case, is one identity.
+    const dup = settingsSvc.sanitize({ identity_links: [
+      { url: 'https://github.com/me' }, { url: 'https://GitHub.com/me' }] });
+    assert.strictEqual(dup.identity_links.length, 1, 'deduped case-insensitively');
+
+    const many = settingsSvc.sanitize({ identity_links:
+      Array.from({ length: 30 }, (_, i) => ({ url: `https://s${i}.example` })) });
+    assert.strictEqual(many.identity_links.length, 8, 'capped');
+
+    // Public by default — they were typed in order to be found — but the
+    // privacy projection must still be able to remove them everywhere at once.
+    const off = settingsSvc.sanitize({ privacy: { identity_links: false },
+      identity_links: [{ url: 'https://github.com/me' }] });
+    const p = { name: 'X', skills: ['a'] };
+    assert.strictEqual(identity.personJsonLd(p, off, { name: 'X' }).sameAs, undefined);
+    assert.strictEqual(identity.resumeJson(p, off, { name: 'X' }).basics.profiles, undefined);
+    assert.ok(!identity.llmsTxt(p, off, { name: 'X', url: 'https://x.dev' }).includes('github.com/me'),
+      'a private field is DELETED from every surface, not blanked on one of them');
+  });
+
   section('the hamburger actually opens — behaviour, not grep');
 
   await t('PUBLIC SITE: tapping the hamburger opens the drawer', () => {

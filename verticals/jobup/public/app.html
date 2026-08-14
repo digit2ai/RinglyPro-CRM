@@ -1984,6 +1984,32 @@ function loadGuide(){
         '<div class="toggle'+(P.directory_opt_in?' on':'')+'" id="g-dir"><i></i></div></div>'+
     '</div>'+
 
+    /* ---- 4 ---- */
+    '<div class="card">'+
+      '<div class="t">4. Say where else you already exist</div>'+
+      '<div class="m">Paste the addresses of your other public profiles &mdash; LinkedIn, GitHub, '+
+        'Google Scholar, ORCID, a personal site, a company team page. Anything public that is you.</div>'+
+      '<div class="note" style="margin-top:10px;line-height:1.7">This is the one thing on your page '+
+        'that the AI sourcing tools can actually use. <strong>SeekOut, hireEZ and Pin take no '+
+        'submissions and have no way to be pushed to</strong> &mdash; they crawl sources they already '+
+        'trust and then merge what they find into one record per person. Without a stated link, your '+
+        'page is a stranger they cannot attach to anyone, so it enriches nothing. With one, it '+
+        'becomes another page about somebody they already have.</div>'+
+      '<div id="g-links" style="margin-top:12px">'+((P.identity_links||[]).length
+        ? P.identity_links.map(function(l){ return '<span class="chip">'+esc(l.label)+': '+
+            '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.url.replace(/^https?:\/\//,'').slice(0,44))+'</a> '+
+            '<a href="#" class="g-rmlink" data-url="'+esc(l.url)+'" style="color:var(--red)">&times;</a></span>'; }).join('')
+        : '<div class="note" style="color:var(--warn)">None yet. Your page currently claims no '+
+          'connection to any profile a sourcing tool already holds.</div>')+
+      '</div>'+
+      '<div class="addrow" style="margin-top:11px">'+
+        '<input id="g-link" placeholder="https://www.linkedin.com/in/yourname" maxlength="300">'+
+        '<button class="btn primary sm" id="g-addlink">Add</button></div>'+
+      '<div class="note" style="margin-top:9px">Published as <code>sameAs</code> in your page\'s '+
+        'structured data and in your r&eacute;sum&eacute; feed. Only addresses you paste here &mdash; '+
+        'nothing is looked up or guessed on your behalf.</div>'+
+    '</div>'+
+
     /* ---- how the other side actually searches ---- */
     '<div class="card">'+
       '<div class="t">How recruiters actually search</div>'+
@@ -2061,6 +2087,19 @@ function loadGuide(){
       this.classList.toggle('on',on);
       gSavePresence({directory_opt_in:on});
     });
+
+    var lf=$('g-link'), la=$('g-addlink');
+    function addLink(){
+      var v=(lf.value||'').trim(); if(!v) return;
+      lf.value=''; gSavePresence({add_link:v});
+    }
+    if(la) la.addEventListener('click',addLink);
+    if(lf) lf.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();addLink();} });
+    Array.prototype.forEach.call(host.querySelectorAll('.g-rmlink'),function(el){
+      el.addEventListener('click',function(e){
+        e.preventDefault(); gSavePresence({remove_link:el.getAttribute('data-url')});
+      });
+    });
   });
 }
 
@@ -2075,7 +2114,13 @@ function gSaveSettings(next){
 function gSavePresence(body){
   fetch(API+'/api/v1/engine/presence',{method:'POST',credentials:'same-origin',
     headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(){ loadGuide(); }).catch(function(){});
+    .then(function(r){ return r.json().then(function(j){return {ok:r.ok,j:j};}); })
+    .then(function(r){
+      // A rejected address must SAY it was rejected. Silently re-rendering the
+      // list without it reads as "saved" and the subscriber never fixes it.
+      if(!r.ok&&r.j&&r.j.error){ var f=$('g-link'); if(f){f.value=body.add_link||'';} alert(r.j.error); }
+      loadGuide();
+    }).catch(function(){});
 }
 function gRmRole(i){
   var next=JSON.parse(JSON.stringify(SET||{}));

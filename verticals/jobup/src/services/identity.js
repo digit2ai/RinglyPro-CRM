@@ -34,6 +34,12 @@ function applyPrivacy(profile, settings) {
   if (!priv.education) drop(p, 'education');
   if (!priv.skills) drop(p, 'skills');
 
+  // The identity links live in settings, not on the profile, so they are
+  // projected onto it here — one function still decides what is public.
+  p.identity_links = priv.identity_links
+    ? ((settings || {}).identity_links || []).slice() : [];
+  if (!p.identity_links.length) delete p.identity_links;
+
   // These live in settings.facts and are NEVER public unless opted in.
   const facts = (settings || {}).facts || {};
   p.facts = {};
@@ -68,6 +74,14 @@ function resumeJson(profile, settings, { name, url }) {
       institution: e.institution, area: e.area, studyType: e.studyType, endDate: e.end,
     }));
   }
+  if (p.identity_links) {
+    // JSON Resume's own field for this. Parsers that read resume.json get the
+    // same identity set as parsers that read the JSON-LD.
+    basics.profiles = p.identity_links.map((l) => {
+      const n = settingsSvc.NETWORKS.find((x) => x.id === l.network);
+      return { network: (n && n.label) || 'Website', url: l.url };
+    });
+  }
   if (p.skills) out.skills = (p.skills || []).map((s) => (typeof s === 'string' ? { name: s } : s));
   if (p.certifications) out.certificates = (p.certifications || []).map((c) => (typeof c === 'string' ? { name: c } : c));
   return out;
@@ -89,6 +103,11 @@ function personJsonLd(profile, settings, { name, url, role }) {
   if (p.location) ld.address = { '@type': 'PostalAddress', addressLocality: p.location };
   if (p.skills && p.skills.length) {
     ld.knowsAbout = p.skills.map((s) => (typeof s === 'string' ? s : s.name)).filter(Boolean);
+  }
+  // THE ENTITY-RESOLUTION CLAIM. See settings.DEFAULTS.identity_links for why
+  // this is the one field on the page an AI sourcing aggregator can act on.
+  if (p.identity_links && p.identity_links.length) {
+    ld.sameAs = p.identity_links.map((l) => l.url);
   }
   if (p.experience && p.experience.length) {
     ld.worksFor = p.experience.slice(0, 1).map((e) => ({ '@type': 'Organization', name: e.company }))[0];
@@ -142,6 +161,10 @@ function llmsTxt(profile, settings, { name, url }) {
   }
   if (p.skills && p.skills.length) {
     lines.push('## Skills', ...p.skills.slice(0, 40).map((s) => `- ${typeof s === 'string' ? s : s.name}`), '');
+  }
+  if (p.identity_links && p.identity_links.length) {
+    lines.push('## The same person elsewhere',
+      ...p.identity_links.map((l) => `- ${l.url}`), '');
   }
   lines.push('## Machine-readable surfaces',
     `- Résumé (JSON Resume): ${url}/resume.json`,
