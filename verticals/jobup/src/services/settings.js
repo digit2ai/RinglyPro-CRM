@@ -68,9 +68,17 @@ const DEFAULTS = {
     open_to_relocation: false,
     min_score: 0,                   // below this, do not clutter the inbox
   },
+  // US ONLY, AND NO LONGER A QUESTION ANYONE IS ASKED.
+  //
+  // The dashboard used to open onto a grid of eighteen country checkboxes with
+  // an empty default, so a new subscriber was unrestricted until they found and
+  // used a control that looked like configuration. JobUp hunts US postings; a
+  // subscriber who left it blank got scored against roles they could not take.
+  // Making it the default rather than a field removes a decision from the
+  // product instead of asking everyone to make the same one.
   geo: {
-    allowed_countries: [],          // [] === unrestricted
-    flag_unknown: true,
+    allowed_countries: ['US'],
+    flag_unknown: true,             // neither silently included nor excluded
   },
   facts: {                          // owner-entered, quoted verbatim or omitted
     work_authorization: null,
@@ -243,6 +251,20 @@ function sanitize(s) {
   // urls the subscriber typed for the express purpose of being found, so a
   // default of "private" would silently defeat the reason they entered them.
   out.privacy.identity_links = out.privacy.identity_links !== false;
+
+  // US ONLY, FORCED — the same shape as approval_required, and for the same
+  // reason: it is not a preference the product can express any more.
+  //
+  // The country picker is gone, so nothing in the UI can set this. Merely
+  // changing the DEFAULT would leave every existing row on whatever it already
+  // held — and an empty array means UNRESTRICTED in geo.evaluate(), so the
+  // subscribers who never touched the old grid would keep being scored against
+  // postings they cannot take, with no control anywhere to correct it. A
+  // setting a user can neither see nor change must not be able to disagree with
+  // what the product says it does.
+  out.geo = out.geo || {};
+  out.geo.allowed_countries = ['US'];
+  out.geo.flag_unknown = out.geo.flag_unknown !== false;
   out.identity_links = identityLinks(out.identity_links);
 
   const t = out.targeting || (out.targeting = { ...DEFAULTS.targeting });

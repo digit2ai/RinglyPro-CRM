@@ -1934,7 +1934,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
     for (const tab of ['Analytics', 'Job Matches', 'Opportunities', 'Today',
-                       'Pipeline', 'Targets', 'My CV', 'Settings']) {
+                       'Pipeline', 'Getting job matches', 'My CV', 'Settings']) {
       assert.ok(html.includes('>' + tab), 'missing tab: ' + tab);
     }
     assert.ok(html.includes('honest by design'), 'the explainer callout should be present');
@@ -3980,12 +3980,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const between = src.slice(i, j);
     assert.ok(between.includes('VERDICT.BLOCK) continue'), 'and a blocked posting must skip the model');
   });
-  await t('the policy is reachable from the dashboard, not only the API', () => {
+  // Was: 'the policy is reachable from the dashboard'. The policy is no longer
+  // a policy — the hunt is US only and nothing in the product can express
+  // otherwise, so a country control ON the dashboard would be a lie. What must
+  // stay reachable is the statement of where it searches; see
+  // 'MATCHES: the hunt is US only, and nothing can widen it' for the enforcement.
+  await t('the dashboard states where it searches, without offering a choice', () => {
     const fs = require('fs');
     const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
-    assert.ok(html.includes('allowed_countries'), 'Targets must write the policy');
-    assert.ok(html.includes('Where you will work'));
-    assert.ok(html.includes('saveGeo') && html.includes('ctrybox'));
+    assert.ok(/Searching <strong>United States<\/strong>/.test(html),
+      'the tab must SAY it searches the US — a silent restriction reads as a bug');
+    assert.ok(!html.includes('Where you will work'), 'and must not offer a country picker');
   });
   await t('role targets and blocked employers are editable too', () => {
     const fs = require('fs');
@@ -5381,6 +5386,43 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         settingsSvc.sanitize({ presence: { directory_opt_in: bad } }).presence.directory_opt_in,
         false, 'opt-in means opt-in: ' + JSON.stringify(bad) + ' must not list somebody');
     }
+  });
+
+  // US ONLY, AND NOT EXPRESSIBLE OTHERWISE.
+  //
+  // The country picker is gone from the dashboard. Changing only the DEFAULT
+  // would have left every existing row on what it already held — and [] means
+  // UNRESTRICTED in geo.evaluate(), so subscribers who never touched the old
+  // grid would keep being scored against postings they cannot take, with no
+  // control anywhere to fix it.
+  await t('MATCHES: the hunt is US only, and nothing can widen it', () => {
+    assert.deepStrictEqual(settingsSvc.sanitize({}).geo.allowed_countries, ['US'],
+      'a fresh profile is US only');
+    for (const attempt of [[], ['GB'], ['US', 'GB', 'IN'], null, undefined, 'US,GB', ['us']]) {
+      assert.deepStrictEqual(
+        settingsSvc.sanitize({ geo: { allowed_countries: attempt } }).geo.allowed_countries,
+        ['US'],
+        'a stored ' + JSON.stringify(attempt) + ' must not widen the hunt — [] is UNRESTRICTED');
+    }
+
+    // And the engine must actually act on it.
+    const geo = require('./src/services/geo');
+    const pol = settingsSvc.sanitize({}).geo;
+    const v = (raw) => geo.evaluate(raw, pol).verdict;
+    assert.strictEqual(v('Tampa, FL'), 'allow');
+    assert.strictEqual(v('Remote - US'), 'allow');
+    assert.strictEqual(v('London, United Kingdom'), 'block');
+    assert.strictEqual(v('Bengaluru, India'), 'block');
+    // A locationless posting is FLAGGED for review, never silently included.
+    assert.strictEqual(v(''), 'flag');
+    assert.strictEqual(pol.flag_unknown, true);
+
+    // The picker must be gone from the dashboard, or it would offer a choice
+    // the server now overrides — a control that lies about what it does.
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!/id="t-savegeo"/.test(app), 'the Save countries button must be gone');
+    assert.ok(!/function saveGeo\(/.test(app), 'and its handler with it');
+    assert.ok(!/var COUNTRIES=/.test(app), 'and the country list it rendered');
   });
 
   // NOBODY IS BLOCKED FOR ROLE TITLES, AND NOBODY ENDS UP WITH NONE.
