@@ -5601,6 +5601,166 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/hidden:g\('x-hidden'\)==='1'/.test(app), 'and saveCV must send it');
   });
 
+  // ===== THE HELP AGENT ====================================================
+  section('the assistant answers about THIS account, and cannot act');
+
+  await t('ASSISTANT: the same question gets a different answer per account', async () => {
+    const A = require('./src/services/assistant');
+    const gappy = settingsSvc.sanitize({
+      targeting: { roles: [] },
+      presence: { placed: ['linkedin'], directory_opt_in: false } });
+    const done = settingsSvc.sanitize({
+      targeting: { roles: [{ title: 'Sales Executive' }] },
+      presence: { placed: ['linkedin', 'job_boards', 'github', 'email_signature', 'qr'],
+                  directory_opt_in: true },
+      identity_links: [{ url: 'https://github.com/ada' }] });
+    const base = { question: 'How can I increase visibility?', profile: { name: 'Ada' },
+                   counts: { matches: 12, opportunities: 1, tailorings: 0, credits: 0 },
+                   subscriber: { name: 'Ada', address: 'ada.jobup.dev', language: 'en' } };
+
+    const a = await A.ask({ ...base, settings: gappy });
+    const b = await A.ask({ ...base, settings: done });
+    assert.notStrictEqual(a.answer, b.answer,
+      'A GENERIC ANSWER IS WORSE THAN NONE — it sends somebody to redo work they '
+      + 'have already done and leaves the real gap untouched');
+    assert.match(a.answer, /no role titles/i, 'it must name the actual gap');
+    assert.match(b.answer, /complete|waiting/i, 'and must not tell a finished account to start');
+    assert.deepStrictEqual(a.actions, [{ tab: 'guide', label: 'Getting found' }],
+      'and it must point at the real tab');
+
+    // The snapshot is assembled from rows, so a wrong count is impossible
+    // rather than merely unlikely.
+    const snap = A.snapshot({ profile: { name: 'Ada', skills: ['a', 'b'],
+        experience: [{ title: 'X', hidden: true }, { title: 'Y' }] },
+      settings: gappy, counts: { matches: 7, opportunities: 2, tailorings: 1, credits: 3 },
+      subscriber: { name: 'Ada', address: 'ada.jobup.dev' } });
+    assert.match(snap, /Skills on file: 2/);
+    assert.match(snap, /Roles on the résumé: 2 \(1 hidden/);
+    assert.match(snap, /Job matches on the board: 7/);
+    assert.match(snap, /Identity links \(sameAs\): 0/);
+  });
+
+  await t('ASSISTANT: it cannot invent a control, and it cannot act', () => {
+    const A = require('./src/services/assistant');
+    // A confident "open the Billing tab" pointing at a tab that does not exist
+    // is the fastest way to make an assistant untrustworthy.
+    assert.deepStrictEqual(
+      A.cleanActions([{ tab: 'billing', label: 'Billing' }, { tab: 'nope' },
+                      { tab: 'guide' }, { tab: 'guide' }, { tab: 'cv' }]),
+      [{ tab: 'guide', label: 'Getting found' }, { tab: 'cv', label: 'My CV' }],
+      'unknown tabs dropped, duplicates collapsed');
+    assert.deepStrictEqual(A.cleanActions('nonsense'), []);
+    assert.deepStrictEqual(A.cleanActions([{ tab: 'guide', label: 'CLICK HERE NOW' }]),
+      [{ tab: 'guide', label: 'Getting found' }],
+      'the LABEL is ours — a model may not rename a tab in the UI');
+    // Every tab it may name has to exist in the dashboard.
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    for (const tab of Object.keys(A.TABS)) {
+      assert.ok(app.includes('data-p="' + tab + '"'), 'assistant names a missing tab: ' + tab);
+    }
+
+    // NO TOOL SURFACE. It advises and links; everything in this product is
+    // approval-gated and the assistant is not the exception.
+    const src = require('fs').readFileSync(__dirname + '/src/services/assistant.js', 'utf8');
+    assert.ok(!/scoped\(|models\.|\.update\(|\.create\(|\.destroy\(/.test(src),
+      'THE ASSISTANT MUST NOT BE ABLE TO WRITE ANYTHING');
+    assert.ok(/tools?:/.test(src) === false, 'and must have no tool definitions');
+
+    // It must not contradict what the product refuses to do.
+    assert.match(A.SYSTEM, /Never claim JobUp applies to jobs/);
+    assert.match(A.CAPABILITIES, /NEVER applies to a job/);
+  });
+
+  await t('ASSISTANT: capped, and honest with no model', async () => {
+    const A = require('./src/services/assistant');
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    // A chat box is an open invitation to a loop.
+    assert.ok(/JOBUP_ASSISTANT_DAILY/.test(src) && /status\(429\)/.test(src),
+      'a per-tenant daily cap is the only thing between a stuck client and a bill');
+    // The keyless path answers from the SAME snapshot rather than apologising.
+    const out = await A.ask({ question: 'why am I not getting matches?',
+      profile: {}, settings: settingsSvc.sanitize({}),
+      counts: { matches: 0, opportunities: 0, tailorings: 0, credits: 0 },
+      subscriber: { language: 'en' } });
+    assert.strictEqual(out.is_simulated, true, 'with no key it is labelled, never a silent fake');
+    assert.ok(out.answer.length > 40, 'and still says something useful');
+    assert.ok(out.actions.every((a) => A.TABS[a.tab]), 'with real actions');
+
+    // A FALLBACK THAT ANSWERS THE WRONG QUESTION CONFIDENTLY IS WORSE THAN ONE
+    // THAT ADMITS THE LIMIT. The first version fell through to the visibility
+    // answer whenever nothing matched, so "what does tailoring cost?" got a
+    // paragraph about sitemaps.
+    const st2 = settingsSvc.sanitize({ targeting: { roles: [{ title: 'AE' }] } });
+    const ctx = { profile: { name: 'Ada' }, settings: st2,
+      counts: { matches: 12, opportunities: 1, tailorings: 0, credits: 2 },
+      subscriber: { language: 'en' } };
+    const price = await A.ask({ ...ctx, question: 'What does tailoring cost?' });
+    assert.match(price.answer, /\$10/, 'a price question must get the price');
+    assert.match(price.answer, /2 credit/, 'grounded in the real credit count');
+    const applies = await A.ask({ ...ctx, question: 'Does JobUp apply to jobs for me?' });
+    assert.match(applies.answer, /never applies/i, 'and the honest refusal must survive');
+    const off = await A.ask({ ...ctx, question: 'What is the weather in Tampa?' });
+    assert.match(off.answer, /could not match|rather say so/i,
+      'AN UNMATCHED QUESTION MUST ADMIT IT, not fall through to a confident wrong answer');
+    assert.ok(!/sitemap/i.test(off.answer), 'and must not answer a question nobody asked');
+  });
+
+  await t('ASSISTANT: the panel opens, answers, and its action navigates', () => {
+    const fs = require('fs');
+    const raw = fs.readFileSync(__dirname + '/public/app.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '').replace(/\{\{PRICE\}\}/g, '59');
+    // The binding IIFE runs where the script sits, so the markup must come
+    // FIRST — a listener attached to null is silence, and that shipped once.
+    assert.ok(raw.indexOf('class="askfab"') < raw.indexOf('<script src'),
+      'the panel markup must precede the script that binds it');
+
+    let asked = null;
+    const { JSDOM, VirtualConsole } = require('jsdom');
+    const w = new JSDOM(raw, {
+      runScripts: 'dangerously', url: 'https://a.jobup.dev/app',
+      virtualConsole: new VirtualConsole(), pretendToBeVisual: true,
+      beforeParse(win) {
+        win.fetch = (u, o) => {
+          if (String(u).includes('/engine/assistant')) {
+            asked = JSON.parse(o.body);
+            return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({
+              answer: 'Open Getting found — you have no role titles set.',
+              actions: [{ tab: 'guide', label: 'Getting found' }], is_simulated: true }) });
+          }
+          return new Promise(() => {});
+        };
+        win.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {},
+                                  addListener() {}, removeListener() {} });
+        win.scrollTo = () => {};
+      },
+    }).window;
+    const click = (el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    try {
+      const d = w.document;
+      assert.strictEqual(d.getElementById('askpanel').hidden, true, 'starts closed');
+      click(d.getElementById('askfab'));
+      assert.strictEqual(d.getElementById('askpanel').hidden, false, 'the launcher must open it');
+      assert.ok(d.querySelectorAll('#askchips button').length >= 3, 'with example questions');
+
+      d.getElementById('askq').value = 'How can I increase my visibility?';
+      click(d.getElementById('asksend'));
+      assert.deepStrictEqual(asked, { question: 'How can I increase my visibility?' });
+      return new Promise((resolve, reject) => setTimeout(() => {
+        try {
+          const act = d.querySelector('.askacts button');
+          assert.ok(act, 'the answer must render its action as a button');
+          assert.strictEqual(act.textContent, 'Getting found');
+          click(act);
+          assert.strictEqual(d.getElementById('p-guide').classList.contains('hidden'), false,
+            'AND THE BUTTON MUST ACTUALLY NAVIGATE — an instruction to go hunting '
+            + 'for a screen is not an answer');
+          assert.strictEqual(d.getElementById('askpanel').hidden, true, 'then get out of the way');
+          resolve();
+        } catch (e) { reject(e); } finally { w.close(); }
+      }, 120));
+    } catch (e) { w.close(); throw e; }
+  });
+
   // ===== EN / ES ===========================================================
   section('the whole funnel speaks Spanish');
 

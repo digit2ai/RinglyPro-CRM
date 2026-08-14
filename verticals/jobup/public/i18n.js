@@ -451,7 +451,17 @@
     'Off by default.': 'Desactivado por defecto.',
     'Strong (80+)': 'Fuerte (80+)',
 
+    // ---------- the help agent -------------------------------------------
+    'Ask about JobUp': 'Pregunta sobre JobUp',
+    'Ask': 'Preguntar',
+    'It reads your account, so the answer is about you.':
+      'Lee tu cuenta, así que la respuesta es sobre ti.',
+    'It explains and points you at the right screen. It never changes a setting and never sends anything.':
+      'Explica y te lleva a la pantalla correcta. Nunca cambia un ajuste ni envía nada.',
+    'Send': 'Enviar',
+
     // ---------- placeholders --------------------------------------------
+    '@ph:How can I increase my visibility?': '¿Cómo aumento mi visibilidad?',
     '@ph:Project Manager, Operations Lead, Business Analyst':
       'Jefe de Proyecto, Responsable de Operaciones, Analista de Negocio',
     '@ph:Tampa, Miami, Remote US': 'Tampa, Miami, remoto en EE. UU.',

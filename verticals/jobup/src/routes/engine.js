@@ -25,6 +25,7 @@ const brain = require('../services/brain');
 const billing = require('../services/billing');
 const tailoringSvc = require('../services/tailoring');
 const resumePdf = require('../services/resume-pdf');
+const assistant = require('../services/assistant');
 
 const router = express.Router();
 
@@ -61,6 +62,64 @@ router.patch('/language', async (req, res) => {
   const l = (req.body || {}).language === 'es' ? 'es' : 'en';
   await models.subscribers.update({ language: l }, { where: { id: tid } });
   res.json({ ok: true, language: l });
+});
+
+// ---------------------------------------------------------------
+// THE HELP AGENT. Grounded in this tenant's real record, and incapable of
+// acting: it answers and it links, and there is no tool surface for it to
+// change anything with. Everything in this product is approval-gated by
+// design; an assistant that could flip a setting would be the one exception.
+// ---------------------------------------------------------------
+const ASSISTANT_DAILY = parseInt(process.env.JOBUP_ASSISTANT_DAILY || '40', 10);
+const askedToday = new Map();          // tenant -> { day, n }
+
+router.post('/assistant', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const question = String((req.body || {}).question || '').trim();
+  if (!question) return res.status(400).json({ error: 'Ask a question first.' });
+
+  // A chat box is an open invitation to a loop. The cap is per tenant per day
+  // and is the only thing between a stuck client and a bill.
+  const day = new Date().toISOString().slice(0, 10);
+  const seen = askedToday.get(tid);
+  const n = seen && seen.day === day ? seen.n : 0;
+  if (n >= ASSISTANT_DAILY) {
+    return res.status(429).json({
+      error: `That is ${ASSISTANT_DAILY} questions today — the limit resets tomorrow.`,
+      asked: n, limit: ASSISTANT_DAILY,
+    });
+  }
+  askedToday.set(tid, { day, n: n + 1 });
+
+  const [pRow, sRow, sub] = await Promise.all([
+    scoped('profiles', tid).findOne({}),
+    scoped('settings', tid).findOne({}),
+    models.subscribers.findOne({ where: { id: tid } }),
+  ]);
+  const settings = settingsSvc.sanitize((sRow && sRow.settings) || {});
+  const [matches, opps, tailorings, credits] = await Promise.all([
+    scoped('job_matches', tid).findAll({}),
+    scoped('opportunities', tid).findAll({}),
+    scoped('tailored_resumes', tid).findAll({}),
+    scoped('tailor_credits', tid).findAll({}),
+  ]);
+
+  const out = await assistant.ask({
+    question,
+    profile: (pRow && pRow.resume_json) || {},
+    settings,
+    presence: settingsSvc.presenceChecklist(settings, sub && sub.language),
+    counts: {
+      matches: matches.length,
+      opportunities: opps.length,
+      tailorings: tailorings.length,
+      credits: credits.filter((c) => !c.consumed_at).length,
+    },
+    subscriber: sub,
+    lang: (sub && sub.language) === 'es' ? 'es' : 'en',
+  });
+
+  res.json({ ...out, asked: n + 1, limit: ASSISTANT_DAILY });
 });
 
 router.get('/settings', async (req, res) => {

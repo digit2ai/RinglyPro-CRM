@@ -92,6 +92,43 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .tdoc{margin:6px 0 2px;font-size:13px}
 .tdoc a{color:var(--cyan);font-weight:650}
 .pricetag{font-family:var(--mono);font-size:10.5px;opacity:.75;margin-left:4px}
+.askfab{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:8px;
+  border:0;border-radius:999px;padding:12px 18px;min-height:48px;cursor:pointer;
+  background:var(--grad);color:#06121a;font:inherit;font-size:14.5px;font-weight:750;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.askfab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.askfab:hover{transform:translateY(-1px)}
+.askpanel{position:fixed;right:16px;bottom:16px;z-index:61;width:min(400px,calc(100vw - 32px));
+  max-height:min(74vh,640px);display:flex;flex-direction:column;
+  background:var(--card);border:1px solid var(--line2);border-radius:18px;overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.askpanel[hidden]{display:none}
+.askhead{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.askhead .t{font-weight:760;font-size:15px;letter-spacing:-.02em}
+.askx{margin-left:auto;background:transparent;border:0;color:var(--faint);font-size:22px;line-height:1;
+  cursor:pointer;padding:0 4px;min-height:34px}
+.askx:hover{color:var(--ink)}
+.asklog{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+.askmsg{font-size:14px;line-height:1.6;border-radius:13px;padding:10px 13px;max-width:92%}
+.askmsg.me{align-self:flex-end;background:rgba(34,211,238,.12);border:1px solid var(--cyan-bd,rgba(34,211,238,.35));color:#bff3fb}
+.askmsg.it{align-self:flex-start;background:var(--card2);border:1px solid var(--line)}
+.askacts{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.askacts button{background:transparent;border:1px solid var(--line2);border-radius:999px;
+  color:var(--cyan);font:inherit;font-size:12.5px;padding:6px 12px;min-height:32px;cursor:pointer}
+.askacts button:hover{background:rgba(34,211,238,.1)}
+.askchips{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 10px}
+.askchips button{background:transparent;border:1px solid var(--line);border-radius:999px;
+  color:var(--mut);font:inherit;font-size:12.5px;padding:6px 11px;min-height:32px;cursor:pointer;text-align:left}
+.askchips button:hover{border-color:var(--line2);color:var(--ink)}
+.askbar{display:flex;gap:8px;padding:11px 16px;border-top:1px solid var(--line)}
+.askbar input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:11px;
+  padding:11px 13px;color:var(--ink);font:inherit;font-size:16px;outline:none}
+.askbar input:focus{border-color:var(--cyan)}
+.askfoot{padding:0 16px 13px;margin:0}
+@media(max-width:600px){
+  .askpanel{right:8px;left:8px;bottom:8px;width:auto;max-height:78vh}
+  .askfab{right:12px;bottom:12px}
+}
 .lang{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;margin-right:8px}
 .lang button{appearance:none;background:transparent;border:0;cursor:pointer;font:inherit;
   font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--faint);
@@ -340,6 +377,25 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
   <footer>JobUp never applies on your behalf. You review and submit every application yourself.</footer>
 </div>
 
+<!-- ASK — a help agent grounded in this account, not a product manual. -->
+<button class="askfab" id="askfab" aria-label="Ask about JobUp" aria-expanded="false" aria-controls="askpanel">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1.2-4.4A8 8 0 1 1 21 12Z"/></svg>
+  <span>Ask</span>
+</button>
+<div class="askpanel" id="askpanel" role="dialog" aria-modal="false" aria-labelledby="asktitle" hidden>
+  <div class="askhead">
+    <div><div class="t" id="asktitle">Ask about JobUp</div>
+      <div class="note" id="asksub">It reads your account, so the answer is about you.</div></div>
+    <button class="askx" id="askx" aria-label="Close">&times;</button>
+  </div>
+  <div class="asklog" id="asklog"></div>
+  <div class="askchips" id="askchips"></div>
+  <div class="askbar">
+    <input id="askq" placeholder="How can I increase my visibility?" maxlength="600" autocomplete="off">
+    <button class="btn primary sm" id="asksend">Send</button>
+  </div>
+  <div class="note askfoot" id="askfoot">It explains and points you at the right screen. It never changes a setting and never sends anything.</div>
+</div>
 <script src="{{BASE}}/i18n.js"></script>
 <script>
 // The mount root, substituted server-side: '' on jobup.dev and on a
@@ -396,6 +452,7 @@ var PANES=['analytics','matches','opps','targets','pipeline','cv','guide','setti
    result and the honest one. A half-reverted pane would be worse than a blink. */
 function juSetLang(l,persist){
   var es = l==='es';
+  JU_APP_LANG = es?'es':'en';
   Array.prototype.forEach.call(document.querySelectorAll('[data-setlang]'),function(b){
     b.setAttribute('aria-pressed', b.getAttribute('data-setlang')===(es?'es':'en')?'true':'false');
   });
@@ -415,6 +472,89 @@ function juSetLang(l,persist){
   Array.prototype.forEach.call(document.querySelectorAll('[data-setlang]'),function(b){
     b.addEventListener('click',function(){ juSetLang(b.getAttribute('data-setlang'),true); });
   });
+})();
+
+/* ---- ASK: the help agent, wired to the real tabs -----------------------
+   Its 'actions' are rendered as buttons that call showTab(), so 'open Getting
+   found' is one tap rather than an instruction to go hunting. The server has
+   already dropped any action naming a tab that does not exist, so nothing here
+   can render a button that goes nowhere. */
+var ASK_OPEN=false;
+function askSuggestions(){
+  return (JU_APP_LANG==='es')
+    ? ['¿Cómo aumento mi visibilidad?','¿Por qué no recibo ofertas?','¿Qué hace el botón de adaptar currículum?','¿Qué es sameAs?']
+    : ['How can I increase my visibility?','Why am I not getting matches?','What does tailoring my resume do?','What is sameAs?'];
+}
+function askBubble(text,who,actions){
+  var log=$('asklog');
+  var d=document.createElement('div');
+  d.className='askmsg '+(who==='me'?'me':'it');
+  d.textContent=text;
+  if(actions&&actions.length){
+    var row=document.createElement('div'); row.className='askacts';
+    actions.forEach(function(a){
+      var b=document.createElement('button');
+      b.textContent=a.label;
+      b.addEventListener('click',function(){ showTab(a.tab); askToggle(false); });
+      row.appendChild(b);
+    });
+    d.appendChild(row);
+  }
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+  if(window.JobUpI18n) JobUpI18n.refresh(d);
+  return d;
+}
+function askChips(){
+  var host=$('askchips'); if(!host) return;
+  host.innerHTML='';
+  askSuggestions().forEach(function(q){
+    var b=document.createElement('button');
+    b.textContent=q;
+    b.addEventListener('click',function(){ $('askq').value=q; askSend(); });
+    host.appendChild(b);
+  });
+}
+function askToggle(open){
+  ASK_OPEN=(open===undefined)?!ASK_OPEN:open;
+  $('askpanel').hidden=!ASK_OPEN;
+  $('askfab').style.display=ASK_OPEN?'none':'';
+  $('askfab').setAttribute('aria-expanded',ASK_OPEN?'true':'false');
+  if(ASK_OPEN){
+    if(!$('asklog').children.length){
+      askBubble(JU_APP_LANG==='es'
+        ? 'Pregúntame lo que quieras sobre JobUp. Leo tu cuenta, así que la respuesta es sobre ti, no un manual.'
+        : 'Ask me anything about JobUp. I read your account, so the answer is about you rather than a manual.','it');
+      askChips();
+    }
+    setTimeout(function(){ $('askq').focus(); },50);
+  }
+}
+function askSend(){
+  var inp=$('askq'), q=(inp.value||'').trim();
+  if(!q) return;
+  inp.value=''; $('askchips').innerHTML='';
+  askBubble(q,'me');
+  var thinking=askBubble(JU_APP_LANG==='es'?'Pensando…':'Thinking…','it');
+  $('asksend').disabled=true;
+  api('/api/v1/engine/assistant',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({question:q})})
+    .then(function(r){
+      $('asksend').disabled=false;
+      thinking.remove();
+      if(!r.ok){ askBubble((r.j&&r.j.error)||'Could not reach the assistant.','it'); return; }
+      askBubble(r.j.answer,'it',r.j.actions);
+    })
+    .catch(function(){ $('asksend').disabled=false; thinking.remove();
+      askBubble(JU_APP_LANG==='es'?'No pude contactar al servidor.':'Could not reach the server.','it'); });
+}
+var JU_APP_LANG='en';
+(function(){
+  var fab=$('askfab'); if(!fab) return;
+  fab.addEventListener('click',function(){ askToggle(true); });
+  $('askx').addEventListener('click',function(){ askToggle(false); });
+  $('asksend').addEventListener('click',askSend);
+  $('askq').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); askSend(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&ASK_OPEN) askToggle(false); });
 })();
 
 function juWatchPanes(){
@@ -1790,4 +1930,5 @@ if('serviceWorker' in navigator)
 })();
 
 boot();
-</script></body></html>
+</script>
+</body></html>
