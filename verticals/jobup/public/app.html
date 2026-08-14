@@ -1177,6 +1177,17 @@ function expRow(e,i){
       '<div><label>End</label><input class="x-end" value="'+esc(e.end||'')+'" placeholder="09/2023 or Present"></div>'+
     '</div>'+
     '<label>Location</label><input class="x-location" value="'+esc(e.location||'')+'">'+
+    /* SHOWN OR HIDDEN, per role. Absent means shown, so nothing a résumé
+       already contains disappears because this field was added. */
+    '<label>On my public CV</label>'+
+    '<select class="x-hidden">'+
+      '<option value="0"'+(e.hidden?'':' selected')+'>Show this role</option>'+
+      '<option value="1"'+(e.hidden?' selected':'')+'>Hide this role</option>'+
+    '</select>'+
+    '<div class="note">Hidden roles come off your public page, your resume.json, your JSON-LD, \
+      your agent card and any r&eacute;sum&eacute; PDF you send. They are still counted when your \
+      agent scores jobs — that is private, and dropping them there would quietly make your \
+      matches worse.</div>'+
     '<label>Achievements (one per line)</label>'+
     '<textarea class="x-highlights" rows="4">'+esc((e.highlights||[]).join('\n'))+'</textarea>'+
     '<div class="acts"><button class="btn sm" onclick="this.closest(\'.cvrow\').remove()">Remove this role</button></div>'+
@@ -1212,7 +1223,8 @@ function saveCV(){
     experience:Array.prototype.map.call(document.querySelectorAll('[data-exp]'),function(el){
       var g=function(c){var n=el.querySelector('.'+c);return n?n.value:'';};
       return {title:g('x-title'),company:g('x-company'),location:g('x-location'),
-        start:g('x-start'),end:g('x-end'),highlights:lines(g('x-highlights'))};
+        start:g('x-start'),end:g('x-end'),highlights:lines(g('x-highlights')),
+        hidden:g('x-hidden')==='1'};
     }),
     education:Array.prototype.map.call(document.querySelectorAll('[data-edu]'),function(el){
       var g=function(c){var n=el.querySelector('.'+c);return n?n.value:'';};

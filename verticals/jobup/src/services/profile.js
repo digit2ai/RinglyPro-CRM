@@ -83,6 +83,12 @@ function cleanExperience(v) {
         .map((h) => str(h, LIMITS.highlight))
         .filter(Boolean)
         .slice(0, LIMITS.highlights),
+      // SHOWN OR NOT SHOWN — the subscriber's call, per role.
+      //
+      // Absent means shown, so every résumé parsed before this existed keeps
+      // every role visible. Only an explicit true hides one: an ambiguous value
+      // must never silently remove work history from somebody's public page.
+      hidden: e.hidden === true || e.hidden === 'true',
     });
     if (out.length >= LIMITS.experience) break;
   }

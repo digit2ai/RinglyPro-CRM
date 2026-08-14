@@ -114,7 +114,15 @@ function build(profile, job, opts) {
   const terms = jobTerms(job);
   const corpus = JSON.stringify(p);
 
-  const roles = (Array.isArray(p.experience) ? p.experience : []).map((e) => {
+  // A HIDDEN ROLE IS ALSO OUT OF THE TAILORED PDF.
+  //
+  // That document goes to an employer. Somebody who took a role off their
+  // public page and then found it in a résumé they sent would rightly call the
+  // switch broken. The role still counts for MATCHING — that is private, only
+  // they see it, and dropping it there would quietly make their results worse
+  // for a choice about presentation.
+  const roles = (Array.isArray(p.experience) ? p.experience : [])
+    .filter((e) => !(e && e.hidden === true)).map((e) => {
     const bullets = (Array.isArray(e.highlights) ? e.highlights : [])
       .map(String).filter(Boolean)
       // ORDERED by relevance, never rewritten. Selection is the whole of the

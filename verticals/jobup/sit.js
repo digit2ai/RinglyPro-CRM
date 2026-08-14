@@ -5530,6 +5530,77 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(one('Tampa, FL / Austin, TX'), null, 'ambiguous — whole country');
   });
 
+  // A HIDDEN ROLE LEAVES EVERY SURFACE SOMEBODY ELSE SEES — AND ONLY THOSE.
+  //
+  // The split is the whole design. Public surfaces and the tailored PDF are
+  // shown to other people, so a hidden role must be absent from all of them or
+  // the switch is a lie. Job MATCHING is private and only the subscriber sees
+  // it, so the role still counts there: dropping it would quietly make their
+  // results worse in exchange for a decision about presentation.
+  await t('CV: a role can be hidden from the public CV without leaving the profile', () => {
+    const profileSvc = require('./src/services/profile');
+    const tailoring = require('./src/services/tailoring');
+    const raw = {
+      name: 'Ada', headline: 'AE', summary: 'S', skills: ['B2B'],
+      experience: [
+        { title: 'Sales Executive', company: 'Globex', highlights: ['Closed regional deals'] },
+        { title: 'Secretary', company: 'OldCo', hidden: true, highlights: ['Filed papers'] },
+        { title: 'Analyst', company: 'Acme', hidden: false, highlights: ['Built models'] },
+      ], education: [],
+    };
+    const saved = profileSvc.applyEdit({}, raw);
+    assert.deepStrictEqual(saved.experience.map((e) => e.hidden), [false, true, false],
+      'the flag must persist, and default to shown');
+
+    // Absent means SHOWN: every résumé parsed before this existed keeps all of
+    // its roles rather than silently losing them.
+    const legacy = profileSvc.applyEdit({}, {
+      experience: [{ title: 'Old Role', company: 'X', highlights: ['a'] }] });
+    assert.strictEqual(legacy.experience[0].hidden, false,
+      'A RÉSUMÉ WITH NO FLAG MUST KEEP EVERY ROLE VISIBLE');
+    // And only an explicit true hides one.
+    for (const bad of [undefined, null, 0, '', 'no', 'false', 1]) {
+      assert.strictEqual(
+        profileSvc.applyEdit({}, { experience: [{ title: 'R', company: 'C', hidden: bad }] })
+          .experience[0].hidden, false,
+        JSON.stringify(bad) + ' must not remove work history');
+    }
+
+    const st = settingsSvc.sanitize({});
+    const names = (xs) => (xs || []).map((x) => x.title || x.position).join(',');
+
+    // Every public surface is built from applyPrivacy, so one filter covers all
+    // of them. Filtering in the page renderer alone would hide it on the page
+    // while resume.json still served it — worse than not offering the switch.
+    assert.strictEqual(names(identity.applyPrivacy(saved, st).experience),
+      'Sales Executive,Analyst', 'the public projection must drop it');
+    assert.strictEqual(names(identity.resumeJson(saved, st, { name: 'Ada' }).work),
+      'Sales Executive,Analyst', 'and resume.json with it');
+    assert.ok(!identity.llmsTxt(saved, st, { name: 'Ada', url: 'https://a.dev' }).includes('Secretary'));
+
+    // The tailored PDF goes to an EMPLOYER, so it drops the role too.
+    const built = tailoring.build(saved, { title: 'AE', description: 'sales deals models' }, {});
+    assert.strictEqual(built.content.roles.map((r) => r.title).join(','),
+      'Sales Executive,Analyst', 'a hidden role must not reach a résumé they send');
+
+    // But MATCHING still sees it: the hunter reads resume_json directly, never
+    // the public projection.
+    assert.strictEqual(saved.experience.length, 3, 'the role stays on the profile');
+    const agents = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/profile: \(profileRow && profileRow\.resume_json\) \|\| \{\}/.test(agents),
+      'scoring must read the raw profile, not applyPrivacy — hiding a role is a '
+      + 'presentation choice and must not degrade their matches');
+
+    // The editor must get the flag back, or the select resets on every load.
+    assert.deepStrictEqual(profileSvc.forEditor(saved).experience.map((e) => e.hidden),
+      [false, true, false]);
+
+    // And the control has to exist and be wired, or the flag is unreachable.
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(app.includes('<select class="x-hidden">'), 'the CV editor must render the select');
+    assert.ok(/hidden:g\('x-hidden'\)==='1'/.test(app), 'and saveCV must send it');
+  });
+
   // ===== EN / ES ===========================================================
   section('the whole funnel speaks Spanish');
 

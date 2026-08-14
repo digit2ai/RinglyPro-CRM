@@ -31,6 +31,19 @@ function applyPrivacy(profile, settings) {
   if (!priv.summary) drop(p, 'summary');
   if (!priv.headline) drop(p, 'headline');
   if (!priv.experience) drop(p, 'experience');
+
+  // A ROLE MARKED HIDDEN LEAVES EVERY PUBLIC SURFACE AT ONCE.
+  //
+  // Done here rather than in the page renderer because this function is the
+  // single projection: the website, resume.json, the Person JSON-LD, llms.txt
+  // and the agent card are all built from its output. Filtering in the renderer
+  // would hide the role on the page while resume.json still served it — which
+  // is worse than not offering the switch, because the subscriber would believe
+  // it was gone.
+  if (Array.isArray(p.experience)) {
+    p.experience = p.experience.filter((e) => !(e && e.hidden === true));
+    if (!p.experience.length) delete p.experience;
+  }
   if (!priv.education) drop(p, 'education');
   if (!priv.skills) drop(p, 'skills');
 

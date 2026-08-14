@@ -400,6 +400,11 @@
     'One per line. These are what the matcher scores against.':
       'Una por línea. Es contra esto que puntúa el comparador.',
     'Remove this role': 'Quitar este puesto',
+    'On my public CV': 'En mi CV público',
+    'Show this role': 'Mostrar este puesto',
+    'Hide this role': 'Ocultar este puesto',
+    'Hidden roles come off your public page, your resume.json, your JSON-LD, your agent card and any résumé PDF you send. They are still counted when your agent scores jobs — that is private, and dropping them there would quietly make your matches worse.':
+      'Los puestos ocultos desaparecen de tu página pública, tu resume.json, tu JSON-LD, tu tarjeta de agente y de cualquier PDF de currículum que envíes. Siguen contando cuando tu agente puntúa ofertas: eso es privado, y quitarlos ahí empeoraría tus coincidencias sin que te enteres.',
 
     'Your resume': 'Tu currículum',
     'Everything on your page and every job score is read from this. Upload a new one whenever your career moves — PDF, DOCX, TXT, MD or RTF.':
