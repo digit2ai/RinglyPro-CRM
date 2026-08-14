@@ -31,7 +31,7 @@ const path = require('path');
 const publicDir = path.join(__dirname, '..', '..', 'public');
 
 /** Bump when a shell file changes, so installed clients pick it up. */
-const SHELL_VERSION = 'v19';
+const SHELL_VERSION = 'v20';
 
 /**
  * BUMP THIS WHENEVER AN ICON FILE CHANGES.
@@ -44,7 +44,7 @@ const SHELL_VERSION = 'v19';
  *
  * A version in the query makes every icon a NEW url, which no cache can have.
  */
-const ICON_VERSION = '5';
+const ICON_VERSION = '6';
 const V = `?v=${ICON_VERSION}`;
 
 /**
@@ -230,8 +230,13 @@ function serveAsset(req, res, base, opts) {
   // favicon.svg is in this list because the manifest now advertises it — a
   // subscriber subdomain only serves what is named here, so leaving it out
   // would promise an icon that 404s.
+  // ask-icon.svg is in this list for the same reason favicon.svg is: a
+  // subscriber subdomain serves ONLY what is named here, and the dashboard —
+  // where the Ask launcher lives — is served from those subdomains. Left out,
+  // the button would render a broken image on every subscriber's own site
+  // while looking perfectly fine on jobup.dev.
   if (['/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32.png',
-       '/favicon.svg', '/logo-master.svg',
+       '/favicon.svg', '/logo-master.svg', '/ask-icon.svg',
        '/admin-icon.svg', '/admin-icon-192.png', '/admin-icon-512.png',
        '/admin-apple-touch-icon.png'].includes(p)) {
     // Only a VERSIONED url may be cached hard: it can never go stale, because

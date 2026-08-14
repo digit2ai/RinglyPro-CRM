@@ -92,12 +92,16 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .tdoc{margin:6px 0 2px;font-size:13px}
 .tdoc a{color:var(--cyan);font-weight:650}
 .pricetag{font-family:var(--mono);font-size:10.5px;opacity:.75;margin-left:4px}
-.askfab{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:8px;
-  border:0;border-radius:999px;padding:12px 18px;min-height:48px;cursor:pointer;
-  background:var(--grad);color:#06121a;font:inherit;font-size:14.5px;font-weight:750;
-  box-shadow:0 10px 30px rgba(0,0,0,.45)}
-.askfab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.askfab:hover{transform:translateY(-1px)}
+/* The brand badge IS the button. It carries its own gradient and its own
+   circle, so wrapping it in the button's gradient pill would have put two
+   competing gradients on top of each other. */
+.askfab{position:fixed;right:16px;bottom:16px;z-index:60;display:block;padding:0;border:0;
+  width:60px;height:60px;border-radius:50%;cursor:pointer;background:transparent;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);transition:transform .15s ease,box-shadow .15s ease}
+.askfab img{display:block;width:60px;height:60px;border-radius:50%}
+.askfab:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.6)}
+.askfab:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.askmark{flex:0 0 34px;border-radius:50%;margin-top:1px}
 .askpanel{position:fixed;right:16px;bottom:16px;z-index:61;width:min(400px,calc(100vw - 32px));
   max-height:min(74vh,640px);display:flex;flex-direction:column;
   background:var(--card);border:1px solid var(--line2);border-radius:18px;overflow:hidden;
@@ -378,14 +382,14 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 </div>
 
 <!-- ASK — a help agent grounded in this account, not a product manual. -->
-<button class="askfab" id="askfab" aria-label="Ask about JobUp" aria-expanded="false" aria-controls="askpanel">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1.2-4.4A8 8 0 1 1 21 12Z"/></svg>
-  <span>Ask</span>
+<button class="askfab" id="askfab" aria-label="Chat with Eva" aria-expanded="false" aria-controls="askpanel">
+  <img src="{{BASE}}/ask-icon.svg{{V}}" alt="" width="60" height="60">
 </button>
 <div class="askpanel" id="askpanel" role="dialog" aria-modal="false" aria-labelledby="asktitle" hidden>
   <div class="askhead">
-    <div><div class="t" id="asktitle">Ask about JobUp</div>
-      <div class="note" id="asksub">It reads your account, so the answer is about you.</div></div>
+    <img class="askmark" src="{{BASE}}/ask-icon.svg{{V}}" alt="" width="34" height="34">
+    <div><div class="t" id="asktitle">Chat with Eva</div>
+      <div class="note" id="asksub">Eva reads your account, so the answer is about you.</div></div>
     <button class="askx" id="askx" aria-label="Close">&times;</button>
   </div>
   <div class="asklog" id="asklog"></div>
@@ -394,7 +398,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
     <input id="askq" placeholder="How can I increase my visibility?" maxlength="600" autocomplete="off">
     <button class="btn primary sm" id="asksend">Send</button>
   </div>
-  <div class="note askfoot" id="askfoot">It explains and points you at the right screen. It never changes a setting and never sends anything.</div>
+  <div class="note askfoot" id="askfoot">Eva explains and points you at the right screen. She never changes a setting and never sends anything.</div>
 </div>
 <script src="{{BASE}}/i18n.js"></script>
 <script>
@@ -522,8 +526,8 @@ function askToggle(open){
   if(ASK_OPEN){
     if(!$('asklog').children.length){
       askBubble(JU_APP_LANG==='es'
-        ? 'Pregúntame lo que quieras sobre JobUp. Leo tu cuenta, así que la respuesta es sobre ti, no un manual.'
-        : 'Ask me anything about JobUp. I read your account, so the answer is about you rather than a manual.','it');
+        ? 'Hola, soy Eva. Pregúntame lo que quieras sobre JobUp: leo tu cuenta, así que la respuesta es sobre ti, no un manual.'
+        : 'Hi, I am Eva. Ask me anything about JobUp — I read your account, so the answer is about you rather than a manual.','it');
       askChips();
     }
     setTimeout(function(){ $('askq').focus(); },50);

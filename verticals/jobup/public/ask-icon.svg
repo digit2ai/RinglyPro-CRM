@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Chat with Eva">
+  <defs>
+    <linearGradient id="jobupGradFab" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#A45CC8"/>
+      <stop offset="52%" stop-color="#D9548A"/>
+      <stop offset="100%" stop-color="#F0904F"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="256" fill="url(#jobupGradFab)"/>
+
+  <g fill="#FFFFFF">
+    <rect x="118" y="128" width="276" height="200" rx="60"/>
+    <path d="M174 320 L174 384 C174 393 181 396 187 389 L234 336 Z"/>
+  </g>
+
+  <g fill="none" stroke="url(#jobupGradFab)" stroke-width="33" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M227 240 C227 285 285 285 285 240 L285 178"/>
+    <path d="M251 212 L285 178 L319 212"/>
+  </g>
+</svg>

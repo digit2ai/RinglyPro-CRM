@@ -452,12 +452,11 @@
     'Strong (80+)': 'Fuerte (80+)',
 
     // ---------- the help agent -------------------------------------------
-    'Ask about JobUp': 'Pregunta sobre JobUp',
-    'Ask': 'Preguntar',
-    'It reads your account, so the answer is about you.':
-      'Lee tu cuenta, así que la respuesta es sobre ti.',
-    'It explains and points you at the right screen. It never changes a setting and never sends anything.':
-      'Explica y te lleva a la pantalla correcta. Nunca cambia un ajuste ni envía nada.',
+    'Chat with Eva': 'Habla con Eva',
+    'Eva reads your account, so the answer is about you.':
+      'Eva lee tu cuenta, así que la respuesta es sobre ti.',
+    'Eva explains and points you at the right screen. She never changes a setting and never sends anything.':
+      'Eva explica y te lleva a la pantalla correcta. Nunca cambia un ajuste ni envía nada.',
     'Send': 'Enviar',
 
     // ---------- placeholders --------------------------------------------

@@ -5705,6 +5705,36 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!/sitemap/i.test(off.answer), 'and must not answer a question nobody asked');
   });
 
+  await t('ASSISTANT: the launcher is the brand badge, and it is actually served', () => {
+    const fs = require('fs');
+    const app = fs.readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(fs.existsSync(__dirname + '/public/ask-icon.svg'), 'the icon file must exist');
+    assert.ok(/id="askfab"[\s\S]{0,200}ask-icon\.svg/.test(app), 'the launcher must use it');
+    assert.ok(/class="askmark"[\s\S]{0,80}ask-icon\.svg/.test(app),
+      'and the panel header too — the thing you opened should look like the thing you clicked');
+    assert.ok(/aria-label="Chat with Eva"/.test(app), 'named, and labelled for a screen reader');
+
+    // THE FAILURE THIS EXISTS TO CATCH: a subscriber subdomain serves ONLY the
+    // assets named in pwa.serveAsset, and the dashboard runs on those
+    // subdomains. Left out of that list the button renders a broken image on
+    // every subscriber's own site while looking perfect on jobup.dev.
+    const pwaSrc = fs.readFileSync(__dirname + '/src/services/pwa.js', 'utf8');
+    assert.ok(/'\/ask-icon\.svg'/.test(pwaSrc),
+      'ask-icon.svg must be in the subscriber-subdomain asset allowlist');
+
+    // Prove it end to end through the real handler rather than by grep.
+    let sent = null;
+    const res = {
+      set() { return this; }, type() { return this; }, json() { return this; },
+      send() { return this; },
+      sendFile(p, opts) { sent = { p, opts }; },
+    };
+    const served = pwaSvc.serveAsset({ path: '/ask-icon.svg', query: { v: '5' } }, res, '');
+    assert.strictEqual(served, true, 'serveAsset must answer for it');
+    assert.match(sent.p, /ask-icon\.svg$/);
+    assert.strictEqual(sent.opts.immutable, true, 'and a versioned url may be cached hard');
+  });
+
   await t('ASSISTANT: the panel opens, answers, and its action navigates', () => {
     const fs = require('fs');
     const raw = fs.readFileSync(__dirname + '/public/app.html', 'utf8')
