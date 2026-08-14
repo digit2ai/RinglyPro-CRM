@@ -857,8 +857,11 @@ function matchCard(m){
     '</div>':'')+
     '<div class="acts">'+
       (j.url?'<a class="btn sm" href="'+esc(j.url)+'" target="_blank" rel="noopener">Open posting</a>':'')+
-      '<button class="btn sm" onclick="tailor('+j.id+')">'+
-        (TAILORINGS[j.id]?'Tailor again':'Tailor my resume')+
+      /* One label in both states. "Tailor again" only made sense to somebody
+         who remembered they had already done it; the label should say what the
+         button does, and it does the same thing either way. The version number
+         beside it is what tells you there is already a document. */
+      '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume to this Job Posting'+
         ' <span class="pricetag">$'+esc(String(TAILOR_PRICE))+'</span></button>'+
       stageSelect(m)+
     '</div><div id="out-'+j.id+'"></div>'+
