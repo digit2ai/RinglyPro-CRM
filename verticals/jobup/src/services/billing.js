@@ -450,6 +450,90 @@ async function verifyCheckoutSession(sessionId) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ONE-OFF PURCHASE: a tailored résumé.
+//
+// mode:'payment', not 'subscription' — this is a single charge, and putting it
+// through the subscription path would create a second recurring plan against
+// the same customer.
+//
+// THE CREDIT IS THE UNIT, NOT THE DOCUMENT. Paying and generating are separate
+// steps that can fail independently: if the model is unreachable after the card
+// clears, a design that charged for "this PDF" owes a refund, while one that
+// sells a credit simply leaves it unspent. So checkout buys a credit and the
+// tailoring consumes one.
+// ---------------------------------------------------------------------------
+
+/** Price of one tailored résumé, in whole dollars. */
+const TAILOR_PRICE_USD = parseInt(process.env.JOBUP_TAILOR_PRICE_USD || '10', 10);
+
+async function createTailorCheckout({ subscriberId, email, jobId, successUrl, cancelUrl }) {
+  const s = client();
+  if (!s) {
+    return { ok: false, configured: false,
+             error: 'Payment is not configured on this deployment, so tailoring cannot be purchased.' };
+  }
+  try {
+    const meta = { subscriber_id: String(subscriberId), purpose: 'tailor_credit' };
+    if (jobId) meta.job_id = String(jobId);
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: email,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: TAILOR_PRICE_USD * 100,
+          product_data: {
+            name: 'JobUp — one tailored résumé',
+            description: 'A résumé rewritten for one specific posting, as a PDF. '
+              + 'Every bullet is copied verbatim from your own résumé.',
+          },
+        },
+        quantity: 1,
+      }],
+      automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === '1' },
+      metadata: meta,
+      payment_intent_data: { metadata: meta },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+    return { ok: true, configured: true, url: session.url, id: session.id,
+             amount_cents: TAILOR_PRICE_USD * 100 };
+  } catch (e) {
+    return { ok: false, configured: true, error: e.message };
+  }
+}
+
+/**
+ * Ask Stripe whether this one-off session was actually paid.
+ *
+ * Never trust the redirect: `?paid=1` is a string in a URL the buyer can type.
+ * The session id is the only thing worth checking, and it is checked against
+ * Stripe rather than against our own database.
+ */
+async function verifyTailorSession(sessionId) {
+  const s = client();
+  if (!s || !sessionId) return { ok: false, reason: 'not configured or no session id' };
+  try {
+    const cs = await s.checkout.sessions.retrieve(String(sessionId));
+    const meta = cs.metadata || {};
+    return {
+      ok: true,
+      paid: cs.payment_status === 'paid',
+      purpose: meta.purpose || null,
+      subscriberId: parseInt(meta.subscriber_id || '', 10) || null,
+      jobId: parseInt(meta.job_id || '', 10) || null,
+      amount_cents: cs.amount_total == null ? null : cs.amount_total,
+      currency: cs.currency || 'usd',
+      paymentIntent: typeof cs.payment_intent === 'string' ? cs.payment_intent
+        : (cs.payment_intent && cs.payment_intent.id) || null,
+      sessionId: cs.id,
+    };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
+}
+
 async function createPortal({ customerId, returnUrl }) {
   const s = client();
   if (!s) return { ok: false, configured: false, error: 'Billing portal is not configured.' };
@@ -651,5 +735,6 @@ module.exports = {
   freeActivation,
   enabled, status, createCheckout, verifyCheckoutSession, createPortal, applyEvent, reconcile,
   renewalNoticesDue, refundEligible,
+  createTailorCheckout, verifyTailorSession, TAILOR_PRICE_USD,
   PRICE_USD, REFUND_DAYS, RENEWAL_NOTICE_DAYS, DUNNING_STAGES,
 };

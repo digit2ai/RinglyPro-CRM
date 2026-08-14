@@ -89,6 +89,9 @@ font-size:12.5px;font-family:var(--mono);color:var(--mut);max-height:340px;white
 .stagecol h4{position:sticky;top:-13px;background:var(--card);padding-top:2px;z-index:1}
 /* The score, as a badge rather than a suffix on the employer line: it is the
    thing the board is now ordered by, so it has to be readable at a glance. */
+.tdoc{margin:6px 0 2px;font-size:13px}
+.tdoc a{color:var(--cyan);font-weight:650}
+.pricetag{font-family:var(--mono);font-size:10.5px;opacity:.75;margin-left:4px}
 .mscore{float:right;margin:-1px 0 0 8px;font-family:var(--mono);font-size:11px;font-weight:700;
   padding:2px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--mut)}
 .mscore.mid{border-color:rgba(230,180,90,.45);color:#e6b45a}
@@ -459,8 +462,8 @@ function boot(){
       if(r.ok) $('who-h').textContent=[r.j.headline,ME.address].filter(Boolean).join('  ·  ')||ME.email;
       else $('who-h').textContent=ME.email;
     });
-    loadAnalytics(); loadMatches(); loadOpps(); loadTargets();
-    loadPipeline(); loadCV(); loadSettings(); renderAccount(); loadGuide();
+    loadAnalytics(); loadTailorings().then(loadMatches); loadOpps(); loadTargets();
+    loadPipeline(); loadCV(); loadSettings(); renderAccount(); loadGuide(); claimTailorPayment();
     /* Honour ?tab= from a home-screen shortcut or a shared link. */
     showTab(tabFromUrl(),false);
   }).catch(function(){ $('login').classList.remove('hidden'); brandOnly(); });
@@ -839,44 +842,106 @@ function matchCard(m){
       return '<span class="chip">missing: '+esc(x)+'</span>';}).join('')+'</div>':'')+
     (m.is_simulated?'<span class="chip sim">heuristic score</span>':'')+
     '<span class="chip">'+esc(m.stage||'new')+'</span>'+
+    /* The résumé column, the way the Bank tracker shows it: the PDF you would
+       actually send, its version, and how much of what the posting asks for
+       that document evidences. Rendered only once one EXISTS — the card never
+       implies a file that has not been produced.
+       'Keyword check' and 'I applied' were removed: the coverage number now
+       comes with the document it describes, and the stage dropdown beside this
+       already moves a match to applied. */
+    (TAILORINGS[j.id]?'<div class="tdoc">'+
+      '<a href="'+API+esc(TAILORINGS[j.id].pdf_url||'')+'" target="_blank" rel="noopener">PDF v'+
+        esc(String(TAILORINGS[j.id].version||1))+'</a>'+
+      (TAILORINGS[j.id].coverage_pct!=null
+        ? '<span class="note"> · '+esc(String(TAILORINGS[j.id].coverage_pct))+'% keywords</span>' : '')+
+    '</div>':'')+
     '<div class="acts">'+
       (j.url?'<a class="btn sm" href="'+esc(j.url)+'" target="_blank" rel="noopener">Open posting</a>':'')+
-      '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume</button>'+
-      '<button class="btn sm" onclick="ats('+j.id+')">Keyword check</button>'+
-      '<button class="btn primary sm" onclick="applied('+j.id+')">I applied</button>'+
+      '<button class="btn sm" onclick="tailor('+j.id+')">'+
+        (TAILORINGS[j.id]?'Tailor again':'Tailor my resume')+
+        ' <span class="pricetag">$'+esc(String(TAILOR_PRICE))+'</span></button>'+
       stageSelect(m)+
     '</div><div id="out-'+j.id+'"></div>'+
     '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
 }
+/* ---- tailoring is paid, and the credit is the unit ----------------------
+   Paying and generating fail independently, so checkout buys a CREDIT and the
+   tailoring spends one. If the model is unreachable after the card clears the
+   credit is simply still there, rather than ten dollars owed back. */
+var TAILORINGS={}, TAILOR_PRICE=10, TAILOR_CREDITS=0;
+
+function loadTailorings(){
+  return Promise.all([
+    api('/api/v1/engine/tailorings'),
+    api('/api/v1/engine/tailor/pricing')
+  ]).then(function(rs){
+    if(rs[0].ok){
+      TAILORINGS={};
+      // Newest first from the server, so the FIRST row for a job is its latest
+      // version — never overwrite it with an older one.
+      (rs[0].j.tailorings||[]).forEach(function(t){
+        if(t.job_id!=null && !TAILORINGS[t.job_id]) TAILORINGS[t.job_id]=t;
+      });
+    }
+    if(rs[1].ok){ TAILOR_PRICE=rs[1].j.price_usd; TAILOR_CREDITS=rs[1].j.credits; }
+  });
+}
+
+/* Stripe sends the browser back with its session id. Claim it, then run the
+   tailoring the purchase was started for. ?paid=1 is never trusted — only the
+   session id, checked against Stripe by the server. */
+function claimTailorPayment(){
+  var q=new URLSearchParams(location.search);
+  var cs=q.get('tailor_cs'), job=parseInt(q.get('tailor_job'),10);
+  if(!cs||cs.indexOf('{')===0) return Promise.resolve();
+  return api('/api/v1/engine/tailor/claim',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:cs})})
+    .then(function(r){
+      // Clean the URL either way so a refresh cannot re-run this.
+      history.replaceState({},'',location.pathname+'?tab=matches');
+      if(!r.ok){ alert(r.j.error||'Could not confirm that payment.'); return; }
+      TAILOR_CREDITS=r.j.credits;
+      if(job) return tailor(job);
+    });
+}
+
 function tailor(id){
   var o=$('out-'+id); o.innerHTML='<div class="note">Tailoring…</div>';
   api('/api/v1/engine/tailor/'+id,{method:'POST'}).then(function(r){
+    if(!r.ok&&r.j&&r.j.needs_payment){
+      o.innerHTML='<div class="note">Taking you to checkout…</div>';
+      return api('/api/v1/engine/tailor/checkout',{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({job_id:id})})
+        .then(function(c){
+          if(c.ok&&c.j.url){ location.href=c.j.url; return; }
+          o.innerHTML='<div class="note">'+esc((c.j&&c.j.error)||'Checkout is unavailable.')+'</div>';
+        });
+    }
     if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not tailor')+'</div>';return;}
+    loadTailorings().then(loadMatches);
     var f=r.j.flagged||[];
     o.innerHTML='<div class="note">'+
       (r.j.changes||[]).map(function(c){return '· '+esc(c);}).join('<br>')+
       (f.length?'<br><span class="chip warn">'+f.length+' term(s) need your confirmation — nothing is added that you did not write</span>':
                 '<br><span class="chip ok">no invented facts detected</span>')+
-      (r.j.is_simulated?'<br><span class="chip sim">returned unchanged — no model configured</span>':'')+
-      '<br>Used '+r.j.used+' of '+r.j.limit+' this month.</div>';
+      (r.j.summary_source==='resume'
+        ? '<br><span class="chip">summary kept from your own r&eacute;sum&eacute; — the tailored one '+
+          'introduced wording your CV does not support</span>' : '')+
+      (r.j.is_simulated?'<br><span class="chip sim">no model configured — your own r&eacute;sum&eacute;, '+
+        'ordered for this posting</span>':'')+
+      (r.j.coverage_pct!=null?'<br>This document evidences <strong>'+esc(String(r.j.coverage_pct))+
+        '%</strong> of the terms in the posting.':'')+
+      ((r.j.gaps||[]).length?'<br>Not evidenced: '+r.j.gaps.map(esc).join(', '):'')+
+      (r.j.pdf_url?'<br><a href="'+API+esc(r.j.pdf_url)+'" target="_blank" rel="noopener">'+
+        'Open the PDF (v'+esc(String(r.j.version||1))+')</a>':'')+
+      '<br>'+esc(String(r.j.credits_left||0))+' tailoring credit(s) left.</div>';
   });
 }
-function ats(id){
-  var o=$('out-'+id); o.innerHTML='<div class="note">Checking…</div>';
-  api('/api/v1/engine/ats/'+id).then(function(r){
-    if(!r.ok){o.innerHTML='';return;}
-    o.innerHTML='<div class="note">ATS keyword match: <strong>'+r.j.score+'%</strong> ('+
-      r.j.matched.length+' of '+r.j.total_terms+' terms).<br>'+
-      (r.j.missing.length?'Missing: '+r.j.missing.slice(0,12).map(esc).join(', '):'Nothing obvious missing.')+
-      '<br>Deterministic — this costs nothing.</div>';
-  });
-}
-function applied(id){
-  api('/api/v1/engine/applications/'+id+'/confirm',{method:'POST'}).then(function(r){
-    if(r.ok){ $('out-'+id).innerHTML='<div class="note">'+esc(r.j.note)+'</div>';
-      loadMatches(); loadPipeline(); }
-  });
-}
+/* `ats()` and `applied()` are gone. The keyword number now arrives WITH the
+   document it describes — a percentage detached from a file was a figure about
+   nothing in particular — and the stage dropdown on the same card already moves
+   a match to applied, so a second control that did only that was one more thing
+   to explain. Both endpoints remain for anything else that calls them. */
 
 /* ---- pipeline ---- */
 function loadPipeline(){

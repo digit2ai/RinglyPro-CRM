@@ -22,6 +22,9 @@ const analytics = require('../services/analytics');
 const agents = require('../services/agents');
 const resumeSvc = require('../services/resume');
 const brain = require('../services/brain');
+const billing = require('../services/billing');
+const tailoringSvc = require('../services/tailoring');
+const resumePdf = require('../services/resume-pdf');
 
 const router = express.Router();
 
@@ -206,41 +209,203 @@ router.get('/pipeline', async (req, res) => {
   res.json({ pipeline: by, stages });
 });
 
-// Tailoring — enforces the no-invented-facts guard and the monthly quota.
+// ===========================================================================
+// TAILORING IS PAID, AND THE CREDIT IS THE UNIT.
+//
+// Paying and generating fail independently. If the model is unreachable after
+// the card clears, a design that sold "this PDF" owes a refund; one that sells
+// a CREDIT simply leaves it unspent. So checkout buys a credit, and a credit is
+// marked consumed only once a document has actually been produced.
+//
+// A credit exists ONLY where a Stripe session this server retrieved says
+// `payment_status === 'paid'`. Never from a redirect parameter — `?paid=1` is a
+// string in a URL the buyer types.
+// ===========================================================================
+
+/** Unspent credits for this tenant, oldest first so refunds are predictable. */
+async function availableCredits(tid) {
+  return (await scoped('tailor_credits', tid).findAll({}))
+    .filter((c) => !c.consumed_at)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+}
+
+router.get('/tailor/pricing', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const credits = await availableCredits(tid);
+  res.json({
+    price_usd: billing.TAILOR_PRICE_USD,
+    credits: credits.length,
+    configured: billing.status().configured !== false,
+  });
+});
+
+/** Start a purchase. Returns a Stripe URL or an honest refusal — never a fake one. */
+router.post('/tailor/checkout', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  const jobId = parseInt((req.body || {}).job_id, 10) || null;
+  const base = (process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev').replace(/\/$/, '');
+  const back = sub && sub.address ? `https://${sub.address}` : base;
+  const out = await billing.createTailorCheckout({
+    subscriberId: tid,
+    email: sub && sub.email,
+    jobId,
+    successUrl: `${back}/app?tab=matches&tailor_cs={CHECKOUT_SESSION_ID}`
+      + (jobId ? `&tailor_job=${jobId}` : ''),
+    cancelUrl: `${back}/app?tab=matches`,
+  });
+  res.status(out.ok ? 200 : 400).json(out);
+});
+
+/**
+ * Turn a paid Stripe session into a credit. Idempotent by session id, which is
+ * what stops a refresh of the return URL minting a second credit for one
+ * payment — the unique index is the backstop, this is the check.
+ */
+router.post('/tailor/claim', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const sessionId = String((req.body || {}).session_id || '');
+  const v = await billing.verifyTailorSession(sessionId);
+  if (!v.ok) return res.status(400).json({ error: v.reason || 'Could not check that payment.' });
+  if (!v.paid) return res.status(402).json({ error: 'That payment has not completed.' });
+  if (v.purpose !== 'tailor_credit') return res.status(400).json({ error: 'That payment was not for a tailored résumé.' });
+  // The session names its own buyer. A session belonging to somebody else can
+  // never credit the account that happens to be signed in.
+  if (v.subscriberId !== tid) return res.status(403).json({ error: 'That payment belongs to a different account.' });
+
+  const existing = (await scoped('tailor_credits', tid).findAll({}))
+    .find((c) => c.stripe_session_id === v.sessionId);
+  if (existing) {
+    return res.json({ ok: true, already: true, credit_id: existing.id,
+                      credits: (await availableCredits(tid)).length });
+  }
+  const row = await scoped('tailor_credits', tid).create({
+    amount_cents: v.amount_cents, currency: v.currency,
+    stripe_session_id: v.sessionId, stripe_payment_intent: v.paymentIntent, source: 'stripe',
+  });
+  await models.audit_log.create({
+    tenant_id: tid, actor: 'subscriber', action: 'tailor_credit_purchased',
+    reason: `Stripe session ${v.sessionId} — ${(v.amount_cents || 0) / 100} ${String(v.currency).toUpperCase()}.`,
+  });
+  res.json({ ok: true, credit_id: row.id, job_id: v.jobId,
+             credits: (await availableCredits(tid)).length });
+});
+
+// Tailoring — consumes one paid credit, enforces the no-invented-facts guard.
 router.post('/tailor/:jobId', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  const sRow = await scoped('settings', tid).findOne({});
-  const settings = settingsSvc.sanitize((sRow && sRow.settings) || {});
-
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-  const used = (await scoped('tailored_resumes', tid).findAll({}))
-    .filter((r) => new Date(r.created_at) >= monthStart).length;
-  const limit = settings.quotas.tailor_monthly_limit;
-  if (used >= limit) {
-    return res.status(429).json({ error: `Monthly tailoring limit reached (${used}/${limit}).`, used, limit });
-  }
 
   const job = await models.jobs.findOne({ where: { id: parseInt(req.params.jobId, 10) } });
   if (!job) return res.status(404).json({ error: 'job not found' });
 
+  const credits = await availableCredits(tid);
+  if (!credits.length) {
+    return res.status(402).json({
+      error: `A tailored résumé is $${billing.TAILOR_PRICE_USD}.`,
+      needs_payment: true, price_usd: billing.TAILOR_PRICE_USD,
+    });
+  }
+  const credit = credits[0];
+
   const pRow = await scoped('profiles', tid).findOne({});
+  const profile = (pRow && pRow.resume_json) || {};
   const source = (pRow && pRow.source_text) || '';
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+
+  // The model writes ONE paragraph. Everything else in the document is copied
+  // out of the subscriber's own résumé, so nothing it returns can put a claim
+  // on the page that they cannot defend.
   const t = await resumeSvc.tailor(source, job);
+  const built = tailoringSvc.build(profile, job, {
+    summary: t.is_simulated ? null : firstParagraph(t.content),
+    name: sub && sub.name,
+    site_url: sub && sub.address ? `https://${sub.address}` : null,
+  });
+
+  const prior = (await scoped('tailored_resumes', tid).findAll({}))
+    .filter((r) => r.job_id === job.id);
+  const version = prior.length + 1;
 
   const row = await scoped('tailored_resumes', tid).create({
     job_id: job.id, content: t.content, diff: t.changes,
     flagged_terms: t.flagged, is_simulated: t.is_simulated,
-    // A version with flagged terms CANNOT be saved as confirmed.
     confirmed: t.flagged.length === 0,
+    doc: built.content, version,
+    keyword_coverage: built.keyword_coverage, gaps: built.gaps,
+    employer: job.employer || null, title: job.title || null,
+    credit_id: credit.id,
   });
 
+  // Consumed only now that a document exists. A failure above leaves the credit
+  // spendable rather than burning somebody's ten dollars on an error.
+  await scoped('tailor_credits', tid).update(
+    { consumed_at: new Date(), consumed_job_id: job.id }, { id: credit.id });
+
   res.json({
-    id: row.id, changes: t.changes, flagged: t.flagged,
+    id: row.id, version,
+    changes: t.changes, flagged: t.flagged,
     requires_confirmation: t.flagged.length > 0,
     is_simulated: t.is_simulated,
-    ats: resumeSvc.atsScore(t.content, job),
-    used: used + 1, limit,
+    summary_source: built.summary_source,
+    coverage_pct: built.keyword_coverage.pct,
+    gaps: built.gaps.slice(0, 10),
+    pdf_url: `/api/v1/engine/tailorings/${row.id}/pdf`,
+    credits_left: (await availableCredits(tid)).length,
   });
+});
+
+/** The first paragraph of the model's résumé — the only free text we keep. */
+function firstParagraph(text) {
+  const parts = String(text || '').split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+  const p = parts.find((x) => x.length > 80 && !/^[A-Z\s]{6,}$/.test(x));
+  return p ? p.slice(0, 900) : null;
+}
+
+/** Every tailoring this subscriber has, newest first — powers the card link. */
+router.get('/tailorings', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const rows = plain(await scoped('tailored_resumes', tid).findAll({}))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  res.json({
+    tailorings: rows.map((r) => ({
+      id: r.id, job_id: r.job_id, version: r.version || 1,
+      title: r.title, employer: r.employer,
+      coverage_pct: (r.keyword_coverage || {}).pct == null ? null : r.keyword_coverage.pct,
+      is_simulated: r.is_simulated, created_at: r.created_at,
+      // A row written before the PDF existed has no doc to render.
+      pdf_url: r.doc ? `/api/v1/engine/tailorings/${r.id}/pdf` : null,
+    })),
+  });
+});
+
+/**
+ * The PDF, rendered on demand FROM THE STORED DOCUMENT.
+ *
+ * Never read off disk: Render's filesystem is ephemeral, so a stored path would
+ * evaporate on the next deploy and take "recover the exact file I sent them"
+ * with it. Same document in, same bytes out.
+ */
+router.get('/tailorings/:id/pdf', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const row = (await scoped('tailored_resumes', tid).findAll({}))
+    .find((r) => r.id === parseInt(req.params.id, 10));
+  if (!row) return res.status(404).json({ error: 'not found' });
+  if (!row.doc) {
+    return res.status(409).json({
+      error: 'This tailoring predates the PDF and has no stored document. Tailor it again to get one.',
+    });
+  }
+  try {
+    const buf = await resumePdf.render(row.doc, {
+      title: `${row.doc.name || 'Resume'} — ${row.title || 'role'}`,
+    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition',
+      `inline; filename="${resumePdf.filename(row.doc.name, row.employer, row.version)}"`);
+    res.send(buf);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Deterministic, free ATS scoring — no model call.

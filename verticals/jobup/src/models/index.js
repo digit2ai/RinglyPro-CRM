@@ -25,7 +25,7 @@ const db = require('../db');
 const TABLE_PREFIX = 'ju_';
 
 const TENANT_SCOPED = new Set([
-  'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes',
+  'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes', 'tailor_credits',
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
   'invoices', 'notification_prefs', 'audit_log', 'page_views', 'assets',
   'address_aliases',
@@ -138,6 +138,32 @@ const SCHEMA = {
     flagged_terms: { type: DataTypes.JSONB, defaultValue: [] }, // no-invented-facts check
     confirmed: { type: DataTypes.BOOLEAN, defaultValue: false },
     is_simulated: { type: DataTypes.BOOLEAN, defaultValue: false },
+    // The structured document the PDF is rendered FROM, so the exact file a
+    // subscriber sent an employer is always recoverable. Render's disk is
+    // ephemeral; a stored path would not survive the next deploy.
+    doc: { type: DataTypes.JSONB, defaultValue: null },
+    version: { type: DataTypes.INTEGER, defaultValue: 1 },
+    keyword_coverage: { type: DataTypes.JSONB, defaultValue: null },
+    gaps: { type: DataTypes.JSONB, defaultValue: [] },
+    employer: { type: DataTypes.STRING(255) },
+    title: { type: DataTypes.STRING(255) },
+    credit_id: { type: DataTypes.INTEGER },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // MONEY. One row per purchased tailoring, created ONLY from a Stripe session
+  // this server has confirmed as paid — never from a redirect parameter, which
+  // the buyer controls. consumed_at is set when a tailoring actually renders,
+  // so a generation failure leaves the credit spendable rather than burning it.
+  tailor_credits: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    amount_cents: { type: DataTypes.INTEGER, allowNull: false },
+    currency: { type: DataTypes.STRING(8), defaultValue: 'usd' },
+    stripe_session_id: { type: DataTypes.STRING(255), unique: true },
+    stripe_payment_intent: { type: DataTypes.STRING(255) },
+    source: { type: DataTypes.STRING(32), defaultValue: 'stripe' },
+    consumed_at: { type: DataTypes.DATE },
+    consumed_job_id: { type: DataTypes.INTEGER },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   applications: {
@@ -500,6 +526,13 @@ const ADDED_COLUMNS = [
   // Referral programme. sync({alter:false}) never adds a column to an existing
   // table, so a new field is invisible to Postgres until it is listed here —
   // and every INSERT naming it fails outright, which is what happened.
+  ['ju_tailored_resumes', 'doc',              'JSONB'],
+  ['ju_tailored_resumes', 'version',          'INTEGER DEFAULT 1'],
+  ['ju_tailored_resumes', 'keyword_coverage', 'JSONB'],
+  ['ju_tailored_resumes', 'gaps',             'JSONB'],
+  ['ju_tailored_resumes', 'employer',         'VARCHAR(255)'],
+  ['ju_tailored_resumes', 'title',            'VARCHAR(255)'],
+  ['ju_tailored_resumes', 'credit_id',        'INTEGER'],
   ['ju_subscribers',   'referral_code',      'VARCHAR(32)'],
   ['ju_subscribers',   'referred_by_code',   'VARCHAR(32)'],
   ['ju_subscribers',   'referred_by_tenant', 'INTEGER'],

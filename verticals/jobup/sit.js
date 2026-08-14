@@ -5526,6 +5526,106 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(one('Tampa, FL / Austin, TX'), null, 'ambiguous — whole country');
   });
 
+  // ===== PAID TAILORING ====================================================
+  // Money and a document that goes to an employer. Both have to be exact.
+  await t('TAILORING: the PDF is the subscriber’s own words, selected not written', async () => {
+    const tailoring = require('./src/services/tailoring');
+    const pdf = require('./src/services/resume-pdf');
+    const profile = {
+      name: 'Carlos Gomez', headline: 'Sales Executive', summary: 'Sells things in Florida.',
+      email: 'c@example.com', location: 'Tampa, FL',
+      skills: ['B2B sales', 'CRM', 'forecasting'],
+      education: [{ studyType: 'BS', area: 'Marketing', institution: 'USF', end: '2011' }],
+      experience: [{
+        title: 'Account Executive', company: 'Acme', start: '2019', end: '2024',
+        highlights: ['Closed regional CRM deals with mid-market accounts.',
+                     'Ran a forecasting cadence for the Florida territory.',
+                     'Trained two junior reps on B2B discovery.'],
+      }],
+    };
+    const job = { title: 'Senior Account Executive', employer: 'Globex',
+                  description: 'B2B sales, CRM, forecasting, territory planning, quota.' };
+
+    const built = tailoring.build(profile, job, { summary: null });
+    const bullets = built.content.roles.flatMap((r) => r.bullets);
+    const corpus = JSON.stringify(profile);
+    for (const b of bullets) {
+      assert.ok(corpus.includes(b),
+        'EVERY BULLET MUST BE VERBATIM FROM THE RÉSUMÉ — a line that reaches an '
+        + 'employer has to be defensible in the interview: ' + b);
+    }
+    assert.ok(built.keyword_coverage.pct >= 0 && built.keyword_coverage.pct <= 100);
+    assert.strictEqual(built.summary_source, 'resume', 'no model summary offered = keep theirs');
+
+    // The one free-text field is verified, and REJECTED WHOLE rather than patched.
+    const invented = tailoring.verifySummary(
+      'Sales leader who grew revenue by $4M across 12 countries using Salesforce.', corpus);
+    assert.strictEqual(invented.ok, false, 'an invented number/tool must not reach the PDF');
+    assert.ok(invented.introduced.some((x) => /4M|12|salesforce/i.test(x)));
+    const honest = tailoring.verifySummary('Sells things in Florida.', corpus);
+    assert.strictEqual(honest.ok, true, 'and their own words must survive');
+
+    // A rejected summary falls back to theirs, never to nothing and never to the
+    // rejected text.
+    const withBad = tailoring.build(profile, job,
+      { summary: 'Delivered $9M in pipeline across EMEA.' });
+    assert.strictEqual(withBad.summary_source, 'resume');
+    assert.strictEqual(withBad.content.summary, profile.summary);
+
+    const buf = await pdf.render(built.content, { title: 'x' });
+    assert.ok(buf.length > 1000 && buf.slice(0, 5).toString() === '%PDF-', 'a real PDF');
+    assert.match(pdf.filename('Carlos Gomez', 'Globex', 2), /^Carlos_Gomez_Resume_Globex_v2\.pdf$/);
+  });
+
+  await t('TAILORING: $10, and a credit only exists from a payment Stripe confirms', () => {
+    const fs = require('fs');
+    const billing = require('./src/services/billing');
+    assert.strictEqual(billing.TAILOR_PRICE_USD, 10, 'the price is $10 unless overridden');
+
+    const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const claim = src.slice(src.indexOf("router.post('/tailor/claim'"),
+                            src.indexOf("router.post('/tailor/:jobId'"));
+    // The four ways a free tailoring could be minted, each closed explicitly.
+    assert.ok(/verifyTailorSession/.test(claim),
+      'the credit must come from Stripe, not from the redirect the buyer controls');
+    assert.ok(/if \(!v\.paid\)/.test(claim), 'an unpaid session must be refused');
+    assert.ok(/v\.purpose !== 'tailor_credit'/.test(claim),
+      'a session for something else must not buy a tailoring');
+    assert.ok(/v\.subscriberId !== tid/.test(claim),
+      "SOMEBODY ELSE'S PAYMENT MUST NOT CREDIT THE SIGNED-IN ACCOUNT");
+    assert.ok(/c\.stripe_session_id === v\.sessionId/.test(claim),
+      'and refreshing the return url must not mint a second credit for one payment');
+
+    const tailor = src.slice(src.indexOf("router.post('/tailor/:jobId'"),
+                             src.indexOf("router.get('/tailorings'"));
+    assert.ok(/needs_payment: true/.test(tailor), 'no credit = an honest 402, not a free run');
+    // Ordering is the whole guarantee: the credit is spent AFTER the row exists,
+    // so a model outage cannot burn somebody's ten dollars.
+    const iCreate = tailor.indexOf("scoped('tailored_resumes', tid).create");
+    const iSpend = tailor.indexOf("scoped('tailor_credits', tid).update");
+    assert.ok(iCreate > 0 && iSpend > iCreate,
+      'THE CREDIT MUST BE CONSUMED ONLY AFTER THE DOCUMENT EXISTS');
+
+    // The PDF is rendered from the stored document, never read off Render's
+    // ephemeral disk, or "recover the exact file I sent" dies at the next deploy.
+    const pdfRoute = src.slice(src.indexOf("router.get('/tailorings/:id/pdf'"));
+    assert.ok(/resumePdf\.render\(row\.doc/.test(pdfRoute));
+    assert.ok(!/readFile|createReadStream/.test(pdfRoute), 'nothing may be read off disk');
+  });
+
+  await t('MATCHES: the card carries the PDF, and the two dead buttons are gone', () => {
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(!/onclick="ats\(/.test(app), 'Keyword check is gone — the number now '
+      + 'arrives with the document it describes');
+    assert.ok(!/onclick="applied\(/.test(app), 'I applied is gone — the stage dropdown '
+      + 'on the same card already does it');
+    assert.ok(!/function ats\(|function applied\(/.test(app), 'and their handlers with them');
+    assert.ok(/class="tdoc"/.test(app), 'the card must show the résumé document');
+    assert.ok(/PDF v/.test(app) && /% keywords/.test(app),
+      'with its version and coverage, the way the Bank tracker shows it');
+    assert.ok(/class="pricetag"/.test(app), 'and the button must state the price');
+  });
+
   // A COLUMN HEADED (48) THAT SHOWS 12 IS A LIE, NOT A LAYOUT CHOICE.
   //
   // The board rendered items.slice(0,12) under a heading printing the real
