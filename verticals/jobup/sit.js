@@ -5602,10 +5602,10 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 
   await t('ONBOARDING: the account form is Spanish when the teaser was', () => {
     const fs = require('fs');
-    const i18n = fs.readFileSync(__dirname + '/public/i18n-onboarding.js', 'utf8');
+    const i18n = fs.readFileSync(__dirname + '/public/i18n.js', 'utf8');
     const build = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
     const welcome = fs.readFileSync(__dirname + '/public/welcome.html', 'utf8');
-    assert.ok(build.includes('i18n-onboarding.js') && welcome.includes('i18n-onboarding.js'));
+    assert.ok(build.includes('i18n.js') && welcome.includes('i18n.js'));
     // THE LANGUAGE COMES FROM THE TEASER ROW, not from a second question. The
     // preview and the account must not disagree about who this person is.
     assert.ok(/JobUpI18n\.apply\(j\.language/.test(build),
@@ -5641,6 +5641,129 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.strictEqual(el.textContent, 'A string nobody translated',
         'a missing translation must never produce an empty label');
     } finally { w.close(); }
+  });
+
+  // THE DASHBOARD, NOT JUST THE FRONT DOOR.
+  //
+  // Nearly every dashboard string is built inside JS template concatenation, so
+  // it does not exist until a fetch resolves — there is no element to tag at
+  // author time. This drives the real dashboard against stubbed responses,
+  // applies Spanish, and asserts that what is LEFT in English is only the
+  // subscriber's own data. Reading the source instead would prove nothing:
+  // the strings are not in it in the form the user sees.
+  await t('DASHBOARD: the whole interface renders in Spanish', async () => {
+    const fs = require('fs');
+    const FIX = {
+      '/api/v1/auth/session': { id: 4, email: 'a@b.co', name: 'Ada', address: 'ada.jobup.dev' },
+      '/api/v1/engine/me': { id: 4, email: 'a@b.co', name: 'Ada', address: 'ada.jobup.dev',
+                             status: 'active', headline: 'Sales Executive', language: 'es' },
+      '/api/v1/engine/settings': { settings: settingsSvc.sanitize({
+        targeting: { roles: [{ title: 'Sales Executive', slug: 'sales-executive', page: true }],
+                     industries: ['Fintech'], employers: ['Citi'], exclude_keywords: ['door to door'] },
+        identity_links: [{ url: 'https://github.com/ada' }], geo: { allowed_states: ['fl'] } }) },
+      '/api/v1/engine/matches': { matches: [{ id: 1, score: 92, stage: 'new',
+        job: { id: 7, title: 'Sales Executive', employer: 'Globex', location: 'Tampa, FL' } }] },
+      '/api/v1/engine/pipeline': { stages: ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'],
+        pipeline: { new: [{ id: 1, score: 92, display_title: 'Sales Executive', display_employer: 'Globex', source: 'hunter', stage: 'new' }],
+                    saved: [], applied: [], screening: [], interviewing: [], offer: [], closed: [] } },
+      '/api/v1/engine/analytics?days=30': { views: 12, unique_visitors: 8, views_all_time: 30,
+        agent_views: 2, per_day: [{ date: '2026-08-01', views: 3 }], referrers: [], pages: [],
+        agents: [], note: 'Counts real requests.' },
+      '/api/v1/engine/presence': { address: 'https://ada.jobup.dev', done_count: 1, total: 5,
+        directory_opt_in: true, identity_links: [], role_pages: [{ title: 'Sales Executive' }],
+        note: 'These are prerequisites, not guarantees.',
+        items: settingsSvc.presenceChecklist({}, 'en').items },
+      // loadCV fetches /engine/profile, not /engine/cv — a wrong key here makes
+      // renderCV read an undefined profile and the whole pane never paints.
+      '/api/v1/engine/profile': { profile: { name: 'Ada', headline: 'Sales Executive', skills: ['B2B'],
+        experience: [{ title: 'AE', company: 'Acme' }], education: [] }, source_text: 'x' },
+      '/api/v1/engine/tailorings': { tailorings: [] },
+      '/api/v1/engine/tailor/pricing': { price_usd: 10, credits: 0, configured: true },
+    };
+    const pick = (p) => FIX[p] || FIX[Object.keys(FIX).find((k) => p.startsWith(k.split('?')[0]))] || {};
+
+    const { JSDOM, VirtualConsole } = require('jsdom');
+    const html = fs.readFileSync(__dirname + '/public/app.html', 'utf8')
+      .replace(/\{\{BASE\}\}/g, '').replace(/\{\{V\}\}/g, '').replace(/\{\{PRICE\}\}/g, '59');
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously', url: 'https://ada.jobup.dev/app',
+      virtualConsole: new VirtualConsole(), pretendToBeVisual: true,
+      beforeParse(win) {
+        win.fetch = (u) => Promise.resolve({ ok: true, status: 200,
+          json: () => Promise.resolve(pick(String(u).replace('https://ada.jobup.dev', ''))) });
+        win.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {},
+                                  addListener() {}, removeListener() {} });
+        win.scrollTo = () => {};
+      },
+    });
+    const w = dom.window;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      const sc = w.document.createElement('script');
+      sc.textContent = fs.readFileSync(__dirname + '/public/i18n.js', 'utf8');
+      w.document.head.appendChild(sc);
+      assert.strictEqual(typeof w.JobUpI18n, 'object', 'the translator must load');
+
+      await sleep(250);
+      try { w.boot(); } catch (e) { /* boot repaints; failures surface below */ }
+      await sleep(300);
+      // renderCV reads a module-level CV that loadCV fills asynchronously; in a
+      // stubbed run a pane can be shown before that lands. Seed it so visiting
+      // every tab exercises the RENDER rather than an ordering artefact.
+      if (!w.CV) w.CV = { name: 'Ada', headline: 'Sales Executive', skills: ['B2B'],
+                          experience: [{ title: 'AE', company: 'Acme' }], education: [] };
+      w.JobUpI18n.apply('es');
+      if (w.juWatchPanes) w.juWatchPanes();
+      // Visit every pane so every render function has run at least once.
+      for (const p of (w.PANES || [])) { try { w.showTab(p); } catch (e) { /* keep going */ } }
+      await sleep(300);
+      w.JobUpI18n.refresh(w.document.body);
+
+      // Harvest what the user can actually read.
+      const seen = new Set();
+      const walk = (n) => {
+        for (const c of n.childNodes) {
+          if (c.nodeType === 3) {
+            const t2 = c.nodeValue.replace(/\s+/g, ' ').trim();
+            if (t2.length > 2 && /[A-Za-z]{3}/.test(t2) && !/^https?:\/\//.test(t2)) seen.add(t2);
+          } else if (c.nodeType === 1 && c.tagName !== 'SCRIPT' && c.tagName !== 'STYLE') walk(c);
+        }
+      };
+      walk(w.document.body);
+
+      // The subscriber's OWN data is never translated — job titles, employers,
+      // skills and keywords are theirs, and are shown verbatim in both
+      // languages exactly as the tailoring engine treats them.
+      const OWN = ['Sales Executive', 'Globex', 'Tampa, FL', 'Fintech', 'Citi', 'door to door',
+                   'Acme', 'AE', 'B2B', 'Ada', 'ada.jobup.dev', 'Counts real requests.',
+                   'These are prerequisites, not guarantees.'];
+      const englishish = (s2) => !/[áéíóúñ¿¡]/i.test(s2)
+        && /\b(the|your|and|you|is|are|of|for|with|that|this|not|will|from|every|each|they|what|how)\b/i.test(s2);
+      const left = Array.from(seen).filter((s2) =>
+        englishish(s2) && !OWN.some((o) => s2 === o || s2.includes(o)));
+
+      assert.ok(seen.size > 120, 'the whole dashboard must have rendered — got ' + seen.size);
+      assert.deepStrictEqual(left, [],
+        'STILL IN ENGLISH: ' + left.slice(0, 6).map((x) => JSON.stringify(x.slice(0, 80))).join(', '));
+      // And Spanish really is on screen, not merely an absence of English.
+      const all = Array.from(seen).join(' ');
+      assert.ok(/puesto|ofertas|reclutador|currículum/i.test(all), 'Spanish must be present');
+    } finally { w.close(); }
+  });
+
+  await t('DASHBOARD: the language lives on the row, not in the browser', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    // A browser-local preference does not travel. Somebody who signed up in
+    // Spanish and opens the dashboard on their phone must still get Spanish.
+    assert.ok(/language: sub\.language === 'es' \? 'es' : 'en'/.test(src),
+      '/me must report the subscriber row language');
+    assert.ok(/router\.patch\('\/language'/.test(src), 'and the toggle must persist it');
+    const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/juSetLang\(r\.j\.language\|\|'en',false\)/.test(app),
+      'the dashboard must apply the row language on boot');
+    assert.ok(/data-setlang="es"/.test(app), 'and offer a toggle');
+    // Every repaint must be re-translated, or half a pane silently reverts.
+    assert.ok(/MutationObserver/.test(app), 'a repaint must re-run the pass');
   });
 
   // ===== PAID TAILORING ====================================================

@@ -46,7 +46,21 @@ router.get('/me', async (req, res) => {
   const pRow = await scoped('profiles', tid).findOne({});
   const profile = (pRow && pRow.resume_json) || {};
   res.json({ id: sub.id, email: sub.email, name: sub.name, address: sub.address, status: sub.status,
-             headline: profile.headline || null });
+             headline: profile.headline || null,
+             // THE LANGUAGE IS ON THE ROW, NOT IN localStorage. Somebody who
+             // signed up in Spanish and then opens the dashboard on their phone
+             // must still get Spanish — a browser-local preference does not
+             // travel, and asking again would be the third time.
+             language: sub.language === 'es' ? 'es' : 'en' });
+});
+
+/** Change the interface language. Persisted on the subscriber row so it
+    follows the person, not the browser. */
+router.patch('/language', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const l = (req.body || {}).language === 'es' ? 'es' : 'en';
+  await models.subscribers.update({ language: l }, { where: { id: tid } });
+  res.json({ ok: true, language: l });
 });
 
 router.get('/settings', async (req, res) => {

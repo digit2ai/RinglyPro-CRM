@@ -24,7 +24,7 @@ const SHELL = [
   // The onboarding translator. Without it in the shell, a Spanish visitor on a
   // poor connection gets the account form in English — the one moment where
   // being confused costs a signup.
-  BASE + '/i18n-onboarding.js',
+  BASE + '/i18n.js',
 ];
 
 self.addEventListener('install', (e) => {
