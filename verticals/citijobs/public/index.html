@@ -141,7 +141,7 @@
 
 <script>
 var API = '/citi-tracker/api/v1';
-var state = { profile: null, profiles: [], status: '', skillKind: '', employer: '', employers: [] };
+var state = { profile: null, profiles: [], status: '', skillKind: '', employer: '', employers: [], usOnly: true, states: [] };
 var STATUSES = ['new','saved','applied','screening','interview','offer','closed'];
 var CLOSE_REASONS = ['rejected','withdrawn','filled','expired','not_interested','unspecified'];
 
@@ -186,6 +186,7 @@ async function loadBoard() {
   var d = await api('/board' + q);
   state.profileMeta = d.profile;
   state.usOnly = !!(d.profile.countries || []).length;
+  state.states = d.profile.states || [];
   renderPayFilter(d);
   var b = document.getElementById('boardBody');
   b.innerHTML = '';
@@ -233,12 +234,48 @@ function renderPayFilter(d) {
       '<input type="checkbox" id="hideUnpriced" style="width:auto"' + (p.hide_unpriced ? ' checked' : '') + '> also hide postings with no stated range</label>' +
     '<label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--mut)">' +
       '<input type="checkbox" id="usOnly" style="width:auto"' + (state.usOnly ? ' checked' : '') + '> United States only</label>' +
+    '<details id="stateBox" style="font-size:13px"><summary style="cursor:pointer; color:var(--mut)">States: ' +
+      esc(state.states.length ? state.states.join(', ') : 'all') + '</summary>' +
+      '<div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:10px; max-width:760px">' +
+        '<label style="flex:0 0 100%"><input type="checkbox" id="stAll" style="width:auto"' +
+          (state.states.length ? '' : ' checked') + '> All states</label>' +
+        STATES.map(function (c) {
+          return '<label style="width:52px"><input type="checkbox" class="stChk" value="' + c + '" style="width:auto"' +
+            (state.states.indexOf(c) !== -1 ? ' checked' : '') + '> ' + c + '</label>';
+        }).join('') +
+        '<button class="sm" id="stSave" style="margin-top:8px">Apply states</button>' +
+      '</div></details>' +
     '<span class="sub">' + (d.filtered_out != null && d.items
       ? (d.filtered_out - d.items.length) + ' of ' + d.filtered_out + ' hidden by this filter' : '') + '</span>';
   document.getElementById('payFloor').onchange = savePay;
   document.getElementById('hideUnpriced').onchange = savePay;
   document.getElementById('usOnly').onchange = saveCountries;
+  var stAll = document.getElementById('stAll');
+  if (stAll) {
+    stAll.onchange = function () {
+      if (stAll.checked) document.querySelectorAll('.stChk').forEach(function (c) { c.checked = false; });
+    };
+    document.querySelectorAll('.stChk').forEach(function (c) {
+      c.onchange = function () { if (c.checked) stAll.checked = false; };
+    });
+    document.getElementById('stSave').onclick = saveStates;
+  }
 }
+var STATES = ('AL AK AZ AR CA CO CT DC DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY '
+  + 'NC ND OH OK OR PA PR RI SC SD TN TX UT VT VA WA WV WI WY').split(' ');
+
+async function saveStates() {
+  // "All states" is an EMPTY list, not all 51 ticked — so a new state does not
+  // need re-selecting, and the meaning stays "no state filter".
+  var picked = document.getElementById('stAll').checked ? []
+    : Array.prototype.slice.call(document.querySelectorAll('.stChk:checked')).map(function (c) { return c.value; });
+  await api('/profiles/' + state.profile.id, { method:'PATCH', body: JSON.stringify({ states: picked }) });
+  state.states = picked;
+  toast(picked.length ? ('Showing ' + picked.join(', ') + ' (plus roles that name no state, such as remote)')
+                      : 'Showing all states');
+  loadBoard(); if (document.getElementById('tab-pool').style.display !== 'none') loadPool();
+}
+
 async function saveCountries() {
   var on = document.getElementById('usOnly').checked;
   // Empty list = no country gate at all; the pre-filter treats it as "anywhere".

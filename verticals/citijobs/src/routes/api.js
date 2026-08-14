@@ -136,7 +136,7 @@ router.get('/profiles', async (req, res) => {
 router.patch('/profiles/:id', async (req, res) => {
   const p = await ownProfile(req, req.params.id);
   if (!p) return res.status(404).json({ error: 'Not found' });
-  for (const k of ['display_name', 'headline', 'target_titles', 'target_locations', 'countries', 'internal', 'score_threshold', 'active', 'min_salary_cents', 'hide_unpriced']) {
+  for (const k of ['display_name', 'headline', 'target_titles', 'target_locations', 'countries', 'states', 'internal', 'score_threshold', 'active', 'min_salary_cents', 'hide_unpriced']) {
     if (req.body[k] !== undefined) p[k] = req.body[k];
   }
   await p.save();
@@ -183,7 +183,8 @@ router.get('/board', async (req, res) => {
         score_threshold: profile.score_threshold,
         min_salary_cents: profile.min_salary_cents ? Number(profile.min_salary_cents) : 0,
         hide_unpriced: !!profile.hide_unpriced,
-        countries: profile.countries || []
+        countries: profile.countries || [],
+        states: profile.states || []
       },
       // Stated so the board can never look empty for a reason it does not show.
       filtered_out: rows.length,
@@ -314,6 +315,7 @@ router.get('/reqs', async (req, res) => {
     res.json({
       total_before_filters: shaped.length,
       countries: profile ? (profile.countries || []) : [],
+      states: profile ? (profile.states || []) : [],
       items: shaped
         // COUNTRY GATE ON THE READ, not only in the agent. The agent already
         // refuses to score or board a posting outside the profile's countries,

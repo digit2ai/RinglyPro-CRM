@@ -55,6 +55,9 @@ const Profile = sequelize.define('CjProfile', {
   target_titles: { type: DataTypes.JSONB, defaultValue: [] },
   target_locations: { type: DataTypes.JSONB, defaultValue: [] },
   countries: { type: DataTypes.JSONB, defaultValue: ['United States'] },
+  // US state codes. EMPTY MEANS EVERY STATE — it is not a filter that happens
+  // to match nothing.
+  states: { type: DataTypes.JSONB, defaultValue: [] },
   internal: { type: DataTypes.BOOLEAN, defaultValue: false }, // already at Citi?
   score_threshold: { type: DataTypes.INTEGER, defaultValue: 70 },
   // Pay floor, compared against the TOP of a stated range (a 130k-160k role is

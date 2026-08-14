@@ -33,6 +33,19 @@ const US_NAME_LIST = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 
   'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont',
   'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming', 'district of columbia', 'puerto rico'];
 
+/** The US state a location names, as a code, or null if it names none. */
+function stateOf(loc) {
+  const l = String(loc || '');
+  const lower = l.toLowerCase();
+  const named = US_NAME_LIST.find((n) => lower.includes(n));
+  if (named) return NAME_TO_CODE[named] || null;
+  const bare = (l.match(/\b[A-Z]{2}\b/g) || []).find((t) => US_STATE_CODES.has(t));
+  if (bare) return bare;
+  // PNC names facilities "Data Center PA690".
+  const glued = (l.match(/\b([A-Z]{2})\d{2,}\b/g) || []).find((t) => US_STATE_CODES.has(t.slice(0, 2)));
+  return glued ? glued.slice(0, 2) : null;
+}
+
 /** Does this location string read as a US one, even without the country? */
 function looksUS(loc) {
   const l = String(loc || '');
@@ -45,16 +58,50 @@ function looksUS(loc) {
   return (l.match(/\b([A-Z]{2})\d{2,}\b/g) || []).some((t) => US_STATE_CODES.has(t.slice(0, 2)));
 }
 
+const NAME_TO_CODE = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA', colorado: 'CO',
+  connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA', hawaii: 'HI', idaho: 'ID',
+  illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS', kentucky: 'KY', louisiana: 'LA',
+  maine: 'ME', maryland: 'MD', massachusetts: 'MA', michigan: 'MI', minnesota: 'MN',
+  mississippi: 'MS', missouri: 'MO', montana: 'MT', nebraska: 'NE', nevada: 'NV',
+  'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+  'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH', oklahoma: 'OK', oregon: 'OR',
+  pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD',
+  tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT', virginia: 'VA', washington: 'WA',
+  'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY', 'district of columbia': 'DC',
+  'puerto rico': 'PR'
+};
+
+/**
+ * State gate, applied only INSIDE the country gate.
+ *
+ * An empty list means every state. A posting that names NO state — "Remote",
+ * "United States", a bare city — is kept rather than dropped: filtering by
+ * state must not quietly delete every remote role, which is the one category
+ * a state list is least meant to exclude.
+ */
+function stateAllowed(req, profile) {
+  const want = Array.isArray(profile.states) ? profile.states.filter(Boolean) : [];
+  if (!want.length) return { ok: true, reason: null };
+  const code = stateOf(req.location);
+  if (!code) return { ok: true, reason: 'no state stated' };
+  return want.map((x) => String(x).toUpperCase()).includes(code)
+    ? { ok: true, reason: null }
+    : { ok: false, reason: `state ${code} not in ${want.join(', ')}` };
+}
+
 /**
  * Country gate. A US-only profile must never be shown Pune — but it must be
  * shown Pittsburgh, and a posting that names only a state is still US.
+ * The state gate rides along, so every surface that respects the country
+ * respects the state list too.
  */
 function locationAllowed(req, profile) {
   // An EXPLICITLY EMPTY list means "anywhere". Only an absent list falls back to
   // US-only. Collapsing the two would make the United-States-only switch
   // impossible to turn off — it would keep filtering while claiming not to.
   if (Array.isArray(profile.countries) && profile.countries.length === 0) {
-    return { ok: true, reason: null };
+    return stateAllowed(req, profile);
   }
   const countries = (profile.countries && profile.countries.length)
     ? profile.countries
@@ -62,11 +109,10 @@ function locationAllowed(req, profile) {
   const loc = String(req.location || '');
   if (!loc) return { ok: true, reason: 'no location stated' };  // flag, do not silently drop
   const lower = loc.toLowerCase();
-  if (countries.some((c) => lower.includes(String(c).toLowerCase()))) return { ok: true, reason: null };
-  if (countries.some((c) => /united states|usa|u\.s\./i.test(c)) && looksUS(loc)) {
-    return { ok: true, reason: null };
-  }
-  return { ok: false, reason: `location "${loc}" outside ${countries.join(', ')}` };
+  const inCountry = countries.some((c) => lower.includes(String(c).toLowerCase()))
+    || (countries.some((c) => /united states|usa|u\.s\./i.test(c)) && looksUS(loc));
+  if (!inCountry) return { ok: false, reason: `location "${loc}" outside ${countries.join(', ')}` };
+  return stateAllowed(req, profile);
 }
 
 /**
@@ -172,4 +218,4 @@ function shouldScore(pre, profile) {
   return pre.score >= floor;
 }
 
-module.exports = { score, shouldScore, locationAllowed, looksUS, salaryAllowed, tokens };
+module.exports = { score, shouldScore, locationAllowed, stateAllowed, stateOf, looksUS, salaryAllowed, tokens, US_STATE_CODES };

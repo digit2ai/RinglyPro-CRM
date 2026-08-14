@@ -53,6 +53,7 @@ async function init() {
     // New columns arrive here, because sync({alter:false}) never adds them.
     `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS min_salary_cents BIGINT DEFAULT 14000000`,
     `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS hide_unpriced BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE cj_profiles ADD COLUMN IF NOT EXISTS states JSONB DEFAULT '[]'::jsonb`,
     // Multi-employer. Existing rows are all Citi, so the default backfills them.
     `ALTER TABLE cj_reqs ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,
     `ALTER TABLE cj_tracked ADD COLUMN IF NOT EXISTS employer VARCHAR(40) NOT NULL DEFAULT 'citi'`,

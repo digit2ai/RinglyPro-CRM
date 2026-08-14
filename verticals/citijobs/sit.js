@@ -336,6 +336,22 @@ async function cleanup() {
   ok('...while United States set still excludes Pune',
     prefilter.locationAllowed({ location: 'Pune Maharashtra India' }, { countries: ['United States'] }).ok === false);
 
+  // STATE GATE. Empty means every state, and a posting that names no state —
+  // "Remote", a bare city — is kept: filtering by state must not quietly delete
+  // every remote role, the one category it is least meant to exclude.
+  const flOnly = { countries: ['United States'], states: ['FL', 'TX'] };
+  [['Tampa Florida United States', true], ['Plano, TX', true], ['Remote - United States', true],
+    ['McLean, VA', false], ['PA - Pittsburgh 15222', false], ['Pune Maharashtra India', false]
+  ].forEach(([loc, want]) => {
+    ok(`states FL,TX: "${loc}" ${want ? 'shows' : 'hidden'}`,
+      prefilter.locationAllowed({ location: loc }, flOnly).ok === want);
+  });
+  ok('an empty state list means EVERY state, not none',
+    prefilter.locationAllowed({ location: 'McLean, VA' }, { countries: ['United States'], states: [] }).ok === true);
+  ok('the state is read from a name as well as a code', prefilter.stateOf('Tampa Florida United States') === 'FL');
+  ok('...and from a facility code', prefilter.stateOf('Data Center PA690') === 'PA');
+  ok('a location naming no state yields null, not a guess', prefilter.stateOf('Remote') === null);
+
   const puneReq = Req.build({ req_id: '26980420', title: 'Data Analytics Lead Analyst', location: 'Pune Maharashtra India', description_text: 'data analytics' });
   const preP = prefilter.score(puneReq, profileA, terms);
   ok('a Pune requisition is refused for a US-only profile', !preP.location_ok);
