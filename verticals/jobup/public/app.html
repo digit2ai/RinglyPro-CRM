@@ -299,7 +299,14 @@ transition:background .15s ease,color .15s ease}
 @media(prefers-reduced-motion:reduce){.drawer,.scrim,.burger span{transition:none}}
 #install{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));
 z-index:70;background:var(--card2);border:1px solid var(--cyan-bd);border-radius:15px;
-padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.6);
+/* En iOS un toque que se desplaza un milímetro sobre texto se interpreta como
+   SELECCIÓN, no como pulsación — y mientras hay una selección activa el
+   siguiente toque sólo la descarta. El aviso quedaba así imposible de cerrar
+   en el teléfono aunque el botón estuviera despejado. */
+-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#install .btn{min-height:44px;min-width:88px;-webkit-user-select:none;user-select:none;
+  touch-action:manipulation}
 #install.show{display:flex}
 #install .txt{flex:1;font-size:13.5px;line-height:1.45}
 </style></head><body>
@@ -1958,13 +1965,24 @@ if('serviceWorker' in navigator)
     $('install').classList.toggle('show',!!on);
     document.body.classList.toggle('has-install',!!on);
   }
-  $('inst-go').addEventListener('click',function(){
+  /* pointerup ADEMÁS de click: en Safari móvil un toque que Safari clasifica
+     como gesto de selección nunca llega a emitir click. La guarda evita que se
+     ejecute dos veces cuando sí llegan los dos eventos. */
+  function tap(el,fn){
+    if(!el) return;
+    var done=false;
+    function run(e){ if(done) return; done=true; setTimeout(function(){done=false;},400);
+      if(e&&e.preventDefault) e.preventDefault(); fn(); }
+    el.addEventListener('click',run);
+    el.addEventListener('pointerup',run);
+  }
+  tap($('inst-go'),function(){
     setInstallVisible(false);
     if(deferred){deferred.prompt();deferred=null;}
   });
-  $('inst-no').addEventListener('click',function(){
+  tap($('inst-no'),function(){
     setInstallVisible(false);
-    localStorage.setItem('jobup_install_dismissed','1');
+    try{ localStorage.setItem('jobup_install_dismissed','1'); }catch(e){}
   });
   // iOS has no beforeinstallprompt — tell Safari users how, once.
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
