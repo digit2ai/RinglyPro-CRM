@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Neural Intelligence + MCP for Banking -- Presented by Rachel</title>
+<title>Inteligencia Neuronal + MCP para la Banca -- Presentado por Dalia</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -292,8 +292,8 @@
   }
   .preplay-btn:hover { background: rgba(0,229,255,0.08); box-shadow: 0 0 40px rgba(0,229,255,0.15); border-color: var(--cyan); }
   .preplay .sub { font-size: 12px; color: var(--white-mute); font-family: var(--mono); letter-spacing: 1px; }
-  /* The other language has to be reachable BEFORE the deck starts — once the
-     narration is running nobody scrolls back to the cover to switch. */
+  /* El otro idioma tiene que ser alcanzable ANTES de arrancar: una vez que la
+     narración empieza, nadie vuelve al inicio para cambiar de idioma. */
   .lang-switch {
     font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
     color: var(--white-mute); text-decoration: none; padding: 8px 16px;
@@ -366,11 +366,11 @@
 <!-- PRE-PLAY -->
 <div class="preplay" id="preplayOverlay">
   <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI">
-  <div class="tag">Technology Briefing</div>
-  <div class="headline">Neural Intelligence + MCP<br>for Global Banking Compliance</div>
-  <button class="preplay-btn" id="preplayBtn">Start Presentation</button>
-  <div class="sub">Narrated by Rachel -- Digit2AI Premium Voice</div>
-  <a class="lang-switch" href="/neural-intelligence-banking-es/presentation.html">Ver en español</a>
+  <div class="tag">Informe Tecnológico</div>
+  <div class="headline">Inteligencia Neuronal + MCP<br>para el Cumplimiento Bancario Global</div>
+  <button class="preplay-btn" id="preplayBtn">Iniciar Presentación</button>
+  <div class="sub">Narrado por Dalia -- Voz Premium de Digit2AI</div>
+  <a class="lang-switch" href="/neural-intelligence-banking/presentation.html">View in English</a>
 </div>
 
 <!-- NARRATION WAVE -->
@@ -381,145 +381,150 @@
 <div class="deck" id="deck">
 
   <!-- SLIDE 01 -->
-  <div class="slide bg-dark active" data-narration="Welcome. I'm Rachel, and today I'll walk you through how Neural Intelligence, powered by the Model Context Protocol, is transforming banking compliance worldwide. This technology addresses the single biggest challenge facing financial institutions today: the compliance crisis that costs over 274 billion dollars annually and generates false positive rates above 95 percent. Let's explore how AI reasoning, connected through a universal open standard, can solve this.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Digit2AI // Neural Intelligence</div>
-    <div class="hud hud-tr"><div class="hud-dot"></div><div class="hud-line"></div>Live</div>
-    <div class="chip">Digit2AI -- Technology Briefing</div>
-    <h1>Neural Intelligence<br>+ MCP</h1>
-    <p class="lead">How AI reasoning connected through a universal open standard transforms banking compliance from a cost center into a competitive advantage.</p>
+  <div class="slide bg-dark active" data-narration="Bienvenidos. Soy Dalia, y hoy le voy a explicar cómo la Inteligencia Neuronal, impulsada por el Protocolo de Contexto de Modelo, está transformando el cumplimiento normativo bancario en todo el mundo. Esta tecnología atiende el mayor desafío que enfrentan hoy las instituciones financieras: la crisis de cumplimiento que cuesta más de doscientos setenta y cuatro mil millones de dólares al año y que genera tasas de falsos positivos superiores al noventa y cinco por ciento. Veamos cómo el razonamiento con inteligencia artificial, conectado mediante un estándar abierto y universal, puede resolverla.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Digit2AI // Inteligencia Neuronal</div>
+    <div class="hud hud-tr"><div class="hud-dot"></div><div class="hud-line"></div>En vivo</div>
+    <div class="chip">Digit2AI -- Informe Tecnológico</div>
+    <h1>Inteligencia<br>Neuronal + MCP</h1>
+    <p class="lead">Cómo el razonamiento con inteligencia artificial, conectado mediante un estándar abierto y universal, convierte el cumplimiento bancario de un centro de costo en una ventaja competitiva.</p>
     <div class="stats">
-      <div class="stat"><div class="val">$274B</div><div class="lbl">Global compliance cost</div></div>
-      <div class="stat"><div class="val">95-99%</div><div class="lbl">False positive rate</div></div>
-      <div class="stat"><div class="val">$55B+</div><div class="lbl">AML fines since 2008</div></div>
+      <!-- "MM" significa millones en la banca latinoamericana, así que el "$274B"
+           del inglés NO puede quedar como "$274 MM": serían mil veces menos.
+           Se escribe en millones con separador de miles, que es la convención
+           de la prensa financiera en español. -->
+      <div class="stat"><div class="val" style="font-size:22px;">$274.000 M</div><div class="lbl">Costo global de cumplimiento</div></div>
+      <div class="stat"><div class="val">95-99%</div><div class="lbl">Tasa de falsos positivos</div></div>
+      <div class="stat"><div class="val" style="font-size:22px;">$55.000 M+</div><div class="lbl">Multas AML desde 2008</div></div>
     </div>
   </div>
 
   <!-- SLIDE 02 -->
-  <div class="slide bg-red" data-narration="Here is the core problem. Traditional compliance systems are rule-based. They apply static thresholds. If a transaction exceeds ten thousand dollars, flag it. If a name matches a sanctions list with 80 percent similarity, generate an alert. These rules are rigid. They cannot adapt to evolving criminal methods. And they generate enormous noise. 95 to 99 percent of all alerts are false positives. That means for every real threat detected, the system generates 20 to 99 false alarms. Compliance analysts spend their days clearing noise instead of catching criminals. This is not a technology limitation of the past. This is the reality today at most banks worldwide.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>The Problem</div>
-    <div class="chip red">Critical Failure</div>
-    <h2>Rules Are Not<br>Intelligence</h2>
-    <p class="lead">Static thresholds cannot reason. They detect what you program them to find -- and miss everything else. The result: 95-99% false positive rates and analyst burnout across the global banking system.</p>
+  <div class="slide bg-red" data-narration="Este es el problema de fondo. Los sistemas tradicionales de cumplimiento se basan en reglas. Aplican umbrales estáticos. Si una transacción supera los diez mil dólares, se marca. Si un nombre coincide con una lista de sanciones en un ochenta por ciento, se genera una alerta. Son reglas rígidas. No se adaptan a los métodos criminales, que sí evolucionan. Y generan un ruido enorme. Entre el noventa y cinco y el noventa y nueve por ciento de todas las alertas son falsos positivos. Es decir: por cada amenaza real detectada, el sistema produce entre veinte y noventa y nueve falsas alarmas. Los analistas de cumplimiento pasan el día despejando ruido en lugar de atrapar criminales. Esto no es una limitación del pasado. Es la realidad actual en la mayoría de los bancos del mundo.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>El Problema</div>
+    <div class="chip red">Falla Crítica</div>
+    <h2>Las Reglas No Son<br>Inteligencia</h2>
+    <p class="lead">Un umbral estático no razona. Detecta lo que usted lo programó para encontrar, y se le escapa todo lo demás. El resultado: entre 95% y 99% de falsos positivos y analistas agotados en todo el sistema bancario global.</p>
     <div class="fgrid">
-      <div class="fcard"><h4>Static Rules</h4><p>"If amount > $10,000, flag." Cannot consider context, history, or behavioral patterns.</p></div>
-      <div class="fcard"><h4>Alert Fatigue</h4><p>47,500 wasted investigations/year at a mid-size bank. 8-18 FTEs clearing false alerts.</p></div>
-      <div class="fcard"><h4>Blind Spots</h4><p>Rules only catch known patterns. Novel schemes, structuring, and layering go undetected.</p></div>
-      <div class="fcard"><h4>Cost Spiral</h4><p>More rules = more alerts = more analysts = higher cost. Zero improvement in detection.</p></div>
+      <div class="fcard"><h4>Reglas Estáticas</h4><p>"Si el monto supera $10.000, marcar." No pesa contexto, historial ni patrones de conducta.</p></div>
+      <div class="fcard"><h4>Fatiga de Alertas</h4><p>47.500 investigaciones desperdiciadas al año en un banco mediano. De 8 a 18 personas a tiempo completo despejando falsas alertas.</p></div>
+      <div class="fcard"><h4>Puntos Ciegos</h4><p>Las reglas sólo atrapan patrones conocidos. Los esquemas nuevos, el pitufeo y la estratificación pasan sin ser vistos.</p></div>
+      <div class="fcard"><h4>Espiral de Costo</h4><p>Más reglas = más alertas = más analistas = más costo. Cero mejora en la detección.</p></div>
     </div>
   </div>
 
   <!-- SLIDE 03 -->
-  <div class="slide bg-amber" data-narration="Neural Intelligence is fundamentally different. Instead of applying rules to individual data points, it reasons across multiple data sources simultaneously. Think of it this way: a rule-based system is like a calculator. It follows formulas. Neural Intelligence is like hiring a team of expert compliance analysts who can read every document, check every database, apply judgment, and work at the speed of software, 24 hours a day. The key distinction is this: rule-based systems detect known patterns. Neural Intelligence identifies unknown risks by reasoning about context. It combines the customer's transaction history, their KYC profile, sanctions databases, adverse media signals, corporate ownership structures, and geographic risk factors -- all at once, in milliseconds.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Core Concept</div>
-    <div class="chip amber">Neural Intelligence</div>
-    <h2 class="glow-amber">What Is Neural<br>Intelligence?</h2>
-    <p class="lead">An AI reasoning layer that considers all data sources simultaneously -- the way a senior compliance officer thinks, but at machine scale, across every customer, 24/7.</p>
+  <div class="slide bg-amber" data-narration="La Inteligencia Neuronal es algo distinto de raíz. En vez de aplicar reglas a datos aislados, razona sobre múltiples fuentes de información al mismo tiempo. Véalo así: un sistema de reglas es como una calculadora, sigue fórmulas. La Inteligencia Neuronal es como contratar a un equipo de analistas de cumplimiento expertos capaces de leer cada documento, consultar cada base de datos, aplicar criterio y trabajar a la velocidad del software, las veinticuatro horas del día. La diferencia clave es esta: los sistemas de reglas detectan patrones conocidos; la Inteligencia Neuronal identifica riesgos desconocidos razonando sobre el contexto. Combina el historial transaccional del cliente, su perfil de conocimiento del cliente, las bases de sanciones, las señales de prensa adversa, las estructuras de propiedad corporativa y los factores de riesgo geográfico, todo a la vez, en milisegundos.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Concepto Central</div>
+    <div class="chip amber">Inteligencia Neuronal</div>
+    <h2 class="glow-amber">¿Qué Es la Inteligencia<br>Neuronal?</h2>
+    <p class="lead">Una capa de razonamiento con inteligencia artificial que considera todas las fuentes de datos a la vez: como piensa un oficial de cumplimiento senior, pero a escala de máquina, sobre cada cliente, las 24 horas.</p>
     <div class="fgrid">
-      <div class="fcard"><h4>Multi-Source Reasoning</h4><p>Simultaneously analyzes transactions, KYC profiles, sanctions, adverse media, UBO structures, and geographic risk.</p></div>
-      <div class="fcard"><h4>Pattern Recognition</h4><p>Graph neural networks detect structuring, BMPE schemes, trade-based laundering, and layering across accounts.</p></div>
-      <div class="fcard"><h4>Contextual Decisions</h4><p>A $50K wire is normal for an importer but alarming for a sole proprietor. Context changes everything.</p></div>
-      <div class="fcard"><h4>Adaptive Learning</h4><p>Continuously refines understanding based on analyst feedback, new typologies, and regulatory updates.</p></div>
+      <div class="fcard"><h4>Razonamiento Multifuente</h4><p>Analiza a la vez transacciones, perfiles KYC, sanciones, prensa adversa, estructuras de beneficiario final y riesgo geográfico.</p></div>
+      <div class="fcard"><h4>Reconocimiento de Patrones</h4><p>Las redes neuronales de grafos detectan pitufeo, esquemas BMPE, lavado por comercio internacional y estratificación entre cuentas.</p></div>
+      <div class="fcard"><h4>Decisiones Contextuales</h4><p>Una transferencia de $50.000 es normal para un importador y alarmante para un comerciante individual. El contexto lo cambia todo.</p></div>
+      <div class="fcard"><h4>Aprendizaje Adaptativo</h4><p>Afina su criterio de forma continua con la retroalimentación del analista, las nuevas tipologías y los cambios regulatorios.</p></div>
     </div>
   </div>
 
   <!-- SLIDE 04 -->
-  <div class="slide bg-dark" data-narration="Now, how does the AI actually connect to all these data sources? This is where the Model Context Protocol comes in. MCP is an open standard released by Anthropic in 2024. Think of it as USB-C for AI. Before USB-C, every device had a different charger. Similarly, before MCP, every AI-to-database connection required a custom integration. MCP provides one universal protocol that replaces dozens of proprietary connectors. It has been adopted by Claude, ChatGPT, VS Code, and major enterprise platforms. For banking, this means the AI can connect to your core banking system, your sanctions databases, your case management tools, and your regulatory filing systems -- all through one standardized, secure, auditable protocol.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Architecture</div>
+  <div class="slide bg-dark" data-narration="Ahora bien, ¿cómo se conecta realmente la inteligencia artificial a todas esas fuentes de datos? Ahí entra el Protocolo de Contexto de Modelo, MCP por sus siglas en inglés. MCP es un estándar abierto publicado por Anthropic en dos mil veinticuatro. Piénselo como el USB-C de la inteligencia artificial. Antes del USB-C, cada aparato tenía su propio cargador. Del mismo modo, antes de MCP, cada conexión entre un modelo y una base de datos exigía una integración a la medida. MCP aporta un único protocolo universal que reemplaza decenas de conectores propietarios. Ya lo adoptaron Claude, ChatGPT, Visual Studio Code y las principales plataformas empresariales. Para la banca, esto significa que la inteligencia artificial puede conectarse a su core bancario, a sus bases de sanciones, a sus herramientas de gestión de casos y a sus sistemas de reporte regulatorio, todo a través de un solo protocolo estandarizado, seguro y auditable.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Arquitectura</div>
     <div class="chip">Model Context Protocol</div>
-    <h2 class="glow-cyan">MCP: USB-C<br>for AI</h2>
-    <p class="lead">The Model Context Protocol is an open standard that gives AI systems a universal, secure, auditable connection to every banking system and data source. One protocol. Zero vendor lock-in. 100% auditable.</p>
+    <h2 class="glow-cyan">MCP: el USB-C<br>de la IA</h2>
+    <p class="lead">El Protocolo de Contexto de Modelo es un estándar abierto que da a los sistemas de inteligencia artificial una conexión universal, segura y auditable con cada sistema bancario y cada fuente de datos. Un protocolo. Cero dependencia de proveedor. 100% auditable.</p>
     <div class="stats">
-      <div class="stat"><div class="val" style="color:var(--cyan);">1</div><div class="lbl">Universal protocol</div></div>
-      <div class="stat"><div class="val" style="color:var(--cyan);">0</div><div class="lbl">Vendor lock-in</div></div>
+      <div class="stat"><div class="val" style="color:var(--cyan);">1</div><div class="lbl">Protocolo universal</div></div>
+      <div class="stat"><div class="val" style="color:var(--cyan);">0</div><div class="lbl">Dependencia de proveedor</div></div>
       <div class="stat"><div class="val" style="color:var(--cyan);">100%</div><div class="lbl">Auditable</div></div>
-      <div class="stat"><div class="val" style="color:var(--cyan);font-size:22px;">JSON-RPC 2.0</div><div class="lbl">Enterprise protocol</div></div>
+      <div class="stat"><div class="val" style="color:var(--cyan);font-size:22px;">JSON-RPC 2.0</div><div class="lbl">Protocolo empresarial</div></div>
     </div>
   </div>
 
   <!-- SLIDE 05 -->
-  <div class="slide bg-dark" data-narration="Let me show you the architecture. MCP follows a three-tier model: Host, Client, and Server. At the top is the Host -- that's your banking compliance application. It controls everything. It creates connections, enforces security policies, and controls what data flows where. In the middle are MCP Clients -- each maintains an isolated, one-to-one connection with a specific server. The sanctions client cannot see the customer data client. This isolation is critical for banking security. At the bottom are MCP Servers -- lightweight programs that wrap your existing banking systems. Your core banking platform, your OFAC database, your case management tool -- each gets a standardized wrapper. No rip-and-replace. You keep your existing infrastructure.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Deep Dive</div>
-    <div class="chip">Architecture</div>
-    <h2 class="glow-cyan">Three-Tier<br>Architecture</h2>
+  <div class="slide bg-dark" data-narration="Déjeme mostrarle la arquitectura. MCP sigue un modelo de tres capas: anfitrión, cliente y servidor. Arriba está el anfitrión, que es su aplicación de cumplimiento bancario. Él controla todo: crea las conexiones, aplica las políticas de seguridad y decide qué datos fluyen hacia dónde. En el medio están los clientes MCP; cada uno mantiene una conexión aislada, uno a uno, con un servidor específico. El cliente de sanciones no puede ver al cliente de datos del cliente bancario. Ese aislamiento es crítico para la seguridad bancaria. Abajo están los servidores MCP: programas ligeros que envuelven sus sistemas bancarios existentes. Su plataforma core, su base de datos de la OFAC, su herramienta de gestión de casos; cada uno recibe un envoltorio estandarizado. No hay que reemplazar nada. Usted conserva su infraestructura actual.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>En Profundidad</div>
+    <div class="chip">Arquitectura</div>
+    <h2 class="glow-cyan">Arquitectura<br>de Tres Capas</h2>
     <div class="arch">
-      <div class="layer l-cyan"><div class="lt">Layer 1 -- Host</div><div class="ld">Your compliance application. Controls all connections, enforces security, manages cross-server data flow. Single point of governance.</div></div>
+      <div class="layer l-cyan"><div class="lt">Capa 1 -- Anfitrión</div><div class="ld">Su aplicación de cumplimiento. Controla todas las conexiones, aplica la seguridad y gobierna el flujo de datos entre servidores. Un solo punto de gobierno.</div></div>
       <div class="arch-arr">&#9660; &#9660; &#9660;</div>
-      <div class="layer l-magenta"><div class="lt">Layer 2 -- MCP Clients</div><div class="ld">Isolated 1:1 connections. Sanctions client cannot see customer data client. Security boundaries enforced at protocol level.</div></div>
+      <div class="layer l-magenta"><div class="lt">Capa 2 -- Clientes MCP</div><div class="ld">Conexiones aisladas 1:1. El cliente de sanciones no puede ver al de datos del cliente. Los límites de seguridad se imponen a nivel de protocolo.</div></div>
       <div class="arch-arr">&#9660; &#9660; &#9660;</div>
-      <div class="layer l-amber"><div class="lt">Layer 3 -- MCP Servers</div><div class="ld">Core Banking | Sanctions | KYC/CDD | Transaction Monitoring | Case Management | Regulatory Filing | Documents | Adverse Media</div></div>
+      <div class="layer l-amber"><div class="lt">Capa 3 -- Servidores MCP</div><div class="ld">Core Bancario | Sanciones | KYC/DDC | Monitoreo Transaccional | Gestión de Casos | Reporte Regulatorio | Documentos | Prensa Adversa</div></div>
       <div class="arch-arr">&#9660; &#9660; &#9660;</div>
-      <div class="layer l-dim"><div class="lt">Layer 4 -- Your Existing Systems</div><div class="ld">FIS / Fiserv / Jack Henry / Temenos | OFAC | UN | EU | AMLC | FINTRAC | Credit Bureaus | Corporate Registries</div></div>
+      <div class="layer l-dim"><div class="lt">Capa 4 -- Sus Sistemas Actuales</div><div class="ld">FIS / Fiserv / Jack Henry / Temenos | OFAC | ONU | UE | AMLC | FINTRAC | Burós de Crédito | Registros Mercantiles</div></div>
     </div>
   </div>
 
   <!-- SLIDE 06 -->
-  <div class="slide bg-magenta" data-narration="Every MCP Server communicates through three standardized primitives. First: Tools. These are executable functions the AI can invoke. Run a sanctions check. Pull a transaction history. File a SAR. Submit an STR. Each invocation is logged with full parameters for audit. Second: Resources. These are read-only data the server exposes. Customer profiles. Regulatory rule sets. Risk scoring models. The application controls when and how data is accessed. Third: Prompts. These are structured templates that ensure consistent output. SAR narratives in FinCEN format. STR reports for the AMLC. EDD investigation summaries. Every report follows the exact format examiners expect.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Protocol</div>
-    <div class="chip magenta">MCP Primitives</div>
-    <h2 class="glow-magenta">Three Primitives</h2>
+  <div class="slide bg-magenta" data-narration="Cada servidor MCP se comunica mediante tres primitivas estandarizadas. Primera: las herramientas. Son funciones ejecutables que la inteligencia artificial puede invocar. Correr una verificación de sanciones. Traer un historial de transacciones. Presentar un reporte de actividad sospechosa. Cada invocación queda registrada con todos sus parámetros para auditoría. Segunda: los recursos. Son datos de sólo lectura que el servidor expone. Perfiles de clientes. Conjuntos de reglas regulatorias. Modelos de puntuación de riesgo. La aplicación controla cuándo y cómo se accede a esos datos. Tercera: los prompts. Son plantillas estructuradas que garantizan una salida consistente. Narrativas de reporte en formato FinCEN. Reportes de operación sospechosa para la AMLC. Resúmenes de debida diligencia ampliada. Cada informe sigue exactamente el formato que los examinadores esperan.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Protocolo</div>
+    <div class="chip magenta">Primitivas MCP</div>
+    <h2 class="glow-magenta">Tres Primitivas</h2>
     <div class="fgrid">
-      <div class="fcard"><h4>Tools</h4><p>AI-invoked functions:<br><code>run_sanctions_check()</code><br><code>file_sar(case_id)</code><br><code>check_ubo_registry()</code><br>Every call logged with timestamp + params.</p></div>
-      <div class="fcard"><h4>Resources</h4><p>Read-only data access:<br><code>customer://profiles/{id}</code><br><code>sanctions://ofac/sdn-list</code><br><code>regulatory://fatf/jurisdictions</code></p></div>
-      <div class="fcard"><h4>Prompts</h4><p>Structured output templates:<br>SAR Narrative (FinCEN)<br>STR Report (AMLC)<br>ROS Report (UIF Mexico)<br>EDD Summary -- audit-ready.</p></div>
+      <!-- Los identificadores de código NO se traducen: son la API real. -->
+      <div class="fcard"><h4>Herramientas</h4><p>Funciones que invoca la IA:<br><code>run_sanctions_check()</code><br><code>file_sar(case_id)</code><br><code>check_ubo_registry()</code><br>Cada llamada se registra con fecha, hora y parámetros.</p></div>
+      <div class="fcard"><h4>Recursos</h4><p>Acceso de sólo lectura:<br><code>customer://profiles/{id}</code><br><code>sanctions://ofac/sdn-list</code><br><code>regulatory://fatf/jurisdictions</code></p></div>
+      <div class="fcard"><h4>Prompts</h4><p>Plantillas de salida estructurada:<br>Narrativa SAR (FinCEN)<br>Reporte STR (AMLC)<br>Reporte ROS (UIF México)<br>Resumen de DDA -- listo para auditoría.</p></div>
     </div>
   </div>
 
   <!-- SLIDE 07 -->
-  <div class="slide bg-amber" data-narration="Let me show you a concrete example. A wire transfer arrives for screening. Here is exactly what happens, in milliseconds. Step one: the Transaction MCP Server receives the wire data from the payment rail -- SWIFT, ACH, PIX, SEPA, or InstaPay. Step two: the Sanctions MCP Server simultaneously checks the originator and beneficiary against OFAC, UN, EU, AMLC, and UK OFSI lists -- using AI entity resolution, not just string matching. Step three: the Core Banking and KYC servers provide the customer profile, risk rating, transaction baseline, and CDD status. Step four: the Neural Intelligence engine reasons across ALL this data. Is this transaction consistent with the customer's profile? Their peer group? Known typologies? Step five: the system renders a decision -- clear, alert, or block -- with a full reasoning chain logged for examiners. If an alert is generated, the Case Management server creates an investigation automatically.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Live Example</div>
-    <div class="chip amber">Data Flow</div>
-    <h2 class="glow-amber">Wire Transfer<br>Screening</h2>
+  <div class="slide bg-amber" data-narration="Veamos un ejemplo concreto. Llega una transferencia electrónica para ser filtrada. Esto es exactamente lo que ocurre, en milisegundos. Paso uno: el servidor MCP de transacciones recibe los datos desde el riel de pagos, sea SWIFT, ACH, PIX, SEPA o InstaPay. Paso dos: el servidor MCP de sanciones verifica simultáneamente al ordenante y al beneficiario contra las listas de la OFAC, la ONU, la Unión Europea, la AMLC y la OFSI del Reino Unido, usando resolución de entidades con inteligencia artificial, no una simple comparación de texto. Paso tres: los servidores de core bancario y de conocimiento del cliente aportan el perfil, la calificación de riesgo, la línea base transaccional y el estado de debida diligencia. Paso cuatro: el motor de Inteligencia Neuronal razona sobre todos esos datos a la vez. ¿Es esta operación consistente con el perfil del cliente? ¿Con su grupo de pares? ¿Con las tipologías conocidas? Paso cinco: el sistema emite una decisión, liberar, alertar o bloquear, con toda la cadena de razonamiento registrada para los examinadores. Si se genera una alerta, el servidor de gestión de casos abre la investigación automáticamente.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Ejemplo en Vivo</div>
+    <div class="chip amber">Flujo de Datos</div>
+    <h2 class="glow-amber">Filtrado de una<br>Transferencia</h2>
     <div class="arch">
-      <div class="layer l-amber"><div class="lt">1. Transaction Received</div><div class="ld">Wire data from SWIFT / ACH / PIX / SEPA / InstaPay / FedNow</div></div>
+      <div class="layer l-amber"><div class="lt">1. Transacción Recibida</div><div class="ld">Datos de la transferencia desde SWIFT / ACH / PIX / SEPA / InstaPay / FedNow</div></div>
       <div class="arch-arr">&#9660;</div>
-      <div class="layer" style="border-color:rgba(239,68,68,0.25);background:rgba(239,68,68,0.03);"><div class="lt" style="color:var(--red);">2. Parallel Sanctions Screen</div><div class="ld">OFAC + UN + EU + AMLC + OFSI -- AI entity resolution, not string matching</div></div>
+      <div class="layer" style="border-color:rgba(239,68,68,0.25);background:rgba(239,68,68,0.03);"><div class="lt" style="color:var(--red);">2. Filtro de Sanciones en Paralelo</div><div class="ld">OFAC + ONU + UE + AMLC + OFSI -- resolución de entidades con IA, no coincidencia de texto</div></div>
       <div class="arch-arr">&#9660;</div>
-      <div class="layer l-magenta"><div class="lt">3. Context Enrichment</div><div class="ld">Customer profile + risk rating + transaction baseline + CDD status + peer group norms</div></div>
+      <div class="layer l-magenta"><div class="lt">3. Enriquecimiento de Contexto</div><div class="ld">Perfil del cliente + calificación de riesgo + línea base transaccional + estado de DDC + normas de su grupo de pares</div></div>
       <div class="arch-arr">&#9660;</div>
-      <div class="layer l-cyan"><div class="lt">4. Neural Intelligence Reasoning</div><div class="ld">AI reasons across ALL sources simultaneously -- context, not rules</div></div>
+      <div class="layer l-cyan"><div class="lt">4. Razonamiento de Inteligencia Neuronal</div><div class="ld">La IA razona sobre TODAS las fuentes a la vez: contexto, no reglas</div></div>
       <div class="arch-arr">&#9660;</div>
-      <div class="layer l-emerald"><div class="lt">5. Decision + Full Audit Trail</div><div class="ld">CLEAR | ALERT | BLOCK -- explainable reasoning chain logged for examiners</div></div>
+      <div class="layer l-emerald"><div class="lt">5. Decisión + Bitácora Completa</div><div class="ld">LIBERAR | ALERTAR | BLOQUEAR -- cadena de razonamiento explicable y registrada para los examinadores</div></div>
     </div>
   </div>
 
   <!-- SLIDE 08 -->
-  <div class="slide bg-emerald" data-narration="Security is not an afterthought. It is built into the protocol itself. MCP mandates OAuth 2.1 with PKCE for all connections. Tokens are scoped per server using Resource Indicators, RFC 8707. This means a token issued for the sanctions server literally cannot be used to access the customer data server. Data isolation is enforced at the protocol level. Servers cannot read the full conversation. They cannot see into other servers. The only entity that controls cross-server data flow is your Host application. Every single tool invocation -- every sanctions check, every data lookup, every filing action -- is logged with timestamp, user identity, parameters, and results. This immutable audit trail satisfies SOC 2, ISO 27001, the EU AI Act, BSP Circular 1085, and OCC 2011-12 simultaneously.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Security</div>
-    <div class="chip emerald">Compliance-Grade</div>
-    <h2 class="glow-emerald">Built-In<br>Security</h2>
+  <div class="slide bg-emerald" data-narration="La seguridad no es un añadido posterior. Está construida dentro del propio protocolo. MCP exige OAuth dos punto uno con PKCE en todas las conexiones. Los tokens se limitan por servidor mediante indicadores de recurso, según el estándar RFC ocho mil setecientos siete. Esto significa que un token emitido para el servidor de sanciones literalmente no puede usarse para acceder al servidor de datos del cliente. El aislamiento de datos se impone a nivel de protocolo. Los servidores no pueden leer la conversación completa ni asomarse a otros servidores. La única entidad que controla el flujo de datos entre servidores es su aplicación anfitriona. Cada invocación de herramienta, cada verificación de sanciones, cada consulta de datos, cada presentación de reporte, queda registrada con fecha, hora, identidad del usuario, parámetros y resultados. Esa bitácora inmutable satisface a la vez SOC dos, ISO veintisiete mil uno, la Ley de Inteligencia Artificial de la Unión Europea, la Circular mil ochenta y cinco del BSP y la OCC dos mil once guion doce.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Seguridad</div>
+    <div class="chip emerald">Grado Cumplimiento</div>
+    <h2 class="glow-emerald">Seguridad<br>Integrada</h2>
     <div class="fgrid">
-      <div class="fcard"><h4>OAuth 2.1 + PKCE</h4><p>Mandatory for all clients. Tokens scoped per server via RFC 8707. Sanctions token cannot access customer data.</p></div>
-      <div class="fcard"><h4>Data Isolation</h4><p>Servers cannot see into other servers. Cross-server flow controlled exclusively by the Host. Protocol-level enforcement.</p></div>
-      <div class="fcard"><h4>Immutable Audit</h4><p>Every tool call logged: timestamp, user, params, results. Meets SOC 2, ISO 27001, EU AI Act, BSP 1085, OCC 2011-12.</p></div>
-      <div class="fcard"><h4>PII Protection</h4><p>Input/output filtering for GDPR, Data Privacy Act RA 10173, LGPD, PIPEDA, and PCI-DSS compliance.</p></div>
+      <div class="fcard"><h4>OAuth 2.1 + PKCE</h4><p>Obligatorio para todos los clientes. Tokens limitados por servidor vía RFC 8707. El token de sanciones no puede tocar datos del cliente.</p></div>
+      <div class="fcard"><h4>Aislamiento de Datos</h4><p>Ningún servidor se asoma a otro. El flujo entre servidores lo controla exclusivamente el anfitrión, y se impone a nivel de protocolo.</p></div>
+      <div class="fcard"><h4>Auditoría Inmutable</h4><p>Cada llamada queda registrada: fecha, hora, usuario, parámetros y resultados. Cumple SOC 2, ISO 27001, Ley de IA de la UE, BSP 1085 y OCC 2011-12.</p></div>
+      <div class="fcard"><h4>Protección de Datos Personales</h4><p>Filtrado de entrada y salida para GDPR, Ley de Privacidad de Datos RA 10173, LGPD, PIPEDA y PCI-DSS.</p></div>
     </div>
   </div>
 
   <!-- SLIDE 09 -->
-  <div class="slide bg-dark" data-narration="Let's talk results. Banks deploying Neural Intelligence with MCP are seeing 50 to 75 percent reduction in false positives. That is not a theoretical number. HSBC reported approximately 60 percent reduction after deploying AI-based transaction monitoring. For a mid-size bank, this translates to 40 to 60 percent reduction in compliance operating costs within 18 to 24 months. The system automates 70 percent of routine compliance workflows. And the implementation timeline is 90 days to first measurable results -- not 12 to 24 months like legacy enterprise platforms. Each phase runs in shadow mode alongside your existing systems, so there is zero deployment risk.">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Impact</div>
-    <div class="chip">Measurable Results</div>
-    <h2 class="glow-cyan">Proven<br>Impact</h2>
+  <div class="slide bg-dark" data-narration="Hablemos de resultados. Los bancos que despliegan Inteligencia Neuronal con MCP están viendo reducciones de falsos positivos de entre el cincuenta y el setenta y cinco por ciento. No es una cifra teórica: HSBC reportó una reducción cercana al sesenta por ciento tras desplegar monitoreo transaccional basado en inteligencia artificial. Para un banco mediano, esto se traduce en una reducción de entre el cuarenta y el sesenta por ciento en el costo operativo de cumplimiento dentro de dieciocho a veinticuatro meses. El sistema automatiza el setenta por ciento de los flujos rutinarios de cumplimiento. Y el plazo de implementación es de noventa días hasta los primeros resultados medibles, no de doce a veinticuatro meses como en las plataformas empresariales heredadas. Cada fase corre en modo sombra, en paralelo con sus sistemas actuales, de modo que el riesgo de despliegue es cero.">
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Impacto</div>
+    <div class="chip">Resultados Medibles</div>
+    <h2 class="glow-cyan">Impacto<br>Comprobado</h2>
     <div class="stats">
-      <div class="stat"><div class="val">50-75%</div><div class="lbl">False positive reduction</div></div>
-      <div class="stat"><div class="val">40-60%</div><div class="lbl">Cost reduction 18-24 mo</div></div>
-      <div class="stat"><div class="val">70%</div><div class="lbl">Workflow automation</div></div>
-      <div class="stat"><div class="val">90 Days</div><div class="lbl">To first results</div></div>
+      <div class="stat"><div class="val">50-75%</div><div class="lbl">Menos falsos positivos</div></div>
+      <div class="stat"><div class="val">40-60%</div><div class="lbl">Menos costo en 18-24 meses</div></div>
+      <div class="stat"><div class="val">70%</div><div class="lbl">Automatización de flujos</div></div>
+      <div class="stat"><div class="val">90 Días</div><div class="lbl">A los primeros resultados</div></div>
     </div>
-    <p class="lead">Each phase runs in shadow mode alongside existing systems. Zero deployment risk. Champion-challenger testing satisfies model governance requirements across all jurisdictions.</p>
+    <p class="lead">Cada fase corre en modo sombra junto a los sistemas actuales. Riesgo de despliegue cero. Las pruebas campeón-retador satisfacen los requisitos de gobierno de modelos en todas las jurisdicciones.</p>
   </div>
 
   <!-- SLIDE 10 -->
-  <div class="slide bg-dark" data-last-slide data-narration="To summarize: Neural Intelligence with MCP is not incremental improvement. It is a paradigm shift. From rules to reasoning. From proprietary silos to a universal open standard. From 95 percent false positives to intelligent, contextual detection. From fragmented point solutions to a unified platform that satisfies FinCEN, AMLC, CNBV, AMLA, MAS, AUSTRAC, and every major regulator simultaneously. The technology exists. The regulatory framework supports it. The economic case is clear. The question for banking leadership is no longer 'should we?' but 'how soon can we start?' Thank you. I'm Rachel, and this has been a Digit2AI technology briefing.">
+  <div class="slide bg-dark" data-last-slide data-narration="En resumen: la Inteligencia Neuronal con MCP no es una mejora incremental. Es un cambio de paradigma. De las reglas al razonamiento. De los silos propietarios a un estándar abierto y universal. Del noventa y cinco por ciento de falsos positivos a una detección inteligente y contextual. De soluciones puntuales y fragmentadas a una plataforma unificada que satisface a la vez a FinCEN, la AMLC, la CNBV, la AMLA, la MAS, AUSTRAC y a todos los reguladores principales. La tecnología existe. El marco regulatorio la respalda. El caso económico es claro. La pregunta para la alta dirección bancaria ya no es &quot;¿deberíamos hacerlo?&quot;, sino &quot;¿qué tan pronto podemos empezar?&quot;. Gracias. Soy Dalia, y esto ha sido un informe tecnológico de Digit2AI.">
     <img class="slide-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI">
-    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Conclusion</div>
-    <div class="chip">The Future</div>
-    <h1>The Future<br>Is Neural</h1>
-    <p class="lead">From rules to reasoning. From silos to a universal standard.<br>From noise to intelligence. From cost center to competitive advantage.</p>
+    <div class="hud hud-tl"><div class="hud-dot"></div><div class="hud-line"></div>Conclusión</div>
+    <div class="chip">El Futuro</div>
+    <h1>El Futuro<br>Es Neuronal</h1>
+    <p class="lead">De las reglas al razonamiento. De los silos a un estándar universal.<br>Del ruido a la inteligencia. De centro de costo a ventaja competitiva.</p>
     <div class="stats">
-      <div class="stat"><div class="val" style="font-size:20px;">Rules</div><div class="lbl" style="font-size:18px;color:var(--cyan);">&#8594; Reasoning</div></div>
+      <div class="stat"><div class="val" style="font-size:20px;">Reglas</div><div class="lbl" style="font-size:18px;color:var(--cyan);">&#8594; Razonamiento</div></div>
       <div class="stat"><div class="val" style="font-size:20px;">Silos</div><div class="lbl" style="font-size:18px;color:var(--magenta);">&#8594; Universal</div></div>
-      <div class="stat"><div class="val" style="font-size:20px;">Noise</div><div class="lbl" style="font-size:18px;color:var(--emerald);">&#8594; Intelligence</div></div>
+      <div class="stat"><div class="val" style="font-size:20px;">Ruido</div><div class="lbl" style="font-size:18px;color:var(--emerald);">&#8594; Inteligencia</div></div>
     </div>
   </div>
 
@@ -530,8 +535,8 @@
   <span class="counter" id="counter">01 / 10</span>
   <div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
   <div class="nav-arrows">
-    <button id="prev" aria-label="Previous">&#9664;</button>
-    <button id="next" aria-label="Next">&#9654;</button>
+    <button id="prev" aria-label="Anterior">&#9664;</button>
+    <button id="next" aria-label="Siguiente">&#9654;</button>
   </div>
 </div>
 
@@ -539,8 +544,8 @@
 
 <div class="autoplay-controls">
   <div class="rec-indicator" id="recIndicator"><div class="rec-dot"></div><span>REC</span></div>
-  <button id="btnPlayPause" aria-label="Play / Pause">&#9654;</button>
-  <button id="btnStop" aria-label="Stop">&#9632;</button>
+  <button id="btnPlayPause" aria-label="Reproducir / Pausar">&#9654;</button>
+  <button id="btnStop" aria-label="Detener">&#9632;</button>
   <div class="slide-info" id="slideInfo">01 / 10</div>
 </div>
 
@@ -588,13 +593,13 @@
 
   function manualNav(n){if(autoPlaying)pauseAutoPlay();cancelNarration();show(n);}
 
-  // ============ RACHEL VOICE — MOBILE-SAFE AUDIO ENGINE ============
+  // ============ VOZ DALIA — MOTOR DE AUDIO SEGURO EN MOVIL ============
   // Single reusable Audio element — critical for mobile.
   // Mobile browsers only allow audio from elements unlocked by user gesture.
   // Creating new Audio() per slide breaks this. Reusing one element works.
   // NEVER call removeAttribute('src') or load() without src — this re-locks on iOS.
-  const rachelAudio = new Audio();
-  rachelAudio.volume = 1.0;
+  const daliaAudio = new Audio();
+  daliaAudio.volume = 1.0;
 
   const narrationWave = document.getElementById('narrationWave');
   let autoAdvanceTimer = null;
@@ -617,17 +622,17 @@
   }
   prefetchAudio(0);
 
-  // Rachel audio event handlers — set once, never recreated
-  rachelAudio.addEventListener('play', function() {
+  // Manejadores de audio de Dalia — set once, never recreated
+  daliaAudio.addEventListener('play', function() {
     narrationWave.classList.add('active');
   });
-  rachelAudio.addEventListener('ended', function() {
+  daliaAudio.addEventListener('ended', function() {
     narrationWave.classList.remove('active');
     if (narrateOnEnd) { var cb = narrateOnEnd; narrateOnEnd = null; cb(); }
   });
-  rachelAudio.addEventListener('error', function() {
+  daliaAudio.addEventListener('error', function() {
     narrationWave.classList.remove('active');
-    console.warn('[Rachel] Audio error on slide', idx + 1);
+    console.warn('[Dalia] Error de audio en la diapositiva', idx + 1);
     // Fallback: wait 8 seconds then advance
     if (narrateOnEnd) {
       var cb = narrateOnEnd;
@@ -640,7 +645,7 @@
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     narrateOnEnd = null;
     // MOBILE-SAFE: just pause, do NOT remove src or call load() — re-locks iOS
-    rachelAudio.pause();
+    daliaAudio.pause();
     narrationWave.classList.remove('active');
   }
 
@@ -654,14 +659,14 @@
     };
 
     // Set src and load — Safari requires explicit load() when src changes
-    rachelAudio.src = audioFiles[slideIndex];
-    rachelAudio.load();
-    rachelAudio.play().then(function() {
-      console.log('[Rachel] Playing slide', slideIndex + 1);
+    daliaAudio.src = audioFiles[slideIndex];
+    daliaAudio.load();
+    daliaAudio.play().then(function() {
+      console.log('[Dalia] Reproduciendo diapositiva', slideIndex + 1);
       // Prefetch upcoming slides
       prefetchAudio(slideIndex + 1);
     }).catch(function(err) {
-      console.warn('[Rachel] Play failed slide', slideIndex + 1, err.message);
+      console.warn('[Dalia] Fallo la reproduccion en la diapositiva', slideIndex + 1, err.message);
       narrationWave.classList.remove('active');
       narrateOnEnd = null;
       // Fallback: wait 8 seconds then advance
@@ -731,15 +736,15 @@
     preplayOverlay.style.display = 'none';
     show(0);
 
-    // Unlock the single rachelAudio element in the direct click handler.
+    // Unlock the single daliaAudio element in the direct click handler.
     // Mobile browsers require play() to be called within user gesture.
     var firstSrc = audioFiles[0];
-    rachelAudio.src = firstSrc;
-    rachelAudio.load();
-    rachelAudio.play().then(function() {
+    daliaAudio.src = firstSrc;
+    daliaAudio.load();
+    daliaAudio.play().then(function() {
       // Audio context unlocked — pause and let autoplay engine take over
-      rachelAudio.pause();
-      rachelAudio.currentTime = 0;
+      daliaAudio.pause();
+      daliaAudio.currentTime = 0;
       startAutoPlay();
     }).catch(function() {
       // Even if play fails, try autoplay anyway
