@@ -163,12 +163,20 @@ function clientPlanFromTriage(project, opts = {}) {
 
   // Risks we plan around — from the premortem, softened (no base rates, no
   // "the company dies"). Pair the failure modes with our mitigations.
+  // A premortem title is sometimes scene-setting ("It is 6 months from now.")
+  // rather than a risk. Detect that and fall back to the narrative's real content.
+  const isSceneSetting = (s) => /^(it is|it's|imagine|picture|fast[- ]?forward|the year is|\d+\s*(months?|weeks?|years?)\s+(from now|later)|six months|three months)\b/i.test(String(s || '').trim());
   const risks = arr(premortem && premortem.failure_modes)
     .map(f => {
-      const risk = scrubText(f.title || '');
+      let risk = scrubText(f.title || '');
       const detail = scrubText(f.narrative || '');
+      if (isSceneSetting(risk)) {
+        // Use the first substantive sentence of the narrative as the risk headline.
+        const firstReal = detail.split(/(?<=[.!?])\s+/).find(s => !isSceneSetting(s) && s.length > 12) || '';
+        risk = firstReal.replace(/[.!?]+$/, '');
+      }
       if (!risk && !detail) return null;
-      return { risk: risk || detail.slice(0, 80), detail: risk && detail && detail !== risk ? detail : '' };
+      return { risk: risk || detail.slice(0, 90), detail: risk && detail && detail.indexOf(risk) === -1 ? detail : '' };
     })
     .filter(Boolean)
     .slice(0, 6);
@@ -193,7 +201,7 @@ function clientPlanFromTriage(project, opts = {}) {
     disclaimer: 'Alcance preliminar generado por nuestro análisis de IA. Un humano lo revisa antes de cualquier construcción.',
     feas: 'Factibilidad', problem: 'El problema, en nuestras palabras', why: 'Evaluación de factibilidad',
     v1: 'Primera versión recomendada', includes: 'Qué incluye la primera versión',
-    timeline: 'Tiempo de entrega estimado', weeks: 'semanas', cons: 'Puntos clave a considerar',
+    timeline: 'Tiempo de entrega estimado', weeks: 'semanas', cons: 'Requisitos regulatorios y de cumplimiento',
     land: 'Panorama competitivo que contemplamos', risks: 'Análisis de riesgos (premortem)',
     mit: 'Cómo los manejamos', need: 'Lo que necesitaremos de ti'
   } : {
@@ -201,7 +209,7 @@ function clientPlanFromTriage(project, opts = {}) {
     disclaimer: 'Preliminary scope from our AI analysis. A human reviews it before any build.',
     feas: 'Feasibility', problem: 'The problem, in our words', why: 'Fit assessment',
     v1: 'Recommended first build', includes: 'What the first version includes',
-    timeline: 'Estimated delivery time', weeks: 'weeks', cons: 'Key considerations to address',
+    timeline: 'Estimated delivery time', weeks: 'weeks', cons: 'Regulatory & compliance requirements',
     land: 'Competitive landscape we account for', risks: 'Risk analysis (premortem)',
     mit: 'How we handle them', need: 'What we\'ll need from you'
   };

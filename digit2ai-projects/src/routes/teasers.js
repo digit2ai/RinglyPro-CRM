@@ -378,6 +378,9 @@ publicRouter.get('/:token', async (req, res) => {
   try {
     const row = await loadTeaser(req.params.token);
     if (!row) return res.status(404).type('html').send('<h1>Teaser not found</h1>');
+    // Never let the browser cache the teaser HTML — the plan + Copilot evolve, and
+    // a stale cached page hides new features (e.g. the chat) from a returning visitor.
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.type('html').send(renderTeaserPage(contentOf(row), { projectId: row.project_id, token: row.token }));
   } catch (err) {
     console.error('[teasers] viewer failed:', err);
