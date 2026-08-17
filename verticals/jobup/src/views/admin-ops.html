@@ -271,6 +271,16 @@ small{color:var(--mut)}
           show('openView'); $('reason').focus();
         });
       });
+      // Arriving from the billing register with ?open=<id>: go straight to the
+      // reason prompt for that subscriber. It is a shortcut through the list,
+      // never through the reason — an unknown id just leaves the list showing.
+      var want=parseInt((location.search.match(/[?&]open=(\d+)/)||[])[1],10);
+      if(want && j.subscribers.some(function(s){return s.id===want;})){
+        TID=want; $('openId').textContent='#'+TID; $('reason').value='';
+        history.replaceState(null,'',location.pathname);
+        show('openView'); $('reason').focus();
+        return;
+      }
       show('listView');
     }).catch(function(e){msg(e.message,'bad');});
   }

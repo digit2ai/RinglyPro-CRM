@@ -2038,6 +2038,31 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const pick = (s) => (s.match(/const SECRET = ([^;]+);/) || [])[1];
     assert.strictEqual(pick(b), pick(a), 'both must resolve the admin secret identically');
   });
+  await t('THE BILLING REGISTER LINKS OUT, IT DOES NOT DRILL IN', () => {
+    // Clicking a subscriber's name in the billing console did nothing, which
+    // reads as a broken console rather than as a deliberate boundary. That
+    // register is billing-only and cannot show a board — so it gets a LINK to
+    // the bench that can, and the link says what it costs before you follow it.
+    const reg = fs.readFileSync(__dirname + '/public/subscribers-admin.html', 'utf8');
+    assert.ok(/href="\/admin\/ops\?open='\+encodeURIComponent\(r\.id\)/.test(reg),
+      'each row must deep-link to that subscriber on the bench');
+    assert.ok(/Separate platform-admin sign-in/.test(reg),
+      'and must say it is a separate credential before it is clicked');
+
+    // It stays a LINK. This console must not start reading career data.
+    const svc = fs.readFileSync(__dirname + '/src/routes/subscribers-admin.js', 'utf8');
+    for (const forbidden of ['job_matches', 'job_scores', 'profiles', 'outreach', 'settings']) {
+      assert.ok(!new RegExp("models\\." + forbidden + "|scoped\\('" + forbidden).test(svc),
+        'the billing register must never read ' + forbidden);
+    }
+
+    // The deep link is a shortcut through the LIST, never through the reason.
+    const page = fs.readFileSync(__dirname + '/src/views/admin-ops.html', 'utf8');
+    assert.ok(/\[?\?&\]open=/.test(page) || /open=\(\\d\+\)/.test(page), '?open= must be honoured');
+    const open = page.slice(page.indexOf('[?&]open='), page.indexOf('show(\'listView\');'));
+    assert.ok(/show\('openView'\)/.test(open), 'it must land on the reason prompt');
+    assert.ok(!/case_token|diagnose/.test(open), 'and must not skip straight to the data');
+  });
   await t('the ops page is not served out of public/', () => {
     // A static file under public/ is reachable by anyone who guesses the name.
     assert.ok(!fs.existsSync(__dirname + '/public/admin-ops.html'),

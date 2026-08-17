@@ -55,6 +55,9 @@ td{padding:12px 12px 12px 0;border-top:1px solid var(--line);vertical-align:top}
 tbody tr:hover{background:rgba(255,255,255,.02)}
 .nm{font-weight:700}
 .em{color:var(--mut);font-size:13px;word-break:break-all}
+.opslink{display:inline-block;white-space:nowrap;font-size:13px;text-decoration:none;
+  border:1px solid var(--line);border-radius:6px;padding:5px 11px;color:inherit;opacity:.75}
+.opslink:hover{opacity:1;border-color:var(--accent,#7c5cff)}
 .money{font-family:var(--mono);white-space:nowrap;font-weight:700}
 .money.zero{color:var(--faint);font-weight:400}
 .dt{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
@@ -318,7 +321,7 @@ function render(){
 
   var html='<div class="card" style="overflow-x:auto"><table><thead><tr>'+
     '<th>Subscriber</th><th>Status</th><th>Subscribed</th><th>Amount paid</th>'+
-    '<th>Payments</th><th>Last payment</th><th>Renews</th></tr></thead><tbody>';
+    '<th>Payments</th><th>Last payment</th><th>Renews</th><th></th></tr></thead><tbody>';
   rows.forEach(function(r){
     var test = r.activation==='free_test'
       ? '<span class="chip test">free test</span>' : '';
@@ -335,6 +338,15 @@ function render(){
         (r.open_invoices?'<small>'+r.open_invoices+' open</small>':'')+'</td>'+
       '<td data-l="Last payment" class="dt">'+when(r.last_payment_at)+'</td>'+
       '<td data-l="Renews" class="dt">'+when(r.current_period_end)+'</td>'+
+      // Clicking a name here did nothing, which reads as a broken console
+      // rather than as a deliberate boundary. This register is billing only —
+      // it cannot show a board or an agent run. The bench that can is a
+      // SEPARATE console behind a SEPARATE credential, so this is a link out,
+      // not a drill-in, and the title says so before you click it.
+      '<td data-l="" class="dt"><a class="opslink" target="_blank" rel="noopener"'+
+        ' href="/admin/ops?open='+encodeURIComponent(r.id)+'"'+
+        ' title="Job matching, diagnosis and agent controls. Separate platform-admin sign-in;'+
+        ' opening an account there needs a written reason and is audited.">Matching &rarr;</a></td>'+
     '</tr>';
   });
   html+='</tbody></table></div>';
