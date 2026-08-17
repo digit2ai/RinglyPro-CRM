@@ -1,0 +1,95 @@
+/* =====================================================
+   Print stylesheet — the model summary as a document.
+
+   Cmd-P then "Save as PDF" is the practical stand-in for the investor-ready
+   deck, which is a content deliverable rather than something this app renders.
+   Chrome is hidden; the assumptions and the provenance table are kept, because
+   a projection printed without its assumptions is how a number escapes into a
+   deck and stops being checkable.
+   ===================================================== */
+
+@page { margin: 14mm; }
+
+body {
+  background: #fff;
+  color: #111;
+  font-size: 10.5pt;
+}
+
+.topbar,
+.tabs,
+.controls,
+.foot,
+.modal,
+.toast,
+#signin-btn,
+#backend-pill {
+  display: none !important;
+}
+
+.guardrail {
+  background: #fff;
+  border: 1pt solid #999;
+  border-radius: 3pt;
+  color: #111;
+  padding: 6pt 8pt;
+  margin-bottom: 8pt;
+}
+.guardrail strong { color: #8a5a00; }
+.guardrail span { color: #444; }
+
+.layout {
+  display: block;
+  padding: 0;
+}
+
+/* Every tab prints, in order, regardless of which one is on screen. A printed
+   model that only carries the tab you happened to be looking at is not a model. */
+.panel { display: block !important; page-break-inside: auto; }
+.panel + .panel { page-break-before: always; }
+
+.card,
+.kpi,
+.item,
+.notice {
+  background: #fff;
+  border: 1pt solid #bbb;
+  border-radius: 3pt;
+  color: #111;
+  page-break-inside: avoid;
+  margin-bottom: 6pt;
+  padding: 7pt 9pt;
+}
+
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6pt; }
+.kpi-value { color: #111; font-size: 15pt; }
+.kpi-label, .kpi-sub, .note, caption { color: #555; }
+
+h1, h2, h3 { color: #111; }
+h2 { font-size: 12pt; margin-bottom: 4pt; }
+h3 { color: #555; }
+
+table { font-size: 8.5pt; }
+th { color: #555; border-bottom: 1pt solid #999; }
+th, td { padding: 3pt 4pt; border-bottom: 0.5pt solid #ddd; }
+tbody tr:hover { background: transparent; }
+
+.chip {
+  border: 0.5pt solid #999;
+  color: #333;
+  background: #f4f4f4;
+}
+.chip.assumption { color: #8a5a00; background: #fdf3e0; }
+.chip.sourced { color: #1c6b4a; background: #eaf7f1; }
+
+.item.critical { border-left: 2pt solid #b00020; }
+.item.strategic { border-left: 2pt solid #8a5a00; }
+.disclaimer { color: #555; }
+
+.chart .bar { fill: #4a4a8a; }
+.chart .bar.alt { fill: #7a7ab0; }
+.chart .bar.neg { fill: #b00020; }
+.chart .glabel, .chart .vlabel { fill: #333; }
+.chart .axis { stroke: #999; }
+
+a { color: #111; text-decoration: none; }

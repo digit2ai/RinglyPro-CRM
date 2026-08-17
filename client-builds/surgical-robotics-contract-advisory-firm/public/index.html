@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoboNegotiate — Fee-on-Savings Model</title>
+<meta name="description" content="Insider intelligence that turns robotic surgery contracts into savings. A sourced, reconciling market and revenue model for a surgical robotics contract advisory practice.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{BASE}}/app.css">
+<link rel="stylesheet" href="{{BASE}}/print.css" media="print">
+</head>
+<body data-base="{{BASE}}" data-brand="{{BRAND}}" data-version="{{VERSION}}" data-model-version="{{MODEL_VERSION}}">
+
+<!--
+  THERE ARE NO NUMBERS IN THIS FILE, AND THAT IS THE POINT.
+
+  Every currency figure, percentage and count on all five tabs is returned by
+  lib/model.js and written in by app.js. The teaser simulator this replaces was
+  hand-authored HTML whose dashboard, scenario table and cumulative totals each
+  carried a different answer to the same question. sit.js greps this file and
+  fails the build on any hardcoded magnitude, so that cannot happen again.
+-->
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>RoboNegotiate</h1>
+      <p class="tagline">Insider intelligence that turns robotic surgery contracts into savings</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="provenance-pill" class="pill" title="How many model inputs are traced to public data"></span>
+    <span id="backend-pill" class="pill quiet"></span>
+    <button id="signin-btn" class="btn ghost" type="button">Sign in</button>
+  </div>
+</header>
+
+<div class="guardrail" role="note">
+  <strong>Model uses publicly sourced benchmarks only. Do not enter Intuitive-confidential pricing.</strong>
+  <span>Every figure below is either sourced or labelled an assumption. Nothing here is Intuitive-confidential.</span>
+</div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab active" role="tab" data-tab="dashboard" aria-selected="true">Dashboard</button>
+  <button class="tab" role="tab" data-tab="market" aria-selected="false">Market Sizing</button>
+  <button class="tab" role="tab" data-tab="revenue" aria-selected="false">Revenue Model</button>
+  <button class="tab" role="tab" data-tab="pipeline" aria-selected="false">IDN Pipeline</button>
+  <button class="tab" role="tab" data-tab="watchouts" aria-selected="false">Watchouts</button>
+</nav>
+
+<main class="layout">
+
+  <aside class="controls" id="controls" aria-label="Model inputs">
+    <div class="controls-head">
+      <h2>Assumptions</h2>
+      <button id="reset-btn" class="btn tiny ghost" type="button">Reset</button>
+    </div>
+    <div id="preset-row" class="preset-row"></div>
+    <div id="control-fields"></div>
+    <div class="controls-foot">
+      <button id="save-btn" class="btn primary" type="button">Save scenario</button>
+      <button id="print-btn" class="btn ghost" type="button">Print or save as PDF</button>
+      <div id="save-note" class="note"></div>
+    </div>
+    <div class="controls-foot">
+      <h3>Saved scenarios</h3>
+      <div id="scenario-list" class="scenario-list"></div>
+    </div>
+  </aside>
+
+  <section class="panels">
+    <div class="panel active" id="panel-dashboard" role="tabpanel">
+      <div id="dash-kpis" class="kpi-grid"></div>
+      <div id="dash-reconciliation"></div>
+      <div id="dash-truth"></div>
+      <div id="dash-chart" class="card"></div>
+    </div>
+
+    <div class="panel" id="panel-market" role="tabpanel">
+      <div id="market-summary" class="kpi-grid"></div>
+      <div id="market-chart" class="card"></div>
+      <div id="market-table" class="card"></div>
+      <div id="market-components" class="card"></div>
+      <div id="market-provenance" class="card"></div>
+    </div>
+
+    <div class="panel" id="panel-revenue" role="tabpanel">
+      <h2 class="panel-title">Revenue Model — Fee-on-Savings</h2>
+      <div id="revenue-chain" class="card"></div>
+      <div id="revenue-chart" class="card"></div>
+      <div id="revenue-table" class="card"></div>
+      <div id="revenue-capacity" class="card"></div>
+      <div id="revenue-sensitivity" class="card"></div>
+    </div>
+
+    <div class="panel" id="panel-pipeline" role="tabpanel">
+      <div id="pipeline-note" class="card"></div>
+      <div id="pipeline-list"></div>
+    </div>
+
+    <div class="panel" id="panel-watchouts" role="tabpanel">
+      <div id="watchouts-next" class="card"></div>
+      <div id="watchouts-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span id="foot-version"></span>
+  <span>Prepared by Digit2AI. Not legal, financial or investment advice.</span>
+</footer>
+
+<div id="signin-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Sign in</h2>
+    <p class="note">Saving scenarios needs a sign-in. Server-initiated email is disabled for this deployment, so the sign-in link is shown here rather than sent.</p>
+    <label for="signin-email">Email</label>
+    <input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com">
+    <div class="modal-actions">
+      <button id="signin-send" class="btn primary" type="button">Get a sign-in link</button>
+      <button id="signin-close" class="btn ghost" type="button">Close</button>
+    </div>
+    <div id="signin-result" class="note"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="{{BASE}}/app.js" defer></script>
+</body>
+</html>
