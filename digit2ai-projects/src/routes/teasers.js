@@ -496,7 +496,7 @@ body{font-family:'Inter',sans-serif;background:radial-gradient(1200px 600px at 5
 .hero .sub{color:var(--mut);margin-top:10px;font-size:1.05rem;max-width:640px}
 /* Lina orb */
 .lina{margin:30px 0;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:24px;display:flex;gap:20px;align-items:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-.orb{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);box-shadow:0 0 0 0 rgba(155,123,255,.5)}
+.orb{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:50%;background:url('/orbup-assets/orb-master.png') center/cover no-repeat,radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);box-shadow:0 0 0 0 rgba(155,123,255,.5)}
 .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(155,123,255,.35)}
 .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(155,123,255,.45)}70%{box-shadow:0 0 0 22px rgba(155,123,255,0)}100%{box-shadow:0 0 0 0 rgba(155,123,255,0)}}
@@ -597,7 +597,7 @@ button:disabled{opacity:.45;cursor:default}
 /* Plan Copilot chat */
 .d2chat{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card),var(--bg2));overflow:hidden}
 .d2chat-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-.d2chat-orb{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);flex:0 0 auto}
+.d2chat-orb{width:26px;height:26px;border-radius:50%;background:url('/orbup-assets/orb-master.png') center/cover no-repeat,radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);flex:0 0 auto}
 .d2chat-h .tt{font-weight:700}.d2chat-h .ss{color:var(--mut);font-size:12.5px}
 .d2chat-log{max-height:340px;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 .d2msg{max-width:88%;padding:10px 13px;border-radius:13px;font-size:14.5px;line-height:1.5}
@@ -623,7 +623,7 @@ body.tw-on{padding-left:264px}
 body.tw-on .tw-side{display:flex}
 @media(min-width:920px){body.tw-on .d2studio-sec{width:min(1180px,calc(96vw - 300px))}}
 .tw-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;padding:4px 8px 16px;color:var(--txt)}
-.tw-brand .dot{width:26px;height:26px;border-radius:50%;flex:0 0 26px;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%)}
+.tw-brand .dot{width:26px;height:26px;border-radius:50%;flex:0 0 26px;background:url('/orbup-assets/orb-master.png') center/cover no-repeat,radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%)}
 .tw-new{display:block;text-align:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;text-decoration:none;padding:10px;border-radius:11px;margin:0 4px 14px;font-size:13.5px}
 .tw-lbl{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#5f7197;padding:8px 10px 6px;font-weight:700}
 .tw-proj{display:block;text-decoration:none;color:var(--mut);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.35;margin-bottom:2px;border:1px solid transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
