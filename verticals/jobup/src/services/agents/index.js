@@ -177,7 +177,9 @@ async function hunter(tenantId, opts = {}) {
     scoped('job_scores', tenantId).findAll({}),
   ]);
   const seen = new Set([...existing, ...ledger].map((m) => m.job_id));
-  const fresh = ranked.filter((r) => !seen.has(r.job.id)).slice(0, jobsLeft);
+  // Spread the day's allowance across employers. A ranked queue alone hands a
+  // national employer every slot with one title in six different cities.
+  const fresh = jobsource.diversify(ranked.filter((r) => !seen.has(r.job.id))).slice(0, jobsLeft);
 
   if (!fresh.length) {
     // Distinguish "your targeting matches nothing in the pool" from "we have

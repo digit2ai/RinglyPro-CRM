@@ -4104,6 +4104,65 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     await scoped('job_scores', subA.id).destroy({ job_id: probe.id });
     await models.jobs.destroy({ where: { id: probe.id } });
   });
+  await t('ONE EMPLOYER CANNOT TAKE THE WHOLE DAY', () => {
+    // A national employer posts one title in twenty markets, so a purely ranked
+    // queue is twenty near-identical rows from one company — and against six
+    // scorings a day that is the subscriber's whole week on one employer, five
+    // of them the same job in a city they do not live in.
+    const mk = (id, employer, prescore) => ({ job: { id, employer, title: 'Account Executive' }, prescore });
+    const ranked = [
+      mk(1, 'TEGNA', 16), mk(2, 'TEGNA', 14), mk(3, 'TEGNA', 14), mk(4, 'TEGNA', 14),
+      mk(5, 'TEGNA', 14), mk(6, 'TEGNA', 14), mk(7, 'TEGNA', 14),
+      mk(8, 'OUTFRONT', 13), mk(9, 'OUTFRONT', 13),
+      mk(10, 'Clear Channel', 13),
+    ];
+    const out = jobsource.diversify(ranked);
+    assert.strictEqual(out.length, ranked.length, 'nothing may be lost, only reordered');
+    assert.strictEqual(out[0].job.id, 1, 'the best posting overall still leads');
+    const firstSix = out.slice(0, 6).map((x) => x.job.employer);
+    assert.strictEqual(new Set(firstSix).size, 3, 'the day must span every employer available');
+    assert.deepStrictEqual(out.slice(0, 3).map((x) => x.job.id), [1, 8, 10],
+      'round one takes each employer\'s best, in order of who is best');
+    // Within an employer, rank order is preserved.
+    const tegna = out.filter((x) => x.job.employer === 'TEGNA').map((x) => x.job.id);
+    assert.deepStrictEqual(tegna, [1, 2, 3, 4, 5, 6, 7]);
+    // And the hunter actually uses it.
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/jobsource\.diversify\(/.test(src), 'the hunter must diversify before slicing the day');
+  });
+  await t('THE JOB IN YOUR OWN CITY RANKS ABOVE THE SAME JOB ELSEWHERE', () => {
+    // geo.js is deliberately lenient — a location it cannot parse is FLAGGED,
+    // never dropped. Right, but a station-code location like "WTSP-TV Tampa"
+    // carries no state, so every market ranked identically and a national
+    // employer posting one title in twenty cities filled the whole queue in
+    // arbitrary order. At six scorings a day that spends the subscriber's week
+    // on Corpus Christi while the opening in their own city waits at #13.
+    const profile = { headline: 'Sales Executive', location: 'Tampa, Florida',
+      skills: ['advertising'] };
+    const settings = { geo: { allowed_states: ['fl'] },
+      targeting: { roles: [{ title: 'Account Executive' }] } };
+    const jobs = [
+      { id: 1, title: 'Account Executive', employer: 'TEGNA', location: 'KIII-TV Corpus Christi',
+        description: 'advertising sales' },
+      { id: 2, title: 'Account Executive', employer: 'TEGNA', location: 'WTSP-TV Tampa',
+        description: 'advertising sales' },
+      { id: 3, title: 'Account Executive', employer: 'OUTFRONT', location: 'Orlando, FL',
+        description: 'advertising sales' },
+    ];
+    const r = jobsource.prefilter(jobs, profile, settings, '');
+    assert.strictEqual(r.length, 3, 'ranking only — nothing is excluded for being elsewhere');
+    assert.strictEqual(r[0].job.id, 2, 'their own city comes first');
+    assert.ok(r.findIndex((x) => x.job.id === 3) < r.findIndex((x) => x.job.id === 1),
+      'their own state beats an unrelated market');
+
+    // Read off the LOCATION only. A posting that merely mentions Florida in its
+    // body is not a posting in Florida.
+    const decoy = [{ id: 4, title: 'Account Executive', employer: 'X', location: 'Seattle, WA',
+      description: 'advertising sales for our Tampa and Florida clients' }];
+    const d = jobsource.prefilter(decoy, profile, settings, '');
+    const local = jobsource.prefilter([{ ...decoy[0], id: 5, location: 'Tampa, FL' }], profile, settings, '');
+    assert.ok(local[0].prescore > d[0].prescore, 'the body must not earn a local bonus');
+  });
   await t('ROLE TARGETS INCLUDE THE TITLES EMPLOYERS ADVERTISE', async () => {
     // Seeding targets from a résumé's own job titles sounds right and quietly
     // is not: people write the title their employer gave them and search the

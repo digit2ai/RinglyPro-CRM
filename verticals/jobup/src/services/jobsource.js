@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const employers = require('./employers');
+const geo = require('./geo');
 const { models } = require('../models');
 
 const STALE_DAYS = 30;
@@ -134,6 +135,29 @@ function prefilter(jobs, profile, settings, rawText, stats) {
   const strictModes = (modes.length === 1 && modes[0] === 'remote') || targeting.work_mode_strict === true;
   const types = (targeting.employment_types || []).map((x) => String(x).toLowerCase()).filter(Boolean);
 
+  // ---- WHERE THEY ACTUALLY LIVE, AS A RANKING SIGNAL --------------------
+  //
+  // geo.js owns the hard rules, and it is deliberately lenient: a location it
+  // cannot parse is FLAGGED, never dropped. That is right, but it means a
+  // station-code location like "WTSP-TV Tampa" or "KIII-TV Corpus Christi"
+  // carries no state at all and every market ranks identically. A national
+  // employer posting the same title in twenty cities then fills the whole
+  // queue in arbitrary order — and at six scorings a day the subscriber spends
+  // their week on Corpus Christi and San Angelo while the opening in their own
+  // city waits at position thirteen.
+  //
+  // Their home city and state are already on file. Matching them is free, and
+  // it only ever promotes: nothing is excluded for being elsewhere, because a
+  // remote-national role is takeable from anywhere.
+  const home = new Set();
+  const profLoc = String((profile || {}).location || '').toLowerCase();
+  const city = profLoc.split(',')[0].trim();
+  if (city.length > 3) home.add(city);
+  for (const st of ((settings || {}).geo || {}).allowed_states || []) {
+    const code = String(st).toLowerCase();
+    if (geo.STATE_NAMES[code]) { home.add(geo.STATE_NAMES[code].toLowerCase()); home.add(', ' + code); }
+  }
+
   const skills = ((profile || {}).skills || []).map((s) =>
     String(typeof s === 'string' ? s : s.name || '').toLowerCase()).filter(Boolean);
   let terms = [...titles, ...skills, ...industries];
@@ -236,7 +260,12 @@ function prefilter(jobs, profile, settings, rawText, stats) {
     // owns the hard country rules and it runs later.
     const locationHit = wantLocations.some((l) => location.includes(l)) ? 2 : 0;
 
-    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit + locationHit + typeHit + modeHit;
+    // Their own city or state, read off the location only — never the body, or
+    // every posting that merely mentions Florida ranks as if it were in it.
+    const homeHit = home.size && [...home].some((h) => location.includes(h)) ? 5 : 0;
+
+    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit
+                   + locationHit + typeHit + modeHit + homeHit;
     if (prescore > 0) scored.push({ job: j, prescore }); else drop.no_overlap++;
   }
 
@@ -299,6 +328,40 @@ async function enrichDescriptions({ limit = 200, fetchImpl } = {}) {
   return { candidates: need.length, filled, failed, skipped };
 }
 
+/**
+ * Spread a ranked queue across employers without disturbing who is best.
+ *
+ * A national employer posts one title in twenty markets, so a purely ranked
+ * queue is twenty near-identical rows from one company. Against a quota of six
+ * scorings a day that is the subscriber's entire week spent on one employer —
+ * and five of those six are the same job in a city they do not live in.
+ *
+ * Round-robin by employer, best-first within each. The top-ranked posting still
+ * comes first, so nothing better is ever demoted below something worse; what
+ * changes is that positions two through six come from different companies.
+ */
+function diversify(ranked) {
+  const byEmployer = new Map();
+  for (const r of ranked || []) {
+    const k = String((r.job && r.job.employer) || '').toLowerCase() || '(none)';
+    if (!byEmployer.has(k)) byEmployer.set(k, []);
+    byEmployer.get(k).push(r);
+  }
+  // Employers ordered by their single best posting, so the overall winner leads.
+  const queues = [...byEmployer.values()]
+    .sort((a, b) => b[0].prescore - a[0].prescore);
+
+  const out = [];
+  for (let round = 0; out.length < (ranked || []).length; round++) {
+    let moved = false;
+    for (const q of queues) {
+      if (q[round] !== undefined) { out.push(q[round]); moved = true; }
+    }
+    if (!moved) break;
+  }
+  return out;
+}
+
 async function markStale() {
   const cutoff = new Date(Date.now() - STALE_DAYS * 86400000);
   const all = await models.jobs.findAll({});
@@ -312,7 +375,7 @@ function adzunaActive() {
 
 module.exports = {
   dedupeKey, ingest, refreshEmployer, prefilter, markStale, adzunaActive,
-  enrichDescriptions, safeDate,
+  enrichDescriptions, safeDate, diversify,
   SOURCES: employers.supportedAts(),
   STALE_DAYS,
 };
