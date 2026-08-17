@@ -3875,6 +3875,13 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
     assert.ok(!/models\.jobs\.findAll\(\{\s*limit:\s*\d+\s*\}\)/.test(src),
       'the candidate pool must never be read unordered');
+    // The teaser reads the same pool, and it is the FIRST impression a
+    // prospect gets — it had the identical bug with a 400-row window.
+    const tsr = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
+    assert.ok(!/models\.jobs\.findAll\(\{\s*limit:\s*\d+\s*\}\)/.test(tsr),
+      'the teaser pool must never be read unordered either');
+    assert.ok(/order:\s*\[\['last_seen_at',\s*'DESC'\]\]/.test(tsr),
+      'the teaser window must be newest-first');
     assert.ok(/order:\s*\[\['last_seen_at',\s*'DESC'\]\]/.test(src),
       'the pool window must be newest-first');
 

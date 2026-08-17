@@ -26,6 +26,7 @@ const settingsSvc = require('./settings');
 
 const TEASER_COST_CAP = parseFloat(process.env.JOBUP_TEASER_COST_CAP_USD || '0.35');
 const JOBS_PER_TEASER = 15;
+const TEASER_POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '6000', 10);
 // Not a second copy of the price. billing.js owns it; two constants reading the
 // same env var is one careless edit away from the teaser quoting a figure the
 // checkout does not charge. Resolved at call time, like billingOff() below.
@@ -138,7 +139,14 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
   let matches = [];
   let poolAvailable = true;
   try {
-    const pool = await models.jobs.findAll({ limit: 400 });
+    // Newest-first, for the reason spelled out in agents/index.js poolWindow():
+    // unordered, Postgres hands back heap order, so this read the OLDEST 400
+    // postings and stopped tracking the pool the moment it grew past 400. On
+    // the teaser that is the first impression a prospect gets of the product,
+    // built from the stalest inventory we hold.
+    const pool = await models.jobs.findAll({
+      limit: TEASER_POOL_WINDOW, order: [['last_seen_at', 'DESC']],
+    });
     if (!pool || pool.length === 0) {
       poolAvailable = false;
       notes.push('Job pool is empty — no openings shown. Nothing fabricated.');
