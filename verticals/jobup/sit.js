@@ -385,11 +385,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(jobsource.prefilter([bare], profile, settings, '').length, 1,
       'a posting with no body text must not be dropped on work mode');
 
-    // But once the text IS there, the rule applies exactly as before.
-    const read = { ...bare, id: 90002, description: 'This is a fully on-site role in our Clearwater office.' };
-    assert.strictEqual(jobsource.prefilter([read], profile, settings, '').length, 0,
-      'a posting we HAVE read that states on-site is still filtered out');
-    const remote = { ...bare, id: 90003, description: 'This is a hybrid role based in Tampa.' };
+    // But once the text IS there, the mode is judged again — and for a strict
+    // remote-only subscriber a stated on-site role is still filtered out.
+    const strict = { targeting: { roles: [{ title: 'Account Executive' }], remote_preference: 'remote' } };
+    const read = { ...bare, id: 90002, description: 'advertising, a fully on-site role in our Clearwater office' };
+    assert.strictEqual(jobsource.prefilter([read], profile, strict, '').length, 0,
+      'a posting we HAVE read that states on-site is still filtered out for remote-only');
+    assert.strictEqual(jobsource.prefilter([{ ...bare, id: 90004 }], profile, strict, '').length, 1,
+      'but the same subscriber still sees a posting we never read');
+    const remote = { ...bare, id: 90003, description: 'advertising, this is a hybrid role based in Tampa' };
     assert.strictEqual(jobsource.prefilter([remote], profile, settings, '').length, 1);
   });
   await t('description enrichment fills the gap, and never invents one', async () => {
@@ -4099,6 +4103,69 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'EVERY scoring is ledgered, not only the filed ones');
     await scoped('job_scores', subA.id).destroy({ job_id: probe.id });
     await models.jobs.destroy({ where: { id: probe.id } });
+  });
+  await t('ROLE TARGETS INCLUDE THE TITLES EMPLOYERS ADVERTISE', async () => {
+    // Seeding targets from a résumé's own job titles sounds right and quietly
+    // is not: people write the title their employer gave them and search the
+    // title the market posts. An OOH seller whose CV says "Sales Executive"
+    // never matched a single "Account Executive" — the standard posted title
+    // for exactly her job.
+    const resumeSvc = require(__dirname + '/src/services/resume');
+    const profile = { headline: 'Sales Executive', summary: 'Out-of-home advertising sales',
+      experience: [{ title: 'Sales Executive' }, { title: 'Marketing Consultant' }],
+      skills: ['Out-of-Home (OOH) Advertising'] };
+    const mt = await resumeSvc.marketTitles(profile);
+    // Keyless here, so it must degrade to their own titles and SAY it is simulated
+    // rather than inventing a market title it cannot know.
+    assert.ok(Array.isArray(mt.titles) && mt.titles.length, 'it must always return usable targets');
+    assert.ok(mt.titles.includes('Sales Executive'), 'their own titles always survive');
+    assert.strictEqual(mt.is_simulated, true, 'the keyless path must label itself');
+    assert.deepStrictEqual(await resumeSvc.marketTitles({}), { titles: [], is_simulated: true },
+      'no titles in, nothing invented out');
+
+    // It is a SEARCH HINT and must never reach the résumé or the public site.
+    const src = require('fs').readFileSync(__dirname + '/src/services/resume.js', 'utf8');
+    assert.ok(/Titles only\./.test(resumeSvc.MARKET_TITLE_SYSTEM));
+    assert.ok(/Never a promotion/.test(resumeSvc.MARKET_TITLE_SYSTEM),
+      'it must not quietly promote the candidate a level');
+    const intake = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/marketTitles\(/.test(intake), 'signup must actually use it');
+    assert.ok(/catch \(e\) \{ \/\* keep the résumé's own titles \*\/ \}/.test(intake),
+      'a failure here must never cost a signup');
+  });
+  await t('WORK MODE IS A PREFERENCE; ONLY "REMOTE ONLY" IS A CONSTRAINT', () => {
+    // The control is labelled "Remote preference" and offers "Hybrid or
+    // remote", but it was implemented as a hard exclusion — so choosing it
+    // deleted every on-site posting, which for field sales, trades, clinical
+    // work or hospitality is the whole job market. Someone who says "hybrid"
+    // is telling us they will come into an office; that ranks, it does not veto.
+    const profile = { headline: 'Sales Executive', skills: ['advertising'] };
+    const onsite = { id: 1, title: 'Account Executive', employer: 'CCO', location: 'Tampa, FL',
+      description: 'advertising sales, fully on-site in our Clearwater office' };
+    const remote = { id: 2, title: 'Account Executive', employer: 'Acme', location: 'US',
+      description: 'advertising sales, fully remote role' };
+
+    // "Prefer hybrid or remote" — both stay visible, the preferred one ranks up.
+    const pref = { targeting: { roles: [{ title: 'Account Executive' }], remote_preference: 'hybrid' } };
+    const got = jobsource.prefilter([onsite, remote], profile, pref, '');
+    assert.strictEqual(got.length, 2, 'a preference must not delete the rest of the market');
+    assert.strictEqual(got[0].job.id, 2, 'but the preferred mode must rank first');
+    assert.ok(got[0].prescore > got[1].prescore, 'and score higher, not merely sort higher');
+
+    // "Remote only" is meant literally and still filters.
+    const only = { targeting: { roles: [{ title: 'Account Executive' }], remote_preference: 'remote' } };
+    const strict = jobsource.prefilter([onsite, remote], profile, only, '');
+    assert.strictEqual(strict.length, 1, 'remote-only must still exclude');
+    assert.strictEqual(strict[0].job.id, 2);
+
+    // And an explicit opt-in makes any preference strict again.
+    const forced = { targeting: { roles: [{ title: 'Account Executive' }],
+      remote_preference: 'hybrid', work_mode_strict: true } };
+    assert.strictEqual(jobsource.prefilter([onsite, remote], profile, forced, '').length, 1);
+
+    // The UI must not call something a preference while it behaves as a filter.
+    const ui = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/Only "Remote only" hides jobs/.test(ui), 'the UI must say which choice filters');
   });
   await t('AN EMPTY BOARD NAMES THE SETTING THAT EMPTIED IT', async () => {
     // A subscriber whose own work-mode preference rules out every posting in

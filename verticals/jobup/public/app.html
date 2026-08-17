@@ -956,11 +956,16 @@ function loadTargets(){
 
       '<div class="card"><div class="t">How you want to work</div>'+
       '<div class="cvgrid" style="margin-top:12px">'+
-        '<div><label for="t-remote">Remote preference</label>'+
+        '<div><label for="t-remote">Where you want to work</label>'+
         '<select id="t-remote">'+
-          [['any','No preference'],['remote','Remote only'],['hybrid','Hybrid or remote'],['onsite','On-site']]
+          [['any','No preference'],
+           ['remote','Remote only — hide everything else'],
+           ['hybrid','Prefer hybrid or remote'],
+           ['onsite','Prefer on-site']]
             .map(function(o){return '<option value="'+o[0]+'"'+(rp===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
-        '</select></div>'+
+        '</select>'+
+        '<div class="hint" style="font-size:12px;opacity:.7;margin-top:5px">Only "Remote only" hides jobs. '+
+        'The others rank your preference higher and still show the rest.</div></div>'+
         '<div><label for="t-seniority">Seniority nudge</label>'+
         '<input id="t-seniority" value="'+esc(tg.seniority||'')+'" placeholder="senior, lead, director"></div>'+
         '<div><label for="t-min">Minimum score to file</label>'+

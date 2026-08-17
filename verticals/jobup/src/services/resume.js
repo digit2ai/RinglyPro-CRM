@@ -353,7 +353,59 @@ function atsScore(resumeText, job) {
   };
 }
 
+// =============================================================
+// THE TITLES EMPLOYERS ADVERTISE, NOT ONLY THE ONES YOU HAVE HELD.
+//
+// Role targets were seeded from a résumé's own job titles, which sounds right
+// and quietly is not: a person writes the title their employer gave them, and
+// searches the title the market posts. A twenty-year out-of-home advertising
+// seller whose CV says "Sales Executive" and "Advertising Sales Representative"
+// never matched a single "Account Executive" — the standard posted title for
+// exactly her job, and the most common one in her field.
+//
+// This is a SEARCH HINT, not a claim about the person: nothing here reaches the
+// résumé, the public site or a tailored document. It only widens what we look
+// at, and the subscriber can see and edit every one of them.
+// =============================================================
+const MARKET_TITLE_SYSTEM = `You map a candidate to the job titles EMPLOYERS ADVERTISE for their work.
+Return ONLY JSON: {"titles":["",""]}
+Rules:
+- 4 to 8 titles, each one a real posted job title in their field and at their level.
+- Include the standard industry title even when their resume never uses it.
+- Same field and seniority only. Never a promotion, never an adjacent career.
+- Titles only. No company names, no locations, no seniority words they have not earned.`;
+
+async function marketTitles(profile) {
+  const held = [String((profile || {}).headline || '')]
+    .concat(((profile || {}).experience || []).map((e) => (e && e.title) || ''))
+    .map((s) => String(s).trim()).filter(Boolean);
+  if (!held.length) return { titles: [], is_simulated: true };
+
+  if (!brain.enabled()) {
+    // Keyless path: the held titles themselves, deduped. Honest and useless-
+    // proof — it never invents a title, it just does not widen anything.
+    return { titles: [...new Set(held)].slice(0, 8), is_simulated: true };
+  }
+
+  const prompt = [
+    `Field/summary: ${(profile || {}).summary || (profile || {}).headline || ''}`,
+    `Titles they have held: ${held.join('; ')}`,
+    `Top skills: ${((profile || {}).skills || []).slice(0, 15).map((s) =>
+      (typeof s === 'string' ? s : s && s.name) || '').filter(Boolean).join(', ')}`,
+  ].join('\n');
+
+  const res = await brain.json({ system: MARKET_TITLE_SYSTEM, prompt, maxTokens: 300 });
+  const got = res && res.ok && res.data && Array.isArray(res.data.titles) ? res.data.titles : null;
+  if (!got) return { titles: [...new Set(held)].slice(0, 8), is_simulated: true };
+
+  const clean = got.map((s) => String(s || '').trim().replace(/\s+/g, ' '))
+    .filter((s) => s.length > 2 && s.length <= 60);
+  // Their own titles always survive — a suggestion never replaces what they said.
+  return { titles: [...new Set([...held, ...clean])].slice(0, 10), is_simulated: false };
+}
+
 module.exports = {
   extractText, structure, tailor, atsScore,
   flagInventedFacts, properNouns, numbers, heuristicStructure, cleanText,
+  marketTitles, MARKET_TITLE_SYSTEM,
 };

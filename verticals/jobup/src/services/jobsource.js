@@ -108,14 +108,30 @@ function prefilter(jobs, profile, settings, rawText, stats) {
   const seniority = String(targeting.seniority || '').toLowerCase();
   const wantLocations = (targeting.locations || []).map((x) => String(x).toLowerCase()).filter(Boolean);
 
-  // Multi-select is the real setting; the legacy single choice is the fallback
-  // for a profile saved before the account form existed.
+  // ---- WORK MODE IS A PREFERENCE. ONLY "REMOTE ONLY" IS A CONSTRAINT. -----
+  //
+  // The control is labelled "Remote preference" and offers "Hybrid or remote".
+  // It was implemented as a hard exclusion, so choosing it silently deleted
+  // every on-site posting — which for anyone in field sales, trades, clinical
+  // work or hospitality is the entire job market. One subscriber's choice of
+  // "Hybrid or remote" removed 3,281 postings and took her local shortlist from
+  // 81 to 7 without a word anywhere.
+  //
+  // Someone who says "hybrid" is telling us they will come into an office. That
+  // is a ranking signal, not a veto. "Remote only" IS a veto — a person who
+  // cannot commute means it literally — so that one still filters. Anything
+  // else ranks: preferred modes score higher and everything stays visible.
+  //
+  // Because it reads the same stored field, this repairs every existing
+  // subscriber on their next run without editing anyone's stated preference.
   let modes = (targeting.work_modes || []).map((x) => String(x).toLowerCase()).filter(Boolean);
   if (!modes.length && targeting.remote_preference && targeting.remote_preference !== 'any') {
     modes = targeting.remote_preference === 'hybrid'
-      ? ['hybrid', 'remote']            // open to hybrid means open to remote too
+      ? ['hybrid', 'remote']            // the option reads "hybrid or remote"
       : [targeting.remote_preference];
   }
+  // A hard filter ONLY where the subscriber has ruled everything else out.
+  const strictModes = (modes.length === 1 && modes[0] === 'remote') || targeting.work_mode_strict === true;
   const types = (targeting.employment_types || []).map((x) => String(x).toLowerCase()).filter(Boolean);
 
   const skills = ((profile || {}).skills || []).map((s) =>
@@ -171,6 +187,7 @@ function prefilter(jobs, profile, settings, rawText, stats) {
     // there is no text to judge, the mode is UNKNOWN and is not grounds to
     // drop the row — the same rule geo.js already applies to a missing location.
     const hasText = String(j.description || '').trim().length > 0;
+    let modeHit = 0;
     if (modes.length && modes.length < 3 && hasText) {
       const where = `${location} ${hay}`;
       const isRemote = /\bremote\b|\bwork from home\b|\bwfh\b|\bfully distributed\b/.test(where);
@@ -180,7 +197,11 @@ function prefilter(jobs, profile, settings, rawText, stats) {
       const wants = (modes.includes('remote') && isRemote)
                  || (modes.includes('hybrid') && isHybrid)
                  || (modes.includes('onsite') && (isOnsite || !stated));
-      if (!wants) { drop.work_mode++; continue; }
+      // Remote-only is a constraint and still filters. Everything else ranks:
+      // a posting in a mode you asked for scores higher, and one that is not
+      // stays on the list where you can see and judge it.
+      if (wants) modeHit = 3;
+      else if (strictModes) { drop.work_mode++; continue; }
     }
 
     // ---- EMPLOYMENT TYPE. Same asymmetry: full-time is the unstated default,
@@ -215,7 +236,7 @@ function prefilter(jobs, profile, settings, rawText, stats) {
     // owns the hard country rules and it runs later.
     const locationHit = wantLocations.some((l) => location.includes(l)) ? 2 : 0;
 
-    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit + locationHit + typeHit;
+    const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit + locationHit + typeHit + modeHit;
     if (prescore > 0) scored.push({ job: j, prescore }); else drop.no_overlap++;
   }
 

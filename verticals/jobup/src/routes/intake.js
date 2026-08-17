@@ -474,7 +474,18 @@ router.post('/build-account', async (req, res) => {
     // be scored against empty targeting and the person's answers would look
     // like they had been ignored.
     const site = ((t.payload || {}).screens || {}).site || {};
-    const cleaned = targetingFrom(b, suggestedRoles(site), resumeState(site));
+    // Widen the seeded targets to the titles employers actually POST for this
+    // person's work, not only the ones their résumé happens to use. A search
+    // hint, never a claim: it touches targeting and nothing else, and it can
+    // only ever ADD to what they typed. A failure here must not cost a signup.
+    let seedRoles = suggestedRoles(site);
+    if (!settingsSvc.strList(b.roles, 12).length) {
+      try {
+        const mt = await resumeSvc.marketTitles((site && site.profile) || {});
+        if (mt && mt.titles && mt.titles.length) seedRoles = mt.titles;
+      } catch (e) { /* keep the résumé's own titles */ }
+    }
+    const cleaned = targetingFrom(b, seedRoles, resumeState(site));
     const existingSettings = await scoped('settings', tenantId).findOne({});
     if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
     else await scoped('settings', tenantId).create({ settings: cleaned });
