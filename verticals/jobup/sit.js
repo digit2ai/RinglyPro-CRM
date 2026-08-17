@@ -326,6 +326,49 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('city, ST infers US', () => {
     assert.strictEqual(geo.evaluate('Austin, TX', usOnly).verdict, 'allow');
   });
+  await t('A MARKET NAME IS A LOCATION — broadcast and OOH write it that way', () => {
+    // A broadcast or out-of-home employer writes locations as markets, not
+    // addresses: "WTSP-TV Tampa", "KFMB-TV San Diego". None contain a state,
+    // so a Florida-only subscriber was shown San Diego, New Orleans, Lexington
+    // and Montreal. Her filter was right; the parser could not read the strings
+    // it was judging, and an unreadable location came back FLAG — which every
+    // caller treats as allow.
+    const fl = { allowed_countries: ['US'], allowed_states: ['fl'] };
+    for (const inPolicy of ['WTSP-TV Tampa', 'Tampa, FL', 'Ocala, FL',
+                            'St. Petersburg and Pinellas County, FL']) {
+      assert.strictEqual(geo.evaluate(inPolicy, fl).verdict, 'allow', inPolicy);
+    }
+    for (const out of ['KFMB-TV San Diego', 'WWL WUPL-TV New Orleans', 'KY, Lexington',
+                       'KIII-TV Corpus Christi', 'Los Angeles; San Francisco',
+                       'Montreal', 'Australia - Virtual']) {
+      assert.strictEqual(geo.evaluate(out, fl).verdict, 'block', out + ' must not reach her');
+    }
+    // Remote-national still survives a state filter — that exemption is why
+    // the state rule is safe to apply by default.
+    assert.strictEqual(geo.evaluate('United States - Remote', fl).verdict, 'allow');
+
+    // A CODE LEADING THE STRING is still a state, but only as the first token.
+    assert.deepStrictEqual(geo.statesIn('ky, lexington'), ['ky']);
+    assert.ok(!geo.statesIn('creative in the ny area').includes('ny'),
+      'a bare two-letter word mid-sentence is not a state');
+
+    // AMBIGUOUS CITIES ARE LEFT UNREAD ON PURPOSE. A wrong state is worse than
+    // an unread one, because it is acted on with confidence.
+    for (const amb of ['Springfield', 'Portland', 'Columbus', 'Charleston']) {
+      assert.deepStrictEqual(geo.statesIn(amb.toLowerCase()), [], amb + ' must not be placed');
+    }
+  });
+  await t('an unreadable location is refused only when a line has been drawn', () => {
+    // With no state restriction there is nothing to contradict, so it stays a
+    // flag for the subscriber to judge — the original behaviour.
+    const loose = { allowed_countries: ['US'] };
+    const v = geo.evaluate('Somewhere Nobody Has Heard Of', loose);
+    assert.strictEqual(v.verdict, 'flag');
+    const strict = { allowed_countries: ['US'], allowed_states: ['fl'] };
+    const b = geo.evaluate('Somewhere Nobody Has Heard Of', strict);
+    assert.strictEqual(b.verdict, 'block');
+    assert.ok(/limited to FL/.test(b.reason), 'and it must say why it was refused');
+  });
   await t('NO LOCATION is FLAGGED, never silently included', () => {
     const v = geo.evaluate('', usOnly);
     assert.strictEqual(v.verdict, 'flag');

@@ -32,6 +32,67 @@ const STATE_NAMES = {
   wv: 'West Virginia', wi: 'Wisconsin', wy: 'Wyoming', dc: 'District of Columbia',
 };
 
+/**
+ * Where a US city is, for location strings that name no state at all.
+ *
+ * A broadcast or out-of-home employer writes its locations as markets, not
+ * addresses: "WTSP-TV Tampa", "KFMB-TV San Diego", "WWL WUPL-TV New Orleans".
+ * None of those contain a state, so a subscriber who had restricted their
+ * search to Florida was shown San Diego, New Orleans and Lexington — her
+ * filter was working perfectly and the parser simply could not read the
+ * strings it was being asked to judge.
+ *
+ * Only cities distinctive enough to place without a state. Springfield,
+ * Columbus, Portland, Kansas City and friends are deliberately absent: a wrong
+ * state is worse than an unread one, because it is acted on with confidence.
+ */
+const CITY_STATE = {
+  tampa: 'fl', 'st. petersburg': 'fl', 'saint petersburg': 'fl', clearwater: 'fl',
+  orlando: 'fl', miami: 'fl', jacksonville: 'fl', sarasota: 'fl', ocala: 'fl',
+  'fort lauderdale': 'fl', 'west palm beach': 'fl', 'boca raton': 'fl', naples: 'fl',
+  tallahassee: 'fl', gainesville: 'fl', 'pembroke pines': 'fl', 'coral gables': 'fl',
+  'new orleans': 'la', 'baton rouge': 'la', shreveport: 'la',
+  'san diego': 'ca', 'los angeles': 'ca', 'san francisco': 'ca', sacramento: 'ca',
+  'san jose': 'ca', 'palo alto': 'ca', 'santa monica': 'ca', oakland: 'ca',
+  'long beach': 'ca', fresno: 'ca', irvine: 'ca', burbank: 'ca', 'redwood city': 'ca',
+  lexington: 'ky', louisville: 'ky',
+  seattle: 'wa', spokane: 'wa', tacoma: 'wa', bellevue: 'wa', redmond: 'wa',
+  atlanta: 'ga', savannah: 'ga', macon: 'ga', augusta: 'ga',
+  chicago: 'il', naperville: 'il', evanston: 'il',
+  boston: 'ma', cambridge: 'ma', worcester: 'ma', springfield: null,
+  'new york': 'ny', brooklyn: 'ny', manhattan: 'ny', buffalo: 'ny', rochester: 'ny',
+  albany: 'ny', syracuse: 'ny', 'wilkes barre': 'pa', 'wilkes-barre': 'pa',
+  philadelphia: 'pa', pittsburgh: 'pa', harrisburg: 'pa', allentown: 'pa',
+  dallas: 'tx', houston: 'tx', austin: 'tx', 'san antonio': 'tx', 'fort worth': 'tx',
+  'corpus christi': 'tx', 'el paso': 'tx', lubbock: 'tx', amarillo: 'tx',
+  'san angelo': 'tx', temple: 'tx', waco: 'tx', midland: null,
+  denver: 'co', boulder: 'co', 'colorado springs': 'co',
+  phoenix: 'az', tucson: 'az', scottsdale: 'az', tempe: 'az', mesa: 'az',
+  detroit: 'mi', 'grand rapids': 'mi', 'ann arbor': 'mi',
+  minneapolis: 'mn', 'st. paul': 'mn', 'saint paul': 'mn',
+  'saint louis': 'mo', 'st. louis': 'mo',
+  cleveland: 'oh', cincinnati: 'oh', toledo: 'oh', dayton: 'oh',
+  indianapolis: 'in', 'fort wayne': 'in',
+  milwaukee: 'wi', madison: null, 'green bay': 'wi',
+  nashville: 'tn', memphis: 'tn', knoxville: 'tn', chattanooga: 'tn',
+  charlotte: 'nc', raleigh: 'nc', durham: 'nc', greensboro: 'nc', asheville: 'nc',
+  charleston: null, columbia: null, greenville: null,
+  richmond: 'va', norfolk: 'va', arlington: null, alexandria: null,
+  baltimore: 'md', annapolis: 'md', bethesda: 'md',
+  newark: 'nj', 'jersey city': 'nj', princeton: 'nj', hoboken: 'nj',
+  hartford: 'ct', stamford: 'ct', 'new haven': 'ct',
+  'salt lake city': 'ut', provo: 'ut',
+  'las vegas': 'nv', reno: 'nv',
+  'oklahoma city': 'ok', tulsa: 'ok',
+  'little rock': 'ar', birmingham: 'al', huntsville: 'al', montgomery: 'al',
+  jackson: null, 'des moines': 'ia', omaha: 'ne', wichita: 'ks',
+  albuquerque: 'nm', boise: 'id', anchorage: 'ak', honolulu: 'hi',
+  'salisbury': 'md', melbourne: null, /* Melbourne FL vs Australia — ambiguous */
+  'sioux falls': 'sd', fargo: 'nd', billings: 'mt', cheyenne: 'wy',
+  burlington: 'vt', portland: null, manchester: null, providence: 'ri',
+  wilmington: null, dover: null, 'virginia beach': 'va',
+};
+
 /** Every US state named in a location string, as lowercase codes, deduped. */
 function statesIn(s) {
   const found = new Set();
@@ -39,6 +100,18 @@ function statesIn(s) {
   // two-letter token safe to read as a state.
   let m; const re = /,\s*([a-z]{2})\b/g;
   while ((m = re.exec(s)) !== null) if (US_STATES.has(m[1])) found.add(m[1]);
+
+  // "KY, Lexington" — some boards lead with the code instead of trailing it.
+  // Anchored, so it can only ever be the first token and never eats a word.
+  const lead = s.match(/^\s*([a-z]{2})\s*,/);
+  if (lead && US_STATES.has(lead[1])) found.add(lead[1]);
+
+  // A distinctive city places itself. Word-boundary matched, and only for
+  // cities that are unambiguous nationally — see CITY_STATE.
+  for (const [city, st] of Object.entries(CITY_STATE)) {
+    if (!st) continue;                       // listed as known-ambiguous
+    if (new RegExp('(^|[^a-z])' + city.replace(/[.]/g, '\\.') + '([^a-z]|$)').test(s)) found.add(st);
+  }
 
   // Washington DC before Washington state, or every "washington, d.c." posting
   // is read as the Pacific Northwest.
@@ -70,7 +143,20 @@ function classify(raw) {
 
   const countries = [];
   if (/\bunited states\b|\bu\.?s\.?a?\.?\b|\busa\b/.test(s)) countries.push('US');
-  if (/\bcanada\b|\bcanadian\b/.test(s)) countries.push('CA');
+  // Named cities count as their country for the same reason they count as
+  // their state: an employer writes "Montreal", not "Montreal, Canada".
+  if (/\bcanada\b|\bcanadian\b|\bmontr[eé]al\b|\btoronto\b|\bvancouver\b|\bcalgary\b|\bottawa\b|\bedmonton\b|\bwinnipeg\b|\bhalifax\b|\bqu[eé]bec\b/.test(s)) countries.push('CA');
+  if (/\baustralia\b|\bsydney\b|\bmelbourne, (au|vic)\b|\bbrisbane\b|\bperth\b/.test(s)) countries.push('AU');
+  if (/\bnetherlands\b|\bamsterdam\b|\brotterdam\b/.test(s)) countries.push('NL');
+  if (/\bireland\b|\bdublin\b/.test(s)) countries.push('IE');
+  if (/\bbrazil\b|\bbrasil\b|\bs[aã]o paulo\b/.test(s)) countries.push('BR');
+  if (/\bsingapore\b/.test(s)) countries.push('SG');
+  if (/\bjapan\b|\btokyo\b/.test(s)) countries.push('JP');
+  if (/\bphilippines\b|\bmanila\b|\bmakati\b/.test(s)) countries.push('PH');
+  if (/\bvietnam\b|\bha noi\b|\bhanoi\b/.test(s)) countries.push('VN');
+  if (/\bchina\b|\bshanghai\b|\bbeijing\b|\bwuxi\b|\bchangzhou\b/.test(s)) countries.push('CN');
+  if (/\bspain\b|\bmadrid\b|\bbarcelona\b/.test(s)) countries.push('ES');
+  if (/\bfrance\b|\bparis\b/.test(s)) countries.push('FR');
   if (/\buk\b|\bunited kingdom\b|\bengland\b|\blondon\b/.test(s)) countries.push('GB');
   if (/\bindia\b|\bbengaluru\b|\bbangalore\b/.test(s)) countries.push('IN');
   if (/\bgermany\b|\bberlin\b|\bmunich\b/.test(s)) countries.push('DE');
@@ -113,7 +199,25 @@ function evaluate(raw, policy = {}) {
     return { verdict: ok ? VERDICT.ALLOW : VERDICT.BLOCK, reason: 'remote, North America' };
   }
   if (c.countries.length === 0) {
-    return { verdict: VERDICT.FLAG, reason: 'location present but country not recognized: ' + c.raw };
+    // A LOCATION WE CANNOT READ IS NOT A LOCATION IN POLICY.
+    //
+    // This returned FLAG, and nothing consumes a flag — every caller filters
+    // on BLOCK alone, so "we could not parse this" quietly meant "allow". A
+    // subscriber who had restricted her search to one state was shown San
+    // Diego, New Orleans, Lexington, Montreal and Australia, and reasonably
+    // concluded the filter was broken. It was not; the parser was.
+    //
+    // The parser is much better now, so what still reaches here is genuinely
+    // unreadable. When somebody has drawn an explicit geographic line, an
+    // unreadable location is refused rather than waved through — being shown
+    // nothing from a market you cannot work in beats being shown five things.
+    // With no state restriction it stays a flag, which is the old behaviour
+    // and the right one: nothing has been ruled out to contradict.
+    const restricted = (policy.allowed_states || []).length > 0;
+    return restricted
+      ? { verdict: VERDICT.BLOCK, reason: 'location could not be placed, and this search is limited to '
+          + (policy.allowed_states || []).map((x) => String(x).toUpperCase()).join('/') + ': ' + c.raw }
+      : { verdict: VERDICT.FLAG, reason: 'location present but country not recognized: ' + c.raw };
   }
 
   const hit = c.countries.filter((x) => allowed.includes(x));
