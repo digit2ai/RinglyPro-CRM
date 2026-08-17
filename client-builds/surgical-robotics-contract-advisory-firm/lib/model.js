@@ -43,8 +43,22 @@ function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
 }
 
+// Rounding goes through toFixed rather than the Math.round(v * 10^n) / 10^n
+// idiom, which reintroduces the float error it is meant to remove: dividing a
+// clean integer by a power of ten produced 2.2036000000000002 in the
+// reconciliation ratio and would have shipped that to the API and the CSV.
+function roundTo(v, dp) {
+  if (!Number.isFinite(v)) return v;
+  return Number(v.toFixed(dp));
+}
+
 function round2(v) {
-  return Math.round(v * 100) / 100;
+  return roundTo(v, 2);
+}
+
+// Fractions (shares, mixes, leverage factors) carry more places than money.
+function roundFrac(v) {
+  return roundTo(v, 6);
 }
 
 // ---------------------------------------------------------------------------
@@ -116,7 +130,7 @@ function blendedSpendPerClient(tiers, engagement) {
     derived_usd: round2(derived),
     is_override: hasOverride,
     mix: tiers.reduce((acc, t, i) => {
-      acc[t.key] = round2(norm[i] * 1e6) / 1e6;
+      acc[t.key] = roundFrac(norm[i]);
       return acc;
     }, {}),
   };
@@ -212,7 +226,7 @@ function project(rawInputs) {
   const tamUsd = round2(tiers.reduce((a, t) => a + t.annual_spend_total_usd, 0));
   const perTier = tiers.map((t) => ({
     ...t,
-    share_of_tam: tamUsd > 0 ? round2((t.annual_spend_total_usd / tamUsd) * 1e6) / 1e6 : 0,
+    share_of_tam: tamUsd > 0 ? roundFrac(t.annual_spend_total_usd / tamUsd) : 0,
   }));
 
   // --- Per-client economics ----------------------------------------------
@@ -279,8 +293,8 @@ function project(rawInputs) {
       arrivals_needed: s.arrivals_needed,
       retained_clients: s.retained_clients,
       churned_clients: s.churned_clients,
-      leverage_factor: round2(leverage * 1e4) / 1e4,
-      year_fraction: round2(yearFraction * 1e4) / 1e4,
+      leverage_factor: roundFrac(leverage),
+      year_fraction: roundFrac(yearFraction),
       effective_fee_per_client_usd: round2(effectiveFeePerClient),
       revenue_usd: round2(revenue),
       cost_usd: round2(cost),
@@ -319,7 +333,7 @@ function project(rawInputs) {
       savings_per_client_year_usd: savingsPerClientYear,
       fee_per_client_year_usd: feePerClientYear,
       client_value_5yr_usd: clientValue5yr,
-      first_year_realization_factor: round2(firstYearFactor * 1e4) / 1e4,
+      first_year_realization_factor: roundFrac(firstYearFactor),
     },
     capacity: {
       partners_planned: partners,
@@ -390,7 +404,7 @@ function reconcile(result, anchors) {
       anchor_as_of: a.as_of,
       basis: a.basis,
       status: exceeds ? 'exceeds' : 'ok',
-      ratio: a.value_usd > 0 ? round2((result.tam_usd / a.value_usd) * 100) / 100 : null,
+      ratio: a.value_usd > 0 ? roundTo(result.tam_usd / a.value_usd, 3) : null,
       note: exceeds
         ? 'The modelled market exceeds this anchor. That is defensible only if the market is explicitly multi-vendor, covering J&J, Medtronic and orthopedic platforms in addition to Intuitive. State that scope wherever this figure appears, or reduce the tier totals.'
         : a.note,
@@ -442,7 +456,7 @@ function sensitivity(inputs) {
       high_y5_usd: round2(hi),
       baseline_y5_usd: round2(baseline),
       swing_usd: round2(hi - lo),
-      swing_pct_of_baseline: baseline > 0 ? round2(((hi - lo) / baseline) * 1e4) / 1e4 : null,
+      swing_pct_of_baseline: baseline > 0 ? roundFrac((hi - lo) / baseline) : null,
     };
   });
   rows.sort((a, b) => b.swing_usd - a.swing_usd);
