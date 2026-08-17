@@ -3987,6 +3987,35 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
     assert.ok(!/slice\(0, perDay\)/.test(code), 'the per-invocation slice must be gone');
   });
+  await t('A BLOCKED POSTING MUST NOT EAT A SLOT IT CAN NEVER USE', () => {
+    // scoreBatch checks geo too and skips a blocked posting for free — but by
+    // then the row has already taken a slot out of the day's allowance. And it
+    // is never ledgered, because it was never scored, so it sits at the head of
+    // the queue and takes a slot again tomorrow, for as long as the policy
+    // stands. For a subscriber searching one state that was 2,809 of 5,581
+    // queued rows: a run that promised 40 scored 18.
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    const cut = src.slice(src.indexOf('const seen = new Set'), src.indexOf('const queue ='));
+    assert.ok(/geo\.evaluate\(r\.job\.location/.test(cut),
+      'country/state policy must be applied BEFORE the queue is sliced');
+    assert.ok(/VERDICT\.BLOCK/.test(cut));
+    assert.ok(src.indexOf('const scoreable') < src.indexOf('const queue ='),
+      'and before diversify, or the spread is computed over rows that cannot run');
+
+    // The behaviour, on the real shape: one state allowed, mixed queue.
+    const geoSvc = require(__dirname + '/src/services/geo');
+    const policy = { allowed_countries: ['US'], allowed_states: ['fl'] };
+    const rows = [
+      { location: 'Tampa, FL' }, { location: 'Austin, TX' }, { location: 'Miami, FL' },
+      { location: 'Denver, CO' }, { location: 'Remote - US' },
+    ];
+    const kept = rows.filter((j) =>
+      geoSvc.evaluate(j.location, policy).verdict !== geoSvc.VERDICT.BLOCK);
+    assert.strictEqual(kept.length, 3, 'in-state and remote-national survive');
+    assert.ok(!kept.some((j) => /TX|CO/.test(j.location)), 'other states do not');
+    // Remote-national is takeable from anywhere and must never be dropped.
+    assert.ok(kept.some((j) => j.location === 'Remote - US'));
+  });
   await t('THE OPERATOR IS NOT ASKED FOR A NUMBER THE RUN WILL IGNORE', () => {
     // The console took a "jobs to score" input and then ignored it whenever the
     // subscriber had a strong backlog — the box read 12 while the run scored 40.
@@ -4321,7 +4350,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'already-matched jobs must be skipped');
     assert.ok(/scoped\('job_scores', tenantId\)\.findAll/.test(src),
       'the seen set must include what was SCORED, not only what was filed');
-    assert.ok(src.includes('.filter((r) => !seen.has(r.job.id))'), 'only fresh jobs are scored');
+    assert.ok(/if \(seen\.has\(r\.job\.id\)\) return false;/.test(src), 'only fresh jobs are scored');
     for (const f of ['src/services/agents/index.js', 'src/services/scheduler.js']) {
       const t2 = fs.readFileSync(__dirname + '/' + f, 'utf8');
       assert.ok(!/job_matches'[^)]*\)\.destroy/.test(t2), f + ' deletes matches');

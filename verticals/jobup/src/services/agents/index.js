@@ -11,6 +11,7 @@
 
 const { models, scoped } = require('../../models');
 const jobsource = require('../jobsource');
+const geo = require('../geo');
 const matcher = require('../matcher');
 const settingsSvc = require('../settings');
 const identity = require('../identity');
@@ -186,9 +187,28 @@ async function hunter(tenantId, opts = {}) {
     scoped('job_scores', tenantId).findAll({}),
   ]);
   const seen = new Set([...existing, ...ledger].map((m) => m.job_id));
+
+  // COUNTRY/STATE POLICY BEFORE THE SLICE, NOT AFTER IT.
+  //
+  // scoreBatch also checks geo and skips a blocked posting — free, no model
+  // call — but by then the row has already taken a slot out of the day's
+  // allowance. And a blocked row is never ledgered, because it was never
+  // scored, so it stays at the head of the queue and takes a slot again
+  // tomorrow, and the day after that, for as long as the policy stands.
+  //
+  // For a subscriber who searches one state that is not a rounding error:
+  // 2,809 of 5,581 queued postings were out-of-state, 16 of every 40 slots
+  // went to rows that could not be scored, and a run that promised 40 scored
+  // 18. Filtering here spends the whole allowance on postings that can
+  // actually be scored, and makes this queue the same one /diagnose reports.
+  const scoreable = ranked.filter((r) => {
+    if (seen.has(r.job.id)) return false;
+    return geo.evaluate(r.job.location, settings.geo || {}).verdict !== geo.VERDICT.BLOCK;
+  });
+
   // Spread across employers. A ranked queue alone hands a national employer
   // every slot with one title in six different cities.
-  const queue = jobsource.diversify(ranked.filter((r) => !seen.has(r.job.id)));
+  const queue = jobsource.diversify(scoreable);
 
   // ---- CLEAR THE STRONG BACKLOG, THEN PACE ------------------------------
   //
