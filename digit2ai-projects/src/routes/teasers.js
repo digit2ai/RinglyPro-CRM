@@ -193,6 +193,36 @@ publicRouter.get('/:token/simulator', async (req, res) => {
   }
 });
 
+// The client-safe Feasibility & Build Plan for THIS teaser. Token-scoped
+// (IDOR-safe). Returns the ALLOWLISTED projection only — never the raw triage,
+// monetization, or verdict. Polled by the Studio page while triage runs.
+//   { status: 'pending' | 'ready' | 'unavailable', plan? }
+publicRouter.get('/:token/plan', async (req, res) => {
+  try {
+    const row = await loadTeaser(req.params.token);
+    if (!row || !row.project_id) return res.status(404).json({ status: 'unavailable' });
+    const t = contentOf(row);
+    const lang = (req.query.lang || (t && t.lang) || 'en');
+    const project = await Project.findByPk(row.project_id).catch(() => null);
+    if (!project) return res.json({ status: 'unavailable' });
+
+    const { clientPlanFromTriage, findLeaks } = require('../services/clientPlanFromTriage');
+    const plan = clientPlanFromTriage(project.toJSON ? project.toJSON() : project, { lang });
+    if (!plan) return res.json({ status: 'pending' }); // triage not done yet
+
+    // Defence in depth: never ship a plan that carries an internal marker.
+    const leaks = findLeaks(plan);
+    if (leaks.length) {
+      console.error('[teasers] PLAN LEAK BLOCKED for token %s: %j', row.token, leaks);
+      return res.json({ status: 'unavailable' });
+    }
+    return res.json({ status: 'ready', plan });
+  } catch (err) {
+    console.error('[teasers] plan projection failed:', err.message);
+    res.status(500).json({ status: 'unavailable', error: 'plan_error' });
+  }
+});
+
 publicRouter.get('/:token', async (req, res) => {
   try {
     const row = await loadTeaser(req.params.token);
@@ -335,6 +365,28 @@ button:disabled{opacity:.45;cursor:default}
 @media(max-width:480px){.ts-slots{grid-template-columns:1fr}}
 .foot{margin-top:34px;text-align:center;color:#5f7197;font-size:12px}
 @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
+/* Feasibility & Build Plan (real triage projection) */
+.d2plan-load{color:var(--mut);font-size:.95rem;display:flex;align-items:center;gap:10px;padding:6px 0}
+.d2plan-spin{width:15px;height:15px;border:2px solid rgba(124,92,255,.3);border-top-color:var(--violet);border-radius:50%;display:inline-block;animation:d2spin .8s linear infinite;flex:0 0 auto}
+@keyframes d2spin{to{transform:rotate(360deg)}}
+.d2feas{display:flex;align-items:center;gap:16px;margin:4px 0 20px;flex-wrap:wrap}
+.d2feas-score{font-size:2.4rem;font-weight:800;line-height:1;background:linear-gradient(135deg,#34d399,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.d2feas-score span{font-size:1rem;color:var(--mut);-webkit-text-fill-color:var(--mut)}
+.d2feas-meta{flex:1 1 200px;min-width:180px}
+.d2feas-label{font-weight:700;font-size:1.05rem}
+.d2feas-bar{height:7px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.d2feas-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#34d399,#22d3ee)}
+.d2plan-block{margin:18px 0}
+.d2plan-block h3{font-size:.82rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:8px}
+.d2plan-block p{color:var(--txt);opacity:.94}
+.d2plan-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.d2plan-list li{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:11px 14px;color:var(--txt)}
+.d2plan-list li .rk{font-weight:600}
+.d2plan-list li .dt{display:block;color:var(--mut);font-size:.9rem;margin-top:3px}
+.d2plan-note{margin:22px 0 6px;padding:16px 18px;border-radius:14px;background:linear-gradient(135deg,rgba(52,211,153,.10),rgba(34,211,238,.08));border:1px solid var(--line);color:var(--txt)}
+.d2plan-cta{margin-top:14px}
+.d2plan-cta button{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:13px 28px;border-radius:10px;font-size:1rem;font-family:inherit}
+.d2plan-disc{color:#5f7197;font-size:12px;margin-top:16px;font-style:italic}
 </style>
 </head>
 <body>
@@ -376,6 +428,12 @@ button:disabled{opacity:.45;cursor:default}
 
   ${section('challenge', t.challenge.heading, safe(t.challenge.body_html))}
   ${section('solution', t.solution.heading, safe(t.solution.body_html))}
+  ${token ? `<section id="d2plan" class="sec">
+    <h2>${es ? 'Plan de factibilidad y construcción' : 'Feasibility &amp; Build Plan'}</h2>
+    <div id="d2plan-body">
+      <div class="d2plan-load"><span class="d2plan-spin"></span>${es ? 'Nuestra IA está evaluando tu proyecto — encaje, alcance y riesgos. Unos segundos…' : 'Our AI is assessing your project — fit, scope and risks. A few seconds…'}</div>
+    </div>
+  </section>` : ''}
   ${section('poc', t.poc.heading,
     hasSim
       ? `<div class="poc-intro">${esc(t.poc.intro)}</div>
@@ -617,6 +675,72 @@ button:disabled{opacity:.45;cursor:default}
   var closers = modal.querySelectorAll('[data-close]');
   for(var i=0;i<closers.length;i++) closers[i].addEventListener('click', close);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.style.display==='flex') close(); });
+})();
+</script>
+
+<script>
+/* Feasibility & Build Plan — polls the token-scoped /plan projection (real
+   triage, client-safe: deep analysis shown, monetization + verdict never sent). */
+(function(){
+  var TOKEN = ${JSON.stringify(token || '')};
+  var ES = ${JSON.stringify(es)};
+  var box = document.getElementById('d2plan-body');
+  if(!TOKEN || !box) return;
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
+  function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
+
+  function render(plan){
+    var L = plan.labels || {};
+    var f = plan.feasibility || {};
+    var html = '';
+    if(f.score != null){
+      html += '<div class="d2feas"><div class="d2feas-score">'+f.score+'<span>/10</span></div>'
+        + '<div class="d2feas-meta"><div class="d2feas-label">'+esc(f.label)+'</div>'
+        + '<div class="d2feas-bar"><div class="d2feas-fill" style="width:'+(f.score*10)+'%"></div></div></div></div>';
+    }
+    if(plan.problem) html += block(L.problem, '<p>'+esc(plan.problem)+'</p>');
+    if(plan.why) html += block(L.why, '<p>'+esc(plan.why)+'</p>');
+    if(plan.v1) html += block(L.v1, '<p>'+esc(plan.v1)+'</p>');
+    if(plan.considerations && plan.considerations.length)
+      html += block(L.cons, listOf(plan.considerations, function(c){ return '<li>'+esc(c)+'</li>'; }));
+    if(plan.landscape && plan.landscape.length)
+      html += block(L.land, listOf(plan.landscape, function(c){ return '<li>'+esc(c)+'</li>'; }));
+    if(plan.risks && plan.risks.length)
+      html += block(L.risks, listOf(plan.risks, function(r){ return '<li><span class="rk">'+esc(r.risk)+'</span>'+(r.detail?'<span class="dt">'+esc(r.detail)+'</span>':'')+'</li>'; }));
+    if(plan.mitigations && plan.mitigations.length)
+      html += block(L.mit, listOf(plan.mitigations, function(m){ return '<li>'+esc(m)+'</li>'; }));
+    if(plan.need_from_you && plan.need_from_you.length)
+      html += block(L.need, listOf(plan.need_from_you, function(n){ return '<li>'+esc(n)+'</li>'; }));
+    if(plan.gate && plan.gate.note){
+      html += '<div class="d2plan-note">'+esc(plan.gate.note)
+        + '<div class="d2plan-cta"><button type="button" id="d2plan-cta-btn">'+esc(plan.gate.cta)+' &rarr;</button></div></div>';
+    }
+    if(plan.disclaimer) html += '<div class="d2plan-disc">'+esc(plan.disclaimer)+'</div>';
+    box.innerHTML = html;
+    var cb = document.getElementById('d2plan-cta-btn');
+    if(cb) cb.onclick = function(){
+      var bk = document.getElementById('ts-book-btn');
+      var cta = document.getElementById('cta');
+      if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
+      if(bk) setTimeout(function(){ bk.click(); }, 420);
+    };
+  }
+
+  var tries = 0, MAX = 24; // ~72s ceiling; triage+premortem usually < 30s
+  function poll(){
+    fetch('/projects/teaser/'+encodeURIComponent(TOKEN)+'/plan?lang='+(ES?'es':'en'))
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.status === 'ready' && res.plan){ render(res.plan); return; }
+        if(res && res.status === 'unavailable'){ hide(); return; }
+        if(++tries >= MAX){ hide(); return; }
+        setTimeout(poll, 3000);
+      })
+      .catch(function(){ if(++tries >= MAX){ hide(); } else setTimeout(poll, 3000); });
+  }
+  function hide(){ var s=document.getElementById('d2plan'); if(s) s.style.display='none'; }
+  poll();
 })();
 </script>
 </body>
