@@ -511,11 +511,15 @@
     <div class="d2b-modal-backdrop" data-gate-close></div>
     <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Your details">
       <button class="d2b-modal-x" data-gate-close aria-label="Close">&times;</button>
-      <div class="modal-title">Before we build &mdash; a few details</div>
-      <div class="modal-sub">Required. Your demo, plan and text updates are all built from this.</div>
+      <div class="modal-title">Create your workspace</div>
+      <div class="modal-sub">Required. This creates your private workspace &mdash; every build you start lives here.</div>
       <div class="modal-fields">
-        <div class="mf"><label class="mf-l" for="cm-name">Full name *</label>
-          <input type="text" id="cm-name" placeholder="First and last name" autocomplete="name"></div>
+        <div class="cm-phone-row" style="gap:8px">
+          <div class="mf" style="flex:1"><label class="mf-l" for="cm-first">First name *</label>
+            <input type="text" id="cm-first" placeholder="First name" autocomplete="given-name"></div>
+          <div class="mf" style="flex:1"><label class="mf-l" for="cm-last">Last name *</label>
+            <input type="text" id="cm-last" placeholder="Last name" autocomplete="family-name"></div>
+        </div>
         <div class="mf"><label class="mf-l" for="cm-email">Work email *</label>
           <input type="email" id="cm-email" placeholder="you@company.com" autocomplete="email"></div>
         <div class="mf"><label class="mf-l" for="cm-phone">Mobile * &mdash; we text your demo link and confirmations</label>
@@ -523,13 +527,17 @@
             <select id="cm-cc" class="cm-cc" aria-label="Country"></select>
             <input type="tel" inputmode="tel" id="cm-phone" placeholder="Phone number" autocomplete="tel-national">
           </div></div>
+        <div class="mf"><label class="mf-l" for="cm-pass">Password *</label>
+          <input type="password" id="cm-pass" placeholder="At least 6 characters" autocomplete="new-password"></div>
+        <div class="mf"><label class="mf-l" for="cm-pass2">Confirm password *</label>
+          <input type="password" id="cm-pass2" placeholder="Re-enter your password" autocomplete="new-password"></div>
         <div class="mf"><label class="mf-l">Language *</label>
           <div class="cm-lang" id="cm-lang" role="group" aria-label="Language">
             <button type="button" class="cm-lang-opt" data-lang="en">English</button>
             <button type="button" class="cm-lang-opt" data-lang="es">Espa&ntilde;ol</button>
           </div></div>
       </div>
-      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Continue &rarr;</button>
+      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Create workspace &rarr;</button>
       <div class="modal-status" id="cm-status" aria-live="polite"></div>
     </div>
   </div>
@@ -1247,7 +1255,10 @@
     var cc=(ccEl&&ccEl.value||'+1').replace(/[^0-9+]/g,''); return cc+nat;
   }
   function validEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x||''); }
-  function identityComplete(){ return !!(contact.name && validEmail(contact.email) && /^\+[1-9]\d{6,15}$/.test(contact.phone||'') && contact.lang); }
+  function hasSession(){ try{ return !!localStorage.getItem('d2ai_session'); }catch(e){ return false; } }
+  // A completed identity now REQUIRES an authenticated workspace session (password),
+  // so a returning visitor without one is re-gated to create/sign into their workspace.
+  function identityComplete(){ return !!(hasSession() && contact.name && validEmail(contact.email) && /^\+[1-9]\d{6,15}$/.test(contact.phone||'') && contact.lang); }
   // language chooser buttons
   var langBtns=root.querySelectorAll('#cm-lang .cm-lang-opt');
   function setGateLang(l){ gateLang=l; langBtns.forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-lang')===l); }); }
@@ -1256,11 +1267,13 @@
   function lockInput(){ if(input){ input.readOnly=true; input.classList.add('locked'); } }
   function unlockInput(){ if(input){ input.readOnly=false; input.classList.remove('locked'); } }
   function openGate(){
-    var cn=root.querySelector('#cm-name'); if(cn) cn.value=contact.name||'';
+    var parts=(contact.name||'').trim().split(/\s+/);
+    var cf=root.querySelector('#cm-first'); if(cf) cf.value=(parts[0]||'');
+    var cl=root.querySelector('#cm-last'); if(cl) cl.value=(parts.slice(1).join(' ')||'');
     var ce=root.querySelector('#cm-email'); if(ce) ce.value=contact.email||'';
     setGateLang(gateLang || contact.lang || PAGE_LANG);
     openModal(contactModal);
-    setTimeout(function(){ if(cn && !cn.value) cn.focus(); }, 60);
+    setTimeout(function(){ if(cf && !cf.value) cf.focus(); }, 60);
   }
   // Any attempt to start writing / use a sample / submit opens the gate first.
   if(input){
@@ -1277,27 +1290,46 @@
     cmBtn.addEventListener('click', function(){
       var st=root.querySelector('#cm-status');
       var es=(PAGE_LANG==='es');
-      var name=((root.querySelector('#cm-name').value)||'').trim();
+      var first=((root.querySelector('#cm-first').value)||'').trim();
+      var last=((root.querySelector('#cm-last').value)||'').trim();
       var email=((root.querySelector('#cm-email').value)||'').trim();
       var phone=e164();
+      var pass=(root.querySelector('#cm-pass').value)||'';
+      var pass2=(root.querySelector('#cm-pass2').value)||'';
       function err(m){ st.textContent=m; st.className='modal-status err'; }
-      if(!name){ return err(es?'Ingresa tu nombre.':'Enter your name.'); }
+      if(!first){ return err(es?'Ingresa tu nombre.':'Enter your first name.'); }
+      if(!last){ return err(es?'Ingresa tu apellido.':'Enter your last name.'); }
       if(!validEmail(email)){ return err(es?'Ingresa un correo válido.':'Enter a valid email.'); }
       if(!phone || phone.replace(/[^0-9]/g,'').length<7){ return err(es?'Ingresa un número de celular válido.':'Enter a valid mobile number.'); }
+      if(pass.length<6){ return err(es?'La contraseña debe tener al menos 6 caracteres.':'Password must be at least 6 characters.'); }
+      if(pass!==pass2){ return err(es?'Las contraseñas no coinciden.':'Passwords do not match.'); }
       if(!gateLang){ return err(es?'Elige un idioma.':'Choose a language.'); }
-      st.textContent=''; st.className='modal-status';
-      contact={name:name,phone:phone,email:email,lang:gateLang};
-      saveContact(name, phone, email, gateLang);
-      // Language drives everything. If they picked the other language, load that
-      // page so the UI + all generated content match; identity persists.
-      if(gateLang!==PAGE_LANG){ location.href = (gateLang==='es' ? '/torna-es' : '/torna'); return; }
-      D2B_LANG = gateLang;
-      closeModal(contactModal); unlockInput();
-      if(afterGate){ var _cb=afterGate; afterGate=null; _cb(); return; } // resume voice/attach
-      // A sample prompt only FILLS + focuses (like an ungated chip) — never auto-builds.
-      if(pendingChip && input){ input.value=pendingChip; pendingChip=''; updateHint(); input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); return; }
-      if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
-      else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
+      var name=(first+' '+last).trim();
+      st.textContent=(es?'Creando tu workspace…':'Creating your workspace…'); st.className='modal-status';
+      cmBtn.disabled=true;
+      // Create (or log into) the workspace account FIRST — nothing builds until this
+      // succeeds. Returns a signed session we store + send on every workspace call.
+      fetch('/projects/api/v1/intake/orbup/signup',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({first_name:first,last_name:last,email:email,phone:phone,password:pass})})
+        .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(res){
+          cmBtn.disabled=false;
+          if(!res.ok || !res.j || !res.j.success){ return err((res.j&&res.j.error)||(es?'No se pudo crear el workspace.':'Could not create your workspace.')); }
+          st.textContent='';
+          try{ localStorage.setItem('d2ai_session', res.j.session||''); }catch(x){}
+          contact={name:name,phone:phone,email:email,lang:gateLang};
+          saveContact(name, phone, email, gateLang);
+          // Language drives everything. If they picked the other language, load that
+          // page so the UI + all generated content match; identity + session persist.
+          if(gateLang!==PAGE_LANG){ location.href = (gateLang==='es' ? '/orbup-es' : '/orbup'); return; }
+          D2B_LANG = gateLang;
+          closeModal(contactModal); unlockInput();
+          if(afterGate){ var _cb=afterGate; afterGate=null; _cb(); return; } // resume voice/attach
+          if(pendingChip && input){ input.value=pendingChip; pendingChip=''; updateHint(); input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+          if(lastDescription || (input && input.value.trim())){ runFullFlow(lastDescription||input.value.trim(), name, phone, email); }
+          else if(input){ input.focus(); input.scrollIntoView({behavior:'smooth',block:'center'}); }
+        })
+        .catch(function(){ cmBtn.disabled=false; err(es?'Error de conexión. Inténtalo de nuevo.':'Connection error. Please try again.'); });
     });
   }
 
