@@ -4100,6 +4100,33 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     await scoped('job_scores', subA.id).destroy({ job_id: probe.id });
     await models.jobs.destroy({ where: { id: probe.id } });
   });
+  await t('AN EMPTY BOARD NAMES THE SETTING THAT EMPTIED IT', async () => {
+    // A subscriber whose own work-mode preference rules out every posting in
+    // their field sees exactly what a subscriber with a broken agent sees. Only
+    // one of those is fixable by the person looking at it.
+    const stats = {};
+    const profile = { headline: 'Sales Executive', skills: ['advertising'] };
+    const settings = { targeting: { roles: [{ title: 'Account Executive' }],
+      remote_preference: 'remote' } };
+    const onsite = [
+      { id: 1, title: 'Account Executive', employer: 'CCO', location: 'Tampa, FL',
+        description: 'advertising sales, fully on-site in our Clearwater office' },
+      { id: 2, title: 'Account Executive', employer: 'CCO', location: 'Miami, FL',
+        description: 'advertising sales, this is an on-site role' },
+    ];
+    const kept = jobsource.prefilter(onsite, profile, settings, '', stats);
+    assert.strictEqual(kept.length, 0);
+    assert.strictEqual(stats.considered, 2);
+    assert.strictEqual(stats.dropped.work_mode, 2, 'the filter must report WHICH branch dropped them');
+
+    const agents = require('./src/services/agents');
+    // The sentence the subscriber actually reads.
+    assert.ok(typeof agents.hunter === 'function');
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/your remote\/hybrid\/on-site preference/.test(src),
+      'the work-mode preference must be nameable in the summary');
+    assert.ok(/filterNote\(filterStats\)/.test(src), 'and the summary must actually call it');
+  });
   await t('a dry run says WHY it filed nothing', async () => {
     // "6 below your minimum score of 70" is unactionable on its own: a best of
     // 68 means lower the floor, a best of 31 means the pool holds nothing in

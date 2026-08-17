@@ -91,7 +91,14 @@ async function refreshEmployer(row, opts = {}) {
 // COST MECHANIC #2 — this is the difference between 5 USD and 25 USD a year.
 const STOP = new Set(['the','and','for','with','you','our','are','will','have','this','that','from','your','all','can','not','was','were','has','had','they','their','been','more','than','when','what','who','how','into','over','under','also','such','each','other','about','which','while','these','those','there','here','then','some','most','many','much','very','just','only','both','after','before','during']);
 
-function prefilter(jobs, profile, settings, rawText) {
+/**
+ * @param stats optional object, mutated with WHY each posting was dropped.
+ *
+ * A subscriber whose own targeting excludes the whole pool sees exactly what a
+ * subscriber with a broken agent sees: nothing. The counts are what separate
+ * the two, and they are free — the filter already knows which branch it took.
+ */
+function prefilter(jobs, profile, settings, rawText, stats) {
   const targeting = (settings || {}).targeting || {};
   const titles = (targeting.roles || []).map((r) => String(r.title || '').toLowerCase()).filter(Boolean);
   const industries = (targeting.industries || []).map((x) => String(x).toLowerCase()).filter(Boolean);
@@ -125,6 +132,7 @@ function prefilter(jobs, profile, settings, rawText) {
       .filter((w) => !STOP.has(w)))].slice(0, 60);
   }
 
+  const drop = { excluded_keyword: 0, must_include: 0, work_mode: 0, employment_type: 0, no_overlap: 0 };
   const scored = [];
   for (const j of (jobs || [])) {
     const title = String(j.title || '').toLowerCase();
@@ -135,10 +143,10 @@ function prefilter(jobs, profile, settings, rawText) {
     // ---- FREE EXCLUSIONS, before anything is counted or spent ----
     // A word you never want to see costs nothing to check and saves a whole
     // model call. This runs before scoring for exactly that reason.
-    if (never.length && never.some((w) => hay.includes(w) || employer.includes(w))) continue;
+    if (never.length && never.some((w) => hay.includes(w) || employer.includes(w))) { drop.excluded_keyword++; continue; }
 
     // A must-have term is a requirement, not a preference.
-    if (must.length && !must.every((w) => hay.includes(w))) continue;
+    if (must.length && !must.every((w) => hay.includes(w))) { drop.must_include++; continue; }
 
     // ---- WORK MODE. Read off location AND description: plenty of postings say
     // "Remote" only in the body, and judging on the location string alone threw
@@ -172,7 +180,7 @@ function prefilter(jobs, profile, settings, rawText) {
       const wants = (modes.includes('remote') && isRemote)
                  || (modes.includes('hybrid') && isHybrid)
                  || (modes.includes('onsite') && (isOnsite || !stated));
-      if (!wants) continue;
+      if (!wants) { drop.work_mode++; continue; }
     }
 
     // ---- EMPLOYMENT TYPE. Same asymmetry: full-time is the unstated default,
@@ -190,8 +198,8 @@ function prefilter(jobs, profile, settings, rawText) {
       const anyStated = Object.values(stated).some(Boolean);
       const wanted = types.some((k) => stated[k]);
       if (wanted) typeHit = 2;
-      else if (anyStated) continue;                 // states a type you ruled out
-      else if (!types.includes('full_time')) continue; // silence reads as full-time
+      else if (anyStated) { drop.employment_type++; continue; }   // states a type you ruled out
+      else if (!types.includes('full_time')) { drop.employment_type++; continue; } // silence reads as full-time
     }
 
     let hits = 0;
@@ -208,9 +216,10 @@ function prefilter(jobs, profile, settings, rawText) {
     const locationHit = wantLocations.some((l) => location.includes(l)) ? 2 : 0;
 
     const prescore = hits + titleHits * 2 + employerHits * 3 + seniorityHit + locationHit + typeHit;
-    if (prescore > 0) scored.push({ job: j, prescore });
+    if (prescore > 0) scored.push({ job: j, prescore }); else drop.no_overlap++;
   }
 
+  if (stats) Object.assign(stats, { considered: (jobs || []).length, kept: scored.length, dropped: drop });
   return scored.sort((a, b) => b.prescore - a.prescore);
 }
 

@@ -59,6 +59,31 @@ async function loadContext(tenantId) {
   };
 }
 
+/**
+ * Name the subscriber's OWN setting that is doing the excluding.
+ *
+ * A person whose work-mode preference rules out every posting in their field
+ * sees precisely what a person with a broken agent sees: an empty board. Only
+ * one of those is fixable by the person looking at it, and they cannot tell
+ * which they are in without this sentence.
+ */
+function filterNote(stats) {
+  const d = (stats && stats.dropped) || {};
+  const reasons = [
+    [d.work_mode, 'your remote/hybrid/on-site preference'],
+    [d.excluded_keyword, 'your excluded keywords'],
+    [d.must_include, 'your required keywords'],
+    [d.employment_type, 'your employment-type filter'],
+  ].filter(([n]) => n > 0).sort((a, b) => b[0] - a[0]);
+
+  if (!reasons.length) {
+    return ' Nothing in the pool overlaps your skills or role targets yet — try adding the titles employers'
+         + ' actually advertise for your work, not only the ones you have held.';
+  }
+  const [n, why] = reasons[0];
+  return ` ${n.toLocaleString()} posting(s) were ruled out by ${why} — widening it is the fastest change you can make.`;
+}
+
 async function log(tenantId, agent, status, summary, cost, isSimulated, scored, trigger) {
   return scoped('agent_runs', tenantId).create({
     agent, status, summary, cost_usd: cost || 0, is_simulated: Boolean(isSimulated),
@@ -141,7 +166,8 @@ async function hunter(tenantId, opts = {}) {
   }
 
   // COST MECHANIC #2 — free deterministic pre-filter before any model call.
-  const ranked = jobsource.prefilter(pool, profile, settings, sourceText);
+  const filterStats = {};
+  const ranked = jobsource.prefilter(pool, profile, settings, sourceText, filterStats);
 
   // Skip anything this tenant has already been CHARGED to look at — filed or
   // not. Reading only job_matches meant below-floor postings were never
@@ -160,11 +186,11 @@ async function hunter(tenantId, opts = {}) {
     const exhausted = ranked.length > 0;
     await log(tenantId, 'hunter', 'idle', exhausted
       ? `Scored every posting in the pool that matches your targeting (${ranked.length}). Nothing new until fresh openings land.`
-      : 'No posting in the shared pool matches your targeting. Widen your roles, industries or locations.',
+      : `No posting in the shared pool matches your targeting.${filterNote(filterStats)}`,
       0, false, 0, trigger);
     return { agent: 'hunter', scored: 0,
              note: exhausted ? 'pool exhausted for this targeting' : 'targeting matches nothing in pool',
-             pool_size: pool.length, prefilter_survivors: ranked.length };
+             pool_size: pool.length, prefilter_survivors: ranked.length, filters: filterStats };
   }
 
   const res = await matcher.scoreBatch(fresh.map((r) => r.job), profile, settings,
