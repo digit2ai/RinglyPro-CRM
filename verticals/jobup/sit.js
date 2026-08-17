@@ -2119,6 +2119,59 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(adminRoute.configured(), false);
     if (saved) process.env.JOBUP_ADMIN_PASSWORD = saved; else delete process.env.JOBUP_ADMIN_PASSWORD;
   });
+  await t('A WRONG EMAIL SAYS SO — BUT ONLY TO SOMEONE WHO HAS THE PASSWORD', async () => {
+    // Two consoles with near-identical names take two different identities:
+    // this one wants JOBUP_ADMIN_EMAILS, the billing register wants
+    // JOBUP_SUBS_ADMIN_EMAIL. Typing the other console's address here is the
+    // obvious mistake, and a bare "not authorised" sends the operator off to
+    // check a password that was never wrong.
+    const savedPw = process.env.JOBUP_ADMIN_PASSWORD;
+    const savedEm = process.env.JOBUP_ADMIN_EMAILS;
+    process.env.JOBUP_ADMIN_PASSWORD = 'a-real-admin-password';
+    process.env.JOBUP_ADMIN_EMAILS = 'owner@digit2ai.com';
+
+    const app = require('express')();
+    app.use(require('express').json());
+    app.use('/admin', adminRoute);
+    const srv = app.listen(0);
+    const base = 'http://127.0.0.1:' + srv.address().port + '/admin/login';
+    const post = async (body) => {
+      const r = await fetch(base, { method: 'POST',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      return { code: r.status, body: await r.json() };
+    };
+
+    // Right password, wrong console's email -> say which half is wrong.
+    const helped = await post({ email: 'admin@jobup.dev', password: 'a-real-admin-password' });
+    assert.strictEqual(helped.code, 401, 'it is still refused');
+    assert.ok(/not an owner of this console/.test(helped.body.error),
+      'the operator must be told the EMAIL is the problem');
+    assert.ok(/Subscribers/.test(helped.body.note || ''), 'and pointed at the other console');
+
+    // Wrong password -> reveal nothing, whatever the email.
+    for (const email of ['admin@jobup.dev', 'owner@digit2ai.com', 'attacker@evil.com']) {
+      const blind = await post({ email, password: 'wrong-password-entirely' });
+      assert.strictEqual(blind.code, 401);
+      assert.strictEqual(blind.body.error, 'not authorised',
+        'without the password, the response must not distinguish anything');
+      assert.strictEqual(blind.body.note, undefined, 'and must carry no hint');
+    }
+
+    // The right pair still works.
+    const good = await post({ email: 'owner@digit2ai.com', password: 'a-real-admin-password' });
+    assert.strictEqual(good.code, 200);
+    assert.strictEqual(good.body.email, 'owner@digit2ai.com');
+
+    srv.close();
+    if (savedPw) process.env.JOBUP_ADMIN_PASSWORD = savedPw; else delete process.env.JOBUP_ADMIN_PASSWORD;
+    if (savedEm) process.env.JOBUP_ADMIN_EMAILS = savedEm; else delete process.env.JOBUP_ADMIN_EMAILS;
+  });
+  await t('the login page names the OTHER console so the trap is visible', () => {
+    const src = fs.readFileSync(__dirname + '/src/routes/admin.js', 'utf8');
+    assert.ok(/Two consoles, two credentials, on purpose/.test(src),
+      'the login page must say this is a separate sign-in');
+    assert.ok(/href="\/subscribers-admin"/.test(src), 'and link to the other one');
+  });
   await t('owner allowlist defaults to the owner and is env-overridable', () => {
     const saved = process.env.JOBUP_ADMIN_EMAILS;
     delete process.env.JOBUP_ADMIN_EMAILS;

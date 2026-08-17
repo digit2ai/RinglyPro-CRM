@@ -114,6 +114,25 @@ router.post('/login', async (req, res) => {
     if (rec.n >= 5) { rec.until = now + 15 * 60 * 1000; rec.n = 0; }
     attempts.set(key, rec);
     await audit(email || 'unknown', 'admin.login.failed', null, null);
+
+    // SAY WHICH HALF IS WRONG — but ONLY once the password is already correct.
+    //
+    // Two consoles with near-identical names take two different identities:
+    // this one wants an owner on JOBUP_ADMIN_EMAILS, the Subscribers billing
+    // register wants JOBUP_SUBS_ADMIN_EMAIL. Typing the other console's email
+    // here is the obvious mistake, and "not authorised" sends the operator to
+    // check their password, which was never the problem.
+    //
+    // It reveals nothing: whoever sees this already holds the admin password,
+    // so the allowlist is not what is protecting anything at that point. The
+    // attempt is still refused, still throttled, still audited.
+    if (passOk && !emailOk) {
+      return res.status(401).json({
+        error: 'that password is correct, but this email is not an owner of this console',
+        note: 'This is the platform console, a different sign-in from the Subscribers billing '
+            + 'register. Use an address on JOBUP_ADMIN_EMAILS, or add this one to it.',
+      });
+    }
     return res.status(401).json({ error: 'not authorised' });
   }
 
@@ -329,6 +348,11 @@ td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
 <div class="sub">Owner access only. Counts and money &mdash; never subscriber personal data.</div>
 
 <div id="login" class="panel">
+  <div class="note" style="margin:0 0 14px">
+    This is the <strong>platform</strong> console and it takes its own sign-in &mdash;
+    not the one for the <a href="/subscribers-admin">Subscribers</a> billing register.
+    Two consoles, two credentials, on purpose.
+  </div>
   <label for="e">Owner email</label><input id="e" type="email" autocomplete="username">
   <label for="p">Admin password</label><input id="p" type="password" autocomplete="current-password">
   <button id="go">Sign in</button>
