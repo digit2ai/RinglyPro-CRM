@@ -1367,7 +1367,9 @@
   function finishBuild(url){
     stopBuild(); loading(false);
     var es=(D2B_LANG==='es');
-    try{ window.open(url,'_blank','noopener'); }catch(e){}
+    // Per the workflow: do NOT display the magic link — take the user straight into
+    // their Studio, which now carries the left-pane workspace / project history.
+    try{ window.location.href = url; return; }catch(e){}
     result.className='show';
     result.innerHTML=''
       +'<div class="d2b-build d2b-done">'
