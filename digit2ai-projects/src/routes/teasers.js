@@ -926,7 +926,7 @@ body.tw-on .tw-side{display:flex}
       var ps=(res&&res.projects)||[];
       if(!ps.length){ list.innerHTML='<div style="color:#5f7197;font-size:13px;padding:9px 11px">'+(ES?'Sin proyectos aún':'No projects yet')+'</div>'; return; }
       list.innerHTML=ps.map(function(p){
-        var cur=(p.id===PID);
+        var cur=(String(p.id)===String(PID));
         var href=p.teaser_url||('#');
         return '<a class="tw-proj'+(cur?' on':'')+'" href="'+esc(href)+'" title="'+esc(p.name||'')+'">'+esc(p.name||'Untitled build')+'</a>';
       }).join('');
