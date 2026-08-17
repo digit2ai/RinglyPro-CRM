@@ -735,7 +735,12 @@ app.get('*', (req, res) => {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_teasers_project ON d2_project_teasers(project_id)`,
-      `CREATE INDEX IF NOT EXISTS idx_d2_project_teasers_token ON d2_project_teasers(token)`
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_teasers_token ON d2_project_teasers(token)`,
+      // Plan Copilot — the prospect's live-refined working plan + version history + chat.
+      `ALTER TABLE d2_project_teasers ADD COLUMN IF NOT EXISTS client_plan_json JSONB`,
+      `ALTER TABLE d2_project_teasers ADD COLUMN IF NOT EXISTS client_plan_versions JSONB DEFAULT '[]'`,
+      `ALTER TABLE d2_project_teasers ADD COLUMN IF NOT EXISTS client_plan_chat JSONB DEFAULT '[]'`,
+      `ALTER TABLE d2_project_teasers ADD COLUMN IF NOT EXISTS client_plan_at TIMESTAMPTZ`
     ];
     for (const sql of teaserMigrations) {
       try { await sequelize.query(sql); } catch (e) {
