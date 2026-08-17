@@ -198,6 +198,19 @@
           cal.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Cal link'; },1200);} if(navigator.clipboard) navigator.clipboard.writeText(calUrl).then(done,done); else done(); });
           btns.appendChild(cal);
         }
+        var ren=document.createElement('button');
+        ren.className='text-xs px-2 py-1 rounded-lg border'; ren.style.cssText='border-color:var(--line);color:var(--txt)';
+        ren.textContent='Rename'; ren.title='Fix a typo in the name — keeps their existing link working';
+        ren.addEventListener('click', function(){
+          var next=prompt('Name for '+c.email, c.name||'');
+          if(next===null) return;
+          next=next.trim(); if(!next) return;
+          var tok=crmToken();
+          fetch(API+'/rename',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({email:c.email,name:next})})
+            .then(function(r){ if(!r.ok) alert('Rename failed ('+r.status+')'); loadChampions(); })
+            .catch(function(){ alert('Network error'); });
+        });
+        btns.appendChild(ren);
         var reissue=document.createElement('button');
         reissue.className='text-xs px-2 py-1 rounded-lg border'; reissue.style.cssText='border-color:var(--line);color:var(--txt)';
         reissue.textContent='Re-issue'; reissue.addEventListener('click', function(){ mint(c.name||c.email, c.email).then(loadChampions); });

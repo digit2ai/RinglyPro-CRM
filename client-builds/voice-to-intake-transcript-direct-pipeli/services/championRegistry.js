@@ -102,6 +102,26 @@ async function list() {
   }
 }
 
+// Fix a champion's display name WITHOUT touching their jti — a typo in a name
+// must not cost them a working link (re-issuing rotates the jti and kills it).
+async function rename(email, name) {
+  const e = norm(email);
+  const n = String(name || '').trim();
+  if (!n) return false;
+  try {
+    const seq = getSequelize();
+    await ensureTable(seq);
+    const [, meta] = await seq.query(
+      `UPDATE ${TABLE} SET name = :name, updated_at = NOW() WHERE email = :email`,
+      { replacements: { email: e, name: n } }
+    );
+    return (meta && typeof meta.rowCount === 'number') ? meta.rowCount > 0 : true;
+  } catch (err) {
+    console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'champion_rename_failed', error: err.message }));
+    return false;
+  }
+}
+
 async function revoke(email) {
   const e = norm(email);
   try {
@@ -116,4 +136,4 @@ async function revoke(email) {
   }
 }
 
-module.exports = { upsert, isValid, list, revoke, TABLE };
+module.exports = { upsert, isValid, list, rename, revoke, TABLE };

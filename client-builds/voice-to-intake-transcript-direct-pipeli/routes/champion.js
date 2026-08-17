@@ -58,6 +58,22 @@ router.get('/', requireCrmAuth, async (req, res) => {
   }
 });
 
+// Fix a champion's display name. Deliberately NOT a re-mint: the jti is left
+// alone, so correcting a typo never invalidates the link they already have.
+router.post('/rename', requireCrmAuth, async (req, res) => {
+  try {
+    const email = String((req.body && req.body.email) || '').trim();
+    const name = String((req.body && req.body.name) || '').trim();
+    if (!email) return res.status(422).json({ error: 'email required' });
+    if (!name) return res.status(422).json({ error: 'name required' });
+    const ok = await registry.rename(email, name);
+    if (!ok) return res.status(404).json({ error: 'champion not found' });
+    return res.json({ ok: true, email, name });
+  } catch (err) {
+    return res.status(500).json({ error: 'internal error' });
+  }
+});
+
 // Revoke a champion's current link.
 router.post('/revoke', requireCrmAuth, async (req, res) => {
   try {
