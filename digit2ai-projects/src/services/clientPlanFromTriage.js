@@ -163,20 +163,23 @@ function clientPlanFromTriage(project, opts = {}) {
 
   // Risks we plan around — from the premortem, softened (no base rates, no
   // "the company dies"). Pair the failure modes with our mitigations.
-  // A premortem title is sometimes scene-setting ("It is 6 months from now.")
-  // rather than a risk. Detect that and fall back to the narrative's real content.
-  const isSceneSetting = (s) => /^(it is|it's|imagine|picture|fast[- ]?forward|the year is|\d+\s*(months?|weeks?|years?)\s+(from now|later)|six months|three months)\b/i.test(String(s || '').trim());
+  // Premortem titles/narratives are sometimes scene-setting ("It is 6 months from
+  // now.") rather than a stated risk. Strip those sentences from the whole text and
+  // build the headline + detail from what actually remains; drop the item if nothing
+  // substantive is left (never surface a bare scene-setter as a "risk").
+  const isSceneSetting = (s) => /^(it is|it's|imagine|picture|fast[- ]?forward|the year is|estamos a|es dentro de|\d+\s*(months?|weeks?|years?|meses|semanas|años)\s+(from now|later|después)|six months|three months|seis meses|tres meses)\b/i.test(String(s || '').trim());
+  const realSentences = (txt) => scrubText(txt || '')
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 12 && !isSceneSetting(s));
   const risks = arr(premortem && premortem.failure_modes)
     .map(f => {
-      let risk = scrubText(f.title || '');
-      const detail = scrubText(f.narrative || '');
-      if (isSceneSetting(risk)) {
-        // Use the first substantive sentence of the narrative as the risk headline.
-        const firstReal = detail.split(/(?<=[.!?])\s+/).find(s => !isSceneSetting(s) && s.length > 12) || '';
-        risk = firstReal.replace(/[.!?]+$/, '');
-      }
-      if (!risk && !detail) return null;
-      return { risk: risk || detail.slice(0, 90), detail: risk && detail && detail.indexOf(risk) === -1 ? detail : '' };
+      const titleClean = isSceneSetting(f.title) ? '' : scrubText(f.title || '');
+      const narr = realSentences(f.narrative);
+      const headline = titleClean || narr.shift() || '';
+      if (!headline) return null;               // nothing but scene-setting → drop
+      const detail = narr.join(' ');
+      return { risk: headline.replace(/[.!?]+$/, ''), detail: detail && detail.indexOf(headline) === -1 ? detail : '' };
     })
     .filter(Boolean)
     .slice(0, 6);
