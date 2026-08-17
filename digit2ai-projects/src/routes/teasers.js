@@ -262,7 +262,10 @@ publicRouter.get('/:token/plan', async (req, res) => {
       console.error('[teasers] PLAN LEAK BLOCKED for token %s: %j', row.token, leaks);
       return res.json({ status: 'unavailable' });
     }
-    return res.json({ status: 'ready', plan, refined: !!working });
+    // Include the saved Copilot transcript so the Studio can RESUME the
+    // conversation for this project (continue where the prospect left off).
+    const chat = jsonOf(row.client_plan_chat, []);
+    return res.json({ status: 'ready', plan, refined: !!working, chat });
   } catch (err) {
     console.error('[teasers] plan projection failed:', err.message);
     res.status(500).json({ status: 'unavailable', error: 'plan_error' });
@@ -883,7 +886,7 @@ button:disabled{opacity:.45;cursor:default}
   var box = document.getElementById('d2plan-body');
   if(!TOKEN || !box) return;
   var section = document.getElementById('d2plan');
-  var history = [], chatMounted = false, sending = false;
+  var history = [], chatMounted = false, sending = false, savedChat = [];
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
   function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
@@ -961,7 +964,16 @@ button:disabled{opacity:.45;cursor:default}
     logEl = document.getElementById('d2chat-log');
     inputEl = document.getElementById('d2chat-input');
     sendBtn = document.getElementById('d2chat-send');
-    addMsg('a', T.hello);
+    // Resume the saved conversation for this project, else greet fresh.
+    if(savedChat && savedChat.length){
+      savedChat.forEach(function(m){
+        if(!m || !m.text) return;
+        addMsg(m.role === 'assistant' ? 'a' : 'u', m.text);
+        history.push({ role: m.role === 'assistant' ? 'assistant' : 'user', text: m.text });
+      });
+    } else {
+      addMsg('a', T.hello);
+    }
     sendBtn.onclick = doSend;
     inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ doSend(); } });
     Array.prototype.forEach.call(document.querySelectorAll('#d2chat-chips .d2chip'), function(b){
@@ -1008,7 +1020,7 @@ button:disabled{opacity:.45;cursor:default}
     fetch('/projects/teaser/'+encodeURIComponent(TOKEN)+'/plan?lang='+(ES?'es':'en'))
       .then(function(r){ return r.json(); })
       .then(function(res){
-        if(res && res.status === 'ready' && res.plan){ render(res.plan); return; }
+        if(res && res.status === 'ready' && res.plan){ savedChat = res.chat || []; render(res.plan); return; }
         if(res && res.status === 'unavailable'){ hide(); return; }
         if(++tries >= MAX){ hide(); return; }
         setTimeout(poll, 3000);

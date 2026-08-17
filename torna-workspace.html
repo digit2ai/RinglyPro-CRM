@@ -97,9 +97,9 @@
 
   <main class="oww-main">
     <div class="oww-hero">
-      <h1 id="oww-greet">What should we build?</h1>
+      <h1 id="oww-greet">What should we continue?</h1>
       <div class="oww-prompt">
-        <textarea id="oww-desc" rows="2" placeholder="Describe the tool your business needs…"></textarea>
+        <textarea id="oww-desc" rows="2" placeholder="Describe a new build — or open a project below to continue the conversation…"></textarea>
         <div class="row">
           <span class="hint">Workspace-private · Free plan</span>
           <button class="oww-build" id="oww-build">Build it &rarr;</button>
@@ -134,7 +134,7 @@
   var first = name ? name.split(' ')[0] : '';
 
   // header personalization
-  document.getElementById('oww-greet').textContent = first ? ('What should we build, '+first+'?') : 'What should we build?';
+  document.getElementById('oww-greet').textContent = first ? ('What should we continue, '+first+'?') : 'What should we continue?';
   document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s Torna";
   document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
 
@@ -172,23 +172,30 @@
       var list=document.getElementById('oww-list');
       if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
       if(res.user && res.user.name && !name){ // backfill from server
-        document.getElementById('oww-greet').textContent='What should we build, '+res.user.name.split(' ')[0]+'?';
+        document.getElementById('oww-greet').textContent='What should we continue, '+res.user.name.split(' ')[0]+'?';
       }
       var ps=res.projects||[];
       if(!ps.length){ list.innerHTML='<div class="oww-empty">No projects yet — describe your first build above and we’ll scope, build, and ship it.</div>'; return; }
       list.innerHTML='<div class="oww-grid">'+ps.map(function(p){
+        var studio = p.teaser_url || '';
         var acts='';
-        if(p.teaser_url) acts+='<a class="oww-pbtn solid" href="'+esc(p.teaser_url)+'" target="_blank" rel="noopener">Open demo</a>';
+        if(studio) acts+='<a class="oww-pbtn solid" href="'+esc(studio)+'">Continue in the Studio &rarr;</a>';
         if(p.simulator_url) acts+='<a class="oww-pbtn" href="'+esc(p.simulator_url)+'" target="_blank" rel="noopener">Simulator</a>';
         if(!acts) acts='<span class="oww-pbtn" style="opacity:.6;cursor:default">Building…</span>';
         var when=''; try{ when=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
-        return '<div class="oww-pcard">'
-          +'<div class="pt">'+esc(p.name||'Untitled build')+'</div>'
+        var titleHtml = studio
+          ? '<a class="pt" style="color:inherit;text-decoration:none" href="'+esc(studio)+'">'+esc(p.name||'Untitled build')+'</a>'
+          : '<div class="pt">'+esc(p.name||'Untitled build')+'</div>';
+        return '<div class="oww-pcard"'+(studio?' data-studio="'+esc(studio)+'" style="cursor:pointer"':'')+'>'
+          +titleHtml
           +(p.description?'<div class="pd">'+esc(p.description)+'</div>':'')
           +'<div class="pmeta"><span class="oww-badge">'+esc(statusLabel(p.status))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
           +'<div class="oww-pacts">'+acts+'</div>'
           +'</div>';
       }).join('')+'</div>';
+      list.querySelectorAll('.oww-pcard[data-studio]').forEach(function(card){
+        card.addEventListener('click',function(e){ if(e.target.closest('a')) return; window.location.href=card.getAttribute('data-studio'); });
+      });
     })
     .catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
 })();
