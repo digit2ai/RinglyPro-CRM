@@ -571,6 +571,28 @@ button:disabled{opacity:.45;cursor:default}
 .d2chat-typing{color:var(--mut);font-size:13px;font-style:italic}
 /* Two-pane Studio (Claude/ChatGPT-style): plan canvas left, Copilot chat right */
 .d2studio-sec{width:min(1180px,94vw);position:relative;left:50%;transform:translateX(-50%);margin:28px 0 16px}
+/* Workspace shell on the Studio: left pane = project history (Claude/ChatGPT-style) */
+.tw-side{position:fixed;left:0;top:0;bottom:0;width:264px;background:#0a0e1c;border-right:1px solid var(--line);display:none;flex-direction:column;padding:16px 12px;z-index:60;overflow-y:auto}
+body.tw-on{padding-left:264px}
+body.tw-on .tw-side{display:flex}
+@media(min-width:920px){body.tw-on .d2studio-sec{width:min(1180px,calc(96vw - 300px))}}
+.tw-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;padding:4px 8px 16px;color:var(--txt)}
+.tw-brand .dot{width:26px;height:26px;border-radius:50%;flex:0 0 26px;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%)}
+.tw-new{display:block;text-align:center;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;text-decoration:none;padding:10px;border-radius:11px;margin:0 4px 14px;font-size:13.5px}
+.tw-lbl{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#5f7197;padding:8px 10px 6px;font-weight:700}
+.tw-proj{display:block;text-decoration:none;color:var(--mut);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.35;margin-bottom:2px;border:1px solid transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tw-proj:hover{background:rgba(255,255,255,.04);color:var(--txt)}
+.tw-proj.on{background:rgba(124,92,255,.16);border-color:rgba(124,92,255,.4);color:var(--txt)}
+.tw-side .sp{flex:1}
+.tw-back{color:var(--mut);text-decoration:none;font-size:13px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);text-align:center}
+.tw-back:hover{color:var(--txt)}
+.tw-toggle{display:none}
+@media(max-width:919px){
+  body.tw-on{padding-left:0}
+  .tw-side{transform:translateX(-100%);transition:transform .25s;box-shadow:0 0 60px rgba(0,0,0,.6)}
+  body.tw-on.tw-open .tw-side{transform:none}
+  body.tw-on .tw-toggle{display:flex;position:fixed;top:12px;left:12px;z-index:61;width:40px;height:40px;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:10px;cursor:pointer;color:var(--txt);font-size:18px}
+}
 .d2studio-h{font-size:1.55rem;font-weight:800;margin-bottom:4px}
 .d2studio-sub{color:var(--mut);margin-bottom:18px;font-size:.98rem}
 .d2studio{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
@@ -583,6 +605,8 @@ button:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
+<button class="tw-toggle" id="tw-toggle" aria-label="Menu">&#9776;</button>
+<aside class="tw-side" id="tw-side"></aside>
 <div class="wrap">
   <div class="brand">Digit2AI</div>
 
@@ -873,6 +897,42 @@ button:disabled{opacity:.45;cursor:default}
   var closers = modal.querySelectorAll('[data-close]');
   for(var i=0;i<closers.length;i++) closers[i].addEventListener('click', close);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.style.display==='flex') close(); });
+})();
+</script>
+
+<script>
+/* Workspace shell — left pane = the signed-in user's project history (Claude-style).
+   Only appears when a signed-in contact exists in this browser; otherwise the
+   Studio renders as a plain full-width page. */
+(function(){
+  var email=''; try{ email=(JSON.parse(localStorage.getItem('d2ai_contact')||'{}').email||'').trim(); }catch(e){}
+  var side=document.getElementById('tw-side');
+  if(!email || !side) return;
+  var PID = ${projectId ? Number(projectId) : 'null'};
+  var ES = ${JSON.stringify(es)};
+  document.body.classList.add('tw-on');
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  side.innerHTML =
+    '<div class="tw-brand"><span class="dot"></span>'+(ES?'Tu workspace':'Your workspace')+'</div>'
+    + '<a class="tw-new" href="/orbup">'+(ES?'+ Nuevo proyecto':'+ New build')+'</a>'
+    + '<div class="tw-lbl">'+(ES?'Proyectos':'Projects')+'</div>'
+    + '<div id="tw-list"><div style="color:#5f7197;font-size:13px;padding:9px 11px">'+(ES?'Cargando…':'Loading…')+'</div></div>'
+    + '<div class="sp"></div>'
+    + '<a class="tw-back" href="/orbup/workspace">'+(ES?'Ver todo el workspace':'Open full workspace')+'</a>';
+  fetch('/projects/api/v1/intake/orbup/workspace?email='+encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var list=document.getElementById('tw-list');
+      var ps=(res&&res.projects)||[];
+      if(!ps.length){ list.innerHTML='<div style="color:#5f7197;font-size:13px;padding:9px 11px">'+(ES?'Sin proyectos aún':'No projects yet')+'</div>'; return; }
+      list.innerHTML=ps.map(function(p){
+        var cur=(p.id===PID);
+        var href=p.teaser_url||('#');
+        return '<a class="tw-proj'+(cur?' on':'')+'" href="'+esc(href)+'" title="'+esc(p.name||'')+'">'+esc(p.name||'Untitled build')+'</a>';
+      }).join('');
+    }).catch(function(){});
+  var tg=document.getElementById('tw-toggle');
+  if(tg) tg.onclick=function(){ document.body.classList.toggle('tw-open'); };
 })();
 </script>
 
