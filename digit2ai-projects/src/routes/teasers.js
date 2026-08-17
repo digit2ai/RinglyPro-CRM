@@ -544,7 +544,7 @@ button:disabled{opacity:.45;cursor:default}
 .d2plan-timeline{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);border-radius:10px;padding:8px 14px;font-weight:600}
 .d2plan-timeline b{font-size:1.25rem;color:var(--cyan)}
 .d2flash{animation:d2flash 1s ease}
-@keyframes d2flash{0%{background:rgba(124,92,255,.14)}100%{background:transparent}}
+@keyframes d2flash{0%{box-shadow:0 0 0 2px rgba(124,92,255,.55)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
 /* Plan Copilot chat */
 .d2chat{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card),var(--bg2));overflow:hidden}
 .d2chat-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
@@ -566,6 +566,17 @@ button:disabled{opacity:.45;cursor:default}
 .d2chat-ctl{padding:0 18px 12px;font-size:12.5px;color:var(--mut)}
 .d2chat-ctl a{color:var(--cyan);text-decoration:none;cursor:pointer;margin-right:14px}
 .d2chat-typing{color:var(--mut);font-size:13px;font-style:italic}
+/* Two-pane Studio (Claude/ChatGPT-style): plan canvas left, Copilot chat right */
+.d2studio-sec{width:min(1180px,94vw);position:relative;left:50%;transform:translateX(-50%);margin:28px 0 16px}
+.d2studio-h{font-size:1.55rem;font-weight:800;margin-bottom:4px}
+.d2studio-sub{color:var(--mut);margin-bottom:18px;font-size:.98rem}
+.d2studio{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
+@media(min-width:920px){.d2studio{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}}
+.d2studio-left{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:24px 24px 20px}
+.d2studio-right{position:relative}
+@media(min-width:920px){.d2studio-right{position:sticky;top:16px}}
+.d2studio-right .d2chat{margin-top:0}
+@media(min-width:920px){.d2studio-right .d2chat-log{max-height:min(56vh,520px)}}
 </style>
 </head>
 <body>
@@ -577,6 +588,17 @@ button:disabled{opacity:.45;cursor:default}
     <div class="tag">${esc(t.tagline)}</div>
     <div class="sub">${esc(t.hero.subhead)}</div>
   </div>
+
+  ${token ? `<section id="d2plan" class="d2studio-sec">
+    <h2 class="d2studio-h">${es ? 'Diseña tu proyecto' : 'Design your project'}</h2>
+    <div class="d2studio-sub">${es ? 'Lee el plan a la izquierda y conversa con el copiloto a la derecha para ajustarlo.' : 'Read the plan on the left, chat with the copilot on the right to shape it.'}</div>
+    <div class="d2studio">
+      <div class="d2studio-left" id="d2plan-body">
+        <div class="d2plan-load"><span class="d2plan-spin"></span>${es ? 'Nuestra IA está evaluando tu proyecto — encaje, alcance y riesgos. Unos segundos…' : 'Our AI is assessing your project — fit, scope and risks. A few seconds…'}</div>
+      </div>
+      <div class="d2studio-right" id="d2plan-right"></div>
+    </div>
+  </section>` : ''}
 
   <!-- Lina voice orb -->
   <div class="lina" id="lina">
@@ -607,12 +629,6 @@ button:disabled{opacity:.45;cursor:default}
 
   ${section('challenge', t.challenge.heading, safe(t.challenge.body_html))}
   ${section('solution', t.solution.heading, safe(t.solution.body_html))}
-  ${token ? `<section id="d2plan" class="sec">
-    <h2>${es ? 'Plan de factibilidad y construcción' : 'Feasibility &amp; Build Plan'}</h2>
-    <div id="d2plan-body">
-      <div class="d2plan-load"><span class="d2plan-spin"></span>${es ? 'Nuestra IA está evaluando tu proyecto — encaje, alcance y riesgos. Unos segundos…' : 'Our AI is assessing your project — fit, scope and risks. A few seconds…'}</div>
-    </div>
-  </section>` : ''}
   ${section('poc', t.poc.heading,
     hasSim
       ? `<div class="poc-intro">${esc(t.poc.intro)}</div>
@@ -940,7 +956,8 @@ button:disabled{opacity:.45;cursor:default}
       + '<div class="d2chat-suggest" id="d2chat-chips">'+T.chips.map(function(c){return '<button type="button" class="d2chip">'+esc(c)+'</button>';}).join('')+'</div>'
       + '<div class="d2chat-ctl"><a id="d2chat-undo">'+esc(T.undo)+'</a><a id="d2chat-reset">'+esc(T.reset)+'</a></div>'
       + '<div class="d2chat-in"><input id="d2chat-input" type="text" placeholder="'+esc(T.ph)+'" autocomplete="off"><button id="d2chat-send" type="button">'+esc(T.send)+'</button></div>';
-    section.appendChild(el);
+    var right = document.getElementById('d2plan-right') || section;
+    right.appendChild(el);
     logEl = document.getElementById('d2chat-log');
     inputEl = document.getElementById('d2chat-input');
     sendBtn = document.getElementById('d2chat-send');
