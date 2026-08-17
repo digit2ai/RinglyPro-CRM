@@ -1455,13 +1455,70 @@
   // Save contact + create project (autosave to inbox) -> teaser (voice + live simulator).
   // The analysis card is intentionally NOT shown; the client sees the build theatre
   // then opens the full teaser+simulator experience.
+  // Guided discovery — a short, chat-style Q&A that ASKS the triage questions
+  // (audience, current process, timeline) instead of only inferring them from one
+  // sentence. Real answers make the feasibility plan sharper. Every question is
+  // skippable (the bucket-not-a-form rule); "Skip all" builds immediately.
+  function runGuidedDiscovery(desc, done){
+    var es=(D2B_LANG==='es');
+    var Q = es ? [
+      {k:'target_users',    q:'¿Quiénes son los usuarios o el público objetivo?', ph:'Ej. dueños de restaurantes, pacientes, agentes de soporte…'},
+      {k:'current_process', q:'¿Cómo se maneja esto hoy? ¿Cuál es el proceso o sistema actual?', ph:'Ej. hojas de cálculo, llamadas manuales, nada aún…'},
+      {k:'timeline',        q:'¿Para cuándo lo necesitas? ¿Tienes un presupuesto en mente?', ph:'Ej. en 4 semanas · presupuesto flexible…'}
+    ] : [
+      {k:'target_users',    q:'Who are the target users or audience?', ph:'e.g. restaurant owners, patients, support agents…'},
+      {k:'current_process', q:'How is this handled today? What is the current process or system?', ph:'e.g. spreadsheets, manual calls, nothing yet…'},
+      {k:'timeline',        q:'How soon do you need it? Any budget in mind?', ph:'e.g. within 4 weeks · flexible budget…'}
+    ];
+    var answers={}, i=0, bubbles=[];
+    var intro = es ? 'Un par de preguntas rápidas para afinar tu plan de factibilidad. Puedes omitir cualquiera.'
+                   : 'A couple of quick questions to sharpen your feasibility plan. You can skip any.';
+    var IST='background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;color:var(--ink,#e8eaf0);font:inherit;font-size:15px;outline:none;width:100%;box-sizing:border-box';
+    result.className='show';
+    function render(){
+      var qc=Q[i];
+      var chat=bubbles.map(function(b){
+        return '<div style="margin:9px 0"><div style="font-size:12px;color:#8b90a0;margin-bottom:3px">'+esc(b.q)+'</div>'
+             + '<div style="background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:9px 12px;display:inline-block;max-width:92%">'+esc(b.a)+'</div></div>';
+      }).join('');
+      result.innerHTML =
+        '<div style="background:var(--panel,#12141c);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px">'
+        + '<div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8b5cf6;font-weight:700;margin-bottom:6px">'+(es?'Descubrimiento':'Discovery')+' · '+(i+1)+'/'+Q.length+'</div>'
+        + '<div style="color:#8b90a0;font-size:14px;margin-bottom:12px">'+esc(intro)+'</div>'
+        + chat
+        + '<div style="font-size:16px;font-weight:600;margin:14px 0 10px">'+esc(qc.q)+'</div>'
+        + '<textarea id="gd-input" rows="2" placeholder="'+esc(qc.ph)+'" style="'+IST+';resize:vertical"></textarea>'
+        + '<div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">'
+        +   '<button type="button" id="gd-next" style="background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#06122b;font-weight:700;border:none;cursor:pointer;padding:12px 26px;border-radius:10px;font:inherit;font-size:15px">'+(i<Q.length-1?(es?'Siguiente':'Next'):(es?'Ver mi plan':'See my plan'))+' &rarr;</button>'
+        +   '<button type="button" id="gd-skip" style="background:none;border:none;color:#8b90a0;cursor:pointer;font:inherit;font-size:14px">'+(es?'Omitir':'Skip')+'</button>'
+        +   '<button type="button" id="gd-skipall" style="margin-left:auto;background:none;border:none;color:#8b90a0;cursor:pointer;font:inherit;font-size:13px;text-decoration:underline">'+(es?'Omitir todo y construir':'Skip all, just build')+'</button>'
+        + '</div></div>';
+      result.scrollIntoView({behavior:'smooth',block:'start'});
+      var ta=document.getElementById('gd-input'); if(ta) ta.focus();
+      document.getElementById('gd-next').onclick=function(){
+        var v=(document.getElementById('gd-input').value||'').trim();
+        if(v){ answers[qc.k]=v; bubbles.push({q:qc.q,a:v}); }
+        i++; if(i>=Q.length) done(answers); else render();
+      };
+      document.getElementById('gd-skip').onclick=function(){ i++; if(i>=Q.length) done(answers); else render(); };
+      document.getElementById('gd-skipall').onclick=function(){ done(answers); };
+    }
+    render();
+  }
+
   function runFullFlow(desc, name, phone, email){
+    removePoc(); removeSim();
+    contact.name=name||contact.name; contact.email=email||contact.email; contact.phone=phone||contact.phone;
+    runGuidedDiscovery(desc, function(guided){ _buildAndSend(desc, name, phone, email, guided); });
+  }
+  function _buildAndSend(desc, name, phone, email, guided){
     removePoc(); removeSim();
     contact.name=name||contact.name; contact.email=email||contact.email; contact.phone=phone||contact.phone;
     loading(true, D2B_LANG==='es'?'Iniciando…':'Starting…');
     startBuild();
     var projectId=null;
     structureRequest(desc).then(function(s){
+      if(guided){ Object.keys(guided).forEach(function(k){ if(guided[k]) s[k]=guided[k]; }); }
       return fetch('/projects/api/v1/intake/public/request', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(Object.assign({
