@@ -348,20 +348,19 @@ small{color:var(--mut)}
    *
    * A disabled button and one word in a message bar is not feedback for a job
    * that takes the better part of a minute — the operator cannot tell a
-   * request in flight from a page that ignored the click, so they click again,
-   * or give up and ask whether anything happened. The label counts, so there
-   * is always something moving.
+   * request in flight from a page that ignored the click, so they click again
+   * or ask whether anything happened. The label counts, so something always
+   * moves.
    */
   function act(btn,path,body,done,working){
     var b=$(btn), label=b.textContent, t0=Date.now();
-    b.disabled=true;
+    b.disabled=true; b.textContent='Running… 0s';
+    msg((working||'Working')+' — starting.');
     var tick=setInterval(function(){
       var s=Math.round((Date.now()-t0)/1000);
       b.textContent='Running… '+s+'s';
       msg((working||'Working')+' — '+s+'s elapsed. Scoring takes about a second a job; leave this page open.');
     },1000);
-    b.textContent='Running… 0s';
-    msg((working||'Working')+' — starting.');
     var stop=function(){ clearInterval(tick); b.disabled=false; b.textContent=label; };
     api(path,{method:'POST',body:body||{}})
       .then(function(j){ stop(); msg(done(j),'ok'); loadDiag(); })
@@ -373,7 +372,8 @@ small{color:var(--mut)}
       if(!j.scored && !j.below_minimum) return j.note||'Nothing new to score.';
       return 'Scored '+num(j.scored+(j.below_minimum||0))+', filed '+num(j.scored)+
         (j.below_minimum?' ('+num(j.below_minimum)+' below their minimum)':'')+
-        (j.cost_usd?' · 
+        (j.cost_usd?' · $'+Number(j.cost_usd).toFixed(4):'');
+    },'Scoring her queue');
   });
   $('doPresence').addEventListener('click',function(){
     act('doPresence','/subscribers/'+TID+'/presence',{},function(j){
@@ -382,42 +382,6 @@ small{color:var(--mut)}
   $('doRescore').addEventListener('click',function(){
     act('doRescore','/subscribers/'+TID+'/rescore',{},function(j){
       return num(j.reopened)+' rejected posting(s) can be scored again.';},'Reopening rejects');
-  });
-  $('doSave').addEventListener('click',function(){
-    var list=function(v){return v.split(',').map(function(x){return x.trim();}).filter(Boolean);};
-    var b=$('doSave'); b.disabled=true; msg('Saving…');
-    api('/subscribers/'+TID+'/targeting',{method:'PATCH',body:{
-      targeting:{
-        roles:list($('fRoles').value).map(function(x){return {title:x};}),
-        remote_preference:$('fMode').value,
-        min_score:parseInt($('fMin').value,10)||0,
-        exclude_keywords:list($('fExcl').value),
-        must_include:list($('fMust').value)
-      },
-      quotas:{jobs_scored_per_day:parseInt($('fPerDay').value,10)||6}
-    }}).then(function(j){
-      msg(j.changed.length?('Saved: '+j.changed.join(', ')):'Nothing changed.','ok'); loadDiag();
-    }).catch(function(e){msg(e.message,'bad');})
-      .then(function(){b.disabled=false;});
-  });
-
-  fetch('/admin/session',{credentials:'same-origin'}).then(function(r){return r.json();})
-    .then(function(j){
-      if(!j||!j.email){location.href='/admin/';return;}
-      $('who').textContent=j.email; loadList();
-    }).catch(function(){location.href='/admin/';});
-})();
-</script>
-+Number(j.cost_usd).toFixed(4):'');
-    },'Scoring her queue');
-  });
-  $('doPresence').addEventListener('click',function(){
-    act('doPresence','/subscribers/'+TID+'/presence',{},function(j){
-      return 'Public surfaces rebuilt. '+(j.gaps||[]).length+' gap(s).';});
-  });
-  $('doRescore').addEventListener('click',function(){
-    act('doRescore','/subscribers/'+TID+'/rescore',{},function(j){
-      return num(j.reopened)+' rejected posting(s) can be scored again.';});
   });
   $('doSave').addEventListener('click',function(){
     var list=function(v){return v.split(',').map(function(x){return x.trim();}).filter(Boolean);};

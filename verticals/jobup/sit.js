@@ -2062,6 +2062,30 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/loadDiag\(\)/.test(open), 'it must land on that subscriber\'s diagnosis');
     assert.ok(/j\.subscribers\.some/.test(open), 'and verify the id exists rather than trusting the URL');
   });
+  await t('THE OPS PAGE IS WELL-FORMED AND ITS SCRIPT PARSES', () => {
+    // A stray '</script>' ends the script early and dumps the rest of the file
+    // onto the screen as raw text. It shipped exactly once, from a careless
+    // String.replace: "$'" in a REPLACEMENT string is not two characters, it
+    // means "everything after the match", so the whole tail of the file was
+    // spliced in after the closing tag. Nothing caught it because the file was
+    // still valid HTML and the route still returned 200.
+    const page = fs.readFileSync(__dirname + '/src/views/admin-ops.html', 'utf8');
+    const open = (page.match(/<script\b/g) || []).length;
+    const close = (page.match(/<\/script\s*>/g) || []).length;
+    assert.strictEqual(open, 1, 'exactly one script block');
+    assert.strictEqual(close, open, 'and exactly one closing tag — a stray one truncates the page');
+
+    // The script body must actually parse. A syntax error is invisible from
+    // the server side: the route still answers 200 with a dead page.
+    const body = page.slice(page.indexOf('<script') , page.lastIndexOf('</script>'));
+    const js = body.slice(body.indexOf('>') + 1);
+    assert.doesNotThrow(() => new Function(js), 'the page script must parse');
+
+    // Nothing may follow the closing tag but whitespace and closing markup.
+    const tail = page.slice(page.lastIndexOf('</script>') + 9).trim();
+    assert.ok(!/[{};]|function|return/.test(tail),
+      'live code after the closing tag renders as text on the page: ' + tail.slice(0, 80));
+  });
   await t('the ops page is not served out of public/', () => {
     // A static file under public/ is reachable by anyone who guesses the name.
     assert.ok(!fs.existsSync(__dirname + '/public/admin-ops.html'),
