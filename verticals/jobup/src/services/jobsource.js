@@ -16,6 +16,9 @@ const geo = require('./geo');
 const { models } = require('../models');
 
 const STALE_DAYS = 30;
+// How long a posting stays worth re-asking for body text. Matched to the stale
+// window: past it the posting is leaving the pool anyway.
+const ENRICH_MAX_AGE_DAYS = parseInt(process.env.JOBUP_ENRICH_MAX_AGE_DAYS || String(STALE_DAYS), 10);
 
 function dedupeKey(p) {
   // Same role reposted under a new id, or listed on two sources, collapses here.
@@ -288,13 +291,31 @@ function prefilter(jobs, profile, settings, rawText, stats) {
  * is one request per posting ONCE, amortised across every subscriber, because
  * the pool is shared.
  */
-async function enrichDescriptions({ limit = 200, fetchImpl } = {}) {
+async function enrichDescriptions({ limit = 200, fetchImpl, maxAgeDays = ENRICH_MAX_AGE_DAYS } = {}) {
   const doFetch = fetchImpl || globalThis.fetch;
   const Jobs = models.jobs;
   const all = await Jobs.findAll({});
+
+  // GIVE UP ON A POSTING THAT WILL NEVER YIELD ONE.
+  //
+  // Some detail endpoints simply refuse us — a posting pulled and never
+  // enriched on day one is not going to enrich on day ninety. Without a bound
+  // those rows sit at the head of the candidate list and are re-requested on
+  // every refresh forever: 357 wasted HTTP calls a day, growing with the pool,
+  // and they crowd out postings that WOULD enrich. A posting older than the
+  // stale window is on its way out of the pool anyway, so the cutoff costs
+  // nothing real and the waste stops growing.
+  const cutoff = Date.now() - maxAgeDays * 86400000;
   const need = all
     .filter((j) => !String(j.description || '').trim())
     .filter((j) => employers.ADAPTERS[j.source] && employers.ADAPTERS[j.source].detail)
+    // An unknown age is not an old age. A row with no dates on it is tried,
+    // not silently written off — the bound exists to stop provable waste, not
+    // to discard anything we cannot date.
+    .filter((j) => {
+      const seen = new Date(j.first_seen_at || j.last_seen_at || 0).getTime();
+      return !seen || isNaN(seen) ? true : seen >= cutoff;
+    })
     .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))
     .slice(0, limit);
 

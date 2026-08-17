@@ -439,6 +439,48 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const remote = { ...bare, id: 90003, description: 'advertising, this is a hybrid role based in Tampa' };
     assert.strictEqual(jobsource.prefilter([remote], profile, settings, '').length, 1);
   });
+  await t('enrichment gives up on a posting that will never yield text', async () => {
+    // Some detail endpoints simply refuse us. Without a bound those rows sit at
+    // the head of the candidate list and are re-requested every refresh for
+    // ever — 357 wasted calls a day, growing with the pool, crowding out
+    // postings that WOULD enrich.
+    const src = require('fs').readFileSync(__dirname + '/src/services/jobsource.js', 'utf8');
+    assert.ok(/maxAgeDays = ENRICH_MAX_AGE_DAYS/.test(src), 'the retry window must be bounded');
+    assert.ok(/seen >= cutoff/.test(src), 'and applied against when the posting was first seen');
+    assert.ok(/An unknown age is not an old age/.test(src),
+      'a row we cannot date must be tried, not written off');
+
+    const old = await models.jobs.create({
+      source: 'workday', employer: 'SIT Age Co', title: 'Old unenrichable',
+      location: 'Tampa, FL', description: '', url: '/job/x/1',
+      first_seen_at: new Date(Date.now() - 90 * 86400000),
+      last_seen_at: new Date(), dedupe_key: 'sit-age-old-' + Date.now(),
+    });
+    const fresh = await models.jobs.create({
+      source: 'workday', employer: 'SIT Age Co', title: 'Fresh unenrichable',
+      location: 'Tampa, FL', description: '', url: '/job/x/2',
+      first_seen_at: new Date(), last_seen_at: new Date(),
+      dedupe_key: 'sit-age-new-' + Date.now(),
+    });
+    await models.employers.create({ name: 'SIT Age Co', ats: 'workday',
+      token: 'h.wd5.myworkdayjobs.com|h|B', status: 'live' });
+
+    const asked = [];
+    const spy = async (u) => { asked.push(u); return { ok: false, status: 404, json: async () => ({}) }; };
+    await jobsource.enrichDescriptions({ limit: 50, fetchImpl: spy });
+    assert.strictEqual(asked.length, 1, 'only the posting still inside the window is asked for');
+    assert.ok(/\/2$/.test(asked[0]), 'and it is the fresh one');
+
+    // The window is configurable, and widening it brings the old row back.
+    asked.length = 0;
+    await jobsource.enrichDescriptions({ limit: 50, fetchImpl: spy, maxAgeDays: 365 });
+    assert.strictEqual(asked.length, 2, 'a wider window reaches both');
+
+    for (const j of [old, fresh]) await models.jobs.destroy({ where: { id: j.id } });
+    for (const b of (await models.employers.findAll({})).filter((x) => x.name === 'SIT Age Co')) {
+      await models.employers.destroy({ where: { id: b.id } });
+    }
+  });
   await t('description enrichment fills the gap, and never invents one', async () => {
     const before = await models.jobs.create({
       source: 'workday', employer: 'SIT Enrich Co', title: 'Account Executive',
