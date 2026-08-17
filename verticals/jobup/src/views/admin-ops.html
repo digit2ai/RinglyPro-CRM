@@ -130,13 +130,12 @@ small{color:var(--mut)}
       <div class="card">
         <h2>Run their matching</h2>
         <div class="f">
-          <div style="width:110px"><label for="runN">Jobs to score</label>
-            <input id="runN" type="number" min="1" max="50" value="12"></div>
-          <div style="align-self:end"><button class="p" id="doRun">Run now</button></div>
-          <div style="align-self:end"><button id="doPresence">Rebuild their site</button></div>
+          <button class="p" id="doRun">Run now</button>
+          <button id="doPresence">Rebuild their site</button>
         </div>
-        <p><small>Runs on the operator allowance, so it never spends the quota the subscriber
-          is about to use, and is logged under its own trigger. It costs real model tokens.</small></p>
+        <p id="runPlan" style="margin:11px 0 0;font-size:13px"></p>
+        <p><small>The agent picks how many. Runs on the operator allowance, so it never spends
+          the quota the subscriber is about to use, and is logged under its own trigger.</small></p>
         <div class="f" style="margin-top:6px">
           <button class="d" id="doRescore">Let it re-score rejected jobs</button>
         </div>
@@ -293,6 +292,21 @@ small{color:var(--mut)}
             return '<span class="tag warn">'+esc(k.replace(/_/g,' '))+': '+num(d[k])+'</span>';}).join('')
         : '<small>Nothing was excluded by their own filters.</small>';
 
+      // Say what the button will do before it is pressed. This replaced a
+      // "jobs to score" input the run ignored whenever a backlog existed.
+      var np=j.next_run||{};
+      $('runPlan').innerHTML = np.allowance
+        ? 'Next run scores <b>'+np.allowance+'</b> job'+(np.allowance===1?'':'s')+
+          (np.catching_up
+            ? ' — catching up on <b>'+Number(np.strong_backlog).toLocaleString()+
+              '</b> strong candidates, '+np.runs_to_drain+' run'+(np.runs_to_drain===1?'':'s')+
+              ' to clear. Above their '+np.per_day+'/day rate.'
+            : ' — their normal '+np.per_day+'/day rate. No backlog.')+
+          (np.cost_estimate_usd!=null
+            ? ' About $'+Number(np.cost_estimate_usd).toFixed(2)+', '+esc(np.cost_basis)+'.'
+            : '')
+        : 'Nothing queued to score.';
+
       $('fRoles').value=(t.roles||[]).map(function(r){return r.title||r;}).join(', ');
       $('fMode').value=t.remote_preference||'any';
       $('fMin').value=t.min_score||0;
@@ -337,7 +351,7 @@ small{color:var(--mut)}
       .then(function(){ b.disabled=false; });
   }
   $('doRun').addEventListener('click',function(){
-    act('doRun','/subscribers/'+TID+'/run',{limit:parseInt($('runN').value,10)||12},function(j){
+    act('doRun','/subscribers/'+TID+'/run',{},function(j){
       if(j.daily_limit_reached) return 'Operator allowance for today is used up.';
       return 'Scored '+num(j.scored+(j.below_minimum||0))+', filed '+num(j.scored)+
         (j.below_minimum?' ('+num(j.below_minimum)+' below their minimum)':'')+

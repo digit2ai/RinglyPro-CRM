@@ -3987,6 +3987,36 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
     assert.ok(!/slice\(0, perDay\)/.test(code), 'the per-invocation slice must be gone');
   });
+  await t('THE OPERATOR IS NOT ASKED FOR A NUMBER THE RUN WILL IGNORE', () => {
+    // The console took a "jobs to score" input and then ignored it whenever the
+    // subscriber had a strong backlog — the box read 12 while the run scored 40.
+    // A control that does not control is worse than none: it teaches the
+    // operator to distrust the screen. The agent decides, and says so first.
+    const agents = require(__dirname + '/src/services/agents');
+    const page = require('fs').readFileSync(__dirname + '/src/views/admin-ops.html', 'utf8');
+    assert.ok(!/runN|Jobs to score/.test(page), 'the input must be gone');
+    assert.ok(/id="runPlan"/.test(page), 'and replaced by what the run will actually do');
+
+    const route = require('fs').readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    const run = route.slice(route.indexOf("/subscribers/:tenantId/run"));
+    assert.ok(!/body \|\| \{\}\)\.limit/.test(run.slice(0, 600)),
+      'the run endpoint must not take a count from the request');
+    assert.ok(/next_run:/.test(route), 'diagnose must publish the plan');
+
+    // plan() is the single source for that number, and matches what hunter uses.
+    const q = (scores) => scores.map((p, i) => ({ prescore: p, job: { id: i } }));
+    const big = agents.plan(q([16].concat(Array(82).fill(10)).concat(Array(2700).fill(3))), 6);
+    assert.strictEqual(big.allowance, agents.CATCHUP_PER_RUN, 'a backlog runs at the catch-up rate');
+    assert.ok(big.catching_up && big.strong_backlog === 83 && big.runs_to_drain === 3);
+
+    const quiet = agents.plan(q(Array(900).fill(1)), 6);
+    assert.strictEqual(quiet.allowance, 6, 'no backlog means the daily rate');
+    assert.strictEqual(quiet.catching_up, false);
+
+    // Never promise more than exists.
+    assert.strictEqual(agents.plan(q([9, 8]), 6).allowance, 2, 'capped by what is queued');
+    assert.strictEqual(agents.plan([], 6).allowance, 0, 'and an empty queue promises nothing');
+  });
   await t('THE STRONG BACKLOG IS CLEARED, THE TAIL IS PACED', () => {
     // A flat rate rations the good matches at the same speed as the weak ones.
     // One subscriber's queue held 83 strong candidates and 2,700 marginal ones;

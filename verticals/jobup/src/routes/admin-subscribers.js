@@ -242,6 +242,20 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
       per_day: perDay,
       days_of_queue: perDay ? Math.floor(fresh.length / perDay) : 0,
     },
+    // What the next run will actually do, decided by the agent rather than
+    // asked of the operator. Cost is measured from THIS subscriber's own runs
+    // where there are any — a global average would be a guess presented as a
+    // figure, and this one is spent in their name.
+    next_run: (() => {
+      const p = agents.plan(fresh, perDay);
+      const scoredRuns = runs.filter((r) => r.agent === 'hunter' && r.scored > 0);
+      const jobs = scoredRuns.reduce((n, r) => n + Number(r.scored || 0), 0);
+      const spent = scoredRuns.reduce((n, r) => n + Number(r.cost_usd || 0), 0);
+      const perJob = jobs ? spent / jobs : null;
+      return { ...p, per_day: perDay,
+               cost_estimate_usd: perJob ? Number((p.allowance * perJob).toFixed(3)) : null,
+               cost_basis: perJob ? `measured from ${jobs} of their own scorings` : 'no runs yet' };
+    })(),
     // Exactly the rows the next run will score, in order.
     next_up: fresh.slice(0, perDay).map((r) => ({
       job_id: r.job.id, rank: r.prescore, employer: r.job.employer,
@@ -266,13 +280,21 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
 // ---------------------------------------------------------------
 // RUN THEIR MATCHING NOW. Its own allowance, its own trigger.
 // ---------------------------------------------------------------
+/**
+ * Run their matching. THE AGENT DECIDES HOW MANY.
+ *
+ * This took a "jobs to score" number from the operator and then ignored it
+ * whenever the subscriber had a strong backlog — the box read 12 while the run
+ * scored 40. A control that does not control is worse than none: it teaches
+ * the operator to distrust the screen. The agent already knows the right
+ * number (clear the strong backlog, else the daily rate), and /diagnose states
+ * it before the button is pressed.
+ */
 router.post('/subscribers/:tenantId/run', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
-  const limit = Math.max(1, Math.min(50, parseInt((req.body || {}).limit, 10) || 12));
   try {
-    const r = await agents.hunter(tenantId, { trigger: 'admin', limit });
-    await audit(req.admin.email, `ops.run:${tenantId} scored=${r.scored || 0} limit=${limit}`,
-      null, tenantId);
+    const r = await agents.hunter(tenantId, { trigger: 'admin' });
+    await audit(req.admin.email, `ops.run:${tenantId} scored=${r.scored || 0}`, null, tenantId);
     res.json({ ok: true, ...r });
   } catch (e) {
     res.status(500).json({ error: e.message });

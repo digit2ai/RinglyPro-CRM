@@ -27,6 +27,7 @@ const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '25000', 10);
 // rather than at the daily rate. See the backlog block in hunter().
 const PRIORITY_FRACTION = parseFloat(process.env.JOBUP_PRIORITY_FRACTION || '0.5');
 const CATCHUP_PER_RUN = parseInt(process.env.JOBUP_CATCHUP_PER_RUN || '40', 10);
+const ADMIN_BASELINE = parseInt(process.env.JOBUP_ADMIN_RUN_JOBS || '12', 10);
 
 /**
  * The candidate pool, NEWEST FIRST.
@@ -142,8 +143,12 @@ async function hunter(tenantId, opts = {}) {
     ? opts.trigger : 'scheduled';
   const isAdmin = trigger === 'admin';
 
+  // An operator run has no number attached to it: the backlog rule below picks
+  // one. ADMIN_BASELINE is only what it falls back to when there is no backlog
+  // at all, and opts.limit stays available for a script that genuinely needs a
+  // specific count — the console deliberately does not offer it.
   const perDay = isAdmin
-    ? Math.max(1, Math.min(50, parseInt(opts.limit, 10) || 12))
+    ? Math.max(1, Math.min(50, parseInt(opts.limit, 10) || ADMIN_BASELINE))
     : ((settings.quotas && settings.quotas.jobs_scored_per_day) || 6);
   const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
@@ -339,4 +344,29 @@ async function runAll(agentName, tenantIds, opts = {}) {
   return out;
 }
 
-module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext, usedToday, poolWindow, POOL_WINDOW };
+/**
+ * What a run WOULD do, without doing it.
+ *
+ * The operator screen used to ask "how many jobs?" and then ignore the answer
+ * whenever a backlog was present — the box read 12 while the run scored 40. A
+ * control that does not control is worse than no control, so the number is the
+ * agent's to decide and this is how the screen states that decision before the
+ * button is pressed.
+ */
+function plan(queue, perDay) {
+  const best = queue.length ? queue[0].prescore : 0;
+  const strongFloor = Math.max(2, Math.ceil(best * PRIORITY_FRACTION));
+  const strong = queue.filter((r) => r.prescore >= strongFloor).length;
+  const raw = strong > 0 ? Math.max(perDay, Math.min(CATCHUP_PER_RUN, strong)) : perDay;
+  const allowance = Math.min(raw, queue.length);
+  return {
+    allowance,
+    strong_backlog: strong,
+    strong_floor: strongFloor,
+    catching_up: strong > 0 && raw > perDay,
+    runs_to_drain: allowance ? Math.ceil(strong / allowance) : 0,
+  };
+}
+
+module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext, usedToday,
+                   poolWindow, POOL_WINDOW, plan, PRIORITY_FRACTION, CATCHUP_PER_RUN };
