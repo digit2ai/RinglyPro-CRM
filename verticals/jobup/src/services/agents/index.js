@@ -22,6 +22,12 @@ const CONCURRENCY = parseInt(process.env.JOBUP_AGENT_CONCURRENCY || '4', 10);
 // defect this constant exists to have fixed, and it fails silently.
 const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '25000', 10);
 
+// A candidate counts as STRONG at this fraction of the subscriber's own best
+// pre-filter score, and strong candidates are worked through at CATCHUP_PER_RUN
+// rather than at the daily rate. See the backlog block in hunter().
+const PRIORITY_FRACTION = parseFloat(process.env.JOBUP_PRIORITY_FRACTION || '0.5');
+const CATCHUP_PER_RUN = parseInt(process.env.JOBUP_CATCHUP_PER_RUN || '40', 10);
+
 /**
  * The candidate pool, NEWEST FIRST.
  *
@@ -142,7 +148,6 @@ async function hunter(tenantId, opts = {}) {
   const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
   const used = await usedToday(tenantId, trigger);
-  const jobsLeft = Math.max(0, perDay - used.scored);
   const budgetLeft = Math.max(0, dailyBudget - used.spent);
 
   // One manual search a day. The scheduled run and the signup run are not
@@ -157,18 +162,6 @@ async function hunter(tenantId, opts = {}) {
              manual_runs_used: used.manual_runs, manual_runs_per_day: manualCap,
              note: `You have used today's manual search. It resets at midnight UTC — and your agent still runs on its own every morning.` };
   }
-
-  if (jobsLeft === 0 || budgetLeft <= 0) {
-    await log(tenantId, 'hunter', 'idle',
-      `Daily limit reached for ${trigger}: ${used.scored} of ${perDay} scored, ` +
-      `$${used.spent.toFixed(4)} of $${dailyBudget.toFixed(4)} spent across ${used.runs} run(s). Nothing charged.`,
-      0, false, 0, trigger);
-    return { agent: 'hunter', scored: 0, cost_usd: 0, daily_limit_reached: true, trigger,
-             used_today: used, jobs_per_day: perDay,
-             note: 'That allowance is used up for today. It resets at midnight UTC.' };
-  }
-
-  const cap = Math.min(budgetLeft, opts.capUsd || dailyBudget);
 
   const pool = opts.pool || await poolWindow();
   if (!pool.length) {
@@ -188,9 +181,47 @@ async function hunter(tenantId, opts = {}) {
     scoped('job_scores', tenantId).findAll({}),
   ]);
   const seen = new Set([...existing, ...ledger].map((m) => m.job_id));
-  // Spread the day's allowance across employers. A ranked queue alone hands a
-  // national employer every slot with one title in six different cities.
-  const fresh = jobsource.diversify(ranked.filter((r) => !seen.has(r.job.id))).slice(0, jobsLeft);
+  // Spread across employers. A ranked queue alone hands a national employer
+  // every slot with one title in six different cities.
+  const queue = jobsource.diversify(ranked.filter((r) => !seen.has(r.job.id)));
+
+  // ---- CLEAR THE STRONG BACKLOG, THEN PACE ------------------------------
+  //
+  // A flat jobs-per-day rate rations the good matches at exactly the same
+  // speed as the weak ones. A subscriber whose queue holds 83 strong
+  // candidates and 2,700 marginal ones met the strong ones at six a day —
+  // a fortnight to reach the end of the jobs that were obviously hers, while
+  // the same six-a-day would still be grinding through the marginal tail two
+  // years later. The value in a ranked queue is not spread evenly, so the
+  // allowance should not be either.
+  //
+  // THE THRESHOLD IS RELATIVE TO THIS SUBSCRIBER, not a global number.
+  // A pre-filter score counts term overlap, so a résumé listing 22 skills
+  // scores far higher than one listing five. A fixed "8 or better" would empty
+  // one person's backlog on day one and never trigger for the next. Half of
+  // their own best candidate travels across profiles; a fixed number does not.
+  const best = queue.length ? queue[0].prescore : 0;
+  const strongFloor = Math.max(2, Math.ceil(best * PRIORITY_FRACTION));
+  const strong = queue.filter((r) => r.prescore >= strongFloor).length;
+
+  // Bounded on every side: the run's own ceiling, and the daily money cap
+  // below, which is what actually stops it. The backlog is finite and drains
+  // in a few runs, after which this is a no-op and the daily rate resumes.
+  const allowance = strong > 0 ? Math.max(perDay, Math.min(CATCHUP_PER_RUN, strong)) : perDay;
+  const jobsLeft = Math.max(0, allowance - used.scored);
+
+  if (jobsLeft === 0 || budgetLeft <= 0) {
+    await log(tenantId, 'hunter', 'idle',
+      `Daily limit reached for ${trigger}: ${used.scored} of ${allowance} scored, ` +
+      `$${used.spent.toFixed(4)} of $${dailyBudget.toFixed(4)} spent across ${used.runs} run(s). Nothing charged.`,
+      0, false, 0, trigger);
+    return { agent: 'hunter', scored: 0, cost_usd: 0, daily_limit_reached: true, trigger,
+             used_today: used, jobs_per_day: allowance,
+             note: 'That allowance is used up for today. It resets at midnight UTC.' };
+  }
+
+  const cap = Math.min(budgetLeft, opts.capUsd || dailyBudget);
+  const fresh = queue.slice(0, jobsLeft);
 
   if (!fresh.length) {
     // Distinguish "your targeting matches nothing in the pool" from "we have
@@ -235,9 +266,9 @@ async function hunter(tenantId, opts = {}) {
   // When NOTHING clears the floor, say how close it got. "6 below your minimum
   // of 70" is unactionable on its own: a best of 68 means lower the floor, a
   // best of 31 means the pool holds nothing in your field.
-  const best = res.matches.reduce((n, m) => Math.max(n, m.score || 0), 0);
+  const bestScore = res.matches.reduce((n, m) => Math.max(n, m.score || 0), 0);
   const nearMiss = !keep.length && res.matches.length
-    ? ` Best was ${best}${best >= floor - 10 ? ' — just under your floor.' : ' — nothing in the pool is close to your field yet.'}`
+    ? ` Best was ${bestScore}${bestScore >= floor - 10 ? ' — just under your floor.' : ' — nothing in the pool is close to your field yet.'}`
     : '';
 
   const simulated = res.matches.some((m) => m.is_simulated);
@@ -248,7 +279,8 @@ async function hunter(tenantId, opts = {}) {
     res.cost_usd, simulated, res.matches.length, trigger);
 
   return { agent: 'hunter', trigger, scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
-           used_today: { scored: used.scored + res.matches.length, of: perDay,
+           strong_backlog: Math.max(0, strong - res.matches.length),
+           used_today: { scored: used.scored + res.matches.length, of: allowance,
                          spent: Number((used.spent + (res.cost_usd || 0)).toFixed(5)),
                          of_budget: Number(dailyBudget.toFixed(5)) },
            stopped_for_cap: res.stopped_for_cap, is_simulated: simulated };

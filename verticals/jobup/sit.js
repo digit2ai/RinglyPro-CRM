@@ -3977,7 +3977,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('THE CEILINGS ARE DAILY AND COUNT EVERY RUN', () => {
     const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
     assert.ok(src.includes('async function usedToday'), 'spend must be measured across the day');
-    assert.ok(src.includes('const jobsLeft = Math.max(0, perDay - used.scored)'),
+    assert.ok(src.includes('const jobsLeft = Math.max(0, allowance - used.scored)'),
       'the job ceiling must subtract what today already scored');
     assert.ok(src.includes('const budgetLeft = Math.max(0, dailyBudget - used.spent)'),
       'and the budget likewise');
@@ -3986,6 +3986,48 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // explains why it was wrong, and matching that would be a false pass.
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
     assert.ok(!/slice\(0, perDay\)/.test(code), 'the per-invocation slice must be gone');
+  });
+  await t('THE STRONG BACKLOG IS CLEARED, THE TAIL IS PACED', () => {
+    // A flat rate rations the good matches at the same speed as the weak ones.
+    // One subscriber's queue held 83 strong candidates and 2,700 marginal ones;
+    // at six a day the obvious matches took a fortnight while the marginal tail
+    // would still be grinding two years later. Value in a ranked queue is not
+    // spread evenly, so the allowance must not be either.
+    const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/const strongFloor = Math\.max\(2, Math\.ceil\(best \* PRIORITY_FRACTION\)\)/.test(src),
+      'strong must be defined relative to this subscriber, not a global number');
+    assert.ok(/const allowance = strong > 0 \? Math\.max\(perDay, Math\.min\(CATCHUP_PER_RUN, strong\)\) : perDay/.test(src),
+      'a backlog raises the allowance; no backlog leaves the daily rate alone');
+
+    // The arithmetic, on the real shapes.
+    const F = parseFloat(process.env.JOBUP_PRIORITY_FRACTION || '0.5');
+    const CATCH = parseInt(process.env.JOBUP_CATCHUP_PER_RUN || '40', 10);
+    const allowanceFor = (scores, perDay) => {
+      const best = scores.length ? scores[0] : 0;
+      const floor = Math.max(2, Math.ceil(best * F));
+      const strong = scores.filter((s) => s >= floor).length;
+      return strong > 0 ? Math.max(perDay, Math.min(CATCH, strong)) : perDay;
+    };
+    // The real subscriber: best 16 -> floor 8 -> 83 strong -> capped at 40.
+    const real = [16].concat(Array(82).fill(10)).concat(Array(2700).fill(3));
+    assert.strictEqual(allowanceFor(real, 6), 40, 'a big backlog runs at the catch-up rate');
+
+    // RELATIVE, so it works for a thin résumé too. Best 4 -> floor 2.
+    const thin = [4, 3, 2].concat(Array(500).fill(1));
+    assert.strictEqual(allowanceFor(thin, 6), 6,
+      'three strong candidates must not be inflated past the daily rate');
+    const thinBusy = [4].concat(Array(30).fill(3)).concat(Array(500).fill(1));
+    assert.strictEqual(allowanceFor(thinBusy, 6), 31,
+      'but a thin profile with a real backlog still gets to clear it');
+
+    // Once drained it is a no-op — this is a burst, not a new rate.
+    assert.strictEqual(allowanceFor(Array(900).fill(1), 6), 6,
+      'a queue of only weak candidates stays at the daily rate');
+    assert.strictEqual(allowanceFor([], 6), 6, 'and an empty queue changes nothing');
+
+    // Money still has the final say.
+    assert.ok(/const cap = Math\.min\(budgetLeft/.test(src),
+      'the cost cap must still bound the run whatever the backlog says');
   });
   await t('usedToday sums only TODAY, and only the Hunter', async () => {
     const t2 = scoped('agent_runs', subA.id);
