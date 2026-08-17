@@ -338,15 +338,27 @@ router.post('/public/teaser/:projectId', async (req, res) => {
     const project = await Project.findByPk(req.params.projectId);
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
 
-    let company_name = '';
-    if (project.company_id && Company) {
-      const c = await Company.findByPk(project.company_id).catch(() => null);
-      company_name = c ? c.name : '';
-    }
-    const projObj = { ...project.toJSON(), company_name };
-
-    const generator = require('../services/voiceTeaserGenerator');
-    const teaser = await generator.generate(projObj, { lang: (req.body && req.body.lang) });
+    // The AI voice-teaser walkthrough was removed from the self-serve flow — it
+    // cost a Claude generation per build and wasn't used. Instead we mint a zero-
+    // cost "studio shell" so the /projects/teaser/:token URL still opens the
+    // Studio (plan + Copilot + workspace history). Deterministic, no AI call.
+    const es = String((req.body && req.body.lang) || project.lang || '').toLowerCase().startsWith('es');
+    const name = project.name || (es ? 'Tu proyecto' : 'Your project');
+    const teaser = {
+      title: name, lang: es ? 'es' : 'en', voice: 'lina', studio_only: true, segments: [],
+      hero: {
+        headline: name,
+        tagline: es ? 'Diseña tu proyecto con IA' : 'Design your project with AI',
+        subhead: es
+          ? 'Lee el plan y conversa con el copiloto para afinarlo antes de agendar una llamada.'
+          : 'Read the plan and chat with the copilot to shape it before you book a call.'
+      },
+      cta: {
+        heading: es ? '¿Listo para construir?' : 'Ready to build?',
+        body: es ? 'Agenda una llamada y lo hacemos realidad.' : 'Book a call and we\'ll make it real.'
+      },
+      simulator: null, model: 'studio-shell'
+    };
     const crypto = require('crypto');
     const token = crypto.randomUUID();
     const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
