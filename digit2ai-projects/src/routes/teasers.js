@@ -430,6 +430,52 @@ function renderTeaserPage(t, meta = {}) {
   const ctaEmail = 'mstagg@digit2ai.com';
   const ctaSubject = encodeURIComponent((es ? 'Adelanto: ' : 'Teaser: ') + (t.title || ''));
 
+  // The AI teaser walkthrough (voice orb + narrated sections) is removed from the
+  // self-serve flow (cost, unused). A 'studio_only' page shows the Studio alone.
+  const linaOrb = t.studio_only ? '' : `
+  <!-- Lina voice orb -->
+  <div class="lina" id="lina">
+    <div class="orb" id="orb"></div>
+    <div class="lina-meta">
+      <div class="lina-name">Lina · Digit2AI</div>
+      <div class="lina-role">${ui.role}</div>
+      <div class="controls">
+        <button class="primary" id="playAll">${ui.play}</button>
+        <button id="pause" disabled>${ui.pause}</button>
+        <button id="stop" disabled>${ui.stop}</button>
+      </div>
+      <div class="status" id="status">${ui.idle}</div>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> ${ui.neural}</label>
+        <span class="voicemode" id="voiceMode"></span>
+        &nbsp;·&nbsp; ${ui.accent}:
+        <select id="voiceSel">
+          <option value="lina" selected>México (Dalia)</option>
+          <option value="paloma">EE. UU. (Paloma)</option>
+          <option value="salome">Colombia (Salomé)</option>
+          <option value="elvira">España (Elvira)</option>
+          <option value="ava">${es ? 'Inglés (Ava)' : 'English (Ava)'}</option>
+        </select>
+      </div>
+    </div>
+  </div>`;
+
+  const walkthrough = t.studio_only ? '' : `
+  ${section('challenge', t.challenge.heading, safe(t.challenge.body_html))}
+  ${section('solution', t.solution.heading, safe(t.solution.body_html))}
+  ${section('poc', t.poc.heading,
+    hasSim
+      ? `<div class="poc-intro">${esc(t.poc.intro)}</div>
+         <div class="sim-badge">${es ? 'Simulador interactivo — toca los botones y navega tu app' : 'Interactive simulator — tap the buttons and navigate your app'}</div>
+         <div class="sim-embed">
+           <iframe src="/projects/teaser/${esc(token)}/simulator?embed=1" title="${esc(t.simulator.app_name || 'App simulator')}" loading="lazy" style="width:100%;height:${simHeight}px;border:0;display:block" allow="clipboard-write"></iframe>
+         </div>
+         <div class="sim-open"><a href="/projects/teaser/${esc(token)}/simulator" target="_blank" rel="noopener">${es ? 'Abrir el simulador en pantalla completa &rarr;' : 'Open the simulator full-screen &rarr;'}</a></div>`
+      : `<div class="poc-intro">${esc(t.poc.intro)}</div><div class="poc-frame">${t.poc.html}</div>`)}
+  ${section('value', t.value.heading, bullets(t.value.bullets))}
+  ${t.deliverables.items && t.deliverables.items.length ? section('deliverables', t.deliverables.heading, bullets(t.deliverables.items)) : ''}
+  ${section('plan', t.plan.heading, `${t.plan.summary ? `<p>${esc(t.plan.summary)}</p>` : ''}${phases(t.plan.phases)}`)}`;
+
   return `<!DOCTYPE html>
 <html lang="${es ? 'es' : 'en'}">
 <head>
@@ -627,47 +673,8 @@ body.tw-on .tw-side{display:flex}
     </div>
   </section>` : ''}
 
-  <!-- Lina voice orb -->
-  <div class="lina" id="lina">
-    <div class="orb" id="orb"></div>
-    <div class="lina-meta">
-      <div class="lina-name">Lina · Digit2AI</div>
-      <div class="lina-role">${ui.role}</div>
-      <div class="controls">
-        <button class="primary" id="playAll">${ui.play}</button>
-        <button id="pause" disabled>${ui.pause}</button>
-        <button id="stop" disabled>${ui.stop}</button>
-      </div>
-      <div class="status" id="status">${ui.idle}</div>
-      <div class="voicepick">
-        <label><input type="checkbox" id="neuralToggle" checked> ${ui.neural}</label>
-        <span class="voicemode" id="voiceMode"></span>
-        &nbsp;·&nbsp; ${ui.accent}:
-        <select id="voiceSel">
-          <option value="lina" selected>México (Dalia)</option>
-          <option value="paloma">EE. UU. (Paloma)</option>
-          <option value="salome">Colombia (Salomé)</option>
-          <option value="elvira">España (Elvira)</option>
-          <option value="ava">${es ? 'Inglés (Ava)' : 'English (Ava)'}</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  ${section('challenge', t.challenge.heading, safe(t.challenge.body_html))}
-  ${section('solution', t.solution.heading, safe(t.solution.body_html))}
-  ${section('poc', t.poc.heading,
-    hasSim
-      ? `<div class="poc-intro">${esc(t.poc.intro)}</div>
-         <div class="sim-badge">${es ? 'Simulador interactivo — toca los botones y navega tu app' : 'Interactive simulator — tap the buttons and navigate your app'}</div>
-         <div class="sim-embed">
-           <iframe src="/projects/teaser/${esc(token)}/simulator?embed=1" title="${esc(t.simulator.app_name || 'App simulator')}" loading="lazy" style="width:100%;height:${simHeight}px;border:0;display:block" allow="clipboard-write"></iframe>
-         </div>
-         <div class="sim-open"><a href="/projects/teaser/${esc(token)}/simulator" target="_blank" rel="noopener">${es ? 'Abrir el simulador en pantalla completa &rarr;' : 'Open the simulator full-screen &rarr;'}</a></div>`
-      : `<div class="poc-intro">${esc(t.poc.intro)}</div><div class="poc-frame">${t.poc.html}</div>`)}
-  ${section('value', t.value.heading, bullets(t.value.bullets))}
-  ${t.deliverables.items && t.deliverables.items.length ? section('deliverables', t.deliverables.heading, bullets(t.deliverables.items)) : ''}
-  ${section('plan', t.plan.heading, `${t.plan.summary ? `<p>${esc(t.plan.summary)}</p>` : ''}${phases(t.plan.phases)}`)}
+  ${linaOrb}
+  ${walkthrough}
 
   <div class="cta" id="cta">
     <h2>${esc(t.cta.heading)}</h2>
@@ -690,6 +697,7 @@ body.tw-on .tw-side{display:flex}
   var synth = window.speechSynthesis;
   var orb=document.getElementById('orb'), status=document.getElementById('status');
   var playAll=document.getElementById('playAll'), pauseBtn=document.getElementById('pause'), stopBtn=document.getElementById('stop');
+  if(!orb || !playAll){ return; } // studio-only page: no voice walkthrough
   var voiceSel=document.getElementById('voiceSel'), neuralToggle=document.getElementById('neuralToggle'), voiceMode=document.getElementById('voiceMode');
   var queue=[],qi=0,mode=null,runToken=0,paused=false,currentAudio=null,playbackMode=null,neuralOK=true,cache={},browserVoice=null;
   var voiceName = voiceSel ? voiceSel.value : VOICE;
