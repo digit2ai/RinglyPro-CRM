@@ -1403,7 +1403,9 @@
     var es=(D2B_LANG==='es');
     // Best-effort auto-open in a new full window (may be popup-blocked after the
     // async build; the big button below is the reliable path).
-    try{ window.open(url,'_blank','noopener'); }catch(e){}
+    // Per the workflow: do NOT display the magic link — take the user straight into
+    // their Studio, which now carries the left-pane workspace / project history.
+    try{ window.location.href = url; return; }catch(e){}
     result.className='show';
     result.innerHTML=''
       +'<div class="d2b-build d2b-done">'
