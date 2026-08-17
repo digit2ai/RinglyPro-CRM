@@ -574,12 +574,12 @@ button:disabled{opacity:.45;cursor:default}
 .d2studio-h{font-size:1.55rem;font-weight:800;margin-bottom:4px}
 .d2studio-sub{color:var(--mut);margin-bottom:18px;font-size:.98rem}
 .d2studio{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
-@media(min-width:920px){.d2studio{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}}
-.d2studio-left{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:24px 24px 20px}
-.d2studio-right{position:relative}
-@media(min-width:920px){.d2studio-right{position:sticky;top:16px}}
-.d2studio-right .d2chat{margin-top:0}
-@media(min-width:920px){.d2studio-right .d2chat-log{max-height:min(56vh,520px)}}
+@media(min-width:920px){.d2studio{grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr)}} /* chat leads on the left, plan on the right */
+.d2studio-plan{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:24px 24px 20px}
+.d2studio-chat{position:relative}
+@media(min-width:920px){.d2studio-chat{position:sticky;top:16px}}
+.d2studio-chat .d2chat{margin-top:0}
+@media(min-width:920px){.d2studio-chat .d2chat-log{max-height:min(60vh,560px)}}
 </style>
 </head>
 <body>
@@ -596,10 +596,10 @@ button:disabled{opacity:.45;cursor:default}
     <h2 class="d2studio-h">${es ? 'Diseña tu proyecto' : 'Design your project'}</h2>
     <div class="d2studio-sub">${es ? 'Lee el plan a la izquierda y conversa con el copiloto a la derecha para ajustarlo.' : 'Read the plan on the left, chat with the copilot on the right to shape it.'}</div>
     <div class="d2studio">
-      <div class="d2studio-left" id="d2plan-body">
+      <div class="d2studio-chat" id="d2plan-right"></div>
+      <div class="d2studio-plan" id="d2plan-body">
         <div class="d2plan-load"><span class="d2plan-spin"></span>${es ? 'Nuestra IA está evaluando tu proyecto — encaje, alcance y riesgos. Unos segundos…' : 'Our AI is assessing your project — fit, scope and risks. A few seconds…'}</div>
       </div>
-      <div class="d2studio-right" id="d2plan-right"></div>
     </div>
   </section>` : ''}
 
@@ -886,7 +886,7 @@ button:disabled{opacity:.45;cursor:default}
   var box = document.getElementById('d2plan-body');
   if(!TOKEN || !box) return;
   var section = document.getElementById('d2plan');
-  var history = [], chatMounted = false, sending = false, savedChat = [];
+  var history = [], sending = false, savedChat = [], planReady = false, chatActivated = false, prepNote = null;
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
   function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
@@ -931,7 +931,6 @@ button:disabled{opacity:.45;cursor:default}
       if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
       if(bk) setTimeout(function(){ bk.click(); }, 420);
     };
-    if(!chatMounted){ mountChat(); chatMounted = true; }
   }
 
   // ---- Plan Copilot (chat to refine the plan) ----
@@ -939,6 +938,7 @@ button:disabled{opacity:.45;cursor:default}
     title:'Copiloto del plan', sub:'Pregúntame o ajusta el plan en lenguaje natural',
     ph:'Ej: hazlo un MVP de 2 semanas · agrega una app móvil',
     send:'Enviar', undo:'Deshacer', reset:'Volver al original', thinking:'Pensando…',
+    prep:'Preparando tu plan… estaré listo en unos segundos.',
     hello:'Puedo explicarte cualquier parte de este plan o cambiarlo. Prueba: "resúmelo en 3 puntos", "hazlo un MVP de 2 semanas" o "agrega una app móvil".',
     chips:['Resúmelo en 3 puntos','Hazlo un MVP de 2 semanas','Agrega una app móvil'],
     updated:'Plan actualizado'
@@ -946,11 +946,14 @@ button:disabled{opacity:.45;cursor:default}
     title:'Plan Copilot', sub:'Ask me anything, or reshape the plan in plain language',
     ph:'e.g. make it a 2-week MVP · add a mobile app',
     send:'Send', undo:'Undo', reset:'Reset to original', thinking:'Thinking…',
+    prep:'Preparing your plan — ready in a few seconds.',
     hello:'I can explain any part of this plan or change it. Try: "summarize in 3 bullets", "make it a 2-week MVP", or "add a mobile app".',
     chips:['Summarize in 3 bullets','Make it a 2-week MVP','Add a mobile app'],
     updated:'Plan updated'
   };
   var logEl, inputEl, sendBtn;
+  // Mount the Copilot shell IMMEDIATELY (it must be the first thing at the top),
+  // input disabled with a "preparing" note until the plan is ready.
   function mountChat(){
     var el = document.createElement('div'); el.className='d2chat'; el.id='d2chat';
     el.innerHTML =
@@ -958,13 +961,27 @@ button:disabled{opacity:.45;cursor:default}
       + '<div class="d2chat-log" id="d2chat-log"></div>'
       + '<div class="d2chat-suggest" id="d2chat-chips">'+T.chips.map(function(c){return '<button type="button" class="d2chip">'+esc(c)+'</button>';}).join('')+'</div>'
       + '<div class="d2chat-ctl"><a id="d2chat-undo">'+esc(T.undo)+'</a><a id="d2chat-reset">'+esc(T.reset)+'</a></div>'
-      + '<div class="d2chat-in"><input id="d2chat-input" type="text" placeholder="'+esc(T.ph)+'" autocomplete="off"><button id="d2chat-send" type="button">'+esc(T.send)+'</button></div>';
+      + '<div class="d2chat-in"><input id="d2chat-input" type="text" placeholder="'+esc(T.ph)+'" autocomplete="off" disabled><button id="d2chat-send" type="button" disabled>'+esc(T.send)+'</button></div>';
     var right = document.getElementById('d2plan-right') || section;
     right.appendChild(el);
     logEl = document.getElementById('d2chat-log');
     inputEl = document.getElementById('d2chat-input');
     sendBtn = document.getElementById('d2chat-send');
-    // Resume the saved conversation for this project, else greet fresh.
+    prepNote = addMsg('a', T.prep); prepNote.classList.add('d2chat-typing');
+    sendBtn.onclick = doSend;
+    inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ doSend(); } });
+    Array.prototype.forEach.call(document.querySelectorAll('#d2chat-chips .d2chip'), function(b){
+      b.onclick = function(){ if(!planReady) return; inputEl.value = b.textContent; doSend(); };
+    });
+    document.getElementById('d2chat-undo').onclick = function(){ if(planReady) version('undo'); };
+    document.getElementById('d2chat-reset').onclick = function(){ if(planReady) version('reset'); };
+  }
+  // Activate once the plan is ready: drop the "preparing" note, resume the saved
+  // conversation (or greet), and enable input.
+  function activateChat(){
+    if(chatActivated || !logEl) return;
+    chatActivated = true;
+    if(prepNote){ prepNote.remove(); prepNote = null; }
     if(savedChat && savedChat.length){
       savedChat.forEach(function(m){
         if(!m || !m.text) return;
@@ -974,20 +991,14 @@ button:disabled{opacity:.45;cursor:default}
     } else {
       addMsg('a', T.hello);
     }
-    sendBtn.onclick = doSend;
-    inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ doSend(); } });
-    Array.prototype.forEach.call(document.querySelectorAll('#d2chat-chips .d2chip'), function(b){
-      b.onclick = function(){ inputEl.value = b.textContent; doSend(); };
-    });
-    document.getElementById('d2chat-undo').onclick = function(){ version('undo'); };
-    document.getElementById('d2chat-reset').onclick = function(){ version('reset'); };
+    inputEl.disabled = false; sendBtn.disabled = false;
   }
   function addMsg(kind, text){
     var d = document.createElement('div'); d.className='d2msg '+kind; d.textContent=text;
     logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; return d;
   }
   function doSend(){
-    if(sending) return;
+    if(sending || !planReady) return;
     var msg = (inputEl.value||'').trim(); if(!msg) return;
     inputEl.value=''; addMsg('u', msg); history.push({role:'user',text:msg});
     sending = true; sendBtn.disabled = true;
@@ -1020,7 +1031,7 @@ button:disabled{opacity:.45;cursor:default}
     fetch('/projects/teaser/'+encodeURIComponent(TOKEN)+'/plan?lang='+(ES?'es':'en'))
       .then(function(r){ return r.json(); })
       .then(function(res){
-        if(res && res.status === 'ready' && res.plan){ savedChat = res.chat || []; render(res.plan); return; }
+        if(res && res.status === 'ready' && res.plan){ savedChat = res.chat || []; planReady = true; render(res.plan); activateChat(); return; }
         if(res && res.status === 'unavailable'){ hide(); return; }
         if(++tries >= MAX){ hide(); return; }
         setTimeout(poll, 3000);
@@ -1028,6 +1039,7 @@ button:disabled{opacity:.45;cursor:default}
       .catch(function(){ if(++tries >= MAX){ hide(); } else setTimeout(poll, 3000); });
   }
   function hide(){ var s=document.getElementById('d2plan'); if(s) s.style.display='none'; }
+  mountChat(); // Copilot is present at the top from the first paint
   poll();
 })();
 </script>
