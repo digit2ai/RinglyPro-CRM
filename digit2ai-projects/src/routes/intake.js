@@ -346,6 +346,7 @@ router.post('/public/teaser/:projectId', async (req, res) => {
     const name = project.name || (es ? 'Tu proyecto' : 'Your project');
     const teaser = {
       title: name, lang: es ? 'es' : 'en', voice: 'lina', studio_only: true, segments: [],
+      tagline: es ? 'Diseña tu proyecto con IA' : 'Design your project with AI',
       hero: {
         headline: name,
         tagline: es ? 'Diseña tu proyecto con IA' : 'Design your project with AI',
