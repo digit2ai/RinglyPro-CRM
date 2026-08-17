@@ -37,7 +37,17 @@ const SCRUB_SENTENCE = [
   /\bmanny\b/i, /\bmonetiz/i, /\brevenue share\b/i, /\bmargin\b/i,
   /\bupsell\b/i, /\bcross-?sell\b/i, /\bportfolio synerg/i,
   /\bthe company (fail|die|dead|collapse)/i, /\bbase[\s-]?rate\b/i,
-  /\d+\s*[-–]\s*\d+\s*%\s*(chance|probability|likelihood)/i
+  /\d+\s*[-–]\s*\d+\s*%\s*(chance|probability|likelihood)/i,
+  // Internal build-vs-buy / analyst posture — honest, but never client-facing.
+  // (Caught live on a low-fit test: "commodity … direct the submitter to an
+  //  off-the-shelf solution … buy-before-build audit … synergy leverage.")
+  /\bdigit2ai\b/i, /\bportfolio\b/i, /\bsynerg/i, /\bcommodity\b/i,
+  /\boff[\s-]?the[\s-]?shelf\b/i, /\bbuild[\s-]?vs[\s-]?buy\b/i,
+  /\bbuy[\s-]?before[\s-]?build\b/i, /\bcustom development\b/i,
+  /\bthe submitter\b/i, /\bdirect(?:ing)? (?:the )?(?:submitter|them|client)\b/i,
+  /\badopt an existing (?:tool|solution|product)\b/i,
+  /\blittle differentiation\b/i, /\bjustify (?:custom|the) (?:build|development)\b/i,
+  /\bwillingness to pay\b/i, /\brepeatable market\b/i, /\bstakeholder interview\b/i
 ];
 
 // Softeners: catastrophic premortem language → neutral client-facing risk.
@@ -127,11 +137,15 @@ function clientPlanFromTriage(project, opts = {}) {
   const feas = feasibility(triage.fit_score, es);
   const gate = ctaGate(triage, premortem, es);
 
-  // The problem, in our words (falls back to the fit reasoning).
-  const problem = scrubText(triage.problem_in_our_words || triage.fit_reasoning || p.description || '');
+  // The problem, in our words — prefer a clean restatement, else the prospect's
+  // OWN description. Never the internal fit_reasoning (it is analyst-voiced).
+  const problem = scrubText(triage.problem_in_our_words || p.description || '');
 
-  // Why it's feasible — sanitized reasoning (never the go/no-go).
-  const whyReasoning = scrubText(triage.fit_reasoning || '');
+  // Why it's feasible — sanitized reasoning. The only reasoning field is
+  // analyst-voiced, so after scrubbing internal posture it can come back thin;
+  // omit rather than show a stub or a dismissive fragment.
+  let whyReasoning = scrubText(triage.fit_reasoning || '');
+  if (whyReasoning.length < 40) whyReasoning = '';
 
   // Recommended first build.
   const v1 = scrubText(triage.wedge_recommendation || '');
