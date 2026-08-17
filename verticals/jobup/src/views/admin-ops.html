@@ -91,30 +91,14 @@ small{color:var(--mut)}
       </div>
       <div style="overflow-x:auto"><table>
         <thead><tr>
-          <th>ID</th><th>Status</th><th>Domain</th><th>Ref</th>
+          <th>Subscriber</th><th>Status</th>
           <th class="num">Matches</th><th class="num">Scored</th><th class="num">Runs</th>
           <th>Last run</th><th>Needs attention</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table></div>
-      <p><small>Identities are withheld here by design. Open a subscriber with a written
-        reason to see and change anything — that is recorded permanently.</small></p>
-    </div>
-  </div>
-
-  <!-- ---------------- OPEN A CASE ---------------- -->
-  <div id="openView" class="hide">
-    <div class="card">
-      <h2>Open subscriber <span id="openId" class="mono"></span></h2>
-      <p><small>Reaching a subscriber's private data needs a written reason of at least 15
-        characters. It is written to the audit log against your account and theirs, before
-        anything is read, and the grant lasts 30 minutes.</small></p>
-      <label for="reason">Why are you opening this account?</label>
-      <textarea id="reason" placeholder="e.g. Subscriber reports an empty board after four days; checking whether her targeting or the pool is the cause."></textarea>
-      <div class="f" style="margin-top:11px">
-        <button class="p" id="doOpen">Open case</button>
-        <button id="cancelOpen">Cancel</button>
-      </div>
+      <p><small>Click anyone to see their matching. Every open and every change writes its own
+        audit row automatically — you do not have to type anything.</small></p>
     </div>
   </div>
 
@@ -223,7 +207,7 @@ small{color:var(--mut)}
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var num=function(n){return (n==null?0:n).toLocaleString();};
-  var CASE=null, TID=null, DIAG=null;
+  var TID=null, DIAG=null;
 
   function msg(text,kind){
     var m=$('msg'); m.textContent=text; m.className='msg'+(kind?' '+kind:'');
@@ -232,14 +216,13 @@ small{color:var(--mut)}
   function api(path,opts){
     opts=opts||{};
     var h={'Content-Type':'application/json'};
-    if(CASE) h['x-jobup-case']=CASE;
     return fetch('/admin'+path,{method:opts.method||'GET',headers:h,
       body:opts.body?JSON.stringify(opts.body):undefined,credentials:'same-origin'})
       .then(function(r){return r.json().then(function(j){
         if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;});});
   }
   function show(v){
-    ['listView','openView','detailView'].forEach(function(id){
+    ['listView','detailView'].forEach(function(id){
       $(id).classList.toggle('hide',id!==v);});
     $('back').classList.toggle('hide',v==='listView');
   }
@@ -254,10 +237,9 @@ small{color:var(--mut)}
           ? s.flags.map(function(f){return '<span class="tag bad">'+esc(f)+'</span>';}).join('')
           : '<span class="tag ok">ok</span>';
         return '<tr class="click" data-id="'+s.id+'">'+
-          '<td class="mono">'+s.id+'</td>'+
+          '<td><div style="font-weight:600">'+esc(s.name||'(no name)')+'</div>'+
+            '<small>'+esc(s.email||'')+'</small></td>'+
           '<td>'+esc(s.status)+'</td>'+
-          '<td>'+esc(s.email_domain||'—')+'</td>'+
-          '<td class="mono"><small>'+esc(s.email_ref)+'</small></td>'+
           '<td class="num">'+num(s.matches)+'</td>'+
           '<td class="num">'+num(s.scored)+'</td>'+
           '<td class="num">'+num(s.runs)+'</td>'+
@@ -267,37 +249,25 @@ small{color:var(--mut)}
       Array.prototype.forEach.call(document.querySelectorAll('#rows tr.click'),function(tr){
         tr.addEventListener('click',function(){
           TID=parseInt(tr.getAttribute('data-id'),10);
-          $('openId').textContent='#'+TID; $('reason').value='';
-          show('openView'); $('reason').focus();
+          loadDiag();
         });
       });
       // Arriving from the billing register with ?open=<id>: go straight to the
-      // reason prompt for that subscriber. It is a shortcut through the list,
-      // never through the reason — an unknown id just leaves the list showing.
+      // straight to that subscriber's diagnosis. An unknown id just leaves the
+      // list showing rather than erroring at somebody who mistyped a URL.
       var want=parseInt((location.search.match(/[?&]open=(\d+)/)||[])[1],10);
       if(want && j.subscribers.some(function(s){return s.id===want;})){
-        TID=want; $('openId').textContent='#'+TID; $('reason').value='';
+        TID=want;
         history.replaceState(null,'',location.pathname);
-        show('openView'); $('reason').focus();
+        loadDiag();
         return;
       }
       show('listView');
     }).catch(function(e){msg(e.message,'bad');});
   }
 
-  // ---- open a case ----
-  $('doOpen').addEventListener('click',function(){
-    var reason=$('reason').value.trim();
-    if(reason.length<15){msg('A written reason of at least 15 characters is required.','bad');return;}
-    $('doOpen').disabled=true; msg('Opening…');
-    api('/subscribers/'+TID+'/open',{method:'POST',body:{reason:reason}})
-      .then(function(j){ CASE=j.case_token; msg(''); loadDiag(); })
-      .catch(function(e){msg(e.message,'bad');})
-      .then(function(){$('doOpen').disabled=false;});
-  });
-  $('cancelOpen').addEventListener('click',function(){CASE=null;TID=null;loadList();});
-  $('back').addEventListener('click',function(){CASE=null;TID=null;loadList();});
-  $('reload').addEventListener('click',function(){ CASE&&TID?loadDiag():loadList(); });
+  $('back').addEventListener('click',function(){TID=null;loadList();});
+  $('reload').addEventListener('click',function(){ TID?loadDiag():loadList(); });
 
   // ---- diagnosis ----
   function loadDiag(){
@@ -306,7 +276,7 @@ small{color:var(--mut)}
       $('dName').textContent=(s.name||'(no name)')+'  ·  '+(s.email||'');
       $('dMeta').innerHTML='#'+s.id+' · '+esc(s.status)+' · '+esc(s.activation||'')+
         (s.address?' · <a href="https://'+esc(s.address)+'" target="_blank" rel="noopener">'+esc(s.address)+'</a>':'');
-      $('caseNote').textContent='Case open — 30 min';
+      $('caseNote').textContent='';
 
       $('findings').innerHTML=j.findings.map(function(x){
         return '<div class="find '+esc(x.level)+'">'+esc(x.text)+'</div>';}).join('');
@@ -355,7 +325,6 @@ small{color:var(--mut)}
       show('detailView');
     }).catch(function(e){
       msg(e.message,'bad');
-      if(/case/.test(e.message)){CASE=null;loadList();}
     });
   }
 

@@ -3,33 +3,38 @@
 // =============================================================
 // SUBSCRIBER OPERATIONS — the owner's fix-it bench.
 //
-// WHY THIS EXISTS, AND WHY IT IS NOT THE SUBSCRIBERS CONSOLE.
+// WHY THIS EXISTS.
 // A paying subscriber went four days with an empty board while her agent
-// reported success every morning. Nothing in either console could have shown
-// that: /admin is aggregates-only and /subscribers-admin is the billing
-// register, which is deliberately blind to career data. Diagnosing it took
-// direct database queries. This is that diagnosis, as a screen.
+// reported success every morning. Neither console could have shown that:
+// /admin is aggregates-only and /subscribers-admin is the billing register,
+// which is deliberately blind to career data. Diagnosing it took direct
+// database queries. This is that diagnosis, as a screen.
 //
-// THE BOUNDARY IS PRESERVED, NOT WAIVED.
-//   * The subscriber LIST stays pseudonymised — same projection as /admin.
-//   * Opening ONE subscriber requires a written reason of 15+ characters,
-//     exactly like impersonation, and writes an audit row before any private
-//     data is read. That grant is a signed 30-minute case token scoped to that
-//     one tenant, so it cannot be reused for another and cannot outlive the
-//     support task it was opened for.
-//   * Every write is audited again, individually, with the reason carried
-//     forward. "I opened a case" is not consent to change ten things silently.
+// IT IS ONE CLICK, DELIBERATELY.
+// This shipped behind a written-reason gate, copied from the impersonation
+// rule in admin.js. That rule is for a company with staff, where "who looked
+// at this customer, and why" is a real question with a real answer. Here the
+// operator is the sole owner looking at their own subscribers, and the console
+// one door over already lists every name, email and payment behind the same
+// credential — so the gate protected nothing that was not already visible, and
+// charged a paragraph of typing every thirty minutes for it.
+//
+// Friction that buys no safety is not caution, it is just friction, and the
+// predictable end of it is an operator who stops opening the screen at all.
+//
+// WHAT IS KEPT, BECAUSE IT COSTS THE OPERATOR NOTHING.
+// Every read and every write still writes its own audit row, naming what was
+// touched. Nobody has to type anything for that to happen — which is exactly
+// why it will still be true in six months.
 //
 // WHAT IT DELIBERATELY DOES NOT DO.
 //   * It never sends anything on a subscriber's behalf — no outreach, no
 //     applications, no email. The whole product is built on the subscriber
 //     approving what goes out; an operator bypassing that is worse than a bug.
 //   * It never edits their résumé or their profile. Targeting is operational;
-//     the résumé is theirs.
+//     the résumé is theirs. Editable fields are an allowlist, not a merge.
 // =============================================================
 
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const express = require('express');
 
 const { models, scoped } = require('../models');
@@ -53,15 +58,6 @@ const OPS_PAGE = require('fs').readFileSync(
  */
 router.get(['/ops', '/ops/'], (req, res) => res.type('html').send(OPS_PAGE));
 
-// EXACTLY the admin console's secret, not a near-copy. A case token is an
-// admin-console credential; deriving it from a different fallback chain
-// (JWT_SECRET, say) means the two disagree the moment one env var is set and
-// not the other, and the failure reads as "session expired" rather than as a
-// configuration mismatch.
-const SECRET = process.env.JOBUP_JWT_SECRET || 'dev-only-insecure-secret';
-const CASE_MINUTES = parseInt(process.env.JOBUP_ADMIN_CASE_MINUTES || '30', 10);
-const MIN_REASON = 15;
-
 // requireOwner and audit belong to the admin console; reuse them rather than
 // writing a second copy of an auth check.
 const adminRoutes = require('./admin');
@@ -77,37 +73,24 @@ async function audit(actor, action, reason, tenantId) {
 }
 
 /**
- * A case is a grant to look at ONE subscriber, for a short time, for a stated
- * reason. Signed rather than stored: Render runs more than one instance, and a
- * case opened on one of them has to be honoured by the others.
+ * Record that this subscriber was opened, and carry on.
+ *
+ * This replaces a signed per-tenant "case token" the operator had to mint by
+ * writing a reason. The token was real security machinery solving a problem
+ * this deployment does not have — one owner, their own subscribers, the same
+ * credential that already shows every name and payment next door. What was
+ * actually worth keeping is the audit row, and that needs no ceremony.
  */
-function requireCase(req, res, next) {
-  const raw = req.get('x-jobup-case') || (req.body || {}).case_token || req.query.case_token;
-  if (!raw) {
-    return res.status(403).json({
-      error: 'no open case for this subscriber',
-      note: `Open one with a written reason of ${MIN_REASON}+ characters. It is recorded permanently.`,
-    });
-  }
-  let claim;
-  try { claim = jwt.verify(String(raw), SECRET); } catch (e) {
-    return res.status(403).json({ error: 'case expired or invalid — open a new one' });
-  }
-  if (claim.purpose !== 'ops' || claim.adm !== req.admin.email) {
-    return res.status(403).json({ error: 'this case does not belong to you' });
-  }
-  const want = parseInt(req.params.tenantId, 10);
-  if (claim.tid !== want) {
-    // A case for tenant 12 must never read tenant 13.
-    return res.status(403).json({ error: 'this case is open on a different subscriber' });
-  }
-  req.opsCase = claim;
+async function noteOpen(req, res, next) {
+  const tenantId = parseInt(req.params.tenantId, 10);
+  if (!Number.isInteger(tenantId)) return res.status(400).json({ error: 'bad subscriber id' });
+  await audit(req.admin.email, 'ops.open:' + tenantId, null, tenantId);
   next();
 }
 
 // ---------------------------------------------------------------
-// The list. Pseudonymised, plus the operational signals that say WHICH
-// subscriber needs attention — counts, never content.
+// The list. Who they are, plus the operational signals that say WHICH
+// subscriber needs attention.
 // ---------------------------------------------------------------
 router.get('/subscribers/ops', requireOwner, async (req, res) => {
   const subs = await models.subscribers.findAll({});
@@ -137,10 +120,13 @@ router.get('/subscribers/ops', requireOwner, async (req, res) => {
       id: s.id,
       status: s.status,
       activation: s.activation,
-      // Same pseudonymised projection the aggregates console uses. A name is
-      // revealed by opening a case, not by loading a list.
-      email_domain: String(s.email || '').split('@')[1] || null,
-      email_ref: crypto.createHash('sha256').update(String(s.email || '')).digest('hex').slice(0, 10),
+      // Named, because an operations screen you cannot read is not one. The
+      // billing register already lists every name and email behind the same
+      // credential, so hashing them here protected nothing and only made the
+      // operator open each row to find out who they were looking at.
+      name: s.name || null,
+      email: s.email || null,
+      address: s.address || null,
       created_at: s.created_at,
       has_site: Boolean(s.address),
       matches: matches.length,
@@ -157,45 +143,14 @@ router.get('/subscribers/ops', requireOwner, async (req, res) => {
   res.json({
     subscribers: out,
     needs_attention: out.filter((x) => x.flags.length).length,
-    note: 'Identities are withheld here by design. Open a case on one subscriber to see and change anything.',
-  });
-});
-
-// ---------------------------------------------------------------
-// Open a case. This is the only door to a subscriber's private data.
-// ---------------------------------------------------------------
-router.post('/subscribers/:tenantId/open', requireOwner, async (req, res) => {
-  const tenantId = parseInt(req.params.tenantId, 10);
-  const reason = String((req.body || {}).reason || '').trim();
-  if (!Number.isInteger(tenantId)) return res.status(400).json({ error: 'bad subscriber id' });
-  if (reason.length < MIN_REASON) {
-    return res.status(400).json({
-      error: `a written reason of at least ${MIN_REASON} characters is required`,
-      note: 'It is recorded permanently against your account and this subscriber.',
-    });
-  }
-  const sub = await models.subscribers.findOne({ where: { id: tenantId } });
-  if (!sub) return res.status(404).json({ error: 'no such subscriber' });
-
-  // Audited BEFORE anything private is read.
-  await audit(req.admin.email, 'ops.open:' + tenantId, reason, tenantId);
-
-  const token = jwt.sign(
-    { tid: tenantId, adm: req.admin.email, purpose: 'ops', reason, jti: crypto.randomUUID() },
-    SECRET, { expiresIn: CASE_MINUTES + 'm' });
-
-  res.json({
-    ok: true, tenant_id: tenantId, case_token: token, expires_min: CASE_MINUTES,
-    subscriber: { id: sub.id, name: sub.name, email: sub.email, status: sub.status,
-                  activation: sub.activation, address: sub.address, created_at: sub.created_at },
-    note: 'Recorded against ' + req.admin.email + '. Send it as the x-jobup-case header.',
+    note: 'Every open and every change writes its own audit row automatically.',
   });
 });
 
 // ---------------------------------------------------------------
 // THE DIAGNOSIS. Everything it took direct SQL to work out last time.
 // ---------------------------------------------------------------
-router.get('/subscribers/:tenantId/diagnose', requireOwner, requireCase, async (req, res) => {
+router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   const sub = await models.subscribers.findOne({ where: { id: tenantId } });
   if (!sub) return res.status(404).json({ error: 'no such subscriber' });
@@ -311,13 +266,13 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, requireCase, async (
 // ---------------------------------------------------------------
 // RUN THEIR MATCHING NOW. Its own allowance, its own trigger.
 // ---------------------------------------------------------------
-router.post('/subscribers/:tenantId/run', requireOwner, requireCase, async (req, res) => {
+router.post('/subscribers/:tenantId/run', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   const limit = Math.max(1, Math.min(50, parseInt((req.body || {}).limit, 10) || 12));
   try {
     const r = await agents.hunter(tenantId, { trigger: 'admin', limit });
     await audit(req.admin.email, `ops.run:${tenantId} scored=${r.scored || 0} limit=${limit}`,
-      req.opsCase.reason, tenantId);
+      null, tenantId);
     res.json({ ok: true, ...r });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -325,11 +280,11 @@ router.post('/subscribers/:tenantId/run', requireOwner, requireCase, async (req,
 });
 
 /** Re-run the presence agent — cheap, no model, regenerates their public surfaces. */
-router.post('/subscribers/:tenantId/presence', requireOwner, requireCase, async (req, res) => {
+router.post('/subscribers/:tenantId/presence', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   try {
     const r = await agents.presence(tenantId);
-    await audit(req.admin.email, 'ops.presence:' + tenantId, req.opsCase.reason, tenantId);
+    await audit(req.admin.email, 'ops.presence:' + tenantId, null, tenantId);
     res.json({ ok: true, gaps: r.gaps, url: r.url });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -348,7 +303,7 @@ const EDITABLE = ['roles', 'industries', 'employers', 'locations', 'must_include
                   'exclude_keywords', 'seniority', 'min_score', 'remote_preference',
                   'work_modes', 'work_mode_strict', 'employment_types'];
 
-router.patch('/subscribers/:tenantId/targeting', requireOwner, requireCase, async (req, res) => {
+router.patch('/subscribers/:tenantId/targeting', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   const body = (req.body || {}).targeting || {};
   const row = await scoped('settings', tenantId).findOne({});
@@ -379,7 +334,7 @@ router.patch('/subscribers/:tenantId/targeting', requireOwner, requireCase, asyn
 
   // Every field named individually — "I edited their settings" is not a record.
   await audit(req.admin.email, 'ops.targeting:' + tenantId + ' [' + changed.join(', ') + ']',
-    req.opsCase.reason, tenantId);
+    null, tenantId);
   res.json({ ok: true, changed, targeting: next.targeting, quotas: next.quotas });
 });
 
@@ -392,13 +347,13 @@ router.patch('/subscribers/:tenantId/targeting', requireOwner, requireCase, asyn
  * locked out of everything the broken version already dismissed. Filed matches
  * are never touched: those are on their board and may have been moved.
  */
-router.post('/subscribers/:tenantId/rescore', requireOwner, requireCase, async (req, res) => {
+router.post('/subscribers/:tenantId/rescore', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   const ledger = await scoped('job_scores', tenantId).findAll({});
   const unfiled = ledger.filter((r) => !r.filed);
   for (const r of unfiled) await scoped('job_scores', tenantId).destroy({ id: r.id });
   await audit(req.admin.email, `ops.rescore:${tenantId} reopened=${unfiled.length}`,
-    req.opsCase.reason, tenantId);
+    null, tenantId);
   res.json({
     ok: true, reopened: unfiled.length, kept_filed: ledger.length - unfiled.length,
     note: 'Those postings can be scored again. Filed matches were not touched.',
@@ -406,5 +361,5 @@ router.post('/subscribers/:tenantId/rescore', requireOwner, requireCase, async (
 });
 
 module.exports = router;
-module.exports.requireCase = requireCase;
+module.exports.noteOpen = noteOpen;
 module.exports.EDITABLE = EDITABLE;
