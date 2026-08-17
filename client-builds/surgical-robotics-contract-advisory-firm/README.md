@@ -85,7 +85,7 @@ values and sources in `lib/benchmarks.js`.
 ```bash
 # The whole suite. Zero external keys, zero network, zero database.
 node client-builds/surgical-robotics-contract-advisory-firm/sit.js
-# -> 124/124 GREEN
+# -> 168/168 GREEN
 
 # The model on its own, no server.
 node -e "console.log(require('./client-builds/surgical-robotics-contract-advisory-firm/lib/model').project({}).cumulative)"
@@ -95,8 +95,8 @@ SIT unsets `DATABASE_URL` before requiring the app, deliberately: the suite must
 nothing external, and the in-memory fallback should be the path that gets exercised rather
 than a branch nobody has run. **The Postgres path is therefore not covered by SIT** and is
 named in its skipped list. It was verified separately against the dev database before
-first deploy — schema creation, JSONB round-trip, single-use tokens, CSV off a stored row,
-and index names all confirmed.
+first deploy — schema creation, JSONB round-trip, CSV off a stored row, and index names
+all confirmed.
 
 ---
 
@@ -122,8 +122,9 @@ keeps the long slug; only SQL identifiers shorten. Every index is named explicit
 same reason. Canonical DDL is in `migrations/001_init.sql`; the app also creates it
 idempotently on boot.
 
-Tables: `srcaf_scenarios`, `srcaf_magic_tokens`. Both `tenant_id NOT NULL` with a named
-index. Every read filters on `tenant_id`, and a cross-tenant id resolves to 404 rather
+Table: `srcaf_scenarios`, `tenant_id NOT NULL` with a named index.
+(`srcaf_magic_tokens` is deprecated — sign-in is the Projects session, so there are no
+local sign-in tokens to store.) Every read filters on `tenant_id`, and a cross-tenant id resolves to 404 rather
 than 403 — a 403 confirms the row exists.
 
 ---
@@ -154,46 +155,55 @@ and the sign-in endpoints. Everything else — the model, the benchmarks, the wa
 saved scenarios, the app shell, `app.js` — returns 401 to a JSON caller and redirects a
 browser to the gate page.
 
-### Two factors, because one of them is written on the project record
+### Sign-in is the Projects Hub, and only that
 
-Sign-in requires **an allow-listed email AND the access code**. The magic link is returned
-in the HTTP response, because `EMAIL_AUTOSEND_DISABLED` is on repo-wide and a flow that
-assumed an email would arrive would authenticate nobody. That was tolerable when reads
-were public. Behind a gate it *is* the gate — so returning the link to anyone who merely
-knows the address would make the address the credential, and Greg's address is on the
-project record. The code is what makes returning the link safe.
+There is **one door**. This app briefly had its own magic-link plus a shared access code
+— a second credential to distribute, rotate and lose, for an audience of two people who
+already sign in at `/projects` every day. It is gone. Access to this model is now exactly
+access to the Projects Hub, so removing someone there removes them here, with nothing to
+remember to revoke separately.
 
-A wrong address and a wrong code produce the **same** status and the **same** message, so
-the endpoint is not an oracle for which addresses are provisioned.
+**The handoff needs no secret and no redirect dance.** `/projects` keeps its CRM JWT in
+`localStorage['token']` on `aiagent.ringlypro.com`, and this app is served from the **same
+origin** — so `/login` reads that value directly, posts it once to
+`POST /api/v1/auth/sso`, and lands the user in the app. Nothing is typed, nothing travels
+in a URL, no third-party cookie is involved.
 
-### It fails closed
+The exchange verifies the token against `JWT_SECRET` (the same key `/projects` signs with)
+and refuses anything that fails: a malformed token, a token signed with the wrong key, an
+expired Projects session, or one of this app's own session tokens replayed as a Projects
+one. That last case is kept apart by the audience claim — ours carry `aud=srcaf`, the
+Hub's carry none.
 
-With no `SRCAF_ACCESS_CODE` set, **no session can be created at all** — `/health` and the
-gate page still answer, and the gate page says why. This is the rule the JobUp consoles
-follow in this repo: unset means CLOSED, deliberately, rather than open under a password
-published in this repository's own documentation. The cost is one env var before first
-sign-in; the alternative is a live app anyone who has read this repo can walk into.
+**A valid Projects session is necessary but not sufficient.** The Hub is the owner's
+command centre and carries accounts with no business reading one named person's departure
+plan, so `SRCAF_ALLOWED_EMAILS` is a second, narrower gate. Default is Greg plus the
+owner; set it to `*` to admit any authenticated Projects user.
 
-A code shorter than twelve characters, or one matching a password this repo publishes, is
-reported as weak on `/health` and bannered on the gate page. **Reported, not blocked** —
-refusing to boot would lock the owner out of their own model with no way back in.
+**The exchanged session lives for the shorter of twelve hours and whatever is left of the
+Projects session.** Both halves matter. Without the upstream cap, removing somebody from
+`/projects` would leave them holding access here until this token expired on its own.
+Without the twelve-hour cap, a fresh seven-day Projects token would mint a seven-day
+session while its cookie lasts twelve hours — leaving the bearer token quietly outliving
+its own cookie as the longer-lived of the two credentials.
+
+**Implication worth stating:** Greg needs a Digit2AI Projects account to open the model.
+There is no longer a path that works without one.
 
 ### Other hardening
 
-- Repeated failures from one source are throttled (10 per 15 minutes), and a correct code
-  during a throttle window is still refused. This is per-process and Render may run more
-  than one instance, so it raises the cost rather than eliminating the attack — the real
-  defence is a long random code.
-- The code is compared as a SHA-256 digest through `timingSafeEqual`, so the comparison is
-  timing-safe and does not leak the real code's length.
+- Repeated rejected tokens from one source are throttled (10 per 15 minutes), and a
+  genuine token during the window is still refused. Per-process, and Render may run more
+  than one instance, so it raises cost rather than eliminating anything — the real defence
+  is that the exchange verifies a signature rather than comparing a guessable string.
 - Every response carries `X-Robots-Tag: noindex`, `X-Frame-Options: DENY`, `nosniff`,
   `Referrer-Policy: no-referrer`, and a CSP with `frame-ancestors 'none'`. No CDN and no
   inline script, so the policy is strict without qualification.
 - `/health` gives an anonymous caller liveness and the access level only. Storage backend,
   error strings and secret-configuration booleans are operational detail, and operational
   detail is reconnaissance when the app behind it is private.
-- Tokens are single-use, expire in thirty minutes, and are never logged at any level.
-  Greg's email is masked (`e***@yahoo.com`) before any console write.
+- No token is ever logged, at any level, in any environment. Email addresses are masked
+  (`e***@yahoo.com`) before any console write.
 
 ---
 
@@ -219,8 +229,8 @@ that, and pretending otherwise would be the fifth unreconciled claim.
 | `GET` | `/api/v1/benchmarks` | public — defaults, provenance, spend components, anchors, watchouts |
 | `GET` | `/api/v1/watchouts` | public |
 | `GET\|POST` | `/api/v1/calculate` | public, stateless, persists nothing |
-| `POST` | `/api/v1/auth/magic-link` | public — returns the verify URL |
-| `GET` | `/api/v1/auth/verify?token=` | public, single-use |
+| `POST` | `/api/v1/auth/sso` | public — exchanges a Projects Hub token for a session |
+| `GET` | `/login` | public — the Projects handoff page |
 | `GET` | `/api/v1/auth/me` | public |
 | `POST` | `/api/v1/auth/logout` | public |
 | `GET\|POST` | `/api/v1/scenarios` | JWT, tenant-scoped |
@@ -235,10 +245,10 @@ Projections are always recomputed server-side on save, never accepted from the c
 
 | Variable | Default | Effect |
 |---|---|---|
-| `SRCAF_ACCESS_CODE` | **none — CLOSED** | Required alongside an allow-listed email to create a session. Unset means no one can sign in, deliberately. Use 20+ random characters. |
 | `SRCAF_ACCESS_LEVEL` | `private` | `private` gates everything; `public` restores open reads with authenticated writes. |
+| `SRCAF_SIGN_IN_URL` | `/projects` | Where an unauthenticated visitor is sent to sign in. |
 | `SRCAF_JWT_SECRET` | falls back to `JWT_SECRET` | Signs the session cookie and bearer token. **Set on prod** — unset on both means a known development secret, and `/health` reports `jwt_secret_configured:false`. |
-| `SRCAF_ALLOWED_EMAILS` | `eriksen.greg@yahoo.com,mstagg@digit2ai.com` | Who may hold a session. The address alone is never sufficient; the access code is also required. |
+| `SRCAF_ALLOWED_EMAILS` | `eriksen.greg@yahoo.com,mstagg@digit2ai.com` | Which Projects accounts may open the model. A valid Projects session is required as well. `*` admits any authenticated Projects user. |
 | `SRCAF_TENANT_ID` | `1` | Tenant stamped on rows and sessions. |
 | `DATABASE_URL` | — | Unset means in-memory scenarios; the whole app still works. |
 | `EMAIL_AUTOSEND_DISABLED` | ON unless `0` | Read, not written, by this app. Governs whether the sign-in link is returned or emailed. |

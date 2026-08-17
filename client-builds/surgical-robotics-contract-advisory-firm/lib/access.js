@@ -9,24 +9,19 @@
 // boundary and a tortious-interference exposure. That is not a page to leave
 // open on a guessable path.
 //
-// THE HOLE THIS ALSO CLOSES: `POST /auth/magic-link` returned the sign-in URL
-// in its response body, because EMAIL_AUTOSEND_DISABLED means no mail can be
-// sent. With public reads that was merely untidy. Behind a gate it is the gate:
-// anyone who knows an allow-listed address could mint themselves a session.
-// A link is now only issued to a caller who ALSO presents the access code, so
-// knowing the address is not sufficient.
+// SIGN-IN IS THE PROJECTS HUB, AND ONLY THAT. This app briefly had its own
+// magic-link plus a shared access code — a second credential to distribute,
+// rotate and lose, for an audience of two people who already sign in at
+// /projects daily. Access here is now exactly access there, so removing someone
+// from the Hub removes them from this model too, with nothing to remember to
+// revoke separately.
 //
-// FAIL CLOSED. With no SRCAF_ACCESS_CODE set, no session can be created at all.
-// This is the same rule the JobUp consoles follow in this repo — unset means
-// CLOSED, deliberately, rather than open under a default password that is
-// published in the documentation. The cost is that the owner must set one env
-// var before first sign-in; the alternative is a live app that anyone who has
-// read this repository can walk into.
+// There is consequently no access code and no new secret to configure.
+// JWT_SECRET is already set in production, and it is the only thing the token
+// exchange needs.
 // =====================================================
 
 'use strict';
-
-const crypto = require('crypto');
 
 // `private` — nothing without a session, except /health and the sign-in flow.
 // `public`  — the previous behaviour: reads open, writes authenticated.
@@ -41,55 +36,20 @@ function isPrivate() {
   return level() === 'private';
 }
 
-function accessCode() {
-  const raw = process.env.SRCAF_ACCESS_CODE;
-  return raw && String(raw).length > 0 ? String(raw) : null;
-}
-
-function accessConfigured() {
-  return accessCode() !== null;
-}
-
-// Passwords this repository publishes in its own documentation. A deployment
-// using one of these is not protected by it, so it is reported rather than
-// silently accepted. Reported and NOT blocked: refusing to boot would lock the
-// owner out of their own model with no way back in.
-const PUBLISHED_SECRETS = [
-  'Palindrome@7',
-  'lawncopilot@2026',
-  'coachtrack@2026',
-  'exec@2026',
-  'defensoresdelapatria@7',
-  'TunjoRacing2024!',
-  'changeme',
-  'password',
-];
-
-function weakAccessCode() {
-  const code = accessCode();
-  if (!code) return false;
-  if (code.length < 12) return true;
-  return PUBLISHED_SECRETS.some((p) => p.toLowerCase() === code.toLowerCase());
-}
-
-// Compares hashes rather than the raw values so the comparison is both
-// timing-safe and length-agnostic — timingSafeEqual throws on a length
-// mismatch, which would itself leak the length of the real code.
-function codeMatches(candidate) {
-  const real = accessCode();
-  if (!real) return false;
-  const a = crypto.createHash('sha256').update(String(candidate || ''), 'utf8').digest();
-  const b = crypto.createHash('sha256').update(real, 'utf8').digest();
-  return crypto.timingSafeEqual(a, b);
+// Where an unauthenticated visitor is sent to sign in. The Projects Hub is the
+// identity provider for this app, so there is nowhere else to send them.
+function projectsUrl() {
+  return process.env.SRCAF_SIGN_IN_URL || '/projects';
 }
 
 // ---------------------------------------------------------------------------
 // Attempt throttling.
 //
-// Once an access code is the thing standing between the internet and the app,
-// brute force is the attack. This is per-process and Render may run more than
-// one instance, so it raises the cost rather than eliminating the attack — the
-// real defence is a long random code. Said plainly here rather than implied.
+// The SSO exchange verifies a signed token, so guessing is not the realistic
+// attack that guessing a shared code was. The throttle stays as a cheap brake
+// on someone spraying forged tokens at the endpoint. Per-process, and Render
+// may run more than one instance, so it raises cost rather than eliminating
+// anything — said plainly rather than implied.
 // ---------------------------------------------------------------------------
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 10;
@@ -164,9 +124,9 @@ function securityHeaders(_req, res, next) {
 }
 
 // Paths reachable with no session, even at the private level. Deliberately
-// short: liveness, the sign-in flow itself, and the two assets the sign-in page
-// needs to render. Everything else — including the model, the benchmarks and
-// the app shell — is behind the gate.
+// short: liveness, the token exchange, and the two assets the handoff page
+// needs to render. Everything else — the model, the benchmarks, the watchouts,
+// the app shell and app.js — is behind the gate.
 const OPEN_PATHS = new Set([
   '/health',
   '/login',
@@ -174,8 +134,7 @@ const OPEN_PATHS = new Set([
   '/login.js',
   '/app.css',
   '/favicon.ico',
-  '/api/v1/auth/magic-link',
-  '/api/v1/auth/verify',
+  '/api/v1/auth/sso',
   '/api/v1/auth/logout',
   '/api/v1/auth/me',
   '/api/v1/auth/status',
@@ -189,10 +148,7 @@ module.exports = {
   LEVELS,
   level,
   isPrivate,
-  accessCode,
-  accessConfigured,
-  weakAccessCode,
-  codeMatches,
+  projectsUrl,
   throttled,
   recordFailure,
   clearFailures,

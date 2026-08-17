@@ -24,11 +24,26 @@ delete process.env.DATABASE_URL;
 delete process.env.CRM_DATABASE_URL;
 process.env.SRCAF_JWT_SECRET = process.env.SRCAF_JWT_SECRET || 'sit-only-secret';
 
-// The suite runs against the shipped default access level (`private`) with a
-// configured access code, so the gate is exercised rather than bypassed.
+// The suite runs against the shipped default access level (`private`), so the
+// gate is exercised rather than bypassed. Sign-in is the Projects Hub session,
+// so the harness mints real CRM-shaped tokens with the same JWT_SECRET the Hub
+// signs with.
 process.env.SRCAF_ACCESS_LEVEL = 'private';
-const SIT_ACCESS_CODE = 'sit-only-access-code-not-a-real-one';
-process.env.SRCAF_ACCESS_CODE = SIT_ACCESS_CODE;
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'sit-only-projects-secret';
+
+// A token shaped exactly like the one /projects puts in localStorage.
+function projectsToken(email, overrides) {
+  return require('jsonwebtoken').sign(
+    Object.assign({
+      userId: 1,
+      email,
+      businessName: 'Digit2AI',
+      clientId: 15,
+    }, overrides || {}),
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' },
+  );
+}
 
 const http = require('http');
 const path = require('path');
@@ -187,57 +202,86 @@ async function run() {
     check('health withholds secret configuration from an anonymous caller', r.body && r.body.jwt_secret_configured === undefined);
   }
 
-  // --- sign in, then everything after this point is authenticated ----------
-  console.log('\nSigning in through the gate');
-  let magicToken = null;
+  // --- sign in through the Projects Hub ------------------------------------
+  console.log('\nSigning in through the Projects Hub session');
   {
-    let r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com' },
+    let r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: {} });
+    check('the exchange refuses an absent token', r.status === 401, `status ${r.status}`);
+    check('the refusal points at the Projects Hub', /projects/.test(r.body.sign_in_url || ''), r.body.sign_in_url);
+
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: 'not.a.jwt' } });
+    check('the exchange refuses a malformed token', r.status === 401);
+
+    // Signed with the wrong key — the classic forged-SSO attempt.
+    const forged = require('jsonwebtoken').sign(
+      { userId: 1, email: 'mstagg@digit2ai.com', clientId: 15 },
+      'not-the-projects-secret',
+      { expiresIn: '1h' },
+    );
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: forged } });
+    check('a token signed with the wrong key is refused', r.status === 401);
+
+    const expired = require('jsonwebtoken').sign(
+      { userId: 1, email: 'mstagg@digit2ai.com', clientId: 15 },
+      process.env.JWT_SECRET,
+      { expiresIn: -60 },
+    );
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: expired } });
+    check('an expired Projects session is refused', r.status === 401);
+
+    // A VALID Projects session that is not on the viewer list. The Hub carries
+    // accounts with no business reading this model, so a real session is
+    // necessary but not sufficient.
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, {
+      noAuth: true, body: { token: projectsToken('someone.else@digit2ai.com') },
     });
-    check('an allow-listed address alone does not mint a link', r.status === 401 && !r.body.verify_url,
-      `status ${r.status}`);
+    check('a valid Projects session not on the viewer list is refused', r.status === 403, `status ${r.status}`);
+    check('the refusal masks the address it names', /^s\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
 
-    const wrongCode = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: 'wrong-code' },
+    // Our own session token must not be accepted as a Projects token.
+    const ourOwn = require('jsonwebtoken').sign(
+      { aud: 'srcaf', email: 'mstagg@digit2ai.com', tenant_id: 1 },
+      process.env.SRCAF_JWT_SECRET,
+      { expiresIn: '1h' },
+    );
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: ourOwn } });
+    check('our own session token is not accepted as a Projects token', r.status === 401, `status ${r.status}`);
+
+    // The real thing.
+    r = await request('POST', `${MOUNT}/api/v1/auth/sso`, {
+      noAuth: true, body: { token: projectsToken('mstagg@digit2ai.com') },
     });
-    check('a wrong access code is refused', wrongCode.status === 401 && !wrongCode.body.verify_url,
-      `status ${wrongCode.status}`);
+    check('a Projects session on the viewer list is exchanged', r.status === 200 && !!r.body.token, `status ${r.status}`);
+    check('the exchange masks the address', /^m\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
+    check('the exchange sets an HttpOnly cookie',
+      /srcaf_token=/.test(String(r.headers['set-cookie'] || '')) && /HttpOnly/i.test(String(r.headers['set-cookie'] || '')));
+    check('the cookie is Secure', /Secure/i.test(String(r.headers['set-cookie'] || '')));
+    SESSION = r.body.token;
 
-    const wrongEmail = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'stranger@example.com', access_code: SIT_ACCESS_CODE },
-    });
-    check('the access code alone does not mint a link for an unknown address',
-      wrongEmail.status === 401 && !wrongEmail.body.verify_url, `status ${wrongEmail.status}`);
+    // The exchanged session must not outlive the Projects session behind it.
+    const jwtLib = require('jsonwebtoken');
+    const shortLived = jwtLib.sign(
+      { userId: 1, email: 'mstagg@digit2ai.com', clientId: 15 },
+      process.env.JWT_SECRET,
+      { expiresIn: 300 },
+    );
+    const shortEx = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: shortLived } });
+    const decoded = jwtLib.decode(shortEx.body.token);
+    const upstream = jwtLib.decode(shortLived);
+    check('the exchanged session expires no later than the Projects session',
+      decoded.exp <= upstream.exp + 1, `${decoded.exp} vs ${upstream.exp}`);
 
-    // The property that matters is that the two failures are indistinguishable.
-    // Anything that separates them turns this endpoint into an oracle for which
-    // addresses are provisioned.
-    check('a wrong address and a wrong code are indistinguishable',
-      wrongCode.status === wrongEmail.status && wrongCode.body.error === wrongEmail.body.error,
-      `${wrongCode.status}:${wrongCode.body.error} vs ${wrongEmail.status}:${wrongEmail.body.error}`);
-
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
-    });
-    check('address plus access code mints a link', r.status === 200 && !!r.body.verify_url, `status ${r.status}`);
-    check('the email is masked in the response', /^e\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
-
-    const verifyPath = r.body.verify_url.slice(r.body.verify_url.indexOf(MOUNT));
-    magicToken = verifyPath.split('token=')[1];
-
-    const v = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magicToken}`, { noAuth: true });
-    check('the link issues a session', v.status === 200 && !!v.body.token, `status ${v.status}`);
-    SESSION = v.body.token;
-
-    const again = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magicToken}`, { noAuth: true });
-    check('the link cannot be used twice', again.status === 401 && again.body.reason === 'already_used',
-      again.body && again.body.reason);
-
-    const bad = await request('GET', `${MOUNT}/api/v1/auth/verify?token=deadbeef`, { noAuth: true });
-    check('an unknown link is refused', bad.status === 401);
+    // And a long-lived Projects token must not mint a long-lived session here:
+    // the cookie is twelve hours, so a seven-day bearer would outlive its own
+    // cookie and become the longer-lived of the two credentials.
+    const longEx = jwtLib.decode(SESSION);
+    const hours = (longEx.exp - Math.floor(Date.now() / 1000)) / 3600;
+    check('a seven-day Projects token still mints a twelve-hour session',
+      hours <= 12.1, `${hours.toFixed(1)} hours`);
 
     const open = await request('GET', `${MOUNT}/`, { raw: true });
-    check('the app opens with a session', open.status === 200 && /RoboNegotiate/.test(open.text), `status ${open.status}`);
+    check('the app opens with an exchanged session', open.status === 200 && /RoboNegotiate/.test(open.text),
+      `status ${open.status}`);
   }
 
   // --- 2. calculate shape -------------------------------------------------
@@ -404,15 +448,13 @@ async function run() {
     r = await request('POST', `${MOUNT}/api/v1/scenarios`, { noAuth: true, body: { name: 'sit', inputs: {} } });
     check('scenario create refuses without a session', r.status === 401, `status ${r.status}`);
 
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'not-an-email', access_code: SIT_ACCESS_CODE },
-    });
-    check('magic link rejects a malformed address', r.status === 400, `status ${r.status}`);
+    r = await request('GET', `${MOUNT}/api/v1/auth/me`, { noAuth: true });
+    check('an anonymous caller is reported as signed out', r.status === 200 && r.body.signed_in === false);
+    check('the signed-out reply points at the Projects Hub', /projects/.test(r.body.sign_in_url || ''));
 
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
-    });
-    check('the delivery path is stated', r.body.delivery === 'returned_in_response' || r.body.delivery === 'email');
+    r = await request('GET', `${MOUNT}/api/v1/auth/me`);
+    check('a session reports the signed-in address, masked',
+      r.body.signed_in === true && /^m\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
 
     const authHeader = { Authorization: `Bearer ${token}` };
     r = await request('POST', `${MOUNT}/api/v1/scenarios`, {
@@ -615,57 +657,57 @@ async function run() {
     await request('DELETE', `${MOUNT}/api/v1/scenarios/${spoof.body.data.id}`, { headers: { Authorization: `Bearer ${token}` } });
   }
 
-  // --- fail closed, weak codes, and brute force ----------------------------
-  console.log('\nThe gate fails closed, and resists guessing');
+  // --- forged tokens are throttled -----------------------------------------
+  console.log('\nSpraying forged tokens is throttled');
   {
     const access = require('./lib/access');
+    const jwtLib = require('jsonwebtoken');
 
-    // With no access code configured, no session can be created at all. An app
-    // that mints sessions under a documented default password is not protected.
-    const saved = process.env.SRCAF_ACCESS_CODE;
-    delete process.env.SRCAF_ACCESS_CODE;
-    check('an unconfigured deployment reports itself unconfigured', access.accessConfigured() === false);
-    const unconfigured = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: 'anything' },
-    });
-    check('an unconfigured deployment refuses to mint a session',
-      unconfigured.status === 503 && !unconfigured.body.verify_url, `status ${unconfigured.status}`);
-    check('it says why rather than failing opaquely', /SRCAF_ACCESS_CODE/.test(unconfigured.body.error || ''));
-    check('the gate page is still reachable so the owner sees the reason',
-      (await request('GET', `${MOUNT}/login`, { noAuth: true, raw: true })).status === 200);
-
-    // Codes this repository publishes are not secrets.
-    process.env.SRCAF_ACCESS_CODE = 'Palindrome@7';
-    check('a password published in this repo is reported as weak', access.weakAccessCode() === true);
-    process.env.SRCAF_ACCESS_CODE = 'short';
-    check('a short code is reported as weak', access.weakAccessCode() === true);
-    process.env.SRCAF_ACCESS_CODE = saved;
-    check('the configured SIT code is not reported as weak', access.weakAccessCode() === false);
-
-    // Once a code is the thing between the internet and the app, guessing is
-    // the attack. Repeated failures from one source are throttled.
     let sawThrottle = false;
-    let throttleStatus = 0;
     for (let i = 0; i < access.MAX_ATTEMPTS + 2; i += 1) {
-      const r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-        noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: `guess-${i}` },
-      });
-      if (r.status === 429) { sawThrottle = true; throttleStatus = r.status; break; }
+      const forged = jwtLib.sign({ userId: i, email: `attacker${i}@example.com` }, 'wrong-key', { expiresIn: '1h' });
+      const r = await request('POST', `${MOUNT}/api/v1/auth/sso`, { noAuth: true, body: { token: forged } });
+      if (r.status === 429) { sawThrottle = true; break; }
     }
-    check('repeated wrong codes are throttled', sawThrottle, `last status ${throttleStatus}`);
+    check('repeated forged tokens are throttled', sawThrottle);
 
-    // And the throttle is not bypassed by then guessing correctly.
-    const afterThrottle = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
-      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
+    // And a genuine token during the window is still refused, so the throttle
+    // is not bypassed by simply getting it right on the next attempt.
+    const real = await request('POST', `${MOUNT}/api/v1/auth/sso`, {
+      noAuth: true, body: { token: projectsToken('mstagg@digit2ai.com') },
     });
-    check('a correct code during a throttle window is still refused',
-      afterThrottle.status === 429 && !afterThrottle.body.verify_url, `status ${afterThrottle.status}`);
-    check('the throttle tells the caller when to retry', Number(afterThrottle.body.retry_after_seconds) > 0);
+    check('a genuine token during a throttle window is still refused', real.status === 429, `status ${real.status}`);
+    check('the throttle tells the caller when to retry', Number(real.body.retry_after_seconds) > 0);
 
-    // An already-issued session keeps working — throttling sign-in must not log
-    // out the person who is already in.
+    // Throttling sign-in must not log out whoever is already in.
     const stillIn = await request('GET', `${MOUNT}/api/v1/scenarios`);
     check('an existing session survives the throttle', stillIn.status === 200, `status ${stillIn.status}`);
+  }
+
+  // --- there is exactly one door -------------------------------------------
+  console.log('\nThere is exactly one door');
+  {
+    // The magic-link and shared-access-code paths were removed. A second
+    // credential to distribute and rotate, for two people who already sign in
+    // at /projects daily, is surface with no benefit — and greps here so it
+    // cannot quietly return.
+    const files = ['routes/auth.js', 'lib/auth.js', 'lib/access.js', 'index.js'];
+    let offender = '';
+    const reintroduced = files.some((f) => {
+      const src = fs.readFileSync(path.join(__dirname, f), 'utf8');
+      // Match call sites and route definitions, not the comments explaining the removal.
+      const hit = /['"`]\/api\/v1\/auth\/(magic-link|verify)['"`]/.test(src)
+        || /SRCAF_ACCESS_CODE/.test(src);
+      if (hit) offender = f;
+      return hit;
+    });
+    check('no second sign-in path has been reintroduced', !reintroduced, offender);
+
+    const gone = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'mstagg@digit2ai.com' },
+    });
+    check('the old magic-link endpoint no longer exists', gone.status === 401 || gone.status === 404,
+      `status ${gone.status}`);
   }
 
   // --- the gate is a chokepoint, not a per-route decoration -----------------

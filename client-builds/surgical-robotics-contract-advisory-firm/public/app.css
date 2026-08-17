@@ -204,9 +204,9 @@ tfoot td { font-weight: 650; border-top: 1px solid var(--line2); border-bottom: 
   padding: 24px; display: grid; gap: 14px;
 }
 .gate-card .brand { margin-bottom: 2px; }
-.gate-form { display: grid; gap: 12px; }
-.gate-form .btn { width: 100%; padding: 10px; }
 .gate-foot { border-top: 1px solid var(--line); padding-top: 12px; }
+.gate-btn { display: block; text-align: center; text-decoration: none; margin-top: 10px; }
+.gate-card .notice { margin: 0; }
 .gate-card code {
   font-family: var(--mono); font-size: 12px; background: #1b2536;
   border: 1px solid var(--line2); border-radius: 5px; padding: 1px 5px;

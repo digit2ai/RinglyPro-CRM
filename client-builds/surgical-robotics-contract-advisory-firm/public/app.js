@@ -656,9 +656,9 @@
     }).catch(function () { return session; });
   }
 
-  // One sign-in path, and it is the gate page. A second one inside the app is a
-  // second thing to keep correct, and the app is normally unreachable without a
-  // session anyway.
+  // One sign-in path, and it runs through the Projects Hub. A second one inside
+  // this app would be a second thing to keep correct, and the app is normally
+  // unreachable without a session anyway.
   function goToGate() {
     window.location.href = BASE + '/login';
   }

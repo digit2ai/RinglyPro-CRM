@@ -22,7 +22,7 @@ const SERVICE = 'surgical-robotics-contract-advisory-firm';
 
 let sequelize = null;
 let initPromise = null;
-const models = { Scenario: null, MagicToken: null };
+const models = { Scenario: null };
 const state = { ready: false, backend: 'memory', error: null };
 
 function dbUrl() {
@@ -54,18 +54,13 @@ function init() {
     try {
       await seq.authenticate();
       const { defineScenario } = require('./scenario');
-      const { defineMagicToken } = require('./magicToken');
       models.Scenario = defineScenario(seq);
-      models.MagicToken = defineMagicToken(seq);
       await models.Scenario.sync();
-      await models.MagicToken.sync();
 
       // sync() will not add indexes to a table that already exists, so they are
       // created idempotently and by explicit name. Auto-generated names built
       // from the full slug would have overflowed the 63-byte identifier limit.
       await seq.query('CREATE INDEX IF NOT EXISTS idx_srcaf_scenarios_tenant ON srcaf_scenarios (tenant_id)');
-      await seq.query('CREATE INDEX IF NOT EXISTS idx_srcaf_tokens_tenant ON srcaf_magic_tokens (tenant_id)');
-      await seq.query('CREATE INDEX IF NOT EXISTS idx_srcaf_tokens_token ON srcaf_magic_tokens (token)');
 
       state.ready = true;
       state.backend = 'postgres';

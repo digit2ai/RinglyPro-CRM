@@ -1,12 +1,16 @@
 /* =====================================================
-   The gate page.
+   The handoff.
 
-   Deliberately thin. It reports whether sign-in is configured at all, posts the
-   address and the access code together, and follows the returned link.
+   /projects and this app are served from the SAME ORIGIN
+   (aiagent.ringlypro.com), so the Projects Hub's CRM token in localStorage is
+   directly readable here. That is the whole mechanism: no redirect dance, no
+   secret in a URL, no third-party cookie, nothing for the user to type.
 
-   It never distinguishes "wrong address" from "wrong code" in what it shows,
-   because the server does not distinguish them either — doing so would make
-   this page an oracle for which addresses are provisioned.
+   Read it, post it once to the exchange, land in the app. If it is missing or
+   rejected, send them to /projects to sign in and come back.
+
+   The page states which of the three things happened rather than showing a
+   spinner that means all of them.
    ===================================================== */
 
 'use strict';
@@ -16,63 +20,83 @@
 
   function $(id) { return document.getElementById(id); }
 
-  function api(path, options) {
-    var opts = options || {};
-    return fetch(BASE + path, {
-      method: opts.method || 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: opts.body ? JSON.stringify(opts.body) : undefined
-    }).then(function (r) {
-      return r.json()
-        .catch(function () { return {}; })
-        .then(function (j) { return { ok: r.ok, status: r.status, body: j }; });
+  function show(id) {
+    ['gate-checking', 'gate-signedout', 'gate-denied', 'gate-error'].forEach(function (s) {
+      var node = $(s);
+      if (node) node.hidden = (s !== id);
     });
   }
 
-  function say(message, kind) {
-    var out = $('gate-result');
-    out.textContent = message;
-    out.className = 'note' + (kind ? ' ' + kind : '');
+  function signInUrl(fallback) {
+    var url = fallback || '/projects';
+    // Come back here once they have a Projects session.
+    return url + '?next=' + encodeURIComponent(window.location.pathname);
   }
 
-  // Configuration state, so the owner is told why sign-in is impossible rather
-  // than being handed a form that can only ever fail.
-  api('/api/v1/auth/status').then(function (r) {
-    if (!r.body) return;
-    if (r.body.access_configured === false) {
-      $('gate-unconfigured').hidden = false;
-      $('gate-submit').disabled = true;
-    } else if (r.body.access_code_weak) {
-      $('gate-weak').hidden = false;
+  // The Hub stores its CRM JWT under 'token'. Checked defensively: a browser
+  // with localStorage disabled should land on "sign in", not on a thrown error.
+  function projectsToken() {
+    try {
+      return window.localStorage.getItem('token');
+    } catch (e) {
+      return null;
     }
-  });
+  }
 
-  $('gate-form').addEventListener('submit', function (event) {
-    event.preventDefault();
-    var email = $('gate-email').value.trim();
-    var code = $('gate-code').value;
-    if (!email || !code) { say('Enter both the address and the access code.', 'error'); return; }
+  function toSignIn(url) {
+    show('gate-signedout');
+    var link = $('gate-signin-link');
+    if (link) link.href = signInUrl(url);
+  }
 
-    $('gate-submit').disabled = true;
-    say('Checking...');
+  function start() {
+    show('gate-checking');
 
-    api('/api/v1/auth/magic-link', { method: 'POST', body: { email: email, access_code: code } })
+    var token = projectsToken();
+    if (!token) { toSignIn(null); return; }
+
+    fetch(BASE + '/api/v1/auth/sso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ token: token })
+    })
       .then(function (r) {
-        if (r.status === 429) {
-          say(r.body.error || 'Too many attempts. Try again later.', 'error');
-          return;
-        }
-        if (!r.ok || !r.body.success || !r.body.verify_url) {
-          say(r.body.error || 'Could not sign in.', 'error');
-          $('gate-code').value = '';
-          return;
-        }
-        say('Signing in...', 'ok');
-        // The link is single-use and consumed by this navigation.
-        window.location.href = r.body.verify_url + '&redirect=1';
+        return r.json().catch(function () { return {}; })
+          .then(function (body) { return { status: r.status, body: body }; });
       })
-      .catch(function () { say('Could not reach the server.', 'error'); })
-      .then(function () { $('gate-submit').disabled = false; });
-  });
+      .then(function (r) {
+        if (r.status === 200 && r.body.success) {
+          window.location.replace(BASE + '/');
+          return;
+        }
+        if (r.status === 403) {
+          // A real Projects session that is not on the viewer list. Saying so
+          // is accurate and lets them ask for access; it reveals nothing they
+          // could not already infer from being signed in.
+          show('gate-denied');
+          var who = $('gate-denied-who');
+          if (who && r.body.email_masked) who.textContent = r.body.email_masked;
+          return;
+        }
+        if (r.status === 401) {
+          // The stored token is stale. Clear it so the next visit does not
+          // retry the same dead credential.
+          try { window.localStorage.removeItem('token'); } catch (e) { /* ignore */ }
+          toSignIn(r.body.sign_in_url);
+          return;
+        }
+        show('gate-error');
+        var msg = $('gate-error-msg');
+        if (msg) msg.textContent = r.body.error || 'Sign-in failed.';
+      })
+      .catch(function () {
+        show('gate-error');
+        var msg = $('gate-error-msg');
+        if (msg) msg.textContent = 'Could not reach the server.';
+      });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();

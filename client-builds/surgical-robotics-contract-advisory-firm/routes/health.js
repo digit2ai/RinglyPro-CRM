@@ -13,7 +13,6 @@
 const express = require('express');
 const authLib = require('../lib/auth');
 const access = require('../lib/access');
-const { autosendDisabled } = require('./auth');
 
 function healthRoutes({ version, service, store, dbState, modelVersion }) {
   const router = express.Router();
@@ -40,22 +39,18 @@ function healthRoutes({ version, service, store, dbState, modelVersion }) {
       model_version: modelVersion,
       db_backend: store.backend(),
       db_error: dbState.error || null,
-      magic_link_delivery: autosendDisabled() ? 'returned_in_response' : 'email',
+      identity_provider: 'digit2ai-projects',
+      sign_in_url: access.projectsUrl(),
       jwt_secret_configured: !authLib.usingDevSecret(),
-      access_configured: access.accessConfigured(),
-      access_code_weak: access.weakAccessCode(),
     });
   });
 
-  // Configuration state the owner needs before they can sign in, with nothing
-  // in it that helps an attacker: whether sign-in is possible at all, and
-  // whether the configured code is one this repository publishes.
+  // Where to sign in, and nothing that helps an attacker. Named separately from
+  // /health so the gate page can ask without pretending to be a monitor.
   router.get('/api/v1/auth/status', (_req, res) => {
     res.json({
       success: true,
       access_level: access.level(),
-      access_configured: access.accessConfigured(),
-      access_code_weak: access.weakAccessCode(),
       jwt_secret_configured: !authLib.usingDevSecret(),
     });
   });

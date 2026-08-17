@@ -30,24 +30,14 @@ CREATE TABLE IF NOT EXISTS srcaf_scenarios (
 CREATE INDEX IF NOT EXISTS idx_srcaf_scenarios_tenant
   ON srcaf_scenarios (tenant_id);
 
-CREATE TABLE IF NOT EXISTS srcaf_magic_tokens (
-  id          SERIAL PRIMARY KEY,
-  tenant_id   INTEGER      NOT NULL,
-  email       VARCHAR(255) NOT NULL,
-  token       VARCHAR(128) NOT NULL UNIQUE,
-  expires_at  TIMESTAMPTZ  NOT NULL,
-  used_at     TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-);
+-- srcaf_magic_tokens is DEPRECATED and no longer created or read.
+-- Sign-in is the Projects Hub session (see routes/auth.js), so there are no
+-- local sign-in tokens to store. Any existing table can be dropped by hand:
+--   DROP TABLE IF EXISTS srcaf_magic_tokens;
+-- It is left in place rather than auto-dropped, because a migration that
+-- destroys data on boot is worse than one stale empty table.
 
-CREATE INDEX IF NOT EXISTS idx_srcaf_tokens_tenant
-  ON srcaf_magic_tokens (tenant_id);
-
-CREATE INDEX IF NOT EXISTS idx_srcaf_tokens_token
-  ON srcaf_magic_tokens (token);
-
--- No user table and no seeded row.
--- The allow-list of addresses that may request a sign-in link lives in
+-- No user table and no seeded row. Identity comes from the Digit2AI Projects
+-- Hub session, and which Projects accounts may open the model is configured in
 -- SRCAF_ALLOWED_EMAILS (default: eriksen.greg@yahoo.com, mstagg@digit2ai.com).
--- A magic-link flow needs no stored password and therefore no user record;
--- adding one would store a personal email address for no functional gain.
+-- Storing a local user row would duplicate an identity we do not own.

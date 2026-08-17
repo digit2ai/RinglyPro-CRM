@@ -8,8 +8,8 @@
 //   GET  /health                              -> liveness + which storage backend won
 //   GET  /api/v1/benchmarks                   -> defaults, provenance, watchouts (public)
 //   GET|POST /api/v1/calculate                -> the model (public, stateless)
-//   POST /api/v1/auth/magic-link              -> returns the sign-in URL in the body
-//   GET  /api/v1/auth/verify?token=           -> single-use, issues the session
+//   POST /api/v1/auth/sso                     -> exchanges a Projects Hub token
+//   GET  /login                               -> the Projects handoff page
 //   GET|POST /api/v1/scenarios                -> saved scenarios (JWT, tenant-scoped)
 //   GET  /api/v1/scenarios/:id/export.csv     -> the model + its assumptions
 //   GET  /                                    -> the five-tab app

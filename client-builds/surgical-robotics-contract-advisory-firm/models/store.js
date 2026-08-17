@@ -16,11 +16,10 @@
 function makeStore(state, models) {
   const mem = {
     scenarios: new Map(),
-    tokens: new Map(),
     nextScenarioId: 1,
   };
 
-  const live = () => state.ready && models && models.Scenario && models.MagicToken;
+  const live = () => state.ready && models && models.Scenario;
 
   function toPlain(row) {
     if (!row) return null;
@@ -95,42 +94,6 @@ function makeStore(state, models) {
       return 1;
     },
 
-    // --- magic tokens -----------------------------------------------------
-
-    async createToken({ tenant_id, email, token, expires_at }) {
-      const now = new Date();
-      if (live()) {
-        const row = await models.MagicToken.create({
-          tenant_id, email, token, expires_at, used_at: null, created_at: now,
-        });
-        return toPlain(row);
-      }
-      const row = { id: mem.tokens.size + 1, tenant_id, email, token, expires_at, used_at: null, created_at: now };
-      mem.tokens.set(token, row);
-      return { ...row };
-    },
-
-    // Consumes the token. Returns the row only if it was valid, unexpired and
-    // unused — and marks it used in the same call, so a replay cannot win a
-    // race against a separate "mark used" step.
-    async consumeToken(token, nowMs) {
-      const now = new Date(nowMs || Date.now());
-      if (live()) {
-        const row = await models.MagicToken.findOne({ where: { token } });
-        if (!row) return { ok: false, reason: 'not_found' };
-        if (row.used_at) return { ok: false, reason: 'already_used' };
-        if (new Date(row.expires_at) < now) return { ok: false, reason: 'expired' };
-        row.used_at = now;
-        await row.save();
-        return { ok: true, row: toPlain(row) };
-      }
-      const row = mem.tokens.get(token);
-      if (!row) return { ok: false, reason: 'not_found' };
-      if (row.used_at) return { ok: false, reason: 'already_used' };
-      if (new Date(row.expires_at) < now) return { ok: false, reason: 'expired' };
-      row.used_at = now;
-      return { ok: true, row: { ...row } };
-    },
   };
 }
 
