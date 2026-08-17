@@ -306,9 +306,91 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(part.postings.length, 20);
     assert.strictEqual(part.capped, true, 'and the truncation must be declared');
   });
-  await t('all 8 ATS adapters are present', () => {
-    const want = ['greenhouse','lever','ashby','smartrecruiters','workable','recruitee','workday','eightfold'];
+  await t('all ATS adapters are present', () => {
+    const want = ['greenhouse','lever','ashby','smartrecruiters','workable','recruitee','workday',
+                  'eightfold','ultipro','jazzhr','adp_wfn'];
     for (const a of want) assert.ok(employers.ADAPTERS[a], `missing adapter: ${a}`);
+  });
+  await t('A PAGINATED LIST ENDS THREE WAYS, NOT ONE', async () => {
+    // Workday serves page one again for ever past the end of the list, so a
+    // board of 80 postings came back as 400 rows, 320 of them duplicates of the
+    // first page. Only "a short page" was handled; a declared total being
+    // reached, and a full page containing nothing new, were not.
+    const page = (n, from) => ({ total: n, jobPostings: Array.from({ length: 20 }, (_, i) => ({
+      title: 'Role ' + (from + i), locationsText: 'Tampa, FL',
+      externalPath: '/p/' + (from + i), bulletFields: ['R-' + (from + i)] })) });
+
+    // Declares 40, then repeats page one for ever.
+    let calls = 0;
+    const repeater = async () => { calls++; return { ok: true, status: 200, json: async () => page(40, 0) }; };
+    const r = await employers.fetchBoard('workday', 'h|t|b', { verified: true, cap: 400, fetchImpl: repeater });
+    assert.strictEqual(r.postings.length, 20, 'duplicates must not accumulate');
+    assert.ok(calls <= 3, 'and it must stop asking, not walk to the cap — made ' + calls + ' calls');
+
+    // Declares nothing (total 0) but repeats: the no-new-rows guard catches it.
+    let c2 = 0;
+    const noTotal = async () => { c2++; return { ok: true, status: 200,
+      json: async () => ({ total: 0, jobPostings: page(0, 0).jobPostings }) }; };
+    const r2 = await employers.fetchBoard('workday', 'h|t|b', { verified: true, cap: 400, fetchImpl: noTotal });
+    assert.strictEqual(r2.postings.length, 20);
+    assert.strictEqual(r2.capped, false, 'a board that declares no total must not be reported as truncated');
+
+    // A genuine second page still works.
+    let n = 0;
+    const real = async () => { n++; return { ok: true, status: 200,
+      json: async () => page(40, n === 1 ? 0 : 20) }; };
+    const r3 = await employers.fetchBoard('workday', 'h|t|b', { verified: true, cap: 400, fetchImpl: real });
+    assert.strictEqual(r3.postings.length, 40, 'real pagination must be unaffected');
+  });
+  await t('ULTIPRO — the family Lamar and Gray are on', () => {
+    const a = employers.ADAPTERS.ultipro;
+    const tok = 'recruiting2.ultipro.com|LAM1000LAC|82898216-guid';
+    assert.strictEqual(a.method, 'POST');
+    assert.ok(/LoadSearchResults$/.test(a.url(tok)), 'the search endpoint, not the HTML board');
+    assert.ok(a.headers['user-agent'], 'UKG refuses the default fetch user-agent');
+    assert.strictEqual(a.body(200).opportunitySearch.Skip, 200, 'offset travels in the body');
+
+    const rows = a.parse({ totalCount: 1, opportunities: [{
+      Id: 'abc-123', Title: 'Sales Account Executive', RequisitionNumber: 'SALES006749',
+      PostedDate: '2026-08-11T00:00:00', BriefDescription: '<p>Sell <b>billboards</b></p>',
+      Locations: [{ LocalizedName: 'Orlando', Address: { City: 'Orlando',
+        State: { Code: 'FL' }, Country: { Code: 'US' } } }] }] }, tok);
+    assert.strictEqual(rows[0].external_id, 'SALES006749', 'the requisition is the identity');
+    assert.strictEqual(rows[0].location, 'Orlando, FL, US');
+    assert.strictEqual(rows[0].description, 'Sell billboards', 'body text arrives on the LIST');
+    assert.ok(rows[0].posted_at instanceof Date && !isNaN(rows[0].posted_at),
+      'a real ISO date, unlike Workday prose');
+    assert.ok(/opportunityId=abc-123/.test(rows[0].url));
+
+    // No location object at all — fall back to the label rather than blanking.
+    const bare = a.parse({ opportunities: [{ Id: 'x', Title: 'T',
+      Locations: [{ LocalizedName: 'Multiple Locations' }] }] }, tok);
+    assert.strictEqual(bare[0].location, 'Multiple Locations');
+  });
+  await t('JAZZHR — HTML boards, and the Florida-only ones', () => {
+    const a = employers.ADAPTERS.jazzhr;
+    assert.strictEqual(a.format, 'html', 'JazzHR has no JSON API');
+    assert.ok(/fortmyersbroadcastingco\.applytojob\.com/.test(a.url('fortmyersbroadcastingco')));
+    const rows = a.parse(`
+      <h3 class='list-group-item-heading'><a href="https://x.applytojob.com/apply/AbC123/marketing-consultant-tv">Marketing Consultant-TV</a></h3>
+      <ul><li><i class='fa fa-map-marker'></i>Fort Myers, FL</li></ul>
+      <h3 class='list-group-item-heading'><a href="https://x.applytojob.com/apply/DeF456/radio-account-executive">Radio Account Executive</a></h3>
+      <ul><li><i class='fa fa-map-marker'></i>Fort Myers, FL</li></ul>`);
+    assert.strictEqual(rows.length, 2);
+    assert.strictEqual(rows[0].title, 'Marketing Consultant-TV');
+    assert.strictEqual(rows[0].location, 'Fort Myers, FL');
+    assert.strictEqual(rows[0].external_id, 'AbC123');
+    assert.strictEqual(rows[1].title, 'Radio Account Executive');
+    assert.deepStrictEqual(a.parse('<html>nothing here</html>'), [], 'a page with no postings yields none');
+  });
+  await t('ADP WFN — Spanish-language radio ad sales', () => {
+    const a = employers.ADAPTERS.adp_wfn;
+    assert.ok(/cid=abc/.test(a.url('abc')));
+    const rows = a.parse({ jobRequisitions: [{ itemID: 'i1', requisitionTitle: 'Account Executive',
+      postDate: '2026-08-01', requisitionLocations: [{ address: { cityName: 'Tampa',
+        countrySubdivisionLevel1: { codeValue: 'FL' } } }] }] });
+    assert.strictEqual(rows[0].location, 'Tampa, FL');
+    assert.strictEqual(rows[0].external_id, 'i1');
   });
 
   // ---------------------------------------------------------------

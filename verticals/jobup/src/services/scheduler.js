@@ -33,6 +33,7 @@ const limits = require('./limits');
 const TICK_MS = parseInt(process.env.JOBUP_TICK_MS || String(15 * 60 * 1000), 10);
 const POOL_REFRESH_HOURS = parseInt(process.env.JOBUP_POOL_REFRESH_HOURS || '24', 10);
 const ENRICH_PER_RUN = parseInt(process.env.JOBUP_ENRICH_PER_RUN || '300', 10);
+const BOARD_CAP = parseInt(process.env.JOBUP_BOARD_CAP || '1200', 10);
 
 /**
  * The hour (UTC) the daily run is allowed to start.
@@ -101,7 +102,13 @@ async function refreshPool() {
   for (const e of live) {
     let res;
     try {
-      res = await employers.fetchBoard(e.ats, e.token, { verified: true, cap: 200 });
+      // 200 was truncating the boards that matter most. A broadcast group posts
+      // hundreds of local-market roles and the Florida ones were falling off
+      // the end: Comcast had 790 postings and we held 186, Nexstar 654 and we
+      // held 195. Paging costs HTTP requests, not model tokens, and the
+      // end-of-list guard in fetchBoard now stops the moment a board is
+      // exhausted rather than walking to the ceiling.
+      res = await employers.fetchBoard(e.ats, e.token, { verified: true, cap: BOARD_CAP });
     } catch (err) { errors.push(`${e.name}: ${err.message}`); continue; }
     if (!res.ok || !res.postings.length) continue;
 

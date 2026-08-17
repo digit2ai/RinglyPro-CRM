@@ -124,6 +124,117 @@ const ADAPTERS = {
     })),
     total: (j) => j.total || 0,
   },
+  /**
+   * UKG / UltiPro. Token is "<host>|<TENANT_CODE>|<boardGuid>" because the same
+   * request shape serves three hosts (recruiting.ultipro.com,
+   * recruiting2.ultipro.com, <tenant>.rec.pro.ukg.net).
+   *
+   * This is the family Lamar Advertising and Gray Media are on — the two
+   * employers a Florida out-of-home seller most wants and that no adapter here
+   * could reach. Unlike Workday, the LIST already carries body text, so a
+   * posting is matchable the moment it lands.
+   */
+  ultipro: {
+    paginated: true,
+    pageSize: 200,
+    method: 'POST',
+    // The default fetch user-agent is refused outright by UKG.
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; JobUp/1.0)' },
+    url: (t) => {
+      const [host, code, guid] = String(t).split('|');
+      return `https://${host}/${code}/JobBoard/${guid}/JobBoardView/LoadSearchResults`;
+    },
+    body: (offset = 0) => ({
+      opportunitySearch: {
+        Top: 200, Skip: offset, QueryString: '',
+        OrderBy: [{ Value: 'postedDateDesc', PropertyName: 'PostedDate', Ascending: false }],
+        Filters: [],
+      },
+      matchCriteria: {
+        PreferredJobs: [], Educations: [], LicenseAndCertifications: [],
+        Skills: [], hasNoLicenses: false, SkippedSkills: [],
+      },
+    }),
+    parse: (j, t) => {
+      const [host, code, guid] = String(t || '').split('|');
+      return (j.opportunities || []).map((x) => {
+        const loc = (x.Locations || [])[0] || {};
+        const a = loc.Address || {};
+        const place = [a.City, a.State && a.State.Code, a.Country && a.Country.Code]
+          .filter(Boolean).join(', ') || loc.LocalizedName || '';
+        return {
+          external_id: x.RequisitionNumber || x.Id,
+          title: x.Title,
+          url: host ? `https://${host}/${code}/JobBoard/${guid}/OpportunityDetail?opportunityId=${x.Id}` : null,
+          location: place,
+          description: stripHtml(x.BriefDescription || ''),
+          // A real ISO date, unlike Workday's "Posted 4 Days Ago" prose.
+          posted_at: x.PostedDate ? new Date(x.PostedDate) : null,
+        };
+      });
+    },
+    total: (j) => j.totalCount || 0,
+  },
+
+  /**
+   * JazzHR. No JSON API — the board is server-rendered HTML at a predictable
+   * address, and an unknown tenant redirects away instead of 200-ing, which
+   * makes the true/false test clean.
+   *
+   * Small boards, but the Florida ones are ENTIRELY Florida: Fort Myers
+   * Broadcasting, Sun Broadcasting and Gulfshore Life are 100% in-state, which
+   * no national board comes close to.
+   */
+  jazzhr: {
+    format: 'html',
+    url: (t) => `https://${encodeURIComponent(t)}.applytojob.com/apply/`,
+    parse: (html) => {
+      const out = [];
+      const s = String(html || '');
+      // Each posting is a heading anchor followed by a marker-icon location.
+      const re = /<h3[^>]*list-group-item-heading[^>]*>\s*<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+      let m;
+      while ((m = re.exec(s)) !== null) {
+        const title = stripHtml(m[2]).trim();
+        if (!title) continue;
+        // The location sits in the list that follows this heading.
+        const after = s.slice(m.index, m.index + 900);
+        const loc = after.match(/fa-map-marker[^>]*><\/i>\s*([^<]{2,80})</i);
+        out.push({
+          external_id: (m[1].match(/\/apply\/([A-Za-z0-9]+)/) || [])[1] || m[1],
+          title,
+          url: m[1].startsWith('http') ? m[1] : null,
+          location: loc ? loc[1].replace(/&nbsp;/g, ' ').trim() : '',
+          description: '',
+          posted_at: null,
+        });
+      }
+      return out;
+    },
+  },
+
+  /**
+   * ADP Workforce Now public staffing feed. One keyless GET, no pagination.
+   * This is Spanish Broadcasting System's board — Spanish-language radio ad
+   * sales in Tampa, Orlando and Miami.
+   */
+  adp_wfn: {
+    url: (t) => 'https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/'
+      + `job-requisitions?cid=${encodeURIComponent(t)}&timeStamp=1&locale=en_US`,
+    parse: (j) => (j.jobRequisitions || []).map((x) => {
+      const a = ((x.requisitionLocations || [])[0] || {}).address || {};
+      const st = a.countrySubdivisionLevel1 && a.countrySubdivisionLevel1.codeValue;
+      return {
+        external_id: x.itemID || x.requisitionId,
+        title: x.requisitionTitle,
+        url: null,
+        location: [a.cityName, st].filter(Boolean).join(', '),
+        description: stripHtml((x.requisitionDescription || {}).descriptionText || ''),
+        posted_at: x.postDate ? new Date(x.postDate) : null,
+      };
+    }),
+  },
+
   eightfold: {
     url: (t) => `https://${encodeURIComponent(t)}.eightfold.ai/api/apply/v2/jobs?domain=${encodeURIComponent(t)}.com&start=0&num=100`,
     parse: (j) => (j.positions || []).map((x) => ({
@@ -190,11 +301,25 @@ async function fetchBoard(ats, token, { verified = false, cap = 200, fetchImpl }
   let capped = false;
   let total = 0;
 
+  // Some boards repeat a posting across pages, and one (Workday) keeps serving
+  // page one for ever past the end of the list. Identity is the requisition,
+  // not the position in the response.
+  const seenIds = new Set();
+  const push = (page) => {
+    let added = 0;
+    for (const p of page || []) {
+      const id = String(p.external_id || p.url || p.title || '');
+      if (!id || seenIds.has(id)) continue;
+      seenIds.add(id); postings.push(p); added++;
+    }
+    return added;
+  };
+
   try {
     if (adapter.paginated) {
       let offset = 0;
       while (offset < cap) {
-        const req = { headers: { accept: 'application/json' } };
+        const req = { headers: { accept: 'application/json', ...(adapter.headers || {}) } };
         if (adapter.method === 'POST') {
           req.method = 'POST';
           req.headers['content-type'] = 'application/json';
@@ -214,22 +339,36 @@ async function fetchBoard(ats, token, { verified = false, cap = 200, fetchImpl }
           capped = true;
           break;
         }
-        const j = await r.json();
+        const j = adapter.format === 'html' ? await r.text() : await r.json();
         total = adapter.total ? adapter.total(j) : 0;
-        const page = adapter.parse(j);
-        postings.push(...page);
+        const page = adapter.parse(j, token);
+        const added = push(page);
+
+        // THREE WAYS A LIST ENDS, AND ONLY ONE OF THEM WAS HANDLED.
+        //   * a short page — the original check;
+        //   * the declared total is reached — Workday happily serves page one
+        //     again past the end, so Scripps' 80 postings came back as 400 rows,
+        //     320 of them duplicates of the first page;
+        //   * a full page containing nothing new — the same symptom on a board
+        //     that declares no total at all.
         if (page.length < adapter.pageSize) break;
+        if (total > 0 && postings.length >= total) break;
+        if (added === 0) break;
         offset += adapter.pageSize;
       }
-      if (total > postings.length) capped = true;
+      // Only claim truncation against a total the board actually declared.
+      // Several tenants report total:0 while serving real pages, which made
+      // every one of them look capped.
+      if (total > 0 && total > postings.length) capped = true;
     } else {
-      const r = await doFetch(adapter.url(token), { headers: { accept: 'application/json' } });
+      const r = await doFetch(adapter.url(token), {
+        headers: { accept: 'application/json', ...(adapter.headers || {}) } });
       if (!r.ok) {
         return { ok: false, status: STATUS.NONE, postings: [], contributes: false,
                  note: `board returned HTTP ${r.status}` };
       }
-      const j = await r.json();
-      postings = adapter.parse(j);
+      const j = adapter.format === 'html' ? await r.text() : await r.json();
+      push(adapter.parse(j, token));
       total = postings.length;
     }
   } catch (e) {
