@@ -2038,6 +2038,37 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const pick = (s) => (s.match(/const SECRET = ([^;]+);/) || [])[1];
     assert.strictEqual(pick(b), pick(a), 'both must resolve the admin secret identically');
   });
+  await t('JOBUP.DEV IS ROUTED BEFORE THE CRM CAN CLAIM A PATH', () => {
+    // jobup.dev is served in place by a host handler inside the CRM's app, and
+    // Express matches in REGISTRATION ORDER. The handler used to sit ~2,000
+    // lines down, after hundreds of CRM routes, so every one of those paths
+    // shadowed JobUp on jobup.dev. The failure is silent and path-specific:
+    // the site looks fine until someone opens a path the CRM also defines.
+    // jobup.dev/admin served the CamaraVirtual Platform Admin login for
+    // exactly this reason, while /admin/ops — which the CRM does not define —
+    // worked, which is what makes it so easy to miss.
+    const appPath = __dirname + '/../../src/app.js';
+    if (!fs.existsSync(appPath)) return;            // jobup checked out alone
+    const src = fs.readFileSync(appPath, 'utf8');
+
+    const host = src.indexOf('JOBUP HOST ROUTING');
+    assert.ok(host > 0, 'the jobup.dev host handler must be findable');
+
+    // Anything that can swallow an arbitrary path must come AFTER it.
+    const shadowers = [
+      ["app.get(['/admin', '/admin/']", 'the CRM platform-admin page'],
+      ['app.use(express.static(', 'the CRM static directory'],
+    ];
+    for (const [needle, what] of shadowers) {
+      const at = src.indexOf(needle);
+      if (at < 0) continue;
+      assert.ok(host < at, `${what} is registered before the jobup.dev handler and will shadow it`);
+    }
+    // And it must not be registered twice — two host handlers means the second
+    // never runs and edits to it look like they do nothing.
+    assert.strictEqual((src.match(/subscriberSite/g) || []).length, 1,
+      'the subscriber-site handler must be mounted exactly once');
+  });
   await t('THE BILLING REGISTER LINKS OUT, IT DOES NOT DRILL IN', () => {
     // Clicking a subscriber's name in the billing console did nothing, which
     // reads as a broken console rather than as a deliberate boundary. That

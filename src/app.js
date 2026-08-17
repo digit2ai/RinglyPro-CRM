@@ -135,6 +135,43 @@ app.use((req, res, next) => {
 });
 
 
+// ═════════════════════════════════════════════════════════════════════════
+// JOBUP HOST ROUTING — jobup.dev and <name>.jobup.dev
+//
+// REGISTERED HERE, BEFORE THE CRM'S OWN PATHS, FOR THE REASON THE LAWNCOPILOT
+// BLOCK ABOVE SPELLS OUT: Express matches in registration order.
+//
+// These handlers used to sit ~2,000 lines further down, after hundreds of CRM
+// routes. Every one of those paths therefore SHADOWED JobUp on jobup.dev, and
+// the failure is silent and specific: only the exact paths the CRM happens to
+// define break, so the site looks fine until someone opens one of them.
+// It was found when jobup.dev/admin served the CamaraVirtual Platform Admin
+// login — the CRM registers app.get(['/admin','/admin/']) long before this —
+// while jobup.dev/admin/ops, which the CRM does NOT define, worked correctly.
+//
+// Anything JobUp does not handle still falls through to the CRM, so the two
+// shared routes below stay reachable.
+// ═════════════════════════════════════════════════════════════════════════
+let jobupHostApp = null;
+try {
+  jobupHostApp = require('../verticals/jobup/src/index');
+
+  // 1. Subscriber sites: <name>.jobup.dev.
+  app.use(jobupHostApp.subscriberSite);
+
+  // 2. Apex + www: serve the JobUp app in place so the address bar stays put.
+  app.use((req, res, next) => {
+    const host = (req.get('host') || '').toLowerCase().split(':')[0];
+    if (host !== 'jobup.dev' && host !== 'www.jobup.dev') return next();
+    // /api/tts is the shared CRM voice route — let it through untouched.
+    if (req.path.startsWith('/api/tts')) return next();
+    return jobupHostApp(req, res, next);
+  });
+} catch (e) {
+  console.log('⚠️ JobUp host routing unavailable:', e.message);
+}
+
+
 // Custom domain: camaravirtual.app
 // Root '/' serves the Spanish marketing landing DIRECTLY (no rewrite to
 // /chamber/hispamind/, which would now bounce through the legacy 301
@@ -2177,18 +2214,9 @@ let jobupApp = null;
 let jobupError = null;
 try {
   jobupApp = require('../verticals/jobup/src/index');
-
-  // 1. Subscriber sites: <name>.jobup.dev. Must run BEFORE the CRM's routes.
-  app.use(jobupApp.subscriberSite);
-
-  // 2. Apex + www: serve the JobUp app in place so the address bar stays put.
-  app.use((req, res, next) => {
-    const host = (req.get('host') || '').toLowerCase().split(':')[0];
-    if (host !== 'jobup.dev' && host !== 'www.jobup.dev') return next();
-    // /api/tts is the shared CRM voice route — let it through untouched.
-    if (req.path.startsWith('/api/tts')) return next();
-    return jobupApp(req, res, next);
-  });
+  // The two HOST handlers now live near the top of this file, beside the other
+  // custom domains — see the JOBUP HOST ROUTING block. They must be registered
+  // before the CRM's own paths or those paths shadow JobUp on jobup.dev.
 
   // 3. Path mount, so it is reachable on aiagent.ringlypro.com too.
   app.get('/jobup', (req, res, next) => {
