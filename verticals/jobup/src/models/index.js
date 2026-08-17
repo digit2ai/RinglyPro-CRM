@@ -494,10 +494,18 @@ function memoryTable(name) {
       rows.forEach((r) => { if (matches(r, where)) { Object.assign(r, values); n++; } });
       return [n];
     },
-    async destroy({ where } = {}) {
+    async destroy(opts = {}) {
+      // Sequelize throws on a destroy with no `where`; the memory backend used
+      // to treat it as "match everything" and quietly empty the table. So
+      // `destroy({ id })` — options where a where-clause was meant — passed in
+      // SIT and would have deleted every row of the real table in production.
+      // Behave like the thing being stood in for.
+      if (!opts.where) {
+        throw new Error(`${name}.destroy called without a where clause — refusing to delete every row`);
+      }
       let n = 0;
       for (let i = rows.length - 1; i >= 0; i--) {
-        if (matches(rows[i], where)) { rows.splice(i, 1); n++; }
+        if (matches(rows[i], opts.where)) { rows.splice(i, 1); n++; }
       }
       return n;
     },

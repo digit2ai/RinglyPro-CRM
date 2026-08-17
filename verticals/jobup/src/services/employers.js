@@ -57,6 +57,14 @@ const ADAPTERS = {
       location: x.location && [x.location.city, x.location.country].filter(Boolean).join(', '),
       description: '', posted_at: x.releasedDate,
     })),
+    // The list endpoint carries no body text; this one does.
+    detail: (t, ref) => `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(t)}/postings/${encodeURIComponent(String(ref).split('/').pop())}`,
+    parseDetail: (j) => {
+      const s = (j.jobAd && j.jobAd.sections) || {};
+      const text = ['companyDescription', 'jobDescription', 'qualifications', 'additionalInformation']
+        .map((k) => (s[k] && s[k].text) || '').filter(Boolean).join('\n\n');
+      return { description: stripHtml(text) };
+    },
   },
   workable: {
     url: (t) => `https://apply.workable.com/api/v1/widget/accounts/${encodeURIComponent(t)}?details=true`,
@@ -78,16 +86,41 @@ const ADAPTERS = {
     // PAGINATED. A large tenant holds thousands of postings served 20 at a time;
     // one request is page one, often sorted by an unrelated region. Citi returns
     // ~2,000. We cap and SAY SO — never silently truncate (spec section 10).
+    //
+    // IT IS A POST, NOT A GET. The CXS jobs endpoint answers a query GET with
+    // HTTP 400 on every tenant — including Citi, which this file documents as
+    // the proof case and which returned nothing at all through the GET form.
+    // The search parameters belong in a JSON body.
     paginated: true,
     pageSize: 20,
-    url: (t, offset = 0) => {
+    method: 'POST',
+    url: (t) => {
       const [host, tenant, board] = String(t).split('|');
-      return `https://${host}/wday/cxs/${tenant}/${board}/jobs?limit=20&offset=${offset}`;
+      return `https://${host}/wday/cxs/${tenant}/${board}/jobs`;
+    },
+    body: (offset = 0) => ({ appliedFacets: {}, limit: 20, offset, searchText: '' }),
+    // The list endpoint returns title + location and NOTHING else. A posting
+    // with no body text cannot match on a single skill, so the pre-filter
+    // scores it zero and it never reaches a subscriber however well it fits —
+    // which is how an "Account Executive, Tampa FL" sat in the pool invisible
+    // to an OOH advertising seller in Tampa. This is where the text lives.
+    detail: (t, externalPath) => {
+      const [host, tenant, board] = String(t).split('|');
+      return `https://${host}/wday/cxs/${tenant}/${board}${externalPath}`;
+    },
+    parseDetail: (j) => {
+      const i = j.jobPostingInfo || {};
+      return {
+        description: stripHtml(i.jobDescription || ''),
+        posted_at: workdayPostedOn(i.startDate || i.postedOn),
+        remote_type: i.remoteType || null,
+        time_type: i.timeType || null,
+      };
     },
     parse: (j) => (j.jobPostings || []).map((x) => ({
       external_id: x.bulletFields && x.bulletFields[0] ? x.bulletFields[0] : x.externalPath,
       title: x.title, url: x.externalPath, location: x.locationsText,
-      description: '', posted_at: x.postedOn,
+      description: '', posted_at: workdayPostedOn(x.postedOn),
     })),
     total: (j) => j.total || 0,
   },
@@ -99,6 +132,28 @@ const ADAPTERS = {
     })),
   },
 };
+
+/**
+ * Workday reports `postedOn` as English prose relative to today — "Posted
+ * Today", "Posted 4 Days Ago", "Posted 30+ Days Ago" — never a date. Passing it
+ * to `new Date()` yields Invalid Date, and Postgres rejects the whole INSERT,
+ * so ONE unparseable field discarded an entire employer's board.
+ *
+ * Only the unambiguous forms are converted. "30+ Days Ago" is a floor, not a
+ * date, so it comes back null: an approximate posted date the UI would render
+ * as fact is worse than no posted date, and nothing here depends on having one.
+ */
+function workdayPostedOn(raw) {
+  const s = String(raw || '').toLowerCase().trim();
+  if (!s) return null;
+  const day = 86400000;
+  if (/\btoday\b|\bjust posted\b/.test(s)) return new Date();
+  if (/\byesterday\b/.test(s)) return new Date(Date.now() - day);
+  const m = s.match(/(\d+)\+?\s*day/);
+  if (m) return s.includes('+') ? null : new Date(Date.now() - parseInt(m[1], 10) * day);
+  const parsed = new Date(raw);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
 
 function stripHtml(s) {
   if (!s) return '';
@@ -139,8 +194,26 @@ async function fetchBoard(ats, token, { verified = false, cap = 200, fetchImpl }
     if (adapter.paginated) {
       let offset = 0;
       while (offset < cap) {
-        const r = await doFetch(adapter.url(token, offset), { headers: { accept: 'application/json' } });
-        if (!r.ok) break;
+        const req = { headers: { accept: 'application/json' } };
+        if (adapter.method === 'POST') {
+          req.method = 'POST';
+          req.headers['content-type'] = 'application/json';
+          req.body = JSON.stringify(adapter.body(offset));
+        }
+        const r = await doFetch(adapter.url(token, offset), req);
+        // A FAILED FIRST PAGE IS A FAILED BOARD, not an employer with no
+        // openings. `break` alone returned ok:true with an empty list, which is
+        // indistinguishable from a real empty board — so a broken adapter read
+        // as "nothing hiring" on every tenant, silently, for as long as it was
+        // broken. Later pages are different: those postings are already real.
+        if (!r.ok) {
+          if (offset === 0) {
+            return { ok: false, status: STATUS.NONE, postings: [], contributes: false,
+                     note: `board returned HTTP ${r.status}` };
+          }
+          capped = true;
+          break;
+        }
         const j = await r.json();
         total = adapter.total ? adapter.total(j) : 0;
         const page = adapter.parse(j);
@@ -188,6 +261,6 @@ async function fetchBoard(ats, token, { verified = false, cap = 200, fetchImpl }
 
 module.exports = {
   ADAPTERS, CLOSED_FAMILIES, STATUS, DEMO_MARKERS,
-  fetchBoard, stripHtml, looksLikeDemo,
+  fetchBoard, stripHtml, looksLikeDemo, workdayPostedOn,
   supportedAts: () => Object.keys(ADAPTERS),
 };

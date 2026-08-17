@@ -225,6 +225,87 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('Workday is treated as paginated', () => {
     assert.strictEqual(employers.ADAPTERS.workday.paginated, true);
   });
+  await t('WORKDAY IS A POST — a GET is HTTP 400 on every tenant', async () => {
+    // The CXS jobs endpoint answers a query GET with 400 everywhere, Citi (this
+    // repo's documented proof case) included. The search parameters go in a
+    // JSON body. Shipped as a GET, the adapter returned zero postings from
+    // every Workday employer in the registry.
+    const wd = employers.ADAPTERS.workday;
+    assert.strictEqual(wd.method, 'POST', 'workday must be issued as a POST');
+    const url = wd.url('x.wd5.myworkdayjobs.com|x|2', 40);
+    assert.ok(!url.includes('?'), 'no search parameters belong in the URL');
+    assert.deepStrictEqual(wd.body(40), { appliedFacets: {}, limit: 20, offset: 40, searchText: '' });
+
+    let sawPost = false, sawBody = null;
+    const fake = async (u, opts) => {
+      sawPost = opts.method === 'POST'; sawBody = JSON.parse(opts.body);
+      return { ok: true, status: 200, json: async () => ({ total: 1, jobPostings: [
+        { title: 'Account Executive', locationsText: 'Tampa, FL', externalPath: '/p/1',
+          bulletFields: ['R-1'], postedOn: 'Posted Today' }] }) };
+    };
+    const res = await employers.fetchBoard('workday', 'h|t|b', { verified: true, fetchImpl: fake });
+    assert.ok(sawPost, 'the request must be a POST');
+    assert.strictEqual(sawBody.offset, 0, 'the offset must travel in the body');
+    assert.strictEqual(res.postings.length, 1);
+  });
+  await t('WORKDAY POSTS A SENTENCE, NOT A DATE — and one field cannot kill a board', async () => {
+    // postedOn is English prose relative to today. new Date("Posted Today") is
+    // Invalid Date, Postgres rejects the row, and ingest ran the board in one
+    // pass — so a single unparseable string discarded every posting from that
+    // employer. It stayed hidden while the adapter itself returned nothing.
+    const wp = employers.workdayPostedOn;
+    const day = 86400000;
+    assert.ok(wp('Posted Today') instanceof Date, '"Posted Today" is a date we can defend');
+    assert.ok(Math.abs(wp('Posted Yesterday') - (Date.now() - day)) < 60000);
+    assert.ok(Math.abs(wp('Posted 4 Days Ago') - (Date.now() - 4 * day)) < 60000);
+    // A floor is not a date. Guessing one would render as fact in the UI.
+    assert.strictEqual(wp('Posted 30+ Days Ago'), null, '"30+" must not become a date');
+    assert.strictEqual(wp(''), null);
+    assert.strictEqual(wp('nonsense string'), null);
+    for (const v of [wp('Posted Today'), wp('Posted 30+ Days Ago'), wp('')]) {
+      assert.ok(v === null || !isNaN(v.getTime()), 'never Invalid Date');
+    }
+
+    // And the ingest guard: a row that cannot be written costs only itself.
+    const jobsourceSrc = require('fs').readFileSync(__dirname + '/src/services/jobsource.js', 'utf8');
+    assert.ok(/posted_at:\s*safeDate\(/.test(jobsourceSrc), 'ingest must sanitise the date');
+    assert.ok(/catch \(e\) \{\s*rejected\+\+/.test(jobsourceSrc),
+      'a malformed posting must not abort the board');
+    const before = (await models.jobs.findAll({})).length;
+    const r = await jobsource.ingest([
+      { external_id: 'sit-ok-1', title: 'SIT good row', location: 'Tampa, FL', posted_at: 'Posted Today' },
+      { external_id: 'sit-ok-2', title: 'SIT prose date', location: 'Tampa, FL', posted_at: 'Posted 30+ Days Ago' },
+    ], { source: 'sit', employer: 'SIT Date Co' });
+    assert.strictEqual(r.added, 2, 'both rows survive a prose posted date');
+    const rows = (await models.jobs.findAll({})).filter((j) => j.employer === 'SIT Date Co');
+    assert.strictEqual(rows.length, 2);
+    for (const j of rows) await models.jobs.destroy({ where: { id: j.id } });
+    assert.strictEqual((await models.jobs.findAll({})).length, before);
+  });
+  await t('A DEAD PAGINATED BOARD IS NOT AN EMPLOYER WITH NO OPENINGS', async () => {
+    // `if (!r.ok) break` returned ok:true with an empty list, so a broken
+    // adapter read as "nobody is hiring" on every Workday tenant at once —
+    // silently, and for as long as it stayed broken.
+    const dead = async () => ({ ok: false, status: 400, json: async () => ({}) });
+    const res = await employers.fetchBoard('workday', 'h|t|b', { verified: true, fetchImpl: dead });
+    assert.strictEqual(res.ok, false, 'a failed first page must not report success');
+    assert.strictEqual(res.contributes, false);
+    assert.ok(/400/.test(res.note || ''), 'the status code must be reported, not swallowed');
+
+    // But a failure on page TWO keeps page one — those postings are real.
+    let n = 0;
+    const flaky = async () => {
+      n++;
+      if (n > 1) return { ok: false, status: 500, json: async () => ({}) };
+      return { ok: true, status: 200, json: async () => ({ total: 99, jobPostings:
+        Array.from({ length: 20 }, (_, i) => ({ title: 'Role ' + i, locationsText: 'Tampa, FL',
+          externalPath: '/p/' + i, bulletFields: ['R-' + i] })) }) };
+    };
+    const part = await employers.fetchBoard('workday', 'h|t|b', { verified: true, fetchImpl: flaky });
+    assert.strictEqual(part.ok, true, 'page one still counts');
+    assert.strictEqual(part.postings.length, 20);
+    assert.strictEqual(part.capped, true, 'and the truncation must be declared');
+  });
   await t('all 8 ATS adapters are present', () => {
     const want = ['greenhouse','lever','ashby','smartrecruiters','workable','recruitee','workday','eightfold'];
     for (const a of want) assert.ok(employers.ADAPTERS[a], `missing adapter: ${a}`);
@@ -265,6 +346,81 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const a = jobsource.dedupeKey({ employer: 'Globex', title: 'Senior Go Engineer', location: 'Austin, TX' });
     const b = jobsource.dedupeKey({ employer: 'globex', title: 'senior go engineer', location: 'austin, tx' });
     assert.strictEqual(a, b);
+  });
+  await t('A DESTROY WITH NO WHERE IS REFUSED, NOT TREATED AS "ALL"', async () => {
+    // Sequelize throws on this; the memory backend treated a missing where as
+    // "match everything" and quietly emptied the table. The two disagreeing is
+    // worse than either: `destroy({ id })` passes green in SIT and deletes
+    // every row of the real table in production.
+    const n = (await models.jobs.findAll({})).length;
+    await assert.rejects(() => models.jobs.destroy({ id: 1 }), /where clause/,
+      'options where a where-clause was meant must be refused');
+    await assert.rejects(() => models.jobs.destroy({}), /where clause/);
+    assert.strictEqual((await models.jobs.findAll({})).length, n, 'and nothing may be deleted');
+  });
+  await t('THERE IS ONE INGEST AND ONE DEDUPE KEY', () => {
+    // The scheduler carried a private copy of ingest keyed on
+    // `ats:token:external_id` while jobsource keyed on a hash of
+    // employer+title+location. Two keys over one shared pool means each writer
+    // is blind to the other's rows: the same posting lands twice, and the
+    // cross-source collapse asserted directly above never happens for anything
+    // the scheduler wrote.
+    const src = require('fs').readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+    assert.ok(/jobsource\.ingest\(/.test(src), 'the scheduler must ingest through jobsource');
+    assert.ok(!/\$\{e\.ats\}:\$\{e\.token\}/.test(src), 'no second dedupe scheme may exist');
+    assert.ok(!/models\.jobs\.create\(/.test(src), 'the scheduler must not write to the pool directly');
+  });
+  await t('AN UNREAD POSTING IS NOT AN ON-SITE POSTING', async () => {
+    // "Silence means on-site" is fair for a posting we have READ. Workday and
+    // SmartRecruiters hand us title and location only — that posting is not
+    // silent about its mode, we never fetched the sentence stating it. Reading
+    // our own ingestion gap as a statement by the employer dropped every such
+    // posting for anyone with a mode preference, which is how an "Account
+    // Executive, Tampa FL" stayed invisible to an OOH seller in Tampa.
+    const profile = { headline: 'Sales Executive', skills: ['Advertising'] };
+    const settings = { targeting: { roles: [{ title: 'Account Executive' }],
+      remote_preference: 'hybrid' } };
+    const bare = { id: 90001, title: 'Account Executive', employer: 'Clear Channel Outdoor',
+      location: 'Tampa, FL (Clearwater)', description: '' };
+    assert.strictEqual(jobsource.prefilter([bare], profile, settings, '').length, 1,
+      'a posting with no body text must not be dropped on work mode');
+
+    // But once the text IS there, the rule applies exactly as before.
+    const read = { ...bare, id: 90002, description: 'This is a fully on-site role in our Clearwater office.' };
+    assert.strictEqual(jobsource.prefilter([read], profile, settings, '').length, 0,
+      'a posting we HAVE read that states on-site is still filtered out');
+    const remote = { ...bare, id: 90003, description: 'This is a hybrid role based in Tampa.' };
+    assert.strictEqual(jobsource.prefilter([remote], profile, settings, '').length, 1);
+  });
+  await t('description enrichment fills the gap, and never invents one', async () => {
+    const before = await models.jobs.create({
+      source: 'workday', employer: 'SIT Enrich Co', title: 'Account Executive',
+      location: 'Tampa, FL', description: '', url: '/job/Tampa/AE_1',
+      dedupe_key: 'sit-enrich-' + Date.now(),
+    });
+    await models.employers.create({ name: 'SIT Enrich Co', ats: 'workday',
+      token: 'h.wd5.myworkdayjobs.com|h|B', status: 'live' });
+
+    const fake = async () => ({ ok: true, status: 200, json: async () => ({
+      jobPostingInfo: { jobDescription: '<p>Sell out-of-home advertising across Tampa Bay.</p>',
+        startDate: '2026-08-14' } }) });
+    const r = await jobsource.enrichDescriptions({ limit: 50, fetchImpl: fake });
+    assert.ok(r.filled >= 1, 'the description must be written');
+    const after = await models.jobs.findOne({ where: { id: before.id } });
+    assert.ok(/out-of-home advertising/.test(after.description), 'and it must be the real text, stripped');
+
+    // A detail endpoint that fails leaves the row alone rather than blanking it.
+    const dead = async () => ({ ok: false, status: 500, json: async () => ({}) });
+    const r2 = await jobsource.enrichDescriptions({ limit: 50, fetchImpl: dead });
+    assert.strictEqual(r2.filled, 0);
+    const still = await models.jobs.findOne({ where: { id: before.id } });
+    assert.ok(/out-of-home advertising/.test(still.description), 'a failed fetch must not erase text');
+
+    await models.jobs.destroy({ where: { id: before.id } });
+    const boards = await models.employers.findAll({});
+    for (const b of boards.filter((x) => x.name === 'SIT Enrich Co')) {
+      await models.employers.destroy({ where: { id: b.id } });
+    }
   });
   await t('pre-filter is deterministic and free (no model call)', async () => {
     const pool = await models.jobs.findAll({});
@@ -3908,7 +4064,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the window must come back newest-first');
     assert.ok(agents.POOL_WINDOW > before.length,
       'the shipped window must be wider than the pool it is reading');
-    for (const id of madeIds) await models.jobs.destroy({ id });
+    for (const id of madeIds) await models.jobs.destroy({ where: { id } });
   });
   await t('A POSTING BELOW THE FLOOR IS NEVER PAID FOR TWICE', async () => {
     // job_matches only holds what cleared min_score. Building the "already
@@ -3942,7 +4098,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/for \(const m of res\.matches\) \{[\s\S]*?job_scores/.test(src),
       'EVERY scoring is ledgered, not only the filed ones');
     await scoped('job_scores', subA.id).destroy({ job_id: probe.id });
-    await models.jobs.destroy({ id: probe.id });
+    await models.jobs.destroy({ where: { id: probe.id } });
   });
   await t('a dry run says WHY it filed nothing', async () => {
     // "6 below your minimum score of 70" is unactionable on its own: a best of

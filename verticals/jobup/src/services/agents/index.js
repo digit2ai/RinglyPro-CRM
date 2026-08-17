@@ -17,8 +17,10 @@ const identity = require('../identity');
 
 const CONCURRENCY = parseInt(process.env.JOBUP_AGENT_CONCURRENCY || '4', 10);
 
-// How much of the shared pool the pre-filter is allowed to see.
-const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '6000', 10);
+// How much of the shared pool the pre-filter is allowed to see. Keep this
+// comfortably AHEAD of the pool: a window the pool has outgrown is the exact
+// defect this constant exists to have fixed, and it fails silently.
+const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '25000', 10);
 
 /**
  * The candidate pool, NEWEST FIRST.
@@ -36,7 +38,14 @@ const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '6000', 10);
  * tenant per run, but it is now a real ceiling rather than an accidental one.
  */
 async function poolWindow() {
-  return models.jobs.findAll({ limit: POOL_WINDOW, order: [['last_seen_at', 'DESC']] });
+  const rows = await models.jobs.findAll({ limit: POOL_WINDOW, order: [['last_seen_at', 'DESC']] });
+  // Say it out loud rather than quietly matching against a slice. Silence here
+  // is what let the 500-row window go unnoticed for the life of the product.
+  if (rows.length >= POOL_WINDOW) {
+    console.warn(`[jobup] pool window is FULL at ${POOL_WINDOW} — older postings are not being ` +
+                 'matched against. Raise JOBUP_POOL_WINDOW.');
+  }
+  return rows;
 }
 
 async function loadContext(tenantId) {

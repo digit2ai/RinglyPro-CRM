@@ -27,10 +27,12 @@
 const { models } = require('../models');
 const agents = require('./agents');
 const employers = require('./employers');
+const jobsource = require('./jobsource');
 const limits = require('./limits');
 
 const TICK_MS = parseInt(process.env.JOBUP_TICK_MS || String(15 * 60 * 1000), 10);
 const POOL_REFRESH_HOURS = parseInt(process.env.JOBUP_POOL_REFRESH_HOURS || '24', 10);
+const ENRICH_PER_RUN = parseInt(process.env.JOBUP_ENRICH_PER_RUN || '300', 10);
 
 /**
  * The hour (UTC) the daily run is allowed to start.
@@ -103,29 +105,34 @@ async function refreshPool() {
     } catch (err) { errors.push(`${e.name}: ${err.message}`); continue; }
     if (!res.ok || !res.postings.length) continue;
 
-    for (const p of res.postings) {
-      if (!p.title) continue;
-      const dedupe_key = `${e.ats}:${e.token}:${p.external_id || p.title}`.slice(0, 250);
-      const existing = await models.jobs.findOne({ where: { dedupe_key } });
-      if (existing) {
-        // last_seen_at is how a stale posting is later identified as gone.
-        await models.jobs.update({ last_seen_at: new Date() }, { where: { id: existing.id } });
-        refreshed++;
-        continue;
-      }
-      await models.jobs.create({
-        source: e.ats, external_id: String(p.external_id || ''), employer: e.name,
-        title: String(p.title).slice(0, 250), location: String(p.location || '').slice(0, 250),
-        url: p.url || '', description: String(p.description || '').slice(0, 20000),
-        compensation: p.compensation || null,
-        posted_at: p.posted_at ? new Date(p.posted_at) : null,
-        dedupe_key,
-      });
-      added++;
-    }
+    // ONE INGEST, ONE DEDUPE KEY. This used to be a second, private copy of
+    // jobsource.ingest that keyed on `ats:token:external_id` while jobsource
+    // keyed on a hash of employer+title+location. Two keys over one shared pool
+    // means each writer is blind to the other's rows, so the same posting is
+    // inserted twice and the cross-source collapse that jobsource.dedupeKey
+    // exists to perform never happens for anything this path wrote.
+    const counts = await jobsource.ingest(
+      res.postings.filter((p) => p.title),
+      { source: e.ats, employer: e.name },
+    );
+    added += counts.added;
+    refreshed += counts.refreshed;
+    if (counts.rejected) errors.push(`${e.name}: ${counts.rejected} posting(s) rejected`);
     await models.employers.update({ last_fetched_at: new Date() }, { where: { id: e.id } });
   }
-  return { boards: live.length, added, refreshed, errors };
+
+  // Workday and SmartRecruiters list endpoints carry no body text, and the
+  // pre-filter matches skills against title + description — so an un-enriched
+  // posting is close to unmatchable however well it fits. Capped and
+  // incremental: it converges over days and never stalls the refresh.
+  let enriched = null;
+  try {
+    enriched = await jobsource.enrichDescriptions({ limit: ENRICH_PER_RUN });
+  } catch (err) {
+    errors.push(`description enrichment: ${err.message}`);
+  }
+
+  return { boards: live.length, added, refreshed, enriched, errors };
 }
 
 /** Fan the Hunter (and Presence) across every active subscriber. */

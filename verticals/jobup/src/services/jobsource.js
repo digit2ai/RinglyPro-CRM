@@ -26,10 +26,25 @@ function dedupeKey(p) {
   return crypto.createHash('sha1').update(basis).digest('hex').slice(0, 20);
 }
 
+/**
+ * A posted date we can defend, or null.
+ *
+ * Not every ATS returns a date in this field — Workday returns English prose
+ * ("Posted 30+ Days Ago"). `new Date()` turns that into Invalid Date, Postgres
+ * rejects the row, and because ingest ran the whole board in one pass, a single
+ * unparseable string discarded EVERY posting from that employer. Nothing here
+ * needs a posted date badly enough to be worth guessing one.
+ */
+function safeDate(v) {
+  if (!v) return null;
+  const d = v instanceof Date ? v : new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 // Upsert postings into the shared pool. Returns counts, never throws into a request.
 async function ingest(postings, { source, employer }) {
   const Jobs = models.jobs;
-  let added = 0, refreshed = 0, reposts = 0;
+  let added = 0, refreshed = 0, reposts = 0, rejected = 0;
 
   for (const p of postings || []) {
     const key = dedupeKey({ ...p, employer });
@@ -40,16 +55,21 @@ async function ingest(postings, { source, employer }) {
       if (existing.external_id && p.external_id && existing.external_id !== p.external_id) reposts++;
       continue;
     }
-    await Jobs.create({
-      source, external_id: p.external_id || null, employer,
-      title: p.title || null, location: p.location || null, url: p.url || null,
-      description: p.description || '', compensation: p.compensation || null,
-      posted_at: p.posted_at ? new Date(p.posted_at) : null,
-      dedupe_key: key, first_seen_at: new Date(), last_seen_at: new Date(),
-    });
-    added++;
+    // One malformed posting must never cost the other 86.
+    try {
+      await Jobs.create({
+        source, external_id: p.external_id || null, employer,
+        title: p.title || null, location: p.location || null, url: p.url || null,
+        description: p.description || '', compensation: p.compensation || null,
+        posted_at: safeDate(p.posted_at),
+        dedupe_key: key, first_seen_at: new Date(), last_seen_at: new Date(),
+      });
+      added++;
+    } catch (e) {
+      rejected++;
+    }
   }
-  return { added, refreshed, reposts, total: (postings || []).length };
+  return { added, refreshed, reposts, rejected, total: (postings || []).length };
 }
 
 // Refresh one employer's board. Honors the guessed-token quarantine.
@@ -132,7 +152,18 @@ function prefilter(jobs, profile, settings, rawText) {
     //     gets an inbox of ordinary office jobs that simply never said.
     //   * on-site wanted     -> silence is fine; only a stated mode you
     //     excluded drops the row.
-    if (modes.length && modes.length < 3) {
+    //
+    // ONE EXCEPTION, AND IT IS THE DIFFERENCE BETWEEN SILENCE AND IGNORANCE.
+    // "Silence means on-site" is a fair reading of a posting we have READ. Some
+    // sources (Workday, SmartRecruiters) hand us title and location only, with
+    // no body text at all — that posting is not silent about its work mode, we
+    // simply never fetched the sentence that states it. Treating our own
+    // ingestion gap as a statement by the employer excluded every Workday
+    // posting from anyone who had expressed any mode preference, silently. When
+    // there is no text to judge, the mode is UNKNOWN and is not grounds to
+    // drop the row — the same rule geo.js already applies to a missing location.
+    const hasText = String(j.description || '').trim().length > 0;
+    if (modes.length && modes.length < 3 && hasText) {
       const where = `${location} ${hay}`;
       const isRemote = /\bremote\b|\bwork from home\b|\bwfh\b|\bfully distributed\b/.test(where);
       const isHybrid = /\bhybrid\b/.test(where);
@@ -183,6 +214,61 @@ function prefilter(jobs, profile, settings, rawText) {
   return scored.sort((a, b) => b.prescore - a.prescore);
 }
 
+/**
+ * Fill in the body text for postings that arrived without any.
+ *
+ * Workday and SmartRecruiters list endpoints return title and location only.
+ * The pre-filter matches a subscriber's skills against title + description, so
+ * a posting with no description can only ever match on its title — and a title
+ * like "Account Executive" contains none of the skills of the person it is
+ * perfect for. Those postings entered the shared pool effectively unmatched.
+ *
+ * It runs against the DB rather than inside fetchBoard so it is INCREMENTAL: a
+ * capped pass each day converges, only ever touches rows still missing text,
+ * and one board's slow detail endpoint cannot stall the whole refresh. The cost
+ * is one request per posting ONCE, amortised across every subscriber, because
+ * the pool is shared.
+ */
+async function enrichDescriptions({ limit = 200, fetchImpl } = {}) {
+  const doFetch = fetchImpl || globalThis.fetch;
+  const Jobs = models.jobs;
+  const all = await Jobs.findAll({});
+  const need = all
+    .filter((j) => !String(j.description || '').trim())
+    .filter((j) => employers.ADAPTERS[j.source] && employers.ADAPTERS[j.source].detail)
+    .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))
+    .slice(0, limit);
+
+  // The detail URL is built from the employer's token, not the posting.
+  const boards = await models.employers.findAll({});
+  const tokenFor = new Map(boards.map((b) => [`${b.ats}|${b.name}`, b.token]));
+
+  let filled = 0, failed = 0, skipped = 0;
+  for (const j of need) {
+    const token = tokenFor.get(`${j.source}|${j.employer}`);
+    const ref = j.url || j.external_id;
+    if (!token || !ref) { skipped++; continue; }
+    try {
+      const a = employers.ADAPTERS[j.source];
+      const r = await doFetch(a.detail(token, ref), { headers: { accept: 'application/json' } });
+      if (!r.ok) { failed++; continue; }
+      const d = a.parseDetail(await r.json());
+      const text = String((d && d.description) || '').trim();
+      if (!text) { failed++; continue; }
+      const patch = { description: text };
+      // A real posted date beats the list endpoint's prose, but never
+      // overwrite one we already have with nothing.
+      const posted = d.posted_at instanceof Date && !isNaN(d.posted_at.getTime()) ? d.posted_at : null;
+      if (posted && !j.posted_at) patch.posted_at = posted;
+      await Jobs.update(patch, { where: { id: j.id } });
+      filled++;
+    } catch (e) {
+      failed++;
+    }
+  }
+  return { candidates: need.length, filled, failed, skipped };
+}
+
 async function markStale() {
   const cutoff = new Date(Date.now() - STALE_DAYS * 86400000);
   const all = await models.jobs.findAll({});
@@ -196,6 +282,7 @@ function adzunaActive() {
 
 module.exports = {
   dedupeKey, ingest, refreshEmployer, prefilter, markStale, adzunaActive,
+  enrichDescriptions, safeDate,
   SOURCES: employers.supportedAts(),
   STALE_DAYS,
 };
