@@ -492,9 +492,37 @@ async function run() {
       check(`the shell carries the ${tab} tab`, new RegExp(tab).test(r.text));
     }
     check('the base-path token was substituted server-side', !/\{\{BASE\}\}/.test(r.text));
+
+    // CACHE SKEW. The shell is no-store while assets carry an hour of cache, so
+    // a deploy that changes the contract between them can pair a FRESH shell
+    // with a STALE script. That shipped once: a renamed element left app.js
+    // throwing mid-boot, and the page came up with its sliders drawn and its
+    // dashboard empty. Content-hashed URLs make a changed file a changed URL.
+    const versioned = r.text.match(/app\.js\?v=([\w.-]+)/);
+    check('the script URL is content-versioned', !!versioned, 'no ?v= on app.js');
+    check('the stylesheet URL is content-versioned', /app\.css\?v=[\w.-]+/.test(r.text));
+    if (versioned) {
+      const asset = await request('GET', `${MOUNT}/app.js?v=${versioned[1]}`, { raw: true });
+      check('the versioned script actually serves', asset.status === 200, `status ${asset.status}`);
+    }
     check('no template token survives into the served HTML', !/\{\{[A-Z_]+\}\}/.test(r.text));
     check('the guardrail banner is present', /Do not enter Intuitive-confidential pricing/.test(r.text));
     check('the shell links its stylesheet at the mounted base', new RegExp(`${MOUNT}/app\\.css`).test(r.text));
+
+    // Every element app.js binds through on() must exist in the shell, or a
+    // control silently does nothing. Cheap to assert, and it is the check that
+    // would have caught the renamed sign-in button before it shipped.
+    const appJs = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+    const bound = [...appJs.matchAll(/\bon\('([a-z-]+)'/g)].map((m) => m[1]);
+    check('app.js binds at least the header and control buttons', bound.length >= 4, bound.join(', '));
+    const missing = bound.filter((id) => !new RegExp(`id="${id}"`).test(r.text));
+    check('every element app.js binds exists in the shell', missing.length === 0, missing.join(', '));
+
+    for (const id of ['signout-btn', 'session-pill', 'signin-link']) {
+      check(`the shell carries #${id}`, new RegExp(`id="${id}"`).test(r.text));
+    }
+    check('the sign-out control ships hidden until a session is known',
+      /id="signout-btn"[^>]*hidden/.test(r.text));
   }
 
   // --- 11. CSV export ------------------------------------------------------

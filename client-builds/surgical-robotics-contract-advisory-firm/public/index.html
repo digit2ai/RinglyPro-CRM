@@ -6,8 +6,8 @@
 <title>RoboNegotiate — Fee-on-Savings Model</title>
 <meta name="description" content="Insider intelligence that turns robotic surgery contracts into savings. A sourced, reconciling market and revenue model for a surgical robotics contract advisory practice.">
 <meta name="robots" content="noindex, nofollow">
-<link rel="stylesheet" href="{{BASE}}/app.css">
-<link rel="stylesheet" href="{{BASE}}/print.css" media="print">
+<link rel="stylesheet" href="{{BASE}}/app.css?v={{ASSET_VERSION}}">
+<link rel="stylesheet" href="{{BASE}}/print.css?v={{ASSET_VERSION}}" media="print">
 </head>
 <body data-base="{{BASE}}" data-brand="{{BRAND}}" data-version="{{VERSION}}" data-model-version="{{MODEL_VERSION}}">
 
@@ -32,7 +32,9 @@
   <div class="topbar-right">
     <span id="provenance-pill" class="pill" title="How many model inputs are traced to public data"></span>
     <span id="backend-pill" class="pill quiet"></span>
-    <button id="session-btn" class="btn ghost signout" type="button">Sign in</button>
+    <span id="session-pill" class="pill quiet" hidden></span>
+    <button id="signout-btn" class="btn ghost" type="button" hidden>Sign out</button>
+    <a id="signin-link" class="btn ghost" href="/projects" hidden>Sign in</a>
   </div>
 </header>
 
@@ -114,6 +116,6 @@
 
 <div id="toast" class="toast" hidden></div>
 
-<script src="{{BASE}}/app.js" defer></script>
+<script src="{{BASE}}/app.js?v={{ASSET_VERSION}}" defer></script>
 </body>
 </html>

@@ -28,6 +28,21 @@
 
   function $(id) { return document.getElementById(id); }
 
+  // Bind defensively. A single missing element must never abort boot: that is
+  // exactly how a stale cached script paired with a fresh shell took the whole
+  // page down — the throw happened after the controls rendered and before the
+  // model was fetched, leaving a half-drawn page that looked broken rather than
+  // failed. Assets are content-hashed now, but the boot should be robust anyway.
+  function on(id, event, handler) {
+    var node = $(id);
+    if (!node) {
+      console.warn('[RoboNegotiate] missing element: ' + id);
+      return false;
+    }
+    node.addEventListener(event, handler);
+    return true;
+  }
+
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
     if (attrs) {
@@ -645,15 +660,35 @@
 
   // ----------------------------------------------------------------- auth
 
+  function paintSession() {
+    var pill = $('session-pill');
+    var out = $('signout-btn');
+    var inLink = $('signin-link');
+    if (pill) {
+      pill.hidden = !session.signed_in;
+      pill.textContent = session.signed_in ? session.email_masked : '';
+      pill.title = session.signed_in ? 'Signed in through the Digit2AI Projects Hub' : '';
+    }
+    if (out) {
+      out.hidden = !session.signed_in;
+      out.title = 'End this session on this device';
+    }
+    if (inLink) {
+      inLink.hidden = !!session.signed_in;
+      inLink.href = session.sign_in_url || '/projects';
+    }
+  }
+
   function refreshSession() {
     return api('/api/v1/auth/me').then(function (r) {
       session = r.body || { signed_in: false };
-      var btn = $('session-btn');
-      btn.textContent = session.signed_in ? ('Sign out · ' + session.email_masked) : 'Sign in';
-      btn.title = session.signed_in ? 'End this session on this device' : 'Sign in to save scenarios';
+      paintSession();
       if (session.signed_in) loadScenarios();
       return session;
-    }).catch(function () { return session; });
+    }).catch(function () {
+      paintSession();
+      return session;
+    });
   }
 
   // One sign-in path, and it runs through the Projects Hub. A second one inside
@@ -663,10 +698,18 @@
     window.location.href = BASE + '/login';
   }
 
+  // Signing out clears the local session and returns to the Projects Hub. It
+  // deliberately does NOT touch the Hub's own token: this app borrowed that
+  // identity, and logging someone out of /projects from here would be a
+  // surprising side effect of leaving one page.
   function signOut() {
+    var url = (session && session.sign_in_url) || '/projects';
     return api('/api/v1/auth/logout', { method: 'POST' })
-      .then(goToGate)
-      .catch(goToGate);
+      .then(function (r) {
+        if (r && r.body && r.body.sign_in_url) url = r.body.sign_in_url;
+      })
+      .catch(function () { /* leaving anyway */ })
+      .then(function () { window.location.href = url; });
   }
 
   function loadScenarios() {
@@ -711,7 +754,7 @@
   }
 
   function wireActions() {
-    $('reset-btn').addEventListener('click', function () {
+    on('reset-btn', 'click', function () {
       inputs = JSON.parse(JSON.stringify(boot.defaults));
       renderControls();
       renderPresets();
@@ -719,13 +762,13 @@
       toast('Reset to the seeded defaults');
     });
 
-    $('print-btn').addEventListener('click', function () {
+    on('print-btn', 'click', function () {
       var stamp = new Date().toISOString().slice(0, 10);
       document.title = 'robonegotiate-model-' + stamp;
       window.print();
     });
 
-    $('save-btn').addEventListener('click', function () {
+    on('save-btn', 'click', function () {
       var name = window.prompt('Name this scenario');
       if (!name) return;
       api('/api/v1/scenarios', { method: 'POST', body: { name: name, inputs: inputs } })
@@ -747,10 +790,7 @@
         });
     });
 
-    $('session-btn').addEventListener('click', function () {
-      if (session.signed_in) signOut();
-      else goToGate();
-    });
+    on('signout-btn', 'click', signOut);
   }
 
   function start() {
@@ -762,7 +802,13 @@
         inputs = JSON.parse(JSON.stringify(boot.defaults));
         renderControls();
         renderPresets();
-        wireActions();
+        try {
+          wireActions();
+        } catch (err) {
+          // Controls that failed to bind are a degraded page, not a dead one.
+          console.error('[RoboNegotiate] wiring error:', err);
+          toast('Some controls did not load. Reload the page.');
+        }
         return recompute();
       })
       .then(refreshSession)

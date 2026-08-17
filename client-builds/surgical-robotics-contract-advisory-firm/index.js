@@ -28,6 +28,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const models = require('./models');
 const { makeStore } = require('./models/store');
@@ -127,12 +128,46 @@ function readPage(file) {
   return pageCache.get(file);
 }
 
+// =====================================================
+// ASSET CACHE-BUSTING — and why this is not optional.
+//
+// The shell is served `no-store` while static assets carry an hour of cache.
+// That combination shipped a real outage: a deploy renamed an element in
+// index.html and deleted a block of markup, and browsers paired the FRESH html
+// with an HOUR-OLD app.js still binding to the element that no longer existed.
+// The listener threw inside boot, after the controls had rendered but before
+// the model was fetched — so the page came up looking half alive, with the
+// sliders drawn, the dashboard empty and the session button frozen.
+//
+// Hashing the asset contents into the query string means the browser cannot
+// serve a stale script to a fresh shell: a changed file is a changed URL. The
+// hour of caching is kept, because now it is safe.
+// =====================================================
+const ASSET_FILES = ['app.js', 'app.css', 'login.js', 'print.css'];
+let assetVersionCache = null;
+
+function assetVersion() {
+  if (assetVersionCache && process.env.NODE_ENV === 'production') return assetVersionCache;
+  const hash = crypto.createHash('sha256');
+  for (const file of ASSET_FILES) {
+    try {
+      hash.update(fs.readFileSync(path.join(__dirname, 'public', file)));
+    } catch (err) {
+      // A missing asset must not take the page down; it just changes the hash.
+      hash.update(`missing:${file}`);
+    }
+  }
+  assetVersionCache = `${VERSION}-${hash.digest('hex').slice(0, 10)}`;
+  return assetVersionCache;
+}
+
 function renderShell(req, file) {
   const base = req.baseUrl || `/${SERVICE}`;
   return readPage(file)
     .split('{{BASE}}').join(base)
     .split('{{BRAND}}').join(BRAND)
     .split('{{VERSION}}').join(VERSION)
+    .split('{{ASSET_VERSION}}').join(assetVersion())
     .split('{{MODEL_VERSION}}').join(model.MODEL_VERSION);
 }
 
