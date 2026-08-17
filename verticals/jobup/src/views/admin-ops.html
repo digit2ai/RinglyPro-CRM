@@ -1,0 +1,400 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subscriber Operations — JobUp</title>
+<style>
+:root{
+  --bg:#0d1116; --panel:#151b22; --panel2:#111820; --line:#232c37; --line2:#2f3a48;
+  --ink:#e8edf3; --ink2:#aab6c4; --mut:#7c8794;
+  --accent:#57b8a0; --warn:#d8a13f; --bad:#dd7566; --ok:#57b8a0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px 80px}
+header{border-bottom:1px solid var(--line);background:var(--panel);padding:16px 0;margin-bottom:22px}
+header .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:0}
+h1{font-size:17px;margin:0;font-weight:640;letter-spacing:-.01em}
+h2{font-size:14px;margin:0 0 10px;font-weight:640;letter-spacing:.02em;text-transform:uppercase;color:var(--mut)}
+.sp{flex:1}
+button{font:inherit;background:var(--panel2);color:var(--ink);border:1px solid var(--line2);
+  border-radius:5px;padding:7px 13px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+button.p{background:var(--accent);border-color:var(--accent);color:#06231c;font-weight:600}
+button.d{border-color:var(--bad);color:var(--bad)}
+input,textarea,select{font:inherit;background:var(--panel2);color:var(--ink);
+  border:1px solid var(--line2);border-radius:5px;padding:7px 10px;width:100%}
+textarea{resize:vertical;min-height:64px}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 4px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);
+  padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--panel2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:3px;
+  border:1px solid var(--line2);color:var(--mut);white-space:nowrap;margin:1px 3px 1px 0}
+.tag.bad{color:var(--bad);border-color:var(--bad)}
+.tag.warn{color:var(--warn);border-color:var(--warn)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.f{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.msg{padding:10px 13px;border-radius:5px;border:1px solid var(--line2);background:var(--panel2);
+  margin-bottom:14px;font-size:13px}
+.msg.bad{border-color:var(--bad);color:var(--bad)}
+.msg.ok{border-color:var(--ok);color:var(--ok)}
+.hide{display:none}
+.kv{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv b{color:var(--mut);font-weight:500;min-width:150px}
+.fun{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.fun>div{background:var(--panel2);padding:11px 14px;flex:1 1 108px}
+.fun .n{font-size:19px;font-variant-numeric:tabular-nums;font-weight:640}
+.fun .l{font-size:10.5px;color:var(--mut);margin-top:2px}
+.find{padding:9px 12px;border-left:3px solid var(--line2);background:var(--panel2);
+  margin-bottom:7px;border-radius:0 5px 5px 0;font-size:13px}
+.find.blocking{border-left-color:var(--bad)}
+.find.warn{border-left-color:var(--warn)}
+.find.ok{border-left-color:var(--ok)}
+.right{text-align:right}
+small{color:var(--mut)}
+</style>
+
+<header><div class="wrap">
+  <h1>Subscriber Operations</h1>
+  <small id="who"></small>
+  <div class="sp"></div>
+  <button id="back" class="hide">&larr; All subscribers</button>
+  <button id="reload">Reload</button>
+  <a href="/admin/" style="font-size:13px">Admin console</a>
+</div></header>
+
+<div class="wrap">
+  <div id="msg" class="msg hide"></div>
+
+  <!-- ---------------- LIST ---------------- -->
+  <div id="listView">
+    <div class="card">
+      <div class="f" style="margin-bottom:12px">
+        <h2 style="margin:0">Every subscriber</h2>
+        <div class="sp"></div>
+        <small id="attn"></small>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>ID</th><th>Status</th><th>Domain</th><th>Ref</th>
+          <th class="num">Matches</th><th class="num">Scored</th><th class="num">Runs</th>
+          <th>Last run</th><th>Needs attention</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <p><small>Identities are withheld here by design. Open a subscriber with a written
+        reason to see and change anything — that is recorded permanently.</small></p>
+    </div>
+  </div>
+
+  <!-- ---------------- OPEN A CASE ---------------- -->
+  <div id="openView" class="hide">
+    <div class="card">
+      <h2>Open subscriber <span id="openId" class="mono"></span></h2>
+      <p><small>Reaching a subscriber's private data needs a written reason of at least 15
+        characters. It is written to the audit log against your account and theirs, before
+        anything is read, and the grant lasts 30 minutes.</small></p>
+      <label for="reason">Why are you opening this account?</label>
+      <textarea id="reason" placeholder="e.g. Subscriber reports an empty board after four days; checking whether her targeting or the pool is the cause."></textarea>
+      <div class="f" style="margin-top:11px">
+        <button class="p" id="doOpen">Open case</button>
+        <button id="cancelOpen">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- DETAIL ---------------- -->
+  <div id="detailView" class="hide">
+    <div class="card">
+      <div class="f">
+        <div>
+          <div style="font-size:16px;font-weight:640" id="dName"></div>
+          <small id="dMeta"></small>
+        </div>
+        <div class="sp"></div>
+        <small id="caseNote"></small>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>What is wrong</h2>
+      <div id="findings"></div>
+    </div>
+
+    <div class="card">
+      <h2>Where the pool goes</h2>
+      <div class="fun" id="funnel"></div>
+      <div id="dropped" style="margin-top:11px"></div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Run their matching</h2>
+        <div class="f">
+          <div style="width:110px"><label for="runN">Jobs to score</label>
+            <input id="runN" type="number" min="1" max="50" value="12"></div>
+          <div style="align-self:end"><button class="p" id="doRun">Run now</button></div>
+          <div style="align-self:end"><button id="doPresence">Rebuild their site</button></div>
+        </div>
+        <p><small>Runs on the operator allowance, so it never spends the quota the subscriber
+          is about to use, and is logged under its own trigger. It costs real model tokens.</small></p>
+        <div class="f" style="margin-top:6px">
+          <button class="d" id="doRescore">Let it re-score rejected jobs</button>
+        </div>
+        <p><small>Reopens postings that were scored and not filed, so a widened filter can
+          look at them again. Filed matches are never touched.</small></p>
+      </div>
+
+      <div class="card">
+        <h2>Fix their targeting</h2>
+        <div class="grid g2">
+          <div><label for="fRoles">Role targets (comma separated)</label><input id="fRoles"></div>
+          <div><label for="fMode">Work mode</label>
+            <select id="fMode">
+              <option value="any">No preference</option>
+              <option value="remote">Remote only — hides everything else</option>
+              <option value="hybrid">Prefer hybrid or remote</option>
+              <option value="onsite">Prefer on-site</option>
+            </select></div>
+          <div><label for="fMin">Minimum score to file</label><input id="fMin" type="number" min="0" max="100"></div>
+          <div><label for="fPerDay">Jobs scored per day</label><input id="fPerDay" type="number" min="1" max="40"></div>
+          <div><label for="fExcl">Excluded keywords</label><input id="fExcl"></div>
+          <div><label for="fMust">Required keywords</label><input id="fMust"></div>
+        </div>
+        <div class="f" style="margin-top:11px"><button class="p" id="doSave">Save targeting</button></div>
+        <p><small>Operational fields only. Their résumé, privacy flags and the approval gate
+          are theirs and are not editable here.</small></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>The next run will score these</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>#</th><th class="num">Rank</th><th>Employer</th><th>Title</th><th>Location</th></tr></thead>
+        <tbody id="nextUp"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>Their board</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th class="num">Score</th><th>Stage</th><th>Employer</th><th>Title</th><th>Why</th></tr></thead>
+        <tbody id="matches"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>Agent history</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>When</th><th>Agent</th><th>Trigger</th><th>Status</th>
+          <th class="num">Scored</th><th class="num">Cost</th><th>Summary</th></tr></thead>
+        <tbody id="runs"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>Queue behind that</h2>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th class="num">Rank</th><th>Employer</th><th>Title</th><th>Location</th></tr></thead>
+        <tbody id="queue"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var num=function(n){return (n==null?0:n).toLocaleString();};
+  var CASE=null, TID=null, DIAG=null;
+
+  function msg(text,kind){
+    var m=$('msg'); m.textContent=text; m.className='msg'+(kind?' '+kind:'');
+    if(!text) m.className='msg hide';
+  }
+  function api(path,opts){
+    opts=opts||{};
+    var h={'Content-Type':'application/json'};
+    if(CASE) h['x-jobup-case']=CASE;
+    return fetch('/admin'+path,{method:opts.method||'GET',headers:h,
+      body:opts.body?JSON.stringify(opts.body):undefined,credentials:'same-origin'})
+      .then(function(r){return r.json().then(function(j){
+        if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;});});
+  }
+  function show(v){
+    ['listView','openView','detailView'].forEach(function(id){
+      $(id).classList.toggle('hide',id!==v);});
+    $('back').classList.toggle('hide',v==='listView');
+  }
+
+  // ---- list ----
+  function loadList(){
+    msg('');
+    api('/subscribers/ops').then(function(j){
+      $('attn').textContent=j.needs_attention+' need attention';
+      $('rows').innerHTML=j.subscribers.map(function(s){
+        var flags=s.flags.length
+          ? s.flags.map(function(f){return '<span class="tag bad">'+esc(f)+'</span>';}).join('')
+          : '<span class="tag ok">ok</span>';
+        return '<tr class="click" data-id="'+s.id+'">'+
+          '<td class="mono">'+s.id+'</td>'+
+          '<td>'+esc(s.status)+'</td>'+
+          '<td>'+esc(s.email_domain||'—')+'</td>'+
+          '<td class="mono"><small>'+esc(s.email_ref)+'</small></td>'+
+          '<td class="num">'+num(s.matches)+'</td>'+
+          '<td class="num">'+num(s.scored)+'</td>'+
+          '<td class="num">'+num(s.runs)+'</td>'+
+          '<td><small>'+esc(s.last_run_at?new Date(s.last_run_at).toISOString().slice(0,16).replace('T',' '):'never')+'</small></td>'+
+          '<td>'+flags+'</td></tr>';
+      }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('#rows tr.click'),function(tr){
+        tr.addEventListener('click',function(){
+          TID=parseInt(tr.getAttribute('data-id'),10);
+          $('openId').textContent='#'+TID; $('reason').value='';
+          show('openView'); $('reason').focus();
+        });
+      });
+      show('listView');
+    }).catch(function(e){msg(e.message,'bad');});
+  }
+
+  // ---- open a case ----
+  $('doOpen').addEventListener('click',function(){
+    var reason=$('reason').value.trim();
+    if(reason.length<15){msg('A written reason of at least 15 characters is required.','bad');return;}
+    $('doOpen').disabled=true; msg('Opening…');
+    api('/subscribers/'+TID+'/open',{method:'POST',body:{reason:reason}})
+      .then(function(j){ CASE=j.case_token; msg(''); loadDiag(); })
+      .catch(function(e){msg(e.message,'bad');})
+      .then(function(){$('doOpen').disabled=false;});
+  });
+  $('cancelOpen').addEventListener('click',function(){CASE=null;TID=null;loadList();});
+  $('back').addEventListener('click',function(){CASE=null;TID=null;loadList();});
+  $('reload').addEventListener('click',function(){ CASE&&TID?loadDiag():loadList(); });
+
+  // ---- diagnosis ----
+  function loadDiag(){
+    api('/subscribers/'+TID+'/diagnose').then(function(j){
+      DIAG=j; var s=j.subscriber, f=j.funnel, t=j.targeting||{};
+      $('dName').textContent=(s.name||'(no name)')+'  ·  '+(s.email||'');
+      $('dMeta').innerHTML='#'+s.id+' · '+esc(s.status)+' · '+esc(s.activation||'')+
+        (s.address?' · <a href="https://'+esc(s.address)+'" target="_blank" rel="noopener">'+esc(s.address)+'</a>':'');
+      $('caseNote').textContent='Case open — 30 min';
+
+      $('findings').innerHTML=j.findings.map(function(x){
+        return '<div class="find '+esc(x.level)+'">'+esc(x.text)+'</div>';}).join('');
+
+      $('funnel').innerHTML=[
+        ['Pool',f.pool],['Admitted',f.admitted],['After location',f.after_geo],
+        ['Already scored',f.already_scored],['Queued',f.queued],
+        ['Per day',f.per_day],['Days of queue',f.days_of_queue]
+      ].map(function(p){return '<div><div class="n">'+num(p[1])+'</div><div class="l">'+p[0]+'</div></div>';}).join('');
+
+      var d=f.dropped||{}, keys=Object.keys(d).filter(function(k){return d[k]>0;});
+      $('dropped').innerHTML=keys.length
+        ? '<small>Excluded before scoring: </small>'+keys.map(function(k){
+            return '<span class="tag warn">'+esc(k.replace(/_/g,' '))+': '+num(d[k])+'</span>';}).join('')
+        : '<small>Nothing was excluded by their own filters.</small>';
+
+      $('fRoles').value=(t.roles||[]).map(function(r){return r.title||r;}).join(', ');
+      $('fMode').value=t.remote_preference||'any';
+      $('fMin').value=t.min_score||0;
+      $('fPerDay').value=(j.quotas&&j.quotas.jobs_scored_per_day)||6;
+      $('fExcl').value=(t.exclude_keywords||[]).join(', ');
+      $('fMust').value=(t.must_include||[]).join(', ');
+
+      $('nextUp').innerHTML=(j.next_up||[]).map(function(r,i){
+        return '<tr><td class="mono">'+(i+1)+'</td><td class="num">'+r.rank+'</td>'+
+          '<td>'+esc(r.employer)+'</td><td>'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.title)+'</a>':esc(r.title))+'</td>'+
+          '<td><small>'+esc(r.location||'')+'</small></td></tr>';}).join('')
+        || '<tr><td colspan="5"><small>Nothing queued.</small></td></tr>';
+
+      $('matches').innerHTML=(j.matches||[]).map(function(m){
+        return '<tr><td class="num">'+(m.score==null?'—':m.score)+'</td><td>'+esc(m.stage)+'</td>'+
+          '<td>'+esc(m.employer||'')+'</td><td>'+esc(m.title||('job '+m.job_id))+'</td>'+
+          '<td><small>'+esc(m.explanation||'')+(m.is_simulated?' <span class="tag warn">heuristic</span>':'')+'</small></td></tr>';
+      }).join('') || '<tr><td colspan="5"><small>Their board is empty.</small></td></tr>';
+
+      $('runs').innerHTML=(j.runs||[]).map(function(r){
+        return '<tr><td><small>'+esc(new Date(r.created_at).toISOString().slice(0,16).replace('T',' '))+'</small></td>'+
+          '<td>'+esc(r.agent)+'</td><td><small>'+esc(r.trigger||'')+'</small></td><td>'+esc(r.status)+'</td>'+
+          '<td class="num">'+num(r.scored)+'</td><td class="num">'+(r.cost_usd?('$'+Number(r.cost_usd).toFixed(4)):'—')+'</td>'+
+          '<td><small>'+esc(r.summary||'')+'</small></td></tr>';}).join('');
+
+      $('queue').innerHTML=(j.queue_preview||[]).map(function(r){
+        return '<tr><td class="num">'+r.rank+'</td><td>'+esc(r.employer)+'</td>'+
+          '<td>'+esc(r.title)+'</td><td><small>'+esc(r.location||'')+'</small></td></tr>';}).join('');
+
+      show('detailView');
+    }).catch(function(e){
+      msg(e.message,'bad');
+      if(/case/.test(e.message)){CASE=null;loadList();}
+    });
+  }
+
+  // ---- actions ----
+  function act(btn,path,body,done){
+    var b=$(btn); b.disabled=true; msg('Working…');
+    api(path,{method:'POST',body:body||{}})
+      .then(function(j){ msg(done(j),'ok'); loadDiag(); })
+      .catch(function(e){ msg(e.message,'bad'); })
+      .then(function(){ b.disabled=false; });
+  }
+  $('doRun').addEventListener('click',function(){
+    act('doRun','/subscribers/'+TID+'/run',{limit:parseInt($('runN').value,10)||12},function(j){
+      if(j.daily_limit_reached) return 'Operator allowance for today is used up.';
+      return 'Scored '+num(j.scored+(j.below_minimum||0))+', filed '+num(j.scored)+
+        (j.below_minimum?' ('+num(j.below_minimum)+' below their minimum)':'')+
+        (j.cost_usd?' · $'+Number(j.cost_usd).toFixed(4):'');
+    });
+  });
+  $('doPresence').addEventListener('click',function(){
+    act('doPresence','/subscribers/'+TID+'/presence',{},function(j){
+      return 'Public surfaces rebuilt. '+(j.gaps||[]).length+' gap(s).';});
+  });
+  $('doRescore').addEventListener('click',function(){
+    act('doRescore','/subscribers/'+TID+'/rescore',{},function(j){
+      return num(j.reopened)+' rejected posting(s) can be scored again.';});
+  });
+  $('doSave').addEventListener('click',function(){
+    var list=function(v){return v.split(',').map(function(x){return x.trim();}).filter(Boolean);};
+    var b=$('doSave'); b.disabled=true; msg('Saving…');
+    api('/subscribers/'+TID+'/targeting',{method:'PATCH',body:{
+      targeting:{
+        roles:list($('fRoles').value).map(function(x){return {title:x};}),
+        remote_preference:$('fMode').value,
+        min_score:parseInt($('fMin').value,10)||0,
+        exclude_keywords:list($('fExcl').value),
+        must_include:list($('fMust').value)
+      },
+      quotas:{jobs_scored_per_day:parseInt($('fPerDay').value,10)||6}
+    }}).then(function(j){
+      msg(j.changed.length?('Saved: '+j.changed.join(', ')):'Nothing changed.','ok'); loadDiag();
+    }).catch(function(e){msg(e.message,'bad');})
+      .then(function(){b.disabled=false;});
+  });
+
+  fetch('/admin/session',{credentials:'same-origin'}).then(function(r){return r.json();})
+    .then(function(j){
+      if(!j||!j.email){location.href='/admin/';return;}
+      $('who').textContent=j.email; loadList();
+    }).catch(function(){location.href='/admin/';});
+})();
+</script>

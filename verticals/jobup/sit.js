@@ -1903,6 +1903,151 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 
 
   // ---------------------------------------------------------------
+  section('subscriber operations — the fix-it bench');
+  const ops = require(__dirname + '/src/routes/admin-subscribers');
+  const fs = require('fs');
+  const jwtLib = require('jsonwebtoken');
+  const OPS_SECRET = process.env.JOBUP_JWT_SECRET || 'dev-only-insecure-secret';
+  const opsReq = (over) => Object.assign({ admin: { email: 'mstagg@digit2ai.com' },
+    params: {}, body: {}, query: {}, get: () => null }, over || {});
+  const opsRes = () => { const r = { code: 200, body: null,
+    status(c) { r.code = c; return r; }, json(b) { r.body = b; return r; } }; return r; };
+  const mkCase = (claim) => jwtLib.sign(Object.assign(
+    { tid: 1, adm: 'mstagg@digit2ai.com', purpose: 'ops' }, claim), OPS_SECRET, { expiresIn: '30m' });
+
+  await t('THE CASE IS THE DOOR, AND IT IS SHUT BY DEFAULT', () => {
+    // Reaching a subscriber's private career data is exactly what the admin
+    // console refuses to do without an audited reason. A support screen must
+    // not become the way around that.
+    const res = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '1' } }), res, () => { throw new Error('let through'); });
+    assert.strictEqual(res.code, 403);
+    assert.ok(/no open case/.test(res.body.error));
+  });
+  await t('A CASE OPENED ON ONE SUBSCRIBER CANNOT READ ANOTHER', () => {
+    // The whole point of a per-subscriber grant. Without this it is just a
+    // login, and the written reason means nothing.
+    const token = mkCase({ tid: 12 });
+    const res = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '13' }, get: () => token }), res,
+      () => { throw new Error('crossed tenants'); });
+    assert.strictEqual(res.code, 403);
+    assert.ok(/different subscriber/.test(res.body.error));
+
+    // ...and the matching one is allowed.
+    let ok = false;
+    ops.requireCase(opsReq({ params: { tenantId: '12' }, get: () => token }), opsRes(), () => { ok = true; });
+    assert.ok(ok, 'the subscriber the case names must be readable');
+  });
+  await t("one operator's case is not another operator's", () => {
+    const token = mkCase({ tid: 5, adm: 'someone.else@digit2ai.com' });
+    const res = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '5' }, get: () => token }), res,
+      () => { throw new Error('accepted a stolen case'); });
+    assert.strictEqual(res.code, 403);
+  });
+  await t('a forged or expired case is refused', () => {
+    const forged = jwtLib.sign({ tid: 5, adm: 'mstagg@digit2ai.com', purpose: 'ops' }, 'wrong-secret');
+    const r1 = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '5' }, get: () => forged }), r1, () => { throw new Error('forged accepted'); });
+    assert.strictEqual(r1.code, 403);
+
+    const expired = jwtLib.sign({ tid: 5, adm: 'mstagg@digit2ai.com', purpose: 'ops' },
+      OPS_SECRET, { expiresIn: '-1s' });
+    const r2 = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '5' }, get: () => expired }), r2, () => { throw new Error('expired accepted'); });
+    assert.strictEqual(r2.code, 403);
+
+    // A session token from somewhere else is not a case.
+    const wrongPurpose = jwtLib.sign({ tid: 5, adm: 'mstagg@digit2ai.com' }, OPS_SECRET);
+    const r3 = opsRes();
+    ops.requireCase(opsReq({ params: { tenantId: '5' }, get: () => wrongPurpose }), r3, () => { throw new Error('non-case accepted'); });
+    assert.strictEqual(r3.code, 403);
+  });
+  await t('THE LIST STAYS PSEUDONYMISED — a name needs a reason', () => {
+    const src = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    const list = src.slice(src.indexOf("router.get('/subscribers/ops'"), src.indexOf("router.post('/subscribers/:tenantId/open'"));
+    assert.ok(/email_ref/.test(list) && /createHash/.test(list), 'the list must hash the email');
+    // Check the keys the row actually RETURNS, not every mention of s.email —
+    // hashing it and taking its domain are exactly how it stays pseudonymous.
+    assert.ok(!/^\s*email:/m.test(list), 'the list row must not carry an email field');
+    assert.ok(!/^\s*name:/m.test(list), 'the list row must not carry a name field');
+    assert.ok(!/^\s*phone:/m.test(list), 'nor a phone number');
+    // The detail view may — that is what the audited reason buys.
+    assert.ok(/name: sub\.name/.test(src), 'an opened case shows who it is');
+  });
+  await t('AN OPERATOR CANNOT EDIT WHAT IS NOT THEIRS TO EDIT', () => {
+    // Targeting is operational. A résumé, the privacy flags and the approval
+    // gate are the subscriber's, and an allowlist is what keeps a well-meaning
+    // fix from switching one off.
+    for (const forbidden of ['privacy', 'approval_required', 'identity_links', 'facts', 'blocked']) {
+      assert.ok(!ops.EDITABLE.includes(forbidden), forbidden + ' must not be operator-editable');
+    }
+    for (const allowed of ['roles', 'min_score', 'remote_preference', 'exclude_keywords']) {
+      assert.ok(ops.EDITABLE.includes(allowed), allowed + ' should be fixable');
+    }
+    const src = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    assert.ok(/settingsSvc\.sanitize\(\{ \.\.\.current, targeting: nextTargeting \}\)/.test(src),
+      'a write must go back through sanitize, which forces approval_required on');
+    assert.ok(!/resume_json[^\n]*update|update[^\n]*resume_json/.test(src),
+      'it must never write to a résumé');
+  });
+  await t('IT CANNOT SEND ANYTHING ON A SUBSCRIBER\'S BEHALF', () => {
+    // The product is built on the subscriber approving what goes out. An
+    // operator route that emails or applies for them is worse than any bug
+    // this bench exists to fix.
+    const src = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    for (const bad of ['mailer', 'sendgrid', 'outreach', 'applications', 'sendMail']) {
+      assert.ok(!new RegExp('require\\([^)]*' + bad, 'i').test(src),
+        'the bench must not reach ' + bad);
+    }
+  });
+  await t('every write is audited individually, by field', () => {
+    const src = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    assert.ok(/ops\.open:/.test(src) && /ops\.run:/.test(src)
+           && /ops\.targeting:/.test(src) && /ops\.rescore:/.test(src),
+      'open, run, targeting and rescore must each write their own audit row');
+    assert.ok(/changed\.join\(', '\)/.test(src),
+      '"I edited their settings" is not a record — name the fields');
+    assert.ok(src.indexOf("await audit(req.admin.email, 'ops.open:")
+            < src.indexOf('jwt.sign('), 'the audit row is written BEFORE the grant is issued');
+  });
+  await t('re-scoring reopens rejects and never touches a filed match', () => {
+    const src = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    assert.ok(/ledger\.filter\(\(r\) => !r\.filed\)/.test(src),
+      'only postings that were NOT filed may be reopened');
+    assert.ok(!/job_matches[^\n]*destroy/.test(src), 'a match on their board is never deleted');
+  });
+  await t('AN OPERATOR RUN DOES NOT SPEND THE SUBSCRIBER\'S ALLOWANCE', () => {
+    // Somebody trying to fix an empty board must not be refused because this
+    // morning's scheduled run already used the day, and must not consume the
+    // manual run the subscriber is about to press.
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/'signup', 'scheduled', 'manual', 'admin'/.test(src), "'admin' must be its own trigger");
+    assert.ok(/const isAdmin = trigger === 'admin'/.test(src));
+    assert.ok(/isAdmin[\s\S]{0,120}Math\.min\(50/.test(src), 'and it must stay bounded');
+    // usedToday scopes by trigger, so the buckets cannot bleed.
+    assert.ok(/today\.filter\(\(r\) => \(r\.trigger \|\| 'scheduled'\) === trigger\)/.test(src));
+  });
+  await t('the case token is signed with the CONSOLE\'S secret, not a near-copy', () => {
+    // Deriving it from a different fallback chain means the two disagree the
+    // moment one env var is set and not the other — and it surfaces as
+    // "session expired", which sends you looking at the wrong thing.
+    const a = fs.readFileSync(__dirname + '/src/routes/admin.js', 'utf8');
+    const b = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    const pick = (s) => (s.match(/const SECRET = ([^;]+);/) || [])[1];
+    assert.strictEqual(pick(b), pick(a), 'both must resolve the admin secret identically');
+  });
+  await t('the ops page is not served out of public/', () => {
+    // A static file under public/ is reachable by anyone who guesses the name.
+    assert.ok(!fs.existsSync(__dirname + '/public/admin-ops.html'),
+      'the operator page must not sit in the public directory');
+    assert.ok(fs.existsSync(__dirname + '/src/views/admin-ops.html'));
+    const page = fs.readFileSync(__dirname + '/src/views/admin-ops.html', 'utf8');
+    assert.ok(!/@[a-z0-9.-]+\.(com|dev|net|org)\b/i.test(page.replace(/[^\n]*jobup\.dev[^\n]*/g, '')),
+      'the shell must carry no subscriber data of its own');
+  });
+
   section('admin console — owner only');
   const adminRoute = require(__dirname + '/src/routes/admin');
 
@@ -3852,8 +3997,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
   await t('an unknown trigger falls back to scheduled, never to a free pass', () => {
     const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
-    assert.ok(src.includes("['signup', 'scheduled', 'manual'].includes(opts.trigger)"),
+    // A CLOSED list. Each entry is its own daily allowance, so a string that is
+    // not on it must fall back rather than mint a fresh one. 'admin' is the
+    // operator's bucket and is deliberately the only addition.
+    const m = src.match(/\[([^\]]*)\]\.includes\(opts\.trigger\)/);
+    assert.ok(m, 'the trigger must be checked against a literal allowlist');
+    const allowed = m[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+    assert.deepStrictEqual(allowed, ['signup', 'scheduled', 'manual', 'admin'],
       'an arbitrary trigger string must not mint a new allowance');
+    assert.ok(/\? opts\.trigger : 'scheduled'/.test(src), 'and anything else falls back');
   });
   await t('the dashboard says whether the search is available', () => {
     const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');

@@ -152,6 +152,10 @@ router.use('/api/v1/intake', require('./routes/intake'));
 router.use('/api/v1/billing', require('./routes/billing'));
 router.use('/api/v1/engine', require('./routes/engine'));
 router.use('/teaser', require('./routes/teaser-view'));
+// The subscriber fix-it bench. Mounted BEFORE the admin console so its routes
+// win over the console's catch-all page, and inside /admin so it inherits the
+// owner credential rather than minting yet another one.
+router.use('/admin', require('./routes/admin-subscribers'));
 router.use('/admin', require('./routes/admin'));
 // Separate module, separate credential, separate cookie: who is subscribed,
 // what they paid and when. See routes/subscribers-admin.js for why it may show

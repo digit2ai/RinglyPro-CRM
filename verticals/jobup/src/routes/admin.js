@@ -338,7 +338,11 @@ td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
 <div id="app" class="hidden">
   <div id="stats" class="grid"></div>
   <h2>Employer registry</h2><div id="emp"></div>
-  <h2>Subscribers (pseudonymised)</h2><div id="subs"></div>
+  <h2>Subscribers (pseudonymised)</h2>
+  <p><a href="/admin/ops" style="font-weight:600">Open Subscriber Operations &rarr;</a>
+     &nbsp;<span class="note">See each subscriber's matching, diagnose why a board is empty,
+     fix targeting and run their agent. Opening one needs a written reason and is audited.</span></p>
+  <div id="subs"></div>
   <h2>Audit log</h2><div id="aud"></div>
   <div class="note" id="foot"></div>
 </div>

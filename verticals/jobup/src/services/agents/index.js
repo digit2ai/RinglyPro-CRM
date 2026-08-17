@@ -121,14 +121,25 @@ async function usedToday(tenantId, trigger) {
 // ---------------------------------------------------------------
 async function hunter(tenantId, opts = {}) {
   const { profile, settings, sourceText } = await loadContext(tenantId);
-  const perDay = (settings.quotas && settings.quotas.jobs_scored_per_day) || 6;
-  const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
   // WHAT ASKED FOR THIS RUN. Each trigger carries its OWN daily allowance:
   // sharing one pool meant whichever ran first spent it, so a subscriber who
   // opened the app after the 07:00 run found the button did nothing.
-  const trigger = ['signup', 'scheduled', 'manual'].includes(opts.trigger)
+  //
+  // 'admin' is the operator's own bucket. A support run must never consume the
+  // allowance the subscriber is about to use, and must not be refused because
+  // this morning's scheduled run already spent theirs — that is exactly the
+  // moment somebody is trying to fix something for them. It is still capped,
+  // still costs real money, and is recorded under its own trigger so it can
+  // never be mistaken for the subscriber's own activity.
+  const trigger = ['signup', 'scheduled', 'manual', 'admin'].includes(opts.trigger)
     ? opts.trigger : 'scheduled';
+  const isAdmin = trigger === 'admin';
+
+  const perDay = isAdmin
+    ? Math.max(1, Math.min(50, parseInt(opts.limit, 10) || 12))
+    : ((settings.quotas && settings.quotas.jobs_scored_per_day) || 6);
+  const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
   const used = await usedToday(tenantId, trigger);
   const jobsLeft = Math.max(0, perDay - used.scored);
