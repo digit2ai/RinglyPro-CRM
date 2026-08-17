@@ -913,9 +913,9 @@ body.tw-on .tw-side{display:flex}
    Only appears when a signed-in contact exists in this browser; otherwise the
    Studio renders as a plain full-width page. */
 (function(){
-  var email=''; try{ email=(JSON.parse(localStorage.getItem('d2ai_contact')||'{}').email||'').trim(); }catch(e){}
+  var session=''; try{ session=localStorage.getItem('d2ai_session')||''; }catch(e){}
   var side=document.getElementById('tw-side');
-  if(!email || !side) return;
+  if(!session || !side) return; // only for an authenticated workspace session
   var PID = ${projectId ? Number(projectId) : 'null'};
   var ES = ${JSON.stringify(es)};
   document.body.classList.add('tw-on');
@@ -927,7 +927,7 @@ body.tw-on .tw-side{display:flex}
     + '<div id="tw-list"><div style="color:#5f7197;font-size:13px;padding:9px 11px">'+(ES?'Cargando…':'Loading…')+'</div></div>'
     + '<div class="sp"></div>'
     + '<a class="tw-back" href="/orbup/workspace">'+(ES?'Ver todo el workspace':'Open full workspace')+'</a>';
-  fetch('/projects/api/v1/intake/orbup/workspace?email='+encodeURIComponent(email))
+  fetch('/projects/api/v1/intake/orbup/workspace?session='+encodeURIComponent(session))
     .then(function(r){ return r.json(); })
     .then(function(res){
       var list=document.getElementById('tw-list');

@@ -804,6 +804,11 @@ app.get('*', (req, res) => {
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS grant_day DATE`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS grant_month VARCHAR(7)`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS month_granted INTEGER DEFAULT 0`,
+      // Real accounts: first/last name, phone, hashed password (workspace login).
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS first_name VARCHAR(80)`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS last_name VARCHAR(80)`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS phone VARCHAR(32)`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS password_hash TEXT`,
       `CREATE TABLE IF NOT EXISTS orbup_apps (
         id SERIAL PRIMARY KEY,
         token UUID NOT NULL UNIQUE,

@@ -434,33 +434,90 @@ router.post('/public/simulator/:projectId', async (req, res) => {
 // projects). Idempotent upsert by email; the wizard calls it after the sign
 // form (name+email) and again as onboarding answers come in. No auth (free
 // self-serve); the email is the workspace identity.
+// ---- OrbUp workspace auth (password + signed session) ----
+const ORBUP_SECRET = process.env.ORBUP_SECRET || process.env.JWT_SECRET || 'orbup-workspace-secret-change-me';
+function orbSign(payload) {
+  const jwt = require('jsonwebtoken');
+  return jwt.sign(payload, ORBUP_SECRET, { expiresIn: '30d' });
+}
+function orbVerify(token) {
+  try { return require('jsonwebtoken').verify(token, ORBUP_SECRET); } catch (_) { return null; }
+}
+// Trusted email from a signed session (query ?session=, Bearer header, or cookie).
+// This is the SECURE identity — never trust a raw ?email= for private data.
+function orbSessionEmail(req) {
+  const t = (req.query && req.query.session)
+    || ((req.headers.authorization || '').replace(/^Bearer\s+/i, ''))
+    || (req.cookies && req.cookies.orbup_session) || '';
+  const p = t ? orbVerify(String(t)) : null;
+  return p && p.email ? String(p.email).toLowerCase() : null;
+}
+
+// POST /orbup/signup — create OR log in a workspace account (password required).
+// New email -> create with hashed password. Existing email with a password ->
+// verify it (login). Legacy passwordless account -> set the password now (claim).
+// Returns a 30-day signed session the frontend stores + sends on every workspace call.
 router.post('/orbup/signup', async (req, res) => {
   try {
+    const bcrypt = require('bcryptjs');
     const b = req.body || {};
-    const name = String(b.name || '').trim().slice(0, 120);
+    const first_name = String(b.first_name || '').trim().slice(0, 80);
+    const last_name = String(b.last_name || '').trim().slice(0, 80);
     const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+    const phone = String(b.phone || '').trim().slice(0, 32) || null;
+    const password = String(b.password || '');
+    const name = (first_name + ' ' + last_name).trim() || String(b.name || '').trim().slice(0, 120);
+
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return res.status(400).json({ success: false, error: 'A valid email is required' });
     }
-    const style = ['light', 'dark'].includes(b.style) ? b.style : null;
-    const role = b.role ? String(b.role).trim().slice(0, 40) : null;
-    const company_size = b.company_size ? String(b.company_size).trim().slice(0, 20) : null;
-    const first_project = b.first_project ? String(b.first_project).trim().slice(0, 500) : null;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    }
 
-    await sequelize.query(
-      `INSERT INTO orbup_users (name, email, style_pref, role, company_size, first_project, plan, created_at, updated_at)
-       VALUES (:name, :email, :style, :role, :size, :fp, 'free', NOW(), NOW())
-       ON CONFLICT (email) DO UPDATE SET
-         name         = COALESCE(NULLIF(EXCLUDED.name, ''), orbup_users.name),
-         style_pref   = COALESCE(EXCLUDED.style_pref, orbup_users.style_pref),
-         role         = COALESCE(EXCLUDED.role, orbup_users.role),
-         company_size = COALESCE(EXCLUDED.company_size, orbup_users.company_size),
-         first_project= COALESCE(EXCLUDED.first_project, orbup_users.first_project),
-         updated_at   = NOW()`,
-      { replacements: { name, email, style, role, size: company_size, fp: first_project } }
+    const [rows] = await sequelize.query(
+      'SELECT id, password_hash FROM orbup_users WHERE email = :email LIMIT 1',
+      { replacements: { email } }
     );
-    const [rows] = await sequelize.query('SELECT id FROM orbup_users WHERE email = :email LIMIT 1', { replacements: { email } });
-    res.json({ success: true, user_id: rows && rows[0] ? rows[0].id : null, plan: 'free' });
+    const existing = rows && rows[0] ? rows[0] : null;
+
+    if (existing && existing.password_hash) {
+      // Account exists with a password -> this is a LOGIN. Verify.
+      const ok = await bcrypt.compare(password, existing.password_hash);
+      if (!ok) return res.status(401).json({ success: false, error: 'That email is already registered. Wrong password.' });
+      // Refresh profile fields the user re-entered (never clobber with blanks).
+      await sequelize.query(
+        `UPDATE orbup_users SET
+           first_name = COALESCE(NULLIF(:fn,''), first_name),
+           last_name  = COALESCE(NULLIF(:ln,''), last_name),
+           name       = COALESCE(NULLIF(:nm,''), name),
+           phone      = COALESCE(:ph, phone),
+           updated_at = NOW()
+         WHERE email = :email`,
+        { replacements: { fn: first_name, ln: last_name, nm: name, ph: phone, email } }
+      );
+      const session = orbSign({ uid: existing.id, email });
+      return res.json({ success: true, user_id: existing.id, plan: 'free', session, mode: 'login', name, email });
+    }
+
+    // New account, or legacy account claiming a password for the first time.
+    const password_hash = await bcrypt.hash(password, 10);
+    await sequelize.query(
+      `INSERT INTO orbup_users (name, first_name, last_name, email, phone, password_hash, plan, created_at, updated_at)
+       VALUES (:name, :fn, :ln, :email, :ph, :pwh, 'free', NOW(), NOW())
+       ON CONFLICT (email) DO UPDATE SET
+         name          = COALESCE(NULLIF(EXCLUDED.name,''), orbup_users.name),
+         first_name    = COALESCE(NULLIF(EXCLUDED.first_name,''), orbup_users.first_name),
+         last_name     = COALESCE(NULLIF(EXCLUDED.last_name,''), orbup_users.last_name),
+         phone         = COALESCE(EXCLUDED.phone, orbup_users.phone),
+         password_hash = COALESCE(orbup_users.password_hash, EXCLUDED.password_hash),
+         updated_at    = NOW()`,
+      { replacements: { name, fn: first_name, ln: last_name, email, ph: phone, pwh: password_hash } }
+    );
+    const [urows] = await sequelize.query('SELECT id FROM orbup_users WHERE email = :email LIMIT 1', { replacements: { email } });
+    const uid = urows && urows[0] ? urows[0].id : null;
+    const session = orbSign({ uid, email });
+    res.json({ success: true, user_id: uid, plan: 'free', session, mode: existing ? 'claim' : 'signup', name, email });
   } catch (err) {
     console.error('[D2AI-Intake] orbup signup failed:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -472,9 +529,11 @@ router.post('/orbup/signup', async (req, res) => {
 // teaser + simulator magic links). Passwordless free tier — email is identity.
 router.get('/orbup/workspace', async (req, res) => {
   try {
-    const email = String(req.query.email || '').trim().toLowerCase();
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      return res.status(400).json({ success: false, error: 'A valid email is required' });
+    // SECURITY: the project list is private. Trust ONLY a signed session — never a
+    // raw ?email= (which anyone could type). No valid session -> 401 needs_auth.
+    const email = orbSessionEmail(req);
+    if (!email) {
+      return res.status(401).json({ success: false, error: 'Sign in to view your workspace', needs_auth: true });
     }
     const [uRows] = await sequelize.query(
       'SELECT id, name, email, plan, role, company_size, created_at FROM orbup_users WHERE email = :email LIMIT 1',

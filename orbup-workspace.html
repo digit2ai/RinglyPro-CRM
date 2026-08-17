@@ -126,10 +126,11 @@
   if(!root) return;
   var WS_URL='/projects/api/v1/intake/orbup/workspace';
 
-  // identity (passwordless free tier): email in localStorage from signup
+  // Authenticated workspace: a signed session (from password login) is required.
   var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
+  var session=''; try{ session=localStorage.getItem('d2ai_session')||''; }catch(e){}
   var email=(contact.email||'').trim();
-  if(!email){ window.location.replace('/orbup/start'); return; }
+  if(!session){ window.location.replace('/orbup'); return; } // no session -> create/sign into workspace
   var name=(contact.name||'').trim();
   var first = name ? name.split(' ')[0] : '';
 
@@ -166,8 +167,8 @@
 
   // load workspace projects
   function statusLabel(s){ return String(s||'planning').replace(/_/g,' '); }
-  fetch(WS_URL+'?email='+encodeURIComponent(email))
-    .then(function(r){ return r.json(); })
+  fetch(WS_URL+'?session='+encodeURIComponent(session))
+    .then(function(r){ if(r.status===401){ window.location.replace('/orbup'); throw new Error('auth'); } return r.json(); })
     .then(function(res){
       var list=document.getElementById('oww-list');
       if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
