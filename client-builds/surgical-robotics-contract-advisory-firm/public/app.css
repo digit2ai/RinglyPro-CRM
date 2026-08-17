@@ -190,19 +190,28 @@ tfoot td { font-weight: 650; border-top: 1px solid var(--line2); border-bottom: 
 .scenario-row a { color: var(--accent2); text-decoration: none; }
 .scenario-row a:hover { text-decoration: underline; }
 
-/* --- modal + toast --- */
-.modal { position: fixed; inset: 0; background: rgba(3, 6, 12, 0.72); display: grid; place-items: center; padding: 20px; z-index: 40; }
-.modal[hidden] { display: none; }
-.modal-card { background: var(--card); border: 1px solid var(--line2); border-radius: 16px; padding: 20px; width: min(460px, 100%); display: grid; gap: 9px; }
-.modal-card input { background: #1b2536; color: var(--txt); border: 1px solid var(--line2); border-radius: 8px; padding: 9px 10px; font: inherit; }
-.modal-card label { font-size: 12px; color: var(--mut); }
-.modal-actions { display: flex; gap: 8px; }
-.link-out { font-family: var(--mono); font-size: 12px; word-break: break-all; color: var(--accent2); }
-
+/* --- toast --- */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--card); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 16px; font-size: 13px; z-index: 50; }
 .toast[hidden] { display: none; }
 
 .foot { display: flex; justify-content: space-between; gap: 12px; padding: 14px 22px 26px; color: var(--mut); font-size: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+
+/* --- the gate page --- */
+.gate-body { display: grid; place-items: center; min-height: 100vh; padding: 20px; }
+.gate { width: min(420px, 100%); }
+.gate-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 24px; display: grid; gap: 14px;
+}
+.gate-card .brand { margin-bottom: 2px; }
+.gate-form { display: grid; gap: 12px; }
+.gate-form .btn { width: 100%; padding: 10px; }
+.gate-foot { border-top: 1px solid var(--line); padding-top: 12px; }
+.gate-card code {
+  font-family: var(--mono); font-size: 12px; background: #1b2536;
+  border: 1px solid var(--line2); border-radius: 5px; padding: 1px 5px;
+}
+.signout { margin-left: 2px; }
 
 @media (max-width: 980px) {
   .layout { grid-template-columns: minmax(0, 1fr); padding: 14px; }

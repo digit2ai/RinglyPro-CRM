@@ -17,6 +17,7 @@
 
 const express = require('express');
 const auth = require('../lib/auth');
+const access = require('../lib/access');
 const { DEFAULT_TENANT_ID } = require('../lib/tenant');
 
 const SEEDED_EMAILS = (process.env.SRCAF_ALLOWED_EMAILS || 'eriksen.greg@yahoo.com,mstagg@digit2ai.com')
@@ -39,15 +40,52 @@ function authRoutes({ store, mountPath }) {
         return res.status(400).json({ success: false, error: 'A valid email address is required' });
       }
 
-      // The allow-list is the access control. An unknown address gets the same
-      // shape of response as a known one — an enumeration oracle on a two-person
-      // app is pointless risk — but no token is minted.
+      // FAIL CLOSED. With no access code configured, no session can be created.
+      // An app that mints sessions under a documented default password is not
+      // protected by it.
+      if (!access.accessConfigured()) {
+        console.error('[srcaf] sign-in refused: SRCAF_ACCESS_CODE is not set on this deployment');
+        return res.status(503).json({
+          success: false,
+          error: 'Sign-in is not configured on this deployment. Set SRCAF_ACCESS_CODE.',
+          access_configured: false,
+        });
+      }
+
+      if (access.throttled(req)) {
+        const retry = access.retryAfterSeconds(req);
+        res.set('Retry-After', String(retry));
+        return res.status(429).json({
+          success: false,
+          error: 'Too many sign-in attempts. Try again later.',
+          retry_after_seconds: retry,
+        });
+      }
+
+      // TWO THINGS ARE REQUIRED, NOT ONE. The allow-list says who may hold a
+      // session; the access code proves the caller is that person. Returning a
+      // sign-in link to anyone who merely knows the address would make the
+      // address the credential — and Greg's address is on the project record.
+      const codeOk = access.codeMatches((req.body || {}).access_code);
       const allowed = SEEDED_EMAILS.includes(email);
+
+      if (!codeOk || !allowed) {
+        access.recordFailure(req);
+        // One message for both failures. Distinguishing them turns this into an
+        // oracle for which addresses are provisioned.
+        console.log(`[srcaf] sign-in refused for ${auth.maskEmail(email)}`);
+        return res.status(401).json({
+          success: false,
+          error: 'That email address and access code combination was not recognised.',
+        });
+      }
+
+      access.clearFailures(req);
 
       const base = `${req.protocol}://${req.get('host')}${mountPath()}`;
       let verify_url = null;
 
-      if (allowed) {
+      {
         const token = auth.newMagicToken();
         await store.createToken({
           tenant_id: DEFAULT_TENANT_ID,
@@ -58,14 +96,15 @@ function authRoutes({ store, mountPath }) {
         verify_url = `${base}/api/v1/auth/verify?token=${token}`;
       }
 
-      console.log(`[srcaf] magic link requested for ${auth.maskEmail(email)} (recognised: ${allowed})`);
+      console.log(`[srcaf] magic link issued for ${auth.maskEmail(email)}`);
 
       return res.json({
         success: true,
         email_masked: auth.maskEmail(email),
         expires_in_minutes: auth.MAGIC_TTL_MINUTES,
-        // Present only for a recognised address. Returned rather than emailed
-        // because server-initiated mail is disabled repo-wide.
+        // Returned rather than emailed because server-initiated mail is
+        // disabled repo-wide. Safe to return here only because the caller has
+        // already proved the access code on this same request.
         verify_url,
         delivery: autosendDisabled() ? 'returned_in_response' : 'email',
         delivery_note: autosendDisabled()

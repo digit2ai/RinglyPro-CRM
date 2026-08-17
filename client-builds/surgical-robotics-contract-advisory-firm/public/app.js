@@ -648,10 +648,25 @@
   function refreshSession() {
     return api('/api/v1/auth/me').then(function (r) {
       session = r.body || { signed_in: false };
-      $('signin-btn').textContent = session.signed_in ? ('Signed in · ' + session.email_masked) : 'Sign in';
+      var btn = $('session-btn');
+      btn.textContent = session.signed_in ? ('Sign out · ' + session.email_masked) : 'Sign in';
+      btn.title = session.signed_in ? 'End this session on this device' : 'Sign in to save scenarios';
       if (session.signed_in) loadScenarios();
       return session;
     }).catch(function () { return session; });
+  }
+
+  // One sign-in path, and it is the gate page. A second one inside the app is a
+  // second thing to keep correct, and the app is normally unreachable without a
+  // session anyway.
+  function goToGate() {
+    window.location.href = BASE + '/login';
+  }
+
+  function signOut() {
+    return api('/api/v1/auth/logout', { method: 'POST' })
+      .then(goToGate)
+      .catch(goToGate);
   }
 
   function loadScenarios() {
@@ -716,9 +731,9 @@
       api('/api/v1/scenarios', { method: 'POST', body: { name: name, inputs: inputs } })
         .then(function (r) {
           if (r.status === 401) {
-            $('save-note').textContent = 'Sign in first to save a scenario.';
+            $('save-note').textContent = 'Your session has expired. Redirecting to sign in.';
             $('save-note').className = 'note error';
-            openSignin();
+            setTimeout(goToGate, 900);
             return;
           }
           if (!r.ok || !r.body.success) throw new Error(r.body.error || 'Could not save');
@@ -732,32 +747,10 @@
         });
     });
 
-    $('signin-btn').addEventListener('click', openSignin);
-    $('signin-close').addEventListener('click', function () { $('signin-modal').hidden = true; });
-    $('signin-send').addEventListener('click', function () {
-      var email = $('signin-email').value.trim();
-      var out = $('signin-result');
-      clear(out);
-      api('/api/v1/auth/magic-link', { method: 'POST', body: { email: email } })
-        .then(function (r) {
-          if (!r.ok || !r.body.success) throw new Error(r.body.error || 'Could not create a link');
-          out.appendChild(el('div', { text: r.body.delivery_note }));
-          if (r.body.verify_url) {
-            var link = el('a', { class: 'link-out', href: r.body.verify_url + '&redirect=1', text: r.body.verify_url });
-            out.appendChild(link);
-          } else {
-            out.appendChild(el('div', { class: 'note', text: 'If that address is recognised, a sign-in link has been created for it.' }));
-          }
-        })
-        .catch(function (err) {
-          out.appendChild(el('div', { class: 'note error', text: err.message }));
-        });
+    $('session-btn').addEventListener('click', function () {
+      if (session.signed_in) signOut();
+      else goToGate();
     });
-  }
-
-  function openSignin() {
-    $('signin-modal').hidden = false;
-    $('signin-email').focus();
   }
 
   function start() {

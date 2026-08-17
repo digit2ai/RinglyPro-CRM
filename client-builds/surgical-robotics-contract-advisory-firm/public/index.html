@@ -32,7 +32,7 @@
   <div class="topbar-right">
     <span id="provenance-pill" class="pill" title="How many model inputs are traced to public data"></span>
     <span id="backend-pill" class="pill quiet"></span>
-    <button id="signin-btn" class="btn ghost" type="button">Sign in</button>
+    <button id="session-btn" class="btn ghost signout" type="button">Sign in</button>
   </div>
 </header>
 
@@ -111,20 +111,6 @@
   <span id="foot-version"></span>
   <span>Prepared by Digit2AI. Not legal, financial or investment advice.</span>
 </footer>
-
-<div id="signin-modal" class="modal" hidden>
-  <div class="modal-card">
-    <h2>Sign in</h2>
-    <p class="note">Saving scenarios needs a sign-in. Server-initiated email is disabled for this deployment, so the sign-in link is shown here rather than sent.</p>
-    <label for="signin-email">Email</label>
-    <input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com">
-    <div class="modal-actions">
-      <button id="signin-send" class="btn primary" type="button">Get a sign-in link</button>
-      <button id="signin-close" class="btn ghost" type="button">Close</button>
-    </div>
-    <div id="signin-result" class="note"></div>
-  </div>
-</div>
 
 <div id="toast" class="toast" hidden></div>
 

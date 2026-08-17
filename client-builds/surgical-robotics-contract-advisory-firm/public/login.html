@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoboNegotiate — Sign in</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{{BASE}}/app.css">
+</head>
+<body data-base="{{BASE}}" class="gate-body">
+
+<!--
+  The gate page. It says as little as possible: no client name, no employer, no
+  hint about what the model contains. Someone who lands here uninvited should
+  learn only that this is private.
+-->
+
+<main class="gate">
+  <div class="gate-card">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>RoboNegotiate</h1>
+        <p class="tagline">Private model. Sign in to continue.</p>
+      </div>
+    </div>
+
+    <div id="gate-unconfigured" class="notice bad" hidden>
+      <h3>Sign-in is not configured on this deployment</h3>
+      <p>No access code is set, so no session can be created. This is deliberate: the alternative is an open door under a default password.</p>
+      <p class="note">Set <code>SRCAF_ACCESS_CODE</code> in the environment and redeploy.</p>
+    </div>
+
+    <div id="gate-weak" class="notice warn" hidden>
+      <h3>The configured access code is weak</h3>
+      <p class="note">It is short, or it is one of the passwords this repository publishes in its own documentation. Sign-in still works; replace it.</p>
+    </div>
+
+    <form id="gate-form" class="gate-form" autocomplete="on">
+      <div class="field">
+        <label for="gate-email">Email</label>
+        <input id="gate-email" name="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="gate-code">Access code</label>
+        <input id="gate-code" name="access_code" type="password" autocomplete="current-password" required>
+      </div>
+      <button id="gate-submit" class="btn primary" type="submit">Continue</button>
+    </form>
+
+    <div id="gate-result" class="note"></div>
+
+    <p class="note gate-foot">Both the address and the access code are required. Sign-in links are single-use and short-lived.</p>
+  </div>
+</main>
+
+<script src="{{BASE}}/login.js" defer></script>
+</body>
+</html>

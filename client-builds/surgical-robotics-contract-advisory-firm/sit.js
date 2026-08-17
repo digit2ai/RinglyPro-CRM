@@ -24,6 +24,12 @@ delete process.env.DATABASE_URL;
 delete process.env.CRM_DATABASE_URL;
 process.env.SRCAF_JWT_SECRET = process.env.SRCAF_JWT_SECRET || 'sit-only-secret';
 
+// The suite runs against the shipped default access level (`private`) with a
+// configured access code, so the gate is exercised rather than bypassed.
+process.env.SRCAF_ACCESS_LEVEL = 'private';
+const SIT_ACCESS_CODE = 'sit-only-access-code-not-a-real-one';
+process.env.SRCAF_ACCESS_CODE = SIT_ACCESS_CODE;
+
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -55,10 +61,18 @@ function near(a, b, tol) {
 
 let BASE = '';
 
-function request(method, urlPath, { headers, body, raw } = {}) {
+// The session the suite works under once it has signed in. Requests carry it by
+// default so the gate does not have to be worked around in every call; pass
+// `noAuth: true` to assert the boundary itself.
+let SESSION = null;
+
+function request(method, urlPath, { headers, body, raw, noAuth } = {}) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null : JSON.stringify(body);
     const url = new URL(BASE + urlPath);
+    const auto = (SESSION && !noAuth && !(headers && headers.Authorization))
+      ? { Authorization: `Bearer ${SESSION}` }
+      : {};
     const req = http.request({
       method,
       hostname: url.hostname,
@@ -66,6 +80,7 @@ function request(method, urlPath, { headers, body, raw } = {}) {
       path: url.pathname + url.search,
       headers: Object.assign(
         payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {},
+        auto,
         headers || {},
       ),
     }, (res) => {
@@ -107,16 +122,122 @@ async function run() {
   BASE = `http://127.0.0.1:${server.address().port}`;
   console.log(`\nSIT · ${SERVICE} v${VERSION} · ${BASE}${MOUNT}\n`);
 
-  // --- 1. health ----------------------------------------------------------
-  console.log('Criterion 1 — health');
+  // --- 0. THE GATE --------------------------------------------------------
+  // Runs first, before a session exists, because everything after this point
+  // holds one. An app that is private only until the first test signs in is
+  // not private.
+  console.log('Criterion 0 — the app is not publicly reachable');
   {
-    const r = await request('GET', `${MOUNT}/health`);
-    check('health returns 200', r.status === 200, `status ${r.status}`);
+    const closed = [
+      '/',
+      '/api/v1/calculate',
+      '/api/v1/benchmarks',
+      '/api/v1/watchouts',
+      '/api/v1/scenarios',
+      '/app.js',
+      '/print.css',
+      '/index.html',
+      '/some/unknown/path',
+    ];
+    for (const p of closed) {
+      const r = await request('GET', `${MOUNT}${p}`, { noAuth: true, raw: true });
+      const blocked = r.status === 401 || (r.status === 302 && /\/login$/.test(r.headers.location || ''));
+      check(`${p} is not publicly readable`, blocked, `status ${r.status} ${r.headers.location || ''}`);
+    }
+
+    const post = await request('POST', `${MOUNT}/api/v1/calculate`, { noAuth: true, body: { inputs: {} } });
+    check('the model cannot be computed without a session', post.status === 401, `status ${post.status}`);
+
+    // A browser navigation gets the gate page; a fetch gets JSON. Handing an
+    // HTML login page to a fetch() caller expecting data is its own bug.
+    const nav = await request('GET', `${MOUNT}/`, { noAuth: true, raw: true, headers: { Accept: 'text/html' } });
+    check('a browser navigation is redirected to the gate', nav.status === 302 && /\/login$/.test(nav.headers.location || ''));
+    const xhr = await request('GET', `${MOUNT}/`, { noAuth: true, headers: { Accept: 'application/json' } });
+    check('a JSON caller gets 401 rather than an HTML page', xhr.status === 401);
+
+    const login = await request('GET', `${MOUNT}/login`, { noAuth: true, raw: true });
+    check('the gate page itself is reachable', login.status === 200, `status ${login.status}`);
+    check('the gate page does not name the client', !/Eriksen|Intuitive/i.test(login.text));
+    check('the gate page does not leak the model', !/Fee-on-Savings|Watchouts/.test(login.text));
+    check('the gate page can style itself', /app\.css/.test(login.text));
+
+    const css = await request('GET', `${MOUNT}/app.css`, { noAuth: true, raw: true });
+    check('the stylesheet the gate needs is reachable', css.status === 200);
+
+    // Security headers, on every response including the gate.
+    const h = login.headers;
+    check('responses are marked noindex', /noindex/.test(h['x-robots-tag'] || ''), h['x-robots-tag']);
+    check('framing is denied', (h['x-frame-options'] || '') === 'DENY');
+    check('sniffing is denied', (h['x-content-type-options'] || '') === 'nosniff');
+    check('a content security policy is set', /frame-ancestors 'none'/.test(h['content-security-policy'] || ''));
+    check('the referrer is not leaked', (h['referrer-policy'] || '') === 'no-referrer');
+  }
+
+  // --- 1. health ----------------------------------------------------------
+  console.log('\nCriterion 1 — health');
+  {
+    const r = await request('GET', `${MOUNT}/health`, { noAuth: true });
+    check('health returns 200 without a session', r.status === 200, `status ${r.status}`);
     check('health status is ok', r.body && r.body.status === 'ok');
     check('health names the service', r.body && r.body.service === SERVICE, r.body && r.body.service);
     check('health carries a version', !!(r.body && r.body.version));
-    check('health carries a model version', !!(r.body && r.body.model_version));
-    check('health reports the storage backend', !!(r.body && r.body.db_backend), r.body && r.body.db_backend);
+    check('health reports the access level', r.body && r.body.access_level === 'private', r.body && r.body.access_level);
+    // Operational detail is reconnaissance when the app behind it is private.
+    check('health withholds the storage backend from an anonymous caller', r.body && r.body.db_backend === undefined);
+    check('health withholds secret configuration from an anonymous caller', r.body && r.body.jwt_secret_configured === undefined);
+  }
+
+  // --- sign in, then everything after this point is authenticated ----------
+  console.log('\nSigning in through the gate');
+  let magicToken = null;
+  {
+    let r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com' },
+    });
+    check('an allow-listed address alone does not mint a link', r.status === 401 && !r.body.verify_url,
+      `status ${r.status}`);
+
+    const wrongCode = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: 'wrong-code' },
+    });
+    check('a wrong access code is refused', wrongCode.status === 401 && !wrongCode.body.verify_url,
+      `status ${wrongCode.status}`);
+
+    const wrongEmail = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'stranger@example.com', access_code: SIT_ACCESS_CODE },
+    });
+    check('the access code alone does not mint a link for an unknown address',
+      wrongEmail.status === 401 && !wrongEmail.body.verify_url, `status ${wrongEmail.status}`);
+
+    // The property that matters is that the two failures are indistinguishable.
+    // Anything that separates them turns this endpoint into an oracle for which
+    // addresses are provisioned.
+    check('a wrong address and a wrong code are indistinguishable',
+      wrongCode.status === wrongEmail.status && wrongCode.body.error === wrongEmail.body.error,
+      `${wrongCode.status}:${wrongCode.body.error} vs ${wrongEmail.status}:${wrongEmail.body.error}`);
+
+    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
+    });
+    check('address plus access code mints a link', r.status === 200 && !!r.body.verify_url, `status ${r.status}`);
+    check('the email is masked in the response', /^e\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
+
+    const verifyPath = r.body.verify_url.slice(r.body.verify_url.indexOf(MOUNT));
+    magicToken = verifyPath.split('token=')[1];
+
+    const v = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magicToken}`, { noAuth: true });
+    check('the link issues a session', v.status === 200 && !!v.body.token, `status ${v.status}`);
+    SESSION = v.body.token;
+
+    const again = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magicToken}`, { noAuth: true });
+    check('the link cannot be used twice', again.status === 401 && again.body.reason === 'already_used',
+      again.body && again.body.reason);
+
+    const bad = await request('GET', `${MOUNT}/api/v1/auth/verify?token=deadbeef`, { noAuth: true });
+    check('an unknown link is refused', bad.status === 401);
+
+    const open = await request('GET', `${MOUNT}/`, { raw: true });
+    check('the app opens with a session', open.status === 200 && /RoboNegotiate/.test(open.text), `status ${open.status}`);
   }
 
   // --- 2. calculate shape -------------------------------------------------
@@ -275,39 +396,23 @@ async function run() {
 
   // --- 8 + 9. auth boundary and magic link --------------------------------
   console.log('\nCriteria 8 and 9 — the auth boundary, in both directions');
-  let token = null;
+  const token = SESSION;
   let scenarioId = null;
   {
-    let r = await request('GET', `${MOUNT}/api/v1/scenarios`);
+    let r = await request('GET', `${MOUNT}/api/v1/scenarios`, { noAuth: true });
     check('scenarios list refuses without a session', r.status === 401, `status ${r.status}`);
-    r = await request('POST', `${MOUNT}/api/v1/scenarios`, { body: { name: 'sit', inputs: {} } });
+    r = await request('POST', `${MOUNT}/api/v1/scenarios`, { noAuth: true, body: { name: 'sit', inputs: {} } });
     check('scenario create refuses without a session', r.status === 401, `status ${r.status}`);
 
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, { body: { email: 'not-an-email' } });
+    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'not-an-email', access_code: SIT_ACCESS_CODE },
+    });
     check('magic link rejects a malformed address', r.status === 400, `status ${r.status}`);
 
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, { body: { email: 'stranger@example.com' } });
-    check('magic link does not mint a token for an unknown address',
-      r.status === 200 && r.body.verify_url === null);
-
-    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, { body: { email: 'eriksen.greg@yahoo.com' } });
-    check('magic link returns 200 for the seeded address', r.status === 200, `status ${r.status}`);
-    check('the verify URL comes back in the response body', !!r.body.verify_url);
+    r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
+    });
     check('the delivery path is stated', r.body.delivery === 'returned_in_response' || r.body.delivery === 'email');
-    check('the email is masked in the response', /^e\*\*\*@/.test(r.body.email_masked || ''), r.body.email_masked);
-
-    const verifyPath = r.body.verify_url.slice(r.body.verify_url.indexOf(MOUNT));
-    const magic = verifyPath.split('token=')[1];
-
-    let v = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magic}`);
-    check('a valid link returns 200 and a session token', v.status === 200 && !!v.body.token, `status ${v.status}`);
-    token = v.body.token;
-
-    v = await request('GET', `${MOUNT}/api/v1/auth/verify?token=${magic}`);
-    check('the same link cannot be used twice', v.status === 401 && v.body.reason === 'already_used', v.body && v.body.reason);
-
-    v = await request('GET', `${MOUNT}/api/v1/auth/verify?token=deadbeef`);
-    check('an unknown link is refused', v.status === 401);
 
     const authHeader = { Authorization: `Bearer ${token}` };
     r = await request('POST', `${MOUNT}/api/v1/scenarios`, {
@@ -380,8 +485,8 @@ async function run() {
     check('the CSV carries what has to be true', /WHAT HAS TO BE TRUE/.test(csv.text));
     check('the CSV names its model version', csv.text.indexOf(json.body.data.model_version) > 0);
 
-    const noAuth = await request('GET', `${MOUNT}/api/v1/scenarios/${scenarioId}/export.csv`, { raw: true });
-    check('export refuses without a session', noAuth.status === 401, `status ${noAuth.status}`);
+    const anon = await request('GET', `${MOUNT}/api/v1/scenarios/${scenarioId}/export.csv`, { raw: true, noAuth: true });
+    check('export refuses without a session', anon.status === 401, `status ${anon.status}`);
   }
 
   // --- 12. the app runs with no database ----------------------------------
@@ -508,6 +613,78 @@ async function run() {
     check('a client-supplied tenant id is ignored', spoof.status === 201 && spoof.body.data.tenant_id === 1,
       spoof.body && spoof.body.data && String(spoof.body.data.tenant_id));
     await request('DELETE', `${MOUNT}/api/v1/scenarios/${spoof.body.data.id}`, { headers: { Authorization: `Bearer ${token}` } });
+  }
+
+  // --- fail closed, weak codes, and brute force ----------------------------
+  console.log('\nThe gate fails closed, and resists guessing');
+  {
+    const access = require('./lib/access');
+
+    // With no access code configured, no session can be created at all. An app
+    // that mints sessions under a documented default password is not protected.
+    const saved = process.env.SRCAF_ACCESS_CODE;
+    delete process.env.SRCAF_ACCESS_CODE;
+    check('an unconfigured deployment reports itself unconfigured', access.accessConfigured() === false);
+    const unconfigured = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: 'anything' },
+    });
+    check('an unconfigured deployment refuses to mint a session',
+      unconfigured.status === 503 && !unconfigured.body.verify_url, `status ${unconfigured.status}`);
+    check('it says why rather than failing opaquely', /SRCAF_ACCESS_CODE/.test(unconfigured.body.error || ''));
+    check('the gate page is still reachable so the owner sees the reason',
+      (await request('GET', `${MOUNT}/login`, { noAuth: true, raw: true })).status === 200);
+
+    // Codes this repository publishes are not secrets.
+    process.env.SRCAF_ACCESS_CODE = 'Palindrome@7';
+    check('a password published in this repo is reported as weak', access.weakAccessCode() === true);
+    process.env.SRCAF_ACCESS_CODE = 'short';
+    check('a short code is reported as weak', access.weakAccessCode() === true);
+    process.env.SRCAF_ACCESS_CODE = saved;
+    check('the configured SIT code is not reported as weak', access.weakAccessCode() === false);
+
+    // Once a code is the thing between the internet and the app, guessing is
+    // the attack. Repeated failures from one source are throttled.
+    let sawThrottle = false;
+    let throttleStatus = 0;
+    for (let i = 0; i < access.MAX_ATTEMPTS + 2; i += 1) {
+      const r = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+        noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: `guess-${i}` },
+      });
+      if (r.status === 429) { sawThrottle = true; throttleStatus = r.status; break; }
+    }
+    check('repeated wrong codes are throttled', sawThrottle, `last status ${throttleStatus}`);
+
+    // And the throttle is not bypassed by then guessing correctly.
+    const afterThrottle = await request('POST', `${MOUNT}/api/v1/auth/magic-link`, {
+      noAuth: true, body: { email: 'eriksen.greg@yahoo.com', access_code: SIT_ACCESS_CODE },
+    });
+    check('a correct code during a throttle window is still refused',
+      afterThrottle.status === 429 && !afterThrottle.body.verify_url, `status ${afterThrottle.status}`);
+    check('the throttle tells the caller when to retry', Number(afterThrottle.body.retry_after_seconds) > 0);
+
+    // An already-issued session keeps working — throttling sign-in must not log
+    // out the person who is already in.
+    const stillIn = await request('GET', `${MOUNT}/api/v1/scenarios`);
+    check('an existing session survives the throttle', stillIn.status === 200, `status ${stillIn.status}`);
+  }
+
+  // --- the gate is a chokepoint, not a per-route decoration -----------------
+  console.log('\nThe gate is one chokepoint');
+  {
+    // Matching the actual call sites, not the words. An earlier version of this
+    // check matched "express.static" inside the comment that explains the
+    // ordering, and reported the ordering it was describing as wrong.
+    const src = fs.readFileSync(path.join(__dirname, 'index.js'), 'utf8');
+    const gateAt = src.indexOf('access.isOpenPath');
+    const staticAt = src.indexOf('app.use(express.static');
+    check('the gate is installed before static file serving',
+      gateAt > 0 && staticAt > 0 && gateAt < staticAt,
+      `gate at ${gateAt}, static at ${staticAt}`);
+    const firstRouteAt = src.indexOf('app.use(healthRoutes');
+    check('the gate is installed before the routes',
+      gateAt > 0 && firstRouteAt > 0 && gateAt < firstRouteAt);
+    check('the open-path list is an explicit allow-list, not a deny-list',
+      /OPEN_PATHS = new Set/.test(fs.readFileSync(path.join(__dirname, 'lib', 'access.js'), 'utf8')));
   }
 
   // --- clean up ------------------------------------------------------------

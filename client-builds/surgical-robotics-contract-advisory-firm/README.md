@@ -128,19 +128,72 @@ than 403 — a 403 confirms the row exists.
 
 ---
 
-## Auth
+## Access and auth
 
-Email magic link, no passwords. **Reads of the model are public**; a login wall on a
-calculator Greg wants to show people would be friction with no security value. **Every
-write requires a session.**
+**THE APP IS PRIVATE. NOTHING IS PUBLICLY READABLE.**
 
-**The sign-in URL comes back in the response body, and that is not a shortcut.**
-`EMAIL_AUTOSEND_DISABLED` defaults ON across this repo, so every server-initiated SendGrid
-send is suppressed. A magic-link flow that assumed an email would arrive would silently
-authenticate nobody — not Greg, not SIT, not anyone. The link is returned, the UI shows it
-as a copyable field, and the response states which delivery path was taken. Tokens are
-single-use, expire in thirty minutes, and are never logged at any level. Greg's email is
-masked (`e***@yahoo.com`) before any console write.
+It shipped with public reads, which was a defensible default for a public-benchmark
+calculator and the wrong default for this artifact. The Watchouts tab alone names a
+non-compete, a trade-secret boundary and a tortious-interference exposure for one named
+person against one named employer. That is not a page to leave open on a guessable path.
+
+`SRCAF_ACCESS_LEVEL` sets the posture:
+
+| Level | Behaviour |
+|---|---|
+| `private` | **Default.** Nothing without a session, except liveness and the sign-in flow. |
+| `public` | The previous behaviour: reads open, writes authenticated. |
+
+The gate is a single middleware installed above every route **and above
+`express.static`**, with an explicit allow-list. A gate applied per route is a gate someone
+forgets to apply to the next route, and a gate applied to static separately misses the
+file dropped into `public/` next month. SIT asserts the ordering by reading `index.js`.
+
+Reachable with no session: `/health` (liveness only), `/login`, `/login.js`, `/app.css`,
+and the sign-in endpoints. Everything else — the model, the benchmarks, the watchouts,
+saved scenarios, the app shell, `app.js` — returns 401 to a JSON caller and redirects a
+browser to the gate page.
+
+### Two factors, because one of them is written on the project record
+
+Sign-in requires **an allow-listed email AND the access code**. The magic link is returned
+in the HTTP response, because `EMAIL_AUTOSEND_DISABLED` is on repo-wide and a flow that
+assumed an email would arrive would authenticate nobody. That was tolerable when reads
+were public. Behind a gate it *is* the gate — so returning the link to anyone who merely
+knows the address would make the address the credential, and Greg's address is on the
+project record. The code is what makes returning the link safe.
+
+A wrong address and a wrong code produce the **same** status and the **same** message, so
+the endpoint is not an oracle for which addresses are provisioned.
+
+### It fails closed
+
+With no `SRCAF_ACCESS_CODE` set, **no session can be created at all** — `/health` and the
+gate page still answer, and the gate page says why. This is the rule the JobUp consoles
+follow in this repo: unset means CLOSED, deliberately, rather than open under a password
+published in this repository's own documentation. The cost is one env var before first
+sign-in; the alternative is a live app anyone who has read this repo can walk into.
+
+A code shorter than twelve characters, or one matching a password this repo publishes, is
+reported as weak on `/health` and bannered on the gate page. **Reported, not blocked** —
+refusing to boot would lock the owner out of their own model with no way back in.
+
+### Other hardening
+
+- Repeated failures from one source are throttled (10 per 15 minutes), and a correct code
+  during a throttle window is still refused. This is per-process and Render may run more
+  than one instance, so it raises the cost rather than eliminating the attack — the real
+  defence is a long random code.
+- The code is compared as a SHA-256 digest through `timingSafeEqual`, so the comparison is
+  timing-safe and does not leak the real code's length.
+- Every response carries `X-Robots-Tag: noindex`, `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy: no-referrer`, and a CSP with `frame-ancestors 'none'`. No CDN and no
+  inline script, so the policy is strict without qualification.
+- `/health` gives an anonymous caller liveness and the access level only. Storage backend,
+  error strings and secret-configuration booleans are operational detail, and operational
+  detail is reconnaissance when the app behind it is private.
+- Tokens are single-use, expire in thirty minutes, and are never logged at any level.
+  Greg's email is masked (`e***@yahoo.com`) before any console write.
 
 ---
 
@@ -182,8 +235,10 @@ Projections are always recomputed server-side on save, never accepted from the c
 
 | Variable | Default | Effect |
 |---|---|---|
+| `SRCAF_ACCESS_CODE` | **none — CLOSED** | Required alongside an allow-listed email to create a session. Unset means no one can sign in, deliberately. Use 20+ random characters. |
+| `SRCAF_ACCESS_LEVEL` | `private` | `private` gates everything; `public` restores open reads with authenticated writes. |
 | `SRCAF_JWT_SECRET` | falls back to `JWT_SECRET` | Signs the session cookie and bearer token. **Set on prod** — unset on both means a known development secret, and `/health` reports `jwt_secret_configured:false`. |
-| `SRCAF_ALLOWED_EMAILS` | `eriksen.greg@yahoo.com,mstagg@digit2ai.com` | Who may request a sign-in link. An unrecognised address gets the same response shape but no token. |
+| `SRCAF_ALLOWED_EMAILS` | `eriksen.greg@yahoo.com,mstagg@digit2ai.com` | Who may hold a session. The address alone is never sufficient; the access code is also required. |
 | `SRCAF_TENANT_ID` | `1` | Tenant stamped on rows and sessions. |
 | `DATABASE_URL` | — | Unset means in-memory scenarios; the whole app still works. |
 | `EMAIL_AUTOSEND_DISABLED` | ON unless `0` | Read, not written, by this app. Governs whether the sign-in link is returned or emailed. |
