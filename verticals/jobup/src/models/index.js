@@ -25,7 +25,7 @@ const db = require('../db');
 const TABLE_PREFIX = 'ju_';
 
 const TENANT_SCOPED = new Set([
-  'profiles', 'settings', 'teasers', 'job_matches', 'tailored_resumes', 'tailor_credits',
+  'profiles', 'settings', 'teasers', 'job_matches', 'job_scores', 'tailored_resumes', 'tailor_credits',
   'applications', 'opportunities', 'outreach', 'sites', 'agent_runs',
   'invoices', 'notification_prefs', 'audit_log', 'page_views', 'assets',
   'address_aliases',
@@ -127,6 +127,22 @@ const SCHEMA = {
     missing: { type: DataTypes.JSONB, defaultValue: [] },
     stage: { type: DataTypes.STRING, defaultValue: 'new' }, // new|saved|applied|screening|interviewing|offer|closed
     is_simulated: { type: DataTypes.BOOLEAN, defaultValue: false },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // EVERY posting this tenant has spent a model call on, whether or not it was
+  // filed. job_matches only holds what cleared `min_score`, so it is the wrong
+  // thing to build the "already looked at this" set from: a subscriber whose
+  // scores all land below their floor files nothing, so that set stays empty
+  // and the hunter re-scores the identical postings every morning forever —
+  // same jobs, same verdict, same charge, and a run summary that never moves.
+  // This ledger is the record of what was PAID to look at; job_matches stays
+  // the clean board of what was worth showing.
+  job_scores: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    job_id: { type: DataTypes.INTEGER, allowNull: false },
+    score: { type: DataTypes.INTEGER },
+    filed: { type: DataTypes.BOOLEAN, defaultValue: false },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   tailored_resumes: {

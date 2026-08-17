@@ -3856,13 +3856,100 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
     // Yesterday's matches, and any stage you moved them to, must survive.
-    assert.ok(src.includes('const seen = new Set(existing.map((m) => m.job_id))'),
+    assert.ok(src.includes('const seen = new Set([...existing, ...ledger].map((m) => m.job_id))'),
       'already-matched jobs must be skipped');
+    assert.ok(/scoped\('job_scores', tenantId\)\.findAll/.test(src),
+      'the seen set must include what was SCORED, not only what was filed');
     assert.ok(src.includes('.filter((r) => !seen.has(r.job.id))'), 'only fresh jobs are scored');
     for (const f of ['src/services/agents/index.js', 'src/services/scheduler.js']) {
       const t2 = fs.readFileSync(__dirname + '/' + f, 'utf8');
       assert.ok(!/job_matches'[^)]*\)\.destroy/.test(t2), f + ' deletes matches');
     }
+  });
+  await t('THE POOL WINDOW TRACKS THE POOL, NOT THE HEAP', async () => {
+    // `findAll({ limit: 500 })` with no ORDER BY returns heap order, i.e. the
+    // OLDEST rows. Once the pool passed 500 the window stopped moving: every
+    // posting ingested afterwards was unreachable to every subscriber, for
+    // ever, while the agent still reported success and still charged for it.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(!/models\.jobs\.findAll\(\{\s*limit:\s*\d+\s*\}\)/.test(src),
+      'the candidate pool must never be read unordered');
+    assert.ok(/order:\s*\[\['last_seen_at',\s*'DESC'\]\]/.test(src),
+      'the pool window must be newest-first');
+
+    // Behaviour, not grep: with more postings than the window holds, the newest
+    // must be the ones that survive.
+    const agents = require('./src/services/agents');
+    const before = await models.jobs.findAll({});
+    const stamp = (n) => new Date(Date.UTC(2030, 0, n));
+    const madeIds = [];
+    for (const [i, when] of [stamp(1), stamp(9), stamp(5)].entries()) {
+      const row = await models.jobs.create({
+        source: 'sit', employer: 'SIT Window Co', title: 'SIT window probe ' + i,
+        location: 'Tampa, FL', description: 'sit window probe',
+        dedupe_key: 'sit-window-' + i + '-' + Date.now(),
+        first_seen_at: when, last_seen_at: when,
+      });
+      madeIds.push(row.id);
+    }
+    const win = await agents.poolWindow();
+    const mine = win.filter((j) => madeIds.includes(j.id));
+    assert.strictEqual(mine.length, 3, 'the probe rows must be inside the window');
+    const seenOrder = mine.map((j) => new Date(j.last_seen_at).getTime());
+    assert.deepStrictEqual(seenOrder, seenOrder.slice().sort((a, b) => b - a),
+      'the window must come back newest-first');
+    assert.ok(agents.POOL_WINDOW > before.length,
+      'the shipped window must be wider than the pool it is reading');
+    for (const id of madeIds) await models.jobs.destroy({ id });
+  });
+  await t('A POSTING BELOW THE FLOOR IS NEVER PAID FOR TWICE', async () => {
+    // job_matches only holds what cleared min_score. Building the "already
+    // looked at" set from it alone meant a subscriber whose scores all landed
+    // below their floor filed nothing, so the set stayed empty and the hunter
+    // re-scored the identical postings every morning — same jobs, same verdict,
+    // same charge, a run summary that never moved. The ledger is what stops it.
+    const agents = require('./src/services/agents');
+    const probe = await models.jobs.create({
+      source: 'sit', employer: 'SIT Ledger Co', title: 'SIT ledger probe',
+      location: 'Tampa, FL', description: 'sit ledger probe',
+      dedupe_key: 'sit-ledger-' + Date.now(),
+    });
+    // Scored, judged not worth showing, therefore NOT in job_matches.
+    await scoped('job_scores', subA.id).create({ job_id: probe.id, score: 31, filed: false });
+    const matches = await scoped('job_matches', subA.id).findAll({});
+    assert.ok(!matches.some((m) => m.job_id === probe.id),
+      'a below-floor posting must not reach the board');
+
+    const ledger = await scoped('job_scores', subA.id).findAll({});
+    const seen = new Set([...matches, ...ledger].map((m) => m.job_id));
+    assert.ok(seen.has(probe.id), 'but it must still count as already looked at');
+
+    // And it is the tenant's own ledger, not everyone's.
+    const other = await scoped('job_scores', subB.id).findAll({});
+    assert.ok(!other.some((r) => r.job_id === probe.id),
+      'one subscriber must never read another subscriber\'s scoring ledger');
+
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/for \(const m of res\.matches\) \{[\s\S]*?job_scores/.test(src),
+      'EVERY scoring is ledgered, not only the filed ones');
+    await scoped('job_scores', subA.id).destroy({ job_id: probe.id });
+    await models.jobs.destroy({ id: probe.id });
+  });
+  await t('a dry run says WHY it filed nothing', async () => {
+    // "6 below your minimum score of 70" is unactionable on its own: a best of
+    // 68 means lower the floor, a best of 31 means the pool holds nothing in
+    // your field. Those need opposite fixes, so the summary must separate them.
+    const fs = require('fs');
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(src.includes('just under your floor'), 'a near miss must be named as one');
+    assert.ok(src.includes('nothing in the pool is close to your field yet'),
+      'an unaligned pool must be named as one');
+    assert.ok(src.includes('No posting in the shared pool matches your targeting'),
+      'targeting that matches nothing must not read as "nothing new"');
+    assert.ok(src.includes('Scored every posting in the pool that matches your targeting'),
+      'an exhausted pool must be distinguishable from an empty one');
   });
   await t('ALL SEVEN STAGES ARE REACHABLE, not just applied', async () => {
     // The board showed seven columns while only 'I applied' could move

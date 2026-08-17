@@ -17,6 +17,28 @@ const identity = require('../identity');
 
 const CONCURRENCY = parseInt(process.env.JOBUP_AGENT_CONCURRENCY || '4', 10);
 
+// How much of the shared pool the pre-filter is allowed to see.
+const POOL_WINDOW = parseInt(process.env.JOBUP_POOL_WINDOW || '6000', 10);
+
+/**
+ * The candidate pool, NEWEST FIRST.
+ *
+ * This was `findAll({ limit: 500 })` with no ORDER BY, which is the bug that
+ * quietly capped the whole product. Unordered, Postgres returns heap order —
+ * effectively the OLDEST rows — so as the pool grew past 500 the window did not
+ * move with it. At 4,541 postings the hunter could see 500 of them, all from
+ * the first day of crawling, and every posting ingested each morning since was
+ * unreachable to every subscriber. It fails silently: the agent runs, reports
+ * success, charges for the scoring, and reports the same verdict daily.
+ *
+ * Ordering by last_seen_at is what makes the window track the pool instead of
+ * the heap. The limit stays, because the pre-filter is O(pool x terms) per
+ * tenant per run, but it is now a real ceiling rather than an accidental one.
+ */
+async function poolWindow() {
+  return models.jobs.findAll({ limit: POOL_WINDOW, order: [['last_seen_at', 'DESC']] });
+}
+
 async function loadContext(tenantId) {
   const t = scoped('profiles', tenantId);
   const profileRow = await t.findOne({});
@@ -103,7 +125,7 @@ async function hunter(tenantId, opts = {}) {
 
   const cap = Math.min(budgetLeft, opts.capUsd || dailyBudget);
 
-  const pool = await models.jobs.findAll({ limit: 500 });
+  const pool = opts.pool || await poolWindow();
   if (!pool.length) {
     await log(tenantId, 'hunter', 'idle', 'Shared job pool is empty — nothing to score.', 0, false, 0, trigger);
     return { agent: 'hunter', scored: 0, note: 'pool empty' };
@@ -112,14 +134,28 @@ async function hunter(tenantId, opts = {}) {
   // COST MECHANIC #2 — free deterministic pre-filter before any model call.
   const ranked = jobsource.prefilter(pool, profile, settings, sourceText);
 
-  // Skip anything already matched for this tenant.
-  const existing = await scoped('job_matches', tenantId).findAll({});
-  const seen = new Set(existing.map((m) => m.job_id));
+  // Skip anything this tenant has already been CHARGED to look at — filed or
+  // not. Reading only job_matches meant below-floor postings were never
+  // remembered, so the same handful was re-scored every single day.
+  const [existing, ledger] = await Promise.all([
+    scoped('job_matches', tenantId).findAll({}),
+    scoped('job_scores', tenantId).findAll({}),
+  ]);
+  const seen = new Set([...existing, ...ledger].map((m) => m.job_id));
   const fresh = ranked.filter((r) => !seen.has(r.job.id)).slice(0, jobsLeft);
 
   if (!fresh.length) {
-    await log(tenantId, 'hunter', 'idle', 'No new candidates after pre-filter.', 0, false, 0, trigger);
-    return { agent: 'hunter', scored: 0, note: 'nothing new' };
+    // Distinguish "your targeting matches nothing in the pool" from "we have
+    // shown you everything it holds". They look identical from a run count and
+    // they need opposite fixes.
+    const exhausted = ranked.length > 0;
+    await log(tenantId, 'hunter', 'idle', exhausted
+      ? `Scored every posting in the pool that matches your targeting (${ranked.length}). Nothing new until fresh openings land.`
+      : 'No posting in the shared pool matches your targeting. Widen your roles, industries or locations.',
+      0, false, 0, trigger);
+    return { agent: 'hunter', scored: 0,
+             note: exhausted ? 'pool exhausted for this targeting' : 'targeting matches nothing in pool',
+             pool_size: pool.length, prefilter_survivors: ranked.length };
   }
 
   const res = await matcher.scoreBatch(fresh.map((r) => r.job), profile, settings,
@@ -139,11 +175,28 @@ async function hunter(tenantId, opts = {}) {
     });
   }
 
+  // The ledger records the spend, not the verdict — so a below-floor posting is
+  // never paid for twice.
+  const kept = new Set(keep.map((m) => m.job_id));
+  for (const m of res.matches) {
+    await scoped('job_scores', tenantId).create({
+      job_id: m.job_id, score: m.score, filed: kept.has(m.job_id),
+    });
+  }
+
+  // When NOTHING clears the floor, say how close it got. "6 below your minimum
+  // of 70" is unactionable on its own: a best of 68 means lower the floor, a
+  // best of 31 means the pool holds nothing in your field.
+  const best = res.matches.reduce((n, m) => Math.max(n, m.score || 0), 0);
+  const nearMiss = !keep.length && res.matches.length
+    ? ` Best was ${best}${best >= floor - 10 ? ' — just under your floor.' : ' — nothing in the pool is close to your field yet.'}`
+    : '';
+
   const simulated = res.matches.some((m) => m.is_simulated);
   await log(tenantId, 'hunter', 'ok',
     `Scored ${res.matches.length} new openings` +
     (held ? `, filed ${keep.length} (${held} below your minimum score of ${floor})` : '') +
-    `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.`,
+    `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.${nearMiss}`,
     res.cost_usd, simulated, res.matches.length, trigger);
 
   return { agent: 'hunter', trigger, scored: keep.length, below_minimum: held, cost_usd: res.cost_usd,
@@ -190,14 +243,20 @@ async function presence(tenantId) {
 async function runAll(agentName, tenantIds, opts = {}) {
   const fn = { hunter, presence }[agentName];
   if (!fn) throw new Error('unknown agent: ' + agentName);
+
+  // One read of the shared pool serves the whole fan-out. It is the same rows
+  // for every tenant — re-reading it per subscriber was N full table scans for
+  // one answer, and that cost grows with the subscriber count.
+  const shared = agentName === 'hunter' ? { pool: await poolWindow() } : {};
+
   const out = [];
   for (let i = 0; i < tenantIds.length; i += CONCURRENCY) {
     const slice = tenantIds.slice(i, i + CONCURRENCY);
     const res = await Promise.all(slice.map((t) =>
-      fn(t, opts).catch((e) => ({ error: e.message, tenant: t }))));
+      fn(t, { ...shared, ...opts }).catch((e) => ({ error: e.message, tenant: t }))));
     out.push(...res);
   }
   return out;
 }
 
-module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext, usedToday };
+module.exports = { hunter, presence, runAll, CONCURRENCY, loadContext, usedToday, poolWindow, POOL_WINDOW };
