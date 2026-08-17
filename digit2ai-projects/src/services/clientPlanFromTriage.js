@@ -183,19 +183,26 @@ function clientPlanFromTriage(project, opts = {}) {
     .filter(Boolean)
     .slice(0, 6);
 
+  // Editable scope + timeline — the fields the Plan Copilot refines. Seeded
+  // deterministically from the triage so the first render already reads complete.
+  const timeline_weeks = weeksFrom(p.timeline);
+  const build_includes = v1 ? [firstClause(v1)] : [];
+
   const L = es ? {
     heading: 'Plan de factibilidad y construcción',
     disclaimer: 'Alcance preliminar generado por nuestro análisis de IA. Un humano lo revisa antes de cualquier construcción.',
-    feas: 'Factibilidad', problem: 'El problema, en nuestras palabras', why: 'Por qué es factible',
-    v1: 'Primera versión recomendada', cons: 'Puntos clave a considerar',
-    land: 'Panorama competitivo que contemplamos', risks: 'Riesgos que anticipamos',
+    feas: 'Factibilidad', problem: 'El problema, en nuestras palabras', why: 'Evaluación de factibilidad',
+    v1: 'Primera versión recomendada', includes: 'Qué incluye la primera versión',
+    timeline: 'Tiempo de entrega estimado', weeks: 'semanas', cons: 'Puntos clave a considerar',
+    land: 'Panorama competitivo que contemplamos', risks: 'Análisis de riesgos (premortem)',
     mit: 'Cómo los manejamos', need: 'Lo que necesitaremos de ti'
   } : {
     heading: 'Feasibility & Build Plan',
     disclaimer: 'Preliminary scope from our AI analysis. A human reviews it before any build.',
-    feas: 'Feasibility', problem: 'The problem, in our words', why: 'Why it\'s feasible',
-    v1: 'Recommended first build', cons: 'Key considerations to address',
-    land: 'Competitive landscape we account for', risks: 'Risks we plan around',
+    feas: 'Feasibility', problem: 'The problem, in our words', why: 'Fit assessment',
+    v1: 'Recommended first build', includes: 'What the first version includes',
+    timeline: 'Estimated delivery time', weeks: 'weeks', cons: 'Key considerations to address',
+    land: 'Competitive landscape we account for', risks: 'Risk analysis (premortem)',
     mit: 'How we handle them', need: 'What we\'ll need from you'
   };
 
@@ -208,6 +215,8 @@ function clientPlanFromTriage(project, opts = {}) {
     problem,
     why: whyReasoning,
     v1,
+    build_includes,     // editable by the Copilot
+    timeline_weeks,     // editable by the Copilot
     considerations,
     landscape,
     risks,
@@ -215,6 +224,24 @@ function clientPlanFromTriage(project, opts = {}) {
     need_from_you: needFromYou,
     gate // { mode, cta, note } — mode drives the button; the verdict itself is never here
   };
+}
+
+// Parse a delivery window into a small week count (POC-in-weeks rule, cap 4 for v1).
+function weeksFrom(timeline) {
+  const s = String(timeline || '').toLowerCase();
+  const m = s.match(/(\d+)\s*(week|semana)/);
+  if (m) return Math.max(1, Math.min(8, parseInt(m[1], 10)));
+  const mo = s.match(/(\d+)\s*(month|mes)/);
+  if (mo) return Math.max(1, Math.min(8, parseInt(mo[1], 10) * 4));
+  if (/urgent|asap|now|ya|urgente/.test(s)) return 2;
+  return 4; // sensible PoC default
+}
+
+// First clause of a sentence — a concise scope label from the wedge prose.
+function firstClause(s) {
+  const t = String(s || '').replace(/^if pursued,?\s*/i, '').trim();
+  const cut = t.split(/[:—–.]/)[0].trim();
+  return (cut.length > 8 ? cut : t).slice(0, 140);
 }
 
 // A test hook: assert an object carries NONE of the internal fields/markers.

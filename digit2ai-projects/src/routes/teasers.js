@@ -38,6 +38,47 @@ function contentOf(row) {
   return typeof row.content_json === 'string' ? JSON.parse(row.content_json) : row.content_json;
 }
 
+function jsonOf(v, dflt) {
+  if (v == null) return dflt;
+  if (typeof v === 'string') { try { return JSON.parse(v); } catch (_) { return dflt; } }
+  return v;
+}
+
+// Real client IP behind Cloudflare (CF-Connecting-IP is set by CF and not forgeable
+// like X-Forwarded-For). Used to rate-limit the public Copilot.
+function clientIp(req) {
+  return req.headers['cf-connecting-ip'] || (req.ip || '').replace(/^::ffff:/, '') || 'unknown';
+}
+
+// Per-token + per-IP + per-day caps for the public Plan Copilot chat. In-memory,
+// self-evicting — hard ceiling on cost regardless of abuse.
+const CHAT_TURN_CAP = parseInt(process.env.ORBUP_PLAN_CHAT_TURN_CAP || '40', 10);   // per token (session)
+const CHAT_DAILY_CAP = parseInt(process.env.ORBUP_PLAN_CHAT_DAILY_CAP || '300', 10); // per IP/day
+const _chatTurns = new Map();  // token -> count
+const _chatDaily = new Map();  // ip -> { day, count }
+function chatRateCheck(token, ip) {
+  const turns = (_chatTurns.get(token) || 0) + 1;
+  if (turns > CHAT_TURN_CAP) return { allowed: false, reason: 'session' };
+  const day = Math.floor(Date.now() / 86400000);
+  const d = _chatDaily.get(ip);
+  const count = (d && d.day === day ? d.count : 0) + 1;
+  if (count > CHAT_DAILY_CAP) return { allowed: false, reason: 'daily' };
+  _chatTurns.set(token, turns);
+  _chatDaily.set(ip, { day, count });
+  if (_chatTurns.size > 5000) _chatTurns.clear();
+  if (_chatDaily.size > 5000) { for (const [k, v] of _chatDaily) if (v.day !== day) _chatDaily.delete(k); }
+  return { allowed: true };
+}
+
+// Build the fresh client-safe projection for a teaser's project (allowlisted).
+async function basePlanFor(row, lang) {
+  if (!row || !row.project_id) return null;
+  const project = await Project.findByPk(row.project_id).catch(() => null);
+  if (!project) return null;
+  const { clientPlanFromTriage } = require('../services/clientPlanFromTriage');
+  return { project, plan: clientPlanFromTriage(project.toJSON ? project.toJSON() : project, { lang }) };
+}
+
 // =====================================================
 // ADMIN ROUTER
 // =====================================================
@@ -203,12 +244,17 @@ publicRouter.get('/:token/plan', async (req, res) => {
     if (!row || !row.project_id) return res.status(404).json({ status: 'unavailable' });
     const t = contentOf(row);
     const lang = (req.query.lang || (t && t.lang) || 'en');
-    const project = await Project.findByPk(row.project_id).catch(() => null);
-    if (!project) return res.json({ status: 'unavailable' });
+    const { findLeaks } = require('../services/clientPlanFromTriage');
 
-    const { clientPlanFromTriage, findLeaks } = require('../services/clientPlanFromTriage');
-    const plan = clientPlanFromTriage(project.toJSON ? project.toJSON() : project, { lang });
-    if (!plan) return res.json({ status: 'pending' }); // triage not done yet
+    // Prefer the prospect's Copilot-refined working plan; else the fresh projection.
+    const working = jsonOf(row.client_plan_json, null);
+    let plan = working;
+    if (!plan) {
+      const base = await basePlanFor(row, lang);
+      if (!base) return res.json({ status: 'unavailable' });
+      if (!base.plan) return res.json({ status: 'pending' }); // triage not done yet
+      plan = base.plan;
+    }
 
     // Defence in depth: never ship a plan that carries an internal marker.
     const leaks = findLeaks(plan);
@@ -216,10 +262,115 @@ publicRouter.get('/:token/plan', async (req, res) => {
       console.error('[teasers] PLAN LEAK BLOCKED for token %s: %j', row.token, leaks);
       return res.json({ status: 'unavailable' });
     }
-    return res.json({ status: 'ready', plan });
+    return res.json({ status: 'ready', plan, refined: !!working });
   } catch (err) {
     console.error('[teasers] plan projection failed:', err.message);
     res.status(500).json({ status: 'unavailable', error: 'plan_error' });
+  }
+});
+
+// Plan Copilot — the prospect chats with their plan and refines it before booking.
+// Token-scoped, rate-limited, cost-capped. Context = client-safe plan + the
+// prospect's own request ONLY, so it structurally cannot leak internal analysis.
+//   body: { message, history? }  ->  { mode, reply, plan?, diff?, refined }
+publicRouter.post('/:token/plan/chat', async (req, res) => {
+  try {
+    if (process.env.ORBUP_PLAN_CHAT === '0') return res.status(403).json({ error: 'disabled' });
+    const row = await loadTeaser(req.params.token);
+    if (!row || !row.project_id) return res.status(404).json({ error: 'not found' });
+
+    const ip = clientIp(req);
+    const rl = chatRateCheck(row.token, ip);
+    if (!rl.allowed) {
+      const es = (row.lang === 'es');
+      return res.status(429).json({ error: rl.reason === 'daily'
+        ? (es ? 'Has alcanzado el límite diario. Vuelve mañana o agenda una llamada.' : 'You\'ve hit today\'s limit. Come back tomorrow or book a call.')
+        : (es ? 'Esta sesión llegó a su límite. Agenda una llamada para continuar.' : 'This session reached its limit. Book a call to keep going.') });
+    }
+
+    const b = req.body || {};
+    const lang = (b.lang || row.lang || 'en');
+    const base = await basePlanFor(row, lang);
+    if (!base || !base.plan) return res.status(409).json({ error: 'plan_not_ready' });
+
+    // Current working plan = refined version if any, else the fresh projection.
+    const current = jsonOf(row.client_plan_json, null) || base.plan;
+    const project = base.project.toJSON ? base.project.toJSON() : base.project;
+    const request = {
+      description: project.description, target_users: project.target_users,
+      current_process: project.current_process, timeline: project.timeline
+    };
+
+    const copilot = require('../services/planCopilot');
+    const out = await copilot.chat({ plan: current, request, message: b.message, history: Array.isArray(b.history) ? b.history : [], lang });
+
+    // Log the turn (capped) regardless of mode.
+    const chatLog = jsonOf(row.client_plan_chat, []);
+    chatLog.push({ role: 'user', text: String(b.message || '').slice(0, 1000) });
+    if (out.reply) chatLog.push({ role: 'assistant', text: out.reply, mode: out.mode });
+    const trimmedChat = chatLog.slice(-60);
+
+    if (out.mode === 'edit' && out.plan) {
+      const { findLeaks } = require('../services/clientPlanFromTriage');
+      if (findLeaks(out.plan).length) return res.json({ mode: 'answer', reply: out.reply, refined: !!row.client_plan_json });
+      const versions = jsonOf(row.client_plan_versions, []);
+      versions.push(current); // push the pre-edit plan for undo
+      await sequelize.query(
+        `UPDATE d2_project_teasers SET client_plan_json = CAST(:plan AS JSONB),
+           client_plan_versions = CAST(:versions AS JSONB), client_plan_chat = CAST(:chat AS JSONB),
+           client_plan_at = NOW(), updated_at = NOW() WHERE token = :token`,
+        { replacements: { token: row.token, plan: JSON.stringify(out.plan), versions: JSON.stringify(versions.slice(-20)), chat: JSON.stringify(trimmedChat) } }
+      );
+      return res.json({ mode: 'edit', reply: out.reply, plan: out.plan, diff: out.diff, refined: true, is_simulated: out.is_simulated });
+    }
+
+    // answer / clarify — persist only the transcript.
+    await sequelize.query(
+      `UPDATE d2_project_teasers SET client_plan_chat = CAST(:chat AS JSONB), updated_at = NOW() WHERE token = :token`,
+      { replacements: { token: row.token, chat: JSON.stringify(trimmedChat) } }
+    );
+    return res.json({ mode: out.mode, reply: out.reply, refined: !!row.client_plan_json, is_simulated: out.is_simulated });
+  } catch (err) {
+    console.error('[teasers] plan chat failed:', err.message);
+    res.status(500).json({ error: 'chat_error' });
+  }
+});
+
+// Undo the last edit / reset to the original projection.
+//   body: { action: 'undo' | 'reset' }  ->  { plan, refined }
+publicRouter.post('/:token/plan/version', async (req, res) => {
+  try {
+    const row = await loadTeaser(req.params.token);
+    if (!row || !row.project_id) return res.status(404).json({ error: 'not found' });
+    const action = (req.body && req.body.action) || 'undo';
+    const lang = (row.lang || 'en');
+
+    if (action === 'reset') {
+      await sequelize.query(
+        `UPDATE d2_project_teasers SET client_plan_json = NULL, client_plan_versions = '[]', client_plan_at = NOW(), updated_at = NOW() WHERE token = :token`,
+        { replacements: { token: row.token } }
+      );
+      const base = await basePlanFor(row, lang);
+      return res.json({ plan: base && base.plan, refined: false });
+    }
+
+    // undo: pop the last saved version back into place.
+    const versions = jsonOf(row.client_plan_versions, []);
+    const prev = versions.pop();
+    if (!prev) {
+      await sequelize.query(`UPDATE d2_project_teasers SET client_plan_json = NULL, client_plan_versions = '[]' WHERE token = :token`, { replacements: { token: row.token } });
+      const base = await basePlanFor(row, lang);
+      return res.json({ plan: base && base.plan, refined: false });
+    }
+    const stillRefined = versions.length > 0;
+    await sequelize.query(
+      `UPDATE d2_project_teasers SET client_plan_json = CAST(:plan AS JSONB), client_plan_versions = CAST(:versions AS JSONB), updated_at = NOW() WHERE token = :token`,
+      { replacements: { token: row.token, plan: JSON.stringify(prev), versions: JSON.stringify(versions) } }
+    );
+    return res.json({ plan: prev, refined: stillRefined || true });
+  } catch (err) {
+    console.error('[teasers] plan version failed:', err.message);
+    res.status(500).json({ error: 'version_error' });
   }
 });
 
@@ -387,6 +538,31 @@ button:disabled{opacity:.45;cursor:default}
 .d2plan-cta{margin-top:14px}
 .d2plan-cta button{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:13px 28px;border-radius:10px;font-size:1rem;font-family:inherit}
 .d2plan-disc{color:#5f7197;font-size:12px;margin-top:16px;font-style:italic}
+.d2plan-timeline{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);border-radius:10px;padding:8px 14px;font-weight:600}
+.d2plan-timeline b{font-size:1.25rem;color:var(--cyan)}
+.d2flash{animation:d2flash 1s ease}
+@keyframes d2flash{0%{background:rgba(124,92,255,.14)}100%{background:transparent}}
+/* Plan Copilot chat */
+.d2chat{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card),var(--bg2));overflow:hidden}
+.d2chat-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.d2chat-orb{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);flex:0 0 auto}
+.d2chat-h .tt{font-weight:700}.d2chat-h .ss{color:var(--mut);font-size:12.5px}
+.d2chat-log{max-height:340px;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.d2msg{max-width:88%;padding:10px 13px;border-radius:13px;font-size:14.5px;line-height:1.5}
+.d2msg.u{align-self:flex-end;background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(124,92,255,.16));border:1px solid var(--line)}
+.d2msg.a{align-self:flex-start;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.d2msg.d{align-self:center;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:#c7f9e5;font-size:13px;text-align:center}
+.d2chat-suggest{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 12px}
+.d2chip{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:20px;padding:7px 13px;color:var(--txt);font:inherit;font-size:13px;cursor:pointer}
+.d2chip:hover{border-color:var(--violet)}
+.d2chat-in{display:flex;gap:9px;padding:12px 14px;border-top:1px solid var(--line)}
+.d2chat-in input{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;padding:12px 14px;color:var(--txt);font:inherit;font-size:14.5px;outline:none}
+.d2chat-in input:focus{border-color:var(--violet)}
+.d2chat-in button{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:0 20px;border-radius:11px;font:inherit}
+.d2chat-in button:disabled{opacity:.5;cursor:not-allowed}
+.d2chat-ctl{padding:0 18px 12px;font-size:12.5px;color:var(--mut)}
+.d2chat-ctl a{color:var(--cyan);text-decoration:none;cursor:pointer;margin-right:14px}
+.d2chat-typing{color:var(--mut);font-size:13px;font-style:italic}
 </style>
 </head>
 <body>
@@ -679,13 +855,16 @@ button:disabled{opacity:.45;cursor:default}
 </script>
 
 <script>
-/* Feasibility & Build Plan — polls the token-scoped /plan projection (real
-   triage, client-safe: deep analysis shown, monetization + verdict never sent). */
+/* Feasibility & Build Plan + Plan Copilot — the prospect reads the real (client-
+   safe) triage/premortem, then chats to refine it live before booking. Monetization
+   + verdict are never sent to the browser; the Copilot can only touch client fields. */
 (function(){
   var TOKEN = ${JSON.stringify(token || '')};
   var ES = ${JSON.stringify(es)};
   var box = document.getElementById('d2plan-body');
   if(!TOKEN || !box) return;
+  var section = document.getElementById('d2plan');
+  var history = [], chatMounted = false, sending = false;
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
   function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
@@ -702,6 +881,10 @@ button:disabled{opacity:.45;cursor:default}
     if(plan.problem) html += block(L.problem, '<p>'+esc(plan.problem)+'</p>');
     if(plan.why) html += block(L.why, '<p>'+esc(plan.why)+'</p>');
     if(plan.v1) html += block(L.v1, '<p>'+esc(plan.v1)+'</p>');
+    if(plan.build_includes && plan.build_includes.length)
+      html += block(L.includes, listOf(plan.build_includes, function(c){ return '<li>'+esc(c)+'</li>'; }));
+    if(plan.timeline_weeks)
+      html += block(L.timeline, '<div class="d2plan-timeline"><b>'+plan.timeline_weeks+'</b> '+esc(L.weeks||'weeks')+'</div>');
     if(plan.considerations && plan.considerations.length)
       html += block(L.cons, listOf(plan.considerations, function(c){ return '<li>'+esc(c)+'</li>'; }));
     if(plan.landscape && plan.landscape.length)
@@ -718,6 +901,7 @@ button:disabled{opacity:.45;cursor:default}
     }
     if(plan.disclaimer) html += '<div class="d2plan-disc">'+esc(plan.disclaimer)+'</div>';
     box.innerHTML = html;
+    box.classList.remove('d2flash'); void box.offsetWidth; box.classList.add('d2flash');
     var cb = document.getElementById('d2plan-cta-btn');
     if(cb) cb.onclick = function(){
       var bk = document.getElementById('ts-book-btn');
@@ -725,6 +909,78 @@ button:disabled{opacity:.45;cursor:default}
       if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
       if(bk) setTimeout(function(){ bk.click(); }, 420);
     };
+    if(!chatMounted){ mountChat(); chatMounted = true; }
+  }
+
+  // ---- Plan Copilot (chat to refine the plan) ----
+  var T = ES ? {
+    title:'Copiloto del plan', sub:'Pregúntame o ajusta el plan en lenguaje natural',
+    ph:'Ej: hazlo un MVP de 2 semanas · agrega una app móvil',
+    send:'Enviar', undo:'Deshacer', reset:'Volver al original', thinking:'Pensando…',
+    hello:'Puedo explicarte cualquier parte de este plan o cambiarlo. Prueba: "resúmelo en 3 puntos", "hazlo un MVP de 2 semanas" o "agrega una app móvil".',
+    chips:['Resúmelo en 3 puntos','Hazlo un MVP de 2 semanas','Agrega una app móvil'],
+    updated:'Plan actualizado'
+  } : {
+    title:'Plan Copilot', sub:'Ask me anything, or reshape the plan in plain language',
+    ph:'e.g. make it a 2-week MVP · add a mobile app',
+    send:'Send', undo:'Undo', reset:'Reset to original', thinking:'Thinking…',
+    hello:'I can explain any part of this plan or change it. Try: "summarize in 3 bullets", "make it a 2-week MVP", or "add a mobile app".',
+    chips:['Summarize in 3 bullets','Make it a 2-week MVP','Add a mobile app'],
+    updated:'Plan updated'
+  };
+  var logEl, inputEl, sendBtn;
+  function mountChat(){
+    var el = document.createElement('div'); el.className='d2chat'; el.id='d2chat';
+    el.innerHTML =
+      '<div class="d2chat-h"><span class="d2chat-orb"></span><div><div class="tt">'+esc(T.title)+'</div><div class="ss">'+esc(T.sub)+'</div></div></div>'
+      + '<div class="d2chat-log" id="d2chat-log"></div>'
+      + '<div class="d2chat-suggest" id="d2chat-chips">'+T.chips.map(function(c){return '<button type="button" class="d2chip">'+esc(c)+'</button>';}).join('')+'</div>'
+      + '<div class="d2chat-ctl"><a id="d2chat-undo">'+esc(T.undo)+'</a><a id="d2chat-reset">'+esc(T.reset)+'</a></div>'
+      + '<div class="d2chat-in"><input id="d2chat-input" type="text" placeholder="'+esc(T.ph)+'" autocomplete="off"><button id="d2chat-send" type="button">'+esc(T.send)+'</button></div>';
+    section.appendChild(el);
+    logEl = document.getElementById('d2chat-log');
+    inputEl = document.getElementById('d2chat-input');
+    sendBtn = document.getElementById('d2chat-send');
+    addMsg('a', T.hello);
+    sendBtn.onclick = doSend;
+    inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ doSend(); } });
+    Array.prototype.forEach.call(document.querySelectorAll('#d2chat-chips .d2chip'), function(b){
+      b.onclick = function(){ inputEl.value = b.textContent; doSend(); };
+    });
+    document.getElementById('d2chat-undo').onclick = function(){ version('undo'); };
+    document.getElementById('d2chat-reset').onclick = function(){ version('reset'); };
+  }
+  function addMsg(kind, text){
+    var d = document.createElement('div'); d.className='d2msg '+kind; d.textContent=text;
+    logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; return d;
+  }
+  function doSend(){
+    if(sending) return;
+    var msg = (inputEl.value||'').trim(); if(!msg) return;
+    inputEl.value=''; addMsg('u', msg); history.push({role:'user',text:msg});
+    sending = true; sendBtn.disabled = true;
+    var typing = addMsg('a', T.thinking); typing.classList.add('d2chat-typing');
+    fetch('/projects/teaser/'+encodeURIComponent(TOKEN)+'/plan/chat',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, history: history.slice(-8), lang: (ES?'es':'en') })
+    }).then(function(r){ return r.json(); }).then(function(res){
+      typing.remove();
+      if(res && res.error){ addMsg('a', res.error); return; }
+      if(res && res.reply){ addMsg('a', res.reply); history.push({role:'assistant',text:res.reply}); }
+      if(res && res.mode==='edit' && res.plan){
+        render(res.plan);
+        if(res.diff){ var d=addMsg('d', T.updated+': '+res.diff); }
+        section.scrollIntoView({behavior:'smooth',block:'nearest'});
+      }
+    }).catch(function(){ typing.remove(); addMsg('a', ES?'Error de conexión.':'Connection error.'); })
+      .then(function(){ sending=false; sendBtn.disabled=false; inputEl.focus(); });
+  }
+  function version(action){
+    fetch('/projects/teaser/'+encodeURIComponent(TOKEN)+'/plan/version',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action: action })
+    }).then(function(r){ return r.json(); }).then(function(res){
+      if(res && res.plan){ render(res.plan); addMsg('d', action==='reset'?(ES?'Plan restaurado al original.':'Plan reset to original.'):(ES?'Cambio deshecho.':'Change undone.')); }
+    }).catch(function(){});
   }
 
   var tries = 0, MAX = 24; // ~72s ceiling; triage+premortem usually < 30s
