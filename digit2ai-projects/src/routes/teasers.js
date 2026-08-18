@@ -619,6 +619,16 @@ button:disabled{opacity:.45;cursor:default}
 .d2chat-ctl{padding:0 18px 12px;font-size:12.5px;color:var(--mut)}
 .d2chat-ctl a{color:var(--cyan);text-decoration:none;cursor:pointer;margin-right:14px}
 .d2chat-typing{color:var(--mut);font-size:13px;font-style:italic}
+/* Neutral grey Copilot (Claude-style) — override the navy panel */
+.d2chat{background:#1e1e1e;border-color:rgba(255,255,255,.12)}
+.d2chat-h{border-bottom-color:rgba(255,255,255,.1)}
+.d2chat-in{border-top-color:rgba(255,255,255,.1)}
+.d2msg.a{background:#2b2b2b;border-color:rgba(255,255,255,.08)}
+.d2msg.u{background:#3a3a3a;border-color:rgba(255,255,255,.1)}
+.d2chip{background:#2b2b2b;border-color:rgba(255,255,255,.1)}
+.d2chip:hover{border-color:rgba(255,255,255,.28)}
+.d2chat-in input{background:#2b2b2b;border-color:rgba(255,255,255,.12)}
+.d2chat-in input:focus{border-color:rgba(255,255,255,.32)}
 /* Two-pane Studio (Claude/ChatGPT-style): plan canvas left, Copilot chat right */
 .d2studio-sec{width:min(1180px,94vw);position:relative;left:50%;transform:translateX(-50%);margin:28px 0 16px}
 /* Workspace shell on the Studio: left pane = project history (Claude/ChatGPT-style) */
