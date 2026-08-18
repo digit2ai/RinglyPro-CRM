@@ -490,8 +490,10 @@ function renderTeaserPage(t, meta = {}) {
 body{font-family:'Inter',sans-serif;background:radial-gradient(1200px 600px at 50% -10%,#16224a,var(--bg));color:var(--txt);line-height:1.7}
 .wrap{max-width:880px;margin:0 auto;padding:40px 22px 80px}
 .brand{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--violet);font-weight:800}
-.d2-back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:13px;font-weight:600;margin-bottom:12px;padding:7px 14px;border:1px solid var(--line);border-radius:20px;transition:.12s ease}
-.d2-back:hover{color:var(--txt);border-color:var(--violet);background:rgba(124,92,255,.08)}
+.d2-back{position:fixed;top:20px;left:20px;z-index:100;display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-size:16px;font-weight:800;padding:13px 24px;border:2px solid #ef4444;border-radius:14px;background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 10px 28px rgba(239,68,68,.4);transition:.12s ease}
+.d2-back:hover{filter:brightness(1.12);transform:translateY(-1px)}
+body.tw-on .d2-back{display:none} /* sidebar already has a workspace link */
+@media(max-width:560px){.d2-back{font-size:14px;padding:10px 16px;top:12px;left:12px}}
 .hero{padding:18px 0 10px}
 .hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.1;margin:10px 0 8px;background:linear-gradient(135deg,#fff,#9bc7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hero .tag{color:var(--cyan);font-size:1.05rem;font-weight:600}
