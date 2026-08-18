@@ -355,8 +355,8 @@ router.post('/public/teaser/:projectId', async (req, res) => {
           : 'Read the plan and chat with the copilot to shape it before you book a call.'
       },
       cta: {
-        heading: es ? '¿Listo para construir?' : 'Ready to build?',
-        body: es ? 'Agenda una llamada y lo hacemos realidad.' : 'Book a call and we\'ll make it real.'
+        heading: es ? 'Construcción completa' : 'Build complete',
+        body: es ? 'Revisa o edita tu plan de proyecto arriba.' : 'See or edit your project plan above.'
       },
       simulator: null, model: 'studio-shell'
     };
