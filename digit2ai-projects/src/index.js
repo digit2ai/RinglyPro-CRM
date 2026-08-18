@@ -809,6 +809,11 @@ app.get('*', (req, res) => {
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS last_name VARCHAR(80)`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS phone VARCHAR(32)`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS password_hash TEXT`,
+      // Password reset (Planea pattern): only the sha256 HASH of the token is
+      // stored, so a database reader can never hijack an account with it.
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(80)`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_users_reset ON orbup_users(reset_token)`,
       `CREATE TABLE IF NOT EXISTS orbup_apps (
         id SERIAL PRIMARY KEY,
         token UUID NOT NULL UNIQUE,

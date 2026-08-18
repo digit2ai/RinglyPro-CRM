@@ -1,4 +1,4 @@
-<!-- ORBUP | Log in to your workspace (email + password) -->
+<!-- VISION2AI | Set a new password from a reset link -->
 <style>
 .owl *{box-sizing:border-box}
 .owl{--bg:#0a0a0e;--card:#16171f;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.18);
@@ -50,87 +50,67 @@
 
 <div class="owl">
   <div class="owl-top">
-    <a href="/orbup" aria-label="OrbUp"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580b27c06d2134c6e06440.png" alt="OrbUp"></a>
-    <a class="x" href="/orbup">Home</a>
+    <a href="/v2ai" aria-label="Vision2Ai"><img src="/v2ai-assets/vision2ai-logo.svg" alt="Vision2Ai"></a>
+    <a class="x" href="/v2ai">Home</a>
   </div>
   <div class="owl-stage">
     <div class="owl-orb" aria-hidden="true">
       <i class="halo"></i><i class="ring"></i><i class="ring2"></i><i class="core"></i><i class="spark"></i>
     </div>
-    <h1>Welcome back</h1>
-    <p class="sub">Sign in with the email and password you created your workspace with.</p>
+    <h1>Set a new password</h1>
+    <p class="sub">Choose a new password for your workspace. You will be signed in straight away.</p>
     <form id="owl-form" autocomplete="on">
-      <div class="owl-field"><label>Email</label><input id="owl-email" type="email" placeholder="you@company.com" autocomplete="email" autofocus></div>
-      <div class="owl-field"><label>Password</label><input id="owl-pass" type="password" placeholder="Your password" autocomplete="current-password"></div>
-      <div class="owl-forgot"><a href="/orbup/forgot">Forgot your password?</a></div>
+      <div class="owl-field"><label>New password</label><input id="owl-pass" type="password" placeholder="At least 6 characters" autocomplete="new-password" autofocus></div>
+      <div class="owl-field"><label>Confirm password</label><input id="owl-pass2" type="password" placeholder="Repeat it" autocomplete="new-password"></div>
       <div class="owl-msg" id="owl-msg" aria-live="polite"></div>
-      <div><button class="owl-btn" id="owl-go" type="submit">Sign in &rarr;</button></div>
+      <div><button class="owl-btn" id="owl-go" type="submit">Save password &rarr;</button></div>
     </form>
-    <div class="owl-alt">New here? <a href="/orbup/start">Create your free workspace</a></div>
+    <div class="owl-alt"><a href="/v2ai/login">Back to sign in</a></div>
   </div>
 </div>
 
 <script>
 (function(){
-  var BASE='/orbup';
+  var BASE='/v2ai';
   var form=document.getElementById('owl-form');
-  var emailEl=document.getElementById('owl-email');
-  var passEl=document.getElementById('owl-pass');
+  var p1=document.getElementById('owl-pass');
+  var p2=document.getElementById('owl-pass2');
   var msg=document.getElementById('owl-msg');
   var go=document.getElementById('owl-go');
+  var token=''; try{ token=new URLSearchParams(window.location.search).get('token')||''; }catch(e){}
 
-  // Where to land after a successful sign-in. Same-origin path only — never an
-  // attacker-supplied absolute URL (open-redirect guard).
-  function nextPath(){
-    try{
-      var n=new URLSearchParams(window.location.search).get('next')||'';
-      if(n && n.charAt(0)==='/' && n.charAt(1)!=='/') return n;
-    }catch(e){}
-    return BASE+'/workspace';
+  if(!token){
+    msg.className='owl-msg err';
+    msg.innerHTML='That link is not valid. <a href="'+BASE+'/forgot">Request a new one &rarr;</a>';
+    go.disabled=true;
   }
 
-  // Already signed in on this browser -> skip the form entirely.
-  try{ if(localStorage.getItem('d2ai_session')){ window.location.replace(nextPath()); return; } }catch(e){}
-
-  // arriving straight from Log out — say so, do not look like a stray redirect
-  try{ if(new URLSearchParams(window.location.search).get('out')){ msg.className='owl-msg ok'; msg.textContent='You are signed out.'; } }catch(e){}
-
-  try{ var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); if(c.email) emailEl.value=c.email; }catch(e){}
-  if(emailEl.value) setTimeout(function(){ passEl.focus(); },60);
-
-  function reset(){ go.disabled=false; go.innerHTML='Sign in &rarr;'; }
-  function fail(html){ reset(); msg.className='owl-msg err'; msg.innerHTML=html; }
+  function fail(html){ go.disabled=false; go.innerHTML='Save password &rarr;'; msg.className='owl-msg err'; msg.innerHTML=html; }
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    var email=(emailEl.value||'').trim();
-    var pass=passEl.value||'';
+    if(!token) return;
+    var a=p1.value||'', b2=p2.value||'';
     msg.className='owl-msg'; msg.textContent='';
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.className='owl-msg err'; msg.textContent='Please enter a valid email.'; emailEl.focus(); return; }
-    if(!pass){ msg.className='owl-msg err'; msg.textContent='Please enter your password.'; passEl.focus(); return; }
-    go.disabled=true; go.innerHTML='<span class="owl-spin"></span> Signing in…';
-    fetch('/projects/api/v1/intake/orbup/login',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email,password:pass})})
+    if(a.length<6){ msg.className='owl-msg err'; msg.textContent='Password must be at least 6 characters.'; p1.focus(); return; }
+    if(a!==b2){ msg.className='owl-msg err'; msg.textContent='Passwords do not match.'; p2.focus(); return; }
+    go.disabled=true; go.innerHTML='<span class="owl-spin"></span> Saving…';
+    fetch('/projects/api/v1/intake/orbup/reset',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:token,password:a})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
         var j=res.json||{};
-        if(res.status===200 && j.success && j.session){
-          try{
-            var prev={}; try{ prev=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(x){}
-            localStorage.setItem('d2ai_session', j.session);
-            localStorage.setItem('d2ai_contact', JSON.stringify({
-              name: j.name||prev.name||'', email: j.email||email, phone: j.phone||prev.phone||'', lang: prev.lang||'en'
-            }));
-          }catch(x){}
-          msg.className='owl-msg ok'; msg.textContent='Signed in. Opening your workspace…';
-          go.innerHTML='<span class="owl-spin"></span> Opening your workspace…';
-          window.location.href=nextPath();
-          return;
-        }
-        if(res.status===404){ return fail('No workspace found for that email. <a href="'+BASE+'/start">Create one free &rarr;</a>'); }
-        if(res.status===409){ return fail('This workspace has no password yet. <a href="'+BASE+'/start">Set one now &rarr;</a>'); }
-        if(res.status===401){ return fail('Wrong password. <a href="'+BASE+'/forgot">Reset it &rarr;</a>'); }
-        return fail(j.error ? String(j.error) : 'Something went wrong. Please try again.');
+        if(res.status!==200 || !j.ok){ return fail((j.error||'Could not update your password.')+' <a href="'+BASE+'/forgot">Request a new link &rarr;</a>'); }
+        try{
+          var prev={}; try{ prev=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(x){}
+          if(j.session) localStorage.setItem('d2ai_session', j.session);
+          localStorage.setItem('d2ai_contact', JSON.stringify({
+            name: j.name||prev.name||'', email: j.email||prev.email||'', phone: j.phone||prev.phone||'', lang: prev.lang||'en'
+          }));
+        }catch(x){}
+        msg.className='owl-msg ok'; msg.textContent='Password updated. Opening your workspace…';
+        go.innerHTML='<span class="owl-spin"></span> Opening your workspace…';
+        setTimeout(function(){ window.location.href = j.session ? (BASE+'/workspace') : (BASE+'/login'); }, 900);
       })
       .catch(function(){ fail('Could not reach the server. Please try again.'); });
   });

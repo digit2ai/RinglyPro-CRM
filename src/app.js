@@ -3699,6 +3699,46 @@ ${content}
 </body>
 </html>`);
 });
+app.get('/orbup/forgot', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-forgot.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your password — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/orbup/reset', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-reset.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set a new password — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
 
 app.get('/orbup-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
@@ -3885,6 +3925,46 @@ ${content}
 </body>
 </html>`);
 });
+app.get('/torna/forgot', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-forgot.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your password — Torna</title>
+${TORNA_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/torna/reset', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-reset.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set a new password — Torna</title>
+${TORNA_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
 
 app.get('/torna-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../torna-es.html'), 'utf8');
@@ -4061,6 +4141,46 @@ app.get('/v2ai/login', (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Log in — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/v2ai/forgot', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-forgot.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your password — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/v2ai/reset', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-reset.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set a new password — Vision2Ai</title>
 ${V2AI_PWA_HEAD}
 <meta name="robots" content="noindex">
 <style>html,body{margin:0;padding:0;background:#06081a;}</style>

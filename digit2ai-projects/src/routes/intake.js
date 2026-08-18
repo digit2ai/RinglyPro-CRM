@@ -563,6 +563,112 @@ router.post('/orbup/login', async (req, res) => {
   }
 });
 
+// ---- OrbUp password reset (mirrors the Planea flow: hashed token, 1h expiry) ----
+// Only the sha256 HASH of the token is stored, never the token itself, so reading
+// the database can never hijack an account. /forgot always answers ok so it never
+// reveals whether an email has an account. With no SendGrid key the link comes
+// back as dev_link so the flow stays testable instead of silently doing nothing.
+const ORBUP_RESET_TTL_MS = 60 * 60 * 1000;
+function orbHashToken(t) { return require('crypto').createHash('sha256').update(String(t)).digest('hex'); }
+
+// Which brand asked — the reset link must come back to the same front door.
+const ORBUP_BRANDS = {
+  'orbup.app':    { base: '/orbup', name: 'OrbUp',     host: 'orbup.app' },
+  'torna.dev':    { base: '/torna', name: 'Torna',     host: 'torna.dev' },
+  'vision2ai.app':{ base: '/v2ai',  name: 'Vision2Ai', host: 'vision2ai.app' }
+};
+function orbBrand(req) {
+  const b = String((req.body && req.body.brand) || '').toLowerCase();
+  if (b === 'torna') return ORBUP_BRANDS['torna.dev'];
+  if (b === 'v2ai' || b === 'vision2ai') return ORBUP_BRANDS['vision2ai.app'];
+  if (b === 'orbup') return ORBUP_BRANDS['orbup.app'];
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase().replace(/^www\./, '');
+  return ORBUP_BRANDS[host] || ORBUP_BRANDS['orbup.app'];
+}
+function orbResetLink(req, token) {
+  const brand = orbBrand(req);
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || brand.host).split(',')[0].trim();
+  return { url: 'https://' + host + brand.base + '/reset?token=' + token, brand };
+}
+
+async function orbSendResetEmail(email, link, brand) {
+  const key = process.env.SENDGRID_API_KEY;
+  const from = process.env.ORBUP_RESET_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'info@digit2ai.com';
+  if (!key) return false;
+  try {
+    const sg = require('@sendgrid/mail'); sg.setApiKey(key);
+    await sg.send({
+      to: email, from,
+      subject: 'Reset your ' + brand.name + ' password',
+      text: 'We received a request to reset your ' + brand.name + ' password. Open this link (valid for 1 hour): ' + link
+        + '\n\nIf you did not request it, ignore this email — your password stays unchanged.',
+      html: '<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:460px;margin:auto;color:#16171f">'
+        + '<h2 style="color:#7c5cff;margin:0 0 14px">' + brand.name + '</h2>'
+        + '<p>We received a request to reset your password.</p>'
+        + '<p><a href="' + link + '" style="display:inline-block;background:linear-gradient(135deg,#22d3ee,#7c5cff);color:#06101f;text-decoration:none;padding:13px 22px;border-radius:999px;font-weight:700">Reset my password</a></p>'
+        + '<p style="color:#6b7280;font-size:13px">The link expires in 1 hour. If you did not request it, ignore this email — your password stays unchanged.</p></div>'
+    });
+    return true;
+  } catch (e) { console.error('[D2AI-Intake] orbup reset email failed:', e.message); return false; }
+}
+
+// POST /orbup/forgot { email, brand? } -> always { ok:true } (never leaks existence)
+router.post('/orbup/forgot', async (req, res) => {
+  try {
+    const email = String((req.body || {}).email || '').trim().toLowerCase().slice(0, 200);
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: 'A valid email is required' });
+    }
+    const [rows] = await sequelize.query('SELECT id FROM orbup_users WHERE email = :email LIMIT 1', { replacements: { email } });
+    let dev_link = null;
+    if (rows && rows[0]) {
+      const token = require('crypto').randomBytes(24).toString('hex');
+      await sequelize.query(
+        'UPDATE orbup_users SET reset_token = :t, reset_expires = :exp, updated_at = NOW() WHERE email = :email',
+        { replacements: { t: orbHashToken(token), exp: new Date(Date.now() + ORBUP_RESET_TTL_MS), email } }
+      );
+      const { url, brand } = orbResetLink(req, token);
+      const sent = await orbSendResetEmail(email, url, brand);
+      if (!sent) dev_link = url;   // no SendGrid key -> show the link instead of pretending mail went out
+    }
+    res.json({ ok: true, dev_link });
+  } catch (err) {
+    console.error('[D2AI-Intake] orbup forgot failed:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST /orbup/reset { token, password } -> sets the password, burns the token,
+// and returns a fresh session so the user lands in the workspace already signed in.
+router.post('/orbup/reset', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const token = String((req.body || {}).token || '').trim();
+    const password = String((req.body || {}).password || '');
+    if (!token) return res.status(400).json({ ok: false, error: 'That link is not valid.' });
+    if (password.length < 6) return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters' });
+
+    const [rows] = await sequelize.query(
+      'SELECT id, name, email, phone, reset_expires FROM orbup_users WHERE reset_token = :t LIMIT 1',
+      { replacements: { t: orbHashToken(token) } }
+    );
+    const u = rows && rows[0];
+    if (!u || !u.reset_expires || new Date(u.reset_expires).getTime() < Date.now()) {
+      return res.status(400).json({ ok: false, error: 'That link is invalid or expired. Request a new one.' });
+    }
+    const password_hash = await bcrypt.hash(password, 10);
+    await sequelize.query(
+      'UPDATE orbup_users SET password_hash = :pwh, reset_token = NULL, reset_expires = NULL, updated_at = NOW() WHERE id = :id',
+      { replacements: { pwh: password_hash, id: u.id } }
+    );
+    const session = orbSign({ uid: u.id, email: u.email });
+    res.json({ ok: true, success: true, session, name: u.name || '', email: u.email, phone: u.phone || '' });
+  } catch (err) {
+    console.error('[D2AI-Intake] orbup reset failed:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // GET /orbup/workspace?email=X — the signed-in user's private workspace:
 // their account + their workspace-private projects (each with its latest
 // teaser + simulator magic links). Passwordless free tier — email is identity.
