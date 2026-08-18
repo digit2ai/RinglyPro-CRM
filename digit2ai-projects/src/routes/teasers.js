@@ -668,7 +668,7 @@ body.tw-on .tw-side{display:flex}
 <button class="tw-toggle" id="tw-toggle" aria-label="Menu">&#9776;</button>
 <aside class="tw-side" id="tw-side"></aside>
 <div class="wrap">
-  <a class="d2-back" href="/orbup/workspace" onclick="if(document.referrer&&/\\/workspace/.test(document.referrer)){location.href=document.referrer;return false;}">&larr; Workspace</a>
+  <a class="d2-back" href="https://orbup.app/orbup/workspace" onclick="try{if(document.referrer&&/\\/workspace/.test(document.referrer)){location.href=document.referrer;return false;}}catch(e){}">&larr; Workspace</a>
   <div class="brand">Digit2AI</div>
 
   <div class="hero" id="top">
