@@ -14,6 +14,7 @@ const jobsource = require('../jobsource');
 const geo = require('../geo');
 const matcher = require('../matcher');
 const settingsSvc = require('../settings');
+const brain = require('../brain');
 const identity = require('../identity');
 
 const CONCURRENCY = parseInt(process.env.JOBUP_AGENT_CONCURRENCY || '4', 10);
@@ -314,10 +315,49 @@ async function hunter(tenantId, opts = {}) {
 // ---------------------------------------------------------------
 // Agent 2 — Professional Presence Agent
 // ---------------------------------------------------------------
+/**
+ * Teach an account what employers call its work, if onboarding could not.
+ *
+ * The widening runs at signup, but it needs a model and a model can be down or
+ * unconfigured at that exact moment. A signup must never fail for that, so it
+ * records whether it happened — and this finishes the job on the next daily
+ * run. That is what makes the step MANDATORY rather than best-effort: an
+ * account cannot end up permanently searching on the titles it has held.
+ *
+ * Once per account, then never again: the flag is set even when the model has
+ * nothing to add, so this cannot become a daily model call per subscriber.
+ */
+async function widenRolesIfNeeded(tenantId, settings) {
+  if (!settings.targeting || settings.targeting.roles_widened) return null;
+  if (!brain.enabled()) return null;            // no model — try again tomorrow
+
+  const row = await scoped('settings', tenantId).findOne({});
+  const profRow = await scoped('profiles', tenantId).findOne({});
+  if (!row || !profRow) return null;
+
+  let mt;
+  try { mt = await require('../resume').marketTitles(profRow.resume_json || {}); }
+  catch (e) { return null; }                     // transient — try again tomorrow
+  if (!mt || mt.is_simulated) return null;
+
+  const cur = settingsSvc.sanitize(row.settings);
+  const existing = (cur.targeting.roles || []).map((r) => r.title).filter(Boolean);
+  const have = new Set(existing.map((t) => t.toLowerCase()));
+  const added = (mt.titles || []).filter((t) => !have.has(String(t).toLowerCase()));
+
+  const next = settingsSvc.sanitize({ ...cur, targeting: { ...cur.targeting,
+    roles: existing.concat(added).map((t) => ({ title: t })) } });
+  next.targeting.roles_widened = true;           // set even when nothing was added
+  await scoped('settings', tenantId).update({ settings: next }, { id: row.id });
+  return added;
+}
+
 async function presence(tenantId) {
   const { profile, settings } = await loadContext(tenantId);
   const sub = await models.subscribers.findOne({ where: { id: tenantId } });
   const url = sub && sub.address ? `https://${sub.address}` : null;
+
+  const widened = await widenRolesIfNeeded(tenantId, settings);
 
   const gaps = [];
   if (!profile.headline) gaps.push('No headline — recruiters and search engines both key on it.');
@@ -339,9 +379,13 @@ async function presence(tenantId) {
   await scoped('sites', tenantId).update({ health: { checked_at: new Date(), gaps } }, {});
 
   await log(tenantId, 'presence', 'ok',
-    `Profile reviewed. ${gaps.length} gap(s) found. Surfaces regenerated from one source of truth.`, 0, false);
+    `Profile reviewed. ${gaps.length} gap(s) found. Surfaces regenerated from one source of truth.`
+    + (widened && widened.length
+      ? ` Role targets widened to the titles employers post: ${widened.join(', ')}.` : ''),
+    0, false);
 
-  return { agent: 'presence', gaps, surfaces_regenerated: Boolean(surfaces), url };
+  return { agent: 'presence', gaps, surfaces_regenerated: Boolean(surfaces), url,
+           roles_widened: widened || [] };
 }
 
 /** Fan out across tenants inside the global concurrency ceiling. */

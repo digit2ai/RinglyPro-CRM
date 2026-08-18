@@ -104,6 +104,7 @@ router.get('/subscribers/ops', requireOwner, async (req, res) => {
     const matches = await scoped('job_matches', s.id).findAll({});
     const scores = await scoped('job_scores', s.id).findAll({});
     const prof = await scoped('profiles', s.id).findOne({});
+    const setRow = await scoped('settings', s.id).findOne({});
     const last = hunts[0] || null;
 
     // The signal that actually mattered and that nothing surfaced: an agent
@@ -115,6 +116,10 @@ router.get('/subscribers/ops', requireOwner, async (req, res) => {
     if (s.status === 'active' && !hunts.length) flags.push('never hunted');
     if (scoredEver >= 12 && !filedEver) flags.push('scoring but never filing');
     if (last && last.status === 'idle') flags.push('last run idle');
+    // Onboarding could not reach the model for this account. The daily agent
+    // retries, so this should clear itself; if it persists, the model is down.
+    if (setRow && setRow.settings && setRow.settings.targeting
+        && setRow.settings.targeting.roles_widened === false) flags.push('roles not widened');
     if (last && new Date(last.created_at) < new Date(Date.now() - 3 * 86400000)) flags.push('stale');
 
     out.push({

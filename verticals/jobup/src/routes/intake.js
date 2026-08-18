@@ -488,15 +488,23 @@ router.post('/build-account', async (req, res) => {
     // Filling the field in was the trap, not the escape from it.
     const typed = settingsSvc.strList(b.roles, 12);
     let seedRoles = typed.length ? typed : suggestedRoles(site);
+    let widened = false;
     try {
       const mt = await resumeSvc.marketTitles((site && site.profile) || {});
-      if (mt && mt.titles && mt.titles.length) {
+      // is_simulated means the keyless path handed back their own titles. That
+      // is not a widening, and recording it as one would leave the account
+      // permanently un-widened while looking finished.
+      if (mt && !mt.is_simulated && mt.titles && mt.titles.length) {
         // Theirs first and always kept; the market titles only ever append.
         const have = new Set(seedRoles.map((r) => String(r).toLowerCase()));
         seedRoles = seedRoles.concat(mt.titles.filter((t) => !have.has(String(t).toLowerCase())));
+        widened = true;
       }
-    } catch (e) { /* a failure here must never cost a signup */ }
+    } catch (e) { /* a failure here must never cost a signup — the agent retries */ }
+
     const cleaned = targetingFrom({ ...b, roles: seedRoles }, seedRoles, resumeState(site));
+    // Mandatory, not instantaneous: false here is a job for the daily agent.
+    cleaned.targeting.roles_widened = widened;
     const existingSettings = await scoped('settings', tenantId).findOne({});
     if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
     else await scoped('settings', tenantId).create({ settings: cleaned });

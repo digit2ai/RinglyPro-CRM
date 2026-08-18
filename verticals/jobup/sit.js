@@ -4684,6 +4684,39 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const local = jobsource.prefilter([{ ...decoy[0], id: 5, location: 'Tampa, FL' }], profile, settings, '');
     assert.ok(local[0].prescore > d[0].prescore, 'the body must not earn a local bonus');
   });
+  await t('THE WIDENING IS MANDATORY — NOT INSTANTANEOUS, BUT MANDATORY', () => {
+    // It needs a model, and a model can be down or unconfigured at the exact
+    // moment somebody signs up. A signup must never fail for that reason — but
+    // "best effort" would leave an account permanently searching on the titles
+    // it has HELD, which is the whole defect. So the step records whether it
+    // happened and the daily agent finishes any account still carrying false.
+    const set = require(__dirname + '/src/services/settings');
+    const fresh = set.sanitize({});
+    assert.strictEqual(fresh.targeting.roles_widened, false,
+      'a new account starts owing the widening');
+    assert.strictEqual(set.sanitize({ targeting: { roles_widened: 'yes' } }).targeting.roles_widened,
+      false, 'only a real true counts');
+
+    const intake = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/cleaned\.targeting\.roles_widened = widened;/.test(intake),
+      'signup must record the outcome, not assume it');
+    assert.ok(/!mt\.is_simulated/.test(intake),
+      'the keyless path hands back their own titles — that is not a widening');
+
+    const ag = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/async function widenRolesIfNeeded/.test(ag), 'the agent must be able to finish it');
+    assert.ok(/if \(!settings\.targeting \|\| settings\.targeting\.roles_widened\) return null;/.test(ag),
+      'and must skip an account already done');
+    assert.ok(/if \(!brain\.enabled\(\)\) return null;/.test(ag),
+      'with no model it waits rather than marking the account done');
+    assert.ok(/next\.targeting\.roles_widened = true;\s*\/\/ set even when nothing was added/.test(ag),
+      'once satisfied it must never run again — otherwise it is a daily model call per subscriber');
+    assert.ok(/const widened = await widenRolesIfNeeded/.test(ag), 'wired into the daily run');
+
+    // And an account still owing it is visible rather than silent.
+    const ops = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    assert.ok(/roles not widened/.test(ops), 'the bench must flag an account onboarding could not finish');
+  });
   await t('MARKET TITLES WIDEN WHAT WAS TYPED, THEY DO NOT WAIT FOR SILENCE', () => {
     // This ran only when the roles field was left blank — the one case that
     // needed it least. Somebody who fills the field in types the titles they
@@ -4733,7 +4766,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'it must not quietly promote the candidate a level');
     const intake = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
     assert.ok(/marketTitles\(/.test(intake), 'signup must actually use it');
-    assert.ok(/catch \(e\) \{ \/\* a failure here must never cost a signup \*\/ \}/.test(intake),
+    assert.ok(/catch \(e\) \{ \/\* a failure here must never cost a signup — the agent retries \*\/ \}/.test(intake),
       'a failure here must never cost a signup');
   });
   await t('WORK MODE IS A PREFERENCE; ONLY "REMOTE ONLY" IS A CONSTRAINT', () => {

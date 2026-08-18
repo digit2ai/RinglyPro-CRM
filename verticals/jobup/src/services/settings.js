@@ -72,6 +72,16 @@ const DEFAULTS = {
     locations: [],                  // cities/regions you would work in
     open_to_relocation: false,
     min_score: 0,                   // below this, do not clutter the inbox
+    // HAS THIS ACCOUNT BEEN TAUGHT WHAT EMPLOYERS CALL ITS WORK?
+    //
+    // Onboarding widens role targets from the titles a person has HELD to the
+    // titles employers POST — the difference between "Sales Executive" and the
+    // "Account Executive" that every posting in her field was actually called.
+    // It needs a model, and a model can be down or unconfigured at the exact
+    // moment somebody signs up. A signup must never fail for that reason, so
+    // the step records whether it happened, and the daily agent finishes the
+    // job on any account still carrying false. Mandatory, not instantaneous.
+    roles_widened: false,
   },
   // US ONLY, AND NO LONGER A QUESTION ANYONE IS ASKED.
   //
@@ -310,6 +320,7 @@ function sanitize(s) {
   t.open_to_relocation = t.open_to_relocation === true
     || t.open_to_relocation === 'true' || t.open_to_relocation === 'on';
   t.min_score = Math.max(0, Math.min(100, parseInt(t.min_score, 10) || 0));
+  t.roles_widened = t.roles_widened === true;
   t.roles = (Array.isArray(t.roles) ? t.roles : [])
     .map((r) => (typeof r === 'string' ? { title: r } : r))
     .filter((r) => r && String(r.title || '').trim())
