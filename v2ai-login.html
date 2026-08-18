@@ -79,6 +79,9 @@
   // Already signed in on this browser -> skip the form entirely.
   try{ if(localStorage.getItem('d2ai_session')){ window.location.replace(nextPath()); return; } }catch(e){}
 
+  // arriving straight from Log out — say so, do not look like a stray redirect
+  try{ if(new URLSearchParams(window.location.search).get('out')){ msg.className='owl-msg ok'; msg.textContent='You are signed out.'; } }catch(e){}
+
   try{ var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); if(c.email) emailEl.value=c.email; }catch(e){}
   if(emailEl.value) setTimeout(function(){ passEl.focus(); },60);
 

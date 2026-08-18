@@ -131,20 +131,24 @@
   var email=(contact.email||'').trim();
   if(!email){ window.location.replace('/v2ai/login?next=%2Fv2ai%2Fworkspace'); return; }
   var name=(contact.name||'').trim();
-  var first = name ? name.split(' ')[0] : '';
 
   // header personalization
   document.getElementById('oww-greet').textContent = first ? ('What should we build, '+first+'?') : 'What should we build?';
-  document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s Vision2Ai";
-  document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
+  function setIdentity(n, e){
+    var label = (n || (e ? e.split('@')[0] : '')).trim();
+    document.getElementById('oww-wsname').textContent = label ? (label + "'s Vision2Ai") : 'Your workspace';
+    document.getElementById('oww-av').textContent = (label || 'V').charAt(0).toUpperCase();
+    document.getElementById('oww-greet').textContent = label ? ('What should we continue, '+label.split(' ')[0]+'?') : 'What should we continue?';
+  }
+  setIdentity(name, email);
 
   document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
 
   // Log out — clear the remembered session on this browser and return to login.
   var logoutBtn=document.getElementById('oww-logout');
   if(logoutBtn) logoutBtn.addEventListener('click', function(){
-    try{ localStorage.removeItem('d2ai_contact'); }catch(e){}
-    window.location.href='/v2ai/login';
+    try{ localStorage.removeItem('d2ai_session'); localStorage.removeItem('d2ai_contact'); }catch(e){}
+    window.location.replace('/v2ai/login?out=1');
   });
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }

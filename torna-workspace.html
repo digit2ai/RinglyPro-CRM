@@ -130,20 +130,23 @@
   var email=(contact.email||'').trim();
   if(!session){ window.location.replace('/torna/login?next=%2Ftorna%2Fworkspace'); return; }
   var name=(contact.name||'').trim();
-  var first = name ? name.split(' ')[0] : '';
 
-  // header personalization
-  document.getElementById('oww-greet').textContent = first ? ('What should we continue, '+first+'?') : 'What should we continue?';
-  document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s Torna";
-  document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
+  // header personalization (server backfills it below when this browser has no cached contact)
+  function setIdentity(n, e){
+    var label = (n || (e ? e.split('@')[0] : '')).trim();
+    document.getElementById('oww-wsname').textContent = label ? (label + "'s Torna") : 'Your workspace';
+    document.getElementById('oww-av').textContent = (label || 'T').charAt(0).toUpperCase();
+    document.getElementById('oww-greet').textContent = label ? ('What should we continue, '+label.split(' ')[0]+'?') : 'What should we continue?';
+  }
+  setIdentity(name, email);
 
   document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
 
   // Log out — clear the remembered session on this browser and return to login.
   var logoutBtn=document.getElementById('oww-logout');
   if(logoutBtn) logoutBtn.addEventListener('click', function(){
-    try{ localStorage.removeItem('d2ai_contact'); }catch(e){}
-    window.location.href='/torna/login';
+    try{ localStorage.removeItem('d2ai_session'); localStorage.removeItem('d2ai_contact'); }catch(e){}
+    window.location.replace('/torna/login?out=1');
   });
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -170,8 +173,10 @@
     .then(function(res){
       var list=document.getElementById('oww-side-list');
       if(!res || !res.success){ list.innerHTML='<div class="oww-side-empty">Could not load. Refresh.</div>'; return; }
-      if(res.user && res.user.name && !name){ // backfill from server
-        document.getElementById('oww-greet').textContent='What should we continue, '+res.user.name.split(' ')[0]+'?';
+      if(res.user && (!name || !email)){ // backfill identity from the session's account
+        name = name || (res.user.name||''); email = email || (res.user.email||'');
+        setIdentity(name, email);
+        try{ contact.name=name; contact.email=email; localStorage.setItem('d2ai_contact', JSON.stringify(contact)); }catch(e){}
       }
       var ps=res.projects||[];
       if(!ps.length){ list.innerHTML='<div class="oww-side-empty">No projects yet — describe your first build.</div>'; return; }
