@@ -12,6 +12,8 @@ const express = require('express');
 const { models } = require('../models');
 const auth = require('../services/auth');
 const provisioning = require('../services/provisioning');
+const mailer = require('../services/mailer');
+const pwa = require('../services/pwa');
 
 const router = express.Router();
 
@@ -106,13 +108,52 @@ router.post('/forgot-password', async (req, res) => {
   if (!sub) return res.json(generic);
 
   const token = auth.makeResetToken(sub);
-  const url = `/api/v1/auth/reset?t=${encodeURIComponent(token)}`;
-  if (!process.env.SENDGRID_API_KEY) {
-    return res.json({ ...generic, reset_url: url, email_configured: false });
+  // The link goes to the browser-openable reset PAGE (GET /reset), never the
+  // POST /api/v1/auth/reset endpoint. Absolute so it works from an email client.
+  const base = pwa.basePath(req);
+  const relative = `${base}/reset?t=${encodeURIComponent(token)}`;
+  const origin = `https://${req.get('host')}`;
+  const url = `${origin}${relative}`;
+
+  // No mail provider configured — return the link so the flow is still usable
+  // (and testable) without SendGrid, mirroring the honest degrade elsewhere.
+  if (!mailer.configured()) {
+    return res.json({ ...generic, reset_url: relative, email_configured: false });
   }
-  // TODO: send via provider. Until then the link is logged, never silently dropped.
-  console.log('[auth] reset link for', email, url);
-  return res.json(generic);
+
+  // Forgot-password is a USER-CLICKED send, so it is exempt from the
+  // EMAIL_AUTOSEND_DISABLED rule (see services/mailer.js).
+  const name = sub.name ? String(sub.name).split(' ')[0] : 'there';
+  const text =
+    `Hi ${name},\n\n` +
+    `We received a request to reset your JobUp password. ` +
+    `Open the link below to choose a new one. It expires in one hour and can only be used once.\n\n` +
+    `${url}\n\n` +
+    `If you did not request this, you can ignore this email — your password will not change.\n\n` +
+    `— JobUp`;
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const html = `<div style="font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1d24;max-width:520px">
+    <p>Hi ${esc(name)},</p>
+    <p>We received a request to reset your JobUp password. Choose a new one below.
+       This link expires in one hour and can only be used once.</p>
+    <p style="margin:26px 0">
+      <a href="${esc(url)}" style="background:#22d3ee;color:#04222a;font-weight:700;
+         text-decoration:none;padding:12px 22px;border-radius:999px;display:inline-block">Set a new password</a></p>
+    <p style="color:#6b7385;font-size:13px">If the button does not work, paste this link into your browser:<br>
+      <a href="${esc(url)}" style="color:#0e7490">${esc(url)}</a></p>
+    <p style="color:#6b7385;font-size:13px">If you did not request this, you can ignore this email — your password will not change.</p>
+    <p style="color:#6b7385;font-size:13px;margin-top:22px">— JobUp</p>
+  </div>`;
+
+  const r = await mailer.send({ to: sub.email, subject: 'Reset your JobUp password', text, html });
+  if (!r.ok) {
+    // Never claim it went out when it did not. Surface the link so the person
+    // is not stranded, and log the reason.
+    console.warn('[auth] reset email send failed for', email, '-', r.error);
+    return res.json({ ...generic, reset_url: relative, email_configured: true, email_sent: false });
+  }
+  return res.json({ ...generic, email_sent: true });
 });
 
 router.post('/reset', async (req, res) => {

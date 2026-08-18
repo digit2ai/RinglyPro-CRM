@@ -335,13 +335,19 @@ router.get(['/build', '/build/'], (req, res) =>
 router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
   res.type('html').send(pwa.page('welcome.html', pwa.basePath(req))));
 
+// The password-reset page. The emailed link points here (a GET the browser can
+// open), NOT at the POST /api/v1/auth/reset endpoint. The page reads ?t=<token>
+// and POSTs the new password back to that endpoint.
+router.get(['/reset', '/reset/'], (req, res) =>
+  res.type('html').send(pwa.page('reset.html', pwa.basePath(req))));
+
 // ---- landing --------------------------------------------------------------
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
-router.get(['/index.html', '/app.html', '/welcome.html', '/build.html',
+router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.html',
             '/subscribers-admin.html', '/social-admin.html', '/plan.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
-               '/welcome.html': '/welcome', '/build.html': '/build',
+               '/welcome.html': '/welcome', '/build.html': '/build', '/reset.html': '/reset',
                '/subscribers-admin.html': '/subscribers-admin',
                '/social-admin.html': '/social-admin',
                '/plan.html': '/subscribers-admin/plan' }[req.path];
@@ -438,6 +444,9 @@ async function subscriberSite(req, res, next) {
   }
   if (p === '/welcome' || p === '/welcome/') {
     return res.type('html').send(pwa.page('welcome.html', ''));
+  }
+  if (p === '/reset' || p === '/reset/') {
+    return res.type('html').send(pwa.page('reset.html', ''));
   }
   // The dashboard resolves its API base to the current origin, so the API has
   // to answer here too.
