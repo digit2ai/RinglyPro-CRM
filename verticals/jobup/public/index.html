@@ -545,6 +545,20 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b .ju-pricecard{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line2);
   border-radius:var(--r-xl);padding:38px;text-align:center}
 .d2b .ju-note{color:var(--faint);font-size:13px;margin-top:16px;font-family:var(--mono)}
+.d2b .ju-plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:940px;margin:0 auto;text-align:left}
+.d2b .ju-plan{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line2);border-radius:var(--r-xl);padding:26px;display:flex;flex-direction:column}
+.d2b .ju-plan.feat{border-color:#22d3ee;box-shadow:0 0 0 1px #22d3ee}
+.d2b .ju-plan h3{margin:0 0 2px;font-size:21px;font-weight:800}
+.d2b .ju-plan .pt{color:var(--mut);font-size:13px;min-height:34px}
+.d2b .ju-plan .pp{font-size:42px;font-weight:830;letter-spacing:-.035em;line-height:1;margin:10px 0 0}
+.d2b .ju-plan .pp span{font-size:15px;font-weight:600;color:var(--mut);letter-spacing:0}
+.d2b .ju-plan ul{list-style:none;padding:0;margin:16px 0;flex:1}
+.d2b .ju-plan li{padding:5px 0 5px 20px;position:relative;font-size:13.5px;color:#cfd6e4}
+.d2b .ju-plan li:before{content:"";position:absolute;left:0;top:10px;width:11px;height:11px;border-radius:50%;background:rgba(52,211,153,.18);border:1px solid rgba(52,211,153,.5)}
+.d2b .ju-plan .pbtn{display:block;text-align:center;border-radius:10px;padding:12px;font-weight:800;font-size:14px;text-decoration:none;cursor:pointer;border:0;font-family:inherit}
+.d2b .ju-plan .pbtn.solid{background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c}
+.d2b .ju-plan .pbtn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.d2b .ju-plan .rib{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#04120c;background:#22d3ee;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:middle}
 .d2b .ju-foot{position:relative;z-index:3;max-width:1120px;margin:90px auto 0;padding:26px 24px 54px;
   border-top:1px solid var(--line);color:var(--faint);font-size:13px;display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
 .d2b .ju-foot a{color:var(--faint)}.d2b .ju-foot a:hover{color:var(--ink)}
@@ -899,24 +913,47 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 
 <section class="ju-sec" id="pricing">
   <div class="ju-kicker" data-i18n="price.kicker">Pricing</div>
-  <div class="ju-pricecard">
-    <!-- Substituted server-side from billing.PRICE_USD. It was hardcoded, so
-         the page could quote a figure the checkout did not charge. -->
-    <div class="ju-price">${{PRICE}}<span data-i18n="price.per"> / year</span></div>
-    <p style="color:var(--mut);margin-top:14px" data-i18n="price.sub">One plan. Everything included. Tax calculated at checkout.</p>
-    <ul class="ju-inc">
-      <li data-i18n="price.inc.0">Your web address and professional website</li>
-      <li data-i18n="price.inc.1">Machine-readable identity: resume.json, JSON-LD, agent card</li>
-      <li data-i18n="price.inc.2">Two AI agents running continuously</li>
-      <li data-i18n="price.inc.3">Job discovery, scoring and explained matching</li>
-      <li data-i18n="price.inc.4">Per-job resume tailoring and cover letters</li>
-      <li data-i18n="price.inc.5">Private dashboard, weekly digest, full data export</li>
-    </ul>
-    <div class="ju-cta" style="margin-top:30px">
-      <button class="ju-btn primary" id="ju-attach2" data-i18n="cta.show">Show me my ecosystem</button>
+  <div class="ju-plans">
+    <div class="ju-plan">
+      <h3>Free</h3>
+      <div class="pt">The growth surface, not a trial</div>
+      <div class="pp">$0</div>
+      <ul>
+        <li>Public CV site at YourName.jobup.dev</li>
+        <li>Role pages and Getting-Found SEO</li>
+        <li>5 job matches a week</li>
+        <li>Eva career chat, read-only</li>
+      </ul>
+      <button class="pbtn solid" id="ju-attach2">Start free</button>
     </div>
-    <p class="ju-note" data-i18n-html="price.note">14-day refund, no questions. JobUp never applies on your behalf &mdash;<br>you review and submit every application yourself.</p>
+    <div class="ju-plan feat">
+      <h3>Search <span class="rib">Popular</span></h3>
+      <div class="pt">For someone actively looking</div>
+      <div class="pp">$29<span> / month</span></div>
+      <ul>
+        <li>Everything in Free</li>
+        <li>Unlimited matches</li>
+        <li>40 scorings a day</li>
+        <li>10 tailored resumes a month</li>
+        <li>Outreach drafts and pipeline</li>
+      </ul>
+      <a class="pbtn solid" href="{{BASE}}/plan">Get Search</a>
+    </div>
+    <div class="ju-plan">
+      <h3>Landed</h3>
+      <div class="pt">For senior roles and urgent searches</div>
+      <div class="pp">$99<span> / month</span></div>
+      <ul>
+        <li>Everything in Search</li>
+        <li>Unlimited tailoring</li>
+        <li>Priority scoring</li>
+        <li>Interview prep per posting</li>
+        <li>One human resume review a month</li>
+      </ul>
+      <a class="pbtn ghost" href="{{BASE}}/plan">Get Landed</a>
+    </div>
   </div>
+  <p class="ju-note">Free forever. Upgrade, downgrade or pause anytime &mdash; your CV site stays live. JobUp never applies on your behalf; you review and submit every application yourself.</p>
 </section>
 
 

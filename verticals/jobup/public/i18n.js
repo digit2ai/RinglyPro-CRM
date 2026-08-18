@@ -27,6 +27,29 @@
   'use strict';
 
   var ES = {
+    // ---------- subscription plans (landing pricing) --------------------
+    'The growth surface, not a trial': 'La superficie de crecimiento, no una prueba',
+    'Public CV site at YourName.jobup.dev': 'Sitio de CV público en TuNombre.jobup.dev',
+    'Role pages and Getting-Found SEO': 'Páginas de rol y SEO para ser encontrado',
+    '5 job matches a week': '5 coincidencias de empleo por semana',
+    'Eva career chat, read-only': 'Eva, chat de carrera, solo lectura',
+    'Start free': 'Empieza gratis',
+    'For someone actively looking': 'Para quien busca activamente',
+    'Everything in Free': 'Todo lo de Free',
+    'Unlimited matches': 'Coincidencias ilimitadas',
+    '40 scorings a day': '40 evaluaciones al día',
+    '10 tailored resumes a month': '10 currículos adaptados al mes',
+    'Outreach drafts and pipeline': 'Borradores de contacto y pipeline',
+    'Get Search': 'Elegir Search',
+    'For senior roles and urgent searches': 'Para roles senior y búsquedas urgentes',
+    'Everything in Search': 'Todo lo de Search',
+    'Unlimited tailoring': 'Adaptación ilimitada',
+    'Priority scoring': 'Evaluación prioritaria',
+    'Interview prep per posting': 'Preparación de entrevista por vacante',
+    'One human resume review a month': 'Una revisión humana de currículo al mes',
+    'Get Landed': 'Elegir Landed',
+    '/ month': '/ mes',
+    'Free forever. Upgrade, downgrade or pause anytime — your CV site stays live. JobUp never applies on your behalf; you review and submit every application yourself.': 'Gratis para siempre. Mejora, baja o pausa cuando quieras: tu sitio de CV sigue activo. JobUp nunca postula por ti; tú revisas y envías cada postulación.',
     // ---------- shared chrome -------------------------------------------
     'Password': 'Contraseña',
     'Confirm password': 'Confirmar contraseña',
