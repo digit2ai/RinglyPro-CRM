@@ -209,6 +209,11 @@ router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html',
 router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
   res.type('html').send(pwa.page('app.html', pwa.basePath(req))));
 
+// Customer Plans & Billing (pricing + upgrade/downgrade/pause). Session-scoped
+// via the billing API; the page itself is public so the pricing is shareable.
+router.get(['/plan', '/plan/', '/pricing', '/billing'], (req, res) =>
+  res.type('html').send(pwa.page('plan-billing.html', pwa.basePath(req))));
+
 // Step 3 of the funnel: the account form the teaser's CTA opens. Carries
 // ?t=<teaser_token>, which is the authoritative record of who this person is.
 /**

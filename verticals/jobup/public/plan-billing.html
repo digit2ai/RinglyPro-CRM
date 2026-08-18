@@ -1,0 +1,183 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<title>JobUp — Plans &amp; Billing</title>
+<style>
+:root{--bg:#07080c;--card:#12141c;--card2:#171a24;--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.18);--ink:#f2f4f8;--mut:#9aa3b2;--faint:#6b7280;--cyan:#22d3ee;--violet:#7c5cff;--good:#34d399;--amber:#f59e0b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.top a{color:var(--mut);text-decoration:none;font-size:14px}.top a:hover{color:var(--ink)}
+h1{font-size:clamp(1.5rem,3vw,2rem);font-weight:800;margin:6px 0 4px}
+.sub{color:var(--mut);margin-bottom:22px}
+.now{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:22px;display:none}
+.now b{color:var(--cyan)}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(124,92,255,.15);color:#c3b5ff;border:1px solid rgba(124,92,255,.3);margin-left:6px}
+.badge.paused{background:rgba(245,158,11,.15);color:#fcd34d;border-color:rgba(245,158,11,.35)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column}
+.card.on{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet)}
+.card h2{margin:0 0 2px;font-size:1.25rem}.card .tag{color:var(--mut);font-size:13px;min-height:38px}
+.price{font-size:2rem;font-weight:800;margin:8px 0 2px}.price span{font-size:.9rem;color:var(--mut);font-weight:600}
+.inc{list-style:none;padding:0;margin:14px 0;flex:1}.inc li{padding:5px 0 5px 22px;position:relative;font-size:14px;color:#cfd6e4}
+.inc li:before{content:"";position:absolute;left:0;top:11px;width:12px;height:12px;border-radius:50%;background:rgba(52,211,153,.18);border:1px solid rgba(52,211,153,.5)}
+.btn{display:block;width:100%;text-align:center;border:0;border-radius:11px;padding:12px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.btn.solid{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.btn.cur{background:rgba(255,255,255,.06);color:var(--mut);cursor:default}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.manage{margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:none}
+.manage h3{margin:0 0 6px;font-size:1rem}
+.manage .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.manage .row .btn{width:auto;padding:10px 18px}
+.pausehint{color:var(--amber);font-size:13px;margin-top:8px}
+.msg{margin-top:16px;font-size:14px;min-height:18px}.msg.err{color:#fca5a5}.msg.ok{color:var(--good)}
+.foot{color:var(--faint);font-size:12px;margin-top:24px}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="/app" id="back">&larr; <span data-i="back">Dashboard</span></a>
+    <a href="#" id="lang">Espanol</a></div>
+  <h1 data-i="title">Plans &amp; Billing</h1>
+  <div class="sub" data-i="sub">Free forever, or unlock the power features. Change or pause anytime.</div>
+
+  <div class="now" id="now"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="manage" id="manage">
+    <h3 data-i="manage">Manage your subscription</h3>
+    <div class="row" id="manage-row"></div>
+    <div class="pausehint" id="pausehint" style="display:none" data-i="pausehint">Between searches? Pause instead of cancel &mdash; your CV site stays live and we stop charging.</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="foot" data-i="foot">Secure payments by Stripe. Cancel or downgrade to Free keeps your paid time until the period ends.</div>
+</div>
+
+<script>
+(function(){
+  var API='/api/v1/billing';
+  var ES = (navigator.language||'').toLowerCase().indexOf('es')===0;
+  try{ var u=new URL(location.href); if(u.searchParams.get('lang')==='es') ES=true; if(u.searchParams.get('lang')==='en') ES=false; }catch(e){}
+  var T={
+    en:{back:'Dashboard',title:'Plans & Billing',sub:'Free forever, or unlock the power features. Change or pause anytime.',
+      manage:'Manage your subscription',pausehint:'Between searches? Pause instead of cancel — your CV site stays live and we stop charging.',
+      foot:'Secure payments by Stripe. Downgrade to Free keeps your paid time until the period ends.',
+      current:'Current plan',free:'Get started free',upgrade:'Upgrade',choose:'Choose',cur:'Your plan',mo:'/mo',
+      pause:'Pause',resume:'Resume',cancel:'Cancel (to Free)',downgrade:'Downgrade',
+      paused:'Paused',pastdue:'Past due',
+      confirmCancel:'Downgrade to Free at the end of your billing period? Your CV site stays live.',
+      confirmDown:'Downgrade this plan?',working:'Working…',
+      nowPaid:function(p,d){return 'You are on '+p+(d?(' — renews '+d):'')+'.';},
+      nowFree:'You are on the Free plan.',nowLegacy:'You have full access (grandfathered account).',
+      nowPaused:function(u){return 'Your subscription is paused'+(u?(' until '+u):'')+' — your CV site stays live.';}},
+    es:{back:'Panel',title:'Planes y facturacion',sub:'Gratis para siempre, o activa las funciones avanzadas. Cambia o pausa cuando quieras.',
+      manage:'Administra tu suscripcion',pausehint:'Entre busquedas? Pausa en vez de cancelar: tu sitio de CV sigue activo y dejamos de cobrar.',
+      foot:'Pagos seguros con Stripe. Bajar a Free conserva tu tiempo pagado hasta fin de periodo.',
+      current:'Plan actual',free:'Empieza gratis',upgrade:'Mejorar',choose:'Elegir',cur:'Tu plan',mo:'/mes',
+      pause:'Pausar',resume:'Reanudar',cancel:'Cancelar (a Free)',downgrade:'Bajar',
+      paused:'En pausa',pastdue:'Pago vencido',
+      confirmCancel:'Bajar a Free al terminar tu periodo de facturacion? Tu sitio de CV sigue activo.',
+      confirmDown:'Bajar este plan?',working:'Procesando…',
+      nowPaid:function(p,d){return 'Estas en '+p+(d?(' — renueva '+d):'')+'.';},
+      nowFree:'Estas en el plan Free.',nowLegacy:'Tienes acceso completo (cuenta heredada).',
+      nowPaused:function(u){return 'Tu suscripcion esta en pausa'+(u?(' hasta '+u):'')+' — tu sitio de CV sigue activo.';}}
+  };
+  var L=ES?T.es:T.en;
+  var grid=document.getElementById('grid'), nowEl=document.getElementById('now'),
+      manage=document.getElementById('manage'), mrow=document.getElementById('manage-row'),
+      msg=document.getElementById('msg');
+  document.querySelectorAll('[data-i]').forEach(function(el){ var k=el.getAttribute('data-i'); if(L[k]) el.textContent=L[k]; });
+  document.getElementById('lang').textContent = ES?'English':'Espanol';
+  document.getElementById('lang').onclick=function(e){ e.preventDefault(); var u=new URL(location.href); u.searchParams.set('lang',ES?'en':'es'); location.href=u.toString(); };
+
+  function money(c){ return '$'+Math.round(c/100); }
+  function fmt(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateString(ES?'es':'en-US',{month:'short',day:'numeric',year:'numeric'}); }catch(e){ return ''; } }
+  function say(t,ok){ msg.textContent=t; msg.className='msg '+(ok?'ok':'err'); }
+  function post(path,body){ return fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json().then(function(j){return {status:r.status,j:j};});}); }
+
+  var me=null, catalog=[];
+  Promise.all([
+    fetch(API+'/plans').then(function(r){return r.json();}).catch(function(){return {plans:[]};}),
+    fetch(API+'/plan/me').then(function(r){ return r.status===200? r.json():null; }).catch(function(){return null;})
+  ]).then(function(res){ catalog=(res[0]&&res[0].plans)||[]; me=res[1]; render(); });
+
+  function render(){
+    // Current-plan banner
+    if(me){
+      nowEl.style.display='block';
+      if(me.legacy){ nowEl.innerHTML=L.nowLegacy; }
+      else if(me.status==='paused'){ nowEl.innerHTML=L.nowPaused(fmt(me.paused_until)); }
+      else if(me.plan==='free'||!me.plan){ nowEl.innerHTML=L.nowFree; }
+      else { var pretty=(me.plan.charAt(0).toUpperCase()+me.plan.slice(1)); nowEl.innerHTML=L.nowPaid('<b>'+pretty+'</b>',fmt(me.current_period_end)); }
+      if(me.pending_plan==='free'){ nowEl.innerHTML+=' <span class="badge">'+(ES?'baja programada':'downgrade scheduled')+' '+fmt(me.plan_change_at)+'</span>'; }
+    }
+    // Tier cards
+    grid.innerHTML='';
+    catalog.forEach(function(p){
+      var isCur = me && (me.plan===p.id || (!me.plan && p.id==='free' && !me.legacy));
+      var card=document.createElement('div'); card.className='card'+(isCur?' on':'');
+      var inc=(ES?p.includes_es:p.includes_en)||[];
+      var tag=(ES?p.tagline_es:p.tagline_en)||'';
+      var priceHtml = p.price_cents===0 ? '$0' : money(p.price_cents)+'<span>'+L.mo+'</span>';
+      var cta;
+      if(isCur){ cta='<button class="btn cur" disabled>'+L.cur+'</button>'; }
+      else if(p.id==='free'){ cta='<button class="btn ghost" data-act="change" data-plan="free">'+L.downgrade+'</button>'; }
+      else {
+        var label = (me && me.plan && me.plan!=='free') ? L.upgrade : L.choose;
+        // If they already have a paid subscription, change it in place; otherwise checkout.
+        var act = (me && me.plan && me.plan!=='free' && me.status!=='paused') ? 'change' : 'checkout';
+        cta='<button class="btn solid" data-act="'+act+'" data-plan="'+p.id+'">'+label+' '+p.name+'</button>';
+      }
+      card.innerHTML='<h2>'+p.name+(isCur?' <span class="badge">'+(ES?'actual':'current')+'</span>':'')+'</h2>'
+        +'<div class="tag">'+tag+'</div>'
+        +'<div class="price">'+priceHtml+'</div>'
+        +'<ul class="inc">'+inc.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
+        +cta;
+      grid.appendChild(card);
+    });
+    grid.querySelectorAll('[data-act]').forEach(function(b){ b.onclick=function(){ doAct(b.getAttribute('data-act'), b.getAttribute('data-plan'), b); }; });
+
+    // Manage panel (only for a signed-in paid/paused subscriber)
+    if(me && !me.legacy && me.plan && me.plan!=='free'){
+      manage.style.display='block'; mrow.innerHTML='';
+      if(me.status==='paused'){
+        mrow.innerHTML='<button class="btn solid" data-m="resume">'+L.resume+'</button>';
+      } else {
+        mrow.innerHTML='<button class="btn ghost" data-m="pause">'+L.pause+'</button>'
+          +'<button class="btn ghost" data-m="cancel">'+L.cancel+'</button>';
+        document.getElementById('pausehint').style.display='block';
+      }
+      mrow.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(){ doManage(b.getAttribute('data-m'), b); }; });
+    }
+  }
+
+  function reload(){ fetch(API+'/plan/me').then(function(r){return r.status===200?r.json():null;}).then(function(m){ me=m; say('',true); render(); }); }
+
+  function doAct(act, plan, btn){
+    say(L.working,true); btn.disabled=true;
+    if(act==='checkout'){
+      post('/plan/checkout',{plan:plan}).then(function(r){
+        if(r.j&&r.j.url){ location.href=r.j.url; return; }
+        say((r.j&&r.j.error)||'Error'); btn.disabled=false;
+      });
+    } else { // change (upgrade/downgrade in place)
+      if(plan==='free' && !confirm(L.confirmCancel)){ say('',true); btn.disabled=false; return; }
+      post('/plan/change',{plan:plan}).then(function(r){
+        if(r.j&&r.j.ok){ if(r.j.note) say(r.j.note,true); reload(); }
+        else if(r.j&&r.j.needs_checkout){ post('/plan/checkout',{plan:plan}).then(function(r2){ if(r2.j&&r2.j.url) location.href=r2.j.url; else { say((r2.j&&r2.j.error)||'Error'); btn.disabled=false; } }); }
+        else { say((r.j&&r.j.error)||'Error'); btn.disabled=false; }
+      });
+    }
+  }
+  function doManage(m, btn){
+    if(m==='cancel' && !confirm(L.confirmCancel)) return;
+    say(L.working,true); btn.disabled=true;
+    post('/plan/'+m,{}).then(function(r){
+      if(r.j&&r.j.ok){ if(r.j.note) say(r.j.note,true); reload(); }
+      else { say((r.j&&r.j.error)||'Error'); btn.disabled=false; }
+    });
+  }
+})();
+</script>
+</body></html>
