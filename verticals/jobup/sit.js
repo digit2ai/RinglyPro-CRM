@@ -3106,6 +3106,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const search = agents.plan(backlog, 40, false);
     const landed = agents.plan(backlog, 40, true);
     assert.ok(landed.allowance > search.allowance, 'priority clears the strong backlog faster');
+
+    // Free (catchup === false) does NOT burst on a backlog — it scans its flat
+    // daily rate so its cost stays low; paid/legacy accounts keep the catch-up.
+    const freeRun = agents.plan(backlog, 8, false, false);
+    assert.strictEqual(freeRun.allowance, 8, 'Free scans its flat daily rate, no backlog burst');
+    assert.ok(freeRun.allowance < search.allowance, 'and stays under the paid tiers');
+    const paidRun = agents.plan(backlog, 8, false, true);
+    assert.ok(paidRun.allowance > 8, 'a paid account on the same queue still bursts');
   });
   await t('BRAND: one mark, one palette, everywhere', () => {
     const fs = require('fs');
@@ -4316,9 +4324,9 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'strong must be defined relative to this subscriber, not a global number');
     // The allowance now lives in plan() (the single source /diagnose and the run
     // share); hunter delegates to it, threading the tier's priority flag.
-    assert.ok(/const raw = strong > 0 \? Math\.max\(perDay, Math\.min\(ceiling, strong\)\) : perDay/.test(src),
-      'a backlog raises the allowance; no backlog leaves the daily rate alone');
-    assert.ok(/const pl = plan\(queue, perDay, priorityScoring\)/.test(src),
+    assert.ok(/const raw = \(allowCatchup && strong > 0\) \? Math\.max\(perDay, Math\.min\(ceiling, strong\)\) : perDay/.test(src),
+      'a backlog raises the allowance (when catch-up is allowed); no backlog leaves the daily rate alone');
+    assert.ok(/const pl = plan\(queue, perDay, priorityScoring, catchupAllowed\)/.test(src),
       'hunter must delegate the allowance to plan(), not recompute it');
     assert.ok(/const ceiling = priority \? Math\.round\(CATCHUP_PER_RUN \* 1\.5\) : CATCHUP_PER_RUN/.test(src),
       'priority scoring (Landed) clears the strong backlog at a higher ceiling');

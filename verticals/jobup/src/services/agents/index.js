@@ -161,8 +161,11 @@ async function hunter(tenantId, opts = {}) {
   const perDay = isAdmin
     ? Math.max(1, Math.min(50, parseInt(opts.limit, 10) || ADMIN_BASELINE))
     : (tierScan != null ? tierScan : settingsPerDay);
-  const priorityScoring = Boolean(sub && ent.entitlementForSub(sub).caps &&
-    ent.entitlementForSub(sub).caps.priority_scoring);
+  const subEnt = ent.entitlementForSub(sub);
+  const priorityScoring = Boolean(subEnt.caps && subEnt.caps.priority_scoring);
+  // Free scans at its flat daily rate (no backlog burst) to keep its cost low;
+  // paid and legacy accounts keep the catch-up. Admin runs always catch up.
+  const catchupAllowed = isAdmin || subEnt.legacy || subEnt.effective_plan !== 'free';
   // TIER-RANKED DAILY BUDGET. Without this the shared monthly cap flattens every
   // tier to the same ~$0.27/day (~22 jobs), so the tier scan above never bit and
   // Landed could file no more than Search. A tiered account gets its plan's
@@ -248,7 +251,7 @@ async function hunter(tenantId, opts = {}) {
   // plan() is the SINGLE source for the allowance number — /diagnose publishes
   // it and the run scores exactly it, so the screen never disagrees with the
   // run. priorityScoring lifts the catch-up ceiling for the Landed tier.
-  const pl = plan(queue, perDay, priorityScoring);
+  const pl = plan(queue, perDay, priorityScoring, catchupAllowed);
   const strong = pl.strong_backlog;
   const allowance = pl.allowance;
   const jobsLeft = Math.max(0, allowance - used.scored);
@@ -454,14 +457,18 @@ async function runAll(agentName, tenantIds, opts = {}) {
  * agent's to decide and this is how the screen states that decision before the
  * button is pressed.
  */
-function plan(queue, perDay, priority) {
+function plan(queue, perDay, priority, catchup) {
   const best = queue.length ? queue[0].prescore : 0;
   const strongFloor = Math.max(2, Math.ceil(best * PRIORITY_FRACTION));
   const strong = queue.filter((r) => r.prescore >= strongFloor).length;
-  // Priority scoring (Landed) clears the strong backlog at a higher ceiling, so
-  // the premium tier reaches all of its strong candidates faster than Search.
+  // Catch-up clears a strong backlog fast, but it also lets a run burst well past
+  // its daily scan — which is cost we do NOT want to spend on the Free tier. So
+  // Free (catchup === false) scans at its flat daily rate and drains slowly;
+  // paid and legacy accounts keep the burst. Priority scoring (Landed) clears at
+  // a higher ceiling than Search. `catchup` defaults to on for back-compat.
+  const allowCatchup = catchup !== false;
   const ceiling = priority ? Math.round(CATCHUP_PER_RUN * 1.5) : CATCHUP_PER_RUN;
-  const raw = strong > 0 ? Math.max(perDay, Math.min(ceiling, strong)) : perDay;
+  const raw = (allowCatchup && strong > 0) ? Math.max(perDay, Math.min(ceiling, strong)) : perDay;
   const allowance = Math.min(raw, queue.length);
   return {
     allowance,

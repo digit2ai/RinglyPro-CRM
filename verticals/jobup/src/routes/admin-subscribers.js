@@ -192,8 +192,9 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
   // Search 40 < Landed 120); legacy accounts keep the settings number.
   const tierScan = ent.hunterScanFor(sub);
   const perDay = tierScan != null ? tierScan : ((settings.quotas && settings.quotas.jobs_scored_per_day) || 6);
-  const priorityScoring = Boolean(ent.entitlementForSub(sub).caps &&
-    ent.entitlementForSub(sub).caps.priority_scoring);
+  const diagEnt = ent.entitlementForSub(sub);
+  const priorityScoring = Boolean(diagEnt.caps && diagEnt.caps.priority_scoring);
+  const catchupAllowed = diagEnt.legacy || diagEnt.effective_plan !== 'free';
 
   // Say plainly what is wrong, in the order it needs fixing. This is the part
   // that would have answered "why is her board empty" in one glance.
@@ -259,7 +260,7 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
     // where there are any — a global average would be a guess presented as a
     // figure, and this one is spent in their name.
     next_run: (() => {
-      const p = agents.plan(fresh, perDay, priorityScoring);
+      const p = agents.plan(fresh, perDay, priorityScoring, catchupAllowed);
       const scoredRuns = runs.filter((r) => r.agent === 'hunter' && r.scored > 0);
       const jobs = scoredRuns.reduce((n, r) => n + Number(r.scored || 0), 0);
       const spent = scoredRuns.reduce((n, r) => n + Number(r.cost_usd || 0), 0);
