@@ -490,6 +490,8 @@ function renderTeaserPage(t, meta = {}) {
 body{font-family:'Inter',sans-serif;background:radial-gradient(1200px 600px at 50% -10%,#16224a,var(--bg));color:var(--txt);line-height:1.7}
 .wrap{max-width:880px;margin:0 auto;padding:40px 22px 80px}
 .brand{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--violet);font-weight:800}
+.d2-back{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:13px;font-weight:600;margin-bottom:12px;padding:7px 14px;border:1px solid var(--line);border-radius:20px;transition:.12s ease}
+.d2-back:hover{color:var(--txt);border-color:var(--violet);background:rgba(124,92,255,.08)}
 .hero{padding:18px 0 10px}
 .hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.1;margin:10px 0 8px;background:linear-gradient(135deg,#fff,#9bc7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hero .tag{color:var(--cyan);font-size:1.05rem;font-weight:600}
@@ -654,6 +656,7 @@ body.tw-on .tw-side{display:flex}
 <button class="tw-toggle" id="tw-toggle" aria-label="Menu">&#9776;</button>
 <aside class="tw-side" id="tw-side"></aside>
 <div class="wrap">
+  <a class="d2-back" href="/orbup/workspace" onclick="if(document.referrer&&/\\/workspace/.test(document.referrer)){location.href=document.referrer;return false;}">&larr; Workspace</a>
   <div class="brand">Digit2AI</div>
 
   <div class="hero" id="top">
