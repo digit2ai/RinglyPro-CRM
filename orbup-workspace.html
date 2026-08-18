@@ -18,7 +18,16 @@
 .oww-ws .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06101f;font-size:13px;flex:0 0 28px}
 .oww-ws .nm{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .oww-ws .pl{font-size:11px;color:var(--mut)}
-.oww-nav{display:flex;flex-direction:column;gap:2px}
+.oww-nav{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow-y:auto}
+/* Left-pane project history (Claude-style) */
+.oww-sideproj{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--mut);border-radius:9px;padding:9px 11px;font-size:13.5px;line-height:1.3;border:1px solid transparent}
+.oww-sideproj:hover{background:var(--card);color:var(--ink)}
+.oww-sideproj.bld{opacity:.6;cursor:default}
+.oww-sp-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.oww-sp-st{font-size:10.5px;color:var(--faint);flex:0 0 auto}
+.oww-sp-dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+.oww-sp-dot.on{background:var(--cyan)}
+.oww-side-empty{color:var(--faint);font-size:12.5px;padding:10px 11px;line-height:1.5}
 .oww-nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:14px;color:var(--mut);font-weight:500}
 .oww-nav a:hover{background:var(--card);color:var(--ink)}
 .oww-nav a.on{background:var(--card);color:var(--ink)}
@@ -82,13 +91,8 @@
       <div class="av" id="oww-av">O</div>
       <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl">Free plan</div></div>
     </div>
-    <nav class="oww-nav">
-      <a href="/orbup/workspace" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg> Dashboard</a>
-      <a href="#projects"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Projects</a>
-      <div class="label">Projects</div>
-      <a href="#projects"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> All projects</a>
-    </nav>
-    <div class="spacer"></div>
+    <div class="label">Projects</div>
+    <nav class="oww-nav" id="oww-side-list"><div class="oww-side-empty">Loading…</div></nav>
     <button class="oww-logout" id="oww-logout" type="button">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
       Log out
@@ -99,7 +103,7 @@
     <div class="oww-hero">
       <h1 id="oww-greet">What should we continue?</h1>
       <div class="oww-prompt">
-        <textarea id="oww-desc" rows="2" placeholder="Describe a new build — or open a project below to continue the conversation…"></textarea>
+        <textarea id="oww-desc" rows="2" placeholder="Describe a new build — or open a project on the left to continue the conversation…"></textarea>
         <div class="row">
           <span class="hint">Workspace-private · Free plan</span>
           <button class="oww-build" id="oww-build">Build it &rarr;</button>
@@ -111,12 +115,6 @@
         <button class="oww-chip" data-p="An AI that reads inbound emails, drafts replies, and books meetings on my calendar.">Inbox autopilot</button>
       </div>
     </div>
-
-    <section class="oww-projects" id="projects">
-      <h2>Your projects</h2>
-      <p class="psub">Private to your workspace — every build you start lives here.</p>
-      <div id="oww-list"><div class="oww-empty">Loading your projects…</div></div>
-    </section>
   </main>
 </div>
 
@@ -170,40 +168,23 @@
   fetch(WS_URL+'?session='+encodeURIComponent(session))
     .then(function(r){ if(r.status===401){ window.location.replace('/orbup'); throw new Error('auth'); } return r.json(); })
     .then(function(res){
-      var list=document.getElementById('oww-list');
-      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
+      var list=document.getElementById('oww-side-list');
+      if(!res || !res.success){ list.innerHTML='<div class="oww-side-empty">Could not load. Refresh.</div>'; return; }
       if(res.user && res.user.name && !name){ // backfill from server
         document.getElementById('oww-greet').textContent='What should we continue, '+res.user.name.split(' ')[0]+'?';
       }
       var ps=res.projects||[];
-      if(!ps.length){ list.innerHTML='<div class="oww-empty">No projects yet — describe your first build above and we’ll scope, build, and ship it.</div>'; return; }
-      list.innerHTML='<div class="oww-grid">'+ps.map(function(p){
-        // The Studio (plan + Copilot) IS the teaser page — opening a project means
-        // continuing its conversation, not viewing a static demo.
-        var studio = p.teaser_url || '';
-        var acts='';
-        if(studio) acts+='<a class="oww-pbtn solid" href="'+esc(studio)+'">Continue in the Studio &rarr;</a>';
-        if(p.simulator_url) acts+='<a class="oww-pbtn" href="'+esc(p.simulator_url)+'" target="_blank" rel="noopener">Simulator</a>';
-        if(!acts) acts='<span class="oww-pbtn" style="opacity:.6;cursor:default">Building…</span>';
-        var when=''; try{ when=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
-        var titleHtml = studio
-          ? '<a class="pt" style="color:inherit;text-decoration:none" href="'+esc(studio)+'">'+esc(p.name||'Untitled build')+'</a>'
-          : '<div class="pt">'+esc(p.name||'Untitled build')+'</div>';
-        return '<div class="oww-pcard"'+(studio?' data-studio="'+esc(studio)+'" style="cursor:pointer"':'')+'>'
-          +titleHtml
-          +(p.description?'<div class="pd">'+esc(p.description)+'</div>':'')
-          +'<div class="pmeta"><span class="oww-badge">'+esc(statusLabel(p.status))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
-          +'<div class="oww-pacts">'+acts+'</div>'
-          +'</div>';
-      }).join('')+'</div>';
-      // Whole card is clickable → open the project's Studio (ignore inner links/buttons).
-      list.querySelectorAll('.oww-pcard[data-studio]').forEach(function(card){
-        card.addEventListener('click', function(e){
-          if(e.target.closest('a')) return; // let explicit links handle themselves
-          window.location.href = card.getAttribute('data-studio');
-        });
-      });
+      if(!ps.length){ list.innerHTML='<div class="oww-side-empty">No projects yet — describe your first build.</div>'; return; }
+      // Every project lives in the LEFT pane (Claude-style history). Click = open its
+      // Studio (plan + Copilot) and continue the conversation.
+      list.innerHTML=ps.map(function(p){
+        var studio=p.teaser_url||'';
+        var nm=esc(p.name||'Untitled build');
+        var dot='<span class="oww-sp-dot '+(p.status==='active'?'on':'')+'"></span>';
+        if(studio) return '<a class="oww-sideproj" href="'+esc(studio)+'" title="'+nm+'">'+dot+'<span class="oww-sp-nm">'+nm+'</span></a>';
+        return '<span class="oww-sideproj bld" title="'+nm+'">'+dot+'<span class="oww-sp-nm">'+nm+'</span><span class="oww-sp-st">building…</span></span>';
+      }).join('');
     })
-    .catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
+    .catch(function(){ var l=document.getElementById('oww-side-list'); if(l) l.innerHTML='<div class="oww-side-empty">Could not reach the server.</div>'; });
 })();
 </script>
