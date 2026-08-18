@@ -305,9 +305,14 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
 router.post('/subscribers/:tenantId/run', requireOwner, noteOpen, async (req, res) => {
   const tenantId = parseInt(req.params.tenantId, 10);
   try {
-    const r = await agents.hunter(tenantId, { trigger: 'admin' });
-    await audit(req.admin.email, `ops.run:${tenantId} scored=${r.scored || 0}`, null, tenantId);
-    res.json({ ok: true, ...r });
+    // Default is the operator's own 'admin' bucket (a flat support run). Pass
+    // ?as=tenant to run the tenant on ITS OWN tier (the scheduled path), which
+    // applies the plan's scan breadth (Free 8 < Search 40 < Landed 120) — the
+    // way to backfill a board exactly as the daily run would.
+    const trigger = req.query.as === 'tenant' ? 'scheduled' : 'admin';
+    const r = await agents.hunter(tenantId, { trigger });
+    await audit(req.admin.email, `ops.run:${tenantId} as=${trigger} scored=${r.scored || 0}`, null, tenantId);
+    res.json({ ok: true, ran_as: trigger, ...r });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
