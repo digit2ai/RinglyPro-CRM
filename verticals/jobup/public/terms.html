@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="The terms that govern your use of JobUp — plans, billing, your content, disclaimers and your rights.">
+<title>JobUp — Terms of Service</title>
+<link rel="icon" href="{{BASE}}/favicon.svg?v={{V}}">
+<style>
+  :root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
+    --ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;--cyan:#22d3ee;--cyan-bd:rgba(34,211,238,.32)}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg)}
+  body{color:var(--ink);font:16px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(120% 60% at 12% 0,rgba(34,211,238,.06),transparent 60%),var(--bg);min-height:100vh}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 22px 80px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+  .brand img{width:34px;height:34px;border-radius:9px}
+  .brand b{font-size:17px;letter-spacing:-.01em}
+  .lang{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}
+  .lang button{background:transparent;color:var(--mut);border:0;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+  .lang button.on{background:rgba(34,211,238,.16);color:var(--cyan)}
+  h1{font-size:30px;letter-spacing:-.02em;margin:6px 0 4px}
+  .dates{color:var(--faint);font-size:13.5px;font-family:ui-monospace,Menlo,monospace;margin-bottom:22px}
+  h2{font-size:19px;letter-spacing:-.01em;margin:32px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+  p{color:#d3d9e4;margin:11px 0}
+  ul{margin:10px 0;padding-left:22px}
+  li{color:#d3d9e4;margin:6px 0}
+  a{color:var(--cyan)}
+  strong{color:var(--ink)}
+  .intro{background:linear-gradient(180deg,rgba(34,211,238,.06),transparent);border:1px solid var(--cyan-bd);
+    border-radius:14px;padding:16px 18px;margin:16px 0}
+  .intro p{margin:0}
+  .foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap}
+  .foot a{color:var(--mut);text-decoration:none}
+  .hidden{display:none}
+  @media(max-width:560px){h1{font-size:25px}.wrap{padding:20px 16px 70px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="{{BASE}}/"><img src="{{BASE}}/favicon.svg?v={{V}}" alt=""><b>JobUp</b></a>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="lang-en" class="on" onclick="setLang('en')">EN</button>
+      <button id="lang-es" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+
+  <!-- ENGLISH -->
+  <div id="doc-en">
+    <h1>Terms of Service</h1>
+    <div class="dates">Effective date: August 2026 · Last updated: August 2026</div>
+    <div class="intro"><p>Please read these Terms of Service ("Terms") carefully. They govern your access to and use of JobUp, a personal AI career platform operated by Digit2AI LLC ("Digit2AI," "we," "us," or "our"), a limited liability company organized under the laws of the State of Florida, United States. Our <a href="{{BASE}}/privacy">Privacy Policy</a> is incorporated into these Terms by reference and explains how we collect, use, and protect your information; by agreeing to these Terms you also agree to the Privacy Policy.</p></div>
+
+    <h2>I. Acceptance of terms; who may use JobUp</h2>
+    <p><strong>1.1.</strong> By creating an account, subscribing to a plan, or otherwise accessing or using JobUp (the "Service"), you agree to be bound by these Terms. If you do not agree, do not use the Service.</p>
+    <p><strong>1.2.</strong> You may use JobUp only if you are at least 18 years old, or the age of majority in your jurisdiction if higher, and are able to form a legally binding contract with us.</p>
+    <p><strong>1.3.</strong> One account per person. You may not create or maintain more than one account for yourself, share your account, or create an account on behalf of another person without their authorization.</p>
+    <p><strong>1.4.</strong> You agree to provide accurate, current, and complete registration information and to keep it up to date. Providing false information is a breach of these Terms.</p>
+
+    <h2>II. Description of the service and plans</h2>
+    <p><strong>2.1. What JobUp does.</strong> JobUp lets a subscriber upload a résumé and, from it, provides: (a) a public personal CV website hosted at an address in the form &lt;name&gt;.jobup.dev; (b) machine-readable surfaces derived from the résumé (including resume.json, schema.org JSON-LD structured data, an AI agent card, and an llms.txt file) so that recruiters and AI tools can discover the subscriber; (c) an "Opportunity Hunter" AI agent that scores real job postings against the subscriber's résumé; and (d) AI résumé tailoring that rewrites the résumé for a specific job posting using only the information the subscriber has already provided — it does not invent experience, credentials, or facts.</p>
+    <p><strong>2.2. The web address.</strong> Your web address (&lt;name&gt;.jobup.dev) is assigned automatically from your name at signup. This address cannot be changed once assigned.</p>
+    <p><strong>2.3. Plans and pricing.</strong></p>
+    <ul>
+      <li><strong>Free ($0):</strong> a public CV site and a limited weekly preview of job matches. No free trial is offered for the paid plans because the Free tier is itself the way to try JobUp before you pay.</li>
+      <li><strong>Search ($29 per month):</strong> unlimited job matches, on-demand scorings, 10 tailored résumés per month included, outreach drafts, and a pipeline to track opportunities.</li>
+      <li><strong>Landed ($99 per month):</strong> everything in Search, plus unlimited tailoring, priority scoring, interview preparation, and one human résumé review each month.</li>
+    </ul>
+    <p><strong>2.4. Billing.</strong> Paid plans are processed by Stripe, billed monthly, and begin immediately upon subscription. There is no trial period. Prices are stated in U.S. dollars and are exclusive of any taxes that may apply.</p>
+    <p><strong>2.5. Managing your plan.</strong> You may upgrade, downgrade, pause, resume, or cancel your plan at any time from your dashboard. Downgrading to Free cancels your paid plan at the end of the current billing period; you keep your paid features until the end of that period, and no partial refund is issued for the unused portion.</p>
+    <p><strong>2.6. What happens when a paid plan ends.</strong> On cancellation or non-renewal, your public CV site is taken offline and your web address is released and may become available to others. Your full data export remains available to you as described in these Terms.</p>
+
+    <h2>III. Account and password security</h2>
+    <p><strong>3.1.</strong> You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.</p>
+    <p><strong>3.2.</strong> You agree to use a secure password, to keep it confidential, and to notify us promptly at <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a> if you suspect any unauthorized use of your account.</p>
+    <p><strong>3.3.</strong> We are not liable for any loss or damage arising from your failure to safeguard your account credentials.</p>
+
+    <h2>IV. Your content belongs to you</h2>
+    <p><strong>4.1. Ownership.</strong> The résumé and any other information, text, or material you upload or provide ("Your Content") belong to you. You retain all ownership rights in Your Content.</p>
+    <p><strong>4.2. Your representations.</strong> You represent and warrant that: (a) Your Content is truthful and accurate; (b) it is yours to publish and you have all rights necessary to provide it and to have it published and processed as described here; and (c) you are not impersonating any person or entity and are not misrepresenting your affiliation with any person or entity.</p>
+    <p><strong>4.3. License you grant to us.</strong> To operate the Service, you grant Digit2AI a limited, worldwide, non-exclusive, royalty-free license to host, store, reproduce, process, adapt (for formatting and machine-readability), display, and publish Your Content — including as your public CV website and as the machine-readable surfaces described in Section II — for the purpose of providing and operating the Service. This license ends when you delete the relevant content or when your account is terminated, except for content already made public or cached by third parties outside our control, and except for backup copies retained for a limited period or as required by law.</p>
+    <p><strong>4.4. No obligation to monitor.</strong> We are not obligated to monitor Your Content, but we may remove or disable content that we reasonably believe violates these Terms or the law.</p>
+
+    <h2>V. Acceptable use and prohibited conduct</h2>
+    <p><strong>5.1.</strong> You agree not to:</p>
+    <ul>
+      <li>upload or publish false, misleading, or fraudulent résumé content, credentials, or employment history;</li>
+      <li>impersonate any person or upload another person's personal data without the right to do so;</li>
+      <li>scrape, harvest, or bulk-collect other subscribers' data beyond the intended use of the public machine-readable surfaces;</li>
+      <li>use the Service for any unlawful, infringing, harassing, or fraudulent purpose;</li>
+      <li>attempt to breach, probe, or circumvent the security of the Service or its multi-tenant isolation, or to access data or accounts that are not yours;</li>
+      <li>interfere with, disrupt, or place an unreasonable load on the Service or its infrastructure; or</li>
+      <li>reverse engineer, decompile, or attempt to derive the source code of the Service except to the extent permitted by law.</li>
+    </ul>
+    <p><strong>5.2.</strong> Violating this Section may result in suspension or termination of your account and, where appropriate, referral to law enforcement.</p>
+
+    <h2>VI. AI outputs and third-party data — disclaimers</h2>
+    <p><strong>6.1. Fit scores are estimates, not guarantees.</strong> The scores produced by the Opportunity Hunter and any related assessments are AI-generated estimates of how your résumé compares to a posting. They are not guarantees of fit, of an interview, or of employment, and should be treated as informational input, not professional advice.</p>
+    <p><strong>6.2. Job postings come from third parties and are "AS IS."</strong> Job postings are gathered from third-party public applicant-tracking systems and job boards. They are provided "AS IS" and may be inaccurate, out of date, changed, filled, or removed by the employer at any time. JobUp is not the employer, does not control these postings, and does not warrant their accuracy or availability.</p>
+    <p><strong>6.3. Tailored résumés use your own words.</strong> AI résumé tailoring is built only from the information you already provided; it does not add experience or facts. You are responsible for reviewing every tailored résumé for accuracy and completeness before you send or rely on it. You remain solely responsible for the content you submit to any employer.</p>
+
+    <h2>VII. No employment guarantee</h2>
+    <p><strong>7.1.</strong> JobUp is a software tool. It is not a recruiter, staffing agency, employment agency, or employer, and it does not employ you or place you in employment.</p>
+    <p><strong>7.2.</strong> We do not guarantee any job outcome, including any interview, offer, hiring, salary, or continued employment. Your results depend on many factors outside our control.</p>
+
+    <h2>VIII. Payments, billing, cancellation, and refunds</h2>
+    <p><strong>8.1. Billing authorization.</strong> By subscribing to a paid plan, you authorize us and our payment processor (Stripe) to charge your payment method the recurring monthly fee for your chosen plan until you cancel or downgrade.</p>
+    <p><strong>8.2. Automatic renewal.</strong> Paid plans renew automatically each month at the then-current price unless you cancel or downgrade before the renewal date.</p>
+    <p><strong>8.3. Cancellation and downgrade.</strong> You may cancel or downgrade at any time from your dashboard. Cancellation and downgrade take effect at the end of the current billing period; you retain paid features until then. No partial or prorated refund is provided for the remainder of a paid period.</p>
+    <p><strong>8.4. Refund policy.</strong> Subscription fees are generally non-refundable, except where a refund is required by applicable law. As a specific exception in your favor: if you purchased or were charged for a résumé tailoring credit that was never actually delivered because generation failed on our side, we will honor that credit or refund it.</p>
+    <p><strong>8.5. Price changes.</strong> We may change plan prices. We will give notice of any price change, and the new price will apply to your next billing cycle after the notice period; your continued use after the change takes effect constitutes acceptance.</p>
+    <p><strong>8.6. Failed payments.</strong> If a payment fails, we may retry the charge and may suspend or downgrade paid features until payment succeeds.</p>
+
+    <h2>IX. Intellectual property in the platform</h2>
+    <p><strong>9.1.</strong> The JobUp platform — including its software, source code, models, prompts, design, user interface, trademarks, logos, and all related materials, but excluding Your Content — is owned by Digit2AI or its licensors and is protected by intellectual property laws.</p>
+    <p><strong>9.2.</strong> We grant you a limited, personal, non-transferable, non-exclusive right to use the Service in accordance with these Terms. No other rights are granted, and all rights not expressly granted are reserved.</p>
+
+    <h2>X. Third-party services</h2>
+    <p><strong>10.1.</strong> We rely on third-party services to operate JobUp, including Stripe (payments), Anthropic (AI processing), SendGrid (email delivery), and Render (hosting). Your use of the Service may be subject to those providers' own terms and policies.</p>
+    <p><strong>10.2.</strong> We are not responsible for the acts, omissions, availability, or content of third-party services, and their inclusion does not imply our endorsement of anything outside the Service.</p>
+
+    <h2>XI. Termination and suspension</h2>
+    <p><strong>11.1. By you.</strong> You may terminate at any time by canceling your plan and, if you wish, deleting your account from your dashboard.</p>
+    <p><strong>11.2. By us.</strong> We may suspend or terminate your access if you breach these Terms, use the Service unlawfully, create risk or legal exposure for us, or fail to pay applicable fees. Where practical and lawful, we will give notice.</p>
+    <p><strong>11.3. Effect on your data.</strong> On termination or cancellation, your public CV site goes offline and your web address is released, as described in Section II. Your full data export remains available to you so that you can retrieve Your Content. We may delete Your Content after a reasonable period following termination, subject to our Privacy Policy and applicable law.</p>
+
+    <h2>XII. Disclaimer of warranties</h2>
+    <p><strong>12.1.</strong> To the fullest extent permitted by law, the Service is provided "AS IS" and "AS AVAILABLE," without warranties of any kind, whether express, implied, or statutory, including any implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement.</p>
+    <p><strong>12.2.</strong> We do not warrant that the Service will be uninterrupted, error-free, secure, or that any AI output, score, or job posting will be accurate, complete, current, or suitable for your purpose.</p>
+
+    <h2>XIII. Limitation of liability</h2>
+    <p><strong>13.1.</strong> To the fullest extent permitted by law, Digit2AI and its owners, officers, employees, and suppliers will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for any loss of profits, revenue, data, goodwill, or business opportunity, arising out of or relating to the Service, even if advised of the possibility of such damages.</p>
+    <p><strong>13.2.</strong> To the fullest extent permitted by law, our total aggregate liability arising out of or relating to the Service or these Terms will not exceed the total amount of fees you actually paid to us for the Service in the twelve (12) months immediately preceding the event giving rise to the claim.</p>
+    <p><strong>13.3.</strong> Some jurisdictions do not allow certain limitations; in those cases, the limitations apply to the maximum extent permitted by law.</p>
+
+    <h2>XIV. Indemnification</h2>
+    <p><strong>14.1.</strong> You agree to indemnify, defend, and hold harmless Digit2AI and its owners, officers, employees, and agents from and against any claims, damages, liabilities, losses, and expenses (including reasonable attorneys' fees) arising out of or related to: (a) Your Content, including any claim that it is false, infringing, or violates another person's rights; (b) your use or misuse of the Service; (c) your breach of these Terms; or (d) your violation of any law or the rights of any third party.</p>
+
+    <h2>XV. Governing law, venue, and dispute resolution</h2>
+    <p><strong>15.1.</strong> These Terms are governed by the laws of the State of Florida, USA, without regard to its conflict-of-laws rules.</p>
+    <p><strong>15.2. Informal resolution first.</strong> Before filing any formal claim, you agree to contact us at <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a> and attempt in good faith to resolve the dispute informally for at least thirty (30) days.</p>
+    <p><strong>15.3.</strong> If the dispute is not resolved, the exclusive venue for any action will be the state or federal courts located in Florida, USA, and you consent to the personal jurisdiction of those courts.</p>
+
+    <h2>XVI. Changes to these terms</h2>
+    <p><strong>16.1.</strong> We may update these Terms from time to time. When we do, we will revise the "Last updated" date and, for material changes, provide reasonable notice and state the effective date.</p>
+    <p><strong>16.2.</strong> Your continued use of the Service after the effective date of the updated Terms constitutes your acceptance of them. If you do not agree, you must stop using the Service and may cancel your plan.</p>
+
+    <h2>XVII. Miscellaneous</h2>
+    <p><strong>17.1. Severability.</strong> If any provision of these Terms is found unenforceable, the remaining provisions remain in full effect, and the unenforceable provision will be modified to the minimum extent necessary to make it enforceable.</p>
+    <p><strong>17.2. Entire agreement.</strong> These Terms, together with the Privacy Policy, constitute the entire agreement between you and Digit2AI regarding the Service and supersede any prior agreements on the subject.</p>
+    <p><strong>17.3. Assignment.</strong> You may not assign or transfer these Terms without our prior written consent. We may assign these Terms in connection with a merger, acquisition, reorganization, or sale of assets.</p>
+    <p><strong>17.4. No waiver.</strong> Our failure to enforce any provision is not a waiver of our right to do so later.</p>
+    <p><strong>17.5. Contact.</strong> Questions about these Terms may be sent to <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a>, Digit2AI LLC, Florida, USA.</p>
+  </div>
+
+  <!-- ESPAÑOL -->
+  <div id="doc-es" class="hidden">
+    <h1>Términos del Servicio</h1>
+    <div class="dates">Fecha de entrada en vigor: agosto de 2026 · Última actualización: agosto de 2026</div>
+    <div class="intro"><p>Lea estos Términos del Servicio ("Términos") con atención. Rigen su acceso y uso de JobUp, una plataforma personal de carrera con inteligencia artificial operada por Digit2AI LLC ("Digit2AI", "nosotros" o "nuestro"), una sociedad de responsabilidad limitada constituida conforme a las leyes del estado de Florida, Estados Unidos. Nuestra <a href="{{BASE}}/privacy">Política de Privacidad</a> se incorpora a estos Términos por referencia y explica cómo recopilamos, usamos y protegemos su información; al aceptar estos Términos, usted también acepta la Política de Privacidad.</p></div>
+
+    <h2>I. Aceptación de los términos; quién puede usar JobUp</h2>
+    <p><strong>1.1.</strong> Al crear una cuenta, suscribirse a un plan o acceder o usar JobUp (el "Servicio") de cualquier otra forma, usted acepta quedar obligado por estos Términos. Si no está de acuerdo, no use el Servicio.</p>
+    <p><strong>1.2.</strong> Solo puede usar JobUp si tiene al menos 18 años, o la mayoría de edad en su jurisdicción si esta fuera superior, y si puede celebrar un contrato legalmente vinculante con nosotros.</p>
+    <p><strong>1.3.</strong> Una cuenta por persona. No puede crear ni mantener más de una cuenta para usted, compartir su cuenta ni crear una cuenta en nombre de otra persona sin su autorización.</p>
+    <p><strong>1.4.</strong> Usted se compromete a proporcionar información de registro exacta, actual y completa, y a mantenerla actualizada. Proporcionar información falsa constituye un incumplimiento de estos Términos.</p>
+
+    <h2>II. Descripción del servicio y de los planes</h2>
+    <p><strong>2.1. Qué hace JobUp.</strong> JobUp permite que un suscriptor cargue su currículum (résumé) y, a partir de él, ofrece: (a) un sitio web personal público de CV alojado en una dirección con el formato &lt;nombre&gt;.jobup.dev; (b) superficies legibles por máquina derivadas del currículum (incluyendo resume.json, datos estructurados schema.org JSON-LD, una tarjeta de agente de IA y un archivo llms.txt) para que reclutadores y herramientas de IA puedan encontrar al suscriptor; (c) un agente de IA "Opportunity Hunter" (Cazador de Oportunidades) que evalúa ofertas de empleo reales frente al currículum del suscriptor; y (d) adaptación del currículum con IA que reescribe el currículum para una oferta específica usando únicamente la información que el suscriptor ya proporcionó: no inventa experiencia, credenciales ni hechos.</p>
+    <p><strong>2.2. La dirección web.</strong> Su dirección web (&lt;nombre&gt;.jobup.dev) se asigna automáticamente a partir de su nombre al registrarse. Esta dirección no se puede cambiar una vez asignada.</p>
+    <p><strong>2.3. Planes y precios.</strong></p>
+    <ul>
+      <li><strong>Free ($0):</strong> un sitio de CV público y una vista previa semanal limitada de coincidencias de empleo. No se ofrece una prueba gratuita de los planes de pago porque el nivel Free es, en sí mismo, la forma de probar JobUp antes de pagar.</li>
+      <li><strong>Search ($29 por mes):</strong> coincidencias de empleo ilimitadas, evaluaciones a solicitud, 10 currículums adaptados por mes incluidos, borradores de contacto (outreach) y un pipeline para dar seguimiento a las oportunidades.</li>
+      <li><strong>Landed ($99 por mes):</strong> todo lo de Search, más adaptación ilimitada, evaluación prioritaria, preparación para entrevistas y una revisión humana del currículum cada mes.</li>
+    </ul>
+    <p><strong>2.4. Facturación.</strong> Los planes de pago se procesan a través de Stripe, se facturan mensualmente y comienzan de inmediato al suscribirse. No hay periodo de prueba. Los precios se expresan en dólares estadounidenses y no incluyen los impuestos que pudieran aplicarse.</p>
+    <p><strong>2.5. Gestión de su plan.</strong> Puede mejorar (upgrade), reducir (downgrade), pausar, reanudar o cancelar su plan en cualquier momento desde su panel. Reducir al nivel Free cancela su plan de pago al final del periodo de facturación en curso; usted conserva las funciones de pago hasta el final de ese periodo y no se emite reembolso parcial por la parte no utilizada.</p>
+    <p><strong>2.6. Qué ocurre cuando termina un plan de pago.</strong> Al cancelar o no renovar, su sitio de CV público se retira de línea y su dirección web se libera, pudiendo quedar disponible para otras personas. Su exportación completa de datos permanece disponible para usted según se describe en estos Términos.</p>
+
+    <h2>III. Cuenta y seguridad de la contraseña</h2>
+    <p><strong>3.1.</strong> Usted es responsable de mantener la confidencialidad de sus credenciales de acceso y de toda actividad que ocurra en su cuenta.</p>
+    <p><strong>3.2.</strong> Se compromete a usar una contraseña segura, a mantenerla confidencial y a notificarnos de inmediato a <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a> si sospecha de un uso no autorizado de su cuenta.</p>
+    <p><strong>3.3.</strong> No somos responsables de ninguna pérdida o daño derivado de que usted no proteja sus credenciales de acceso.</p>
+
+    <h2>IV. Su contenido le pertenece</h2>
+    <p><strong>4.1. Titularidad.</strong> El currículum y cualquier otra información, texto o material que usted cargue o proporcione ("Su Contenido") le pertenecen. Usted conserva todos los derechos de propiedad sobre Su Contenido.</p>
+    <p><strong>4.2. Sus declaraciones.</strong> Usted declara y garantiza que: (a) Su Contenido es veraz y exacto; (b) le corresponde a usted publicarlo y cuenta con todos los derechos necesarios para proporcionarlo y para que se publique y procese como aquí se describe; y (c) no está suplantando a ninguna persona o entidad ni tergiversando su vinculación con ninguna persona o entidad.</p>
+    <p><strong>4.3. Licencia que usted nos otorga.</strong> Para operar el Servicio, usted otorga a Digit2AI una licencia limitada, mundial, no exclusiva y libre de regalías para alojar, almacenar, reproducir, procesar, adaptar (para formato y legibilidad por máquina), mostrar y publicar Su Contenido, incluyendo como su sitio web de CV público y como las superficies legibles por máquina descritas en la Sección II, con el fin de prestar y operar el Servicio. Esta licencia termina cuando usted elimina el contenido correspondiente o cuando se cancela su cuenta, salvo por el contenido ya hecho público o almacenado en caché por terceros fuera de nuestro control, y salvo por copias de respaldo conservadas por un periodo limitado o cuando lo exija la ley.</p>
+    <p><strong>4.4. Sin obligación de supervisar.</strong> No estamos obligados a supervisar Su Contenido, pero podemos retirar o deshabilitar contenido que razonablemente consideremos que infringe estos Términos o la ley.</p>
+
+    <h2>V. Uso aceptable y conducta prohibida</h2>
+    <p><strong>5.1.</strong> Usted se compromete a no:</p>
+    <ul>
+      <li>cargar ni publicar contenido de currículum, credenciales o historial laboral falso, engañoso o fraudulento;</li>
+      <li>suplantar a ninguna persona ni cargar datos personales de otra persona sin tener derecho a hacerlo;</li>
+      <li>extraer (scraping), recolectar o recopilar de forma masiva los datos de otros suscriptores más allá del uso previsto de las superficies públicas legibles por máquina;</li>
+      <li>usar el Servicio con cualquier fin ilícito, infractor, de acoso o fraudulento;</li>
+      <li>intentar vulnerar, sondear o eludir la seguridad del Servicio o su aislamiento multiinquilino (multi-tenant), o acceder a datos o cuentas que no le pertenezcan;</li>
+      <li>interferir con el Servicio o su infraestructura, interrumpirlos o imponerles una carga irrazonable; o</li>
+      <li>realizar ingeniería inversa, descompilar o intentar derivar el código fuente del Servicio, salvo en la medida permitida por la ley.</li>
+    </ul>
+    <p><strong>5.2.</strong> Infringir esta Sección puede dar lugar a la suspensión o cancelación de su cuenta y, cuando corresponda, a la remisión a las autoridades.</p>
+
+    <h2>VI. Resultados de IA y datos de terceros — descargos de responsabilidad</h2>
+    <p><strong>6.1. Las puntuaciones de idoneidad son estimaciones, no garantías.</strong> Las puntuaciones que produce el Opportunity Hunter y cualquier evaluación relacionada son estimaciones generadas por IA sobre cómo se compara su currículum con una oferta. No son garantías de idoneidad, de una entrevista ni de empleo, y deben tratarse como información de apoyo, no como asesoramiento profesional.</p>
+    <p><strong>6.2. Las ofertas de empleo provienen de terceros y se ofrecen "TAL CUAL".</strong> Las ofertas de empleo se obtienen de sistemas públicos de seguimiento de candidatos (ATS) y bolsas de empleo de terceros. Se proporcionan "TAL CUAL" y pueden ser inexactas, estar desactualizadas, haber cambiado, estar cubiertas o haber sido retiradas por el empleador en cualquier momento. JobUp no es el empleador, no controla estas ofertas y no garantiza su exactitud ni su disponibilidad.</p>
+    <p><strong>6.3. Los currículums adaptados usan sus propias palabras.</strong> La adaptación de currículum con IA se construye únicamente a partir de la información que usted ya proporcionó; no agrega experiencia ni hechos. Usted es responsable de revisar cada currículum adaptado para verificar su exactitud e integridad antes de enviarlo o basarse en él. Usted sigue siendo el único responsable del contenido que presente a cualquier empleador.</p>
+
+    <h2>VII. Sin garantía de empleo</h2>
+    <p><strong>7.1.</strong> JobUp es una herramienta de software. No es un reclutador, una agencia de empleo, una agencia de colocación ni un empleador, y no lo emplea ni lo coloca en un puesto de trabajo.</p>
+    <p><strong>7.2.</strong> No garantizamos ningún resultado laboral, incluyendo entrevistas, ofertas, contrataciones, salario o continuidad del empleo. Sus resultados dependen de muchos factores fuera de nuestro control.</p>
+
+    <h2>VIII. Pagos, facturación, cancelación y reembolsos</h2>
+    <p><strong>8.1. Autorización de cobro.</strong> Al suscribirse a un plan de pago, usted nos autoriza a nosotros y a nuestro procesador de pagos (Stripe) a cobrar en su medio de pago la tarifa mensual recurrente del plan elegido hasta que usted cancele o reduzca el plan.</p>
+    <p><strong>8.2. Renovación automática.</strong> Los planes de pago se renuevan automáticamente cada mes al precio vigente en ese momento, salvo que usted cancele o reduzca el plan antes de la fecha de renovación.</p>
+    <p><strong>8.3. Cancelación y reducción.</strong> Puede cancelar o reducir su plan en cualquier momento desde su panel. La cancelación y la reducción surten efecto al final del periodo de facturación en curso; usted conserva las funciones de pago hasta entonces. No se otorga reembolso parcial ni prorrateado por el resto de un periodo de pago.</p>
+    <p><strong>8.4. Política de reembolsos.</strong> Las tarifas de suscripción, por regla general, no son reembolsables, salvo cuando la ley aplicable exija un reembolso. Como excepción específica a su favor: si compró o se le cobró un crédito de adaptación de currículum que nunca se entregó porque la generación falló por causa nuestra, honraremos ese crédito o lo reembolsaremos.</p>
+    <p><strong>8.5. Cambios de precio.</strong> Podemos cambiar los precios de los planes. Avisaremos de cualquier cambio de precio, y el nuevo precio se aplicará a su siguiente ciclo de facturación después del periodo de aviso; su uso continuado tras la entrada en vigor del cambio constituye aceptación.</p>
+    <p><strong>8.6. Pagos fallidos.</strong> Si un pago falla, podemos reintentar el cobro y podemos suspender o reducir las funciones de pago hasta que el pago se realice correctamente.</p>
+
+    <h2>IX. Propiedad intelectual de la plataforma</h2>
+    <p><strong>9.1.</strong> La plataforma JobUp —incluyendo su software, código fuente, modelos, prompts, diseño, interfaz de usuario, marcas, logotipos y todos los materiales relacionados, pero excluyendo Su Contenido— es propiedad de Digit2AI o de sus licenciantes y está protegida por las leyes de propiedad intelectual.</p>
+    <p><strong>9.2.</strong> Le otorgamos un derecho limitado, personal, intransferible y no exclusivo de usar el Servicio conforme a estos Términos. No se conceden otros derechos, y todos los derechos no otorgados expresamente quedan reservados.</p>
+
+    <h2>X. Servicios de terceros</h2>
+    <p><strong>10.1.</strong> Nos apoyamos en servicios de terceros para operar JobUp, incluyendo Stripe (pagos), Anthropic (procesamiento de IA), SendGrid (envío de correo) y Render (alojamiento). Su uso del Servicio puede estar sujeto a los propios términos y políticas de dichos proveedores.</p>
+    <p><strong>10.2.</strong> No somos responsables de los actos, omisiones, disponibilidad o contenido de los servicios de terceros, y su inclusión no implica que respaldemos nada ajeno al Servicio.</p>
+
+    <h2>XI. Terminación y suspensión</h2>
+    <p><strong>11.1. Por usted.</strong> Puede terminar en cualquier momento cancelando su plan y, si lo desea, eliminando su cuenta desde su panel.</p>
+    <p><strong>11.2. Por nosotros.</strong> Podemos suspender o cancelar su acceso si usted incumple estos Términos, usa el Servicio de forma ilícita, genera riesgo o exposición legal para nosotros, o no paga las tarifas correspondientes. Cuando sea práctico y legal, daremos aviso.</p>
+    <p><strong>11.3. Efecto sobre sus datos.</strong> Al terminar o cancelar, su sitio de CV público se retira de línea y su dirección web se libera, según se describe en la Sección II. Su exportación completa de datos permanece disponible para que pueda recuperar Su Contenido. Podemos eliminar Su Contenido tras un periodo razonable después de la terminación, con sujeción a nuestra Política de Privacidad y a la ley aplicable.</p>
+
+    <h2>XII. Exención de garantías</h2>
+    <p><strong>12.1.</strong> En la máxima medida permitida por la ley, el Servicio se proporciona "TAL CUAL" y "SEGÚN DISPONIBILIDAD", sin garantías de ningún tipo, ya sean expresas, implícitas o legales, incluyendo cualquier garantía implícita de comerciabilidad, idoneidad para un fin particular, titularidad y no infracción.</p>
+    <p><strong>12.2.</strong> No garantizamos que el Servicio sea ininterrumpido, esté libre de errores o sea seguro, ni que ninguna salida de IA, puntuación u oferta de empleo sea exacta, completa, actual o adecuada para su propósito.</p>
+
+    <h2>XIII. Limitación de responsabilidad</h2>
+    <p><strong>13.1.</strong> En la máxima medida permitida por la ley, Digit2AI y sus propietarios, directivos, empleados y proveedores no serán responsables de daños indirectos, incidentales, especiales, consecuentes, ejemplares o punitivos, ni de la pérdida de beneficios, ingresos, datos, prestigio u oportunidades de negocio, que surjan de o estén relacionados con el Servicio, aun si se hubiera advertido de la posibilidad de tales daños.</p>
+    <p><strong>13.2.</strong> En la máxima medida permitida por la ley, nuestra responsabilidad total agregada que surja de o esté relacionada con el Servicio o estos Términos no excederá el monto total de las tarifas que usted efectivamente nos haya pagado por el Servicio en los doce (12) meses inmediatamente anteriores al hecho que dio origen a la reclamación.</p>
+    <p><strong>13.3.</strong> Algunas jurisdicciones no permiten ciertas limitaciones; en esos casos, las limitaciones se aplicarán en la máxima medida permitida por la ley.</p>
+
+    <h2>XIV. Indemnización</h2>
+    <p><strong>14.1.</strong> Usted se compromete a indemnizar, defender y eximir de responsabilidad a Digit2AI y a sus propietarios, directivos, empleados y agentes frente a cualquier reclamación, daño, responsabilidad, pérdida y gasto (incluidos honorarios razonables de abogados) que surjan de o estén relacionados con: (a) Su Contenido, incluida cualquier reclamación de que es falso, infractor o vulnera los derechos de otra persona; (b) su uso o uso indebido del Servicio; (c) su incumplimiento de estos Términos; o (d) su violación de cualquier ley o de los derechos de un tercero.</p>
+
+    <h2>XV. Ley aplicable, jurisdicción y resolución de controversias</h2>
+    <p><strong>15.1.</strong> Estos Términos se rigen por las leyes del estado de Florida, EE. UU., sin atender a sus normas sobre conflicto de leyes.</p>
+    <p><strong>15.2. Resolución informal primero.</strong> Antes de presentar cualquier reclamación formal, usted se compromete a contactarnos en <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a> y a intentar de buena fe resolver la controversia de manera informal durante al menos treinta (30) días.</p>
+    <p><strong>15.3.</strong> Si la controversia no se resuelve, la jurisdicción exclusiva para cualquier acción serán los tribunales estatales o federales ubicados en Florida, EE. UU., y usted se somete a la jurisdicción personal de dichos tribunales.</p>
+
+    <h2>XVI. Cambios a estos términos</h2>
+    <p><strong>16.1.</strong> Podemos actualizar estos Términos de vez en cuando. Cuando lo hagamos, revisaremos la fecha de "Última actualización" y, para cambios sustanciales, daremos un aviso razonable e indicaremos la fecha de entrada en vigor.</p>
+    <p><strong>16.2.</strong> Su uso continuado del Servicio después de la fecha de entrada en vigor de los Términos actualizados constituye su aceptación de estos. Si no está de acuerdo, debe dejar de usar el Servicio y puede cancelar su plan.</p>
+
+    <h2>XVII. Disposiciones varias</h2>
+    <p><strong>17.1. Divisibilidad.</strong> Si alguna disposición de estos Términos resulta inejecutable, las demás disposiciones seguirán en pleno vigor, y la disposición inejecutable se modificará en la mínima medida necesaria para hacerla ejecutable.</p>
+    <p><strong>17.2. Acuerdo íntegro.</strong> Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo íntegro entre usted y Digit2AI respecto del Servicio y sustituyen cualquier acuerdo previo sobre la materia.</p>
+    <p><strong>17.3. Cesión.</strong> Usted no puede ceder ni transferir estos Términos sin nuestro consentimiento previo por escrito. Nosotros podemos ceder estos Términos en relación con una fusión, adquisición, reorganización o venta de activos.</p>
+    <p><strong>17.4. Sin renuncia.</strong> El hecho de que no hagamos valer alguna disposición no constituye una renuncia a nuestro derecho de hacerlo posteriormente.</p>
+    <p><strong>17.5. Contacto.</strong> Las preguntas sobre estos Términos pueden enviarse a <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a>, Digit2AI LLC, Florida, EE. UU.</p>
+  </div>
+
+  <div class="foot">
+    <a href="{{BASE}}/">JobUp</a>
+    <a href="{{BASE}}/privacy" id="link-privacy">Privacy Policy</a>
+    <a href="mailto:legal@digit2ai.com">legal@digit2ai.com</a>
+  </div>
+</div>
+<script>
+(function(){
+  function pref(){ try{ return localStorage.getItem('jobup_lang')||''; }catch(e){ return ''; } }
+  window.setLang=function(l){
+    var es=(l==='es');
+    document.getElementById('doc-en').classList.toggle('hidden',es);
+    document.getElementById('doc-es').classList.toggle('hidden',!es);
+    document.getElementById('lang-en').classList.toggle('on',!es);
+    document.getElementById('lang-es').classList.toggle('on',es);
+    document.documentElement.lang=es?'es':'en';
+    document.getElementById('link-privacy').textContent=es?'Política de Privacidad':'Privacy Policy';
+    try{ localStorage.setItem('jobup_lang',l); }catch(e){}
+  };
+  var l=pref(); if(l==='es'||(!l&&(navigator.language||'').toLowerCase().indexOf('es')===0)) setLang('es');
+})();
+</script>
+</body>
+</html>

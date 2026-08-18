@@ -4208,6 +4208,38 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('loadPhoto') && html.includes('uploadPhoto'));
     assert.ok(html.includes("method:'DELETE'"), 'removal must be reachable');
   });
+  await t('LEGAL: a real Privacy Policy and Terms are served, routed, and linked', () => {
+    const fs = require('fs');
+    const pwaSvc = require(__dirname + '/src/services/pwa');
+    // Both pages render through the shell with no unsubstituted tokens, bilingual.
+    for (const f of ['privacy.html', 'terms.html']) {
+      const h = pwaSvc.page(f, '');
+      assert.ok(!/\{\{[A-Z_]+\}\}/.test(h), `${f} left a template token unsubstituted`);
+      assert.ok(h.includes('id="doc-en"') && h.includes('id="doc-es"'), `${f} must be EN+ES`);
+    }
+    // The privacy policy must be honest about the load-bearing facts of THIS product.
+    const priv = pwaSvc.page('privacy.html', '');
+    assert.ok(/public by design/i.test(priv), 'the public-by-design nature must be stated plainly');
+    assert.ok(priv.includes('Anthropic') && priv.includes('Stripe') && priv.includes('SendGrid') && priv.includes('Render'),
+      'every subprocessor must be named');
+    assert.ok(/scrypt/.test(priv) && /salted hash/i.test(priv), 'security specifics must be stated');
+    assert.ok(priv.includes('privacy@digit2ai.com'), 'a contact for rights requests');
+    const terms = pwaSvc.page('terms.html', '');
+    assert.ok(/No employment guarantee/i.test(terms) && /AS IS/.test(terms),
+      'the no-guarantee and as-is disclaimers must be present');
+    // Routed on the main mount AND the subscriber-subdomain handler.
+    const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+    assert.ok(/router\.get\(\['\/privacy'/.test(idx) && /router\.get\(\['\/terms'/.test(idx),
+      'both must be routed on the main mount');
+    assert.ok(/p === '\/privacy'/.test(idx) && /p === '\/terms'/.test(idx),
+      'and on the subscriber-subdomain handler');
+    // Linked from the footer and referenced at signup.
+    const landing = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+    assert.ok(landing.includes('/privacy') && landing.includes('/terms'), 'footer must link both');
+    const build = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
+    assert.ok(/agree to/i.test(build) && /\/terms/.test(build) && /\/privacy/.test(build),
+      'signup must state agreement to the terms and privacy policy');
+  });
   await t('THE DASHBOARD PREVIEW LOADS A SAME-ORIGIN PHOTO, not the apex 404', () => {
     // The public /photo is only served on the subscriber's own subdomain, so on
     // jobup.dev/app it 404'd and the preview showed a broken image. The console

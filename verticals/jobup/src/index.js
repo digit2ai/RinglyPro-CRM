@@ -341,13 +341,22 @@ router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
 router.get(['/reset', '/reset/'], (req, res) =>
   res.type('html').send(pwa.page('reset.html', pwa.basePath(req))));
 
+// Legal. Public, indexable, and linked from the footer + signup. This ecosystem
+// hosts people's personal data, so the policy and terms are first-class pages.
+router.get(['/privacy', '/privacy/', '/privacy-policy'], (req, res) =>
+  res.type('html').send(pwa.page('privacy.html', pwa.basePath(req))));
+router.get(['/terms', '/terms/', '/terms-of-service'], (req, res) =>
+  res.type('html').send(pwa.page('terms.html', pwa.basePath(req))));
+
 // ---- landing --------------------------------------------------------------
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
 router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.html',
+            '/privacy.html', '/terms.html',
             '/subscribers-admin.html', '/social-admin.html', '/plan.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
                '/welcome.html': '/welcome', '/build.html': '/build', '/reset.html': '/reset',
+               '/privacy.html': '/privacy', '/terms.html': '/terms',
                '/subscribers-admin.html': '/subscribers-admin',
                '/social-admin.html': '/social-admin',
                '/plan.html': '/subscribers-admin/plan' }[req.path];
@@ -447,6 +456,12 @@ async function subscriberSite(req, res, next) {
   }
   if (p === '/reset' || p === '/reset/') {
     return res.type('html').send(pwa.page('reset.html', ''));
+  }
+  if (p === '/privacy' || p === '/privacy/' || p === '/privacy-policy') {
+    return res.type('html').send(pwa.page('privacy.html', ''));
+  }
+  if (p === '/terms' || p === '/terms/' || p === '/terms-of-service') {
+    return res.type('html').send(pwa.page('terms.html', ''));
   }
   // The dashboard resolves its API base to the current origin, so the API has
   // to answer here too.
