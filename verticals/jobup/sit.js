@@ -3090,6 +3090,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(s('search') < s('landed'), 'Landed scans more of the pool than Search');
     assert.strictEqual(entSvc.hunterScanFor({ plan: null }), null, 'legacy keeps its settings number');
 
+    // The budget must rank the SAME way, or the shared daily cap flattens the
+    // scan to the same handful of jobs for every tier (the real bug: Landed
+    // could file no more than Search because both hit ~$0.27/day first).
+    const b = (plan) => entSvc.hunterBudgetFor({ plan, status: 'active' });
+    assert.ok(b('free') < b('search') && b('search') < b('landed'),
+      'the daily budget must rank Free < Search < Landed so the scan can bite');
+    assert.strictEqual(entSvc.hunterBudgetFor({ plan: null }), null, 'legacy keeps its settings budget');
+
     // And priority scoring (Landed only) lifts the strong-backlog ceiling, so it
     // clears its strong candidates faster than Search during a backlog.
     const agents = require(__dirname + '/src/services/agents');

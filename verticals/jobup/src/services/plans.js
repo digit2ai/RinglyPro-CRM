@@ -47,6 +47,11 @@ const PLANS = {
       // ranked (Free < Search < Landed) so a paid account always evaluates at
       // least as much of the pool — see hunter_scan_per_day on the paid tiers.
       hunter_scan_per_day: envInt('JOBUP_FREE_SCAN_PER_DAY', 8),
+      // The DAILY model budget in cents. Tier-ranked too — the scan ceiling only
+      // bites if the budget allows it, so budget and scan must rank together or
+      // the shared budget flattens every tier to the same handful (Free $0.10 <
+      // Search $0.60 < Landed $1.80 per day).
+      hunter_budget_cents_day: envInt('JOBUP_FREE_BUDGET_CENTS_DAY', 10),
       scorings_per_day: 0,            // no on-demand scoring on Free
       tailorings_per_month: 0,        // no AI tailoring on Free
       outreach: false,
@@ -72,6 +77,7 @@ const PLANS = {
     caps: {
       matches_per_week: null,                                     // unlimited
       hunter_scan_per_day: envInt('JOBUP_SEARCH_SCAN_PER_DAY', 40),
+      hunter_budget_cents_day: envInt('JOBUP_SEARCH_BUDGET_CENTS_DAY', 60),
       scorings_per_day: envInt('JOBUP_SEARCH_SCORINGS_PER_DAY', 40),
       tailorings_per_month: envInt('JOBUP_SEARCH_TAILORINGS_PER_MO', 10),
       outreach: true,
@@ -100,6 +106,7 @@ const PLANS = {
       // so on the same resume it can only ever surface MORE strong matches than
       // Search, never fewer. This is what makes the tier ordering monotonic.
       hunter_scan_per_day: envInt('JOBUP_LANDED_SCAN_PER_DAY', 120),
+      hunter_budget_cents_day: envInt('JOBUP_LANDED_BUDGET_CENTS_DAY', 180),
       scorings_per_day: envInt('JOBUP_LANDED_SCORINGS_PER_DAY', 200),  // fair-use, not "unlimited" fiction
       tailorings_per_month: null,                                 // unlimited
       outreach: true,

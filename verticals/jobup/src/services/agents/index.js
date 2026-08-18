@@ -163,7 +163,15 @@ async function hunter(tenantId, opts = {}) {
     : (tierScan != null ? tierScan : settingsPerDay);
   const priorityScoring = Boolean(sub && ent.entitlementForSub(sub).caps &&
     ent.entitlementForSub(sub).caps.priority_scoring);
-  const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
+  // TIER-RANKED DAILY BUDGET. Without this the shared monthly cap flattens every
+  // tier to the same ~$0.27/day (~22 jobs), so the tier scan above never bit and
+  // Landed could file no more than Search. A tiered account gets its plan's
+  // budget (Free $0.10 < Search $0.60 < Landed $1.80 a day); legacy keeps the
+  // settings-driven monthly cap.
+  const tierBudget = ent.hunterBudgetFor(sub);
+  const dailyBudget = isAdmin
+    ? (settings.cost_cap_usd || 8) / 30
+    : (tierBudget != null ? tierBudget : (settings.cost_cap_usd || 8) / 30);
 
   const used = await usedToday(tenantId, trigger);
   const budgetLeft = Math.max(0, dailyBudget - used.spent);

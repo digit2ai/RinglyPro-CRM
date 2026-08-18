@@ -96,7 +96,19 @@ function hunterScanFor(sub) {
   return Number.isFinite(v) && v > 0 ? v : null;
 }
 
+/**
+ * The Hunter's DAILY model budget in dollars for this tenant. Tier-ranked so the
+ * scan ceiling can actually bite — a shared budget would flatten every tier to
+ * the same handful of jobs. Returns null for legacy (caller uses settings).
+ */
+function hunterBudgetFor(sub) {
+  const e = entitlementForSub(sub);
+  if (e.legacy || !e.caps) return null;
+  const cents = e.caps.hunter_budget_cents_day;
+  return Number.isFinite(cents) && cents > 0 ? cents / 100 : null;
+}
+
 module.exports = {
   entitlementFor, entitlementForSub, allowsFeature, capFor,
-  freeMatchAllowanceFor, hunterScanFor, FREE_MATCHES_MAX,
+  freeMatchAllowanceFor, hunterScanFor, hunterBudgetFor, FREE_MATCHES_MAX,
 };
