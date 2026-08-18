@@ -924,7 +924,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
         <li>5 job matches a week</li>
         <li>Eva career chat, read-only</li>
       </ul>
-      <button class="pbtn solid" id="ju-attach2">Start free</button>
+      <button class="pbtn solid ju-planbtn" id="ju-attach2" data-plan="free">Start free</button>
     </div>
     <div class="ju-plan feat">
       <h3>Search <span class="rib">Popular</span></h3>
@@ -937,7 +937,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
         <li>10 tailored resumes a month</li>
         <li>Outreach drafts and pipeline</li>
       </ul>
-      <a class="pbtn solid" href="{{BASE}}/plan">Get Search</a>
+      <button class="pbtn solid ju-planbtn" data-plan="search">Get Search</button>
     </div>
     <div class="ju-plan">
       <h3>Landed</h3>
@@ -950,7 +950,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
         <li>Interview prep per posting</li>
         <li>One human resume review a month</li>
       </ul>
-      <a class="pbtn ghost" href="{{BASE}}/plan">Get Landed</a>
+      <button class="pbtn ghost ju-planbtn" data-plan="landed">Get Landed</button>
     </div>
   </div>
   <p class="ju-note">Free forever. Upgrade, downgrade or pause anytime &mdash; your CV site stays live. JobUp never applies on your behalf; you review and submit every application yourself.</p>
@@ -1406,9 +1406,19 @@ function juApplyLang(l,persist){
                 :('You can build another after '+t+' on '+d.toLocaleDateString([], {month:'short',day:'numeric'})+'.');
   }
 
-  ['ju-attach','ju-attach2'].forEach(function(id){
-    var b=document.getElementById(id); if(b) b.addEventListener('click',open);
-  });
+  // Every start button opens the SAME onboarding. Plan buttons remember which
+  // tier was chosen (localStorage jobup_plan) so checkout charges that price and
+  // provisions that plan. The hero "Attach my resume" clears any prior choice.
+  function bindStart(el){
+    if(!el) return;
+    el.addEventListener('click',function(){
+      var p=el.getAttribute('data-plan')||'';
+      try{ if(p) localStorage.setItem('jobup_plan',p); else localStorage.removeItem('jobup_plan'); }catch(e){}
+      open();
+    });
+  }
+  bindStart(document.getElementById('ju-attach'));
+  Array.prototype.forEach.call(document.querySelectorAll('.ju-planbtn'),bindStart);
   document.getElementById('ju-x').addEventListener('click',close);
   sheet.addEventListener('click',function(e){if(e.target===sheet)close();});
   document.addEventListener('keydown',function(e){

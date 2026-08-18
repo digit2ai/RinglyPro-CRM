@@ -69,6 +69,20 @@ router.post('/checkout', async (req, res) => {
     if (!sub) sub = await models.subscribers.create({ email, name, status: 'pending' });
 
     const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+    const chosenPlan = String((req.body || {}).plan || '').toLowerCase();
+
+    // ---- FREE PLAN selected on the landing -------------------------------
+    // No charge. Create the account on the Free tier and send them to /build to
+    // set a password and their targeting (so the Hunter has something to search).
+    if (chosenPlan === 'free') {
+      await models.subscribers.update(
+        { status: 'active', activation: 'free_plan', activated_at: new Date(), plan: 'free' },
+        { where: { id: sub.id } });
+      const provisioning = require('../services/provisioning');
+      const pr = await provisioning.run(sub.id, { teaserToken: teaser_token }).catch(() => ({ ok: false }));
+      try { await models.audit_log.create({ tenant_id: sub.id, actor: 'system', action: 'free_plan_activation', reason: 'Free plan selected on landing' }); } catch (e) {}
+      return res.json({ ok: true, plan: 'free', build_url: `${base}/build?t=${encodeURIComponent(teaser_token)}&s=${sub.id}&free=1`, provisioned: pr.ok });
+    }
 
     // ---- TEST MODE: skip payment entirely --------------------------------
     // Activates and provisions immediately. Off unless JOBUP_FREE_ACTIVATION=1.
@@ -88,6 +102,21 @@ router.post('/checkout', async (req, res) => {
         provisioned: r2.ok, site: r2.url, steps: r2.steps,
         note: 'TEST MODE — no payment was taken. This account is marked free_test.',
       });
+    }
+
+    // ---- PAID TIER selected on the landing (Search/Landed) ----------------
+    // Plan-aware monthly checkout at the SELECTED price; the account is then
+    // provisioned on that plan by the webhook. Success returns to /build to
+    // capture the password + targeting, same as the single-tier flow.
+    if (chosenPlan === 'search' || chosenPlan === 'landed') {
+      const rp = await billing.createPlanCheckout({
+        subscriberId: sub.id, email, plan: chosenPlan, teaserToken: teaser_token,
+        successUrl: teaser_token
+          ? `${base}/build?t=${encodeURIComponent(teaser_token)}&s=${sub.id}&paid=1&cs={CHECKOUT_SESSION_ID}`
+          : `${base}/welcome?s=${sub.id}&paid=1&cs={CHECKOUT_SESSION_ID}`,
+        cancelUrl: teaser_token ? `${base}/teaser/${teaser_token}` : `${base}/`,
+      });
+      return res.status(rp.ok ? 200 : 503).json(rp);
     }
 
     // AFTER PAYMENT, FINISH THE ACCOUNT — do not drop them on a status page.

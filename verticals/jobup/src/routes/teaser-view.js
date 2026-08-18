@@ -664,7 +664,7 @@ function checkout(){
   if(out) out.textContent=T.opening;
   ctaBusy(true);
   fetch(API_BASE+'/api/v1/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({teaser_token:TOKEN})})
+    body:JSON.stringify({teaser_token:TOKEN, plan:(function(){try{return localStorage.getItem('jobup_plan')||'';}catch(e){return '';}})()})})
     .then(function(r){return r.json();}).then(function(j){
       if(j.build_url){location.href=j.build_url;return;}   // no payment: straight to the form
       if(j.url){location.href=j.url;return;}               // Stripe, when enabled
