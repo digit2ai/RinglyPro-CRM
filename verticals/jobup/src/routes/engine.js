@@ -1272,6 +1272,16 @@ router.post('/address', async (req, res) => {
   const host = `${v.label}.${addresses.BASE_DOMAIN}`;
   if (sub.address === host) return res.json({ ok: true, address: host, url: `https://${host}`, unchanged: true });
 
+  // The web address is set from the subscriber's name at signup and is NOT
+  // changeable — on any tier. The UI no longer offers a rename; this refuses the
+  // change so there is no hidden path either. First-time assignment (address
+  // still unset) is allowed, since that is provisioning, not a change.
+  if (sub.address) {
+    return res.status(403).json({
+      error: 'Your web address is set when your account is created and cannot be changed.',
+    });
+  }
+
   const ownAlias = await scoped('address_aliases', tid).findOne({ address: host });
   if (!ownAlias && await addresses.isTaken(v.label)) {
     return res.status(409).json({ error: 'That address is already taken.' });

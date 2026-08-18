@@ -1645,7 +1645,10 @@ function uploadPhoto(file){
     }).catch(function(){msg.textContent='Could not reach the server.';});
 }
 
-/* ---- web address ---- */
+/* ---- web address (read-only) ----
+   The address is assigned from the subscriber's name at signup and is not
+   changeable \u2014 so this only DISPLAYS it. The old Personalize/rename flow was
+   removed; the server also refuses a change, so there is no hidden path. */
 var ADDR=null;
 function loadAddress(){
   api('/api/v1/engine/address').then(function(r){
@@ -1654,56 +1657,9 @@ function loadAddress(){
     $('addrbox').innerHTML=
       '<div class="addrnow"><a href="'+esc(ADDR.url||'#')+'" target="_blank" rel="noopener">'+
         esc(ADDR.address||'not assigned yet')+'</a></div>'+
-      '<div class="acts"><button class="btn primary sm" id="a-edit">Personalize</button></div>'+
       (ADDR.previous&&ADDR.previous.length
         ? '<div class="note">Also yours, redirecting here: '+
-          ADDR.previous.map(esc).join(', ')+'</div>' : '')+
-      '<div id="addredit"></div>';
-    $('a-edit').addEventListener('click',showAddrEdit);
-  });
-}
-function showAddrEdit(){
-  var cur=(ADDR.address||'').split('.')[0];
-  $('addredit').innerHTML=
-    '<label for="a-in">Choose your address</label>'+
-    '<div class="addrrow"><input id="a-in" value="'+esc(cur)+'" maxlength="40" '+
-      'autocapitalize="none" autocorrect="off" spellcheck="false">'+
-      '<span class="addrsuffix">.'+esc(ADDR.base_domain)+'</span></div>'+
-    '<div class="astat" id="a-stat"></div>'+
-    '<div class="acts"><button class="btn primary sm" id="a-save" disabled>Save address</button>'+
-    '<button class="btn sm" id="a-cancel">Cancel</button></div>'+
-    '<div class="note">Letters and numbers only. Your current address keeps working '+
-    'and will redirect here \u2014 a link someone saved never breaks.</div>';
-  var inp=$('a-in'),stat=$('a-stat'),save=$('a-save'),timer=null;
-  function check(){
-    var v=inp.value.trim();
-    save.disabled=true;
-    if(!v){stat.className='astat';stat.textContent='';return;}
-    stat.className='astat';stat.textContent='Checking...';
-    api('/api/v1/engine/address/check?label='+encodeURIComponent(v)).then(function(r){
-      if(!r.ok)return;
-      if(r.j.available){
-        stat.className='astat ok';
-        stat.textContent=r.j.host+' is available'+(r.j.yours_previously?' (yours previously)':'');
-        save.disabled=false;
-      }else{
-        stat.className='astat bad'; stat.textContent=r.j.reason||'Not available.';
-      }
-    });
-  }
-  inp.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(check,350);});
-  inp.focus(); inp.select();
-  $('a-cancel').addEventListener('click',function(){$('addredit').innerHTML='';});
-  save.addEventListener('click',function(){
-    save.disabled=true;save.textContent='Saving...';
-    api('/api/v1/engine/address',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({label:inp.value.trim()})}).then(function(r){
-        if(!r.ok){save.disabled=false;save.textContent='Save address';
-          stat.className='astat bad';stat.textContent=r.j.error||'Could not save.';return;}
-        err('aerr','Your address is now '+r.j.address+'. '+(r.j.note||''));
-        $('addredit').innerHTML='';
-        loadAddress(); boot();
-      });
+          ADDR.previous.map(esc).join(', ')+'</div>' : '');
   });
 }
 
