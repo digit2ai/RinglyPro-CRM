@@ -4208,6 +4208,18 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(html.includes('loadPhoto') && html.includes('uploadPhoto'));
     assert.ok(html.includes("method:'DELETE'"), 'removal must be reachable');
   });
+  await t('THE DASHBOARD PREVIEW LOADS A SAME-ORIGIN PHOTO, not the apex 404', () => {
+    // The public /photo is only served on the subscriber's own subdomain, so on
+    // jobup.dev/app it 404'd and the preview showed a broken image. The console
+    // must load the auth'd raw endpoint, which answers on every host it runs on.
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    assert.ok(/router\.get\('\/photo\/raw'/.test(src), 'a same-origin raw photo endpoint must exist');
+    assert.ok(/raw_url: '\/api\/v1\/engine\/photo\/raw\?v=' \+ id/.test(src),
+      'status must advertise the raw url, versioned by asset id');
+    const html = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
+    assert.ok(/src="'\+esc\(API\+\(s\.raw_url\|\|s\.url\)\)\+'"/.test(html),
+      'the preview must use the same-origin raw url, prefixed by the app base');
+  });
 
 
   // ---------------------------------------------------------------

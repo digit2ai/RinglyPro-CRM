@@ -1612,7 +1612,11 @@ function loadPhoto(){
     $('photobox').innerHTML=
       '<div class="photorow">'+
         (s.has_photo
-          ? '<img class="photoprev" src="'+esc(s.url)+'" alt="Your profile photo">'
+          /* Same-origin, auth'd URL — the public /photo only exists on the
+             subscriber's own subdomain, so on jobup.dev/app it 404'd and showed
+             a broken image. ?v=<asset_id> refreshes the instant a new photo is
+             saved, so a Replace never shows the old one. */
+          ? '<img class="photoprev" src="'+esc(API+(s.raw_url||s.url))+'" alt="Your profile photo">'
           : '<div class="photoprev none">no photo</div>')+
         '<div style="flex:1">'+
           (s.has_photo?'<div class="note" style="margin:0 0 8px">'+Math.round(s.bytes/1024)+' KB · '+esc(s.mime)+'</div>':'')+

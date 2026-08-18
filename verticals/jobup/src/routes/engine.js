@@ -1214,8 +1214,34 @@ router.get('/photo/status', async (req, res) => {
   const id = prof && prof.photo_asset_id;
   if (!id) return res.json({ has_photo: false, max_bytes: photos.MAX_BYTES });
   const a = await scoped('assets', tid).findOne({ id });
-  res.json({ has_photo: Boolean(a), bytes: a && a.bytes, mime: a && a.mime,
-             url: '/photo?v=' + id, max_bytes: photos.MAX_BYTES });
+  res.json({
+    has_photo: Boolean(a), bytes: a && a.bytes, mime: a && a.mime, asset_id: id,
+    url: '/photo?v=' + id,                              // the PUBLIC url (subscriber subdomain)
+    // Same-origin, auth'd url the DASHBOARD uses. The public /photo is only
+    // served on the subscriber's own host, so on jobup.dev/app it 404s and the
+    // preview showed a broken image — this one works on every host the console
+    // runs on. ?v=<asset_id> busts the cache the moment the photo changes.
+    raw_url: '/api/v1/engine/photo/raw?v=' + id,
+    max_bytes: photos.MAX_BYTES,
+  });
+});
+
+/** The signed-in subscriber's own photo bytes — for the dashboard preview,
+    which cannot reach the public /photo on the apex host. */
+router.get('/photo/raw', async (req, res) => {
+  const tid = auth(req, res); if (!tid) return;
+  const prof = await scoped('profiles', tid).findOne({});
+  const id = prof && prof.photo_asset_id;
+  if (!id) return res.status(404).type('text/plain').send('No photo on file.');
+  const a = await scoped('assets', tid).findOne({ id });
+  if (!a || !a.data) return res.status(404).type('text/plain').send('No photo on file.');
+  const tag = photos.etagFor(a);
+  if (req.headers['if-none-match'] === tag) return res.status(304).end();
+  res.set('ETag', tag);
+  // A private, revalidated cache: the ?v=<asset_id> changes on every new upload,
+  // so a stale image can never survive a replace.
+  res.set('Cache-Control', 'private, max-age=86400');
+  return res.type(a.mime || 'image/jpeg').send(Buffer.from(a.data, 'base64'));
 });
 
 // ---------------------------------------------------------------
