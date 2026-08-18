@@ -177,6 +177,12 @@ font-size:13px;margin-bottom:7px}
 border-radius:11px;padding:11px 14px;font-size:13.5px;margin:14px 0;display:none}
 .err.show{display:block}
 .note{color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.65;margin-top:12px}
+.tprog{margin-top:12px}
+.tprog-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:var(--ink);margin-bottom:7px}
+.tprog-pct{color:var(--cyan);font-weight:700}
+.tprog-bar{height:8px;border-radius:999px;background:var(--card2);border:1px solid var(--line);overflow:hidden}
+.tprog-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--cyan),#7c5cff);transition:width .45s cubic-bezier(.22,.61,.36,1)}
+.tprog-sub{margin-top:7px;font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 .hidden{display:none}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
 /* The header mark is the logo, permanently. There used to be an initials chip
@@ -1225,10 +1231,43 @@ function claimTailorPayment(){
     });
 }
 
+/* A live progress bar for the tailoring wait. The model call is one request with
+   no server-side percentage, so the bar EASES toward 92% while rotating through
+   the real steps, then the caller snaps it to 100% the moment the document lands
+   — an honest "working" signal, never a fake countdown. */
+function startTailorProgress(o){
+  var es=(JU_APP_LANG==='es');
+  var steps=es
+    ? ['Leyendo la oferta…','Comparando con tu experiencia…','Seleccionando tus propias palabras…','Construyendo el documento…','Revisando que nada se invente…']
+    : ['Reading the posting…','Matching it to your experience…','Selecting your own wording…','Building the document…','Checking nothing is invented…'];
+  o.innerHTML='<div class="tprog">'+
+    '<div class="tprog-head"><span>'+(es?'Adaptando tu currículum':'Tailoring your resume')+'</span><span class="tprog-pct">0%</span></div>'+
+    '<div class="tprog-bar"><div class="tprog-fill"></div></div>'+
+    '<div class="tprog-sub">'+esc(steps[0])+'</div></div>';
+  var fill=o.querySelector('.tprog-fill'), pct=o.querySelector('.tprog-pct'), sub=o.querySelector('.tprog-sub');
+  var p=4, si=0, done=false;
+  fill.style.width='4%'; pct.textContent='4%';
+  var tick=setInterval(function(){
+    if(done) return;
+    // Ease toward 92%: big early steps, small near the ceiling.
+    p += Math.max(0.6,(92-p)*0.08);
+    if(p>92) p=92;
+    fill.style.width=p.toFixed(0)+'%'; pct.textContent=p.toFixed(0)+'%';
+  },320);
+  var stepTimer=setInterval(function(){ if(done)return; si=(si+1)%steps.length; sub.textContent=steps[si]; },1400);
+  return {
+    finish:function(cb){ done=true; clearInterval(tick); clearInterval(stepTimer);
+      fill.style.width='100%'; pct.textContent='100%'; sub.textContent=es?'Listo':'Done';
+      setTimeout(cb,380); },
+    stop:function(){ done=true; clearInterval(tick); clearInterval(stepTimer); },
+  };
+}
 function tailor(id){
-  var o=$('out-'+id); o.innerHTML='<div class="note">Tailoring…</div>';
+  var o=$('out-'+id);
+  var prog=startTailorProgress(o);
   api('/api/v1/engine/tailor/'+id,{method:'POST'}).then(function(r){
     if(!r.ok&&r.j&&r.j.needs_payment){
+      prog.stop();
       o.innerHTML='<div class="note">Taking you to checkout…</div>';
       return api('/api/v1/engine/tailor/checkout',{method:'POST',
         headers:{'Content-Type':'application/json'},body:JSON.stringify({job_id:id})})
@@ -1237,28 +1276,31 @@ function tailor(id){
           o.innerHTML='<div class="note">'+esc((c.j&&c.j.error)||'Checkout is unavailable.')+'</div>';
         });
     }
-    if(!r.ok){o.innerHTML='<div class="note">'+esc(r.j.error||'Could not tailor')+'</div>';return;}
-    loadTailorings().then(loadMatches);
-    var f=r.j.flagged||[];
-    o.innerHTML='<div class="note">'+
-      (r.j.changes||[]).map(function(c){return '· '+esc(c);}).join('<br>')+
-      (f.length?'<br><span class="chip warn">'+f.length+' term(s) need your confirmation — nothing is added that you did not write</span>':
-                '<br><span class="chip ok">no invented facts detected</span>')+
-      (r.j.summary_source==='resume'
-        ? '<br><span class="chip">summary kept from your own r&eacute;sum&eacute; — the tailored one '+
-          'introduced wording your CV does not support</span>' : '')+
-      (r.j.is_simulated?'<br><span class="chip sim">no model configured — your own r&eacute;sum&eacute;, '+
-        'ordered for this posting</span>':'')+
-      (r.j.coverage_pct!=null?'<br>This document evidences <strong>'+esc(String(r.j.coverage_pct))+
-        '%</strong> of the terms in the posting.':'')+
-      ((r.j.gaps||[]).length?'<br>Not evidenced: '+r.j.gaps.map(esc).join(', '):'')+
-      (r.j.pdf_url?'<br><a href="'+API+esc(r.j.pdf_url)+'" target="_blank" rel="noopener">'+
-        'Open the PDF (v'+esc(String(r.j.version||1))+')</a>':'')+
-      '<br>'+esc(tailorAllowanceLine(r.j))+
-      ((r.j.credits_left||0)>0?' '+esc(String(r.j.credits_left))+' paid credit(s) also available.':'')+
-      '</div>';
-    if(TAILOR_PLAN){ TAILOR_PLAN.included_left=r.j.included_left; TAILOR_PLAN.unlimited=r.j.unlimited; TAILOR_PLAN.included_per_month=r.j.included_per_month; }
-  });
+    if(!r.ok){prog.stop();o.innerHTML='<div class="note">'+esc(r.j.error||'Could not tailor')+'</div>';return;}
+    // Snap the bar to 100%, then paint the result.
+    prog.finish(function(){
+      loadTailorings().then(loadMatches);
+      var f=r.j.flagged||[];
+      o.innerHTML='<div class="note">'+
+        (r.j.changes||[]).map(function(c){return '· '+esc(c);}).join('<br>')+
+        (f.length?'<br><span class="chip warn">'+f.length+' term(s) need your confirmation — nothing is added that you did not write</span>':
+                  '<br><span class="chip ok">no invented facts detected</span>')+
+        (r.j.summary_source==='resume'
+          ? '<br><span class="chip">summary kept from your own r&eacute;sum&eacute; — the tailored one '+
+            'introduced wording your CV does not support</span>' : '')+
+        (r.j.is_simulated?'<br><span class="chip sim">no model configured — your own r&eacute;sum&eacute;, '+
+          'ordered for this posting</span>':'')+
+        (r.j.coverage_pct!=null?'<br>This document evidences <strong>'+esc(String(r.j.coverage_pct))+
+          '%</strong> of the terms in the posting.':'')+
+        ((r.j.gaps||[]).length?'<br>Not evidenced: '+r.j.gaps.map(esc).join(', '):'')+
+        (r.j.pdf_url?'<br><a href="'+API+esc(r.j.pdf_url)+'" target="_blank" rel="noopener">'+
+          'Open the PDF (v'+esc(String(r.j.version||1))+')</a>':'')+
+        '<br>'+esc(tailorAllowanceLine(r.j))+
+        ((r.j.credits_left||0)>0?' '+esc(String(r.j.credits_left))+' paid credit(s) also available.':'')+
+        '</div>';
+      if(TAILOR_PLAN){ TAILOR_PLAN.included_left=r.j.included_left; TAILOR_PLAN.unlimited=r.j.unlimited; TAILOR_PLAN.included_per_month=r.j.included_per_month; }
+    });
+  }).catch(function(){ prog.stop(); o.innerHTML='<div class="note">'+(JU_APP_LANG==='es'?'No se pudo completar. Intenta de nuevo.':'Could not complete. Please try again.')+'</div>'; });
 }
 /* `ats()` and `applied()` are gone. The keyword number now arrives WITH the
    document it describes — a percentage detached from a file was a figure about
