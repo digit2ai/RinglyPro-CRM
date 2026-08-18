@@ -603,10 +603,10 @@ async function applyEvent(type, obj, opts = {}) {
 
   switch (type) {
     case 'checkout.session.completed': {
-      await models.subscribers.update(
-        { status: 'active', stripe_customer_id: obj.customer, stripe_subscription_id: obj.subscription },
-        { where: { id: subscriberId } }
-      );
+      const csPlan = (obj.metadata && obj.metadata.plan) || null;
+      const csUpd = { status: 'active', stripe_customer_id: obj.customer, stripe_subscription_id: obj.subscription };
+      if (csPlan) csUpd.plan = csPlan;                // tiered signup; legacy checkout leaves plan untouched
+      await models.subscribers.update(csUpd, { where: { id: subscriberId } });
       // THE PAID SIGNAL. Provisioning runs as a background job — the webhook
       // must answer fast, and the chain far exceeds Cloudflare's ~100s ceiling.
       const teaserToken = (obj.metadata && obj.metadata.teaser_token) || null;
@@ -624,20 +624,36 @@ async function applyEvent(type, obj, opts = {}) {
     }
 
     case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-      await models.subscribers.update(
-        { status: obj.status === 'active' || obj.status === 'trialing' ? 'active'
-                : obj.status === 'past_due' ? 'past_due' : obj.status,
-          current_period_end: obj.current_period_end ? new Date(obj.current_period_end * 1000) : null },
-        { where: { id: subscriberId } }
-      );
-      return { ok: true, action: 'status:' + obj.status, subscriberId };
+    case 'customer.subscription.updated': {
+      const paused = !!obj.pause_collection;          // Stripe pause_collection set => paused
+      const planMeta = (obj.metadata && obj.metadata.plan) || null;
+      const st = paused ? 'paused'
+        : (obj.status === 'active' || obj.status === 'trialing') ? 'active'
+        : obj.status === 'past_due' ? 'past_due' : obj.status;
+      const upd = { status: st, current_period_end: obj.current_period_end ? new Date(obj.current_period_end * 1000) : null };
+      if (planMeta) upd.plan = planMeta;              // keep the plan cache in sync with Stripe
+      if (!paused) upd.paused_until = null;
+      await models.subscribers.update(upd, { where: { id: subscriberId } });
+      return { ok: true, action: 'status:' + st, subscriberId };
+    }
 
     case 'customer.subscription.trial_will_end':
       // The conversion email. This single message largely decides trial-to-paid.
       return { ok: true, action: 'trial_will_end_notice_queued', subscriberId };
 
     case 'customer.subscription.deleted': {
+      // A TIERED subscriber whose paid sub ends (downgrade-to-Free = cancel at
+      // period end) drops to the FREE tier and KEEPS the public CV site — Free
+      // is a real tier, not a teardown. Only legacy single-tier accounts are
+      // torn down on cancel, exactly as before (existing users unchanged).
+      const sub = await models.subscribers.findOne({ where: { id: subscriberId } });
+      if (sub && sub.plan) {
+        await models.subscribers.update(
+          { plan: 'free', pending_plan: null, plan_change_at: null, status: 'active',
+            stripe_subscription_id: null, paused_until: null },
+          { where: { id: subscriberId } });
+        return { ok: true, action: 'downgraded_to_free', subscriberId };
+      }
       const provisioning = require('./provisioning');
       const r = await provisioning.teardown(subscriberId);
       return { ok: true, action: 'torn_down', subscriberId, ...r };
@@ -724,6 +740,104 @@ function refundEligible(chargedAt, now = new Date()) {
   return days <= REFUND_DAYS;
 }
 
+// =============================================================
+// TIERED PLANS (new subscribers only — legacy accounts never touch this path).
+// Honest-with-no-key throughout: never a fake URL, never a silent no-op.
+// =============================================================
+const plans = require('./plans');
+
+// Plan-aware monthly checkout for a NEW paid signup. No trial (Free is the trial).
+async function createPlanCheckout({ subscriberId, email, plan, successUrl, cancelUrl, teaserToken }) {
+  if (disabled()) return { ok: false, configured: false, billing_disabled: true, error: 'Payment is switched off on this deployment.' };
+  const s = client();
+  if (!s) return { ok: false, configured: false, error: 'Checkout is not configured. Set STRIPE_SECRET_KEY.' };
+  const p = plans.planFor(plan);
+  if (!plans.isPaid(p.id)) return { ok: false, error: 'The Free plan needs no checkout.' };
+  const meta = { subscriber_id: String(subscriberId), plan: p.id };
+  if (teaserToken) meta.teaser_token = String(teaserToken);
+  const trialDays = p.trial_days || 0;
+  try {
+    const line = p.stripe_price_id
+      ? { price: p.stripe_price_id, quantity: 1 }
+      : { price_data: { currency: 'usd', recurring: { interval: 'month' }, unit_amount: p.price_cents, product_data: { name: `JobUp ${p.name}` } }, quantity: 1 };
+    const session = await s.checkout.sessions.create({
+      mode: 'subscription', customer_email: email, line_items: [line],
+      automatic_tax: { enabled: process.env.STRIPE_TAX_ENABLED === '1' },
+      metadata: meta,
+      subscription_data: Object.assign({ metadata: meta }, trialDays > 0 ? { trial_period_days: trialDays } : {}),
+      success_url: successUrl, cancel_url: cancelUrl,
+    });
+    return { ok: true, configured: true, url: session.url, id: session.id, plan: p.id };
+  } catch (e) { return { ok: false, configured: true, error: e.message }; }
+}
+
+// Change an EXISTING tiered subscriber's plan. Policy from plans.changePolicy:
+//   upgrade / paid->paid -> immediate, Stripe prorates.  to Free -> cancel at period end.
+async function changePlan({ subscriberId, toPlan }) {
+  if (disabled()) return { ok: false, error: 'Payment is switched off.' };
+  const s = client(); if (!s) return { ok: false, error: 'Billing is not configured.' };
+  const sub = await models.subscribers.findOne({ where: { id: subscriberId } });
+  if (!sub) return { ok: false, error: 'No such subscriber.' };
+  const from = sub.plan || 'free';
+  const to = plans.planFor(toPlan).id;
+  if (from === to) return { ok: true, noop: true, plan: to };
+
+  if (to === 'free') {
+    if (!sub.stripe_subscription_id) {
+      await models.subscribers.update({ plan: 'free', pending_plan: null }, { where: { id: sub.id } });
+      return { ok: true, plan: 'free', when: 'immediate' };
+    }
+    await s.subscriptions.update(sub.stripe_subscription_id, { cancel_at_period_end: true });
+    await models.subscribers.update({ pending_plan: 'free', plan_change_at: sub.current_period_end }, { where: { id: sub.id } });
+    return { ok: true, kind: 'downgrade', when: 'period_end', effective_at: sub.current_period_end,
+             note: `You keep ${from} until the period ends, then move to Free. Your CV site stays live.` };
+  }
+
+  // Paid target with no subscription yet (they were Free) -> must check out.
+  if (!sub.stripe_subscription_id) return { ok: false, needs_checkout: true, plan: to, error: `Start a ${to} subscription via checkout.` };
+
+  const p = plans.planFor(to);
+  const subObj = await s.subscriptions.retrieve(sub.stripe_subscription_id);
+  const item = subObj.items.data[0];
+  const priceArg = p.stripe_price_id
+    ? { price: p.stripe_price_id }
+    : { price_data: { currency: 'usd', recurring: { interval: 'month' }, unit_amount: p.price_cents, product: item.price.product } };
+  await s.subscriptions.update(sub.stripe_subscription_id, {
+    cancel_at_period_end: false,
+    items: [Object.assign({ id: item.id }, priceArg)],
+    proration_behavior: 'create_prorations',
+    metadata: Object.assign({}, subObj.metadata || {}, { plan: to, subscriber_id: String(sub.id) }),
+  });
+  await models.subscribers.update({ plan: to, pending_plan: null, plan_change_at: null }, { where: { id: sub.id } });
+  return { ok: true, kind: plans.changePolicy(from, to).kind, when: 'immediate', plan: to };
+}
+
+// Pause (anti-churn): stop billing, keep the account + CV site. Resume anytime.
+async function pausePlan({ subscriberId }) {
+  if (disabled()) return { ok: false, error: 'Payment is switched off.' };
+  const s = client(); if (!s) return { ok: false, error: 'Billing is not configured.' };
+  const sub = await models.subscribers.findOne({ where: { id: subscriberId } });
+  if (!sub || !sub.stripe_subscription_id) return { ok: false, error: 'No active subscription to pause.' };
+  await s.subscriptions.update(sub.stripe_subscription_id, { pause_collection: { behavior: 'void' } });
+  const maxDays = parseInt(process.env.JOBUP_PAUSE_MAX_DAYS || '90', 10);
+  const until = new Date(Date.now() + maxDays * 86400000);
+  await models.subscribers.update({ status: 'paused', paused_until: until }, { where: { id: sub.id } });
+  return { ok: true, status: 'paused', resume_by: until };
+}
+
+async function resumePlan({ subscriberId }) {
+  if (disabled()) return { ok: false, error: 'Payment is switched off.' };
+  const s = client(); if (!s) return { ok: false, error: 'Billing is not configured.' };
+  const sub = await models.subscribers.findOne({ where: { id: subscriberId } });
+  if (!sub || !sub.stripe_subscription_id) return { ok: false, error: 'No subscription to resume.' };
+  await s.subscriptions.update(sub.stripe_subscription_id, { pause_collection: '' });
+  await models.subscribers.update({ status: 'active', paused_until: null }, { where: { id: sub.id } });
+  return { ok: true, status: 'active' };
+}
+
+// Cancel = downgrade to Free = cancel at period end (owner decision).
+async function cancelPlan({ subscriberId }) { return changePlan({ subscriberId, toPlan: 'free' }); }
+
 module.exports = {
   // Test-vs-live and WHICH account, so the webhook route cannot verify a
   // test-mode signature against the estate-wide live secret.
@@ -737,4 +851,6 @@ module.exports = {
   renewalNoticesDue, refundEligible,
   createTailorCheckout, verifyTailorSession, TAILOR_PRICE_USD,
   PRICE_USD, REFUND_DAYS, RENEWAL_NOTICE_DAYS, DUNNING_STAGES,
+  // Tiered plans (new subscribers only).
+  createPlanCheckout, changePlan, pausePlan, resumePlan, cancelPlan,
 };

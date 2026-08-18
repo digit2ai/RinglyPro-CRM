@@ -4,8 +4,18 @@ const express = require('express');
 const { models } = require('../models');
 const billing = require('../services/billing');
 const teaserSvc = require('../services/teaser');
+const plans = require('../services/plans');
+const ent = require('../services/entitlements');
+const authSvc = require('../services/auth');
 
 const router = express.Router();
+
+// tenant_id from the session cookie ONLY (same rule as the engine surface).
+function tenantFromReq(req) {
+  const token = (req.cookies && req.cookies.jobup_token) || (req.headers.authorization || '').replace(/^Bearer /, '');
+  const p = token ? authSvc.readSession(token) : null;
+  return p && p.tid ? p.tid : null;
+}
 
 router.get('/status', (req, res) => res.json(billing.status()));
 
@@ -149,5 +159,66 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 router.get('/renewal-notices', async (req, res) => {
   res.json({ due: await billing.renewalNoticesDue() });
 });
+
+// ---- TIERED PLANS (new subscribers only) -----------------------------------
+
+// Public plan catalog for the pricing/landing page.
+router.get('/plans', (req, res) => {
+  res.json({
+    ok: true, configured: billing.status().configured,
+    plans: plans.allPlans().map((p) => ({
+      id: p.id, name: p.name, price_cents: p.price_cents, trial_days: p.trial_days,
+      tagline_en: p.tagline_en, tagline_es: p.tagline_es,
+      includes_en: p.includes_en, includes_es: p.includes_es,
+    })),
+  });
+});
+
+// The signed-in subscriber's current plan + entitlement + billing state.
+router.get('/plan/me', async (req, res) => {
+  try {
+    const tid = tenantFromReq(req); if (!tid) return res.status(401).json({ error: 'not signed in' });
+    const sub = await models.subscribers.findOne({ where: { id: tid } });
+    if (!sub) return res.status(404).json({ error: 'no account' });
+    const e = ent.entitlementForSub(sub);
+    res.json({
+      ok: true, plan: e.plan, legacy: e.legacy, status: sub.status, degraded: e.degraded,
+      current_period_end: sub.current_period_end, pending_plan: sub.pending_plan,
+      plan_change_at: sub.plan_change_at, paused_until: sub.paused_until,
+      caps: e.caps, catalog: plans.planFor(e.plan || 'free'),
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Start a paid subscription for a signed-in (Free/legacy) subscriber.
+router.post('/plan/checkout', async (req, res) => {
+  try {
+    const tid = tenantFromReq(req); if (!tid) return res.status(401).json({ error: 'not signed in' });
+    const sub = await models.subscribers.findOne({ where: { id: tid } });
+    if (!sub) return res.status(404).json({ error: 'no account' });
+    const plan = String((req.body || {}).plan || '');
+    if (!plans.isPaid(plan)) return res.status(400).json({ error: 'Choose the Search or Landed plan.' });
+    const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+    const r = await billing.createPlanCheckout({
+      subscriberId: sub.id, email: sub.email, plan,
+      successUrl: `${base}/plan?upgraded=1`, cancelUrl: `${base}/plan`,
+    });
+    res.status(r.ok ? 200 : 503).json(r);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+function planAction(fn) {
+  return async (req, res) => {
+    try {
+      const tid = tenantFromReq(req); if (!tid) return res.status(401).json({ error: 'not signed in' });
+      const r = await fn(tid, req);
+      res.status(r.ok ? 200 : 400).json(r);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  };
+}
+router.post('/plan/change', planAction((tid, req) => billing.changePlan({ subscriberId: tid, toPlan: String((req.body || {}).plan || '') })));
+router.post('/plan/pause',  planAction((tid) => billing.pausePlan({ subscriberId: tid })));
+router.post('/plan/resume', planAction((tid) => billing.resumePlan({ subscriberId: tid })));
+router.post('/plan/cancel', planAction((tid) => billing.cancelPlan({ subscriberId: tid })));
 
 module.exports = router;

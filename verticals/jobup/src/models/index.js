@@ -57,6 +57,10 @@ const SCHEMA = {
     stripe_customer_id: { type: DataTypes.STRING },
     stripe_subscription_id: { type: DataTypes.STRING },
     current_period_end: { type: DataTypes.DATE },
+    plan: { type: DataTypes.STRING },            // free|search|landed; NULL = legacy account (untouched)
+    pending_plan: { type: DataTypes.STRING },    // set on a scheduled downgrade (applied at period end)
+    plan_change_at: { type: DataTypes.DATE },    // when the pending change takes effect (period end)
+    paused_until: { type: DataTypes.DATE },      // auto-resume ceiling for a paused subscription
     // The subscriber's own shareable code. Generated on first use, never reused.
     referral_code: { type: DataTypes.STRING, unique: true },
     // Where this subscriber came from. Kept as BOTH the raw code and the
@@ -562,6 +566,11 @@ const ADDED_COLUMNS = [
   ['ju_subscribers',   'referred_by_tenant', 'INTEGER'],
   ['ju_subscribers',   'activation',   "VARCHAR(32) DEFAULT 'paid'"],
   ['ju_subscribers',   'activated_at', 'TIMESTAMPTZ'],
+  // Tiers (Free/Search/Landed). NULL plan = legacy account, left untouched.
+  ['ju_subscribers',   'plan',           'VARCHAR(16)'],
+  ['ju_subscribers',   'pending_plan',   'VARCHAR(16)'],
+  ['ju_subscribers',   'plan_change_at', 'TIMESTAMPTZ'],
+  ['ju_subscribers',   'paused_until',   'TIMESTAMPTZ'],
   ['ju_opportunities', 'from_name',    'VARCHAR(255)'],
   ['ju_opportunities', 'from_email',   'VARCHAR(255)'],
   ['ju_opportunities', 'status',       "VARCHAR(32) DEFAULT 'new'"],
