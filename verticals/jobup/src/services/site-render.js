@@ -241,7 +241,7 @@ const STR = {
     share_hint: 'Share this profile, or save the contact card.',
     ai_voice: "%s's AI Voice", voice_sub: 'A voice walkthrough of this profile.',
     voice_hint: 'Tap the orb, or press play.', play: 'Play', stop: 'Stop',
-    profile: 'Professional Profile', skills: 'Core Competencies',
+    profile: 'Professional Profile', skills: 'Core Competencies', languages: 'Languages',
     experience: 'Professional Experience', education: 'Education',
     extras: 'Additional Qualifications', open_to: 'Open to',
     hiring: 'Hiring?', reach_direct: 'Reach %s directly — every message is read.',
@@ -267,7 +267,7 @@ const STR = {
     share_hint: 'Comparte este perfil o guarda la tarjeta de contacto.',
     ai_voice: 'La voz IA de %s', voice_sub: 'Un recorrido por este perfil.',
     voice_hint: 'Toca la esfera o pulsa reproducir.', play: 'Reproducir', stop: 'Detener',
-    profile: 'Perfil profesional', skills: 'Competencias principales',
+    profile: 'Perfil profesional', skills: 'Competencias principales', languages: 'Idiomas',
     experience: 'Experiencia profesional', education: 'Formación',
     extras: 'Cualificaciones adicionales', open_to: 'Abierto a',
     hiring: '¿Contratando?', reach_direct: 'Contacta con %s directamente — lee cada mensaje.',
@@ -387,7 +387,7 @@ function sections(p, lang) {
   const t = L(lang);
   // Ids so the mobile drawer can jump straight to a section. A long CV on a
   // phone is otherwise a lot of scrolling to reach Experience.
-  const secId = { [t.profile]: 'profile', [t.skills]: 'skills', [t.experience]: 'experience',
+  const secId = { [t.profile]: 'profile', [t.skills]: 'skills', [t.languages]: 'languages', [t.experience]: 'experience',
                   [t.education]: 'education', [t.extras]: 'extras' };
   let h = '<div class="wrap">';
   let n = 0;
@@ -402,6 +402,13 @@ function sections(p, lang) {
     h += `<section id="skills">${sh(t.skills)}<div class="grid">` +
       p.skills.slice(0, 18).map((s) =>
         `<div class="gcard">${esc(typeof s === 'string' ? s : s.name)}</div>`).join('') +
+      '</div></section>';
+  }
+
+  if (p.languages && p.languages.length) {
+    h += `<section id="languages">${sh(t.languages)}<div class="grid">` +
+      p.languages.slice(0, 10).map((l) =>
+        `<div class="gcard">${esc(typeof l === 'string' ? l : (l && l.name) || '')}</div>`).join('') +
       '</div></section>';
   }
 

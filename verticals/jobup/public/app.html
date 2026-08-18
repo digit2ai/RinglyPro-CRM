@@ -1435,6 +1435,12 @@ function renderCV(meta){
     '<div class="m">The introduction at the top of your page.</div>'+
     '<textarea id="cv-summary" rows="7" placeholder="Write your summary...">'+esc(CV.summary||'')+'</textarea></div>';
 
+  h+='<div class="card"><div class="t">Languages</div>'+
+    '<div class="m">One per line. A posting that wants a language you speak scores you higher for it \u2014 '+
+    'and it is the first thing a bilingual market looks for.</div>'+
+    '<textarea id="cv-languages" rows="3" placeholder="English (native)&#10;Spanish (native)">'+
+    esc((CV.languages||[]).join('\n'))+'</textarea></div>';
+
   h+='<div class="card"><div class="t">Core Competencies</div>'+
     '<div class="m">One per line. These are what the matcher scores against.</div>'+
     '<textarea id="cv-skills" rows="8" placeholder="Financial Analysis&#10;Budgeting&#10;Power BI">'+
@@ -1517,6 +1523,7 @@ function saveCV(){
     phone:$('cv-phone').value, linkedin:$('cv-linkedin').value,
     summary:$('cv-summary').value,
     skills:lines($('cv-skills').value),
+    languages:lines($('cv-languages').value),
     certifications:lines($('cv-certs').value),
     experience:Array.prototype.map.call(document.querySelectorAll('[data-exp]'),function(el){
       var g=function(c){var n=el.querySelector('.'+c);return n?n.value:'';};

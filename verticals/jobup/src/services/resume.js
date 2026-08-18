@@ -103,9 +103,11 @@ Return ONLY JSON:
 {"basics":{"name":"","headline":"","email":"","phone":"","location":"","summary":""},
  "experience":[{"title":"","company":"","start":"","end":"","highlights":[""]}],
  "education":[{"institution":"","area":"","studyType":"","end":""}],
- "skills":[""],"certifications":[""]}
+ "skills":[""],"certifications":[""],"languages":[""]}
 Rules:
 - Copy facts EXACTLY as written. Never infer, never embellish, never fill gaps.
+- "languages" lists spoken languages the resume states, with any stated level
+  ("Spanish (native)"). A language named only inside a skills list still counts.
 - If a field is absent from the source, use an empty string or empty array.
 - Do not invent employers, dates, degrees, certifications or metrics.`;
 

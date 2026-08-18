@@ -4811,6 +4811,25 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const ops = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
     assert.ok(/roles not widened/.test(ops), 'the bench must flag an account onboarding could not finish');
   });
+  await t('THE MODEL IS TOLD WHERE THEY LIVE AND WHAT THEY SPEAK', () => {
+    // A subscriber in Tampa was asked, on match after match, to "confirm
+    // willingness to relocate to Tampa, FL". Her location was on her profile
+    // and simply never reached the model — cachedPrefix sent headline, summary,
+    // skills, experience, education and certifications, and nothing else.
+    // The model was not wrong, it was uninformed.
+    const matcher = require(__dirname + '/src/services/matcher');
+    const src = fs.readFileSync(__dirname + '/src/services/matcher.js', 'utf8');
+    assert.ok(/location: profile\.location \|\| null/.test(src), 'location must reach the model');
+    assert.ok(/languages: profile\.languages \|\| \[\]/.test(src), 'and the languages they speak');
+    assert.ok(/WHERE THEY ARE SEARCHING/.test(src), 'and the geography they chose');
+    assert.ok(/current: \/present\|current\/i\.test/.test(src),
+      'and which job they hold TODAY — a flat list let the model call a current employer absent');
+
+    // The prompt must stop reporting an evidenced requirement as missing.
+    assert.ok(/A requirement the resume DOES evidence is not missing/.test(src),
+      'a stated degree is not missing because the field of study is unstated');
+    assert.ok(/Never list relocation or willingness to[\s]+work somewhere as missing/.test(src));
+  });
   await t('MARKET TITLES WIDEN WHAT WAS TYPED, THEY DO NOT WAIT FOR SILENCE', () => {
     // This ran only when the roles field was left blank — the one case that
     // needed it least. Somebody who fills the field in types the titles they

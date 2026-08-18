@@ -20,6 +20,14 @@ Return ONLY JSON: {"score": 0-100, "explanation": "one sentence", "missing": ["q
 Rules:
 - Score on demonstrable fit: title, seniority, skills, domain, location.
 - "missing" lists requirements the posting states that the resume does not evidence. Be specific.
+- A requirement the resume DOES evidence is not missing. If the resume shows a
+  degree, that degree is not missing because the field of study is unstated; if
+  it shows the employer or the industry, that experience is not missing because
+  a detail is absent. Name the missing DETAIL, or say nothing.
+- The candidate's location is given. Never list relocation or willingness to
+  work somewhere as missing when their stated location already answers it.
+- An experience entry marked "current": true is the job they hold today. Weigh
+  it accordingly and never describe it as absent.
 - Never invent experience the resume does not contain.
 - One sentence for explanation. No preamble.`;
 
@@ -45,22 +53,40 @@ function heuristicScore(job, profile) {
 
 // Build the stable prefix once per subscriber per batch — this is what gets cached.
 function cachedPrefix(profile, settings) {
+  const exp = (profile.experience || []).map((e) => ({
+    title: e.title, company: e.company, start: e.start, end: e.end,
+    // SAY WHICH JOB THEY ARE IN RIGHT NOW. A model reading a flat list treated
+    // a current employer as just another past one and told a subscriber she had
+    // "no evidence of prior employment with Clear Channel" — the company she
+    // works at today, listed first in her own history.
+    current: /present|current/i.test(String(e.end || '')) || undefined,
+    highlights: (e.highlights || []).slice(0, 4),
+  }));
+
   return [
     'CANDIDATE PROFILE (stable across this batch):',
     JSON.stringify({
       headline: profile.headline || null,
       summary: profile.summary || null,
+      // WHERE THEY LIVE. This was omitted entirely, so every posting looked
+      // like a relocation question: a subscriber in Tampa was asked on match
+      // after match to "confirm willingness to relocate to Tampa, FL". The
+      // model was not wrong, it was uninformed.
+      location: profile.location || null,
+      languages: profile.languages || [],
       skills: profile.skills || [],
-      experience: (profile.experience || []).map((e) => ({
-        title: e.title, company: e.company, start: e.start, end: e.end,
-        highlights: (e.highlights || []).slice(0, 4),
-      })),
+      experience: exp,
       education: profile.education || [],
       certifications: profile.certifications || [],
     }, null, 1),
     '',
     'TARGETING:',
     JSON.stringify((settings || {}).targeting || {}, null, 1),
+    '',
+    // The geography they have chosen, so "is this commutable" is answerable
+    // instead of guessed at.
+    'WHERE THEY ARE SEARCHING: ' + (((settings || {}).geo || {}).allowed_states || [])
+      .map((x) => String(x).toUpperCase()).join(', ') || 'no state restriction',
   ].join('\n');
 }
 

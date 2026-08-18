@@ -298,6 +298,8 @@
       'El nivel orienta, no filtra: los títulos lo expresan de demasiadas formas como para excluir por ahí. Por debajo de la puntuación mínima la oferta se puntúa igual pero no se archiva, y la ejecución dice cuántas se retuvieron.',
     'Save preferences': 'Guardar preferencias',
     'Remote preference': 'Preferencia de modalidad',
+    'Languages': 'Idiomas',
+    'One per line. A posting that wants a language you speak scores you higher for it — and it is the first thing a bilingual market looks for.': 'Uno por línea. Una oferta que pide un idioma que hablas te puntúa más alto, y es lo primero que mira un mercado bilingüe.',
     'Where you want to work': 'Dónde quieres trabajar',
     'Remote only — hide everything else': 'Solo remoto: ocultar todo lo demás',
     'Prefer hybrid or remote': 'Preferir híbrido o remoto',
