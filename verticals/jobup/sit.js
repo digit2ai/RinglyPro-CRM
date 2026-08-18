@@ -4684,6 +4684,29 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const local = jobsource.prefilter([{ ...decoy[0], id: 5, location: 'Tampa, FL' }], profile, settings, '');
     assert.ok(local[0].prescore > d[0].prescore, 'the body must not earn a local bonus');
   });
+  await t('MARKET TITLES WIDEN WHAT WAS TYPED, THEY DO NOT WAIT FOR SILENCE', () => {
+    // This ran only when the roles field was left blank — the one case that
+    // needed it least. Somebody who fills the field in types the titles they
+    // have HELD, which are exactly the ones employers do not post: an
+    // out-of-home seller wrote "Sales Executive" and matched no "Account
+    // Executive" at all. Filling the field in WAS the trap.
+    const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(!/if \(!settingsSvc\.strList\(b\.roles, 12\)\.length\) \{\s*try \{\s*const mt/.test(src),
+      'the widening must not be conditional on an empty field');
+    assert.ok(/const typed = settingsSvc\.strList\(b\.roles, 12\)/.test(src));
+    assert.ok(/seedRoles = seedRoles\.concat\(mt\.titles\.filter/.test(src),
+      'and it must APPEND to what they typed, never replace it');
+
+    // Existing subscribers predate signup, so they get an operator action.
+    const ops = fs.readFileSync(__dirname + '/src/routes/admin-subscribers.js', 'utf8');
+    assert.ok(/\/subscribers\/:tenantId\/widen-roles/.test(ops), 'existing accounts need a way in');
+    assert.ok(/if \(mt && !mt\.is_simulated\)/.test(ops),
+      'the keyless path suggests a subscriber their own titles back — that is not a widening');
+    assert.ok(/existing\.concat\(added\)/.test(ops), 'their own choices come first and are kept');
+    assert.ok(/ops\.widen_roles:/.test(ops), 'and the change is audited by name');
+    const page = fs.readFileSync(__dirname + '/src/views/admin-ops.html', 'utf8');
+    assert.ok(/doWiden/.test(page), 'and reachable from the bench');
+  });
   await t('ROLE TARGETS INCLUDE THE TITLES EMPLOYERS ADVERTISE', async () => {
     // Seeding targets from a résumé's own job titles sounds right and quietly
     // is not: people write the title their employer gave them and search the
@@ -4710,7 +4733,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'it must not quietly promote the candidate a level');
     const intake = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
     assert.ok(/marketTitles\(/.test(intake), 'signup must actually use it');
-    assert.ok(/catch \(e\) \{ \/\* keep the résumé's own titles \*\/ \}/.test(intake),
+    assert.ok(/catch \(e\) \{ \/\* a failure here must never cost a signup \*\/ \}/.test(intake),
       'a failure here must never cost a signup');
   });
   await t('WORK MODE IS A PREFERENCE; ONLY "REMOTE ONLY" IS A CONSTRAINT', () => {

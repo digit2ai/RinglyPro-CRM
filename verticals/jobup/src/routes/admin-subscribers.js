@@ -42,6 +42,7 @@ const agents = require('../services/agents');
 const jobsource = require('../services/jobsource');
 const geo = require('../services/geo');
 const settingsSvc = require('../services/settings');
+const resumeSvc = require('../services/resume');
 const brain = require('../services/brain');
 
 const router = express.Router();
@@ -358,6 +359,56 @@ router.patch('/subscribers/:tenantId/targeting', requireOwner, noteOpen, async (
   await audit(req.admin.email, 'ops.targeting:' + tenantId + ' [' + changed.join(', ') + ']',
     null, tenantId);
   res.json({ ok: true, changed, targeting: next.targeting, quotas: next.quotas });
+});
+
+/**
+ * Widen an EXISTING subscriber's role targets to the titles employers post.
+ *
+ * New signups get this automatically. Everyone who signed up before it existed
+ * is still searching on the titles they have HELD — and those are precisely the
+ * titles employers do not advertise. One subscriber's targets read "Sales
+ * Executive"; the job she wanted was posted as "Account Executive" and she
+ * matched none of them. Another's read "Technology Executive | Digital
+ * Transformation Leader", which is a résumé headline, not a job title anybody
+ * posts anywhere.
+ *
+ * It only ever APPENDS. What the subscriber chose is never removed or
+ * reordered, and the whole thing is one audited operator action rather than
+ * something that happens to their account behind their back.
+ */
+router.post('/subscribers/:tenantId/widen-roles', requireOwner, noteOpen, async (req, res) => {
+  const tenantId = parseInt(req.params.tenantId, 10);
+  const row = await scoped('settings', tenantId).findOne({});
+  const profRow = await scoped('profiles', tenantId).findOne({});
+  if (!row || !profRow) return res.status(404).json({ error: 'no profile or settings on file' });
+
+  const cur = settingsSvc.sanitize(row.settings);
+  const existing = (cur.targeting.roles || []).map((r) => r.title).filter(Boolean);
+
+  let suggested = [];
+  try {
+    const mt = await resumeSvc.marketTitles(profRow.resume_json || {});
+    // With no model key this returns the subscriber's own titles and labels
+    // itself simulated — nothing to add, and it must say so rather than
+    // reporting a success that changed nothing.
+    if (mt && !mt.is_simulated) suggested = mt.titles || [];
+  } catch (e) {
+    return res.status(502).json({ error: 'could not reach the model: ' + e.message });
+  }
+
+  const have = new Set(existing.map((t) => t.toLowerCase()));
+  const added = suggested.filter((t) => !have.has(String(t).toLowerCase()));
+  if (!added.length) {
+    return res.json({ ok: true, added: [], roles: existing,
+      note: suggested.length ? 'Nothing to add — their targets already cover the posted titles.'
+                             : 'No model available on this instance, so no titles could be suggested.' });
+  }
+
+  const next = settingsSvc.sanitize({ ...cur, targeting: { ...cur.targeting,
+    roles: existing.concat(added).map((t) => ({ title: t })) } });
+  await scoped('settings', tenantId).update({ settings: next }, { id: row.id });
+  await audit(req.admin.email, `ops.widen_roles:${tenantId} [+${added.join(', ')}]`, null, tenantId);
+  res.json({ ok: true, added, roles: next.targeting.roles.map((r) => r.title) });
 });
 
 /**

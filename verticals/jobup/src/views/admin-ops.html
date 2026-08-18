@@ -137,6 +137,7 @@ small{color:var(--mut)}
         <p><small>The agent picks how many. Runs on the operator allowance, so it never spends
           the quota the subscriber is about to use, and is logged under its own trigger.</small></p>
         <div class="f" style="margin-top:6px">
+          <button id="doWiden">Widen their role targets</button>
           <button class="d" id="doRescore">Let it re-score rejected jobs</button>
         </div>
         <p><small>Reopens postings that were scored and not filed, so a widened filter can
@@ -378,6 +379,11 @@ small{color:var(--mut)}
   $('doPresence').addEventListener('click',function(){
     act('doPresence','/subscribers/'+TID+'/presence',{},function(j){
       return 'Public surfaces rebuilt. '+(j.gaps||[]).length+' gap(s).';},'Rebuilding their site');
+  });
+  $('doWiden').addEventListener('click',function(){
+    act('doWiden','/subscribers/'+TID+'/widen-roles',{},function(j){
+      return j.added.length?('Added: '+j.added.join(', ')):(j.note||'Nothing to add.');
+    },'Asking what employers call this work');
   });
   $('doRescore').addEventListener('click',function(){
     act('doRescore','/subscribers/'+TID+'/rescore',{},function(j){

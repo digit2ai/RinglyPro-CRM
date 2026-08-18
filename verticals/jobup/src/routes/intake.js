@@ -478,14 +478,25 @@ router.post('/build-account', async (req, res) => {
     // person's work, not only the ones their résumé happens to use. A search
     // hint, never a claim: it touches targeting and nothing else, and it can
     // only ever ADD to what they typed. A failure here must not cost a signup.
-    let seedRoles = suggestedRoles(site);
-    if (!settingsSvc.strList(b.roles, 12).length) {
-      try {
-        const mt = await resumeSvc.marketTitles((site && site.profile) || {});
-        if (mt && mt.titles && mt.titles.length) seedRoles = mt.titles;
-      } catch (e) { /* keep the résumé's own titles */ }
-    }
-    const cleaned = targetingFrom(b, seedRoles, resumeState(site));
+    // IT WIDENS WHAT THEY TYPED — it does not wait for them to type nothing.
+    //
+    // This used to run only when the roles field was left blank, which is the
+    // one case that needed it least. Somebody who fills the field in types the
+    // titles they have HELD, and those are exactly the titles employers do not
+    // post: an out-of-home seller wrote "Sales Executive" and never matched a
+    // single "Account Executive", the standard posted title for her job.
+    // Filling the field in was the trap, not the escape from it.
+    const typed = settingsSvc.strList(b.roles, 12);
+    let seedRoles = typed.length ? typed : suggestedRoles(site);
+    try {
+      const mt = await resumeSvc.marketTitles((site && site.profile) || {});
+      if (mt && mt.titles && mt.titles.length) {
+        // Theirs first and always kept; the market titles only ever append.
+        const have = new Set(seedRoles.map((r) => String(r).toLowerCase()));
+        seedRoles = seedRoles.concat(mt.titles.filter((t) => !have.has(String(t).toLowerCase())));
+      }
+    } catch (e) { /* a failure here must never cost a signup */ }
+    const cleaned = targetingFrom({ ...b, roles: seedRoles }, seedRoles, resumeState(site));
     const existingSettings = await scoped('settings', tenantId).findOne({});
     if (existingSettings) await scoped('settings', tenantId).update({ settings: cleaned }, { id: existingSettings.id });
     else await scoped('settings', tenantId).create({ settings: cleaned });
