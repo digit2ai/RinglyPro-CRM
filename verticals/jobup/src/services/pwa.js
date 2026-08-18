@@ -68,10 +68,14 @@ function page(file, base) {
   // Lazy require: billing pulls in the models, and pwa.js is loaded during
   // route setup before the store has settled.
   const price = require('./billing').PRICE_USD;
+  // Tier prices come from the single plan catalog, never hardcoded on the page.
+  const plans = require('./plans');
   const out = fs.readFileSync(path.join(publicDir, file), 'utf8')
     .replace(/\{\{BASE\}\}/g, base)
     .replace(/\{\{V\}\}/g, V)
-    .replace(/\{\{PRICE\}\}/g, String(price));
+    .replace(/\{\{PRICE\}\}/g, String(price))
+    .replace(/\{\{PRICE_SEARCH\}\}/g, String(Math.round(plans.PLANS.search.price_cents / 100)))
+    .replace(/\{\{PRICE_LANDED\}\}/g, String(Math.round(plans.PLANS.landed.price_cents / 100)));
   htmlCache.set(key, out);
   return out;
 }

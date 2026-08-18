@@ -3047,20 +3047,22 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const teaserSrc = fs.readFileSync(__dirname + '/src/services/teaser.js', 'utf8');
     assert.ok(!/JOBUP_PRICE_USD/.test(teaserSrc), 'teaser.js must not read the price env var itself');
     assert.strictEqual(teaserSvc.PRICE_USD, billingSvc.PRICE_USD, 'the two must agree');
-    // And the landing page must not print a number of its own.
+    // The three-tier landing must TEMPLATE its prices from the single plan
+    // catalog — never a number typed on the page. (This replaced the single
+    // ${{PRICE}}/year card; the invariant is the same: one source, not hardcoded.)
     const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
-    // The invariant is that the figure is TEMPLATED, not that the markup around
-    // it never changes — the span now carries an i18n key so ' / year' can
-    // become ' / año'. Asserting the exact byte string made a legitimate
-    // translation look like a regression.
-    assert.ok(/\$\{\{PRICE\}\}<span[^>]*> \/ year<\/span>/.test(html),
-      'the pricing card must be templated, not hardcoded');
-    assert.ok(!/\$\d+<span> \/ year/.test(html), 'a hardcoded price is back on the landing page');
-    // The rendered page must carry the figure billing actually charges.
+    assert.ok(/\$\{\{PRICE_SEARCH\}\}<span/.test(html) && /\$\{\{PRICE_LANDED\}\}<span/.test(html),
+      'the tier prices must be templated, not hardcoded');
+    assert.ok(!/\$29<span|\$99<span/.test(html), 'a hardcoded tier price is back on the landing page');
+    // The rendered page must carry the real figures from the plan catalog, with
+    // no token left unsubstituted.
+    const plansSvc = require(__dirname + '/src/services/plans');
     const rendered = pwaSvc.page('index.html', '');
-    assert.ok(new RegExp(`\\$${billingSvc.PRICE_USD}<span[^>]*> / year</span>`).test(rendered),
-      `the rendered price should be $${billingSvc.PRICE_USD}`);
-    assert.ok(!rendered.includes('{{PRICE}}'), 'the price token was not substituted');
+    const searchP = Math.round(plansSvc.PLANS.search.price_cents / 100);
+    const landedP = Math.round(plansSvc.PLANS.landed.price_cents / 100);
+    assert.ok(rendered.includes('$' + searchP + '<span') && rendered.includes('$' + landedP + '<span'),
+      `the rendered tier prices should be $${searchP} and $${landedP}`);
+    assert.ok(!/\{\{PRICE/.test(rendered), 'a price token was not substituted');
   });
   await t('BRAND: one mark, one palette, everywhere', () => {
     const fs = require('fs');
@@ -6301,9 +6303,16 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(w.document.getElementById('stickybuy').classList.contains('on'),
         'the pinned bar must actually be revealed once the preview is ready');
 
-      // THE ACTUAL BUG: press the TOP one, the one nobody had before.
+      // No tier chosen yet: the TOP button must OFFER THE PLANS first (the
+      // picker), never silently do nothing and never charge before a choice.
       click(w, ctas[0]);
-      assert.strictEqual(checkoutCalls, 1, 'THE TOP BUTTON DID NOTHING');
+      assert.ok(w.document.getElementById('planpick'), 'THE TOP BUTTON DID NOTHING — no plan picker opened');
+      assert.strictEqual(checkoutCalls, 0, 'no checkout may start before a plan is picked');
+      const pick = w.document.querySelector('#planpick [data-pick]');
+      assert.ok(pick, 'the picker must render plan choices');
+      // Picking a plan is what starts the real checkout.
+      click(w, pick);
+      assert.strictEqual(checkoutCalls, 1, 'picking a plan must start checkout');
       // A second press while the first is in flight must be refused, or four
       // buttons become four Stripe sessions for one person.
       click(w, ctas[1]);
