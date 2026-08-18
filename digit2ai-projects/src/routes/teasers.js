@@ -573,7 +573,13 @@ button:disabled{opacity:.45;cursor:default}
 .foot{margin-top:34px;text-align:center;color:#5f7197;font-size:12px}
 @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
 /* Feasibility & Build Plan (real triage projection) */
-.d2plan-load{color:var(--mut);font-size:.95rem;display:flex;align-items:center;gap:10px;padding:6px 0}
+.d2plan-load{color:var(--mut);font-size:.95rem;display:flex;flex-direction:column;gap:14px;padding:8px 2px}
+.d2plan-pgtxt{font-size:1.15rem;font-weight:700;color:var(--txt)}
+.d2plan-pgwrap{display:flex;align-items:center;gap:14px}
+.d2plan-pgbar{flex:1;height:12px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid var(--line)}
+.d2plan-pgfill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .5s ease}
+.d2plan-pgpct{font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--cyan);min-width:58px;text-align:right}
+.d2plan-pgsub{display:flex;align-items:center;gap:9px;font-size:.9rem}
 .d2plan-spin{width:15px;height:15px;border:2px solid rgba(124,92,255,.3);border-top-color:var(--violet);border-radius:50%;display:inline-block;animation:d2spin .8s linear infinite;flex:0 0 auto}
 @keyframes d2spin{to{transform:rotate(360deg)}}
 .d2feas{display:flex;align-items:center;gap:16px;margin:4px 0 20px;flex-wrap:wrap}
@@ -683,7 +689,11 @@ body.tw-on .tw-side{display:flex}
     <div class="d2studio">
       <div class="d2studio-chat" id="d2plan-right"></div>
       <div class="d2studio-plan" id="d2plan-body">
-        <div class="d2plan-load"><span class="d2plan-spin"></span>${es ? 'Nuestra IA está evaluando tu proyecto — encaje, alcance y riesgos. Unos segundos…' : 'Our AI is assessing your project — fit, scope and risks. A few seconds…'}</div>
+        <div class="d2plan-load">
+          <div class="d2plan-pgtxt">${es ? 'Construyendo tu plan con IA…' : 'Building your AI plan…'}</div>
+          <div class="d2plan-pgwrap"><div class="d2plan-pgbar"><div class="d2plan-pgfill" id="d2pg-fill"></div></div><div class="d2plan-pgpct" id="d2pg-pct">0%</div></div>
+          <div class="d2plan-pgsub"><span class="d2plan-spin"></span> ${es ? 'Nuestra IA está evaluando encaje, alcance y riesgos. No cierres esta ventana.' : 'Our AI is assessing fit, scope and risks. Keep this window open.'}</div>
+        </div>
       </div>
     </div>
   </section>` : ''}
@@ -694,9 +704,11 @@ body.tw-on .tw-side{display:flex}
   <div class="cta" id="cta">
     <h2>${esc(t.cta.heading)}</h2>
     <p>${esc(t.cta.body)}</p>
-    ${projectId
-      ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${ui.cta} &rarr;</button>`
-      : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`}
+    ${t.studio_only
+      ? `<a class="ts-cta-btn" href="https://orbup.app/orbup/workspace" style="display:inline-block;text-decoration:none">${es ? 'Abre tu workspace' : 'Open your Workspace'} &rarr;</a>`
+      : (projectId
+        ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${ui.cta} &rarr;</button>`
+        : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`)}
   </div>
 
   <div class="foot">${ui.poweredBy}</div>
@@ -970,11 +982,22 @@ body.tw-on .tw-side{display:flex}
   if(!TOKEN || !box) return;
   var section = document.getElementById('d2plan');
   var history = [], sending = false, savedChat = [], planReady = false, chatActivated = false, prepNote = null;
+  // Visible progress while triage+premortem run (~20-45s). Eases toward 96% and
+  // completes when the plan renders, so the prospect knows it's working.
+  var pgTimer = null, pgVal = 0;
+  function startProgress(){ if(pgTimer) return; pgTimer=setInterval(function(){
+    var f=document.getElementById('d2pg-fill'), p=document.getElementById('d2pg-pct');
+    if(!f||!p) return;
+    pgVal=Math.min(96, pgVal+Math.max(1, Math.round((97-pgVal)*0.05)));
+    f.style.width=pgVal+'%'; p.textContent=pgVal+'%';
+  }, 500); }
+  function stopProgress(){ if(pgTimer){ clearInterval(pgTimer); pgTimer=null; } var f=document.getElementById('d2pg-fill'), p=document.getElementById('d2pg-pct'); if(f) f.style.width='100%'; if(p) p.textContent='100%'; }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
   function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
 
   function render(plan){
+    stopProgress();
     var L = plan.labels || {};
     var f = plan.feasibility || {};
     var html = '';
@@ -1123,6 +1146,7 @@ body.tw-on .tw-side{display:flex}
   }
   function hide(){ var s=document.getElementById('d2plan'); if(s) s.style.display='none'; }
   mountChat(); // Copilot is present at the top from the first paint
+  startProgress(); // visible plan-build progress bar
   poll();
 })();
 </script>
