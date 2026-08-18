@@ -7263,6 +7263,35 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(!/readFile|createReadStream/.test(pdfRoute), 'nothing may be read off disk');
   });
 
+  await t('TAILORING: the tier allowance is spent before any charge', () => {
+    // Free pays $10 each; Search gets 10 a month; Landed is unlimited. The old
+    // flow charged every tier — this asserts the plan is honoured first.
+    const plansSvc = require(__dirname + '/src/services/plans');
+    assert.strictEqual(plansSvc.PLANS.free.caps.tailorings_per_month, 0, 'Free: 0 included (pay each)');
+    assert.strictEqual(plansSvc.PLANS.search.caps.tailorings_per_month, 10, 'Search: 10 a month');
+    assert.strictEqual(plansSvc.PLANS.landed.caps.tailorings_per_month, null, 'Landed: unlimited');
+
+    const src = require('fs').readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
+    const tailor = src.slice(src.indexOf("router.post('/tailor/:jobId'"),
+                             src.indexOf("router.get('/tailorings'"));
+    // Allowance is checked, and payment is only required once it is spent.
+    assert.ok(/const allow = await tailorAllowance\(tid\)/.test(tailor),
+      'the tier allowance must be resolved before payment');
+    assert.ok(/if \(allow\.included_left <= 0\) \{[\s\S]{0,200}needs_payment: true/.test(tailor),
+      'payment is required ONLY when the included allowance is spent');
+    assert.ok(/credit_id: credit \? credit\.id : null/.test(tailor),
+      'an included tailoring is a row with no credit (credit_id null)');
+    assert.ok(/if \(credit\) \{[\s\S]{0,160}consumed_at/.test(tailor),
+      'a credit is consumed only when one was actually spent');
+
+    // capFor resolves the numbers the endpoint relies on.
+    const ent = require(__dirname + '/src/services/entitlements');
+    const cap = (plan) => ent.entitlementForSub({ plan, status: 'active' }).caps.tailorings_per_month;
+    assert.strictEqual(cap('free'), 0);
+    assert.strictEqual(cap('search'), 10);
+    assert.strictEqual(cap('landed'), null);
+  });
+
   await t('MATCHES: the card carries the PDF, and the two dead buttons are gone', () => {
     const app = require('fs').readFileSync(__dirname + '/public/app.html', 'utf8');
     assert.ok(!/onclick="ats\(/.test(app), 'Keyword check is gone — the number now '

@@ -1155,7 +1155,7 @@ function matchCard(m){
          button does, and it does the same thing either way. The version number
          beside it is what tells you there is already a document. */
       '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume to this Job Posting'+
-        ' <span class="pricetag">$'+esc(String(TAILOR_PRICE))+'</span></button>'+
+        ' <span class="pricetag">'+esc(tailorTag())+'</span></button>'+
       stageSelect(m)+
     '</div><div id="out-'+j.id+'"></div>'+
     '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
@@ -1179,8 +1179,32 @@ function loadTailorings(){
         if(t.job_id!=null && !TAILORINGS[t.job_id]) TAILORINGS[t.job_id]=t;
       });
     }
-    if(rs[1].ok){ TAILOR_PRICE=rs[1].j.price_usd; TAILOR_CREDITS=rs[1].j.credits; }
+    if(rs[1].ok){ TAILOR_PRICE=rs[1].j.price_usd; TAILOR_CREDITS=rs[1].j.credits; TAILOR_PLAN=rs[1].j; }
   });
+}
+var TAILOR_PLAN=null;
+/* The short badge on the Tailor button — plan-aware so a paid tier is never
+   shown a price it does not pay. */
+function tailorTag(){
+  var p=TAILOR_PLAN||{}; var es=(JU_APP_LANG==='es');
+  if(p.unlimited) return es?'Incluido':'Included';
+  if(p.included_per_month>0){
+    var left=(p.included_left!=null?p.included_left:p.included_per_month);
+    return left>0 ? (es?'Incluido':'Included') : ('$'+(p.price_usd||TAILOR_PRICE));
+  }
+  return '$'+(p.price_usd||TAILOR_PRICE);
+}
+/* One line describing what a tailoring costs THIS subscriber, plan-aware. */
+function tailorAllowanceLine(p){
+  p=p||TAILOR_PLAN||{}; var es=(JU_APP_LANG==='es');
+  if(p.unlimited) return es?'Adaptación ilimitada en tu plan.':'Unlimited tailoring on your plan.';
+  if(p.included_per_month>0){
+    var left=(p.included_left!=null?p.included_left:p.included_per_month);
+    return es?(left+' de '+p.included_per_month+' currículos adaptados incluidos este mes.')
+             :(left+' of '+p.included_per_month+' tailored resumes left this month.');
+  }
+  return es?('Cada currículo adaptado cuesta $'+ (p.price_usd||TAILOR_PRICE) +'.')
+           :('Each tailored resume is $'+ (p.price_usd||TAILOR_PRICE) +'.');
 }
 
 /* Stripe sends the browser back with its session id. Claim it, then run the
@@ -1230,7 +1254,10 @@ function tailor(id){
       ((r.j.gaps||[]).length?'<br>Not evidenced: '+r.j.gaps.map(esc).join(', '):'')+
       (r.j.pdf_url?'<br><a href="'+API+esc(r.j.pdf_url)+'" target="_blank" rel="noopener">'+
         'Open the PDF (v'+esc(String(r.j.version||1))+')</a>':'')+
-      '<br>'+esc(String(r.j.credits_left||0))+' tailoring credit(s) left.</div>';
+      '<br>'+esc(tailorAllowanceLine(r.j))+
+      ((r.j.credits_left||0)>0?' '+esc(String(r.j.credits_left))+' paid credit(s) also available.':'')+
+      '</div>';
+    if(TAILOR_PLAN){ TAILOR_PLAN.included_left=r.j.included_left; TAILOR_PLAN.unlimited=r.j.unlimited; TAILOR_PLAN.included_per_month=r.j.included_per_month; }
   });
 }
 /* `ats()` and `applied()` are gone. The keyword number now arrives WITH the

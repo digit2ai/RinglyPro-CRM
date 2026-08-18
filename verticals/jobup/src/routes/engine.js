@@ -330,12 +330,37 @@ async function availableCredits(tid) {
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 }
 
+/**
+ * The tier's monthly tailoring allowance, resolved from the plan:
+ *   Free   → 0 included  (pay $10 each)
+ *   Search → 10 included / month, then pay
+ *   Landed → unlimited, never charged
+ *   legacy → unlimited (untouched)
+ * `included_used` counts only tailorings taken from the allowance this calendar
+ * month (credit_id IS NULL); paid ones never eat into it.
+ */
+async function tailorAllowance(tid) {
+  const cap = await ent.capFor(tid, 'tailorings_per_month');   // Infinity | number | 0
+  const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
+  const used = (await scoped('tailored_resumes', tid).findAll({}))
+    .filter((r) => r.credit_id == null && new Date(r.created_at) >= start).length;
+  const unlimited = !Number.isFinite(cap);
+  const included_left = unlimited ? Infinity : Math.max(0, cap - used);
+  return { per_month: unlimited ? null : cap, unlimited, included_used: used, included_left };
+}
+
 router.get('/tailor/pricing', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const credits = await availableCredits(tid);
+  const a = await tailorAllowance(tid);
   res.json({
     price_usd: billing.TAILOR_PRICE_USD,
     credits: credits.length,
+    // Tier allowance the UI shows before ever mentioning a price.
+    included_per_month: a.per_month,        // null = unlimited (Landed/legacy)
+    included_used: a.included_used,
+    included_left: a.unlimited ? null : a.included_left,   // null = unlimited
+    unlimited: a.unlimited,
     configured: billing.status().configured !== false,
   });
 });
@@ -399,14 +424,25 @@ router.post('/tailor/:jobId', async (req, res) => {
   const job = await models.jobs.findOne({ where: { id: parseInt(req.params.jobId, 10) } });
   if (!job) return res.status(404).json({ error: 'job not found' });
 
-  const credits = await availableCredits(tid);
-  if (!credits.length) {
-    return res.status(402).json({
-      error: `A tailored résumé is $${billing.TAILOR_PRICE_USD}.`,
-      needs_payment: true, price_usd: billing.TAILOR_PRICE_USD,
-    });
+  // TIER ALLOWANCE FIRST, PAYMENT ONLY IF IT IS SPENT.
+  //   Landed / legacy → unlimited, never a credit.
+  //   Search → the first 10 a month are included; the 11th needs a credit.
+  //   Free   → 0 included, so every one needs a credit ($10).
+  // An included tailoring is a row with credit_id NULL; a paid one carries the
+  // credit it spent. So the allowance is never silently double-charged.
+  const allow = await tailorAllowance(tid);
+  let credit = null;
+  if (allow.included_left <= 0) {
+    const credits = await availableCredits(tid);
+    if (!credits.length) {
+      return res.status(402).json({
+        error: `A tailored résumé is $${billing.TAILOR_PRICE_USD}.`,
+        needs_payment: true, price_usd: billing.TAILOR_PRICE_USD,
+        included_per_month: allow.per_month, included_used: allow.included_used,
+      });
+    }
+    credit = credits[0];
   }
-  const credit = credits[0];
 
   const pRow = await scoped('profiles', tid).findOne({});
   const profile = (pRow && pRow.resume_json) || {};
@@ -434,14 +470,18 @@ router.post('/tailor/:jobId', async (req, res) => {
     doc: built.content, version,
     keyword_coverage: built.keyword_coverage, gaps: built.gaps,
     employer: job.employer || null, title: job.title || null,
-    credit_id: credit.id,
+    credit_id: credit ? credit.id : null,
   });
 
   // Consumed only now that a document exists. A failure above leaves the credit
-  // spendable rather than burning somebody's ten dollars on an error.
-  await scoped('tailor_credits', tid).update(
-    { consumed_at: new Date(), consumed_job_id: job.id }, { id: credit.id });
+  // spendable rather than burning somebody's ten dollars on an error. An included
+  // (allowance) tailoring has no credit to spend.
+  if (credit) {
+    await scoped('tailor_credits', tid).update(
+      { consumed_at: new Date(), consumed_job_id: job.id }, { id: credit.id });
+  }
 
+  const after = await tailorAllowance(tid);
   res.json({
     id: row.id, version,
     changes: t.changes, flagged: t.flagged,
@@ -451,6 +491,10 @@ router.post('/tailor/:jobId', async (req, res) => {
     coverage_pct: built.keyword_coverage.pct,
     gaps: built.gaps.slice(0, 10),
     pdf_url: `/api/v1/engine/tailorings/${row.id}/pdf`,
+    paid: Boolean(credit),                                   // false = included in the plan
+    unlimited: after.unlimited,
+    included_left: after.unlimited ? null : after.included_left,
+    included_per_month: after.per_month,
     credits_left: (await availableCredits(tid)).length,
   });
 });
