@@ -270,8 +270,24 @@ async function hunter(tenantId, opts = {}) {
   // spent — but it does not get filed. This is about inbox noise, not money,
   // and the run summary says how many were held back rather than hiding it.
   const floor = parseInt((settings.targeting && settings.targeting.min_score) || 0, 10) || 0;
-  const keep = res.matches.filter((m) => (m.score || 0) >= floor);
-  const held = res.matches.length - keep.length;
+
+  // A HEURISTIC SCORE AND A MODEL SCORE ARE NOT THE SAME SCALE, AND MUST NOT
+  // SHARE A FLOOR.
+  //
+  // With no model the fallback counts keyword overlap and tops out in the
+  // teens; the model judges fit and lands between 28 and 92 on the same
+  // profiles. Compared against one min_score, a keyword count of 12 was filed
+  // onto a paying subscriber's board next to a real 92 — six of them, on an
+  // account that had been through a keyless run.
+  //
+  // They were correctly LABELLED simulated, and the label is not the problem:
+  // a keyword count is not a match, however it is badged. So they are scored
+  // (the run still learns what it looked at) and not filed, and the summary
+  // says the model was missing rather than reporting an empty morning.
+  const usable = res.matches.filter((m) => !m.is_simulated);
+  const keep = usable.filter((m) => (m.score || 0) >= floor);
+  const heuristicHeld = res.matches.length - usable.length;
+  const held = usable.length - keep.length;
 
   for (const m of keep) {
     await scoped('job_matches', tenantId).create({
@@ -292,8 +308,8 @@ async function hunter(tenantId, opts = {}) {
   // When NOTHING clears the floor, say how close it got. "6 below your minimum
   // of 70" is unactionable on its own: a best of 68 means lower the floor, a
   // best of 31 means the pool holds nothing in your field.
-  const bestScore = res.matches.reduce((n, m) => Math.max(n, m.score || 0), 0);
-  const nearMiss = !keep.length && res.matches.length
+  const bestScore = usable.reduce((n, m) => Math.max(n, m.score || 0), 0);
+  const nearMiss = !keep.length && usable.length
     ? ` Best was ${bestScore}${bestScore >= floor - 10 ? ' — just under your floor.' : ' — nothing in the pool is close to your field yet.'}`
     : '';
 
@@ -301,6 +317,10 @@ async function hunter(tenantId, opts = {}) {
   await log(tenantId, 'hunter', 'ok',
     `Scored ${res.matches.length} new openings` +
     (held ? `, filed ${keep.length} (${held} below your minimum score of ${floor})` : '') +
+    (heuristicHeld
+      ? `. ${heuristicHeld} could not be judged — no language model was available, so they were `
+        + 'not filed. Keyword overlap is not a fit score and does not belong on your board'
+      : '') +
     `${res.stopped_for_cap ? ' (stopped at cost cap)' : ''}.${nearMiss}`,
     res.cost_usd, simulated, res.matches.length, trigger);
 

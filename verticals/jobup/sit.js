@@ -4237,6 +4237,29 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(agents.plan(q([9, 8]), 6).allowance, 2, 'capped by what is queued');
     assert.strictEqual(agents.plan([], 6).allowance, 0, 'and an empty queue promises nothing');
   });
+  await t('A KEYWORD COUNT IS NOT A MATCH, HOWEVER IT IS BADGED', () => {
+    // The keyless fallback counts keyword overlap and tops out in the teens;
+    // the model judges fit and lands 28-92 on the same profiles. Compared
+    // against ONE min_score, a keyword count of 12 was filed onto a paying
+    // subscriber's board beside a real 92 — six of them, found in production.
+    // They were correctly labelled simulated, and the label was never the
+    // problem: a keyword count is not a match however it is badged.
+    const src = fs.readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
+    assert.ok(/const usable = res\.matches\.filter\(\(m\) => !m\.is_simulated\)/.test(src),
+      'simulated scores must be excluded before the floor is applied');
+    assert.ok(/const keep = usable\.filter\(\(m\) => \(m\.score \|\| 0\) >= floor\)/.test(src),
+      'the floor applies only to scores on the same scale as itself');
+    assert.ok(/could not be judged — no language model was available/.test(src),
+      'and the run must say the model was missing, not report an empty morning');
+    // They are still SCORED and ledgered, so the run learns what it looked at
+    // and never pays to look again.
+    assert.ok(/for \(const m of res\.matches\) \{[\s\S]{0,200}job_scores/.test(src),
+      'every scoring is still ledgered, judged or not');
+    // The near-miss line must read the judged ones, or it reports a keyword
+    // count as "just under your floor".
+    assert.ok(/const bestScore = usable\.reduce/.test(src));
+    assert.ok(/const nearMiss = !keep\.length && usable\.length/.test(src));
+  });
   await t('THE STRONG BACKLOG IS CLEARED, THE TAIL IS PACED', () => {
     // A flat rate rations the good matches at the same speed as the weak ones.
     // One subscriber's queue held 83 strong candidates and 2,700 marginal ones;
