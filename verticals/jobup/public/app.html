@@ -1499,22 +1499,39 @@ function loadSettings(){
       '<div class="card"><div class="t">Quotas</div>'+
       '<div class="m">Resume tailoring: '+esc(SET.quotas.tailor_monthly_limit)+' per month · '+
       'Jobs scored: '+esc(SET.quotas.jobs_scored_per_day)+' per day</div></div>'+
-      '<button class="btn primary" id="saveset">Save settings</button>';
+      '<div class="m" style="margin-top:6px;color:var(--faint)">'+
+        (JU_APP_LANG==='es'?'Cada interruptor se guarda solo, sin un paso de guardado aparte.':'Each switch saves on its own — no separate save step.')+'</div>';
+    /* Auto-save on every toggle, like the rest of the dashboard. The old flow
+       needed a separate "Save settings" click, so a switch flipped on here never
+       reached the public CV unless the button was also pressed — a trap that
+       looked like the toggle simply did nothing. */
     Array.prototype.forEach.call(document.querySelectorAll('.toggle[data-k]'),function(t){
-      t.addEventListener('click',function(){t.classList.toggle('on');});
+      t.addEventListener('click',function(){ t.classList.toggle('on'); saveSettings(t); });
     });
-    $('saveset').addEventListener('click',saveSettings);
   });
 }
-function saveSettings(){
+function saveSettings(changed){
   var pv={};
   Array.prototype.forEach.call(document.querySelectorAll('.toggle[data-k]'),function(t){
     pv[t.dataset.k]=t.classList.contains('on');});
   var next=JSON.parse(JSON.stringify(SET)); next.privacy=pv;
   api('/api/v1/engine/settings',{method:'PUT',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({settings:next})}).then(function(r){
-      if(r.ok){SET=r.j.settings;err('aerr','Settings saved. Your public surfaces update immediately.');}
-      else err('aerr',r.j.error||'Save failed');
+      if(r.ok){
+        SET=r.j.settings;
+        var on = changed && changed.classList.contains('on');
+        var lbl = changed ? (changed.parentNode.querySelector('.lbl')||{}).textContent : '';
+        var es = (JU_APP_LANG==='es');
+        err('aerr', changed
+          ? (es ? (lbl+(on?' ahora es público en tu CV.':' ahora está oculto.'))
+                : (lbl+' is now '+(on?'public on your CV.':'hidden.')))
+          : (es ? 'Ajustes guardados. Tus superficies públicas se actualizan de inmediato.'
+                : 'Settings saved. Your public surfaces update immediately.'));
+      } else {
+        // Put the switch back — the save did not take.
+        if(changed) changed.classList.toggle('on');
+        err('aerr',r.j.error||'Save failed');
+      }
     });
 }
 
