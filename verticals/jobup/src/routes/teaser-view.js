@@ -658,19 +658,26 @@ function ctaBusy(on){
   }
 }
 
+function chosenPlan(){ try{ return localStorage.getItem('jobup_plan')||''; }catch(e){ return ''; } }
+
 function checkout(){
+  if(CTA_BUSY)return;
+  // If they arrived without picking a tier (from "Attach my resume"), OFFER THE
+  // PLANS first — the pricing selection must happen before any Stripe step.
+  if(!chosenPlan()){ showPlanPicker(); return; }
+  doCheckout();
+}
+
+function doCheckout(){
   if(CTA_BUSY)return;
   var out=document.getElementById('buyout');
   if(out) out.textContent=T.opening;
   ctaBusy(true);
   fetch(API_BASE+'/api/v1/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({teaser_token:TOKEN, plan:(function(){try{return localStorage.getItem('jobup_plan')||'';}catch(e){return '';}})()})})
+    body:JSON.stringify({teaser_token:TOKEN, plan:chosenPlan()})})
     .then(function(r){return r.json();}).then(function(j){
       if(j.build_url){location.href=j.build_url;return;}   // no payment: straight to the form
       if(j.url){location.href=j.url;return;}               // Stripe, when enabled
-      // The failure has to be visible from wherever the button was pressed.
-      // It used to print at the foot of screen 8, which the person who tapped
-      // the top of the page would never scroll to.
       ctaBusy(false);
       var msg=j.error||T.ctaFail;
       if(out) out.textContent=msg;
@@ -680,6 +687,42 @@ function checkout(){
       // strand somebody who has already decided to sign up.
       location.href=API_BASE+'/build?t='+encodeURIComponent(TOKEN);
     });
+}
+
+// The plan picker — three tiers, shown before checkout when none was pre-chosen.
+function showPlanPicker(){
+  if(document.getElementById('planpick')) return;
+  var es=(LANG==='es');
+  var PLANS=[
+    {id:'free',name:'Free',price:'$0',sub:es?'La superficie de crecimiento':'The growth surface',
+      feats:es?['Sitio de CV publico','5 coincidencias por semana','Eva (solo lectura)']:['Public CV site','5 matches a week','Eva chat (read-only)'],cls:'ghost'},
+    {id:'search',name:'Search',price:'$29'+(es?'/mes':'/mo'),sub:es?'Para quien busca activamente':'For someone actively looking',pop:true,
+      feats:es?['Coincidencias ilimitadas','40 evaluaciones al dia','10 curriculos al mes','Contacto y pipeline']:['Unlimited matches','40 scorings a day','10 tailored resumes a month','Outreach and pipeline'],cls:'solid'},
+    {id:'landed',name:'Landed',price:'$99'+(es?'/mes':'/mo'),sub:es?'Para roles senior y urgentes':'For senior and urgent searches',
+      feats:es?['Adaptacion ilimitada','Evaluacion prioritaria','Preparacion de entrevista','Una revision humana al mes']:['Unlimited tailoring','Priority scoring','Interview prep','One human review a month'],cls:'ghost'}
+  ];
+  function card(p){
+    return '<div style="background:linear-gradient(180deg,#12141c,#0e0f15);border:1px solid '+(p.pop?'#22d3ee':'rgba(255,255,255,.12)')+';border-radius:16px;padding:20px;width:250px;display:flex;flex-direction:column;text-align:left">'
+      +'<div style="font-size:19px;font-weight:800;color:#f2f4f8">'+p.name+(p.pop?' <span style="font-size:10px;font-weight:800;background:#22d3ee;color:#04120c;border-radius:999px;padding:2px 8px;vertical-align:middle">POPULAR</span>':'')+'</div>'
+      +'<div style="color:#9aa3b2;font-size:12.5px;min-height:32px">'+p.sub+'</div>'
+      +'<div style="font-size:30px;font-weight:800;color:#fff;margin:6px 0">'+p.price+'</div>'
+      +'<ul style="list-style:none;padding:0;margin:10px 0;flex:1">'+p.feats.map(function(f){return '<li style="font-size:13px;color:#cfd6e4;padding:4px 0 4px 16px;position:relative"><span style="position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:50%;background:rgba(52,211,153,.2);border:1px solid rgba(52,211,153,.5)"></span>'+f+'</li>';}).join('')+'</ul>'
+      +'<button data-pick="'+p.id+'" style="border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer;'+(p.cls==='solid'?'background:linear-gradient(135deg,#4ade80,#22d3ee);color:#04120c':'background:transparent;border:1px solid rgba(255,255,255,.18);color:#f2f4f8')+'">'+(es?'Elegir ':'Choose ')+p.name+'</button>'
+      +'</div>';
+  }
+  var ov=document.createElement('div'); ov.id='planpick';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(5,6,10,.86);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+  ov.innerHTML='<div style="max-width:860px;width:100%">'
+    +'<div style="text-align:center;margin-bottom:16px"><div style="font-size:22px;font-weight:800;color:#fff">'+(es?'Elige tu plan':'Choose your plan')+'</div>'
+    +'<div style="color:#9aa3b2;font-size:14px">'+(es?'Cambia, baja o pausa cuando quieras. Tu sitio de CV siempre sigue activo.':'Change, downgrade or pause anytime. Your CV site always stays live.')+'</div></div>'
+    +'<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">'+PLANS.map(card).join('')+'</div>'
+    +'<div style="text-align:center;margin-top:14px"><button id="planpick-x" style="background:none;border:0;color:#9aa3b2;font-size:13px;cursor:pointer;text-decoration:underline">'+(es?'Cancelar':'Cancel')+'</button></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) ov.remove(); });
+  document.getElementById('planpick-x').onclick=function(){ ov.remove(); };
+  Array.prototype.forEach.call(ov.querySelectorAll('[data-pick]'),function(b){
+    b.onclick=function(){ try{ localStorage.setItem('jobup_plan',b.getAttribute('data-pick')); }catch(e){} ov.remove(); doCheckout(); };
+  });
 }
 
 // Narration: segmented, prefetched one ahead, blob-cached, browser fallback.
