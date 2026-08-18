@@ -42,6 +42,7 @@ const agents = require('../services/agents');
 const jobsource = require('../services/jobsource');
 const geo = require('../services/geo');
 const settingsSvc = require('../services/settings');
+const ent = require('../services/entitlements');
 const resumeSvc = require('../services/resume');
 const brain = require('../services/brain');
 
@@ -187,7 +188,12 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
 
   const runs = (await scoped('agent_runs', tenantId).findAll({}))
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 15);
-  const perDay = (settings.quotas && settings.quotas.jobs_scored_per_day) || 6;
+  // Match the run: a tiered account scans its plan's daily breadth (Free 8 <
+  // Search 40 < Landed 120); legacy accounts keep the settings number.
+  const tierScan = ent.hunterScanFor(sub);
+  const perDay = tierScan != null ? tierScan : ((settings.quotas && settings.quotas.jobs_scored_per_day) || 6);
+  const priorityScoring = Boolean(ent.entitlementForSub(sub).caps &&
+    ent.entitlementForSub(sub).caps.priority_scoring);
 
   // Say plainly what is wrong, in the order it needs fixing. This is the part
   // that would have answered "why is her board empty" in one glance.
@@ -253,7 +259,7 @@ router.get('/subscribers/:tenantId/diagnose', requireOwner, noteOpen, async (req
     // where there are any — a global average would be a guess presented as a
     // figure, and this one is spent in their name.
     next_run: (() => {
-      const p = agents.plan(fresh, perDay);
+      const p = agents.plan(fresh, perDay, priorityScoring);
       const scoredRuns = runs.filter((r) => r.agent === 'hunter' && r.scored > 0);
       const jobs = scoredRuns.reduce((n, r) => n + Number(r.scored || 0), 0);
       const spent = scoredRuns.reduce((n, r) => n + Number(r.cost_usd || 0), 0);

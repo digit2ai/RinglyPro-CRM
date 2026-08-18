@@ -16,6 +16,7 @@ const matcher = require('../matcher');
 const settingsSvc = require('../settings');
 const brain = require('../brain');
 const identity = require('../identity');
+const ent = require('../entitlements');
 
 const CONCURRENCY = parseInt(process.env.JOBUP_AGENT_CONCURRENCY || '4', 10);
 
@@ -149,9 +150,19 @@ async function hunter(tenantId, opts = {}) {
   // one. ADMIN_BASELINE is only what it falls back to when there is no backlog
   // at all, and opts.limit stays available for a script that genuinely needs a
   // specific count — the console deliberately does not offer it.
+  // TIER-RANKED SCAN (the fix for "Search surfaced more strong matches than
+  // Landed"). A tiered account scans its plan's daily breadth (Free 8 < Search
+  // 40 < Landed 120), so on the same resume a higher tier always evaluates at
+  // least as much of the pool and can only surface MORE strong matches, never
+  // fewer. Legacy accounts (no plan) keep their settings-driven number.
+  const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+  const tierScan = ent.hunterScanFor(sub);            // null for legacy
+  const settingsPerDay = (settings.quotas && settings.quotas.jobs_scored_per_day) || 6;
   const perDay = isAdmin
     ? Math.max(1, Math.min(50, parseInt(opts.limit, 10) || ADMIN_BASELINE))
-    : ((settings.quotas && settings.quotas.jobs_scored_per_day) || 6);
+    : (tierScan != null ? tierScan : settingsPerDay);
+  const priorityScoring = Boolean(sub && ent.entitlementForSub(sub).caps &&
+    ent.entitlementForSub(sub).caps.priority_scoring);
   const dailyBudget = (settings.cost_cap_usd || 8) / 30;   // the monthly cap, per day
 
   const used = await usedToday(tenantId, trigger);
@@ -226,14 +237,12 @@ async function hunter(tenantId, opts = {}) {
   // scores far higher than one listing five. A fixed "8 or better" would empty
   // one person's backlog on day one and never trigger for the next. Half of
   // their own best candidate travels across profiles; a fixed number does not.
-  const best = queue.length ? queue[0].prescore : 0;
-  const strongFloor = Math.max(2, Math.ceil(best * PRIORITY_FRACTION));
-  const strong = queue.filter((r) => r.prescore >= strongFloor).length;
-
-  // Bounded on every side: the run's own ceiling, and the daily money cap
-  // below, which is what actually stops it. The backlog is finite and drains
-  // in a few runs, after which this is a no-op and the daily rate resumes.
-  const allowance = strong > 0 ? Math.max(perDay, Math.min(CATCHUP_PER_RUN, strong)) : perDay;
+  // plan() is the SINGLE source for the allowance number — /diagnose publishes
+  // it and the run scores exactly it, so the screen never disagrees with the
+  // run. priorityScoring lifts the catch-up ceiling for the Landed tier.
+  const pl = plan(queue, perDay, priorityScoring);
+  const strong = pl.strong_backlog;
+  const allowance = pl.allowance;
   const jobsLeft = Math.max(0, allowance - used.scored);
 
   if (jobsLeft === 0 || budgetLeft <= 0) {
@@ -437,11 +446,14 @@ async function runAll(agentName, tenantIds, opts = {}) {
  * agent's to decide and this is how the screen states that decision before the
  * button is pressed.
  */
-function plan(queue, perDay) {
+function plan(queue, perDay, priority) {
   const best = queue.length ? queue[0].prescore : 0;
   const strongFloor = Math.max(2, Math.ceil(best * PRIORITY_FRACTION));
   const strong = queue.filter((r) => r.prescore >= strongFloor).length;
-  const raw = strong > 0 ? Math.max(perDay, Math.min(CATCHUP_PER_RUN, strong)) : perDay;
+  // Priority scoring (Landed) clears the strong backlog at a higher ceiling, so
+  // the premium tier reaches all of its strong candidates faster than Search.
+  const ceiling = priority ? Math.round(CATCHUP_PER_RUN * 1.5) : CATCHUP_PER_RUN;
+  const raw = strong > 0 ? Math.max(perDay, Math.min(ceiling, strong)) : perDay;
   const allowance = Math.min(raw, queue.length);
   return {
     allowance,

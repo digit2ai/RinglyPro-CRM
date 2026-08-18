@@ -43,6 +43,10 @@ const PLANS = {
     // acquisition + SEO engine, so its only recurring AI cost is capped tight.
     caps: {
       matches_per_week: envInt('JOBUP_FREE_MATCHES_PER_WEEK', 5),
+      // How many openings the Hunter SCANS per day for a Free account. Tier-
+      // ranked (Free < Search < Landed) so a paid account always evaluates at
+      // least as much of the pool — see hunter_scan_per_day on the paid tiers.
+      hunter_scan_per_day: envInt('JOBUP_FREE_SCAN_PER_DAY', 8),
       scorings_per_day: 0,            // no on-demand scoring on Free
       tailorings_per_month: 0,        // no AI tailoring on Free
       outreach: false,
@@ -67,6 +71,7 @@ const PLANS = {
     tagline_es: 'Para quien esta buscando activamente',
     caps: {
       matches_per_week: null,                                     // unlimited
+      hunter_scan_per_day: envInt('JOBUP_SEARCH_SCAN_PER_DAY', 40),
       scorings_per_day: envInt('JOBUP_SEARCH_SCORINGS_PER_DAY', 40),
       tailorings_per_month: envInt('JOBUP_SEARCH_TAILORINGS_PER_MO', 10),
       outreach: true,
@@ -91,6 +96,10 @@ const PLANS = {
     tagline_es: 'Para roles senior y busquedas urgentes',
     caps: {
       matches_per_week: null,
+      // Landed scans the most of the pool and does it with priority (below),
+      // so on the same resume it can only ever surface MORE strong matches than
+      // Search, never fewer. This is what makes the tier ordering monotonic.
+      hunter_scan_per_day: envInt('JOBUP_LANDED_SCAN_PER_DAY', 120),
       scorings_per_day: envInt('JOBUP_LANDED_SCORINGS_PER_DAY', 200),  // fair-use, not "unlimited" fiction
       tailorings_per_month: null,                                 // unlimited
       outreach: true,

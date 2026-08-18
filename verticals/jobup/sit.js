@@ -3064,6 +3064,41 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       `the rendered tier prices should be $${searchP} and $${landedP}`);
     assert.ok(!/\{\{PRICE/.test(rendered), 'a price token was not substituted');
   });
+  await t('FREE TIER: 5 matches, drip +1 a week, capped', () => {
+    const entSvc = require(__dirname + '/src/services/entitlements');
+    const DAY = 24 * 3600 * 1000, WK = 7 * DAY;
+    const now = Date.now();
+    // Brand-new Free account sees exactly the base (5) and the nudge counts down.
+    const fresh = entSvc.freeMatchAllowanceFor({ created_at: new Date(now) }, now);
+    assert.strictEqual(fresh.allowance, 5, 'a new Free account sees 5');
+    assert.ok(fresh.next_unlock_days >= 1 && fresh.next_unlock_days <= 7, 'and one unlocks within the week');
+    // One week in -> 6; two weeks in -> 7. The drip is monotonic.
+    assert.strictEqual(entSvc.freeMatchAllowanceFor({ created_at: new Date(now - WK) }, now).allowance, 6);
+    assert.strictEqual(entSvc.freeMatchAllowanceFor({ created_at: new Date(now - 2 * WK) }, now).allowance, 7);
+    // It never runs away — capped at the max, with no further unlock promised.
+    const old = entSvc.freeMatchAllowanceFor({ created_at: new Date(now - 99 * WK) }, now);
+    assert.strictEqual(old.allowance, entSvc.FREE_MATCHES_MAX);
+    assert.strictEqual(old.next_unlock_days, null, 'at the cap nothing more is promised');
+  });
+  await t('SCAN BREADTH IS TIER-MONOTONIC: Free < Search < Landed', () => {
+    // The report showed Search surfacing more strong matches than Landed on the
+    // same resume — an artifact of tier-blind scoring. A paid tier must scan at
+    // least as much of the pool as a cheaper one, so it can only surface MORE.
+    const entSvc = require(__dirname + '/src/services/entitlements');
+    const s = (plan) => entSvc.hunterScanFor({ plan, status: 'active' });
+    assert.ok(s('free') < s('search'), 'Search scans more of the pool than Free');
+    assert.ok(s('search') < s('landed'), 'Landed scans more of the pool than Search');
+    assert.strictEqual(entSvc.hunterScanFor({ plan: null }), null, 'legacy keeps its settings number');
+
+    // And priority scoring (Landed only) lifts the strong-backlog ceiling, so it
+    // clears its strong candidates faster than Search during a backlog.
+    const agents = require(__dirname + '/src/services/agents');
+    const q = (n) => Array.from({ length: n }, (_, i) => ({ prescore: 20, job: { id: i } }));
+    const backlog = q(200);
+    const search = agents.plan(backlog, 40, false);
+    const landed = agents.plan(backlog, 40, true);
+    assert.ok(landed.allowance > search.allowance, 'priority clears the strong backlog faster');
+  });
   await t('BRAND: one mark, one palette, everywhere', () => {
     const fs = require('fs');
     const p = __dirname + '/public/';
@@ -4271,8 +4306,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = require('fs').readFileSync(__dirname + '/src/services/agents/index.js', 'utf8');
     assert.ok(/const strongFloor = Math\.max\(2, Math\.ceil\(best \* PRIORITY_FRACTION\)\)/.test(src),
       'strong must be defined relative to this subscriber, not a global number');
-    assert.ok(/const allowance = strong > 0 \? Math\.max\(perDay, Math\.min\(CATCHUP_PER_RUN, strong\)\) : perDay/.test(src),
+    // The allowance now lives in plan() (the single source /diagnose and the run
+    // share); hunter delegates to it, threading the tier's priority flag.
+    assert.ok(/const raw = strong > 0 \? Math\.max\(perDay, Math\.min\(ceiling, strong\)\) : perDay/.test(src),
       'a backlog raises the allowance; no backlog leaves the daily rate alone');
+    assert.ok(/const pl = plan\(queue, perDay, priorityScoring\)/.test(src),
+      'hunter must delegate the allowance to plan(), not recompute it');
+    assert.ok(/const ceiling = priority \? Math\.round\(CATCHUP_PER_RUN \* 1\.5\) : CATCHUP_PER_RUN/.test(src),
+      'priority scoring (Landed) clears the strong backlog at a higher ceiling');
 
     // The arithmetic, on the real shapes.
     const F = parseFloat(process.env.JOBUP_PRIORITY_FRACTION || '0.5');

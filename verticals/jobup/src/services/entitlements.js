@@ -54,4 +54,49 @@ async function capFor(tenantId, feature) {
   return v === null ? Infinity : (typeof v === 'number' ? v : (v ? Infinity : 0));
 }
 
-module.exports = { entitlementFor, entitlementForSub, allowsFeature, capFor };
+// ---- Free-tier match drip -------------------------------------------------
+// Free surfaces a SMALL, slowly-growing set of matches: the base weekly cap
+// (5) on day one, then +1 for each full week the account has existed, capped at
+// JOBUP_FREE_MATCHES_MAX. The scarcity is the point — it is the upgrade nudge.
+// Higher tiers are uncapped, so this only ever narrows Free.
+
+const FREE_MATCHES_MAX = (() => {
+  const v = parseInt(process.env.JOBUP_FREE_MATCHES_MAX || '', 10);
+  return Number.isFinite(v) ? v : 12;
+})();
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+/**
+ * The number of Hunter matches a Free account may SEE right now, and when the
+ * next one unlocks. Only meaningful for effective-Free accounts; callers gate
+ * on entitlement first. Never applies to legacy or paid tiers.
+ */
+function freeMatchAllowanceFor(sub, now) {
+  const base = plans.PLANS.free.caps.matches_per_week || 5;
+  const start = sub && sub.created_at ? new Date(sub.created_at).getTime() : Date.now();
+  const t = (now ? new Date(now).getTime() : Date.now());
+  const weeks = Math.max(0, Math.floor((t - start) / WEEK_MS));
+  const allowance = Math.min(FREE_MATCHES_MAX, base + weeks);
+  const atMax = allowance >= FREE_MATCHES_MAX;
+  const msIntoWeek = Math.max(0, (t - start)) % WEEK_MS;
+  const next_unlock_days = atMax ? null : Math.max(1, Math.ceil((WEEK_MS - msIntoWeek) / (24 * 3600 * 1000)));
+  return { allowance, base, weeks, max: FREE_MATCHES_MAX, at_max: atMax, next_unlock_days };
+}
+
+/**
+ * How many openings the Hunter scans per day for this tenant. Tier-ranked so a
+ * paid account always evaluates at least as much of the pool as a cheaper one
+ * (Free 8 < Search 40 < Landed 120). Legacy accounts keep their settings-driven
+ * number (resolved by the caller); this returns null for legacy to signal that.
+ */
+function hunterScanFor(sub) {
+  const e = entitlementForSub(sub);
+  if (e.legacy || !e.caps) return null;                 // legacy: caller uses settings
+  const v = e.caps.hunter_scan_per_day;
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
+
+module.exports = {
+  entitlementFor, entitlementForSub, allowsFeature, capFor,
+  freeMatchAllowanceFor, hunterScanFor, FREE_MATCHES_MAX,
+};

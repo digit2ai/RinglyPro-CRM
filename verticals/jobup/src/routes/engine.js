@@ -26,6 +26,7 @@ const billing = require('../services/billing');
 const tailoringSvc = require('../services/tailoring');
 const resumePdf = require('../services/resume-pdf');
 const assistant = require('../services/assistant');
+const ent = require('../services/entitlements');
 
 const router = express.Router();
 
@@ -141,12 +142,39 @@ router.put('/settings', async (req, res) => {
 router.get('/matches', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
   const rows = await scoped('job_matches', tid).findAll({ order: [['score', 'DESC']], limit: 100 });
+
+  // FREE-TIER DRIP. Only Hunter-found matches are gated — anything the person
+  // added themselves (manual, inbound, tracked opportunities) is always theirs
+  // to see. Free sees its best `allowance` hunter matches, growing by one a
+  // week; every paid or legacy account sees them all.
+  const sub = await models.subscribers.findOne({ where: { id: tid } });
+  const e = ent.entitlementForSub(sub);
+  const isFree = !e.legacy && e.effective_plan === 'free';
+
+  let gate = null;
+  let visible = rows;
+  if (isFree) {
+    const hunter = rows.filter((m) => m.source === 'hunter' || m.source == null);   // Hunter-found
+    const own = rows.filter((m) => !(m.source === 'hunter' || m.source == null));   // the user's own entries
+    const a = ent.freeMatchAllowanceFor(sub);
+    const shownHunter = hunter.slice(0, a.allowance);                               // best-first, stable growth
+    const withheld = Math.max(0, hunter.length - shownHunter.length);
+    // Keep the board score-ordered after recombining.
+    visible = [...shownHunter, ...own].sort((x, y) => (y.score || 0) - (x.score || 0));
+    gate = {
+      tier: 'free', match_cap: a.allowance, hunter_total: hunter.length,
+      shown: shownHunter.length, withheld,
+      next_unlock_days: a.next_unlock_days, at_max: a.at_max, max: a.max,
+      upgrade: withheld > 0 || true,   // Free always sees the nudge
+    };
+  }
+
   const out = [];
-  for (const m of rows) {
+  for (const m of visible) {
     const job = await models.jobs.findOne({ where: { id: m.job_id } });
     out.push({ ...plain(m), job: plain(job) || null });
   }
-  res.json({ matches: out });
+  res.json({ matches: out, gate });
 });
 
 const STAGES = ['new', 'saved', 'applied', 'screening', 'interviewing', 'offer', 'closed'];
