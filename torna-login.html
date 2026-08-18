@@ -1,8 +1,8 @@
-<!-- ORBUP | Log in (passwordless return-by-email) -->
+<!-- TORNA | Log in to your workspace (email + password) -->
 <style>
 .owl *{box-sizing:border-box}
 .owl{--bg:#0a0a0e;--card:#16171f;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.18);
-  --ink:#f2f4f8;--mut:#9aa3b2;--cyan:#fb7185;--violet:#7c5cff;--magenta:#dc2626;
+  --ink:#f2f4f8;--mut:#9aa3b2;--cyan:#22d3ee;--violet:#7c5cff;--magenta:#ec4899;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
   position:fixed;inset:0;z-index:2147483000;background:
     radial-gradient(900px 600px at 50% -10%,rgba(124,92,255,.20),transparent 60%),
@@ -14,7 +14,7 @@
 .owl-top .x{color:var(--mut);font-size:13.5px;font-weight:500}.owl-top .x:hover{color:var(--ink)}
 .owl-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 22px 60px;text-align:center}
 .owl-orb{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;
-  background:radial-gradient(circle at 35% 30%,#fecaca,#991b1b 45%,#2a1f6b 100%);
+  background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);
   box-shadow:0 0 40px rgba(124,92,255,.45),0 0 0 1px rgba(255,255,255,.08) inset}
 .owl h1{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
 .owl .sub{color:var(--mut);font-size:15px;max-width:460px;margin:0 auto 28px;line-height:1.55}
@@ -33,6 +33,9 @@
 .owl-alt{margin-top:24px;font-size:13.5px;color:var(--mut)}.owl-alt a{color:var(--ink);font-weight:600}
 .owl-spin{width:16px;height:16px;border:2px solid rgba(6,16,31,.35);border-top-color:#06101f;border-radius:50%;animation:owlSpin .8s linear infinite;display:inline-block}
 @keyframes owlSpin{to{transform:rotate(360deg)}}
+.owl-field .owl-hint{float:right;font-weight:500;color:var(--mut);font-size:12px}
+.owl-field .owl-hint a{color:var(--cyan)}
+.owl-msg.ok{color:#86efac}
 </style>
 
 <div class="owl">
@@ -43,11 +46,12 @@
   <div class="owl-stage">
     <div class="owl-orb"></div>
     <h1>Welcome back</h1>
-    <p class="sub">Enter the email you signed up with and we'll take you straight to your workspace.</p>
+    <p class="sub">Sign in with the email and password you created your workspace with.</p>
     <form id="owl-form" autocomplete="on">
       <div class="owl-field"><label>Email</label><input id="owl-email" type="email" placeholder="you@company.com" autocomplete="email" autofocus></div>
-      <div class="owl-msg" id="owl-msg"></div>
-      <div><button class="owl-btn" id="owl-go" type="submit">Continue &rarr;</button></div>
+      <div class="owl-field"><label>Password</label><input id="owl-pass" type="password" placeholder="Your password" autocomplete="current-password"></div>
+      <div class="owl-msg" id="owl-msg" aria-live="polite"></div>
+      <div><button class="owl-btn" id="owl-go" type="submit">Sign in &rarr;</button></div>
     </form>
     <div class="owl-alt">New here? <a href="/torna/start">Create your free workspace</a></div>
   </div>
@@ -55,39 +59,64 @@
 
 <script>
 (function(){
+  var BASE='/torna';
   var form=document.getElementById('owl-form');
   var emailEl=document.getElementById('owl-email');
+  var passEl=document.getElementById('owl-pass');
   var msg=document.getElementById('owl-msg');
   var go=document.getElementById('owl-go');
 
-  // prefill if a session is remembered on this browser
+  // Where to land after a successful sign-in. Same-origin path only — never an
+  // attacker-supplied absolute URL (open-redirect guard).
+  function nextPath(){
+    try{
+      var n=new URLSearchParams(window.location.search).get('next')||'';
+      if(n && n.charAt(0)==='/' && n.charAt(1)!=='/') return n;
+    }catch(e){}
+    return BASE+'/workspace';
+  }
+
+  // Already signed in on this browser -> skip the form entirely.
+  try{ if(localStorage.getItem('d2ai_session')){ window.location.replace(nextPath()); return; } }catch(e){}
+
   try{ var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); if(c.email) emailEl.value=c.email; }catch(e){}
+  if(emailEl.value) setTimeout(function(){ passEl.focus(); },60);
+
+  function reset(){ go.disabled=false; go.innerHTML='Sign in &rarr;'; }
+  function fail(html){ reset(); msg.className='owl-msg err'; msg.innerHTML=html; }
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
     var email=(emailEl.value||'').trim();
+    var pass=passEl.value||'';
     msg.className='owl-msg'; msg.textContent='';
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.className='owl-msg err'; msg.textContent='Please enter a valid email.'; emailEl.focus(); return; }
-    go.disabled=true; go.innerHTML='<span class="owl-spin"></span> Checking…';
-    fetch('/projects/api/v1/orbup/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email }) })
-      .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
+    if(!pass){ msg.className='owl-msg err'; msg.textContent='Please enter your password.'; passEl.focus(); return; }
+    go.disabled=true; go.innerHTML='<span class="owl-spin"></span> Signing in…';
+    fetch('/projects/api/v1/intake/orbup/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,password:pass})})
+      .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
-        if(res.status===200 && res.json && res.json.success){
+        var j=res.json||{};
+        if(res.status===200 && j.success && j.session){
           try{
             var prev={}; try{ prev=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(x){}
-            localStorage.setItem('d2ai_contact', JSON.stringify({ name: res.json.name||prev.name||'', email: res.json.email||email, phone: prev.phone||'' }));
+            localStorage.setItem('d2ai_session', j.session);
+            localStorage.setItem('d2ai_contact', JSON.stringify({
+              name: j.name||prev.name||'', email: j.email||email, phone: j.phone||prev.phone||'', lang: prev.lang||'en'
+            }));
           }catch(x){}
+          msg.className='owl-msg ok'; msg.textContent='Signed in. Opening your workspace…';
           go.innerHTML='<span class="owl-spin"></span> Opening your workspace…';
-          window.location.href='/torna/workspace';
-        } else if(res.status===404){
-          go.disabled=false; go.innerHTML='Continue &rarr;';
-          msg.className='owl-msg err'; msg.innerHTML='No workspace found for that email. <a href="/torna/start">Create one free &rarr;</a>';
-        } else {
-          go.disabled=false; go.innerHTML='Continue &rarr;';
-          msg.className='owl-msg err'; msg.textContent=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
+          window.location.href=nextPath();
+          return;
         }
+        if(res.status===404){ return fail('No workspace found for that email. <a href="'+BASE+'/start">Create one free &rarr;</a>'); }
+        if(res.status===409){ return fail('This workspace has no password yet. <a href="'+BASE+'/start">Set one now &rarr;</a>'); }
+        if(res.status===401){ return fail('Wrong password. Try again.'); }
+        return fail(j.error ? String(j.error) : 'Something went wrong. Please try again.');
       })
-      .catch(function(){ go.disabled=false; go.innerHTML='Continue &rarr;'; msg.className='owl-msg err'; msg.textContent='Could not reach the server. Please try again.'; });
+      .catch(function(){ fail('Could not reach the server. Please try again.'); });
   });
 })();
 </script>

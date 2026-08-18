@@ -129,7 +129,7 @@
   // identity (passwordless free tier): email in localStorage from signup
   var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
   var email=(contact.email||'').trim();
-  if(!email){ window.location.replace('/v2ai/start'); return; }
+  if(!email){ window.location.replace('/v2ai/login?next=%2Fv2ai%2Fworkspace'); return; }
   var name=(contact.name||'').trim();
   var first = name ? name.split(' ')[0] : '';
 

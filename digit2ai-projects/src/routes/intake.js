@@ -524,6 +524,45 @@ router.post('/orbup/signup', async (req, res) => {
   }
 });
 
+// POST /orbup/login — password login ONLY (never creates an account). The login
+// page needs honest, distinguishable outcomes so it can tell the visitor exactly
+// what to do next:
+//   404 account_not_found -> no workspace on that email, go create one
+//   409 needs_password    -> legacy passwordless account, claim it via /start
+//   401 bad_password      -> wrong password
+// Success returns the SAME 30-day signed session /orbup/signup issues, so the
+// workspace page (which trusts only the session) opens straight away.
+router.post('/orbup/login', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+    const password = String(b.password || '');
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email is required' });
+    }
+    if (!password) return res.status(400).json({ success: false, error: 'Password is required' });
+
+    const [rows] = await sequelize.query(
+      'SELECT id, name, email, phone, plan, password_hash FROM orbup_users WHERE email = :email LIMIT 1',
+      { replacements: { email } }
+    );
+    const u = rows && rows[0];
+    if (!u) return res.status(404).json({ success: false, error: 'account_not_found' });
+    if (!u.password_hash) return res.status(409).json({ success: false, error: 'needs_password' });
+
+    const ok = await bcrypt.compare(password, u.password_hash);
+    if (!ok) return res.status(401).json({ success: false, error: 'bad_password' });
+
+    await sequelize.query('UPDATE orbup_users SET updated_at = NOW() WHERE email = :email', { replacements: { email } });
+    const session = orbSign({ uid: u.id, email });
+    res.json({ success: true, user_id: u.id, plan: u.plan || 'free', session, name: u.name || '', email: u.email, phone: u.phone || '' });
+  } catch (err) {
+    console.error('[D2AI-Intake] orbup login failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /orbup/workspace?email=X — the signed-in user's private workspace:
 // their account + their workspace-private projects (each with its latest
 // teaser + simulator magic links). Passwordless free tier — email is identity.
