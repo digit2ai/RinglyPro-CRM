@@ -6,7 +6,7 @@
   var ITEMS = [
     { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
     { k: 'salud', label: 'Salud Financiera', icon: 'M12 20C7 16 3.5 12.7 3.5 8.7A4.2 4.2 0 0 1 12 6.2 4.2 4.2 0 0 1 20.5 8.7C20.5 12.7 17 16 12 20Z|M3.8 12.2h3.4l1.3-3 2 5 1.4-2.6h3.4' },
-    { k: 'diagnostico', label: 'Mi Puntaje', icon: 'circle:12,12,9|M12 7v5l3 2' },
+    { k: 'diagnostico', label: 'Planea Score', icon: 'circle:12,12,9|M12 7v5l3 2' },
     // Mi Patrimonio se fusionó dentro de Salud Financiera (el editor de activos y
     // pasivos vive ahora al final de /portal/salud). Se oculta del menú; la ruta
     // /portal/patrimonio redirige a /portal/salud para no romper enlaces viejos.
@@ -227,7 +227,7 @@
           try { done ? localStorage.setItem('planea-onboarded', '1') : localStorage.removeItem('planea-onboarded'); } catch (e) {}
           // Tras el onboarding, ocultar Mi Puntaje salvo que el usuario lo active en Configuración.
           var fm = (data && data.finance_meta) || {};
-          hideMiPuntaje = done && fm.mi_puntaje_visible !== true;
+          hideMiPuntaje = false; // un solo Planea Score: tab siempre visible (progreso)
           try { localStorage.setItem('planea-mipuntaje-visible', fm.mi_puntaje_visible === true ? '1' : '0'); } catch (e) {}
           applyLock(ourCookie() && !done); // renderNav() usa hideMiPuntaje ya actualizado
         }).catch(function () {});
@@ -235,7 +235,7 @@
     // Unlock live the moment the survey is completed (fired by planea-diagnostico.js).
     window.addEventListener('planea:onboarded', function () {
       try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
-      hideMiPuntaje = true;                 // recién diagnosticado: la Salud Financiera toma el relevo
+      hideMiPuntaje = false;                // un solo Planea Score: el tab "Planea Score" queda visible con su progreso
       applyLock(false);
     });
     // Toggle en vivo desde Configuración (mostrar/ocultar Mi Puntaje).
