@@ -1605,6 +1605,7 @@
       return fetch('/projects/api/v1/intake/public/request', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(Object.assign({
+          session:(function(){ try{ return localStorage.getItem('d2ai_session')||''; }catch(e){ return ''; } })(),
           full_name:name, phone:phone, email:email||undefined,
           heard_from:'torna self-serve builder', language: D2B_LANG
         }, s))

@@ -811,6 +811,18 @@ app.get('*', (req, res) => {
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS password_hash TEXT`,
       // Password reset (Planea pattern): only the sha256 HASH of the token is
       // stored, so a database reader can never hijack an account with it.
+      // Workspace ownership. submitter_email is a string typed into a PUBLIC form,
+      // so it can never decide who owns a project. This is the authenticated fact:
+      // the orbup_users.id of the signed-in account that actually built it.
+      // Kept in its OWN table, not a d2_projects column: that table has burned all
+      // 1600 postgres attribute slots (85 live, ~1515 dropped by an old sync alter),
+      // so it cannot take another column until it is rebuilt.
+      `CREATE TABLE IF NOT EXISTS orbup_project_owners (
+        project_id INTEGER PRIMARY KEY,
+        orbup_user_id INTEGER NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_project_owners_user ON orbup_project_owners(orbup_user_id)`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(80)`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ`,
       `CREATE INDEX IF NOT EXISTS idx_orbup_users_reset ON orbup_users(reset_token)`,

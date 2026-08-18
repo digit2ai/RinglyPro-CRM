@@ -119,6 +119,12 @@ router.post('/public/request', async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const b = req.body || {};
+    // Workspace ownership is an AUTHENTICATED fact, never a typed string. A signed
+    // OrbUp session (sent by the builder) stamps the owning account and forces the
+    // submitter email to that account, so a build can never be filed under someone
+    // else's address. Anonymous funnel submissions stay owned by nobody and so can
+    // never surface inside a private workspace.
+    const orbOwner = orbSessionUser(req);
     const rl = _triageRateLimit(clientIp(req));
     if (!rl.allowed) {
       await t.rollback();
@@ -202,7 +208,7 @@ router.post('/public/request', async (req, res) => {
       category: aiCategoryDisplay,
       // Intake fields (migration 003)
       submitter_name: b.full_name || null,
-      submitter_email: b.email || null,
+      submitter_email: orbOwner ? orbOwner.email : (b.email || null),
       submitter_phone: b.phone || null,
       country: b.country || null,
       target_users: b.target_users || null,
@@ -228,6 +234,17 @@ router.post('/public/request', async (req, res) => {
       utm_term:     (b.utm_term     || '').toString().trim().slice(0, 255) || null,
       referrer_url: (b.referrer_url || '').toString().trim() || null
     }, { transaction: t });
+
+    // Ownership row: this is what a private workspace lists. Written only when a
+    // signed session proved who is building, so an anonymous funnel submission can
+    // never land inside somebody's workspace.
+    if (orbOwner) {
+      await sequelize.query(
+        `INSERT INTO orbup_project_owners (project_id, orbup_user_id, created_at)
+         VALUES (:pid, :uid, NOW()) ON CONFLICT (project_id) DO NOTHING`,
+        { replacements: { pid: project.id, uid: orbOwner.uid }, transaction: t }
+      );
+    }
 
     await ProjectIntake.create({
       project_id: project.id,
@@ -443,14 +460,16 @@ function orbSign(payload) {
 function orbVerify(token) {
   try { return require('jsonwebtoken').verify(token, ORBUP_SECRET); } catch (_) { return null; }
 }
-// Trusted email from a signed session (query ?session=, Bearer header, or cookie).
-// This is the SECURE identity — never trust a raw ?email= for private data.
-function orbSessionEmail(req) {
+// Trusted { uid, email } from a signed session — query ?session=, POST body
+// { session }, Bearer header, or cookie. Returns null when nothing verifies.
+function orbSessionUser(req) {
   const t = (req.query && req.query.session)
+    || (req.body && req.body.session)
     || ((req.headers.authorization || '').replace(/^Bearer\s+/i, ''))
     || (req.cookies && req.cookies.orbup_session) || '';
   const p = t ? orbVerify(String(t)) : null;
-  return p && p.email ? String(p.email).toLowerCase() : null;
+  if (!p || !p.email || !p.uid) return null;
+  return { uid: p.uid, email: String(p.email).toLowerCase() };
 }
 
 // POST /orbup/signup — create OR log in a workspace account (password required).
@@ -676,10 +695,11 @@ router.get('/orbup/workspace', async (req, res) => {
   try {
     // SECURITY: the project list is private. Trust ONLY a signed session — never a
     // raw ?email= (which anyone could type). No valid session -> 401 needs_auth.
-    const email = orbSessionEmail(req);
-    if (!email) {
+    const me = orbSessionUser(req);
+    if (!me) {
       return res.status(401).json({ success: false, error: 'Sign in to view your workspace', needs_auth: true });
     }
+    const email = me.email;
     const [uRows] = await sequelize.query(
       'SELECT id, name, email, plan, role, company_size, created_at FROM orbup_users WHERE email = :email LIMIT 1',
       { replacements: { email } }
@@ -691,16 +711,17 @@ router.get('/orbup/workspace', async (req, res) => {
               t.token AS teaser_token,
               s.token AS simulator_token
          FROM d2_projects p
+         JOIN orbup_project_owners o ON o.project_id = p.id AND o.orbup_user_id = :uid
          LEFT JOIN LATERAL (
            SELECT token FROM d2_project_teasers WHERE project_id = p.id ORDER BY created_at DESC LIMIT 1
          ) t ON true
          LEFT JOIN LATERAL (
            SELECT token FROM d2_project_simulators WHERE project_id = p.id AND status = 'ready' ORDER BY created_at DESC LIMIT 1
          ) s ON true
-        WHERE p.workspace_id = 1 AND lower(p.submitter_email) = :email
+        WHERE p.workspace_id = 1
         ORDER BY p.created_at DESC
         LIMIT 60`,
-      { replacements: { email } }
+      { replacements: { uid: me.uid } }
     );
 
     const base = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
