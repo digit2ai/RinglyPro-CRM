@@ -128,7 +128,7 @@
   var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
   var session=''; try{ session=localStorage.getItem('d2ai_session')||''; }catch(e){}
   var email=(contact.email||'').trim();
-  if(!session){ window.location.replace('/orbup'); return; } // no session -> create/sign into workspace
+  if(!session){ window.location.replace('/orbup/login?next=%2Forbup%2Fworkspace'); return; } // no session -> create/sign into workspace
   var name=(contact.name||'').trim();
   var first = name ? name.split(' ')[0] : '';
 
@@ -166,7 +166,7 @@
   // load workspace projects
   function statusLabel(s){ return String(s||'planning').replace(/_/g,' '); }
   fetch(WS_URL+'?session='+encodeURIComponent(session))
-    .then(function(r){ if(r.status===401){ window.location.replace('/orbup'); throw new Error('auth'); } return r.json(); })
+    .then(function(r){ if(r.status===401){ try{localStorage.removeItem('d2ai_session');}catch(e){} window.location.replace('/orbup/login?next=%2Forbup%2Fworkspace'); throw new Error('auth'); } return r.json(); })
     .then(function(res){
       var list=document.getElementById('oww-side-list');
       if(!res || !res.success){ list.innerHTML='<div class="oww-side-empty">Could not load. Refresh.</div>'; return; }

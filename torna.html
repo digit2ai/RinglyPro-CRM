@@ -1715,16 +1715,7 @@
       }
     }catch(x){}
   })();
-
-  // Signed-in users: turn the nav "Get started" into "Workspace".
-  (function signedInNav(){
-    try{
-      var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
-      if(!c || !c.email) return;
-      var el=document.querySelector('nav a.btn.btn-primary[href="/torna/start"]') || document.querySelector('a.btn.btn-primary[href="/torna/start"]');
-      if(el){ el.setAttribute('href','/torna/workspace'); el.textContent=(D2B_LANG==='es'?'Workspace':'Workspace'); }
-    }catch(x){}
-  })();
+  // nav auth state is handled by the shared nav-state block at the end of this file.
 })();
 </script>
 
@@ -2121,5 +2112,31 @@
   if(orb) orb.addEventListener('click', function(){ if(playing) stop(); });
   document.addEventListener('visibilitychange', function(){ if(document.hidden && playing && !paused) bPause.click(); });
   setStatus(T.idle);
+})();
+</script>
+
+<script>
+/* Nav auth state — exactly ONE Workspace button, and it always leads somewhere.
+   signed in (session)      -> primary button = Workspace, duplicate link removed
+   known email, no session  -> primary = Log in, links carry ?next=/workspace
+   brand-new visitor        -> primary stays Get started; Workspace goes to login */
+(function(){
+  try{
+    var links=document.querySelector('nav .nav-links'); if(!links) return;
+    var wsLink=links.querySelector('a[href$="/workspace"]'); if(!wsLink) return;
+    var BASE=wsLink.getAttribute('href').replace(/\/workspace$/,'');
+    var WS=BASE+'/workspace', LOGIN=BASE+'/login?next='+encodeURIComponent(WS);
+    var pill=links.querySelector('a.btn.btn-primary');
+    var es=!!links.querySelector('.lang-opt.active[href*="lang=es"]');
+    var session=''; try{ session=localStorage.getItem('d2ai_session')||''; }catch(e){}
+    var email=''; try{ email=(JSON.parse(localStorage.getItem('d2ai_contact')||'{}').email)||''; }catch(e){}
+    if(session){
+      if(pill){ pill.setAttribute('href',WS); pill.textContent='Workspace'; wsLink.remove(); }
+      else { wsLink.setAttribute('href',WS); }
+    } else {
+      wsLink.setAttribute('href',LOGIN);
+      if(email && pill){ pill.setAttribute('href',LOGIN); pill.textContent=(es?'Iniciar sesión':'Log in'); }
+    }
+  }catch(x){}
 })();
 </script>
