@@ -3699,6 +3699,44 @@ ${content}
 </body>
 </html>`);
 });
+app.get('/orbup/privacy', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-privacy.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/orbup/terms', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-terms.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache'); // revalidate so a deploy is picked up immediately (behind Cloudflare)
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
 app.get('/orbup/forgot', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-forgot.html'), 'utf8');
   res.removeHeader('X-Frame-Options');
@@ -3925,6 +3963,44 @@ ${content}
 </body>
 </html>`);
 });
+app.get('/torna/privacy', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-privacy.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Torna</title>
+${TORNA_PWA_HEAD}
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/torna/terms', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../torna-terms.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', tornaFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Torna</title>
+${TORNA_PWA_HEAD}
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
 app.get('/torna/forgot', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../torna-forgot.html'), 'utf8');
   res.removeHeader('X-Frame-Options');
@@ -4143,6 +4219,44 @@ app.get('/v2ai/login', (req, res) => {
 <title>Log in — Vision2Ai</title>
 ${V2AI_PWA_HEAD}
 <meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/v2ai/privacy', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-privacy.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Vision2Ai</title>
+${V2AI_PWA_HEAD}
+<style>html,body{margin:0;padding:0;background:#06081a;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+app.get('/v2ai/terms', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../v2ai-terms.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', v2aiFrameCsp);
+  res.setHeader('Cache-Control', 'no-cache');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Vision2Ai</title>
+${V2AI_PWA_HEAD}
 <style>html,body{margin:0;padding:0;background:#06081a;}</style>
 </head>
 <body>
