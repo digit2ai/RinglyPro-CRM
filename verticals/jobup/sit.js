@@ -4241,6 +4241,18 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const build = fs.readFileSync(__dirname + '/public/build.html', 'utf8');
     assert.ok(/agree to/i.test(build) && /\/terms/.test(build) && /\/privacy/.test(build),
       'signup must state agreement to the terms and privacy policy');
+    // An EXPLICIT data-hosting consent (this ecosystem stores people's data): the
+    // person consents to us collecting/hosting/processing their data, and it is
+    // honest — no sale, and no sharing beyond the providers needed to run JobUp.
+    // Flatten whitespace so HTML line-wrapping does not break the phrase match.
+    const buildFlat = build.replace(/\s+/g, ' ');
+    assert.ok(/consent to Digit2AI LLC/i.test(buildFlat) && /collecting, hosting, and processing/i.test(buildFlat),
+      'signup must carry an explicit data-hosting consent');
+    assert.ok(/do not sell your personal information/i.test(buildFlat) &&
+              /do not disclose it to any third party other than the service providers/i.test(buildFlat),
+      'the consent must be honest about non-sale and the operating-providers exception');
+    assert.ok(/consientes expresamente que Digit2AI LLC/i.test(buildFlat),
+      'the consent must also be available in Spanish');
   });
   await t('THE DASHBOARD PREVIEW LOADS A SAME-ORIGIN PHOTO, not the apex 404', () => {
     // The public /photo is only served on the subscriber's own subdomain, so on

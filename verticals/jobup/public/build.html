@@ -73,6 +73,9 @@ min-height:54px;transition:transform .14s ease}
 .btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.45;transform:none;cursor:default}
 .note{color:var(--faint);font-size:13px;font-family:var(--mono);line-height:1.65;margin-top:14px}
+.consent{color:var(--mut);font-size:11.5px;line-height:1.6;margin-top:16px;padding:11px 13px;
+  border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.02)}
+.consent a{color:var(--mut);text-decoration:underline;text-underline-offset:2px}
 .err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#ffb4b4;
 border-radius:12px;padding:12px 15px;font-size:14px;margin-top:14px;display:none}
 .err.show{display:block}
@@ -276,10 +279,16 @@ body.hasgo .wrap{padding-bottom:140px}
 
     <div class="err" id="err"></div>
     <button class="btn go" id="go" type="submit" data-go="bottom">Build my account</button>
-    <p class="note" id="legalnote">By creating your account you agree to the
+    <p class="consent" id="consent">By creating your account, you expressly consent to Digit2AI LLC
+      (&ldquo;JobUp&rdquo;) collecting, hosting, and processing your r&eacute;sum&eacute; and the personal
+      information it contains for the sole purpose of providing this service. We do not sell your personal
+      information, and we do not disclose it to any third party other than the service providers strictly
+      necessary to operate JobUp, as described in our
+      <a href="{{BASE}}/privacy" target="_blank" rel="noopener">Privacy Policy</a>. Your profile is published
+      only to the extent you choose &mdash; sensitive fields remain private unless you enable them. By
+      continuing, you acknowledge that you have read and agree to the
       <a href="{{BASE}}/terms" target="_blank" rel="noopener">Terms of Service</a> and
-      <a href="{{BASE}}/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
-      Your CV page is public by design; sensitive fields stay private until you switch them on.</p>
+      <a href="{{BASE}}/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     <p class="note" id="footnote">You review and submit every application yourself. JobUp never applies on your behalf.</p>
   </form>
 </div>
@@ -454,6 +463,18 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
   var es=(j.language==='es');
   var lede=es?'Dos últimos pasos: cómo inicias sesión y qué deben buscar tus agentes.'
              :'Two last things: how you sign in, and what your agents should hunt for.';
+  // Data-hosting consent in Spanish (the static HTML carries the English one).
+  if(es && $('consent')){
+    $('consent').innerHTML='Al crear tu cuenta, consientes expresamente que Digit2AI LLC '+
+      '(“JobUp”) recopile, aloje y procese tu currículum y los datos personales que contiene '+
+      'con el único fin de prestarte este servicio. No vendemos tus datos personales, y no los '+
+      'divulgamos a ningún tercero salvo los proveedores estrictamente necesarios para operar JobUp, '+
+      'según nuestra <a href="'+API+'/privacy" target="_blank" rel="noopener">Política de Privacidad</a>. '+
+      'Tu perfil se publica solo en la medida en que tú decidas — los campos sensibles permanecen '+
+      'privados hasta que los actives. Al continuar, reconoces que has leído y aceptas los '+
+      '<a href="'+API+'/terms" target="_blank" rel="noopener">Términos del Servicio</a> y la '+
+      '<a href="'+API+'/privacy" target="_blank" rel="noopener">Política de Privacidad</a>.';
+  }
   if(j.billing_disabled){
     $('footnote').textContent='No payment is required. '+
       'You review and submit every application yourself — JobUp never applies on your behalf.';
