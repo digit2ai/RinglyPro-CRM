@@ -83,8 +83,12 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const src = require('fs').readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
     assert.ok(src.includes('build_url'), 'the CTA must follow the server, not hardcode Stripe');
     assert.ok(src.includes("'/build?t='"), 'and fall back to the form if the status call fails');
-    // A null price must never render as "$null / year".
-    assert.ok(/if\(c\.price_usd\)/.test(src), 'the price block must be conditional');
+    // NO price on the teaser: the plan (Free / Search / Landed) is chosen in the
+    // picker after the CTA, so a single number here is stale and misleading. The
+    // prominent slot carries a value headline, never a "$X / year".
+    assert.ok(/var PRICE_HTML=T\.ctaHeadline/.test(src), 'the price slot must be a headline, not a number');
+    assert.ok(!/\$'\+c\.price_usd\+'<em>/.test(src) && !/\$'\+c\.price_usd\+'<span/.test(src),
+      'no "$<price> / year" may be rendered anywhere on the teaser');
   });
   await t('the disabled switch is a SWITCH — every Stripe path is still there', () => {
     const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
@@ -3715,20 +3719,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(src.includes('function ctaBusy'), 'and every button locks together');
   });
 
-  await t('the price is resolved once, so no two buttons can disagree', () => {
+  await t('the CTA headline is resolved once, so no two placements can disagree', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
     assert.ok(src.includes('var CTA_LABEL=') && src.includes('var PRICE_HTML='),
-      'label and price must be computed once for every placement');
-    // "/ year" may appear ONCE, in the T table. Anywhere else is a second
-    // English string that a Spanish page would print untranslated.
-    assert.strictEqual((src.match(/' \/ year'/g) || []).length, 1,
-      'the period must come from T.perYear, not a repeated literal');
-    assert.strictEqual((src.match(/T\.perYear/g) || []).length, 2,
-      'both the pinned bar and screen 8 read the same period string');
-    // Payment off must still not print "$null / year" anywhere.
-    assert.ok(src.includes('c.price_usd?') && src.includes('T.freePrice'),
-      'a price is shown only when there is one');
+      'label and headline must be computed once for every placement');
+    assert.ok(/var PRICE_HTML=T\.ctaHeadline/.test(src),
+      'the prominent slot is a single value headline, chosen once');
+    // The teaser quotes NO price at all now — the period string and any per-year
+    // literal are gone with it, so a Spanish page cannot print an English "/ year".
+    assert.strictEqual((src.match(/\/ year/g) || []).length, 0, 'no "/ year" may remain');
+    assert.strictEqual((src.match(/perYear/g) || []).length, 0, 'perYear is fully removed');
   });
 
   await t('a failed checkout is visible from the button that was pressed', () => {
@@ -3758,7 +3759,8 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const shipped = src.replace(/\\u([0-9a-fA-F]{4})/g,
       (_, h) => String.fromCharCode(parseInt(h, 16)));
     assert.ok(shipped.includes("ctaPaid:'Crear mi ecosistema'"), 'ES label missing');
-    assert.ok(shipped.includes(' / año'), 'ES period missing its tilde');
+    assert.ok(shipped.includes("ctaHeadline:'Tu ecosistema profesional'"), 'ES headline missing');
+    assert.ok(shipped.includes('Preparando tu cuenta'), 'ES opening indicator missing');
     assert.ok(shipped.includes('¿Ya lo tienes claro?'), 'ES mid-page prompt missing');
     assert.ok(shipped.includes('contraseña'), 'ES pinned-bar note missing its tilde');
   });
@@ -6418,8 +6420,11 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       // Every one of them must carry the same price and the same label.
       const labels = new Set(Array.from(ctas).map((b) => b.textContent.trim()));
       assert.strictEqual(labels.size, 1, 'the four buttons must say the same thing');
-      assert.ok(w.document.getElementById('sb-price').textContent.includes('59'),
-        'the pinned bar must quote the real price');
+      // No price is quoted anywhere on the teaser now — the pinned bar carries
+      // the value headline, and never a dollar figure (the tier is chosen later).
+      const sbTxt = w.document.getElementById('sb-price').textContent;
+      assert.ok(sbTxt.trim().length > 0 && !/\$|\d/.test(sbTxt),
+        'the pinned bar shows a headline, not a price');
       assert.ok(w.document.getElementById('stickybuy').classList.contains('on'),
         'the pinned bar must actually be revealed once the preview is ready');
 

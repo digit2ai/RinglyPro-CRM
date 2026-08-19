@@ -210,7 +210,19 @@ transition:transform .28s cubic-bezier(.4,0,.2,1)}
 color:#f0d5a6;border-radius:999px;padding:4px 11px;font-family:var(--mono);font-size:11px;
 letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px}
 .sb-note.test{color:#f0d5a6}
-@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+/* Big in-progress overlay while the account/checkout opens. The redirect can
+   take a moment; without this the page looks frozen after the tap. */
+.opening-ov{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px;
+  background:rgba(6,8,14,.86);backdrop-filter:blur(10px);opacity:0;pointer-events:none;
+  transition:opacity .25s ease}
+.opening-ov.on{opacity:1;pointer-events:auto}
+.opening-ov .spin{width:72px;height:72px;border-radius:50%;
+  border:5px solid rgba(255,255,255,.14);border-top-color:#8b5cf6;border-right-color:#ec4899;
+  animation:spin .9s linear infinite}
+.opening-ov .ot{font-size:22px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.opening-ov .os{font-family:var(--mono);font-size:13px;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}.opening-ov .spin{animation-duration:2s}}
 `;
 
 
@@ -315,25 +327,25 @@ var T=LANG==='es'
      elapsed:'transcurrido',remaining:'tiempo restante aproximado',almost:'Casi listo',
      // --- the subscribe controls -------------------------------------
      ctaPaid:'Crear mi ecosistema', ctaFree:'Crear mi cuenta',
-     perYear:' / a\u00f1o', freePrice:'Gratis mientras estamos en vista previa',
      topSub:'Todo lo que sigue se construy\u00f3 a partir de tu hoja de vida. '+
             'Puedes crear tu cuenta desde aqu\u00ed, desde la mitad o desde el final.',
      midHead:'\u00bfYa lo tienes claro?',
      sbNotePaid:'Pago seguro, luego tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
      sbNoteFree:'Sin pago. Solo tu contrase\u00f1a y qu\u00e9 deben buscar tus agentes.',
-     opening:'Abriendo\u2026',
+     opening:'Abriendo\u2026', openingBig:'Preparando tu cuenta\u2026',
+     ctaHeadline:'Tu ecosistema profesional',
      testChip:'Modo de prueba', testNote:'Modo de prueba: no se cobra ninguna tarjeta.',
      ctaFail:'No pudimos abrir el siguiente paso. Int\u00e9ntalo de nuevo.'}
   : {step:'Step',of:'of',left:'left',over:'Taking longer than usual \u2014 still working',
      elapsed:'elapsed',remaining:'estimated time remaining',almost:'Almost there',
      ctaPaid:'Build my ecosystem', ctaFree:'Build my account',
-     perYear:' / year', freePrice:'Free while we are in preview',
      topSub:'Everything below was built from your resume. '+
             'You can create your account from here, from the middle, or from the end.',
      midHead:'Seen enough?',
      sbNotePaid:'Secure checkout, then your password and what your agents should hunt for.',
      sbNoteFree:'No payment. Just your password and what your agents should hunt for.',
-     opening:'Opening\u2026',
+     opening:'Opening\u2026', openingBig:'Setting up your account\u2026',
+     ctaHeadline:'Your career ecosystem',
      testChip:'Test mode', testNote:'Test mode \u2014 no card is charged.',
      ctaFail:'We could not open the next step. Please try again.'};
 
@@ -421,9 +433,10 @@ function render(){
   // another would be the worst possible bug in this file.
   var c=(s.cta)||{price_usd:null,includes:[],non_renewal:''};
   var CTA_LABEL=c.price_usd?T.ctaPaid:T.ctaFree;
-  var PRICE_HTML=c.price_usd
-    ? '$'+c.price_usd+'<em>'+T.perYear+'</em>'
-    : T.freePrice;
+  // NO PRICE ON THE TEASER. Pricing is chosen later in the plan picker (Free /
+  // Search / Landed), so a single fixed yearly figure here is stale and
+  // misleading. The prominent slot now carries a value headline, not a number.
+  var PRICE_HTML=T.ctaHeadline;
   var SB_NOTE=c.price_usd?T.sbNotePaid:T.sbNoteFree;
 
   var TEST=TEST_MODE||Boolean(c.test_mode);
@@ -532,12 +545,9 @@ function render(){
 
   h+=open(8,c.headline||'Build my ecosystem');
   h+=TEST_CHIP;
-  // A price is shown only when there is one. With payment switched off the
-  // block would otherwise read "$null / year".
-  if(c.price_usd)
-    h+='<div class="price">$'+c.price_usd+'<span style="font-size:17px;color:var(--mut)">'+T.perYear+'</span></div>';
-  else
-    h+='<div class="price" style="font-size:26px">'+esc(T.freePrice)+'</div>';
+  // No price here either — the plan (Free / Search / Landed) is chosen in the
+  // picker after this button. Show the value headline, not a stale number.
+  h+='<div class="price" style="font-size:26px">'+esc(T.ctaHeadline)+'</div>';
   h+='<ul class="inc">'+(c.includes||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
   // BOTTOM \u2014 the full pitch. Same class, same handler as the other three.
   h+='<button class="btn primary cta" id="buy" type="button" data-cta="bottom" '+
@@ -668,17 +678,34 @@ function checkout(){
   doCheckout();
 }
 
+// A full-screen "we're working on it" state, so the wait after the tap — the
+// account gets created and the next page fetched — never looks frozen. It stays
+// up through the redirect and is only taken down if something goes wrong.
+function showOpening(){
+  var ov=document.getElementById('openingov');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='openingov'; ov.className='opening-ov';
+    ov.innerHTML='<div class="spin"></div><div class="ot">'+esc(T.opening)+'</div>'+
+      '<div class="os">'+esc(T.openingBig)+'</div>';
+    document.body.appendChild(ov);
+  }
+  // next frame so the transition runs
+  requestAnimationFrame(function(){ ov.classList.add('on'); });
+}
+function hideOpening(){ var ov=document.getElementById('openingov'); if(ov) ov.classList.remove('on'); }
+
 function doCheckout(){
   if(CTA_BUSY)return;
   var out=document.getElementById('buyout');
   if(out) out.textContent=T.opening;
   ctaBusy(true);
+  showOpening();
   fetch(API_BASE+'/api/v1/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({teaser_token:TOKEN, plan:chosenPlan()})})
     .then(function(r){return r.json();}).then(function(j){
       if(j.build_url){location.href=j.build_url;return;}   // no payment: straight to the form
       if(j.url){location.href=j.url;return;}               // Stripe, when enabled
-      ctaBusy(false);
+      ctaBusy(false); hideOpening();
       var msg=j.error||T.ctaFail;
       if(out) out.textContent=msg;
       toast(msg);
