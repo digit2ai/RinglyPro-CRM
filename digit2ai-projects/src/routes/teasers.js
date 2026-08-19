@@ -604,35 +604,39 @@ button:disabled{opacity:.45;cursor:default}
 .d2plan-timeline b{font-size:1.25rem;color:var(--cyan)}
 .d2flash{animation:d2flash 1s ease}
 @keyframes d2flash{0%{box-shadow:0 0 0 2px rgba(124,92,255,.55)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
-/* Changed-section highlight. The pane used to flash as a whole, which told you
-   something moved but never what, so a one-line edit was invisible until you
-   reread the plan. Now only the blocks that actually changed light up, the first
-   one is scrolled to, and new list items are marked individually. */
+/* Changed-section highlight — YELLOW, because that is the colour people read as
+   "look here". The first version used the brand violet on a dark navy card and
+   was so low-contrast the change may as well not have been marked. It also does
+   NOT time out: the whole point is to still be visible when you look up. Each
+   new edit rebuilds the pane, which clears the previous marks on its own. */
 .d2plan-block.d2chg,.d2plan-timeline-wrap.d2chg{position:relative;border-radius:12px;
-  background:linear-gradient(90deg,rgba(124,92,255,.16),rgba(34,211,238,.07) 60%,transparent);
-  box-shadow:inset 3px 0 0 var(--accent-violet,#7c5cff);padding-left:14px;margin-left:-14px;
-  animation:d2chgIn .5s ease}
-@keyframes d2chgIn{from{background-color:rgba(124,92,255,.34);transform:translateX(-3px)}to{transform:none}}
-.d2plan-block.d2chg>h3::after{content:attr(data-chg);margin-left:9px;font-size:10.5px;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;color:#0a0a12;background:linear-gradient(90deg,#22d3ee,#7c5cff);
-  padding:2px 7px;border-radius:999px;vertical-align:middle}
-.d2plan-list li.d2new{background:rgba(34,211,238,.11);box-shadow:inset 2px 0 0 var(--accent-cyan,#22d3ee);
-  border-radius:8px;padding-left:8px;margin-left:-8px;animation:d2chgIn .5s ease}
+  background:linear-gradient(90deg,rgba(250,204,21,.20),rgba(250,204,21,.07) 65%,transparent);
+  box-shadow:inset 4px 0 0 #facc15;padding-left:16px;margin-left:-16px;
+  animation:d2chgIn .55s ease}
+@keyframes d2chgIn{0%{background-color:rgba(250,204,21,.42)}60%{background-color:rgba(250,204,21,.26)}100%{background-color:transparent}}
+.d2plan-block.d2chg>h3::after{content:attr(data-chg);margin-left:9px;font-size:10.5px;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;color:#1c1600;background:#facc15;
+  padding:2px 8px;border-radius:999px;vertical-align:middle}
+/* An edited or added bullet is marked on its own, so the eye lands on the line
+   that moved rather than on the list that contains it. */
+.d2plan-list li.d2new{background:rgba(250,204,21,.17);box-shadow:inset 3px 0 0 #facc15;
+  border-radius:8px;padding:6px 8px 6px 10px;margin-left:-10px;animation:d2chgIn .55s ease}
+.d2plan-list li.d2new::marker{color:#facc15}
 .d2chg-fade{transition:background 1.2s ease,box-shadow 1.2s ease}
-.d2chg-jump{display:inline-block;margin-left:8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
-  border:0;border-radius:999px;padding:3px 10px;background:linear-gradient(90deg,#22d3ee,#7c5cff);color:#06101f}
+.d2chg-jump{display:inline-block;margin-left:8px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;
+  border:0;border-radius:999px;padding:3px 10px;background:#facc15;color:#1c1600}
 .d2chg-jump:hover{filter:brightness(1.08)}
 /* Jump bar — appears only when more than one section changed. */
 .d2jump{position:sticky;top:8px;z-index:6;display:none;align-items:center;gap:10px;flex-wrap:wrap;
-  background:rgba(20,27,41,.94);border:1px solid var(--line,#243049);border-radius:999px;
+  background:rgba(28,22,0,.94);border:1px solid rgba(250,204,21,.55);border-radius:999px;
   padding:7px 8px 7px 14px;margin:0 0 14px;font-size:13px;backdrop-filter:blur(8px)}
 .d2jump.on{display:flex}
-.d2jump b{color:var(--txt,#e9eef7);font-weight:700}
-.d2jump .sp{color:var(--mut,#8a98b0)}
-.d2jump button{font:inherit;font-weight:600;cursor:pointer;border-radius:999px;padding:5px 12px;
-  border:1px solid var(--line,#243049);background:transparent;color:var(--txt,#e9eef7)}
-.d2jump button:hover{border-color:var(--accent-cyan,#22d3ee);color:var(--accent-cyan,#22d3ee)}
-.d2jump .go{background:linear-gradient(90deg,#22d3ee,#7c5cff);color:#06101f;border:0}
+.d2jump b{color:#facc15;font-weight:800}
+.d2jump .sp{color:#c9bd86}
+.d2jump button{font:inherit;font-weight:700;cursor:pointer;border-radius:999px;padding:5px 12px;
+  border:1px solid rgba(250,204,21,.5);background:transparent;color:#facc15}
+.d2jump button:hover{background:rgba(250,204,21,.14)}
+.d2jump .go{background:#facc15;color:#1c1600;border:0}
 @media(prefers-reduced-motion:reduce){.d2plan-block.d2chg,.d2plan-list li.d2new{animation:none}}
 /* Plan Copilot chat */
 .d2chat{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card),var(--bg2));overflow:hidden}
@@ -1035,7 +1039,15 @@ body.tw-on .tw-side{display:flex}
 
   var fadeTimer=null, jumpMarks=[], jumpAt=0;
   function jumpEl(){ return document.getElementById('d2jump'); }
-  function hideJump(){ var j=jumpEl(); if(j) j.classList.remove('on'); jumpMarks=[]; }
+  // Dismiss now clears the marks as well as the bar — with the highlight no longer
+  // timing out, hiding only the bar would leave the plan permanently painted.
+  function hideJump(){
+    var j=jumpEl(); if(j) j.classList.remove('on');
+    jumpMarks.forEach(function(el){ el.classList.remove('d2chg'); });
+    var bx=document.getElementById('d2plan-body');
+    if(bx) Array.prototype.forEach.call(bx.querySelectorAll('li.d2new'), function(li){ li.classList.remove('d2new'); });
+    jumpMarks=[];
+  }
   // Scroll the changed section into view inside the plan pane. block:'center' so
   // the change lands where the eye already is, not glued under the sticky bar.
   function goTo(marks, i){
@@ -1119,13 +1131,10 @@ body.tw-on .tw-side{display:flex}
     if(!marked.length){ hideJump(); return; }
     showJump(marked, changes);
     goTo(marked, 0);
-    // The highlight is a pointer, not decoration: it fades on its own so the plan
-    // reads clean again, while the jump bar stays until the next turn.
+    // No auto-fade. The mark has to still be there when you look back at the pane,
+    // and the next edit rebuilds the pane anyway, which clears it. Dismiss on the
+    // jump bar clears it by hand.
     clearTimeout(fadeTimer);
-    fadeTimer = setTimeout(function(){
-      marked.forEach(function(el){ el.classList.add('d2chg-fade'); el.classList.remove('d2chg'); });
-      box.querySelectorAll('li.d2new').forEach(function(li){ li.classList.add('d2chg-fade'); li.classList.remove('d2new'); });
-    }, 9000);
     var cb = document.getElementById('d2plan-cta-btn');
     if(cb) cb.onclick = function(){
       var bk = document.getElementById('ts-book-btn');
