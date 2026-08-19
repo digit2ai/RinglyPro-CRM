@@ -330,34 +330,43 @@
 
   // ── Voz Dalia (Edge TTS) con respaldo navegador ──
   var i=0, started=false, synth=window.speechSynthesis, bvoice=null;
-  var audioCache={}, currentAudio=null, neuralOK=true, loadToken=0;
-  function ttsUrl(idx){
-    var key='d|'+idx; if(audioCache[key]) return Promise.resolve(audioCache[key]);
+  var audioCache={}, currentAudio=null, loadToken=0;
+  // SIEMPRE Dalia (es-MX-DaliaNeural) para TODAS las diapositivas. Un reintento por
+  // diapositiva; solo esa diapositiva usa la voz del navegador si Dalia falla de verdad,
+  // y la siguiente vuelve a intentar Dalia (sin interruptor global).
+  function ttsFetch(idx){
     return fetch(TTS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SLIDES[idx].narr,voice:TTS_VOICE})})
       .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
-      .then(function(b){if(!b||b.size<200)throw new Error('empty');var u=URL.createObjectURL(b);audioCache[key]=u;return u;});
+      .then(function(b){if(!b||b.size<200)throw new Error('empty');return URL.createObjectURL(b);});
   }
+  function ttsUrl(idx){
+    var key='d|'+idx; if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    if(audioCache['p|'+idx]) return audioCache['p|'+idx];
+    var p=ttsFetch(idx).catch(function(){ return ttsFetch(idx); }).then(function(u){ audioCache[key]=u; return u; });
+    audioCache['p|'+idx]=p; return p;
+  }
+  function prefetchAll(){ for(var k=0;k<SLIDES.length;k++){ ttsUrl(k).catch(function(){}); } }
   function stopAudio(){ if(currentAudio){try{currentAudio.pause();}catch(e){}currentAudio=null;} if(synth)synth.cancel(); }
   var advTimer=null;
   function dwell(idx){ return Math.max(4500, SLIDES[idx].narr.split(/\s+/).length*360); }
   function scheduleNext(delay){ clearTimeout(advTimer); if(!el('autoplay').checked||i>=SLIDES.length-1) return; advTimer=setTimeout(function(){ if(el('autoplay').checked && i<SLIDES.length-1) go(i+1); }, delay||1000); }
-  function vind(on){ el('voiceInd').className='voice-ind'+(on?' buffering':''); el('voiceTxt').textContent=on?'Voz: Dalia · cargando…':(neuralOK?'Voz: Dalia':'Voz: navegador'); }
+  function vind(state){ el('voiceInd').className='voice-ind'+(state==='load'?' buffering':''); el('voiceTxt').textContent=state==='load'?'Voz: Dalia · cargando…':(state==='browser'?'Voz: navegador':'Voz: Dalia'); }
   function pickBV(){ if(!synth)return; var vs=synth.getVoices(); bvoice=vs.filter(function(v){return /^es/i.test(v.lang);})[0]||vs[0]||null; }
   if(synth){ pickBV(); synth.onvoiceschanged=pickBV; }
   function bspeak(t){ if(!synth){setPlay(false);return;} var u=new SpeechSynthesisUtterance(t); if(bvoice)u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-ES'; u.rate=1; u.onend=function(){setPlay(false,true);scheduleNext(1000);}; synth.speak(u); setPlay(true); }
+  function fallback(idx,tok){ if(tok!==loadToken||idx!==i) return; vind('browser'); bspeak(SLIDES[idx].narr); }
   function speak(idx){
     stopAudio();
     if(el('muteChk').checked||!el('autoNarr').checked){ setPlay(false); scheduleNext(dwell(idx)); return; }
-    if(!neuralOK){ bspeak(SLIDES[idx].narr); return; }
-    var tok=++loadToken; vind(true);
+    var tok=++loadToken; vind('load');
     ttsUrl(idx).then(function(url){
-      if(tok!==loadToken||idx!==i) return; vind(false);
+      if(tok!==loadToken||idx!==i) return; vind('dalia');
       currentAudio=new Audio(url);
       currentAudio.onended=function(){setPlay(false,true);scheduleNext(1000);};
-      currentAudio.onerror=function(){neuralOK=false;vind(false);bspeak(SLIDES[idx].narr);};
-      currentAudio.play().then(function(){setPlay(true);}).catch(function(){neuralOK=false;vind(false);bspeak(SLIDES[idx].narr);});
+      currentAudio.onerror=function(){ fallback(idx,tok); };
+      currentAudio.play().then(function(){setPlay(true);}).catch(function(){ fallback(idx,tok); });
       if(i+1<SLIDES.length) ttsUrl(i+1).catch(function(){});
-    }).catch(function(){ if(tok!==loadToken)return; neuralOK=false; vind(false); bspeak(SLIDES[idx].narr); });
+    }).catch(function(){ fallback(idx,tok); });
   }
   function setPlay(playing, ended){ var b=el('play'); if(el('muteChk').checked){b.innerHTML='Voz silenciada';return;} if(ended){b.innerHTML='▶ Repetir voz';return;} b.innerHTML=playing?'❚❚ Pausar voz':'▶ Reanudar voz'; }
 
@@ -388,6 +397,7 @@
     ['bar','prog','stage','dock','hint'].forEach(function(id){el(id).classList.remove('hidden');});
     el('dots').innerHTML=SLIDES.map(function(_,k){return '<button class="dot" data-k="'+k+'"></button>';}).join('');
     go(0);
+    prefetchAll();
   }
 
   el('start').addEventListener('click', begin);
