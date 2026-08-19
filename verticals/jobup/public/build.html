@@ -295,7 +295,7 @@ body.hasgo .wrap{padding-bottom:140px}
 var API='{{BASE}}',Q=new URLSearchParams(location.search),TOKEN=Q.get('t')||'';
 // Stripe puts the checkout session id in the return URL. It is how the server
 // confirms the payment with Stripe directly, without waiting on the webhook.
-var CS=Q.get('cs')||'',PAID=Q.get('paid')==='1';
+var CS=Q.get('cs')||'',PAID=Q.get('paid')==='1',FREE=Q.get('free')==='1';
 function $(i){return document.getElementById(i);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -451,12 +451,21 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
       '<a href="'+API+'/app" style="color:#f5d79c;font-weight:700">Sign in instead</a>.';
     setGo(true); lockHint('You already have an account');
   }
+  var es=(j.language==='es');
+  var lede=es?'Dos últimos pasos: cómo inicias sesión y qué deben buscar tus agentes.'
+             :'Two last things: how you sign in, and what your agents should hunt for.';
   if(j.billing_disabled){
     $('footnote').textContent='No payment is required. '+
       'You review and submit every application yourself — JobUp never applies on your behalf.';
+  } else if(FREE){
+    // FREE has no payment — never say "Payment received", it causes confusion/panic.
+    document.querySelector('h1').textContent=es?'Ya casi está — termina tu cuenta gratis'
+                                                :'Almost done — finish your free account';
+    document.querySelector('.lede').textContent=lede;
   } else if(PAID||j.paid){
-    document.querySelector('h1').textContent='Payment received — finish your account';
-    document.querySelector('.lede').textContent='Two last things: how you sign in, and what your agents should hunt for.';
+    document.querySelector('h1').textContent=es?'Pago recibido — termina tu cuenta'
+                                                :'Payment received — finish your account';
+    document.querySelector('.lede').textContent=lede;
   }
  }).catch(function(){ $('who').textContent='Could not reach the server. Refresh to try again.'; });
 
