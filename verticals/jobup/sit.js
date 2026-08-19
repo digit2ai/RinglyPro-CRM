@@ -4223,7 +4223,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(priv.includes('Anthropic') && priv.includes('Stripe') && priv.includes('SendGrid') && priv.includes('Render'),
       'every subprocessor must be named');
     assert.ok(/scrypt/.test(priv) && /salted hash/i.test(priv), 'security specifics must be stated');
-    assert.ok(priv.includes('privacy@digit2ai.com'), 'a contact for rights requests');
+    assert.ok(priv.includes('info@digit2ai.com'), 'a contact for rights requests');
     const terms = pwaSvc.page('terms.html', '');
     assert.ok(/No employment guarantee/i.test(terms) && /AS IS/.test(terms),
       'the no-guarantee and as-is disclaimers must be present');
