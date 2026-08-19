@@ -66,7 +66,18 @@
     tr{ page-break-inside:avoid; }
     .pay{ padding:11px 13px; margin-top:12px; page-break-inside:avoid; }
     .pay-row b{ font-size:13px; }
+    .dalia{ display:none !important; }
   }
+  /* Dalia — explicación por voz */
+  .dalia{ margin:20px 34px 0; display:flex; align-items:center; gap:16px; background:linear-gradient(120deg,#0f2620,#0a1613); border:1px solid #234036; border-radius:14px; padding:16px 18px; }
+  .dorb{ width:52px; height:52px; flex:0 0 52px; border-radius:50%; border:none; cursor:pointer; background:radial-gradient(circle at 35% 30%,#c9f4d8,#3fc06a 48%,#0e7d7f 100%); color:#04120c; font-size:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 0 rgba(63,192,106,.5); }
+  .dorb.speaking{ animation:dpulse 1.3s ease-in-out infinite; }
+  @keyframes dpulse{ 0%{box-shadow:0 0 0 0 rgba(63,192,106,.5)} 70%{box-shadow:0 0 0 16px rgba(63,192,106,0)} 100%{box-shadow:0 0 0 0 rgba(63,192,106,0)} }
+  .dmeta{ flex:1; min-width:0; color:#eaf1ec; }
+  .dh{ font-weight:800; font-size:14.5px; }
+  .ds{ font-size:12px; color:#9db3ab; margin-top:3px; }
+  .dbtn{ font:inherit; font-weight:700; font-size:13px; background:#12494b; color:#eafff4; border:none; border-radius:10px; padding:9px 16px; cursor:pointer; white-space:nowrap; }
+  @media(max-width:640px){ .dalia{ margin:16px 18px 0; } }
 </style>
 </head>
 <body>
@@ -88,6 +99,16 @@
     <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Desarrollo, IA y operación de plataforma</div></div>
     <div class="col"><div class="k">Facturar a</div><div class="v"><b>Planea</b> (planea.ai)<br>Producto: App de finanzas personales (PWA)<br>Atención: Propietario del proyecto</div></div>
     <div class="col"><div class="k">Periodo</div><div class="v">Construcción inicial: 10–18 jul 2026 · 73 commits<br>Mejoras: 19 jul–19 ago 2026 · 52 commits · 42 archivos</div></div>
+  </div>
+
+  <!-- DALIA · explicación por voz -->
+  <div class="dalia">
+    <button class="dorb" id="dPlay" aria-label="Reproducir la explicación de Dalia">&#9654;</button>
+    <div class="dmeta">
+      <div class="dh">Escucha la explicación de esta factura</div>
+      <div class="ds" id="dStatus">Dalia, la voz de Planea, te explica cómo se calcula el precio. Toca para reproducir.</div>
+    </div>
+    <button class="dbtn" id="dPause" hidden>&#10073;&#10073; Pausar</button>
   </div>
 
   <!-- SECTION A -->
@@ -181,5 +202,48 @@
   </div>
 </div>
 <div class="print"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+<script>
+(function(){
+  var SEG=[
+    'Hola, soy Dalia, la voz de Planea. Te explico en un minuto cómo se calcula esta factura y qué incluye.',
+    'El desarrollo se cobra por el tiempo real de construcción, lo que llamamos wall time, a una tarifa competitiva para el mercado colombiano. Es un modelo transparente: cada componente lleva sus horas y su importe, y todo suma a la vista.',
+    'Pero hay algo importante que conviene entender: ese tiempo de construcción es menos de la mitad del trabajo total. Para llegar a escribir la primera línea de código hacen falta reuniones con el cliente, el levantamiento de los requerimientos de negocio, y la traducción de esos requerimientos a especificaciones técnicas.',
+    'Y después del desarrollo viene todo lo que garantiza la calidad: la solución de errores, las pruebas extensivas de regresión, las pruebas funcionales, las pruebas de integración o S I T, las pruebas de aceptación del usuario o U A T, y las pruebas de estrés. Todo ese proceso está incluido y no se factura aparte.',
+    'En números: la construcción inicial fueron veintisiete horas, y las mejoras de julio a agosto sumaron veintidós horas más. En total, cuarenta y nueve horas de desarrollo. Esta factura está pagada en su totalidad y el saldo es cero.',
+    'En resumen: pagas por el tiempo real de construcción, a un precio competitivo, y detrás recibes todo el proceso completo que lo hace posible. Gracias por confiar en Digit2AI.'
+  ];
+  var play=document.getElementById('dPlay'), pause=document.getElementById('dPause'),
+      orb=document.getElementById('dPlay'), status=document.getElementById('dStatus');
+  var audio=null, cache={}, seg=0, running=false, tok=0;
+  function fetchSeg(n){
+    if(cache[n]) return Promise.resolve(cache[n]);
+    return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SEG[n],voice:'dalia'})})
+      .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
+      .then(function(b){var u=URL.createObjectURL(b);cache[n]=u;return u;});
+  }
+  function setState(on){ if(on){orb.classList.add('speaking');orb.innerHTML='&#10073;&#10073;';pause.hidden=false;} else {orb.classList.remove('speaking');orb.innerHTML='&#9654;';} }
+  function playFrom(n){
+    if(n>=SEG.length){ finish(); return; }
+    seg=n; running=true; var my=++tok;
+    status.textContent='Dalia · reproduciendo… ('+(n+1)+' de '+SEG.length+')';
+    setState(true);
+    if(n+1<SEG.length) fetchSeg(n+1).catch(function(){});
+    fetchSeg(n).then(function(url){
+      if(my!==tok) return;
+      audio=new Audio(url);
+      audio.onended=function(){ if(my===tok) playFrom(n+1); };
+      audio.onerror=function(){ status.textContent='No se pudo cargar la voz. Intenta de nuevo.'; setState(false); running=false; };
+      audio.play().catch(function(){ status.textContent='Toca de nuevo para reproducir.'; setState(false); running=false; });
+    }).catch(function(){ status.textContent='No se pudo cargar la voz. Intenta de nuevo.'; setState(false); running=false; });
+  }
+  function finish(){ running=false; setState(false); pause.hidden=true; status.textContent='Explicación terminada. Toca para repetir.'; seg=0; }
+  play.addEventListener('click', function(){
+    if(running && audio && !audio.paused){ audio.pause(); running=false; setState(false); status.textContent='En pausa. Toca para continuar.'; return; }
+    if(!running && audio && audio.paused && audio.currentTime>0 && seg<SEG.length){ audio.play(); running=true; setState(true); status.textContent='Dalia · reproduciendo… ('+(seg+1)+' de '+SEG.length+')'; return; }
+    playFrom(seg>=SEG.length?0:seg);
+  });
+  pause.addEventListener('click', function(){ if(audio && !audio.paused){ audio.pause(); running=false; setState(false); status.textContent='En pausa. Toca el orbe para continuar.'; } else if(audio){ audio.play(); running=true; setState(true); } });
+})();
+</script>
 </body>
 </html>
