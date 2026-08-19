@@ -189,14 +189,28 @@
 
   function render(){
     var s = SLIDES[i];
-    var src = IMG_DIR + s.file + '.' + IMG_EXT;
-    el('frame').innerHTML = '<img src="'+src+'" alt="'+s.step+'" onerror="this.parentNode.innerHTML=\'<div class=&quot;ph&quot;><b>Falta la imagen '+s.file+'.'+IMG_EXT+'</b><small>Sube tu captura de \\'+s.step.replace(/'/g,'').replace(/"/g,'')+'\\' como '+s.file+'.'+IMG_EXT+' a /planea-onboarding/</small></div>\'">'
-      + '<div class="stitle">'+s.title+'</div>';
+    var frame = el('frame');
+    function addTitle(){ var st=document.createElement('div'); st.className='stitle'; st.textContent=s.title; frame.appendChild(st); }
+    frame.innerHTML = '';
+    var img = new Image();
+    img.alt = s.step;
+    img.onerror = function(){
+      frame.innerHTML = '';
+      var ph = document.createElement('div'); ph.className='ph';
+      var b = document.createElement('b'); b.textContent = 'Falta la imagen ' + s.file + '.' + IMG_EXT;
+      var sm = document.createElement('small'); sm.textContent = 'Sube tu captura de ' + s.step + ' como ' + s.file + '.' + IMG_EXT + ' a /planea-onboarding/';
+      ph.appendChild(b); ph.appendChild(sm); frame.appendChild(ph); addTitle();
+    };
+    img.src = IMG_DIR + s.file + '.' + IMG_EXT;
+    frame.appendChild(img);
+    addTitle();
+
     el('stepPill').textContent = 'Paso ' + (i+1) + ' · ' + s.step;
     el('count').textContent = (i+1) + ' / ' + SLIDES.length;
     el('prog').style.width = ((i+1)/SLIDES.length*100) + '%';
-    var mayaSvg = s.file===14 ? '<svg class="maya" viewBox="0 0 48 48"><use href="#parrot"/></svg>' : '';
-    el('narr').innerHTML = mayaSvg + '<span>' + s.narr + '</span>';
+    var narr = el('narr');
+    narr.innerHTML = s.file===14 ? '<svg class="maya" viewBox="0 0 48 48"><use href="#parrot"/></svg>' : '';
+    var span = document.createElement('span'); span.textContent = s.narr; narr.appendChild(span);
     el('prev').disabled = (i===0); el('next').disabled = (i===SLIDES.length-1);
     Array.prototype.forEach.call(document.querySelectorAll('.dot'), function(d,k){ d.className='dot'+(k===i?' on':''); });
     speak(i);
