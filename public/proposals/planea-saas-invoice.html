@@ -76,9 +76,9 @@
     <div class="doc">
       <h1>FACTURA DE SERVICIOS</h1>
       <div class="meta">
-        No. <b>DGT-PLANEA-2026-07</b><br>
-        Fecha de emisión: 18 de julio de 2026<br>
-        Vencimiento: 1 de agosto de 2026<br>
+        No. <b>DGT-PLANEA-2026-08</b><br>
+        Fecha de emisión: 19 de agosto de 2026<br>
+        Vencimiento: 2 de septiembre de 2026<br>
         Moneda: USD
       </div>
     </div>
@@ -87,12 +87,12 @@
   <div class="parties">
     <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Desarrollo, IA y operación de plataforma</div></div>
     <div class="col"><div class="k">Facturar a</div><div class="v"><b>Planea</b> (planea.ai)<br>Producto: App de finanzas personales (PWA)<br>Atención: Propietario del proyecto</div></div>
-    <div class="col"><div class="k">Periodo</div><div class="v">Construcción: 10–18 jul 2026<br>73 commits · 6 días · 62 archivos<br>Operación: mensual desde ago 2026</div></div>
+    <div class="col"><div class="k">Periodo</div><div class="v">Construcción inicial: 10–18 jul 2026 · 73 commits<br>Mejoras: 19 jul–19 ago 2026 · 52 commits · 42 archivos<br>Operación: mensual desde ago 2026</div></div>
   </div>
 
   <!-- SECTION A -->
   <div class="sec">
-    <h2>A · Desarrollo de la plataforma <span class="pill">Cargo único</span></h2>
+    <h2>A · Construcción inicial de la plataforma <span class="pill">Cargo único · 10–18 jul 2026</span></h2>
     <p class="lead">Tiempo real de construcción (modelo IA-asistido). Desglose por componente.</p>
     <table>
       <thead><tr><th>Componente</th><th class="num">Horas</th><th class="num">Importe</th></tr></thead>
@@ -116,9 +116,36 @@
     </div>
   </div>
 
+  <!-- SECTION A-2 · MEJORAS -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <h2>B · Mejoras y nuevas funciones <span class="pill">Cargo único · 19 jul–19 ago 2026</span></h2>
+    <p class="lead">Trabajo adicional desde la primera factura (modelo IA-asistido). Desglose por componente.</p>
+    <table>
+      <thead><tr><th>Componente</th><th class="num">Horas</th><th class="num">Importe</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Reconstrucción del onboarding "Planea Score" a la especificación MVP<small>Motor de 9 preguntas por tramos, insight de textos literales, rangos y colores, CTA por pilar, glosario de cumplimiento, tab Planea Score con histórico y barra de progreso, prueba de aceptación automatizada (=61)</small></td><td class="num">4.5</td><td class="num">$630</td></tr>
+        <tr><td class="desc">Seguridad para auditoría externa (ISO 27001 / SOC 2)<small>Cabeceras de seguridad, ficha de cumplimiento /seguridad, límite de intentos compartido entre instancias + bloqueo por cuenta, restablecimiento de contraseña por correo con remitente verificado</small></td><td class="num">3</td><td class="num">$420</td></tr>
+        <tr><td class="desc">Maya v2 — confirmación antes de guardar (HU-2), registro por chat y recorrido guiado por buckets en orden<small>Preguntas guiadas por pilar débil; ingresos → gastos → ahorro → … de forma secuencial</small></td><td class="num">3</td><td class="num">$420</td></tr>
+        <tr><td class="desc">Sprint UX (sesión de trabajo)<small>Bloqueo de navegación durante el onboarding, avatar de Maya en escritorio, animación de onda en móvil, CTAs de resultado, ajustes de marca y copy</small></td><td class="num">2.5</td><td class="num">$350</td></tr>
+        <tr><td class="desc">Insight desplegable por pilar + registro guiado paso a paso (asistente)<small>Cada pilar despliega su lectura; "Mesada" en fuentes de ingreso; Seguros con valor asegurado + prima mensual</small></td><td class="num">2.5</td><td class="num">$350</td></tr>
+        <tr><td class="desc">Puntaje Unificado (HU-1) — 7 pilares con proxy del survey<small>Un solo número real + proxy por dimensión, con traza por pilar y reemplazo por dato real; tope 99</small></td><td class="num">2</td><td class="num">$280</td></tr>
+        <tr><td class="desc">Voz de Maya reactivada (Dalia / Ava) + reenfoque como asistente de captura<small>Edge TTS sin llave; guardarraíl de cumplimiento (guía, no asesora)</small></td><td class="num">1.5</td><td class="num">$210</td></tr>
+        <tr><td class="desc">Fusión de Mi Patrimonio dentro de Salud Financiera + KPIs accionables<small>Cada pilar registra dinero y sube el puntaje; simplificación de navegación</small></td><td class="num">1.5</td><td class="num">$210</td></tr>
+        <tr><td class="desc">Landing "Conoce a Maya", página de Novedades con voz y estabilización<small>Autenticación multidominio, cookies, prefetch landing → app, correcciones de sesión</small></td><td class="num">1.5</td><td class="num">$210</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="tot"><td>Subtotal mejoras</td><td class="num">22 h</td><td class="num">$3.080</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">
+      <b>Tiempo real de las mejoras:</b> 22 horas (modelo IA-asistido). 52 commits · 42 archivos · ~4.700 líneas netas desde la primera factura.
+      <br><br><b>Total de desarrollo acumulado:</b> 27 h (construcción inicial) + 22 h (mejoras) = <b>49 horas · $6.860</b>.
+    </div>
+  </div>
+
   <!-- SECTION B -->
   <div class="sec" style="border-top:1px solid var(--line)">
-    <h2>B · Operación SaaS <span class="pill ok">Recurrente mensual</span></h2>
+    <h2>C · Operación SaaS <span class="pill ok">Recurrente mensual</span></h2>
     <p class="lead">Infraestructura, consumo de IA en producción y operación gestionada con disponibilidad 99.9%.</p>
     <table>
       <thead><tr><th>Concepto</th><th>Proveedor</th><th class="num">Mensual</th></tr></thead>
@@ -144,8 +171,9 @@
       <div class="card">
         <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Total desarrollo (único)</div>
         <table style="margin-top:8px">
-          <tr><td>Subtotal</td><td class="num">$3.780,00</td></tr>
-          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total a pagar</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$3.780,00</td></tr>
+          <tr><td>A · Construcción inicial (27 h)</td><td class="num">$3.780,00</td></tr>
+          <tr><td>B · Mejoras jul–ago (22 h)</td><td class="num">$3.080,00</td></tr>
+          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total a pagar (49 h)</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$6.860,00</td></tr>
         </table>
       </div>
       <div class="card">
