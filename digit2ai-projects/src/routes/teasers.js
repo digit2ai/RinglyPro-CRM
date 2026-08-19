@@ -324,7 +324,7 @@ publicRouter.post('/:token/plan/chat', async (req, res) => {
            client_plan_at = NOW(), updated_at = NOW() WHERE token = :token`,
         { replacements: { token: row.token, plan: JSON.stringify(out.plan), versions: JSON.stringify(versions.slice(-20)), chat: JSON.stringify(trimmedChat) } }
       );
-      return res.json({ mode: 'edit', reply: out.reply, plan: out.plan, diff: out.diff, refined: true, is_simulated: out.is_simulated });
+      return res.json({ mode: 'edit', reply: out.reply, plan: out.plan, diff: out.diff, changes: out.changes || null, refined: true, is_simulated: out.is_simulated });
     }
 
     // answer / clarify — persist only the transcript.
@@ -604,6 +604,36 @@ button:disabled{opacity:.45;cursor:default}
 .d2plan-timeline b{font-size:1.25rem;color:var(--cyan)}
 .d2flash{animation:d2flash 1s ease}
 @keyframes d2flash{0%{box-shadow:0 0 0 2px rgba(124,92,255,.55)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
+/* Changed-section highlight. The pane used to flash as a whole, which told you
+   something moved but never what, so a one-line edit was invisible until you
+   reread the plan. Now only the blocks that actually changed light up, the first
+   one is scrolled to, and new list items are marked individually. */
+.d2plan-block.d2chg,.d2plan-timeline-wrap.d2chg{position:relative;border-radius:12px;
+  background:linear-gradient(90deg,rgba(124,92,255,.16),rgba(34,211,238,.07) 60%,transparent);
+  box-shadow:inset 3px 0 0 var(--accent-violet,#7c5cff);padding-left:14px;margin-left:-14px;
+  animation:d2chgIn .5s ease}
+@keyframes d2chgIn{from{background-color:rgba(124,92,255,.34);transform:translateX(-3px)}to{transform:none}}
+.d2plan-block.d2chg>h3::after{content:attr(data-chg);margin-left:9px;font-size:10.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#0a0a12;background:linear-gradient(90deg,#22d3ee,#7c5cff);
+  padding:2px 7px;border-radius:999px;vertical-align:middle}
+.d2plan-list li.d2new{background:rgba(34,211,238,.11);box-shadow:inset 2px 0 0 var(--accent-cyan,#22d3ee);
+  border-radius:8px;padding-left:8px;margin-left:-8px;animation:d2chgIn .5s ease}
+.d2chg-fade{transition:background 1.2s ease,box-shadow 1.2s ease}
+.d2chg-jump{display:inline-block;margin-left:8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  border:0;border-radius:999px;padding:3px 10px;background:linear-gradient(90deg,#22d3ee,#7c5cff);color:#06101f}
+.d2chg-jump:hover{filter:brightness(1.08)}
+/* Jump bar — appears only when more than one section changed. */
+.d2jump{position:sticky;top:8px;z-index:6;display:none;align-items:center;gap:10px;flex-wrap:wrap;
+  background:rgba(20,27,41,.94);border:1px solid var(--line,#243049);border-radius:999px;
+  padding:7px 8px 7px 14px;margin:0 0 14px;font-size:13px;backdrop-filter:blur(8px)}
+.d2jump.on{display:flex}
+.d2jump b{color:var(--txt,#e9eef7);font-weight:700}
+.d2jump .sp{color:var(--mut,#8a98b0)}
+.d2jump button{font:inherit;font-weight:600;cursor:pointer;border-radius:999px;padding:5px 12px;
+  border:1px solid var(--line,#243049);background:transparent;color:var(--txt,#e9eef7)}
+.d2jump button:hover{border-color:var(--accent-cyan,#22d3ee);color:var(--accent-cyan,#22d3ee)}
+.d2jump .go{background:linear-gradient(90deg,#22d3ee,#7c5cff);color:#06101f;border:0}
+@media(prefers-reduced-motion:reduce){.d2plan-block.d2chg,.d2plan-list li.d2new{animation:none}}
 /* Plan Copilot chat */
 .d2chat{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--card),var(--bg2));overflow:hidden}
 .d2chat-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
@@ -688,6 +718,7 @@ body.tw-on .tw-side{display:flex}
     <div class="d2studio-sub">${es ? 'Lee el plan a la izquierda y conversa con el copiloto a la derecha para ajustarlo.' : 'Read the plan on the left, chat with the copilot on the right to shape it.'}</div>
     <div class="d2studio">
       <div class="d2studio-chat" id="d2plan-right"></div>
+      <div class="d2jump" id="d2jump" aria-live="polite"></div>
       <div class="d2studio-plan" id="d2plan-body">
         <div class="d2plan-load">
           <div class="d2plan-pgtxt">${es ? 'Construyendo tu plan con IA…' : 'Building your AI plan…'}</div>
@@ -994,10 +1025,48 @@ body.tw-on .tw-side{display:flex}
   function stopProgress(){ if(pgTimer){ clearInterval(pgTimer); pgTimer=null; } var f=document.getElementById('d2pg-fill'), p=document.getElementById('d2pg-pct'); if(f) f.style.width='100%'; if(p) p.textContent='100%'; }
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function listOf(arr, render){ return '<ul class="d2plan-list">'+arr.map(render).join('')+'</ul>'; }
-  function block(title, inner){ return inner ? '<div class="d2plan-block"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
+  // Every block carries the plan field it renders, so a change can be located in
+  // the DOM without guessing from the heading text (which is localized).
+  function block(title, inner, field){ return inner ? '<div class="d2plan-block" data-field="'+(field||'')+'"><h3>'+esc(title)+'</h3>'+inner+'</div>' : ''; }
+  // Items added by the last edit are marked so the eye lands on the new bullet
+  // instead of rereading the list.
+  var NEWITEMS = {};
+  function isNew(field, text){ var a=NEWITEMS[field]; return a && a.indexOf(String(text))>=0 ? ' class="d2new"' : ''; }
 
-  function render(plan){
+  var fadeTimer=null, jumpMarks=[], jumpAt=0;
+  function jumpEl(){ return document.getElementById('d2jump'); }
+  function hideJump(){ var j=jumpEl(); if(j) j.classList.remove('on'); jumpMarks=[]; }
+  // Scroll the changed section into view inside the plan pane. block:'center' so
+  // the change lands where the eye already is, not glued under the sticky bar.
+  function goTo(marks, i){
+    if(!marks.length) return;
+    jumpAt = ((i % marks.length) + marks.length) % marks.length;
+    var el = marks[jumpAt];
+    try{ el.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){ el.scrollIntoView(); }
+    var j=jumpEl(); var c=j && j.querySelector('.d2jump-at');
+    if(c) c.textContent=(jumpAt+1)+'/'+marks.length;
+  }
+  // Only shown when more than one section moved — with a single change the scroll
+  // already did the job and a control bar would just be noise.
+  function showJump(marks, changes){
+    var j=jumpEl(); if(!j) return;
+    jumpMarks=marks;
+    if(marks.length < 2){ j.classList.remove('on'); return; }
+    var lost=0; if(changes && changes.removed) Object.keys(changes.removed).forEach(function(k){ lost += changes.removed[k]; });
+    j.innerHTML = '<b>'+T.changedN.replace('{n}', marks.length)+'</b>'
+      + (lost ? '<span class="sp">'+T.removedN.replace('{n}', lost)+'</span>' : '')
+      + '<span class="d2jump-at sp">1/'+marks.length+'</span>'
+      + '<button type="button" class="go" id="d2jump-next">'+T.nextChange+'</button>'
+      + '<button type="button" id="d2jump-dismiss">'+T.dismiss+'</button>';
+    j.classList.add('on');
+    j.querySelector('#d2jump-next').onclick=function(){ goTo(jumpMarks, jumpAt+1); };
+    j.querySelector('#d2jump-dismiss').onclick=hideJump;
+  }
+
+  // changes = { fields:[], added:{field:[items]}, removed:{field:n}, count:n }
+  function render(plan, changes){
     stopProgress();
+    NEWITEMS = (changes && changes.added) ? changes.added : {};
     var L = plan.labels || {};
     var f = plan.feasibility || {};
     var html = '';
@@ -1006,30 +1075,57 @@ body.tw-on .tw-side{display:flex}
         + '<div class="d2feas-meta"><div class="d2feas-label">'+esc(f.label)+'</div>'
         + '<div class="d2feas-bar"><div class="d2feas-fill" style="width:'+(f.score*10)+'%"></div></div></div></div>';
     }
-    if(plan.problem) html += block(L.problem, '<p>'+esc(plan.problem)+'</p>');
-    if(plan.why) html += block(L.why, '<p>'+esc(plan.why)+'</p>');
-    if(plan.v1) html += block(L.v1, '<p>'+esc(plan.v1)+'</p>');
+    if(plan.problem) html += block(L.problem, '<p>'+esc(plan.problem)+'</p>', 'problem');
+    if(plan.why) html += block(L.why, '<p>'+esc(plan.why)+'</p>', 'why');
+    if(plan.v1) html += block(L.v1, '<p>'+esc(plan.v1)+'</p>', 'v1');
     if(plan.build_includes && plan.build_includes.length)
-      html += block(L.includes, listOf(plan.build_includes, function(c){ return '<li>'+esc(c)+'</li>'; }));
+      html += block(L.includes, listOf(plan.build_includes, function(c){ return '<li'+isNew('build_includes',c)+'>'+esc(c)+'</li>'; }), 'build_includes');
     if(plan.timeline_weeks)
-      html += block(L.timeline, '<div class="d2plan-timeline"><b>'+plan.timeline_weeks+'</b> '+esc(L.weeks||'weeks')+'</div>');
+      html += block(L.timeline, '<div class="d2plan-timeline"><b>'+plan.timeline_weeks+'</b> '+esc(L.weeks||'weeks')+'</div>', 'timeline_weeks');
     if(plan.considerations && plan.considerations.length)
-      html += block(L.cons, listOf(plan.considerations, function(c){ return '<li>'+esc(c)+'</li>'; }));
+      html += block(L.cons, listOf(plan.considerations, function(c){ return '<li'+isNew('considerations',c)+'>'+esc(c)+'</li>'; }), 'considerations');
     if(plan.landscape && plan.landscape.length)
-      html += block(L.land, listOf(plan.landscape, function(c){ return '<li>'+esc(c)+'</li>'; }));
+      html += block(L.land, listOf(plan.landscape, function(c){ return '<li'+isNew('landscape',c)+'>'+esc(c)+'</li>'; }), 'landscape');
     if(plan.risks && plan.risks.length)
       html += block(L.risks, listOf(plan.risks, function(r){ return '<li><span class="rk">'+esc(r.risk)+'</span>'+(r.detail?'<span class="dt">'+esc(r.detail)+'</span>':'')+'</li>'; }));
     if(plan.mitigations && plan.mitigations.length)
       html += block(L.mit, listOf(plan.mitigations, function(m){ return '<li>'+esc(m)+'</li>'; }));
     if(plan.need_from_you && plan.need_from_you.length)
-      html += block(L.need, listOf(plan.need_from_you, function(n){ return '<li>'+esc(n)+'</li>'; }));
+      html += block(L.need, listOf(plan.need_from_you, function(n){ return '<li'+isNew('need_from_you',n)+'>'+esc(n)+'</li>'; }), 'need_from_you');
     if(plan.gate && plan.gate.note){
       html += '<div class="d2plan-note">'+esc(plan.gate.note)
         + '<div class="d2plan-cta"><button type="button" id="d2plan-cta-btn">'+esc(plan.gate.cta)+' &rarr;</button></div></div>';
     }
     if(plan.disclaimer) html += '<div class="d2plan-disc">'+esc(plan.disclaimer)+'</div>';
     box.innerHTML = html;
-    box.classList.remove('d2flash'); void box.offsetWidth; box.classList.add('d2flash');
+    NEWITEMS = {};
+    var fields = (changes && changes.fields) ? changes.fields : [];
+    if(!fields.length){
+      // Nothing to point at (first render, undo, reset): keep the old whole-pane
+      // flash so the pane still acknowledges it refreshed.
+      box.classList.remove('d2flash'); void box.offsetWidth; box.classList.add('d2flash');
+      hideJump();
+      return;
+    }
+    box.classList.remove('d2flash');
+    var marked = [];
+    fields.forEach(function(f){
+      var el = box.querySelector('[data-field="'+f+'"]');
+      if(!el) return;
+      el.classList.add('d2chg');
+      var h = el.querySelector('h3'); if(h) h.setAttribute('data-chg', T.changed);
+      marked.push(el);
+    });
+    if(!marked.length){ hideJump(); return; }
+    showJump(marked, changes);
+    goTo(marked, 0);
+    // The highlight is a pointer, not decoration: it fades on its own so the plan
+    // reads clean again, while the jump bar stays until the next turn.
+    clearTimeout(fadeTimer);
+    fadeTimer = setTimeout(function(){
+      marked.forEach(function(el){ el.classList.add('d2chg-fade'); el.classList.remove('d2chg'); });
+      box.querySelectorAll('li.d2new').forEach(function(li){ li.classList.add('d2chg-fade'); li.classList.remove('d2new'); });
+    }, 9000);
     var cb = document.getElementById('d2plan-cta-btn');
     if(cb) cb.onclick = function(){
       var bk = document.getElementById('ts-book-btn');
@@ -1117,9 +1213,18 @@ body.tw-on .tw-side{display:flex}
       if(res && res.error){ addMsg('a', res.error); return; }
       if(res && res.reply){ addMsg('a', res.reply); history.push({role:'assistant',text:res.reply}); }
       if(res && res.mode==='edit' && res.plan){
-        render(res.plan);
-        if(res.diff){ var d=addMsg('d', T.updated+': '+res.diff); }
-        section.scrollIntoView({behavior:'smooth',block:'nearest'});
+        render(res.plan, res.changes);
+        if(res.diff){
+          var d=addMsg('d', T.updated+': '+res.diff);
+          // The receipt in the chat is also the way back to the change, for when
+          // the highlight has faded or the reader has scrolled away.
+          if(res.changes && res.changes.count){
+            var jb=document.createElement('button');
+            jb.type='button'; jb.className='d2chg-jump'; jb.textContent=T.seeChange;
+            jb.onclick=function(){ if(jumpMarks.length) goTo(jumpMarks, 0); };
+            d.appendChild(jb);
+          }
+        }
       }
     }).catch(function(){ typing.remove(); addMsg('a', ES?'Error de conexión.':'Connection error.'); })
       .then(function(){ sending=false; sendBtn.disabled=false; inputEl.focus(); });

@@ -57,6 +57,47 @@ function applyEdit(current, proposed) {
   return next;
 }
 
+// Compute what ACTUALLY changed by comparing the plan before and after the merge.
+// Deterministic and server-side on purpose: the model also volunteers a prose
+// "diff" sentence, but that is narration and can be wrong or vague. The Studio
+// highlights sections based on this, so it has to be the truth, not a claim.
+//
+// Returns { fields: [v1, ...], added: { build_includes: [...] },
+//           removed: { considerations: 2 }, count: n }
+// `added` is per-item so a list can highlight the new bullets rather than
+// lighting up the whole list. Removals have nowhere to render in place, so they
+// are reported as a count for the summary line.
+function diffPlans(before, after) {
+  const out = { fields: [], added: {}, removed: {}, count: 0 };
+  if (!before || !after) return out;
+
+  for (const f of EDITABLE) {
+    const a = before[f], b = after[f];
+
+    if (Array.isArray(a) || Array.isArray(b)) {
+      const prev = Array.isArray(a) ? a.map(String) : [];
+      const next = Array.isArray(b) ? b.map(String) : [];
+      const prevSet = new Set(prev);
+      const nextSet = new Set(next);
+      const gained = next.filter(x => !prevSet.has(x));
+      const lost = prev.filter(x => !nextSet.has(x));
+      // Same members in a different order still counts as a change worth showing.
+      const reordered = gained.length === 0 && lost.length === 0 && prev.join(String.fromCharCode(31)) !== next.join(String.fromCharCode(31));
+      if (gained.length || lost.length || reordered) {
+        out.fields.push(f);
+        if (gained.length) out.added[f] = gained;
+        if (lost.length) out.removed[f] = lost.length;
+      }
+      continue;
+    }
+
+    if (String(a == null ? "" : a) !== String(b == null ? "" : b)) out.fields.push(f);
+  }
+
+  out.count = out.fields.length;
+  return out;
+}
+
 function heuristicReply(lang) {
   const es = String(lang || 'en').startsWith('es');
   return {
@@ -147,7 +188,14 @@ ${msg}`;
         console.error('[planCopilot] edit blocked, leaks: %j', leaks);
         return { ok: true, mode: 'answer', reply: es ? 'No pude aplicar ese cambio. ¿Intentamos de otra forma?' : 'I couldn\'t apply that change — want to try it another way?', plan: null, diff: null, cost_estimate_usd: cost, model: HAIKU_MODEL };
       }
-      return { ok: true, mode: 'edit', reply, plan: nextPlan, diff: String(parsed.diff || '').slice(0, 300), cost_estimate_usd: cost, model: HAIKU_MODEL };
+      const changes = diffPlans(plan, nextPlan);
+      // An 'edit' that changed nothing is an answer wearing an edit costume.
+      // Telling the Studio to highlight zero sections would flash the pane for
+      // no reason, so it is reported honestly as an answer.
+      if (!changes.count) {
+        return { ok: true, mode: 'answer', reply, plan: null, diff: null, changes: null, cost_estimate_usd: cost, model: HAIKU_MODEL };
+      }
+      return { ok: true, mode: 'edit', reply, plan: nextPlan, diff: String(parsed.diff || '').slice(0, 300), changes, cost_estimate_usd: cost, model: HAIKU_MODEL };
     }
     return { ok: true, mode, reply, plan: null, diff: null, cost_estimate_usd: cost, model: HAIKU_MODEL };
   } catch (err) {
