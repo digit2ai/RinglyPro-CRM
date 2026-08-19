@@ -234,24 +234,24 @@
   };
   var PILAR_INSIGHT = {
     fondo_emergencia: {
-      bajo: 'Tu fondo de emergencia está en un nivel bajo: hoy no alcanzaría a cubrir tus gastos si dejaras de recibir ingresos. Es la base que amortigua cualquier imprevisto.',
-      medio: 'Tu fondo de emergencia va tomando forma, pero aún no cubre del todo el tiempo que suele tomar resolver un imprevisto.',
-      alto: 'Tu fondo de emergencia es sólido: ya cuentas con un respaldo disponible que te da margen frente a imprevistos.',
+      bajo: 'Aún no tienes un colchón que cubra tus gastos ante un imprevisto.',
+      medio: 'Ya tienes algo de colchón, pero todavía no cubre un imprevisto completo.',
+      alto: 'Tienes un buen respaldo para imprevistos.',
     },
     flujo_caja: {
-      bajo: 'Tu flujo de caja está ajustado: lo que gastas está muy cerca de lo que recibes, o por encima. Queda poco margen para avanzar.',
-      medio: 'Tu flujo de caja te deja algo de margen cada mes, aunque todavía es estrecho.',
-      alto: 'Tu flujo de caja es holgado: gastas bastante menos de lo que recibes, lo que te da margen para construir.',
+      bajo: 'Gastas casi todo lo que recibes; te queda muy poco margen.',
+      medio: 'Te queda algo de margen cada mes, aunque es ajustado.',
+      alto: 'Te sobra margen: gastas bastante menos de lo que ganas.',
     },
     salud_deuda: {
-      bajo: 'Tu deuda pesa alto en tu mes: una parte importante de tu ingreso ya está comprometida en cuotas.',
-      medio: 'Tu deuda es manejable, aunque compromete una parte de tu ingreso cada mes.',
-      alto: 'Tu deuda no compromete una parte determinante de tu ingreso hoy.',
+      bajo: 'Tus cuotas se llevan buena parte de tu ingreso.',
+      medio: 'Tu deuda es manejable, aunque compromete parte de tu ingreso.',
+      alto: 'Tu deuda no pesa demasiado en tu ingreso hoy.',
     },
     estabilidad: {
-      bajo: 'La relación entre la estabilidad de tu ingreso y tus responsabilidades muestra tensión: tu ingreso varía o sostienes a varias personas.',
-      medio: 'Tu estabilidad es intermedia: tu ingreso es más o menos predecible y tus responsabilidades son moderadas.',
-      alto: 'Tu ingreso es predecible y tus responsabilidades están dentro de lo que tu estructura sostiene: una base firme para planear.',
+      bajo: 'Tu ingreso varía o sostienes a varias personas; eso mete tensión.',
+      medio: 'Tu ingreso es más o menos predecible y tus cargas, moderadas.',
+      alto: 'Tu ingreso es estable y predecible: buena base para planear.',
     },
   };
   function band(score) { return score < 35 ? 'bajo' : score <= 70 ? 'medio' : 'alto'; }

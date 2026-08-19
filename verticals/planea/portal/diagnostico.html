@@ -129,20 +129,18 @@
   .dg-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3fc06a,#17a6a6);transition:width 1s ease}
   .dg-prog-cap{font-size:12.5px;color:var(--mut);margin-top:9px;line-height:1.45}
 
-  /* Desglose por pilares — desplegable (un insight por pilar) */
+  /* Desglose por pilares — score + lectura corta de Maya (siempre visible) */
   .dg-pex-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;text-align:left}
-  .dg-pex{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-  .dg-pex-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;color:var(--txt)}
+  .dg-pex{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
+  .dg-pex-top{display:flex;align-items:center;gap:10px}
   .dg-pex-nm{flex:1;text-align:left;font-weight:700;font-size:14.5px}
   .dg-pex-w{color:var(--mut);font-weight:500;font-size:12px}
   .dg-pex-v{font-family:'Inter',sans-serif;font-weight:800;font-size:16px}
-  .dg-pex-chev{color:var(--mut);font-size:12px;transition:transform .2s;margin-left:2px}
-  .dg-pex.open .dg-pex-chev{transform:rotate(180deg)}
   .dg-pex-bar{height:7px;border-radius:99px;background:var(--line);margin-top:9px;overflow:hidden}
   .dg-pex-fill{height:100%;border-radius:99px;transition:width .7s ease}
-  .dg-pex-body{max-height:0;overflow:hidden;transition:max-height .28s ease;opacity:.0}
-  .dg-pex.open .dg-pex-body{max-height:260px;opacity:1;margin-top:10px}
-  .dg-pex-body p{font-size:13.5px;line-height:1.55;color:var(--mut)}
+  .dg-pex-maya{display:flex;align-items:flex-start;gap:9px;margin-top:11px}
+  .dg-pex-av{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:52% 8%;flex-shrink:0;background:#fff}
+  .dg-pex-maya span{font-size:13px;line-height:1.5;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -159,8 +157,8 @@
 </div></div>
 <script src="/planea/portal/planea-nav.js?v=60" defer></script>
 <script src="/planea/portal/planea-sb.js?v=60" defer></script>
-<script src="/planea/portal/planea-score-engine.js?v=61" defer></script>
-<script src="/planea/portal/planea-diagnostico.js?v=61" defer></script>
+<script src="/planea/portal/planea-score-engine.js?v=62" defer></script>
+<script src="/planea/portal/planea-diagnostico.js?v=62" defer></script>
 <script src="/planea/portal/maya-chat.js?v=60" defer></script>
 </body>
 </html>

@@ -135,14 +135,13 @@
       var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
       var pins = E.pillarInsight(k, v);
       var col = v < 50 ? 'var(--red)' : 'var(--green)';
-      return '<div class="dg-pex" data-pex="' + k + '">' +
-        '<button class="dg-pex-head" data-pex-btn="' + k + '">' +
+      return '<div class="dg-pex">' +
+        '<div class="dg-pex-top">' +
           '<span class="dg-pex-nm">' + esc(meta.label) + ' <span class="dg-pex-w">· ' + esc(meta.peso) + '</span></span>' +
           '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span>' +
-          '<span class="dg-pex-chev" aria-hidden="true">▾</span>' +
-        '</button>' +
+        '</div>' +
         '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + v + '%;background:' + col + '"></div></div>' +
-        '<div class="dg-pex-body"><p>' + esc(pins) + '</p></div>' +
+        '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(pins) + '</span></div>' +
       '</div>';
     }).join('');
 
@@ -156,7 +155,7 @@
       '<div class="dg-res-badge" style="border-color:' + color + ';color:' + color + '">' + esc(r.rango.name) + '</div>' +
       progHtml +
       '<div class="dg-insight">' + apertura + '</div>' +
-      '<div class="dg-res-sub">DESGLOSE POR PILARES · toca cada uno para ver el detalle</div>' +
+      '<div class="dg-res-sub">DESGLOSE POR PILARES · con la lectura de Maya</div>' +
       '<div class="dg-pex-list">' + pilaresHtml + '</div>' +
       '<div class="dg-insight">' + cierre + '</div>' +
       // "Próximo paso": inicia el registro guiado paso a paso (ingresos -> ... -> retiro).
