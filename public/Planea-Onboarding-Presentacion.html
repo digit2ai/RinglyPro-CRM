@@ -160,21 +160,41 @@
 
   /* ══ MÓVIL ══ */
   @media(max-width:768px){
-    .bar{height:52px;padding:0 14px;gap:10px}
-    .brand{font-size:16px}.brand svg{width:20px;height:20px}
+    .bar{height:48px;padding:0 12px;gap:8px}
+    .brand{font-size:15px}.brand svg{width:19px;height:19px}
     .step-pill,.voice-ind,.hint{display:none}
     .count{font-size:12px}
-    .prog{top:52px}
-    .stage{top:52px;bottom:184px;padding:12px}
-    .dock{height:184px;padding:0 12px 12px}
-    .narr{font-size:14px;min-height:42px;margin-bottom:10px;line-height:1.45}
-    .ctrls{gap:8px}
-    button.c{padding:10px 12px;font-size:13px}
-    button.play{min-width:0;flex:1 1 auto;max-width:220px;font-size:14px}
-    .toggle{font-size:11.5px;margin-left:0}
-    .dots{margin-top:10px;gap:5px}
+    .prog{top:48px}
+    .stage{top:48px;bottom:150px;padding:8px}
+    .dock{height:150px;padding:0 12px 12px}
+    .narr{font-size:13.5px;min-height:38px;margin-bottom:9px;line-height:1.4;-webkit-line-clamp:3}
+    .ctrls{gap:7px}
+    button.c{padding:9px 11px;font-size:12.5px}
+    button.play{min-width:0;flex:1 1 auto;max-width:200px;font-size:13.5px}
+    .toggle{font-size:11px;margin-left:0}
+    .dots{margin-top:9px;gap:5px}
     .cover h1{font-size:30px}.cover p{font-size:14px}.cover .logo{font-size:26px}
   }
+  /* Lienzo VERTICAL en móvil (440×820): sin barra lateral, tarjeta a todo el ancho */
+  .fit.mob .screen{flex-direction:column;width:440px;height:820px}
+  .fit.mob .sb{display:none}
+  .fit.mob .mn{flex:1;padding:22px 20px;overflow:hidden}
+  .fit.mob .mn-eye{font-size:11px}
+  .fit.mob .mn-h1{font-size:27px;margin:6px 0 6px}
+  .fit.mob .mn-lede{display:none}
+  .fit.mob .qcard,.fit.mob .icard{max-width:100%;margin-top:14px;padding:20px}
+  .fit.mob .rcard{max-width:100%;margin-top:12px;padding:22px}
+  .fit.mob .qq{font-size:20px}
+  .fit.mob .opt{padding:14px 15px;font-size:15px}
+  .fit.mob .mfab{right:16px;bottom:14px}
+  .fit.mob .mfab .pav{width:46px;height:46px}
+  .fit.mob .mfab .mf1{font-size:14px}.fit.mob .mfab .mf2{font-size:11px}
+  .fit.mob .lnd-top{padding:16px 22px}
+  .fit.mob .lnd-body h1{font-size:48px}
+  .fit.mob .lnd-body p{font-size:17px;margin-top:20px}
+  .fit.mob .lnd-cta{font-size:17px;padding:15px 28px;margin-top:32px}
+  .fit.mob .auth h2{font-size:27px}
+  .fit.mob .auth .field,.fit.mob .auth .go2{width:min(380px,90%)}
 </style>
 </head>
 <body>
@@ -330,7 +350,7 @@
 
   // ── Voz Dalia (Edge TTS) con respaldo navegador ──
   var i=0, started=false, synth=window.speechSynthesis, bvoice=null;
-  var audioCache={}, currentAudio=null, loadToken=0;
+  var audioCache={}, currentAudio=null, loadToken=0, player=null;
   // SIEMPRE Dalia (es-MX-DaliaNeural) para TODAS las diapositivas. Un reintento por
   // diapositiva; solo esa diapositiva usa la voz del navegador si Dalia falla de verdad,
   // y la siguiente vuelve a intentar Dalia (sin interruptor global).
@@ -346,7 +366,7 @@
     audioCache['p|'+idx]=p; return p;
   }
   function prefetchAll(){ for(var k=0;k<SLIDES.length;k++){ ttsUrl(k).catch(function(){}); } }
-  function stopAudio(){ if(currentAudio){try{currentAudio.pause();}catch(e){}currentAudio=null;} if(synth)synth.cancel(); }
+  function stopAudio(){ if(player){try{player.pause();}catch(e){}} if(synth)synth.cancel(); }
   var advTimer=null;
   function dwell(idx){ return Math.max(4500, SLIDES[idx].narr.split(/\s+/).length*360); }
   function scheduleNext(delay){ clearTimeout(advTimer); if(!el('autoplay').checked||i>=SLIDES.length-1) return; advTimer=setTimeout(function(){ if(el('autoplay').checked && i<SLIDES.length-1) go(i+1); }, delay||1000); }
@@ -361,10 +381,12 @@
     var tok=++loadToken; vind('load');
     ttsUrl(idx).then(function(url){
       if(tok!==loadToken||idx!==i) return; vind('dalia');
-      currentAudio=new Audio(url);
-      currentAudio.onended=function(){setPlay(false,true);scheduleNext(1000);};
-      currentAudio.onerror=function(){ fallback(idx,tok); };
-      currentAudio.play().then(function(){setPlay(true);}).catch(function(){ fallback(idx,tok); });
+      if(!player) player=new Audio();
+      currentAudio=player;
+      player.onended=function(){setPlay(false,true);scheduleNext(1000);};
+      player.onerror=function(){ fallback(idx,tok); };
+      player.src=url; try{player.currentTime=0;}catch(e){}
+      player.play().then(function(){setPlay(true);}).catch(function(){ fallback(idx,tok); });
       if(i+1<SLIDES.length) ttsUrl(i+1).catch(function(){});
     }).catch(function(){ fallback(idx,tok); });
   }
@@ -372,10 +394,14 @@
 
   function applyFit(){
     var stage=el('stage'); var fit=document.querySelector('.fit'); if(!fit) return;
-    var availW=stage.clientWidth-40, availH=stage.clientHeight-40;
-    var scale=Math.min(availW/1180, availH/740, 1.5);
+    var mob=window.innerWidth<=768;
+    var W=mob?440:1180, H=mob?820:740;              // móvil: lienzo vertical, se ve más grande
+    fit.classList.toggle('mob',mob);
+    fit.style.width=W+'px'; fit.style.height=H+'px';
+    var availW=stage.clientWidth-(mob?10:40), availH=stage.clientHeight-(mob?10:40);
+    var scale=Math.min(availW/W, availH/H, mob?2:1.5);
     fit.style.transform='scale('+scale+')';
-    el('frame').style.width=(1180*scale)+'px'; el('frame').style.height=(740*scale)+'px';
+    el('frame').style.width=(W*scale)+'px'; el('frame').style.height=(H*scale)+'px';
   }
   function render(){
     clearTimeout(advTimer);
@@ -394,6 +420,10 @@
   function go(n){ i=Math.max(0,Math.min(SLIDES.length-1,n)); render(); }
   function begin(){
     started=true; el('cover').classList.add('hidden');
+    // Desbloquear el audio DENTRO del gesto del usuario (clave en móvil). Un mismo
+    // elemento de audio se reutiliza en TODAS las diapositivas, así iOS/Android no
+    // bloquean la reproducción de la 2.ª diapositiva en adelante.
+    try{ player=new Audio(); player.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='; player.play().then(function(){player.pause();player.currentTime=0;}).catch(function(){}); }catch(e){}
     ['bar','prog','stage','dock','hint'].forEach(function(id){el(id).classList.remove('hidden');});
     el('dots').innerHTML=SLIDES.map(function(_,k){return '<button class="dot" data-k="'+k+'"></button>';}).join('');
     go(0);
