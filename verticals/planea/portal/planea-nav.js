@@ -87,6 +87,14 @@
         writeCache(norm);
         try { window.dispatchEvent(new CustomEvent('planea:modules', { detail: norm })); } catch (e) {}
       }
+      // Sembrar pasos guiados completados/omitidos (cross-device) desde el backend.
+      if (pd && pd.steps && typeof pd.steps === 'object') {
+        var cur = readStepsCache(), merged = {}, kk;
+        for (kk in cur) merged[kk] = cur[kk];
+        for (kk in pd.steps) if (pd.steps[kk] === true) merged[kk] = true;
+        writeStepsCache(merged);
+        try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: merged })); } catch (e) {}
+      }
       return pd;
     }).catch(function () {});
   }
@@ -107,6 +115,79 @@
     keys: MODULE_KEYS, isActive: isActive, activeSet: activeSet, activeCount: activeCount,
     setModule: setModule, reload: syncModulesFromDB
   };
+
+  // ── Guided sequential steps (post-onboarding) ───────────────────────────────
+  // Tras el puntaje, Planea OBLIGA a llenar los 7 pilares EN ORDEN. Solo el paso
+  // actual (y los ya completados) quedan habilitados; los siguientes se bloquean
+  // con candado hasta terminar el anterior. Es el mismo orden fijo que sigue Maya
+  // en el backend (BUCKET_FLOW en server.cjs), así la app y la voz van a la par.
+  var STEP_ORDER = ['ingreso', 'gastos', 'ahorro', 'deuda', 'inversion', 'seguros', 'retiro'];
+  var LS_STEPS = 'planea-steps';
+  // Un pilar cuenta como "con datos" si su lista del perfil trae al menos un ítem.
+  var STEP_PROFILE_KEY = {
+    ingreso: 'ingresos', gastos: 'gastos', ahorro: 'ahorros',
+    deuda: 'pasivos', inversion: 'inversiones', seguros: 'seguros', retiro: 'retiro'
+  };
+  function readStepsCache() { try { return JSON.parse(localStorage.getItem(LS_STEPS)) || {}; } catch (e) { return {}; } }
+  function writeStepsCache(m) { try { localStorage.setItem(LS_STEPS, JSON.stringify(m)); } catch (e) {} }
+  // done por DATOS reales del perfil (cross-device: el dato mismo es la señal)
+  function stepHasData(k) {
+    var p = window.PLANEA_PROFILE; if (!p) return false;
+    var arr = p[STEP_PROFILE_KEY[k]];
+    return Array.isArray(arr) && arr.length > 0;
+  }
+  // Pasos visibles = los 7 filtrados por módulos activos (ingreso/gastos siempre).
+  function visibleSteps() {
+    return STEP_ORDER.filter(function (k) { return MODULE_KEYS.indexOf(k) < 0 || isActive(k); });
+  }
+  // "done" = completado/omitido EXPLÍCITO (pegajoso). Los pilares que YA traían datos
+  // se siembran como done una sola vez cuando llega el perfil (seedStepsFromProfile),
+  // para no re-bloquear a usuarios existentes y, a la vez, permitir que un usuario
+  // nuevo agregue varios ítems al pilar actual sin que el paso "avance" solo.
+  function stepDone(k) { return readStepsCache()[k] === true; }
+  function seedStepsFromProfile() {
+    if (!window.PLANEA_PROFILE) return;
+    var m = readStepsCache(), changed = false;
+    STEP_ORDER.forEach(function (k) { if (m[k] !== true && stepHasData(k)) { m[k] = true; changed = true; } });
+    if (changed) { writeStepsCache(m); try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: m })); } catch (e) {} }
+  }
+  function currentStep() {
+    var vis = visibleSteps();
+    for (var i = 0; i < vis.length; i++) { if (!stepDone(vis[i])) return vis[i]; }
+    return null; // todos los pasos hechos
+  }
+  // Un pilar se bloquea si va DESPUÉS del paso actual en el orden visible.
+  function isStepLocked(k) {
+    if (STEP_ORDER.indexOf(k) < 0) return false;      // no es pilar -> nunca por secuencia
+    var cur = currentStep(); if (cur == null) return false; // ya terminó todo
+    var vis = visibleSteps();
+    return vis.indexOf(k) > vis.indexOf(cur);
+  }
+  function nextStepAfter(k) {
+    var vis = visibleSteps(); var i = vis.indexOf(k);
+    for (var j = i + 1; j < vis.length; j++) { if (!stepDone(vis[j])) return vis[j]; }
+    return null;
+  }
+  function doneKeys() { return visibleSteps().filter(stepDone); }
+  function markStepDone(k) {
+    var m = readStepsCache(); m[k] = true; writeStepsCache(m);
+    try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: m })); } catch (e) {}
+    // Persistencia best-effort en progress_data.steps (como los módulos).
+    if (!mSession()) return Promise.resolve(m);
+    return mReq('GET', 'persons?select=id,user_id,progress_data&limit=1').then(function (rows) {
+      var row = (rows && rows[0]) || {}; var pd = row.progress_data || {};
+      pd.steps = m; var uid = row.user_id;
+      return mReq('PATCH', 'persons?' + (uid ? 'user_id=eq.' + uid : 'id=eq.' + row.id), { progress_data: pd });
+    }).catch(function () { return m; });
+  }
+  window.PlaneaSteps = {
+    order: STEP_ORDER, visible: visibleSteps, current: currentStep,
+    isLocked: isStepLocked, done: stepDone, doneKeys: doneKeys,
+    next: nextStepAfter, markDone: markStepDone
+  };
+  // Cuando llega el perfil real (planea-data), sembrar como "done" los pilares que ya
+  // traían datos, para que el bloqueo secuencial no re-bloquee a usuarios existentes.
+  window.addEventListener('planea:profile', function () { seedStepsFromProfile(); });
 
   var LOGO = '<svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
   // New Planea brand: white horizontal lockup (mark + wordmark). Inverts to ink on light theme via CSS.
@@ -153,12 +234,17 @@
         return !it.module || isActive(it.k);
       }).map(function (it) {
         var on = (it.k === current) ? ' on' : '';
-        var disabled = locked && it.k !== 'diagnostico';
+        // Bloqueo del onboarding (todo salvo diagnostico) O bloqueo secuencial de
+        // pilares (paso posterior al actual). Ambos deshabilitan el enlace igual.
+        var seqLocked = !locked && isStepLocked(it.k);
+        var disabled = (locked && it.k !== 'diagnostico') || seqLocked;
         var href = disabled ? '#' : (it.action === 'maya' ? '#' : BASE + it.k);
-        var plus = it.plus ? '<span class="plus">+</span>' : '';
+        // En un pilar bloqueado ocultamos el "+" y mostramos candado.
+        var plus = (it.plus && !seqLocked) ? '<span class="plus">+</span>' : '';
         var cls = (on + (disabled ? ' locked' : '')).trim();
         var attrs = disabled ? ' aria-disabled="true" tabindex="-1"' : (it.action ? ' data-action="' + it.action + '"' : '');
-        return '<a href="' + href + '"' + attrs + ' class="' + cls + '">' + svg(it.icon) + it.label + plus + (disabled ? LOCK_IC : '') + '</a>';
+        var title = seqLocked ? ' title="Completa el paso anterior para desbloquear"' : '';
+        return '<a href="' + href + '"' + attrs + title + ' class="' + cls + '">' + svg(it.icon) + it.label + plus + (disabled ? LOCK_IC : '') + '</a>';
       }).join('');
     }
     d.innerHTML =
@@ -209,6 +295,10 @@
     var dnavEl = d.querySelector('.dnav');
     function renderNav() { if (dnavEl) dnavEl.innerHTML = navHtml(); }
     window.addEventListener('planea:modules', renderNav);
+    // Re-render el drawer cuando cambian los pasos guiados o llega el perfil real
+    // (para reflejar qué pilar está desbloqueado sin recargar la página).
+    window.addEventListener('planea:steps', renderNav);
+    window.addEventListener('planea:profile', renderNav);
     syncModulesFromDB(); // pull the authoritative set from the DB, then re-render via event
 
     // ── Apply / release the onboarding lock ──

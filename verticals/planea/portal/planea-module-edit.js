@@ -47,9 +47,34 @@
         }).join('')
       : '<div class="pe-empty">Aún no has agregado ' + cfg.noun + '. Toca “+ Agregar”.</div>';
     mount.innerHTML = '<div class="pe-col"><div class="pe-head"><span>' + esc(cfg.title) +
-      '</span><button class="pe-add" data-add>+ Agregar</button></div>' + body + '</div>';
+      '</span><button class="pe-add" data-add>+ Agregar</button></div>' + body + '</div>' + continueHtml();
     // keep the page's "total above" header in sync immediately (planea-data also does on reload)
     document.querySelectorAll('[data-pl="' + totalKey() + '"]').forEach(function (el) { el.textContent = cop(total()); });
+  }
+
+  // ── Paso guiado: etiqueta legible de cada pilar para el botón "Continuar" ──
+  var STEP_LABEL = { ingreso: 'Ingresos', gastos: 'Gastos', ahorro: 'Ahorro', deuda: 'Deuda', inversion: 'Inversión', seguros: 'Seguros', retiro: 'Retiro' };
+  // Botón "Continuar" del flujo guiado: marca este paso como completado (incluso si
+  // el pilar va vacío — "no tengo") y lleva al SIGUIENTE pilar en el orden fijo. Solo
+  // aparece cuando este pilar es el paso ACTUAL del acompañamiento.
+  function continueHtml() {
+    var PS = window.PlaneaSteps; if (!PS) return '';
+    if (guidedActive()) return '';                // el flujo ?guided=1 ya trae su barra
+    if (PS.current() !== cat) return '';          // no es el paso actual -> sin CTA de avance
+    var nxt = PS.next(cat);
+    var label = items.length
+      ? (nxt ? 'Continuar a ' + (STEP_LABEL[nxt] || 'lo siguiente') : 'Terminar y ver mi Salud Financiera')
+      : (nxt ? 'No tengo, continuar a ' + (STEP_LABEL[nxt] || 'lo siguiente') : 'No tengo, terminar');
+    return '<div class="pe-nextwrap"><button class="pe-next" data-next>' + esc(label) +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>' +
+      '<div class="pe-nexthint">Planea te guía paso a paso, en orden. Completa este para desbloquear el siguiente.</div></div>';
+  }
+  function goNext() {
+    var PS = window.PlaneaSteps; if (!PS) { location.href = '/planea/portal/salud'; return; }
+    var nxt = PS.next(cat);
+    var done = PS.markDone(cat);
+    var jump = function () { location.href = nxt ? ('/planea/portal/' + nxt) : '/planea/portal/salud'; };
+    (done && done.then ? done.then(jump, jump) : jump());
   }
   function totalKey() {
     return { ingreso: 'ingreso_total', gasto: 'gasto_total', ahorro: 'ahorro_total', inversion: 'inversion_total', deuda: 'deuda_total', seguros: 'seguros_total', retiro: 'retiro_total' }[cfg.cat];
@@ -112,11 +137,16 @@
     if (t.hasAttribute('data-del')) { del(+t.getAttribute('data-del')); return; }
     if (t.hasAttribute('data-close')) { closeForm(); return; }
     if (t.hasAttribute('data-save')) { save(); return; }
+    if (t.hasAttribute('data-next')) { goNext(); return; }
   }
 
   function style() {
     var s = document.createElement('style');
-    s.textContent = '#mod-edit .pe-edit{background:none;border:none;color:var(--mut,#9db3ab);cursor:pointer;font-size:15px;padding:4px 6px;margin-left:6px}#mod-edit .pe-edit:hover{color:var(--green,#3fc06a)}';
+    s.textContent = '#mod-edit .pe-edit{background:none;border:none;color:var(--mut,#9db3ab);cursor:pointer;font-size:15px;padding:4px 6px;margin-left:6px}#mod-edit .pe-edit:hover{color:var(--green,#3fc06a)}' +
+      '#mod-edit .pe-nextwrap{margin-top:18px;display:flex;flex-direction:column;gap:8px}' +
+      '#mod-edit .pe-next{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:14px;padding:15px 20px;font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 22px rgba(63,192,106,.30)}' +
+      '#mod-edit .pe-next:active{transform:scale(.99)}#mod-edit .pe-next svg{width:20px;height:20px}' +
+      '#mod-edit .pe-nexthint{font-size:12.5px;color:var(--mut,#9db3ab);line-height:1.4;text-align:center}';
     document.head.appendChild(s);
   }
 
@@ -174,11 +204,30 @@
     document.body.appendChild(bar);
 
     function go() {
-      if (last) { location.href = '/planea/portal/salud'; return; }   // termina en Salud Financiera
-      location.href = '/planea/portal/' + GUIDED_SEQ[idx + 1] + '?guided=1';
+      // Marca este paso como completado (desbloquea el siguiente en la navegación),
+      // luego avanza. "Saltar por ahora" también completa: el flujo debe progresar.
+      var PS = window.PlaneaSteps;
+      var done = PS ? PS.markDone(cat) : null;
+      var jump = function () {
+        if (last) { location.href = '/planea/portal/salud'; return; }   // termina en Salud Financiera
+        location.href = '/planea/portal/' + GUIDED_SEQ[idx + 1] + '?guided=1';
+      };
+      (done && done.then ? done.then(jump, jump) : jump());
     }
     document.getElementById('gw-next').addEventListener('click', go);
     document.getElementById('gw-skip').addEventListener('click', go);
+  }
+
+  // Guardia anti-atajo: si el usuario llega por URL a un pilar BLOQUEADO (posterior al
+  // paso actual), lo devolvemos a su paso actual. Se ejecuta cuando ya hay perfil real
+  // (planea:profile) para no rebotar durante la carga inicial.
+  function guardLocked() {
+    var PS = window.PlaneaSteps; if (!PS || !window.PLANEA_PROFILE) return;
+    if (guidedActive()) return;                 // el flujo guiado maneja su propio orden
+    if (PS.isLocked(cat)) {
+      var cur = PS.current();
+      if (cur && cur !== cat) location.replace('/planea/portal/' + cur);
+    }
   }
 
   function boot() {
@@ -190,6 +239,11 @@
     style();
     render();
     document.addEventListener('click', onClick);
+    // El botón "Continuar" y el candado del siguiente pilar dependen del paso actual,
+    // que se resuelve cuando llega el perfil real. Re-render al cambiar pasos/perfil,
+    // y aplica la guardia anti-atajo una vez que hay datos reales.
+    window.addEventListener('planea:steps', render);
+    window.addEventListener('planea:profile', function () { render(); guardLocked(); });
     if (guidedActive()) guided();
     if (window.PlaneaSB) reload(); // load this module's rows (JWT-auth); 401 => empty
   }

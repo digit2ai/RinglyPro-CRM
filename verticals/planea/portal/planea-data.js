@@ -415,6 +415,9 @@
           return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
         });
         window.PLANEA_PROFILE = prof;
+        // Avisa a la navegación (bloqueo secuencial de pilares) y a Maya que ya hay
+        // perfil real, para derivar qué paso está desbloqueado sin recargar.
+        try { window.dispatchEvent(new CustomEvent('planea:profile', { detail: prof })); } catch (e) {}
         return prof;
       });
   }

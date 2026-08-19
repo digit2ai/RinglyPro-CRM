@@ -155,8 +155,11 @@ const BUCKET_FLOW = [
 function mayaFlowState(p) {
   const onboarded = !p.sin_diagnostico && (p.puntaje_inicial_onboarding != null || p.planea_score != null);
   const filled = Array.isArray(p.modulos_con_datos) ? p.modulos_con_datos : [];
+  // Pasos que la app ya marcó como completados/omitidos ("no tengo") en el flujo
+  // guiado secuencial. Cuentan como llenos para que Maya no los vuelva a pedir.
+  const doneSteps = Array.isArray(p.pasos_completados) ? p.pasos_completados : [];
   const hasMeta = Array.isArray(p.metas) && p.metas.length > 0;
-  const isFilled = (k) => (k === 'meta' ? hasMeta : filled.indexOf(k) >= 0);
+  const isFilled = (k) => (k === 'meta' ? hasMeta : (filled.indexOf(k) >= 0 || doneSteps.indexOf(k) >= 0));
   const pending = BUCKET_FLOW.filter((b) => !isFilled(b.k));
   const next = pending[0] || null;
   return { onboarded, filled, pending, next, allDone: onboarded && pending.length === 0 };

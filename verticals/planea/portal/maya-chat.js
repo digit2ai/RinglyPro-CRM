@@ -481,10 +481,23 @@
     var typing = opts.silentTyping ? null : addMsg('maya', 'Maya está pensando...');
     if (typing) typing.classList.add('typing');
 
+    // Alinea a Maya con el flujo guiado de la app: los pilares que el usuario ya
+    // completó/omitió ("no tengo") se pasan como pasos_completados para que Maya
+    // NO los vuelva a pedir y siga el mismo orden que muestra la navegación.
+    var prof = profile();
+    try {
+      if (window.PlaneaSteps) {
+        var norm = { gastos: 'gasto' };
+        prof = Object.assign({}, prof, {
+          pasos_completados: (window.PlaneaSteps.doneKeys() || []).map(function (k) { return norm[k] || k; })
+        });
+      }
+    } catch (e) {}
+
     fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history.slice(-12), profile: profile() })
+      body: JSON.stringify({ messages: history.slice(-12), profile: prof })
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
