@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Planea · Recorrido de Onboarding</title>
+<style>
+  :root{
+    --bg:#0a1310; --panel:#0e1a16; --card:#16211d; --line:#26332e;
+    --txt:#eaf1ec; --mut:#8a9a92; --green:#3fc06a; --teal:#17a6a6; --red:#e0714f;
+    --font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(120% 90% at 50% 0%,#12251e,#0a1310 60%);color:var(--txt);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .bar{position:fixed;top:0;left:0;right:0;height:60px;display:flex;align-items:center;gap:16px;padding:0 22px;background:rgba(10,19,16,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em}
+  .brand svg{width:22px;height:22px}
+  .step-pill{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .bar .spacer{flex:1}
+  .voice-ind{font-size:11.5px;color:var(--mut);display:inline-flex;align-items:center;gap:7px}
+  .voice-ind .dotv{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .voice-ind.buffering .dotv{background:#f4b73e;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .count{font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px;font-weight:600}
+  .prog{position:fixed;top:60px;left:0;height:3px;background:linear-gradient(90deg,var(--green),var(--teal));z-index:20;transition:width .35s ease}
+
+  .stage{position:absolute;top:60px;left:0;right:0;bottom:150px;display:flex;align-items:center;justify-content:center;padding:22px 26px}
+  .frame{position:relative;max-width:100%;max-height:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55);background:#05100c}
+  .frame img{display:block;max-width:100%;max-height:calc(100vh - 60px - 150px - 44px);object-fit:contain}
+  .ph{width:min(900px,80vw);aspect-ratio:16/10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut);text-align:center;padding:30px}
+  .ph b{color:var(--txt);font-size:17px}
+  .ph small{font-size:13px;max-width:440px;line-height:1.5}
+  .stitle{position:absolute;left:22px;bottom:16px;background:rgba(8,16,12,.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:8px 14px;font-weight:700;font-size:14px}
+
+  .dock{position:fixed;left:0;right:0;bottom:0;height:150px;background:linear-gradient(0deg,#0a1310 60%,transparent);z-index:20;display:flex;flex-direction:column;justify-content:flex-end;padding:0 26px 18px}
+  .narr{max-width:1000px;margin:0 auto 12px;text-align:center;font-size:16.5px;line-height:1.55;color:#dfe9e3;min-height:52px;display:flex;align-items:center;justify-content:center}
+  .narr .maya{width:22px;height:22px;margin-right:9px;flex-shrink:0;vertical-align:middle}
+  .ctrls{display:flex;align-items:center;justify-content:center;gap:12px;max-width:1000px;margin:0 auto;width:100%;flex-wrap:wrap}
+  button.c{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,border-color .12s}
+  button.c:hover{border-color:var(--green)}
+  button.c:active{transform:scale(.97)}
+  button.c:disabled{opacity:.4;cursor:default}
+  button.play{background:linear-gradient(90deg,var(--green),var(--teal));color:#04120c;border:none;min-width:178px;justify-content:center;font-size:15px;box-shadow:0 8px 22px rgba(63,192,106,.3)}
+  .toggle{font-size:12.5px;color:var(--mut);display:inline-flex;align-items:center;gap:7px;margin-left:6px;cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--green)}
+  .dots{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap;max-width:760px;margin-left:auto;margin-right:auto}
+  .dot{width:9px;height:9px;border-radius:50%;background:#2a3a33;border:none;cursor:pointer;padding:0}
+  .dot.on{background:var(--green);width:24px;border-radius:99px}
+  .hint{position:fixed;right:16px;bottom:6px;font-size:11px;color:#4a5a53;z-index:21}
+
+  .cover{position:fixed;inset:0;z-index:40;background:radial-gradient(120% 90% at 50% 20%,#143026,#0a1310 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:30px}
+  .cover .logo{display:flex;align-items:center;gap:12px;font-weight:800;font-size:30px;letter-spacing:-.02em}
+  .cover .logo svg{width:34px;height:34px}
+  .cover h1{font-size:40px;font-weight:800;letter-spacing:-.02em;margin:6px 0 0;text-wrap:balance}
+  .cover p{color:var(--mut);font-size:16px;max-width:540px;line-height:1.6;margin:0}
+  .cover .go{margin-top:14px;background:linear-gradient(90deg,var(--green),var(--teal));color:#04120c;border:none;border-radius:16px;padding:16px 34px;font-family:inherit;font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 12px 30px rgba(63,192,106,.35)}
+  .cover .note{font-size:12.5px;color:#4a5a53;max-width:540px;line-height:1.6}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="pg" cx="34%" cy="28%" r="80%"><stop offset="0" stop-color="#c9f4d8"/><stop offset="55%" stop-color="#3fc06a"/><stop offset="100%" stop-color="#0e7d7f"/></radialGradient>
+  <g id="parrot">
+    <circle cx="24" cy="24" r="24" fill="url(#pg)"/>
+    <path d="M28 9c-6.6 0-11.4 4.9-11.4 11.8 0 5.4 3.3 9.5 8.5 10.6L23.6 36h8.2l-1.4-4.6c4.3-1.5 7.2-5.2 7.2-10 0-7-4.6-12.4-9.6-12.4z" fill="#0f2a20"/>
+    <path d="M16.2 20.4c-3 .1-4.9 1.6-4.9 3.2 0 1.4 1.7 2.3 4.4 2.1z" fill="#f4b73e"/>
+    <circle cx="22" cy="18.4" r="2.1" fill="#fff"/><circle cx="22.4" cy="18.7" r="1" fill="#12241c"/>
+    <path d="M27 9.3l4-3.1 1 4.2z" fill="#e0714f"/>
+  </g>
+</defs></svg>
+
+<div class="cover" id="cover">
+  <div class="logo"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
+  <h1>Recorrido de Onboarding</h1>
+  <p>Del primer clic al Planea Score: cómo un usuario nuevo descubre su salud financiera en dos minutos, con Maya como guía. Narrado por Dalia, la voz de Planea.</p>
+  <button class="go" id="start">Iniciar presentación</button>
+  <div class="note">Flechas ← → para navegar · barra espaciadora para pausar o reanudar la voz. Puedes pausar en cualquier momento para responder preguntas del público.</div>
+</div>
+
+<div class="bar hidden" id="bar">
+  <div class="brand"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
+  <span class="step-pill" id="stepPill">Paso 1</span>
+  <div class="spacer"></div>
+  <span class="voice-ind" id="voiceInd"><span class="dotv"></span>Voz: Dalia</span>
+  <span class="count" id="count">1 / 14</span>
+</div>
+<div class="prog hidden" id="prog" style="width:0"></div>
+
+<div class="stage hidden" id="stage"><div class="frame" id="frame"></div></div>
+
+<div class="dock hidden" id="dock">
+  <div class="narr" id="narr"></div>
+  <div class="ctrls">
+    <button class="c" id="prev" title="Anterior (←)">‹ Anterior</button>
+    <button class="c play" id="play" title="Pausar / Reanudar la voz (espacio)">❚❚ Pausar voz</button>
+    <button class="c" id="next" title="Siguiente (→)">Siguiente ›</button>
+    <label class="toggle"><input type="checkbox" id="autoNarr" checked> Narración automática</label>
+    <label class="toggle"><input type="checkbox" id="muteChk"> Silenciar voz</label>
+  </div>
+  <div class="dots" id="dots"></div>
+</div>
+<div class="hint hidden" id="hint">← → navegar · espacio pausa/reanuda voz · F pantalla completa</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────────
+  // Las 14 capturas viven en /planea-onboarding/1.png … 14.png (mismo repo).
+  var IMG_DIR = 'planea-onboarding/';
+  var IMG_EXT = 'png';
+  var TTS_URL = '/api/tts/edge';   // voz neural Dalia (es-MX), mismo origen
+  var TTS_VOICE = 'dalia';
+
+  var SLIDES = [
+    { file:1,  step:'Landing',        title:'Entiende tu dinero, Planea tu futuro',
+      narr:'Este es el punto de entrada de Planea. El mensaje es directo: entiende tu dinero hoy y planea tu futuro. Desde aquí, el usuario da un solo clic en Descubre tu salud financiera para comenzar.' },
+    { file:2,  step:'Crear cuenta',   title:'Crear cuenta',
+      narr:'Crear una cuenta toma segundos: nombre, correo y contraseña, sin confirmación por correo. El usuario entra de inmediato y empieza su recorrido.' },
+    { file:3,  step:'Iniciar sesión', title:'Iniciar sesión',
+      narr:'Si ya tiene cuenta, inicia sesión con su correo y contraseña, y puede restablecerla de forma segura si la olvidó.' },
+    { file:4,  step:'Onboarding',     title:'Antes de empezar',
+      narr:'Aquí arranca el onboarding. Le explicamos que son nueve preguntas, dos minutos, con la metodología de los cuatro pilares del CFP Board. Un solo botón: Comenzar.' },
+    { file:5,  step:'Pregunta 1 · Ocupación', title:'¿A qué te dedicas hoy?',
+      narr:'La primera pregunta es fácil y no compromete nada: a qué te dedicas. Abre la conversación y le da contexto a Maya. La barra muestra el avance: uno de nueve.' },
+    { file:6,  step:'Pregunta 2 · Ingresos', title:'¿Cuánto recibes al mes?',
+      narr:'Luego, los ingresos del mes. El usuario escoge un rango y, si lo sabe, escribe el monto exacto. Rápido y sin fricción.' },
+    { file:7,  step:'Pregunta 3 · Gastos', title:'¿Cuánto gastas al mes?',
+      narr:'Lo mismo con los gastos: cuánto se le va al mes en total. Ingresos y gastos, juntos, definen su flujo de caja.' },
+    { file:8,  step:'Pregunta 4 · Deudas', title:'¿Qué deudas tienes hoy?',
+      narr:'Aquí selecciona qué tipos de deuda tiene. Puede marcar varias, o decir que no tiene deudas. Cada tipo pesa distinto en el puntaje.' },
+    { file:9,  step:'Pregunta 5 · Cuotas', title:'¿Cuánto pagas en cuotas?',
+      narr:'Cuánto paga al mes en cuotas, sumando todas sus deudas. Esta es la variable principal de su salud de deuda.' },
+    { file:10, step:'Pregunta 6 · Fondo de emergencia', title:'¿Cuánto tiempo aguantas?',
+      narr:'Una pregunta clave: si dejara de recibir ingresos, cuánto tiempo aguanta con lo que tiene guardado. Este es el pilar de mayor peso del puntaje.' },
+    { file:11, step:'Pregunta 7 · Estabilidad', title:'¿Tu ingreso es fijo o cambia?',
+      narr:'Su ingreso es fijo o cambia mes a mes. La estabilidad del ingreso también cuenta para el resultado.' },
+    { file:12, step:'Pregunta 8 · Dependientes', title:'¿Cuántas personas dependen de ti?',
+      narr:'Cuántas personas dependen de él económicamente. Esto ajusta el tamaño de su colchón y su estabilidad.' },
+    { file:13, step:'Pregunta 9 · Productos', title:'¿Qué productos tienes hoy?',
+      narr:'Por último, qué productos financieros tiene hoy. Esto no cambia el puntaje, pero le da contexto a Maya y define qué le pedimos después.' },
+    { file:14, step:'Resultado · Planea Score', title:'Tu Planea Score',
+      narr:'Y este es el momento clave: su Planea Score. Un número, un rango, y el desglose por pilares, cada uno con una lectura corta de Maya. Aquí obtiene sesenta y cuatro, estable. Es su punto de partida, que irá subiendo a medida que registra su información. De aquí, un clic en Próximo paso y Maya lo guía a completar sus datos.' }
+  ];
+
+  var i = 0, started = false;
+  var el = function(id){ return document.getElementById(id); };
+  var synth = window.speechSynthesis, bvoice = null;
+
+  // ── Dalia (Edge TTS) con respaldo a la voz del navegador ──
+  var audioCache = {}, currentAudio = null, neuralOK = true, loadToken = 0;
+  function ttsUrl(idx){
+    var key = TTS_VOICE + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(TTS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SLIDES[idx].narr,voice:TTS_VOICE})})
+      .then(function(r){ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function stopAudio(){ if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; } if(synth) synth.cancel(); }
+  function buffering(on){ el('voiceInd').className = 'voice-ind' + (on?' buffering':''); el('voiceInd').lastChild.textContent = on ? 'Voz: Dalia · cargando…' : (neuralOK ? 'Voz: Dalia' : 'Voz: navegador'); }
+
+  function pickBrowserVoice(){ if(!synth) return; var vs=synth.getVoices(); bvoice = vs.filter(function(v){return /^es/i.test(v.lang);})[0] || vs[0] || null; }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+  function browserSpeak(text){ if(!synth){ setPlayLabel(false); return; } var u=new SpeechSynthesisUtterance(text); if(bvoice)u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-ES'; u.rate=1; u.onend=function(){ setPlayLabel(false,true); }; synth.speak(u); setPlayLabel(true); }
+
+  function speak(idx){
+    stopAudio();
+    if(el('muteChk').checked || !el('autoNarr').checked){ setPlayLabel(false); return; }
+    if(!neuralOK){ browserSpeak(SLIDES[idx].narr); return; }
+    var tok = ++loadToken; buffering(true);
+    ttsUrl(idx).then(function(url){
+      if(tok!==loadToken || idx!==i) return;         // cambió de slide
+      buffering(false);
+      currentAudio = new Audio(url);
+      currentAudio.onended = function(){ setPlayLabel(false,true); };
+      currentAudio.onerror = function(){ neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); };
+      currentAudio.play().then(function(){ setPlayLabel(true); }).catch(function(){ neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); });
+      if(i+1 < SLIDES.length) ttsUrl(i+1).catch(function(){});   // prefetch
+    }).catch(function(){ if(tok!==loadToken) return; neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); });
+  }
+  function setPlayLabel(playing, ended){
+    var b = el('play');
+    if(el('muteChk').checked){ b.innerHTML='Voz silenciada'; return; }
+    if(ended){ b.innerHTML='▶ Repetir voz'; return; }
+    b.innerHTML = playing ? '❚❚ Pausar voz' : '▶ Reanudar voz';
+  }
+
+  function render(){
+    var s = SLIDES[i];
+    var src = IMG_DIR + s.file + '.' + IMG_EXT;
+    el('frame').innerHTML = '<img src="'+src+'" alt="'+s.step+'" onerror="this.parentNode.innerHTML=\'<div class=&quot;ph&quot;><b>Falta la imagen '+s.file+'.'+IMG_EXT+'</b><small>Sube tu captura de \\'+s.step.replace(/'/g,'').replace(/"/g,'')+'\\' como '+s.file+'.'+IMG_EXT+' a /planea-onboarding/</small></div>\'">'
+      + '<div class="stitle">'+s.title+'</div>';
+    el('stepPill').textContent = 'Paso ' + (i+1) + ' · ' + s.step;
+    el('count').textContent = (i+1) + ' / ' + SLIDES.length;
+    el('prog').style.width = ((i+1)/SLIDES.length*100) + '%';
+    var mayaSvg = s.file===14 ? '<svg class="maya" viewBox="0 0 48 48"><use href="#parrot"/></svg>' : '';
+    el('narr').innerHTML = mayaSvg + '<span>' + s.narr + '</span>';
+    el('prev').disabled = (i===0); el('next').disabled = (i===SLIDES.length-1);
+    Array.prototype.forEach.call(document.querySelectorAll('.dot'), function(d,k){ d.className='dot'+(k===i?' on':''); });
+    speak(i);
+  }
+  function go(n){ i=Math.max(0,Math.min(SLIDES.length-1,n)); render(); }
+
+  function begin(){
+    started = true;
+    el('cover').classList.add('hidden');
+    ['bar','prog','stage','dock','hint'].forEach(function(id){ el(id).classList.remove('hidden'); });
+    el('dots').innerHTML = SLIDES.map(function(_,k){ return '<button class="dot" data-k="'+k+'" aria-label="Paso '+(k+1)+'"></button>'; }).join('');
+    go(0);
+  }
+
+  el('start').addEventListener('click', begin);
+  el('prev').addEventListener('click', function(){ go(i-1); });
+  el('next').addEventListener('click', function(){ go(i+1); });
+  el('play').addEventListener('click', function(){
+    if(el('muteChk').checked) return;
+    if(currentAudio){
+      if(!currentAudio.paused){ currentAudio.pause(); setPlayLabel(false); }
+      else { currentAudio.play(); setPlayLabel(true); }
+      return;
+    }
+    if(synth && synth.paused){ synth.resume(); setPlayLabel(true); return; }
+    if(synth && synth.speaking){ synth.pause(); setPlayLabel(false); return; }
+    speak(i);
+  });
+  el('muteChk').addEventListener('change', function(){ if(this.checked) stopAudio(); setPlayLabel(false); });
+  el('autoNarr').addEventListener('change', function(){ if(!this.checked) stopAudio(); });
+  el('dots').addEventListener('click', function(e){ var d=e.target.closest('.dot'); if(d) go(+d.getAttribute('data-k')); });
+
+  document.addEventListener('keydown', function(e){
+    if(!started){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); begin(); } return; }
+    if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); go(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(i-1); }
+    else if(e.key===' '){ e.preventDefault(); el('play').click(); }
+    else if(e.key==='Home'){ go(0); } else if(e.key==='End'){ go(SLIDES.length-1); }
+    else if(e.key.toLowerCase()==='f'){ if(document.fullscreenElement) document.exitFullscreen(); else (document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()); }
+  });
+  window.addEventListener('beforeunload', stopAudio);
+</script>
+</body>
+</html>
