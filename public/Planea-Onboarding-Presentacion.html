@@ -7,8 +7,8 @@
 <title>Planea · Recorrido de Onboarding</title>
 <style>
   :root{
-    --bg:#0a1310; --panel:#0e1a16; --card:#16211d; --line:#26332e;
-    --txt:#eaf1ec; --mut:#8a9a92; --green:#3fc06a; --teal:#17a6a6; --red:#e0714f;
+    --bg:#0a1310; --card:#101a16; --card2:#17221d; --line:#26332e;
+    --txt:#eaf1ec; --mut:#8a9a92; --green:#3fc06a; --teal:#17a6a6; --red:#e0714f; --estable:#7fb79a;
     --font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box}
@@ -22,24 +22,20 @@
   .bar .spacer{flex:1}
   .voice-ind{font-size:11.5px;color:var(--mut);display:inline-flex;align-items:center;gap:7px}
   .voice-ind .dotv{width:8px;height:8px;border-radius:50%;background:var(--green)}
-  .voice-ind.buffering .dotv{background:#f4b73e;animation:pulse 1s infinite}
-  @keyframes pulse{50%{opacity:.35}}
+  .voice-ind.buffering .dotv{background:#f4b73e;animation:pulseD 1s infinite}
+  @keyframes pulseD{50%{opacity:.35}}
   .count{font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px;font-weight:600}
   .prog{position:fixed;top:60px;left:0;height:3px;background:linear-gradient(90deg,var(--green),var(--teal));z-index:20;transition:width .35s ease}
 
-  .stage{position:absolute;top:60px;left:0;right:0;bottom:150px;display:flex;align-items:center;justify-content:center;padding:22px 26px}
-  .frame{position:relative;max-width:100%;max-height:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.55);background:#05100c}
-  .frame img{display:block;max-width:100%;max-height:calc(100vh - 60px - 150px - 44px);object-fit:contain}
-  .ph{width:min(900px,80vw);aspect-ratio:16/10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut);text-align:center;padding:30px}
-  .ph b{color:var(--txt);font-size:17px}
-  .ph small{font-size:13px;max-width:440px;line-height:1.5}
-  .stitle{position:absolute;left:22px;bottom:16px;background:rgba(8,16,12,.72);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:8px 14px;font-weight:700;font-size:14px}
+  .stage{position:absolute;top:60px;left:0;right:0;bottom:150px;display:flex;align-items:center;justify-content:center;padding:22px}
+  .frame{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.55);background:#080f0c}
+  .fit{position:absolute;top:0;left:0;width:1180px;height:740px;transform-origin:top left;background:#0a1310}
 
   .dock{position:fixed;left:0;right:0;bottom:0;height:150px;background:linear-gradient(0deg,#0a1310 60%,transparent);z-index:20;display:flex;flex-direction:column;justify-content:flex-end;padding:0 26px 18px}
   .narr{max-width:1000px;margin:0 auto 12px;text-align:center;font-size:16.5px;line-height:1.55;color:#dfe9e3;min-height:52px;display:flex;align-items:center;justify-content:center}
-  .narr .maya{width:22px;height:22px;margin-right:9px;flex-shrink:0;vertical-align:middle}
+  .narr .maya{width:22px;height:22px;margin-right:9px;flex-shrink:0}
   .ctrls{display:flex;align-items:center;justify-content:center;gap:12px;max-width:1000px;margin:0 auto;width:100%;flex-wrap:wrap}
-  button.c{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,border-color .12s}
+  button.c{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,border-color .12s}
   button.c:hover{border-color:var(--green)}
   button.c:active{transform:scale(.97)}
   button.c:disabled{opacity:.4;cursor:default}
@@ -59,6 +55,107 @@
   .cover .go{margin-top:14px;background:linear-gradient(90deg,var(--green),var(--teal));color:#04120c;border:none;border-radius:16px;padding:16px 34px;font-family:inherit;font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 12px 30px rgba(63,192,106,.35)}
   .cover .note{font-size:12.5px;color:#4a5a53;max-width:540px;line-height:1.6}
   .hidden{display:none!important}
+
+  /* ══ SCREEN RECREATIONS (1180×740) ══ */
+  .screen{width:1180px;height:740px;display:flex;overflow:hidden}
+  /* landing */
+  .lnd{width:100%;height:100%;background:radial-gradient(130% 90% at 12% 6%,rgba(63,192,106,.14),transparent 55%),radial-gradient(120% 90% at 92% 10%,rgba(23,166,166,.16),transparent 55%),linear-gradient(158deg,#0f2620,#0a1613);display:flex;flex-direction:column}
+  .lnd-top{display:flex;align-items:center;padding:22px 40px;gap:12px}
+  .lnd-top .lg{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+  .lnd-top .lg svg{width:24px;height:24px}
+  .lnd-top .sp{flex:1}
+  .lnd-top .btn{font-size:14px;font-weight:700;padding:9px 18px;border-radius:10px;border:1px solid var(--line);color:var(--txt)}
+  .lnd-top .btn.solid{background:rgba(63,192,106,.22);border-color:transparent}
+  .lnd-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 40px}
+  .lnd-body h1{font-size:70px;font-weight:800;letter-spacing:-.03em;line-height:1.02;margin:0}
+  .lnd-body h1 .g{color:#6f9f8d}
+  .lnd-body p{font-size:22px;color:#c4d2cb;max-width:720px;line-height:1.4;margin:26px 0 0}
+  .lnd-cta{margin-top:44px;background:linear-gradient(90deg,rgba(63,192,106,.55),rgba(23,166,166,.55));color:#eafff4;border-radius:99px;padding:16px 34px;font-weight:700;font-size:18px;display:inline-flex;gap:10px;align-items:center}
+  /* auth */
+  .auth{width:100%;height:100%;background:linear-gradient(160deg,#0f2620,#0a120f 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:30px}
+  .auth .mk{width:64px;height:64px;border-radius:16px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .auth .mk svg{width:32px;height:32px}
+  .auth h2{font-size:30px;font-weight:800;margin:0}
+  .auth .sub{color:var(--mut);font-size:14px;margin:4px 0 20px}
+  .auth .field{width:420px;text-align:left;margin-top:14px}
+  .auth .field label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}
+  .auth .field .inp{height:52px;border-radius:14px;border:1px solid var(--line);background:#0e1a15;display:flex;align-items:center;padding:0 16px;color:#c4d2cb;font-size:15px}
+  .auth .field .inp.filled{background:#eaf1f7;color:#0e1a15}
+  .auth .go2{width:420px;margin-top:22px;background:linear-gradient(90deg,var(--green),var(--teal));color:#04120c;border-radius:14px;padding:15px;text-align:center;font-weight:800;font-size:16px}
+  .auth .lnk{margin-top:16px;font-size:14px;color:#c4d2cb}
+  .auth .lnk b{color:var(--green)}
+  /* app frame */
+  .sb{width:250px;flex-shrink:0;background:#0a120f;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px}
+  .sb-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;padding:6px 8px 16px}
+  .sb-logo svg{width:23px;height:23px}
+  .sb-item{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:11px;color:#c4d2cb;font-size:15px;font-weight:600}
+  .sb-item svg{width:19px;height:19px;opacity:.85}
+  .sb-item.on{background:#14231d;color:#fff;font-weight:700}
+  .sb-item.on svg{color:var(--green);opacity:1}
+  .sb-item.mut{color:#6f8078}
+  .sb-sep{height:1px;background:var(--line);margin:12px 4px}
+  .sb-prof{display:flex;align-items:center;gap:11px;padding:12px;margin-top:auto}
+  .sb-av{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#c4d2cb}
+  .sb-nm{font-weight:700;font-size:14px}.sb-pl{font-size:12px;color:var(--mut)}
+  .sb-logout{display:flex;align-items:center;gap:12px;padding:11px 12px;color:#e0714f;font-weight:600;font-size:14px}
+  .sb-logout svg{width:18px;height:18px}
+  .mn{flex:1;padding:34px 40px;overflow:hidden}
+  .mn-eye{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .mn-h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:7px 0 8px}
+  .mn-lede{color:var(--mut);font-size:14px;line-height:1.5;max-width:520px;margin:0}
+  .mfab{position:absolute;right:26px;bottom:20px;display:flex;align-items:center;gap:12px}
+  .mfab .pav{width:56px;height:56px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}
+  .mfab .mf1{font-weight:800;font-size:16px}.mfab .mf2{font-size:12px;color:var(--mut)}
+  /* question card */
+  .qcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin-top:22px;max-width:640px}
+  .qprog{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .qtag{display:inline-block;margin-top:10px;background:#1b2b26;color:var(--txt);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:99px}
+  .qq{font-size:20px;font-weight:800;line-height:1.25;margin:14px 0 0}
+  .qhint{color:var(--mut);font-size:14px;margin:8px 0 0}
+  .qopts{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+  .opt{display:flex;align-items:center;gap:13px;border:1.5px solid var(--line);border-radius:13px;padding:13px 15px;font-size:14.5px;font-weight:600;color:var(--txt);background:#0f1a15}
+  .opt.sel{border-color:var(--green);background:rgba(63,192,106,.1)}
+  .opt .rad{width:20px;height:20px;border-radius:50%;border:2px solid #3a4a43;flex-shrink:0;position:relative}
+  .opt.sel .rad{border-color:var(--green)}
+  .opt.sel .rad::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--green)}
+  .opt .box{width:20px;height:20px;border-radius:6px;border:2px solid #3a4a43;flex-shrink:0;position:relative}
+  .opt.sel .box{border-color:var(--green);background:var(--green)}
+  .opt.sel .box::after{content:"";position:absolute;left:5px;top:1px;width:6px;height:11px;border:solid #04120c;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .qexact{height:48px;border-radius:13px;border:1.5px solid var(--line);background:#0f1a15;display:flex;align-items:center;padding:0 16px;color:#6f8078;font-size:15px;margin-top:2px}
+  .qexlbl{font-size:12.5px;color:var(--mut);margin-top:7px}
+  .qnav{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+  .qnav .qback{border:1.5px solid var(--line);color:var(--mut);border-radius:99px;padding:11px 22px;font-weight:600;font-size:14px}
+  .qnav .qcont{background:#12494b;color:#eafff4;border-radius:99px;padding:11px 24px;font-weight:700;font-size:14px;margin-left:auto}
+  .qnav.solo .qcont{margin-left:auto}
+  /* intro card */
+  .icard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin-top:22px;max-width:600px}
+  .icard .qtag{margin-top:0}
+  .icard h3{font-size:22px;font-weight:800;margin:14px 0 0}
+  .icard p{color:var(--mut);font-size:14.5px;line-height:1.55;margin:10px 0 0}
+  .icard .qcont{display:inline-block;background:#12494b;color:#eafff4;border-radius:99px;padding:12px 26px;font-weight:700;font-size:14px;margin-top:18px}
+  /* result card */
+  .rcard{background:linear-gradient(180deg,#18241f,#131d19);border:1px solid var(--line);border-radius:20px;padding:26px;margin-top:18px;max-width:560px;text-align:center}
+  .rtag{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--green)}
+  .rring{position:relative;width:150px;height:150px;margin:16px auto 4px}
+  .rring svg{width:150px;height:150px;transform:rotate(-90deg)}
+  .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .rnum b{font-size:52px;font-weight:800;line-height:1;letter-spacing:-.03em}
+  .rnum small{font-size:9px;letter-spacing:.18em;color:var(--mut);margin-top:2px}
+  .rbadge{display:inline-block;border:1.5px solid var(--estable);color:var(--estable);border-radius:99px;padding:5px 18px;font-weight:700;font-size:13px}
+  .rprog{height:8px;border-radius:99px;background:#22322c;overflow:hidden;margin:16px 0 8px}
+  .rprog i{display:block;height:100%;width:64%;background:linear-gradient(90deg,var(--green),var(--teal))}
+  .rcap{font-size:12px;color:var(--mut);text-align:left;line-height:1.5}
+  .rapertura{font-size:14px;line-height:1.55;text-align:left;margin-top:16px}
+  .rsub{font-size:10.5px;letter-spacing:.14em;font-weight:700;color:var(--mut);margin-top:18px;text-align:left}
+  .pex{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-top:9px;text-align:left}
+  .pex-top{display:flex;align-items:center;gap:10px}
+  .pex-nm{flex:1;font-weight:700;font-size:13.5px}.pex-nm .w{color:var(--mut);font-weight:500;font-size:11px}
+  .pex-v{font-weight:800;font-size:15px}
+  .pex-bar{height:6px;border-radius:99px;background:#2a3a33;margin-top:8px;overflow:hidden}
+  .pex-bar i{display:block;height:100%}
+  .pex-maya{display:flex;align-items:flex-start;gap:8px;margin-top:9px}
+  .pex-maya .pav{width:20px;height:20px;flex-shrink:0}
+  .pex-maya span{font-size:12px;line-height:1.45;color:#b6c6be}
 </style>
 </head>
 <body>
@@ -86,19 +183,17 @@
   <div class="brand"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
   <span class="step-pill" id="stepPill">Paso 1</span>
   <div class="spacer"></div>
-  <span class="voice-ind" id="voiceInd"><span class="dotv"></span>Voz: Dalia</span>
+  <span class="voice-ind" id="voiceInd"><span class="dotv"></span><span id="voiceTxt">Voz: Dalia</span></span>
   <span class="count" id="count">1 / 14</span>
 </div>
 <div class="prog hidden" id="prog" style="width:0"></div>
-
 <div class="stage hidden" id="stage"><div class="frame" id="frame"></div></div>
-
 <div class="dock hidden" id="dock">
   <div class="narr" id="narr"></div>
   <div class="ctrls">
-    <button class="c" id="prev" title="Anterior (←)">‹ Anterior</button>
-    <button class="c play" id="play" title="Pausar / Reanudar la voz (espacio)">❚❚ Pausar voz</button>
-    <button class="c" id="next" title="Siguiente (→)">Siguiente ›</button>
+    <button class="c" id="prev">‹ Anterior</button>
+    <button class="c play" id="play">❚❚ Pausar voz</button>
+    <button class="c" id="next">Siguiente ›</button>
     <label class="toggle"><input type="checkbox" id="autoNarr" checked> Narración automática</label>
     <label class="toggle"><input type="checkbox" id="muteChk"> Silenciar voz</label>
   </div>
@@ -107,149 +202,191 @@
 <div class="hint hidden" id="hint">← → navegar · espacio pausa/reanuda voz · F pantalla completa</div>
 
 <script>
-  // ── CONFIG ──────────────────────────────────────────────────────────────────
-  // Las 14 capturas viven en /planea-onboarding/1.png … 14.png (mismo repo).
-  var IMG_DIR = 'planea-onboarding/';
-  var IMG_EXT = 'png';
-  var TTS_URL = '/api/tts/edge';   // voz neural Dalia (es-MX), mismo origen
-  var TTS_VOICE = 'dalia';
+  var TTS_URL='/api/tts/edge', TTS_VOICE='dalia';
+  var el=function(id){return document.getElementById(id);};
 
-  var SLIDES = [
-    { file:1,  step:'Landing',        title:'Entiende tu dinero, Planea tu futuro',
-      narr:'Este es el punto de entrada de Planea. El mensaje es directo: entiende tu dinero hoy y planea tu futuro. Desde aquí, el usuario da un solo clic en Descubre tu salud financiera para comenzar.' },
-    { file:2,  step:'Crear cuenta',   title:'Crear cuenta',
-      narr:'Crear una cuenta toma segundos: nombre, correo y contraseña, sin confirmación por correo. El usuario entra de inmediato y empieza su recorrido.' },
-    { file:3,  step:'Iniciar sesión', title:'Iniciar sesión',
-      narr:'Si ya tiene cuenta, inicia sesión con su correo y contraseña, y puede restablecerla de forma segura si la olvidó.' },
-    { file:4,  step:'Onboarding',     title:'Antes de empezar',
-      narr:'Aquí arranca el onboarding. Le explicamos que son nueve preguntas, dos minutos, con la metodología de los cuatro pilares del CFP Board. Un solo botón: Comenzar.' },
-    { file:5,  step:'Pregunta 1 · Ocupación', title:'¿A qué te dedicas hoy?',
-      narr:'La primera pregunta es fácil y no compromete nada: a qué te dedicas. Abre la conversación y le da contexto a Maya. La barra muestra el avance: uno de nueve.' },
-    { file:6,  step:'Pregunta 2 · Ingresos', title:'¿Cuánto recibes al mes?',
-      narr:'Luego, los ingresos del mes. El usuario escoge un rango y, si lo sabe, escribe el monto exacto. Rápido y sin fricción.' },
-    { file:7,  step:'Pregunta 3 · Gastos', title:'¿Cuánto gastas al mes?',
-      narr:'Lo mismo con los gastos: cuánto se le va al mes en total. Ingresos y gastos, juntos, definen su flujo de caja.' },
-    { file:8,  step:'Pregunta 4 · Deudas', title:'¿Qué deudas tienes hoy?',
-      narr:'Aquí selecciona qué tipos de deuda tiene. Puede marcar varias, o decir que no tiene deudas. Cada tipo pesa distinto en el puntaje.' },
-    { file:9,  step:'Pregunta 5 · Cuotas', title:'¿Cuánto pagas en cuotas?',
-      narr:'Cuánto paga al mes en cuotas, sumando todas sus deudas. Esta es la variable principal de su salud de deuda.' },
-    { file:10, step:'Pregunta 6 · Fondo de emergencia', title:'¿Cuánto tiempo aguantas?',
-      narr:'Una pregunta clave: si dejara de recibir ingresos, cuánto tiempo aguanta con lo que tiene guardado. Este es el pilar de mayor peso del puntaje.' },
-    { file:11, step:'Pregunta 7 · Estabilidad', title:'¿Tu ingreso es fijo o cambia?',
-      narr:'Su ingreso es fijo o cambia mes a mes. La estabilidad del ingreso también cuenta para el resultado.' },
-    { file:12, step:'Pregunta 8 · Dependientes', title:'¿Cuántas personas dependen de ti?',
-      narr:'Cuántas personas dependen de él económicamente. Esto ajusta el tamaño de su colchón y su estabilidad.' },
-    { file:13, step:'Pregunta 9 · Productos', title:'¿Qué productos tienes hoy?',
-      narr:'Por último, qué productos financieros tiene hoy. Esto no cambia el puntaje, pero le da contexto a Maya y define qué le pedimos después.' },
-    { file:14, step:'Resultado · Planea Score', title:'Tu Planea Score',
-      narr:'Y este es el momento clave: su Planea Score. Un número, un rango, y el desglose por pilares, cada uno con una lectura corta de Maya. Aquí obtiene sesenta y cuatro, estable. Es su punto de partida, que irá subiendo a medida que registra su información. De aquí, un clic en Próximo paso y Maya lo guía a completar sus datos.' }
+  // ── Iconos SVG (línea) ──
+  function svg(inner){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';}
+  var ICON={
+    clock: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    plus: svg('<path d="M12 5v14M5 12h14"/>'),
+    sun: svg('<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+    logout: svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>')
+  };
+  var MARK='<svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
+
+  function sidebar(){
+    return '<aside class="sb"><div class="sb-logo">'+MARK+' Planea</div>'
+      +'<div class="sb-item on">'+ICON.clock+' Planea Score</div>'
+      +'<div class="sb-sep"></div>'
+      +'<div class="sb-item mut">'+ICON.plus+' Agregar módulo</div>'
+      +'<div class="sb-item mut">'+ICON.sun+' Modo claro</div>'
+      +'<div class="sb-prof"><span class="sb-av">LA</span><div><div class="sb-nm">Leonardo Alvarado</div><div class="sb-pl">Plan activo</div></div></div>'
+      +'<div class="sb-logout">'+ICON.logout+' Cerrar sesión</div></aside>';
+  }
+  function mfab(){ return '<div class="mfab"><svg class="pav" viewBox="0 0 48 48"><use href="#parrot"/></svg><div><div class="mf1">Pregúntale a Maya</div><div class="mf2">Tu guía financiera IA</div></div></div>'; }
+  var LEDE='Nueve preguntas, dos minutos. Calculamos tu Planea Score con tus cuatro pilares (fondo de emergencia, flujo de caja, deuda y estabilidad) según la metodología del CFP Board, y de ahí lo afinamos con tu información real.';
+  function appScreen(card){
+    return '<div class="screen">'+sidebar()+'<div class="mn"><div class="mn-eye">PLANEA SCORE</div><h2 class="mn-h1">Descubre tu Planea Score</h2><p class="mn-lede">'+LEDE+'</p>'+card+'</div>'+mfab()+'</div>';
+  }
+  function optsHtml(list, multi){
+    return list.map(function(o){
+      var sel=o[1]?' sel':''; var mark=multi?'<span class="box"></span>':'<span class="rad"></span>';
+      return '<div class="opt'+sel+'">'+mark+'<span>'+o[0]+'</span></div>';
+    }).join('');
+  }
+  function qCard(n, tag, q, hint, list, multi, exact){
+    var h='<div class="qcard"><div class="qprog">'+n+' DE 9</div><div class="qtag">'+tag+'</div><h3 class="qq">'+q+'</h3>'
+      +(hint?'<p class="qhint">'+hint+'</p>':'')+'<div class="qopts">'+optsHtml(list,multi)+'</div>';
+    if(exact){ h+='<div class="qexact">$ '+exact+'</div><div class="qexlbl">Si sabes el monto exacto, escríbelo aquí (opcional)</div>'; }
+    h+='<div class="qnav'+(n===1?' solo':'')+'">'+(n>1?'<button class="qback">Volver</button>':'')+'<button class="qcont">'+(n===9?'Calcular mi Planea Score':'Continuar')+'</button></div></div>';
+    return appScreen(h);
+  }
+
+  // ── Pantallas ──
+  function scrLanding(){
+    return '<div class="lnd"><div class="lnd-top"><div class="lg">'+MARK+' Planea</div><div class="sp"></div><div class="btn">Ingresa</div><div class="btn solid">Empieza ya</div></div>'
+      +'<div class="lnd-body"><h1>Entiende tu dinero,<br><span class="g">Planea</span> tu futuro</h1>'
+      +'<p>Te ayudamos a entender cómo están tus finanzas hoy y qué puedes hacer para mejorar mañana.</p>'
+      +'<div class="lnd-cta">Descubre tu salud financiera →</div></div></div>';
+  }
+  function scrAuth(kind){
+    var mk='<div class="mk"><svg viewBox="0 0 24 24" fill="none" stroke="var(--txt)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 5-7 13-7-13z"/></svg></div>';
+    if(kind==='signup'){
+      return '<div class="auth">'+mk+'<h2>Crear cuenta</h2><div class="sub">Sin confirmación por correo — entras de inmediato.</div>'
+        +'<div class="field"><label>Nombre</label><div class="inp">Tu nombre</div></div>'
+        +'<div class="field"><label>Correo electrónico</label><div class="inp">tu@correo.com</div></div>'
+        +'<div class="field"><label>Contraseña</label><div class="inp">Mínimo 6 caracteres</div></div>'
+        +'<div class="go2">Crear cuenta</div><div class="lnk">¿Ya tienes cuenta? <b>Inicia sesión</b></div></div>';
+    }
+    return '<div class="auth">'+mk+'<h2>Iniciar sesión</h2>'
+      +'<div class="field" style="margin-top:24px"><label>Correo electrónico</label><div class="inp filled">leonardo.alvarado@planea.vip</div></div>'
+      +'<div class="field"><label>Contraseña</label><div class="inp filled">•••••••••••</div></div>'
+      +'<div class="go2">Ingresar</div><div class="lnk"><b>¿Olvidaste tu contraseña? Restablécela</b></div><div class="lnk">¿No tienes cuenta? <b>Regístrate</b></div></div>';
+  }
+  function scrIntro(){
+    return appScreen('<div class="icard"><div class="qtag">Antes de empezar</div><h3>Descubre tu Planea Score</h3>'
+      +'<p>Son nueve preguntas, dos minutos. Con tus respuestas calculamos tu Planea Score y, a partir de ahí, lo vamos afinando con tu información real. Metodología basada en los cuatro pilares del CFP Board.</p>'
+      +'<div class="qcont">Comenzar</div></div>');
+  }
+  function scrResult(){
+    var C=2*Math.PI*63, off=C*(1-0.64);
+    var pex=[
+      ['Fondo de Emergencia','35%',20,'#e0714f','Aún no tienes un colchón que cubra tus gastos ante un imprevisto.'],
+      ['Flujo de Caja','25%',100,'#3fc06a','Te sobra margen: gastas bastante menos de lo que ganas.'],
+      ['Salud de Deudas','25%',75,'#3fc06a','Tu deuda no pesa demasiado en tu ingreso hoy.'],
+      ['Estabilidad','15%',90,'#3fc06a','Tu ingreso es estable y predecible: buena base para planear.']
+    ].map(function(p){
+      return '<div class="pex"><div class="pex-top"><span class="pex-nm">'+p[0]+' <span class="w">· '+p[1]+'</span></span><span class="pex-v" style="color:'+p[3]+'">'+p[2]+'</span></div>'
+        +'<div class="pex-bar"><i style="width:'+p[2]+'%;background:'+p[3]+'"></i></div>'
+        +'<div class="pex-maya"><svg class="pav" viewBox="0 0 48 48"><use href="#parrot"/></svg><span>'+p[4]+'</span></div></div>';
+    }).join('');
+    var card='<div class="rcard"><div class="rtag">TU PLANEA SCORE</div>'
+      +'<div class="rring"><svg viewBox="0 0 156 156"><circle cx="78" cy="78" r="63" fill="none" stroke="#26332e" stroke-width="11"/><circle cx="78" cy="78" r="63" fill="none" stroke="url(#rg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset="1" stop-color="#17a6a6"/></linearGradient></defs></svg><div class="rnum"><b>64</b><small>PLANEA</small></div></div>'
+      +'<div class="rbadge">Estable</div><div class="rprog"><i></i></div>'
+      +'<div class="rcap">Este es tu punto de partida. Tu Planea Score irá subiendo a medida que registres tu información con Maya.</div>'
+      +'<p class="rapertura">Leonardo, hoy tu salud financiera es estable. Tus finanzas se sostienen en el día a día y eso ya es terreno ganado. Lo que falta es el respaldo que te permita absorber un imprevisto sin retroceder.</p>'
+      +'<div class="rsub">DESGLOSE POR PILARES · CON LA LECTURA DE MAYA</div>'+pex+'</div>';
+    return appScreen(card);
+  }
+
+  // ── SLIDES ──
+  var SLIDES=[
+    {step:'Landing', render:scrLanding, narr:'Este es el punto de entrada de Planea. El mensaje es directo: entiende tu dinero hoy y planea tu futuro. Desde aquí, el usuario da un solo clic en Descubre tu salud financiera para comenzar.'},
+    {step:'Crear cuenta', render:function(){return scrAuth('signup');}, narr:'Crear una cuenta toma segundos: nombre, correo y contraseña, sin confirmación por correo. El usuario entra de inmediato y empieza su recorrido.'},
+    {step:'Iniciar sesión', render:function(){return scrAuth('login');}, narr:'Si ya tiene cuenta, inicia sesión con su correo y contraseña, y puede restablecerla de forma segura si la olvidó.'},
+    {step:'Onboarding', render:scrIntro, narr:'Aquí arranca el onboarding. Le explicamos que son nueve preguntas, dos minutos, con la metodología de los cuatro pilares del CFP Board. Un solo botón: Comenzar.'},
+    {step:'Pregunta 1 · Ocupación', render:function(){return qCard(1,'Ocupación','¿A qué te dedicas hoy?','',[['Empleado con contrato',1],['Servidor público',0],['Independiente o por prestación de servicios',0],['Dueño de negocio o empresario',0],['Pensionado',0],['Rentista o inversionista',0]],false,'');}, narr:'La primera pregunta es fácil y no compromete nada: a qué te dedicas. Abre la conversación y le da contexto a Maya. La barra muestra el avance: uno de nueve.'},
+    {step:'Pregunta 2 · Ingresos', render:function(){return qCard(2,'Ingresos','¿Cuánto recibes al mes en total?','Suma todo: sueldo, rebusque, arriendos, lo que sea.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $3.000.000',0],['Entre $3.000.000 y $5.000.000',0],['Entre $5.000.000 y $8.000.000',0],['Más de $8.000.000',1]],false,'3.500.000');}, narr:'Luego, los ingresos del mes. El usuario escoge un rango y, si lo sabe, escribe el monto exacto. Rápido y sin fricción.'},
+    {step:'Pregunta 3 · Gastos', render:function(){return qCard(3,'Gastos','¿Cuánto se te va al mes en total?','Arriendo, mercado, transporte, entretenimiento, todo.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $2.500.000',0],['Entre $2.500.000 y $4.000.000',1],['Entre $4.000.000 y $6.500.000',0],['Más de $6.500.000',0]],false,'2.800.000');}, narr:'Lo mismo con los gastos: cuánto se le va al mes en total. Ingresos y gastos, juntos, definen su flujo de caja.'},
+    {step:'Pregunta 4 · Deudas', render:function(){return qCard(4,'Deudas','¿Qué tipo de deudas tienes hoy?','Selecciona todas las que apliquen.',[['Tarjeta de crédito',1],['Préstamo personal o de libre inversión',0],['Crédito hipotecario',0],['Crédito de vehículo',1],['Crédito educativo',1],['Compras a cuotas o financiadas',0],['Deuda con familiares o particulares',0],['No tengo deudas',0]],true,'');}, narr:'Aquí selecciona qué tipos de deuda tiene. Puede marcar varias, o decir que no tiene deudas. Cada tipo pesa distinto en el puntaje.'},
+    {step:'Pregunta 5 · Cuotas', render:function(){return qCard(5,'Cuotas','¿Cuánto pagas al mes en cuotas sumando todas tus deudas?','',[['No pago cuotas',0],['Menos de $300.000',0],['Entre $300.000 y $700.000',0],['Entre $700.000 y $1.500.000',1],['Entre $1.500.000 y $3.000.000',0],['Más de $3.000.000',0]],false,'800.000');}, narr:'Cuánto paga al mes en cuotas, sumando todas sus deudas. Esta es la variable principal de su salud de deuda.'},
+    {step:'Pregunta 6 · Fondo de emergencia', render:function(){return qCard(6,'Fondo de emergencia','Si dejaras de recibir ingresos, ¿cuánto tiempo aguantas con lo que tienes guardado?','',[['No tengo nada guardado',0],['Menos de 1 mes',1],['Entre 1 y 3 meses',0],['Entre 3 y 6 meses',0],['Entre 6 meses y 1 año',0],['Más de 1 año',0]],false,'');}, narr:'Una pregunta clave: si dejara de recibir ingresos, cuánto tiempo aguanta con lo que tiene guardado. Este es el pilar de mayor peso del puntaje.'},
+    {step:'Pregunta 7 · Estabilidad', render:function(){return qCard(7,'Estabilidad','¿Tu ingreso es más o menos el mismo cada mes o cambia?','',[['Siempre me cae lo mismo, es fijo',1],['Varía un poco pero más o menos sé cuánto es',0],['Cambia bastante, nunca sé exactamente cuánto va a ser',0]],false,'');}, narr:'Su ingreso es fijo o cambia mes a mes. La estabilidad del ingreso también cuenta para el resultado.'},
+    {step:'Pregunta 8 · Dependientes', render:function(){return qCard(8,'Dependientes','¿Cuántas personas dependen económicamente de ti?','',[['Nadie depende de mí',0],['1 o 2 personas',1],['3 o más personas',0]],false,'');}, narr:'Cuántas personas dependen de él económicamente. Esto ajusta el tamaño de su colchón y su estabilidad.'},
+    {step:'Pregunta 9 · Productos', render:function(){return qCard(9,'Productos','¿Cuáles de estos tienes hoy?','Selecciona todos los que apliquen.',[['Cuenta de ahorros',1],['Cuenta corriente',0],['Billetera digital',0],['CDT',0],['Cuenta o portafolio de inversión',0],['Pólizas de seguro',1],['Pensión voluntaria',0],['Ninguno de los anteriores',0]],true,'');}, narr:'Por último, qué productos financieros tiene hoy. Esto no cambia el puntaje, pero le da contexto a Maya y define qué le pedimos después.'},
+    {step:'Resultado · Planea Score', render:scrResult, narr:'Y este es el momento clave: su Planea Score. Un número, un rango, y el desglose por pilares, cada uno con una lectura corta de Maya. Aquí obtiene sesenta y cuatro, estable. Es su punto de partida, que irá subiendo a medida que registra su información. De aquí, un clic en Próximo paso y Maya lo guía a completar sus datos.'}
   ];
 
-  var i = 0, started = false;
-  var el = function(id){ return document.getElementById(id); };
-  var synth = window.speechSynthesis, bvoice = null;
-
-  // ── Dalia (Edge TTS) con respaldo a la voz del navegador ──
-  var audioCache = {}, currentAudio = null, neuralOK = true, loadToken = 0;
+  // ── Voz Dalia (Edge TTS) con respaldo navegador ──
+  var i=0, started=false, synth=window.speechSynthesis, bvoice=null;
+  var audioCache={}, currentAudio=null, neuralOK=true, loadToken=0;
   function ttsUrl(idx){
-    var key = TTS_VOICE + '|' + idx;
-    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    var key='d|'+idx; if(audioCache[key]) return Promise.resolve(audioCache[key]);
     return fetch(TTS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SLIDES[idx].narr,voice:TTS_VOICE})})
-      .then(function(r){ if(!r.ok) throw new Error('tts '+r.status); return r.blob(); })
-      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+      .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
+      .then(function(b){if(!b||b.size<200)throw new Error('empty');var u=URL.createObjectURL(b);audioCache[key]=u;return u;});
   }
-  function stopAudio(){ if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; } if(synth) synth.cancel(); }
-  function buffering(on){ el('voiceInd').className = 'voice-ind' + (on?' buffering':''); el('voiceInd').lastChild.textContent = on ? 'Voz: Dalia · cargando…' : (neuralOK ? 'Voz: Dalia' : 'Voz: navegador'); }
-
-  function pickBrowserVoice(){ if(!synth) return; var vs=synth.getVoices(); bvoice = vs.filter(function(v){return /^es/i.test(v.lang);})[0] || vs[0] || null; }
-  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
-  function browserSpeak(text){ if(!synth){ setPlayLabel(false); return; } var u=new SpeechSynthesisUtterance(text); if(bvoice)u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-ES'; u.rate=1; u.onend=function(){ setPlayLabel(false,true); }; synth.speak(u); setPlayLabel(true); }
-
+  function stopAudio(){ if(currentAudio){try{currentAudio.pause();}catch(e){}currentAudio=null;} if(synth)synth.cancel(); }
+  function vind(on){ el('voiceInd').className='voice-ind'+(on?' buffering':''); el('voiceTxt').textContent=on?'Voz: Dalia · cargando…':(neuralOK?'Voz: Dalia':'Voz: navegador'); }
+  function pickBV(){ if(!synth)return; var vs=synth.getVoices(); bvoice=vs.filter(function(v){return /^es/i.test(v.lang);})[0]||vs[0]||null; }
+  if(synth){ pickBV(); synth.onvoiceschanged=pickBV; }
+  function bspeak(t){ if(!synth){setPlay(false);return;} var u=new SpeechSynthesisUtterance(t); if(bvoice)u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-ES'; u.rate=1; u.onend=function(){setPlay(false,true);}; synth.speak(u); setPlay(true); }
   function speak(idx){
     stopAudio();
-    if(el('muteChk').checked || !el('autoNarr').checked){ setPlayLabel(false); return; }
-    if(!neuralOK){ browserSpeak(SLIDES[idx].narr); return; }
-    var tok = ++loadToken; buffering(true);
+    if(el('muteChk').checked||!el('autoNarr').checked){ setPlay(false); return; }
+    if(!neuralOK){ bspeak(SLIDES[idx].narr); return; }
+    var tok=++loadToken; vind(true);
     ttsUrl(idx).then(function(url){
-      if(tok!==loadToken || idx!==i) return;         // cambió de slide
-      buffering(false);
-      currentAudio = new Audio(url);
-      currentAudio.onended = function(){ setPlayLabel(false,true); };
-      currentAudio.onerror = function(){ neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); };
-      currentAudio.play().then(function(){ setPlayLabel(true); }).catch(function(){ neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); });
-      if(i+1 < SLIDES.length) ttsUrl(i+1).catch(function(){});   // prefetch
-    }).catch(function(){ if(tok!==loadToken) return; neuralOK=false; buffering(false); browserSpeak(SLIDES[idx].narr); });
+      if(tok!==loadToken||idx!==i) return; vind(false);
+      currentAudio=new Audio(url);
+      currentAudio.onended=function(){setPlay(false,true);};
+      currentAudio.onerror=function(){neuralOK=false;vind(false);bspeak(SLIDES[idx].narr);};
+      currentAudio.play().then(function(){setPlay(true);}).catch(function(){neuralOK=false;vind(false);bspeak(SLIDES[idx].narr);});
+      if(i+1<SLIDES.length) ttsUrl(i+1).catch(function(){});
+    }).catch(function(){ if(tok!==loadToken)return; neuralOK=false; vind(false); bspeak(SLIDES[idx].narr); });
   }
-  function setPlayLabel(playing, ended){
-    var b = el('play');
-    if(el('muteChk').checked){ b.innerHTML='Voz silenciada'; return; }
-    if(ended){ b.innerHTML='▶ Repetir voz'; return; }
-    b.innerHTML = playing ? '❚❚ Pausar voz' : '▶ Reanudar voz';
-  }
+  function setPlay(playing, ended){ var b=el('play'); if(el('muteChk').checked){b.innerHTML='Voz silenciada';return;} if(ended){b.innerHTML='▶ Repetir voz';return;} b.innerHTML=playing?'❚❚ Pausar voz':'▶ Reanudar voz'; }
 
+  function applyFit(){
+    var stage=el('stage'); var fit=document.querySelector('.fit'); if(!fit) return;
+    var availW=stage.clientWidth-40, availH=stage.clientHeight-40;
+    var scale=Math.min(availW/1180, availH/740, 1.5);
+    fit.style.transform='scale('+scale+')';
+    el('frame').style.width=(1180*scale)+'px'; el('frame').style.height=(740*scale)+'px';
+  }
   function render(){
-    var s = SLIDES[i];
-    var frame = el('frame');
-    function addTitle(){ var st=document.createElement('div'); st.className='stitle'; st.textContent=s.title; frame.appendChild(st); }
-    frame.innerHTML = '';
-    var img = new Image();
-    img.alt = s.step;
-    img.onerror = function(){
-      frame.innerHTML = '';
-      var ph = document.createElement('div'); ph.className='ph';
-      var b = document.createElement('b'); b.textContent = 'Falta la imagen ' + s.file + '.' + IMG_EXT;
-      var sm = document.createElement('small'); sm.textContent = 'Sube tu captura de ' + s.step + ' como ' + s.file + '.' + IMG_EXT + ' a /planea-onboarding/';
-      ph.appendChild(b); ph.appendChild(sm); frame.appendChild(ph); addTitle();
-    };
-    img.src = IMG_DIR + s.file + '.' + IMG_EXT;
-    frame.appendChild(img);
-    addTitle();
-
-    el('stepPill').textContent = 'Paso ' + (i+1) + ' · ' + s.step;
-    el('count').textContent = (i+1) + ' / ' + SLIDES.length;
-    el('prog').style.width = ((i+1)/SLIDES.length*100) + '%';
-    var narr = el('narr');
-    narr.innerHTML = s.file===14 ? '<svg class="maya" viewBox="0 0 48 48"><use href="#parrot"/></svg>' : '';
-    var span = document.createElement('span'); span.textContent = s.narr; narr.appendChild(span);
-    el('prev').disabled = (i===0); el('next').disabled = (i===SLIDES.length-1);
-    Array.prototype.forEach.call(document.querySelectorAll('.dot'), function(d,k){ d.className='dot'+(k===i?' on':''); });
+    var s=SLIDES[i];
+    el('frame').innerHTML='<div class="fit">'+s.render()+'</div>';
+    applyFit();
+    el('stepPill').textContent='Paso '+(i+1)+' · '+s.step;
+    el('count').textContent=(i+1)+' / '+SLIDES.length;
+    el('prog').style.width=((i+1)/SLIDES.length*100)+'%';
+    var narr=el('narr'); narr.innerHTML=(i===SLIDES.length-1)?'<svg class="maya" viewBox="0 0 48 48"><use href="#parrot"/></svg>':'';
+    var span=document.createElement('span'); span.textContent=s.narr; narr.appendChild(span);
+    el('prev').disabled=(i===0); el('next').disabled=(i===SLIDES.length-1);
+    Array.prototype.forEach.call(document.querySelectorAll('.dot'),function(d,k){d.className='dot'+(k===i?' on':'');});
     speak(i);
   }
   function go(n){ i=Math.max(0,Math.min(SLIDES.length-1,n)); render(); }
-
   function begin(){
-    started = true;
-    el('cover').classList.add('hidden');
-    ['bar','prog','stage','dock','hint'].forEach(function(id){ el(id).classList.remove('hidden'); });
-    el('dots').innerHTML = SLIDES.map(function(_,k){ return '<button class="dot" data-k="'+k+'" aria-label="Paso '+(k+1)+'"></button>'; }).join('');
+    started=true; el('cover').classList.add('hidden');
+    ['bar','prog','stage','dock','hint'].forEach(function(id){el(id).classList.remove('hidden');});
+    el('dots').innerHTML=SLIDES.map(function(_,k){return '<button class="dot" data-k="'+k+'"></button>';}).join('');
     go(0);
   }
 
   el('start').addEventListener('click', begin);
-  el('prev').addEventListener('click', function(){ go(i-1); });
-  el('next').addEventListener('click', function(){ go(i+1); });
+  el('prev').addEventListener('click', function(){go(i-1);});
+  el('next').addEventListener('click', function(){go(i+1);});
   el('play').addEventListener('click', function(){
     if(el('muteChk').checked) return;
-    if(currentAudio){
-      if(!currentAudio.paused){ currentAudio.pause(); setPlayLabel(false); }
-      else { currentAudio.play(); setPlayLabel(true); }
-      return;
-    }
-    if(synth && synth.paused){ synth.resume(); setPlayLabel(true); return; }
-    if(synth && synth.speaking){ synth.pause(); setPlayLabel(false); return; }
+    if(currentAudio){ if(!currentAudio.paused){currentAudio.pause();setPlay(false);} else {currentAudio.play();setPlay(true);} return; }
+    if(synth&&synth.paused){synth.resume();setPlay(true);return;}
+    if(synth&&synth.speaking){synth.pause();setPlay(false);return;}
     speak(i);
   });
-  el('muteChk').addEventListener('change', function(){ if(this.checked) stopAudio(); setPlayLabel(false); });
+  el('muteChk').addEventListener('change', function(){ if(this.checked) stopAudio(); setPlay(false); });
   el('autoNarr').addEventListener('change', function(){ if(!this.checked) stopAudio(); });
   el('dots').addEventListener('click', function(e){ var d=e.target.closest('.dot'); if(d) go(+d.getAttribute('data-k')); });
-
+  window.addEventListener('resize', applyFit);
   document.addEventListener('keydown', function(e){
-    if(!started){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); begin(); } return; }
-    if(e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); go(i+1); }
-    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); go(i-1); }
-    else if(e.key===' '){ e.preventDefault(); el('play').click(); }
-    else if(e.key==='Home'){ go(0); } else if(e.key==='End'){ go(SLIDES.length-1); }
-    else if(e.key.toLowerCase()==='f'){ if(document.fullscreenElement) document.exitFullscreen(); else (document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()); }
+    if(!started){ if(e.key==='Enter'||e.key===' '){e.preventDefault();begin();} return; }
+    if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+    else if(e.key===' '){e.preventDefault();el('play').click();}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(SLIDES.length-1);}
+    else if(e.key.toLowerCase()==='f'){ if(document.fullscreenElement)document.exitFullscreen(); else (document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()); }
   });
   window.addEventListener('beforeunload', stopAudio);
 </script>
