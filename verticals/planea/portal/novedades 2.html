@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Novedades y actualizaciones — Planea</title>
+<style>
+  :root{
+    --verde:#2f9e63; --verde-osc:#1f6f45; --verde-cl:#7fd6a4; --tinta:#0f1a14;
+    --gris:#5b6b62; --linea:#e3ebe6; --fondo:#f6f9f7; --blanco:#fff;
+    --ok:#2f9e63; --sec:#2563a8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fondo);color:var(--tinta);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .env{max-width:920px;margin:0 auto;padding:0 20px}
+
+  /* ── Hero con orbe de Lina ── */
+  header.hero{background:linear-gradient(150deg,#0d251a 0%,#164a30 55%,#2f9e63 130%);
+    color:#fff;padding:44px 0 40px;text-align:center;position:relative;overflow:hidden}
+  .marca{display:inline-flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.16em;
+    font-size:11px;text-transform:uppercase;color:var(--verde-cl);margin-bottom:22px}
+  .marca .pt{width:9px;height:9px;border-radius:50%;background:var(--verde-cl);display:inline-block}
+
+  .orb{position:relative;width:130px;height:130px;margin:0 auto 8px;cursor:pointer}
+  .orb .core{position:absolute;inset:20px;border-radius:50%;
+    background:radial-gradient(circle at 34% 28%,#d9ffe9,#4fd18b 46%,#1f8f56 100%);
+    box-shadow:0 10px 42px rgba(47,158,99,.55)}
+  .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(127,214,164,.4)}
+  .orb .ring.r2{inset:11px;border-color:rgba(127,214,164,.24)}
+  .orb .pulse{position:absolute;inset:20px;border-radius:50%;box-shadow:0 0 0 0 rgba(127,214,164,.55)}
+  .orb .glyph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#08301d}
+  .orb.speaking .pulse{animation:vp 1.15s ease-in-out infinite}
+  .orb.speaking .ring{animation:sp 8s linear infinite}
+  @keyframes vp{0%{box-shadow:0 0 0 0 rgba(127,214,164,.5)}70%{box-shadow:0 0 0 26px rgba(127,214,164,0)}100%{box-shadow:0 0 0 0 rgba(127,214,164,0)}}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .hero h1{font-size:clamp(26px,4.4vw,38px);letter-spacing:-.02em;line-height:1.15;margin:14px 0 8px}
+  .hero p.lead{color:#d7efe0;max-width:60ch;margin:0 auto;font-size:16px}
+  .voxstatus{margin-top:16px;font-size:13px;color:var(--verde-cl);min-height:18px}
+  .voxctl{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .voxctl button{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;
+    font:600 13px/1 inherit;padding:11px 20px;border-radius:999px;cursor:pointer;transition:.15s}
+  .voxctl button:hover:not(:disabled){background:rgba(255,255,255,.18)}
+  .voxctl button:disabled{opacity:.4;cursor:default}
+  .voxctl .prim{background:#fff;color:var(--verde-osc);border-color:#fff}
+
+  /* ── Contenido ── */
+  main{padding:34px 0 70px}
+  section.blk{background:var(--blanco);border:1px solid var(--linea);border-radius:16px;
+    padding:22px 22px 18px;margin-bottom:16px;transition:box-shadow .3s,border-color .3s}
+  section.blk.narr{border-color:var(--verde);box-shadow:0 0 0 3px rgba(47,158,99,.12)}
+  .blk h2{font-size:20px;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .blk h2 .n{background:var(--verde);color:#fff;font-size:12px;width:24px;height:24px;border-radius:7px;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+  .blk .sub{color:var(--gris);font-size:14.5px;margin:0 0 14px}
+
+  .lista{list-style:none;display:grid;gap:9px}
+  .item{display:flex;gap:11px;align-items:flex-start;background:#fbfdfc;border:1px solid var(--linea);
+    border-radius:11px;padding:11px 13px}
+  .item .ic{flex:none;width:22px;height:22px;border-radius:50%;background:#eaf5ee;border:1px solid #cfe7d9;
+    color:var(--verde-osc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-top:1px}
+  .item .tx{font-size:14.5px;line-height:1.55}
+  .item .tx b{color:var(--tinta)}
+  .item .tx span{color:var(--gris)}
+
+  .kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .kpi{flex:1;min-width:130px;background:var(--blanco);border:1px solid var(--linea);border-radius:14px;padding:16px;text-align:center}
+  .kpi .num{font-size:30px;font-weight:800;color:var(--verde);letter-spacing:-.03em;line-height:1}
+  .kpi .num.z{color:var(--sec)}
+  .kpi .lab{font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-top:6px}
+
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .cta a{flex:1;min-width:200px;text-align:center;text-decoration:none;font-weight:700;font-size:14.5px;
+    padding:14px 18px;border-radius:12px;border:1px solid var(--linea);color:var(--verde-osc);background:var(--blanco)}
+  .cta a.prim{background:linear-gradient(120deg,var(--verde),#28b4b0);color:#fff;border:none}
+
+  footer{border-top:1px solid var(--linea);padding:22px 0 40px;color:var(--gris);font-size:13px;text-align:center}
+  footer a{color:var(--verde-osc);text-decoration:none}
+  @media(max-width:560px){ header.hero{padding:34px 0 30px} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="env">
+    <div class="marca"><span class="pt"></span> Planea &middot; Novedades</div>
+
+    <div class="orb" id="voxorb" title="Pulsa para escuchar a Lina">
+      <div class="ring"></div><div class="ring r2"></div><div class="pulse"></div><div class="core"></div>
+      <div class="glyph">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1>Qu&eacute; cambi&oacute; y mejor&oacute; en Planea</h1>
+    <p class="lead">Pulsa el orbe y Lina, la voz de Planea, te cuenta en un minuto las
+       correcciones y mejoras de esta versi&oacute;n.</p>
+    <div class="voxstatus" id="voxstatus">Pulsa el orbe para escuchar el recorrido.</div>
+    <div class="voxctl">
+      <button class="prim" id="voxplay">Escuchar a Lina</button>
+      <button id="voxpause" disabled>Pausa</button>
+      <button id="voxstop" disabled>Detener</button>
+    </div>
+  </div>
+</header>
+
+<main class="env">
+
+  <div class="kpis">
+    <div class="kpi"><div class="num">9</div><div class="lab">correcciones UAT</div></div>
+    <div class="kpi"><div class="num">6</div><div class="lab">mejoras de seguridad</div></div>
+    <div class="kpi"><div class="num">35</div><div class="lab">pruebas en verde</div></div>
+    <div class="kpi"><div class="num z">0</div><div class="lab">pendientes</div></div>
+  </div>
+
+  <section class="blk" data-seg="1">
+    <h2><span class="n">1</span> Correcciones del UAT</h2>
+    <p class="sub">Las nueve observaciones que reportaron Eduardo y Juan quedaron corregidas, desplegadas y verificadas en producci&oacute;n.</p>
+    <ul class="lista">
+      <li class="item"><span class="ic">1</span><span class="tx"><b>La sesi&oacute;n ya no se cae.</b> <span>La cookie usaba una ruta equivocada; ahora persiste al entrar por planea.vip.</span></span></li>
+      <li class="item"><span class="ic">2</span><span class="tx"><b>La p&aacute;gina principal carga m&aacute;s r&aacute;pido.</b> <span>Se precargan las secciones m&aacute;s usadas.</span></span></li>
+      <li class="item"><span class="ic">3</span><span class="tx"><b>El correo de recuperaci&oacute;n de contrase&ntilde;a llega.</b> <span>Se corrigi&oacute; el remitente y el env&iacute;o.</span></span></li>
+      <li class="item"><span class="ic">4</span><span class="tx"><b>El puntaje ya no marca 100.</b> <span>Se aplic&oacute; un tope realista de 99.</span></span></li>
+      <li class="item"><span class="ic">5</span><span class="tx"><b>La meta financiera es &uacute;nica.</b> <span>Todas las pantallas leen el mismo dato.</span></span></li>
+      <li class="item"><span class="ic">6</span><span class="tx"><b>El Puntaje y la Salud coinciden.</b> <span>Vienen del mismo motor de c&aacute;lculo.</span></span></li>
+      <li class="item"><span class="ic">7</span><span class="tx"><b>Maya ahora ejecuta acciones.</b> <span>Agrega ingresos, gastos y metas desde el chat.</span></span></li>
+      <li class="item"><span class="ic">8</span><span class="tx"><b>El patrimonio se guarda.</b> <span>Activos y pasivos persisten en la base de datos.</span></span></li>
+      <li class="item"><span class="ic">9</span><span class="tx"><b>El enlace para recuperar la clave est&aacute; visible.</b> <span>Presente tambi&eacute;n en planea.vip.</span></span></li>
+    </ul>
+  </section>
+
+  <section class="blk" data-seg="2">
+    <h2><span class="n">2</span> Seguridad reforzada</h2>
+    <p class="sub">Aprovechando el mismo ciclo, dejamos Planea lista para una auditor&iacute;a externa, con controles al nivel de una app de banca.</p>
+    <ul class="lista">
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Fuerza bruta cortada.</b> <span>L&iacute;mite de intentos compartido entre servidores y bloqueo de la cuenta tras varios fallos.</span></span></li>
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Contrase&ntilde;as m&aacute;s fuertes.</b> <span>M&iacute;nimo ocho caracteres, con letras y n&uacute;meros, y rechazo de claves comunes.</span></span></li>
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Enlaces de recuperaci&oacute;n de un solo uso.</b> <span>Se guardan cifrados y caducan en una hora.</span></span></li>
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Todo el tr&aacute;fico cifrado.</b> <span>HTTPS obligatorio y cabeceras de protecci&oacute;n en cada p&aacute;gina.</span></span></li>
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Sesi&oacute;n de la plataforma endurecida.</b> <span>Cookies seguras y sin secretos expuestos.</span></span></li>
+      <li class="item"><span class="ic">&bull;</span><span class="tx"><b>Privacidad por dise&ntilde;o.</b> <span>Alineado con la Ley de Habeas Data de Colombia.</span></span></li>
+    </ul>
+  </section>
+
+  <section class="blk" data-seg="3">
+    <h2><span class="n">3</span> Verificado y desplegado</h2>
+    <p class="sub">Nada de esto es promesa. Se corri&oacute; una regresi&oacute;n completa contra el servicio en vivo: treinta y cinco pruebas, todas en verde, cero pendientes. El detalle est&aacute; en la ficha de seguridad.</p>
+    <div class="cta">
+      <a class="prim" href="/planea/login">Entrar a la app</a>
+      <a href="/planea/seguridad">Ver la ficha de seguridad</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="env">
+  Planea &mdash; Digit2AI LLC &middot; Actualizado en julio de 2026.<br>
+  &iquest;Dudas? <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
+</footer>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+
+  // ── Guion de Lina (un segmento por bloque) ──
+  var SEG=[
+    'Hola, soy Lina, la voz de Planea. Te cuento en un minuto qué cambió y qué mejoró en esta versión.',
+    'Primero, las correcciones del recorrido de pruebas. Las nueve observaciones que reportaron Eduardo y Juan quedaron resueltas. Ahora la sesión ya no se cae al entrar por planea punto vip. El correo para recuperar la contraseña sí llega. El puntaje muestra un tope realista de noventa y nueve. El Puntaje y la Salud financiera coinciden porque vienen del mismo motor. Maya, además de conversar, ahora agrega tus ingresos, gastos y metas desde el chat. Y tu patrimonio, activos y pasivos, se guarda de verdad.',
+    'Segundo, reforzamos la seguridad para dejar a Planea lista para una auditoría externa, con controles al nivel de una aplicación de banca. Cortamos los ataques de fuerza bruta, exigimos contraseñas más fuertes, los enlaces de recuperación son de un solo uso y caducan en una hora, y todo el tráfico viaja cifrado. Tu privacidad está protegida según la Ley de Habeas Data de Colombia.',
+    'Y todo esto está verificado. Corrimos una regresión completa contra el servicio en vivo: treinta y cinco pruebas, todas en verde, cero pendientes. Cuando quieras, entra a la aplicación o revisa la ficha de seguridad. Gracias por usar Planea.'
+  ];
+  var BLK=[].slice.call(document.querySelectorAll('section.blk[data-seg]'));
+
+  var orb=$('voxorb'), status=$('voxstatus');
+  var play=$('voxplay'), pause=$('voxpause'), stop=$('voxstop');
+  var synth=window.speechSynthesis, qi=0, token=0, paused=false, pmode=null, audio=null, neuralOK=true, bvoice=null;
+  var cache={};
+
+  function pickV(){ if(!synth) return; var vs=synth.getVoices();
+    bvoice=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('es')===0;})[0]||vs[0]||null; }
+  if(synth){ pickV(); synth.onvoiceschanged=pickV; }
+
+  function highlight(i){
+    BLK.forEach(function(b){ b.classList.remove('narr'); });
+    // segmento 0 = intro (sin bloque). 1..3 -> bloques 0..2
+    var b=BLK[i-1];
+    if(b){ b.classList.add('narr'); b.scrollIntoView({behavior:'smooth',block:'center'}); }
+  }
+
+  function fetchN(i){
+    if(cache[i]) return Promise.resolve(cache[i]);
+    return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:SEG[i],voice:'lina'})})
+      .then(function(r){ if(!r.ok) throw new Error('tts'); return r.blob(); })
+      .then(function(b){ var u=URL.createObjectURL(b); cache[i]=u; return u; });
+  }
+
+  function bspeak(i,end){
+    if(!synth){ end(); return; }
+    pmode='browser';
+    var u=new SpeechSynthesisUtterance(SEG[i]);
+    if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-MX'; u.rate=1; u.pitch=1.03;
+    u.onstart=function(){ orb.classList.add('speaking'); };
+    u.onend=end; u.onerror=end; synth.speak(u);
+  }
+
+  function speak(i,next){
+    var t=token;
+    if(neuralOK){
+      fetchN(i).then(function(url){
+        if(t!==token) return;
+        pmode='neural'; audio=new Audio(url);
+        audio.onended=next;
+        audio.onerror=function(){ neuralOK=false; bspeak(i,next); };
+        orb.classList.add('speaking');
+        audio.play().catch(function(){ neuralOK=false; bspeak(i,next); });
+      }).catch(function(){ if(t!==token) return; neuralOK=false; bspeak(i,next); });
+    } else bspeak(i,next);
+  }
+
+  function step(){
+    if(paused) return;
+    if(qi>=SEG.length){ done(); return; }
+    var i=qi;
+    highlight(i);
+    status.textContent='Lina está hablando… ('+(i+1)+' de '+SEG.length+')';
+    speak(i,function(){ if(paused) return; qi++; orb.classList.remove('speaking'); step(); });
+  }
+
+  function start(){
+    token++; qi=0; paused=false;
+    play.disabled=true; pause.disabled=false; stop.disabled=false; pause.textContent='Pausa';
+    step();
+  }
+  function done(){
+    token++; orb.classList.remove('speaking');
+    if(audio){ try{audio.pause();}catch(e){} audio=null; }
+    BLK.forEach(function(b){ b.classList.remove('narr'); });
+    pause.disabled=true; stop.disabled=true; play.disabled=false;
+    status.textContent='Recorrido terminado. Pulsa para repetir.';
+  }
+  function halt(){
+    token++; paused=false;
+    if(audio){ try{audio.pause();}catch(e){} audio=null; }
+    if(synth) synth.cancel();
+    orb.classList.remove('speaking');
+    BLK.forEach(function(b){ b.classList.remove('narr'); });
+    pause.disabled=true; stop.disabled=true; play.disabled=false; pause.textContent='Pausa';
+    status.textContent='Detenido. Pulsa el orbe para escuchar de nuevo.';
+  }
+
+  orb.addEventListener('click',function(){ if(!play.disabled) start(); });
+  play.addEventListener('click',function(){ if(!play.disabled) start(); });
+  stop.addEventListener('click',halt);
+  pause.addEventListener('click',function(){
+    if(!paused){
+      paused=true; pause.textContent='Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.';
+      if(pmode==='neural'&&audio) audio.pause(); else if(synth) synth.pause();
+    } else {
+      paused=false; pause.textContent='Pausa'; orb.classList.add('speaking'); status.textContent='Reproduciendo…';
+      if(pmode==='neural'&&audio){ audio.play(); } else if(synth){ synth.resume(); }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

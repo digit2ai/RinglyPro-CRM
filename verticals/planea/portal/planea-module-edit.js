@@ -59,6 +59,7 @@
   // aparece cuando este pilar es el paso ACTUAL del acompañamiento.
   function continueHtml() {
     var PS = window.PlaneaSteps; if (!PS) return '';
+    if (!PS.guidedActive || !PS.guidedActive()) return ''; // solo en onboarding nuevo
     if (guidedActive()) return '';                // el flujo ?guided=1 ya trae su barra
     if (PS.current() !== cat) return '';          // no es el paso actual -> sin CTA de avance
     var nxt = PS.next(cat);

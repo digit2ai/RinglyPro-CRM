@@ -95,6 +95,12 @@
         writeStepsCache(merged);
         try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: merged })); } catch (e) {}
       }
+      // Bandera del flujo guiado (onboarding nuevo). Sólo la respeta si el backend la
+      // trae encendida; un usuario existente nunca la tiene, así que no se re-bloquea.
+      if (pd && pd.guided_active === true) { try { localStorage.setItem(LS_GUIDED, '1'); } catch (e) {} }
+      // Si ya completó los 7 pasos, apaga la bandera y libera cualquier bloqueo.
+      if (guidedFlowActive() && currentStep() == null) setGuidedActive(false);
+      try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: readStepsCache() })); } catch (e) {}
       return pd;
     }).catch(function () {});
   }
@@ -123,6 +129,24 @@
   // en el backend (BUCKET_FLOW en server.cjs), así la app y la voz van a la par.
   var STEP_ORDER = ['ingreso', 'gastos', 'ahorro', 'deuda', 'inversion', 'seguros', 'retiro'];
   var LS_STEPS = 'planea-steps';
+  var LS_GUIDED = 'planea-guided-active';
+  // El bloqueo secuencial es SOLO para el onboarding NUEVO. La bandera se enciende una
+  // única vez cuando el usuario acaba de completar su cuestionario (evento
+  // planea:onboarded, que sólo se dispara al GUARDAR el survey en vivo — un usuario
+  // existente jamás lo vuelve a disparar) y se apaga al terminar los 7 pasos. Un usuario
+  // que ya venía usando la app (con datos parciales o completos) nunca la tiene, así
+  // que NUNCA ve pilares bloqueados.
+  function guidedFlowActive() { try { return localStorage.getItem(LS_GUIDED) === '1'; } catch (e) { return false; } }
+  function setGuidedActive(on) {
+    try { on ? localStorage.setItem(LS_GUIDED, '1') : localStorage.removeItem(LS_GUIDED); } catch (e) {}
+    if (!mSession()) return;
+    // Persistir best-effort en progress_data.guided_active (sobrevive recarga/dispositivo).
+    mReq('GET', 'persons?select=id,user_id,progress_data&limit=1').then(function (rows) {
+      var row = (rows && rows[0]) || {}; var pd = row.progress_data || {};
+      pd.guided_active = !!on; var uid = row.user_id;
+      return mReq('PATCH', 'persons?' + (uid ? 'user_id=eq.' + uid : 'id=eq.' + row.id), { progress_data: pd });
+    }).catch(function () {});
+  }
   // Un pilar cuenta como "con datos" si su lista del perfil trae al menos un ítem.
   var STEP_PROFILE_KEY = {
     ingreso: 'ingresos', gastos: 'gastos', ahorro: 'ahorros',
@@ -156,8 +180,10 @@
     for (var i = 0; i < vis.length; i++) { if (!stepDone(vis[i])) return vis[i]; }
     return null; // todos los pasos hechos
   }
-  // Un pilar se bloquea si va DESPUÉS del paso actual en el orden visible.
+  // Un pilar se bloquea si va DESPUÉS del paso actual en el orden visible — pero SOLO
+  // durante el flujo de onboarding nuevo (guidedFlowActive). Fuera de él, nada se bloquea.
   function isStepLocked(k) {
+    if (!guidedFlowActive()) return false;            // usuario existente -> sin bloqueo
     if (STEP_ORDER.indexOf(k) < 0) return false;      // no es pilar -> nunca por secuencia
     var cur = currentStep(); if (cur == null) return false; // ya terminó todo
     var vis = visibleSteps();
@@ -172,6 +198,8 @@
   function markStepDone(k) {
     var m = readStepsCache(); m[k] = true; writeStepsCache(m);
     try { window.dispatchEvent(new CustomEvent('planea:steps', { detail: m })); } catch (e) {}
+    // Si con esto se completaron los 7 pasos, el flujo guiado termina (apaga la bandera).
+    if (currentStep() == null) setGuidedActive(false);
     // Persistencia best-effort en progress_data.steps (como los módulos).
     if (!mSession()) return Promise.resolve(m);
     return mReq('GET', 'persons?select=id,user_id,progress_data&limit=1').then(function (rows) {
@@ -183,7 +211,7 @@
   window.PlaneaSteps = {
     order: STEP_ORDER, visible: visibleSteps, current: currentStep,
     isLocked: isStepLocked, done: stepDone, doneKeys: doneKeys,
-    next: nextStepAfter, markDone: markStepDone
+    next: nextStepAfter, markDone: markStepDone, guidedActive: guidedFlowActive
   };
   // Cuando llega el perfil real (planea-data), sembrar como "done" los pilares que ya
   // traían datos, para que el bloqueo secuencial no re-bloquee a usuarios existentes.
@@ -326,7 +354,13 @@
     window.addEventListener('planea:onboarded', function () {
       try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
       hideMiPuntaje = false;                // un solo Planea Score: el tab "Planea Score" queda visible con su progreso
+      // ARRANCA el flujo guiado secuencial: SOLO aquí (onboarding recién completado).
+      // Un usuario existente jamás pasa por este evento, así que nunca se le bloquea.
+      // Si por algún motivo ya tuviera datos en todos los pilares, no habría nada que
+      // bloquear (currentStep()==null) y la bandera se apaga sola en el próximo sync.
+      if (currentStep() != null) setGuidedActive(true);
       applyLock(false);
+      renderNav();
     });
     // Toggle en vivo desde Configuración (mostrar/ocultar Mi Puntaje).
     window.addEventListener('planea:mipuntaje', function (e) {
