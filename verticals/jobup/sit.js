@@ -4226,6 +4226,23 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'every subprocessor must be named');
     assert.ok(/scrypt/.test(priv) && /salted hash/i.test(priv), 'security specifics must be stated');
     assert.ok(priv.includes('info@digit2ai.com'), 'a contact for rights requests');
+    // BULLETPROOF SHARING CLAUSE: the user decides what is shared, and the policy
+    // is honest — it names the only paths (user-published, operating providers,
+    // user-directed, legally-compelled, safety, business transfer) and states no
+    // sale / no other sharing. An absolute "never shared with anyone" would NOT be
+    // defensible against a lawful subpoena, so the carve-outs must be present.
+    assert.ok(/How your information is shared/i.test(priv) && /You decide what is shared/i.test(priv),
+      'a dedicated, user-controlled sharing section must exist');
+    for (const clause of ['legal process', 'business transfer', 'protect rights and safety',
+                          'no one else shares your information']) {
+      assert.ok(priv.includes(clause), `the sharing section must cover: ${clause}`);
+    }
+    assert.ok(/do not sell it, we do not rent it/i.test(priv), 'no sale / no rent must be explicit');
+    assert.ok(/Security incidents/i.test(priv) && /Do Not Track/i.test(priv) &&
+              /Aggregated and de-identified data/i.test(priv) && /Third-party links/i.test(priv),
+      'breach, Do-Not-Track, aggregated-data and third-party-link clauses must be present');
+    assert.ok(/Cómo se comparte tu información/i.test(priv) && /nadie más comparte tu información/i.test(priv),
+      'the sharing section must also be in Spanish');
     const terms = pwaSvc.page('terms.html', '');
     assert.ok(/No employment guarantee/i.test(terms) && /AS IS/.test(terms),
       'the no-guarantee and as-is disclaimers must be present');
