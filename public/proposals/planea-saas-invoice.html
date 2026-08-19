@@ -78,8 +78,8 @@
       <div class="meta">
         No. <b>DGT-PLANEA-2026-08</b><br>
         Fecha de emisión: 19 de agosto de 2026<br>
-        Vencimiento: 2 de septiembre de 2026<br>
-        Moneda: USD
+        Moneda: USD<br>
+        <span style="display:inline-block;margin-top:8px;background:#ecfdf5;color:#059669;font-weight:800;padding:4px 14px;border-radius:99px;letter-spacing:.12em;font-size:12px">PAGADO · SALDO $0,00</span>
       </div>
     </div>
   </div>
@@ -87,7 +87,7 @@
   <div class="parties">
     <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Desarrollo, IA y operación de plataforma</div></div>
     <div class="col"><div class="k">Facturar a</div><div class="v"><b>Planea</b> (planea.ai)<br>Producto: App de finanzas personales (PWA)<br>Atención: Propietario del proyecto</div></div>
-    <div class="col"><div class="k">Periodo</div><div class="v">Construcción inicial: 10–18 jul 2026 · 73 commits<br>Mejoras: 19 jul–19 ago 2026 · 52 commits · 42 archivos<br>Operación: mensual desde ago 2026</div></div>
+    <div class="col"><div class="k">Periodo</div><div class="v">Construcción inicial: 10–18 jul 2026 · 73 commits<br>Mejoras: 19 jul–19 ago 2026 · 52 commits · 42 archivos</div></div>
   </div>
 
   <!-- SECTION A -->
@@ -143,28 +143,6 @@
     </div>
   </div>
 
-  <!-- SECTION B -->
-  <div class="sec" style="border-top:1px solid var(--line)">
-    <h2>C · Operación SaaS <span class="pill ok">Recurrente mensual</span></h2>
-    <p class="lead">Infraestructura, consumo de IA en producción y operación gestionada con disponibilidad 99.9%.</p>
-    <table>
-      <thead><tr><th>Concepto</th><th>Proveedor</th><th class="num">Mensual</th></tr></thead>
-      <tbody>
-        <tr><td class="desc">Cómputo web (servicio de aplicación)<small>Ejecuta el backend y sirve la PWA</small></td><td>Render</td><td class="num">$25</td></tr>
-        <tr><td class="desc">Base de datos PostgreSQL<small>Datos de usuarios, ítems, salud, histórico</small></td><td>Render</td><td class="num">$19</td></tr>
-        <tr><td class="desc">Consumo de tokens de IA — Maya + Neural Findings<small>Claude Haiku, uso variable; estimado a volumen bajo/medio</small></td><td>Anthropic</td><td class="num">$20</td></tr>
-        <tr><td class="desc">Correo transaccional<small>Nivel gratuito actual (aumenta con volumen)</small></td><td>SendGrid</td><td class="num">$0</td></tr>
-        <tr><td class="desc">Operación gestionada, monitoreo, respaldos, actualizaciones y soporte<small>SLA 99.9% · parches de seguridad · mejoras menores</small></td><td>Digit2AI</td><td class="num">$333</td></tr>
-      </tbody>
-      <tfoot>
-        <tr class="tot"><td colspan="2">Subtotal operación mensual</td><td class="num">$397</td></tr>
-      </tfoot>
-    </table>
-    <div class="note">
-      <b>Ahorro obtenido:</b> la migración a backend propio elimina el costo y la dependencia de <b>Supabase ($0 en adelante)</b>. La voz neural Lina usa TTS sin llave, por lo que <b>no genera costo de síntesis</b> (incluida sin cargo). Los rubros de proveedor (Render, Anthropic) son <b>pass-through</b> y se ajustan al consumo real; la operación gestionada incluye el margen de servicio.
-    </div>
-  </div>
-
   <!-- TOTALS -->
   <div class="sec" style="border-top:1px solid var(--line)">
     <div class="two">
@@ -176,12 +154,15 @@
           <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total a pagar (49 h)</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$6.860,00</td></tr>
         </table>
       </div>
-      <div class="card">
-        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Total operación (mensual)</div>
+      <div class="card" style="border-color:var(--ok);background:#ecfdf5">
+        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--ok);font-weight:700;text-transform:uppercase">Estado de pago</div>
+        <div class="big" style="color:var(--ok);letter-spacing:.04em">PAGADO / PAID</div>
         <table style="margin-top:8px">
-          <tr><td>Subtotal</td><td class="num">$397,00</td></tr>
-          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total mensual</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$397,00</td></tr>
+          <tr><td>Total facturado</td><td class="num">$6.860,00</td></tr>
+          <tr><td>Pagos recibidos</td><td class="num">$6.860,00</td></tr>
+          <tr class="tot grand" style="font-weight:800;color:var(--ok)"><td style="border-top:2px solid var(--ok);padding-top:8px">Saldo · Balance</td><td class="num" style="border-top:2px solid var(--ok);padding-top:8px">$0,00</td></tr>
         </table>
+        <div class="sub" style="margin-top:8px">Pagado a DIGIT2AI LLC. Saldo en cero.</div>
       </div>
     </div>
     <div class="pay">
@@ -195,7 +176,7 @@
   </div>
 
   <div class="foot">
-    <b>Condiciones.</b> Precios en USD. Valores sin IVA. El desarrollo es un cargo único; la operación SaaS se factura por mes adelantado desde agosto de 2026. Los rubros de proveedor (Render, Anthropic, correo) son pass-through y pueden variar según el consumo real de tráfico, tokens y almacenamiento. La tarifa de operación gestionada incluye monitoreo, respaldos, parches de seguridad, disponibilidad 99.9% y mejoras menores; nuevas funcionalidades se cotizan por separado.<br><br>
+    <b>Condiciones.</b> Precios en USD. Valores sin IVA. El desarrollo es un cargo único. Esta factura está <b>PAGADA en su totalidad</b> a DIGIT2AI LLC; el saldo es <b>$0,00</b>. Nuevas funcionalidades se cotizan por separado.<br><br>
     Digit2AI LLC · digit2ai.com · info@digit2ai.com
   </div>
 </div>
