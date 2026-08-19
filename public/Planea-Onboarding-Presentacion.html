@@ -164,15 +164,18 @@
     .brand{font-size:15px}.brand svg{width:19px;height:19px}
     .step-pill,.voice-ind,.hint{display:none}
     .count{font-size:12px}
-    .prog{top:48px}
-    .stage{top:48px;bottom:150px;padding:8px}
-    .dock{height:150px;padding:0 12px 12px}
-    .narr{font-size:13.5px;min-height:38px;margin-bottom:9px;line-height:1.4;-webkit-line-clamp:3}
-    .ctrls{gap:7px}
-    button.c{padding:9px 11px;font-size:12.5px}
-    button.play{min-width:0;flex:1 1 auto;max-width:200px;font-size:13.5px}
-    .toggle{font-size:11px;margin-left:0}
-    .dots{margin-top:9px;gap:5px}
+    .prog{top:46px}
+    .bar{height:46px}
+    .stage{top:46px;bottom:126px;padding:8px}
+    .dock{height:126px;padding:0 12px 10px}
+    .narr{font-size:11.5px;line-height:1.35;min-height:0;margin-bottom:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+    .ctrls{gap:6px}
+    button.c{padding:8px 10px;font-size:12px;border-radius:10px}
+    button.play{min-width:0;flex:1 1 auto;max-width:170px;font-size:12.5px}
+    .toggle{font-size:10.5px;margin-left:0;gap:5px}
+    #tglAuto{display:none}
+    .dots{margin-top:8px;gap:4px}
+    .dot{width:7px;height:7px}.dot.on{width:18px}
     .cover h1{font-size:30px}.cover p{font-size:14px}.cover .logo{font-size:26px}
   }
   /* Lienzo VERTICAL en móvil (440×820): sin barra lateral, tarjeta a todo el ancho */
@@ -234,7 +237,7 @@
     <button class="c play" id="play">❚❚ Pausar voz</button>
     <button class="c" id="next">Siguiente ›</button>
     <label class="toggle"><input type="checkbox" id="autoplay" checked> Reproducir todo</label>
-    <label class="toggle"><input type="checkbox" id="autoNarr" checked> Narración automática</label>
+    <label class="toggle" id="tglAuto"><input type="checkbox" id="autoNarr" checked> Narración automática</label>
     <label class="toggle"><input type="checkbox" id="muteChk"> Silenciar voz</label>
   </div>
   <div class="dots" id="dots"></div>
