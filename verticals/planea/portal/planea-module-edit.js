@@ -9,7 +9,7 @@
 
   var CATS = {
     ingreso:   { cat: 'ingreso', title: 'Tus fuentes de ingreso', noun: 'ingresos', amount: 'Monto mensual', ph: 'Ej: Salario',
-      types: ['Salario', 'Freelance / honorarios', 'Negocio propio', 'Arriendos / rentas', 'Pensión', 'Comisiones', 'Otro'] },
+      types: ['Salario', 'Mesada', 'Freelance / honorarios', 'Negocio propio', 'Arriendos / rentas', 'Pensión', 'Comisiones', 'Otro'] },
     gastos:    { cat: 'gasto', title: 'Tus gastos mensuales', noun: 'gastos', amount: 'Monto mensual', ph: 'Ej: Arriendo',
       types: ['Vivienda / arriendo', 'Alimentación', 'Transporte', 'Servicios públicos', 'Entretenimiento', 'Educación', 'Salud', 'Suscripciones', 'Otro'] },
     ahorro:    { cat: 'ahorro', title: 'Tus cuentas de ahorro', noun: 'ahorros', amount: 'Valor actual', ph: 'Ej: Cuenta de ahorros',
@@ -17,9 +17,10 @@
     inversion: { cat: 'inversion', title: 'Tus inversiones', noun: 'inversiones', amount: 'Valor actual', ph: 'Ej: Fondo de inversión',
       types: ['Acciones', 'Fondo de inversión', 'CDT', 'Cripto', 'Bonos', 'ETF', 'Portafolio', 'Otro'] },
     deuda:     { cat: 'deuda', title: 'Tus deudas', noun: 'deudas', amount: 'Saldo que debes', ph: 'Ej: Tarjeta Visa',
-      extra: { key: 'monthly', label: 'Cuota mensual' },
+      extra: { key: 'monthly', label: 'Cuota mensual', short: 'cuota' },
       types: ['Tarjeta de crédito', 'Crédito de libre inversión', 'Crédito de vehículo', 'Crédito hipotecario', 'Crédito educativo', 'Deuda informal', 'Otro'] },
     seguros:   { cat: 'seguros', title: 'Tus pólizas', noun: 'seguros', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida',
+      extra: { key: 'monthly', label: 'Prima mensual de la póliza', short: 'prima' },
       types: ['Vida', 'Salud', 'Vehículo', 'Hogar', 'Educativo', 'Exequial', 'Otro'] },
     retiro:    { cat: 'retiro', title: 'Tus fondos de retiro', noun: 'fondos de retiro', amount: 'Saldo acumulado', ph: 'Ej: Pensión voluntaria',
       types: ['Pensión obligatoria', 'Pensión voluntaria', 'Cesantías', 'Fondo privado', 'Otro'] }
@@ -37,7 +38,7 @@
     var body = items.length
       ? items.map(function (x) {
           var sub = x.type || '';
-          if (cfg.extra && x[cfg.extra.key]) sub += (sub ? ' · ' : '') + 'cuota ' + cop(x[cfg.extra.key]) + '/mes';
+          if (cfg.extra && x[cfg.extra.key]) sub += (sub ? ' · ' : '') + (cfg.extra.short || 'cuota') + ' ' + cop(x[cfg.extra.key]) + '/mes';
           return '<div class="pe-row"><div><div class="pe-nm">' + esc(x.name || '—') + '</div>' +
             (sub ? '<div class="pe-ty">' + esc(sub) + '</div>' : '') + '</div>' +
             '<div class="pe-amt">' + cop(x.value) + '</div>' +
@@ -119,6 +120,67 @@
     document.head.appendChild(s);
   }
 
+  // ── Registro GUIADO paso a paso (?guided=1) ─────────────────────────────────
+  // Tras el Planea Score, "Próximo paso" arranca este flujo: lleva al usuario click a
+  // click por cada bucket (ingresos -> gastos -> ... -> retiro) con un botón Siguiente
+  // grande, para que registrar sus datos sea muy fácil y explícito.
+  var GUIDED_SEQ = ['ingreso', 'gastos', 'ahorro', 'deuda', 'inversion', 'seguros', 'retiro'];
+  var GUIDED_LABEL = { ingreso: 'Ingresos', gastos: 'Gastos', ahorro: 'Ahorro', deuda: 'Deudas', inversion: 'Inversión', seguros: 'Seguros', retiro: 'Retiro' };
+  function guidedActive() { try { return /[?&]guided=1/.test(location.search); } catch (e) { return false; } }
+
+  function guidedStyle() {
+    var s = document.createElement('style');
+    s.textContent =
+      'body.guided-mode{padding-bottom:96px}' +
+      '.gw-top{position:sticky;top:0;z-index:40;background:var(--bg,#0a1310);border-bottom:1px solid var(--line);padding:12px 16px 14px}' +
+      '.gw-step{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700}' +
+      '.gw-ttl{font-family:"Inter",sans-serif;font-weight:800;font-size:16px;margin-top:3px;color:var(--txt)}' +
+      '.gw-track{height:7px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:9px}' +
+      '.gw-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3fc06a,#17a6a6);transition:width .4s ease}' +
+      '.gw-hint{font-size:12.5px;color:var(--mut);margin-top:9px;line-height:1.4}' +
+      '.gw-bar{position:fixed;left:0;right:0;bottom:0;z-index:41;display:flex;gap:12px;align-items:center;justify-content:space-between;' +
+        'padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg,#0a1310);border-top:1px solid var(--line)}' +
+      '.gw-skip{background:none;border:none;color:var(--mut);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:10px}' +
+      '.gw-next{flex:1;max-width:280px;margin-left:auto;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:14px;' +
+        'padding:15px 20px;font-family:"Inter",sans-serif;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 22px rgba(63,192,106,.32)}' +
+      '.gw-next:active{transform:scale(.99)}';
+    document.head.appendChild(s);
+  }
+
+  function guided() {
+    var idx = GUIDED_SEQ.indexOf(cat);
+    if (idx < 0) return;                       // este módulo no está en el flujo guiado
+    guidedStyle();
+    document.body.classList.add('guided-mode');
+    var n = idx + 1, total = GUIDED_SEQ.length;
+    var last = idx === total - 1;
+    var pct = Math.round((n / total) * 100);
+
+    // Banner superior con progreso
+    var top = document.createElement('div');
+    top.className = 'gw-top';
+    top.innerHTML = '<div class="gw-step">Paso ' + n + ' de ' + total + '</div>' +
+      '<div class="gw-ttl">' + esc(GUIDED_LABEL[cat] || cfg.title) + '</div>' +
+      '<div class="gw-track"><div class="gw-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="gw-hint">Agrega tus ' + esc(cfg.noun) + ' con “+ Agregar”. Cuando termines (o si no aplica), toca ' + (last ? 'Finalizar' : 'Siguiente') + '.</div>';
+    document.body.insertBefore(top, document.body.firstChild);
+
+    // Barra inferior con Siguiente/Finalizar
+    var bar = document.createElement('div');
+    bar.className = 'gw-bar';
+    var nextLabel = last ? 'Finalizar' : 'Siguiente';
+    bar.innerHTML = '<button class="gw-skip" id="gw-skip">Saltar por ahora</button>' +
+      '<button class="gw-next" id="gw-next">' + nextLabel + '</button>';
+    document.body.appendChild(bar);
+
+    function go() {
+      if (last) { location.href = '/planea/portal/salud'; return; }   // termina en Salud Financiera
+      location.href = '/planea/portal/' + GUIDED_SEQ[idx + 1] + '?guided=1';
+    }
+    document.getElementById('gw-next').addEventListener('click', go);
+    document.getElementById('gw-skip').addEventListener('click', go);
+  }
+
   function boot() {
     mount = document.getElementById('mod-edit');
     if (!mount) return;
@@ -128,6 +190,7 @@
     style();
     render();
     document.addEventListener('click', onClick);
+    if (guidedActive()) guided();
     if (window.PlaneaSB) reload(); // load this module's rows (JWT-auth); 401 => empty
   }
 

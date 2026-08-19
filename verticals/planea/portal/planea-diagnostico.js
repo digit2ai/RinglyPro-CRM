@@ -117,22 +117,35 @@
   }
 
   // ── RENDER: resultado (número + rango + insight + CTA). SIN desglose por pilar. ─
+  var PILAR_ORDER = ['fondo_emergencia', 'flujo_caja', 'salud_deuda', 'estabilidad'];
+
   function renderResult(r) {
     var nombre = profile ? profile.nombre : '';
     var ins = E.buildInsight(r, nombre);
     var C = 2 * Math.PI * 63, color = r.rango.color;
 
-    var paras = [];
-    if (ins.apertura) paras.push(ins.apertura);
-    if (ins.diagnostico) paras.push(ins.diagnostico);
-    if (ins.reconocimiento) paras.push(ins.reconocimiento);
-    ins.cta_textos.forEach(function (t) { paras.push(t); });
-    if (ins.cierre) paras.push(ins.cierre);
-    var insightHtml = paras.map(function (p) { return '<p class="dg-ins-p">' + esc(p) + '</p>'; }).join('');
+    // Narrativa envolvente (apertura + cierre + advertencia). El detalle por pilar
+    // vive ahora en el desglose desplegable de abajo.
+    var apertura = ins.apertura ? '<p class="dg-ins-p">' + esc(ins.apertura) + '</p>' : '';
+    var cierre = ins.cierre ? '<p class="dg-ins-p">' + esc(ins.cierre) + '</p>' : '';
 
-    // Botones (§7): principal "Completar mi perfil" -> pantalla del CTA primario; si no
-    // hay ruta habilitada, cae a ahorro. Secundario "Ver el detalle de mi puntaje".
-    var destino = CTA_ROUTE[r.cta_primario] || CTA_ROUTE.ahorro;
+    // DESGLOSE POR PILARES — cada pilar se DESPLIEGA para ver su insight (§ solicitud).
+    var pilaresHtml = PILAR_ORDER.map(function (k) {
+      var meta = E.PILAR_META[k] || { label: k, peso: '' };
+      var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
+      var pins = E.pillarInsight(k, v);
+      var col = v < 50 ? 'var(--red)' : 'var(--green)';
+      return '<div class="dg-pex" data-pex="' + k + '">' +
+        '<button class="dg-pex-head" data-pex-btn="' + k + '">' +
+          '<span class="dg-pex-nm">' + esc(meta.label) + ' <span class="dg-pex-w">· ' + esc(meta.peso) + '</span></span>' +
+          '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span>' +
+          '<span class="dg-pex-chev" aria-hidden="true">▾</span>' +
+        '</button>' +
+        '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + v + '%;background:' + col + '"></div></div>' +
+        '<div class="dg-pex-body"><p>' + esc(pins) + '</p></div>' +
+      '</div>';
+    }).join('');
+
     var progHtml = renderProgress(r.score);
 
     return '<div class="dg-card dg-result">' +
@@ -142,9 +155,13 @@
       '<div class="dg-res-num"><b id="dg-score">0</b><small>PLANEA</small></div></div>' +
       '<div class="dg-res-badge" style="border-color:' + color + ';color:' + color + '">' + esc(r.rango.name) + '</div>' +
       progHtml +
-      '<div class="dg-insight">' + insightHtml + '</div>' +
-      '<a class="dg-cta" href="' + destino + '" id="dg-cta-primary">' + esc(ins.botones.principal) + '</a>' +
-      '<a class="dg-panel" href="/planea/portal/inicio" id="dg-done">' + esc(ins.botones.secundario) + '</a>' +
+      '<div class="dg-insight">' + apertura + '</div>' +
+      '<div class="dg-res-sub">DESGLOSE POR PILARES · toca cada uno para ver el detalle</div>' +
+      '<div class="dg-pex-list">' + pilaresHtml + '</div>' +
+      '<div class="dg-insight">' + cierre + '</div>' +
+      // "Próximo paso": inicia el registro guiado paso a paso (ingresos -> ... -> retiro).
+      '<a class="dg-cta" href="/planea/portal/ingreso?guided=1" id="dg-next-step">Próximo paso</a>' +
+      '<a class="dg-panel" href="/planea/portal/inicio" id="dg-done">Ir al panel</a>' +
       '<p class="dg-advertencia">' + esc(ins.advertencia) + '</p>' +
       '<div class="dg-res-links"><a href="#" id="dg-maya-btn">Hablar con Maya</a> · <a href="#" id="dg-retake">Volver a responder</a></div>' +
       '<div class="dg-saved" id="dg-saved"></div>' +
@@ -262,6 +279,7 @@
     if (t.classList.contains('dg-next')) { e.preventDefault(); if (!t.hasAttribute('disabled')) next(+t.getAttribute('data-step')); return; }
     if (t.classList.contains('dg-back')) { e.preventDefault(); back(+t.getAttribute('data-step')); return; }
     if (t.hasAttribute('data-calc')) { e.preventDefault(); if (!t.hasAttribute('disabled')) startCalc(); return; }
+    if (t.hasAttribute('data-pex-btn')) { e.preventDefault(); var pex = t.closest('.dg-pex'); if (pex) pex.classList.toggle('open'); return; }
     if (t.id === 'dg-maya-btn') { e.preventDefault(); if (window.MayaChat) MayaChat.open(); else location.href = '/planea/portal/inicio'; return; }
     if (t.id === 'dg-retake') { e.preventDefault(); retake(); return; }
   }

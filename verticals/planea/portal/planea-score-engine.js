@@ -223,10 +223,49 @@
     };
   }
 
+  // ── Insight POR PILAR (desplegable en el resultado) ─────────────────────────
+  // Texto descriptivo por banda (bajo <35 / medio 35-70 / alto >70). Cumplimiento:
+  // describe la situación, sin consejos, sin montos/%/meses. (El copy se afinará luego.)
+  var PILAR_META = {
+    fondo_emergencia: { label: 'Fondo de Emergencia', icon: 'shield', peso: '35%' },
+    flujo_caja: { label: 'Flujo de Caja', icon: 'flow', peso: '25%' },
+    salud_deuda: { label: 'Salud de Deudas', icon: 'card', peso: '25%' },
+    estabilidad: { label: 'Estabilidad', icon: 'scale', peso: '15%' },
+  };
+  var PILAR_INSIGHT = {
+    fondo_emergencia: {
+      bajo: 'Tu fondo de emergencia está en un nivel bajo: hoy no alcanzaría a cubrir tus gastos si dejaras de recibir ingresos. Es la base que amortigua cualquier imprevisto.',
+      medio: 'Tu fondo de emergencia va tomando forma, pero aún no cubre del todo el tiempo que suele tomar resolver un imprevisto.',
+      alto: 'Tu fondo de emergencia es sólido: ya cuentas con un respaldo disponible que te da margen frente a imprevistos.',
+    },
+    flujo_caja: {
+      bajo: 'Tu flujo de caja está ajustado: lo que gastas está muy cerca de lo que recibes, o por encima. Queda poco margen para avanzar.',
+      medio: 'Tu flujo de caja te deja algo de margen cada mes, aunque todavía es estrecho.',
+      alto: 'Tu flujo de caja es holgado: gastas bastante menos de lo que recibes, lo que te da margen para construir.',
+    },
+    salud_deuda: {
+      bajo: 'Tu deuda pesa alto en tu mes: una parte importante de tu ingreso ya está comprometida en cuotas.',
+      medio: 'Tu deuda es manejable, aunque compromete una parte de tu ingreso cada mes.',
+      alto: 'Tu deuda no compromete una parte determinante de tu ingreso hoy.',
+    },
+    estabilidad: {
+      bajo: 'La relación entre la estabilidad de tu ingreso y tus responsabilidades muestra tensión: tu ingreso varía o sostienes a varias personas.',
+      medio: 'Tu estabilidad es intermedia: tu ingreso es más o menos predecible y tus responsabilidades son moderadas.',
+      alto: 'Tu ingreso es predecible y tus responsabilidades están dentro de lo que tu estructura sostiene: una base firme para planear.',
+    },
+  };
+  function band(score) { return score < 35 ? 'bajo' : score <= 70 ? 'medio' : 'alto'; }
+  function pillarInsight(key, score) {
+    var g = PILAR_INSIGHT[key]; if (!g) return '';
+    return g[band(score)] || '';
+  }
+
   var api = {
     compute: compute,
     rangoDe: rangoDe,
     buildInsight: buildInsight,
+    pillarInsight: pillarInsight,
+    PILAR_META: PILAR_META,
     MAYA_MICRO: MAYA_MICRO,
     MID_INGRESOS: MID_INGRESOS, MID_GASTOS: MID_GASTOS, MID_CUOTAS: MID_CUOTAS,
     FONDO_MAP: FONDO_MAP, DEUDA_ADJ: DEUDA_ADJ,
