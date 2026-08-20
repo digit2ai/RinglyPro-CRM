@@ -235,6 +235,24 @@ router.post('/public/request', async (req, res) => {
       referrer_url: (b.referrer_url || '').toString().trim() || null
     }, { transaction: t });
 
+    // An anonymous build is owned by nobody, but the person who made it should be
+    // able to keep it if they sign up in the same session. A single-use claim token
+    // makes that possible without ever guessing ownership from an email.
+    let claimToken = null;
+    if (!orbOwner && b.anonymous_build) {
+      claimToken = require('crypto').randomBytes(18).toString('hex');
+      await sequelize.query(
+        `CREATE TABLE IF NOT EXISTS orbup_project_claims (
+           project_id INTEGER PRIMARY KEY,
+           token TEXT UNIQUE NOT NULL,
+           claimed_at TIMESTAMPTZ,
+           created_at TIMESTAMPTZ DEFAULT NOW()
+         )`, { transaction: t });
+      await sequelize.query(
+        'INSERT INTO orbup_project_claims (project_id, token) VALUES (:pid, :tok) ON CONFLICT (project_id) DO NOTHING',
+        { replacements: { pid: project.id, tok: claimToken }, transaction: t });
+    }
+
     // Ownership row: this is what a private workspace lists. Written only when a
     // signed session proved who is building, so an anonymous funnel submission can
     // never land inside somebody's workspace.
@@ -301,6 +319,9 @@ router.post('/public/request', async (req, res) => {
       success: true,
       batch_id: batch.id,
       project_id: project.id,
+      // Present only on an anonymous build: single-use, lets the maker keep this
+      // project if they create an account in the same session.
+      claim_token: claimToken || undefined,
       token: accessToken.token,
       url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`,
       // Echo attribution back so the Partner can verify their code wired
@@ -685,6 +706,36 @@ router.post('/orbup/reset', async (req, res) => {
   } catch (err) {
     console.error('[D2AI-Intake] orbup reset failed:', err);
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// POST /orbup/claim { token, session } — attach an anonymous build to the account
+// that just signed up. Single use: the token is cleared on success, so a leaked
+// link cannot move a project between accounts later.
+router.post("/orbup/claim", async (req, res) => {
+  try {
+    const me = orbSessionUser(req);
+    if (!me) return res.status(401).json({ success: false, error: "needs_auth" });
+    const token = String((req.body || {}).token || "").trim();
+    if (!token) return res.status(400).json({ success: false, error: "no_token" });
+    const [rows] = await sequelize.query(
+      "SELECT project_id FROM orbup_project_claims WHERE token = :t AND claimed_at IS NULL LIMIT 1",
+      { replacements: { t: token } });
+    if (!rows || !rows.length) return res.status(404).json({ success: false, error: "not_claimable" });
+    const pid = rows[0].project_id;
+    await sequelize.query(
+      `INSERT INTO orbup_project_owners (project_id, orbup_user_id, created_at)
+       VALUES (:pid, :uid, NOW()) ON CONFLICT (project_id) DO NOTHING`,
+      { replacements: { pid, uid: me.uid } });
+    await sequelize.query("UPDATE orbup_project_claims SET claimed_at = NOW() WHERE token = :t",
+      { replacements: { t: token } });
+    await sequelize.query(
+      "UPDATE d2_projects SET submitter_email = :e WHERE id = :pid AND (submitter_email IS NULL OR submitter_email = '')",
+      { replacements: { e: me.email, pid } });
+    res.json({ success: true, project_id: pid });
+  } catch (err) {
+    console.error("[D2AI-Intake] orbup claim failed:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
