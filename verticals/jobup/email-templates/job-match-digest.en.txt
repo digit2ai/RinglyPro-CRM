@@ -1,0 +1,20 @@
+Hi {{first_name}},
+
+You have {{match_count}} new job matches {{period_label}}:
+
+{{#each matches}}
+- {{this.title}}{{#if this.match_score}} ({{this.match_score}} match){{/if}}
+  {{this.company}}{{#if this.location}} · {{this.location}}{{/if}} — {{this.posted_ago}}
+  {{this.apply_url}}
+
+{{/each}}
+{{#if more_count}}And {{more_count}} more in your dashboard: {{dashboard_url}}
+
+{{/if}}
+Open your dashboard: {{dashboard_url}}
+
+---
+You are receiving this because you turned on job alerts in JobUp ({{tier_label}} plan).
+Manage frequency: {{preferences_url}}
+Unsubscribe: {{unsubscribe_url}}
+{{physical_address}}

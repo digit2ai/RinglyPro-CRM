@@ -151,6 +151,7 @@ router.use('/api/v1/auth', require('./routes/auth'));
 router.use('/api/v1/intake', require('./routes/intake'));
 router.use('/api/v1/billing', require('./routes/billing'));
 router.use('/api/v1/engine', require('./routes/engine'));
+router.use('/api/v1/notify', require('./routes/notify'));
 router.use('/teaser', require('./routes/teaser-view'));
 // The subscriber fix-it bench. Mounted BEFORE the admin console so its routes
 // win over the console's catch-all page, and inside /admin so it inherits the

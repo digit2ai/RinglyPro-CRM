@@ -58,8 +58,16 @@ let lastTick = null;
 let lastRun = null;
 let running = false;
 
-function enabled() {
+function agentsEnabled() {
   return process.env.JOBUP_AGENTS_GO === '1';
+}
+function notifyEnabled() {
+  return process.env.JOBUP_NOTIFY_GO === '1';
+}
+// The timer starts if EITHER the agent fleet or the notifier is enabled; each
+// gates its own work inside tick().
+function enabled() {
+  return agentsEnabled() || notifyEnabled();
 }
 
 function dayKey(d = new Date()) {
@@ -171,6 +179,20 @@ async function tick() {
   const out = { at: lastTick, pool: null, fleet: null, retention: null, skipped: null };
 
   try {
+    // NOTIFIER RUNS EVERY TICK (gates itself to the top of each hour via its own
+    // audit claim), independently of the agent run hour. It only mails users who
+    // are past their frequency cap AND at 08:00 local, so most ticks it no-ops.
+    if (notifyEnabled()) {
+      try { out.notify = await require('../jobs/notificationCron').runHourly(); }
+      catch (e) { out.notify = { error: e.message }; }
+    }
+
+    // Everything below is the AGENT fleet — only when JOBUP_AGENTS_GO=1.
+    if (!agentsEnabled()) {
+      if (!out.notify) out.skipped = 'notify-only mode';
+      return out;
+    }
+
     // SELF-HEAL RUNS EVERY TICK, NOT ONCE A DAY.
     //
     // A profile frozen by an outage is live and wrong for every minute it
@@ -221,8 +243,8 @@ async function tick() {
 function start() {
   if (timer) return { started: false, reason: 'already running' };
   if (!enabled()) {
-    console.log('[jobup] scheduler OFF — set JOBUP_AGENTS_GO=1 to run agents daily');
-    return { started: false, reason: 'JOBUP_AGENTS_GO is not 1' };
+    console.log('[jobup] scheduler OFF — set JOBUP_AGENTS_GO=1 (agents) and/or JOBUP_NOTIFY_GO=1 (email digests)');
+    return { started: false, reason: 'neither JOBUP_AGENTS_GO nor JOBUP_NOTIFY_GO is 1' };
   }
   // A first tick shortly after boot, then every TICK_MS. The day-claim makes
   // frequent ticks harmless: whoever wins does the work, everyone else no-ops.
@@ -236,6 +258,8 @@ function start() {
 function status() {
   return {
     enabled: enabled(),
+    agents_enabled: agentsEnabled(),
+    notifier: (() => { try { return require('../jobs/notificationCron').status(); } catch (e) { return { error: e.message }; } })(),
     running,
     tick_ms: TICK_MS,
     run_hour_utc: RUN_HOUR_UTC,

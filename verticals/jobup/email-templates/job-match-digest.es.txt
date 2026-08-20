@@ -1,0 +1,20 @@
+Hola {{first_name}},
+
+Tienes {{match_count}} nuevas vacantes {{period_label}}:
+
+{{#each matches}}
+- {{this.title}}{{#if this.match_score}} ({{this.match_score}} idoneidad){{/if}}
+  {{this.company}}{{#if this.location}} · {{this.location}}{{/if}} — {{this.posted_ago}}
+  {{this.apply_url}}
+
+{{/each}}
+{{#if more_count}}Y {{more_count}} más en tu panel: {{dashboard_url}}
+
+{{/if}}
+Abrir tu panel: {{dashboard_url}}
+
+---
+Recibes esto porque activaste las alertas de vacantes en JobUp (plan {{tier_label}}).
+Administrar frecuencia: {{preferences_url}}
+Cancelar suscripción: {{unsubscribe_url}}
+{{physical_address}}

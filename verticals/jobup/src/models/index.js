@@ -38,6 +38,7 @@ const TENANT_SCOPED = new Set([
   'social_accounts', 'social_copy', 'social_campaigns', 'social_posts',
   'admin_state', 'admin_push_subs',
   'referrals', 'referral_clicks',
+  'email_sends',
 ]);
 
 const SCHEMA = {
@@ -68,6 +69,14 @@ const SCHEMA = {
     // if the referrer is later deleted, which is what makes a dispute checkable.
     referred_by_code: { type: DataTypes.STRING },
     referred_by_tenant: { type: DataTypes.INTEGER },
+    // Email job-match notifications. Cadence follows `plan` (landed=daily,
+    // search/legacy=weekly, free=never). The cap is enforced from next_eligible_at.
+    notifications_enabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+    unsubscribe_token: { type: DataTypes.STRING },
+    timezone: { type: DataTypes.STRING },             // IANA tz; null => America/New_York
+    last_notified_at: { type: DataTypes.DATE },
+    next_eligible_at: { type: DataTypes.DATE },
+    bounce_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   // tenant_id === subscribers.id
@@ -131,7 +140,27 @@ const SCHEMA = {
     missing: { type: DataTypes.JSONB, defaultValue: [] },
     stage: { type: DataTypes.STRING, defaultValue: 'new' }, // new|saved|applied|screening|interviewing|offer|closed
     is_simulated: { type: DataTypes.BOOLEAN, defaultValue: false },
+    // Stamped when this match has been included in a sent email digest. A match
+    // is emailed exactly once, ever — the notifier only ever reads WHERE
+    // notified_at IS NULL, so a stamped row can never reappear in a later digest.
+    notified_at: { type: DataTypes.DATE },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // One row per digest actually sent (or attempted). The audit trail that makes
+  // the frequency cap and the "once ever" guarantee checkable after the fact.
+  // tenant_id === subscribers.id (JobUp has one user per tenant).
+  email_sends: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    kind: { type: DataTypes.STRING, defaultValue: 'job_match_digest' },
+    period: { type: DataTypes.STRING },            // 'daily' | 'weekly'
+    tier_at_send: { type: DataTypes.STRING },       // the plan at the moment of send
+    locale: { type: DataTypes.STRING },
+    match_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+    sendgrid_message_id: { type: DataTypes.STRING },
+    status: { type: DataTypes.STRING, defaultValue: 'sent' }, // sent|failed|dry_run
+    error: { type: DataTypes.TEXT },
+    sent_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   // EVERY posting this tenant has spent a model call on, whether or not it was
   // filed. job_matches only holds what cleared `min_score`, so it is the wrong
@@ -542,6 +571,7 @@ async function init() {
     // model and in the SIT's memory backend but NOT in production Postgres,
     // and every read of it silently returns undefined.
     await ensureColumns(seq);
+    await ensureIndexes(seq);
   } else {
     for (const name of Object.keys(SCHEMA)) models[name] = memoryTable(name);
   }
@@ -590,6 +620,15 @@ const ADDED_COLUMNS = [
   ['ju_job_matches',   'opportunity_id', 'INTEGER'],
   ['ju_job_matches',   'title',        'VARCHAR(250)'],
   ['ju_job_matches',   'employer',     'VARCHAR(250)'],
+  ['ju_job_matches',   'notified_at',  'TIMESTAMPTZ'],
+  // Email job-match notifications. Cadence is driven by `plan`; these carry the
+  // per-user state the cap is enforced from.
+  ['ju_subscribers',   'notifications_enabled', 'BOOLEAN DEFAULT true'],
+  ['ju_subscribers',   'unsubscribe_token',     'VARCHAR(64)'],
+  ['ju_subscribers',   'timezone',              'VARCHAR(64)'],
+  ['ju_subscribers',   'last_notified_at',      'TIMESTAMPTZ'],
+  ['ju_subscribers',   'next_eligible_at',      'TIMESTAMPTZ'],
+  ['ju_subscribers',   'bounce_count',          'INTEGER DEFAULT 0'],
   ['ju_outreach',      'job_id',       'INTEGER'],
   ['ju_outreach',      'to_email',     'VARCHAR(255)'],
   ['ju_outreach',      'to_name',      'VARCHAR(255)'],
@@ -597,6 +636,20 @@ const ADDED_COLUMNS = [
   ['ju_agent_runs',    'trigger',      "VARCHAR(24) DEFAULT 'scheduled'"],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
 ];
+
+// Indexes the notifier's hot paths need. Idempotent; safe to re-run forever.
+const ADDED_INDEXES = [
+  ['idx_ju_job_matches_notify', 'ju_job_matches', '(tenant_id, notified_at)'],
+  ['idx_ju_subscribers_eligible', 'ju_subscribers', '(next_eligible_at)'],
+  ['idx_ju_email_sends_tenant', 'ju_email_sends', '(tenant_id, sent_at)'],
+];
+async function ensureIndexes(sequelize) {
+  if (!sequelize) return;
+  for (const [name, table, cols] of ADDED_INDEXES) {
+    try { await sequelize.query(`CREATE INDEX IF NOT EXISTS ${name} ON ${table} ${cols}`); }
+    catch (e) { console.warn(`[jobup] could not ensure index ${name}:`, e.message); }
+  }
+}
 
 async function ensureColumns(sequelize) {
   // The instance is passed in — it is local to init(), and reaching for a

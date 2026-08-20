@@ -32,7 +32,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 (async () => {
   console.log('JobUp SIT — zero external keys\n');
 
-  const { init, models, scoped, TENANT_SCOPED } = require(__dirname + '/src/models');
+  const { init, models, scoped, plain, TENANT_SCOPED } = require(__dirname + '/src/models');
   const r = await init();
   console.log(`store: ${r.backend}, ${r.tables} tables`);
 
@@ -7674,6 +7674,135 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
 
   // ---------------------------------------------------------------
+  // ===========================================================================
+  section('job-match email notifications — the frequency cap holds at the data layer');
+  {
+    const notifier = require(__dirname + '/src/services/jobMatchNotifier');
+    const digest = require(__dirname + '/src/services/emailDigest');
+    const fs = require('fs');
+    // The send path must not touch real SendGrid; dry-run makes sendDigest
+    // succeed so the STAMP + CAP logic runs, without mailing anyone.
+    const prevDry = process.env.NOTIFY_DRY_RUN;
+    process.env.NOTIFY_DRY_RUN = 'true';
+
+    async function seedMatches(tid, n, startId) {
+      for (let i = 0; i < n; i++) {
+        const job = await models.jobs.create({
+          title: `Role ${startId + i}`, employer: `Co ${startId + i}`, location: 'Remote - US',
+          url: `https://example.com/j/${startId + i}`, posted_at: new Date(Date.now() - i * 3600 * 1000),
+          dedupe_key: `notif-${startId + i}`,
+        });
+        await scoped('job_matches', tid).create({
+          job_id: job.id, score: 90 - i, source: 'hunter', stage: 'new',
+          title: `Role ${startId + i}`, employer: `Co ${startId + i}`,
+        });
+      }
+    }
+    async function cleanTenant(tid) {
+      await scoped('job_matches', tid).destroy({});
+      const es = await models.email_sends.findAll({ where: { tenant_id: tid } });
+      for (const e of es) await models.email_sends.destroy({ where: { id: e.id } });
+    }
+
+    const now8 = () => { const d = new Date(); d.setUTCHours(13, 0, 0, 0); return d; }; // 08:00 America/New_York (EDT)
+
+    await t('SEARCH: 40 new matches in a week yields exactly one email of 8, 32 roll over', async () => {
+      const sub = await models.subscribers.create({ email: 'notif-search@sit.dev', name: 'Sara Search',
+        status: 'active', plan: 'search', language: 'en' });
+      await seedMatches(sub.id, 40, 1000);
+      const r = await notifier.runForUser(plain(sub), { dryRun: false, now: now8() });
+      assert.strictEqual(r.sent, true, 'one email sent');
+      assert.strictEqual(r.match_count, 8, 'search shows top 8');
+      assert.strictEqual(r.more_count, 32, 'the rest become more_count');
+      const stamped = (await scoped('job_matches', sub.id).findAll({})).filter((m) => m.notified_at != null);
+      assert.strictEqual(stamped.length, 8, 'exactly 8 matches stamped notified_at');
+      const sends = await models.email_sends.findAll({ where: { tenant_id: sub.id } });
+      assert.strictEqual(sends.length, 1, 'one email_sends row');
+      // The cap is now in the future — a second run this hour is not eligible.
+      const fresh = await models.subscribers.findOne({ where: { id: sub.id } });
+      assert.ok(new Date(fresh.next_eligible_at) > now8(), 'next_eligible_at advanced ~7d');
+      assert.strictEqual(notifier.isEligible(plain(fresh), now8()), false, 'not eligible again this cycle');
+      // A previously emailed match never reappears.
+      const leftovers = await notifier.newMatchesFor(sub.id);
+      assert.strictEqual(leftovers.length, 32, 'only the un-notified 32 remain');
+      assert.ok(leftovers.every((m) => m.match_score <= 82), 'the top 8 by score are gone');
+      await cleanTenant(sub.id); await models.subscribers.destroy({ where: { id: sub.id } });
+    });
+
+    await t('LANDED: daily cap, top 5, next_eligible ~24h', async () => {
+      const sub = await models.subscribers.create({ email: 'notif-landed@sit.dev', name: 'Leo Landed',
+        status: 'active', plan: 'landed', language: 'en' });
+      await seedMatches(sub.id, 10, 2000);
+      const r = await notifier.runForUser(plain(sub), { dryRun: false, now: now8() });
+      assert.strictEqual(r.match_count, 5, 'landed shows top 5');
+      assert.strictEqual(r.more_count, 5);
+      const fresh = await models.subscribers.findOne({ where: { id: sub.id } });
+      const dh = (new Date(fresh.next_eligible_at) - now8()) / 3600000;
+      assert.ok(dh > 23 && dh < 25, `daily cadence ~24h, got ${dh.toFixed(1)}h`);
+      await cleanTenant(sub.id); await models.subscribers.destroy({ where: { id: sub.id } });
+    });
+
+    await t('ZERO new matches sends nothing — never an empty digest', async () => {
+      const sub = await models.subscribers.create({ email: 'notif-empty@sit.dev', name: 'Ed Empty',
+        status: 'active', plan: 'search', language: 'en' });
+      const r = await notifier.runForUser(plain(sub), { dryRun: false, now: now8() });
+      assert.strictEqual(r.skipped, 'no new matches');
+      const sends = await models.email_sends.findAll({ where: { tenant_id: sub.id } });
+      assert.strictEqual(sends.length, 0, 'no email row for an empty digest');
+      await models.subscribers.destroy({ where: { id: sub.id } });
+    });
+
+    await t('FREE tier is never emailed; unsubscribe and off-hour also gate out', async () => {
+      const free = await models.subscribers.create({ email: 'notif-free@sit.dev', status: 'active', plan: 'free', language: 'en' });
+      assert.strictEqual(digest.cadenceFor('free'), null, 'free has no cadence');
+      assert.strictEqual(notifier.isEligible(plain(free), now8()), false, 'free never eligible');
+      await models.subscribers.destroy({ where: { id: free.id } });
+
+      const off = await models.subscribers.create({ email: 'notif-off@sit.dev', status: 'active', plan: 'search', language: 'en', notifications_enabled: false });
+      assert.strictEqual(notifier.isEligible(plain(off), now8()), false, 'unsubscribed is not eligible');
+      await models.subscribers.destroy({ where: { id: off.id } });
+
+      const late = await models.subscribers.create({ email: 'notif-late@sit.dev', status: 'active', plan: 'search', language: 'en' });
+      const at3 = new Date(); at3.setUTCHours(20, 0, 0, 0); // not 08:00 anywhere near ET morning
+      assert.strictEqual(notifier.isEligible(plain(late), at3), false, 'only sends at 08:00 local');
+      await models.subscribers.destroy({ where: { id: late.id } });
+    });
+
+    await t('unsubscribe token turns notifications off without a login', async () => {
+      const sub = await models.subscribers.create({ email: 'notif-unsub@sit.dev', status: 'active', plan: 'search', language: 'en' });
+      await notifier.ensureUnsubToken(await models.subscribers.findOne({ where: { id: sub.id } }));
+      const withTok = await models.subscribers.findOne({ where: { id: sub.id } });
+      assert.ok(withTok.unsubscribe_token, 'a token is minted');
+      // Simulate the route's turnOff.
+      await models.subscribers.update({ notifications_enabled: false }, { where: { unsubscribe_token: withTok.unsubscribe_token } });
+      const after = await models.subscribers.findOne({ where: { id: sub.id } });
+      assert.strictEqual(after.notifications_enabled, false);
+      await models.subscribers.destroy({ where: { id: sub.id } });
+    });
+
+    await t('both locales render, both plain-text templates ship', () => {
+      const en = digest.renderFallback(digest.buildData(
+        { name: 'Ann', language: 'en', plan: 'search', address: 'ann.jobup.dev', unsubscribe_token: 'x' },
+        [{ title: 'Engineer', company: 'Acme', location: 'NY', match_score: 91, posted_at: new Date(), apply_url: 'https://a.co' }], 2));
+      assert.ok(en.subject.includes('this week') && en.html.includes('Hi Ann') && en.text.includes('View job') === false, 'EN subject + greeting');
+      assert.ok(en.html.includes('Open my dashboard') && en.html.includes('Unsubscribe'), 'EN CTA + unsubscribe');
+      const es = digest.renderFallback(digest.buildData(
+        { name: 'Ana', language: 'es', plan: 'landed', address: 'ana.jobup.dev', unsubscribe_token: 'y' },
+        [{ title: 'Ingeniera', company: 'Acme', location: 'CDMX', match_score: 91, posted_at: new Date(), apply_url: 'https://a.co' }], 0));
+      assert.ok(es.subject.includes('hoy') && es.html.includes('Hola Ana'), 'ES daily subject + greeting');
+      assert.ok(es.html.includes('Cancelar suscripción'), 'ES unsubscribe');
+      // Paste-ready SendGrid templates + plain text alternatives all present.
+      const dir = __dirname + '/email-templates/';
+      for (const f of ['job-match-digest.en.html', 'job-match-digest.es.html', 'job-match-digest.en.txt', 'job-match-digest.es.txt']) {
+        assert.ok(fs.existsSync(dir + f), `missing template file: ${f}`);
+      }
+      assert.ok(fs.readFileSync(dir + 'job-match-digest.en.html', 'utf8').includes('{{#each matches}}'), 'EN template iterates matches');
+      assert.ok(fs.readFileSync(dir + 'job-match-digest.es.html', 'utf8').includes('Cancelar suscripción'), 'ES template has unsubscribe');
+    });
+
+    process.env.NOTIFY_DRY_RUN = prevDry;
+  }
+
   section('cleanup');
   await t('SIT removes its own rows', async () => {
     for (const tbl of ['profiles', 'settings', 'job_matches', 'outreach', 'agent_runs', 'sites', 'invoices', 'tailored_resumes', 'applications']) {

@@ -93,6 +93,49 @@ async function send({ to, subject, text, html, replyTo }) {
   }
 }
 
+/**
+ * Send a job-match digest. Two paths, one contract:
+ *   - templateId set  -> SendGrid DYNAMIC TEMPLATE (template_id + dynamicData)
+ *   - templateId null -> the in-app fallback html/text (identical layout)
+ * Adds the ASM unsubscribe group and List-Unsubscribe headers when provided,
+ * and returns the SendGrid message id so email_sends stays auditable.
+ * NOTIFY_DRY_RUN=true short-circuits: it never calls SendGrid.
+ */
+async function sendDigest({ to, subject, html, text, templateId, dynamicData, asmGroupId, headers, categories }) {
+  if (process.env.NOTIFY_DRY_RUN === 'true') {
+    return { ok: true, dry_run: true, messageId: `dry-${Date.now()}` };
+  }
+  if (!configured()) return { ok: false, configured: false, error: 'Email is not configured.' };
+  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(to))) {
+    return { ok: false, configured: true, error: 'A valid destination address is required.' };
+  }
+  try {
+    const sg = require('@sendgrid/mail');
+    sg.setApiKey(process.env.SENDGRID_API_KEY);
+    const msg = { to, from: fromAddress() };
+    if (templateId) {
+      msg.templateId = templateId;
+      msg.dynamicTemplateData = dynamicData || {};
+    } else {
+      msg.subject = String(subject || 'JobUp').slice(0, 200);
+      if (text) msg.text = String(text);
+      if (html) msg.html = String(html);
+    }
+    if (asmGroupId) msg.asm = { groupId: parseInt(asmGroupId, 10) };
+    if (headers && Object.keys(headers).length) msg.headers = headers;
+    if (categories && categories.length) msg.categories = categories;
+    const [resp] = await sg.send(msg);
+    const messageId = (resp && resp.headers && resp.headers['x-message-id']) || null;
+    return { ok: true, configured: true, messageId, statusCode: resp && resp.statusCode };
+  } catch (e) {
+    const body = e && e.response && e.response.body;
+    const detail = (body && JSON.stringify(body).slice(0, 400)) || e.message;
+    const code = (e && e.code) || (e && e.response && e.response.statusCode) || null;
+    console.warn('[jobup mailer] digest send failed:', detail);
+    return { ok: false, configured: true, error: detail, statusCode: code };
+  }
+}
+
 /** Plain-text + HTML rendering of one inbound opportunity. */
 function renderOpportunity(opp, profileName) {
   const when = opp.created_at ? new Date(opp.created_at).toISOString().slice(0, 16).replace('T', ' ') : '';
@@ -131,4 +174,4 @@ function renderOpportunity(opp, profileName) {
   return { text, html };
 }
 
-module.exports = { send, configured, status, renderOpportunity, fromAddress, fromSource };
+module.exports = { send, sendDigest, configured, status, renderOpportunity, fromAddress, fromSource };
