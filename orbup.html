@@ -323,6 +323,15 @@
 .d2b .cx-note{margin-top:12px;font-size:12.5px;color:var(--ink-mute);line-height:1.6}
 .d2b .cx-note b{color:var(--ink)}
 @media(max-width:640px){.d2b .cx-tbl td:nth-child(4){font-size:11px;min-width:88px}}
+.d2b .cx-tbl td:nth-child(3),.d2b .cx-tbl td:nth-child(4),.d2b .cx-tbl td:nth-child(5){text-align:right;font-family:var(--mono);white-space:nowrap}
+.d2b .cx-tbl th:nth-child(3),.d2b .cx-tbl th:nth-child(4),.d2b .cx-tbl th:nth-child(5),.d2b .cx-tbl th:nth-child(6){text-align:right}
+.d2b .cx-tbl td:nth-child(3){color:var(--faint)}
+.d2b .cx-tbl td:nth-child(4){color:var(--ink-mute)}
+.d2b .cx-tbl td:nth-child(5){color:var(--accent-cyan);font-weight:700}
+.d2b .cx-tbl td:nth-child(6){text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:nowrap}
+@media(max-width:900px){.d2b .cx-tbl td:nth-child(2),.d2b .cx-tbl th:nth-child(2){display:none}}
+@media(max-width:640px){.d2b .cx-tbl td:nth-child(3),.d2b .cx-tbl th:nth-child(3),
+  .d2b .cx-tbl td:nth-child(4),.d2b .cx-tbl th:nth-child(4){display:none}}
 .d2b .cx-tbl td:nth-child(1){font-weight:700;color:var(--ink);white-space:nowrap}
 .d2b .cx-tbl td:nth-child(2){color:var(--ink-mute)}
 .d2b .cx-tbl td:nth-child(3){text-align:right;font-family:var(--mono);color:var(--accent-cyan);white-space:nowrap}
@@ -991,26 +1000,27 @@
         <h3>How credits work</h3>
         <p class="lede">A credit is one unit of work by the workforce. These are <b>project-planning credits</b> &mdash; what it costs the workforce to analyse your idea, scope it, produce the plan and stand up a working prototype. <b>They are not an estimate of the work to deliver the finished production system.</b> What you ask for decides the cost: an AI receptionist and a compliance-grade banking system are not the same job to plan.</p>
         <table class="credits-tbl cx-tbl">
-          <thead><tr><th>Solution you are planning</th><th>Example</th><th>Planning credits</th><th>Time to a working MVP</th></tr></thead>
+          <thead><tr><th>Solution</th><th>Example</th><th>Plan it</th><th>Deliver the MVP</th><th>All-in</th><th>Time</th></tr></thead>
           <tbody>
-            <tr><td>Simple</td><td>AI receptionist, booking bot, lead capture</td><td>600</td><td>3-5 days</td></tr>
-            <tr><td>Standard</td><td>Customer dashboard, inventory, CRM-lite</td><td>2,500</td><td>1-2 weeks</td></tr>
-            <tr><td>Advanced</td><td>Multi-role portal, payments, live integrations</td><td>9,000</td><td>2-4 weeks</td></tr>
-            <tr><td>Regulated</td><td>Banking, health or compliance system</td><td>40,000+</td><td>4 weeks to MVP, then a scoped engagement</td></tr>
+            <tr><td>Simple</td><td>AI receptionist, booking bot, lead capture</td><td>1,200</td><td>4,200</td><td>5,400</td><td>3-5 days</td></tr>
+            <tr><td>Standard</td><td>Customer dashboard, inventory, CRM-lite</td><td>5,000</td><td>17,500</td><td>22,500</td><td>1-2 weeks</td></tr>
+            <tr><td>Advanced</td><td>Multi-role portal, payments, live integrations</td><td>18,000</td><td>63,000</td><td>81,000</td><td>2-4 weeks</td></tr>
+            <tr><td>Regulated</td><td>Banking, health or compliance system</td><td>80,000</td><td>280,000</td><td>360,000</td><td>4 weeks to MVP</td></tr>
           </tbody>
         </table>
-        <div class="cx-note">The plan and the interactive prototype come back in <b>minutes</b> &mdash; that is what the credits buy. The right-hand column is how long the workforce then takes to deliver a <b>working MVP</b> you can put in front of real users. Certifying and hardening a regulated system runs beyond the MVP and is quoted separately.</div>
+        <div class="cx-note"><b>Planning is the cheap part.</b> The plan and prototype come back in minutes for the figure in <b>Plan it</b>. Actually delivering a working MVP &mdash; the agent work, revisions, integrations and testing over the weeks in the last column &mdash; costs the figure in <b>Deliver the MVP</b>. Read the <b>All-in</b> column against your monthly credits below.</div>
 
-        <h3 style="margin-top:22px">What a month of planning gets you</h3>
+        <h3 style="margin-top:22px">What one month of each plan can actually deliver</h3>
         <div class="cx-month">
-          <div class="cx-m"><b>Free</b><div class="cr">1,500 credits / month</div><p>Two simple solutions planned and prototyped, or one with a round of refinements.</p></div>
-          <div class="cx-m"><b>Plus</b><div class="cr">25,000 credits / month</div><p>Around ten standard solutions planned, or two advanced ones with room to iterate.</p></div>
-          <div class="cx-m"><b>Pro</b><div class="cr">100,000 credits / month</div><p>Around eleven advanced solutions planned, or two regulated systems scoped end to end.</p></div>
+          <div class="cx-m"><b>Free</b><div class="cr">1,500 credits / month</div><p><b>Planning only.</b> One simple solution planned and prototyped. Not enough to deliver any MVP end to end.</p></div>
+          <div class="cx-m"><b>Plus</b><div class="cr">25,000 credits / month</div><p><b>One Standard MVP delivered</b> (22,500 all-in), or four Simple ones. Enough to plan an Advanced build, not to deliver it.</p></div>
+          <div class="cx-m"><b>Pro</b><div class="cr">100,000 credits / month</div><p><b>One Advanced MVP delivered</b> (81,000 all-in), with credits to spare. Enough to plan a Regulated system, not to deliver one.</p></div>
         </div>
 
         <div class="cx-ceil">
-          <h4>What a subscription does and does not buy</h4>
-          <p>Your subscription buys <b>planning, prototyping and the MVP surface</b> &mdash; the plan, the interactive prototype, your web address and the ecosystem around it. <b>It does not buy the delivered production system.</b> Planning a banking, healthcare or compliance system costs 40,000 credits; <b>building, certifying and hardening one is a separate scoped engagement with a human team and its own price.</b> The credits get you a real, working MVP of it. We will tell you which of the two you are asking for before you spend a credit on it.</p>
+          <h4>So what does <div class="cx-ceil">
+          <h4>66 a month actually get me?</h4>
+          <p>An <b>Advanced</b> MVP delivered inside the month, with credits to spare. <b>It does not get you a banking system.</b> A Regulated MVP is <b>360,000 credits all-in &mdash; roughly three and a half months of Pro</b>, or one month plus top-ups. And that buys the <b>MVP</b>: certifying, auditing and hardening a real banking, healthcare or compliance platform for production is a separate scoped engagement with a human team and its own price. We will tell you which of the two you are asking for before you spend a credit.</p>
         </div>
 
         <div class="credits-roll">Credits reset to your monthly allowance on your billing date. Unused monthly credits do not roll over. Credits you purchase never expire.</div>

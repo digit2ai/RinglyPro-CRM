@@ -97,6 +97,7 @@ async function ensureSchema() {
        label_es TEXT,
        wall_en TEXT,
        wall_es TEXT,
+       deliver_cost INTEGER,
        updated_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     // Stripe replay guard: the event id is the key, so a redelivery is a no-op.
@@ -113,6 +114,7 @@ async function ensureSchema() {
 
   await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_en TEXT');
   await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_es TEXT');
+  await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS deliver_cost INTEGER');
 
   // PLANNING complexity, not delivery. These credits buy the workforce's analysis,
   // scoping, plan and working prototype for a solution of that shape — the thing
@@ -126,27 +128,27 @@ async function ensureSchema() {
   // purpose: certification and hardening are a separate engagement, and quoting one
   // number for them would be the exact false impression this table exists to stop.
   const PLAN_COSTS = [
-    ['plan_simple',    600,   'Plan + prototype — AI receptionist, booking bot, lead capture',
+    ['plan_simple',    1200,   'Plan + prototype — AI receptionist, booking bot, lead capture',
                               'Plan + prototipo — recepcionista IA, agenda de citas, captura de prospectos',
-                              '3-5 days', '3-5 días'],
-    ['plan_standard',  2500,  'Plan + prototype — customer dashboard, inventory or CRM-lite',
+                              '3-5 days', '3-5 días', 4200],
+    ['plan_standard',  5000,  'Plan + prototype — customer dashboard, inventory or CRM-lite',
                               'Plan + prototipo — panel de clientes, inventario o CRM ligero',
-                              '1-2 weeks', '1-2 semanas'],
-    ['plan_advanced',  9000,  'Plan + prototype — multi-role portal, payments, live integrations',
+                              '1-2 weeks', '1-2 semanas', 17500],
+    ['plan_advanced',  18000,  'Plan + prototype — multi-role portal, payments, live integrations',
                               'Plan + prototipo — portal multiusuario, pagos, integraciones en vivo',
-                              '2-4 weeks', '2-4 semanas'],
-    ['plan_regulated', 40000, 'Plan + prototype — banking, health or compliance system',
+                              '2-4 weeks', '2-4 semanas', 63000],
+    ['plan_regulated', 80000, 'Plan + prototype — banking, health or compliance system',
                               'Plan + prototipo — sistema bancario, de salud o de cumplimiento',
                               '4 weeks to MVP, then a scoped engagement',
-                              '4 semanas al MVP, luego un proyecto definido']
+                              '4 semanas al MVP, luego un proyecto definido', 280000]
   ];
-  for (const [k, c, en, es, wen, wes] of PLAN_COSTS) {
+  for (const [k, c, en, es, wen, wes, dc] of PLAN_COSTS) {
     await sequelize.query(
-      `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es, wall_en, wall_es)
-       VALUES (:k,:c,:en,:es,:wen,:wes) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
+      `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es, wall_en, wall_es, deliver_cost)
+       VALUES (:k,:c,:en,:es,:wen,:wes,:dc) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
          label_en = EXCLUDED.label_en, label_es = EXCLUDED.label_es,
-         wall_en = EXCLUDED.wall_en, wall_es = EXCLUDED.wall_es`,
-      { replacements: { k, c, en, es, wen, wes } });
+         wall_en = EXCLUDED.wall_en, wall_es = EXCLUDED.wall_es, deliver_cost = EXCLUDED.deliver_cost`,
+      { replacements: { k, c, en, es, wen, wes, dc } });
   }
   // The build_* keys promised delivery. Retired.
   await sequelize.query("DELETE FROM orbup_credit_costs WHERE action_key LIKE 'build_%'");
@@ -359,7 +361,7 @@ async function claimEvent(eventId, type) {
 
 async function costTable() {
   const [rows] = await sequelize.query(
-    'SELECT action_key, cost, label_en, label_es, wall_en, wall_es FROM orbup_credit_costs ORDER BY cost DESC');
+    'SELECT action_key, cost, label_en, label_es, wall_en, wall_es, deliver_cost FROM orbup_credit_costs ORDER BY cost DESC');
   return rows || [];
 }
 
