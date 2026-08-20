@@ -288,6 +288,18 @@
 .d2b .price-card.rec .price-cta{background:var(--grad);border:0;color:#0a0a12}
 .d2b .price-note{margin-top:8px;font-size:11.5px;color:var(--faint);text-align:center;min-height:15px}
 /* How credits work */
+/* Manual top-ups. A Free account never needs a card to exist — only to buy. */
+.d2b .topup{margin-top:22px;border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--card)}
+.d2b .topup h3{margin:0 0 4px;font-size:16px;font-weight:750}
+.d2b .topup .lede{margin:0 0 14px;font-size:14px;color:var(--ink-mute)}
+.d2b .topup-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.d2b .topup-btn{cursor:pointer;font:inherit;text-align:center;border:1px solid var(--line);border-radius:14px;
+  padding:16px 12px;background:var(--bg2);color:var(--ink);transition:.15s}
+.d2b .topup-btn:hover{border-color:var(--accent-cyan);transform:translateY(-1px)}
+.d2b .topup-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.d2b .topup-amt{font-size:24px;font-weight:850;letter-spacing:-.03em}
+.d2b .topup-cr{margin-top:4px;font-family:var(--mono);font-size:11.5px;color:var(--accent-cyan)}
+.d2b .topup-note{margin-top:12px;font-size:12.5px;color:var(--faint)}
 .d2b .credits-blk{margin-top:30px;border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--bg2)}
 .d2b .credits-blk h3{margin:0 0 6px;font-size:16px;font-weight:750}
 .d2b .credits-blk .lede{margin:0 0 14px;font-size:14px;color:var(--ink-mute)}
@@ -907,6 +919,31 @@
       </div>
       <div class="price-note" id="price-note"></div>
 
+<div class="topup">
+        <h3>&iquest;Sin cr&eacute;ditos? Recarga y sigue.</h3>
+        <p class="lede">Recarga cuando quieras sin cambiar de plan. Sin suscripci&oacute;n, sin compromiso, y los cr&eacute;ditos comprados no caducan.</p>
+        <div class="topup-grid">
+          <button type="button" class="topup-btn" data-topup="t10">
+            <div class="topup-amt">$10</div>
+            <div class="topup-cr">5.000 cr&eacute;ditos</div>
+          </button>
+          <button type="button" class="topup-btn" data-topup="t20">
+            <div class="topup-amt">$20</div>
+            <div class="topup-cr">11.000 cr&eacute;ditos</div>
+          </button>
+          <button type="button" class="topup-btn" data-topup="t50">
+            <div class="topup-amt">$50</div>
+            <div class="topup-cr">30.000 cr&eacute;ditos</div>
+          </button>
+          <button type="button" class="topup-btn" data-topup="t100">
+            <div class="topup-amt">$100</div>
+            <div class="topup-cr">65.000 cr&eacute;ditos</div>
+          </button>
+        </div>
+        <div class="topup-note">Free sigue siendo gratis: no se pide tarjeta para registrarte ni para usar tus cr&eacute;ditos mensuales. Solo se pide si decides comprar.</div>
+        <div class="price-note" id="topup-note"></div>
+      </div>
+
       <div class="credits-blk">
         <h3>C&oacute;mo funcionan los cr&eacute;ditos</h3>
         <p class="lede">Un cr&eacute;dito es una unidad de trabajo de la fuerza. Construir cuesta m&aacute;s que preguntar.</p>
@@ -954,6 +991,24 @@
               ? (ES?'Los pagos a\u00fan no est\u00e1n activos.':'Payments are not switched on yet.')
               : (ES?'No se pudo abrir el pago. Int\u00e9ntalo de nuevo.':'Could not open checkout. Please try again.');
           }).catch(function(){ b.disabled=false; b.textContent=old;
+            note.textContent=ES?'Error de conexi\u00f3n.':'Connection error.'; });
+      });
+    });
+
+    /* Top-ups. mode:'payment' server-side, so this never creates a subscription. */
+    document.querySelectorAll('[data-topup]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var note=document.getElementById('topup-note');
+        var s2=session();
+        if(!s2){ note.textContent="Inicia sesi&oacute;n para recargar cr&eacute;ditos."; window.location.href='/orbup/start'; return; }
+        b.disabled=true;
+        fetch('/projects/api/v1/orbup/billing/topup',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({pack:b.getAttribute('data-topup'),session:s2})})
+          .then(function(r){ return r.json(); }).then(function(j){
+            if(j&&j.success&&j.url){ window.location.href=j.url; return; }
+            b.disabled=false;
+            note.textContent=ES?'No se pudo abrir el pago.':'Could not open checkout.';
+          }).catch(function(){ b.disabled=false;
             note.textContent=ES?'Error de conexi\u00f3n.':'Connection error.'; });
       });
     });

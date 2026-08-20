@@ -21,6 +21,20 @@ const PLANS = {
   pro:       { key: 'pro',       label: 'Pro',       cents: 16600, credits: 100000 }
 };
 
+// Manual top-ups. One-time purchases, NOT a subscription: Free never needs a card
+// to exist, only to buy. Rates are deliberately below every subscription tier
+// (Plus is 714 credits/$) so a top-up never beats subscribing, with a mild volume
+// ladder inside that band.
+const TOPUPS = [
+  { key: 't10',  cents: 1000,  credits: 5000  },   // 500/$
+  { key: 't20',  cents: 2000,  credits: 11000 },   // 550/$
+  { key: 't50',  cents: 5000,  credits: 30000 },   // 600/$
+  { key: 't100', cents: 10000, credits: 65000 }    // 650/$
+];
+function topupPack(key) { return TOPUPS.find(t => t.key === key) || null; }
+function topupPriceId(key) { return process.env['ORBUP_PRICE_' + String(key).toUpperCase()] || null; }
+function packForPriceId(id) { if (!id) return null; return TOPUPS.find(t => topupPriceId(t.key) === id) || null; }
+
 // Unused credits do NOT roll over. Stated here, in the UI, and enforced by
 // refill() setting the balance to the allowance rather than adding to it.
 const ROLLOVER = false;
@@ -47,6 +61,7 @@ async function ensureSchema() {
        email TEXT NOT NULL,
        plan VARCHAR(20) NOT NULL DEFAULT 'free',
        balance INTEGER NOT NULL DEFAULT 0,
+       topup_balance INTEGER NOT NULL DEFAULT 0,
        monthly_allowance INTEGER NOT NULL DEFAULT 1500,
        period_start TIMESTAMPTZ DEFAULT NOW(),
        period_end TIMESTAMPTZ,
@@ -90,6 +105,9 @@ async function ensureSchema() {
      )`
   ];
   for (const q of ddl) await sequelize.query(q);
+  // Purchased credits are a SEPARATE bucket. The monthly refill sets the granted
+  // balance to the allowance; it must never touch credits somebody paid for.
+  await sequelize.query('ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS topup_balance INTEGER NOT NULL DEFAULT 0');
 
   const COSTS = [
     ['prototype_build', 250, 'Prototype build (plan + simulator)', 'Construcción de prototipo (plan + simulador)'],
@@ -169,14 +187,26 @@ async function consumeCredits({ tenantId, userId, email, actionKey, units = 1, i
   const unit = await costOf(actionKey);
   if (unit == null) return { ok: false, error: 'unknown_action', action_key: actionKey };
   const total = unit * Math.max(1, parseInt(units, 10) || 1);
-  if (acct.balance < total) {
-    return { ok: false, error: 'insufficient_credits', balance: acct.balance, needed: total,
+  const available = (acct.balance || 0) + (acct.topup_balance || 0);
+  if (available < total) {
+    return { ok: false, error: 'insufficient_credits', balance: acct.balance,
+             topup_balance: acct.topup_balance || 0, available, needed: total,
              plan: acct.plan, upgrade: true };
   }
-  const r = await post({ tenantId, accountId: acct.id, delta: -total, reason: 'consume',
-    actionKey, idempotencyKey: idempotencyKey || `consume:${tenantId}:${userId}:${actionKey}:${Date.now()}`,
-    metadata });
-  return { ok: true, spent: total, balance: r.balance, replayed: !r.applied };
+  // Spend the granted allowance first — it expires at the period end, purchased
+  // credits do not, so burning the perishable bucket first is the honest order.
+  const fromGrant = Math.min(acct.balance || 0, total);
+  const fromTopup = total - fromGrant;
+  const key = idempotencyKey || `consume:${tenantId}:${userId}:${actionKey}:${Date.now()}`;
+  const r = await post({ tenantId, accountId: acct.id, delta: -fromGrant, reason: 'consume',
+    actionKey, idempotencyKey: key, metadata: Object.assign({}, metadata, { from_topup: fromTopup }) });
+  if (fromTopup > 0 && r.applied) {
+    await sequelize.query('UPDATE orbup_credit_accounts SET topup_balance = GREATEST(0, topup_balance - :d), updated_at=NOW() WHERE id=:i',
+      { replacements: { d: fromTopup, i: acct.id } });
+  }
+  const after = await getAccount({ tenantId, userId, email, create: false });
+  return { ok: true, spent: total, balance: after.balance, topup_balance: after.topup_balance,
+           available: after.balance + after.topup_balance, replayed: !r.applied };
 }
 
 // Reserve-then-settle for long jobs: hold an estimate, settle to actual, refund
@@ -209,7 +239,7 @@ async function refill({ tenantId, userId, email, plan, periodStart, periodEnd, e
   const acct = await getAccount({ tenantId, userId, email });
   if (!acct) return { ok: false, error: 'no_account' };
   const allowance = (PLANS[plan] || PLANS.free).credits;
-  const delta = allowance - acct.balance;   // ROLLOVER === false
+  const delta = allowance - acct.balance;   // ROLLOVER === false; topup_balance untouched
   await sequelize.query(
     `UPDATE orbup_credit_accounts SET plan=:p, monthly_allowance=:a, period_start=:ps, period_end=:pe, updated_at=NOW()
      WHERE id=:i`,
@@ -252,6 +282,31 @@ async function downgradeToFree({ tenantId, userId, email, eventId }) {
   return { ok: true, balance: r.balance, capped: acct.balance - cap };
 }
 
+// A purchase. Idempotent on the Stripe session id, so a redelivered
+// checkout.session.completed cannot grant the credits twice.
+async function topUp({ tenantId, userId, email, packKey, sessionId }) {
+  const pack = topupPack(packKey);
+  if (!pack) return { ok: false, error: 'unknown_pack', pack: packKey };
+  const acct = await getAccount({ tenantId, userId, email });
+  if (!acct) return { ok: false, error: 'no_account' };
+  const [rows] = await sequelize.query(
+    `INSERT INTO orbup_credit_ledger (tenant_id,account_id,delta,reason,action_key,metadata,idempotency_key)
+     VALUES (:t,:a,:d,'purchase',:k,CAST(:m AS JSONB),:i)
+     ON CONFLICT (idempotency_key) DO NOTHING RETURNING id`,
+    { replacements: { t: tenantId, a: acct.id, d: pack.credits, k: 'topup_' + pack.key,
+        m: JSON.stringify({ cents: pack.cents, pack: pack.key, session: sessionId }),
+        i: `topup:${sessionId || pack.key + ':' + Date.now()}` } });
+  if (!rows || !rows.length) {
+    return { ok: true, applied: false, topup_balance: acct.topup_balance || 0 };   // replay
+  }
+  const [[a]] = await sequelize.query(
+    'UPDATE orbup_credit_accounts SET topup_balance = topup_balance + :d, updated_at=NOW() WHERE id=:i RETURNING topup_balance',
+    { replacements: { d: pack.credits, i: acct.id } });
+  await sequelize.query('UPDATE orbup_credit_ledger SET balance_after = :b WHERE id = :i',
+    { replacements: { b: (acct.balance || 0) + a.topup_balance, i: rows[0].id } });
+  return { ok: true, applied: true, granted: pack.credits, topup_balance: a.topup_balance };
+}
+
 // Replay guard for Stripe. Returns false if this event was already handled.
 async function claimEvent(eventId, type) {
   const [rows] = await sequelize.query(
@@ -267,6 +322,6 @@ async function costTable() {
   return rows || [];
 }
 
-module.exports = { PLANS, ROLLOVER, ensureSchema, getAccount, consumeCredits, reserve, settle,
+module.exports = { PLANS, TOPUPS, ROLLOVER, topupPack, topupPriceId, packForPriceId, topUp, ensureSchema, getAccount, consumeCredits, reserve, settle,
                    refill, prorateUpgrade, downgradeToFree, claimEvent, costOf, costTable,
                    priceIdFor, planForPriceId, post };

@@ -51,6 +51,8 @@ apiRouter.get('/plans', async (req, res) => {
       credits: p.credits, recommended: !!p.recommended,
       purchasable: p.key === 'free' ? false : !!credits.priceIdFor(p.key)
     })),
+    topups: credits.TOPUPS.map(t => ({ key: t.key, cents: t.cents, credits: t.credits,
+      purchasable: !!credits.topupPriceId(t.key) })),
     costs: await credits.costTable().catch(() => [])
   });
 });
@@ -63,9 +65,13 @@ apiRouter.get('/balance', async (req, res) => {
     const a = await credits.getAccount({ tenantId: me.uid, userId: me.uid, email: me.email });
     const allowance = a.monthly_allowance || 1;
     const pct = Math.max(0, Math.min(100, Math.round((a.balance / allowance) * 100)));
-    res.json({ success: true, plan: a.plan, balance: a.balance, allowance,
-               pct, low: pct <= 20, critical: pct <= 5, period_end: a.period_end,
-               rollover: credits.ROLLOVER });
+    const topup = a.topup_balance || 0;
+    res.json({ success: true, plan: a.plan, balance: a.balance, topup_balance: topup,
+               available: a.balance + topup, allowance, pct,
+               // The warning is about the perishable bucket. Purchased credits do
+               // not expire, so a healthy top-up balance means you are not low.
+               low: pct <= 20 && topup === 0, critical: pct <= 5 && topup === 0,
+               period_end: a.period_end, rollover: credits.ROLLOVER });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -76,6 +82,12 @@ apiRouter.post('/checkout', async (req, res) => {
   const me = sessionUser(req);
   if (!me) return res.status(401).json({ success: false, error: 'needs_auth' });
   const plan = String((req.body || {}).plan || '').toLowerCase();
+  // Free never touches Stripe and never asks for a card. Refused here explicitly
+  // so a forged or mistaken request cannot open a checkout for a free plan.
+  if (plan === 'free') {
+    return res.status(400).json({ success: false, error: 'free_needs_no_payment',
+      note: 'The Free plan requires no card. Sign up and it is granted.' });
+  }
   const price = credits.priceIdFor(plan);
   if (!price) return res.status(400).json({ success: false, error: 'unknown_plan', plan });
   try {
@@ -95,6 +107,38 @@ apiRouter.post('/checkout', async (req, res) => {
     res.json({ success: true, url: session.url });
   } catch (e) {
     console.error('[orbupBilling] checkout failed:', e.message);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /topup { pack, session } -> one-time Stripe Checkout. mode:'payment', so
+// this can never create a subscription, and a Free user can buy credits without
+// ever taking on a recurring charge.
+apiRouter.post('/topup', async (req, res) => {
+  const s = stripe();
+  if (!s) return res.status(503).json({ success: false, error: 'billing_not_configured' });
+  const me = sessionUser(req);
+  if (!me) return res.status(401).json({ success: false, error: 'needs_auth' });
+  const packKey = String((req.body || {}).pack || '').toLowerCase();
+  const pack = credits.topupPack(packKey);
+  const price = credits.topupPriceId(packKey);
+  if (!pack || !price) return res.status(400).json({ success: false, error: 'unknown_pack', pack: packKey });
+  try {
+    const acct = await credits.getAccount({ tenantId: me.uid, userId: me.uid, email: me.email });
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price, quantity: 1 }],
+      customer: acct.stripe_customer_id || undefined,
+      customer_email: acct.stripe_customer_id ? undefined : me.email,
+      client_reference_id: String(me.uid),
+      metadata: { orbup_user_id: String(me.uid), orbup_email: me.email, orbup_topup: packKey },
+      payment_intent_data: { metadata: { orbup_user_id: String(me.uid), orbup_topup: packKey } },
+      success_url: ORB_BASE + '/orbup/welcome?topup=success&pack=' + encodeURIComponent(packKey),
+      cancel_url: ORB_BASE + '/orbup#pricing'
+    });
+    res.json({ success: true, url: session.url });
+  } catch (e) {
+    console.error('[orbupBilling] topup failed:', e.message);
     res.status(500).json({ success: false, error: e.message });
   }
 });
@@ -141,6 +185,17 @@ async function applyEvent(event) {
   if (!who) { console.warn('[orbupBilling] unattributable %s, parked', type); return; }
 
   const acct = await credits.getAccount({ tenantId: who.uid, userId: who.uid, email: who.email });
+
+  if (type === 'checkout.session.completed' && (obj.mode === 'payment' || meta.orbup_topup)) {
+    // A one-time credit purchase. Idempotent on the Stripe session id, and it
+    // never touches the plan — buying credits is not subscribing.
+    await credits.topUp({ tenantId: who.uid, userId: who.uid, email: who.email,
+      packKey: meta.orbup_topup, sessionId: obj.id });
+    if (customerId) await sequelize.query(
+      'UPDATE orbup_credit_accounts SET stripe_customer_id=:c, updated_at=NOW() WHERE id=:i',
+      { replacements: { c: customerId, i: acct.id } });
+    return;
+  }
 
   if (type === 'checkout.session.completed') {
     const plan = meta.orbup_plan || 'plus';
