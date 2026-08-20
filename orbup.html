@@ -255,6 +255,29 @@
   background:var(--bg2);box-shadow:0 24px 70px rgba(0,0,0,.45)}
 .d2b .mcp-frame{display:block;width:100%;height:640px;min-height:360px;border:0;background:var(--bg2)}
 @media(max-width:760px){.d2b .mcp-frame{height:560px}}
+/* The full army. Department cards on desktop, one horizontally scrollable row on
+   mobile so the roster never becomes an endless column. */
+.d2b .army-core{margin-top:26px;border:1px solid var(--line);border-radius:18px;padding:20px 22px;
+  background:linear-gradient(180deg,rgba(34,211,238,.06),transparent 70%),var(--card)}
+.d2b .army-core-hd,.d2b .army-card-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.d2b .army-core-hd h3,.d2b .army-card-hd h3{margin:0;font-size:15.5px;font-weight:750;letter-spacing:-.01em}
+.d2b .army-n{flex:0 0 auto;min-width:26px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--accent-cyan);border:1px solid rgba(34,211,238,.4);background:rgba(34,211,238,.08);
+  border-radius:999px;padding:2px 8px}
+.d2b .army-core ul{list-style:none;margin:0;padding:0;display:grid;gap:6px 20px;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.d2b .army-card ul{list-style:none;margin:0;padding:0}
+.d2b .army-core li,.d2b .army-card li{position:relative;padding-left:15px;margin:5px 0;font-size:14px;color:var(--ink-mute)}
+.d2b .army-core li::before,.d2b .army-card li::before{content:'\203A';position:absolute;left:0;color:var(--accent-cyan);opacity:.75}
+.d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+.d2b .army-card{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:var(--card)}
+@media(max-width:720px){
+  .d2b .army-grid{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+    margin-inline:-18px;padding:2px 18px 10px;-webkit-overflow-scrolling:touch}
+  .d2b .army-card{flex:0 0 82vw;scroll-snap-align:start}
+  .d2b .army-core ul{grid-template-columns:1fr}
+}
 @media(max-width:430px){.d2b .or-divider{margin:14px auto 0}.d2b .hero-ask{margin:4px auto 12px;font-size:clamp(1.9rem,8.4vw,2.6rem)}}
 @media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
 @media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
@@ -761,6 +784,66 @@
       var f=document.getElementById('mcp-brain-frame'); if(f) f.style.height=Math.max(360,d.height)+'px'; }
   }); })();
   </script>
+
+<section class="blk" id="army">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">8 core + 75 specialists = 83</div>
+        <h2>The full army &mdash; 70+ specialist agents on call</h2>
+        <p>8 core + 75 specialists = an 83-agent workforce. The core agents are always on; the specialists spin up the moment your project needs them.</p>
+      </div>
+      <div class="army-core">
+        <div class="army-core-hd"><h3>Always on</h3><span class="army-n">8</span></div>
+        <ul><li>Senior Business Analyst</li><li>Research Brief</li><li>Outreach Drafter</li><li>Architect &amp; Builder</li><li>Inbox Triage</li><li>Meeting Minutes Synthesizer</li><li>Voice AI Agents</li><li>Neural Findings</li></ul>
+      </div>
+      <div class="army-grid">
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Engineering &amp; Build</h3><span class="army-n">12</span></div>
+          <ul><li>Senior Full Stack Developer</li><li>Senior Frontend Engineer</li><li>Senior Backend Engineer</li><li>Senior DevOps / SRE</li><li>Senior Database Architect</li><li>Senior API Designer</li><li>Senior Mobile Engineer</li><li>Senior SIT Tester</li><li>Senior UAT Coordinator</li><li>Senior Production Release Manager</li><li>Senior Security Engineer</li><li>Senior Performance Engineer</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Data, ML &amp; Math</h3><span class="army-n">8</span></div>
+          <ul><li>Senior Data Engineer</li><li>Senior Data Analyst</li><li>Senior Data Scientist</li><li>Mathematics SME</li><li>Senior ML / AI Engineer</li><li>Senior Forecasting Analyst</li><li>Senior BI / Dashboard Builder</li><li>Senior Statistician</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Business &amp; Strategy</h3><span class="army-n">8</span></div>
+          <ul><li>Senior Project Manager</li><li>Senior Product Manager</li><li>Senior Strategy Consultant</li><li>Senior Operations Analyst</li><li>Senior Process Improvement</li><li>Senior M&amp;A Analyst</li><li>Senior Pricing Analyst</li><li>Senior Change Management</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Sales, Marketing &amp; Customer</h3><span class="army-n">9</span></div>
+          <ul><li>Senior Sales Engineer</li><li>Senior Lead Qualifier</li><li>Senior Content Marketer</li><li>Senior SEO Specialist</li><li>Senior Brand Strategist</li><li>Senior CRM Hygiene Specialist</li><li>Senior Customer Success Manager</li><li>Senior Churn Prevention Analyst</li><li>Senior Onboarding Specialist</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Finance &amp; Risk</h3><span class="army-n">7</span></div>
+          <ul><li>Senior Accountant</li><li>Senior FP&amp;A Analyst</li><li>Senior Treasury Analyst</li><li>Senior Tax Strategist</li><li>Senior Auditor</li><li>Senior Risk Modeler</li><li>Senior Invoice Reconciler</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Legal, Compliance &amp; HR</h3><span class="army-n">8</span></div>
+          <ul><li>Senior Contract Drafter</li><li>Senior NDA / IP Reviewer</li><li>Senior Compliance Officer</li><li>Senior Regulatory Researcher</li><li>Senior Privacy Officer (GDPR / HIPAA)</li><li>Senior Recruiter</li><li>Senior Performance Reviewer</li><li>Senior Training Designer</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>AI-Native / LLM</h3><span class="army-n">6</span></div>
+          <ul><li>Senior Prompt &amp; Eval Engineer</li><li>Senior LLMOps / Model Router</li><li>Senior RAG / Retrieval Engineer</li><li>Senior AI Safety / Red-Team Engineer</li><li>Senior Conversation &amp; Voice UX Designer</li><li>Senior MCP / Integration Engineer</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Reliability &amp; Trust</h3><span class="army-n">5</span></div>
+          <ul><li>Senior Observability Engineer</li><li>Senior FinOps / Cloud-Cost Analyst</li><li>Senior Data Governance / MDM Specialist</li><li>Senior Responsible-AI / Ethics Officer</li><li>Senior Fraud &amp; Anomaly Detection Specialist</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Vertical SMEs</h3><span class="army-n">4</span></div>
+          <ul><li>Clinical / Healthcare Informatics SME</li><li>Logistics &amp; Supply-Chain SME</li><li>Agriculture &amp; Commodities SME</li><li>Fintech / Payments SME</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Design, Content &amp; Localization</h3><span class="army-n">5</span></div>
+          <ul><li>Senior UX/UI &amp; Design-System Designer</li><li>Senior Localization Engineer</li><li>Senior Accessibility (a11y) Specialist</li><li>Senior Technical Writer</li><li>Senior Conversion-Rate Optimizer</li></ul>
+        </div>
+        <div class="army-card">
+          <div class="army-card-hd"><h3>Growth &amp; Partnerships</h3><span class="army-n">3</span></div>
+          <ul><li>Senior Partnerships / Channel Manager</li><li>Senior Solutions Architect / Pre-Sales</li><li>Senior Demand-Gen / Paid-Ads Specialist</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="blk" id="meet">
     <div class="wrap">
