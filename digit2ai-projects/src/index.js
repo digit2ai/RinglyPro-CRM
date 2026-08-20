@@ -170,6 +170,13 @@ const orbupApps = require('./routes/orbupApps');
 app.use('/app', orbupApps.viewerRouter);
 app.use('/api/v1/orbup', express.json({ limit: '2mb' }), orbupApps.apiRouter);
 
+// OrbUp billing — plans, checkout, portal, live balance. The webhook mounts
+// separately with a RAW body, because Stripe signature verification needs the
+// exact bytes and express.json() would have already consumed them.
+const orbupBilling = require('./routes/orbupBilling');
+app.use('/api/v1/orbup/billing', express.json(), orbupBilling.apiRouter);
+app.use('/api/v1/webhooks/orbup-stripe', orbupBilling.webhookRouter);
+
 // Public read-only Registry Agent catalog (NIN org chart node source).
 // Non-sensitive roster data — departments, agents, input/output schemas, owners.
 // Mounted BEFORE the authenticated /api/v1/agents router so the org chart and
