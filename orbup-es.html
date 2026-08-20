@@ -238,6 +238,12 @@
   font-size:clamp(2.1rem,7.4vw,4.6rem);
   background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   filter:drop-shadow(0 6px 34px rgba(124,92,255,.28))}
+/* MCP brain embed. Reserves its own min-height up front so the lazy iframe cannot
+   shift the page when it loads. */
+.d2b .mcp-embed{margin-top:26px;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+  background:var(--bg2);box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.d2b .mcp-frame{display:block;width:100%;height:640px;min-height:360px;border:0;background:var(--bg2)}
+@media(max-width:760px){.d2b .mcp-frame{height:560px}}
 @media(max-width:430px){.d2b .or-divider{margin:14px auto 0}.d2b .hero-ask{margin:4px auto 12px;font-size:clamp(1.9rem,8.4vw,2.6rem)}}
 @media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
 @media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
@@ -709,6 +715,29 @@
       <b>Impulsando 21 plataformas en vivo en 22 verticales de la industria</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
     </div>
   </header>
+
+<section class="blk" id="mcp-brain">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Fuerza de trabajo de 83 agentes</div>
+        <h2>Un solo cerebro. Todos los agentes.<br>Conectados por MCP abierto.</h2>
+        <p>Un solo cerebro MCP reparte el trabajo entre una fuerza de 83 agentes &mdash; 8 agentes centrales m&aacute;s 75 especialistas a la orden &mdash; cada uno conectado a tus sistemas en vivo mediante el Model Context Protocol abierto.</p>
+      </div>
+      <div class="mcp-embed">
+        <iframe id="mcp-brain-frame" class="mcp-frame" src="/orbup-mcp-brain.html"
+                title="Cerebro MCP de OrbUp &mdash; 83 agentes" loading="lazy" scrolling="no"></iframe>
+      </div>
+    </div>
+  </section>
+  <script>
+  /* The brain page reports its own height so the iframe fits exactly — no scrollbar,
+     no guessed height, no layout shift. loading="lazy" keeps it from competing with
+     the orb for the first paint. */
+  (function(){ window.addEventListener('message', function(e){
+    var d=e&&e.data; if(d&&d.__d2mcp&&typeof d.height==='number'){
+      var f=document.getElementById('mcp-brain-frame'); if(f) f.style.height=Math.max(360,d.height)+'px'; }
+  }); })();
+  </script>
 
   <section class="blk" id="meet">
     <div class="wrap">
