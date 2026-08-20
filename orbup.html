@@ -952,7 +952,7 @@
         <div class="price-card rec" data-plan="build">
           <div class="price-rec">Most clients</div>
           <div class="price-name">We build it</div>
-          <div class="price-amt">From $4,900<span>one-time</span></div>
+          <div class="price-amt">Quoted<span>after your free plan</span></div>
           <div class="price-cr">Your real system, scoped with you on a call.</div>
           <ul><li>Shared data your whole team uses</li><li>Logins for your customers</li><li>Phone, SMS, email and payments</li><li>Integrations with what you already run</li><li>Yours, delivered and live</li></ul>
           <button type="button" class="price-cta" data-go="build">Get a plan, then book</button>
@@ -960,48 +960,23 @@
         <div class="price-card" data-plan="care">
           
           <div class="price-name">Care plan</div>
-          <div class="price-amt">From $490<span>/month</span></div>
+          <div class="price-amt">Monthly<span>sized to your build</span></div>
           <div class="price-cr">Hosting, support and changes after we build.</div>
           <ul><li>Hosting and monitoring</li><li>Fixes and small changes</li><li>Changes as your business changes</li><li>Priority access to us</li></ul>
           <div class="price-cta" style="cursor:default;opacity:.72">Ask on your call</div>
         </div>
       </div>
-      <div class="price-note" id="price-note">Prices depend on scope. The plan is free either way &mdash; describe what you need and you will see the shape and the timeline before anyone talks about money.</div>
+      <div class="price-note" id="price-note">Every build is quoted to its scope, so we do not publish a number that would be wrong for you. The plan is free either way &mdash; describe what you need and you will see the shape, the timeline and what it takes before anyone talks about money.</div>
 
-<div class="topup">
-        <h3>Out of credits? Just load more.</h3>
-        <p class="lede">Top up any time without changing your plan. No subscription, no commitment — and purchased credits never expire.</p>
-        <div class="topup-grid">
-          <button type="button" class="topup-btn" data-topup="t10">
-            <div class="topup-amt">$10</div>
-            <div class="topup-cr">5,000 credits</div>
-          </button>
-          <button type="button" class="topup-btn" data-topup="t20">
-            <div class="topup-amt">$20</div>
-            <div class="topup-cr">11,000 credits</div>
-          </button>
-          <button type="button" class="topup-btn" data-topup="t50">
-            <div class="topup-amt">$50</div>
-            <div class="topup-cr">30,000 credits</div>
-          </button>
-          <button type="button" class="topup-btn" data-topup="t100">
-            <div class="topup-amt">$100</div>
-            <div class="topup-cr">65,000 credits</div>
-          </button>
-        </div>
-        <div class="topup-note">Free stays free: no card is needed to sign up or to use your monthly credits. A card is only asked for when you choose to buy.</div>
-        <div class="price-note" id="topup-note"></div>
-      </div>
-
-      <div class="credits-blk">
+<div class="credits-blk">
         <h3>What you can build free, and what needs us</h3>
         <p class="lede">The free builder makes <b>self-contained tools that run in your browser</b> and save to that browser. That is genuinely useful, and it is genuinely limited: the moment a second person needs to see the data, or the thing has to make a call, send an email or take a payment, it needs a backend &mdash; and that is a build, not a generation.</p>
         <table class="credits-tbl cx-tbl">
-          <thead><tr><th>What you want</th><th>Example</th><th>Who builds it</th><th>Time</th><th>Price</th></tr></thead>
+          <thead><tr><th>What you want</th><th>Example</th><th>Who builds it</th><th>Time</th><th>Cost</th></tr></thead>
           <tbody>
-            <tr><td>Personal tool</td><td>Habit tracker, invoice generator, calculator, checklist, planner</td><td>You, free</td><td>Minutes</td><td>$0</td></tr>
-            <tr><td>Business system</td><td>Customer dashboard, inventory, CRM your team shares</td><td>We do</td><td>1-2 weeks</td><td>From $4,900</td></tr>
-            <tr><td>Advanced</td><td>Multi-role portal, payments, phone, live integrations</td><td>We do</td><td>2-4 weeks</td><td>From $9,800</td></tr>
+            <tr><td>Personal tool</td><td>Habit tracker, invoice generator, calculator, checklist, planner</td><td>You, free</td><td>Minutes</td><td>Free</td></tr>
+            <tr><td>Business system</td><td>Customer dashboard, inventory, CRM your team shares</td><td>We do</td><td>1-2 weeks</td><td>Quoted</td></tr>
+            <tr><td>Advanced</td><td>Multi-role portal, payments, phone, live integrations</td><td>We do</td><td>2-4 weeks</td><td>Quoted</td></tr>
             <tr><td>Regulated</td><td>Banking, health or compliance system</td><td>We do</td><td>Scoped with you</td><td>Quoted</td></tr>
           </tbody>
         </table>
@@ -1036,23 +1011,6 @@
       });
     });
 
-    /* Top-ups. mode:'payment' server-side, so this never creates a subscription. */
-    document.querySelectorAll('[data-topup]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var note=document.getElementById('topup-note');
-        var s2=session();
-        if(!s2){ note.textContent="Sign in first to load credits."; window.location.href='/orbup/start'; return; }
-        b.disabled=true;
-        fetch('/projects/api/v1/orbup/billing/topup',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({pack:b.getAttribute('data-topup'),session:s2})})
-          .then(function(r){ return r.json(); }).then(function(j){
-            if(j&&j.success&&j.url){ window.location.href=j.url; return; }
-            b.disabled=false;
-            note.textContent=ES?'No se pudo abrir el pago.':'Could not open checkout.';
-          }).catch(function(){ b.disabled=false;
-            note.textContent=ES?'Error de conexi\u00f3n.':'Connection error.'; });
-      });
-    });
 
     /* Live meter — reads the API, never a hardcoded number. */
     (function(){
