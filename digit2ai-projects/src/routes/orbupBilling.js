@@ -201,11 +201,17 @@ webhookRouter.post('/', express.raw({ type: 'application/json' }), async (req, r
   const s = stripe();
   if (!s) return res.status(503).send('billing not configured');
   let event;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    // REFUSE rather than trust an unverified body — the same stance JobUp takes.
+    // An unauthenticated webhook that reaches this handler could POST a forged
+    // invoice.paid with any orbup_user_id and grant itself 100,000 credits.
+    console.error('[orbupBilling] refused: STRIPE_WEBHOOK_SECRET is not set');
+    return res.status(503).json({ error: 'webhook signature verification is not configured',
+      note: 'Set STRIPE_WEBHOOK_SECRET. Unverified webhooks are refused.' });
+  }
   try {
-    const secret = process.env.STRIPE_WEBHOOK_SECRET;
-    event = secret
-      ? s.webhooks.constructEvent(req.body, req.headers['stripe-signature'], secret)
-      : JSON.parse(req.body.toString('utf8'));
+    event = s.webhooks.constructEvent(req.body, req.headers['stripe-signature'], secret);
   } catch (e) {
     console.error('[orbupBilling] signature verify failed:', e.message);
     return res.status(400).send('bad signature');
