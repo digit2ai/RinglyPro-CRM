@@ -3587,6 +3587,22 @@ const orbupFrameCsp = "frame-ancestors 'self' https://orbup.app https://*.orbup.
 
 // PWA head (favicon + app icons + manifest + SW). SW registers ONLY on orbup.app
 // so it never installs a service worker on aiagent.ringlypro.com (main CRM).
+// Canonical + hreflang + Search Console verification for the OrbUp brand pages.
+// WHY canonical: orbup.app/ and orbup.app/orbup serve byte-identical HTML, so
+// without this Google sees duplicate content and splits or discards the signal.
+// WHY hreflang: the Spanish landing is a second language of traffic, and the pair
+// must be declared reciprocally or Google treats them as duplicates too.
+function ORBUP_SEO_HEAD(lang) {
+  const v = (process.env.GOOGLE_SITE_VERIFICATION || '').replace(/^google/i, '').replace(/\.html$/i, '').trim();
+  return [
+    `<link rel="canonical" href="https://orbup.app/${lang === 'es' ? 'es' : ''}">`,
+    '<link rel="alternate" hreflang="en" href="https://orbup.app/">',
+    '<link rel="alternate" hreflang="es" href="https://orbup.app/es">',
+    '<link rel="alternate" hreflang="x-default" href="https://orbup.app/">',
+    v ? `<meta name="google-site-verification" content="${v}">` : ''
+  ].filter(Boolean).join('\n');
+}
+
 const ORBUP_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
 <link rel="icon" type="image/png" sizes="32x32" href="/orbup-assets/favicon-32.png">
 <link rel="apple-touch-icon" href="/orbup-assets/apple-touch-icon.png">
@@ -3596,6 +3612,17 @@ const ORBUP_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="OrbUp">
 <script>if('serviceWorker' in navigator && location.hostname.indexOf('orbup.app')!==-1){window.addEventListener('load',function(){navigator.serviceWorker.register('/orbup-sw.js',{scope:'/'}).catch(function(){});});}</script>`;
+
+// Google Search Console verification. Driven by env so a property can be verified
+// without a code change: set GOOGLE_SITE_VERIFICATION to the token Google gives
+// you (the part between "google" and ".html", or the content= value of the meta
+// tag) and BOTH accepted methods start working immediately — the HTML file and
+// the meta tag, which is injected into the brand pages below.
+app.get(/^\/google([0-9a-f]{16,32})\.html$/i, (req, res, next) => {
+  const want = (process.env.GOOGLE_SITE_VERIFICATION || '').replace(/^google/i, '').replace(/\.html$/i, '').trim();
+  if (!want || req.params[0].toLowerCase() !== want.toLowerCase()) return next();
+  res.type('text/html').send('google-site-verification: google' + want + '.html');
+});
 
 app.get('/orbup', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
@@ -3611,6 +3638,7 @@ app.get('/orbup', (req, res) => {
 ${ORBUP_GEO_REDIRECT_SCRIPT('en')}
 <title>OrbUp — Talk to it. We build it.</title>
 ${ORBUP_PWA_HEAD}
+${ORBUP_SEO_HEAD('en')}
 <meta name="description" content="It's time to OrbUp. Tap the orb and talk — let your website and AI ecosystem speak for themselves. An AI-native software firm: voice agents, dashboards, automations, full platforms.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://orbup.app">
@@ -3792,6 +3820,7 @@ app.get('/orbup-es', (req, res) => {
 ${ORBUP_GEO_REDIRECT_SCRIPT('es')}
 <title>OrbUp — Háblale. Lo construimos.</title>
 ${ORBUP_PWA_HEAD}
+${ORBUP_SEO_HEAD('es')}
 <meta name="description" content="Es hora de OrbUp. Toca el orbe y habla — deja que tu sitio web y tu ecosistema de IA hablen por sí mismos. Firma de software AI-native: agentes de voz, tableros, automatizaciones y plataformas completas.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://orbup.app">

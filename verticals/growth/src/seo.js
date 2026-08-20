@@ -23,8 +23,17 @@ router.get('/sitemap.xml', async (req, res, next) => {
   try {
     const base = `https://${host}`;
     const posts = await Post.findAll({ where: { brand_id: brand.id, status: 'published' }, order: [['published_at', 'DESC']], limit: 5000, raw: true });
+    // Public brand pages the sitemap used to omit. The Spanish landing especially:
+    // it is a whole second language of traffic Google had no path to.
+    const EXTRA = {
+      'orbup.app':     [['/es', '0.9'], ['/orbup/privacy', '0.3'], ['/orbup/terms', '0.3']],
+      'torna.dev':     [['/es', '0.9'], ['/torna/privacy', '0.3'], ['/torna/terms', '0.3']],
+      'vision2ai.app': [['/es', '0.9'], ['/v2ai/privacy', '0.3'], ['/v2ai/terms', '0.3']]
+    };
+    const extraUrls = (EXTRA[host] || []).map(([path, pri]) => ({ loc: base + path, pri }));
     const urls = [
       { loc: base + '/', pri: '1.0' },
+      ...extraUrls,
       { loc: base + '/blog', pri: '0.8' },
       ...posts.map(p => ({ loc: `${base}/blog/${encodeURIComponent(p.slug)}`, pri: '0.7', lastmod: (p.published_at || p.updated_at || new Date()).toISOString().slice(0, 10) }))
     ];
