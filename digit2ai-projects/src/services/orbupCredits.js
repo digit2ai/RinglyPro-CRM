@@ -109,27 +109,31 @@ async function ensureSchema() {
   // balance to the allowance; it must never touch credits somebody paid for.
   await sequelize.query('ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS topup_balance INTEGER NOT NULL DEFAULT 0');
 
-  // Build complexity. A receptionist and a regulated banking back office are not
-  // the same job and must not carry the same price. These are the rows the
-  // landing page shows, so the page cannot promise a cheaper build than the
-  // engine will actually charge.
-  const BUILDS = [
-    ['build_simple',    600,   'Simple build — AI receptionist, booking bot, lead capture',
-                               'Construcción simple — recepcionista IA, agenda de citas, captura de prospectos'],
-    ['build_standard',  2500,  'Standard build — customer dashboard, inventory or CRM-lite',
-                               'Construcción estándar — panel de clientes, inventario o CRM ligero'],
-    ['build_advanced',  9000,  'Advanced build — multi-role portal, payments, live integrations',
-                               'Construcción avanzada — portal multiusuario, pagos, integraciones en vivo'],
-    ['build_regulated', 40000, 'Regulated build — banking, health or compliance MVP (scoped with us)',
-                               'Construcción regulada — MVP bancario, de salud o de cumplimiento (definido con nosotros)']
+  // PLANNING complexity, not delivery. These credits buy the workforce's analysis,
+  // scoping, plan and working prototype for a solution of that shape — the thing
+  // OrbUp actually produces on the spot. They are NOT an estimate of the wall time
+  // to deliver the finished production system, which is scoped separately. Naming
+  // them plan_* rather than build_* is the whole point: a label that says "build"
+  // promises delivery.
+  const PLAN_COSTS = [
+    ['plan_simple',    600,   'Plan + prototype — AI receptionist, booking bot, lead capture',
+                              'Plan + prototipo — recepcionista IA, agenda de citas, captura de prospectos'],
+    ['plan_standard',  2500,  'Plan + prototype — customer dashboard, inventory or CRM-lite',
+                              'Plan + prototipo — panel de clientes, inventario o CRM ligero'],
+    ['plan_advanced',  9000,  'Plan + prototype — multi-role portal, payments, live integrations',
+                              'Plan + prototipo — portal multiusuario, pagos, integraciones en vivo'],
+    ['plan_regulated', 40000, 'Plan + prototype — banking, health or compliance system',
+                              'Plan + prototipo — sistema bancario, de salud o de cumplimiento']
   ];
-  for (const [k, c, en, es] of BUILDS) {
+  for (const [k, c, en, es] of PLAN_COSTS) {
     await sequelize.query(
       `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es)
        VALUES (:k,:c,:en,:es) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
          label_en = EXCLUDED.label_en, label_es = EXCLUDED.label_es`,
       { replacements: { k, c, en, es } });
   }
+  // The build_* keys promised delivery. Retired.
+  await sequelize.query("DELETE FROM orbup_credit_costs WHERE action_key LIKE 'build_%'");
 
   const COSTS = [
     ['prototype_build', 250, 'Prototype build (plan + simulator)', 'Construcción de prototipo (plan + simulador)'],
