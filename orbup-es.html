@@ -260,6 +260,52 @@
 .d2b .army-core li,.d2b .army-card li{position:relative;padding-left:15px;margin:5px 0;font-size:14px;color:var(--ink-mute)}
 .d2b .army-core li::before,.d2b .army-card li::before{content:'\203A';position:absolute;left:0;color:var(--accent-cyan);opacity:.75}
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+/* Pricing. Cards inherit the page's card/line tokens; the recommended plan is the
+   only one that carries the accent border and glow. */
+.d2b .price-grid{margin-top:26px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr))}
+.d2b .price-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);
+  border-radius:18px;padding:22px 20px;background:var(--card)}
+.d2b .price-card.rec{border-color:rgba(139,92,246,.55);
+  background:linear-gradient(180deg,rgba(139,92,246,.10),transparent 62%),var(--card);
+  box-shadow:0 0 0 1px rgba(139,92,246,.25),0 22px 60px rgba(139,92,246,.20)}
+.d2b .price-rec{position:absolute;top:-11px;left:20px;font-family:var(--mono);font-size:10px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;color:#0a0a12;background:var(--grad);border-radius:999px;padding:3px 10px}
+.d2b .price-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
+.d2b .price-amt{margin:10px 0 2px;font-size:38px;font-weight:850;letter-spacing:-.035em;line-height:1}
+.d2b .price-amt span{font-size:14px;font-weight:600;color:var(--ink-mute);letter-spacing:0}
+.d2b .price-was{margin-left:8px;font-size:17px;font-weight:600;color:var(--faint);text-decoration:line-through}
+.d2b .price-badge{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9.5px;font-weight:800;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--accent-cyan);
+  border:1px solid rgba(34,211,238,.42);background:rgba(34,211,238,.10);border-radius:999px;padding:3px 9px}
+.d2b .price-cr{margin-top:12px;font-family:var(--mono);font-size:12.5px;color:var(--accent-cyan);letter-spacing:.04em}
+.d2b .price-card ul{list-style:none;margin:14px 0 18px;padding:0;flex:1}
+.d2b .price-card li{position:relative;padding-left:16px;margin:7px 0;font-size:13.5px;color:var(--ink-mute);line-height:1.5}
+.d2b .price-card li::before{content:'\2713';position:absolute;left:0;color:var(--accent-cyan);font-size:11px}
+.d2b .price-cta{display:block;width:100%;text-align:center;cursor:pointer;font:inherit;font-size:14px;font-weight:750;
+  border-radius:999px;padding:11px 16px;border:1px solid var(--line-strong,rgba(255,255,255,.18));
+  background:transparent;color:var(--ink);text-decoration:none;transition:.15s}
+.d2b .price-cta:hover{border-color:var(--accent-cyan);color:var(--accent-cyan)}
+.d2b .price-card.rec .price-cta{background:var(--grad);border:0;color:#0a0a12}
+.d2b .price-note{margin-top:8px;font-size:11.5px;color:var(--faint);text-align:center;min-height:15px}
+/* How credits work */
+.d2b .credits-blk{margin-top:30px;border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--bg2)}
+.d2b .credits-blk h3{margin:0 0 6px;font-size:16px;font-weight:750}
+.d2b .credits-blk .lede{margin:0 0 14px;font-size:14px;color:var(--ink-mute)}
+.d2b .credits-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.d2b .credits-tbl th,.d2b .credits-tbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;color:var(--ink-mute)}
+.d2b .credits-tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.d2b .credits-tbl td:last-child,.d2b .credits-tbl th:last-child{text-align:right;font-family:var(--mono);color:var(--accent-cyan)}
+.d2b .credits-roll{margin-top:12px;font-size:12.5px;color:var(--faint)}
+/* Live credit meter in the nav — only rendered for a signed-in user. */
+.d2b .credit-meter{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--ink-mute);white-space:nowrap}
+.d2b .credit-meter.on{display:inline-flex}
+.d2b .credit-meter b{color:var(--ink);font-weight:700}
+.d2b .credit-meter .bar{width:56px;height:5px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
+.d2b .credit-meter .fill{height:100%;background:var(--grad);border-radius:999px;transition:width .4s ease}
+.d2b .credit-meter.low .fill{background:#f59e0b}.d2b .credit-meter.crit .fill{background:#ef4444}
+.d2b .credit-meter.low b{color:#f59e0b}.d2b .credit-meter.crit b{color:#ef4444}
+@media(max-width:900px){.d2b .credit-meter{display:none!important}}
 .d2b .army-card{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:var(--card)}
 @media(max-width:720px){
   .d2b .army-grid{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
@@ -560,6 +606,7 @@
       <a href="#platforms">Plataformas</a>
       <a href="#numbers">Por qué nosotros</a>
       <a href="/blog">Blog</a>
+      <span class="credit-meter" id="credit-meter" title="Credits"><b class="cm-bal">0</b><span class="bar"><span class="fill" style="width:0%"></span></span><span class="cm-plan"></span></span>
       <span class="lang-toggle" role="group" aria-label="Idioma">
         <a href="/orbup?lang=en" class="lang-opt">EN</a>
         <a href="/orbup-es?lang=es" class="lang-opt active" aria-current="true">ES</a>
@@ -821,6 +868,121 @@
       </div>
     </div>
   </section>
+
+<section class="blk" id="pricing">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Planes</div>
+        <h2>Elige el tama&ntilde;o de tu fuerza de trabajo</h2>
+        <p>Todos los planes usan la misma fuerza de 83 agentes. Lo que cambia es cu&aacute;nto puedes construir cada mes.</p>
+      </div>
+      <div class="price-grid">
+        <div class="price-card" data-plan="free">
+          
+          <div class="price-name">Free</div>
+          <div class="price-amt">$0<span>/mes</span></div>
+          
+          <div class="price-cr">1.500 cr&eacute;ditos / mes</div>
+          <ul><li>1.500 cr&eacute;ditos cada mes</li><li>Briefs por voz o escritos</li><li>Plan con viabilidad y cronograma</li><li>Simulador interactivo para compartir</li><li>Sin tarjeta</li></ul>
+          <button type="button" class="price-cta" data-buy="free">Empezar gratis</button>
+        </div>
+        <div class="price-card" data-plan="essential">
+          
+          <div class="price-name">Essential</div>
+          <div class="price-amt">$10<span class="price-was">$20</span><span>/mes</span></div>
+          <div class="price-badge">Precio de lanzamiento</div>
+          <div class="price-cr">7.500 cr&eacute;ditos / mes</div>
+          <ul><li>7.500 cr&eacute;ditos cada mes</li><li>Todo lo de Free</li><li>Aplicaciones funcionales generadas</li><li>Copiloto del plan para ajustar la obra</li><li>Exportar planes y aplicaciones</li></ul>
+          <button type="button" class="price-cta" data-buy="essential">Elegir</button>
+        </div>
+        <div class="price-card rec" data-plan="plus">
+          <div class="price-rec">Recomendado</div>
+          <div class="price-name">Plus</div>
+          <div class="price-amt">$35<span>/mes</span></div>
+          
+          <div class="price-cr">25.000 cr&eacute;ditos / mes</div>
+          <ul><li>25.000 cr&eacute;ditos cada mes</li><li>Todo lo de Essential</li><li>Despacho prioritario de agentes</li><li>Publicaci&oacute;n en una direcci&oacute;n en vivo</li><li>Dominio propio para tu construcci&oacute;n</li></ul>
+          <button type="button" class="price-cta" data-buy="plus">Elegir</button>
+        </div>
+        <div class="price-card" data-plan="pro">
+          
+          <div class="price-name">Pro</div>
+          <div class="price-amt">$166<span>/mes</span></div>
+          
+          <div class="price-cr">100.000 cr&eacute;ditos / mes</div>
+          <ul><li>100.000 cr&eacute;ditos cada mes</li><li>Todo lo de Plus</li><li>Los 83 agentes a tu disposici&oacute;n</li><li>M&aacute;xima concurrencia de construcci&oacute;n</li><li>Soporte prioritario</li></ul>
+          <button type="button" class="price-cta" data-buy="pro">Elegir</button>
+        </div>
+      </div>
+      <div class="price-note" id="price-note"></div>
+
+      <div class="credits-blk">
+        <h3>C&oacute;mo funcionan los cr&eacute;ditos</h3>
+        <p class="lede">Un cr&eacute;dito es una unidad de trabajo de la fuerza. Construir cuesta m&aacute;s que preguntar.</p>
+        <table class="credits-tbl"><thead><tr><th>Acci&oacute;n</th><th>Cr&eacute;ditos</th></tr></thead>
+          <tbody id="credit-costs"></tbody></table>
+        <div class="credits-roll">Los cr&eacute;ditos vuelven a tu asignaci&oacute;n mensual en tu fecha de facturaci&oacute;n. Los cr&eacute;ditos no usados no se acumulan.</div>
+      </div>
+    </div>
+  </section>
+  <script>
+  /* Pricing is wired to the SAME endpoint the server charges from, so the table
+     on the page and the ledger cannot drift. The cost rows are fetched, not
+     hardcoded — tuning a cost in the database changes the page with no deploy. */
+  (function(){
+    var ES=true;
+    var note=document.getElementById('price-note');
+    function session(){ try{ return localStorage.getItem('d2ai_session')||''; }catch(e){ return ''; } }
+
+    fetch('/projects/api/v1/orbup/billing/plans').then(function(r){ return r.json(); }).then(function(j){
+      if(!j||!j.success) return;
+      var tb=document.getElementById('credit-costs');
+      (j.costs||[]).slice(0,4).forEach(function(c){
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td>'+(ES?(c.label_es||c.label_en):(c.label_en||c.action_key))+'</td><td>'+c.cost+'</td>';
+        tb.appendChild(tr);
+      });
+      if(!j.configured && note) note.textContent = ES
+        ? 'Los pagos se activan en breve. Mientras tanto, el plan Free est\u00e1 disponible.'
+        : 'Paid plans are switching on shortly. Free is available now.';
+    }).catch(function(){});
+
+    document.querySelectorAll('[data-buy]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var plan=b.getAttribute('data-buy');
+        if(plan==='free'){ window.location.href='/orbup/start'; return; }
+        var s=session();
+        if(!s){ note.textContent='Inicia sesi&oacute;n para cambiar de plan'; window.location.href='/orbup/start?plan='+plan; return; }
+        b.disabled=true; var old=b.textContent; b.textContent='\u2026';
+        fetch('/projects/api/v1/orbup/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({plan:plan,session:s})})
+          .then(function(r){ return r.json(); }).then(function(j){
+            if(j&&j.success&&j.url){ window.location.href=j.url; return; }
+            b.disabled=false; b.textContent=old;
+            note.textContent=(j&&j.error==='billing_not_configured')
+              ? (ES?'Los pagos a\u00fan no est\u00e1n activos.':'Payments are not switched on yet.')
+              : (ES?'No se pudo abrir el pago. Int\u00e9ntalo de nuevo.':'Could not open checkout. Please try again.');
+          }).catch(function(){ b.disabled=false; b.textContent=old;
+            note.textContent=ES?'Error de conexi\u00f3n.':'Connection error.'; });
+      });
+    });
+
+    /* Live meter — reads the API, never a hardcoded number. */
+    (function(){
+      var s=session(); if(!s) return;
+      var el=document.getElementById('credit-meter'); if(!el) return;
+      fetch('/projects/api/v1/orbup/billing/balance?session='+encodeURIComponent(s))
+        .then(function(r){ return r.json(); }).then(function(j){
+          if(!j||!j.success) return;
+          el.classList.add('on');
+          if(j.critical) el.classList.add('crit'); else if(j.low) el.classList.add('low');
+          el.querySelector('.cm-bal').textContent=j.balance.toLocaleString(ES?'es-ES':'en-US');
+          el.querySelector('.cm-plan').textContent=j.plan;
+          el.querySelector('.fill').style.width=Math.max(2,j.pct)+'%';
+        }).catch(function(){});
+    })();
+  })();
+  </script>
 
   <section class="blk" id="meet">
     <div class="wrap">
