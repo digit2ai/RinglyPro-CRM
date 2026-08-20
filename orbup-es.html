@@ -262,7 +262,10 @@
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 /* Pricing. Cards inherit the page's card/line tokens; the recommended plan is the
    only one that carries the accent border and glow. */
-.d2b .price-grid{margin-top:26px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(262px,1fr));max-width:940px;margin-inline:auto}
+/* Two cards, centred. auto-fit on a 3-col track left a hole when the third
+   card was removed; an explicit 2-col track cannot. */
+.d2b .price-grid{margin-top:26px;display:grid;gap:18px;grid-template-columns:repeat(2,minmax(0,1fr));max-width:720px;margin-inline:auto}
+@media(max-width:680px){.d2b .price-grid{grid-template-columns:1fr;max-width:420px}}
 .d2b .price-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);
   border-radius:18px;padding:22px 20px;background:var(--card)}
 .d2b .price-card.rec{border-color:rgba(139,92,246,.55);
@@ -938,13 +941,6 @@
           <ul><li>Datos compartidos para todo tu equipo</li><li>Accesos para tus clientes</li><li>Tel&eacute;fono, SMS, correo y pagos</li><li>Integraciones con lo que ya usas</li><li>Tuyo, entregado y en vivo</li></ul>
           <button type="button" class="price-cta" data-go="build">Obt&eacute;n un plan y agenda</button>
         </div>
-        <div class="price-card" data-plan="care">
-          
-          <div class="price-name">Plan de cuidado</div>
-          <div class="price-amt">Mensual<span>seg&uacute;n tu construcci&oacute;n</span></div>
-          <div class="price-cr">Hosting, soporte y cambios despu&eacute;s de construir.</div>
-          <ul><li>Hosting y monitoreo</li><li>Correcciones y cambios peque&ntilde;os</li><li>Ajustes conforme cambia tu negocio</li><li>Acceso prioritario a nosotros</li></ul>
-          <div class="price-cta" style="cursor:default;opacity:.72">Preg&uacute;ntanos en la llamada</div>
         </div>
       </div>
       <div class="price-note" id="price-note">Cada construcci&oacute;n se cotiza seg&uacute;n su alcance, por eso no publicamos un n&uacute;mero que estar&iacute;a equivocado para ti. El plan es gratis de todos modos &mdash; describe lo que necesitas y ver&aacute;s la forma, el cronograma y lo que implica antes de que alguien hable de dinero.</div>

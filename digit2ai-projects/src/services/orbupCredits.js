@@ -15,6 +15,22 @@
 
 const { sequelize } = require('../models');
 
+// 5a THE PEG. One credit is one tenth of a US cent of TRUE VENDOR COST. Every
+// credit figure in this codebase derives from these two constants; nothing
+// hardcodes a credit price anywhere else.
+//   1,500 credits = USD 1.50 = the hard monthly ceiling on a free user.
+const CREDIT_USD_VALUE = Number(process.env.CREDIT_USD_VALUE || 0.001);
+// 5i what a purchased dollar buys. At 750/USD a $10 pack carries USD 7.50 of
+// vendor cost, i.e. a 25% gross margin before card fees — thin, and deliberate.
+const CREDITS_PER_USD  = Number(process.env.CREDITS_PER_USD  || 750);
+
+const usdToCredits = usd => Math.round(usd * CREDITS_PER_USD);
+const creditsToUsd = c => +(c * CREDIT_USD_VALUE).toFixed(4);
+
+// 5e an unregistered visitor draws on a trial allotment: enough for dictation,
+// ingest and one plan plus demo, and nothing more.
+const TRIAL_CREDITS = Number(process.env.ORBUP_TRIAL_CREDITS || 400);
+
 const PLANS = {
   free:      { key: 'free',      label: 'Free',      cents: 0,     credits: 1500 },
   plus:      { key: 'plus',      label: 'Plus',      cents: 3500,  credits: 25000,  recommended: true },
@@ -25,12 +41,9 @@ const PLANS = {
 // to exist, only to buy. Rates are deliberately below every subscription tier
 // (Plus is 714 credits/$) so a top-up never beats subscribing, with a mild volume
 // ladder inside that band.
-const TOPUPS = [
-  { key: 't10',  cents: 1000,  credits: 5000  },   // 500/$
-  { key: 't20',  cents: 2000,  credits: 11000 },   // 550/$
-  { key: 't50',  cents: 5000,  credits: 30000 },   // 600/$
-  { key: 't100', cents: 10000, credits: 65000 }    // 650/$
-];
+const TOPUPS = [10, 20, 50, 100].map(usd => ({
+  key: 't' + usd, cents: usd * 100, credits: usdToCredits(usd)
+}));
 function topupPack(key) { return TOPUPS.find(t => t.key === key) || null; }
 function topupPriceId(key) { return process.env['ORBUP_PRICE_' + String(key).toUpperCase()] || null; }
 function packForPriceId(id) { if (!id) return null; return TOPUPS.find(t => topupPriceId(t.key) === id) || null; }
@@ -111,6 +124,13 @@ async function ensureSchema() {
   // Purchased credits are a SEPARATE bucket. The monthly refill sets the granted
   // balance to the allowance; it must never touch credits somebody paid for.
   await sequelize.query('ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS topup_balance INTEGER NOT NULL DEFAULT 0');
+  // 3e/4d. ONE capability flag, checked at the build action and nowhere else, and
+  // the entry path that set it, persisted so the branch survives a reload.
+  // Default TRUE: any feature added later is available on both paths unless it
+  // explicitly opts into this check. That is what stops the two plans drifting
+  // into two UIs.
+  await sequelize.query("ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS can_build BOOLEAN NOT NULL DEFAULT TRUE");
+  await sequelize.query("ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS entry_path VARCHAR(10) NOT NULL DEFAULT 'free'");
 
   await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_en TEXT');
   await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_es TEXT');
@@ -128,19 +148,11 @@ async function ensureSchema() {
   // purpose: certification and hardening are a separate engagement, and quoting one
   // number for them would be the exact false impression this table exists to stop.
   const PLAN_COSTS = [
-    ['plan_simple',    1200,   'Plan + prototype — AI receptionist, booking bot, lead capture',
-                              'Plan + prototipo — recepcionista IA, agenda de citas, captura de prospectos',
-                              '3-5 days', '3-5 días', 4200],
-    ['plan_standard',  5000,  'Plan + prototype — customer dashboard, inventory or CRM-lite',
-                              'Plan + prototipo — panel de clientes, inventario o CRM ligero',
-                              '1-2 weeks', '1-2 semanas', 17500],
-    ['plan_advanced',  18000,  'Plan + prototype — multi-role portal, payments, live integrations',
-                              'Plan + prototipo — portal multiusuario, pagos, integraciones en vivo',
-                              '2-4 weeks', '2-4 semanas', 63000],
-    ['plan_regulated', 80000, 'Plan + prototype — banking, health or compliance system',
-                              'Plan + prototipo — sistema bancario, de salud o de cumplimiento',
-                              '4 weeks to MVP, then a scoped engagement',
-                              '4 semanas al MVP, luego un proyecto definido', 280000]
+    ['orb_dictation_min',  5,   'Orb dictation, per minute', 'Dictado por el orbe, por minuto', 'seconds', 'segundos', null],
+    ['file_ingest',        10,  'File or email ingested',    'Archivo o correo procesado',      'seconds', 'segundos', null],
+    ['plan_generation',    150, 'Plan and demo generated',   'Plan y demo generados',           'about a minute', 'cerca de un minuto', null],
+    ['copilot_turn',       25,  'Copilot refinement turn',   'Turno de refinamiento del copiloto','seconds', 'segundos', null],
+    ['agent_army_build',   900, 'Agent army and simulator build', 'Construcción con el ejército de agentes y el simulador', 'minutes', 'minutos', null]
   ];
   for (const [k, c, en, es, wen, wes, dc] of PLAN_COSTS) {
     await sequelize.query(
@@ -152,6 +164,9 @@ async function ensureSchema() {
   }
   // The build_* keys promised delivery. Retired.
   await sequelize.query("DELETE FROM orbup_credit_costs WHERE action_key LIKE 'build_%'");
+  // The planning ladder priced a scoped request. The product now meters real
+  // actions, so those rows would price something nobody can buy.
+  await sequelize.query("DELETE FROM orbup_credit_costs WHERE action_key LIKE 'plan_simple' OR action_key LIKE 'plan_standard' OR action_key LIKE 'plan_advanced' OR action_key LIKE 'plan_regulated'");
 
   const COSTS = [
     ['prototype_build', 250, 'Prototype build (plan + simulator)', 'Construcción de prototipo (plan + simulador)'],
@@ -350,6 +365,25 @@ async function topUp({ tenantId, userId, email, packKey, sessionId }) {
   return { ok: true, applied: true, granted: pack.credits, topup_balance: a.topup_balance };
 }
 
+// 3e/4d. The entry path decides exactly one thing. Quoted keeps every other
+// capability, wallet included — the difference is the build, and only the build.
+async function setEntryPath({ tenantId, userId, email, entryPath }) {
+  const path = entryPath === 'quoted' ? 'quoted' : 'free';
+  const acct = await getAccount({ tenantId, userId, email });
+  if (!acct) return { ok: false, error: 'no_account' };
+  await sequelize.query(
+    'UPDATE orbup_credit_accounts SET entry_path = :p, can_build = :cb, updated_at = NOW() WHERE id = :i',
+    { replacements: { p: path, cb: path === 'free', i: acct.id } });
+  return { ok: true, entry_path: path, can_build: path === 'free' };
+}
+
+// The ONLY place can_build is consulted. If a second call site ever appears, the
+// two plans have started diverging and the parity rule is broken.
+async function canBuild({ tenantId, userId, email }) {
+  const acct = await getAccount({ tenantId, userId, email, create: false });
+  return acct ? acct.can_build !== false : true;
+}
+
 // Replay guard for Stripe. Returns false if this event was already handled.
 async function claimEvent(eventId, type) {
   const [rows] = await sequelize.query(
@@ -365,6 +399,6 @@ async function costTable() {
   return rows || [];
 }
 
-module.exports = { PLANS, TOPUPS, ROLLOVER, topupPack, topupPriceId, packForPriceId, topUp, ensureSchema, getAccount, consumeCredits, reserve, settle,
+module.exports = { PLANS, TOPUPS, ROLLOVER, setEntryPath, canBuild, CREDIT_USD_VALUE, CREDITS_PER_USD, TRIAL_CREDITS, usdToCredits, creditsToUsd, topupPack, topupPriceId, packForPriceId, topUp, ensureSchema, getAccount, consumeCredits, reserve, settle,
                    refill, prorateUpgrade, downgradeToFree, claimEvent, costOf, costTable,
                    priceIdFor, planForPriceId, post };
