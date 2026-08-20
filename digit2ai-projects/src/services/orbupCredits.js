@@ -95,6 +95,8 @@ async function ensureSchema() {
        cost INTEGER NOT NULL,
        label_en TEXT,
        label_es TEXT,
+       wall_en TEXT,
+       wall_es TEXT,
        updated_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     // Stripe replay guard: the event id is the key, so a redelivery is a no-op.
@@ -109,28 +111,42 @@ async function ensureSchema() {
   // balance to the allowance; it must never touch credits somebody paid for.
   await sequelize.query('ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS topup_balance INTEGER NOT NULL DEFAULT 0');
 
+  await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_en TEXT');
+  await sequelize.query('ALTER TABLE orbup_credit_costs ADD COLUMN IF NOT EXISTS wall_es TEXT');
+
   // PLANNING complexity, not delivery. These credits buy the workforce's analysis,
   // scoping, plan and working prototype for a solution of that shape — the thing
   // OrbUp actually produces on the spot. They are NOT an estimate of the wall time
   // to deliver the finished production system, which is scoped separately. Naming
   // them plan_* rather than build_* is the whole point: a label that says "build"
   // promises delivery.
+  // Delivery windows are for the WORKING MVP, built AI-native by the workforce —
+  // not for a certified production system. Held to weeks, never months, in line
+  // with how every Digit2AI PoC is scoped. Regulated stops at the MVP boundary on
+  // purpose: certification and hardening are a separate engagement, and quoting one
+  // number for them would be the exact false impression this table exists to stop.
   const PLAN_COSTS = [
     ['plan_simple',    600,   'Plan + prototype — AI receptionist, booking bot, lead capture',
-                              'Plan + prototipo — recepcionista IA, agenda de citas, captura de prospectos'],
+                              'Plan + prototipo — recepcionista IA, agenda de citas, captura de prospectos',
+                              '3-5 days', '3-5 días'],
     ['plan_standard',  2500,  'Plan + prototype — customer dashboard, inventory or CRM-lite',
-                              'Plan + prototipo — panel de clientes, inventario o CRM ligero'],
+                              'Plan + prototipo — panel de clientes, inventario o CRM ligero',
+                              '1-2 weeks', '1-2 semanas'],
     ['plan_advanced',  9000,  'Plan + prototype — multi-role portal, payments, live integrations',
-                              'Plan + prototipo — portal multiusuario, pagos, integraciones en vivo'],
+                              'Plan + prototipo — portal multiusuario, pagos, integraciones en vivo',
+                              '2-4 weeks', '2-4 semanas'],
     ['plan_regulated', 40000, 'Plan + prototype — banking, health or compliance system',
-                              'Plan + prototipo — sistema bancario, de salud o de cumplimiento']
+                              'Plan + prototipo — sistema bancario, de salud o de cumplimiento',
+                              '4 weeks to MVP, then a scoped engagement',
+                              '4 semanas al MVP, luego un proyecto definido']
   ];
-  for (const [k, c, en, es] of PLAN_COSTS) {
+  for (const [k, c, en, es, wen, wes] of PLAN_COSTS) {
     await sequelize.query(
-      `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es)
-       VALUES (:k,:c,:en,:es) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
-         label_en = EXCLUDED.label_en, label_es = EXCLUDED.label_es`,
-      { replacements: { k, c, en, es } });
+      `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es, wall_en, wall_es)
+       VALUES (:k,:c,:en,:es,:wen,:wes) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
+         label_en = EXCLUDED.label_en, label_es = EXCLUDED.label_es,
+         wall_en = EXCLUDED.wall_en, wall_es = EXCLUDED.wall_es`,
+      { replacements: { k, c, en, es, wen, wes } });
   }
   // The build_* keys promised delivery. Retired.
   await sequelize.query("DELETE FROM orbup_credit_costs WHERE action_key LIKE 'build_%'");
@@ -343,7 +359,7 @@ async function claimEvent(eventId, type) {
 
 async function costTable() {
   const [rows] = await sequelize.query(
-    'SELECT action_key, cost, label_en, label_es FROM orbup_credit_costs ORDER BY cost DESC');
+    'SELECT action_key, cost, label_en, label_es, wall_en, wall_es FROM orbup_credit_costs ORDER BY cost DESC');
   return rows || [];
 }
 

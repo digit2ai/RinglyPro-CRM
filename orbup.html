@@ -318,6 +318,11 @@
 .d2b .credits-tbl th,.d2b .credits-tbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;color:var(--ink-mute)}
 .d2b .credits-tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .d2b .credits-tbl td:last-child,.d2b .credits-tbl th:last-child{text-align:right;font-family:var(--mono);color:var(--accent-cyan)}
+.d2b .cx-tbl td:nth-child(4){text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:normal;min-width:120px}
+.d2b .cx-tbl th:nth-child(4){text-align:right}
+.d2b .cx-note{margin-top:12px;font-size:12.5px;color:var(--ink-mute);line-height:1.6}
+.d2b .cx-note b{color:var(--ink)}
+@media(max-width:640px){.d2b .cx-tbl td:nth-child(4){font-size:11px;min-width:88px}}
 .d2b .cx-tbl td:nth-child(1){font-weight:700;color:var(--ink);white-space:nowrap}
 .d2b .cx-tbl td:nth-child(2){color:var(--ink-mute)}
 .d2b .cx-tbl td:nth-child(3){text-align:right;font-family:var(--mono);color:var(--accent-cyan);white-space:nowrap}
@@ -986,14 +991,15 @@
         <h3>How credits work</h3>
         <p class="lede">A credit is one unit of work by the workforce. These are <b>project-planning credits</b> &mdash; what it costs the workforce to analyse your idea, scope it, produce the plan and stand up a working prototype. <b>They are not an estimate of the work to deliver the finished production system.</b> What you ask for decides the cost: an AI receptionist and a compliance-grade banking system are not the same job to plan.</p>
         <table class="credits-tbl cx-tbl">
-          <thead><tr><th>Solution you are planning</th><th>Example</th><th>Credits</th></tr></thead>
+          <thead><tr><th>Solution you are planning</th><th>Example</th><th>Planning credits</th><th>Time to a working MVP</th></tr></thead>
           <tbody>
-            <tr><td>Simple</td><td>AI receptionist, booking bot, lead capture</td><td>600</td></tr>
-            <tr><td>Standard</td><td>Customer dashboard, inventory, CRM-lite</td><td>2,500</td></tr>
-            <tr><td>Advanced</td><td>Multi-role portal, payments, live integrations</td><td>9,000</td></tr>
-            <tr><td>Regulated</td><td>Banking, health or compliance system</td><td>40,000+</td></tr>
+            <tr><td>Simple</td><td>AI receptionist, booking bot, lead capture</td><td>600</td><td>3-5 days</td></tr>
+            <tr><td>Standard</td><td>Customer dashboard, inventory, CRM-lite</td><td>2,500</td><td>1-2 weeks</td></tr>
+            <tr><td>Advanced</td><td>Multi-role portal, payments, live integrations</td><td>9,000</td><td>2-4 weeks</td></tr>
+            <tr><td>Regulated</td><td>Banking, health or compliance system</td><td>40,000+</td><td>4 weeks to MVP, then a scoped engagement</td></tr>
           </tbody>
         </table>
+        <div class="cx-note">The plan and the interactive prototype come back in <b>minutes</b> &mdash; that is what the credits buy. The right-hand column is how long the workforce then takes to deliver a <b>working MVP</b> you can put in front of real users. Certifying and hardening a regulated system runs beyond the MVP and is quoted separately.</div>
 
         <h3 style="margin-top:22px">What a month of planning gets you</h3>
         <div class="cx-month">

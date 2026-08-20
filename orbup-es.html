@@ -307,6 +307,11 @@
 .d2b .credits-tbl th,.d2b .credits-tbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;color:var(--ink-mute)}
 .d2b .credits-tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .d2b .credits-tbl td:last-child,.d2b .credits-tbl th:last-child{text-align:right;font-family:var(--mono);color:var(--accent-cyan)}
+.d2b .cx-tbl td:nth-child(4){text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:normal;min-width:120px}
+.d2b .cx-tbl th:nth-child(4){text-align:right}
+.d2b .cx-note{margin-top:12px;font-size:12.5px;color:var(--ink-mute);line-height:1.6}
+.d2b .cx-note b{color:var(--ink)}
+@media(max-width:640px){.d2b .cx-tbl td:nth-child(4){font-size:11px;min-width:88px}}
 .d2b .cx-tbl td:nth-child(1){font-weight:700;color:var(--ink);white-space:nowrap}
 .d2b .cx-tbl td:nth-child(2){color:var(--ink-mute)}
 .d2b .cx-tbl td:nth-child(3){text-align:right;font-family:var(--mono);color:var(--accent-cyan);white-space:nowrap}
@@ -963,14 +968,15 @@
         <h3>C&oacute;mo funcionan los cr&eacute;ditos</h3>
         <p class="lede">Un cr&eacute;dito es una unidad de trabajo de la fuerza. Estos son <b>cr&eacute;ditos de planeaci&oacute;n de proyecto</b> &mdash; lo que le cuesta a la fuerza analizar tu idea, definir el alcance, producir el plan y levantar un prototipo funcional. <b>No son una estimaci&oacute;n del trabajo para entregar el sistema de producci&oacute;n terminado.</b> Lo que pides decide el costo: una recepcionista de IA y un sistema bancario con nivel de cumplimiento no son el mismo trabajo de planeaci&oacute;n.</p>
         <table class="credits-tbl cx-tbl">
-          <thead><tr><th>Soluci&oacute;n que est&aacute;s planeando</th><th>Ejemplo</th><th>Cr&eacute;ditos</th></tr></thead>
+          <thead><tr><th>Soluci&oacute;n que est&aacute;s planeando</th><th>Ejemplo</th><th>Cr&eacute;ditos de planeaci&oacute;n</th><th>Tiempo hasta un MVP funcional</th></tr></thead>
           <tbody>
-            <tr><td>Simple</td><td>Recepcionista IA, agenda de citas, captura de prospectos</td><td>600</td></tr>
-            <tr><td>Est&aacute;ndar</td><td>Panel de clientes, inventario, CRM ligero</td><td>2.500</td></tr>
-            <tr><td>Avanzada</td><td>Portal multiusuario, pagos, integraciones en vivo</td><td>9.000</td></tr>
-            <tr><td>Regulada</td><td>Sistema bancario, de salud o de cumplimiento</td><td>40.000+</td></tr>
+            <tr><td>Simple</td><td>Recepcionista IA, agenda de citas, captura de prospectos</td><td>600</td><td>3-5 d&iacute;as</td></tr>
+            <tr><td>Est&aacute;ndar</td><td>Panel de clientes, inventario, CRM ligero</td><td>2.500</td><td>1-2 semanas</td></tr>
+            <tr><td>Avanzada</td><td>Portal multiusuario, pagos, integraciones en vivo</td><td>9.000</td><td>2-4 semanas</td></tr>
+            <tr><td>Regulada</td><td>Sistema bancario, de salud o de cumplimiento</td><td>40.000+</td><td>4 semanas al MVP, luego un proyecto definido</td></tr>
           </tbody>
         </table>
+        <div class="cx-note">El plan y el prototipo interactivo llegan en <b>minutos</b> &mdash; eso es lo que compran los cr&eacute;ditos. La columna de la derecha es lo que tarda la fuerza en entregar un <b>MVP funcional</b> que puedas poner frente a usuarios reales. Certificar y endurecer un sistema regulado va m&aacute;s all&aacute; del MVP y se cotiza aparte.</div>
 
         <h3 style="margin-top:22px">Lo que rinde un mes de planeaci&oacute;n</h3>
         <div class="cx-month">
