@@ -282,8 +282,12 @@
 .d2b .price-rec{position:absolute;top:-11px;left:20px;font-family:var(--mono);font-size:10px;font-weight:800;
   letter-spacing:.12em;text-transform:uppercase;color:#0a0a12;background:var(--grad);border-radius:999px;padding:3px 10px}
 .d2b .price-name{font-size:15px;font-weight:750;letter-spacing:-.01em}
-.d2b .price-amt{margin:10px 0 2px;font-size:38px;font-weight:850;letter-spacing:-.035em;line-height:1}
-.d2b .price-amt span{font-size:14px;font-weight:600;color:var(--ink-mute);letter-spacing:0}
+.d2b .price-amt{margin:10px 0 2px;font-size:38px;font-weight:850;letter-spacing:-.035em;line-height:1.05}
+/* The qualifier sits on its OWN line. Inline, it inherited the 38px block's
+   line-height:1, so as soon as it wrapped it collided with the line above. */
+.d2b .price-amt span{display:block;margin-top:7px;font-size:13px;font-weight:600;
+  color:var(--ink-mute);letter-spacing:0;line-height:1.4;text-wrap:balance}
+.d2b .price-amt span:empty{display:none}
 .d2b .price-was{margin-left:8px;font-size:17px;font-weight:600;color:var(--faint);text-decoration:line-through}
 .d2b .price-badge{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9.5px;font-weight:800;
   letter-spacing:.11em;text-transform:uppercase;color:var(--accent-cyan);
