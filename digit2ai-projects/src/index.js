@@ -799,6 +799,10 @@ app.get('*', (req, res) => {
     console.log('[D2AI-Projects] OrbUp users table ready');
 
     // OrbUp App Builder — credits + generated apps (Lovable-style real apps)
+    // Credit ledger + Stripe replay guard own their own schema.
+    try { await require('./services/orbupCredits').ensureSchema(); }
+    catch (e) { console.error('[orbupCredits] schema init failed:', e.message); }
+
     const orbupAppMigrations = [
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 0`,
       `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS grant_day DATE`,
