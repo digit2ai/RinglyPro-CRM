@@ -307,6 +307,21 @@
 .d2b .credits-tbl th,.d2b .credits-tbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;color:var(--ink-mute)}
 .d2b .credits-tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .d2b .credits-tbl td:last-child,.d2b .credits-tbl th:last-child{text-align:right;font-family:var(--mono);color:var(--accent-cyan)}
+.d2b .cx-tbl td:nth-child(1){font-weight:700;color:var(--ink);white-space:nowrap}
+.d2b .cx-tbl td:nth-child(2){color:var(--ink-mute)}
+.d2b .cx-tbl td:nth-child(3){text-align:right;font-family:var(--mono);color:var(--accent-cyan);white-space:nowrap}
+.d2b .cx-tbl th:nth-child(3){text-align:right}
+.d2b .cx-month{margin-top:18px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.d2b .cx-m{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg2)}
+.d2b .cx-m b{font-size:14px}
+.d2b .cx-m .cr{font-family:var(--mono);font-size:11.5px;color:var(--accent-cyan);margin:3px 0 6px}
+.d2b .cx-m p{margin:0;font-size:13px;color:var(--ink-mute);line-height:1.5}
+.d2b .cx-ceil{margin-top:18px;border:1px solid rgba(236,72,153,.32);border-left:3px solid var(--accent-magenta);
+  border-radius:14px;padding:16px 18px;background:rgba(236,72,153,.06)}
+.d2b .cx-ceil h4{margin:0 0 6px;font-size:14.5px;font-weight:750}
+.d2b .cx-ceil p{margin:0;font-size:13.5px;color:var(--ink-mute);line-height:1.6}
+.d2b .cx-ceil b{color:var(--ink)}
+@media(max-width:640px){.d2b .cx-tbl td:nth-child(2){display:none}.d2b .cx-tbl th:nth-child(2){display:none}}
 .d2b .credits-roll{margin-top:12px;font-size:12.5px;color:var(--faint)}
 /* Live credit meter in the nav — only rendered for a signed-in user. */
 .d2b .credit-meter{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
@@ -946,10 +961,30 @@
 
       <div class="credits-blk">
         <h3>C&oacute;mo funcionan los cr&eacute;ditos</h3>
-        <p class="lede">Un cr&eacute;dito es una unidad de trabajo de la fuerza. Construir cuesta m&aacute;s que preguntar.</p>
-        <table class="credits-tbl"><thead><tr><th>Acci&oacute;n</th><th>Cr&eacute;ditos</th></tr></thead>
-          <tbody id="credit-costs"></tbody></table>
-        <div class="credits-roll">Los cr&eacute;ditos vuelven a tu asignaci&oacute;n mensual en tu fecha de facturaci&oacute;n. Los cr&eacute;ditos no usados no se acumulan.</div>
+        <p class="lede">Un cr&eacute;dito es una unidad de trabajo de la fuerza. <b>Lo que pides decide el costo.</b> Una recepcionista de IA y un back office bancario con nivel de cumplimiento no son el mismo trabajo, y no cuestan lo mismo.</p>
+        <table class="credits-tbl cx-tbl">
+          <thead><tr><th>Lo que est&aacute;s construyendo</th><th>Ejemplo</th><th>Cr&eacute;ditos</th></tr></thead>
+          <tbody>
+            <tr><td>Simple</td><td>Recepcionista IA, agenda de citas, captura de prospectos</td><td>600</td></tr>
+            <tr><td>Est&aacute;ndar</td><td>Panel de clientes, inventario, CRM ligero</td><td>2.500</td></tr>
+            <tr><td>Avanzada</td><td>Portal multiusuario, pagos, integraciones en vivo</td><td>9.000</td></tr>
+            <tr><td>Regulada</td><td>MVP bancario, de salud o de cumplimiento</td><td>40.000+</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top:22px">Lo que realmente rinde un mes</h3>
+        <div class="cx-month">
+          <div class="cx-m"><b>Free</b><div class="cr">1.500 cr&eacute;ditos / mes</div><p>Dos construcciones simples, o una con una ronda de ajustes.</p></div>
+          <div class="cx-m"><b>Plus</b><div class="cr">25.000 cr&eacute;ditos / mes</div><p>Unas diez construcciones est&aacute;ndar, o dos avanzadas con espacio para iterar.</p></div>
+          <div class="cx-m"><b>Pro</b><div class="cr">100.000 cr&eacute;ditos / mes</div><p>Unas once construcciones avanzadas, o un MVP regulado definido con nosotros.</p></div>
+        </div>
+
+        <div class="cx-ceil">
+          <h4>Lo que una suscripci&oacute;n s&iacute; compra y lo que no</h4>
+          <p>Una suscripci&oacute;n compra el <b>MVP funcional</b>, tu direcci&oacute;n web y el ecosistema alrededor &mdash; medido por lo que realmente construyes. <b>No compra una plataforma regulada terminada.</b> Un sistema bancario, de salud o de cumplimiento completo es un proyecto definido aparte: en Pro tus cr&eacute;ditos te dan un MVP real y funcional, no el producto final certificado, auditado y endurecido para producci&oacute;n. Te diremos cu&aacute;l de los dos est&aacute;s pidiendo antes de que gastes un solo cr&eacute;dito.</p>
+        </div>
+
+        <div class="credits-roll">Los cr&eacute;ditos vuelven a tu asignaci&oacute;n mensual en tu fecha de facturaci&oacute;n. Los cr&eacute;ditos mensuales no usados no se acumulan. Los cr&eacute;ditos que compras no caducan.</div>
       </div>
     </div>
   </section>
@@ -964,12 +999,6 @@
 
     fetch('/projects/api/v1/orbup/billing/plans').then(function(r){ return r.json(); }).then(function(j){
       if(!j||!j.success) return;
-      var tb=document.getElementById('credit-costs');
-      (j.costs||[]).slice(0,4).forEach(function(c){
-        var tr=document.createElement('tr');
-        tr.innerHTML='<td>'+(ES?(c.label_es||c.label_en):(c.label_en||c.action_key))+'</td><td>'+c.cost+'</td>';
-        tb.appendChild(tr);
-      });
       if(!j.configured && note) note.textContent = ES
         ? 'Los pagos se activan en breve. Mientras tanto, el plan Free est\u00e1 disponible.'
         : 'Paid plans are switching on shortly. Free is available now.';

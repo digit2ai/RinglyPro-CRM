@@ -109,9 +109,30 @@ async function ensureSchema() {
   // balance to the allowance; it must never touch credits somebody paid for.
   await sequelize.query('ALTER TABLE orbup_credit_accounts ADD COLUMN IF NOT EXISTS topup_balance INTEGER NOT NULL DEFAULT 0');
 
+  // Build complexity. A receptionist and a regulated banking back office are not
+  // the same job and must not carry the same price. These are the rows the
+  // landing page shows, so the page cannot promise a cheaper build than the
+  // engine will actually charge.
+  const BUILDS = [
+    ['build_simple',    600,   'Simple build — AI receptionist, booking bot, lead capture',
+                               'Construcción simple — recepcionista IA, agenda de citas, captura de prospectos'],
+    ['build_standard',  2500,  'Standard build — customer dashboard, inventory or CRM-lite',
+                               'Construcción estándar — panel de clientes, inventario o CRM ligero'],
+    ['build_advanced',  9000,  'Advanced build — multi-role portal, payments, live integrations',
+                               'Construcción avanzada — portal multiusuario, pagos, integraciones en vivo'],
+    ['build_regulated', 40000, 'Regulated build — banking, health or compliance MVP (scoped with us)',
+                               'Construcción regulada — MVP bancario, de salud o de cumplimiento (definido con nosotros)']
+  ];
+  for (const [k, c, en, es] of BUILDS) {
+    await sequelize.query(
+      `INSERT INTO orbup_credit_costs (action_key, cost, label_en, label_es)
+       VALUES (:k,:c,:en,:es) ON CONFLICT (action_key) DO UPDATE SET cost = EXCLUDED.cost,
+         label_en = EXCLUDED.label_en, label_es = EXCLUDED.label_es`,
+      { replacements: { k, c, en, es } });
+  }
+
   const COSTS = [
     ['prototype_build', 250, 'Prototype build (plan + simulator)', 'Construcción de prototipo (plan + simulador)'],
-    ['app_build',       400, 'Working app generated',              'Aplicación funcional generada'],
     ['app_edit',        80,  'Edit a generated app',               'Editar una aplicación generada'],
     ['agent_dispatch',  40,  'Agent dispatch (per specialist run)','Despacho de agente (por especialista)'],
     ['voice_minute',    25,  'Voice conversation, per minute',     'Conversación de voz, por minuto'],

@@ -318,6 +318,21 @@
 .d2b .credits-tbl th,.d2b .credits-tbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;color:var(--ink-mute)}
 .d2b .credits-tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .d2b .credits-tbl td:last-child,.d2b .credits-tbl th:last-child{text-align:right;font-family:var(--mono);color:var(--accent-cyan)}
+.d2b .cx-tbl td:nth-child(1){font-weight:700;color:var(--ink);white-space:nowrap}
+.d2b .cx-tbl td:nth-child(2){color:var(--ink-mute)}
+.d2b .cx-tbl td:nth-child(3){text-align:right;font-family:var(--mono);color:var(--accent-cyan);white-space:nowrap}
+.d2b .cx-tbl th:nth-child(3){text-align:right}
+.d2b .cx-month{margin-top:18px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.d2b .cx-m{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg2)}
+.d2b .cx-m b{font-size:14px}
+.d2b .cx-m .cr{font-family:var(--mono);font-size:11.5px;color:var(--accent-cyan);margin:3px 0 6px}
+.d2b .cx-m p{margin:0;font-size:13px;color:var(--ink-mute);line-height:1.5}
+.d2b .cx-ceil{margin-top:18px;border:1px solid rgba(236,72,153,.32);border-left:3px solid var(--accent-magenta);
+  border-radius:14px;padding:16px 18px;background:rgba(236,72,153,.06)}
+.d2b .cx-ceil h4{margin:0 0 6px;font-size:14.5px;font-weight:750}
+.d2b .cx-ceil p{margin:0;font-size:13.5px;color:var(--ink-mute);line-height:1.6}
+.d2b .cx-ceil b{color:var(--ink)}
+@media(max-width:640px){.d2b .cx-tbl td:nth-child(2){display:none}.d2b .cx-tbl th:nth-child(2){display:none}}
 .d2b .credits-roll{margin-top:12px;font-size:12.5px;color:var(--faint)}
 /* Live credit meter in the nav — only rendered for a signed-in user. */
 .d2b .credit-meter{display:none;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
@@ -969,10 +984,30 @@
 
       <div class="credits-blk">
         <h3>How credits work</h3>
-        <p class="lede">A credit is one unit of work by the workforce. Building costs more than asking.</p>
-        <table class="credits-tbl"><thead><tr><th>Action</th><th>Credits</th></tr></thead>
-          <tbody id="credit-costs"></tbody></table>
-        <div class="credits-roll">Credits reset to your monthly allowance on your billing date. Unused credits do not roll over.</div>
+        <p class="lede">A credit is one unit of work by the workforce. <b>What you ask for decides the cost.</b> An AI receptionist and a compliance-grade banking back office are not the same job, and they are not priced the same.</p>
+        <table class="credits-tbl cx-tbl">
+          <thead><tr><th>What you are building</th><th>Example</th><th>Credits</th></tr></thead>
+          <tbody>
+            <tr><td>Simple</td><td>AI receptionist, booking bot, lead capture</td><td>600</td></tr>
+            <tr><td>Standard</td><td>Customer dashboard, inventory, CRM-lite</td><td>2,500</td></tr>
+            <tr><td>Advanced</td><td>Multi-role portal, payments, live integrations</td><td>9,000</td></tr>
+            <tr><td>Regulated</td><td>Banking, health or compliance MVP</td><td>40,000+</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top:22px">What a month actually gets you</h3>
+        <div class="cx-month">
+          <div class="cx-m"><b>Free</b><div class="cr">1,500 credits / month</div><p>Two simple builds, or one plus a round of refinements.</p></div>
+          <div class="cx-m"><b>Plus</b><div class="cr">25,000 credits / month</div><p>Around ten standard builds, or two advanced ones with room to iterate.</p></div>
+          <div class="cx-m"><b>Pro</b><div class="cr">100,000 credits / month</div><p>Around eleven advanced builds, or one regulated MVP scoped with us.</p></div>
+        </div>
+
+        <div class="cx-ceil">
+          <h4>What a subscription does and does not buy</h4>
+          <p>A subscription buys the <b>working MVP</b>, your web address, and the ecosystem around it &mdash; metered by what you actually build. <b>It does not buy a finished regulated platform.</b> A full banking, healthcare or compliance system is a scoped engagement: at Pro your credits get you a real, working MVP of it, not the certified, audited, production-hardened end product. We will tell you which one you are asking for before you spend a credit on it.</p>
+        </div>
+
+        <div class="credits-roll">Credits reset to your monthly allowance on your billing date. Unused monthly credits do not roll over. Credits you purchase never expire.</div>
       </div>
     </div>
   </section>
@@ -987,12 +1022,6 @@
 
     fetch('/projects/api/v1/orbup/billing/plans').then(function(r){ return r.json(); }).then(function(j){
       if(!j||!j.success) return;
-      var tb=document.getElementById('credit-costs');
-      (j.costs||[]).slice(0,4).forEach(function(c){
-        var tr=document.createElement('tr');
-        tr.innerHTML='<td>'+(ES?(c.label_es||c.label_en):(c.label_en||c.action_key))+'</td><td>'+c.cost+'</td>';
-        tb.appendChild(tr);
-      });
       if(!j.configured && note) note.textContent = ES
         ? 'Los pagos se activan en breve. Mientras tanto, el plan Free est\u00e1 disponible.'
         : 'Paid plans are switching on shortly. Free is available now.';
