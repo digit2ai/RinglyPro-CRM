@@ -230,6 +230,15 @@
 .d2b .orb-fallback[hidden]{display:none!important}
 .d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
 .d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
+/* Hero ask — the largest type on the page. Same wordmark gradient as "OrbUp.",
+   clamp-sized so it never wraps awkwardly, and deliberately tight above so the
+   orb still clears the fold on a 390px viewport. */
+.d2b .hero-ask{position:relative;z-index:3;text-align:center;margin:6px auto 18px;padding:0 18px;
+  font-weight:850;letter-spacing:-.04em;line-height:1.02;
+  font-size:clamp(2.1rem,7.4vw,4.6rem);
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 6px 34px rgba(124,92,255,.28))}
+@media(max-width:430px){.d2b .or-divider{margin:14px auto 0}.d2b .hero-ask{margin:4px auto 12px;font-size:clamp(1.9rem,8.4vw,2.6rem)}}
 @media(max-width:900px){.d2b .hero-logo{--orb-size:440px}}
 @media(max-width:480px){.d2b .hero-logo{--orb-size:300px}}
 @media(prefers-reduced-motion:reduce){
@@ -657,6 +666,8 @@
     </div>
 
     <div class="or-divider">— o escribe tu idea —</div>
+
+    <h2 class="hero-ask">&iquest;Qu&eacute; puedo hacer por ti?</h2>
 
     <div class="builder wrap">
       <form id="d2b-form" class="promptcard">
