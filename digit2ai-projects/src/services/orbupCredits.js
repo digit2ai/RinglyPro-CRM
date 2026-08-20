@@ -17,7 +17,6 @@ const { sequelize } = require('../models');
 
 const PLANS = {
   free:      { key: 'free',      label: 'Free',      cents: 0,     credits: 1500 },
-  essential: { key: 'essential', label: 'Essential', cents: 1000,  credits: 7500,   was_cents: 2000 },
   plus:      { key: 'plus',      label: 'Plus',      cents: 3500,  credits: 25000,  recommended: true },
   pro:       { key: 'pro',       label: 'Pro',       cents: 16600, credits: 100000 }
 };
@@ -28,14 +27,13 @@ const ROLLOVER = false;
 
 function priceIdFor(plan) {
   return ({
-    essential: process.env.ORBUP_PRICE_ESSENTIAL,
     plus:      process.env.ORBUP_PRICE_PLUS,
     pro:       process.env.ORBUP_PRICE_PRO
   })[plan] || null;
 }
 function planForPriceId(id) {
   if (!id) return null;
-  for (const k of ['essential', 'plus', 'pro']) if (priceIdFor(k) === id) return k;
+  for (const k of ['plus', 'pro']) if (priceIdFor(k) === id) return k;
   return null;
 }
 

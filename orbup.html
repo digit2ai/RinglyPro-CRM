@@ -273,7 +273,7 @@
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 /* Pricing. Cards inherit the page's card/line tokens; the recommended plan is the
    only one that carries the accent border and glow. */
-.d2b .price-grid{margin-top:26px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr))}
+.d2b .price-grid{margin-top:26px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(262px,1fr));max-width:940px;margin-inline:auto}
 .d2b .price-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);
   border-radius:18px;padding:22px 20px;background:var(--card)}
 .d2b .price-card.rec{border-color:rgba(139,92,246,.55);
@@ -909,22 +909,13 @@
           <ul><li>1,500 credits every month</li><li>Voice or typed briefs</li><li>AI plan with feasibility and timeline</li><li>Interactive simulator you can share</li><li>No card required</li></ul>
           <button type="button" class="price-cta" data-buy="free">Start free</button>
         </div>
-        <div class="price-card" data-plan="essential">
-          
-          <div class="price-name">Essential</div>
-          <div class="price-amt">$10<span class="price-was">$20</span><span>/month</span></div>
-          <div class="price-badge">Limited time</div>
-          <div class="price-cr">7,500 credits / month</div>
-          <ul><li>7,500 credits every month</li><li>Everything in Free</li><li>Working apps generated from a brief</li><li>Plan Copilot to reshape the build</li><li>Export plans and apps</li></ul>
-          <button type="button" class="price-cta" data-buy="essential">Choose</button>
-        </div>
         <div class="price-card rec" data-plan="plus">
           <div class="price-rec">Recommended</div>
           <div class="price-name">Plus</div>
           <div class="price-amt">$35<span>/month</span></div>
           
           <div class="price-cr">25,000 credits / month</div>
-          <ul><li>25,000 credits every month</li><li>Everything in Essential</li><li>Priority agent dispatch</li><li>Deploy to a live address</li><li>Custom domain on your build</li></ul>
+          <ul><li>25,000 credits every month</li><li>Everything in Free</li><li>Priority agent dispatch</li><li>Deploy to a live address</li><li>Custom domain on your build</li></ul>
           <button type="button" class="price-cta" data-buy="plus">Choose</button>
         </div>
         <div class="price-card" data-plan="pro">
@@ -2280,5 +2271,42 @@
       if(email && pill){ pill.setAttribute('href',LOGIN); pill.textContent=(es?'Iniciar sesión':'Log in'); }
     }
   }catch(x){}
+})();
+</script>
+
+<script>
+/* Animated placeholder. The prompt box used to sit there with one frozen example,
+   which reads as a label rather than an invitation. It now types through real
+   briefs so the box demonstrates what a good ask looks like.
+   It yields immediately and permanently the moment the visitor engages — focus,
+   a keystroke, or any existing text stops it and restores a plain placeholder,
+   so it can never fight someone who is typing. */
+(function(){
+  var el=document.getElementById('d2b-input'); if(!el) return;
+  var PREFIX="Ask OrbUp to build…  e.g. ";
+  var EX=["An AI receptionist that answers calls in Spanish, books appointments, and texts a confirmation","A dashboard that shows my shop’s real-time sales and warns me before stock runs out","A tool that reads incoming invoices, matches them to purchase orders, and flags the mismatches","An agent that calls customers who missed their appointment and reschedules them","A portal where my clients upload documents and track their case status"];
+  var PLAIN=PREFIX+'"'+EX[0]+'"';
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){ el.placeholder=PLAIN; return; }   // static for reduced motion
+
+  var i=0,c=0,del=false,timer=null,stopped=false;
+  function stop(){
+    if(stopped) return; stopped=true;
+    clearTimeout(timer); el.placeholder=PLAIN;
+  }
+  function tick(){
+    if(stopped) return;
+    if(el.value){ stop(); return; }             // never animate over real input
+    var full=EX[i];
+    c += del?-1:1;
+    el.placeholder=PREFIX+'"'+full.slice(0,c)+(del?'':'\u258f')+'"';
+    var wait=del?18:34;
+    if(!del && c>=full.length){ del=true; wait=2100; }        // hold, then erase
+    else if(del && c<=0){ del=false; i=(i+1)%EX.length; wait=260; }
+    timer=setTimeout(tick,wait);
+  }
+  ['focus','input','pointerdown','keydown'].forEach(function(ev){ el.addEventListener(ev,stop,{once:true}); });
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) clearTimeout(timer); else if(!stopped) tick(); });
+  timer=setTimeout(tick,900);
 })();
 </script>
