@@ -21,6 +21,12 @@ const { sequelize } = require('../models');
 const generator = require('../services/orbupAppGenerator');
 
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
+// Credit metering is OFF while the funnel settles. A workspace account is the
+// gate now; credits were a second gate behind it and only ever produced a
+// "you are out" wall for someone who had already signed up. Flip
+// ORBUP_CREDITS_ENABLED=1 to turn metering back on with no code change — the
+// ledger, the grants and the spend path all still exist underneath.
+const CREDITS_ENABLED = process.env.ORBUP_CREDITS_ENABLED === '1';
 const NEW_APP_COST = parseInt(process.env.ORBUP_APP_BUILD_CREDITS || '5', 10);
 const EDIT_COST = parseInt(process.env.ORBUP_APP_EDIT_CREDITS || '1', 10);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -64,6 +70,9 @@ async function ensureGrant(email) {
 }
 
 async function spend(email, amount, reason) {
+  // Metering off: never refuse, never debit. The call still resolves so every
+  // caller keeps working unchanged.
+  if (!CREDITS_ENABLED) return { ok: true, credits: null, metered: false };
   const u = await ensureGrant(email);
   if (!u) return { ok: false, error: 'account_not_found' };
   if ((u.credits || 0) < amount) return { ok: false, error: 'insufficient_credits', credits: u.credits || 0, needed: amount };

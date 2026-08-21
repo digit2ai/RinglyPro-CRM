@@ -676,8 +676,7 @@
       <a href="#platforms">Platforms</a>
       <a href="#numbers">Why us</a>
       <a href="/blog">Blog</a>
-      <span class="credit-meter" id="credit-meter" title="Credits"><b class="cm-bal">0</b><span class="bar"><span class="fill" style="width:0%"></span></span><span class="cm-plan"></span></span>
-      <span class="lang-toggle" role="group" aria-label="Language">
+            <span class="lang-toggle" role="group" aria-label="Language">
         <a href="/orbup?lang=en" class="lang-opt active" aria-current="true">EN</a>
         <a href="/orbup-es?lang=es" class="lang-opt">ES</a>
       </span>
@@ -1534,8 +1533,10 @@
   }
   // Any attempt to start writing / use a sample / submit opens the gate first.
   if(input){
-    // Typing is free. The gate moved to the point where there is something worth
-    // keeping — see the save step after the plan renders.
+    // Log in or create a workspace first. Both are the same modal: an existing
+    // email with the right password signs in, a new one creates the workspace.
+    input.addEventListener('mousedown', function(e){ if(!identityComplete()){ e.preventDefault(); input.blur(); openGate(); } });
+    input.addEventListener('focus', function(){ if(!identityComplete()) openGate(); });
   }
   // Exposed so any request entry point (voice orb, attach) enforces the same gate.
   // Pass a callback to RESUME that action once the gate is satisfied, so voice,
@@ -1601,6 +1602,7 @@
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
+    if(!identityComplete()){ openGate(); return; }
     var desc=input.value.trim();
     if(desc.length < 30 && !selectedFiles.length){ updateHint(); input.focus(); return; }
     if(go){ go.disabled=true; }
@@ -1669,7 +1671,8 @@
       if(c.phone){ contact.phone=c.phone; }
       if(c.lang){ contact.lang=c.lang; gateLang=c.lang; }
     }catch(x){}
-    // The builder is never locked. Typing is free; the gate is after the plan.
+    // The builder is locked until the visitor has a workspace. The gate is what
+    // guarantees name, email and phone exist by the time a build is submitted.
     // The PAGE language is authoritative for a returning user — so the nav EN/ES
     // toggle actually changes the generated-content language (and dictation), and
     // update the saved record so it stays consistent.
@@ -1678,7 +1681,7 @@
       D2B_LANG=PAGE_LANG; unlockInput();
       var rs=root.querySelector('#d2b-reset'); if(rs) rs.hidden=false;
     }
-    else { unlockInput(); }   // anonymous visitors type freely
+    else { lockInput(); }
   })();
 
   // ---- BIG BUILD PROGRESS (backend-at-work theatre) ----
@@ -1873,7 +1876,6 @@
         // owning account from it and ignores any email typed in the body.
         body: JSON.stringify(Object.assign({
           session:(function(){ try{ return localStorage.getItem('d2ai_session')||''; }catch(e){ return ''; } })(),
-          anonymous_build:(function(){ try{ return !localStorage.getItem('d2ai_session'); }catch(e){ return true; } })(),
           full_name:name, phone:phone, email:email||undefined,
           heard_from:'orbup self-serve builder', language: D2B_LANG
         }, s))
