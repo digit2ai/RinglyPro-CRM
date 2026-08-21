@@ -739,11 +739,15 @@ body.tw-on .tw-side{display:flex}
   <div class="cta" id="cta">
     <h2>${esc(t.cta.heading)}</h2>
     <p>${esc(t.cta.body)}</p>
-    ${t.studio_only
-      ? `<a class="ts-cta-btn" href="https://orbup.app/orbup/workspace" style="display:inline-block;text-decoration:none">${es ? 'Abre tu workspace' : 'Open your Workspace'} &rarr;</a>`
-      : (projectId
-        ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${ui.cta} &rarr;</button>`
-        : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`)}
+    ${projectId
+      // The Studio said "Book a call and we'll make it real" and then offered a
+      // link to the workspace, which books nothing. Both modes now render the
+      // SAME booking button, which opens the real calendar. This also repairs the
+      // plan's "book a scoping call" CTA: that button works by clicking
+      // #ts-book-btn, and in Studio mode the element did not exist, so it silently
+      // did nothing.
+      ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${es ? 'Agenda una cita' : 'Book an appointment'} &rarr;</button>`
+      : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`}
   </div>
 
   <div class="foot">${ui.poweredBy}</div>
