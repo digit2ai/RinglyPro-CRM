@@ -92,7 +92,10 @@ router.use((req, res, next) => {
 let ready = false;
 let bootError = null;
 init()
-  .then((r) => { ready = true; console.log(`[jobup] store ready: ${r.backend}, ${r.tables} tables (ju_ prefix)`); scheduler.start(); })
+  .then((r) => { ready = true; console.log(`[jobup] store ready: ${r.backend}, ${r.tables} tables (ju_ prefix)`); scheduler.start();
+    // ReachUp marketing layer — same Postgres, ru_ tables. Runs after the store
+    // is up so its sequelize handle is live; never fatal to JobUp boot.
+    require('./reachup').init().catch((e) => console.error('[reachup] init failed:', e.message)); })
   .catch((e) => { bootError = e.message; console.error('[jobup] init failed:', e.message); });
 
 // ---- health ---------------------------------------------------------------
@@ -173,6 +176,12 @@ router.get(['/subscribers-admin/plan', '/subscribers-admin/plan/'], (req, res) =
 router.use('/social-admin', require('./routes/social-admin'));
 router.get(['/social-admin', '/social-admin/'], (req, res) =>
   res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req))));
+
+// ReachUp marketing layer: public capture/unsubscribe/webhook API + the
+// /admin/marketing console. Shares the JobUp owner credential (no new secret).
+const reachup = require('./reachup');
+router.use('/api/v1/reachup', reachup.apiRouter);
+router.use('/admin', reachup.adminRouter);
 
 // ---- Referral magic link ---------------------------------------------------
 // /r/CODE is the whole share mechanism: it logs the click, drops the
