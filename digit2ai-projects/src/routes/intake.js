@@ -403,7 +403,12 @@ router.post('/public/teaser/:projectId', async (req, res) => {
       },
       cta: {
         heading: es ? 'Construcción completa' : 'Build complete',
-        body: es ? 'Revisa o edita tu plan de proyecto arriba.' : 'See or edit your project plan above.'
+        body: es ? 'Revisa o edita tu plan de proyecto arriba.' : 'See or edit your project plan above.',
+        // This shell is what a user lands on the moment their project is created.
+        // The next step there is the workspace, not a sales call — booking comes
+        // later, from the plan itself. Declared explicitly so the renderer never
+        // has to infer intent from the heading text.
+        action: 'workspace'
       },
       simulator: null, model: 'studio-shell'
     };

@@ -432,6 +432,14 @@ function renderTeaserPage(t, meta = {}) {
 
   // The AI teaser walkthrough (voice orb + narrated sections) is removed from the
   // self-serve flow (cost, unused). A 'studio_only' page shows the Studio alone.
+  // What the closing CTA should do. New shells declare it; rows written before
+  // the field existed are read from their heading, which is the only signal they
+  // carry — 'Build complete' means the project was just created, anything else is
+  // copy that promises a call.
+  const ctaAction = (t.cta && t.cta.action)
+    ? t.cta.action
+    : (/^(build complete|construcci[oó]n completa)$/i.test(String((t.cta && t.cta.heading) || '').trim()) ? 'workspace' : 'book');
+
   const linaOrb = t.studio_only ? '' : `
   <!-- Lina voice orb -->
   <div class="lina" id="lina">
@@ -708,7 +716,7 @@ body.tw-on .tw-side{display:flex}
 <button class="tw-toggle" id="tw-toggle" aria-label="Menu">&#9776;</button>
 <aside class="tw-side" id="tw-side"></aside>
 <div class="wrap">
-  <a class="d2-back" href="https://orbup.app/orbup/workspace" onclick="try{if(document.referrer&&/\\/workspace/.test(document.referrer)){location.href=document.referrer;return false;}}catch(e){}">&larr; Workspace</a>
+  <a class="d2-back" href="https://orbup.app/orbup/workspace" onclick="try{if(document.referrer&&/\\/workspace/.test(document.referrer)){location.href=document.referrer;return false;}}catch(e){}">&larr; ${es ? 'Mi Workspace' : 'My Workspace'}</a>
   <div class="brand">Digit2AI</div>
 
   <div class="hero" id="top">
@@ -736,18 +744,19 @@ body.tw-on .tw-side{display:flex}
   ${linaOrb}
   ${walkthrough}
 
+  ${''}
   <div class="cta" id="cta">
     <h2>${esc(t.cta.heading)}</h2>
     <p>${esc(t.cta.body)}</p>
-    ${projectId
-      // The Studio said "Book a call and we'll make it real" and then offered a
-      // link to the workspace, which books nothing. Both modes now render the
-      // SAME booking button, which opens the real calendar. This also repairs the
-      // plan's "book a scoping call" CTA: that button works by clicking
-      // #ts-book-btn, and in Studio mode the element did not exist, so it silently
-      // did nothing.
-      ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${es ? 'Agenda una cita' : 'Book an appointment'} &rarr;</button>`
-      : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`}
+    ${ctaAction === 'workspace'
+      // Freshly created project: the next step is the workspace. Booking is still
+      // one click away from the plan's own CTA further up the page.
+      ? `<a class="ts-cta-btn" href="https://orbup.app/orbup/workspace" style="display:inline-block;text-decoration:none">${es ? 'Abre tu workspace para continuar' : 'Open your workspace to continue'} &rarr;</a>`
+      : (projectId
+        // Copy that promises a call must produce a call. This button opens the
+        // real calendar, and the plan's "book a scoping call" CTA clicks it.
+        ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${es ? 'Agenda una cita' : 'Book an appointment'} &rarr;</button>`
+        : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`)}
   </div>
 
   <div class="foot">${ui.poweredBy}</div>
