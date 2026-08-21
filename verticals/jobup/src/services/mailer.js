@@ -34,6 +34,18 @@ function fromSource() {
   return null;
 }
 
+// The From DISPLAY NAME. So the inbox shows "JobUp", not the raw address, even
+// while the address itself falls back to the shared verified sender. Override
+// with JOBUP_FROM_NAME.
+function fromName() {
+  return process.env.JOBUP_FROM_NAME || 'JobUp';
+}
+// SendGrid accepts { email, name }. Returns that object when an address exists.
+function fromField() {
+  const email = fromAddress();
+  return email ? { email, name: fromName() } : null;
+}
+
 function configured() {
   return Boolean(process.env.SENDGRID_API_KEY && fromAddress());
 }
@@ -76,7 +88,7 @@ async function send({ to, subject, text, html, replyTo }) {
     sg.setApiKey(process.env.SENDGRID_API_KEY);
     const msg = {
       to,
-      from: fromAddress(),
+      from: fromField(),
       subject: String(subject || 'JobUp').slice(0, 200),
       text: String(text || ''),
     };
@@ -112,7 +124,7 @@ async function sendDigest({ to, subject, html, text, templateId, dynamicData, as
   try {
     const sg = require('@sendgrid/mail');
     sg.setApiKey(process.env.SENDGRID_API_KEY);
-    const msg = { to, from: fromAddress() };
+    const msg = { to, from: fromField() };
     if (templateId) {
       msg.templateId = templateId;
       msg.dynamicTemplateData = dynamicData || {};

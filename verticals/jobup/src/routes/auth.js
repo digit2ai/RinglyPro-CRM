@@ -51,6 +51,19 @@ router.post('/set-password', async (req, res) => {
       verify_url: `/api/v1/auth/verify?t=${encodeURIComponent(verifyToken)}`,
       note: 'Verify your email before the site goes public or any outbound message is sent.',
     });
+
+    // Welcome email — once per account, in the subscriber's language. build-account
+    // is the usual completion path and sends it too; the welcomed_at guard makes
+    // this a safe belt-and-suspenders so NO signup path can miss it.
+    setImmediate(async () => {
+      try {
+        if (!fresh.welcomed_at) {
+          const w = require('../services/emailWelcome').buildWelcome(fresh);
+          const r = await require('../services/mailer').send({ to: fresh.email, subject: w.subject, html: w.html, text: w.text });
+          if (r.ok) await models.subscribers.update({ welcomed_at: new Date() }, { where: { id: sub.id } });
+        }
+      } catch (e) { console.error('[set-password] welcome email failed:', e.message); }
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
