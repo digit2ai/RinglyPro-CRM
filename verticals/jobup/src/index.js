@@ -376,6 +376,9 @@ router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.
 // request to '/' by default, which would hand out the RAW shell — {{BASE}}
 // tokens and all — before the route below ever ran.
 router.use(express.static(publicDir, { index: false }));
+// Public radio-interview guide (static, self-contained). Clean /radio URL on
+// every root; carries a Descargar PDF button (print-to-PDF).
+router.get(['/radio', '/radio/'], (req, res) => res.sendFile(path.join(publicDir, 'radio.html')));
 router.get('/', (req, res) => res.type('html').send(pwa.page('index.html', pwa.basePath(req))));
 
 // ===========================================================================

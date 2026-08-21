@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de Radio: JobUp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Guion de radio para presentar JobUp como un servicio a la comunidad hispana: 50 preguntas y respuestas y un plan de 30 minutos.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#f7f3ec;
+  --card:#fffdf9;
+  --ink:#1f1c17;
+  --muted:#6c6558;
+  --faint:#938b7c;
+  --line:rgba(31,28,23,.12);
+  --line-soft:rgba(31,28,23,.07);
+  --green:#0d7c62;
+  --green-deep:#0a5d49;
+  --amber:#c07617;
+  --amber-soft:#f2e6d2;
+  --green-wash:#e7f0ec;
+  --shadow:0 1px 2px rgba(31,28,23,.05),0 8px 30px -18px rgba(31,28,23,.35);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --paper:#16140f;
+    --card:#1e1b15;
+    --ink:#f2ede3;
+    --muted:#a89f8e;
+    --faint:#7c7466;
+    --line:rgba(242,237,227,.14);
+    --line-soft:rgba(242,237,227,.08);
+    --green:#3fbfa0;
+    --green-deep:#6fd3ba;
+    --amber:#e0a14e;
+    --amber-soft:#2c2416;
+    --green-wash:#182420;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -18px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16140f;
+  --card:#1e1b15;
+  --ink:#f2ede3;
+  --muted:#a89f8e;
+  --faint:#7c7466;
+  --line:rgba(242,237,227,.14);
+  --line-soft:rgba(242,237,227,.08);
+  --green:#3fbfa0;
+  --green-deep:#6fd3ba;
+  --amber:#e0a14e;
+  --amber-soft:#2c2416;
+  --green-wash:#182420;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -18px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:17px;line-height:1.65;letter-spacing:-.003em;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:820px;margin:0 auto;padding:clamp(24px,5vw,64px) clamp(18px,4vw,40px) 96px}
+
+/* Masthead */
+.mast{border-bottom:2px solid var(--ink);padding-bottom:26px;margin-bottom:34px}
+.kicker{
+  font-size:12.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--green);display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;
+}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex:none;
+  animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.kicker .dot{animation:none}}
+h1{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;
+  font-size:clamp(34px,7vw,58px);line-height:1.02;letter-spacing:-.02em;
+  margin:0 0 14px;text-wrap:balance;
+}
+h1 em{font-style:italic;color:var(--green)}
+.lede{font-size:clamp(17px,2.4vw,19.5px);color:var(--muted);max-width:60ch;margin:0}
+.meta{
+  display:flex;gap:22px;flex-wrap:wrap;margin-top:22px;
+  font-size:14px;color:var(--muted);
+}
+.meta b{color:var(--ink);font-weight:600}
+
+/* Strategy panel */
+.strat{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:clamp(22px,4vw,32px);margin-bottom:14px;box-shadow:var(--shadow);
+}
+.strat h2{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:23px;letter-spacing:-.01em;
+  margin:0 0 6px;
+}
+.strat .say{color:var(--muted);margin:0 0 22px;font-size:15.5px}
+.strat .say b{color:var(--amber);font-weight:600}
+.pillars{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.pillars{grid-template-columns:1fr}}
+.pillar{
+  border:1px solid var(--line-soft);border-radius:12px;padding:16px 18px;background:var(--green-wash);
+}
+.pillar .n{font-family:"Fraunces",serif;font-size:15px;color:var(--green-deep);font-weight:600}
+.pillar h3{margin:6px 0 4px;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.pillar p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+
+/* 30-minute run of show */
+.plan{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:clamp(22px,4vw,32px);margin-top:14px;box-shadow:var(--shadow);
+}
+.plan h2{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:23px;letter-spacing:-.01em;
+  margin:0 0 6px;display:flex;align-items:center;gap:10px;
+}
+.plan .clock{
+  width:16px;height:16px;border:2px solid var(--amber);border-radius:50%;position:relative;flex:none;
+}
+.plan .clock::after{content:"";position:absolute;left:50%;top:22%;width:2px;height:38%;
+  background:var(--amber);transform-origin:bottom;transform:rotate(60deg)}
+.plan .say{color:var(--muted);margin:0 0 20px;font-size:15.5px}
+.run{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:step}
+.run li{
+  border:1px solid var(--line-soft);border-left:3px solid var(--green);border-radius:10px;
+  padding:15px 18px;position:relative;
+}
+.rt{font-weight:700;font-size:15.5px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.min{
+  font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;letter-spacing:.04em;
+  color:var(--green-deep);background:var(--green-wash);padding:2px 9px;border-radius:999px;
+}
+.script{margin:8px 0 0;font-size:15px;color:var(--muted);line-height:1.55}
+.script b{color:var(--ink);font-weight:600}
+
+.tag{
+  font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--amber);background:var(--amber-soft);border:1px solid var(--line-soft);
+  padding:2px 8px;border-radius:6px;white-space:nowrap;
+}
+.tag.mini{font-size:10px;padding:1px 6px;vertical-align:middle}
+.q .tag{margin-left:8px;vertical-align:2px}
+
+.legend{
+  display:flex;gap:8px;align-items:baseline;margin:34px 0 4px;color:var(--faint);
+  font-size:12.5px;letter-spacing:.02em;flex-wrap:wrap;
+}
+
+/* Sections */
+.sec{margin-top:40px}
+.sec-head{
+  display:flex;align-items:baseline;gap:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:8px;
+}
+.sec-head .idx{
+  font-family:"Fraunces",serif;font-variant-numeric:tabular-nums;
+  font-size:15px;font-weight:600;color:var(--amber);flex:none;
+  width:2.4ch;text-align:right;
+}
+.sec-head h2{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(20px,3vw,25px);
+  letter-spacing:-.015em;margin:0;line-height:1.15;text-wrap:balance;
+}
+
+.qa{padding:22px 0;border-bottom:1px solid var(--line-soft);display:flex;gap:18px}
+.qa:last-child{border-bottom:0}
+.qnum{
+  font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--green);
+  flex:none;width:2.6ch;text-align:right;padding-top:5px;
+}
+.qbody{min-width:0}
+.q{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:19.5px;line-height:1.32;
+  letter-spacing:-.01em;margin:0 0 8px;color:var(--ink);text-wrap:pretty;
+}
+.a{margin:0;color:var(--muted);font-size:16px;line-height:1.62}
+.a strong{color:var(--ink);font-weight:600}
+.a .hl{color:var(--green-deep);font-weight:600}
+
+footer{
+  margin-top:56px;padding-top:22px;border-top:2px solid var(--ink);
+  color:var(--faint);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+footer a{color:var(--green);text-decoration:none;font-weight:600}
+
+/* Download / print-to-PDF button */
+.dl{
+  position:fixed;top:18px;right:18px;z-index:50;
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:14px;font-weight:600;
+  color:#fff;background:var(--green);border:1px solid var(--green-deep);
+  padding:10px 15px;border-radius:999px;cursor:pointer;
+  box-shadow:0 6px 20px -8px rgba(13,124,98,.6);transition:transform .12s ease,background .12s ease;
+}
+.dl:hover{background:var(--green-deep);transform:translateY(-1px)}
+.dl:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.dl svg{flex:none}
+@media (max-width:560px){.dl{top:auto;bottom:16px;right:16px}}
+@media (prefers-reduced-motion:reduce){.dl{transition:none}}
+
+/* Print: clean, ink-friendly, no page-break inside a Q&A */
+@media print{
+  .dl{display:none !important}
+  :root{--paper:#fff;--card:#fff;--ink:#111;--muted:#333;--line:rgba(0,0,0,.25);
+    --line-soft:rgba(0,0,0,.12);--green-wash:#f3f3f3;--shadow:none}
+  body{font-size:11.5pt}
+  .wrap{max-width:none;padding:0}
+  .kicker .dot{animation:none}
+  .qa,.pillar,.strat{break-inside:avoid}
+  .sec{break-inside:auto}
+  .sec-head{break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<button class="dl" onclick="window.print()" aria-label="Descargar como PDF">
+  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+  Descargar PDF
+</button>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="kicker"><span class="dot"></span> Guía para entrevista de radio &middot; 27 de agosto</div>
+    <h1>Hablemos de <em>JobUp</em>: 50 preguntas para la comunidad</h1>
+    <p class="lede">Un guion de conversación pensado para presentar JobUp como lo que es: una herramienta de acompañamiento para que nuestra gente encuentre no solo un trabajo, sino un trabajo que la haga feliz.</p>
+    <div class="meta">
+      <span><b>Formato:</b> programa de 30 minutos</span>
+      <span><b>Audiencia:</b> comunidad hispana</span>
+      <span><b>Tono:</b> servicio, no venta</span>
+    </div>
+  </header>
+
+  <section class="strat">
+    <h2>Cómo posicionarlo al aire</h2>
+    <p class="say">Preséntalo como un <b>servicio a la comunidad</b>, no como un negocio. La palabra que guía toda la conversación es <b>ayudar</b>. Estos son los cuatro pilares del mensaje &mdash; regresa a ellos cada vez que puedas.</p>
+    <div class="pillars">
+      <div class="pillar"><div class="n">01</div><h3>Ayudar, de verdad</h3><p>Acompañar a la persona en un momento difícil, no cobrarle por una promesa.</p></div>
+      <div class="pillar"><div class="n">02</div><h3>Reconstruir la red</h3><p>Optimizar el tiempo al reconectar con contactos, sin empezar de cero.</p></div>
+      <div class="pillar"><div class="n">03</div><h3>Ahorrar tiempo</h3><p>Menos horas creando el currículum, el perfil y los mensajes. Eso lo hace la herramienta.</p></div>
+      <div class="pillar"><div class="n">04</div><h3>Trabajo que haga feliz</h3><p>La meta no es tener cualquier trabajo, sino uno que le quede bien a la persona.</p></div>
+    </div>
+  </section>
+
+  <section class="plan">
+    <h2><span class="clock" aria-hidden="true"></span> Guion de 30 minutos</h2>
+    <p class="say">Con saludo y despedida, al aire caben cerca de 20 preguntas. En la lista de abajo están marcadas <span class="tag mini">Clave</span> las esenciales &mdash; empieza por esas y usa el resto solo si sobra tiempo.</p>
+
+    <ol class="run">
+      <li>
+        <div class="rt">Saludo <span class="min">2&ndash;3 min</span></div>
+        <p class="script">&ldquo;Gracias por este espacio. Hoy quiero hablarles de algo muy cercano para todos: la b&uacute;squeda de trabajo. Buscar empleo se volvi&oacute; casi un trabajo de tiempo completo, y mucha de nuestra gente lo hace sola. Vengo a contarles de una herramienta hecha para <b>acompa&ntilde;arla</b> en ese camino, se llama JobUp.&rdquo;</p>
+      </li>
+      <li>
+        <div class="rt">Bloque de preguntas clave <span class="min">~24 min</span></div>
+        <p class="script">Recorre las preguntas marcadas <span class="tag mini">Clave</span>, regresando siempre a los cuatro pilares: <b>ayudar</b>, reconstruir la red, ahorrar tiempo y encontrar un trabajo que haga feliz. Deja espacio para que el conductor pregunte.</p>
+      </li>
+      <li>
+        <div class="rt">Despedida y llamado a la acci&oacute;n <span class="min">2&ndash;3 min</span></div>
+        <p class="script">&ldquo;Si algo se llevan de hoy, que sea esto: <b>no est&aacute;n solos</b> en su b&uacute;squeda. Entren a <b>jobup.dev</b> desde su tel&eacute;fono, suban su curr&iacute;culum y denle una oportunidad; empezar no cuesta nada. Y si conocen a alguien que lo necesita, comp&aacute;rtanlo &mdash; as&iacute; nos ayudamos entre todos. Gracias.&rdquo;</p>
+      </li>
+    </ol>
+  </section>
+
+  <div class="legend"><span class="tag mini">Clave</span> = prioridad para la versión de 30 min. Las respuestas son sugerencias &mdash; ajústalas con tus propias palabras.</div>
+
+  <main id="content"></main>
+
+  <footer>
+    <span>JobUp &middot; Guion de radio &middot; 27 de agosto de 2026</span>
+    <span>Al aire, invita a visitar <a href="https://jobup.dev">jobup.dev</a></span>
+  </footer>
+</div>
+
+<script>
+const SECTIONS = [
+  { t: "La visión: por qué existe JobUp", qa: [
+    ["¿Qué es JobUp en una sola frase?",
+     "Es una <span class='hl'>herramienta que acompaña a una persona en su búsqueda de trabajo</span>: encuentra empleos reales que encajan con su experiencia, le arma una presencia profesional en internet y le ayuda a tocar puertas. Todo pensado para ahorrarle tiempo y darle una mano en un momento que suele ser solitario."],
+    ["¿Por qué decidieron crearlo?",
+     "Porque buscar trabajo hoy se volvió un trabajo de tiempo completo, y mucha de nuestra gente lo hace sola, después de su jornada, sin quien la oriente. Quisimos <strong>poner la tecnología del lado de la persona</strong>, no del lado de las grandes empresas."],
+    ["¿Es un negocio o un servicio a la comunidad?",
+     "Nace como un <strong>servicio a la comunidad</strong>. Sí, tiene que sostenerse, pero la meta no es cobrar mucho: es que la mayor cantidad de personas posible consiga un buen trabajo. Si a la comunidad le va bien, a todos nos va bien."],
+    ["¿A quién quieren ayudar con esto?",
+     "A la persona que sabe hacer su trabajo pero no sabe 'venderse' en papel. Al recién llegado, al que cambia de carrera, a la mamá que regresa al mercado laboral, al profesional que lleva años en la misma empresa y de repente tiene que buscar. <span class='hl'>Gente trabajadora que solo necesita una mano.</span>"],
+    ["¿Qué los diferencia de una bolsa de trabajo cualquiera?",
+     "Una bolsa de trabajo te muestra miles de anuncios y te deja solo. JobUp hace lo contrario: <strong>filtra por ti</strong>, te dice cuáles encajan de verdad con tu experiencia, y te ayuda con la parte que a todos nos cuesta: escribir el currículum y los mensajes."],
+    ["Si tuvieras que resumir el impacto que buscan, ¿cuál sería?",
+     "Que más personas terminen en un trabajo <strong>que las haga felices</strong>, no solo en cualquier trabajo. Un empleo bien elegido cambia la vida de una familia entera."],
+  ]},
+  { t: "Qué es, en palabras sencillas", qa: [
+    ["Para alguien que no es de tecnología, ¿cómo funciona?",
+     "Subes tu currículum una vez. A partir de ahí, la herramienta <strong>busca empleos que te quedan bien</strong>, te crea una página profesional en internet con tu perfil, y te prepara mensajes para contactar a las empresas. Tú revisas y apruebas todo; nada sale sin tu permiso."],
+    ["¿Necesito saber usar computadoras avanzadas?",
+     "No. Si sabes usar WhatsApp o Facebook, puedes usar JobUp. Está pensado para el teléfono y en español, con pasos simples."],
+    ["¿Qué es eso de una 'página profesional en internet'?",
+     "Es como una tarjeta de presentación viva, con tu propia dirección web. Cuando un reclutador te busca, encuentra una página ordenada y profesional tuya, <span class='hl'>legible tanto por personas como por los sistemas de inteligencia artificial</span> que hoy usan las empresas para buscar candidatos."],
+    ["¿Por qué importa que la lea la inteligencia artificial?",
+     "Porque hoy muchas empresas filtran candidatos con programas automáticos antes de que un humano vea tu currículum. Si tu información está en un formato que esas máquinas entienden, <strong>tienes más posibilidades de aparecer</strong>. JobUp se encarga de eso por ti."],
+    ["¿Es una aplicación que descargo?",
+     "Puedes entrar desde el navegador del teléfono, y también instalarla como una aplicación en tu pantalla de inicio. No ocupa espacio ni complicaciones."],
+    ["¿La inteligencia artificial hace todo por mí?",
+     "Te hace el trabajo pesado &mdash; buscar, ordenar, redactar borradores &mdash; pero <strong>tú siempre tienes la última palabra</strong>. Es una asistente, no una reemplazante. Las decisiones son tuyas."],
+  ]},
+  { t: "El problema que vive nuestra comunidad", qa: [
+    ["¿Cuál es el problema más grande al buscar trabajo hoy?",
+     "El tiempo. Buscar bien exige horas todos los días: leer anuncios, adaptar el currículum a cada uno, escribir mensajes. La mayoría no tiene esas horas, y termina mandando el mismo currículum a todos lados sin resultado."],
+    ["¿Qué obstáculos enfrenta específicamente la comunidad hispana?",
+     "El idioma en los formularios, no conocer los códigos de cómo se busca trabajo aquí, y muchas veces no tener una red de contactos grande. <span class='hl'>No es falta de talento; es falta de herramientas y de tiempo.</span> Eso es justo lo que buscamos nivelar."],
+    ["Mucha gente dice 'mando currículums y nadie contesta'. ¿Por qué pasa?",
+     "Casi siempre por dos razones: el currículum no está en el formato que las máquinas leen, y se manda el mismo para todos sin adaptarlo. JobUp corrige las dos cosas: <strong>adapta tu perfil a cada oportunidad</strong> y lo pone en el formato correcto."],
+    ["¿Y los que llevan muchos años en un mismo empleo?",
+     "Son los que más sufren cuando les toca buscar, porque perdieron la práctica y su red se enfrió. Para ellos JobUp es un alivio: <strong>reconstruye la presencia y la red</strong> sin que tengan que empezar desde cero."],
+    ["¿Ayuda a quien apenas está aprendiendo inglés?",
+     "Sí. Funciona en español y en inglés, y te ayuda a presentar tu experiencia de forma profesional en el idioma que necesites. El idioma deja de ser la barrera que frena tu talento."],
+    ["¿Esto es solo para trabajos de oficina?",
+     "No. Sirve para muchos tipos de trabajo. La idea de fondo &mdash; presentarte bien, encontrar lo que encaja y contactar &mdash; aplica igual para un oficio, un puesto técnico o uno profesional."],
+  ]},
+  { t: "Reconstruir la red de contactos", qa: [
+    ["Todos dicen que 'el trabajo se consigue por contactos'. ¿JobUp ayuda con eso?",
+     "Sí, y es una de las partes que más nos importa. Reconstruir una red toma muchísimo tiempo. JobUp <span class='hl'>optimiza ese tiempo</span>: te ayuda a organizar a quién contactar y te prepara el mensaje, para que reconectar no sea una montaña."],
+    ["¿Cómo me ayuda a reconectar sin sentir que estoy molestando?",
+     "Redactando por ti un primer mensaje respetuoso y profesional, que tú ajustas a tu voz. Muchas personas no escriben por miedo a sonar mal; al darles un buen punto de partida, <strong>se animan a tocar la puerta</strong>."],
+    ["¿Va a escribirle a mis contactos sin que yo sepa?",
+     "Nunca. Prepara borradores y <strong>tú los apruebas antes de que salga nada</strong>. Tú controlas a quién se le escribe y qué se dice. Esa regla es sagrada para nosotros."],
+    ["¿Por qué es tan importante la red para la comunidad hispana?",
+     "Porque somos una comunidad que se ayuda entre sí. Cuando le va bien a uno, abre puertas para otros. JobUp le pone estructura a algo que ya hacemos por naturaleza: <span class='hl'>apoyarnos.</span>"],
+    ["¿Y si siento que perdí todos mis contactos?",
+     "Es más común de lo que crees, y tiene solución. La herramienta te ayuda a reactivar poco a poco esa red y a construir una presencia nueva, para que cada semana estés un paso más cerca, sin agotarte."],
+  ]},
+  { t: "Ahorrar tiempo creando el contenido", qa: [
+    ["Escribir el currículum es lo que más cuesta. ¿Ahí ayuda?",
+     "Muchísimo. Tomar tu experiencia y convertirla en un currículum claro toma horas. JobUp <strong>arma el borrador por ti</strong> a partir de tu información, y lo adapta a cada oportunidad. Tú solo revisas."],
+    ["¿También me ayuda a adaptar el currículum a cada empleo?",
+     "Sí, y eso es clave. Mandar el mismo currículum a todos es el error más común. La herramienta lo ajusta a lo que pide cada puesto, <span class='hl'>ahorrándote el tiempo de rehacerlo una y otra vez.</span>"],
+    ["¿Inventa cosas para que mi currículum se vea mejor?",
+     "No, y esto es muy importante decirlo: <strong>JobUp no inventa experiencia ni datos</strong>. Trabaja solo con lo que tú aportas. Un currículum con mentiras se cae en la entrevista; preferimos que sea real y bien presentado."],
+    ["¿Cuánto tiempo puede ahorrarme a la semana?",
+     "Las horas que hoy pasas leyendo anuncios, copiando y pegando currículums y redactando mensajes desde cero. Ese tiempo lo puedes usar en prepararte para las entrevistas &mdash; o en tu familia."],
+    ["¿Me ayuda con los mensajes para las empresas?",
+     "Sí. Te prepara mensajes de presentación y de seguimiento, listos para que los revises y envíes. Dejar de mirar la pantalla en blanco sin saber qué escribir ya es medio camino andado."],
+  ]},
+  { t: "Un trabajo que te haga feliz", qa: [
+    ["Dicen que la meta no es 'un trabajo' sino 'el trabajo correcto'. ¿Qué significa?",
+     "Que tener trabajo no es lo mismo que estar bien. Buscamos que la persona llegue a un puesto <span class='hl'>que encaje con su experiencia y con su vida</span>, donde crezca y esté a gusto. Un buen trabajo sostiene a toda una familia."],
+    ["¿Cómo ayuda JobUp a encontrar ese trabajo correcto y no cualquiera?",
+     "Porque no te lanza miles de anuncios: te muestra los que <strong>de verdad encajan con lo que tú sabes hacer</strong>. Cuando aplicas a lo que te queda bien, tienes más posibilidades de quedarte y de ser feliz ahí."],
+    ["¿No es mejor tomar cualquier trabajo rápido cuando hay necesidad?",
+     "A veces la urgencia manda, y lo entendemos. Pero incluso en esos casos, JobUp te sigue acompañando para que el siguiente paso sea mejor. La idea es que nadie se quede estancado en algo que lo hace infeliz."],
+    ["¿Miden si la gente termina contenta, no solo colocada?",
+     "Esa es la estrella que guía el proyecto: que crezca el número de personas con trabajos que las hagan felices. No presumimos números que no podamos respaldar, pero esa es la vara con la que nos medimos."],
+    ["¿Qué le dirías a alguien que ya se rindió en su búsqueda?",
+     "Que no está solo y que no es su culpa: el sistema se volvió complicado. Con una herramienta de su lado y un poco de constancia, <strong>la puerta correcta aparece</strong>. Vale la pena intentarlo una vez más."],
+  ]},
+  { t: "Cómo funciona, paso a paso", qa: [
+    ["¿Cuál es el primer paso para alguien que escucha hoy?",
+     "Entrar a jobup.dev desde el teléfono, crear su cuenta y subir su currículum. Con eso ya arranca: la herramienta empieza a trabajar para la persona de inmediato."],
+    ["¿Qué pasa después de que subo mi currículum?",
+     "JobUp analiza tu experiencia, empieza a buscar empleos que encajan y arma tu página profesional. Luego te va mostrando coincidencias y te prepara los mensajes para postularte."],
+    ["¿Con qué frecuencia me avisa de nuevos empleos?",
+     "Depende del nivel que elijas. Hay una forma de empezar gratis, y niveles que te envían coincidencias una vez por semana o incluso a diario, para que estés siempre al tanto sin tener que buscar tú."],
+    ["¿Se postula solo a los trabajos por mí?",
+     "Te deja todo listo &mdash; la coincidencia, el currículum adaptado, el mensaje &mdash; pero <strong>el envío final lo confirmas tú</strong>. Preferimos que la persona decida; es su carrera, su nombre."],
+    ["¿Puedo usarlo si ya tengo trabajo pero quiero algo mejor?",
+     "Claro. Muchos lo usan para buscar con calma algo que les guste más, sin la presión de la urgencia. Tener tu presencia lista y activa hace que las oportunidades te lleguen."],
+    ["¿Qué necesito tener a la mano para empezar?",
+     "Tu currículum, aunque sea sencillo, y tu correo. Si no tienes un currículum formal, la herramienta te ayuda a armarlo con tu experiencia. No hay excusa para no dar el primer paso."],
+  ]},
+  { t: "Confianza, privacidad y honestidad", qa: [
+    ["¿Qué hacen con mis datos personales?",
+     "Tu información es tuya. Se usa para ayudarte a buscar trabajo y presentarte, nada más. No estamos en el negocio de vender datos de la gente; eso va en contra de todo el propósito del proyecto."],
+    ["¿Es seguro que mi información esté en internet?",
+     "Tu página profesional muestra lo que tú decides mostrar, de forma pública y ordenada, como un currículum en línea. Lo sensible se queda protegido. Tú controlas qué se ve."],
+    ["¿La inteligencia artificial va a mentir o exagerar por mí?",
+     "No. Está diseñada expresamente para <strong>no inventar datos</strong>. Solo usa lo que tú le das. Un perfil honesto es el único que aguanta una entrevista, y en eso somos estrictos."],
+    ["¿Qué pasa si no estoy de acuerdo con lo que escribió la herramienta?",
+     "Lo cambias. Todo es un borrador que tú revisas y editas antes de usarlo. La voz final siempre es la tuya."],
+  ]},
+  { t: "Acceso, idioma y para quién es", qa: [
+    ["¿Cuánto cuesta? Esta es la pregunta que todos se hacen.",
+     "Se puede <strong>empezar gratis</strong>. Hay una opción de pago muy accesible &mdash; pensada más como un aporte simbólico que como un precio &mdash; para quien quiere todas las funciones. La barrera de entrada es baja a propósito: no queremos que el dinero deje a nadie afuera."],
+    ["¿Está disponible en español completo?",
+     "Sí, funciona en español y en inglés. Puedes moverte en el idioma en el que te sientas cómodo."],
+    ["¿Sirve en cualquier estado o ciudad?",
+     "Busca empleos reales en Estados Unidos, así que sirve estés donde estés en el país. La herramienta va contigo en el teléfono."],
+    ["¿Para qué edad o nivel es? ¿Solo para jóvenes?",
+     "Para cualquier adulto que busque trabajo. De hecho, a quien lleva años sin buscar es a quien más le sirve, porque le devuelve la confianza y le pone la tecnología de su lado."],
+  ]},
+  { t: "Cómo empezar hoy y preguntas difíciles", qa: [
+    ["¿Esto le quita el trabajo a los reclutadores o a la gente?",
+     "Al contrario: le da poder a la persona que busca. No reemplaza el trato humano de una entrevista; <strong>ayuda a que la persona correcta y el trabajo correcto se encuentren</strong> más rápido. Todos ganan con eso."],
+    ["¿Por qué debería confiar en una herramienta y no en mi propio esfuerzo?",
+     "No es una u otra. Tu esfuerzo sigue siendo el motor; JobUp solo te quita de encima las horas de trabajo repetitivo para que uses tu energía donde de verdad cuenta: en prepararte y en presentarte. <span class='hl'>Es una mano, no un atajo.</span>"],
+    ["Si alguien quiere empezar ahora mismo, ¿qué le dices?",
+     "Que entre a <strong>jobup.dev</strong> desde su teléfono, suba su currículum y le dé una oportunidad. No cuesta nada empezar, y puede ser el primer paso hacia un trabajo que de verdad lo haga feliz. Y si le sirve, que lo comparta con alguien que lo necesite &mdash; así nos ayudamos entre todos."],
+  ]},
+];
+
+// Preguntas esenciales para la versión de 30 minutos (empieza por estas).
+const CLAVE = new Set([1,3,6,7,10,13,14,15,19,21,24,26,29,30,33,34,37,40,42,44,48,50]);
+
+const content = document.getElementById('content');
+let qn = 0;
+SECTIONS.forEach((sec, i) => {
+  const s = document.createElement('section');
+  s.className = 'sec';
+  const idx = String(i + 1).padStart(2, '0');
+  const items = sec.qa.map(([q, a]) => {
+    qn++;
+    const tag = CLAVE.has(qn) ? '<span class="tag">Clave</span>' : '';
+    return `<div class="qa">
+      <div class="qnum">${qn}</div>
+      <div class="qbody"><p class="q">${q}${tag}</p><p class="a">${a}</p></div>
+    </div>`;
+  }).join('');
+  s.innerHTML = `<div class="sec-head"><span class="idx">${idx}</span><h2>${sec.t}</h2></div>${items}`;
+  content.appendChild(s);
+});
+</script>
+</body>
+</html>
