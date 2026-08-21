@@ -7742,6 +7742,33 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       await cleanTenant(sub.id); await models.subscribers.destroy({ where: { id: sub.id } });
     });
 
+    await t('MATCHES ARE DISTINCT: a duplicate posting is never emailed twice', async () => {
+      const sub = await models.subscribers.create({ email: 'notif-dup@sit.dev', name: 'Dee Dup',
+        status: 'active', plan: 'search', language: 'en' });
+      // Two DISTINCT postings...
+      const jobA = await models.jobs.create({ title: 'Data Engineer', employer: 'Acme', location: 'NY', url: 'https://a', dedupe_key: 'dup-A', posted_at: new Date() });
+      const jobB = await models.jobs.create({ title: 'ML Engineer', employer: 'Globex', location: 'SF', url: 'https://b', dedupe_key: 'dup-B', posted_at: new Date() });
+      // ...but jobA is on the board TWICE: once by its own id, and again as a
+      // cross-source duplicate (different job id, same employer+title).
+      const jobADup = await models.jobs.create({ title: 'Data Engineer', employer: 'Acme', location: 'NY', url: 'https://a2', dedupe_key: 'dup-A2', posted_at: new Date() });
+      await scoped('job_matches', sub.id).create({ job_id: jobA.id, score: 90, source: 'hunter', title: 'Data Engineer', employer: 'Acme' });
+      await scoped('job_matches', sub.id).create({ job_id: jobADup.id, score: 88, source: 'hunter', title: 'Data Engineer', employer: 'Acme' });
+      await scoped('job_matches', sub.id).create({ job_id: jobB.id, score: 85, source: 'hunter', title: 'ML Engineer', employer: 'Globex' });
+
+      const distinct = await notifier.newMatchesFor(sub.id);
+      assert.strictEqual(distinct.length, 2, 'three rows, two distinct postings');
+      const titles = distinct.map((m) => m.title).sort();
+      assert.deepStrictEqual(titles, ['Data Engineer', 'ML Engineer'], 'the duplicate collapsed');
+
+      const r = await notifier.runForUser(plain(sub), { dryRun: false, now: now8() });
+      assert.strictEqual(r.match_count, 2, 'the email lists each posting once');
+      // BOTH rows of the duplicate posting are stamped — it can never resurface.
+      const stampedNull = (await scoped('job_matches', sub.id).findAll({})).filter((m) => m.notified_at == null);
+      assert.strictEqual(stampedNull.length, 0, 'every row for an emailed posting is stamped');
+      assert.strictEqual((await notifier.newMatchesFor(sub.id)).length, 0, 'nothing repeats next cycle');
+      await cleanTenant(sub.id); await models.subscribers.destroy({ where: { id: sub.id } });
+    });
+
     await t('ZERO new matches sends nothing — never an empty digest', async () => {
       const sub = await models.subscribers.create({ email: 'notif-empty@sit.dev', name: 'Ed Empty',
         status: 'active', plan: 'search', language: 'en' });

@@ -232,6 +232,47 @@ router.get('/employers', requireOwner, async (req, res) => {
   res.json({ employers: await models.employers.findAll({}) });
 });
 
+/**
+ * Send a PREVIEW of a tenant's job-match digest to any address, for QA before
+ * live sends. It changes NOTHING: no notified_at stamp, no email_sends row, no
+ * cap advance. Uses the exact production render path (SendGrid template when
+ * configured, else the identical in-app fallback). Operator-only.
+ *   POST /admin/notify-preview/:tenantId?to=<email>
+ */
+router.post('/notify-preview/:tenantId', requireOwner, async (req, res) => {
+  const tenantId = parseInt(req.params.tenantId, 10);
+  const to = String((req.query.to || (req.body || {}).to) || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'a valid ?to= address is required' });
+  try {
+    const notifier = require('../services/jobMatchNotifier');
+    const digest = require('../services/emailDigest');
+    const mailer = require('../services/mailer');
+    const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+    if (!sub) return res.status(404).json({ error: 'no such subscriber' });
+
+    await notifier.ensureUnsubToken(sub);
+    const cad = digest.cadenceFor(sub.plan) || digest.CADENCE.search;
+    const all = await notifier.newMatchesFor(tenantId);
+    if (!all.length) return res.status(400).json({ error: 'this subscriber has no new (un-notified) matches to preview' });
+    const included = all.slice(0, cad.top);
+    const data = digest.buildData(sub, included, all.length - included.length);
+    const fb = digest.renderFallback(data);
+    const templateId = data.locale === 'es'
+      ? process.env.SENDGRID_TEMPLATE_ID_ES : process.env.SENDGRID_TEMPLATE_ID_EN;
+
+    const r = await mailer.sendDigest({
+      to, subject: `[Preview] ${fb.subject}`, html: fb.html, text: fb.text,
+      templateId: templateId || null, dynamicData: data,
+      asmGroupId: process.env.SENDGRID_ASM_GROUP_ID || null,
+      categories: ['job_match_digest_preview'],
+    });
+    await audit(req.admin.email, `notify.preview:${tenantId} -> ${to} (${r.ok ? 'sent' : 'failed'})`, null, tenantId);
+    if (!r.ok) return res.status(502).json({ error: r.error || 'send failed', configured: r.configured });
+    res.json({ ok: true, to, period: cad.period, match_count: data.match_count, more_count: data.more_count,
+               locale: data.locale, used_template: Boolean(templateId), message_id: r.messageId || null });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.post('/employers', requireOwner, async (req, res) => {
   const { name, ats, token, status } = req.body || {};
   if (!name || !ats) return res.status(400).json({ error: 'name and ats required' });

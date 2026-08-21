@@ -92,7 +92,13 @@ function isEligible(sub, now = new Date()) {
   return true;
 }
 
-// The unnotified Hunter matches for a tenant, richest first, joined to the job.
+// The unnotified Hunter matches for a tenant, richest first, joined to the job,
+// and DISTINCT BY POSTING. A job the subscriber has already been emailed can
+// never come back (notified_at), and the same posting can never appear twice in
+// one digest even if two match rows point at it (dedupe by job_id, then by
+// employer|title so a cross-source duplicate collapses too). Each distinct
+// posting carries every underlying fresh match_id, so when it is emailed ALL of
+// its rows are stamped — a sibling row can never resurface it next cycle.
 async function newMatchesFor(tenantId) {
   const rows = plain(await scoped('job_matches', tenantId).findAll({}));
   const fresh = rows.filter((m) =>
@@ -100,19 +106,40 @@ async function newMatchesFor(tenantId) {
     && (m.source === 'hunter' || m.source == null)
     && m.job_id != null
     && m.score != null);
-  const out = [];
+
+  const byKey = new Map();
   for (const m of fresh) {
     const job = plain(await models.jobs.findOne({ where: { id: m.job_id } })) || {};
-    out.push({
-      match_id: m.id,
-      title: m.title || job.title || null,
-      company: m.employer || job.employer || null,
-      location: job.location || null,
+    const title = m.title || job.title || null;
+    const company = m.employer || job.employer || null;
+    // Prefer job_id; fall back to a normalized employer|title so the same
+    // posting arriving under two ids still collapses to one card.
+    const key = `job:${m.job_id}`;
+    const softKey = `t:${String(company || '').toLowerCase().trim()}|${String(title || '').toLowerCase().trim()}`;
+    const existing = byKey.get(key) || byKey.get(softKey);
+    if (existing) {
+      existing.match_ids.push(m.id);                       // stamp this row too when we send
+      if ((m.score || 0) > (existing.match_score || 0)) {  // keep the strongest as the representative
+        existing.match_score = m.score;
+        existing.posted_at = job.posted_at || m.created_at || existing.posted_at;
+      }
+      continue;
+    }
+    const entry = {
+      match_id: m.id, match_ids: [m.id],
+      title, company, location: job.location || null,
       match_score: m.score,
       posted_at: job.posted_at || m.created_at || null,
       apply_url: job.url || null,
-    });
+    };
+    byKey.set(key, entry);
+    byKey.set(softKey, entry);   // both keys point at the same entry, so either collapses
   }
+
+  // Distinct entries only (both keys mapped to the same object — de-dupe by identity).
+  const seen = new Set();
+  const out = [];
+  for (const e of byKey.values()) { if (!seen.has(e)) { seen.add(e); out.push(e); } }
   out.sort((a, b) =>
     (b.match_score - a.match_score) || (new Date(b.posted_at || 0) - new Date(a.posted_at || 0)));
   return out;
@@ -140,9 +167,11 @@ async function runForUser(sub, { dryRun = false, now = new Date() } = {}) {
   if (!all.length) return { tenant_id: sub.id, skipped: 'no new matches' };
 
   await ensureUnsubToken(sub);
-  const included = all.slice(0, cad.top);
+  const included = all.slice(0, cad.top);         // distinct postings, top N
   const moreCount = all.length - included.length;
-  const includedIds = included.map((m) => m.match_id);
+  // Stamp EVERY underlying row for each included posting, not just the
+  // representative — so a duplicate match row can never bring the same job back.
+  const includedIds = included.reduce((ids, m) => ids.concat(m.match_ids || [m.match_id]), []);
   const data = digest.buildData(sub, included, moreCount);
   const fb = digest.renderFallback(data);
 
