@@ -15,9 +15,10 @@ const TABS = [
   ['campaigns', 'Campaigns'],
 ];
 
-function shell(active, bodyHtml, tabScript) {
+function shell(active, bodyHtml, tabScript, base) {
+  const b = base || '';
   const nav = TABS.map(([id, label]) =>
-    `<a class="tab${id === active ? ' on' : ''}" href="./${id}">${label}</a>`).join('');
+    `<a class="tab${id === active ? ' on' : ''}" href="${b}/marketing/${id}">${label}</a>`).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
@@ -119,7 +120,7 @@ ensureAuth().then(function(ok){if(ok)boot();});
 
 // ---- per-tab bodies + scripts ---------------------------------------------
 
-function audienceTab() {
+function audienceTab(base) {
   const body = `
   <div class="panel">
     <h2>Capture test</h2>
@@ -175,10 +176,10 @@ function audienceTab() {
     var rows=$('imp_rows').value.split('\\n').map(function(l){return {email:l.trim()};}).filter(function(r){return r.email;});
     api('/subscribers/import',{method:'POST',body:JSON.stringify({rows:rows})})
     .then(function(r){$('imp_msg').innerHTML=r.ok?'<span class="ok">Quarantined batch #'+r.batch_id+' ('+r.row_count+')</span>':esc(r.error||'failed');loadBatches();}).catch(function(){});});`;
-  return shell('audience', body, script);
+  return shell('audience', body, script, base);
 }
 
-function studioTab() {
+function studioTab(base) {
   const body = `
   <div class="panel">
     <h2>Generate from a brief</h2>
@@ -217,10 +218,10 @@ function studioTab() {
     .then(function(r){$('gen').disabled=false;
       $('gmsg').innerHTML=r.ok?'<span class="ok">Generated brief #'+r.brief_id+'</span>':esc((r.halted?r.error:r.error)||'failed');
       loadAssets();}).catch(function(){$('gen').disabled=false;});});`;
-  return shell('studio', body, script);
+  return shell('studio', body, script, base);
 }
 
-function queueTab() {
+function queueTab(base) {
   const body = `
   <div class="panel">
     <h2>Approval queue</h2>
@@ -246,10 +247,10 @@ function queueTab() {
     if(!r.ok){$('m_'+id).textContent=' '+(r.error||'blocked');return;}loadQ();}).catch(function(){});};
   window.rej=function(id){var why=prompt('Reason for rejection?')||'unspecified';
     api('/assets/'+id+'/reject',{method:'POST',body:JSON.stringify({reason:why})}).then(function(){loadQ();}).catch(function(){});};`;
-  return shell('queue', body, script);
+  return shell('queue', body, script, base);
 }
 
-function campaignsTab() {
+function campaignsTab(base) {
   const body = `
   <div class="panel">
     <h2>Build a test audience</h2>
@@ -297,14 +298,14 @@ function campaignsTab() {
     .then(function(r){$('cm_go').disabled=false;
       $('cm_msg').innerHTML=r.ok?('<span class="ok">Done &mdash; sent '+(r.sent||0)+', suppressed '+(r.suppressed||0)+', skipped '+(r.skipped||0)+(r.stream_configured?'':' (stream domain not configured)')+'</span>'):esc(r.error||'failed');
       loadCamps();}).catch(function(){$('cm_go').disabled=false;});});`;
-  return shell('campaigns', body, script);
+  return shell('campaigns', body, script, base);
 }
 
-function render(tab) {
-  if (tab === 'studio') return studioTab();
-  if (tab === 'queue') return queueTab();
-  if (tab === 'campaigns') return campaignsTab();
-  return audienceTab();
+function render(tab, base) {
+  if (tab === 'studio') return studioTab(base);
+  if (tab === 'queue') return queueTab(base);
+  if (tab === 'campaigns') return campaignsTab(base);
+  return audienceTab(base);
 }
 
 module.exports = { render };

@@ -185,10 +185,10 @@ apiRouter.get('/import-batches', requireOwner, async (req, res) => {
 // API, which 401s until the jobup_admin cookie is set. No second credential.
 const adminRouter = express.Router();
 const page = require('./ui');
-adminRouter.get('/marketing', (req, res) => res.type('html').send(page.render('audience')));
+adminRouter.get('/marketing', (req, res) => res.type('html').send(page.render('audience', req.baseUrl)));
 for (const tab of ['audience', 'studio', 'queue', 'campaigns']) {
   adminRouter.get([`/marketing/${tab}`, `/marketing/${tab}/`], (req, res) =>
-    res.type('html').send(page.render(tab)));
+    res.type('html').send(page.render(tab, req.baseUrl)));
 }
 
 module.exports = { init, seedTenant, resolveTenant, apiRouter, adminRouter, models: RM.models, scoped: RM.scoped, plain: RM.plain, DEFAULT_SLUG };
