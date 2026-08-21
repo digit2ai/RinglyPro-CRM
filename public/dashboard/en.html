@@ -473,6 +473,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
         Member Guide
       </a>
+      <a class="sidebar-nav-item" id="jobupNavLink" href="https://jobup.dev/" target="_blank" rel="noopener" style="display:none;text-decoration:none;color:inherit;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        JobUp &mdash; Global Profile
+      </a>
       <div class="sidebar-nav-item" data-page="admin" id="adminNavItem" style="display:none;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:16px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         <span style="color:var(--accent);font-weight:600;">Admin</span>
@@ -523,6 +527,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   (function(){
     var g = document.getElementById('guideNavLink');
     if (g) g.href = (BASE || '') + '/guide';
+  })();
+
+  // JobUp (jobup.dev) -- shown only for the chambers that offer it as a member
+  // benefit. This dashboard file is shared by every English chamber, so the
+  // link is opt-in by slug rather than global. Add a slug here to enable it.
+  var JOBUP_SLUGS = ['cv-2'];
+  var JOBUP_ON = !!(slugMatch && JOBUP_SLUGS.indexOf(slugMatch) !== -1);
+  (function(){
+    var j = document.getElementById('jobupNavLink');
+    if (j && JOBUP_ON) j.style.display = '';
   })();
 
   // -- State --
@@ -625,6 +639,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         .login-msg.success { background:rgba(40,167,69,0.18); color:#9be8ad; border:1px solid rgba(40,167,69,0.4); }
         .login-link-box { margin-top:14px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); word-break:break-all; }
         .login-link-box a { color:#FCD116; font-size:13px; text-decoration:underline; }
+        .login-jobup { margin-top:22px; padding:16px 16px 18px; border-radius:10px; background:rgba(255,255,255,0.07); border:1px solid rgba(252,209,22,0.35); }
+        .login-jobup-title { color:#FCD116; font-size:13px; font-weight:800; line-height:1.35; text-align:center; margin-bottom:8px; }
+        .login-jobup-text { color:rgba(255,255,255,0.72); font-size:12px; line-height:1.5; text-align:center; margin-bottom:12px !important; }
+        .login-jobup-cta { display:block; text-align:center; padding:10px; border-radius:8px; background:rgba(252,209,22,0.14); border:1px solid rgba(252,209,22,0.5); color:#FCD116; font-size:13px; font-weight:700; text-decoration:none; }
+        .login-jobup-cta:hover { background:rgba(252,209,22,0.24); }
       </style>
       <div class="login-wrap">
         <div class="login-card">
@@ -641,6 +660,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           </form>
           <a class="login-forgot" id="forgotPwLink">Forgot your password?</a>
           <a href="${BASE || '/'}" class="login-back">&larr; Back to site</a>
+          ${JOBUP_ON ? `
+          <div class="login-jobup">
+            <div class="login-jobup-title">The Present and the Future of Your Personal Professional Profile &mdash; Global Visibility Is Here</div>
+            <p class="login-jobup-text">JobUp turns your r&eacute;sum&eacute; into a living professional profile: real openings scored against what you have actually done, a public CV site recruiters and their AI can read, and outreach drafted for you to approve.</p>
+            <a class="login-jobup-cta" href="https://jobup.dev/" target="_blank" rel="noopener">Open JobUp &mdash; jobup.dev</a>
+          </div>` : ''}
         </div>
       </div>
     `;
