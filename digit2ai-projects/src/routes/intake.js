@@ -980,7 +980,11 @@ let _triageSweepAt = 0;
 function _triageRateLimit(ip) {
   const now = Date.now();
   const HOUR = 60 * 60 * 1000;
-  const LIMIT = 10;
+  // Sized when the funnel required signup, so one IP meant one person. The entry
+  // is anonymous now, and an office, campus or coworking space shares a single
+  // NAT address — at 10/hour a handful of colleagues locked out the whole
+  // building. Still bounded, just not hostile to legitimate shared networks.
+  const LIMIT = Number(process.env.ORBUP_TRIAGE_HOURLY_LIMIT || 40);
   // Evict stale windows so the map can't grow unbounded (memory-DoS guard).
   if (now - _triageSweepAt > HOUR) {
     _triageSweepAt = now;

@@ -1738,6 +1738,7 @@
     _buildTimers.push(setInterval(function(){ if(cur<steps.length-1){ cur++; activate(cur); } }, per));
   }
   function stopBuild(){ _buildTimers.forEach(function(t){ clearInterval(t); }); _buildTimers=[]; }
+  var _serverError = '';
   function failBuild(msg){
     stopBuild(); loading(false);
     showError(msg || (D2B_LANG==='es'?'No se pudo completar. Verifica tu conexión e inténtalo de nuevo.':'Could not complete. Check your connection and try again.'));
@@ -1859,6 +1860,7 @@
     runGuidedDiscovery(desc, function(guided){ _buildAndSend(desc, name, phone, email, guided); });
   }
   function _buildAndSend(desc, name, phone, email, guided){
+    _serverError = '';
     loading(true, D2B_LANG==='es'?'Iniciando…':'Starting…');
     startBuild();
     var projectId=null;
@@ -1878,10 +1880,13 @@
       });
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
-    .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id;
-      // Anonymous build: remember the claim token so creating an account in this
-      // session keeps the work rather than orphaning it.
-      if(reg.claim_token){ try{ localStorage.setItem('d2ai_claim', reg.claim_token); }catch(e){} } } })
+    .then(function(reg){
+      if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id;
+        // Anonymous build: remember the claim token so creating an account in this
+        // session keeps the work rather than orphaning it.
+        if(reg.claim_token){ try{ localStorage.setItem('d2ai_claim', reg.claim_token); }catch(e){} }
+      } else if(reg && reg.error){ _serverError = reg.error; }   // keep the real reason
+    })
     .catch(function(){})
     .then(function(){
       if(!projectId) throw new Error('noproject');
@@ -1892,7 +1897,7 @@
       if(tz && tz.success && tz.url){ finishBuild(tz.url); }
       else { throw new Error('teaser'); }
     })
-    .catch(function(){ failBuild(); });
+    .catch(function(){ failBuild(_serverError); });
   }
 
   // "Start building" -> booking modal with open calendar slots from /projects.
