@@ -75,12 +75,14 @@ function status() {
  * this is never used to mail a third party without the subscriber sending it
  * themselves from their own client.
  */
-async function send({ to, subject, text, html, replyTo }) {
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+async function send({ to, subject, text, html, replyTo, bcc }) {
   if (!configured()) {
     return { ok: false, configured: false,
              error: 'Email is not configured on this deployment.' };
   }
-  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(to))) {
+  if (!to || !EMAIL_RE.test(String(to))) {
     return { ok: false, configured: true, error: 'A valid destination address is required.' };
   }
   try {
@@ -94,7 +96,12 @@ async function send({ to, subject, text, html, replyTo }) {
     };
     if (html) msg.html = html;
     // So hitting reply in their own client goes to the recruiter, not to us.
-    if (replyTo && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(replyTo)) msg.replyTo = replyTo;
+    if (replyTo && EMAIL_RE.test(replyTo)) msg.replyTo = replyTo;
+    // Optional blind copy — valid addresses only, never the primary recipient
+    // (SendGrid rejects a duplicate address across to/bcc).
+    const bccList = (Array.isArray(bcc) ? bcc : [bcc])
+      .filter((a) => a && EMAIL_RE.test(String(a)) && String(a).toLowerCase() !== String(to).toLowerCase());
+    if (bccList.length) msg.bcc = bccList;
     await sg.send(msg);
     return { ok: true, configured: true };
   } catch (e) {
@@ -186,4 +193,22 @@ function renderOpportunity(opp, profileName) {
   return { text, html };
 }
 
-module.exports = { send, sendDigest, configured, status, renderOpportunity, fromAddress, fromSource };
+// Who gets blind-copied on every welcome email. The owner wants a copy of each
+// new subscriber's welcome; keep it in ONE place so no signup path can miss it.
+// Override or disable via JOBUP_WELCOME_BCC ('' or 'none' turns it off).
+function welcomeBcc() {
+  const v = process.env.JOBUP_WELCOME_BCC;
+  if (v === undefined) return 'mstagg@digit2ai.com';
+  return (v === '' || v.toLowerCase() === 'none') ? null : v;
+}
+
+/**
+ * Send a welcome email. Identical to send(), but ALWAYS blind-copies the
+ * configured welcome BCC (the owner). Every real signup path routes through
+ * here, so the BCC is guaranteed rather than remembered at each call site.
+ */
+async function sendWelcome({ to, subject, text, html, replyTo }) {
+  return send({ to, subject, text, html, replyTo, bcc: welcomeBcc() });
+}
+
+module.exports = { send, sendWelcome, sendDigest, configured, status, renderOpportunity, fromAddress, fromSource, welcomeBcc };

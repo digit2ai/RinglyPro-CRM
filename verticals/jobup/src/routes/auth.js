@@ -59,7 +59,7 @@ router.post('/set-password', async (req, res) => {
       try {
         if (!fresh.welcomed_at) {
           const w = require('../services/emailWelcome').buildWelcome(fresh);
-          const r = await require('../services/mailer').send({ to: fresh.email, subject: w.subject, html: w.html, text: w.text });
+          const r = await require('../services/mailer').sendWelcome({ to: fresh.email, subject: w.subject, html: w.html, text: w.text });
           if (r.ok) await models.subscribers.update({ welcomed_at: new Date() }, { where: { id: sub.id } });
         }
       } catch (e) { console.error('[set-password] welcome email failed:', e.message); }

@@ -545,7 +545,7 @@ router.post('/build-account', async (req, res) => {
         const sub = await models.subscribers.findOne({ where: { id: tenantId } });
         if (sub && !sub.welcomed_at) {
           const welcome = require('../services/emailWelcome').buildWelcome(sub);
-          const r = await require('../services/mailer').send({
+          const r = await require('../services/mailer').sendWelcome({
             to: sub.email, subject: welcome.subject, html: welcome.html, text: welcome.text,
           });
           if (r.ok) await models.subscribers.update({ welcomed_at: new Date() }, { where: { id: tenantId } });
