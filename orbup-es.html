@@ -233,6 +233,10 @@
 /* Hero ask — the largest type on the page. Same wordmark gradient as "OrbUp.",
    clamp-sized so it never wraps awkwardly, and deliberately tight above so the
    orb still clears the fold on a 390px viewport. */
+/* Existing customers were shown a signup form with no way in. */
+.d2b .modal-signin{margin-top:14px;text-align:center;font-size:13.5px;color:var(--ink-mute)}
+.d2b .modal-signin a{color:var(--accent-cyan);font-weight:650;text-decoration:none}
+.d2b .modal-signin a:hover{text-decoration:underline}
 .d2b .hero-ask{position:relative;z-index:3;text-align:center;margin:6px auto 18px;padding:0 18px;
   font-weight:850;letter-spacing:-.04em;line-height:1.02;
   font-size:clamp(2.1rem,7.4vw,4.6rem);
@@ -631,6 +635,7 @@
           </div></div>
       </div>
       <button type="button" class="btn btn-grad modal-go" id="cm-continue">Crear workspace &rarr;</button>
+      <div class="modal-signin">&iquest;Ya tienes un workspace? <a href="https://orbup.app/orbup/login?next=%2Forbup%2Fworkspace">Inicia sesi&oacute;n</a></div>
       <div class="modal-status" id="cm-status" aria-live="polite"></div>
     </div>
   </div>

@@ -1115,6 +1115,24 @@ body.tw-on .tw-side{display:flex}
     if(plan.disclaimer) html += '<div class="d2plan-disc">'+esc(plan.disclaimer)+'</div>';
     box.innerHTML = html;
     NEWITEMS = {};
+
+    // Bind the plan's own CTA HERE, immediately after the DOM is written and
+    // before any highlight logic runs. It used to be bound at the very bottom of
+    // this function, behind three early returns — and the first of those fires on
+    // every normal render (no changes to highlight), so on a freshly loaded page
+    // the button never received a handler at all. It only worked right after an
+    // edit. Binding is about the new DOM, not about highlighting, so it belongs
+    // at the top.
+    (function(){
+      var cb = document.getElementById('d2plan-cta-btn');
+      if(!cb) return;
+      cb.onclick = function(){
+        var bk = document.getElementById('ts-book-btn');
+        var cta = document.getElementById('cta');
+        if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
+        if(bk) setTimeout(function(){ bk.click(); }, 420);
+      };
+    })();
     var fields = (changes && changes.fields) ? changes.fields : [];
     if(!fields.length){
       // Nothing to point at (first render, undo, reset): keep the old whole-pane
@@ -1139,13 +1157,7 @@ body.tw-on .tw-side{display:flex}
     // and the next edit rebuilds the pane anyway, which clears it. Dismiss on the
     // jump bar clears it by hand.
     clearTimeout(fadeTimer);
-    var cb = document.getElementById('d2plan-cta-btn');
-    if(cb) cb.onclick = function(){
-      var bk = document.getElementById('ts-book-btn');
-      var cta = document.getElementById('cta');
-      if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
-      if(bk) setTimeout(function(){ bk.click(); }, 420);
-    };
+
   }
 
   // ---- Plan Copilot (chat to refine the plan) ----
