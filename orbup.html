@@ -1669,7 +1669,7 @@
       if(c.phone){ contact.phone=c.phone; }
       if(c.lang){ contact.lang=c.lang; gateLang=c.lang; }
     }catch(x){}
-    // Lock the builder until the required identity gate is satisfied.
+    // The builder is never locked. Typing is free; the gate is after the plan.
     // The PAGE language is authoritative for a returning user — so the nav EN/ES
     // toggle actually changes the generated-content language (and dictation), and
     // update the saved record so it stays consistent.
@@ -1678,7 +1678,7 @@
       D2B_LANG=PAGE_LANG; unlockInput();
       var rs=root.querySelector('#d2b-reset'); if(rs) rs.hidden=false;
     }
-    else { lockInput(); }
+    else { unlockInput(); }   // anonymous visitors type freely
   })();
 
   // ---- BIG BUILD PROGRESS (backend-at-work theatre) ----

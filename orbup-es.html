@@ -1646,7 +1646,7 @@
       D2B_LANG=PAGE_LANG; unlockInput();
       var rs=root.querySelector('#d2b-reset'); if(rs) rs.hidden=false;
     }
-    else { lockInput(); }
+    else { unlockInput(); }   // anonymous visitors type freely
   })();
 
   // ---- BIG BUILD PROGRESS (teatro de "el backend trabajando") ----
