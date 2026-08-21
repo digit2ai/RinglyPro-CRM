@@ -130,14 +130,21 @@ router.post('/public/request', async (req, res) => {
       await t.rollback();
       return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
     }
-    const required = ['full_name', 'email', 'project_title', 'problem'];
+    // An anonymous build has no name or email yet — that is the point: the visitor
+    // sees the plan first and registers after. Identity is still required for
+    // every OTHER caller of this endpoint (the champion pages, voice intake, the
+    // partner funnel), so the relaxation is scoped to the anonymous builder and
+    // nothing else. The claim token issued below is what ties the work to whoever
+    // registers next, so nothing is orphaned by allowing it.
+    const isAnonBuild = !!b.anonymous_build && !orbOwner;
+    const required = isAnonBuild ? ['project_title', 'problem'] : ['full_name', 'email', 'project_title', 'problem'];
     for (const f of required) {
       if (!b[f] || !String(b[f]).trim()) {
         await t.rollback();
         return res.status(400).json({ success: false, error: `${f} is required` });
       }
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(b.email).trim())) {
+    if (b.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(b.email).trim())) {
       await t.rollback();
       return res.status(400).json({ success: false, error: 'Invalid email' });
     }
@@ -147,7 +154,9 @@ router.post('/public/request', async (req, res) => {
     if (b.project_title) b.project_title = String(b.project_title).slice(0, 200);
     if (b.full_name) b.full_name = String(b.full_name).slice(0, 120);
 
-    const companyName = (b.company_name || b.full_name).toString().trim();
+    // An anonymous build has neither, and .toString() on undefined throws a 500.
+    // The company is named on registration, when we actually know it.
+    const companyName = String(b.company_name || b.full_name || 'Unclaimed build').trim();
 
     // 1) Company (find-or-create by name)
     let [company] = await Company.findOrCreate({
@@ -239,7 +248,7 @@ router.post('/public/request', async (req, res) => {
     // able to keep it if they sign up in the same session. A single-use claim token
     // makes that possible without ever guessing ownership from an email.
     let claimToken = null;
-    if (!orbOwner && b.anonymous_build) {
+    if (isAnonBuild) {
       claimToken = require('crypto').randomBytes(18).toString('hex');
       await sequelize.query(
         `CREATE TABLE IF NOT EXISTS orbup_project_claims (
