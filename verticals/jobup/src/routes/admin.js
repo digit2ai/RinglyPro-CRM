@@ -233,6 +233,31 @@ router.get('/employers', requireOwner, async (req, res) => {
 });
 
 /**
+ * Send a WELCOME-email preview/demo to any address. Renders in the requested
+ * language (?lang=en|es, defaults to the tenant's own), from a real tenant so
+ * the name/address/plan are realistic. Changes nothing. Operator-only.
+ *   POST /admin/welcome-preview/:tenantId?to=<email>&lang=en|es
+ */
+router.post('/welcome-preview/:tenantId', requireOwner, async (req, res) => {
+  const tenantId = parseInt(req.params.tenantId, 10);
+  const to = String((req.query.to || (req.body || {}).to) || '').trim();
+  const lang = String(req.query.lang || (req.body || {}).lang || '').toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'a valid ?to= address is required' });
+  try {
+    const mailer = require('../services/mailer');
+    const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+    if (!sub) return res.status(404).json({ error: 'no such subscriber' });
+    const s = require('../models').plain(sub);
+    if (lang === 'en' || lang === 'es') s.language = lang;
+    const w = require('../services/emailWelcome').buildWelcome(s);
+    const r = await mailer.send({ to, subject: `[Demo] ${w.subject}`, html: w.html, text: w.text });
+    await audit(req.admin.email, `welcome.preview:${tenantId} -> ${to} (${s.language}, ${r.ok ? 'sent' : 'failed'})`, null, tenantId);
+    if (!r.ok) return res.status(502).json({ error: r.error || 'send failed', configured: r.configured });
+    res.json({ ok: true, to, language: s.language });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/**
  * Send a PREVIEW of a tenant's job-match digest to any address, for QA before
  * live sends. It changes NOTHING: no notified_at stamp, no email_sends row, no
  * cap advance. Uses the exact production render path (SendGrid template when

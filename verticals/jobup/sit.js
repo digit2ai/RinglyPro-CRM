@@ -7830,6 +7830,32 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     process.env.NOTIFY_DRY_RUN = prevDry;
   }
 
+  section('welcome email — bilingual, sent once on signup');
+  await t('WELCOME renders in EN and ES with thanks, presence, plans and upgrade', () => {
+    const w = require(__dirname + '/src/services/emailWelcome');
+    const en = w.buildWelcome({ name: 'Manuel Stagg', language: 'en', plan: 'free', address: 'manuelstagg.jobup.dev' });
+    assert.ok(en.subject.includes('Welcome to JobUp, Manuel'), 'EN subject greets by first name');
+    assert.ok(/Thank you/i.test(en.html) && /online presence/i.test(en.html), 'EN: thanks + presence');
+    assert.ok(en.html.includes('Free') && en.html.includes('Search') && en.html.includes('Landed'), 'EN: all three plans');
+    assert.ok(en.html.includes('$29') && en.html.includes('$99'), 'EN: prices from the catalog');
+    assert.ok(/See plans &amp; upgrade|See plans & upgrade/.test(en.html) && en.html.includes('/plan'), 'EN: upgrade CTA');
+    assert.ok(en.html.includes('YOUR PLAN'), 'EN: current plan is flagged');
+    assert.ok(en.text.includes('Welcome to JobUp') && en.text.includes('Landed'), 'EN plain-text present');
+
+    const es = w.buildWelcome({ name: 'Ana García', language: 'es', plan: 'search', address: 'ana.jobup.dev' });
+    assert.ok(es.subject.includes('Bienvenido a JobUp, Ana'), 'ES subject greets by first name');
+    assert.ok(/Gracias por unirte/.test(es.html) && /presencia en línea/i.test(es.html), 'ES: thanks + presence');
+    assert.ok(es.html.includes('Ver planes y mejorar') && es.html.includes('/plan'), 'ES: upgrade CTA');
+    assert.ok(es.html.includes('$29') && es.html.includes('$99'), 'ES: prices');
+    assert.ok(es.text.includes('Bienvenido a JobUp'), 'ES plain-text present');
+  });
+  await t('the welcome email is wired to send once on account build', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/emailWelcome/.test(src) && /!sub\.welcomed_at/.test(src),
+      'build-account must send the welcome only when welcomed_at is unset');
+    assert.ok(/welcomed_at: new Date\(\)/.test(src), 'and stamp welcomed_at so it never repeats');
+  });
+
   section('cleanup');
   await t('SIT removes its own rows', async () => {
     for (const tbl of ['profiles', 'settings', 'job_matches', 'outreach', 'agent_runs', 'sites', 'invoices', 'tailored_resumes', 'applications']) {

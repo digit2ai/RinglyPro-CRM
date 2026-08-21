@@ -538,6 +538,19 @@ router.post('/build-account', async (req, res) => {
       } catch (e) {
         console.error('[build-account] provisioning failed:', e.message);
       }
+      // WELCOME EMAIL — once per account, in the subscriber's own language. A
+      // user-triggered signup, so it is exempt from any autosend rule. Failure
+      // here never affects the account that is already built.
+      try {
+        const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+        if (sub && !sub.welcomed_at) {
+          const welcome = require('../services/emailWelcome').buildWelcome(sub);
+          const r = await require('../services/mailer').send({
+            to: sub.email, subject: welcome.subject, html: welcome.html, text: welcome.text,
+          });
+          if (r.ok) await models.subscribers.update({ welcomed_at: new Date() }, { where: { id: tenantId } });
+        }
+      } catch (e) { console.error('[build-account] welcome email failed:', e.message); }
     });
   } catch (e) {
     console.error('[build-account] error:', e);

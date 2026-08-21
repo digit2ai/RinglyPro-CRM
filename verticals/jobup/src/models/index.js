@@ -77,6 +77,7 @@ const SCHEMA = {
     last_notified_at: { type: DataTypes.DATE },
     next_eligible_at: { type: DataTypes.DATE },
     bounce_count: { type: DataTypes.INTEGER, defaultValue: 0 },
+    welcomed_at: { type: DataTypes.DATE },            // welcome email sent once, on signup
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   // tenant_id === subscribers.id
@@ -629,6 +630,7 @@ const ADDED_COLUMNS = [
   ['ju_subscribers',   'last_notified_at',      'TIMESTAMPTZ'],
   ['ju_subscribers',   'next_eligible_at',      'TIMESTAMPTZ'],
   ['ju_subscribers',   'bounce_count',          'INTEGER DEFAULT 0'],
+  ['ju_subscribers',   'welcomed_at',           'TIMESTAMPTZ'],
   ['ju_outreach',      'job_id',       'INTEGER'],
   ['ju_outreach',      'to_email',     'VARCHAR(255)'],
   ['ju_outreach',      'to_name',      'VARCHAR(255)'],
