@@ -156,6 +156,7 @@ border:1px solid rgba(76,110,245,.45);border-radius:14px;padding:13px 15px;margi
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <a class="btn sm hidden" id="planlink" href="{{BASE}}/subscribers-admin/plan">Growth Plan</a>
+    <a class="btn sm hidden" id="mktlink" href="{{BASE}}/admin/marketing" title="ReachUp — uses the platform owner sign-in">Marketing</a>
     <a class="btn hidden" id="csv" href="{{BASE}}/subscribers-admin/api/export.csv">Export CSV</a>
     <button class="btn hidden" id="signout">Sign out</button>
   </div>
@@ -364,6 +365,7 @@ function boot(){
     $('login').classList.add('hidden'); $('app').classList.remove('hidden');
     $('signout').classList.remove('hidden'); $('csv').classList.remove('hidden');
     $('planlink').classList.remove('hidden');
+    $('mktlink').classList.remove('hidden');
     $('who-sub').textContent=r.j.email;
     if(r.j.weak_password) $('pwbanner').classList.remove('hidden');
     // The model going down is invisible from every other surface, and it is

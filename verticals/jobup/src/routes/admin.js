@@ -426,6 +426,8 @@ td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
 </div>
 
 <div id="app" class="hidden">
+  <p style="margin:0 0 18px"><a href="/admin/marketing" style="font-weight:650">Open ReachUp Marketing &rarr;</a>
+     &nbsp;<span class="note" style="display:inline">Audience, content studio, approval queue and campaign sending &mdash; same owner sign-in as this console.</span></p>
   <div id="stats" class="grid"></div>
   <h2>Employer registry</h2><div id="emp"></div>
   <h2>Subscribers (pseudonymised)</h2>
