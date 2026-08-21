@@ -685,8 +685,7 @@
         <a href="/orbup?lang=en" class="lang-opt active" aria-current="true">EN</a>
         <a href="/orbup-es?lang=es" class="lang-opt">ES</a>
       </span>
-      <a href="/orbup/workspace">Workspace</a>
-      <a href="/orbup/start" class="btn btn-primary">Get started</a>
+      <a href="/orbup/workspace" class="btn btn-primary">Workspace</a>
     </div>
     <button class="nav-burger" id="navBurger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
       <svg class="ic-m" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
@@ -967,7 +966,6 @@
           <div class="price-cr">Your real system, scoped with you on a call.</div>
           <ul><li>Shared data your whole team uses</li><li>Logins for your customers</li><li>Phone, SMS, email and payments</li><li>Integrations with what you already run</li><li>Yours, delivered and live</li></ul>
           <button type="button" class="price-cta" data-go="build">Get a plan, then book</button>
-        </div>
         </div>
       </div>
       <div class="price-note" id="price-note">Every build is quoted to its scope, so we do not publish a number that would be wrong for you. The plan is free either way &mdash; describe what you need and you will see the shape, the timeline and what it takes before anyone talks about money.</div>
@@ -2301,27 +2299,17 @@
 </script>
 
 <script>
-/* Nav auth state — exactly ONE Workspace button, and it always leads somewhere.
-   signed in (session)      -> primary button = Workspace, duplicate link removed
-   known email, no session  -> primary = Log in, links carry ?next=/workspace
-   brand-new visitor        -> primary stays Get started; Workspace goes to login */
+/* Nav auth state. One button: Workspace. Signed in it opens the workspace,
+   signed out it goes to login carrying ?next so the visitor lands where they
+   were headed. The hero form is the get-started path, so the nav does not
+   duplicate it. */
 (function(){
   try{
     var links=document.querySelector('nav .nav-links'); if(!links) return;
-    var wsLink=links.querySelector('a[href$="/workspace"]'); if(!wsLink) return;
-    var BASE=wsLink.getAttribute('href').replace(/\/workspace$/,'');
-    var WS=BASE+'/workspace', LOGIN=BASE+'/login?next='+encodeURIComponent(WS);
-    var pill=links.querySelector('a.btn.btn-primary');
-    var es=!!links.querySelector('.lang-opt.active[href*="lang=es"]');
+    var ws=links.querySelector('a[href$="/workspace"]'); if(!ws) return;
+    var BASE=ws.getAttribute('href').replace(/\/workspace$/,'');
     var session=''; try{ session=localStorage.getItem('d2ai_session')||''; }catch(e){}
-    var email=''; try{ email=(JSON.parse(localStorage.getItem('d2ai_contact')||'{}').email)||''; }catch(e){}
-    if(session){
-      if(pill){ pill.setAttribute('href',WS); pill.textContent='Workspace'; wsLink.remove(); }
-      else { wsLink.setAttribute('href',WS); }
-    } else {
-      wsLink.setAttribute('href',LOGIN);
-      if(email && pill){ pill.setAttribute('href',LOGIN); pill.textContent=(es?'Iniciar sesión':'Log in'); }
-    }
+    if(!session) ws.setAttribute('href', BASE+'/login?next='+encodeURIComponent(BASE+'/workspace'));
   }catch(x){}
 })();
 </script>
