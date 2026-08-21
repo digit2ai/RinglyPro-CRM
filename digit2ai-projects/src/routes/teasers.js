@@ -76,7 +76,10 @@ async function basePlanFor(row, lang) {
   const project = await Project.findByPk(row.project_id).catch(() => null);
   if (!project) return null;
   const { clientPlanFromTriage } = require('../services/clientPlanFromTriage');
-  return { project, plan: clientPlanFromTriage(project.toJSON ? project.toJSON() : project, { lang }) };
+  // Economics lives in its own table; hand it to the plan builder.
+  let economics = null;
+  try { economics = await require('../services/agents/marketEconomicsAgent').forProject(project.id); } catch (_) {}
+  return { project, plan: clientPlanFromTriage(project.toJSON ? project.toJSON() : project, { lang, economics }) };
 }
 
 // =====================================================

@@ -130,6 +130,20 @@ function renderMarkdown(project, parsed) {
 // Run Claude Premortem for a freshly-triaged project, then flag + notify Manny
 // when the verdict is RESHAPE or DECLINE (before any commitment reaches the
 // requestor). Required lazily to avoid any require-cycle at module load.
+// Market and Economic Analysis — a MANDATORY pass, for the same reason the
+// regulatory pass is one: coverage must not depend on how the request was
+// phrased. Feasibility says what a thing costs; this says what it is worth, and
+// without it the pipeline can flag a budget gap while never noting that one
+// engagement covers the build. Failure here never blocks the triage.
+async function runEconomics(project, triageStructured, language) {
+  try {
+    const econ = require("./marketEconomicsAgent");
+    const proj = { ...(project.toJSON ? project.toJSON() : project), triage_structured: triageStructured };
+    return await econ.run({ project: proj, triage: triageStructured,
+      language: language && language !== "auto" ? language : undefined });
+  } catch (e) { console.error("[inboxTriage] economics pass failed:", e.message); return null; }
+}
+
 async function runPremortem(project, triageStructured, language) {
   const premortemAgent = require('./premortemAgent');
   // Re-read premortem_version so re-runs increment correctly.
@@ -265,6 +279,9 @@ Provide 10-15 stakeholder questions in EACH language, organized by feasibility /
     let premortem = null;
     try {
       premortem = await runPremortem(project, parsed, language);
+      // Runs on EVERY intake. A pass that only runs when someone remembers to ask
+      // is exactly the gap this was built to close.
+      await runEconomics(project, parsed, language);
     } catch (pmErr) {
       console.error('[inboxTriageAgent] premortem chain crashed:', pmErr.message);
     }

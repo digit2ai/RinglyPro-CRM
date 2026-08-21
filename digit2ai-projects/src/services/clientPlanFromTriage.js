@@ -130,6 +130,10 @@ function clientPlanFromTriage(project, opts = {}) {
   const p = project || {};
   const triage = p.triage_structured || null;
   const premortem = p.premortem_structured || null;
+  // Economics comes from its own side table (d2_projects cannot take another
+  // column) and is attached by the caller. Absent is fine — the plan renders
+  // without it rather than inventing one.
+  const econ = opts.economics || p.economics_structured || null;
   if (!triage || typeof triage.fit_score === 'undefined') return null; // not ready yet
 
   const es = String(opts.lang || p.lang || 'en').toLowerCase().startsWith('es');
@@ -199,6 +203,42 @@ function clientPlanFromTriage(project, opts = {}) {
   const timeline_weeks = weeksFrom(p.timeline);
   const build_includes = v1 ? [firstClause(v1)] : [];
 
+  // The economic case, client-safe. Only QUOTABLE figures reach the plan: an
+  // industry assumption or an unvalidated estimate stays in the internal brief
+  // where it is labelled, rather than appearing in a client document as fact.
+  const economics = (function(){
+    if (!econ || !econ.figures) return null;
+    const cash = function(v){ return String.fromCharCode(36) + Number(v).toLocaleString(es ? 'es-ES' : 'en-US'); };
+    const money = function(f){
+      if (f.low !== null && f.high !== null && f.low !== f.high) return cash(f.low) + '\u2013' + cash(f.high);
+      const v = f.value !== null ? f.value : (f.low !== null ? f.low : f.high);
+      return v === null ? null : cash(v);
+    };
+    const out = { lines: [], caution: null };
+    const labels = es
+      ? { value_at_stake: 'Lo que el problema cuesta hoy', addressable_spend: 'Gasto direccionable',
+          revenue_year_one: 'Ingreso primer a\u00f1o', build_cost: 'Costo de construcci\u00f3n' }
+      : { value_at_stake: 'What the problem costs today', addressable_spend: 'Addressable spend',
+          revenue_year_one: 'First-year revenue', build_cost: 'Build cost' };
+    Object.keys(labels).forEach(function(k){
+      const f = econ.figures[k];
+      if (!f || !f.quotable) return;               // unquotable never reaches the client
+      const m = money(f); if (!m) return;
+      out.lines.push(labels[k] + ': ' + m + (f.period ? ' / ' + f.period : ''));
+    });
+    if (econ.payback && (econ.payback.months_low !== null || econ.payback.months_high !== null)) {
+      out.lines.push((es ? 'Recuperaci\u00f3n' : 'Payback') + ': ' +
+        [econ.payback.months_low, econ.payback.months_high].filter(function(v){ return v !== null; }).join('\u2013') +
+        ' ' + (es ? 'meses' : 'months'));
+    }
+    if (Array.isArray(econ.validation_required) && econ.validation_required.length) {
+      out.caution = es
+        ? 'Otras cifras del an\u00e1lisis siguen sin validar y no se muestran aqu\u00ed. Las revisamos contigo antes de que salgan a ning\u00fan lado.'
+        : 'Other figures in the analysis are not yet validated and are deliberately not shown here. We go through them with you before any of them leaves the room.';
+    }
+    return out.lines.length || out.caution ? out : null;
+  })();
+
   const L = es ? {
     heading: 'Plan de factibilidad y construcción',
     disclaimer: 'Alcance preliminar generado por nuestro análisis de IA. Un humano lo revisa antes de cualquier construcción.',
@@ -233,6 +273,8 @@ function clientPlanFromTriage(project, opts = {}) {
     risks,
     mitigations,
     need_from_you: needFromYou,
+    economics,          // quotable figures only; nulls out when there are none
+
     gate // { mode, cta, note } — mode drives the button; the verdict itself is never here
   };
 }
