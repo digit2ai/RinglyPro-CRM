@@ -229,7 +229,7 @@ async function run(models, brief, est) {
     let done = 0;
     const total = Math.max(1, est.generated_clips);
 
-    const screens = await screensFor(spec, workDir);
+    const screens = await screensFor(spec, workDir, models, brief.id);
 
     const result = await p.runner.render({
       beats: toBeats(spec),
@@ -312,7 +312,7 @@ async function run(models, brief, est) {
  * One clip per distinct product scene: the operator's own file where they
  * supplied one, otherwise a branded card built from that beat's spoken line.
  */
-async function screensFor(spec, workDir) {
+async function screensFor(spec, workDir, models, briefId) {
   const supplied = spec.screenRecordings || {};
   const out = {};
   const beats = (spec.beats || []).filter((b) => b.source === 'screen_recording');
@@ -323,6 +323,14 @@ async function screensFor(spec, workDir) {
     if (out[key]) continue;
     if (supplied[key]) { out[key] = supplied[key]; continue; }
     const file = path.join(workDir, `screen-${Object.keys(out).length}.mp4`);
+    // Report it. Building screens used to sit silently on "starting", which is
+    // indistinguishable from a hang.
+    if (models && briefId) {
+      mark(models, briefId, {
+        step: 'screens', pct: 4 + Math.round((Object.keys(out).length / Math.max(1, beats.length)) * 6),
+        note: `building screen ${Object.keys(out).length + 1} of ${beats.length}`,
+      });
+    }
     await cards.card(file, {
       text: b.text,
       label: (spec.title || '').split(/[—-]/)[0].trim().slice(0, 24),

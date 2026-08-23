@@ -441,6 +441,20 @@ test('ROUTES — a rendering brief cannot be deleted out from under the job', as
   assert.strictEqual(d.status, 409, 'deleted a brief mid-render');
 });
 
+
+test('CARDS — a card renders fast enough to not look like a hang', async () => {
+  const cardsSvc = require('./src/services/video-cards');
+  if (!cardsSvc.font()) { console.log('        (no font on this host; skipped)'); return; }
+  // The first version evaluated a geq gradient PER PIXEL PER FRAME: 147s of CPU
+  // for one six-second card, so six cards read as a dead render. The gradient is
+  // now one low-resolution frame, scaled. This fails long before that returns.
+  const t0 = Date.now();
+  await cardsSvc.card('/tmp/sit-card-speed.mp4', { text: 'one brain routes work across 83 agents', seconds: 6 });
+  const secs = (Date.now() - t0) / 1000;
+  require('fs').unlinkSync('/tmp/sit-card-speed.mp4');
+  assert.ok(secs < 8, `a 6s card took ${secs.toFixed(1)}s — that is per-frame work creeping back in`);
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;
