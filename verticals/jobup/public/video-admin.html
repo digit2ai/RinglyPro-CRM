@@ -168,6 +168,9 @@ border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-ri
     <h1>Describe the video</h1>
     <div class="lede">Plain language. Who is on screen, what goes wrong, what JobUp does, how it ends.</div>
     <div id="ready"></div>
+    <div style="margin-bottom:12px"><button class="btn sm" id="selftest">Run render self-test</button>
+      <span class="muted" id="stout"></span></div>
+    <div id="stres"></div>
 
     <div class="card">
       <textarea id="brief" placeholder="A guy in his thirties is panicking because rent is due Friday and the bills are stacking up on his kitchen table. He still has not found a job. Then JobUp's agents find real openings that match his resume, he sends one himself, and the replies start."></textarea>
@@ -465,6 +468,21 @@ function loadLibrary(){
         navigator.clipboard.writeText(t.value).then(function(){b.textContent='Copied'},function(){})}});
   }).catch(function(){});
 }
+
+$('selftest').onclick=function(){
+  $('stout').innerHTML='<span class="spin"></span>checking this host';
+  $('stres').innerHTML='';
+  api('/selftest').then(function(r){
+    $('stout').textContent='';
+    var rows=r.steps.map(function(s){
+      return '<div class="kv"><span>'+esc(s.name)+'</span><b style="color:'+(s.ok?'var(--green)':'var(--red)')+'">'+
+        (s.ok?'ok':'FAILED')+'</b></div>'+(s.error?'<div class="muted" style="font:12px var(--mono);padding:4px 0 8px">'+esc(s.error)+'</div>':'');
+    }).join('');
+    $('stres').innerHTML='<div class="card"><h2>Render self-test</h2>'+
+      '<div class="muted" style="margin-bottom:10px">ffmpeg: '+esc(r.ffmpeg)+'<br>font: '+esc(r.font||'NONE FOUND')+'</div>'+
+      rows+'</div>';
+  }).catch(function(e){$('stout').textContent=e.message});
+};
 
 function loadReady(){
   api('/health').then(function(j){

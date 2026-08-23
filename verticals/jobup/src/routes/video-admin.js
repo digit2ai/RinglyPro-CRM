@@ -68,6 +68,19 @@ router.get('/api/health', requireAdmin, (req, res) => {
   res.json({ ok: true, readiness: renderSvc.readiness(), composer: briefSvc.FACTS.length });
 });
 
+/**
+ * Runs every ffmpeg stage the assembler uses on synthetic inputs. Free, and
+ * the only honest way to find a host problem without paying for a render to
+ * discover it at the last step.
+ */
+router.get('/api/selftest', requireAdmin, async (req, res) => {
+  try {
+    res.json(await renderSvc.selfTest());
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // ---- compose ---------------------------------------------------------------
 
 /** Natural language in, an editable spec out. Persists nothing but the draft. */

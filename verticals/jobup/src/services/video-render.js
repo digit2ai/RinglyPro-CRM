@@ -214,6 +214,7 @@ async function run(models, brief, est) {
 
   const filename = `jobup-${brief.id}-${Date.now()}.mp4`;
   const outPath = path.join(LIBRARY_DIR, filename);
+  let keepWork = false;
 
   try {
     const tts = p.providers.fishAudio({ http: p.http, apiKey: c.fishKey, voiceId: c.fishVoice });
@@ -292,11 +293,17 @@ async function run(models, brief, est) {
     mark(models, brief.id, { status: 'done', step: 'done', pct: 100, note: null, reason: null });
     return row;
   } catch (e) {
+    keepWork = true;
     console.error('[video-render] brief', brief.id, 'failed:', e.message);
-    mark(models, brief.id, { status: 'failed', step: 'failed', pct: 100, reason: e.message.slice(0, 500) });
+    mark(models, brief.id, { status: 'failed', step: 'failed', pct: 100, reason: reasonOf(e) });
+    // DO NOT DELETE THE WORK. Reaching clip 8 of 8 and then failing at the mux
+    // means every clip was paid for; wiping the directory throws that money
+    // away and makes a retry cost full price again.
+    console.error('[video-render] artifacts kept at', workDir);
     throw e;
   } finally {
-    try { fs.rmSync(workDir, { recursive: true, force: true }); } catch (_) {}
+    // Only clean up a run that actually succeeded.
+    if (!keepWork) { try { fs.rmSync(workDir, { recursive: true, force: true }); } catch (_) {} }
   }
 }
 
@@ -339,11 +346,87 @@ function musicFor(spec, workDir, p) {
   }
 }
 
+/**
+ * execFile rejects with a message that is "Command failed: <the entire command>"
+ * followed by stderr. The command alone runs past 400 characters, so slicing
+ * the message head threw away the only part that explains anything — which is
+ * exactly what happened on the first failed mux.
+ */
+function reasonOf(e) {
+  const err = String((e && e.stderr) || '').trim();
+  if (err) {
+    const lines = err.split('\n').filter(Boolean);
+    return lines.slice(-6).join(' | ').slice(0, 900);
+  }
+  const msg = String((e && e.message) || 'render failed');
+  // Drop the echoed command; keep whatever follows it.
+  const after = msg.split('\n').slice(1).filter(Boolean).join(' | ');
+  return (after || msg.split('\n')[0]).slice(0, 900);
+}
+
 function progress(id) {
   return jobs.get(id) || null;
 }
 
+/**
+ * Exercise every ffmpeg stage the assembler uses, on synthetic inputs, so a
+ * host problem can be found for free instead of at the end of a paid render.
+ */
+async function selfTest() {
+  const { execFile } = require('child_process');
+  const { promisify } = require('util');
+  const run = promisify(execFile);
+  bindBinaries();
+  const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jobup-selftest-'));
+  const steps = [];
+  const step = async (name, args) => {
+    try { await run(FFMPEG, args, { maxBuffer: 1 << 24 }); steps.push({ name, ok: true }); return true; }
+    catch (e) { steps.push({ name, ok: false, error: reasonOf(e) }); return false; }
+  };
+  try {
+    const v = path.join(dir, 'v.mp4'), a = path.join(dir, 'a.mp3'), m = path.join(dir, 'm.wav');
+    const ass = path.join(dir, 'c.ass'), out = path.join(dir, 'o.mp4');
+    fs.writeFileSync(ass, [
+      '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', '',
+      '[V4+ Styles]',
+      'Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
+      'Style: Caption,DejaVu Sans,72,&H00FFFFFF,&H00000000,&H80000000,1,0,1,4,2,2,80,80,420,1', '',
+      '[Events]',
+      'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
+      'Dialogue: 0,0:00:00.00,0:00:02.00,Caption,,0,0,0,,SELF TEST',
+    ].join('\n') + '\n');
+
+    await step('video source', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=navy:s=540x960:d=3:r=30',
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', v]);
+    await step('mp3 encode (libmp3lame)', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=300:duration=3',
+      '-c:a', 'libmp3lame', a]);
+    await step('score wav', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=120:duration=3', m]);
+    const subsOk = await step('burn captions (libass)', ['-y', '-v', 'error', '-i', v,
+      '-vf', `subtitles=${ass.replace(/([:'\\])/g, '\\$1')}`,
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-t', '1', path.join(dir, 'sub.mp4')]);
+    await step('mux voice + music (amix normalize=0)', ['-y', '-v', 'error', '-i', v, '-i', a, '-i', m,
+      '-filter_complex',
+      `[0:v]subtitles=${ass.replace(/([:'\\])/g, '\\$1')}[v];[2:a]volume=0.18,afade=t=in:st=0:d=1.5[bed];`
+      + '[1:a][bed]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]',
+      '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
+      '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', '2', out]);
+    let cardOk = null;
+    try { await cards.card(path.join(dir, 'card.mp4'), { text: 'self test', seconds: 2 }); cardOk = true; }
+    catch (e) { cardOk = false; steps.push({ name: 'product card', ok: false, error: reasonOf(e) }); }
+    if (cardOk) steps.push({ name: 'product card', ok: true });
+
+    return {
+      ffmpeg: FFMPEG, ffprobe: process.env.FFPROBE_PATH || 'ffprobe',
+      font: cards.font(), captions_ok: subsOk,
+      steps, ok: steps.every((x) => x.ok),
+    };
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {}
+  }
+}
+
 module.exports = {
-  estimate, start, progress, readiness, toBeats,
+  estimate, start, progress, readiness, toBeats, selfTest, reasonOf,
   PLATFORM_TENANT, LIBRARY_DIR, MAX_COST_USD,
 };
