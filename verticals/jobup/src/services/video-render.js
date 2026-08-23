@@ -61,6 +61,7 @@ function pipeline() {
       http: require(path.join(VIDGEN, 'src', 'http')),
       score: require(path.join(VIDGEN, 'demo', 'score')),
       probe: require(path.join(VIDGEN, 'src', 'pipeline', 'assemble')).probe,
+      assemble: require(path.join(VIDGEN, 'src', 'pipeline', 'assemble')).assemble,
     };
   } catch (e) {
     pipelineCache = null;
@@ -369,57 +370,69 @@ function progress(id) {
 }
 
 /**
- * Exercise every ffmpeg stage the assembler uses, on synthetic inputs, so a
- * host problem can be found for free instead of at the end of a paid render.
+ * Exercise the real assembly path on synthetic inputs, so a host problem is
+ * found for free instead of at the end of a paid render.
+ *
+ * IT CALLS assemble() ITSELF. The first version of this hand-copied the mux
+ * command, which meant it kept testing an `amix normalize=0` the assembler had
+ * already stopped using — a self-test that passes or fails independently of the
+ * code it is meant to be checking is worse than none.
  */
 async function selfTest() {
   const { execFile } = require('child_process');
   const { promisify } = require('util');
   const run = promisify(execFile);
   bindBinaries();
+  const p = pipeline();
   const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jobup-selftest-'));
   const steps = [];
-  const step = async (name, args) => {
-    try { await run(FFMPEG, args, { maxBuffer: 1 << 24 }); steps.push({ name, ok: true }); return true; }
+  const step = async (name, fn) => {
+    try { await fn(); steps.push({ name, ok: true }); return true; }
     catch (e) { steps.push({ name, ok: false, error: reasonOf(e) }); return false; }
   };
-  try {
-    const v = path.join(dir, 'v.mp4'), a = path.join(dir, 'a.mp3'), m = path.join(dir, 'm.wav');
-    const ass = path.join(dir, 'c.ass'), out = path.join(dir, 'o.mp4');
-    fs.writeFileSync(ass, [
-      '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', '',
-      '[V4+ Styles]',
-      'Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
-      'Style: Caption,DejaVu Sans,72,&H00FFFFFF,&H00000000,&H80000000,1,0,1,4,2,2,80,80,420,1', '',
-      '[Events]',
-      'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
-      'Dialogue: 0,0:00:00.00,0:00:02.00,Caption,,0,0,0,,SELF TEST',
-    ].join('\n') + '\n');
 
-    await step('video source', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=navy:s=540x960:d=3:r=30',
-      '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', v]);
-    await step('mp3 encode (libmp3lame)', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=300:duration=3',
-      '-c:a', 'libmp3lame', a]);
-    await step('score wav', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=120:duration=3', m]);
-    const subsOk = await step('burn captions (libass)', ['-y', '-v', 'error', '-i', v,
-      '-vf', `subtitles=${ass.replace(/([:'\\])/g, '\\$1')}`,
-      '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-t', '1', path.join(dir, 'sub.mp4')]);
-    await step('mux voice + music (amix normalize=0)', ['-y', '-v', 'error', '-i', v, '-i', a, '-i', m,
-      '-filter_complex',
-      `[0:v]subtitles=${ass.replace(/([:'\\])/g, '\\$1')}[v];[2:a]volume=0.18,afade=t=in:st=0:d=1.5[bed];`
-      + '[1:a][bed]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]',
-      '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-      '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', '2', out]);
-    let cardOk = null;
-    try { await cards.card(path.join(dir, 'card.mp4'), { text: 'self test', seconds: 2 }); cardOk = true; }
-    catch (e) { cardOk = false; steps.push({ name: 'product card', ok: false, error: reasonOf(e) }); }
-    if (cardOk) steps.push({ name: 'product card', ok: true });
+  try {
+    if (!p) {
+      steps.push({ name: 'render pipeline', ok: false, error: 'not installed on this host' });
+      return { ffmpeg: FFMPEG, font: cards.font(), steps, ok: false };
+    }
+    const v = path.join(dir, 'v.mp4'), a = path.join(dir, 'a.mp3'), m = path.join(dir, 'm.wav');
+
+    await step('video source', () => run(FFMPEG, ['-y', '-v', 'error', '-f', 'lavfi',
+      '-i', 'color=c=navy:s=540x960:d=4:r=30', '-c:v', 'libx264', '-preset', 'ultrafast',
+      '-pix_fmt', 'yuv420p', v]));
+    await step('mp3 encode (libmp3lame)', () => run(FFMPEG, ['-y', '-v', 'error', '-f', 'lavfi',
+      '-i', 'sine=frequency=300:duration=6', '-c:a', 'libmp3lame', a]));
+    await step('score', () => { fs.writeFileSync(m, p.score.score(6)); });
+    await step('product card', () => cards.card(path.join(dir, 'card.mp4'), { text: 'self test', seconds: 3 }));
+
+    // The whole assembly, exactly as a render runs it: normalise, concat,
+    // burn captions, mix voice under music, mux.
+    const cues = [{ start: 0, end: 3, text: 'self test one' }, { start: 3, end: 6, text: 'self test two' }];
+    const out = path.join(dir, 'out.mp4');
+    const assembled = await step('assemble (captions + voice + music)', () => p.assemble({
+      clips: [{ path: v, seconds: 3 }, { path: v, seconds: 3 }],
+      cues, voiceover: a, music: m, musicVolume: 0.22,
+      outPath: out, workDir: path.join(dir, 'w'),
+    }));
+
+    if (assembled) {
+      await step('output has video and audio', async () => {
+        const info = await p.probe(out);
+        const vs = (info.streams || []).find((x) => x.codec_type === 'video');
+        const as = (info.streams || []).find((x) => x.codec_type === 'audio');
+        if (!vs) throw new Error('no video stream');
+        if (!as) throw new Error('no audio stream — the voiceover did not survive the mux');
+        if (Math.abs(parseFloat(as.duration) - 6) > 1) {
+          throw new Error(`audio is ${as.duration}s against a 6s voiceover`);
+        }
+      });
+    }
 
     return {
       ffmpeg: FFMPEG, ffprobe: process.env.FFPROBE_PATH || 'ffprobe',
-      font: cards.font(), captions_ok: subsOk,
-      steps, ok: steps.every((x) => x.ok),
+      font: cards.font(), steps, ok: steps.every((x) => x.ok),
     };
   } finally {
     try { fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {}
