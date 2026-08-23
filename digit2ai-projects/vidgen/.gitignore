@@ -1,0 +1,6 @@
+node_modules/
+.env
+demo/*.mp4
+/tmp/
+character-sheet-*.json
+.DS_Store

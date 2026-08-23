@@ -36,6 +36,7 @@ const TENANT_SCOPED = new Set([
   // subscriber, deleting that subscriber would take it with them instead of
   // leaving a live credential behind owned by nobody.
   'social_accounts', 'social_copy', 'social_campaigns', 'social_posts',
+  'video_briefs', 'videos',
   'admin_state', 'admin_push_subs',
   'referrals', 'referral_clicks',
   'email_sends',
@@ -424,6 +425,51 @@ const SCHEMA = {
   // ---- Social Media Image Poster -----------------------------------------
   // The destination registry. This IS the "<social account credentials store>"
   // the spec left as a placeholder.
+  // ---- video posting creator -------------------------------------------
+  // A brief is a natural-language description of the ad. The SPEC is what the
+  // pipeline actually renders, and it is editable by a human before a cent is
+  // spent — the whole point of the review step.
+  video_briefs: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    title: { type: DataTypes.STRING },
+    brief: { type: DataTypes.TEXT, allowNull: false },      // what the operator typed
+    lang: { type: DataTypes.STRING, defaultValue: 'en' },
+    // { character:{description,styleTokens}, beats:[...], targetSeconds, music:{...}, voice:{...} }
+    spec: { type: DataTypes.JSONB },
+    // Identifier-shaped claims the brief did NOT contain — shown above the
+    // artifact so nobody signs off on an invented product claim.
+    unverified: { type: DataTypes.JSONB },
+    composed_by: { type: DataTypes.STRING },                 // model id | 'heuristic'
+    is_simulated: { type: DataTypes.BOOLEAN, defaultValue: false },
+    estimate: { type: DataTypes.JSONB },                     // plan + projected cost
+    // draft -> approved -> rendering -> done | failed
+    status: { type: DataTypes.STRING, defaultValue: 'draft' },
+    status_reason: { type: DataTypes.TEXT },
+    progress: { type: DataTypes.JSONB },                     // {step, pct, note}
+    approved_at: { type: DataTypes.DATE },
+    approved_by: { type: DataTypes.STRING },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
+  // The rendered library. One row per finished mp4.
+  videos: {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+    brief_id: { type: DataTypes.INTEGER },
+    title: { type: DataTypes.STRING },
+    filename: { type: DataTypes.STRING, allowNull: false },
+    path: { type: DataTypes.TEXT, allowNull: false },
+    poster_path: { type: DataTypes.TEXT },
+    seconds: { type: DataTypes.FLOAT },
+    width: { type: DataTypes.INTEGER },
+    height: { type: DataTypes.INTEGER },
+    bytes: { type: DataTypes.INTEGER },
+    caption: { type: DataTypes.TEXT },                       // ready for the social poster
+    // What the providers actually reported, not the rate-card guess.
+    ledger: { type: DataTypes.JSONB },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  },
   social_accounts: {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     tenant_id: { type: DataTypes.INTEGER, allowNull: false },

@@ -52,6 +52,7 @@
     "@aws-sdk/client-s3": "^3.609.0",
     "@aws-sdk/s3-request-presigner": "^3.609.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
     "@realitydefender/realitydefender": "^0.1.17",
     "@sendgrid/mail": "^8.1.6",
     "@sparticuz/chromium": "^148.0.0",
