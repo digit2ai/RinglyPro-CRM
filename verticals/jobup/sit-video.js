@@ -9,6 +9,7 @@ delete process.env.ANTHROPIC_API_KEY;
 const assert = require('assert');
 const briefSvc = require('./src/services/video-brief');
 const renderSvc = require('./src/services/video-render');
+const { models } = require('./src/models');
 
 const tests = [];
 const test = (n, f) => tests.push({ name: n, fn: f });
@@ -419,6 +420,25 @@ test('ROUTES — approving anyway requires an explicit force', async () => {
   });
   assert.strictEqual(r.status, 200);
   assert.strictEqual(r.body.brief.status, 'approved');
+});
+
+
+test('ROUTES — a brief can be deleted, and is then gone', async () => {
+  const c = await compose();
+  const id = c.body.brief.id;
+  const d = await call('/video-admin/api/briefs/' + id, { method: 'DELETE' });
+  assert.strictEqual(d.status, 200);
+  assert.strictEqual(d.body.deleted, true);
+  const after = await call('/video-admin/api/briefs/' + id);
+  assert.strictEqual(after.status, 404, 'the brief survived its own deletion');
+});
+
+test('ROUTES — a rendering brief cannot be deleted out from under the job', async () => {
+  const c = await compose();
+  const id = c.body.brief.id;
+  await models.video_briefs.update({ status: 'rendering' }, { where: { id } });
+  const d = await call('/video-admin/api/briefs/' + id, { method: 'DELETE' });
+  assert.strictEqual(d.status, 409, 'deleted a brief mid-render');
 });
 
 (async () => {
