@@ -126,16 +126,51 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 5px;font-wei
 .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--cyan);
 border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---- phone ---------------------------------------------------------- */
+.navbar{display:flex;align-items:center;gap:12px;padding:12px 20px}
+.navttl{flex:1;min-width:0}
+.navacts{display:flex;gap:8px;flex-shrink:0}
+@media(max-width:720px){
+  /* The title was squeezed into a four-line column beside the buttons. */
+  .navbar{flex-direction:column;align-items:stretch;gap:10px;padding:10px 16px}
+  .navttl .ttl{font-size:16px}
+  .navttl .sub{font-size:12px}
+  .navacts{width:100%}
+  .navacts .btn{flex:1;justify-content:center;text-align:center}
+  .wrap{padding:0 16px}
+  h1{font-size:21px;margin:18px 0 4px}
+  .lede{font-size:13.5px}
+  .card{padding:14px;border-radius:14px}
+  textarea{min-height:104px;font-size:16px}   /* 16px stops iOS zooming on focus */
+  input,select{font-size:16px}
+  #script{min-height:340px;font-size:12.5px}
+  .price{font-size:26px}
+  .kv{font-size:13px}
+  .libgrid{grid-template-columns:1fr}
+  .vid video{max-height:none}
+  /* Buttons in a list row stop shrinking to unreadable slivers. */
+  #briefs .card{flex-wrap:wrap}
+  #briefs .card>div:first-child{flex:1 1 100%;margin-bottom:8px}
+  .row3{grid-template-columns:1fr}
+  .tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}
+}
+@media(max-width:420px){
+  .navacts .btn{font-size:12.5px;padding:8px 10px}
+  h1{font-size:19px}
+}
 </style></head><body>
 
-<div class="nav"><div class="wrap" style="display:flex;align-items:center;gap:12px;padding:12px 20px">
-  <div style="flex:1">
+<div class="nav"><div class="wrap navbar">
+  <div class="navttl">
     <div class="ttl">Video Posting Creator</div>
     <div class="sub">Describe it, read it back, then approve the spend.</div>
   </div>
+  <div class="navacts">
   <a class="btn sm" href="{{BASE}}/social-admin">Social</a>
   <a class="btn sm" href="{{BASE}}/subscribers-admin">Subscribers</a>
   <button class="btn sm hidden" id="signout">Sign out</button>
+  </div>
 </div></div>
 
 <div id="login" class="wrap"><div class="panel">
@@ -478,7 +513,7 @@ function loadLibrary(){
     $('lib').innerHTML=j.videos.length?j.videos.map(function(v){
       var cost=v.ledger&&v.ledger.actual_spend_usd!=null?('$'+v.ledger.actual_spend_usd):'';
       return '<div class="vid">'+
-        (v.exists?'<video src="'+v.url+'" controls preload="metadata"></video>'
+        (v.exists?'<video src="'+v.url+'" controls playsinline preload="metadata"></video>'
                  :'<div style="padding:30px;text-align:center" class="muted">file no longer on disk</div>')+
         '<div class="meta"><b>'+esc(v.title)+'</b>'+
         '<div class="muted">'+(v.seconds||0)+'s · '+(v.width||'?')+'x'+(v.height||'?')+
