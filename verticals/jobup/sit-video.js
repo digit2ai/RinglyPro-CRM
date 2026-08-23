@@ -189,6 +189,15 @@ async function boot() {
   const app = express();
   app.use('/jobup', require('./src/index.js'));
   await new Promise((r) => { SRV = app.listen(0, r); });
+
+  // The store initialises asynchronously after require(), so listening is NOT
+  // the same as being ready: the route tests below raced it and passed or
+  // failed depending on which checkout won. Wait for the tables.
+  const models = require('./src/models');
+  for (let i = 0; i < 200 && !models.isReady(); i++) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  if (!models.isReady()) throw new Error('the store never became ready');
   BASE = 'http://127.0.0.1:' + SRV.address().port + '/jobup';
   const login = await fetch(BASE + '/subscribers-admin/api/login', {
     method: 'POST', headers: { 'content-type': 'application/json' },

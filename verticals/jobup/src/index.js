@@ -177,6 +177,12 @@ router.use('/social-admin', require('./routes/social-admin'));
 router.get(['/social-admin', '/social-admin/'], (req, res) =>
   res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req))));
 
+// The video posting creator: describe an ad, review the spec and its price,
+// then approve. Same credential as the subscribers console (see social-admin).
+router.use('/video-admin', require('./routes/video-admin'));
+router.get(['/video-admin', '/video-admin/'], (req, res) =>
+  res.type('html').send(pwa.page('video-admin.html', pwa.basePath(req))));
+
 // ReachUp marketing layer: public capture/unsubscribe/webhook API + the
 // /admin/marketing console. Shares the JobUp owner credential (no new secret).
 const reachup = require('./reachup');
