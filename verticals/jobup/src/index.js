@@ -95,7 +95,11 @@ init()
   .then((r) => { ready = true; console.log(`[jobup] store ready: ${r.backend}, ${r.tables} tables (ju_ prefix)`); scheduler.start();
     // ReachUp marketing layer — same Postgres, ru_ tables. Runs after the store
     // is up so its sequelize handle is live; never fatal to JobUp boot.
-    require('./reachup').init().catch((e) => console.error('[reachup] init failed:', e.message)); })
+    require('./reachup').init().catch((e) => console.error('[reachup] init failed:', e.message));
+    // A render cannot survive the process that started it; reclaim any row
+    // still claiming to be in progress, or it is wedged forever.
+    require('./services/video-render').recoverInterrupted(require('./models').models)
+      .catch((e) => console.error('[video-render] recovery failed:', e.message)); })
   .catch((e) => { bootError = e.message; console.error('[jobup] init failed:', e.message); });
 
 // ---- health ---------------------------------------------------------------
@@ -382,9 +386,6 @@ router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.
 // request to '/' by default, which would hand out the RAW shell — {{BASE}}
 // tokens and all — before the route below ever ran.
 router.use(express.static(publicDir, { index: false }));
-// Public radio-interview guide (static, self-contained). Clean /radio URL on
-// every root; carries a Descargar PDF button (print-to-PDF).
-router.get(['/radio', '/radio/'], (req, res) => res.sendFile(path.join(publicDir, 'radio.html')));
 router.get('/', (req, res) => res.type('html').send(pwa.page('index.html', pwa.basePath(req))));
 
 // ===========================================================================

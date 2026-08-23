@@ -373,6 +373,33 @@ function reasonOf(e) {
   return (after || msg.split('\n')[0]).slice(0, 900);
 }
 
+
+/**
+ * A render lives in memory. A deploy, a crash or an idle-restart kills it, but
+ * the row still says "rendering" — and that status blocks editing, re-running
+ * AND deleting, so the brief is wedged forever with no way back.
+ *
+ * Nothing that was rendering can still be rendering after a boot, by
+ * definition. Reclaim them and say why.
+ */
+async function recoverInterrupted(models) {
+  try {
+    const stuck = await models.video_briefs.findAll({ where: { status: 'rendering' } });
+    if (!stuck.length) return 0;
+    await models.video_briefs.update({
+      status: 'failed',
+      status_reason: 'the server restarted while this was rendering — nothing was lost except the run itself; approve and create again',
+      progress: null,
+      updated_at: new Date(),
+    }, { where: { status: 'rendering' } });
+    console.log(`[video-render] reclaimed ${stuck.length} interrupted render(s)`);
+    return stuck.length;
+  } catch (e) {
+    console.warn('[video-render] recovery failed:', e.message);
+    return 0;
+  }
+}
+
 function progress(id) {
   return jobs.get(id) || null;
 }
@@ -448,6 +475,6 @@ async function selfTest() {
 }
 
 module.exports = {
-  estimate, start, progress, readiness, toBeats, selfTest, reasonOf,
+  estimate, start, progress, readiness, toBeats, selfTest, reasonOf, recoverInterrupted,
   PLATFORM_TENANT, LIBRARY_DIR, MAX_COST_USD,
 };

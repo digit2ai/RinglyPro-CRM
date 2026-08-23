@@ -156,12 +156,29 @@ router.patch('/api/briefs/:id', requireAdmin, async (req, res) => {
   res.json({ brief: briefView(plain(fresh)), rewrites: rewrites || [] });
 });
 
+/** Unstick a brief whose render died with the process that owned it. */
+router.post('/api/briefs/:id/reset', requireAdmin, async (req, res) => {
+  const id = idOf(req);
+  if (id === null) return res.status(400).json({ error: 'bad id' });
+  const row = await scoped('video_briefs', TENANT).findOne({ id });
+  if (!row) return res.status(404).json({ error: 'not found' });
+  await scoped('video_briefs', TENANT).update({
+    status: row.approved_at ? 'approved' : 'draft',
+    status_reason: null, progress: null, updated_at: new Date(),
+  }, { id });
+  const fresh = await scoped('video_briefs', TENANT).findOne({ id });
+  res.json({ brief: briefView(plain(fresh)) });
+});
+
 router.delete('/api/briefs/:id', requireAdmin, async (req, res) => {
   const id = idOf(req);
   if (id === null) return res.status(400).json({ error: 'bad id' });
   const row = await scoped('video_briefs', TENANT).findOne({ id });
   if (!row) return res.status(404).json({ error: 'not found' });
-  if (row.status === 'rendering') return res.status(409).json({ error: 'it is rendering' });
+  // A live job is protected; a stale one must not be undeletable forever.
+  if (row.status === 'rendering' && renderSvc.progress(row.id)) {
+    return res.status(409).json({ error: 'it is rendering' });
+  }
   await scoped('video_briefs', TENANT).destroy({ id: row.id });
   await audit(req.admin.email, 'video.brief.delete', String(row.id));
   res.json({ deleted: true });

@@ -433,12 +433,18 @@ test('ROUTES — a brief can be deleted, and is then gone', async () => {
   assert.strictEqual(after.status, 404, 'the brief survived its own deletion');
 });
 
-test('ROUTES — a rendering brief cannot be deleted out from under the job', async () => {
+test('ROUTES — a rendering brief cannot be EDITED out from under the job', async () => {
+  // Deletion is now guarded by whether a job is actually live, not by the
+  // status alone: a status left behind by a dead process must not make the
+  // brief undeletable forever (see the RECOVERY tests). Editing stays blocked
+  // on status, because the spec that is mid-render must not change underneath it.
   const c = await compose();
   const id = c.body.brief.id;
   await models.video_briefs.update({ status: 'rendering' }, { where: { id } });
-  const d = await call('/video-admin/api/briefs/' + id, { method: 'DELETE' });
-  assert.strictEqual(d.status, 409, 'deleted a brief mid-render');
+  const e = await call('/video-admin/api/briefs/' + id, {
+    method: 'PATCH', body: JSON.stringify({ script: c.body.brief.script }),
+  });
+  assert.strictEqual(e.status, 409, 'edited a brief mid-render');
 });
 
 
@@ -453,6 +459,35 @@ test('CARDS — a card renders fast enough to not look like a hang', async () =>
   const secs = (Date.now() - t0) / 1000;
   require('fs').unlinkSync('/tmp/sit-card-speed.mp4');
   assert.ok(secs < 8, `a 6s card took ${secs.toFixed(1)}s — that is per-frame work creeping back in`);
+});
+
+
+test('RECOVERY — a render that died with its process is reclaimed, not wedged', async () => {
+  const c = await compose();
+  const id = c.body.brief.id;
+  await models.video_briefs.update({ status: 'rendering' }, { where: { id } });
+
+  const n = await renderSvc.recoverInterrupted(models);
+  assert.ok(n >= 1, 'nothing was reclaimed');
+
+  const after = await call('/video-admin/api/briefs/' + id);
+  assert.strictEqual(after.body.brief.status, 'failed', 'still claims to be rendering');
+  assert.ok(/restarted/.test(after.body.brief.status_reason || ''), after.body.brief.status_reason);
+});
+
+test('RECOVERY — a stale rendering brief can be reset and deleted', async () => {
+  const c = await compose();
+  const id = c.body.brief.id;
+  await models.video_briefs.update({ status: 'rendering' }, { where: { id } });
+
+  // No live job owns it, so it must not be undeletable forever.
+  const r = await call('/video-admin/api/briefs/' + id + '/reset', { method: 'POST' });
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.body.brief.status, 'draft');
+
+  await models.video_briefs.update({ status: 'rendering' }, { where: { id } });
+  const d = await call('/video-admin/api/briefs/' + id, { method: 'DELETE' });
+  assert.strictEqual(d.status, 200, 'a stale rendering brief could not be deleted');
 });
 
 (async () => {

@@ -441,8 +441,17 @@ function loadBriefs(){
         '<div class="muted">'+esc((b.brief||'').slice(0,110))+'</div></div>'+
         '<span class="pill '+cls+'">'+b.status+'</span>'+
         '<button class="btn sm" data-open="'+b.id+'">Open</button>'+
+        (b.status==='rendering'||b.status==='failed' ? '<button class="btn sm" data-reset="'+b.id+'" title="Unstick this brief">Reset</button>' : '')+
         '<button class="btn sm danger" data-delb="'+b.id+'" title="Delete this brief">Delete</button></div>';
     }).join(''):'<div class="muted">Nothing yet.</div>';
+    Array.prototype.forEach.call($('briefs').querySelectorAll('[data-reset]'),function(b){
+      b.onclick=function(){
+        api('/briefs/'+b.dataset.reset+'/reset',{method:'POST'}).then(function(j){
+          if(cur&&String(cur.id)===String(j.brief.id)){cur=j.brief;syncButtons();
+            if(poll){clearInterval(poll);poll=null;} $('prog').classList.add('hidden');}
+          loadBriefs();
+        }).catch(function(e){alert(e.message)});
+      }});
     Array.prototype.forEach.call($('briefs').querySelectorAll('[data-delb]'),function(b){
       b.onclick=function(){
         if(!confirm('Delete this brief? The spec is removed; any video already rendered from it stays in the Library.'))return;
