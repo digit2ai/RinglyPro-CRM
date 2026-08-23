@@ -24,7 +24,12 @@ const path = require('path');
 
 const PLATFORM_TENANT = parseInt(process.env.JOBUP_PLATFORM_TENANT_ID || '0', 10);
 const LIBRARY_DIR = process.env.JOBUP_VIDEO_DIR || path.join(os.tmpdir(), 'jobup-videos');
-const MAX_COST_USD = parseFloat(process.env.JOBUP_VIDEO_MAX_COST_USD || '4.00');
+// The specific name wins; MAX_COST_USD is accepted because that is what
+// vidgen's own .env.example calls it, and a ceiling that is silently ignored
+// is worse than no ceiling.
+const MAX_COST_USD = parseFloat(
+  process.env.JOBUP_VIDEO_MAX_COST_USD || process.env.MAX_COST_USD || '4.00'
+);
 const VIDGEN = path.join(__dirname, '..', '..', '..', '..', 'digit2ai-projects', 'vidgen');
 
 /** Point vidgen at the root app's binaries before it resolves its own. */
