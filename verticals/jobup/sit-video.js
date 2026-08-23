@@ -490,6 +490,29 @@ test('RECOVERY — a stale rendering brief can be reset and deleted', async () =
   assert.strictEqual(d.status, 200, 'a stale rendering brief could not be deleted');
 });
 
+
+test('STORAGE — ephemeral video storage is reported, not left to be discovered', () => {
+  const st = renderSvc.libraryState();
+  assert.strictEqual(typeof st.library_dir, 'string');
+  assert.strictEqual(typeof st.library_writable, 'boolean');
+  // The default lives under the system temp dir, which Render wipes on deploy.
+  // The row survives while the file does not, so this has to be said out loud.
+  if (!st.library_persistent) {
+    assert.ok(/lost on every deploy|not writable|cannot write/.test(st.library_note || ''),
+      `ephemeral storage was not flagged: ${st.library_note}`);
+  }
+});
+
+test('STORAGE — an unwritable library is a loud error, not a silent one', () => {
+  const st = renderSvc.libraryState();
+  if (!st.library_writable) {
+    assert.ok(st.library_error, 'unwritable but no error recorded');
+    assert.ok(/cannot write/.test(st.library_note || ''));
+  } else {
+    assert.strictEqual(st.library_error, null);
+  }
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;

@@ -552,9 +552,15 @@ $('selftest').onclick=function(){
 function loadReady(){
   api('/health').then(function(j){
     var r=j.readiness;
-    $('ready').innerHTML = r.ready ? '' :
+    var warn='';
+    if(r.library_note){
+      warn='<div class="banner '+(r.library_writable?'warn':'bad')+'"><b>'+
+        (r.library_writable?'Videos are not being kept':'The video library is not writable')+'</b>'+
+        esc(r.library_note)+'<div class="muted" style="margin-top:6px;font:12px var(--mono)">'+esc(r.library_dir)+'</div></div>';
+    }
+    $('ready').innerHTML = warn + (r.ready ? '' :
       '<div class="banner warn"><b>Rendering is not available on this host</b>'+
-      r.missing.map(esc).join(' · ')+'<div class="muted" style="margin-top:6px">You can still compose and review a spec.</div></div>';
+      r.missing.map(esc).join(' · ')+'<div class="muted" style="margin-top:6px">You can still compose and review a spec.</div></div>');
   }).catch(function(){});
 }
 

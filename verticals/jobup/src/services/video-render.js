@@ -91,7 +91,46 @@ function readiness() {
   if (!c.fishKey) missing.push('FISH_API_KEY (voiceover)');
   if (!c.imageKey) missing.push('IMAGE_API_KEY (character sheet)');
   if (!c.videoKey) missing.push('VIDEO_API_KEY (clips)');
-  return { ready: missing.length === 0, missing, library_dir: LIBRARY_DIR, max_cost_usd: MAX_COST_USD };
+  return Object.assign(
+    { ready: missing.length === 0, missing, max_cost_usd: MAX_COST_USD },
+    libraryState()
+  );
+}
+
+/**
+ * Whether finished videos will actually still be there tomorrow.
+ *
+ * The default library lives under the system temp dir, which on Render is wiped
+ * by every deploy and restart. The DB row survives, so the video keeps showing
+ * in the console while the file underneath is gone — a rendered video that
+ * quietly stops existing is worth saying out loud, not discovering on download.
+ */
+function libraryState() {
+  const tmp = os.tmpdir();
+  const persistent = !LIBRARY_DIR.startsWith(tmp);
+  let writable = false;
+  let error = null;
+  try {
+    fs.mkdirSync(LIBRARY_DIR, { recursive: true });
+    const probe = path.join(LIBRARY_DIR, '.write-probe');
+    fs.writeFileSync(probe, 'ok');
+    fs.unlinkSync(probe);
+    writable = true;
+  } catch (e) {
+    error = e.message;
+  }
+  return {
+    library_dir: LIBRARY_DIR,
+    library_writable: writable,
+    library_persistent: persistent,
+    library_error: error,
+    library_note: !writable
+      ? `cannot write to ${LIBRARY_DIR} — renders will fail at the last step`
+      : persistent
+        ? null
+        : 'videos are on ephemeral storage and are lost on every deploy or restart. '
+          + 'Mount a Render disk and set JOBUP_VIDEO_DIR to a path on it.',
+  };
 }
 
 /** Spec -> the beats array vidgen's planner expects. */
@@ -475,6 +514,6 @@ async function selfTest() {
 }
 
 module.exports = {
-  estimate, start, progress, readiness, toBeats, selfTest, reasonOf, recoverInterrupted,
+  estimate, start, progress, readiness, libraryState, toBeats, selfTest, reasonOf, recoverInterrupted,
   PLATFORM_TENANT, LIBRARY_DIR, MAX_COST_USD,
 };
