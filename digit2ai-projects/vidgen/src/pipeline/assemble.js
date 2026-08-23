@@ -8,6 +8,7 @@ const run = promisify(execFile);
 const { FFMPEG, FFPROBE } = require('../ffmpeg');
 
 const W = 1080, H = 1920, FPS = 30;
+const round3 = (n) => Math.round(n * 1000) / 1000;
 
 /**
  * Assembly. This is the stage that turns N short clips + one voiceover into
@@ -119,17 +120,27 @@ async function assemble(opts) {
     args.push('-i', voiceover, '-i', music);
     // Duck the bed under the voice so the read stays legible.
     //
-    // `normalize=0` IS LOAD-BEARING. amix divides every input by the number of
-    // inputs by default, so the voiceover would come out 6dB quieter than it
-    // goes in — the bed gets ducked and the voice gets ducked with it, which
-    // reads as "the music buried the read". With normalize off, the bed sits
-    // at `musicVolume` under a voice that is untouched.
+    // amix divides every input by the input count, so a naive mix returns the
+    // voiceover 6dB quieter than it went in — the bed gets ducked and the read
+    // gets ducked with it, which sounds like the music buried the voice.
+    //
+    // `normalize=0` fixes that, BUT IT IS NOT PORTABLE: the linux-x64 build
+    // this runs on in production reports version 4.4 and still rejects the
+    // option outright ("Option 'normalize' not found"), while the darwin build
+    // of the same version accepts it. Checking one binary told us nothing about
+    // the other.
+    //
+    // So compensate instead of configuring. amix in normalize mode emits
+    // sum(inputs)/n, so pre-multiplying every input by n yields exactly what
+    // normalize=0 would have — identical output, and no option to be missing.
     filters.push(null);
     const bedVol = opts.musicVolume != null ? opts.musicVolume : 0.18;
+    const N = 2;
     audioMap = ['-filter_complex',
       `[0:v]subtitles=${assPath.replace(/([:'\\])/g, '\\$1')}[v];` +
-      `[2:a]volume=${bedVol},afade=t=in:st=0:d=1.5[bed];` +
-      `[1:a][bed]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]`,
+      `[1:a]volume=${N}[voice];` +
+      `[2:a]volume=${round3(bedVol * N)},afade=t=in:st=0:d=1.5[bed];` +
+      `[voice][bed]amix=inputs=${N}:duration=first:dropout_transition=0[a]`,
       '-map', '[v]', '-map', '[a]'];
   } else if (voiceover) {
     args.push('-i', voiceover);

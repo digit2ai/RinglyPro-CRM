@@ -631,6 +631,24 @@ test('MUSIC — a bed is mixed under the voice WITHOUT ducking the voice too', a
   assert.ok(Math.abs(parseFloat(au.duration) - 9) < 0.6, `audio is ${au.duration}s against a 9s read`);
 });
 
+
+test('MUSIC — the mix uses no ffmpeg option that some builds lack', () => {
+  // A production render died on "Option 'normalize' not found": the linux-x64
+  // build reports version 4.4 and rejects an option the darwin build of the
+  // SAME version accepts, so testing one binary proved nothing about the other.
+  // The mix must therefore be built from options present everywhere.
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'pipeline', 'assemble.js'), 'utf8');
+  const filterStrings = src.split('\n')
+    .filter((l) => /amix=|volume=|afade=/.test(l) && !/^\s*(\/\/|\*)/.test(l));
+  assert.ok(filterStrings.length, 'could not find the mix filter to check');
+  for (const l of filterStrings) {
+    assert.ok(!/normalize\s*=/.test(l),
+      `the mix filter uses normalize=, which is missing on some ffmpeg builds: ${l.trim()}`);
+  }
+  // and it must still compensate, or the voice comes back 6dB down
+  assert.ok(/\[1:a\]volume=\$\{N\}/.test(src), 'the voice is no longer pre-amplified to offset amix');
+});
+
 (async () => {
   // Start clean: several tests now assert on whether the runner GENERATED a
   // character sheet, and a sheet left behind by the previous run would make
