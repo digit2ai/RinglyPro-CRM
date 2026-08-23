@@ -170,6 +170,19 @@ function heuristic(briefText) {
   }, briefText);
 }
 
+/**
+ * brain.json reports ok:false for three different situations and names only
+ * one, so an unparseable reply looked exactly like a missing API key.
+ */
+function describeFailure(out) {
+  if (!out) return 'the composer threw';
+  if (out.reason) return String(out.reason).slice(0, 200);
+  if (out.raw != null) {
+    return `the model replied but its JSON did not parse (${out.raw.length} chars)`;
+  }
+  return 'no reply and no reason given';
+}
+
 /** @returns {spec, unverified[], rewrites[], composed_by, is_simulated, cost_usd} */
 async function compose(briefText, { lang = 'en' } = {}) {
   const text = clamp(briefText, MAX_BRIEF).trim();
@@ -185,17 +198,29 @@ async function compose(briefText, { lang = 'en' } = {}) {
     });
   }
 
-  const out = await brain.json({
+  const ask = (extra) => brain.json({
     system: SYSTEM,
-    prompt: `LANGUAGE: ${lang}\n\nFACTS ABOUT JOBUP (the only product claims permitted):\n${FACTS.map((f) => '- ' + f).join('\n')}\n\nBRIEF:\n${text}`,
-    maxTokens: 3000,
+    prompt: (extra || '') + `LANGUAGE: ${lang}\n\nFACTS ABOUT JOBUP (the only product claims permitted):\n${FACTS.map((f) => '- ' + f).join('\n')}\n\nBRIEF:\n${text}`,
+    // A ten-beat spec with real poses is long. 3000 truncated it mid-JSON,
+    // which surfaced as "no response" because brain.json reports ok:false with
+    // NO reason when a reply arrives but does not parse.
+    maxTokens: 8000,
   });
+
+  let out = await ask();
+  // One repair attempt: truncated or fence-wrapped JSON is the common miss and
+  // asking again is cheap. A second miss falls through to the honest path.
+  if (out && !out.ok && out.raw) {
+    out = await ask('Return ONLY the JSON object — no prose, no markdown fence. Keep each "pose" under 25 words.\n\n');
+  }
 
   if (!out || !out.ok || !out.data) {
     const h = heuristic(text);
     return Object.assign(h, {
       composed_by: 'heuristic', is_simulated: true, cost_usd: (out && out.cost_usd) || 0,
-      note: `The model did not return a usable spec (${(out && out.reason) || 'no response'}), so this is built from your own sentences.`,
+      note: 'The model did not write this. These beats are just your own sentences '
+        + 'split up, which is NOT an ad script — rewrite them or try again. Reason: '
+        + describeFailure(out) + '.',
     });
   }
 
@@ -205,4 +230,95 @@ async function compose(briefText, { lang = 'en' } = {}) {
   });
 }
 
-module.exports = { compose, normalise, enforceClaims, unverifiedClaims, heuristic, FACTS, FORBIDDEN, SAFE_REWRITE };
+
+// =============================================================
+// ONE BOX. The spec is shown and edited as a single readable script.
+//
+// A beat-by-beat form makes the operator do the composer's job — ten little
+// fields to tab through before they can tell whether the AD is any good. The
+// whole thing renders as text they can read top to bottom, edit anywhere, and
+// approve. The structured editor stays available, but this is the front door.
+//
+// The format is deliberately forgiving: unknown lines are ignored, missing
+// fields fall back, and a beat needs only a LINE to exist.
+// =============================================================
+
+function toText(spec) {
+  const s = spec || {};
+  const out = [];
+  out.push(`TITLE: ${s.title || ''}`);
+  out.push(`SECONDS: ${s.targetSeconds || 30}`);
+  out.push(`MUSIC: ${(s.music && s.music.mood) || 'hopeful'}`);
+  out.push('');
+  out.push(`CHARACTER: ${(s.character && s.character.description) || ''}`);
+  out.push(`STYLE: ${(s.character && s.character.styleTokens) || ''}`);
+  out.push('');
+  (s.beats || []).forEach((b, i) => {
+    const ui = b.source === 'screen_recording';
+    out.push(`--- ${i + 1}${ui ? ' PRODUCT' : ''} ---`);
+    out.push(`LINE: ${b.text || ''}`);
+    out.push(`FRAMING: ${b.scene || ''}`);
+    if (!ui) {
+      out.push(`EMOTION: ${b.emotion || 'neutral'}`);
+      out.push(`POSE: ${b.pose || ''}`);
+    }
+    out.push('');
+  });
+  return out.join('\n').trim() + '\n';
+}
+
+function fromText(text) {
+  const lines = String(text == null ? '' : text).split(/\r?\n/);
+  const spec = {
+    title: '', targetSeconds: 30,
+    character: { description: '', styleTokens: '' },
+    beats: [], music: { mood: 'hopeful' },
+  };
+  let beat = null;
+  const push = () => { if (beat && String(beat.text || '').trim()) spec.beats.push(beat); beat = null; };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    const sep = /^-{2,}\s*(\d+)?\s*(PRODUCT|UI|SCREEN)?\s*-{2,}$/i.exec(line);
+    if (sep) {
+      push();
+      beat = sep[2] ? { text: '', scene: 'app interface', source: 'screen_recording' }
+                    : { text: '', scene: 'three-quarter view', emotion: 'neutral', pose: null };
+      continue;
+    }
+
+    const kv = /^([A-Za-z ]+):\s*(.*)$/.exec(line);
+    if (!kv) {
+      // A bare line inside a beat is treated as more of the spoken line, so a
+      // sentence typed on its own is not silently dropped.
+      if (beat) beat.text = (beat.text ? beat.text + ' ' : '') + line;
+      continue;
+    }
+    const key = kv[1].trim().toUpperCase();
+    const val = kv[2].trim();
+
+    if (!beat) {
+      if (key === 'TITLE') spec.title = val;
+      else if (key === 'SECONDS') spec.targetSeconds = parseInt(val, 10) || 30;
+      else if (key === 'MUSIC') spec.music.mood = val || 'hopeful';
+      else if (key === 'CHARACTER') spec.character.description = val;
+      else if (key === 'STYLE') spec.character.styleTokens = val;
+      continue;
+    }
+    if (key === 'LINE' || key === 'SAYS' || key === 'VO') beat.text = val;
+    else if (key === 'FRAMING' || key === 'SCENE' || key === 'SHOT') beat.scene = val;
+    else if (key === 'EMOTION') beat.emotion = val;
+    else if (key === 'POSE' || key === 'ACTION') beat.pose = val;
+    else if (key === 'SCREEN') { beat.source = 'screen_recording'; beat.scene = val || beat.scene; }
+  }
+  push();
+  return spec;
+}
+
+module.exports = {
+  compose, normalise, enforceClaims, unverifiedClaims, heuristic,
+  toText, fromText,
+  FACTS, FORBIDDEN, SAFE_REWRITE,
+};

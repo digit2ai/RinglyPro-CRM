@@ -43,7 +43,10 @@ function idOf(req) {
 
 const briefView = (b) => ({
   id: b.id, title: b.title, brief: b.brief, lang: b.lang,
-  spec: b.spec, unverified: b.unverified || [],
+  spec: b.spec,
+  // The one box: the whole spec as an editable script.
+  script: briefSvc.toText(b.spec),
+  unverified: b.unverified || [],
   composed_by: b.composed_by, is_simulated: !!b.is_simulated,
   estimate: b.estimate, status: b.status, status_reason: b.status_reason,
   progress: renderSvc.progress(b.id) || b.progress || null,
@@ -115,6 +118,10 @@ router.patch('/api/briefs/:id', requireAdmin, async (req, res) => {
   }
 
   const patch = { updated_at: new Date() };
+  // One box in: the operator edits the script, not ten form fields.
+  if (req.body && typeof req.body.script === 'string') {
+    req.body = Object.assign({}, req.body, { spec: briefSvc.fromText(req.body.script) });
+  }
   if (req.body && req.body.spec) {
     // Run the operator's edits through the same guard the model's output goes
     // through — a human can type "we apply for you" just as easily.

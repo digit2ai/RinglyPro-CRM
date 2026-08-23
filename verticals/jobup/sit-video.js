@@ -294,6 +294,57 @@ test('ROUTES — the console page renders with its base path substituted', async
   assert.ok(html.includes('/jobup/video-admin/api'), 'the API base is wrong for this mount');
 });
 
+
+test('ONE BOX — the spec round-trips through the editable script', () => {
+  const t = briefSvc.toText(SPEC);
+  const back = briefSvc.fromText(t);
+  assert.strictEqual(back.title, SPEC.title);
+  assert.strictEqual(back.targetSeconds, SPEC.targetSeconds);
+  assert.strictEqual(back.beats.length, SPEC.beats.length, 'a beat was lost in the round trip');
+  assert.strictEqual(back.character.description, SPEC.character.description);
+  assert.strictEqual(back.beats[0].pose, SPEC.beats[0].pose, 'the pose did not survive');
+  const ui = back.beats.find((b) => b.source === 'screen_recording');
+  assert.ok(ui, 'the product beat lost its source');
+});
+
+test('ONE BOX — an edited script is what gets rendered', () => {
+  const t = briefSvc.toText(SPEC).replace('Rent is due Friday.', 'The rent is due on Friday.');
+  const back = briefSvc.fromText(t);
+  assert.strictEqual(back.beats[0].text, 'The rent is due on Friday.');
+});
+
+test('ONE BOX — a sloppy script still parses', () => {
+  const back = briefSvc.fromText([
+    'TITLE: Sloppy', 'seconds: 22', '',
+    '--- 1 ---', 'line: He looks at the bills.', 'pose: he stands still',
+    '--- 2 PRODUCT ---', 'LINE: The agents go to work.',
+    '--- 3 ---', 'LINE: It ends well.', 'nonsense line that is not a field',
+  ].join('\n'));
+  assert.strictEqual(back.title, 'Sloppy');
+  assert.strictEqual(back.targetSeconds, 22);
+  assert.strictEqual(back.beats.length, 3);
+  assert.strictEqual(back.beats[1].source, 'screen_recording');
+  assert.ok(/It ends well\. nonsense/.test(back.beats[2].text), 'a stray line was silently dropped');
+});
+
+test('ONE BOX — the claim guard still runs on a script edit', () => {
+  const t = briefSvc.toText(SPEC).replace('Rent is due Friday.', 'We apply to every job for you.');
+  const n = briefSvc.normalise(briefSvc.fromText(t), 'brief');
+  assert.strictEqual(n.rewrites.length, 1, 'a false claim slipped through the script path');
+});
+
+test('ROUTES — the console serves the script, and saving it re-prices', async () => {
+  const c = await compose();
+  assert.ok(c.body.brief.script && /LINE:/.test(c.body.brief.script), 'no script in the payload');
+  const edited = c.body.brief.script.replace(/^TITLE: .*$/m, 'TITLE: Renamed by hand');
+  const e = await call('/video-admin/api/briefs/' + c.body.brief.id, {
+    method: 'PATCH', body: JSON.stringify({ script: edited }),
+  });
+  assert.strictEqual(e.status, 200);
+  assert.strictEqual(e.body.brief.spec.title, 'Renamed by hand');
+  assert.ok(e.body.brief.estimate.available, 'the edit was not re-priced');
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;

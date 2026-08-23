@@ -193,15 +193,19 @@ border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-ri
                 <option value="tense">tense</option><option value="driving">driving</option></select></div>
               <div><label>Composed by</label><input id="cby" disabled></div>
             </div>
-            <label for="cdesc">Character (one person, the whole video)</label>
-            <textarea id="cdesc" style="min-height:64px"></textarea>
-            <label for="cstyle">Style and lighting (set once here, never per shot)</label>
-            <textarea id="cstyle" style="min-height:64px"></textarea>
           </div>
 
           <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <h2 style="margin:0;flex:1">The script</h2>
+              <button class="btn sm" id="toggleadv">Advanced</button>
+            </div>
+            <div class="muted" style="margin-bottom:10px">Read it top to bottom. Edit anything. <b>POSE</b> is a literal body position &mdash; where the arms are, what the hands hold. A setting is not a pose.</div>
+            <textarea id="script" spellcheck="false" style="min-height:460px;font:13.5px/1.65 var(--mono)"></textarea>
+          </div>
+          <div class="card hidden" id="advcard">
             <h2>Beats</h2>
-            <div class="muted" style="margin-bottom:10px">Every character beat needs a literal <b>pose</b> &mdash; where the arms are, what the hands hold. A setting is not a pose.</div>
+            <div class="muted" style="margin-bottom:10px">The same beats as fields, if you would rather.</div>
             <div id="beats"></div>
             <button class="btn sm" id="addbeat">Add a beat</button>
             <button class="btn sm" id="adduibeat">Add a product beat</button>
@@ -278,8 +282,7 @@ function renderReview(rewrites,note){
   $('title').value=s.title||''; $('secs').value=s.targetSeconds||30;
   $('mood').value=(s.music&&s.music.mood)||'hopeful';
   $('cby').value=cur.composed_by||''; 
-  $('cdesc').value=(s.character&&s.character.description)||'';
-  $('cstyle').value=(s.character&&s.character.styleTokens)||'';
+  $('script').value=cur.script||'';
   renderBeats(s.beats||[]);
   renderFlags(rewrites,note);
   renderEstimate();
@@ -374,8 +377,18 @@ function syncButtons(){
   $('approve').textContent = st==='approved' ? 'Approved' : 'Approve';
 }
 
+$('toggleadv').onclick=function(){
+  var a=$('advcard'); a.classList.toggle('hidden');
+  $('toggleadv').textContent=a.classList.contains('hidden')?'Advanced':'Hide fields';
+};
+/* The box is the source of truth unless the advanced editor is open. */
+function payload(){
+  return $('advcard').classList.contains('hidden')
+    ? {script:$('script').value}
+    : {spec:collect()};
+}
 $('save').onclick=function(){
-  api('/briefs/'+cur.id,{method:'PATCH',body:JSON.stringify({spec:collect()})})
+  api('/briefs/'+cur.id,{method:'PATCH',body:JSON.stringify(payload())})
    .then(function(j){cur=j.brief;renderReview(j.rewrites,null);loadBriefs()})
    .catch(function(e){alert(e.message)})};
 
