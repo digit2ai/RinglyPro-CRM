@@ -318,11 +318,31 @@ const runwayVideo = ({
     // Poll. The submit response carries no output, so this is not optional.
     const tasksUrl = endpoint.replace(/\/v1\/.*$/, '/v1/tasks/') + taskId;
     const deadline = Date.now() + pollTimeoutMs;
+    let transientPolls = 0;
 
     for (;;) {
       await sleep(pollIntervalMs);
-      const t = await http.get(tasksUrl, headers);
-      if (!t.ok) throw runwayError(`polling task ${taskId} failed`, t);
+      let t;
+      try {
+        t = await http.get(tasksUrl, headers);
+      } catch (netErr) {
+        // A dropped connection while polling says nothing about the task.
+        t = { ok: false, status: 0, headers: {}, buffer: Buffer.alloc(0), error: netErr.message };
+      }
+
+      // A POLL FAILURE IS NOT A TASK FAILURE. Runway returned HTTP 502 on one
+      // poll of a job that was still running, and treating that as terminal
+      // discarded eight clips that had already been paid for. Transient
+      // gateway errors, rate limits and dropped connections are retried until
+      // the deadline; only a 4xx (bad id, bad key) is fatal.
+      if (!t.ok) {
+        const transient = t.status === 0 || t.status === 429 || t.status >= 500;
+        if (transient && Date.now() <= deadline) {
+          transientPolls++;
+          continue;
+        }
+        throw runwayError(`polling task ${taskId} failed`, t);
+      }
 
       const task = t.body || {};
       if (!TERMINAL[task.status]) {
@@ -352,6 +372,7 @@ const runwayVideo = ({
         url,
         seconds,
         taskId,
+        transientPolls,
         credits: (task.cost && task.cost.credits) != null ? task.cost.credits : estimatedCredits
       };
     }

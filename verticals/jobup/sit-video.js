@@ -247,7 +247,9 @@ test('ROUTES — RENDER IS REFUSED UNTIL A HUMAN APPROVES', async () => {
 
 test('ROUTES — approval records who signed off', async () => {
   const c = await compose();
-  const a = await call('/video-admin/api/briefs/' + c.body.brief.id + '/approve', { method: 'POST' });
+  const a = await call('/video-admin/api/briefs/' + c.body.brief.id + '/approve', {
+    method: 'POST', body: JSON.stringify({ force: true }),   // heuristic beats carry no pose
+  });
   assert.strictEqual(a.status, 200);
   assert.strictEqual(a.body.brief.status, 'approved');
   assert.strictEqual(a.body.brief.approved_by, 'admin@jobup.dev');
@@ -257,7 +259,9 @@ test('ROUTES — approval records who signed off', async () => {
 test('ROUTES — EDITING AN APPROVED BRIEF REVOKES THE SIGN-OFF', async () => {
   const c = await compose();
   const id = c.body.brief.id;
-  await call('/video-admin/api/briefs/' + id + '/approve', { method: 'POST' });
+  await call('/video-admin/api/briefs/' + id + '/approve', {
+    method: 'POST', body: JSON.stringify({ force: true }),
+  });
   const e = await call('/video-admin/api/briefs/' + id, {
     method: 'PATCH', body: JSON.stringify({ spec: c.body.brief.spec }),
   });
@@ -280,7 +284,9 @@ test('ROUTES — a false claim typed by the operator is rewritten server-side', 
 test('ROUTES — with no provider keys the render names them instead of failing blind', async () => {
   const c = await compose();
   const id = c.body.brief.id;
-  await call('/video-admin/api/briefs/' + id + '/approve', { method: 'POST' });
+  await call('/video-admin/api/briefs/' + id + '/approve', {
+    method: 'POST', body: JSON.stringify({ force: true }),
+  });
   const r = await call('/video-admin/api/briefs/' + id + '/render', { method: 'POST' });
   assert.strictEqual(r.status, 400);
   assert.ok(/API_KEY/.test(r.body.error), r.body.error);
@@ -393,6 +399,26 @@ test('PRODUCT — a card actually renders, and moves', async () => {
   const st = require('fs').statSync(out);
   assert.ok(st.size > 20000, `card is ${st.size} bytes — probably a blank frame`);
   require('fs').unlinkSync(out);
+});
+
+
+test('ROUTES — APPROVAL IS REFUSED WHEN BEATS HAVE NO POSE', async () => {
+  const c = await compose();          // heuristic path: no poses
+  const r = await call('/video-admin/api/briefs/' + c.body.brief.id + '/approve', {
+    method: 'POST', body: JSON.stringify({}),
+  });
+  assert.strictEqual(r.status, 400, 'approved a spec whose clips would be wasted');
+  assert.ok(/have no pose/.test(r.body.error), r.body.error);
+  assert.strictEqual(r.body.can_force, true);
+});
+
+test('ROUTES — approving anyway requires an explicit force', async () => {
+  const c = await compose();
+  const r = await call('/video-admin/api/briefs/' + c.body.brief.id + '/approve', {
+    method: 'POST', body: JSON.stringify({ force: true }),
+  });
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.body.brief.status, 'approved');
 });
 
 (async () => {

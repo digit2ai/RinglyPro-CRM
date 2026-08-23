@@ -181,6 +181,19 @@ router.post('/api/briefs/:id/approve', requireAdmin, async (req, res) => {
   if (est.over_ceiling) {
     return res.status(400).json({ error: `estimated $${est.cost.total} is over the $${est.max_cost_usd} ceiling` });
   }
+  // A generated beat with no pose animates a setting instead of a body — the
+  // clip is bought and then unusable. This was a warning and got approved
+  // through twice, both times on a spec whose "spoken lines" were actually
+  // someone's instructions. It refuses now; `force` is the deliberate override.
+  if (est.beats_missing_pose && est.beats_missing_pose.length && !(req.body && req.body.force)) {
+    return res.status(400).json({
+      error: `${est.beats_missing_pose.length} beat(s) have no pose (beat `
+        + `${est.beats_missing_pose.map((i) => i + 1).join(', ')}). Those clips would animate a `
+        + `setting instead of a body and be wasted. Write the poses, or re-compose the brief.`,
+      beats_missing_pose: est.beats_missing_pose,
+      can_force: true,
+    });
+  }
   await scoped('video_briefs', TENANT).update({
     status: 'approved', estimate: est, approved_at: new Date(), approved_by: req.admin.email,
     status_reason: null, updated_at: new Date(),

@@ -396,9 +396,16 @@ $('save').onclick=function(){
    .catch(function(e){alert(e.message)})};
 
 $('approve').onclick=function(){
-  api('/briefs/'+cur.id+'/approve',{method:'POST'})
+  api('/briefs/'+cur.id+'/approve',{method:'POST',body:JSON.stringify({})})
    .then(function(j){cur=j.brief;syncButtons();renderEstimate();loadBriefs()})
-   .catch(function(e){alert(e.message)})};
+   .catch(function(e){
+     // Poseless beats are refused; approving anyway has to be a deliberate act.
+     if(/have no pose/.test(e.message) && confirm(e.message+'\n\nApprove anyway?')){
+       api('/briefs/'+cur.id+'/approve',{method:'POST',body:JSON.stringify({force:true})})
+        .then(function(j){cur=j.brief;syncButtons();renderEstimate();loadBriefs()})
+        .catch(function(e2){alert(e2.message)});
+     } else { alert(e.message); }
+   })};
 
 $('render').onclick=function(){
   $('rerr').classList.add('hidden');

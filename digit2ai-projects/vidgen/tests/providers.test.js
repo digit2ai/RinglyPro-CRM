@@ -426,6 +426,46 @@ test('IMAGES — a response with no image data is an error, not an undefined url
   );
 });
 
+
+test('RUNWAY — a 502 while polling is retried, not treated as a dead task', async () => {
+  // A live render lost eight paid clips to exactly one transient 502.
+  const http = fakeRunway(SUBMIT_OK, [
+    json(502, { error: 'Bad Gateway' }),
+    json(503, { error: 'Service Unavailable' }),
+    RUNNING,
+    SUCCEEDED,
+  ]);
+  const out = await runway(http).animate({ referenceImageUrl: 'IMG', motionPrompt: 'x', seconds: 5 });
+  assert.strictEqual(out.url, SUCCEEDED.body.output[0], 'gave up on a task that was still running');
+  assert.strictEqual(out.transientPolls, 2, 'did not record the transient failures');
+});
+
+test('RUNWAY — a dropped connection while polling is also retried', async () => {
+  let n = 0;
+  const http = {
+    post: async () => SUBMIT_OK,
+    get: async () => { if (++n === 1) throw new Error('socket hang up'); return SUCCEEDED; },
+  };
+  const out = await runway(http).animate({ referenceImageUrl: 'IMG', motionPrompt: 'x', seconds: 5 });
+  assert.strictEqual(out.url, SUCCEEDED.body.output[0]);
+});
+
+test('RUNWAY — a 4xx while polling IS fatal (bad id or key will never recover)', async () => {
+  const http = fakeRunway(SUBMIT_OK, [json(404, { error: 'Task not found' })]);
+  await assert.rejects(
+    () => runway(http).animate({ referenceImageUrl: 'IMG', motionPrompt: 'x', seconds: 5 }),
+    (e) => e.code === 'video_error' && e.status === 404
+  );
+});
+
+test('RUNWAY — endless transient errors still stop at the deadline', async () => {
+  const http = fakeRunway(SUBMIT_OK, [json(502, { error: 'Bad Gateway' })]);
+  await assert.rejects(
+    () => runway(http, { pollTimeoutMs: -1 }).animate({ referenceImageUrl: 'IMG', motionPrompt: 'x', seconds: 5 }),
+    (e) => e.code === 'video_error' && e.status === 502
+  );
+});
+
 (async () => {
   fs.rmSync(TMP, { recursive: true, force: true });
   fs.mkdirSync(TMP, { recursive: true });
