@@ -63,6 +63,7 @@ const DEFAULTS = {
 function estimateCost(plan, cfg) {
   // imageCount is 0 when a saved character sheet is being reused: the budget
   // should reflect what this run will actually buy.
+  // 0 when a saved sheet is reused, or when no beat needs a character at all.
   const imageCount = cfg.imageCount != null ? cfg.imageCount : cfg.angles.length;
   const images = imageCount * cfg.costPerImage;
   const video = plan.billedVideoSeconds * cfg.costPerVideoSecond;
@@ -150,9 +151,10 @@ async function render(spec, deps) {
   const sheetPath = sheetPathFor(spec, cfg, outPath);
   const savedSheet = cfg.reuseCharacterSheet === false ? null : loadSheet(sheetPath);
 
+  const anyGenerated = plan.shots.some((sh) => sh.source !== 'screen_recording');
   const estimate = estimateCost(plan, Object.assign({}, cfg, {
     ttsCostPerMillion: (tts && tts.costPerMillionChars) || 15,
-    imageCount: savedSheet ? 0 : cfg.angles.length
+    imageCount: (savedSheet || !anyGenerated) ? 0 : cfg.angles.length
   }));
 
   if (estimate.total > cfg.maxCostUsd) {
@@ -190,8 +192,16 @@ async function render(spec, deps) {
   if (logger) logger.info({ voSeconds, replannedShots: timed.shots.length });
 
   // 2 — the continuity lock, generated exactly once, then kept.
+  //
+  // Unless nothing needs it: a product tour is every beat a supplied screen,
+  // and buying a character sheet for a video with no character on it is pure
+  // waste. This is not hypothetical — a live run paid for one and then failed.
+  const needsCharacter = timed.shots.some((sh) => sh.source !== 'screen_recording');
   let sheet = savedSheet;
-  if (sheet) {
+  if (!needsCharacter) {
+    sheet = [];
+    if (logger) logger.info({ characterSheet: 'skipped', reason: 'no character beats' });
+  } else if (sheet) {
     if (logger) logger.info({ characterSheet: 'reused', path: sheetPath, frames: sheet.length });
   } else {
     sheet = await images.characterSheet({
@@ -220,7 +230,7 @@ async function render(spec, deps) {
 
   // 3 — one clip per shot, each animating a locked frame.
   const clips = [];
-  let spent = savedSheet ? 0 : estimate.images;
+  let spent = (savedSheet || !anyGenerated) ? 0 : estimate.images;
   for (const shot of timed.shots) {
     if (shot.source === 'screen_recording') {
       const asset = spec.screenRecordings && spec.screenRecordings[shot.scene];

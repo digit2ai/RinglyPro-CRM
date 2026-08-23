@@ -22,6 +22,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const cards = require('./video-cards');
+
 const PLATFORM_TENANT = parseInt(process.env.JOBUP_PLATFORM_TENANT_ID || '0', 10);
 const LIBRARY_DIR = process.env.JOBUP_VIDEO_DIR || path.join(os.tmpdir(), 'jobup-videos');
 // The specific name wins; MAX_COST_USD is accepted because that is what
@@ -117,10 +119,22 @@ function estimate(spec) {
   if (!beats.length) return { available: false, reason: 'the spec has no beats' };
 
   const plan = p.script.planShots({ beats, targetSeconds: spec.targetSeconds || 30 });
-  const cfg = Object.assign({}, p.runner.DEFAULTS, { ttsCostPerMillion: 15 });
+  // No character beat means no character sheet — the price the operator signs
+  // off on has to say so, not just the render.
+  const cfg = Object.assign({}, p.runner.DEFAULTS, {
+    ttsCostPerMillion: 15,
+    imageCount: plan.generatedShots > 0 ? p.runner.DEFAULTS.angles.length : 0,
+  });
   const cost = p.runner.estimateCost(plan, cfg);
   const missingPoses = (spec.beats || [])
     .map((b, i) => ({ i, b })).filter((x) => x.b.source !== 'screen_recording' && !x.b.pose).map((x) => x.i);
+
+  // A product beat is SUPPLIED footage. Without a file — or a card to stand in
+  // for one — the render reaches that beat and dies, having already paid for
+  // the character sheet. That has to surface here, before approval.
+  const productBeats = (spec.beats || []).filter((b) => b.source === 'screen_recording').length;
+  const screensSupplied = Object.keys((spec.screenRecordings || {})).length;
+  const cardsOk = cards.available();
 
   return {
     available: true,
@@ -139,6 +153,12 @@ function estimate(spec) {
     // A generated beat with no pose animates a setting, not a body — which is
     // how "phone in hand" became a phone pressed to an ear.
     beats_missing_pose: missingPoses,
+    product_beats: productBeats,
+    screens_supplied: screensSupplied,
+    // Cards stand in for un-supplied product screens; if they cannot be made
+    // this plan is unrenderable and must not be approvable.
+    product_screens_ready: productBeats === 0 || screensSupplied > 0 || cardsOk,
+    product_screens_are_cards: productBeats > 0 && screensSupplied === 0 && cardsOk,
   };
 }
 
@@ -173,6 +193,9 @@ function start(models, brief, { onDone } = {}) {
   if (est.over_ceiling) {
     return { started: false, reason: `estimated $${est.cost.total} is over the $${MAX_COST_USD} ceiling` };
   }
+  if (!est.product_screens_ready) {
+    return { started: false, reason: `${est.product_beats} product beat(s) have no screen recording and cards cannot be rendered on this host` };
+  }
 
   mark(models, brief.id, { status: 'rendering', step: 'starting', pct: 1, note: null, reason: null });
   setImmediate(() => run(models, brief, est).then(
@@ -204,9 +227,12 @@ async function run(models, brief, est) {
     let done = 0;
     const total = Math.max(1, est.generated_clips);
 
+    const screens = await screensFor(spec, workDir);
+
     const result = await p.runner.render({
       beats: toBeats(spec),
       character: spec.character,
+      screenRecordings: screens,
       musicPath: musicFor(spec, workDir, p),
       config: {
         targetSeconds: spec.targetSeconds || 30,
@@ -272,6 +298,32 @@ async function run(models, brief, est) {
   } finally {
     try { fs.rmSync(workDir, { recursive: true, force: true }); } catch (_) {}
   }
+}
+
+/**
+ * One clip per distinct product scene: the operator's own file where they
+ * supplied one, otherwise a branded card built from that beat's spoken line.
+ */
+async function screensFor(spec, workDir) {
+  const supplied = spec.screenRecordings || {};
+  const out = {};
+  const beats = (spec.beats || []).filter((b) => b.source === 'screen_recording');
+  const longest = Math.max(6, Math.ceil((spec.targetSeconds || 30) / Math.max(1, beats.length)) + 2);
+
+  for (const b of beats) {
+    const key = b.scene || 'app interface';
+    if (out[key]) continue;
+    if (supplied[key]) { out[key] = supplied[key]; continue; }
+    const file = path.join(workDir, `screen-${Object.keys(out).length}.mp4`);
+    await cards.card(file, {
+      text: b.text,
+      label: (spec.title || '').split(/[—-]/)[0].trim().slice(0, 24),
+      footer: spec.footer || '',
+      seconds: longest,
+    });
+    out[key] = file;
+  }
+  return out;
 }
 
 /** An original score, written to this cut's shape. Never a licensed track. */

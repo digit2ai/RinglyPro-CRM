@@ -345,6 +345,56 @@ test('ROUTES — the console serves the script, and saving it re-prices', async 
   assert.ok(e.body.brief.estimate.available, 'the edit was not re-priced');
 });
 
+
+// ---- product beats: the failure that reached production ---------------------
+
+const PRODUCT_SPEC = {
+  title: 'OrbUp Product Tour', targetSeconds: 28,
+  character: { description: '', styleTokens: '' },
+  beats: [
+    { text: 'Tap the orb and just talk.', scene: 'close-up on glowing orb', source: 'screen_recording' },
+    { text: 'One brain routes work across 83 agents.', scene: 'mcp brain panel', source: 'screen_recording' },
+    { text: 'A real app the workforce already shipped.', scene: 'phone simulator', source: 'screen_recording' },
+  ],
+  music: { mood: 'hopeful' },
+};
+
+test('PRODUCT — an all-screen video buys NO character sheet', () => {
+  const e = renderSvc.estimate(PRODUCT_SPEC);
+  assert.strictEqual(e.generated_clips, 0, 'a product tour generated character clips');
+  assert.strictEqual(e.cost.images, 0,
+    'paid for a character sheet on a video with no character in it');
+  assert.strictEqual(e.cost.video, 0);
+});
+
+test('PRODUCT — the pre-flight knows whether the screens exist', () => {
+  const e = renderSvc.estimate(PRODUCT_SPEC);
+  assert.strictEqual(e.product_beats, 3);
+  assert.strictEqual(e.screens_supplied, 0);
+  // Cards stand in, so this IS renderable — but the console is told they are cards.
+  assert.strictEqual(e.product_screens_ready, true);
+  assert.strictEqual(e.product_screens_are_cards, true);
+});
+
+test('PRODUCT — a supplied recording is preferred over a card', () => {
+  const spec = Object.assign({}, PRODUCT_SPEC, {
+    screenRecordings: { 'close-up on glowing orb': '/tmp/real-orb.mp4' },
+  });
+  const e = renderSvc.estimate(spec);
+  assert.strictEqual(e.screens_supplied, 1);
+  assert.strictEqual(e.product_screens_are_cards, false, 'ignored the operator\'s own footage');
+});
+
+test('PRODUCT — a card actually renders, and moves', async () => {
+  const cards = require('./src/services/video-cards');
+  if (!cards.font()) { console.log('        (no font on this host; skipped)'); return; }
+  const out = '/tmp/sit-card.mp4';
+  await cards.card(out, { text: 'One brain routes work across 83 agents', label: 'OrbUp', seconds: 4 });
+  const st = require('fs').statSync(out);
+  assert.ok(st.size > 20000, `card is ${st.size} bytes — probably a blank frame`);
+  require('fs').unlinkSync(out);
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;
