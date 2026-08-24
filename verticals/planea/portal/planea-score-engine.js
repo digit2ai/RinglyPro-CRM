@@ -103,8 +103,13 @@
     var omitir_diagnostico = allHigh;
     var omitir_reconocimiento = (pil[respaldo] < 40) || allEqual;
 
-    var productos = a.productos_activos || [];
-    var frase_sin_coberturas = (atencion === 'fondo_emergencia') && productos.indexOf('polizas') < 0;
+    // Regla de seguros (§8.2): antes leía "productos activos" (P9, retirada). Ahora lee
+    // la P12 "Seguros". Se activa cuando el usuario respondió "No tengo ninguno" o "No
+    // estoy seguro". Los seguros NO alimentan el cálculo; solo esta frase del insight.
+    var seguros = a.seguros_activos || [];
+    var sinSeguros = seguros.indexOf('ninguno') >= 0 || seguros.indexOf('inseguro') >= 0;
+    var productos = a.productos_activos || []; // compat de persistencia (P9 retirada)
+    var frase_sin_coberturas = (atencion === 'fondo_emergencia') && sinSeguros;
 
     var cta = ctaFor(atencion, allHigh);
 
@@ -120,6 +125,7 @@
       pilar_atencion: atencion,
       pilar_respaldo: respaldo,
       productos_activos: productos,
+      seguros_activos: seguros,
       frase_sin_coberturas: frase_sin_coberturas,
       cta_primario: cta.primario,
       cta_secundario: cta.secundario,
@@ -229,7 +235,7 @@
   var PILAR_META = {
     fondo_emergencia: { label: 'Fondo de Emergencia', icon: 'shield', peso: '35%' },
     flujo_caja: { label: 'Flujo de Caja', icon: 'flow', peso: '25%' },
-    salud_deuda: { label: 'Salud de Deudas', icon: 'card', peso: '25%' },
+    salud_deuda: { label: 'Salud de Deuda', icon: 'card', peso: '25%' },
     estabilidad: { label: 'Estabilidad', icon: 'scale', peso: '15%' },
   };
   var PILAR_INSIGHT = {

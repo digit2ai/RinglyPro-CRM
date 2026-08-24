@@ -189,7 +189,7 @@
     return '<div class="nf" id="sf-neural">' +
       '<div class="nf-hd"><div class="nf-mark"><span class="nf-diamond">◈</span> NEURAL FINDINGS</div>' +
       '<div class="nf-meta"><span class="nf-chip" id="nf-src">Analizando…</span><span class="nf-chip alt" id="nf-scn" style="display:none"></span></div></div>' +
-      '<div class="nf-sub">Análisis de tu situación por el motor neural de Digit2AI — priorizado según la pirámide de prioridades del CFP y consciente de todas tus áreas a la vez.</div>' +
+      '<div class="nf-sub">Análisis de tu situación por el motor neural de Digit2AI — priorizado según una pirámide de prioridades financieras y consciente de todas tus áreas a la vez.</div>' +
       '<div class="nf-lead"><div class="av">M</div><div style="flex:1">' +
       '<div class="who">Maya · recomendación principal</div>' +
       '<div class="msg" id="nf-fx-msg">Analizando tus datos para darte la recomendación principal…</div>' +

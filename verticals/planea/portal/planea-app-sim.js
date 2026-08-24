@@ -97,7 +97,7 @@
       var r = SCORE / 100, C = 2 * Math.PI * 52, off = C * (1 - r);
       return header() + '<div class="psim-scroll">' +
         '<div class="psim-cap">DIAGNÓSTICO PLANEA</div><h2 class="psim-h2">Calcula tu Puntaje Planea</h2>' +
-        '<p class="psim-sub" style="margin-bottom:12px">Evalúa tus 4 pilares con la metodología del CFP Board.</p>' +
+        '<p class="psim-sub" style="margin-bottom:12px">Evalúa tus 4 pilares con estándares internacionales de planeación financiera.</p>' +
         '<div class="psim-diag"><div class="psim-diag-lbl">✦ TU PUNTAJE PLANEA</div><b class="psim-diag-hook">Estás en movimiento. Eso ya es más que la mayoría.</b>' +
         '<svg viewBox="0 0 130 130" class="psim-diag-ring"><circle cx="65" cy="65" r="52" fill="none" stroke="#e3ede8" stroke-width="8"/><circle cx="65" cy="65" r="52" fill="none" stroke="#35a768" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 65 65)"/><text x="65" y="72" text-anchor="middle" fill="#14201b" font-size="34" font-weight="800">' + SCORE + '</text><text x="65" y="90" text-anchor="middle" fill="#5c6b64" font-size="9" letter-spacing="2">PUNTAJE</text></svg>' +
         '<div class="psim-diag-chip">' + RANGO + '</div>' +

@@ -14,7 +14,12 @@
   'use strict';
   var E = window.PlaneaScoreEngine;
 
-  // ── MODELO DE PREGUNTAS (§2.1) — orden fijo, sin saltos ──────────────────────
+  // ── MODELO DE PREGUNTAS — orden fijo, sin saltos, 13 preguntas ──────────────
+  // Ajuste cliente (21–24 ago 2026): el onboarding pasa de 9 a 13 preguntas. Las
+  // preguntas 9–13 (ahorro, inversión, impuestos, seguros, retiro) NO alimentan el
+  // Planea Score: recogen los frentes de planeación que faltaban y se persisten para
+  // Maya. El motor de cálculo (planea-score-engine.js) NO se toca: 7 preguntas siguen
+  // alimentando el puntaje, las mismas de siempre. Las opciones nuevas son LITERALES.
   var Q = {
     1: { key: 'ocupacion', tag: 'Ocupación', title: '¿A qué te dedicas hoy?', type: 'single', options: [
       { val: 'empleado', label: 'Empleado con contrato' },
@@ -31,17 +36,25 @@
       { val: 'tarjeta', label: 'Tarjeta de crédito' }, { val: 'personal', label: 'Préstamo personal o de libre inversión' }, { val: 'hipotecario', label: 'Crédito hipotecario' }, { val: 'vehiculo', label: 'Crédito de vehículo' }, { val: 'educativo', label: 'Crédito educativo' }, { val: 'compras', label: 'Compras a cuotas o financiadas' }, { val: 'familiares', label: 'Deuda con familiares o particulares' }, { val: 'ninguna', label: 'No tengo deudas' } ] },
     5: { key: 'rango_cuotas', tag: 'Cuotas', title: '¿Cuánto pagas al mes en cuotas sumando todas tus deudas?', type: 'exact', exactKey: 'monto_cuotas', placeholder: '800.000', options: [
       { val: 'nopago', label: 'No pago cuotas' }, { val: 'c1', label: 'Menos de $300.000' }, { val: 'c2', label: 'Entre $300.000 y $700.000' }, { val: 'c3', label: 'Entre $700.000 y $1.500.000' }, { val: 'c4', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'c5', label: 'Más de $3.000.000' } ] },
-    6: { key: 'cobertura', tag: 'Fondo de emergencia', title: 'Si dejaras de recibir ingresos, ¿cuánto tiempo aguantas con lo que tienes guardado?', type: 'single', options: [
+    6: { key: 'cobertura', tag: 'Fondo de emergencia', title: 'Si dejaras de recibir ingresos hoy, ¿cuánto tiempo podrías cubrir tus gastos con lo que tienes guardado?', type: 'single', options: [
       { val: 'nada', label: 'No tengo nada guardado' }, { val: 'm1', label: 'Menos de 1 mes' }, { val: 'm1_3', label: 'Entre 1 y 3 meses' }, { val: 'm3_6', label: 'Entre 3 y 6 meses' }, { val: 'm6_12', label: 'Entre 6 meses y 1 año' }, { val: 'm12plus', label: 'Más de 1 año' } ] },
-    7: { key: 'estabilidad_ingreso', tag: 'Estabilidad', title: '¿Tu ingreso es más o menos el mismo cada mes o cambia?', type: 'single', options: [
+    7: { key: 'estabilidad_ingreso', tag: 'Estabilidad', title: '¿Tus ingresos son más o menos los mismos cada mes o suelen cambiar?', type: 'single', options: [
       { val: 'fijo', label: 'Siempre me cae lo mismo, es fijo' }, { val: 'varia', label: 'Varía un poco pero más o menos sé cuánto es' }, { val: 'cambia', label: 'Cambia bastante, nunca sé exactamente cuánto va a ser' } ] },
     8: { key: 'numero_dependientes', tag: 'Dependientes', title: '¿Cuántas personas dependen económicamente de ti?', type: 'single', options: [
       { val: 'nadie', label: 'Nadie depende de mí' }, { val: 'd1_2', label: '1 o 2 personas' }, { val: 'd3plus', label: '3 o más personas' } ] },
-    9: { key: 'productos_activos', tag: 'Productos', title: '¿Cuáles de estos tienes hoy?', hint: 'Selecciona todos los que apliquen.', type: 'multi', exclusive: 'ninguno', last: true, options: [
-      { val: 'ahorros', label: 'Cuenta de ahorros' }, { val: 'corriente', label: 'Cuenta corriente' }, { val: 'billetera', label: 'Billetera digital' }, { val: 'cdt', label: 'CDT' }, { val: 'inversion', label: 'Cuenta o portafolio de inversión' }, { val: 'polizas', label: 'Pólizas de seguro' }, { val: 'pension', label: 'Pensión voluntaria' }, { val: 'ninguno', label: 'Ninguno de los anteriores' } ] }
+    9: { key: 'conducta_ahorro', tag: 'Ahorro', title: 'Después de cubrir tus gastos, ¿normalmente logras guardar una parte de tus ingresos?', type: 'exact', exactKey: 'monto_ahorro_mensual', exactLabel: 'Si sabes cuánto guardas al mes, escríbelo aquí (opcional)', placeholder: '300.000', options: [
+      { val: 'casi_todos', label: 'Sí, casi todos los meses' }, { val: 'a_veces', label: 'A veces, cuando me queda algo' }, { val: 'casi_nunca', label: 'Casi nunca me queda' }, { val: 'cero', label: 'Termino el mes en cero o debiendo' } ] },
+    10: { key: 'estado_inversion', tag: 'Inversión', title: '¿Hoy tienes dinero destinado a inversiones para hacerlo crecer en el tiempo?', type: 'single', options: [
+      { val: 'periodica', label: 'Sí, invierto de forma periódica' }, { val: 'algo', label: 'Tengo algo invertido pero no aporto seguido' }, { val: 'interesa', label: 'No, pero me interesa empezar' }, { val: 'no_prioridad', label: 'No, por ahora no es prioridad' }, { val: 'no_se', label: 'No sé bien qué cuenta como inversión' } ] },
+    11: { key: 'claridad_tributaria', tag: 'Impuestos', title: '¿Qué tan claro tienes tu tema de impuestos?', type: 'single', options: [
+      { val: 'claro', label: 'Declaro y tengo claro qué me aplica' }, { val: 'declaro_confuso', label: 'Declaro pero no entiendo bien el proceso' }, { val: 'no_toca', label: 'Creo que no me toca declarar' }, { val: 'no_se', label: 'No sé si me toca o no' } ] },
+    12: { key: 'seguros_activos', tag: 'Seguros', title: '¿Tienes algún seguro o póliza activa hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: ['ninguno', 'inseguro'], options: [
+      { val: 'salud', label: 'Salud o medicina prepagada' }, { val: 'vida', label: 'Vida' }, { val: 'vehiculo', label: 'Vehículo' }, { val: 'hogar', label: 'Hogar' }, { val: 'empresa', label: 'Solo lo que me da la empresa' }, { val: 'ninguno', label: 'No tengo ninguno' }, { val: 'inseguro', label: 'No estoy seguro' } ] },
+    13: { key: 'estado_retiro', tag: 'Retiro', title: '¿Hoy estás construyendo un ahorro para tu retiro?', type: 'single', last: true, options: [
+      { val: 'voluntario', label: 'Sí, aporto a un fondo voluntario o similar' }, { val: 'obligatorio', label: 'Solo lo obligatorio que me descuentan' }, { val: 'nada', label: 'No aporto nada hoy' }, { val: 'no_se', label: 'No sé cómo funciona mi pensión' } ] }
   };
-  var TOTAL = 9;
-  var CALC_LABELS = ['Midiendo tu flujo de caja', 'Analizando tu salud de deuda', 'Evaluando tu fondo de emergencia', 'Calculando tu estabilidad', 'Construyendo tu Planea Score'];
+  var TOTAL = 13;
+  var CALC_LABELS = ['Midiendo tu flujo de caja', 'Analizando tu salud de deuda', 'Evaluando tu fondo de emergencia', 'Calculando tu estabilidad', 'Registrando tus frentes de planeación', 'Construyendo tu puntaje Planea'];
 
   // Rutas de las pantallas de registro (solo deuda y ahorro habilitadas hoy).
   var CTA_ROUTE = { ahorro: '/planea/portal/ahorro', deuda: '/planea/portal/deuda' };
@@ -81,7 +94,7 @@
       });
       if (q.type === 'exact') {
         html += '<div class="dg-exact"><span class="pfx">$</span><input type="text" inputmode="numeric" id="dg-exact-input" data-exact="' + q.exactKey + '" placeholder="' + q.placeholder + '" value="' + fmtInput(a[q.exactKey]) + '"></div>' +
-          '<div class="dg-exact-lbl">Si sabes el monto exacto, escríbelo aquí (opcional)</div>';
+          '<div class="dg-exact-lbl">' + esc(q.exactLabel || 'Si sabes el monto exacto, escríbelo aquí (opcional)') + '</div>';
       }
     }
     html += '</div>';
@@ -89,7 +102,7 @@
     var disabled = isStepIncomplete(step);
     html += '<div class="dg-nav' + (step === 1 ? ' solo' : '') + '">';
     if (step > 1) html += '<button class="dg-back" data-step="' + step + '">Volver</button>';
-    if (q.last) html += '<button class="dg-calc" data-calc' + (disabled ? ' disabled' : '') + '>Calcular mi Planea Score</button>';
+    if (q.last) html += '<button class="dg-calc" data-calc' + (disabled ? ' disabled' : '') + '>Calcular mi puntaje Planea</button>';
     else html += '<button class="dg-next" data-step="' + step + '"' + (disabled ? ' disabled' : '') + '>Continuar</button>';
     html += '</div></div>';
     return html;
@@ -103,15 +116,15 @@
 
   function renderIntro() {
     return '<div class="dg-card"><div class="dg-tag">Antes de empezar</div>' +
-      '<h3 class="dg-q">Descubre tu Planea Score</h3>' +
-      '<p class="dg-hint">Son nueve preguntas, dos minutos. Con tus respuestas calculamos tu Planea Score y, a partir de ahí, lo vamos afinando con tu información real. Metodología basada en los cuatro pilares del CFP Board.</p>' +
+      '<h3 class="dg-q">Descubre tu puntaje Planea</h3>' +
+      '<p class="dg-hint">Son trece preguntas, tres minutos. Con tus respuestas calculamos tu puntaje Planea y, a partir de ahí, lo vamos afinando con tu información real. Basado en estándares internacionales de planeación financiera.</p>' +
       '<div class="dg-nav solo"><button class="dg-next" data-intro>Comenzar</button></div></div>';
   }
 
   function renderCalculating() {
     var items = CALC_LABELS.map(function (l, i) { return '<div class="dg-calc-item" data-ci="' + i + '"><span class="dg-cdot"></span>' + esc(l) + '</div>'; }).join('');
     return '<div class="dg-card dg-calc-screen"><div class="dg-spinner"></div>' +
-      '<div class="dg-calc-title">Calculando tu Planea Score</div>' +
+      '<div class="dg-calc-title">Calculando tu puntaje Planea</div>' +
       '<div class="dg-calc-sub">Analizando tus cuatro pilares financieros…</div>' +
       '<div class="dg-calc-steps">' + items + '</div></div>';
   }
@@ -148,7 +161,7 @@
     var progHtml = renderProgress(r.score);
 
     return '<div class="dg-card dg-result">' +
-      '<div class="dg-res-tag">TU PLANEA SCORE</div>' +
+      '<div class="dg-res-tag">TU PUNTAJE PLANEA</div>' +
       '<div class="dg-ringwrap"><svg viewBox="0 0 156 156"><circle cx="78" cy="78" r="63" fill="none" stroke="var(--line)" stroke-width="11"/>' +
       '<circle id="dg-ring" cx="78" cy="78" r="63" fill="none" stroke="' + color + '" stroke-width="11" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '" transform="rotate(-90 78 78)"/></svg>' +
       '<div class="dg-res-num"><b id="dg-score">0</b><small>PLANEA</small></div></div>' +
@@ -201,10 +214,12 @@
   }
   function toggleMulti(step, val) {
     var q = Q[step], arr = Array.isArray(answers[q.key]) ? answers[q.key].slice() : [];
-    var exclusive = q.exclusive;
-    if (val === exclusive) { arr = arr.indexOf(val) >= 0 ? [] : [val]; }
+    // exclusive admite string o array (P12 tiene DOS excluyentes: "No tengo ninguno" y
+    // "No estoy seguro" — marcar cualquiera de ellas deselecciona todo lo demás).
+    var excl = Array.isArray(q.exclusive) ? q.exclusive : (q.exclusive ? [q.exclusive] : []);
+    if (excl.indexOf(val) >= 0) { arr = arr.indexOf(val) >= 0 ? [] : [val]; }
     else {
-      arr = arr.filter(function (x) { return x !== exclusive; });
+      arr = arr.filter(function (x) { return excl.indexOf(x) < 0; });
       var i = arr.indexOf(val); if (i >= 0) arr.splice(i, 1); else arr.push(val);
     }
     answers[q.key] = arr;
@@ -250,7 +265,7 @@
       },
       // salida de la spec (§9.1)
       pilar_atencion: r.pilar_atencion, pilar_respaldo: r.pilar_respaldo,
-      productos_activos: r.productos_activos, frase_sin_coberturas: r.frase_sin_coberturas,
+      productos_activos: r.productos_activos, seguros_activos: r.seguros_activos, frase_sin_coberturas: r.frase_sin_coberturas,
       cta_primario: r.cta_primario, cta_secundario: r.cta_secundario,
       omitir_diagnostico: r.omitir_diagnostico, omitir_reconocimiento: r.omitir_reconocimiento,
       history: hist,
@@ -258,12 +273,12 @@
     };
     PlaneaSB.mePut({ score_data: entry })
       .then(function () {
-        var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Planea Score guardado en tu perfil.';
+        var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje Planea guardado en tu perfil.';
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
       })
       .catch(function (e) {
-        var el = document.getElementById('dg-saved'); if (el) { el.textContent = 'No se pudo guardar tu Planea Score (revisa tu sesión).'; el.className = 'dg-saved warn'; }
+        var el = document.getElementById('dg-saved'); if (el) { el.textContent = 'No se pudo guardar tu puntaje Planea (revisa tu sesión).'; el.className = 'dg-saved warn'; }
         if (window.console) console.warn('[planea-score] save failed', e && e.message);
       });
   }

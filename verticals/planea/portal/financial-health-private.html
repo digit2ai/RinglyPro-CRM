@@ -307,7 +307,7 @@
           metric('Activos líquidos', copS(m.A), 'efectivo + ahorro')+
           metric('Quick ratio', (m.G>0?(m.A/m.G).toFixed(1):'—'), 'líquido / gasto mes')+
         '</div>'+ barRow('Índice de liquidez',m.subs.liquidity)+
-        '<div class="text-[12px] text-slate-500 mt-2">Un fondo de 6 meses de gastos es el estándar CFP. Actualmente cubres '+(m.monthsExp>=99?'más de 6':m.monthsExp.toFixed(1))+' meses.</div>')+
+        '<div class="text-[12px] text-slate-500 mt-2">Un fondo de 6 meses de gastos es el estándar recomendado internacionalmente. Actualmente cubres '+(m.monthsExp>=99?'más de 6':m.monthsExp.toFixed(1))+' meses.</div>')+
       card(secHead('03','Cash Flow Intelligence','Entrada vs. salida y tu superávit real.')+
         '<div style="position:relative;height:200px"><canvas id="ch-flow"></canvas></div>'+
         '<div class="grid grid-cols-3 gap-3 mt-4">'+
@@ -448,7 +448,7 @@
 
     // 17 — AI Financial Advisor (existing findings endpoint)
     H.push('<section class="reveal">'+card(
-      secHead('17','AI Financial Advisor','Recomendación del motor neural de Digit2AI, priorizada por la pirámide del CFP y consciente de todas tus áreas.',
+      secHead('17','AI Financial Advisor','Recomendación del motor neural de Digit2AI, priorizada por una pirámide de prioridades financieras y consciente de todas tus áreas.',
         '<span id="ai-src" class="chip text-slate-400 flash">analizando…</span>')+
       '<div id="ai-featured" class="glass p-4 flex gap-3 items-start mb-3"><div class="w-9 h-9 rounded-full bg-gradient-to-br from-pos to-accent flex items-center justify-center font-black text-ink">M</div>'+
         '<div><div class="text-[12px] font-bold text-slate-300">Maya · recomendación principal</div><div id="ai-msg" class="text-[13.5px] mt-1 text-slate-200">Consultando el motor neural…</div><div id="ai-goal" class="text-[12px] text-pos font-semibold mt-1.5"></div></div></div>'+

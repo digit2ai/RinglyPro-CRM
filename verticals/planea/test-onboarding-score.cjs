@@ -26,7 +26,11 @@ var a = {
   cobertura: 'm1_3',                    // 1–3 meses → 50
   estabilidad_ingreso: 'fijo',         // 100
   numero_dependientes: 'd1_2',         // 65
-  productos_activos: ['ahorros', 'billetera'],
+  // P12 Seguros (reemplaza a la P9 "productos activos" retirada). "No tengo ninguno"
+  // dispara frase_sin_coberturas cuando el pilar de atención es fondo de emergencia (§8.2).
+  seguros_activos: ['ninguno'],
+  // Preguntas informativas nuevas (no alimentan el cálculo; se persisten para Maya):
+  conducta_ahorro: 'a_veces', estado_inversion: 'interesa', claridad_tributaria: 'no_se', estado_retiro: 'obligatorio',
 };
 
 var r = E.compute(a);
@@ -57,6 +61,17 @@ assert('cta ahorro', /dónde tienes hoy tu ahorro/.test(ins.cta_textos[0]), true
 assert('sin deudas -> deuda 100', E.compute({ rango_ingresos: 'i3', rango_gastos: 'g1', tipos_deuda: ['ninguna'], cobertura: 'nada', estabilidad_ingreso: 'fijo', numero_dependientes: 'nadie' }).pilares.salud_deuda.puntaje, 100);
 assert('no pago cuotas -> deuda 100', E.compute({ rango_ingresos: 'i3', rango_gastos: 'g1', tipos_deuda: ['tarjeta'], rango_cuotas: 'nopago', cobertura: 'nada', estabilidad_ingreso: 'fijo', numero_dependientes: 'nadie' }).pilares.salud_deuda.puntaje, 100);
 assert('cobertura nada -> fondo 0', E.compute({ rango_ingresos: 'i3', rango_gastos: 'g1', tipos_deuda: ['ninguna'], cobertura: 'nada', estabilidad_ingreso: 'fijo', numero_dependientes: 'nadie' }).pilares.fondo_emergencia.puntaje, 0);
+
+// ── Regresión del ajuste 9→13: las 5 preguntas informativas NO mueven el puntaje ──
+// (inversión, impuestos, retiro, conducta de ahorro, y CUALQUIER combinación de seguros
+//  que no sea "ninguno/inseguro" no cambia el score respecto al caso base de 61).
+var base = { rango_ingresos: 'i3', rango_gastos: 'g3', tipos_deuda: ['tarjeta'], rango_cuotas: 'c3', cobertura: 'm1_3', estabilidad_ingreso: 'fijo', numero_dependientes: 'd1_2', seguros_activos: ['ninguno'] };
+function withExtra(extra) { var o = {}; for (var k in base) o[k] = base[k]; for (var j in extra) o[j] = extra[j]; return o; }
+assert('P9-13 no mueven el score (todas rellenas)', E.compute(withExtra({ conducta_ahorro: 'casi_todos', monto_ahorro_mensual: '500000', estado_inversion: 'periodica', claridad_tributaria: 'claro', estado_retiro: 'voluntario' })).score, 61);
+assert('P9-13 no mueven el score (otras respuestas)', E.compute(withExtra({ conducta_ahorro: 'cero', estado_inversion: 'no_prioridad', claridad_tributaria: 'no_toca', estado_retiro: 'nada' })).score, 61);
+assert('seguros con pólizas NO dispara frase_sin_coberturas', E.compute(withExtra({ seguros_activos: ['salud', 'vida'] })).frase_sin_coberturas, false);
+assert('seguros "No estoy seguro" SÍ dispara frase (atención=fondo)', E.compute(withExtra({ seguros_activos: ['inseguro'] })).frase_sin_coberturas, true);
+assert('seguros vacío NO dispara frase (solo ninguno/inseguro)', E.compute(withExtra({ seguros_activos: [] })).frase_sin_coberturas, false);
 
 console.log('\n' + (fails === 0 ? 'ALL PASS' : (fails + ' FAILED')));
 process.exit(fails === 0 ? 0 : 1);
