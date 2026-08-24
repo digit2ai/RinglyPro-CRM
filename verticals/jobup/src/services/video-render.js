@@ -220,9 +220,17 @@ function libraryState() {
   if (!writable) {
     note = `cannot write to ${dir} — renders will fail at the last step`;
   } else if (fallbackFrom) {
+    // What to DO about it depends entirely on whether a durable copy exists.
+    // Telling an operator with S3 on that their videos are lost is false, and
+    // recommending a Render disk contradicts why the S3 path was built: a disk
+    // pins this whole service to one instance.
     note = `${fallbackFrom} cannot be written to (${fallbackError}). `
-      + `Videos are going to ${dir} instead, and are lost on every deploy or restart. `
-      + 'Attach a Render disk with that mount path, or unset JOBUP_VIDEO_DIR to stop the warning.';
+      + `Videos are being written to ${dir} instead. `
+      + (durable.durable
+        ? `The durable copy still goes to S3 (${durable.bucket}), so nothing is lost — `
+          + 'unset JOBUP_VIDEO_DIR to clear this warning.'
+        : 'They are lost on every deploy or restart. Unset JOBUP_VIDEO_DIR and set '
+          + durable.missing.join(' + ') + ' to keep them in S3.');
   } else if (!persistent && !durable.durable) {
     // Only a warning when there is NO durable copy anywhere. With S3 on, a
     // temp render directory is a cache, not a risk, and saying otherwise
