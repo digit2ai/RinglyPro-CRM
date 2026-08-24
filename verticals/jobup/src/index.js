@@ -348,6 +348,27 @@ ${rows.length ? `<ul>${items}</ul>`
 router.get(['/build', '/build/'], (req, res) =>
   res.type('html').send(pwa.page('build.html', pwa.basePath(req))));
 
+// Job Map — "Job Search in your area": real, live openings on an interactive map.
+// Keyless off the shared cv_jobs pool (geocoded + cached); upgrades to Adzuna's
+// coordinate-level local coverage the moment ADZUNA_APP_ID/KEY are set.
+router.get(['/jobsearch', '/jobsearch/', '/jobs-map', '/jobs-map/'], (req, res) =>
+  res.type('html').send(pwa.page('jobsearch.html', pwa.basePath(req))));
+router.get('/api/v1/jobs/search', async (req, res) => {
+  try {
+    const jobmap = require('./services/jobmap');
+    const out = await jobmap.search({
+      what: String(req.query.what || '').slice(0, 120),
+      where: String(req.query.where || '').slice(0, 120),
+      remote: req.query.remote === '1' || req.query.remote === 'true',
+      limit: Math.min(parseInt(req.query.limit, 10) || 120, 150)
+    });
+    res.set('Cache-Control', 'public, max-age=120').json(out);
+  } catch (e) {
+    console.error('jobmap search:', e.message);
+    res.status(500).json({ error: e.message, jobs: [], source: 'error' });
+  }
+});
+
 // Step 4: the account is built. Bookmark link + Manage.
 // /welcome is where Stripe used to land people, so it keeps that name for the
 // old links; /ready is the honest name now that nothing is being welcomed back
@@ -372,11 +393,11 @@ router.get(['/terms', '/terms/', '/terms-of-service'], (req, res) =>
 // The three shells carry a {{BASE}} token, so serving them as raw static files
 // would ship that token to the browser. Send people to the real routes instead.
 router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.html',
-            '/privacy.html', '/terms.html',
+            '/privacy.html', '/terms.html', '/jobsearch.html',
             '/subscribers-admin.html', '/social-admin.html', '/plan.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
                '/welcome.html': '/welcome', '/build.html': '/build', '/reset.html': '/reset',
-               '/privacy.html': '/privacy', '/terms.html': '/terms',
+               '/privacy.html': '/privacy', '/terms.html': '/terms', '/jobsearch.html': '/jobsearch',
                '/subscribers-admin.html': '/subscribers-admin',
                '/social-admin.html': '/social-admin',
                '/plan.html': '/subscribers-admin/plan' }[req.path];

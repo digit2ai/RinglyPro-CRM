@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Search in your area — JobUp</title>
+<meta name="description" content="Search real, live job openings on an interactive map. Find who's hiring near you.">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{--bg:#0b0e1a;--bg2:#0f1424;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
+  --cyan:#22d3ee;--violet:#8b5cf6;--green:#84cc16;--grad:linear-gradient(135deg,#22d3ee,#8b5cf6)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+a{color:inherit}
+.top{display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.3px;font-size:15px;text-decoration:none}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--grad)}
+.top .sp{flex:1}
+.lang{display:flex;background:#0f1424;border:1px solid var(--line);border-radius:20px;padding:2px}
+.lang button{border:none;background:transparent;color:var(--mut);padding:5px 11px;border-radius:18px;font-size:12px;font-weight:700;cursor:pointer}
+.lang button.on{background:var(--grad);color:#04121a}
+.search{display:flex;gap:8px;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.search input{flex:1;min-width:150px;background:#0f1424;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 13px;font-size:14px}
+.search button{border:none;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.search .go{background:var(--grad);color:#04121a}
+.search .loc{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+.chk{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;padding:0 4px;cursor:pointer;user-select:none}
+.wrap{flex:1;display:flex;min-height:0}
+#map{flex:1;min-width:0;background:#0b0e1a}
+.list{width:380px;max-width:42vw;overflow-y:auto;border-left:1px solid var(--line);background:var(--bg)}
+.meta{padding:10px 14px;color:var(--mut);font-size:12.5px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+.job{padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s}
+.job:hover,.job.on{background:#121a2b}
+.job .t{font-weight:700;font-size:14px;line-height:1.3}
+.job .c{color:var(--mut);font-size:12.5px;margin-top:3px}
+.job .r{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center}
+.pill{font-size:11px;border:1px solid var(--line);border-radius:20px;padding:3px 8px;color:var(--txt);background:#0f1424}
+.pill.pay{color:var(--green);border-color:#3f5510}
+.pill.rem{color:var(--cyan);border-color:#155e6b}
+.job a.apply{margin-top:8px;display:inline-block;font-size:12.5px;font-weight:700;color:var(--cyan);text-decoration:none}
+.empty{padding:30px 16px;color:var(--mut);text-align:center;font-size:14px}
+.leaflet-popup-content{font-size:13px}.leaflet-popup-content b{font-size:13.5px}
+.leaflet-popup-content a{color:#0a66c2;font-weight:700}
+@media(max-width:760px){.wrap{flex-direction:column}.list{width:100%;max-width:none;max-height:44vh;border-left:none;border-top:1px solid var(--line)}#map{min-height:46vh}}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="{{BASE}}/"><span class="dot"></span> JobUp</a>
+  <span class="sp"></span>
+  <div class="lang"><button data-l="en" class="on">EN</button><button data-l="es">ES</button></div>
+</div>
+<form class="search" id="f">
+  <input id="what" placeholder="Job title or keyword (e.g. analyst, sales)" autocomplete="off">
+  <input id="where" placeholder="City or area (e.g. Tampa, FL)" autocomplete="off">
+  <button type="button" class="loc" id="useLoc">Use my location</button>
+  <label class="chk"><input type="checkbox" id="remote"> <span id="remoteLbl">Remote</span></label>
+  <button type="submit" class="go" id="go">Search</button>
+</form>
+<div class="wrap">
+  <div id="map"></div>
+  <div class="list">
+    <div class="meta" id="meta">Search real, live openings and see who's hiring near you.</div>
+    <div id="jobs"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function(){
+  var BASE = "{{BASE}}";
+  var I18N = {
+    en:{ph_what:"Job title or keyword (e.g. analyst, sales)",ph_where:"City or area (e.g. Tampa, FL)",loc:"Use my location",remote:"Remote",go:"Search",
+         intro:"Search real, live openings and see who's hiring near you.",searching:"Searching…",
+         none:"No openings found for that search. Try a broader keyword or a nearby city.",
+         apply:"Apply →",count:function(n,m){return n+" openings · "+m+" on the map";},locating:"Finding your location…",locfail:"Couldn't get your location — type a city instead."},
+    es:{ph_what:"Puesto o palabra clave (p. ej. analista, ventas)",ph_where:"Ciudad o zona (p. ej. Tampa, FL)",loc:"Usar mi ubicación",remote:"Remoto",go:"Buscar",
+         intro:"Busca vacantes reales y en vivo, y mira quién contrata cerca de ti.",searching:"Buscando…",
+         none:"No se encontraron vacantes. Prueba una palabra más amplia o una ciudad cercana.",
+         apply:"Postular →",count:function(n,m){return n+" vacantes · "+m+" en el mapa";},locating:"Buscando tu ubicación…",locfail:"No pudimos obtener tu ubicación — escribe una ciudad."}
+  };
+  var lang = (navigator.language||'en').toLowerCase().indexOf('es')===0 ? 'es' : 'en';
+  function T(){ return I18N[lang]; }
+  function applyLang(){
+    var t=T();
+    document.getElementById('what').placeholder=t.ph_what;
+    document.getElementById('where').placeholder=t.ph_where;
+    document.getElementById('useLoc').textContent=t.loc;
+    document.getElementById('remoteLbl').textContent=t.remote;
+    document.getElementById('go').textContent=t.go;
+    document.documentElement.lang=lang;
+    Array.prototype.forEach.call(document.querySelectorAll('.lang button'),function(b){b.classList.toggle('on',b.dataset.l===lang);});
+    if(!lastData) document.getElementById('meta').textContent=t.intro;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.lang button'),function(b){b.onclick=function(){lang=b.dataset.l;applyLang();if(lastData)render(lastData);};});
+
+  // ---- map ----
+  var map = L.map('map',{zoomControl:true,attributionControl:true}).setView([39.5,-98.35],4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    subdomains:'abcd',maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+  var markers = [], byIndex = {}, lastData = null;
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function clearMarkers(){ markers.forEach(function(m){map.removeLayer(m);}); markers=[]; byIndex={}; }
+
+  function render(d){
+    lastData=d; var t=T();
+    clearMarkers();
+    var jobsEl=document.getElementById('jobs'); jobsEl.innerHTML='';
+    var jobs=d.jobs||[];
+    if(!jobs.length){ document.getElementById('meta').textContent=d.note||t.intro; jobsEl.innerHTML='<div class="empty">'+t.none+'</div>'; return; }
+    var mapped=0, bounds=[];
+    jobs.forEach(function(j,i){
+      // list card
+      var payP = j.pay? '<span class="pill pay">'+esc(j.pay)+'</span>':'';
+      var remP = j.remote? '<span class="pill rem">'+t.remote+'</span>':'';
+      var card=document.createElement('div'); card.className='job'; card.dataset.i=i;
+      card.innerHTML='<div class="t">'+esc(j.title)+'</div>'+
+        '<div class="c">'+esc(j.company)+(j.location?' · '+esc(j.location):'')+'</div>'+
+        '<div class="r">'+payP+remP+'</div>'+
+        '<a class="apply" href="'+esc(j.url)+'" target="_blank" rel="noopener">'+t.apply+'</a>';
+      card.addEventListener('click',function(e){ if(e.target.tagName==='A')return; focusJob(i); });
+      jobsEl.appendChild(card);
+      // marker
+      if(j.lat!=null && j.lng!=null){
+        mapped++;
+        var m=L.circleMarker([j.lat,j.lng],{radius:8,color:'#0b0e1a',weight:1.5,fillColor:'#22d3ee',fillOpacity:.92});
+        m.bindPopup('<b>'+esc(j.title)+'</b><br>'+esc(j.company)+(j.location?'<br>'+esc(j.location):'')+
+          (j.pay?'<br><b style="color:#4d7c0f">'+esc(j.pay)+'</b>':'')+
+          '<br><a href="'+esc(j.url)+'" target="_blank" rel="noopener">'+t.apply+'</a>');
+        m.on('click',function(){ selectCard(i); });
+        m.addTo(map); markers.push(m); byIndex[i]=m; bounds.push([j.lat,j.lng]);
+      }
+    });
+    document.getElementById('meta').textContent = t.count(jobs.length,mapped) + (d.note? ' · '+d.note : '');
+    if(bounds.length) map.fitBounds(bounds,{padding:[40,40],maxZoom:12});
+    else if(d.center) map.setView([d.center.lat,d.center.lng],5);
+  }
+  function selectCard(i){
+    Array.prototype.forEach.call(document.querySelectorAll('.job'),function(c){c.classList.toggle('on',c.dataset.i==i);});
+    var c=document.querySelector('.job[data-i="'+i+'"]'); if(c)c.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function focusJob(i){
+    selectCard(i);
+    var m=byIndex[i];
+    if(m){ map.setView(m.getLatLng(),12,{animate:true}); m.openPopup(); }
+  }
+
+  var busy=false;
+  async function doSearch(){
+    if(busy) return; busy=true;
+    var t=T();
+    document.getElementById('meta').textContent=t.searching;
+    document.getElementById('jobs').innerHTML='';
+    var what=document.getElementById('what').value.trim();
+    var where=document.getElementById('where').value.trim();
+    var remote=document.getElementById('remote').checked;
+    var q='?what='+encodeURIComponent(what)+'&where='+encodeURIComponent(where)+(remote?'&remote=1':'');
+    try{
+      var r=await fetch(BASE+'/api/v1/jobs/search'+q,{headers:{'Accept':'application/json'}});
+      var d=await r.json();
+      render(d);
+    }catch(e){ document.getElementById('meta').textContent='Error: '+e.message; }
+    busy=false;
+  }
+  document.getElementById('f').addEventListener('submit',function(e){ e.preventDefault(); doSearch(); });
+
+  document.getElementById('useLoc').addEventListener('click',function(){
+    var t=T();
+    if(!navigator.geolocation){ document.getElementById('meta').textContent=t.locfail; return; }
+    document.getElementById('meta').textContent=t.locating;
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var la=pos.coords.latitude, ln=pos.coords.longitude;
+      map.setView([la,ln],10);
+      // reverse geocode to a city to fill the box (keyless Nominatim)
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat='+la+'&lon='+ln)
+        .then(function(r){return r.json();}).then(function(j){
+          var a=(j&&j.address)||{};
+          var city=a.city||a.town||a.village||a.county||'';
+          var st=a.state||'';
+          if(city){ document.getElementById('where').value=city+(st?', '+st:''); }
+          doSearch();
+        }).catch(function(){ doSearch(); });
+    },function(){ document.getElementById('meta').textContent=t.locfail; },{enableHighAccuracy:false,timeout:8000,maximumAge:600000});
+  });
+
+  applyLang();
+  // Prefill from ?what=&where= if present, and auto-search
+  (function(){
+    var p=new URLSearchParams(location.search);
+    if(p.get('what')) document.getElementById('what').value=p.get('what');
+    if(p.get('where')) document.getElementById('where').value=p.get('where');
+    if(p.get('what')||p.get('where')) doSearch();
+  })();
+})();
+</script>
+</body>
+</html>
