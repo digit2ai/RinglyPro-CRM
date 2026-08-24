@@ -70,6 +70,58 @@ function pipeline() {
   return pipelineCache;
 }
 
+/**
+ * The two engines, side by side. Neither replaces the other: Runway is cheap
+ * motion on a locked character, Veo is the only one that can put SOUND in a
+ * clip — which is what a talking head needs.
+ *
+ * Every figure below was measured against the live APIs, not read off a page.
+ */
+const ENGINES = {
+  runway: {
+    id: 'runway',
+    label: 'Runway + OpenAI',
+    note: 'Cheapest motion. No audio in the clips — the voiceover is added separately.',
+    clipSeconds: 5,
+    generationSeconds: [5, 10],
+    costPerVideoSecond: 0.05,      // measured: 25 credits per 5s clip
+    costPerImage: 0.0634,          // measured: 1,584 output tokens at quality medium
+    clipAudio: false,
+  },
+  veo: {
+    id: 'veo',
+    label: 'Veo + Nano Banana',
+    note: 'Clips come back WITH audio, and it can lip-sync. Roughly 3x the cost per second.',
+    clipSeconds: 8,
+    generationSeconds: [8],        // measured: Veo returns 8s clips, not 5 or 10
+    // NOT YET CONFIRMED against a bill. The published rate for veo-3.1-fast is
+    // the basis; the API returns no cost and Google's billing lags by hours.
+    costPerVideoSecond: parseFloat(process.env.JOBUP_VEO_COST_PER_SECOND || '0.15'),
+    costPerImage: 0.039,           // measured: 1,290 image output tokens
+    clipAudio: true,
+    costUnverified: true,
+  },
+};
+
+/** Which credentials a given engine still needs. */
+function engineMissing(eng, c) {
+  const out = [];
+  if (eng.id === 'veo') {
+    if (!c.geminiKey) out.push('GEMINI_API_KEY');
+  } else {
+    if (!c.imageKey) out.push('IMAGE_API_KEY');
+    if (!c.videoKey) out.push('VIDEO_API_KEY');
+  }
+  // Every engine needs a voiceover; the clips carry no narration either way.
+  if (!c.fishKey) out.push('FISH_API_KEY');
+  return out;
+}
+
+function engineFor(spec) {
+  const id = String((spec && spec.engine) || process.env.JOBUP_VIDEO_ENGINE || 'runway').toLowerCase();
+  return ENGINES[id] || ENGINES.runway;
+}
+
 function creds() {
   return {
     fishKey: process.env.FISH_API_KEY, fishVoice: process.env.FISH_VOICE_ID,
@@ -79,6 +131,9 @@ function creds() {
     videoKey: process.env.VIDEO_API_KEY,
     videoEndpoint: process.env.VIDEO_ENDPOINT || 'https://api.dev.runwayml.com/v1/image_to_video',
     videoModel: process.env.VIDEO_MODEL || 'gen4_turbo',
+    geminiKey: process.env.GEMINI_API_KEY,
+    geminiImageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    veoModel: process.env.VEO_MODEL || 'veo-3.1-fast-generate-preview',
   };
 }
 
@@ -91,8 +146,21 @@ function readiness() {
   if (!c.fishKey) missing.push('FISH_API_KEY (voiceover)');
   if (!c.imageKey) missing.push('IMAGE_API_KEY (character sheet)');
   if (!c.videoKey) missing.push('VIDEO_API_KEY (clips)');
+
   return Object.assign(
-    { ready: missing.length === 0, missing, max_cost_usd: MAX_COST_USD },
+    {
+      ready: missing.length === 0, missing, max_cost_usd: MAX_COST_USD,
+      engines: Object.values(ENGINES).map((e) => ({
+        id: e.id, label: e.label, note: e.note,
+        clip_seconds: e.clipSeconds, clip_audio: e.clipAudio,
+        cost_per_video_second: e.costPerVideoSecond,
+        cost_unverified: !!e.costUnverified,
+        // Each engine names ITS OWN missing keys. Reporting "unavailable" with
+        // an empty list tells the operator nothing they can act on.
+        available: engineMissing(e, c).length === 0,
+        missing: engineMissing(e, c),
+      })),
+    },
     libraryState()
   );
 }
@@ -158,11 +226,17 @@ function estimate(spec) {
   const beats = toBeats(spec);
   if (!beats.length) return { available: false, reason: 'the spec has no beats' };
 
-  const plan = p.script.planShots({ beats, targetSeconds: spec.targetSeconds || 30 });
+  const eng = engineFor(spec);
+  const plan = p.script.planShots({
+    beats, targetSeconds: spec.targetSeconds || 30,
+    clipSeconds: eng.clipSeconds, generationSeconds: eng.generationSeconds,
+  });
   // No character beat means no character sheet — the price the operator signs
   // off on has to say so, not just the render.
   const cfg = Object.assign({}, p.runner.DEFAULTS, {
     ttsCostPerMillion: 15,
+    costPerVideoSecond: eng.costPerVideoSecond,
+    costPerImage: eng.costPerImage,
     imageCount: plan.generatedShots > 0 ? p.runner.DEFAULTS.angles.length : 0,
   });
   const cost = p.runner.estimateCost(plan, cfg);
@@ -193,6 +267,10 @@ function estimate(spec) {
     // A generated beat with no pose animates a setting, not a body — which is
     // how "phone in hand" became a phone pressed to an ear.
     beats_missing_pose: missingPoses,
+    engine: eng.id,
+    engine_label: eng.label,
+    clip_audio: eng.clipAudio,
+    cost_unverified: !!eng.costUnverified,
     product_beats: productBeats,
     screens_supplied: screensSupplied,
     // Cards stand in for un-supplied product screens; if they cannot be made
@@ -225,8 +303,12 @@ function start(models, brief, { onDone } = {}) {
   if (jobs.get(brief.id) && jobs.get(brief.id).status === 'rendering') {
     return { started: false, reason: 'already rendering' };
   }
+  const eng = engineFor(brief.spec);
   const r = readiness();
-  if (!r.ready) return { started: false, reason: r.missing.join('; ') };
+  const chosen = (r.engines || []).find((e) => e.id === eng.id);
+  if (chosen && !chosen.available) {
+    return { started: false, reason: `${eng.label} needs ${chosen.missing.join(', ')}` };
+  }
   if (!r.library_writable) {
     return { started: false, reason: r.library_note || `cannot write to ${r.library_dir}` };
   }
@@ -288,13 +370,21 @@ async function runInner(models, brief, est) {
   let keepWork = false;
 
   try {
+    const eng = engineFor(spec);
     const tts = p.providers.fishAudio({ http: p.http, apiKey: c.fishKey, voiceId: c.fishVoice });
-    const images = p.providers.imageProvider({
-      http: p.http, apiKey: c.imageKey, endpoint: c.imageEndpoint, model: c.imageModel,
-    });
-    const video = p.providers.runwayVideo({
-      http: p.http, apiKey: c.videoKey, endpoint: c.videoEndpoint, model: c.videoModel,
-    });
+
+    // The two engines are picked here and NOWHERE ELSE — everything downstream
+    // (planner, continuity lock, captions, assembly, ledger) is identical.
+    const images = eng.id === 'veo'
+      ? p.providers.geminiImage({ http: p.http, apiKey: c.geminiKey, model: c.geminiImageModel })
+      : p.providers.imageProvider({
+        http: p.http, apiKey: c.imageKey, endpoint: c.imageEndpoint, model: c.imageModel,
+      });
+    const video = eng.id === 'veo'
+      ? p.providers.veoVideo({ http: p.http, apiKey: c.geminiKey, model: c.veoModel })
+      : p.providers.runwayVideo({
+        http: p.http, apiKey: c.videoKey, endpoint: c.videoEndpoint, model: c.videoModel,
+      });
 
     let done = 0;
     const total = Math.max(1, est.generated_clips);
@@ -309,7 +399,14 @@ async function runInner(models, brief, est) {
       config: {
         targetSeconds: spec.targetSeconds || 30,
         maxCostUsd: MAX_COST_USD,
-        sheetDir: path.join(LIBRARY_DIR, 'character-sheets'),
+        clipSeconds: eng.clipSeconds,
+        generationSeconds: eng.generationSeconds,
+        costPerVideoSecond: eng.costPerVideoSecond,
+        costPerImage: eng.costPerImage,
+        // A sheet made by one engine is not the other's character, so they are
+        // kept apart — otherwise switching engines would silently reuse frames
+        // the new model never made.
+        sheetDir: path.join(LIBRARY_DIR, 'character-sheets', eng.id),
       },
     }, {
       tts, images,
@@ -546,5 +643,6 @@ async function selfTest() {
 
 module.exports = {
   estimate, start, progress, readiness, libraryState, toBeats, selfTest, reasonOf, recoverInterrupted,
+  ENGINES, engineFor,
   PLATFORM_TENANT, LIBRARY_DIR, MAX_COST_USD,
 };

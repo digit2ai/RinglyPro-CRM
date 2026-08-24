@@ -36,12 +36,21 @@ function toDataUri(image, opts = {}) {
   const quality = opts.quality || 3;
 
   return new Promise((resolve, reject) => {
+    // COVER vs FIT.
+    //
+    // A photographic frame should cover and crop: letterboxing hands the video
+    // model black bars to animate. A UI SCREENSHOT is the opposite — cropping a
+    // 1738x708 banner to 9:16 throws away most of the interface, which is the
+    // only reason it is in the ad. `fit` pads onto the brand background instead.
+    const geometry = opts.fit
+      ? `scale=${width}:${height}:force_original_aspect_ratio=decrease,`
+        + `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:${opts.pad || '#07080c'}`
+      : `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`;
+
     const proc = spawn(FFMPEG, [
       '-v', 'error',
       '-i', 'pipe:0',
-      // Cover the target box and crop the overflow: letterboxing would hand
-      // the video model black bars to animate.
-      '-vf', `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height}`,
+      '-vf', geometry,
       '-q:v', String(quality),
       '-f', 'mjpeg',
       'pipe:1'

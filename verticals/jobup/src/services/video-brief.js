@@ -134,6 +134,8 @@ function normalise(raw, briefText) {
 
   const spec = {
     title: clamp(raw && raw.title, 120) || 'Untitled video',
+    // Which pair of models renders this. Chosen by the operator, not the model.
+    engine: (raw && raw.engine) === 'veo' ? 'veo' : 'runway',
     targetSeconds: Math.max(10, Math.min(60, Number(raw && raw.targetSeconds) || Math.round(words / WORDS_PER_SECOND))),
     character: {
       description: clamp(raw && raw.character && raw.character.description, 400),
@@ -249,6 +251,7 @@ function toText(spec) {
   out.push(`TITLE: ${s.title || ''}`);
   out.push(`SECONDS: ${s.targetSeconds || 30}`);
   out.push(`MUSIC: ${(s.music && s.music.mood) || 'hopeful'}`);
+  out.push(`ENGINE: ${s.engine === 'veo' ? 'veo' : 'runway'}`);
   out.push('');
   out.push(`CHARACTER: ${(s.character && s.character.description) || ''}`);
   out.push(`STYLE: ${(s.character && s.character.styleTokens) || ''}`);
@@ -270,7 +273,7 @@ function toText(spec) {
 function fromText(text) {
   const lines = String(text == null ? '' : text).split(/\r?\n/);
   const spec = {
-    title: '', targetSeconds: 30,
+    title: '', targetSeconds: 30, engine: 'runway',
     character: { description: '', styleTokens: '' },
     beats: [], music: { mood: 'hopeful' },
   };
@@ -303,6 +306,7 @@ function fromText(text) {
       if (key === 'TITLE') spec.title = val;
       else if (key === 'SECONDS') spec.targetSeconds = parseInt(val, 10) || 30;
       else if (key === 'MUSIC') spec.music.mood = val || 'hopeful';
+      else if (key === 'ENGINE') spec.engine = /veo/i.test(val) ? 'veo' : 'runway';
       else if (key === 'CHARACTER') spec.character.description = val;
       else if (key === 'STYLE') spec.character.styleTokens = val;
       continue;

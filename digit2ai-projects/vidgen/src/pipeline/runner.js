@@ -278,6 +278,7 @@ async function render(spec, deps) {
     cues: timed.captionCues,
     voiceover: voPath,
     music: spec.musicPath || null,
+    logo: spec.logoPath || null,
     outPath,
     workDir: path.join(workDir, 'assembly'),
     style: spec.captionStyle
@@ -304,6 +305,13 @@ async function render(spec, deps) {
 
 /** Close-up emotions get the close-up reference; wide beats get the wide one. */
 function pickAngle(sheet, shot) {
+  // An explicitly named frame always wins. Keyword-matching the framing is a
+  // heuristic for a generated sheet; when the operator names the still, guessing
+  // is not just unnecessary, it is wrong.
+  if (shot.image) {
+    const named = sheet.find((f) => f.angle === shot.image);
+    if (named) return named;
+  }
   const wants = /close|tight|face|eyes/i.test(shot.scene || '') ? 'close-up'
     : /wide|room|full/i.test(shot.scene || '') ? 'medium wide'
     : 'three-quarter';

@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const nodeHttp = require('http');
 
-const { fishAudio, runwayVideo, imageProvider } = require('../src/providers');
+const { fishAudio, runwayVideo, imageProvider, geminiImage, veoVideo } = require('../src/providers');
 const { toDataUri } = require('../src/frames');
 const { FFMPEG } = require('../src/ffmpeg');
 const { execFile } = require('child_process');
@@ -463,6 +463,115 @@ test('RUNWAY — endless transient errors still stop at the deadline', async () 
   await assert.rejects(
     () => runway(http, { pollTimeoutMs: -1 }).animate({ referenceImageUrl: 'IMG', motionPrompt: 'x', seconds: 5 }),
     (e) => e.code === 'video_error' && e.status === 502
+  );
+});
+
+
+// ---------- google: gemini images + veo ------------------------------------
+
+const DATA_URI = 'data:image/jpeg;base64,/9j/AAAA';
+
+function geminiImageResponse(png, tokens = 1290) {
+  return json(200, {
+    candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: png.toString('base64') } }], role: 'model' }, finishReason: 'STOP' }],
+    usageMetadata: { promptTokenCount: 199, candidatesTokenCount: tokens, totalTokenCount: 199 + tokens },
+    modelVersion: 'gemini-2.5-flash-image',
+  });
+}
+
+test('GEMINI IMAGE — inline base64 becomes a recompressed data uri', async () => {
+  const png = await makePng(path.join(TMP, 'gem-src.png'));
+  const calls = [];
+  const http = { post: async (url, body, headers, opts) => { calls.push({ url, body, opts }); return geminiImageResponse(png); } };
+  const sheet = await geminiImage({ http, apiKey: 'k' })
+    .characterSheet({ description: 'an orb', styleTokens: '3d', angles: ['close-up on face'] });
+
+  assert.strictEqual(sheet.length, 1);
+  assert.ok(sheet[0].url.startsWith('data:image/jpeg;base64,'), 'not recompressed to a data uri');
+  assert.strictEqual(sheet[0].outputTokens, 1290, 'lost the usage figure that makes spend reconcilable');
+  assert.ok(/generateContent\?key=k$/.test(calls[0].url), `wrong endpoint: ${calls[0].url}`);
+  assert.deepStrictEqual(calls[0].body.generationConfig.responseModalities, ['IMAGE']);
+  assert.strictEqual(calls[0].body.generationConfig.imageConfig.aspectRatio, '9:16');
+});
+
+test('GEMINI IMAGE — a seed image turns it into the consistency path', async () => {
+  const png = await makePng(path.join(TMP, 'gem-seed.png'));
+  const calls = [];
+  const http = { post: async (url, body) => { calls.push(body); return geminiImageResponse(png); } };
+  await geminiImage({ http, apiKey: 'k', seedImage: DATA_URI })
+    .characterSheet({ description: 'an orb', styleTokens: '3d', angles: ['walking'] });
+
+  const parts = calls[0].contents[0].parts;
+  assert.ok(parts[0].inlineData, 'the seed frame was not sent');
+  assert.strictEqual(parts[0].inlineData.mimeType, 'image/jpeg');
+  assert.ok(/SAME character/i.test(parts[1].text), 'did not ask for the same character');
+});
+
+test('GEMINI IMAGE — a response with no image part is an error', async () => {
+  const http = { post: async () => json(200, { candidates: [{ content: { parts: [{ text: 'sorry' }] } }] }) };
+  await assert.rejects(
+    () => geminiImage({ http, apiKey: 'k' }).characterSheet({ description: 'd', styleTokens: 's', angles: ['a'] }),
+    (e) => e.code === 'image_error' && /no image data/.test(e.message)
+  );
+});
+
+// The live payloads, recorded 2026-08-24.
+const VEO_SUBMIT = json(200, { name: 'models/veo-3.1-fast-generate-preview/operations/3dsjzi0ktlkg' });
+const VEO_RUNNING = json(200, { name: 'models/veo/operations/x', done: false });
+const VEO_DONE = json(200, {
+  name: 'models/veo/operations/x', done: true,
+  response: {
+    '@type': 'type.googleapis.com/…',
+    generateVideoResponse: { generatedSamples: [{ video: { uri: 'https://generativelanguage.googleapis.com/v1beta/files/nzu1ovak5g84:download?alt=media' } }] },
+  },
+});
+
+const veo = (http, over) => veoVideo(Object.assign({
+  http, apiKey: 'gkey', pollIntervalMs: 0, sleep: async () => {},
+}, over));
+
+test('VEO — submit then poll, and the download url carries the key', async () => {
+  const http = fakeRunway(VEO_SUBMIT, [VEO_RUNNING, VEO_DONE]);
+  const out = await veo(http).animate({ referenceImageUrl: DATA_URI, motionPrompt: 'he walks', seconds: 8 });
+
+  assert.ok(out.url.includes('files/nzu1ovak5g84'), out.url);
+  assert.ok(/[?&]key=gkey/.test(out.url), 'the Files uri is unusable without the key appended');
+  assert.strictEqual(out.seconds, 8);
+  assert.strictEqual(http.calls.gets.length, 2, 'stopped polling before the operation finished');
+});
+
+test('VEO — the reference frame is sent as bytes, and generateAudio is NEVER set', async () => {
+  const http = fakeRunway(VEO_SUBMIT, [VEO_DONE]);
+  await veo(http).animate({ referenceImageUrl: DATA_URI, motionPrompt: 'he walks', seconds: 8 });
+  const body = http.calls.posts[0].body;
+
+  assert.ok(body.instances[0].image.bytesBase64Encoded, 'the still was not attached');
+  assert.strictEqual(body.instances[0].image.mimeType, 'image/jpeg');
+  assert.strictEqual(body.parameters.aspectRatio, '9:16');
+  // The live API answers 400 INVALID_ARGUMENT if this is present. Audio is automatic.
+  assert.ok(!('generateAudio' in body.parameters), 'generateAudio is rejected by the model');
+});
+
+test('VEO — only 8s is producible, and a bad duration never reaches the network', async () => {
+  const http = fakeRunway(VEO_SUBMIT, [VEO_DONE]);
+  await assert.rejects(
+    () => veo(http).animate({ referenceImageUrl: DATA_URI, motionPrompt: 'x', seconds: 5 }),
+    (e) => e.code === 'shot_too_long' && /only 8s/.test(e.message)
+  );
+  assert.strictEqual(http.calls.posts.length, 0, 'sent a request Veo would reject');
+});
+
+test('VEO — a 5xx while polling is retried, not treated as a dead job', async () => {
+  const http = fakeRunway(VEO_SUBMIT, [json(503, { error: { message: 'unavailable' } }), VEO_DONE]);
+  const out = await veo(http).animate({ referenceImageUrl: DATA_URI, motionPrompt: 'x', seconds: 8 });
+  assert.strictEqual(out.transientPolls, 1);
+});
+
+test('VEO — a finished operation with no uri is an error, not an undefined url', async () => {
+  const http = fakeRunway(VEO_SUBMIT, [json(200, { done: true, response: { generateVideoResponse: { generatedSamples: [] } } })]);
+  await assert.rejects(
+    () => veo(http).animate({ referenceImageUrl: DATA_URI, motionPrompt: 'x', seconds: 8 }),
+    (e) => e.code === 'video_error' && /no video uri/.test(e.message)
   );
 });
 

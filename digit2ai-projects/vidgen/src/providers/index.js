@@ -392,8 +392,207 @@ function runwayError(what, res) {
   );
 }
 
+
+// ---------- google: gemini images (Nano Banana) + veo video ----------------
+
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+/** data: URI -> the {bytes, mime} shape Google's APIs want. */
+function fromDataUri(uri) {
+  const m = /^data:([^;,]+);base64,(.*)$/s.exec(String(uri || ''));
+  if (!m) return null;
+  return { mimeType: m[1], data: m[2] };
+}
+
+/**
+ * Gemini image models ("Nano Banana"). Confirmed against the live API on
+ * 2026-08-24.
+ *
+ *   - Plain `generateContent`, SYNCHRONOUS, image returned inline as base64 —
+ *     simpler than gpt-image-1's dedicated endpoint.
+ *   - Measured: 1,290 image output tokens per frame, 5.5s, native 9:16 at
+ *     768x1344. gpt-image-1 was 1,584 tokens and ~22s for the same prompt.
+ *   - IT KEEPS A CHARACTER. Handed its own output plus "the SAME character,
+ *     different shot", it holds the body, colour and translucency. gpt-image-1
+ *     cannot do this at all — it has no seed — which is the entire reason
+ *     runner.js persists a sheet and warns that deleting it loses the
+ *     character. That constraint does not apply here.
+ *   - The trade is fidelity: on the same brief gpt-image-1 rendered a richer
+ *     gradient and the specified glow. Better for variations, not obviously
+ *     better for the first frame.
+ *
+ * `seedImage` (a data uri) turns this into the consistency path: every angle is
+ * generated FROM that frame rather than from the text alone.
+ */
+const geminiImage = ({
+  http, apiKey, model = 'gemini-2.5-flash-image',
+  aspectRatio = '9:16', timeoutMs = 180000, concurrency = 4,
+  seedImage = null, toDataUri = frames.toDataUri,
+}) => ({
+  name: 'gemini-image',
+  model,
+  async characterSheet({ description, styleTokens, angles }) {
+    const one = async (angle) => {
+      const parts = [];
+      if (seedImage) {
+        const img = fromDataUri(seedImage);
+        if (img) parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
+      }
+      parts.push({
+        text: seedImage
+          ? `The SAME character, unchanged. ${angle}. Keep the identical proportions, colours and translucency.`
+          : `${description}. ${angle}. ${styleTokens}`,
+      });
+
+      const res = await http.post(
+        `${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`,
+        { contents: [{ parts }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio } } },
+        {}, { timeoutMs }
+      );
+      if (!res.ok) throw googleError(`image (${angle})`, res, { angle });
+
+      const body = res.body || {};
+      const part = ((body.candidates || [])[0]?.content?.parts || [])
+        .find((x) => x.inlineData || x.inline_data);
+      const inline = part && (part.inlineData || part.inline_data);
+      if (!inline) {
+        throw Object.assign(new Error(`image (${angle}): response carried no image data`),
+          { code: 'image_error', angle, terminal: true });
+      }
+      return {
+        angle,
+        url: await toDataUri(Buffer.from(inline.data, 'base64')),
+        outputTokens: (body.usageMetadata && body.usageMetadata.candidatesTokenCount) || null,
+      };
+    };
+
+    const settled = await mapWithConcurrency(angles, concurrency, one);
+    const done = settled.filter((r) => r.ok).map((r) => r.value);
+    const failed = settled.map((r, i) => ({ angle: angles[i], r })).filter((x) => !x.r.ok);
+    if (failed.length) {
+      throw Object.assign(
+        new Error(`character sheet incomplete: ${failed.length} of ${angles.length} angles failed `
+          + `(${failed.map((f) => f.angle).join(', ')}) — ${failed[0].r.error.message}`),
+        { code: 'image_error', frames: done, billedFrames: done.length, cause: failed[0].r.error }
+      );
+    }
+    return done;
+  },
+});
+
+/**
+ * Veo 3.1. Confirmed against the live API on 2026-08-24 with the same Orb frame
+ * Runway animated, so the comparison is like-for-like.
+ *
+ *   - `predictLongRunning` then poll the operation — the same shape as Runway's
+ *     task API, not a synchronous call.
+ *   - Produces EIGHT-second clips. Runway does 5 or 10. The quantum is
+ *     different, so `generationSeconds` is [8] and the planner cuts to it.
+ *   - 720x1280 h264, measured 42s end to end (Runway ~21s).
+ *   - IT RETURNS AUDIO, and the track has real content (RMS 0.176 sustained).
+ *     Runway gen4_turbo has none. This is the reason to reach for Veo: it is
+ *     the only engine here that can put sound — including speech — in the clip.
+ *   - `generateAudio` IS REJECTED (400 INVALID_ARGUMENT). Audio is automatic;
+ *     asking for it fails the request.
+ *   - The result is a Files API uri that needs the key appended to download,
+ *     which is why `url` comes back with it already on.
+ */
+const VEO_DURATIONS = [8];
+
+const veoVideo = ({
+  http, apiKey, model = 'veo-3.1-fast-generate-preview',
+  aspectRatio = '9:16', durations = VEO_DURATIONS,
+  pollIntervalMs = 8000, pollTimeoutMs = 10 * 60 * 1000,
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+}) => ({
+  name: 'veo',
+  durations,
+  async animate({ referenceImageUrl, motionPrompt, seconds }) {
+    if (!durations.includes(seconds)) {
+      throw Object.assign(
+        new Error(`shot is ${seconds}s; ${model} generates only ${durations.join('s or ')}s`),
+        { code: 'shot_too_long', terminal: true }
+      );
+    }
+    const instance = { prompt: motionPrompt };
+    const img = fromDataUri(referenceImageUrl);
+    if (img) instance.image = { bytesBase64Encoded: img.data, mimeType: img.mimeType };
+
+    const res = await http.post(
+      `${GEMINI_BASE}/models/${model}:predictLongRunning?key=${apiKey}`,
+      // NO generateAudio here — the model rejects it outright.
+      { instances: [instance], parameters: { aspectRatio } },
+      {}, { timeoutMs: 180000 }
+    );
+    if (!res.ok) throw googleError('submit failed', res);
+
+    const opName = res.body && res.body.name;
+    if (!opName) {
+      throw Object.assign(new Error('veo accepted the job but returned no operation name'),
+        { code: 'video_error', terminal: true });
+    }
+
+    const deadline = Date.now() + pollTimeoutMs;
+    let transientPolls = 0;
+    for (;;) {
+      await sleep(pollIntervalMs);
+      let op;
+      try {
+        op = await http.get(`${GEMINI_BASE}/${opName}?key=${apiKey}`, {}, { timeoutMs: 60000 });
+      } catch (netErr) {
+        op = { ok: false, status: 0, headers: {}, buffer: Buffer.alloc(0), error: netErr.message };
+      }
+      // A poll failure is not a job failure — same rule the Runway adapter
+      // learned the hard way when one 502 discarded eight paid clips.
+      if (!op.ok) {
+        const transient = op.status === 0 || op.status === 429 || op.status >= 500;
+        if (transient && Date.now() <= deadline) { transientPolls++; continue; }
+        throw googleError(`polling ${opName} failed`, op);
+      }
+
+      const b = op.body || {};
+      if (!b.done) {
+        if (Date.now() > deadline) {
+          throw Object.assign(new Error(`${opName} still running after ${Math.round(pollTimeoutMs / 1000)}s`),
+            { code: 'video_timeout', taskId: opName });
+        }
+        continue;
+      }
+      if (b.error) {
+        throw Object.assign(new Error(`veo ${opName} failed: ${b.error.message || 'no reason given'}`),
+          { code: 'video_error', taskId: opName, terminal: true });
+      }
+
+      const r = b.response || {};
+      const samples = (r.generateVideoResponse && r.generateVideoResponse.generatedSamples)
+        || r.generatedSamples || [];
+      const uri = samples[0] && (samples[0].video ? samples[0].video.uri : samples[0].uri);
+      if (!uri) {
+        throw Object.assign(new Error(`veo ${opName} finished with no video uri`),
+          { code: 'video_error', taskId: opName, terminal: true });
+      }
+      return {
+        // The Files uri is unauthenticated without the key, so it rides along.
+        url: uri.includes('key=') ? uri : `${uri}${uri.includes('?') ? '&' : '?'}key=${apiKey}`,
+        seconds, taskId: opName, transientPolls, credits: null,
+      };
+    }
+  },
+});
+
+function googleError(what, res, extra) {
+  const body = errorBody(res);
+  const msg = (body && body.error && body.error.message) || res.error || `HTTP ${res.status}`;
+  return Object.assign(new Error(`google: ${what} — ${String(msg).split('\n')[0]}`),
+    Object.assign({
+      code: 'video_error', status: res.status,
+      terminal: res.status >= 400 && res.status < 500 && res.status !== 429,
+    }, extra || {}));
+}
+
 module.exports = {
   fishAudio, elevenLabs, imageProvider,
+  geminiImage, veoVideo, VEO_DURATIONS,
   runwayVideo,
   // The runner injects this as `video`; the shape is Runway's, not generic.
   videoProvider: runwayVideo,

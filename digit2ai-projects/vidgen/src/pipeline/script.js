@@ -130,16 +130,29 @@ function planShots(spec) {
 function layout(beats, targetSeconds, wordsPerLine) {
   const cues = [];
   for (const beat of beats) {
-    const lines = chunkCaptions(beat.text, wordsPerLine);
+    // WHAT IS SPOKEN AND WHAT IS PRINTED ARE NOT ALWAYS THE SAME STRING.
+    // A voiceover has to say "JobUp dot dev" to be read aloud correctly; the
+    // caption has to print "JobUp.dev". Without `caption`, the burned text is
+    // a transcript of the read, which is wrong for anything with a domain,
+    // a price or an acronym in it.
+    const lines = chunkCaptions(beat.caption != null ? beat.caption : beat.text, wordsPerLine);
     for (const line of lines) {
       cues.push({
         index: cues.length,
         caption: line,
+        // A caption written by hand keeps the case it was written in.
+        rawCase: beat.caption != null,
         scene: beat.scene,
         // The literal body position for this beat. `scene` stays as framing
         // (it keys the screen-recording lookup and picks the reference angle);
         // `pose` is what the video model is actually told to animate.
         pose: beat.pose || null,
+        // An explicit reference image for this beat, by name. Without it the
+        // runner guesses from the framing, which is right for a generated
+        // character sheet and wrong when the operator supplied the stills.
+        image: beat.image || null,
+        // An explicit camera move for this beat, if the brief specifies one.
+        camera: beat.camera || null,
         emotion: beat.emotion || 'neutral',
         source: beat.source || 'generated',   // 'generated' | 'screen_recording'
         seconds: estimateSeconds(line)
@@ -203,6 +216,8 @@ function planClips(cues, clipSeconds, allowed) {
         index: clips.length,
         scene: dominant.scene,
         pose: dominant.pose,
+        image: dominant.image,
+        camera: dominant.camera,
         emotion: dominant.emotion,
         source,
         startAt: segStart,
@@ -254,7 +269,9 @@ function finish(beats, laid, targetSeconds, wordsPerLine, spec) {
     // quantum is billed whole even where the edit uses 3s of it.
     billedVideoSeconds: round2(generated.reduce((n, c) => n + c.generateSeconds, 0)),
     clipSeconds,
-    captionCues: cues.map(s => ({ start: s.startAt, end: s.startAt + s.seconds, text: s.caption })),
+    captionCues: cues.map(s => ({
+      start: s.startAt, end: s.startAt + s.seconds, text: s.caption, rawCase: s.rawCase,
+    })),
     voiceoverText: beats.map(b => b.text).join(' ')
   };
 }

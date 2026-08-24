@@ -531,6 +531,59 @@ test('RENDER — a failure during SETUP still marks the brief, never leaves it "
     'start() does not refuse an unwritable library up front');
 });
 
+
+// ---- two engines, side by side ---------------------------------------------
+
+test('ENGINES — both are offered, and each reports whether its key is present', () => {
+  const r = renderSvc.readiness();
+  const ids = (r.engines || []).map((e) => e.id);
+  assert.deepStrictEqual(ids.sort(), ['runway', 'veo']);
+  for (const e of r.engines) {
+    assert.strictEqual(typeof e.available, 'boolean');
+    assert.ok(e.label && e.note, 'an engine has no label or explanation');
+    if (!e.available) assert.ok(e.missing.length, 'unavailable but nothing named as missing');
+  }
+});
+
+test('ENGINES — Veo plans in 8s clips, Runway in 5s', () => {
+  const runway = renderSvc.estimate(Object.assign({}, SPEC, { engine: 'runway' }));
+  const veo = renderSvc.estimate(Object.assign({}, SPEC, { engine: 'veo' }));
+  assert.strictEqual(runway.engine, 'runway');
+  assert.strictEqual(veo.engine, 'veo');
+  // Measured live: Runway returns 5s or 10s, Veo returns 8s.
+  assert.strictEqual(runway.billed_video_seconds % 5, 0);
+  assert.strictEqual(veo.billed_video_seconds % 8, 0);
+});
+
+test('ENGINES — the price changes with the engine, and Veo is flagged unconfirmed', () => {
+  const runway = renderSvc.estimate(Object.assign({}, SPEC, { engine: 'runway' }));
+  const veo = renderSvc.estimate(Object.assign({}, SPEC, { engine: 'veo' }));
+  assert.ok(veo.cost.total > runway.cost.total, 'Veo priced at or below Runway — check the rates');
+  assert.strictEqual(runway.clip_audio, false);
+  assert.strictEqual(veo.clip_audio, true, 'Veo clips carry audio; that is the reason to pick it');
+  assert.strictEqual(veo.cost_unverified, true, 'Veo cost is not yet confirmed against a bill');
+  assert.ok(!runway.cost_unverified, 'Runway cost IS measured and should not be flagged');
+});
+
+test('ENGINES — an unknown engine falls back to runway rather than failing', () => {
+  const e = renderSvc.estimate(Object.assign({}, SPEC, { engine: 'nonsense' }));
+  assert.strictEqual(e.engine, 'runway');
+});
+
+test('ENGINES — the engine survives the script round trip', () => {
+  const t = briefSvc.toText(Object.assign({}, SPEC, { engine: 'veo' }));
+  assert.ok(/ENGINE: veo/.test(t), 'the script does not print the engine');
+  assert.strictEqual(briefSvc.fromText(t).engine, 'veo');
+  // and anything unrecognised is the safe, cheap one
+  assert.strictEqual(briefSvc.fromText('TITLE: x\nENGINE: something\n--- 1 ---\nLINE: hi').engine, 'runway');
+});
+
+test('ENGINES — a render is refused when the chosen engine has no key', () => {
+  const r = renderSvc.start({}, { id: 7, status: 'approved', spec: Object.assign({}, SPEC, { engine: 'veo' }) });
+  assert.strictEqual(r.started, false);
+  assert.ok(/GEMINI_API_KEY|API_KEY/.test(r.reason), r.reason);
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;

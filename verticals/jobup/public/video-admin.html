@@ -212,6 +212,8 @@ border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-ri
       <div style="display:flex;gap:10px;align-items:end;margin-top:10px;flex-wrap:wrap">
         <div style="width:150px"><label for="lang">Voice language</label>
           <select id="lang"><option value="en">English</option><option value="es">Espanol</option></select></div>
+        <div style="width:220px"><label for="engine">Engine</label>
+          <select id="engine"></select></div>
         <button class="btn primary" id="compose">Compose the spec</button>
         <span class="muted" id="composing"></span>
       </div>
@@ -307,7 +309,16 @@ $('compose').onclick=function(){
   var t=$('brief').value.trim(); if(!t) return;
   $('compose').disabled=true; $('composing').innerHTML='<span class="spin"></span>reading your brief';
   api('/briefs',{method:'POST',body:JSON.stringify({brief:t,lang:$('lang').value})})
-   .then(function(j){ cur=j.brief; renderReview(j.rewrites,j.note); loadBriefs(); })
+   .then(function(j){
+     cur=j.brief;
+     // The picker on the compose form chooses the engine for the new brief.
+     if($('engine').value && cur.spec && cur.spec.engine!==$('engine').value){
+       return api('/briefs/'+cur.id,{method:'PATCH',
+         body:JSON.stringify({spec:Object.assign({},cur.spec,{engine:$('engine').value})})})
+        .then(function(k){cur=k.brief;renderReview(j.rewrites,j.note);loadBriefs();});
+     }
+     renderReview(j.rewrites,j.note); loadBriefs();
+   })
    .catch(function(e){ alert(e.message) })
    .then(function(){ $('compose').disabled=false; $('composing').textContent=''; });
 };
@@ -393,7 +404,9 @@ function renderEstimate(){
   var e=cur.estimate||{};
   if(!e.available){ $('estcard').innerHTML='<h2>Price</h2><div class="banner bad">'+esc(e.reason||'cannot be priced')+'</div>'; return }
   var h='<h2>Before you spend</h2><div class="price">$'+(e.cost?e.cost.total:'?')+'</div>'+
-    '<div class="muted" style="margin-bottom:12px">estimated, at the published provider rates</div>'+
+    '<div class="muted" style="margin-bottom:12px">'+esc(e.engine_label||'')+
+      (e.clip_audio?' · clips include audio':' · voiceover added separately')+
+      (e.cost_unverified?' · <b>price not yet confirmed against a bill</b>':'')+'</div>'+
     '<div class="kv"><span>Runtime</span><b>'+e.seconds+'s</b></div>'+
     '<div class="kv"><span>Clips</span><b>'+e.clips+' ('+e.generated_clips+' generated)</b></div>'+
     '<div class="kv"><span>Billed video</span><b>'+e.billed_video_seconds+'s</b></div>'+
@@ -557,6 +570,16 @@ function loadReady(){
       warn='<div class="banner '+(r.library_writable?'warn':'bad')+'"><b>'+
         (r.library_writable?'Videos are not being kept':'The video library is not writable')+'</b>'+
         esc(r.library_note)+'<div class="muted" style="margin-top:6px;font:12px var(--mono)">'+esc(r.library_dir)+'</div></div>';
+    }
+    // Engines come from the server, so one that has no key is visibly unavailable.
+    if(r.engines && r.engines.length && !$('engine').options.length){
+      $('engine').innerHTML=r.engines.map(function(e){
+        return '<option value="'+e.id+'"'+(e.available?'':' disabled')+'>'+esc(e.label)+
+          (e.available?'':' — needs '+e.missing.join(', '))+'</option>';
+      }).join('');
+      var first=r.engines.filter(function(e){return e.available});
+      if(first.length) $('engine').value=first[0].id;
+      $('engine').title=r.engines.map(function(e){return e.label+': '+e.note}).join('\n');
     }
     $('ready').innerHTML = warn + (r.ready ? '' :
       '<div class="banner warn"><b>Rendering is not available on this host</b>'+

@@ -60,7 +60,10 @@ function buildAss(cues, style = {}) {
     'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text'
   ];
   const events = cues.map(c =>
-    `Dialogue: 0,${assTime(c.start)},${assTime(c.end)},Caption,,0,0,0,,${escapeAss(c.text.toUpperCase())}`
+    // Captions are upper-cased for the burned-in look, EXCEPT one written by
+    // hand — "JobUp.dev" is a brand, and JOBUP.DEV is a different word.
+    `Dialogue: 0,${assTime(c.start)},${assTime(c.end)},Caption,,0,0,0,,`
+    + `${escapeAss(c.rawCase ? c.text : c.text.toUpperCase())}`
   );
   return header.concat(events).join('\n') + '\n';
 }
@@ -113,8 +116,19 @@ async function assemble(opts) {
   fs.writeFileSync(assPath, buildAss(cues, style));
 
   const args = ['-y', '-v', 'error', '-i', silent];
-  const filters = [`subtitles=${assPath.replace(/([:'\\])/g, '\\$1')}`];
+  // A logo is an overlay input, not a filter on the video, so it is added
+  // before the audio inputs and its index has to stay ahead of them.
+  const logo = opts.logo && fs.existsSync(opts.logo) ? opts.logo : null;
+  if (logo) args.push('-i', logo);
+  const logoIdx = 1;
+  const chain = (vin) => logo
+    ? `${vin}subtitles=${assPath.replace(/([:'\\])/g, '\\$1')}[sub];`
+      + `[sub][${logoIdx}:v]overlay=${opts.logoX || '(W-w)/2'}:${opts.logoY || 96}`
+    : `${vin}subtitles=${assPath.replace(/([:'\\])/g, '\\$1')}`;
+  const filters = [chain('')];
 
+  const vIdx = logo ? 2 : 1;          // where the voiceover lands
+  const mIdx = vIdx + 1;
   let audioMap = [];
   if (voiceover && music) {
     args.push('-i', voiceover, '-i', music);
@@ -137,16 +151,20 @@ async function assemble(opts) {
     const bedVol = opts.musicVolume != null ? opts.musicVolume : 0.18;
     const N = 2;
     audioMap = ['-filter_complex',
-      `[0:v]subtitles=${assPath.replace(/([:'\\])/g, '\\$1')}[v];` +
-      `[1:a]volume=${N}[voice];` +
-      `[2:a]volume=${round3(bedVol * N)},afade=t=in:st=0:d=1.5[bed];` +
+      `${chain('[0:v]')}[v];` +
+      `[${vIdx}:a]volume=${N}[voice];` +
+      `[${mIdx}:a]volume=${round3(bedVol * N)},afade=t=in:st=0:d=1.5[bed];` +
       `[voice][bed]amix=inputs=${N}:duration=first:dropout_transition=0[a]`,
       '-map', '[v]', '-map', '[a]'];
   } else if (voiceover) {
     args.push('-i', voiceover);
-    audioMap = ['-vf', filters[0], '-map', '0:v', '-map', '1:a'];
+    audioMap = logo
+      ? ['-filter_complex', `${chain('[0:v]')}[v]`, '-map', '[v]', '-map', `${vIdx}:a`]
+      : ['-vf', filters[0], '-map', '0:v', '-map', `${vIdx}:a`];
   } else {
-    audioMap = ['-vf', filters[0]];
+    audioMap = logo
+      ? ['-filter_complex', `${chain('[0:v]')}[v]`, '-map', '[v]']
+      : ['-vf', filters[0]];
   }
 
   // NEVER `-shortest` HERE. It truncated the voiceover by ~8s on every render

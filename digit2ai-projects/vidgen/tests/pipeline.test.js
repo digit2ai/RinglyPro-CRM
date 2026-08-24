@@ -646,7 +646,10 @@ test('MUSIC — the mix uses no ffmpeg option that some builds lack', () => {
       `the mix filter uses normalize=, which is missing on some ffmpeg builds: ${l.trim()}`);
   }
   // and it must still compensate, or the voice comes back 6dB down
-  assert.ok(/\[1:a\]volume=\$\{N\}/.test(src), 'the voice is no longer pre-amplified to offset amix');
+  // The voice input index shifts when a logo overlay is present, so match the
+  // compensation itself rather than a fixed stream number.
+  assert.ok(/:a\]volume=\$\{N\}\[voice\]/.test(src),
+    'the voice is no longer pre-amplified to offset amix');
 });
 
 (async () => {
