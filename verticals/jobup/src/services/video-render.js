@@ -227,6 +227,9 @@ function start(models, brief, { onDone } = {}) {
   }
   const r = readiness();
   if (!r.ready) return { started: false, reason: r.missing.join('; ') };
+  if (!r.library_writable) {
+    return { started: false, reason: r.library_note || `cannot write to ${r.library_dir}` };
+  }
 
   const est = estimate(brief.spec);
   if (!est.available) return { started: false, reason: est.reason };
@@ -246,11 +249,39 @@ function start(models, brief, { onDone } = {}) {
 }
 
 async function run(models, brief, est) {
+  // EVERY failure path must mark the brief, including the setup below.
+  //
+  // mkdtemp and the library mkdir used to sit OUTSIDE the try. When the library
+  // directory could not be created — a mis-set JOBUP_VIDEO_DIR, a disk mounted
+  // somewhere else, a permissions problem — the job threw before anything had
+  // marked it, the rejection was swallowed by the caller's handler, and the
+  // brief sat on "starting" forever with no error anywhere.
+  try {
+    return await runInner(models, brief, est);
+  } catch (e) {
+    console.error('[video-render] brief', brief.id, 'failed:', e.message);
+    mark(models, brief.id, { status: 'failed', step: 'failed', pct: 100, reason: reasonOf(e) });
+    throw e;
+  }
+}
+
+async function runInner(models, brief, est) {
   const p = pipeline();
   const c = creds();
   const spec = brief.spec;
+
+  mark(models, brief.id, { step: 'preparing', pct: 2, note: 'opening the video library' });
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `jobup-vid-${brief.id}-`));
-  fs.mkdirSync(LIBRARY_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(LIBRARY_DIR, { recursive: true });
+    fs.accessSync(LIBRARY_DIR, fs.constants.W_OK);
+  } catch (e) {
+    throw Object.assign(
+      new Error(`the video library at ${LIBRARY_DIR} is not writable (${e.code || e.message}). `
+        + 'Check the Render disk mount path and JOBUP_VIDEO_DIR.'),
+      { code: 'library_unwritable' }
+    );
+  }
 
   const filename = `jobup-${brief.id}-${Date.now()}.mp4`;
   const outPath = path.join(LIBRARY_DIR, filename);

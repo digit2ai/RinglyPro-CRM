@@ -513,6 +513,24 @@ test('STORAGE — an unwritable library is a loud error, not a silent one', () =
   }
 });
 
+
+test('RENDER — a failure during SETUP still marks the brief, never leaves it "starting"', async () => {
+  // mkdtemp and the library mkdir used to run outside the try, so a bad
+  // JOBUP_VIDEO_DIR threw before anything was marked and the brief sat on
+  // "starting" forever with no error recorded anywhere.
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'src', 'services', 'video-render.js'), 'utf8');
+  const runFn = src.slice(src.indexOf('async function run(models, brief, est) {'),
+                          src.indexOf('async function runInner('));
+  assert.ok(/try \{[\s\S]*runInner[\s\S]*catch/.test(runFn),
+    'run() no longer wraps the whole job — a setup throw would go unmarked again');
+  assert.ok(/status: 'failed'/.test(runFn), 'the outer handler does not mark the brief failed');
+
+  // and the library is checked before the job is even started
+  assert.ok(/if \(!r\.library_writable\)/.test(src),
+    'start() does not refuse an unwritable library up front');
+});
+
 (async () => {
   await boot();
   let pass = 0, fail = 0;
