@@ -19,6 +19,7 @@ const { models, scoped, plain } = require('../models');
 const { requireAdmin } = require('./subscribers-admin');
 const briefSvc = require('../services/video-brief');
 const renderSvc = require('../services/video-render');
+const store = require('../services/video-store');
 
 const router = express.Router();
 const TENANT = renderSvc.PLATFORM_TENANT;
@@ -59,7 +60,12 @@ const videoView = (v) => ({
   seconds: v.seconds, width: v.width, height: v.height, bytes: v.bytes,
   caption: v.caption, ledger: v.ledger, created_at: v.created_at,
   url: `/video-admin/api/videos/${v.id}/file`,
-  exists: !!(v.path && fs.existsSync(v.path)),
+  storage: v.storage || 'local',
+  // A durable copy is one that survives the next deploy. The local file is
+  // checked on disk; the S3 object is NOT head-requested here — that would be
+  // one API call per row on every list — the download route does the real check.
+  durable: v.storage === 's3' && !!v.object_key,
+  exists: !!(v.path && fs.existsSync(v.path)) || (v.storage === 's3' && !!v.object_key),
 });
 
 // ---- capability ------------------------------------------------------------
@@ -245,13 +251,21 @@ router.get('/api/videos/:id/file', requireAdmin, async (req, res) => {
   if (id === null) return res.status(400).json({ error: 'bad id' });
   const row = await scoped('videos', TENANT).findOne({ id });
   if (!row) return res.status(404).json({ error: 'not found' });
-  if (!row.path || !fs.existsSync(row.path)) {
-    // Render's disk is ephemeral; say so rather than serving a 0-byte file.
-    return res.status(410).json({ error: 'the file is no longer on disk (re-render, or mount a persistent disk)' });
+  // Local first: it is the same bytes and costs nothing.
+  if (row.path && fs.existsSync(row.path)) {
+    res.type('video/mp4');
+    res.setHeader('Content-Disposition', `inline; filename="${row.filename}"`);
+    return fs.createReadStream(row.path).pipe(res);
   }
-  res.type('video/mp4');
-  res.setHeader('Content-Disposition', `inline; filename="${row.filename}"`);
-  fs.createReadStream(row.path).pipe(res);
+  // The local copy is gone (a deploy wiped the temp library). Hand out a
+  // SHORT-LIVED signed URL for the durable object — never a public link.
+  const signed = await store.signedUrl(row);
+  if (signed) return res.redirect(302, signed);
+  return res.status(410).json({
+    error: row.storage === 's3'
+      ? 'the durable copy could not be read from S3 (check the bucket and credentials)'
+      : 'the file is no longer on disk, and this video was never copied to durable storage',
+  });
 });
 
 router.delete('/api/videos/:id', requireAdmin, async (req, res) => {
@@ -260,6 +274,9 @@ router.delete('/api/videos/:id', requireAdmin, async (req, res) => {
   const row = await scoped('videos', TENANT).findOne({ id });
   if (!row) return res.status(404).json({ error: 'not found' });
   try { if (row.path && fs.existsSync(row.path)) fs.unlinkSync(row.path); } catch (_) {}
+  // Deleting the row must delete the object too, or the bucket grows forever
+  // with files nothing can reach.
+  try { await store.remove(row); } catch (_) {}
   await scoped('videos', TENANT).destroy({ id: row.id });
   await audit(req.admin.email, 'video.delete', String(row.id));
   res.json({ deleted: true });

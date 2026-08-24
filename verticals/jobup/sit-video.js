@@ -538,6 +538,64 @@ test('STORAGE — a JOBUP_VIDEO_DIR that cannot be created falls back to temp, l
 });
 
 
+test('STORAGE — with no bucket, nothing claims a video is kept', () => {
+  const store = require('./src/services/video-store');
+  const st = store.state();
+  // SIT runs with no AWS bucket on purpose, so this is the shipped-degraded path.
+  if (!st.durable) {
+    assert.strictEqual(st.backend, 'local');
+    assert.strictEqual(st.bucket, null);
+    assert.ok(st.missing.length, 'not durable but nothing named to fix it');
+  }
+});
+
+test('STORAGE — an upload that cannot happen returns local, never a false key', async () => {
+  const store = require('./src/services/video-store');
+  const kept = await store.keep('/nonexistent/never.mp4', 'never.mp4');
+  // Either there is no bucket (skipped) or the read failed. Both must land on
+  // 'local' with no object key — a row saying s3 with nothing uploaded is the
+  // failure this guards.
+  assert.strictEqual(kept.storage, 'local');
+  assert.strictEqual(kept.object_key, null);
+  assert.strictEqual(kept.bucket, null);
+});
+
+test('STORAGE — a signed URL is refused for anything not actually in S3', async () => {
+  const store = require('./src/services/video-store');
+  assert.strictEqual(await store.signedUrl(null), null);
+  assert.strictEqual(await store.signedUrl({ storage: 'local', path: '/tmp/x.mp4' }), null);
+  assert.strictEqual(await store.signedUrl({ storage: 's3', object_key: null }), null);
+  assert.strictEqual(await store.exists({ storage: 'local' }), false);
+  assert.strictEqual(await store.remove({ storage: 'local' }), false);
+});
+
+test('STORAGE — object keys are dated and never carry a path traversal', () => {
+  const store = require('./src/services/video-store');
+  const k = store.keyFor('../../etc/passwd', new Date('2026-08-24T00:00:00Z'));
+  assert.ok(!k.includes('..'), 'a traversal survived into the object key: ' + k);
+  assert.ok(/^jobup-videos\/2026-08-24\//.test(k), 'key is not prefixed and dated: ' + k);
+});
+
+test('STORAGE — the video row records where the copy really is', () => {
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'src', 'services', 'video-render.js'), 'utf8');
+  // The upload happens BEFORE the insert, and the insert copies its result —
+  // not a hardcoded 's3'.
+  const i = src.indexOf('await store.keep(');
+  const j = src.indexOf('models.videos.create(');
+  assert.ok(i > 0 && j > i, 'the durable copy is not made before the row is written');
+  assert.ok(/storage: kept\.storage/.test(src), 'the row does not record the ACTUAL storage backend');
+});
+
+test('STORAGE — the download falls back to a signed URL, and 410s honestly', () => {
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'src', 'routes', 'video-admin.js'), 'utf8');
+  assert.ok(/await store\.signedUrl\(row\)/.test(src), 'no signed-URL fallback on the download');
+  assert.ok(/res\.redirect\(302, signed\)/.test(src), 'the signed URL is not handed to the browser');
+  assert.ok(/await store\.remove\(row\)/.test(src), 'deleting a video leaves the S3 object orphaned');
+});
+
+
 test('RENDER — a failure during SETUP still marks the brief, never leaves it "starting"', async () => {
   // mkdtemp and the library mkdir used to run outside the try, so a bad
   // JOBUP_VIDEO_DIR threw before anything was marked and the brief sat on

@@ -23,6 +23,7 @@ const os = require('os');
 const path = require('path');
 
 const cards = require('./video-cards');
+const store = require('./video-store');
 
 const PLATFORM_TENANT = parseInt(process.env.JOBUP_PLATFORM_TENANT_ID || '0', 10);
 const CONFIGURED_DIR = (process.env.JOBUP_VIDEO_DIR || '').trim() || null;
@@ -193,6 +194,7 @@ function probeDir(dir) {
  */
 function libraryState() {
   const tmp = os.tmpdir();
+  const durable = store.state();
   let dir = CONFIGURED_DIR || TMP_LIBRARY;
   let fallbackFrom = null;
   let fallbackError = null;
@@ -221,9 +223,13 @@ function libraryState() {
     note = `${fallbackFrom} cannot be written to (${fallbackError}). `
       + `Videos are going to ${dir} instead, and are lost on every deploy or restart. `
       + 'Attach a Render disk with that mount path, or unset JOBUP_VIDEO_DIR to stop the warning.';
-  } else if (!persistent) {
+  } else if (!persistent && !durable.durable) {
+    // Only a warning when there is NO durable copy anywhere. With S3 on, a
+    // temp render directory is a cache, not a risk, and saying otherwise
+    // trains the operator to ignore the banner.
     note = 'videos are on ephemeral storage and are lost on every deploy or restart. '
-      + 'Mount a Render disk and set JOBUP_VIDEO_DIR to a path on it.';
+      + 'Set ' + durable.missing.join(' + ') + ' to keep them in S3 '
+      + '(cheaper than a Render disk, and it does not pin this service to one instance).';
   }
 
   return {
@@ -235,6 +241,12 @@ function libraryState() {
     // console shouting 'not writable' at a host that is rendering fine.
     library_error: writable ? null : (e && e.message) || null,
     library_configured: CONFIGURED_DIR,
+    // The local directory is a cache when this is on: the copy that survives a
+    // deploy is the object in S3.
+    storage_backend: durable.backend,
+    storage_durable: durable.durable,
+    storage_bucket: durable.bucket,
+    storage_missing: durable.missing,
     library_fallback_from: fallbackFrom,
     library_fallback_error: fallbackError,
     library_note: note,
@@ -486,11 +498,24 @@ async function runInner(models, brief, est) {
     const v = (info.streams || []).find((s) => s.codec_type === 'video') || {};
     const stat = fs.statSync(result.path);
 
+    // Durable copy BEFORE the row exists, so what the row claims about storage
+    // is what actually happened. A failed upload keeps the render — the file is
+    // on local disk either way — and is recorded as 'local', never as kept.
+    let kept = { storage: 'local', bucket: null, object_key: null, error: null };
+    if (store.configured()) {
+      mark(models, brief.id, { step: 'storing', pct: 96, note: 'copying to the video library' });
+      kept = await store.keep(result.path, filename);
+      if (kept.error) {
+        mark(models, brief.id, { step: 'storing', pct: 96, note: 'kept on local disk only: ' + kept.error });
+      }
+    }
+
     const row = await models.videos.create({
       tenant_id: PLATFORM_TENANT,
       brief_id: brief.id,
       title: spec.title || brief.title || 'Untitled video',
       filename, path: result.path,
+      storage: kept.storage, bucket: kept.bucket, object_key: kept.object_key,
       seconds: Math.round((result.seconds || 0) * 100) / 100,
       width: v.width || null, height: v.height || null,
       bytes: stat.size,

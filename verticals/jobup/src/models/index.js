@@ -461,6 +461,11 @@ const SCHEMA = {
     filename: { type: DataTypes.STRING, allowNull: false },
     path: { type: DataTypes.TEXT, allowNull: false },
     poster_path: { type: DataTypes.TEXT },
+    // Where the DURABLE copy lives. 'local' means the only copy is the one on
+    // this host's ephemeral disk and is gone at the next deploy.
+    storage: { type: DataTypes.STRING, defaultValue: 'local' },
+    bucket: { type: DataTypes.STRING },
+    object_key: { type: DataTypes.TEXT },
     seconds: { type: DataTypes.FLOAT },
     width: { type: DataTypes.INTEGER },
     height: { type: DataTypes.INTEGER },
@@ -683,6 +688,11 @@ const ADDED_COLUMNS = [
   ['ju_agent_runs',    'scored',       'INTEGER DEFAULT 0'],
   ['ju_agent_runs',    'trigger',      "VARCHAR(24) DEFAULT 'scheduled'"],
   ['ju_profiles',      'photo_asset_id', 'INTEGER'],
+  // Durable video storage. The table shipped local-disk-only, so these are
+  // invisible to Postgres until listed here and every INSERT naming them fails.
+  ['ju_videos',        'storage',    "VARCHAR(16) DEFAULT 'local'"],
+  ['ju_videos',        'bucket',     'VARCHAR(255)'],
+  ['ju_videos',        'object_key', 'TEXT'],
 ];
 
 // Indexes the notifier's hot paths need. Idempotent; safe to re-run forever.

@@ -527,10 +527,11 @@ function loadLibrary(){
       var cost=v.ledger&&v.ledger.actual_spend_usd!=null?('$'+v.ledger.actual_spend_usd):'';
       return '<div class="vid">'+
         (v.exists?'<video src="'+v.url+'" controls playsinline preload="metadata"></video>'
-                 :'<div style="padding:30px;text-align:center" class="muted">file no longer on disk</div>')+
+                 :'<div style="padding:30px;text-align:center" class="muted">file no longer on disk, and there is no durable copy</div>')+
         '<div class="meta"><b>'+esc(v.title)+'</b>'+
         '<div class="muted">'+(v.seconds||0)+'s · '+(v.width||'?')+'x'+(v.height||'?')+
-        ' · '+Math.round((v.bytes||0)/1048576*10)/10+' MB'+(cost?' · '+cost:'')+'</div>'+
+        ' · '+Math.round((v.bytes||0)/1048576*10)/10+' MB'+(cost?' · '+cost:'')+
+        ' · '+(v.durable?'kept in S3':'this host only')+'</div>'+
         '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
         (v.exists?'<a class="btn sm" href="'+v.url+'" download>Download</a>':'')+
         '<button class="btn sm" data-cap="'+v.id+'">Copy caption</button>'+
@@ -571,7 +572,7 @@ function loadReady(){
       // rendering fine to temp must not be told it 'is not writable'.
       var head = !r.library_writable ? 'The video library is not writable'
         : (r.library_fallback_from ? 'Falling back to temporary storage'
-        : 'Videos are not being kept');
+        : 'Videos are not being kept after a deploy');
       var where = r.library_fallback_from
         ? esc(r.library_fallback_from)+' -> '+esc(r.library_dir)
         : esc(r.library_dir);
@@ -588,6 +589,12 @@ function loadReady(){
       var first=r.engines.filter(function(e){return e.available});
       if(first.length) $('engine').value=first[0].id;
       $('engine').title=r.engines.map(function(e){return e.label+': '+e.note}).join('\n');
+    }
+    // Always state where a finished video ends up — it is the one fact an
+    // operator needs before spending money on a render.
+    if(r.storage_durable){
+      warn += '<div class="muted" style="margin:0 0 14px;font:12px var(--mono)">'+
+        'finished videos are kept in S3 ('+esc(r.storage_bucket||'')+') and survive deploys</div>';
     }
     $('ready').innerHTML = warn + (r.ready ? '' :
       '<div class="banner warn"><b>Rendering is not available on this host</b>'+
