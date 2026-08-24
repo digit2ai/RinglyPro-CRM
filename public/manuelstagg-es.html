@@ -165,6 +165,7 @@ a{color:inherit;text-decoration:none}
 .photo-wrap::before{content:"";position:absolute;inset:-10px;border-radius:26px;background:var(--grad);opacity:.55;filter:blur(16px);z-index:-1;animation:breathe 5s ease-in-out infinite}
 @keyframes breathe{0%,100%{opacity:.4}50%{opacity:.75}}
 .photo{width:200px;height:200px;border-radius:22px;object-fit:cover;border:1.5px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);display:block;background:#08131c}
+.photo-print{display:none}
 video.photo{cursor:pointer}
 .vidsound{position:absolute;right:8px;bottom:8px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line2);background:rgba(4,12,18,.72);backdrop-filter:blur(6px);color:var(--txt);font-family:inherit;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
 .vidsound:hover{border-color:var(--cyan-bd);color:var(--cyan);transform:translateY(-1px)}
@@ -358,7 +359,9 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
   *{-webkit-print-color-adjust:exact; print-color-adjust:exact}
   body{background:#fff; color:#111418}
   /* Drop screen-only chrome + the animated diagram (blank in a static PDF). */
-  .aura,.grid-bg,.topbar,.voicebar,#neural,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent,.sharebtns,.qrmodal,.toast{display:none!important}
+  .aura,.grid-bg,.topbar,.voicebar,#neural,.ring-orbit,.recruit .rbox .cta,.social-row .sbtn.accent,.sharebtns,.qrmodal,.toast,video.photo,.vidsound,#vidSound,.vidhint{display:none!important}
+  /* Download/print the profile as a FIXED IMAGE (the video's poster), no glow/ring/highlight. */
+  .photo-print{display:block!important;width:200px;height:200px;object-fit:cover;border-radius:14px;border:1px solid #cfd3da!important;box-shadow:none!important;background:#fff}
   .sharecard{border-color:#cfd3da!important;max-width:none;break-inside:avoid}
   /* Gradient-filled text → solid dark so it prints. */
   h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
@@ -400,6 +403,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
     <div class="photo-wrap">
       <div class="ring-orbit"></div>
       <video class="photo" id="heroVideo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a72501cfcee90cf639db7f7.mp4" data-video-en="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a7250180629193ed58ddfff.mp4" data-video-es="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a72501cfcee90cf639db7f7.mp4" poster="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a64e8d8cf9f8312dcb6620f.png" autoplay="" muted="" loop="" playsinline="" webkit-playsinline="" preload="metadata" aria-label="Manuel Stagg — video de presentación"></video>
+      <img class="photo photo-print" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a64e8d8cf9f8312dcb6620f.png" alt="Manuel Stagg" width="200" height="200">
       <button class="vidsound" id="vidSound" type="button" aria-label="Reproducir video con sonido"><i class="fas fa-volume-xmark"></i></button>
     </div>
       <div class="vidhint" id="vidHint" role="status" hidden=""></div>
