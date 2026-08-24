@@ -1107,11 +1107,78 @@ function loadMatches(){
         '<div class="acts" style="justify-content:center"><button class="btn primary sm" onclick="runAgent(\'hunter\')">Run the Hunter now</button></div></div>';
       return;
     }
-    $('p-matches').innerHTML=freeBanner()+'<div class="grid">'+
-      stat('Matches',MATCHES.length)+
-      stat('Strong (80+)',MATCHES.filter(function(m){return m.score>=80;}).length)+
-      stat('Applied',MATCHES.filter(function(m){return m.stage==='applied';}).length)+
-      '</div>'+MATCHES.map(matchCard).join('');
+    paintMatches();
+  });
+}
+/* Filter state for the matches board — all client-side over the loaded set so
+   it is instant. Score (min), name (title/company), location, and stage. */
+var MFILTER={q:'',minScore:0,loc:'',stage:''};
+function filterBar(){
+  var es=(JU_APP_LANG==='es');
+  var stages=['','new','saved','applied','screening','interviewing','offer','closed'];
+  return '<div class="card mfilter"><div class="addrow" style="flex-wrap:wrap;gap:10px">'+
+    '<input id="mf-q" type="text" placeholder="'+(es?'Buscar por puesto o empresa':'Search title or company')+'" '+
+      'value="'+esc(MFILTER.q)+'" oninput="MFILTER.q=this.value;renderMatches()" style="flex:2 1 200px">'+
+    '<input id="mf-loc" type="text" placeholder="'+(es?'Ubicación':'Location')+'" '+
+      'value="'+esc(MFILTER.loc)+'" oninput="MFILTER.loc=this.value;renderMatches()" style="flex:1 1 130px">'+
+    '<input id="mf-score" type="number" min="0" max="100" placeholder="'+(es?'Puntaje mín.':'Min score')+'" '+
+      'value="'+(MFILTER.minScore||'')+'" oninput="MFILTER.minScore=parseInt(this.value,10)||0;renderMatches()" style="flex:0 1 110px">'+
+    '<select id="mf-stage" onchange="MFILTER.stage=this.value;renderMatches()" style="flex:0 1 140px">'+
+      stages.map(function(s){return '<option value="'+s+'"'+(MFILTER.stage===s?' selected':'')+'>'+
+        (s?esc(s):(es?'Toda etapa':'Any stage'))+'</option>';}).join('')+'</select>'+
+    '<button class="btn sm" onclick="clearMatchFilter()">'+(es?'Limpiar':'Clear')+'</button>'+
+    '</div><div class="note" id="mf-count" style="margin-top:8px"></div></div>';
+}
+function clearMatchFilter(){ MFILTER={q:'',minScore:0,loc:'',stage:''}; paintMatches(); }
+function filteredMatches(){
+  var q=MFILTER.q.trim().toLowerCase(), loc=MFILTER.loc.trim().toLowerCase();
+  return MATCHES.filter(function(m){
+    var j=m.job||{};
+    if(MFILTER.minScore>0 && (m.score==null || m.score<MFILTER.minScore)) return false;
+    if(MFILTER.stage && (m.stage||'new')!==MFILTER.stage) return false;
+    if(loc && String(j.location||'').toLowerCase().indexOf(loc)<0) return false;
+    if(q){
+      var hay=((j.title||m.title||'')+' '+(j.employer||m.employer||'')).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  });
+}
+/* Paint the whole pane once (banner + stats + filter bar + list container);
+   renderMatches only rewrites the list so the filter inputs keep focus. */
+function paintMatches(){
+  $('p-matches').innerHTML=freeBanner()+'<div class="grid">'+
+    stat('Matches',MATCHES.length)+
+    stat('Strong (80+)',MATCHES.filter(function(m){return m.score>=80;}).length)+
+    stat('Applied',MATCHES.filter(function(m){return m.stage==='applied';}).length)+
+    '</div>'+filterBar()+'<div id="matches-list"></div>';
+  renderMatches();
+}
+function renderMatches(){
+  var box=$('matches-list'); if(!box) return;
+  var rows=filteredMatches();
+  var es=(JU_APP_LANG==='es');
+  var cnt=$('mf-count');
+  if(cnt) cnt.textContent=(rows.length===MATCHES.length)
+    ? (rows.length+(es?' coincidencias':' matches'))
+    : (es?('Mostrando '+rows.length+' de '+MATCHES.length):('Showing '+rows.length+' of '+MATCHES.length));
+  box.innerHTML=rows.length?rows.map(matchCard).join('')
+    :'<div class="empty"><div class="big">'+(es?'Ningún resultado':'No results')+'</div>'+
+     (es?'Ajusta o limpia los filtros.':'Adjust or clear the filters.')+'</div>';
+}
+/* Remove a posting from THIS subscriber's board. Hunter matches are dismissed
+   durably server-side (the ledger keeps the daily Hunter from re-surfacing
+   them); the shared job pool is never touched. */
+function deleteMatch(id){
+  var es=(JU_APP_LANG==='es');
+  if(!confirm(es?'¿Quitar este empleo de tu tablero? No volverá a aparecer.'
+               :'Remove this job from your board? It will not come back.')) return;
+  api('/api/v1/engine/matches/'+id,{method:'DELETE'}).then(function(r){
+    if(!r.ok) return err('aerr',(r.j&&r.j.error)||'Could not remove that.');
+    MATCHES=MATCHES.filter(function(m){return m.id!==id;});
+    $('c-matches').textContent=MATCHES.length?'('+MATCHES.length+')':'';
+    renderMatches();
+    loadPipeline();
   });
 }
 var STAGES=['new','saved','applied','screening','interviewing','offer','closed'];
@@ -1163,6 +1230,9 @@ function matchCard(m){
       '<button class="btn sm" onclick="tailor('+j.id+')">Tailor my resume to this Job Posting'+
         ' <span class="pricetag">'+esc(tailorTag())+'</span></button>'+
       stageSelect(m)+
+      '<button class="btn sm danger" onclick="deleteMatch('+m.id+')" title="'+
+        (JU_APP_LANG==='es'?'Quitar de tu tablero':'Remove from your board')+'">'+
+        (JU_APP_LANG==='es'?'Eliminar':'Remove')+'</button>'+
     '</div><div id="out-'+j.id+'"></div>'+
     '</div><div class="score">'+esc(m.score==null?'—':m.score)+'</div></div></div>';
 }

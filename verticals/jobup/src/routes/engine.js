@@ -263,14 +263,23 @@ router.delete('/matches/:id', async (req, res) => {
   const t2 = scoped('job_matches', tid);
   const row = await t2.findOne({ id: parseInt(req.params.id, 10) });
   if (!row) return res.status(404).json({ error: 'not found' });
-  // Only entries you added yourself. A Hunter match is re-created on the next
-  // run anyway, so deleting one just makes it reappear.
-  if (row.source === 'hunter') {
-    return res.status(400).json({
-      error: 'Move a found match to closed instead — deleting it only makes the Hunter find it again.' });
+  // A Hunter match points at a shared-pool job. Deleting it durably means the
+  // daily Hunter must not re-surface it: the Hunter skips any job_id already in
+  // the job_scores ledger, so we guarantee a ledger row exists (scoring already
+  // writes one, but a legacy or manually-seeded match might lack it) BEFORE we
+  // destroy the row. That is what makes "remove this posting" stick instead of
+  // reappearing tomorrow. Manual/inbound entries have no shared job and are
+  // simply removed. The shared ju_jobs pool is never touched — one tenant
+  // removing a posting from their own board can never affect another tenant.
+  if (row.source === 'hunter' && row.job_id != null) {
+    const ledger = scoped('job_scores', tid);
+    const seen = await ledger.findOne({ job_id: row.job_id });
+    if (!seen) {
+      await ledger.create({ job_id: row.job_id, score: row.score == null ? 0 : row.score, filed: false });
+    }
   }
   await t2.destroy({ id: row.id });
-  res.json({ ok: true });
+  res.json({ ok: true, removed: row.id });
 });
 
 router.get('/pipeline', async (req, res) => {
