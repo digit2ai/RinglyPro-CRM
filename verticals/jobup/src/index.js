@@ -348,7 +348,7 @@ ${rows.length ? `<ul>${items}</ul>`
 router.get(['/build', '/build/'], (req, res) =>
   res.type('html').send(pwa.page('build.html', pwa.basePath(req))));
 
-// Job Map — "Job Search in your area": real, live openings on an interactive map.
+// Job Map — "Job Search in your area" (v1): real, live openings on an interactive map.
 // Keyless off the shared cv_jobs pool (geocoded + cached); upgrades to Adzuna's
 // coordinate-level local coverage the moment ADZUNA_APP_ID/KEY are set.
 router.get(['/jobsearch', '/jobsearch/', '/jobs-map', '/jobs-map/'], (req, res) =>
