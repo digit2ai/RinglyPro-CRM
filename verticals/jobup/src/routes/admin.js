@@ -409,6 +409,16 @@ color:var(--faint);padding:9px 10px;border-bottom:1px solid var(--line)}
 td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
 .note{color:var(--faint);font-size:12.5px;font-family:var(--mono);margin-top:10px;line-height:1.6}
 .hidden{display:none}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:2px 26px}
+@media(max-width:640px){.cols{grid-template-columns:1fr}}
+.chart{display:flex;align-items:flex-end;gap:3px;height:120px;margin:8px 0 2px;overflow-x:auto}
+.chart .bar{flex:1;min-width:5px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.chart .bar i{display:block;width:100%;background:var(--grad);border-radius:3px 3px 0 0;min-height:1px}
+.chart .bar i.s{background:#8b5cf6;opacity:.85;border-radius:3px 3px 0 0}
+.chart .bar em{font-size:8px;color:var(--faint);text-align:center;font-family:var(--mono);font-style:normal;white-space:nowrap}
+.leg{font-size:11px;color:var(--faint);font-family:var(--mono);margin:0 0 14px;display:flex;gap:16px}
+.leg b{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle}
+.pfilter{background:var(--bg);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:3px 8px;font:inherit;width:auto;margin:0}
 </style></head><body><div class="wrap">
 <h1>JobUp Admin</h1>
 <div class="sub">Owner access only. Counts and money &mdash; never subscriber personal data.</div>
@@ -429,6 +439,23 @@ td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
   <p style="margin:0 0 18px"><a href="/admin/marketing" style="font-weight:650">Open ReachUp Marketing &rarr;</a>
      &nbsp;<span class="note" style="display:inline">Audience, content studio, approval queue and campaign sending &mdash; same owner sign-in as this console.</span></p>
   <div id="stats" class="grid"></div>
+
+  <h2>Traffic &amp; Job Finder &mdash; jobup.dev
+    <select id="paDays" class="pfilter" style="float:right;margin-top:-4px">
+      <option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select>
+  </h2>
+  <div id="paStats" class="grid"></div>
+  <div class="leg"><span><b style="background:var(--grad)"></b>Page views</span><span><b style="background:#8b5cf6"></b>Job searches</span></div>
+  <div id="paChart" class="chart"></div>
+  <div class="cols" style="margin-top:8px">
+    <div><h2>Where people search</h2><div id="paLoc"></div></div>
+    <div><h2>What people search</h2><div id="paKw"></div></div>
+    <div><h2>Visitors by country</h2><div id="paCountry"></div></div>
+    <div><h2>Visitors by city</h2><div id="paCity"></div></div>
+    <div><h2>Traffic sources</h2><div id="paRef"></div></div>
+    <div><h2>Privacy</h2><div class="note" id="paNote"></div></div>
+  </div>
+
   <h2>Employer registry</h2><div id="emp"></div>
   <h2>Subscribers (pseudonymised)</h2>
   <p><a href="/admin/ops" style="font-weight:600">Open Subscriber Operations &rarr;</a>
@@ -446,7 +473,35 @@ function tbl(rows,cols){ if(!rows.length) return '<div class="note">None yet.</d
   return '<table><tr>'+cols.map(function(c){return '<th>'+esc(c[0])+'</th>';}).join('')+'</tr>'+
     rows.map(function(r){return '<tr>'+cols.map(function(c){
       return '<td>'+esc(typeof c[1]==='function'?c[1](r):r[c[1]])+'</td>';}).join('')+'</tr>';}).join('')+'</table>';}
+function paBars(days){
+  var maxV=1; days.forEach(function(d){var t=(d.views||0)+(d.searches||0); if(t>maxV)maxV=t;});
+  return days.map(function(d){
+    var vh=Math.round((d.views||0)/maxV*108), sh=Math.round((d.searches||0)/maxV*108);
+    return '<div class="bar" title="'+d.date+': '+(d.views||0)+' views, '+(d.searches||0)+' searches">'+
+      '<i class="s" style="height:'+sh+'px"></i><i style="height:'+vh+'px"></i><em>'+d.date.slice(5)+'</em></div>';
+  }).join('');
+}
+function paLoad(){
+  var d=document.getElementById('paDays');
+  fetch(API+'/analytics?days='+(d?d.value:30)).then(function(r){return r.json();}).then(function(a){
+    if(!a||a.error) return;
+    var t=a.totals||{};
+    document.getElementById('paStats').innerHTML=[
+      ['Page views',t.page_views||0],['Unique visitors',t.unique_visitors||0],
+      ['Job searches',t.job_searches||0],['Unique searchers',t.unique_searchers||0],
+      ['Remote searches',t.remote_searches||0],['Bot hits',t.agent_hits||0]
+    ].map(function(x){return '<div class="stat"><div class="k">'+esc(x[0])+'</div><div class="v">'+esc(x[1])+'</div></div>';}).join('');
+    document.getElementById('paChart').innerHTML=paBars(a.per_day||[]);
+    function rows(el,list,lbl){ document.getElementById(el).innerHTML=tbl(list||[],
+      [[lbl,function(r){return r.label||'—';}],['#',function(r){return r.n;}]]); }
+    rows('paLoc',a.search_locations,'Location'); rows('paKw',a.search_keywords,'Keyword');
+    rows('paCountry',a.countries,'Country'); rows('paCity',a.cities,'City'); rows('paRef',a.referrers,'Referrer');
+    document.getElementById('paNote').textContent=a.note||'';
+  }).catch(function(){});
+}
 function load(){
+  var pd=document.getElementById('paDays'); if(pd && !pd._wired){ pd._wired=1; pd.onchange=paLoad; }
+  paLoad();
   fetch(API+'/overview').then(function(r){ if(!r.ok) throw r; return r.json(); }).then(function(o){
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
@@ -516,6 +571,14 @@ router.post('/fleet/run', requireOwner, async (req, res) => {
 
 router.get('/schedule', requireOwner, (req, res) =>
   res.json(require('../services/scheduler').status()));
+
+// Platform traffic + Job Finder usage (jobup.dev). First-party, no IP stored.
+router.get('/analytics', requireOwner, async (req, res) => {
+  try {
+    const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+    res.json(await require('../services/platform-analytics').summary(days));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 module.exports = router;
 module.exports.requireOwner = requireOwner;

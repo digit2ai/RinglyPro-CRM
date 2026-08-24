@@ -16,8 +16,11 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 a{color:inherit}
 .top{display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.3px;font-size:15px;text-decoration:none}
-.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--grad)}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none}
+.brand .mark{width:30px;height:30px;display:block;flex:0 0 30px}
+.brand-text{font-weight:800;font-size:17px;letter-spacing:-.02em;color:#fff}
+.brand-text .up{background:linear-gradient(120deg,#e64980,#ff922b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.brand-text .tld{color:var(--mut);font-weight:700}
 .top .sp{flex:1}
 .lang{display:flex;background:#0f1424;border:1px solid var(--line);border-radius:20px;padding:2px}
 .lang button{border:none;background:transparent;color:var(--mut);padding:5px 11px;border-radius:18px;font-size:12px;font-weight:700;cursor:pointer}
@@ -49,7 +52,18 @@ a{color:inherit}
 </head>
 <body>
 <div class="top">
-  <a class="brand" href="{{BASE}}/"><span class="dot"></span> JobUp</a>
+  <a class="brand" href="{{BASE}}/" aria-label="JobUp home">
+    <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
+      <defs><linearGradient id="navbrand" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
+        <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/><stop offset="1" stop-color="#ff922b"/>
+      </linearGradient></defs>
+      <rect width="512" height="512" rx="108" fill="url(#navbrand)"/>
+      <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/>
+      </g>
+    </svg>
+    <span class="brand-text">Job<span class="up">Up</span><span class="tld">.dev</span></span>
+  </a>
   <span class="sp"></span>
   <div class="lang"><button data-l="en" class="on">EN</button><button data-l="es">ES</button></div>
 </div>

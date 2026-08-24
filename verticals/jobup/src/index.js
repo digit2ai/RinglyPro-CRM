@@ -33,6 +33,7 @@ const analytics = require('./services/analytics');
 const scheduler = require('./services/scheduler');
 const photos = require('./services/photos');
 const pwa = require('./services/pwa');
+const platformAnalytics = require('./services/platform-analytics');
 
 // QR is generated on OUR server — no third-party QR service ever sees a
 // subscriber's address. Cached per address; it only changes when they
@@ -351,17 +352,19 @@ router.get(['/build', '/build/'], (req, res) =>
 // Job Map — "Job Search in your area" (v1): real, live openings on an interactive map.
 // Keyless off the shared cv_jobs pool (geocoded + cached); upgrades to Adzuna's
 // coordinate-level local coverage the moment ADZUNA_APP_ID/KEY are set.
-router.get(['/jobsearch', '/jobsearch/', '/jobs-map', '/jobs-map/'], (req, res) =>
-  res.type('html').send(pwa.page('jobsearch.html', pwa.basePath(req))));
+router.get(['/jobsearch', '/jobsearch/', '/jobs-map', '/jobs-map/'], (req, res) => {
+  platformAnalytics.record(req, 'page_view', { path: '/jobsearch' });
+  res.type('html').send(pwa.page('jobsearch.html', pwa.basePath(req)));
+});
 router.get('/api/v1/jobs/search', async (req, res) => {
   try {
     const jobmap = require('./services/jobmap');
-    const out = await jobmap.search({
-      what: String(req.query.what || '').slice(0, 120),
-      where: String(req.query.where || '').slice(0, 120),
-      remote: req.query.remote === '1' || req.query.remote === 'true',
-      limit: Math.min(parseInt(req.query.limit, 10) || 120, 150)
-    });
+    const what = String(req.query.what || '').slice(0, 120);
+    const where = String(req.query.where || '').slice(0, 120);
+    const remote = req.query.remote === '1' || req.query.remote === 'true';
+    const out = await jobmap.search({ what, where, remote, limit: Math.min(parseInt(req.query.limit, 10) || 120, 150) });
+    // Log the Job Finder usage — what people search, and (from their IP) where they are.
+    platformAnalytics.record(req, 'job_search', { what, where, remote, count: out.count, source: out.source });
     res.set('Cache-Control', 'public, max-age=120').json(out);
   } catch (e) {
     console.error('jobmap search:', e.message);
@@ -407,7 +410,10 @@ router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.
 // request to '/' by default, which would hand out the RAW shell — {{BASE}}
 // tokens and all — before the route below ever ran.
 router.use(express.static(publicDir, { index: false }));
-router.get('/', (req, res) => res.type('html').send(pwa.page('index.html', pwa.basePath(req))));
+router.get('/', (req, res) => {
+  platformAnalytics.record(req, 'page_view', { path: '/' });
+  res.type('html').send(pwa.page('index.html', pwa.basePath(req)));
+});
 
 // ===========================================================================
 // Subscriber-site handler for <name>.jobup.dev.
