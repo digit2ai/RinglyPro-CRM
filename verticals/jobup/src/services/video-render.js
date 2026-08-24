@@ -25,7 +25,12 @@ const path = require('path');
 const cards = require('./video-cards');
 
 const PLATFORM_TENANT = parseInt(process.env.JOBUP_PLATFORM_TENANT_ID || '0', 10);
-const LIBRARY_DIR = process.env.JOBUP_VIDEO_DIR || path.join(os.tmpdir(), 'jobup-videos');
+const CONFIGURED_DIR = (process.env.JOBUP_VIDEO_DIR || '').trim() || null;
+const TMP_LIBRARY = path.join(os.tmpdir(), 'jobup-videos');
+// The library actually written to. It starts at the configured path and is
+// re-resolved by libraryState() — a JOBUP_VIDEO_DIR pointing at a disk that was
+// never mounted falls back to temp rather than taking the console down with it.
+let LIBRARY_DIR = CONFIGURED_DIR || TMP_LIBRARY;
 // The specific name wins; MAX_COST_USD is accepted because that is what
 // vidgen's own .env.example calls it, and a ceiling that is silently ignored
 // is worse than no ceiling.
@@ -165,6 +170,19 @@ function readiness() {
   );
 }
 
+/** Create the directory and prove a file can actually be written into it. */
+function probeDir(dir) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, '.write-probe');
+    fs.writeFileSync(probe, 'ok');
+    fs.unlinkSync(probe);
+    return null;
+  } catch (e) {
+    return e;
+  }
+}
+
 /**
  * Whether finished videos will actually still be there tomorrow.
  *
@@ -175,29 +193,51 @@ function readiness() {
  */
 function libraryState() {
   const tmp = os.tmpdir();
-  const persistent = !LIBRARY_DIR.startsWith(tmp);
-  let writable = false;
-  let error = null;
-  try {
-    fs.mkdirSync(LIBRARY_DIR, { recursive: true });
-    const probe = path.join(LIBRARY_DIR, '.write-probe');
-    fs.writeFileSync(probe, 'ok');
-    fs.unlinkSync(probe);
-    writable = true;
-  } catch (e) {
-    error = e.message;
+  let dir = CONFIGURED_DIR || TMP_LIBRARY;
+  let fallbackFrom = null;
+  let fallbackError = null;
+
+  let e = probeDir(dir);
+  if (e && CONFIGURED_DIR) {
+    // The overwhelmingly common cause is JOBUP_VIDEO_DIR pointing at a Render
+    // disk mount path (/var/data/...) on a service that has no disk attached.
+    // Refusing every render for that is worse than rendering to temp and saying
+    // so — the operator can still get the video out today, and the banner tells
+    // them exactly what to fix to keep tomorrow's.
+    fallbackFrom = CONFIGURED_DIR;
+    fallbackError = e.message; // already carries the errno code
+    dir = TMP_LIBRARY;
+    e = probeDir(dir);
   }
+
+  LIBRARY_DIR = dir;
+  const writable = !e;
+  const persistent = writable && !dir.startsWith(tmp);
+
+  let note = null;
+  if (!writable) {
+    note = `cannot write to ${dir} — renders will fail at the last step`;
+  } else if (fallbackFrom) {
+    note = `${fallbackFrom} cannot be written to (${fallbackError}). `
+      + `Videos are going to ${dir} instead, and are lost on every deploy or restart. `
+      + 'Attach a Render disk with that mount path, or unset JOBUP_VIDEO_DIR to stop the warning.';
+  } else if (!persistent) {
+    note = 'videos are on ephemeral storage and are lost on every deploy or restart. '
+      + 'Mount a Render disk and set JOBUP_VIDEO_DIR to a path on it.';
+  }
+
   return {
-    library_dir: LIBRARY_DIR,
+    library_dir: dir,
     library_writable: writable,
     library_persistent: persistent,
-    library_error: error,
-    library_note: !writable
-      ? `cannot write to ${LIBRARY_DIR} — renders will fail at the last step`
-      : persistent
-        ? null
-        : 'videos are on ephemeral storage and are lost on every deploy or restart. '
-          + 'Mount a Render disk and set JOBUP_VIDEO_DIR to a path on it.',
+    // Only a library that cannot be written to AT ALL is an error. A fallback
+    // is a working library with a warning, and conflating the two would have the
+    // console shouting 'not writable' at a host that is rendering fine.
+    library_error: writable ? null : (e && e.message) || null,
+    library_configured: CONFIGURED_DIR,
+    library_fallback_from: fallbackFrom,
+    library_fallback_error: fallbackError,
+    library_note: note,
   };
 }
 
@@ -354,8 +394,11 @@ async function runInner(models, brief, est) {
 
   mark(models, brief.id, { step: 'preparing', pct: 2, note: 'opening the video library' });
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `jobup-vid-${brief.id}-`));
+  // Re-resolve rather than trusting the module variable: this also applies the
+  // temp fallback when a configured JOBUP_VIDEO_DIR is unreachable.
+  const lib = libraryState();
   try {
-    fs.mkdirSync(LIBRARY_DIR, { recursive: true });
+    if (!lib.library_writable) throw new Error(lib.library_error || 'not writable');
     fs.accessSync(LIBRARY_DIR, fs.constants.W_OK);
   } catch (e) {
     throw Object.assign(

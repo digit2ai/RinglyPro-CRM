@@ -514,6 +514,30 @@ test('STORAGE — an unwritable library is a loud error, not a silent one', () =
 });
 
 
+test('STORAGE — a JOBUP_VIDEO_DIR that cannot be created falls back to temp, loudly', () => {
+  // The real case: JOBUP_VIDEO_DIR=/var/data/jobup-videos on a Render service
+  // with no disk attached. Refusing every render for that is worse than
+  // rendering to temp and saying which path to fix — but a fallback must never
+  // be reported as a healthy persistent library.
+  const out = require('child_process').execFileSync(process.execPath, ['-e',
+    "console.log(JSON.stringify(require('./src/services/video-render').libraryState()))"
+  ], {
+    cwd: __dirname,
+    env: Object.assign({}, process.env, { JOBUP_VIDEO_DIR: '/proc/jobup-videos-nope' }),
+    encoding: 'utf8',
+  });
+  const st = JSON.parse(out.trim().split('\n').pop());
+  assert.strictEqual(st.library_configured, '/proc/jobup-videos-nope');
+  assert.strictEqual(st.library_fallback_from, '/proc/jobup-videos-nope');
+  assert.ok(st.library_fallback_error, 'fell back without recording why');
+  assert.strictEqual(st.library_writable, true, 'the fallback library is not usable');
+  assert.strictEqual(st.library_persistent, false, 'a temp fallback claimed to be persistent');
+  assert.strictEqual(st.library_error, null, 'a working fallback was reported as an error');
+  assert.ok(st.library_note.includes('/proc/jobup-videos-nope') && st.library_note.includes(st.library_dir),
+    'the note does not name both the broken path and where the videos actually went');
+});
+
+
 test('RENDER — a failure during SETUP still marks the brief, never leaves it "starting"', async () => {
   // mkdtemp and the library mkdir used to run outside the try, so a bad
   // JOBUP_VIDEO_DIR threw before anything was marked and the brief sat on

@@ -567,9 +567,17 @@ function loadReady(){
     var r=j.readiness;
     var warn='';
     if(r.library_note){
-      warn='<div class="banner '+(r.library_writable?'warn':'bad')+'"><b>'+
-        (r.library_writable?'Videos are not being kept':'The video library is not writable')+'</b>'+
-        esc(r.library_note)+'<div class="muted" style="margin-top:6px;font:12px var(--mono)">'+esc(r.library_dir)+'</div></div>';
+      // Three different situations, three different headlines. A host that is
+      // rendering fine to temp must not be told it 'is not writable'.
+      var head = !r.library_writable ? 'The video library is not writable'
+        : (r.library_fallback_from ? 'Falling back to temporary storage'
+        : 'Videos are not being kept');
+      var where = r.library_fallback_from
+        ? esc(r.library_fallback_from)+' -> '+esc(r.library_dir)
+        : esc(r.library_dir);
+      if(!r.library_writable && r.library_error) where += '  ('+esc(r.library_error)+')';
+      warn='<div class="banner '+(r.library_writable?'warn':'bad')+'"><b>'+head+'</b>'+
+        esc(r.library_note)+'<div class="muted" style="margin-top:6px;font:12px var(--mono)">'+where+'</div></div>';
     }
     // Engines come from the server, so one that has no key is visibly unavailable.
     if(r.engines && r.engines.length && !$('engine').options.length){
