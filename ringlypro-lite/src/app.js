@@ -21,8 +21,32 @@ app.use(cookieParser());
 
 const PUBLIC = path.join(__dirname, '..', 'public');
 
-// Health
-app.get('/health', (req, res) => res.json({ service: 'ringlypro-lite', ok: true, ts: new Date().toISOString() }));
+// Health. `ok` used to mean "the process is up", which stayed true while the
+// database was unreachable and every signup 503'd — so the check that exists to
+// catch that outage was the one surface that could not see it. It now probes the
+// connection and reports `db` honestly. It deliberately still answers 200: this
+// path is Render's healthCheckPath, and failing it during a database outage
+// would fail the deploy and roll back — hiding the very message that names the
+// cause. Liveness and database reachability are reported as separate facts.
+const sequelize = require('./db');
+const { reason: dbErrorReason } = require('./utils/db-error');
+
+app.get('/health', async (req, res) => {
+  const body = { service: 'ringlypro-lite', ok: true, ts: new Date().toISOString() };
+  try {
+    // Bounded: the pool would otherwise sit on `acquire` (30s) and the health
+    // check itself would time out before it could report the failure.
+    await Promise.race([
+      sequelize.authenticate(),
+      new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('probe timeout'), { code: 'ETIMEDOUT' })), 5000).unref())
+    ]);
+    body.db = { ok: true };
+  } catch (e) {
+    body.db = { ok: false, code: dbErrorReason(e) };
+    console.error('[lite:health] database unreachable:', e.original?.message || e.message);
+  }
+  res.json(body);
+});
 
 // Public config (no auth) — drives the billing UI. Billing is ON by default now
 // (US plan is live); set LITE_BILLING_ENABLED=0 to return to free mode.

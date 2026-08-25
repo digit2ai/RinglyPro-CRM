@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { Tenant, User, AvailabilityRule } = require('../models');
 const auth = require('../middleware/auth');
+const { sendDbError } = require('../utils/db-error');
 
 const TRIAL_DAYS = parseInt(process.env.LITE_TRIAL_DAYS || '7', 10);
 
@@ -47,8 +48,7 @@ router.post('/register', async (req, res) => {
     auth.setCookie(res, token);
     res.status(201).json({ success: true, token, tenant_id: tenant.id, trial_ends_at: trialEnds });
   } catch (e) {
-    console.error('[lite:auth] register error:', e.message);
-    res.status(500).json({ error: e.message });
+    sendDbError(res, e, 'auth:register');
   }
 });
 
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
     auth.setCookie(res, token);
     res.json({ success: true, token, tenant_id: user.tenant_id });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendDbError(res, e, 'auth');
   }
 });
 
@@ -80,7 +80,7 @@ router.post('/change-password', async (req, res) => {
     await user.save();
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    sendDbError(res, e, 'auth');
   }
 });
 
