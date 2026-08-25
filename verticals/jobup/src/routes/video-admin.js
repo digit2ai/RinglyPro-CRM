@@ -20,6 +20,7 @@ const { requireAdmin } = require('./subscribers-admin');
 const briefSvc = require('../services/video-brief');
 const renderSvc = require('../services/video-render');
 const store = require('../services/video-store');
+const previewSvc = require('../services/video-preview');
 
 const router = express.Router();
 const TENANT = renderSvc.PLATFORM_TENANT;
@@ -224,6 +225,51 @@ router.post('/api/briefs/:id/approve', requireAdmin, async (req, res) => {
   await audit(req.admin.email, 'video.brief.approve', `$${est.cost.total} · ${est.generated_clips} clips`);
   const fresh = await scoped('video_briefs', TENANT).findOne({ id: row.id });
   res.json({ brief: briefView(plain(fresh)) });
+});
+
+// ---- the free storyboard preview ------------------------------------------
+//
+// Deliberately available on a DRAFT, before approval and before any money: the
+// whole point is to see the pacing and the length while the spec can still be
+// changed. It spends nothing, so there is no ceiling and no approval gate.
+router.post('/api/briefs/:id/preview', requireAdmin, async (req, res) => {
+  const id = idOf(req);
+  if (id === null) return res.status(400).json({ error: 'bad id' });
+  const row = await scoped('video_briefs', TENANT).findOne({ id });
+  if (!row) return res.status(404).json({ error: 'not found' });
+
+  const started = previewSvc.start(plain(row), { dir: renderSvc.readiness().library_dir });
+  if (!started.started) return res.status(400).json({ error: started.reason });
+  res.json({ started: true });
+});
+
+router.get('/api/briefs/:id/preview', requireAdmin, async (req, res) => {
+  const id = idOf(req);
+  if (id === null) return res.status(400).json({ error: 'bad id' });
+  const p = previewSvc.progress(id);
+  if (!p) return res.json({ preview: null, capability: previewSvc.available() });
+  // The path never leaves the server; the console gets a URL.
+  const { file, ...rest } = p;
+  res.json({
+    preview: Object.assign(rest, {
+      url: p.status === 'done' ? `/video-admin/api/briefs/${id}/preview/file` : null,
+    }),
+    capability: previewSvc.available(),
+  });
+});
+
+router.get('/api/briefs/:id/preview/file', requireAdmin, async (req, res) => {
+  const id = idOf(req);
+  if (id === null) return res.status(400).json({ error: 'bad id' });
+  const p = previewSvc.progress(id);
+  if (!p || !p.file || !fs.existsSync(p.file)) {
+    // A preview is disposable by design: temp storage, no row, no S3. Saying so
+    // beats serving a stale file from a previous version of the spec.
+    return res.status(410).json({ error: 'the preview is gone — run it again' });
+  }
+  res.type('video/mp4');
+  res.setHeader('Cache-Control', 'no-store');
+  fs.createReadStream(p.file).pipe(res);
 });
 
 router.post('/api/briefs/:id/render', requireAdmin, async (req, res) => {

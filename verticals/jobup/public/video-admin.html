@@ -254,6 +254,17 @@ border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-ri
 
         <div>
           <div class="card" id="estcard"></div>
+          <div class="card" id="pvcard">
+            <h2>Watch it first</h2>
+            <div class="muted" style="margin-bottom:12px">A storyboard read aloud, with the real pacing and the real length. Free, about twenty seconds, no models. <b>Not the final look</b> &mdash; no character, no motion, different voice.</div>
+            <button class="btn" id="preview" style="width:100%">Preview free</button>
+            <div id="pvprog" class="hidden" style="margin-top:12px">
+              <div class="bar"><i id="pvbar" style="width:0%"></i></div>
+              <div class="muted" id="pvtext"></div>
+            </div>
+            <div id="pvout" class="hidden" style="margin-top:12px"></div>
+            <div id="pverr" class="banner bad hidden" style="margin-top:12px"></div>
+          </div>
           <div class="card">
             <h2>Sign off</h2>
             <div class="muted" style="margin-bottom:12px">Nothing is generated and nothing is charged until you approve.</div>
@@ -327,6 +338,10 @@ $('compose').onclick=function(){
 function renderReview(rewrites,note){
   if(!cur) return;
   $('review').classList.remove('hidden');
+  // A preview belongs to the spec that produced it. Editing or switching briefs
+  // must not leave a video on screen that no longer matches the script above it.
+  if($('pvout')){ $('pvout').classList.add('hidden'); $('pvout').innerHTML=''; }
+  if($('pverr')) $('pverr').classList.add('hidden');
   var s=cur.spec||{};
   $('title').value=s.title||''; $('secs').value=s.targetSeconds||30;
   $('mood').value=(s.music&&s.music.mood)||'hopeful';
@@ -454,6 +469,49 @@ $('approve').onclick=function(){
         .catch(function(e2){alert(e2.message)});
      } else { alert(e.message); }
    })};
+
+/* ---- the free preview ----
+   Available on a DRAFT on purpose: pacing and length are what you change the
+   script over, and after approval is too late to learn them. */
+var pvpoll=null;
+$('preview').onclick=function(){
+  $('pverr').classList.add('hidden'); $('pvout').classList.add('hidden');
+  $('preview').disabled=true;
+  api('/briefs/'+cur.id+'/preview',{method:'POST'})
+   .then(function(){ $('pvprog').classList.remove('hidden'); watchPreview(); })
+   .catch(function(e){ $('preview').disabled=false;
+     $('pverr').textContent=e.message; $('pverr').classList.remove('hidden'); })};
+
+function watchPreview(){
+  if(pvpoll) clearInterval(pvpoll);
+  pvpoll=setInterval(function(){
+    api('/briefs/'+cur.id+'/preview').then(function(j){
+      var p=j.preview; if(!p) return;
+      $('pvbar').style.width=(p.pct||0)+'%';
+      $('pvtext').textContent=(p.note||p.status)||'';
+      if(p.status==='running') return;
+      clearInterval(pvpoll); pvpoll=null; $('preview').disabled=false;
+      $('pvprog').classList.add('hidden');
+      if(p.status==='failed'){
+        $('pverr').textContent=p.error||'the preview failed';
+        $('pverr').classList.remove('hidden'); return;
+      }
+      // The length is the point. A 30s target that reads as 47s is the most
+      // common thing wrong with a spec and is invisible in the text.
+      var over=p.over_target;
+      var len='<div class="kv"><span>Reads as</span><b>'+(p.seconds||0)+'s</b></div>';
+      if(p.target_seconds) len+='<div class="kv"><span>Target</span><b>'+p.target_seconds+'s</b></div>';
+      var warn = (over!==null&&over!==undefined&&Math.abs(over)>=3)
+        ? '<div class="banner warn" style="margin-top:10px"><b>'+(over>0?over+'s over':(-over)+'s under')+' the target</b>'+
+          (over>0?'Cut a line, or raise the target before you pay for clips.'
+                 :'Add a line, or lower the target.')+'</div>' : '';
+      $('pvout').innerHTML='<video src="'+p.url+'?t='+Date.now()+'" controls playsinline preload="metadata" '+
+        'style="width:100%;border-radius:12px;background:#000;margin-bottom:10px"></video>'+len+warn+
+        '<div class="muted" style="margin-top:8px;font:12px var(--mono)">storyboard preview · free · not the final render</div>';
+      $('pvout').classList.remove('hidden');
+    }).catch(function(){ clearInterval(pvpoll); pvpoll=null; $('preview').disabled=false; });
+  },2000);
+}
 
 $('render').onclick=function(){
   $('rerr').classList.add('hidden');

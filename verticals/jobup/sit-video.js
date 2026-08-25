@@ -596,6 +596,65 @@ test('STORAGE — the download falls back to a signed URL, and 410s honestly', (
 });
 
 
+// ---- the free storyboard preview -------------------------------------------
+
+test('PREVIEW — it spends NOTHING: no paid provider is reachable from it', () => {
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'src', 'services', 'video-preview.js'), 'utf8');
+  // The entire value of a preview is that it is free. A single paid call in
+  // here turns "watch it first" into "pay twice".
+  for (const paid of ['fish', 'runway', 'openai', 'veo', 'gemini', 'anthropic', 'elevenlabs']) {
+    assert.ok(!new RegExp(paid, 'i').test(src.replace(/^\s*\/\/.*$/gm, '')),
+      `the preview reaches a paid provider: ${paid}`);
+  }
+  assert.ok(/edge-tts/.test(src), 'the preview does not use the zero-key TTS engine');
+});
+
+test('PREVIEW — an empty spec is refused, not previewed into nothing', () => {
+  const pv = require('./src/services/video-preview');
+  const r = pv.start({ id: 999001, lang: 'en', spec: { beats: [] } });
+  assert.strictEqual(r.started, false);
+  assert.ok(/no beats/.test(r.reason), r.reason);
+});
+
+test('PREVIEW — it renders a real, timed video and reports the true length', async function () {
+  const pv = require('./src/services/video-preview');
+  const cap = pv.available();
+  if (!cap.ok) return 'skipped: ' + cap.missing.join(', ');
+
+  const brief = { id: 999002, lang: 'en', spec: { title: 'T', targetSeconds: 30, beats: [
+    { text: 'Rent is due Friday.', scene: 'medium wide' },
+    { text: 'Then the replies start.', scene: 'close-up' },
+  ] } };
+  assert.strictEqual(pv.start(brief, { dir: require('os').tmpdir() }).started, true);
+  // A second start while one is running must not fan out into two ffmpeg runs.
+  assert.strictEqual(pv.start(brief).started, false);
+
+  const deadline = Date.now() + 120000;
+  let p = pv.progress(brief.id);
+  while (p && p.status === 'running' && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 500));
+    p = pv.progress(brief.id);
+  }
+  assert.strictEqual(p.status, 'done', p.error || 'preview did not finish');
+  assert.ok(p.file && require('fs').existsSync(p.file), 'no preview file on disk');
+  assert.ok(p.seconds > 1, 'preview reports no runtime');
+  // The length the operator is really buying, measured — not the spec's target.
+  assert.strictEqual(p.target_seconds, 30);
+  assert.ok(Math.abs(p.over_target - (p.seconds - 30)) < 0.2, 'over_target does not match the measured length');
+  try { require('fs').unlinkSync(p.file); } catch (_) {}
+});
+
+test('PREVIEW — the console never learns the server path, only a URL', () => {
+  const src = require('fs').readFileSync(
+    require('path').join(__dirname, 'src', 'routes', 'video-admin.js'), 'utf8');
+  const route = src.slice(src.indexOf("router.get('/api/briefs/:id/preview'"),
+                          src.indexOf("router.get('/api/briefs/:id/preview/file'"));
+  assert.ok(/const \{ file, \.\.\.rest \} = p;/.test(route), 'the preview file path is handed to the browser');
+  assert.ok(/preview\/file/.test(route), 'no URL is offered for a finished preview');
+});
+
+
 test('RENDER — a failure during SETUP still marks the brief, never leaves it "starting"', async () => {
   // mkdtemp and the library mkdir used to run outside the try, so a bad
   // JOBUP_VIDEO_DIR threw before anything was marked and the brief sat on
