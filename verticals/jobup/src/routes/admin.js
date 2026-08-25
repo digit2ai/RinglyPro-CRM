@@ -227,6 +227,61 @@ router.get('/subscribers', requireOwner, async (req, res) => {
   });
 });
 
+/**
+ * UNFINISHED ACCOUNTS — the funnel's largest leak, made visible.
+ *
+ * Someone builds a preview, lands on /build, closes the tab, and until now
+ * nothing anywhere recorded that a person was left holding a finished preview
+ * and no account. This is that list, PSEUDONYMISED to the same rule the
+ * subscriber list follows: enough to see the size and age of the leak, never
+ * enough to identify who leaked out of it.
+ */
+router.get('/finish-reminders', requireOwner, async (req, res) => {
+  try {
+    const svc = require('../services/finish-reminder');
+    const rows = await svc.pending({ includeNotDue: true });
+    res.json({
+      status: await svc.status(),
+      unfinished: rows.map((r) => ({
+        email_domain: String(r.email).split('@')[1] || null,
+        email_ref: crypto.createHash('sha256').update(r.email).digest('hex').slice(0, 10),
+        language: r.language,
+        created_at: r.created_at,
+        age_hours: r.age_hours,
+        reminders_sent: r.reminders_sent,
+        last_reminded_at: r.last_reminded_at,
+        opted_out: r.opted_out,
+        too_old: r.too_old,
+        due: r.due,
+      })),
+      note: 'Pseudonymised by design. A dry run shows what would be sent, to which addresses.',
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/**
+ * Send the due reminders, or (default) show what WOULD be sent.
+ *
+ * Dry run is the default on purpose: this is the one admin button whose
+ * accidental press mails real people, so sending has to be typed for
+ * explicitly. Either way it writes an audit row — including the dry run, so the
+ * record shows what was inspected as well as what was sent.
+ */
+router.post('/finish-reminders/run', requireOwner, async (req, res) => {
+  try {
+    const svc = require('../services/finish-reminder');
+    const dryRun = String((req.body || {}).send) !== 'true';
+    const out = await svc.runOnce({ dryRun, force: true });
+    await models.audit_log.create({
+      tenant_id: null,
+      actor: `admin:${(req.admin && req.admin.email) || 'owner'}`,
+      action: dryRun ? 'finish_reminders.preview' : 'finish_reminders.send',
+      reason: `eligible=${out.eligible || 0} sent=${out.sent || 0}`,
+    });
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 /** Employer registry — no PII by nature, so it is fully visible and editable. */
 router.get('/employers', requireOwner, async (req, res) => {
   res.json({ employers: await models.employers.findAll({}) });
@@ -462,6 +517,14 @@ td{padding:10px;border-bottom:1px solid var(--line);color:var(--mut)}
      &nbsp;<span class="note">See each subscriber's matching, diagnose why a board is empty,
      fix targeting and run their agent. Opening one needs a written reason and is audited.</span></p>
   <div id="subs"></div>
+  <h2>Unfinished accounts</h2>
+  <p class="note" id="finfo">People holding a finished preview with no account behind it.
+     They get at most two reminders, then nothing. Preview first &mdash; sending is the
+     second button on purpose.</p>
+  <p><button id="finPrev" class="pfilter" style="cursor:pointer">Preview what would be sent</button>
+     &nbsp;<button id="finSend" class="pfilter" style="cursor:pointer">Send the due reminders</button>
+     &nbsp;<span class="note" id="finmsg"></span></p>
+  <div id="fin"></div>
   <h2>Audit log</h2><div id="aud"></div>
   <div class="note" id="foot"></div>
 </div>
@@ -525,11 +588,44 @@ function load(){
        ['Site',function(r){return r.has_address?'yes':'no';}],['Verified',function(r){return r.email_verified?'yes':'no';}]])
       +'<div class="note">'+esc(o.note||'')+'</div>';
   }).catch(function(){});
+  fetch(API+'/finish-reminders').then(function(r){return r.json();}).then(function(o){
+    var st=o.status||{}, c=st.counts||{};
+    document.getElementById('finfo').innerHTML=
+      'Unfinished: <b>'+esc(c.unfinished||0)+'</b> &middot; due now: <b>'+esc(c.due_now||0)+'</b>'
+      +' &middot; reminded out: '+esc(c.exhausted||0)+' &middot; opted out: '+esc(c.opted_out||0)
+      +' &middot; too old to mail: '+esc(c.too_old||0)
+      +'<br>Reminders are '+(st.enabled?'ON':'OFF (set JOBUP_FINISH_REMINDERS_GO=1)')
+      +' &middot; mailer '+(st.mailer_configured?'configured':'NOT configured — nothing can send');
+    document.getElementById('fin').innerHTML=tbl(o.unfinished||[],
+      [['Ref','email_ref'],['Domain','email_domain'],['Preview','created_at'],
+       ['Age (h)','age_hours'],['Sent','reminders_sent'],
+       ['State',function(r){return r.opted_out?'opted out':(r.too_old?'too old':(r.due?'DUE':'waiting'));}]]);
+  }).catch(function(){});
   fetch(API+'/audit').then(function(r){return r.json();}).then(function(o){
     document.getElementById('aud').innerHTML=tbl((o.audit||[]).slice(0,40),
       [['When','created_at'],['Actor','actor'],['Action','action'],['Reason',function(r){return r.reason||'—';}]]);
   }).catch(function(){});
 }
+function finRun(send){
+  var m=document.getElementById('finmsg');
+  m.textContent=send?'sending…':'checking…';
+  fetch(API+'/finish-reminders/run',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({send:send?'true':'false'})})
+   .then(function(r){return r.json();}).then(function(o){
+     if(o.error){m.textContent=o.error;return;}
+     if(o.skipped){m.textContent=o.skipped;return;}
+     m.textContent=(o.dry_run?'Would send ':'Sent ')+(o.dry_run?(o.eligible||0):(o.sent||0))
+       +' reminder(s).'+((o.results||[]).filter(function(x){return x.error;}).length
+         ?' Some failed — see the audit log.':'');
+     if(!o.dry_run) load();
+   }).catch(function(){m.textContent='request failed';});
+}
+document.getElementById('finPrev').addEventListener('click',function(){finRun(false);});
+document.getElementById('finSend').addEventListener('click',function(){
+  // Typed confirmation, because this one leaves the building.
+  if(prompt('This emails real people. Type SEND to confirm.')!=='SEND') return;
+  finRun(true);
+});
 document.getElementById('go').addEventListener('click',function(){
   var err=document.getElementById('err');err.textContent='';
   fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},
