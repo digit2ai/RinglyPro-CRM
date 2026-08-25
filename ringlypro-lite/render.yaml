@@ -5,7 +5,7 @@ services:
   - type: web
     name: ringlypro-lite
     env: node
-    region: oregon
+    region: virginia
     plan: starter
     rootDir: ringlypro-lite
     buildCommand: npm install
