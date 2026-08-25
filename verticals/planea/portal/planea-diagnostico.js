@@ -28,14 +28,14 @@
       { val: 'negocio', label: 'Dueño de negocio o empresario' },
       { val: 'pensionado', label: 'Pensionado' },
       { val: 'rentista', label: 'Rentista o inversionista' } ] },
-    2: { key: 'rango_ingresos', tag: 'Ingresos', title: '¿Cuánto recibes al mes en total?', hint: 'Suma todo: sueldo, rebusque, arriendos, lo que sea.', type: 'exact', exactKey: 'monto_ingresos', placeholder: '3.500.000', options: [
-      { val: 'i1', label: 'Menos de $1.500.000' }, { val: 'i2', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'i3', label: 'Entre $3.000.000 y $5.000.000' }, { val: 'i4', label: 'Entre $5.000.000 y $8.000.000' }, { val: 'i5', label: 'Más de $8.000.000' } ] },
-    3: { key: 'rango_gastos', tag: 'Gastos', title: '¿Cuánto se te va al mes en total?', hint: 'Arriendo, mercado, transporte, entretenimiento, todo.', type: 'exact', exactKey: 'monto_gastos', placeholder: '2.800.000', options: [
-      { val: 'g1', label: 'Menos de $1.500.000' }, { val: 'g2', label: 'Entre $1.500.000 y $2.500.000' }, { val: 'g3', label: 'Entre $2.500.000 y $4.000.000' }, { val: 'g4', label: 'Entre $4.000.000 y $6.500.000' }, { val: 'g5', label: 'Más de $6.500.000' } ] },
+    2: { key: 'rango_ingresos', tag: 'Ingresos', title: '¿Cuánto recibes al mes en total?', hint: 'Suma todo: sueldo, rebusque, arriendos, lo que sea.', type: 'exact', exactKey: 'monto_ingresos', requireExact: true, exactLabel: 'Escribe un monto aproximado (lo usamos para calcular tu puntaje)', placeholder: '3.500.000', options: [
+      { val: 'i1', label: 'Menos de $1.500.000' }, { val: 'i2', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'i3', label: 'Entre $3.000.000 y $5.000.000' }, { val: 'i4', label: 'Entre $5.000.000 y $8.000.000' }, { val: 'i5', label: 'Entre $8.000.000 y $12.000.000' }, { val: 'i6', label: 'Más de $12.000.000' } ] },
+    3: { key: 'rango_gastos', tag: 'Gastos', title: '¿Cuánto se te va al mes en total?', hint: 'Arriendo, mercado, transporte, entretenimiento, todo.', type: 'exact', exactKey: 'monto_gastos', requireExact: true, exactLabel: 'Escribe un monto aproximado (lo usamos para calcular tu puntaje)', placeholder: '2.800.000', options: [
+      { val: 'g1', label: 'Menos de $1.500.000' }, { val: 'g2', label: 'Entre $1.500.000 y $2.500.000' }, { val: 'g3', label: 'Entre $2.500.000 y $4.000.000' }, { val: 'g4', label: 'Entre $4.000.000 y $6.500.000' }, { val: 'g5', label: 'Entre $6.500.000 y $10.000.000' }, { val: 'g6', label: 'Más de $10.000.000' } ] },
     4: { key: 'tipos_deuda', tag: 'Deudas', title: '¿Qué tipo de deudas tienes hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: 'ninguna', exactKey: 'monto_deuda_total', exactLabel: 'Si sabes cuánto debes en total, escríbelo (opcional)', placeholder: '12.000.000', options: [
       { val: 'tarjeta', label: 'Tarjeta de crédito' }, { val: 'personal', label: 'Préstamo personal o de libre inversión' }, { val: 'hipotecario', label: 'Crédito hipotecario' }, { val: 'vehiculo', label: 'Crédito de vehículo' }, { val: 'educativo', label: 'Crédito educativo' }, { val: 'compras', label: 'Compras a cuotas o financiadas' }, { val: 'familiares', label: 'Deuda con familiares o particulares' }, { val: 'ninguna', label: 'No tengo deudas' } ] },
-    5: { key: 'rango_cuotas', tag: 'Cuotas', title: '¿Cuánto pagas al mes en cuotas sumando todas tus deudas?', type: 'exact', exactKey: 'monto_cuotas', placeholder: '800.000', options: [
-      { val: 'nopago', label: 'No pago cuotas' }, { val: 'c1', label: 'Menos de $300.000' }, { val: 'c2', label: 'Entre $300.000 y $700.000' }, { val: 'c3', label: 'Entre $700.000 y $1.500.000' }, { val: 'c4', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'c5', label: 'Más de $3.000.000' } ] },
+    5: { key: 'rango_cuotas', tag: 'Cuotas', title: '¿Cuánto pagas al mes en cuotas sumando todas tus deudas?', type: 'exact', exactKey: 'monto_cuotas', requireExact: true, exactLabel: 'Escribe un monto aproximado (lo usamos para calcular tu puntaje)', placeholder: '800.000', options: [
+      { val: 'nopago', label: 'No pago cuotas' }, { val: 'c1', label: 'Menos de $300.000' }, { val: 'c2', label: 'Entre $300.000 y $700.000' }, { val: 'c3', label: 'Entre $700.000 y $1.500.000' }, { val: 'c4', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'c5', label: 'Entre $3.000.000 y $6.000.000' }, { val: 'c6', label: 'Más de $6.000.000' } ] },
     6: { key: 'cobertura', tag: 'Fondo de emergencia', title: 'Si dejaras de recibir ingresos hoy, ¿cuánto tiempo podrías cubrir tus gastos con lo que tienes guardado?', type: 'single', options: [
       { val: 'nada', label: 'No tengo nada guardado' }, { val: 'm1', label: 'Menos de 1 mes' }, { val: 'm1_3', label: 'Entre 1 y 3 meses' }, { val: 'm3_6', label: 'Entre 3 y 6 meses' }, { val: 'm6_12', label: 'Entre 6 meses y 1 año' }, { val: 'm12plus', label: 'Más de 1 año' } ] },
     7: { key: 'estabilidad_ingreso', tag: 'Estabilidad', title: '¿Tus ingresos son más o menos los mismos cada mes o suelen cambiar?', type: 'single', options: [
@@ -111,7 +111,15 @@
   function isStepIncomplete(step) {
     var q = Q[step], v = answers[q.key];
     if (q.type === 'multi') return !(Array.isArray(v) && v.length > 0);
-    return v === undefined; // single/exact: basta con un rango elegido (el monto exacto es opcional)
+    if (v === undefined) return true; // primero hay que elegir un rango/opción
+    // Ajuste de Eduardo: en ingresos, gastos y cuotas el monto aproximado es OBLIGATORIO
+    // (así el puntaje usa la cifra real y no aplana a dos personas en el mismo tramo).
+    if (q.requireExact) {
+      if (q.exactKey === 'monto_cuotas' && v === 'nopago') return false; // no paga cuotas -> sin monto
+      var amt = parseInt(String(answers[q.exactKey] || '').replace(/\D/g, ''), 10);
+      return !(amt > 0);
+    }
+    return false; // resto de single/exact: basta con la opción elegida
   }
 
   function renderIntro() {

@@ -73,5 +73,18 @@ assert('seguros con pólizas NO dispara frase_sin_coberturas', E.compute(withExt
 assert('seguros "No estoy seguro" SÍ dispara frase (atención=fondo)', E.compute(withExtra({ seguros_activos: ['inseguro'] })).frase_sin_coberturas, true);
 assert('seguros vacío NO dispara frase (solo ninguno/inseguro)', E.compute(withExtra({ seguros_activos: [] })).frase_sin_coberturas, false);
 
+// ── Ajuste Eduardo: tramos superiores subidos + monto aproximado OBLIGATORIO ──────
+// El monto real manda sobre el tramo, así dos personas del mismo tramo NO se aplanan.
+var hi = { rango_gastos: 'g3', tipos_deuda: ['ninguna'], cobertura: 'nada', estabilidad_ingreso: 'fijo', numero_dependientes: 'nadie' };
+function ing(extra) { var o = {}; for (var k in hi) o[k] = hi[k]; for (var j in extra) o[j] = extra[j]; return o; }
+// Dos usuarios en el MISMO tramo tope (i6 "Más de $12M") con montos muy distintos:
+var flujoRico = E.compute(ing({ rango_ingresos: 'i6', monto_ingresos: '40000000', rango_gastos: 'g3', monto_gastos: '3250000' })).pilares.flujo_caja.puntaje;
+var flujoJusto = E.compute(ing({ rango_ingresos: 'i6', monto_ingresos: '13000000', rango_gastos: 'g6', monto_gastos: '12000000' })).pilares.flujo_caja.puntaje;
+assert('mismo tramo tope, montos distintos -> flujo distinto (no aplana)', flujoRico !== flujoJusto, true);
+assert('ingreso alto real -> flujo 100 (usa el monto, no el tramo)', flujoRico, 100);
+// El tramo nuevo intermedio existe como respaldo (sin monto) y no rompe el motor:
+assert('tramo i5 respaldo computa', E.compute(ing({ rango_ingresos: 'i5' })).score >= 0, true);
+assert('tramo tope g6 respaldo computa', E.compute(ing({ rango_ingresos: 'i3', rango_gastos: 'g6' })).score >= 0, true);
+
 console.log('\n' + (fails === 0 ? 'ALL PASS' : (fails + ' FAILED')));
 process.exit(fails === 0 ? 0 : 1);

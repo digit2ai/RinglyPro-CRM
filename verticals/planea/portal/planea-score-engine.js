@@ -11,9 +11,13 @@
   'use strict';
 
   // ── Puntos medios (§3.1). Extremos = decisión de Planea, no mitad. ──────────
-  var MID_INGRESOS = { i1: 1200000, i2: 2250000, i3: 4000000, i4: 6500000, i5: 12000000 };
-  var MID_GASTOS   = { g1: 1200000, g2: 2000000, g3: 3250000, g4: 5250000, g5: 8000000 };
-  var MID_CUOTAS   = { nopago: 0, c1: 200000, c2: 500000, c3: 1100000, c4: 2250000, c5: 4000000 };
+  // Tramos superiores subidos (spec §4.1): se agregó un tramo intermedio y el tope pasó
+  // a Más de $12M (ingresos), $10M (gastos) y $6M (cuotas). Estos puntos medios SOLO son
+  // un respaldo: desde el ajuste de Eduardo, el monto aproximado es OBLIGATORIO en las
+  // preguntas de dinero, así que el cálculo usa la cifra real del usuario, no el tramo.
+  var MID_INGRESOS = { i1: 1200000, i2: 2250000, i3: 4000000, i4: 6500000, i5: 10000000, i6: 16000000 };
+  var MID_GASTOS   = { g1: 1200000, g2: 2000000, g3: 3250000, g4: 5250000, g5: 8250000, g6: 13000000 };
+  var MID_CUOTAS   = { nopago: 0, c1: 200000, c2: 500000, c3: 1100000, c4: 2250000, c5: 4500000, c6: 8000000 };
 
   // ── Mapas de puntaje por respuesta ──────────────────────────────────────────
   var FONDO_MAP = { nada: 0, m1: 20, m1_3: 50, m3_6: 85, m6_12: 92, m12plus: 100 }; // P6 directo (§3.2)
