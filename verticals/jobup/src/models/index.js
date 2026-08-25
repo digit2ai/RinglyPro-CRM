@@ -250,6 +250,12 @@ const SCHEMA = {
     started_at: { type: DataTypes.DATE },
     cost_usd: { type: DataTypes.FLOAT, defaultValue: 0 },
     ip_hash: { type: DataTypes.STRING },
+    // "You never finished your account" reminders. Counted here rather than in
+    // a table of their own because the teaser IS the unfinished account: there
+    // is no subscriber row to hang the state on until they set a password.
+    finish_reminders_sent: { type: DataTypes.INTEGER, defaultValue: 0 },
+    finish_reminded_at: { type: DataTypes.DATE },
+    finish_optout_at: { type: DataTypes.DATE },
     resume_purge_after: { type: DataTypes.DATE },    // 90-day purge (spec 19.1)
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
@@ -666,6 +672,9 @@ const ADDED_COLUMNS = [
   ['ju_teasers',       'started_at',   'TIMESTAMPTZ'],
   ['ju_opportunities', 'ip_hash',      'VARCHAR(64)'],
   ['ju_teasers',       'resume_text',  'TEXT'],
+  ['ju_teasers',       'finish_reminders_sent', 'INTEGER DEFAULT 0'],
+  ['ju_teasers',       'finish_reminded_at',    'TIMESTAMPTZ'],
+  ['ju_teasers',       'finish_optout_at',      'TIMESTAMPTZ'],
   ['ju_job_matches',   'stage_changed_at', 'TIMESTAMPTZ'],
   ['ju_job_matches',   'note',         'TEXT'],
   ['ju_job_matches',   'source',       "VARCHAR(32) DEFAULT 'hunter'"],

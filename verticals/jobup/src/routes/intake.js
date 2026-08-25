@@ -517,6 +517,10 @@ router.post('/build-account', async (req, res) => {
     });
 
     res.cookie('jobup_token', authSvc.issueSession(tenantId), authSvc.cookieOptions());
+    // The account exists now, so this browser is no longer carrying an
+    // unfinished one. Clearing it here is what keeps the home-page banner from
+    // greeting a paying subscriber with "you never finished".
+    res.clearCookie('jobup_unfinished', { path: '/' });
 
     const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
     res.status(202).json({

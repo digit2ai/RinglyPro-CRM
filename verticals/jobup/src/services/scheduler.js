@@ -64,10 +64,13 @@ function agentsEnabled() {
 function notifyEnabled() {
   return process.env.JOBUP_NOTIFY_GO === '1';
 }
-// The timer starts if EITHER the agent fleet or the notifier is enabled; each
-// gates its own work inside tick().
+function finishRemindersEnabled() {
+  return process.env.JOBUP_FINISH_REMINDERS_GO === '1';
+}
+// The timer starts if ANY of the agent fleet, the notifier or the unfinished-
+// account reminder is enabled; each gates its own work inside tick().
 function enabled() {
-  return agentsEnabled() || notifyEnabled();
+  return agentsEnabled() || notifyEnabled() || finishRemindersEnabled();
 }
 
 function dayKey(d = new Date()) {
@@ -187,9 +190,18 @@ async function tick() {
       catch (e) { out.notify = { error: e.message }; }
     }
 
+    // UNFINISHED-ACCOUNT REMINDERS. Independent of the agent fleet: the people
+    // it mails have no account, so there is nothing for the fleet to run for
+    // them — which is the entire problem it exists to fix. Claims its own hour,
+    // and on most ticks finds nothing due.
+    if (finishRemindersEnabled()) {
+      try { out.finish_reminders = await require('./finish-reminder').runOnce(); }
+      catch (e) { out.finish_reminders = { error: e.message }; }
+    }
+
     // Everything below is the AGENT fleet — only when JOBUP_AGENTS_GO=1.
     if (!agentsEnabled()) {
-      if (!out.notify) out.skipped = 'notify-only mode';
+      if (!out.notify && !out.finish_reminders) out.skipped = 'notify-only mode';
       return out;
     }
 
@@ -260,6 +272,7 @@ function status() {
     enabled: enabled(),
     agents_enabled: agentsEnabled(),
     notifier: (() => { try { return require('../jobs/notificationCron').status(); } catch (e) { return { error: e.message }; } })(),
+    finish_reminders: { enabled: finishRemindersEnabled() },
     running,
     tick_ms: TICK_MS,
     run_hour_utc: RUN_HOUR_UTC,
@@ -273,4 +286,7 @@ function status() {
   };
 }
 
-module.exports = { start, tick, status, enabled, refreshPool, runFleet, claimDay, dayKey, RUN_HOUR_UTC };
+module.exports = {
+  start, tick, status, enabled, refreshPool, runFleet, claimDay, dayKey, RUN_HOUR_UTC,
+  finishRemindersEnabled,
+};

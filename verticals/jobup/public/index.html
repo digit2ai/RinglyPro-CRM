@@ -727,6 +727,28 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
 <div class="ambient"></div>
 
+<!-- UNFINISHED ACCOUNT — the way back.
+     The preview token lives in the URL and nowhere else, so a visitor who
+     closed the build tab had no route back to their own preview from anywhere
+     on this site. The /teaser and /build pages leave a `jobup_unfinished`
+     cookie; if it is here, this browser is carrying a finished preview with no
+     account behind it, and this is the one link that finishes it. Hidden by
+     default and revealed by script, so it can never flash for a visitor who
+     has no unfinished account. -->
+<div id="ju-unfinished" hidden style="position:sticky;top:0;z-index:60;
+     background:linear-gradient(90deg,rgba(76,110,245,.22),rgba(230,73,128,.22));
+     border-bottom:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px)">
+  <div style="max-width:1080px;margin:0 auto;padding:11px 18px;display:flex;gap:14px;
+       align-items:center;flex-wrap:wrap">
+    <strong id="ju-unfinished-title" style="font-size:14.5px">You have an unfinished account.</strong>
+    <span id="ju-unfinished-body" style="font-size:14px;opacity:.85;flex:1 1 260px">
+      Your preview is built and waiting — it just needs a password and the roles to hunt for.</span>
+    <a id="ju-unfinished-cta" class="ju-btn" href="#" style="white-space:nowrap">Finish my account</a>
+    <button id="ju-unfinished-x" aria-label="Dismiss" style="background:none;border:0;color:inherit;
+      opacity:.55;font-size:20px;line-height:1;cursor:pointer;padding:2px 6px">&times;</button>
+  </div>
+</div>
+
 <nav>
   <a class="brand" href="/" aria-label="JobUp home">
     <!-- Inline, not an <img>: no extra request, and it stays crisp at any DPR.
@@ -1581,6 +1603,34 @@ if('serviceWorker' in navigator)
     document.getElementById('ju-inst-go').style.display='none';
     setTimeout(function(){box.classList.add('show');},2600);
   }
+})();
+</script>
+<script>
+(function(){
+  try{
+    var m = document.cookie.match(/(?:^|;\s*)jobup_unfinished=([^;]+)/);
+    if(!m) return;
+    if(sessionStorage.getItem('ju_unfinished_dismissed')==='1') return;
+    var tok = decodeURIComponent(m[1]);
+    if(!tok) return;
+    var es = (document.documentElement.lang||'').slice(0,2)==='es'
+             || (navigator.language||'').slice(0,2)==='es';
+    var el = document.getElementById('ju-unfinished');
+    if(es){
+      document.getElementById('ju-unfinished-title').textContent='Tienes una cuenta sin terminar.';
+      document.getElementById('ju-unfinished-body').textContent=
+        'Tu vista previa ya está lista — solo falta una contraseña y los puestos que debemos buscar.';
+      document.getElementById('ju-unfinished-cta').textContent='Terminar mi cuenta';
+    }
+    document.getElementById('ju-unfinished-cta').href='/build?t='+encodeURIComponent(tok);
+    document.getElementById('ju-unfinished-x').addEventListener('click',function(){
+      // Dismiss for this visit only. The account is still unfinished, and a
+      // permanent dismissal would quietly recreate the problem this fixes.
+      try{sessionStorage.setItem('ju_unfinished_dismissed','1');}catch(e){}
+      el.hidden=true;
+    });
+    el.hidden=false;
+  }catch(e){/* the banner is an aid; never let it break the page */}
 })();
 </script>
 </body>

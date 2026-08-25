@@ -346,8 +346,71 @@ ${rows.length ? `<ul>${items}</ul>`
   }
 });
 
-router.get(['/build', '/build/'], (req, res) =>
-  res.type('html').send(pwa.page('build.html', pwa.basePath(req))));
+// A RETURN VISITOR HAS TO BE ABLE TO FIND THEIR WAY BACK.
+//
+// The teaser token lives in the URL and nowhere else. Someone who reaches the
+// build step and closes the tab has no route back to their own preview — not
+// from the home page, not from a bookmark, not from anything. This cookie is
+// the crumb: any later visit to jobup.dev can see that this browser has an
+// unfinished account and offer the exact link that finishes it.
+//
+// Deliberately NOT HttpOnly — the landing page reads it to draw the banner —
+// and it holds a preview token, never a session. Cleared the moment the account
+// is built (see routes/intake.js), so a finished account never sees the banner.
+const UNFINISHED_COOKIE = 'jobup_unfinished';
+function markUnfinished(req, res, token) {
+  if (!token) return;
+  try {
+    res.cookie(UNFINISHED_COOKIE, String(token), {
+      maxAge: 30 * 24 * 3600 * 1000,
+      sameSite: 'lax',
+      secure: String(req.protocol) === 'https',
+      httpOnly: false,
+      path: '/',
+    });
+  } catch (e) { /* a cookie that will not set must never break the page */ }
+}
+
+router.get(['/build', '/build/'], (req, res) => {
+  markUnfinished(req, res, req.query.t);
+  res.type('html').send(pwa.page('build.html', pwa.basePath(req)));
+});
+
+/**
+ * One-click stop for the unfinished-account reminders.
+ *
+ * Public and unauthenticated by necessity — the recipient has no account to
+ * sign in to, which is the whole point. The link is an HMAC of the address, so
+ * it can stop mail to that address and do nothing else.
+ */
+router.get(['/finish/stop', '/finish/stop/'], async (req, res) => {
+  const svc = require('./services/finish-reminder');
+  let ok = false;
+  try {
+    const r = await svc.optOut(req.query.e, req.query.k);
+    ok = Boolean(r && r.ok);
+  } catch (e) { ok = false; }
+  const es = String(req.query.lang || '').toLowerCase() === 'es';
+  const title = ok
+    ? (es ? 'Listo, no te escribiremos más.' : "Done — we won't remind you again.")
+    : (es ? 'Ese enlace ya no es válido.' : 'That link is not valid.');
+  const body = ok
+    ? (es
+      ? 'No volveremos a enviarte recordatorios sobre tu cuenta sin terminar. Tu vista previa sigue disponible si algún día quieres retomarla.'
+      : 'We will not send you any more reminders about your unfinished account. Your preview is still there if you ever want to pick it up.')
+    : (es
+      ? 'Puede que ya lo hayas usado. Si sigues recibiendo correos, responde a cualquiera de ellos y lo detenemos a mano.'
+      : 'You may have used it already. If the emails keep coming, reply to any of them and we will stop them by hand.');
+  res.status(ok ? 200 : 400).type('html').send(`<!doctype html><html lang="${es ? 'es' : 'en'}"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>JobUp</title>
+<style>body{margin:0;background:#0b0b12;color:#e8e8f0;font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.c{max-width:460px}h1{font-size:22px;margin:0 0 12px}p{color:#c9c9d8;margin:0 0 18px}
+a{color:#9a9ab0}</style></head><body><div class="c">
+<div style="font-weight:700;background:linear-gradient(90deg,#7c5cff,#ff5c9d);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:18px">JobUp</div>
+<h1>${title}</h1><p>${body}</p><p><a href="/">jobup.dev</a></p></div></body></html>`);
+});
 
 // Job Map — "Job Search in your area" (v1): real, live openings on an interactive map.
 // Keyless off the shared cv_jobs pool (geocoded + cached); upgrades to Adzuna's

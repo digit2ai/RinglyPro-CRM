@@ -256,6 +256,16 @@ router.get('/:token', async (req, res) => {
 
   const lang = row.language === 'es' ? 'es' : 'en';
 
+  // Leave the crumb here too, not only on /build. Plenty of people read the
+  // preview, mean to come back, and never reach the build step at all — and
+  // this token is the only thing that can return them to it.
+  try {
+    res.cookie('jobup_unfinished', String(row.token), {
+      maxAge: 30 * 24 * 3600 * 1000, sameSite: 'lax',
+      secure: String(req.protocol) === 'https', httpOnly: false, path: '/',
+    });
+  } catch (e) { /* never break the preview over a cookie */ }
+
   res.type('html').send(`<!doctype html><html lang="${lang}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">

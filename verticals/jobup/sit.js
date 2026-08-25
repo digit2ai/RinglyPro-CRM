@@ -7882,6 +7882,216 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   });
 
   // ---------------------------------------------------------------
+  section('unfinished accounts — the reminder that closes the funnel');
+  {
+    const finish = require(__dirname + '/src/services/finish-reminder');
+    const mk = async (email, { hoursAgo = 5, sent = 0, optout = false, status = 'ready' } = {}) => {
+      const row = await models.teasers.create({
+        token: `sit-fin-${Math.random().toString(36).slice(2, 10)}`,
+        email, name: 'SIT Person', language: 'en', status,
+        finish_reminders_sent: sent, finish_optout_at: optout ? new Date() : null,
+        created_at: new Date(Date.now() - hoursAgo * 3600000),
+      });
+      // The in-memory store honours created_at on create; a real DB default can
+      // win, so force it either way or every row reads as brand new.
+      await models.teasers.update(
+        { created_at: new Date(Date.now() - hoursAgo * 3600000) }, { where: { id: row.id } });
+      return row;
+    };
+    const cleanup = [];
+    const sweep = async () => {
+      for (const e of cleanup) {
+        for (const row of await models.teasers.findAll({ where: { email: e } })) {
+          await models.teasers.destroy({ where: { id: row.id } });
+        }
+        const sub = await models.subscribers.findOne({ where: { email: e } });
+        if (sub) await models.subscribers.destroy({ where: { id: sub.id } });
+      }
+      cleanup.length = 0;
+    };
+
+    await t('a ready preview with no account is due for a reminder', async () => {
+      const e = 'sit-unfinished-a@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5 });
+      const rows = await finish.pending();
+      const mine = rows.find((r) => r.email === e);
+      assert.ok(mine, 'the abandoned preview was not detected');
+      assert.strictEqual(mine.due, true);
+      assert.ok(mine.finish_url.includes('/build?t='), 'the reminder must link to the build step');
+      await sweep();
+    });
+
+    await t('A FINISHED ACCOUNT IS NEVER REMINDED — the whole point', async () => {
+      const e = 'sit-unfinished-done@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5 });
+      await models.subscribers.create({ email: e, password_hash: 'x', status: 'active' });
+      const rows = await finish.pending();
+      assert.ok(!rows.find((r) => r.email === e), 'a completed account was queued for a "you did not finish" email');
+      await sweep();
+    });
+
+    await t('a subscriber row WITHOUT a password is still unfinished', async () => {
+      // Checkout creates the row before anyone chooses a password, so status
+      // alone would call a half-made account finished.
+      const e = 'sit-unfinished-nopw@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5 });
+      await models.subscribers.create({ email: e, status: 'active' });
+      const rows = await finish.pending();
+      assert.ok(rows.find((r) => r.email === e), 'a passwordless row must still count as unfinished');
+      await sweep();
+    });
+
+    await t('ONE PERSON IS ONE EMAIL, however many previews they built', async () => {
+      const e = 'sit-unfinished-many@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 9 }); await mk(e, { hoursAgo: 7 }); await mk(e, { hoursAgo: 5 });
+      const rows = (await finish.pending()).filter((r) => r.email === e);
+      assert.strictEqual(rows.length, 1, 'three previews produced three reminders');
+      assert.ok(rows[0].age_hours < 6, 'the newest preview should be the one linked');
+      await sweep();
+    });
+
+    await t('nothing is due before the first interval elapses', async () => {
+      const e = 'sit-unfinished-fresh@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 0.1 });
+      assert.ok(!(await finish.pending()).find((r) => r.email === e));
+      await sweep();
+    });
+
+    await t('TWO REMINDERS AND THEN SILENCE', async () => {
+      const e = 'sit-unfinished-cap@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 200, sent: finish.MAX_REMINDERS });
+      assert.ok(!(await finish.pending()).find((r) => r.email === e), 'a third reminder was queued');
+      await sweep();
+    });
+
+    await t('an old abandoned preview is never cold-mailed', async () => {
+      const e = 'sit-unfinished-old@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: (finish.MAX_AGE_DAYS + 3) * 24 });
+      const all = await finish.pending({ includeNotDue: true });
+      const mine = all.find((r) => r.email === e);
+      assert.ok(mine && mine.too_old === true && mine.due === false);
+      await sweep();
+    });
+
+    await t('opting out stops every preview for that address, not one row', async () => {
+      const e = 'sit-unfinished-stop@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5 }); await mk(e, { hoursAgo: 6 });
+      const r = await finish.optOut(e, finish.stopToken(e));
+      assert.strictEqual(r.ok, true);
+      assert.ok(!(await finish.pending()).find((r2) => r2.email === e), 'opt-out did not stop the mail');
+      await sweep();
+    });
+
+    await t('a forged stop link changes nothing', async () => {
+      const e = 'sit-unfinished-forge@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5 });
+      const r = await finish.optOut(e, 'not-the-real-token');
+      assert.strictEqual(r.ok, false);
+      assert.ok((await finish.pending()).find((r2) => r2.email === e), 'a forged link silenced a real address');
+      await sweep();
+    });
+
+    await t('a preview that never finished building is not chased', async () => {
+      const e = 'sit-unfinished-pending@example.invalid'; cleanup.push(e);
+      await mk(e, { hoursAgo: 5, status: 'pending' });
+      assert.ok(!(await finish.pending()).find((r) => r.email === e));
+      await sweep();
+    });
+
+    await t('a preview with no email address is skipped, not crashed on', async () => {
+      const row = await models.teasers.create({
+        token: 'sit-fin-noemail', email: null, status: 'ready',
+        created_at: new Date(Date.now() - 5 * 3600000),
+      });
+      const rows = await finish.pending({ includeNotDue: true });
+      assert.ok(!rows.find((r) => !r.email));
+      await models.teasers.destroy({ where: { id: row.id } });
+    });
+
+    await t('THE DRY RUN SENDS NOTHING AND BURNS NO ATTEMPT', async () => {
+      const e = 'sit-unfinished-dry@example.invalid'; cleanup.push(e);
+      const row = await mk(e, { hoursAgo: 5 });
+      const out = await finish.runOnce({ dryRun: true });
+      assert.strictEqual(out.dry_run, true);
+      assert.ok(out.results.some((r) => r.email === e && r.dry_run));
+      const after = await models.teasers.findOne({ where: { id: row.id } });
+      assert.ok(!after.finish_reminders_sent, 'the dry run consumed a reminder');
+      assert.ok(!after.finish_reminded_at, 'the dry run stamped a send that never happened');
+      await sweep();
+    });
+
+    await t('the sender refuses to run while the feature is switched off', async () => {
+      const before = process.env.JOBUP_FINISH_REMINDERS_GO;
+      delete process.env.JOBUP_FINISH_REMINDERS_GO;
+      const out = await finish.runOnce({});
+      assert.ok(out.skipped, 'reminders sent with the GO flag unset');
+      if (before !== undefined) process.env.JOBUP_FINISH_REMINDERS_GO = before;
+    });
+
+    await t('a failed send does NOT consume the attempt', async () => {
+      // With no SENDGRID_API_KEY the mailer cannot send, which is exactly the
+      // condition SIT runs under — so the counter must stay at zero or the one
+      // reminder this person had would be silently spent on nothing.
+      const e = 'sit-unfinished-fail@example.invalid'; cleanup.push(e);
+      const row = await mk(e, { hoursAgo: 5 });
+      process.env.JOBUP_FINISH_REMINDERS_GO = '1';
+      const out = await finish.runOnce({ force: true });
+      delete process.env.JOBUP_FINISH_REMINDERS_GO;
+      const after = await models.teasers.findOne({ where: { id: row.id } });
+      if (!require(__dirname + '/src/services/mailer').configured()) {
+        assert.strictEqual(out.sent, 0, 'a send was reported with no mailer configured');
+        assert.ok(!after.finish_reminders_sent, 'a failed send burned the attempt');
+      }
+      await sweep();
+    });
+
+    await t('the reminder names what is missing and carries a stop link', async () => {
+      const msg = finish.buildEmail({
+        email: 'x@example.invalid', name: 'Ada Lovelace', language: 'en',
+        finish_url: 'https://jobup.dev/build?t=abc',
+      }, { attempt: 1 });
+      assert.ok(/password/i.test(msg.text), 'the email never says a password is needed');
+      assert.ok(msg.text.includes('https://jobup.dev/build?t=abc'), 'the email omits the link back');
+      assert.ok(/finish\/stop/.test(msg.html), 'no way to stop the reminders');
+      assert.ok(/does not exist yet/i.test(msg.text), 'the email implies the account already exists');
+    });
+
+    await t('the Spanish reminder is Spanish, not an English body with a Spanish subject', async () => {
+      const msg = finish.buildEmail({
+        email: 'x@example.invalid', name: 'Ana', language: 'es',
+        finish_url: 'https://jobup.dev/build?t=abc',
+      }, { attempt: 1 });
+      assert.ok(/contraseña/.test(msg.text), 'the Spanish body is not Spanish');
+      assert.ok(/vista previa/i.test(msg.subject));
+    });
+
+    await t('only one instance may send a given hour', async () => {
+      const key = `sit-${Math.random().toString(36).slice(2, 8)}`;
+      assert.strictEqual(await finish.claimHour(key), true);
+      assert.strictEqual(await finish.claimHour(key), false, 'a second instance also claimed the hour');
+      for (const a of await models.audit_log.findAll({ where: { action: `finish-reminder:${key}` } })) {
+        await models.audit_log.destroy({ where: { id: a.id } });
+      }
+    });
+
+    await t('the landing page can show a return visitor the way back', () => {
+      const fs = require('fs');
+      const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      assert.ok(html.includes('jobup_unfinished'), 'the landing page never reads the crumb');
+      assert.ok(html.includes('/build?t='), 'the banner does not link to the build step');
+      assert.ok(/id="ju-unfinished"[^>]*hidden/.test(html),
+        'the banner must start hidden, or it flashes for visitors with no unfinished account');
+    });
+
+    await t('THE CRUMB IS CLEARED THE MOMENT THE ACCOUNT EXISTS', () => {
+      const fs = require('fs');
+      const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+      assert.ok(/clearCookie\('jobup_unfinished'/.test(src),
+        'a finished subscriber would keep being told they never finished');
+    });
+  }
+
+  // ---------------------------------------------------------------
   console.log(`\n${'='.repeat(64)}`);
   console.log(`  ${pass}/${pass + fail} passed`);
   if (fail) {
