@@ -310,7 +310,17 @@
     if (t.id === 'dg-exact-input') {
       var raw = t.value.replace(/\D/g, '');
       answers[t.getAttribute('data-exact')] = raw; t.value = fmtInput(raw);
+      // El monto ahora puede ser obligatorio (ingresos/gastos/cuotas). Escribir NO
+      // re-renderiza (perdería el foco del input), así que habilitamos/deshabilitamos
+      // el botón Continuar/Calcular en vivo según si el paso ya está completo.
+      refreshNavDisabled();
     }
+  }
+  function refreshNavDisabled() {
+    if (typeof current !== 'number') return;
+    var disabled = isStepIncomplete(current);
+    var btn = root.querySelector('.dg-next, .dg-calc');
+    if (btn) { if (disabled) btn.setAttribute('disabled', ''); else btn.removeAttribute('disabled'); }
   }
 
   function readOurUser() {
