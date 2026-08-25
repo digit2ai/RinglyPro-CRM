@@ -166,7 +166,7 @@ $('go1').onclick=async()=>{
   const b={business_name:business_name.value,owner_name:owner_name.value,email:email.value,password:p,owner_phone,country:country.value,locale:locale.value};
   const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(b)});
   const j=await r.json();
-  if(r.ok){goStep2();}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.error||'Error'}
+  if(r.ok){goStep2();}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.message||j.error||'Error'}
 };
 
 // Step 2a → start trial → Stripe checkout (redirects away, returns to ?paid=1)
