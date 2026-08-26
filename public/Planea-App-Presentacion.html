@@ -407,10 +407,22 @@
       +'<div class="sb-prof"><span class="sb-av">CR</span><div><div class="sb-nm">'+NAME+' Restrepo</div><div class="sb-pl">Plan activo</div></div></div>'
       +'<div class="sb-logout">'+ICON.logout+' Cerrar sesión</div></aside>';
   }
+  // Durante el onboarding la navegación está BLOQUEADA: solo se ve "Puntaje Planea".
+  // El resto de enlaces (Mis metas, Ingresos, Gastos, Ahorro, Deuda, Inversión, Seguros,
+  // Retiro, Cuentas, Planea IA, Guía…) aparecen recién cuando el usuario termina el
+  // cuestionario. Igual que en la app real.
+  function sidebarLocked(){
+    return '<aside class="sb"><div class="sb-logo">'+MARK+' Planea</div>'
+      +'<div class="sb-item on">'+ICON.clock+' Puntaje Planea</div>'
+      +'<div class="sb-sep"></div>'
+      +'<div class="sb-prof"><span class="sb-av">CR</span><div><div class="sb-nm">'+NAME+' Restrepo</div><div class="sb-pl">Plan activo</div></div></div>'
+      +'<div class="sb-logout">'+ICON.logout+' Cerrar sesión</div></aside>';
+  }
   function mfab(){ return '<div class="mfab">'+pav()+'<div><div class="mf1">Pregúntale a Maya</div><div class="mf2">Tu guía financiera IA</div></div></div>'; }
   var LEDE='Trece preguntas, tres minutos. Calculamos tu puntaje Planea con tus cuatro pilares (fondo de emergencia, flujo de caja, deuda y estabilidad), basado en estándares internacionales de planeación financiera, y de ahí lo afinamos con tu información real.';
-  function appScreen(card){
-    return '<div class="screen">'+sidebar('Puntaje Planea')+'<div class="mn"><div class="mn-eye">PUNTAJE PLANEA</div><h2 class="mn-h1">Descubre tu puntaje Planea</h2><p class="mn-lede">'+LEDE+'</p>'+card+'</div>'+mfab()+'</div>';
+  function appScreen(card, locked){
+    var sb=(locked===false)?sidebar('Puntaje Planea'):sidebarLocked();
+    return '<div class="screen">'+sb+'<div class="mn"><div class="mn-eye">PUNTAJE PLANEA</div><h2 class="mn-h1">Descubre tu puntaje Planea</h2><p class="mn-lede">'+LEDE+'</p>'+card+'</div>'+mfab()+'</div>';
   }
   function optsHtml(list, multi){
     return list.map(function(o){
@@ -466,7 +478,7 @@
       +'<div class="rcap">Este es tu punto de partida. Tu puntaje Planea irá subiendo a medida que registres tu información con Maya.</div>'
       +'<p class="rapertura">'+NAME+', hoy tu salud financiera es estable. Tus finanzas se sostienen en el día a día y eso ya es terreno ganado. Lo que falta es el respaldo que te permita absorber un imprevisto sin retroceder.</p>'
       +'<div class="rsub">DESGLOSE POR PILARES · CON LA LECTURA DE MAYA</div>'+pex+'</div>';
-    return appScreen(card);
+    return appScreen(card, false); // ya terminó el onboarding: la navegación se desbloquea
   }
 
   // ── Maya chat ──
