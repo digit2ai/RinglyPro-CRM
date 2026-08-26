@@ -473,6 +473,12 @@ router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.
 // request to '/' by default, which would hand out the RAW shell — {{BASE}}
 // tokens and all — before the route below ever ran.
 router.use(express.static(publicDir, { index: false }));
+// Static, self-contained marketing pages served at clean URLs on every root.
+// (The /radio clean URL regressed once when a merge rewrote the '/' handler —
+//  keep these together, right after the static mount, so a bare '/radio' or
+//  '/presentation' never falls through to a 404 while '/radio.html' works.)
+router.get(['/radio', '/radio/'], (req, res) => res.sendFile(path.join(publicDir, 'radio.html')));
+router.get(['/presentation', '/presentation/'], (req, res) => res.sendFile(path.join(publicDir, 'presentation.html')));
 router.get('/', (req, res) => {
   platformAnalytics.record(req, 'page_view', { path: '/' });
   res.type('html').send(pwa.page('index.html', pwa.basePath(req)));
