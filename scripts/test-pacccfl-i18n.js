@@ -75,6 +75,7 @@ const server = http.createServer((req, res) => {
   ok(navItems.filter(x => /Live Demo|Demo en Vivo|Live na Demo/.test(x)).length === 1,
      'header nav links the demo exactly once: ' + navItems.join(' | '));
   ok(await page.$$eval('.footer-col a[href="#demo"]', n => n.length) === 1, 'footer links the demo too');
+  ok(await page.$('.hero a[href="#demo"]') !== null, 'hero carries a button straight to the demo');
   ok(await page.$('#vcApp') !== null, 'simulator mounted in the page');
   ok(await count('.vc-nav button') === 13, 'sidebar has 13 modules (got ' + await count('.vc-nav button') + ')');
   ok((await txt('.vc-head h3')) === 'Dashboard', 'opens on the Dashboard');
