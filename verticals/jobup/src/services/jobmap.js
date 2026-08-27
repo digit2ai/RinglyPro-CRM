@@ -160,8 +160,17 @@ async function searchAdzuna({ what, where, limit }) {
 async function searchPool(seq, { what, where, remote, limit }) {
   const repl = {};
   const clauses = [`fetched_at > now() - interval '21 days'`];
-  if (what) { repl.q = '%' + what.trim() + '%'; clauses.push(`(title ILIKE :q OR company ILIKE :q OR description ILIKE :q)`); }
-  if (where && !isRemote(where)) { repl.w = '%' + where.trim() + '%'; clauses.push(`(location ILIKE :w)`); }
+  if (what) {
+    // Match the whole phrase, OR any significant word of it in the title. A
+    // search for "IT Project Manager" should still surface "Project Manager" and
+    // "Senior Project Manager" rather than requiring that exact string.
+    repl.q = '%' + what.trim() + '%';
+    const parts = [`(title ILIKE :q OR company ILIKE :q OR description ILIKE :q)`];
+    const words = what.trim().split(/\s+/).filter((w) => w.length > 2);
+    words.forEach((w, k) => { repl['w' + k] = '%' + w + '%'; parts.push(`title ILIKE :w${k}`); });
+    clauses.push('(' + parts.join(' OR ') + ')');
+  }
+  if (where && !isRemote(where)) { repl.loc = '%' + where.trim() + '%'; clauses.push(`(location ILIKE :loc)`); }
   if (remote === true) clauses.push(`(remote = true OR location ILIKE '%remote%')`);
   const rows = await seq.query(
     `SELECT title, company, location, remote, url, posted_at, comp_min, comp_max, comp_period
@@ -191,14 +200,41 @@ async function searchPool(seq, { what, where, remote, limit }) {
   });
 }
 
+// Pool search that relaxes the location when a specific city has nothing: a
+// title with zero local openings returns national matches rather than an empty
+// map, and reports that it relaxed so the UI can say so honestly.
+async function poolWithRelax(seq, { what, where, remote, limit }) {
+  let rows = await searchPool(seq, { what, where, remote, limit });
+  let relaxed = false;
+  if (!rows.length && where && !isRemote(where)) {
+    rows = await searchPool(seq, { what, where: '', remote, limit });
+    relaxed = rows.length > 0;
+  }
+  return { rows, relaxed };
+}
+
 async function search({ what = '', where = '', remote, limit } = {}) {
   const seq = db.sequelize();
   if (!seq) return { source: 'none', center: US_CENTER, jobs: [], count: 0, mapped: 0, adzuna: false, note: 'database unavailable' };
   await ensureGeocache(seq);
-  const adzuna = jobsource.adzunaActive();
-  let jobs, source;
-  if (adzuna) { jobs = await searchAdzuna({ what, where, limit }); source = 'adzuna'; }
-  else { jobs = await searchPool(seq, { what, where, remote, limit }); source = 'pool'; }
+  const adzunaConfigured = jobsource.adzunaActive();
+  let jobs, source, relaxed = false;
+  if (adzunaConfigured) {
+    // Adzuna is the local-coverage source, but its key has a daily quota and can
+    // return nothing once that is spent (or if the key lapses). When it comes
+    // back empty we DO NOT show an empty map — we fall back to the keyless
+    // cv_jobs pool (thousands of live openings). An empty map on a working
+    // product is the failure this prevents.
+    try { jobs = await searchAdzuna({ what, where, limit }); } catch (e) { jobs = []; }
+    source = 'adzuna';
+    if (!jobs.length) {
+      const p = await poolWithRelax(seq, { what, where, remote, limit });
+      if (p.rows.length) { jobs = p.rows; source = 'pool'; relaxed = p.relaxed; }
+    }
+  } else {
+    const p = await poolWithRelax(seq, { what, where, remote, limit });
+    jobs = p.rows; source = 'pool'; relaxed = p.relaxed;
+  }
 
   let center = where ? await geocode(seq, where, true) : null;   // one live call for the searched area
   const placed = jobs.filter((j) => j.lat != null && j.lng != null);
@@ -206,9 +242,13 @@ async function search({ what = '', where = '', remote, limit } = {}) {
   if (!center) center = US_CENTER;
 
   return {
-    source, adzuna, center, count: jobs.length, mapped: placed.length,
+    source, adzuna: source === 'adzuna', center, count: jobs.length, mapped: placed.length, relaxed,
     jobs: jobs.slice(0, limit || 120),
-    note: adzuna ? null : 'Live openings placed by city — the map keeps filling in as we map more locations. Add a free Adzuna key for full local coverage.'
+    note: relaxed
+      ? ('No local openings for that search near ' + (where || 'you').trim() + ' — showing matching roles across the US.')
+      : (source === 'pool'
+        ? 'Live openings placed by city — the map keeps filling in as we map more locations.'
+        : null)
   };
 }
 
