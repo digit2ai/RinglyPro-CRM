@@ -982,6 +982,7 @@
   }
   @media (prefers-reduced-motion: reduce) { .wf-section *, .wf-section *::before, .wf-section *::after { animation: none !important; } }
 </style>
+<link rel="stylesheet" href="/pacccfl/demo/demo.css">
 </head>
 <body>
 
@@ -995,7 +996,9 @@
     <ul class="header-nav" id="navMenu">
       <li><a href="#ecosystem" data-en="Ecosystem" data-es="Ecosistema" data-tl="Ekosistema">Ecosystem</a></li>
       <li><a href="#flow" data-en="Flow" data-es="Flujo" data-tl="Daloy">Flow</a></li>
-      <li><a href="#modules" data-en="Modules" data-es="Módulos" data-tl="Mga Module">Modules</a></li>
+      <li><a href="#modules" data-en="Modules" data-es="Módulos" data-tl="Mga Module">Modules</a>
+      <a href="#demo" data-en="Live Demo" data-es="Demo en Vivo" data-tl="Live na Demo">Live Demo</a></li>
+      <li><a href="#demo" style="color:var(--gold);font-weight:600;" data-en="Live Demo" data-es="Demo en Vivo" data-tl="Live na Demo">Live Demo</a></li>
       <li><a href="#how" data-en="How It Works" data-es="Cómo Funciona" data-tl="Paano Gumagana">How It Works</a></li>
       <li><a href="#technology" data-en="Technology" data-es="Tecnología" data-tl="Teknolohiya">Technology</a></li>
       <li><a href="#access" data-en="Access" data-es="Acceso" data-tl="Mag-access">Access</a></li>
@@ -1238,6 +1241,62 @@
   </div>
 </section>
 
+
+<!-- ═══════ LIVE APP DEMO ═══════ -->
+<section class="section section-full demo-section" id="demo">
+  <div class="section-inner">
+    <div class="gold-line" style="margin:0 auto 20px;"></div>
+    <h2 class="section-title" style="text-align:center;"
+        data-en="The platform, running"
+        data-es="La plataforma, funcionando"
+        data-tl="Ang plataporma, tumatakbo">The platform, running</h2>
+    <p class="section-subtitle" style="margin:0 auto 10px;text-align:center;"
+       data-en="This is the member app. Click through it -- the directory searches, the AI ranks, the projects filter. No account needed."
+       data-es="Esta es la app del miembro. Recórrela: el directorio busca, la IA ordena, los proyectos se filtran. Sin necesidad de cuenta."
+       data-tl="Ito ang app ng miyembro. I-click mo -- naghahanap ang direktoryo, nirarangko ng AI, sinasala ang mga proyekto. Walang kailangang account.">This is the member app. Click through it -- the directory searches, the AI ranks, the projects filter. No account needed.</p>
+
+    <div class="demo-frame-wrap">
+      <div class="vc-chrome">
+        <div class="vc-chrome-bar">
+          <div class="vc-dots"><i></i><i></i><i></i></div>
+          <div class="vc-url">camaravirtual.app/<b>cv-2</b></div>
+          <span class="vc-demo-tag" id="vcDemoTag">Demo · sample data</span>
+        </div>
+        <div class="vc-app" id="vcApp"></div>
+      </div>
+    </div>
+
+    <p class="demo-disc" id="vcDisc">Interactive demonstration. Every member, company and project shown here is invented sample data — click anything.</p>
+
+    <div class="demo-points">
+      <div class="demo-point">
+        <b data-en="Search, not scroll" data-es="Buscar, no desplazarse" data-tl="Maghanap, huwag mag-scroll">Search, not scroll</b>
+        <span data-en="Filter 1,247 members by sector and region, or describe a need in plain language and let the AI rank them."
+              data-es="Filtra 1.247 miembros por sector y región, o describe una necesidad en lenguaje natural y deja que la IA los ordene."
+              data-tl="Salain ang 1,247 miyembro ayon sa sektor at rehiyon, o ilarawan ang pangangailangan sa payak na wika at hayaang irangko ng AI.">Filter 1,247 members by sector and region, or describe a need in plain language and let the AI rank them.</span>
+      </div>
+      <div class="demo-point">
+        <b data-en="Equity by design" data-es="Equidad por diseño" data-tl="Pagkakapantay-pantay sa disenyo">Equity by design</b>
+        <span data-en="A Gini correction reserves slots for qualified members with fewer introductions, so opportunity does not pool around the same names."
+              data-es="Una corrección Gini reserva cupos para miembros calificados con menos presentaciones, para que la oportunidad no se concentre en los mismos nombres."
+              data-tl="Naglalaan ang Gini correction ng puwesto para sa mga kwalipikadong miyembrong may mas kaunting introduksiyon, para hindi maipon ang oportunidad sa parehong pangalan.">A Gini correction reserves slots for qualified members with fewer introductions, so opportunity does not pool around the same names.</span>
+      </div>
+      <div class="demo-point">
+        <b data-en="Validated before funded" data-es="Validado antes de financiado" data-tl="Napatunayan bago pinondohan">Validated before funded</b>
+        <span data-en="Every project carries an Investment Readiness Score and a 10,000-run Monte Carlo viability figure before a dollar moves."
+              data-es="Cada proyecto lleva un Puntaje de Preparación para Inversión y una viabilidad Monte Carlo de 10.000 corridas antes de mover un dólar."
+              data-tl="May Investment Readiness Score at 10,000-takbong Monte Carlo viability ang bawat proyekto bago gumalaw ang kahit isang dolyar.">Every project carries an Investment Readiness Score and a 10,000-run Monte Carlo viability figure before a dollar moves.</span>
+      </div>
+      <div class="demo-point">
+        <b data-en="Trust you can audit" data-es="Confianza auditable" data-tl="Tiwalang masusuri">Trust you can audit</b>
+        <span data-en="TrustRank is computed from verified registration, completed projects and peer endorsements -- never self-reported."
+              data-es="TrustRank se calcula a partir del registro verificado, proyectos completados y respaldos de pares: nunca es autodeclarado."
+              data-tl="Kinompute ang TrustRank mula sa beripikadong rehistro, natapos na proyekto at endorsement ng kapwa -- hindi kailanman self-reported.">TrustRank is computed from verified registration, completed projects and peer endorsements -- never self-reported.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════ HOW IT WORKS ═══════ -->
 <section class="section section-full" id="how">
   <div class="section-inner">
@@ -1401,6 +1460,7 @@
 
     try { localStorage.setItem('pacccfl_lang', lang); } catch (e) {}
     // Let the voice tour re-label itself and swap to this language's narration.
+    if (window.PACCDemo) window.PACCDemo.relang();
     if (typeof window.__linaOnLangChange === 'function') window.__linaOnLangChange(lang);
   };
 
@@ -1441,15 +1501,16 @@
     // Narration exists in all three languages. English was recorded once via
     // ElevenLabs; Spanish (es-US) and Tagalog (fil-PH) are neural voices generated
     // by scripts/generate-pacccfl-audio.js. Audio path follows the language switch.
-    var AUDIO_DIR = { en: '/pacccfl/audio/', es: '/pacccfl/audio/es/', tl: '/pacccfl/audio/tl/' };
+    var AUDIO_DIR = { en: '/pacccfl/audio/en/', es: '/pacccfl/audio/es/', tl: '/pacccfl/audio/tl/' };
     var SEGS = [
       { n: 1, sec: 'hero',       en: 'Welcome',                 es: 'Bienvenida',                  tl: 'Maligayang Pagdating' },
       { n: 2, sec: 'ecosystem',  en: 'The Digital Ecosystem',   es: 'El Ecosistema Digital',       tl: 'Ang Digital na Ekosistema' },
       { n: 3, sec: 'flow',       en: 'The Ecosystem in Motion', es: 'El Ecosistema en Movimiento', tl: 'Ang Ekosistema sa Galaw' },
       { n: 4, sec: 'modules',    en: 'The Member Dashboard',    es: 'El Panel del Miembro',        tl: 'Ang Dashboard ng Miyembro' },
-      { n: 5, sec: 'how',        en: 'How It Works',            es: 'Cómo Funciona',               tl: 'Paano Ito Gumagana' },
-      { n: 6, sec: 'technology', en: 'Technology Platform',     es: 'Plataforma Tecnológica',      tl: 'Plataporma ng Teknolohiya' },
-      { n: 7, sec: 'access',     en: 'Enter the Ecosystem',     es: 'Entra al Ecosistema',         tl: 'Pumasok sa Ekosistema' }
+      { n: 5, sec: 'demo',       en: 'The Platform, Running',   es: 'La Plataforma en Marcha',     tl: 'Ang Plataporma na Tumatakbo' },
+      { n: 6, sec: 'how',        en: 'How It Works',            es: 'Cómo Funciona',               tl: 'Paano Ito Gumagana' },
+      { n: 7, sec: 'technology', en: 'Technology Platform',     es: 'Plataforma Tecnológica',      tl: 'Plataporma ng Teknolohiya' },
+      { n: 8, sec: 'access',     en: 'Enter the Ecosystem',     es: 'Entra al Ecosistema',         tl: 'Pumasok sa Ekosistema' }
     ];
     // Player chrome, per language.
     var UI = {
@@ -1551,5 +1612,7 @@
     updateBar(); // label the (hidden) bar in the language the page loaded in
   })();
 </script>
+<script src="/pacccfl/demo/demo-data.js" defer></script>
+<script src="/pacccfl/demo/demo.js" defer></script>
 </body>
 </html>
