@@ -786,6 +786,40 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 
-  // The page language switch drives the app too.
-  window.PACCDemo = { relang: render, go: function (s) { S.screen = s; render(); } };
+  // The page language switch drives the app too, and the narrated ecosystem
+  // deck (/pacccfl/ecosystem/) drives it slide by slide through set()/runMatch().
+  window.PACCDemo = {
+    relang: render,
+    go: function (s) { S.screen = s; render(); },
+    // Put the app into an exact state for one slide of the deck.
+    set: function (o) {
+      o = o || {};
+      if (o.screen) S.screen = o.screen;
+      if (o.projTab) S.proj = o.projTab;
+      if (o.xchTab) S.xch = o.xchTab;
+      if (o.admTab) { S.adm.tab = o.admTab; S.adm.page = 0; }
+      if (typeof o.guide === 'number') S.guide = o.guide;
+      if (typeof o.dirSector === 'string') { S.dir.sector = o.dirSector; S.dir.page = 0; }
+      if (typeof o.dirQ === 'string') { S.dir.q = o.dirQ; S.dir.page = 0; }
+      if (o.clearMatch) { S.match.q = ''; S.match.results = null; S.match.busy = false; }
+      render();
+    },
+    // Type an example need and run the ranking, so the deck can show the AI
+    // working rather than an empty form. Resolves once results are on screen.
+    runMatch: function (i) {
+      S.screen = 'matching';
+      S.match.q = label(EXAMPLES[i || 0]);
+      S.match.results = null;
+      S.match.busy = true;
+      render();
+      return new Promise(function (res) {
+        setTimeout(function () {
+          S.match.busy = false;
+          S.match.results = scoreMembers(S.match.q);
+          render();
+          res();
+        }, 850);
+      });
+    }
+  };
 })();

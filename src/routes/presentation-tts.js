@@ -111,7 +111,8 @@ const EDGE_VOICES = {
   salome: 'es-CO-SalomeNeural',
   ava: 'en-US-AvaNeural',       // warm US-English female — Ava
   guy: 'en-US-GuyNeural',       // confident US-English male — Guy
-  sonia: 'en-GB-SoniaNeural'    // UK-English female — Sonia
+  sonia: 'en-GB-SoniaNeural',   // UK-English female — Sonia
+  blessica: 'fil-PH-BlessicaNeural' // Filipino female — Tagalog narration
 };
 
 // Synthesize + disk-cache + respond. Shared by POST /edge and by the legacy
@@ -124,7 +125,9 @@ async function serveEdge(req, res, { text, voice, rate }) {
     // Resolve the voice: friendly alias -> Edge name, or pass an Edge name straight through.
     let voiceName = EDGE_VOICES[String(voice || '').toLowerCase()];
     if (!voiceName) {
-      voiceName = /^[a-z]{2}-[A-Z]{2}-\w+Neural$/.test(voice || '') ? voice : EDGE_VOICES.lina;
+      // 2- OR 3-letter language subtag: Filipino is fil-PH-*, and a 2-letter-only
+      // test silently fell back to the Spanish voice for every Tagalog request.
+      voiceName = /^[a-z]{2,3}-[A-Z]{2}-\w+Neural$/.test(voice || '') ? voice : EDGE_VOICES.lina;
     }
     const rateStr = /^[+-]\d{1,3}%$/.test(rate || '') ? rate : '-2%';
 
