@@ -37,6 +37,7 @@ const BuildPlan = sequelize.define('JmBuildPlan', {
   id:           { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id:    tenant,
   label:        { type: DataTypes.STRING },
+  kind:         { type: DataTypes.STRING, defaultValue: 'build_plan' },  // build_plan | architecture_record
   plan:         { type: DataTypes.JSONB, allowNull: false },
   evidence:     { type: DataTypes.JSONB },
   counts:       { type: DataTypes.JSONB },
@@ -57,6 +58,7 @@ const PlanRun = sequelize.define('JmPlanRun', {
   id:          { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id:   tenant,
   status:      { type: DataTypes.STRING, allowNull: false },   // ok | refused | error
+  kind:         { type: DataTypes.STRING, defaultValue: 'build_plan' },  // build_plan | architecture_record
   composed_by: { type: DataTypes.STRING },
   violations:  { type: DataTypes.JSONB },
   rejected_rewrites: { type: DataTypes.JSONB },
