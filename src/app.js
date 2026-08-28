@@ -172,6 +172,34 @@ try {
 }
 
 
+// ═════════════════════════════════════════════════════════════════════════
+// JOBMD.IO HOST ROUTING — jobmd.io and www.jobmd.io
+//
+// REGISTERED HERE FOR THE SAME REASON AS THE JOBUP BLOCK ABOVE: Express
+// matches in registration order, and the CRM defines hundreds of paths below
+// this point. Registering the handler after them would silently shadow only
+// the paths the CRM happens to define — jobmd.io/admin would serve someone
+// else's login while jobmd.io/health worked fine, which is the worst kind of
+// bug to find in production.
+//
+// The whole domain is served in place so the address bar stays on jobmd.io.
+// JobMD self-mounts /api/tts (see verticals/jobmd/src/index.js) so Ava's
+// narration is same-origin here; nothing needs to fall through for voice.
+// Anything JobMD does not handle still falls through to the CRM.
+// ═════════════════════════════════════════════════════════════════════════
+try {
+  const jobmdHostApp = require('../verticals/jobmd/src/index');
+  app.use((req, res, next) => {
+    const host = (req.get('host') || '').toLowerCase().split(':')[0];
+    if (host !== 'jobmd.io' && host !== 'www.jobmd.io') return next();
+    return jobmdHostApp(req, res, next);
+  });
+  console.log('JobMD.io host routing active for jobmd.io / www.jobmd.io');
+} catch (e) {
+  console.log('⚠️ JobMD.io host routing unavailable:', e.message);
+}
+
+
 // Custom domain: camaravirtual.app
 // Root '/' serves the Spanish marketing landing DIRECTLY (no rewrite to
 // /chamber/hispamind/, which would now bounce through the legacy 301

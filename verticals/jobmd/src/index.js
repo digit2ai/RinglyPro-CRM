@@ -43,6 +43,21 @@ const DEFAULT_TENANT = parseInt(process.env.JOBMD_TENANT_ID || '1', 10);
 router.use(express.json({ limit: '1mb' }));
 router.use(express.urlencoded({ extended: true }));
 
+/**
+ * Neural TTS for Ava's narration.
+ *
+ * On jobmd.io the host handler routes the WHOLE domain into this router, and
+ * the main app mounts /api/tts ~1,100 lines later — so the CRM's own route is
+ * unreachable there and the page would silently drop to the robot browser
+ * voice. Mounting the same route here makes Ava same-origin on every root
+ * (/jobmd, /jobMD and jobmd.io) with no CORS and no ordering dependency.
+ *
+ * This is the exact route already live at aiagent.ringlypro.com. It is REUSED,
+ * never regenerated — there is no second TTS engine in this vertical.
+ */
+try { router.use('/api/tts', require('../../../src/routes/presentation-tts')); }
+catch (e) { console.warn('[jobmd] TTS route not mounted —', e.message); }
+
 // ── Boot ────────────────────────────────────────────────────────────────────
 let initError = null;
 let initDone = false;
@@ -300,6 +315,35 @@ router.get('/api/v1/leads', requireAuth, async function (req, res) {
 // index:false so express.static never answers "/" with the raw file.
 router.use(express.static(publicDir, { index: false }));
 router.get('/', function (req, res) { res.sendFile(path.join(publicDir, 'index.html')); });
+
+// ── Catch-all ───────────────────────────────────────────────────────────────
+//
+// JOBMD.IO IS A PUBLIC BRAND DOMAIN, NOT A SECOND FRONT DOOR TO THE CRM.
+//
+// The host handler routes the whole domain into this router, and hundreds of
+// CRM routes are registered after it. Calling next() on an unowned path
+// therefore served the CRM on jobmd.io — jobmd.io/admin returned the
+// CamaraVirtual Platform Admin login, which is the same class of bug the JobUp
+// host block documents, and it leaks an unrelated product onto a customer
+// domain. Anything this vertical does not own ends here instead.
+//
+// Nothing needs to fall through: the page uses relative assets and /api/tts is
+// self-mounted above.
+router.use(function (req, res) {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+  res.status(404).type('html').send(
+    '<!doctype html><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Not found - JobMD.io</title>' +
+    '<style>html,body{margin:0;height:100%;background:#0a0a0e;color:#f5f5f7;' +
+    'font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;' +
+    'display:grid;place-items:center;text-align:center}a{color:#22d3ee}' +
+    'p{color:#a6a9b4;margin:10px 0 22px}</style>' +
+    '<div><h1 style="font-size:44px;margin:0;letter-spacing:-.03em">Not found</h1>' +
+    '<p>That page does not exist on JobMD.io.</p>' +
+    '<p><a href="/">Go to the home page</a> &middot; ' +
+    '<a href="tel:8883154401">(888) 315-4401</a></p></div>');
+});
 
 module.exports = router;
 module.exports.init = init;
