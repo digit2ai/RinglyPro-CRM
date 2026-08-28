@@ -303,10 +303,22 @@ function mustReject(name, mutate, expectConstraint) {
     ['fenced bare array',  '```json\n[{"i":0,"text":"a"}]\n```',                   1],
     ['object w/ preamble', 'Here you go:\n{"rewrites":[{"i":0,"text":"a"}]}',      1],
     ['array w/ preamble',  'Sure:\n[{"i":0,"text":"a"}]',                          1],
-    ['unparseable',        'sorry, I cannot',                                     0]
+    ['unparseable',        'sorry, I cannot',                                     0],
+    // THE REAL PRODUCTION FAILURE: a fenced reply cut off mid-array. There is
+    // no closing fence and no closing brace, so every whole-payload parse
+    // fails and the rewrites that DID arrive were being thrown away.
+    ['truncated fenced reply',
+     '```json\n{\n "rewrites": [\n  {"i": 0, "text": "First, complete."},\n' +
+     '  {"i": 1, "text": "Second with a \\"quote\\" and a { brace } inside."},\n  {', 2]
   ].forEach(function (c) {
     eq('parser: ' + c[0], PR(c[1]).length, c[2]);
   });
+  // Salvage must not corrupt the prose it recovers.
+  const salv = PR('```json\n{"rewrites":[{"i":0,"text":"a \\"q\\" and { brace }"},{');
+  ok('parser: salvaged text survives quotes and braces intact',
+     salv.length === 1 && salv[0].text === 'a "q" and { brace }', JSON.stringify(salv));
+  ok('parser: the token ceiling leaves room for every prose slot',
+     /max_tokens: 12000/.test(fs.readFileSync(path.join(__dirname, 'src', 'services', 'architect.js'), 'utf8')));
   // Both composers must report what the model actually did.
   ['architect.js', 'spec-architect.js'].forEach(function (f) {
     const src = fs.readFileSync(path.join(__dirname, 'src', 'services', f), 'utf8');
