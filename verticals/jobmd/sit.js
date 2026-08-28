@@ -684,6 +684,45 @@ function mustReject(name, mutate, expectConstraint) {
      JSON.stringify(tLanding) === JSON.stringify(tDoc),
      'landing ' + tLanding.length + ' vs docs ' + tDoc.length);
 
+  // ── The two menu bars must carry the same items, in the same order ──────
+  function navItems(src) {
+    const open = src.indexOf('<div class="navlinks" id="navlinks">');
+    const close = src.indexOf('<button class="themetog"', open);
+    const seg = src.slice(open, close);
+    return Array.from(seg.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g),
+                       function (m) { return { href: m[1], label: m[2].trim() }; });
+  }
+  const navLanding = navItems(html), navDoc = navItems(doc);
+  eq('nav: the landing bar carries five items', navLanding.length, 5);
+  ok('nav: both bars carry the same labels, in the same order',
+     JSON.stringify(navLanding.map(function (x) { return x.label; })) ===
+     JSON.stringify(navDoc.map(function (x) { return x.label; })),
+     'landing [' + navLanding.map(function (x) { return x.label; }).join(', ') + '] vs docs [' +
+     navDoc.map(function (x) { return x.label; }).join(', ') + ']');
+  // The hrefs differ by necessity — the docs page has to reach back to the
+  // landing page — but they must resolve to the same targets.
+  // "Home" is the one item that legitimately differs: on the landing page it
+  // scrolls to the top, from the docs page it navigates back. Everything else
+  // must be the same target, prefixed so it resolves from a subpage.
+  ok('nav: the docs bar points back at the landing page for shared items',
+     navDoc.every(function (d, i) {
+       const l = navLanding[i].href;
+       if (navLanding[i].label === 'Home') return d.href === './' && l.charAt(0) === '#';
+       return d.href === './' + l;
+     }),
+     navDoc.map(function (d, i) { return d.href + ' vs ' + navLanding[i].href; }).join(' | '));
+  // Every in-page target the bar names must exist on the landing page.
+  navLanding.filter(function (x) { return x.href.charAt(0) === '#'; }).forEach(function (x) {
+    const id = x.href.slice(1);
+    ok('nav: "' + x.label + '" points at a section that exists', new RegExp('id="' + id + '"').test(html));
+  });
+  ok('nav: How It Works points at the routed page',
+     navLanding.some(function (x) { return x.href === 'how-it-works'; }));
+  // The items dropped from the bar stay reachable in the footer sitemap.
+  ['The Right Fit', 'Specialties', 'Contact'].forEach(function (l) {
+    ok('nav: "' + l + '" is still reachable from the footer', new RegExp('>' + l + '<').test(html));
+  });
+
   // ── Mobile navigation ──  // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
   // hero ghost through, and it carried no Apply Now. Assert the contract.
