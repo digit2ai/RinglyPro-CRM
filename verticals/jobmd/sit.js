@@ -382,24 +382,29 @@ function mustReject(name, mutate, expectConstraint) {
   ok('constellation: the full written list is always present, never replaced',
      html.indexOf('id="agentList"') !== -1 && !/agentList[^>]*style="display:none/.test(html));
 
-  // ── Footer illustration ─────────────────────────────────────────────────
+  // ── Footer backdrop ─────────────────────────────────────────────────────
   ok('footer: robotic-surgery.jpg exists', fs.existsSync(path.join(__dirname, 'public', 'robotic-surgery.jpg')));
-  ok('footer: the illustration is in the footer', /<footer>[\s\S]*?class="fimg"/.test(html));
-  // Below the fold: it must not compete with the hero for bandwidth.
-  ok('footer: it loads lazily', /robotic-surgery\.jpg"[^>]*loading="lazy"/.test(html));
-  ok('footer: it reserves its box so the footer does not jump',
-     /robotic-surgery\.jpg" width="1280" height="853"/.test(html));
-  ok('footer: it is described for screen readers, not left as an empty alt',
-     /alt="Robotic surgery system:/.test(html));
-  // IT CARRIES CLINICAL CLAIMS (less pain, faster recovery, better outcomes).
-  // Those are the published advantages of robotic surgery, not anything
-  // JobMD.io measured, and the caption has to say so.
-  ok('footer: the clinical claims are attributed, not adopted',
-     /not outcomes measured by JobMD\.io/.test(html));
+  ok('footer: the illustration is the footer background',
+     /footer::before\{[^}]*url\(robotic-surgery\.jpg\)/.test(html));
+  ok('footer: it is a backdrop, not an inline figure', html.indexOf('class="fimg"') === -1);
+  // The artwork is bright in places; every footer link sits on top of it.
+  ok('footer: the backdrop is scrimmed so the footer stays legible',
+     /footer::after\{[^}]*linear-gradient\(180deg,rgba\(10,10,14/.test(html));
+  ok('footer: the backdrop is clipped to the footer',
+     /\.jmd footer\{[^}]*overflow:hidden/.test(html));
+  // A DECORATIVE BACKGROUND CARRIES NO ALT, so the claims baked into the
+  // artwork - less pain, faster recovery, better outcomes - have to be
+  // attributed in the fine print or they read as JobMD.io's own outcomes.
+  ok('footer: the clinical claims are attributed in the fine print',
+     /not outcomes measured by\s+JobMD\.io/.test(html));
   const fimgKB = fs.statSync(path.join(__dirname, 'public', 'robotic-surgery.jpg')).size / 1024;
-  ok('footer: the illustration is under 400KB', fimgKB < 400, Math.round(fimgKB) + 'KB');
+  ok('footer: the backdrop is under 400KB', fimgKB < 400, Math.round(fimgKB) + 'KB');
+  // The fine print sits on the artwork. At --faint it measured 3.64:1, under
+  // AA for text that small, so it has its own lighter colour.
+  ok('footer: the fine print is lightened for contrast over the backdrop',
+     /\.jmd \.fine\{color:#9aa0ad/.test(html));
 
-  // ── Mobile navigation ───────────────────────────────────────────────────
+  // ── Mobile navigation ──  // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
   // hero ghost through, and it carried no Apply Now. Assert the contract.
   ok('mobile: the burger is a 44px touch target', /\.burger\{[^}]*width:44px[^}]*height:44px/.test(html));
