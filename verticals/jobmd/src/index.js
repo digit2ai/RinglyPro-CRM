@@ -285,7 +285,10 @@ router.post('/api/v1/leads', async function (req, res) {
     if (rateLimited(hash, parseInt(process.env.JOBMD_LEADS_PER_HOUR || '10', 10))) {
       return res.status(429).json({ error: 'Too many submissions. Please call (888) 315-4401.' });
     }
-    const roles = ['surgeon', 'hospital_executive', 'other'];
+    // Mirrors the <select> on the landing page. JobMD.io recruits surgeons,
+    // doctors and medical staff, so the allow-list carries all of them; an
+    // unrecognized value is stored as null rather than trusted.
+    const roles = ['surgeon', 'physician', 'medical_staff', 'hospital_executive', 'other'];
     const role = roles.indexOf(String(b.role || '')) !== -1 ? String(b.role) : null;
     await Lead.create({
       tenant_id: DEFAULT_TENANT,          // never from the body

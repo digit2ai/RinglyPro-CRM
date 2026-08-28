@@ -241,7 +241,37 @@ function mustReject(name, mutate, expectConstraint) {
 
   // ── 9. The landing page ───────────────────────────────────────────────────
   const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-  ok('landing: carries the source positioning', html.indexOf('Superior Surgeons') !== -1);
+  ok('landing: carries the source positioning', html.indexOf('Superior Results') !== -1);
+
+  // ── SCOPE: surgeons, doctors AND medical staff ──────────────────────────
+  // The page was first built from a surgeon-only source. JobMD.io is not
+  // surgeon-only, and a page that says it is turns away two thirds of the
+  // people it is for.
+  ['Surgeons', 'Doctors', 'Medical Staff'].forEach(function (a) {
+    ok('scope: the hero names ' + a, new RegExp('class="chip t">' + a + '<').test(html));
+  });
+  ok('scope: the page no longer calls itself a surgeon recruiting firm',
+     html.indexOf('leading surgeon recruiting firm') === -1);
+  ok('scope: Who We Serve covers doctors', /<h3>Doctors &amp; Physicians<\/h3>/.test(html));
+  ok('scope: Who We Serve covers medical staff', /<h3>Medical Staff<\/h3>/.test(html));
+  ok('scope: the surgical specialty list is labelled as surgical, not as everything',
+     html.indexOf('>Surgical Specialties<') !== -1);
+  // No invented roster: we may not publish a staff role we were never given.
+  ok('scope: no medical staff roles are invented',
+     !/(registered nurse|nurse practitioner|physician assistant|perfusionist|radiologic tech)/i.test(html));
+
+  // THE FORM AND THE SERVER MUST AGREE. A value the page offers but the server
+  // rejects is silently dropped to null, and the lead arrives unattributed.
+  const formRoles = (html.match(/<option value="([a-z_]+)">/g) || [])
+    .map(function (m) { return m.replace(/.*value="([a-z_]+)".*/, '$1'); });
+  const srvMatch = idxSrc.match(/const roles = \[([^\]]+)\]/);
+  const srvRoles = srvMatch ? srvMatch[1].split(',').map(function (x) { return x.trim().replace(/'/g, ''); }) : [];
+  ok('scope: every role the form offers is accepted by the server',
+     formRoles.length > 0 && formRoles.every(function (r) { return srvRoles.indexOf(r) !== -1; }),
+     'form=' + formRoles.join(',') + ' server=' + srvRoles.join(','));
+  ['surgeon', 'physician', 'medical_staff', 'hospital_executive'].forEach(function (r) {
+    ok('scope: the form offers ' + r, formRoles.indexOf(r) !== -1);
+  });
   ok('landing: carries the Robotics Division', html.indexOf('Robotics Division') !== -1);
   ok('landing: carries the published phone number', html.indexOf('(888) 315-4401') !== -1);
   ok('landing: presents JobMD.io as a division of JobUp.dev', html.indexOf('A division of JobUp.dev') !== -1);
@@ -293,6 +323,10 @@ function mustReject(name, mutate, expectConstraint) {
   eq('ava: one listen button per section', plays.length, secCount);
   ok('ava: every listen button maps to a real segment',
      plays.every(function (i) { return i + 1 < segs.length; }));
+  const narration = segs.join(' ');
+  ['doctor', 'medical staff'].forEach(function (w) {
+    ok('ava: the narration speaks to ' + w, narration.toLowerCase().indexOf(w) !== -1);
+  });
   ok('ava: the browser-speech fallback survives a TTS outage',
      /SpeechSynthesisUtterance/.test(avaJs) && /neuralOK = false/.test(avaJs));
 
@@ -392,7 +426,7 @@ function mustReject(name, mutate, expectConstraint) {
 
   const landing = await req('GET', '/jobmd/');
   eq('http: landing responds 200', landing.status, 200);
-  ok('http: landing serves the page', landing.text.indexOf('Superior Surgeons') !== -1);
+  ok('http: landing serves the page', landing.text.indexOf('Superior Results') !== -1);
 
   const schema = await req('GET', '/jobmd/api/v1/architect/schema');
   eq('http: schema responds 200', schema.status, 200);
