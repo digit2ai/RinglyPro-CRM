@@ -462,6 +462,15 @@ app.use((req, res, next) => {
 // To open the site back up publicly: set env SURGICALMIND_PUBLIC=1.
 const SM_AUTH_USER = process.env.SURGICALMIND_AUTH_USER || 'intuitive';
 const SM_AUTH_PASS = process.env.SURGICALMIND_AUTH_PASS || 'IntuitiveSpace2026';
+// Owner access: the same account used everywhere else in the ecosystem, so the owner
+// never has to remember a second pair for a domain he owns. Username match is
+// case-insensitive (an email typed into a browser dialog is not reliably lowercase).
+// SURGICALMIND_OWNER_PASS falls back to the shared LAWNCOPILOT_MSTAGG_PASSWORD, so one
+// rotation covers both. Set SURGICALMIND_OWNER_PASS='' to disable this pair entirely.
+const SM_OWNER_USER = (process.env.SURGICALMIND_OWNER_EMAIL || 'mstagg@digit2ai.com').toLowerCase();
+const SM_OWNER_PASS = process.env.SURGICALMIND_OWNER_PASS !== undefined
+  ? process.env.SURGICALMIND_OWNER_PASS
+  : (process.env.LAWNCOPILOT_MSTAGG_PASSWORD || 'Palindrome@7');
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host !== 'www.surgicalmind.app' && host !== 'surgicalmind.app') return next();
@@ -469,8 +478,13 @@ app.use((req, res, next) => {
   const hdr = req.get('authorization') || '';
   if (hdr.startsWith('Basic ')) {
     try {
-      const [u, p] = Buffer.from(hdr.slice(6), 'base64').toString('utf8').split(':');
+      // Split on the FIRST colon only - a password may legitimately contain one.
+      const raw = Buffer.from(hdr.slice(6), 'base64').toString('utf8');
+      const i = raw.indexOf(':');
+      const u = i === -1 ? raw : raw.slice(0, i);
+      const p = i === -1 ? '' : raw.slice(i + 1);
       if (u === SM_AUTH_USER && p === SM_AUTH_PASS) return next();
+      if (SM_OWNER_PASS && u.toLowerCase() === SM_OWNER_USER && p === SM_OWNER_PASS) return next();
     } catch (e) {}
   }
   res.setHeader('WWW-Authenticate', 'Basic realm="SurgicalMind - Intuitive Space", charset="UTF-8"');
