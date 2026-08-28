@@ -151,6 +151,7 @@ async function composePlan(opts) {
   // Observability: a model that answered but changed nothing must look
   // different from a model that was never called.
   let model_text_chars = 0, model_rewrites_parsed = 0, model_rewrites_accepted = 0;
+  let model_text_sample = null;
 
   const wantModel = opts.use_model !== false && Boolean(process.env.ANTHROPIC_API_KEY);
 
@@ -189,6 +190,10 @@ async function composePlan(opts) {
         model_text_chars = (out.text || '').length;
         model_rewrites_parsed = rewrites.length;
         model_rewrites_accepted = accepted;
+        // When the model answers and NOTHING parses, keep a short sample of
+        // what it actually sent. Without it the only signal is a token bill
+        // and a record that did not change.
+        if (!rewrites.length && model_text_chars) model_text_sample = String(out.text).slice(0, 400);
       }
     } catch (e) {
       // A model failure never fails the plan — it falls back to deterministic
@@ -214,6 +219,7 @@ async function composePlan(opts) {
     model_text_chars: model_text_chars,
     model_rewrites_parsed: model_rewrites_parsed,
     model_rewrites_accepted: model_rewrites_accepted,
+    model_text_sample: model_text_sample,
     duration_ms: Date.now() - started,
     counts: {
       medical_specialties: plan.medical_specialties.initial.length,
