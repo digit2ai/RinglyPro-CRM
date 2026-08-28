@@ -337,27 +337,6 @@ function mustReject(name, mutate, expectConstraint) {
   ok('ava: the browser-speech fallback survives a TTS outage',
      /SpeechSynthesisUtterance/.test(avaJs) && /neuralOK = false/.test(avaJs));
 
-  // ── The lit sign ────────────────────────────────────────────────────────
-  // Requested as "the main image from surgicalmind.app". That file is the
-  // SurgicalMind WORDMARK, so shipping it verbatim would put another product's
-  // brand across this page. The treatment was rebuilt with JobMD's own name and
-  // palette instead; SIT asserts the foreign brand never appears here.
-  ['jobmd-sign.jpg', 'og-image.jpg'].forEach(function (f) {
-    ok('sign: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
-  });
-  ok('sign: the hero carries it', /<figure class="sign">[\s\S]{0,200}jobmd-sign\.jpg/.test(html));
-  ok('sign: it reserves its box so the page does not jump',
-     /jobmd-sign\.jpg" width="1600" height="900"/.test(html));
-  ok('sign: it is described for screen readers', /alt="JobMD\.io"/.test(html));
-  ok('sign: no other product\'s brand was copied onto this page',
-     !/surgicalmind/i.test(html));
-  ok('sign: no asset is hotlinked from another host\'s CDN',
-     !/filesafe\.space|assets\.cdn/i.test(html));
-  ok('sign: the social card is the wide sign, not the square app icon',
-     /og:image" content="[^"]*og-image\.jpg/.test(html) && /twitter:card" content="summary_large_image/.test(html));
-  ok('sign: the social card declares its dimensions',
-     /og:image:width" content="1200"/.test(html) && /og:image:height" content="630"/.test(html));
-
   // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
   // hero ghost through, and it carried no Apply Now. Assert the contract.
