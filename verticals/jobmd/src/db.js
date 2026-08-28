@@ -1,0 +1,23 @@
+'use strict';
+
+/**
+ * JobMD.io — database connection.
+ * Self-contained Sequelize instance (mirrors the AI Radar / SpeakUp / Veritas
+ * pattern). Uses CRM_DATABASE_URL || DATABASE_URL per project convention.
+ *
+ * The database is SHARED with the rest of the CRM, so every table carries the
+ * `jm_` prefix and every table carries tenant_id.
+ */
+
+const { Sequelize } = require('sequelize');
+
+const databaseUrl = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
+
+const sequelize = new Sequelize(databaseUrl, {
+  dialect: 'postgres',
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+  logging: false,
+  pool: { max: 5, min: 0, acquire: 30000, idle: 10000 }
+});
+
+module.exports = sequelize;

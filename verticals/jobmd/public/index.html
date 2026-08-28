@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<title>JobMD.io — Superior Surgeons. Superior Results.</title>
+<meta name="description" content="An AI Healthcare Talent Intelligence Network connecting top ranked surgeons with the hospitals, health systems and IDNs that need them. A specialized division of JobUp.dev.">
+<meta property="og:title" content="JobMD.io — Superior Surgeons. Superior Results.">
+<meta property="og:description" content="Not another healthcare job board. An AI Healthcare Talent Intelligence Network for physician and surgeon recruitment.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="canonical" href="https://jobmd.io/">
+<style>
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden}
+.jmd,.jmd *,.jmd *::before,.jmd *::after{margin:0;padding:0;box-sizing:border-box}
+.jmd{
+  /* Brand inheritance: the JobUp.dev dark-aurora token set, specialized for
+     the medical division by rotating the accent toward clinical teal. */
+  --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7; --mut:#a6a9b4; --faint:#767a86;
+  --blue:#4263eb; --teal:#22d3ee; --violet:#8b5cf6; --pink:#e64980;
+  --grad:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(91,123,255,.13));
+  --good:#3ad07f;
+  --r:14px; --r-lg:22px; --r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 4px 14px rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5),0 40px 90px rgba(0,0,0,.55);
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+.jmd .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+.jmd a{color:inherit;text-decoration:none}
+
+/* ── Aurora backdrop ─────────────────────────────────────────────────── */
+.jmd .aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.jmd .aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.30}
+.jmd .aurora i:nth-child(1){width:52vw;height:52vw;left:-12vw;top:-18vw;background:#22d3ee}
+.jmd .aurora i:nth-child(2){width:44vw;height:44vw;right:-10vw;top:6vw;background:#5b7bff}
+.jmd .aurora i:nth-child(3){width:40vw;height:40vw;left:22vw;bottom:-18vw;background:#8b5cf6;opacity:.20}
+.jmd .page{position:relative;z-index:1}
+
+/* ── Nav ─────────────────────────────────────────────────────────────── */
+.jmd .nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+  background:rgba(10,10,14,.78);border-bottom:1px solid var(--line)}
+.jmd .nav .wrap{display:flex;align-items:center;gap:26px;height:66px}
+.jmd .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;letter-spacing:-.02em}
+.jmd .brand .mk{width:30px;height:30px;border-radius:9px;background:var(--grad);
+  display:grid;place-items:center;font-size:14px;font-weight:900;color:#08080c}
+.jmd .brand small{display:block;font-size:10px;font-weight:600;color:var(--faint);
+  letter-spacing:.09em;text-transform:uppercase;line-height:1}
+.jmd .navlinks{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--mut);font-weight:500}
+.jmd .navlinks a:hover{color:var(--ink)}
+.jmd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:999px;font-weight:700;font-size:15px;border:1px solid transparent;
+  cursor:pointer;transition:transform .15s ease,opacity .15s ease;font-family:inherit}
+.jmd .btn:hover{transform:translateY(-1px)}
+.jmd .btn.p{background:var(--grad);color:#07070c}
+.jmd .btn.g{background:transparent;border-color:var(--line2);color:var(--ink)}
+.jmd .nav .btn{padding:9px 18px;font-size:14px}
+.jmd .burger{display:none;margin-left:auto;background:none;border:1px solid var(--line2);
+  color:var(--ink);border-radius:10px;padding:7px 11px;font-size:17px;cursor:pointer}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.jmd .hero{padding:104px 0 82px;text-align:center}
+.jmd .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:999px;
+  background:var(--grad-soft);border:1px solid var(--line2);font-size:12.5px;font-weight:600;
+  color:var(--mut);letter-spacing:.03em;margin-bottom:26px}
+.jmd .eyebrow b{color:var(--teal);font-weight:700}
+.jmd h1{font-size:clamp(42px,6.4vw,76px);line-height:1.03;letter-spacing:-.035em;font-weight:850}
+.jmd h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jmd .lead{max-width:730px;margin:26px auto 0;font-size:clamp(17px,2vw,20px);color:var(--mut)}
+.jmd .lead b{color:var(--ink);font-weight:650}
+.jmd .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:38px}
+
+/* ── Stat band ───────────────────────────────────────────────────────── */
+.jmd .band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:66px}
+.jmd .band div{background:var(--bg2);padding:26px 20px;text-align:center}
+.jmd .band .n{font-size:clamp(24px,3.2vw,34px);font-weight:850;letter-spacing:-.03em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jmd .band .l{font-size:12.5px;color:var(--faint);margin-top:5px;line-height:1.4}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+.jmd section{padding:88px 0;position:relative}
+.jmd .kicker{font-size:12px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.jmd h2{font-size:clamp(29px,4.1vw,46px);line-height:1.1;letter-spacing:-.03em;font-weight:800;margin-top:12px}
+.jmd h3{font-size:20px;font-weight:750;letter-spacing:-.015em}
+.jmd .sub{color:var(--mut);font-size:17px;max-width:760px;margin-top:16px}
+.jmd .prose p{color:var(--mut);font-size:16.5px;margin-top:18px;max-width:820px}
+.jmd .prose p b{color:var(--ink);font-weight:650}
+
+.jmd .grid{display:grid;gap:20px;margin-top:42px}
+.jmd .g2{grid-template-columns:repeat(2,1fr)}
+.jmd .g3{grid-template-columns:repeat(3,1fr)}
+.jmd .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:30px;transition:border-color .2s ease,transform .2s ease}
+.jmd .card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.jmd .card p{color:var(--mut);margin-top:12px;font-size:15.5px}
+.jmd .card .ic{width:44px;height:44px;border-radius:13px;background:var(--grad-soft);
+  border:1px solid var(--line2);display:grid;place-items:center;margin-bottom:18px;
+  font-size:16px;font-weight:800;color:var(--teal);font-family:var(--mono)}
+
+/* ── Chips ───────────────────────────────────────────────────────────── */
+.jmd .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.jmd .chip{padding:9px 17px;border-radius:999px;background:var(--card);border:1px solid var(--line);
+  font-size:14px;font-weight:600;color:var(--ink)}
+.jmd .chip.t{background:var(--grad-soft);border-color:rgba(34,211,238,.32);color:var(--teal)}
+.jmd .chip.s{background:transparent;color:var(--mut);font-weight:500}
+
+/* ── Split ───────────────────────────────────────────────────────────── */
+.jmd .split{display:grid;grid-template-columns:1fr 1fr;gap:58px;align-items:center}
+.jmd .panel{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+  border-radius:var(--r-xl);padding:34px;box-shadow:var(--shadow)}
+
+/* ── Agent / pipeline lists ──────────────────────────────────────────── */
+.jmd .agents{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:34px}
+.jmd .agent{display:flex;gap:14px;align-items:flex-start;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);padding:17px 19px}
+.jmd .agent .no{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--teal);
+  background:var(--grad-soft);border-radius:7px;padding:3px 8px;flex:0 0 auto;margin-top:2px}
+.jmd .agent .nm{font-weight:700;font-size:15px}
+.jmd .agent .fn{color:var(--faint);font-size:13.5px;margin-top:3px;line-height:1.5}
+
+.jmd .flow{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;align-items:center}
+.jmd .st{padding:8px 15px;border-radius:10px;background:var(--card);border:1px solid var(--line);
+  font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.jmd .st i{font-family:var(--mono);font-size:11px;color:var(--faint);font-style:normal}
+.jmd .st.ai{border-color:rgba(34,211,238,.34);background:var(--grad-soft)}
+.jmd .st.ai i{color:var(--teal)}
+.jmd .arw{color:var(--faint);font-size:13px}
+.jmd .legend{margin-top:18px;font-size:13px;color:var(--faint);display:flex;gap:18px;flex-wrap:wrap}
+.jmd .legend span{display:flex;align-items:center;gap:7px}
+.jmd .dot{width:9px;height:9px;border-radius:3px;background:var(--teal)}
+.jmd .dot.n{background:var(--faint)}
+
+/* ── Dimensions ──────────────────────────────────────────────────────── */
+.jmd .dims{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:32px}
+.jmd .dim{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:19px}
+.jmd .dim .d{font-weight:700;font-size:14.5px}
+.jmd .dim .e{color:var(--faint);font-size:13px;margin-top:6px;line-height:1.5}
+
+/* ── Contact ─────────────────────────────────────────────────────────── */
+.jmd .form{display:grid;gap:14px;margin-top:28px}
+.jmd .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.jmd label{display:block;font-size:13px;font-weight:650;color:var(--mut);margin-bottom:7px}
+.jmd input,.jmd select,.jmd textarea{width:100%;padding:13px 15px;border-radius:12px;
+  background:var(--bg2);border:1px solid var(--line2);color:var(--ink);font:inherit;font-size:16px}
+.jmd input:focus,.jmd select:focus,.jmd textarea:focus{outline:none;border-color:var(--teal)}
+.jmd textarea{min-height:112px;resize:vertical}
+.jmd .note{font-size:13px;color:var(--faint);margin-top:6px}
+.jmd .msg{margin-top:14px;padding:14px 16px;border-radius:12px;font-size:14.5px;display:none}
+.jmd .msg.ok{display:block;background:rgba(58,208,127,.12);border:1px solid rgba(58,208,127,.4);color:var(--good)}
+.jmd .msg.err{display:block;background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:var(--pink)}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.jmd footer{border-top:1px solid var(--line);padding:54px 0 40px;margin-top:40px}
+.jmd .fgrid{display:flex;justify-content:space-between;gap:34px;flex-wrap:wrap}
+.jmd .fnav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--mut)}
+.jmd .fnav a:hover{color:var(--ink)}
+.jmd .fine{color:var(--faint);font-size:12.5px;margin-top:26px;line-height:1.7;max-width:900px}
+.jmd .tel{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--teal)}
+
+@media(max-width:940px){
+  .jmd .navlinks{display:none}
+  .jmd .nav .btn{display:none}
+  .jmd .burger{display:block}
+  .jmd .navlinks.open{display:flex;position:absolute;top:66px;left:0;right:0;flex-direction:column;
+    background:rgba(10,10,14,.98);border-bottom:1px solid var(--line);padding:18px 24px;gap:16px}
+  .jmd .g3,.jmd .g2,.jmd .split,.jmd .agents,.jmd .row{grid-template-columns:1fr}
+  .jmd .band{grid-template-columns:repeat(2,1fr)}
+  .jmd .dims{grid-template-columns:repeat(2,1fr)}
+  .jmd section{padding:64px 0}
+  .jmd .hero{padding:70px 0 56px}
+}
+@media(max-width:520px){ .jmd .dims{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="jmd">
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="page">
+
+<!-- ── NAV ────────────────────────────────────────────────────────────── -->
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="#top">
+    <span class="mk">MD</span>
+    <span>JobMD.io<small>A division of JobUp.dev</small></span>
+  </a>
+  <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
+  <div class="navlinks" id="navlinks">
+    <a href="#fit">The Right Fit</a>
+    <a href="#specialties">Specialties</a>
+    <a href="#serve">Who We Serve</a>
+    <a href="#robotics">Robotics Division</a>
+    <a href="#intelligence">AI Intelligence</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <a class="btn p" href="#contact">Apply Now</a>
+</div></nav>
+
+<!-- ── HERO ───────────────────────────────────────────────────────────── -->
+<header class="hero" id="top"><div class="wrap">
+  <div class="eyebrow"><b>JobMD.io</b> &middot; AI Healthcare Talent Intelligence Network</div>
+  <h1>Superior Surgeons.<br><span class="g">Superior Results.</span></h1>
+  <p class="lead">We work with and represent the <b>top ranked surgeons in the country</b> &mdash;
+     and the hospitals, health systems and IDNs that need them. The best of the best. The Elite.</p>
+  <div class="cta">
+    <a class="btn p" href="#contact">Apply Now</a>
+    <a class="btn g" href="#serve">Who We Serve</a>
+  </div>
+
+  <div class="band">
+    <div><div class="n">15,000&ndash;30,000</div><div class="l">Projected surgical specialty shortage by 2034 (AAMC)</div></div>
+    <div><div class="n">15</div><div class="l">Surgical specialties covered at launch</div></div>
+    <div><div class="n">11</div><div class="l">Specialized AI recruitment agents</div></div>
+    <div><div class="n">13</div><div class="l">Stages from prospect to placement</div></div>
+  </div>
+</div></header>
+
+<!-- ── THE CHALLENGE ──────────────────────────────────────────────────── -->
+<section id="challenge"><div class="wrap">
+  <div class="kicker">The Market</div>
+  <h2>Surgeon recruitment has never been more daunting &mdash; on both sides of the market.</h2>
+  <div class="prose">
+    <p>The demand for skilled, talented surgeons is higher now than ever before. A report released by the
+       American Association of Medical Colleges projects shortages of <b>15,000 &ndash; 30,000 in all surgical
+       specialties by 2034</b>. The high cost of medical education is contributing to this ongoing physician
+       shortage. In today's medical recruitment market, there are increasing challenges in identifying,
+       attracting, placing, and retaining top medical talent.</p>
+    <p>It isn't just about filling a position. It is about finding the <b>most skilled and talented surgeon
+       available</b> &mdash; the surgeons who deliver the best clinical outcomes for their patients and the
+       hospitals they represent, who can consolidate markets and change referral patterns in the markets
+       they move to and work within.</p>
+    <p>Patients are more educated now than ever. Patients research the surgeons in their area and their
+       track record of success to ensure they will receive the best care available to them. Patients can
+       easily locate clinical outcome data online to ensure they have the best chance at an excellent
+       clinical outcome based on the surgeon they select for their procedure.</p>
+    <p>Our interests are aligned with the surgeons and hospitals we work with. <b>Surgeons want to work for
+       the top ranked hospitals, and hospitals want to recruit the top ranked surgeons who will deliver the
+       best care.</b></p>
+  </div>
+</div></section>
+
+<!-- ── THE RIGHT FIT ──────────────────────────────────────────────────── -->
+<section id="fit"><div class="wrap"><div class="split">
+  <div>
+    <div class="kicker">Making a Connection</div>
+    <h2>Ensuring the right fit for hospitals and surgeons.</h2>
+    <p class="sub">We never lose sight of finding the right fit for the surgeon and the hospital &mdash;
+       keeping in mind the surgeon's goals, lifestyle, professional needs, income expectations and concerns.
+       We are well connected to the best hospitals and IDN health systems in the country, with an extensive,
+       relationship-based physician network.</p>
+    <div class="chips">
+      <span class="chip">Goals</span><span class="chip">Lifestyle</span>
+      <span class="chip">Professional needs</span><span class="chip">Income expectations</span>
+      <span class="chip">Concerns</span>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Every match is explained.</h3>
+    <p class="sub" style="font-size:15.5px">Seven dimensions are evaluated simultaneously. Each produces a
+       score, a plain-language explanation of why the candidate was selected, and any material gaps.</p>
+    <div class="dims" style="grid-template-columns:repeat(2,1fr)">
+      <div class="dim"><div class="d">Clinical</div><div class="e">Qualifications, certifications, procedural expertise</div></div>
+      <div class="dim"><div class="d">Technology</div><div class="e">Robotic platforms and technology experience</div></div>
+      <div class="dim"><div class="d">Geographic</div><div class="e">Preferences and relocation willingness</div></div>
+      <div class="dim"><div class="d">Career</div><div class="e">Objectives, leadership, academic experience</div></div>
+      <div class="dim"><div class="d">Compensation</div><div class="e">Expectations against the stated range</div></div>
+      <div class="dim"><div class="d">Availability</div><div class="e">Against start-date requirements</div></div>
+      <div class="dim" style="grid-column:1/-1"><div class="d">Cultural / Professional</div><div class="e">Employment preferences and hospital type against the employment model and call schedule</div></div>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- ── WHO WE SERVE ───────────────────────────────────────────────────── -->
+<section id="serve"><div class="wrap">
+  <div class="kicker">Who We Serve</div>
+  <h2>Surgeons, hospitals, and IDN health systems.</h2>
+  <p class="sub">As a leading surgeon recruiting firm, we connect top ranked surgeons in the US with the
+     right job and the right market.</p>
+  <div class="grid g3">
+    <div class="card">
+      <div class="ic">01</div>
+      <h3>Top Ranking Surgeons</h3>
+      <p>If you are a top ranked surgeon with a track record of success delivering excellent clinical
+         outcomes, and you are interested in working in a specific market or geographical location,
+         we can help you.</p>
+    </div>
+    <div class="card">
+      <div class="ic">02</div>
+      <h3>Hospital Executives</h3>
+      <p>If you are a hospital executive looking to hire a top ranked surgeon delivering excellent clinical
+         outcomes who can consolidate markets and change referral patterns, we can deliver that to you.</p>
+    </div>
+    <div class="card">
+      <div class="ic">03</div>
+      <h3>IDN Health Systems</h3>
+      <p>We maintain relationships across integrated delivery networks &mdash; facilities, locations,
+         recruiting priorities and historical placements held in one structured client profile.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ── SPECIALTIES ────────────────────────────────────────────────────── -->
+<section id="specialties"><div class="wrap">
+  <div class="kicker">What Are You Gifted With?</div>
+  <h2>The specialties and sectors we focus on.</h2>
+  <p class="sub">Fifteen surgical specialties at launch. The architecture allows additional physician
+     specialties and subspecialties without redesigning the platform.</p>
+  <div class="chips" id="specChips"></div>
+  <h3 style="margin-top:42px">Business Sectors</h3>
+  <div class="chips">
+    <span class="chip s">Private</span><span class="chip s">Public</span>
+    <span class="chip s">County</span><span class="chip s">Government</span>
+    <span class="chip s">VA</span><span class="chip s">DOD</span>
+    <span class="chip s">Overseas Surgeons</span>
+  </div>
+</div></section>
+
+<!-- ── ROBOTICS ───────────────────────────────────────────────────────── -->
+<section id="robotics"><div class="wrap">
+  <div class="kicker">Technological Advancement</div>
+  <h2>The Robotics Division.</h2>
+  <p class="sub">A team of specialized recruiters focused exclusively on surgeons, hospitals and IDN health
+     systems who offer robotic surgery to their patients and communities.</p>
+
+  <div class="chips" style="margin-top:24px">
+    <span class="chip t">General Surgery</span><span class="chip t">Thoracic</span>
+    <span class="chip t">Colon &amp; Rectal</span><span class="chip t">Urology</span>
+    <span class="chip t">Gynecology</span><span class="chip t">Orthopaedic</span>
+    <span class="chip t">Spine</span><span class="chip t">Neuro</span>
+    <span class="chip s">And more</span>
+  </div>
+
+  <div class="prose">
+    <p>As more surgeons and hospitals continue to adopt and specialize in robotic surgery, the need for
+       specialized recruiters who work exclusively in this space will be significant. Medical schools now
+       have well established <b>robotic fellowship programs</b> where surgeons are trained on robotic surgery
+       before accepting their first physician job. These future surgeons will graduate seeking jobs where
+       they can offer robotic surgery in their practice.</p>
+    <p>We have hospital and IDN health system partners primarily focused on recruiting surgeons and fellows
+       with a track record of excellent patient outcomes in this area of surgery. If you are a robotic
+       surgeon looking to join a well established robotics program, we can help you. If you are a hospital
+       or IDN health system executive looking to recruit an experienced robotic surgeon, we can deliver.</p>
+  </div>
+
+  <div class="band" style="margin-top:44px">
+    <div><div class="n">6,000+</div><div class="l">da Vinci systems in operation worldwide</div></div>
+    <div><div class="n">8.5M</div><div class="l">Procedures performed worldwide</div></div>
+    <div><div class="n">92%</div><div class="l">US radical prostatectomies robot-assisted (2019)</div></div>
+    <div><div class="n">$1.59B</div><div class="l">Projected robotic surgery services market by 2026</div></div>
+  </div>
+  <p class="note" style="margin-top:14px;color:var(--faint);font-size:12.5px">
+     Market figures as published on healthsourceelite.com. The robotic surgery services market grew from
+     $0.73 billion in 2021 to $0.86 billion in 2022; the da Vinci install base has seen historical annual
+     growth of around 12%.</p>
+
+  <div class="grid g2" style="margin-top:44px">
+    <div class="card">
+      <h3>What the Robotics Division captures</h3>
+      <p>Robotic platforms used &middot; years of robotic experience &middot; relevant procedures &middot;
+         procedure volume when available &middot; training and certifications &middot; specialty &middot;
+         hospital robotics experience &middot; program leadership &middot; robotics program-development
+         experience.</p>
+    </div>
+    <div class="card">
+      <h3>Why it is its own module</h3>
+      <p>It lets hospitals search for highly specialized robotic surgeons instead of relying on generic
+         physician search. Image-guided navigation combined with robotics has opened orthopaedic and neuro
+         procedures that were previously difficult to perform minimally invasively.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ── AI INTELLIGENCE ────────────────────────────────────────────────── -->
+<section id="intelligence"><div class="wrap">
+  <div class="kicker">MCP Orchestration &middot; Multi-Agent AI &middot; A2A Workflows</div>
+  <h2>Not another healthcare job board.</h2>
+  <p class="sub">JobMD.io is an AI Healthcare Talent Intelligence Network. A central MCP orchestration layer
+     coordinates eleven specialized agents, each performing a specific recruitment function and able to
+     communicate with the others through agent-to-agent workflows.</p>
+
+  <div class="agents" id="agentList"></div>
+
+  <h3 style="margin-top:58px">The Recruitment Pipeline</h3>
+  <p class="sub">Recruiters manage candidates through a visual pipeline, with authorized AI agents updating
+     relevant states when appropriate.</p>
+  <div class="flow" id="pipeline"></div>
+  <div class="legend">
+    <span><i class="dot"></i> An authorized agent may update this state</span>
+    <span><i class="dot n"></i> Recruiter and administrator only</span>
+  </div>
+
+  <div class="grid g2" style="margin-top:52px">
+    <div class="card">
+      <div class="ic">TIR</div>
+      <h3>Talent Intelligence Record</h3>
+      <p>A persistent record per physician: contact information, specialty and subspecialty, education,
+         residency, fellowship, board certifications, licenses, experience, organizations, leadership,
+         clinical interests, procedure expertise, robotic platforms, academic experience, research and
+         publications, geographic preferences, relocation willingness, compensation expectations,
+         employment preferences, availability, credentialing information, recruitment status, recruiter
+         notes, AI summary and match history.</p>
+    </div>
+    <div class="card">
+      <div class="ic">HCP</div>
+      <h3>Hospital / Client Intelligence Profile</h3>
+      <p>Organization, health system or IDN, facilities, locations, contacts, open positions, specialty and
+         experience requirements, certifications, licensing, procedures, robotics platform, compensation
+         range, call schedule, employment model, relocation assistance, start-date requirements, recruiting
+         priorities, historical placements and candidate pipeline.</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:24px">
+    <h3>Conversational Search</h3>
+    <p class="sub" style="font-size:15.5px">Authorized users search the physician network in natural
+       language &mdash; specialty, robotic experience, licensing, geography, relocation preferences,
+       experience, hospital requirements, and candidate-to-position matching. The AI translates the request
+       into a structured search and returns ranked results.</p>
+  </div>
+</div></section>
+
+<!-- ── CONTACT ────────────────────────────────────────────────────────── -->
+<section id="contact"><div class="wrap"><div class="split">
+  <div>
+    <div class="kicker">Inquire Within</div>
+    <h2>Let us know how we can help.</h2>
+    <p class="sub">Whether you are a surgeon exploring the market or a hospital executive with a position to
+       fill, leave your information and we will get back to you.</p>
+    <p style="margin-top:26px"><a class="tel" href="tel:8883154401">(888) 315-4401</a></p>
+  </div>
+  <div class="panel">
+    <form class="form" id="leadForm" novalidate>
+      <div class="row">
+        <div><label for="fname">First Name</label><input id="fname" name="first_name" autocomplete="given-name" required></div>
+        <div><label for="lname">Last Name</label><input id="lname" name="last_name" autocomplete="family-name" required></div>
+      </div>
+      <div class="row">
+        <div><label for="email">Email Address</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+        <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel"></div>
+      </div>
+      <div>
+        <label for="role">Are you a surgeon or a hospital executive?</label>
+        <select id="role" name="role">
+          <option value="">Select one</option>
+          <option value="surgeon">Surgeon</option>
+          <option value="hospital_executive">Hospital Executive</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div><label for="message">Message</label><textarea id="message" name="message" placeholder="Specialty, market, timing, anything else we should know."></textarea></div>
+      <button class="btn p" type="submit" id="submitBtn" style="width:100%">Submit</button>
+      <div class="note">We will never share your information. Submitting does not create a candidate
+        record until you confirm it with a recruiter.</div>
+      <div class="msg" id="formMsg" role="status"></div>
+    </form>
+  </div>
+</div></div></section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
+<footer><div class="wrap">
+  <div class="fgrid">
+    <div>
+      <a class="brand" href="#top"><span class="mk">MD</span><span>JobMD.io<small>A division of JobUp.dev</small></span></a>
+      <p style="color:var(--faint);font-size:13.5px;margin-top:14px">Superior Surgeons. Superior Results.</p>
+      <p style="margin-top:12px"><a class="tel" href="tel:8883154401">(888) 315-4401</a></p>
+    </div>
+    <div class="fnav">
+      <a href="#fit">The Right Fit</a>
+      <a href="#specialties">Specialties</a>
+      <a href="#serve">Who We Serve</a>
+      <a href="#robotics">Robotics Division</a>
+      <a href="#intelligence">AI Intelligence</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+  <p class="fine">JobMD.io is a specialized division of JobUp.dev. Reuse the JobUp.dev foundation.
+     Specialize the intelligence for healthcare. Keep JobMD.io as its own scalable ecosystem.
+     Content adapted from healthsourceelite.com. Market and robotics figures are as published there and
+     are attributed, not independently verified.</p>
+</div></footer>
+
+</div></div>
+
+<script>
+(function(){
+  var SPECIALTIES = ["General Surgery","Cardiac Surgery","Thoracic Surgery","Orthopaedic Surgery",
+    "Urology","Gynecology","Colon & Rectal Surgery","Trauma Surgery","Plastic Surgery",
+    "Vascular Surgery","Robotic Surgery","Pediatric Surgery","Neurosurgery","Transplant Surgery",
+    "Hepatobiliary Surgery"];
+  var AGENTS = [
+    ["Candidate Intake Agent","Conversational physician and surgeon intake and structured profile creation."],
+    ["CV / Resume Intelligence Agent","Extracts education, residency, fellowship, board certifications, licenses, specialties, procedures, experience, publications, leadership roles, robotic experience and employment history."],
+    ["Hospital Intake Agent","Converts hospital recruiting requirements into structured position profiles."],
+    ["Candidate Matching Agent","Continuously compares physician profiles against opportunities."],
+    ["Clinical Qualification Agent","Evaluates specialty-specific qualifications, certifications, procedural expertise and experience."],
+    ["Robotics Intelligence Agent","Specialized robotic-surgery recruitment intelligence."],
+    ["Candidate Ranking Agent","Generates explainable candidate rankings and match scores with strengths and gaps."],
+    ["Recruitment Outreach Agent","Creates personalized outreach through approved channels and tracks responses."],
+    ["Scheduling Agent","Coordinates recruiter, candidate and hospital interview availability."],
+    ["Follow-Up Agent","Manages follow-ups throughout the recruitment pipeline."],
+    ["Recruiter Copilot","Conversational interface across the ecosystem."]
+  ];
+  var PIPELINE = [["Prospect",0],["Contacted",1],["Interested",1],["Qualified",1],["Matched",1],
+    ["Submitted",0],["Hospital Review",0],["Interview",1],["Offer",0],["Negotiation",0],
+    ["Accepted",0],["Credentialing",0],["Placement",0]];
+
+  function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+  function esc(s){return String(s).replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});}
+
+  var sc=document.getElementById('specChips');
+  SPECIALTIES.forEach(function(s){ sc.appendChild(el('span','chip',esc(s))); });
+
+  var al=document.getElementById('agentList');
+  AGENTS.forEach(function(a,i){
+    var d=el('div','agent');
+    d.appendChild(el('span','no',String(i+1).padStart(2,'0')));
+    var b=el('div');
+    b.appendChild(el('div','nm',esc(a[0])));
+    b.appendChild(el('div','fn',esc(a[1])));
+    d.appendChild(b); al.appendChild(d);
+  });
+
+  var pl=document.getElementById('pipeline');
+  PIPELINE.forEach(function(p,i){
+    if(i) pl.appendChild(el('span','arw','&rarr;'));
+    pl.appendChild(el('span','st'+(p[1]?' ai':''),'<i>'+String(i+1).padStart(2,'0')+'</i>'+esc(p[0])));
+  });
+
+  var b=document.getElementById('burger'), nl=document.getElementById('navlinks');
+  b.addEventListener('click',function(){ nl.classList.toggle('open'); });
+  nl.addEventListener('click',function(e){ if(e.target.tagName==='A') nl.classList.remove('open'); });
+
+  var f=document.getElementById('leadForm'), msg=document.getElementById('formMsg'),
+      btn=document.getElementById('submitBtn');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    msg.className='msg';
+    var fd=new FormData(f), body={};
+    fd.forEach(function(v,k){ body[k]=String(v).trim(); });
+    if(!body.first_name || !body.email){
+      msg.className='msg err'; msg.textContent='Please provide at least your first name and email address.';
+      return;
+    }
+    btn.disabled=true; btn.textContent='Submitting...';
+    fetch('api/v1/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(r){
+        if(!r.ok) throw new Error(r.j && r.j.error ? r.j.error : 'Something went wrong.');
+        msg.className='msg ok';
+        msg.textContent='Thank you. A recruiter will be in touch. You can also reach us at (888) 315-4401.';
+        f.reset();
+      })
+      .catch(function(err){
+        msg.className='msg err';
+        msg.textContent=err.message+' You can reach us directly at (888) 315-4401.';
+      })
+      .finally(function(){ btn.disabled=false; btn.textContent='Submit'; });
+  });
+})();
+</script>
+
+<!-- Brand inheritance: the JobUp/Digit2AI voice orb, reusing the CRM's
+     zero-key /api/tts/edge route. Degrades to nothing if the script 404s. -->
+<div data-voice-orb data-agent="digit2ai" data-lang="en" data-label="Ask about JobMD"></div>
+<script src="/embed/voice-orb.js" defer></script>
+</body>
+</html>

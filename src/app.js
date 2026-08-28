@@ -2238,6 +2238,40 @@ app.get('/debug/jobup-error', (req, res) => {
              stack: jobupError ? String(jobupError.stack).split('\n').slice(0, 8) : null });
 });
 
+// =====================================================
+// JOBMD.IO — AI Healthcare Talent Intelligence Network for physician and
+// surgeon recruitment. A specialized division of JobUp.dev.
+//
+// The project request declares the hosted location as /jobMD, and the owner
+// asked for /jobmd. Express paths are case sensitive, so BOTH are mounted onto
+// the same router rather than picking one and breaking the other link.
+// Shares this database, so all of its tables carry the `jm_` prefix.
+// =====================================================
+let jobmdApp = null;
+let jobmdError = null;
+try {
+  jobmdApp = require('../verticals/jobmd/src/index');
+  // A bare /jobmd must become /jobmd/ or every relative asset and the form's
+  // own `api/v1/leads` POST resolve one level too high.
+  app.get(['/jobmd', '/jobMD'], (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect(req.path + '/');
+    next();
+  });
+  app.use(['/jobmd', '/jobMD'], jobmdApp);
+
+  console.log('JobMD.io mounted at /jobmd (alias /jobMD)');
+  console.log('   - Landing: /jobmd/');
+  console.log('   - Health:  /jobmd/health');
+  console.log('   - Architect: GET /jobmd/api/v1/architect/plan');
+} catch (e) {
+  jobmdError = e;
+  console.error('JobMD.io failed to mount:', e.message);
+}
+app.get('/debug/jobmd-error', (req, res) => {
+  res.json({ mounted: Boolean(jobmdApp), error: jobmdError ? jobmdError.message : null,
+             stack: jobmdError ? String(jobmdError.stack).split('\n').slice(0, 8) : null });
+});
+
 // SPEAKUP — Voice-to-Text + AI editing (internal team tool, served at /speakup/)
 // =====================================================
 
