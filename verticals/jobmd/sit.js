@@ -281,7 +281,8 @@ function mustReject(name, mutate, expectConstraint) {
      !/three one five|four four zero one/i.test(html));
   ok('landing: the contact path is the form, not a phone call',
      html.indexOf('id="leadForm"') !== -1);
-  ok('landing: presents JobMD.io as a division of JobUp.dev', html.indexOf('A division of JobUp.dev') !== -1);
+  ok('landing: presents JobMD.io as a division of JobUp.dev',
+     /specialized division of JobUp\.dev/.test(html));
   ok('landing: attributes the market figures', /healthsourceelite\.com/.test(html));
   ok('landing: is emoji-free', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(html));
   C.MEDICAL_SPECIALTIES.forEach(function (s) {
@@ -388,8 +389,16 @@ function mustReject(name, mutate, expectConstraint) {
      /footer::before\{[^}]*url\(robotic-surgery\.jpg\)/.test(html));
   ok('footer: it is a backdrop, not an inline figure', html.indexOf('class="fimg"') === -1);
   // The artwork is bright in places; every footer link sits on top of it.
+  // The scrim is graded: light where only the artwork sits, heavy where the
+  // links and fine print are.
   ok('footer: the backdrop is scrimmed so the footer stays legible',
-     /footer::after\{[^}]*linear-gradient\(180deg,rgba\(var\(--bg-rgb\)/.test(html));
+     /footer::after\{[\s\S]{0,320}linear-gradient\(180deg,[\s\S]{0,320}rgba\(var\(--bg-rgb\),\.9[0-9]?\)/.test(html));
+  // Tall enough that the artwork actually reads, with the content anchored to
+  // the bottom so the extra height is image rather than empty space.
+  ok('footer: it is tall enough to show the artwork',
+     /\.jmd footer\{[\s\S]{0,320}min-height:min\(72vh,660px\)/.test(html));
+  ok('footer: content is anchored to the bottom',
+     /\.jmd footer\{[\s\S]{0,320}align-items:flex-end/.test(html));
   ok('footer: the backdrop is clipped to the footer',
      /\.jmd footer\{[^}]*overflow:hidden/.test(html));
   // A DECORATIVE BACKGROUND CARRIES NO ALT, so the claims baked into the
@@ -512,8 +521,22 @@ function mustReject(name, mutate, expectConstraint) {
   ok('logo: the placeholder MD tile is gone', html.indexOf('class="mk">MD<') === -1);
   // The bar now carries the full brand lockup as artwork; the footer keeps the
   // inline mark, which is drawn white and works on the dark backdrop.
-  eq('logo: one inline mark remains, in the footer', (html.match(/class="mk"/g) || []).length, 1);
-  ok('logo: the inline mark is the footer one', html.indexOf('class="mk"') > html.indexOf('<footer>'));
+  eq('logo: no inline MD tile remains anywhere', (html.match(/class="mk"/g) || []).length, 0);
+
+  // ── The footer lockup ───────────────────────────────────────────────────
+  ok('footer: the lockup artwork exists',
+     fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo-footer.png')));
+  ok('footer: the footer carries the full lockup', /jobmd-logo-footer\.png/.test(html));
+  ok('footer: it reserves its box', /jobmd-logo-footer\.png" width="849" height="264"/.test(html));
+  ok('footer: it loads lazily, being below the fold',
+     /jobmd-logo-footer\.png"[^>]*loading="lazy"/.test(html));
+  ok('footer: it is named for screen readers', /alt="JobMD\.io — AI Healthcare Talent Intelligence Network\. Superior/.test(html));
+  // THE ARTWORK IS DARK NAVY ON A TRANSPARENT GROUND. On the dark backdrop it
+  // would simply disappear, so it sits on a light plate.
+  ok('footer: the lockup sits on a light plate',
+     /\.jmd \.fbrand\{[^}]*background:#fff/.test(html));
+  ok('footer: the plate is transparent-PNG safe (not a JPEG with a white box)',
+     !/jobmd-logo-footer\.jpg/.test(html));
 
   // ── The white menu bar ──────────────────────────────────────────────────
   ok('nav: the logo artwork exists', fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo.jpg')));
