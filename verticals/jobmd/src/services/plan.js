@@ -147,7 +147,8 @@ function openQuestions() {
     'No Claude model identifier is named in the request; the deployment default is used and is reported on every response.',
     'The request names no output field set for the build plan. The field names in this plan were introduced by the specification author, not by the request.',
     'The request does not state a retention, consent or regulatory regime for physician credentialing data.',
-    'The request does not state whether JobMD.io recruiters and Platform Administrators authenticate against JobUp.dev identity or a separate JobMD.io directory.'
+    'The request does not state whether JobMD.io recruiters and Platform Administrators authenticate against JobUp.dev identity or a separate JobMD.io directory.',
+    'Section 1 names "Physicians & Surgeons" as a primary user type and never mentions medical staff, but the owner states JobMD.io recruits surgeons, doctors AND medical staff. The Talent Intelligence Record, the specialty taxonomy and the Clinical Qualification Agent are all specified in physician terms; what a non-physician staff record must carry is not stated anywhere in the request and has not been invented here.'
   ];
   if (C.TALENT_DISCOVERY_TRUNCATED) return q;
   return q.slice(1);
