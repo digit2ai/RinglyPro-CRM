@@ -256,6 +256,13 @@ body.navopen{overflow:hidden}
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .jmd footer{border-top:1px solid var(--line);padding:54px 0 40px;margin-top:40px}
+/* Below the fold, so it loads lazily; width/height reserve the box so the
+   footer never jumps when it decodes. */
+.jmd .fimg{margin:0 0 46px;padding:0;border-radius:var(--r-xl);overflow:hidden;
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.jmd .fimg img{display:block;width:100%;height:auto}
+.jmd .fimg figcaption{padding:14px 20px 16px;background:var(--bg2);color:var(--faint);
+  font-size:12.5px;line-height:1.6;border-top:1px solid var(--line)}
 .jmd .fgrid{display:flex;justify-content:space-between;gap:34px;flex-wrap:wrap}
 .jmd .fnav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--mut)}
 .jmd .fnav a:hover{color:var(--ink)}
@@ -339,6 +346,8 @@ body.navopen{overflow:hidden}
   .jmd h2{font-size:clamp(26px,7vw,34px)}
   .jmd .prose p,.jmd .sub{font-size:16px}
   .jmd footer{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+  .jmd .fimg{margin-bottom:34px;border-radius:var(--r-lg)}
+  .jmd .fimg figcaption{padding:12px 16px 14px;font-size:12px}
 }
 @media(max-width:520px){
   .jmd .dims,.jmd .dims2{grid-template-columns:1fr}
@@ -820,6 +829,15 @@ body.navopen{overflow:hidden}
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
 <footer><div class="wrap">
+  <figure class="fimg">
+    <img src="robotic-surgery.jpg" width="1280" height="853" loading="lazy" decoding="async"
+         alt="Robotic surgery system: a console surgeon operating an articulated arm over a draped
+              patient, with panels for instrument tracking, 3D HD visualization and the pre-op to
+              post-op workflow.">
+    <figcaption>Robotic surgery, illustrated. The benefits shown are the generally published
+      advantages of robotic-assisted surgery, not outcomes measured by JobMD.io.</figcaption>
+  </figure>
+
   <div class="fgrid">
     <div>
       <a class="brand" href="#top"><svg class="mk" viewBox="0 0 512 512" width="34" height="34" aria-hidden="true" focusable="false"><defs><linearGradient id="jmdFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="0.5" stop-color="#5b7bff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#jmdFoot)"/><g transform="translate(256,256) scale(0.92) translate(-276,-268)"><path d="M84 386 L84 150 L158 296 L232 150 L232 386" stroke="#fff" stroke-width="42" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M270 132 L340 132 C 488 132 488 404 340 404 L270 404 Z M346 206 L390 206 L390 246 L430 246 L430 290 L390 290 L390 330 L346 330 L346 290 L306 290 L306 246 L346 246 Z" fill="#fff" fill-rule="evenodd"/></g></svg><span>JobMD.io<small>A division of JobUp.dev</small></span></a>
