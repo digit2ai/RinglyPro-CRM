@@ -348,7 +348,7 @@ function mustReject(name, mutate, expectConstraint) {
   ok('hero: the scene is the hero background', /\.hero::before\{[^}]*url\(jobmd-hero\.jpg\)/.test(html));
   // A picture behind a headline is only allowed if the headline still wins.
   ok('hero: the scene is scrimmed so the headline stays readable',
-     /\.hero::after\{[^}]*linear-gradient\(180deg,rgba\(10,10,14/.test(html));
+     /\.hero::after\{[^}]*linear-gradient\(180deg,rgba\(var\(--bg-rgb\)/.test(html));
   ok('hero: the retired neon sign is gone', html.indexOf('jobmd-sign.jpg') === -1);
   ok('hero: no other product\'s brand was copied onto this page', !/surgicalmind/i.test(html));
   ok('hero: no asset is hotlinked from another host\'s CDN',
@@ -389,7 +389,7 @@ function mustReject(name, mutate, expectConstraint) {
   ok('footer: it is a backdrop, not an inline figure', html.indexOf('class="fimg"') === -1);
   // The artwork is bright in places; every footer link sits on top of it.
   ok('footer: the backdrop is scrimmed so the footer stays legible',
-     /footer::after\{[^}]*linear-gradient\(180deg,rgba\(10,10,14/.test(html));
+     /footer::after\{[^}]*linear-gradient\(180deg,rgba\(var\(--bg-rgb\)/.test(html));
   ok('footer: the backdrop is clipped to the footer',
      /\.jmd footer\{[^}]*overflow:hidden/.test(html));
   // A DECORATIVE BACKGROUND CARRIES NO ALT, so the claims baked into the
@@ -401,8 +401,73 @@ function mustReject(name, mutate, expectConstraint) {
   ok('footer: the backdrop is under 400KB', fimgKB < 400, Math.round(fimgKB) + 'KB');
   // The fine print sits on the artwork. At --faint it measured 3.64:1, under
   // AA for text that small, so it has its own lighter colour.
-  ok('footer: the fine print is lightened for contrast over the backdrop',
-     /\.jmd \.fine\{color:#9aa0ad/.test(html));
+  // The fine print keeps its own token because --faint was still under AA
+  // over the backdrop; each theme sets --fine independently.
+  ok('footer: the fine print has its own contrast-tuned token',
+     /\.jmd \.fine\{color:var\(--fine\)/.test(html) && /--fine:#9aa0ad/.test(html) &&
+     /html\[data-theme="light"\][\s\S]{0,900}--fine:#[0-9a-f]{6}/.test(html));
+
+  // ── Theme: dark default, light opt-in ───────────────────────────────────
+  // DARK IS THE DEFAULT AND STAYS THE DEFAULT. The shipped markup carries no
+  // data-theme; only a stored preference adds one.
+  ok('theme: the shipped page has no data-theme, so it renders dark',
+     !/<html[^>]*data-theme/.test(html));
+  // The init must run BEFORE the stylesheet, or a saved light preference
+  // flashes dark and repaints.
+  ok('theme: the preference is applied before the stylesheet paints',
+     html.indexOf('jobmd_theme') < html.indexOf('<style>'));
+  ok('theme: an unreadable localStorage falls back to dark, it does not throw',
+     /catch\(e\)\{ \/\* private mode: stay on the default \*\//.test(html));
+  ok('theme: the light palette exists', /html\[data-theme="light"\] \.jmd\{/.test(html));
+  ok('theme: the toggle exists and reports its state',
+     /id="themeToggle"/.test(html) && /aria-pressed="false"/.test(html));
+  ok('theme: one toggle node serves the bar and the drawer',
+     (html.match(/id="themeToggle"/g) || []).length === 1);
+  ok('theme: the toggle sits inside the drawer\'s link list', (function () {
+    const a = html.indexOf('id="navlinks"'), c = html.indexOf('</div>', a);
+    const t = html.indexOf('id="themeToggle"');
+    return t > a && t < c;
+  })());
+  ok('theme: the browser chrome colour follows the theme',
+     /id="themeColor"/.test(html) && /themeMeta.setAttribute\('content'/.test(html));
+  ok('theme: color-scheme is declared', /name="color-scheme" content="dark light"/.test(html));
+
+  // EVERY THEME-DEPENDENT COLOUR MUST BE A TOKEN. A stray literal renders the
+  // same in both themes and is invisible until someone switches.
+  ok('theme: no raw page-background literal survives in the CSS',
+     !/rgba\(10,10,14,/.test(html), 'rgba(10,10,14,...) still present');
+  ok('theme: no raw constellation wire literal survives',
+     !/rgba\(120,190,255,/.test(html));
+  ok('theme: scrims are built from --bg-rgb so they follow the theme',
+     (html.match(/rgba\(var\(--bg-rgb\)/g) || []).length >= 6);
+  // --grad paints buttons (dark label on top) AND clipped text. Those pull in
+  // opposite directions on a light page, so they are separate tokens.
+  ok('theme: the text gradient is separate from the button gradient',
+     /--grad-text:/.test(html) && /\.jmd h1 \.g\{background:var\(--grad-text\)/.test(html));
+  ok('theme: light restates the text gradient darker',
+     /html\[data-theme="light"\][\s\S]{0,900}--grad-text:linear-gradient\(120deg,#0b7285/.test(html));
+
+  // EVERY var(--x) MUST BE DECLARED. An undefined custom property makes the
+  // whole declaration invalid at computed-value time and the property silently
+  // falls back to its initial value - which is how the aurora ended up
+  // painting at opacity 1 and every scrim was dropped, with no error anywhere.
+  const cssBlock = html.slice(html.indexOf('<style>'), html.indexOf('</style>'));
+  const usedVars = new Set(Array.from(cssBlock.matchAll(/var\((--[a-z0-9-]+)\)/g), function (m) { return m[1]; }));
+  const declVars = new Set(Array.from(cssBlock.matchAll(/(--[a-z0-9-]+)\s*:/g), function (m) { return m[1]; }));
+  const undeclared = Array.from(usedVars).filter(function (v) { return !declVars.has(v); });
+  ok('theme: every CSS custom property used is declared', undeclared.length === 0, undeclared.join(', '));
+  // The light palette must restate everything the dark one sets, or a token
+  // silently keeps its dark value on a light page.
+  const darkBlock = cssBlock.slice(cssBlock.indexOf('.jmd{'), cssBlock.indexOf('html[data-theme="light"]'));
+  const lightBlock = cssBlock.slice(cssBlock.indexOf('html[data-theme="light"] .jmd{'));
+  const themed = ['--bg', '--bg-rgb', '--bg2', '--card', '--card2', '--line', '--line2',
+                  '--ink', '--mut', '--faint', '--fine', '--teal', '--good',
+                  '--wire', '--wire-fill', '--wire-accent', '--surface-soft', '--scrim',
+                  '--img-hero', '--img-foot', '--aurora', '--grad-text', '--grad-soft'];
+  const notRestated = themed.filter(function (v) {
+    return darkBlock.indexOf(v + ':') !== -1 && lightBlock.indexOf(v + ':') === -1;
+  });
+  ok('theme: light restates every theme-dependent token', notRestated.length === 0, notRestated.join(', '));
 
   // ── Mobile navigation ──  // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
