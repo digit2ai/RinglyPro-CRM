@@ -475,8 +475,11 @@ function mustReject(name, mutate, expectConstraint) {
   ok('mobile: the burger is a 44px touch target', /\.burger\{[^}]*width:44px[^}]*height:44px/.test(html));
   ok('mobile: the burger reports its state to assistive tech',
      /aria-expanded="false"/.test(html) && /aria-controls="navlinks"/.test(html));
+  // The drawer hangs off a white bar, so it is white too - still fully
+  // opaque, which is the property that matters (at .98 the hero ghosted).
   ok('mobile: the open drawer is fully opaque',
-     /\.navlinks\.open\{[^}]*background:var\(--bg\)/.test(html));
+     /\.navlinks\.open\{[^}]*background:var\(--nav-bg\)/.test(html) &&
+     /--nav-bg:#ffffff/.test(html));
   ok('mobile: drawer rows are at least 48px', /\.navlinks\.open a\{[^}]*min-height:48px/.test(html));
   ok('mobile: the primary CTA is reachable inside the drawer',
      /class="btn p navcta"/.test(html));
@@ -507,7 +510,34 @@ function mustReject(name, mutate, expectConstraint) {
     ok('logo: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
   });
   ok('logo: the placeholder MD tile is gone', html.indexOf('class="mk">MD<') === -1);
-  eq('logo: the mark is inline in both lockups', (html.match(/class="mk"/g) || []).length, 2);
+  // The bar now carries the full brand lockup as artwork; the footer keeps the
+  // inline mark, which is drawn white and works on the dark backdrop.
+  eq('logo: one inline mark remains, in the footer', (html.match(/class="mk"/g) || []).length, 1);
+  ok('logo: the inline mark is the footer one', html.indexOf('class="mk"') > html.indexOf('<footer>'));
+
+  // ── The white menu bar ──────────────────────────────────────────────────
+  ok('nav: the logo artwork exists', fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo.jpg')));
+  ok('nav: the bar carries the full lockup', /class="logo" src="jobmd-logo\.jpg"/.test(html));
+  ok('nav: the logo reserves its box so the bar does not reflow',
+     /jobmd-logo\.jpg" width="518" height="174"/.test(html));
+  ok('nav: the logo is named for screen readers', /alt="JobMD\.io — AI Healthcare/.test(html));
+  // THE BAR IS WHITE IN BOTH THEMES, so it cannot borrow --ink/--mut, which
+  // invert - that would leave white links on a white bar in dark mode.
+  ok('nav: the bar has its own palette, independent of the theme',
+     /--nav-bg:#ffffff/.test(html) && /--nav-ink:/.test(html) && /--nav-mut:/.test(html));
+  ok('nav: the bar background is the nav token, not the page background',
+     /\.jmd \.nav\{[\s\S]{0,400}background:var\(--nav-bg\)/.test(html));
+  ok('nav: links and burger use the nav palette, not the page palette',
+     /\.navlinks\{[^}]*color:var\(--nav-mut\)/.test(html) &&
+     /\.burger \.bars[^{]*\{[^}]*background:var\(--nav-ink\)/.test(html));
+  ok('nav: no nav rule still reads the page --ink or --mut',
+     !/\.jmd \.navlinks a:hover\{color:var\(--ink\)\}/.test(html));
+  // The drawer's top padding must track the bar height, not a fixed 66px.
+  ok('nav: the drawer clears the bar via --nav-h',
+     /padding:calc\(var\(--nav-h\)/.test(html) && /--nav-h:86px/.test(html) && /--nav-h:66px/.test(html));
+  // The white bar is what sits under the browser chrome in both themes.
+  ok('nav: the browser chrome colour matches the white bar',
+     /theme-color" content="#ffffff"/.test(html) && /setAttribute\('content', '#ffffff'\)/.test(html));
   // Two inline SVGs sharing one gradient id makes the second render flat.
   const gradIds = (html.match(/linearGradient id="([^"]+)"/g) || []);
   ok('logo: each inline lockup carries a unique gradient id',
