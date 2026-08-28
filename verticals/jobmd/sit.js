@@ -273,7 +273,14 @@ function mustReject(name, mutate, expectConstraint) {
     ok('scope: the form offers ' + r, formRoles.indexOf(r) !== -1);
   });
   ok('landing: carries the Robotics Division', html.indexOf('Robotics Division') !== -1);
-  ok('landing: carries the published phone number', html.indexOf('(888) 315-4401') !== -1);
+  // The phone number was retired at the owner's request. Assert its absence
+  // everywhere, or a future copy edit quietly reinstates a dead line.
+  ok('landing: the retired phone number is gone',
+     !/315-?4401|8883154401/.test(html));
+  ok('landing: no narration segment still reads the number aloud',
+     !/three one five|four four zero one/i.test(html));
+  ok('landing: the contact path is the form, not a phone call',
+     html.indexOf('id="leadForm"') !== -1);
   ok('landing: presents JobMD.io as a division of JobUp.dev', html.indexOf('A division of JobUp.dev') !== -1);
   ok('landing: attributes the market figures', /healthsourceelite\.com/.test(html));
   ok('landing: is emoji-free', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(html));
@@ -329,6 +336,38 @@ function mustReject(name, mutate, expectConstraint) {
   });
   ok('ava: the browser-speech fallback survives a TTS outage',
      /SpeechSynthesisUtterance/.test(avaJs) && /neuralOK = false/.test(avaJs));
+
+  // ── Mobile navigation ───────────────────────────────────────────────────
+  // The hamburger existed but its links were 22px tall, the drawer let the
+  // hero ghost through, and it carried no Apply Now. Assert the contract.
+  ok('mobile: the burger is a 44px touch target', /\.burger\{[^}]*width:44px[^}]*height:44px/.test(html));
+  ok('mobile: the burger reports its state to assistive tech',
+     /aria-expanded="false"/.test(html) && /aria-controls="navlinks"/.test(html));
+  ok('mobile: the open drawer is fully opaque',
+     /\.navlinks\.open\{[^}]*background:var\(--bg\)/.test(html));
+  ok('mobile: drawer rows are at least 48px', /\.navlinks\.open a\{[^}]*min-height:48px/.test(html));
+  ok('mobile: the primary CTA is reachable inside the drawer',
+     /class="btn p navcta"/.test(html));
+  // One markup node serves the desktop bar and the drawer, so they can never
+  // disagree about the label or the target.
+  ok('mobile: there is one Apply Now node in the nav, not a desktop and a mobile copy',
+     (html.match(/class="btn p navcta"/g) || []).length === 1);
+  // Must sit between the drawer's opening tag and its closing tag, or the
+  // mobile menu renders without the primary CTA.
+  const navOpen = html.indexOf('id="navlinks"');
+  const navClose = html.indexOf('</div>', navOpen);
+  const ctaAt = html.indexOf('class="btn p navcta"');
+  ok('mobile: that Apply Now lives inside the link list the drawer shows',
+     ctaAt > navOpen && ctaAt < navClose, 'nav@' + navOpen + ' cta@' + ctaAt + ' close@' + navClose);
+  ['scrim', 'Escape', 'resize'].forEach(function (w) {
+    ok('mobile: the drawer closes via ' + w, html.indexOf(w) !== -1);
+  });
+  ok('mobile: the notch is respected', /env\(safe-area-inset/.test(html));
+  ok('mobile: text is not auto-inflated by the browser', /text-size-adjust:100%/.test(html));
+  // An inline grid override beats a media query, which is how mobile kept two
+  // columns where the breakpoint asked for one.
+  ok('mobile: no inline grid-template overrides the breakpoints',
+     !/style="grid-template-columns/.test(html));
 
   // ── The mark ────────────────────────────────────────────────────────────
   ['logo-master.svg', 'favicon.svg', 'favicon-32.png', 'apple-touch-icon.png',
@@ -448,7 +487,9 @@ function mustReject(name, mutate, expectConstraint) {
   const stray = await req('GET', '/jobmd/admin');
   eq('http: an unowned page 404s instead of serving the CRM', stray.status, 404);
   ok('http: the 404 is branded JobMD, not another product',
-     stray.text.indexOf('JobMD.io') !== -1 && stray.text.indexOf('(888) 315-4401') !== -1);
+     stray.text.indexOf('JobMD.io') !== -1 && stray.text.indexOf('Go to the home page') !== -1);
+  ok('http: the 404 does not offer the retired phone number',
+     !/315-?4401|8883154401/.test(stray.text));
   const strayApi = await req('GET', '/jobmd/api/v1/nope');
   eq('http: an unowned API path 404s as JSON', strayApi.status, 404);
   ok('http: the API 404 is JSON, not the HTML page', strayApi.body && strayApi.body.error === 'Not found');
