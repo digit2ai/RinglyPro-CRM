@@ -316,6 +316,41 @@ function mustReject(name, mutate, expectConstraint) {
   ok('logo: favicon is the rounded tab variant',
      fs.readFileSync(path.join(__dirname, 'public', 'favicon.svg'), 'utf8').indexOf('rx=') !== -1);
 
+  // ── 9b. The jobmd.io domain wiring ───────────────────────────────────────
+  //
+  // Ava posts to the ABSOLUTE /api/tts/edge. On jobmd.io the host handler
+  // routes the whole domain into this router and the CRM mounts its own
+  // /api/tts far below, so without a self-mount the narration would silently
+  // drop to the robot browser voice on the real domain only.
+  ok('domain: the vertical self-mounts /api/tts so Ava is same-origin on jobmd.io',
+     /router\.use\('\/api\/tts'/.test(idxSrc));
+  ok('domain: the TTS route is reused, not re-implemented here',
+     /require\('\.\.\/\.\.\/\.\.\/src\/routes\/presentation-tts'\)/.test(idxSrc));
+
+  const appSrc = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
+  ok('domain: jobmd.io and www.jobmd.io are both handled',
+     /host !== 'jobmd\.io' && host !== 'www\.jobmd\.io'/.test(appSrc));
+  // REGISTRATION ORDER IS THE WHOLE BUG. Express matches in order, so the host
+  // handler must come before the CRM's own paths or it is silently shadowed.
+  const hostAt = appSrc.indexOf("host !== 'jobmd.io'");
+  const ttsAt = appSrc.indexOf("require('./routes/presentation-tts')");
+  const pathMountAt = appSrc.indexOf("app.use(['/jobmd', '/jobMD'], jobmdApp)");
+  ok('domain: the host handler is registered before the CRM mounts its own routes',
+     hostAt > 0 && ttsAt > 0 && hostAt < ttsAt, 'host@' + hostAt + ' tts@' + ttsAt);
+  ok('domain: the host handler precedes the path mount', hostAt > 0 && hostAt < pathMountAt);
+  ok('domain: the page declares jobmd.io as canonical and og:url',
+     /rel="canonical" href="https:\/\/jobmd\.io\/"/.test(html) &&
+     /og:url" content="https:\/\/jobmd\.io\/"/.test(html));
+  // Relative asset paths are what let ONE page serve /jobmd/, /jobMD/ and the
+  // domain root. An absolute /jobmd/ prefix would break the apex.
+  ok('domain: page assets are relative so one page serves every root',
+     !/(?:href|src)="\/jobmd\//.test(html) && /href="favicon\.svg"/.test(html) &&
+     /fetch\('api\/v1\/leads'/.test(html));
+
+  // jobmd.io must NOT become a second front door to the CRM.
+  ok('domain: an unowned path ends in this vertical, not the CRM',
+     /JOBMD\.IO IS A PUBLIC BRAND DOMAIN/.test(idxSrc));
+
   // ── 10. HTTP surface ──────────────────────────────────────────────────────
   const app = express();
   const jobmd = require('./src/index');
@@ -375,6 +410,19 @@ function mustReject(name, mutate, expectConstraint) {
      planRes.body.evidence && !planRes.body.plan.capability_map);
 
   // Auth gates
+  // The catch-all, exercised rather than grepped.
+  const stray = await req('GET', '/jobmd/admin');
+  eq('http: an unowned page 404s instead of serving the CRM', stray.status, 404);
+  ok('http: the 404 is branded JobMD, not another product',
+     stray.text.indexOf('JobMD.io') !== -1 && stray.text.indexOf('(888) 315-4401') !== -1);
+  const strayApi = await req('GET', '/jobmd/api/v1/nope');
+  eq('http: an unowned API path 404s as JSON', strayApi.status, 404);
+  ok('http: the API 404 is JSON, not the HTML page', strayApi.body && strayApi.body.error === 'Not found');
+  // Ava's route must answer on this router itself, not via the CRM mount.
+  const ttsHead = await req('POST', '/jobmd/api/tts/edge', { text: 'Ava check.', voice: 'ava' });
+  ok('http: Ava\'s TTS answers from inside the vertical',
+     ttsHead.status === 200 || ttsHead.status === 502, 'got ' + ttsHead.status);
+
   const unauth = await req('POST', '/jobmd/api/v1/architect/runs', {});
   eq('http: persisting a plan requires auth', unauth.status, 401);
   const unauthList = await req('GET', '/jobmd/api/v1/architect/runs');
