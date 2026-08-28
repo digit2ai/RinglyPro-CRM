@@ -257,8 +257,64 @@ function mustReject(name, mutate, expectConstraint) {
   C.RECRUITMENT_PIPELINE.forEach(function (s) {
     ok('landing: shows stage ' + s.stage, html.indexOf('"' + s.stage + '"') !== -1);
   });
-  ok('landing: reuses the shared voice orb rather than a new TTS backend',
-     html.indexOf('/embed/voice-orb.js') !== -1);
+  // ── Ava narration ───────────────────────────────────────────────────────
+  // It must REUSE the repo's shared zero-key Edge TTS. A second TTS backend
+  // inside this vertical is the thing the voice runbook exists to prevent.
+  ok('ava: narration posts to the shared /api/tts/edge route', html.indexOf('/api/tts/edge') !== -1);
+  ok('ava: uses the Ava voice alias', /VOICE\s*=\s*'ava'/.test(html));
+  ok('ava: no second TTS backend ships inside this vertical',
+     !fs.existsSync(path.join(__dirname, 'src', 'services', 'edge-tts.js')));
+  ok('ava: no paid TTS provider is reachable from the page',
+     !/elevenlabs|api\.openai|texttospeech\.googleapis/i.test(html));
+
+  // The narration script must parse, and carry one segment per section plus
+  // the intro. A missing segment silently narrates the wrong section.
+  const blocks = [];
+  html.replace(/<script>([\s\S]*?)<\/script>/g, function (m, b) { blocks.push(b); return m; });
+  const avaJs = blocks[blocks.length - 1] || '';
+  ok('ava: the narration script parses',
+     (function () { try { new (require('vm').Script)(avaJs); return true; } catch (e) { return false; } })());
+  let segs = [];
+  const sm = avaJs.match(/var segments = \[([\s\S]*?)\n  \];/);
+  try { segs = eval('[' + (sm ? sm[1] : '') + ']'); } catch (e) { segs = []; }
+  const secCount = (html.match(/class="sec"/g) || []).length;
+  eq('ava: seven narratable sections', secCount, 7);
+  eq('ava: one segment per section plus the intro', segs.length, secCount + 1);
+  ok('ava: every segment carries real narration', segs.every(function (t) { return typeof t === 'string' && t.length > 80; }));
+
+  // NUMBERS ARE SPELLED OUT ON PURPOSE. Edge reads "8.5" and "(888)" badly,
+  // and this is copy being read aloud to a surgeon.
+  const numeric = segs.filter(function (t) { return /\d{3,}|\(\d|\d\.\d|%/.test(t); });
+  ok('ava: numbers are spelled out for the reader', numeric.length === 0,
+     numeric.map(function (t) { return (t.match(/[^ ]*\d[^ ]*/g) || []).join(' '); }).join(' | '));
+
+  // A listen button per section, and its index must map to a real segment.
+  const plays = (html.match(/data-play="(\d+)"/g) || []).map(function (m) { return parseInt(m.replace(/\D/g, ''), 10); });
+  eq('ava: one listen button per section', plays.length, secCount);
+  ok('ava: every listen button maps to a real segment',
+     plays.every(function (i) { return i + 1 < segs.length; }));
+  ok('ava: the browser-speech fallback survives a TTS outage',
+     /SpeechSynthesisUtterance/.test(avaJs) && /neuralOK = false/.test(avaJs));
+
+  // ── The mark ────────────────────────────────────────────────────────────
+  ['logo-master.svg', 'favicon.svg', 'favicon-32.png', 'apple-touch-icon.png',
+   'icon-192.png', 'icon-512.png'].forEach(function (f) {
+    ok('logo: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
+  });
+  ok('logo: the placeholder MD tile is gone', html.indexOf('class="mk">MD<') === -1);
+  eq('logo: the mark is inline in both lockups', (html.match(/class="mk"/g) || []).length, 2);
+  // Two inline SVGs sharing one gradient id makes the second render flat.
+  const gradIds = (html.match(/linearGradient id="([^"]+)"/g) || []);
+  ok('logo: each inline lockup carries a unique gradient id',
+     new Set(gradIds).size === gradIds.length, gradIds.join(', '));
+  ok('logo: the head links the favicon and the touch icon',
+     /rel="icon"[^>]*favicon\.svg/.test(html) && /apple-touch-icon\.png/.test(html));
+  // logo-master must stay FULL-BLEED: iOS rounds apple-touch-icon itself, and
+  // a pre-rounded source gets double-rounded.
+  const master = fs.readFileSync(path.join(__dirname, 'public', 'logo-master.svg'), 'utf8');
+  ok('logo: logo-master is full-bleed, not pre-rounded', master.indexOf('rx=') === -1);
+  ok('logo: favicon is the rounded tab variant',
+     fs.readFileSync(path.join(__dirname, 'public', 'favicon.svg'), 'utf8').indexOf('rx=') !== -1);
 
   // ── 10. HTTP surface ──────────────────────────────────────────────────────
   const app = express();
