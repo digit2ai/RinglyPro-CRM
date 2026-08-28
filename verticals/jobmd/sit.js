@@ -1,0 +1,364 @@
+'use strict';
+
+/**
+ * JobMD.io — System Integration Test.
+ *
+ * Asserts the INVARIANTS, not the happy path. Every constraint in the agent
+ * spec is an absolute about what must never happen, so each one is attacked
+ * here: a plan is deliberately tampered with and the verifier must refuse it.
+ * A verifier that only ever sees valid input proves nothing.
+ *
+ * Zero external keys. The model path is exercised only if ANTHROPIC_API_KEY
+ * happens to be set, and its absence is reported rather than skipped silently.
+ *
+ * Run: node verticals/jobmd/sit.js
+ */
+
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const express = require('express');
+
+const ROOT = path.join(__dirname, '..', '..');
+const C = require('./src/services/corpus');
+const { buildPlan, buildEvidence } = require('./src/services/plan');
+const { verifyPlan, unverifiedIdentifiers, SCHEMA_KEYS } = require('./src/services/verify');
+const { composePlan } = require('./src/services/architect');
+
+let pass = 0, fail = 0;
+const failures = [];
+function ok(name, cond, detail) {
+  if (cond) { pass++; }
+  else { fail++; failures.push(name + (detail ? ' :: ' + detail : '')); }
+}
+function eq(name, a, b) { ok(name, a === b, 'expected ' + JSON.stringify(b) + ', got ' + JSON.stringify(a)); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/** Tamper with a valid plan and require the verifier to catch it. */
+function mustReject(name, mutate, expectConstraint) {
+  const p = clone(buildPlan());
+  mutate(p);
+  const r = verifyPlan(p);
+  if (r.ok) { fail++; failures.push('NOT CAUGHT: ' + name); return; }
+  if (expectConstraint && !r.violations.some(function (v) { return v.constraint === expectConstraint; })) {
+    fail++; failures.push(name + ' :: caught but as ' + r.violations.map(function (v) { return v.constraint; }).join(',') +
+      ', expected ' + expectConstraint);
+    return;
+  }
+  pass++;
+}
+
+(async function run() {
+  console.log('JobMD.io SIT\n' + '='.repeat(60));
+
+  // ── 1. Corpus integrity ───────────────────────────────────────────────────
+  eq('corpus: 15 medical specialties', C.MEDICAL_SPECIALTIES.length, 15);
+  eq('corpus: 11 AI agents', C.AGENTS.length, 11);
+  eq('corpus: 13 pipeline stages', C.RECRUITMENT_PIPELINE.length, 13);
+  eq('corpus: 7 matching dimensions', C.MATCHING_DIMENSIONS.length, 7);
+  eq('corpus: 25 Talent Intelligence Record fields', C.TALENT_INTELLIGENCE_RECORD_FIELDS.length, 25);
+  eq('corpus: 19 Hospital/Client Profile fields', C.HOSPITAL_CLIENT_PROFILE_FIELDS.length, 19);
+  eq('corpus: 9 Robotics Division fields', C.ROBOTICS_CAPTURED_FIELDS.length, 9);
+  ok('corpus: pipeline order is 1..13 contiguous',
+     C.RECRUITMENT_PIPELINE.every(function (s, i) { return s.order === i + 1; }));
+  ok('corpus: first stage is Prospect', C.RECRUITMENT_PIPELINE[0].stage === 'Prospect');
+  ok('corpus: last stage is Placement', C.RECRUITMENT_PIPELINE[12].stage === 'Placement');
+  ok('corpus: source truncation is recorded', C.TALENT_DISCOVERY_TRUNCATED === true);
+
+  // THE INVENTORY IS REAL, NOT A PLACEHOLDER. Every named JobUp.dev component
+  // must resolve to a file on disk, or the plan is citing something invented.
+  let missing = [];
+  C.JOBUP_INVENTORY.forEach(function (e) {
+    if (!fs.existsSync(path.join(ROOT, e.path))) missing.push(e.path);
+  });
+  ok('inventory: every JobUp component resolves to a real file', missing.length === 0, missing.join(', '));
+  ok('inventory: no placeholder survived', !JSON.stringify(C.JOBUP_INVENTORY).includes('<JobUp'));
+
+  // ── 2. The deterministic plan is valid ────────────────────────────────────
+  const base = buildPlan();
+  const v = verifyPlan(base);
+  ok('plan: passes its own constraint verification', v.ok,
+     v.violations.map(function (x) { return x.constraint + ':' + x.detail; }).join(' | '));
+  ok('plan: top-level keys are exactly the declared schema',
+     JSON.stringify(Object.keys(base).sort()) === JSON.stringify(SCHEMA_KEYS.slice().sort()));
+  ok('plan: is JSON-serializable', (function () { try { JSON.parse(JSON.stringify(base)); return true; } catch (e) { return false; } })());
+  eq('plan: 20 inventory entries classified', base.reuse_inventory.length, C.JOBUP_INVENTORY.length);
+  eq('plan: 8 build phases', base.build_phases.length, 8);
+  ok('plan: build phases depend only on earlier phases',
+     base.build_phases.every(function (p) { return (p.depends_on_phases || []).every(function (d) { return d < p.phase; }); }));
+
+  // ── 3. Instruction 3: no capability is left unmapped ──────────────────────
+  const ev = buildEvidence();
+  ok('capabilities: every capability carries a mapping',
+     ev.capability_map.every(function (c) { return c.mapping && c.via; }));
+  const known = C.JOBUP_INVENTORY.map(function (e) { return e.component; });
+  const newNames = base.new_components.map(function (n) { return n.component; });
+  const unmapped = ev.capability_map.filter(function (c) {
+    if (c.mapping === 'new') return false;              // satisfied by a new component
+    return known.indexOf(c.via) === -1;
+  });
+  ok('capabilities: every reuse mapping names a real JobUp component', unmapped.length === 0,
+     unmapped.map(function (c) { return c.capability; }).join(', '));
+  const newUnbacked = ev.capability_map.filter(function (c) {
+    return c.mapping === 'new' && newNames.indexOf(c.via) === -1 &&
+           !newNames.some(function (n) { return c.via.indexOf(n) !== -1 || n.indexOf(c.via) !== -1; });
+  });
+  ok('capabilities: every new mapping names a declared new component', newUnbacked.length === 0,
+     newUnbacked.map(function (c) { return c.via; }).join(', '));
+
+  // ── 4. Constraint enforcement — each attacked ─────────────────────────────
+  mustReject('C6: dropping a specialty',    function (p) { p.medical_specialties.initial.splice(3, 1); }, 'no_reorder');
+  mustReject('C6: reordering specialties',  function (p) { const a = p.medical_specialties.initial; const t = a[0]; a[0] = a[1]; a[1] = t; }, 'no_reorder');
+  mustReject('C6: renaming a specialty',    function (p) { p.medical_specialties.initial[10] = 'Robotics'; }, 'no_reorder');
+  mustReject('C6: dropping an agent',       function (p) { p.agents.splice(5, 1); }, 'no_reorder');
+  mustReject('C6: reordering agents',       function (p) { const a = p.agents; const t = a[0]; a[0] = a[1]; a[1] = t; }, 'no_reorder');
+  mustReject('C6: merging two agents',      function (p) { p.agents[3].name = 'Candidate Matching and Ranking Agent'; p.agents.splice(6, 1); }, 'no_reorder');
+  mustReject('C6: dropping a pipeline stage', function (p) { p.recruitment_pipeline.splice(6, 1); }, 'no_reorder');
+  mustReject('C6: reordering pipeline stages', function (p) { const a = p.recruitment_pipeline; const t = a[8]; a[8] = a[9]; a[9] = t; }, 'no_reorder');
+  mustReject('C6: renumbering a stage',     function (p) { p.recruitment_pipeline[4].order = 99; }, 'no_reorder');
+  mustReject('C6: dropping a matching dimension', function (p) { p.matching_engine.dimensions.splice(2, 1); }, 'no_reorder');
+  mustReject('C6: renaming a matching dimension', function (p) { p.matching_engine.dimensions[1].dimension = 'Tech Match'; }, 'no_reorder');
+
+  mustReject('C3: inventing a JobUp component', function (p) { p.reuse_inventory[0].jobup_component = 'JobUp Credentialing Service'; }, 'no_invented_component');
+  mustReject('C3: inventing an MCP endpoint',   function (p) { p.reuse_inventory[1].jobup_component = 'JobUp /api/v1/credentials endpoint'; }, 'no_invented_component');
+  mustReject('C3: leaving an entry unclassified', function (p) { p.reuse_inventory.pop(); }, 'no_fabrication');
+  mustReject('C3: an invalid classification',   function (p) { p.reuse_inventory[2].classification = 'maybe'; }, 'declared_shape');
+
+  mustReject('C8: agent authority on Offer',      function (p) { p.recruitment_pipeline[8].agents_authorized_to_update = ['Follow-Up Agent']; }, 'agent_authority');
+  mustReject('C8: agent authority on Placement',  function (p) { p.recruitment_pipeline[12].agents_authorized_to_update = ['Recruiter Copilot']; }, 'agent_authority');
+  mustReject('C8: agent authority on Credentialing', function (p) { p.recruitment_pipeline[11].agents_authorized_to_update = ['Clinical Qualification Agent']; }, 'agent_authority');
+  mustReject('C8: authority to an unnamed agent', function (p) { p.recruitment_pipeline[1].agents_authorized_to_update = ['Credentialing Agent']; }, 'agent_authority');
+  mustReject('C8: a stage with no human role',    function (p) { p.recruitment_pipeline[0].roles_that_may_advance = []; }, 'agent_authority');
+
+  mustReject('C5: healthcare data declared shared', function (p) { p.separation_boundaries.shared_modular_components.push('Talent Intelligence Record'); }, 'no_coupling');
+  mustReject('C5: permissions declared shared',     function (p) { p.separation_boundaries.shared_modular_components.push('permissions'); }, 'no_coupling');
+  mustReject('C5: dropping JobMD ownership',        function (p) { p.separation_boundaries.jobmd_owned = p.separation_boundaries.jobmd_owned.filter(function (x) { return x !== 'workflows'; }); }, 'no_coupling');
+  mustReject('C5: data model owned elsewhere',      function (p) { p.data_model[0].owned_by = 'shared'; }, 'no_coupling');
+
+  mustReject('C4: renaming Talent Intelligence Record', function (p) {
+    Object.assign(p, JSON.parse(JSON.stringify(p).split('Talent Intelligence Record').join('Physician Record')));
+  }, 'protected_noun');
+  mustReject('C4: renaming Robotics Division', function (p) {
+    Object.assign(p, JSON.parse(JSON.stringify(p).split('Robotics Division').join('Robotics Module')));
+  }, 'protected_noun');
+  mustReject('C4: dropping IDNs', function (p) {
+    Object.assign(p, JSON.parse(JSON.stringify(p).split('IDN').join('network')));
+  }, 'protected_noun');
+
+  mustReject('C7: an email address in the plan',  function (p) { p.new_components[0].purpose += ' Contact drjones@hospital.org.'; }, 'no_real_data');
+  mustReject('C7: a phone number in the plan',    function (p) { p.risks[0].mitigation += ' Call (813) 555-0142.'; }, 'no_real_data');
+  mustReject('C7: an NPI in the plan',            function (p) { p.data_model[0].fields.push('NPI 1234567893'); }, 'no_real_data');
+  mustReject('C7: a licence number in the plan',  function (p) { p.data_model[0].purpose += ' License No. ME145098.'; }, 'no_real_data');
+  mustReject('C7: a DEA number in the plan',      function (p) { p.risks[1].impact += ' DEA BJ1234563.'; }, 'no_real_data');
+  mustReject('C7: an SSN in the plan',            function (p) { p.open_questions.push('Verify 123-45-6789.'); }, 'no_real_data');
+
+  mustReject('C2: an undeclared top-level key',   function (p) { p.notes = 'extra'; }, 'declared_shape');
+  mustReject('C2: a missing declared key',        function (p) { delete p.risks; }, 'declared_shape');
+
+  mustReject('C1: inventing a discovery source',  function (p) { p.automated_talent_discovery.authorized_sources.push('LinkedIn'); }, 'no_fabrication');
+  mustReject('C1: hiding the truncation',         function (p) { p.open_questions = p.open_questions.filter(function (q) { return !/truncat/i.test(q); }); }, 'no_fabrication');
+  mustReject('C1: emptying open_questions',       function (p) { p.open_questions = []; }, 'no_fabrication');
+  mustReject('C1: a not_applicable with a target', function (p) {
+    const r = p.reuse_inventory.filter(function (x) { return x.classification === 'not_applicable'; })[0];
+    r.jobmd_target = 'JobMD.io billing';
+  }, 'no_fabrication');
+  mustReject('C1: a classification with no reason', function (p) { p.reuse_inventory[4].reason = ''; }, 'no_fabrication');
+  mustReject('C1: changing the hosted location',  function (p) { p.project.hosted_location = 'https://jobmd.io/app'; }, 'no_fabrication');
+  mustReject('C1: changing the parent ecosystem', function (p) { p.project.parent_ecosystem = 'Digit2AI'; }, 'no_fabrication');
+
+  // ── 5. The prose identifier guard ─────────────────────────────────────────
+  const hay = JSON.stringify(C);
+  ok('prose guard: catches an invented table',
+     unverifiedIdentifiers('Store this in physician_credentials_2024.', hay).length > 0);
+  ok('prose guard: catches an invented route',
+     unverifiedIdentifiers('Expose it at /api/v1/credentialing/verify.', hay).length > 0);
+  ok('prose guard: catches an invented file',
+     unverifiedIdentifiers('Implement it in credentialing-engine.js.', hay).length > 0);
+  ok('prose guard: passes ordinary prose',
+     unverifiedIdentifiers('The matching machinery is reusable and the clinical evaluators are new.', hay).length === 0);
+  ok('prose guard: separator-only differences are not findings',
+     unverifiedIdentifiers('The robotic_platforms field is captured.', hay + ' robotic platforms').length === 0);
+
+  // ── 6. Determinism: the model may not move a structural field ─────────────
+  const a = await composePlan({ use_model: false });
+  const b = await composePlan({ use_model: false });
+  ok('compose: refuses nothing on the deterministic path', a.ok === true,
+     JSON.stringify((a.verification || {}).violations || []).slice(0, 300));
+  ok('compose: deterministic runs are byte-identical', JSON.stringify(a.plan) === JSON.stringify(b.plan));
+  eq('compose: labels the deterministic path', a.composed_by, 'deterministic');
+  eq('compose: is_simulated is true with no model prose', a.is_simulated, true);
+  eq('compose: reports no model when none was used', a.model, null);
+
+  const withModel = await composePlan({ use_model: true });
+  ok('compose: the model path also returns a valid plan', withModel.ok === true);
+
+  // THE STRUCTURE IS IDENTICAL WITH AND WITHOUT A MODEL. Only prose may differ.
+  function structural(p) {
+    return JSON.stringify({
+      project: p.project,
+      specialties: p.medical_specialties.initial,
+      agents: p.agents.map(function (x) { return [x.name, x.inputs, x.outputs, x.communicates_with]; }),
+      pipeline: p.recruitment_pipeline,
+      dimensions: p.matching_engine.dimensions.map(function (d) { return d.dimension; }),
+      data_model: p.data_model.map(function (d) { return [d.entity, d.fields, d.owned_by]; }),
+      inventory: p.reuse_inventory.map(function (r) { return [r.jobup_component, r.classification, r.jobmd_target]; }),
+      boundaries: p.separation_boundaries,
+      robotics: p.robotics_division,
+      discovery: p.automated_talent_discovery.authorized_sources,
+      phases: p.build_phases
+    });
+  }
+  ok('compose: structure is identical with and without a model',
+     structural(a.plan) === structural(withModel.plan));
+  console.log('  [model path] ANTHROPIC_API_KEY ' + (process.env.ANTHROPIC_API_KEY ? 'present — model prose exercised' :
+    'ABSENT — deterministic prose only; the model rewrite path is NOT covered by this run'));
+
+  // ── 7. The architect can never reach a real person's record ──────────────
+  // A lead is a real contact detail. Nothing in the architect may import it.
+  const svcDir = path.join(__dirname, 'src', 'services');
+  const svcFiles = fs.readdirSync(svcDir).filter(function (f) { return f.endsWith('.js'); });
+  let leaks = [];
+  svcFiles.forEach(function (f) {
+    const src = fs.readFileSync(path.join(svcDir, f), 'utf8');
+    if (/require\(['"][^'"]*models['"]\)/.test(src) || /\bLead\b/.test(src)) leaks.push(f);
+  });
+  ok('isolation: no architect service imports the models or the Lead table', leaks.length === 0, leaks.join(', '));
+
+  // ── 8. Multi-tenancy ──────────────────────────────────────────────────────
+  const modelsSrc = fs.readFileSync(path.join(__dirname, 'src', 'models.js'), 'utf8');
+  const tableDefs = (modelsSrc.match(/tableName:\s*'jm_[a-z_]+'/g) || []);
+  eq('tenancy: four jm_ tables defined', tableDefs.length, 4);
+  eq('tenancy: every table declares tenant_id', (modelsSrc.match(/tenant_id:\s*tenant/g) || []).length, 4);
+  eq('tenancy: every table is indexed on tenant_id',
+     (modelsSrc.match(/fields:\s*\['tenant_id'\]/g) || []).length, 4);
+  const idxSrc = fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8');
+  ok('tenancy: tenant_id is read from the session, never the body', /function tenantOf\(req\)/.test(idxSrc) &&
+     !/tenant_id:\s*req\.body/.test(idxSrc));
+  const mig = fs.readFileSync(path.join(__dirname, 'migrations', '20260828_jobmd_tables.sql'), 'utf8');
+  eq('tenancy: the migration declares tenant_id NOT NULL on all four tables',
+     (mig.match(/tenant_id\s+INTEGER NOT NULL/g) || []).length, 4);
+
+  // ── 9. The landing page ───────────────────────────────────────────────────
+  const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  ok('landing: carries the source positioning', html.indexOf('Superior Surgeons') !== -1);
+  ok('landing: carries the Robotics Division', html.indexOf('Robotics Division') !== -1);
+  ok('landing: carries the published phone number', html.indexOf('(888) 315-4401') !== -1);
+  ok('landing: presents JobMD.io as a division of JobUp.dev', html.indexOf('A division of JobUp.dev') !== -1);
+  ok('landing: attributes the market figures', /healthsourceelite\.com/.test(html));
+  ok('landing: is emoji-free', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(html));
+  C.MEDICAL_SPECIALTIES.forEach(function (s) {
+    ok('landing: lists ' + s, html.indexOf(s.replace(/&/g, '&')) !== -1 || html.indexOf(s.replace('&', '&')) !== -1);
+  });
+  C.AGENTS.forEach(function (a) {
+    ok('landing: names ' + a.name, html.indexOf(a.name.replace(/\//g, ' / ').replace(/\s+/g, ' ')) !== -1 ||
+       html.indexOf(a.name) !== -1);
+  });
+  C.RECRUITMENT_PIPELINE.forEach(function (s) {
+    ok('landing: shows stage ' + s.stage, html.indexOf('"' + s.stage + '"') !== -1);
+  });
+  ok('landing: reuses the shared voice orb rather than a new TTS backend',
+     html.indexOf('/embed/voice-orb.js') !== -1);
+
+  // ── 10. HTTP surface ──────────────────────────────────────────────────────
+  const app = express();
+  const jobmd = require('./src/index');
+  // The router fires init() at load. Await it so the schema is settled before
+  // the HTTP probes, and so nothing is still connecting when we close below.
+  await jobmd.init().catch(function (e) { ok('boot: router init succeeded', false, e.message); });
+  app.use('/jobmd', jobmd);
+  const server = http.createServer(app);
+  await new Promise(function (r) { server.listen(0, r); });
+  const port = server.address().port;
+
+  function req(method, p, body, headers) {
+    return new Promise(function (resolve) {
+      const data = body ? JSON.stringify(body) : null;
+      const r = http.request({ host: '127.0.0.1', port, path: p, method,
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+          data ? { 'Content-Length': Buffer.byteLength(data) } : {}, headers || {}) },
+        function (res) {
+          let s = '';
+          res.on('data', function (c) { s += c; });
+          res.on('end', function () {
+            let j = null; try { j = JSON.parse(s); } catch (e) { /* html */ }
+            resolve({ status: res.statusCode, body: j, text: s, headers: res.headers });
+          });
+        });
+      r.on('error', function (e) { resolve({ status: 0, body: null, text: String(e.message) }); });
+      if (data) r.write(data);
+      r.end();
+    });
+  }
+
+  const health = await req('GET', '/jobmd/health');
+  eq('http: health responds 200', health.status, 200);
+  ok('http: health reports the binding counts',
+     health.body && health.body.counts && health.body.counts.agents === 11 &&
+     health.body.counts.recruitment_pipeline_stages === 13);
+  ok('http: health names the narrative path',
+     health.body && ['model', 'deterministic'].indexOf(health.body.narrative_path) !== -1);
+
+  const landing = await req('GET', '/jobmd/');
+  eq('http: landing responds 200', landing.status, 200);
+  ok('http: landing serves the page', landing.text.indexOf('Superior Surgeons') !== -1);
+
+  const schema = await req('GET', '/jobmd/api/v1/architect/schema');
+  eq('http: schema responds 200', schema.status, 200);
+  eq('http: schema declares 17 keys', schema.body.schema_keys.length, 17);
+  ok('http: schema reports the source truncation', schema.body.source_truncated === true);
+
+  const planRes = await req('GET', '/jobmd/api/v1/architect/plan?model=0');
+  eq('http: plan responds 200', planRes.status, 200);
+  ok('http: plan is verified before it is returned', planRes.body.ok === true &&
+     planRes.body.verification.violations.length === 0);
+  ok('http: returned plan re-verifies independently', verifyPlan(planRes.body.plan).ok);
+  ok('http: returned plan carries only the declared keys',
+     JSON.stringify(Object.keys(planRes.body.plan).sort()) === JSON.stringify(SCHEMA_KEYS.slice().sort()));
+  ok('http: evidence travels beside the plan, not inside it',
+     planRes.body.evidence && !planRes.body.plan.capability_map);
+
+  // Auth gates
+  const unauth = await req('POST', '/jobmd/api/v1/architect/runs', {});
+  eq('http: persisting a plan requires auth', unauth.status, 401);
+  const unauthList = await req('GET', '/jobmd/api/v1/architect/runs');
+  eq('http: listing plans requires auth', unauthList.status, 401);
+  const unauthLeads = await req('GET', '/jobmd/api/v1/leads');
+  eq('http: reading leads requires auth', unauthLeads.status, 401);
+
+  // Leads: validation, and tenant_id is never taken from the body.
+  const badLead = await req('POST', '/jobmd/api/v1/leads', { first_name: '', email: 'nope' });
+  eq('http: a malformed lead is rejected', badLead.status, 400);
+  const stamp = Date.now();
+  const goodLead = await req('POST', '/jobmd/api/v1/leads',
+    { first_name: 'SIT', last_name: 'Probe', email: 'sit-' + stamp + '@example.invalid',
+      role: 'surgeon', message: 'SIT probe', tenant_id: 999999 });
+  eq('http: a valid lead is accepted', goodLead.status, 201);
+
+  const { Lead, sequelize } = require('./src/models');
+  const stored = await Lead.findOne({ where: { email: 'sit-' + stamp + '@example.invalid' } });
+  ok('http: the lead was persisted', Boolean(stored));
+  ok('tenancy: a tenant_id in the body is ignored', stored && stored.tenant_id !== 999999);
+  ok('privacy: the raw IP is never stored, only a salted hash',
+     stored && stored.ip_hash && stored.ip_hash.length === 32 && !/\d+\.\d+\.\d+\.\d+/.test(stored.ip_hash));
+
+  // Clean up after ourselves.
+  await Lead.destroy({ where: { email: 'sit-' + stamp + '@example.invalid' } });
+  const gone = await Lead.findOne({ where: { email: 'sit-' + stamp + '@example.invalid' } });
+  ok('cleanup: the SIT lead was removed', !gone);
+
+  server.close();
+  await sequelize.close();
+
+  // ── Summary ───────────────────────────────────────────────────────────────
+  console.log('='.repeat(60));
+  if (failures.length) {
+    console.log('FAILURES:');
+    failures.forEach(function (f) { console.log('  - ' + f); });
+  }
+  console.log('SIT: ' + pass + '/' + (pass + fail) + (fail ? '  FAILED' : '  PASS'));
+  process.exit(fail ? 1 : 0);
+})().catch(function (e) {
+  console.error('SIT CRASHED:', e && e.stack || e);
+  process.exit(1);
+});
