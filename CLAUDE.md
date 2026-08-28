@@ -650,6 +650,21 @@ Note the deliberate divergence from the agent: the project request's §1 names o
 
 **Landing** (`public/index.html`) carries the HealthSource Elite positioning — Superior Talent / Superior Results, the AAMC 15,000-30,000 shortage by 2034, The Right Fit, Who We Serve, the 15 specialties + business sectors, the full Robotics Division with its da Vinci figures, and the AI layer — on the **inherited JobUp dark-aurora token set** rotated toward clinical teal (brand inheritance is explicitly requested by the spec). Market figures are **attributed to healthsourceelite.com, not independently verified**, and the page says so. It reuses the shared zero-key voice orb (`/embed/voice-orb.js` → `/api/tts/edge`) rather than standing up a second TTS backend.
 
+### TWO agents, ONE corpus
+
+`corpus.js` is the single transcription of the project request; **both** generators are projections of it. Two agents that each transcribed the request separately would eventually disagree about how many pipeline stages there are, and each would look right in isolation — SIT asserts the two agree on the stages, in order.
+
+| Agent | Contract | Endpoints |
+|---|---|---|
+| **JobMD Build Plan Architect** | 17 snake_case keys, `build_phases` + `risks` | `/api/v1/architect/*` |
+| **JobMD.io Platform Architecture Spec Generator** | 15 camelCase keys, `brandInheritance`, `reuseAnalysis` (itemType/decision/modular), profile fields as objects, `openQuestions` as objects with `blocksBuild` | `/api/v1/spec/*` |
+
+Both persist to `jm_build_plans` / `jm_plan_runs`, distinguished by a `kind` column (`build_plan` | `architecture_record`); every read filters on it.
+
+**Three things the spec generator refuses to invent, and says so instead.** `mcpEndpoints` is **empty** — neither the request nor the registry names a single endpoint path, and it is the most tempting field on the schema to fill. The **JobMD.io physician database** the request cites as a discovery source **does not exist** in this repo; that is a blocking open question, not a table name. And the declared `decision` enum has **no value for "not applicable"**, so the two registry items that are genuinely not reused (billing, entitlements) are omitted from `reuseAnalysis` with the omission stated, rather than forced into `build_new_for_jobmd` — which would assert JobMD.io is building its own billing, something the request never says.
+
+**It is read-only with respect to every runtime system.** `spec-plan.js`, `spec-verify.js` and `spec-architect.js` never import `models.js` or `db.js` and contain no `create/update/destroy/query/sync` call; SIT greps all three rather than trusting the comment. That is how "never execute, deploy, migrate, or write to any production system" is held.
+
 ### The JobMD Build Plan Architect
 
 Turns the project request into the declared build-plan JSON for OrbUp.app.

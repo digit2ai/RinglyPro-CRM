@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS jm_build_plans (
   id           SERIAL PRIMARY KEY,
   tenant_id    INTEGER NOT NULL DEFAULT 1,
   label        VARCHAR(255),
+  kind         VARCHAR(64) DEFAULT 'build_plan',   -- build_plan | architecture_record
   plan         JSONB NOT NULL,
   evidence     JSONB,
   counts       JSONB,
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS jm_plan_runs (
   id                SERIAL PRIMARY KEY,
   tenant_id         INTEGER NOT NULL DEFAULT 1,
   status            VARCHAR(255) NOT NULL,
+  kind              VARCHAR(64) DEFAULT 'build_plan',
   composed_by       VARCHAR(255),
   violations        JSONB,
   rejected_rewrites JSONB,

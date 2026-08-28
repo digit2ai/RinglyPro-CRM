@@ -167,6 +167,129 @@ function mustReject(name, mutate, expectConstraint) {
   mustReject('C1: changing the hosted location',  function (p) { p.project.hosted_location = 'https://jobmd.io/app'; }, 'no_fabrication');
   mustReject('C1: changing the parent ecosystem', function (p) { p.project.parent_ecosystem = 'Digit2AI'; }, 'no_fabrication');
 
+  // ══════════════════════════════════════════════════════════════════════
+  //  AGENT 2 — JobMD.io Platform Architecture Spec Generator
+  //  A different contract over the SAME corpus. Two agents that each
+  //  transcribed the request separately would eventually disagree about how
+  //  many pipeline stages there are, and both would look right alone.
+  // ══════════════════════════════════════════════════════════════════════
+  const { buildRecord } = require('./src/services/spec-plan');
+  const { verifyRecord, SPEC_KEYS } = require('./src/services/spec-verify');
+  const { composeRecord } = require('./src/services/spec-architect');
+
+  const specRec = buildRecord();
+  const specV = verifyRecord(specRec);
+  ok('spec: the record passes its own constraint verification', specV.ok,
+     specV.violations.map(function (x) { return x.constraint + ':' + x.detail; }).join(' | '));
+  eq('spec: fifteen declared top-level keys', SPEC_KEYS.length, 15);
+  ok('spec: top-level keys are exactly the declared schema',
+     JSON.stringify(Object.keys(specRec).sort()) === JSON.stringify(SPEC_KEYS.slice().sort()));
+  ok('spec: it is a DIFFERENT contract from the build plan, not a copy',
+     JSON.stringify(SPEC_KEYS.slice().sort()) !== JSON.stringify(SCHEMA_KEYS.slice().sort()));
+
+  // Both agents must agree on every count, because both read one corpus.
+  eq('spec: same fifteen specialties as the build plan', specRec.medicalSpecialties.initialSpecialties.length, base.medical_specialties.initial.length);
+  eq('spec: same eleven agents', specRec.mcpArchitecture.agents.length, base.agents.length);
+  eq('spec: same thirteen stages', specRec.recruitmentPipeline.stages.length, base.recruitment_pipeline.length);
+  eq('spec: same seven dimensions', specRec.matchingEngine.dimensions.length, base.matching_engine.dimensions.length);
+  ok('spec: the two agents name the same stages in the same order',
+     JSON.stringify(specRec.recruitmentPipeline.stages.map(function (x) { return x.stageName; })) ===
+     JSON.stringify(base.recruitment_pipeline.map(function (x) { return x.stage; })));
+  eq('spec: the full Talent Intelligence Record field list', specRec.physicianIntelligenceProfile.fields.length, C.TALENT_INTELLIGENCE_RECORD_FIELDS.length);
+  eq('spec: the full Hospital / Client Intelligence Profile field list', specRec.hospitalClientIntelligenceProfile.fields.length, C.HOSPITAL_CLIENT_PROFILE_FIELDS.length);
+
+  // NOTHING NAMES AN MCP ENDPOINT, so the list stays empty and the gap is
+  // recorded. This is the single most tempting field to invent.
+  eq('spec: mcpEndpoints is empty because nothing names one', specRec.mcpArchitecture.orchestrationLayer.mcpEndpoints.length, 0);
+  ok('spec: the empty endpoint list is explained in openQuestions',
+     specRec.openQuestions.some(function (q) { return /endpoint/i.test(q.question); }));
+  // The declared decision enum has no not-applicable value; the two registry
+  // items that are genuinely not reused are omitted and the omission stated.
+  eq('spec: reuseAnalysis covers every applicable registry item', specRec.reuseAnalysis.length, C.JOBUP_INVENTORY.length - 2);
+  ok('spec: the omitted registry items are explained, not silently dropped',
+     specRec.openQuestions.some(function (q) { return /not applicable|decision enum/i.test(q.question + ' ' + q.topic); }));
+  ok('spec: every reuseAnalysis row is modular', specRec.reuseAnalysis.every(function (r) { return r.modular === true; }));
+  ok('spec: openQuestions are objects with a blocksBuild flag',
+     specRec.openQuestions.every(function (q) { return q.topic && q.question && typeof q.blocksBuild === 'boolean'; }));
+  ok('spec: the missing physician database is flagged as blocking',
+     specRec.openQuestions.some(function (q) { return /physician database/i.test(q.topic) && q.blocksBuild === true; }));
+
+  // The constraints, attacked.
+  function mustRejectSpec(name, mutate, expect) {
+    const r = JSON.parse(JSON.stringify(buildRecord()));
+    mutate(r);
+    const res = verifyRecord(r);
+    if (res.ok) { fail++; failures.push('NOT CAUGHT: ' + name); return; }
+    if (expect && !res.violations.some(function (x) { return x.constraint === expect; })) {
+      fail++; failures.push(name + ' :: caught as ' + res.violations.map(function (x) { return x.constraint; }).join(',') + ', expected ' + expect);
+      return;
+    }
+    pass++;
+  }
+  mustRejectSpec('spec: reordering the section 7 stages', function (r) { const a = r.recruitmentPipeline.stages; const t = a[8]; a[8] = a[9]; a[9] = t; }, 'no_reorder');
+  mustRejectSpec('spec: dropping a stage', function (r) { r.recruitmentPipeline.stages.splice(6, 1); }, 'no_reorder');
+  mustRejectSpec('spec: dropping a Talent Intelligence Record field', function (r) { r.physicianIntelligenceProfile.fields.splice(3, 1); }, 'no_reorder');
+  mustRejectSpec('spec: dropping a hospital profile field', function (r) { r.hospitalClientIntelligenceProfile.fields.pop(); }, 'no_reorder');
+  mustRejectSpec('spec: inventing an MCP endpoint', function (r) { r.mcpArchitecture.orchestrationLayer.mcpEndpoints.push('/api/v1/mcp/tools'); }, 'no_invented_component');
+  mustRejectSpec('spec: inventing a registry item', function (r) { r.reuseAnalysis[0].jobUpDevItem = 'JobUp Credentialing Service'; }, 'no_invented_component');
+  mustRejectSpec('spec: inventing an agent reuse source', function (r) { r.mcpArchitecture.agents[2].reuseSource = 'JobUp Hospital Service'; }, 'no_invented_component');
+  mustRejectSpec('spec: inventing an A2A partner', function (r) { r.mcpArchitecture.agents[0].a2aPartners.push('Credentialing Agent'); }, 'no_fabrication');
+  mustRejectSpec('spec: a non-modular shared item', function (r) { r.reuseAnalysis[3].modular = false; }, 'no_coupling');
+  mustRejectSpec('spec: build_new without saying why', function (r) { r.reuseAnalysis[4].decision = 'build_new_for_jobmd'; r.reuseAnalysis[4].rationale = 'It is new.'; }, 'no_rebuild_from_zero');
+  mustRejectSpec('spec: an agent grabbing Placement', function (r) { r.mcpArchitecture.agents[10].mayUpdatePipelineStages = ['Placement']; }, 'agent_authority');
+  mustRejectSpec('spec: a stage authorizing the wrong agent', function (r) { r.recruitmentPipeline.stages[11].aiAgentsAuthorizedToUpdate = ['Follow-Up Agent']; }, 'agent_authority');
+  mustRejectSpec('spec: sharing the Talent Intelligence Record', function (r) { r.separationFromJobUpDev.sharedModularComponents.push('Talent Intelligence Record'); }, 'no_coupling');
+  mustRejectSpec('spec: giving away ownAgents', function (r) { r.separationFromJobUpDev.ownAgents = false; }, 'no_coupling');
+  mustRejectSpec('spec: renaming the record', function (r) {
+    Object.assign(r, JSON.parse(JSON.stringify(r).split('Talent Intelligence Record').join('Physician Record')));
+  }, 'protected_noun');
+  mustRejectSpec('spec: a licence number in a note', function (r) { r.physicianIntelligenceProfile.fields[0].notes = 'License No. ME145098'; }, 'no_real_data');
+  mustRejectSpec('spec: an email in an open question', function (r) { r.openQuestions[0].question += ' Contact drjones@hospital.org.'; }, 'no_real_data');
+  mustRejectSpec('spec: claiming section 10 is complete', function (r) { r.automatedTalentDiscovery.status = 'specified'; }, 'no_fabrication');
+  mustRejectSpec('spec: inventing a discovery source', function (r) { r.automatedTalentDiscovery.authorizedSources.push('LinkedIn'); }, 'no_fabrication');
+  mustRejectSpec('spec: hiding the truncation', function (r) { r.openQuestions = r.openQuestions.filter(function (q) { return !/truncat/i.test(q.question); }); }, 'no_fabrication');
+  mustRejectSpec('spec: an open question without blocksBuild', function (r) { delete r.openQuestions[3].blocksBuild; }, 'declared_shape');
+  mustRejectSpec('spec: an undeclared top-level key', function (r) { r.notes = 'extra'; }, 'declared_shape');
+  mustRejectSpec('spec: a specialization on a reuse_as_is row', function (r) {
+    const x = r.reuseAnalysis.filter(function (y) { return y.decision === 'reuse_as_is'; })[0];
+    x.healthcareSpecialization = 'something';
+  }, 'no_fabrication');
+
+  // READ-ONLY WITH RESPECT TO EVERY RUNTIME SYSTEM. The constraint says this
+  // agent may not execute, deploy, migrate or write anywhere; the way to hold
+  // it is to keep the database out of reach entirely.
+  ['spec-plan.js', 'spec-verify.js', 'spec-architect.js'].forEach(function (f) {
+    const src = fs.readFileSync(path.join(__dirname, 'src', 'services', f), 'utf8');
+    ok('spec: ' + f + ' cannot reach the database', !/require\(['"][^'"]*(models|db)['"]\)/.test(src));
+    ok('spec: ' + f + ' cannot write, deploy or migrate',
+       !/\.(create|update|destroy|query|sync)\s*\(/.test(src));
+  });
+
+  // Determinism, and the model may not move a structural field.
+  const specA = await composeRecord({ use_model: false });
+  const specB = await composeRecord({ use_model: false });
+  ok('spec: refuses nothing on the deterministic path', specA.ok === true);
+  ok('spec: deterministic runs are byte-identical', JSON.stringify(specA.record) === JSON.stringify(specB.record));
+  eq('spec: labels the deterministic path', specA.composed_by, 'deterministic');
+  const specM = await composeRecord({ use_model: true });
+  ok('spec: the model path also returns a valid record', specM.ok === true);
+  function structuralSpec(r) {
+    return JSON.stringify({
+      project: r.project.name + '|' + r.project.hostedLocation,
+      specialties: r.medicalSpecialties.initialSpecialties,
+      agents: r.mcpArchitecture.agents.map(function (a) { return [a.agentName, a.inputs, a.outputs, a.a2aPartners, a.mayUpdatePipelineStages, a.reuseSource]; }),
+      stages: r.recruitmentPipeline.stages,
+      dims: r.matchingEngine.dimensions.map(function (d) { return d.dimensionName; }),
+      tir: r.physicianIntelligenceProfile.fields.map(function (f) { return [f.fieldName, f.sourceAgent]; }),
+      hcp: r.hospitalClientIntelligenceProfile.fields.map(function (f) { return [f.fieldName, f.sourceAgent]; }),
+      reuse: r.reuseAnalysis.map(function (x) { return [x.jobUpDevItem, x.itemType, x.decision, x.healthcareSpecialization]; }),
+      endpoints: r.mcpArchitecture.orchestrationLayer.mcpEndpoints,
+      sep: r.separationFromJobUpDev, atd: r.automatedTalentDiscovery
+    });
+  }
+  ok('spec: structure is identical with and without a model',
+     structuralSpec(specA.record) === structuralSpec(specM.record));
+
   // ── 5. The prose identifier guard ─────────────────────────────────────────
   const hay = JSON.stringify(C);
   ok('prose guard: catches an invented table',

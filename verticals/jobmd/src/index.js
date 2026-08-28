@@ -27,7 +27,9 @@ const bcrypt = require('bcryptjs');
 
 const { sequelize, User, BuildPlan, PlanRun, Lead } = require('./models');
 const { composePlan, MODEL } = require('./services/architect');
+const { composeRecord } = require('./services/spec-architect');
 const { SCHEMA_KEYS } = require('./services/verify');
+const { SPEC_KEYS } = require('./services/spec-verify');
 const C = require('./services/corpus');
 
 const router = express.Router();
@@ -70,7 +72,11 @@ async function init() {
     'ALTER TABLE jm_build_plans ADD COLUMN IF NOT EXISTS evidence JSONB',
     'ALTER TABLE jm_build_plans ADD COLUMN IF NOT EXISTS counts JSONB',
     'ALTER TABLE jm_plan_runs   ADD COLUMN IF NOT EXISTS rejected_rewrites JSONB',
-    'ALTER TABLE jm_leads       ADD COLUMN IF NOT EXISTS status VARCHAR(255) DEFAULT \'new\''
+    'ALTER TABLE jm_leads       ADD COLUMN IF NOT EXISTS status VARCHAR(255) DEFAULT \'new\'',
+    // Two generators, one table. `kind` is what distinguishes a build plan
+    // from an architecture record; existing rows predate the spec generator.
+    'ALTER TABLE jm_build_plans ADD COLUMN IF NOT EXISTS kind VARCHAR(64) DEFAULT \'build_plan\'',
+    'ALTER TABLE jm_plan_runs   ADD COLUMN IF NOT EXISTS kind VARCHAR(64) DEFAULT \'build_plan\''
   ];
   for (const sql of alters) {
     try { await sequelize.query(sql); } catch (e) { console.warn('[jobmd] alter skipped:', e.message); }
@@ -159,6 +165,7 @@ router.get('/health', function (req, res) {
     db: initDone ? 'connected' : (initError ? 'error' : 'connecting'),
     model: process.env.ANTHROPIC_API_KEY ? MODEL : null,
     narrative_path: process.env.ANTHROPIC_API_KEY ? 'model' : 'deterministic',
+    agents: ['JobMD Build Plan Architect', 'JobMD.io Platform Architecture Spec Generator'],
     counts: {
       medical_specialties: C.MEDICAL_SPECIALTIES.length,
       agents: C.AGENTS.length,
@@ -186,6 +193,87 @@ router.get('/api/v1/architect/schema', function (req, res) {
   });
 });
 
+// ── The architecture record: the second agent, a different contract ────────
+router.get('/api/v1/spec/schema', function (req, res) {
+  res.json({
+    agent: 'JobMD.io Platform Architecture Spec Generator',
+    schema_keys: SPEC_KEYS,
+    binding_counts: {
+      medical_specialties: C.MEDICAL_SPECIALTIES.length,
+      agents: C.AGENTS.length,
+      recruitment_pipeline_stages: C.RECRUITMENT_PIPELINE.length,
+      matching_dimensions: C.MATCHING_DIMENSIONS.length,
+      talent_record_fields: C.TALENT_INTELLIGENCE_RECORD_FIELDS.length,
+      hospital_profile_fields: C.HOSPITAL_CLIENT_PROFILE_FIELDS.length
+    },
+    jobup_registry: C.JOBUP_INVENTORY.map(function (e) { return e.component; }),
+    protected_nouns: C.PROTECTED_NOUNS,
+    source_truncated: C.TALENT_DISCOVERY_TRUNCATED
+  });
+});
+
+router.get('/api/v1/spec', async function (req, res) {
+  try {
+    const out = await composeRecord({ use_model: req.query.model !== '0' });
+    if (!out.ok) {
+      return res.status(500).json({ error: 'The composed record failed constraint verification.',
+                                    violations: out.verification.violations });
+    }
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/api/v1/spec/runs', requireAuth, async function (req, res) {
+  const tenant_id = tenantOf(req);
+  try {
+    const out = await composeRecord({ use_model: req.body && req.body.use_model !== false });
+    await PlanRun.create({
+      tenant_id, kind: 'architecture_record', status: out.ok ? 'ok' : 'refused',
+      composed_by: out.composed_by, violations: out.verification.violations,
+      rejected_rewrites: out.rejected_rewrites, duration_ms: out.duration_ms,
+      error: out.model_error || null
+    });
+    if (!out.ok) {
+      return res.status(422).json({ error: 'Refused: the composed record failed constraint verification.',
+                                    violations: out.verification.violations });
+    }
+    const row = await BuildPlan.create({
+      tenant_id, kind: 'architecture_record',
+      label: String((req.body && req.body.label) || 'JobMD.io architecture record').slice(0, 200),
+      plan: out.record, counts: out.counts, verification: out.verification,
+      composed_by: out.composed_by, is_simulated: out.is_simulated, model: out.model,
+      duration_ms: out.duration_ms, created_by: req.user.id
+    });
+    res.status(201).json({ id: row.id, ok: true, composed_by: out.composed_by,
+                           is_simulated: out.is_simulated, counts: out.counts, record: out.record });
+  } catch (e) {
+    try { await PlanRun.create({ tenant_id, kind: 'architecture_record', status: 'error', error: e.message }); }
+    catch (e2) { /* audit best effort */ }
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/api/v1/spec/runs', requireAuth, async function (req, res) {
+  try {
+    const rows = await BuildPlan.findAll({
+      where: { tenant_id: tenantOf(req), kind: 'architecture_record' },
+      order: [['created_at', 'DESC']], limit: 50,
+      attributes: ['id', 'label', 'counts', 'composed_by', 'is_simulated', 'model', 'duration_ms', 'created_at']
+    });
+    res.json({ items: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/api/v1/spec/runs/:id', requireAuth, async function (req, res) {
+  try {
+    const row = await BuildPlan.findOne({
+      where: { id: parseInt(req.params.id, 10) || 0, tenant_id: tenantOf(req), kind: 'architecture_record' }
+    });
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    res.json(row);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Compose a plan. Persists nothing. Contains no PII by construction. ──────
 router.get('/api/v1/architect/plan', async function (req, res) {
   try {
@@ -206,7 +294,7 @@ router.post('/api/v1/architect/runs', requireAuth, async function (req, res) {
   try {
     const out = await composePlan({ use_model: req.body && req.body.use_model !== false });
     await PlanRun.create({
-      tenant_id, status: out.ok ? 'ok' : 'refused', composed_by: out.composed_by,
+      tenant_id, kind: 'build_plan', status: out.ok ? 'ok' : 'refused', composed_by: out.composed_by,
       violations: out.verification.violations, rejected_rewrites: out.rejected_rewrites,
       duration_ms: out.duration_ms, error: out.model_error || null
     });
@@ -215,7 +303,7 @@ router.post('/api/v1/architect/runs', requireAuth, async function (req, res) {
                                     violations: out.verification.violations });
     }
     const row = await BuildPlan.create({
-      tenant_id,
+      tenant_id, kind: 'build_plan',
       label: String((req.body && req.body.label) || 'JobMD.io build plan').slice(0, 200),
       plan: out.plan, evidence: out.evidence, counts: out.counts,
       verification: out.verification, composed_by: out.composed_by,
@@ -235,7 +323,7 @@ router.post('/api/v1/architect/runs', requireAuth, async function (req, res) {
 router.get('/api/v1/architect/runs', requireAuth, async function (req, res) {
   try {
     const rows = await BuildPlan.findAll({
-      where: { tenant_id: tenantOf(req) },
+      where: { tenant_id: tenantOf(req), kind: 'build_plan' },
       order: [['created_at', 'DESC']], limit: 50,
       attributes: ['id', 'label', 'counts', 'composed_by', 'is_simulated', 'model', 'duration_ms', 'created_at']
     });
@@ -247,7 +335,7 @@ router.get('/api/v1/architect/runs/:id', requireAuth, async function (req, res) 
   try {
     // Scoped by BOTH id and tenant_id, so another tenant's plan reads as absent.
     const row = await BuildPlan.findOne({
-      where: { id: parseInt(req.params.id, 10) || 0, tenant_id: tenantOf(req) }
+      where: { id: parseInt(req.params.id, 10) || 0, tenant_id: tenantOf(req), kind: 'build_plan' }
     });
     if (!row) return res.status(404).json({ error: 'Not found' });
     res.json(row);

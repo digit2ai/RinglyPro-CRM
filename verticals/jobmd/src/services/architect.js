@@ -196,4 +196,4 @@ async function composePlan(opts) {
   };
 }
 
-module.exports = { composePlan, MODEL, proseSlots, parseRewrites };
+module.exports = { composePlan, MODEL, proseSlots, parseRewrites, callModel };
