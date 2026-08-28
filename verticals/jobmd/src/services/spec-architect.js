@@ -78,6 +78,7 @@ async function composeRecord(opts) {
   const rejected = [];
   let usage = null;
   let model_error = null;
+  let model_text_chars = 0, model_rewrites_parsed = 0, model_rewrites_accepted = 0;
 
   if (opts.use_model !== false && process.env.ANTHROPIC_API_KEY) {
     const slots = proseSlots(record);
@@ -86,7 +87,8 @@ async function composeRecord(opts) {
       if (out) {
         const hay = corpusText();
         let accepted = 0;
-        parseRewrites(out.text).forEach(function (r) {
+        const rewrites = parseRewrites(out.text);
+        rewrites.forEach(function (r) {
           const i = Number(r && r.i);
           const text = r && typeof r.text === 'string' ? r.text.trim() : '';
           const slot = slots[i];
@@ -101,6 +103,9 @@ async function composeRecord(opts) {
         });
         if (accepted > 0) { composed_by = 'model'; is_simulated = false; }
         usage = out.usage || null;
+        model_text_chars = (out.text || '').length;
+        model_rewrites_parsed = rewrites.length;
+        model_rewrites_accepted = accepted;
       }
     } catch (e) { model_error = e.message; }
   }
@@ -118,6 +123,9 @@ async function composeRecord(opts) {
     model_error: model_error,
     rejected_rewrites: rejected,
     usage: usage,
+    model_text_chars: model_text_chars,
+    model_rewrites_parsed: model_rewrites_parsed,
+    model_rewrites_accepted: model_rewrites_accepted,
     duration_ms: Date.now() - started,
     counts: {
       medical_specialties: record.medicalSpecialties.initialSpecialties.length,

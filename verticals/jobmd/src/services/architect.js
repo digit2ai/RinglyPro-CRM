@@ -95,19 +95,42 @@ async function callModel(prompt) {
   return { text: text, usage: usage };
 }
 
+/**
+ * Parse the model's rewrites.
+ *
+ * The first cut sliced from the first "{" to the last "}", which silently
+ * returned NOTHING when the model answered with a bare array instead of the
+ * requested {"rewrites":[...]} — the slice then spanned "},{" and failed to
+ * parse. That is exactly what happened to the spec generator in production:
+ * 1390 output tokens, zero rewrites applied, zero rejected, and composed_by
+ * quietly reading "deterministic". A model path that does nothing must not be
+ * indistinguishable from one that was never called, so this accepts both
+ * shapes and the caller reports what it saw.
+ */
 function parseRewrites(text) {
   if (!text) return [];
   let s = String(text).trim();
-  // Strip a code fence if the model added one despite being told not to.
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence) s = fence[1].trim();
-  const start = s.indexOf('{');
-  const end = s.lastIndexOf('}');
-  if (start === -1 || end === -1) return [];
-  try {
-    const obj = JSON.parse(s.slice(start, end + 1));
-    return Array.isArray(obj.rewrites) ? obj.rewrites : [];
-  } catch (e) { return []; }
+
+  const pick = function (obj) {
+    if (Array.isArray(obj)) return obj;
+    if (obj && Array.isArray(obj.rewrites)) return obj.rewrites;
+    return null;
+  };
+  // 1. the whole thing, as sent
+  try { const got = pick(JSON.parse(s)); if (got) return got; } catch (e) { /* keep trying */ }
+  // 2. a bare array anywhere in the text
+  const a0 = s.indexOf('['), a1 = s.lastIndexOf(']');
+  if (a0 !== -1 && a1 > a0) {
+    try { const got = pick(JSON.parse(s.slice(a0, a1 + 1))); if (got) return got; } catch (e) { /* keep trying */ }
+  }
+  // 3. an object wrapper with prose around it
+  const o0 = s.indexOf('{'), o1 = s.lastIndexOf('}');
+  if (o0 !== -1 && o1 > o0) {
+    try { const got = pick(JSON.parse(s.slice(o0, o1 + 1))); if (got) return got; } catch (e) { /* give up */ }
+  }
+  return [];
 }
 
 /**
@@ -125,6 +148,9 @@ async function composePlan(opts) {
   let rejected = [];
   let usage = null;
   let model_error = null;
+  // Observability: a model that answered but changed nothing must look
+  // different from a model that was never called.
+  let model_text_chars = 0, model_rewrites_parsed = 0, model_rewrites_accepted = 0;
 
   const wantModel = opts.use_model !== false && Boolean(process.env.ANTHROPIC_API_KEY);
 
@@ -160,6 +186,9 @@ async function composePlan(opts) {
         });
         if (accepted > 0) { composed_by = 'model'; is_simulated = false; }
         usage = out.usage || null;
+        model_text_chars = (out.text || '').length;
+        model_rewrites_parsed = rewrites.length;
+        model_rewrites_accepted = accepted;
       }
     } catch (e) {
       // A model failure never fails the plan — it falls back to deterministic
@@ -182,6 +211,9 @@ async function composePlan(opts) {
     model_error: model_error,
     rejected_rewrites: rejected,
     usage: usage,
+    model_text_chars: model_text_chars,
+    model_rewrites_parsed: model_rewrites_parsed,
+    model_rewrites_accepted: model_rewrites_accepted,
     duration_ms: Date.now() - started,
     counts: {
       medical_specialties: plan.medical_specialties.initial.length,
