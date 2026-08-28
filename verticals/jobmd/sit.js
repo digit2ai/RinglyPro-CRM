@@ -290,6 +290,30 @@ function mustReject(name, mutate, expectConstraint) {
   ok('spec: structure is identical with and without a model',
      structuralSpec(specA.record) === structuralSpec(specM.record));
 
+  // ── The rewrite parser ──────────────────────────────────────────────────
+  // A model that answers but changes nothing must not look identical to one
+  // that was never called. The first parser sliced first-{ to last-}, which
+  // silently returned nothing for a bare array — 1390 output tokens spent in
+  // production for zero effect, reported as "deterministic".
+  const { parseRewrites: PR } = require('./src/services/architect');
+  [
+    ['object form',        '{"rewrites":[{"i":0,"text":"a"},{"i":1,"text":"b"}]}', 2],
+    ['bare array',         '[{"i":0,"text":"a"},{"i":1,"text":"b"}]',              2],
+    ['fenced object',      '```json\n{"rewrites":[{"i":0,"text":"a"}]}\n```',      1],
+    ['fenced bare array',  '```json\n[{"i":0,"text":"a"}]\n```',                   1],
+    ['object w/ preamble', 'Here you go:\n{"rewrites":[{"i":0,"text":"a"}]}',      1],
+    ['array w/ preamble',  'Sure:\n[{"i":0,"text":"a"}]',                          1],
+    ['unparseable',        'sorry, I cannot',                                     0]
+  ].forEach(function (c) {
+    eq('parser: ' + c[0], PR(c[1]).length, c[2]);
+  });
+  // Both composers must report what the model actually did.
+  ['architect.js', 'spec-architect.js'].forEach(function (f) {
+    const src = fs.readFileSync(path.join(__dirname, 'src', 'services', f), 'utf8');
+    ok('parser: ' + f + ' reports what the model returned',
+       /model_text_chars/.test(src) && /model_rewrites_parsed/.test(src) && /model_rewrites_accepted/.test(src));
+  });
+
   // ── 5. The prose identifier guard ─────────────────────────────────────────
   const hay = JSON.stringify(C);
   ok('prose guard: catches an invented table',
