@@ -213,10 +213,52 @@ async function poolWithRelax(seq, { what, where, remote, limit }) {
   return { rows, relaxed };
 }
 
+// Spanish -> English job-term translation. US postings (Adzuna and the pool) are
+// in English, so a Hispanic visitor searching "enfermera" would otherwise get
+// nothing. We translate token by token, keep anything we don't recognise, and
+// fall back to the original if nothing changed. Accents are stripped so
+// "construcción"/"construccion" both match.
+const ES_EN = {
+  enfermera: 'nurse', enfermero: 'nurse', enfermeria: 'nursing',
+  conductor: 'driver', chofer: 'driver', camionero: 'truck driver', repartidor: 'delivery driver',
+  cajero: 'cashier', cajera: 'cashier', cocinero: 'cook', cocinera: 'cook', chef: 'chef',
+  mesero: 'server', mesera: 'server', camarero: 'server', camarera: 'server',
+  limpieza: 'cleaning', limpiador: 'janitor', limpiadora: 'housekeeping', conserje: 'janitor',
+  construccion: 'construction', albanil: 'construction', obrero: 'laborer',
+  vendedor: 'sales', vendedora: 'sales', ventas: 'sales', dependiente: 'retail',
+  recepcionista: 'receptionist', asistente: 'assistant', secretaria: 'secretary',
+  contador: 'accountant', contadora: 'accountant', administrador: 'administrator',
+  maestro: 'teacher', maestra: 'teacher', profesor: 'teacher', profesora: 'teacher',
+  ninera: 'nanny', cuidadora: 'caregiver', cuidador: 'caregiver',
+  jardinero: 'landscaper', paisajista: 'landscaper', mecanico: 'mechanic',
+  electricista: 'electrician', plomero: 'plumber', fontanero: 'plumber',
+  soldador: 'welder', carpintero: 'carpenter', pintor: 'painter',
+  almacen: 'warehouse', bodega: 'warehouse', montacargas: 'forklift',
+  seguridad: 'security', guardia: 'security guard', vigilante: 'security guard',
+  estilista: 'hairstylist', peluquero: 'barber', peluquera: 'hairstylist', barbero: 'barber',
+  gerente: 'manager', supervisor: 'supervisor', operador: 'operator', tecnico: 'technician',
+  ingeniero: 'engineer', ingeniera: 'engineer', abogado: 'lawyer', abogada: 'lawyer',
+  medico: 'physician', doctor: 'doctor', dentista: 'dentist', farmaceutico: 'pharmacist',
+  programador: 'developer', desarrollador: 'developer', disenador: 'designer',
+  chofer_camion: 'truck driver', ayudante: 'helper', empacador: 'packer',
+  costurera: 'sewing machine operator', lavaplatos: 'dishwasher',
+};
+function stripAccents(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ""); }
+function esToEn(what) {
+  const raw = String(what || '').trim();
+  if (!raw) return raw;
+  const toks = stripAccents(raw.toLowerCase()).split(/\s+/);
+  let hit = false;
+  const out = toks.map((t) => { if (ES_EN[t]) { hit = true; return ES_EN[t]; } return t; });
+  return hit ? out.join(' ') : raw;
+}
+
 async function search({ what = '', where = '', remote, limit } = {}) {
   const seq = db.sequelize();
   if (!seq) return { source: 'none', center: US_CENTER, jobs: [], count: 0, mapped: 0, adzuna: false, note: 'database unavailable' };
   await ensureGeocache(seq);
+  // Translate a Spanish job term into English so US postings actually match.
+  what = esToEn(what);
   const adzunaConfigured = jobsource.adzunaActive();
   let jobs, source, relaxed = false;
   if (adzunaConfigured) {

@@ -21,7 +21,12 @@ const WINDOW_MS = 24 * 3600 * 1000;
 // cents a preview, ten costs at most seventy cents to an abusive network per
 // day — cheap next to the funnel it was closing. The per-EMAIL cap is the one
 // that actually stops a loop, and it stays tight.
-const MAX_PER_IP_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_IP_PER_DAY || '10', 10);
+// Raised for launch-day / radio-driven traffic: many mobile listeners share one
+// carrier-grade NAT IP, so a low per-IP cap would lock out real users on the
+// same network. The per-EMAIL cap below is the real loop-stopper; a teaser also
+// requires pasted resume text, so this is a safe ceiling. Override with
+// JOBUP_TEASERS_PER_IP_PER_DAY on Render.
+const MAX_PER_IP_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_IP_PER_DAY || '60', 10);
 const MAX_PER_EMAIL_PER_DAY = parseInt(process.env.JOBUP_TEASERS_PER_EMAIL_PER_DAY || '2', 10);
 
 /**
