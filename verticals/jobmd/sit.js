@@ -637,6 +637,53 @@ function mustReject(name, mutate, expectConstraint) {
   });
   ok('theme: light restates every theme-dependent token', notRestated.length === 0, notRestated.join(', '));
 
+  // ── The instruction page ────────────────────────────────────────────────
+  const docPath = path.join(__dirname, 'public', 'how-it-works.html');
+  ok('docs: how-it-works.html exists', fs.existsSync(docPath));
+  const doc = fs.existsSync(docPath) ? fs.readFileSync(docPath, 'utf8') : '';
+  ok('docs: it is routed, extensionless, on every root',
+     /router\.get\(\['\/how-it-works', '\/how-it-works\/'\]/.test(idxSrc));
+  ok('docs: the landing page links to it', /href="how-it-works"/.test(html));
+  eq('docs: linked from both the nav and the footer', (html.match(/href="how-it-works"/g) || []).length, 2);
+  ok('docs: it carries the same theme toggle', /id="themeToggle"/.test(doc) && /jobmd_theme/.test(doc));
+  ok('docs: it applies the theme before the stylesheet paints',
+     doc.indexOf('jobmd_theme') < doc.indexOf('<style>'));
+  ok('docs: it carries the shared lockup, not a copy',
+     /jobmd-logo\.webp/.test(doc) && /jobmd-logo\.png/.test(doc));
+
+  // DOCUMENTATION THAT DRIFTS FROM THE CODE IS WORSE THAN NONE. Every path the
+  // page documents must actually be routed, and the counts it quotes must
+  // match the corpus.
+  const documented = Array.from(doc.matchAll(/<code>\/jobmd(\/[a-z0-9\/:._-]*)<\/code>/g),
+                                function (m) { return m[1]; });
+  ok('docs: it documents a meaningful number of endpoints', documented.length >= 8, documented.length + ' found');
+  const docMissing = documented.filter(function (route) {
+    const re = new RegExp("router\\.(get|post)\\((\\[[^\\]]*)?['\"]" +
+      route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]");
+    return !re.test(idxSrc);
+  });
+  ok('docs: every documented endpoint is actually routed', docMissing.length === 0, docMissing.join(', '));
+  [[C.MEDICAL_SPECIALTIES.length, 'Fifteen'], [C.AGENTS.length, 'eleven'],
+   [C.RECRUITMENT_PIPELINE.length, 'Thirteen'], [C.MATCHING_DIMENSIONS.length, 'Seven']].forEach(function (pair) {
+    ok('docs: it quotes the real count for ' + pair[1], doc.indexOf(pair[1]) !== -1);
+  });
+  // It must say what is NOT built, or it reads as a description of a running
+  // platform rather than of a set of specifications.
+  ok('docs: it states what is not built yet', /What is not built yet/.test(doc));
+  ok('docs: it states the physician database does not exist', /no physician database yet/i.test(doc));
+  ok('docs: it states the agents are specified, not running', /not yet running services/i.test(doc));
+  ok('docs: it does not claim the retired phone number', !/315-?4401/.test(doc));
+
+  // The two pages must not drift apart on colour.
+  function tokens(src) {
+    const b = src.slice(src.indexOf('.jmd{'), src.indexOf('\n}', src.indexOf('.jmd{')));
+    return (b.match(/--[a-z0-9-]+:[^;]+/g) || []).map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).sort();
+  }
+  const tLanding = tokens(html), tDoc = tokens(doc);
+  ok('docs: it shares the landing page token values exactly',
+     JSON.stringify(tLanding) === JSON.stringify(tDoc),
+     'landing ' + tLanding.length + ' vs docs ' + tDoc.length);
+
   // ── Mobile navigation ──  // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
   // hero ghost through, and it carried no Apply Now. Assert the contract.

@@ -406,6 +406,10 @@ router.get('/api/v1/leads', requireAuth, async function (req, res) {
 // index:false so express.static never answers "/" with the raw file.
 router.use(express.static(publicDir, { index: false }));
 router.get('/', function (req, res) { res.sendFile(path.join(publicDir, 'index.html')); });
+// Extensionless, so the same URL works on jobmd.io and under /jobmd.
+router.get(['/how-it-works', '/how-it-works/'], function (req, res) {
+  res.sendFile(path.join(publicDir, 'how-it-works.html'));
+});
 
 // ── Catch-all ───────────────────────────────────────────────────────────────
 //
