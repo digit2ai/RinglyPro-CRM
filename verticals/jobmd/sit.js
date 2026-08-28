@@ -524,12 +524,27 @@ function mustReject(name, mutate, expectConstraint) {
   eq('logo: no inline MD tile remains anywhere', (html.match(/class="mk"/g) || []).length, 0);
 
   // ── The footer lockup ───────────────────────────────────────────────────
-  ok('footer: the lockup artwork exists',
-     fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo-footer.png')));
-  ok('footer: the footer carries the full lockup', /jobmd-logo-footer\.png/.test(html));
-  ok('footer: it reserves its box', /jobmd-logo-footer\.png" width="849" height="264"/.test(html));
-  ok('footer: it loads lazily, being below the fold',
-     /jobmd-logo-footer\.png"[^>]*loading="lazy"/.test(html));
+  // ONE lockup serves the bar and the footer, so they can never drift apart.
+  ['jobmd-logo.png', 'jobmd-logo.webp'].forEach(function (f) {
+    ok('logo: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
+  });
+  eq('logo: the same asset is used in both places', (html.match(/jobmd-logo\.png/g) || []).length, 2);
+  eq('logo: both places offer the WebP first', (html.match(/<source srcset="jobmd-logo\.webp"/g) || []).length, 2);
+  eq('logo: both places keep a PNG fallback - the brand mark must never fail',
+     (html.match(/<picture>/g) || []).length, 2);
+  // WebP is roughly a third the weight, and the bar is above the fold.
+  const webpKB = fs.statSync(path.join(__dirname, 'public', 'jobmd-logo.webp')).size / 1024;
+  const pngKB = fs.statSync(path.join(__dirname, 'public', 'jobmd-logo.png')).size / 1024;
+  ok('logo: the WebP is materially smaller than the PNG', webpKB < pngKB * 0.6,
+     Math.round(webpKB) + 'KB vs ' + Math.round(pngKB) + 'KB');
+  ok('footer: the footer carries the full lockup',
+     /<footer>[\s\S]*?jobmd-logo\.png/.test(html));
+  eq('logo: every instance reserves its box',
+     (html.match(/jobmd-logo\.png" width="849" height="264"/g) || []).length, 2);
+  ok('footer: its copy loads lazily, being below the fold',
+     /jobmd-logo\.png"[^>]*loading="lazy"/.test(html));
+  ok('nav: its copy is eager and prioritised, being above the fold',
+     /jobmd-logo\.png"[^>]*fetchpriority="high"/.test(html));
   ok('footer: it is named for screen readers', /alt="JobMD\.io — AI Healthcare Talent Intelligence Network\. Superior/.test(html));
   // THE ARTWORK IS DARK NAVY ON A TRANSPARENT GROUND. On the dark backdrop it
   // would simply disappear, so it sits on a light plate.
@@ -539,10 +554,10 @@ function mustReject(name, mutate, expectConstraint) {
      !/jobmd-logo-footer\.jpg/.test(html));
 
   // ── The white menu bar ──────────────────────────────────────────────────
-  ok('nav: the logo artwork exists', fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo.jpg')));
-  ok('nav: the bar carries the full lockup', /class="logo" src="jobmd-logo\.jpg"/.test(html));
-  ok('nav: the logo reserves its box so the bar does not reflow',
-     /jobmd-logo\.jpg" width="518" height="174"/.test(html));
+  ok('nav: the bar carries the full lockup', /class="logo" src="jobmd-logo\.png"/.test(html));
+  ok('nav: the retired one-off nav artwork is gone',
+     !fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo.jpg')) &&
+     !fs.existsSync(path.join(__dirname, 'public', 'jobmd-logo-footer.png')));
   ok('nav: the logo is named for screen readers', /alt="JobMD\.io — AI Healthcare/.test(html));
   // THE BAR IS WHITE IN BOTH THEMES, so it cannot borrow --ink/--mut, which
   // invert - that would leave white links on a white bar in dark mode.

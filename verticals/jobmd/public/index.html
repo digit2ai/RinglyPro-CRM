@@ -487,8 +487,11 @@ html[data-theme="light"] .jmd .orb{
 <!-- ── NAV ────────────────────────────────────────────────────────────── -->
 <nav class="nav"><div class="wrap">
   <a class="brand" href="#top" aria-label="JobMD.io home">
-    <img class="logo" src="jobmd-logo.jpg" width="518" height="174"
-         alt="JobMD.io — AI Healthcare Talent Intelligence Network">
+    <picture>
+      <source srcset="jobmd-logo.webp" type="image/webp">
+      <img class="logo" src="jobmd-logo.png" width="849" height="264" fetchpriority="high"
+           alt="JobMD.io — AI Healthcare Talent Intelligence Network">
+    </picture>
   </a>
   <button class="burger" id="burger" type="button" aria-label="Open menu"
           aria-expanded="false" aria-controls="navlinks"><span class="bars"></span></button>
@@ -966,8 +969,11 @@ html[data-theme="light"] .jmd .orb{
       <!-- The lockup is dark navy artwork on a transparent ground, so it needs
            a light plate to sit on - the footer backdrop would swallow it. -->
       <div class="fbrand">
-        <img src="jobmd-logo-footer.png" width="849" height="264" loading="lazy" decoding="async"
-             alt="JobMD.io — AI Healthcare Talent Intelligence Network. Superior talent. Superior results.">
+        <picture>
+          <source srcset="jobmd-logo.webp" type="image/webp">
+          <img src="jobmd-logo.png" width="849" height="264" loading="lazy" decoding="async"
+               alt="JobMD.io — AI Healthcare Talent Intelligence Network. Superior talent. Superior results.">
+        </picture>
       </div>
       <p style="margin-top:18px"><a class="flink" href="#contact">Get in touch</a></p>
     </div>
