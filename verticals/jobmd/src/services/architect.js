@@ -86,7 +86,7 @@ async function callModel(prompt) {
   const client = new Anthropic({ apiKey: key });
   const res = await client.messages.create({
     model: MODEL,
-    max_tokens: 4000,
+    max_tokens: 12000,
     temperature: 0,               // the spec pins temperature to 0
     messages: [{ role: 'user', content: prompt }]
   });
@@ -112,6 +112,9 @@ function parseRewrites(text) {
   let s = String(text).trim();
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence) s = fence[1].trim();
+  // An OPENING fence with no closing one means the reply was cut off. Strip
+  // the opener so the salvage below still sees JSON rather than backticks.
+  else s = s.replace(/^```(?:json)?\s*/, '');
 
   const pick = function (obj) {
     if (Array.isArray(obj)) return obj;
@@ -128,9 +131,20 @@ function parseRewrites(text) {
   // 3. an object wrapper with prose around it
   const o0 = s.indexOf('{'), o1 = s.lastIndexOf('}');
   if (o0 !== -1 && o1 > o0) {
-    try { const got = pick(JSON.parse(s.slice(o0, o1 + 1))); if (got) return got; } catch (e) { /* give up */ }
+    try { const got = pick(JSON.parse(s.slice(o0, o1 + 1))); if (got) return got; } catch (e) { /* keep trying */ }
   }
-  return [];
+  // 4. SALVAGE. A reply cut off mid-array parses as nothing at all, which
+  //    throws away every rewrite that did arrive. Pull out the complete
+  //    {"i":N,"text":"..."} objects one at a time; a half-written last one is
+  //    simply not matched. The escape-aware string class is what keeps a
+  //    quote or a brace inside the prose from ending the match early.
+  const salvaged = [];
+  const re = /\{\s*"i"\s*:\s*(\d+)\s*,\s*"text"\s*:\s*("(?:[^"\\]|\\.)*")\s*\}/g;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    try { salvaged.push({ i: Number(m[1]), text: JSON.parse(m[2]) }); } catch (e) { /* skip */ }
+  }
+  return salvaged;
 }
 
 /**
