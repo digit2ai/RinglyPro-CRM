@@ -63,7 +63,7 @@ body.navopen{overflow:hidden}
   --surface-soft:rgba(255,255,255,.03);
   --scrim:rgba(0,0,0,.55);
   --img-hero:.95;
-  --img-foot:.72;
+  --img-foot:.88;
   --aurora:.30;
   --r:14px; --r-lg:22px; --r-xl:30px;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -309,8 +309,13 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
 .jmd .msg.err{display:block;background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:var(--pink)}
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
-.jmd footer{position:relative;isolation:isolate;overflow:hidden;
-  border-top:1px solid var(--line);padding:92px 0 64px;margin-top:40px}
+/* Tall enough for the artwork to actually read. The content is anchored to
+   the BOTTOM, so the extra height is image rather than empty space, and the
+   text still lands where the scrim is heaviest. */
+.jmd footer{position:relative;isolation:isolate;overflow:hidden;display:flex;
+  align-items:flex-end;min-height:min(72vh,660px);
+  border-top:1px solid var(--line);padding:150px 0 56px;margin-top:40px}
+.jmd footer > .wrap{width:100%}
 /* The illustration is the footer's backdrop. It is decorative here, so it
    carries no alt - the claims baked into it are attributed in the fine print
    below instead. */
@@ -318,9 +323,19 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
   background:url(robotic-surgery.jpg) center center/cover no-repeat;opacity:var(--img-foot)}
 /* Heavy scrim: the artwork is bright in places (the arm, the HUD panels) and
    every footer link has to stay legible over all of it. */
+/* Light at the top where only the artwork sits, heavy at the bottom where the
+   links and fine print are. */
 .jmd footer::after{content:"";position:absolute;inset:0;z-index:-1;
-  background:linear-gradient(180deg,rgba(var(--bg-rgb),.80) 0%,rgba(var(--bg-rgb),.86) 45%,rgba(var(--bg-rgb),.94) 100%)}
+  background:linear-gradient(180deg,
+    rgba(var(--bg-rgb),.34) 0%,
+    rgba(var(--bg-rgb),.44) 28%,
+    rgba(var(--bg-rgb),.88) 52%,
+    rgba(var(--bg-rgb),.96) 72%,
+    rgba(var(--bg-rgb),.97) 100%)}
 .jmd .fgrid{display:flex;justify-content:space-between;gap:34px;flex-wrap:wrap}
+.jmd .fbrand{display:inline-block;background:#fff;border-radius:18px;padding:18px 24px;
+  box-shadow:var(--shadow);max-width:100%}
+.jmd .fbrand img{display:block;height:92px;width:auto;max-width:100%}
 .jmd .fnav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--mut)}
 .jmd .fnav a:hover{color:var(--ink)}
 /* Lighter than --faint: over the backdrop the old grey measured 3.64:1,
@@ -391,7 +406,7 @@ html[data-theme="light"] .jmd{
   --scrim:rgba(20,24,34,.45);
   /* The two photographs are dark scenes. Under a light scrim they wash out
      to a pale tint rather than fighting the text. */
-  --img-hero:.30; --img-foot:.26;
+  --img-hero:.30; --img-foot:.34;
   --aurora:.16;
 }
 html[data-theme="light"], html[data-theme="light"] body{background:#f6f7fa}
@@ -445,11 +460,15 @@ html[data-theme="light"] .jmd .orb{
   .jmd h2{font-size:clamp(26px,7vw,34px)}
   .jmd .prose p,.jmd .sub{font-size:16px}
   .jmd footer{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
-  .jmd footer{padding-top:64px}
+  .jmd footer{min-height:min(66vh,520px);padding:96px 0 52px}
+  .jmd .fbrand{padding:14px 18px;border-radius:14px}
+  .jmd .fbrand img{height:62px}
   /* Cover on a tall narrow box crops to the middle and loses the scene, so
      hold the console side in frame. */
   .jmd footer::before{background-position:68% center}
-  .jmd footer::after{background:linear-gradient(180deg,rgba(var(--bg-rgb),.90),rgba(var(--bg-rgb),.95))}
+  .jmd footer::after{background:linear-gradient(180deg,
+    rgba(var(--bg-rgb),.42) 0%,rgba(var(--bg-rgb),.56) 26%,
+    rgba(var(--bg-rgb),.90) 50%,rgba(var(--bg-rgb),.97) 100%)}
 }
 @media(max-width:520px){
   .jmd .dims,.jmd .dims2{grid-template-columns:1fr}
@@ -944,9 +963,13 @@ html[data-theme="light"] .jmd .orb{
 <footer><div class="wrap">
   <div class="fgrid">
     <div>
-      <a class="brand" href="#top"><svg class="mk" viewBox="0 0 512 512" width="34" height="34" aria-hidden="true" focusable="false"><defs><linearGradient id="jmdFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="0.5" stop-color="#5b7bff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#jmdFoot)"/><g transform="translate(256,256) scale(0.92) translate(-276,-268)"><path d="M84 386 L84 150 L158 296 L232 150 L232 386" stroke="#fff" stroke-width="42" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M270 132 L340 132 C 488 132 488 404 340 404 L270 404 Z M346 206 L390 206 L390 246 L430 246 L430 290 L390 290 L390 330 L346 330 L346 290 L306 290 L306 246 L346 246 Z" fill="#fff" fill-rule="evenodd"/></g></svg><span>JobMD.io<small>A division of JobUp.dev</small></span></a>
-      <p style="color:var(--faint);font-size:13.5px;margin-top:14px">Superior Talent. Superior Results.</p>
-      <p style="margin-top:12px"><a class="flink" href="#contact">Get in touch</a></p>
+      <!-- The lockup is dark navy artwork on a transparent ground, so it needs
+           a light plate to sit on - the footer backdrop would swallow it. -->
+      <div class="fbrand">
+        <img src="jobmd-logo-footer.png" width="849" height="264" loading="lazy" decoding="async"
+             alt="JobMD.io — AI Healthcare Talent Intelligence Network. Superior talent. Superior results.">
+      </div>
+      <p style="margin-top:18px"><a class="flink" href="#contact">Get in touch</a></p>
     </div>
     <div class="fnav">
       <a href="#fit">The Right Fit</a>
