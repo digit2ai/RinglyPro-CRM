@@ -337,26 +337,50 @@ function mustReject(name, mutate, expectConstraint) {
   ok('ava: the browser-speech fallback survives a TTS outage',
      /SpeechSynthesisUtterance/.test(avaJs) && /neuralOK = false/.test(avaJs));
 
-  // ── The lit sign ────────────────────────────────────────────────────────
-  // Requested as "the main image from surgicalmind.app". That file is the
-  // SurgicalMind WORDMARK, so shipping it verbatim would put another product's
-  // brand across this page. The treatment was rebuilt with JobMD's own name and
-  // palette instead; SIT asserts the foreign brand never appears here.
-  ['jobmd-sign.jpg', 'og-image.jpg'].forEach(function (f) {
-    ok('sign: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
+  // ── The hero scene + the agent constellation ────────────────────────────
+  // Asked for as "the main image from surgicalmind.app". That file is the
+  // SurgicalMind WORDMARK, and no robotic-surgery hero existed anywhere in the
+  // repo, so the scene was drawn here. SIT asserts the foreign brand never
+  // appears and that nothing is hotlinked from another host's CDN.
+  ['jobmd-hero.jpg', 'og-image.jpg'].forEach(function (f) {
+    ok('hero: ' + f + ' exists', fs.existsSync(path.join(__dirname, 'public', f)));
   });
-  ok('sign: the hero carries it', /<figure class="sign">[\s\S]{0,200}jobmd-sign\.jpg/.test(html));
-  ok('sign: it reserves its box so the page does not jump',
-     /jobmd-sign\.jpg" width="1600" height="900"/.test(html));
-  ok('sign: it is described for screen readers', /alt="JobMD\.io"/.test(html));
-  ok('sign: no other product\'s brand was copied onto this page',
-     !/surgicalmind/i.test(html));
-  ok('sign: no asset is hotlinked from another host\'s CDN',
+  ok('hero: the scene is the hero background', /\.hero::before\{[^}]*url\(jobmd-hero\.jpg\)/.test(html));
+  // A picture behind a headline is only allowed if the headline still wins.
+  ok('hero: the scene is scrimmed so the headline stays readable',
+     /\.hero::after\{[^}]*linear-gradient\(180deg,rgba\(10,10,14/.test(html));
+  ok('hero: the retired neon sign is gone', html.indexOf('jobmd-sign.jpg') === -1);
+  ok('hero: no other product\'s brand was copied onto this page', !/surgicalmind/i.test(html));
+  ok('hero: no asset is hotlinked from another host\'s CDN',
      !/filesafe\.space|assets\.cdn/i.test(html));
-  ok('sign: the social card is the wide sign, not the square app icon',
-     /og:image" content="[^"]*og-image\.jpg/.test(html) && /twitter:card" content="summary_large_image/.test(html));
-  ok('sign: the social card declares its dimensions',
+  ok('hero: the social card declares its dimensions',
      /og:image:width" content="1200"/.test(html) && /og:image:height" content="630"/.test(html));
+
+  // The constellation must carry ALL ELEVEN agents, in corpus order, or the
+  // picture quietly disagrees with the list underneath it.
+  eq('constellation: eleven nodes', (html.match(/class="nd"/g) || []).length, 11);
+  eq('constellation: eleven links from the brain', (html.match(/class="lk"/g) || []).length, 11);
+  const cstNums = (html.match(/class="nm"[^>]*>(\d\d) /g) || []).map(function (m) { return m.slice(-3, -1); });
+  ok('constellation: numbered 01 to 11 in order',
+     cstNums.join(',') === '01,02,03,04,05,06,07,08,09,10,11', cstNums.join(','));
+  ok('constellation: the brain reports the true agent count', /11 agents · linked/.test(html));
+  // Every node must name a real agent from the corpus.
+  const shortNames = ['CANDIDATE INTAKE', 'CV / RESUME INTELLIGENCE', 'HOSPITAL INTAKE',
+    'CANDIDATE MATCHING', 'CLINICAL QUALIFICATION', 'ROBOTICS INTELLIGENCE', 'CANDIDATE RANKING',
+    'RECRUITMENT OUTREACH', 'SCHEDULING', 'FOLLOW-UP', 'RECRUITER COPILOT'];
+  shortNames.forEach(function (n) {
+    ok('constellation: names ' + n, html.indexOf('>' + (shortNames.indexOf(n) + 1 < 10 ? '0' : '') +
+       (shortNames.indexOf(n) + 1) + ' ' + n + '<') !== -1);
+  });
+  // Motion is decoration; it must never be the only way to read the diagram.
+  ok('constellation: honours prefers-reduced-motion',
+     /prefers-reduced-motion:reduce\)\{[^}]*\.cst/.test(html.replace(/\s+/g, ' ')));
+  ok('constellation: it is described for screen readers', /role="img"[^>]*\n?[^>]*aria-label="The MCP/.test(html));
+  // Labels are unreadable at phone width, so the diagram hides and the written
+  // list carries the information. The list must therefore always be present.
+  ok('constellation: hidden below 720px', /max-width:720px\)\{ \.jmd \.cstwrap\{display:none\}/.test(html));
+  ok('constellation: the full written list is always present, never replaced',
+     html.indexOf('id="agentList"') !== -1 && !/agentList[^>]*style="display:none/.test(html));
 
   // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
