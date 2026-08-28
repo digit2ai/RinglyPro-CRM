@@ -7,7 +7,7 @@ window.TORNA_ORIENTATION = {
   ui: {
     es: {
       h1: 'Guía completa del programa', step: 'Paso', back: 'Atrás', next: 'Siguiente', again: 'Empezar de nuevo',
-      lede: 'Del A1 al B1+ en doce módulos. Esta guía explica cómo funciona la plataforma y qué se estudia en cada módulo, con la voz de la Profesora Isabel.',
+      lede: 'Del A1 al B1+ en doce módulos. Esta guía explica cómo funciona la plataforma, cómo enseña la Profesora Isabel y qué se estudia en cada uno de los doce módulos, con su voz.',
       credH: 'Acceso de demostración',
       credP: 'Cuenta compartida de demostración. Todos ven el mismo progreso, así que no la trates como tu expediente personal.',
       tourH: 'Cómo funciona una lección', tourS: 'Seis pasos, del inicio de sesión hasta hablar en voz alta. El teléfono muestra lo que verás de verdad.',
@@ -17,6 +17,14 @@ window.TORNA_ORIENTATION = {
       voiceIdle: 'Voz: Profesora Isabel · Dalia, Ava, Blessica',
       loading: 'Cargando la voz…', voiceOk: 'Profesora Isabel (neural)', voiceFallback: 'Voz neural no disponible — usando la del navegador',
       noVoice: 'Este navegador no puede leer en voz alta',
+      methH: 'Cómo enseña la Profesora Isabel',
+      methS: 'El Método Rizal, tal como está implementado en la plataforma: qué hace en cada sesión, cómo corrige, cómo evalúa y qué no hará nunca.',
+      always: 'Siempre', never: 'Nunca',
+      canDo: 'Al terminar, puedes', struct: 'Estructura', trackL: 'Vía profesional',
+      sizeLine: '6 lecciones · unas 30 horas',
+      openAll: 'Abrir los doce', closeAll: 'Cerrar los doce',
+      assessH: 'Cómo se puntúa tu examen oral',
+      criteria: 'Criterio', weight: 'Peso',
       clH: 'Tus primeros quince minutos',
       cl: [
         'Inicia sesión y abre el Módulo 1, Lección 1.',
@@ -31,7 +39,7 @@ window.TORNA_ORIENTATION = {
     },
     en: {
       h1: 'The complete programme guide', step: 'Step', back: 'Back', next: 'Next step', again: 'Start again',
-      lede: 'A1 to B1+ across twelve modules. This guide explains how the platform works and what each module teaches, narrated by Profesora Isabel.',
+      lede: 'A1 to B1+ across twelve modules. This guide explains how the platform works, how Profesora Isabel teaches, and what each of the twelve modules covers — narrated in her own voice.',
       credH: 'Demo sign-in',
       credP: 'Shared demo account. Everyone sees the same progress, so do not treat it as your own record.',
       tourH: 'How a lesson works', tourS: 'Six steps, from signing in to speaking aloud. The phone mirrors what you will actually see.',
@@ -41,6 +49,14 @@ window.TORNA_ORIENTATION = {
       voiceIdle: 'Voice: Profesora Isabel · Dalia, Ava, Blessica',
       loading: 'Loading the voice…', voiceOk: 'Profesora Isabel (neural)', voiceFallback: 'Neural voice unavailable — using the browser voice',
       noVoice: 'This browser cannot read aloud',
+      methH: 'How Profesora Isabel teaches',
+      methS: 'The Método Rizal as the platform actually implements it: what she does in a session, how she corrects, how she scores, and what she will never do.',
+      always: 'Always', never: 'Never',
+      canDo: 'By the end you can', struct: 'Structure', trackL: 'Workplace track',
+      sizeLine: '6 lessons · about 30 hours',
+      openAll: 'Open all twelve', closeAll: 'Close all twelve',
+      assessH: 'How your oral exam is scored',
+      criteria: 'Criterion', weight: 'Weight',
       clH: 'Your first fifteen minutes',
       cl: [
         'Sign in and open Module 1, Lesson 1.',
@@ -55,7 +71,7 @@ window.TORNA_ORIENTATION = {
     },
     fil: {
       h1: 'Kumpletong gabay sa programa', step: 'Hakbang', back: 'Bumalik', next: 'Susunod', again: 'Ulitin',
-      lede: 'A1 hanggang B1+ sa labindalawang module. Ipinapaliwanag ng gabay na ito kung paano gumagana ang plataporma at ano ang itinuturo sa bawat module, sa boses ni Profesora Isabel.',
+      lede: 'A1 hanggang B1+ sa labindalawang module. Ipinapaliwanag ng gabay na ito kung paano gumagana ang plataporma, kung paano nagtuturo si Profesora Isabel, at ano ang itinuturo sa bawat isa sa labindalawang module — sa sarili niyang boses.',
       credH: 'Demo na pag-sign in',
       credP: 'Ibinabahaging demo account. Pareho ang nakikitang progreso ng lahat, kaya huwag itong ituring na sarili mong tala.',
       tourH: 'Paano gumagana ang aralin', tourS: 'Anim na hakbang, mula sa pag-sign in hanggang sa pagsasalita. Ipinapakita ng telepono ang tunay na makikita mo.',
@@ -65,6 +81,14 @@ window.TORNA_ORIENTATION = {
       voiceIdle: 'Boses: Profesora Isabel · Dalia, Ava, Blessica',
       loading: 'Naglo-load ang boses…', voiceOk: 'Profesora Isabel (neural)', voiceFallback: 'Hindi available ang neural — ginagamit ang boses ng browser',
       noVoice: 'Hindi makakapagbasa nang malakas ang browser na ito',
+      methH: 'Paano nagtuturo si Profesora Isabel',
+      methS: 'Ang Método Rizal ayon sa aktuwal na pagkakagawa sa plataporma: ano ang ginagawa niya sa bawat sesyon, paano siya nagwawasto, paano siya nagmamarka, at ano ang hindi niya gagawin kailanman.',
+      always: 'Palagi', never: 'Hindi kailanman',
+      canDo: 'Sa pagtatapos, kaya mong', struct: 'Estruktura', trackL: 'Vía sa trabaho',
+      sizeLine: '6 na aralin · humigit-kumulang 30 oras',
+      openAll: 'Buksan ang lahat', closeAll: 'Isara ang lahat',
+      assessH: 'Paano minamarkahan ang oral na pagsusulit',
+      criteria: 'Pamantayan', weight: 'Bigat',
       clH: 'Ang unang labinlimang minuto',
       cl: [
         'Mag-sign in at buksan ang Module 1, Aralin 1.',
@@ -76,6 +100,143 @@ window.TORNA_ORIENTATION = {
         'Bumalik bukas. Mas mabisa ang labinlimang minuto araw-araw kaysa dalawang oras tuwing Linggo.'
       ],
       foot: 'Torna Idioma · Vida · Cultura · Legado'
+    }
+  },
+
+  /* How Profesora Isabel teaches.
+     Every claim here is drawn from what the code actually does — the Método Rizal
+     system prompt in backend/routes/tutor.js, the SM-2 scheduler in
+     services/rizal-srs.js, the Filipino interference profile in services/phonology.js,
+     the cognate bridge in services/activity-pack.js, the oral rubric in
+     routes/speaking.js and the honor scoring in services/emperador.js.
+     If one of those changes, change the matching pillar here. Do not add a claim
+     the platform does not implement. */
+  method: {
+    es: {
+      intro: "La Profesora Isabel no improvisa. Sigue el Método Rizal — inspirado en cómo José Rizal aprendía idiomas, cinco raíces cada noche, y en cómo enseñaba en Dapitan: inmersión, traducir textos reales y progreso amable. Esto es lo que hace y lo que no hará nunca.",
+      pillars: [
+        { h: "Explica en tu idioma, enseña en español",
+          p: "La regla que nunca rompe. Todas las explicaciones, correcciones y ánimos van en inglés o filipino; todas las palabras, ejemplos y frases modelo van en español. Nunca sustituye una palabra española por su traducción: la traduce entre paréntesis y sigue. En la voz se nota, porque el español lo dice Dalia y la explicación tu propia voz." },
+        { h: "Cinco raíces por sesión, ni una más",
+          p: "Una sesión estándar son exactamente cinco raíces nuevas. No seis. Cada raíz se enseña como familia — dos a cuatro formas derivadas y el vínculo entre ellas — se usa de inmediato en una frase española y te pide que produzcas la tuya. La profundidad rinde más que el volumen." },
+        { h: "Repaso espaciado, no repaso al azar",
+          p: "Cada raíz vive en un programador SM-2. Te autoevalúas de 0 a 5; acertar la lleva a un día, luego a seis, luego al intervalo anterior multiplicado por su facilidad; fallar reinicia la cuenta. Una raíz se considera dominada cuando su intervalo llega a veintiún días." },
+        { h: "La escalera de inmersión, del uno al cinco",
+          p: "Tú decides cuánto español oyes. En el nivel uno cada frase española va glosada; en el cinco casi todo el intercambio ocurre en español y solo glosa cuando te atascas. Nunca salta por encima de tu nivel, y si tropiezas baja un peldaño en ese turno en vez de repetir más alto." },
+        { h: "Cuatro modos, no uno",
+          p: "Tutor es la sesión de cinco raíces. Día de Español lleva el español al máximo que tu nivel aguante. El Atelier de Traducción corrige lo que tú traduces, marcando uno o dos arreglos prioritarios. Estudios Rizal lee la prosa española del propio Rizal, siempre de dominio público y diciendo cuándo un texto es una adaptación graduada." },
+        { h: "Pronunciación filipina, no pronunciación genérica",
+          p: "Una nota de 78 sobre 100 no te dice qué hacer. La plataforma parte del perfil real de interferencia tagalo-español: la /f/ que se va a /p/ (familia, pamilya), la rr sostenida frente al golpe que ya tienes, la jota. Y también nombra los sonidos que el tagalo transfiere perfectos, que son ventajas gratis que un angloparlante tiene que trabajar." },
+        { h: "El puente de los cognados",
+          p: "El tagalo lleva siglos de español dentro. Cada lección cruza su vocabulario contra un banco de 576 pares tagalo-español, de modo que las palabras que ya sabías sin saberlo se te señalan en vez de enseñártelas de cero." },
+        { h: "Corrige por criterio, no por sensación",
+          p: "Cuando corrige, nombra el criterio — pronunciación, concordancia de género, ser frente a estar, terminación verbal — para que sepas qué has fallado y no solo que fallaste. Uno o dos arreglos de mayor impacto por turno, nunca una lista. Cada sesión cierra con una línea de lo que ya puedes hacer, y esa línea queda registrada como evidencia." },
+        { h: "Reconocimiento, no apuestas",
+          p: "Los puntos Emperador son de honor: no hay dinero, ni premios, ni azar. La tabla es de tu escuela y no se cruza con otras. La racha se celebra cuando existe; nunca se usa la culpa ni la amenaza de perderla para hacerte volver." }
+      ],
+      always: [
+        "Explicar en tu idioma y enseñar en español.",
+        "Enseñar cada raíz como familia y usarla en el acto.",
+        "Nombrar el criterio al corregir.",
+        "Uno o dos arreglos por turno, los de mayor impacto.",
+        "Una pregunta a la vez, en turnos cortos.",
+        "Cerrar la sesión con lo que ya puedes hacer."
+      ],
+      never: [
+        "Explicar en español.",
+        "Pasar de cinco raíces nuevas en una sesión.",
+        "Avergonzarte por un error, por tu acento o por los días que faltaste.",
+        "Usar culpa, presión o miedo a perder la racha.",
+        "Inventar un español que no existe.",
+        "Regalarte una nota perfecta."
+      ],
+      assessP: "El examen oral lo puntúa un examinador con cinco criterios. Cada criterio va de uno a cinco y tiene que citar un fragmento de tu propia grabación como prueba: no puede puntuarte sin enseñarte dónde. La transcripción viene del reconocedor del navegador, que es imperfecto, así que se juzga si te comunicaste, no cómo se escribió.",
+      criteria: [["Fluidez","20%"],["Precisión","25%"],["Pronunciación","20%"],["Rango","15%"],["Interacción","20%"]],
+      assessNote: "Se aprueba con setenta por ciento y ningún criterio en uno. La nota perfecta automática está prohibida en el propio examinador: si algo flojea, te lo dice."
+    },
+    en: {
+      intro: "Profesora Isabel does not improvise. She follows the Método Rizal — modelled on how José Rizal learned languages, five roots a night, and on how he taught at Dapitan: immersion, translating real texts, friendly progress. Here is what she does, and what she will never do.",
+      pillars: [
+        { h: "Explains in your language, teaches in Spanish",
+          p: "The rule she never breaks. Every explanation, correction and word of encouragement is in English or Filipino; every target word, example and model phrase is in Spanish. She never swaps a Spanish word for its translation — she glosses it in brackets and moves on. You can hear the split, because the Spanish is spoken by Dalia and the explanation in your own language's voice." },
+        { h: "Five roots a session, and not a sixth",
+          p: "A standard session is exactly five new roots. Each one is taught as a family — two to four derived forms and the link between them — used immediately in a natural Spanish sentence, then handed to you to produce one of your own. Depth beats volume, deliberately." },
+        { h: "Spaced repetition, not random review",
+          p: "Every root lives in an SM-2 scheduler. You grade yourself from zero to five; getting it right moves the root to one day, then six, then the previous interval multiplied by its ease factor, while forgetting resets the count. A root counts as mastered once its interval reaches twenty-one days." },
+        { h: "An immersion ladder, one to five",
+          p: "You choose how much Spanish you hear. At level one every Spanish phrase is fully glossed; at level five most of the exchange happens in Spanish and she glosses only when you stall. She never jumps past your level, and if you struggle she drops a rung for that turn rather than repeating herself louder." },
+        { h: "Four modes, not one",
+          p: "Tutor is the five-root session. Día de Español pushes Spanish as far as your level will carry. The Translation Atelier grades what you translate, naming one or two priority fixes. Rizal Studies reads Rizal's own Spanish prose — public domain only, and it tells you when a text is a graded adaptation rather than the original." },
+        { h: "Filipino pronunciation, not generic pronunciation",
+          p: "A score of 78 out of 100 tells you nothing you can act on. The platform starts from the real Tagalog–Spanish interference profile: the /f/ that slides to /p/ (familia becoming pamilya), the sustained trill against the tap you already own, the jota. It also names the sounds Tagalog transfers perfectly, which are free wins an English speaker has to work for." },
+        { h: "The cognate bridge",
+          p: "Tagalog carries centuries of Spanish inside it. Each lesson's vocabulary is checked against a bank of 576 Tagalog–Spanish pairs, so the words you already knew without knowing it are pointed out to you rather than taught from zero." },
+        { h: "Corrects against a criterion, not a feeling",
+          p: "When she corrects, she names the criterion — pronunciation, gender agreement, ser versus estar, the verb ending — so you know what went wrong and not merely that something did. One or two highest-impact fixes per turn, never a list. Every session closes with a line stating what you can now do, and that line is logged as evidence." },
+        { h: "Recognition, not gambling",
+          p: "Emperador points are honour-based: no money, no prizes, no chance. The leaderboard is scoped to your own school and never leaks across. A streak is celebrated when you have one; it is never used as guilt or as something to be afraid of losing." }
+      ],
+      always: [
+        "Explain in your language, teach in Spanish.",
+        "Teach each root as a family and use it immediately.",
+        "Name the criterion when correcting.",
+        "One or two fixes per turn, the highest-impact ones.",
+        "One question at a time, in short turns.",
+        "Close the session with what you can now do."
+      ],
+      never: [
+        "Explain in Spanish.",
+        "Go past five new roots in a session.",
+        "Shame you for a mistake, your accent, or the days you missed.",
+        "Use guilt, pressure, or fear of losing a streak.",
+        "Invent Spanish that does not exist.",
+        "Hand you a perfect score."
+      ],
+      assessP: "The oral exam is scored by an examiner against five criteria. Each is marked one to five and must cite a short span of your own recording as evidence — it cannot score you without showing you where. The transcript comes from the browser's recogniser, which is imperfect, so what is judged is whether you communicated, not how it was spelled.",
+      criteria: [["Fluency","20%"],["Accuracy","25%"],["Pronunciation","20%"],["Range","15%"],["Interaction","20%"]],
+      assessNote: "You pass at seventy per cent with no criterion sitting at one. The automatic perfect score is forbidden to the examiner itself: if something is weak, it says so."
+    },
+    fil: {
+      intro: "Hindi nag-iimprobisa si Profesora Isabel. Sinusunod niya ang Método Rizal — hango sa kung paano natuto ng wika si José Rizal, limang ugat bawat gabi, at kung paano siya nagturo sa Dapitan: imersyon, pagsasalin ng tunay na teksto, at mabining pag-unlad. Ito ang ginagawa niya, at ito ang hindi niya gagawin kailanman.",
+      pillars: [
+        { h: "Nagpapaliwanag sa wika mo, nagtuturo ng Espanyol",
+          p: "Ito ang tuntuning hindi niya sinisira. Nasa Ingles o Filipino ang lahat ng paliwanag, pagwawasto at pampalakas-loob; nasa Espanyol ang bawat salita, halimbawa at modelong parirala. Hindi niya pinapalitan ng salin ang salitang Espanyol — nilalagyan niya ito ng maikling gloss at nagpapatuloy. Naririnig ito sa boses: si Dalia ang bumibigkas ng Espanyol, at nasa sarili mong wika ang paliwanag." },
+        { h: "Limang ugat bawat sesyon, hindi anim",
+          p: "Eksaktong limang bagong ugat ang karaniwang sesyon. Itinuturo ang bawat isa bilang pamilya — dalawa hanggang apat na hango at ang ugnayan ng mga ito — agad ginagamit sa isang natural na pangungusap na Espanyol, at ikaw naman ang pinapagawa ng sarili mo. Sinadya ang lalim kaysa dami." },
+        { h: "Nakaiskedyul na pagbabalik-aral",
+          p: "Nasa SM-2 na scheduler ang bawat ugat. Nagbibigay ka ng marka mula sero hanggang lima; ang tama ay naglilipat sa isang araw, tapos anim, tapos ang dating agwat na pinarami ng ease nito, samantalang ang nakalimutan ay bumabalik sa simula. Itinuturing na bihasa ang isang ugat kapag umabot sa dalawampu't isang araw ang agwat." },
+        { h: "Hagdan ng imersyon, isa hanggang lima",
+          p: "Ikaw ang pumipili kung gaano karaming Espanyol ang maririnig mo. Sa unang antas, may gloss ang bawat pariralang Espanyol; sa ikalima, halos buong palitan ay Espanyol at may gloss lamang kapag natigilan ka. Hindi siya lumalampas sa antas mo, at kapag nahirapan ka ay bumababa siya ng isang baitang sa turn na iyon." },
+        { h: "Apat na mode, hindi iisa",
+          p: "Ang Tutor ang sesyon ng limang ugat. Ang Día de Español ay nagtutulak ng Espanyol hanggang kaya ng antas mo. Ang Translation Atelier ay nagmamarka ng isinalin mo at nagtuturo ng isa o dalawang unahing itama. Ang Rizal Studies ay bumabasa ng sariling prosang Espanyol ni Rizal — public domain lamang, at sinasabi nito kung ang teksto ay adaptasyon at hindi orihinal." },
+        { h: "Bigkas na Filipino, hindi pangkalahatan",
+          p: "Walang naitutulong ang markang 78 sa 100. Nagsisimula ang plataporma sa tunay na interference ng Tagalog at Espanyol: ang /f/ na nagiging /p/ (familia, pamilya), ang tuloy-tuloy na rr laban sa tapik na kaya mo na, at ang jota. Tinutukoy din nito ang mga tunog na perpektong nadadala ng Tagalog — libreng panalo na pinaghihirapan pa ng nagsasalita ng Ingles." },
+        { h: "Ang tulay ng mga cognate",
+          p: "Daan-daang taon ng Espanyol ang nasa loob ng Tagalog. Tinatapat ang bokabularyo ng bawat aralin sa bangko ng 576 na pares na Tagalog-Espanyol, kaya itinuturo sa iyo ang mga salitang alam mo na pala sa halip na simulan sa wala." },
+        { h: "Nagwawasto ayon sa pamantayan",
+          p: "Kapag nagwawasto siya, pinapangalanan niya ang pamantayan — bigkas, pagkakatugma ng kasarian, ser laban sa estar, ang hulapi ng pandiwa — para malaman mo kung ano ang mali at hindi lamang na may mali. Isa o dalawang pinakamahalagang itama bawat turn, hindi listahan. Nagtatapos ang bawat sesyon sa isang linya ng kaya mo nang gawin, at naitatala iyon bilang ebidensiya." },
+        { h: "Pagkilala, hindi pusta",
+          p: "Pandangal ang puntos ng Emperador: walang pera, walang premyo, walang tsamba. Nakasaklaw sa sarili mong paaralan ang leaderboard at hindi ito humahalo sa iba. Ipinagdiriwang ang streak kapag mayroon; hindi ito ginagamit na pagkakasala o pananakot na mawawala." }
+      ],
+      always: [
+        "Magpaliwanag sa wika mo, magturo ng Espanyol.",
+        "Ituro ang bawat ugat bilang pamilya at gamitin agad.",
+        "Pangalanan ang pamantayan kapag nagwawasto.",
+        "Isa o dalawang itama bawat turn, ang pinakamahalaga.",
+        "Isang tanong sa bawat pagkakataon, maiikling turn.",
+        "Tapusin ang sesyon sa kaya mo nang gawin."
+      ],
+      never: [
+        "Magpaliwanag sa Espanyol.",
+        "Lumampas sa limang bagong ugat bawat sesyon.",
+        "Hiyain ka sa mali, sa punto mo, o sa mga araw na nalaktawan.",
+        "Gumamit ng pagkakasala, presyon o takot na mawala ang streak.",
+        "Mag-imbento ng Espanyol na wala naman.",
+        "Bigyan ka ng perpektong marka nang basta."
+      ],
+      assessP: "Minamarkahan ang oral na pagsusulit ayon sa limang pamantayan. Isa hanggang lima ang bawat isa, at kailangang sumipi ng maikling bahagi ng sarili mong recording bilang ebidensiya — hindi ka nito mamarkahan nang hindi ipinapakita kung saan. Galing sa recognizer ng browser ang transcript, na hindi perpekto, kaya ang hinuhusgahan ay kung nakapag-usap ka, hindi kung paano ito naisulat.",
+      criteria: [["Katatasan","20%"],["Katumpakan","25%"],["Bigkas","20%"],["Saklaw","15%"],["Interaksyon","20%"]],
+      assessNote: "Pasado sa pitumpung porsyento at walang pamantayang nasa isa. Ipinagbabawal sa examiner mismo ang awtomatikong perpektong marka: kung may mahina, sinasabi nito."
     }
   },
 
@@ -273,5 +434,67 @@ window.TORNA_ORIENTATION = {
            roleplay:'Bakit maraming Pilipino ang nagtatrabaho sa ibang bansa.',
            workNote:'Interpretasyon at bilingual team lead. Ikaw na ang hangganan ng wika para sa iba. Walang dinadagdag, pinapalambot o inaalis ang interpreter.',
            howto:'Mag-record ng dalawang minutong pagtatanggol sa isang panig at pakinggan. Ito ang pinakamabisang ehersisyo sa buong programa.' } }
+  ],
+
+  /* Per-module competency statements — the authored can-do list from the server's
+     data/practice-bank.js, which is what the curriculum actually claims a learner
+     can do at the end of each module. English is that file verbatim; es/fil are the
+     same three statements. Aligned BY INDEX with `modules` above: if you reorder one
+     array you must reorder the other. `track` is the occupational lane from the same
+     bank, present only on the six workplace modules (7-12). */
+  outcomes: [
+    { es:['Saludar y despedirte con el nivel de formalidad correcto','Decir tu nombre, tu nacionalidad y una breve descripción de ti','Nombrar a tu familia y decir cómo es cada uno'],
+      en:['Greet someone and say goodbye at the right level of formality','Give my name, nationality and a short description of myself','Name the members of my family and say what they are like'],
+      fil:['Bumati at magpaalam sa tamang antas ng pormalidad','Sabihin ang pangalan, nasyonalidad at maikling paglalarawan sa sarili','Pangalanan ang pamilya at sabihin kung ano sila'] },
+
+    { es:['Describir tu rutina diaria en orden y con horas','Decir con qué frecuencia haces algo','Hablar de lo que vas a hacer esta semana'],
+      en:['Describe my daily routine in order, with times','Say how often I do something','Talk about what I am going to do this week'],
+      fil:['Ilarawan ang araw-araw na rutina nang may oras','Sabihin kung gaano kadalas mong ginagawa ang isang bagay','Pag-usapan ang gagawin mo sa linggong ito'] },
+
+    { es:['Pedir una comida y preguntar qué lleva un plato','Preguntar un precio, una cantidad y otra talla','Decir qué te gusta, qué no y a qué eres alérgico'],
+      en:['Order a meal and ask what a dish contains','Ask for a price, a quantity and a different size','Say what I like, dislike and am allergic to'],
+      fil:['Umorder ng pagkain at itanong kung ano ang laman ng putahe','Magtanong ng presyo, dami at ibang sukat','Sabihin ang gusto, ayaw at allergy mo'] },
+
+    { es:['Pedir y seguir indicaciones a pie y en transporte','Comprar un boleto y preguntar horarios y andenes','Decir dónde está algo con respecto a otra cosa'],
+      en:['Ask for and follow directions on foot and by transport','Buy a ticket and ask about times and platforms','Describe where something is in relation to something else'],
+      fil:['Magtanong at sumunod sa direksyon, naglalakad o sakay','Bumili ng tiket at magtanong ng oras at platform','Sabihin kung nasaan ang isang bagay kaugnay ng iba'] },
+
+    { es:['Invitar a alguien y aceptar o rechazar con cortesía','Decir qué hacías antes y qué haces ahora','Acordar una hora y un lugar con alguien'],
+      en:['Invite someone out and accept or decline politely','Say what I used to do and what I do now','Agree on a time and place with someone'],
+      fil:['Mag-imbita at tumanggap o tumanggi nang magalang','Sabihin ang dati mong ginagawa at ang ginagawa mo ngayon','Magkasundo sa oras at lugar'] },
+
+    { es:['Describir un síntoma y cuánto tiempo llevas con él','Entender y dar una recomendación de salud','Pedir una cita y explicar el motivo'],
+      en:['Describe a symptom and how long I have had it','Understand and give a health recommendation','Make an appointment and explain why'],
+      fil:['Ilarawan ang sintomas at kung gaano na katagal','Unawain at magbigay ng rekomendasyon sa kalusugan','Magpa-appointment at ipaliwanag ang dahilan'] },
+
+    { es:['Describir tu puesto, tu equipo y tus responsabilidades','Hablar de tu experiencia profesional y de lo que has hecho','Sostener una conversación breve de trabajo con un colega hispanohablante'],
+      en:['Describe my job, my team and my responsibilities','Talk about my professional experience and what I have done','Handle a short work conversation with a Spanish-speaking colleague'],
+      fil:['Ilarawan ang trabaho, koponan at responsibilidad mo','Pag-usapan ang karanasan mo sa trabaho at ang nagawa mo','Makipag-usap nang maikli sa trabaho sa katrabahong nagsasalita ng Espanyol'],
+      track:{ es:'Centro de contacto — atención al cliente entrante', en:'Contact centre — inbound customer service', fil:'Contact centre — inbound customer service' } },
+
+    { es:['Describir una tradición filipina a quien nunca la ha visto','Comparar una celebración filipina con una latinoamericana','Contar un hecho pasado y cómo se sintió'],
+      en:['Describe a Filipino tradition to someone who has never seen it','Compare a Filipino and a Latin American celebration','Talk about a past event and how it felt'],
+      fil:['Ilarawan ang tradisyong Pilipino sa hindi pa nakakakita nito','Ihambing ang selebrasyong Pilipino at Latin American','Magkuwento ng nakaraang pangyayari at ng pakiramdam dito'],
+      track:{ es:'Centro de contacto — registro cultural entre mercados', en:'Contact centre — cultural register across markets', fil:'Contact centre — kultural na register sa iba-ibang merkado' } },
+
+    { es:['Explicar con claridad un problema técnico a quien no ve tu pantalla','Dar instrucciones paso a paso','Decir qué lees, qué ves y qué sigues, y por qué'],
+      en:['Explain a technical problem clearly to someone who cannot see my screen','Give step-by-step instructions','Say what I read, watch and follow, and why'],
+      fil:['Ipaliwanag nang malinaw ang teknikal na problema sa hindi nakakakita ng screen mo','Magbigay ng hakbang-hakbang na tagubilin','Sabihin kung ano ang binabasa, pinapanood at sinusundan mo, at bakit'],
+      track:{ es:'Soporte técnico — primer nivel en español', en:'Technical support — Spanish-language tier 1', fil:'Technical support — tier 1 sa Espanyol' } },
+
+    { es:['Manejar una reserva, un registro y un problema con la reserva','Contar el viaje que hiciste','Reclamar con cortesía hasta resolverlo'],
+      en:['Handle a booking, a check-in and a problem with a reservation','Tell the story of a trip I took','Make a complaint politely and get it resolved'],
+      fil:['Asikasuhin ang booking, check-in at problema sa reserbasyon','Ikuwento ang biyaheng ginawa mo','Magreklamo nang magalang hanggang maayos ito'],
+      track:{ es:'Cuentas de viajes y hostelería', en:'Travel and hospitality accounts', fil:'Mga account sa travel at hospitality' } },
+
+    { es:['Dar una opinión y sostenerla con una razón','Estar de acuerdo y en desacuerdo sin ser grosero','Hablar de causas, consecuencias y qué debería hacerse'],
+      en:['State an opinion and support it with a reason','Agree and disagree without being rude','Talk about causes, consequences and what should be done'],
+      fil:['Magbigay ng opinyon at panindigan ito sa isang dahilan','Sumang-ayon at tumutol nang hindi bastos','Pag-usapan ang sanhi, bunga at ang dapat gawin'],
+      track:{ es:'Coordinación de salud y seguros', en:'Healthcare coordination and insurance', fil:'Koordinasyon sa kalusugan at seguro' } },
+
+    { es:['Sostener un argumento a lo largo de varios turnos','Conceder un punto sin abandonar tu postura','Resumir una discusión y decir dónde quedas'],
+      en:['Sustain an argument over several turns','Concede a point without abandoning my position','Summarise a discussion and state where I stand'],
+      fil:['Panindigan ang argumento sa maraming turn','Umamin sa isang punto nang hindi sumusuko sa panig mo','Ibuod ang talakayan at sabihin kung saan ka nakatayo'],
+      track:{ es:'Interpretación y liderazgo de equipo bilingüe', en:'Interpretation and bilingual team lead', fil:'Interpretasyon at bilingual team lead' } }
   ]
 };
