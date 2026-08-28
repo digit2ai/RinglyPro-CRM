@@ -79,6 +79,7 @@ async function composeRecord(opts) {
   let usage = null;
   let model_error = null;
   let model_text_chars = 0, model_rewrites_parsed = 0, model_rewrites_accepted = 0;
+  let model_text_sample = null;
 
   if (opts.use_model !== false && process.env.ANTHROPIC_API_KEY) {
     const slots = proseSlots(record);
@@ -106,6 +107,10 @@ async function composeRecord(opts) {
         model_text_chars = (out.text || '').length;
         model_rewrites_parsed = rewrites.length;
         model_rewrites_accepted = accepted;
+        // When the model answers and NOTHING parses, keep a short sample of
+        // what it actually sent. Without it the only signal is a token bill
+        // and a record that did not change.
+        if (!rewrites.length && model_text_chars) model_text_sample = String(out.text).slice(0, 400);
       }
     } catch (e) { model_error = e.message; }
   }
@@ -126,6 +131,7 @@ async function composeRecord(opts) {
     model_text_chars: model_text_chars,
     model_rewrites_parsed: model_rewrites_parsed,
     model_rewrites_accepted: model_rewrites_accepted,
+    model_text_sample: model_text_sample,
     duration_ms: Date.now() - started,
     counts: {
       medical_specialties: record.medicalSpecialties.initialSpecialties.length,
