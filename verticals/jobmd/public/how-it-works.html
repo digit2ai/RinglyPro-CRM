@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" id="themeColor">
+<meta name="color-scheme" content="dark light">
+<script>
+// Same pre-paint theme init as the landing page: a saved light preference must
+// not flash dark first. Dark stays the default.
+(function(){try{var t=localStorage.getItem('jobmd_theme');
+if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();
+</script>
+<title>How JobMD.io works</title>
+<meta name="description" content="How the JobMD.io AI Healthcare Talent Intelligence Network works: the eleven agents behind the MCP orchestration layer, the matching engine, the recruitment pipeline, and the architecture API.">
+<meta name="robots" content="index,follow">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="canonical" href="https://jobmd.io/how-it-works">
+<style>
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.navopen{overflow:hidden}
+.jmd,.jmd *,.jmd *::before,.jmd *::after{margin:0;padding:0;box-sizing:border-box}
+.jmd{
+  /* Brand inheritance: the JobUp.dev dark-aurora token set, specialized for
+     the medical division by rotating the accent toward clinical teal. */
+  --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7; --mut:#a6a9b4;
+  /* #767a86 measured 3.95:1 on --card2 and 4.42:1 on --bg2 - both under AA
+     for the 12px labels this colour is used for. This clears 4.5 on every
+     surface it sits on. */
+  --faint:#828796;
+  --blue:#4263eb; --teal:#22d3ee; --violet:#8b5cf6; --pink:#e64980;
+  --grad:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  /* Same identity, but this one is read AS TEXT, so light mode darkens it
+     while --grad stays bright behind #07070c button labels. */
+  --grad-text:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(91,123,255,.13));
+  --good:#3ad07f;
+  /* Split out so the light palette can restate them. --bg-rgb backs every
+     scrim, so a scrim automatically follows the theme. */
+  --bg-rgb:10,10,14;
+  --fine:#9aa0ad;
+  --wire:120,190,255;
+  --wire-fill:rgba(12,18,32,.92);
+  --wire-accent:34,211,238;
+  --surface-soft:rgba(255,255,255,.03);
+  --scrim:rgba(0,0,0,.55);
+  --img-hero:.95;
+  --img-foot:.88;
+  --aurora:.30;
+  --r:14px; --r-lg:22px; --r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 4px 14px rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5),0 40px 90px rgba(0,0,0,.55);
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+html[data-theme="light"] .jmd{
+  --bg:#f6f7fa; --bg-rgb:246,247,250;
+  --bg2:#eceff4; --card:#ffffff; --card2:#f3f5f9;
+  --line:rgba(12,16,26,.10); --line2:rgba(12,16,26,.20);
+  --ink:#0d1117; --mut:#454d5c; --faint:#646c7a; --fine:#555d6b;
+  --teal:#0b7285; --good:#0d7a45;
+  --pill:#101015; --pill-ink:#f4f5f7;
+  --grad-soft:linear-gradient(135deg,rgba(11,114,133,.10),rgba(67,97,238,.09));
+  --grad-text:linear-gradient(120deg,#0b7285 0%,#3b5bdb 50%,#6d28d9 100%);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+  --shadow:0 2px 8px rgba(16,24,40,.06),0 12px 32px rgba(16,24,40,.07);
+  --shadow-lg:0 8px 24px rgba(16,24,40,.08),0 32px 72px rgba(16,24,40,.10);
+  --wire:34,78,132; --wire-fill:rgba(255,255,255,.94);
+  --wire-accent:11,114,133;
+  --surface-soft:rgba(12,16,26,.035);
+  --scrim:rgba(20,24,34,.45);
+  /* The two photographs are dark scenes. Under a light scrim they wash out
+     to a pale tint rather than fighting the text. */
+  --img-hero:.30; --img-foot:.34;
+  --aurora:.16;
+}
+html[data-theme="light"], html[data-theme="light"] body{background:#f6f7fa}
+
+.jmd{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.65}
+.jmd .wrap{max-width:960px;margin:0 auto;
+  padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+.jmd a{color:inherit;text-decoration:none}
+
+/* ── Nav: white in both themes, exactly as on the landing page ────────── */
+.jmd .nav{position:sticky;top:0;z-index:70;
+  --nav-h:86px;--nav-bg:#ffffff;--nav-ink:#0d1117;--nav-mut:#3f4756;
+  --nav-line:rgba(12,16,26,.13);--nav-line2:rgba(12,16,26,.22);
+  background:var(--nav-bg);border-bottom:1px solid var(--nav-line)}
+.jmd .nav .wrap{display:flex;align-items:center;gap:26px;height:var(--nav-h);max-width:1140px}
+.jmd .brand{display:flex;align-items:center;position:relative;z-index:80}
+.jmd .brand .logo{display:block;height:58px;width:auto}
+.jmd .navlinks{display:flex;gap:22px;margin-left:auto;align-items:center;font-size:14px;
+  color:var(--nav-mut);font-weight:500}
+.jmd .navlinks a:hover{color:var(--nav-ink)}
+.jmd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:999px;font-weight:700;font-size:15px;border:1px solid transparent;
+  cursor:pointer;transition:transform .15s ease;font-family:inherit}
+.jmd .btn:hover{transform:translateY(-1px)}
+.jmd .btn.p{background:var(--grad);color:#07070c}
+.jmd .btn.g{background:transparent;border-color:var(--line2);color:var(--ink)}
+.jmd .nav .btn{padding:9px 18px;font-size:14px}
+.jmd .navcta{color:#07070c}
+.jmd .themetog{display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  width:44px;height:44px;flex:0 0 auto;padding:0;border-radius:12px;cursor:pointer;
+  background:transparent;border:1px solid var(--nav-line2);color:var(--nav-mut);font:inherit;
+  -webkit-tap-highlight-color:transparent;transition:color .15s,border-color .15s}
+.jmd .themetog:hover{color:var(--nav-ink);border-color:var(--nav-ink)}
+.jmd .themetog .ti{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.jmd .themetog .tl{display:none}
+.jmd .themetog .moon{display:none}
+html[data-theme="light"] .jmd .themetog .sun{display:none}
+html[data-theme="light"] .jmd .themetog .moon{display:block}
+.jmd .burger{display:none;position:relative;z-index:80;margin-left:auto;width:44px;height:44px;
+  flex:0 0 44px;background:none;border:1px solid var(--nav-line2);border-radius:12px;cursor:pointer;
+  align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
+.jmd .burger .bars,.jmd .burger .bars::before,.jmd .burger .bars::after{
+  content:"";display:block;width:20px;height:2px;background:var(--nav-ink);border-radius:2px;
+  transition:transform .22s ease,opacity .18s ease}
+.jmd .burger .bars{position:relative}
+.jmd .burger .bars::before{position:absolute;top:-6px}
+.jmd .burger .bars::after{position:absolute;top:6px}
+.jmd .burger[aria-expanded="true"] .bars{background:transparent}
+.jmd .burger[aria-expanded="true"] .bars::before{top:0;transform:rotate(45deg)}
+.jmd .burger[aria-expanded="true"] .bars::after{top:0;transform:rotate(-45deg)}
+.jmd .scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;border:0}
+.jmd .scrim[hidden]{display:none}
+
+/* ── Document ─────────────────────────────────────────────────────────── */
+.jmd .doc{padding:56px 0 96px}
+.jmd .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:999px;
+  background:var(--grad-soft);border:1px solid var(--line2);font-size:12.5px;font-weight:600;
+  color:var(--mut);letter-spacing:.03em}
+.jmd h1{font-size:clamp(32px,5vw,50px);line-height:1.08;letter-spacing:-.03em;font-weight:850;margin:22px 0 0}
+.jmd .lead{color:var(--mut);font-size:18px;margin-top:16px;max-width:760px}
+.jmd h2{font-size:clamp(23px,3vw,30px);line-height:1.2;letter-spacing:-.02em;font-weight:800;
+  margin:56px 0 0;scroll-margin-top:100px}
+.jmd h3{font-size:18px;font-weight:750;margin:30px 0 0;letter-spacing:-.01em}
+.jmd p{color:var(--mut);margin-top:14px}
+.jmd p b,.jmd li b{color:var(--ink);font-weight:650}
+.jmd ul,.jmd ol{margin:14px 0 0 20px;color:var(--mut)}
+.jmd li{margin-top:8px}
+.jmd .note{margin-top:22px;padding:18px 20px;border-radius:var(--r);border:1px solid var(--line2);
+  background:var(--grad-soft);color:var(--mut);font-size:15px}
+.jmd .note b{color:var(--ink)}
+.jmd code{font-family:var(--mono);font-size:13.5px;background:var(--card2);border:1px solid var(--line);
+  border-radius:7px;padding:2px 6px;color:var(--ink);word-break:break-word}
+.jmd pre{margin-top:16px;padding:18px 20px;border-radius:var(--r);background:var(--card);
+  border:1px solid var(--line);overflow-x:auto}
+.jmd pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.7;white-space:pre;display:block}
+.jmd .tablewrap{overflow-x:auto;margin-top:18px;border:1px solid var(--line);border-radius:var(--r)}
+.jmd table{border-collapse:collapse;width:100%;min-width:620px;font-size:14.5px}
+.jmd th,.jmd td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+.jmd th{color:var(--ink);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--bg2)}
+.jmd td{color:var(--mut)}
+.jmd tr:last-child td{border-bottom:0}
+.jmd .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;
+  letter-spacing:.04em;border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+.jmd .pill.open{color:var(--good);border-color:rgba(58,208,127,.45)}
+.jmd .pill.auth{color:var(--teal);border-color:rgba(34,211,238,.42)}
+.jmd .toc{margin-top:32px;padding:22px 24px;border:1px solid var(--line);border-radius:var(--r-lg);
+  background:var(--card)}
+.jmd .toc ol{margin:10px 0 0 18px}
+.jmd .toc a{color:var(--teal)}
+.jmd .toc a:hover{text-decoration:underline}
+.jmd .rule{height:1px;background:var(--line);margin:56px 0 0}
+.jmd footer{border-top:1px solid var(--line);padding:40px 0 calc(48px + env(safe-area-inset-bottom));
+  color:var(--faint);font-size:13px}
+.jmd footer a{color:var(--teal)}
+
+@media(max-width:940px){
+  .jmd .burger{display:flex}
+  .jmd .navlinks{display:none}
+  .jmd .nav{--nav-h:66px}
+  .jmd .brand .logo{height:42px}
+  .jmd .navlinks.open{display:flex;position:fixed;top:0;left:0;right:0;flex-direction:column;
+    align-items:stretch;gap:4px;z-index:60;background:var(--nav-bg);
+    border-bottom:1px solid var(--nav-line);
+    padding:calc(var(--nav-h) + env(safe-area-inset-top)) max(20px,env(safe-area-inset-left)) 20px;
+    box-shadow:var(--shadow-lg);max-height:100dvh;overflow-y:auto}
+  .jmd .navlinks.open a{display:flex;align-items:center;min-height:48px;font-size:16px;
+    color:var(--nav-ink);border-bottom:1px solid var(--nav-line)}
+  .jmd .navlinks.open a:last-child{border-bottom:0}
+  .jmd .navlinks.open .navcta{justify-content:center;margin-top:14px;min-height:52px;
+    border-radius:999px;font-size:16px}
+  .jmd .navlinks.open .themetog{width:auto;min-height:48px;justify-content:flex-start;border:0;
+    border-bottom:1px solid var(--nav-line);border-radius:0;padding:0;color:var(--nav-ink);font-size:16px}
+  .jmd .navlinks.open .themetog .tl{display:inline}
+  .jmd .doc{padding:40px 0 72px}
+}
+</style>
+</head>
+<body>
+<div class="jmd">
+
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="./" aria-label="JobMD.io home">
+    <picture>
+      <source srcset="jobmd-logo.webp" type="image/webp">
+      <img class="logo" src="jobmd-logo.png" width="849" height="264" fetchpriority="high"
+           alt="JobMD.io — AI Healthcare Talent Intelligence Network">
+    </picture>
+  </a>
+  <button class="burger" id="burger" type="button" aria-label="Open menu"
+          aria-expanded="false" aria-controls="navlinks"><span class="bars"></span></button>
+  <div class="navlinks" id="navlinks">
+    <a href="./">Home</a>
+    <a href="./#serve">Who We Serve</a>
+    <a href="./#robotics">Robotics Division</a>
+    <a href="./#intelligence">AI Intelligence</a>
+    <a href="./how-it-works">How It Works</a>
+    <button class="themetog" id="themeToggle" type="button" aria-pressed="false"
+            aria-label="Switch to light mode">
+      <svg class="ti sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.6"/>
+        <path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/>
+      </svg>
+      <svg class="ti moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/>
+      </svg>
+      <span class="tl">Light mode</span>
+    </button>
+    <a class="btn p navcta" href="./#contact">Apply Now</a>
+  </div>
+</div></nav>
+<div class="scrim" id="scrim" hidden></div>
+
+<main class="doc"><div class="wrap">
+
+  <div class="eyebrow">JobMD.io &middot; Documentation</div>
+  <h1>How JobMD.io works</h1>
+  <p class="lead">JobMD.io is an AI Healthcare Talent Intelligence Network for recruiting surgeons,
+     doctors and medical staff. This page explains what runs underneath: the eleven agents behind the
+     MCP orchestration layer, how a candidate moves from prospect to placement, and the two
+     architecture APIs that generate the platform&rsquo;s own build documents.</p>
+
+  <div class="toc">
+    <b>On this page</b>
+    <ol>
+      <li><a href="#overview">What the platform does</a></li>
+      <li><a href="#agents">The eleven agents and the MCP layer</a></li>
+      <li><a href="#matching">How a match is produced</a></li>
+      <li><a href="#pipeline">The recruitment pipeline, and who may move a candidate</a></li>
+      <li><a href="#architecture-api">The architecture API</a></li>
+      <li><a href="#rules">The rules enforced in code</a></li>
+      <li><a href="#not-built">What is not built yet</a></li>
+      <li><a href="#config">Configuration</a></li>
+    </ol>
+  </div>
+
+  <h2 id="overview">1. What the platform does</h2>
+  <p>Three groups of people meet here. <b>Surgeons, doctors and medical staff</b> looking for the right
+     role. <b>Hospitals, health systems and IDNs</b> looking for the right person. And
+     <b>JobMD.io Recruiters</b>, who run the process with AI assistance rather than being replaced by it.
+     <b>Platform Administrators</b> manage clients, candidates, recruiters, placements, agents and
+     workflows.</p>
+  <p>Two persistent records carry everything. The <b>Talent Intelligence Record</b> holds twenty-five
+     fields per candidate &mdash; specialty and subspecialty, education, residency, fellowship, board
+     certifications, licenses, procedure expertise, robotic platforms, preferences, availability,
+     recruitment status and match history. The <b>Hospital / Client Intelligence Profile</b> holds
+     nineteen &mdash; organisation, facilities, open positions, requirements, robotics platform,
+     compensation range, call schedule, employment model, recruiting priorities and pipeline.</p>
+  <p>Fifteen surgical specialties are configured at launch, and the taxonomy is stored as data with a
+     subspecialty relation, so adding a specialty or a staff role is data entry rather than a redesign.</p>
+
+  <h2 id="agents">2. The eleven agents and the MCP layer</h2>
+  <p>A central MCP orchestration layer coordinates eleven specialised agents. Each performs one
+     recruitment function and can hand work to the others through agent-to-agent workflows. The layer
+     injects the tenant from the session, enforces role and channel authorisation before any tool call,
+     and audits every call &mdash; including the ones it denies.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Agent</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Candidate Intake Agent</td><td>Conversational physician and surgeon intake, and structured profile creation.</td></tr>
+      <tr><td>02</td><td>CV / Resume Intelligence Agent</td><td>Extracts education, residency, fellowship, board certifications, licenses, specialties, procedures, experience, publications, leadership roles, robotic experience and employment history.</td></tr>
+      <tr><td>03</td><td>Hospital Intake Agent</td><td>Turns a hospital&rsquo;s recruiting requirements into a structured position profile.</td></tr>
+      <tr><td>04</td><td>Candidate Matching Agent</td><td>Continuously compares profiles against opportunities.</td></tr>
+      <tr><td>05</td><td>Clinical Qualification Agent</td><td>Evaluates specialty-specific qualifications, certifications, procedural expertise and experience.</td></tr>
+      <tr><td>06</td><td>Robotics Intelligence Agent</td><td>Robotic-surgery recruitment intelligence: platforms, volume, programme leadership.</td></tr>
+      <tr><td>07</td><td>Candidate Ranking Agent</td><td>Explainable rankings and match scores, with strengths and gaps.</td></tr>
+      <tr><td>08</td><td>Recruitment Outreach Agent</td><td>Personalised outreach through approved channels, and response tracking.</td></tr>
+      <tr><td>09</td><td>Scheduling Agent</td><td>Coordinates recruiter, candidate and hospital interview availability.</td></tr>
+      <tr><td>10</td><td>Follow-Up Agent</td><td>Manages follow-ups across the pipeline.</td></tr>
+      <tr><td>11</td><td>Recruiter Copilot</td><td>Conversational interface across the whole ecosystem.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="matching">3. How a match is produced</h2>
+  <p>Seven dimensions are evaluated at once, not in sequence: <b>Clinical</b>, <b>Technology</b>,
+     <b>Geographic</b>, <b>Career</b>, <b>Compensation</b>, <b>Availability</b>, and
+     <b>Cultural / Professional</b>.</p>
+  <p>Every match returns three things together, and the third is the one that matters:
+     a <b>score</b>, a <b>plain-language explanation</b> of why the candidate was selected, and the
+     <b>material gaps</b>. A score with no gaps attached is a number nobody can act on.</p>
+
+  <h2 id="pipeline">4. The recruitment pipeline, and who may move a candidate</h2>
+  <p>Thirteen stages, in order: Prospect &rarr; Contacted &rarr; Interested &rarr; Qualified &rarr;
+     Matched &rarr; Submitted &rarr; Hospital Review &rarr; Interview &rarr; Offer &rarr; Negotiation
+     &rarr; Accepted &rarr; Credentialing &rarr; Placement.</p>
+  <p>Recruiters and Platform Administrators can advance any stage. <b>Agents can advance only four</b>,
+     and only where a named agent function actually produces that state:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Stage</th><th>Agent permitted to set it</th></tr></thead>
+    <tbody>
+      <tr><td>Contacted, Interested</td><td>Recruitment Outreach Agent</td></tr>
+      <tr><td>Qualified</td><td>Clinical Qualification Agent</td></tr>
+      <tr><td>Matched</td><td>Candidate Matching Agent</td></tr>
+      <tr><td>Interview</td><td>Scheduling Agent</td></tr>
+      <tr><td>Prospect, Submitted, Hospital Review, Offer, Negotiation, Accepted, Credentialing, Placement</td><td><b>None.</b> People only.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>Why the list is short.</b> The project request authorises agent updates only in
+    general terms &mdash; it never says which agent may set which stage. Rather than guess, authority
+    was granted only where a named agent function produces the state, and the ambiguity is recorded as
+    an open question. No agent can move a candidate to Offer or Placement.</div>
+
+  <h2 id="architecture-api">5. The architecture API</h2>
+  <p>Two agents generate JobMD.io&rsquo;s own build documents from the project request. They answer
+     different questions and return different shapes, and both read one shared transcription of the
+     request, so they can never disagree about how many pipeline stages exist.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Method</th><th>Path</th><th>Access</th><th>What it returns</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/jobmd/health</code></td><td><span class="pill open">public</span></td><td>Service state, both agent names, and which narration path is live.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/schema</code></td><td><span class="pill open">public</span></td><td>The build plan&rsquo;s 17 declared keys and its binding counts.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/plan</code></td><td><span class="pill open">public</span></td><td>A build plan. Persists nothing. Add <code>?model=0</code> for the deterministic path.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/architect/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Composes and stores a build plan.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Stored build plans for your tenant.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/spec/schema</code></td><td><span class="pill open">public</span></td><td>The architecture record&rsquo;s 15 declared keys and the component registry.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/spec</code></td><td><span class="pill open">public</span></td><td>An architecture record. Persists nothing. <code>?model=0</code> for the deterministic path.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/spec/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Composes and stores an architecture record.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/spec/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Stored architecture records for your tenant.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/leads</code></td><td><span class="pill open">public</span></td><td>The contact form. Rate limited; the IP is stored only as a salted hash.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The two read endpoints persist nothing and contain no personal data by construction, which is why
+     they are open. Everything that writes, or that reads stored rows, requires a session.</p>
+  <pre><code># A build plan, deterministic path
+curl -s "https://aiagent.ringlypro.com/jobmd/api/v1/architect/plan?model=0"
+
+# An architecture record, and just its open questions
+curl -s "https://aiagent.ringlypro.com/jobmd/api/v1/spec" \
+  | python3 -c "import sys,json; [print(q['blocksBuild'], q['topic']) for q in json.load(sys.stdin)['record']['openQuestions']]"</code></pre>
+  <p>Every response carries its own provenance: <code>composed_by</code> (<code>model</code> or
+     <code>deterministic</code>), <code>is_simulated</code>, the <code>model</code> id or
+     <code>null</code>, and the full <code>verification</code> result. It also reports what the model
+     actually did &mdash; <code>model_rewrites_parsed</code> and <code>model_rewrites_accepted</code>
+     &mdash; so a model that answered but changed nothing can never be mistaken for one that had
+     nothing to add.</p>
+
+  <h2 id="rules">6. The rules enforced in code</h2>
+  <p>These are not instructions given to a model. They are checks that run on every document before it
+     is returned, and a document that fails any of them is refused rather than shipped.</p>
+  <ul>
+    <li><b>The model never writes a named entity.</b> The specialties, agents, stages, dimensions and
+        profile fields are held in code and read verbatim, in order. The model is offered only a prose
+        rewrite, and each rewrite is discarded unless the whole document still verifies.</li>
+    <li><b>The structure is identical with or without an API key.</b> Only wording changes, and the
+        response says which path produced it.</li>
+    <li><b>Nothing is invented.</b> A component that is not in the registry, a discovery source the
+        request never named, an MCP endpoint path that appears nowhere &mdash; all rejected. Where a
+        value is unknown it is left empty and recorded as an open question.</li>
+    <li><b>Nouns are preserved.</b> Talent Intelligence Record, Robotics Division, IDNs, JobMD.io
+        Recruiters and the agent names must survive verbatim.</li>
+    <li><b>No candidate data reaches these documents.</b> Field names are architecture; values are not.
+        Anything shaped like an email, phone number, licence, NPI or DEA number is refused.</li>
+    <li><b>The generators cannot reach the database.</b> They import no model and no connection, and
+        contain no write call &mdash; so &ldquo;never execute, deploy or migrate&rdquo; holds by reach,
+        not by promise.</li>
+    <li><b>Nothing may be dropped or reordered.</b> Fifteen specialties, eleven agents, thirteen
+        stages, seven dimensions, twenty-five and nineteen profile fields &mdash; checked as exact
+        ordered lists, because a document missing one stage still looks correct.</li>
+  </ul>
+  <div class="note"><b>How this is proved.</b> The test suite does not check the happy path. It builds
+    valid documents, deliberately breaks them &mdash; drops a stage, invents a component, grants an
+    agent authority over Placement, leaks a licence number, hides the truncation &mdash; and fails
+    unless every one is refused.</div>
+
+  <h2 id="not-built">7. What is not built yet</h2>
+  <p>The platform documents are generated and verified. The recruitment platform itself is specified,
+     not shipped. Stated plainly so nobody reads a build plan as a running system:</p>
+  <ul>
+    <li>There is <b>no physician database yet</b>. The project request cites one as a discovery source;
+        it does not exist here, and the architecture record flags that as blocking.</li>
+    <li><b>No MCP endpoint paths exist.</b> Neither the request nor the registry names one, so the
+        record leaves the list empty rather than filling it in.</li>
+    <li><b>Section 10 of the request is truncated</b> mid-sentence, so Automated Talent Discovery lists
+        only the two sources the text actually states.</li>
+    <li>The eleven agents, the matching engine and the pipeline are <b>specified in the documents</b>
+        &mdash; they are not yet running services.</li>
+  </ul>
+
+  <h2 id="config">8. Configuration</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Variable</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Enables the prose rewrite. Unset is fully supported: the documents are identical in structure and labelled <code>deterministic</code>.</td></tr>
+      <tr><td><code>JOBMD_MODEL</code></td><td>Model used for prose. Defaults to Claude Haiku.</td></tr>
+      <tr><td><code>JOBMD_JWT_SECRET</code></td><td>Signs the session cookie. Set this in production.</td></tr>
+      <tr><td><code>JOBMD_PASSWORD</code> / <code>JOBMD_OWNER_EMAIL</code></td><td>The owner account.</td></tr>
+      <tr><td><code>JOBMD_LEADS_PER_HOUR</code></td><td>Contact-form ceiling per caller. Defaults to 10.</td></tr>
+      <tr><td><code>SESSION_SALT</code></td><td>Salt for the contact form&rsquo;s IP hash. Raw IPs are never stored.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="rule"></div>
+  <p style="margin-top:26px"><a class="btn g" href="./">Back to JobMD.io</a></p>
+</div></main>
+
+<footer><div class="wrap">
+  JobMD.io is a specialized division of JobUp.dev. This page describes the platform as currently built;
+  where something is specified but not yet running, it says so. Questions?
+  <a href="./#contact">Get in touch</a>.
+</div></footer>
+
+</div>
+
+<script>
+(function(){
+  var tog=document.getElementById('themeToggle'), themeMeta=document.getElementById('themeColor');
+  function applyTheme(mode){
+    var light = mode === 'light';
+    if(light) document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');
+    if(tog){
+      tog.setAttribute('aria-pressed', light ? 'true' : 'false');
+      tog.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
+      var lbl = tog.querySelector('.tl');
+      if(lbl) lbl.textContent = light ? 'Dark mode' : 'Light mode';
+    }
+    if(themeMeta) themeMeta.setAttribute('content', '#ffffff');
+  }
+  function currentTheme(){
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  }
+  applyTheme(currentTheme());
+  if(tog){
+    tog.addEventListener('click', function(){
+      var next = currentTheme() === 'light' ? 'dark' : 'light';
+      applyTheme(next);
+      try{ localStorage.setItem('jobmd_theme', next); }catch(e){}
+    });
+  }
+  var b=document.getElementById('burger'), nl=document.getElementById('navlinks'),
+      scrim=document.getElementById('scrim');
+  function setMenu(open){
+    nl.classList.toggle('open', open);
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    b.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    scrim.hidden = !open;
+    document.body.classList.toggle('navopen', open);
+  }
+  b.addEventListener('click', function(){ setMenu(!nl.classList.contains('open')); });
+  nl.addEventListener('click', function(e){ if(e.target.closest('a')) setMenu(false); });
+  scrim.addEventListener('click', function(){ setMenu(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') setMenu(false); });
+  window.addEventListener('resize', function(){ if(window.innerWidth > 940) setMenu(false); });
+})();
+</script>
+</body>
+</html>
