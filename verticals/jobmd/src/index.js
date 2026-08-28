@@ -283,7 +283,7 @@ router.post('/api/v1/leads', async function (req, res) {
     }
     const hash = ipHash(req);
     if (rateLimited(hash, parseInt(process.env.JOBMD_LEADS_PER_HOUR || '10', 10))) {
-      return res.status(429).json({ error: 'Too many submissions. Please call (888) 315-4401.' });
+      return res.status(429).json({ error: 'Too many submissions. Please try again shortly.' });
     }
     // Mirrors the <select> on the landing page. JobMD.io recruits surgeons,
     // doctors and medical staff, so the allow-list carries all of them; an
@@ -344,8 +344,7 @@ router.use(function (req, res) {
     'p{color:#a6a9b4;margin:10px 0 22px}</style>' +
     '<div><h1 style="font-size:44px;margin:0;letter-spacing:-.03em">Not found</h1>' +
     '<p>That page does not exist on JobMD.io.</p>' +
-    '<p><a href="/">Go to the home page</a> &middot; ' +
-    '<a href="tel:8883154401">(888) 315-4401</a></p></div>');
+    '<p><a href="/">Go to the home page</a></p></div>');
 });
 
 module.exports = router;

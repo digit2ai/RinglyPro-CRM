@@ -16,7 +16,9 @@
 <meta property="og:image" content="https://aiagent.ringlypro.com/jobmd/icon-512.png">
 <link rel="canonical" href="https://jobmd.io/">
 <style>
-html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden}
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%}
+body.navopen{overflow:hidden}
 .jmd,.jmd *,.jmd *::before,.jmd *::after{margin:0;padding:0;box-sizing:border-box}
 .jmd{
   /* Brand inheritance: the JobUp.dev dark-aurora token set, specialized for
@@ -36,7 +38,8 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
   font-family:var(--sans); background:var(--bg); color:var(--ink);
   -webkit-font-smoothing:antialiased; line-height:1.6;
 }
-.jmd .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+.jmd .wrap{max-width:1140px;margin:0 auto;
+  padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
 .jmd a{color:inherit;text-decoration:none}
 
 /* ── Aurora backdrop ─────────────────────────────────────────────────── */
@@ -48,14 +51,20 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .jmd .page{position:relative;z-index:1}
 
 /* ── Nav ─────────────────────────────────────────────────────────────── */
-.jmd .nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
-  background:rgba(10,10,14,.78);border-bottom:1px solid var(--line)}
+/* Above the drawer (60) and the scrim (40): the bar must keep showing the
+   brand and the X while the menu is open, or there is no visible way out. */
+.jmd .nav{position:sticky;top:0;z-index:70;backdrop-filter:blur(14px);
+  background:rgba(10,10,14,.86);border-bottom:1px solid var(--line)}
 .jmd .nav .wrap{display:flex;align-items:center;gap:26px;height:66px}
-.jmd .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;letter-spacing:-.02em}
+/* The drawer is a child of the sticky nav, so it lives inside the nav's own
+   stacking context and paints over its siblings. The brand and the close
+   button must sit above it or the menu has no visible way out. */
+.jmd .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:19px;
+  letter-spacing:-.02em;position:relative;z-index:80}
 .jmd .brand .mk{width:34px;height:34px;flex:0 0 auto;display:block}
 .jmd .brand small{display:block;font-size:10px;font-weight:600;color:var(--faint);
   letter-spacing:.09em;text-transform:uppercase;line-height:1}
-.jmd .navlinks{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--mut);font-weight:500}
+.jmd .navlinks{display:flex;gap:22px;margin-left:auto;align-items:center;font-size:14px;color:var(--mut);font-weight:500}
 .jmd .navlinks a:hover{color:var(--ink)}
 .jmd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:12px 22px;border-radius:999px;font-weight:700;font-size:15px;border:1px solid transparent;
@@ -64,8 +73,23 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .jmd .btn.p{background:var(--grad);color:#07070c}
 .jmd .btn.g{background:transparent;border-color:var(--line2);color:var(--ink)}
 .jmd .nav .btn{padding:9px 18px;font-size:14px}
-.jmd .burger{display:none;margin-left:auto;background:none;border:1px solid var(--line2);
-  color:var(--ink);border-radius:10px;padding:7px 11px;font-size:17px;cursor:pointer}
+.jmd .navcta{color:#07070c}
+/* 44px is the minimum comfortable touch target; the old button was 39x37. */
+.jmd .burger{display:none;position:relative;z-index:80;margin-left:auto;width:44px;height:44px;flex:0 0 44px;
+  background:none;border:1px solid var(--line2);border-radius:12px;cursor:pointer;
+  align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
+.jmd .burger .bars,.jmd .burger .bars::before,.jmd .burger .bars::after{
+  content:"";display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;
+  transition:transform .22s ease,opacity .18s ease}
+.jmd .burger .bars{position:relative}
+.jmd .burger .bars::before{position:absolute;top:-6px}
+.jmd .burger .bars::after{position:absolute;top:6px}
+/* Open state draws an X, so the control says what tapping it will do. */
+.jmd .burger[aria-expanded="true"] .bars{background:transparent}
+.jmd .burger[aria-expanded="true"] .bars::before{top:0;transform:rotate(45deg)}
+.jmd .burger[aria-expanded="true"] .bars::after{top:0;transform:rotate(-45deg)}
+.jmd .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;border:0}
+.jmd .scrim[hidden]{display:none}
 
 /* ── Hero ────────────────────────────────────────────────────────────── */
 .jmd .hero{padding:104px 0 82px;text-align:center}
@@ -142,6 +166,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 
 /* ── Dimensions ──────────────────────────────────────────────────────── */
 .jmd .dims{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:32px}
+.jmd .dims2{grid-template-columns:repeat(2,1fr)}
 .jmd .dim{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:19px}
 .jmd .dim .d{font-weight:700;font-size:14.5px}
 .jmd .dim .e{color:var(--faint);font-size:13px;margin-top:6px;line-height:1.5}
@@ -165,7 +190,8 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .jmd .fnav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--mut)}
 .jmd .fnav a:hover{color:var(--ink)}
 .jmd .fine{color:var(--faint);font-size:12.5px;margin-top:26px;line-height:1.7;max-width:900px}
-.jmd .tel{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--teal)}
+.jmd .flink{font-weight:650;color:var(--teal)}
+.jmd .flink:hover{text-decoration:underline}
 
 
 /* ── Ava: narration orb ──────────────────────────────────────────────── */
@@ -204,18 +230,53 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
   .jmd .ava .controls,.jmd .ava-pick{justify-content:center}}
 
 @media(max-width:940px){
+  .jmd .burger{display:flex}
   .jmd .navlinks{display:none}
-  .jmd .nav .btn{display:none}
-  .jmd .burger{display:block}
-  .jmd .navlinks.open{display:flex;position:absolute;top:66px;left:0;right:0;flex-direction:column;
-    background:rgba(10,10,14,.98);border-bottom:1px solid var(--line);padding:18px 24px;gap:16px}
+  /* FULLY OPAQUE. At .98 the hero headline ghosted through the drawer and
+     read as a rendering fault rather than a design. */
+  .jmd .navlinks.open{display:flex;position:fixed;top:0;left:0;right:0;
+    flex-direction:column;align-items:stretch;gap:4px;z-index:60;
+    background:var(--bg);border-bottom:1px solid var(--line);
+    padding:calc(66px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-left)) 20px;
+    box-shadow:var(--shadow-lg);max-height:100dvh;overflow-y:auto}
+  /* 44px rows: the links were 22px tall and hard to hit. */
+  .jmd .navlinks.open a{display:flex;align-items:center;min-height:48px;font-size:16px;
+    color:var(--ink);border-bottom:1px solid var(--line)}
+  .jmd .navlinks.open a:last-child{border-bottom:0}
+  .jmd .navlinks.open .navcta{justify-content:center;margin-top:14px;min-height:52px;
+    border-radius:999px;font-size:16px}
   .jmd .g3,.jmd .g2,.jmd .split,.jmd .agents,.jmd .row{grid-template-columns:1fr}
   .jmd .band{grid-template-columns:repeat(2,1fr)}
-  .jmd .dims{grid-template-columns:repeat(2,1fr)}
+  .jmd .dims,.jmd .dims2{grid-template-columns:repeat(2,1fr)}
   .jmd section{padding:64px 0}
-  .jmd .hero{padding:70px 0 56px}
+  .jmd .hero{padding:64px 0 52px}
+  .jmd .split{gap:34px}
+  .jmd .ava .btn{min-height:48px;padding:12px 20px}
+  .jmd .listen{min-height:44px;padding:0 16px}
 }
-@media(max-width:520px){ .jmd .dims{grid-template-columns:1fr} }
+@media(max-width:640px){
+  /* The pill wrapped to two lines and looked broken; let it breathe. */
+  .jmd .eyebrow{font-size:12px;line-height:1.5;padding:9px 16px;text-align:center}
+  .jmd .band div{padding:20px 14px}
+  .jmd .band .n{font-size:clamp(20px,6vw,26px);line-height:1.15}
+  .jmd .band .l{font-size:11.5px}
+  .jmd .cta{flex-direction:column;align-items:stretch}
+  .jmd .cta .btn{width:100%;min-height:52px}
+  .jmd .kickrow{gap:12px}
+  .jmd .card{padding:24px}
+  .jmd .panel{padding:24px}
+  .jmd .ava{margin-top:0;padding:22px}
+  .jmd h2{font-size:clamp(26px,7vw,34px)}
+  .jmd .prose p,.jmd .sub{font-size:16px}
+  .jmd footer{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+}
+@media(max-width:520px){
+  .jmd .dims,.jmd .dims2{grid-template-columns:1fr}
+  .jmd .band{grid-template-columns:1fr}
+  .jmd h1{font-size:clamp(34px,10vw,44px)}
+  .jmd .chip{font-size:13px;padding:8px 14px}
+  .jmd .st{font-size:12.5px;padding:7px 12px}
+}
 </style>
 </head>
 <body>
@@ -229,7 +290,8 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     <svg class="mk" viewBox="0 0 512 512" width="34" height="34" aria-hidden="true" focusable="false"><defs><linearGradient id="jmdNav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="0.5" stop-color="#5b7bff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#jmdNav)"/><g transform="translate(256,256) scale(0.92) translate(-276,-268)"><path d="M84 386 L84 150 L158 296 L232 150 L232 386" stroke="#fff" stroke-width="42" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M270 132 L340 132 C 488 132 488 404 340 404 L270 404 Z M346 206 L390 206 L390 246 L430 246 L430 290 L390 290 L390 330 L346 330 L346 290 L306 290 L306 246 L346 246 Z" fill="#fff" fill-rule="evenodd"/></g></svg>
     <span>JobMD.io<small>A division of JobUp.dev</small></span>
   </a>
-  <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
+  <button class="burger" id="burger" type="button" aria-label="Open menu"
+          aria-expanded="false" aria-controls="navlinks"><span class="bars"></span></button>
   <div class="navlinks" id="navlinks">
     <a href="#fit">The Right Fit</a>
     <a href="#specialties">Specialties</a>
@@ -237,9 +299,10 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     <a href="#robotics">Robotics Division</a>
     <a href="#intelligence">AI Intelligence</a>
     <a href="#contact">Contact</a>
+    <a class="btn p navcta" href="#contact">Apply Now</a>
   </div>
-  <a class="btn p" href="#contact">Apply Now</a>
 </div></nav>
+<div class="scrim" id="scrim" hidden></div>
 
 <!-- ── HERO ───────────────────────────────────────────────────────────── -->
 <header class="hero" id="top"><div class="wrap">
@@ -333,7 +396,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     <h3>Every match is explained.</h3>
     <p class="sub" style="font-size:15.5px">Seven dimensions are evaluated simultaneously. Each produces a
        score, a plain-language explanation of why the candidate was selected, and any material gaps.</p>
-    <div class="dims" style="grid-template-columns:repeat(2,1fr)">
+    <div class="dims dims2">
       <div class="dim"><div class="d">Clinical</div><div class="e">Qualifications, certifications, procedural expertise</div></div>
       <div class="dim"><div class="d">Technology</div><div class="e">Robotic platforms and technology experience</div></div>
       <div class="dim"><div class="d">Geographic</div><div class="e">Preferences and relocation willingness</div></div>
@@ -515,7 +578,6 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     <h2>Let us know how we can help.</h2>
     <p class="sub">Whether you are a surgeon, a physician or medical staff exploring the market, or a
        hospital executive with a position to fill, leave your information and we will get back to you.</p>
-    <p style="margin-top:26px"><a class="tel" href="tel:8883154401">(888) 315-4401</a></p>
   </div>
   <div class="panel">
     <form class="form" id="leadForm" novalidate>
@@ -553,7 +615,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     <div>
       <a class="brand" href="#top"><svg class="mk" viewBox="0 0 512 512" width="34" height="34" aria-hidden="true" focusable="false"><defs><linearGradient id="jmdFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="0.5" stop-color="#5b7bff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#jmdFoot)"/><g transform="translate(256,256) scale(0.92) translate(-276,-268)"><path d="M84 386 L84 150 L158 296 L232 150 L232 386" stroke="#fff" stroke-width="42" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M270 132 L340 132 C 488 132 488 404 340 404 L270 404 Z M346 206 L390 206 L390 246 L430 246 L430 290 L390 290 L390 330 L346 330 L346 290 L306 290 L306 246 L346 246 Z" fill="#fff" fill-rule="evenodd"/></g></svg><span>JobMD.io<small>A division of JobUp.dev</small></span></a>
       <p style="color:var(--faint);font-size:13.5px;margin-top:14px">Superior Talent. Superior Results.</p>
-      <p style="margin-top:12px"><a class="tel" href="tel:8883154401">(888) 315-4401</a></p>
+      <p style="margin-top:12px"><a class="flink" href="#contact">Get in touch</a></p>
     </div>
     <div class="fnav">
       <a href="#fit">The Right Fit</a>
@@ -617,9 +679,25 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
     pl.appendChild(el('span','st'+(p[1]?' ai':''),'<i>'+String(i+1).padStart(2,'0')+'</i>'+esc(p[0])));
   });
 
-  var b=document.getElementById('burger'), nl=document.getElementById('navlinks');
-  b.addEventListener('click',function(){ nl.classList.toggle('open'); });
-  nl.addEventListener('click',function(e){ if(e.target.tagName==='A') nl.classList.remove('open'); });
+  // ── Mobile drawer ──────────────────────────────────────────────────────
+  // Every way out of the menu is wired: tapping a link, the X, the scrim
+  // behind it, Escape, or widening past the breakpoint. A drawer you can open
+  // but not obviously close is worse than no drawer.
+  var b=document.getElementById('burger'), nl=document.getElementById('navlinks'),
+      scrim=document.getElementById('scrim');
+  function setMenu(open){
+    nl.classList.toggle('open', open);
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    b.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    scrim.hidden = !open;
+    document.body.classList.toggle('navopen', open);
+  }
+  b.addEventListener('click', function(){ setMenu(!nl.classList.contains('open')); });
+  nl.addEventListener('click', function(e){ if(e.target.closest('a')) setMenu(false); });
+  scrim.addEventListener('click', function(){ setMenu(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') setMenu(false); });
+  // Rotating to landscape past the breakpoint must not strand the open drawer.
+  window.addEventListener('resize', function(){ if(window.innerWidth > 940) setMenu(false); });
 
   var f=document.getElementById('leadForm'), msg=document.getElementById('formMsg'),
       btn=document.getElementById('submitBtn');
@@ -638,12 +716,12 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
       .then(function(r){
         if(!r.ok) throw new Error(r.j && r.j.error ? r.j.error : 'Something went wrong.');
         msg.className='msg ok';
-        msg.textContent='Thank you. A recruiter will be in touch. You can also reach us at (888) 315-4401.';
+        msg.textContent='Thank you. A recruiter will be in touch.';
         f.reset();
       })
       .catch(function(err){
         msg.className='msg err';
-        msg.textContent=err.message+' You can reach us directly at (888) 315-4401.';
+        msg.textContent=err.message+' Please try again in a moment.';
       })
       .finally(function(){ btn.disabled=false; btn.textContent='Submit'; });
   });
@@ -682,7 +760,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 
     "Here is what makes JobMD different. This is not another healthcare job board. It is an A I healthcare talent intelligence network. A central orchestration layer coordinates eleven specialized agents, and they talk to each other. The same machinery runs for a surgeon, a physician and a member of the medical staff. Intake agents build the profile. The resume intelligence agent extracts residency, fellowship, board certifications, licenses and robotic experience. Matching, clinical qualification and robotics intelligence agents evaluate the fit. A ranking agent explains it. Outreach, scheduling and follow up agents carry it forward. And a recruiter copilot sits across all of it. Every candidate moves through thirteen pipeline stages, from prospect to placement, and recruiters stay in control. Agents only update the states they are explicitly authorized to touch.",
 
-    "That is the picture. Whether you are a surgeon, a doctor or medical staff exploring the market, or a hospital executive with a position to fill, leave your details in the form, or call us at eight eight eight, three one five, four four zero one. We will get back to you."
+    "That is the picture. Whether you are a surgeon, a doctor or medical staff exploring the market, or a hospital executive with a position to fill, leave your details in the form and we will get back to you."
   ];
 
   var synth = window.speechSynthesis;
