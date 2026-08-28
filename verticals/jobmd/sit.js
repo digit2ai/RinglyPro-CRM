@@ -382,6 +382,23 @@ function mustReject(name, mutate, expectConstraint) {
   ok('constellation: the full written list is always present, never replaced',
      html.indexOf('id="agentList"') !== -1 && !/agentList[^>]*style="display:none/.test(html));
 
+  // ── Footer illustration ─────────────────────────────────────────────────
+  ok('footer: robotic-surgery.jpg exists', fs.existsSync(path.join(__dirname, 'public', 'robotic-surgery.jpg')));
+  ok('footer: the illustration is in the footer', /<footer>[\s\S]*?class="fimg"/.test(html));
+  // Below the fold: it must not compete with the hero for bandwidth.
+  ok('footer: it loads lazily', /robotic-surgery\.jpg"[^>]*loading="lazy"/.test(html));
+  ok('footer: it reserves its box so the footer does not jump',
+     /robotic-surgery\.jpg" width="1280" height="853"/.test(html));
+  ok('footer: it is described for screen readers, not left as an empty alt',
+     /alt="Robotic surgery system:/.test(html));
+  // IT CARRIES CLINICAL CLAIMS (less pain, faster recovery, better outcomes).
+  // Those are the published advantages of robotic surgery, not anything
+  // JobMD.io measured, and the caption has to say so.
+  ok('footer: the clinical claims are attributed, not adopted',
+     /not outcomes measured by JobMD\.io/.test(html));
+  const fimgKB = fs.statSync(path.join(__dirname, 'public', 'robotic-surgery.jpg')).size / 1024;
+  ok('footer: the illustration is under 400KB', fimgKB < 400, Math.round(fimgKB) + 'KB');
+
   // ── Mobile navigation ───────────────────────────────────────────────────
   // The hamburger existed but its links were 22px tall, the drawer let the
   // hero ghost through, and it carried no Apply Now. Assert the contract.
