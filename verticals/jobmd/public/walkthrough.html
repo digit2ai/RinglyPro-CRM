@@ -32,6 +32,11 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
   --grad-text:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
   --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(91,123,255,.13));
   --good:#3ad07f;
+  /* Gaps and "not understood" notices render in this. It was USED on three
+     selectors and DECLARED nowhere, so those declarations were invalid and
+     dropped — the honesty signals this page exists to show were rendering in
+     body text. Both palettes carry it now, each contrast-checked on --card. */
+  --warn:#f0a63a;
   /* Split out so the light palette can restate them. --bg-rgb backs every
      scrim, so a scrim automatically follows the theme. */
   --bg-rgb:10,10,14;
@@ -57,7 +62,7 @@ html[data-theme="light"] .jmd{
   --bg2:#eceff4; --card:#ffffff; --card2:#f3f5f9;
   --line:rgba(12,16,26,.10); --line2:rgba(12,16,26,.20);
   --ink:#0d1117; --mut:#454d5c; --faint:#646c7a; --fine:#555d6b;
-  --teal:#0b7285; --good:#0d7a45;
+  --teal:#0b7285; --good:#0d7a45; --warn:#8a5200;
   --pill:#101015; --pill-ink:#f4f5f7;
   --grad-soft:linear-gradient(135deg,rgba(11,114,133,.10),rgba(67,97,238,.09));
   --grad-text:linear-gradient(120deg,#0b7285 0%,#3b5bdb 50%,#6d28d9 100%);
@@ -239,6 +244,37 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
 .jmd .fs.done{color:var(--faint)}
 @media(max-width:820px){ .jmd .dm{grid-template-columns:repeat(4,1fr)} .jmd .kv{grid-template-columns:1fr} }
 
+
+/* ── Ava: she narrates the walkthrough and drives the stepper ─────────── */
+.jmd .ava{margin:26px 0 0;background:linear-gradient(180deg,var(--card),var(--bg2));
+  border:1px solid var(--line);border-radius:var(--r-xl);padding:22px;display:flex;gap:20px;
+  align-items:center;box-shadow:var(--shadow)}
+.jmd .orb{position:relative;width:76px;height:76px;flex:0 0 76px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#a5f3fc,#22d3ee 42%,#4c1d95 100%);
+  box-shadow:0 0 0 0 rgba(34,211,238,.5)}
+.jmd .orb::after{content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:2px solid rgba(34,211,238,.35)}
+.jmd .orb.speaking{animation:avapulse 1.2s ease-in-out infinite}
+@keyframes avapulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.45)}
+  70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+/* Same override the landing page carries: the dark orb's pale cyan washes out
+   on a white card, and this is meant to read as the same Ava in both themes. */
+html[data-theme="light"] .jmd .orb{
+  background:radial-gradient(circle at 34% 30%,#7fe3f5,#0b7285 45%,#123a52 100%)}
+.jmd .ava-meta{flex:1;min-width:0}
+.jmd .ava-name{font-weight:750;font-size:16px;letter-spacing:-.01em}
+.jmd .ava-role{color:var(--faint);font-size:13px;margin-bottom:12px}
+.jmd .ava .ctrl{display:flex;gap:9px;flex-wrap:wrap}
+.jmd .ava .btn{padding:10px 17px;font-size:14px;min-height:44px}
+.jmd .ava .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.jmd .ava-status{font-size:12.5px;color:var(--mut);margin-top:10px;min-height:17px}
+.jmd .listen{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 15px;
+  border-radius:999px;background:transparent;border:1px solid var(--line2);color:var(--mut);
+  font:inherit;font-size:13px;font-weight:650;cursor:pointer;margin-left:12px}
+.jmd .listen:hover{color:var(--teal);border-color:rgba(34,211,238,.45)}
+@media(max-width:640px){.jmd .ava{flex-direction:column;text-align:center}
+  .jmd .ava .ctrl{justify-content:center}.jmd .listen{margin:10px 0 0}}
+
 </style>
 </head>
 <body>
@@ -264,6 +300,21 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
    account to a placed surgeon. Every screen below is the real interface, and
    <b>every score is produced by the live matching engine</b>, not written by hand. The people and
    hospitals are samples.</p>
+
+
+<div class="ava">
+  <div class="orb" id="orb"></div>
+  <div class="ava-meta">
+    <div class="ava-name">Ava &middot; JobMD.io voice AI</div>
+    <div class="ava-role">She narrates the walkthrough and moves the steps as she goes.</div>
+    <div class="ctrl">
+      <button class="btn p" id="playAll" type="button">Have Ava present it</button>
+      <button class="btn g" id="pauseBtn" type="button" disabled>Pause</button>
+      <button class="btn g" id="stopBtn" type="button" disabled>Stop</button>
+    </div>
+    <div class="ava-status" id="avaStatus">Press play and she will take you through all seven steps.</div>
+  </div>
+</div>
 
 <div class="steps" id="dots"></div>
 <div id="step"></div>
@@ -422,7 +473,7 @@ var STEPS=[
    '<div style="margin-top:16px"><b style="color:var(--ink);font-size:14px">Where she is now</b>'+
    stageFlow('Placement')+'</div>'+
    '<div class="note" style="margin-top:14px"><b>Every stage change is logged</b> with who made it and '+
-   'whether a person or an agent did. The four stages an agent may ever set are Contacted, Interested, '+
+   'whether a person or an agent did. The five stages an agent may ever set are Contacted, Interested, '+
    'Qualified, Matched and Interview — nothing beyond that.</div>');}}
 ];
 
@@ -432,20 +483,204 @@ function draw(){
     return '<button class="sdot'+(n===i?' on':(n<i?' done':''))+'" data-s="'+n+'">'+(n+1)+'</button>';}).join('');
   var s=STEPS[i];
   $('step').innerHTML='<div class="stephead"><div class="stepno">'+(i+1)+'</div>'+
-    '<div style="flex:1"><div class="whobadge">'+esc(s.who)+' dashboard</div>'+
+    '<div style="flex:1"><div class="whobadge">'+esc(s.who)+' dashboard</div>'+'<button class="listen" type="button" data-n="'+(i+1)+'"><span aria-hidden="true">&#9654;</span> Hear this step</button>'+
     '<h2 style="margin-top:2px">'+esc(s.t)+'</h2>'+
     '<p class="sub" style="max-width:720px">'+s.p+'</p></div></div>'+s.s();
   $('prev').disabled=(i===0);
   $('next').textContent=(i===STEPS.length-1)?'Start again':'Next step';
   [].forEach.call(document.querySelectorAll('.sdot'),function(b){
-    b.addEventListener('click',function(){ i=parseInt(this.getAttribute('data-s'),10); draw();
+    b.addEventListener('click',function(){ if(window.__avaStop)window.__avaStop();
+      i=parseInt(this.getAttribute('data-s'),10); draw();
       window.scrollTo({top:0,behavior:'smooth'}); });
   });
 }
-$('next').addEventListener('click',function(){ i=(i+1)%STEPS.length; draw(); window.scrollTo({top:0,behavior:'smooth'}); });
-$('prev').addEventListener('click',function(){ if(i>0){i--;draw();window.scrollTo({top:0,behavior:'smooth'});} });
+$('next').addEventListener('click',function(){ if(window.__avaStop)window.__avaStop(); i=(i+1)%STEPS.length; draw(); window.scrollTo({top:0,behavior:'smooth'}); });
+$('prev').addEventListener('click',function(){ if(window.__avaStop)window.__avaStop(); if(i>0){i--;draw();window.scrollTo({top:0,behavior:'smooth'});} });
 document.addEventListener('keydown',function(e){
   if(e.key==='ArrowRight'){$('next').click();} if(e.key==='ArrowLeft'){$('prev').click();}});
+
+/* ── AVA — she narrates all seven steps and moves the stepper as she goes ──
+   Layers 1 and 2 (edge-tts.js and /api/tts/edge) already exist in this repo
+   and are shared; only the orb lives here.
+
+   THE SCORES SHE SPEAKS ARE READ OUT OF THE SAME `DEMO` ARRAY THE SCREENS
+   RENDER FROM, and DEMO comes from the live matching engine (SIT re-scores it
+   and fails on drift). Typing "ninety nine" into this script would create a
+   second copy of a number that is allowed to change — the one thing a
+   walkthrough of an honesty-first product must not do.
+------------------------------------------------------------------------- */
+var AVA_URL='/api/tts/edge', AVA_VOICE='ava';   // en-US-AvaNeural
+
+function spell(n){                              // Edge reads bare integers badly
+  var ones=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven',
+    'twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  var tens=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  n=Math.round(n); if(n===100) return 'one hundred'; if(n<20) return ones[n];
+  return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:'');
+}
+
+/* Index 0 is the opening; 1..7 map to steps 0..6, in order. */
+var NARR=[
+"Hello, I'm Ava, the voice of JobMD dot I O. Let me walk you through the whole platform, end to end, "+
+"in seven steps. One surgeon, one hospital, one recruiter, from an empty account to a hire. Every screen "+
+"you are about to see is the real interface, and every score you hear me read is produced by the live "+
+"matching engine. None of it is written by hand. Let's begin.",
+
+"Step one. Doctor Elena Marsh creates an account, and she chooses Physician. That single choice decides "+
+"everything she sees from here. A hospital signing up would choose Hospital and land on a completely "+
+"different dashboard. A recruiter would get a third one. Three roles, three dashboards, one platform.",
+
+"Step two. Now she fills in her Talent Intelligence Record. That is the structured picture of a clinician: "+
+"specialty and subspecialty, board certification, years in practice, robotic platforms and procedures, "+
+"state licences, compensation expectation and availability. She can type it, or she can paste her "+
+"curriculum vitae and let the platform read it. And here is the part that matters. The reader proposes; "+
+"it never saves. For every value it suggests, it shows the exact phrase in her document that the value "+
+"came from, and it lists plainly what it could not find. Here it could not find her compensation "+
+"expectation or her availability date, so it says so, and she enters those herself. Nothing about a "+
+"physician is ever quietly assumed.",
+
+"Step three. Over on the hospital side, Sample Regional Medical Center posts a robotic general surgeon "+
+"position. They describe it the way a hospital actually thinks about a role: the specialty, the robotic "+
+"platform in the operating room, the case mix, the call schedule, the employment model, the compensation "+
+"range and the start date. The moment they save it, that position is live, and every physician on the "+
+"platform is scored against it.",
+
+"Step four, and this is the heart of it. Doctor Marsh opens her dashboard and every open role is already "+
+"scored. Her top match is "+spell(DEMO[0].score)+" out of one hundred. That number is not a guess, and it "+
+"is not one similarity score. Every match is evaluated across seven separate dimensions: clinical, "+
+"technology, geographic, career, compensation, availability, and cultural and professional fit. Each one "+
+"carries its own weight, and each one produces its own plain language reason. Just as importantly, it "+
+"produces the gaps. Look at the trauma role further down. It scores "+spell(DEMO[2].score)+", and it tells "+
+"her exactly why: wrong specialty, wrong state and she is not open to relocation, her expectation is above "+
+"the top of the range, and the call is heavy where she asked for light. She is never shown a score without "+
+"being told how it was reached.",
+
+"Step five. She reads the reasons, she agrees, and she clicks: I am interested. That one click puts her "+
+"into the pipeline at the Interested stage, and the recruiter sees her immediately. No cover letter, no "+
+"application form, and no waiting to find out whether anybody ever opened it.",
+
+"Step six. The recruiter's dashboard. He can search in plain English: find robotic surgeons in Florida on "+
+"da Vinci. The Copilot turns that into a real query, and then it tells him what it ignored, so he is never "+
+"left believing a filter was applied when it was not. From there the Outreach Agent drafts the first "+
+"message to Doctor Marsh, using only facts already on her record and on the position. The gaps go to the "+
+"recruiter; they never go into the candidate's message. The Scheduling Agent proposes interview times and "+
+"says plainly that nothing is booked. The Follow-Up Agent flags whatever has gone quiet, and moves nothing. "+
+"Every one of those is a draft sitting in a queue with the recruiter's name on it. The agents prepare the "+
+"work. A person sends it.",
+
+"Step seven. Back on the hospital's dashboard, the candidates for the position are ranked, with the "+
+"reasoning attached to each one. The hospital interviews, extends an offer, and Doctor Marsh accepts. She "+
+"moves through credentialing, and into placement. Every stage change is recorded, with who made it and "+
+"whether a person or an agent did it. And an agent may only ever set five of the thirteen stages: "+
+"contacted, interested, qualified, matched and interview. An offer, an acceptance and a placement are set "+
+"by a human being, always. That is JobMD dot I O, from an empty account to a hire."
+];
+
+(function(){
+  var synth=window.speechSynthesis;
+  var orb=$('orb'), status=$('avaStatus'), playAll=$('playAll'),
+      pauseBtn=$('pauseBtn'), stopBtn=$('stopBtn');
+  var queue=[], qi=0, mode=null, runToken=0, paused=false;
+  var playbackMode=null, currentAudio=null, neuralOK=true, cache={}, bVoice=null;
+
+  function pickVoice(){ if(!synth) return; var vs=synth.getVoices();
+    var en=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('en')===0;});
+    bVoice=en[0]||vs[0]||null; }
+  if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; }
+
+  function fetchNeural(n){
+    if(cache[n]) return Promise.resolve(cache[n]);
+    return fetch(AVA_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:NARR[n],voice:AVA_VOICE})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty');
+        var u=URL.createObjectURL(b); cache[n]=u; return u; });
+  }
+
+  /* Narration DRIVES the stepper. If she is talking about step four, step four
+     is what you are looking at — a demo whose voice and screen disagree is
+     worse than no voice at all. */
+  function show(n){ if(n<1) return; i=n-1; draw();
+    window.scrollTo({top:0,behavior:'smooth'}); }
+
+  function say(){ status.textContent=(mode==='all')
+    ? 'Ava is speaking — part '+(qi+1)+' of '+queue.length
+    : 'Playing this step.'; }
+
+  function run(tok){
+    if(tok!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var n=queue[qi];
+    show(n);
+    function next(){ if(tok!==runToken) return; qi++; run(tok); }
+
+    if(neuralOK){
+      status.textContent='Preparing Ava’s voice…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1])['catch'](function(){});
+      fetchNeural(n).then(function(url){
+        if(tok!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=next;
+        currentAudio.onerror=function(){ neuralOK=false; next(); };
+        orb.classList.add('speaking'); say();
+        currentAudio.play()['catch'](function(){ neuralOK=false; browserSay(n,next); });
+      })['catch'](function(){ if(tok!==runToken) return; neuralOK=false; browserSay(n,next); });
+    } else { browserSay(n,next); }
+  }
+
+  function browserSay(n,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(NARR[n]);
+    if(bVoice) u.voice=bVoice;
+    u.lang=bVoice?bVoice.lang:'en-US'; u.rate=0.98; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); say(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true;
+    pauseBtn.textContent='Pause';
+    run(runToken);
+  }
+
+  function finish(){
+    runToken++; orb.classList.remove('speaking');
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='Finished. Press play to hear it again.';
+  }
+  window.__avaStop=function(){ if(!playAll.disabled) return; finish();
+    status.textContent='Stopped — you took the wheel. Press play to start over.'; };
+
+  playAll.addEventListener('click',function(){
+    start(NARR.map(function(_,n){return n;}),'all'); });
+  pauseBtn.addEventListener('click',function(){
+    if(!paused){ paused=true; pauseBtn.textContent='Resume';
+      orb.classList.remove('speaking'); status.textContent='Paused.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause();
+    } else { paused=false; pauseBtn.textContent='Pause';
+      orb.classList.add('speaking'); say();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click',finish);
+
+  /* Per-step button, rendered by draw() into #hearStep. */
+  document.addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('.listen'):null;
+    if(b){ start([parseInt(b.getAttribute('data-n'),10)],'one'); }
+  });
+  window.addEventListener('beforeunload',function(){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} }
+  });
+})();
+
 draw();
 
 </script>
