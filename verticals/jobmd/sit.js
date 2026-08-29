@@ -1224,8 +1224,9 @@ function mustReject(name, mutate, expectConstraint) {
   // this whole vertical exists to avoid.
   const demoMatch = wt.match(/var DEMO=(\[[\s\S]*?\]);/);
   ok('walkthrough: it embeds computed match data', !!demoMatch);
+  let demo = null;
   if (demoMatch) {
-    const demo = JSON.parse(demoMatch[1]);
+    demo = JSON.parse(demoMatch[1]);
     eq('walkthrough: four scored positions', demo.length, 4);
     ok('walkthrough: every embedded row carries all seven dimensions',
        demo.every(function (d) { return d.dims.length === C.MATCHING_DIMENSIONS.length; }));
@@ -1251,6 +1252,77 @@ function mustReject(name, mutate, expectConstraint) {
   ok('walkthrough: it says the data is sample data', /sample data/i.test(wt));
   ok('walkthrough: it states the platform sends nothing',
      /platform sends nothing itself|Nothing is sent by the platform/i.test(wt));
+
+  // ── Ava narrates the walkthrough ──────────────────────────────────────
+  // She DRIVES the stepper, so voice and screen can never disagree, and the
+  // scores she reads are evaluated out of the same DEMO array the screens
+  // render from. A second hand-typed copy of a number that is allowed to
+  // change is exactly the drift this whole product exists to prevent.
+  const wtNarrSrc = (wt.match(/var NARR=\[([\s\S]*?)\n\];/) || [])[1];
+  ok('walkthrough/ava: the narration script is present', !!wtNarrSrc);
+  if (wtNarrSrc && demo) {
+    const spellSrc = (wt.match(/function spell\(n\)\{([\s\S]*?)\n\}/) || [])[1];
+    ok('walkthrough/ava: numbers are spelled for the reader', !!spellSrc);
+    const spell = new Function('n', spellSrc);
+    const NARR = new Function('DEMO', 'spell', 'return [' + wtNarrSrc + ']')(demo, spell);
+
+    eq('walkthrough/ava: one opening plus one segment per step', NARR.length, 8);
+
+    // Edge reads bare integers badly, and this is being read to a surgeon.
+    const digits = NARR.filter(function (t) { return /\d/.test(t); });
+    ok('walkthrough/ava: no bare digits reach the reader', digits.length === 0,
+       digits.map(function (t) { return (t.match(/[^ ]*\d[^ ]*/g) || []).join(' '); }).join(' | '));
+
+    // /api/tts/edge truncates at 2000 characters. A segment over that is
+    // silently cut mid-sentence, which no one would notice until a demo.
+    const overCap = NARR.filter(function (t) { return t.length > 2000; });
+    eq('walkthrough/ava: every segment fits the TTS input cap', overCap.length, 0);
+
+    // THE SPOKEN SCORES ARE THE ENGINE'S SCORES.
+    ok('walkthrough/ava: the spoken headline score is the engine\'s score',
+       NARR[4].indexOf(spell(demo[0].score) + ' out of one hundred') !== -1,
+       'expected "' + spell(demo[0].score) + ' out of one hundred" in segment 4');
+    ok('walkthrough/ava: the spoken gap score is the engine\'s score',
+       NARR[4].indexOf('It scores ' + spell(demo[2].score)) !== -1,
+       'expected "It scores ' + spell(demo[2].score) + '" in segment 4');
+
+    // Each segment must actually be about its step.
+    ['one', 'two', 'three', 'four', 'five', 'six', 'seven'].forEach(function (w, n) {
+      ok('walkthrough/ava: segment ' + (n + 1) + ' announces step ' + w,
+         new RegExp('^Step ' + w + '\\b', 'i').test(NARR[n + 1]));
+    });
+
+    // She may not promise anything the platform does not do.
+    ok('walkthrough/ava: she never claims the platform sends or books',
+       !/\b(we will email|we send the email|the interview is booked|we book)\b/i.test(NARR.join(' ')));
+
+    // The count of agent-settable stages is a fact in the corpus, not prose.
+    const agentStages = C.RECRUITMENT_PIPELINE.filter(function (s2) {
+      return (s2.agents_authorized_to_update || []).length > 0; }).length;
+    ok('walkthrough/ava: she states the real number of agent-settable stages',
+       NARR[7].indexOf('only ever set ' + spell(agentStages) + ' of the ' +
+         spell(C.RECRUITMENT_PIPELINE.length) + ' stages') !== -1,
+       'corpus says ' + agentStages + ' of ' + C.RECRUITMENT_PIPELINE.length);
+    ok('walkthrough: the page text agrees on agent-settable stages',
+       wt.indexOf('The ' + spell(agentStages) + ' stages an agent may ever set') !== -1);
+  }
+
+  // The orb, its controls, and the outage path.
+  ['orb', 'playAll', 'pauseBtn', 'stopBtn', 'avaStatus'].forEach(function (id) {
+    ok('walkthrough/ava: #' + id + ' exists', wt.indexOf('id="' + id + '"') !== -1);
+  });
+  ok('walkthrough/ava: she uses the repo\'s zero-key TTS route',
+     /AVA_URL='\/api\/tts\/edge'/.test(wt) && /AVA_VOICE='ava'/.test(wt));
+  ok('walkthrough/ava: no paid TTS provider is reachable from the page',
+     !/elevenlabs|openai\.com|play\.ht|azure/i.test(wt));
+  ok('walkthrough/ava: browser speech survives a TTS outage',
+     /SpeechSynthesisUtterance/.test(wt) && /neuralOK=false/.test(wt));
+  ok('walkthrough/ava: her narration moves the stepper',
+     /function show\(n\)\{[\s\S]{0,80}draw\(\)/.test(wt));
+  ok('walkthrough/ava: taking the stepper by hand stops her',
+     /__avaStop/.test(wt) && /\$\('next'\)\.addEventListener\('click',function\(\)\{ if\(window\.__avaStop\)/.test(wt));
+  ok('walkthrough/ava: a per-step listen button is rendered',
+     /class="listen" type="button" data-n="'\+\(i\+1\)\+'"/.test(wt));
 
   // ── The pages exist and are routed ────────────────────────────────────
   for (const pg of ['/signup', '/login', '/app']) {
