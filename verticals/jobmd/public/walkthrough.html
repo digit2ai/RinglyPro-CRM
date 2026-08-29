@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" id="themeColor">
+<meta name="color-scheme" content="dark light">
+<script>(function(){try{var t=localStorage.getItem('jobmd_theme');
+if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<title>JobMD.io walkthrough</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%}
+.jmd,.jmd *,.jmd *::before,.jmd *::after{margin:0;padding:0;box-sizing:border-box}
+.jmd{
+  /* Brand inheritance: the JobUp.dev dark-aurora token set, specialized for
+     the medical division by rotating the accent toward clinical teal. */
+  --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7; --mut:#a6a9b4;
+  /* #767a86 measured 3.95:1 on --card2 and 4.42:1 on --bg2 - both under AA
+     for the 12px labels this colour is used for. This clears 4.5 on every
+     surface it sits on. */
+  --faint:#828796;
+  --blue:#4263eb; --teal:#22d3ee; --violet:#8b5cf6; --pink:#e64980;
+  --grad:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  /* Same identity, but this one is read AS TEXT, so light mode darkens it
+     while --grad stays bright behind #07070c button labels. */
+  --grad-text:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(91,123,255,.13));
+  --good:#3ad07f;
+  /* Split out so the light palette can restate them. --bg-rgb backs every
+     scrim, so a scrim automatically follows the theme. */
+  --bg-rgb:10,10,14;
+  --fine:#9aa0ad;
+  --wire:120,190,255;
+  --wire-fill:rgba(12,18,32,.92);
+  --wire-accent:34,211,238;
+  --surface-soft:rgba(255,255,255,.03);
+  --scrim:rgba(0,0,0,.55);
+  --img-hero:.95;
+  --img-foot:.88;
+  --aurora:.30;
+  --r:14px; --r-lg:22px; --r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 4px 14px rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5),0 40px 90px rgba(0,0,0,.55);
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+html[data-theme="light"] .jmd{
+  --bg:#f6f7fa; --bg-rgb:246,247,250;
+  --bg2:#eceff4; --card:#ffffff; --card2:#f3f5f9;
+  --line:rgba(12,16,26,.10); --line2:rgba(12,16,26,.20);
+  --ink:#0d1117; --mut:#454d5c; --faint:#646c7a; --fine:#555d6b;
+  --teal:#0b7285; --good:#0d7a45;
+  --pill:#101015; --pill-ink:#f4f5f7;
+  --grad-soft:linear-gradient(135deg,rgba(11,114,133,.10),rgba(67,97,238,.09));
+  --grad-text:linear-gradient(120deg,#0b7285 0%,#3b5bdb 50%,#6d28d9 100%);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+  --shadow:0 2px 8px rgba(16,24,40,.06),0 12px 32px rgba(16,24,40,.07);
+  --shadow-lg:0 8px 24px rgba(16,24,40,.08),0 32px 72px rgba(16,24,40,.10);
+  --wire:34,78,132; --wire-fill:rgba(255,255,255,.94);
+  --wire-accent:11,114,133;
+  --surface-soft:rgba(12,16,26,.035);
+  --scrim:rgba(20,24,34,.45);
+  /* The two photographs are dark scenes. Under a light scrim they wash out
+     to a pale tint rather than fighting the text. */
+  --img-hero:.30; --img-foot:.34;
+  --aurora:.16;
+}
+html[data-theme="light"], html[data-theme="light"] body{background:#f6f7fa}
+.jmd{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.6;min-height:100vh}
+.jmd .wrap{max-width:1140px;margin:0 auto;
+  padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+.jmd a{color:inherit;text-decoration:none}
+.jmd .nav{position:sticky;top:0;z-index:70;--nav-bg:#ffffff;--nav-ink:#0d1117;--nav-mut:#3f4756;
+  --nav-line:rgba(12,16,26,.13);--nav-line2:rgba(12,16,26,.22);
+  background:var(--nav-bg);border-bottom:1px solid var(--nav-line)}
+.jmd .nav .wrap{display:flex;align-items:center;gap:18px;height:72px}
+.jmd .brand .logo{display:block;height:46px;width:auto}
+.jmd .navsp{margin-left:auto}
+.jmd .who{font-size:13.5px;color:var(--nav-mut);display:flex;align-items:center;gap:8px}
+.jmd .who b{color:var(--nav-ink)}
+.jmd .rolechip{padding:3px 10px;border-radius:999px;border:1px solid var(--nav-line2);
+  font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--nav-mut)}
+.jmd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;
+  border-radius:999px;font-weight:700;font-size:15px;border:1px solid transparent;cursor:pointer;
+  font-family:inherit;transition:transform .15s ease,opacity .15s}
+.jmd .btn:hover{transform:translateY(-1px)}
+.jmd .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.jmd .btn.p{background:var(--grad);color:#07070c}
+.jmd .btn.g{background:transparent;border-color:var(--line2);color:var(--ink)}
+.jmd .btn.s{padding:8px 14px;font-size:13.5px;border-radius:10px}
+.jmd .nav .btn{padding:9px 16px;font-size:14px}
+.jmd .nav .btn.g{border-color:var(--nav-line2);color:var(--nav-ink)}
+.jmd .themetog{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  flex:0 0 auto;padding:0;border-radius:11px;cursor:pointer;background:transparent;
+  border:1px solid var(--nav-line2);color:var(--nav-mut);font:inherit}
+.jmd .themetog .ti{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.jmd .themetog .moon{display:none}
+html[data-theme="light"] .jmd .themetog .sun{display:none}
+html[data-theme="light"] .jmd .themetog .moon{display:block}
+.jmd main{padding:36px 0 80px}
+.jmd h1{font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:-.025em;font-weight:850}
+.jmd h2{font-size:20px;font-weight:780;letter-spacing:-.015em;margin-top:36px}
+.jmd h3{font-size:16px;font-weight:730}
+.jmd p{color:var(--mut);margin-top:10px}
+.jmd .sub{color:var(--mut);font-size:15.5px;margin-top:8px}
+.jmd .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px}
+.jmd .grid{display:grid;gap:16px;margin-top:18px}
+.jmd .g2{grid-template-columns:repeat(2,1fr)}
+.jmd label{display:block;font-size:13px;font-weight:650;color:var(--mut);margin-bottom:6px;margin-top:14px}
+.jmd input,.jmd select,.jmd textarea{width:100%;padding:12px 14px;border-radius:11px;background:var(--bg2);
+  border:1px solid var(--line2);color:var(--ink);font:inherit;font-size:16px}
+.jmd input:focus,.jmd select:focus,.jmd textarea:focus{outline:none;border-color:var(--teal)}
+.jmd textarea{min-height:120px;resize:vertical}
+.jmd .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.jmd .chk{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--mut);font-size:14.5px}
+.jmd .chk input{width:auto}
+.jmd .msg{margin-top:14px;padding:12px 15px;border-radius:11px;font-size:14.5px;display:none}
+.jmd .msg.ok{display:block;background:rgba(58,208,127,.12);border:1px solid rgba(58,208,127,.4);color:var(--good)}
+.jmd .msg.err{display:block;background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:var(--pink)}
+.jmd .auth{max-width:520px;margin:0 auto}
+.jmd .switch{margin-top:20px;color:var(--mut);font-size:14.5px;text-align:center}
+.jmd .switch a{color:var(--teal);font-weight:650}
+.jmd .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.jmd .role{padding:14px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--bg2);
+  cursor:pointer;text-align:center;font-size:14px;font-weight:650;color:var(--mut)}
+.jmd .role.on{border-color:var(--teal);color:var(--teal);background:var(--grad-soft)}
+.jmd .role small{display:block;font-weight:500;font-size:11.5px;color:var(--faint);margin-top:3px}
+.jmd .bar{height:7px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-top:10px}
+.jmd .bar i{display:block;height:100%;background:var(--grad);border-radius:999px}
+.jmd .score{font-family:var(--mono);font-weight:700;font-size:20px;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jmd .match{border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;background:var(--card);margin-top:12px}
+.jmd .match header{display:flex;align-items:flex-start;gap:16px}
+.jmd .match .meta{color:var(--faint);font-size:13px;margin-top:4px}
+.jmd .dims{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.jmd .dim{text-align:center}
+.jmd .dim .n{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink)}
+.jmd .dim .b{height:5px;border-radius:999px;background:var(--bg2);margin-top:4px;overflow:hidden}
+.jmd .dim .b i{display:block;height:100%;background:var(--teal)}
+.jmd .dim .l{font-size:9.5px;color:var(--faint);margin-top:4px;line-height:1.25;letter-spacing:.02em}
+.jmd .why{margin-top:14px;font-size:13.5px}
+.jmd .why ul{margin:6px 0 0 18px;color:var(--mut)}
+.jmd .why li{margin-top:4px}
+.jmd .why .gap{color:var(--warn)}
+.jmd details{margin-top:12px}
+.jmd summary{cursor:pointer;color:var(--teal);font-size:13.5px;font-weight:650}
+.jmd .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);margin-top:14px}
+.jmd table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+.jmd th,.jmd td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.jmd th{color:var(--ink);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--bg2)}
+.jmd td{color:var(--mut)}
+.jmd tr:last-child td{border-bottom:0}
+.jmd .stage{padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;
+  border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+.jmd .empty{padding:34px 22px;text-align:center;color:var(--mut);border:1px dashed var(--line2);
+  border-radius:var(--r-lg);margin-top:16px}
+.jmd .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+.jmd .tab{padding:9px 16px;border-radius:999px;border:1px solid var(--line2);background:transparent;
+  color:var(--mut);font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+.jmd .tab.on{background:var(--grad-soft);border-color:rgba(34,211,238,.4);color:var(--teal)}
+.jmd .note{margin-top:16px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line2);
+  background:var(--grad-soft);color:var(--mut);font-size:14px}
+.jmd .note b{color:var(--ink)}
+@media(max-width:820px){
+  .jmd .g2,.jmd .row{grid-template-columns:1fr}
+  .jmd .dims{grid-template-columns:repeat(4,1fr)}
+  .jmd .who{display:none}
+  .jmd .nav .wrap{height:64px;gap:12px}
+  .jmd .brand .logo{height:38px}
+  .jmd .roles{grid-template-columns:1fr}
+}
+
+.jmd .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.jmd .role{padding:12px 10px;border-radius:11px;border:1px solid var(--line2);background:var(--bg);
+  text-align:center;font-size:13.5px;font-weight:650;color:var(--mut)}
+.jmd .role.on{border-color:var(--teal);color:var(--teal);background:var(--grad-soft)}
+.jmd .role small{display:block;font-weight:500;font-size:11px;color:var(--faint);margin-top:2px}
+.jmd .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+.jmd table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+.jmd th,.jmd td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+.jmd th{color:var(--ink);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;background:var(--card2)}
+.jmd td{color:var(--mut)}
+.jmd tr:last-child td{border-bottom:0}
+.jmd .note{margin-top:14px;padding:13px 16px;border-radius:var(--r);border:1px solid var(--line2);
+  background:var(--grad-soft);color:var(--mut);font-size:13.5px}
+.jmd .note b{color:var(--ink)}
+.jmd .steps{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 4px}
+.jmd .sdot{width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);background:transparent;
+  color:var(--mut);font:inherit;font-weight:800;font-size:15px;cursor:pointer;font-family:var(--mono)}
+.jmd .sdot.on{background:var(--grad);color:#07070c;border-color:transparent}
+.jmd .sdot.done{color:var(--teal);border-color:rgba(34,211,238,.45)}
+.jmd .stephead{display:flex;align-items:flex-start;gap:16px;margin-top:26px}
+.jmd .stepno{flex:0 0 auto;width:52px;height:52px;border-radius:15px;background:var(--grad);
+  color:#07070c;display:grid;place-items:center;font-weight:850;font-size:22px;font-family:var(--mono)}
+.jmd .whobadge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line2);color:var(--teal);
+  background:var(--grad-soft);margin-bottom:8px}
+.jmd .screen{margin-top:20px;border:1px solid var(--line2);border-radius:var(--r-xl);overflow:hidden;
+  background:var(--bg2);box-shadow:var(--shadow-lg)}
+.jmd .screenbar{display:flex;align-items:center;gap:7px;padding:11px 16px;background:var(--card2);
+  border-bottom:1px solid var(--line)}
+.jmd .screenbar i{width:10px;height:10px;border-radius:50%;background:var(--line2);display:block}
+.jmd .screenbar span{margin-left:10px;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.jmd .screenbody{padding:22px}
+.jmd .nav2{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.jmd .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:12px;font-size:14px}
+.jmd .kv b{color:var(--ink);font-weight:650}
+.jmd .kv span{color:var(--mut)}
+.jmd .fakebar{height:10px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:8px}
+.jmd .fakebar i{display:block;height:100%;background:var(--grad)}
+.jmd .mrow{border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:10px;background:var(--card)}
+.jmd .mrow header{display:flex;gap:14px;align-items:flex-start}
+.jmd .sc{font-family:var(--mono);font-weight:800;font-size:26px;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jmd .dm{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}
+.jmd .dm div{text-align:center}
+.jmd .dm b{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:700}
+.jmd .dm u{display:block;height:5px;border-radius:999px;background:var(--bg);margin-top:3px;overflow:hidden;text-decoration:none}
+.jmd .dm u i{display:block;height:100%;background:var(--teal)}
+.jmd .dm s{display:block;font-size:9px;color:var(--faint);margin-top:3px;text-decoration:none;letter-spacing:.02em}
+.jmd .why2{margin-top:12px;font-size:13px}
+.jmd .why2 ul{margin:5px 0 0 17px;color:var(--mut)}
+.jmd .why2 .g{color:var(--warn)}
+.jmd pre.mail{white-space:pre-wrap;font-family:var(--mono);font-size:12.5px;color:var(--mut);
+  background:var(--bg);padding:16px;border-radius:10px;border:1px solid var(--line);margin-top:12px}
+.jmd .flow2{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.jmd .fs{padding:6px 12px;border-radius:8px;border:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+.jmd .fs.on{border-color:var(--teal);color:var(--teal);background:var(--grad-soft);font-weight:700}
+.jmd .fs.done{color:var(--faint)}
+@media(max-width:820px){ .jmd .dm{grid-template-columns:repeat(4,1fr)} .jmd .kv{grid-template-columns:1fr} }
+
+</style>
+</head>
+<body>
+<div class="jmd">
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="./" aria-label="JobMD.io home">
+    <picture><source srcset="jobmd-logo.webp" type="image/webp">
+    <img class="logo" src="jobmd-logo.png" width="849" height="264" alt="JobMD.io"></picture>
+  </a>
+  <div class="navsp"></div>
+  
+  <button class="themetog" id="themeToggle" type="button" aria-label="Switch theme">
+    <svg class="ti sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/>
+      <path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg>
+    <svg class="ti moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>
+  </button>
+</div></nav>
+<main><div class="wrap">
+
+<div class="whobadge">Walkthrough &middot; sample data</div>
+<h1>JobMD.io, end to end in seven steps</h1>
+<p class="sub" style="max-width:760px">One physician, one hospital, one recruiter &mdash; from a blank
+   account to a placed surgeon. Every screen below is the real interface, and
+   <b>every score is produced by the live matching engine</b>, not written by hand. The people and
+   hospitals are samples.</p>
+
+<div class="steps" id="dots"></div>
+<div id="step"></div>
+<div class="nav2">
+  <button class="btn g" id="prev">Back</button>
+  <button class="btn p" id="next">Next step</button>
+</div>
+
+</div></main>
+</div>
+<script>
+(function(){
+  var tog=document.getElementById('themeToggle');
+  function apply(m){var l=m==='light';
+    if(l)document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');}
+  apply(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
+  tog.addEventListener('click',function(){
+    var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    apply(next); try{localStorage.setItem('jobmd_theme',next);}catch(e){}
+  });
+})();
+
+var DEMO=[{"title": "Robotic General Surgeon", "org": "Sample Regional Medical Center", "city": "Tampa", "state": "FL", "specialty": "Robotic Surgery", "comp": [550000, 650000], "score": 99, "dims": [{"n": "Clinical Match", "s": 100}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 100}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 100}], "reasons": ["Clinical Match: Specialty matches: Robotic Surgery. Board certified, as required. 11 years of experience against a 5-year minimum. Shared procedures: robotic cholecystectomy, robotic hernia repair.", "Technology Match: Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.", "Geographic Match: FL is a stated preferred location.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2026-11-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed). Call schedule is within the stated tolerance."], "gaps": []}, {"title": "Colon & Rectal Surgeon", "org": "Sample Regional Medical Center", "city": "Tampa", "state": "FL", "specialty": "Colon & Rectal Surgery", "comp": [520000, 610000], "score": 69, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 100}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 100}], "reasons": ["Technology Match: Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.", "Geographic Match: FL is a stated preferred location.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2026-12-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed). Call schedule is within the stated tolerance."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Colon & Rectal Surgery."]}, {"title": "Trauma Surgeon", "org": "Sample Coastal Hospital", "city": "Charleston", "state": "SC", "specialty": "Trauma Surgery", "comp": [500000, 580000], "score": 48, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 5}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 65}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 80}], "reasons": ["Technology Match: The position does not require robotic experience.", "Career Match: Leadership experience on record.", "Availability Match: Available on or before the 2026-12-15 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed)."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Trauma Surgery.", "Geographic Match: Prefers FL and is not open to relocation; the position is in SC.", "Compensation Match: Expectation of $600,000 is about 3% above the top of the range ($580,000).", "Cultural / Professional Match: Call is heavy; the stated tolerance is light."]}, {"title": "Neurosurgeon - Spine", "org": "Sample IDN", "city": "Dallas", "state": "TX", "specialty": "Neurosurgery", "comp": [800000, 950000], "score": 48, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 70}, {"n": "Geographic Match", "s": 5}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 80}], "reasons": ["Technology Match: Robotic experience on record. 6 years robotic. Has led a robotics programme.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2027-02-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed)."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Neurosurgery.", "Technology Match: Trained on da Vinci Xi; the position uses Mazor X.", "Geographic Match: Prefers FL and is not open to relocation; the position is in TX.", "Cultural / Professional Match: Call is heavy; the stated tolerance is light."]}];
+var DRAFT="Hello Dr Elena Marsh,\n\nI am recruiting for Robotic General Surgeon at Sample Regional Medical Center in Tampa, FL.\n\nI am contacting you because:\n  - Specialty matches: Robotic Surgery. Board certified, as required. 11 years of experience against a 5-year minimum. Shared procedures: robotic cholecystectomy, robotic hernia repair.\n  - Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.\n  - FL is a stated preferred location.\n\nThe posted range is $550,000 to $650,000.\nCall is light.\nThey are looking to start around 2026-11-01.\n\nIf the timing is wrong I would still value a short conversation.\n\nBest regards";
+var QUERY={"filters": {"state": "FL", "robotic": true, "board_certified": true, "min_years": 8}, "applied": ["state is FL", "has robotic experience", "board certified", "at least 8 years"], "ignored": []};
+var $=function(i){return document.getElementById(i);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
+function money(n){return n==null?'':'$'+Number(n).toLocaleString();}
+var SHORT={'Clinical Match':'CLIN','Technology Match':'TECH','Geographic Match':'GEO','Career Match':'CAREER',
+  'Compensation Match':'COMP','Availability Match':'AVAIL','Cultural / Professional Match':'CULT'};
+
+function screen(title,inner){
+  return '<div class="screen"><div class="screenbar"><i></i><i></i><i></i><span>'+esc(title)+
+    '</span></div><div class="screenbody">'+inner+'</div></div>';
+}
+function matchCard(m,showWhy){
+  return '<div class="mrow"><header><div style="flex:1"><b style="color:var(--ink);font-size:15px">'+
+    esc(m.title)+'</b><div style="color:var(--faint);font-size:12.5px;margin-top:3px">'+esc(m.org)+
+    ' &middot; '+esc(m.city)+', '+esc(m.state)+' &middot; '+esc(m.specialty)+
+    (m.comp[0]?' &middot; '+money(m.comp[0])+'&ndash;'+money(m.comp[1]):'')+'</div></div>'+
+    '<div style="text-align:right"><div class="sc">'+m.score+'</div>'+
+    '<div style="color:var(--faint);font-size:11px">/100</div></div></header>'+
+    '<div class="dm">'+m.dims.map(function(d){
+      return '<div><b>'+d.s+'</b><u><i style="width:'+d.s+'%"></i></u><s>'+esc(SHORT[d.n]||d.n)+'</s></div>';
+    }).join('')+'</div>'+
+    (showWhy?'<div class="why2"><b style="color:var(--ink)">Why</b><ul>'+
+      m.reasons.slice(0,3).map(function(r){return '<li>'+esc(r)+'</li>';}).join('')+'</ul>'+
+      (m.gaps.length?'<b style="color:var(--ink);display:block;margin-top:8px">Gaps</b><ul>'+
+        m.gaps.map(function(g){return '<li class="g">'+esc(g)+'</li>';}).join('')+'</ul>':
+        '<div style="color:var(--good);margin-top:6px">No gaps on this one.</div>')+'</div>':'')+
+    '</div>';
+}
+function stageFlow(current){
+  var S=['Prospect','Contacted','Interested','Qualified','Matched','Submitted','Hospital Review',
+         'Interview','Offer','Negotiation','Accepted','Credentialing','Placement'];
+  var at=S.indexOf(current);
+  return '<div class="flow2">'+S.map(function(s,i){
+    return '<span class="fs'+(i===at?' on':(i<at?' done':''))+'">'+esc(s)+'</span>';}).join('')+'</div>';
+}
+
+var STEPS=[
+{who:'Physician',t:'She creates an account',
+ p:'Dr Elena Marsh signs up and picks <b>Physician</b>. That single choice decides everything she sees from '+
+   'here. A hospital or a recruiter would pick differently and get a different dashboard.',
+ s:function(){return screen('jobmd.io/signup',
+   '<b style="color:var(--ink)">I am a</b>'+
+   '<div class="roles" style="margin-top:8px"><div class="role on">Physician<small>Find a role</small></div>'+
+   '<div class="role">Hospital<small>Post positions</small></div>'+
+   '<div class="role">Recruiter<small>Run the pipeline</small></div></div>'+
+   '<div class="kv" style="margin-top:16px"><b>Name</b><span>Elena Marsh</span>'+
+   '<b>Email</b><span>elena.marsh@example.org</span><b>Password</b><span>••••••••••</span></div>');}},
+
+{who:'Physician',t:'She fills in her record — or pastes her CV',
+ p:'This is the <b>Talent Intelligence Record</b>. She can type it, or paste her CV and let the platform '+
+   'read it. The CV reader <b>proposes and never saves</b>: it shows the exact phrase each value came from '+
+   'and lists what it could not find, so nothing is quietly assumed.',
+ s:function(){return screen('jobmd.io/app — Read my CV',
+   '<div style="color:var(--mut);font-size:13.5px">Pasted CV &rarr; read on device, nothing written yet</div>'+
+   '<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Field</th><th>Proposed</th>'+
+   '<th>Read from</th></tr></thead><tbody>'+
+   '<tr><td>specialty</td><td><b style="color:var(--ink)">Robotic Surgery</b></td><td>Board-certified in Robotic Surgery</td></tr>'+
+   '<tr><td>years experience</td><td><b style="color:var(--ink)">11</b></td><td>11 years of clinical experience</td></tr>'+
+   '<tr><td>robotic platforms</td><td><b style="color:var(--ink)">da Vinci Xi</b></td><td>on the da Vinci Xi platform</td></tr>'+
+   '<tr><td>licenses</td><td><b style="color:var(--ink)">FL, GA</b></td><td>Licensed in FL and GA</td></tr>'+
+   '</tbody></table></div>'+
+   '<div class="note" style="margin-top:14px"><b>Not found in the CV:</b> compensation expectation, '+
+   'availability date. She adds those herself on the profile tab.</div>'+
+   '<div style="margin-top:14px"><b style="color:var(--ink)">Profile completeness</b>'+
+   '<div class="fakebar"><i style="width:100%"></i></div>'+
+   '<div style="color:var(--mut);font-size:13px;margin-top:6px">100% — measured only against the fields a '+
+   'match actually depends on.</div></div>');}},
+
+{who:'Hospital',t:'A hospital posts a position',
+ p:'Sample Regional Medical Center needs a robotic general surgeon. Every field they enter is used by the '+
+   'scoring &mdash; <b>a range left blank is a dimension that cannot be scored</b>, and the match will say so.',
+ s:function(){return screen('jobmd.io/app — Post a position',
+   '<div class="kv"><b>Title</b><span>Robotic General Surgeon</span>'+
+   '<b>Specialty</b><span>Robotic Surgery</span><b>Location</b><span>Tampa, FL</span>'+
+   '<b>Compensation</b><span>$550,000 – $650,000</span><b>Employment</b><span>employed</span>'+
+   '<b>Call</b><span>light</span><b>Minimum experience</b><span>5 years</span>'+
+   '<b>Robotics</b><span>required — da Vinci Xi</span><b>Start</b><span>2026-11-01</span></div>'+
+   '<div class="note" style="margin-top:14px">The moment this is posted it is scored against every '+
+   'physician on the platform, and appears in their matches.</div>');}},
+
+{who:'Physician',t:'She sees every open role, scored',
+ p:'This is the part that makes it more than a job board. Each position is scored across <b>seven '+
+   'dimensions at once</b>, best first, with the reasons and the gaps attached. '+
+   '<b>These numbers came from the live engine</b> — the same code that runs in production.',
+ s:function(){return screen('jobmd.io/app — My matches',
+   DEMO.map(function(m,i){return matchCard(m,i===0);}).join('')+
+   '<div class="note" style="margin-top:14px"><b>Why 99 and not 100.</b> Career Match scored 90: the post '+
+   'is not academic, so her publications add nothing here. Nothing is hidden — she can see every number '+
+   'that produced the total.</div>');}},
+
+{who:'Physician',t:'She says she is interested',
+ p:'One click. That is the only pipeline stage a physician can set &mdash; she puts herself in at '+
+   '<b>Interested</b>, and from there it is a person\'s decision, never an automatic one.',
+ s:function(){return screen('jobmd.io/app — Robotic General Surgeon',
+   matchCard(DEMO[0],false)+
+   '<div style="margin-top:14px"><b style="color:var(--ink);font-size:14px">Her position in the pipeline</b>'+
+   stageFlow('Interested')+'</div>'+
+   '<div class="note" style="margin-top:14px">She now appears on the recruiter\'s board and on the '+
+   'hospital\'s candidate list for that position.</div>');}},
+
+{who:'Recruiter',t:'The recruiter works the board',
+ p:'The recruiter sees every candidate across every client. They can ask the <b>Copilot</b> in plain '+
+   'English, have the <b>Outreach Agent</b> draft an approach, and have the <b>Scheduling Agent</b> propose '+
+   'times. Every one of those is a draft a person approves &mdash; <b>the platform sends nothing itself</b>.',
+ s:function(){return screen('jobmd.io/app — Copilot and agent queue',
+   '<b style="color:var(--ink)">Ask in plain English</b>'+
+   '<div style="margin-top:8px;padding:11px 14px;border:1px solid var(--line2);border-radius:11px;'+
+   'background:var(--bg);font-family:var(--mono);font-size:13px;color:var(--ink)">'+
+   'board certified robotic surgeons in Florida with more than 8 years</div>'+
+   '<div class="note" style="margin-top:10px"><b>1 of 1 record matched.</b><br>Filters applied: '+
+   esc(QUERY.applied.join('; '))+'.'+
+   (QUERY.ignored.length?'<br><span style="color:var(--warn)">Not understood, and NOT filtered on: '+
+     esc(QUERY.ignored.join(', '))+'</span>':'')+'</div>'+
+   '<b style="color:var(--ink);display:block;margin-top:18px">Outreach Agent — draft</b>'+
+   '<pre class="mail">'+esc(DRAFT)+'</pre>'+
+   '<div class="note"><b>Nothing is sent by the platform.</b> The recruiter approves this and sends it '+
+   'themselves. The gaps the matcher found go to the recruiter, not into the candidate\'s message.</div>');}},
+
+{who:'Hospital',t:'The hospital reviews, and hires',
+ p:'The hospital sees the same candidates ranked against their own position, with the same reasons and '+
+   'gaps the physician saw. They move her through the remaining stages. '+
+   '<b>No agent can set Offer, Credentialing or Placement</b> — those are people, always.',
+ s:function(){return screen('jobmd.io/app — Candidates for Robotic General Surgeon',
+   '<div class="tablewrap"><table><thead><tr><th>Score</th><th>Candidate</th><th>Why</th><th>Stage</th></tr></thead>'+
+   '<tbody><tr><td><span class="sc" style="font-size:18px">'+DEMO[0].score+'</span></td>'+
+   '<td><b style="color:var(--ink)">Dr Elena Marsh</b><br><span style="font-size:12.5px">Robotic Surgery '+
+   '&middot; 11y &middot; board certified</span></td>'+
+   '<td style="font-size:12.5px;max-width:360px">'+esc(DEMO[0].reasons[0])+'</td>'+
+   '<td><span class="fs on">Offer</span></td></tr></tbody></table></div>'+
+   '<div style="margin-top:16px"><b style="color:var(--ink);font-size:14px">Where she is now</b>'+
+   stageFlow('Placement')+'</div>'+
+   '<div class="note" style="margin-top:14px"><b>Every stage change is logged</b> with who made it and '+
+   'whether a person or an agent did. The four stages an agent may ever set are Contacted, Interested, '+
+   'Qualified, Matched and Interview — nothing beyond that.</div>');}}
+];
+
+var i=0;
+function draw(){
+  $('dots').innerHTML=STEPS.map(function(s,n){
+    return '<button class="sdot'+(n===i?' on':(n<i?' done':''))+'" data-s="'+n+'">'+(n+1)+'</button>';}).join('');
+  var s=STEPS[i];
+  $('step').innerHTML='<div class="stephead"><div class="stepno">'+(i+1)+'</div>'+
+    '<div style="flex:1"><div class="whobadge">'+esc(s.who)+' dashboard</div>'+
+    '<h2 style="margin-top:2px">'+esc(s.t)+'</h2>'+
+    '<p class="sub" style="max-width:720px">'+s.p+'</p></div></div>'+s.s();
+  $('prev').disabled=(i===0);
+  $('next').textContent=(i===STEPS.length-1)?'Start again':'Next step';
+  [].forEach.call(document.querySelectorAll('.sdot'),function(b){
+    b.addEventListener('click',function(){ i=parseInt(this.getAttribute('data-s'),10); draw();
+      window.scrollTo({top:0,behavior:'smooth'}); });
+  });
+}
+$('next').addEventListener('click',function(){ i=(i+1)%STEPS.length; draw(); window.scrollTo({top:0,behavior:'smooth'}); });
+$('prev').addEventListener('click',function(){ if(i>0){i--;draw();window.scrollTo({top:0,behavior:'smooth'});} });
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'){$('next').click();} if(e.key==='ArrowLeft'){$('prev').click();}});
+draw();
+
+</script>
+</body>
+</html>

@@ -1206,6 +1206,52 @@ function mustReject(name, mutate, expectConstraint) {
   eq('agents: a physician cannot reach the agent queue',
      (await jreq('GET', '/api/v1/agents/actions', null, docCookie)).status, 403);
 
+  // ── The walkthrough ───────────────────────────────────────────────────
+  const wtPath = path.join(__dirname, 'public', 'walkthrough.html');
+  ok('walkthrough: the page exists', fs.existsSync(wtPath));
+  const wt = fs.existsSync(wtPath) ? fs.readFileSync(wtPath, 'utf8') : '';
+  eq('walkthrough: it is served', (await req('GET', '/jobmd/walkthrough')).status, 200);
+  eq('walkthrough: seven steps', (wt.match(/\{who:'/g) || []).length, 7);
+  ['Physician', 'Hospital', 'Recruiter'].forEach(function (r) {
+    ok('walkthrough: it covers the ' + r + ' dashboard', wt.indexOf("who:'" + r + "'") !== -1);
+  });
+  // DELIBERATELY NOT LINKED. It is a bookmark, not a public page.
+  ok('walkthrough: the landing page does NOT link to it', !/walkthrough/.test(html));
+  ok('walkthrough: the guide does NOT link to it', !/walkthrough/.test(doc));
+  ok('walkthrough: it is marked noindex', /name="robots" content="noindex"/.test(wt));
+  // THE NUMBERS MUST COME FROM THE REAL ENGINE, not be typed in. Recompute
+  // them here and compare — a demo quoting invented scores is the exact thing
+  // this whole vertical exists to avoid.
+  const demoMatch = wt.match(/var DEMO=(\[[\s\S]*?\]);/);
+  ok('walkthrough: it embeds computed match data', !!demoMatch);
+  if (demoMatch) {
+    const demo = JSON.parse(demoMatch[1]);
+    eq('walkthrough: four scored positions', demo.length, 4);
+    ok('walkthrough: every embedded row carries all seven dimensions',
+       demo.every(function (d) { return d.dims.length === C.MATCHING_DIMENSIONS.length; }));
+    ok('walkthrough: rows are ordered best first',
+       demo.every(function (d, i) { return i === 0 || demo[i - 1].score >= d.score; }));
+    // Re-score the top row with the live engine and require the same number.
+    const demoDoc = { specialty: 'Robotic Surgery', board_certified: true, years_experience: 11,
+      procedure_expertise: ['robotic cholecystectomy', 'robotic hernia repair'],
+      robotic_platforms: ['da Vinci Xi'], robotic_years: 6, robotics_program_leadership: true,
+      geographic_preferences: ['FL'], relocation_willing: false, compensation_expectation: 600000,
+      employment_preference: 'employed', call_tolerance: 'light', available_from: '2026-10-01',
+      publications: 4 };
+    const demoPos = { specialty: 'Robotic Surgery', state: 'FL', robotics_required: true,
+      robotic_platforms: ['da Vinci Xi'], min_years_experience: 5, board_certification_required: true,
+      procedures: ['robotic cholecystectomy', 'robotic hernia repair'],
+      compensation_min: 550000, compensation_max: 650000, employment_model: 'employed',
+      call_schedule: 'light', start_date: '2026-11-01' };
+    const live = require('./src/services/matching').scoreMatch(demoDoc, demoPos);
+    eq('walkthrough: the headline score matches the live engine exactly', demo[0].score, live.score);
+    ok('walkthrough: a weaker match shows real gaps',
+       demo[demo.length - 1].gaps.length > 0);
+  }
+  ok('walkthrough: it says the data is sample data', /sample data/i.test(wt));
+  ok('walkthrough: it states the platform sends nothing',
+     /platform sends nothing itself|Nothing is sent by the platform/i.test(wt));
+
   // ── The pages exist and are routed ────────────────────────────────────
   for (const pg of ['/signup', '/login', '/app']) {
     eq('app: ' + pg + ' is served', (await req('GET', '/jobmd' + pg)).status, 200);

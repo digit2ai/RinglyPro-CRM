@@ -426,6 +426,11 @@ router.get(['/how-it-works', '/how-it-works/'], function (req, res) {
 router.get(['/signup', '/signup/'], function (req, res) { res.sendFile(path.join(publicDir, 'signup.html')); });
 router.get(['/login', '/login/'],  function (req, res) { res.sendFile(path.join(publicDir, 'login.html')); });
 router.get(['/app', '/app/'],      function (req, res) { res.sendFile(path.join(publicDir, 'app.html')); });
+// The seven-step walkthrough. Deliberately NOT linked from the landing page —
+// it is a bookmark for the owner and, later, a user guide.
+router.get(['/walkthrough', '/walkthrough/'], function (req, res) {
+  res.sendFile(path.join(publicDir, 'walkthrough.html'));
+});
 
 // ── Catch-all ───────────────────────────────────────────────────────────────
 //
