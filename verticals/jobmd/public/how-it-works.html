@@ -379,15 +379,45 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
       <tr><td>CV reading (Candidate Intake / CV Intelligence, in part)</td><td><span class="pill open">running</span></td></tr>
       <tr><td>The thirteen-stage pipeline with agent authority enforced</td><td><span class="pill open">running</span></td></tr>
       <tr><td>Three dashboards</td><td><span class="pill open">running</span></td></tr>
-      <tr><td>Automatic outreach, scheduling and follow-up</td><td><span class="pill auth">not built</span></td></tr>
-      <tr><td>Continuous background matching (rather than on page load)</td><td><span class="pill auth">not built</span></td></tr>
-      <tr><td>Conversational search and the Recruiter Copilot</td><td><span class="pill auth">not built</span></td></tr>
-      <tr><td>Automated talent discovery from outside sources</td><td><span class="pill auth">not built</span></td></tr>
+      <tr><td>Outreach drafting (Recruitment Outreach Agent)</td><td><span class="pill open">running</span> &mdash; drafts only, see below</td></tr>
+      <tr><td>Interview time proposals (Scheduling Agent)</td><td><span class="pill open">running</span> &mdash; proposes only</td></tr>
+      <tr><td>Stalled-candidate flagging (Follow-Up Agent)</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Background rescan of every match (Candidate Matching Agent)</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Conversational search (Recruiter Copilot)</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Actually sending an email or booking a calendar</td><td><span class="pill auth">deliberately not built</span></td></tr>
+      <tr><td>Automated discovery from outside sources</td><td><span class="pill auth">blocked</span></td></tr>
     </tbody>
   </table></div>
-  <p>The four unbuilt items are automations that sit <i>on top of</i> the working parts. They are
-     specified in the architecture documents but they are not yet running services, and this page will
-     not pretend otherwise.</p>
+
+  <h3>Why the platform never sends anything</h3>
+  <p>The Outreach Agent writes the message and the Scheduling Agent proposes the times, but
+     <b>nothing leaves this platform on its own</b>. That is a decision, not a gap. Server-sent mail
+     across this estate was landing in client spam folders, so the standing rule is that a person
+     reviews a draft and sends it themselves. There is no mail transport in the agent code at all, and
+     the test suite fails the build if one appears. The platform also refuses to record a message as
+     &ldquo;sent&rdquo; &mdash; it cannot know that, and claiming it would be a lie in your audit trail.</p>
+  <p>The Scheduling Agent proposes three weekday slots and says plainly that it has read no calendar and
+     booked nothing, because it has no calendar access. Inventing availability would be worse than
+     proposing none.</p>
+
+  <h3>Why outside discovery is blocked rather than unbuilt</h3>
+  <p>Section 10 of the original project request is truncated mid-sentence, and the &ldquo;existing
+     JobMD.io physician database&rdquo; it names as a discovery source <b>does not exist</b> &mdash;
+     there is no such table, endpoint or file. There is nothing to discover from until you say where
+     that data lives. This is the one item waiting on you rather than on engineering.</p>
+
+  <h3>What the agents will and will not do</h3>
+  <ul>
+    <li>They <b>draft, propose and flag</b>. A person approves.</li>
+    <li>They <b>never move a candidate</b>. A stage change goes through the same allow-list as everything
+        else, and the four agent-settable stages are the only ones automation can reach.</li>
+    <li>They <b>invent nothing</b>. Every figure in an outreach draft is copied from the position row.
+        The Copilot searches only records that exist, and reports back every word of your question it
+        did not understand &mdash; so you never have to guess which part of &ldquo;robotic surgeons in
+        the southeast&rdquo; was actually applied.</li>
+    <li>Gaps found by the matcher go <b>to the recruiter, not into the message</b>. A weakness is
+        something to raise on a call, not something to write to a candidate.</li>
+  </ul>
 
   <h2 id="api">9. For developers</h2>
   <p>Two agents generate the platform's own architecture documents from the original project request.

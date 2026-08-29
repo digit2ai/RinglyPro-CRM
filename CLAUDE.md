@@ -674,6 +674,26 @@ Note the deliberate divergence from the agent: the project request's §1 names o
 
 Seed: `node verticals/jobmd/scripts/seed.js` — 5 sample organisations and 12 open positions, idempotent, deliberately named "Sample …" so a seeded row is never quoted back as a real client.
 
+### THE AGENTS — five of the eleven now do real work
+
+`services/agents.js` + `/api/v1/agents/*`, recruiter and hospital only. **Two rules govern all of them, enforced in code.**
+
+**NOTHING SENDS.** There is no mail transport in the agent runtime at all — SIT strips the comments (the file *explains* the policy and names SendGrid) and then fails the build if any transport appears. Server-sent mail across this estate was landing in client spam, so the standing rule is draft → a person approves → they send it by hand. **`status:'sent'` is deliberately rejected by the API**: the platform cannot know that, and recording it would put a lie in the audit trail.
+
+**NOTHING IS INVENTED, AND NOTHING MOVES.** SIT asserts every `$` figure in an outreach draft appears on the position row. No agent can change a stage — that still goes through `pipeline.js` and the corpus allow-list, and SIT greps the runtime for `.stage =`.
+
+| Agent | Does | Never does |
+|---|---|---|
+| **Recruitment Outreach** | Drafts an approach grounded only in the row values | Sends. Gaps go to the recruiter, not into the candidate's message |
+| **Scheduling** | Proposes three weekday slots | Books. It holds no calendar and says so in the body |
+| **Follow-Up** | Flags rows past a per-stage threshold | Advances anyone |
+| **Candidate Matching** | Rescans every physician × position | — |
+| **Recruiter Copilot** | Plain-English search over real rows | Invents a candidate |
+
+**The Copilot reports what it did not understand.** `parseQuery` recognises only corpus specialties (plus plural aliases — a recruiter types "urologists", not "Urology"), real states, known robotic platforms, years and compensation. Everything else comes back in `ignored`, so "robotic surgeons in the southeast" tells you plainly that *southeast* was **not** filtered on rather than letting you assume it was.
+
+**The two remaining gaps are different in kind.** Actually sending mail or booking a calendar is a **deliberate decision**. Discovery from outside sources is **blocked**: §10 of the request is truncated and the "existing JobMD.io physician database" it names does not exist — no table, no endpoint, no file. That one waits on the owner, not on engineering.
+
 ### TWO agents, ONE corpus
 
 `corpus.js` is the single transcription of the project request; **both** generators are projections of it. Two agents that each transcribed the request separately would eventually disagree about how many pipeline stages there are, and each would look right in isolation — SIT asserts the two agree on the stages, in order.

@@ -416,8 +416,11 @@ function renderEmployer(){
       : 'You see your own positions and the candidates on them.')+'</p>'+
    '<div class="tabs"><button class="tab on" data-t="pipe">Pipeline</button>'+
    '<button class="tab" data-t="pos">Positions</button>'+
-   '<button class="tab" data-t="new">Post a position</button></div><div id="pane"></div>';
-  bindTabs(function(t){ if(t==='pipe')panePipeline(); else if(t==='pos')panePositions(); else paneNewPosition(); });
+   '<button class="tab" data-t="new">Post a position</button>'+
+   '<button class="tab" data-t="copilot">Copilot</button>'+
+   '<button class="tab" data-t="agents">Agent queue</button></div><div id="pane"></div>';
+  bindTabs(function(t){ if(t==='pipe')panePipeline(); else if(t==='pos')panePositions();
+    else if(t==='copilot')paneCopilot(); else if(t==='agents')paneAgents(); else paneNewPosition(); });
   panePipeline();
 }
 function panePipeline(){
@@ -439,13 +442,29 @@ function panePipeline(){
           '<td><span class="stage">'+esc(it.stage)+'</span>'+
           (it.set_by_kind==='agent'?'<br><span style="font-size:11px;color:var(--teal)">set by an agent</span>':'')+'</td>'+
           '<td><select data-move="'+it.id+'">'+d.stages.map(function(s){
-            return '<option'+(s===it.stage?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select></td></tr>';
+            return '<option'+(s===it.stage?' selected':'')+'>'+esc(s)+'</option>';}).join('')+'</select>'+
+          '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+
+          '<button class="btn g s" data-draft="'+it.id+'">Draft outreach</button>'+
+          '<button class="btn g s" data-slots="'+it.id+'">Propose times</button></div></td></tr>';
       }).join('')+'</tbody></table></div>'+
       '<div class="note"><b>Who may move a candidate.</b> You can move anyone to any stage. '+
       'An AI agent may only set the four stages its own function produces &mdash; '+
       d.agent_authority.filter(function(a){return a.maySet.length;}).map(function(a){
         return esc(a.agent)+' &rarr; '+esc(a.maySet.join(', '));}).join('; ')+
       '. No agent can move anyone to Offer, Credentialing or Placement.</div>';
+    [].forEach.call(document.querySelectorAll('[data-draft],[data-slots]'),function(btn){
+      btn.addEventListener('click',function(){
+        var isDraft=this.hasAttribute('data-draft');
+        var id=this.getAttribute(isDraft?'data-draft':'data-slots');
+        btn.disabled=true; btn.textContent='Working...';
+        api('/agents/'+(isDraft?'outreach':'schedule')+'/'+id,{method:'POST'})
+         .then(function(){ btn.textContent='Added to the queue';
+           setTimeout(function(){ [].forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+             var t=[].slice.call(document.querySelectorAll('.tab')).filter(function(x){return x.dataset.t==='agents';})[0];
+             if(t){t.classList.add('on'); paneAgents();} },600); })
+         .catch(function(e){ btn.disabled=false; btn.textContent=e.message; });
+      });
+    });
     [].forEach.call(document.querySelectorAll('[data-move]'),function(sel){
       sel.addEventListener('change',function(){
         var id=this.getAttribute('data-move'), v=this.value, self=this;
@@ -542,6 +561,89 @@ function paneNewPosition(){
   };
   if(ME.account.role==='recruiter') api('/organizations').then(function(d){draw(d.items);});
   else draw(null);
+}
+
+// ── Recruiter Copilot ─────────────────────────────────────────────────────
+function paneCopilot(){
+  $('pane').innerHTML='<div class="card" style="margin-top:18px"><h3>Ask in plain English</h3>'+
+    '<p class="sub">It searches the physician records this platform actually holds. '+
+    'Anything in your question it did not understand is listed back to you, so you never '+
+    'have to guess which part was applied.</p>'+
+    '<input id="q" placeholder="board certified urologists in Florida with more than 8 years">'+
+    '<button class="btn p" id="ask" style="margin-top:14px">Search</button>'+
+    '<div id="qout"></div></div>';
+  var run=function(){
+    var b=$('ask'); b.disabled=true; b.textContent='Searching...';
+    api('/search',{method:'POST',body:JSON.stringify({q:$('q').value})})
+     .then(function(d){
+       b.disabled=false; b.textContent='Search';
+       var h='<div class="note" style="margin-top:18px"><b>'+d.items.length+' of '+d.searched+
+         ' physician record'+(d.searched===1?'':'s')+' matched.</b><br>'+
+         (d.applied.length?'Filters applied: '+esc(d.applied.join('; '))+'.':'No filters were applied.')+
+         (d.ignored.length?'<br><span style="color:var(--warn)">Not understood, and NOT filtered on: '+
+           esc(d.ignored.join(', '))+'</span>':'')+'</div>';
+       if(!d.items.length) h+='<div class="empty">Nothing matched. '+
+         (d.searched===0?'There are no physician profiles on the platform yet.':'Try a broader question.')+'</div>';
+       else h+='<div class="tablewrap"><table><thead><tr><th>Name</th><th>Specialty</th>'+
+         '<th>Experience</th><th>Licensed</th><th>Robotic</th></tr></thead><tbody>'+
+         d.items.map(function(x){
+           return '<tr><td><b style="color:var(--ink)">'+esc(x.name)+'</b></td><td>'+esc(x.specialty||'')+'</td>'+
+             '<td>'+(x.years_experience||'—')+(x.board_certified?' &middot; BC':'')+'</td>'+
+             '<td>'+esc((x.licenses||[]).join(', ')||'—')+'</td>'+
+             '<td>'+esc((x.robotic_platforms||[]).join(', ')||'—')+'</td></tr>';}).join('')+
+         '</tbody></table></div>';
+       $('qout').innerHTML=h;
+     })
+     .catch(function(e){ b.disabled=false; b.textContent='Search';
+       $('qout').innerHTML='<div class="msg err" style="display:block">'+esc(e.message)+'</div>'; });
+  };
+  $('ask').addEventListener('click',run);
+  $('q').addEventListener('keydown',function(e){ if(e.key==='Enter') run(); });
+}
+
+// ── The agent queue: drafts, proposals and flags awaiting a person ────────
+function paneAgents(){
+  $('pane').innerHTML='<p class="sub" style="margin-top:18px">Loading&hellip;</p>';
+  Promise.all([api('/agents/followup'),api('/agents/actions')]).then(function(r){
+    var fu=r[0], acts=r[1];
+    var h='<div class="note" style="margin-top:18px"><b>Nothing here is sent by the platform.</b> '+
+      'Agents draft, propose and flag. You approve, and you send it yourself.</div>';
+
+    h+='<h2>Follow-Up Agent</h2><p class="sub">'+esc(fu.note)+'</p>';
+    if(!fu.items.length) h+='<div class="empty">Nothing has stalled.</div>';
+    else h+='<div class="tablewrap"><table><thead><tr><th>Candidate</th><th>Position</th>'+
+      '<th>Stage</th><th>Waiting</th></tr></thead><tbody>'+fu.items.map(function(x){
+        return '<tr><td>'+esc(x.candidate)+'</td><td>'+esc(x.position)+'</td>'+
+          '<td><span class="stage">'+esc(x.stage)+'</span></td>'+
+          '<td style="color:var(--warn)">'+x.days_in_stage+' days (limit '+x.threshold_days+')</td></tr>';
+      }).join('')+'</tbody></table></div>';
+
+    h+='<h2>Review queue</h2><p class="sub">'+esc(acts.note)+'</p>';
+    if(!acts.items.length) h+='<div class="empty">No drafts yet. Open the Pipeline tab and ask an agent '+
+      'to draft outreach or propose interview times for a candidate.</div>';
+    else h+=acts.items.map(function(a){
+      return '<div class="match"><header><div style="flex:1"><h3>'+esc(a.subject||a.kind)+'</h3>'+
+        '<div class="meta">'+esc(a.agent)+' &middot; <span class="stage">'+esc(a.status)+'</span></div></div></header>'+
+        '<pre style="white-space:pre-wrap;font-family:var(--mono);font-size:12.5px;color:var(--mut);'+
+        'margin-top:12px;background:var(--bg2);padding:14px;border-radius:10px">'+esc(a.body)+'</pre>'+
+        (a.payload&&a.payload.gaps_for_recruiter&&a.payload.gaps_for_recruiter.length
+          ? '<div class="note"><b>Gaps to raise on the call</b> (deliberately not in the message): '+
+            esc(a.payload.gaps_for_recruiter.join(' ')) +'</div>' : '')+
+        (a.status==='draft'
+          ? '<div style="margin-top:12px"><button class="btn p s" data-act="'+a.id+'" data-st="approved">Approve for sending</button>'+
+            ' <button class="btn g s" data-act="'+a.id+'" data-st="discarded">Discard</button></div>'
+          : '')+'</div>';
+    }).join('');
+    $('pane').innerHTML=h;
+    [].forEach.call(document.querySelectorAll('[data-act]'),function(b){
+      b.addEventListener('click',function(){
+        b.disabled=true;
+        api('/agents/actions/'+this.getAttribute('data-act'),
+            {method:'PATCH',body:JSON.stringify({status:this.getAttribute('data-st')})})
+         .then(paneAgents).catch(function(e){ b.disabled=false; alert(e.message); });
+      });
+    });
+  }).catch(function(e){ $('pane').innerHTML='<div class="msg err" style="display:block">'+esc(e.message)+'</div>'; });
 }
 
 function bindTabs(fn){
