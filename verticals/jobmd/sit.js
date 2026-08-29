@@ -824,8 +824,26 @@ function mustReject(name, mutate, expectConstraint) {
      Math.round(webpKB) + 'KB vs ' + Math.round(pngKB) + 'KB');
   ok('footer: the footer carries the full lockup',
      /<footer>[\s\S]*?jobmd-logo\.png/.test(html));
-  eq('logo: every instance reserves its box',
-     (html.match(/jobmd-logo\.png" width="849" height="264"/g) || []).length, 2);
+  // The reserved box must be the FILE'S real box, or the browser lays the page
+  // out against the wrong aspect ratio and the logo jumps when it loads. Read
+  // the PNG header rather than hard-coding numbers a re-cut artwork invalidates.
+  const logoBuf = fs.readFileSync(path.join(__dirname, 'public', 'jobmd-logo.png'));
+  const logoBox = 'width="' + logoBuf.readUInt32BE(16) + '" height="' + logoBuf.readUInt32BE(20) + '"';
+  eq('logo: every instance reserves the file\'s real box',
+     (html.match(new RegExp('jobmd-logo\\.png" ' + logoBox, 'g')) || []).length, 2, logoBox);
+  // Every other page that carries the lockup must reserve the same box.
+  ['how-it-works.html', 'walkthrough.html', 'app.html', 'login.html', 'signup.html']
+    .forEach(function (f) {
+      const src = fs.readFileSync(path.join(__dirname, 'public', f), 'utf8');
+      if (src.indexOf('jobmd-logo.png') === -1) return;
+      ok('logo: ' + f + ' reserves the same box',
+         src.indexOf('jobmd-logo.png" ' + logoBox) !== -1, logoBox);
+    });
+  // The retired tagline lockup was 849x264. A file back at that ratio means the
+  // strapline crept back into the mark, where it is unreadable at 58px.
+  ok('logo: the lockup is the tagline-free cut',
+     Math.abs(logoBuf.readUInt32BE(16) / logoBuf.readUInt32BE(20) - 3.21) > 0.2,
+     'aspect ' + (logoBuf.readUInt32BE(16) / logoBuf.readUInt32BE(20)).toFixed(2));
   ok('footer: its copy loads lazily, being below the fold',
      /jobmd-logo\.png"[^>]*loading="lazy"/.test(html));
   ok('nav: its copy is eager and prioritised, being above the fold',
