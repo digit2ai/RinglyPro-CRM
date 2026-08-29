@@ -17,11 +17,12 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 
-const { Account, Physician, Organization, Position, Match, Pipeline, PipelineEvent } = require('../models');
+const { Account, Physician, Organization, Position, Match, Pipeline, PipelineEvent, AgentAction } = require('../models');
 const accounts = require('../services/accounts');
 const matching = require('../services/matching');
 const pipelineSvc = require('../services/pipeline');
 const cv = require('../services/cv');
+const agents = require('../services/agents');
 const C = require('../services/corpus');
 
 const router = express.Router();
@@ -409,6 +410,177 @@ router.patch('/pipeline/:id', requireRole('recruiter', 'hospital'), async functi
       : await moveStage(row, stage, 'person', String(req.account.id));
     if (!r.ok) return res.status(403).json({ error: r.error });
     res.json({ ok: true, stage: row.stage });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  THE AGENTS. Every one of them drafts, proposes or flags. None of them
+//  sends anything, and none can move a candidate — a stage change still goes
+//  through pipeline.js and its allow-list.
+// ══════════════════════════════════════════════════════════════════════════
+
+async function pipelineContext(row) {
+  const ph = await Physician.findOne({ where: { id: row.physician_id, tenant_id: TENANT } });
+  const pos = await Position.findOne({ where: { id: row.position_id, tenant_id: TENANT } });
+  const org = pos ? await Organization.findOne({ where: { id: pos.org_id, tenant_id: TENANT } }) : null;
+  const acc = ph ? await Account.findOne({ where: { id: ph.account_id, tenant_id: TENANT } }) : null;
+  const m = (ph && pos) ? matching.scoreMatch(ph.get({ plain: true }), pos.get({ plain: true })) : null;
+  return {
+    physician: ph ? ph.get({ plain: true }) : null,
+    position: pos ? pos.get({ plain: true }) : null,
+    organization: org ? org.get({ plain: true }) : null,
+    candidateName: acc ? acc.name : 'Candidate #' + row.physician_id,
+    reasons: m ? m.reasons : [], gaps: m ? m.gaps : [], score: m ? m.score : null
+  };
+}
+
+async function scopedPipelineRow(req, id) {
+  const row = await Pipeline.findOne({ where: { id: parseInt(id, 10) || 0, tenant_id: TENANT } });
+  if (!row) return null;
+  if (req.account.role === 'hospital') {
+    const pos = await Position.findOne({ where: { id: row.position_id, org_id: req.account.org_id } });
+    if (!pos) return null;
+  }
+  return row;
+}
+
+// Recruitment Outreach Agent — drafts an approach. Never sends.
+router.post('/agents/outreach/:pipelineId', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const row = await scopedPipelineRow(req, req.params.pipelineId);
+    if (!row) return res.status(404).json({ error: 'Not found.' });
+    const ctx = await pipelineContext(row);
+    if (!ctx.position) return res.status(404).json({ error: 'That position no longer exists.' });
+    const draft = agents.outreachDraft(ctx);
+    const saved = await AgentAction.create({
+      tenant_id: TENANT, pipeline_id: row.id, agent: draft.agent, kind: draft.kind,
+      subject: draft.subject, body: draft.body,
+      payload: { grounded_in: draft.grounded_in, gaps_for_recruiter: draft.gaps_for_recruiter, score: ctx.score },
+      status: 'draft', created_by: req.account.id
+    });
+    res.status(201).json({ ok: true, action: saved, note: draft.note });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Scheduling Agent — proposes times. Books nothing; it holds no calendar.
+router.post('/agents/schedule/:pipelineId', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const row = await scopedPipelineRow(req, req.params.pipelineId);
+    if (!row) return res.status(404).json({ error: 'Not found.' });
+    const ctx = await pipelineContext(row);
+    const prop = agents.schedulingPropose({ candidateName: ctx.candidateName, position: ctx.position });
+    const saved = await AgentAction.create({
+      tenant_id: TENANT, pipeline_id: row.id, agent: prop.agent, kind: prop.kind,
+      subject: prop.subject, body: prop.body, payload: prop.payload,
+      status: 'draft', created_by: req.account.id
+    });
+    res.status(201).json({ ok: true, action: saved, note: prop.note });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Follow-Up Agent — flags what has stalled. It never moves anyone.
+router.get('/agents/followup', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const where = { tenant_id: TENANT };
+    if (req.account.role === 'hospital') {
+      const mine = await Position.findAll({ where: { tenant_id: TENANT, org_id: req.account.org_id }, attributes: ['id'] });
+      where.position_id = { [Op.in]: mine.map(function (x) { return x.id; }).concat([-1]) };
+    }
+    const rows = await Pipeline.findAll({ where: where, limit: 500 });
+    const posIds = Array.from(new Set(rows.map(function (r) { return r.position_id; })));
+    const docIds = Array.from(new Set(rows.map(function (r) { return r.physician_id; })));
+    const positions = await Position.findAll({ where: { id: { [Op.in]: posIds.concat([-1]) } } });
+    const docs = await Physician.findAll({ where: { id: { [Op.in]: docIds.concat([-1]) } } });
+    const accs = await Account.findAll({ where: { tenant_id: TENANT, role: 'physician' } });
+    const P = {}; positions.forEach(function (x) { P[x.id] = x; });
+    const D = {}; docs.forEach(function (x) { D[x.id] = x; });
+    const A = {}; accs.forEach(function (x) { A[x.id] = x; });
+    const enriched = rows.map(function (r) {
+      const d = D[r.physician_id], a = d ? A[d.account_id] : null;
+      return { id: r.id, stage: r.stage, updated_at: r.updated_at,
+               candidateName: a ? a.name : 'Candidate #' + r.physician_id,
+               positionTitle: P[r.position_id] ? P[r.position_id].title : '' };
+    });
+    res.json({ agent: 'Follow-Up Agent', items: agents.followupScan(enriched),
+               thresholds: agents.STALL_DAYS,
+               note: 'These are flags. Nothing has been moved; only a person can advance a stage.' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Candidate Matching Agent — background rescan across everyone.
+router.post('/agents/rescan', requireRole('recruiter'), async function (req, res) {
+  try {
+    const docs = await Physician.findAll({ where: { tenant_id: TENANT, specialty: { [Op.ne]: null } }, limit: 500 });
+    const positions = await Position.findAll({ where: { tenant_id: TENANT, status: 'open' }, limit: 300 });
+    let n = 0;
+    for (const d of docs) {
+      const plain = d.get({ plain: true });
+      for (const pos of positions) {
+        const m = matching.scoreMatch(plain, pos.get({ plain: true }));
+        await Match.upsert({ tenant_id: TENANT, physician_id: d.id, position_id: pos.id,
+          score: m.score, dimensions: m.dimensions, reasons: m.reasons, gaps: m.gaps,
+          computed_at: new Date() });
+        n++;
+      }
+    }
+    res.json({ ok: true, agent: 'Candidate Matching Agent', physicians: docs.length,
+               positions: positions.length, matches_written: n });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// The review queue. A person approves or discards; nothing leaves on its own.
+router.get('/agents/actions', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const rows = await AgentAction.findAll({ where: { tenant_id: TENANT },
+      order: [['created_at', 'DESC']], limit: 200 });
+    res.json({ items: rows,
+      note: 'Approving marks a draft ready to send by hand. This platform sends nothing itself.' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.patch('/agents/actions/:id', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const row = await AgentAction.findOne({ where: { id: parseInt(req.params.id, 10) || 0, tenant_id: TENANT } });
+    if (!row) return res.status(404).json({ error: 'Not found.' });
+    const status = String((req.body || {}).status || '');
+    // 'sent' is deliberately NOT accepted: the platform cannot know that, and
+    // recording it would be the platform claiming it did something it did not.
+    if (['approved', 'discarded', 'draft'].indexOf(status) === -1) {
+      return res.status(400).json({ error: 'Status must be approved, discarded or draft.' });
+    }
+    if (typeof (req.body || {}).body === 'string') row.body = String(req.body.body).slice(0, 20000);
+    row.status = status;
+    row.reviewed_by = req.account.id;
+    row.reviewed_at = new Date();
+    await row.save();
+    res.json({ ok: true, action: row });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Recruiter Copilot — plain English over the rows that actually exist.
+router.post('/search', requireRole('recruiter', 'hospital'), async function (req, res) {
+  try {
+    const q = String((req.body || {}).q || '').slice(0, 500);
+    const parsed = agents.parseQuery(q);
+    const docs = await Physician.findAll({ where: { tenant_id: TENANT, specialty: { [Op.ne]: null } }, limit: 500 });
+    const plain = docs.map(function (d) { return d.get({ plain: true }); });
+    const hits = agents.applyQuery(parsed, plain);
+    const accs = await Account.findAll({ where: { tenant_id: TENANT, role: 'physician' } });
+    const A = {}; accs.forEach(function (x) { A[x.id] = x; });
+    res.json({
+      agent: 'Recruiter Copilot', query: q,
+      applied: parsed.applied, ignored: parsed.ignored, searched: plain.length,
+      items: hits.map(function (p) {
+        const a = A[p.account_id];
+        return { physician_id: p.id, name: a ? a.name : 'Candidate #' + p.id,
+                 specialty: p.specialty, years_experience: p.years_experience,
+                 board_certified: p.board_certified, licenses: p.licenses,
+                 robotic_platforms: p.robotic_platforms, ai_summary: p.ai_summary };
+      }),
+      note: parsed.ignored.length
+        ? 'These words were not understood and were NOT used as filters: ' + parsed.ignored.join(', ') + '.'
+        : 'Every part of the question was applied as a filter.'
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

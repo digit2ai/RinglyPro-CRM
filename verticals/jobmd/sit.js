@@ -699,9 +699,17 @@ function mustReject(name, mutate, expectConstraint) {
   // AND it must still separate what runs from what does not, or it reads as a
   // description of a platform that is further along than it is.
   ok('docs: it separates what is running from what is not',
-     /what is real today/i.test(doc) && (doc.match(/pill auth">not built/g) || []).length >= 4);
-  ok('docs: it says the remaining agents are not yet running services',
-     /not yet running services/i.test(doc));
+     /what is real today/i.test(doc) &&
+     (doc.match(/pill open">running/g) || []).length >= 8 &&
+     (doc.match(/pill auth">(deliberately not built|blocked)/g) || []).length >= 2);
+  // The two remaining gaps are different in kind, and the page must say which
+  // is a decision and which is waiting on the owner.
+  ok('docs: it explains that sending is a decision, not a gap',
+     /never sends anything/i.test(doc) && /landing in client spam/i.test(doc));
+  ok('docs: it explains that outside discovery is blocked on missing information',
+     /blocked rather than unbuilt/i.test(doc) && /does not exist/i.test(doc));
+  ok('docs: it states the agents draft, propose and flag but never act',
+     /draft, propose and flag/i.test(doc) && /never move a candidate/i.test(doc));
   ok('docs: it states the scoring is arithmetic, not a language model',
      /arithmetic, not a language model/i.test(doc));
   ok('docs: it does not claim the retired phone number', !/315-?4401/.test(doc));
@@ -1135,6 +1143,69 @@ function mustReject(name, mutate, expectConstraint) {
          { stage: 'Qualified', as_agent: 'Invented Agent' }, hospCookie)).status, 403);
   }
 
+  // ── THE AGENTS ────────────────────────────────────────────────────────
+  // Five of the eleven do real work now. The test is not that they run — it is
+  // that none of them sends anything, invents anything, or moves anyone.
+  const agentsRaw = fs.readFileSync(path.join(__dirname, 'src', 'services', 'agents.js'), 'utf8');
+  // Strip comments first: the file EXPLAINS why there is no send path, and the
+  // explanation names SendGrid. The assertion is about code, not about prose.
+  const agentsSrc = agentsRaw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  ok('agents: there is NO send path in the agent runtime at all',
+     !/sendgrid|nodemailer|smtp|mailgun|postmark|\bses\b|transporter|\.send\(/i.test(agentsSrc));
+  ok('agents: the file still explains why it cannot send', /EMAIL_AUTOSEND_DISABLED/.test(agentsRaw));
+  ok('agents: the runtime cannot change a pipeline stage',
+     !/\.stage\s*=/.test(agentsSrc) && !/canSet|moveStage/.test(agentsSrc));
+
+  if (prow) {
+    R = await jreq('POST', '/api/v1/agents/outreach/' + prow.id, {}, hospCookie);
+    eq('agents: the Outreach Agent drafts', R.status, 201);
+    const draft = R.body.action;
+    eq('agents: the draft is the Recruitment Outreach Agent\'s', draft.agent, 'Recruitment Outreach Agent');
+    eq('agents: a draft starts as a draft, never as sent', draft.status, 'draft');
+    ok('agents: the draft names the real candidate and position',
+       draft.body.indexOf('SIT Physician') !== -1 && draft.body.indexOf('SIT Robotic Surgeon') !== -1);
+    // NOTHING INVENTED: every figure in the body must exist on the position row.
+    const nums = (draft.body.match(/\$[\d,]+/g) || []).map(function (x) { return x.replace(/[$,]/g, ''); });
+    ok('agents: every figure in the draft comes from the position row',
+       nums.every(function (n) { return n === '560000' || n === '660000'; }), nums.join(','));
+    // Gaps go to the recruiter, not into the message to the candidate.
+    ok('agents: gaps are kept for the recruiter, not put in the candidate message',
+       Array.isArray(draft.payload.gaps_for_recruiter));
+
+    R = await jreq('POST', '/api/v1/agents/schedule/' + prow.id, {}, hospCookie);
+    eq('agents: the Scheduling Agent proposes times', R.status, 201);
+    eq('agents: it proposes three slots', R.body.action.payload.slots.length, 3);
+    ok('agents: it states it has booked nothing', /nothing is booked/i.test(R.body.action.body));
+
+    // A person approves; the platform never claims it sent anything.
+    R = await jreq('PATCH', '/api/v1/agents/actions/' + draft.id, { status: 'approved' }, hospCookie);
+    eq('agents: a person can approve a draft', R.status, 200);
+    R = await jreq('PATCH', '/api/v1/agents/actions/' + draft.id, { status: 'sent' }, hospCookie);
+    eq('agents: the platform refuses to record a send it did not make', R.status, 400);
+  }
+
+  R = await jreq('GET', '/api/v1/agents/followup', null, hospCookie);
+  eq('agents: the Follow-Up Agent reports', R.status, 200);
+  ok('agents: it says plainly that it moved nothing', /Nothing has been moved/i.test(R.body.note));
+  ok('agents: it publishes its own thresholds', !!R.body.thresholds.Interested);
+
+  // The Copilot searches real rows and admits what it did not understand.
+  R = await jreq('POST', '/api/v1/search', { q: 'board certified robotic surgeons in Florida with more than 8 years' }, hospCookie);
+  eq('agents: the Copilot answers', R.status, 200);
+  ok('agents: it reports the filters it applied', R.body.applied.length >= 3, JSON.stringify(R.body.applied));
+  ok('agents: it finds the physician it should', R.body.items.length >= 1, JSON.stringify(R.body.items.length));
+  ok('agents: it reports how many records it actually searched', typeof R.body.searched === 'number');
+  R = await jreq('POST', '/api/v1/search', { q: 'somebody great in the southeast' }, hospCookie);
+  ok('agents: words it did not understand are reported, not silently dropped',
+     R.body.ignored.indexOf('southeast') !== -1, JSON.stringify(R.body.ignored));
+  ok('agents: and it says so in the note', /NOT used as filters/.test(R.body.note));
+
+  // Background rescan is a recruiter capability, not a hospital one.
+  eq('agents: a hospital cannot trigger a platform-wide rescan',
+     (await jreq('POST', '/api/v1/agents/rescan', {}, hospCookie)).status, 403);
+  eq('agents: a physician cannot reach the agent queue',
+     (await jreq('GET', '/api/v1/agents/actions', null, docCookie)).status, 403);
+
   // ── The pages exist and are routed ────────────────────────────────────
   for (const pg of ['/signup', '/login', '/app']) {
     eq('app: ' + pg + ' is served', (await req('GET', '/jobmd' + pg)).status, 200);
@@ -1150,6 +1221,8 @@ function mustReject(name, mutate, expectConstraint) {
     if (ph) { await Pipe.destroy({ where: { physician_id: ph.id } }); await ph.destroy(); }
     await a.destroy();
   }
+  const { AgentAction: AA } = require('./src/models');
+  await AA.destroy({ where: { subject: { [require('sequelize').Op.like]: '%SIT Robotic Surgeon%' } } });
   await Pos.destroy({ where: { title: 'SIT Robotic Surgeon' } });
   // The hospital signup creates an organisation; without this they accumulate.
   const { Organization: Org } = require('./src/models');

@@ -202,6 +202,29 @@ const PipelineEvent = sequelize.define('JmPipelineEvent', {
   indexes: [{ name: 'jm_pipeline_events_pipeline', fields: ['pipeline_id'] }]
 });
 
+// ── Agent output: drafts and proposals awaiting a human ────────────────────
+// NOTHING HERE IS EVER SENT BY THE PLATFORM. status goes draft -> approved,
+// and "approved" means a person judged it ready to send by hand.
+const AgentAction = sequelize.define('JmAgentAction', {
+  id:          { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id:   tenant,
+  pipeline_id: { type: DataTypes.INTEGER },
+  agent:       { type: DataTypes.STRING, allowNull: false },   // the exact agent name
+  kind:        { type: DataTypes.STRING, allowNull: false },   // outreach | scheduling | followup
+  subject:     { type: DataTypes.STRING },
+  body:        { type: DataTypes.TEXT },
+  payload:     { type: DataTypes.JSONB },
+  status:      { type: DataTypes.STRING, defaultValue: 'draft' }, // draft | approved | discarded
+  created_by:  { type: DataTypes.INTEGER },
+  reviewed_by: { type: DataTypes.INTEGER },
+  reviewed_at: { type: DataTypes.DATE },
+  created_at:  { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'jm_agent_actions', timestamps: false,
+  indexes: [{ name: 'jm_agent_actions_tenant_status', fields: ['tenant_id', 'status'] },
+            { name: 'jm_agent_actions_pipeline', fields: ['pipeline_id'] }]
+});
+
 // ── Generated architecture documents (the two spec agents) ─────────────────
 const BuildPlan = sequelize.define('JmBuildPlan', {
   id:           { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -260,5 +283,5 @@ const Lead = sequelize.define('JmLead', {
 
 module.exports = {
   sequelize, User, Account, Physician, Organization, Position,
-  Match, Pipeline, PipelineEvent, BuildPlan, PlanRun, Lead
+  Match, Pipeline, PipelineEvent, AgentAction, BuildPlan, PlanRun, Lead
 };

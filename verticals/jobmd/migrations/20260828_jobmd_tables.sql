@@ -19,6 +19,24 @@ CREATE UNIQUE INDEX IF NOT EXISTS jm_accounts_email_key ON public.jm_accounts US
 CREATE INDEX IF NOT EXISTS jm_accounts_org ON public.jm_accounts USING btree (org_id);
 CREATE INDEX IF NOT EXISTS jm_accounts_tenant_role ON public.jm_accounts USING btree (tenant_id, role);
 
+CREATE TABLE IF NOT EXISTS jm_agent_actions (
+  id                          SERIAL,
+  tenant_id                   INTEGER DEFAULT 1 NOT NULL,
+  pipeline_id                 INTEGER,
+  agent                       VARCHAR(255) NOT NULL,
+  kind                        VARCHAR(255) NOT NULL,
+  subject                     VARCHAR(255),
+  body                        TEXT,
+  payload                     JSONB,
+  status                      VARCHAR(255) DEFAULT 'draft'::character varying,
+  created_by                  INTEGER,
+  reviewed_by                 INTEGER,
+  reviewed_at                 TIMESTAMPTZ,
+  created_at                  TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS jm_agent_actions_pipeline ON public.jm_agent_actions USING btree (pipeline_id);
+CREATE INDEX IF NOT EXISTS jm_agent_actions_tenant_status ON public.jm_agent_actions USING btree (tenant_id, status);
+
 CREATE TABLE IF NOT EXISTS jm_build_plans (
   id                          SERIAL,
   tenant_id                   INTEGER DEFAULT 1 NOT NULL,
