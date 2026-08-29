@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" id="themeColor">
+<meta name="color-scheme" content="dark light">
+<script>(function(){try{var t=localStorage.getItem('jobmd_theme');
+if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<title>Create your JobMD.io account</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%}
+.jmd,.jmd *,.jmd *::before,.jmd *::after{margin:0;padding:0;box-sizing:border-box}
+.jmd{
+  /* Brand inheritance: the JobUp.dev dark-aurora token set, specialized for
+     the medical division by rotating the accent toward clinical teal. */
+  --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7; --mut:#a6a9b4;
+  /* #767a86 measured 3.95:1 on --card2 and 4.42:1 on --bg2 - both under AA
+     for the 12px labels this colour is used for. This clears 4.5 on every
+     surface it sits on. */
+  --faint:#828796;
+  --blue:#4263eb; --teal:#22d3ee; --violet:#8b5cf6; --pink:#e64980;
+  --grad:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  /* Same identity, but this one is read AS TEXT, so light mode darkens it
+     while --grad stays bright behind #07070c button labels. */
+  --grad-text:linear-gradient(120deg,#22d3ee 0%,#5b7bff 48%,#8b5cf6 100%);
+  --grad-soft:linear-gradient(135deg,rgba(34,211,238,.14),rgba(91,123,255,.13));
+  --good:#3ad07f;
+  /* Split out so the light palette can restate them. --bg-rgb backs every
+     scrim, so a scrim automatically follows the theme. */
+  --bg-rgb:10,10,14;
+  --fine:#9aa0ad;
+  --wire:120,190,255;
+  --wire-fill:rgba(12,18,32,.92);
+  --wire-accent:34,211,238;
+  --surface-soft:rgba(255,255,255,.03);
+  --scrim:rgba(0,0,0,.55);
+  --img-hero:.95;
+  --img-foot:.88;
+  --aurora:.30;
+  --r:14px; --r-lg:22px; --r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 4px 14px rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5),0 40px 90px rgba(0,0,0,.55);
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+html[data-theme="light"] .jmd{
+  --bg:#f6f7fa; --bg-rgb:246,247,250;
+  --bg2:#eceff4; --card:#ffffff; --card2:#f3f5f9;
+  --line:rgba(12,16,26,.10); --line2:rgba(12,16,26,.20);
+  --ink:#0d1117; --mut:#454d5c; --faint:#646c7a; --fine:#555d6b;
+  --teal:#0b7285; --good:#0d7a45;
+  --pill:#101015; --pill-ink:#f4f5f7;
+  --grad-soft:linear-gradient(135deg,rgba(11,114,133,.10),rgba(67,97,238,.09));
+  --grad-text:linear-gradient(120deg,#0b7285 0%,#3b5bdb 50%,#6d28d9 100%);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+  --shadow:0 2px 8px rgba(16,24,40,.06),0 12px 32px rgba(16,24,40,.07);
+  --shadow-lg:0 8px 24px rgba(16,24,40,.08),0 32px 72px rgba(16,24,40,.10);
+  --wire:34,78,132; --wire-fill:rgba(255,255,255,.94);
+  --wire-accent:11,114,133;
+  --surface-soft:rgba(12,16,26,.035);
+  --scrim:rgba(20,24,34,.45);
+  /* The two photographs are dark scenes. Under a light scrim they wash out
+     to a pale tint rather than fighting the text. */
+  --img-hero:.30; --img-foot:.34;
+  --aurora:.16;
+}
+html[data-theme="light"], html[data-theme="light"] body{background:#f6f7fa}
+.jmd{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.6;min-height:100vh}
+.jmd .wrap{max-width:1140px;margin:0 auto;
+  padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+.jmd a{color:inherit;text-decoration:none}
+.jmd .nav{position:sticky;top:0;z-index:70;--nav-bg:#ffffff;--nav-ink:#0d1117;--nav-mut:#3f4756;
+  --nav-line:rgba(12,16,26,.13);--nav-line2:rgba(12,16,26,.22);
+  background:var(--nav-bg);border-bottom:1px solid var(--nav-line)}
+.jmd .nav .wrap{display:flex;align-items:center;gap:18px;height:72px}
+.jmd .brand .logo{display:block;height:46px;width:auto}
+.jmd .navsp{margin-left:auto}
+.jmd .who{font-size:13.5px;color:var(--nav-mut);display:flex;align-items:center;gap:8px}
+.jmd .who b{color:var(--nav-ink)}
+.jmd .rolechip{padding:3px 10px;border-radius:999px;border:1px solid var(--nav-line2);
+  font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--nav-mut)}
+.jmd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;
+  border-radius:999px;font-weight:700;font-size:15px;border:1px solid transparent;cursor:pointer;
+  font-family:inherit;transition:transform .15s ease,opacity .15s}
+.jmd .btn:hover{transform:translateY(-1px)}
+.jmd .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.jmd .btn.p{background:var(--grad);color:#07070c}
+.jmd .btn.g{background:transparent;border-color:var(--line2);color:var(--ink)}
+.jmd .btn.s{padding:8px 14px;font-size:13.5px;border-radius:10px}
+.jmd .nav .btn{padding:9px 16px;font-size:14px}
+.jmd .nav .btn.g{border-color:var(--nav-line2);color:var(--nav-ink)}
+.jmd .themetog{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  flex:0 0 auto;padding:0;border-radius:11px;cursor:pointer;background:transparent;
+  border:1px solid var(--nav-line2);color:var(--nav-mut);font:inherit}
+.jmd .themetog .ti{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.jmd .themetog .moon{display:none}
+html[data-theme="light"] .jmd .themetog .sun{display:none}
+html[data-theme="light"] .jmd .themetog .moon{display:block}
+.jmd main{padding:36px 0 80px}
+.jmd h1{font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:-.025em;font-weight:850}
+.jmd h2{font-size:20px;font-weight:780;letter-spacing:-.015em;margin-top:36px}
+.jmd h3{font-size:16px;font-weight:730}
+.jmd p{color:var(--mut);margin-top:10px}
+.jmd .sub{color:var(--mut);font-size:15.5px;margin-top:8px}
+.jmd .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px}
+.jmd .grid{display:grid;gap:16px;margin-top:18px}
+.jmd .g2{grid-template-columns:repeat(2,1fr)}
+.jmd label{display:block;font-size:13px;font-weight:650;color:var(--mut);margin-bottom:6px;margin-top:14px}
+.jmd input,.jmd select,.jmd textarea{width:100%;padding:12px 14px;border-radius:11px;background:var(--bg2);
+  border:1px solid var(--line2);color:var(--ink);font:inherit;font-size:16px}
+.jmd input:focus,.jmd select:focus,.jmd textarea:focus{outline:none;border-color:var(--teal)}
+.jmd textarea{min-height:120px;resize:vertical}
+.jmd .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.jmd .chk{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--mut);font-size:14.5px}
+.jmd .chk input{width:auto}
+.jmd .msg{margin-top:14px;padding:12px 15px;border-radius:11px;font-size:14.5px;display:none}
+.jmd .msg.ok{display:block;background:rgba(58,208,127,.12);border:1px solid rgba(58,208,127,.4);color:var(--good)}
+.jmd .msg.err{display:block;background:rgba(230,73,128,.12);border:1px solid rgba(230,73,128,.4);color:var(--pink)}
+.jmd .auth{max-width:520px;margin:0 auto}
+.jmd .switch{margin-top:20px;color:var(--mut);font-size:14.5px;text-align:center}
+.jmd .switch a{color:var(--teal);font-weight:650}
+.jmd .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.jmd .role{padding:14px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--bg2);
+  cursor:pointer;text-align:center;font-size:14px;font-weight:650;color:var(--mut)}
+.jmd .role.on{border-color:var(--teal);color:var(--teal);background:var(--grad-soft)}
+.jmd .role small{display:block;font-weight:500;font-size:11.5px;color:var(--faint);margin-top:3px}
+.jmd .bar{height:7px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-top:10px}
+.jmd .bar i{display:block;height:100%;background:var(--grad);border-radius:999px}
+.jmd .score{font-family:var(--mono);font-weight:700;font-size:20px;
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jmd .match{border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;background:var(--card);margin-top:12px}
+.jmd .match header{display:flex;align-items:flex-start;gap:16px}
+.jmd .match .meta{color:var(--faint);font-size:13px;margin-top:4px}
+.jmd .dims{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.jmd .dim{text-align:center}
+.jmd .dim .n{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink)}
+.jmd .dim .b{height:5px;border-radius:999px;background:var(--bg2);margin-top:4px;overflow:hidden}
+.jmd .dim .b i{display:block;height:100%;background:var(--teal)}
+.jmd .dim .l{font-size:9.5px;color:var(--faint);margin-top:4px;line-height:1.25;letter-spacing:.02em}
+.jmd .why{margin-top:14px;font-size:13.5px}
+.jmd .why ul{margin:6px 0 0 18px;color:var(--mut)}
+.jmd .why li{margin-top:4px}
+.jmd .why .gap{color:var(--warn)}
+.jmd details{margin-top:12px}
+.jmd summary{cursor:pointer;color:var(--teal);font-size:13.5px;font-weight:650}
+.jmd .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);margin-top:14px}
+.jmd table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+.jmd th,.jmd td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.jmd th{color:var(--ink);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--bg2)}
+.jmd td{color:var(--mut)}
+.jmd tr:last-child td{border-bottom:0}
+.jmd .stage{padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;
+  border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
+.jmd .empty{padding:34px 22px;text-align:center;color:var(--mut);border:1px dashed var(--line2);
+  border-radius:var(--r-lg);margin-top:16px}
+.jmd .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+.jmd .tab{padding:9px 16px;border-radius:999px;border:1px solid var(--line2);background:transparent;
+  color:var(--mut);font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+.jmd .tab.on{background:var(--grad-soft);border-color:rgba(34,211,238,.4);color:var(--teal)}
+.jmd .note{margin-top:16px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--line2);
+  background:var(--grad-soft);color:var(--mut);font-size:14px}
+.jmd .note b{color:var(--ink)}
+@media(max-width:820px){
+  .jmd .g2,.jmd .row{grid-template-columns:1fr}
+  .jmd .dims{grid-template-columns:repeat(4,1fr)}
+  .jmd .who{display:none}
+  .jmd .nav .wrap{height:64px;gap:12px}
+  .jmd .brand .logo{height:38px}
+  .jmd .roles{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="jmd">
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="./" aria-label="JobMD.io home">
+    <picture><source srcset="jobmd-logo.webp" type="image/webp">
+    <img class="logo" src="jobmd-logo.png" width="849" height="264" alt="JobMD.io"></picture>
+  </a>
+  <div class="navsp"></div>
+  <a class="btn g" href="login">Sign in</a>
+  <button class="themetog" id="themeToggle" type="button" aria-label="Switch theme">
+    <svg class="ti sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/>
+      <path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg>
+    <svg class="ti moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>
+  </button>
+</div></nav>
+<main><div class="wrap">
+
+<div class="auth">
+  <h1>Create your account</h1>
+  <p class="sub">One platform, three ways in. Pick the one that describes you &mdash; it decides what you see.</p>
+  <div class="card" style="margin-top:22px">
+    <form id="f" novalidate>
+      <label>I am a</label>
+      <div class="roles" id="roles">
+        <div class="role on" data-role="physician">Physician<small>Find a role</small></div>
+        <div class="role" data-role="hospital">Hospital<small>Post positions</small></div>
+        <div class="role" data-role="recruiter">Recruiter<small>Run the pipeline</small></div>
+      </div>
+      <label for="name">Full name</label><input id="name" autocomplete="name" required>
+      <label for="email">Email</label><input id="email" type="email" autocomplete="email" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="new-password" required>
+      <div class="sub" style="font-size:13px">At least 10 characters.</div>
+      <div id="orgblock" hidden>
+        <label for="org_name">Hospital or health system</label><input id="org_name">
+        <div class="row">
+          <div><label for="city">City</label><input id="city"></div>
+          <div><label for="state">State</label><input id="state" maxlength="2" placeholder="FL"></div>
+        </div>
+      </div>
+      <button class="btn p" type="submit" id="go" style="width:100%;margin-top:20px">Create account</button>
+      <div class="msg" id="msg" role="status"></div>
+    </form>
+  </div>
+  <div class="switch">Already have an account? <a href="login">Sign in</a></div>
+</div>
+</div></main>
+</div>
+<script>
+(function(){
+  var tog=document.getElementById('themeToggle');
+  function apply(m){var l=m==='light';
+    if(l)document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');}
+  apply(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
+  tog.addEventListener('click',function(){
+    var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    apply(next); try{localStorage.setItem('jobmd_theme',next);}catch(e){}
+  });
+})();
+
+var role='physician';
+document.getElementById('roles').addEventListener('click',function(e){
+  var el=e.target.closest('.role'); if(!el)return;
+  [].forEach.call(this.children,function(c){c.classList.remove('on');});
+  el.classList.add('on'); role=el.getAttribute('data-role');
+  document.getElementById('orgblock').hidden = role!=='hospital';
+});
+document.getElementById('f').addEventListener('submit',function(e){
+  e.preventDefault();
+  var msg=document.getElementById('msg'), go=document.getElementById('go');
+  msg.className='msg';
+  var body={role:role,name:val('name'),email:val('email'),password:val('password'),
+            org_name:val('org_name'),city:val('city'),state:val('state')};
+  go.disabled=true; go.textContent='Creating...';
+  fetch('api/v1/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)})
+   .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+   .then(function(r){ if(!r.ok) throw new Error(r.j.error||'Could not create the account.');
+     window.location.href='app'; })
+   .catch(function(err){ msg.className='msg err'; msg.textContent=err.message;
+     go.disabled=false; go.textContent='Create account'; });
+});
+function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+</script>
+</body>
+</html>

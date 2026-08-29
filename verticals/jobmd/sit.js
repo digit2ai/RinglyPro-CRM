@@ -387,16 +387,35 @@ function mustReject(name, mutate, expectConstraint) {
   // ── 8. Multi-tenancy ──────────────────────────────────────────────────────
   const modelsSrc = fs.readFileSync(path.join(__dirname, 'src', 'models.js'), 'utf8');
   const tableDefs = (modelsSrc.match(/tableName:\s*'jm_[a-z_]+'/g) || []);
-  eq('tenancy: four jm_ tables defined', tableDefs.length, 4);
-  eq('tenancy: every table declares tenant_id', (modelsSrc.match(/tenant_id:\s*tenant/g) || []).length, 4);
-  eq('tenancy: every table is indexed on tenant_id',
-     (modelsSrc.match(/fields:\s*\['tenant_id'\]/g) || []).length, 4);
+  ok('tenancy: the platform tables exist', tableDefs.length >= 11, tableDefs.length + ' tables');
+  // EVERY table, without exception.
+  eq('tenancy: every table declares tenant_id',
+     (modelsSrc.match(/tenant_id:\s*tenant/g) || []).length, tableDefs.length);
+  // Indexes are named explicitly — Sequelize's auto-names collided across
+  // re-runs and left a half-built schema.
+  ok('tenancy: every index is explicitly named',
+     (modelsSrc.match(/name: 'jm_[a-z_]+'/g) || []).length >= tableDefs.length,
+     (modelsSrc.match(/name: 'jm_[a-z_]+'/g) || []).length + ' named');
+  ok('tenancy: no unnamed index declarations remain',
+     !/indexes: \[\{ fields:/.test(modelsSrc));
+  // tenant_id alone is not access control when everyone shares a tenant: the
+  // app routes must scope by account.
+  const appApiSrc = fs.readFileSync(path.join(__dirname, 'src', 'routes', 'app.js'), 'utf8');
+  ok('tenancy: the app scopes reads by the signed-in account, not just the tenant',
+     /account_id: req\.account\.id/.test(appApiSrc));
+  ok('tenancy: role is never taken from a request body',
+     !/role:\s*(req\.body|b\.role)/.test(appApiSrc));
   const idxSrc = fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8');
   ok('tenancy: tenant_id is read from the session, never the body', /function tenantOf\(req\)/.test(idxSrc) &&
      !/tenant_id:\s*req\.body/.test(idxSrc));
   const mig = fs.readFileSync(path.join(__dirname, 'migrations', '20260828_jobmd_tables.sql'), 'utf8');
-  eq('tenancy: the migration declares tenant_id NOT NULL on all four tables',
-     (mig.match(/tenant_id\s+INTEGER NOT NULL/g) || []).length, 4);
+  // The migration is regenerated from the live schema, so it must agree with
+  // the models: every table, tenant_id, NOT NULL.
+  const migTables = (mig.match(/CREATE TABLE IF NOT EXISTS jm_/g) || []).length;
+  ok('tenancy: the migration covers every table', migTables === tableDefs.length,
+     migTables + ' in the migration vs ' + tableDefs.length + ' models');
+  eq('tenancy: the migration declares tenant_id NOT NULL on every table',
+     (mig.match(/tenant_id\s+INTEGER[^\n]*NOT NULL/g) || []).length, migTables);
 
   // ── 9. The landing page ───────────────────────────────────────────────────
   const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
@@ -644,7 +663,8 @@ function mustReject(name, mutate, expectConstraint) {
   ok('docs: it is routed, extensionless, on every root',
      /router\.get\(\['\/how-it-works', '\/how-it-works\/'\]/.test(idxSrc));
   ok('docs: the landing page links to it', /href="how-it-works"/.test(html));
-  eq('docs: linked from both the nav and the footer', (html.match(/href="how-it-works"/g) || []).length, 2);
+  ok('docs: linked from the nav and the footer at least',
+     (html.match(/href="how-it-works"/g) || []).length >= 2);
   ok('docs: it carries the same theme toggle', /id="themeToggle"/.test(doc) && /jobmd_theme/.test(doc));
   ok('docs: it applies the theme before the stylesheet paints',
      doc.indexOf('jobmd_theme') < doc.indexOf('<style>'));
@@ -654,24 +674,36 @@ function mustReject(name, mutate, expectConstraint) {
   // DOCUMENTATION THAT DRIFTS FROM THE CODE IS WORSE THAN NONE. Every path the
   // page documents must actually be routed, and the counts it quotes must
   // match the corpus.
+  // Endpoints live in two files now: the vertical's own router and the app API.
+  const routedSrc = idxSrc + '\n' + fs.readFileSync(path.join(__dirname, 'src', 'routes', 'app.js'), 'utf8');
   const documented = Array.from(doc.matchAll(/<code>\/jobmd(\/[a-z0-9\/:._-]*)<\/code>/g),
                                 function (m) { return m[1]; });
   ok('docs: it documents a meaningful number of endpoints', documented.length >= 8, documented.length + ' found');
   const docMissing = documented.filter(function (route) {
-    const re = new RegExp("router\\.(get|post)\\((\\[[^\\]]*)?['\"]" +
-      route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]");
-    return !re.test(idxSrc);
+    // the app API is mounted at /api/v1, so its own paths are declared without it
+    const bare = route.replace(/^\/api\/v1/, '');
+    const esc2 = function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+    const re = new RegExp("router\\.(get|post|patch|put)\\((\\[[^\\]]*)?['\"](" +
+      esc2(route) + "|" + esc2(bare) + ")['\"]");
+    return !re.test(routedSrc);
   });
   ok('docs: every documented endpoint is actually routed', docMissing.length === 0, docMissing.join(', '));
-  [[C.MEDICAL_SPECIALTIES.length, 'Fifteen'], [C.AGENTS.length, 'eleven'],
-   [C.RECRUITMENT_PIPELINE.length, 'Thirteen'], [C.MATCHING_DIMENSIONS.length, 'Seven']].forEach(function (pair) {
-    ok('docs: it quotes the real count for ' + pair[1], doc.indexOf(pair[1]) !== -1);
+  ['eleven agents', 'thirteen-stage', 'seven dimensions'].forEach(function (phrase) {
+    ok('docs: it describes the ' + phrase, doc.toLowerCase().indexOf(phrase.toLowerCase()) !== -1);
   });
-  // It must say what is NOT built, or it reads as a description of a running
-  // platform rather than of a set of specifications.
-  ok('docs: it states what is not built yet', /What is not built yet/.test(doc));
-  ok('docs: it states the physician database does not exist', /no physician database yet/i.test(doc));
-  ok('docs: it states the agents are specified, not running', /not yet running services/i.test(doc));
+  // It is a USER GUIDE now, so it must tell each role what to do.
+  ['If you are a physician', 'If you are a hospital', 'If you are a recruiter'].forEach(function (h) {
+    ok('docs: it guides the reader — "' + h + '"', doc.indexOf(h) !== -1);
+  });
+  ok('docs: it points at the app', /href="app"/.test(doc) && /href="signup"/.test(doc));
+  // AND it must still separate what runs from what does not, or it reads as a
+  // description of a platform that is further along than it is.
+  ok('docs: it separates what is running from what is not',
+     /what is real today/i.test(doc) && (doc.match(/pill auth">not built/g) || []).length >= 4);
+  ok('docs: it says the remaining agents are not yet running services',
+     /not yet running services/i.test(doc));
+  ok('docs: it states the scoring is arithmetic, not a language model',
+     /arithmetic, not a language model/i.test(doc));
   ok('docs: it does not claim the retired phone number', !/315-?4401/.test(doc));
 
   // The two pages must not drift apart on colour.
@@ -965,6 +997,165 @@ function mustReject(name, mutate, expectConstraint) {
   ok('tenancy: a tenant_id in the body is ignored', stored && stored.tenant_id !== 999999);
   ok('privacy: the raw IP is never stored, only a salted hash',
      stored && stored.ip_hash && stored.ip_hash.length === 32 && !/\d+\.\d+\.\d+\.\d+/.test(stored.ip_hash));
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  THE PLATFORM, END TO END
+  //  A real physician and a real hospital through the whole flow, against the
+  //  running server. This is the part that proves there is an application and
+  //  not only a set of documents describing one.
+  // ══════════════════════════════════════════════════════════════════════
+  const { seed } = require('./scripts/seed');
+  await seed();
+
+  function jreq(method, p, body, cookie) {
+    return new Promise(function (resolve) {
+      const data = body ? JSON.stringify(body) : null;
+      const r = http.request({ host: '127.0.0.1', port: port, path: '/jobmd' + p, method: method,
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+          data ? { 'Content-Length': Buffer.byteLength(data) } : {}, cookie ? { Cookie: cookie } : {}) },
+        function (res) {
+          let s2 = '';
+          res.on('data', function (c) { s2 += c; });
+          res.on('end', function () {
+            let j = null; try { j = JSON.parse(s2); } catch (e) { /* html */ }
+            const sc = res.headers['set-cookie'];
+            resolve({ status: res.statusCode, body: j, cookie: sc ? sc[0].split(';')[0] : null });
+          });
+        });
+      r.on('error', function (e) { resolve({ status: 0, body: { error: e.message } }); });
+      if (data) r.write(data);
+      r.end();
+    });
+  }
+
+  const docEmail = 'sit-doc-' + stamp + '@example.invalid';
+  const hospEmail = 'sit-hosp-' + stamp + '@example.invalid';
+  let R = await jreq('POST', '/api/v1/auth/signup', { role: 'physician', name: 'SIT Physician',
+    email: docEmail, password: 'a-long-enough-pw' });
+  eq('app: a physician can sign up', R.status, 201);
+  const docCookie = R.cookie;
+  R = await jreq('GET', '/api/v1/me', null, docCookie);
+  ok('app: the session identifies them as a physician', R.body && R.body.account.role === 'physician');
+  ok('app: an empty Talent Intelligence Record is created at signup', !!(R.body && R.body.profile));
+  // An unanswered yes/no is not "no": completeness must start at zero.
+  eq('app: completeness starts at 0', R.body.completeness.percent, 0);
+
+  R = await jreq('GET', '/api/v1/matches', null, docCookie);
+  ok('app: with no specialty there are no matches, and it says why',
+     R.status === 200 && R.body.items.length === 0 && !!R.body.message);
+
+  // The CV reader proposes; it must never write.
+  R = await jreq('POST', '/api/v1/profile/cv', { text:
+    'Board-certified in Robotic Surgery. Residency in General Surgery. 11 years of clinical experience. ' +
+    '260 robotic cases per year on the da Vinci Xi with 6 years robotic experience. Licensed in FL and GA.' },
+    docCookie);
+  ok('app: the CV reader extracts a specialty', R.body && R.body.fields.specialty === 'Robotic Surgery');
+  ok('app: it shows the phrase each value came from', !!(R.body && R.body.evidence.specialty));
+  ok('app: it names both specialties rather than guessing one',
+     !!(R.body && R.body.fields.specialty_candidates && R.body.fields.specialty_candidates.length === 2));
+  R = await jreq('GET', '/api/v1/profile', null, docCookie);
+  ok('app: READING a CV does not write the profile', R.body.profile.specialty === null);
+
+  R = await jreq('PUT', '/api/v1/profile', { specialty: 'Robotic Surgery', years_experience: 11,
+    board_certified: true, licenses: ['FL', 'GA'], robotic_platforms: ['da Vinci Xi'], robotic_years: 6,
+    robotics_program_leadership: true, geographic_preferences: ['FL'], relocation_willing: false,
+    compensation_expectation: 600000, employment_preference: 'employed', call_tolerance: 'light',
+    available_from: '2026-10-01', procedure_expertise: ['robotic cholecystectomy'] }, docCookie);
+  eq('app: the profile saves', R.status, 200);
+  eq('app: completeness reaches 100', R.body.completeness.percent, 100);
+  ok('app: a plain summary is generated from the fields', !!R.body.profile.ai_summary);
+  R = await jreq('PUT', '/api/v1/profile', { specialty: 'Space Surgery' }, docCookie);
+  eq('app: a specialty outside the taxonomy is refused', R.status, 400);
+
+  R = await jreq('GET', '/api/v1/matches', null, docCookie);
+  const mItems = R.body.items || [];
+  ok('app: matches are returned', mItems.length > 0);
+  ok('app: sorted best first', mItems.every(function (m, i) { return i === 0 || mItems[i - 1].score >= m.score; }));
+  ok('app: every match carries all seven dimensions',
+     mItems.every(function (m) { return m.dimensions.length === C.MATCHING_DIMENSIONS.length; }));
+  // A score with no gaps attached is a number nobody can act on.
+  ok('app: every match carries reasons AND gaps',
+     mItems.every(function (m) { return Array.isArray(m.reasons) && Array.isArray(m.gaps); }));
+  ok('app: the best match is in the physician\'s own specialty',
+     mItems[0].position.specialty === 'Robotic Surgery', mItems[0].position.specialty);
+  ok('app: scores actually differentiate',
+     mItems[0].score - mItems[mItems.length - 1].score > 25,
+     mItems[0].score + ' vs ' + mItems[mItems.length - 1].score);
+  ok('app: a weak match explains its gaps', mItems[mItems.length - 1].gaps.length > 0);
+
+  R = await jreq('POST', '/api/v1/apply', { position_id: mItems[0].position_id }, docCookie);
+  ok('app: a physician can express interest', R.status === 201 && R.body.stage === 'Interested');
+  R = await jreq('POST', '/api/v1/apply', { position_id: mItems[0].position_id }, docCookie);
+  ok('app: applying twice does not duplicate', R.status === 200 && R.body.already === true);
+
+  R = await jreq('POST', '/api/v1/auth/signup', { role: 'hospital', name: 'SIT Hospital',
+    email: hospEmail, password: 'a-long-enough-pw', org_name: 'SIT Hospital ' + stamp,
+    city: 'Tampa', state: 'FL' });
+  eq('app: a hospital can sign up with its organisation', R.status, 201);
+  const hospCookie = R.cookie;
+  R = await jreq('POST', '/api/v1/positions', { title: 'SIT Robotic Surgeon', specialty: 'Robotic Surgery',
+    city: 'Tampa', state: 'FL', compensation_min: 560000, compensation_max: 660000,
+    employment_model: 'employed', call_schedule: 'light', robotics_required: true,
+    robotic_platforms: ['da Vinci Xi'], min_years_experience: 5, start_date: '2026-11-01' }, hospCookie);
+  eq('app: a hospital can post a position', R.status, 201);
+  const sitPos = R.body.position.id;
+  R = await jreq('GET', '/api/v1/positions/' + sitPos + '/candidates', null, hospCookie);
+  ok('app: ranked candidates come back, with reasons',
+     R.status === 200 && R.body.items.length > 0 && R.body.items[0].reasons.length > 0);
+
+  // ── The permission boundaries ─────────────────────────────────────────
+  eq('app: a physician cannot open the recruiter pipeline',
+     (await jreq('GET', '/api/v1/pipeline', null, docCookie)).status, 403);
+  eq('app: a physician cannot post a position',
+     (await jreq('POST', '/api/v1/positions', { title: 'x', specialty: 'Urology' }, docCookie)).status, 403);
+  eq('app: a hospital has no physician profile to read',
+     (await jreq('GET', '/api/v1/profile', null, hospCookie)).status, 403);
+  eq('app: no session means no data', (await jreq('GET', '/api/v1/me', null, null)).status, 401);
+  // Role is set at signup and can never be raised by a later request.
+  await jreq('PUT', '/api/v1/profile', { role: 'recruiter' }, docCookie);
+  R = await jreq('GET', '/api/v1/me', null, docCookie);
+  eq('app: a physician cannot promote themselves to recruiter', R.body.account.role, 'physician');
+
+  // ── Agent authority, over HTTP ────────────────────────────────────────
+  await jreq('POST', '/api/v1/apply', { position_id: sitPos }, docCookie);
+  R = await jreq('GET', '/api/v1/pipeline', null, hospCookie);
+  const prow = (R.body.items || []).filter(function (x) { return x.position && x.position.id === sitPos; })[0];
+  ok('app: the application reaches the hospital pipeline', !!prow);
+  if (prow) {
+    eq('app: a PERSON may move a candidate to Offer',
+       (await jreq('PATCH', '/api/v1/pipeline/' + prow.id, { stage: 'Offer' }, hospCookie)).status, 200);
+    eq('app: an AGENT may not move a candidate to Placement',
+       (await jreq('PATCH', '/api/v1/pipeline/' + prow.id,
+         { stage: 'Placement', as_agent: 'Follow-Up Agent' }, hospCookie)).status, 403);
+    eq('app: the Scheduling Agent may set Interview',
+       (await jreq('PATCH', '/api/v1/pipeline/' + prow.id,
+         { stage: 'Interview', as_agent: 'Scheduling Agent' }, hospCookie)).status, 200);
+    eq('app: an agent that is not one of the eleven is refused',
+       (await jreq('PATCH', '/api/v1/pipeline/' + prow.id,
+         { stage: 'Qualified', as_agent: 'Invented Agent' }, hospCookie)).status, 403);
+  }
+
+  // ── The pages exist and are routed ────────────────────────────────────
+  for (const pg of ['/signup', '/login', '/app']) {
+    eq('app: ' + pg + ' is served', (await req('GET', '/jobmd' + pg)).status, 200);
+  }
+  ok('app: the landing page sends people to sign up', /href="signup"/.test(html));
+  ok('app: the landing page offers sign in', /href="login"/.test(html));
+
+  // Clean up every row this suite created.
+  const { Account, Physician, Position: Pos, Pipeline: Pipe } = require('./src/models');
+  const mine = await Account.findAll({ where: { email: [docEmail, hospEmail] } });
+  for (const a of mine) {
+    const ph = await Physician.findOne({ where: { account_id: a.id } });
+    if (ph) { await Pipe.destroy({ where: { physician_id: ph.id } }); await ph.destroy(); }
+    await a.destroy();
+  }
+  await Pos.destroy({ where: { title: 'SIT Robotic Surgeon' } });
+  // The hospital signup creates an organisation; without this they accumulate.
+  const { Organization: Org } = require('./src/models');
+  await Org.destroy({ where: { name: { [require('sequelize').Op.like]: 'SIT Hospital %' } } });
+  ok('cleanup: the SIT accounts were removed',
+     (await Account.findAll({ where: { email: [docEmail, hospEmail] } })).length === 0);
 
   // Clean up after ourselves.
   await Lead.destroy({ where: { email: 'sit-' + stamp + '@example.invalid' } });

@@ -650,6 +650,30 @@ Note the deliberate divergence from the agent: the project request's §1 names o
 
 **Landing** (`public/index.html`) carries the HealthSource Elite positioning — Superior Talent / Superior Results, the AAMC 15,000-30,000 shortage by 2034, The Right Fit, Who We Serve, the 15 specialties + business sectors, the full Robotics Division with its da Vinci figures, and the AI layer — on the **inherited JobUp dark-aurora token set** rotated toward clinical teal (brand inheritance is explicitly requested by the spec). Market figures are **attributed to healthsourceelite.com, not independently verified**, and the page says so. It reuses the shared zero-key voice orb (`/embed/voice-orb.js` → `/api/tts/edge`) rather than standing up a second TTS backend.
 
+### THE PLATFORM — accounts, profiles, positions, matching, pipeline, dashboards
+
+**This is the product. The two spec agents below are build tooling, not the product.**
+
+`/jobmd/signup` → `/jobmd/login` → `/jobmd/app`. One app shell renders a different dashboard per role, and **role is set at signup and never read from a request body thereafter** — a physician cannot promote themselves by posting one.
+
+| Role | Sees |
+|---|---|
+| **physician** | Their own Talent Intelligence Record, every open position scored against it, and their own applications |
+| **hospital** | Only their own organisation's positions and the candidates on them |
+| **recruiter** | The whole pipeline across every client — a deliberate widening, since a JobMD.io recruiter works across clients |
+
+**Eleven `jm_` tables, all `tenant_id NOT NULL` and indexed.** In a marketplace where everyone shares a tenant, **`tenant_id` alone is not access control** — row ownership is `account_id`, and that is what actually isolates people. Indexes are **explicitly named**: Sequelize's auto-names collided across re-runs and left a half-built schema mid-build.
+
+**THE MATCHING ENGINE IS ARITHMETIC, NOT A MODEL** (`services/matching.js`). It iterates `corpus.MATCHING_DIMENSIONS`, so the running engine and the published architecture document cannot disagree about what a match is made of — and it can never silently score six. Each dimension returns a score, the reason, and the gap; **gaps travel with the score always**, because a number with nothing to act on is not useful. Weights: Clinical 30, Technology 15, Geographic 15, Compensation 14, Cultural 10, Career 8, Availability 8. A model is never asked for a number — a recruiter has to defend a ranking in a meeting, and a number that differs per run cannot be defended. Verified live: the same surgeon scores **94–99 on a matching robotic role and 42 on a mismatched one**, with the 42 listing exactly why.
+
+**The pipeline enforces agent authority from the corpus** (`services/pipeline.js`). People may set any of the thirteen stages. An agent may set **only four** — Contacted/Interested (Outreach), Qualified (Clinical Qualification), Matched (Candidate Matching), Interview (Scheduling). **No agent can reach Offer, Credentialing or Placement**, and an unknown agent name is refused. Every change is logged to `jm_pipeline_events` with who made it and whether a person or an agent did.
+
+**CV reading proposes; it never writes** (`services/cv.js`). Every value must be traceable to a substring of the pasted CV — it returns the phrase each came from, lists what it could not find, and **names both specialties rather than guessing** when a CV mentions two. Zero-key heuristic.
+
+**Unanswered yes/no questions are `null`, not `false`.** A new profile reported 13% complete because three booleans defaulted to false and read as answered; completeness is measured only against the fields a match actually depends on.
+
+Seed: `node verticals/jobmd/scripts/seed.js` — 5 sample organisations and 12 open positions, idempotent, deliberately named "Sample …" so a seeded row is never quoted back as a real client.
+
 ### TWO agents, ONE corpus
 
 `corpus.js` is the single transcription of the project request; **both** generators are projections of it. Two agents that each transcribed the request separately would eventually disagree about how many pipeline stages there are, and each would look right in isolation — SIT asserts the two agree on the stages, in order.

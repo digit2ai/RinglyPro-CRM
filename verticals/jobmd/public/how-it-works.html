@@ -236,184 +236,181 @@ html[data-theme="light"] .jmd .themetog .moon{display:block}
 
 <main class="doc"><div class="wrap">
 
-  <div class="eyebrow">JobMD.io &middot; Documentation</div>
-  <h1>How JobMD.io works</h1>
-  <p class="lead">JobMD.io is an AI Healthcare Talent Intelligence Network for recruiting surgeons,
-     doctors and medical staff. This page explains what runs underneath: the eleven agents behind the
-     MCP orchestration layer, how a candidate moves from prospect to placement, and the two
-     architecture APIs that generate the platform&rsquo;s own build documents.</p>
+  <div class="eyebrow">JobMD.io &middot; Guide</div>
+  <h1>How to use JobMD.io</h1>
+  <p class="lead">One platform, three ways in. A physician looking for a role, a hospital hiring, or a
+     JobMD.io recruiter running the process. This page walks through each one, then explains what
+     happens behind the screen &mdash; and what is still specification rather than software.</p>
 
   <div class="toc">
     <b>On this page</b>
     <ol>
-      <li><a href="#overview">What the platform does</a></li>
-      <li><a href="#agents">The eleven agents and the MCP layer</a></li>
-      <li><a href="#matching">How a match is produced</a></li>
-      <li><a href="#pipeline">The recruitment pipeline, and who may move a candidate</a></li>
-      <li><a href="#architecture-api">The architecture API</a></li>
-      <li><a href="#rules">The rules enforced in code</a></li>
-      <li><a href="#not-built">What is not built yet</a></li>
-      <li><a href="#config">Configuration</a></li>
+      <li><a href="#start">Where to start</a></li>
+      <li><a href="#doctor">If you are a physician</a></li>
+      <li><a href="#hospital">If you are a hospital</a></li>
+      <li><a href="#recruiter">If you are a recruiter</a></li>
+      <li><a href="#scoring">How a match is scored</a></li>
+      <li><a href="#pipeline">The pipeline, and who may move a candidate</a></li>
+      <li><a href="#behind">What happens behind the screen</a></li>
+      <li><a href="#agents">The eleven agents &mdash; what is real today</a></li>
+      <li><a href="#api">For developers</a></li>
     </ol>
   </div>
 
-  <h2 id="overview">1. What the platform does</h2>
-  <p>Three groups of people meet here. <b>Surgeons, doctors and medical staff</b> looking for the right
-     role. <b>Hospitals, health systems and IDNs</b> looking for the right person. And
-     <b>JobMD.io Recruiters</b>, who run the process with AI assistance rather than being replaced by it.
-     <b>Platform Administrators</b> manage clients, candidates, recruiters, placements, agents and
-     workflows.</p>
-  <p>Two persistent records carry everything. The <b>Talent Intelligence Record</b> holds twenty-five
-     fields per candidate &mdash; specialty and subspecialty, education, residency, fellowship, board
-     certifications, licenses, procedure expertise, robotic platforms, preferences, availability,
-     recruitment status and match history. The <b>Hospital / Client Intelligence Profile</b> holds
-     nineteen &mdash; organisation, facilities, open positions, requirements, robotics platform,
-     compensation range, call schedule, employment model, recruiting priorities and pipeline.</p>
-  <p>Fifteen surgical specialties are configured at launch, and the taxonomy is stored as data with a
-     subspecialty relation, so adding a specialty or a staff role is data entry rather than a redesign.</p>
-
-  <h2 id="agents">2. The eleven agents and the MCP layer</h2>
-  <p>A central MCP orchestration layer coordinates eleven specialised agents. Each performs one
-     recruitment function and can hand work to the others through agent-to-agent workflows. The layer
-     injects the tenant from the session, enforces role and channel authorisation before any tool call,
-     and audits every call &mdash; including the ones it denies.</p>
+  <h2 id="start">1. Where to start</h2>
+  <p><b>Create an account at <a href="signup" style="color:var(--teal)">/signup</a></b> and choose one of
+     three roles. The role decides everything you see afterwards and cannot be changed by anything you
+     send later.</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>#</th><th>Agent</th><th>What it does</th></tr></thead>
+    <thead><tr><th>You are</th><th>You get</th></tr></thead>
     <tbody>
-      <tr><td>01</td><td>Candidate Intake Agent</td><td>Conversational physician and surgeon intake, and structured profile creation.</td></tr>
-      <tr><td>02</td><td>CV / Resume Intelligence Agent</td><td>Extracts education, residency, fellowship, board certifications, licenses, specialties, procedures, experience, publications, leadership roles, robotic experience and employment history.</td></tr>
-      <tr><td>03</td><td>Hospital Intake Agent</td><td>Turns a hospital&rsquo;s recruiting requirements into a structured position profile.</td></tr>
-      <tr><td>04</td><td>Candidate Matching Agent</td><td>Continuously compares profiles against opportunities.</td></tr>
-      <tr><td>05</td><td>Clinical Qualification Agent</td><td>Evaluates specialty-specific qualifications, certifications, procedural expertise and experience.</td></tr>
-      <tr><td>06</td><td>Robotics Intelligence Agent</td><td>Robotic-surgery recruitment intelligence: platforms, volume, programme leadership.</td></tr>
-      <tr><td>07</td><td>Candidate Ranking Agent</td><td>Explainable rankings and match scores, with strengths and gaps.</td></tr>
-      <tr><td>08</td><td>Recruitment Outreach Agent</td><td>Personalised outreach through approved channels, and response tracking.</td></tr>
-      <tr><td>09</td><td>Scheduling Agent</td><td>Coordinates recruiter, candidate and hospital interview availability.</td></tr>
-      <tr><td>10</td><td>Follow-Up Agent</td><td>Manages follow-ups across the pipeline.</td></tr>
-      <tr><td>11</td><td>Recruiter Copilot</td><td>Conversational interface across the whole ecosystem.</td></tr>
+      <tr><td><b>Physician</b></td><td>A profile to complete, and every open position scored against it.</td></tr>
+      <tr><td><b>Hospital</b></td><td>Your own organisation, your positions, and ranked candidates for each.</td></tr>
+      <tr><td><b>Recruiter</b></td><td>The whole pipeline across every client, and the ability to move candidates.</td></tr>
     </tbody>
   </table></div>
+  <p>After that, everything lives at <b><a href="app" style="color:var(--teal)">/app</a></b>. It is one
+     address for all three roles &mdash; it renders your dashboard, not somebody else's.</p>
 
-  <h2 id="matching">3. How a match is produced</h2>
-  <p>Seven dimensions are evaluated at once, not in sequence: <b>Clinical</b>, <b>Technology</b>,
-     <b>Geographic</b>, <b>Career</b>, <b>Compensation</b>, <b>Availability</b>, and
-     <b>Cultural / Professional</b>.</p>
-  <p>Every match returns three things together, and the third is the one that matters:
-     a <b>score</b>, a <b>plain-language explanation</b> of why the candidate was selected, and the
-     <b>material gaps</b>. A score with no gaps attached is a number nobody can act on.</p>
+  <h2 id="doctor">2. If you are a physician</h2>
+  <ol>
+    <li><b>Complete your profile.</b> Specialty, years of experience, board certification, the states you
+        are licensed in, robotic platforms, where you want to work, what you expect to be paid, and when
+        you are available. A completeness bar shows what is still missing, measured against the fields a
+        match actually depends on &mdash; not against every box on the form.</li>
+    <li><b>Or paste your CV instead.</b> The <i>Read my CV</i> tab reads the text and <b>proposes</b>
+        values. It shows you the exact phrase each one came from, lists what it could not find, and
+        writes nothing until you press apply. If your CV names two specialties, it tells you and uses the
+        first rather than guessing silently.</li>
+    <li><b>Look at your matches.</b> Every open position is scored 0&ndash;100 against your profile,
+        best first, with the seven dimension scores, the reasons it scored well, and the gaps.</li>
+    <li><b>Say you are interested.</b> That puts you in the recruiter's pipeline at the
+        <b>Interested</b> stage. That is the only stage a physician can set.</li>
+  </ol>
+  <div class="note"><b>Nothing about you is public.</b> A hospital sees your professional record when you
+    enter their pipeline. Your contact details live on your account, not on the record a match is
+    computed from, so a score can be produced without anyone loading your email.</div>
 
-  <h2 id="pipeline">4. The recruitment pipeline, and who may move a candidate</h2>
-  <p>Thirteen stages, in order: Prospect &rarr; Contacted &rarr; Interested &rarr; Qualified &rarr;
-     Matched &rarr; Submitted &rarr; Hospital Review &rarr; Interview &rarr; Offer &rarr; Negotiation
-     &rarr; Accepted &rarr; Credentialing &rarr; Placement.</p>
-  <p>Recruiters and Platform Administrators can advance any stage. <b>Agents can advance only four</b>,
-     and only where a named agent function actually produces that state:</p>
+  <h2 id="hospital">3. If you are a hospital</h2>
+  <ol>
+    <li><b>Post a position.</b> Title, specialty, city and state, compensation range, employment model,
+        call schedule, minimum years, whether robotic experience is required and on which platform.
+        Every one of those fields is used by the scoring &mdash; a range you leave blank is a dimension
+        that cannot be scored, and the match will say so.</li>
+    <li><b>See ranked candidates.</b> Every physician profile on the platform, scored against that
+        specific position, best first, each with its reasons and gaps.</li>
+    <li><b>Move people through the pipeline.</b> Thirteen stages from Prospect to Placement. You can move
+        anyone to any stage.</li>
+  </ol>
+  <p>You only ever see your own organisation's positions and the candidates on them.</p>
+
+  <h2 id="recruiter">4. If you are a recruiter</h2>
+  <p>A JobMD.io recruiter works across clients, so the recruiter view is deliberately wider: the whole
+     pipeline, every organisation, and the ability to post a position on behalf of any of them. This is
+     the one role that is not scoped to a single organisation, and that is a decision rather than an
+     oversight.</p>
+
+  <h2 id="scoring">5. How a match is scored</h2>
+  <p>Seven dimensions are computed at once. Each returns a score out of 100, the reason it scored that
+     way, and the gap if there is one. The overall score is their weighted average.</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>Stage</th><th>Agent permitted to set it</th></tr></thead>
+    <thead><tr><th>Dimension</th><th>Weight</th><th>What it compares</th></tr></thead>
+    <tbody>
+      <tr><td>Clinical</td><td>30%</td><td>Specialty, board certification, years of experience, procedures.</td></tr>
+      <tr><td>Technology</td><td>15%</td><td>Robotic platforms, years robotic, programme leadership.</td></tr>
+      <tr><td>Geographic</td><td>15%</td><td>Preferred states, willingness to relocate.</td></tr>
+      <tr><td>Compensation</td><td>14%</td><td>Expectation against the posted range.</td></tr>
+      <tr><td>Cultural / Professional</td><td>10%</td><td>Employment model and call tolerance.</td></tr>
+      <tr><td>Career</td><td>8%</td><td>Academic background against an academic post; leadership.</td></tr>
+      <tr><td>Availability</td><td>8%</td><td>Available-from date against the requested start date.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>The scoring is arithmetic, not a language model.</b> Every number comes from
+    comparing two records, so the same two records always produce the same score and you can always see
+    which comparison produced it. A recruiter should be able to defend a ranking in a meeting; a number
+    a model produced differently each time cannot be defended. <b>Gaps are always returned alongside the
+    score</b> &mdash; a number with nothing to act on is not useful.</div>
+  <p>A worked example from the live system: a robotic surgeon with eleven years, da&nbsp;Vinci&nbsp;Xi
+     experience and a Florida preference scores <b>99</b> against a Tampa robotic surgery role and
+     <b>42</b> against a general surgery role in another state &mdash; and the 42 lists exactly why.</p>
+
+  <h2 id="pipeline">6. The pipeline, and who may move a candidate</h2>
+  <p>Prospect &rarr; Contacted &rarr; Interested &rarr; Qualified &rarr; Matched &rarr; Submitted &rarr;
+     Hospital Review &rarr; Interview &rarr; Offer &rarr; Negotiation &rarr; Accepted &rarr;
+     Credentialing &rarr; Placement.</p>
+  <p>Recruiters and hospitals can move a candidate to any stage. <b>Automation may set only four</b>,
+     and only where a named agent's own function produces that state:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Stage</th><th>Which agent may set it</th></tr></thead>
     <tbody>
       <tr><td>Contacted, Interested</td><td>Recruitment Outreach Agent</td></tr>
       <tr><td>Qualified</td><td>Clinical Qualification Agent</td></tr>
       <tr><td>Matched</td><td>Candidate Matching Agent</td></tr>
       <tr><td>Interview</td><td>Scheduling Agent</td></tr>
-      <tr><td>Prospect, Submitted, Hospital Review, Offer, Negotiation, Accepted, Credentialing, Placement</td><td><b>None.</b> People only.</td></tr>
+      <tr><td>Offer, Negotiation, Accepted, Credentialing, Placement</td><td><b>No agent, ever.</b> People only.</td></tr>
     </tbody>
   </table></div>
-  <div class="note"><b>Why the list is short.</b> The project request authorises agent updates only in
-    general terms &mdash; it never says which agent may set which stage. Rather than guess, authority
-    was granted only where a named agent function produces the state, and the ambiguity is recorded as
-    an open question. No agent can move a candidate to Offer or Placement.</div>
+  <p>This is enforced in the code, not requested in a prompt. An attempt to move someone to Placement as
+     an agent is refused with a reason.</p>
 
-  <h2 id="architecture-api">5. The architecture API</h2>
-  <p>Two agents generate JobMD.io&rsquo;s own build documents from the project request. They answer
-     different questions and return different shapes, and both read one shared transcription of the
-     request, so they can never disagree about how many pipeline stages exist.</p>
+  <h2 id="behind">7. What happens behind the screen</h2>
+  <p>In plain terms, when a physician opens their matches:</p>
+  <ol>
+    <li>Their Talent Intelligence Record is loaded &mdash; one row, the profile they filled in.</li>
+    <li>Every open position is loaded.</li>
+    <li>Each pair is scored across the seven dimensions. This is ordinary arithmetic over two records.</li>
+    <li>The scores are stored, so a recruiter later sees <b>the same number the physician saw</b> rather
+        than a fresh guess.</li>
+    <li>The list is sorted and returned with its reasons and gaps attached.</li>
+  </ol>
+  <p>The data itself is seven tables: accounts, physician records, organisations, positions, matches,
+     pipeline rows, and a log of every stage change with who made it and whether a person or an agent
+     did.</p>
+
+  <h2 id="agents">8. The eleven agents &mdash; what is real today</h2>
+  <p>Stated plainly, because it matters:</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>Method</th><th>Path</th><th>Access</th><th>What it returns</th></tr></thead>
+    <thead><tr><th>Capability</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td>GET</td><td><code>/jobmd/health</code></td><td><span class="pill open">public</span></td><td>Service state, both agent names, and which narration path is live.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/schema</code></td><td><span class="pill open">public</span></td><td>The build plan&rsquo;s 17 declared keys and its binding counts.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/plan</code></td><td><span class="pill open">public</span></td><td>A build plan. Persists nothing. Add <code>?model=0</code> for the deterministic path.</td></tr>
-      <tr><td>POST</td><td><code>/jobmd/api/v1/architect/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Composes and stores a build plan.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Stored build plans for your tenant.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/spec/schema</code></td><td><span class="pill open">public</span></td><td>The architecture record&rsquo;s 15 declared keys and the component registry.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/spec</code></td><td><span class="pill open">public</span></td><td>An architecture record. Persists nothing. <code>?model=0</code> for the deterministic path.</td></tr>
-      <tr><td>POST</td><td><code>/jobmd/api/v1/spec/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Composes and stores an architecture record.</td></tr>
-      <tr><td>GET</td><td><code>/jobmd/api/v1/spec/runs</code></td><td><span class="pill auth">sign-in</span></td><td>Stored architecture records for your tenant.</td></tr>
-      <tr><td>POST</td><td><code>/jobmd/api/v1/leads</code></td><td><span class="pill open">public</span></td><td>The contact form. Rate limited; the IP is stored only as a salted hash.</td></tr>
+      <tr><td>Accounts and roles for physicians, hospitals and recruiters</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>The Talent Intelligence Record</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Organisations and open positions</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Matching across the seven dimensions, with reasons and gaps</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>CV reading (Candidate Intake / CV Intelligence, in part)</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>The thirteen-stage pipeline with agent authority enforced</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Three dashboards</td><td><span class="pill open">running</span></td></tr>
+      <tr><td>Automatic outreach, scheduling and follow-up</td><td><span class="pill auth">not built</span></td></tr>
+      <tr><td>Continuous background matching (rather than on page load)</td><td><span class="pill auth">not built</span></td></tr>
+      <tr><td>Conversational search and the Recruiter Copilot</td><td><span class="pill auth">not built</span></td></tr>
+      <tr><td>Automated talent discovery from outside sources</td><td><span class="pill auth">not built</span></td></tr>
     </tbody>
   </table></div>
-  <p>The two read endpoints persist nothing and contain no personal data by construction, which is why
-     they are open. Everything that writes, or that reads stored rows, requires a session.</p>
-  <pre><code># A build plan, deterministic path
-curl -s "https://aiagent.ringlypro.com/jobmd/api/v1/architect/plan?model=0"
+  <p>The four unbuilt items are automations that sit <i>on top of</i> the working parts. They are
+     specified in the architecture documents but they are not yet running services, and this page will
+     not pretend otherwise.</p>
 
-# An architecture record, and just its open questions
-curl -s "https://aiagent.ringlypro.com/jobmd/api/v1/spec" \
-  | python3 -c "import sys,json; [print(q['blocksBuild'], q['topic']) for q in json.load(sys.stdin)['record']['openQuestions']]"</code></pre>
-  <p>Every response carries its own provenance: <code>composed_by</code> (<code>model</code> or
-     <code>deterministic</code>), <code>is_simulated</code>, the <code>model</code> id or
-     <code>null</code>, and the full <code>verification</code> result. It also reports what the model
-     actually did &mdash; <code>model_rewrites_parsed</code> and <code>model_rewrites_accepted</code>
-     &mdash; so a model that answered but changed nothing can never be mistaken for one that had
-     nothing to add.</p>
-
-  <h2 id="rules">6. The rules enforced in code</h2>
-  <p>These are not instructions given to a model. They are checks that run on every document before it
-     is returned, and a document that fails any of them is refused rather than shipped.</p>
-  <ul>
-    <li><b>The model never writes a named entity.</b> The specialties, agents, stages, dimensions and
-        profile fields are held in code and read verbatim, in order. The model is offered only a prose
-        rewrite, and each rewrite is discarded unless the whole document still verifies.</li>
-    <li><b>The structure is identical with or without an API key.</b> Only wording changes, and the
-        response says which path produced it.</li>
-    <li><b>Nothing is invented.</b> A component that is not in the registry, a discovery source the
-        request never named, an MCP endpoint path that appears nowhere &mdash; all rejected. Where a
-        value is unknown it is left empty and recorded as an open question.</li>
-    <li><b>Nouns are preserved.</b> Talent Intelligence Record, Robotics Division, IDNs, JobMD.io
-        Recruiters and the agent names must survive verbatim.</li>
-    <li><b>No candidate data reaches these documents.</b> Field names are architecture; values are not.
-        Anything shaped like an email, phone number, licence, NPI or DEA number is refused.</li>
-    <li><b>The generators cannot reach the database.</b> They import no model and no connection, and
-        contain no write call &mdash; so &ldquo;never execute, deploy or migrate&rdquo; holds by reach,
-        not by promise.</li>
-    <li><b>Nothing may be dropped or reordered.</b> Fifteen specialties, eleven agents, thirteen
-        stages, seven dimensions, twenty-five and nineteen profile fields &mdash; checked as exact
-        ordered lists, because a document missing one stage still looks correct.</li>
-  </ul>
-  <div class="note"><b>How this is proved.</b> The test suite does not check the happy path. It builds
-    valid documents, deliberately breaks them &mdash; drops a stage, invents a component, grants an
-    agent authority over Placement, leaks a licence number, hides the truncation &mdash; and fails
-    unless every one is refused.</div>
-
-  <h2 id="not-built">7. What is not built yet</h2>
-  <p>The platform documents are generated and verified. The recruitment platform itself is specified,
-     not shipped. Stated plainly so nobody reads a build plan as a running system:</p>
-  <ul>
-    <li>There is <b>no physician database yet</b>. The project request cites one as a discovery source;
-        it does not exist here, and the architecture record flags that as blocking.</li>
-    <li><b>No MCP endpoint paths exist.</b> Neither the request nor the registry names one, so the
-        record leaves the list empty rather than filling it in.</li>
-    <li><b>Section 10 of the request is truncated</b> mid-sentence, so Automated Talent Discovery lists
-        only the two sources the text actually states.</li>
-    <li>The eleven agents, the matching engine and the pipeline are <b>specified in the documents</b>
-        &mdash; they are not yet running services.</li>
-  </ul>
-
-  <h2 id="config">8. Configuration</h2>
+  <h2 id="api">9. For developers</h2>
+  <p>Two agents generate the platform's own architecture documents from the original project request.
+     They are build tooling, not part of the product a subscriber uses.</p>
   <div class="tablewrap"><table>
-    <thead><tr><th>Variable</th><th>Effect</th></tr></thead>
+    <thead><tr><th>Method</th><th>Path</th><th>Access</th><th>Returns</th></tr></thead>
     <tbody>
-      <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Enables the prose rewrite. Unset is fully supported: the documents are identical in structure and labelled <code>deterministic</code>.</td></tr>
-      <tr><td><code>JOBMD_MODEL</code></td><td>Model used for prose. Defaults to Claude Haiku.</td></tr>
-      <tr><td><code>JOBMD_JWT_SECRET</code></td><td>Signs the session cookie. Set this in production.</td></tr>
-      <tr><td><code>JOBMD_PASSWORD</code> / <code>JOBMD_OWNER_EMAIL</code></td><td>The owner account.</td></tr>
-      <tr><td><code>JOBMD_LEADS_PER_HOUR</code></td><td>Contact-form ceiling per caller. Defaults to 10.</td></tr>
-      <tr><td><code>SESSION_SALT</code></td><td>Salt for the contact form&rsquo;s IP hash. Raw IPs are never stored.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/health</code></td><td><span class="pill open">public</span></td><td>Service state and where the app lives.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/auth/signup</code></td><td><span class="pill open">public</span></td><td>Creates an account and signs you in.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/auth/login</code></td><td><span class="pill open">public</span></td><td>Signs you in.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/me</code></td><td><span class="pill auth">sign-in</span></td><td>Your account, profile and completeness.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/matches</code></td><td><span class="pill auth">physician</span></td><td>Every open position, scored.</td></tr>
+      <tr><td>POST</td><td><code>/jobmd/api/v1/apply</code></td><td><span class="pill auth">physician</span></td><td>Enters you in the pipeline as Interested.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/positions</code></td><td><span class="pill auth">sign-in</span></td><td>Open positions, or your own if a hospital.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/pipeline</code></td><td><span class="pill auth">recruiter</span></td><td>The pipeline, and the agent authority table.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/architect/plan</code></td><td><span class="pill open">public</span></td><td>The build plan document.</td></tr>
+      <tr><td>GET</td><td><code>/jobmd/api/v1/spec</code></td><td><span class="pill open">public</span></td><td>The architecture record document.</td></tr>
     </tbody>
   </table></div>
 
   <div class="rule"></div>
-  <p style="margin-top:26px"><a class="btn g" href="./">Back to JobMD.io</a></p>
+  <p style="margin-top:26px"><a class="btn p" href="signup">Create your account</a>
+     <a class="btn g" href="./" style="margin-left:10px">Back to JobMD.io</a></p>
 </div></main>
 
 <footer><div class="wrap">
