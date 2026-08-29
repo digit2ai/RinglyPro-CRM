@@ -25,7 +25,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const { sequelize, User, BuildPlan, PlanRun, Lead } = require('./models');
+const { sequelize, User, Account, Physician, Organization, Position, BuildPlan, PlanRun, Lead } = require('./models');
 const { composePlan, MODEL } = require('./services/architect');
 const { composeRecord } = require('./services/spec-architect');
 const { SCHEMA_KEYS } = require('./services/verify');
@@ -60,6 +60,11 @@ router.use(express.urlencoded({ extended: true }));
 try { router.use('/api/tts', require('../../../src/routes/presentation-tts')); }
 catch (e) { console.warn('[jobmd] TTS route not mounted —', e.message); }
 
+// ── The subscriber application ─────────────────────────────────────────────
+// Its own cookie, its own roles, its own 401s. Mounted before the operator
+// auth block so the two session systems never collide.
+router.use('/api/v1', require('./routes/app'));
+
 // ── Boot ────────────────────────────────────────────────────────────────────
 let initError = null;
 let initDone = false;
@@ -76,7 +81,13 @@ async function init() {
     // Two generators, one table. `kind` is what distinguishes a build plan
     // from an architecture record; existing rows predate the spec generator.
     'ALTER TABLE jm_build_plans ADD COLUMN IF NOT EXISTS kind VARCHAR(64) DEFAULT \'build_plan\'',
-    'ALTER TABLE jm_plan_runs   ADD COLUMN IF NOT EXISTS kind VARCHAR(64) DEFAULT \'build_plan\''
+    'ALTER TABLE jm_plan_runs   ADD COLUMN IF NOT EXISTS kind VARCHAR(64) DEFAULT \'build_plan\'',
+    'ALTER TABLE jm_accounts    ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ',
+    'ALTER TABLE jm_physicians  ADD COLUMN IF NOT EXISTS ai_summary_by VARCHAR(64)',
+    // An unanswered yes/no must read as unanswered, not as "no".
+    'ALTER TABLE jm_physicians  ALTER COLUMN board_certified DROP DEFAULT',
+    'ALTER TABLE jm_physicians  ALTER COLUMN relocation_willing DROP DEFAULT',
+    'ALTER TABLE jm_physicians  ALTER COLUMN robotics_program_leadership DROP DEFAULT'
   ];
   for (const sql of alters) {
     try { await sequelize.query(sql); } catch (e) { console.warn('[jobmd] alter skipped:', e.message); }
@@ -166,6 +177,7 @@ router.get('/health', function (req, res) {
     model: process.env.ANTHROPIC_API_KEY ? MODEL : null,
     narrative_path: process.env.ANTHROPIC_API_KEY ? 'model' : 'deterministic',
     agents: ['JobMD Build Plan Architect', 'JobMD.io Platform Architecture Spec Generator'],
+    app: { signup: '/jobmd/signup', dashboard: '/jobmd/app' },
     counts: {
       medical_specialties: C.MEDICAL_SPECIALTIES.length,
       agents: C.AGENTS.length,
@@ -410,6 +422,10 @@ router.get('/', function (req, res) { res.sendFile(path.join(publicDir, 'index.h
 router.get(['/how-it-works', '/how-it-works/'], function (req, res) {
   res.sendFile(path.join(publicDir, 'how-it-works.html'));
 });
+// The application itself. One shell renders the right dashboard for the role.
+router.get(['/signup', '/signup/'], function (req, res) { res.sendFile(path.join(publicDir, 'signup.html')); });
+router.get(['/login', '/login/'],  function (req, res) { res.sendFile(path.join(publicDir, 'login.html')); });
+router.get(['/app', '/app/'],      function (req, res) { res.sendFile(path.join(publicDir, 'app.html')); });
 
 // ── Catch-all ───────────────────────────────────────────────────────────────
 //
