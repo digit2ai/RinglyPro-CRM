@@ -28,13 +28,28 @@ const ORGS = [
     facilities: 5, robotics_platforms: ['da Vinci Si'], recruiting_priorities: 'Academic transplant and hepatobiliary.' }
 ];
 
+// COMPENSATION HERE IS FIRST-YEAR STARTING SALARY, and where a public benchmark
+// exists it is anchored to one: AMN Healthcare / Merritt Hawkins, 2024 Review of
+// Physician and Advanced Practitioner Recruiting Incentives, built from 2,138
+// permanent search engagements —
+//   General Surgery       low $245K / avg $419K / high $517K
+//   Orthopedic Surgery    low $500K / avg $686K / high $815K
+//   Urology               low $300K / avg $496K / high $630K
+//   Obstetrics/Gynecology low $275K / avg $389K / high $700K
+// Robotic general surgery, general surgery, urology and gynaecology sit inside
+// those bands. The Review does not cover cardiac, thoracic, neuro, trauma,
+// transplant, hepatobiliary or colorectal surgery, so THOSE FIGURES ARE
+// ILLUSTRATIVE AND NOT BENCHMARKED - plausible, not sourced.
+//
+// An earlier version quoted $550-650K for a general surgery role, above even
+// the benchmarked HIGH, and that number reached a customer-facing demo.
 const POSITIONS = [
   { org: 'Sample Regional Medical Center', title: 'Robotic General Surgeon', specialty: 'Robotic Surgery',
-    employment_model: 'employed', compensation_min: 550000, compensation_max: 650000, call_schedule: 'light',
+    employment_model: 'employed', compensation_min: 430000, compensation_max: 510000, call_schedule: 'light',
     robotics_required: true, robotic_platforms: ['da Vinci Xi'], min_years_experience: 5,
     procedures: ['robotic cholecystectomy', 'robotic hernia repair'], start_date: '2026-11-01' },
   { org: 'Sample Regional Medical Center', title: 'Urologist', specialty: 'Urology',
-    employment_model: 'employed', compensation_min: 480000, compensation_max: 560000, call_schedule: 'moderate',
+    employment_model: 'employed', compensation_min: 440000, compensation_max: 550000, call_schedule: 'moderate',
     robotics_required: true, robotic_platforms: ['da Vinci Xi'], min_years_experience: 3,
     procedures: ['robotic prostatectomy'], start_date: '2026-10-01' },
   { org: 'Sample Health System', title: 'Cardiac Surgeon', specialty: 'Cardiac Surgery',
@@ -53,7 +68,7 @@ const POSITIONS = [
     robotics_required: true, robotic_platforms: ['Mazor X'], min_years_experience: 6,
     procedures: ['spinal fusion'], start_date: '2027-02-01' },
   { org: 'Sample Coastal Hospital', title: 'General Surgeon', specialty: 'General Surgery',
-    employment_model: 'employed', compensation_min: 420000, compensation_max: 500000, call_schedule: 'moderate',
+    employment_model: 'employed', compensation_min: 380000, compensation_max: 470000, call_schedule: 'moderate',
     robotics_required: false, min_years_experience: 2, procedures: ['appendectomy', 'cholecystectomy'],
     start_date: '2026-10-15' },
   { org: 'Sample Coastal Hospital', title: 'Trauma Surgeon', specialty: 'Trauma Surgery',
@@ -69,7 +84,7 @@ const POSITIONS = [
     robotics_required: true, robotic_platforms: ['da Vinci Si'], min_years_experience: 4,
     procedures: ['Whipple', 'hepatectomy'], start_date: '2027-01-01' },
   { org: 'Sample Health System', title: 'Gynecologic Surgeon', specialty: 'Gynecology',
-    employment_model: 'employed', compensation_min: 400000, compensation_max: 480000, call_schedule: 'light',
+    employment_model: 'employed', compensation_min: 340000, compensation_max: 430000, call_schedule: 'light',
     robotics_required: true, robotic_platforms: ['da Vinci Xi'], min_years_experience: 3,
     procedures: ['robotic hysterectomy'], start_date: '2026-11-01' },
   { org: 'Sample Regional Medical Center', title: 'Colon & Rectal Surgeon', specialty: 'Colon & Rectal Surgery',

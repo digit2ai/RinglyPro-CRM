@@ -252,6 +252,35 @@ function parseQuery(q) {
 }
 
 /** Apply a parsed filter to real physician rows. Nothing is generated. */
+/**
+ * Does a searched-for platform match one on a record?
+ *
+ * NOT string equality, which is what this was and which made the commonest
+ * search in the division return nothing. The vocabulary deliberately holds both
+ * families ("da Vinci", "Hugo") and specific systems ("da Vinci Xi", "Hugo
+ * RAS"), and cv.js stores the MOST SPECIFIC one it can find — so every real
+ * record says "da Vinci Xi" while every recruiter types "da Vinci". Equality
+ * meant the Copilot reported "trained on da Vinci" as an applied filter and
+ * then returned zero, which reads as "we have no such surgeon" rather than
+ * "the filter did not work". That is precisely the false belief the Copilot's
+ * `ignored[]` exists to prevent, arriving through the front door.
+ *
+ * A family therefore matches its own systems, by WHOLE TOKENS: "da Vinci"
+ * matches "da Vinci Xi", and "da Vinci X" does NOT match "da Vinci Xi" —
+ * the X and the Xi are different systems and a recruiter who names one is not
+ * asking for the other.
+ */
+function platformTokens(s) {
+  return String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+function platformMatches(wanted, held) {
+  const w = platformTokens(wanted), h = platformTokens(held);
+  if (!w.length || !h.length) return false;
+  const short = w.length <= h.length ? w : h;
+  const long = w.length <= h.length ? h : w;
+  return short.every(function (t, i) { return long[i] === t; });
+}
+
 function applyQuery(parsed, physicians) {
   const f = parsed.filters;
   return physicians.filter(function (p) {
@@ -260,7 +289,7 @@ function applyQuery(parsed, physicians) {
     if (f.min_years && (p.years_experience || 0) < f.min_years) return false;
     if (f.robotic && !(Array.isArray(p.robotic_platforms) && p.robotic_platforms.length)) return false;
     if (f.platform && !(Array.isArray(p.robotic_platforms) &&
-        p.robotic_platforms.some(function (x) { return String(x).toLowerCase() === f.platform.toLowerCase(); }))) return false;
+        p.robotic_platforms.some(function (x) { return platformMatches(f.platform, x); }))) return false;
     if (f.max_expectation && p.compensation_expectation && p.compensation_expectation > f.max_expectation) return false;
     if (f.relocation_willing && p.relocation_willing !== true) return false;
     if (f.state) {
@@ -272,4 +301,4 @@ function applyQuery(parsed, physicians) {
   });
 }
 
-module.exports = { outreachDraft, schedulingPropose, followupScan, parseQuery, applyQuery, STALL_DAYS };
+module.exports = { platformMatches, outreachDraft, schedulingPropose, followupScan, parseQuery, applyQuery, STALL_DAYS };

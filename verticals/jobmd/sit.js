@@ -22,6 +22,7 @@ const express = require('express');
 
 const ROOT = path.join(__dirname, '..', '..');
 const C = require('./src/services/corpus');
+const agents = require('./src/services/agents');
 const { buildPlan, buildEvidence } = require('./src/services/plan');
 const { verifyPlan, unverifiedIdentifiers, SCHEMA_KEYS } = require('./src/services/verify');
 const { composePlan } = require('./src/services/architect');
@@ -1218,6 +1219,21 @@ function mustReject(name, mutate, expectConstraint) {
      R.body.ignored.indexOf('southeast') !== -1, JSON.stringify(R.body.ignored));
   ok('agents: and it says so in the note', /NOT used as filters/.test(R.body.note));
 
+  // A FAMILY NAME MUST MATCH ITS OWN SYSTEMS. Every real record says
+  // "da Vinci Xi" because cv.js stores the most specific platform it finds,
+  // while every recruiter types "da Vinci". String equality meant the commonest
+  // search in the robotics division reported "trained on da Vinci" as an
+  // applied filter and then returned nobody — which reads as "we have no such
+  // surgeon", not as "the filter is broken".
+  [['da Vinci', 'da Vinci Xi', true], ['da Vinci Xi', 'da Vinci Xi', true],
+   ['Hugo', 'Hugo RAS', true], ['da Vinci Xi', 'da Vinci', true],
+   ['da Vinci X', 'da Vinci Xi', false], ['da Vinci', 'Mazor X', false],
+   ['ROSA', 'MAKO', false], ['Mazor X', 'Mazor X', true]
+  ].forEach(function (t) {
+    ok('agents: platform "' + t[0] + '" vs "' + t[1] + '" is ' + t[2],
+       agents.platformMatches(t[0], t[1]) === t[2]);
+  });
+
   // Background rescan is a recruiter capability, not a hospital one.
   eq('agents: a hospital cannot trigger a platform-wide rescan',
      (await jreq('POST', '/api/v1/agents/rescan', {}, hospCookie)).status, 403);
@@ -1237,36 +1253,122 @@ function mustReject(name, mutate, expectConstraint) {
   ok('walkthrough: the landing page does NOT link to it', !/walkthrough/.test(html));
   ok('walkthrough: the guide does NOT link to it', !/walkthrough/.test(doc));
   ok('walkthrough: it is marked noindex', /name="robots" content="noindex"/.test(wt));
-  // THE NUMBERS MUST COME FROM THE REAL ENGINE, not be typed in. Recompute
-  // them here and compare — a demo quoting invented scores is the exact thing
-  // this whole vertical exists to avoid.
-  const demoMatch = wt.match(/var DEMO=(\[[\s\S]*?\]);/);
-  ok('walkthrough: it embeds computed match data', !!demoMatch);
-  let demo = null;
-  if (demoMatch) {
-    demo = JSON.parse(demoMatch[1]);
-    eq('walkthrough: four scored positions', demo.length, 4);
-    ok('walkthrough: every embedded row carries all seven dimensions',
-       demo.every(function (d) { return d.dims.length === C.MATCHING_DIMENSIONS.length; }));
-    ok('walkthrough: rows are ordered best first',
-       demo.every(function (d, i) { return i === 0 || demo[i - 1].score >= d.score; }));
-    // Re-score the top row with the live engine and require the same number.
-    const demoDoc = { specialty: 'Robotic Surgery', board_certified: true, years_experience: 11,
-      procedure_expertise: ['robotic cholecystectomy', 'robotic hernia repair'],
-      robotic_platforms: ['da Vinci Xi'], robotic_years: 6, robotics_program_leadership: true,
-      geographic_preferences: ['FL'], relocation_willing: false, compensation_expectation: 600000,
-      employment_preference: 'employed', call_tolerance: 'light', available_from: '2026-10-01',
-      publications: 4 };
-    const demoPos = { specialty: 'Robotic Surgery', state: 'FL', robotics_required: true,
-      robotic_platforms: ['da Vinci Xi'], min_years_experience: 5, board_certification_required: true,
-      procedures: ['robotic cholecystectomy', 'robotic hernia repair'],
-      compensation_min: 550000, compensation_max: 650000, employment_model: 'employed',
-      call_schedule: 'light', start_date: '2026-11-01' };
-    const live = require('./src/services/matching').scoreMatch(demoDoc, demoPos);
-    eq('walkthrough: the headline score matches the live engine exactly', demo[0].score, live.score);
-    ok('walkthrough: a weaker match shows real gaps',
-       demo[demo.length - 1].gaps.length > 0);
+  // ── THE SIMULATOR, AND THE SINGLE RENDERER ────────────────────────────
+  //
+  // The walkthrough no longer draws pictures of the dashboards. Steps 3-7
+  // iframe /simulator, which runs the PRODUCT'S OWN renderer against captured
+  // API responses. That is only worth anything if the renderer really is one
+  // file — the moment app.html keeps its own copy, the demo starts showing a
+  // screen the product does not have.
+  const uiJs  = fs.readFileSync(path.join(__dirname, 'public', 'dashboard-ui.js'), 'utf8');
+  const uiCss = fs.readFileSync(path.join(__dirname, 'public', 'dashboard-ui.css'), 'utf8');
+  const appHtml = fs.readFileSync(path.join(__dirname, 'public', 'app.html'), 'utf8');
+  const simHtml = fs.readFileSync(path.join(__dirname, 'public', 'simulator.html'), 'utf8');
+
+  ['dashboard-ui.js', 'dashboard-ui.css', 'simulator-fixtures.js', 'simulator']
+    .forEach(async function () {});
+  for (const asset of ['/jobmd/dashboard-ui.js', '/jobmd/dashboard-ui.css',
+                       '/jobmd/simulator-fixtures.js', '/jobmd/simulator', '/jobmd/simulator/']) {
+    eq('simulator: ' + asset + ' is served', (await req('GET', asset)).status, 200);
   }
+  ['app.html', 'simulator.html'].forEach(function (f) {
+    const src = f === 'app.html' ? appHtml : simHtml;
+    ok('renderer: ' + f + ' loads the shared renderer', /src="dashboard-ui\.js"/.test(src));
+    ok('renderer: ' + f + ' loads the shared stylesheet', /href="dashboard-ui\.css"/.test(src));
+  });
+  // Neither host may re-implement a pane. If one of these names appears in a
+  // page rather than in the shared file, the two have started to drift.
+  ['renderPhysician', 'renderEmployer', 'paneMatches', 'panePipeline', 'paneCopilot']
+    .forEach(function (fn) {
+      ok('renderer: ' + fn + ' lives only in dashboard-ui.js',
+         uiJs.indexOf('function ' + fn) !== -1 &&
+         appHtml.indexOf('function ' + fn) === -1 &&
+         simHtml.indexOf('function ' + fn) === -1);
+    });
+  // The renderer must not be able to reach the network by itself: the host
+  // installs a transport. Otherwise a missing fixture would quietly call the
+  // real API from a demo page.
+  ok('renderer: it has no transport of its own', !/fetch\s*\(/.test(uiJs));
+  ok('renderer: a host must install one', /API_TRANSPORT/.test(uiJs) && /setApiTransport/.test(uiJs));
+  ok('simulator: it never calls fetch or XHR',
+     !/fetch\s*\(/.test(simHtml) && !/XMLHttpRequest/.test(simHtml));
+  ok('simulator: it is noindex', /name="robots" content="noindex/.test(simHtml));
+  ok('simulator: it says plainly that the data is sample data',
+     /samples?\./i.test(simHtml) && /captured data/i.test(simHtml));
+
+  // THE NUMBERS MUST COME FROM THE REAL ENGINE, not be typed in. The fixtures
+  // are captured API responses; re-score the top one here and require the same
+  // number. A demo quoting invented scores is the exact thing this vertical
+  // exists to avoid.
+  const fixSrc = fs.readFileSync(path.join(__dirname, 'public', 'simulator-fixtures.js'), 'utf8');
+  let demo = null, FIX = null;
+  try {
+    FIX = JSON.parse(fixSrc.slice(fixSrc.indexOf('var FIXTURES = ') + 15,
+                                 fixSrc.lastIndexOf(';\nvar FIXTURE_META')));
+  } catch (e) { /* reported below */ }
+  ok('simulator: the fixtures parse', !!FIX);
+  ok('simulator: they were captured, not hand-written',
+     /GENERATED — do not edit by hand/.test(fixSrc));
+  if (FIX) {
+    const mm = FIX['physician:/matches'];
+    ok('simulator: the physician fixture carries scored matches', !!(mm && mm.items && mm.items.length));
+    demo = (mm.items || []).map(function (x) { return { score: x.score, dims: x.dimensions,
+      title: x.position.title, gaps: x.gaps || [] }; });
+    ok('simulator: every match carries all seven dimensions',
+       demo.every(function (d) { return d.dims.length === C.MATCHING_DIMENSIONS.length; }));
+    ok('simulator: matches are ordered best first',
+       demo.every(function (d, i) { return i === 0 || demo[i - 1].score >= d.score; }));
+    ok('simulator: a weaker match shows real gaps',
+       demo[demo.length - 1].gaps.length > 0);
+    // No fixture may name a real person or hospital.
+    ok('simulator: every organisation in the fixtures is labelled a sample',
+       (FIX['hospital:/positions'] || { items: [] }).items.every(function (p) {
+         return !p.organization || /^Sample /.test(p.organization.name); }));
+    // Nothing the agents produced may claim to have been sent.
+    const acts = (FIX['recruiter:/agents/actions'] || { items: [] }).items || [];
+    ok('simulator: no agent output claims to have been sent',
+       acts.every(function (a) { return a.status !== 'sent'; }));
+    // RE-SCORE THE TOP MATCH WITH THE LIVE ENGINE and require the same number.
+    // The physician and the position are read out of the fixtures themselves,
+    // so this compares the captured score against what the engine produces for
+    // that exact pair today — it catches an engine change AND a stale capture,
+    // and it needs no hand-copied profile to go out of date.
+    const prof = (FIX['physician:/profile'] || {}).profile;
+    // The position inside a match is a TRIMMED projection for display — it has
+    // no procedures, platforms or minimum years. Re-scoring against that under-
+    // scores the clinical and technology dimensions and looks like drift when
+    // nothing has drifted. Score against the full row the hospital view carries.
+    const topId = ((FIX['physician:/matches'] || { items: [] }).items[0] || {}).position;
+    const topPos = ((FIX['hospital:/positions'] || { items: [] }).items || [])
+      .filter(function (x) { return topId && x.id === topId.id; })[0];
+    ok('simulator: the fixtures carry the profile the scores came from', !!prof);
+    ok('simulator: and the full position row, not just its display projection',
+       !!(topPos && topPos.procedures && topPos.min_years_experience !== undefined));
+    if (prof && topPos) {
+      const live = require('./src/services/matching').scoreMatch(prof, topPos);
+      eq('simulator: the top score matches the live engine exactly', demo[0].score, live.score);
+      eq('simulator: and so does every dimension',
+         JSON.stringify(demo[0].dims.map(function (d) { return d.score; })),
+         JSON.stringify(live.dimensions.map(function (d) { return d.score; })));
+    }
+  }
+
+  // The walkthrough must read the SAME fixtures the live panes render. It used
+  // to carry its own hardcoded copy, and the moment the panes went live the two
+  // could disagree — Ava reading one score beside a dashboard showing another.
+  ok('walkthrough: it loads the fixtures the panes render',
+     /<script src="simulator-fixtures\.js">/.test(wt));
+  ok('walkthrough: DEMO is derived from them, not typed',
+     /var DEMO=\(function\(\)\{/.test(wt) && !/var DEMO=\[\{/.test(wt));
+  // Steps 3-7 show the real interface; 1-2 predate the dashboard and stay drawn.
+  eq('walkthrough: five steps render the live dashboard',
+     (wt.match(/return live\(/g) || []).length, 5);
+  ['physician', 'hospital', 'recruiter'].forEach(function (r) {
+    ok('walkthrough: a live pane exists for the ' + r,
+       new RegExp("live\\('" + r + "'").test(wt));
+  });
+  ok('walkthrough: the live panes are framed as the app', /liveframe/.test(wt) && /livewrap/.test(wt));
+
   ok('walkthrough: it says the data is sample data', /sample data/i.test(wt));
   ok('walkthrough: it states the platform sends nothing',
      /platform sends nothing itself|Nothing is sent by the platform/i.test(wt));
@@ -1282,7 +1384,17 @@ function mustReject(name, mutate, expectConstraint) {
     const spellSrc = (wt.match(/function spell\(n\)\{([\s\S]*?)\n\}/) || [])[1];
     ok('walkthrough/ava: numbers are spelled for the reader', !!spellSrc);
     const spell = new Function('n', spellSrc);
-    const NARR = new Function('DEMO', 'spell', 'return [' + wtNarrSrc + ']')(demo, spell);
+    // The narration names the weaker role it discusses rather than indexing
+    // into a score-ordered array, so evaluate it the way the page does.
+    const weakSrc = (wt.match(/var DEMO_WEAK = ([^;]+);/) || [])[1];
+    ok('walkthrough/ava: it addresses the weak match by name, not by index', !!weakSrc);
+    const DEMO_WEAK = new Function('DEMO', 'demoBy',
+      'return ' + (weakSrc || 'DEMO[DEMO.length-1]'))(demo, function (t) {
+        return demo.filter(function (d) { return d.title.indexOf(t) !== -1; })[0] || null; });
+    ok('walkthrough/ava: the weak match it names is a real one in the fixtures',
+       !!DEMO_WEAK && demo.some(function (d) { return d.score === DEMO_WEAK.score; }));
+    const NARR = new Function('DEMO', 'DEMO_WEAK', 'spell',
+      'return [' + wtNarrSrc + ']')(demo, DEMO_WEAK, spell);
 
     eq('walkthrough/ava: one opening plus one segment per step', NARR.length, 8);
 
@@ -1301,8 +1413,8 @@ function mustReject(name, mutate, expectConstraint) {
        NARR[4].indexOf(spell(demo[0].score) + ' out of one hundred') !== -1,
        'expected "' + spell(demo[0].score) + ' out of one hundred" in segment 4');
     ok('walkthrough/ava: the spoken gap score is the engine\'s score',
-       NARR[4].indexOf('It scores ' + spell(demo[2].score)) !== -1,
-       'expected "It scores ' + spell(demo[2].score) + '" in segment 4');
+       NARR[4].indexOf('It scores ' + spell(DEMO_WEAK.score)) !== -1,
+       'expected "It scores ' + spell(DEMO_WEAK.score) + '" in segment 4');
 
     // Each segment must actually be about its step.
     ['one', 'two', 'three', 'four', 'five', 'six', 'seven'].forEach(function (w, n) {
