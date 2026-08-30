@@ -163,6 +163,7 @@ function cifraFundacion(f) {
       valor: Number(f.proxy_valor),
       es_estimacion: true,
       etiqueta: 'ESTIMACION (proxy: ' + (f.proxy_tipo || 'sin especificar') + ')',
+      proxy_tipo: f.proxy_tipo || null,
       fuente: f.proxy_fuente || null,
       ejercicio: f.proxy_ejercicio || null,
       caducado: presupuestoCaducado(f.proxy_ejercicio),
@@ -204,7 +205,26 @@ function ordenarFundaciones(filas) {
   };
 }
 
+/**
+ * LA CLAVE DE DUPLICADOS, EN UN SOLO SITIO.
+ *
+ * Existia dos veces con formatos distintos: el sembrador la construia con tres
+ * partes y el importador con cuatro. Las claves no coincidian, asi que la
+ * importacion creo un segundo "Fundacion Telefonica" sin detectar nada — el
+ * duplicado exacto que HISP-101 manda evitar. Toda escritura pasa por aqui.
+ *
+ * nombre + pais + dominio de email, mas la naturaleza: dos entidades del mismo
+ * nombre en el mismo pais pueden ser una fundacion y su empresa matriz.
+ */
+function claveDedupe(f) {
+  const n = (v) => String(v == null ? '' : v).normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+  const dominio = String((f && f.email) || '').split('@')[1] || '';
+  return [n(f && f.naturaleza) || 'persona_fisica', n(f && f.nombre), n(f && f.pais), n(dominio)].join('|');
+}
+
 module.exports = {
+  claveDedupe,
   INSTANCIA,
   TIPOLOGIAS, NATURALEZAS, ESTADOS_FICHA, ESTADOS_INTERACCION, ORIGENES,
   TIPOLOGIAS_SOCIO, esSocioFormal,

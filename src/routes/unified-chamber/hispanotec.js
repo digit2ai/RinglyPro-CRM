@@ -19,6 +19,11 @@ const express = require('express');
 const { sequelize, QueryTypes, authMiddleware } = require('./lib/shared');
 const dom = require('../../services/hispanotec/domain');
 const assistant = require('../../services/hispanotec/assistant');
+const importar = require('../../services/hispanotec/importar');
+const enriquecer = require('../../services/hispanotec/enriquecer');
+const matching = require('../../services/hispanotec/matching');
+const multer = require('multer');
+const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 6 * 1024 * 1024 } });
 
 const router = express.Router({ mergeParams: true });
 
@@ -250,6 +255,220 @@ router.post('/assistant', async (req, res) => {
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
+});
+
+// ---- HISP-101 — ingesta masiva: analizar, y solo despues escribir ----------
+//
+// Dos endpoints a proposito. /import/analizar no toca la base: devuelve los
+// errores fila a fila y los duplicados para que una persona los mire. Solo
+// /import/aplicar escribe, y solo las filas que el analisis aprobo.
+router.post('/import/analizar', requiereRol('administracion'), subida.single('fichero'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: 'Falta el fichero.' });
+    const existentes = await sequelize.query(
+      'SELECT dedupe_key, nombre FROM hd_entries WHERE chamber_id = :c AND dedupe_key IS NOT NULL',
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT });
+    const r = importar.analizar(req.file.buffer, req.file.originalname, existentes,
+      { origen: (req.body || {}).origen });
+    if (!r.ok) return res.status(400).json({ success: false, ...r });
+    // El plan se guarda en memoria de proceso el tiempo justo para confirmarlo.
+    const plan = r._validas; delete r._validas;
+    PLANES.set(planId(req), { filas: plan, origen: r.origen, at: Date.now() });
+    await audita(req, 'import_analizado', r.fichero,
+      `${r.validas} validas, ${r.con_error} con error, ${r.duplicadas} duplicadas`);
+    res.json({ success: true, data: r });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// El plan vive 15 minutos. Mas alla, se vuelve a subir el fichero: confirmar a
+// ciegas algo analizado hace una hora es confirmar otra cosa.
+const PLANES = new Map();
+function planId(req) { return `${req.chamber_id}:${(req.member && req.member.id) || 0}`; }
+setInterval(() => {
+  const corte = Date.now() - 15 * 60 * 1000;
+  for (const [k, v] of PLANES) if (v.at < corte) PLANES.delete(k);
+}, 5 * 60 * 1000).unref();
+
+router.post('/import/aplicar', requiereRol('administracion'), async (req, res) => {
+  try {
+    const plan = PLANES.get(planId(req));
+    if (!plan) {
+      return res.status(409).json({ success: false,
+        error: 'No hay un analisis reciente que confirmar. Vuelve a subir el fichero.' });
+    }
+    const esPublica = plan.origen === 'fuente_publica';
+    const art14 = esPublica ? new Date(Date.now() + 30 * 24 * 3600 * 1000) : null;
+    let creadas = 0; const fallos = [];
+
+    for (const v of plan.filas) {
+      const d = v.datos;
+      try {
+        await sequelize.query(
+          `INSERT INTO hd_entries
+             (chamber_id, nombre, naturaleza, tipologia, pais, especialidad, experiencia,
+              localizacion, email, telefono, web, sector, tamano, notas,
+              estado_ficha, origen, base_legal, art14_due_at, dedupe_key, creado_por)
+           VALUES (:c,:nom,:nat,:tip,:pais,:esp,:exp,:loc,:mail,:tel,:web,:sec,:tam,:notas,
+                   'pendiente_validacion', :origen, :base, :art14, :clave, :actor)`,
+          { replacements: {
+              c: req.chamber_id, nom: d.nombre, nat: d.naturaleza, tip: d.tipologia,
+              pais: d.pais || null, esp: d.especialidad || null, exp: d.experiencia || null,
+              loc: d.localizacion || null, mail: d.email || null, tel: d.telefono || null,
+              web: d.web || null, sec: d.sector || null, tam: d.tamano || null,
+              notas: d.notas || null, origen: plan.origen,
+              base: esPublica ? 'Interes legitimo — dato de fuente publica (art. 14 RGPD aplicable)' : null,
+              art14, clave: v.dedupe_key, actor: (req.member && req.member.id) || null },
+            type: QueryTypes.INSERT });
+        creadas++;
+      } catch (e) { fallos.push({ fila: v.fila, nombre: d.nombre, error: e.message.slice(0, 160) }); }
+    }
+    PLANES.delete(planId(req));
+    await audita(req, 'import_aplicado', plan.origen, `${creadas} fichas creadas, ${fallos.length} fallos`);
+
+    res.json({ success: true, data: {
+      creadas, fallos,
+      estado: 'Todas entran como pendiente_validacion. Ninguna se publica sin revision humana.',
+      art14: esPublica
+        ? 'Origen fuente publica: cada ficha lleva su base legal y la notificacion del art. 14 RGPD '
+        + 'vence en un mes desde hoy.' : null,
+    }});
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ---- HISP-102 — enriquecimiento: propone campo a campo, no publica ---------
+router.post('/entries/:id/enriquecer', requiereRol('gestion'), async (req, res) => {
+  try {
+    const [ficha] = await sequelize.query(
+      'SELECT * FROM hd_entries WHERE id = :id AND chamber_id = :c',
+      { replacements: { id: req.params.id, c: req.chamber_id }, type: QueryTypes.SELECT });
+    if (!ficha) return res.status(404).json({ success: false, error: 'Ficha no encontrada' });
+
+    const r = await enriquecer.proponer(ficha);
+    // Cada propuesta se guarda como 'propuesto'. La ficha NO cambia.
+    for (const pr of (r.propuestas || [])) {
+      await sequelize.query(
+        `INSERT INTO hd_entry_fields (chamber_id, entry_id, campo, valor, origen, fuente, estado)
+         VALUES (:c,:e,:campo,:valor,'ia',:fuente,'propuesto')`,
+        { replacements: { c: req.chamber_id, e: ficha.id, campo: pr.campo,
+                          valor: pr.valor, fuente: pr.fuente + ' (confianza ' + pr.confianza + ')' },
+          type: QueryTypes.INSERT });
+    }
+    await audita(req, 'enriquecimiento_propuesto', 'entry:' + ficha.id,
+      `${(r.propuestas || []).length} campo(s) propuestos`);
+    res.json({ success: true, data: r });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.get('/entries/:id/propuestas', requiereRol('gestion'), async (req, res) => {
+  const rows = await sequelize.query(
+    `SELECT * FROM hd_entry_fields WHERE chamber_id = :c AND entry_id = :e AND estado = 'propuesto'
+      ORDER BY id`,
+    { replacements: { c: req.chamber_id, e: req.params.id }, type: QueryTypes.SELECT });
+  res.json({ success: true, data: rows });
+});
+
+// Aceptar / editar / rechazar UN campo. Uno por peticion, deliberadamente:
+// aceptar diez de golpe es no revisar ninguno.
+router.patch('/propuestas/:pid', requiereRol('gestion'), async (req, res) => {
+  try {
+    const accion = String((req.body || {}).accion || '');
+    if (!['aceptar', 'rechazar'].includes(accion)) {
+      return res.status(400).json({ success: false, error: "accion debe ser 'aceptar' o 'rechazar'" });
+    }
+    const [pr] = await sequelize.query(
+      "SELECT * FROM hd_entry_fields WHERE id = :id AND chamber_id = :c AND estado = 'propuesto'",
+      { replacements: { id: req.params.pid, c: req.chamber_id }, type: QueryTypes.SELECT });
+    if (!pr) return res.status(404).json({ success: false, error: 'Propuesta no encontrada o ya resuelta' });
+
+    // El validador puede EDITAR antes de aceptar: se guarda lo que aprobo, no
+    // lo que propuso la IA.
+    const valorFinal = accion === 'aceptar'
+      ? String((req.body || {}).valor != null ? req.body.valor : pr.valor).slice(0, 500) : pr.valor;
+
+    await sequelize.query(
+      `UPDATE hd_entry_fields SET estado = :est, valor = :val, decidido_por = :who,
+              decidido_en = NOW(), origen = :origen WHERE id = :id`,
+      { replacements: { est: accion === 'aceptar' ? 'aceptado' : 'rechazado', val: valorFinal,
+          who: (req.member && req.member.id) || null,
+          origen: (accion === 'aceptar' && String(req.body.valor || '') !== String(pr.valor)) ? 'humano' : pr.origen,
+          id: pr.id }, type: QueryTypes.UPDATE });
+
+    // El nombre de columna se interpola en el SQL, asi que NO puede venir de la
+    // base de datos sin mas: se comprueba contra una lista literal escrita aqui.
+    // Aunque hoy solo pueda contener valores de enriquecer.CAMPOS, una lista en
+    // el punto de interpolacion es lo que hace que siga siendo cierto manana.
+    const ACTUALIZABLES = {
+      sector: 'texto', pais: 'texto', tamano: 'texto', especialidad: 'texto',
+      localizacion: 'texto', web: 'texto', lineas_actuacion: 'jsonb',
+    };
+    if (accion === 'aceptar' && ACTUALIZABLES[pr.campo]) {
+      // lineas_actuacion es JSONB: un string suelto rompe el INSERT, asi que se
+      // convierte a array. Antes este campo se aceptaba y no se aplicaba nunca.
+      const esJson = ACTUALIZABLES[pr.campo] === 'jsonb';
+      const val = esJson
+        ? JSON.stringify(String(valorFinal).split(/[;,]/).map((x) => x.trim()).filter(Boolean))
+        : valorFinal;
+      const sql = esJson
+        ? `UPDATE hd_entries SET ${pr.campo} = CAST(:val AS jsonb), updated_at = NOW()
+            WHERE id = :e AND chamber_id = :c`
+        : `UPDATE hd_entries SET ${pr.campo} = :val, updated_at = NOW()
+            WHERE id = :e AND chamber_id = :c`;
+      await sequelize.query(sql,
+        { replacements: { val, e: pr.entry_id, c: req.chamber_id }, type: QueryTypes.UPDATE });
+    }
+    await audita(req, 'propuesta_' + accion, 'entry:' + pr.entry_id, pr.campo);
+    res.json({ success: true, data: { id: pr.id, campo: pr.campo, estado: accion === 'aceptar' ? 'aceptado' : 'rechazado',
+      nota: 'La ficha sigue pendiente de validacion hasta que se valide entera.' } });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Validar la ficha entera — el unico paso que la publica.
+router.post('/entries/:id/validar', requiereRol('gestion'), async (req, res) => {
+  const [n] = await sequelize.query(
+    `UPDATE hd_entries SET estado_ficha = 'validada', validado_por = :who, validado_en = NOW()
+      WHERE id = :id AND chamber_id = :c RETURNING id`,
+    { replacements: { id: req.params.id, c: req.chamber_id, who: (req.member && req.member.id) || null },
+      type: QueryTypes.SELECT });
+  if (!n || !n.length) return res.status(404).json({ success: false, error: 'Ficha no encontrada' });
+  await audita(req, 'ficha_validada', 'entry:' + req.params.id, null);
+  res.json({ success: true, data: { validada: true, por: (req.member && req.member.email) || null } });
+});
+
+// ---- HISP-106 — matching por proyecto --------------------------------------
+router.post('/matching', requiereRol('gestion'), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const etiquetas = (Array.isArray(b.etiquetas) ? b.etiquetas : String(b.etiquetas || '').split(','))
+      .map((x) => String(x).trim()).filter(Boolean).slice(0, 12);
+    if (!etiquetas.length) {
+      return res.status(400).json({ success: false,
+        error: 'Indica al menos una etiqueta tematica del proyecto.' });
+    }
+    const fichas = await sequelize.query(
+      `SELECT e.*, f.presupuesto_eur, f.presupuesto_ejercicio, f.proxy_valor, f.proxy_tipo, f.proxy_ejercicio
+         FROM hd_entries e
+    LEFT JOIN hd_foundations f ON f.entry_id = e.id AND f.chamber_id = e.chamber_id
+        WHERE e.chamber_id = :c`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT });
+
+    const r = matching.candidatos(fichas, {
+      etiquetas, naturaleza_buscada: b.naturaleza_buscada || null,
+      pais: b.pais || null, localizacion: b.localizacion || null,
+    }, {});
+
+    // Se registra lo propuesto para poder recalibrar con el tiempo.
+    if (b.project_id) {
+      for (const c of r.candidatos) {
+        await sequelize.query(
+          `INSERT INTO hd_matches (chamber_id, project_id, entry_id, score, motivos, decision)
+           VALUES (:c,:p,:e,:s,:m,'propuesto')`,
+          { replacements: { c: req.chamber_id, p: b.project_id, e: c.entry_id, s: c.score,
+                            m: JSON.stringify(c.motivos) }, type: QueryTypes.INSERT });
+      }
+    }
+    await audita(req, 'matching', etiquetas.join(','), `${r.candidatos.length} candidatos`);
+    res.json({ success: true, data: r });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 // ---- HISP-109 — el registro de accesos, visible para administracion --------
