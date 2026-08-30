@@ -469,6 +469,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Pagos
       </div>
+      <!-- Motor de Directorio Inteligente. Este archivo lo comparten TODAS las
+           camaras, asi que el enlace nace oculto y solo se muestra en cv-105
+           (HISPANOTEC). Ver el bloque que lo activa mas abajo. -->
+      <a class="sidebar-nav-item" id="hispDirLink" href="#" style="display:none;text-decoration:none;color:inherit;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/><circle cx="19" cy="17" r="2.5"/></svg>
+        Motor de Directorio
+      </a>
       <a class="sidebar-nav-item" id="guideNavLink" href="#" target="_blank" style="text-decoration:none;color:inherit;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
         Guia del Miembro
@@ -525,6 +532,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   (function(){
     var g = document.getElementById('guideNavLink');
     if (g) g.href = (BASE || '') + '/guide';
+  })();
+
+  // Motor de Directorio Inteligente — SOLO cv-105 (HISPANOTEC).
+  // El Acuerdo Marco reserva estos elementos a la capa funcional diferenciada
+  // de su Instancia, asi que el enlace no se muestra en ninguna otra camara.
+  // El servidor ademas devuelve 404 fuera de cv-105: esto es la cortesia, no
+  // el control de acceso.
+  (function(){
+    var d = document.getElementById('hispDirLink');
+    if (!d) return;
+    if (slugMatch === 'cv-105') { d.href = '/cv-105/directorio'; d.style.display = ''; }
   })();
 
   // -- State --
