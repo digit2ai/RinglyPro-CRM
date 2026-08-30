@@ -2831,6 +2831,64 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/provisioning\.run/.test(src), 'and repair by re-running the idempotent chain');
   });
 
+  // ---------------------------------------------------------------
+  // A FREE ACCOUNT MUST NEVER BE RECORDED AS A PAYING ONE.
+  //
+  // This shipped broken. The landing page's Free plan sets status:'active'
+  // before sending people to /build, and the build form's payment gate treated
+  // "already active" as proof of payment. Seven free-tier subscribers were
+  // stamped activation:'paid', with an audit line reading "after payment", and
+  // the revenue deny-list did not know 'free_plan' existed either — so they
+  // counted as customers twice over.
+  await t('REVENUE IS AN ALLOW-LIST — a new free tier cannot count as revenue by accident', () => {
+    const b = require(__dirname + '/src/services/billing');
+    assert.strictEqual(b.isNonRevenue('paid'), false, 'paid is the only revenue activation');
+    for (const free of ['free_plan', 'free_test', 'no_billing', 'stripe_test', 'pending']) {
+      assert.strictEqual(b.isNonRevenue(free), true, free + ' must never count as revenue');
+    }
+    // The whole point of inverting it: something nobody has thought of yet.
+    assert.strictEqual(b.isNonRevenue('some_tier_added_next_year'), true,
+      'an unknown activation must default to NON-revenue, not revenue');
+    assert.strictEqual(b.isNonRevenue(null), true);
+    const src = require('fs').readFileSync(__dirname + '/src/services/billing.js', 'utf8');
+    assert.ok(/REVENUE_ACTIVATIONS = \['paid'\]/.test(src), 'the allow-list must be the source of truth');
+    assert.ok(/!REVENUE_ACTIVATIONS\.includes/.test(src), 'isNonRevenue must read the allow-list');
+  });
+
+  await t('AN ACTIVE STATUS IS NOT PROOF OF PAYMENT', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    // The exact shape of the bug: status alone satisfying the gate.
+    assert.ok(!/sub\.status === 'active' \|\| sub\.stripe_customer_id/.test(src),
+      "the gate must not accept status==='active' as payment evidence");
+    assert.ok(/const hasStripe = sub && \(sub\.stripe_customer_id \|\| sub\.stripe_subscription_id\)/.test(src),
+      'payment evidence must be a Stripe object');
+    assert.ok(/FREE_ACTIVATIONS = \['free_plan', 'free_test', 'no_billing'\]/.test(src),
+      'the free activations must be named so they are let through WITHOUT being called payment');
+  });
+
+  await t('a free-plan account keeps its own stamp through the build form', () => {
+    const src = require('fs').readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+    assert.ok(/activation: wasActivatedFree \? sub\.activation : billing\.activationStamp\(\)/.test(src),
+      'a free activation must survive the build form rather than being relabelled paid');
+    // And the audit line must not claim a payment that did not happen.
+    assert.ok(/on a free activation .* No payment was taken/.test(src),
+      'the audit trail must say what actually happened');
+  });
+
+  await t('activationStamp answers about the DEPLOYMENT, so it cannot stand alone', () => {
+    // Documenting the trap that caused this: the function is correct, the
+    // call site was wrong. It knows the mode, never the account.
+    const b = require(__dirname + '/src/services/billing');
+    const savedD = process.env.JOBUP_BILLING_DISABLED;
+    process.env.JOBUP_BILLING_DISABLED = '1';
+    assert.strictEqual(b.activationStamp(), 'no_billing');
+    delete process.env.JOBUP_BILLING_DISABLED;
+    assert.ok(['paid', 'stripe_test'].includes(b.activationStamp()),
+      'with billing on it returns a PAYING stamp regardless of the account');
+    if (savedD === undefined) delete process.env.JOBUP_BILLING_DISABLED;
+    else process.env.JOBUP_BILLING_DISABLED = savedD;
+  });
+
   await t('a free-test account is STAMPED so it can never be counted as revenue', async () => {
     const s2 = await models.subscribers.create({
       email: 'sit-free@example.com', name: 'Free Test',
@@ -5101,12 +5159,24 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(row.score, undefined === row.score ? row.score : null);
     await scoped('job_matches', subA.id).destroy({ id: row.id });
   });
-  await t('a HUNTER match cannot be deleted, only closed', () => {
+  await t('deleting a HUNTER match suppresses it so it cannot come back tomorrow', () => {
+    // The contract changed: a found match used to be undeletable (close only),
+    // because removing it just meant the Hunter re-found it on the next run.
+    // It is now genuinely removable, and the reappearance is prevented by
+    // writing the job_scores ledger row BEFORE the destroy. The assertion
+    // follows the behaviour, not the old wording.
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/routes/engine.js', 'utf8');
-    assert.ok(/row\.source === 'hunter'/.test(src),
-      'deleting one just makes the Hunter find it again next run');
-    assert.ok(src.includes('Move a found match to closed instead'));
+    assert.ok(/row\.source === 'hunter' && row\.job_id != null/.test(src),
+      'the hunter path must be handled separately from manual entries');
+    const guard = src.indexOf("row.source === 'hunter'");
+    const ledger = src.indexOf('job_scores', guard);
+    const destroy = src.indexOf('destroy', guard);
+    assert.ok(ledger > guard && ledger < destroy,
+      'the suppression ledger row must be written BEFORE the row is destroyed, '
+      + 'or the Hunter finds the same posting again on the next run');
+    assert.ok(/shared ju_jobs pool is never touched|never touched/.test(src),
+      'one tenant removing a posting must not affect another tenant');
   });
   await t('the board reads the same whatever the entry came from', () => {
     const fs = require('fs');

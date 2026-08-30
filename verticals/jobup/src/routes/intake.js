@@ -417,11 +417,24 @@ router.post('/build-account', async (req, res) => {
     // return URL. The webhook is NOT relied on here: the browser redirect
     // routinely beats it, and gating on it would strand a paying customer.
     // A row already marked active (webhook won the race) is equally accepted.
+    // FREE ACTIVATIONS ARE NOT PAYMENTS. The landing page's Free plan sets
+    // status:'active' + activation:'free_plan' before sending people here, and
+    // an earlier version of this gate accepted "already active" as proof of
+    // payment. It is not: it is proof that SOMETHING activated the row, and
+    // the free plan is one of those things. The result was seven free-tier
+    // subscribers stamped activation:'paid' with an audit line reading
+    // "after payment", which is both a revenue miscount and a false record.
+    const FREE_ACTIVATIONS = ['free_plan', 'free_test', 'no_billing'];
+    const wasActivatedFree = sub && FREE_ACTIVATIONS.includes(sub.activation);
+
     let paidVia = null;
     if (!billing.disabled()) {
-      const already = sub && (sub.status === 'active' || sub.stripe_customer_id);
-      if (already) {
-        paidVia = 'subscriber_active';
+      // Payment evidence is a Stripe object, never a status flag.
+      const hasStripe = sub && (sub.stripe_customer_id || sub.stripe_subscription_id);
+      if (hasStripe) {
+        paidVia = 'stripe_customer_on_file';
+      } else if (wasActivatedFree) {
+        paidVia = null;                 // allowed through, but NOT as a payment
       } else {
         const v = await billing.verifyCheckoutSession(b.checkout_session_id);
         if (!v.ok || !v.paid || (v.subscriberId && sub && v.subscriberId !== sub.id)) {
@@ -449,8 +462,12 @@ router.post('/build-account', async (req, res) => {
       language: t.language || 'en',
       password_hash: authSvc.hashPassword(password),
       status: 'active',
-      // Never countable as revenue. Mirrors the free_test stamp.
-      activation: billing.activationStamp(),
+      // The stamp records how THIS account was activated, not what mode the
+      // deployment is in. billing.activationStamp() answers the second
+      // question, so using it alone relabelled free accounts as 'paid'.
+      // A free activation keeps its own stamp; only real payment evidence
+      // earns the paid one.
+      activation: wasActivatedFree ? sub.activation : billing.activationStamp(),
       activated_at: new Date(),
     };
     if (sub) await models.subscribers.update(fields, { where: { id: sub.id } });
@@ -511,9 +528,15 @@ router.post('/build-account', async (req, res) => {
 
     await models.audit_log.create({
       tenant_id: tenantId, actor: 'subscriber', action: 'account_built',
+      // The audit line must survive being read back months later by somebody
+      // reconciling revenue. It said "after payment" for every account,
+      // including the free-plan ones, which put a false statement in the
+      // permanent record. It now says what actually happened.
       reason: billing.disabled()
         ? 'Built from the account form with the payment layer switched off (no_billing).'
-        : `Built from the account form after payment (confirmed via ${paidVia}).`,
+        : wasActivatedFree
+          ? `Built from the account form on a free activation (${sub.activation}). No payment was taken.`
+          : `Built from the account form after payment (confirmed via ${paidVia}).`,
     });
 
     res.cookie('jobup_token', authSvc.issueSession(tenantId), authSvc.cookieOptions());
