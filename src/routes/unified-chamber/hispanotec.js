@@ -44,6 +44,33 @@ router.use((req, res, next) => {
   next();
 });
 
+// ---- SOLO ADMINISTRADORES -------------------------------------------------
+//
+// El modulo entero queda cerrado a quien no tenga rol administrativo. Un socio
+// con la direccion no ve una version reducida: no entra.
+//
+// Esto se aplica AQUI, en el servidor, y no ocultando el enlace del menu. Un
+// enlace oculto es una cortesia —quien conozca la URL entra igual—, y lo que
+// hay detras son datos personales de terceros incorporados de fuentes publicas
+// y presupuestos de fundaciones. La puerta tiene que estar cerrada, no
+// disimulada.
+//
+// Los tres niveles de HISP-109 siguen existiendo en el codigo y la proyeccion
+// por rol se mantiene: es defensa en profundidad, y el dia que HISPANOTEC
+// decida abrir el directorio a los socios numerarios —como contempla
+// HISP-105— basta con bajar este umbral a 'consulta_basica' sin tocar nada mas.
+const UMBRAL_ACCESO = 'gestion';
+router.use((req, res, next) => {
+  if (dom.rolPermite(req.hdRol, UMBRAL_ACCESO)) return next();
+  return res.status(403).json({
+    success: false,
+    error: 'El Motor de Directorio esta reservado a los administradores de HISPANOTEC.',
+    rol_actual: req.hdRol,
+    rol_requerido: UMBRAL_ACCESO,
+    nota: 'Si necesitas acceso, pidelo a un administrador de la Instancia.',
+  });
+});
+
 async function audita(req, accion, objetivo, detalle) {
   try {
     await sequelize.query(
