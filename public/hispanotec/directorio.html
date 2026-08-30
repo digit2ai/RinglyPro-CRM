@@ -89,6 +89,8 @@ color:var(--g500);margin-bottom:3px}
   <div class="tabs">
     <div class="tab on" data-t="dir">Directorio</div>
     <div class="tab" data-t="fun">Fundaciones</div>
+    <div class="tab" data-t="mat">Matching</div>
+    <div class="tab" data-t="imp">Importar</div>
     <div class="tab" data-t="ia">Asistente</div>
   </div>
 
@@ -116,6 +118,42 @@ color:var(--g500);margin-bottom:3px}
       <div class="sub">Presupuestos verificados y estimaciones proxy se agrupan por separado: no son cifras comparables.</div>
       <div id="funOut"><div class="empty">Cargando…</div></div>
     </div>
+  </section>
+
+  <!-- MATCHING -->
+  <section id="t-mat" style="display:none">
+    <div class="card">
+      <h2>Candidatos para un proyecto</h2>
+      <div class="sub">Lista propositiva. Cada candidato viaja con los motivos por los que entro, para que puedas descartarlo con criterio.</div>
+      <div class="filters">
+        <div><label for="m-tags">Etiquetas tematicas (separadas por comas)</label><input id="m-tags" type="text" placeholder="cultura, educacion, patrimonio"></div>
+        <div><label for="m-nat">Se busca</label><select id="m-nat"><option value="">Cualquiera</option></select></div>
+        <div><label for="m-pais">Pais</label><input id="m-pais" type="text" placeholder="Espana"></div>
+      </div>
+      <button class="btn" id="mBtn">Proponer candidatos</button>
+    </div>
+    <div class="card"><div id="matOut"><div class="empty">Indica al menos una etiqueta tematica.</div></div></div>
+  </section>
+
+  <!-- IMPORTAR -->
+  <section id="t-imp" style="display:none">
+    <div class="card">
+      <h2>Importar CSV o Excel</h2>
+      <div class="sub">Primero se analiza y se muestran los errores fila a fila. Nada se escribe hasta que lo confirmas.</div>
+      <div class="filters">
+        <div><label for="i-file">Fichero (.csv, .xlsx)</label><input id="i-file" type="file" accept=".csv,.xlsx,.xls"></div>
+        <div><label for="i-origen">Origen de los datos</label>
+          <select id="i-origen">
+            <option value="csv">Lista propia o facilitada por el interesado</option>
+            <option value="fuente_publica">Fuente publica (registro, camara, prensa)</option>
+          </select></div>
+      </div>
+      <div class="ia-nota">Columnas reconocidas: nombre o razon social (obligatoria), tipo, pais,
+        especialidad, experiencia, localizacion, email, telefono, web, sector, tamano, notas.
+        Elegir "fuente publica" activa la base legal y la notificacion del art. 14 RGPD en cada ficha.</div>
+      <button class="btn" id="iBtn" style="margin-top:14px">Analizar fichero</button>
+    </div>
+    <div class="card"><div id="impOut"><div class="empty">Selecciona un fichero para empezar.</div></div></div>
   </section>
 
   <!-- ASISTENTE -->
@@ -176,6 +214,8 @@ if(!TOKEN){
     document.querySelector('.tabs').style.display='none';
     document.getElementById('t-dir').style.display='none';
     document.getElementById('t-fun').style.display='none';
+    document.getElementById('t-mat').style.display='none';
+    document.getElementById('t-imp').style.display='none';
     document.getElementById('t-ia').style.display='none';
     document.getElementById('rolBar').className='aviso';
     document.getElementById('rolBar').innerHTML =
@@ -191,6 +231,7 @@ if(!TOKEN){
   document.getElementById('rolBar').innerHTML =
     '<strong>Tu rol: '+esc(META.rol_usuario)+'.</strong> '+esc(rolTxt[META.rol_usuario]||'');
   fill('f-tip', META.tipologias); fill('f-nat', META.naturalezas); fill('f-est', META.estados_ficha);
+  fill('m-nat', META.naturalezas);
   document.getElementById('iaNota').textContent = META.asistente.configurado
     ? 'Asistente con modelo de lenguaje. Toda salida es una propuesta editable, nunca una accion consumada.'
     : 'Sin modelo configurado en este despliegue: el asistente responde de forma extractiva sobre el directorio y lo indica. Nunca inventa.';
@@ -291,11 +332,101 @@ document.getElementById('send').addEventListener('click', enviar);
 document.getElementById('q').addEventListener('keydown',function(e){
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}});
 
+// ---- MATCHING -------------------------------------------------------------
+function matching(){
+  var tags=document.getElementById('m-tags').value.split(',').map(function(x){return x.trim();}).filter(Boolean);
+  if(!tags.length){ document.getElementById('matOut').innerHTML=
+    '<div class="empty">Indica al menos una etiqueta tematica del proyecto.</div>'; return; }
+  document.getElementById('matOut').innerHTML='<div class="empty">Puntuando…</div>';
+  api('/matching',{method:'POST',body:JSON.stringify({
+    etiquetas:tags, naturaleza_buscada:document.getElementById('m-nat').value||null,
+    pais:document.getElementById('m-pais').value.trim()||null })})
+  .then(function(r){
+    if(r.status!==200){ document.getElementById('matOut').innerHTML=
+      '<div class="aviso">'+esc(r.j.error||'No se pudo puntuar.')+'</div>'; return; }
+    var d=r.j.data, h='';
+    h+='<div class="aviso"><strong>Esto es una propuesta, no una activacion</strong>'+esc(d.aviso_activacion)+'</div>';
+    if(d.nota) h+='<div class="aviso"><strong>Lista corta</strong>'+esc(d.nota)+'</div>';
+    if(d.nivel1) h+='<div class="aviso"><strong>'+d.nivel1+' de '+d.candidatos.length+' son Nivel 1</strong>'+
+      'Fundaciones, patronos y mecenas: el contacto lo inicia siempre una persona. No admiten ningun envio automatizado.</div>';
+    d.candidatos.forEach(function(c,i){
+      h+='<div style="border:1px solid var(--g200);border-radius:10px;padding:14px;margin-bottom:10px">'+
+         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+         '<strong>'+(i+1)+'. '+esc(c.nombre)+'</strong>'+
+         '<span class="pill n'+c.nivel_contacto+'">Nivel '+c.nivel_contacto+'</span>'+
+         '<span class="pill '+(c.tipologia==='Prospecto'?'prospecto':'socio')+'">'+esc(c.tipologia)+'</span>'+
+         '<span style="margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums">'+c.score+'</span></div>'+
+         '<ul style="margin:8px 0 0 18px;color:var(--g700);font-size:13px">'+
+         c.motivos.map(function(m){return '<li>'+esc(m)+'</li>';}).join('')+'</ul></div>';
+    });
+    document.getElementById('matOut').innerHTML=h;
+  });
+}
+document.getElementById('mBtn').addEventListener('click', matching);
+
+// ---- IMPORTAR (analizar -> confirmar) --------------------------------------
+function analizarFichero(){
+  var f=document.getElementById('i-file').files[0];
+  if(!f){ document.getElementById('impOut').innerHTML='<div class="empty">Selecciona un fichero.</div>'; return; }
+  var fd=new FormData(); fd.append('fichero',f); fd.append('origen',document.getElementById('i-origen').value);
+  document.getElementById('impOut').innerHTML='<div class="empty">Analizando…</div>';
+  fetch(API+'/import/analizar',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:fd})
+   .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
+   .then(function(r){
+    if(r.s!==200){ document.getElementById('impOut').innerHTML=
+      '<div class="aviso"><strong>No se pudo analizar</strong>'+esc(r.j.error||'')+'</div>'; return; }
+    var d=r.j.data, h='';
+    h+='<div class="aviso"><strong>Nada se ha escrito todavia</strong>'+esc(d.nota)+'</div>';
+    if(d.aviso_art14) h+='<div class="aviso"><strong>Fuente publica — art. 14 RGPD</strong>'+esc(d.aviso_art14)+'</div>';
+    h+='<p style="margin-bottom:12px"><strong>'+d.total_filas+'</strong> filas leidas · '+
+       '<strong style="color:var(--green)">'+d.validas+'</strong> validas · '+
+       '<strong style="color:var(--red)">'+d.con_error+'</strong> con error · '+
+       '<strong style="color:var(--amber)">'+d.duplicadas+'</strong> duplicadas</p>';
+    if(d.cabeceras_ignoradas.length) h+='<div class="ia-nota">Columnas ignoradas (no reconocidas): '+
+      esc(d.cabeceras_ignoradas.join(', '))+'</div>';
+    if(d.errores.length){
+      h+='<div class="grp">Filas con error — no se importaran</div><table><thead><tr><th>Fila</th><th>Nombre</th><th>Problema</th></tr></thead><tbody>';
+      d.errores.forEach(function(e){ h+='<tr><td>'+e.fila+'</td><td>'+esc(e.nombre)+'</td><td>'+esc(e.fallos.join('; '))+'</td></tr>'; });
+      h+='</tbody></table>';
+    }
+    if(d.duplicados.length){
+      h+='<div class="grp">Duplicados — se reportan, no se fusionan</div><table><thead><tr><th>Fila</th><th>Nombre</th><th>Motivo</th></tr></thead><tbody>';
+      d.duplicados.forEach(function(x){ h+='<tr><td>'+x.fila+'</td><td>'+esc(x.nombre)+'</td><td>'+esc(x.motivo)+'</td></tr>'; });
+      h+='</tbody></table>';
+    }
+    if(d.validas){
+      h+='<div class="grp">Muestra de lo que se creara</div><table><thead><tr><th>Nombre</th><th>Naturaleza</th><th>Tipologia</th><th>Pais</th></tr></thead><tbody>';
+      d.muestra.forEach(function(m){ h+='<tr><td>'+esc(m.nombre)+'</td><td>'+esc(m.naturaleza.replace(/_/g,' '))+
+        '</td><td>'+esc(m.tipologia)+'</td><td>'+esc(m.pais||'—')+'</td></tr>'; });
+      h+='</tbody></table>';
+      h+='<button class="btn" id="confirmar" style="margin-top:14px">Confirmar e importar '+d.validas+' ficha(s)</button>';
+    } else {
+      h+='<div class="empty">No hay ninguna fila valida que importar.</div>';
+    }
+    document.getElementById('impOut').innerHTML=h;
+    var c=document.getElementById('confirmar');
+    if(c) c.addEventListener('click', function(){
+      c.disabled=true; c.textContent='Importando…';
+      api('/import/aplicar',{method:'POST',body:'{}'}).then(function(rr){
+        if(rr.s!==200 && rr.status!==200){}
+        var dd=rr.j.data||{};
+        document.getElementById('impOut').innerHTML=
+          '<div class="aviso"><strong>'+(dd.creadas||0)+' ficha(s) creadas</strong>'+esc(dd.estado||'')+
+          (dd.art14?'<br>'+esc(dd.art14):'')+'</div>'+
+          ((dd.fallos&&dd.fallos.length)?'<div class="aviso"><strong>'+dd.fallos.length+' fallo(s)</strong>'+
+            esc(dd.fallos.map(function(x){return 'fila '+x.fila+': '+x.error;}).join(' · '))+'</div>':'');
+        buscar();
+      });
+    });
+  });
+}
+document.getElementById('iBtn').addEventListener('click', analizarFichero);
+
 document.querySelectorAll('.tab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
     t.classList.add('on');
-    ['dir','fun','ia'].forEach(function(k){
+    ['dir','fun','mat','imp','ia'].forEach(function(k){
       document.getElementById('t-'+k).style.display = (k===t.dataset.t)?'':'none'; });
     if(t.dataset.t==='fun') fundaciones();
   });

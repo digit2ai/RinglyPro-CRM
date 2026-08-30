@@ -29,6 +29,7 @@
 
 require('dotenv').config();
 const { Sequelize, QueryTypes } = require('sequelize');
+const dom = require('../src/services/hispanotec/domain');
 
 const APPLY = process.argv.includes('--apply');
 const SLUG = 'cv-105';
@@ -59,7 +60,9 @@ const seq = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_U
 
   let creadas = 0, existentes = 0;
   for (const f of FUNDACIONES) {
-    const clave = `fundacion|${f.nombre.toLowerCase()}|espana`;
+    // La misma funcion que usa el importador. Construirla a mano aqui fue lo
+    // que dejo entrar un duplicado de Fundacion Telefonica.
+    const clave = dom.claveDedupe({ naturaleza: 'fundacion', nombre: f.nombre, pais: 'Espana' });
     const [ya] = await seq.query(
       'SELECT id FROM hd_entries WHERE chamber_id = :c AND dedupe_key = :k',
       { replacements: { c: ch.id, k: clave }, type: QueryTypes.SELECT });
