@@ -82,6 +82,16 @@ app.use(['/api/v1/billing/webhook', '/jobup/api/v1/billing/webhook'], (req, res,
   return express.raw({ type: 'application/json' })(req, res, next);
 });
 
+// WordPress como proveedor de identidad — el webhook monta su propio
+// express.raw y DEBE ir antes del parser global: el HMAC cubre los bytes
+// exactos que envio WordPress, y si express.json los parsea y reserializa
+// primero, ninguna firma vuelve a coincidir. El sintoma seria "401 siempre",
+// que desde el lado del socio es indistinguible de un secreto mal copiado.
+try {
+  app.use('/api/v1/webhooks', require('./routes/wordpressWebhook'));
+  console.log('WordPress identity webhook mounted at /api/v1/webhooks/wordpress/users');
+} catch (e) { console.log('WordPress identity webhook not loaded:', e.message); }
+
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
@@ -1675,6 +1685,14 @@ try {
 } catch (error) {
     console.log('Platform admin not available:', error.message);
 }
+
+// WordPress como proveedor de identidad — canal A (handoff SSO).
+// Va ANTES del router de camaras para que /:slug/auth/wp no lo capture otra
+// ruta, y solo responde a slugs cv-N / vc-N con integracion configurada.
+try {
+    app.use('/', require('./routes/wordpressAuth'));
+    console.log('WordPress SSO handoff mounted at /:slug/auth/wp');
+} catch (e) { console.log('WordPress SSO handoff not loaded:', e.message); }
 
 // Multi-Tenant Unified Chamber Routes (cv-* / vc-* slugs)
 // Mounted under /:chamber_slug/api/* with chamber-resolver middleware.

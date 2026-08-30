@@ -163,7 +163,14 @@ function destinoSeguro(pedido, cfg, slug) {
  * ADOPTA la fila enlazandola — asi un miembro que ya existia con contrasena
  * local no se duplica al entrar por primera vez desde WordPress.
  */
-async function upsertMiembro(sequelize, QueryTypes, { chamberId, cfg, datos }) {
+async function upsertMiembro(sequelize, QueryTypes, { chamberId, cfg, datos, canal }) {
+  // EL ESTADO ES AUTORIDAD DEL WEBHOOK, NUNCA DEL SSO.
+  //
+  // El handoff enviaba status:'active' en cada acceso, asi que un usuario dado
+  // de baja en WordPress volvia a quedar activo en cuanto pulsaba "Entrar":
+  // user.deleted lo desactivaba y el siguiente SSO lo resucitaba. La baja no
+  // servia para nada. Desde el SSO el estado no se toca; se lee y se decide.
+  const esSso = canal === 'sso';
   const wpId = Number(datos.wp_user_id);
   const email = String(datos.email || '').trim().toLowerCase();
   const roles = mapearRoles(datos.roles, cfg);
@@ -215,7 +222,7 @@ async function upsertMiembro(sequelize, QueryTypes, { chamberId, cfg, datos }) {
         phone      = COALESCE(:tel, phone),
         company_name = COALESCE(:emp, company_name),
         access_level = :al,
-        status = :st,
+        status = CASE WHEN :es_sso THEN status ELSE :st END,
         wp_user_id = :w,
         identity_provider = 'wordpress',
         wp_user_login = COALESCE(:login, wp_user_login),
@@ -224,7 +231,7 @@ async function upsertMiembro(sequelize, QueryTypes, { chamberId, cfg, datos }) {
         updated_at = NOW()
       WHERE id = :id AND chamber_id = :c
       RETURNING *`,
-    { replacements: { e: email || null,
+    { replacements: { es_sso: esSso, e: email || null,
         fn: datos.first_name || null, ln: datos.last_name || null,
         tel: datos.phone || null, emp: (datos.company && datos.company.name) || null,
         al: roles.access_level, st: datos.status === 'inactive' ? 'inactive' : 'active',
