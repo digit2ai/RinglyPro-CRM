@@ -431,6 +431,13 @@ router.get(['/app', '/app/'],      function (req, res) { res.sendFile(path.join(
 router.get(['/walkthrough', '/walkthrough/'], function (req, res) {
   res.sendFile(path.join(publicDir, 'walkthrough.html'));
 });
+// The dashboard simulator. It runs the PRODUCT'S OWN renderer (dashboard-ui.js,
+// shared with app.html) against captured API responses, so a prospect is shown
+// the real interface rather than a drawing of it. Same reason it is unlisted:
+// it is a demo surface, not a page for search engines.
+router.get(['/simulator', '/simulator/'], function (req, res) {
+  res.sendFile(path.join(publicDir, 'simulator.html'));
+});
 
 // ── Catch-all ───────────────────────────────────────────────────────────────
 //

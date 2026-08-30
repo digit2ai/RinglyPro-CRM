@@ -275,6 +275,21 @@ html[data-theme="light"] .jmd .orb{
 @media(max-width:640px){.jmd .ava{flex-direction:column;text-align:center}
   .jmd .ava .ctrl{justify-content:center}.jmd .listen{margin:10px 0 0}}
 
+
+/* The live dashboard panes. */
+.jmd .livewrap{margin-top:20px;border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+  background:var(--bg);box-shadow:var(--shadow)}
+.jmd .livewrap .fbar{display:flex;align-items:center;gap:9px;padding:11px 15px;
+  background:var(--card2);border-bottom:1px solid var(--line)}
+.jmd .livewrap .fdot{width:11px;height:11px;border-radius:50%;background:var(--line2)}
+.jmd .livewrap .furl{flex:1;margin-left:9px;font-family:var(--mono);font-size:12.5px;
+  color:var(--faint);background:var(--bg2);border-radius:7px;padding:6px 12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jmd .livewrap .livetag{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:#07070c;background:var(--grad);border-radius:999px;padding:4px 10px}
+.jmd .liveframe{display:block;width:100%;border:0;background:var(--bg)}
+@media(max-width:640px){.jmd .liveframe{height:560px !important}}
+
 </style>
 </head>
 <body>
@@ -325,6 +340,7 @@ html[data-theme="light"] .jmd .orb{
 
 </div></main>
 </div>
+<script src="simulator-fixtures.js"></script>
 <script>
 (function(){
   var tog=document.getElementById('themeToggle');
@@ -338,7 +354,21 @@ html[data-theme="light"] .jmd .orb{
   });
 })();
 
-var DEMO=[{"title": "Robotic General Surgeon", "org": "Sample Regional Medical Center", "city": "Tampa", "state": "FL", "specialty": "Robotic Surgery", "comp": [550000, 650000], "score": 99, "dims": [{"n": "Clinical Match", "s": 100}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 100}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 100}], "reasons": ["Clinical Match: Specialty matches: Robotic Surgery. Board certified, as required. 11 years of experience against a 5-year minimum. Shared procedures: robotic cholecystectomy, robotic hernia repair.", "Technology Match: Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.", "Geographic Match: FL is a stated preferred location.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2026-11-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed). Call schedule is within the stated tolerance."], "gaps": []}, {"title": "Colon & Rectal Surgeon", "org": "Sample Regional Medical Center", "city": "Tampa", "state": "FL", "specialty": "Colon & Rectal Surgery", "comp": [520000, 610000], "score": 69, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 100}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 100}], "reasons": ["Technology Match: Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.", "Geographic Match: FL is a stated preferred location.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2026-12-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed). Call schedule is within the stated tolerance."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Colon & Rectal Surgery."]}, {"title": "Trauma Surgeon", "org": "Sample Coastal Hospital", "city": "Charleston", "state": "SC", "specialty": "Trauma Surgery", "comp": [500000, 580000], "score": 48, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 100}, {"n": "Geographic Match", "s": 5}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 65}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 80}], "reasons": ["Technology Match: The position does not require robotic experience.", "Career Match: Leadership experience on record.", "Availability Match: Available on or before the 2026-12-15 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed)."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Trauma Surgery.", "Geographic Match: Prefers FL and is not open to relocation; the position is in SC.", "Compensation Match: Expectation of $600,000 is about 3% above the top of the range ($580,000).", "Cultural / Professional Match: Call is heavy; the stated tolerance is light."]}, {"title": "Neurosurgeon - Spine", "org": "Sample IDN", "city": "Dallas", "state": "TX", "specialty": "Neurosurgery", "comp": [800000, 950000], "score": 48, "dims": [{"n": "Clinical Match", "s": 0}, {"n": "Technology Match", "s": 70}, {"n": "Geographic Match", "s": 5}, {"n": "Career Match", "s": 90}, {"n": "Compensation Match", "s": 100}, {"n": "Availability Match", "s": 100}, {"n": "Cultural / Professional Match", "s": 80}], "reasons": ["Technology Match: Robotic experience on record. 6 years robotic. Has led a robotics programme.", "Career Match: Leadership experience on record.", "Compensation Match: Expectation of $600,000 sits within the posted range.", "Availability Match: Available on or before the 2027-02-01 start date.", "Cultural / Professional Match: Employment model matches the stated preference (employed)."], "gaps": ["Clinical Match: Specialty is Robotic Surgery; the position is Neurosurgery.", "Technology Match: Trained on da Vinci Xi; the position uses Mazor X.", "Geographic Match: Prefers FL and is not open to relocation; the position is in TX.", "Cultural / Professional Match: Call is heavy; the stated tolerance is light."]}];
+/* DEMO is DERIVED FROM THE FIXTURES THE LIVE PANES RENDER, not typed here.
+   It used to be a hardcoded array, and the moment the panes went live the two
+   could disagree — Ava reading one score while the dashboard beside her showed
+   another is the worst failure a narrated demo can have. One source now:
+   simulator-fixtures.js, captured from the real API. */
+var DEMO=(function(){
+  var m=(typeof FIXTURES!=='undefined'&&FIXTURES['physician:/matches'])||{items:[]};
+  return (m.items||[]).map(function(x){
+    return { title:x.position.title, org:(x.position.organization||{}).name||'',
+      city:x.position.city, state:x.position.state, specialty:x.position.specialty,
+      comp:[x.position.compensation_min,x.position.compensation_max],
+      score:x.score, dims:x.dimensions.map(function(d){return {n:d.dimension,s:d.score};}),
+      reasons:x.reasons||[], gaps:x.gaps||[] };
+  });
+})();
 var DRAFT="Hello Dr Elena Marsh,\n\nI am recruiting for Robotic General Surgeon at Sample Regional Medical Center in Tampa, FL.\n\nI am contacting you because:\n  - Specialty matches: Robotic Surgery. Board certified, as required. 11 years of experience against a 5-year minimum. Shared procedures: robotic cholecystectomy, robotic hernia repair.\n  - Robotic experience on record. Platform match: da Vinci Xi. 6 years robotic. Has led a robotics programme.\n  - FL is a stated preferred location.\n\nThe posted range is $550,000 to $650,000.\nCall is light.\nThey are looking to start around 2026-11-01.\n\nIf the timing is wrong I would still value a short conversation.\n\nBest regards";
 var QUERY={"filters": {"state": "FL", "robotic": true, "board_certified": true, "min_years": 8}, "applied": ["state is FL", "has robotic experience", "board certified", "at least 8 years"], "ignored": []};
 var $=function(i){return document.getElementById(i);};
@@ -377,6 +407,26 @@ function stageFlow(current){
     return '<span class="fs'+(i===at?' on':(i<at?' done':''))+'">'+esc(s)+'</span>';}).join('')+'</div>';
 }
 
+/* ── The live panes ────────────────────────────────────────────────────────
+   Steps that correspond to a real screen no longer draw a picture of one.
+   They iframe /jobmd/simulator, which runs the PRODUCT'S OWN renderer
+   (dashboard-ui.js, the same file app.html loads) against captured API
+   responses. So this is the interface, not an artist's impression of it, and
+   the viewer can click the tabs and read the reasons for themselves.
+
+   Steps 1 and 2 keep a drawn screen: signing up and pasting a CV happen
+   before there is a dashboard, so there is nothing live to show.
+------------------------------------------------------------------------- */
+function live(role,tab,label,height){
+  var q='simulator?role='+role+(tab?'&tab='+tab:'')+'&embed=1';
+  return '<div class="livewrap">'+
+    '<div class="fbar"><span class="fdot"></span><span class="fdot"></span><span class="fdot"></span>'+
+    '<span class="furl">jobmd.io/app'+(tab?' &mdash; '+esc(label||tab):'')+'</span>'+
+    '<span class="livetag">live</span></div>'+
+    '<iframe class="liveframe" src="'+q+'" title="'+esc(role)+' dashboard" '+
+    'style="height:'+(height||620)+'px" loading="lazy"></iframe></div>';
+}
+
 var STEPS=[
 {who:'Physician',t:'She creates an account',
  p:'Dr Elena Marsh signs up and picks <b>Physician</b>. That single choice decides everything she sees from '+
@@ -388,6 +438,7 @@ var STEPS=[
    '<div class="role">Recruiter<small>Run the pipeline</small></div></div>'+
    '<div class="kv" style="margin-top:16px"><b>Name</b><span>Elena Marsh</span>'+
    '<b>Email</b><span>elena.marsh@example.org</span><b>Password</b><span>••••••••••</span></div>');}},
+
 
 {who:'Physician',t:'She fills in her record — or pastes her CV',
  p:'This is the <b>Talent Intelligence Record</b>. She can type it, or paste her CV and let the platform '+
@@ -409,72 +460,37 @@ var STEPS=[
    '<div style="color:var(--mut);font-size:13px;margin-top:6px">100% — measured only against the fields a '+
    'match actually depends on.</div></div>');}},
 
+
 {who:'Hospital',t:'A hospital posts a position',
  p:'Sample Regional Medical Center needs a robotic general surgeon. Every field they enter is used by the '+
    'scoring &mdash; <b>a range left blank is a dimension that cannot be scored</b>, and the match will say so.',
- s:function(){return screen('jobmd.io/app — Post a position',
-   '<div class="kv"><b>Title</b><span>Robotic General Surgeon</span>'+
-   '<b>Specialty</b><span>Robotic Surgery</span><b>Location</b><span>Tampa, FL</span>'+
-   '<b>Compensation</b><span>$550,000 – $650,000</span><b>Employment</b><span>employed</span>'+
-   '<b>Call</b><span>light</span><b>Minimum experience</b><span>5 years</span>'+
-   '<b>Robotics</b><span>required — da Vinci Xi</span><b>Start</b><span>2026-11-01</span></div>'+
-   '<div class="note" style="margin-top:14px">The moment this is posted it is scored against every '+
-   'physician on the platform, and appears in their matches.</div>');}},
+ s:function(){return live('hospital','pos','Positions',700);}},
 
 {who:'Physician',t:'She sees every open role, scored',
  p:'This is the part that makes it more than a job board. Each position is scored across <b>seven '+
    'dimensions at once</b>, best first, with the reasons and the gaps attached. '+
    '<b>These numbers came from the live engine</b> — the same code that runs in production.',
- s:function(){return screen('jobmd.io/app — My matches',
-   DEMO.map(function(m,i){return matchCard(m,i===0);}).join('')+
-   '<div class="note" style="margin-top:14px"><b>Why 99 and not 100.</b> Career Match scored 90: the post '+
-   'is not academic, so her publications add nothing here. Nothing is hidden — she can see every number '+
-   'that produced the total.</div>');}},
+ s:function(){return live('physician','matches','My matches',780);}},
 
 {who:'Physician',t:'She says she is interested',
  p:'One click. That is the only pipeline stage a physician can set &mdash; she puts herself in at '+
    '<b>Interested</b>, and from there it is a person\'s decision, never an automatic one.',
- s:function(){return screen('jobmd.io/app — Robotic General Surgeon',
-   matchCard(DEMO[0],false)+
-   '<div style="margin-top:14px"><b style="color:var(--ink);font-size:14px">Her position in the pipeline</b>'+
-   stageFlow('Interested')+'</div>'+
-   '<div class="note" style="margin-top:14px">She now appears on the recruiter\'s board and on the '+
-   'hospital\'s candidate list for that position.</div>');}},
+ s:function(){return live('physician','matches','My matches',700);}},
 
 {who:'Recruiter',t:'The recruiter works the board',
  p:'The recruiter sees every candidate across every client. They can ask the <b>Copilot</b> in plain '+
    'English, have the <b>Outreach Agent</b> draft an approach, and have the <b>Scheduling Agent</b> propose '+
    'times. Every one of those is a draft a person approves &mdash; <b>the platform sends nothing itself</b>.',
- s:function(){return screen('jobmd.io/app — Copilot and agent queue',
-   '<b style="color:var(--ink)">Ask in plain English</b>'+
-   '<div style="margin-top:8px;padding:11px 14px;border:1px solid var(--line2);border-radius:11px;'+
-   'background:var(--bg);font-family:var(--mono);font-size:13px;color:var(--ink)">'+
-   'board certified robotic surgeons in Florida with more than 8 years</div>'+
-   '<div class="note" style="margin-top:10px"><b>1 of 1 record matched.</b><br>Filters applied: '+
-   esc(QUERY.applied.join('; '))+'.'+
-   (QUERY.ignored.length?'<br><span style="color:var(--warn)">Not understood, and NOT filtered on: '+
-     esc(QUERY.ignored.join(', '))+'</span>':'')+'</div>'+
-   '<b style="color:var(--ink);display:block;margin-top:18px">Outreach Agent — draft</b>'+
-   '<pre class="mail">'+esc(DRAFT)+'</pre>'+
-   '<div class="note"><b>Nothing is sent by the platform.</b> The recruiter approves this and sends it '+
-   'themselves. The gaps the matcher found go to the recruiter, not into the candidate\'s message.</div>');}},
+ s:function(){return live('recruiter','copilot','Copilot',740);}},
 
 {who:'Hospital',t:'The hospital reviews, and hires',
  p:'The hospital sees the same candidates ranked against their own position, with the same reasons and '+
    'gaps the physician saw. They move her through the remaining stages. '+
-   '<b>No agent can set Offer, Credentialing or Placement</b> — those are people, always.',
- s:function(){return screen('jobmd.io/app — Candidates for Robotic General Surgeon',
-   '<div class="tablewrap"><table><thead><tr><th>Score</th><th>Candidate</th><th>Why</th><th>Stage</th></tr></thead>'+
-   '<tbody><tr><td><span class="sc" style="font-size:18px">'+DEMO[0].score+'</span></td>'+
-   '<td><b style="color:var(--ink)">Dr Elena Marsh</b><br><span style="font-size:12.5px">Robotic Surgery '+
-   '&middot; 11y &middot; board certified</span></td>'+
-   '<td style="font-size:12.5px;max-width:360px">'+esc(DEMO[0].reasons[0])+'</td>'+
-   '<td><span class="fs on">Offer</span></td></tr></tbody></table></div>'+
-   '<div style="margin-top:16px"><b style="color:var(--ink);font-size:14px">Where she is now</b>'+
-   stageFlow('Placement')+'</div>'+
-   '<div class="note" style="margin-top:14px"><b>Every stage change is logged</b> with who made it and '+
-   'whether a person or an agent did. The five stages an agent may ever set are Contacted, Interested, '+
-   'Qualified, Matched and Interview — nothing beyond that.</div>');}}
+   '<b>No agent can set Offer, Credentialing or Placement</b> — those are people, always. '+
+   'Every stage change is logged with who made it and whether a person or an agent did. '+
+   'The five stages an agent may ever set are Contacted, Interested, Qualified, Matched and '+
+   'Interview — nothing beyond that.',
+ s:function(){return live('hospital','pipe','Pipeline',700);}}
 ];
 
 var i=0;
@@ -511,6 +527,14 @@ document.addEventListener('keydown',function(e){
 ------------------------------------------------------------------------- */
 var AVA_URL='/api/tts/edge', AVA_VOICE='ava';   // en-US-AvaNeural
 
+/* Look a role up by title. The narration talks about the trauma role by name;
+   addressing it as DEMO[2] silently pointed at a different job the first time
+   the underlying data moved. */
+function demoBy(title){
+  for(var i=0;i<DEMO.length;i++) if(DEMO[i].title.indexOf(title)!==-1) return DEMO[i];
+  return null;
+}
+var DEMO_WEAK = demoBy('Trauma') || DEMO[DEMO.length-1] || {score:0,title:'a weaker role'};
 function spell(n){                              // Edge reads bare integers badly
   var ones=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven',
     'twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
@@ -550,7 +574,7 @@ var NARR=[
 "is not one similarity score. Every match is evaluated across seven separate dimensions: clinical, "+
 "technology, geographic, career, compensation, availability, and cultural and professional fit. Each one "+
 "carries its own weight, and each one produces its own plain language reason. Just as importantly, it "+
-"produces the gaps. Look at the trauma role further down. It scores "+spell(DEMO[2].score)+", and it tells "+
+"produces the gaps. Look at the trauma role further down. It scores "+spell(DEMO_WEAK.score)+", and it tells "+
 "her exactly why: wrong specialty, wrong state and she is not open to relocation, her expectation is above "+
 "the top of the range, and the call is heavy where she asked for light. She is never shown a score without "+
 "being told how it was reached.",
