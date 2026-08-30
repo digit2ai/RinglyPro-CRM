@@ -170,6 +170,20 @@ if(!TOKEN){
   if(r.status===401){ return parar('Tu sesion ha caducado o no se encontro. '+
     '<a href="/'+SLUG+'/login">Inicia sesion</a> y vuelve a abrir el Motor de Directorio.'); }
   if(r.status===404){ return parar('Este modulo solo existe en la instancia de HISPANOTEC (cv-105).'); }
+  if(r.status===403){
+    // El servidor ya ha dicho que no. La pagina no insiste ni deja las
+    // pestanas a medio cargar: dice quien puede entrar y a quien pedirlo.
+    document.querySelector('.tabs').style.display='none';
+    document.getElementById('t-dir').style.display='none';
+    document.getElementById('t-fun').style.display='none';
+    document.getElementById('t-ia').style.display='none';
+    document.getElementById('rolBar').className='aviso';
+    document.getElementById('rolBar').innerHTML =
+      '<strong>Acceso restringido</strong>El Motor de Directorio esta reservado a los '+
+      'administradores de HISPANOTEC. Tu rol actual es '+esc(r.j.rol_actual||'consulta basica')+'. '+
+      'Si necesitas acceso, pidelo a un administrador de la Instancia.';
+    return;
+  }
   META = r.j.data;
   var rolTxt = {consulta_basica:'Consulta basica — ficha resumida, sin presupuestos ni contacto directo.',
                 gestion:'Gestion — ficha completa, presupuestos y proxies, interacciones.',
