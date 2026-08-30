@@ -1580,6 +1580,14 @@ try {
         }
     });
 
+    // Motor de Directorio Inteligente HISPANOTEC (/<slug>/directorio).
+    // Solo cv-105. Cualquier otra camara cae a next() y termina en su 404
+    // normal, de modo que la pagina no existe fuera de la Instancia HISPANOTEC.
+    app.get(['/:chamber_slug/directorio', '/:chamber_slug/directorio/'], (req, res, next) => {
+        if (String(req.params.chamber_slug || '').toLowerCase() !== 'cv-105') return next();
+        return res.sendFile(path.join(__dirname, '..', 'public', 'hispanotec', 'directorio.html'));
+    });
+
     // Per-chamber dashboard (/<slug>/dashboard or /<slug>/dashboard/...)
     app.get(['/:chamber_slug/dashboard', '/:chamber_slug/dashboard/'], async (req, res, next) => {
         const slug = req.params.chamber_slug;
