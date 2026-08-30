@@ -207,9 +207,21 @@ function webhookHealth() {
 // So a test-mode signup is stamped, and every surface that means "not revenue"
 // reads ONE list rather than repeating a literal it can forget to update.
 const TEST_ACTIVATION = 'stripe_test';
-const NON_REVENUE_ACTIVATIONS = ['free_test', 'no_billing', TEST_ACTIVATION];
+// REVENUE IS AN ALLOW-LIST, NOT A DENY-LIST.
+//
+// This was a list of activations to EXCLUDE from revenue, and it went stale the
+// moment the landing page grew a Free plan: 'free_plan' was not on it, so seven
+// free-tier accounts counted as paying customers. A deny-list has to be updated
+// every time somebody adds a way to activate an account for free, and forgetting
+// silently overstates revenue — the failure is invisible and always in the
+// flattering direction.
+//
+// Inverted: an activation counts as revenue only if it is named here. A new free
+// tier added tomorrow is non-revenue by default, which is the safe way to be wrong.
+const REVENUE_ACTIVATIONS = ['paid'];
+const NON_REVENUE_ACTIVATIONS = ['free_test', 'free_plan', 'no_billing', 'pending', TEST_ACTIVATION];
 function isNonRevenue(activation) {
-  return NON_REVENUE_ACTIVATIONS.includes(String(activation || ''));
+  return !REVENUE_ACTIVATIONS.includes(String(activation || ''));
 }
 /** What to stamp on a subscriber activated through checkout right now. */
 function activationStamp() {
@@ -843,7 +855,7 @@ module.exports = {
   // test-mode signature against the estate-wide live secret.
   secretKey, webhookSecret, mode, isTestMode, isolated, keyShape, probe,
   noteWebhook, webhookHealth,
-  TEST_ACTIVATION, NON_REVENUE_ACTIVATIONS, isNonRevenue, activationStamp,
+  TEST_ACTIVATION, NON_REVENUE_ACTIVATIONS, REVENUE_ACTIVATIONS, isNonRevenue, activationStamp,
   freeReason,
   disabled,
   freeActivation,
