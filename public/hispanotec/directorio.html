@@ -137,7 +137,13 @@ color:var(--g500);margin-bottom:3px}
 var P = location.pathname.split('/').filter(Boolean);
 var SLUG = (P[0] && /^(cv|vc)-\d+$/.test(P[0])) ? P[0] : 'cv-105';
 var API = '/' + SLUG + '/api/directorio';
-var TOKEN = localStorage.getItem('chamber_token') || localStorage.getItem('token') || '';
+// EL PANEL GUARDA EL TOKEN CON EL SLUG EN LA CLAVE ('cv_cv-105_token'), para que
+// dos camaras abiertas en el mismo navegador no se pisen la sesion. Buscar
+// 'chamber_token' no encontraba nada y la pagina decia "sesion caducada" a
+// alguien que acababa de entrar. Se deriva igual que en el panel, con la clave
+// antigua como respaldo.
+var TOKEN_KEY = 'cv_' + SLUG + '_token';
+var TOKEN = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('hispamind_token') || '';
 document.getElementById('back').href = '/' + SLUG + '/dashboard/';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -157,11 +163,13 @@ function cifraHtml(c){
 }
 
 var META = null;
-api('/meta').then(function(r){
-  if(r.status===401){ document.getElementById('rolBar').innerHTML =
-    'Tu sesion ha caducado. <a href="/'+SLUG+'/login">Inicia sesion</a> y vuelve a entrar.'; return; }
-  if(r.status===404){ document.getElementById('rolBar').textContent =
-    'Este modulo solo existe en la instancia de HISPANOTEC (cv-105).'; return; }
+if(!TOKEN){
+  parar('No hay sesion en este navegador. <a href="/'+SLUG+'/login">Inicia sesion</a> '+
+        'y vuelve a abrir el Motor de Directorio.');
+} else api('/meta').then(function(r){
+  if(r.status===401){ return parar('Tu sesion ha caducado o no se encontro. '+
+    '<a href="/'+SLUG+'/login">Inicia sesion</a> y vuelve a abrir el Motor de Directorio.'); }
+  if(r.status===404){ return parar('Este modulo solo existe en la instancia de HISPANOTEC (cv-105).'); }
   META = r.j.data;
   var rolTxt = {consulta_basica:'Consulta basica — ficha resumida, sin presupuestos ni contacto directo.',
                 gestion:'Gestion — ficha completa, presupuestos y proxies, interacciones.',
@@ -174,6 +182,13 @@ api('/meta').then(function(r){
     : 'Sin modelo configurado en este despliegue: el asistente responde de forma extractiva sobre el directorio y lo indica. Nunca inventa.';
   buscar();
 });
+// Un "Cargando..." que no termina nunca es peor que un error: parece que la
+// pagina sigue trabajando. Si el arranque falla, se dice y se limpia todo.
+function parar(html){
+  document.getElementById('rolBar').innerHTML = html;
+  document.getElementById('dirOut').innerHTML = '<div class="empty">Sin acceso al directorio.</div>';
+  document.getElementById('funOut').innerHTML = '<div class="empty">Sin acceso al directorio.</div>';
+}
 function fill(id, vals){
   var s=document.getElementById(id);
   (vals||[]).forEach(function(v){ var o=document.createElement('option'); o.value=v;
