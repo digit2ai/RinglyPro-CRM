@@ -14,6 +14,10 @@
 const express = require('express');
 const router = express.Router();
 
+// Motor de Directorio Inteligente HISPANOTEC. El router se auto-limita a
+// cv-105 y devuelve 404 para cualquier otro slug, asi que montarlo aqui no
+// expone nada a las demas camaras. Va ARRIBA para que core.js no se lo trague.
+router.use('/directorio', require('./hispanotec'));
 router.use('/projects/:id/workspace', require('./workspace'));
 router.use('/projects', require('./projects'));
 router.use('/wp', require('./wp'));
