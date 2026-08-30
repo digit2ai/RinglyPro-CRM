@@ -535,14 +535,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   })();
 
   // Motor de Directorio Inteligente — SOLO cv-105 (HISPANOTEC).
-  // El Acuerdo Marco reserva estos elementos a la capa funcional diferenciada
-  // de su Instancia, asi que el enlace no se muestra en ninguna otra camara.
-  // El servidor ademas devuelve 404 fuera de cv-105: esto es la cortesia, no
-  // el control de acceso.
+  // Aqui solo se prepara el destino. El enlace sigue oculto: quien puede verlo
+  // depende del ROL, y el rol no se conoce hasta que la sesion se resuelve.
+  // Se muestra mas abajo, junto al resto de la navegacion de administracion.
   (function(){
     var d = document.getElementById('hispDirLink');
-    if (!d) return;
-    if (slugMatch === 'cv-105') { d.href = '/cv-105/directorio'; d.style.display = ''; }
+    if (d && slugMatch === 'cv-105') d.href = '/cv-105/directorio';
   })();
 
   // -- State --
@@ -929,6 +927,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     // Show admin nav if user has admin access
     if (['superadmin', 'admin_global', 'admin_regional'].includes(currentMember.access_level)) {
       document.getElementById('adminNavItem').style.display = 'flex';
+
+      // Motor de Directorio (HISPANOTEC): visible solo para administradores de
+      // cv-105. Un socio no ve que exista. Ocultar el enlace es cortesia, no
+      // control: el permiso real lo aplica el servidor, que sirve la ficha
+      // resumida sin presupuestos ni contacto directo a quien no tiene rol de
+      // gestion, y devuelve 404 fuera de cv-105.
+      if (slugMatch === 'cv-105') {
+        var hd = document.getElementById('hispDirLink');
+        if (hd) hd.style.display = 'flex';
+      }
     }
 
     setupNav();
