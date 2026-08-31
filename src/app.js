@@ -718,7 +718,10 @@ app.use((req, res, next) => {
   if (p.startsWith('/planea') || PLANEA_APP_PATHS.has(p.replace(/\/$/, '') || '/')) {
     return res.redirect(301, PLANEA_APP_ORIGIN + req.url.replace(/^\/planea/, ''));
   }
-  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/portal/inicio' + q;
+  // El landing de marketing es main.html (el mismo que hoy sirve planea.vip/main),
+  // NO la portada del portal (inicio.html). OJO: main.html todavía trae CSS, video
+  // e imágenes desde www.planea.co (Vercel) — hay que localizarlos antes de apagarlo.
+  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/main' + q;
   else req.url = '/planea/portal' + req.url;
   next();
 });
