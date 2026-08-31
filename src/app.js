@@ -1433,6 +1433,23 @@ app.get('/pricing', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/digit2ai-pricing.html'));
 });
 
+// ComplianceMind — counterparty dossiers. Framable from digit2ai.com (GHL), like /digit2ai.
+// Serves public/compliancemind/<slug>.html so a new dossier is a file drop, not a code change.
+// URL contract: digit2ai.com/compliancemind/<slug> iframes aiagent.ringlypro.com/compliancemind/<slug>
+const COMPLIANCEMIND_DIR = path.join(__dirname, '../public/compliancemind');
+const COMPLIANCEMIND_CSP = "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
+app.get('/compliancemind/:slug', (req, res, next) => {
+  // Slug is a filename, never a path: reject anything that could traverse.
+  const slug = String(req.params.slug || '').replace(/\.html$/i, '');
+  if (!/^[A-Za-z0-9_-]{1,120}$/.test(slug)) return next();
+  const file = path.join(COMPLIANCEMIND_DIR, slug + '.html');
+  if (!file.startsWith(COMPLIANCEMIND_DIR + path.sep) || !fs.existsSync(file)) return next();
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', COMPLIANCEMIND_CSP);
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(file);
+});
+
 // Call forwarding API routes
 app.use('/api/call-forwarding', callForwardingRoutes);
 app.use('/api/forwarding-status', forwardingStatusRoutes);
