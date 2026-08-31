@@ -335,9 +335,9 @@
 <div class="cover" id="cover">
   <div class="logo"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
   <h1>Recorrido completo de la aplicación</h1>
-  <p>De principio a fin: del primer clic al plan financiero vivo. Registro, las trece preguntas del onboarding, el puntaje Planea, Maya, el registro guiado por frente y el tablero de Salud Financiera. Narrado por Dalia, la voz de Digit2AI.</p>
+  <p>El diseño aprobado del Documento Maestro: del primer clic al plan financiero vivo. Registro, la vinculación de veinte preguntas, un solo Puntaje Planea con ocho pilares, los Hallazgos de Maya y las catorce secciones del portal. Narrado por Dalia, la voz de Digit2AI.</p>
   <div class="chips">
-    <span class="chip">Landing y registro</span><span class="chip">Onboarding · 13 preguntas</span><span class="chip">Puntaje Planea</span><span class="chip">Maya IA</span><span class="chip">Registro guiado</span><span class="chip">Salud Financiera</span><span class="chip">Configuración</span>
+    <span class="chip">Landing y registro</span><span class="chip">Vinculación · 20 preguntas</span><span class="chip">8 pilares</span><span class="chip">Un solo Puntaje Planea</span><span class="chip">Hallazgos de Maya</span><span class="chip">Impuestos · RUT</span><span class="chip">14 secciones</span>
   </div>
   <button class="go" id="start">Iniciar presentación</button>
   <div class="note">Flechas ← → para navegar · barra espaciadora para pausar o reanudar la voz. Puedes pausar en cualquier momento para responder preguntas del público.</div>
@@ -397,11 +397,14 @@
 
   // Barra lateral de onboarding (solo "Puntaje Planea" activo, resto atenuado)
   function sidebar(active){
+    // Las 14 secciones del portal (§Parte IV). Todas disponibles desde el primer
+    // ingreso; ninguna bloqueada. Ya NO existe "Salud Financiera": su motor y su
+    // velocímetro se retiran y se consolidan en Puntaje Planea (§9.1).
     var items=[
-      ['home','Inicio'],['heart','Salud Financiera'],['clock','Puntaje Planea'],['target','Mis metas'],
-      ['bill','Ingresos'],['chart','Gastos'],['wallet','Ahorro'],['card','Deuda'],['chart','Inversión'],['shield','Seguros'],['clock','Retiro'],['card','Cuentas vinculadas'],['spark','Planea IA'],['book','Guía de uso']
+      ['home','Inicio'],['clock','Puntaje Planea'],['target','Mis Metas'],
+      ['bill','Ingresos'],['chart','Gastos'],['wallet','Ahorro'],['card','Deuda'],['chart','Inversión'],['bill','Impuestos'],['shield','Seguros'],['clock','Retiro / Pensión'],['scale','Patrimonio'],['spark','Mi Perfil'],['sun','Configuración']
     ];
-    var rows=items.map(function(it){ var on=it[1]===active; return '<div class="sb-item'+(on?' on':' mut')+'">'+ICON[it[0]]+' '+it[1]+(it[1]==='Planea IA'?'<span class="pl">+</span>':'')+'</div>'; }).join('');
+    var rows=items.map(function(it){ var on=it[1]===active; return '<div class="sb-item'+(on?' on':' mut')+'">'+ICON[it[0]]+' '+it[1]+'</div>'; }).join('');
     return '<aside class="sb"><div class="sb-logo">'+MARK+' Planea</div>'+rows
       +'<div class="sb-sep"></div>'
       +'<div class="sb-prof"><span class="sb-av">CR</span><div><div class="sb-nm">'+NAME+' Restrepo</div><div class="sb-pl">Plan activo</div></div></div>'
@@ -419,7 +422,8 @@
       +'<div class="sb-logout">'+ICON.logout+' Cerrar sesión</div></aside>';
   }
   function mfab(){ return '<div class="mfab">'+pav()+'<div><div class="mf1">Pregúntale a Maya</div><div class="mf2">Tu guía financiera IA</div></div></div>'; }
-  var LEDE='Trece preguntas, tres minutos. Calculamos tu puntaje Planea con tus cuatro pilares (fondo de emergencia, flujo de caja, deuda y estabilidad), basado en estándares internacionales de planeación financiera, y de ahí lo afinamos con tu información real.';
+  // §4: sin mención al número de preguntas ni al tiempo estimado.
+  var LEDE='Responde unas preguntas para entender tu situación financiera actual y qué puedes hacer para mejorarla. Recibirás tu Puntaje Planea y hallazgos personalizados para ayudarte a definir tus próximos pasos.';
   function appScreen(card, locked){
     var sb=(locked===false)?sidebar('Puntaje Planea'):sidebarLocked();
     return '<div class="screen">'+sb+'<div class="mn"><div class="mn-eye">PUNTAJE PLANEA</div><h2 class="mn-h1">Descubre tu puntaje Planea</h2><p class="mn-lede">'+LEDE+'</p>'+card+'</div>'+mfab()+'</div>';
@@ -430,11 +434,12 @@
       return '<div class="opt'+sel+'">'+mark+'<span>'+o[0]+'</span></div>';
     }).join('');
   }
-  function qCard(n, tag, q, hint, list, multi, exact, exlbl){
-    var h='<div class="qcard"><div class="qprog">'+n+' DE 13</div><div class="qtag">'+tag+'</div><h3 class="qq">'+q+'</h3>'
+  // Encabezado por PILAR, no por posición numérica (§5.4). p.ej. "Seguros · 1 de 2".
+  function qCard(header, q, hint, list, multi, exact, exlbl, isLast){
+    var h='<div class="qcard"><div class="qtag">'+header+'</div><h3 class="qq">'+q+'</h3>'
       +(hint?'<p class="qhint">'+hint+'</p>':'')+'<div class="qopts">'+optsHtml(list,multi)+'</div>';
     if(exact){ h+='<div class="qexact'+(exact.filled?' filled':'')+'">$ '+exact.v+'</div><div class="qexlbl">'+(exlbl||'Si sabes el monto exacto, escríbelo aquí (opcional)')+'</div>'; }
-    h+='<div class="qnav">'+(n>1?'<button class="qback">Volver</button>':'')+'<button class="qcont">'+(n===13?'Calcular mi puntaje Planea':'Continuar')+'</button></div></div>';
+    h+='<div class="qnav"><button class="qback">Volver</button><button class="qcont">'+(isLast?'Calcular mi puntaje Planea':'Continuar')+'</button></div></div>';
     return appScreen(h);
   }
 
@@ -456,28 +461,36 @@
       +'<div class="go2">Crear cuenta</div><div class="lnk">¿Ya tienes cuenta? <b>Inicia sesión</b></div></div>';
   }
   function scrIntro(){
-    return appScreen('<div class="icard"><div class="qtag">Antes de empezar</div><h3>Descubre tu puntaje Planea</h3>'
-      +'<p>Son trece preguntas, tres minutos. Con tus respuestas calculamos tu puntaje Planea y, a partir de ahí, lo vamos afinando con tu información real. Basado en estándares internacionales de planeación financiera.</p>'
+    return appScreen('<div class="icard"><div class="qtag">Antes de empezar</div><h3>Empecemos por conocerte</h3>'
+      +'<p>Responde con información real para que tu resultado refleje mejor tu situación actual.</p>'
+      +'<p style="font-size:12.5px;color:var(--mut);margin-top:8px">Puntaje basado en estándares internacionales de planeación financiera.</p>'
       +'<div class="qcont">Comenzar</div></div>');
   }
   function scrResult(){
-    var C=2*Math.PI*63, off=C*(1-0.56);
+    var C=2*Math.PI*63, off=C*(1-0.72);
+    function col(v){ return v>=70?'#5A9E7B':v>=45?'#e0954f':'#e0714f'; }
+    // Los OCHO pilares (§2), denominaciones oficiales. Subpuntaje 0–100. Sin fórmula.
     var pex=[
-      ['Fondo de Emergencia','35%',50,'#e0954f','Ya tienes algo de colchón, pero todavía no cubre un imprevisto completo.'],
-      ['Flujo de Caja','25%',100,'#3fc06a','Te sobra margen: gastas bastante menos de lo que ganas.'],
-      ['Salud de Deuda','25%',0,'#e0714f','Tus cuotas se llevan buena parte de tu ingreso.'],
-      ['Estabilidad','15%',90,'#3fc06a','Tu ingreso es estable y predecible: buena base para planear.']
+      ['Ahorro',80,'Ya tienes un colchón que aguanta varios meses. Vas muy bien en este frente.'],
+      ['Flujo de Caja',85,'Te queda buen margen cada mes: gastas bastante menos de lo que ganas.'],
+      ['Deuda',75,'Tus pagos están dentro de un nivel manejable frente a tu ingreso.'],
+      ['Retiro / Pensión',70,'Llevas un tiempo consistente cotizando para tu retiro.'],
+      ['Seguros',65,'Tienes protección, aunque hay un frente por reforzar en tu cobertura.'],
+      ['Inversión',55,'Ya empezaste a poner tu dinero a crecer; puedes diversificar más adelante.'],
+      ['Impuestos',60,'Estás al día, aunque tus soportes podrían quedar mejor organizados.'],
+      ['Patrimonio y Sucesión',55,'Tienes activos registrados; deja por escrito qué pasaría con ellos.']
     ].map(function(p){
-      return '<div class="pex"><div class="pex-top"><span class="pex-nm">'+p[0]+' <span class="w">· '+p[1]+'</span></span><span class="pex-v" style="color:'+p[3]+'">'+p[2]+'</span></div>'
-        +'<div class="pex-bar"><i style="width:'+Math.max(p[2],3)+'%;background:'+p[3]+'"></i></div>'
-        +'<div class="pex-maya">'+pav()+'<span>'+p[4]+'</span></div></div>';
+      var c=col(p[1]);
+      return '<div class="pex"><div class="pex-top"><span class="pex-nm">'+p[0]+'</span><span class="pex-v" style="color:'+c+'">'+p[1]+'</span></div>'
+        +'<div class="pex-bar"><i style="width:'+Math.max(p[1],3)+'%;background:'+c+'"></i></div>'
+        +'<div class="pex-maya">'+pav()+'<span>'+p[2]+'</span></div></div>';
     }).join('');
     var card='<div class="rcard"><div class="rtag">TU PUNTAJE PLANEA</div>'
-      +'<div class="rring"><svg viewBox="0 0 156 156"><circle cx="78" cy="78" r="63" fill="none" stroke="#26332e" stroke-width="11"/><circle cx="78" cy="78" r="63" fill="none" stroke="url(#rg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset="1" stop-color="#17a6a6"/></linearGradient></defs></svg><div class="rnum"><b>56</b><small>PLANEA</small></div></div>'
-      +'<div class="rbadge">Estable</div><div class="rprog"><i></i></div>'
-      +'<div class="rcap">Este es tu punto de partida. Tu puntaje Planea irá subiendo a medida que registres tu información con Maya.</div>'
-      +'<p class="rapertura">'+NAME+', hoy tu salud financiera es estable. Tus finanzas se sostienen en el día a día y eso ya es terreno ganado. Lo que falta es el respaldo que te permita absorber un imprevisto sin retroceder.</p>'
-      +'<div class="rsub">DESGLOSE POR PILARES · CON LA LECTURA DE MAYA</div>'+pex+'</div>';
+      +'<div class="rring"><svg viewBox="0 0 156 156"><circle cx="78" cy="78" r="63" fill="none" stroke="#26332e" stroke-width="11"/><circle cx="78" cy="78" r="63" fill="none" stroke="url(#rg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5A9E7B"/><stop offset="1" stop-color="#2E7D5B"/></linearGradient></defs></svg><div class="rnum"><b>72</b><small>PLANEA</small></div></div>'
+      +'<div class="rbadge">Sólido</div><div class="rprog"><i></i></div>'
+      +'<div class="rcap">Este es tu punto de partida. Tu puntaje Planea se afina con cada dato real que registres — un solo número, en Inicio y aquí.</div>'
+      +'<p class="rapertura">'+NAME+', tienes una base sólida. Tu mayor palanca ahora es reforzar tu protección: enfócate en tu cobertura y ponte una meta, y Maya te acompaña a medida que avances.</p>'
+      +'<div class="rsub">HALLAZGOS DE MAYA · IA &nbsp;·&nbsp; DETALLE POR ÁREA (8 PILARES)</div>'+pex+'</div>';
     return appScreen(card, false); // ya terminó el onboarding: la navegación se desbloquea
   }
 
@@ -492,15 +505,16 @@
 
   // ── Módulo de registro guiado ──
   function ring(score,color){ var C=2*Math.PI*46, off=C*(1-score/100); return '<svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="#22322c" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="'+color+'" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/></svg>'; }
+  // Sección de registro de un pilar. §3: las pantallas de pilar NO muestran indicador
+  // de puntaje (por eso no hay orbe aquí). §3 "Acción nombrada": el botón nombra la
+  // acción completa ("Agregar ingreso", "Agregar deuda"…), nunca solo "Agregar".
   function moduleScreen(c){
-    return '<div class="mreg"><div class="mreg-bar"><i style="width:'+(c.step/7*100)+'%"></i></div>'
-      +'<div class="mreg-note"><b>PASO '+c.step+' DE 7 · '+c.title+'</b> &nbsp; '+c.note+'</div>'
-      +'<div class="mreg-app"><div class="mreg-hd"><div><h2>'+c.title+'</h2><p>'+c.sub+'</p></div>'
-      +'<div class="mreg-orb"><div class="rr">'+ring(c.score,c.color)+'<div class="rn">'+c.score+'</div></div><div class="rl">PUNTAJE PLANEA</div><div class="rg">'+c.rango+'</div></div></div>'
-      +'<div class="mreg-tot"><div class="tl">'+c.totLabel+'</div><div class="tv">'+c.totVal+'<small>COP</small></div></div>'
+    return '<div class="mreg"><div class="mreg-note"><b>'+c.title+'</b> &nbsp; '+c.note+'</div>'
+      +'<div class="mreg-app"><div class="mreg-hd"><div><h2>'+c.title+'</h2><p>'+c.sub+'</p></div></div>'
+      +'<div class="mreg-tot"><div class="tl">'+c.totLabel+'</div><div class="tv">'+c.totVal+(/^\$/.test(c.totVal)?'<small>COP</small>':'')+'</div></div>'
       +'<div class="mreg-div"></div>'
       +'<div class="mreg-card"><div class="ch"><div><b>'+c.cardTitle+'</b><div class="s">'+c.cardSub+'</div></div><div class="tt">'+c.totVal+'</div></div>'
-      +'<div class="mreg-inner"><div class="ih"><span>'+c.innerTitle+'</span><span class="add">+ Agregar</span></div>'
+      +'<div class="mreg-inner"><div class="ih"><span>'+c.innerTitle+'</span><span class="add">'+(c.add||'+ Agregar')+'</span></div>'
       +'<div class="mreg-row"><div><div class="nm">'+c.itemNm+'</div><div class="ty">'+c.itemTy+'</div></div><div class="amt">'+c.itemAmt+'</div></div></div></div></div>'
       +'<div class="mreg-bottom"><div class="mreg-skip">'+c.skip+'</div><div class="mreg-next">'+c.nextLbl+'</div></div></div>';
   }
@@ -557,62 +571,68 @@
   // ── Configuración ──
   function scrConfig(){
     var mods=[
-      ['wallet','Ahorro',1,'Tu fondo de emergencia y hábitos de ahorro en un solo lugar.'],
-      ['card','Deuda',1,'Consolida tus créditos, tarjetas y planea cómo salir más rápido.'],
-      ['chart','Inversión',1,'Lleva tu portafolio y rendimiento en un solo lugar.'],
-      ['shield','Seguros',1,'Todas tus pólizas y los huecos de cobertura.'],
-      ['clock','Retiro',1,'Proyección de tu pensión y aportes voluntarios.'],
-      ['bill','Impuestos',2,'Estima tu renta y encuentra deducciones que te ahorran plata.']
+      ['shield','Cuenta y seguridad','Correo, teléfono, contraseña o método de acceso y opciones adicionales de seguridad.'],
+      ['spark','Notificaciones','Elige qué recordatorios recibir y por dónde: dentro de Planea, correo o WhatsApp.'],
+      ['sun','Preferencias de Planea','Moneda principal, idioma y preferencias de visualización.'],
+      ['book','Privacidad, datos e IA','Qué información usa Maya, documentos cargados y opciones para descargar o eliminar datos.'],
+      ['card','Documentos y datos compartidos','Qué documentos has compartido con Planea. El RUT sigue en Impuestos; las pólizas en Seguros.'],
+      ['logout','Administración de la cuenta','Cerrar sesión y, con confirmación, eliminar cuenta.']
     ].map(function(m){
-      var tog=m[2]===1?'<div class="cf-tog"></div>':'<div class="asesor">Contacta un asesor</div>';
-      var body=m[2]===1?'<div class="d">'+m[3]+'</div>':'<div class="d">'+m[3]+'</div>'+tog;
-      var top='<div class="top"><div class="nm">'+ICON[m[0]]+' '+m[1]+'</div>'+(m[2]===1?tog:'')+'</div>';
-      return '<div class="cf-card">'+top+(m[2]===1?'<div class="d">'+m[3]+'</div>':'<div class="d">'+m[3]+'</div>'+tog)+'</div>';
+      return '<div class="cf-card"><div class="top"><div class="nm">'+ICON[m[0]]+' '+m[1]+'</div></div><div class="d">'+m[2]+'</div></div>';
     }).join('');
-    var body='<div class="mn cf"><h1>Configuración</h1><div class="lede">Tu portal, hecho a tu medida.</div>'
-      +'<div class="sec">Mis módulos</div><div class="secsub">Activa solo los que necesites. Cada módulo aparece como una opción en la barra lateral. <b>5 de 7 activos.</b></div>'
+    var body='<div class="mn cf"><h1>Configuración</h1><div class="lede">Administra tu cuenta y tu experiencia digital.</div>'
+      +'<div class="secsub" style="margin-bottom:12px">Mi Perfil es humano; Configuración es técnica. Aquí no hay información financiera ni metas. Las 14 secciones están siempre disponibles: no se activan ni se bloquean.</div>'
       +'<div class="cf-grid">'+mods+'</div></div>';
-    return '<div class="screen">'+sidebar('')+body+'</div>';
+    return '<div class="screen">'+sidebar('Configuración')+body+'</div>';
   }
 
   // ── Guía ──
   function scrGuia(){
     var cards=[
-      ['clock','Tu puntaje Planea',['Un número de 0 a 100 que resume qué tan sana está tu vida financiera. No mide cuánto tienes, sino qué tan bien manejas lo que tienes.','Se construye con cuatro pilares: <b>fondo de emergencia, flujo de caja, salud de deuda y estabilidad.</b>','Rangos: Punto de partida, Construyendo, En camino, Sólido y <b>Planeado</b> (el mejor).']],
-      ['spark','Habla con Maya, tu guía IA',['Toca el botón <b>Pregúntale a Maya</b> abajo a la derecha en cualquier pantalla.','<b>Escribe</b> tu pregunta, o toca el <b>micrófono</b> para hablar.','Maya responde sobre tus datos reales, no consejos genéricos.']],
-      ['book','Tus módulos',['<b>Inicio:</b> el resumen de tus finanzas hoy.','<b>Salud Financiera:</b> tu tablero completo con las 7 áreas.','<b>Ingresos · Gastos · Ahorro · Deuda · Inversión · Seguros · Retiro:</b> el detalle de cada frente.']],
-      ['target','Personaliza tu portal',['En <b>Agregar módulo</b> o <b>Configuración</b> activas solo los módulos que necesitas.','Cada uno aparece como una opción en el menú lateral.','El puntaje se recalcula con cada dato nuevo que registres.']]
+      ['clock','Tu Puntaje Planea',['Un solo número de 0 a 100 que resume qué tan sana está tu estructura financiera. No mide cuánto tienes, sino qué tan preparada está.','Se construye con <b>ocho pilares</b>: Flujo de Caja, Deuda, Ahorro, Inversión, Impuestos, Seguros, Retiro y Patrimonio y Sucesión.','Rangos: Punto de partida, Construyendo, En camino, Sólido y <b>Planeado</b> (el mejor). El mismo número aparece en Inicio y en Puntaje Planea, nunca dos distintos.']],
+      ['spark','Hallazgos de Maya, tu guía IA',['Maya es tu <b>guía financiera de IA</b>, nunca una asesora. Lee tu situación en lenguaje cotidiano, sin cifras ni productos.','Te señala el <b>frente prioritario</b> para atender primero y te invita a registrar tu información.','La decisión siempre es tuya: Planea informa, no recomienda productos.']],
+      ['book','Tus 14 secciones',['<b>Inicio</b> y <b>Puntaje Planea</b>: tu resultado y tus hallazgos.','<b>Ingresos · Gastos · Ahorro · Deuda · Inversión · Impuestos · Seguros · Retiro · Patrimonio</b>: registra cada frente.','<b>Mis Metas · Mi Perfil · Configuración</b>: tu plan, tu contexto y tu cuenta. Todas disponibles desde el primer día.']],
+      ['target','Cada dato afina tu puntaje',['La información que registras vale igual que una conexión bancaria y <b>reemplaza</b> la respuesta del survey en ese frente.','El puntaje se recalcula al instante, con una frase que explica qué cambió.','Tus metas y aportes son contexto para Maya: nunca mueven el puntaje.']]
     ].map(function(c){ return '<div class="gd-card"><div class="h">'+ICON[c[0]]+' '+c[1]+'</div><ul>'+c[2].map(function(li){return '<li>'+li+'</li>';}).join('')+'</ul></div>'; }).join('');
-    var body='<div class="mn gd"><h1>Guía de uso</h1><div class="lede">Todo lo que puedes hacer en Planea, en dos minutos.</div><div class="gd-grid">'+cards+'</div></div>';
-    return '<div class="screen">'+sidebar('Guía de uso')+body+'</div>';
+    var body='<div class="mn gd"><h1>Así funciona Planea</h1><div class="lede">Un puntaje, ocho pilares, catorce secciones — en dos minutos.</div><div class="gd-grid">'+cards+'</div></div>';
+    return '<div class="screen">'+sidebar('')+body+'</div>';
   }
 
   // ── SLIDES ──
+  var MONTO_LBL = 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.';
   var SLIDES=[
-    {step:'Landing', render:scrLanding, narr:'Este es el punto de entrada de Planea. El mensaje es directo: entiende tu dinero hoy y planea tu futuro. Un diagnóstico gratuito en tres minutos, sin tarjeta, que cubre los siete frentes de la planeación. Desde aquí, el usuario da un solo clic en Descubre tu salud financiera.'},
+    {step:'Landing', render:scrLanding, narr:'Este es el punto de entrada de Planea. El mensaje es directo: entiende tu dinero hoy y planea tu futuro. Un diagnóstico gratuito, sin tarjeta, que cubre los ocho pilares de la planeación. Desde aquí, el usuario da un solo clic en Descubre tu salud financiera.'},
     {step:'Crear cuenta', render:scrSignup, narr:'Crear una cuenta toma segundos: nombre, correo y contraseña, sin confirmación por correo. El usuario entra de inmediato y empieza su recorrido. Pedimos lo mínimo para no perder a nadie en el registro.'},
-    {step:'Onboarding', render:scrIntro, narr:'Aquí arranca el onboarding. Le explicamos que son trece preguntas, tres minutos, basado en estándares internacionales de planeación financiera. Un solo botón: Comenzar.'},
-    {step:'Pregunta 1 · Ocupación', render:function(){return qCard(1,'Ocupación','¿A qué te dedicas hoy?','',[['Empleado con contrato',1],['Servidor público',0],['Independiente o por prestación de servicios',0],['Dueño de negocio o empresario',0],['Pensionado',0],['Rentista o inversionista',0]],false,null);}, narr:'La primera pregunta es fácil y no compromete nada: a qué te dedicas. Abre la conversación y le da contexto a Maya. La barra muestra el avance: uno de trece.'},
-    {step:'Pregunta 2 · Ingresos', render:function(){return qCard(2,'Ingresos','¿Cuánto recibes al mes en total?','Suma todo: sueldo, rebusque, arriendos, lo que sea.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $3.000.000',0],['Entre $3.000.000 y $5.000.000',0],['Entre $5.000.000 y $8.000.000',0],['Entre $8.000.000 y $12.000.000',0],['Más de $12.000.000',1]],false,{v:'15.000.000',filled:true},'O escribe el monto exacto (elige un rango o escribe el monto)');}, narr:'Luego, los ingresos del mes. El usuario elige un rango o escribe el monto exacto: con cualquiera de los dos avanza. Escribir el monto hace que el puntaje use su cifra real, no un promedio del rango. Subimos los topes hasta más de doce millones para no aplanar a quien gana más.'},
-    {step:'Pregunta 3 · Gastos', render:function(){return qCard(3,'Gastos','¿Cuánto se te va al mes en total?','Arriendo, mercado, transporte, entretenimiento, todo.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $2.500.000',0],['Entre $2.500.000 y $4.000.000',0],['Entre $4.000.000 y $6.500.000',0],['Entre $6.500.000 y $10.000.000',1],['Más de $10.000.000',0]],false,{v:'7.000.000',filled:true},'O escribe el monto exacto (elige un rango o escribe el monto)');}, narr:'Lo mismo con los gastos: cuánto se le va al mes en total. Ingresos y gastos, juntos, definen su flujo de caja, que es uno de los cuatro pilares del puntaje.'},
-    {step:'Pregunta 4 · Deudas', render:function(){return qCard(4,'Deudas','¿Qué tipo de deudas tienes hoy?','Selecciona todas las que apliquen.',[['Tarjeta de crédito',1],['Préstamo personal o de libre inversión',1],['Crédito hipotecario',1],['Crédito de vehículo',1],['Crédito educativo',0],['Compras a cuotas o financiadas',0],['Deuda con familiares o particulares',0],['No tengo deudas',0]],true,{v:'12.000.000'},'Si sabes cuánto debes en total, escríbelo (opcional)');}, narr:'Aquí selecciona qué tipos de deuda tiene. Puede marcar varias, o decir que no tiene deudas. Cada tipo pesa distinto en el puntaje. El saldo total es opcional y no cambia el puntaje inicial; se considera más adelante cuando registra sus deudas reales.'},
-    {step:'Pregunta 5 · Cuotas', render:function(){return qCard(5,'Cuotas','¿Cuánto pagas al mes en cuotas sumando todas tus deudas?','',[['No pago cuotas',0],['Menos de $300.000',0],['Entre $300.000 y $700.000',0],['Entre $700.000 y $1.500.000',0],['Entre $1.500.000 y $3.000.000',0],['Entre $3.000.000 y $6.000.000',0],['Más de $6.000.000',1]],false,{v:'6.100.000',filled:true},'O escribe el monto exacto (elige un rango o escribe el monto)');}, narr:'Cuánto paga al mes en cuotas, sumando todas sus deudas. Esta es la variable principal de su salud de deuda: cuánto de su ingreso ya está comprometido.'},
-    {step:'Pregunta 6 · Fondo de emergencia', render:function(){return qCard(6,'Fondo de emergencia','Si dejaras de recibir ingresos hoy, ¿cuánto tiempo podrías cubrir tus gastos con lo que tienes guardado?','',[['No tengo nada guardado',0],['Menos de 1 mes',0],['Entre 1 y 3 meses',1],['Entre 3 y 6 meses',0],['Entre 6 meses y 1 año',0],['Más de 1 año',0]],false,null);}, narr:'Una pregunta clave: si dejara de recibir ingresos hoy, cuánto tiempo podría cubrir sus gastos con lo que tiene guardado. Este es el pilar de mayor peso del puntaje.'},
-    {step:'Pregunta 7 · Estabilidad', render:function(){return qCard(7,'Estabilidad','¿Tus ingresos son más o menos los mismos cada mes o suelen cambiar?','',[['Siempre me cae lo mismo, es fijo',1],['Varía un poco pero más o menos sé cuánto es',0],['Cambia bastante, nunca sé exactamente cuánto va a ser',0]],false,null);}, narr:'Sus ingresos son fijos o cambian mes a mes. La estabilidad del ingreso también cuenta para el resultado.'},
-    {step:'Pregunta 8 · Dependientes', render:function(){return qCard(8,'Dependientes','¿Cuántas personas dependen económicamente de ti?','',[['Nadie depende de mí',0],['1 o 2 personas',1],['3 o más personas',0]],false,null);}, narr:'Cuántas personas dependen de ella económicamente. Esto ajusta el tamaño de su colchón y su estabilidad. Hasta aquí van las ocho preguntas que alimentan el puntaje.'},
-    {step:'Pregunta 9 · Ahorro', render:function(){return qCard(9,'Ahorro','Después de cubrir tus gastos, ¿normalmente logras guardar una parte de tus ingresos?','',[['Sí, casi todos los meses',0],['A veces, cuando me queda algo',1],['Casi nunca me queda',0],['Termino el mes en cero o debiendo',0]],false,{v:'300.000'},'Si sabes cuánto guardas al mes, escríbelo aquí (opcional)');}, narr:'De aquí en adelante empiezan las cinco preguntas nuevas, que no cambian el puntaje pero completan la foto de sus siete frentes. La primera: su conducta de ahorro, distinta del saldo que ya tiene guardado.'},
-    {step:'Pregunta 10 · Inversión', render:function(){return qCard(10,'Inversión','¿Hoy tienes dinero destinado a inversiones para hacerlo crecer en el tiempo?','',[['Sí, invierto de forma periódica',0],['Tengo algo invertido pero no aporto seguido',1],['No, pero me interesa empezar',0],['No, por ahora no es prioridad',0],['No sé bien qué cuenta como inversión',0]],false,null);}, narr:'La inversión: si hoy destina dinero a hacerlo crecer. Fíjense en la última opción, no sé bien qué cuenta como inversión: no es relleno, es una respuesta esperada que le dice a Maya que ahí hace falta educación, no un producto.'},
-    {step:'Pregunta 11 · Impuestos', render:function(){return qCard(11,'Impuestos','¿Qué tan claro tienes tu tema de impuestos?','',[['Declaro y tengo claro qué me aplica',0],['Declaro pero no entiendo bien el proceso',1],['Creo que no me toca declarar',0],['No sé si me toca o no',0]],false,null);}, narr:'El frente tributario, que hoy la mayoría de las apps ignora: qué tan claro tiene su tema de impuestos. Con esto Planea cubre los siete frentes de la planeación, no solo el mes.'},
-    {step:'Pregunta 12 · Seguros', render:function(){return qCard(12,'Seguros','¿Tienes algún seguro o póliza activa hoy?','Selecciona todas las que apliquen.',[['Salud o medicina prepagada',0],['Vida',1],['Vehículo',1],['Hogar',0],['Solo lo que me da la empresa',0],['No tengo ninguno',0],['No estoy seguro',0]],true,null);}, narr:'Los seguros: qué coberturas tiene activas hoy. Puede marcar varias. Y si responde que no tiene ninguno, Planea se lo señala como un frente por construir, sin recomendarle ningún producto.'},
-    {step:'Pregunta 13 · Retiro', render:function(){return qCard(13,'Retiro','¿Hoy estás construyendo un ahorro para tu retiro?','',[['Sí, aporto a un fondo voluntario o similar',0],['Solo lo obligatorio que me descuentan',1],['No aporto nada hoy',0],['No sé cómo funciona mi pensión',0]],false,null);}, narr:'La última pregunta: su retiro. Con esto termina el cuestionario de trece preguntas y el botón cambia a Calcular mi puntaje Planea.'},
-    {step:'Resultado · Puntaje Planea', render:scrResult, narr:'Y este es el momento clave: su puntaje Planea. Un número, un rango, y el desglose por pilares, cada uno con una lectura corta de Maya. Aquí obtiene cincuenta y seis, estable. Es su punto de partida, que irá subiendo a medida que registra su información. De aquí, un clic en Próximo paso y Maya la guía a completar sus datos.'},
-    {step:'Maya · guía IA', render:scrMaya, narr:'Maya es la guía de inteligencia artificial de Planea. Habla por texto o por voz, siempre sobre los datos reales del usuario, nunca con consejos genéricos. No recomienda productos ni entidades: su papel es ayudar a registrar la información y explicar el resultado, con los límites que exige la regulación.'},
-    {step:'Registro guiado · Ingresos', render:function(){return moduleScreen({step:1,title:'Ingresos',sub:'Todo lo que entra cada mes: sueldo, freelance, arriendos, negocio.',note:'Agrega tus ingresos con "+ Agregar". Cuando termines, toca Siguiente.',score:56,color:'#3fc06a',rango:'En camino',totLabel:'Total mensual · lo que entra cada mes',totVal:'$15.601.487',cardTitle:'Tus fuentes de ingreso',cardSub:'Agrega cada entrada por separado',innerTitle:'Tus fuentes de ingreso',itemNm:'Salario',itemTy:'Salario',itemAmt:'$15.601.487',skip:'Saltar por ahora',nextLbl:'Siguiente'});}, narr:'Terminado el puntaje, empieza el registro guiado, frente por frente, en siete pasos. El primero, ingresos: el usuario agrega cada fuente por separado. Y lo importante: el puntaje, arriba a la derecha, se recalcula con cada dato que registra. Ya no es una encuesta, es una lectura que se afina.'},
-    {step:'Registro guiado · Deuda', render:function(){return moduleScreen({step:4,title:'Deuda',sub:'Todo lo que debes, ordenado por costo y prioridad de pago.',note:'Agrega tus deudas con "+ Agregar". Cuando termines (o si no aplica), toca Siguiente.',score:75,color:'#3fc06a',rango:'Sólido',totLabel:'Saldo total de deuda · pasivos activos',totVal:'$35.000.000',cardTitle:'Tus créditos y tarjetas',cardSub:'Ordenados de mayor a menor saldo',innerTitle:'Tus deudas',itemNm:'Vehículo',itemTy:'Crédito de vehículo · cuota $1.500.000/mes',itemAmt:'$35.000.000',skip:'Saltar por ahora',nextLbl:'Siguiente'});}, narr:'Cada frente tiene su propia pantalla con la misma lógica. En deuda, el usuario registra cada crédito con su saldo y su cuota, ordenados por prioridad de pago. Aquí es donde el saldo total sí entra al cálculo, con datos reales en vez de un rango declarado.'},
-    {step:'Registro guiado · Seguros', render:function(){return moduleScreen({step:6,title:'Seguros',sub:'¿Qué pasa si algo sale mal? Aquí ves lo que estás protegiendo.',note:'Agrega tus seguros con "+ Agregar". Cuando termines (o si no aplica), toca Siguiente.',score:65,color:'#17a6a6',rango:'En camino',totLabel:'Cobertura total · valor asegurado',totVal:'$100.000.000',cardTitle:'Tus pólizas',cardSub:'Agrega cada seguro que tengas',innerTitle:'Tus pólizas',itemNm:'Vida',itemTy:'Vida · prima $150.000/mes',itemAmt:'$100.000.000',skip:'Saltar por ahora',nextLbl:'Siguiente'});}, narr:'Y así con ahorro, inversión, seguros y retiro. Cada paso ofrece dos salidas: registrar, o decir que ese frente no aplica todavía. El usuario puede salir y retomar donde quedó; nada se pierde. En total, siete pasos para convertir la encuesta en cifras.'},
-    {step:'Salud Financiera', render:scrSalud, narr:'Con la información registrada, el usuario llega a su tablero de Salud Financiera. Aquí el puntaje ya no se apoya en rangos declarados, sino en cifras reales: setenta y dos, sólido. Ve su patrimonio neto, cuatro medidores clave y el perfil completo de sus siete áreas en un radar. Este es el producto final: una lectura viva que mejora con cada dato.'},
-    {step:'Configuración', render:scrConfig, narr:'Cada usuario arma su propio portal. En Configuración activa solo los módulos que necesita, y cada uno aparece como una opción en el menú. Impuestos, por ejemplo, se ofrece con acompañamiento de un asesor, respetando el límite de lo que Planea puede hacer directamente.'},
-    {step:'Guía de uso', render:scrGuia, narr:'Y para que nadie se pierda, la guía de uso resume todo en dos minutos: qué es el puntaje, cómo hablar con Maya, cuáles son los módulos y cómo personalizar el portal. Del primer clic al plan financiero vivo, este es el recorrido completo de Planea.'}
+    {step:'Antes de empezar', render:scrIntro, narr:'Aquí arranca la vinculación. No mencionamos cuántas preguntas ni cuánto tarda: solo invitamos a responder con información real para que el resultado refleje mejor su situación. Un solo botón: Comenzar.'},
+    // ── Las 20 preguntas, agrupadas por pilar (§5) ──
+    {step:'Contexto · Edad', render:function(){return qCard('Contexto','¿En qué rango de edad estás?','',[['18–29',1],['30–39',0],['40–49',0],['50–59',0],['60 o más',0]],false,null);}, narr:'Las primeras cuatro preguntas son de contexto y no piden cálculo. La edad no da puntaje: modula qué tan exigente es el estándar de otros pilares, como el retiro. El encabezado nombra el pilar, no la posición; arriba, una barra marca los ocho pilares a medida que avanza.'},
+    {step:'Contexto · Ocupación', render:function(){return qCard('Contexto','¿A qué te dedicas hoy?','',[['Empleado con contrato',1],['Servidor público',0],['Independiente o por prestación de servicios',0],['Dueño de negocio o empresario',0],['Pensionado',0],['Rentista o inversionista',0]],false,null);}, narr:'La ocupación también modula: si es pensionado, el pilar de retiro se resuelve completo; si es independiente, se ajusta la exigencia del colchón de ahorro.'},
+    {step:'Contexto · Dependientes', render:function(){return qCard('Contexto','¿Cuántas personas dependen económicamente de ti?','',[['Nadie depende de mí',0],['1 o 2 personas',1],['3 o más personas',0]],false,null);}, narr:'Cuántas personas dependen de él. Esto ajusta el estándar de seguros y de patrimonio, y sube la prioridad de la protección cuando hay personas a cargo.'},
+    {step:'Contexto · Variabilidad', render:function(){return qCard('Contexto','¿Tus ingresos son más o menos los mismos cada mes?','',[['Siempre me cae lo mismo, es fijo',1],['Varía un poco pero más o menos sé cuánto es',0],['Cambia bastante, nunca sé exactamente cuánto va a ser',0]],false,null);}, narr:'La última de contexto: si su ingreso es fijo o cambia. Si cambia bastante, exigimos un colchón un poco mayor.'},
+    {step:'Ahorro · 1 de 2', render:function(){return qCard('Ahorro · 1 de 2','Después de cubrir tus gastos, ¿logras guardar una parte?','',[['Sí, casi todos los meses',1],['A veces, cuando me queda algo',0],['Casi nunca me queda',0],['Termino el mes en cero o debiendo',0]],false,{v:'500.000'},'Si sabes cuánto guardas al mes, escríbelo (opcional).');}, narr:'Empiezan los pilares. Ahorro es el de mayor peso, veinte por ciento. Primero su constancia: si logra guardar una parte. Puede escribir cuánto guarda, pero es opcional y nunca bloquea el avance.'},
+    {step:'Ahorro · 2 de 2', render:function(){return qCard('Ahorro · 2 de 2','Si dejaras de recibir ingresos hoy, ¿cuánto tiempo cubrirías tus gastos con lo guardado?','',[['No tengo nada guardado',0],['Menos de 1 mes',0],['Entre 1 y 3 meses',0],['Entre 3 y 6 meses',1],['Más de 6 meses',0]],false,null);}, narr:'La cobertura: cuánto tiempo aguantaría con lo guardado si dejara de recibir ingresos. Es el fondo de emergencia, y por eso se mide en meses de gastos, no de ingresos.'},
+    {step:'Deuda · 1 de 2', render:function(){return qCard('Deuda · 1 de 2','¿Qué tipo de deudas tienes hoy?','Selecciona todas las que apliquen.',[['Tarjeta de crédito',1],['Préstamo personal o de libre inversión',0],['Crédito hipotecario',1],['Crédito de vehículo',0],['Crédito educativo',0],['Compras a cuotas o financiadas',0],['Deuda con familiares o particulares',0],['No tengo deudas',0]],true,null);}, narr:'Deuda: qué tipos tiene. Cada uno pesa distinto — una hipoteca suma, una deuda informal resta. Si elige No tengo deudas, se salta la pregunta de cuotas y el pilar se resuelve completo, sin tratar la ausencia de deuda como un logro.'},
+    {step:'Seguros · 1 de 2', render:function(){return qCard('Seguros · 1 de 2','¿Qué seguros o pólizas tienes activas hoy?','Selecciona todas las que apliquen.',[['Salud o medicina prepagada',1],['Vida',1],['Vehículo',0],['Hogar',0],['Solo lo que me da la empresa',0],['No tengo ninguno',0],['No estoy seguro',0]],true,null);}, narr:'Seguros: qué coberturas tiene activas. Vida y salud pesan más que una póliza patrimonial. Si no tiene ninguna, Planea lo marca como un frente por construir, sin recomendar ningún producto.'},
+    {step:'Seguros · 2 de 2', render:function(){return qCard('Seguros · 2 de 2','Si no pudieras trabajar mañana, ¿por cuánto tiempo estarían cubiertos tú y los tuyos?','',[['Menos de 3 meses',0],['Entre 3 meses y 1 año',1],['Más de 1 año',0],['No sé',0]],false,null);}, narr:'La suficiencia: por cuánto tiempo estarían cubiertos si no pudiera trabajar. La opción No sé no vale cero: vale cincuenta, porque significa que falta información, no que la situación sea mala.'},
+    {step:'Retiro / Pensión · 1 de 2', render:function(){return qCard('Retiro / Pensión · 1 de 2','¿Cuánto tiempo llevas cotizando a pensión?','',[['Menos de 5 años',0],['Entre 5 y 15 años',1],['Más de 15 años',0],['No cotizo',0],['No sé',0]],false,null);}, narr:'Retiro: cuánto tiempo lleva cotizando. Este pilar se lee con una matriz que cruza el tiempo cotizado con su rango de edad, porque lo que es suficiente a los treinta no lo es a los cincuenta.'},
+    {step:'Retiro / Pensión · 2 de 2', render:function(){return qCard('Retiro / Pensión · 2 de 2','¿En qué régimen de pensión estás?','',[['Colpensiones',0],['Fondo privado',1],['En ninguno',0],['No sé en cuál estoy',0]],false,null);}, narr:'Su régimen de pensión. El régimen en sí no es mejor ni peor: solo reconocemos que conoce su situación.'},
+    {step:'Patrimonio · 1 de 2', render:function(){return qCard('Patrimonio · 1 de 2','¿Cuáles de estos tienes a tu nombre?','Selecciona todas las que apliquen.',[['Vivienda propia',1],['Vehículo',1],['Local, lote o segunda propiedad',0],['Negocio o participación en empresa',0],['Inversiones registradas',0],['Ninguno todavía',0]],true,null);}, narr:'Patrimonio y Sucesión: qué activos tiene a su nombre. Es el pilar de menor peso, pero completa la foto de su estructura.'},
+    {step:'Patrimonio · 2 de 2', render:function(){return qCard('Patrimonio · 2 de 2','¿Has dejado por escrito qué pasaría con tus bienes o seguros?','',[['Sí, está todo definido',0],['Algunos beneficiarios asignados',1],['No he hecho nada',0],['No sé si me aplica',0]],false,null);}, narr:'La previsión sucesoria: si dejó por escrito qué pasaría con sus bienes. Pesa más a partir de los cuarenta o si hay personas a cargo.'},
+    {step:'Impuestos · 1 de 2', render:function(){return qCard('Impuestos · 1 de 2','¿Cuál es tu situación con la declaración de renta?','',[['Declaro y estoy al día',1],['Declaro pero me atraso',0],['Creo que no me toca declarar',0],['No sé si me toca o no',0]],false,null);}, narr:'El frente tributario, que casi ninguna app cubre: su situación con la declaración de renta.'},
+    {step:'Impuestos · 2 de 2', render:function(){return qCard('Impuestos · 2 de 2','¿Llevas registro de los soportes que sirven para declarar?','',[['Sí, organizados',0],['Algunos, sin orden',1],['No llevo ninguno',0],['No sé cuáles necesito',0]],false,null);}, narr:'Y si lleva ordenados los soportes que sirven para declarar.'},
+    {step:'Inversión · 1 de 2', render:function(){return qCard('Inversión · 1 de 2','¿Dónde tienes dinero invertido hoy?','Selecciona todas las que apliquen.',[['CDT o ahorro programado',0],['Fondos de inversión',1],['Acciones o bonos',0],['Finca raíz para renta',0],['Negocio propio',0],['Criptomonedas',0],['No tengo nada invertido',0]],true,null);}, narr:'Inversión: dónde tiene su dinero puesto a crecer. Si elige No tengo nada invertido, se salta la siguiente y el pilar se resuelve en cero, sin castigar: es simplemente un frente por empezar.'},
+    {step:'Inversión · 2 de 2', render:function(){return qCard('Inversión · 2 de 2','¿Qué parte de tu dinero tienes invertido para que crezca?','',[['Nada',0],['Menos de un mes de mis ingresos',0],['Entre 1 y 6 meses de mis ingresos',1],['Más de 6 meses de mis ingresos',0],['No sé bien qué cuenta como inversión',0]],false,null);}, narr:'La magnitud, medida en meses de su ingreso. Y una regla de secuencia: si aún no tiene un colchón, la inversión no puede subir demasiado, porque el respaldo va primero.'},
+    {step:'Flujo de Caja · 1 de 3', render:function(){return qCard('Flujo de Caja · 1 de 3','¿Cuánto recibes al mes en total?','Suma todo: sueldo, rebusque, arriendos, negocio.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $3.000.000',0],['Entre $3.000.000 y $6.000.000',0],['Entre $6.000.000 y $12.000.000',1],['Más de $12.000.000',0]],false,{v:'9.000.000',filled:true},MONTO_LBL);}, narr:'Las tres preguntas que piden estimar cifras van al final, cuando el avance acumulado reduce el abandono. Primero los ingresos: elige un rango y, si quiere, escribe el monto exacto. El cálculo usa el monto cuando existe, y el punto medio del rango cuando no.'},
+    {step:'Flujo de Caja · 2 de 3', render:function(){return qCard('Flujo de Caja · 2 de 3','¿Cuánto se te va al mes en total?','Arriendo, mercado, transporte, todo lo del día a día.',[['Menos de $1.500.000',0],['Entre $1.500.000 y $3.000.000',0],['Entre $3.000.000 y $6.000.000',1],['Entre $6.000.000 y $12.000.000',0],['Más de $12.000.000',0]],false,{v:'4.500.000',filled:true},MONTO_LBL);}, narr:'Los gastos del mes. Ingresos menos gastos, sobre ingresos, dan el margen: el corazón del flujo de caja. El margen no descuenta pagos de deuda ni aportes a ahorro, que viven en sus propios pilares.'},
+    {step:'Deuda · 2 de 2', render:function(){return qCard('Deuda · 2 de 2','¿Cuánto pagas al mes en cuotas sumando todas tus deudas?','',[['No pago cuotas',0],['Menos de $500.000',0],['Entre $500.000 y $1.500.000',0],['Entre $1.500.000 y $3.000.000',1],['Más de $3.000.000',0]],false,{v:'2.000.000'},MONTO_LBL,true);}, narr:'La última: cuánto paga al mes en cuotas. Es la variable principal de la deuda: cuánto de su ingreso ya está comprometido. Con esto termina la vinculación y el botón cambia a Calcular mi puntaje Planea.'},
+    {step:'Resultado · Puntaje Planea', render:scrResult, narr:'Y este es el momento clave: un solo puntaje Planea. Aquí obtiene setenta y dos, sólido. Debajo, los Hallazgos de Maya y las ocho tarjetas de pilar, cada una con su lectura. Maya habla sin cifras y sin productos: describe su situación y le señala el frente prioritario. La deuda que veíamos antes en dos secciones distintas ya no existe: un solo número, aquí y en Inicio.'},
+    {step:'Hallazgos de Maya', render:scrMaya, narr:'Maya es la guía de inteligencia artificial de Planea, nunca una asesora. Lee la situación del usuario en lenguaje cotidiano, sin números ni jerga, y nunca nombra un producto ni una entidad. Su papel es explicar el resultado y ayudar a registrar la información; la decisión siempre es del usuario.'},
+    {step:'Sección · Ingresos', render:function(){return moduleScreen({title:'Ingresos',sub:'Todo lo que entra cada mes: sueldo, freelance, arriendos, negocio.',note:'Registra cada fuente. Cuando termines, toca Siguiente.',totLabel:'Total mensual · lo que entra cada mes',totVal:'$9.000.000',cardTitle:'Tus fuentes de ingreso',cardSub:'Recurrente, variable o único',innerTitle:'Tus fuentes de ingreso',add:'Agregar ingreso',itemNm:'Salario',itemTy:'Recurrente',itemAmt:'$9.000.000',skip:'Terminé de agregar mis ingresos',nextLbl:'Siguiente'});}, narr:'Cada pilar tiene su sección, y todas están disponibles desde el primer día — ninguna bloqueada. Aquí registra sus ingresos, uno por uno. Fíjense en algo del documento: las pantallas de pilar ya no muestran el puntaje, y el botón nombra la acción completa, Agregar ingreso, nunca solo Agregar.'},
+    {step:'Sección · Deuda', render:function(){return moduleScreen({title:'Deuda',sub:'Todo lo que debes, sin pedirte tasas ni intereses.',note:'Registra cada obligación con su saldo y su pago mensual.',totLabel:'Saldo total de deuda',totVal:'$35.000.000',cardTitle:'Tus créditos y tarjetas',cardSub:'Ordenados de mayor a menor saldo',innerTitle:'Tus deudas',add:'Agregar deuda',itemNm:'Crédito hipotecario',itemTy:'Pago mensual $1.500.000',itemAmt:'$35.000.000',skip:'No tengo deudas activas',nextLbl:'Siguiente'});}, narr:'En Deuda registra cada obligación con su saldo y su pago mensual, sin pedirle tasas de interés. El dato que registra reemplaza por completo la respuesta del survey en ese pilar, y el puntaje se recalcula al instante con una frase que explica qué cambió.'},
+    {step:'Sección · Seguros', render:function(){return moduleScreen({title:'Seguros',sub:'Qué tienes protegido, cuánto pagas y cuándo renuevas.',note:'Sube tu póliza y Maya te ayuda a entenderla.',totLabel:'Protección · pólizas activas',totVal:'2 pólizas',cardTitle:'Tus pólizas',cardSub:'Prima y próxima renovación',innerTitle:'Tus pólizas',add:'Agregar seguro',itemNm:'Vida',itemTy:'Prima $150.000 · anual',itemAmt:'Vigente',skip:'No tengo pólizas activas',nextLbl:'Siguiente'});}, narr:'En Seguros ve qué tiene protegido y cuándo renueva. Puede subir su póliza y Maya la traduce a lenguaje sencillo. Cada paso ofrece dos salidas distintas: no tengo pólizas, que sí alimenta el perfil, o ahora no, que lo deja pendiente.'},
+    {step:'Sección · Impuestos', render:function(){return moduleScreen({title:'Impuestos',sub:'Entiende, organiza y no te pierdas una fecha. Diseñada para Colombia.',note:'Carga tu RUT y Maya te ayuda a entenderlo.',totLabel:'Estado tributario',totVal:'Por revisar',cardTitle:'Tu calendario tributario',cardSub:'Según los dos últimos dígitos de tu cédula',innerTitle:'Próxima obligación',add:'Cargar RUT',itemNm:'Declaración de renta',itemTy:'Fechas basadas en información oficial de la DIAN',itemAmt:'Agosto',skip:'Ahora no, seguir',nextLbl:'Siguiente'});}, narr:'Y una sección nueva, Impuestos, pensada para Colombia. El usuario carga su RUT y Maya lo traduce, sin obligarlo a entender códigos. Muestra su calendario tributario personalizado según los últimos dígitos de su cédula. Maya explica y recuerda fechas, pero nunca calcula si supera topes ni presenta esto como asesoría.'},
+    {step:'Configuración', render:scrConfig, narr:'Configuración queda solo para la cuenta y la experiencia: seguridad, notificaciones, privacidad. Es la frontera con Mi Perfil: Mi Perfil es humano, Configuración es técnica. Ya no se activan ni desactivan módulos: las catorce secciones están siempre disponibles.'},
+    {step:'Así funciona Planea', render:scrGuia, narr:'En resumen: un solo Puntaje Planea construido con ocho pilares, Hallazgos de Maya sin cifras ni productos, y catorce secciones donde cada dato real afina el número. Del primer clic al plan financiero vivo, este es el nuevo recorrido de Planea.'}
   ];
 
   // ── Voz Dalia (Edge TTS) con respaldo navegador ──
