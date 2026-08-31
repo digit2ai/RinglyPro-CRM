@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Impuestos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-app.css?v=51">
+<style>
+  .tx-intro{color:var(--mut);font-size:14px;max-width:520px;line-height:1.5;margin-top:4px}
+  .tx-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:16px}
+  .tx-card h2{font-family:'Inter',sans-serif;font-weight:800;font-size:16px}
+  .tx-card .sub{color:var(--mut);font-size:12.5px;margin-top:3px}
+  /* Estado */
+  .tx-estado{display:flex;align-items:center;gap:14px;margin-top:16px;border-radius:18px;border:1px solid var(--line);padding:18px;background:linear-gradient(180deg,rgba(63,192,106,.05),transparent)}
+  .tx-dot{width:14px;height:14px;border-radius:50%;flex:0 0 14px}
+  .tx-estado .lbl{font-size:11px;letter-spacing:.14em;color:var(--mut);font-weight:700}
+  .tx-estado .val{font-family:'Inter';font-weight:800;font-size:20px;margin-top:2px}
+  /* Calendario (jerarquía principal §23.2) */
+  .tx-cal{border-color:rgba(63,192,106,.45);background:linear-gradient(180deg,rgba(63,192,106,.08),transparent)}
+  .tx-cal .prox{font-family:'Inter';font-weight:800;font-size:22px;margin-top:10px}
+  .tx-cal .fecha{font-size:14px;color:var(--green);font-weight:700;margin-top:4px}
+  .tx-cal .keep{font-size:13px;color:var(--txt);margin-top:10px;line-height:1.5}
+  .tx-cal .warn{font-size:11.5px;color:var(--mut);margin-top:12px;line-height:1.5;border-top:1px dashed var(--line);padding-top:10px}
+  .tx-row{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .tx-row label{font-size:12.5px;font-weight:700}
+  .tx-row select,.tx-row input{width:100%;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;color:var(--txt);outline:none}
+  .tx-row select:focus,.tx-row input:focus{border-color:var(--green)}
+  .tx-note{font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.5}
+  .tx-rut{border:1.5px dashed var(--line);border-radius:14px;padding:18px;text-align:center;margin-top:14px}
+  .tx-rut input[type=file]{display:none}
+  .tx-rut .btn{display:inline-block;background:#12494b;color:#eafff4;border-radius:12px;padding:11px 18px;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px}
+  body.light .tx-rut .btn{background:var(--cream);color:var(--ink)}
+  .tx-rut .st{font-size:12.5px;color:var(--mut);margin-top:10px}
+  .tx-save{width:100%;margin-top:16px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px;font-family:'Inter',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
+  body.light .tx-save{background:var(--cream);color:var(--ink)}
+  .tx-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#12494b;color:#eafff4;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none}
+  .tx-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .maya-line{display:flex;gap:10px;align-items:flex-start;background:var(--group);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+  .maya-line .av{width:28px;height:28px;border-radius:50%;background:var(--green);color:#04120c;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 28px}
+  .maya-line p{font-size:13px;line-height:1.45}
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+
+  <div class="phead"><div>
+    <h1>Impuestos</h1>
+    <p class="tx-intro">Entiende, organiza y no te pierdas una fecha. Diseñada para personas naturales en Colombia. Planea no es un software contable ni prepara declaraciones.</p>
+  </div></div>
+
+  <!-- Estado tributario §23.1 -->
+  <div class="tx-estado">
+    <span class="tx-dot" id="tx-dot" style="background:var(--mut)"></span>
+    <div><div class="lbl">ESTADO TRIBUTARIO</div><div class="val" id="tx-estado-val">Información incompleta</div></div>
+  </div>
+
+  <!-- Calendario tributario personalizado §23.2 -->
+  <div class="tx-card tx-cal">
+    <h2>Tu próxima fecha</h2>
+    <div class="sub">Tu declaración de renta se ordena por los dos últimos dígitos de tu cédula.</div>
+    <div class="prox" id="tx-prox">Cuéntanos tus dos últimos dígitos</div>
+    <div class="fecha" id="tx-fecha"></div>
+    <div class="keep" id="tx-keep">Ingresa los dos últimos dígitos de tu cédula abajo para ver tu ventana estimada.</div>
+    <div class="warn">Las fechas son referenciales y deben confirmarse en la DIAN. Los vencimientos y los criterios para declarar cambian por año.</div>
+  </div>
+
+  <!-- Perfil tributario §23.4 (alimenta el pilar Impuestos) -->
+  <div class="tx-card">
+    <h2>Tu perfil tributario</h2>
+    <div class="sub">Unas pocas preguntas. Al responderlas, tu Puntaje Planea afina el pilar de Impuestos.</div>
+    <div class="tx-row"><label>¿Cuál es tu situación con la declaración de renta?</label>
+      <select id="t-cumplimiento"><option value="">Selecciona…</option><option value="aldia">Declaro y estoy al día</option><option value="atraso">Declaro pero me atraso</option><option value="notoca">Creo que no me toca declarar</option><option value="nose">No sé si me toca o no</option></select></div>
+    <div class="tx-row"><label>¿Llevas registro de los soportes que sirven para declarar?</label>
+      <select id="t-soportes"><option value="">Selecciona…</option><option value="organizados">Sí, organizados</option><option value="algunos">Algunos, sin orden</option><option value="ninguno">No llevo ninguno</option><option value="nose">No sé cuáles necesito</option></select></div>
+    <div class="tx-row"><label>¿Quién se encarga de tus impuestos?</label>
+      <select id="t-preparador"><option value="">Selecciona…</option><option>Yo mismo</option><option>Contador</option><option>Otra persona</option><option>Actualmente nadie</option><option>No aplica</option></select></div>
+    <div class="tx-row"><label>Dos últimos dígitos de tu cédula</label>
+      <input id="t-cedula" inputmode="numeric" maxlength="2" placeholder="00"></div>
+    <div class="tx-note" id="tx-calc-note"></div>
+  </div>
+
+  <!-- Tu RUT §23.3 -->
+  <div class="tx-card">
+    <h2>Tu RUT</h2>
+    <div class="sub">Carga tu RUT y Maya te ayuda a entenderlo, sin códigos ni terminología.</div>
+    <div class="tx-rut">
+      <label class="btn" for="t-rut-file">Cargar RUT (PDF)</label>
+      <input type="file" id="t-rut-file" accept="application/pdf">
+      <div class="st" id="tx-rut-st">El PDF no se almacena: Planea lee los campos y los descarta. Si necesitas actualizarlo, vuelves a cargarlo.</div>
+    </div>
+    <div class="maya-line"><div class="av">M</div><p>La lectura automática del RUT llega muy pronto. Por ahora, completa tu perfil tributario arriba: con eso ya construyo tu estado y tu calendario. Cuando actives la lectura, traduzco tu RUT a lenguaje sencillo.</p></div>
+  </div>
+
+  <button class="tx-save" id="tx-save">Guardar</button>
+  <p class="tx-note">Maya explica y te recuerda fechas. Nunca afirma que estás obligado a declarar, ni calcula si superas topes o un valor a pagar: para eso, un contador. Esta información es educativa, no asesoría tributaria.</p>
+
+</div></div>
+<div class="tx-toast" id="tx-toast"></div>
+
+<script src="/planea/portal/planea-motor.js?v=1" defer></script>
+<script src="/planea/portal/planea-sb.js?v=60" defer></script>
+<script src="/planea/portal/planea-nav.js?v=66" defer></script>
+<script src="/planea/portal/maya-chat.js?v=62" defer></script>
+<script src="/planea/portal/impuestos.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Mi Perfil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-app.css?v=51">
+<style>
+  .mp-intro{color:var(--mut);font-size:14px;max-width:520px;line-height:1.5;margin-top:4px}
+  .mp-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 20px;margin-top:16px}
+  .mp-card h2{font-family:'Inter',sans-serif;font-weight:800;font-size:16px}
+  .mp-card .sub{color:var(--mut);font-size:12.5px;margin-top:3px}
+  .mp-card.calc{border-color:rgba(63,192,106,.4);background:linear-gradient(180deg,rgba(63,192,106,.06),transparent)}
+  .mp-badge{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--green);border:1px solid var(--green);border-radius:99px;padding:3px 9px;margin-bottom:6px}
+  .mp-row{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .mp-row label{font-size:12.5px;font-weight:700;color:var(--txt)}
+  .mp-row select,.mp-row input,.mp-row textarea{width:100%;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;color:var(--txt);outline:none}
+  .mp-row select:focus,.mp-row input:focus,.mp-row textarea:focus{border-color:var(--green)}
+  .mp-row textarea{min-height:74px;resize:vertical}
+  .mp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .mp-chip{border:1.5px solid var(--line);background:var(--card2);color:var(--txt);border-radius:99px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer}
+  .mp-chip.on{border-color:var(--green);background:var(--green-soft)}
+  .mp-save{width:100%;margin-top:16px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px;font-family:'Inter',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
+  body.light .mp-save{background:var(--cream);color:var(--ink)}
+  .mp-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#12494b;color:#eafff4;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none}
+  .mp-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .mp-note{font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.5}
+  .mp-comp{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .mp-comp .bar{flex:1;height:7px;border-radius:99px;background:var(--line);overflow:hidden}
+  .mp-comp .bar i{display:block;height:100%;background:linear-gradient(90deg,#3fc06a,#17a6a6);width:0;transition:width .5s}
+  .mp-comp .pct{font-size:12px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+
+  <div class="phead"><div>
+    <h1>Mi Perfil</h1>
+    <p class="mp-intro">Ayuda a Maya a conocerte mejor. Cuanto más entienda sobre tu vida, prioridades y responsabilidades, mejor podrá contextualizar tus finanzas.</p>
+  </div></div>
+
+  <div class="mp-comp"><div class="bar"><i id="mp-compfill"></i></div><span class="pct" id="mp-comppct">0%</span></div>
+
+  <!-- Datos que afectan el cálculo (§27.2) -->
+  <div class="mp-card calc">
+    <span class="mp-badge">AFECTA TU PUNTAJE</span>
+    <h2>Tu contexto</h2>
+    <div class="sub">Estos tres datos son un único valor en todo Planea. Al cambiarlos, tu Puntaje Planea se recalcula al instante.</div>
+    <div class="mp-row"><label>¿En qué rango de edad estás?</label>
+      <select id="f-edad"><option value="">Selecciona…</option><option value="e1">18–29</option><option value="e2">30–39</option><option value="e3">40–49</option><option value="e4">50–59</option><option value="e5">60 o más</option></select></div>
+    <div class="mp-row"><label>¿A qué te dedicas hoy?</label>
+      <select id="f-ocupacion"><option value="">Selecciona…</option><option value="empleado">Empleado con contrato</option><option value="publico">Servidor público</option><option value="independiente">Independiente o por prestación de servicios</option><option value="negocio">Dueño de negocio o empresario</option><option value="pensionado">Pensionado</option><option value="rentista">Rentista o inversionista</option></select></div>
+    <div class="mp-row"><label>¿Cuántas personas dependen económicamente de ti?</label>
+      <select id="f-dependientes"><option value="">Selecciona…</option><option value="nadie">Nadie depende de mí</option><option value="d1_2">1 o 2 personas</option><option value="d3plus">3 o más personas</option></select></div>
+    <div class="mp-note" id="mp-calc-note"></div>
+  </div>
+
+  <!-- Sobre ti -->
+  <div class="mp-card">
+    <h2>Sobre ti</h2>
+    <div class="mp-row"><label>Ciudad y país</label><input id="c-ciudad" placeholder="Cali, Colombia"></div>
+    <div class="mp-row"><label>Profesión u ocupación</label><input id="c-profesion" placeholder="A qué te dedicas"></div>
+    <div class="mp-row"><label>Situación laboral</label><input id="c-laboral" placeholder="Empleado, independiente, buscando…"></div>
+  </div>
+
+  <!-- Tu vida -->
+  <div class="mp-card">
+    <h2>Tu vida</h2>
+    <div class="mp-row"><label>¿Con quién vives?</label><input id="c-convive" placeholder="Solo, con pareja, con familia…"></div>
+    <div class="mp-row"><label>Otras responsabilidades familiares o personales</label><input id="c-responsabilidades" placeholder="Hijos, padres, mascotas…"></div>
+  </div>
+
+  <!-- Lo que es importante para ti -->
+  <div class="mp-card">
+    <h2>Lo que es importante para ti</h2>
+    <div class="sub">Elige lo que más te mueve. Maya lo usa para contextualizar, no para juzgar.</div>
+    <div class="mp-chips" id="c-prioridades"></div>
+    <div class="mp-row"><label>¿Qué quieres que el dinero te permita hacer?</label><textarea id="c-proposito" placeholder="En tus palabras"></textarea></div>
+    <div class="mp-row"><label>¿Qué te preocupa hoy de tus finanzas?</label><textarea id="c-preocupa" placeholder="En tus palabras"></textarea></div>
+  </div>
+
+  <!-- Tu relación con el dinero -->
+  <div class="mp-card">
+    <h2>Tu relación con el dinero</h2>
+    <div class="mp-row"><label>¿Qué tan organizado te consideras con tu plata?</label>
+      <select id="c-organizado"><option value="">Selecciona…</option><option>Muy organizado</option><option>Más o menos</option><option>Poco organizado</option></select></div>
+    <div class="mp-row"><label>¿Cuánto acompañamiento quieres de Maya?</label>
+      <select id="c-acompanamiento"><option value="">Selecciona…</option><option>Mucho, guíame paso a paso</option><option>Lo justo</option><option>Poco, solo lo esencial</option></select></div>
+    <div class="mp-row"><label>Cuéntale a Maya un poco sobre ti</label><textarea id="c-libre" placeholder="Lo que quieras que Maya sepa"></textarea></div>
+  </div>
+
+  <button class="mp-save" id="mp-save">Guardar mi perfil</button>
+  <p class="mp-note">Ningún campo se pide por acumular datos. Tú decides qué compartir y puedes editarlo o eliminarlo cuando quieras. Mi Perfil es tu espacio humano; la administración de la cuenta vive en Configuración.</p>
+
+</div></div>
+<div class="mp-toast" id="mp-toast"></div>
+
+<script src="/planea/portal/planea-motor.js?v=1" defer></script>
+<script src="/planea/portal/planea-sb.js?v=60" defer></script>
+<script src="/planea/portal/planea-nav.js?v=66" defer></script>
+<script src="/planea/portal/maya-chat.js?v=62" defer></script>
+<script src="/planea/portal/mi-perfil.js?v=1" defer></script>
+</body>
+</html>
