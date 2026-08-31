@@ -171,7 +171,8 @@
     var C = 2 * Math.PI * 63, color = r.rango.color;
     var prio = (r.prioridad && r.prioridad.principal) || 'ahorro';
     var pv = Math.round((r.pilares[prio] && r.pilares[prio].puntaje) || 0);
-    var apertura = (nombre ? esc(nombre) + ', ' : '') + 'tu mayor palanca ahora es ' + esc(PILAR_LOWER[prio]) + '. ' + esc(hallazgo(prio, pv));
+    // §9.2: la lectura principal NO repite el texto de la tarjeta; nombra el frente prioritario.
+    var apertura = (nombre ? esc(nombre) + ', ' : '') + 'tu mayor palanca ahora es ' + esc(PILAR_LOWER[prio]) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.';
 
     var pilaresHtml = PILAR_ORDER.map(function (k) {
       var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
