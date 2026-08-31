@@ -80,6 +80,7 @@
 
   // ── STATE ───────────────────────────────────────────────────────────────────
   var answers = {}, current = 'intro', root, profile = null, mayaMsg = {}, savedHistory = [];
+  var montosYaTransferidos = false;   // §5.2: los montos exactos se transfieren UNA sola vez
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
   function fmtInput(raw) { if (!raw) return ''; return parseInt(raw, 10).toLocaleString('es-CO'); }
@@ -273,10 +274,28 @@
     if (!(opts && opts.skipPersist)) persist(r);
   }
 
+  // ── §5.2 Transferencia de montos exactos a su sección de destino ──────────────
+  // Cuando el usuario escribió un monto exacto en P5/P18/P19/P20, se crea un REGISTRO
+  // editable en la sección correspondiente (Ahorro, Ingresos, Gastos, Deuda), para no
+  // pedir el mismo dato dos veces. Solo lo tecleado (el rango solo NO transfiere).
+  function amt(k) { var v = parseInt(String(answers[k] || '').replace(/\D/g, ''), 10); return v > 0 ? v : 0; }
+  function transferirMontos() {
+    if (montosYaTransferidos || !window.PlaneaSB || !PlaneaSB.itemCreate) return;
+    var reg = [];
+    if (amt('monto_ingresos')) reg.push({ category: 'ingreso', name: 'Ingreso mensual (de tu diagnóstico)', type: 'recurrente', value: amt('monto_ingresos') });
+    if (amt('monto_gastos')) reg.push({ category: 'gasto', name: 'Gasto mensual (de tu diagnóstico)', type: 'recurrente', value: amt('monto_gastos') });
+    if (amt('monto_ahorro_mensual')) reg.push({ category: 'ahorro', name: 'Ahorro mensual (de tu diagnóstico)', type: '', value: amt('monto_ahorro_mensual') });
+    if (amt('monto_pago')) reg.push({ category: 'deuda', name: 'Deuda (de tu diagnóstico)', type: '', value: 0, monthly: amt('monto_pago') });
+    if (!reg.length) { montosYaTransferidos = true; return; }
+    montosYaTransferidos = true;
+    reg.forEach(function (it) { PlaneaSB.itemCreate(it).catch(function () {}); });   // editable por el usuario
+  }
+
   // ── PERSISTENCIA — un solo Puntaje Planea + histórico + compat proxy ──────────
   function persist(r) {
     if (!window.PlaneaSB) return;
     var nowIso = new Date().toISOString();
+    var willTransfer = !montosYaTransferidos;
     var hist = savedHistory && savedHistory.length ? savedHistory.slice() : [];
     hist.push({ score: r.score, at: nowIso, source: 'onboarding' });
     savedHistory = hist;
@@ -293,11 +312,13 @@
       pillars: { emergency_fund: sub('ahorro'), cash_flow: sub('flujo'), debt_health: sub('deuda'), stability: sub('patrimonio') },
       prioridad: r.prioridad,
       history: hist,
+      montos_transferidos: montosYaTransferidos || willTransfer,   // §5.2: no re-transferir
       answers: answers
     };
     PlaneaSB.mePut({ score_data: entry })
       .then(function () {
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje Planea guardado en tu perfil.';
+        if (willTransfer) transferirMontos();   // §5.2: pasa los montos exactos a sus secciones (una vez)
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
       })
@@ -360,6 +381,7 @@
         if (d && d.full_name) profile = { nombre: firstName(d.full_name, d.email), email: d.email || '' };
         var sd = d && d.score_data;
         savedHistory = (sd && Array.isArray(sd.history)) ? sd.history : [];
+        montosYaTransferidos = !!(sd && sd.montos_transferidos);   // §5.2: ya se hizo una vez
         // Ya completado con el ESQUEMA NUEVO (marcador: answers.edad) -> muestra el resultado
         // guardado. Un perfil con respuestas del esquema viejo re-hace la vinculación (el
         // motor cambió; no se recalcula sobre respuestas incompatibles).
