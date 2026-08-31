@@ -29,11 +29,9 @@
   .tx-row select,.tx-row input{width:100%;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;color:var(--txt);outline:none}
   .tx-row select:focus,.tx-row input:focus{border-color:var(--green)}
   .tx-note{font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.5}
-  .tx-rut{border:1.5px dashed var(--line);border-radius:14px;padding:18px;text-align:center;margin-top:14px}
-  .tx-rut input[type=file]{display:none}
-  .tx-rut .btn{display:inline-block;background:#12494b;color:#eafff4;border-radius:12px;padding:11px 18px;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px}
-  body.light .tx-rut .btn{background:var(--cream);color:var(--ink)}
-  .tx-rut .st{font-size:12.5px;color:var(--mut);margin-top:10px}
+  .tx-rut{border:1.5px dashed var(--line);border-radius:14px;padding:22px 18px;text-align:center;margin-top:14px;opacity:.85}
+  .tx-rut .soon{display:inline-block;background:var(--group);color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:7px 16px;font-weight:800;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+  .tx-rut .st{font-size:12.5px;color:var(--mut);margin-top:12px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
   .tx-save{width:100%;margin-top:16px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px;font-family:'Inter',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
   body.light .tx-save{background:var(--cream);color:var(--ink)}
   .tx-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#12494b;color:#eafff4;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none}
@@ -82,16 +80,16 @@
     <div class="tx-note" id="tx-calc-note"></div>
   </div>
 
-  <!-- Tu RUT §23.3 -->
+  <!-- Tu RUT §23.3 — carga de documento DESHABILITADA (protección de datos personales,
+       Ley 1581 de 2012 / RNBD). Se habilitará con el marco de tratamiento de PII listo. -->
   <div class="tx-card">
     <h2>Tu RUT</h2>
-    <div class="sub">Carga tu RUT y Maya te ayuda a entenderlo, sin códigos ni terminología.</div>
+    <div class="sub">Pronto podrás cargar tu RUT para que Maya te lo explique en lenguaje sencillo.</div>
     <div class="tx-rut">
-      <label class="btn" for="t-rut-file">Cargar RUT (PDF)</label>
-      <input type="file" id="t-rut-file" accept="application/pdf">
-      <div class="st" id="tx-rut-st">El PDF no se almacena: Planea lee los campos y los descarta. Si necesitas actualizarlo, vuelves a cargarlo.</div>
+      <div class="soon">Próximamente</div>
+      <div class="st">La carga de tu RUT aún no está habilitada. La activaremos cuando esté listo el tratamiento seguro de tus datos personales.</div>
     </div>
-    <div class="maya-line"><div class="av">M</div><p>La lectura automática del RUT llega muy pronto. Por ahora, completa tu perfil tributario arriba: con eso ya construyo tu estado y tu calendario. Cuando actives la lectura, traduzco tu RUT a lenguaje sencillo.</p></div>
+    <div class="maya-line"><div class="av">M</div><p>Por ahora no necesitas subir ningún documento: completa tu perfil tributario arriba y con eso ya construyo tu estado y tu calendario.</p></div>
   </div>
 
   <button class="tx-save" id="tx-save">Guardar</button>
@@ -104,6 +102,6 @@
 <script src="/planea/portal/planea-sb.js?v=60" defer></script>
 <script src="/planea/portal/planea-nav.js?v=66" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
-<script src="/planea/portal/impuestos.js?v=1" defer></script>
+<script src="/planea/portal/impuestos.js?v=2" defer></script>
 </body>
 </html>

@@ -102,10 +102,7 @@
     $('t-cumplimiento').addEventListener('change', function () { renderEstado(); recompute(); });
     $('t-soportes').addEventListener('change', function () { renderEstado(); recompute(); });
     $('t-cedula').addEventListener('input', renderCalendario);
-    $('t-rut-file').addEventListener('change', function () {
-      var f = this.files && this.files[0];
-      $('tx-rut-st').textContent = f ? ('Recibí "' + f.name + '". La lectura automática del RUT llega muy pronto; el archivo no se guarda. Por ahora completa tu perfil tributario.') : 'El PDF no se almacena.';
-    });
+    // Carga de RUT deshabilitada por protección de datos personales — sin input de archivo.
     $('tx-save').addEventListener('click', saveMeta);
   }
 
