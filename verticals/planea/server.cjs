@@ -138,6 +138,20 @@ function copFmt(n) {
   return '$' + Number(n).toLocaleString('es-CO');
 }
 
+// §12 refuerzo en CÓDIGO (no solo en el prompt): las respuestas de Maya se leen en voz
+// alta y deben ir SIN emojis y en TEXTO PLANO. Determinista, sin falsos positivos.
+function sanitizeMayaReply(t) {
+  if (!t) return t;
+  return String(t)
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{2022}]/gu, '')
+    .replace(/(\*\*|__)([\s\S]*?)\1/g, '$2')   // **negrita** / __énfasis__
+    .replace(/[*_`#]+/g, '')                    // restos de markdown
+    .replace(/^\s*[-–]\s+/gm, '')               // viñetas de guion
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 // Orden fijo del acompañamiento: Maya empieza SIEMPRE por ingresos y sigue en este
 // orden, saltándose los buckets que el usuario ya tenga con datos. Una persona real
 // no salta de tema en tema: llena la foto financiera de arriba hacia abajo.
@@ -211,6 +225,14 @@ CÓMO HABLAR (cumplimiento, Decreto 661 de 2018 y Libro 40 del Decreto 2555 de 2
 - "las mejores opciones para ti" -> "las opciones disponibles para tu etapa".
 - "plan de inversión personalizado" -> "información sobre alternativas de inversión".
 Reglas fijas: no nombres ningún producto financiero ni entidad; que al usuario le falte un producto se menciona como un vacío del diagnóstico, nunca como algo que deba contratar; no felicites ni penalices por no tener deuda; sin emojis; nada de "mañana" ni de un día concreto (el usuario abre la app cuando quiera).
+
+CUMPLIMIENTO ESTRICTO (Documento Maestro §12 — de obligatorio cumplimiento). El modelo NUNCA debe:
+- Calcular ni mencionar un monto objetivo en pesos, un aporte mensual sugerido, ni un plazo estimado para alcanzar una meta, AUNQUE sea matemáticamente derivable de los datos del usuario ("con esto lo logras en X meses", "necesitas ahorrar Y al mes", "te falta Z"). Nada de proyecciones de tiempo ni de aportes sugeridos.
+- Mencionar cifras o porcentajes exactos dentro de una LECTURA de su situación (el número ya vive en su tablero; la lectura se lee sin números). Confirmar un dato que el usuario te dictó para registrarlo SÍ requiere el monto — eso es distinto de una lectura.
+- Usar un verbo imperativo dirigido al usuario seguido de una categoría de producto financiero ("contrata un seguro", "abre un fondo", "adquiere un CDT"). En MVP 1.0 no se sugiere ningún tipo de producto, ni en singular ni en plural, ni siquiera la categoría.
+- Afirmar que una opción es la más conveniente o cuál se ajusta mejor a su perfil. Instruir a contratar, adquirir, trasladar o cancelar un producto.
+El modelo SÍ debe: nombrar el área general de mejora en términos de COMPORTAMIENTO (no de producto), referir estándares generales en forma RELATIVA (meses de gastos, porcentaje del ingreso), invitar a REGISTRAR información dentro de Planea, y devolver siempre la decisión al usuario ("la decisión sobre tus finanzas es tuya").
+CRITERIO DE VERIFICACIÓN antes de responder: tu mensaje NUNCA puede combinar simultáneamente estos tres elementos: (1) un dato individual del usuario, (2) una categoría o producto financiero, y (3) una acción cuantificada. Los tres juntos configuran asesoría, con independencia del tono. Si tu borrador los combina, reescríbelo sin el producto y sin la cifra.
 
 DATOS DEL USUARIO (contexto; úsalo para saber qué falta por registrar):
 ${perfil}
@@ -324,6 +346,7 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
       .replace(/<propuesta>\s*([\s\S]*?)\s*<\/propuesta>/gi, function (_m, json) { const d = parseDato(json); if (d) proposals.push(d); return ''; })
       .replace(/<accion>\s*([\s\S]*?)\s*<\/accion>/gi, function (_m, json) { const d = parseDato(json); if (d) actions.push(d); return ''; })
       .replace(/\n{3,}/g, '\n\n').trim();
+    reply = sanitizeMayaReply(reply);   // §12: sin emojis, texto plano
     res.json({ reply: reply || 'Listo.', actions, proposals, configured: true });
   } catch (e) {
     console.error('Maya chat error', e.message);
