@@ -672,6 +672,57 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Planea: dos dominios, dos roles ─────────────────────────────────────────
+// planea.co  = LANDING (marketing, público, indexable)
+// planea.ai  = ECOSISTEMA (la app: login, portal, score, Maya)
+// Ambos se sirven EN SITIO (la barra de direcciones no cambia), igual que
+// planea.vip. Toda la app ya vive bajo /planea (SPA con basename="/planea",
+// /planea/assets y los enlaces absolutos /planea/portal/*), así que esas rutas
+// pasan sin tocarse; sólo se mapea la raíz y las rutas vanidosas.
+//
+// El host de la app es configurable: si el dominio termina siendo otro
+// (planea.app, app.planea.co…), es un cambio de env var, no de código.
+const PLANEA_APP_HOSTS = (process.env.PLANEA_APP_HOSTS || 'planea.ai,www.planea.ai')
+  .toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+const PLANEA_SITE_HOSTS = (process.env.PLANEA_SITE_HOSTS || 'planea.co,www.planea.co')
+  .toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+const PLANEA_APP_ORIGIN = process.env.PLANEA_APP_ORIGIN || 'https://planea.ai';
+
+// planea.ai -> la app completa (mismo mapeo que planea.vip)
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (!PLANEA_APP_HOSTS.includes(host)) return next();
+  const p = req.path;
+  if (p.startsWith('/planea') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+  const q = req.url.slice(p.length);
+  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/login' + q;
+  else if (p === '/register' || p === '/signup' || p === '/start') req.url = '/planea/register' + q;
+  else req.url = '/planea' + req.url;
+  next();
+});
+
+// planea.co -> el landing. Las rutas de la app se REDIRIGEN a planea.ai para que
+// la app tenga un único origen canónico (sesiones, cookies y SEO en un solo sitio).
+const PLANEA_APP_PATHS = new Set([
+  '/login', '/register', '/signup', '/start', '/home', '/score', '/forgot',
+  '/reset', '/portal', '/cuentas', '/gastos', '/metas', '/patrimonio', '/deuda',
+  '/ahorro', '/inversion', '/ingreso', '/diagnostico', '/configuracion', '/mas'
+]);
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (!PLANEA_SITE_HOSTS.includes(host)) return next();
+  const p = req.path;
+  if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+  const q = req.url.slice(p.length);
+  // Cualquier ruta de la app que alguien tenga guardada sigue funcionando: se va a planea.ai
+  if (p.startsWith('/planea') || PLANEA_APP_PATHS.has(p.replace(/\/$/, '') || '/')) {
+    return res.redirect(301, PLANEA_APP_ORIGIN + req.url.replace(/^\/planea/, ''));
+  }
+  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/portal/inicio' + q;
+  else req.url = '/planea/portal' + req.url;
+  next();
+});
+
 // Custom domain: orbup.app -> OrbUp (voice-orb-first brand) marketing landing,
 // served IN PLACE so the address bar stays on orbup.app. GHL domain + Render are
 // configured, so this app now sees the Host header. Root serves the EN landing;
