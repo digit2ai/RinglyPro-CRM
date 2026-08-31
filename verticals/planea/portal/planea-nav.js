@@ -223,8 +223,8 @@
 
   var LOGO = '<svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
   // New Planea brand: white horizontal lockup (mark + wordmark). Inverts to ink on light theme via CSS.
-  var LOGO_IMG = '<img src="' + BASE + 'planea-logo-white.png" alt="Planea" class="pl-logo-img">';
-  var MARK_IMG = '<img src="' + BASE + 'planea-mark-white.png" alt="" class="pl-mark-img">';
+  var LOGO_IMG = '<img src="' + BASE + 'planea-logo-white.png?v=2" alt="Planea" class="pl-logo-img">';
+  var MARK_IMG = '<img src="' + BASE + 'planea-mark-white.png?v=2" alt="" class="pl-mark-img">';
   var current = (location.pathname.split('/').pop() || 'inicio').replace('.html', '');
 
   function build() {
