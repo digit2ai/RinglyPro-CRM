@@ -165,6 +165,76 @@
     th_tier:        ['Tier', 'Nivel'],
     board_note:     ['Board seats and regional delegate roles are assigned here. Governance changes are logged and visible to every member.', 'Aquí se asignan los puestos de la junta y los cargos de delegado regional. Los cambios de gobernanza quedan registrados y visibles para cada miembro.'],
 
+    nav_motor:      ['Directory Engine', 'Motor de Directorio'],
+    mo_dir:         ['Directory', 'Directorio'],
+    mo_fun:         ['Foundations', 'Fundaciones'],
+    mo_mat:         ['Matching', 'Matching'],
+    mo_imp:         ['Import', 'Importar'],
+    mo_ia:          ['Assistant', 'Asistente'],
+    mo_solo_admin:  ['Administrators only', 'Solo administradores'],
+    mo_buscador:    ['Search', 'Buscador'],
+    mo_buscador_lede: ['Filters combine. A search with no results explains why.', 'Combina filtros. Una búsqueda sin resultados explica por qué.'],
+    mo_ph:          ['Name, sector or specialty...', 'Nombre, sector o especialidad...'],
+    mo_all_tip:     ['All typologies', 'Todas las tipologías'],
+    mo_all_nat:     ['All natures', 'Todas las naturalezas'],
+    mo_th_nombre:   ['Name or legal name', 'Nombre o razón social'],
+    mo_th_nat:      ['Nature', 'Naturaleza'],
+    mo_th_tip:      ['Typology', 'Tipología'],
+    mo_th_pais:     ['Country', 'País'],
+    mo_th_esp:      ['Specialty', 'Especialidad'],
+    mo_th_estado:   ['Record state', 'Estado de ficha'],
+    mo_th_origen:   ['Origin', 'Origen'],
+    mo_validada:    ['Validated', 'Validada'],
+    mo_pendiente:   ['Pending validation', 'Pendiente de validación'],
+    mo_dir_note:    ['<b>Typology is a closed vocabulary</b> — Founding, Honorary, Numerary, Protector, Patron, Prospect. Anyone who is not yet a member is a Prospect, and a Prospect never appears as a formal member in any report. Every record created or enriched by AI is born pending validation.', '<b>La tipología es un vocabulario cerrado</b>: Fundador, Honorífico, Numerario, Protector, Patrono, Prospecto. Quien todavía no es asociado es Prospecto, y un Prospecto nunca figura como socio formal en ningún informe. Toda ficha creada o enriquecida por IA nace pendiente de validación.'],
+    mo_aviso_mezcla:['<b>This list combines verified budgets and proxy estimates.</b> They are not comparable figures, so they are ranked in separate groups and never in one column.', '<b>Este listado combina presupuestos verificados y estimaciones proxy.</b> No son cifras comparables entre sí, así que se ordenan en grupos separados y nunca en una sola columna.'],
+    mo_g_real:      ['Verified budget', 'Presupuesto verificado'],
+    mo_g_proxy:     ['Proxy estimate — not comparable with the above', 'Estimación proxy: no comparable con lo anterior'],
+    mo_g_sin:       ['No budget or proxy on file', 'Sin presupuesto ni proxy'],
+    mo_verificado:  ['Verified budget', 'Presupuesto verificado'],
+    mo_estimacion:  ['ESTIMATE', 'ESTIMACIÓN'],
+    mo_caducado:    ['Over 18 months — review', 'Más de 18 meses: revisar'],
+    mo_ejercicio:   ['financial year', 'ejercicio'],
+    mo_sin_dato:    ['Not on file', 'No consta'],
+    mo_mat_h:       ['Candidates for a project', 'Candidatos para un proyecto'],
+    mo_mat_lede:    ['A proposal, not a decision. Every candidate travels with the reasons it got in, so you can rule it out on the merits.', 'Lista propositiva, no una decisión. Cada candidato viaja con los motivos por los que entró, para que puedas descartarlo con criterio.'],
+    mo_proponer:    ['Propose candidates', 'Proponer candidatos'],
+    mo_nivel:       ['Contact level {n}', 'Nivel de contacto {n}'],
+    mo_mat_note:    ['<b>The score is arithmetic, not a model.</b> Thematic match 40, nature 15, location 15, typology 15, capacity 15 — every point comes from a written rule, so the same query gives the same list and a coordinator can defend it to the Board. <b>Level 1</b> (foundations, patrons, major donors) is excluded by design from every automated send: that contact is always opened by a person.', '<b>El score es aritmética, no un modelo.</b> Temática 40, naturaleza 15, localización 15, tipología 15, capacidad 15: cada punto sale de una regla escrita, así que la misma consulta da la misma lista y un coordinador puede defenderla ante la Junta. El <b>Nivel 1</b> (fundaciones, patronos y mecenas de alto valor) está excluido por diseño de todo envío automatizado: ese contacto lo inicia siempre una persona.'],
+    mo_imp_h:       ['Import CSV or Excel', 'Importar CSV o Excel'],
+    mo_imp_lede:    ['It analyses first and shows the errors row by row. Nothing is written until you confirm.', 'Primero se analiza y se muestran los errores fila a fila. Nada se escribe hasta que lo confirmas.'],
+    mo_origen_pub:  ['Public source (register, chamber, press)', 'Fuente pública (registro, cámara, prensa)'],
+    mo_analizar:    ['Analyse file', 'Analizar fichero'],
+    mo_k_filas:     ['Rows read', 'Filas leídas'],
+    mo_k_listas:    ['Ready to load', 'Listas para cargar'],
+    mo_k_error:     ['With errors', 'Con error'],
+    mo_k_dup:       ['Duplicates', 'Duplicadas'],
+    mo_errores:     ['Errors, row by row', 'Errores, fila a fila'],
+    mo_dups:        ['Duplicates detected', 'Duplicados detectados'],
+    mo_fila:        ['Row {n} — ', 'Fila {n} — '],
+    mo_descargar:   ['Download the report', 'Descargar el informe'],
+    mo_confirmar:   ['Confirm and load {n}', 'Confirmar y cargar {n}'],
+    mo_imp_note:    ['<b>Duplicates are reported, never merged.</b> Merging two records is deciding they are the same entity, and that is a human decision. Choosing "public source" activates the legal basis and the article 14 GDPR notice on every record it creates.', '<b>Los duplicados se reportan, no se fusionan.</b> Fusionar dos fichas es decidir que son la misma entidad, y esa decisión es humana. Elegir "fuente pública" activa la base legal y la notificación del artículo 14 del RGPD en cada ficha que crea.'],
+    mo_ia_h:        ['Directory assistant', 'Asistente del directorio'],
+    mo_ia_lede:     ['It assists, proposes and ranks. The decision and the validation are always human.', 'Asiste, propone y ordena. La decisión y la validación son siempre humanas.'],
+    mo_ia_ph:       ['Ask about the cv-105 directory...', 'Pregunta sobre el directorio de cv-105...'],
+    mo_enviar:      ['Send', 'Enviar'],
+    mo_tu:          ['You', 'Tú'],
+    mo_asistente:   ['Assistant · AI system', 'Asistente · sistema de IA'],
+    mo_prop_h:      ['AI proposals for this record', 'Propuestas de la IA para esta ficha'],
+    mo_prop_lede:   ['Fundación Altamar — pending validation. Accept, edit or reject each field separately.', 'Fundación Altamar, pendiente de validación. Acepta, edita o rechaza cada campo por separado.'],
+    mo_th_campo:    ['Field', 'Campo'],
+    mo_th_valor:    ['Proposed value', 'Valor propuesto'],
+    mo_th_fuente:   ['Source', 'Fuente'],
+    mo_th_accion:   ['', ''],
+    mo_conf_alta:   ['high confidence', 'confianza alta'],
+    mo_conf_media:  ['medium confidence', 'confianza media'],
+    mo_conf_baja:   ['low confidence', 'confianza baja'],
+    mo_sin_fuente:  ['No source: left empty. It is not filled in by plausibility.', 'Sin fuente: se queda vacío. No se rellena por verosimilitud.'],
+    mo_bloqueado:   ['The AI never proposes budgets. That figure needs a source and a financial year.', 'La IA nunca propone presupuestos. Esa cifra exige fuente y ejercicio.'],
+    mo_aceptar:     ['Accept', 'Aceptar'],
+    mo_rechazar:    ['Reject', 'Rechazar'],
+    mo_prop_note:   ['<b>Field by field, never in bulk.</b> Accepting ten fields at once is reviewing none of them, so there is no button that does it. A proposal with no source is discarded before it is ever stored.', '<b>Campo a campo, nunca en bloque.</b> Aceptar diez campos de golpe es no revisar ninguno, así que no existe el botón que lo haga. Una propuesta sin fuente se descarta antes de guardarse.'],
     demo_tag:       ['Demo · sample data', 'Demo · datos de muestra'],
     demo_disc:      ['Interactive demonstration. Every member, company and project shown here is invented sample data — click anything.', 'Demostración interactiva. Cada miembro, empresa y proyecto mostrado aquí es dato de muestra inventado: haz clic en lo que quieras.']
   };
@@ -200,7 +270,8 @@
     payments: 'M2 6h20v12H2zM2 10h20',
     guide: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z',
     jobup: 'M4 7h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2',
-    admin: 'M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM8 11V7a4 4 0 0 1 8 0v4'
+    admin: 'M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM8 11V7a4 4 0 0 1 8 0v4',
+    motor: 'M3 5h18M3 12h18M3 19h11M17 17.5l2 2 4-4'
   };
   function icon(k) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + I[k] + '"/></svg>';
@@ -210,7 +281,8 @@
     ['dashboard', 'nav_dashboard'], ['inbox', 'nav_inbox', 7], ['profile', 'nav_profile'],
     ['directory', 'nav_directory'], ['matching', 'nav_matching'], ['searches', 'nav_searches'],
     ['projects', 'nav_projects'], ['invites', 'nav_invites', 2], ['exchange', 'nav_exchange'],
-    ['payments', 'nav_payments'], ['guide', 'nav_guide'], ['jobup', 'nav_jobup'], ['admin', 'nav_admin']
+    ['payments', 'nav_payments'], ['motor', 'nav_motor'], ['guide', 'nav_guide'],
+    ['jobup', 'nav_jobup'], ['admin', 'nav_admin']
   ];
 
   // ── view state ─────────────────────────────────────────────────────────
@@ -221,6 +293,7 @@
     proj: 'all',
     xch: 'companies',
     guide: 0,
+    motor: 'dir',
     match: { q: '', results: null, busy: false }
   };
   var PER_CARD = 6, PER_ROW = 8;
@@ -653,10 +726,175 @@
       }).join('') + '</div>' + body;
   }
 
+
+  // ── Motor de Directorio Inteligente ────────────────────────────────────
+  //
+  // El módulo propio de HISPANOTEC (cv-105), montado para esa instancia y para
+  // ninguna otra. Aquí se reproduce lo que el servidor garantiza de verdad:
+  // vocabulario cerrado, la etiqueta pegada a cada cifra, los motivos junto a
+  // cada candidato, el análisis antes de la escritura y la fuente junto a cada
+  // propuesta de la IA. Nada de esto es decorativo — es lo que el módulo
+  // enseña en pantalla porque el código no le deja enseñar otra cosa.
+  var NATURALEZA = {
+    fundacion:     { es: 'Fundación',     en: 'Foundation' },
+    empresa:       { es: 'Empresa',       en: 'Company' },
+    institucion:   { es: 'Institución',   en: 'Institution' },
+    persona_fisica:{ es: 'Persona física',en: 'Individual' }
+  };
+  var ORIGEN = {
+    manual:         { es: 'Manual',          en: 'Manual' },
+    csv:            { es: 'CSV',             en: 'CSV' },
+    fuente_publica: { es: 'Fuente pública',  en: 'Public source' },
+    ia:             { es: 'IA',              en: 'AI' }
+  };
+
+  function scMotor() {
+    var tabs = [['dir', 'mo_dir'], ['fun', 'mo_fun'], ['mat', 'mo_mat'], ['imp', 'mo_imp'], ['ia', 'mo_ia']];
+    var body;
+
+    if (S.motor === 'dir') {
+      body =
+        '<div class="vc-card"><h4>' + t('mo_buscador') + '</h4>' +
+        '<p class="vc-lede" style="margin-top:-8px">' + t('mo_buscador_lede') + '</p>' +
+        '<div class="vc-tools">' +
+          '<input class="vc-in" placeholder="' + t('mo_ph') + '" value="patrimonio">' +
+          '<select class="vc-sel"><option>' + t('mo_all_tip') + '</option></select>' +
+          '<select class="vc-sel"><option>' + t('mo_all_nat') + '</option></select>' +
+          '<button class="vc-btn" data-act="noop">' + t('search') + '</button>' +
+        '</div></div>' +
+        '<div class="vc-tw"><table class="vc-t"><thead><tr>' +
+        ['mo_th_nombre', 'mo_th_nat', 'mo_th_tip', 'mo_th_pais', 'mo_th_esp', 'mo_th_estado', 'mo_th_origen']
+          .map(function (k) { return '<th>' + t(k) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        D.FICHAS.map(function (f) {
+          var socio = f.tipologia !== 'Prospecto';
+          return '<tr><td><b>' + esc(f.nombre) + '</b></td>' +
+            '<td>' + label(NATURALEZA[f.naturaleza]) + '</td>' +
+            '<td><span class="vc-pill ' + (socio ? 'corporate' : 'gray') + '">' + esc(f.tipologia) + '</span></td>' +
+            '<td>' + esc(f.pais) + '</td><td>' + esc(f.esp) + '</td>' +
+            '<td><span class="vc-pill ' + (f.estado === 'validada' ? 'founding' : 'student') + '">' +
+            t(f.estado === 'validada' ? 'mo_validada' : 'mo_pendiente') + '</span></td>' +
+            '<td>' + label(ORIGEN[f.origen]) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<div class="vc-note">' + t('mo_dir_note') + '</div>';
+
+    } else if (S.motor === 'fun') {
+      var fila = function (f) {
+        var est = f.tipo === 'proxy';
+        return '<div class="vc-mc"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
+          '<div><h5>' + esc(f.nombre) + '</h5><div class="co">' + esc(f.pais) + '</div></div>' +
+          (f.valor
+            ? '<span class="vc-score' + (est ? ' mid' : '') + '">' + esc(f.valor) + '</span>'
+            : '<span class="vc-pill gray">' + t('mo_sin_dato') + '</span>') +
+          '</div>' +
+          '<div class="meta">' +
+          (f.tipo === 'real'
+            ? '<span class="vc-pill founding">' + t('mo_verificado') + '</span>'
+            : est ? '<span class="vc-pill est">' + t('mo_estimacion') + ' · ' + esc(f.proxy_tipo) + '</span>' : '') +
+          (f.caducado ? ' <span class="vc-pill warn">' + t('mo_caducado') + '</span>' : '') +
+          (f.fuente ? '<br>' + esc(f.fuente) + (f.ejercicio ? ' · ' + t('mo_ejercicio') + ' ' + f.ejercicio : '') : '') +
+          '</div></div>';
+      };
+      var reales = D.FUNDACIONES.filter(function (f) { return f.tipo === 'real'; });
+      var proxies = D.FUNDACIONES.filter(function (f) { return f.tipo === 'proxy'; });
+      var sin = D.FUNDACIONES.filter(function (f) { return f.tipo === 'desconocido'; });
+      body =
+        '<div class="vc-warn">' + t('mo_aviso_mezcla') + '</div>' +
+        '<h4 style="margin:14px 0 10px;font-size:14px;color:#0a2b47">' + t('mo_g_real') + '</h4>' +
+        '<div class="vc-grid">' + reales.map(fila).join('') + '</div>' +
+        '<h4 style="margin:18px 0 10px;font-size:14px;color:#0a2b47">' + t('mo_g_proxy') + '</h4>' +
+        '<div class="vc-grid">' + proxies.map(fila).join('') + '</div>' +
+        '<h4 style="margin:18px 0 10px;font-size:14px;color:#0a2b47">' + t('mo_g_sin') + '</h4>' +
+        '<div class="vc-grid">' + sin.map(fila).join('') + '</div>';
+
+    } else if (S.motor === 'mat') {
+      body =
+        '<div class="vc-card"><h4>' + t('mo_mat_h') + '</h4>' +
+        '<p class="vc-lede" style="margin-top:-8px">' + t('mo_mat_lede') + '</p>' +
+        '<div class="vc-tools">' +
+          '<input class="vc-in" value="patrimonio, cultura, educación">' +
+          '<select class="vc-sel"><option>' + label(NATURALEZA.fundacion) + '</option></select>' +
+          '<input class="vc-in" style="max-width:150px" value="España">' +
+          '<button class="vc-btn" data-act="noop">' + t('mo_proponer') + '</button>' +
+        '</div></div>' +
+        D.CANDIDATOS.map(function (c) {
+          return '<div class="vc-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">' +
+            '<b style="font-size:15px;color:#0a2b47">' + esc(c.nombre) + '</b>' +
+            '<span class="vc-score' + (c.score < 70 ? ' mid' : '') + '">' + c.score + '/100</span></div>' +
+            '<span class="vc-pill ' + (c.nivel === 1 ? 'warn' : 'gold') + '" style="margin-top:8px">' +
+            t('mo_nivel', { n: c.nivel }) + '</span>' +
+            '<ul class="vc-ul">' + c.motivos.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul>' +
+            '</div>';
+        }).join('') +
+        '<div class="vc-note">' + t('mo_mat_note') + '</div>';
+
+    } else if (S.motor === 'imp') {
+      var im = D.IMPORTACION;
+      body =
+        '<div class="vc-card"><h4>' + t('mo_imp_h') + '</h4>' +
+        '<p class="vc-lede" style="margin-top:-8px">' + t('mo_imp_lede') + '</p>' +
+        '<div class="vc-tools"><span class="vc-in" style="flex:1 1 240px">' + esc(im.fichero) + '</span>' +
+        '<select class="vc-sel"><option>' + t('mo_origen_pub') + '</option></select>' +
+        '<button class="vc-btn" data-act="noop">' + t('mo_analizar') + '</button></div></div>' +
+        '<div class="vc-kpis">' +
+          '<div class="vc-kpi"><small>' + t('mo_k_filas') + '</small><b>' + im.filas + '</b></div>' +
+          '<div class="vc-kpi"><small>' + t('mo_k_listas') + '</small><b>' + im.listas + '</b></div>' +
+          '<div class="vc-kpi warn"><small>' + t('mo_k_error') + '</small><b>' + im.con_error + '</b></div>' +
+          '<div class="vc-kpi warn"><small>' + t('mo_k_dup') + '</small><b>' + im.duplicadas + '</b></div>' +
+        '</div>' +
+        '<div class="vc-card"><h4>' + t('mo_errores') + '</h4>' +
+        im.errores.map(function (e) {
+          return '<div class="vc-fila"><b>' + t('mo_fila', { n: e.fila }) + '</b>' + esc(label(e)) + '</div>';
+        }).join('') +
+        '<h4 style="margin:16px 0 10px">' + t('mo_dups') + '</h4>' +
+        im.dups.map(function (d) { return '<div class="vc-fila">' + esc(label(d)) + '</div>'; }).join('') +
+        '<div class="vc-tools" style="justify-content:flex-end;margin-top:14px">' +
+        '<button class="vc-btn ghost" data-act="noop">' + t('mo_descargar') + '</button>' +
+        '<button class="vc-btn" data-act="noop">' + t('mo_confirmar', { n: im.listas }) + '</button></div></div>' +
+        '<div class="vc-note">' + t('mo_imp_note') + '</div>';
+
+    } else {
+      body =
+        '<div class="vc-card"><h4>' + t('mo_ia_h') + '</h4>' +
+        '<p class="vc-lede" style="margin-top:-8px">' + t('mo_ia_lede') + '</p>' +
+        D.CHAT.map(function (m) {
+          return '<div class="vc-msg ' + m.rol + '"><small>' + t(m.rol === 'user' ? 'mo_tu' : 'mo_asistente') + '</small>' +
+            esc(label(m)) + '</div>';
+        }).join('') +
+        '<div class="vc-tools" style="margin-top:12px">' +
+        '<input class="vc-in" placeholder="' + t('mo_ia_ph') + '">' +
+        '<button class="vc-btn" data-act="noop">' + t('mo_enviar') + '</button></div></div>' +
+        '<div class="vc-card"><h4>' + t('mo_prop_h') + '</h4>' +
+        '<p class="vc-lede" style="margin-top:-8px">' + t('mo_prop_lede') + '</p>' +
+        '<div class="vc-tw"><table class="vc-t"><thead><tr>' +
+        ['mo_th_campo', 'mo_th_valor', 'mo_th_fuente', 'mo_th_accion'].map(function (k) { return '<th>' + t(k) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' +
+        D.PROPUESTAS.map(function (p) {
+          if (p.bloqueado) {
+            return '<tr><td><b>' + esc(p.campo) + '</b></td><td colspan="3" style="color:#8d94a3">' + t('mo_bloqueado') + '</td></tr>';
+          }
+          if (!p.valor) {
+            return '<tr><td><b>' + esc(p.campo) + '</b></td><td colspan="3" style="color:#8d94a3">' + t('mo_sin_fuente') + '</td></tr>';
+          }
+          return '<tr><td><b>' + esc(p.campo) + '</b></td><td>' + esc(p.valor) + '</td>' +
+            '<td>' + esc(p.fuente) + ' · ' + t('mo_conf_' + p.conf) + '</td>' +
+            '<td class="acc"><button class="vc-btn sm green" data-act="noop">' + t('mo_aceptar') + '</button> ' +
+            '<button class="vc-btn sm red" data-act="noop">' + t('mo_rechazar') + '</button></td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<div class="vc-note">' + t('mo_prop_note') + '</div></div>';
+    }
+
+    return head('nav_motor') +
+      '<div class="vc-tabs">' + tabs.map(function (x) {
+        return '<button class="vc-tab' + (S.motor === x[0] ? ' on' : '') + '" data-act="motorTab" data-v="' + x[0] + '">' + t(x[1]) + '</button>';
+      }).join('') + '<span class="vc-pill blue" style="margin-left:auto">' + t('mo_solo_admin') + '</span></div>' + body;
+  }
+
   var SCREENS = {
     dashboard: scDashboard, inbox: scInbox, profile: scProfile, directory: scDirectory,
     matching: scMatching, searches: scSearches, projects: scProjects, invites: scInvites,
-    exchange: scExchange, payments: scPayments, guide: scGuide, jobup: scJobup, admin: scAdmin
+    exchange: scExchange, payments: scPayments, motor: scMotor, guide: scGuide,
+    jobup: scJobup, admin: scAdmin
   };
 
   // ── render ─────────────────────────────────────────────────────────────
@@ -667,7 +905,7 @@
       '<div class="vc-side">' +
         '<div class="vc-brand"><img src="' + LOGO + '" alt=""><div class="vc-brand-name">Hispa<span>notec</span></div></div>' +
         '<div class="vc-nav">' + NAV.map(function (n, i) {
-          return (i === 10 ? '<div class="vc-nav-sep"></div>' : '') +
+          return (i === 11 ? '<div class="vc-nav-sep"></div>' : '') +
             '<button class="' + (S.screen === n[0] ? 'on' : '') + '" data-act="go" data-v="' + n[0] + '">' +
             icon(n[0]) + '<span>' + t(n[1]) + '</span>' +
             (n[2] ? '<span class="vc-badge-n">' + n[2] + '</span>' : '') + '</button>';
@@ -696,6 +934,7 @@
     projTab: function (v) { S.proj = v; },
     xchTab: function (v) { S.xch = v; },
     admTab: function (v) { S.adm.tab = v; S.adm.page = 0; },
+    motorTab: function (v) { S.motor = v; },
     guide: function (v, el) { S.guide = +el.getAttribute('data-i'); },
     dirSearch: function () { S.dir.page = 0; },
     dirPrev: function () { S.dir.page = Math.max(0, S.dir.page - 1); },
@@ -761,6 +1000,7 @@
       if (o.projTab) S.proj = o.projTab;
       if (o.xchTab) S.xch = o.xchTab;
       if (o.admTab) { S.adm.tab = o.admTab; S.adm.page = 0; }
+      if (o.motorTab) S.motor = o.motorTab;
       if (typeof o.guide === 'number') S.guide = o.guide;
       if (typeof o.dirSector === 'string') { S.dir.sector = o.dirSector; S.dir.page = 0; }
       if (typeof o.dirQ === 'string') { S.dir.q = o.dirQ; S.dir.page = 0; }
