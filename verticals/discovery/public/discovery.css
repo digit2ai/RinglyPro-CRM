@@ -140,7 +140,18 @@ tr:last-child td{border-bottom:0}
   border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 footer{border-top:1px solid var(--line);padding:26px 0;color:var(--faint);font-size:12.5px}
-@media(max-width:640px){ .wrap{padding:0 16px} .nav nav a{padding:6px 9px;font-size:12.5px} }
+@media(max-width:640px){
+  .wrap{padding:0 16px}
+  /* 44px minimum on every tappable thing. A 36px button is the house default
+     that reads fine with a mouse and is a miss with a thumb. */
+  .nav nav a{padding:11px 10px;font-size:12.5px;min-height:44px;display:inline-flex;align-items:center}
+  .btn{min-height:44px}
+  .btn.sm{min-height:44px;padding:11px 14px}
+  select,input:not([type=checkbox]),textarea{min-height:44px}
+  .chk{min-height:44px;align-items:center}
+  /* The checkbox itself stays small; its label carries the target. */
+  .chk input[type=checkbox]{width:20px;height:20px;margin:0}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ── PRINT / SAVE AS PDF ──────────────────────────────────────────────────
