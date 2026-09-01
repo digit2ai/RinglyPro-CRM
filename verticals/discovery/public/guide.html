@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How AI Discovery works — a walkthrough</title>
+<meta name="description" content="A narrated walkthrough of OrbUp AI Discovery: what the recorder sees, what it refuses to store, and exactly how a roadmap gets its numbers.">
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="stylesheet" href="/discovery/discovery.css">
+<link rel="stylesheet" href="/discovery/guide.css">
+</head><body>
+
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav>
+    <a class="on" href="/discovery/guide">Walkthrough</a>
+    <a href="/discovery/how-it-works">The details</a>
+    <a href="/discovery/login">Sign in</a>
+    <a class="btn primary sm" href="/discovery/signup">Start free</a>
+  </nav>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ── AVA ────────────────────────────────────────────────────────────── -->
+  <div class="ava">
+    <div class="ava-orb" id="orb"></div>
+    <div class="ava-meta">
+      <div class="ava-name">Ava · OrbUp voice guide</div>
+      <div class="ava-role">She reads the whole page aloud. Six minutes, no jargon.</div>
+      <div class="controls">
+        <button class="btn primary" id="playAll">Play the whole walkthrough</button>
+        <button class="btn ghost" id="pause" disabled>Pause</button>
+        <button class="btn ghost" id="stop" disabled>Stop</button>
+      </div>
+      <div class="ava-status" id="status">Press play, or use the Listen button on any section.</div>
+      <div class="ava-pick">
+        <label><input type="checkbox" id="hd" checked> Neural voice</label>
+        <span class="sep">·</span>
+        <label for="voiceSel">Language</label>
+        <select id="voiceSel">
+          <option value="ava" selected>English (Ava)</option>
+          <option value="dalia">Español (Dalia)</option>
+        </select>
+        <span id="mode"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 0 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="0">
+    <div class="sec-head"><h1>How this works, in plain language</h1>
+      <button class="btn ghost sm listen" data-play="0">Listen</button></div>
+    <p class="lede">You do your job for a week. Something quietly notes <em>which programs you used and how long each thing took</em> — never what you typed. At the end you get a document that says what your work costs and what to automate first.</p>
+    <div class="threeup">
+      <div><span class="big">1</span><b>It watches</b><span>A week of normal work</span></div>
+      <div><span class="big">2</span><b>You confirm</b><span>Six questions and a few numbers</span></div>
+      <div><span class="big">3</span><b>You get a plan</b><span>Costed, phased, yours to keep</span></div>
+    </div>
+  </section>
+
+  <!-- ── 1 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="1">
+    <div class="sec-head"><h2>Why not just ask people?</h2>
+      <button class="btn ghost sm listen" data-play="1">Listen</button></div>
+    <p class="lede">Because the answer is always a guess, and everything after it inherits the guess.</p>
+    <div class="vs">
+      <div class="vs-side bad">
+        <span class="pill red">Asking</span>
+        <p class="quote">“Invoicing? Maybe four hours a week.”</p>
+        <ul>
+          <li>Rounded to a story, not a stopwatch</li>
+          <li>Leaves out the spreadsheet nobody mentions</li>
+          <li>Never mentions copying numbers between two screens, because that is remembered as part of the job, not as a job</li>
+        </ul>
+      </div>
+      <div class="vs-side good">
+        <span class="pill green">Watching</span>
+        <p class="quote">“Ten point six hours a week each, across two people, over eighteen observed runs.”</p>
+        <ul>
+          <li>A measurement you can put in a business case</li>
+          <li>Finds every program the work actually touches</li>
+          <li>Catches the copy-paste between systems — usually the most expensive habit in the building</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2 · the redaction demo ─────────────────────────────────────────── -->
+  <section class="sec" data-i="2">
+    <div class="sec-head"><h2>What it sees, and what it throws away</h2>
+      <button class="btn ghost sm listen" data-play="2">Listen</button></div>
+    <p class="lede">This is the part people worry about, so watch it happen. On the left is what someone actually did. On the right is every single thing that reached our server.</p>
+    <div class="demo">
+      <div class="demo-col">
+        <div class="demo-hd"><span class="dot red"></span> What you did</div>
+        <div id="didList" class="demo-body"></div>
+      </div>
+      <div class="demo-col">
+        <div class="demo-hd"><span class="dot green"></span> What we stored</div>
+        <div id="gotList" class="demo-body"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary sm" id="demoPlay">Watch it happen</button>
+      <button class="btn ghost sm" id="demoReset">Reset</button>
+      <span class="faint" id="demoCount"></span>
+    </div>
+    <div class="note">Notice what never crosses: the customer name, the dollar amount, the address you typed, the invoice number in the web address. The page you were on becomes just <span class="mono">Salesforce · /orders/:id/edit</span>. There is nowhere in our database to put the rest — the columns do not exist.</div>
+  </section>
+
+  <!-- ── 3 · the simulator ──────────────────────────────────────────────── -->
+  <section class="sec" data-i="3">
+    <div class="sec-head"><h2>The whole thing, screen by screen</h2>
+      <button class="btn ghost sm listen" data-play="3">Listen</button></div>
+    <p class="lede">Six screens. Click through them, or press play and let it run.</p>
+    <div class="simsteps" id="simSteps"></div>
+    <div class="sim">
+      <div class="sim-chrome">
+        <span class="tl"></span><span class="tl"></span><span class="tl"></span>
+        <div class="sim-url" id="simUrl">orbup.app/discovery</div>
+      </div>
+      <div class="sim-screen" id="simScreen"></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost sm" id="simPrev">Back</button>
+      <button class="btn primary sm" id="simNext">Next screen</button>
+      <button class="btn ghost sm" id="simAuto">Play all six</button>
+      <span class="faint" id="simCaption"></span>
+    </div>
+  </section>
+
+  <!-- ── 4 · the math ───────────────────────────────────────────────────── -->
+  <section class="sec" data-i="4">
+    <div class="sec-head"><h2>Where the money numbers come from</h2>
+      <button class="btn ghost sm listen" data-play="4">Listen</button></div>
+    <p class="lede">Six steps, all of them arithmetic you can check. Nothing here is a model's opinion and nothing is an industry average. Press the button to build it up one step at a time.</p>
+    <div class="calc" id="calc"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary sm" id="calcNext">Next step</button>
+      <button class="btn ghost sm" id="calcReset">Start over</button>
+      <span class="faint" id="calcCaption"></span>
+    </div>
+  </section>
+
+  <!-- ── 5 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="5">
+    <div class="sec-head"><h2>The two rules that keep it honest</h2>
+      <button class="btn ghost sm listen" data-play="5">Listen</button></div>
+    <div class="grid g2">
+      <div class="card rule">
+        <span class="pill blue">Rule one</span>
+        <h3>Time is measured. Money is typed by a person.</h3>
+        <p class="mut">A browser can time your work. It cannot know what anyone is paid. So if nobody enters an hourly rate, that job shows its hours and contributes <b>zero dollars</b> — and the report says so by name, instead of quietly using a industry average and passing it off as your number.</p>
+      </div>
+      <div class="card rule">
+        <span class="pill blue">Rule two</span>
+        <h3>A short week is reported, never stretched.</h3>
+        <p class="mut">If we only watched for two days, we do not multiply by three and a half to make a week. That would turn a guess into something that looks exactly like a measurement. Two days is reported as two days, marked low confidence.</p>
+      </div>
+    </div>
+    <div class="warnbox"><b>And it refuses to finish if you skip something.</b> Miss one of the six questions and it will not produce a roadmap around the gap. It stops and tells you which answer is missing. A confident document built on things nobody asked is exactly what most executives have already been sold once.</div>
+  </section>
+
+  <!-- ── 6 · the user guide ─────────────────────────────────────────────── -->
+  <section class="sec" data-i="6">
+    <div class="sec-head"><h2>Your turn — the actual steps</h2>
+      <button class="btn ghost sm listen" data-play="6">Listen</button></div>
+    <div class="guide" id="guideSteps"></div>
+    <div class="row" style="margin-top:22px">
+      <a class="btn primary" href="/discovery/signup">Create your free account</a>
+      <a class="btn ghost" href="/discovery/r/CpZrYJFnvUQcve-M_sfC4ncY">See a finished report</a>
+    </div>
+    <p class="faint" style="margin-top:14px">The assessment and the roadmap are free and stay yours. Building anything is quoted separately, to its scope.</p>
+  </section>
+
+</div>
+
+<footer><div class="wrap row" style="justify-content:space-between">
+  <span>OrbUp AI Discovery · Digit2AI LLC</span>
+  <span><a href="/discovery/">Dashboard</a> · <a href="/discovery/how-it-works">The technical detail</a> · <a href="/">OrbUp</a></span>
+</div></footer>
+
+<script src="/discovery/guide.js"></script>
+</body></html>

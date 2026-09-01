@@ -86,7 +86,7 @@ function clearSession(res) {
 }
 
 const PUBLIC_EXACT = new Set([
-  '/', '/health', '/login', '/signup', '/connect', '/how-it-works',
+  '/', '/health', '/login', '/signup', '/connect', '/how-it-works', '/guide',
   '/favicon.svg', '/manifest.webmanifest'
 ]);
 const PUBLIC_ASSET = /\.(png|jpe?g|svg|webmanifest|css|js|woff2?|ico|zip)$/i;
@@ -168,6 +168,9 @@ router.get('/login', page('login.html'));
 router.get('/signup', page('signup.html'));
 router.get('/connect', (req, res, next) => (req.user ? page('connect.html')(req, res, next) : res.redirect('/discovery/login')));
 router.get('/how-it-works', page('how-it-works.html'));
+// The narrated walkthrough. Public, because it is the thing that explains the
+// product to somebody who has not signed up yet.
+router.get('/guide', page('guide.html'));
 router.get('/r/:token', page('shared.html'));
 
 router.use(express.static(publicDir, { index: false }));
