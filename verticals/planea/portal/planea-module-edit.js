@@ -13,9 +13,9 @@
   // (§24); Retiro solo evolución (§25). Denominaciones: deuda «Pago mensual» (§21),
   // retiro «recursos» (§25).
   var CATS = {
-    ingreso:   { cat: 'ingreso', title: 'Tus fuentes de ingreso', noun: 'ingresos', add: 'Agregar ingreso', amount: 'Monto mensual', ph: 'Ej: Salario', charts: { comp: true, evo: true },
+    ingreso:   { cat: 'ingreso', title: 'Tus fuentes de ingreso', noun: 'ingresos', add: 'Agregar ingreso', amount: 'Monto mensual', ph: 'Ej: Salario', charts: { comp: true, evo: true }, behavior: true,
       types: ['Salario', 'Mesada', 'Freelance / honorarios', 'Negocio propio', 'Arriendos / rentas', 'Pensión', 'Comisiones', 'Otro'] },
-    gastos:    { cat: 'gasto', title: 'Tus gastos mensuales', noun: 'gastos', add: 'Agregar gasto', amount: 'Monto mensual', ph: 'Ej: Arriendo', charts: { comp: true, evo: true },
+    gastos:    { cat: 'gasto', title: 'Tus gastos mensuales', noun: 'gastos', add: 'Agregar gasto', amount: 'Monto mensual', ph: 'Ej: Arriendo', charts: { comp: true, evo: true }, behavior: true,
       types: ['Vivienda / arriendo', 'Alimentación', 'Transporte', 'Servicios públicos', 'Entretenimiento', 'Educación', 'Salud', 'Suscripciones', 'Otro'] },
     ahorro:    { cat: 'ahorro', title: 'Tus cuentas de ahorro', noun: 'ahorros', add: 'Agregar ahorro', amount: 'Valor actual', ph: 'Ej: Cuenta de ahorros', charts: { comp: true, evo: true },
       types: ['Cuenta de ahorros', 'Efectivo', 'CDT', 'Fondo (FIC)', 'Cuenta AFC', 'Otro'] },
@@ -24,7 +24,7 @@
     deuda:     { cat: 'deuda', title: 'Tus deudas', noun: 'deudas', add: 'Agregar deuda', amount: 'Saldo que debes', ph: 'Ej: Tarjeta Visa', charts: { comp: true, evo: true },
       extra: { key: 'monthly', label: 'Pago mensual', short: 'pago' },
       types: ['Tarjeta de crédito', 'Crédito de libre inversión', 'Crédito de vehículo', 'Crédito hipotecario', 'Crédito educativo', 'Deuda informal', 'Otro'] },
-    seguros:   { cat: 'seguros', title: 'Tus pólizas', noun: 'seguros', add: 'Agregar seguro', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida', charts: { comp: false, evo: false },
+    seguros:   { cat: 'seguros', title: 'Tus pólizas', noun: 'seguros', add: 'Agregar seguro', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida', charts: { comp: false, evo: false }, insurance: true,
       extra: { key: 'monthly', label: 'Prima', short: 'prima' },
       types: ['Vida', 'Salud', 'Vehículo', 'Hogar', 'Educativo', 'Exequial', 'Otro'] },
     retiro:    { cat: 'retiro', title: 'Tus recursos para el retiro', noun: 'recursos', add: 'Agregar recurso', amount: 'Saldo o valor actual', ph: 'Ej: Pensión voluntaria', charts: { comp: false, evo: true },
@@ -61,16 +61,38 @@
     });
     return head + '<div class="pe-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="42" fill="none" stroke="var(--card2,#16302a)" stroke-width="16"/>' + segs + '</svg><div class="pe-legwrap">' + legend + '</div></div></div>';
   }
+  var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   function evoHtml() {
-    return '<div class="pe-chart"><div class="pe-chart-h">Evolución</div><div class="pe-chart-empty">La evolución mes a mes aparecerá a medida que actualices tus ' + esc(cfg.noun) + ' en distintos períodos.</div></div>';
+    return '<div class="pe-chart"><div class="pe-chart-h">Evolución</div><div class="pe-evo" id="pe-evo"><div class="pe-chart-empty">Cargando…</div></div></div>';
+  }
+  // Barras reales de evolución mes a mes desde el histórico (planea_item_history).
+  function fillEvo() {
+    if (!cfg.charts || !cfg.charts.evo || !window.PlaneaSB || !PlaneaSB.itemsHistory) return;
+    var box = document.getElementById('pe-evo'); if (!box) return;
+    PlaneaSB.itemsHistory(cfg.cat).then(function (d) {
+      var h = ((d && d.history) || []).filter(function (r) { return r.category === cfg.cat; }).slice(-8);
+      if (!h.length) { box.innerHTML = '<div class="pe-chart-empty">Aparecerá aquí cuando registres o actualices tus ' + esc(cfg.noun) + ' en distintos meses.</div>'; return; }
+      var max = h.reduce(function (m, r) { return Math.max(m, +r.total || 0); }, 0) || 1;
+      box.innerHTML = '<div class="pe-bars">' + h.map(function (r) {
+        var pct = Math.round((+r.total || 0) / max * 100), mi = parseInt((r.ym || '').slice(5, 7), 10) - 1;
+        return '<div class="pe-bar"><div class="pe-bar-track"><div class="pe-bar-fill" style="height:' + Math.max(pct, 3) + '%"></div></div><div class="pe-bar-lbl">' + (MESES[mi] || '') + '</div></div>';
+      }).join('') + '</div>';
+    }).catch(function () { box.innerHTML = '<div class="pe-chart-empty">Aún sin histórico.</div>'; });
   }
 
   function render() {
     if (!mount) return;
     var body = items.length
       ? items.map(function (x) {
+          var m = (x.meta && typeof x.meta === 'object') ? x.meta : {};
           var sub = x.type || '';
-          if (cfg.extra && x[cfg.extra.key]) sub += (sub ? ' · ' : '') + (cfg.extra.short || 'pago') + ' ' + cop(x[cfg.extra.key]) + '/mes';
+          if (cfg.extra && x[cfg.extra.key]) {
+            var per = '/mes';
+            if (cfg.insurance && m.frequency && m.frequency !== 'mensual') per = '/' + ({ trimestral: 'trimestre', semestral: 'semestre', anual: 'año', otra: 'período' }[m.frequency] || 'período');
+            sub += (sub ? ' · ' : '') + (cfg.extra.short || 'pago') + ' ' + cop(x[cfg.extra.key]) + per;
+          }
+          if (cfg.behavior && m.behavior) sub += (sub ? ' · ' : '') + ({ recurrente: 'Recurrente', variable: 'Variable', unico: 'Único' }[m.behavior] || '');
+          if (cfg.insurance && m.employer) sub += (sub ? ' · ' : '') + 'del empleador';
           return '<div class="pe-row"><div><div class="pe-nm">' + esc(x.name || x.type || '—') + '</div>' +
             (sub ? '<div class="pe-ty">' + esc(sub) + '</div>' : '') + '</div>' +
             '<div class="pe-amt">' + cop(x.value) + '</div>' +
@@ -84,6 +106,7 @@
       continueHtml();
     // keep the page's "total above" header in sync immediately (planea-data also does on reload)
     document.querySelectorAll('[data-pl="' + totalKey() + '"]').forEach(function (el) { el.textContent = cop(total()); });
+    if (cfg.charts && cfg.charts.evo) fillEvo();
   }
 
   // ── Paso guiado: etiqueta legible de cada pilar para el botón "Continuar" ──
@@ -116,15 +139,27 @@
   }
 
   function formHtml(prefill) {
+    var pm = (prefill && prefill.meta && typeof prefill.meta === 'object') ? prefill.meta : {};
+    var behaviorHtml = cfg.behavior ? ('<label class="pe-l">Comportamiento</label><select class="pe-in" id="pe-behavior">' +
+      [['recurrente', 'Recurrente (se repite cada mes)'], ['variable', 'Variable (cambia cada mes)'], ['unico', 'Único (una sola vez)']].map(function (o) {
+        return '<option value="' + o[0] + '"' + ((pm.behavior === o[0] || (!pm.behavior && o[0] === 'recurrente')) ? ' selected' : '') + '>' + o[1] + '</option>';
+      }).join('') + '</select>') : '';
+    var insuranceHtml = cfg.insurance ? ('<label class="pe-l">Frecuencia de la prima</label><select class="pe-in" id="pe-freq">' +
+      ['mensual', 'trimestral', 'semestral', 'anual', 'otra'].map(function (f) {
+        return '<option value="' + f + '"' + ((pm.frequency === f || (!pm.frequency && f === 'mensual')) ? ' selected' : '') + '>' + f.charAt(0).toUpperCase() + f.slice(1) + '</option>';
+      }).join('') + '</select>' +
+      '<label class="pe-check"><input type="checkbox" id="pe-employer"' + (pm.employer ? ' checked' : '') + '> La otorga mi empleador</label>') : '';
     return '<div class="pe-backdrop" id="pe-modal"><div class="pe-form">' +
       '<div class="pe-form-h">' + (prefill ? 'Editar' : 'Agregar') + '<button class="pe-x" data-close>✕</button></div>' +
       '<label class="pe-l">Nombre <span class="pe-opt">(opcional)</span></label><input class="pe-in" id="pe-name" placeholder="' + esc(cfg.ph) + '" value="' + esc(prefill && prefill.name || '') + '">' +
       '<label class="pe-l">Tipo</label><select class="pe-in" id="pe-type">' +
         cfg.types.map(function (t) { return '<option' + (prefill && prefill.type === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
+      behaviorHtml +
       '<label class="pe-l">' + esc(cfg.amount) + ' ($)</label><div class="pe-money"><span>$</span>' +
         '<input class="pe-in" id="pe-value" inputmode="numeric" placeholder="0" value="' + (prefill && prefill.value ? (+prefill.value).toLocaleString('es-CO') : '') + '"></div>' +
       (cfg.extra ? '<label class="pe-l">' + esc(cfg.extra.label) + ' ($)</label><div class="pe-money"><span>$</span>' +
         '<input class="pe-in" id="pe-extra" inputmode="numeric" placeholder="0" value="' + (prefill && prefill[cfg.extra.key] ? (+prefill[cfg.extra.key]).toLocaleString('es-CO') : '') + '"></div>' : '') +
+      insuranceHtml +
       '<div class="pe-err" id="pe-err" hidden></div>' +
       '<div class="pe-actions"><button class="pe-cancel" data-close>Cancelar</button><button class="pe-save" data-save>Guardar</button></div>' +
       '</div></div>';
@@ -153,6 +188,14 @@
     }
     var body = { category: cfg.cat, name: name || type, type: type, value: value };
     if (cfg.extra) body[cfg.extra.key] = parseInt(digits((document.getElementById('pe-extra') || {}).value || ''), 10) || 0;
+    // §18 comportamiento · §24 frecuencia + empleador → viajan en meta (columna JSONB).
+    var meta = {};
+    if (cfg.behavior) { var bh = document.getElementById('pe-behavior'); if (bh && bh.value) meta.behavior = bh.value; }
+    if (cfg.insurance) {
+      var fq = document.getElementById('pe-freq'); if (fq && fq.value) meta.frequency = fq.value;
+      var em = document.getElementById('pe-employer'); if (em && em.checked) meta.employer = true;
+    }
+    if (Object.keys(meta).length) body.meta = meta;
     if (!window.PlaneaSB) { closeForm(); return; }
     var op = editItem ? PlaneaSB.itemUpdate(editItem.id, body) : PlaneaSB.itemCreate(body);
     closeForm();
@@ -197,12 +240,20 @@
       '#mod-edit .pe-dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px}' +
       '#mod-edit .pe-leg-nm{flex:1;color:var(--txt,#eafff4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '#mod-edit .pe-leg-pct{color:var(--mut,#9db3ab);font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      // Barras de evolución
+      '#mod-edit .pe-bars{display:flex;gap:8px;align-items:flex-end;height:96px;margin-top:12px}' +
+      '#mod-edit .pe-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}' +
+      '#mod-edit .pe-bar-track{flex:1;width:100%;max-width:34px;display:flex;align-items:flex-end;background:var(--card2,#16302a);border-radius:6px;overflow:hidden}' +
+      '#mod-edit .pe-bar-fill{width:100%;background:linear-gradient(180deg,#3fc06a,#17a6a6);border-radius:6px 6px 0 0;transition:height .5s ease}' +
+      '#mod-edit .pe-bar-lbl{font-size:10.5px;color:var(--mut,#9db3ab);text-transform:capitalize}' +
       // Botón "Agregar {sección}" centrado, debajo del listado (§1.4 + PRECISIÓN NUEVA)
       '#mod-edit .pe-addwrap{margin-top:16px;display:flex;justify-content:center}' +
       '#mod-edit .pe-add{display:inline-flex;align-items:center;gap:9px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px 26px;font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:15.5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22)}' +
       'body.light #mod-edit .pe-add{background:var(--cream,#16373A);color:#fff}' +
       '#mod-edit .pe-add:active{transform:scale(.99)}#mod-edit .pe-plus{font-size:19px;line-height:1;font-weight:700}' +
       '.pe-form .pe-opt{color:var(--mut,#9db3ab);font-weight:500}' +
+      '.pe-form .pe-check{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--txt,#eafff4);margin-top:12px;cursor:pointer}' +
+      '.pe-form .pe-check input{width:18px;height:18px;flex:0 0 18px}' +
       '.pe-form .pe-err{color:#e0705a;font-size:12.5px;margin:2px 0 -2px;font-weight:600}' +
       '#mod-edit .pe-nextwrap{margin-top:18px;display:flex;flex-direction:column;gap:8px}' +
       '#mod-edit .pe-next{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:14px;padding:15px 20px;font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 22px rgba(63,192,106,.30)}' +

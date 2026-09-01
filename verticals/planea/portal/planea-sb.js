@@ -130,6 +130,7 @@
     mePut: function (fields) { _profile = null; return req('PUT', '/me/profile', fields); },
     // Financial items (own table) — one row per entry, per module.
     items: function (cat) { return req('GET', '/me/items' + (cat ? '?category=' + encodeURIComponent(cat) : '')); },
+    itemsHistory: function (cat) { return req('GET', '/me/items/history' + (cat ? '?category=' + encodeURIComponent(cat) : '')); },
     itemCreate: function (b) { return req('POST', '/me/items', b); },
     itemUpdate: function (id, b) { return req('PATCH', '/me/items/' + id, b); },
     itemDelete: function (id) { return req('DELETE', '/me/items/' + id); },

@@ -182,11 +182,18 @@
       seguros: 'Cobertura de vida, salud y patrimonial vigente', inversion: 'Recursos invertidos superiores a seis meses de ingreso, en más de un instrumento',
       impuestos: 'Declaración al día y soportes organizados', patrimonio: 'Activos registrados y beneficiarios definidos'
     };
+    // Sección de cada pilar (§10 «Registrar más información») y pilares con control de
+    // interés §15.2 (Ahorro, Deuda, Seguros, Inversión, Retiro / Pensión).
+    var SECCION = { ahorro: 'ahorro', flujo: 'ingreso', deuda: 'deuda', retiro: 'retiro', seguros: 'seguros', inversion: 'inversion', impuestos: 'impuestos', patrimonio: 'patrimonio' };
+    var INTERES = { ahorro: 1, deuda: 1, seguros: 1, inversion: 1, retiro: 1 };
     // §10: tarjetas COLAPSADAS por defecto (nombre + subpuntaje + barra); se expanden con
-    // un toque para ver la referencia general y el hallazgo de Maya.
+    // un toque para ver la referencia general, el hallazgo, las acciones y el interés.
     var pilaresHtml = PILAR_ORDER.map(function (k) {
       var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
       var col = v >= 70 ? 'var(--green)' : v >= 45 ? '#e0954f' : 'var(--red)';
+      var interes = INTERES[k]
+        ? '<label class="dg-interes"><input type="checkbox" class="dg-int-cb" data-pilar="' + k + '"><span class="dg-int-tx"><b>Quiero saber cuáles son los productos ideales para mí</b><small>Te avisaremos cuando tengamos esa opción disponible</small></span></label>'
+        : '';
       return '<details class="dg-pex">' +
         '<summary>' +
           '<div class="dg-pex-top"><span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + '</span>' +
@@ -196,6 +203,9 @@
         '<div class="dg-pex-body">' +
           '<div class="dg-pex-ref">Meta de referencia: ' + esc(REFERENCIA[k] || '') + '</div>' +
           '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(hallazgo(k, v)) + '</span></div>' +
+          '<div class="dg-pex-acts"><a class="dg-pex-btn" href="/planea/portal/' + SECCION[k] + '">Registrar más información</a>' +
+            '<a class="dg-pex-btn ghost" href="/planea/portal/metas">Añadir o editar meta</a></div>' +
+          interes +
         '</div>' +
       '</details>';
     }).join('');
@@ -228,8 +238,37 @@
       'details.dg-pex summary::after{content:"⌄";position:absolute;right:15px;top:13px;color:var(--mut)}' +
       'details.dg-pex[open] summary::after{content:"⌃"}' +
       '.dg-pex-body{margin-top:11px}' +
-      '.dg-pex-ref{font-size:12.5px;color:var(--mut);line-height:1.5;margin-bottom:9px}';
+      '.dg-pex-ref{font-size:12.5px;color:var(--mut);line-height:1.5;margin-bottom:9px}' +
+      '.dg-pex-acts{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}' +
+      '.dg-pex-btn{flex:1;min-width:140px;text-align:center;background:#12494b;color:#eafff4;text-decoration:none;border-radius:11px;padding:11px 12px;font-weight:700;font-size:13px}' +
+      'body.light .dg-pex-btn{background:var(--cream);color:var(--ink)}' +
+      '.dg-pex-btn.ghost{background:transparent;color:var(--txt);border:1.5px solid var(--line)}' +
+      '.dg-interes{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);cursor:pointer}' +
+      '.dg-interes input{width:18px;height:18px;flex:0 0 18px;margin-top:2px}' +
+      '.dg-int-tx b{display:block;font-size:13px;font-weight:700}' +
+      '.dg-int-tx small{display:block;font-size:12px;color:var(--mut);margin-top:2px}';
     document.head.appendChild(s);
+  }
+
+  // Control de interés §15: guarda el consentimiento por pilar en finance_meta
+  // (fusiona para no pisar otras claves). NO dispara Maya ni muestra producto alguno.
+  function saveInteres(pilar, on) {
+    if (!window.PlaneaSB || !PlaneaSB.meGet) return;
+    PlaneaSB.meGet().then(function (d) {
+      var fm = (d && d.finance_meta && typeof d.finance_meta === 'object') ? d.finance_meta : {};
+      var ip = (fm.interes_producto && typeof fm.interes_producto === 'object') ? fm.interes_producto : {};
+      ip[pilar] = !!on; fm.interes_producto = ip;
+      PlaneaSB.mePut({ finance_meta: fm }).catch(function () {});
+    }).catch(function () {});
+  }
+  function prefillInteres() {
+    if (!window.PlaneaSB || !PlaneaSB.meGet) return;
+    PlaneaSB.meGet().then(function (d) {
+      var ip = (d && d.finance_meta && d.finance_meta.interes_producto) || {};
+      document.querySelectorAll('.dg-int-cb').forEach(function (cb) {
+        if (ip[cb.getAttribute('data-pilar')] === true) cb.checked = true;
+      });
+    }).catch(function () {});
   }
 
   function renderProgress(cur) {
@@ -300,6 +339,7 @@
     var numEl = document.getElementById('dg-score'), t0 = performance.now(), dur = 1400;
     (function tick(now) { var p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3); if (numEl) numEl.textContent = Math.round(r.score * e); if (p < 1) requestAnimationFrame(tick); })(performance.now());
     if (!(opts && opts.skipPersist)) persist(r);
+    prefillInteres();
   }
 
   // ── §5.2 Transferencia de montos exactos a su sección de destino ──────────────
@@ -397,6 +437,11 @@
   function boot() {
     root = document.getElementById('dg-root'); if (!root || !E) return;
     root.addEventListener('click', onClick);
+    // Control de interés §15 — guarda el consentimiento por pilar (sin disparar Maya).
+    root.addEventListener('change', function (e) {
+      var cb = e.target;
+      if (cb && cb.classList && cb.classList.contains('dg-int-cb')) saveInteres(cb.getAttribute('data-pilar'), cb.checked);
+    });
     root.addEventListener('input', onInput);
 
     var ou = readOurUser();

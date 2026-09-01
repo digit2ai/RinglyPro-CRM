@@ -37,6 +37,7 @@ let sequelize = null;
 let User = null;
 let Profile = null;
 let Item = null;
+let ItemH = null;
 let SaludH = null;
 let Uat = null;
 let Audit = null;
@@ -83,7 +84,20 @@ function defineModels(sq) {
     type: { type: DataTypes.STRING, allowNull: true },
     value: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
     monthly: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
+    // Atributos opcionales por ítem: comportamiento (recurrente/variable/único §18),
+    // frecuencia de la prima (§24) y marca de póliza otorgada por el empleador (§24).
+    meta: { type: DataTypes.JSONB, allowNull: true, defaultValue: {} },
   }, { tableName: 'planea_items', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+  // Snapshot MENSUAL del total por categoría — alimenta la gráfica de evolución (barras)
+  // de cada sección (§1.3). Una fila por (usuario, categoría, mes YYYY-MM).
+  const IH = sq.define('PlaneaItemHistory', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    category: { type: DataTypes.STRING, allowNull: false },
+    ym: { type: DataTypes.STRING, allowNull: false },
+    total: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
+  }, { tableName: 'planea_item_history', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   // Daily snapshot of the Salud Financiera score (for the over-time chart).
   const H = sq.define('PlaneaSaludHistory', {
@@ -125,7 +139,7 @@ function defineModels(sq) {
     meta: { type: DataTypes.JSONB, allowNull: true },
   }, { tableName: 'planea_audit_log', underscored: true, createdAt: 'created_at', updatedAt: false });
 
-  return { U, P, I, H, T, L };
+  return { U, P, I, IH, H, T, L };
 }
 
 async function init() {
@@ -138,10 +152,12 @@ async function init() {
       pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
     });
     const m = defineModels(sequelize);
-    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H; Uat = m.T; Audit = m.L;
+    User = m.U; Profile = m.P; Item = m.I; ItemH = m.IH; SaludH = m.H; Uat = m.T; Audit = m.L;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
+    await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_item_history_uniq ON planea_item_history(user_id, category, ym)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
+    await sequelize.query("ALTER TABLE planea_items ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}'::jsonb").catch(function () {});
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS net_worth DOUBLE PRECISION').catch(function () {});
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS income DOUBLE PRECISION').catch(function () {});
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS expense DOUBLE PRECISION').catch(function () {});
@@ -628,7 +644,28 @@ function build() {
 
   // ── Financial items (own table planea_items, one row per entry) ─────────────
   const ITEM_CATS = ['ingreso', 'gasto', 'ahorro', 'inversion', 'deuda', 'seguros', 'retiro'];
-  function itemOut(i) { return { id: i.id, category: i.category, name: i.name || '', type: i.type || '', value: +i.value || 0, monthly: +i.monthly || 0 }; }
+  function itemOut(i) { return { id: i.id, category: i.category, name: i.name || '', type: i.type || '', value: +i.value || 0, monthly: +i.monthly || 0, meta: (i.meta && typeof i.meta === 'object') ? i.meta : {} }; }
+  // Atributos opcionales validados por lista blanca (§18 comportamiento, §24 frecuencia/empleador).
+  function sanItemMeta(m) {
+    m = (m && typeof m === 'object') ? m : {};
+    const out = {};
+    if (['recurrente', 'variable', 'unico'].indexOf(String(m.behavior)) >= 0) out.behavior = String(m.behavior);
+    if (['mensual', 'trimestral', 'semestral', 'anual', 'otra'].indexOf(String(m.frequency)) >= 0) out.frequency = String(m.frequency);
+    if (m.employer === true || m.employer === 'true') out.employer = true;
+    return out;
+  }
+  // Guarda/actualiza el total del mes actual para una categoría (evolución §1.3).
+  async function snapshotCategory(userId, category) {
+    try {
+      if (!ItemH) return;
+      const rows = await Item.findAll({ where: { user_id: userId, category } });
+      const total = rows.reduce(function (s, r) { return s + (+r.value || 0); }, 0);
+      const ym = new Date().toISOString().slice(0, 7);
+      const ex = await ItemH.findOne({ where: { user_id: userId, category, ym } });
+      if (ex) { ex.total = total; await ex.save(); }
+      else { await ItemH.create({ user_id: userId, category, ym, total }); }
+    } catch (e) { /* histórico best-effort */ }
+  }
   function itemsSummary(items) {
     const s = {};
     ITEM_CATS.forEach(function (c) { s[c] = items.filter(function (i) { return i.category === c; }).reduce(function (a, i) { return a + (+i.value || 0); }, 0); });
@@ -780,8 +817,9 @@ function build() {
       const item = await Item.create({
         user_id: a.id, category: category,
         name: String(b.name || '').slice(0, 160), type: String(b.type || '').slice(0, 80),
-        value: +b.value || 0, monthly: +b.monthly || 0,
+        value: +b.value || 0, monthly: +b.monthly || 0, meta: sanItemMeta(b.meta),
       });
+      await snapshotCategory(a.id, category);
       res.json({ success: true, item: itemOut(item) });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -798,7 +836,9 @@ function build() {
       if (b.type != null) item.type = String(b.type).slice(0, 80);
       if (b.value != null) item.value = +b.value || 0;
       if (b.monthly != null) item.monthly = +b.monthly || 0;
+      if (b.meta != null) item.meta = sanItemMeta(b.meta);
       await item.save();
+      await snapshotCategory(a.id, item.category);
       res.json({ success: true, item: itemOut(item) });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -808,8 +848,24 @@ function build() {
     const a = authUser(req);
     if (!a) return res.status(401).json({ error: 'unauthorized' });
     try {
+      const it = await Item.findOne({ where: { id: req.params.id, user_id: a.id } });
+      const cat = it ? it.category : null;
       const n = await Item.destroy({ where: { id: req.params.id, user_id: a.id } });
+      if (cat) await snapshotCategory(a.id, cat);
       res.json({ success: true, deleted: n });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Histórico mensual por categoría (evolución §1.3).
+  router.get('/me/items/history', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const where = { user_id: a.id };
+      if (req.query.category) where.category = String(req.query.category);
+      const rows = await ItemH.findAll({ where: where, order: [['ym', 'ASC']], limit: 240 });
+      res.json({ history: rows.map(function (r) { return { ym: r.ym, category: r.category, total: +r.total || 0 }; }) });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
