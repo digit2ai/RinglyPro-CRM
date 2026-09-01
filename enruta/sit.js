@@ -174,6 +174,17 @@ function ok(n, c, extra='') { c ? (pasa++, console.log('  ok   ', n, extra)) : (
     const p = DO.filter(d => d.placa_vehiculo).map(d => d.placa_vehiculo);
     return new Set(p).size === new Set(DO.filter(d => d.placa_vehiculo).map(d => d.cliente_id)).size;
   })());
+  // Un ciudadano tiene UN vehículo: la placa, la línea, el color y el
+  // cilindraje tienen que decir lo mismo en todos sus documentos.
+  ok('cada placa describe siempre el mismo vehículo', (() => {
+    const porPlaca = new Map();
+    for (const d of DO.filter(x => x.placa_vehiculo)) {
+      const huella = [d.marca_vehiculo, d.linea_vehiculo, d.color_vehiculo, d.cilindraje, d.modelo_vehiculo].join('|');
+      if (porPlaca.has(d.placa_vehiculo) && porPlaca.get(d.placa_vehiculo) !== huella) return false;
+      porPlaca.set(d.placa_vehiculo, huella);
+    }
+    return porPlaca.size > 0;
+  })());
   ok('ninguna motocicleta paga impuesto vehicular',
      !DO.some(d => d.tipo_documento === 'impuesto_vehicular' && d.tipo_vehiculo === 'motocicleta'));
   ok('quien pidió no ser llamado no recibe llamadas', (() => {

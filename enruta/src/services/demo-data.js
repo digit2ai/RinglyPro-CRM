@@ -282,6 +282,14 @@ async function sembrarDemo(models, opciones = {}) {
     let placa = generarPlaca(az, v.tipo);
     while (placasUsadas.has(placa)) placa = generarPlaca(az, v.tipo);
     placasUsadas.add(placa);
+    // ES UN SOLO CARRO, ASÍ QUE SE ELIGE UNA SOLA VEZ. Sorteando la línea
+    // dentro del bucle de documentos, la misma placa salía como Hilux en el
+    // SOAT y como Fortuner en la revisión: es exactamente el renglón que
+    // alguien nota en una demostración y ya no vuelve a creerle a la pantalla.
+    const linea = az.uno(v.lineas);
+    const color = az.uno(COLORES);
+    const cilindraje = az.ent(v.cil[0], v.cil[1]);
+    const combustible = v.tipo === 'camioneta' && az.prob(0.5) ? 'diesel' : 'gasolina';
     const servicio = !esMoto && az.prob(0.12) ? 'publico' : 'particular';
 
     // ── Los documentos
@@ -323,12 +331,12 @@ async function sembrarDemo(models, opciones = {}) {
         organismo_expedicion: esLicencia ? 'Centro de Diagnóstico Automotor del Valle - Cali' : null,
         placa_vehiculo: esLicencia ? null : placa,
         marca_vehiculo: esLicencia ? null : v.marca,
-        linea_vehiculo: esLicencia ? null : az.uno(v.lineas),
+        linea_vehiculo: esLicencia ? null : linea,
         modelo_vehiculo: esLicencia ? null : modelo,
         tipo_vehiculo: esLicencia ? null : v.tipo,
-        color_vehiculo: esLicencia ? null : az.uno(COLORES),
-        cilindraje: esLicencia ? null : az.ent(v.cil[0], v.cil[1]),
-        tipo_combustible: esLicencia ? null : (v.tipo === 'camioneta' && az.prob(0.5) ? 'diesel' : 'gasolina'),
+        color_vehiculo: esLicencia ? null : color,
+        cilindraje: esLicencia ? null : cilindraje,
+        tipo_combustible: esLicencia ? null : combustible,
         servicio_vehiculo: esLicencia ? null : servicio,
         aseguradora_soat: tipo === 'soat' ? az.uno(ASEGURADORAS) : null,
         numero_poliza_soat: tipo === 'soat' ? String(az.ent(100000000, 999999999)) : null,
