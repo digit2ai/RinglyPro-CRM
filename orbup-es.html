@@ -263,6 +263,27 @@
 .d2b .army-card ul{list-style:none;margin:0;padding:0}
 .d2b .army-core li,.d2b .army-card li{position:relative;padding-left:15px;margin:5px 0;font-size:14px;color:var(--ink-mute)}
 .d2b .army-core li::before,.d2b .army-card li::before{content:'\203A';position:absolute;left:0;color:var(--accent-cyan);opacity:.75}
+/* AI Discovery. Same card language as the army grid; its own accent so the
+   privacy statement reads as a claim the product makes, not decoration. */
+.d2b .disc-grid{margin-top:24px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+.d2b .disc-card{border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--card)}
+.d2b .disc-card h3{margin:0 0 8px;font-size:15.5px;font-weight:750;letter-spacing:-.01em}
+.d2b .disc-card p{margin:0;font-size:14px;color:var(--ink-mute);line-height:1.6}
+.d2b .disc-keeps{margin-top:16px;display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.d2b .disc-keeps > div{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--bg2)}
+.d2b .disc-keeps h4{margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
+.d2b .disc-keeps .keep h4{color:var(--accent-cyan)}
+.d2b .disc-keeps .never h4{color:var(--accent-magenta)}
+.d2b .disc-keeps ul{list-style:none;margin:0;padding:0}
+.d2b .disc-keeps li{position:relative;padding-left:15px;margin:5px 0;font-size:13.5px;color:var(--ink-mute)}
+.d2b .disc-keeps .keep li::before{content:'\2713';position:absolute;left:0;color:var(--accent-cyan);font-size:11px}
+.d2b .disc-keeps .never li::before{content:'\00d7';position:absolute;left:0;color:var(--accent-magenta)}
+.d2b .disc-cta{margin-top:22px;text-align:center}
+.d2b .disc-cta a{display:inline-block;font-weight:750;font-size:15px;border-radius:999px;padding:12px 28px;
+  background:var(--grad);color:#0a0a12;text-decoration:none;transition:.15s}
+.d2b .disc-cta a:hover{transform:translateY(-1px);box-shadow:0 12px 34px rgba(124,92,255,.32)}
+.d2b .disc-note{margin-top:10px;font-size:12.5px;color:var(--faint);text-align:center}
+@media(max-width:640px){.d2b .disc-keeps{grid-template-columns:1fr}}
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 /* Pricing. Cards inherit the page's card/line tokens; the recommended plan is the
    only one that carries the accent border and glow. */
@@ -658,6 +679,7 @@
       <a href="#how">Cómo funciona</a>
       <a href="#platforms">Plataformas</a>
       <a href="#numbers">Por qué nosotros</a>
+      <a href="#discovery">Discovery</a>
       <a href="/blog">Blog</a>
             <span class="lang-toggle" role="group" aria-label="Idioma">
         <a href="/orbup?lang=en" class="lang-opt">EN</a>
@@ -920,7 +942,30 @@
     </div>
   </section>
 
-<section class="blk" id="pricing">
+<section class="blk" id="discovery">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">AI Discovery</div>
+        <h2>Mide el trabajo, luego ponle precio</h2>
+        <p>Instala un grabador, trabaja normal durante una semana y recibe una hoja de ruta de preparaci&oacute;n para IA con costos, construida sobre lo que se <b>midi&oacute;</b> &mdash; no sobre lo que alguien record&oacute; en una reuni&oacute;n.</p>
+      </div>
+      <div class="disc-grid">
+        <div class="disc-card"><h3>Seis preguntas, no cuarenta</h3><p>La mayor&iacute;a de las evaluaciones le piden a un directivo describir sus procesos y estimar las horas. Ambas respuestas son suposiciones, y cada d&oacute;lar posterior las hereda. Discovery mide los procesos y solo pregunta las seis cosas que ninguna observaci&oacute;n puede aportar.</p></div>
+        <div class="disc-card"><h3>El tiempo se mide. El dinero se declara.</h3><p>Un navegador puede ver cu&aacute;nto tarda el trabajo. No puede saber cu&aacute;nto gana quien lo hace, as&iacute; que nunca lo adivina: un proceso sin costo aporta cero d&oacute;lares y se nombra en el registro de cobertura en vez de promediarse.</p></div>
+        <div class="disc-card"><h3>Una semana corta se reporta, no se multiplica</h3><p>Convertir dos d&iacute;as observados en “horas por semana” significa multiplicar por 3,5, lo que produce una invenci&oacute;n que se ve igual que una medici&oacute;n. Bajo siete d&iacute;as recibes la tasa medida, la ventana al lado y una advertencia que viaja hasta la hoja de ruta.</p></div>
+        <div class="disc-card"><h3>Cada dato lleva su etiqueta</h3><p>Medido, declarado por ti, derivado o ausente. A un directivo al que ya le vendieron humo no hay que decirle que un documento es honesto &mdash; hay que dejarlo verificarlo.</p></div>
+      </div>
+      <div class="disc-keeps">
+        <div class="keep"><h4>Lo que registra</h4><ul><li>La aplicaci&oacute;n y la acci&oacute;n</li><li>El rol del elemento, no su etiqueta</li><li>Cu&aacute;nto dur&oacute; el trabajo</li><li>El host, y una ruta con los identificadores enmascarados</li><li>El cambio entre aplicaciones &mdash; el trabajo de silla giratoria que nadie describe en una entrevista</li></ul></div>
+        <div class="never"><h4>Lo que se niega a registrar</h4><ul><li>Nada de lo que escribiste</li><li>Ning&uacute;n texto de p&aacute;gina ni etiqueta</li><li>Cadenas de consulta &mdash; se descartan enteras, nunca se acortan</li><li>Tu portapapeles</li><li>Capturas de pantalla, nunca</li></ul></div>
+      </div>
+      <p class="disc-note" style="text-align:left;margin-top:14px">La redacci&oacute;n corre en el servidor, no en la extensi&oacute;n. “Nuestro cliente redacta antes de enviar” es una promesa sobre software en el port&aacute;til de otra persona; esto es un archivo que un oficial de cumplimiento puede leer. Cada dato eliminado se cuenta y se muestra, para que el l&iacute;mite se pueda verificar en vez de creer.</p>
+      <div class="disc-cta"><a href="/discovery/">Mira c&oacute;mo funciona Discovery &rarr;</a></div>
+      <div class="disc-note">Gratis y self-service. La construcci&oacute;n se cotiza aparte.</div>
+    </div>
+  </section>
+
+  <section class="blk" id="pricing">
     <div class="wrap">
       <div class="blk-head">
         <div class="kick">Precios</div>
