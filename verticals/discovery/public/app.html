@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dashboard — OrbUp AI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><a class="on" href="/discovery/">Dashboard</a><a href="/discovery/connect">Connect</a>
+  <a href="/discovery/how-it-works">How it works</a><a href="#" id="out">Sign out</a></nav>
+</div></div>
+
+<div class="wrap" style="padding-top:26px;padding-bottom:70px">
+  <div id="boot" class="faint"><span class="spin"></span> Loading…</div>
+  <div id="main" class="hide">
+
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><h1 style="font-size:26px;margin:0" id="co"></h1>
+        <p class="faint" style="margin:2px 0 0" id="sub"></p></div>
+      <a class="btn ghost sm" href="/discovery/connect">Sources &amp; keys</a>
+    </div>
+
+    <div class="stepper" id="stepper" style="margin-top:20px"></div>
+
+    <!-- ROADMAP -->
+    <section id="roadmapSec" class="hide" style="border-top:0;padding-top:8px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Your AI roadmap</h2>
+        <div class="row" id="rmActions"></div>
+      </div>
+      <div id="verdict" class="banner" style="margin-top:14px"></div>
+      <div class="grid g3" id="lanes"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="diagram" id="diagram"></div>
+        <div class="legend">
+          <span><b style="background:var(--good)"></b>Green — no obstacle</span>
+          <span><b style="background:var(--warn)"></b>Yellow — open items, none require waiting</span>
+          <span><b style="background:var(--bad)"></b>Red — something must change first</span>
+          <span><b style="background:var(--violet)"></b>Gate — the phase does not get funded unless these are met</span>
+        </div>
+      </div>
+      <div id="phases" style="margin-top:16px"></div>
+      <div id="nextstep"></div>
+      <div id="coverage"></div>
+    </section>
+
+    <!-- CAPTURE -->
+    <section>
+      <h2>What has been observed</h2>
+      <div class="grid g3" id="capstats"></div>
+      <div id="redaction"></div>
+    </section>
+
+    <!-- PROCESSES -->
+    <section id="processes">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Processes</h2>
+        <div class="row">
+          <button class="btn ghost sm" id="rederive">Re-read captures</button>
+          <button class="btn ghost sm" id="addManual">Add by hand</button>
+        </div>
+      </div>
+      <p class="mut" style="font-size:14px;max-width:74ch">Capture proposes; you confirm. Only confirmed processes enter the roadmap — a machine grouping of clicks is a good guess about where one piece of work ends and the next begins, not authority to put a name in a board document.</p>
+      <div id="proclist"></div>
+    </section>
+
+    <!-- ANSWERS -->
+    <section id="answers">
+      <h2>What only you can answer</h2>
+      <p class="mut" style="font-size:14px;max-width:74ch">Six questions. Everything else — which processes exist, how long they take, which systems they cross — was measured, so it is not asked.</p>
+      <div id="missingBox"></div>
+      <div class="card" id="qform"></div>
+    </section>
+
+    <!-- FINDINGS -->
+    <section>
+      <h2>Findings</h2>
+      <div class="card" id="findings"></div>
+    </section>
+
+    <section style="text-align:center">
+      <button class="btn primary" id="runEval" style="padding:14px 26px;font-size:15px">Run the evaluation</button>
+      <p class="faint" id="evalNote" style="margin-top:10px"></p>
+      <div class="msg" id="evalMsg"></div>
+    </section>
+  </div>
+</div>
+
+<script src="/discovery/diagram.js"></script>
+<script src="/discovery/app.js"></script>
+</body></html>

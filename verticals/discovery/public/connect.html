@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connect a source — OrbUp AI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><a href="/discovery/">Dashboard</a><a class="on" href="/discovery/connect">Connect</a>
+  <a href="/discovery/how-it-works">How it works</a><a href="#" id="out">Sign out</a></nav>
+</div></div>
+
+<div class="wrap" style="padding-top:34px;padding-bottom:60px">
+  <h1 style="font-size:30px">Connect a capture source</h1>
+  <p class="lede" style="font-size:16px">One key, two directions. Push observed work in with <b>ingest</b>; let your own AI read the roadmap back out with <b>read</b>.</p>
+
+  <section>
+    <h2>1 · Mint a key</h2>
+    <div class="card">
+      <div class="grid g2" style="margin-top:0">
+        <div><label for="kname">Name it</label><input id="kname" placeholder="e.g. Ops team laptops"></div>
+        <div><label>Scopes</label>
+          <div class="checks">
+            <label class="chk on" id="c-ingest"><input type="checkbox" id="s-ingest" checked>
+              <span><b>ingest</b><br><span class="faint">Push captures in. Safe to put on many laptops — it can read nothing back.</span></span></label>
+            <label class="chk" id="c-read"><input type="checkbox" id="s-read">
+              <span><b>read</b><br><span class="faint">Query the roadmap over MCP. This reads your stated budget and fears — keep it close.</span></span></label>
+          </div>
+        </div>
+      </div>
+      <button class="btn primary" id="mint" style="margin-top:16px">Mint key</button>
+      <div id="minted" class="hide">
+        <div class="warnbox" style="margin-top:16px"><b>This is the only time this key is shown.</b> It is stored as a hash and cannot be recovered. If you lose it, revoke it and mint another — that is the correct outcome, not a problem.</div>
+        <div class="keybox" id="plaintext"></div>
+        <button class="btn ghost sm" id="copy">Copy</button>
+      </div>
+      <div id="keys" style="margin-top:20px"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · Install the recorder</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Browser extension</h3>
+        <p class="mut" style="font-size:14px">Chrome, Edge or any Chromium browser. Records the shape of browser work: which system, which kind of action, how long. A banner stays visible on every page while it runs — a capture tool nobody can see is spyware, regardless of what it collects.</p>
+        <ol class="mut" style="font-size:13.5px;padding-left:19px">
+          <li>Download and unzip the folder</li>
+          <li>Open <span class="mono">chrome://extensions</span>, turn on Developer mode</li>
+          <li>Load unpacked → pick the folder</li>
+          <li>Click the icon, paste your <b>ingest</b> key, press Connect</li>
+        </ol>
+        <div class="row" style="margin-top:12px">
+          <a class="btn primary sm" href="/discovery/extension/manifest.json" download>Extension files</a>
+          <a class="btn ghost sm" href="/discovery/how-it-works#recorder">What it records</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Integrations and your own systems</h3>
+        <p class="mut" style="font-size:14px">Anything that can make an HTTP request can push a run. Useful when the work happens in a desktop application the browser cannot see, or when you already have an event log.</p>
+        <div class="keybox" style="font-size:11.5px">POST /discovery/api/v1/ingest/capture
+Authorization: Bearer orbup_dk_…
+
+{ "label": "month-end invoice run",
+  "actor": "ops-2",
+  "external_ref": "run-4471",
+  "duration_ms": 1860000,
+  "steps": [
+    {"action":"navigate","url":"https://acme.my.salesforce.com/orders/8837",
+     "dwell_ms":42000},
+    {"action":"copy","host":"acme.my.salesforce.com","dwell_ms":3000},
+    {"action":"paste","native_app":"excel.exe","dwell_ms":9000}
+  ] }</div>
+        <p class="faint">Re-pushing the same <span class="mono">external_ref</span> is a no-op, so a retry after a timeout cannot double-count hours into your cost model.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · Point your AI at the roadmap</h2>
+    <div class="card">
+      <p class="mut">Any MCP client — Claude, a copilot, your own agent — can query the assessment with a <b>read</b>-scoped key.</p>
+      <div class="keybox" style="font-size:11.5px">{
+  "mcpServers": {
+    "orbup-discovery": {
+      "url": "https://orbup.app/discovery/mcp",
+      "headers": { "Authorization": "Bearer orbup_dk_…" }
+    }
+  }
+}</div>
+      <div id="tools" class="faint"></div>
+      <div class="note">The read surface will not confirm a process, set an hourly rate, or answer a posture question. Those are the human judgements every figure rests on — an agent that could supply them could manufacture a roadmap end to end with nobody in the loop.</div>
+    </div>
+  </section>
+
+  <div class="row"><a class="btn primary" href="/discovery/">Go to the dashboard</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll('.chk').forEach(l=>l.addEventListener('click',()=>setTimeout(()=>{
+  l.classList.toggle('on', l.querySelector('input').checked);},0)));
+$('out').addEventListener('click',async e=>{e.preventDefault();await fetch('/discovery/api/v1/auth/logout',{method:'POST'});location.href='/discovery/login';});
+
+async function loadKeys(){
+  const r=await fetch('/discovery/api/v1/keys'); const j=await r.json();
+  if(!j.keys||!j.keys.length){$('keys').innerHTML='<p class="faint">No keys yet.</p>';return;}
+  $('keys').innerHTML='<div class="scroll"><table><thead><tr><th>Name</th><th>Prefix</th><th>Scopes</th><th>Used</th><th></th></tr></thead><tbody>'+
+    j.keys.map(k=>`<tr><td>${esc(k.name)}</td><td class="mono">${esc(k.prefix)}…</td>
+      <td>${(k.scopes||[]).map(s=>`<span class="pill blue">${esc(s)}</span>`).join(' ')}</td>
+      <td class="faint">${k.use_count||0}${k.last_used_at?' · '+new Date(k.last_used_at).toLocaleDateString():''}</td>
+      <td>${k.active?`<button class="btn ghost sm" data-rev="${k.id}">Revoke</button>`:'<span class="faint">revoked</span>'}</td></tr>`).join('')+
+    '</tbody></table></div>';
+  $('keys').querySelectorAll('[data-rev]').forEach(b=>b.addEventListener('click',async()=>{
+    await fetch('/discovery/api/v1/keys/'+b.dataset.rev,{method:'DELETE'}); loadKeys();}));
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+$('mint').addEventListener('click',async()=>{
+  const scopes=[]; if($('s-ingest').checked)scopes.push('ingest'); if($('s-read').checked)scopes.push('read');
+  if(!scopes.length)return;
+  const r=await fetch('/discovery/api/v1/keys',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:$('kname').value.trim()||'Untitled key',scopes})});
+  const j=await r.json();
+  if(j.plaintext){$('minted').classList.remove('hide');$('plaintext').textContent=j.plaintext;}
+  loadKeys();
+});
+$('copy').addEventListener('click',()=>{navigator.clipboard.writeText($('plaintext').textContent);$('copy').textContent='Copied';});
+loadKeys();
+</script>
+</body></html>

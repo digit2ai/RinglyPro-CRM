@@ -1,0 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>OrbUp AI Discovery</title>
+<style>
+  :root { color-scheme: dark; }
+  body { width: 320px; margin: 0; font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+         background: #0b1220; color: #e8edf7; }
+  header { padding: 14px 16px 10px; border-bottom: 1px solid #22304a; }
+  h1 { font-size: 14px; margin: 0 0 2px; letter-spacing: .01em; }
+  .sub { font-size: 11px; color: #8ea0bd; }
+  main { padding: 14px 16px 16px; }
+  label { display: block; font-size: 11px; color: #8ea0bd; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .06em; }
+  input { width: 100%; box-sizing: border-box; background: #131d2f; border: 1px solid #2b3a55;
+          color: #e8edf7; border-radius: 7px; padding: 8px 10px; font: inherit; }
+  input:focus { outline: none; border-color: #4f7cff; }
+  button { width: 100%; margin-top: 12px; padding: 10px; border-radius: 8px; border: 0;
+           font: 600 13px/1 system-ui, sans-serif; cursor: pointer; }
+  .go { background: #4f7cff; color: #fff; }
+  .stop { background: #e0483c; color: #fff; }
+  .ghost { background: transparent; color: #8ea0bd; border: 1px solid #2b3a55; }
+  .note { font-size: 11px; color: #7b8ba6; margin-top: 12px; line-height: 1.45; }
+  .rec { display: flex; align-items: center; gap: 8px; background: #1a1116; border: 1px solid #4a2229;
+         border-radius: 8px; padding: 10px 12px; margin-bottom: 4px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #e0483c; animation: p 1.4s infinite; }
+  @keyframes p { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+  .msg { font-size: 11px; margin-top: 10px; padding: 8px 10px; border-radius: 7px; display: none; }
+  .msg.ok { display: block; background: #10241a; color: #7fd6a4; border: 1px solid #1f4a33; }
+  .msg.err { display: block; background: #241214; color: #f0a3a3; border: 1px solid #4a2229; }
+  .hide { display: none; }
+</style>
+<header>
+  <h1>OrbUp AI Discovery</h1>
+  <div class="sub">Records the shape of the work. Never its contents.</div>
+</header>
+<main>
+  <div id="setup">
+    <label for="api">OrbUp address</label>
+    <input id="api" value="https://orbup.app" spellcheck="false">
+    <label for="key">Ingest key</label>
+    <input id="key" placeholder="orbup_dk_..." spellcheck="false" autocomplete="off">
+    <label for="actor">Your reference (optional)</label>
+    <input id="actor" placeholder="e.g. ops-2" spellcheck="false">
+    <button class="go" id="save">Connect</button>
+    <div class="note">Your reference is hashed with your company's own salt before it is stored. The module counts how many people do a piece of work; it never learns who they are.</div>
+  </div>
+
+  <div id="panel" class="hide">
+    <div class="rec hide" id="recbox"><span class="dot"></span><span id="recmsg">Recording</span></div>
+    <label for="label">What is this work called?</label>
+    <input id="label" placeholder="e.g. month-end invoice run">
+    <button class="go" id="start">Start capture</button>
+    <button class="stop hide" id="stop">Stop and send</button>
+    <button class="ghost" id="reset">Change key</button>
+    <div class="note" id="hint">Go about the work normally. A banner stays visible on every page while this is running.</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+</main>
+<script src="popup.js"></script>

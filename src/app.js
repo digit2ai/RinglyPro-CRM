@@ -96,6 +96,75 @@ app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 // ═════════════════════════════════════════════════════════════════════════
+// DOMINIO PROPIO DE ENRUTA: enruta.digit2ai.com
+//
+// digit2ai.com NO lo sirve esta aplicación. Es un sitio de GoHighLevel
+// (sites.ludicrous.cloud detrás de Cloudflare), así que una ruta
+// digit2ai.com/enruta NO se puede crear desde este repo por mucho manejador
+// de host que se escriba: la petición nunca llega hasta aquí. Esa ruta se
+// hace en GHL, con un marco o una redirección.
+//
+// Lo que sí es nuestro es un subdominio apuntado a Render, y además es la
+// mejor opción de las tres: origen propio, el micrófono del orbe de voz no
+// depende de permisos prestados por un marco ajeno, y las cookies no serán de
+// terceros el día que se encienda ENRUTA_PASSWORD.
+//
+// Registrado AQUÍ, junto a los demás dominios propios, porque Express empareja
+// en orden de registro: el CRM define cientos de rutas más abajo y un
+// manejador tardío queda tapado justo en las rutas que el CRM sí define.
+//
+// El tablero ya pide todo con rutas absolutas /enruta/..., así que lo único
+// que hay que mapear es la raíz; el resto pasa sin tocar. Lo que sí hay que
+// dejar pasar es el cerebro y la voz del orbe, que los sirve la aplicación
+// principal: el orbe deduce su origen del src de su propio script, o sea este
+// mismo host, y reescribirle /api/ lo dejaría mudo.
+//
+// UNA RUTA AJENA TERMINA EN UN 404 DE ENRUTA, NO EN EL CRM. Dejar caer el
+// resto serviría el CRM entero en el dominio de la marca: es la lección de
+// jobmd.io/admin, que devolvía el login de un producto ajeno.
+// ═════════════════════════════════════════════════════════════════════════
+const ENRUTA_HOSTS = new Set(['enruta.digit2ai.com', 'www.enruta.digit2ai.com']);
+// Servido por la app principal, no por el router de ENRUTA. El orbe de voz
+// vive aquí: su script, su cerebro y su voz.
+const ENRUTA_PASA_DERECHO = ['/embed/', '/api/voice-agent/', '/api/tts/'];
+
+function enruta404(res) {
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<meta name="robots" content="noindex, nofollow"><title>enRuta - página no encontrada</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;' +
+    'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;' +
+    'background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%)}' +
+    'h1{font-size:3rem;margin:0}p{opacity:.9;margin:.5rem 0 1.5rem}' +
+    'a{display:inline-block;padding:.7rem 1.4rem;border-radius:.5rem;background:#fff;' +
+    'color:#1e3a8a;text-decoration:none;font-weight:600}</style></head><body><div>' +
+    '<h1>404</h1><p>Esta página no existe en enRuta.</p>' +
+    '<a href="/">Ir al tablero</a></div></body></html>');
+}
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!ENRUTA_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://enruta.digit2ai.com' + req.originalUrl);
+
+  const corte = req.url.indexOf('?');
+  const ruta = corte === -1 ? req.url : req.url.slice(0, corte);
+  const cola = corte === -1 ? '' : req.url.slice(corte);
+
+  // Son datos de ciudadanos: el dominio entero se queda fuera de los índices.
+  if (ruta === '/robots.txt') {
+    return res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  }
+  if (ruta === '/' || ruta === '') { req.url = '/enruta/' + cola; return next(); }
+  if (ruta === '/health') { req.url = '/enruta/health' + cola; return next(); }
+  if (ruta === '/enruta' || ruta.startsWith('/enruta/')) return next();
+  if (ENRUTA_PASA_DERECHO.some((pre) => ruta.startsWith(pre))) return next();
+  if (ruta === '/favicon.ico' || ruta === '/apple-touch-icon.png') return next();
+
+  return enruta404(res);
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // CUSTOM DOMAIN: lawncopilot.com serves the Lawn Co-Pilot app at its ROOT
 //
 // Registered HERE, before any other route, because Express matches in
@@ -735,6 +804,10 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'orbup.app' || host === 'www.orbup.app') {
     const p = req.path;
+    // /discovery is a full sub-application on this domain and owns every path
+    // beneath it, including its own /api and /mcp. It must pass through before
+    // any rewrite, or the module's API would be reachable on the CRM host only.
+    if (p === '/discovery' || p.startsWith('/discovery/')) return next();
     if (p.startsWith('/orbup') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
     if (p === '/' || p === '' || p === '/index.html' || p === '/en') req.url = '/orbup';
     else if (p === '/es') req.url = '/orbup-es';
@@ -2518,6 +2591,42 @@ app.get('/debug/ai-readiness-error', (req, res) => {
     service: 'AI Readiness Department',
     available: !aiReadinessError,
     error: aiReadinessError ? { message: aiReadinessError.message, stack: aiReadinessError.stack } : null
+  });
+});
+
+// =====================================================
+// AI DISCOVERY — orbup.app/discovery. Scribe-style process capture feeding the
+// AI Readiness engines: observe how the work is actually done, derive the
+// processes, and produce a costed roadmap with a diagram. Self-serve, free.
+// The API key works both ways: `ingest` pushes captures in, `read` lets the
+// company's own AI query the roadmap over MCP at /discovery/mcp.
+// =====================================================
+
+let discoveryApp = null;
+let discoveryError = null;
+try {
+  discoveryApp = require('../verticals/discovery/src/index');
+  app.get('/discovery', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/discovery/');
+    next();
+  });
+  app.use('/discovery', discoveryApp);
+  console.log('AI Discovery mounted at /discovery');
+  console.log('   - Landing: /discovery/  (orbup.app/discovery)');
+  console.log('   - Connect + keys: /discovery/connect');
+  console.log('   - MCP endpoint: /discovery/mcp');
+  console.log('   - Ingest: POST /discovery/api/v1/ingest/capture');
+  console.log('   - Health Check: /discovery/health');
+} catch (error) {
+  discoveryError = error;
+  console.log('AI Discovery not available:', error.message);
+}
+
+app.get('/debug/discovery-error', (req, res) => {
+  res.json({
+    service: 'AI Discovery',
+    available: !discoveryError,
+    error: discoveryError ? { message: discoveryError.message, stack: discoveryError.stack } : null
   });
 });
 
