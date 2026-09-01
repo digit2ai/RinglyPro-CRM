@@ -302,6 +302,8 @@ Recordatorios de vencimiento de documentos de tránsito para el Centro de Diagn�
 
 **Datos de demostración:** `src/services/demo-data.js` — 80 ciudadanos del Valle con vehículos, documentos, comparendos, llamadas y renovaciones. **Las fechas son relativas al día en que se siembra** (el sembrador viejo escribía fechas literales y la demostración envejecía) y **el azar es sembrado**, así que la misma semilla da las mismas cédulas y quien prepara la demostración puede aprenderse una. Cédulas con formato colombiano real (8 dígitos pre-1988 por rango de género, 10 empezando por 1 para el NUIP). Cada fila queda marcada `[demo]` en `notas`. `node enruta/scripts/seed-demo.js [--reset]` o el endpoint.
 
+**Dominio propio:** `enruta.digit2ai.com` (manejador de host en `src/app.js`, junto a los demás dominios propios — Express empareja en orden de registro). Mapea solo la raíz: el tablero ya pide todo con rutas absolutas `/enruta/...`. Deja pasar `/embed/`, `/api/voice-agent/` y `/api/tts/` porque el orbe deduce su origen del `src` de su propio script y reescribirle `/api/` lo dejaría mudo. **Una ruta ajena termina en un 404 de enRuta, no en el CRM.** `digit2ai.com` NO lo sirve esta app (es GoHighLevel, `sites.ludicrous.cloud` tras Cloudflare), así que `digit2ai.com/enruta` no se puede crear desde este repo: eso se hace en GHL con un marco o una redirección. Prueba: `node scripts/test-enruta-host.js` → 16/16.
+
 **SIT:** `node enruta/sit.js` (en proceso) o `node enruta/sit.js https://aiagent.ringlypro.com/enruta` (contra el despliegue) → **63/63**, sin llaves externas, solo lectura contra producción.
 
 **Variables de entorno:**

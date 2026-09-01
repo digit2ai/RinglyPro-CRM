@@ -96,6 +96,75 @@ app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 // ═════════════════════════════════════════════════════════════════════════
+// DOMINIO PROPIO DE ENRUTA: enruta.digit2ai.com
+//
+// digit2ai.com NO lo sirve esta aplicación. Es un sitio de GoHighLevel
+// (sites.ludicrous.cloud detrás de Cloudflare), así que una ruta
+// digit2ai.com/enruta NO se puede crear desde este repo por mucho manejador
+// de host que se escriba: la petición nunca llega hasta aquí. Esa ruta se
+// hace en GHL, con un marco o una redirección.
+//
+// Lo que sí es nuestro es un subdominio apuntado a Render, y además es la
+// mejor opción de las tres: origen propio, el micrófono del orbe de voz no
+// depende de permisos prestados por un marco ajeno, y las cookies no serán de
+// terceros el día que se encienda ENRUTA_PASSWORD.
+//
+// Registrado AQUÍ, junto a los demás dominios propios, porque Express empareja
+// en orden de registro: el CRM define cientos de rutas más abajo y un
+// manejador tardío queda tapado justo en las rutas que el CRM sí define.
+//
+// El tablero ya pide todo con rutas absolutas /enruta/..., así que lo único
+// que hay que mapear es la raíz; el resto pasa sin tocar. Lo que sí hay que
+// dejar pasar es el cerebro y la voz del orbe, que los sirve la aplicación
+// principal: el orbe deduce su origen del src de su propio script, o sea este
+// mismo host, y reescribirle /api/ lo dejaría mudo.
+//
+// UNA RUTA AJENA TERMINA EN UN 404 DE ENRUTA, NO EN EL CRM. Dejar caer el
+// resto serviría el CRM entero en el dominio de la marca: es la lección de
+// jobmd.io/admin, que devolvía el login de un producto ajeno.
+// ═════════════════════════════════════════════════════════════════════════
+const ENRUTA_HOSTS = new Set(['enruta.digit2ai.com', 'www.enruta.digit2ai.com']);
+// Servido por la app principal, no por el router de ENRUTA. El orbe de voz
+// vive aquí: su script, su cerebro y su voz.
+const ENRUTA_PASA_DERECHO = ['/embed/', '/api/voice-agent/', '/api/tts/'];
+
+function enruta404(res) {
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<meta name="robots" content="noindex, nofollow"><title>enRuta - página no encontrada</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;' +
+    'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;' +
+    'background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%)}' +
+    'h1{font-size:3rem;margin:0}p{opacity:.9;margin:.5rem 0 1.5rem}' +
+    'a{display:inline-block;padding:.7rem 1.4rem;border-radius:.5rem;background:#fff;' +
+    'color:#1e3a8a;text-decoration:none;font-weight:600}</style></head><body><div>' +
+    '<h1>404</h1><p>Esta página no existe en enRuta.</p>' +
+    '<a href="/">Ir al tablero</a></div></body></html>');
+}
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!ENRUTA_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://enruta.digit2ai.com' + req.originalUrl);
+
+  const corte = req.url.indexOf('?');
+  const ruta = corte === -1 ? req.url : req.url.slice(0, corte);
+  const cola = corte === -1 ? '' : req.url.slice(corte);
+
+  // Son datos de ciudadanos: el dominio entero se queda fuera de los índices.
+  if (ruta === '/robots.txt') {
+    return res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  }
+  if (ruta === '/' || ruta === '') { req.url = '/enruta/' + cola; return next(); }
+  if (ruta === '/health') { req.url = '/enruta/health' + cola; return next(); }
+  if (ruta === '/enruta' || ruta.startsWith('/enruta/')) return next();
+  if (ENRUTA_PASA_DERECHO.some((pre) => ruta.startsWith(pre))) return next();
+  if (ruta === '/favicon.ico' || ruta === '/apple-touch-icon.png') return next();
+
+  return enruta404(res);
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // CUSTOM DOMAIN: lawncopilot.com serves the Lawn Co-Pilot app at its ROOT
 //
 // Registered HERE, before any other route, because Express matches in
@@ -669,6 +738,60 @@ app.use((req, res, next) => {
     else if (p === '/register' || p === '/signup' || p === '/start') req.url = '/planea/register' + q;
     else req.url = '/planea' + req.url; // /login, /score, /home, ... map into the app
   }
+  next();
+});
+
+// ── Planea: dos dominios, dos roles ─────────────────────────────────────────
+// planea.co  = LANDING (marketing, público, indexable)
+// planea.ai  = ECOSISTEMA (la app: login, portal, score, Maya)
+// Ambos se sirven EN SITIO (la barra de direcciones no cambia), igual que
+// planea.vip. Toda la app ya vive bajo /planea (SPA con basename="/planea",
+// /planea/assets y los enlaces absolutos /planea/portal/*), así que esas rutas
+// pasan sin tocarse; sólo se mapea la raíz y las rutas vanidosas.
+//
+// El host de la app es configurable: si el dominio termina siendo otro
+// (planea.app, app.planea.co…), es un cambio de env var, no de código.
+const PLANEA_APP_HOSTS = (process.env.PLANEA_APP_HOSTS || 'planea.ai,www.planea.ai')
+  .toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+const PLANEA_SITE_HOSTS = (process.env.PLANEA_SITE_HOSTS || 'planea.co,www.planea.co')
+  .toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+const PLANEA_APP_ORIGIN = process.env.PLANEA_APP_ORIGIN || 'https://planea.ai';
+
+// planea.ai -> la app completa (mismo mapeo que planea.vip)
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (!PLANEA_APP_HOSTS.includes(host)) return next();
+  const p = req.path;
+  if (p.startsWith('/planea') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+  const q = req.url.slice(p.length);
+  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/login' + q;
+  else if (p === '/register' || p === '/signup' || p === '/start') req.url = '/planea/register' + q;
+  else req.url = '/planea' + req.url;
+  next();
+});
+
+// planea.co -> el landing. Las rutas de la app se REDIRIGEN a planea.ai para que
+// la app tenga un único origen canónico (sesiones, cookies y SEO en un solo sitio).
+const PLANEA_APP_PATHS = new Set([
+  '/login', '/register', '/signup', '/start', '/home', '/score', '/forgot',
+  '/reset', '/portal', '/cuentas', '/gastos', '/metas', '/patrimonio', '/deuda',
+  '/ahorro', '/inversion', '/ingreso', '/diagnostico', '/configuracion', '/mas'
+]);
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (!PLANEA_SITE_HOSTS.includes(host)) return next();
+  const p = req.path;
+  if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+  const q = req.url.slice(p.length);
+  // Cualquier ruta de la app que alguien tenga guardada sigue funcionando: se va a planea.ai
+  if (p.startsWith('/planea') || PLANEA_APP_PATHS.has(p.replace(/\/$/, '') || '/')) {
+    return res.redirect(301, PLANEA_APP_ORIGIN + req.url.replace(/^\/planea/, ''));
+  }
+  // El landing de marketing es main.html (el mismo que hoy sirve planea.vip/main),
+  // NO la portada del portal (inicio.html). OJO: main.html todavía trae CSS, video
+  // e imágenes desde www.planea.co (Vercel) — hay que localizarlos antes de apagarlo.
+  if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/main' + q;
+  else req.url = '/planea/portal' + req.url;
   next();
 });
 
