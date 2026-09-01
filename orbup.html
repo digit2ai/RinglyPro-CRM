@@ -274,6 +274,27 @@
 .d2b .army-card ul{list-style:none;margin:0;padding:0}
 .d2b .army-core li,.d2b .army-card li{position:relative;padding-left:15px;margin:5px 0;font-size:14px;color:var(--ink-mute)}
 .d2b .army-core li::before,.d2b .army-card li::before{content:'\203A';position:absolute;left:0;color:var(--accent-cyan);opacity:.75}
+/* AI Discovery. Same card language as the army grid; its own accent so the
+   privacy statement reads as a claim the product makes, not decoration. */
+.d2b .disc-grid{margin-top:24px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+.d2b .disc-card{border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--card)}
+.d2b .disc-card h3{margin:0 0 8px;font-size:15.5px;font-weight:750;letter-spacing:-.01em}
+.d2b .disc-card p{margin:0;font-size:14px;color:var(--ink-mute);line-height:1.6}
+.d2b .disc-keeps{margin-top:16px;display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.d2b .disc-keeps > div{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--bg2)}
+.d2b .disc-keeps h4{margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono)}
+.d2b .disc-keeps .keep h4{color:var(--accent-cyan)}
+.d2b .disc-keeps .never h4{color:var(--accent-magenta)}
+.d2b .disc-keeps ul{list-style:none;margin:0;padding:0}
+.d2b .disc-keeps li{position:relative;padding-left:15px;margin:5px 0;font-size:13.5px;color:var(--ink-mute)}
+.d2b .disc-keeps .keep li::before{content:'\2713';position:absolute;left:0;color:var(--accent-cyan);font-size:11px}
+.d2b .disc-keeps .never li::before{content:'\00d7';position:absolute;left:0;color:var(--accent-magenta)}
+.d2b .disc-cta{margin-top:22px;text-align:center}
+.d2b .disc-cta a{display:inline-block;font-weight:750;font-size:15px;border-radius:999px;padding:12px 28px;
+  background:var(--grad);color:#0a0a12;text-decoration:none;transition:.15s}
+.d2b .disc-cta a:hover{transform:translateY(-1px);box-shadow:0 12px 34px rgba(124,92,255,.32)}
+.d2b .disc-note{margin-top:10px;font-size:12.5px;color:var(--faint);text-align:center}
+@media(max-width:640px){.d2b .disc-keeps{grid-template-columns:1fr}}
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 /* Pricing. Cards inherit the page's card/line tokens; the recommended plan is the
    only one that carries the accent border and glow. */
@@ -680,6 +701,7 @@
       <a href="#how">How it works</a>
       <a href="#platforms">Platforms</a>
       <a href="#numbers">Why us</a>
+      <a href="#discovery">Discovery</a>
       <a href="/blog">Blog</a>
             <span class="lang-toggle" role="group" aria-label="Language">
         <a href="/orbup?lang=en" class="lang-opt active" aria-current="true">EN</a>
@@ -943,7 +965,30 @@
     </div>
   </section>
 
-<section class="blk" id="pricing">
+<section class="blk" id="discovery">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">AI Discovery</div>
+        <h2>Measure the work, then price it</h2>
+        <p>Install a recorder, work normally for a week, and get back a costed AI readiness roadmap built from what was <b>measured</b> &mdash; not from what somebody remembered in a meeting.</p>
+      </div>
+      <div class="disc-grid">
+        <div class="disc-card"><h3>Six questions, not forty</h3><p>Most readiness assessments ask an executive to describe their processes and estimate the hours. Both answers are guesses, and every dollar downstream inherits them. Discovery measures the processes and asks a human only the six things no observation can supply.</p></div>
+        <div class="disc-card"><h3>Time is measured. Money is stated.</h3><p>A browser can watch how long work takes. It cannot know what the person doing it is paid, so it never guesses: an uncosted process contributes zero dollars and is named in the coverage ledger rather than averaged away.</p></div>
+        <div class="disc-card"><h3>A short week is reported, not multiplied</h3><p>Turning two observed days into “hours per week” means multiplying by 3.5, which produces an invention that looks exactly like a measurement. Under seven days you get the measured rate, the window beside it, and a caveat that travels into the roadmap.</p></div>
+        <div class="disc-card"><h3>Every input is labelled</h3><p>Measured, stated by you, derived, or absent. A CEO who has been oversold before does not need to be told a document is honest &mdash; they need to be able to check.</p></div>
+      </div>
+      <div class="disc-keeps">
+        <div class="keep"><h4>What it records</h4><ul><li>The application and the action</li><li>The role of the element, not its label</li><li>How long the work took</li><li>The host, and a path with identifiers masked</li><li>The switch between applications &mdash; the swivel-chair work nobody describes in an interview</li></ul></div>
+        <div class="never"><h4>What it refuses to record</h4><ul><li>Anything you typed</li><li>Any page text or element label</li><li>Query strings &mdash; dropped whole, never shortened</li><li>Your clipboard</li><li>Screenshots, ever</li></ul></div>
+      </div>
+      <p class="disc-note" style="text-align:left;margin-top:14px">The redaction runs on the server, not in the extension. “Our client redacts before sending” is a promise about software on somebody else’s laptop; this is a file a compliance officer can read. Every strip is counted and shown, so the boundary can be checked rather than trusted.</p>
+      <div class="disc-cta"><a href="/discovery/">See how Discovery works &rarr;</a></div>
+      <div class="disc-note">Free and self-serve. A build is quoted separately.</div>
+    </div>
+  </section>
+
+  <section class="blk" id="pricing">
     <div class="wrap">
       <div class="blk-head">
         <div class="kick">Pricing</div>
