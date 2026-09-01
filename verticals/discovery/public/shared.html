@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Roadmap — OrbUp Discovery</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><span class="pill">read-only</span></nav>
+</div></div>
+<div class="wrap" style="padding-top:28px;padding-bottom:70px">
+  <div id="boot" class="faint"><span class="spin"></span> Loading…</div>
+  <div id="main" class="hide">
+    <h1 style="font-size:28px" id="co"></h1>
+    <p class="faint" id="meta"></p>
+    <div class="banner" id="verdict"></div>
+    <div class="grid g3" id="lanes"></div>
+    <div class="card" style="margin-top:16px"><div class="diagram" id="diagram"></div></div>
+    <div id="phases" style="margin-top:16px"></div>
+    <div id="coverage"></div>
+    <div class="note">This is a frozen version. It cannot change after it was shared. The stated pilot budget and the worst-case description are deliberately omitted from this view — a link that travels reaches more inboxes than whoever minted it expects.</div>
+  </div>
+</div>
+<script src="/discovery/diagram.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+(async()=>{
+  const token=location.pathname.split('/').pop();
+  const r=await fetch('/discovery/api/v1/public/roadmap/'+encodeURIComponent(token));
+  if(!r.ok){$('boot').textContent='That link is not valid.';return;}
+  const d=await r.json();
+  $('boot').classList.add('hide');$('main').classList.remove('hide');
+  $('co').textContent=(d.company||'')+' — AI Readiness Roadmap';
+  $('meta').textContent='Version '+d.version+' · '+new Date(d.created_at).toLocaleDateString();
+  const sc=d.scorecard||{};
+  $('verdict').innerHTML=`<span class="pill ${esc(sc.overall_rating)}">${esc(sc.overall_rating||'')}</span>
+    <h2 style="margin:10px 0 4px">${esc(sc.verdict_label||'')}</h2>
+    <p class="mut" style="margin:0;font-size:14px">${esc(d.executive_summary||'')}</p>`;
+  $('lanes').innerHTML=(sc.lanes||[]).map(l=>`<div class="card">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(l.title)}</h3>
+    <span class="pill ${esc(l.rating)}">${l.score==null?'—':l.score}</span></div>
+    <p class="mut" style="font-size:13.5px;margin:8px 0 0">${esc(l.headline)}</p></div>`).join('');
+  $('diagram').innerHTML=window.DiscoveryDiagram.render(d.diagram||{});
+  $('phases').innerHTML=(d.phases||[]).map(p=>`<div class="card">
+    <span class="faint mono">PHASE ${p.number}</span><h3 style="margin:3px 0 8px">${esc(p.title)}</h3>
+    <p class="mut" style="font-size:14px;margin:0 0 8px">${esc(p.objective||'')}</p>
+    ${(p.scope||[]).length?`<p style="font-size:13.5px"><b>In scope:</b> ${p.scope.map(esc).join(' · ')}</p>`:''}
+    ${p.cost&&p.cost.build_usd_range?`<p class="mono" style="font-size:13px">build ${esc(p.cost.build_usd_range)}${p.cost.run_monthly_usd?` · run $${p.cost.run_monthly_usd}/mo`:''}</p>`:''}
+    ${p.number===3?'<div class="note">Deliberately unpriced.</div>':''}
+    ${p.gate?`<div class="note" style="border-left-color:var(--violet)"><b>${esc(p.gate.title)}</b><br>${(p.gate.conditions||[]).map(esc).join('<br>')}</div>`:''}
+  </div>`).join('');
+  const cov=d.coverage||{};
+  $('coverage').innerHTML=`<div class="card"><h3>Where every number came from</h3>
+    <p class="mut" style="font-size:13.5px">Hours were measured from observed runs. Hourly rates were entered by a person — a browser cannot know what anyone is paid, so a process without a rate contributes zero dollars here and is listed rather than averaged.</p>
+    ${cov.rates?`<p class="faint">${cov.rates.costed} process(es) costed, ${cov.rates.uncosted} uncosted.</p>`:''}
+    ${(cov.absent||[]).length?`<div class="warnbox"><b>Not present, and therefore not used:</b><br>${cov.absent.map(esc).join('<br>')}</div>`:''}</div>`;
+})();
+</script>
+</body></html>

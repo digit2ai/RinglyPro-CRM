@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b7bff"/><stop offset="52%" stop-color="#e64980"/><stop offset="1" stop-color="#ff922b"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="#0a0a0e"/>
+  <!-- the orb, and three measured steps leaving it: the module in one mark -->
+  <circle cx="40" cy="64" r="21" fill="url(#g)"/>
+  <circle cx="40" cy="64" r="29" fill="none" stroke="url(#g)" stroke-width="2" opacity=".45"/>
+  <rect x="76" y="40" width="30" height="7" rx="3.5" fill="#f5f5f7" opacity=".92"/>
+  <rect x="76" y="60" width="22" height="7" rx="3.5" fill="#f5f5f7" opacity=".62"/>
+  <rect x="76" y="80" width="26" height="7" rx="3.5" fill="#f5f5f7" opacity=".38"/>
+</svg>

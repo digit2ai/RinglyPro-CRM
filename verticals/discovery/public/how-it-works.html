@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it works — OrbUp AI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><a href="/discovery/">Dashboard</a><a class="on" href="/discovery/how-it-works">How it works</a>
+  <a class="btn primary sm" href="/discovery/signup">Start free</a></nav>
+</div></div>
+<div class="wrap" style="padding-bottom:60px">
+
+<section>
+  <h1 style="font-size:32px">How it works</h1>
+  <p class="lede">Six steps. Everything a machine can observe is observed; everything it cannot is asked once, plainly.</p>
+</section>
+
+<section id="recorder">
+  <h2>1 · What the recorder actually records</h2>
+  <p class="mut">The single most important page on this site, so it is spelled out rather than summarised.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Signal</th><th>Kept</th><th>Why</th></tr></thead><tbody>
+      <tr><td>Application</td><td>The name — Salesforce, QuickBooks, a spreadsheet</td><td class="mut">Which systems a process crosses is what makes it automatable or not.</td></tr>
+      <tr><td>Action</td><td>One of: navigate, click, type, submit, copy, paste, upload, download, search, wait, switch_app, scroll</td><td class="mut">A fixed list. An unrecognised verb becomes <span class="mono">other</span> — "whatever the client called it" is a text field by another name.</td></tr>
+      <tr><td>Element</td><td>Its <b>role</b>: button, field, link, table</td><td class="mut">Never its label. "Approve invoice 4471" would leak both a process and a record.</td></tr>
+      <tr><td>Address</td><td>Site name, plus a path with identifiers masked: <span class="mono">/orders/:id/edit</span></td><td class="mut">Query strings are dropped whole, never shortened — that is where search terms and tokens live.</td></tr>
+      <tr><td>Duration</td><td>Milliseconds on each step</td><td class="mut">The measurement the entire cost model is built from.</td></tr>
+      <tr><td>Who</td><td>A hash of whatever reference you supply, salted per company</td><td class="mut">The module counts how many people do a piece of work. It never learns who they are, and two companies hashing the same person get different pseudonyms.</td></tr>
+    </tbody></table></div>
+  <div class="warnbox"><b>Never recorded, at any point:</b> anything you type (not the value, not one character), page contents, element labels, document text, clipboard contents on copy or paste, or a screenshot of any kind.</div>
+  <div class="note"><b>Why the server redacts too.</b> An extension can be modified by whoever installs it, so "our recorder strips this before sending" is a promise about software on someone else's laptop. The server strips again on arrival, counts what it removed, and shows you the counts. There is no column in the database that could hold a value you typed — the schema and the redactor are two halves of one guarantee, and a compliance officer can verify the second one.</div>
+</section>
+
+<section>
+  <h2>2 · Runs become proposed processes</h2>
+  <p class="mut">Runs with the same shape are grouped. From a group we measure: how many runs, over how many days, by how many distinct people, and the median duration. Hours per week, per person, follows from those.</p>
+  <div class="note"><b>A short window is reported, never multiplied.</b> Turning two observed days into "hours per week" means multiplying by three and a half, which produces an invention that looks exactly like a measurement. Under seven days, the rate is the measured rate, marked low confidence, with the window stated beside it — and that caveat travels into the roadmap.</div>
+  <p class="mut">The grouping is a machine guess about where one piece of work ends and the next begins. It stays <b>proposed</b> until a person confirms it, and only confirmed processes enter the roadmap.</p>
+</section>
+
+<section>
+  <h2>3 · Time is measured. Money is stated.</h2>
+  <p class="lede">A browser can watch how long work takes. It cannot know what the person doing it is paid.</p>
+  <p class="mut">So there is no industry average anywhere in this product. A process with no hourly rate contributes <b>zero dollars</b> to every figure in your roadmap and is listed as uncosted. Enter a rate and those hours become dollars. That is the only path by which a dollar figure can appear here.</p>
+</section>
+
+<section>
+  <h2>4 · Six questions</h2>
+  <p class="mut">Which concern is the real blocker · what you could spend once without losing sleep · which risks keep you up · whether you would trust a report pulled today · how hard data is to get out · whether the work touches personal, health or payment data.</p>
+  <p class="mut">The full readiness interview asks about forty things. Better than thirty of them are now measured, which is what this module is for. <b>The evaluation refuses to run while one of the six is missing</b>, and names which — a confident document built on absent inputs is precisely the artifact most executives have already been sold once.</p>
+</section>
+
+<section>
+  <h2>5 · Five agents, in a fixed order</h2>
+  <p class="mut">The same AI Readiness Department that runs consultant-led engagements, called through the same code: Data Readiness, then Cost Comfort, then Risk Comfort, then the Roadmap Builder, coordinated by the Readiness Director.</p>
+  <p class="mut">The order is load-bearing. Data runs first because its count of blocking gaps becomes remediation hours in the cost model; cost runs second because its Phase 1 scope is what risk writes guardrails around. Run concurrently, the three lanes quietly disagree about which processes are in the pilot.</p>
+  <div class="note">Phase 1 excludes regulated data, customer-facing output and zero-error-tolerance work <b>by rule</b>, not by preference. Phase 3 is never priced. The verdict is not an average — one blocking data item outranks two green lanes. And there is always a safe next step: a red scorecard produces a smaller one, never "come back later".</div>
+</section>
+
+<section>
+  <h2>6 · One key, two directions</h2>
+  <p class="mut"><b>ingest</b> pushes observed work in — this is the key that sits on many laptops, and it can read nothing back. <b>read</b> lets your own AI query the roadmap over MCP at <span class="mono">/discovery/mcp</span>.</p>
+  <p class="mut">The read surface will not confirm a process, set a rate, or answer a posture question. Those are the human judgements every figure rests on, and an agent that could supply them could manufacture a roadmap end to end with nobody in the loop.</p>
+</section>
+
+<section style="text-align:center;padding:50px 0">
+  <a class="btn primary" href="/discovery/signup">Start free</a>
+  <p class="faint" style="margin-top:12px">The assessment and the roadmap are free and stay yours. A build is quoted to its scope.</p>
+</section>
+
+<footer><div class="row" style="justify-content:space-between">
+  <span>OrbUp AI Discovery · Digit2AI LLC</span><span><a href="/discovery/">Dashboard</a> · <a href="/">OrbUp</a></span>
+</div></footer>
+</div>
+</body></html>

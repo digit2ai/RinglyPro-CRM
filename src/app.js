@@ -804,6 +804,10 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'orbup.app' || host === 'www.orbup.app') {
     const p = req.path;
+    // /discovery is a full sub-application on this domain and owns every path
+    // beneath it, including its own /api and /mcp. It must pass through before
+    // any rewrite, or the module's API would be reachable on the CRM host only.
+    if (p === '/discovery' || p.startsWith('/discovery/')) return next();
     if (p.startsWith('/orbup') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
     if (p === '/' || p === '' || p === '/index.html' || p === '/en') req.url = '/orbup';
     else if (p === '/es') req.url = '/orbup-es';
@@ -2587,6 +2591,42 @@ app.get('/debug/ai-readiness-error', (req, res) => {
     service: 'AI Readiness Department',
     available: !aiReadinessError,
     error: aiReadinessError ? { message: aiReadinessError.message, stack: aiReadinessError.stack } : null
+  });
+});
+
+// =====================================================
+// AI DISCOVERY — orbup.app/discovery. Scribe-style process capture feeding the
+// AI Readiness engines: observe how the work is actually done, derive the
+// processes, and produce a costed roadmap with a diagram. Self-serve, free.
+// The API key works both ways: `ingest` pushes captures in, `read` lets the
+// company's own AI query the roadmap over MCP at /discovery/mcp.
+// =====================================================
+
+let discoveryApp = null;
+let discoveryError = null;
+try {
+  discoveryApp = require('../verticals/discovery/src/index');
+  app.get('/discovery', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/discovery/');
+    next();
+  });
+  app.use('/discovery', discoveryApp);
+  console.log('AI Discovery mounted at /discovery');
+  console.log('   - Landing: /discovery/  (orbup.app/discovery)');
+  console.log('   - Connect + keys: /discovery/connect');
+  console.log('   - MCP endpoint: /discovery/mcp');
+  console.log('   - Ingest: POST /discovery/api/v1/ingest/capture');
+  console.log('   - Health Check: /discovery/health');
+} catch (error) {
+  discoveryError = error;
+  console.log('AI Discovery not available:', error.message);
+}
+
+app.get('/debug/discovery-error', (req, res) => {
+  res.json({
+    service: 'AI Discovery',
+    available: !discoveryError,
+    error: discoveryError ? { message: discoveryError.message, stack: discoveryError.stack } : null
   });
 });
 

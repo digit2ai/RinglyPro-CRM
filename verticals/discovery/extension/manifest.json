@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "OrbUp AI Discovery — Process Capture",
+  "version": "1.0.0",
+  "description": "Records the shape of your work — which systems, which actions, how long — and never what you typed, what a page said, or a URL beyond its host.",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_title": "OrbUp AI Discovery" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "icons": { "128": "icon-128.png" }
+}

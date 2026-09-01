@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in — OrbUp AI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><a href="/discovery/signup">Create account</a></nav>
+</div></div>
+<div class="wrap narrow" style="padding-top:60px">
+  <h1 style="font-size:28px">Sign in</h1>
+  <div class="card" style="margin-top:18px">
+    <form id="f">
+      <label for="email">Email</label><input id="email" type="email" required autocomplete="email">
+      <label for="password">Password</label><input id="password" type="password" required autocomplete="current-password">
+      <div class="msg" id="msg"></div>
+      <button class="btn primary" type="submit" id="go" style="width:100%;margin-top:18px">Sign in</button>
+    </form>
+  </div>
+  <p class="faint" style="margin-top:16px">No account? <a href="/discovery/signup">Create one free</a>.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault(); const b=$('go'); b.disabled=true; b.textContent='Signing in…';
+  const r=await fetch('/discovery/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});
+  const j=await r.json();
+  if(r.ok){const n=new URLSearchParams(location.search).get('next');location.href=n||'/discovery/';return;}
+  $('msg').className='msg err on'; $('msg').textContent=j.error||'Sign in failed.';
+  b.disabled=false; b.textContent='Sign in';
+});
+</script>
+</body></html>

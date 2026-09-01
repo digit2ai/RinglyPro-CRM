@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create account — OrbUp AI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/discovery/favicon-32.png">
+<link rel="stylesheet" href="/discovery/discovery.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
+  <nav><a href="/discovery/login">Sign in</a></nav>
+</div></div>
+<div class="wrap narrow" style="padding-top:40px;padding-bottom:60px">
+  <h1 style="font-size:30px">Create your workspace</h1>
+  <p class="lede" style="font-size:16px">Free. No card. The assessment and the roadmap stay yours whether or not anything is ever built.</p>
+  <div class="card" style="margin-top:22px">
+    <form id="f">
+      <label for="company_name">Company name</label>
+      <input id="company_name" required autocomplete="organization">
+      <div class="grid g2" style="margin-top:0">
+        <div><label for="industry">Industry</label><input id="industry" placeholder="e.g. freight brokerage"></div>
+        <div><label for="country">Country</label><input id="country" placeholder="e.g. United States"></div>
+      </div>
+      <div class="grid g2">
+        <div><label for="headcount">Roughly how many people</label><input id="headcount" type="number" min="1"></div>
+        <div><label for="revenue_band">Revenue band</label>
+          <select id="revenue_band">
+            <option value="">Prefer not to say</option>
+            <option value="under_1m">Under $1M</option><option value="1m_10m">$1M – $10M</option>
+            <option value="10m_50m">$10M – $50M</option><option value="50m_250m">$50M – $250M</option>
+            <option value="over_250m">Over $250M</option>
+          </select>
+          <p class="faint" style="margin:6px 0 0">Used only to sanity-check that a pilot budget is proportionate. A precise figure is never asked for.</p>
+        </div>
+      </div>
+      <label for="name">Your name</label><input id="name" autocomplete="name">
+      <label for="email">Work email</label><input id="email" type="email" required autocomplete="email">
+      <label for="password">Password</label><input id="password" type="password" required minlength="8" autocomplete="new-password">
+      <div class="msg" id="msg"></div>
+      <button class="btn primary" type="submit" id="go" style="width:100%;margin-top:18px">Create workspace</button>
+    </form>
+  </div>
+  <p class="faint" style="margin-top:16px">Your company is its own tenant. Observed work is a map of exactly how your business operates, and no other account can ever read it.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault(); const b=$('go'); b.disabled=true; b.textContent='Creating…';
+  const body={};['company_name','industry','country','headcount','revenue_band','name','email','password'].forEach(k=>body[k]=$(k).value.trim());
+  const r=await fetch('/discovery/api/v1/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(r.ok){location.href='/discovery/connect';return;}
+  $('msg').className='msg err on'; $('msg').textContent=j.error||'Could not create the account.';
+  b.disabled=false; b.textContent='Create workspace';
+});
+</script>
+</body></html>
