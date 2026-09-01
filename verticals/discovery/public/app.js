@@ -237,6 +237,17 @@ function renderFindings(list) {
     </div>`).join('') : '<p class="mut" style="margin:0">Nothing yet.</p>';
 }
 
+
+/** The verdict is our <h2>; the engine also closes its summary with it. Drop
+ *  the echo here rather than editing the shared engine, whose own console
+ *  renders the summary without a heading above it and needs that sentence. */
+function trimEcho(summary, verdict) {
+  if (!summary || !verdict) return summary || '';
+  const s = String(summary).trim();
+  const v = String(verdict).trim();
+  return s.endsWith(v) ? s.slice(0, -v.length).trim() : s;
+}
+
 /* ── the roadmap ─────────────────────────────────────────────────────────── */
 function renderRoadmap(ev) {
   if (!ev) { $('roadmapSec').classList.add('hide'); return; }
@@ -246,7 +257,7 @@ function renderRoadmap(ev) {
   $('verdict').innerHTML = `<div class="row" style="justify-content:space-between;align-items:flex-start">
     <div><span class="pill ${esc(sc.overall_rating)}">${esc(sc.overall_rating || '')}</span>
       <h2 style="margin:10px 0 4px">${esc(sc.verdict_label || '')}</h2>
-      <p class="mut" style="margin:0;font-size:14px">${esc(ev.executive_summary || '')}</p></div>
+      <p class="mut" style="margin:0;font-size:14px">${esc(trimEcho(ev.executive_summary, sc.verdict_label))}</p></div>
   </div>`;
 
   $('lanes').innerHTML = (sc.lanes || []).map(l => `

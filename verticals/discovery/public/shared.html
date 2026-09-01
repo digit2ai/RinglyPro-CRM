@@ -29,6 +29,10 @@
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// The verdict is our heading; the engine also closes its summary with it.
+// Drop the echo here rather than editing the shared engine, whose own console
+// renders that summary with no heading above it and needs the sentence.
+const trimEcho=(sum,v)=>{const a=String(sum||'').trim(),b=String(v||'').trim();return b&&a.endsWith(b)?a.slice(0,-b.length).trim():a;};
 document.getElementById('pdf').addEventListener('click',()=>window.print());
 (async()=>{
   const token=location.pathname.split('/').pop();
@@ -43,7 +47,7 @@ document.getElementById('pdf').addEventListener('click',()=>window.print());
   const sc=d.scorecard||{};
   $('verdict').innerHTML=`<span class="pill ${esc(sc.overall_rating)}">${esc(sc.overall_rating||'')}</span>
     <h2 style="margin:10px 0 4px">${esc(sc.verdict_label||'')}</h2>
-    <p class="mut" style="margin:0;font-size:14px">${esc(d.executive_summary||'')}</p>`;
+    <p class="mut" style="margin:0;font-size:14px">${esc(trimEcho(d.executive_summary,sc.verdict_label))}</p>`;
   $('lanes').innerHTML=(sc.lanes||[]).map(l=>`<div class="card">
     <div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(l.title)}</h3>
     <span class="pill ${esc(l.rating)}">${l.score==null?'—':l.score}</span></div>
