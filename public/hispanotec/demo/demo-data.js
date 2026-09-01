@@ -243,10 +243,105 @@
       en: 'Solar engineering firms with self-consumption projects in industrial parks' }
   ];
 
+
+  // ── Motor de Directorio Inteligente (HISP-101..112) ───────────────────
+  //
+  // Las cifras de fundación reproducen la regla del dominio: una ficha lleva
+  // presupuesto VERIFICADO (con fuente y ejercicio) o una ESTIMACIÓN proxy, y
+  // la etiqueta viaja pegada al valor. Nunca las dos, y nunca una cifra suelta.
+  var FICHAS = [
+    { id: 'h1', nombre: 'Fundación Ribera del Duero', naturaleza: 'fundacion', tipologia: 'Patrono',
+      pais: 'España', loc: 'Valladolid', esp: 'Patrimonio y cultura', estado: 'validada', origen: 'fuente_publica' },
+    { id: 'h2', nombre: 'Nervión Systems S.L.', naturaleza: 'empresa', tipologia: 'Numerario',
+      pais: 'España', loc: 'Bilbao', esp: 'Plataformas IA', estado: 'validada', origen: 'manual' },
+    { id: 'h3', nombre: 'Instituto Quetzal de Comercio', naturaleza: 'institucion', tipologia: 'Protector',
+      pais: 'México', loc: 'Ciudad de México', esp: 'Comercio exterior', estado: 'validada', origen: 'csv' },
+    { id: 'h4', nombre: 'Camila Jaramillo', naturaleza: 'persona_fisica', tipologia: 'Numerario',
+      pais: 'Colombia', loc: 'Bogotá', esp: 'Encadenamientos productivos', estado: 'validada', origen: 'manual' },
+    { id: 'h5', nombre: 'Fundación Altamar', naturaleza: 'fundacion', tipologia: 'Prospecto',
+      pais: 'España', loc: 'A Coruña', esp: 'Educación y formación', estado: 'pendiente_validacion', origen: 'ia' },
+    { id: 'h6', nombre: 'Meseta Ingeniería S.A.', naturaleza: 'empresa', tipologia: 'Prospecto',
+      pais: 'Argentina', loc: 'Rosario', esp: 'Rehabilitación energética', estado: 'pendiente_validacion', origen: 'fuente_publica' }
+  ];
+
+  var FUNDACIONES = [
+    { nombre: 'Fundación Ribera del Duero', pais: 'España', tipo: 'real', valor: '4.200.000 €',
+      fuente: 'Memoria anual 2025, registro de fundaciones', ejercicio: '2025', caducado: false },
+    { nombre: 'Fundación Hispalis', pais: 'España', tipo: 'real', valor: '1.850.000 €',
+      fuente: 'Cuentas depositadas, Protectorado', ejercicio: '2023', caducado: true },
+    { nombre: 'Fundación Altamar', pais: 'España', tipo: 'proxy', valor: '900.000 €',
+      proxy_tipo: 'plantilla declarada y número de convocatorias', fuente: 'Web institucional', ejercicio: '2025', caducado: false },
+    { nombre: 'Fundación Quetzal', pais: 'México', tipo: 'proxy', valor: '640.000 €',
+      proxy_tipo: 'volumen de proyectos publicados', fuente: 'Memoria de actividades', ejercicio: '2024', caducado: false },
+    { nombre: 'Fundación Cierzo', pais: 'España', tipo: 'desconocido', valor: null,
+      fuente: null, ejercicio: null, caducado: false }
+  ];
+
+  // Cada candidato viaja con los motivos por los que entró: el criterio de
+  // aceptación pide poder descartarlo CON criterio, y para eso hay que ver por
+  // qué estaba dentro. Los puntos salen de los pesos de matching.js
+  // (temática 40, naturaleza 15, localización 15, tipología 15, capacidad 15).
+  var CANDIDATOS = [
+    { nombre: 'Fundación Ribera del Duero', score: 92, nivel: 1,
+      motivos: ['Temática: coincide en patrimonio y cultura (2 de 3 etiquetas)',
+                'Naturaleza: se busca fundación',
+                'Localización: España',
+                'Tipología: Patrono, socio de la casa',
+                'Capacidad: 1.º del ranking por presupuesto verificado'] },
+    { nombre: 'Fundación Altamar', score: 74, nivel: 1,
+      motivos: ['Temática: coincide en educación (1 de 3 etiquetas)',
+                'Naturaleza: se busca fundación',
+                'Localización: España',
+                'Tipología: Prospecto, contacto frío',
+                'Capacidad: 3.ª del ranking, cifra ESTIMADA por proxy'] },
+    { nombre: 'Instituto Quetzal de Comercio', score: 61, nivel: 2,
+      motivos: ['Temática: coincide en cultura (1 de 3 etiquetas)',
+                'Naturaleza: institución, no fundación',
+                'Localización: México, fuera del país indicado',
+                'Tipología: Protector, socio de la casa'] }
+  ];
+
+  // El análisis NO escribe: enseña los errores fila a fila y espera confirmación.
+  var IMPORTACION = {
+    fichero: 'socios-jornada-madrid.xlsx', filas: 128, listas: 119, con_error: 6, duplicadas: 3,
+    columnas: 'nombre, tipo, país, especialidad, email, web',
+    errores: [
+      { fila: 14, es: 'Falta el nombre o razón social (columna obligatoria)', en: 'Missing name or legal name (required column)' },
+      { fila: 47, es: 'Naturaleza "ONG" no está en el vocabulario cerrado', en: 'Nature "ONG" is not in the closed vocabulary' },
+      { fila: 88, es: 'Correo con formato inválido', en: 'Invalid email format' }
+    ],
+    dups: [
+      { es: 'Fila 61 y fila 103: mismo nombre y país. Se reportan, no se fusionan.',
+        en: 'Row 61 and row 103: same name and country. Reported, never merged.' },
+      { es: 'Fila 72: ya existe una ficha con ese dominio de correo.',
+        en: 'Row 72: a record with that email domain already exists.' }
+    ]
+  };
+
+  // La IA propone campo a campo, cada uno con su fuente. Sin fuente, no hay
+  // propuesta: rellenar por verosimilitud es lo único que este módulo no puede
+  // hacer. El presupuesto no aparece aquí a propósito.
+  var PROPUESTAS = [
+    { campo: 'Sector', valor: 'Cultura y patrimonio', fuente: 'Web institucional', conf: 'alta' },
+    { campo: 'Localización', valor: 'A Coruña', fuente: 'Registro de fundaciones', conf: 'alta' },
+    { campo: 'Líneas de actuación', valor: 'Becas de formación, conservación documental', fuente: 'Memoria anual 2025', conf: 'media' },
+    { campo: 'Tamaño', valor: null, fuente: null, conf: null },
+    { campo: 'Presupuesto', valor: null, fuente: null, conf: null, bloqueado: true }
+  ];
+
+  var CHAT = [
+    { rol: 'user', es: '¿Qué fundaciones españolas encajan con un proyecto de patrimonio documental?',
+      en: 'Which Spanish foundations fit a documentary-heritage project?' },
+    { rol: 'ia', es: 'Te propongo tres, ordenadas dentro de su grupo. Con presupuesto verificado: Fundación Ribera del Duero (4.200.000 €, memoria 2025). Con estimación proxy —no comparable con la anterior—: Fundación Altamar (900.000 € ESTIMADO). De Fundación Cierzo no consta presupuesto ni proxy y no lo estimo. Las tres son Nivel 1: el contacto lo inicia una persona. Es una propuesta; la decisión es tuya.',
+      en: 'I propose three, ranked within their own group. With a verified budget: Fundación Ribera del Duero (4,200,000 €, 2025 annual report). With a proxy estimate — not comparable to the above: Fundación Altamar (900,000 € ESTIMATED). For Fundación Cierzo no budget or proxy is on file and I will not estimate one. All three are Level 1: contact is opened by a person. This is a proposal; the decision is yours.' }
+  ];
+
   window.HISPA_DEMO = {
     SECTORS: SECTORS, REGIONS: REGIONS, TIERS: TIERS, MEMBERS: MEMBERS,
     PROJECTS: PROJECTS, RFQS: RFQS, COMPANIES: COMPANIES, CONVOS: CONVOS,
     INVITES: INVITES, SAVED: SAVED,
+    FICHAS: FICHAS, FUNDACIONES: FUNDACIONES, CANDIDATOS: CANDIDATOS,
+    IMPORTACION: IMPORTACION, PROPUESTAS: PROPUESTAS, CHAT: CHAT,
     STATS: {
       members: MEMBERS.length,
       projects: 31,
