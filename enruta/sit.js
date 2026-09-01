@@ -102,6 +102,40 @@ function ok(n, c, extra='') { c ? (pasa++, console.log('  ok   ', n, extra)) : (
   const rHead = await fetch(base + '/');
   ok('cabecera X-Robots-Tag: noindex', (rHead.headers.get('x-robots-tag')||'').includes('noindex'));
 
+  console.log('\n== 5. Voz: orbe propio con Dalia, sin ElevenLabs ==');
+  const html = await (await fetch(base + '/')).text();
+  ok('el tablero no carga ningún SDK de ElevenLabs',
+     !/elevenlabs|11labs|livekit|convai/i.test(html));
+  ok('no queda un agent id de ElevenLabs en el cliente', !/agent_[0-9a-z]{20,}/i.test(html));
+  ok('el tablero monta el orbe propio', html.includes('data-voice-orb') && html.includes('/embed/voice-orb.js'));
+  ok('el orbe usa la persona enruta', /data-agent="enruta"/.test(html));
+  ok('el orbe usa la voz Dalia', /data-voice="dalia"/.test(html));
+
+  // La persona: Laura, español, Dalia. Se comprueba en la fuente para que valga
+  // igual en local que contra el despliegue.
+  const { agentConfig } = require('../src/config/voice-agents');
+  const laura = agentConfig('enruta', 'es');
+  ok('la persona enruta es Laura', laura.name === 'Laura', laura.name);
+  ok('la persona enruta habla con la voz dalia', laura.voice === 'dalia', laura.voice);
+  ok('la persona enruta no cae al genérico digit2ai', laura.id === 'enruta', laura.id);
+
+  const ctx = await get(`/voice/laura/contexto?tenant_id=${T}`);
+  ok('/voice/laura/contexto responde 200', ctx.s === 200, `-> ${ctx.s}`);
+  const texto = (ctx.j && ctx.j.contexto) || '';
+  ok('el contexto lleva los hechos de trámites', /SOAT/.test(texto) && /Categorías de Licencia/.test(texto));
+  ok('el contexto lleva las restricciones de conducta', /NUNCA pedir datos bancarios/.test(texto));
+  ok('el contexto lleva la foto en vivo del tablero', /Documentos ya vencidos: \d+/.test(texto));
+  ok('el contexto NO lleva los guiones de llamada saliente', !/Flujo de Llamadas Salientes/.test(texto));
+  ok('el contexto cabe en el límite del cerebro (9000)', texto.length > 0 && texto.length <= 9000, `${texto.length} chars`);
+
+  const twiml = await (await fetch(base + '/voice/laura/webhook/inicio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'CallSid=SIT&From=%2B15551234567&To=%2B15550000000&Direction=inbound'
+  })).text();
+  ok('el TwiML no abre un stream a ElevenLabs', !/elevenlabs/i.test(twiml));
+  ok('el TwiML contesta en español con voz neural', /Polly\.Mia-Neural/.test(twiml) && /enRuta/.test(twiml));
+
   if (srv) srv.close();
   console.log(`\n=== ${pasa} ok, ${falla} fallas ===`);
   process.exit(falla ? 1 : 0);

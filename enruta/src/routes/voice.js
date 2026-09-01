@@ -1,6 +1,8 @@
 /**
  * ENRUTA - Voice API Routes
- * Laura AI agent voice integration (ElevenLabs + Twilio)
+ * Laura: herramientas de consulta y registro de llamadas.
+ * La voz de la web corre sobre el orbe propio (Web Speech + Haiku + Edge TTS);
+ * la persona vive en src/config/voice-agents.js bajo el id "enruta".
  */
 const express = require('express');
 const router = express.Router();
@@ -12,9 +14,9 @@ const {
   sequelize
 } = require('../../models');
 const { whereEstado, sqlPrioridad } = require('../utils/estado');
-const { LAURA_SYSTEM_PROMPT, generateLauraContext, getMessageTemplate } = require('../../prompts/laura-agent');
+const { LAURA_SYSTEM_PROMPT, LAURA_CONOCIMIENTO, generateLauraContext, getMessageTemplate } = require('../../prompts/laura-agent');
 
-// GET /voice/laura/prompt - Get Laura's system prompt for ElevenLabs
+// GET /voice/laura/prompt - Prompt completo de Laura (guiones de llamada incluidos)
 router.get('/laura/prompt', async (req, res) => {
   try {
     res.json({
@@ -30,6 +32,46 @@ router.get('/laura/prompt', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting prompt:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /voice/laura/contexto - Lo que el orbe de voz de la web le pasa a Laura
+//
+// El orbe solo puede hablar de lo que se le entrega como contexto: es su regla
+// de honestidad, no puede inventar una tarifa que nadie le dio. El tablero
+// pide esto al abrir y lo empuja con D2AIVoiceOrb.setContext().
+//
+// Van los HECHOS (recortados del prompt de Laura, no copiados) más la foto en
+// vivo del tenant. Los guiones de llamada quedan fuera: el orbe de la web
+// responde preguntas, no hace llamadas salientes.
+router.get('/laura/contexto', async (req, res) => {
+  try {
+    const tenantFilter = req.query.tenant_id || '00000000-0000-0000-0000-000000000001';
+    const partes = ['## enRuta - Centro de Diagnóstico Automotor del Valle (CDAV), Santiago de Cali', LAURA_CONOCIMIENTO];
+
+    // La foto en vivo es un extra: si la consulta falla, el conocimiento
+    // igual viaja. Un orbe sin cifras sirve; un orbe sin hechos, no.
+    try {
+      const [porVencer, vencidos, clientes] = await Promise.all([
+        EnrutaDocumento.count({ where: { tenant_id: tenantFilter, ...whereEstado(['por_vencer_30_dias', 'por_vencer_15_dias', 'por_vencer_7_dias']) } }),
+        EnrutaDocumento.count({ where: { tenant_id: tenantFilter, ...whereEstado('vencido') } }),
+        EnrutaCliente.count({ where: { tenant_id: tenantFilter, estado: 'activo' } })
+      ]);
+      partes.push([
+        '### Estado actual del tablero (en vivo)',
+        `- Ciudadanos activos registrados: ${clientes}`,
+        `- Documentos por vencer en los próximos 30 días: ${porVencer}`,
+        `- Documentos ya vencidos: ${vencidos}`,
+        'Estas tres cifras son del sistema en este momento. No cite ninguna otra cifra de la operación.'
+      ].join('\n'));
+    } catch (e) {
+      console.error('ENRUTA: no se pudo adjuntar la foto en vivo al contexto de Laura:', e.message);
+    }
+
+    res.json({ success: true, contexto: partes.join('\n\n') });
+  } catch (error) {
+    console.error('Error building Laura context:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -123,27 +165,24 @@ router.post('/laura/webhook/inicio', async (req, res) => {
     // Log call start
     console.log('ENRUTA Call started:', { CallSid, From, To, Direction });
 
-    // Sin agente configurado se colgaba contra el id literal 'laura-enruta',
-    // que no existe: la llamada moría en silencio. Mejor decírselo a quien
-    // contesta y dejar rastro en el log.
-    const agentId = process.env.ELEVENLABS_ENRUTA_AGENT_ID;
-    if (!agentId) {
-      console.error('ENRUTA: ELEVENLABS_ENRUTA_AGENT_ID no configurado, no se puede conectar a Laura');
-      return res.type('text/xml').send(
-        '<?xml version="1.0" encoding="UTF-8"?>' +
-        '<Response><Say language="es-MX">El servicio de voz no está disponible en este momento. ' +
-        'Por favor intente más tarde.</Say></Response>'
-      );
-    }
+    // Laura por TELÉFONO todavía no existe.
+    //
+    // Esto conectaba la llamada a un agente conversacional de ElevenLabs, que
+    // ya no se usa en ninguna parte de ENRUTA: la web corre sobre el orbe
+    // propio (Web Speech + Haiku + Edge TTS, cero llaves). El camino de
+    // reemplazo por teléfono es Twilio ConversationRelay, que este repo ya
+    // tiene montado en /voice/relay/*, pero apuntarlo a ENRUTA exige un cerebro
+    // con las herramientas de trámites y una llamada real de prueba: no se
+    // despacha a ciegas.
+    //
+    // Mientras tanto se contesta con una voz neural en español y se dice la
+    // verdad, en vez de dejar la llamada colgada contra un agente inexistente.
+    console.warn('ENRUTA: llamada entrante sin agente de voz telefónico ' +
+                 '(pendiente ConversationRelay)', { CallSid, From, To });
 
-    // Return TwiML to connect to ElevenLabs
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Connect>
-    <Stream url="wss://api.elevenlabs.io/v1/convai/conversation">
-      <Parameter name="agent_id" value="${agentId}" />
-    </Stream>
-  </Connect>
+  <Say voice="Polly.Mia-Neural">Gracias por comunicarse con enRuta, el Centro de Diagnóstico Automotor del Valle. En este momento no contamos con atención automática por teléfono. Puede escribirnos por WhatsApp al tres uno siete, cinco uno tres, cuarenta y uno, setenta y uno, o consultar en cdav punto gov punto co. Que tenga un buen día.</Say>
 </Response>`;
 
     res.type('text/xml').send(twiml);
@@ -352,11 +391,11 @@ router.get('/laura/cola', async (req, res) => {
 });
 
 // =====================================================
-// ELEVENLABS TOOLS - Called by Laura during conversations
+// HERRAMIENTAS DE LAURA - consultas que resuelve durante una conversación
 // =====================================================
 
 // POST /voice/laura/tools/consultar-documentos - Look up documents by cedula
-// This is called by ElevenLabs when Laura needs to check document status
+// La llama el cliente de voz cuando Laura necesita el estado de un documento
 router.post('/laura/tools/consultar-documentos', async (req, res) => {
   try {
     const { numero_cedula } = req.body;
@@ -681,7 +720,7 @@ router.get('/laura/tools/info-sedes', async (req, res) => {
   }
 });
 
-// GET /voice/laura/tools-schema - ElevenLabs tool definitions
+// GET /voice/laura/tools-schema - definición de herramientas en formato OpenAI/JSON-Schema
 router.get('/laura/tools-schema', (req, res) => {
   res.json({
     tools: [

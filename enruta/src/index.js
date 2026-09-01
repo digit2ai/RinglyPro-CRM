@@ -49,7 +49,7 @@ if (auth.protegido()) {
   console.log('🔒 ENRUTA protegido con ENRUTA_PASSWORD');
   if (!auth.claveHerramientas()) {
     console.warn('⚠️  ENRUTA: /voice/* sigue ABIERTO — configure ENRUTA_TOOLS_KEY ' +
-                 'y envíela como cabecera x-enruta-tools-key desde ElevenLabs');
+                 'y envíela como cabecera x-enruta-tools-key desde el cliente que las consume');
   }
 } else {
   console.warn('⚠️  ENRUTA sin autenticación: el tablero y la API son públicos. ' +
@@ -246,50 +246,6 @@ app.get('/', (req, res) => {
       .nav-brand {
         gap: 0 !important;
       }
-      /* Voice widget stays visible but smaller */
-      .voice-widget {
-        margin-left: auto;
-      }
-      .voice-label {
-        font-size: 12px;
-      }
-      .voice-btn {
-        width: 36px;
-        height: 36px;
-      }
-      .voice-btn .inner {
-        width: 28px;
-        height: 28px;
-      }
-      /* Cards on mobile */
-      main.container {
-        padding: 1rem;
-      }
-      .card {
-        padding: 1rem;
-      }
-      .card .text-3xl {
-        font-size: 1.5rem;
-      }
-      /* Footer */
-      footer {
-        padding: 1rem;
-      }
-      footer p {
-        font-size: 0.75rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      nav {
-        padding: 0.75rem !important;
-      }
-      .nav-brand {
-        gap: 0.5rem !important;
-      }
-      .voice-label {
-        display: none;
-      }
       /* Client modal on small screens */
       #cliente-modal > div {
         margin: 0.5rem;
@@ -304,19 +260,6 @@ app.get('/', (req, res) => {
       #modal-content {
         padding: 1rem;
       }
-      /* Mic permission modal */
-      .mic-modal {
-        padding: 1.5rem;
-        margin: 1rem;
-      }
-      .mic-modal-icon {
-        width: 60px;
-        height: 60px;
-      }
-      .mic-modal-icon svg {
-        width: 30px;
-        height: 30px;
-      }
     }
 
     /* Improve grid on tablets */
@@ -326,209 +269,6 @@ app.get('/', (req, res) => {
       }
     }
 
-    /* Voice Agent Widget Styles - Styled like Virginia */
-    .voice-widget {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .voice-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #f97316;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .voice-label::before {
-      content: '';
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #f97316;
-      border-radius: 50%;
-    }
-    .voice-label.speaking::before {
-      animation: pulse 1s infinite;
-    }
-
-    .voice-btn {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-    .voice-btn:hover { transform: scale(1.1); }
-    .voice-btn:active { transform: scale(0.95); }
-    .voice-btn.inactive { background: linear-gradient(135deg, #374151, #1f2937); }
-    .voice-btn.active { background: linear-gradient(135deg, #f97316, #ea580c); }
-    .voice-btn.connecting { background: #6b7280; opacity: 0.7; cursor: wait; }
-
-    .voice-btn .ping {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px solid #fb923c;
-      animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-    }
-    .voice-btn .glow {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      filter: blur(4px);
-      transition: all 0.3s;
-    }
-    .voice-btn.inactive .glow {
-      background: linear-gradient(90deg, #f97316, #fb923c, #f97316);
-      opacity: 0.3;
-    }
-    .voice-btn.active .glow {
-      background: #f97316;
-      opacity: 0.5;
-    }
-    .voice-btn .inner {
-      position: relative;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-    }
-    .voice-btn.inactive .inner { background: linear-gradient(135deg, #4b5563, #1f2937); }
-    .voice-btn.active .inner { background: linear-gradient(135deg, #fb923c, #ea580c); }
-    .voice-btn .inner svg { width: 16px; height: 16px; color: white; }
-    .voice-btn .highlight {
-      position: absolute;
-      top: 4px;
-      left: 6px;
-      width: 8px;
-      height: 6px;
-      border-radius: 50%;
-      background: white;
-      opacity: 0.3;
-      filter: blur(1px);
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    @keyframes ping {
-      75%, 100% { transform: scale(1.5); opacity: 0; }
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* Microphone Permission Modal */
-    .mic-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-    .mic-modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
-    .mic-modal {
-      background: white;
-      border-radius: 1rem;
-      padding: 2rem;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-    }
-    .mic-modal-overlay.show .mic-modal {
-      transform: scale(1);
-    }
-    .mic-modal-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1.5rem;
-      background: linear-gradient(135deg, #3b82f6, #1e3a8a);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: pulse-mic 2s ease-in-out infinite;
-    }
-    .mic-modal-icon svg {
-      width: 40px;
-      height: 40px;
-      color: white;
-    }
-    @keyframes pulse-mic {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-      50% { box-shadow: 0 0 0 20px rgba(59,130,246,0); }
-    }
-    .mic-modal h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 0.5rem;
-    }
-    .mic-modal p {
-      color: #6b7280;
-      margin-bottom: 1.5rem;
-      line-height: 1.5;
-    }
-    .mic-modal-btn {
-      width: 100%;
-      padding: 0.875rem 1.5rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-    }
-    .mic-modal-btn.primary {
-      background: linear-gradient(135deg, #3b82f6, #1e3a8a);
-      color: white;
-      margin-bottom: 0.75rem;
-    }
-    .mic-modal-btn.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-    }
-    .mic-modal-btn.secondary {
-      background: #f3f4f6;
-      color: #4b5563;
-    }
-    .mic-modal-btn.secondary:hover {
-      background: #e5e7eb;
-    }
-    .mic-modal-hint {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      background: #fef3c7;
-      border-radius: 0.5rem;
-      font-size: 0.75rem;
-      color: #92400e;
-      display: none;
-    }
-    .mic-modal-hint.show {
-      display: block;
-    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -578,28 +318,6 @@ app.get('/', (req, res) => {
           <a href="https://cdav.gov.co" target="_blank" class="hover:text-blue-200">CDAV</a>
         </div>
 
-        <!-- Voice Agent Widget - Laura (always visible) -->
-        <div class="voice-widget">
-          <span id="voice-label" class="voice-label">Laura</span>
-          <button id="voice-btn" class="voice-btn inactive" onclick="toggleVoiceAgent()" title="Hablar con Laura">
-            <div class="glow"></div>
-            <div class="inner">
-              <svg id="voice-icon-mic" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-              <svg id="voice-icon-x" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <svg id="voice-icon-spinner" fill="none" viewBox="0 0 24 24" style="display:none; animation: spin 1s linear infinite;">
-                <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-            <div class="highlight"></div>
-            <div id="voice-ping" class="ping" style="display:none;"></div>
-          </button>
-        </div>
-
         <!-- Hamburger Menu Button (mobile only) -->
         <button class="mobile-menu-btn" onclick="openMobileMenu()">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -609,31 +327,6 @@ app.get('/', (req, res) => {
       </div>
     </div>
   </nav>
-
-  <!-- Microphone Permission Modal -->
-  <div id="mic-modal-overlay" class="mic-modal-overlay">
-    <div class="mic-modal">
-      <div class="mic-modal-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-        </svg>
-      </div>
-      <h3>Hablar con Laura</h3>
-      <p>Laura es nuestra asistente virtual. Necesita acceso a tu micrófono para escucharte.</p>
-      <button class="mic-modal-btn primary" onclick="confirmMicPermission()">
-        Permitir Micrófono
-      </button>
-      <button class="mic-modal-btn secondary" onclick="closeMicModal()">
-        Cancelar
-      </button>
-      <div id="mic-modal-hint" class="mic-modal-hint">
-        <strong>Permiso denegado.</strong> Para habilitar el micrófono:<br>
-        1. Haz clic en el icono del candado 🔒 en la barra de direcciones<br>
-        2. Busca "Micrófono" y selecciona "Permitir"<br>
-        3. Recarga la página
-      </div>
-    </div>
-  </div>
 
   <!-- Modal for client details -->
   <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
@@ -944,223 +637,59 @@ app.get('/', (req, res) => {
       buscarCliente();
     }
 
-    // =====================================================
-    // Voice Agent - Laura (ElevenLabs Conversational AI)
-    // =====================================================
-    const LAURA_AGENT_ID = 'agent_7901kh24ng7zfsg9v14jwd58bn5x';
-    let voiceConversation = null;
-    let voiceStatus = 'disconnected'; // disconnected, connecting, connected
-
-    // Update UI based on voice status
-    function updateVoiceUI(status, message) {
-      voiceStatus = status;
-      const btn = document.getElementById('voice-btn');
-      const label = document.getElementById('voice-label');
-      const iconMic = document.getElementById('voice-icon-mic');
-      const iconX = document.getElementById('voice-icon-x');
-      const iconSpinner = document.getElementById('voice-icon-spinner');
-      const ping = document.getElementById('voice-ping');
-
-      // Reset all icons
-      iconMic.style.display = 'none';
-      iconX.style.display = 'none';
-      iconSpinner.style.display = 'none';
-      ping.style.display = 'none';
-
-      // Reset button classes
-      btn.classList.remove('inactive', 'active', 'connecting');
-      label.classList.remove('speaking');
-
-      switch (status) {
-        case 'disconnected':
-          btn.classList.add('inactive');
-          iconMic.style.display = 'block';
-          label.textContent = 'Laura';
-          btn.title = 'Hablar con Laura';
-          break;
-        case 'connecting':
-          btn.classList.add('connecting');
-          iconSpinner.style.display = 'block';
-          label.textContent = 'Conectando...';
-          btn.title = 'Conectando...';
-          break;
-        case 'connected':
-          btn.classList.add('active');
-          iconX.style.display = 'block';
-          ping.style.display = 'block';
-          if (message === 'Laura habla...') {
-            label.textContent = 'Laura habla...';
-            label.classList.add('speaking');
-          } else {
-            label.textContent = 'Laura';
-          }
-          btn.title = 'Terminar llamada';
-          break;
-        case 'error':
-          btn.classList.add('inactive');
-          iconMic.style.display = 'block';
-          label.textContent = message || 'Error';
-          btn.title = 'Error - Click para reintentar';
-          setTimeout(() => {
-            label.textContent = 'Laura';
-          }, 3000);
-          break;
-      }
-    }
-
-    // Show microphone permission modal
-    function showMicModal() {
-      document.getElementById('mic-modal-overlay').classList.add('show');
-      document.getElementById('mic-modal-hint').classList.remove('show');
-    }
-
-    // Close microphone permission modal
-    function closeMicModal() {
-      document.getElementById('mic-modal-overlay').classList.remove('show');
-    }
-
-    // User confirmed microphone permission
-    async function confirmMicPermission() {
-      try {
-        // Request microphone permission
-        console.log('Requesting microphone...');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('Microphone granted');
-
-        // Close modal and start session
-        closeMicModal();
-        await actuallyStartVoiceSession();
-
-      } catch (err) {
-        console.error('Microphone permission denied:', err);
-        // Show hint about how to enable
-        document.getElementById('mic-modal-hint').classList.add('show');
-      }
-    }
-
-    // Toggle voice agent on/off
-    async function toggleVoiceAgent() {
-      if (voiceStatus === 'connecting') return;
-
-      if (voiceStatus === 'connected') {
-        await endVoiceSession();
-      } else {
-        // Show permission modal first
-        showMicModal();
-      }
-    }
-
-    // Actually start voice conversation with Laura (after permission granted)
-    async function actuallyStartVoiceSession() {
-      try {
-        updateVoiceUI('connecting');
-
-        // Load ElevenLabs client dynamically if not already loaded
-        if (!window.ElevenLabsClient) {
-          console.log('Loading ElevenLabs SDK...');
-          await loadElevenLabsSDK();
-        }
-
-        // Create conversation
-        console.log('Starting conversation with Laura:', LAURA_AGENT_ID);
-        voiceConversation = await window.ElevenLabsClient.Conversation.startSession({
-          agentId: LAURA_AGENT_ID,
-          onConnect: () => {
-            console.log('ElevenLabs: Connected');
-            updateVoiceUI('connected', 'Escuchando...');
-          },
-          onDisconnect: () => {
-            console.log('ElevenLabs: Disconnected');
-            updateVoiceUI('disconnected');
-            voiceConversation = null;
-          },
-          onError: (error) => {
-            console.error('ElevenLabs error:', error);
-            updateVoiceUI('error', 'Error de conexión');
-            voiceConversation = null;
-          },
-          onModeChange: (mode) => {
-            console.log('Mode:', mode);
-            if (mode.mode === 'speaking') {
-              updateVoiceUI('connected', 'Laura habla...');
-            } else {
-              updateVoiceUI('connected', 'Escuchando...');
-            }
-          }
-        });
-
-        console.log('Session started:', voiceConversation);
-
-      } catch (err) {
-        console.error('Failed to start voice session:', err);
-        updateVoiceUI('error', err.message || 'No se pudo conectar');
-      }
-    }
-
-    // End voice conversation
-    async function endVoiceSession() {
-      try {
-        console.log('Ending voice session...');
-        if (voiceConversation) {
-          await voiceConversation.endSession();
-          voiceConversation = null;
-        }
-        updateVoiceUI('disconnected');
-      } catch (err) {
-        console.error('Error ending session:', err);
-        updateVoiceUI('disconnected');
-      }
-    }
-
-    // Load ElevenLabs SDK from CDN (requires livekit-client)
-    function loadElevenLabsSDK() {
-      return new Promise((resolve, reject) => {
-        if (window.ElevenLabsClient) {
-          resolve();
-          return;
-        }
-
-        // First load livekit-client dependency
-        const livekitScript = document.createElement('script');
-        livekitScript.src = 'https://cdn.jsdelivr.net/npm/livekit-client@2.9.0/dist/livekit-client.umd.min.js';
-        livekitScript.onload = () => {
-          console.log('LiveKit SDK loaded');
-
-          // Then load ElevenLabs client
-          const elevenLabsScript = document.createElement('script');
-          elevenLabsScript.src = 'https://cdn.jsdelivr.net/npm/@11labs/client@0.2.0/dist/lib.umd.min.js';
-          elevenLabsScript.onload = () => {
-            console.log('ElevenLabs SDK loaded');
-            // The UMD exports to window.client
-            window.ElevenLabsClient = window.client;
-            resolve();
-          };
-          elevenLabsScript.onerror = () => {
-            reject(new Error('Failed to load ElevenLabs SDK'));
-          };
-          document.head.appendChild(elevenLabsScript);
-        };
-        livekitScript.onerror = () => {
-          reject(new Error('Failed to load LiveKit SDK'));
-        };
-        document.head.appendChild(livekitScript);
-      });
-    }
-
-    // Close mic modal on background click
-    document.getElementById('mic-modal-overlay').addEventListener('click', (e) => {
-      if (e.target.id === 'mic-modal-overlay') closeMicModal();
-    });
-
-    // Also close mic modal on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        closeMicModal();
         cerrarModal();
         closeMobileMenu();
       }
     });
+
+    // =====================================================
+    // Laura - orbe de voz propio (sin ElevenLabs)
+    //
+    //   Oído -> Web Speech API, en el navegador
+    //   Cerebro -> POST /api/voice-agent/chat (Claude Haiku)
+    //   Voz -> POST /api/tts/edge, voz Dalia (es-MX-DaliaNeural)
+    //
+    // El orbe solo puede hablar de lo que se le entrega: por eso se le empuja
+    // la base de conocimiento de trámites más la foto en vivo del tablero. Sin
+    // eso solo leería las tarjetas de la página y no sabría una tarifa.
+    // =====================================================
+    const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+    async function cargarContextoLaura() {
+      try {
+        const r = await fetch('/enruta/voice/laura/contexto?tenant_id=' + TENANT_ID);
+        const d = await r.json();
+        if (d && d.success && d.contexto && window.D2AIVoiceOrb) {
+          window.D2AIVoiceOrb.setContext(d.contexto);
+        }
+      } catch (err) {
+        // Sin contexto el orbe cae a leer la página: degrada, no se rompe.
+        console.warn('No se pudo cargar el contexto de Laura:', err.message);
+      }
+    }
+
+    // El script del orbe es defer: existe después de parsear, no ahora.
+    (function esperarOrbe(intentos) {
+      if (window.D2AIVoiceOrb) return cargarContextoLaura();
+      if (intentos <= 0) return console.warn('El orbe de voz no cargó');
+      setTimeout(() => esperarOrbe(intentos - 1), 200);
+    })(25);
+
+    // Las cifras del tablero envejecen; el contexto se refresca con ellas.
+    setInterval(cargarContextoLaura, 300000);
   </script>
+
+  <!-- Laura: orbe de voz propio. Reemplaza al widget de ElevenLabs convai;
+       ni SDK de terceros, ni LiveKit, ni llave en el navegador. -->
+  <div data-voice-orb
+       data-agent="enruta"
+       data-lang="es"
+       data-voice="dalia"
+       data-accent="#3b82f6"
+       data-label="Hablar con Laura"></div>
+  <script src="/embed/voice-orb.js" defer></script>
 </body>
 </html>
   `);

@@ -9,10 +9,11 @@
  * variable en Render: no hay que tocar código y no cambia nada hasta entonces,
  * para no tumbar una demostración en curso.
  *
- * Las rutas /voice/* las llama ElevenLabs de servidor a servidor y no pueden
- * llevar cookie: se autentican con `ENRUTA_TOOLS_KEY`. Si la puerta está
- * encendida pero esa clave no está configurada, /voice/* queda abierta y el
- * arranque lo dice en voz alta — antes que cortar una llamada en vivo.
+ * Las rutas /voice/* son endpoints máquina (las herramientas de consulta que
+ * usa Laura) y no siempre pueden llevar cookie: se autentican con
+ * `ENRUTA_TOOLS_KEY`. Si la puerta está encendida pero esa clave no está
+ * configurada, /voice/* queda abierta y el arranque lo dice en voz alta —
+ * antes que cortar una consulta en vivo.
  */
 const crypto = require('crypto');
 

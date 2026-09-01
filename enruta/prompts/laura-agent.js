@@ -1,7 +1,7 @@
 /**
  * Laura de enRuta - AI Voice Agent Prompt
  * Colombian Spanish voice agent for vehicle document renewal reminders
- * Designed for ElevenLabs Conversational AI integration
+ * Los HECHOS los consume el orbe de voz propio (LAURA_CONOCIMIENTO, abajo).
  */
 
 const LAURA_SYSTEM_PROMPT = `
@@ -278,8 +278,32 @@ function getMessageTemplate(resultado, data) {
   return templates[resultado] || templates['recordatorio_informado'];
 }
 
+/**
+ * Solo los HECHOS: categorías, requisitos, tarifas, vigencias, multas, sedes,
+ * canales y las restricciones de conducta. Sin la personalidad ni los guiones
+ * de llamada, que viven en el paquete de persona (src/config/voice-agents.js).
+ *
+ * Se RECORTA del mismo prompt de arriba en vez de copiarse, para que una
+ * tarifa corregida en un sitio no siga vieja en el otro. Es lo que el orbe de
+ * voz de la web empuja como contexto: la marca del orbe es que el agente solo
+ * puede hablar de lo que se le entrega, así que la base de conocimiento tiene
+ * que viajar con él.
+ */
+function recorte(desde, hasta) {
+  const a = LAURA_SYSTEM_PROMPT.indexOf(desde);
+  if (a < 0) return '';
+  const b = hasta ? LAURA_SYSTEM_PROMPT.indexOf(hasta, a) : -1;
+  return LAURA_SYSTEM_PROMPT.slice(a, b > a ? b : undefined).trim();
+}
+
+const LAURA_CONOCIMIENTO = [
+  recorte('### Base de Conocimiento', '### Flujo de Llamadas Salientes'),
+  recorte('### Restricciones', '### Datos a Recopilar')
+].filter(Boolean).join('\n\n');
+
 module.exports = {
   LAURA_SYSTEM_PROMPT,
+  LAURA_CONOCIMIENTO,
   generateLauraContext,
   getMessageTemplate
 };
