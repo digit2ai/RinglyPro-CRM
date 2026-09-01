@@ -174,17 +174,30 @@
     // §9.2: la lectura principal NO repite el texto de la tarjeta; nombra el frente prioritario.
     var apertura = (nombre ? esc(nombre) + ', ' : '') + 'tu mayor palanca ahora es ' + esc(PILAR_LOWER[prio]) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.';
 
+    injectPexStyle();
+    // Referencia general por pilar (§10.1) — en forma relativa, nunca un monto en pesos.
+    var REFERENCIA = {
+      ahorro: 'Entre 3 y 6 meses de gastos cubiertos', flujo: 'Margen igual o superior al 20 % del ingreso',
+      deuda: 'Pagos por debajo del 30 % del ingreso mensual', retiro: 'Tiempo cotizado consistente con tu rango de edad',
+      seguros: 'Cobertura de vida, salud y patrimonial vigente', inversion: 'Recursos invertidos superiores a seis meses de ingreso, en más de un instrumento',
+      impuestos: 'Declaración al día y soportes organizados', patrimonio: 'Activos registrados y beneficiarios definidos'
+    };
+    // §10: tarjetas COLAPSADAS por defecto (nombre + subpuntaje + barra); se expanden con
+    // un toque para ver la referencia general y el hallazgo de Maya.
     var pilaresHtml = PILAR_ORDER.map(function (k) {
       var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
       var col = v >= 70 ? 'var(--green)' : v >= 45 ? '#e0954f' : 'var(--red)';
-      return '<div class="dg-pex">' +
-        '<div class="dg-pex-top">' +
-          '<span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + '</span>' +
-          '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span>' +
+      return '<details class="dg-pex">' +
+        '<summary>' +
+          '<div class="dg-pex-top"><span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + '</span>' +
+          '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span></div>' +
+          '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + Math.max(v, 3) + '%;background:' + col + '"></div></div>' +
+        '</summary>' +
+        '<div class="dg-pex-body">' +
+          '<div class="dg-pex-ref">Meta de referencia: ' + esc(REFERENCIA[k] || '') + '</div>' +
+          '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(hallazgo(k, v)) + '</span></div>' +
         '</div>' +
-        '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + Math.max(v, 3) + '%;background:' + col + '"></div></div>' +
-        '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(hallazgo(k, v)) + '</span></div>' +
-      '</div>';
+      '</details>';
     }).join('');
 
     return '<div class="dg-card dg-result">' +
@@ -197,12 +210,26 @@
       '<div class="dg-insight"><p class="dg-ins-p">' + apertura + '</p></div>' +
       '<div class="dg-res-sub">HALLAZGOS DE MAYA · IA — detalle por área (8 pilares)</div>' +
       '<div class="dg-pex-list">' + pilaresHtml + '</div>' +
-      '<a class="dg-cta" href="/planea/portal/ingreso?guided=1" id="dg-next-step">Próximo paso</a>' +
-      '<a class="dg-panel" href="/planea/portal/inicio" id="dg-done">Ir al panel</a>' +
+      // §3.3: un solo CTA. Se retiran «Próximo paso» (flujo guiado) y «Volver a responder»
+      // (las respuestas se afinan registrando datos reales en cada sección, no rehaciendo
+      // el cuestionario). El botón lleva al panel.
+      '<a class="dg-panel" href="/planea/portal/inicio" id="dg-done">Ir a mi panel →</a>' +
       '<p class="dg-advertencia">' + esc(ADVERTENCIA) + '</p>' +
-      '<div class="dg-res-links"><a href="#" id="dg-maya-btn">Hablar con Maya</a> · <a href="#" id="dg-retake">Volver a responder</a></div>' +
       '<div class="dg-saved" id="dg-saved"></div>' +
       '</div>';
+  }
+
+  function injectPexStyle() {
+    if (document.getElementById('dg-pex-style')) return;
+    var s = document.createElement('style'); s.id = 'dg-pex-style';
+    s.textContent = 'details.dg-pex{position:relative}' +
+      'details.dg-pex summary{list-style:none;cursor:pointer;display:block}' +
+      'details.dg-pex summary::-webkit-details-marker{display:none}' +
+      'details.dg-pex summary::after{content:"⌄";position:absolute;right:15px;top:13px;color:var(--mut)}' +
+      'details.dg-pex[open] summary::after{content:"⌃"}' +
+      '.dg-pex-body{margin-top:11px}' +
+      '.dg-pex-ref{font-size:12.5px;color:var(--mut);line-height:1.5;margin-bottom:9px}';
+    document.head.appendChild(s);
   }
 
   function renderProgress(cur) {
