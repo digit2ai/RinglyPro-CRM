@@ -165,6 +165,69 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// DOMINIO PROPIO: hispanotec.digit2ai.com sirve el recorrido narrado de la
+// cámara Hispanotec (cv-105) en su RAÍZ.
+//
+// digit2ai.com/hispanotec/... NO se puede crear desde este repo. El ápice es
+// un sitio de GoHighLevel (sites.ludicrous.cloud detrás de Cloudflare) y la
+// petición nunca llega hasta aquí; esa ruta se hace en GHL, con una
+// redirección o un marco. Un subdominio apuntado a Render sí es nuestro, y es
+// la mejor de las opciones: origen propio, sin permisos prestados por un marco
+// ajeno y sin cookies de terceros.
+//
+// Registrado AQUÍ, junto a los demás dominios propios, porque Express empareja
+// en orden de registro: el CRM define cientos de rutas más abajo y un manejador
+// tardío queda tapado justo en las rutas que el CRM sí define.
+//
+// El recorrido pide todo con rutas absolutas (/hispanotec/..., el logo en
+// /hispatec/ y la voz en /api/tts/), así que lo único que hay que mapear es la
+// raíz. La voz TIENE que pasar sin tocar: la narración la sintetiza la app
+// principal en /api/tts/edge, y reescribirle el prefijo dejaría muda a Elvira.
+//
+// UNA RUTA AJENA TERMINA EN UN 404 DE HISPANOTEC, NO EN EL CRM. Dejar caer el
+// resto serviría el CRM entero en el dominio de la marca: es la lección de
+// jobmd.io/admin, que devolvía el login de un producto ajeno.
+//
+// No hace nada hasta que exista el CNAME hacia Render. Mientras tanto el
+// recorrido vive en aiagent.ringlypro.com/hispanotec/ecosystem/.
+// ═════════════════════════════════════════════════════════════════════════
+const HISPANOTEC_HOSTS = new Set(['hispanotec.digit2ai.com', 'www.hispanotec.digit2ai.com']);
+// Servido por la app principal: los archivos del recorrido, el logo de la
+// cámara y la voz que lo narra.
+const HISPANOTEC_PASA_DERECHO = ['/hispanotec/', '/hispatec/', '/embed/', '/api/voice-agent/', '/api/tts/'];
+
+function hispanotec404(res) {
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>Hispanotec - página no encontrada</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;' +
+    'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;' +
+    'background:radial-gradient(900px 600px at 50% 30%,#0e5387 0%,#07345B 45%,#04182b 100%)}' +
+    'h1{font-size:3rem;margin:0}p{opacity:.9;margin:.5rem 0 1.5rem}' +
+    'a{display:inline-block;padding:.7rem 1.4rem;border-radius:.5rem;background:#509BCD;' +
+    'color:#04182b;text-decoration:none;font-weight:700}</style></head><body><div>' +
+    '<h1>404</h1><p>Esta página no existe en Hispanotec.</p>' +
+    '<a href="/">Ver el recorrido</a></div></body></html>');
+}
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!HISPANOTEC_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://hispanotec.digit2ai.com' + req.originalUrl);
+
+  const corte = req.url.indexOf('?');
+  const ruta = corte === -1 ? req.url : req.url.slice(0, corte);
+  const cola = corte === -1 ? '' : req.url.slice(corte);
+
+  if (ruta === '/' || ruta === '') { req.url = '/hispanotec/ecosystem/' + cola; return next(); }
+  if (ruta === '/ecosystem' || ruta === '/ecosystem/') { req.url = '/hispanotec/ecosystem/' + cola; return next(); }
+  if (HISPANOTEC_PASA_DERECHO.some((pre) => ruta.startsWith(pre))) return next();
+  if (ruta === '/favicon.ico' || ruta === '/apple-touch-icon.png') return next();
+
+  return hispanotec404(res);
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // CUSTOM DOMAIN: lawncopilot.com serves the Lawn Co-Pilot app at its ROOT
 //
 // Registered HERE, before any other route, because Express matches in
