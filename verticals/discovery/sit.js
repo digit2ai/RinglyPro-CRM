@@ -543,6 +543,35 @@ async function main() {
     ok('the extension is downloadable', ext.status === 200 && ext.json.manifest_version === 3);
   }
   {
+    const g = await req('GET', '/discovery/guide');
+    ok('the walkthrough serves publicly', g.status === 200 && /<!doctype html>/i.test(g.text));
+    ok('the walkthrough is linked from the landing page',
+      (await req('GET', '/discovery/')).text.includes('/discovery/guide'));
+
+    const js = require('fs').readFileSync(require('path').join(__dirname, 'public', 'guide.js'), 'utf8');
+    // Layer 1 and 2 already exist in this repo; a vertical that stands up its
+    // own synthesis is the duplication the voice runbook exists to prevent.
+    ok('the guide reuses the shared TTS route', js.includes("'/api/tts/edge'"));
+    ok('the guide ships no second TTS backend',
+      !/elevenlabs|readaloud|speech\.platform\.bing|edge-tts/i.test(js));
+    ok('the guide falls back to browser speech', /SpeechSynthesisUtterance/.test(js));
+
+    // Numbers read aloud. Edge says "10.61" and "$147,393" badly, and this is
+    // copy being spoken to a business owner — the script spells them, while the
+    // page keeps the digits.
+    const SCRIPT_BLOCK = js.slice(js.indexOf('const SCRIPT'), js.indexOf('/* ═', js.indexOf('const SCRIPT')));
+    const bareNumerals = (SCRIPT_BLOCK.match(/[\$]?\d[\d,.]*/g) || [])
+      .filter(t => !/^\d$/.test(t));   // a lone digit in prose is read fine
+    ok('the spoken script spells its numbers out', bareNumerals.length === 0,
+      'found: ' + bareNumerals.slice(0, 6).join(', '));
+
+    ok('the walkthrough is bilingual', /\ben:\s*\[/.test(js) && /\bes:\s*\[/.test(js));
+    const en = (js.match(/en: \[([\s\S]*?)\n  \],/) || [])[1] || '';
+    const es = (js.match(/es: \[([\s\S]*?)\n  \]\n/) || [])[1] || '';
+    ok('both languages carry the same number of segments',
+      (en.match(/^\s*"/gm) || []).length === (es.match(/^\s*"/gm) || []).length);
+  }
+  {
     // The extension must not read content, and this is greppable.
     const fs = require('fs');
     const content = fs.readFileSync(require('path').join(__dirname, 'extension', 'content.js'), 'utf8');

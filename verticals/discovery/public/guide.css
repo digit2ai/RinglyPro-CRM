@@ -1,0 +1,134 @@
+/* AI Discovery — the narrated walkthrough. Inherits every token from
+   discovery.css; nothing here redefines a colour, only arranges them. */
+
+/* ── Ava ──────────────────────────────────────────────────────────────── */
+.ava{margin:30px 0 6px;background:linear-gradient(180deg,var(--card),var(--bg2));
+  border:1px solid var(--line);border-radius:var(--r-lg,22px);padding:24px;
+  display:flex;gap:22px;align-items:center;box-shadow:var(--shadow)}
+.ava-orb{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#9db4ff,#4263eb 46%,#1a1f52 100%);
+  box-shadow:0 0 0 0 rgba(66,99,235,.5)}
+.ava-orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;
+  border:2px solid rgba(66,99,235,.35)}
+.ava-orb.speaking{animation:avapulse 1.25s ease-in-out infinite}
+@keyframes avapulse{0%{box-shadow:0 0 0 0 rgba(66,99,235,.45)}
+  70%{box-shadow:0 0 0 22px rgba(66,99,235,0)}100%{box-shadow:0 0 0 0 rgba(66,99,235,0)}}
+.ava-meta{flex:1;min-width:0}
+.ava-name{font-weight:700;font-size:17px}
+.ava-role{color:var(--mut);font-size:13.5px;margin-bottom:14px}
+.ava-status{font-size:13px;color:var(--mut);margin-top:12px;min-height:18px}
+.ava-pick{margin-top:10px;font-size:12.5px;color:var(--mut);display:flex;
+  gap:8px;align-items:center;flex-wrap:wrap}
+.ava-pick select{width:auto;padding:5px 8px;font-size:12.5px}
+.ava-pick .sep{opacity:.4}
+@media(max-width:620px){.ava{flex-direction:column;text-align:center}
+  .ava-pick,.controls{justify-content:center}}
+
+/* the section being read lifts out of the page */
+.sec{transition:background .4s,box-shadow .4s;border-radius:var(--r-lg,22px);
+  padding-left:20px;padding-right:20px;margin-left:-20px;margin-right:-20px}
+.sec.active{background:var(--grad-soft);box-shadow:0 0 0 1px var(--line2)}
+.sec-head{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+.sec-head h1,.sec-head h2{margin:0}
+.listen{flex:0 0 auto}
+
+/* ── the three-up ─────────────────────────────────────────────────────── */
+.threeup{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:22px}
+.threeup>div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;display:flex;flex-direction:column;gap:3px}
+.threeup .big{font-size:26px;font-weight:700;background:var(--grad);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.threeup b{font-size:15.5px;margin-top:6px}
+.threeup span:last-child{color:var(--mut);font-size:13.5px}
+
+/* ── asking vs watching ───────────────────────────────────────────────── */
+.vs{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:20px}
+.vs-side{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.vs-side.bad{border-color:rgba(240,100,90,.28)}
+.vs-side.good{border-color:rgba(58,208,127,.28)}
+.vs .quote{font-size:17px;line-height:1.45;margin:12px 0 14px;font-style:italic;color:var(--ink)}
+.vs ul{margin:0;padding-left:19px;color:var(--mut);font-size:13.5px}
+.vs li{margin-bottom:6px}
+
+/* ── the redaction demo ───────────────────────────────────────────────── */
+.demo{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:20px}
+.demo-col{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.demo-hd{padding:11px 16px;border-bottom:1px solid var(--line);font-size:12px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);
+  display:flex;align-items:center;gap:8px}
+.demo-hd .dot{width:8px;height:8px;border-radius:50%}
+.demo-hd .dot.red{background:var(--bad)}.demo-hd .dot.green{background:var(--good)}
+.demo-body{padding:8px 0;min-height:340px;font-size:13px}
+.demo-row{padding:9px 16px;border-bottom:1px solid var(--line);animation:fadein .35s ease}
+.demo-row:last-child{border-bottom:0}
+@keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.demo-row .act{font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.demo-row .txt{margin-top:2px;font-family:var(--mono);font-size:12px;word-break:break-all}
+.strike{text-decoration:line-through;color:var(--bad);opacity:.75}
+.kept{color:#9fd3ff}
+.gone{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+  background:var(--bad-soft);color:#ffb0aa;border-radius:5px;padding:1px 6px;margin-left:6px;
+  text-transform:uppercase;vertical-align:1px}
+
+/* ── the simulator ────────────────────────────────────────────────────── */
+.simsteps{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0 14px}
+.simsteps button{background:var(--card);border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:6px 13px;font:600 12.5px/1 var(--sans);cursor:pointer}
+.simsteps button.on{background:var(--pill);color:var(--pill-ink);border-color:transparent}
+.simsteps button.done{color:var(--ink);border-color:var(--line2)}
+.sim{background:#07070b;border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow)}
+.sim-chrome{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#12121a;
+  border-bottom:1px solid var(--line)}
+.sim-chrome .tl{width:10px;height:10px;border-radius:50%;background:#3a3a46}
+.sim-url{flex:1;margin-left:10px;background:#07070b;border-radius:7px;padding:5px 12px;
+  font-family:var(--mono);font-size:11.5px;color:var(--mut);overflow:hidden;white-space:nowrap}
+.sim-screen{padding:26px;min-height:420px}
+.sim-screen h3{font-size:19px;margin:0 0 4px}
+.sim-screen .sub{color:var(--mut);font-size:13.5px;margin-bottom:18px}
+.mockrow{display:flex;gap:14px;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:9px}
+.mockrow .nm{font-weight:600;font-size:14.5px}
+.mockrow .meta{color:var(--mut);font-size:12.5px;margin-top:3px}
+.mockrow .acts{display:flex;gap:7px;flex:0 0 auto}
+.fakebtn{border-radius:8px;padding:6px 11px;font-size:12px;font-weight:600;border:1px solid var(--line2);color:var(--mut)}
+.fakebtn.p{background:var(--pill);color:var(--pill-ink);border-color:transparent}
+.fakefield{background:var(--bg2);border:1px solid var(--line2);border-radius:8px;
+  padding:7px 10px;font-family:var(--mono);font-size:12.5px;color:var(--ink);display:inline-block;min-width:90px}
+.fakefield.empty{color:var(--bad);border-color:rgba(240,100,90,.4)}
+.banner-demo{background:#0b1220;border:1px solid #2b3a55;border-radius:8px;padding:8px 14px;
+  font-size:11.5px;font-weight:600;color:#e8edf7;text-align:center;margin-bottom:16px}
+.qrow{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.qrow:last-child{border-bottom:0}
+.qrow .a{color:var(--ink);font-weight:600;flex:0 0 auto}
+
+/* ── the calculator ───────────────────────────────────────────────────── */
+.calc{margin-top:20px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden}
+.cstep{padding:18px 20px;border-bottom:1px solid var(--line);animation:fadein .4s ease}
+.cstep:last-child{border-bottom:0}
+.cstep .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.cstep h4{margin:5px 0 8px;font-size:16px}
+.cstep .sum{font-family:var(--mono);font-size:13px;color:var(--mut);white-space:pre-wrap;
+  background:#07070b;border-radius:9px;padding:12px 14px;margin:9px 0;overflow-x:auto}
+.cstep .out{font-size:20px;font-weight:700;color:var(--good);font-family:var(--mono)}
+.cstep .why{color:var(--mut);font-size:13.5px;margin-top:8px}
+.cstep.hl{background:var(--grad-soft)}
+
+/* ── the user guide ───────────────────────────────────────────────────── */
+.guide{margin-top:20px;display:grid;gap:12px}
+.gstep{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:18px 20px}
+.gstep .n{flex:0 0 34px;height:34px;border-radius:50%;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#07070b}
+.gstep h3{margin:4px 0 5px;font-size:16px}
+.gstep p{margin:0;color:var(--mut);font-size:13.5px}
+.gstep .tip{margin-top:8px;font-size:12.5px;color:var(--faint);border-left:2px solid var(--line2);padding-left:10px}
+
+@media(max-width:640px){
+  .sim-screen{padding:16px;min-height:0}
+  .mockrow{flex-direction:column;align-items:flex-start}
+  .demo-body{min-height:0}
+  .sec{padding-left:14px;padding-right:14px;margin-left:-14px;margin-right:-14px}
+}
+@media(prefers-reduced-motion:reduce){.ava-orb.speaking{animation:none}.demo-row,.cstep{animation:none}}
