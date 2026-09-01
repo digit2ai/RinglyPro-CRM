@@ -36,7 +36,20 @@ const DEFAULT_VOICE = 'es-MX-DaliaNeural'; // warm Latin-American female — Pro
 const EXPL_VOICE_EN = 'en-US-AvaNeural';  // explanation voice when interface_lang = en
 const EXPL_VOICE_FIL = 'fil-PH-BlessicaNeural'; // explanation voice when interface_lang = fil
 const DEFAULT_RATE = '-4%'; // slightly slowed for learners
-const SYNTH_TIMEOUT_MS = 15000;
+// A COLD EDGE SOCKET COSTS 8-11 SECONDS BEFORE A BYTE OF AUDIO ARRIVES, and
+// that cost is highly variable — the same 566-character utterance measured
+// 10.8s on a cold connection and 1.1s warm. At the old 15s budget, any
+// narration segment past roughly 700 characters lost the race on a cold start
+// and 502'd, which on a narrated page reads as "the voice stops and a robot
+// finishes the presentation". The synthesis itself was never the problem.
+// 45s leaves room for a cold connect plus a long utterance and still sits well
+// inside Cloudflare's ~100s ceiling.
+const SYNTH_TIMEOUT_MS = Number(process.env.EDGE_TTS_TIMEOUT_MS || 45000);
+
+// Above this, text is spoken as sentence chunks and the MP3s concatenated.
+// Edge returns a fixed bitrate, so naive Buffer concatenation plays back
+// cleanly — synthesizeMarked has relied on that for the ES/EN mix all along.
+const CHUNK_CHARS = Number(process.env.EDGE_TTS_CHUNK_CHARS || 600);
 
 // Marker Profesora Isabel uses to wrap Spanish target words for the voice layer.
 const ES_MARKER = '⟦es⟧'; // ⟦es⟧
@@ -179,4 +192,56 @@ async function synthesizeMarked(text, opts = {}) {
   return Buffer.concat(buffers);
 }
 
-module.exports = { synthesize, synthesizeMarked, DEFAULT_VOICE, ES_MARKER };
+/**
+ * Split text on sentence boundaries into chunks no larger than `max`.
+ * Sentences are never broken mid-way — a chunk boundary inside a clause is
+ * audible as a swallowed word, which is worse than a slightly long chunk.
+ */
+function chunkText(text, max = CHUNK_CHARS) {
+  const raw = String(text || '').trim();
+  if (raw.length <= max) return raw ? [raw] : [];
+
+  const sentences = raw.match(/[^.!?\n]+[.!?]*\s*/g) || [raw];
+  const out = [];
+  let cur = '';
+  for (const s of sentences) {
+    if (cur && (cur + s).length > max) { out.push(cur.trim()); cur = s; }
+    else cur += s;
+    // A single sentence longer than the budget is spoken whole rather than
+    // cut — the timeout covers it, and a clipped sentence is a defect a
+    // listener notices immediately.
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+/**
+ * Synthesize text of any length as ONE MP3 buffer.
+ *
+ * Long narration is chunked so that no single socket has to carry both a cold
+ * connect and a long utterance, and each chunk gets one retry — a cold-start
+ * failure is transient by nature and almost always succeeds immediately after,
+ * since the second attempt reuses a warm path.
+ *
+ * A chunk that fails BOTH attempts throws rather than being skipped. Silently
+ * dropping a sentence from a narration produces audio that sounds fine and is
+ * missing a fact, which is far worse than an error the caller can fall back on.
+ */
+async function synthesizeLong(text, opts = {}) {
+  const chunks = chunkText(text, opts.maxChars || CHUNK_CHARS);
+  if (chunks.length <= 1) return synthesize(text, opts);
+
+  const buffers = [];
+  for (const chunk of chunks) {
+    let buf = null, lastErr = null;
+    for (let attempt = 0; attempt < 2 && !buf; attempt++) {
+      try { buf = await synthesize(chunk, opts); }
+      catch (e) { lastErr = e; }
+    }
+    if (!buf) throw lastErr || new Error('Edge TTS failed on a chunk');
+    buffers.push(buf);
+  }
+  return Buffer.concat(buffers);
+}
+
+module.exports = { synthesize, synthesizeLong, synthesizeMarked, chunkText, DEFAULT_VOICE, ES_MARKER, CHUNK_CHARS };

@@ -29,7 +29,7 @@ const SCRIPT = {
 
     "Here's the whole product, six screens. First, you install the recorder and paste in your key. Second, you work normally, and a bar sits at the top of every page the entire time, because a recorder nobody can see is spyware, no matter what it collects. Third, it groups what it saw into suggested jobs — this one happened eighteen times, took ten and a half hours a week, and crossed four programs. Fourth, a human confirms each one and types an hourly rate, because a browser can time your work but it cannot know what anyone is paid. Fifth, six questions only you can answer. And sixth, your roadmap.",
 
-    "Let's do the money, because this is where most reports get vague and this one doesn't. Six steps, all of them arithmetic you can check on paper. Step one: measure the time. Eighteen hundred and eighteen minutes were observed, divided by two people, divided by the ten days we watched, gives ten point six hours a week each. Step two: a person types the rate. Forty-four dollars an hour. Step three: multiply. Ten point six hours, times two people, times fifty-two weeks, times forty-four dollars, is forty-eight and a half thousand dollars a year, on that one job. Do that for every job and add the sixty-eight thousand the owner already knew they were losing, and you get one hundred forty-seven thousand dollars a year of work being done by hand. Step four: decide what's even allowed in a first project. Anything a customer sees is out. Anything touching personal or regulated data is out. Anything where a mistake is unrecoverable is out. That left two jobs. Step five: size it. Two jobs at forty hours each, plus three connections at sixteen hours, plus one data fix at twelve hours, is one hundred forty hours, at seventy dollars an hour, which is nine thousand eight hundred dollars, shown as a range because a single number on unbuilt software is a fiction. And the most important figure on the page: the most you can lose is ten thousand two hundred and ninety dollars. That's the build plus one month of running it, if it returns absolutely nothing and you stop. Step six: score the three lanes and lay out the phases.",
+    "Now the money, because this is where most reports go vague and this one doesn't. Six steps, all of them arithmetic you can check on paper — press the button beside me and they build up one at a time. It starts with measured time and a rate somebody typed. Multiply those and you learn this company spends one hundred forty-seven thousand dollars a year doing this work by hand. Then it decides what is even allowed in a first project: anything a customer sees is out, anything touching regulated data is out, anything where a mistake cannot be undone is out. Two jobs survived that. Sizing those two comes to nine thousand eight hundred dollars, shown as a range, because a single exact number on software nobody has built yet is a fiction. And then the figure that actually ends the argument: the most you can lose is ten thousand two hundred and ninety dollars. That is the build plus one month of running it, if it returns absolutely nothing and you switch it off.",
 
     "Two rules keep the whole thing honest, and they're both enforced in the software rather than promised in a sales meeting. Rule one: time is measured, money is typed by a person. If nobody enters an hourly rate for a job, that job shows its hours and contributes exactly zero dollars — and the report names it, instead of quietly borrowing an industry average and passing it off as your number. Rule two: a short week is reported, never stretched. If we only watched for two days, we do not multiply by three and a half to make it a week. That would turn a guess into something that looks exactly like a measurement. And one more thing. If you skip one of the six questions, it refuses to finish. It will not build a roadmap around a gap. It stops and tells you which answer is missing, because a confident document built on things nobody asked is precisely what most owners have already been sold once.",
 
@@ -44,7 +44,7 @@ const SCRIPT = {
 
     "Este es el producto completo, seis pantallas. Primero, instalas el grabador y pegas tu clave. Segundo, trabajas normalmente, y una barra permanece visible arriba de cada página todo el tiempo, porque un grabador que nadie puede ver es un espía, sin importar qué recoja. Tercero, agrupa lo que vio en trabajos sugeridos: este ocurrió dieciocho veces, tomó diez horas y media por semana y cruzó cuatro programas. Cuarto, una persona confirma cada uno y escribe una tarifa por hora, porque un navegador puede medir el tiempo pero no puede saber cuánto gana nadie. Quinto, seis preguntas que solo tú puedes responder. Y sexto, tu hoja de ruta.",
 
-    "Vamos con el dinero, porque aquí es donde la mayoría de los informes se vuelven vagos y este no. Seis pasos, todos aritmética que puedes comprobar en papel. Paso uno: medir el tiempo. Se observaron mil ochocientos dieciocho minutos, divididos entre dos personas, divididos entre los diez días que observamos, dan diez coma seis horas por semana cada uno. Paso dos: una persona escribe la tarifa. Cuarenta y cuatro dólares por hora. Paso tres: multiplicar. Diez coma seis horas, por dos personas, por cincuenta y dos semanas, por cuarenta y cuatro dólares, son cuarenta y ocho mil quinientos dólares al año en ese solo trabajo. Haz eso con cada trabajo y suma los sesenta y ocho mil que el dueño ya sabía que estaba perdiendo, y llegas a ciento cuarenta y siete mil dólares al año de trabajo hecho a mano. Paso cuatro: decidir qué se permite siquiera en un primer proyecto. Todo lo que ve un cliente queda fuera. Todo lo que toca datos personales o regulados queda fuera. Todo donde un error es irreparable queda fuera. Quedaron dos trabajos. Paso cinco: dimensionarlo. Dos trabajos de cuarenta horas cada uno, más tres conexiones de dieciséis horas, más un arreglo de datos de doce horas, son ciento cuarenta horas, a setenta dólares la hora, o sea nueve mil ochocientos dólares, mostrado como rango porque una cifra exacta sobre software no construido es una ficción. Y la cifra más importante de la página: lo máximo que puedes perder son diez mil doscientos noventa dólares. Eso es la construcción más un mes de operación, si no devuelve absolutamente nada y lo detienes.  Paso seis: puntuar los tres carriles y trazar las fases.",
+    "Ahora el dinero, porque aquí es donde la mayoría de los informes se vuelven vagos y este no. Seis pasos, todos aritmética que puedes comprobar en papel: pulsa el botón que está a mi lado y se construyen uno a uno. Empieza con tiempo medido y una tarifa que alguien escribió. Multiplica esas dos cosas y descubres que esta empresa gasta ciento cuarenta y siete mil dólares al año haciendo este trabajo a mano. Después decide qué se permite siquiera en un primer proyecto: todo lo que ve un cliente queda fuera, todo lo que toca datos regulados queda fuera, y todo donde un error no se puede deshacer queda fuera. Sobrevivieron dos trabajos. Dimensionar esos dos da nueve mil ochocientos dólares, mostrado como rango, porque una cifra exacta sobre software que nadie ha construido todavía es una ficción. Y entonces llega la cifra que de verdad termina la discusión: lo máximo que puedes perder son diez mil doscientos noventa dólares. Eso es la construcción más un mes de operación, si no devuelve absolutamente nada y lo apagas.",
 
     "Dos reglas mantienen todo esto honesto, y ambas están impuestas en el software, no prometidas en una reunión de ventas. Regla uno: el tiempo se mide, el dinero lo escribe una persona. Si nadie introduce una tarifa por hora para un trabajo, ese trabajo muestra sus horas y aporta exactamente cero dólares, y el informe lo dice por su nombre, en vez de tomar discretamente un promedio del sector y presentarlo como tu cifra. Regla dos: una semana corta se reporta, nunca se estira. Si solo observamos dos días, no multiplicamos por tres y medio para fabricar una semana. Eso convertiría una suposición en algo que parece exactamente una medición. Y una cosa más: si te saltas una de las seis preguntas, se niega a terminar. No construye una hoja de ruta alrededor de un hueco. Se detiene y te dice qué respuesta falta, porque un documento seguro de sí mismo construido sobre cosas que nadie preguntó es justo lo que a la mayoría ya le vendieron una vez.",
 
@@ -65,6 +65,21 @@ const SCRIPT = {
   let lang = 'en', voice = 'ava';
   let queue = [], qi = 0, runMode = null, token = 0, paused = false;
   let playbackMode = null, audio = null, neuralOK = true, cache = {}, browserVoice = null;
+
+  // ONE FAILED SEGMENT MUST NOT DOWNGRADE THE REST OF THE PRESENTATION.
+  // The first version set neuralOK=false on any error, so a single lost
+  // request meant Ava spoke, paused, and a robot finished the deck — which is
+  // exactly what a listener reported. A miss now falls back for THAT segment
+  // only; the voice is given up on solely when the route is genuinely down,
+  // which is what three consecutive failures indicate.
+  let consecutiveMisses = 0;
+  const GIVE_UP_AFTER = 3;
+
+  function neuralMissed() {
+    consecutiveMisses++;
+    if (consecutiveMisses >= GIVE_UP_AFTER) { neuralOK = false; setMode(); }
+  }
+  function neuralWorked() { consecutiveMisses = 0; }
 
   const segs = () => SCRIPT[lang];
 
@@ -92,14 +107,25 @@ const SCRIPT = {
     cache = {};
   }
 
-  function fetchNeural(i) {
-    const key = voice + '|' + i;
-    if (cache[key]) return Promise.resolve(cache[key]);
+  function requestNeural(i) {
     return fetch('/api/tts/edge', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: segs()[i], voice })
     }).then(r => { if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
-      .then(b => { if (!b || b.size < 200) throw new Error('empty'); const u = URL.createObjectURL(b); cache[key] = u; return u; });
+      .then(b => { if (!b || b.size < 200) throw new Error('empty'); return b; });
+  }
+
+  /**
+   * One retry before giving up on a segment. A miss here is nearly always a
+   * cold connection losing a race, and the second attempt reuses a warm path —
+   * so retrying costs a second and saves the voice.
+   */
+  function fetchNeural(i) {
+    const key = voice + '|' + i;
+    if (cache[key]) return Promise.resolve(cache[key]);
+    return requestNeural(i)
+      .catch(() => requestNeural(i))
+      .then(b => { const u = URL.createObjectURL(b); cache[key] = u; return u; });
   }
 
   function setActive(i) {
@@ -121,15 +147,28 @@ const SCRIPT = {
     const advance = () => { if (t !== token) return; qi++; run(t); };
     if (useNeural()) {
       status.textContent = lang === 'es' ? 'Preparando voz…' : 'Preparing the voice…';
-      if (qi + 1 < queue.length) fetchNeural(queue[qi + 1]).catch(() => {});
+      // Two ahead, not one. The request that makes a listener wait is always
+      // the one that was not already in flight during the previous segment.
+      for (let n = 1; n <= 2; n++) {
+        if (qi + n < queue.length) fetchNeural(queue[qi + n]).catch(() => {});
+      }
       fetchNeural(i).then(url => {
         if (t !== token) return;
+        neuralWorked();
         playbackMode = 'neural'; audio = new Audio(url);
         audio.onended = advance;
-        audio.onerror = () => { neuralOK = false; setMode(); advance(); };
+        audio.onerror = () => { neuralMissed(); browserSpeak(i, advance); };
         orb.classList.add('speaking'); speaking();
-        audio.play().catch(() => { neuralOK = false; setMode(); browserSpeak(i, advance); });
-      }).catch(() => { if (t !== token) return; neuralOK = false; setMode(); browserSpeak(i, advance); });
+        audio.play().catch(() => { neuralMissed(); browserSpeak(i, advance); });
+      }).catch(() => {
+        if (t !== token) return;
+        neuralMissed();
+        // Say so, rather than swapping the voice without explanation.
+        status.textContent = lang === 'es'
+          ? 'Esta sección se leerá con la voz del navegador.'
+          : 'Reading this section in the browser voice.';
+        browserSpeak(i, advance);
+      });
     } else browserSpeak(i, advance);
   }
 
