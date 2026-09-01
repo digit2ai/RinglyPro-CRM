@@ -282,6 +282,12 @@
 .d2b .disc-cta a{display:inline-block;font-weight:750;font-size:15px;border-radius:999px;padding:12px 28px;
   background:var(--grad);color:#0a0a12;text-decoration:none;transition:.15s}
 .d2b .disc-cta a:hover{transform:translateY(-1px);box-shadow:0 12px 34px rgba(124,92,255,.32)}
+/* Two CTAs: start it, or read how it works first. The secondary is a ghost so it
+   reads as the calmer option rather than competing with the primary. */
+.d2b .disc-cta{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+.d2b .disc-cta a.ghost{background:none;color:var(--ink);border:1px solid var(--line-strong,rgba(255,255,255,.18));
+  box-shadow:none}
+.d2b .disc-cta a.ghost:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);transform:translateY(-1px);box-shadow:none}
 .d2b .disc-note{margin-top:10px;font-size:12.5px;color:var(--faint);text-align:center}
 @media(max-width:640px){.d2b .disc-keeps{grid-template-columns:1fr}}
 .d2b .army-grid{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
@@ -960,7 +966,7 @@
         <div class="never"><h4>Lo que se niega a registrar</h4><ul><li>Nada de lo que escribiste</li><li>Ning&uacute;n texto de p&aacute;gina ni etiqueta</li><li>Cadenas de consulta &mdash; se descartan enteras, nunca se acortan</li><li>Tu portapapeles</li><li>Capturas de pantalla, nunca</li></ul></div>
       </div>
       <p class="disc-note" style="text-align:left;margin-top:14px">La redacci&oacute;n corre en el servidor, no en la extensi&oacute;n. “Nuestro cliente redacta antes de enviar” es una promesa sobre software en el port&aacute;til de otra persona; esto es un archivo que un oficial de cumplimiento puede leer. Cada dato eliminado se cuenta y se muestra, para que el l&iacute;mite se pueda verificar en vez de creer.</p>
-      <div class="disc-cta"><a href="/discovery/">Mira c&oacute;mo funciona Discovery &rarr;</a></div>
+      <div class="disc-cta"><a href="/discovery/">Empieza un Discovery &rarr;</a><a class="ghost" href="/discovery/guide">Lee el recorrido</a></div>
       <div class="disc-note">Gratis y self-service. La construcci&oacute;n se cotiza aparte.</div>
     </div>
   </section>
