@@ -142,7 +142,11 @@ async function serveEdge(req, res, { text, voice, rate }) {
     }
 
     const edgeTts = require('../services/edge-tts');
-    const buffer = await edgeTts.synthesize(text, { voice: voiceName, rate: rateStr });
+    // synthesizeLong chunks past ~600 characters and retries each chunk once.
+    // Below that it is synthesize() unchanged, so short calls are untouched.
+    // A narration segment losing a cold-connect race used to 502 here, which
+    // every narrated page in the repo renders as the voice giving up mid-deck.
+    const buffer = await edgeTts.synthesizeLong(text, { voice: voiceName, rate: rateStr });
 
     try { fs.writeFileSync(cachePath, buffer); } catch (e) { /* cache is best-effort */ }
 
