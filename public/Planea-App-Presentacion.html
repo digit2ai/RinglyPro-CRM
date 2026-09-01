@@ -5,12 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Planea · Recorrido completo de la aplicación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
+    /* Marca oficial (Documento Maestro §1): primario #16373A, verde secundario #2E7D5B. */
+    --brand:#16373A; --brand-green:#2E7D5B;
     --bg:#0a1310; --card:#101a16; --card2:#17221d; --line:#26332e;
     --txt:#eaf1ec; --mut:#8a9a92; --green:#3fc06a; --teal:#17a6a6; --red:#e0714f; --orange:#e0954f; --estable:#7fb79a;
-    --font:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    /* Tipografía oficial (§1): Inter para títulos/display, DM Sans para cuerpo. */
+    --font:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --display:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
+  h1,h2,h3,.cover .logo,.lnd-body h1,.sb-logo{font-family:var(--display)}
+  .lg{height:1.15em;width:auto;object-fit:contain;vertical-align:middle;display:inline-block}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:radial-gradient(120% 90% at 50% 0%,#12251e,#0a1310 60%);color:var(--txt);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
@@ -333,7 +342,7 @@
 </defs></svg>
 
 <div class="cover" id="cover">
-  <div class="logo"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
+  <div class="logo"><img class="lg" src="/planea/portal/planea-mark-white.png?v=2" alt="Planea">Planea</div>
   <h1>Recorrido completo de la aplicación</h1>
   <p>El diseño aprobado del Documento Maestro: del primer clic al plan financiero vivo. Registro, la vinculación de veinte preguntas, un solo Puntaje Planea con ocho pilares, los Hallazgos de Maya y las catorce secciones del portal. Narrado por Dalia, la voz de Digit2AI.</p>
   <div class="chips">
@@ -344,7 +353,7 @@
 </div>
 
 <div class="bar hidden" id="bar">
-  <div class="brand"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>Planea</div>
+  <div class="brand"><img class="lg" src="/planea/portal/planea-mark-white.png?v=2" alt="Planea">Planea</div>
   <span class="step-pill" id="stepPill">Paso 1</span>
   <div class="spacer"></div>
   <span class="voice-ind" id="voiceInd"><span class="dotv"></span><span id="voiceTxt">Voz: Dalia</span></span>
@@ -391,7 +400,7 @@
     mic: svg('<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
     send: svg('<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/>')
   };
-  var MARK='<svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
+  var MARK='<img class="lg" src="/planea/portal/planea-mark-white.png?v=2" alt="Planea">';
 
   function pav(){ return '<img class="pav" src="/planea/portal/images/maya.png" alt="Maya">'; }
 
