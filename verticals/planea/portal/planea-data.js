@@ -299,23 +299,6 @@
             pilarRow('Salud de la deuda', pp.salud_deuda) +
             pilarRow('Estabilidad', pp.estabilidad);
         }
-      } else if (type === 'fondo_emergencia') {
-        var goal = (prof.metas || []).filter(function (m) { return /emergen/i.test(m.nombre || ''); })[0];
-        if (goal) {
-          var pct = goal.objetivo_cop > 0 ? Math.max(0, Math.min(100, Math.round(goal.actual_cop / goal.objetivo_cop * 100))) : 0;
-          var rem = goal.objetivo_cop - goal.actual_cop;
-          var months = goal.aporte_mensual_cop > 0 && rem > 0 ? Math.ceil(rem / goal.aporte_mensual_cop) : null;
-          html = '<div class="track" style="height:12px;margin-top:16px"><div class="fill" style="width:' + pct + '%"></div></div>' +
-            '<div class="pie" style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)">' +
-            '<span><strong style="color:var(--txt)">' + pct + '%</strong> completado</span>' +
-            '<span><strong style="color:var(--txt)">' + (months != null ? months + ' meses' : cop(rem > 0 ? rem : 0)) + '</strong> ' +
-            (months != null ? 'restantes al ritmo actual' : 'por completar') + '</span></div>';
-        } else if (!prof.sin_diagnostico && prof.score_pilares_pct && prof.score_pilares_pct.fondo_emergencia != null) {
-          var fp = Math.max(0, Math.min(100, Math.round(prof.score_pilares_pct.fondo_emergencia)));
-          html = '<div class="track" style="height:12px;margin-top:16px"><div class="fill" style="width:' + fp + '%"></div></div>' +
-            '<div class="pie" style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)">' +
-            '<span><strong style="color:var(--txt)">' + fp + '%</strong> de tu meta de fondo</span></div>';
-        }
       } else if (type === 'seguros') {
         rows = prof.seguros || [];
         html = rows.map(function (x) { return fund(x.nombre, cop(x.valor_cop), esc(x.tipo || 'Póliza') + ' · valor asegurado'); }).join('');
