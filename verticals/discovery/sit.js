@@ -565,6 +565,43 @@ async function main() {
     ok('the spoken script spells its numbers out', bareNumerals.length === 0,
       'found: ' + bareNumerals.slice(0, 6).join(', '));
 
+    // REGRESSION GUARD — Ava stopped mid-deck and browser speech finished it.
+    // Two causes, both greppable, both asserted here so neither can return.
+    //
+    // 1. A segment long enough to lose the cold-connect race. The service now
+    //    chunks and retries, but a 1,500-character monologue is also simply too
+    //    long to listen to, so the script is held to a ceiling.
+    const SEG_CEILING = 1200;
+    const tooLong = [];
+    ['en', 'es'].forEach(l => {
+      const block = (js.match(new RegExp(l + ': \\[([\\s\\S]*?)\\n  \\]')) || [])[1] || '';
+      (block.match(/"(?:[^"\\\\]|\\\\.)*"/g) || []).forEach(seg => {
+        if (seg.length > SEG_CEILING) tooLong.push(`${l}:${seg.length}`);
+      });
+    });
+    ok('no narration segment exceeds the length ceiling', !tooLong.length, tooLong.join(', '));
+
+    // 2. A single miss permanently downgrading the voice. The old code set
+    //    neuralOK=false on any error, which is exactly what produced "a pause,
+    //    then a machine voice for the rest of the presentation".
+    ok('one failed segment does not disable the voice', /consecutiveMisses/.test(js) && /GIVE_UP_AFTER/.test(js));
+    ok('a failed fetch is retried before falling back', /\.catch\(\(\) => requestNeural/.test(js));
+    ok('the fallback is announced, not silent',
+      /browser voice/i.test(js) && /voz del navegador/i.test(js));
+
+    // The shared service must keep the widened budget and the chunked path —
+    // this vertical is not the only narrated page that depends on them.
+    const tts = require('../../src/services/edge-tts');
+    ok('the TTS service exposes the chunked path', typeof tts.synthesizeLong === 'function');
+    ok('chunking splits on sentence boundaries, losslessly', (() => {
+      const long = 'One sentence here. '.repeat(60);
+      const parts = tts.chunkText(long, 600);
+      return parts.length > 1
+        && parts.every(x => x.length <= 760)
+        && parts.join(' ').replace(/\s+/g, ' ').trim() === long.replace(/\s+/g, ' ').trim();
+    })());
+    ok('short text still takes the single-request path', tts.chunkText('Hello there.', 600).length === 1);
+
     ok('the walkthrough is bilingual', /\ben:\s*\[/.test(js) && /\bes:\s*\[/.test(js));
     const en = (js.match(/en: \[([\s\S]*?)\n  \],/) || [])[1] || '';
     const es = (js.match(/es: \[([\s\S]*?)\n  \]\n/) || [])[1] || '';
