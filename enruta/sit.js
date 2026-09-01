@@ -128,6 +128,81 @@ function ok(n, c, extra='') { c ? (pasa++, console.log('  ok   ', n, extra)) : (
   ok('el contexto NO lleva los guiones de llamada saliente', !/Flujo de Llamadas Salientes/.test(texto));
   ok('el contexto cabe en el límite del cerebro (9000)', texto.length > 0 && texto.length <= 9000, `${texto.length} chars`);
 
+  console.log('\n== 6. Datos de demostración ==');
+  const { sembrarDemo, MARCA_DEMO } = require('./src/services/demo-data');
+  const { estadoDesdeFecha, diasParaVencer } = require('./src/utils/estado');
+
+  // Se siembra contra modelos falsos: se juzga el generador, no la base.
+  const bolsa = {};
+  const falso = (n) => (bolsa[n] = [], {
+    async create(r) { const x = { id: 'id' + bolsa[n].length + n, ...r }; bolsa[n].push(x); return x; },
+    async bulkCreate(rs) { rs.forEach((r, i) => bolsa[n].push({ id: 'b' + i + n, ...r })); return bolsa[n]; },
+    async findOrCreate() { return [null, true]; },
+    async destroy() { return 0; }
+  });
+  const modelosFalsos = {
+    EnrutaCliente: falso('clientes'), EnrutaDocumento: falso('documentos'),
+    EnrutaRegistroContacto: falso('contactos'), EnrutaRenovacion: falso('renovaciones'),
+    EnrutaCampana: falso('campanas'), EnrutaPlantillaMensaje: falso('plantillas'),
+    EnrutaComparendo: falso('comparendos')
+  };
+  const resumen = await sembrarDemo(modelosFalsos, { clientes: 60, semilla: 4242 });
+  const CL = bolsa.clientes, DO = bolsa.documentos;
+
+  ok('siembra al menos 50 cédulas', CL.length >= 50, `${CL.length}`);
+  ok('todas las cédulas son distintas', new Set(CL.map(c => c.numero_documento)).size === CL.length);
+  ok('las cédulas tienen formato colombiano (8 o 10 dígitos)',
+     CL.every(c => /^\d{8}$|^1\d{9}$/.test(c.numero_documento)));
+  ok('todas las filas quedan marcadas como demostración',
+     CL.every(c => c.notas === MARCA_DEMO));
+
+  const reparto = {};
+  DO.forEach(d => { const e = estadoDesdeFecha(d.fecha_vencimiento); reparto[e] = (reparto[e] || 0) + 1; });
+  console.log('   reparto:', JSON.stringify(reparto));
+  ok('hay documentos en las cinco casillas', Object.keys(reparto).length === 5, Object.keys(reparto).join(','));
+  // El defecto que se está reparando: una demostración donde la casilla que
+  // trabaja el agente está vacía.
+  const enVentana = (reparto.por_vencer_7_dias||0)+(reparto.por_vencer_15_dias||0)+(reparto.por_vencer_30_dias||0);
+  ok('la casilla "por vencer" tiene volumen real', enVentana >= DO.length * 0.2, `${enVentana}/${DO.length}`);
+  ok('la mayoría de documentos NO está vencida', (reparto.vencido||0) < DO.length * 0.4, `${reparto.vencido}/${DO.length}`);
+
+  ok('solo los documentos vencidos llevan multa',
+     DO.every(d => (estadoDesdeFecha(d.fecha_vencimiento) === 'vencido') === !!d.valor_multa_cop));
+  ok('ningún documento vence antes de expedirse',
+     DO.every(d => d.fecha_expedicion < d.fecha_vencimiento));
+  ok('las placas no se repiten entre ciudadanos', (() => {
+    const p = DO.filter(d => d.placa_vehiculo).map(d => d.placa_vehiculo);
+    return new Set(p).size === new Set(DO.filter(d => d.placa_vehiculo).map(d => d.cliente_id)).size;
+  })());
+  ok('ninguna motocicleta paga impuesto vehicular',
+     !DO.some(d => d.tipo_documento === 'impuesto_vehicular' && d.tipo_vehiculo === 'motocicleta'));
+  ok('quien pidió no ser llamado no recibe llamadas', (() => {
+    const mudos = new Set(CL.filter(c => c.no_llamar).map(c => c.id));
+    return mudos.size > 0 && !bolsa.contactos.some(c => mudos.has(c.cliente_id));
+  })());
+  ok('hay llamadas registradas hoy',
+     bolsa.contactos.some(c => diasParaVencer(c.llamada_inicio.toISOString().slice(0, 10)) === 0));
+  ok('hay renovaciones en curso',
+     bolsa.renovaciones.some(r => !['completada','cancelada','fallida'].includes(r.estado_renovacion)));
+
+  // Misma semilla, mismas personas: quien prepara la demostración se aprende
+  // una cédula y sigue sirviendo después de volver a sembrar.
+  const bolsa2 = {}; const falso2 = (n) => (bolsa2[n] = [], {
+    async create(r) { bolsa2[n].push({ id: 'x' + bolsa2[n].length, ...r }); return bolsa2[n][bolsa2[n].length-1]; },
+    async bulkCreate(rs) { rs.forEach(r => bolsa2[n].push(r)); return bolsa2[n]; },
+    async findOrCreate() { return [null, true]; }, async destroy() { return 0; }
+  });
+  await sembrarDemo({
+    EnrutaCliente: falso2('clientes'), EnrutaDocumento: falso2('documentos'),
+    EnrutaRegistroContacto: falso2('contactos'), EnrutaRenovacion: falso2('renovaciones'),
+    EnrutaCampana: falso2('campanas'), EnrutaPlantillaMensaje: falso2('plantillas'),
+    EnrutaComparendo: falso2('comparendos')
+  }, { clientes: 60, semilla: 4242 });
+  ok('la misma semilla produce las mismas cédulas',
+     JSON.stringify(bolsa2.clientes.map(c => c.numero_documento)) === JSON.stringify(CL.map(c => c.numero_documento)));
+  ok('el resumen trae cédulas de ejemplo para la demostración',
+     Array.isArray(resumen.cedulas_de_ejemplo) && resumen.cedulas_de_ejemplo.length === 5);
+
   const twiml = await (await fetch(base + '/voice/laura/webhook/inicio', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

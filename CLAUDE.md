@@ -290,6 +290,27 @@ Saved searches, a daily digest (`GET /digest`), the application **pipeline** (ne
 - `CV_ADMIN_SECRET` — session cookie signing (falls back to `JWT_SECRET`).
 - `CV_ADMIN_PW_<SLUG>` — **legacy bootstrap only**, read once for the four pre-existing profiles when their password hash is empty. New profiles use invites; do not add one per person.
 
+## ENRUTA — gestión documental vehicular (carpeta `enruta/`, montado en `/enruta`)
+
+Recordatorios de vencimiento de documentos de tránsito para el Centro de Diagnóstico Automotor del Valle (CDAV, Cali), con **Laura** como asistente. Router Express propio, Sequelize propio sobre `DATABASE_URL`, tablas `enruta_*` multi-tenant.
+
+**EL ESTADO DE UN DOCUMENTO SE DERIVA, NUNCA SE LEE DE LA COLUMNA.** `enruta_documentos.estado` se calculaba una vez al dar de alta el documento y nada volvía a tocarlo: medio año después el tablero anunciaba 234 "por vencer" mientras `/documentos/por-vencer` devolvía lista vacía, porque 83 filas marcadas `por_vencer_30_dias` llevaban meses vencidas. `src/utils/estado.js` lo deriva de `fecha_vencimiento` en cada lectura (getter del modelo + `sqlEstado()` para agregaciones) y traduce los filtros a rangos de fecha con `whereEstado()`. Las fechas se resuelven en zona Colombia (`fecha_vencimiento` es DATEONLY; comparar contra un timestamp del servidor recorta hoy). `renovado` y `suspendido` son de ciclo de vida y se respetan tal cual. No reintroducir un `where: { estado: ... }` sobre la columna.
+
+**LAS OPERACIONES QUE TOCAN EL ESQUEMA SON POST CON CLAVE.** Estaban como `GET /health/sync|seed|seed-test-data` sin autenticación: un rastreador corría `sync({alter:true})` sobre producción. Ahora `POST /admin/sync|seed-sedes|seed-demo` con cabecera `x-enruta-admin-key` y `{"confirmar":true}`; clave equivocada responde 404, no 403.
+
+**Voz:** el orbe propio (`data-agent="enruta"`, voz **dalia**), no ElevenLabs. La persona vive en `src/config/voice-agents.js`; los hechos de trámites los empuja el tablero con `setContext` desde `GET /enruta/voice/laura/contexto`, que los **recorta** del prompt de Laura (`LAURA_CONOCIMIENTO`) en vez de copiarlos. Laura por teléfono no existe: el webhook contesta con `<Say>` de Polly y lo dice; el reemplazo es ConversationRelay.
+
+**Datos de demostración:** `src/services/demo-data.js` — 80 ciudadanos del Valle con vehículos, documentos, comparendos, llamadas y renovaciones. **Las fechas son relativas al día en que se siembra** (el sembrador viejo escribía fechas literales y la demostración envejecía) y **el azar es sembrado**, así que la misma semilla da las mismas cédulas y quien prepara la demostración puede aprenderse una. Cédulas con formato colombiano real (8 dígitos pre-1988 por rango de género, 10 empezando por 1 para el NUIP). Cada fila queda marcada `[demo]` en `notas`. `node enruta/scripts/seed-demo.js [--reset]` o el endpoint.
+
+**SIT:** `node enruta/sit.js` (en proceso) o `node enruta/sit.js https://aiagent.ringlypro.com/enruta` (contra el despliegue) → **63/63**, sin llaves externas, solo lectura contra producción.
+
+**Variables de entorno:**
+- `ENRUTA_ADMIN_KEY` — clave de las operaciones administrativas (cae a `JWT_SECRET`). Sin ninguna de las dos, esas rutas quedan **deshabilitadas**, nunca abiertas.
+- `ENRUTA_PASSWORD` — enciende la puerta de acceso (`src/auth.js`). **Sin ella el tablero y toda la API son públicos**, con cédulas, teléfonos y comparendos. `ENRUTA_JWT_SECRET` firma la cookie (cae a `JWT_SECRET`).
+- `ENRUTA_TOOLS_KEY` — autentica `/voice/*` (endpoints máquina) cuando la puerta está encendida. Si falta, `/voice/*` queda abierto y el arranque lo avisa, antes que cortar una consulta en vivo.
+- `ENRUTA_SEED_DEMO=1` — siembra al arrancar. **Siembra una vez y no vuelve**: la guarda es la marca `[demo]`, así que la variable puede quedarse puesta. `ENRUTA_SEED_RESET=1` borra el tenant antes de sembrar · `ENRUTA_SEED_CLIENTES` (80) · `ENRUTA_SEED_SEMILLA` (20260901) · `ENRUTA_SEED_TENANT`.
+- `ELEVENLABS_ENRUTA_AGENT_ID` — **ya no se lee en ninguna parte.**
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
