@@ -7,24 +7,31 @@
 (function () {
   'use strict';
 
+  // `add` = etiqueta completa del botón (Documento Maestro §3 «Acción nombrada»: nunca
+  // solo «Agregar»). `charts` = qué gráficas muestra la sección (Doc 2 §1.3): Ingresos,
+  // Gastos, Ahorro, Deuda, Inversión llevan composición + evolución; Seguros ninguna
+  // (§24); Retiro solo evolución (§25). Denominaciones: deuda «Pago mensual» (§21),
+  // retiro «recursos» (§25).
   var CATS = {
-    ingreso:   { cat: 'ingreso', title: 'Tus fuentes de ingreso', noun: 'ingresos', amount: 'Monto mensual', ph: 'Ej: Salario',
+    ingreso:   { cat: 'ingreso', title: 'Tus fuentes de ingreso', noun: 'ingresos', add: 'Agregar ingreso', amount: 'Monto mensual', ph: 'Ej: Salario', charts: { comp: true, evo: true },
       types: ['Salario', 'Mesada', 'Freelance / honorarios', 'Negocio propio', 'Arriendos / rentas', 'Pensión', 'Comisiones', 'Otro'] },
-    gastos:    { cat: 'gasto', title: 'Tus gastos mensuales', noun: 'gastos', amount: 'Monto mensual', ph: 'Ej: Arriendo',
+    gastos:    { cat: 'gasto', title: 'Tus gastos mensuales', noun: 'gastos', add: 'Agregar gasto', amount: 'Monto mensual', ph: 'Ej: Arriendo', charts: { comp: true, evo: true },
       types: ['Vivienda / arriendo', 'Alimentación', 'Transporte', 'Servicios públicos', 'Entretenimiento', 'Educación', 'Salud', 'Suscripciones', 'Otro'] },
-    ahorro:    { cat: 'ahorro', title: 'Tus cuentas de ahorro', noun: 'ahorros', amount: 'Valor actual', ph: 'Ej: Cuenta de ahorros',
+    ahorro:    { cat: 'ahorro', title: 'Tus cuentas de ahorro', noun: 'ahorros', add: 'Agregar ahorro', amount: 'Valor actual', ph: 'Ej: Cuenta de ahorros', charts: { comp: true, evo: true },
       types: ['Cuenta de ahorros', 'Efectivo', 'CDT', 'Fondo (FIC)', 'Cuenta AFC', 'Otro'] },
-    inversion: { cat: 'inversion', title: 'Tus inversiones', noun: 'inversiones', amount: 'Valor actual', ph: 'Ej: Fondo de inversión',
+    inversion: { cat: 'inversion', title: 'Tus inversiones', noun: 'inversiones', add: 'Agregar inversión', amount: 'Valor actual', ph: 'Ej: Fondo de inversión', charts: { comp: true, evo: true },
       types: ['Acciones', 'Fondo de inversión', 'CDT', 'Cripto', 'Bonos', 'ETF', 'Portafolio', 'Otro'] },
-    deuda:     { cat: 'deuda', title: 'Tus deudas', noun: 'deudas', amount: 'Saldo que debes', ph: 'Ej: Tarjeta Visa',
-      extra: { key: 'monthly', label: 'Cuota mensual', short: 'cuota' },
+    deuda:     { cat: 'deuda', title: 'Tus deudas', noun: 'deudas', add: 'Agregar deuda', amount: 'Saldo que debes', ph: 'Ej: Tarjeta Visa', charts: { comp: true, evo: true },
+      extra: { key: 'monthly', label: 'Pago mensual', short: 'pago' },
       types: ['Tarjeta de crédito', 'Crédito de libre inversión', 'Crédito de vehículo', 'Crédito hipotecario', 'Crédito educativo', 'Deuda informal', 'Otro'] },
-    seguros:   { cat: 'seguros', title: 'Tus pólizas', noun: 'seguros', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida',
-      extra: { key: 'monthly', label: 'Prima mensual de la póliza', short: 'prima' },
+    seguros:   { cat: 'seguros', title: 'Tus pólizas', noun: 'seguros', add: 'Agregar seguro', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida', charts: { comp: false, evo: false },
+      extra: { key: 'monthly', label: 'Prima', short: 'prima' },
       types: ['Vida', 'Salud', 'Vehículo', 'Hogar', 'Educativo', 'Exequial', 'Otro'] },
-    retiro:    { cat: 'retiro', title: 'Tus fondos de retiro', noun: 'fondos de retiro', amount: 'Saldo acumulado', ph: 'Ej: Pensión voluntaria',
+    retiro:    { cat: 'retiro', title: 'Tus recursos para el retiro', noun: 'recursos', add: 'Agregar recurso', amount: 'Saldo o valor actual', ph: 'Ej: Pensión voluntaria', charts: { comp: false, evo: true },
       types: ['Pensión obligatoria', 'Pensión voluntaria', 'Cesantías', 'Fondo privado', 'Otro'] }
   };
+  // Paleta de segmentos para la gráfica de composición (dona).
+  var PIE = ['#3fc06a', '#17a6a6', '#5a9e7b', '#c8a24a', '#8fd9ac', '#2a6f9e', '#b07ac8', '#c87a32', '#9db3ab'];
 
   var mount, cat, cfg, items = [], editItem = null;
 
@@ -33,21 +40,48 @@
   function digits(s) { return (s || '').replace(/\D/g, ''); }
   function total() { return items.reduce(function (a, x) { return a + (+x.value || 0); }, 0); }
 
+  // ── Gráficas §1.3 (dona composición + evolución), según cfg.charts. Existen aunque
+  //    no haya datos: una sección vacía muestra el componente en estado vacío, nunca su
+  //    ausencia (regla §3 «Ninguna sección bloqueada / estado vacío»). ──
+  function chartsHtml() {
+    if (!cfg.charts || (!cfg.charts.comp && !cfg.charts.evo)) return '';
+    return (cfg.charts.comp ? donutHtml() : '') + (cfg.charts.evo ? evoHtml() : '');
+  }
+  function donutHtml() {
+    var head = '<div class="pe-chart"><div class="pe-chart-h">Composición</div>';
+    var t = total();
+    if (!items.length || t <= 0) return head + '<div class="pe-chart-empty">Se dibujará aquí cuando agregues ' + esc(cfg.noun) + '.</div></div>';
+    var C = 2 * Math.PI * 42, off = 0, segs = '', legend = '';
+    items.slice().sort(function (a, b) { return (+b.value || 0) - (+a.value || 0); }).forEach(function (x, i) {
+      var v = +x.value || 0; if (v <= 0) return;
+      var frac = v / t, len = frac * C, col = PIE[i % PIE.length];
+      segs += '<circle cx="60" cy="60" r="42" fill="none" stroke="' + col + '" stroke-width="16" stroke-dasharray="' + len + ' ' + (C - len) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 60 60)"/>';
+      off += len;
+      legend += '<div class="pe-leg"><span class="pe-dot" style="background:' + col + '"></span><span class="pe-leg-nm">' + esc(x.name || x.type || '—') + '</span><span class="pe-leg-pct">' + Math.round(frac * 100) + '% · ' + cop(v) + '</span></div>';
+    });
+    return head + '<div class="pe-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="42" fill="none" stroke="var(--card2,#16302a)" stroke-width="16"/>' + segs + '</svg><div class="pe-legwrap">' + legend + '</div></div></div>';
+  }
+  function evoHtml() {
+    return '<div class="pe-chart"><div class="pe-chart-h">Evolución</div><div class="pe-chart-empty">La evolución mes a mes aparecerá a medida que actualices tus ' + esc(cfg.noun) + ' en distintos períodos.</div></div>';
+  }
+
   function render() {
     if (!mount) return;
     var body = items.length
       ? items.map(function (x) {
           var sub = x.type || '';
-          if (cfg.extra && x[cfg.extra.key]) sub += (sub ? ' · ' : '') + (cfg.extra.short || 'cuota') + ' ' + cop(x[cfg.extra.key]) + '/mes';
-          return '<div class="pe-row"><div><div class="pe-nm">' + esc(x.name || '—') + '</div>' +
+          if (cfg.extra && x[cfg.extra.key]) sub += (sub ? ' · ' : '') + (cfg.extra.short || 'pago') + ' ' + cop(x[cfg.extra.key]) + '/mes';
+          return '<div class="pe-row"><div><div class="pe-nm">' + esc(x.name || x.type || '—') + '</div>' +
             (sub ? '<div class="pe-ty">' + esc(sub) + '</div>' : '') + '</div>' +
             '<div class="pe-amt">' + cop(x.value) + '</div>' +
             '<button class="pe-edit" data-edit="' + x.id + '" title="Editar" aria-label="Editar">✎</button>' +
             '<button class="pe-del" data-del="' + x.id + '" title="Eliminar" aria-label="Eliminar">✕</button></div>';
         }).join('')
-      : '<div class="pe-empty">Aún no has agregado ' + cfg.noun + '. Toca “+ Agregar”.</div>';
-    mount.innerHTML = '<div class="pe-col"><div class="pe-head"><span>' + esc(cfg.title) +
-      '</span><button class="pe-add" data-add>+ Agregar</button></div>' + body + '</div>' + continueHtml();
+      : '<div class="pe-empty">Aún no has agregado ' + cfg.noun + '. Toca «' + esc(cfg.add) + '».</div>';
+    mount.innerHTML = chartsHtml() +
+      '<div class="pe-col"><div class="pe-head"><span>' + esc(cfg.title) + '</span></div>' + body + '</div>' +
+      '<div class="pe-addwrap"><button class="pe-add" data-add><span class="pe-plus">+</span>' + esc(cfg.add) + '</button></div>' +
+      continueHtml();
     // keep the page's "total above" header in sync immediately (planea-data also does on reload)
     document.querySelectorAll('[data-pl="' + totalKey() + '"]').forEach(function (el) { el.textContent = cop(total()); });
   }
@@ -64,17 +98,17 @@
     if (PS.current() !== cat) return '';          // no es el paso actual -> sin CTA de avance
     var nxt = PS.next(cat);
     var label = items.length
-      ? (nxt ? 'Continuar a ' + (STEP_LABEL[nxt] || 'lo siguiente') : 'Terminar y ver mi Salud Financiera')
+      ? (nxt ? 'Continuar a ' + (STEP_LABEL[nxt] || 'lo siguiente') : 'Terminar y ver mi Puntaje Planea')
       : (nxt ? 'No tengo, continuar a ' + (STEP_LABEL[nxt] || 'lo siguiente') : 'No tengo, terminar');
     return '<div class="pe-nextwrap"><button class="pe-next" data-next>' + esc(label) +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>' +
       '<div class="pe-nexthint">Planea te guía paso a paso, en orden. Completa este para desbloquear el siguiente.</div></div>';
   }
   function goNext() {
-    var PS = window.PlaneaSteps; if (!PS) { location.href = '/planea/portal/salud'; return; }
+    var PS = window.PlaneaSteps; if (!PS) { location.href = '/planea/portal/diagnostico'; return; }
     var nxt = PS.next(cat);
     var done = PS.markDone(cat);
-    var jump = function () { location.href = nxt ? ('/planea/portal/' + nxt) : '/planea/portal/salud'; };
+    var jump = function () { location.href = nxt ? ('/planea/portal/' + nxt) : '/planea/portal/diagnostico'; };
     (done && done.then ? done.then(jump, jump) : jump());
   }
   function totalKey() {
@@ -84,13 +118,14 @@
   function formHtml(prefill) {
     return '<div class="pe-backdrop" id="pe-modal"><div class="pe-form">' +
       '<div class="pe-form-h">' + (prefill ? 'Editar' : 'Agregar') + '<button class="pe-x" data-close>✕</button></div>' +
-      '<label class="pe-l">Nombre</label><input class="pe-in" id="pe-name" placeholder="' + esc(cfg.ph) + '" value="' + esc(prefill && prefill.name || '') + '">' +
+      '<label class="pe-l">Nombre <span class="pe-opt">(opcional)</span></label><input class="pe-in" id="pe-name" placeholder="' + esc(cfg.ph) + '" value="' + esc(prefill && prefill.name || '') + '">' +
       '<label class="pe-l">Tipo</label><select class="pe-in" id="pe-type">' +
         cfg.types.map(function (t) { return '<option' + (prefill && prefill.type === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
       '<label class="pe-l">' + esc(cfg.amount) + ' ($)</label><div class="pe-money"><span>$</span>' +
         '<input class="pe-in" id="pe-value" inputmode="numeric" placeholder="0" value="' + (prefill && prefill.value ? (+prefill.value).toLocaleString('es-CO') : '') + '"></div>' +
       (cfg.extra ? '<label class="pe-l">' + esc(cfg.extra.label) + ' ($)</label><div class="pe-money"><span>$</span>' +
         '<input class="pe-in" id="pe-extra" inputmode="numeric" placeholder="0" value="' + (prefill && prefill[cfg.extra.key] ? (+prefill[cfg.extra.key]).toLocaleString('es-CO') : '') + '"></div>' : '') +
+      '<div class="pe-err" id="pe-err" hidden></div>' +
       '<div class="pe-actions"><button class="pe-cancel" data-close>Cancelar</button><button class="pe-save" data-save>Guardar</button></div>' +
       '</div></div>';
   }
@@ -108,8 +143,15 @@
     var name = document.getElementById('pe-name').value.trim();
     var type = document.getElementById('pe-type').value;
     var value = parseInt(digits(document.getElementById('pe-value').value), 10) || 0;
-    if (!name || !value) { alert('Escribe un nombre y un valor.'); return; }
-    var body = { category: cfg.cat, name: name, type: type, value: value };
+    // §1.5: el nombre es OPCIONAL (una nota personal). Con tipo y valor basta para guardar.
+    // Sin valor, mensaje EN LÍNEA dentro del formulario — nunca una alerta nativa del navegador.
+    if (!value) {
+      var er = document.getElementById('pe-err');
+      if (er) { er.textContent = 'Escribe un valor para guardar.'; er.hidden = false; }
+      var vi = document.getElementById('pe-value'); if (vi) vi.focus();
+      return;
+    }
+    var body = { category: cfg.cat, name: name || type, type: type, value: value };
     if (cfg.extra) body[cfg.extra.key] = parseInt(digits((document.getElementById('pe-extra') || {}).value || ''), 10) || 0;
     if (!window.PlaneaSB) { closeForm(); return; }
     var op = editItem ? PlaneaSB.itemUpdate(editItem.id, body) : PlaneaSB.itemCreate(body);
@@ -144,6 +186,24 @@
   function style() {
     var s = document.createElement('style');
     s.textContent = '#mod-edit .pe-edit{background:none;border:none;color:var(--mut,#9db3ab);cursor:pointer;font-size:15px;padding:4px 6px;margin-left:6px}#mod-edit .pe-edit:hover{color:var(--green,#3fc06a)}' +
+      // Gráficas (dona composición + evolución)
+      '#mod-edit .pe-chart{background:var(--card,#0f231e);border:1px solid var(--line,#1f3b33);border-radius:16px;padding:16px;margin-bottom:14px}' +
+      '#mod-edit .pe-chart-h{font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:14px;color:var(--txt,#eafff4)}' +
+      '#mod-edit .pe-chart-empty{font-size:12.5px;color:var(--mut,#9db3ab);line-height:1.5;margin-top:8px}' +
+      '#mod-edit .pe-donut{display:flex;gap:16px;align-items:center;margin-top:12px;flex-wrap:wrap}' +
+      '#mod-edit .pe-donut svg{width:120px;height:120px;flex:0 0 120px}' +
+      '#mod-edit .pe-legwrap{flex:1;min-width:160px;display:flex;flex-direction:column;gap:7px}' +
+      '#mod-edit .pe-leg{display:flex;align-items:center;gap:8px;font-size:12.5px}' +
+      '#mod-edit .pe-dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px}' +
+      '#mod-edit .pe-leg-nm{flex:1;color:var(--txt,#eafff4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '#mod-edit .pe-leg-pct{color:var(--mut,#9db3ab);font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      // Botón "Agregar {sección}" centrado, debajo del listado (§1.4 + PRECISIÓN NUEVA)
+      '#mod-edit .pe-addwrap{margin-top:16px;display:flex;justify-content:center}' +
+      '#mod-edit .pe-add{display:inline-flex;align-items:center;gap:9px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px 26px;font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:15.5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22)}' +
+      'body.light #mod-edit .pe-add{background:var(--cream,#16373A);color:#fff}' +
+      '#mod-edit .pe-add:active{transform:scale(.99)}#mod-edit .pe-plus{font-size:19px;line-height:1;font-weight:700}' +
+      '.pe-form .pe-opt{color:var(--mut,#9db3ab);font-weight:500}' +
+      '.pe-form .pe-err{color:#e0705a;font-size:12.5px;margin:2px 0 -2px;font-weight:600}' +
       '#mod-edit .pe-nextwrap{margin-top:18px;display:flex;flex-direction:column;gap:8px}' +
       '#mod-edit .pe-next{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:14px;padding:15px 20px;font-family:"Inter",system-ui,sans-serif;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 22px rgba(63,192,106,.30)}' +
       '#mod-edit .pe-next:active{transform:scale(.99)}#mod-edit .pe-next svg{width:20px;height:20px}' +
@@ -210,7 +270,7 @@
       var PS = window.PlaneaSteps;
       var done = PS ? PS.markDone(cat) : null;
       var jump = function () {
-        if (last) { location.href = '/planea/portal/salud'; return; }   // termina en Salud Financiera
+        if (last) { location.href = '/planea/portal/diagnostico'; return; }   // termina en Salud Financiera
         location.href = '/planea/portal/' + GUIDED_SEQ[idx + 1] + '?guided=1';
       };
       (done && done.then ? done.then(jump, jump) : jump());

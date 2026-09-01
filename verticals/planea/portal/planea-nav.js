@@ -3,16 +3,12 @@
 (function () {
   'use strict';
   var BASE = '/planea/portal/';
+  // Las CATORCE secciones oficiales del portal (Documento Maestro §29), en su orden.
+  // El listado es cerrado: no hay "Cuentas vinculadas", "Planea IA", "Guía de uso" ni
+  // "Más" (Doc 2 §1.6). "Retiro / Pensión" es la denominación única (Doc 2 §1.7 / §2).
   var ITEMS = [
     { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
-    // §9.1 Consolidación: "Salud Financiera" se RETIRA del menú y su ruta /portal/salud
-    // se redirige a Puntaje Planea. Motor único: el usuario nunca ve dos puntajes.
-    // { k: 'salud', label: 'Salud Financiera', icon: '…' },  // retirado (Documento Maestro §9.1)
     { k: 'diagnostico', label: 'Puntaje Planea', icon: 'circle:12,12,9|M12 7v5l3 2' },
-    // Mi Patrimonio se fusionó dentro de Salud Financiera (el editor de activos y
-    // pasivos vive ahora al final de /portal/salud). Se oculta del menú; la ruta
-    // /portal/patrimonio redirige a /portal/salud para no romper enlaces viejos.
-    // { k: 'patrimonio', label: 'Mi Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
     { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
     { k: 'ingreso', label: 'Ingresos', plus: true, icon: 'rect:2.5,7,19,10,2|circle:12,12,2.2|M6 10v.01M18 14v.01' },
     { k: 'gastos', label: 'Gastos', plus: true, icon: 'M3 17l6-6 4 4 8-8|M21 13V7h-6' },
@@ -21,12 +17,10 @@
     { k: 'inversion', label: 'Inversión', module: true, plus: true, icon: 'M3 17l6-6 4 4 8-8|M15 7h6v6' },
     { k: 'impuestos', label: 'Impuestos', icon: 'rect:2.5,7,19,10,2|circle:12,12,2.2' },
     { k: 'seguros', label: 'Seguros', module: true, plus: true, icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z|M9 12l2 2 4-4' },
-    { k: 'retiro', label: 'Retiro', module: true, plus: true, icon: 'circle:12,12,9|M12 7v5l3 3' },
+    { k: 'retiro', label: 'Retiro / Pensión', module: true, plus: true, icon: 'circle:12,12,9|M12 7v5l3 3' },
+    { k: 'patrimonio', label: 'Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
     { k: 'mi-perfil', label: 'Mi Perfil', icon: 'circle:12,8,3.6|M5 20a7 7 0 0 1 14 0' },
-    { k: 'cuentas', label: 'Cuentas vinculadas', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19' },
-    { k: 'maya', label: 'Planea IA', icon: 'M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z', plus: true, action: 'maya' },
-    { k: 'guia', label: 'Guía de uso', icon: 'M12 6.5V21|M12 6.5C10 5 6 4.5 4 5v13c2-.5 6 0 8 1.5|M12 6.5C14 5 18 4.5 20 5v13c-2-.5-6 0-8 1.5' },
-    { k: 'mas', label: 'Más', icon: 'M4 7h16M4 12h16M4 17h16' }
+    { k: 'configuracion', label: 'Configuración', icon: 'circle:12,12,3|M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8' }
   ];
 
   function svg(path) {
@@ -186,13 +180,11 @@
   }
   // Un pilar se bloquea si va DESPUÉS del paso actual en el orden visible — pero SOLO
   // durante el flujo de onboarding nuevo (guidedFlowActive). Fuera de él, nada se bloquea.
-  function isStepLocked(k) {
-    if (!guidedFlowActive()) return false;            // usuario existente -> sin bloqueo
-    if (STEP_ORDER.indexOf(k) < 0) return false;      // no es pilar -> nunca por secuencia
-    var cur = currentStep(); if (cur == null) return false; // ya terminó todo
-    var vis = visibleSteps();
-    return vis.indexOf(k) > vis.indexOf(cur);
-  }
+  // Documento Maestro §3 «Ninguna sección bloqueada» + Doc 2 §1.8: las secciones NUNCA
+  // se muestran bloqueadas, en gris ni con candado. El flujo guiado secuencial se retira
+  // por completo; una sección sin datos se presenta vacía con su acceso de registro, no
+  // bloqueada. (Se conserva el resto de la API de pasos para el orden sugerido de Maya.)
+  function isStepLocked(k) { return false; }
   function nextStepAfter(k) {
     var vis = visibleSteps(); var i = vis.indexOf(k);
     for (var j = i + 1; j < vis.length; j++) { if (!stepDone(vis[j])) return vis[j]; }

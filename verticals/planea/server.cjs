@@ -491,11 +491,11 @@ if (hasPortal) {
 if (hasPortal) {
   // /planea/portal → inicio; /planea/portal/<page> → <page>.html; plus the css.
   router.get(['/portal', '/portal/'], (req, res) => res.sendFile(path.join(portalDir, 'inicio.html')));
-  // Mi Patrimonio se fusionó dentro de Salud Financiera. La página vieja se oculta
-  // del menú; su ruta redirige a /portal/salud para no romper enlaces, QR ni
-  // marcadores. Debe ir ANTES del static para ganarle a patrimonio.html.
-  router.get(['/portal/patrimonio', '/portal/patrimonio.html', '/portal/patrimonio/'],
-    (req, res) => res.redirect(301, '/planea/portal/salud'));
+  // Patrimonio es una de las 14 secciones oficiales (Documento Maestro §26 / §29).
+  // Se sirve directamente patrimonio.html — ya NO se redirige a /salud (Doc 2 §1.6).
+  // Salud Financiera sí queda consolidada en Puntaje Planea (§9.1): su ruta redirige.
+  router.get(['/portal/salud', '/portal/salud.html', '/portal/salud/'],
+    (req, res) => res.redirect(301, '/planea/portal/diagnostico'));
   router.use('/portal', express.static(portalDir, { extensions: ['html'], index: 'inicio.html' }));
 }
 
