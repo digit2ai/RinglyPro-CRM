@@ -176,13 +176,18 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--faint);font-s
   .pill.yellow{background:#fdf3e0;color:#8a5d00}
   .pill.red{background:#fbe9e7;color:#b3261e}
   .pill.blue{background:#eaeefb;color:#1f3fb0}
-  /* The diagram is a dark-ground SVG. Scaled to the page rather than clipped —
-     a roadmap whose Phase 3 is off the right edge of the paper is not a report. */
-  .diagram{overflow:visible}
-  .diagram svg{min-width:0;width:100%;height:auto}
+  /* The horizontal roadmap has to shrink to ~44% to fit a portrait page, and
+     at that size its scope lines and cost bands are unreadable — the single
+     most important element of the report becoming the weakest thing on it.
+     Paper gets the stacked variant instead: same nodes, same JSON, same
+     numbers, full column width. */
+  .diagram{display:none!important}
+  .diagram-print{display:block!important;overflow:visible;break-inside:avoid;page-break-inside:avoid}
+  .diagram-print svg{width:100%;height:auto;max-width:100%}
   a{color:#101014;text-decoration:none}
   .print-only{display:block!important}
   .grid.g3{grid-template-columns:repeat(3,1fr)}
   .grid.g2{grid-template-columns:repeat(2,1fr)}
 }
 .print-only{display:none}
+.diagram-print{display:none}

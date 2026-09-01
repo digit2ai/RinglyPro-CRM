@@ -268,7 +268,10 @@ function renderRoadmap(ev) {
       ${(l.what_would_move_it || []).length ? `<p class="faint" style="margin:9px 0 0"><b>To move it:</b> ${l.what_would_move_it.map(esc).join(' · ')}</p>` : ''}
     </div>`).join('');
 
+  // Both layouts are rendered from the one JSON; CSS decides which is visible.
+  // Rendering only on demand would risk the printed diagram being stale.
   $('diagram').innerHTML = window.DiscoveryDiagram.render(ev.diagram || {});
+  $('diagramPrint').innerHTML = window.DiscoveryDiagram.renderVertical(ev.diagram || {});
 
   $('phases').innerHTML = (ev.phases || []).map(p => `
     <div class="card">
