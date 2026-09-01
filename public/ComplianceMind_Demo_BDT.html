@@ -451,6 +451,20 @@ ul.tk li .n{font-family:var(--mono);font-size:11px;color:var(--acc);flex:none;pa
 .btn.dgr{background:var(--critdim);border-color:#7A3229;color:var(--crit);font-weight:600}
 .btn.gate{border-style:dashed;color:var(--faint)}
 
+
+/* connection map: stubs from each system to a side spine, spine to the brain */
+.map{display:grid;grid-template-columns:1fr 132px 1fr;gap:0 30px;align-items:center}
+.mapcol{position:relative;display:flex;flex-direction:column;gap:9px}
+.mapcol .mbox{padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px;position:relative}
+.mapcol.l .mbox::after{content:"";position:absolute;right:-15px;top:50%;width:15px;height:1px;background:var(--accdim)}
+.mapcol.r .mbox::before{content:"";position:absolute;left:-15px;top:50%;width:15px;height:1px;background:var(--accdim)}
+.mapcol.l::after{content:"";position:absolute;right:-15px;top:18px;bottom:18px;width:1px;background:var(--accdim)}
+.mapcol.r::before{content:"";position:absolute;left:-15px;top:18px;bottom:18px;width:1px;background:var(--accdim)}
+.maphub{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px}
+.maphub::before,.maphub::after{content:"";position:absolute;top:44px;width:15px;height:1px;background:var(--accdim)}
+.maphub::before{left:-15px}
+.maphub::after{right:-15px}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
 }
@@ -1253,26 +1267,26 @@ ul.tk li .n{font-family:var(--mono);font-size:11px;color:var(--acc);flex:none;pa
       <div class="win" style="flex:1">
         <div class="win-top"><span class="win-title">Mapa de conexión</span><span class="win-sp"></span><span class="chip acc">Conectores MCP</span></div>
         <div class="win-body" style="gap:14px;justify-content:center">
-          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center">
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <span class="eyebrow">Sistemas del BDT</span>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Core bancario</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Móvil BDT · BDTenLínea</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Mesa de cambio</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Gestión documental</div>
+          <div class="map">
+            <div class="mapcol l">
+              <span class="eyebrow" style="margin-bottom:2px">Sistemas del BDT</span>
+              <div class="mbox">Core bancario</div>
+              <div class="mbox">Móvil BDT &middot; BDTenLínea</div>
+              <div class="mbox">Mesa de cambio</div>
+              <div class="mbox">Gestión documental</div>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
+            <div class="maphub">
               <div style="width:112px;height:112px;border-radius:14px;border:1.5px solid var(--acc);background:radial-gradient(circle at 50% 35%,#1B4C45,#0E2622);display:grid;place-items:center;text-align:center">
                 <div><div class="mono" style="font-size:8.5px;letter-spacing:.15em;color:var(--acc2)">COMPLIANCE</div><div class="mono" style="font-size:8.5px;letter-spacing:.15em;color:var(--acc2)">MIND</div><div style="font-size:11px;color:var(--ink2);margin-top:5px">5 agentes</div></div>
               </div>
               <span class="tiny" style="text-align:center;max-width:130px">Sólo lectura sobre los sistemas del banco</span>
             </div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <span class="eyebrow">Fuentes externas</span>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Listas de sanciones · 4</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Registros mercantiles</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Medios adversos ES/EN</div>
-              <div style="padding:9px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:12.5px">Listas PEP</div>
+            <div class="mapcol r">
+              <span class="eyebrow" style="margin-bottom:2px">Fuentes externas</span>
+              <div class="mbox">Listas de sanciones &middot; 4</div>
+              <div class="mbox">Registros mercantiles</div>
+              <div class="mbox">Medios adversos ES/EN</div>
+              <div class="mbox">Listas PEP</div>
             </div>
           </div>
           <div class="row" style="gap:12px;margin-top:4px">
