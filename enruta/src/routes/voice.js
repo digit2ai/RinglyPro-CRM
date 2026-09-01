@@ -654,9 +654,27 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
     // en horario de Colombia. Lo mismo pasaba con `tipo_tramite`, que ahora
     // viaja en el historial.
     const hora = /^\d{1,2}:\d{2}$/.test(String(hora_preferida || '')) ? hora_preferida : '09:00';
-    const fechaBase = /^\d{4}-\d{2}-\d{2}$/.test(String(fecha_preferida || ''))
+    const hoy = hoyBogota();
+    let fechaBase = /^\d{4}-\d{2}-\d{2}$/.test(String(fecha_preferida || ''))
       ? fecha_preferida
-      : sumarDias(hoyBogota(), 3);
+      : sumarDias(hoy, 3);
+
+    // NO SE AGENDA EN EL PASADO. Un modelo al que se le pide "el quince de
+    // septiembre" devuelve la fecha con el año que le parezca: la primera cita
+    // real quedó en septiembre de 2024 y se confirmó en voz alta como si nada.
+    // El prompt ya lleva la fecha de hoy; esto es la red debajo, porque el
+    // ciudadano se entera del error cuando llega a la sede.
+    if (fechaBase < hoy) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: `Esa fecha ya pasó. ¿Para qué día quiere la cita? Hoy es ${hoy}.`,
+        error: `fecha_preferida ${fechaBase} es anterior a hoy (${hoy}); confirme el día con el ciudadano`
+      });
+    }
+    // El CDAV no atiende domingos: agendar uno es mandar a alguien a una puerta cerrada.
+    if (new Date(`${fechaBase}T12:00:00-05:00`).getDay() === 0) {
+      fechaBase = sumarDias(fechaBase, 1);
+    }
     const cuando = new Date(`${fechaBase}T${hora.padStart(5, '0')}:00-05:00`);
 
     // Se ata la cita al documento que la motiva cuando se sabe cuál es, para

@@ -132,6 +132,25 @@ HONESTY RULES (mandatory)
 - Do not discuss competitors and do not give legal, medical or financial advice.`
 };
 
+// Un agente que agenda tiene que saber qué día es hoy.
+//
+// Pedirle "el quince de septiembre" a un modelo sin fecha en el prompt produce
+// una fecha con el año que le parezca: la primera cita real de Laura quedó
+// agendada para septiembre de 2024, un año y medio en el pasado, y la
+// confirmó en voz alta como si nada. Es el mismo tropiezo que el agente de
+// ConversationRelay ya resuelve con su tabla de fechas.
+function hoyParaElModelo(lang) {
+  const f = new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', {
+    timeZone: 'America/Bogota', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }).format(new Date());
+  const iso = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+  return lang === 'es'
+    ? `\nHOY es ${f} (${iso}). Toda fecha que calcules parte de hoy y va en el FUTURO. Si el ciudadano dice un día sin año, es el próximo que caiga. Nunca uses un año distinto al de hoy salvo que la fecha ya haya pasado este año.`
+    : `\nTODAY is ${f} (${iso}). Every date you compute starts from today and lies in the FUTURE.`;
+}
+
 function buildSystem(agent, lang, context) {
   const persona = pick(agent.persona, lang, agent.defaultLang);
   const cta = pick(agent.cta, lang, agent.defaultLang);
@@ -140,9 +159,13 @@ function buildSystem(agent, lang, context) {
   const empty = lang === 'es'
     ? '(La página no envió contenido. Dilo con honestidad y pide que reformulen.)'
     : '(The page sent no content. Say so honestly and ask them to rephrase.)';
+  // Solo para los packs con herramientas: los orbes de landing no agendan nada
+  // y su prompt no tiene por qué moverse.
+  const fecha = agent.tools ? hoyParaElModelo(lang) : '';
+
   return `${persona}
 
-${rules}${cta ? '\n- ' + cta : ''}
+${rules}${cta ? '\n- ' + cta : ''}${fecha}
 
 ${header}
 ${context || empty}`;
