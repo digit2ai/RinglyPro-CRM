@@ -230,13 +230,17 @@
       '</div></div><div class="val">' + valueTxt + '</div><div class="meta">' + metaTxt + '</div></div>';
   }
   function metacard(m) {
-    var pct = m.objetivo_cop > 0 ? Math.max(0, Math.min(100, Math.round(m.actual_cop / m.objetivo_cop * 100))) : 0;
+    var head = '<div class="metacard"><div class="top"><span class="mi">' + IC_GOAL + '</span><div><div class="nm">' + esc(m.nombre) +
+      '</div><div class="de">' + esc(m.tipo || 'Meta') + '</div></div>';
+    // Meta CUALITATIVA (sin monto §17): sin barra ni %, se marca como cumplida.
+    if (!(m.objetivo_cop > 0)) {
+      return head + '</div><div class="pie" style="margin-top:12px"><span>Meta sin monto</span><span>Márcala como cumplida cuando la logres</span></div></div>';
+    }
+    var pct = Math.max(0, Math.min(100, Math.round(m.actual_cop / m.objetivo_cop * 100)));
     var rem = m.objetivo_cop - m.actual_cop;
-    var months = m.aporte_mensual_cop > 0 && rem > 0 ? Math.ceil(rem / m.aporte_mensual_cop) : null;
-    var right = months != null ? '<strong>' + months + ' meses</strong> restantes al ritmo actual'
-      : (rem <= 0 ? 'Meta cumplida' : 'Define un aporte mensual');
-    return '<div class="metacard"><div class="top"><span class="mi">' + IC_GOAL + '</span><div><div class="nm">' + esc(m.nombre) +
-      '</div><div class="de">' + esc(m.tipo || 'Meta') + '</div></div><div class="cif"><div class="a">' + cop(m.actual_cop) +
+    // §12/§17.4: NUNCA una proyección de plazo («N meses al ritmo actual»). Solo estado.
+    var right = rem <= 0 ? 'Meta cumplida' : 'Te falta ' + cop(rem);
+    return head + '<div class="cif"><div class="a">' + cop(m.actual_cop) +
       '</div><div class="o">de ' + cop(m.objetivo_cop) + '</div></div></div>' +
       '<div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="pie"><span><strong>' + pct + '%</strong> completado</span><span>' + right + '</span></div></div>';

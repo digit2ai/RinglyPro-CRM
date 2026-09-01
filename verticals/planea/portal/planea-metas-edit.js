@@ -31,15 +31,19 @@
 
   function formHtml() {
     var otro = selType === 'Otro';
+    // §17.2: la creación comienza con una pregunta abierta. §17: una meta puede ser
+    // CUALITATIVA (sin monto ni fecha) — no se le inventan valores para que encaje.
     return '<div class="me-form">' +
-      '<div class="me-h">Nueva meta</div>' +
+      '<div class="me-h">Crear una meta</div>' +
+      '<label class="me-l">¿Qué quieres lograr?</label><input class="me-in" id="me-name" placeholder="Ej: Comprar vivienda · Organizar mis deudas · Viajar">' +
       '<div class="me-types">' + TYPES.map(function (o) { return '<button class="me-type' + (o.t === selType ? ' on' : '') + '" data-type="' + o.t + '">' + svg(o.ic) + '<span>' + o.t + '</span></button>'; }).join('') + '</div>' +
       '<div id="me-custom-wrap" style="' + (otro ? '' : 'display:none') + '"><label class="me-l">Categoría personalizada</label><input class="me-in" id="me-custom" placeholder="Ej: Negocio, Boda, Fondo médico…" value="' + esc(customType) + '"></div>' +
-      '<label class="me-l">¿Para qué es?</label><input class="me-in" id="me-name" placeholder="Ej: Viaje a Cartagena">' +
-      '<div class="me-grid"><div><label class="me-l">Meta total ($)</label><div class="me-money"><span>$</span><input class="me-in" id="me-target" inputmode="numeric" placeholder="5.000.000"></div></div>' +
-      '<div><label class="me-l">Ya ahorrado ($)</label><div class="me-money"><span>$</span><input class="me-in" id="me-current" inputmode="numeric" placeholder="0"></div></div></div>' +
-      '<label class="me-l">Ahorro mensual estimado ($)</label><div class="me-money"><span>$</span><input class="me-in" id="me-monthly" inputmode="numeric" placeholder="200.000"></div>' +
-      '<div class="me-actions"><button class="me-cancel" data-me-cancel>Cancelar</button><button class="me-save" data-me-save>Agregar meta</button></div>' +
+      '<div class="me-grid"><div><label class="me-l">Meta total ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-target" inputmode="numeric" placeholder="5.000.000"></div></div>' +
+      '<div><label class="me-l">Ya tienes ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-current" inputmode="numeric" placeholder="0"></div></div></div>' +
+      '<label class="me-l">Aporte que estás dispuesto a hacer ($/mes) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-monthly" inputmode="numeric" placeholder="200.000"></div>' +
+      '<div class="me-hint">Una meta puede ser sin monto ni fecha (por ejemplo «organizar mis deudas»). Con el nombre basta para crearla.</div>' +
+      '<div class="me-err" id="me-err" hidden></div>' +
+      '<div class="me-actions"><button class="me-cancel" data-me-cancel>Cancelar</button><button class="me-save" data-me-save>Crear meta</button></div>' +
       '</div>';
   }
 
@@ -64,8 +68,10 @@
     var target = parseInt(digits(document.getElementById('me-target').value), 10) || 0;
     var current = parseInt(digits(document.getElementById('me-current').value), 10) || 0;
     var monthly = parseInt(digits(document.getElementById('me-monthly').value), 10) || 0;
-    if (!name || !target) { alert('Escribe para qué es y la meta total.'); return; }
-    if (!person) { alert('Inicia sesión para guardar tu meta.'); return; }
+    // Solo el nombre es obligatorio (§17: metas cualitativas sin monto). Mensaje EN LÍNEA.
+    var er = document.getElementById('me-err');
+    if (!name) { if (er) { er.textContent = 'Escribe qué quieres lograr.'; er.hidden = false; } var nmi = document.getElementById('me-name'); if (nmi) nmi.focus(); return; }
+    if (!person) { if (er) { er.textContent = 'Inicia sesión para guardar tu meta.'; er.hidden = false; } return; }
     // Custom category: when "Otro" is picked, use the free-text type the user entered.
     var customEl = document.getElementById('me-custom');
     customType = customEl ? customEl.value.trim() : customType;
@@ -98,6 +104,11 @@
   function boot() {
     mount = document.getElementById('metas-edit');
     if (!mount) return;
+    var st = document.createElement('style');
+    st.textContent = '#metas-edit .me-opt{color:var(--mut,#9db3ab);font-weight:500;font-size:11.5px}' +
+      '#metas-edit .me-hint{font-size:12px;color:var(--mut,#9db3ab);line-height:1.45;margin:10px 0 2px}' +
+      '#metas-edit .me-err{color:#e0705a;font-size:12.5px;margin-top:8px;font-weight:600}';
+    document.head.appendChild(st);
     render();
     mount.addEventListener('click', onClick);
     if (window.PlaneaSB && PlaneaSB.loggedIn()) PlaneaSB.person().then(function (pr) { person = pr; }).catch(function () {});
