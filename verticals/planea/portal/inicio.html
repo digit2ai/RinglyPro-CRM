@@ -36,64 +36,95 @@
   .pill-loc{position:relative;z-index:2;display:inline-flex;align-items:center;gap:9px;margin-top:16px;padding:9px 15px;border:1px solid rgba(255,255,255,.18);border-radius:99px;font-size:14px;font-weight:600;color:#fff}
   .pill-loc .dot{width:8px;height:8px;border-radius:50%;background:var(--greenb)}
   .pill-loc .m{color:rgba(234,241,236,.6);font-weight:500}
+  /* Bloque 2 — Puntaje Planea */
+  .pp-row{display:flex;align-items:center;gap:20px;margin-top:8px}
+  .pp-row .ring{width:120px;height:120px;flex:0 0 120px;position:relative}
+  .pp-row .ring svg{width:120px;height:120px}
+  .pp-row .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .pp-row .ring .num b{font-family:'Inter';font-weight:800;font-size:34px;line-height:1}
+  .pp-row .ring .num small{font-size:9px;letter-spacing:.16em;color:var(--mut);margin-top:2px}
+  .pp-side{flex:1;min-width:0}
+  .pp-rango{font-family:'Inter';font-style:italic;font-weight:700;font-size:18px;color:var(--greenb)}
+  .pp-evo{font-size:13px;color:var(--mut);margin-top:8px;line-height:1.45}
+  .pp-detalle{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  .pp-detalle summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--txt);list-style:none}
+  .pp-detalle summary::-webkit-details-marker{display:none}
+  .pp-detalle summary::after{content:'⌄';float:right;color:var(--mut)}
+  .pp-detalle[open] summary::after{content:'⌃'}
+  .pp-detalle > div{margin-top:12px}
+  /* Bloque 3 — Lo más importante */
+  .prio-card{background:linear-gradient(180deg,rgba(63,192,106,.08),transparent);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:6px}
+  .prio-nm{font-family:'Inter';font-weight:800;font-size:20px}
+  .prio-tx{color:var(--mut);font-size:14px;line-height:1.5;margin-top:6px}
+  .prio-card .btn{margin-top:14px}
+  /* Bloque 4 — Tu mes */
+  .mes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+  .mes-cell{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .mes-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .mes-val{font-family:'Inter';font-weight:800;font-size:20px;margin-top:5px;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
 <div class="app"><div class="wrap">
 
+  <!-- Bloque 1 · Saludo y contexto (Documento Maestro §16) -->
   <section class="hero">
     <div class="hero-top">
-      <div><h1 data-pl="saludo">Hola</h1><p class="lede">Tus propias finanzas en un solo lugar.</p></div>
-      <div class="ringw" id="hero-score" style="display:none">
-        <div class="ring">
-          <svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/></svg>
-          <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
-        </div>
-        <div class="cap">PUNTAJE PLANEA</div>
-        <div class="rango" data-pl="rango">Sin diagnóstico</div>
-      </div>
+      <div><h1 data-pl="saludo">Hola</h1><p class="lede" data-pl="resumen">Tus finanzas, en un solo lugar.</p></div>
     </div>
     <div class="divg"></div>
     <div class="hoy"><div class="lbl">HOY</div><div class="fecha" id="hoy-fecha">—</div></div>
     <span class="pill-loc"><span class="dot"></span>Tus finanzas <span class="m">· Colombia</span></span>
   </section>
 
+  <!-- Bloque 2 · Puntaje Planea -->
   <section class="sec">
-    <div class="sec-head"><div><h2>Tu patrimonio</h2><div class="sub">Cuánto has construido hasta hoy</div></div><a class="link" href="/planea/portal/patrimonio">Ver detalle →</a></div>
-    <div class="big-money"><span data-pl="patrimonio_total">$0</span><span class="cur">COP</span></div>
-    <div class="btn-row"><a class="btn primary" href="/planea/portal/patrimonio">Ver mi patrimonio →</a><a class="btn ghost" href="/planea/portal/cuentas">Conectar cuentas</a></div>
+    <div class="sec-head"><div><h2>Puntaje Planea</h2><div class="sub">Tu estructura financiera, en un número</div></div><a class="link" href="/planea/portal/diagnostico">Ver mi Puntaje Planea →</a></div>
+    <div class="pp-row">
+      <div class="ring">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="var(--card2)" stroke-width="8"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="#8fd9ac" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
+        <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
+      </div>
+      <div class="pp-side">
+        <div class="pp-rango" data-pl="rango">Sin diagnóstico</div>
+        <div class="pp-evo" data-pl="evolucion"></div>
+      </div>
+    </div>
+    <details class="pp-detalle"><summary>Detalle por área</summary>
+      <div data-pl-list="pilares8" data-pl-empty="Haz tu diagnóstico Planea para ver el detalle por área."></div>
+    </details>
   </section>
 
+  <!-- Bloque 3 · Lo más importante para ti (prioridad §14) -->
   <section class="sec">
-    <div class="sec-head"><div><h2>Balance</h2><div class="sub">Lo que tienes frente a lo que debes</div></div><a class="link" href="/planea/portal/patrimonio">Ver desglose →</a></div>
+    <div class="sec-head"><div><h2>Lo más importante para ti</h2><div class="sub">Tu prioridad en este momento</div></div><span class="badge">Prioridad</span></div>
+    <div class="prio-card">
+      <div class="prio-nm" data-pl="prioridad_nombre">Tu diagnóstico</div>
+      <p class="prio-tx" data-pl="prioridad_texto">Haz tu diagnóstico Planea para saber por dónde empezar.</p>
+      <a class="btn primary" data-pl-href="prioridad" href="/planea/portal/diagnostico">Ir a esta área →</a>
+    </div>
+  </section>
+
+  <!-- Bloque 4 · Tu mes -->
+  <section class="sec">
+    <div class="sec-head"><div><h2>Tu mes</h2><div class="sub">Lo que entra, lo que sale y lo que te queda</div></div></div>
+    <div class="mes-grid">
+      <div class="mes-cell"><div class="mes-lbl">Ingresos</div><div class="mes-val" data-pl="ingreso_total">$0</div></div>
+      <div class="mes-cell"><div class="mes-lbl">Gastos</div><div class="mes-val" data-pl="gasto_total">$0</div></div>
+      <div class="mes-cell"><div class="mes-lbl">Disponible</div><div class="mes-val" data-pl="disponible_total">$0</div></div>
+      <div class="mes-cell"><div class="mes-lbl">Tasa de ahorro</div><div class="mes-val" data-pl="tasa_ahorro">—</div></div>
+    </div>
+  </section>
+
+  <!-- Bloque 5 · Patrimonio -->
+  <section class="sec">
+    <div class="sec-head"><div><h2>Patrimonio</h2><div class="sub">Cuánto has construido hasta hoy</div></div><a class="link" href="/planea/portal/patrimonio">Ver detalle →</a></div>
+    <div class="big-money"><span data-pl="patrimonio_total">$0</span><span class="cur">COP</span></div>
     <div class="bars">
       <div class="bar"><div class="cab"><span class="lbl">Activos</span><span class="val" data-pl="activos_total">$0</span></div><div class="track"><div class="fill" data-pl-bar="activos" style="width:0%"></div></div></div>
       <div class="bar neg"><div class="cab"><span class="lbl">Pasivos</span><span class="val" data-pl="pasivos_total">$0</span></div><div class="track"><div class="fill" data-pl-bar="pasivos" style="width:0%"></div></div></div>
     </div>
-  </section>
-
-  <section class="sec">
-    <div class="sec-head"><div><h2>Fondo de emergencia</h2><div class="sub">Tu meta más prioritaria en este momento</div></div><span class="badge">Prioridad alta</span></div>
-    <div data-pl-list="fondo_emergencia" data-pl-empty="Aún no defines tu fondo de emergencia. Habla con Maya para dar el primer paso."></div>
-    <div class="btn-row"><a class="btn primary" href="/planea/portal/metas">Aportar ahora →</a><a class="btn ghost" href="/planea/portal/metas">Ver todas mis metas</a></div>
-  </section>
-
-  <section class="sec">
-    <div class="card" data-pl-insight><span class="tagline">Maya sugiere</span><h3 data-pl-insight-goal>Haz tu diagnóstico Planea</h3><p data-pl-insight-msg>Responde 8 preguntas y Maya te dice exactamente por dónde empezar.</p><a class="btn primary" data-pl-insight-cta style="margin-top:16px" href="/planea/portal/diagnostico">Empezar diagnóstico →</a></div>
-  </section>
-
-  <section class="sec">
-    <h2>Próximos pasos sugeridos por Maya</h2><div class="sub">Acciones concretas para mejorar tu Planea Score</div>
-    <div class="steps">
-      <div class="step"><div class="n">1</div><h4>Haz tu diagnóstico Planea</h4><p>Responde el cuestionario de dos minutos para calcular tu Planea Score real y ver tus puntos débiles.</p><a class="link" href="/planea/portal/diagnostico">Empezar diagnóstico →</a></div>
-      <div class="step"><div class="n">2</div><h4>Registra tu patrimonio</h4><p>Agrega tus activos y deudas para que Maya te dé recomendaciones basadas en tu realidad, no en promedios.</p><a class="link" href="/planea/portal/patrimonio">Ver mi patrimonio →</a></div>
-      <div class="step"><div class="n">3</div><h4>Conecta tus cuentas</h4><p>Al vincular tus cuentas bancarias mantenemos tus cifras al día y mejoramos tu Planea Score.</p><a class="link" href="/planea/portal/cuentas">Conectar cuenta →</a></div>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sec-head"><div><h2>Tus pilares financieros</h2><div class="sub">Avance en cada área de tu diagnóstico</div></div><a class="link" href="#" data-action="maya">Planea IA →</a></div>
-    <div data-pl-list="pilares" data-pl-empty="Haz tu diagnóstico Planea para ver el avance de tus pilares financieros."></div>
+    <div class="btn-row"><a class="btn primary" href="/planea/portal/patrimonio">Ver mi patrimonio →</a></div>
   </section>
 
 </div></div>
@@ -108,24 +139,9 @@
     } catch (e) {}
   })();
 
-  // Item 2 del acta: tras el onboarding el Puntaje Planea se OCULTA del panel. Persiste
-  // en la base de datos y solo se vuelve a mostrar si el usuario lo activa
-  // (finance_meta.mi_puntaje_visible === true) desde Maya. La Salud Financiera gobierna
-  // el panel. Arranca oculto para no parpadear; se revela si el flag lo pide.
-  (function () {
-    var el = document.getElementById('hero-score'); if (!el) return;
-    function show(v) { el.style.display = v ? '' : 'none'; }
-    try { if (localStorage.getItem('planea-mipuntaje-visible') === '1') show(true); } catch (e) {}
-    try {
-      fetch('/planea/api/v1/me/profile', { credentials: 'include' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { var fm = (d && d.finance_meta) || {}; show(fm.mi_puntaje_visible === true); })
-        .catch(function () {});
-    } catch (e) {}
-  })();
 </script>
 <script src="/planea/portal/planea-nav.js?v=68" defer></script>
-<script src="/planea/portal/planea-data.js?v=62" defer></script>
+<script src="/planea/portal/planea-data.js?v=63" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
 </body>
 </html>

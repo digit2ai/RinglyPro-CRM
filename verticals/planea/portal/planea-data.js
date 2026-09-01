@@ -42,10 +42,30 @@
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (email ? email.slice(0, 2) : 'PL').toUpperCase();
   }
+  // Rangos §7 del Documento Maestro (0-35 / 36-52 / 53-68 / 69-83 / 84-100).
   function rangoDe(s) {
-    return s <= 30 ? 'Punto de partida' : s <= 50 ? 'Construyendo' : s <= 70 ? 'En camino' : s <= 85 ? 'Sólido' : 'Planeado';
+    return s <= 35 ? 'Punto de partida' : s <= 52 ? 'Construyendo' : s <= 68 ? 'En camino' : s <= 83 ? 'Sólido' : 'Planeado';
   }
   function num(x) { var v = +x; return isNaN(v) ? 0 : v; }
+
+  // ── Los 8 pilares oficiales (Documento Maestro §2), su etiqueta y su sección ──
+  var PIL8 = [['ahorro', 'Ahorro'], ['flujo', 'Flujo de Caja'], ['deuda', 'Deuda'], ['retiro', 'Retiro / Pensión'], ['seguros', 'Seguros'], ['inversion', 'Inversión'], ['impuestos', 'Impuestos'], ['patrimonio', 'Patrimonio y Sucesión']];
+  var PIL_LABEL = { ahorro: 'Ahorro', flujo: 'Flujo de Caja', deuda: 'Deuda', retiro: 'Retiro / Pensión', seguros: 'Seguros', inversion: 'Inversión', impuestos: 'Impuestos', patrimonio: 'Patrimonio y Sucesión' };
+  var PIL_SECTION = { ahorro: 'ahorro', flujo: 'ingreso', deuda: 'deuda', retiro: 'retiro', seguros: 'seguros', inversion: 'inversion', impuestos: 'impuestos', patrimonio: 'patrimonio' };
+  function prioKey(prof) { return prof.prioridad && prof.prioridad.principal ? prof.prioridad.principal : null; }
+  function prioNombre(prof) { var k = prioKey(prof); return k ? (PIL_LABEL[k] || k) : 'Tu diagnóstico'; }
+  function prioTexto(prof) {
+    if (prof.sin_diagnostico) return 'Haz tu diagnóstico Planea para saber por dónde empezar.';
+    var k = prioKey(prof);
+    if (!k) return 'Registra tu información para afinar tu plan.';
+    return 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.';
+  }
+  function resumenLine(prof) {
+    if (prof.sin_diagnostico) return 'Empieza tu diagnóstico para ver tu panorama en un solo lugar.';
+    var k = prioKey(prof);
+    if (k) return 'Hoy tu mayor palanca es ' + (PIL_LABEL[k] || k).toLowerCase() + '.';
+    return 'Tus finanzas, en un solo lugar.';
+  }
 
   function sbSession() {
     try {
@@ -160,6 +180,12 @@
       case 'ahorro_total': return cop(prof.ahorro_total_cop || 0);
       case 'inversion_total': return cop(prof.inversion_total_cop || 0);
       case 'metas_count': return String((prof.metas || []).length);
+      case 'disponible_total': return cop(prof.disponible_cop || 0);
+      case 'tasa_ahorro': return prof.tasa_ahorro == null ? '—' : prof.tasa_ahorro + '%';
+      case 'resumen': return resumenLine(prof);
+      case 'evolucion': return prof.evolucion || '';
+      case 'prioridad_nombre': return prioNombre(prof);
+      case 'prioridad_texto': return prioTexto(prof);
       default: return null;
     }
   }
@@ -252,7 +278,14 @@
       } else if (type === 'metas') {
         rows = prof.metas || [];
         html = rows.map(metacard).join('');
+      } else if (type === 'pilares8') {
+        // Detalle por área: los 8 pilares oficiales (Documento Maestro §2 / §10 / Doc 2 §2.4).
+        var p8 = prof.pilares8;
+        if (!prof.sin_diagnostico && p8) {
+          html = PIL8.map(function (pl) { return pilarRow(pl[1], p8[pl[0]]); }).join('');
+        }
       } else if (type === 'pilares') {
+        // (legacy 4-pilares — retirado de Inicio; se mantiene el hook por compat)
         var pp = prof.score_pilares_pct;
         if (!prof.sin_diagnostico && pp) {
           html = pilarRow('Fondo de emergencia', pp.fondo_emergencia) +
@@ -320,11 +353,22 @@
     }
   }
 
+  // Enlaces dinámicos (data-pl-href="prioridad" → sección del pilar prioritario).
+  function fillHrefs(prof) {
+    document.querySelectorAll('[data-pl-href]').forEach(function (a) {
+      if (a.getAttribute('data-pl-href') === 'prioridad') {
+        var k = prioKey(prof), sec = k ? (PIL_SECTION[k] || 'diagnostico') : 'diagnostico';
+        a.setAttribute('href', '/planea/portal/' + sec);
+      }
+    });
+  }
+
   function render(prof) {
     try { fillScalars(prof); } catch (e) {}
     try { fillRing(prof); } catch (e) {}
     try { fillBars(prof); } catch (e) {}
     try { fillLists(prof); } catch (e) {}
+    try { fillHrefs(prof); } catch (e) {}
     try { fillInsight(prof); } catch (e) {}
     try { updateNav(prof); } catch (e) {}
     document.body.classList.add('pl-data-ready');
@@ -379,6 +423,16 @@
             salud_deuda: pl.debt_health != null ? pl.debt_health : null,
             estabilidad: pl.stability != null ? pl.stability : null
           };
+          // Los 8 pilares oficiales + la prioridad (del motor §6/§14) viven en score_data.
+          prof.pilares8 = (sd.pilares && typeof sd.pilares === 'object') ? sd.pilares : null;
+          prof.prioridad = (sd.prioridad && typeof sd.prioridad === 'object') ? sd.prioridad : null;
+          // Evolución §9.2: solo cuando el puntaje cambió respecto del resultado inicial.
+          var hist = Array.isArray(sd.history) ? sd.history : [];
+          prof.evolucion = null;
+          if (hist.length > 1) {
+            var d0 = num(hist[hist.length - 1].score) - num(hist[0].score);
+            if (d0 !== 0) prof.evolucion = (d0 > 0 ? 'Subió ' : 'Bajó ') + Math.abs(d0) + (Math.abs(d0) === 1 ? ' punto' : ' puntos') + ' desde tu diagnóstico inicial, al registrar tu información real.';
+          }
         } else {
           prof.sin_diagnostico = true;
         }
@@ -399,6 +453,10 @@
         prof.pasivos_total_cop = num(sum.deuda);             // debt balances
         prof.deuda_cuota_cop = num(sum.deuda_cuota);
         prof.patrimonio_neto_cop = num(sum.patrimonio_neto);
+        // «Tu mes» §16 bloque 4: disponible = ingresos − gastos (no descuenta deuda ni ahorro);
+        // tasa de ahorro = disponible / ingreso.
+        prof.disponible_cop = num(sum.ingreso) - num(sum.gasto);
+        prof.tasa_ahorro = num(sum.ingreso) > 0 ? Math.round(prof.disponible_cop / num(sum.ingreso) * 100) : null;
 
         prof.ingresos = byCat('ingreso').map(toRow);
         prof.gastos = byCat('gasto').map(toRow);
