@@ -1191,7 +1191,9 @@ app.get('/docs/enterprise-architecture', (req, res) => {
 // from any host, embedded in an iframe, or opened straight off a laptop with no
 // network at all — which is how it gets presented in a boardroom.
 // Every figure on screen is synthetic and labelled as such; nothing here is BDT data.
-app.get(['/ComplianceMind_Demo_BDT.html', '/compliancemind-demo'], (req, res) => {
+// Path is matched case-insensitively on purpose: the deck gets linked from GHL,
+// from email and from chat, and each one rewrites the capitalisation differently.
+app.get(['/ComplianceMind_Demo_BDT.html', '/compliancemind_demo_bdt.html', '/compliancemind-demo'], (req, res) => {
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy',
     "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
