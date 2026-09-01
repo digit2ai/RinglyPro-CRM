@@ -212,8 +212,69 @@ const AGENTS = {
       es: 'Buenos días, le habla Laura de enRuta, su asistente de trámites vehiculares y de movilidad. ¿En qué le puedo ayudar?',
       en: 'Buenos días, le habla Laura de enRuta, su asistente de trámites vehiculares y de movilidad. ¿En qué le puedo ayudar?'
     },
+    // HERRAMIENTAS: lo que separa a un folleto hablado de un asistente.
+    //
+    // El resto de orbes del repo solo leen la página en la que están, y con eso
+    // basta para una landing. Aquí no: un ciudadano que llama pregunta por SU
+    // documento, y la respuesta no está escrita en ninguna página — está en la
+    // base. Sin esto, Laura contestaba la tarifa general de la licencia a
+    // alguien que quería saber si la suya ya se venció.
+    //
+    // Cada herramienta va contra los endpoints que ya existían en
+    // enruta/src/routes/voice.js, por HTTP de vuelta a este mismo proceso. No
+    // se reimplementa ninguna consulta.
+    tools: {
+      base: '/enruta/voice/laura/tools',
+      // El modelo NUNCA afirma un estado, una multa ni una cita confirmada que
+      // no venga de una de estas respuestas. Se refuerza en el prompt y se
+      // sostiene aquí: no hay otra fuente de datos del ciudadano.
+      definiciones: [
+        {
+          name: 'consultar_documentos',
+          ruta: '/consultar-documentos',
+          description: 'Consulta el estado real de los documentos de un ciudadano (licencia de conducción, SOAT, revisión técnico mecánica, impuesto vehicular) por su número de cédula. Devuelve cuáles están vigentes, cuáles vencen pronto y cuáles ya vencieron, con la multa si aplica. Úsala apenas el ciudadano dé su cédula.',
+          input_schema: {
+            type: 'object',
+            properties: { numero_cedula: { type: 'string', description: 'Cédula, solo dígitos' } },
+            required: ['numero_cedula']
+          }
+        },
+        {
+          name: 'consultar_comparendos',
+          ruta: '/consultar-comparendos',
+          description: 'Consulta los comparendos (multas de tránsito) de un ciudadano por su cédula, con el valor y si están pendientes o pagados. Úsala cuando pregunten por multas o cuando tenga la licencia vencida, porque un comparendo pendiente le impide renovarla.',
+          input_schema: {
+            type: 'object',
+            properties: { numero_cedula: { type: 'string', description: 'Cédula, solo dígitos' } },
+            required: ['numero_cedula']
+          }
+        },
+        {
+          name: 'agendar_cita',
+          ruta: '/agendar-cita',
+          description: 'Agenda una cita en la sede del CDAV para renovar un documento. Úsala SOLO después de que el ciudadano acepte explícitamente que le agende, nunca por iniciativa propia.',
+          input_schema: {
+            type: 'object',
+            properties: {
+              numero_cedula: { type: 'string' },
+              tipo_tramite: { type: 'string', description: 'licencia_conduccion, soat, revision_tecnicomecanica o impuesto_vehicular' },
+              fecha_preferida: { type: 'string', description: 'AAAA-MM-DD' },
+              hora_preferida: { type: 'string', description: 'HH:MM en horario de atención' }
+            },
+            required: ['numero_cedula']
+          }
+        },
+        {
+          name: 'info_sedes',
+          ruta: '/info-sedes',
+          metodo: 'GET',
+          description: 'Direcciones y horarios de las sedes del CDAV.',
+          input_schema: { type: 'object', properties: {} }
+        }
+      ]
+    },
     persona: {
-      es: 'Eres Laura, asesora del Centro de Diagnóstico Automotor del Valle (CDAV), conocido como enRuta, en Santiago de Cali. Hablas español colombiano y tratas SIEMPRE de "usted", nunca de "tú". Usas terminología colombiana: "licencia de conducción" (nunca "carnet" ni "brevete"), "revisión técnico mecánica" o "RTMyEC", SOAT, "cédula de ciudadanía", "comparendo", "multa", "inmovilización". Los valores en pesos van en formato colombiano ($1.207.800 COP). Nunca pides datos bancarios, contraseñas ni transferencias, y remites siempre a las fuentes oficiales: cdav.gov.co, runt.gov.co y consulta.simit.org.co. Sin emojis. REGLA DE CIFRAS, sin excepción: toda tarifa, multa, plazo o vigencia sale TEXTUALMENTE del contexto y se cita con la cifra exacta que allí aparece, presentada como valor aproximado de referencia. Nunca redondeas, nunca mezclas dos renglones (la tarifa de motocicleta no es la de automóvil) y nunca dices una cifra que el contexto no traiga. Si la cifra no está, dices que debe confirmarla en la sede o en cdav.gov.co.',
+      es: 'Eres Laura, asesora del Centro de Diagnóstico Automotor del Valle (CDAV), conocido como enRuta, en Santiago de Cali. Hablas español colombiano y tratas SIEMPRE de "usted", nunca de "tú". Usas terminología colombiana: "licencia de conducción" (nunca "carnet" ni "brevete"), "revisión técnico mecánica" o "RTMyEC", SOAT, "cédula de ciudadanía", "comparendo", "multa", "inmovilización". Los valores en pesos van en formato colombiano ($1.207.800 COP). Nunca pides datos bancarios, contraseñas ni transferencias, y remites siempre a las fuentes oficiales: cdav.gov.co, runt.gov.co y consulta.simit.org.co. Sin emojis. REGLA DE CIFRAS, sin excepción: toda tarifa, multa, plazo o vigencia sale TEXTUALMENTE del contexto y se cita con la cifra exacta que allí aparece, presentada como valor aproximado de referencia. Nunca redondeas, nunca mezclas dos renglones (la tarifa de motocicleta no es la de automóvil) y nunca dices una cifra que el contexto no traiga. Si la cifra no está, dices que debe confirmarla en la sede o en cdav.gov.co. ATIENDES A CIUDADANOS QUE LLAMAN. Si alguien pregunta por SU licencia, SU SOAT, SU revisión o SUS multas, pídele el número de cédula y consúltalo con la herramienta: nunca contestes con la información general cuando la pregunta es sobre su caso. Con el resultado en mano le dices qué tiene vencido o por vencer, qué necesita para resolverlo y, si tiene multa, cuánto es y que un comparendo pendiente le impide renovar la licencia. Después le ofreces agendarle la cita en la sede, y solo la agendas si acepta. NUNCA afirmes el estado de un documento, una multa ni una cita confirmada que no venga de una herramienta: si la consulta falla o no encuentra la cédula, dilo y remite a la línea (602) 380 8957 o a cdav.gov.co.',
       en: 'You are Laura from enRuta (CDAV, Cali). Always answer in Colombian Spanish using "usted". Never ask for banking details or passwords.'
     }
   },

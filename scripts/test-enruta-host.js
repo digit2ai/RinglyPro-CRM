@@ -68,6 +68,39 @@ srv.listen(0, async () => {
   const crmRaiz = await pedir('/health', 'aiagent.ringlypro.com');
   ok('aiagent.ringlypro.com/health NO lo secuestra ENRUTA', crmRaiz.s === 200 && !/Vehicle Document/.test(crmRaiz.b), `-> ${crmRaiz.s}`);
 
+  // ── Herramientas del orbe: que el cerebro pueda abrir un expediente ──
+  console.log('\n-- herramientas del orbe --');
+  const { getAgent } = require('../src/config/voice-agents');
+  const laura = getAgent('enruta');
+  ok('la persona enruta declara herramientas',
+     !!(laura.tools && laura.tools.definiciones.length === 4),
+     (laura.tools ? laura.tools.definiciones.map(d => d.name).join(',') : 'ninguna'));
+  // El resto de orbes no puede haber ganado herramientas sin querer: el orbe de
+  // una landing que de pronto consulta bases de datos es una regresión, no un
+  // avance.
+  ok('los demás packs siguen sin herramientas',
+     ['digit2ai', 'camaravirtual', 'pacccfl', 'visionarium', 'rachel'].every(id => !getAgent(id).tools));
+  ok('cada herramienta declara su ruta y su esquema',
+     laura.tools.definiciones.every(d => d.ruta && d.input_schema && d.description));
+
+  // Las rutas declaradas tienen que existir de verdad: una definición que
+  // apunta a un 404 hace que Laura diga "no pude consultar" para siempre.
+  for (const d of laura.tools.definiciones) {
+    const ruta = laura.tools.base + d.ruta;
+    const r = d.metodo === 'GET'
+      ? await pedir(ruta, 'aiagent.ringlypro.com')
+      : await new Promise((resolver) => {
+        const cuerpo = JSON.stringify({ numero_cedula: '0' });
+        const req2 = http.request({
+          port, path: ruta, method: 'POST',
+          headers: { host: 'aiagent.ringlypro.com', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(cuerpo) }
+        }, (res) => { let b = ''; res.on('data', (c) => (b += c)); res.on('end', () => resolver({ s: res.statusCode, b })); });
+        req2.on('error', (e) => resolver({ s: 0, b: e.message }));
+        req2.end(cuerpo);
+      });
+    ok(`${d.name} responde en ${ruta}`, r.s !== 404 && !/Endpoint not found/.test(r.b), `-> ${r.s}`);
+  }
+
   srv.close();
   console.log(`\n=== ${pasa} ok, ${falla} fallas ===`);
   process.exit(falla ? 1 : 0);

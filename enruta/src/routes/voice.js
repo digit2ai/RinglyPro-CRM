@@ -13,7 +13,7 @@ const {
   EnrutaRenovacion,
   sequelize
 } = require('../../models');
-const { whereEstado, sqlPrioridad } = require('../utils/estado');
+const { whereEstado, sqlPrioridad, hoyBogota, sumarDias } = require('../utils/estado');
 const { LAURA_SYSTEM_PROMPT, LAURA_CONOCIMIENTO, generateLauraContext, getMessageTemplate } = require('../../prompts/laura-agent');
 
 // GET /voice/laura/prompt - Prompt completo de Laura (guiones de llamada incluidos)
@@ -644,18 +644,45 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
 
     const referencia = `CITA-${Date.now().toString(36).toUpperCase()}`;
 
+    // LA REFERENCIA SE GUARDA. Antes se generaba, se le dictaba al ciudadano y
+    // no se escribía en ninguna columna: llegaba a la sede con un número que no
+    // existía. `referencia_cita` es el campo del modelo.
+    //
+    // La hora también se perdía: se pasaba `hora_cita`, que NO es una columna
+    // de EnrutaRenovacion, y Sequelize descarta en silencio lo que no conoce.
+    // Ahora fecha y hora se combinan en `fecha_cita`, que sí es un timestamp,
+    // en horario de Colombia. Lo mismo pasaba con `tipo_tramite`, que ahora
+    // viaja en el historial.
+    const hora = /^\d{1,2}:\d{2}$/.test(String(hora_preferida || '')) ? hora_preferida : '09:00';
+    const fechaBase = /^\d{4}-\d{2}-\d{2}$/.test(String(fecha_preferida || ''))
+      ? fecha_preferida
+      : sumarDias(hoyBogota(), 3);
+    const cuando = new Date(`${fechaBase}T${hora.padStart(5, '0')}:00-05:00`);
+
+    // Se ata la cita al documento que la motiva cuando se sabe cuál es, para
+    // que la renovación no quede colgando de nadie.
+    const documento = tipo_tramite
+      ? await EnrutaDocumento.findOne({
+        where: { cliente_id: cliente.id, tipo_documento: tipo_tramite },
+        order: [['fecha_vencimiento', 'ASC']]
+      })
+      : null;
+
     await EnrutaRenovacion.create({
       tenant_id: cliente.tenant_id,
       cliente_id: cliente.id,
+      documento_id: documento ? documento.id : null,
       estado_renovacion: 'cita_agendada',
-      fecha_cita: fecha_preferida || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-      hora_cita: hora_preferida || '09:00',
+      fecha_cita: cuando,
       sede_cita: sede?.nombre_sede || 'CDAV Sede Principal',
-      tipo_tramite: tipo_tramite || 'renovacion_licencia',
+      referencia_cita: referencia,
+      costo_estimado_cop: documento ? documento.costo_estimado_renovacion : null,
+      iniciada_en: new Date(),
       historial_estados: [{
         estado: 'cita_agendada',
         fecha: new Date().toISOString(),
-        nota: 'Cita agendada por Laura via llamada telefónica'
+        tramite: tipo_tramite || null,
+        nota: 'Cita agendada por Laura'
       }]
     });
 
@@ -666,12 +693,15 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
       success: true,
       cita: {
         referencia,
-        fecha: fecha_preferida || 'Por confirmar',
-        hora: hora_preferida || '9:00 AM',
+        fecha: fechaBase,
+        hora,
         sede: sedeInfo,
-        horario: horario
+        horario,
+        costo_estimado_cop: documento ? documento.costo_estimado_renovacion : null
       },
-      mensaje_para_usuario: `Perfecto señor/a ${cliente.nombre_completo}, le agendé su cita. Su número de referencia es ${referencia}. Lo esperamos en ${sedeInfo}. Recuerde traer su cédula original y el examen médico vigente. Le enviaré un mensaje de texto con todos los detalles.`
+      // Sin promesa de SMS: nada en este sistema envía uno hoy, y una cita que
+      // el ciudadano espera confirmar por mensaje es una cita a la que no llega.
+      mensaje_para_usuario: `Listo, señor o señora ${cliente.nombre_completo}, le agendé la cita para el ${fechaBase} a las ${hora}. Su número de referencia es ${referencia}, anótelo. Lo esperamos en ${sedeInfo}. Recuerde llevar su cédula original y los demás requisitos del trámite.`
     });
 
   } catch (error) {

@@ -31,8 +31,74 @@ const MAX_TURNS = 12;
 const MAX_CONTEXT = 9000;   // chars of page text handed to the model
 const MAX_MSG = 1200;
 
+const MAX_RONDAS_HERRAMIENTA = 4;   // ida y vuelta con el modelo antes de rendirse
+const TOOL_TIMEOUT_MS = 8000;
+const TOOL_LIMITE_HORA = Number(process.env.VOICE_AGENT_TOOL_CALLS_PER_HOUR || 60);
+
 function isConfigured() {
   return !!process.env.ANTHROPIC_API_KEY;
+}
+
+// ── HERRAMIENTAS (opt-in por pack) ────────────────────────────────────────
+//
+// Casi todos los orbes solo leen la página en la que están: para una landing
+// eso basta y es lo que los hace honestos. Pero un orbe que ATIENDE a alguien
+// necesita mirar el expediente de quien pregunta, y eso no está escrito en
+// ninguna página. Un pack puede declarar `tools`; el que no lo hace se
+// comporta exactamente igual que antes — nada de esto se activa sin la
+// declaración.
+//
+// Las herramientas se ejecutan por HTTP de vuelta a este mismo proceso, contra
+// endpoints que ya existen. Aquí no se reimplementa ninguna consulta: si la de
+// ENRUTA cambia, esto la sigue sin enterarse.
+
+function loopbackBase() {
+  return `http://127.0.0.1:${process.env.PORT || 3000}`;
+}
+
+// El orbe es una superficie pública. Un techo por IP evita que la ventana de
+// consulta se convierta en un raspador de expedientes a punta de fuerza bruta.
+const _toolHits = new Map();
+function excedeLimite(ip) {
+  const ahora = Date.now();
+  const hits = (_toolHits.get(ip) || []).filter((t) => ahora - t < 3600000);
+  if (hits.length >= TOOL_LIMITE_HORA) { _toolHits.set(ip, hits); return true; }
+  hits.push(ahora);
+  _toolHits.set(ip, hits);
+  if (_toolHits.size > 5000) {
+    for (const [k, v] of _toolHits) if (!v.some((t) => ahora - t < 3600000)) _toolHits.delete(k);
+  }
+  return false;
+}
+
+async function ejecutarHerramienta(agent, nombre, argumentos) {
+  const def = (agent.tools.definiciones || []).find((d) => d.name === nombre);
+  // Un nombre que no está declarado no se llama: el modelo no elige la URL.
+  if (!def) return { error: `herramienta desconocida: ${nombre}` };
+
+  const url = loopbackBase() + agent.tools.base + def.ruta;
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), TOOL_TIMEOUT_MS);
+  try {
+    const opciones = def.metodo === 'GET'
+      ? { method: 'GET', signal: ctl.signal }
+      : {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(argumentos || {}),
+        signal: ctl.signal
+      };
+    const r = await fetch(url, opciones);
+    const cuerpo = await r.json().catch(() => null);
+    if (!cuerpo) return { error: `la consulta respondió ${r.status} sin datos` };
+    return cuerpo;
+  } catch (e) {
+    // Se devuelve el fallo AL MODELO, no una respuesta vacía: así dice que no
+    // pudo consultar en vez de inventar un estado.
+    return { error: `no se pudo consultar: ${e.name === 'AbortError' ? 'tiempo agotado' : e.message}` };
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 function cleanContext(raw) {
@@ -150,6 +216,16 @@ router.post('/chat', async (req, res) => {
   const askedText = lastUser ? lastUser.content : '';
 
   if (!isConfigured()) {
+    // Sin modelo no hay consulta posible: un agente con herramientas que
+    // responde de memoria es peor que uno que admite que no puede mirar.
+    if (agent.tools) {
+      return res.json({
+        reply: lang === 'es'
+          ? 'En este momento no puedo consultar su expediente. Puede llamar a la línea de atención al seis cero dos, tres ocho cero, ocho nueve cinco siete.'
+          : "I can't look up your record right now. Please call the service line.",
+        source: 'heuristic', degraded: true
+      });
+    }
     return res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic' });
   }
 
@@ -157,12 +233,49 @@ router.post('/chat', async (req, res) => {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 400,
-      system: buildSystem(agent, lang, context),
-      messages
-    });
+    const conHerramientas = !!(agent.tools && Array.isArray(agent.tools.definiciones) && agent.tools.definiciones.length);
+    const tools = conHerramientas
+      ? agent.tools.definiciones.map(({ name, description, input_schema }) => ({ name, description, input_schema }))
+      : undefined;
+
+    // El historial crece dentro del bucle: cada resultado de herramienta vuelve
+    // como un turno, que es como el modelo lo lee.
+    const hilo = messages.slice();
+    const usadas = [];
+    let response = null;
+
+    for (let ronda = 0; ronda < (conHerramientas ? MAX_RONDAS_HERRAMIENTA : 1); ronda++) {
+      response = await client.messages.create({
+        model: MODEL,
+        max_tokens: 400,
+        system: buildSystem(agent, lang, context),
+        messages: hilo,
+        ...(tools ? { tools } : {})
+      });
+
+      const pedidos = (response.content || []).filter((b) => b.type === 'tool_use');
+      if (!pedidos.length) break;
+
+      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || 'desconocida';
+      hilo.push({ role: 'assistant', content: response.content });
+
+      const resultados = [];
+      for (const p of pedidos) {
+        let salida;
+        if (excedeLimite(ip)) {
+          salida = { error: 'límite de consultas alcanzado, intente más tarde' };
+        } else {
+          salida = await ejecutarHerramienta(agent, p.name, p.input);
+          usadas.push(p.name);
+        }
+        resultados.push({
+          type: 'tool_result',
+          tool_use_id: p.id,
+          content: JSON.stringify(salida).slice(0, 6000)
+        });
+      }
+      hilo.push({ role: 'user', content: resultados });
+    }
 
     const reply = (response.content || [])
       .filter((b) => b.type === 'text')
@@ -171,9 +284,19 @@ router.post('/chat', async (req, res) => {
       .trim();
 
     if (!reply) {
+      // Si se acabaron las rondas con el modelo todavía pidiendo datos, se dice
+      // que no se pudo resolver. Una respuesta vacía se oiría como un cuelgue.
+      if (usadas.length) {
+        return res.json({
+          reply: lang === 'es'
+            ? 'No logré completar la consulta en este momento. Puede intentarlo de nuevo o llamar a la línea de atención.'
+            : "I couldn't complete that lookup right now. Please try again or call the service line.",
+          source: 'model', tools_used: usadas, incomplete: true
+        });
+      }
       return res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic' });
     }
-    res.json({ reply, source: 'model' });
+    res.json({ reply, source: 'model', ...(usadas.length ? { tools_used: usadas } : {}) });
   } catch (err) {
     console.error('[voice-agent]', err.message);
     res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic', degraded: true });
