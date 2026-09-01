@@ -3,32 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Planea — Retiro</title>
+<title>Planea — Retiro / Pensión</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/planea/portal/planea-app.css?v=51">
+<style>
+  .rp-row{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .rp-row label{font-size:12.5px;font-weight:700}
+  .rp-row select{width:100%;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;color:var(--txt);outline:none}
+  .rp-row select:focus{border-color:var(--green)}
+  .rp-note{font-size:12.5px;color:var(--green);margin-top:12px;font-weight:600;line-height:1.5}
+</style>
 </head>
 <body>
 <div class="app"><div class="wrap">
 
-  <div class="phead"><div><h1>Retiro</h1><p class="lede">¿Cuánto necesitas para retirarte tranquilo? Empecemos por lo que ya tienes.</p></div></div>
+  <div class="phead"><div><h1>Retiro / Pensión</h1><p class="lede">Entiende cómo estás construyendo tu retiro y qué recursos tienes destinados a ese propósito.</p></div></div>
 
-  <div class="eyebrow">Ahorrado para tu retiro</div>
+  <div class="eyebrow">Recursos registrados para tu retiro</div>
   <div class="big-money"><span data-pl="retiro_total">$0</span><span class="cur">COP</span></div>
 
   <div class="divider-h"></div>
 
+  <!-- Tu plan de retiro §25 — tiempo cotizado + régimen. Fuente de DATO REAL del pilar:
+       al cambiar, recalcula el subpuntaje (sin ellos el pilar no evoluciona). -->
   <div class="group">
-    <div class="group-head"><div><div class="gt">Tus fondos para el retiro</div><div class="gs">Todo lo que hoy trabaja para tu futuro</div></div></div>
+    <div class="group-head"><div><div class="gt">Tu plan de retiro</div><div class="gs">Tiempo cotizado y régimen — afinan tu Puntaje Planea</div></div></div>
+    <div class="group-body">
+      <div class="rp-row"><label>¿Cuánto tiempo llevas cotizando a pensión?</label>
+        <select id="rp-tiempo"><option value="">Selecciona…</option><option value="menos5">Menos de 5 años</option><option value="5a15">Entre 5 y 15 años</option><option value="mas15">Más de 15 años</option><option value="nocotizo">No cotizo</option><option value="nose">No sé</option></select></div>
+      <div class="rp-row"><label>¿En qué régimen de pensión estás?</label>
+        <select id="rp-regimen"><option value="">Selecciona…</option><option value="colpensiones">Colpensiones</option><option value="privado">Fondo privado</option><option value="ninguno">En ninguno</option><option value="nose">No sé en cuál estoy</option></select></div>
+      <div class="rp-note" id="rp-note"></div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><div><div class="gt">Tus recursos para el retiro</div><div class="gs">Todo lo que hoy trabaja para tu futuro</div></div></div>
     <div class="group-body"><div id="mod-edit" data-cat="retiro"></div></div>
   </div>
 
 </div></div>
+<script src="/planea/portal/planea-motor.js?v=1" defer></script>
 <script src="/planea/portal/planea-nav.js?v=68" defer></script>
-<script src="/planea/portal/planea-data.js?v=64" defer></script>
+<script src="/planea/portal/planea-data.js?v=65" defer></script>
 <script src="/planea/portal/planea-sb.js?v=38" defer></script>
 <script src="/planea/portal/planea-module-edit.js?v=64" defer></script>
+<script>
+  // «Tu plan de retiro» — tiempo cotizado + régimen editables = fuente de dato real del
+  // pilar (§25). Al cambiar, recalcula el Puntaje Planea con el motor de 8 pilares y guarda.
+  (function () {
+    var SB = window.PlaneaSB, M = window.PlaneaMotor, scoreData = null;
+    var $ = function (id) { return document.getElementById(id); };
+    function sub(P, k) { return Math.round((P[k] && P[k].puntaje) || 0); }
+    function recompute() {
+      if (!scoreData || !scoreData.answers || !scoreData.answers.edad || !M) return;
+      var t = $('rp-tiempo').value, r = $('rp-regimen').value, ans = scoreData.answers, changed = false;
+      if (t && ans.retiro_tiempo !== t) { ans.retiro_tiempo = t; changed = true; }
+      if (r && ans.retiro_regimen !== r) { ans.retiro_regimen = r; changed = true; }
+      if (!changed) return;
+      var res = M.compute(ans), P = res.pilares;
+      var hist = Array.isArray(scoreData.history) ? scoreData.history.slice() : [];
+      hist.push({ score: res.score, at: new Date().toISOString(), source: 'retiro' });
+      scoreData = Object.assign({}, scoreData, {
+        score: res.score, rango: res.rango.name, answers: ans, history: hist, prioridad: res.prioridad,
+        pilares: { ahorro: sub(P, 'ahorro'), flujo: sub(P, 'flujo'), deuda: sub(P, 'deuda'), retiro: sub(P, 'retiro'), seguros: sub(P, 'seguros'), inversion: sub(P, 'inversion'), impuestos: sub(P, 'impuestos'), patrimonio: sub(P, 'patrimonio') },
+        pillars: { emergency_fund: sub(P, 'ahorro'), cash_flow: sub(P, 'flujo'), debt_health: sub(P, 'deuda'), stability: sub(P, 'patrimonio') }
+      });
+      $('rp-note').textContent = 'Tu Puntaje Planea quedó en ' + res.score + '. Actualizaste tu plan de retiro.';
+      if (SB) SB.mePut({ score_data: scoreData }).catch(function () {});
+    }
+    function boot() {
+      if (!SB || !SB.meGet) return;
+      SB.meGet().then(function (d) {
+        d = d || {}; scoreData = d.score_data || null;
+        var a = (scoreData && scoreData.answers) || {};
+        if ($('rp-tiempo')) $('rp-tiempo').value = a.retiro_tiempo || '';
+        if ($('rp-regimen')) $('rp-regimen').value = a.retiro_regimen || '';
+      }).catch(function () {});
+      if ($('rp-tiempo')) $('rp-tiempo').addEventListener('change', recompute);
+      if ($('rp-regimen')) $('rp-regimen').addEventListener('change', recompute);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  })();
+</script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
 </body>
 </html>

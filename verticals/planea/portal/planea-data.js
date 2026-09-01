@@ -186,6 +186,8 @@
       case 'evolucion': return prof.evolucion || '';
       case 'prioridad_nombre': return prioNombre(prof);
       case 'prioridad_texto': return prioTexto(prof);
+      case 'seguros_count': return String(prof.seguros_count || 0);
+      case 'seguros_prima': return cop(prof.seguros_prima_cop || 0);
       default: return null;
     }
   }
@@ -469,6 +471,9 @@
         prof.pasivos = byCat('deuda').map(toRow);
         prof.seguros = byCat('seguros').map(toRow);
         prof.retiro = byCat('retiro').map(toRow);
+        // Seguros §24: resumen de protección = # pólizas + prima total (NO suma asegurada).
+        prof.seguros_count = prof.seguros.length;
+        prof.seguros_prima_cop = prof.seguros.reduce(function (s, x) { return s + num(x.monthly_cop); }, 0);
         // Net-worth asset list (for the patrimonio "activos" view): ahorro+inversión+retiro
         prof.activos = byCat('ahorro').map(toRow).concat(byCat('inversion').map(toRow))
           .concat(byCat('retiro').map(function (x) { return { nombre: x.name, tipo: x.type || 'Retiro', valor_cop: num(x.value) }; }));
