@@ -677,29 +677,46 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
     }
     const cuando = new Date(`${fechaBase}T${hora.padStart(5, '0')}:00-05:00`);
 
-    // Se ata la cita al documento que la motiva cuando se sabe cuál es, para
-    // que la renovación no quede colgando de nadie.
-    const documento = tipo_tramite
-      ? await EnrutaDocumento.findOne({
-        where: { cliente_id: cliente.id, tipo_documento: tipo_tramite },
-        order: [['fecha_vencimiento', 'ASC']]
-      })
-      : null;
+    // TODA CITA CUELGA DE UN DOCUMENTO, Y ES OBLIGATORIO.
+    //
+    // `documento_id` es NOT NULL y el código original nunca lo pasaba: cada
+    // intento de agendar moría en el catch y contestaba "no pude agendar la
+    // cita en este momento". Nunca funcionó, y por eso el tablero mostraba
+    // renovaciones activas en cero desde el principio.
+    //
+    // Si dicen el trámite, se busca ese documento. Si no, se toma el más
+    // urgente del ciudadano, que es el que lo trajo a llamar.
+    const documento = await EnrutaDocumento.findOne({
+      where: {
+        cliente_id: cliente.id,
+        ...(tipo_tramite ? { tipo_documento: tipo_tramite } : {})
+      },
+      order: [['fecha_vencimiento', 'ASC']]
+    });
+
+    if (!documento) {
+      return res.json({
+        success: false,
+        mensaje_para_usuario: tipo_tramite
+          ? 'No tengo ese documento registrado a su nombre. ¿Me confirma cuál trámite necesita?'
+          : 'No tengo documentos registrados a su nombre para agendar. Puede acercarse a la sede o llamar al (602) 380 8957.'
+      });
+    }
 
     await EnrutaRenovacion.create({
       tenant_id: cliente.tenant_id,
       cliente_id: cliente.id,
-      documento_id: documento ? documento.id : null,
+      documento_id: documento.id,
       estado_renovacion: 'cita_agendada',
       fecha_cita: cuando,
       sede_cita: sede?.nombre_sede || 'CDAV Sede Principal',
       referencia_cita: referencia,
-      costo_estimado_cop: documento ? documento.costo_estimado_renovacion : null,
+      costo_estimado_cop: documento.costo_estimado_renovacion,
       iniciada_en: new Date(),
       historial_estados: [{
         estado: 'cita_agendada',
         fecha: new Date().toISOString(),
-        tramite: tipo_tramite || null,
+        tramite: documento.tipo_documento,
         nota: 'Cita agendada por Laura'
       }]
     });
@@ -715,7 +732,8 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
         hora,
         sede: sedeInfo,
         horario,
-        costo_estimado_cop: documento ? documento.costo_estimado_renovacion : null
+        tramite: documento.tipo_documento,
+        costo_estimado_cop: documento.costo_estimado_renovacion
       },
       // Sin promesa de SMS: nada en este sistema envía uno hoy, y una cita que
       // el ciudadano espera confirmar por mensaje es una cita a la que no llega.
@@ -723,9 +741,12 @@ router.post('/laura/tools/agendar-cita', async (req, res) => {
     });
 
   } catch (error) {
+    // El mensaje amable escondió durante meses una violación de NOT NULL.
+    // El detalle va al log Y a la respuesta, para que el fallo sea diagnosticable.
     console.error('Error scheduling appointment:', error);
     res.json({
       success: false,
+      error: error.message,
       mensaje_para_usuario: 'Disculpe, no pude agendar la cita en este momento. Puede llamar directamente al (602) 380 8957 para agendar.'
     });
   }
