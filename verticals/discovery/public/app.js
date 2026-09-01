@@ -10,6 +10,17 @@ const api = async (url, opts) => {
 
 let STATE = null;
 
+$('pdf').addEventListener('click', () => {
+  // document.title becomes the default filename in the print dialog.
+  const co = (STATE && STATE.account ? STATE.account.company_name : 'company')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const v = STATE && STATE.latest_evaluation ? STATE.latest_evaluation.version : 1;
+  const prev = document.title;
+  document.title = `ai-readiness-roadmap-${co}-v${v}`;
+  window.print();
+  setTimeout(() => { document.title = prev; }, 1000);
+});
+
 $('out').addEventListener('click', async e => {
   e.preventDefault(); await api('/api/v1/auth/logout', { method: 'POST' });
   location.href = '/discovery/login';
