@@ -157,5 +157,102 @@
     return svg;
   }
 
-  global.DiscoveryDiagram = { render, wrap };
+
+  /**
+   * VERTICAL LAYOUT — for paper.
+   *
+   * The horizontal roadmap is right on a screen, where it scrolls. On a
+   * portrait page it has to shrink to about 44% to fit, and at that size the
+   * scope lines and the cost band are unreadable — which makes the single most
+   * important element of the report the weakest thing on the page. Stacked, each
+   * phase gets the full column width and prints at its natural size.
+   *
+   * Same nodes, same JSON, same numbers. Only the arrangement differs, so the
+   * printed diagram still cannot disagree with the on-screen one.
+   */
+  function renderVertical(diagram) {
+    if (!diagram || !Array.isArray(diagram.nodes) || !diagram.nodes.length) return '';
+    const nodes = diagram.nodes.filter(n => n.kind !== 'gate');
+    const gates = diagram.nodes.filter(n => n.kind === 'gate');
+
+    const VW = 660, VH = 132, VGAP = 62, VPAD = 18, VTOP = 46;
+    const width = VW + VPAD * 2;
+    const height = VTOP + nodes.length * VH + (nodes.length - 1) * VGAP + 40;
+
+    let svg = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="AI roadmap: phases and gates">`;
+    svg += `<defs><marker id="arv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="${C.line}"/></marker></defs>`;
+    svg += `<rect width="${width}" height="${height}" fill="${C.bg}"/>`;
+
+    (diagram.lanes || []).forEach((l, i) => {
+      const cx = VPAD + i * 220;
+      svg += `<circle cx="${cx + 6}" cy="24" r="5" fill="${ratingColor(l.rating)}"/>`;
+      svg += `<text x="${cx + 18}" y="28" font-size="12" font-weight="600" fill="${C.mut}" font-family="system-ui,sans-serif">${esc(l.title)} — ${esc(l.rating)}</text>`;
+    });
+
+    nodes.forEach((n, i) => {
+      const x = VPAD, y = VTOP + i * (VH + VGAP);
+      const isPhase = n.kind === 'phase';
+      const isBlocker = n.kind === 'blocker';
+      const isFirst = n.number === 1;
+
+      if (i > 0) {
+        const py = y - VGAP, cxm = x + VW / 2;
+        svg += `<line x1="${cxm}" y1="${py + 4}" x2="${cxm}" y2="${y - 8}" stroke="${C.line}" stroke-width="2.2" marker-end="url(#arv)"/>`;
+        const gate = gates.find(g => g.after === nodes[i - 1].id);
+        if (gate) {
+          const gy = py + VGAP / 2;
+          svg += `<path d="M${cxm - 15} ${gy - 12} L${cxm} ${gy + 5} L${cxm + 15} ${gy - 12} Z" fill="${C.violet}" opacity=".9"/>`;
+          svg += `<text x="${cxm + 24}" y="${gy + 2}" font-size="10.5" font-weight="700" fill="${C.violet}" font-family="system-ui,sans-serif">GATE</text>`;
+        }
+      }
+
+      svg += `<rect x="${x}" y="${y}" width="${VW}" height="${VH}" rx="14" fill="${isBlocker ? '#1d1214' : (isFirst ? C.card2 : C.card)}" stroke="${isBlocker ? C.red : (isFirst ? C.blue : C.line)}" stroke-width="${isFirst || isBlocker ? 1.8 : 1}"/>`;
+      if (isFirst || isBlocker) svg += `<rect x="${x + 1}" y="${y + 14}" width="3.5" height="${VH - 28}" rx="2" fill="${isBlocker ? C.red : C.blue}"/>`;
+
+      let ty = y + 25;
+      const kicker = isPhase ? `PHASE ${n.number}` : (isBlocker ? 'BEFORE YOU START' : 'INPUT');
+      svg += `<text x="${x + 20}" y="${ty}" font-size="10.5" font-weight="700" fill="${isBlocker ? C.red : C.faint}" letter-spacing="1.4" font-family="system-ui,sans-serif">${kicker}</text>`;
+      if (isPhase && n.risk_level) {
+        const rc = n.risk_level === 'low' ? C.green : n.risk_level === 'medium' ? C.yellow : C.red;
+        const label = `${n.risk_level} risk`, rw = label.length * 5.9 + 20;
+        svg += `<rect x="${x + VW - 20 - rw}" y="${ty - 12}" width="${rw}" height="17" rx="8.5" fill="${rc}" opacity=".16"/>`;
+        svg += `<circle cx="${x + VW - 20 - rw + 9}" cy="${ty - 3.5}" r="3" fill="${rc}"/>`;
+        svg += `<text x="${x + VW - 20 - rw + 16}" y="${ty}" font-size="10" font-weight="600" fill="${rc}" font-family="system-ui,sans-serif">${esc(label)}</text>`;
+      }
+      ty += 23;
+
+      const title = (n.label || '').replace(/^Phase \d+\s*[—-]\s*/i, '');
+      svg += `<text x="${x + 20}" y="${ty}" font-size="16" font-weight="650" fill="${C.ink}" font-family="system-ui,sans-serif">${esc(wrap(title, 68, 1)[0] || '')}</text>`;
+      ty += 21;
+
+      const body = isPhase
+        ? (n.scope && n.scope.length ? 'Scope: ' + n.scope.join(' · ') : (n.objective || ''))
+        : (isBlocker ? (Array.isArray(n.detail) ? n.detail.join(' ') : n.detail) : (n.detail || ''));
+      wrap(body, 92, 2).forEach(l => {
+        svg += `<text x="${x + 20}" y="${ty}" font-size="11.5" fill="${isFirst ? '#c9cfdb' : C.mut}" font-family="system-ui,sans-serif">${esc(l)}</text>`;
+        ty += 15;
+      });
+
+      const fy = y + VH - 18;
+      svg += `<line x1="${x + 16}" y1="${fy - 20}" x2="${x + VW - 16}" y2="${fy - 20}" stroke="${C.line}"/>`;
+      let bits = [];
+      if (isPhase) {
+        if (n.weeks) bits.push(`${n.weeks} weeks`);
+        if (n.cost && n.cost.build_usd_range) bits.push(n.cost.build_usd_range);
+        else if (n.number === 3) bits.push('not priced');
+        if (n.cost && n.cost.run_monthly_usd) bits.push(`$${n.cost.run_monthly_usd}/mo`);
+        if (n.cost && n.cost.max_exposure_usd) bits.push(`max exposure $${n.cost.max_exposure_usd}`);
+      } else if (isBlocker) {
+        bits.push(n.days ? `${n.days} day${n.days === 1 ? '' : 's'} of work` : 'measured in days');
+      }
+      const col = (isPhase && n.number === 3) ? C.faint : (isBlocker ? '#ff8a80' : (isFirst ? C.ink : C.mut));
+      svg += `<text x="${x + 20}" y="${fy}" font-size="11.5" font-weight="600" fill="${col}" font-family="ui-monospace,Menlo,monospace">${esc(bits.join('  ·  '))}</text>`;
+    });
+
+    svg += `<text x="${VPAD}" y="${height - 12}" font-size="11" fill="${C.faint}" font-family="system-ui,sans-serif">${esc(diagram.unpriced_note || '')}</text>`;
+    return svg + '</svg>';
+  }
+
+  global.DiscoveryDiagram = { render, renderVertical, wrap };
 })(window);

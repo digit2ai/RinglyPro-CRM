@@ -19,7 +19,8 @@
     <p class="faint" id="meta"></p>
     <div class="banner" id="verdict"></div>
     <div class="grid g3" id="lanes"></div>
-    <div class="card" style="margin-top:16px"><div class="diagram" id="diagram"></div></div>
+    <div class="card" style="margin-top:16px"><div class="diagram" id="diagram"></div>
+        <div class="diagram-print" id="diagramPrint"></div></div>
     <div id="phases" style="margin-top:16px"></div>
     <div id="coverage"></div>
     <div class="note">This is a frozen version. It cannot change after it was shared. The stated pilot budget and the worst-case description are deliberately omitted from this view — a link that travels reaches more inboxes than whoever minted it expects.</div>
@@ -53,6 +54,7 @@ document.getElementById('pdf').addEventListener('click',()=>window.print());
     <span class="pill ${esc(l.rating)}">${l.score==null?'—':l.score}</span></div>
     <p class="mut" style="font-size:13.5px;margin:8px 0 0">${esc(l.headline)}</p></div>`).join('');
   $('diagram').innerHTML=window.DiscoveryDiagram.render(d.diagram||{});
+  $('diagramPrint').innerHTML=window.DiscoveryDiagram.renderVertical(d.diagram||{});
   $('phases').innerHTML=(d.phases||[]).map(p=>`<div class="card">
     <span class="faint mono">PHASE ${p.number}</span><h3 style="margin:3px 0 8px">${esc(p.title)}</h3>
     <p class="mut" style="font-size:14px;margin:0 0 8px">${esc(p.objective||'')}</p>
