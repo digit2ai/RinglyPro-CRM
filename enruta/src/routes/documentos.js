@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { EnrutaDocumento, EnrutaCliente } = require('../../models');
 const { Op } = require('sequelize');
+const { whereEstado, sqlEstado, hoyBogota, sumarDias, TERMINALES } = require('../utils/estado');
 
 // GET /api/documentos - List documents (filterable by type, status, expiration)
 router.get('/', async (req, res) => {
@@ -25,7 +26,8 @@ router.get('/', async (req, res) => {
     const where = { tenant_id };
 
     if (tipo_documento) where.tipo_documento = tipo_documento;
-    if (estado) where.estado = estado;
+    // El estado se resuelve por fecha de vencimiento, no por la columna.
+    if (estado) Object.assign(where, whereEstado(estado));
 
     const offset = (page - 1) * limit;
 
@@ -66,18 +68,16 @@ router.get('/por-vencer', async (req, res) => {
       return res.status(400).json({ success: false, error: 'tenant_id required' });
     }
 
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + parseInt(dias));
+    // fecha_vencimiento es DATEONLY: se compara contra fechas de Colombia, no
+    // contra un timestamp del servidor (que recorta el día de hoy).
+    const hoy = hoyBogota();
+    const hasta = sumarDias(hoy, parseInt(dias));
 
     const documentos = await EnrutaDocumento.findAll({
       where: {
         tenant_id,
-        fecha_vencimiento: {
-          [Op.between]: [new Date(), futureDate]
-        },
-        estado: {
-          [Op.in]: ['vigente', 'por_vencer_30_dias', 'por_vencer_15_dias', 'por_vencer_7_dias']
-        }
+        fecha_vencimiento: { [Op.between]: [hoy, hasta] },
+        estado: { [Op.notIn]: TERMINALES }
       },
       limit: parseInt(limit),
       order: [['fecha_vencimiento', 'ASC']],
@@ -107,7 +107,7 @@ router.get('/vencidos', async (req, res) => {
     const documentos = await EnrutaDocumento.findAll({
       where: {
         tenant_id,
-        estado: 'vencido'
+        ...whereEstado('vencido')
       },
       limit: parseInt(limit),
       order: [['fecha_vencimiento', 'DESC']],
@@ -136,14 +136,18 @@ router.get('/estadisticas', async (req, res) => {
 
     const { sequelize } = require('../../models');
 
+    // Se agrupa por el estado DERIVADO en SQL: agrupar por la columna
+    // devolvía la foto del día en que se creó cada documento.
+    const estadoSql = sqlEstado('EnrutaDocumento');
+
     const stats = await EnrutaDocumento.findAll({
       where: { tenant_id },
       attributes: [
-        'estado',
+        [sequelize.literal(estadoSql), 'estado'],
         'tipo_documento',
         [sequelize.fn('COUNT', sequelize.col('id')), 'count']
       ],
-      group: ['estado', 'tipo_documento'],
+      group: [sequelize.literal(estadoSql), 'tipo_documento'],
       raw: true
     });
 

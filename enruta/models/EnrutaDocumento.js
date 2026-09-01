@@ -3,6 +3,7 @@
  * Stores vehicle and driving documents (licenses, RTMyEC, SOAT, etc.)
  */
 const { DataTypes } = require('sequelize');
+const { TERMINALES, estadoDesdeFecha, diasParaVencer } = require('../src/utils/estado');
 
 module.exports = (sequelize) => {
   const EnrutaDocumento = sequelize.define('EnrutaDocumento', {
@@ -161,9 +162,21 @@ module.exports = (sequelize) => {
     },
 
     // Status Tracking
+    //
+    // La columna se conserva (la escribe el alta del documento y el proceso de
+    // renovación), pero SIEMPRE se lee derivada de fecha_vencimiento: guardada
+    // en frío envejece y termina afirmando que un documento vencido hace medio
+    // año "vence en 30 días". 'renovado' y 'suspendido' no dependen de la fecha
+    // y se devuelven tal cual.
     estado: {
       type: DataTypes.STRING(30),
       defaultValue: 'vigente',
+      get() {
+        const guardado = this.getDataValue('estado');
+        if (TERMINALES.includes(guardado)) return guardado;
+        const fecha = this.getDataValue('fecha_vencimiento');
+        return estadoDesdeFecha(fecha) || guardado;
+      },
       validate: {
         isIn: [[
           'vigente',
@@ -174,6 +187,22 @@ module.exports = (sequelize) => {
           'renovado',
           'suspendido'
         ]]
+      }
+    },
+
+    // Estado tal como está en la base, sin derivar. Solo para diagnóstico.
+    estado_almacenado: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue('estado');
+      }
+    },
+
+    // Días hasta el vencimiento (negativo = ya venció). Calculado, no guardado.
+    dias_para_vencer: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return diasParaVencer(this.getDataValue('fecha_vencimiento'));
       }
     },
 

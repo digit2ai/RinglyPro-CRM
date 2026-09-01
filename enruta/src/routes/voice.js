@@ -8,8 +8,10 @@ const {
   EnrutaCliente,
   EnrutaDocumento,
   EnrutaRegistroContacto,
-  EnrutaRenovacion
+  EnrutaRenovacion,
+  sequelize
 } = require('../../models');
+const { whereEstado, sqlPrioridad } = require('../utils/estado');
 const { LAURA_SYSTEM_PROMPT, generateLauraContext, getMessageTemplate } = require('../../prompts/laura-agent');
 
 // GET /voice/laura/prompt - Get Laura's system prompt for ElevenLabs
@@ -121,12 +123,25 @@ router.post('/laura/webhook/inicio', async (req, res) => {
     // Log call start
     console.log('ENRUTA Call started:', { CallSid, From, To, Direction });
 
+    // Sin agente configurado se colgaba contra el id literal 'laura-enruta',
+    // que no existe: la llamada moría en silencio. Mejor decírselo a quien
+    // contesta y dejar rastro en el log.
+    const agentId = process.env.ELEVENLABS_ENRUTA_AGENT_ID;
+    if (!agentId) {
+      console.error('ENRUTA: ELEVENLABS_ENRUTA_AGENT_ID no configurado, no se puede conectar a Laura');
+      return res.type('text/xml').send(
+        '<?xml version="1.0" encoding="UTF-8"?>' +
+        '<Response><Say language="es-MX">El servicio de voz no está disponible en este momento. ' +
+        'Por favor intente más tarde.</Say></Response>'
+      );
+    }
+
     // Return TwiML to connect to ElevenLabs
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
     <Stream url="wss://api.elevenlabs.io/v1/convai/conversation">
-      <Parameter name="agent_id" value="${process.env.ELEVENLABS_ENRUTA_AGENT_ID || 'laura-enruta'}" />
+      <Parameter name="agent_id" value="${agentId}" />
     </Stream>
   </Connect>
 </Response>`;
@@ -301,25 +316,21 @@ router.get('/laura/cola', async (req, res) => {
       return res.status(400).json({ success: false, error: 'tenant_id required' });
     }
 
-    // Get documents that need calls
+    // Documentos que necesitan llamada.
+    //
+    // El orden se calcula sobre fecha_vencimiento y con la columna CALIFICADA
+    // por su tabla: `CASE estado` a secas era ambiguo, porque el JOIN con
+    // clientes trae un segundo "estado" y Postgres rechazaba la consulta
+    // entera ("column reference \"estado\" is ambiguous"), dejando la cola de
+    // llamadas de Laura caída.
     const documentos = await EnrutaDocumento.findAll({
       where: {
         tenant_id,
-        estado: {
-          [require('sequelize').Op.in]: ['por_vencer_30_dias', 'por_vencer_15_dias', 'por_vencer_7_dias', 'vencido']
-        }
+        ...whereEstado(['vencido', 'por_vencer_7_dias', 'por_vencer_15_dias', 'por_vencer_30_dias'])
       },
       limit: parseInt(limit),
       order: [
-        [require('sequelize').literal(`
-          CASE estado
-            WHEN 'vencido' THEN 1
-            WHEN 'por_vencer_7_dias' THEN 2
-            WHEN 'por_vencer_15_dias' THEN 3
-            WHEN 'por_vencer_30_dias' THEN 4
-            ELSE 5
-          END
-        `), 'ASC'],
+        [sequelize.literal(sqlPrioridad('EnrutaDocumento')), 'ASC'],
         ['fecha_vencimiento', 'ASC']
       ],
       include: [{

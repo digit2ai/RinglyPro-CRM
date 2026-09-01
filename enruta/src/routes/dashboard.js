@@ -13,6 +13,7 @@ const {
   sequelize
 } = require('../../models');
 const { Op } = require('sequelize');
+const { whereEstado, hoyBogota, sumarDias, TERMINALES } = require('../utils/estado');
 
 // GET /api/dashboard/stats - Overview statistics
 router.get('/stats', async (req, res) => {
@@ -42,11 +43,11 @@ router.get('/stats', async (req, res) => {
       EnrutaDocumento.count({
         where: {
           tenant_id: tenantFilter,
-          estado: { [Op.in]: ['por_vencer_30_dias', 'por_vencer_15_dias', 'por_vencer_7_dias'] }
+          ...whereEstado(['por_vencer_30_dias', 'por_vencer_15_dias', 'por_vencer_7_dias'])
         }
       }),
       EnrutaDocumento.count({
-        where: { tenant_id: tenantFilter, estado: 'vencido' }
+        where: { tenant_id: tenantFilter, ...whereEstado('vencido') }
       }),
       EnrutaRegistroContacto.count({
         where: {
@@ -165,16 +166,17 @@ router.get('/vencimientos-proximos', async (req, res) => {
     const { tenant_id, dias = 30 } = req.query;
     const tenantFilter = tenant_id || '00000000-0000-0000-0000-000000000001';
 
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + parseInt(dias));
+    // Fechas en la zona de Colombia y como DATE, no como timestamp del servidor:
+    // fecha_vencimiento es DATEONLY y comparar contra un Date con hora recorta
+    // el día de hoy.
+    const hoy = hoyBogota();
+    const hasta = sumarDias(hoy, parseInt(dias));
 
     const expirations = await EnrutaDocumento.findAll({
       where: {
         tenant_id: tenantFilter,
-        fecha_vencimiento: {
-          [Op.between]: [new Date(), futureDate]
-        },
-        estado: { [Op.ne]: 'renovado' }
+        fecha_vencimiento: { [Op.between]: [hoy, hasta] },
+        estado: { [Op.notIn]: TERMINALES }
       },
       attributes: [
         [sequelize.fn('DATE', sequelize.col('fecha_vencimiento')), 'fecha'],

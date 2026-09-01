@@ -33,6 +33,29 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files for dashboard
 app.use('/static', express.static(path.join(__dirname, '../public')));
 
+// Los datos de ENRUTA son de ciudadanos: nada de este módulo debe terminar
+// en un índice de búsqueda, esté o no protegido con contraseña.
+app.use((req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
+// Puerta de acceso opcional (ver src/auth.js). Apagada sin ENRUTA_PASSWORD.
+const auth = require('./auth');
+auth.montarRutas(app);
+app.use(auth.puerta);
+
+if (auth.protegido()) {
+  console.log('🔒 ENRUTA protegido con ENRUTA_PASSWORD');
+  if (!auth.claveHerramientas()) {
+    console.warn('⚠️  ENRUTA: /voice/* sigue ABIERTO — configure ENRUTA_TOOLS_KEY ' +
+                 'y envíela como cabecera x-enruta-tools-key desde ElevenLabs');
+  }
+} else {
+  console.warn('⚠️  ENRUTA sin autenticación: el tablero y la API son públicos. ' +
+               'Configure ENRUTA_PASSWORD para cerrarlos.');
+}
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
@@ -1143,8 +1166,56 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Sync database (create tables if not exist)
-app.get('/health/sync', async (req, res) => {
+// =====================================================
+// OPERACIONES ADMINISTRATIVAS
+//
+// Estas tres rutas alteran el esquema o insertan datos en la base de
+// PRODUCCIÓN. Estaban expuestas como GET sin autenticación en /health/*:
+// cualquier buscador, prefetch del navegador o visitante curioso que abriera
+// /enruta/health/sync corría `sequelize.sync({ alter: true })` contra la base
+// real, y /health/seed-test-data sembraba 180 ciudadanos ficticios más.
+//
+// Ahora: POST, fuera del espacio /health, con clave y confirmación explícita.
+// Sin ENRUTA_ADMIN_KEY (ni JWT_SECRET) quedan deshabilitadas, nunca abiertas.
+// =====================================================
+const crypto = require('crypto');
+
+function claveAdminConfigurada() {
+  return process.env.ENRUTA_ADMIN_KEY || process.env.JWT_SECRET || null;
+}
+
+function mismaClave(a, b) {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
+function requiereClaveAdmin(req, res, next) {
+  const esperada = claveAdminConfigurada();
+  if (!esperada) {
+    return res.status(503).json({
+      status: 'DISABLED',
+      error: 'Operación administrativa deshabilitada: falta ENRUTA_ADMIN_KEY'
+    });
+  }
+  const enviada = req.get('x-enruta-admin-key') || (req.body && req.body.admin_key);
+  // 404 y no 403: una clave equivocada no debe confirmar que la ruta existe.
+  if (!enviada || !mismaClave(enviada, esperada)) {
+    return res.status(404).json({ success: false, error: 'Endpoint not found' });
+  }
+  next();
+}
+
+function requiereConfirmacion(req, res, next) {
+  if (req.body && req.body.confirmar === true) return next();
+  return res.status(400).json({
+    status: 'ERROR',
+    error: 'Envíe { "confirmar": true } para ejecutar esta operación sobre la base de producción'
+  });
+}
+
+// POST /enruta/admin/sync - Sincroniza el esquema (antes: GET /health/sync)
+app.post('/admin/sync', requiereClaveAdmin, requiereConfirmacion, async (req, res) => {
   try {
     await sequelize.sync({ alter: true });
     res.json({
@@ -1160,13 +1231,13 @@ app.get('/health/sync', async (req, res) => {
   }
 });
 
-// Seed initial CDAV locations
-app.get('/health/seed', async (req, res) => {
+// POST /enruta/admin/seed-sedes - Siembra las sedes CDAV (antes: GET /health/seed)
+app.post('/admin/seed-sedes', requiereClaveAdmin, requiereConfirmacion, async (req, res) => {
   try {
     const { EnrutaSede } = models;
 
     // Default tenant ID (you can make this dynamic)
-    const tenantId = req.query.tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = (req.body && req.body.tenant_id) || '00000000-0000-0000-0000-000000000001';
 
     // CDAV/enRuta official locations
     const sedes = [
@@ -1232,7 +1303,8 @@ app.get('/health/seed', async (req, res) => {
 });
 
 // Seed comprehensive test data for dashboard testing
-app.get('/health/seed-test-data', async (req, res) => {
+// POST /enruta/admin/seed-demo - Siembra datos de demostración (antes: GET /health/seed-test-data)
+app.post('/admin/seed-demo', requiereClaveAdmin, requiereConfirmacion, async (req, res) => {
   try {
     const {
       EnrutaCliente,
@@ -1244,7 +1316,7 @@ app.get('/health/seed-test-data', async (req, res) => {
       EnrutaComparendo
     } = models;
 
-    const tenantId = req.query.tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = (req.body && req.body.tenant_id) || '00000000-0000-0000-0000-000000000001';
 
     // Colombian first names
     const nombres = ['Carlos', 'María', 'José', 'Ana', 'Luis', 'Diana', 'Andrés', 'Paola', 'Juan', 'Laura',
