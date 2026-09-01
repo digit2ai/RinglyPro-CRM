@@ -112,7 +112,7 @@ function build(input = {}) {
     const hrs = uncosted.reduce((a, p) => a + Number(p.hours_per_week) * Math.max(1, p.people || 1), 0);
     push({
       code: 'DSC-UNCOSTED', severity: 'WARNING',
-      title: `${uncosted.length} confirmed process${uncosted.length === 1 ? '' : 'es'} carry hours but no hourly rate`,
+      title: `${uncosted.length} confirmed process${uncosted.length === 1 ? '' : 'es'} ${uncosted.length === 1 ? 'carries' : 'carry'} hours but no hourly rate`,
       explanation: `We measured roughly ${Math.round(hrs * 10) / 10} hours a week across ${uncosted.map(p => `"${p.name}"`).join(', ')}, and those hours contribute nothing to the savings figures in your roadmap. A browser can watch how long work takes; it cannot know what the person doing it is paid. Rather than apply an industry average and present it as your number, we leave it out and tell you it is out. Enter a loaded hourly cost and these hours become dollars.`,
       dollarImpact: '', source: 'Answers',
       evidence: { processes: uncosted.map(p => p.name), weekly_hours: Math.round(hrs * 10) / 10 },
@@ -179,7 +179,7 @@ function build(input = {}) {
   if (regulated.length) {
     push({
       code: 'DSC-REGULATED', severity: 'CRITICAL',
-      title: `${regulated.length} confirmed process${regulated.length === 1 ? '' : 'es'} touch regulated data`,
+      title: `${regulated.length} confirmed process${regulated.length === 1 ? '' : 'es'} ${regulated.length === 1 ? 'touches' : 'touch'} regulated data`,
       explanation: `${regulated.map(p => `"${p.name}"`).join(', ')} ${regulated.length === 1 ? 'was' : 'were'} marked as touching regulated or personal data. These are excluded from Phase 1 by rule, not by preference — a first project should not be the thing that tests your compliance posture. They become Phase 2 candidates once the obligations in your roadmap's risk section are satisfied.`,
       dollarImpact: '', source: 'Risk',
       evidence: { processes: regulated.map(p => p.name) },

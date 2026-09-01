@@ -9,11 +9,12 @@
 </head><body>
 <div class="nav"><div class="wrap">
   <a class="brand" href="/discovery/"><span class="orb"></span>OrbUp <small>Discovery</small></a>
-  <nav><span class="pill">read-only</span></nav>
+  <nav><button class="btn ghost sm" id="pdf">Save as PDF</button><span class="pill">read-only</span></nav>
 </div></div>
 <div class="wrap" style="padding-top:28px;padding-bottom:70px">
   <div id="boot" class="faint"><span class="spin"></span> Loading…</div>
   <div id="main" class="hide">
+    <div class="print-only" style="margin-bottom:10px"><b>OrbUp AI Discovery</b> — AI Readiness Roadmap</div>
     <h1 style="font-size:28px" id="co"></h1>
     <p class="faint" id="meta"></p>
     <div class="banner" id="verdict"></div>
@@ -28,6 +29,7 @@
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('pdf').addEventListener('click',()=>window.print());
 (async()=>{
   const token=location.pathname.split('/').pop();
   const r=await fetch('/discovery/api/v1/public/roadmap/'+encodeURIComponent(token));
@@ -36,6 +38,8 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
   $('boot').classList.add('hide');$('main').classList.remove('hide');
   $('co').textContent=(d.company||'')+' — AI Readiness Roadmap';
   $('meta').textContent='Version '+d.version+' · '+new Date(d.created_at).toLocaleDateString();
+  const slug=String(d.company||'company').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  document.title=`ai-readiness-roadmap-${slug}-v${d.version}`;
   const sc=d.scorecard||{};
   $('verdict').innerHTML=`<span class="pill ${esc(sc.overall_rating)}">${esc(sc.overall_rating||'')}</span>
     <h2 style="margin:10px 0 4px">${esc(sc.verdict_label||'')}</h2>
