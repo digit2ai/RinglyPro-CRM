@@ -226,6 +226,10 @@ async function hunter(tenantId, opts = {}) {
   // actually be scored, and makes this queue the same one /diagnose reports.
   const scoreable = ranked.filter((r) => {
     if (seen.has(r.job.id)) return false;
+    // Never spend a scoring slot on a posting that cannot be opened — a match
+    // whose "Open posting" dead-ends never reaches the board anyway.
+    const u = r.job && r.job.url;
+    if (!(typeof u === 'string' && /^https?:\/\//i.test(u.trim()))) return false;
     return geo.evaluate(r.job.location, settings.geo || {}).verdict !== geo.VERDICT.BLOCK;
   });
 

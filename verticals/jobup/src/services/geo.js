@@ -186,6 +186,10 @@ function evaluate(raw, policy = {}) {
   const c = classify(raw);
 
   if (c.kind === 'none') {
+    // US-ONLY, ENFORCED: a posting we cannot confirm is in the US is not shown.
+    // Without this, a locationless posting was FLAGGED (never blocked), so it
+    // reached the board — which is how non-US and unplaceable jobs appeared.
+    if (policy.us_only) return { verdict: VERDICT.BLOCK, reason: 'US-only: posting states no location' };
     return { verdict: policy.flag_unknown === false ? VERDICT.ALLOW : VERDICT.FLAG,
              reason: 'posting states no location' };
   }
@@ -199,6 +203,19 @@ function evaluate(raw, policy = {}) {
     return { verdict: ok ? VERDICT.ALLOW : VERDICT.BLOCK, reason: 'remote, North America' };
   }
   if (c.countries.length === 0) {
+    // US-ONLY, ENFORCED. A location we cannot positively read as US is refused
+    // rather than flagged onto the board — that is what stops "London",
+    // "Bengaluru" and other unparsed-foreign strings from appearing. The one
+    // exception is a REMOTE posting: the pool is US-sourced, so a bare "Remote"
+    // is a US-workable role, not a foreign office, and is kept.
+    if (policy.us_only) {
+      // A remote role is kept ONLY when it names no foreign region — "Remote"
+      // and "Remote - US" stay; "Remote - EMEA / Europe / India" are refused.
+      const FOREIGN = /\b(emea|apac|apj|anz|latam|latin america|europe|european|eu|uk|u\.k\.|england|britain|canada|canadian|india|australia|singapore|germany|france|spain|italy|mexico|brazil|argentina|colombia|philippines|ireland|netherlands|poland|romania|asia|asian|africa|middle east|gcc|dubai|uae)\b/i;
+      return (c.remote && !FOREIGN.test(c.raw))
+        ? { verdict: VERDICT.ALLOW, reason: 'US-only: remote role, workable from the US' }
+        : { verdict: VERDICT.BLOCK, reason: 'US-only: location not confirmed US: ' + c.raw };
+    }
     // A LOCATION WE CANNOT READ IS NOT A LOCATION IN POLICY.
     //
     // This returned FLAG, and nothing consumes a flag — every caller filters

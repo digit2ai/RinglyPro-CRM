@@ -283,6 +283,10 @@ function sanitize(s) {
   // what the product says it does.
   out.geo = out.geo || {};
   out.geo.allowed_countries = ['US'];
+  // US-ONLY IS ENFORCED FOR EVERYONE — not a per-profile choice. With this on,
+  // geo.evaluate refuses any posting not positively confirmed in the US
+  // (foreign, or unplaceable), rather than flagging it onto the board.
+  out.geo.us_only = true;
   out.geo.flag_unknown = out.geo.flag_unknown !== false;
   // States ARE the subscriber's to choose, unlike the country. Unknown codes are
   // dropped rather than stored, so a typo can never become a filter that
