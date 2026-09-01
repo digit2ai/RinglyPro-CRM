@@ -126,6 +126,9 @@
 .gstep .tip{margin-top:8px;font-size:12.5px;color:var(--faint);border-left:2px solid var(--line2);padding-left:10px}
 
 @media(max-width:640px){
+  .simsteps button{min-height:44px;padding:11px 14px}
+  .ava-pick label{min-height:44px;display:inline-flex;align-items:center;gap:7px}
+  .ava-pick select{min-height:44px}
   .sim-screen{padding:16px;min-height:0}
   .mockrow{flex-direction:column;align-items:flex-start}
   .demo-body{min-height:0}
