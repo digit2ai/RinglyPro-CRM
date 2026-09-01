@@ -645,7 +645,7 @@ app.get('/', (req, res) => {
     });
 
     // =====================================================
-    // Laura - orbe de voz propio (sin ElevenLabs)
+    // Laura - orbe de voz propio
     //
     //   Oído -> Web Speech API, en el navegador
     //   Cerebro -> POST /api/voice-agent/chat (Claude Haiku)
@@ -681,8 +681,7 @@ app.get('/', (req, res) => {
     setInterval(cargarContextoLaura, 300000);
   </script>
 
-  <!-- Laura: orbe de voz propio. Reemplaza al widget de ElevenLabs convai;
-       ni SDK de terceros, ni LiveKit, ni llave en el navegador. -->
+  <!-- Laura: orbe de voz propio. Sin SDK de terceros y sin llaves en el navegador. -->
   <div data-voice-orb
        data-agent="enruta"
        data-lang="es"
