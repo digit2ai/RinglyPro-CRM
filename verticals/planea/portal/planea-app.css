@@ -1,6 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 /* PLANEA app — dark theme (mirror of the client's reference model).
    Shared design system for all module screens. Mobile-first single column,
-   left drawer nav (injected by planea-nav.js), floating Maya button. */
+   left drawer nav (injected by planea-nav.js), floating Maya button.
+   Tipografía §1: Inter para títulos/display, DM Sans para el cuerpo. */
 :root{
   --bg:#0a1310; --bg-elev:#0f1a16; --card:#121e1a; --card2:#16231f;
   --group:#1c2f28; --group2:#213b31; --line:#233029;
@@ -16,7 +18,11 @@ body.light{
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--bg);color:var(--txt)}
-body{font-family:'Inter','DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+/* Fondo radial verde-oscuro (igual que la presentación) — solo en tema oscuro; el claro
+   queda plano. Fijo para que no se corte al hacer scroll. */
+body:not(.light){background:radial-gradient(125% 92% at 50% -8%,#12251e 0%,#0a1310 55%) no-repeat;background-color:#0a1310}
+/* §1: DM Sans para el cuerpo; los títulos ya fijan Inter en sus propias clases. */
+body{font-family:'DM Sans','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit;text-decoration:none}
 .app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:130px}
 .wrap{padding:8px 16px 0}
