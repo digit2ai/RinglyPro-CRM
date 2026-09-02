@@ -4,7 +4,8 @@
    left drawer nav (injected by planea-nav.js), floating Maya button.
    Tipografía §1: Inter para títulos/display, DM Sans para el cuerpo. */
 :root{
-  --bg:#0a1310; --bg-elev:#0f1a16; --card:#121e1a; --card2:#16231f;
+  /* Paleta oficial del landing (theme.css): primary-300 #16373A … primary-500 #02181A. */
+  --bg:#02181A; --bg-elev:#0a2220; --card:#121e1a; --card2:#16231f;
   --group:#1c2f28; --group2:#213b31; --line:#233029;
   --txt:#eef3ef; --mut:#8a9b93; --mut2:#6d7d76;
   --green:#5cba8a; --greenb:#8fd9ac; --green-soft:rgba(92,186,138,.14);
@@ -20,7 +21,7 @@ body.light{
 html,body{background:var(--bg);color:var(--txt)}
 /* Fondo radial verde-oscuro (igual que la presentación) — solo en tema oscuro; el claro
    queda plano. Fijo para que no se corte al hacer scroll. */
-body:not(.light){background:radial-gradient(125% 92% at 50% -8%,#12251e 0%,#0a1310 55%) no-repeat;background-color:#0a1310}
+body:not(.light){background:radial-gradient(125% 95% at 50% -6%,#16373A 0%,#0B282B 42%,#02181A 78%) no-repeat;background-color:#02181A}
 /* §1: DM Sans para el cuerpo; los títulos ya fijan Inter en sus propias clases. */
 body{font-family:'DM Sans','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit;text-decoration:none}
