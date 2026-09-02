@@ -36,7 +36,13 @@
   .pill-loc{position:relative;z-index:2;display:inline-flex;align-items:center;gap:9px;margin-top:16px;padding:9px 15px;border:1px solid rgba(255,255,255,.18);border-radius:99px;font-size:14px;font-weight:600;color:#fff}
   .pill-loc .dot{width:8px;height:8px;border-radius:50%;background:var(--greenb)}
   .pill-loc .m{color:rgba(234,241,236,.6);font-weight:500}
-  /* Bloque 2 — Puntaje Planea */
+  /* Bloque 1 — Saludo plano (sin tarjeta), como la referencia */
+  .greet{margin:6px 2px 2px}
+  .greet h1{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.02em;line-height:1.1;color:var(--txt)}
+  .greet .greet-sub{color:var(--mut);font-size:14.5px;margin-top:6px;max-width:340px}
+  /* Bloque 2 — Puntaje Planea (dentro de tarjeta) */
+  .pp-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 18px}
+  .pp-card .sec-head{margin-bottom:4px}
   .pp-row{display:flex;align-items:center;gap:20px;margin-top:8px}
   .pp-row .ring{width:120px;height:120px;flex:0 0 120px;position:relative}
   .pp-row .ring svg{width:120px;height:120px}
@@ -67,32 +73,30 @@
 <body>
 <div class="app"><div class="wrap">
 
-  <!-- Bloque 1 · Saludo y contexto (Documento Maestro §16) -->
-  <section class="hero">
-    <div class="hero-top">
-      <div><h1 data-pl="saludo">Hola</h1><p class="lede" data-pl="resumen">Tus finanzas, en un solo lugar.</p></div>
-    </div>
-    <div class="divg"></div>
-    <div class="hoy"><div class="lbl">HOY</div><div class="fecha" id="hoy-fecha">—</div></div>
-    <span class="pill-loc"><span class="dot"></span>Tus finanzas <span class="m">· Colombia</span></span>
-  </section>
+  <!-- Bloque 1 · Saludo (§16) — texto plano, sin tarjeta (como la referencia). -->
+  <div class="greet">
+    <h1 data-pl="saludo">Hola</h1>
+    <p class="greet-sub" data-pl="resumen">Tus finanzas, en un solo lugar.</p>
+  </div>
 
-  <!-- Bloque 2 · Puntaje Planea -->
+  <!-- Bloque 2 · Puntaje Planea — DENTRO de una tarjeta (como la referencia). -->
   <section class="sec">
-    <div class="sec-head"><div><h2>Puntaje Planea</h2><div class="sub">Tu estructura financiera, en un número</div></div><a class="link" href="/planea/portal/diagnostico">Ver mi Puntaje Planea →</a></div>
-    <div class="pp-row">
-      <div class="ring">
-        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="var(--card2)" stroke-width="8"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="var(--greenb)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
-        <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
+    <div class="pp-card">
+      <div class="sec-head"><div><h2>Puntaje Planea</h2><div class="sub">Tu estructura financiera, en un número</div></div><a class="link" href="/planea/portal/diagnostico">Ver mi Puntaje Planea →</a></div>
+      <div class="pp-row">
+        <div class="ring">
+          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="var(--card2)" stroke-width="8"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="var(--greenb)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
+          <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
+        </div>
+        <div class="pp-side">
+          <div class="pp-rango" data-pl="rango">Sin diagnóstico</div>
+          <div class="pp-evo" data-pl="evolucion"></div>
+        </div>
       </div>
-      <div class="pp-side">
-        <div class="pp-rango" data-pl="rango">Sin diagnóstico</div>
-        <div class="pp-evo" data-pl="evolucion"></div>
-      </div>
+      <details class="pp-detalle"><summary>Detalle por área</summary>
+        <div data-pl-list="pilares8" data-pl-empty="Haz tu diagnóstico Planea para ver el detalle por área."></div>
+      </details>
     </div>
-    <details class="pp-detalle"><summary>Detalle por área</summary>
-      <div data-pl-list="pilares8" data-pl-empty="Haz tu diagnóstico Planea para ver el detalle por área."></div>
-    </details>
   </section>
 
   <!-- Bloque 3 · Lo más importante para ti (prioridad §14) -->
@@ -128,18 +132,6 @@
   </section>
 
 </div></div>
-<script>
-  // "HOY" banner — always the real current date, in Spanish, capitalized.
-  (function () {
-    try {
-      var f = document.getElementById('hoy-fecha');
-      if (!f) return;
-      var s = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
-      f.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-    } catch (e) {}
-  })();
-
-</script>
 <script src="/planea/portal/planea-nav.js?v=70" defer></script>
 <script src="/planea/portal/planea-data.js?v=67" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
