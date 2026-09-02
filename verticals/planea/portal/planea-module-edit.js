@@ -199,7 +199,7 @@
     if (!window.PlaneaSB) { closeForm(); return; }
     var op = editItem ? PlaneaSB.itemUpdate(editItem.id, body) : PlaneaSB.itemCreate(body);
     closeForm();
-    op.then(reload).catch(function (e) {
+    op.then(function () { reload(); recomputeScore(); }).catch(function (e) {
       if (window.console) console.warn('[module-edit] save failed', e && e.message);
       // 401 = not authenticated on this domain -> go log in here, then come back.
       if (e && /\b401\b/.test(e.message || '')) { location.href = '/planea/login'; return; }
@@ -208,7 +208,34 @@
   }
   function del(id) {
     if (!confirm('¿Eliminar este ' + cfg.noun.replace(/s$/, '') + '?')) return;
-    PlaneaSB.itemDelete(id).then(reload).catch(function () { alert('No se pudo eliminar.'); });
+    PlaneaSB.itemDelete(id).then(function () { reload(); recomputeScore(); }).catch(function () { alert('No se pudo eliminar.'); });
+  }
+
+  // DATO REAL (Documento Maestro §3, §6.3): al registrar/editar/borrar un ítem, el motor
+  // ÚNICO de 8 pilares recalcula el Puntaje Planea con el dato real fusionado en answers
+  // (planea-realdata.js). Se persiste en score_data, así que Inicio, Puntaje Planea y las
+  // secciones leen SIEMPRE el mismo número. Sin diagnóstico previo no hay nada que recalcular.
+  function recomputeScore() {
+    if (!window.PlaneaSB || !window.PlaneaMotor || !window.PlaneaRealData || !PlaneaSB.meGet) return;
+    PlaneaSB.meGet().then(function (d) {
+      var sd = d && d.score_data;
+      if (!sd || !sd.answers || !sd.answers.edad) return;   // aún sin vinculación → no se recalcula
+      var all = (d && d.items) || [];
+      var ans = PlaneaRealData.applyRealData(sd.answers, all);
+      var r = PlaneaMotor.compute(ans);
+      if (sd.score === r.score && JSON.stringify(sd.answers) === JSON.stringify(ans)) return; // sin cambios
+      function sub(k) { return Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0); }
+      var hist = Array.isArray(sd.history) ? sd.history.slice() : [];
+      if (sd.score !== r.score) hist.push({ score: r.score, at: new Date().toISOString(), source: 'real' });
+      var newSd = Object.assign({}, sd, {
+        score: r.score, rango: r.rango.name, answers: ans, history: hist, prioridad: r.prioridad,
+        pilares: { ahorro: sub('ahorro'), flujo: sub('flujo'), deuda: sub('deuda'), retiro: sub('retiro'), seguros: sub('seguros'), inversion: sub('inversion'), impuestos: sub('impuestos'), patrimonio: sub('patrimonio') },
+        pillars: { emergency_fund: sub('ahorro'), cash_flow: sub('flujo'), debt_health: sub('deuda'), stability: sub('patrimonio') }
+      });
+      PlaneaSB.mePut({ score_data: newSd }).then(function () {
+        document.querySelectorAll('[data-pl="score"]').forEach(function (el) { el.textContent = r.score; });
+      }).catch(function () {});
+    }).catch(function () {});
   }
 
   function reload() {

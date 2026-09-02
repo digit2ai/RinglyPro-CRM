@@ -49,7 +49,8 @@
 <script src="/planea/portal/planea-nav.js?v=68" defer></script>
 <script src="/planea/portal/planea-data.js?v=66" defer></script>
 <script src="/planea/portal/planea-sb.js?v=39" defer></script>
-<script src="/planea/portal/planea-module-edit.js?v=65" defer></script>
+<script src="/planea/portal/planea-realdata.js?v=1" defer></script>
+<script src="/planea/portal/planea-module-edit.js?v=66" defer></script>
 <script>
   // «Tu plan de retiro» — tiempo cotizado + régimen editables = fuente de dato real del
   // pilar (§25). Al cambiar, recalcula el Puntaje Planea con el motor de 8 pilares y guarda.
@@ -58,21 +59,29 @@
     var $ = function (id) { return document.getElementById(id); };
     function sub(P, k) { return Math.round((P[k] && P[k].puntaje) || 0); }
     function recompute() {
-      if (!scoreData || !scoreData.answers || !scoreData.answers.edad || !M) return;
-      var t = $('rp-tiempo').value, r = $('rp-regimen').value, ans = scoreData.answers, changed = false;
-      if (t && ans.retiro_tiempo !== t) { ans.retiro_tiempo = t; changed = true; }
-      if (r && ans.retiro_regimen !== r) { ans.retiro_regimen = r; changed = true; }
-      if (!changed) return;
-      var res = M.compute(ans), P = res.pilares;
-      var hist = Array.isArray(scoreData.history) ? scoreData.history.slice() : [];
-      hist.push({ score: res.score, at: new Date().toISOString(), source: 'retiro' });
-      scoreData = Object.assign({}, scoreData, {
-        score: res.score, rango: res.rango.name, answers: ans, history: hist, prioridad: res.prioridad,
-        pilares: { ahorro: sub(P, 'ahorro'), flujo: sub(P, 'flujo'), deuda: sub(P, 'deuda'), retiro: sub(P, 'retiro'), seguros: sub(P, 'seguros'), inversion: sub(P, 'inversion'), impuestos: sub(P, 'impuestos'), patrimonio: sub(P, 'patrimonio') },
-        pillars: { emergency_fund: sub(P, 'ahorro'), cash_flow: sub(P, 'flujo'), debt_health: sub(P, 'deuda'), stability: sub(P, 'patrimonio') }
-      });
-      $('rp-note').textContent = 'Tu Puntaje Planea quedó en ' + res.score + '. Actualizaste tu plan de retiro.';
-      if (SB) SB.mePut({ score_data: scoreData }).catch(function () {});
+      var t = $('rp-tiempo').value, r = $('rp-regimen').value;
+      if ((!t && !r) || !M || !SB) return;
+      // Re-lee fresco para no pisar el DATO REAL que el editor pudo guardar (§3), y aplica
+      // el dato real de los ítems al recalcular — un solo motor, un solo número.
+      SB.meGet().then(function (d) {
+        var sd = d && d.score_data;
+        if (!sd || !sd.answers || !sd.answers.edad) return;
+        var ans = Object.assign({}, sd.answers), changed = false;
+        if (t && ans.retiro_tiempo !== t) { ans.retiro_tiempo = t; changed = true; }
+        if (r && ans.retiro_regimen !== r) { ans.retiro_regimen = r; changed = true; }
+        if (!changed) { scoreData = sd; return; }
+        if (window.PlaneaRealData) ans = PlaneaRealData.applyRealData(ans, (d && d.items) || []);
+        var res = M.compute(ans), P = res.pilares;
+        var hist = Array.isArray(sd.history) ? sd.history.slice() : [];
+        hist.push({ score: res.score, at: new Date().toISOString(), source: 'retiro' });
+        scoreData = Object.assign({}, sd, {
+          score: res.score, rango: res.rango.name, answers: ans, history: hist, prioridad: res.prioridad,
+          pilares: { ahorro: sub(P, 'ahorro'), flujo: sub(P, 'flujo'), deuda: sub(P, 'deuda'), retiro: sub(P, 'retiro'), seguros: sub(P, 'seguros'), inversion: sub(P, 'inversion'), impuestos: sub(P, 'impuestos'), patrimonio: sub(P, 'patrimonio') },
+          pillars: { emergency_fund: sub(P, 'ahorro'), cash_flow: sub(P, 'flujo'), debt_health: sub(P, 'deuda'), stability: sub(P, 'patrimonio') }
+        });
+        $('rp-note').textContent = 'Tu Puntaje Planea quedó en ' + res.score + '. Actualizaste tu plan de retiro.';
+        SB.mePut({ score_data: scoreData }).catch(function () {});
+      }).catch(function () {});
     }
     function boot() {
       if (!SB || !SB.meGet) return;
