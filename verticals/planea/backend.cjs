@@ -574,10 +574,15 @@ function build() {
       // (meta de Maya == meta de alta prioridad) se deriva de ESOS MISMOS datos.
       let sd = p.score_data || null;
       const meta = p.finance_meta || {};
-      // HU-1 · Puntaje único: 7 pilares canónicos + las 4 dimensiones del survey
-      // como proxy por pilar hasta que llegue el dato real. NUNCA dos números.
-      const uni = unified.computeUnified(items, meta, p.score_data || null);
-      if (uni && uni.overall != null) {
+      // MOTOR ÚNICO (Documento Maestro §3, §9.1): el ÚNICO puntaje válido es el motor de
+      // 8 pilares (planea-motor.js), cuyo resultado el frontend guarda en score_data
+      // (score / rango / prioridad). El backend NO lo recalcula ni lo sobrescribe: el
+      // segundo motor «Salud Financiera» (unified-score/salud, 7 pilares, rangos
+      // 30/50/70/85) queda superado y ya NO produce el número. Así Inicio y Puntaje
+      // Planea muestran siempre el mismo valor. La recomendación es metadato de apoyo y
+      // no altera el puntaje.
+      const uni = unified.computeUnified(items, meta, p.score_data || null); // solo para net_worth
+      if (sd) {
         const t = salud.totalsFromItems(items);
         const rec = score.recommendation({
           ingresos: t.I, gastos: t.G, cuotas: t.C, tiene_deuda: (t.D > 0 || t.C > 0),
@@ -585,15 +590,10 @@ function build() {
           tipo_ingreso: meta.tipo_ingreso || 'fijo', dependientes: meta.dependientes || 'nadie',
           nombre: String(p.full_name || u.full_name || '').trim().split(/\s+/)[0] || '',
         });
-        sd = Object.assign({}, sd || {}, {
-          score: uni.overall,
-          rango: uni.rango,
-          recommendation: rec,          // ← única fuente de la meta prioritaria
+        sd = Object.assign({}, sd, {
+          recommendation: rec,          // metadato de apoyo (no es el puntaje)
           scenario: rec.scenario,
-          source: uni.score_source,     // 'survey' | 'blended' | 'real'
-          dimensions: uni.dimensions,   // traza real/proxy por pilar (HU-1)
-          proxy_pillars: uni.proxy_pillars,
-          survey_score: (p.score_data && p.score_data.score != null) ? p.score_data.score : null,
+          survey_score: (sd.score != null) ? sd.score : null,
         });
       }
 
@@ -607,7 +607,8 @@ function build() {
         items: items,
         summary: itemsSummary(items),
         finance_meta: p.finance_meta || {},   // incluye preferencias UI (p.ej. mi_puntaje_visible)
-        salud: uni && uni.overall != null ? { overall: uni.overall, rango: uni.rango, net_worth: uni.net_worth, source: uni.score_source } : null,
+        // Número principal = motor único (score_data). net_worth sí viene del cálculo real.
+        salud: (sd && sd.score != null) ? { overall: sd.score, rango: sd.rango, net_worth: uni ? uni.net_worth : null, source: 'motor8' } : null,
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -702,16 +703,16 @@ function build() {
       const rowItems = rows.map(itemOut);
       // Instrumentos/buckets del cockpit vienen de los DATOS REALES (salud.cjs).
       const result = salud.computeSalud(rowItems, meta);
-      // HU-1 · el número principal (gauge) es el UNIFICADO: 7 pilares + proxy del
-      // survey por dimensión, para que NUNCA difiera del que se ve en Inicio.
-      const uni = unified.computeUnified(rowItems, meta, (prof && prof.score_data) || null);
-      if (uni && uni.overall != null) {
-        result.overall = uni.overall;
-        result.rango = uni.rango;
-        result.light = uni.light;
-        result.dimensions = uni.dimensions;      // traza real/proxy por pilar
-        result.score_source = uni.score_source;
-        result.proxy_pillars = uni.proxy_pillars;
+      // MOTOR ÚNICO (§3, §9.1): el número principal (gauge) es el del motor de 8 pilares
+      // guardado en score_data — el MISMO que se ve en Inicio y Puntaje Planea. Los
+      // buckets siguen siendo el desglose real, pero el puntaje ya no lo produce el
+      // motor viejo (unified/salud, superado por el Documento Maestro).
+      const sd8 = (prof && prof.score_data) || null;
+      if (sd8 && sd8.score != null) {
+        result.overall = sd8.score;
+        result.rango = sd8.rango;
+        result.light = sd8.score >= 69 ? 'green' : sd8.score >= 53 ? 'yellow' : 'red';
+        result.score_source = 'motor8';
       }
       // Snapshot diario SOLO cuando hay instrumentos reales (buckets no nulos):
       // un score de solo-survey no tiene desglose que guardar.
