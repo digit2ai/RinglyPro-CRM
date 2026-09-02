@@ -5,7 +5,7 @@
    Tipografía §1: Inter para títulos/display, DM Sans para el cuerpo. */
 :root{
   /* Paleta oficial del landing (theme.css): primary-300 #16373A … primary-500 #02181A. */
-  --bg:#202d28; --bg-elev:#0a2220; --card:#27332e; --card2:#2c3833;
+  --bg:#16373A; --bg-elev:#123033; --card:#1a4044; --card2:#1e474b;
   /* Panel izquierdo (barra lateral) = color primario de marca §1 = #16373A. */
   --pane:#16373A;
   --group:#1c2f28; --group2:#213b31; --line:#233029;
@@ -24,7 +24,7 @@ body.light{
 html,body{background:var(--bg);color:var(--txt)}
 /* Fondo radial verde-oscuro (igual que la presentación) — solo en tema oscuro; el claro
    queda plano. Fijo para que no se corte al hacer scroll. */
-body:not(.light){background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27320%27%20height%3D%27188%27%20viewBox%3D%270%200%20320%20188%27%3E%3Cg%20fill%3D%27%23EAF3EF%27%20fill-opacity%3D%270.045%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27800%27%3E%3Cg%20transform%3D%27translate%2828%2C56%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2756%27%20y%3D%2778%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3Cg%20transform%3D%27translate%28188%2C150%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%27216%27%20y%3D%27172%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat;background-color:#202d28}
+body:not(.light){background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27320%27%20height%3D%27188%27%20viewBox%3D%270%200%20320%20188%27%3E%3Cg%20fill%3D%27%23EAF3EF%27%20fill-opacity%3D%270.045%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27800%27%3E%3Cg%20transform%3D%27translate%2828%2C56%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2756%27%20y%3D%2778%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3Cg%20transform%3D%27translate%28188%2C150%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%27216%27%20y%3D%27172%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat;background-color:#16373A}
 /* §1: DM Sans para el cuerpo; los títulos ya fijan Inter en sus propias clases. */
 body{font-family:'Inter','DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit;text-decoration:none}
