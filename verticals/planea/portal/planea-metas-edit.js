@@ -29,6 +29,23 @@
   var selType = 'Viaje';
   var customType = '';
 
+  // §17.2 — los 8 pilares oficiales. Maya SUGIERE uno; el usuario puede cambiarlo.
+  var PILARES = [
+    ['ahorro', 'Ahorro'], ['flujo', 'Flujo de Caja'], ['deuda', 'Deuda'], ['inversion', 'Inversión'],
+    ['seguros', 'Seguros'], ['retiro', 'Retiro / Pensión'], ['impuestos', 'Impuestos'], ['patrimonio', 'Patrimonio']
+  ];
+  function suggestPilar(name, type) {
+    var s = ((name || '') + ' ' + (type || '')).toLowerCase();
+    if (/deuda|tarjeta|crédito|credito|préstamo|prestamo/.test(s)) return 'deuda';
+    if (/retiro|pensión|pension|jubila/.test(s)) return 'retiro';
+    if (/seguro|póliza|poliza|protección|proteccion/.test(s)) return 'seguros';
+    if (/invertir|inversión|inversion|acciones|cripto|fondo/.test(s)) return 'inversion';
+    if (/impuesto|renta|dian|tributar/.test(s)) return 'impuestos';
+    if (/casa|vivienda|apartamento|carro|vehículo|vehiculo|patrimonio|herencia|sucesión|sucesion/.test(s)) return 'patrimonio';
+    if (/gasto|presupuesto|flujo/.test(s)) return 'flujo';
+    return 'ahorro'; // por defecto, la mayoría de metas de compra se apalancan en ahorro
+  }
+
   function formHtml() {
     var otro = selType === 'Otro';
     // §17.2: la creación comienza con una pregunta abierta. §17: una meta puede ser
@@ -41,6 +58,9 @@
       '<div class="me-grid"><div><label class="me-l">Meta total ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-target" inputmode="numeric" placeholder="5.000.000"></div></div>' +
       '<div><label class="me-l">Ya tienes ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-current" inputmode="numeric" placeholder="0"></div></div></div>' +
       '<label class="me-l">Aporte que estás dispuesto a hacer ($/mes) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-monthly" inputmode="numeric" placeholder="200.000"></div>' +
+      '<div class="me-grid"><div><label class="me-l">Área relacionada <span class="me-opt">Maya sugiere</span></label>' +
+        '<select class="me-in" id="me-pilar">' + PILARES.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div><label class="me-l">Fecha objetivo <span class="me-opt">opcional</span></label><input class="me-in" id="me-fecha" type="date"></div></div>' +
       '<div class="me-hint">Una meta puede ser sin monto ni fecha (por ejemplo «organizar mis deudas»). Con el nombre basta para crearla.</div>' +
       '<div class="me-err" id="me-err" hidden></div>' +
       '<div class="me-actions"><button class="me-cancel" data-me-cancel>Cancelar</button><button class="me-save" data-me-save>Crear meta</button></div>' +
@@ -59,9 +79,17 @@
         var el = document.getElementById(id);
         el.addEventListener('input', function () { var d = digits(el.value); el.value = d ? parseInt(d, 10).toLocaleString('es-CO') : ''; });
       });
-      var nm = document.getElementById('me-name'); if (nm) nm.focus();
+      pilarTouched = false;
+      var pil = document.getElementById('me-pilar');
+      if (pil) { pil.value = suggestPilar('', selType); pil.addEventListener('change', function () { pilarTouched = true; }); }
+      var nm = document.getElementById('me-name');
+      if (nm) {
+        nm.addEventListener('input', function () { if (!pilarTouched && pil) pil.value = suggestPilar(nm.value, selType); });
+        nm.focus();
+      }
     }
   }
+  var pilarTouched = false;
 
   function save() {
     var name = document.getElementById('me-name').value.trim();
@@ -76,7 +104,11 @@
     var customEl = document.getElementById('me-custom');
     customType = customEl ? customEl.value.trim() : customType;
     var type = selType === 'Otro' ? (customType || 'Otro') : selType;
-    var row = { person_id: person.id, name: name, type: type, target_amount: target, current_savings: current, monthly_saving: monthly };
+    var pilarEl = document.getElementById('me-pilar');
+    var fechaEl = document.getElementById('me-fecha');
+    var pilar = pilarEl ? pilarEl.value : suggestPilar(name, type);
+    var fecha = fechaEl && fechaEl.value ? fechaEl.value : null;
+    var row = { person_id: person.id, name: name, type: type, pilar: pilar, fecha_objetivo: fecha, target_amount: target, current_savings: current, monthly_saving: monthly };
     PlaneaSB.post('persons_long_term_goals', row)
       .then(function () { location.reload(); })
       .catch(function (e) { if (window.console) console.warn('[metas] save failed', e && e.message); alert('No se pudo guardar la meta. Revisa tu sesión.'); });
@@ -107,10 +139,31 @@
     var st = document.createElement('style');
     st.textContent = '#metas-edit .me-opt{color:var(--mut,#9db3ab);font-weight:500;font-size:11.5px}' +
       '#metas-edit .me-hint{font-size:12px;color:var(--mut,#9db3ab);line-height:1.45;margin:10px 0 2px}' +
-      '#metas-edit .me-err{color:#e0705a;font-size:12.5px;margin-top:8px;font-weight:600}';
+      '#metas-edit .me-err{color:#e0705a;font-size:12.5px;margin-top:8px;font-weight:600}' +
+      '#metas-edit select.me-in{-webkit-appearance:none;appearance:none;background:var(--card2,#16302a)}' +
+      // §17.3 estados + acciones + invitación destacada (viven en la lista, fuera de #metas-edit)
+      '.mc-badge{font-size:10px;font-weight:800;letter-spacing:.03em;border:1px solid;border-radius:99px;padding:1px 7px;vertical-align:middle;white-space:nowrap}' +
+      '.metacard.mc-done{opacity:.62}' +
+      '.mc-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}' +
+      '.mc-act{background:#12494b;color:#eafff4;border:none;border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer}' +
+      '.mc-act.ghost{background:transparent;color:var(--mut,#9db3ab);border:1px solid var(--line,#26332e)}' +
+      '.meta-invi{display:block;background:linear-gradient(120deg,rgba(63,192,106,.14),rgba(23,166,166,.12));border:1px solid var(--green,#3fc06a);border-radius:14px;padding:13px 15px;margin-bottom:12px;color:var(--txt,#eaf1ec);font-size:13.5px;line-height:1.5;text-decoration:none}' +
+      '.meta-invi b{color:var(--green,#3fc06a)}';
     document.head.appendChild(st);
+    if (/(^|#)crear$/.test(location.hash)) open = true;   // invitación destacada §17.3
     render();
     mount.addEventListener('click', onClick);
+    // §17.3 — estados de meta: marcar cumplida / archivar / eliminar (botones de la tarjeta).
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-goal-act]') : null;
+      if (!b) return;
+      var id = b.getAttribute('data-goal-id'), act = b.getAttribute('data-goal-act');
+      if (!id || !window.PlaneaSB) return;
+      if (act === 'delete' && !confirm('¿Eliminar esta meta?')) return;
+      b.disabled = true;
+      var op = act === 'delete' ? PlaneaSB.goalDelete(id) : PlaneaSB.goalUpdate(id, { estado: act });
+      op.then(function () { location.reload(); }).catch(function () { b.disabled = false; alert('No se pudo actualizar la meta.'); });
+    });
     if (window.PlaneaSB && PlaneaSB.loggedIn()) PlaneaSB.person().then(function (pr) { person = pr; }).catch(function () {});
   }
 

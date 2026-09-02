@@ -18,11 +18,69 @@
 
   <div id="metas-edit" style="margin-top:16px"><!-- Crear una meta --></div>
 
+  <!-- §17.6 Calculadora de valor del dinero en el tiempo. Escenario NEUTRO: el usuario
+       ingresa TODO, Maya no interpreta, no alimenta el puntaje, no menciona productos. -->
+  <details class="calc" style="margin-top:18px">
+    <summary>Calculadora de valor del dinero en el tiempo</summary>
+    <div class="calc-body">
+      <div class="calc-grid">
+        <div><label>Monto inicial ($)</label><div class="me-money"><span>$</span><input id="c-p" inputmode="numeric" placeholder="0"></div></div>
+        <div><label>Aporte mensual ($)</label><div class="me-money"><span>$</span><input id="c-m" inputmode="numeric" placeholder="0"></div></div>
+        <div><label>Rendimiento anual (%)</label><input id="c-r" inputmode="decimal" placeholder="0"></div>
+        <div><label>Plazo (años)</label><input id="c-y" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <button id="c-go" class="calc-go">Calcular escenario</button>
+      <div id="c-out" class="calc-out" hidden></div>
+      <p class="calc-aviso">Esta herramienta realiza un cálculo matemático con los valores que tú ingresas. No constituye una proyección de tus finanzas, una recomendación ni una asesoría. Los resultados dependen enteramente de los supuestos que elijas.</p>
+    </div>
+  </details>
+
 </div></div>
+<style>
+  .calc{background:var(--card,#101a16);border:1px solid var(--line,#26332e);border-radius:16px;overflow:hidden}
+  .calc>summary{list-style:none;cursor:pointer;padding:15px 17px;font-weight:700;font-size:15px;color:var(--txt,#eaf1ec)}
+  .calc>summary::-webkit-details-marker{display:none}
+  .calc>summary::after{content:"⌄";float:right;color:var(--mut,#9db3ab)}
+  .calc[open]>summary::after{content:"⌃"}
+  .calc-body{padding:0 17px 17px}
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .calc-body label{display:block;font-size:12.5px;font-weight:700;color:var(--txt,#eaf1ec);margin-bottom:6px}
+  .calc-body input{width:100%;background:var(--card2,#16302a);border:1.5px solid var(--line,#26332e);border-radius:12px;padding:11px 13px;font-family:inherit;font-size:15px;color:var(--txt,#eaf1ec);outline:none}
+  .calc-body .me-money{position:relative}.calc-body .me-money span{position:absolute;left:13px;top:11px;color:var(--mut,#9db3ab)}.calc-body .me-money input{padding-left:26px}
+  .calc-go{margin-top:14px;width:100%;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:12px;padding:13px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer}
+  .calc-out{margin-top:14px;background:var(--card2,#16302a);border:1px solid var(--line,#26332e);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--txt,#eaf1ec);line-height:1.6}
+  .calc-out b{font-family:'Inter';font-size:20px;color:var(--green,#3fc06a)}
+  .calc-aviso{font-size:11.5px;color:var(--mut,#9db3ab);line-height:1.5;margin:12px 0 0}
+</style>
+<script>
+  // §17.6 — cálculo puro, escenario neutro. No toca el puntaje ni a Maya.
+  (function () {
+    function digits(s) { return (s || '').replace(/[^\d]/g, ''); }
+    function cop(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+    ['c-p', 'c-m'].forEach(function (id) {
+      var el = document.getElementById(id); if (!el) return;
+      el.addEventListener('input', function () { var d = digits(el.value); el.value = d ? parseInt(d, 10).toLocaleString('es-CO') : ''; });
+    });
+    var go = document.getElementById('c-go');
+    if (go) go.addEventListener('click', function () {
+      var P = parseInt(digits(document.getElementById('c-p').value), 10) || 0;
+      var M = parseInt(digits(document.getElementById('c-m').value), 10) || 0;
+      var rA = parseFloat((document.getElementById('c-r').value || '').replace(',', '.')) || 0;
+      var y = parseInt((document.getElementById('c-y').value || '').replace(/[^\d]/g, ''), 10) || 0;
+      var n = y * 12, r = (rA / 100) / 12;
+      var fv = r === 0 ? P + M * n : P * Math.pow(1 + r, n) + M * ((Math.pow(1 + r, n) - 1) / r);
+      var aportado = P + M * n;
+      var out = document.getElementById('c-out');
+      out.hidden = false;
+      out.innerHTML = 'En este escenario, al cabo de ' + y + ' año' + (y === 1 ? '' : 's') + ' tendrías <b>' + cop(fv) + '</b>.<br>' +
+        'Habrías aportado ' + cop(aportado) + '; la diferencia (' + cop(fv - aportado) + ') corresponde al rendimiento supuesto.';
+    });
+  })();
+</script>
 <script src="/planea/portal/planea-nav.js?v=68" defer></script>
-<script src="/planea/portal/planea-sb.js?v=39" defer></script>
-<script src="/planea/portal/planea-data.js?v=66" defer></script>
-<script src="/planea/portal/planea-metas-edit.js?v=39" defer></script>
+<script src="/planea/portal/planea-sb.js?v=70" defer></script>
+<script src="/planea/portal/planea-data.js?v=67" defer></script>
+<script src="/planea/portal/planea-metas-edit.js?v=40" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
 </body>
 </html>

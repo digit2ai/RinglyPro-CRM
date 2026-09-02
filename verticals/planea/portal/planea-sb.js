@@ -134,6 +134,10 @@
     itemCreate: function (b) { return req('POST', '/me/items', b); },
     itemUpdate: function (id, b) { return req('PATCH', '/me/items/' + id, b); },
     itemDelete: function (id) { return req('DELETE', '/me/items/' + id); },
+    // Metas (§17) — actualizar estado/campos y eliminar.
+    goalCreate: function (b) { return req('POST', '/me/goals', b); },
+    goalUpdate: function (id, b) { return req('PATCH', '/me/goals/' + id, b); },
+    goalDelete: function (id) { return req('DELETE', '/me/goals/' + id); },
     logout: function () { return req('POST', '/auth/logout').catch(function () {}); }
   };
 })();

@@ -655,6 +655,11 @@ function build() {
     if (m.employer === true || m.employer === 'true') out.employer = true;
     return out;
   }
+  // §17.2 — pilar de una meta: solo los 8 pilares oficiales; cualquier otra cosa → null.
+  const PILAR_KEYS = ['ahorro', 'flujo', 'deuda', 'retiro', 'seguros', 'inversion', 'impuestos', 'patrimonio'];
+  function sanPilar(v) { return PILAR_KEYS.indexOf(String(v)) >= 0 ? String(v) : null; }
+  // §17.2 — fecha objetivo: cadena YYYY-MM-DD, o null.
+  function sanFecha(v) { return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null; }
   // Guarda/actualiza el total del mes actual para una categoría (evolución §1.3).
   async function snapshotCategory(userId, category) {
     try {
@@ -881,16 +886,61 @@ function build() {
       const goals = Array.isArray(p.goals) ? p.goals.slice() : [];
       const g = req.body || {};
       goals.push({
+        id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         name: String(g.name || '').slice(0, 120),
         type: g.type || null,
+        pilar: sanPilar(g.pilar),                 // §17.2 vínculo a uno de los 8 pilares
+        fecha_objetivo: sanFecha(g.fecha_objetivo), // §17.2 fecha objetivo (opcional)
+        estado: 'activa',                          // §17.3 estados
         target_amount: Number(g.target_amount) || 0,
         current_savings: Number(g.current_savings) || 0,
         monthly_saving: Number(g.monthly_saving) || 0,
-        created_at: undefined,
+        created_at: new Date().toISOString(),
       });
       p.goals = goals;
+      p.changed('goals', true);
       await p.save();
       res.json({ success: true, goals });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // §17.3 — actualizar una meta (estado activa/cumplida/archivada, o sus campos).
+  router.patch('/me/goals/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const p = await Profile.findOne({ where: { user_id: a.id } });
+      const goals = Array.isArray(p && p.goals) ? p.goals.slice() : [];
+      const i = goals.findIndex(function (x) { return x && String(x.id) === String(req.params.id); });
+      if (i < 0) return res.status(404).json({ error: 'not_found' });
+      const b = req.body || {};
+      const g = Object.assign({}, goals[i]);
+      if (b.estado != null && ['activa', 'cumplida', 'archivada'].indexOf(b.estado) >= 0) g.estado = b.estado;
+      if (b.name != null) g.name = String(b.name).slice(0, 120);
+      if (b.type != null) g.type = b.type;
+      if (b.pilar !== undefined) g.pilar = sanPilar(b.pilar);
+      if (b.fecha_objetivo !== undefined) g.fecha_objetivo = sanFecha(b.fecha_objetivo);
+      if (b.target_amount != null) g.target_amount = Number(b.target_amount) || 0;
+      if (b.current_savings != null) g.current_savings = Number(b.current_savings) || 0;
+      if (b.monthly_saving != null) g.monthly_saving = Number(b.monthly_saving) || 0;
+      goals[i] = g;
+      p.goals = goals; p.changed('goals', true); await p.save();
+      res.json({ success: true, goal: g, goals });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Eliminar una meta.
+  router.delete('/me/goals/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const p = await Profile.findOne({ where: { user_id: a.id } });
+      const goals = Array.isArray(p && p.goals) ? p.goals.slice() : [];
+      const next = goals.filter(function (x) { return x && String(x.id) !== String(req.params.id); });
+      p.goals = next; p.changed('goals', true); await p.save();
+      res.json({ success: true, goals: next });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

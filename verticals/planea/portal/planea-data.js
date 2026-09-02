@@ -47,6 +47,22 @@
     return s <= 35 ? 'Punto de partida' : s <= 52 ? 'Construyendo' : s <= 68 ? 'En camino' : s <= 83 ? 'Sólido' : 'Planeado';
   }
   function num(x) { var v = +x; return isNaN(v) ? 0 : v; }
+  // §17.3 — estado de una meta: manual (cumplida/archivada) o DERIVADO (cumplida al
+  // alcanzar el monto, vencida al pasar la fecha objetivo sin cumplirse; si no, activa).
+  function todayISO() { return new Date().toISOString().slice(0, 10); }
+  function goalEstado(g) {
+    if (g.estado === 'cumplida' || g.estado === 'archivada') return g.estado;
+    if (num(g.target_amount) > 0 && num(g.current_savings) >= num(g.target_amount)) return 'cumplida';
+    if (g.fecha_objetivo && String(g.fecha_objetivo) < todayISO()) return 'vencida';
+    return 'activa';
+  }
+  function mapGoal(g) {
+    return {
+      id: g.id || null, nombre: g.name, tipo: g.type, pilar: g.pilar || null,
+      fecha_objetivo: g.fecha_objetivo || null, estado: goalEstado(g),
+      objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving)
+    };
+  }
 
   // ── Los 8 pilares oficiales (Documento Maestro §2), su etiqueta y su sección ──
   var PIL8 = [['ahorro', 'Ahorro'], ['flujo', 'Flujo de Caja'], ['deuda', 'Deuda'], ['retiro', 'Retiro / Pensión'], ['seguros', 'Seguros'], ['inversion', 'Inversión'], ['impuestos', 'Impuestos'], ['patrimonio', 'Patrimonio y Sucesión']];
@@ -148,9 +164,7 @@
         prof.pasivos = liab.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
 
         var goalRows = res[1] || [];
-        prof.metas = goalRows.map(function (g) {
-          return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
-        });
+        prof.metas = goalRows.map(mapGoal);
 
         window.PLANEA_PROFILE = prof;
         return prof;
@@ -179,7 +193,7 @@
       case 'retiro_total': return cop(prof.retiro_total_cop || 0);
       case 'ahorro_total': return cop(prof.ahorro_total_cop || 0);
       case 'inversion_total': return cop(prof.inversion_total_cop || 0);
-      case 'metas_count': return String((prof.metas || []).length);
+      case 'metas_count': return String((prof.metas || []).filter(function (m) { return m.estado === 'activa'; }).length);
       case 'disponible_total': return cop(prof.disponible_cop || 0);
       case 'tasa_ahorro': return prof.tasa_ahorro == null ? '—' : prof.tasa_ahorro + '%';
       case 'resumen': return resumenLine(prof);
@@ -231,12 +245,25 @@
     return '<div class="fund"><div class="top"><span class="ic">' + IC_TREND + '</span><div class="nm">' + esc(name) +
       '</div></div><div class="val">' + valueTxt + '</div><div class="meta">' + metaTxt + '</div></div>';
   }
+  var GOAL_EST = { activa: { t: 'Activa', c: '#3fc06a' }, cumplida: { t: 'Cumplida', c: '#5a9e7b' }, vencida: { t: 'Vencida', c: '#e0954f' }, archivada: { t: 'Archivada', c: '#8a9a92' } };
+  var GOAL_PILAR = { ahorro: 'Ahorro', flujo: 'Flujo de Caja', deuda: 'Deuda', retiro: 'Retiro / Pensión', seguros: 'Seguros', inversion: 'Inversión', impuestos: 'Impuestos', patrimonio: 'Patrimonio' };
+  function goalActions(m) {
+    if (!m.id) return '';
+    var b = [];
+    if (m.estado === 'activa' || m.estado === 'vencida') b.push('<button class="mc-act" data-goal-id="' + m.id + '" data-goal-act="cumplida">Marcar cumplida</button>');
+    if (m.estado === 'cumplida') b.push('<button class="mc-act" data-goal-id="' + m.id + '" data-goal-act="archivada">Archivar</button>');
+    b.push('<button class="mc-act ghost" data-goal-id="' + m.id + '" data-goal-act="delete">Eliminar</button>');
+    return '<div class="mc-acts">' + b.join('') + '</div>';
+  }
   function metacard(m) {
-    var head = '<div class="metacard"><div class="top"><span class="mi">' + IC_GOAL + '</span><div><div class="nm">' + esc(m.nombre) +
-      '</div><div class="de">' + esc(m.tipo || 'Meta') + '</div></div>';
+    var e = GOAL_EST[m.estado] || GOAL_EST.activa;
+    var badge = '<span class="mc-badge" style="color:' + e.c + ';border-color:' + e.c + '">' + e.t + '</span>';
+    var sub = (m.pilar && GOAL_PILAR[m.pilar]) ? esc(GOAL_PILAR[m.pilar]) : esc(m.tipo || 'Meta');
+    var head = '<div class="metacard' + (m.estado === 'cumplida' || m.estado === 'archivada' ? ' mc-done' : '') + '"><div class="top"><span class="mi">' + IC_GOAL + '</span>' +
+      '<div style="flex:1"><div class="nm">' + esc(m.nombre) + ' ' + badge + '</div><div class="de">' + sub + '</div></div>';
     // Meta CUALITATIVA (sin monto §17): sin barra ni %, se marca como cumplida.
     if (!(m.objetivo_cop > 0)) {
-      return head + '</div><div class="pie" style="margin-top:12px"><span>Meta sin monto</span><span>Márcala como cumplida cuando la logres</span></div></div>';
+      return head + '</div><div class="pie" style="margin-top:12px"><span>Meta sin monto</span><span>' + (m.estado === 'cumplida' ? 'Cumplida' : 'Márcala como cumplida cuando la logres') + '</span></div>' + goalActions(m) + '</div>';
     }
     var pct = Math.max(0, Math.min(100, Math.round(m.actual_cop / m.objetivo_cop * 100)));
     var rem = m.objetivo_cop - m.actual_cop;
@@ -245,7 +272,7 @@
     return head + '<div class="cif"><div class="a">' + cop(m.actual_cop) +
       '</div><div class="o">de ' + cop(m.objetivo_cop) + '</div></div></div>' +
       '<div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:' + pct + '%"></div></div>' +
-      '<div class="pie"><span><strong>' + pct + '%</strong> completado</span><span>' + right + '</span></div></div>';
+      '<div class="pie"><span><strong>' + pct + '%</strong> completado</span><span>' + right + '</span></div>' + goalActions(m) + '</div>';
   }
   function pilarRow(nombre, pct) {
     var p = pct == null ? 0 : Math.max(0, Math.min(100, Math.round(pct)));
@@ -282,8 +309,16 @@
         var maxV = rows.reduce(function (m, x) { return Math.max(m, x.valor_cop); }, 0) || 1;
         html = rows.map(function (x) { return pocket(x.nombre, x.tipo, cop(x.valor_cop), Math.round(x.valor_cop / maxV * 100)); }).join('');
       } else if (type === 'metas') {
-        rows = prof.metas || [];
-        html = rows.map(metacard).join('');
+        // §17.3: activas primero (luego vencidas), y al final cumplidas/archivadas.
+        var ORD = { activa: 0, vencida: 1, cumplida: 2, archivada: 3 };
+        rows = (prof.metas || []).slice().sort(function (a, b) { return (ORD[a.estado] || 0) - (ORD[b.estado] || 0); });
+        // §17.3 invitación destacada: si el pilar prioritario no tiene meta activa, invita a crearla.
+        var invi = '';
+        var pr = prof.prioridad && prof.prioridad.principal;
+        if (pr && !(prof.metas || []).some(function (m) { return m.pilar === pr && m.estado === 'activa'; })) {
+          invi = '<a class="meta-invi" href="/planea/portal/metas#crear"><b>Tu prioridad es ' + esc((GOAL_PILAR[pr] || pr)) + '.</b> Ponte una meta en esta área y Maya te acompaña.</a>';
+        }
+        html = invi + rows.map(metacard).join('');
       } else if (type === 'pilares8') {
         // Detalle por área: los 8 pilares oficiales (Documento Maestro §2 / §10 / Doc 2 §2.4).
         var p8 = prof.pilares8;
@@ -461,9 +496,7 @@
         prof.activos = byCat('ahorro').map(toRow).concat(byCat('inversion').map(toRow))
           .concat(byCat('retiro').map(function (x) { return { nombre: x.name, tipo: x.type || 'Retiro', valor_cop: num(x.value) }; }));
 
-        prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(function (g) {
-          return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
-        });
+        prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(mapGoal);
         window.PLANEA_PROFILE = prof;
         // Avisa a la navegación (bloqueo secuencial de pilares) y a Maya que ya hay
         // perfil real, para derivar qué paso está desbloqueado sin recargar.
