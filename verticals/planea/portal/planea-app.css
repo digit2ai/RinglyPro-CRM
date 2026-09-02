@@ -10,14 +10,15 @@
   --pane:#16373A;
   --group:#1c2f28; --group2:#213b31; --line:#233029;
   --txt:#eef3ef; --mut:#8a9b93; --mut2:#6d7d76;
-  --green:#5cba8a; --greenb:#8fd9ac; --green-soft:rgba(92,186,138,.14);
+  /* Acento TEAL de marca (landing secondary3): anillos, barras, «En camino», enlaces. */
+  --green:#4fb3ac; --greenb:#83d6cf; --green-soft:rgba(79,179,172,.15);
   --red:#c86b4f; --red-soft:rgba(200,107,79,.16); --gold:#d8c48a;
   --cream:#f1eee4; --ink:#11201b; --radius:18px;
 }
 body.light{
   --bg:#eef2ef; --bg-elev:#fff; --card:#fff; --card2:#f6f8f6; --group:#e7f2ec; --group2:#dcebe1;
   --line:#e3e8e5; --txt:#14201b; --mut:#5f716a; --mut2:#7c8a83;
-  --green:#2e7d5b; --greenb:#2e7d5b; --green-soft:#e7f2ec; --cream:#16373a; --ink:#fff; --pane:#fff;
+  --green:#2f6e74; --greenb:#2f6e74; --green-soft:#e3f0f0; --cream:#16373a; --ink:#fff; --pane:#fff;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--bg);color:var(--txt)}
@@ -25,7 +26,7 @@ html,body{background:var(--bg);color:var(--txt)}
    queda plano. Fijo para que no se corte al hacer scroll. */
 body:not(.light){background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27320%27%20height%3D%27188%27%20viewBox%3D%270%200%20320%20188%27%3E%3Cg%20fill%3D%27%23EAF3EF%27%20fill-opacity%3D%270.045%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27800%27%3E%3Cg%20transform%3D%27translate%2828%2C56%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%2756%27%20y%3D%2778%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3Cg%20transform%3D%27translate%28188%2C150%29%20scale%280.92%29%27%3E%3Cpath%20d%3D%27M13%202%20L24%2020%20L14.5%2020%20L14.5%2011%20Z%27%2F%3E%3Cpath%20d%3D%27M11.5%206.5%20L11.5%2020%20L2%2020%20Z%27%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%27216%27%20y%3D%27172%27%20font-size%3D%2725%27%3EPlanea%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat, radial-gradient(125% 95% at 50% -6%,#16373A 0%,#0B282B 42%,#02181A 78%) no-repeat;background-color:#02181A}
 /* §1: DM Sans para el cuerpo; los títulos ya fijan Inter en sus propias clases. */
-body{font-family:'DM Sans','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+body{font-family:'Inter','DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit;text-decoration:none}
 .app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:130px}
 .wrap{padding:8px 16px 0}
@@ -169,7 +170,7 @@ a{color:inherit;text-decoration:none}
 .pocket .sub{display:flex;justify-content:space-between;margin-top:10px;font-size:13px;color:var(--mut)}
 
 /* Priority goal / meta card */
-.badge{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(143,217,172,.4);background:var(--green-soft);padding:6px 12px;border-radius:99px;white-space:nowrap}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(131,214,207,.4);background:var(--green-soft);padding:6px 12px;border-radius:99px;white-space:nowrap}
 .metacard{background:var(--card2);border-radius:14px;padding:20px;margin-top:12px}
 .metacard .top{display:flex;align-items:flex-start;gap:12px}
 .metacard .mi{width:40px;height:40px;border-radius:11px;background:var(--group);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -184,7 +185,7 @@ a{color:inherit;text-decoration:none}
 
 /* Cards / steps / insight */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
-.tagline{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(143,217,172,.35);background:var(--green-soft);padding:5px 11px;border-radius:99px;display:inline-block}
+.tagline{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(131,214,207,.35);background:var(--green-soft);padding:5px 11px;border-radius:99px;display:inline-block}
 .card h3{font-family:'Inter',sans-serif;font-weight:700;font-size:18px;margin-top:14px}
 .card p{color:var(--mut);font-size:14px;margin-top:6px;line-height:1.5}
 .steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
@@ -258,7 +259,7 @@ a{color:inherit;text-decoration:none}
 .chatbot .orbe{width:40px;height:40px;border-radius:50%;background:#fff;overflow:hidden;flex-shrink:0;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
 .chatbot .txt-short{display:block;font-family:'Inter',sans-serif;font-weight:800;font-size:14px;color:var(--txt);white-space:nowrap}
 .chatbot .orbe img{width:100%;height:100%;object-fit:cover;object-position:52% 8%;display:block}
-@keyframes mpulse{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 0 rgba(143,217,172,.4)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 10px rgba(143,217,172,0)}}
+@keyframes mpulse{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 0 rgba(131,214,207,.4)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 10px rgba(131,214,207,0)}}
 @media (prefers-reduced-motion:reduce){.chatbot .orbe{animation:none}}
 .chatbot .txt{display:none;flex-direction:column;text-align:left} /* móvil: solo 'Maya' (txt-short) */
 .chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
