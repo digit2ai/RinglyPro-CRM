@@ -21,7 +21,7 @@ body.light{
 html,body{background:var(--bg);color:var(--txt)}
 /* Fondo radial verde-oscuro (igual que la presentación) — solo en tema oscuro; el claro
    queda plano. Fijo para que no se corte al hacer scroll. */
-body:not(.light){background:radial-gradient(125% 95% at 50% -6%,#16373A 0%,#0B282B 42%,#02181A 78%) no-repeat;background-color:#02181A}
+body:not(.light){background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27460%27%20height%3D%27300%27%20viewBox%3D%270%200%20460%20300%27%3E%3Cg%20fill%3D%27%23EAF3EF%27%20fill-opacity%3D%270.030%27%3E%3Cg%20transform%3D%27translate%2840%2C66%29%27%3E%3Cpath%20d%3D%27M15%202%20L28%2015%20L15%2028%20L2%2015%20Z%27%20fill%3D%27none%27%20stroke%3D%27%23EAF3EF%27%20stroke-opacity%3D%270.035%27%20stroke-width%3D%272.4%27%2F%3E%3Cpath%20d%3D%27M15%208%20L21%2018.5%20L15%2015.5%20L9%2018.5%20Z%27%2F%3E%3Ctext%20x%3D%2740%27%20y%3D%2724%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27800%27%20font-size%3D%2728%27%3EPlanea%3C%2Ftext%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28260%2C212%29%27%3E%3Cpath%20d%3D%27M15%202%20L28%2015%20L15%2028%20L2%2015%20Z%27%20fill%3D%27none%27%20stroke%3D%27%23EAF3EF%27%20stroke-opacity%3D%270.035%27%20stroke-width%3D%272.4%27%2F%3E%3Cpath%20d%3D%27M15%208%20L21%2018.5%20L15%2015.5%20L9%2018.5%20Z%27%2F%3E%3Ctext%20x%3D%2740%27%20y%3D%2724%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27800%27%20font-size%3D%2728%27%3EPlanea%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat, radial-gradient(125% 95% at 50% -6%,#16373A 0%,#0B282B 42%,#02181A 78%) no-repeat;background-color:#02181A}
 /* §1: DM Sans para el cuerpo; los títulos ya fijan Inter en sus propias clases. */
 body{font-family:'DM Sans','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit;text-decoration:none}
@@ -266,7 +266,7 @@ a{color:inherit;text-decoration:none}
    sombra suave. Móvil no se toca (queda "Maya" junto al logo). Va al final para
    ganar en cascada a las reglas base de móvil. */
 @media (min-width:1024px){
-  .chatbot{top:auto;left:auto;bottom:24px;right:24px;transform:none;gap:11px;align-items:center}
+  .chatbot{top:auto;left:auto;bottom:92px;right:24px;transform:none;gap:11px;align-items:center}
   .chatbot:hover{transform:translateY(-2px)}
   .chatbot .orbe{width:66px;height:66px;background:transparent;box-shadow:none;overflow:visible;animation:none}
   .chatbot .orbe img{object-fit:contain;object-position:center;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45));animation:mFloat 5s ease-in-out infinite}
