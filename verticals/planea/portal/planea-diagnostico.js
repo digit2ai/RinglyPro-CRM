@@ -79,7 +79,7 @@
   var ADVERTENCIA = 'Planea presenta información con fines educativos e informativos. No constituye asesoría ni recomendación de productos financieros. Las decisiones sobre tus finanzas son siempre tuyas.';
 
   // ── STATE ───────────────────────────────────────────────────────────────────
-  var answers = {}, current = 'intro', root, profile = null, mayaMsg = {}, savedHistory = [];
+  var answers = {}, current = 'intro', root, profile = null, mayaMsg = {}, savedHistory = [], myGoals = [];
   var montosYaTransferidos = false;   // §5.2: los montos exactos se transfieren UNA sola vez
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
@@ -186,22 +186,36 @@
     // interés §15.2 (Ahorro, Deuda, Seguros, Inversión, Retiro / Pensión).
     var SECCION = { ahorro: 'ahorro', flujo: 'ingreso', deuda: 'deuda', retiro: 'retiro', seguros: 'seguros', inversion: 'inversion', impuestos: 'impuestos', patrimonio: 'patrimonio' };
     var INTERES = { ahorro: 1, deuda: 1, seguros: 1, inversion: 1, retiro: 1 };
+    // §14: pilar(es) prioritario(s) — se DESTACAN visualmente como la ruta natural de
+    // entrada (§10). §10 punto 3: meta activa del pilar si el usuario definió una en Mis
+    // Metas (vínculo por g.pilar/g.area); si no, el botón para crearla.
+    var prin = r.prioridad && r.prioridad.principal, seg = r.prioridad && r.prioridad.secundario;
+    function metaDe(k) {
+      for (var i = 0; i < myGoals.length; i++) { var g = myGoals[i] || {}; if (g.pilar === k || g.area === k) return g.name || g.nombre || g.titulo; }
+      return null;
+    }
     // §10: tarjetas COLAPSADAS por defecto (nombre + subpuntaje + barra); se expanden con
-    // un toque para ver la referencia general, el hallazgo, las acciones y el interés.
+    // un toque para ver la referencia, la meta activa, el hallazgo, las acciones y el interés.
     var pilaresHtml = PILAR_ORDER.map(function (k) {
       var v = Math.round((r.pilares[k] && r.pilares[k].puntaje) || 0);
       var col = v >= 70 ? 'var(--green)' : v >= 45 ? '#e0954f' : 'var(--red)';
+      var esPrio = (k === prin || k === seg);
+      var mg = metaDe(k);
+      var metaHtml = mg
+        ? '<div class="dg-pex-meta">Meta activa: <b>' + esc(mg) + '</b> · <a href="/planea/portal/metas">editar</a></div>'
+        : '<div class="dg-pex-meta dg-pex-nometa">Aún no tienes una meta en esta área. <a href="/planea/portal/metas">Crear meta</a></div>';
       var interes = INTERES[k]
         ? '<label class="dg-interes"><input type="checkbox" class="dg-int-cb" data-pilar="' + k + '"><span class="dg-int-tx"><b>Quiero saber cuáles son los productos ideales para mí</b><small>Te avisaremos cuando tengamos esa opción disponible</small></span></label>'
         : '';
-      return '<details class="dg-pex">' +
+      return '<details class="dg-pex' + (esPrio ? ' dg-pex-prio' : '') + '">' +
         '<summary>' +
-          '<div class="dg-pex-top"><span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + '</span>' +
+          '<div class="dg-pex-top"><span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + (esPrio ? ' <span class="dg-pex-flag">Empieza aquí</span>' : '') + '</span>' +
           '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span></div>' +
           '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + Math.max(v, 3) + '%;background:' + col + '"></div></div>' +
         '</summary>' +
         '<div class="dg-pex-body">' +
           '<div class="dg-pex-ref">Meta de referencia: ' + esc(REFERENCIA[k] || '') + '</div>' +
+          metaHtml +
           '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(hallazgo(k, v)) + '</span></div>' +
           '<div class="dg-pex-acts"><a class="dg-pex-btn" href="/planea/portal/' + SECCION[k] + '">Registrar más información</a>' +
             '<a class="dg-pex-btn ghost" href="/planea/portal/metas">Añadir o editar meta</a></div>' +
@@ -209,6 +223,8 @@
         '</div>' +
       '</details>';
     }).join('');
+    // §9.2 capa 2 — orden de prioridad (principal, luego secundario).
+    var ordenHtml = prin ? '<p class="dg-orden">Empieza por <b>' + esc((PILAR_LOWER[prin] || '').replace(/^tu[s]? /, '')) + '</b>' + (seg ? ', y luego ' + esc((PILAR_LOWER[seg] || '').replace(/^tu[s]? /, '')) : '') + '.</p>' : '';
 
     return '<div class="dg-card dg-result">' +
       '<div class="dg-res-tag">TU PUNTAJE PLANEA</div>' +
@@ -217,8 +233,12 @@
       '<div class="dg-res-num"><b id="dg-score">0</b><small>PLANEA</small></div></div>' +
       '<div class="dg-res-badge" style="border-color:' + color + ';color:' + color + '">' + esc(r.rango.name) + '</div>' +
       renderProgress(r.score) +
-      '<div class="dg-insight"><p class="dg-ins-p">' + apertura + '</p></div>' +
-      '<div class="dg-res-sub">HALLAZGOS DE MAYA · IA — detalle por área (8 pilares)</div>' +
+      // §9.2 CAPA 2 — Hallazgos de Maya: lectura principal + orden de prioridad. Va en su
+      // propio bloque, separado del detalle por área (§11.1 denominación «Hallazgos de Maya» + «IA»).
+      '<div class="dg-res-sub dg-hallazgos-h">Hallazgos de Maya <span class="dg-ia">IA</span></div>' +
+      '<div class="dg-insight"><p class="dg-ins-p">' + apertura + '</p>' + ordenHtml + '</div>' +
+      // §9.2 CAPA 3 — Detalle por área: las 8 tarjetas (capa distinta, encabezado propio).
+      '<div class="dg-res-sub">Detalle por área</div>' +
       '<div class="dg-pex-list">' + pilaresHtml + '</div>' +
       // §3.3: un solo CTA. Se retiran «Próximo paso» (flujo guiado) y «Volver a responder»
       // (las respuestas se afinan registrando datos reales en cada sección, no rehaciendo
@@ -246,7 +266,18 @@
       '.dg-interes{display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);cursor:pointer}' +
       '.dg-interes input{width:18px;height:18px;flex:0 0 18px;margin-top:2px}' +
       '.dg-int-tx b{display:block;font-size:13px;font-weight:700}' +
-      '.dg-int-tx small{display:block;font-size:12px;color:var(--mut);margin-top:2px}';
+      '.dg-int-tx small{display:block;font-size:12px;color:var(--mut);margin-top:2px}' +
+      // §11 denominación Hallazgos de Maya · IA (capa 2, separada del detalle)
+      '.dg-hallazgos-h .dg-ia{font-size:10px;font-weight:800;letter-spacing:.08em;background:var(--green);color:#04120c;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}' +
+      '.dg-orden{margin:10px 0 0;font-size:13.5px;color:var(--txt);line-height:1.5}' +
+      '.dg-orden b{color:var(--green);text-transform:capitalize}' +
+      // §10 destacar el pilar prioritario (ruta natural de entrada)
+      'details.dg-pex-prio{border:1.5px solid var(--green);box-shadow:0 0 0 3px rgba(63,192,106,.12)}' +
+      '.dg-pex-flag{font-size:10px;font-weight:800;letter-spacing:.04em;background:var(--green);color:#04120c;border-radius:99px;padding:2px 8px;margin-left:7px;vertical-align:middle;text-transform:uppercase}' +
+      // §10 punto 3 — meta activa del pilar
+      '.dg-pex-meta{font-size:12.5px;color:var(--txt);margin-bottom:9px;line-height:1.5}' +
+      '.dg-pex-meta a{color:var(--green);font-weight:700;text-decoration:none}' +
+      '.dg-pex-nometa{color:var(--mut)}';
     document.head.appendChild(s);
   }
 
@@ -454,6 +485,7 @@
         if (d && d.full_name) profile = { nombre: firstName(d.full_name, d.email), email: d.email || '' };
         var sd = d && d.score_data;
         savedHistory = (sd && Array.isArray(sd.history)) ? sd.history : [];
+        myGoals = (d && Array.isArray(d.goals)) ? d.goals : [];   // §10: meta activa por pilar
         montosYaTransferidos = !!(sd && sd.montos_transferidos);   // §5.2: ya se hizo una vez
         // Ya completado con el ESQUEMA NUEVO (marcador: answers.edad) -> muestra el resultado
         // guardado. Un perfil con respuestas del esquema viejo re-hace la vinculación (el
