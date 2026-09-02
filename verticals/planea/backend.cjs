@@ -944,6 +944,24 @@ function build() {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // §28 — eliminar la cuenta (solo la del propio usuario en sesión). Requiere confirmación
+  // explícita del cliente (body {confirm:true}); borra perfil, ítems, histórico y el usuario.
+  router.delete('/me/account', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!req.body || req.body.confirm !== true) return res.status(400).json({ error: 'confirm_required' });
+    try {
+      await Item.destroy({ where: { user_id: a.id } }).catch(function () {});
+      if (ItemH) await ItemH.destroy({ where: { user_id: a.id } }).catch(function () {});
+      if (SaludH) await SaludH.destroy({ where: { user_id: a.id } }).catch(function () {});
+      await Profile.destroy({ where: { user_id: a.id } }).catch(function () {});
+      await User.destroy({ where: { id: a.id } }).catch(function () {});
+      res.clearCookie(COOKIE, { path: '/' }); res.clearCookie('planea_user', { path: '/' });
+      res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   return router;
 }
 

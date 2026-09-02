@@ -40,30 +40,35 @@
   // ── Recalcular el Puntaje Planea al cambiar un modulador (§27.2) ───────────────
   function sub(P, k) { return Math.round((P[k] && P[k].puntaje) || 0); }
   function recompute() {
-    if (!scoreData || !scoreData.answers || !scoreData.answers.edad) {
-      $('mp-calc-note').textContent = 'Completa tu vinculación (Puntaje Planea) para que estos datos afinen tu puntaje.';
-      return;
-    }
     var edad = $('f-edad').value, ocu = $('f-ocupacion').value, dep = $('f-dependientes').value;
-    if (!edad || !ocu || !dep) return;
-    var prev = scoreData.score;
-    var ans = scoreData.answers;
-    if (ans.edad === edad && ans.ocupacion === ocu && ans.dependientes === dep) return; // sin cambios
-    ans.edad = edad; ans.ocupacion = ocu; ans.dependientes = dep;
-    var r = M.compute(ans);
-    var P = r.pilares;
-    var hist = Array.isArray(scoreData.history) ? scoreData.history.slice() : [];
-    hist.push({ score: r.score, at: new Date().toISOString(), source: 'perfil' });
-    scoreData = Object.assign({}, scoreData, {
-      score: r.score, survey_score: scoreData.survey_score != null ? scoreData.survey_score : r.score,
-      rango: r.rango.name, answers: ans, history: hist, prioridad: r.prioridad,
-      pilares: { ahorro: sub(P, 'ahorro'), flujo: sub(P, 'flujo'), deuda: sub(P, 'deuda'), retiro: sub(P, 'retiro'), seguros: sub(P, 'seguros'), inversion: sub(P, 'inversion'), impuestos: sub(P, 'impuestos'), patrimonio: sub(P, 'patrimonio') },
-      pillars: { emergency_fund: sub(P, 'ahorro'), cash_flow: sub(P, 'flujo'), debt_health: sub(P, 'deuda'), stability: sub(P, 'patrimonio') }
-    });
-    var delta = r.score - prev;
-    var frase = delta === 0 ? 'Tu Puntaje Planea se mantuvo en ' + r.score + '.' : (delta > 0 ? 'Tu Puntaje Planea subió a ' + r.score + '.' : 'Tu Puntaje Planea quedó en ' + r.score + '.');
-    $('mp-calc-note').textContent = frase + ' Cambió porque tu contexto ajusta la exigencia de algunos pilares.';
-    if (SB) SB.mePut({ score_data: scoreData }).then(function () { toast('Puntaje actualizado.'); }).catch(function () {});
+    if (!edad || !ocu || !dep || !M || !SB) return;
+    // Re-lee fresco (no pisar el DATO REAL que otras secciones guardaron, §3) y aplica el
+    // dato real de los ítems al recalcular — un solo motor, un solo número.
+    SB.meGet().then(function (d) {
+      var sd = d && d.score_data;
+      if (!sd || !sd.answers || !sd.answers.edad) {
+        $('mp-calc-note').textContent = 'Completa tu vinculación (Puntaje Planea) para que estos datos afinen tu puntaje.';
+        return;
+      }
+      var prev = sd.score;
+      var ans = Object.assign({}, sd.answers);
+      if (ans.edad === edad && ans.ocupacion === ocu && ans.dependientes === dep) { scoreData = sd; return; }
+      ans.edad = edad; ans.ocupacion = ocu; ans.dependientes = dep;
+      if (window.PlaneaRealData) ans = PlaneaRealData.applyRealData(ans, (d && d.items) || []);
+      var r = M.compute(ans), P = r.pilares;
+      var hist = Array.isArray(sd.history) ? sd.history.slice() : [];
+      hist.push({ score: r.score, at: new Date().toISOString(), source: 'perfil' });
+      scoreData = Object.assign({}, sd, {
+        score: r.score, survey_score: sd.survey_score != null ? sd.survey_score : r.score,
+        rango: r.rango.name, answers: ans, history: hist, prioridad: r.prioridad,
+        pilares: { ahorro: sub(P, 'ahorro'), flujo: sub(P, 'flujo'), deuda: sub(P, 'deuda'), retiro: sub(P, 'retiro'), seguros: sub(P, 'seguros'), inversion: sub(P, 'inversion'), impuestos: sub(P, 'impuestos'), patrimonio: sub(P, 'patrimonio') },
+        pillars: { emergency_fund: sub(P, 'ahorro'), cash_flow: sub(P, 'flujo'), debt_health: sub(P, 'deuda'), stability: sub(P, 'patrimonio') }
+      });
+      var delta = r.score - prev;
+      var frase = delta === 0 ? 'Tu Puntaje Planea se mantuvo en ' + r.score + '.' : (delta > 0 ? 'Tu Puntaje Planea subió a ' + r.score + '.' : 'Tu Puntaje Planea quedó en ' + r.score + '.');
+      $('mp-calc-note').textContent = frase + ' Cambió porque tu contexto ajusta la exigencia de algunos pilares.';
+      SB.mePut({ score_data: scoreData }).then(function () { toast('Puntaje actualizado.'); }).catch(function () {});
+    }).catch(function () {});
   }
 
   function collectMeta() {
