@@ -177,6 +177,9 @@ async function init() {
     // Contador de límite de peticiones COMPARTIDO entre instancias de Render.
     await sequelize.query('CREATE TABLE IF NOT EXISTS planea_rate_limits (key TEXT PRIMARY KEY, hits INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ NOT NULL)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_rate_exp ON planea_rate_limits(expires_at)').catch(function () {});
+    // Documentos de impuestos (PDF) — se guardan en base64 en la propia base.
+    await sequelize.query('CREATE TABLE IF NOT EXISTS planea_tax_docs (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, filename TEXT NOT NULL, mime TEXT NOT NULL, size_bytes INTEGER NOT NULL, data_b64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())').catch(function () {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_tax_docs_user ON planea_tax_docs(user_id, created_at)').catch(function () {});
     await sequelize.query('DELETE FROM planea_rate_limits WHERE expires_at < NOW()').catch(function () {});
     sec.useDatabase(sequelize); // el almacén de límites deja de ser por proceso
     ready = true;
@@ -233,7 +236,12 @@ function publicUser(u) { return { id: u.id, email: u.email, full_name: u.full_na
 // ── router ────────────────────────────────────────────────────────────────
 function build() {
   const router = express.Router();
-  router.use(express.json({ limit: '256kb' }));
+  var bigJson = express.json({ limit: '12mb' });   // solo carga de PDF de impuestos
+  var smallJson = express.json({ limit: '256kb' }); // resto de la API
+  router.use(function (req, res, next) {
+    if (req.method === 'POST' && req.path === '/me/tax-docs') return bigJson(req, res, next);
+    return smallJson(req, res, next);
+  });
   // Never cache API responses — a stale cached GET must not mask an expired session
   // (which would then let writes silently 401). Always hit the network + auth fresh.
   router.use(function (req, res, next) { res.set('Cache-Control', 'no-store, must-revalidate'); next(); });
@@ -872,6 +880,71 @@ function build() {
       if (req.query.category) where.category = String(req.query.category);
       const rows = await ItemH.findAll({ where: where, order: [['ym', 'ASC']], limit: 240 });
       res.json({ history: rows.map(function (r) { return { ym: r.ym, category: r.category, total: +r.total || 0 }; }) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── Documentos de impuestos (PDF) ──────────────────────────────────────────
+  var TAX_DOC_MAX = 8 * 1024 * 1024; // 8 MB por archivo
+  router.get('/me/tax-docs', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const [rows] = await sequelize.query(
+        'SELECT id, filename, mime, size_bytes, created_at FROM planea_tax_docs WHERE user_id = :uid ORDER BY created_at DESC LIMIT 200',
+        { replacements: { uid: a.id } });
+      res.json({ docs: rows });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/me/tax-docs', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const b = req.body || {};
+      const filename = String(b.filename || 'documento.pdf').slice(0, 180);
+      const mime = String(b.mime || '');
+      if (mime !== 'application/pdf') return res.status(400).json({ error: 'solo_pdf' });
+      let data = String(b.data_b64 || '');
+      if (data.indexOf(',') >= 0 && /^data:/.test(data)) data = data.slice(data.indexOf(',') + 1); // por si llega como data-URL
+      if (!data) return res.status(400).json({ error: 'archivo_vacio' });
+      const size = Math.round(data.length * 3 / 4);
+      if (size > TAX_DOC_MAX) return res.status(400).json({ error: 'archivo_muy_grande', max_mb: 8 });
+      const [ins] = await sequelize.query(
+        'INSERT INTO planea_tax_docs (user_id, filename, mime, size_bytes, data_b64) VALUES (:uid, :fn, :mime, :sz, :data) RETURNING id, filename, mime, size_bytes, created_at',
+        { replacements: { uid: a.id, fn: filename, mime: mime, sz: size, data: data } });
+      res.json({ success: true, doc: ins[0] });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/me/tax-docs/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const [rows] = await sequelize.query(
+        'SELECT filename, mime, data_b64 FROM planea_tax_docs WHERE id = :id AND user_id = :uid',
+        { replacements: { id: +req.params.id || 0, uid: a.id } });
+      if (!rows.length) return res.status(404).json({ error: 'not_found' });
+      const d = rows[0];
+      const buf = Buffer.from(d.data_b64, 'base64');
+      res.setHeader('Content-Type', d.mime || 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="' + String(d.filename || 'documento.pdf').replace(/[^\w.\- ]/g, '_') + '"');
+      res.setHeader('Cache-Control', 'no-store');
+      res.send(buf);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.delete('/me/tax-docs/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const [, meta] = await sequelize.query(
+        'DELETE FROM planea_tax_docs WHERE id = :id AND user_id = :uid',
+        { replacements: { id: +req.params.id || 0, uid: a.id } });
+      res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

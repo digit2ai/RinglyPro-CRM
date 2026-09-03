@@ -32,6 +32,20 @@
   .tx-rut{border:1.5px dashed var(--line);border-radius:14px;padding:22px 18px;text-align:center;margin-top:14px;opacity:.85}
   .tx-rut .soon{display:inline-block;background:var(--group);color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:7px 16px;font-weight:800;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
   .tx-rut .st{font-size:12.5px;color:var(--mut);margin-top:12px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
+  .tx-upload{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+  .tx-up-btn{background:#12494b;color:#eafff4;border:none;border-radius:12px;padding:12px 18px;font-family:'Inter',sans-serif;font-weight:800;font-size:14px;cursor:pointer}
+  body.light .tx-up-btn{background:var(--cream);color:var(--ink)}
+  .tx-up-btn[disabled]{opacity:.5;cursor:default}
+  .tx-up-hint{color:var(--mut);font-size:12.5px}
+  .tx-doclist{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .tx-doc{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .tx-doc .ic{width:30px;height:30px;border-radius:8px;background:var(--red-soft);color:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+  .tx-doc .nm{flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tx-doc .nm small{display:block;color:var(--mut);font-weight:500;font-size:12px}
+  .tx-doc a.dl{color:var(--green);font-weight:700;font-size:13px;text-decoration:none}
+  .tx-doc button.del{background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px}
+  .tx-doc button.del:hover{color:var(--red)}
+  .tx-doc-empty{color:var(--mut);font-size:13.5px;padding:4px 2px}
   .tx-save{width:100%;margin-top:16px;background:#12494b;color:#eafff4;border:none;border-radius:14px;padding:14px;font-family:'Inter',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
   body.light .tx-save{background:var(--cream);color:var(--ink)}
   .tx-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#12494b;color:#eafff4;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;transition:opacity .25s,transform .25s;z-index:60;pointer-events:none}
@@ -83,13 +97,15 @@
   <!-- Tu RUT §23.3 — carga de documento DESHABILITADA (protección de datos personales,
        Ley 1581 de 2012 / RNBD). Se habilitará con el marco de tratamiento de PII listo. -->
   <div class="tx-card">
-    <h2>Tu RUT</h2>
-    <div class="sub">Pronto podrás cargar tu RUT para que Maya te lo explique en lenguaje sencillo.</div>
-    <div class="tx-rut">
-      <div class="soon">Próximamente</div>
-      <div class="st">La carga de tu RUT aún no está habilitada. La activaremos cuando esté listo el tratamiento seguro de tus datos personales.</div>
+    <h2>Tus documentos</h2>
+    <div class="sub">Sube tu RUT, declaraciones o soportes en PDF. Solo tú los ves.</div>
+    <input type="file" id="tx-file" accept="application/pdf" hidden>
+    <div class="tx-upload">
+      <button class="tx-up-btn" id="tx-up-btn" type="button">＋ Subir PDF</button>
+      <span class="tx-up-hint">PDF · hasta 8 MB</span>
     </div>
-    <div class="maya-line"><div class="av">M</div><p>Por ahora no necesitas subir ningún documento: completa tu perfil tributario arriba y con eso ya construyo tu estado y tu calendario.</p></div>
+    <div id="tx-doclist" class="tx-doclist"></div>
+    <div class="maya-line"><div class="av">M</div><p>Guarda aquí tu RUT y tus soportes. Completa además tu perfil tributario arriba y con eso construyo tu estado y tu calendario.</p></div>
   </div>
 
   <button class="tx-save" id="tx-save">Guardar</button>
@@ -102,6 +118,6 @@
 <script src="/planea/portal/planea-sb.js?v=70" defer></script>
 <script src="/planea/portal/planea-nav.js?v=70" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
-<script src="/planea/portal/impuestos.js?v=2" defer></script>
+<script src="/planea/portal/impuestos.js?v=3" defer></script>
 </body>
 </html>
