@@ -127,6 +127,42 @@
     <div class="note">A mayor escala, <b>el costo por usuario baja</b>: de $3,83 (100) a $0,27 (10.000). El cómputo web y la operación gestionada se comparten entre todos (casi fijos); solo la IA crece de forma lineal por uso.</div>
   </div>
 
+  <!-- JUSTIFICACIÓN -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <h2>Por qué sube el total y baja el costo por usuario</h2>
+    <p class="lead">La clave es separar lo que se comparte entre todos (fijo) de lo que consume cada usuario (variable).</p>
+    <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card" style="text-align:left">
+        <div class="u" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);font-weight:700">Por qué sube el total</div>
+        <div style="font-size:12.5px;color:#334155;line-height:1.65;margin-top:8px">
+          <b>IA (variable, lineal):</b> cada usuario suma ~$0,06/mes de tokens; 100× usuarios = 100× tokens. Es el único rubro estrictamente proporcional.<br><br>
+          <b>Base de datos:</b> más usuarios = más registros, conexiones y respaldos; se sube de plan por tramos.<br><br>
+          <b>Cómputo web:</b> se mantiene fijo hasta que la concurrencia real obliga a añadir capacidad (solo a gran escala).<br><br>
+          <b>Operación gestionada:</b> más usuarios e infraestructura = más superficie que monitorear, más incidentes y mayor exigencia del SLA 99.9%; el servicio sube por tramos.
+        </div>
+      </div>
+      <div class="card" style="text-align:left">
+        <div class="u" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ok);font-weight:700">Por qué baja el costo por usuario</div>
+        <div style="font-size:12.5px;color:#334155;line-height:1.65;margin-top:8px">
+          Los rubros <b>fijos y compartidos</b> (cómputo web + operación gestionada + buena parte de la base de datos) se reparten entre <b>todos</b> los usuarios. Cuantos más haya, menos toca a cada uno.<br><br>
+          Solo la parte <b>variable</b> (IA + correo, ~$0,06–0,08) se mantiene por usuario sin importar la escala.<br><br>
+          Resultado: el costo por usuario cae de <b>$3,83 a $0,27 (−93%)</b>. El costo marginal de un usuario nuevo tiende a <b>~$0,065</b>: es economía de escala.
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:16px">
+      <thead><tr><th>Descomposición por usuario</th><th class="num">100</th><th class="num">1.000</th><th class="num">10.000</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Costos compartidos ÷ usuarios<small>Cómputo + base de datos + operación gestionada</small></td><td class="num">$3,77</td><td class="num">$0,77</td><td class="num">$0,20</td></tr>
+        <tr><td class="desc">Consumo propio del usuario<small>IA + correo</small></td><td class="num">$0,06</td><td class="num">$0,08</td><td class="num">$0,07</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="totrow"><td>Costo por usuario / mes</td><td class="num">$3,83</td><td class="num">$0,85</td><td class="num">$0,27</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">Lo que baja es la <b>porción compartida por usuario</b> ($3,77 → $0,20): los mismos servidores y la misma operación sirven a muchos más. Lo que un usuario consume por sí mismo casi no cambia (~$0,065). Por eso el total sube, pero mucho más despacio que el número de usuarios.</div>
+  </div>
+
   <div class="foot">
     <b>Supuestos y condiciones.</b> Cifras en USD, sin IVA, <b>estimadas</b> a partir de la factura de operación de septiembre ($397/mes) y de precios públicos de proveedores. El consumo de IA supone ~15 interacciones con Maya por usuario al mes; a mayor o menor uso, el rubro de Anthropic sube o baja proporcionalmente. Los rubros de proveedor (Render, Anthropic, SendGrid) son <b>pass-through</b> y se facturan al consumo real; los tramos de cómputo y base de datos son referenciales y se confirman al momento de escalar. La operación gestionada (Hypercare) es el servicio Digit2AI: monitoreo proactivo, respaldos, parches de seguridad, gestión de incidentes y soporte correctivo con disponibilidad 99.9%. El desarrollo de nuevas funcionalidades se cotiza por separado.<br><br>
     Digit2AI LLC · digit2ai.com · info@digit2ai.com
