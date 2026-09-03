@@ -32,9 +32,11 @@ const JOBMD = {
     en: 'Medical Career Intelligence',
     es: 'Inteligencia de Carrera Médica'
   },
+  // Mirrors JobUp's own headline rather than inventing a different promise —
+  // the two products make the same offer to different people.
   'hero.h1': {
-    en: 'Stop Looking for Positions.<br><span class="grad-text">Let AI Find Them.</span>',
-    es: 'Deja de Buscar Plazas.<br><span class="grad-text">Deja que la IA las Encuentre.</span>',
+    en: 'Stop Looking for Positions.<br><span class="grad-text">Let your AI Agents find them while you sleep.</span>',
+    es: 'Deja de buscar plazas.<br><span class="grad-text">Deja que tus agentes de IA las encuentren mientras duermes.</span>',
     html: true
   },
   'hero.lede': {

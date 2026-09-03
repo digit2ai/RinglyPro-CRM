@@ -8313,7 +8313,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       const jt = md.slice(md.indexOf('var JU_T='), md.indexOf('var JU_T=') + 4000);
       assert.ok(/'hero\.lede':'[^']*médicos, cirujanos/.test(jt),
         'the inline ES map must carry the medical wording');
-      assert.ok(/'hero\.h1':'Deja de Buscar Plazas/.test(jt), 'and the ES headline');
+      assert.ok(/'hero\.h1':'Deja de buscar plazas/.test(jt), 'and the ES headline');
       const up = pwaSvc.page('index.html', '', BRAND.byId('jobup'));
       const jtUp = up.slice(up.indexOf('var JU_T='), up.indexOf('var JU_T=') + 4000);
       assert.ok(!/médicos, cirujanos/.test(jtUp), 'and JobUp ES must be untouched');
