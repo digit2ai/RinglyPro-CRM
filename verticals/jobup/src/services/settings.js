@@ -289,6 +289,10 @@ function sanitize(s, opts) {
   // what the product says it does.
   out.geo = out.geo || {};
   out.geo.allowed_countries = ['US'];
+  // US-ONLY IS ENFORCED FOR EVERYONE — not a per-profile choice. With this on,
+  // geo.evaluate refuses any posting not positively confirmed in the US
+  // (foreign, or unplaceable), rather than flagging it onto the board.
+  out.geo.us_only = true;
   out.geo.flag_unknown = out.geo.flag_unknown !== false;
   // Strict US-only is the BRAND's rule, not the subscriber's, so it is stamped
   // from the brand and preserved otherwise. Like the country, it is not a

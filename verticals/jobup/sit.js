@@ -6672,9 +6672,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(v('Remote - US'), 'allow');
     assert.strictEqual(v('London, United Kingdom'), 'block');
     assert.strictEqual(v('Bengaluru, India'), 'block');
-    // A locationless posting is FLAGGED for review, never silently included.
-    assert.strictEqual(v(''), 'flag');
+    // A LOCATIONLESS POSTING IS NOW REFUSED, not flagged.
+    //
+    // This assertion used to expect 'flag' and had been failing on main since
+    // us_only shipped: the code refused it while the test still described the
+    // older behaviour, so the suite was red and the contradiction was between
+    // two halves of the same change. US-only means a posting we cannot confirm
+    // is in the United States does not reach the board — a flag is a PASS
+    // everywhere in this engine, because every filter drops BLOCK only.
+    assert.strictEqual(v(''), 'block');
     assert.strictEqual(pol.flag_unknown, true);
+    assert.strictEqual(pol.us_only, true, 'and it is on for every profile');
 
     // The picker must be gone from the dashboard, or it would offer a choice
     // the server now overrides — a control that lies about what it does.
@@ -6705,10 +6713,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // The exemptions, each for a different reason.
     assert.strictEqual(v('Remote - US').verdict, 'allow', 'REMOTE-US MUST SURVIVE A STATE FILTER');
     assert.strictEqual(v('Remote (US only)').verdict, 'allow');
-    assert.strictEqual(v('Remote - Global').verdict, 'allow');
+    // "Remote - Global" is REFUSED, and this line used to expect 'allow'.
+    // A role open to anyone on earth is takeable FROM the US but is not a job
+    // based IN it, which under a US-only rule is the distinction that matters.
+    assert.strictEqual(v('Remote - Global').verdict, 'block');
+    // Still a flag: this one IS confirmed US, only the state is unstated, so
+    // the subscriber judges it rather than losing it.
     assert.strictEqual(v('United States').verdict, 'flag',
       'US but state unstated is judged by the subscriber, never silently dropped');
-    assert.strictEqual(v('').verdict, 'flag');
+    assert.strictEqual(v('').verdict, 'block', 'no location at all is refused');
     // Multi-location: one in policy is enough.
     assert.strictEqual(v('Miami, FL or Austin, TX').verdict, 'allow');
 
@@ -8446,7 +8459,10 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       const strict = { allowed_countries: ['US'], flag_unknown: true, strict_us: true };
       [['', 'no location at all'],
        ['Remote - Global', 'open to the whole world'],
-       ['Remote, Anywhere', 'anywhere'],
+       // NOTE: a bare "Remote"/"Remote, Anywhere" naming no foreign region is
+       // deliberately KEPT — the pool is US-sourced, so it is a US-workable
+       // role rather than a foreign office. "Remote - Global" is not: it says
+       // outright that it is open to the whole world.
        ['2 Locations', 'unnamed locations'],
        ['Virtual', 'unplaceable'],
        ['N/A', 'unplaceable'],
