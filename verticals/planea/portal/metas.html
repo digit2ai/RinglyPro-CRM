@@ -24,8 +24,8 @@
     <summary>Calculadora de valor del dinero en el tiempo</summary>
     <div class="calc-body">
       <div class="calc-grid">
-        <div><label>Monto inicial ($)</label><div class="me-money"><span>$</span><input id="c-p" inputmode="numeric" placeholder="0"></div></div>
-        <div><label>Aporte mensual ($)</label><div class="me-money"><span>$</span><input id="c-m" inputmode="numeric" placeholder="0"></div></div>
+        <div><label>Monto inicial (COP)</label><div class="me-money"><span>$</span><input id="c-p" inputmode="numeric" placeholder="0"></div></div>
+        <div><label>Aporte mensual (COP)</label><div class="me-money"><span>$</span><input id="c-m" inputmode="numeric" placeholder="0"></div></div>
         <div><label>Rendimiento anual (%)</label><input id="c-r" inputmode="decimal" placeholder="0"></div>
         <div><label>Plazo (años)</label><input id="c-y" inputmode="numeric" placeholder="0"></div>
       </div>
@@ -56,7 +56,7 @@
   // §17.6 — cálculo puro, escenario neutro. No toca el puntaje ni a Maya.
   (function () {
     function digits(s) { return (s || '').replace(/[^\d]/g, ''); }
-    function cop(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+    function cop(n) { return '$' + Math.round(n).toLocaleString('es-CO') + ' COP'; }
     ['c-p', 'c-m'].forEach(function (id) {
       var el = document.getElementById(id); if (!el) return;
       el.addEventListener('input', function () { var d = digits(el.value); el.value = d ? parseInt(d, 10).toLocaleString('es-CO') : ''; });
