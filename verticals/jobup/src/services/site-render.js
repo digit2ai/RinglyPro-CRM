@@ -249,12 +249,12 @@ const STR = {
     your_name: 'Your name', your_email: 'Your email (required)',
     company: 'Company', role_hiring: 'Role you are hiring for',
     what_talk: 'What would you like to talk about?', send: 'Send message',
-    sending: 'Sending...', delivered_to: 'Delivered to %s through JobUp. Their address is never shared.',
+    sending: 'Sending...', delivered_to: 'Delivered to %s through {{BRAND}}. Their address is never shared.',
     bad_email: 'Please enter a valid email so they can reply.',
     short_msg: 'Please write a short message.',
     sent_ok: 'Mensaje enviado. Ya está en su panel y podrán responderte directamente.',
     no_send: 'Could not send that.', no_server: 'Could not reach the server.',
-    built_by: 'Built and maintained by JobUp', owner_signin: 'Owner sign in', manage: 'Manage',
+    built_by: 'Built and maintained by {{BRAND}}', owner_signin: 'Owner sign in', manage: 'Manage',
     agent_card: 'agent card', full_profile: 'Full profile',
     core_skills: 'Core skills include ', voice_tag: 'EN · Ava',
     menu: 'Menu', show_qr: 'Show QR', close: 'Close', qr_alt: 'QR code for this profile',
@@ -275,12 +275,12 @@ const STR = {
     your_name: 'Tu nombre', your_email: 'Tu correo (obligatorio)',
     company: 'Empresa', role_hiring: 'Puesto que ofreces',
     what_talk: '¿De qué te gustaría hablar?', send: 'Enviar mensaje',
-    sending: 'Enviando...', delivered_to: 'Se entrega a %s a través de JobUp. Su dirección nunca se comparte.',
+    sending: 'Enviando...', delivered_to: 'Se entrega a %s a través de {{BRAND}}. Su dirección nunca se comparte.',
     bad_email: 'Escribe un correo válido para que puedan responderte.',
     short_msg: 'Escribe un mensaje breve.',
     sent_ok: 'Mensaje enviado. Ya está en su panel y podrán responderte directamente.',
     no_send: 'No se pudo enviar.', no_server: 'No se pudo conectar con el servidor.',
-    built_by: 'Creado y mantenido por JobUp', owner_signin: 'Acceso del titular', manage: 'Gestionar',
+    built_by: 'Creado y mantenido por {{BRAND}}', owner_signin: 'Acceso del titular', manage: 'Gestionar',
     agent_card: 'tarjeta de agente', full_profile: 'Perfil completo',
     core_skills: 'Sus competencias principales incluyen ', voice_tag: 'ES · Dalia',
     menu: 'Menú', show_qr: 'Ver QR', close: 'Cerrar', qr_alt: 'Código QR de este perfil',
@@ -594,6 +594,20 @@ function scripts(name, url, p, narration, lang) {
 </script></body></html>`;
 }
 
+/* THE PUBLIC CV SITE IS THE PRODUCT'S FACE — it is the page a recruiter opens.
+   Its footer said "Built and maintained by JobUp" on every site, so a doctor's
+   own CV page carried the wrong product's name to the people it exists to
+   reach. The brand comes from the SUBSCRIBER on ctx, because a CV site is
+   rendered for a person, not for a request. */
+function brandOf(ctx) {
+  const B = require('../brand');
+  const c = ctx || {};
+  if (c.brand) return B.byId(c.brand.id || c.brand);
+  if (c.subscriber) return B.forSubscriber(c.subscriber);
+  // The host is the last resort: <name>.jobmd.io resolves correctly from it.
+  return (c.url && B.byHost(String(c.url).replace(/^https?:\/\//, '').split('/')[0])) || B.byId(B.DEFAULT_ID);
+}
+
 function page(profile, settings, ctx) {
   const lang = (ctx && ctx.lang) === 'es' ? 'es' : 'en';
   const t = L(lang);
@@ -669,7 +683,8 @@ function page(profile, settings, ctx) {
     <a href="${attr(ctx.url)}/.well-known/agent.json">${esc(t.agent_card)}</a> &middot;
     <a href="${attr(ctx.url)}/llms.txt">llms.txt</a></div></footer></div>`;
 
-  return h + scripts(name, ctx.url, p, narrationFor(p, name, lang), lang);
+  return require('../brand').apply(
+    h + scripts(name, ctx.url, p, narrationFor(p, name, lang), lang), brandOf(ctx));
 }
 
 function rolePage(profile, settings, ctx, role) {
@@ -690,7 +705,8 @@ function rolePage(profile, settings, ctx, role) {
     <a class="sbtn" href="/">Full profile</a>
   </div><footer><div>Built and maintained by JobUp</div>
   <div><a href="${attr(ctx.url)}/resume.json">resume.json</a></div></footer></div>`;
-  return h + scripts(name, ctx.url, p, narrationFor(p, name));
+  return require('../brand').apply(
+    h + scripts(name, ctx.url, p, narrationFor(p, name)), brandOf(ctx));
 }
 
 function roleIndex(profile, settings, ctx) {

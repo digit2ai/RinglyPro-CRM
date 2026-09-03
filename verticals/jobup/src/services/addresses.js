@@ -13,7 +13,24 @@
 
 const { models } = require('../models');
 
+// THE ADDRESS DOMAIN FOLLOWS THE BRAND, NOT A GLOBAL CONSTANT.
+//
+// This was one module-level constant, so a doctor signing up on jobmd.io was
+// offered marcuswhitfield.JOBUP.DEV — the wrong product's domain, on the one
+// screen of the whole funnel that is entirely about their own name. The
+// registry's site_suffix decides it now, and this constant is only the
+// fallback for a caller with no brand in hand.
 const BASE_DOMAIN = process.env.JOBUP_BASE_DOMAIN || 'jobup.dev';
+
+/** The subscriber-site domain for a brand ('' or null => JobUp). */
+function baseDomain(brand) {
+  if (!brand) return BASE_DOMAIN;
+  const b = typeof brand === 'string' ? require('../brand').byId(brand) : brand;
+  // An explicit env override still wins for JobUp, so nothing about the
+  // existing deployment changes.
+  if (b.id === require('../brand').DEFAULT_ID) return BASE_DOMAIN;
+  return b.site_suffix;
+}
 
 const RESERVED = new Set([
   'www', 'api', 'app', 'admin', 'mail', 'smtp', 'ftp', 'blog', 'help', 'support',
@@ -73,11 +90,12 @@ async function isTaken(label) {
 }
 
 /** Resolve the first free rung. Returns the label and the full host. */
-async function allocate(parts) {
+async function allocate(parts, brand) {
+  const domain = baseDomain(brand);
   const options = ladder(parts);
   for (const label of options) {
     if (!(await isTaken(label))) {
-      return { ok: true, label, host: `${label}.${BASE_DOMAIN}`, url: `https://${label}.${BASE_DOMAIN}`,
+      return { ok: true, label, host: `${label}.${domain}`, url: `https://${label}.${domain}`,
                ladder: options, rung: options.indexOf(label) };
     }
   }
@@ -85,8 +103,8 @@ async function allocate(parts) {
 }
 
 /** Non-mutating preview for the teaser — shows the exact address they will get. */
-async function preview(parts) {
-  const r = await allocate(parts);
+async function preview(parts, brand) {
+  const r = await allocate(parts, brand);
   return r.ok
     ? { available: true, address: r.host, url: r.url, rung: r.rung, exact_match: r.rung === 0 }
     : { available: false, reason: r.reason, ladder: r.ladder };
@@ -122,4 +140,4 @@ function splitName(full) {
 }
 
 module.exports = { ladder, allocate, preview, isTaken, splitName, clean, validateLabel,
-                   BASE_DOMAIN, RESERVED, MAX_NUMERIC };
+                   BASE_DOMAIN, baseDomain, RESERVED, MAX_NUMERIC };

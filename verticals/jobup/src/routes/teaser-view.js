@@ -241,13 +241,14 @@ router.get('/:token/site', async (req, res) => {
   const site = row.payload.screens && row.payload.screens.site;
   const profile = (site && site.profile) || {};
   const addr = (row.payload.screens && row.payload.screens.address) || {};
-  const url = addr.url || 'https://' + (row.address_offer || 'you.jobup.dev');
+  const url = addr.url || 'https://' + (row.address_offer || ('you.' + require('../brand').forRequest(req).site_suffix));
   // Preview shows the profile as the SUBSCRIBER would publish it, so contact
   // fields are opted in here. The live site still honours their own settings.
   const settings = settingsSvc.sanitize({ privacy: { email: true, phone: true, location: true } });
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.type('html').send(siteRender.page(profile, settings,
-    { name: profile.name || row.name, url, slug: 'preview' }));
+    { name: profile.name || row.name, url, slug: 'preview',
+      brand: require('../brand').forRequest(req) }));
 });
 
 router.get('/:token', async (req, res) => {
@@ -255,6 +256,12 @@ router.get('/:token', async (req, res) => {
   if (!row) return res.status(404).type('text/plain').send('Teaser not found.');
 
   const lang = row.language === 'es' ? 'es' : 'en';
+  // THE TEASER IS RENDERED FROM THIS ROUTE, not from public/*.html, so it is
+  // not reached by the shell tokeniser or by pwa.page(). It has to resolve its
+  // own brand — and until it did, a doctor on jobmd.io was shown a page titled
+  // "Your JobUp ecosystem", narrated by "Ava — JobUp", offering them a
+  // .jobup.dev web address.
+  const BR = require('../brand').forRequest(req);
 
   // Leave the crumb here too, not only on /build. Plenty of people read the
   // preview, mean to come back, and never reach the build step at all — and
@@ -269,7 +276,7 @@ router.get('/:token', async (req, res) => {
   res.type('html').send(`<!doctype html><html lang="${lang}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Your JobUp ecosystem</title><style>${CSS}</style></head><body><div class="wrap">
+<title>Your ${BR.name} ecosystem</title><style>${CSS}</style></head><body><div class="wrap">
 
 <div class="orbbar">
   <div class="orbwrap">
@@ -278,7 +285,7 @@ router.get('/:token', async (req, res) => {
     <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
   </div>
   <div style="flex:1">
-    <div class="obtitle">${lang === 'es' ? 'Dalia' : 'Ava'} &mdash; JobUp</div>
+    <div class="obtitle">${lang === 'es' ? 'Dalia' : 'Ava'} &mdash; ${BR.name}</div>
     <div class="obstat" id="stat">Building your ecosystem&hellip;</div>
     <!-- THE VOICE CANNOT BE OFFERED BEFORE THERE IS ANYTHING TO NARRATE.
          While the resume is being read this row was already showing "Play the
@@ -314,7 +321,8 @@ router.get('/:token', async (req, res) => {
 <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
 <script>
-var API_BASE=(location.hostname.endsWith('jobup.dev')?'':'/jobup');
+var BRAND_NAME=${JSON.stringify(BR.name)};
+  var API_BASE=${JSON.stringify(BR.hosts.concat(['.' + BR.site_suffix]))}.some(function(h){return location.hostname===h||location.hostname.endsWith(h);})?'':'/jobup';
 var TOKEN=${JSON.stringify(req.params.token)};
 var VOICE=${JSON.stringify(lang === 'es' ? 'dalia' : 'ava')};
 // TEST MODE IS LIVE SERVER STATE, NOT A PROPERTY OF THIS PREVIEW.
@@ -563,7 +571,7 @@ function render(){
   h+='<button class="btn primary cta" id="buy" type="button" data-cta="bottom" '+
      'style="font-size:16px;padding:13px 26px">'+esc(CTA_LABEL)+'</button>';
   h+='<p class="note">'+esc(c.non_renewal||'')+'</p>';
-  h+='<p class="note">JobUp never applies on your behalf. You review and submit every application yourself.</p>';
+  h+='<p class="note">'+BRAND_NAME+' never applies on your behalf. You review and submit every application yourself.</p>';
   h+='<div id="buyout" class="note"></div></div>';
 
   document.getElementById('body').innerHTML=h;

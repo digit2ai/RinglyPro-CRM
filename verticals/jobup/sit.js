@@ -8389,6 +8389,83 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
 
     // ── US ONLY, AND ONLY WHERE THEY CHOSE ─────────────────────────
+    // ── THE TEASER IS RENDERED FROM A ROUTE, NOT A SHELL ───────────
+    // It is not reached by the tokeniser or by pwa.page(), so it has to brand
+    // itself — and until it did, a doctor on jobmd.io saw a page titled "Your
+    // JobUp ecosystem", narrated by "Ava — JobUp", offering them a .jobup.dev
+    // web address. Everything a prospect sees before they pay was the wrong
+    // product.
+    await t('TEASER: the page brands itself, because no shell does it for it', () => {
+      const src = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+      assert.ok(/const BR = require\('\.\.\/brand'\)\.forRequest\(req\)/.test(src));
+      assert.ok(/<title>Your \$\{BR\.name\} ecosystem<\/title>/.test(src), 'the tab title');
+      assert.ok(/&mdash; \$\{BR\.name\}<\/div>/.test(src), 'the orb label');
+      assert.ok(/var BRAND_NAME=/.test(src), 'and the client script needs it too');
+      // COMMENTS ARE STRIPPED FIRST. The file EXPLAINS the bug it fixes, so it
+      // necessarily contains the words "JobUp" and "jobup.dev" — and a naive
+      // scan flags the explanation as the defect. The same trap caught this
+      // suite once before over the word SendGrid.
+      const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      const leaks = (code.match(/JobUp(?!I18n|Ask)|jobup\.dev/g) || []);
+      assert.deepStrictEqual(leaks, [], 'raw brand left in the teaser: ' + leaks.join(','));
+    });
+
+    await t('TEASER: the web address it offers is the BRAND\'s domain', () => {
+      const addr = require('./src/services/addresses');
+      assert.strictEqual(addr.baseDomain(BRAND.byId('jobup')), 'jobup.dev');
+      assert.strictEqual(addr.baseDomain(BRAND.byId('jobmd')), 'jobmd.io');
+      assert.strictEqual(addr.baseDomain(null), 'jobup.dev', 'no brand stays JobUp');
+      // And every allocation path must pass one.
+      const prov = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
+      assert.ok(/allocate\(parts, require\('\.\.\/brand'\)\.forSubscriber\(sub\)\)/.test(prov),
+        'provisioning allocates against the SUBSCRIBER, not a global constant');
+    });
+
+    await t('TEASER: Ava names the product she is actually narrating', () => {
+      const teaserSvc = require('./src/services/teaser');
+      const ctx = { name: 'Marcus Whitfield', address: 'x', matchCount: 3, tailored: true };
+      ['jobup', 'jobmd'].forEach((id) => {
+        const b = BRAND.byId(id);
+        const n = teaserSvc.narration({ name: 'Marcus Whitfield' }, ctx, 'en', b);
+        assert.ok(n[0].includes('the voice of ' + b.name), id + ': ' + n[0]);
+        const other = BRAND.byId(id === 'jobup' ? 'jobmd' : 'jobup').name;
+        assert.ok(!n.join(' ').includes(other), id + ' narration leaks ' + other);
+      });
+    });
+
+    await t('TEASER: THE SPOKEN PRICE IS THE PLAN CATALOG, NOT A DEAD CONSTANT', () => {
+      // It said "It is fifty dollars a year" — the single-price model — while
+      // the pricing page beside it showed Free, Search and Landed at monthly
+      // rates. A voice quoting a price the checkout does not charge is the
+      // worst kind of drift, because nobody reads it in a diff.
+      const teaserSvc = require('./src/services/teaser');
+      const plans = require('./src/services/plans').PLANS;
+      const n = teaserSvc.narration({ name: 'M' },
+        { name: 'M', address: 'x', matchCount: 1, tailored: false }, 'en', BRAND.byId('jobmd'));
+      const last = n[n.length - 1];
+      if (!require('./src/services/billing').disabled()) {
+        assert.ok(!/a year/.test(last), 'the annual figure is gone: ' + last);
+        assert.ok(last.includes(String(Math.round(plans.search.price_cents / 100))), 'quotes Search');
+        assert.ok(last.includes(String(Math.round(plans.landed.price_cents / 100))), 'quotes Landed');
+        assert.ok(/three plans/i.test(last), 'and says there are three');
+      }
+    });
+
+    await t('SITE: a subscriber\'s public CV page carries THEIR product', () => {
+      // The page a recruiter opens. Its footer said "Built and maintained by
+      // JobUp" on every site, including a doctor's.
+      const sr = require('./src/services/site-render');
+      const S = require('./src/services/settings');
+      const prof = { name: 'Marcus Whitfield', work: [], education: [], skills: [] };
+      [['jobup', 'JobUp'], ['jobmd', 'JobMD']].forEach(([id, name]) => {
+        const h = sr.page(prof, S.sanitize({}), {
+          url: 'https://marcuswhitfield.' + BRAND.byId(id).site_suffix,
+          subscriber: { brand: id }, name: 'Marcus Whitfield' });
+        assert.ok(h.includes('Built and maintained by ' + name), id + ' footer');
+        assert.deepStrictEqual(h.match(/\{\{[A-Z_]+\}\}/g) || [], [], 'no token left unsubstituted');
+      });
+    });
+
     // ── THE OPEN FEEDS ─────────────────────────────────────────────
     await t('FEEDS: every connector returns the shape ingest already takes', () => {
       // A second ingest path with its own dedupe key would double-insert every

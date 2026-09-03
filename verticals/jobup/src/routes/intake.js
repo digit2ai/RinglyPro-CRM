@@ -48,7 +48,8 @@ function validateGate({ name, email, phone, language }) {
 router.post('/address-preview', async (req, res) => {
   try {
     const parts = addresses.splitName(req.body && req.body.name);
-    const r = await addresses.preview({ ...parts, city: req.body && req.body.city });
+    const r = await addresses.preview({ ...parts, city: req.body && req.body.city },
+      require('../brand').forRequest(req));
     res.json(r);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -152,10 +153,14 @@ router.post('/teaser', upload.fields([{ name: 'resume', maxCount: 1 }, { name: '
       }
     }
 
+    // Resolve the brand HERE, not inside the build: the build runs on a later
+    // tick with no request in scope, and reaching for req there would give the
+    // prospect the other product's name and web address.
+    const teaserBrand = require('../brand').forRequest(req);
     setImmediate(async () => {
       try {
         const payload = await teaser.build({
-          ...body, resumeText, ip,
+          ...body, resumeText, ip, brand: teaserBrand,
           onStage: (st) => teaser.setStage(token, st),
         });
         await teaser.finish(token, payload);

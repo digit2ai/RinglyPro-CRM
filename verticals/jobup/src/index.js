@@ -557,7 +557,10 @@ async function subscriberSite(req, res, next) {
   analytics.record(site.sub.id, req, req.path);
 
   const url = `https://${site.sub.address}`;
+  // The subscriber travels with the ctx so the CV site is branded for the
+  // person it belongs to, not for whoever happens to be reading it.
   const ctx = { name: site.profile.name || site.sub.name, url, slug: label,
+    subscriber: site.sub,
                 lang: site.sub.language === 'es' ? 'es' : 'en' };
   const p = req.path;
 

@@ -178,7 +178,7 @@ async function provisionAddress(tenantId, teaserToken) {
   const profileRow = await scoped('profiles', tenantId).findOne({});
   const profile = (profileRow && profileRow.resume_json) || {};
   const parts = addresses.splitName(sub.name || profile.name || sub.email.split('@')[0]);
-  const r = await addresses.allocate(parts);
+  const r = await addresses.allocate(parts, require('../brand').forSubscriber(sub));
 
   if (!r.ok) return { step: 'address', ok: false, reason: r.reason };
 

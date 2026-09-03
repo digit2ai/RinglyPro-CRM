@@ -50,11 +50,20 @@ function ipHash(ip) {
 
 // --- narration ------------------------------------------------------------
 // One short segment per screen. Prefetched one ahead and cached by the orb.
-function narration(profile, ctx, lang) {
+function narration(profile, ctx, lang, brand) {
   const name = (profile.name || ctx.name || '').split(' ')[0] || '';
+  const B = require('../brand').byId(brand && (brand.id || brand));
+  const BRAND = B.name;
+  // PRICING IS THREE PLANS, NOT ONE ANNUAL FEE. This said "It is fifty
+  // dollars a year" — a figure from the single-price model, spoken aloud to
+  // a prospect while the pricing page beside it showed Free, Search and
+  // Landed at monthly rates. Read from the plan catalog so the voice and the
+  // page cannot disagree.
+  const plans = require('./plans').PLANS;
+  const usd = (id) => Math.round((plans[id].price_cents || 0) / 100);
   if (lang === 'es') {
     return [
-      `Hola ${name}, soy Dalia, la voz de JobUp. Déjame mostrarte el ecosistema profesional que construiríamos para ti.`,
+      `Hola ${name}, soy Dalia, la voz de ${BRAND}. Déjame mostrarte el ecosistema profesional que construiríamos para ti.`,
       `Este sería tu sitio profesional, generado a partir de tu propio currículum y mantenido al día automáticamente.`,
       ctx.address ? `Tu dirección web sería ${ctx.address}, en línea pocos minutos después de activarla.` : `Revisaremos qué dirección web está disponible para tu nombre.`,
       ctx.matchCount > 0
@@ -64,15 +73,17 @@ function narration(profile, ctx, lang) {
         ? `Y este es tu currículum reescrito para una de esas vacantes en concreto. Solo reordena y reformula lo que tú ya escribiste: nunca añade un empleador, una fecha o una cifra que no esté en tu currículum original.`
         : `Cuando haya una vacante que encaje, reescribimos tu currículum para ella, usando únicamente lo que tú ya escribiste.`,
       `Aquí está tu identidad legible por máquinas: currículum estructurado, datos JSON-LD y una tarjeta de agente, para que los sistemas de reclutamiento entiendan tu trayectoria.`,
-      `Dos agentes trabajarían por ti las veinticuatro horas: el Cazador de Oportunidades busca y puntúa vacantes reales, y el Agente de Presencia te mantiene visible. A partir de ahí decides tú: JobUp nunca envía nada en tu nombre.`,
+      `Dos agentes trabajarían por ti las veinticuatro horas: el Cazador de Oportunidades busca y puntúa vacantes reales, y el Agente de Presencia te mantiene visible. A partir de ahí decides tú: ${BRAND} nunca envía nada en tu nombre.`,
       `Todo esto vive en tu panel privado: tus coincidencias, tu proceso, tus borradores pendientes de aprobación y la exportación completa de tus datos.`,
       billingOff()
         ? `El siguiente paso es construir tu cuenta: eliges una contraseña y nos dices qué tipo de trabajo buscas. Sin pago y sin tarjeta.`
-        : `Son ${price()} dólares al año. Si no renuevas, el sitio se apaga, pero siempre puedes exportar tus datos.`,
+        : `Hay tres planes: Free, que no cuesta nada y mantiene tu sitio activo; Search, `
+          + `${usd('search')} dólares al mes para quien está buscando activamente; y Landed, `
+          + `${usd('landed')} dólares al mes. Puedes cambiar o pausar cuando quieras, y tu sitio de CV sigue en línea.`,
     ];
   }
   return [
-    `Hi ${name}, I'm Ava, the voice of JobUp. Let me show you the career ecosystem we would build for you.`,
+    `Hi ${name}, I'm Ava, the voice of ${BRAND}. Let me show you the career ecosystem we would build for you.`,
     `This would be your professional website, generated from your own resume and kept current automatically.`,
     ctx.address ? `Your web address would be ${ctx.address}, live within minutes of activation.` : `We will check which web address is available for your name.`,
     ctx.matchCount > 0
@@ -82,11 +93,13 @@ function narration(profile, ctx, lang) {
       ? `And this is your resume rewritten for one of those roles specifically. It only reorders and rephrases what you already wrote — it never adds an employer, a date or a number that is not in your own resume.`
       : `When there is a matching role, we rewrite your resume for it, using only what you already wrote.`,
     `Here is your machine-readable identity: a structured resume, JSON-LD data and an agent card, so recruiting systems can understand your career.`,
-    `Two agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings against your resume, and the Professional Presence Agent keeps you findable. From there you take over — JobUp never applies or writes to anyone on your behalf.`,
+    `Two agents would work for you around the clock, every day, whether or not you are looking: the Opportunity Hunter searches and scores real openings against your resume, and the Professional Presence Agent keeps you findable. From there you take over — ${BRAND} never applies or writes to anyone on your behalf.`,
     `All of it lives in your private dashboard: your matches, your pipeline, the drafts waiting on your approval, and a full export of everything.`,
     billingOff()
       ? `The next step is to build your account: you choose a password and tell us what kind of work you want. No payment, no card.`
-      : `It is ${price()} dollars a year. If you do not renew the site goes down, but you can always export your data.`,
+      : `There are three plans: Free, which costs nothing and keeps your site live; Search, at `
+        + `${usd('search')} dollars a month for someone actively looking; and Landed, at `
+        + `${usd('landed')} dollars a month. You can change or pause anytime, and your CV site stays up.`,
   ];
 }
 
@@ -105,8 +118,12 @@ const STAGES = [
   { key: 'identity',  en: 'Building your AI-readable identity', es: 'Creando tu identidad legible por IA' },
 ];
 
-async function build({ name, email, phone, language, resumeText, ip, onStage }) {
+async function build({ name, email, phone, language, resumeText, ip, onStage, brand }) {
   const lang = language === 'es' ? 'es' : 'en';
+  // The teaser is the first thing a prospect sees. Everything in it — the web
+  // address it offers and the voice that narrates it — must be the product
+  // they are actually looking at.
+  const BR = require('../brand').byId(brand && (brand.id || brand));
   let spent = 0;
   const notes = [];
   const stage = async (key) => {
@@ -131,7 +148,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
   // which would hand them carlosmejia when they asked to be Carlos Gomez.
   // Whatever they typed is what they chose to be called; Personalize covers the rest.
   const parts = addresses.splitName(name || profile.name);
-  const addr = await addresses.preview({ ...parts, city: profile.location });
+  const addr = await addresses.preview({ ...parts, city: profile.location }, BR);
 
   // 3. REAL matched jobs from the shared pool. Never fabricated.
   await stage('matching');
@@ -243,7 +260,7 @@ async function build({ name, email, phone, language, resumeText, ip, onStage }) 
           : 'If you do not renew, the site goes down and the address is released. You can always export your data.',
       },
     },
-    narration: narration(profile, ctx, lang),
+    narration: narration(profile, ctx, lang, BR),
   };
 }
 
@@ -285,6 +302,7 @@ async function setStage(token, st) {
 }
 
 module.exports = {
+  narration,
   STAGES,
   TYPICAL_BUILD_MS,
   setStage, build, create, finish, get, token, ipHash, TEASER_COST_CAP, RESUME_PURGE_DAYS,
