@@ -34,16 +34,21 @@ function fromSource() {
   return null;
 }
 
-// The From DISPLAY NAME. So the inbox shows "JobUp", not the raw address, even
-// while the address itself falls back to the shared verified sender. Override
-// with JOBUP_FROM_NAME.
-function fromName() {
-  return process.env.JOBUP_FROM_NAME || 'JobUp';
+// The From DISPLAY NAME. So the inbox shows "JobUp" (or "JobMD"), not the raw
+// address, even while the address itself falls back to the shared verified
+// sender. Override per brand with JOBUP_FROM_NAME / JOBMD_FROM_NAME.
+//
+// THE BRAND COMES FROM THE SUBSCRIBER, NOT FROM A REQUEST. A weekly digest is
+// sent by the scheduler with nothing to resolve a host from, so a caller that
+// knows the recipient passes their brand; anything that does not gets JobUp,
+// which is what every account created before the registry is.
+function fromName(brand) {
+  return require('../brand').fromName(brand);
 }
 // SendGrid accepts { email, name }. Returns that object when an address exists.
-function fromField() {
+function fromField(brand) {
   const email = fromAddress();
-  return email ? { email, name: fromName() } : null;
+  return email ? { email, name: fromName(brand) } : null;
 }
 
 function configured() {
@@ -77,7 +82,7 @@ function status() {
  */
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-async function send({ to, subject, text, html, replyTo, bcc }) {
+async function send({ to, subject, text, html, replyTo, bcc, brand }) {
   if (!configured()) {
     return { ok: false, configured: false,
              error: 'Email is not configured on this deployment.' };
@@ -90,8 +95,8 @@ async function send({ to, subject, text, html, replyTo, bcc }) {
     sg.setApiKey(process.env.SENDGRID_API_KEY);
     const msg = {
       to,
-      from: fromField(),
-      subject: String(subject || 'JobUp').slice(0, 200),
+      from: fromField(brand),
+      subject: String(subject || require('../brand').byId(brand && brand.id).name).slice(0, 200),
       text: String(text || ''),
     };
     if (html) msg.html = html;
@@ -120,7 +125,7 @@ async function send({ to, subject, text, html, replyTo, bcc }) {
  * and returns the SendGrid message id so email_sends stays auditable.
  * NOTIFY_DRY_RUN=true short-circuits: it never calls SendGrid.
  */
-async function sendDigest({ to, subject, html, text, templateId, dynamicData, asmGroupId, headers, categories }) {
+async function sendDigest({ to, subject, html, text, templateId, dynamicData, asmGroupId, headers, categories, brand }) {
   if (process.env.NOTIFY_DRY_RUN === 'true') {
     return { ok: true, dry_run: true, messageId: `dry-${Date.now()}` };
   }
@@ -131,12 +136,12 @@ async function sendDigest({ to, subject, html, text, templateId, dynamicData, as
   try {
     const sg = require('@sendgrid/mail');
     sg.setApiKey(process.env.SENDGRID_API_KEY);
-    const msg = { to, from: fromField() };
+    const msg = { to, from: fromField(brand) };
     if (templateId) {
       msg.templateId = templateId;
       msg.dynamicTemplateData = dynamicData || {};
     } else {
-      msg.subject = String(subject || 'JobUp').slice(0, 200);
+      msg.subject = String(subject || require('../brand').byId(brand && brand.id).name).slice(0, 200);
       if (text) msg.text = String(text);
       if (html) msg.html = String(html);
     }
@@ -207,8 +212,8 @@ function welcomeBcc() {
  * configured welcome BCC (the owner). Every real signup path routes through
  * here, so the BCC is guaranteed rather than remembered at each call site.
  */
-async function sendWelcome({ to, subject, text, html, replyTo }) {
+async function sendWelcome({ to, subject, text, html, replyTo, brand }) {
   return send({ to, subject, text, html, replyTo, bcc: welcomeBcc() });
 }
 
-module.exports = { send, sendWelcome, sendDigest, configured, status, renderOpportunity, fromAddress, fromSource, welcomeBcc };
+module.exports = { send, sendWelcome, sendDigest, fromName, configured, status, renderOpportunity, fromAddress, fromSource, welcomeBcc };

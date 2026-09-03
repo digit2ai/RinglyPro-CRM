@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
-<title>Your account is built — JobUp</title><style>
+<title>Your account is built — {{BRAND}}</title><style>
 :root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
 --line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
 --cyan:#22d3ee;--green:#3ad07f;--red:#f87171;--warn:#e6b45a;
@@ -90,7 +90,7 @@ padding:11px 22px;font-size:14px;opacity:0;pointer-events:none;transition:.22s e
       <rect width="512" height="512" rx="108" fill="url(#bm)"/>
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>JobUp</div>
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>{{BRAND}}</div>
 
   <div class="bar" id="bar"></div>
   <div class="tick" id="tick" style="display:none">
@@ -295,7 +295,7 @@ $('copy').addEventListener('click',function(){
   } else prompt('Copy your link:',u);
 });
 $('share').addEventListener('click',function(){
-  if(navigator.share) navigator.share({title:'My JobUp profile',url:window.__URL||location.href}).catch(function(){});
+  if(navigator.share) navigator.share({title:'My {{BRAND}} profile',url:window.__URL||location.href}).catch(function(){});
 });
 $('openit').addEventListener('click',function(){
   if(window.__URL) window.open(window.__URL,'_blank','noopener');

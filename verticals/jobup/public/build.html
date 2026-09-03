@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
-<title>Build my account — JobUp</title><style>
+<title>Build my account — {{BRAND}}</title><style>
 :root{--bg:#07080c;--card:#11141c;--card2:#161a24;--line:rgba(255,255,255,.07);
 --line2:rgba(255,255,255,.15);--ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;
 --cyan:#22d3ee;--green:#3ad07f;--red:#f87171;--warn:#e6b45a;
@@ -128,7 +128,7 @@ body.hasgo .wrap{padding-bottom:140px}
       <rect width="512" height="512" rx="108" fill="url(#bm)"/>
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>JobUp</div>
+      <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>{{BRAND}}</div>
 
   <div class="bar" id="bar"></div>
   <h1>Build my account</h1>
@@ -252,7 +252,7 @@ body.hasgo .wrap{padding-bottom:140px}
       </div>
 
       <div class="priv">These four are <strong>private by default</strong>. Nothing here appears on your public
-        page or in a message unless you switch it on in your dashboard, and JobUp never rewords them —
+        page or in a message unless you switch it on in your dashboard, and {{BRAND}} never rewords them —
         they are quoted exactly as you typed them or omitted.</div>
     </div>
 
@@ -267,7 +267,7 @@ body.hasgo .wrap{padding-bottom:140px}
       <div class="sub">Your site works either way. This decides whether anything links to it.</div>
 
       <label class="switch" for="dir" style="margin-top:14px">
-        <input id="dir" type="checkbox"><span>List me in the public JobUp directory</span></label>
+        <input id="dir" type="checkbox"><span>List me in the public {{BRAND}} directory</span></label>
 
       <div class="priv">Listing you adds your page to the directory and to the sitemap search
         engines read, which is how a page gets crawled at all. It publishes three things:
@@ -280,16 +280,16 @@ body.hasgo .wrap{padding-bottom:140px}
     <div class="err" id="err"></div>
     <button class="btn go" id="go" type="submit" data-go="bottom">Build my account</button>
     <p class="consent" id="consent">By creating your account, you expressly consent to Digit2AI LLC
-      (&ldquo;JobUp&rdquo;) collecting, hosting, and processing your r&eacute;sum&eacute; and the personal
+      (&ldquo;{{BRAND}}&rdquo;) collecting, hosting, and processing your r&eacute;sum&eacute; and the personal
       information it contains for the sole purpose of providing this service. We do not sell your personal
       information, and we do not disclose it to any third party other than the service providers strictly
-      necessary to operate JobUp, as described in our
+      necessary to operate {{BRAND}}, as described in our
       <a href="{{BASE}}/privacy" target="_blank" rel="noopener">Privacy Policy</a>. Your profile is published
       only to the extent you choose &mdash; sensitive fields remain private unless you enable them. By
       continuing, you acknowledge that you have read and agree to the
       <a href="{{BASE}}/terms" target="_blank" rel="noopener">Terms of Service</a> and
       <a href="{{BASE}}/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
-    <p class="note" id="footnote">You review and submit every application yourself. JobUp never applies on your behalf.</p>
+    <p class="note" id="footnote">You review and submit every application yourself. {{BRAND}} never applies on your behalf.</p>
   </form>
 </div>
 
@@ -466,9 +466,9 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
   // Data-hosting consent in Spanish (the static HTML carries the English one).
   if(es && $('consent')){
     $('consent').innerHTML='Al crear tu cuenta, consientes expresamente que Digit2AI LLC '+
-      '(“JobUp”) recopile, aloje y procese tu currículum y los datos personales que contiene '+
+      '(“{{BRAND}}”) recopile, aloje y procese tu currículum y los datos personales que contiene '+
       'con el único fin de prestarte este servicio. No vendemos tus datos personales, y no los '+
-      'divulgamos a ningún tercero salvo los proveedores estrictamente necesarios para operar JobUp, '+
+      'divulgamos a ningún tercero salvo los proveedores estrictamente necesarios para operar {{BRAND}}, '+
       'según nuestra <a href="'+API+'/privacy" target="_blank" rel="noopener">Política de Privacidad</a>. '+
       'Tu perfil se publica solo en la medida en que tú decidas — los campos sensibles permanecen '+
       'privados hasta que los actives. Al continuar, reconoces que has leído y aceptas los '+
@@ -477,7 +477,7 @@ fetch(API+'/api/v1/intake/build?t='+encodeURIComponent(TOKEN))
   }
   if(j.billing_disabled){
     $('footnote').textContent='No payment is required. '+
-      'You review and submit every application yourself — JobUp never applies on your behalf.';
+      'You review and submit every application yourself — {{BRAND}} never applies on your behalf.';
   } else if(FREE){
     // FREE has no payment — never say "Payment received", it causes confusion/panic.
     document.querySelector('h1').textContent=es?'Ya casi está — termina tu cuenta gratis'

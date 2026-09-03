@@ -137,18 +137,22 @@ router.post('/forgot-password', async (req, res) => {
   // Forgot-password is a USER-CLICKED send, so it is exempt from the
   // EMAIL_AUTOSEND_DISABLED rule (see services/mailer.js).
   const name = sub.name ? String(sub.name).split(' ')[0] : 'there';
+  // The brand on the ROW, not the host of this request: a doctor who resets
+  // their password from a link they opened anywhere still gets JobMD's mail.
+  const subBrand = require('../brand').forSubscriber(sub);
+  const brandName = subBrand.name;
   const text =
     `Hi ${name},\n\n` +
-    `We received a request to reset your JobUp password. ` +
+    `We received a request to reset your ${brandName} password. ` +
     `Open the link below to choose a new one. It expires in one hour and can only be used once.\n\n` +
     `${url}\n\n` +
     `If you did not request this, you can ignore this email — your password will not change.\n\n` +
-    `— JobUp`;
+    `— ${brandName}`;
   const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const html = `<div style="font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1d24;max-width:520px">
     <p>Hi ${esc(name)},</p>
-    <p>We received a request to reset your JobUp password. Choose a new one below.
+    <p>We received a request to reset your ${brandName} password. Choose a new one below.
        This link expires in one hour and can only be used once.</p>
     <p style="margin:26px 0">
       <a href="${esc(url)}" style="background:#22d3ee;color:#04222a;font-weight:700;
@@ -156,10 +160,10 @@ router.post('/forgot-password', async (req, res) => {
     <p style="color:#6b7385;font-size:13px">If the button does not work, paste this link into your browser:<br>
       <a href="${esc(url)}" style="color:#0e7490">${esc(url)}</a></p>
     <p style="color:#6b7385;font-size:13px">If you did not request this, you can ignore this email — your password will not change.</p>
-    <p style="color:#6b7385;font-size:13px;margin-top:22px">— JobUp</p>
+    <p style="color:#6b7385;font-size:13px;margin-top:22px">— ${brandName}</p>
   </div>`;
 
-  const r = await mailer.send({ to: sub.email, subject: 'Reset your JobUp password', text, html });
+  const r = await mailer.send({ to: sub.email, subject: `Reset your ${brandName} password`, text, html, brand: subBrand });
   if (!r.ok) {
     // Never claim it went out when it did not. Surface the link so the person
     // is not stranded, and log the reason.

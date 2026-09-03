@@ -15,6 +15,20 @@
  */
 
 require('dotenv').config();
+
+// ── THE HOSPITAL AND RECRUITER WORKSPACES ARE STOOD DOWN, NOT REMOVED ──────
+// jobmd.io now serves the JobUp engine under the JobMD brand — one product,
+// aimed at doctors, surgeons and medical staff. This vertical's hospital
+// dashboard, hospital intake, recruiter intake, matching engine and eleven
+// agents are kept whole because they are wanted later, and they must keep
+// WORKING while switched off or "we can turn it back on" is a guess.
+//
+// So this suite turns every role on for itself and exercises the lot. The
+// assertions that the DEFAULT is physician-only, and that a disabled role is
+// refused at the door, live at the end of the run where they cannot be
+// affected by this line.
+process.env.JOBMD_ROLES = 'physician,hospital,recruiter';
+
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -905,16 +919,35 @@ function mustReject(name, mutate, expectConstraint) {
      /require\('\.\.\/\.\.\/\.\.\/src\/routes\/presentation-tts'\)/.test(idxSrc));
 
   const appSrc = fs.readFileSync(path.join(ROOT, 'src', 'app.js'), 'utf8');
-  ok('domain: jobmd.io and www.jobmd.io are both handled',
-     /host !== 'jobmd\.io' && host !== 'www\.jobmd\.io'/.test(appSrc));
-  // REGISTRATION ORDER IS THE WHOLE BUG. Express matches in order, so the host
-  // handler must come before the CRM's own paths or it is silently shadowed.
-  const hostAt = appSrc.indexOf("host !== 'jobmd.io'");
+
+  // ── WHO OWNS jobmd.io NOW ────────────────────────────────────────────────
+  // The public product on that domain is the JobUp engine under the JobMD
+  // brand — a replica for doctors, surgeons and medical staff. THIS vertical
+  // is stood down: kept whole, still tested, no longer the front door.
+  ok('domain: jobmd.io is claimed by the brand registry, not by this vertical',
+     /JU_BRAND\.byHost\(host\)/.test(appSrc) &&
+     /req\.jobupBrand = brand\.id/.test(appSrc));
+  const brandReg = require(path.join(ROOT, 'verticals', 'jobup', 'src', 'brand.js'));
+  ok('domain: and the registry actually resolves jobmd.io',
+     brandReg.byHost('jobmd.io').id === 'jobmd' &&
+     brandReg.byHost('www.jobmd.io').id === 'jobmd');
+
+  // REGISTRATION ORDER IS STILL THE WHOLE BUG. Express matches in order, so
+  // whatever claims the brand hosts must come before the CRM's own paths or it
+  // is silently shadowed on only the paths the CRM happens to define.
+  const hostAt = appSrc.indexOf('JU_BRAND.byHost(host)');
   const ttsAt = appSrc.indexOf("require('./routes/presentation-tts')");
-  const pathMountAt = appSrc.indexOf("app.use(['/jobmd', '/jobMD'], jobmdApp)");
   ok('domain: the host handler is registered before the CRM mounts its own routes',
      hostAt > 0 && ttsAt > 0 && hostAt < ttsAt, 'host@' + hostAt + ' tts@' + ttsAt);
-  ok('domain: the host handler precedes the path mount', hostAt > 0 && hostAt < pathMountAt);
+
+  // ── STOOD DOWN, NOT DELETED ──────────────────────────────────────────────
+  // The way back must be a variable, not a rebuild.
+  ok('legacy: this vertical is still mounted, at /jobmd-legacy',
+     /app\.use\('\/jobmd-legacy', jobmdApp\)/.test(appSrc));
+  ok('legacy: and jobmd.io can be handed back to it with one variable',
+     /JOBMD_LEGACY_HOST === '1'/.test(appSrc));
+  ok('legacy: the hospital and recruiter workspaces are gated, not deleted',
+     /JOBMD_ROLES/.test(fs.readFileSync(path.join(__dirname, 'src', 'routes', 'app.js'), 'utf8')));
   ok('domain: the page declares jobmd.io as canonical and og:url',
      /rel="canonical" href="https:\/\/jobmd\.io\/"/.test(html) &&
      /og:url" content="https:\/\/jobmd\.io\/"/.test(html));
@@ -1460,6 +1493,45 @@ function mustReject(name, mutate, expectConstraint) {
   }
   ok('app: the landing page sends people to sign up', /href="signup"/.test(html));
   ok('app: the landing page offers sign in', /href="login"/.test(html));
+
+  // ── THE DISABLED WORKSPACES ──────────────────────────────────────────────
+  // This suite runs with every role switched on so the retained code is
+  // exercised. These assertions check the SHIPPED DEFAULT instead: the module
+  // is re-read in a child process with no override, because ENABLED_ROLES is
+  // resolved once at load and cannot be un-set in this one.
+  {
+    const { execFileSync } = require('child_process');
+    const probe =
+      "process.env.JOBMD_ROLES='';" +
+      "delete require.cache[require.resolve('" + path.join(__dirname, 'src', 'routes', 'app.js') + "')];" +
+      "const src=require('fs').readFileSync('" + path.join(__dirname, 'src', 'routes', 'app.js') + "','utf8');" +
+      "const m=src.match(/JOBMD_ROLES \\|\\| '([a-z,]+)'/);" +
+      "console.log(m?m[1]:'NONE');";
+    let dflt = '';
+    try { dflt = String(execFileSync(process.execPath, ['-e', probe])).trim(); } catch (e) { dflt = 'ERR:' + e.message; }
+    eq('legacy: the SHIPPED default enables the physician workspace only', dflt, 'physician');
+  }
+
+  // A switched-off role is refused AT SIGNUP, not accepted and then dead-ended.
+  // An account that exists but can do nothing is worse than one never created.
+  {
+    const appRoutes = fs.readFileSync(path.join(__dirname, 'src', 'routes', 'app.js'), 'utf8');
+    ok('legacy: signup refuses a disabled role at the door',
+       /if \(!roleEnabled\(v\.role\)\)/.test(appRoutes));
+    ok('legacy: and every gated route refuses it too',
+       /if \(!roleEnabled\(req\.account\.role\)\)/.test(appRoutes));
+    ok('legacy: the refusal says it is temporary, not a permissions error',
+       /not open yet/.test(appRoutes) && /disabled: true/.test(appRoutes));
+    ok('legacy: it answers 503, not 403 — nothing is forbidden, it is switched off',
+       /res\.status\(503\)/.test(appRoutes));
+    // The retained machinery must still be here.
+    ['services/matching.js', 'services/pipeline.js', 'services/agents.js', 'services/cv.js']
+      .forEach(function (f) {
+        ok('legacy: ' + f + ' is retained', fs.existsSync(path.join(__dirname, 'src', f)));
+      });
+    eq('legacy: all eleven agents are still declared', C.AGENTS.length, 11);
+    eq('legacy: and all thirteen pipeline stages', C.RECRUITMENT_PIPELINE.length, 13);
+  }
 
   // Clean up every row this suite created.
   const { Account, Physician, Position: Pos, Pipeline: Pipe } = require('./src/models');

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="How JobUp collects, uses, protects and shares your data. Public by design, private where it counts.">
-<title>JobUp — Privacy Policy</title>
+<meta name="description" content="How {{BRAND}} collects, uses, protects and shares your data. Public by design, private where it counts.">
+<title>{{BRAND}} — Privacy Policy</title>
 <link rel="icon" href="{{BASE}}/favicon.svg?v={{V}}">
 <style>
   :root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
@@ -41,7 +41,7 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <a class="brand" href="{{BASE}}/"><img src="{{BASE}}/favicon.svg?v={{V}}" alt=""><b>JobUp</b></a>
+    <a class="brand" href="{{BASE}}/"><img src="{{BASE}}/favicon.svg?v={{V}}" alt=""><b>{{BRAND}}</b></a>
     <div class="lang" role="group" aria-label="Language">
       <button id="lang-en" class="on" onclick="setLang('en')">EN</button>
       <button id="lang-es" onclick="setLang('es')">ES</button>
@@ -54,12 +54,12 @@
     <div class="dates">Effective date: August 2026 · Last updated: August 2026</div>
 
     <h2>Who we are and who controls your data</h2>
-    <p>JobUp is a personal AI career platform operated by <strong>Digit2AI LLC</strong>, a limited liability company organized in the State of Florida, USA, based in Wesley Chapel, Florida. For the purposes of this policy, Digit2AI LLC is the "data controller" — the company that decides how and why your personal information is handled. When this policy says "we," "us," "our," or "JobUp," it means Digit2AI LLC.</p>
+    <p>{{BRAND}} is a personal AI career platform operated by <strong>Digit2AI LLC</strong>, a limited liability company organized in the State of Florida, USA, based in Wesley Chapel, Florida. For the purposes of this policy, Digit2AI LLC is the "data controller" — the company that decides how and why your personal information is handled. When this policy says "we," "us," "our," or "{{BRAND}}," it means Digit2AI LLC.</p>
     <p>You can reach us about anything in this policy, or to exercise any of your rights, at <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>.</p>
 
     <div class="lead">
-      <h2>The one thing to understand first: JobUp is public by design</h2>
-      <p>JobUp exists to get you found. When you create an account, we build you a public personal CV website at your own address (yourname.jobup.dev) and give you AI agents that score real job postings against your résumé and rewrite your résumé for a specific posting. The entire point of the product is for recruiters, hiring platforms, and automated AI sourcing tools to discover and read your profile.</p>
+      <h2>The one thing to understand first: {{BRAND}} is public by design</h2>
+      <p>{{BRAND}} exists to get you found. When you create an account, we build you a public personal CV website at your own address (yourname.{{BRAND_SITE}}) and give you AI agents that score real job postings against your résumé and rewrite your résumé for a specific posting. The entire point of the product is for recruiters, hiring platforms, and automated AI sourcing tools to discover and read your profile.</p>
     </div>
     <p>Because of that, your CV page and several machine-readable versions of it are public and are meant to be crawled. Specifically, the following are published and openly accessible unless you remove the information from them:</p>
     <ul>
@@ -77,17 +77,17 @@
     <p><strong>Résumé and profile.</strong> When you upload your résumé, we parse the file into structured data (your name, contact details, work history, skills, and education) and also keep the raw extracted text. You may add an optional profile photo and your location. This is the core content that becomes your CV site, subject to the privacy toggles above.</p>
     <p><strong>Job activity.</strong> Which postings matched you, the fit scores produced for them, the pipeline stage you assign to each opportunity (for example: saved, applied, interviewing), and any inbound messages recruiters send you through your public profile.</p>
     <p><strong>Usage analytics.</strong> Page views of your public profile, referrers (where a visitor came from), and whether the visitor was an AI agent fetching your page. We store IP addresses only as a salted hash — never in raw form — so we can measure activity without keeping the actual addresses of the people who view your page.</p>
-    <p><strong>Payments.</strong> Payments are processed by Stripe. JobUp stores only Stripe identifiers, transaction amounts, and your card's brand and last four digits. We never store full card numbers on JobUp servers.</p>
+    <p><strong>Payments.</strong> Payments are processed by Stripe. {{BRAND}} stores only Stripe identifiers, transaction amounts, and your card's brand and last four digits. We never store full card numbers on {{BRAND}} servers.</p>
 
     <h2>Where job postings come from</h2>
-    <p>The job postings we score you against come from public applicant-tracking-system (ATS) job boards that JobUp reads. Reading flows one way: <strong>JobUp does not send your personal data to those job boards.</strong> Applying to a job is always something you do yourself.</p>
+    <p>The job postings we score you against come from public applicant-tracking-system (ATS) job boards that {{BRAND}} reads. Reading flows one way: <strong>{{BRAND}} does not send your personal data to those job boards.</strong> Applying to a job is always something you do yourself.</p>
 
-    <h2>AI processing and the companies that help us run JobUp (subprocessors)</h2>
-    <p>To run JobUp, some of your data is processed by trusted third-party providers. Some data leaves our servers to reach them. We name them plainly here, along with what they do:</p>
+    <h2>AI processing and the companies that help us run {{BRAND}} (subprocessors)</h2>
+    <p>To run {{BRAND}}, some of your data is processed by trusted third-party providers. Some data leaves our servers to reach them. We name them plainly here, along with what they do:</p>
     <ul>
       <li><strong>Anthropic (Claude models).</strong> To produce fit scores and tailored résumés, we send your résumé text and the target job postings to Anthropic's Claude models. The tailored résumé is built only from what you already wrote — the AI rewrites and reorganizes your own content for a specific posting; it does not invent new credentials. Fit scores are assessments to help you prioritize, not guarantees of an interview, an offer, or any outcome.</li>
       <li><strong>Stripe.</strong> Payment processing. Stripe handles your card details directly; see the note above on what little we retain.</li>
-      <li><strong>SendGrid (a Twilio company).</strong> Transactional email only — password resets, address verification, and messages you yourself choose to send. JobUp does not send you marketing email automatically.</li>
+      <li><strong>SendGrid (a Twilio company).</strong> Transactional email only — password resets, address verification, and messages you yourself choose to send. {{BRAND}} does not send you marketing email automatically.</li>
       <li><strong>Render.</strong> Cloud hosting and our PostgreSQL database, located in the United States.</li>
     </ul>
     <p>We do not sell your personal information to any of these providers, and they are permitted to use your data only to perform their service for us, under obligations of confidentiality.</p>
@@ -96,11 +96,11 @@
     <p><strong>You decide what is shared.</strong> Your personal information is disclosed in only the following ways, and in no others:</p>
     <ul>
       <li><strong>The public surfaces you choose to publish.</strong> Your CV page and its machine-readable versions (resume.json, JSON-LD, the agent card, llms.txt) are made discoverable to recruiters and AI tools because that is the service you signed up for. What appears there is only what you leave on — the sensitive fields listed above stay private until you switch them on, and switching one off deletes it from every public surface.</li>
-      <li><strong>The service providers strictly necessary to operate JobUp</strong> (Anthropic, Stripe, SendGrid, Render — named above), who may use your data only to perform their service for us and under obligations of confidentiality.</li>
+      <li><strong>The service providers strictly necessary to operate {{BRAND}}</strong> (Anthropic, Stripe, SendGrid, Render — named above), who may use your data only to perform their service for us and under obligations of confidentiality.</li>
       <li><strong>When you direct us to</strong> — for example, a message or email you yourself choose to send from your account.</li>
       <li><strong>When the law requires it.</strong> We may disclose information if compelled by valid legal process (such as a subpoena, court order, or lawful request from a public authority), or where necessary to comply with applicable law.</li>
-      <li><strong>To protect rights and safety.</strong> We may disclose information where we reasonably believe it is necessary to detect, prevent, or address fraud, security, or technical issues, or to protect the rights, property, or safety of JobUp, our users, or the public.</li>
-      <li><strong>In a business transfer.</strong> If JobUp is involved in a merger, acquisition, financing, reorganization, or sale of assets, your information may be transferred as part of that transaction. We will require the recipient to honor this Privacy Policy, and we will notify you of any change of control that materially affects your information.</li>
+      <li><strong>To protect rights and safety.</strong> We may disclose information where we reasonably believe it is necessary to detect, prevent, or address fraud, security, or technical issues, or to protect the rights, property, or safety of {{BRAND}}, our users, or the public.</li>
+      <li><strong>In a business transfer.</strong> If {{BRAND}} is involved in a merger, acquisition, financing, reorganization, or sale of assets, your information may be transferred as part of that transaction. We will require the recipient to honor this Privacy Policy, and we will notify you of any change of control that materially affects your information.</li>
     </ul>
     <p>Outside of these paths, <strong>no one else shares your information.</strong> We do not sell it, we do not rent it, we do not trade it, and we do not share it for anyone else's advertising or marketing. You remain the owner of your information: <strong>you</strong> decide what is public, you can make any of it private again at any time, and you can export or delete it whenever you wish.</p>
 
@@ -123,25 +123,25 @@
     <p><strong>Security incidents.</strong> If a breach affecting your personal information occurs, we will notify affected users and any relevant authorities as required by applicable law, without undue delay.</p>
 
     <h2>Data retention</h2>
-    <p>We keep your data while your account is active. Your full export is always available to you (see below), including after you cancel. If you delete your account, we remove your data. If you simply do not renew, your public site goes down and your web address (yourname.jobup.dev) is released so it can be reused — while your data export remains available to you.</p>
+    <p>We keep your data while your account is active. Your full export is always available to you (see below), including after you cancel. If you delete your account, we remove your data. If you simply do not renew, your public site goes down and your web address (yourname.{{BRAND_SITE}}) is released so it can be reused — while your data export remains available to you.</p>
 
     <h2>Your rights</h2>
     <p>You have real, exercisable control over your data:</p>
     <ul>
-      <li><strong>Access and portability.</strong> Use "Download my data" for a one-click full export. It returns everything JobUp holds about you as a single file, available any time — including after cancellation.</li>
+      <li><strong>Access and portability.</strong> Use "Download my data" for a one-click full export. It returns everything {{BRAND}} holds about you as a single file, available any time — including after cancellation.</li>
       <li><strong>Correction / rectification.</strong> Re-upload your résumé to update your information, and edit your privacy toggles at any time.</li>
       <li><strong>Deletion / erasure.</strong> Deleting your account removes your data.</li>
       <li><strong>Restriction and objection.</strong> You can ask us to limit or stop certain processing.</li>
     </ul>
     <p>For users in the European Economic Area and the UK (GDPR), you specifically have the rights of access, rectification, erasure, restriction of processing, data portability, and objection, and the right to lodge a complaint with your local data protection authority.</p>
-    <p>For California residents (CCPA/CPRA), you have the right to know what personal information we collect and how we use it, the right to delete it, the right to correct it, and the right to opt out of the "sale" or "sharing" of personal information. <strong>JobUp does not sell your personal information.</strong> We will never discriminate against you for exercising any of your privacy rights.</p>
+    <p>For California residents (CCPA/CPRA), you have the right to know what personal information we collect and how we use it, the right to delete it, the right to correct it, and the right to opt out of the "sale" or "sharing" of personal information. <strong>{{BRAND}} does not sell your personal information.</strong> We will never discriminate against you for exercising any of your privacy rights.</p>
     <p>To exercise any right, email <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>. Note that your public profile is, by its nature, public — the strongest tools you have for controlling public exposure are the per-field privacy toggles and account deletion.</p>
 
     <h2>International users</h2>
-    <p>JobUp is operated from the United States, and your data is processed and stored in the United States. If you use JobUp from outside the US, you understand that your information is transferred to and handled in the US, where data-protection laws may differ from those in your country.</p>
+    <p>{{BRAND}} is operated from the United States, and your data is processed and stored in the United States. If you use {{BRAND}} from outside the US, you understand that your information is transferred to and handled in the US, where data-protection laws may differ from those in your country.</p>
 
     <h2>Children</h2>
-    <p>JobUp is not intended for anyone under 16 years of age, and it is not directed to children. We do not knowingly collect personal information from anyone under 16. If you believe a child has given us their information, contact <a href="mailto:info@digit2ai.com">info@digit2ai.com</a> and we will remove it.</p>
+    <p>{{BRAND}} is not intended for anyone under 16 years of age, and it is not directed to children. We do not knowingly collect personal information from anyone under 16. If you believe a child has given us their information, contact <a href="mailto:info@digit2ai.com">info@digit2ai.com</a> and we will remove it.</p>
 
     <h2>Cookies and local storage</h2>
     <p>We use a single session cookie so you can stay logged in, and browser local storage to hold app state (such as your interface preferences). We do not use third-party advertising trackers, and we do not run advertising networks on your profile.</p>
@@ -156,7 +156,7 @@
     <p>Job postings and other links may lead to websites we do not operate or control. This Privacy Policy does not apply to those sites, and we are not responsible for their content or their privacy practices; review their own policies before providing information to them.</p>
 
     <h2>Changes to this policy</h2>
-    <p>We may update this policy from time to time. When we do, we will revise the "Last updated" date at the top. If the changes are significant, we will make a reasonable effort to notify you. Continued use of JobUp after an update means you accept the revised policy.</p>
+    <p>We may update this policy from time to time. When we do, we will revise the "Last updated" date at the top. If the changes are significant, we will make a reasonable effort to notify you. Continued use of {{BRAND}} after an update means you accept the revised policy.</p>
 
     <h2>How to contact us</h2>
     <p>Digit2AI LLC<br>Wesley Chapel, Florida, USA<br><a href="mailto:info@digit2ai.com">info@digit2ai.com</a></p>
@@ -168,12 +168,12 @@
     <div class="dates">Fecha de entrada en vigor: agosto de 2026 · Última actualización: agosto de 2026</div>
 
     <h2>Quiénes somos y quién controla tus datos</h2>
-    <p>JobUp es una plataforma personal de carrera profesional impulsada por inteligencia artificial, operada por <strong>Digit2AI LLC</strong>, una sociedad de responsabilidad limitada constituida en el estado de Florida, EE. UU., con sede en Wesley Chapel, Florida. Para los efectos de esta política, Digit2AI LLC es el "responsable del tratamiento", es decir, la empresa que decide cómo y por qué se tratan tus datos personales. Cuando esta política dice "nosotros", "nos", "nuestro" o "JobUp", se refiere a Digit2AI LLC.</p>
+    <p>{{BRAND}} es una plataforma personal de carrera profesional impulsada por inteligencia artificial, operada por <strong>Digit2AI LLC</strong>, una sociedad de responsabilidad limitada constituida en el estado de Florida, EE. UU., con sede en Wesley Chapel, Florida. Para los efectos de esta política, Digit2AI LLC es el "responsable del tratamiento", es decir, la empresa que decide cómo y por qué se tratan tus datos personales. Cuando esta política dice "nosotros", "nos", "nuestro" o "{{BRAND}}", se refiere a Digit2AI LLC.</p>
     <p>Puedes comunicarte con nosotros sobre cualquier punto de esta política, o para ejercer cualquiera de tus derechos, en <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>.</p>
 
     <div class="lead">
-      <h2>Lo primero que debes entender: JobUp es público por diseño</h2>
-      <p>JobUp existe para que te encuentren. Cuando creas una cuenta, te construimos un sitio web personal público de tu CV en tu propia dirección (tunombre.jobup.dev) y te damos agentes de IA que evalúan ofertas de empleo reales frente a tu currículum y reescriben tu currículum para una oferta específica. Todo el propósito del producto es que los reclutadores, las plataformas de contratación y las herramientas automáticas de búsqueda con IA descubran y lean tu perfil.</p>
+      <h2>Lo primero que debes entender: {{BRAND}} es público por diseño</h2>
+      <p>{{BRAND}} existe para que te encuentren. Cuando creas una cuenta, te construimos un sitio web personal público de tu CV en tu propia dirección (tunombre.{{BRAND_SITE}}) y te damos agentes de IA que evalúan ofertas de empleo reales frente a tu currículum y reescriben tu currículum para una oferta específica. Todo el propósito del producto es que los reclutadores, las plataformas de contratación y las herramientas automáticas de búsqueda con IA descubran y lean tu perfil.</p>
     </div>
     <p>Por esa razón, tu página de CV y varias versiones legibles por máquina de la misma son públicas y están pensadas para ser rastreadas. En concreto, lo siguiente se publica y es accesible abiertamente, salvo que retires la información de dichos archivos:</p>
     <ul>
@@ -191,17 +191,17 @@
     <p><strong>Currículum y perfil.</strong> Cuando subes tu currículum, analizamos el archivo y lo convertimos en datos estructurados (tu nombre, datos de contacto, historial laboral, competencias y formación) y también conservamos el texto extraído en bruto. Puedes añadir una foto de perfil opcional y tu ubicación. Este es el contenido principal que se convierte en tu sitio de CV, sujeto a los interruptores de privacidad mencionados arriba.</p>
     <p><strong>Actividad de empleo.</strong> Qué ofertas coincidieron contigo, las puntuaciones de idoneidad producidas para ellas, la etapa del proceso que asignas a cada oportunidad (por ejemplo: guardada, postulada, en entrevista) y cualquier mensaje entrante que los reclutadores te envíen a través de tu perfil público.</p>
     <p><strong>Analítica de uso.</strong> Vistas de tu perfil público, referentes (de dónde vino un visitante) y si el visitante fue un agente de IA que recuperó tu página. Almacenamos las direcciones IP únicamente como un hash con sal ("salted hash"), nunca en su forma original, para poder medir la actividad sin conservar las direcciones reales de quienes ven tu página.</p>
-    <p><strong>Pagos.</strong> Los pagos los procesa Stripe. JobUp almacena solo identificadores de Stripe, los importes de las transacciones y la marca y los últimos cuatro dígitos de tu tarjeta. Nunca almacenamos números de tarjeta completos en los servidores de JobUp.</p>
+    <p><strong>Pagos.</strong> Los pagos los procesa Stripe. {{BRAND}} almacena solo identificadores de Stripe, los importes de las transacciones y la marca y los últimos cuatro dígitos de tu tarjeta. Nunca almacenamos números de tarjeta completos en los servidores de {{BRAND}}.</p>
 
     <h2>De dónde vienen las ofertas de empleo</h2>
-    <p>Las ofertas de empleo con las que te comparamos provienen de bolsas de trabajo públicas basadas en sistemas de seguimiento de candidatos (ATS) que JobUp lee. La lectura fluye en una sola dirección: <strong>JobUp no envía tus datos personales a esas bolsas de trabajo.</strong> Postularte a un empleo es siempre algo que haces tú.</p>
+    <p>Las ofertas de empleo con las que te comparamos provienen de bolsas de trabajo públicas basadas en sistemas de seguimiento de candidatos (ATS) que {{BRAND}} lee. La lectura fluye en una sola dirección: <strong>{{BRAND}} no envía tus datos personales a esas bolsas de trabajo.</strong> Postularte a un empleo es siempre algo que haces tú.</p>
 
-    <h2>Procesamiento con IA y las empresas que nos ayudan a operar JobUp (subencargados)</h2>
-    <p>Para operar JobUp, algunos de tus datos son tratados por proveedores externos de confianza. Parte de esos datos sale de nuestros servidores para llegar a ellos. Aquí los nombramos con claridad, junto con lo que hacen:</p>
+    <h2>Procesamiento con IA y las empresas que nos ayudan a operar {{BRAND}} (subencargados)</h2>
+    <p>Para operar {{BRAND}}, algunos de tus datos son tratados por proveedores externos de confianza. Parte de esos datos sale de nuestros servidores para llegar a ellos. Aquí los nombramos con claridad, junto con lo que hacen:</p>
     <ul>
       <li><strong>Anthropic (modelos Claude).</strong> Para producir las puntuaciones de idoneidad y los currículums adaptados, enviamos el texto de tu currículum y las ofertas de empleo objetivo a los modelos Claude de Anthropic. El currículum adaptado se construye únicamente con lo que ya escribiste: la IA reescribe y reorganiza tu propio contenido para una oferta específica; no inventa nuevas credenciales. Las puntuaciones de idoneidad son evaluaciones para ayudarte a priorizar, no garantías de una entrevista, una oferta ni ningún resultado.</li>
       <li><strong>Stripe.</strong> Procesamiento de pagos. Stripe gestiona directamente los datos de tu tarjeta; consulta arriba lo poco que conservamos.</li>
-      <li><strong>SendGrid (una empresa de Twilio).</strong> Correo electrónico transaccional únicamente: restablecimiento de contraseña, verificación de dirección y mensajes que tú mismo eliges enviar. JobUp no te envía correo de marketing de forma automática.</li>
+      <li><strong>SendGrid (una empresa de Twilio).</strong> Correo electrónico transaccional únicamente: restablecimiento de contraseña, verificación de dirección y mensajes que tú mismo eliges enviar. {{BRAND}} no te envía correo de marketing de forma automática.</li>
       <li><strong>Render.</strong> Alojamiento en la nube y nuestra base de datos PostgreSQL, ubicada en los Estados Unidos.</li>
     </ul>
     <p>No vendemos tus datos personales a ninguno de estos proveedores, y solo pueden usar tus datos para prestarnos su servicio, bajo obligaciones de confidencialidad.</p>
@@ -210,11 +210,11 @@
     <p><strong>Tú decides qué se comparte.</strong> Tus datos personales se divulgan únicamente de las siguientes formas, y de ninguna otra:</p>
     <ul>
       <li><strong>Las superficies públicas que tú eliges publicar.</strong> Tu página de CV y sus versiones legibles por máquina (resume.json, JSON-LD, la tarjeta de agente, llms.txt) se hacen visibles para reclutadores y herramientas de IA porque ese es el servicio que contrataste. Ahí solo aparece lo que dejas activado — los campos sensibles indicados arriba permanecen privados hasta que los actives, y al desactivar uno se elimina de todas las superficies públicas.</li>
-      <li><strong>Los proveedores estrictamente necesarios para operar JobUp</strong> (Anthropic, Stripe, SendGrid, Render — nombrados arriba), que solo pueden usar tus datos para prestarnos su servicio y bajo obligaciones de confidencialidad.</li>
+      <li><strong>Los proveedores estrictamente necesarios para operar {{BRAND}}</strong> (Anthropic, Stripe, SendGrid, Render — nombrados arriba), que solo pueden usar tus datos para prestarnos su servicio y bajo obligaciones de confidencialidad.</li>
       <li><strong>Cuando tú nos lo indicas</strong> — por ejemplo, un mensaje o correo que tú mismo eliges enviar desde tu cuenta.</li>
       <li><strong>Cuando la ley lo exige.</strong> Podemos divulgar información si nos obliga un proceso legal válido (como una citación, orden judicial o solicitud legítima de una autoridad pública), o cuando sea necesario para cumplir la ley aplicable.</li>
-      <li><strong>Para proteger derechos y seguridad.</strong> Podemos divulgar información cuando razonablemente creamos que es necesario para detectar, prevenir o atender fraude, problemas de seguridad o técnicos, o para proteger los derechos, la propiedad o la seguridad de JobUp, de nuestros usuarios o del público.</li>
-      <li><strong>En una transferencia de negocio.</strong> Si JobUp participa en una fusión, adquisición, financiación, reorganización o venta de activos, tu información puede transferirse como parte de esa operación. Exigiremos que quien la reciba respete esta Política de Privacidad y te notificaremos cualquier cambio de control que afecte materialmente tu información.</li>
+      <li><strong>Para proteger derechos y seguridad.</strong> Podemos divulgar información cuando razonablemente creamos que es necesario para detectar, prevenir o atender fraude, problemas de seguridad o técnicos, o para proteger los derechos, la propiedad o la seguridad de {{BRAND}}, de nuestros usuarios o del público.</li>
+      <li><strong>En una transferencia de negocio.</strong> Si {{BRAND}} participa en una fusión, adquisición, financiación, reorganización o venta de activos, tu información puede transferirse como parte de esa operación. Exigiremos que quien la reciba respete esta Política de Privacidad y te notificaremos cualquier cambio de control que afecte materialmente tu información.</li>
     </ul>
     <p>Fuera de estas vías, <strong>nadie más comparte tu información.</strong> No la vendemos, no la alquilamos, no la intercambiamos y no la compartimos para la publicidad o el marketing de nadie. Tú sigues siendo el dueño de tu información: <strong>tú</strong> decides qué es público, puedes volver a hacer privado cualquier dato en cualquier momento, y puedes exportarlo o eliminarlo cuando quieras.</p>
 
@@ -237,25 +237,25 @@
     <p><strong>Incidentes de seguridad.</strong> Si ocurre una brecha que afecte tus datos personales, notificaremos a los usuarios afectados y a las autoridades correspondientes según lo exija la ley aplicable, sin dilación indebida.</p>
 
     <h2>Conservación de datos</h2>
-    <p>Conservamos tus datos mientras tu cuenta esté activa. Tu exportación completa siempre está disponible para ti (ver más abajo), incluso después de cancelar. Si eliminas tu cuenta, eliminamos tus datos. Si simplemente no renuevas, tu sitio público se da de baja y tu dirección web (tunombre.jobup.dev) se libera para poder reutilizarse, mientras que tu exportación de datos permanece disponible para ti.</p>
+    <p>Conservamos tus datos mientras tu cuenta esté activa. Tu exportación completa siempre está disponible para ti (ver más abajo), incluso después de cancelar. Si eliminas tu cuenta, eliminamos tus datos. Si simplemente no renuevas, tu sitio público se da de baja y tu dirección web (tunombre.{{BRAND_SITE}}) se libera para poder reutilizarse, mientras que tu exportación de datos permanece disponible para ti.</p>
 
     <h2>Tus derechos</h2>
     <p>Tienes control real y ejercible sobre tus datos:</p>
     <ul>
-      <li><strong>Acceso y portabilidad.</strong> Usa "Descargar mis datos" para una exportación completa con un clic. Devuelve todo lo que JobUp tiene sobre ti en un único archivo, disponible en cualquier momento, incluso después de la cancelación.</li>
+      <li><strong>Acceso y portabilidad.</strong> Usa "Descargar mis datos" para una exportación completa con un clic. Devuelve todo lo que {{BRAND}} tiene sobre ti en un único archivo, disponible en cualquier momento, incluso después de la cancelación.</li>
       <li><strong>Corrección / rectificación.</strong> Vuelve a subir tu currículum para actualizar tu información y edita tus interruptores de privacidad en cualquier momento.</li>
       <li><strong>Supresión / eliminación.</strong> Eliminar tu cuenta elimina tus datos.</li>
       <li><strong>Limitación y oposición.</strong> Puedes pedirnos que limitemos o detengamos ciertos tratamientos.</li>
     </ul>
     <p>Para usuarios en el Espacio Económico Europeo y el Reino Unido (RGPD), tienes específicamente los derechos de acceso, rectificación, supresión, limitación del tratamiento, portabilidad de datos y oposición, así como el derecho a presentar una reclamación ante tu autoridad local de protección de datos.</p>
-    <p>Para residentes de California (CCPA/CPRA), tienes derecho a saber qué datos personales recopilamos y cómo los usamos, derecho a eliminarlos, derecho a corregirlos y derecho a excluirte de la "venta" o el "intercambio" de datos personales. <strong>JobUp no vende tus datos personales.</strong> Nunca te discriminaremos por ejercer cualquiera de tus derechos de privacidad.</p>
+    <p>Para residentes de California (CCPA/CPRA), tienes derecho a saber qué datos personales recopilamos y cómo los usamos, derecho a eliminarlos, derecho a corregirlos y derecho a excluirte de la "venta" o el "intercambio" de datos personales. <strong>{{BRAND}} no vende tus datos personales.</strong> Nunca te discriminaremos por ejercer cualquiera de tus derechos de privacidad.</p>
     <p>Para ejercer cualquier derecho, escribe a <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>. Ten en cuenta que tu perfil público es, por su naturaleza, público: las herramientas más potentes que tienes para controlar la exposición pública son los interruptores de privacidad campo por campo y la eliminación de la cuenta.</p>
 
     <h2>Usuarios internacionales</h2>
-    <p>JobUp se opera desde los Estados Unidos, y tus datos se tratan y almacenan en los Estados Unidos. Si usas JobUp desde fuera de EE. UU., entiendes que tu información se transfiere y se gestiona en EE. UU., donde las leyes de protección de datos pueden diferir de las de tu país.</p>
+    <p>{{BRAND}} se opera desde los Estados Unidos, y tus datos se tratan y almacenan en los Estados Unidos. Si usas {{BRAND}} desde fuera de EE. UU., entiendes que tu información se transfiere y se gestiona en EE. UU., donde las leyes de protección de datos pueden diferir de las de tu país.</p>
 
     <h2>Menores</h2>
-    <p>JobUp no está destinado a personas menores de 16 años y no está dirigido a menores de edad. No recopilamos a sabiendas datos personales de personas menores de 16 años. Si crees que un menor nos ha proporcionado su información, escribe a <a href="mailto:info@digit2ai.com">info@digit2ai.com</a> y la eliminaremos.</p>
+    <p>{{BRAND}} no está destinado a personas menores de 16 años y no está dirigido a menores de edad. No recopilamos a sabiendas datos personales de personas menores de 16 años. Si crees que un menor nos ha proporcionado su información, escribe a <a href="mailto:info@digit2ai.com">info@digit2ai.com</a> y la eliminaremos.</p>
 
     <h2>Cookies y almacenamiento local</h2>
     <p>Usamos una única cookie de sesión para que puedas permanecer con la sesión iniciada, y el almacenamiento local del navegador para guardar el estado de la aplicación (como tus preferencias de interfaz). No usamos rastreadores publicitarios de terceros ni ejecutamos redes de publicidad en tu perfil.</p>
@@ -270,14 +270,14 @@
     <p>Las ofertas de empleo y otros enlaces pueden llevar a sitios web que no operamos ni controlamos. Esta Política de Privacidad no aplica a esos sitios, y no somos responsables de su contenido ni de sus prácticas de privacidad; revisa sus propias políticas antes de proporcionarles información.</p>
 
     <h2>Cambios en esta política</h2>
-    <p>Podemos actualizar esta política de vez en cuando. Cuando lo hagamos, actualizaremos la fecha de "Última actualización" en la parte superior. Si los cambios son significativos, haremos un esfuerzo razonable por notificártelo. El uso continuado de JobUp tras una actualización significa que aceptas la política revisada.</p>
+    <p>Podemos actualizar esta política de vez en cuando. Cuando lo hagamos, actualizaremos la fecha de "Última actualización" en la parte superior. Si los cambios son significativos, haremos un esfuerzo razonable por notificártelo. El uso continuado de {{BRAND}} tras una actualización significa que aceptas la política revisada.</p>
 
     <h2>Cómo contactarnos</h2>
     <p>Digit2AI LLC<br>Wesley Chapel, Florida, EE. UU.<br><a href="mailto:info@digit2ai.com">info@digit2ai.com</a></p>
   </div>
 
   <div class="foot">
-    <a href="{{BASE}}/">JobUp</a>
+    <a href="{{BASE}}/">{{BRAND}}</a>
     <a href="{{BASE}}/terms" id="link-terms">Terms of Service</a>
     <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
   </div>

@@ -12,9 +12,14 @@
 
 const plans = require('./plans');
 
-function baseUrl() {
-  return (process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev').replace(/\/$/, '');
+// The base URL and the product name both follow the SUBSCRIBER's brand, not a
+// request — a welcome email is built after signup and a digest long after it,
+// and a doctor must never receive mail headed JobUp.
+const BRAND = require('../brand');
+function baseUrl(sub) {
+  return BRAND.publicUrl(BRAND.forSubscriber(sub));
 }
+function brandName(sub) { return BRAND.forSubscriber(sub).name; }
 function price(id) { return Math.round((plans.PLANS[id].price_cents || 0) / 100); }
 const PHYSICAL_ADDRESS = process.env.JOBUP_MAIL_ADDRESS || 'Digit2AI LLC, Wesley Chapel, Florida, USA';
 
@@ -26,18 +31,18 @@ function esc(v) {
 function copy(sub) {
   const es = String(sub.language || 'en') === 'es';
   const first = String(sub.name || '').trim().split(/\s+/)[0] || (es ? 'hola' : 'there');
-  const addr = sub.address ? `https://${sub.address}` : baseUrl();
+  const addr = sub.address ? `https://${sub.address}` : baseUrl(sub);
   const S = price('search'); const L = price('landed');
   const planId = (sub.plan && plans.PLANS[sub.plan]) ? sub.plan : 'free';
 
   if (es) {
     return {
       es: true, first, addr, planId, S, L,
-      subject: `¡Bienvenido a JobUp, ${first}! Tu presencia profesional ya está en marcha`,
-      hi: `¡Bienvenido a JobUp, ${first}!`,
+      subject: `¡Bienvenido a ${brandName(sub)}, ${first}! Tu presencia profesional ya está en marcha`,
+      hi: `¡Bienvenido a ${brandName(sub)}, ${first}!`,
       thanks: 'Gracias por unirte. Acabas de dar un paso que la mayoría de los profesionales aún no da: publicar tu identidad profesional en internet, lista para que la encuentren las personas y la inteligencia artificial.',
       whyH: 'Por qué importa tu presencia en línea',
-      why: 'En esta nueva era, a quien encuentran es a quien tiene una presencia sólida. Tu sitio de JobUp te hace visible para reclutadores y para las herramientas de IA que hoy buscan candidatos — y un equipo de IA trabaja las 24 horas conectando tu currículum con miles de vacantes reales en tiempo real.',
+      why: 'En esta nueva era, a quien encuentran es a quien tiene una presencia sólida. Tu sitio de ${brandName(sub)} te hace visible para reclutadores y para las herramientas de IA que hoy buscan candidatos — y un equipo de IA trabaja las 24 horas conectando tu currículum con miles de vacantes reales en tiempo real.',
       plansH: 'Lo que incluye cada plan',
       free: ['Sitio de CV público en tu propia dirección', 'Perfil legible por IA (para que te encuentren)', '5 coincidencias de empleo por semana'],
       search: [`Todo lo de Free`, 'Coincidencias ilimitadas + 40 evaluaciones al día', '10 currículos adaptados al mes + contacto y pipeline', 'Un correo semanal con tus nuevas vacantes'],
@@ -46,17 +51,17 @@ function copy(sub) {
       upgradeCta: 'Ver planes y mejorar',
       upgradeLine: `¿Buscas activamente? Search (${'$' + S}/mes) desbloquea coincidencias ilimitadas y contacto; Landed (${'$' + L}/mes) añade adaptación ilimitada y una revisión humana.`,
       openCta: 'Abrir mi panel',
-      footer: 'Estás recibiendo esto porque creaste una cuenta en JobUp.',
+      footer: `Estás recibiendo esto porque creaste una cuenta en ${brandName(sub)}.`,
       free_l: 'Free', search_l: 'Search', landed_l: 'Landed', mo: '/mes',
     };
   }
   return {
     es: false, first, addr, planId, S, L,
-    subject: `Welcome to JobUp, ${first}! Your professional presence is live`,
-    hi: `Welcome to JobUp, ${first}!`,
+    subject: `Welcome to ${brandName(sub)}, ${first}! Your professional presence is live`,
+    hi: `Welcome to ${brandName(sub)}, ${first}!`,
     thanks: 'Thank you for joining. You just did what most professionals still have not: published your professional self on the internet, ready to be found by people and by AI.',
     whyH: 'Why your online presence matters',
-    why: 'In this new era, the people who get found are the ones with a strong online presence. Your JobUp site makes you visible to recruiters and to the AI tools that now source candidates — and an AI workforce works around the clock, matching your resume to thousands of real jobs in real time.',
+    why: `In this new era, the people who get found are the ones with a strong online presence. Your ${brandName(sub)} site makes you visible to recruiters and to the AI tools that now source candidates — and an AI workforce works around the clock, matching your resume to thousands of real jobs in real time.`,
     plansH: 'What each plan gives you',
     free: ['A public CV website at your own address', 'An AI-readable profile so machines can find you', '5 job matches every week'],
     search: ['Everything in Free', 'Unlimited matches + 40 scorings a day', '10 tailored resumes a month + outreach and pipeline', 'A weekly email of your new matches'],
@@ -65,7 +70,7 @@ function copy(sub) {
     upgradeCta: 'See plans & upgrade',
     upgradeLine: `Actively looking? Search (${'$' + S}/mo) unlocks unlimited matches and outreach; Landed (${'$' + L}/mo) adds unlimited tailoring and a human review.`,
     openCta: 'Open my dashboard',
-    footer: 'You are receiving this because you created a JobUp account.',
+    footer: `You are receiving this because you created a ${brandName(sub)} account.`,
     free_l: 'Free', search_l: 'Search', landed_l: 'Landed', mo: '/mo',
   };
 }
@@ -85,17 +90,17 @@ function planCard(name, priceLabel, bullets, highlight) {
 
 function buildWelcome(sub) {
   const c = copy(sub);
-  const base = baseUrl();
+  const base = baseUrl(sub);
   const dash = `${base}/app`;
   const planUrl = `${base}/plan`;
 
-  const html = `<!doctype html><html lang="${c.es ? 'es' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobUp</title></head>
+  const html = `<!doctype html><html lang="${c.es ? 'es' : 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${brandName(sub)}</title></head>
 <body style="margin:0;padding:0;background:#07080c">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#07080c">
   <tr><td align="center" style="padding:26px 14px">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%">
       <tr><td style="background:linear-gradient(90deg,#e64980,#ff922b);border-radius:14px 14px 0 0;padding:16px 20px">
-        <span style="font:800 18px -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;letter-spacing:-.01em">JobUp</span>
+        <span style="font:800 18px -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;letter-spacing:-.01em">${brandName(sub)}</span>
       </td></tr>
       <tr><td style="background:#0b0d13;border:1px solid #1b1f2b;border-top:none;border-radius:0 0 14px 14px;padding:24px 20px 10px">
         <div style="font:800 22px/1.3 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#eef2f8">${esc(c.hi)}</div>

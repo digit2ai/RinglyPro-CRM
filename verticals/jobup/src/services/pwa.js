@@ -61,8 +61,9 @@ function basePath(req) {
 
 /** Substitute the base, the icon version and the list price into a shell. */
 const htmlCache = new Map();
-function page(file, base) {
-  const key = file + '|' + base;
+function page(file, base, brand) {
+  const b = brand || require('../brand').byId(require('../brand').DEFAULT_ID);
+  const key = file + '|' + base + '|' + b.id;
   const hit = htmlCache.get(key);
   if (hit) return hit;
   // Lazy require: billing pulls in the models, and pwa.js is loaded during
@@ -70,12 +71,21 @@ function page(file, base) {
   const price = require('./billing').PRICE_USD;
   // Tier prices come from the single plan catalog, never hardcoded on the page.
   const plans = require('./plans');
-  const out = fs.readFileSync(path.join(publicDir, file), 'utf8')
+  let out = fs.readFileSync(path.join(publicDir, file), 'utf8')
     .replace(/\{\{BASE\}\}/g, base)
     .replace(/\{\{V\}\}/g, V)
     .replace(/\{\{PRICE\}\}/g, String(price))
     .replace(/\{\{PRICE_SEARCH\}\}/g, String(Math.round(plans.PLANS.search.price_cents / 100)))
     .replace(/\{\{PRICE_LANDED\}\}/g, String(Math.round(plans.PLANS.landed.price_cents / 100)));
+  // The copy overlay BEFORE the brand tokens, so an override may itself contain
+  // {{BRAND}} and still be substituted. JobUp declares no overlay, so this is a
+  // no-op for it and the live product is untouched.
+  out = /\.js$/.test(file) ? require('../copy').applyI18n(out, b)
+                           : require('../copy').applyHtml(out, b);
+  // Brand tokens LAST, so a price or a base can never be mistaken for one.
+  // For JobUp these substitute to the literals that used to be in the file,
+  // which is what makes this refactor invisible to the live product.
+  out = require('../brand').apply(out, b);
   htmlCache.set(key, out);
   return out;
 }
@@ -89,13 +99,15 @@ function page(file, base) {
 function manifest(base, opts) {
   const o = opts || {};
   const b = base || '';
-  const owner = o.name ? `${o.name} — JobUp` : 'JobUp — your AI career platform';
+  const BR = o.brand || require('../brand').byId(require('../brand').DEFAULT_ID);
+  const owner = o.name ? `${o.name} — ${BR.name}`
+                       : `${BR.name} — your AI ${BR.audience === 'medical' ? 'medical ' : ''}career platform`;
   return {
     // A stable identity. Without it the install is keyed on start_url, so
     // changing start_url later would orphan every existing install.
     id: `${b}/`,
     name: owner,
-    short_name: 'JobUp',
+    short_name: BR.name,
     description: 'Your own job-finding ecosystem: matches scored against your real '
       + 'resume, a public site recruiters and their AI can read, and a pipeline you '
       + 'approve before anything sends.',
@@ -252,14 +264,21 @@ function serveAsset(req, res, base, opts) {
     // its own Cache-Control from these and would overwrite a header set here,
     // silently serving every icon as max-age=0.
     const versioned = Boolean(req.query && req.query.v);
-    res.sendFile(path.join(publicDir, p.replace(/^\//, '')), {
+    // A brand may wear its own mark: public/jobmd-icon-192.png ahead of the
+    // shared icon-192.png. Falling back rather than 404ing means adding an icon
+    // to the engine never breaks the brand that has not been given one yet.
+    const pref = ((opts || {}).brand || {}).icon_prefix || '';
+    const bare = p.replace(/^\//, '');
+    const branded = pref ? path.join(publicDir, pref + bare) : null;
+    const file = (branded && fs.existsSync(branded)) ? branded : path.join(publicDir, bare);
+    res.sendFile(file, {
       maxAge: versioned ? '365d' : '10m',
       immutable: versioned,
     });
     return true;
   }
   if (p === '/offline' || p === '/offline.html') {
-    res.type('html').send(page('offline.html', base));
+    res.type('html').send(page('offline.html', base, (opts || {}).brand));
     return true;
   }
   return false;

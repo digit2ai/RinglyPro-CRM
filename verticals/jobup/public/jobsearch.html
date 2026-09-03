@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Job Search in your area — JobUp</title>
+<title>Job Search in your area — {{BRAND}}</title>
 <meta name="description" content="Search real, live job openings on an interactive map. Find who's hiring near you.">
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg">
@@ -52,7 +52,7 @@ a{color:inherit}
 </head>
 <body>
 <div class="top">
-  <a class="brand" href="{{BASE}}/" aria-label="JobUp home">
+  <a class="brand" href="{{BASE}}/" aria-label="{{BRAND}} home">
     <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
       <defs><linearGradient id="navbrand" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
         <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/><stop offset="1" stop-color="#ff922b"/>
@@ -62,7 +62,7 @@ a{color:inherit}
         <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/>
       </g>
     </svg>
-    <span class="brand-text">Job<span class="up">Up</span><span class="tld">.dev</span></span>
+    <span class="brand-text">{{BRAND_HEAD}}<span class="up">{{BRAND_TAIL}}</span><span class="tld">{{BRAND_TLD}}</span></span>
   </a>
   <span class="sp"></span>
   <div class="lang"><button data-l="en" class="on">EN</button><button data-l="es">ES</button></div>

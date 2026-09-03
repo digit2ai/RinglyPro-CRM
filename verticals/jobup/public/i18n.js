@@ -29,7 +29,7 @@
   var ES = {
     // ---------- subscription plans (landing pricing) --------------------
     'The growth surface, not a trial': 'La superficie de crecimiento, no una prueba',
-    'Public CV site at YourName.jobup.dev': 'Sitio de CV público en TuNombre.jobup.dev',
+    'Public CV site at YourName.{{BRAND_SITE}}': 'Sitio de CV público en TuNombre.{{BRAND_SITE}}',
     'Role pages and Getting-Found SEO': 'Páginas de rol y SEO para ser encontrado',
     '5 job matches a week': '5 coincidencias de empleo por semana',
     'Eva career chat, read-only': 'Eva, chat de carrera, solo lectura',
@@ -49,7 +49,7 @@
     'One human resume review a month': 'Una revisión humana de currículo al mes',
     'Get Landed': 'Elegir Landed',
     '/ month': '/ mes',
-    'Free forever. Upgrade, downgrade or pause anytime — your CV site stays live. JobUp never applies on your behalf; you review and submit every application yourself.': 'Gratis para siempre. Mejora, baja o pausa cuando quieras: tu sitio de CV sigue activo. JobUp nunca postula por ti; tú revisas y envías cada postulación.',
+    'Free forever. Upgrade, downgrade or pause anytime — your CV site stays live. {{BRAND}} never applies on your behalf; you review and submit every application yourself.': 'Gratis para siempre. Mejora, baja o pausa cuando quieras: tu sitio de CV sigue activo. {{BRAND}} nunca postula por ti; tú revisas y envías cada postulación.',
     // ---------- shared chrome -------------------------------------------
     'Password': 'Contraseña',
     'Confirm password': 'Confirmar contraseña',
@@ -80,7 +80,7 @@
     'no photo': 'sin foto',
     'Searching': 'Buscando',
     'United States': 'Estados Unidos',
-    'Add JobUp to your home screen': 'Añade JobUp a tu pantalla de inicio',
+    'Add {{BRAND}} to your home screen': 'Añade {{BRAND}} a tu pantalla de inicio',
     'Opens like an app, and keeps you signed in.':
       'Se abre como una aplicación y mantiene tu sesión iniciada.',
 
@@ -135,20 +135,20 @@
     'Notice period': 'Preaviso',
     'These four are': 'Estos cuatro son',
     'private by default': 'privados por defecto',
-    '. Nothing here appears on your public page or in a message unless you switch it on in your dashboard, and JobUp never rewords them — they are quoted exactly as you typed them or omitted.':
-      '. Nada de esto aparece en tu página pública ni en un mensaje a menos que lo actives en tu panel, y JobUp nunca los reescribe: se citan exactamente como los escribiste, o se omiten.',
+    '. Nothing here appears on your public page or in a message unless you switch it on in your dashboard, and {{BRAND}} never rewords them — they are quoted exactly as you typed them or omitted.':
+      '. Nada de esto aparece en tu página pública ni en un mensaje a menos que lo actives en tu panel, y {{BRAND}} nunca los reescribe: se citan exactamente como los escribiste, o se omiten.',
     'Should recruiters be able to find you?': '¿Quieres que los reclutadores puedan encontrarte?',
     'Your site works either way. This decides whether anything links to it.':
       'Tu sitio funciona igual en ambos casos. Esto decide si algo enlaza hacia él.',
-    'List me in the public JobUp directory': 'Incluirme en el directorio público de JobUp',
+    'List me in the public {{BRAND}} directory': 'Incluirme en el directorio público de {{BRAND}}',
     'Listing you adds your page to the directory and to the sitemap search engines read, which is how a page gets crawled at all. It publishes three things:':
       'Incluirte añade tu página al directorio y al mapa del sitio que leen los buscadores, que es la única forma de que rastreen una página. Publica tres cosas:',
     'your name, the headline you wrote, and the role titles you want':
       'tu nombre, el titular que escribiste y los puestos que te interesan',
     '. Never your email, phone, location, compensation or work authorization — those stay private under the same switches as everything else. You can turn this off at any time in your dashboard.':
       '. Nunca tu correo, teléfono, ubicación, salario ni permiso de trabajo: eso sigue privado con los mismos controles que todo lo demás. Puedes desactivarlo cuando quieras desde tu panel.',
-    'You review and submit every application yourself. JobUp never applies on your behalf.':
-      'Tú revisas y envías cada postulación. JobUp nunca postula por ti.',
+    'You review and submit every application yourself. {{BRAND}} never applies on your behalf.':
+      'Tú revisas y envías cada postulación. {{BRAND}} nunca postula por ti.',
     'Choose a password to finish': 'Elige una contraseña para terminar',
     'Ready to build': 'Listo para crear',
     'Choose a password of at least 12 characters': 'Elige una contraseña de al menos 12 caracteres',
@@ -203,8 +203,8 @@
     'View public CV': 'Ver mi CV público',
 
     // ---------- dashboard: the standing explainer ------------------------
-    'What JobUp does, and what it never does':
-      'Qué hace JobUp, y qué nunca hace',
+    'What {{BRAND}} does, and what it never does':
+      'Qué hace {{BRAND}}, y qué nunca hace',
     'Your AI career agent (honest by design):': 'Tu agente de carrera con IA (honesto por diseño):',
     'scans real, live openings every day and scores each one against your profile, with the reasoning and the gaps.':
       'revisa vacantes reales cada día y puntúa cada una contra tu perfil, con el razonamiento y lo que te falta.',
@@ -314,8 +314,8 @@
     'Signing up gave you a working, discoverable profile. This page is where you make it better. Every field below is the real one, not a copy of it — change something here and your site changes.':
       'Al registrarte obtuviste un perfil funcional y localizable. Esta página es donde lo mejoras. Cada campo de abajo es el real, no una copia: cambia algo aquí y cambia tu sitio.',
     'Already done for you:': 'Ya hecho por ti:',
-    'your job titles were read off your résumé and each one has its own page; jobup.dev is verified with Google and its sitemap — which lists your site — has been submitted. Search engines can reach you. The four steps below are what make them, and the recruiters using them, actually find you.':
-      'tus puestos se leyeron de tu currículum y cada uno tiene su propia página; jobup.dev está verificado con Google y su mapa del sitio, que incluye tu página, ya fue enviado. Los buscadores pueden llegar a ti. Los cuatro pasos de abajo son los que hacen que ellos, y los reclutadores que los usan, realmente te encuentren.',
+    'your job titles were read off your résumé and each one has its own page; {{BRAND_DOMAIN}} is verified with Google and its sitemap — which lists your site — has been submitted. Search engines can reach you. The four steps below are what make them, and the recruiters using them, actually find you.':
+      'tus puestos se leyeron de tu currículum y cada uno tiene su propia página; {{BRAND_DOMAIN}} está verificado con Google y su mapa del sitio, que incluye tu página, ya fue enviado. Los buscadores pueden llegar a ti. Los cuatro pasos de abajo son los que hacen que ellos, y los reclutadores que los usan, realmente te encuentren.',
     '1. Check the job titles you are targeting': '1. Revisa los puestos a los que apuntas',
     'These were taken from your résumé word for word, and each one already has its own page on your site carrying that exact phrase — which is what a search matches against.':
       'Se tomaron de tu currículum palabra por palabra, y cada uno ya tiene su propia página en tu sitio con esa frase exacta, que es contra lo que compara una búsqueda.',
@@ -349,11 +349,11 @@
     'Your QR code, printed': 'Tu código QR, impreso',
     'On a card, a CV footer, or a conference badge. — The only one that works on paper, where a URL cannot be clicked.':
       'En una tarjeta, el pie de tu CV o una credencial. — El único que funciona en papel, donde una URL no se puede pulsar.',
-    '3. List yourself in the JobUp directory': '3. Aparece en el directorio de JobUp',
+    '3. List yourself in the {{BRAND}} directory': '3. Aparece en el directorio de {{BRAND}}',
     'One switch. It publishes your name, your headline and the titles from step one to':
       'Un solo interruptor. Publica tu nombre, tu titular y los puestos del paso uno en',
-    '— never your email, phone or location. It is also the only thing that puts your address in the sitemap search engines read, so while it is off there is no route to your site from anywhere on jobup.dev. A link from your own LinkedIn still counts for more, because it is independent of us — but this one costs a single click.':
-      '— nunca tu correo, teléfono ni ubicación. Además es lo único que pone tu dirección en el mapa del sitio que leen los buscadores, así que mientras esté desactivado no hay ninguna ruta hacia tu sitio desde jobup.dev. Un enlace desde tu propio LinkedIn sigue valiendo más, porque es independiente de nosotros, pero este cuesta un solo clic.',
+    '— never your email, phone or location. It is also the only thing that puts your address in the sitemap search engines read, so while it is off there is no route to your site from anywhere on {{BRAND_DOMAIN}}. A link from your own LinkedIn still counts for more, because it is independent of us — but this one costs a single click.':
+      '— nunca tu correo, teléfono ni ubicación. Además es lo único que pone tu dirección en el mapa del sitio que leen los buscadores, así que mientras esté desactivado no hay ninguna ruta hacia tu sitio desde {{BRAND_DOMAIN}}. Un enlace desde tu propio LinkedIn sigue valiendo más, porque es independiente de nosotros, pero este cuesta un solo clic.',
     'List me in the public directory': 'Incluirme en el directorio público',
     'Off unless you turn it on. Reversible at any time.':
       'Desactivado salvo que lo actives. Reversible en cualquier momento.',
@@ -395,18 +395,18 @@
     '1. Through a profile you already have.': '1. A través de un perfil que ya tienes.',
     'A sourcing tool that already holds your GitHub or LinkedIn follows the address you put there, reads your page, and the':
       'Una herramienta que ya tiene tu GitHub o tu LinkedIn sigue la dirección que pusiste ahí, lee tu página, y el',
-    'from step 4 tells it this is the same person — so your titles, skills and availability get merged into the record recruiters search. You never appear as a JobUp entry; you appear as yourself, better described.':
-      'del paso 4 le dice que eres la misma persona, así que tus puestos, aptitudes y disponibilidad se fusionan en el registro que consultan los reclutadores. Nunca apareces como una entrada de JobUp: apareces como tú, mejor descrito.',
+    'from step 4 tells it this is the same person — so your titles, skills and availability get merged into the record recruiters search. You never appear as a {{BRAND}} entry; you appear as yourself, better described.':
+      'del paso 4 le dice que eres la misma persona, así que tus puestos, aptitudes y disponibilidad se fusionan en el registro que consultan los reclutadores. Nunca apareces como una entrada de {{BRAND}}: apareces como tú, mejor descrito.',
     'Needs steps 2 and 4.': 'Requiere los pasos 2 y 4.',
     '2. Through a plain search.': '2. A través de una búsqueda normal.',
-    'Your role pages carry the exact phrases a sourcer types. jobup.dev is verified and its sitemap submitted, so this route is open — but only for titles you actually target.':
-      'Tus páginas de puesto llevan las frases exactas que escribe un reclutador. jobup.dev está verificado y su mapa del sitio enviado, así que esta vía está abierta, pero solo para los puestos a los que realmente apuntas.',
+    'Your role pages carry the exact phrases a sourcer types. {{BRAND_DOMAIN}} is verified and its sitemap submitted, so this route is open — but only for titles you actually target.':
+      'Tus páginas de puesto llevan las frases exactas que escribe un reclutador. {{BRAND_DOMAIN}} está verificado y su mapa del sitio enviado, así que esta vía está abierta, pero solo para los puestos a los que realmente apuntas.',
     'Needs step 1.': 'Requiere el paso 1.',
     'There is deliberately no third route where we submit you somewhere. SeekOut, hireEZ and Pin take no submissions and publish no API to push to — recruiters pay them precisely because their index holds people who never signed up. Anyone claiming to list you inside them is selling something that does not exist.':
       'Deliberadamente no hay una tercera vía en la que te inscribamos en algún sitio. SeekOut, hireEZ y Pin no aceptan envíos ni publican una API a la que mandar nada: los reclutadores les pagan precisamente porque su índice contiene a gente que nunca se registró. Quien diga que puede incluirte ahí está vendiendo algo que no existe.',
     'What this does not do': 'Lo que esto no hace',
-    'JobUp does not post your profile to LinkedIn, Indeed or any job board — those are closed platforms and only you can create a profile there, which is exactly why step two matters. None of this guarantees a recruiter will search for you; it makes being found possible. A new address with few links typically takes two to eight weeks to appear in search results at all.':
-      'JobUp no publica tu perfil en LinkedIn, Indeed ni en ningún portal de empleo: son plataformas cerradas y solo tú puedes crear un perfil ahí, que es exactamente por lo que importa el paso dos. Nada de esto garantiza que un reclutador te busque; hace posible que te encuentren. Una dirección nueva con pocos enlaces suele tardar entre dos y ocho semanas en aparecer siquiera en los resultados.',
+    '{{BRAND}} does not post your profile to LinkedIn, Indeed or any job board — those are closed platforms and only you can create a profile there, which is exactly why step two matters. None of this guarantees a recruiter will search for you; it makes being found possible. A new address with few links typically takes two to eight weeks to appear in search results at all.':
+      '{{BRAND}} no publica tu perfil en LinkedIn, Indeed ni en ningún portal de empleo: son plataformas cerradas y solo tú puedes crear un perfil ahí, que es exactamente por lo que importa el paso dos. Nada de esto garantiza que un reclutador te busque; hace posible que te encuentren. Una dirección nueva con pocos enlaces suele tardar entre dos y ocho semanas en aparecer siquiera en los resultados.',
     'The reliable path is still you using the link — in applications, in messages, in your signature. Search and AI discovery are the upside on top of that, not a replacement for it.':
       'La vía fiable sigue siendo que tú uses el enlace: en postulaciones, en mensajes, en tu firma. La búsqueda y el descubrimiento por IA son el extra encima de eso, no un sustituto.',
 
@@ -467,8 +467,8 @@
     'This is what recruiters type and what AI agents fetch.':
       'Esto es lo que escriben los reclutadores y lo que consultan los agentes de IA.',
     'Your data': 'Tus datos',
-    'Everything JobUp holds about you, in one file. Yours, any time, including after you cancel.':
-      'Todo lo que JobUp guarda sobre ti, en un solo archivo. Tuyo, cuando quieras, incluso después de cancelar.',
+    'Everything {{BRAND}} holds about you, in one file. Yours, any time, including after you cancel.':
+      'Todo lo que {{BRAND}} guarda sobre ti, en un solo archivo. Tuyo, cuando quieras, incluso después de cancelar.',
     'Download my data': 'Descargar mis datos',
     'Subscription': 'Suscripción',
     'Status:': 'Estado:',
@@ -478,8 +478,8 @@
     'Removes everything, including the resume text we extracted. This cannot be undone.':
       'Elimina todo, incluido el texto del currículum que extrajimos. Esto no se puede deshacer.',
     'Delete permanently': 'Eliminar definitivamente',
-    'JobUp never applies on your behalf. You review and submit every application yourself.':
-      'JobUp nunca postula por ti. Tú revisas y envías cada postulación.',
+    '{{BRAND}} never applies on your behalf. You review and submit every application yourself.':
+      '{{BRAND}} nunca postula por ti. Tú revisas y envías cada postulación.',
     'Off by default.': 'Desactivado por defecto.',
     'Strong (80+)': 'Fuerte (80+)',
 
