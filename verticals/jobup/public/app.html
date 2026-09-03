@@ -5,12 +5,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JobUp">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
-<title>JobUp — Your dashboard</title><style>
+<title>{{BRAND}} — Your dashboard</title><style>
 :root{--bg:#07080c;--bg2:#0b0d13;--card:#11141c;--card2:#161a24;
 --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.15);
 --ink:#eef2f8;--mut:#9aa3b4;--faint:#6b7385;--cyan:#22d3ee;--cyan-bd:rgba(34,211,238,.32);
@@ -320,7 +320,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 <div class="nav"><div class="wrap">
   <div class="who">
     <!-- The logo, always. Same geometry as favicon.svg. -->
-    <svg class="brandmark" id="brandmark" viewBox="0 0 512 512" role="img" aria-label="JobUp"><defs>
+    <svg class="brandmark" id="brandmark" viewBox="0 0 512 512" role="img" aria-label="{{BRAND}}"><defs>
       <linearGradient id="bm" gradientUnits="userSpaceOnUse" x1="-30" y1="-10" x2="470" y2="480">
         <stop offset="0" stop-color="#4c6ef5"/><stop offset="0.5" stop-color="#e64980"/>
         <stop offset="1" stop-color="#ff922b"/></linearGradient></defs>
@@ -328,7 +328,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
       <g transform="translate(256 256) scale(1.25) translate(-256 -256)" fill="none" stroke="#fff"
          stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
         <path d="M209 232 L283 158 L357 232"/><path d="M283 158 V290 A64 64 0 0 1 155 290"/></g></svg>
-    <div><div class="who-n" id="who-n">JobUp</div><div class="who-h" id="who-h"></div></div>
+    <div><div class="who-n" id="who-n">{{BRAND}}</div><div class="who-h" id="who-h"></div></div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
     <a class="btn sm hide-sm" id="mysite" target="_blank" rel="noopener" style="display:none">View public CV</a>
@@ -355,7 +355,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 
 <!-- app -->
 <div id="app" class="wrap hidden">
-  <button class="introshow hidden" id="introShow" type="button">What JobUp does, and what it never does</button>
+  <button class="introshow hidden" id="introShow" type="button">What {{BRAND}} does, and what it never does</button>
   <div class="callout" id="introBox">
     <button class="introx" id="introClose" type="button" aria-label="Dismiss">&times;</button>
     <strong>Your AI career agent (honest by design):</strong> it finds the work &mdash;
@@ -386,7 +386,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 
   <div class="scrim" id="scrim"></div>
   <nav class="drawer" id="drawer" aria-label="Menu">
-    <div class="dhead" id="dhead">JobUp</div>
+    <div class="dhead" id="dhead">{{BRAND}}</div>
     <div id="dnav"></div>
     <div class="dsep"></div>
     <a class="dlink" id="d-site" target="_blank" rel="noopener" style="display:none">View public CV</a>
@@ -404,13 +404,13 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
   <div id="p-account" class="hidden"></div>
 
   <div id="install">
-    <div class="txt"><strong>Add JobUp to your home screen</strong><br>
+    <div class="txt"><strong>Add {{BRAND}} to your home screen</strong><br>
       <span style="color:var(--mut)">Opens like an app, and keeps you signed in.</span></div>
     <button class="btn primary sm" id="inst-go">Install</button>
     <button class="btn sm" id="inst-no">Not now</button>
   </div>
 
-  <footer>JobUp never applies on your behalf. You review and submit every application yourself.</footer>
+  <footer>{{BRAND}} never applies on your behalf. You review and submit every application yourself.</footer>
 </div>
 
 <!-- ASK — a help agent grounded in this account, not a product manual. -->
@@ -434,7 +434,7 @@ padding:13px 15px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40p
 </div>
 <script src="{{BASE}}/i18n.js"></script>
 <script>
-// The mount root, substituted server-side: '' on jobup.dev and on a
+// The mount root, substituted server-side: '' on {{BRAND_DOMAIN}} and on a
 // subscriber's own address, '/jobup' under the path mount. Sniffing the URL for
 // it in the browser got the www and subdomain cases subtly wrong.
 var API='{{BASE}}';
@@ -558,8 +558,8 @@ function askToggle(open){
   if(ASK_OPEN){
     if(!$('asklog').children.length){
       askBubble(JU_APP_LANG==='es'
-        ? 'Hola, soy Eva. Pregúntame lo que quieras sobre JobUp: leo tu cuenta, así que la respuesta es sobre ti, no un manual.'
-        : 'Hi, I am Eva. Ask me anything about JobUp — I read your account, so the answer is about you rather than a manual.','it');
+        ? 'Hola, soy Eva. Pregúntame lo que quieras sobre {{BRAND}}: leo tu cuenta, así que la respuesta es sobre ti, no un manual.'
+        : 'Hi, I am Eva. Ask me anything about {{BRAND}} — I read your account, so the answer is about you rather than a manual.','it');
       askChips();
     }
     setTimeout(function(){ $('askq').focus(); },50);
@@ -700,7 +700,7 @@ function tabFromUrl(){
 /* Signed out (or the session call failed): the header falls back to the plain
    brand, so a name from a previous session cannot survive a sign-out. */
 function brandOnly(){
-  $('who-n').textContent='JobUp'; $('who-h').textContent='';
+  $('who-n').textContent='{{BRAND}}'; $('who-h').textContent='';
 }
 function boot(){
   api('/api/v1/auth/session').then(function(r){
@@ -1690,7 +1690,7 @@ function loadPhoto(){
       '<div class="photorow">'+
         (s.has_photo
           /* Same-origin, auth'd URL — the public /photo only exists on the
-             subscriber's own subdomain, so on jobup.dev/app it 404'd and showed
+             subscriber's own subdomain, so on {{BRAND_DOMAIN}}/app it 404'd and showed
              a broken image. ?v=<asset_id> refreshes the instant a new photo is
              saved, so a Replace never shows the old one. */
           ? '<img class="photoprev" src="'+esc(API+(s.raw_url||s.url))+'" alt="Your profile photo">'
@@ -1762,7 +1762,7 @@ function renderAccount(){
     '<div class="m">This is what recruiters type and what AI agents fetch.</div>'+
     '<div id="addrbox"><div class="note">Loading...</div></div></div>'+
     '<div class="card"><div class="t">Your data</div>'+
-    '<div class="m">Everything JobUp holds about you, in one file. Yours, any time, including after you cancel.</div>'+
+    '<div class="m">Everything {{BRAND}} holds about you, in one file. Yours, any time, including after you cancel.</div>'+
     '<div class="acts"><a class="btn primary sm" href="'+API+'/api/v1/engine/export">Download my data</a></div></div>'+
     '<div class="card"><div class="t">Subscription</div>'+
     '<div class="m">Status: '+esc(ME.status)+(ME.address?' · site live at '+esc(ME.address):'')+'</div>'+
@@ -1816,7 +1816,7 @@ function loadGuide(){
         'something here and your site changes.</div>'+
       '<div class="note" style="margin-top:10px;line-height:1.7">'+
         '<strong>Already done for you:</strong> your job titles were read off your r&eacute;sum&eacute; '+
-        'and each one has its own page; jobup.dev is verified with Google and its sitemap &mdash; which '+
+        'and each one has its own page; {{BRAND_DOMAIN}} is verified with Google and its sitemap &mdash; which '+
         'lists your site &mdash; has been submitted. Search engines can reach you. '+
         'The four steps below are what make them, and the recruiters using them, actually find you.</div>'+
       '<div class="note" style="margin-top:10px">Step '+stepsDone+' of 4 complete'+
@@ -1876,12 +1876,12 @@ function loadGuide(){
 
     /* ---- 3 ---- */
     '<div class="card">'+
-      '<div class="t">3. List yourself in the JobUp directory</div>'+
+      '<div class="t">3. List yourself in the {{BRAND}} directory</div>'+
       '<div class="m">One switch. It publishes your name, your headline and the titles from step one '+
-        'to <a href="https://jobup.dev/directory" target="_blank" rel="noopener">jobup.dev/directory</a> '+
+        'to <a href="https://{{BRAND_DOMAIN}}/directory" target="_blank" rel="noopener">{{BRAND_DOMAIN}}/directory</a> '+
         '&mdash; never your email, phone or location. It is also the only thing that puts your address '+
         'in the sitemap search engines read, so while it is off there is no route to your site from '+
-        'anywhere on jobup.dev. A link from your own LinkedIn still counts for more, because it is '+
+        'anywhere on {{BRAND_DOMAIN}}. A link from your own LinkedIn still counts for more, because it is '+
         'independent of us &mdash; but this one costs a single click.</div>'+
       '<div class="sw" style="margin-top:12px"><div><div class="lbl">List me in the public directory</div>'+
         '<div class="hint">Off unless you turn it on. Reversible at any time.</div></div>'+
@@ -1946,9 +1946,9 @@ function loadGuide(){
           'your GitHub or LinkedIn follows the address you put there, reads your page, and the '+
           '<code>sameAs</code> from step 4 tells it this is the same person &mdash; so your titles, '+
           'skills and availability get merged into the record recruiters search. You never appear as '+
-          'a JobUp entry; you appear as yourself, better described. <em>Needs steps 2 and 4.</em><br>'+
+          'a {{BRAND}} entry; you appear as yourself, better described. <em>Needs steps 2 and 4.</em><br>'+
         '<strong>2. Through a plain search.</strong> Your role pages carry the exact phrases a sourcer '+
-          'types. jobup.dev is verified and its sitemap submitted, so this route is open &mdash; but '+
+          'types. {{BRAND_DOMAIN}} is verified and its sitemap submitted, so this route is open &mdash; but '+
           'only for titles you actually target. <em>Needs step 1.</em>'+
       '</div>'+
       '<div class="note" style="margin-top:12px">There is deliberately no third route where we submit '+
@@ -1960,7 +1960,7 @@ function loadGuide(){
     /* ---- honest limits ---- */
     '<div class="card">'+
       '<div class="t">What this does not do</div>'+
-      '<div class="m">JobUp does not post your profile to LinkedIn, Indeed or any job board &mdash; '+
+      '<div class="m">{{BRAND}} does not post your profile to LinkedIn, Indeed or any job board &mdash; '+
         'those are closed platforms and only you can create a profile there, which is exactly why '+
         'step two matters. None of this guarantees a recruiter will search for you; it makes being '+
         'found possible. A new address with few links typically takes two to eight weeks to appear '+
@@ -2149,7 +2149,7 @@ if('serviceWorker' in navigator)
   var standalone=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
   if(isIOS&&!standalone&&!localStorage.getItem('jobup_install_dismissed')){
     $('install').querySelector('.txt').innerHTML=
-      '<strong>Add JobUp to your home screen</strong><br>'+
+      '<strong>Add {{BRAND}} to your home screen</strong><br>'+
       '<span style="color:var(--mut)">Tap Share, then Add to Home Screen.</span>';
     $('inst-go').style.display='none';
     setInstallVisible(true);

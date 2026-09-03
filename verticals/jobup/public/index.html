@@ -7,18 +7,18 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JobUp">
+<meta name="apple-mobile-web-app-title" content="{{BRAND}}">
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png{{V}}">
 <link rel="icon" type="image/svg+xml" href="{{BASE}}/favicon.svg{{V}}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png{{V}}">
-<title>JobUp — Your Personal AI Career Platform</title>
+<title>{{BRAND_TITLE}}</title>
 <meta name="description" content="Stop looking for jobs. Let AI find them for you. Your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.">
-<meta property="og:title" content="JobUp — Your Personal AI Career Platform">
+<meta property="og:title" content="{{BRAND_TITLE}}">
 <meta property="og:description" content="Talk to the orb or attach your resume. See your own AI career ecosystem in minutes.">
-<meta property="og:url" content="https://jobup.dev">
+<meta property="og:url" content="https://{{BRAND_DOMAIN}}">
 <meta property="og:type" content="website">
-<link rel="canonical" href="https://jobup.dev/">
+<link rel="canonical" href="https://{{BRAND_DOMAIN}}/">
 <style>
 html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidden}
 /* ============================================================
@@ -513,7 +513,7 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b .brand-word{font-weight:850;letter-spacing:-.045em;font-size:24px;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .d2b .brand-word .up{-webkit-text-fill-color:#fff;color:#fff}
 
-/* ---- JobUp deltas on the OrbUp system ------------------------------------ */
+/* ---- {{BRAND}} deltas on the OrbUp system ------------------------------------ */
 .d2b .ju-hero{position:relative;z-index:3;text-align:center;padding:18px 24px 0;max-width:900px;margin:0 auto}
 .d2b .ju-hero h1{font-size:clamp(42px,7.4vw,86px);font-weight:830;margin:6px 0 0}
 .d2b .ju-hero .lede{color:var(--mut);font-size:clamp(16px,2.1vw,20px);max-width:660px;margin:22px auto 0;line-height:1.55}
@@ -750,7 +750,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 </div>
 
 <nav>
-  <a class="brand" href="/" aria-label="JobUp home">
+  <a class="brand" href="/" aria-label="{{BRAND}} home">
     <!-- Inline, not an <img>: no extra request, and it stays crisp at any DPR.
          Same geometry as logo-master.svg / favicon.svg — one mark everywhere. -->
     <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
@@ -768,7 +768,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
         <path d="M283 158 V290 A64 64 0 0 1 155 290"/>
       </g>
     </svg>
-    <span class="brand-text">Job<span class="up">Up</span><span class="tld">.dev</span></span>
+    <span class="brand-text">{{BRAND_HEAD}}<span class="up">{{BRAND_TAIL}}</span><span class="tld">{{BRAND_TLD}}</span></span>
   </a>
   <!-- The links carry NO inline styles: an inline display:flex cannot be
        overridden by the media query that turns this into a drawer. -->
@@ -795,12 +795,12 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <header class="ju-hero">
   <div class="ju-eyebrow"><i></i> <span data-i18n="hero.eyebrow">Career Intelligence</span></div>
   <h1 data-i18n-html="hero.h1">Stop Looking for Jobs.<br><span class="grad-text">Let your AI Agents find them while you sleep.</span></h1>
-  <p class="lede" data-i18n="hero.lede">Talk to the Orb or simply upload your resume. In minutes, JobUp builds your AI-powered career ecosystem &mdash; your personal website, custom web address, AI-readable professional profile, and real-time job matches tailored to your experience.</p>
+  <p class="lede" data-i18n="hero.lede">Talk to the Orb or simply upload your resume. In minutes, {{BRAND}} builds your AI-powered career ecosystem &mdash; your personal website, custom web address, AI-readable professional profile, and real-time job matches tailored to your experience.</p>
 </header>
 
 <div class="hero-logo">
   <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
-       aria-label="Tap the orb to hear how JobUp works"
+       aria-label="Tap the orb to hear how {{BRAND}} works"
        aria-pressed="false" aria-describedby="orb-caption" data-state="idle">
     <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
         <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -901,7 +901,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 <section class="ju-sec" id="receive">
   <div class="ju-kicker" data-i18n="receive.kicker">What you receive</div>
   <div class="ju-grid">
-    <div class="ju-card"><div class="n">01</div><h3 data-i18n="receive.01.h">Your web address</h3><p data-i18n="receive.01.p">yourname.jobup.dev, live minutes after you activate.</p></div>
+    <div class="ju-card"><div class="n">01</div><h3 data-i18n="receive.01.h">Your web address</h3><p data-i18n="receive.01.p">yourname.{{BRAND_SITE}}, live minutes after you activate.</p></div>
     <div class="ju-card"><div class="n">02</div><h3 data-i18n="receive.02.h">A professional website</h3><p data-i18n="receive.02.p">Generated from your own resume and kept current automatically.</p></div>
     <div class="ju-card"><div class="n">03</div><h3 data-i18n="receive.03.h">AI-readable identity</h3><p data-i18n="receive.03.p">resume.json, JSON-LD, an agent card and an MCP endpoint, so machines understand your career.</p></div>
     <div class="ju-card"><div class="n">04</div><h3 data-i18n="receive.04.h">Continuous discovery</h3><p data-i18n="receive.04.p">Real openings from eight ATS platforms, scored and explained. Never invented.</p></div>
@@ -920,13 +920,13 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 </section>
 
 <section class="ju-sec" id="how">
-  <div class="ju-kicker" data-i18n="vs.kicker">Traditional search vs JobUp</div>
+  <div class="ju-kicker" data-i18n="vs.kicker">Traditional search vs {{BRAND}}</div>
   <div class="ju-vs">
     <div><h4 data-i18n="vs.old.h">The old way</h4><ul class="old">
       <li data-i18n="vs.old.0">Search manually, every day</li><li data-i18n="vs.old.1">Review hundreds of listings</li>
       <li data-i18n="vs.old.2">Re-upload the same resume</li><li data-i18n="vs.old.3">Depend on job boards</li>
       <li data-i18n="vs.old.4">Wait to be discovered</li><li data-i18n="vs.old.5">Disconnected profiles everywhere</li></ul></div>
-    <div><h4 data-i18n="vs.new.h">With JobUp</h4><ul class="new">
+    <div><h4 data-i18n="vs.new.h">With {{BRAND}}</h4><ul class="new">
       <li data-i18n="vs.new.0">AI searches continuously</li><li data-i18n="vs.new.1">Opportunities ranked and explained</li>
       <li data-i18n="vs.new.2">A tailored resume per role</li><li data-i18n="vs.new.3">Your own site, always available</li>
       <li data-i18n="vs.new.4">Structured so AI can find you</li><li data-i18n="vs.new.5">One dashboard for everything</li></ul></div>
@@ -941,7 +941,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
       <div class="pt">The growth surface, not a trial</div>
       <div class="pp">$0</div>
       <ul>
-        <li>Public CV site at YourName.jobup.dev</li>
+        <li>Public CV site at YourName.{{BRAND_SITE}}</li>
         <li>Role pages and Getting-Found SEO</li>
         <li>5 job matches a week</li>
         <li>Eva career chat, read-only</li>
@@ -975,7 +975,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
       <button class="pbtn ghost ju-planbtn" data-plan="landed">Get Landed</button>
     </div>
   </div>
-  <p class="ju-note">Free forever. Upgrade, downgrade or pause anytime &mdash; your CV site stays live. JobUp never applies on your behalf; you review and submit every application yourself.</p>
+  <p class="ju-note">Free forever. Upgrade, downgrade or pause anytime &mdash; your CV site stays live. {{BRAND}} never applies on your behalf; you review and submit every application yourself.</p>
 </section>
 
 
@@ -1037,7 +1037,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 </div>
 
 <footer class="ju-foot">
-  <div data-i18n="foot.by">JobUp &mdash; a Digit2AI product.</div>
+  <div data-i18n="foot.by">{{BRAND}} &mdash; a Digit2AI product.</div>
   <div style="display:flex;gap:18px;flex-wrap:wrap">
     <a href="{{BASE}}/directory" data-i18n="foot.dir">Directory</a><a href="{{BASE}}/health" data-i18n="foot.status">Status</a><a href="#pricing" data-i18n="nav.pricing">Pricing</a><a href="#agents" data-i18n="nav.agents">Agents</a><a href="{{BASE}}/privacy" data-i18n="foot.privacy">Privacy</a><a href="{{BASE}}/terms" data-i18n="foot.terms">Terms</a>
   </div>
@@ -1174,12 +1174,12 @@ var JU_T={
   'nav.pricing':'Precio','nav.signin':'Iniciar sesión',
   'hero.eyebrow':'Inteligencia de carrera',
   'hero.h1':'Deja de buscar empleo.<br><span class="grad-text">Deja que tus agentes de IA lo encuentren mientras duermes.</span>',
-  'hero.lede':'Habla con el Orbe o simplemente sube tu currículum. En minutos, JobUp construye tu ecosistema profesional con IA: tu sitio web personal, tu dirección web propia, tu perfil profesional legible por IA y ofertas reales seleccionadas según tu experiencia.',
+  'hero.lede':'Habla con el Orbe o simplemente sube tu currículum. En minutos, {{BRAND}} construye tu ecosistema profesional con IA: tu sitio web personal, tu dirección web propia, tu perfil profesional legible por IA y ofertas reales seleccionadas según tu experiencia.',
   'orb.caption':'Toca el orbe y deja que Dalia te explique<br>&mdash; o sube tu currículum &mdash;',
   'cta.attach':'Subir mi currículum','cta.how':'Búsqueda de empleo en tu zona',
   'cta.show':'Muéstrame mi ecosistema',
   'receive.kicker':'Qué recibes',
-  'receive.01.h':'Tu dirección web','receive.01.p':'tunombre.jobup.dev, en línea minutos después de activarla.',
+  'receive.01.h':'Tu dirección web','receive.01.p':'tunombre.{{BRAND_SITE}}, en línea minutos después de activarla.',
   'receive.02.h':'Un sitio web profesional','receive.02.p':'Generado a partir de tu propio currículum y actualizado automáticamente.',
   'receive.03.h':'Identidad legible por IA','receive.03.p':'resume.json, JSON-LD, una tarjeta de agente y un punto MCP, para que las máquinas entiendan tu trayectoria.',
   'receive.04.h':'Búsqueda continua','receive.04.p':'Vacantes reales de ocho plataformas ATS, puntuadas y explicadas. Nunca inventadas.',
@@ -1190,12 +1190,12 @@ var JU_T={
   'agents.one.p':'Busca cada día en fuentes aprobadas, clasifica y puntúa cada vacante, explica por qué encaja y te dice qué te falta.',
   'agents.two.n':'AGENTE DOS','agents.two.h':'Presencia profesional',
   'agents.two.p':'Construye y mantiene tu sitio web, tus datos estructurados y el lenguaje con el que te leen los reclutadores. Mantiene todo coherente.',
-  'vs.kicker':'Búsqueda tradicional frente a JobUp',
+  'vs.kicker':'Búsqueda tradicional frente a {{BRAND}}',
   'vs.old.h':'La forma antigua',
   'vs.old.0':'Buscar a mano, todos los días','vs.old.1':'Revisar cientos de anuncios',
   'vs.old.2':'Volver a subir el mismo currículum','vs.old.3':'Depender de los portales de empleo',
   'vs.old.4':'Esperar a que te descubran','vs.old.5':'Perfiles desconectados por todas partes',
-  'vs.new.h':'Con JobUp',
+  'vs.new.h':'Con {{BRAND}}',
   'vs.new.0':'La IA busca de forma continua','vs.new.1':'Oportunidades clasificadas y explicadas',
   'vs.new.2':'Un currículum adaptado a cada puesto','vs.new.3':'Tu propio sitio, siempre disponible',
   'vs.new.4':'Estructurado para que la IA te encuentre','vs.new.5':'Un solo panel para todo',
@@ -1207,7 +1207,7 @@ var JU_T={
   'price.inc.3':'Búsqueda de empleo, puntuación y coincidencias explicadas',
   'price.inc.4':'Currículum adaptado por vacante y cartas de presentación',
   'price.inc.5':'Panel privado, resumen semanal y exportación completa de tus datos',
-  'price.note':'Reembolso de 14 días, sin preguntas. JobUp nunca postula por ti:<br>tú revisas y envías cada postulación.',
+  'price.note':'Reembolso de 14 días, sin preguntas. {{BRAND}} nunca postula por ti:<br>tú revisas y envías cada postulación.',
   'sheet.sub':'Sube tu currículum y construiremos una vista previa en vivo: tu sitio, tu dirección web y las ofertas reales que encajan contigo ahora mismo.',
   'form.name':'Nombre completo','form.email':'Correo electrónico','form.phone':'Teléfono',
   'form.optional':'(opcional)','form.lang':'Idioma','form.resume':'Tu currículum',
@@ -1219,7 +1219,7 @@ var JU_T={
   'form.go':'Construir mi vista previa',
   'form.legal':'Gratis. Sin tarjeta. Te mostramos vacantes reales o ninguna &mdash; nunca inventadas.<br>      Puedes borrar todo lo que extrajimos cuando quieras.',
   'prog.t':'Leyendo tu currículum…','prog.s':'Esto tarda alrededor de un minuto.',
-  'foot.by':'JobUp &mdash; un producto de Digit2AI.',
+  'foot.by':'{{BRAND}} &mdash; un producto de Digit2AI.',
   'foot.dir':'Directorio','foot.status':'Estado','foot.privacy':'Privacidad','foot.terms':'Términos'
  }
 };
@@ -1267,28 +1267,28 @@ function juApplyLang(l,persist){
   if(!wrap) return;
   var SCRIPTS={
     en:[
-      "Hi, I'm Ava, the voice of JobUp.",
-      "JobUp isn't only here to help you find a job — it's here to give you a real online presence. Your professional self, published on the internet, is the now and the future of your career.",
+      "Hi, I'm Ava, the voice of {{BRAND}}.",
+      "{{BRAND}} isn't only here to help you find a job — it's here to give you a real online presence. Your professional self, published on the internet, is the now and the future of your career.",
       "A paradigm shift is coming. Artificial intelligence is transforming technology across the entire world, and in this new era the people who get found are the ones with a strong online presence. So start building yours today.",
-      "JobUp gives you an AI workforce that works for you around the clock, matching your resume and your skills to thousands of open jobs in real time.",
+      "{{BRAND}} gives you an AI workforce that works for you around the clock, matching your resume and your skills to thousands of open jobs in real time.",
       "The moment you attach your resume, our agents match you to hundreds of real openings right away — and keep searching, day and night, so fresh matches keep coming in.",
       "Every match is a real job, ranked by how well it fits you and explained. Never invented.",
       "And you get your own professional website, so recruiters and AI can find you too.",
-      "Applying to a specific role? JobUp tailors your resume for that exact posting — using only what you already wrote.",
+      "Applying to a specific role? {{BRAND}} tailors your resume for that exact posting — using only what you already wrote.",
       "Everything lives in one private dashboard: your matches, your pipeline, approvals, agent activity and a full export. Yours alone.",
       "Your Opportunity Hunter searches approved sources every day, ranks and scores each opening, explains why it matches, and names what you're missing.",
       "And your Professional Presence agent builds and maintains your website and your recruiter-facing profile, keeping every surface consistent.",
       "Attach your resume and I'll show you the jobs that match you right now."
     ],
     es:[
-      "Hola, soy Dalia, la voz de JobUp.",
-      "JobUp no está aquí solo para ayudarte a encontrar empleo: está aquí para darte una verdadera presencia en línea. Tu identidad profesional, publicada en internet, es el presente y el futuro de tu carrera.",
+      "Hola, soy Dalia, la voz de {{BRAND}}.",
+      "{{BRAND}} no está aquí solo para ayudarte a encontrar empleo: está aquí para darte una verdadera presencia en línea. Tu identidad profesional, publicada en internet, es el presente y el futuro de tu carrera.",
       "Se acerca un cambio de paradigma. La inteligencia artificial está transformando la tecnología en todo el mundo, y en esta nueva era, a quienes encuentran es a quienes tienen una fuerte presencia en línea. Así que empieza a construir la tuya hoy.",
-      "JobUp te da un equipo de inteligencia artificial que trabaja para ti las veinticuatro horas, conectando tu currículum y tus habilidades con miles de empleos disponibles en tiempo real.",
+      "{{BRAND}} te da un equipo de inteligencia artificial que trabaja para ti las veinticuatro horas, conectando tu currículum y tus habilidades con miles de empleos disponibles en tiempo real.",
       "En cuanto subes tu currículum, nuestros agentes te conectan con cientos de vacantes reales de inmediato, y siguen buscando de día y de noche, para que sigan llegando nuevas coincidencias.",
       "Cada coincidencia es un empleo real, ordenado según lo bien que encaja contigo y explicado. Nunca inventado.",
       "Y obtienes tu propio sitio web profesional, para que los reclutadores y la inteligencia artificial también te encuentren.",
-      "¿Vas a postularte a una vacante específica? JobUp adapta tu currículum para esa oferta exacta, usando solo lo que ya escribiste.",
+      "¿Vas a postularte a una vacante específica? {{BRAND}} adapta tu currículum para esa oferta exacta, usando solo lo que ya escribiste.",
       "Todo vive en un solo panel privado: tus coincidencias, tu pipeline, las aprobaciones, la actividad de los agentes y una exportación completa. Solo tuyo.",
       "Tu Cazador de Oportunidades busca en fuentes aprobadas cada día, clasifica y puntúa cada vacante, explica por qué encaja y señala lo que te falta.",
       "Y tu agente de Presencia Profesional construye y mantiene tu sitio web y tu perfil orientado a reclutadores, manteniendo cada superficie coherente.",
@@ -1498,7 +1498,7 @@ function juApplyLang(l,persist){
           var j=res.j||{};
           // Already a customer: they were trying to get in, not to build a preview.
           if(res.status===409&&j.already_registered)
-            return failWithWay(j.error||'You already have a JobUp account.',
+            return failWithWay(j.error||'You already have a {{BRAND}} account.',
               j.note||'', j.sign_in_url||'/app', 'Sign in');
           // Rate limited: hand back the preview they already have, or at least
           // the exact time it clears.
@@ -1564,7 +1564,7 @@ function juApplyLang(l,persist){
 </script>
 
 <div id="ju-install">
-  <div class="txt"><strong>Add JobUp to your home screen</strong><br>
+  <div class="txt"><strong>Add {{BRAND}} to your home screen</strong><br>
     <span>Opens like an app, and keeps you signed in.</span></div>
   <button class="go" id="ju-inst-go">Install</button>
   <button class="no" id="ju-inst-no">Not now</button>
@@ -1573,7 +1573,7 @@ function juApplyLang(l,persist){
 <script>
 /* The worker is registered at the MOUNT ROOT, not at a fixed path. A worker's
    scope is the directory it was served from, so the old hardcoded path gave it
-   the mount scope even on jobup.dev — where the landing page lives at the root,
+   the mount scope even on {{BRAND_DOMAIN}} — where the landing page lives at the root,
    meaning it never controlled the very page that registered it. */
 if('serviceWorker' in navigator)
   navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function(){});
@@ -1598,7 +1598,7 @@ if('serviceWorker' in navigator)
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   var standalone=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
   if(isIOS&&!standalone){
-    box.querySelector('.txt').innerHTML='<strong>Add JobUp to your home screen</strong><br>'+
+    box.querySelector('.txt').innerHTML='<strong>Add {{BRAND}} to your home screen</strong><br>'+
       '<span>Tap Share, then Add to Home Screen.</span>';
     document.getElementById('ju-inst-go').style.display='none';
     setTimeout(function(){box.classList.add('show');},2600);

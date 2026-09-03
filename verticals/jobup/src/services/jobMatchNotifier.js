@@ -187,6 +187,7 @@ async function runForUser(sub, { dryRun = false, now = new Date() } = {}) {
     ? process.env.SENDGRID_TEMPLATE_ID_ES : process.env.SENDGRID_TEMPLATE_ID_EN;
 
   const r = await mailer.sendDigest({
+    brand: require('../brand').forSubscriber(sub),
     to: sub.email,
     subject: fb.subject, html: fb.html, text: fb.text,     // used when templateId is unset
     templateId: templateId || null,

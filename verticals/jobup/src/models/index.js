@@ -49,6 +49,12 @@ const SCHEMA = {
     activation: { type: DataTypes.STRING, defaultValue: 'paid' },
     activated_at: { type: DataTypes.DATE },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    // WHICH PRODUCT THIS PERSON SIGNED UP TO — 'jobup' | 'jobmd'.
+    // Stamped once at signup and read by every BACKGROUND sender (the weekly
+    // digest, the match notifier, the finish reminder), none of which has a
+    // request to resolve a host from. Without it a doctor would get JobUp mail.
+    // NULL on every row created before the registry existed = JobUp.
+    brand: { type: DataTypes.STRING, defaultValue: 'jobup' },
     name: { type: DataTypes.STRING },
     phone: { type: DataTypes.STRING },              // E.164
     language: { type: DataTypes.STRING, defaultValue: 'en' },
@@ -649,6 +655,7 @@ const ADDED_COLUMNS = [
   ['ju_tailored_resumes', 'employer',         'VARCHAR(255)'],
   ['ju_tailored_resumes', 'title',            'VARCHAR(255)'],
   ['ju_tailored_resumes', 'credit_id',        'INTEGER'],
+  ['ju_subscribers',   'brand',              "VARCHAR(16) DEFAULT 'jobup'"],
   ['ju_subscribers',   'referral_code',      'VARCHAR(32)'],
   ['ju_subscribers',   'referred_by_code',   'VARCHAR(32)'],
   ['ju_subscribers',   'referred_by_tenant', 'INTEGER'],

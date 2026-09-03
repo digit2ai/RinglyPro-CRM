@@ -7167,7 +7167,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(/VOICE=\{en:'ava',es:'dalia'\}/.test(src), 'Dalia is the ES voice');
     assert.ok(/voice:VOICE\[olang\]/.test(src), 'and the request must use it');
     assert.ok(/u\.lang=LOCALE\[olang\]/.test(src), 'the browser fallback too');
-    assert.ok(/Hola, soy Dalia, la voz de JobUp\./.test(src), 'with a Spanish script');
+    // Asserted on the RENDERED page, not the source: the shells carry {{BRAND}}
+    // so the same file serves JobUp and JobMD, and grepping the raw file for a
+    // brand name now tests the template rather than what a visitor hears.
+    const pwaSvc = require('./src/services/pwa');
+    const brandSvc = require('./src/brand');
+    brandSvc.ids().forEach((bid) => {
+      const rendered = pwaSvc.page('index.html', '', brandSvc.byId(bid));
+      const nm = brandSvc.byId(bid).name;
+      assert.ok(rendered.includes('Hola, soy Dalia, la voz de ' + nm + '.'),
+        'with a Spanish script naming ' + nm);
+    });
     // Switching language mid-sentence must stop the old voice and drop the
     // cached audio, or Ava finishes an English line on a Spanish page.
     assert.ok(/window\.__juOrbLang=function[\s\S]{0,400}cache=\{\}[\s\S]{0,80}if\(playing\) stop\(\)/.test(src),
@@ -8158,6 +8168,223 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
       assert.ok(/clearCookie\('jobup_unfinished'/.test(src),
         'a finished subscriber would keep being told they never finished');
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // THE BRAND LAYER — JobMD.io is JobUp.dev for doctors, surgeons and
+  // medical staff: one engine, two brand records. These assertions exist to
+  // protect the two things that make that safe.
+  // ═══════════════════════════════════════════════════════════════
+  {
+    const fs = require('fs');
+    const BRAND = require('./src/brand');
+    const COPY = require('./src/copy');
+    const pwaSvc = require('./src/services/pwa');
+
+    await t('BRAND: the registry knows both products', () => {
+      assert.deepStrictEqual(BRAND.ids().sort(), ['jobmd', 'jobup']);
+      assert.strictEqual(BRAND.byId('jobup').domain, 'jobup.dev');
+      assert.strictEqual(BRAND.byId('jobmd').domain, 'jobmd.io');
+    });
+
+    await t('BRAND: an unknown id falls back to JobUp rather than throwing', () => {
+      // A stored brand that no longer exists must not 500 a paying
+      // subscriber's dashboard.
+      assert.strictEqual(BRAND.byId('nope').id, 'jobup');
+      assert.strictEqual(BRAND.byId(null).id, 'jobup');
+      assert.strictEqual(BRAND.byId(undefined).id, 'jobup');
+    });
+
+    await t('BRAND: a legacy subscriber row with no brand is JobUp', () => {
+      // Every account created before the column existed. Getting this wrong
+      // would rebrand the entire existing subscriber base overnight.
+      assert.strictEqual(BRAND.forSubscriber({}).id, 'jobup');
+      assert.strictEqual(BRAND.forSubscriber({ brand: null }).id, 'jobup');
+      assert.strictEqual(BRAND.forSubscriber({ brand: 'jobmd' }).id, 'jobmd');
+    });
+
+    await t('BRAND: hosts and subscriber subdomains resolve', () => {
+      ['jobup.dev', 'www.jobup.dev', 'elena.jobup.dev'].forEach((h) =>
+        assert.strictEqual(BRAND.byHost(h).id, 'jobup', h));
+      ['jobmd.io', 'www.jobmd.io', 'elena.jobmd.io'].forEach((h) =>
+        assert.strictEqual(BRAND.byHost(h).id, 'jobmd', h));
+      assert.strictEqual(BRAND.byHost('example.com'), null);
+      assert.strictEqual(BRAND.byHost(''), null);
+    });
+
+    await t('BRAND: the mount stamps the brand ahead of the host', () => {
+      // app.js decides in exactly one place which product a visitor sees.
+      assert.strictEqual(BRAND.forRequest({ jobupBrand: 'jobmd', headers: {} }).id, 'jobmd');
+      assert.strictEqual(BRAND.forRequest({ headers: { host: 'jobmd.io' } }).id, 'jobmd');
+      assert.strictEqual(BRAND.forRequest({ headers: {}, originalUrl: '/jobmd/app' }).id, 'jobmd');
+      assert.strictEqual(BRAND.forRequest({ headers: {}, originalUrl: '/' }).id, 'jobup');
+    });
+
+    // ── THE SAFETY PROPERTY ────────────────────────────────────────
+    await t('BRAND: JOBUP RENDERS EXACTLY AS IT DID BEFORE THE REGISTRY', () => {
+      // JobUp is live and has paying subscribers. Every brand token must
+      // substitute back to the literal that used to sit in the file, so the
+      // refactor is invisible to the running product. Any {{TOKEN}} left
+      // unsubstituted is a page shipped with a placeholder in it.
+      fs.readdirSync(__dirname + '/public')
+        .filter((f) => /\.html$/.test(f))
+        .forEach((f) => {
+          const out = pwaSvc.page(f, '', BRAND.byId('jobup'));
+          const left = out.match(/\{\{[A-Z_]+\}\}/g) || [];
+          assert.deepStrictEqual(left, [], f + ' has unsubstituted tokens: ' + left.join(','));
+          assert.ok(!/JobMD|jobmd\.io/.test(out), f + ' leaks the other brand into JobUp');
+        });
+    });
+
+    await t('BRAND: and JobMD carries no JobUp anywhere a visitor can read', () => {
+      fs.readdirSync(__dirname + '/public')
+        .filter((f) => /\.html$/.test(f))
+        // The owner's own consoles are one business, not per-brand.
+        .filter((f) => !/admin/.test(f))
+        .forEach((f) => {
+          const out = pwaSvc.page(f, '', BRAND.byId('jobmd'));
+          const left = out.match(/\{\{[A-Z_]+\}\}/g) || [];
+          assert.deepStrictEqual(left, [], f + ' has unsubstituted tokens');
+          // JobUpI18n is a browser global, not branding — see brand.js.
+          const leak = (out.match(/JobUp(?!I18n|Ask)|jobup\.dev/g) || []);
+          assert.deepStrictEqual(leak, [], f + ' leaks JobUp: ' + leak.slice(0, 4).join(','));
+        });
+    });
+
+    await t('BRAND: the protected identifiers were NOT renamed', () => {
+      // JobUpI18n is the i18n global in both products. Renaming it per brand
+      // would give two bundles and lose Spanish on whichever went untested.
+      const app = pwaSvc.page('app.html', '', BRAND.byId('jobmd'));
+      assert.ok(app.includes('JobUpI18n'), 'the i18n global must survive the rebrand');
+      const tok = require('./scripts/tokenise-brand');
+      assert.ok(tok.PROTECTED.indexOf('JobUpI18n') !== -1);
+    });
+
+    await t('BRAND: both products serve the identical page set', () => {
+      // "Same landing page, same dashboard, same everything" is the whole
+      // requirement. A shell that renders for one brand and not the other is
+      // the failure this catches.
+      const files = fs.readdirSync(__dirname + '/public').filter((f) => /\.html$/.test(f));
+      files.forEach((f) => {
+        const a = pwaSvc.page(f, '', BRAND.byId('jobup'));
+        const b = pwaSvc.page(f, '', BRAND.byId('jobmd'));
+        assert.ok(a.length > 200 && b.length > 200, f + ' rendered empty for a brand');
+        // Same structure: the count of i18n-tagged nodes must not differ.
+        const n = (s2) => (s2.match(/data-i18n(-html)?=/g) || []).length;
+        assert.strictEqual(n(a), n(b), f + ' has a different structure per brand');
+      });
+    });
+
+    // ── THE COPY OVERLAY ───────────────────────────────────────────
+    await t('COPY: every medical override still matches a key on the page', () => {
+      // An override for a renamed key stops applying IN SILENCE and the
+      // medical page reverts to wording aimed at somebody else.
+      const raw = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      const a = COPY.audit(raw, BRAND.byId('jobmd'));
+      assert.ok(a.checked > 0, 'the overlay must actually cover something');
+      assert.deepStrictEqual(a.missing, [],
+        'overrides that no longer match a key: ' + a.missing.join(', '));
+    });
+
+    await t('COPY: JobUp declares no overlay, so its wording is untouched', () => {
+      assert.strictEqual(COPY.forBrand(BRAND.byId('jobup')), null);
+      const raw = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      assert.strictEqual(COPY.applyHtml(raw, BRAND.byId('jobup')), raw);
+    });
+
+    await t('COPY: the medical page actually speaks to clinicians', () => {
+      const md = pwaSvc.page('index.html', '', BRAND.byId('jobmd'));
+      const up = pwaSvc.page('index.html', '', BRAND.byId('jobup'));
+      assert.ok(/doctors, surgeons and medical staff/i.test(md),
+        'the hero must name who this is for');
+      assert.ok(!/doctors, surgeons and medical staff/i.test(up),
+        'and JobUp must not have been rebranded medical');
+      assert.ok(/Medical Career Intelligence/.test(md));
+      assert.ok(/Your Personal AI Medical Career Platform/.test(md), 'title');
+    });
+
+    await t('COPY: the LANDING page Spanish is overridden, in its own inline map', () => {
+      // The landing page does NOT use i18n.js for its own strings — it carries
+      // an inline JU_T.es keyed by the same data-i18n key. Overriding only the
+      // English shipped a page that spoke to surgeons until you pressed ES and
+      // then spoke to office workers. Visible by clicking, invisible in source.
+      const md = pwaSvc.page('index.html', '', BRAND.byId('jobmd'));
+      const jt = md.slice(md.indexOf('var JU_T='), md.indexOf('var JU_T=') + 4000);
+      assert.ok(/'hero\.lede':'[^']*médicos, cirujanos/.test(jt),
+        'the inline ES map must carry the medical wording');
+      assert.ok(/'hero\.h1':'Deja de buscar plazas/.test(jt), 'and the ES headline');
+      const up = pwaSvc.page('index.html', '', BRAND.byId('jobup'));
+      const jtUp = up.slice(up.indexOf('var JU_T='), up.indexOf('var JU_T=') + 4000);
+      assert.ok(!/médicos, cirujanos/.test(jtUp), 'and JobUp ES must be untouched');
+      // Every ES override must actually land somewhere, in either map.
+      Object.keys(COPY.OVERLAYS.jobmd).forEach((k) => {
+        const e = COPY.OVERLAYS.jobmd[k];
+        if (!e.es) return;
+        assert.ok(jt.indexOf("'" + k + "':") !== -1,
+          'no inline ES slot for ' + k + ' — the override would be silently dropped');
+      });
+    });
+
+    await t('COPY: the Spanish is overridden too, not just the English', () => {
+      // A page that speaks to surgeons until you press ES is worse than one
+      // that was never translated.
+      const es = pwaSvc.page('i18n.js', '', BRAND.byId('jobmd'));
+      assert.ok(/médicos, cirujanos y personal sanitario/.test(es),
+        'the ES bundle must carry the medical wording');
+      const esUp = pwaSvc.page('i18n.js', '', BRAND.byId('jobup'));
+      assert.ok(!/médicos, cirujanos/.test(esUp), 'and JobUp ES must be untouched');
+    });
+
+    // ── EMAIL FOLLOWS THE SUBSCRIBER, NOT THE REQUEST ──────────────
+    await t('EMAIL: a JobMD subscriber gets JobMD mail with no request in scope', () => {
+      // The digest and the welcome are sent by schedulers. Resolving the brand
+      // from a host would have sent JobUp mail to every doctor.
+      const w = require('./src/services/emailWelcome');
+      const md = w.buildWelcome({ email: 'a@b.co', name: 'Elena Marsh', language: 'en',
+        brand: 'jobmd', address: 'elenamarsh' });
+      assert.ok(/JobMD/.test(md.subject), 'subject: ' + md.subject);
+      assert.ok(!/JobUp/.test(md.html), 'the JobMD welcome must not mention JobUp');
+      const up = w.buildWelcome({ email: 'a@b.co', name: 'Elena Marsh', language: 'en',
+        brand: 'jobup', address: 'elenamarsh' });
+      assert.ok(/JobUp/.test(up.subject));
+      assert.ok(!/JobMD/.test(up.html));
+    });
+
+    await t('EMAIL: the Spanish welcome follows the brand too', () => {
+      const w = require('./src/services/emailWelcome');
+      const md = w.buildWelcome({ email: 'a@b.co', name: 'Elena', language: 'es',
+        brand: 'jobmd', address: 'elena' });
+      assert.ok(/JobMD/.test(md.subject), md.subject);
+      assert.ok(!/JobUp/.test(md.html));
+    });
+
+    await t('EMAIL: the From name follows the brand', () => {
+      const mailerSvc = require('./src/services/mailer');
+      assert.strictEqual(mailerSvc.fromName(BRAND.byId('jobup')), 'JobUp');
+      assert.strictEqual(mailerSvc.fromName(BRAND.byId('jobmd')), 'JobMD');
+      assert.strictEqual(mailerSvc.fromName(), 'JobUp', 'no brand = JobUp');
+    });
+
+    await t('BRAND: signup stamps the brand on the row', () => {
+      const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+      assert.ok(/brand: signupBrand/.test(src),
+        'a new subscriber must record which product they joined');
+      const models = fs.readFileSync(__dirname + '/src/models/index.js', 'utf8');
+      assert.ok(/\['ju_subscribers',\s*'brand',/.test(models),
+        'and the column must be in the idempotent migration, or every INSERT naming it fails');
+    });
+
+    await t('BRAND: both products share the mark, and the swap is one line', () => {
+      // The agreement was a replica: same colour, same thing, same everything.
+      // The nav glyph is drawn inline in the page, so a per-brand favicon with
+      // a shared masthead would have shipped a product whose tab icon and
+      // header disagreed. The alternative is ready, not hypothetical:
+      assert.strictEqual(BRAND.byId('jobup').icon_prefix, '');
+      assert.strictEqual(BRAND.byId('jobmd').icon_prefix, '');
+      ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.svg']
+        .forEach((f) => assert.ok(fs.existsSync(__dirname + '/public/jobmd-' + f),
+          'the JobMD mark must be shipped and ready to switch on: jobmd-' + f));
     });
   }
 

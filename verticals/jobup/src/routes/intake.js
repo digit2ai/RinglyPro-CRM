@@ -471,7 +471,15 @@ router.post('/build-account', async (req, res) => {
       activated_at: new Date(),
     };
     if (sub) await models.subscribers.update(fields, { where: { id: sub.id } });
-    else sub = await models.subscribers.create({ email, ...fields });
+    else {
+      // STAMP THE BRAND AT SIGNUP, from the host they signed up on. Every
+      // background sender reads this row, not a request, so a doctor who signs
+      // up on jobmd.io must be recorded as JobMD here or their weekly digest
+      // arrives branded JobUp. It is set on creation only: an existing account
+      // never changes product because someone opened the other domain once.
+      const signupBrand = require('../brand').forRequest(req).id;
+      sub = await models.subscribers.create({ email, brand: signupBrand, ...fields });
+    }
     // Badge the admin console. Fire-and-forget by design: a push that fails
     // must never break the signup that triggered it.
     try { require('../services/admin-notify').onNewSubscriber(sub); } catch (e) { /* non-fatal */ }
@@ -573,6 +581,7 @@ router.post('/build-account', async (req, res) => {
         if (sub && !sub.welcomed_at) {
           const welcome = require('../services/emailWelcome').buildWelcome(sub);
           const r = await require('../services/mailer').sendWelcome({
+            brand: require('../brand').forSubscriber(sub),
             to: sub.email, subject: welcome.subject, html: welcome.html, text: welcome.text,
           });
           if (r.ok) await models.subscribers.update({ welcomed_at: new Date() }, { where: { id: tenantId } });

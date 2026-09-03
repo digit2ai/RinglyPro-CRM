@@ -33,6 +33,7 @@ const analytics = require('./services/analytics');
 const scheduler = require('./services/scheduler');
 const photos = require('./services/photos');
 const pwa = require('./services/pwa');
+const BRAND = require('./brand');
 const platformAnalytics = require('./services/platform-analytics');
 
 // QR is generated on OUR server — no third-party QR service ever sees a
@@ -171,22 +172,22 @@ router.use('/admin', require('./routes/admin'));
 // billing identity where /admin deliberately will not.
 router.use('/subscribers-admin', require('./routes/subscribers-admin'));
 router.get(['/subscribers-admin', '/subscribers-admin/'], (req, res) =>
-  res.type('html').send(pwa.page('subscribers-admin.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('subscribers-admin.html', pwa.basePath(req), BRAND.forRequest(req))));
 // The growth plan dashboard. Inside the console's PWA scope on purpose, so it
 // opens in the installed app rather than kicking out to a browser tab.
 router.get(['/subscribers-admin/plan', '/subscribers-admin/plan/'], (req, res) =>
-  res.type('html').send(pwa.page('plan.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('plan.html', pwa.basePath(req), BRAND.forRequest(req))));
 // Social Media Image Poster. Shares the subscribers console credential rather
 // than minting a third admin password — see routes/social-admin.js.
 router.use('/social-admin', require('./routes/social-admin'));
 router.get(['/social-admin', '/social-admin/'], (req, res) =>
-  res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('social-admin.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // The video posting creator: describe an ad, review the spec and its price,
 // then approve. Same credential as the subscribers console (see social-admin).
 router.use('/video-admin', require('./routes/video-admin'));
 router.get(['/video-admin', '/video-admin/'], (req, res) =>
-  res.type('html').send(pwa.page('video-admin.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('video-admin.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // ReachUp marketing layer: public capture/unsubscribe/webhook API + the
 // /admin/marketing console. Shares the JobUp owner credential (no new secret).
@@ -220,7 +221,7 @@ router.get('/r/:code', async (req, res) => {
 router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html',
             '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png',
             '/favicon-32.png', '/favicon.svg', '/logo-master.svg'], (req, res, next) => {
-  if (!pwa.serveAsset(req, res, pwa.basePath(req))) next();
+  if (!pwa.serveAsset(req, res, pwa.basePath(req), { brand: BRAND.forRequest(req) })) next();
 });
 
 // ---- subscriber dashboard --------------------------------------------------
@@ -228,12 +229,12 @@ router.get(['/manifest.webmanifest', '/sw.js', '/offline', '/offline.html',
 // No allowlist, no env var — that is only the platform owner console.
 // Aliases include /cv-admin so the muscle memory from manuelstagg.com works.
 router.get(['/app', '/app/', '/dashboard', '/cv-admin'], (req, res) =>
-  res.type('html').send(pwa.page('app.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('app.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // Customer Plans & Billing (pricing + upgrade/downgrade/pause). Session-scoped
 // via the billing API; the page itself is public so the pricing is shareable.
 router.get(['/plan', '/plan/', '/pricing', '/billing'], (req, res) =>
-  res.type('html').send(pwa.page('plan-billing.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('plan-billing.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // Step 3 of the funnel: the account form the teaser's CTA opens. Carries
 // ?t=<teaser_token>, which is the authoritative record of who this person is.
@@ -373,7 +374,7 @@ function markUnfinished(req, res, token) {
 
 router.get(['/build', '/build/'], (req, res) => {
   markUnfinished(req, res, req.query.t);
-  res.type('html').send(pwa.page('build.html', pwa.basePath(req)));
+  res.type('html').send(pwa.page('build.html', pwa.basePath(req), BRAND.forRequest(req)));
 });
 
 /**
@@ -417,7 +418,7 @@ a{color:#9a9ab0}</style></head><body><div class="c">
 // coordinate-level local coverage the moment ADZUNA_APP_ID/KEY are set.
 router.get(['/jobsearch', '/jobsearch/', '/jobs-map', '/jobs-map/'], (req, res) => {
   platformAnalytics.record(req, 'page_view', { path: '/jobsearch' });
-  res.type('html').send(pwa.page('jobsearch.html', pwa.basePath(req)));
+  res.type('html').send(pwa.page('jobsearch.html', pwa.basePath(req), BRAND.forRequest(req)));
 });
 router.get('/api/v1/jobs/search', async (req, res) => {
   try {
@@ -440,20 +441,20 @@ router.get('/api/v1/jobs/search', async (req, res) => {
 // old links; /ready is the honest name now that nothing is being welcomed back
 // from a checkout page.
 router.get(['/welcome', '/welcome/', '/ready', '/ready/'], (req, res) =>
-  res.type('html').send(pwa.page('welcome.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('welcome.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // The password-reset page. The emailed link points here (a GET the browser can
 // open), NOT at the POST /api/v1/auth/reset endpoint. The page reads ?t=<token>
 // and POSTs the new password back to that endpoint.
 router.get(['/reset', '/reset/'], (req, res) =>
-  res.type('html').send(pwa.page('reset.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('reset.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // Legal. Public, indexable, and linked from the footer + signup. This ecosystem
 // hosts people's personal data, so the policy and terms are first-class pages.
 router.get(['/privacy', '/privacy/', '/privacy-policy'], (req, res) =>
-  res.type('html').send(pwa.page('privacy.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('privacy.html', pwa.basePath(req), BRAND.forRequest(req))));
 router.get(['/terms', '/terms/', '/terms-of-service'], (req, res) =>
-  res.type('html').send(pwa.page('terms.html', pwa.basePath(req))));
+  res.type('html').send(pwa.page('terms.html', pwa.basePath(req), BRAND.forRequest(req))));
 
 // ---- landing --------------------------------------------------------------
 // The three shells carry a {{BASE}} token, so serving them as raw static files
@@ -481,7 +482,7 @@ router.get(['/radio', '/radio/'], (req, res) => res.sendFile(path.join(publicDir
 router.get(['/presentation', '/presentation/'], (req, res) => res.sendFile(path.join(publicDir, 'presentation.html')));
 router.get('/', (req, res) => {
   platformAnalytics.record(req, 'page_view', { path: '/' });
-  res.type('html').send(pwa.page('index.html', pwa.basePath(req)));
+  res.type('html').send(pwa.page('index.html', pwa.basePath(req), BRAND.forRequest(req)));
 });
 
 // ===========================================================================
@@ -565,19 +566,19 @@ async function subscriberSite(req, res, next) {
   // jobup.dev/jobup/app. Serving it here also makes the session cookie and
   // every API call same-origin with their site.
   if (['/app', '/app/', '/dashboard', '/admin', '/cv-admin', '/login'].includes(p)) {
-    return res.type('html').send(pwa.page('app.html', ''));
+    return res.type('html').send(pwa.page('app.html', '', BRAND.forRequest(req)));
   }
   if (p === '/welcome' || p === '/welcome/') {
-    return res.type('html').send(pwa.page('welcome.html', ''));
+    return res.type('html').send(pwa.page('welcome.html', '', BRAND.forRequest(req)));
   }
   if (p === '/reset' || p === '/reset/') {
-    return res.type('html').send(pwa.page('reset.html', ''));
+    return res.type('html').send(pwa.page('reset.html', '', BRAND.forRequest(req)));
   }
   if (p === '/privacy' || p === '/privacy/' || p === '/privacy-policy') {
-    return res.type('html').send(pwa.page('privacy.html', ''));
+    return res.type('html').send(pwa.page('privacy.html', '', BRAND.forRequest(req)));
   }
   if (p === '/terms' || p === '/terms/' || p === '/terms-of-service') {
-    return res.type('html').send(pwa.page('terms.html', ''));
+    return res.type('html').send(pwa.page('terms.html', '', BRAND.forRequest(req)));
   }
   // The dashboard resolves its API base to the current origin, so the API has
   // to answer here too.
@@ -591,7 +592,7 @@ async function subscriberSite(req, res, next) {
   //
   // The subscriber's name goes on the install so two JobUp sites are told apart
   // on one home screen.
-  if (pwa.serveAsset(req, res, '', { name: ctx.name, lang: ctx.lang })) return undefined;
+  if (pwa.serveAsset(req, res, '', { name: ctx.name, lang: ctx.lang, brand: BRAND.forRequest(req) })) return undefined;
 
   // Profile photo, if the subscriber uploaded one.
   if (p === '/photo' || p === '/photo.jpg') {

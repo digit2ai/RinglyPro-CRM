@@ -301,12 +301,24 @@ try {
   // 1. Subscriber sites: <name>.jobup.dev.
   app.use(jobupHostApp.subscriberSite);
 
-  // 2. Apex + www: serve the JobUp app in place so the address bar stays put.
+  // 2. Apex + www for EVERY BRAND THE ENGINE SERVES.
+  //
+  // JobMD.io is a replica of JobUp.dev for doctors, surgeons and medical staff
+  // — same landing page, same dashboard, same emails, same colours. It is
+  // therefore the SAME ENGINE with a different brand record, not a second
+  // codebase: see verticals/jobup/src/brand.js. Two copies of 21,000 lines
+  // would agree today and disagree by the end of the quarter.
+  //
+  // The brand is stamped on the request here rather than sniffed deeper down,
+  // so exactly one place decides which product a visitor is looking at.
+  const JU_BRAND = require('../verticals/jobup/src/brand');
   app.use((req, res, next) => {
     const host = (req.get('host') || '').toLowerCase().split(':')[0];
-    if (host !== 'jobup.dev' && host !== 'www.jobup.dev') return next();
+    const brand = JU_BRAND.byHost(host);
+    if (!brand) return next();
     // /api/tts is the shared CRM voice route — let it through untouched.
     if (req.path.startsWith('/api/tts')) return next();
+    req.jobupBrand = brand.id;
     return jobupHostApp(req, res, next);
   });
 } catch (e) {
@@ -329,16 +341,29 @@ try {
 // narration is same-origin here; nothing needs to fall through for voice.
 // Anything JobMD does not handle still falls through to the CRM.
 // ═════════════════════════════════════════════════════════════════════════
+//
+// STOOD DOWN, NOT DELETED. jobmd.io now serves the JobUp engine under the
+// JobMD brand (the block above). The original JobMD vertical — the hospital
+// dashboard, the hospital intake, the recruiter intake and the eleven-agent
+// pipeline — is intact and still mounted at /jobmd-legacy, because it is
+// wanted later. It simply no longer answers on the public domain.
+//
+// JOBMD_LEGACY_HOST=1 hands jobmd.io back to it, which is the whole point of
+// disabling rather than removing: the way back is a variable, not a rebuild.
 try {
   const jobmdHostApp = require('../verticals/jobmd/src/index');
-  app.use((req, res, next) => {
-    const host = (req.get('host') || '').toLowerCase().split(':')[0];
-    if (host !== 'jobmd.io' && host !== 'www.jobmd.io') return next();
-    return jobmdHostApp(req, res, next);
-  });
-  console.log('JobMD.io host routing active for jobmd.io / www.jobmd.io');
+  if (process.env.JOBMD_LEGACY_HOST === '1') {
+    app.use((req, res, next) => {
+      const host = (req.get('host') || '').toLowerCase().split(':')[0];
+      if (host !== 'jobmd.io' && host !== 'www.jobmd.io') return next();
+      return jobmdHostApp(req, res, next);
+    });
+    console.log('JobMD LEGACY host routing active (JOBMD_LEGACY_HOST=1)');
+  } else {
+    console.log('JobMD.io served by the JobUp engine (brand: jobmd); legacy vertical at /jobmd-legacy');
+  }
 } catch (e) {
-  console.log('⚠️ JobMD.io host routing unavailable:', e.message);
+  console.log('⚠️ JobMD legacy vertical unavailable:', e.message);
 }
 
 
@@ -2516,27 +2541,44 @@ app.get('/debug/jobup-error', (req, res) => {
 });
 
 // =====================================================
-// JOBMD.IO — AI Healthcare Talent Intelligence Network for physician and
-// surgeon recruitment. A specialized division of JobUp.dev.
+// JOBMD — two things share this name, and the split is deliberate.
 //
-// The project request declares the hosted location as /jobMD, and the owner
-// asked for /jobmd. Express paths are case sensitive, so BOTH are mounted onto
-// the same router rather than picking one and breaking the other link.
-// Shares this database, so all of its tables carry the `jm_` prefix.
+//  /jobmd  and /jobMD      the LIVE product: the JobUp engine under the JobMD
+//                          brand, identical to jobup.dev but for doctors,
+//                          surgeons and medical staff. Same code as jobmd.io.
+//  /jobmd-legacy           the ORIGINAL JobMD vertical: hospital dashboard,
+//                          hospital intake, recruiter intake, eleven agents,
+//                          matching engine. Kept whole because it is wanted
+//                          later; simply not the public product today.
+//
+// The legacy vertical is DISABLED BY DEFAULT and its own routes refuse the
+// hospital and recruiter surfaces (see verticals/jobmd/src/index.js). Deleting
+// it would have thrown away a working matching engine and eleven agents to
+// save a route table.
 // =====================================================
 let jobmdApp = null;
 let jobmdError = null;
 try {
   jobmdApp = require('../verticals/jobmd/src/index');
-  // A bare /jobmd must become /jobmd/ or every relative asset and the form's
-  // own `api/v1/leads` POST resolve one level too high.
-  app.get(['/jobmd', '/jobMD'], (req, res, next) => {
-    if (!req.originalUrl.endsWith('/')) return res.redirect(req.path + '/');
-    next();
-  });
-  app.use(['/jobmd', '/jobMD'], jobmdApp);
 
-  console.log('JobMD.io mounted at /jobmd (alias /jobMD)');
+  // The live product on the shared CRM host. Same engine as jobup.dev, brand
+  // stamped so one place decides which product a visitor is looking at.
+  const JU_BRAND2 = require('../verticals/jobup/src/brand');
+  if (jobupApp) {
+    app.get(['/jobmd', '/jobMD'], (req, res, next) => {
+      if (!req.originalUrl.endsWith('/')) return res.redirect(req.path + '/');
+      next();
+    });
+    app.use(['/jobmd', '/jobMD'], (req, res, next) => {
+      req.jobupBrand = JU_BRAND2.byId('jobmd').id;
+      return jobupApp(req, res, next);
+    });
+  }
+
+  // The legacy vertical, retained and reachable for the owner.
+  app.use('/jobmd-legacy', jobmdApp);
+
+  console.log('JobMD (JobUp engine, brand jobmd) at /jobmd; legacy vertical at /jobmd-legacy');
   console.log('   - Landing: /jobmd/');
   console.log('   - Health:  /jobmd/health');
   console.log('   - Architect: GET /jobmd/api/v1/architect/plan');

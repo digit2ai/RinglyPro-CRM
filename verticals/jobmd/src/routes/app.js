@@ -59,12 +59,38 @@ function requireAccount(req, res, next) {
   if (!req.account) return res.status(401).json({ error: 'Sign in to continue.' });
   next();
 }
+/* ── STOOD DOWN, NOT REMOVED ───────────────────────────────────────────────
+   The hospital dashboard, the hospital intake and the recruiter intake are
+   switched off while JobMD runs as a replica of JobUp — one product, aimed at
+   doctors, surgeons and medical staff. They are wanted later, so the code, the
+   tables, the matching engine and the eleven agents are all intact; they
+   simply refuse to serve today.
+
+   DISABLING IS A GATE, NOT A DELETION, and the way back is one variable:
+   JOBMD_ROLES=physician,hospital,recruiter turns them straight back on. A
+   signup for a disabled role is refused at the door rather than accepted and
+   then dead-ended, because an account that exists but can do nothing is worse
+   than one that was never created.
+   ─────────────────────────────────────────────────────────────────────────── */
+const ENABLED_ROLES = String(process.env.JOBMD_ROLES || 'physician')
+  .split(',').map(function (r) { return r.trim().toLowerCase(); }).filter(Boolean);
+
+function roleEnabled(role) { return ENABLED_ROLES.indexOf(String(role)) !== -1; }
+
 function requireRole() {
   const allowed = Array.prototype.slice.call(arguments);
   return function (req, res, next) {
     if (!req.account) return res.status(401).json({ error: 'Sign in to continue.' });
     if (allowed.indexOf(req.account.role) === -1) {
       return res.status(403).json({ error: 'This is not available to a ' + req.account.role + ' account.' });
+    }
+    // A role that is switched off says so plainly, and says it is temporary.
+    // A bare 403 would read as a permissions bug to whoever hits it.
+    if (!roleEnabled(req.account.role)) {
+      return res.status(503).json({
+        error: 'The ' + req.account.role + ' workspace is not open yet.',
+        disabled: true, role: req.account.role
+      });
     }
     next();
   };
@@ -75,6 +101,13 @@ router.post('/auth/signup', async function (req, res) {
   try {
     const v = accounts.validate(req.body || {});
     if (v.errors.length) return res.status(400).json({ error: v.errors[0], errors: v.errors });
+    // Refuse a signup for a switched-off role at the door. Creating the account
+    // and then refusing every screen behind it is the worse failure: the person
+    // has a password to a product that does nothing.
+    if (!roleEnabled(v.role)) {
+      return res.status(503).json({
+        error: 'The ' + v.role + ' workspace is not open yet.', disabled: true, role: v.role });
+    }
     if (await Account.findOne({ where: { email: v.email } })) {
       return res.status(409).json({ error: 'An account already exists for that email address.' });
     }
