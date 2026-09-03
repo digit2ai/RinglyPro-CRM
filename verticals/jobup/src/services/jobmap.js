@@ -160,17 +160,8 @@ async function searchAdzuna({ what, where, limit }) {
 async function searchPool(seq, { what, where, remote, limit }) {
   const repl = {};
   const clauses = [`fetched_at > now() - interval '21 days'`];
-  if (what) {
-    // Match the whole phrase, OR any significant word of it in the title. A
-    // search for "IT Project Manager" should still surface "Project Manager" and
-    // "Senior Project Manager" rather than requiring that exact string.
-    repl.q = '%' + what.trim() + '%';
-    const parts = [`(title ILIKE :q OR company ILIKE :q OR description ILIKE :q)`];
-    const words = what.trim().split(/\s+/).filter((w) => w.length > 2);
-    words.forEach((w, k) => { repl['w' + k] = '%' + w + '%'; parts.push(`title ILIKE :w${k}`); });
-    clauses.push('(' + parts.join(' OR ') + ')');
-  }
-  if (where && !isRemote(where)) { repl.loc = '%' + where.trim() + '%'; clauses.push(`(location ILIKE :loc)`); }
+  if (what) { repl.q = '%' + what.trim() + '%'; clauses.push(`(title ILIKE :q OR company ILIKE :q OR description ILIKE :q)`); }
+  if (where && !isRemote(where)) { repl.w = '%' + where.trim() + '%'; clauses.push(`(location ILIKE :w)`); }
   if (remote === true) clauses.push(`(remote = true OR location ILIKE '%remote%')`);
   const rows = await seq.query(
     `SELECT title, company, location, remote, url, posted_at, comp_min, comp_max, comp_period
@@ -200,98 +191,64 @@ async function searchPool(seq, { what, where, remote, limit }) {
   });
 }
 
-// Pool search that relaxes the location when a specific city has nothing: a
-// title with zero local openings returns national matches rather than an empty
-// map, and reports that it relaxed so the UI can say so honestly.
-async function poolWithRelax(seq, { what, where, remote, limit }) {
-  let rows = await searchPool(seq, { what, where, remote, limit });
-  let relaxed = false;
-  if (!rows.length && where && !isRemote(where)) {
-    rows = await searchPool(seq, { what, where: '', remote, limit });
-    relaxed = rows.length > 0;
-  }
-  return { rows, relaxed };
-}
-
-// Spanish -> English job-term translation. US postings (Adzuna and the pool) are
-// in English, so a Hispanic visitor searching "enfermera" would otherwise get
-// nothing. We translate token by token, keep anything we don't recognise, and
-// fall back to the original if nothing changed. Accents are stripped so
-// "construcción"/"construccion" both match.
-const ES_EN = {
-  enfermera: 'nurse', enfermero: 'nurse', enfermeria: 'nursing',
-  conductor: 'driver', chofer: 'driver', camionero: 'truck driver', repartidor: 'delivery driver',
-  cajero: 'cashier', cajera: 'cashier', cocinero: 'cook', cocinera: 'cook', chef: 'chef',
-  mesero: 'server', mesera: 'server', camarero: 'server', camarera: 'server',
-  limpieza: 'cleaning', limpiador: 'janitor', limpiadora: 'housekeeping', conserje: 'janitor',
-  construccion: 'construction', albanil: 'construction', obrero: 'laborer',
-  vendedor: 'sales', vendedora: 'sales', ventas: 'sales', dependiente: 'retail',
-  recepcionista: 'receptionist', asistente: 'assistant', secretaria: 'secretary',
-  contador: 'accountant', contadora: 'accountant', administrador: 'administrator',
-  maestro: 'teacher', maestra: 'teacher', profesor: 'teacher', profesora: 'teacher',
-  ninera: 'nanny', cuidadora: 'caregiver', cuidador: 'caregiver',
-  jardinero: 'landscaper', paisajista: 'landscaper', mecanico: 'mechanic',
-  electricista: 'electrician', plomero: 'plumber', fontanero: 'plumber',
-  soldador: 'welder', carpintero: 'carpenter', pintor: 'painter',
-  almacen: 'warehouse', bodega: 'warehouse', montacargas: 'forklift',
-  seguridad: 'security', guardia: 'security guard', vigilante: 'security guard',
-  estilista: 'hairstylist', peluquero: 'barber', peluquera: 'hairstylist', barbero: 'barber',
-  gerente: 'manager', supervisor: 'supervisor', operador: 'operator', tecnico: 'technician',
-  ingeniero: 'engineer', ingeniera: 'engineer', abogado: 'lawyer', abogada: 'lawyer',
-  medico: 'physician', doctor: 'doctor', dentista: 'dentist', farmaceutico: 'pharmacist',
-  programador: 'developer', desarrollador: 'developer', disenador: 'designer',
-  chofer_camion: 'truck driver', ayudante: 'helper', empacador: 'packer',
-  costurera: 'sewing machine operator', lavaplatos: 'dishwasher',
-};
-function stripAccents(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ""); }
-function esToEn(what) {
-  const raw = String(what || '').trim();
-  if (!raw) return raw;
-  const toks = stripAccents(raw.toLowerCase()).split(/\s+/);
-  let hit = false;
-  const out = toks.map((t) => { if (ES_EN[t]) { hit = true; return ES_EN[t]; } return t; });
-  return hit ? out.join(' ') : raw;
-}
-
 async function search({ what = '', where = '', remote, limit } = {}) {
   const seq = db.sequelize();
   if (!seq) return { source: 'none', center: US_CENTER, jobs: [], count: 0, mapped: 0, adzuna: false, note: 'database unavailable' };
   await ensureGeocache(seq);
-  // Translate a Spanish job term into English so US postings actually match.
-  what = esToEn(what);
-  const adzunaConfigured = jobsource.adzunaActive();
-  let jobs, source, relaxed = false;
-  if (adzunaConfigured) {
-    // Adzuna is the local-coverage source, but its key has a daily quota and can
-    // return nothing once that is spent (or if the key lapses). When it comes
-    // back empty we DO NOT show an empty map — we fall back to the keyless
-    // cv_jobs pool (thousands of live openings). An empty map on a working
-    // product is the failure this prevents.
-    try { jobs = await searchAdzuna({ what, where, limit }); } catch (e) { jobs = []; }
-    source = 'adzuna';
-    if (!jobs.length) {
-      const p = await poolWithRelax(seq, { what, where, remote, limit });
-      if (p.rows.length) { jobs = p.rows; source = 'pool'; relaxed = p.relaxed; }
-    }
-  } else {
-    const p = await poolWithRelax(seq, { what, where, remote, limit });
-    jobs = p.rows; source = 'pool'; relaxed = p.relaxed;
-  }
+  const adzuna = jobsource.adzunaActive();
+  let jobs, source;
+  if (adzuna) { jobs = await searchAdzuna({ what, where, limit }); source = 'adzuna'; }
+  else { jobs = await searchPool(seq, { what, where, remote, limit }); source = 'pool'; }
 
   let center = where ? await geocode(seq, where, true) : null;   // one live call for the searched area
   const placed = jobs.filter((j) => j.lat != null && j.lng != null);
   if (!center && placed.length) center = { lat: placed[0].lat, lng: placed[0].lng };
   if (!center) center = US_CENTER;
 
+  // EVERY MAP SEARCH FEEDS THE HUNTER. These are live US openings the engine
+  // did not otherwise hold: Adzuna was wired to this map alone, so the fifty
+  // roles a subscriber could see here were never scored by the agent whose job
+  // is to find them. Now the same postings enter the shared pool, through the
+  // same ingest and the same dedupe key as everything else.
+  //
+  // Fire-and-forget on purpose: a map search is somebody waiting on a page.
+  // Ingest failing must cost them nothing, so it is never awaited and never
+  // surfaces — the scheduled refresh is what guarantees coverage, and this is
+  // opportunistic on top of it.
+  if (adzuna && jobs.length) {
+    setImmediate(() => { ingestMapResults(jobs).catch(() => {}); });
+  }
+
   return {
-    source, adzuna: source === 'adzuna', center, count: jobs.length, mapped: placed.length, relaxed,
+    source, adzuna, center, count: jobs.length, mapped: placed.length,
     jobs: jobs.slice(0, limit || 120),
-    note: relaxed
-      ? ('No local openings for that search near ' + (where || 'you').trim() + ' — showing matching roles across the US.')
-      : (source === 'pool'
-        ? 'Live openings placed by city — the map keeps filling in as we map more locations.'
-        : null)
+    note: adzuna ? null : 'Live openings placed by city — the map keeps filling in as we map more locations. Add a free Adzuna key for full local coverage.'
   };
 }
 
-module.exports = { search, geocode, ensureGeocache, warmGeocache };
+/** Map rows -> the ingest shape, grouped by employer so each keeps its own. */
+async function ingestMapResults(rows) {
+  const byEmployer = new Map();
+  rows.forEach((r) => {
+    if (!r.title || !r.url) return;
+    const employer = r.company || 'Unknown employer';
+    if (!byEmployer.has(employer)) byEmployer.set(employer, []);
+    byEmployer.get(employer).push({
+      external_id: null,
+      title: r.title,
+      location: r.location || '',
+      url: r.url,
+      description: '',
+      // `pay` is display text and Adzuna's may be a PREDICTION rather than
+      // something the employer wrote. The pool stores only stated figures, so
+      // this deliberately carries none: enrichment fills the body later.
+      compensation: null,
+      posted_at: r.posted_at || null,
+    });
+  });
+  for (const [employer, list] of byEmployer) {
+    await jobsource.ingest(list, { source: 'adzuna', employer });
+  }
+}
+
+module.exports = { search, geocode, ensureGeocache, warmGeocache, ingestMapResults };

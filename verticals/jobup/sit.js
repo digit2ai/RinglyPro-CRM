@@ -8389,6 +8389,95 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
 
     // ── US ONLY, AND ONLY WHERE THEY CHOSE ─────────────────────────
+    // ── THE OPEN FEEDS ─────────────────────────────────────────────
+    await t('FEEDS: every connector returns the shape ingest already takes', () => {
+      // A second ingest path with its own dedupe key would double-insert every
+      // posting that is also on an employer's own board — jobsource.js carries
+      // the scar from the last time that happened.
+      const feeds = require('./src/services/feeds');
+      assert.deepStrictEqual(Object.keys(feeds.FEEDS).sort(), ['adzuna', 'themuse', 'usajobs']);
+      const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
+      ['external_id', 'title', 'location', 'url', 'description', 'compensation', 'posted_at']
+        .forEach((k) => assert.ok(new RegExp('\\b' + k + ':').test(src), 'missing ' + k));
+      // And nothing in here writes to the database itself.
+      assert.ok(!/models\.|ingest\(/.test(src), 'a feed fetches; the scheduler ingests');
+    });
+
+    await t('FEEDS: a source with no key contributes NOTHING and says so', () => {
+      // "The hunter found nothing" must always be distinguishable from "the
+      // hunter was not looking".
+      const feeds = require('./src/services/feeds');
+      const st = feeds.status();
+      assert.ok(st.themuse.live, 'The Muse is keyless and must always be live');
+      ['adzuna', 'usajobs'].forEach((n) => {
+        assert.strictEqual(st[n].keyed, true);
+        assert.ok(st[n].needs, n + ' must name the key it needs');
+      });
+      assert.ok(/free/i.test(st.usajobs.needs), 'and say the USAJOBS key is free');
+    });
+
+    await t('FEEDS: a dormant source returns no postings, never invented ones', async () => {
+      const feeds = require('./src/services/feeds');
+      const id = process.env.ADZUNA_APP_ID; const key = process.env.ADZUNA_APP_KEY;
+      delete process.env.ADZUNA_APP_ID; delete process.env.ADZUNA_APP_KEY;
+      try {
+        const r = await feeds.adzuna({ what: 'nurse' });
+        assert.strictEqual(r.ok, false);
+        assert.strictEqual(r.dormant, true);
+        assert.deepStrictEqual(r.postings, [], 'a keyless feed must return zero postings');
+        assert.ok(/not set/.test(r.note), 'and say why');
+      } finally {
+        if (id) process.env.ADZUNA_APP_ID = id;
+        if (key) process.env.ADZUNA_APP_KEY = key;
+      }
+    });
+
+    await t('FEEDS: Adzuna PREDICTED pay is never stored as if stated', () => {
+      // Adzuna flags an estimated salary with salary_is_predicted. Passing it
+      // through would put a number in front of a subscriber that no employer
+      // ever offered — the one thing the compensation rule exists to prevent.
+      const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
+      assert.ok(/salary_is_predicted/.test(src), 'the predicted flag must be read');
+      const map = fs.readFileSync(__dirname + '/src/services/jobmap.js', 'utf8');
+      assert.ok(/compensation: null/.test(map),
+        'and the map path must not store its display pay text either');
+    });
+
+    await t('FEEDS: the pull is driven by roles subscribers actually target', () => {
+      const sch = require('./src/services/scheduler');
+      assert.strictEqual(typeof sch.feedTerms, 'function');
+      const src = fs.readFileSync(__dirname + '/src/services/scheduler.js', 'utf8');
+      // A role target is {title, slug, page}. Reading it as a string produced
+      // the literal term "[object object]", which every feed would have searched.
+      assert.ok(/role && role\.title/.test(src),
+        'role targets are objects; reading them as strings searches for [object object]');
+      assert.ok(/no role targets yet/.test(src),
+        'and with no targets the feeds are not queried at all rather than pulled blind');
+    });
+
+    await t('FEEDS: the map now feeds the hunter, without slowing the map', () => {
+      // Adzuna was wired to /jobsearch ALONE, so the live openings a subscriber
+      // could see there were never scored by the agent hunting for them.
+      const map = fs.readFileSync(__dirname + '/src/services/jobmap.js', 'utf8');
+      assert.ok(/ingestMapResults/.test(map));
+      assert.ok(/setImmediate\(\(\) => \{ ingestMapResults/.test(map),
+        'ingest must not be awaited — a map search is somebody waiting on a page');
+      assert.ok(/jobsource\.ingest\(list, \{ source: 'adzuna', employer \}\)/.test(map),
+        'and must go through the SHARED ingest, so it shares the dedupe key');
+    });
+
+    await t('FEEDS: the remote-tech boards are excluded, and why is recorded', () => {
+      // Measured, not assumed: of the free keyless boards only The Muse
+      // carried US clinical work. Remotive, Jobicy, Himalayas and Arbeitnow
+      // returned zero US medical roles between them.
+      const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
+      ['remotive', 'jobicy', 'himalayas', 'arbeitnow']
+        .forEach((n) => assert.ok(new RegExp(n, 'i').test(src),
+          n + ' must be named as a considered-and-rejected source, not silently absent'));
+      assert.ok(!/https:\/\/remotive|jobicy\.com|himalayas\.app|arbeitnow\.com\/api/.test(src),
+        'named in the reasoning, but not actually wired');
+    });
+
     await t('GEO: the country is enforced, not merely defaulted', () => {
       // A subscriber cannot widen it, and neither can a stale row: sanitize
       // rewrites it on every save. Both products hunt US postings only.

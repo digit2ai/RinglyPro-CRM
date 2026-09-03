@@ -33,6 +33,10 @@ const limits = require('./limits');
 const TICK_MS = parseInt(process.env.JOBUP_TICK_MS || String(15 * 60 * 1000), 10);
 const POOL_REFRESH_HOURS = parseInt(process.env.JOBUP_POOL_REFRESH_HOURS || '24', 10);
 const ENRICH_PER_RUN = parseInt(process.env.JOBUP_ENRICH_PER_RUN || '300', 10);
+// Open-feed pull. Capped because every term is an HTTP round trip per feed;
+// these are requests, not model tokens, but a provider's rate limit is real.
+const FEED_TERMS = parseInt(process.env.JOBUP_FEED_TERMS || '12', 10);
+const FEED_PER_TERM = parseInt(process.env.JOBUP_FEED_PER_TERM || '50', 10);
 const BOARD_CAP = parseInt(process.env.JOBUP_BOARD_CAP || '1200', 10);
 
 /**
@@ -150,7 +154,104 @@ async function refreshPool() {
     errors.push(`description enrichment: ${err.message}`);
   }
 
-  return { boards: live.length, added, refreshed, enriched, errors };
+  // ── THE OPEN FEEDS ──────────────────────────────────────────────────────
+  // ATS boards are employers we already know about. These are the sources that
+  // carry everybody else — and Adzuna in particular was wired to the MAP only,
+  // so the fifty live openings a subscriber could see on /jobsearch were never
+  // scored by the agent whose whole job is to hunt for them.
+  //
+  // Queried by ROLE, not by a blanket pull: a feed search needs a term, and the
+  // terms that matter are the ones subscribers actually target. Failures are
+  // collected per feed and never abort the rest — one provider being down must
+  // not cost the pool its other sources.
+  let feedReport = null;
+  try {
+    feedReport = await refreshFeeds();
+    added += feedReport.added;
+    refreshed += feedReport.refreshed;
+    feedReport.errors.forEach((e) => errors.push(e));
+  } catch (err) {
+    errors.push(`open feeds: ${err.message}`);
+  }
+
+  return { boards: live.length, added, refreshed, enriched, feeds: feedReport, errors };
+}
+
+/**
+ * Pull the open feeds into the SAME pool, through the SAME ingest.
+ *
+ * One ingest, one dedupe key — the identical rule the board path documents. A
+ * private second writer would be blind to the first, so an Adzuna posting that
+ * is also on the employer's Greenhouse board would be inserted twice and the
+ * cross-source collapse dedupeKey exists to perform would never happen.
+ */
+async function refreshFeeds() {
+  const feeds = require('./feeds');
+  const errors = [];
+  let added = 0; let refreshed = 0;
+  const bySource = {};
+
+  // The roles subscribers actually target, so the pull is theirs rather than
+  // a guess. Falls back to nothing — a feed with no term is not queried at
+  // all, which is honest, rather than pulling an arbitrary slice of the board.
+  const terms = await feedTerms();
+  if (!terms.length) return { added, refreshed, sources: bySource, terms: 0, errors, skipped: 'no role targets yet' };
+
+  const jobs = [];
+  for (const term of terms.slice(0, FEED_TERMS)) {
+    jobs.push(['adzuna', () => feeds.adzuna({ what: term, perPage: FEED_PER_TERM })]);
+    jobs.push(['usajobs', () => feeds.usajobs({ what: term, perPage: FEED_PER_TERM })]);
+  }
+  // The Muse is searched by CATEGORY, not by role text, so it is pulled once
+  // rather than once per term.
+  jobs.push(['themuse', () => feeds.themuse({ category: 'Healthcare' })]);
+  jobs.push(['themuse', () => feeds.themuse({ category: null })]);
+
+  for (const [name, run] of jobs) {
+    let res;
+    try { res = await run(); } catch (err) { errors.push(`${name}: ${err.message}`); continue; }
+    if (!res.ok) {
+      // A dormant feed is reported ONCE, not once per term, and is not an error:
+      // it is a missing free key, and saying so is the point.
+      if (res.dormant) { bySource[name] = bySource[name] || { dormant: true, note: res.note }; }
+      else errors.push(`${name}: ${res.error}`);
+      continue;
+    }
+    // Each posting carries its own employer, so ingest is called per employer
+    // rather than stamping one name across a whole feed.
+    const byEmployer = new Map();
+    res.postings.filter((p) => p.title).forEach((p) => {
+      const k = p.employer || 'Unknown employer';
+      if (!byEmployer.has(k)) byEmployer.set(k, []);
+      byEmployer.get(k).push(p);
+    });
+    const tally = bySource[name] || (bySource[name] = { added: 0, refreshed: 0, seen: 0 });
+    for (const [employer, list] of byEmployer) {
+      try {
+        const c = await jobsource.ingest(list, { source: name, employer });
+        added += c.added; refreshed += c.refreshed;
+        tally.added += c.added; tally.refreshed += c.refreshed; tally.seen += c.total;
+      } catch (err) { errors.push(`${name}/${employer}: ${err.message}`); }
+    }
+  }
+  return { added, refreshed, sources: bySource, terms: Math.min(terms.length, FEED_TERMS), errors };
+}
+
+/** The role targets subscribers have actually set, most common first. */
+async function feedTerms() {
+  const rows = await models.settings.findAll({});
+  const count = new Map();
+  rows.forEach((r) => {
+    const roles = (((r.settings || {}).targeting || {}).roles) || [];
+    roles.forEach((role) => {
+      // A role target is {title, slug, page}, not a string — settings.roleList
+      // normalises it that way. Reading it as a string produced the literal
+      // term "[object object]", which every feed would have searched for.
+      const k = String((role && role.title) || role || '').trim().toLowerCase();
+      if (k.length > 2) count.set(k, (count.get(k) || 0) + 1);
+    });
+  });
+  return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
 }
 
 /** Fan the Hunter (and Presence) across every active subscriber. */
@@ -286,7 +387,7 @@ function status() {
   };
 }
 
-module.exports = {
+module.exports = { refreshFeeds, feedTerms,
   start, tick, status, enabled, refreshPool, runFleet, claimDay, dayKey, RUN_HOUR_UTC,
   finishRemindersEnabled,
 };
