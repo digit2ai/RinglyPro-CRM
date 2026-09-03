@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Digit2AI — Hypercare · Proyección por escala · Planea</title>
+<style>
+  :root{ --ink:#0f172a; --mut:#64748b; --line:#e2e8f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669; --bg:#f8fafc; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page{ max-width:920px; margin:24px auto; background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(15,23,42,.06); }
+  .top{ padding:28px 34px; background:linear-gradient(120deg,#111827,#312e81 70%,#0e7490); color:#fff; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .brand{ font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .brand small{ display:block; font-weight:500; font-size:12px; opacity:.8; letter-spacing:.02em; margin-top:3px; }
+  .doc{ text-align:right; }
+  .doc h1{ margin:0; font-size:17px; letter-spacing:.16em; font-weight:700; }
+  .doc .meta{ font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.7; }
+  .parties{ display:flex; gap:24px; padding:22px 34px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .parties .col{ flex:1; min-width:220px; }
+  .parties .k{ font-size:10.5px; letter-spacing:.14em; color:var(--mut); font-weight:700; text-transform:uppercase; }
+  .parties .v{ font-size:13.5px; margin-top:5px; line-height:1.6; }
+  .sec{ padding:22px 34px; }
+  .sec h2{ font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--brand); margin:0 0 4px; }
+  .sec .lead{ font-size:12.5px; color:var(--mut); margin:0 0 14px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); border-bottom:2px solid var(--line); padding:8px 6px; }
+  td{ padding:9px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td.num,th.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .desc small{ display:block; color:var(--mut); font-size:11.5px; margin-top:2px; }
+  tfoot td{ border-bottom:none; padding:6px; font-size:13px; }
+  .subrow td{ font-weight:700; background:#f8fafc; }
+  .totrow td{ font-weight:800; font-size:15px; border-top:2px solid var(--ink); color:var(--brand); }
+  .perrow td{ color:var(--mut); font-size:12px; }
+  .pill{ display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; background:#eef2ff; color:var(--brand); }
+  .pill.ok{ background:#ecfdf5; color:var(--ok); }
+  .note{ background:#f1f5f9; border-radius:10px; padding:14px 16px; font-size:12px; color:#334155; line-height:1.6; margin-top:14px; }
+  .note b{ color:var(--ink); }
+  .foot{ padding:20px 34px 30px; font-size:11.5px; color:var(--mut); line-height:1.7; border-top:1px solid var(--line); }
+  .cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .card{ border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center; }
+  .card.hl{ border-color:var(--brand); box-shadow:0 6px 20px rgba(79,70,229,.12); }
+  .card .u{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); font-weight:700; }
+  .card .big{ font-size:28px; font-weight:800; letter-spacing:-.02em; margin-top:6px; }
+  .card .sub{ font-size:11.5px; color:var(--mut); margin-top:4px; }
+  .print{ display:block; text-align:center; margin:14px auto 30px; }
+  .print button{ font:inherit; font-weight:700; font-size:13px; background:var(--brand); color:#fff; border:0; border-radius:10px; padding:11px 22px; cursor:pointer; }
+  @media(max-width:640px){ .cards{ grid-template-columns:1fr; } .top,.parties,.sec,.foot{ padding-left:18px; padding-right:18px; } table{ font-size:12px; } }
+  @media print{
+    @page{ size:A4; margin:11mm; }
+    html,body{ background:#fff; font-size:10.5px; }
+    .page{ box-shadow:none; border:none; margin:0; max-width:100%; border-radius:0; }
+    .print{ display:none; }
+    .top{ padding:14px 20px; } .parties{ padding:12px 20px; } .sec{ padding:12px 20px; page-break-inside:avoid; }
+    .foot{ padding:10px 20px 6px; font-size:9.5px; } table{ font-size:10px; } td,th{ padding:5px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div class="brand">DIGIT2AI<small>Inteligencia Artificial · Plataformas a la medida</small></div>
+    <div class="doc">
+      <h1>HYPERCARE · PROYECCIÓN POR ESCALA</h1>
+      <div class="meta">
+        Ref. <b>DGT-PLANEA-HC-ESCALA</b><br>
+        Fecha: 3 de septiembre de 2026<br>
+        Base: factura de operación de septiembre<br>
+        Moneda: USD
+      </div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Operación gestionada (Hypercare)</div></div>
+    <div class="col"><div class="k">Para</div><div class="v"><b>Planea</b> (planea.ai)<br>Atención: Eduardo y Juan<br>App de finanzas personales (PWA)</div></div>
+    <div class="col"><div class="k">Objeto</div><div class="v">Costo mensual de Hypercare<br>según número de usuarios<br>100 · 1.000 · 10.000</div></div>
+  </div>
+
+  <!-- CONSUMO POR USUARIO -->
+  <div class="sec">
+    <h2>Consumo variable por usuario <span class="pill">pass-through</span></h2>
+    <p class="lead">Lo único que crece por cada usuario es el consumo de IA y de correo. El resto (cómputo y base de datos) crece por tramos, no por persona.</p>
+    <table>
+      <thead><tr><th>Concepto</th><th>Base del cálculo</th><th class="num">USD / usuario·mes</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">IA — Maya + hallazgos<small>Claude Haiku ($1/M entrada · $5/M salida)</small></td><td>~15 interacciones/mes · 2.000 tokens de entrada + 350 de salida c/u</td><td class="num">$0,060</td></tr>
+        <tr><td class="desc">Correo transaccional<small>SendGrid</small></td><td>Pocos correos por usuario/mes</td><td class="num">$0,005</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="subrow"><td colspan="2">Total variable por usuario</td><td class="num">~$0,065</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">La voz neural (Lina/Maya) usa TTS sin llave: <b>no genera costo de síntesis</b>. La IA es el rubro que escala con el uso; se factura por consumo real y aquí se estima a un uso medio.</div>
+  </div>
+
+  <!-- PROYECCIÓN POR ESCALA -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <h2>Costo mensual de Hypercare por número de usuarios</h2>
+    <p class="lead">Infraestructura (pass-through) + operación gestionada Digit2AI (SLA 99.9%). Cifras estimadas, ajustables al consumo real.</p>
+    <table>
+      <thead><tr><th>Concepto</th><th class="num">100</th><th class="num">1.000</th><th class="num">10.000</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Cómputo web (Render)<small>Instancias de aplicación</small></td><td class="num">$25</td><td class="num">$85</td><td class="num">$350</td></tr>
+        <tr><td class="desc">Base de datos PostgreSQL (Render)<small>Plan según RAM / conexiones / almacenamiento</small></td><td class="num">$19</td><td class="num">$90</td><td class="num">$350</td></tr>
+        <tr><td class="desc">Tokens de IA (Anthropic)<small>usuarios × $0,06</small></td><td class="num">$6</td><td class="num">$60</td><td class="num">$600</td></tr>
+        <tr><td class="desc">Correo transaccional (SendGrid)<small>nivel según volumen</small></td><td class="num">$0</td><td class="num">$20</td><td class="num">$90</td></tr>
+        <tr class="subrow"><td>Subtotal infraestructura</td><td class="num">$50</td><td class="num">$255</td><td class="num">$1.390</td></tr>
+        <tr><td class="desc">Operación gestionada — Hypercare (Digit2AI)<small>Monitoreo, respaldos, parches, incidentes, soporte · SLA 99.9%</small></td><td class="num">$333</td><td class="num">$650</td><td class="num">$1.500</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="totrow"><td>Total mensual</td><td class="num">$383</td><td class="num">$905</td><td class="num">$2.890</td></tr>
+        <tr class="perrow"><td>Costo por usuario / mes</td><td class="num">$3,83</td><td class="num">$0,91</td><td class="num">$0,29</td></tr>
+        <tr class="perrow"><td>Equivalente anual</td><td class="num">$4.596</td><td class="num">$10.860</td><td class="num">$34.680</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- RESUMEN CARDS -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <h2>Resumen</h2>
+    <div class="cards">
+      <div class="card"><div class="u">100 usuarios</div><div class="big">$383<span style="font-size:14px;color:var(--mut)">/mes</span></div><div class="sub">$3,83 por usuario/mes</div></div>
+      <div class="card hl"><div class="u">1.000 usuarios</div><div class="big">$905<span style="font-size:14px;color:var(--mut)">/mes</span></div><div class="sub">$0,91 por usuario/mes</div></div>
+      <div class="card"><div class="u">10.000 usuarios</div><div class="big">$2.890<span style="font-size:14px;color:var(--mut)">/mes</span></div><div class="sub">$0,29 por usuario/mes</div></div>
+    </div>
+    <div class="note">A mayor escala, <b>el costo por usuario baja</b>: de $3,83 (100) a $0,29 (10.000). La operación gestionada y la base de datos se comparten entre todos; solo la IA crece de forma lineal por uso.</div>
+  </div>
+
+  <div class="foot">
+    <b>Supuestos y condiciones.</b> Cifras en USD, sin IVA, <b>estimadas</b> a partir de la factura de operación de septiembre ($397/mes) y de precios públicos de proveedores. El consumo de IA supone ~15 interacciones con Maya por usuario al mes; a mayor o menor uso, el rubro de Anthropic sube o baja proporcionalmente. Los rubros de proveedor (Render, Anthropic, SendGrid) son <b>pass-through</b> y se facturan al consumo real; los tramos de cómputo y base de datos son referenciales y se confirman al momento de escalar. La operación gestionada (Hypercare) es el servicio Digit2AI: monitoreo proactivo, respaldos, parches de seguridad, gestión de incidentes y soporte correctivo con disponibilidad 99.9%. El desarrollo de nuevas funcionalidades se cotiza por separado.<br><br>
+    Digit2AI LLC · digit2ai.com · info@digit2ai.com
+  </div>
+</div>
+<div class="print"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+</body>
+</html>
