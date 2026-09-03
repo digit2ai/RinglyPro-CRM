@@ -31,7 +31,10 @@ router.post('/checkout', async (req, res) => {
     const teaser_token = body.teaser_token;
 
     if (billing.disabled()) {
-      const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+      // THE RETURN URL MUST STAY ON THE BRAND THEY ARE USING. This was the JobUp
+      // public URL for everyone, so a doctor choosing Free on jobmd.io was sent to
+      // jobup.dev/build — a different product, mid-signup.
+      const base = require('../brand').publicUrl(require('../brand').forRequest(req));
       if (!teaser_token) {
         return res.status(400).json({
           error: 'We lost track of your preview. Start again from the home page.' });
@@ -66,9 +69,19 @@ router.post('/checkout', async (req, res) => {
     }
 
     let sub = await models.subscribers.findOne({ where: { email } });
-    if (!sub) sub = await models.subscribers.create({ email, name, status: 'pending' });
+    if (!sub) {
+      // THE BRAND IS STAMPED HERE, because THIS is where a subscriber row is
+      // actually born for anyone who goes through checkout — the build form
+      // only ever updates it. Stamping it there alone left every real signup
+      // on the default brand, which is how a JobMD doctor was provisioned
+      // marcuswhitfield.jobup.dev with brand 'jobup' on their row.
+      sub = await models.subscribers.create({
+        email, name, status: 'pending',
+        brand: require('../brand').forRequest(req).id,
+      });
+    }
 
-    const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+    const base = require('../brand').publicUrl(require('../brand').forRequest(req));
     const chosenPlan = String((req.body || {}).plan || '').toLowerCase();
 
     // ---- FREE PLAN selected on the landing -------------------------------
@@ -227,7 +240,7 @@ router.post('/plan/checkout', async (req, res) => {
     if (!sub) return res.status(404).json({ error: 'no account' });
     const plan = String((req.body || {}).plan || '');
     if (!plans.isPaid(plan)) return res.status(400).json({ error: 'Choose the Search or Landed plan.' });
-    const base = process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev';
+    const base = require('../brand').publicUrl(require('../brand').forRequest(req));
     const r = await billing.createPlanCheckout({
       subscriberId: sub.id, email: sub.email, plan,
       successUrl: `${base}/plan?upgraded=1`, cancelUrl: `${base}/plan`,

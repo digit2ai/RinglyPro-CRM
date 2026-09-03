@@ -372,8 +372,48 @@ function markUnfinished(req, res, token) {
   } catch (e) { /* a cookie that will not set must never break the page */ }
 }
 
-router.get(['/build', '/build/'], (req, res) => {
+/**
+ * THE PLAN IS CHOSEN BEFORE THE FORM, NOT AFTER IT.
+ *
+ * This rendered the build form to anyone holding a teaser token, and the
+ * payment gate then refused the SUBMIT. So somebody typed their work
+ * authorization, their lowest acceptable compensation, their availability and
+ * their notice period, chose their directory setting, pressed the button — and
+ * only then was told no payment could be confirmed, with no way forward from
+ * that page. Failing at the end of a form is the worst place to fail: every
+ * field they filled is wasted, and the message reads like a broken checkout
+ * rather than a step they skipped.
+ *
+ * The check is the SAME evidence the submit gate uses — a Stripe object or a
+ * free activation on the row — so the two can never disagree about who may
+ * proceed. Anyone without it goes back to the teaser, where the plan picker
+ * lives, instead of into a form that will refuse them.
+ */
+router.get(['/build', '/build/'], async (req, res) => {
   markUnfinished(req, res, req.query.t);
+
+  const token = String(req.query.t || '');
+  const billing = require('./services/billing');
+  if (token && !billing.disabled()) {
+    try {
+      const t = await require('./services/teaser').get(token);
+      const email = t && t.email ? String(t.email).trim().toLowerCase() : null;
+      const sub = email ? await models.subscribers.findOne({ where: { email } }) : null;
+      const FREE = ['free_plan', 'free_test', 'no_billing'];
+      const settled = sub && (sub.stripe_customer_id || sub.stripe_subscription_id
+                              || FREE.includes(sub.activation));
+      // A Stripe return carries the session id; that is a payment in flight and
+      // must not be bounced back to the picker.
+      const returning = Boolean(req.query.session_id || req.query.free || req.query.s);
+      if (!settled && !returning) {
+        return res.redirect(`${pwa.basePath(req)}/teaser/${encodeURIComponent(token)}?plan=1`);
+      }
+    } catch (e) {
+      // Never strand somebody over a lookup: show the form. The submit gate is
+      // still there, so this cannot become a way around the paywall.
+    }
+  }
+
   res.type('html').send(pwa.page('build.html', pwa.basePath(req), BRAND.forRequest(req)));
 });
 

@@ -688,6 +688,13 @@ function ctaBusy(on){
 
 function chosenPlan(){ try{ return localStorage.getItem('jobup_plan')||''; }catch(e){ return ''; } }
 
+// Sent here by /build because no plan was chosen yet. Open the picker on
+// arrival rather than making them find the button again — they already pressed
+// one button expecting to move forward.
+if(/[?&]plan=1/.test(location.search)){
+  setTimeout(function(){ try{ showPlanPicker(); }catch(e){} }, 400);
+}
+
 function checkout(){
   if(CTA_BUSY)return;
   // If they arrived without picking a tier (from "Attach my resume"), OFFER THE

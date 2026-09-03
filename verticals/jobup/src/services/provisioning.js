@@ -166,7 +166,7 @@ async function provisionAddress(tenantId, teaserToken) {
     const offered = t && t.address_offer;
     if (offered) {
       const label = String(offered).split('.')[0];
-      if (!(await addresses.isTaken(label))) {
+      if (!(await addresses.isTaken(label, addresses.baseDomain(require('../brand').forSubscriber(sub))))) {
         await models.subscribers.update({ address: offered }, { where: { id: tenantId } });
         return { step: 'address', ok: true, address: offered,
                  url: `https://${offered}`, from_teaser: true };

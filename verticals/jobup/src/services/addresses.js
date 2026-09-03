@@ -75,11 +75,19 @@ function ladder({ first, middle, last }) {
   return out.filter((x) => x.length >= 3 && x.length <= 40 && !RESERVED.has(x));
 }
 
-async function isTaken(label) {
+async function isTaken(label, domain) {
   if (RESERVED.has(label)) return true;
-  // Addresses are STORED as the full host, so compare against the full host.
-  const host = `${label}.${BASE_DOMAIN}`;
-  for (const value of [host, label]) {
+  // THE NAMESPACE IS PER BRAND. marcuswhitfield.jobup.dev and
+  // marcuswhitfield.jobmd.io are different hosts and both may exist — they are
+  // different products with different people on them. Checking a bare label
+  // across every brand pushed a doctor to marcuswhitfield1.jobmd.io because
+  // somebody unrelated held marcuswhitfield.jobup.dev.
+  const dom = domain || BASE_DOMAIN;
+  const host = `${label}.${dom}`;
+  // The bare label is still checked for the DEFAULT brand only: some early
+  // JobUp rows stored just the label, and those must stay reserved.
+  const candidates = dom === BASE_DOMAIN ? [host, label] : [host];
+  for (const value of candidates) {
     if (await models.subscribers.findOne({ where: { address: value } })) return true;
     // A retired address stays reserved — never reassign a link a recruiter holds.
     if (await models.sites.findOne({ where: { address: value } })) return true;
@@ -94,7 +102,7 @@ async function allocate(parts, brand) {
   const domain = baseDomain(brand);
   const options = ladder(parts);
   for (const label of options) {
-    if (!(await isTaken(label))) {
+    if (!(await isTaken(label, domain))) {
       return { ok: true, label, host: `${label}.${domain}`, url: `https://${label}.${domain}`,
                ladder: options, rung: options.indexOf(label) };
     }

@@ -139,29 +139,9 @@ router.put('/settings', async (req, res) => {
   res.json({ settings: clean });
 });
 
-const validUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u.trim());
-
 router.get('/matches', async (req, res) => {
   const tid = auth(req, res); if (!tid) return;
-  const all = await scoped('job_matches', tid).findAll({ order: [['score', 'DESC']], limit: 120 });
-
-  // Fetch the pool job for each match once.
-  const jobById = {};
-  for (const m of all) {
-    if (m.job_id != null && !(m.job_id in jobById)) {
-      jobById[m.job_id] = plain(await models.jobs.findOne({ where: { id: m.job_id } }));
-    }
-  }
-  // A found posting is only shown if it actually OPENS. A Hunter match whose
-  // pool job has no working URL is dropped — "Open posting" would dead-end, and
-  // a match you cannot act on is worse than one fewer match. Manual and inbound
-  // entries are the subscriber's own and are always kept.
-  const rows = all.filter((m) => {
-    const hunter = (m.source === 'hunter' || m.source == null);
-    if (!hunter) return true;
-    const j = jobById[m.job_id];
-    return j && validUrl(j.url);
-  });
+  const rows = await scoped('job_matches', tid).findAll({ order: [['score', 'DESC']], limit: 100 });
 
   // FREE-TIER DRIP. Only Hunter-found matches are gated — anything the person
   // added themselves (manual, inbound, tracked opportunities) is always theirs
@@ -189,7 +169,11 @@ router.get('/matches', async (req, res) => {
     };
   }
 
-  const out = visible.map((m) => ({ ...plain(m), job: (m.job_id != null ? jobById[m.job_id] : null) || null }));
+  const out = [];
+  for (const m of visible) {
+    const job = await models.jobs.findOne({ where: { id: m.job_id } });
+    out.push({ ...plain(m), job: plain(job) || null });
+  }
   res.json({ matches: out, gate });
 });
 
@@ -1305,7 +1289,7 @@ router.get('/address/check', async (req, res) => {
   const ownAlias = await scoped('address_aliases', tid).findOne({ address: host });
   if (ownAlias) return res.json({ available: true, label: v.label, host, url: `https://${host}`, yours_previously: true });
 
-  const taken = await addresses.isTaken(v.label);
+  const taken = await addresses.isTaken(v.label, addresses.baseDomain(require('../brand').forRequest(req)));
   res.json(taken
     ? { available: false, label: v.label, host, reason: 'That address is already taken.' }
     : { available: true, label: v.label, host, url: `https://${host}` });
@@ -1334,7 +1318,7 @@ router.post('/address', async (req, res) => {
   }
 
   const ownAlias = await scoped('address_aliases', tid).findOne({ address: host });
-  if (!ownAlias && await addresses.isTaken(v.label)) {
+  if (!ownAlias && await addresses.isTaken(v.label, addresses.baseDomain(require('../brand').forRequest(req)))) {
     return res.status(409).json({ error: 'That address is already taken.' });
   }
 

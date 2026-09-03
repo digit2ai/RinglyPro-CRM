@@ -4137,7 +4137,9 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
   await t('a promised address still taken by then falls through honestly', () => {
     const fs = require('fs');
     const src = fs.readFileSync(__dirname + '/src/services/provisioning.js', 'utf8');
-    assert.ok(src.includes('await addresses.isTaken(label)'),
+    // The domain is passed now, because the namespace is per brand — but the
+    // re-check itself is the point of this assertion and must survive.
+    assert.ok(/await addresses\.isTaken\(label\b/.test(src),
       'it must re-check rather than assume the offer still stands');
     assert.ok(src.includes('Taken between preview and payment'),
       'and allocate a fresh one rather than fail');
@@ -6352,8 +6354,14 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
 
     const fs = require('fs');
     const idx = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
-    const dir = idx.slice(idx.indexOf('async function directoryEntries'),
-                          idx.indexOf("router.get(['/build'"));
+    // COMMENTS ARE STRIPPED. The slice ends at the next route, so a comment
+    // written ABOVE that route lands inside it — and a comment explaining that
+    // somebody had to type their compensation before being refused read as the
+    // directory publishing compensation. Third time this suite has been caught
+    // by prose rather than code; scan the code.
+    const dirRaw = idx.slice(idx.indexOf('async function directoryEntries'),
+                             idx.indexOf("router.get(['/build'"));
+    const dir = dirRaw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     assert.ok(dir.includes('directory_opt_in'), 'the listing must check the flag');
     // Name, headline and the role titles they asked to be found for. Nothing else.
     for (const leak of ['profile.email', 'profile.phone', 'profile.location',
@@ -8389,6 +8397,56 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
 
     // ── US ONLY, AND ONLY WHERE THEY CHOSE ─────────────────────────
+    // ── THE PLAN IS CHOSEN BEFORE THE FORM ─────────────────────────
+    await t('SIGNUP: /build sends you to the plan picker instead of a doomed form', () => {
+      // It rendered the whole build form to anyone holding a teaser token and
+      // the payment gate refused the SUBMIT — so somebody typed their work
+      // authorization, their lowest acceptable compensation, their availability
+      // and their notice period, pressed the button, and only then learned no
+      // payment could be confirmed, with no way forward from that page.
+      const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+      assert.ok(/res\.redirect\(`\$\{pwa\.basePath\(req\)\}\/teaser\/\$\{encodeURIComponent\(token\)\}\?plan=1`\)/.test(src),
+        'an unsettled account must go back to the picker, not into the form');
+      // The SAME evidence the submit gate uses, so the two cannot disagree.
+      assert.ok(/free_plan', 'free_test', 'no_billing'/.test(src), 'free activations pass');
+      assert.ok(/stripe_customer_id \|\| sub\.stripe_subscription_id/.test(src), 'so does a Stripe object');
+      // A Stripe return is a payment in flight and must not be bounced.
+      assert.ok(/req\.query\.session_id \|\| req\.query\.free \|\| req\.query\.s/.test(src));
+      // And a lookup failure must never strand somebody.
+      assert.ok(/Never strand somebody over a lookup/.test(src));
+      const teaserSrc = fs.readFileSync(__dirname + '/src/routes/teaser-view.js', 'utf8');
+      assert.ok(/\[\?&\]plan=1/.test(teaserSrc) && /showPlanPicker/.test(teaserSrc),
+        'and the teaser must OPEN the picker on arrival, not make them find it again');
+    });
+
+    await t('SIGNUP: the brand is stamped where the row is actually born', () => {
+      // The CHECKOUT path creates the subscriber; the build form only updates
+      // it. Stamping the brand in the form alone left every real signup on the
+      // default brand — a JobMD doctor was provisioned marcuswhitfield.jobup.dev
+      // with brand 'jobup' on their row.
+      const src = fs.readFileSync(__dirname + '/src/routes/billing.js', 'utf8');
+      assert.ok(/brand: require\('\.\.\/brand'\)\.forRequest\(req\)\.id/.test(src),
+        'checkout must stamp the brand at creation');
+      assert.ok(!/JOBUP_PUBLIC_URL \|\| 'https:\/\/jobup\.dev'/.test(src),
+        'and the return URL must not be hardcoded to one product');
+    });
+
+    await t('SIGNUP: the address namespace is PER BRAND', async () => {
+      // marcuswhitfield.jobup.dev and marcuswhitfield.jobmd.io are different
+      // hosts on different products. Checking a bare label across every brand
+      // pushed a doctor to marcuswhitfield1.jobmd.io because somebody unrelated
+      // held the JobUp name.
+      const A = require('./src/services/addresses');
+      assert.strictEqual(A.baseDomain(BRAND.byId('jobmd')), 'jobmd.io');
+      // Reserved labels still apply everywhere.
+      assert.strictEqual(await A.isTaken('admin', 'jobmd.io'), true);
+      assert.strictEqual(await A.isTaken('www', 'jobup.dev'), true);
+      const src = fs.readFileSync(__dirname + '/src/services/addresses.js', 'utf8');
+      // The bare-label check is kept for the default brand only: some early
+      // JobUp rows stored just the label and must stay reserved.
+      assert.ok(/dom === BASE_DOMAIN \? \[host, label\] : \[host\]/.test(src));
+    });
+
     // ── THE TEASER IS RENDERED FROM A ROUTE, NOT A SHELL ───────────
     // It is not reached by the tokeniser or by pwa.page(), so it has to brand
     // itself — and until it did, a doctor on jobmd.io saw a page titled "Your
