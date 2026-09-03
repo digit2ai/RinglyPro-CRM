@@ -250,6 +250,7 @@ function evaluate(raw, policy = {}) {
   // this wrong deletes the best matches on the board — the remote roles are
   // exactly the ones a state-restricted subscriber can actually take — and it
   // fails silently, looking like a thin week rather than a broken filter.
+  let stateReason = null;
   const states = (policy.allowed_states || [])
     .map((x) => String(x).toLowerCase()).filter((x) => US_STATES.has(x));
   if (states.length && hit.includes('US')) {
@@ -266,9 +267,44 @@ function evaluate(raw, policy = {}) {
       return { verdict: VERDICT.BLOCK,
                reason: 'state ' + c.states.map((x) => x.toUpperCase()).join('/') + ' outside policy' };
     }
-    return { verdict: VERDICT.ALLOW,
-             reason: 'in policy (' + sHit.map((x) => x.toUpperCase()).join('/') + ')' };
+    // PASSING THE STATE IS NOT THE END OF THE CHECK. This used to return ALLOW
+    // here, which made the city rule below unreachable for exactly the people
+    // who had set one — a subscriber who chose Tampa was shown the whole of
+    // Florida and the filter looked ignored. Fall through instead.
+    stateReason = 'in policy (' + sHit.map((x) => x.toUpperCase()).join('/') + ')';
   }
+
+  // ---- CITY POLICY --------------------------------------------------------
+  // Applied after country and state, and governed by the SAME rule that makes
+  // the state filter safe: a posting that is remote across the country can be
+  // taken from any city, so a city filter must never touch it. Without that
+  // exemption a subscriber who names their city loses every remote role on the
+  // board — the ones they can most easily take — and it fails silently.
+  //
+  // A city is matched as a whole word against the location string only, never
+  // the body: "our Tampa team is hiring for Phoenix" is a Phoenix job.
+  const cities = (policy.allowed_cities || [])
+    .map((x) => norm(x).replace(/,.*$/, '').trim()).filter(Boolean);
+  if (cities.length && hit.includes('US')) {
+    if (c.global || c.remoteNational) {
+      return { verdict: VERDICT.ALLOW, reason: 'remote across the US — any city can take it' };
+    }
+    const loc = norm(raw);
+    const cHit = cities.filter((city) =>
+      new RegExp('\\b' + city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(loc));
+    if (!cHit.length) {
+      // Unlike a state, a city is often simply absent from a location string
+      // that is still perfectly in range ("Hillsborough County, FL"). Blocking
+      // on absence would hide most of a metro area, so an unmatched posting
+      // that already passed the state check is FLAGGED, not dropped.
+      return { verdict: VERDICT.FLAG,
+               reason: 'outside the chosen ' + (cities.length > 1 ? 'cities' : 'city')
+                     + ' (' + cities.join('/') + '): ' + c.raw };
+    }
+    return { verdict: VERDICT.ALLOW, reason: 'in ' + cHit.join('/') };
+  }
+
+  if (stateReason) return { verdict: VERDICT.ALLOW, reason: stateReason };
 
   if (c.multi && hit.length < c.countries.length) {
     return { verdict: VERDICT.ALLOW, reason: 'multi-location, at least one in policy (' + hit.join('/') + ')' };

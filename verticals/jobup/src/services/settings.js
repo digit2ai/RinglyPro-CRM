@@ -97,6 +97,11 @@ const DEFAULTS = {
     // starts OFF: guessing a state from a résumé address would quietly hide
     // most of the board from someone who is willing to move or work remotely.
     allowed_states: [],
+    // [] === anywhere in the chosen states. A city is a NARROWER choice than a
+    // state and is the subscriber's alone: it comes from their résumé at signup
+    // and they change it here. Remote-national roles are exempt from it, the
+    // same rule that makes the state filter safe.
+    allowed_cities: [],
     flag_unknown: true,             // neither silently included nor excluded
   },
   facts: {                          // owner-entered, quoted verbatim or omitted
@@ -298,6 +303,18 @@ function sanitize(s) {
       .filter((x) => geoSvc.US_STATES.has(x))
       .filter((x) => (seen.has(x) ? false : (seen.add(x), true)))
       .slice(0, 51);
+  }
+  // Cities are free text — there is no closed list to validate against — so
+  // they are cleaned rather than rejected: trimmed, de-duplicated, capped, and
+  // stripped of the trailing ", FL" that people type out of habit and that
+  // would never match a location string on its own.
+  {
+    const seenC = new Set();
+    out.geo.allowed_cities = (Array.isArray(out.geo.allowed_cities) ? out.geo.allowed_cities : [])
+      .map((x) => String(x || '').replace(/,.*$/, '').trim().slice(0, 60))
+      .filter((x) => x.length > 1)
+      .filter((x) => (seenC.has(x.toLowerCase()) ? false : (seenC.add(x.toLowerCase()), true)))
+      .slice(0, 10);
   }
   out.identity_links = identityLinks(out.identity_links);
 

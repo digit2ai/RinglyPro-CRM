@@ -68,7 +68,7 @@ a{color:inherit}
   <div class="lang"><button data-l="en" class="on">EN</button><button data-l="es">ES</button></div>
 </div>
 <form class="search" id="f">
-  <input id="what" placeholder="Job title or keyword (e.g. analyst, sales)" autocomplete="off">
+  <input id="what" placeholder="Job title or keyword (e.g. {{BRAND_EG_ROLES}})" autocomplete="off">
   <input id="where" placeholder="City or area (e.g. Tampa, FL)" autocomplete="off">
   <button type="button" class="loc" id="useLoc">Use my location</button>
   <label class="chk"><input type="checkbox" id="remote"> <span id="remoteLbl">Remote</span></label>
@@ -87,11 +87,11 @@ a{color:inherit}
 (function(){
   var BASE = "{{BASE}}";
   var I18N = {
-    en:{ph_what:"Job title or keyword (e.g. analyst, sales)",ph_where:"City or area (e.g. Tampa, FL)",loc:"Use my location",remote:"Remote",go:"Search",
+    en:{ph_what:"Job title or keyword (e.g. {{BRAND_EG_ROLES}})",ph_where:"City or area (e.g. Tampa, FL)",loc:"Use my location",remote:"Remote",go:"Search",
          intro:"Search real, live openings and see who's hiring near you.",searching:"Searching…",
          none:"No openings found for that search. Try a broader keyword or a nearby city.",
          apply:"Apply →",count:function(n,m){return n+" openings · "+m+" on the map";},locating:"Finding your location…",locfail:"Couldn't get your location — type a city instead."},
-    es:{ph_what:"Puesto o palabra clave (p. ej. analista, ventas)",ph_where:"Ciudad o zona (p. ej. Tampa, FL)",loc:"Usar mi ubicación",remote:"Remoto",go:"Buscar",
+    es:{ph_what:"Puesto o palabra clave (p. ej. {{BRAND_EG_ROLES_ES}})",ph_where:"Ciudad o zona (p. ej. Tampa, FL)",loc:"Usar mi ubicación",remote:"Remoto",go:"Buscar",
          intro:"Busca vacantes reales y en vivo, y mira quién contrata cerca de ti.",searching:"Buscando…",
          none:"No se encontraron vacantes. Prueba una palabra más amplia o una ciudad cercana.",
          apply:"Postular →",count:function(n,m){return n+" vacantes · "+m+" en el mapa";},locating:"Buscando tu ubicación…",locfail:"No pudimos obtener tu ubicación — escribe una ciudad."}
@@ -113,9 +113,26 @@ a{color:inherit}
 
   // ---- map ----
   var map = L.map('map',{zoomControl:true,attributionControl:true}).setView([39.5,-98.35],4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    subdomains:'abcd',maxZoom:19,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  /* KEYLESS BASEMAP, DELIBERATELY.
+     This was CARTO's dark_all, which was free and no longer is: they now stamp
+     "API KEY REQUIRED" across every tile and still answer 200, so the map did
+     not fail — it rendered a watermark over the whole country, on a page the
+     visitor had not even searched from yet.
+
+     Esri's Dark Gray Canvas needs no key and no account, and this repo already
+     depends on Esri for the keyless satellite imagery in LawnCopilot. Base and
+     labels are two layers because Esri ships them separately; without the
+     reference layer the map is readable shapes with no city names.
+
+     If this ever starts asking for a key too, the map is not worth a signup:
+     take it out rather than wire a billable dependency into a page that loads
+     before anyone has searched. */
+  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; Esri'
+  }).addTo(map);
+  L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16
   }).addTo(map);
   var markers = [], byIndex = {}, lastData = null;
 
