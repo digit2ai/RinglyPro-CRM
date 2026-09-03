@@ -190,7 +190,11 @@ async function provisionAddress(tenantId, teaserToken) {
 async function ensureSettings(tenantId) {
   const row = await scoped('settings', tenantId).findOne({});
   if (row) return { step: 'settings', skipped: true };
-  await scoped('settings', tenantId).create({ settings: settingsSvc.sanitize({}) });
+  // Stamp the brand's geo rule at creation. A JobMD subscriber's search is US
+  // only from their very first run, without anyone remembering to set it.
+  const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+  const brand = require('../brand').forSubscriber(sub);
+  await scoped('settings', tenantId).create({ settings: settingsSvc.sanitize({}, { brand }) });
   return { step: 'settings', ok: true };
 }
 

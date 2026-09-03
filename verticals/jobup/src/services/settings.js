@@ -263,8 +263,9 @@ function deriveRemotePreference(modes, legacy) {
 deepFreeze(DEFAULTS);
 
 // Forced invariants, applied on EVERY save. Not advisory.
-function sanitize(s) {
+function sanitize(s, opts) {
   const out = deepMerge(DEFAULTS, s || {});
+  const brand = (opts && opts.brand) || null;
   out.approval_required = true;                       // cannot be turned off
   if (!out.privacy) out.privacy = { ...DEFAULTS.privacy };
   // Sensitive fields can only be opted IN explicitly and are private otherwise.
@@ -289,6 +290,11 @@ function sanitize(s) {
   out.geo = out.geo || {};
   out.geo.allowed_countries = ['US'];
   out.geo.flag_unknown = out.geo.flag_unknown !== false;
+  // Strict US-only is the BRAND's rule, not the subscriber's, so it is stamped
+  // from the brand and preserved otherwise. Like the country, it is not a
+  // control anyone can find and switch off.
+  if (brand) out.geo.strict_us = brand.us_only_strict === true;
+  else out.geo.strict_us = out.geo.strict_us === true;
   // States ARE the subscriber's to choose, unlike the country. Unknown codes are
   // dropped rather than stored, so a typo can never become a filter that
   // silently matches nothing.

@@ -224,7 +224,7 @@ const geo = require('../services/geo');
 const billing = require('../services/billing');
 
 /** Only what the search layer can act on; everything else is dropped. */
-function targetingFrom(body, fallbackRoles, resumeState) {
+function targetingFrom(body, fallbackRoles, resumeState, brand) {
   const b = body || {};
   const roles = settingsSvc.strList(b.roles, 12);
   return settingsSvc.sanitize({
@@ -269,7 +269,7 @@ function targetingFrom(body, fallbackRoles, resumeState) {
       availability: b.availability ? String(b.availability).slice(0, 120) : null,
       notice_period: b.notice_period ? String(b.notice_period).slice(0, 120) : null,
     },
-  });
+  }, { brand });
 }
 
 /**
@@ -527,7 +527,8 @@ router.post('/build-account', async (req, res) => {
       }
     } catch (e) { /* a failure here must never cost a signup — the agent retries */ }
 
-    const cleaned = targetingFrom({ ...b, roles: seedRoles }, seedRoles, resumeState(site));
+    const cleaned = targetingFrom({ ...b, roles: seedRoles }, seedRoles, resumeState(site),
+      require('../brand').forRequest(req));
     // Mandatory, not instantaneous: false here is a job for the daily agent.
     cleaned.targeting.roles_widened = widened;
     const existingSettings = await scoped('settings', tenantId).findOne({});

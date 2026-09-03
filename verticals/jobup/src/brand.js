@@ -41,6 +41,10 @@ const BRANDS = {
     // Example roles in the job-search placeholder. A medical site prompting
     // for "analyst, sales" tells a surgeon they are on the wrong website.
     eg_roles_en: 'analyst, sales', eg_roles_es: 'analista, ventas',
+    // JobUp FLAGS a posting it cannot place rather than dropping it: its
+    // subscriber reviews the edge cases themselves, and a US role written as
+    // "WQAD-TV Davenport" is worth showing with a caveat.
+    us_only_strict: false,
     // Who the product speaks to. Drives the copy overlay, nothing structural.
     audience: 'professional',
     audience_one: 'professional',
@@ -73,6 +77,13 @@ const BRANDS = {
     word_head: 'Job', word_tail: 'MD', word_tld: '.io',
     eg_roles_en: 'nurse practitioner, surgeon',
     eg_roles_es: 'enfermera especialista, cirujano',
+    // US POSTINGS ONLY, AND NOTHING ELSE. Every filter in the engine drops
+    // BLOCK and passes FLAG, so "we could not verify this is in the US" was a
+    // pass — a posting with no location, one saying "Anywhere", and one nobody
+    // could parse all reached the subscriber. For a licensed clinical role
+    // that is wrong: unverified means no. Costs some genuinely-US postings
+    // whose location is unreadable, which is the right side to err on here.
+    us_only_strict: true,
     audience: 'medical',
     audience_one: 'clinician',
     audience_many: 'doctors, surgeons and medical staff',

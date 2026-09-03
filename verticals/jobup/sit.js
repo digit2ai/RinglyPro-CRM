@@ -8438,6 +8438,70 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'allow', 'and with no city chosen it still allows the whole state');
     });
 
+    await t('GEO: JobMD is US ONLY — an unverified location is refused', () => {
+      // Every filter in the engine drops BLOCK and passes FLAG, so before this
+      // a flag was a pass: measured against the live pool, 913 of 8,000
+      // postings reached subscribers without being verifiably in the US.
+      const g = require('./src/services/geo');
+      const strict = { allowed_countries: ['US'], flag_unknown: true, strict_us: true };
+      [['', 'no location at all'],
+       ['Remote - Global', 'open to the whole world'],
+       ['Remote, Anywhere', 'anywhere'],
+       ['2 Locations', 'unnamed locations'],
+       ['Virtual', 'unplaceable'],
+       ['N/A', 'unplaceable'],
+       ['North America', 'includes Canada and Mexico'],
+       ['London, United Kingdom', 'foreign']]
+        .forEach(([loc, why]) => assert.strictEqual(g.evaluate(loc, strict).verdict, 'block',
+          JSON.stringify(loc) + ' must not reach a JobMD subscriber (' + why + ')'));
+      // And a real US posting still passes.
+      [['Miami, FL'], ['Austin, TX'], ['Remote - US'], ['United States']]
+        .forEach(([loc]) => assert.strictEqual(g.evaluate(loc, strict).verdict, 'allow', loc));
+    });
+
+    await t('GEO: strict is the BRAND\'s rule, and JobUp is not changed by it', () => {
+      const S = require('./src/services/settings');
+      assert.strictEqual(S.sanitize({}, { brand: BRAND.byId('jobmd') }).geo.strict_us, true);
+      assert.strictEqual(S.sanitize({}, { brand: BRAND.byId('jobup') }).geo.strict_us, false);
+      // A subscriber cannot switch it on or off; the brand decides.
+      assert.strictEqual(
+        S.sanitize({ geo: { strict_us: true } }, { brand: BRAND.byId('jobup') }).geo.strict_us, false);
+      // JobUp keeps FLAGGING what it cannot place — right for a product whose
+      // subscriber reviews the edge cases themselves.
+      const g = require('./src/services/geo');
+      const loose = { allowed_countries: ['US'], flag_unknown: true };
+      assert.strictEqual(g.evaluate('WQAD-TV Davenport', loose).verdict, 'flag');
+      assert.strictEqual(g.evaluate('Remote - Global', loose).verdict, 'allow');
+    });
+
+    await t('GEO: the parser reads the countries that were leaking through', () => {
+      // 1,568 of 8,000 live postings were "country not recognized", and the
+      // bucket was overwhelmingly foreign. The filter was not weak; the parser
+      // could not read the strings it was being asked to judge.
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], flag_unknown: true };
+      ['Warsaw  Poland', 'Budapest, hu', 'Campinas, br', 'Suzhou, cn',
+       'Kuala Lumpur Selangor Malaysia', 'Kowloon  Hong Kong', 'Seoul, South Korea',
+       'Dubai United Arab Emirates', 'Cluj-Napoca, ro', 'Braga, pt', 'Zurich',
+       'Remote Poland', 'Bayan Lepas, my']
+        .forEach((l) => assert.strictEqual(g.evaluate(l, pol).verdict, 'block', l));
+    });
+
+    await t('GEO: AND THE US STATE CODES THAT COLLIDE WITH COUNTRIES SURVIVE', () => {
+      // The ISO-suffix rule reads ", hu" as Hungary. Half the two-letter codes
+      // are also US states — IN India/Indiana, OR Oregon, LA Louisiana,
+      // MA Massachusetts/Morocco, PA Pennsylvania, CO Colorado/Colombia,
+      // CA California/Canada, DE Delaware/Germany. Reading one of those as a
+      // country sends a Los Angeles job to Toronto.
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], flag_unknown: true };
+      ['Portland, OR', 'Indianapolis, IN', 'New Orleans, LA', 'Boston, MA',
+       'Philadelphia, PA', 'Denver, CO', 'Los Angeles, CA', 'Wilmington, DE',
+       'Baltimore, MD', 'Helena, MT', 'Columbia, SC', 'Chicago, IL',
+       'Little Rock, AR', 'Kansas City, MO', 'Jackson, MS', 'Birmingham, AL']
+        .forEach((l) => assert.strictEqual(g.evaluate(l, pol).verdict, 'allow', l));
+    });
+
     await t('GEO: a typed city is cleaned, not rejected', () => {
       const S = require('./src/services/settings');
       const out = S.sanitize({ geo: { allowed_cities: ['Tampa, FL', 'tampa', '  Orlando  ', 'x', ''] } });
