@@ -8375,6 +8375,76 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'and the column must be in the idempotent migration, or every INSERT naming it fails');
     });
 
+    // ── US ONLY, AND ONLY WHERE THEY CHOSE ─────────────────────────
+    await t('GEO: the country is enforced, not merely defaulted', () => {
+      // A subscriber cannot widen it, and neither can a stale row: sanitize
+      // rewrites it on every save. Both products hunt US postings only.
+      const S = require('./src/services/settings');
+      assert.deepStrictEqual(S.sanitize({ geo: { allowed_countries: ['US', 'GB', 'IN'] } })
+        .geo.allowed_countries, ['US']);
+      assert.deepStrictEqual(S.sanitize({ geo: { allowed_countries: [] } })
+        .geo.allowed_countries, ['US']);
+      assert.deepStrictEqual(S.sanitize({}).geo.allowed_countries, ['US']);
+    });
+
+    await t('GEO: non-US postings are blocked, US and remote-US are not', () => {
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], flag_unknown: true };
+      [['Tampa, FL', 'allow'], ['Remote - US', 'allow'],
+       ['London, United Kingdom', 'block'], ['Toronto, Ontario', 'block'],
+       ['Bengaluru, India', 'block'], ['Manila, Philippines', 'block']]
+        .forEach(([loc, want]) => assert.strictEqual(g.evaluate(loc, pol).verdict, want, loc));
+    });
+
+    await t('GEO: the location starts from the RESUME, not from a question', () => {
+      // The board is local from day one without asking. One state, never a
+      // guess at a second, and the whole country stays one change away.
+      const src = fs.readFileSync(__dirname + '/src/routes/intake.js', 'utf8');
+      assert.ok(/geo: resumeState \? \{ allowed_states: \[resumeState\] \} : \{\}/.test(src),
+        'signup must seed the state from the resume');
+    });
+
+    await t('GEO: and the subscriber can narrow it to their own city', () => {
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], allowed_states: ['fl'],
+        allowed_cities: ['Tampa'], flag_unknown: true };
+      assert.strictEqual(g.evaluate('Tampa, FL', pol).verdict, 'allow');
+      assert.strictEqual(g.evaluate('Miami, FL', pol).verdict, 'flag',
+        'a different city in the same state must not read as in range');
+      assert.strictEqual(g.evaluate('London, United Kingdom', pol).verdict, 'block');
+    });
+
+    await t('GEO: A REMOTE-US ROLE SURVIVES EVERY LOCATION FILTER', () => {
+      // The rule that makes location filtering safe at all. A remote-national
+      // posting is takeable from any city and any state, so filtering it out
+      // deletes exactly the roles a location-restricted subscriber can most
+      // easily take — and it fails silently, looking like a thin week.
+      const g = require('./src/services/geo');
+      const tight = { allowed_countries: ['US'], allowed_states: ['fl'],
+        allowed_cities: ['Tampa'], flag_unknown: true };
+      ['Remote - US', 'Remote (US only)', 'Remote - United States']
+        .forEach((l) => assert.strictEqual(g.evaluate(l, tight).verdict, 'allow', l));
+    });
+
+    await t('GEO: passing the state does not end the check', () => {
+      // The state branch used to return ALLOW, which made the city rule
+      // unreachable for exactly the people who had set one: choosing Tampa
+      // showed the whole of Florida and the filter looked ignored.
+      const src = fs.readFileSync(__dirname + '/src/services/geo.js', 'utf8');
+      assert.ok(/stateReason = /.test(src), 'the state branch must fall through');
+      const g = require('./src/services/geo');
+      assert.strictEqual(
+        g.evaluate('Miami, FL', { allowed_countries: ['US'], allowed_states: ['fl'] }).verdict,
+        'allow', 'and with no city chosen it still allows the whole state');
+    });
+
+    await t('GEO: a typed city is cleaned, not rejected', () => {
+      const S = require('./src/services/settings');
+      const out = S.sanitize({ geo: { allowed_cities: ['Tampa, FL', 'tampa', '  Orlando  ', 'x', ''] } });
+      assert.deepStrictEqual(out.geo.allowed_cities, ['Tampa', 'Orlando'],
+        'the trailing state people type out of habit would never match a location string');
+    });
+
     await t('BRAND: both products share the mark, and the swap is one line', () => {
       // The agreement was a replica: same colour, same thing, same everything.
       // The nav glyph is drawn inline in the page, so a per-brand favicon with

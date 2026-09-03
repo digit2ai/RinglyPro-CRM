@@ -38,6 +38,9 @@ const BRANDS = {
     // The nav wordmark is split across spans for styling, so it needs its own
     // tokens: a whole-name replacement cannot see "Job" + "Up" + ".dev".
     word_head: 'Job', word_tail: 'Up', word_tld: '.dev',
+    // Example roles in the job-search placeholder. A medical site prompting
+    // for "analyst, sales" tells a surgeon they are on the wrong website.
+    eg_roles_en: 'analyst, sales', eg_roles_es: 'analista, ventas',
     // Who the product speaks to. Drives the copy overlay, nothing structural.
     audience: 'professional',
     audience_one: 'professional',
@@ -68,6 +71,8 @@ const BRANDS = {
     tagline: 'Your Personal AI Medical Career Platform',
     title: 'JobMD.io — Your Personal AI Medical Career Platform',
     word_head: 'Job', word_tail: 'MD', word_tld: '.io',
+    eg_roles_en: 'nurse practitioner, surgeon',
+    eg_roles_es: 'enfermera especialista, cirujano',
     audience: 'medical',
     audience_one: 'clinician',
     audience_many: 'doctors, surgeons and medical staff',
@@ -173,7 +178,8 @@ function tokens(brand) {
     BRAND_FOOTER: b.footer_by,
     BRAND_BUILT_BY: b.built_by,
     BRAND_URL: 'https://' + b.domain,
-    BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld
+    BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld,
+    BRAND_EG_ROLES: b.eg_roles_en, BRAND_EG_ROLES_ES: b.eg_roles_es
   };
 }
 
