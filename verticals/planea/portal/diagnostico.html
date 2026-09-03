@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="planea-app.css?v=65">
+<link rel="stylesheet" href="planea-app.css?v=66">
 <style>
   .dg-hd{margin:6px 0 14px}
   .dg-hd .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700}
@@ -136,6 +136,13 @@
   .dg-pex-nm{flex:1;text-align:left;font-weight:700;font-size:14.5px}
   .dg-pex-w{color:var(--mut);font-weight:500;font-size:12px}
   .dg-pex-v{font-family:'Inter',sans-serif;font-weight:800;font-size:16px}
+  .dg-pex>summary{cursor:pointer;list-style:none}
+  .dg-pex>summary::-webkit-details-marker{display:none}
+  .dg-pex-vwrap{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0}
+  .dg-pex-caret{display:flex;color:var(--mut);transition:transform .2s ease}
+  .dg-pex-caret svg{width:16px;height:16px;display:block}
+  .dg-pex[open] .dg-pex-caret{transform:rotate(180deg)}
+  .dg-pex-prio .dg-pex-caret{color:var(--greenb)}
   .dg-pex-bar{height:7px;border-radius:99px;background:var(--line);margin-top:9px;overflow:hidden}
   .dg-pex-fill{height:100%;border-radius:99px;transition:width .7s ease}
   .dg-pex-maya{display:flex;align-items:flex-start;gap:9px;margin-top:11px}
@@ -179,7 +186,7 @@
 <script src="/planea/portal/planea-nav.js?v=70" defer></script>
 <script src="/planea/portal/planea-sb.js?v=70" defer></script>
 <script src="/planea/portal/planea-motor.js?v=1" defer></script>
-<script src="/planea/portal/planea-diagnostico.js?v=74" defer></script>
+<script src="/planea/portal/planea-diagnostico.js?v=75" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
 </body>
 </html>

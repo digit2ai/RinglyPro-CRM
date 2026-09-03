@@ -29,9 +29,9 @@
       { val: 'casi_todos', label: 'Sí, casi todos los meses' }, { val: 'a_veces', label: 'A veces, cuando me queda algo' }, { val: 'casi_nunca', label: 'Casi nunca me queda' }, { val: 'cero', label: 'Termino el mes en cero o debiendo' } ] },
     6:  { key: 'ahorro_cobertura', tag: 'Ahorro · 2 de 2', title: 'Si dejaras de recibir ingresos hoy, ¿cuánto tiempo cubrirías tus gastos con lo guardado?', type: 'single', auto: true, options: [
       { val: 'nada', label: 'No tengo nada guardado' }, { val: 'm1', label: 'Menos de 1 mes' }, { val: 'm1_3', label: 'Entre 1 y 3 meses' }, { val: 'm3_6', label: 'Entre 3 y 6 meses' }, { val: 'm6plus', label: 'Más de 6 meses' } ] },
-    7:  { key: 'deuda_tipos', tag: 'Deuda · 1 de 2', title: '¿Qué tipo de deudas tienes hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: 'ninguna', options: [
+    7:  { key: 'deuda_tipos', tag: 'Deuda', title: '¿Qué tipo de deudas tienes hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: 'ninguna', options: [
       { val: 'tarjeta', label: 'Tarjeta de crédito' }, { val: 'libre', label: 'Préstamo personal o de libre inversión' }, { val: 'hipotecario', label: 'Crédito hipotecario' }, { val: 'vehiculo', label: 'Crédito de vehículo' }, { val: 'educativo', label: 'Crédito educativo' }, { val: 'compras', label: 'Compras a cuotas o financiadas' }, { val: 'informal', label: 'Deuda con familiares o particulares' }, { val: 'ninguna', label: 'No tengo deudas' } ] },
-    8:  { key: 'seguros_tipos', tag: 'Seguros · 1 de 2', title: '¿Qué seguros o pólizas tienes activas hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: ['ninguno', 'inseguro'], options: [
+    8:  { key: 'seguros_tipos', tag: 'Seguros', title: '¿Qué seguros o pólizas tienes activas hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: ['ninguno', 'inseguro'], options: [
       { val: 'salud', label: 'Salud o medicina prepagada' }, { val: 'vida', label: 'Vida' }, { val: 'vehiculo', label: 'Vehículo' }, { val: 'hogar', label: 'Hogar' }, { val: 'empresa', label: 'Solo lo que me da la empresa' }, { val: 'ninguno', label: 'No tengo ninguno' }, { val: 'inseguro', label: 'No estoy seguro' } ] },
     9:  { key: 'seguros_suficiencia', tag: 'Seguros · 2 de 2', title: 'Si no pudieras trabajar mañana, ¿por cuánto tiempo estarían cubiertos tú y los tuyos?', type: 'single', auto: true, options: [
       { val: 'menos3', label: 'Menos de 3 meses' }, { val: '3a12', label: 'Entre 3 meses y 1 año' }, { val: 'mas1', label: 'Más de 1 año' }, { val: 'nose', label: 'No sé' } ] },
@@ -47,13 +47,13 @@
       { val: 'aldia', label: 'Declaro y estoy al día' }, { val: 'atraso', label: 'Declaro pero me atraso' }, { val: 'notoca', label: 'Creo que no me toca declarar' }, { val: 'nose', label: 'No sé si me toca o no' } ] },
     15: { key: 'impuestos_soportes', tag: 'Impuestos · 2 de 2', title: '¿Llevas registro de los soportes que sirven para declarar?', type: 'single', auto: true, options: [
       { val: 'organizados', label: 'Sí, organizados' }, { val: 'algunos', label: 'Algunos, sin orden' }, { val: 'ninguno', label: 'No llevo ninguno' }, { val: 'nose', label: 'No sé cuáles necesito' } ] },
-    16: { key: 'inversion_donde', tag: 'Inversión · 1 de 2', title: '¿Dónde tienes dinero invertido hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: 'ninguno', options: [
+    16: { key: 'inversion_donde', tag: 'Inversión', title: '¿Dónde tienes dinero invertido hoy?', hint: 'Selecciona todas las que apliquen.', type: 'multi', exclusive: 'ninguno', options: [
       { val: 'cdt', label: 'CDT o ahorro programado' }, { val: 'fondos', label: 'Fondos de inversión' }, { val: 'acciones', label: 'Acciones o bonos' }, { val: 'fincaraiz', label: 'Finca raíz para renta' }, { val: 'negocio', label: 'Negocio propio' }, { val: 'cripto', label: 'Criptomonedas' }, { val: 'ninguno', label: 'No tengo nada invertido' } ] },
     17: { key: 'inversion_magnitud', tag: 'Inversión · 2 de 2', title: '¿Qué parte de tu dinero tienes invertido para que crezca?', type: 'single', auto: true, options: [
       { val: 'nada', label: 'Nada' }, { val: 'menos1', label: 'Menos de un mes de mis ingresos' }, { val: '1a6', label: 'Entre 1 y 6 meses de mis ingresos' }, { val: 'mas6', label: 'Más de 6 meses de mis ingresos' }, { val: 'nose', label: 'No sé bien qué cuenta como inversión' } ] },
-    18: { key: 'rango_ingresos', tag: 'Flujo de Caja · 1 de 3', title: '¿Cuánto recibes al mes en total?', hint: 'Suma todo: sueldo, rebusque, arriendos, negocio.', type: 'exact', moneyStep: true, exactKey: 'monto_ingresos', exactLabel: 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.', placeholder: '4.000.000', options: [
+    18: { key: 'rango_ingresos', tag: 'Flujo de Caja · 1 de 2', title: '¿Cuánto recibes al mes en total?', hint: 'Suma todo: sueldo, rebusque, arriendos, negocio.', type: 'exact', moneyStep: true, exactKey: 'monto_ingresos', exactLabel: 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.', placeholder: '4.000.000', options: [
       { val: 'i1', label: 'Menos de $1.500.000' }, { val: 'i2', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'i3', label: 'Entre $3.000.000 y $6.000.000' }, { val: 'i4', label: 'Entre $6.000.000 y $12.000.000' }, { val: 'i5', label: 'Más de $12.000.000' } ] },
-    19: { key: 'rango_gastos', tag: 'Flujo de Caja · 2 de 3', title: '¿Cuánto se te va al mes en total?', hint: 'Arriendo, mercado, transporte, todo lo del día a día.', type: 'exact', moneyStep: true, exactKey: 'monto_gastos', exactLabel: 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.', placeholder: '3.000.000', options: [
+    19: { key: 'rango_gastos', tag: 'Flujo de Caja · 2 de 2', title: '¿Cuánto se te va al mes en total?', hint: 'Arriendo, mercado, transporte, todo lo del día a día.', type: 'exact', moneyStep: true, exactKey: 'monto_gastos', exactLabel: 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.', placeholder: '3.000.000', options: [
       { val: 'g1', label: 'Menos de $1.500.000' }, { val: 'g2', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'g3', label: 'Entre $3.000.000 y $6.000.000' }, { val: 'g4', label: 'Entre $6.000.000 y $12.000.000' }, { val: 'g5', label: 'Más de $12.000.000' } ] },
     20: { key: 'rango_pago', tag: 'Deuda · 2 de 2', title: '¿Cuánto pagas al mes en cuotas sumando todas tus deudas?', type: 'exact', moneyStep: true, last: true, exactKey: 'monto_pago', exactLabel: 'Si conoces la cifra exacta, escríbela (opcional). Nunca bloquea el avance.', placeholder: '800.000', options: [
       { val: 'nopago', label: 'No pago cuotas' }, { val: 'p1', label: 'Menos de $500.000' }, { val: 'p2', label: 'Entre $500.000 y $1.500.000' }, { val: 'p3', label: 'Entre $1.500.000 y $3.000.000' }, { val: 'p4', label: 'Más de $3.000.000' } ] }
@@ -91,8 +91,9 @@
   function activeSteps() {
     var s = [];
     for (var i = 1; i <= 20; i++) {
-      if (i === 17 && Array.isArray(answers.inversion_donde) && answers.inversion_donde.indexOf('ninguno') >= 0) continue;
-      if (i === 20 && Array.isArray(answers.deuda_tipos) && answers.deuda_tipos.indexOf('ninguna') >= 0) continue;
+      // Preguntas retiradas del flujo (el motor las deja en su valor neutro): Seguros 2/2,
+      // Inversión 2/2 y Deuda 2/2.
+      if (i === 9 || i === 17 || i === 20) continue;
       s.push(i);
     }
     return s;
@@ -210,7 +211,8 @@
       return '<details class="dg-pex' + (esPrio ? ' dg-pex-prio' : '') + '">' +
         '<summary>' +
           '<div class="dg-pex-top"><span class="dg-pex-nm">' + esc(PILAR_LABEL[k]) + (esPrio ? ' <span class="dg-pex-flag">Empieza aquí</span>' : '') + '</span>' +
-          '<span class="dg-pex-v" style="color:' + col + '">' + v + '</span></div>' +
+          '<span class="dg-pex-vwrap"><span class="dg-pex-v" style="color:' + col + '">' + v + '</span>' +
+          '<span class="dg-pex-caret" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></span></div>' +
           '<div class="dg-pex-bar"><div class="dg-pex-fill" style="width:' + Math.max(v, 3) + '%;background:' + col + '"></div></div>' +
         '</summary>' +
         '<div class="dg-pex-body">' +
@@ -318,6 +320,8 @@
   function paint() {
     if (current === 'intro') root.innerHTML = renderIntro();
     else if (typeof current === 'number') root.innerHTML = renderQuestion(current);
+    // El encabezado con el texto de bienvenida solo va en la primera pantalla del onboarding.
+    var hd = document.querySelector('.dg-hd'); if (hd) hd.style.display = (current === 'intro') ? '' : 'none';
   }
   function go(step) { current = step; paint(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function next(from) {
@@ -356,6 +360,7 @@
   function startCalc() {
     var r = E.compute(answers);
     root.innerHTML = renderCalculating();
+    var hc = document.querySelector('.dg-hd'); if (hc) hc.style.display = 'none';
     window.scrollTo({ top: 0, behavior: 'smooth' });
     CALC_LABELS.forEach(function (_, i) { setTimeout(function () { var el = document.querySelector('[data-ci="' + i + '"]'); if (el) el.classList.add('done'); }, 450 + i * 520); });
     setTimeout(function () { showResult(r); }, 3200);
@@ -364,6 +369,7 @@
   function showResult(r, opts) {
     current = 'result';
     root.innerHTML = renderResult(r);
+    var hr = document.querySelector('.dg-hd'); if (hr) hr.style.display = 'none';
     window.scrollTo({ top: 0, behavior: 'smooth' });
     var C = 2 * Math.PI * 63, ring = document.getElementById('dg-ring');
     setTimeout(function () { if (ring) ring.setAttribute('stroke-dashoffset', C - (r.score / 100) * C); }, 140);
