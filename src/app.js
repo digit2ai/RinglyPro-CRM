@@ -1271,25 +1271,6 @@ app.get('/docs/enterprise-architecture', (req, res) => {
   return res.sendFile(path.join(__dirname, '..', 'private-docs', 'digit2ai-enterprise-architecture.html'));
 });
 
-// ComplianceMind — narrated Spanish demo for BDT management (Dalia, es-MX).
-// Registered BEFORE express.static so the frame-ancestors CSP actually applies:
-// digit2ai.com is a GoHighLevel site, so the customer-facing URL there is a page
-// that iframes this one. The deck is a single self-contained file (fonts and all
-// eleven narration MP3s inlined as data URIs), so it renders identically served
-// from any host, embedded in an iframe, or opened straight off a laptop with no
-// network at all — which is how it gets presented in a boardroom.
-// Every figure on screen is synthetic and labelled as such; nothing here is BDT data.
-// Path is matched case-insensitively on purpose: the deck gets linked from GHL,
-// from email and from chat, and each one rewrites the capitalisation differently.
-app.get(['/ComplianceMind_Demo_BDT.html', '/compliancemind_demo_bdt.html', '/compliancemind-demo'], (req, res) => {
-  res.removeHeader('X-Frame-Options');
-  res.setHeader('Content-Security-Policy',
-    "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  res.setHeader('Cache-Control', 'public, max-age=600');
-  return res.sendFile(path.join(__dirname, '..', 'public', 'ComplianceMind_Demo_BDT.html'));
-});
-
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)

@@ -6672,9 +6672,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.strictEqual(v('Remote - US'), 'allow');
     assert.strictEqual(v('London, United Kingdom'), 'block');
     assert.strictEqual(v('Bengaluru, India'), 'block');
-    // A locationless posting is FLAGGED for review, never silently included.
-    assert.strictEqual(v(''), 'flag');
+    // A LOCATIONLESS POSTING IS NOW REFUSED, not flagged.
+    //
+    // This assertion used to expect 'flag' and had been failing on main since
+    // us_only shipped: the code refused it while the test still described the
+    // older behaviour, so the suite was red and the contradiction was between
+    // two halves of the same change. US-only means a posting we cannot confirm
+    // is in the United States does not reach the board — a flag is a PASS
+    // everywhere in this engine, because every filter drops BLOCK only.
+    assert.strictEqual(v(''), 'block');
     assert.strictEqual(pol.flag_unknown, true);
+    assert.strictEqual(pol.us_only, true, 'and it is on for every profile');
 
     // The picker must be gone from the dashboard, or it would offer a choice
     // the server now overrides — a control that lies about what it does.
@@ -6705,10 +6713,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     // The exemptions, each for a different reason.
     assert.strictEqual(v('Remote - US').verdict, 'allow', 'REMOTE-US MUST SURVIVE A STATE FILTER');
     assert.strictEqual(v('Remote (US only)').verdict, 'allow');
-    assert.strictEqual(v('Remote - Global').verdict, 'allow');
+    // "Remote - Global" is REFUSED, and this line used to expect 'allow'.
+    // A role open to anyone on earth is takeable FROM the US but is not a job
+    // based IN it, which under a US-only rule is the distinction that matters.
+    assert.strictEqual(v('Remote - Global').verdict, 'block');
+    // Still a flag: this one IS confirmed US, only the state is unstated, so
+    // the subscriber judges it rather than losing it.
     assert.strictEqual(v('United States').verdict, 'flag',
       'US but state unstated is judged by the subscriber, never silently dropped');
-    assert.strictEqual(v('').verdict, 'flag');
+    assert.strictEqual(v('').verdict, 'block', 'no location at all is refused');
     // Multi-location: one in policy is enough.
     assert.strictEqual(v('Miami, FL or Austin, TX').verdict, 'allow');
 
@@ -8436,6 +8449,73 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.strictEqual(
         g.evaluate('Miami, FL', { allowed_countries: ['US'], allowed_states: ['fl'] }).verdict,
         'allow', 'and with no city chosen it still allows the whole state');
+    });
+
+    await t('GEO: JobMD is US ONLY — an unverified location is refused', () => {
+      // Every filter in the engine drops BLOCK and passes FLAG, so before this
+      // a flag was a pass: measured against the live pool, 913 of 8,000
+      // postings reached subscribers without being verifiably in the US.
+      const g = require('./src/services/geo');
+      const strict = { allowed_countries: ['US'], flag_unknown: true, strict_us: true };
+      [['', 'no location at all'],
+       ['Remote - Global', 'open to the whole world'],
+       // NOTE: a bare "Remote"/"Remote, Anywhere" naming no foreign region is
+       // deliberately KEPT — the pool is US-sourced, so it is a US-workable
+       // role rather than a foreign office. "Remote - Global" is not: it says
+       // outright that it is open to the whole world.
+       ['2 Locations', 'unnamed locations'],
+       ['Virtual', 'unplaceable'],
+       ['N/A', 'unplaceable'],
+       ['North America', 'includes Canada and Mexico'],
+       ['London, United Kingdom', 'foreign']]
+        .forEach(([loc, why]) => assert.strictEqual(g.evaluate(loc, strict).verdict, 'block',
+          JSON.stringify(loc) + ' must not reach a JobMD subscriber (' + why + ')'));
+      // And a real US posting still passes.
+      [['Miami, FL'], ['Austin, TX'], ['Remote - US'], ['United States']]
+        .forEach(([loc]) => assert.strictEqual(g.evaluate(loc, strict).verdict, 'allow', loc));
+    });
+
+    await t('GEO: strict is the BRAND\'s rule, and JobUp is not changed by it', () => {
+      const S = require('./src/services/settings');
+      assert.strictEqual(S.sanitize({}, { brand: BRAND.byId('jobmd') }).geo.strict_us, true);
+      assert.strictEqual(S.sanitize({}, { brand: BRAND.byId('jobup') }).geo.strict_us, false);
+      // A subscriber cannot switch it on or off; the brand decides.
+      assert.strictEqual(
+        S.sanitize({ geo: { strict_us: true } }, { brand: BRAND.byId('jobup') }).geo.strict_us, false);
+      // JobUp keeps FLAGGING what it cannot place — right for a product whose
+      // subscriber reviews the edge cases themselves.
+      const g = require('./src/services/geo');
+      const loose = { allowed_countries: ['US'], flag_unknown: true };
+      assert.strictEqual(g.evaluate('WQAD-TV Davenport', loose).verdict, 'flag');
+      assert.strictEqual(g.evaluate('Remote - Global', loose).verdict, 'allow');
+    });
+
+    await t('GEO: the parser reads the countries that were leaking through', () => {
+      // 1,568 of 8,000 live postings were "country not recognized", and the
+      // bucket was overwhelmingly foreign. The filter was not weak; the parser
+      // could not read the strings it was being asked to judge.
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], flag_unknown: true };
+      ['Warsaw  Poland', 'Budapest, hu', 'Campinas, br', 'Suzhou, cn',
+       'Kuala Lumpur Selangor Malaysia', 'Kowloon  Hong Kong', 'Seoul, South Korea',
+       'Dubai United Arab Emirates', 'Cluj-Napoca, ro', 'Braga, pt', 'Zurich',
+       'Remote Poland', 'Bayan Lepas, my']
+        .forEach((l) => assert.strictEqual(g.evaluate(l, pol).verdict, 'block', l));
+    });
+
+    await t('GEO: AND THE US STATE CODES THAT COLLIDE WITH COUNTRIES SURVIVE', () => {
+      // The ISO-suffix rule reads ", hu" as Hungary. Half the two-letter codes
+      // are also US states — IN India/Indiana, OR Oregon, LA Louisiana,
+      // MA Massachusetts/Morocco, PA Pennsylvania, CO Colorado/Colombia,
+      // CA California/Canada, DE Delaware/Germany. Reading one of those as a
+      // country sends a Los Angeles job to Toronto.
+      const g = require('./src/services/geo');
+      const pol = { allowed_countries: ['US'], flag_unknown: true };
+      ['Portland, OR', 'Indianapolis, IN', 'New Orleans, LA', 'Boston, MA',
+       'Philadelphia, PA', 'Denver, CO', 'Los Angeles, CA', 'Wilmington, DE',
+       'Baltimore, MD', 'Helena, MT', 'Columbia, SC', 'Chicago, IL',
+       'Little Rock, AR', 'Kansas City, MO', 'Jackson, MS', 'Birmingham, AL']
+        .forEach((l) => assert.strictEqual(g.evaluate(l, pol).verdict, 'allow', l));
     });
 
     await t('GEO: a typed city is cleaned, not rejected', () => {

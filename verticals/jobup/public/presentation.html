@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>JobUp · Product Walkthrough</title>
+<title>{{BRAND}} · Product Walkthrough</title>
 <style>
   :root{
     --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1b1b23;
@@ -238,7 +238,7 @@
 <div class="cover" id="cover">
   <div class="logo"><span id="mark"></span> <span>Job<span class="gt">Up</span></span></div>
   <h1 id="cvH">Let AI find your next job</h1>
-  <p id="cvP">A guided walkthrough of JobUp.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, JobUp's AI voice.</p>
+  <p id="cvP">A guided walkthrough of {{BRAND}}.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}'s AI voice.</p>
   <div class="langsw clang"><button id="cvEn" class="on">EN</button><button id="cvEs">ES</button></div>
   <button class="go" id="start">Start the walkthrough</button>
   <div class="note" id="cvNote">Arrows to navigate · space to pause or resume the voice. Pause anytime to take questions.</div>
@@ -282,7 +282,7 @@
     var TABS=['Analytics','Job Matches','Opportunities','Pipeline','Getting found','My CV','Settings','Account'];
     var tabs=TABS.map(function(t){var on=(t===active)?' on':'';return '<div class="tab'+on+'">'+t+'</div>';}).join('');
     return '<div class="app"><div class="app-top"><div class="who"><div class="av">'+MARK+'</div>'
-      +'<div><div class="nm">Manny Stagg</div><div class="hd">SME Senior · Full-Stack AI Solutions Architect · mannystagg.jobup.dev</div></div></div>'
+      +'<div><div class="nm">Manny Stagg</div><div class="hd">SME Senior · Full-Stack AI Solutions Architect · mannystagg.{{BRAND_DOMAIN}}</div></div></div>'
       +'<div class="btn">View public CV</div><span class="langsw"><button class="on">EN</button><button>ES</button></span><div class="btn">Sign out</div></div>'
       +'<div class="tabs">'+tabs+'</div><div class="app-body">'+body+'</div></div>';
   }
@@ -294,7 +294,7 @@
       +'<div class="btn" style="margin-left:22px">Sign in</div></div>'
       +'<div class="lnd-body"><span class="eyebrow"><span class="d"></span> Career Intelligence</span>'
       +'<h1>Stop Looking for Jobs.<br><span class="gt">Let AI Find Them.</span></h1>'
-      +'<p>Talk to the Orb or upload your resume. In minutes, JobUp builds your career ecosystem — a personal website, a custom web address, an AI-readable profile, and real-time job matches.</p>'
+      +'<p>Talk to the Orb or upload your resume. In minutes, {{BRAND}} builds your career ecosystem — a personal website, a custom web address, an AI-readable profile, and real-time job matches.</p>'
       +'<div class="orb"></div>'
       +'<div class="lnd-cta"><span class="btn-grad">Attach my resume</span><span class="btn-ghost">Job search in your area</span></div></div></div>';
   }
@@ -309,7 +309,7 @@
   }
   function scrProgress(){
     return '<div class="center"><div class="prg"><div class="prg-head"><div class="orb sm"></div>'
-      +'<div><div class="t">Ava — JobUp</div><div class="s">Understanding your experience…</div></div></div>'
+      +'<div><div class="t">Ava — {{BRAND}}</div><div class="s">Understanding your experience…</div></div></div>'
       +'<div class="prg-time">1:<span>04</span></div><div class="prg-lbl">ESTIMATED TIME REMAINING</div>'
       +'<div class="prg-track"><i></i></div><div class="prg-step">Understanding your experience…&nbsp;&nbsp;Step 2 of 6&nbsp;·&nbsp;33%</div></div></div>';
   }
@@ -320,7 +320,7 @@
       +'<div style="display:flex;gap:20px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px">'
       +'<div class="cv-photo" style="width:120px;height:120px;font-size:34px">MS</div>'
       +'<div><div class="cv-name" style="font-size:34px;margin:0">Manuel Stagg</div><div class="cv-role" style="font-size:17px" class="gt">SME Senior · Full-Stack AI Solutions Architect</div>'
-      +'<div style="display:flex;gap:8px;margin-top:12px"><span class="chip">mannystagg.jobup.dev</span><span class="chip">130 skills</span><span class="chip">3 roles</span></div></div></div></div></div></div>';
+      +'<div style="display:flex;gap:8px;margin-top:12px"><span class="chip">mannystagg.{{BRAND_DOMAIN}}</span><span class="chip">130 skills</span><span class="chip">3 roles</span></div></div></div></div></div></div>';
   }
   function scrPricing(){
     function li(t){return '<div class="li"><span class="dt"></span>'+t+'</div>';}
@@ -335,9 +335,9 @@
     function row(t){return '<div class="row">'+ICON.check+t+'</div>';}
     return '<div class="center"><div class="built"><div class="ok">'+ICON.check+'</div><h2>Your account is built, Manny</h2>'
       +'<div class="sub">Everything below is live. Bookmark your address and sign in whenever you like.</div>'
-      +'<div class="addr"><div class="step-pill">YOUR WEB ADDRESS</div><div class="u" style="margin-top:10px">https://mannystagg.jobup.dev</div></div>'
+      +'<div class="addr"><div class="step-pill">YOUR WEB ADDRESS</div><div class="u" style="margin-top:10px">https://mannystagg.{{BRAND_DOMAIN}}</div></div>'
       +'<div class="panel"><div class="pt gt" style="font-size:20px">Your page is live</div><div class="check">'
-      +row('Account activated')+row('Web address reserved — mannystagg.jobup.dev')+row('Your site published')+row('Your agents switched on')+'</div></div></div></div>';
+      +row('Account activated')+row('Web address reserved — mannystagg.{{BRAND_DOMAIN}}')+row('Your site published')+row('Your agents switched on')+'</div></div></div></div>';
   }
   function scrCV(){
     return '<div class="cv"><div class="cv-top"><div class="lg"><span class="d"></span> Manuel Stagg <span style="color:var(--faint);font-size:11px;letter-spacing:.1em;margin-left:4px">CV</span></div><div class="sp"></div><div class="b">Résumé JSON</div><div class="b">Manage</div></div>'
@@ -408,7 +408,7 @@
   function scrEva(){
     return '<div class="center"><div class="eva"><div class="eva-h"><div class="orb sm"></div><div class="t">Chat with Eva</div></div>'
       +'<div class="note">Eva reads your account, so the answer is about you.</div>'
-      +'<div class="bubble">Hi, I am Eva. Ask me anything about JobUp — I read your account, so the answer is about you rather than a manual.</div>'
+      +'<div class="bubble">Hi, I am Eva. Ask me anything about {{BRAND}} — I read your account, so the answer is about you rather than a manual.</div>'
       +'<div class="sugg"><span class="s">How can I increase my visibility?</span><span class="s">Why am I not getting matches?</span><span class="s">What does tailoring do?</span></div>'
       +'<div class="evain"><span class="ib">How can I increase my visibility?</span><span class="sd">Send</span></div>'
       +'<div class="note" style="margin-top:12px">Eva explains and points you at the right screen. She never changes a setting and never sends anything.</div></div></div>';
@@ -417,8 +417,8 @@
   // ---- SLIDES (bilingual narration) ----
   var SLIDES=[
     {step:['Landing','Inicio'], render:scrLanding,
-      en:'This is JobUp.dev. The promise is simple: stop looking for jobs, and let AI find them for you. A person talks to the Orb or uploads a resume, and in minutes JobUp builds their entire career presence. Everything you are about to see is real product, in English and Spanish.',
-      es:'Esto es JobUp.dev. La promesa es simple: deja de buscar empleo y deja que la inteligencia artificial lo encuentre por ti. La persona habla con el Orbe o sube su currículum, y en minutos JobUp construye toda su presencia profesional. Todo lo que verás es producto real, en inglés y español.'},
+      en:'This is {{BRAND}}.dev. The promise is simple: stop looking for jobs, and let AI find them for you. A person talks to the Orb or uploads a resume, and in minutes {{BRAND}} builds their entire career presence. Everything you are about to see is real product, in English and Spanish.',
+      es:'Esto es {{BRAND}}.dev. La promesa es simple: deja de buscar empleo y deja que la inteligencia artificial lo encuentre por ti. La persona habla con el Orbe o sube su currículum, y en minutos {{BRAND}} construye toda su presencia profesional. Todo lo que verás es producto real, en inglés y español.'},
     {step:['Attach resume','Sube tu CV'], render:scrBuild,
       en:'It starts with one thing: your resume. Name, email, and a file — or paste the text. No card, no signup wall. And a promise we keep in code: we show real openings or none at all, never invented ones.',
       es:'Empieza con una sola cosa: tu currículum. Nombre, correo y un archivo, o pegas el texto. Sin tarjeta, sin muro de registro. Y una promesa que cumplimos en el código: mostramos vacantes reales o ninguna, nunca inventadas.'},
@@ -441,8 +441,8 @@
       en:'Behind the site is the dashboard. Your agents run daily, and you can run them now — they find and check, but they never act for you. And you see who is watching: profile views, unique visitors, and how many AI agents have read your profile.',
       es:'Detrás del sitio está el panel. Tus agentes corren a diario, y puedes ejecutarlos ahora mismo: encuentran y verifican, pero nunca actúan por ti. Y ves quién te observa: vistas de perfil, visitantes únicos, y cuántos agentes de inteligencia artificial han leído tu perfil.'},
     {step:['Job Matches','Coincidencias'], render:scrMatches,
-      en:'Here is the heart of it: real jobs, scored against your resume, with the reason for the match and what is missing, in plain language. Filter by score, title, company or location, and remove anything that is not for you. These two scored ninety-two: a perfect example of the fit JobUp finds.',
-      es:'Aquí está el corazón: empleos reales, puntuados contra tu currículum, con la razón de la coincidencia y lo que falta, en lenguaje claro. Filtra por puntaje, título, empresa o ubicación, y elimina lo que no es para ti. Estos dos sacaron noventa y dos: un ejemplo perfecto del encaje que JobUp encuentra.'},
+      en:'Here is the heart of it: real jobs, scored against your resume, with the reason for the match and what is missing, in plain language. Filter by score, title, company or location, and remove anything that is not for you. These two scored ninety-two: a perfect example of the fit {{BRAND}} finds.',
+      es:'Aquí está el corazón: empleos reales, puntuados contra tu currículum, con la razón de la coincidencia y lo que falta, en lenguaje claro. Filtra por puntaje, título, empresa o ubicación, y elimina lo que no es para ti. Estos dos sacaron noventa y dos: un ejemplo perfecto del encaje que {{BRAND}} encuentra.'},
     {step:['Pipeline','Proceso'], render:scrPipeline,
       en:'Every match can move into your pipeline — new, saved, applied, screening, interviewing, offer. Your agent only ever adds to new; every move after that is a decision you make. It is the whole job search on one board.',
       es:'Cada coincidencia puede pasar a tu proceso: nuevo, guardado, postulado, entrevista inicial, entrevistando, oferta. Tu agente solo agrega a "nuevo"; cada movimiento después es una decisión tuya. Es toda la búsqueda de empleo en un solo tablero.'},
@@ -453,8 +453,8 @@
       en:'And anyone can search live openings on a map, by title and city, with the stated salary shown when the posting gives it. Fifty real openings around Tampa here — a free, no-signup way to feel the product before building an account.',
       es:'Y cualquiera puede buscar vacantes en vivo sobre un mapa, por título y ciudad, con el salario indicado cuando la publicación lo da. Aquí, cincuenta vacantes reales alrededor de Tampa: una forma gratuita y sin registro de sentir el producto antes de crear una cuenta.'},
     {step:['Eva · Close','Eva · Cierre'], render:scrEva,
-      en:'And whenever you have a question, Eva is there — she reads your account, so the answer is about you, not a manual. That is JobUp: a resume in, and out comes a living career presence that helps people find not just a job, but the right one. JobUp.dev.',
-      es:'Y cuando tengas una pregunta, ahí está Eva: lee tu cuenta, así que la respuesta es sobre ti, no un manual. Eso es JobUp: entra un currículum, y sale una presencia profesional viva que ayuda a las personas a encontrar no solo un trabajo, sino el correcto. JobUp.dev.'}
+      en:'And whenever you have a question, Eva is there — she reads your account, so the answer is about you, not a manual. That is {{BRAND}}: a resume in, and out comes a living career presence that helps people find not just a job, but the right one. {{BRAND}}.dev.',
+      es:'Y cuando tengas una pregunta, ahí está Eva: lee tu cuenta, así que la respuesta es sobre ti, no un manual. Eso es {{BRAND}}: entra un currículum, y sale una presencia profesional viva que ayuda a las personas a encontrar no solo un trabajo, sino el correcto. {{BRAND}}.dev.'}
   ];
 
   function narrOf(idx){ return LANG==='es'?SLIDES[idx].es:SLIDES[idx].en; }
@@ -540,13 +540,13 @@
   function setCover(){
     if(LANG==='es'){
       el('cvH').textContent='Deja que la IA encuentre tu próximo empleo';
-      el('cvP').textContent='Un recorrido guiado por JobUp.dev: de un currículum a un sitio personal en vivo, un perfil legible por IA y coincidencias de empleo reales. Narrado por Ava y Dalia, las voces de JobUp.';
+      el('cvP').textContent='Un recorrido guiado por {{BRAND}}.dev: de un currículum a un sitio personal en vivo, un perfil legible por IA y coincidencias de empleo reales. Narrado por Ava y Dalia, las voces de {{BRAND}}.';
       el('start').textContent='Iniciar el recorrido';
       el('cvNote').textContent='Flechas para navegar · barra espaciadora para pausar o reanudar la voz. Pausa cuando quieras para responder preguntas.';
       el('cvEs').className='on'; el('cvEn').className='';
     } else {
       el('cvH').textContent='Let AI find your next job';
-      el('cvP').textContent='A guided walkthrough of JobUp.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, JobUp\'s AI voice.';
+      el('cvP').textContent='A guided walkthrough of {{BRAND}}.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}\'s AI voice.';
       el('start').textContent='Start the walkthrough';
       el('cvNote').textContent='Arrows to navigate · space to pause or resume the voice. Pause anytime to take questions.';
       el('cvEn').className='on'; el('cvEs').className='';

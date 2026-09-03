@@ -163,6 +163,62 @@ function classify(raw) {
   if (/\bmexico\b|\bméxico\b|\bcdmx\b/.test(s)) countries.push('MX');
   if (/\bcolombia\b|\bbogot[aá]\b|\bmedell[ií]n\b/.test(s)) countries.push('CO');
 
+  // More country names, added after measuring the live pool: 1,568 of 8,000
+  // postings were reaching subscribers as "country not recognized", and the
+  // bucket was overwhelmingly foreign — Warsaw, Budapest, Kuala Lumpur,
+  // Kowloon, Dubai, Seoul, Cluj-Napoca, Bayan Lepas. The filter was not weak;
+  // the parser could not read the strings it was being asked to judge.
+  if (/\bpoland\b|\bwarsaw\b|\bwarszawa\b|\bkrak[oó]w\b|\bwroc[lł]aw\b|\bgda[nń]sk\b/.test(s)) countries.push('PL');
+  if (/\bhungary\b|\bbudapest\b|\bmiskolc\b|\bdebrecen\b|\bszeged\b|\bhatvan\b/.test(s)) countries.push('HU');
+  if (/\bmalaysia\b|\bkuala lumpur\b|\bpenang\b|\bbayan lepas\b|\bselangor\b|\bcyberjaya\b/.test(s)) countries.push('MY');
+  if (/\bhong kong\b|\bkowloon\b/.test(s)) countries.push('HK');
+  if (/\bunited arab emirates\b|\bdubai\b|\babu dhabi\b/.test(s)) countries.push('AE');
+  if (/\bsouth korea\b|\bseoul\b|\bincheon\b/.test(s)) countries.push('KR');
+  if (/\bromania\b|\bbucharest\b|\bcluj-napoca\b|\btimi[sș]oara\b|\bia[sș]i\b/.test(s)) countries.push('RO');
+  if (/\bportugal\b|\blisbon\b|\blisboa\b|\bporto\b|\bbraga\b/.test(s)) countries.push('PT');
+  if (/\bczech\b|\bczechia\b|\bprague\b|\bpraha\b|\bbrno\b/.test(s)) countries.push('CZ');
+  if (/\bpoland\b|\bkatowice\b|\bpozna[nń]\b|\b[lł][oó]d[zź]\b/.test(s)) countries.push('PL');
+  if (/\bthailand\b|\bbangkok\b/.test(s)) countries.push('TH');
+  if (/\bindonesia\b|\bjakarta\b/.test(s)) countries.push('ID');
+  if (/\bturkey\b|\bt[uü]rkiye\b|\bistanbul\b|\bankara\b/.test(s)) countries.push('TR');
+  if (/\bisrael\b|\btel aviv\b/.test(s)) countries.push('IL');
+  if (/\bswitzerland\b|\bz[uü]rich\b|\bgeneva\b|\bgen[eè]ve\b/.test(s)) countries.push('CH');
+  if (/\bsweden\b|\bstockholm\b|\bg[oö]teborg\b/.test(s)) countries.push('SE');
+  if (/\bnorway\b|\boslo\b/.test(s)) countries.push('NO');
+  if (/\bdenmark\b|\bcopenhagen\b|\bk[oø]benhavn\b/.test(s)) countries.push('DK');
+  if (/\bfinland\b|\bhelsinki\b/.test(s)) countries.push('FI');
+  if (/\bbelgium\b|\bbrussels\b|\bbruxelles\b/.test(s)) countries.push('BE');
+  if (/\bitaly\b|\bitalia\b|\bmilan\b|\bmilano\b|\brome\b|\broma\b/.test(s)) countries.push('IT');
+  if (/\baustria\b|\bvienna\b|\bwien\b/.test(s)) countries.push('AT');
+  if (/\bargentina\b|\bbuenos aires\b/.test(s)) countries.push('AR');
+  if (/\bchile\b|\bsantiago de chile\b/.test(s)) countries.push('CL');
+  if (/\bperu\b|\bper[uú]\b|\blima, pe\b/.test(s)) countries.push('PE');
+  if (/\bcosta rica\b|\bsan jos[eé], cr\b/.test(s)) countries.push('CR');
+  if (/\bnew zealand\b|\bauckland\b|\bwellington, nz\b/.test(s)) countries.push('NZ');
+  if (/\bsouth africa\b|\bjohannesburg\b|\bcape town\b/.test(s)) countries.push('ZA');
+  if (/\begypt\b|\bcairo\b/.test(s)) countries.push('EG');
+  if (/\bpakistan\b|\bkarachi\b|\blahore\b/.test(s)) countries.push('PK');
+  if (/\btaiwan\b|\btaipei\b/.test(s)) countries.push('TW');
+
+  // "Budapest, hu" / "Campinas, br" — the ISO country code after a comma, the
+  // convention Workday and Adzuna both use. A bare two-letter token is NEVER
+  // read this way (half of them are ordinary English), and a code that is also
+  // a US state abbreviation is skipped entirely: ", ca" is California far more
+  // often than Canada, and guessing wrong sends a Los Angeles job to Toronto.
+  {
+    const m = s.match(/,\s*([a-z]{2})\b\s*$/);
+    const iso = m && m[1];
+    const KNOWN = new Set(['pl','hu','br','cn','mx','pt','ro','my','cz','th','tr','il','ch',
+      'se','no','dk','fi','be','it','at','ar','cl','pe','cr','nz','za','eg','pk','tw','hk',
+      'ae','kr','jp','sg','ph','vn','gb','uk','fr','es','nl','ie','au','ru','ua','gr','hr',
+      'rs','bg','sk','si','lt','lv','ee','lu','is','pr','do','gt','hn','sv','ni','pa','py',
+      'uy','bo','ec','ve','ke','ng','gh','ma','tn','dz','sa','qa','kw','bh','om','jo','lb',
+      'bd','lk','np','mm','kh','la','bn','mn','kz','uz','az','ge','am']);
+    if (iso && !US_STATES.has(iso) && KNOWN.has(iso)) {
+      countries.push(iso === 'uk' ? 'GB' : iso.toUpperCase());
+    }
+  }
+
   // "Austin, TX" style — infer US from a state abbreviation or a state name.
   const states = statesIn(s);
   if (!countries.includes('US') && states.length) countries.push('US');
@@ -185,20 +241,47 @@ function evaluate(raw, policy = {}) {
   const unrestricted = allowed.length === 0;
   const c = classify(raw);
 
+  // ── STRICT US ONLY ───────────────────────────────────────────────────────
+  // JobMD hunts US clinical postings and nothing else, so "we could not verify
+  // this is in the United States" must mean NO, not "show it and let them
+  // judge". Every filter in the engine drops BLOCK and passes FLAG, so a flag
+  // is a pass — which meant a posting with no location, one that says
+  // "Anywhere", and one nobody could parse all reached the subscriber.
+  //
+  // It is a POLICY FLAG, not a global change: JobUp keeps flagging, which is
+  // right for a product whose subscriber reviews the edge cases themselves.
+  // TWO NAMES, ONE RULE. `us_only` is enforced for every profile by
+  // settings.sanitize; `strict_us` is what the brand registry stamps. Reading
+  // both means neither path can silently stop working — and a merge that
+  // dropped one would have turned the filter off for a whole product.
+  const strict = policy.strict_us === true || policy.us_only === true;
+
   if (c.kind === 'none') {
     // US-ONLY, ENFORCED: a posting we cannot confirm is in the US is not shown.
     // Without this, a locationless posting was FLAGGED (never blocked), so it
     // reached the board — which is how non-US and unplaceable jobs appeared.
-    if (policy.us_only) return { verdict: VERDICT.BLOCK, reason: 'US-only: posting states no location' };
+    if (strict) return { verdict: VERDICT.BLOCK, reason: 'US-only: posting states no location' };
     return { verdict: policy.flag_unknown === false ? VERDICT.ALLOW : VERDICT.FLAG,
              reason: 'posting states no location' };
   }
   if (unrestricted) return { verdict: VERDICT.ALLOW, reason: 'no country restriction on this profile' };
 
   if (c.global) {
+    // A globally-remote posting is takeable FROM the US but is not a job based
+    // IN the US, and for a licensed clinical role that distinction is the whole
+    // point — a role open to anyone on earth is not a US hospital vacancy.
+    if (strict && !c.countries.includes('US')) {
+      return { verdict: VERDICT.BLOCK, reason: 'open globally, not a US posting' };
+    }
     return { verdict: VERDICT.ALLOW, reason: 'remote, global' };
   }
   if (c.northAmerica) {
+    // "North America" is the US, Canada AND Mexico. Under a US-only rule that
+    // is not a verified US posting, and for a licensed clinical role a Toronto
+    // or Monterrey vacancy is not one a US-licensed clinician can take.
+    if (strict && !c.countries.includes('US')) {
+      return { verdict: VERDICT.BLOCK, reason: 'North America (includes CA/MX), not stated as US' };
+    }
     const ok = allowed.includes('US') || allowed.includes('CA') || allowed.includes('MX');
     return { verdict: ok ? VERDICT.ALLOW : VERDICT.BLOCK, reason: 'remote, North America' };
   }
@@ -208,7 +291,7 @@ function evaluate(raw, policy = {}) {
     // "Bengaluru" and other unparsed-foreign strings from appearing. The one
     // exception is a REMOTE posting: the pool is US-sourced, so a bare "Remote"
     // is a US-workable role, not a foreign office, and is kept.
-    if (policy.us_only) {
+    if (strict) {
       // A remote role is kept ONLY when it names no foreign region — "Remote"
       // and "Remote - US" stay; "Remote - EMEA / Europe / India" are refused.
       const FOREIGN = /\b(emea|apac|apj|anz|latam|latin america|europe|european|eu|uk|u\.k\.|england|britain|canada|canadian|india|australia|singapore|germany|france|spain|italy|mexico|brazil|argentina|colombia|philippines|ireland|netherlands|poland|romania|asia|asian|africa|middle east|gcc|dubai|uae)\b/i;
