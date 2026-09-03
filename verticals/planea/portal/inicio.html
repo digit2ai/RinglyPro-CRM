@@ -40,9 +40,18 @@
   .greet{margin:6px 2px 2px}
   .greet h1{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.02em;line-height:1.1;color:var(--txt)}
   .greet .greet-sub{color:var(--mut);font-size:14.5px;margin-top:6px;max-width:340px}
-  /* Bloque 2 — Puntaje Planea (dentro de tarjeta) */
+  /* Bloque 2 — Puntaje Base (tarjeta con fondo de marca + ave Maya) */
   .pp-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 18px}
   .pp-card .sec-head{margin-bottom:4px}
+  .pp-hero{position:relative;overflow:hidden;
+    background:radial-gradient(120% 90% at 90% 6%,rgba(23,166,166,.24),transparent 55%),
+      linear-gradient(150deg,rgba(63,192,106,.12),transparent 60%),var(--card)}
+  .pp-hero::after{content:"";position:absolute;left:-26px;bottom:-30px;width:180px;height:180px;pointer-events:none;z-index:0;
+    background:url('/planea/portal/planea-mark-white.png') no-repeat center/contain;opacity:.05;transform:rotate(-8deg)}
+  .pp-hero .sec-head,.pp-hero .pp-row,.pp-hero .pp-detalle{position:relative;z-index:1}
+  .pp-hero .pp-side{flex:1;min-width:0}
+  .pp-bird{width:60px;height:auto;flex-shrink:0;align-self:flex-end;filter:drop-shadow(0 8px 16px rgba(0,0,0,.4))}
+  @media(max-width:360px){.pp-bird{display:none}}
   .pp-row{display:flex;align-items:center;gap:20px;margin-top:8px}
   .pp-row .ring{width:120px;height:120px;flex:0 0 120px;position:relative}
   .pp-row .ring svg{width:120px;height:120px}
@@ -79,19 +88,20 @@
     <p class="greet-sub" data-pl="resumen">Tus finanzas, en un solo lugar.</p>
   </div>
 
-  <!-- Bloque 2 · Puntaje Planea — DENTRO de una tarjeta (como la referencia). -->
+  <!-- Bloque 2 · Puntaje Base — tarjeta con fondo de marca, logo y ave Maya. -->
   <section class="sec">
-    <div class="pp-card">
-      <div class="sec-head"><div><h2>Puntaje Planea</h2><div class="sub">Tu estructura financiera, en un número</div></div><a class="link" href="/planea/portal/diagnostico">Ver mi Puntaje Planea →</a></div>
+    <div class="pp-card pp-hero">
+      <div class="sec-head"><div><h2>Puntaje Base</h2><div class="sub">Tu estructura financiera, en un número</div></div><a class="link" href="/planea/portal/diagnostico">Ver el detalle →</a></div>
       <div class="pp-row">
         <div class="ring">
-          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="var(--card2)" stroke-width="8"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="var(--greenb)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
+          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="8"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="var(--greenb)" stroke-width="8" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
           <div class="num"><b data-pl="score">—</b><small>PLANEA</small></div>
         </div>
         <div class="pp-side">
           <div class="pp-rango" data-pl="rango">Sin diagnóstico</div>
           <div class="pp-evo" data-pl="evolucion"></div>
         </div>
+        <img class="pp-bird" src="/planea/portal/images/maya.png" alt="" aria-hidden="true">
       </div>
       <details class="pp-detalle"><summary>Detalle por área</summary>
         <div data-pl-list="pilares8" data-pl-empty="Haz tu diagnóstico Planea para ver el detalle por área."></div>

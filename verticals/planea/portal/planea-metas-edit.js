@@ -28,6 +28,7 @@
 
   var selType = 'Viaje';
   var customType = '';
+  var montoMode = 'con'; // 'con' = meta con monto/fecha · 'sin' = acción por cumplir
 
   // §17.2 — los 8 pilares oficiales. Maya SUGIERE uno; el usuario puede cambiarlo.
   var PILARES = [
@@ -50,14 +51,22 @@
     var otro = selType === 'Otro';
     // §17.2: la creación comienza con una pregunta abierta. §17: una meta puede ser
     // CUALITATIVA (sin monto ni fecha) — no se le inventan valores para que encaje.
+    var conMonto = montoMode === 'con';
     return '<div class="me-form">' +
       '<div class="me-h">Crear una meta</div>' +
+      '<label class="me-l">¿Cómo es esta meta?</label>' +
+      '<div class="me-mode">' +
+        '<button class="me-mode-b' + (conMonto ? ' on' : '') + '" data-mode="con"><b>Con monto</b><small>Ahorro dirigido, compra, viaje</small></button>' +
+        '<button class="me-mode-b' + (!conMonto ? ' on' : '') + '" data-mode="sin"><b>Sin monto</b><small>Una acción por cumplir</small></button>' +
+      '</div>' +
       '<label class="me-l">¿Qué quieres lograr?</label><input class="me-in" id="me-name" placeholder="Ej: Comprar vivienda · Organizar mis deudas · Viajar">' +
       '<div class="me-types">' + TYPES.map(function (o) { return '<button class="me-type' + (o.t === selType ? ' on' : '') + '" data-type="' + o.t + '">' + svg(o.ic) + '<span>' + o.t + '</span></button>'; }).join('') + '</div>' +
       '<div id="me-custom-wrap" style="' + (otro ? '' : 'display:none') + '"><label class="me-l">Categoría personalizada</label><input class="me-in" id="me-custom" placeholder="Ej: Negocio, Boda, Fondo médico…" value="' + esc(customType) + '"></div>' +
+      '<div id="me-amount-fields" style="' + (conMonto ? '' : 'display:none') + '">' +
       '<div class="me-grid"><div><label class="me-l">Meta total ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-target" inputmode="numeric" placeholder="5.000.000"></div></div>' +
       '<div><label class="me-l">Ya tienes ($) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-current" inputmode="numeric" placeholder="0"></div></div></div>' +
       '<label class="me-l">Aporte que estás dispuesto a hacer ($/mes) <span class="me-opt">opcional</span></label><div class="me-money"><span>$</span><input class="me-in" id="me-monthly" inputmode="numeric" placeholder="200.000"></div>' +
+      '</div>' +
       '<div class="me-grid"><div><label class="me-l">Área relacionada <span class="me-opt">Maya sugiere</span></label>' +
         '<select class="me-in" id="me-pilar">' + PILARES.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('') + '</select></div>' +
       '<div><label class="me-l">Fecha objetivo <span class="me-opt">opcional</span></label><input class="me-in" id="me-fecha" type="date"></div></div>' +
@@ -96,6 +105,7 @@
     var target = parseInt(digits(document.getElementById('me-target').value), 10) || 0;
     var current = parseInt(digits(document.getElementById('me-current').value), 10) || 0;
     var monthly = parseInt(digits(document.getElementById('me-monthly').value), 10) || 0;
+    if (montoMode === 'sin') { target = 0; current = 0; monthly = 0; } // meta sin monto
     // Solo el nombre es obligatorio (§17: metas cualitativas sin monto). Mensaje EN LÍNEA.
     var er = document.getElementById('me-err');
     if (!name) { if (er) { er.textContent = 'Escribe qué quieres lograr.'; er.hidden = false; } var nmi = document.getElementById('me-name'); if (nmi) nmi.focus(); return; }
@@ -130,6 +140,13 @@
       }
       return;
     }
+    if (t.hasAttribute('data-mode')) {
+      montoMode = t.getAttribute('data-mode');
+      mount.querySelectorAll('.me-mode-b').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === montoMode); });
+      var af = document.getElementById('me-amount-fields');
+      if (af) af.style.display = montoMode === 'con' ? '' : 'none';
+      return;
+    }
     if (t.hasAttribute('data-me-save')) { save(); return; }
   }
 
@@ -138,6 +155,11 @@
     if (!mount) return;
     var st = document.createElement('style');
     st.textContent = '#metas-edit .me-opt{color:var(--mut,#9db3ab);font-weight:500;font-size:11.5px}' +
+      '#metas-edit .me-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}' +
+      '#metas-edit .me-mode-b{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;background:var(--card2,#16302a);border:1.5px solid var(--line,#26332e);border-radius:14px;padding:14px 15px;cursor:pointer;font-family:inherit;color:var(--txt,#eaf1ec)}' +
+      '#metas-edit .me-mode-b b{font-size:15px;font-weight:800}' +
+      '#metas-edit .me-mode-b small{color:var(--mut,#9db3ab);font-size:12px;font-weight:500}' +
+      '#metas-edit .me-mode-b.on{border-color:var(--green,#3fc06a);background:var(--green-soft,rgba(63,192,106,.12))}' +
       '#metas-edit .me-hint{font-size:12px;color:var(--mut,#9db3ab);line-height:1.45;margin:10px 0 2px}' +
       '#metas-edit .me-err{color:#e0705a;font-size:12.5px;margin-top:8px;font-weight:600}' +
       '#metas-edit select.me-in{-webkit-appearance:none;appearance:none;background:var(--card2,#16302a)}' +
