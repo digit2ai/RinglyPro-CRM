@@ -282,6 +282,18 @@
       '<div class="track"><div class="fill" style="width:' + p + '%"></div></div></div>';
   }
 
+  // Detalle por área (Inicio): nombre + RANGO + barra coloreada por rango, como la referencia.
+  function pilar8Row(nombre, val) {
+    var raw = (val && typeof val === 'object') ? val.puntaje : val;
+    var has = raw != null && !isNaN(raw);
+    var p = has ? Math.max(0, Math.min(100, Math.round(raw))) : 0;
+    var rango = has ? rangoDe(p) : '—';
+    var col = !has ? 'var(--mut)' : p < 36 ? 'var(--red)' : p < 53 ? '#e0954f' : p < 69 ? 'var(--greenb)' : 'var(--green)';
+    return '<div class="ad-row"><div class="ad-cab"><span class="ad-nm">' + esc(nombre) +
+      '</span><span class="ad-rg" style="color:' + col + '">' + esc(rango).toUpperCase() + '</span></div>' +
+      '<div class="ad-track"><div class="ad-fill" style="width:' + p + '%;background:' + col + '"></div></div></div>';
+  }
+
   function fillLists(prof) {
     document.querySelectorAll('[data-pl-list]').forEach(function (box) {
       var type = box.getAttribute('data-pl-list');
@@ -323,7 +335,7 @@
         // Detalle por área: los 8 pilares oficiales (Documento Maestro §2 / §10 / Doc 2 §2.4).
         var p8 = prof.pilares8;
         if (!prof.sin_diagnostico && p8) {
-          html = PIL8.map(function (pl) { return pilarRow(pl[1], p8[pl[0]]); }).join('');
+          html = PIL8.map(function (pl) { return pilar8Row(pl[1], p8[pl[0]]); }).join('');
         }
       } else if (type === 'pilares') {
         // (legacy 4-pilares — retirado de Inicio; se mantiene el hook por compat)
