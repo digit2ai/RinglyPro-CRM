@@ -531,17 +531,37 @@ router.get('/', (req, res) => {
 // Exported separately because it must run at the TOP of the main app's
 // middleware stack (before the CRM's own routes), not under the /jobup mount.
 // ===========================================================================
-function labelFromHost(host) {
-  const base = addresses.BASE_DOMAIN;
+/**
+ * A subscriber's own host, for ANY brand the engine serves.
+ *
+ * This tested one hardcoded domain, so danielaferreira.jobmd.io was not
+ * recognised as a subscriber site at all: the handler passed, the request fell
+ * through to the main app, and a doctor's public CV page rendered the JobMD
+ * LANDING PAGE. DNS and the Render wildcard were both correct — the engine
+ * simply did not know that host could belong to anybody.
+ *
+ * Returns the full host, because that is what `subscribers.address` stores.
+ * Rebuilding it from a global constant is exactly what broke.
+ */
+function siteHostFrom(host) {
   const h = String(host || '').toLowerCase().split(':')[0];
-  if (!h.endsWith('.' + base)) return null;
+  const brand = BRAND.byHost(h);
+  if (!brand) return null;
+  const base = addresses.baseDomain(brand);
+  if (!h.endsWith('.' + base)) return null;                 // the apex is not a site
   const label = h.slice(0, -(base.length + 1));
   if (!label || label === 'www' || label.includes('.')) return null;
-  return label;
+  return { label, host: h, brand };
 }
 
-async function loadSite(label) {
-  const sub = await models.subscribers.findOne({ where: { address: `${label}.${addresses.BASE_DOMAIN}` } });
+/** Kept for callers that only want the label. */
+function labelFromHost(host) {
+  const r = siteHostFrom(host);
+  return r ? r.label : null;
+}
+
+async function loadSite(host) {
+  const sub = await models.subscribers.findOne({ where: { address: host } });
   if (!sub) return null;
   if (sub.status !== 'active') return { sub, offline: true };
   const p = await scoped('profiles', sub.id).findOne({});
@@ -565,11 +585,12 @@ async function loadSite(label) {
 /** Middleware for the main app: serves a subscriber's public site + surfaces. */
 async function subscriberSite(req, res, next) {
   if (!ready) return next();
-  const label = labelFromHost(req.get('host'));
-  if (!label) return next();
+  const found = siteHostFrom(req.get('host'));
+  if (!found) return next();
+  const label = found.label;
 
   let site;
-  try { site = await loadSite(label); } catch (e) { return next(); }
+  try { site = await loadSite(found.host); } catch (e) { return next(); }
 
   // An address the subscriber used to hold still resolves — a recruiter may be
   // holding that link, so it redirects rather than 404s.
@@ -672,4 +693,5 @@ async function subscriberSite(req, res, next) {
 module.exports = router;
 module.exports.subscriberSite = subscriberSite;
 module.exports.labelFromHost = labelFromHost;
+module.exports.siteHostFrom = siteHostFrom;
 module.exports.isReady = () => ready;

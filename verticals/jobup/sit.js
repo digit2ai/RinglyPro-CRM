@@ -8397,6 +8397,27 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
 
     // ── US ONLY, AND ONLY WHERE THEY CHOSE ─────────────────────────
+    await t('SITE: a subscriber subdomain resolves for EVERY brand', () => {
+      // This tested one hardcoded domain, so danielaferreira.jobmd.io was not
+      // recognised as a subscriber site at all: the handler passed, the request
+      // fell through to the main app, and a doctor's public CV page rendered
+      // the JobMD LANDING PAGE. DNS and the Render wildcard were both correct;
+      // the engine simply did not know that host could belong to anybody.
+      const app = require('./src/index');
+      const md = app.siteHostFrom('danielaferreira.jobmd.io');
+      assert.ok(md, 'a jobmd.io subdomain must resolve');
+      assert.strictEqual(md.label, 'danielaferreira');
+      assert.strictEqual(md.brand.id, 'jobmd');
+      assert.strictEqual(md.host, 'danielaferreira.jobmd.io',
+        'the FULL host is what subscribers.address stores — rebuilding it from a global constant is what broke');
+      const up = app.siteHostFrom('mannystagg.jobup.dev');
+      assert.ok(up && up.brand.id === 'jobup' && up.label === 'mannystagg');
+      // And the things that are NOT subscriber sites stay that way.
+      ['jobmd.io', 'www.jobmd.io', 'jobup.dev', 'www.jobup.dev', 'example.com',
+       'a.b.jobmd.io', ''].forEach((h) =>
+        assert.strictEqual(app.siteHostFrom(h), null, h + ' must not read as a subscriber site'));
+    });
+
     // ── THE PLAN IS CHOSEN BEFORE THE FORM ─────────────────────────
     await t('SIGNUP: /build sends you to the plan picker instead of a doomed form', () => {
       // It rendered the whole build form to anyone holding a teaser token and
