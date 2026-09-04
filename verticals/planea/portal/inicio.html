@@ -41,25 +41,25 @@
   .greet h1{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.02em;line-height:1.1;color:var(--txt)}
   .greet .greet-sub{color:var(--mut);font-size:14.5px;margin-top:6px;max-width:340px}
   /* Bloque 2 — Puntaje Base (tarjeta hero como la referencia) */
-  .pb-card{position:relative;overflow:hidden;border-radius:20px;padding:22px 22px 15px;margin-top:8px;color:#eafcf6;
-    background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 20px),radial-gradient(130% 120% at 12% -12%,#3f8079,transparent 58%),linear-gradient(140deg,#2c6d70 0%,#1c4f52 46%,#143a3d 100%);
-    border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 34px rgba(0,0,0,.28)}
-  .pb-bird{position:absolute;top:-22px;right:-26px;width:64%;max-width:360px;pointer-events:none;opacity:1;mix-blend-mode:luminosity;filter:contrast(1.12) brightness(.96);
-    -webkit-mask-image:radial-gradient(125% 135% at 86% 32%,#000 36%,transparent 74%);mask-image:radial-gradient(125% 135% at 86% 32%,#000 36%,transparent 74%)}
+  .pb-card{position:relative;overflow:hidden;border-radius:20px;padding:20px 22px 14px;margin-top:8px;color:#eafcf6;
+    background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 20px),radial-gradient(130% 120% at 12% -12%,#4f9f92,transparent 58%),linear-gradient(140deg,#3a877d 0%,#2c6a62 50%,#245852 100%);
+    border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 34px rgba(0,0,0,.26)}
+  .pb-bird{position:absolute;top:2px;right:8px;width:46%;max-width:230px;pointer-events:none;opacity:.5;
+    filter:grayscale(1) brightness(1.06) contrast(1.18) sepia(1) hue-rotate(92deg) saturate(1.45)}
   .pb-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .pb-eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.72)}
-  .pb-mark{width:26px;height:26px;opacity:.85;flex-shrink:0}
-  .pb-body{position:relative;z-index:1;display:flex;align-items:center;gap:20px;margin-top:16px}
-  .pb-ring{position:relative;width:150px;height:150px;flex:0 0 150px}
-  .pb-ring svg{width:150px;height:150px}
+  .pb-mark{width:24px;height:24px;opacity:.85;flex-shrink:0}
+  .pb-body{position:relative;z-index:1;display:flex;align-items:center;gap:18px;margin-top:14px}
+  .pb-ring{position:relative;width:132px;height:132px;flex:0 0 132px}
+  .pb-ring svg{width:132px;height:132px}
   .pb-ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .pb-ring-c b{font-family:'Inter',sans-serif;font-weight:800;font-size:48px;line-height:1;color:#fff}
-  .pb-ring-c small{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.82);margin-top:4px}
+  .pb-ring-c b{font-family:'Inter',sans-serif;font-weight:800;font-size:42px;line-height:1;color:#fff}
+  .pb-ring-c small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.82);margin-top:4px}
   .pb-text{flex:1;min-width:0}
-  .pb-estas{font-size:18px;color:#eafcf6;line-height:1.3}
+  .pb-estas{font-size:15.5px;color:#eafcf6;line-height:1.3}
   .pb-estas b{font-weight:800}
-  .pb-note{font-size:13.5px;color:rgba(234,252,246,.66);margin-top:8px;line-height:1.45;max-width:230px}
-  .pb-link{display:inline-block;margin-top:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:14.5px;color:#fff}
+  .pb-note{font-size:12px;color:rgba(234,252,246,.66);margin-top:6px;line-height:1.4;max-width:200px}
+  .pb-link{display:inline-block;margin-top:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:13px;color:#fff}
   .pb-foot{position:relative;z-index:1;display:flex;justify-content:space-between;margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14);
     font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.6)}
   /* Detalle por área (desplegable bajo la tarjeta) */
@@ -98,7 +98,7 @@
   <!-- Bloque 2 · Puntaje Base — tarjeta hero (como la referencia). -->
   <section class="sec">
     <div class="pb-card">
-      <img class="pb-bird" src="/planea/portal/planea-bird-fly.jpg" alt="" aria-hidden="true">
+      <img class="pb-bird" src="/planea/portal/planea-bird-cut.png" alt="" aria-hidden="true">
       <div class="pb-top">
         <span class="pb-eyebrow">Puntaje Base</span>
         <img class="pb-mark" src="/planea/portal/planea-mark-white.png" alt="" aria-hidden="true">
