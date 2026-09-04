@@ -44,7 +44,8 @@
   .pb-card{position:relative;overflow:hidden;border-radius:20px;padding:22px 22px 15px;margin-top:8px;color:#eafcf6;
     background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 1px,transparent 1px 20px),radial-gradient(130% 120% at 12% -12%,#3f8079,transparent 58%),linear-gradient(140deg,#2c6d70 0%,#1c4f52 46%,#143a3d 100%);
     border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 34px rgba(0,0,0,.28)}
-  .pb-bird{position:absolute;top:-6px;right:-14px;width:52%;max-width:300px;pointer-events:none;opacity:.42;transform:scaleX(-1);filter:grayscale(1) sepia(1) hue-rotate(86deg) saturate(1.9) brightness(1.12)}
+  .pb-bird{position:absolute;top:-22px;right:-26px;width:64%;max-width:360px;pointer-events:none;opacity:1;mix-blend-mode:luminosity;filter:contrast(1.12) brightness(.96);
+    -webkit-mask-image:radial-gradient(125% 135% at 86% 32%,#000 36%,transparent 74%);mask-image:radial-gradient(125% 135% at 86% 32%,#000 36%,transparent 74%)}
   .pb-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .pb-eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.72)}
   .pb-mark{width:26px;height:26px;opacity:.85;flex-shrink:0}
@@ -85,7 +86,7 @@
   <!-- Bloque 2 · Puntaje Base — tarjeta hero (como la referencia). -->
   <section class="sec">
     <div class="pb-card">
-      <img class="pb-bird" src="/planea/portal/images/maya.png" alt="" aria-hidden="true">
+      <img class="pb-bird" src="/planea/portal/planea-bird-fly.jpg" alt="" aria-hidden="true">
       <div class="pb-top">
         <span class="pb-eyebrow">Puntaje Base</span>
         <img class="pb-mark" src="/planea/portal/planea-mark-white.png" alt="" aria-hidden="true">
