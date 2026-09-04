@@ -295,6 +295,35 @@
     function closeD() { scrim.classList.remove('open'); d.classList.remove('open'); }
     document.getElementById('pl-menu').addEventListener('click', openD);
     scrim.addEventListener('click', closeD);
+
+    // Barra de navegación inferior (accesos rápidos) — móvil.
+    var BN = [
+      { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
+      { k: 'diagnostico', label: 'Puntaje', icon: 'M6 20V10|M12 20V4|M18 20V13' },
+      { k: 'metas', label: 'Metas', icon: 'circle:12,12,8.5|circle:12,12,4.4|circle:12,12,0.8' },
+      { k: '__mas', label: 'Más', icon: 'M4 7h16M4 12h16M4 17h16' },
+      { k: 'mi-perfil', label: 'Mi perfil', icon: 'circle:12,8,3.6|M5 20a7 7 0 0 1 14 0' }
+    ];
+    var botnav = document.createElement('nav');
+    botnav.className = 'pl-botnav';
+    botnav.innerHTML = BN.map(function (it) {
+      if (it.k === '__mas') return '<button type="button" class="bn-mas">' + svg(it.icon) + '<span>' + it.label + '</span></button>';
+      var on = (it.k === current) ? ' class="on"' : '';
+      return '<a href="' + BASE + it.k + '"' + on + '>' + svg(it.icon) + '<span>' + it.label + '</span></a>';
+    }).join('');
+    document.body.appendChild(botnav);
+    var masBtn = botnav.querySelector('.bn-mas');
+    if (masBtn) masBtn.addEventListener('click', openD);
+    var bnStyle = document.createElement('style');
+    bnStyle.textContent =
+      '.pl-botnav{position:fixed;left:0;right:0;bottom:0;z-index:55;display:flex;max-width:560px;margin:0 auto;background:var(--bg);border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))}' +
+      '.pl-botnav a,.pl-botnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--mut);font-family:inherit;font-size:11px;font-weight:600;text-decoration:none;background:none;border:none;cursor:pointer;padding:2px 0}' +
+      '.pl-botnav svg{width:24px;height:24px}' +
+      '.pl-botnav a.on{color:var(--txt)}' +
+      '.pl-botnav a.on svg{stroke:var(--greenb)}' +
+      '@media(max-width:1023px){.app{padding-bottom:150px}.chatbot{bottom:calc(82px + env(safe-area-inset-bottom,0px))}}' +
+      '@media(min-width:1024px){.pl-botnav{display:none}}';
+    document.head.appendChild(bnStyle);
     function themeLabel() {
       var light = document.body.classList.contains('light');
       var sun = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
