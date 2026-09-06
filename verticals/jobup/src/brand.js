@@ -41,6 +41,11 @@ const BRANDS = {
     // Example roles in the job-search placeholder. A medical site prompting
     // for "analyst, sales" tells a surgeon they are on the wrong website.
     eg_roles_en: 'analyst, sales', eg_roles_es: 'analista, ventas',
+    // The number under the hero. PER BRAND, because the landing page is one
+    // file serving both products — a raw number in the markup would put
+    // JobUp's line on jobmd.io too. A brand with no number renders nothing at
+    // all rather than an empty link.
+    phone: '+1 813-212-4888',
     // JobUp FLAGS a posting it cannot place rather than dropping it: its
     // subscriber reviews the edge cases themselves, and a US role written as
     // "WQAD-TV Davenport" is worth showing with a caveat.
@@ -77,6 +82,10 @@ const BRANDS = {
     word_head: 'Job', word_tail: 'MD', word_tld: '.io',
     eg_roles_en: 'nurse practitioner, surgeon',
     eg_roles_es: 'enfermera especialista, cirujano',
+    // No published number for JobMD yet. The old JobMD landing had one retired
+    // at the owner's request, and inventing a second line here would publish a
+    // number nobody answers. Set it when there is one to answer.
+    phone: null,
     // US POSTINGS ONLY, AND NOTHING ELSE. Every filter in the engine drops
     // BLOCK and passes FLAG, so "we could not verify this is in the US" was a
     // pass — a posting with no location, one saying "Anywhere", and one nobody
@@ -190,7 +199,13 @@ function tokens(brand) {
     BRAND_BUILT_BY: b.built_by,
     BRAND_URL: 'https://' + b.domain,
     BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld,
-    BRAND_EG_ROLES: b.eg_roles_en, BRAND_EG_ROLES_ES: b.eg_roles_es
+    BRAND_EG_ROLES: b.eg_roles_en, BRAND_EG_ROLES_ES: b.eg_roles_es,
+    BRAND_PHONE: b.phone || '',
+    // tel: wants digits and a leading +, nothing else.
+    BRAND_PHONE_TEL: b.phone ? String(b.phone).replace(/[^0-9+]/g, '') : '',
+    // A brand with no number hides the block outright — an empty <a> would
+    // still take vertical space and still be focusable.
+    BRAND_PHONE_CLASS: b.phone ? '' : 'no-phone'
   };
 }
 

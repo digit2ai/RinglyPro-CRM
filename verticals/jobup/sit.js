@@ -8297,6 +8297,24 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       });
     });
 
+    await t('HERO: the phone number is JobUp\'s, and JobMD publishes none', () => {
+      // The landing page is ONE file serving both products, so a raw number in
+      // the markup would publish JobUp's line on jobmd.io. And a brand with no
+      // number must render nothing at all — an empty <a> still takes vertical
+      // space and is still focusable.
+      const up = pwaSvc.page('index.html', '', BRAND.byId('jobup'));
+      assert.ok(up.includes('+1 813-212-4888'), 'JobUp shows the number');
+      assert.ok(up.includes('href="tel:+18132124888"'),
+        'and it is tappable — tel: takes digits and a leading + only');
+      assert.ok(/class="herotel "/.test(up), 'not hidden on JobUp');
+
+      const md = pwaSvc.page('index.html', '', BRAND.byId('jobmd'));
+      assert.ok(!md.includes('813-212-4888'), 'JobMD must NOT publish JobUp\'s line');
+      assert.ok(/class="herotel no-phone"/.test(md), 'and the block is hidden outright');
+      assert.strictEqual(BRAND.byId('jobmd').phone, null,
+        'JobMD has no published number; inventing one publishes a line nobody answers');
+    });
+
     // ── THE COPY OVERLAY ───────────────────────────────────────────
     await t('COPY: every medical override still matches a key on the page', () => {
       // An override for a renamed key stops applying IN SILENCE and the
