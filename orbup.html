@@ -647,6 +647,24 @@
 }
 .d2b .brand-word{font-weight:850;letter-spacing:-.045em;font-size:24px;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .d2b .brand-word .up{-webkit-text-fill-color:#fff;color:#fff}
+
+/* Hero phone. Placed after the lede rather than under the headline: this hero
+   runs h1 -> eyebrow -> lede, and dropping a phone number into the middle of
+   that sequence breaks it. NOTE: the footer carries a DIFFERENT number
+   (223-294-9184, OrbUp's own voice line). Two numbers on one page is a
+   deliberate choice to be reviewed, not an oversight. */
+.d2b .herotel{margin:18px 0 0;text-align:center}
+.d2b .herotel a{display:inline-flex;align-items:center;gap:9px;min-height:44px;
+  padding:0 20px;border-radius:999px;border:1px solid var(--line);
+  color:var(--ink);text-decoration:none;font-family:var(--mono);
+  font-size:15px;font-weight:600;letter-spacing:.01em;
+  background:rgba(255,255,255,.03);transition:border-color .15s,background .15s,color .15s}
+.d2b .herotel a::before{content:"";width:15px;height:15px;flex:0 0 15px;
+  background:currentColor;opacity:.75;
+  -webkit-mask:var(--telmask) center/contain no-repeat;mask:var(--telmask) center/contain no-repeat}
+.d2b{--telmask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.2.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.3 2.2Z'/></svg>")}
+.d2b .herotel a:hover{border-color:var(--accent-cyan);color:var(--accent-cyan)}
+@media(max-width:640px){.d2b .herotel a{font-size:16px}}
 </style>
 
 <div class="d2b">
@@ -737,6 +755,9 @@
       <h1>It&rsquo;s time to<br><span class="grad-text">OrbUp.</span></h1>
       <p class="eyebrow" style="margin:22px 0 0"><span class="pip"></span>Automation Intelligence</p>
       <p class="lede">Tap the orb and just talk. Describe the tool your business needs &mdash; our AI workforce scopes it, builds it, and ships it.</p>
+      <div class="herotel">
+        <a href="tel:+18132124888" aria-label="Call OrbUp">+1 813-212-4888</a>
+      </div>
     </div>
 
     <div class="hero-logo">

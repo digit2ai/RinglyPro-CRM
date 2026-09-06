@@ -82,10 +82,8 @@ const BRANDS = {
     word_head: 'Job', word_tail: 'MD', word_tld: '.io',
     eg_roles_en: 'nurse practitioner, surgeon',
     eg_roles_es: 'enfermera especialista, cirujano',
-    // No published number for JobMD yet. The old JobMD landing had one retired
-    // at the owner's request, and inventing a second line here would publish a
-    // number nobody answers. Set it when there is one to answer.
-    phone: null,
+    // Same line as JobUp — one number answered for both products.
+    phone: '+1 813-212-4888',
     // US POSTINGS ONLY, AND NOTHING ELSE. Every filter in the engine drops
     // BLOCK and passes FLAG, so "we could not verify this is in the US" was a
     // pass — a posting with no location, one saying "Anywhere", and one nobody

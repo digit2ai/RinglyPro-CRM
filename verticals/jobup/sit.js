@@ -8297,7 +8297,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       });
     });
 
-    await t('HERO: the phone number is JobUp\'s, and JobMD publishes none', () => {
+    await t('HERO: the phone number comes from the brand, on both products', () => {
       // The landing page is ONE file serving both products, so a raw number in
       // the markup would publish JobUp's line on jobmd.io. And a brand with no
       // number must render nothing at all — an empty <a> still takes vertical
@@ -8308,11 +8308,20 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'and it is tappable — tel: takes digits and a leading + only');
       assert.ok(/class="herotel "/.test(up), 'not hidden on JobUp');
 
+      // Both products now publish the same line. The MECHANISM still matters:
+      // the number comes from the brand record, so either product can change or
+      // drop it without touching the page, and a brand with phone:null renders
+      // nothing rather than an empty link.
       const md = pwaSvc.page('index.html', '', BRAND.byId('jobmd'));
-      assert.ok(!md.includes('813-212-4888'), 'JobMD must NOT publish JobUp\'s line');
-      assert.ok(/class="herotel no-phone"/.test(md), 'and the block is hidden outright');
-      assert.strictEqual(BRAND.byId('jobmd').phone, null,
-        'JobMD has no published number; inventing one publishes a line nobody answers');
+      assert.ok(md.includes('+1 813-212-4888'), 'JobMD shows the number too');
+      assert.ok(md.includes('href="tel:+18132124888"'), 'and it is tappable');
+      assert.ok(/class="herotel "/.test(md), 'not hidden on JobMD');
+      // The empty-brand path is still live and still correct.
+      const none = { id: 'x', name: 'X', phone: null };
+      const tok = BRAND.tokens(none);
+      assert.strictEqual(tok.BRAND_PHONE, '');
+      assert.strictEqual(tok.BRAND_PHONE_CLASS, 'no-phone',
+        'a brand with no number must still hide the block outright');
     });
 
     // ── THE COPY OVERLAY ───────────────────────────────────────────
