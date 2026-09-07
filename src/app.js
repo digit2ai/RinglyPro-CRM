@@ -228,6 +228,71 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// THE ARCHITECT DISPATCH BOARD — /architect, password-gated
+//
+// The /ringlypro-architect reference: its modes, the seven build phases, the
+// 89-agent bench, the routing table and the house patterns.
+//
+// digit2ai.com/architect CANNOT BE CREATED FROM THIS REPO. The apex is a
+// GoHighLevel site (sites.ludicrous.cloud behind Cloudflare, currently
+// 162.159.140.166) and the request never reaches this app — the same wall
+// that stopped digit2ai.com/enruta and digit2ai.com/hispanotec. That path is
+// made in GHL, as a redirect or a frame. A subdomain pointed at Render IS
+// ours, so architect.digit2ai.com is handled here and starts working the
+// moment the CNAME exists; until then the board lives at
+// aiagent.ringlypro.com/architect.
+//
+// Registered HERE with the other custom domains because Express matches in
+// registration order and the CRM defines hundreds of paths below.
+//
+// The gate is in routes/architect-board.js; credentials come from
+// ARCHITECT_USER / ARCHITECT_PASSWORD and have NO default, so an unset
+// variable closes the board rather than opening it. The page itself is in
+// src/views/, deliberately outside the express.static root below.
+// ═════════════════════════════════════════════════════════════════════════
+const ARCHITECT_HOSTS = new Set(['architect.digit2ai.com', 'www.architect.digit2ai.com']);
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!ARCHITECT_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) {
+    return res.redirect(301, 'https://architect.digit2ai.com' + req.originalUrl);
+  }
+  const cut = req.url.indexOf('?');
+  const routePath = cut === -1 ? req.url : req.url.slice(0, cut);
+  const tail = cut === -1 ? '' : req.url.slice(cut);
+
+  // The board is the whole point of this host: its root and its health check
+  // are the only two things it answers. Everything else would otherwise fall
+  // through and serve the entire CRM on a brand subdomain.
+  if (routePath === '/' || routePath === '') { req.url = '/architect' + tail; return next(); }
+  if (routePath === '/health') { req.url = '/architect/health' + tail; return next(); }
+  if (routePath.startsWith('/architect')) return next();
+  if (routePath === '/favicon.ico' || routePath === '/apple-touch-icon.png') return next();
+
+  return res.redirect(302, 'https://architect.digit2ai.com/');
+});
+
+let architectBoardError = null;
+try {
+  app.use('/architect', require('./routes/architect-board'));
+  console.log('Architect Dispatch Board mounted at /architect' +
+    (process.env.ARCHITECT_USER && process.env.ARCHITECT_PASSWORD
+      ? ''
+      : '  [CLOSED — set ARCHITECT_USER and ARCHITECT_PASSWORD]'));
+} catch (e) {
+  architectBoardError = e;
+  console.error('Architect Dispatch Board failed to mount:', e.message);
+}
+app.get('/debug/architect-board-error', (req, res) => {
+  res.json({
+    mounted: !architectBoardError,
+    error: architectBoardError ? architectBoardError.message : null,
+    stack: architectBoardError ? String(architectBoardError.stack).split('\n').slice(0, 8) : null
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // CUSTOM DOMAIN: lawncopilot.com serves the Lawn Co-Pilot app at its ROOT
 //
 // Registered HERE, before any other route, because Express matches in
