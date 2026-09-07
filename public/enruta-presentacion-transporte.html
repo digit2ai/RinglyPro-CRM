@@ -143,6 +143,24 @@
   .btn:hover{border-color:rgba(56,189,248,.55)}
   .btn.pri{background:var(--grad);border:0}
   .foot{padding:30px 0 6px;color:var(--faint);font-size:12.5px}
+  /* simulador del tablero */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+  .kpi .kn{font-family:var(--disp);font-size:1.45rem;font-weight:700;line-height:1.1;color:var(--text)}
+  .kpi .kn.warn{color:var(--amber)} .kpi .kn.crit{color:var(--crit)} .kpi .kn.ok{color:var(--green)}
+  .kpi .kl{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.3}
+  table.sim{width:100%;border-collapse:collapse;font-size:12px}
+  table.sim th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--faint);padding:7px 8px;border-bottom:1px solid var(--line2);font-weight:500}
+  table.sim td{padding:8px;border-bottom:1px solid var(--line);color:var(--muted)}
+  table.sim td.nm{color:var(--text);font-weight:600}
+  table.sim td.mono{font-family:var(--mono);font-size:11px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;padding:2px 7px;border-radius:99px;white-space:nowrap}
+  .tag.v{background:rgba(63,192,106,.13);color:var(--green);border:1px solid rgba(63,192,106,.34)}
+  .tag.w{background:rgba(245,169,75,.13);color:var(--amber);border:1px solid rgba(245,169,75,.34)}
+  .tag.c{background:rgba(240,113,95,.13);color:var(--crit);border:1px solid rgba(240,113,95,.34)}
+  .tag.n{background:rgba(154,163,208,.12);color:var(--muted);border:1px solid var(--line2)}
 </style>
 </head>
 <body>
@@ -156,7 +174,7 @@
 <main>
 
 <!-- 00 -->
-<section class="slide" data-narr="Señora Ministra, muy buenos días. Le habla Dalia, la voz de Digit2AI. Vision2Ai es nuestra división estratégica de inteligencia artificial. En los próximos minutos no le voy a mostrar diapositivas: le voy a mostrar un sistema que construimos y que usted puede abrir ahora mismo, pantalla por pantalla. Lo construimos como prueba de concepto para enRuta, del Valle del Cauca. Es una prueba de concepto terminada, no un sistema en operación, y prefiero decírselo desde el primer minuto.">
+<section class="slide" data-narr="Señora Ministra, muy buenos días. Le habla Dalia, la voz de Digit2AI. Vision2Ai es nuestra división estratégica de inteligencia artificial. En los próximos minutos no le voy a mostrar diapositivas: le voy a mostrar, pantalla por pantalla, un sistema que construimos. Lo construimos como prueba de concepto para enRuta, del Valle del Cauca. Es una prueba de concepto terminada, no un sistema en operación, y prefiero decírselo desde el primer minuto.">
   <div class="wrap">
     <span class="eyebrow">Demostración institucional</span>
     <h1>El dato de vencimiento ya existe.<br><span class="grad">Lo que falta es avisarle al ciudadano.</span></h1>
@@ -268,11 +286,48 @@
   </div>
 </section>
 
-<!-- 05 -->
+<!-- 05 simulador -->
+<section class="slide" data-narr="Esto es el tablero, tal como lo ve un operador de la entidad. Seis cifras arriba: ciudadanos activos, documentos por vencer, documentos vencidos, contactos hechos hoy, renovaciones en curso y campañas activas. Y debajo, la lista de a quién hay que avisarle, ordenada por urgencia, con el canal que cada persona autorizó. Fíjese en la última columna: el sistema no contacta a nadie que no haya dado su consentimiento, y eso no es una política escrita, es una columna en la base de datos.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 05 — el tablero</span>
+      <h2>Lo que ve un operador cuando abre enRuta.</h2>
+      <p class="lede">Las seis cifras del tablero y la lista de a quién hay que avisarle hoy. Las cifras y los nombres de esta pantalla son datos de demostración.</p>
+    </div>
+    <div class="win">
+      <div class="win-top"><span class="win-title">enRuta — Tablero de control · Sede Cali</span><span class="win-sp"></span><span class="chip">Datos de demostración</span></div>
+      <div class="win-body">
+        <div class="kpis">
+          <div class="kpi"><div class="kn">80</div><div class="kl">Ciudadanos activos</div></div>
+          <div class="kpi"><div class="kn warn">37</div><div class="kl">Documentos por vencer</div></div>
+          <div class="kpi"><div class="kn crit">14</div><div class="kl">Documentos vencidos</div></div>
+          <div class="kpi"><div class="kn ok">23</div><div class="kl">Contactos hoy</div></div>
+          <div class="kpi"><div class="kn">9</div><div class="kl">Renovaciones en curso</div></div>
+          <div class="kpi"><div class="kn">2</div><div class="kl">Campañas activas</div></div>
+        </div>
+        <table class="sim">
+          <tr><th>Ciudadano</th><th>Cédula</th><th>Documento</th><th>Vence</th><th>Estado</th><th>Canal autorizado</th></tr>
+          <tr><td class="nm">Carolina Restrepo A.</td><td class="mono">1.0••.•••.412</td><td>Revisión técnico-mecánica</td><td class="mono">en 6 días</td><td><span class="tag c">Por vencer 7</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+          <tr><td class="nm">Jhon Fredy Ocampo</td><td class="mono">94.•••.331</td><td>SOAT</td><td class="mono">en 12 días</td><td><span class="tag w">Por vencer 15</span></td><td><span class="tag v">SMS</span></td></tr>
+          <tr><td class="nm">María Eugenia Caicedo</td><td class="mono">31.•••.907</td><td>Licencia de conducción C1</td><td class="mono">en 27 días</td><td><span class="tag w">Por vencer 30</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+          <tr><td class="nm">Andrés Felipe Loaiza</td><td class="mono">1.1••.•••.058</td><td>Revisión técnico-mecánica</td><td class="mono">hace 41 días</td><td><span class="tag c">Vencido</span></td><td><span class="tag n">Sin consentimiento</span></td></tr>
+          <tr><td class="nm">Luz Marina Grajales</td><td class="mono">66.•••.284</td><td>Tarjeta de propiedad</td><td class="mono">en 4 meses</td><td><span class="tag v">Vigente</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <div class="col"><div class="reason"><b>El estado no está escrito, se calcula.</b> Cada vez que se abre esta pantalla, la columna Estado se deriva de la fecha. Nunca puede quedar desactualizada.</div></div>
+      <div class="col"><div class="reason"><b>El consentimiento manda.</b> A quien no autorizó un canal, el sistema no lo contacta por ese canal. Está en la fila cuatro y es una regla del sistema, no del manual.</div></div>
+    </div>
+    <div class="win2"><strong>Habeas data por diseño (Ley 1581).</strong> Cada ciudadano tiene consentimiento independiente para datos, llamada, mensaje de texto y WhatsApp, más las marcas de no contactar y su horario preferido. Una campaña no puede saltarse esas columnas.</div>
+  </div>
+</section>
+
+<!-- 06 -->
 <section class="slide" data-narr="Ahora quiero mostrarle algo que encontramos en nuestro propio sistema, porque explica cómo trabajamos mejor que cualquier lista de capacidades. El tablero anunciaba doscientos treinta y cuatro documentos por vencer, pero al abrir la lista no aparecía ninguno. Dos cifras del mismo sistema, contradiciéndose. Lo encontramos nosotros, sobre datos de prueba, antes de que ningún ciudadano dependiera de ese número.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 05 — el hallazgo</span>
+      <span class="eyebrow">Sección 06 — el hallazgo</span>
       <h2>El tablero decía 234. La lista devolvía cero.</h2>
     </div>
     <div class="row">
@@ -300,7 +355,7 @@
 <section class="slide" data-narr="La corrección. El estado dejó de ser una columna guardada y pasó a derivarse de la fecha de vencimiento en cada consulta, resuelto en la zona horaria de Colombia. Ya no existe un dato que pueda quedar desactualizado, porque ya no se guarda: se calcula. Un tablero que informa mal es peor que no tener tablero, y para una entidad pública esa diferencia es la que separa una decisión correcta de una equivocada.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 06 — la corrección</span>
+      <span class="eyebrow">Sección 07 — la corrección</span>
       <h2>El estado dejó de guardarse. Ahora se calcula.</h2>
     </div>
     <div class="row">
@@ -331,27 +386,32 @@
 </section>
 
 <!-- 07 -->
-<section class="slide" data-narr="Laura es la asistente de enRuta. Habla español colombiano, trata de usted y usa la terminología local: licencia de conducción, revisión técnico-mecánica, comparendo, cédula de ciudadanía. Y hay una decisión de diseño importante: Laura no responde de memoria ni improvisa. El tablero le entrega los datos del ciudadano y ella solo puede responder con eso.">
+<section class="slide" data-narr="Así atiende Laura a una ciudadana. Le escribe ella primero, porque el tablero detectó que a la señora Carolina le quedan seis días de revisión técnico-mecánica. Le ofrece la cita, se la agenda el sábado y le programa el recordatorio. Y fíjese en el momento clave: cuando le preguntan cuánto vale, Laura no inventa una cifra. Dice que no la tiene confirmada y ofrece un asesor. Un dato equivocado sobre una tarifa oficial es exactamente el error que una entidad no se puede permitir.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 07 — la asistente</span>
-      <h2>Laura responde con los datos del tablero. Solo con eso.</h2>
+      <span class="eyebrow">Sección 08 — la asistente</span>
+      <h2>Laura resuelve el trámite. Y cuando no sabe, lo dice.</h2>
     </div>
     <div class="row">
       <div class="col" style="flex:1.15">
         <div class="win">
-          <div class="win-top"><span class="win-title">Laura — asistente de trámites</span><span class="win-sp"></span><span class="chip acc">Español colombiano</span></div>
+          <div class="win-top"><span class="win-title">Laura — atención a un ciudadano por WhatsApp</span><span class="win-sp"></span><span class="chip acc">Español colombiano</span></div>
           <div class="win-body">
-            <div class="msg a"><span class="who">Laura</span>Buenos días, le habla Laura de enRuta, su asistente de trámites vehiculares y de movilidad. ¿En qué le puedo ayudar?</div>
-            <div class="msg u"><span class="who">Ciudadano</span>¿Cuándo se me vence la técnico-mecánica?</div>
-            <div class="msg a"><span class="who">Laura</span>Su revisión técnico-mecánica vence el 24 de octubre. Le quedan dieciocho días. ¿Desea que le agende la cita en la sede de Cali?</div>
+            <div class="msg a"><span class="who">Laura · aviso automático</span>Buenas tardes, señora Carolina. Le habla Laura de enRuta, su asistente de trámites vehiculares. Le escribo porque la revisión técnico-mecánica de su vehículo de placas ABC123 vence el 24 de octubre: le quedan seis días. ¿Desea que le agende la cita?</div>
+            <div class="msg u"><span class="who">Ciudadana</span>Sí señora, pero el sábado que no trabajo</div>
+            <div class="msg a"><span class="who">Laura</span>Con mucho gusto. Tenemos disponibilidad el sábado 19 de octubre a las 8:30 de la mañana o a las 10:00, en la sede de Cali. ¿Cuál le sirve?</div>
+            <div class="msg u"><span class="who">Ciudadana</span>A las 8:30. Y cuánto me vale?</div>
+            <div class="msg a"><span class="who">Laura</span>Le agendé el sábado 19 a las 8:30 en la sede de Cali. Sobre el valor: la tarifa de la revisión la fija la resolución vigente y no la tengo confirmada para su tipo de vehículo, así que prefiero no darle una cifra equivocada. Al llegar se la confirman en caja, o si desea le hago seguir su consulta con un asesor.</div>
+            <div class="msg u"><span class="who">Ciudadana</span>Listo, gracias</div>
+            <div class="msg a"><span class="who">Laura</span>A usted. Le llegará el recordatorio un día antes. Que tenga buena tarde.</div>
           </div>
         </div>
       </div>
       <div class="col" style="flex:.85">
-        <div class="reason"><b>Trato de usted, siempre.</b> Nunca tutea. La terminología es la colombiana, no genérica.</div>
-        <div class="reason"><b>No improvisa.</b> Los hechos de trámites se los empuja el tablero. Si el dato no está, Laura lo dice; no lo inventa.</div>
-        <div class="reason"><b>Categorías reales.</b> A1, A2, B1, B2, B3, C1 — con su definición oficial, no una aproximación.</div>
+        <div class="reason"><b>Trato de usted, siempre.</b> Nunca tutea. Y la terminología es la colombiana: revisión técnico-mecánica, comparendo, cédula de ciudadanía.</div>
+        <div class="reason"><b>No improvisa una cifra.</b> Cuando le preguntan el valor y no lo tiene confirmado, lo dice y ofrece un asesor. Un dato inventado sobre una tarifa oficial es exactamente el error que no se puede cometer.</div>
+        <div class="reason"><b>Resuelve el trámite, no solo informa.</b> Agenda la cita, confirma sede y hora, y deja programado el recordatorio.</div>
+        <div class="reason"><b>Categorías reales.</b> A1, A2, B1, B2, B3, C1, con su definición oficial.</div>
       </div>
     </div>
     <div class="note"><strong>Lo que Laura todavía no hace, dicho por nosotros:</strong> atiende por el tablero, <strong>no por línea telefónica</strong>. La telefonía con IA es el siguiente paso identificado; no está funcionando hoy y no se la vamos a presentar como si lo estuviera.</div>
@@ -362,7 +422,7 @@
 <section class="slide" data-narr="Otro hallazgo, este de seguridad. Las operaciones que modifican la estructura de la base de datos estaban expuestas como enlaces abiertos, sin ninguna autenticación. Un rastreador automático de internet las estaba ejecutando sobre el sistema desplegado, simplemente porque encontró el enlace. Hoy exigen una clave y una confirmación explícita, y una clave equivocada responde como si la ruta no existiera.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 08 — seguridad</span>
+      <span class="eyebrow">Sección 09 — seguridad</span>
       <h2>Un rastreador automático estaba alterando la base de datos.</h2>
     </div>
     <div class="row">
@@ -393,14 +453,14 @@
 </section>
 
 <!-- 09 -->
-<section class="slide" data-narr="Cómo verificamos que lo que le digo es cierto. El sistema tiene una suite de sesenta y cuatro pruebas automáticas que se ejecuta contra el despliegue en línea, no contra una copia de laboratorio. Las sesenta y cuatro pasan. No requiere ninguna llave externa, así que cualquiera puede correrla y comprobarlo, incluido su propio equipo técnico.">
+<section class="slide" data-narr="Cómo verificamos que lo que le digo es cierto. La prueba de concepto trae una suite de sesenta y cuatro pruebas automáticas que se ejecuta contra el sistema desplegado, no contra una copia de laboratorio. Las sesenta y cuatro pasan. No requiere ninguna llave externa, así que su propio equipo técnico puede correrla y comprobarlo por su cuenta.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 09 — verificación</span>
+      <span class="eyebrow">Sección 10 — verificación</span>
       <h2>64 pruebas contra el sistema real. Las 64 en verde.</h2>
     </div>
     <div class="win">
-      <div class="win-top"><span class="win-title">Suite de aceptación — ejecutada contra el despliegue en línea</span><span class="win-sp"></span><span class="chip ok">64 ok · 0 fallas</span></div>
+      <div class="win-top"><span class="win-title">Suite de aceptación — ejecutada contra el sistema desplegado</span><span class="win-sp"></span><span class="chip ok">64 ok · 0 fallas</span></div>
       <div class="win-body">
         <div class="kv"><span class="k">El estado se deriva de la fecha, no de la columna</span><span class="v ok">ok</span></div>
         <div class="kv"><span class="k">Las rutas de administración exigen clave</span><span class="v ok">ok</span></div>
@@ -417,7 +477,7 @@
 <section class="slide" data-narr="Señora Ministra, la aclaración de alcance, y prefiero ser del todo precisa. Lo que le mostré es una prueba de concepto, construida para enRuta del Valle del Cauca. Está terminada y desplegada, pero no opera con ciudadanos reales y no es una integración nacional. No se la voy a presentar como si lo fuera. Es una prueba de concepto esperando su primer despliegue real. Escalarlo después no exige inventar tecnología; exige acuerdos de datos y decisión institucional.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 10 — alcance real</span>
+      <span class="eyebrow">Sección 11 — alcance real</span>
       <h2>Una prueba de concepto terminada, esperando su primer despliegue real.</h2>
     </div>
     <ul class="list">
@@ -434,7 +494,7 @@
 <section class="slide" data-narr="El beneficio, en el lenguaje que le sirve a usted para defenderlo. Adelantarse a la fecha convierte una sanción en una renovación. Eso es más seguridad vial, porque circulan menos vehículos sin revisión ni SOAT. Es más cumplimiento voluntario. Es recaudo que llega por el trámite hecho a tiempo y no por la multa al ciudadano que no se enteró. Y es menos congestión en las ventanillas.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 11 — el beneficio</span>
+      <span class="eyebrow">Sección 12 — el beneficio</span>
       <h2>Convertir una sanción en una renovación.</h2>
     </div>
     <div class="row">
@@ -448,10 +508,10 @@
 </section>
 
 <!-- 12 -->
-<section class="slide" data-narr="Para cerrar. Lo que le mostré está en línea y usted lo puede abrir desde su teléfono ahora mismo, con datos de demostración. Por eso nuestra propuesta es pequeña a propósito: un piloto de cuatro semanas, en la entidad que usted elija, con una métrica acordada de antemano. No le estamos pidiendo que crea en una promesa: le estamos pidiendo el primer despliegue real de una prueba de concepto que ya está construida y que usted acaba de ver. Muchas gracias por su tiempo.">
+<section class="slide" data-narr="Para cerrar. Lo que le mostré es una prueba de concepto terminada, y con mucho gusto se la presentamos en vivo cuando usted disponga, con el equipo que quiera tener en la sala. Nuestra propuesta es pequeña a propósito: un piloto de cuatro semanas, en la entidad que usted elija, con una métrica acordada de antemano. No le estamos pidiendo que crea en una promesa: le estamos pidiendo el primer despliegue real de una prueba de concepto que ya está construida y que usted acaba de ver. Muchas gracias por su tiempo.">
   <div class="wrap">
     <div class="head">
-      <span class="eyebrow">Sección 12 — la propuesta</span>
+      <span class="eyebrow">Sección 13 — la propuesta</span>
       <h2>Un piloto de cuatro semanas,<br><span class="grad">con la métrica acordada de antemano.</span></h2>
     </div>
     <div class="win">
@@ -464,8 +524,8 @@
       </div>
     </div>
     <div class="row" style="margin-top:18px">
-      <div class="col"><div class="reason"><b>enRuta, en vivo</b><br>aiagent.ringlypro.com/enruta</div></div>
-      <div class="col"><div class="reason"><b>Vision2Ai</b><br>vision2ai.app</div></div>
+      <div class="col"><div class="reason"><b>Demostración en vivo</b><br>La presentamos ante usted y su equipo, cuando disponga.</div></div>
+      <div class="col"><div class="reason"><b>Vision2Ai</b><br>División estratégica de Digit2AI</div></div>
       <div class="col"><div class="reason"><b>Contacto</b><br>info@digit2ai.com</div></div>
     </div>
     <div class="foot">Vision2Ai — división estratégica de Digit2AI LLC · Tampa, Florida · Operación en Colombia: Cali y Barranquilla<br>enRuta: prueba de concepto construida para el Centro de Diagnóstico Automotor del Valle del Cauca.</div>
