@@ -159,7 +159,11 @@ async function searchAdzuna({ what, where, limit }) {
 
 async function searchPool(seq, { what, where, remote, limit }) {
   const repl = {};
-  const clauses = [`fetched_at > now() - interval '21 days'`];
+  // Include rows whose fetched_at is NULL: the shared pool is populated by the
+  // CV engine, which does not always stamp that column, and a hard freshness
+  // filter then silently empties the fallback (leaving the map blank whenever
+  // Adzuna is spent). Genuinely stale rows sort last via posted_at.
+  const clauses = [`(fetched_at IS NULL OR fetched_at > now() - interval '45 days')`];
   if (what) { repl.q = '%' + what.trim() + '%'; clauses.push(`(title ILIKE :q OR company ILIKE :q OR description ILIKE :q)`); }
   if (where && !isRemote(where)) { repl.w = '%' + where.trim() + '%'; clauses.push(`(location ILIKE :w)`); }
   if (remote === true) clauses.push(`(remote = true OR location ILIKE '%remote%')`);
@@ -191,14 +195,80 @@ async function searchPool(seq, { what, where, remote, limit }) {
   });
 }
 
+// Spanish -> English job-term translation. US postings (Adzuna and the pool) are
+// in English, so a Hispanic visitor searching "enfermera" would otherwise get
+// nothing — which matters most for TornaJobs. Token by token, accent-insensitive,
+// original kept when nothing matches.
+const ES_EN = {
+  enfermera: 'nurse', enfermero: 'nurse', enfermeria: 'nursing',
+  conductor: 'driver', chofer: 'driver', camionero: 'truck driver', repartidor: 'delivery driver',
+  cajero: 'cashier', cajera: 'cashier', cocinero: 'cook', cocinera: 'cook', chef: 'chef',
+  mesero: 'server', mesera: 'server', camarero: 'server', camarera: 'server',
+  limpieza: 'cleaning', limpiador: 'janitor', limpiadora: 'housekeeping', conserje: 'janitor',
+  construccion: 'construction', albanil: 'construction', obrero: 'laborer',
+  vendedor: 'sales', vendedora: 'sales', ventas: 'sales', dependiente: 'retail',
+  recepcionista: 'receptionist', asistente: 'assistant', secretaria: 'secretary',
+  contador: 'accountant', contadora: 'accountant', administrador: 'administrator',
+  maestro: 'teacher', maestra: 'teacher', profesor: 'teacher', profesora: 'teacher',
+  ninera: 'nanny', cuidadora: 'caregiver', cuidador: 'caregiver',
+  jardinero: 'landscaper', paisajista: 'landscaper', mecanico: 'mechanic',
+  electricista: 'electrician', plomero: 'plumber', fontanero: 'plumber',
+  soldador: 'welder', carpintero: 'carpenter', pintor: 'painter',
+  almacen: 'warehouse', bodega: 'warehouse', montacargas: 'forklift',
+  seguridad: 'security', guardia: 'security guard', vigilante: 'security guard',
+  estilista: 'hairstylist', peluquero: 'barber', peluquera: 'hairstylist', barbero: 'barber',
+  gerente: 'manager', supervisor: 'supervisor', operador: 'operator', tecnico: 'technician',
+  ingeniero: 'engineer', ingeniera: 'engineer', abogado: 'lawyer', abogada: 'lawyer',
+  medico: 'physician', doctor: 'doctor', dentista: 'dentist', farmaceutico: 'pharmacist',
+  programador: 'developer', desarrollador: 'developer', disenador: 'designer',
+  ayudante: 'helper', empacador: 'packer', costurera: 'sewing machine operator', lavaplatos: 'dishwasher',
+};
+function stripAccents(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ""); }
+function esToEn(what) {
+  const raw = String(what || '').trim();
+  if (!raw) return raw;
+  const toks = stripAccents(raw.toLowerCase()).split(/\s+/);
+  let hit = false;
+  const out = toks.map((t) => { if (ES_EN[t]) { hit = true; return ES_EN[t]; } return t; });
+  return hit ? out.join(' ') : raw;
+}
+
+// Pool search that relaxes the location when a specific city has nothing, so a
+// title with zero local openings returns national matches rather than an empty
+// map. Reports whether it relaxed so the UI can say so honestly.
+async function poolWithRelax(seq, { what, where, remote, limit }) {
+  let rows = await searchPool(seq, { what, where, remote, limit });
+  let relaxed = false;
+  if (!rows.length && where && !isRemote(where)) {
+    rows = await searchPool(seq, { what, where: '', remote, limit });
+    relaxed = rows.length > 0;
+  }
+  return { rows, relaxed };
+}
+
 async function search({ what = '', where = '', remote, limit } = {}) {
   const seq = db.sequelize();
   if (!seq) return { source: 'none', center: US_CENTER, jobs: [], count: 0, mapped: 0, adzuna: false, note: 'database unavailable' };
   await ensureGeocache(seq);
-  const adzuna = jobsource.adzunaActive();
-  let jobs, source;
-  if (adzuna) { jobs = await searchAdzuna({ what, where, limit }); source = 'adzuna'; }
-  else { jobs = await searchPool(seq, { what, where, remote, limit }); source = 'pool'; }
+  // Translate a Spanish job term into English so US postings actually match.
+  what = esToEn(what);
+  const adzunaConfigured = jobsource.adzunaActive();
+  let jobs, source, relaxed = false;
+  if (adzunaConfigured) {
+    // Adzuna is the local-coverage source but has a daily quota; when it comes
+    // back empty (spent, or a term it has nothing for) fall back to the keyless
+    // pool instead of showing an empty map.
+    try { jobs = await searchAdzuna({ what, where, limit }); } catch (e) { jobs = []; }
+    source = 'adzuna';
+    if (!jobs.length) {
+      const p = await poolWithRelax(seq, { what, where, remote, limit });
+      if (p.rows.length) { jobs = p.rows; source = 'pool'; relaxed = p.relaxed; }
+    }
+  } else {
+    const p = await poolWithRelax(seq, { what, where, remote, limit });
+    jobs = p.rows; source = 'pool'; relaxed = p.relaxed;
+  }
+  const adzuna = source === 'adzuna';
 
   let center = where ? await geocode(seq, where, true) : null;   // one live call for the searched area
   const placed = jobs.filter((j) => j.lat != null && j.lng != null);
@@ -220,9 +290,11 @@ async function search({ what = '', where = '', remote, limit } = {}) {
   }
 
   return {
-    source, adzuna, center, count: jobs.length, mapped: placed.length,
+    source, adzuna, center, count: jobs.length, mapped: placed.length, relaxed,
     jobs: jobs.slice(0, limit || 120),
-    note: adzuna ? null : 'Live openings placed by city — the map keeps filling in as we map more locations. Add a free Adzuna key for full local coverage.'
+    note: relaxed
+      ? ('No local openings for that search near ' + (where || 'you').trim() + ' — showing matching roles across the US.')
+      : (adzuna ? null : 'Live openings placed by city — the map keeps filling in as we map more locations.')
   };
 }
 
