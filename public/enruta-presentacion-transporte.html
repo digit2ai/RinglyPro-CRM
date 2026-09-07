@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vision2Ai para el sector transporte — Caso enRuta</title>
+<meta name="description" content="Quiénes somos, qué hacemos, cómo lo hacemos y el caso enRuta: gestión documental vehicular para el Centro de Diagnóstico Automotor del Valle.">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --ink:#06081a; --panel:#0b0f2b; --panel2:#101538;
+    --line:rgba(139,148,255,.16);
+    --blue:#3b82f6; --violet:#8b5cf6; --magenta:#d946a8; --cyan:#38bdf8; --amber:#f5a94b; --green:#3fc06a;
+    --text:#e8eaff; --muted:#9aa3d0;
+    --grad:linear-gradient(100deg,var(--blue),var(--violet) 45%,var(--magenta));
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--text);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;line-height:1.55}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+  /* barra superior */
+  header{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(6,8,26,.86);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:14px;height:60px}
+  .brand{font-weight:800;font-size:1.05rem;letter-spacing:.01em;white-space:nowrap}
+  .brand .two{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .prog{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:var(--grad);transition:width .4s ease}
+  .count{font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* controles de voz */
+  .voice{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(6,8,26,.92);
+    backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+  .vrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .orb{width:46px;height:46px;flex:none;border-radius:50%;position:relative;cursor:pointer;border:0;padding:0;
+    background:radial-gradient(circle at 38% 32%,#a5f3fc,#38bdf8 34%,#8b5cf6 70%,#d946a8);
+    box-shadow:0 0 0 0 rgba(139,92,246,.55)}
+  .orb.on{animation:pulse 1.8s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(139,92,246,.5)}70%{box-shadow:0 0 0 18px rgba(139,92,246,0)}100%{box-shadow:0 0 0 0 rgba(139,92,246,0)}}
+  .vtxt{flex:1;min-width:180px}
+  .vtxt b{display:block;font-size:.9rem}
+  .vtxt span{font-size:.78rem;color:var(--muted)}
+  .btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);
+    padding:9px 15px;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:rgba(56,189,248,.55)}
+  .btn.pri{background:var(--grad);border:0}
+
+  /* diapositivas */
+  main{padding:88px 0 130px}
+  section{min-height:auto;padding:44px 0;border-bottom:1px solid var(--line);scroll-margin-top:72px}
+  section.now{background:linear-gradient(180deg,rgba(139,92,246,.09),transparent 70%)}
+  .kick{display:inline-flex;align-items:center;gap:9px;font-size:.7rem;font-weight:800;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
+  .kick::before{content:"";width:24px;height:2px;background:var(--grad);border-radius:2px}
+  h1{font-size:clamp(1.9rem,5vw,3rem);line-height:1.12;letter-spacing:-.02em;margin:0 0 14px;font-weight:800}
+  h2{font-size:clamp(1.4rem,3.6vw,2.1rem);line-height:1.2;letter-spacing:-.015em;margin:0 0 12px;font-weight:800}
+  h3{font-size:1.05rem;margin:0 0 6px;font-weight:750}
+  .lede{color:var(--muted);font-size:1.05rem;max-width:760px}
+  p{margin:0 0 12px}
+  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card h3{color:var(--text)} .card p{color:var(--muted);font-size:.92rem;margin:0}
+  .card .n{font-size:.72rem;font-weight:800;letter-spacing:.16em;color:var(--cyan);margin-bottom:8px}
+
+  .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:24px}
+  .num{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .num b{display:block;font-size:2rem;font-weight:800;background:var(--grad);
+    -webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
+  .num span{font-size:.8rem;color:var(--muted)}
+
+  ul.list{list-style:none;padding:0;margin:18px 0 0}
+  ul.list li{padding:13px 0;border-bottom:1px solid var(--line);color:var(--muted);display:flex;gap:14px}
+  ul.list li:last-child{border-bottom:0}
+  ul.list b{color:var(--text);flex:none;width:190px;font-size:.86rem}
+  @media(max-width:640px){ul.list li{flex-direction:column;gap:4px}ul.list b{width:auto}}
+
+  .quote{margin:22px 0 0;padding:20px 24px;border-left:3px solid;border-image:var(--grad) 1;
+    background:rgba(139,92,246,.07);border-radius:0 12px 12px 0}
+  .flag{margin-top:18px;padding:14px 18px;border-radius:12px;font-size:.92rem;
+    background:rgba(245,169,75,.1);border:1px solid rgba(245,169,75,.32);color:#f6d9ac}
+  .win{margin-top:18px;padding:14px 18px;border-radius:12px;font-size:.92rem;
+    background:rgba(63,192,106,.1);border:1px solid rgba(63,192,106,.32);color:#bdeccd}
+  .foot{padding:34px 0 10px;color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">Vision<span class="two">2</span>Ai</div>
+    <div class="prog"><i id="bar"></i></div>
+    <div class="count" id="cnt">1 / 10</div>
+  </div>
+</header>
+
+<main>
+
+<section id="s0" data-narr="Buenos días. Le habla Dalia, la voz de Digit2AI. En los próximos minutos le voy a contar quiénes somos, qué hacemos, cómo lo hacemos, y sobre todo, qué construimos para el Centro de Diagnóstico Automotor del Valle, en Cali. Todo lo que va a escuchar está funcionando hoy en producción.">
+  <div class="wrap">
+    <div class="kick">Presentación para el sector transporte</div>
+    <h1>Software con inteligencia artificial<br><span class="grad">para la movilidad.</span></h1>
+    <p class="lede">Quiénes somos, qué hacemos, cómo lo hacemos, y el caso enRuta: gestión documental vehicular para el Centro de Diagnóstico Automotor del Valle.</p>
+    <div class="quote">Presentado por Digit2AI · Vision2Ai · Tampa, Florida — con operación en Colombia</div>
+  </div>
+</section>
+
+<section id="s1" data-narr="Primero, quiénes somos. Vision2Ai es la fábrica de inteligencia artificial de Digit2AI. No somos una consultora que entrega diapositivas ni un laboratorio que entrega prototipos. Operamos veintiún plataformas en vivo, en veintidós verticales de industria, con un acuerdo de disponibilidad del noventa y nueve punto nueve por ciento. Cada una de esas plataformas empezó como una conversación, igual que esta.">
+  <div class="wrap">
+    <div class="kick">Quiénes somos</div>
+    <h2>Una fábrica de inteligencia artificial, no una consultora.</h2>
+    <p class="lede">Construimos y operamos software en producción. Lo que entregamos son sistemas funcionando, no informes ni pruebas de concepto que se quedan en el escritorio.</p>
+    <div class="nums">
+      <div class="num"><b>21</b><span>Plataformas en vivo</span></div>
+      <div class="num"><b>22</b><span>Verticales de industria</span></div>
+      <div class="num"><b>83</b><span>Roles de trabajo con IA</span></div>
+      <div class="num"><b>99.9%</b><span>Disponibilidad comprometida</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="s2" data-narr="Qué hacemos. Convertimos una necesidad descrita en palabras corrientes en un sistema que funciona. Usted describe el problema: qué trámite se le atasca, qué información llega tarde, qué le toca hacer a mano. Nosotros dimensionamos la solución, la construimos y la ponemos en línea. Sin licencias por asiento, sin comprar una plataforma extranjera que no entiende el contexto colombiano.">
+  <div class="wrap">
+    <div class="kick">Qué hacemos</div>
+    <h2>De una necesidad descrita en palabras, a un sistema en producción.</h2>
+    <div class="cards">
+      <div class="card"><div class="n">01</div><h3>Usted lo describe</h3><p>En lenguaje corriente: qué trámite se atasca, qué dato llega tarde, qué se hace a mano hoy.</p></div>
+      <div class="card"><div class="n">02</div><h3>La fábrica lo construye</h3><p>Una fuerza de trabajo con ochenta y tres roles especializados: ingeniería, datos, cumplimiento, experto del dominio.</p></div>
+      <div class="card"><div class="n">03</div><h3>Lo ponemos en línea</h3><p>Desplegado, monitoreado y soportado. Usted recibe un sistema funcionando, no un archivo para instalar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="s3" data-narr="Cómo lo hacemos, y por qué esto importa para una entidad pública. Trabajamos en semanas, no en años. Construimos sobre una plataforma que ya opera, así que no empezamos de cero cada vez. Todo queda documentado y auditable: cada cifra que le mostramos en un tablero se puede rastrear hasta el dato que la produjo. Y la inteligencia artificial recomienda, pero la decisión siempre la toma una persona.">
+  <div class="wrap">
+    <div class="kick">Cómo lo hacemos</div>
+    <h2>En semanas. Sobre plataforma propia. Con la persona decidiendo.</h2>
+    <ul class="list">
+      <li><b>Plazos en semanas</b><span>Un primer sistema útil en cuatro semanas o menos, no en ciclos presupuestales completos.</span></li>
+      <li><b>Plataforma propia</b><span>No empezamos de cero: reutilizamos infraestructura ya probada en producción.</span></li>
+      <li><b>Trazabilidad</b><span>Cada cifra de un tablero se rastrea hasta el dato que la produjo. Sirve para auditoría y para apelaciones.</span></li>
+      <li><b>La IA recomienda, la persona decide</b><span>Ningún sistema nuestro ejecuta una sanción, una suspensión ni un cobro por su cuenta.</span></li>
+      <li><b>Contexto colombiano</b><span>Cédula, SOAT, revisión técnico-mecánica, comparendos, husos horarios y formato de moneda locales.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="s4" data-narr="El beneficio, dicho sin adornos. Para una entidad de transporte, el problema no suele ser la falta de datos: es que el dato está y nadie llega a tiempo al ciudadano. Un documento vencido que nadie avisó se convierte en un vehículo inmovilizado, en un comparendo, y en una fila en la ventanilla. Adelantarse a esa fecha es más seguridad vial, más cumplimiento voluntario y menos congestión en sus oficinas.">
+  <div class="wrap">
+    <div class="kick">El beneficio</div>
+    <h2>El dato ya existe. Lo que falta es llegarle al ciudadano a tiempo.</h2>
+    <div class="cards">
+      <div class="card"><h3>Más cumplimiento</h3><p>Un recordatorio oportuno convierte un vencimiento en una renovación, no en un comparendo.</p></div>
+      <div class="card"><h3>Menos congestión</h3><p>El trámite se resuelve antes de que el ciudadano tenga que ir a hacer fila.</p></div>
+      <div class="card"><h3>Más seguridad vial</h3><p>Menos vehículos circulando sin revisión técnico-mecánica ni SOAT vigente.</p></div>
+      <div class="card"><h3>Trazabilidad</h3><p>Cada contacto queda registrado: a quién, cuándo, por qué canal y con qué respuesta.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="s5" data-narr="Ahora, el caso concreto. El Centro de Diagnóstico Automotor del Valle, en Santiago de Cali, tenía el problema que acabo de describir. Miles de ciudadanos con documentos vehiculares por vencer: licencia de conducción, SOAT, revisión técnico-mecánica, tarjeta de propiedad. La información estaba en el sistema, pero el aviso al ciudadano dependía de que alguien se acordara de revisarlo.">
+  <div class="wrap">
+    <div class="kick">El caso — enRuta</div>
+    <h2>Centro de Diagnóstico Automotor del Valle, Cali.</h2>
+    <p class="lede">Miles de ciudadanos con documentos por vencer. La información estaba en el sistema; el aviso dependía de que alguien se acordara de revisarla.</p>
+    <div class="cards">
+      <div class="card"><h3>Licencia de conducción</h3><p>Renovación, recategorización, duplicado y expedición.</p></div>
+      <div class="card"><h3>SOAT</h3><p>Seguro obligatorio, con la fecha de vencimiento como disparador.</p></div>
+      <div class="card"><h3>Revisión técnico-mecánica</h3><p>RTMyEC, el trámite propio del centro de diagnóstico.</p></div>
+      <div class="card"><h3>Tarjeta de propiedad</h3><p>Y el historial de comparendos asociado al ciudadano.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="s6" data-narr="Esto es lo que construimos. Un sistema de gestión documental vehicular, multiempresa, con tablero de control, campañas de contacto por WhatsApp y mensaje de texto, plantillas de mensaje, registro de cada contacto, sedes, comparendos y renovaciones. Y una asistente llamada Laura, que habla español colombiano y responde sobre trámites usando únicamente la información del tablero.">
+  <div class="wrap">
+    <div class="kick">Qué construimos</div>
+    <h2>enRuta: el sistema completo, en producción.</h2>
+    <ul class="list">
+      <li><b>Tablero de control</b><span>Documentos vigentes, por vencer y vencidos, con el detalle por ciudadano y por sede.</span></li>
+      <li><b>Campañas de contacto</b><span>WhatsApp y mensaje de texto, con plantillas y registro de cada envío.</span></li>
+      <li><b>Ciudadanos y vehículos</b><span>Cédula, contacto, vehículos asociados, documentos y comparendos.</span></li>
+      <li><b>Renovaciones</b><span>El ciclo completo desde el aviso hasta el trámite resuelto.</span></li>
+      <li><b>Laura, asistente de voz</b><span>Español colombiano, trato de usted, terminología local. Responde con los datos del tablero.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="s7" data-narr="Quiero detenerme en un hallazgo, porque explica cómo trabajamos. El tablero anunciaba doscientos treinta y cuatro documentos por vencer, pero la lista de por vencer aparecía vacía. La causa: el estado se calculaba una sola vez, al registrar el documento, y nunca se volvía a tocar. Ochenta y tres registros marcados como por vencer llevaban meses vencidos. Lo corregimos derivando el estado de la fecha real en cada consulta. Un tablero que miente es peor que no tener tablero.">
+  <div class="wrap">
+    <div class="kick">Cómo trabajamos — un hallazgo real</div>
+    <h2>El tablero decía 234 por vencer. La lista estaba vacía.</h2>
+    <p class="lede">El estado del documento se calculaba una sola vez, al registrarlo, y nada volvía a actualizarlo. Ochenta y tres registros marcados “por vencer” llevaban meses vencidos.</p>
+    <div class="win"><strong>La corrección:</strong> el estado ahora se deriva de la fecha de vencimiento en cada lectura, resuelto en zona horaria de Colombia. Ya no existe una columna que pueda quedar desactualizada.</div>
+    <div class="quote">Un tablero que miente es peor que no tener tablero. Para una entidad pública, esa diferencia es la que separa una decisión informada de una equivocada.</div>
+  </div>
+</section>
+
+<section id="s8" data-narr="También corregimos un asunto de seguridad. Las operaciones que modifican la estructura de la base de datos estaban expuestas como enlaces abiertos, sin autenticación. Un rastreador automático de internet las estaba ejecutando sobre el sistema en producción. Hoy exigen una clave y una confirmación explícita. Y una aclaración honesta sobre Laura: hoy atiende por el tablero, no por teléfono. La línea telefónica está identificada como el siguiente paso, y lo decimos antes de que usted lo pregunte.">
+  <div class="wrap">
+    <div class="kick">Seguridad y transparencia</div>
+    <h2>Lo que corregimos, y lo que todavía no hace.</h2>
+    <div class="win"><strong>Seguridad corregida:</strong> las operaciones que alteran la base de datos estaban abiertas sin autenticación, y un rastreador automático las estaba ejecutando en producción. Hoy exigen clave y confirmación explícita.</div>
+    <div class="flag"><strong>Lo que Laura todavía no hace:</strong> atiende por el tablero, no por línea telefónica. La telefonía con inteligencia artificial es el siguiente paso identificado, no algo que ya esté funcionando. Preferimos decirlo nosotros.</div>
+    <div class="win"><strong>Verificado:</strong> sesenta y cuatro pruebas automáticas ejecutadas contra el sistema en producción, sesenta y cuatro en verde, sin ninguna llave externa.</div>
+  </div>
+</section>
+
+<section id="s9" data-narr="Para cerrar. Lo que le mostré no es una maqueta: enRuta está en línea hoy y usted lo puede abrir. Si en su entidad hay un trámite que depende de que alguien recuerde revisar una fecha, ese es exactamente el problema que sabemos resolver, y lo hacemos en semanas. Quedo atenta. Muchas gracias por su tiempo.">
+  <div class="wrap">
+    <div class="kick">Cierre</div>
+    <h2>Si un trámite depende de que alguien recuerde revisar una fecha,<br><span class="grad">ese problema lo sabemos resolver.</span></h2>
+    <div class="cards">
+      <div class="card"><h3>enRuta, en vivo</h3><p>aiagent.ringlypro.com/enruta</p></div>
+      <div class="card"><h3>Vision2Ai</h3><p>vision2ai.app</p></div>
+      <div class="card"><h3>Contacto</h3><p>info@digit2ai.com</p></div>
+    </div>
+    <div class="foot">Digit2AI LLC · Tampa, Florida · Operación en Colombia — Cali y Barranquilla</div>
+  </div>
+</section>
+
+</main>
+
+<div class="voice">
+  <div class="wrap vrow">
+    <button class="orb" id="orb" aria-label="Reproducir narración"></button>
+    <div class="vtxt">
+      <b id="vt">Narración con Dalia</b>
+      <span id="vs">Toque el orbe para escuchar la presentación completa</span>
+    </div>
+    <button class="btn" id="prev">Anterior</button>
+    <button class="btn" id="next">Siguiente</button>
+    <button class="btn pri" id="play">Reproducir todo</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section[data-narr]'));
+  var i = 0, playing = false, auto = false, audio = new Audio(), token = 0;
+  var bar = document.getElementById('bar'), cnt = document.getElementById('cnt');
+  var orb = document.getElementById('orb'), vt = document.getElementById('vt'), vs = document.getElementById('vs');
+  var play = document.getElementById('play');
+
+  // Voz de marca: Dalia (es-MX-DaliaNeural) por el motor neuronal propio, sin llave.
+  var TTS = '/api/tts/edge', VOICE = 'dalia', RATE = '-4%';
+  var cache = {};
+
+  function mark(){
+    secs.forEach(function(s,k){ s.classList.toggle('now', k===i); });
+    bar.style.width = ((i+1)/secs.length*100) + '%';
+    cnt.textContent = (i+1) + ' / ' + secs.length;
+  }
+  function show(k){
+    i = Math.max(0, Math.min(secs.length-1, k));
+    secs[i].scrollIntoView({behavior:'smooth', block:'start'});
+    mark();
+  }
+  function setState(on, label, sub){
+    playing = on; orb.classList.toggle('on', on);
+    if(label) vt.textContent = label;
+    if(sub !== undefined) vs.textContent = sub;
+    play.textContent = auto ? 'Detener' : 'Reproducir todo';
+  }
+
+  async function speak(k){
+    var my = ++token;
+    var text = secs[k].getAttribute('data-narr');
+    setState(true, 'Preparando la voz…', 'Sección ' + (k+1) + ' de ' + secs.length);
+    try {
+      var url = cache[k];
+      if(!url){
+        var r = await fetch(TTS, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: text, voice: VOICE, rate: RATE })
+        });
+        if(!r.ok) throw new Error('tts ' + r.status);
+        url = cache[k] = URL.createObjectURL(await r.blob());
+      }
+      if(my !== token) return;
+      audio.src = url;
+      await audio.play();
+      setState(true, 'Dalia narrando', 'Sección ' + (k+1) + ' de ' + secs.length);
+    } catch(e){
+      if(my !== token) return;
+      // Respaldo: voz del navegador, para que la presentación nunca quede muda.
+      try {
+        var u = new SpeechSynthesisUtterance(text); u.lang = 'es-CO'; u.rate = .96;
+        u.onend = function(){ if(my===token) onEnd(); };
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+        setState(true, 'Narrando (voz del navegador)', 'El motor neuronal no respondió');
+      } catch(e2){
+        setState(false, 'No se pudo reproducir', 'Puede seguir leyendo la presentación');
+      }
+    }
+  }
+  function onEnd(){
+    if(auto && i < secs.length-1){ show(i+1); speak(i); }
+    else { auto = false; setState(false, 'Narración con Dalia', 'Toque el orbe para escuchar de nuevo'); }
+  }
+  audio.addEventListener('ended', onEnd);
+
+  function stop(){ token++; auto=false; audio.pause(); try{speechSynthesis.cancel();}catch(e){}
+    setState(false, 'Narración con Dalia', 'Toque el orbe para escuchar esta sección'); }
+
+  orb.addEventListener('click', function(){ playing ? stop() : speak(i); });
+  play.addEventListener('click', function(){
+    if(auto){ stop(); return; }
+    auto = true; show(0); speak(0); play.textContent = 'Detener';
+  });
+  document.getElementById('prev').addEventListener('click', function(){ stop(); show(i-1); });
+  document.getElementById('next').addEventListener('click', function(){ stop(); show(i+1); });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'){ stop(); show(i+1); }
+    if(e.key==='ArrowLeft'){ stop(); show(i-1); }
+    if(e.key===' '){ e.preventDefault(); playing ? stop() : speak(i); }
+  });
+
+  // La sección visible manda: si el usuario baja con el dedo, el contador la sigue.
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(en.isIntersecting && !auto){ i = secs.indexOf(en.target); mark(); }
+    });
+  }, { threshold:.5 });
+  secs.forEach(function(s){ io.observe(s); });
+
+  mark();
+})();
+</script>
+</body>
+</html>
