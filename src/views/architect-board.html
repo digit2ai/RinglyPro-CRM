@@ -1,0 +1,705 @@
+<title>Architect Dispatch Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+/* ── tokens: light is the base, both dark states redefine only these ─────── */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --sunk:#EAEEF6;
+  --ink:#10162B; --mut:#525C78; --faint:#7E88A2;
+  --line:#DCE2EE; --line-soft:#E9EDF5;
+  --accent:#2450DC; --accent-ink:#1B3EAE; --accent-soft:#E3EAFD;
+  --ok:#1C7A4E; --ok-soft:#DDF0E5;
+  --warn:#8C5C0A; --warn-soft:#F7EBD5;
+  --stop:#A82F2F; --stop-soft:#F8E2E1;
+  --shadow:0 1px 2px rgba(16,22,43,.05), 0 8px 24px -16px rgba(16,22,43,.28);
+  --rail:216px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B0E17; --surface:#141926; --sunk:#101522;
+    --ink:#E9ECF5; --mut:#9BA5BE; --faint:#6E7994;
+    --line:#242C3E; --line-soft:#1C2231;
+    --accent:#7EA0FF; --accent-ink:#A8BEFF; --accent-soft:#1A2444;
+    --ok:#57C08B; --ok-soft:#13291F;
+    --warn:#DDA84A; --warn-soft:#2A2115;
+    --stop:#EC7C73; --stop-soft:#2C1919;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B0E17; --surface:#141926; --sunk:#101522;
+  --ink:#E9ECF5; --mut:#9BA5BE; --faint:#6E7994;
+  --line:#242C3E; --line-soft:#1C2231;
+  --accent:#7EA0FF; --accent-ink:#A8BEFF; --accent-soft:#1A2444;
+  --ok:#57C08B; --ok-soft:#13291F;
+  --warn:#DDA84A; --warn-soft:#2A2115;
+  --stop:#EC7C73; --stop-soft:#2C1919;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Source Serif 4", Georgia, "Times New Roman", serif;
+  font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.ui{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+code,kbd,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+
+a{color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+
+/* ── shell ───────────────────────────────────────────────────────────────── */
+.shell{max-width:1240px; margin:0 auto; padding:0 24px 96px;
+  display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:48px; align-items:start}
+
+/* ── masthead ────────────────────────────────────────────────────────────── */
+.mast{grid-column:1/-1; padding:40px 0 28px; border-bottom:1px solid var(--line);
+  display:flex; flex-wrap:wrap; gap:28px 40px; align-items:flex-end; justify-content:space-between}
+.mast-id{max-width:60ch}
+.eyebrow{font-family:Archivo,sans-serif; font-size:11.5px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint); margin:0 0 10px}
+h1{font-size:clamp(30px,4.4vw,44px); line-height:1.04; font-weight:700; letter-spacing:-.022em;
+  margin:0 0 12px; text-wrap:balance}
+h1 .cmd{color:var(--accent)}
+.dek{margin:0; color:var(--mut); font-size:17px; max-width:56ch; text-wrap:pretty}
+.tally{display:flex; gap:26px; flex-wrap:wrap}
+.tally div{display:flex; flex-direction:column; gap:2px}
+.tally b{font-family:Archivo,sans-serif; font-size:27px; font-weight:700; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; line-height:1}
+.tally span{font-family:Archivo,sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--faint)}
+
+/* ── rail ────────────────────────────────────────────────────────────────── */
+.rail{position:sticky; top:24px; padding-top:36px}
+.rail nav{display:flex; flex-direction:column; gap:1px}
+.rail a{font-family:Archivo,sans-serif; font-size:13.5px; font-weight:500; color:var(--mut);
+  text-decoration:none; padding:6px 10px; border-left:2px solid var(--line-soft); border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink); background:var(--sunk); border-left-color:var(--accent)}
+.themebtn{margin-top:20px; font-family:Archivo,sans-serif; font-size:12px; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase; color:var(--mut); background:var(--surface);
+  border:1px solid var(--line); border-radius:6px; padding:8px 12px; cursor:pointer; width:100%; text-align:left}
+.themebtn:hover{color:var(--ink); border-color:var(--accent)}
+
+/* ── sections ────────────────────────────────────────────────────────────── */
+main{min-width:0; padding-top:36px; display:flex; flex-direction:column; gap:56px}
+section{scroll-margin-top:20px}
+h2{font-size:12px; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 6px}
+.h2sub{font-family:Archivo,sans-serif; font-size:23px; font-weight:600; letter-spacing:-.015em;
+  margin:0 0 4px; line-height:1.25; text-wrap:balance}
+.lede{margin:0 0 22px; color:var(--mut); max-width:66ch; text-wrap:pretty}
+
+/* ── funnel: a real left→right sequence ──────────────────────────────────── */
+.funnel{display:flex; align-items:stretch; gap:0; flex-wrap:wrap;
+  border:1px solid var(--line); border-radius:10px; background:var(--surface); overflow:hidden}
+.fstep{flex:1 1 132px; min-width:132px; padding:14px 16px; border-right:1px solid var(--line-soft);
+  display:flex; flex-direction:column; gap:3px; position:relative}
+.fstep:last-child{border-right:0}
+.fstep .n{font-family:"JetBrains Mono",monospace; font-size:10.5px; color:var(--faint); letter-spacing:.04em}
+.fstep .k{font-family:"JetBrains Mono",monospace; font-size:14.5px; font-weight:600; color:var(--accent)}
+.fstep .w{font-family:Archivo,sans-serif; font-size:12.5px; color:var(--mut); line-height:1.35}
+
+/* ── tables ──────────────────────────────────────────────────────────────── */
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th{font-family:Archivo,sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--faint); text-align:left; padding:11px 16px;
+  border-bottom:1px solid var(--line); white-space:nowrap; background:var(--sunk)}
+td{padding:11px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--mut)}
+tr:last-child td{border-bottom:0}
+td:first-child{color:var(--ink)}
+td code{font-size:13px; color:var(--accent-ink); background:var(--accent-soft);
+  padding:1px 6px; border-radius:4px; white-space:nowrap}
+.trig{font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--faint)}
+
+/* ── phases ──────────────────────────────────────────────────────────────── */
+.phases{display:flex; flex-direction:column; gap:0; border:1px solid var(--line);
+  border-radius:10px; background:var(--surface); overflow:hidden}
+.ph{display:grid; grid-template-columns:52px minmax(0,1fr); gap:0;
+  border-bottom:1px solid var(--line-soft)}
+.ph:last-child{border-bottom:0}
+.ph .num{font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:600; color:var(--faint);
+  padding:14px 0 14px 18px}
+.ph .body{padding:14px 18px 14px 0}
+.ph h4{margin:0 0 2px; font-size:14.5px; font-weight:600; letter-spacing:-.005em;
+  display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.ph p{margin:0; font-size:14.5px; color:var(--mut); max-width:70ch}
+.ph.gate{background:linear-gradient(90deg,var(--ok-soft),transparent 46%)}
+.ph.gate .num{color:var(--ok)}
+
+.tag{font-family:Archivo,sans-serif; font-size:10px; font-weight:600; letter-spacing:.09em;
+  text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap}
+.tag.gate{background:var(--ok-soft); color:var(--ok)}
+.tag.new{background:var(--accent-soft); color:var(--accent-ink)}
+
+/* ── bench ───────────────────────────────────────────────────────────────── */
+.controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px}
+#q{font-family:"JetBrains Mono",monospace; font-size:13.5px; color:var(--ink);
+  background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  padding:9px 13px; min-width:250px; flex:1 1 250px}
+#q::placeholder{color:var(--faint)}
+#q:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 3px var(--accent-soft)}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+.chip{font-family:Archivo,sans-serif; font-size:12px; font-weight:500; color:var(--mut);
+  background:var(--surface); border:1px solid var(--line); border-radius:20px;
+  padding:6px 13px; cursor:pointer; white-space:nowrap}
+.chip:hover{border-color:var(--accent); color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .chip[aria-pressed="true"],
+:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#0B0E17}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .chip[aria-pressed="true"]{color:#fff}}
+.count{font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--faint);
+  font-variant-numeric:tabular-nums; margin-left:auto}
+
+.group{margin-bottom:26px}
+.group-h{display:flex; align-items:baseline; gap:10px; margin:0 0 10px;
+  padding-bottom:7px; border-bottom:1px solid var(--line)}
+.group-h .gname{font-family:Archivo,sans-serif; font-size:11.5px; font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase}
+.group-h .gn{font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.group-h .gnote{font-size:13.5px; color:var(--faint); margin-left:auto; text-align:right;
+  font-style:italic; max-width:44ch}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:7px}
+.a{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  padding:10px 12px; display:flex; flex-direction:column; gap:2px}
+.a .an{font-family:Archivo,sans-serif; font-size:13.5px; font-weight:600; line-height:1.28;
+  letter-spacing:-.005em}
+.a .ad{font-size:12.5px; color:var(--faint); line-height:1.35}
+/* core and department are different in KIND, not just colour */
+.a.core{border-left:3px solid var(--accent)}
+.a.core .an{color:var(--accent-ink)}
+.a.dept{border-left:3px solid var(--ok); background:var(--ok-soft)}
+.a.brief{border-style:solid}
+.a .briefmark{font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--accent-ink);
+  letter-spacing:.04em; margin-top:2px}
+.empty{color:var(--faint); font-style:italic; padding:22px 0}
+
+/* ── rules / patterns ────────────────────────────────────────────────────── */
+.rules{display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:14px}
+.rule{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px}
+.rule h4{margin:0 0 6px; font-size:14.5px; font-weight:600; letter-spacing:-.005em}
+.rule p{margin:0 0 8px; font-size:14px; color:var(--mut)}
+.rule p:last-child{margin-bottom:0}
+.rule ul{margin:0; padding-left:17px; font-size:14px; color:var(--mut)}
+.rule li{margin-bottom:5px}
+.rule li:last-child{margin-bottom:0}
+.rule code{font-size:12.5px; color:var(--accent-ink); background:var(--accent-soft);
+  padding:1px 5px; border-radius:4px}
+.rule.hot{border-color:var(--stop); background:linear-gradient(180deg,var(--stop-soft),transparent 34%)}
+
+.callout{border-left:3px solid var(--accent); background:var(--surface); border-radius:0 8px 8px 0;
+  padding:14px 18px; margin-top:16px; font-size:14.5px; color:var(--mut); max-width:74ch}
+.callout strong{color:var(--ink)}
+.callout code{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--accent-ink)}
+
+/* ── math block ──────────────────────────────────────────────────────────── */
+.math{font-family:"JetBrains Mono",monospace; font-size:13px; line-height:1.85;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:16px 18px; overflow-x:auto; color:var(--mut); margin:0}
+.math b{color:var(--ink); font-weight:600}
+.math i{color:var(--faint); font-style:normal}
+
+footer{grid-column:1/-1; margin-top:12px; padding-top:20px; border-top:1px solid var(--line);
+  font-size:13.5px; color:var(--faint); display:flex; gap:8px 22px; flex-wrap:wrap; justify-content:space-between}
+footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
+
+@media (max-width:920px){
+  .shell{grid-template-columns:1fr; gap:0}
+  .rail{position:static; padding-top:22px; border-bottom:1px solid var(--line); padding-bottom:18px}
+  .rail nav{flex-direction:row; flex-wrap:wrap; gap:4px}
+  .rail a{border-left:0; border:1px solid var(--line); border-radius:20px; padding:5px 11px; font-size:12.5px}
+  .themebtn{width:auto; margin-top:12px}
+  main{padding-top:32px; gap:46px}
+  .group-h{flex-wrap:wrap}
+  .group-h .gnote{margin-left:0; text-align:left; flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+  <header class="mast">
+    <div class="mast-id">
+      <p class="eyebrow">Claude Code project skill &middot; RinglyPro CRM</p>
+      <h1><span class="cmd">/ringlypro-architect</span></h1>
+      <p class="dek">Natural language in, a deployed and verified ecosystem out. One MCP Brain routing
+        work across a bench of 89, then shipping it. This is the bench, the modes, and the rules it will
+        not break.</p>
+    </div>
+    <div class="tally">
+      <div><b>9</b><span>Modes</span></div>
+      <div><b>7</b><span>Phases</span></div>
+      <div><b>89</b><span>Agents</span></div>
+      <div><b>13</b><span>Rules</span></div>
+    </div>
+  </header>
+
+  <aside class="rail">
+    <nav>
+      <a href="#modes">Modes</a>
+      <a href="#funnel">The funnel</a>
+      <a href="#phases">Build phases</a>
+      <a href="#bench">The bench &middot; 89</a>
+      <a href="#routing">Routing</a>
+      <a href="#patterns">House patterns</a>
+      <a href="#briefs">Specialist briefs</a>
+      <a href="#money">Cost &amp; quote math</a>
+      <a href="#rules">Behavior rules</a>
+    </nav>
+    <button class="themebtn" id="theme" type="button">Theme: auto</button>
+  </aside>
+
+  <main>
+
+    <!-- MODES -->
+    <section id="modes">
+      <h2>Modes</h2>
+      <p class="h2sub">Nine ways to invoke one command</p>
+      <p class="lede">Everything is typed as <code class="mono">/ringlypro-architect &lt;mode&gt;</code>.
+        Each mode also fires on plain language, in English or Spanish — so the trigger column matters as
+        much as the keyword.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Mode</th><th>Produces</th><th>Also triggers on</th></tr></thead>
+          <tbody>
+            <tr><td><code>(default)</code></td><td>The full build: analyze, develop, test, deploy, verify, auto-fix</td><td class="trig">any build request</td></tr>
+            <tr><td><code>triage</code></td><td>Fit score 1&ndash;10, go/poc/no, the smallest defensible v1 wedge, regulatory flags</td><td class="trig">"evaluate this request" &middot; "&iquest;vale la pena?"</td></tr>
+            <tr><td><code>teaser</code></td><td>Branded interactive POC magic link with the Lina voice walkthrough</td><td class="trig">"demo for this" &middot; "POC para el cliente"</td></tr>
+            <tr><td><code>cost</code></td><td>Internal costing doc &mdash; no profit, no IVA, red confidential banner</td><td class="trig">"costo del proyecto"</td></tr>
+            <tr><td><code>quote</code></td><td>The client price: cost &times; 1.70, then IVA</td><td class="trig">"cotizaci&oacute;n" &middot; "quote the project"</td></tr>
+            <tr><td><code>proposal</code></td><td>The closing package &mdash; triage + quote + timeline + demo CTA</td><td class="trig"><code>deck</code> &middot; "propuesta completa"</td></tr>
+            <tr><td><code>loop</code></td><td>Runs the whole scope to live and green in one continuous pass, no check-ins</td><td class="trig"><code>auto</code> &middot; "no pares hasta que est&eacute; vivo"</td></tr>
+            <tr><td><code>voice</code></td><td>Adds the three-layer voice orb to a page &mdash; on-device ear, Haiku brain, Edge TTS</td><td class="trig">"add narration" &middot; "put the orb on it"</td></tr>
+            <tr><td><code>a2p</code></td><td>Registers a Twilio number to the SHAKEN Trust Product for A-level attestation</td><td class="trig"><code>SHAKEN</code> &middot; "register number"</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FUNNEL -->
+    <section id="funnel">
+      <h2>The funnel</h2>
+      <p class="h2sub">The modes are a revenue sequence, not a menu</p>
+      <p class="lede">Each stage consumes the one before it. Any stage can be invoked alone &mdash;
+        it silently runs whatever upstream pieces are missing rather than asking for them.</p>
+      <div class="funnel">
+        <div class="fstep"><span class="n">01</span><span class="k">triage</span><span class="w">Is it worth doing, and what is the wedge</span></div>
+        <div class="fstep"><span class="n">02</span><span class="k">teaser</span><span class="w">Let them touch it</span></div>
+        <div class="fstep"><span class="n">03</span><span class="k">cost</span><span class="w">What it costs us &mdash; internal only</span></div>
+        <div class="fstep"><span class="n">04</span><span class="k">quote</span><span class="w">What they pay</span></div>
+        <div class="fstep"><span class="n">05</span><span class="k">proposal</span><span class="w">The artifact that closes</span></div>
+        <div class="fstep"><span class="n">06</span><span class="k">loop</span><span class="w">Build it until it is live</span></div>
+      </div>
+    </section>
+
+    <!-- PHASES -->
+    <section id="phases">
+      <h2>Build phases</h2>
+      <p class="h2sub">Seven, and two of them are gates</p>
+      <p class="lede">Phases 3 and 4 hold gates the build cannot walk past. Phase 7 is what makes the
+        next session cheaper than this one.</p>
+      <div class="phases">
+        <div class="ph"><div class="num">01</div><div class="body">
+          <h4>Analyze</h4>
+          <p>Decompose into work units, map each to the agents that own it, right-size the fan-out.</p></div></div>
+        <div class="ph"><div class="num">02</div><div class="body">
+          <h4>Develop</h4>
+          <p>Models, migrations, routes, services, UI, env-var docs. Deployable code, never pseudocode.</p></div></div>
+        <div class="ph gate"><div class="num">03</div><div class="body">
+          <h4>Test <span class="tag gate">Gate &middot; SIT</span></h4>
+          <p>A green SIT with zero external keys is what done means here. Run the vertical's suite; write one if the vertical is new. Test the invariants, not the happy path.</p></div></div>
+        <div class="ph gate"><div class="num">04</div><div class="body">
+          <h4>Deploy <span class="tag gate">Gate &middot; review</span></h4>
+          <p>Delegate to <code class="mono">/code-review</code> and <code class="mono">/security-review</code> before the push, not after. Then commit and push to main; Render deploys in ~90&ndash;100s.</p></div></div>
+        <div class="ph"><div class="num">05</div><div class="body">
+          <h4>Review</h4>
+          <p>Poll health and the <code class="mono">/debug/*-error</code> endpoints. Verify each feature live, not locally.</p></div></div>
+        <div class="ph"><div class="num">06</div><div class="body">
+          <h4>Auto-fix</h4>
+          <p>Loop back to Develop on any failure, capped at ~8 cycles per component. Past the budget it ships the rest and reports the blocked item &mdash; it never stops the whole build to ask.</p></div></div>
+        <div class="ph"><div class="num">07</div><div class="body">
+          <h4>Record <span class="tag new">Added</span></h4>
+          <p><code class="mono">CLAUDE.md</code> for anything structural, <code class="mono">memory/</code> for what the code cannot show. If you spent real time working something out and the answer is invisible afterwards, it goes in one of the two.</p></div></div>
+      </div>
+    </section>
+
+    <!-- BENCH -->
+    <section id="bench">
+      <h2>The bench</h2>
+      <p class="h2sub">89 agents: 8 always on, 76 on call, 5 that only work as a crew</p>
+      <p class="lede">Specialists are dispatched as subagents with a scoped brief and return artifacts,
+        not commentary. Filter by name or by what you need done.</p>
+
+      <div class="controls">
+        <input id="q" type="search" placeholder="pricing, HIPAA, tenancy, deepfake&hellip;" aria-label="Filter the bench">
+        <div class="chips" id="chips"></div>
+        <span class="count" id="count"></span>
+      </div>
+      <div id="bench"></div>
+
+      <div class="callout">
+        <strong>Marketing still says 83.</strong> That was accurate before the AI Readiness Department
+        shipped and before Field Extractor was added. The figure appears in investor-facing documents,
+        so it gets updated deliberately &mdash; never as a side effect of a build.
+      </div>
+    </section>
+
+    <!-- ROUTING -->
+    <section id="routing">
+      <h2>Routing</h2>
+      <p class="h2sub">Request in, bench out</p>
+      <p class="lede">The lookup the Brain runs in Phase 1. A landing-page tweak needs one or two
+        specialists; a new vertical may need fifteen.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:38%">If the request is about&hellip;</th><th>Spin up</th></tr></thead>
+          <tbody>
+            <tr><td>New feature or full app</td><td>Architect &amp; Builder &rarr; Full Stack / Frontend / Backend &rarr; DB Architect &rarr; API Designer &rarr; SIT &rarr; UAT &rarr; Release Manager</td></tr>
+            <tr><td>Performance or outage</td><td>DevOps/SRE + Performance + Security</td></tr>
+            <tr><td>Data product, forecast, model</td><td>Data Engineer &rarr; Data Scientist / ML &rarr; Forecasting + Statistician &rarr; BI Builder</td></tr>
+            <tr><td>Pricing or business case</td><td>Pricing Analyst + FP&amp;A + Strategy Consultant + Business Analyst</td></tr>
+            <tr><td>New AI agent, voice, chatbot</td><td>Conversation &amp; Voice UX + Prompt &amp; Eval + AI Safety/Red-Team + LLMOps</td></tr>
+            <tr><td>Document extraction &mdash; invoices, contracts, OCR</td><td>Field Extractor + Data Engineer</td></tr>
+            <tr><td>RAG or citation chain</td><td>RAG/Retrieval + Data Engineer + Prompt &amp; Eval</td></tr>
+            <tr><td>AI cost, token spend, model choice</td><td>LLMOps/Model Router + FinOps</td></tr>
+            <tr><td>Fraud, KYC, deepfake, anomalies</td><td>Fraud &amp; Anomaly + AI Safety/Red-Team + the matching Vertical SME</td></tr>
+            <tr><td>Contract, regulatory, privacy</td><td>Contract Drafter + NDA/IP + Compliance + Regulatory Researcher + Privacy Officer</td></tr>
+            <tr><td>Regulated-domain build</td><td>The matching Vertical SME + Compliance Officer + Architect &amp; Builder</td></tr>
+            <tr><td><strong>A CEO nervous about adopting AI</strong> &mdash; "where do we start", "our data is a mess"</td><td><strong>The AI Readiness Department, as a unit.</strong> Never a lone specialist writing a readiness deck</td></tr>
+            <tr><td><strong>"What does this process actually cost us?"</strong> &mdash; a client willing to be observed</td><td><strong>AI Discovery</strong> <code>/discovery</code> &mdash; the measured front door to the same department</td></tr>
+            <tr><td>Cost of doing nothing, ROI on a pilot</td><td>Cost Comfort Agent &mdash; <em>not</em> the Pricing Analyst, which prices what we sell rather than what the client already spends by hand</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Never cherry-pick an agent out of a department.</strong> Its five run in a fixed order &mdash;
+        data, then cost, then risk, then roadmap &mdash; because each one's output is the next one's input.
+        Fanned out concurrently, the lanes quietly disagree about which processes are even in the pilot.
+      </div>
+    </section>
+
+    <!-- PATTERNS -->
+    <section id="patterns">
+      <h2>House patterns</h2>
+      <p class="h2sub">The five things this repo does its own way</p>
+      <p class="lede">Each one produces a bug that looks like something else entirely, ships green, and
+        gets found in production. Copy the pattern; never invent a second way to do the same thing.</p>
+      <div class="rules">
+        <div class="rule">
+          <h4>Migrations &mdash; <code>alter:true</code> is banned</h4>
+          <p><code>sync({alter:false})</code> never adds a column to an existing table. The model boots
+            clean, reads <code>undefined</code> forever, and nothing errors.</p>
+          <ul>
+            <li>New columns go in the vertical's init as idempotent <code>ADD COLUMN IF NOT EXISTS</code></li>
+            <li>Name every index explicitly &mdash; auto-names collide across re-runs</li>
+            <li>Schema operations are POST with an admin key. A wrong key answers <strong>404, not 403</strong></li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h4>Custom domains &mdash; register near the top</h4>
+          <p>Express matches in registration order, and the CRM defines hundreds of paths below. A late
+            handler shadows only the paths the CRM happens to define &mdash; so the brand domain works
+            until someone visits <code>/admin</code>.</p>
+          <ul>
+            <li>An unowned path ends in that vertical's branded 404, never the CRM</li>
+            <li>Let <code>/embed/</code>, <code>/api/voice-agent/</code> and <code>/api/tts/</code> through untouched</li>
+            <li>Mount the shared TTS route inside the vertical when it owns a whole domain</li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h4>PWA &mdash; never hardcode a mount prefix</h4>
+          <p>A manifest's scope resolves against its own URL. Serve a <code>/x/</code>-scoped manifest on
+            <code>x.com</code> and the install excludes the site's own root &mdash; tapping the logo drops
+            the user into a browser tab.</p>
+          <ul>
+            <li>One server-side generator keyed on <code>req.baseUrl</code>; no manifest on disk</li>
+            <li>Cache shell entries individually &mdash; <code>addAll</code> is atomic, one 404 leaves no worker</li>
+            <li>Never cache <code>/api/</code></li>
+          </ul>
+        </div>
+        <div class="rule">
+          <h4>MCP tools &mdash; the gateway owns the tenant</h4>
+          <ul>
+            <li><code>tenant_id</code> is injected from session and <strong>deleted</strong> from tool arguments</li>
+            <li><code>listTools</code> computes trust exactly as <code>callTool</code> does, or gated tools leak into the listing</li>
+            <li>Keys are one-directional: an ingest key reads nothing back</li>
+            <li>Every call writes an audit row &mdash; including every denial</li>
+          </ul>
+        </div>
+        <div class="rule hot">
+          <h4>Honesty is enforced in code, not in the prompt</h4>
+          <p>A model asked for a number returns a plausible one. A model asked to be honest agrees, and
+            then is not.</p>
+          <ul>
+            <li>The model writes prose. It never writes a named entity or a figure</li>
+            <li>Verify after generating, on every path &mdash; the deterministic one too</li>
+            <li><code>null</code> over a guess. An unstated figure is omitted and <em>named as absent</em></li>
+            <li>A short window is reported with its window, never multiplied into a rate</li>
+            <li>A machine's grouping is a proposal until a human confirms it</li>
+            <li>Label the keyless path; never fake it and never break it</li>
+            <li>Nothing auto-sends. Draft, a human approves, they send</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRIEFS -->
+    <section id="briefs">
+      <h2>Specialist briefs</h2>
+      <p class="h2sub">Five blocks, every time</p>
+      <p class="lede">A specialist without these returns commentary instead of an artifact, and the work
+        gets done twice. Nine written specs cover ten roles on top of this &mdash; Data Scientist and
+        Statistician share one &mdash; marked
+        <span class="mono" style="color:var(--accent-ink)">full brief written</span> on the bench above.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:150px">Block</th><th>What goes in it</th></tr></thead>
+          <tbody>
+            <tr><td>Role</td><td>One sentence of identity, and where in the pipeline they sit &mdash; who feeds them, who consumes them</td></tr>
+            <tr><td>Deliverable</td><td>The exact artifact and its shape, with file paths. "A migration plus the idempotent ALTER block", not "help with the database"</td></tr>
+            <tr><td>Context</td><td>The specific files, the table prefix, the tenant model, the relevant invariants. Never "read the repo"</td></tr>
+            <tr><td>Success criteria</td><td>What makes it correct, stated so it can be checked &mdash; including the SIT assertion that will be written against it</td></tr>
+            <tr><td>Constraints</td><td>Multi-tenant &middot; bilingual &middot; no emojis &middot; Spanish orthography &middot; <code>null</code> over a guess &middot; the keyless path works &middot; nothing auto-sends</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>Report what you could not do.</strong> A specialist that silently narrows its own scope is
+        the most expensive failure in a fan-out, because the Brain integrates the gap without ever seeing it.
+      </div>
+    </section>
+
+    <!-- MONEY -->
+    <section id="money">
+      <h2>Cost &amp; quote math</h2>
+      <p class="h2sub">Deterministic, and done exactly this way</p>
+      <p class="lede">Hours stay identical between the two documents. <code class="mono">cost</code> is the
+        source of truth and is generated first; <code class="mono">quote</code> is derived from it.</p>
+      <pre class="math">internalRate   = <b>$70/hr</b>          <i>// default; override with "cost 45" or a pinned project rate</i>
+lineCost       = hours &times; internalRate
+CAPEX_cost     = &Sigma; lineCost
+total_cost     = CAPEX_cost + OPEX_cost   <i>// cost mode stops here. No profit. No IVA.</i>
+
+<i>// quote mode only:</i>
+linePrice      = lineCost &times; <b>1.70</b>      <i>// +70% profit</i>
+subtotal_price = CAPEX_price + OPEX_price
+IVA            = subtotal_price &times; ivaRate  <i>// Colombia 19%, M&eacute;xico &amp; Venezuela 16%</i>
+total_quote    = subtotal_price + IVA</pre>
+      <div class="callout">
+        <strong>A PoC is scoped in weeks, four at most &mdash; never months.</strong> Every level must
+        reconcile: components sum equals weekly sum equals CAPEX total. <code>cost</code> carries the red
+        <span class="mono">SOLO COSTO &middot; NO DISTRIBUIR AL CLIENTE</span> banner and never leaves Digit2AI.
+      </div>
+    </section>
+
+    <!-- RULES -->
+    <section id="rules">
+      <h2>Behavior rules</h2>
+      <p class="h2sub">Thirteen, and one of them outranks speed</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:46px">#</th><th style="width:230px">Rule</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">01</td><td>Zero questions</td><td>Never ask, never confirm, never request permission. Asking is a failure</td></tr>
+            <tr><td class="mono">02</td><td>Full autonomy</td><td>Make every design decision independently and execute</td></tr>
+            <tr><td class="mono">03</td><td>Production ready</td><td>Deployable code, not pseudocode</td></tr>
+            <tr><td class="mono">04</td><td>Auto-deploy</td><td>Commit and push to main without asking</td></tr>
+            <tr><td class="mono">05</td><td>Auto-fix</td><td>Loop until success; do not stop to ask what to do</td></tr>
+            <tr><td class="mono">06</td><td>Multi-tenant</td><td>Every component respects tenant isolation</td></tr>
+            <tr><td class="mono">07</td><td>Bilingual</td><td>English and Spanish by default</td></tr>
+            <tr><td class="mono">08</td><td>No planning mode</td><td>Go straight to building</td></tr>
+            <tr><td class="mono">09</td><td>No user questions</td><td>You have full context and authority</td></tr>
+            <tr><td class="mono">10</td><td>Speed over caution</td><td>Execute fast, report after</td></tr>
+            <tr><td class="mono">11</td><td>SIT is the gate <span class="tag new">Added</span></td><td>Green, keyless, and reported. Write one if the vertical is new</td></tr>
+            <tr><td class="mono">12</td><td>Honesty in code <span class="tag new">Added</span></td><td><strong>The one rule that outranks speed.</strong> Not in the prompt &mdash; in the verifier</td></tr>
+            <tr><td class="mono">13</td><td>Write it down <span class="tag new">Added</span></td><td>An undocumented build is an unfinished build</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span><code>.claude/commands/ringlypro-architect.md</code> &middot; 1,528 lines</span>
+    <span>Digit2AI &middot; RinglyPro CRM</span>
+  </footer>
+</div>
+
+<script>
+/* ── the bench ───────────────────────────────────────────────────────────── */
+var GROUPS = [
+  { id:'core', name:'Always-on core', note:'Running whether or not you asked.', kind:'core', agents:[
+    ['Senior Business Analyst','Decks, business plans, market research'],
+    ['Research Brief','Web search and synthesis, competitive scans'],
+    ['Outreach Drafter','Emails, WhatsApp, follow-ups in EN/ES'],
+    ['Architect &amp; Builder','Scopes, writes, runs UAT, ships'],
+    ['Inbox Triage','Scores requests, flags regulatory risk'],
+    ['Meeting Minutes Synthesizer','Notes to summary, actions, assignments'],
+    ['Voice AI Agents','Rachel, Ana and Lina &mdash; qualify, book, log'],
+    ['Neural Findings','Stalls, missing owners, overdue milestones']
+  ]},
+  { id:'dept', name:'AI Readiness Department', note:'Invoked as one crew, in this order. Never cherry-picked.', kind:'dept', agents:[
+    ['Readiness Director','Overcomes not knowing where to start'],
+    ['Data Readiness Agent','Runs first &mdash; its gaps become cost hours'],
+    ['Cost Comfort Agent','Its Phase 1 scope is what risk guards'],
+    ['Risk Comfort Agent','Mitigation and guardrail, owner, evidence'],
+    ['Roadmap Builder','Three phases, each with a gate. Phase 3 never priced']
+  ]},
+  { id:'eng', name:'Engineering &amp; build', note:'', agents:[
+    ['Senior Full Stack Developer',''],['Senior Frontend Engineer',''],['Senior Backend Engineer',''],
+    ['Senior DevOps / SRE',''],['Senior Database Architect','brief'],['Senior API Designer',''],
+    ['Senior Mobile Engineer',''],['Senior SIT Tester','brief'],['Senior UAT Coordinator',''],
+    ['Senior Production Release Manager',''],['Senior Security Engineer','brief'],['Senior Performance Engineer','']
+  ]},
+  { id:'data', name:'Data, ML &amp; math', note:'', agents:[
+    ['Senior Data Engineer',''],['Field Extractor','brief'],['Senior Data Analyst',''],
+    ['Senior Data Scientist','brief'],['Mathematics SME',''],['Senior ML / AI Engineer',''],
+    ['Senior Forecasting Analyst',''],['Senior BI / Dashboard Builder',''],['Senior Statistician','brief']
+  ]},
+  { id:'biz', name:'Business &amp; strategy', note:'', agents:[
+    ['Senior Project Manager',''],['Senior Product Manager',''],['Senior Strategy Consultant',''],
+    ['Senior Operations Analyst',''],['Senior Process Improvement',''],['Senior M&amp;A Analyst',''],
+    ['Senior Pricing Analyst','brief'],['Senior Change Management','']
+  ]},
+  { id:'gtm', name:'Sales, marketing &amp; customer', note:'', agents:[
+    ['Senior Sales Engineer',''],['Senior Lead Qualifier',''],['Senior Content Marketer',''],
+    ['Senior SEO Specialist',''],['Senior Brand Strategist',''],['Senior CRM Hygiene Specialist',''],
+    ['Senior Customer Success Manager',''],['Senior Churn Prevention Analyst',''],['Senior Onboarding Specialist','']
+  ]},
+  { id:'fin', name:'Finance &amp; risk', note:'', agents:[
+    ['Senior Accountant',''],['Senior FP&amp;A Analyst',''],['Senior Treasury Analyst',''],
+    ['Senior Tax Strategist',''],['Senior Auditor',''],['Senior Risk Modeler',''],['Senior Invoice Reconciler','']
+  ]},
+  { id:'legal', name:'Legal, compliance &amp; HR', note:'', agents:[
+    ['Senior Contract Drafter',''],['Senior NDA / IP Reviewer',''],['Senior Compliance Officer',''],
+    ['Senior Regulatory Researcher','brief'],['Senior Privacy Officer','GDPR, HIPAA'],
+    ['Senior Recruiter',''],['Senior Performance Reviewer',''],['Senior Training Designer','']
+  ]},
+  { id:'ai', name:'AI-native / LLM', note:'The Digit2AI moat. Dispatch on anything that ships, evaluates or safeguards an AI system.', agents:[
+    ['Senior Prompt &amp; Eval Engineer','brief'],
+    ['Senior LLMOps / Model Router','Model selection, token cost, caching'],
+    ['Senior RAG / Retrieval Engineer','Grounding, citation chains, vector stores'],
+    ['Senior AI Safety / Red-Team','Jailbreak, PII/PHI leakage, guardrails'],
+    ['Senior Conversation &amp; Voice UX','Convai flows, intake logic, fallbacks'],
+    ['Senior MCP / Integration Engineer','Tool schemas, connector contracts, webhooks']
+  ]},
+  { id:'trust', name:'Reliability &amp; trust', note:'', agents:[
+    ['Senior Observability Engineer','Tracing, logging, Neural OBD codes'],
+    ['Senior FinOps / Cloud-Cost Analyst','Render spend and token spend as one budget'],
+    ['Senior Data Governance / MDM','Multi-tenant isolation, tenant_id discipline'],
+    ['Senior Responsible-AI / Ethics','Bias, disclosure, deepfake ethics'],
+    ['Senior Fraud &amp; Anomaly Detection','KYC, fraud flags, takedown signals']
+  ]},
+  { id:'sme', name:'Vertical SMEs', note:'Domain depth a generic analyst cannot carry.', agents:[
+    ['Clinical / Healthcare Informatics','HIPAA, da Vinci, MSK imaging'],
+    ['Logistics &amp; Supply-Chain','FMCSA, HOS, freight'],
+    ['Agriculture &amp; Commodities','FX/BCV, semovientes, subastas'],
+    ['Fintech / Payments','Stripe, billing, settlements']
+  ]},
+  { id:'design', name:'Design, content &amp; localization', note:'', agents:[
+    ['Senior UX/UI &amp; Design-System',''],
+    ['Senior Localization Engineer','brief'],
+    ['Senior Accessibility Specialist',''],
+    ['Senior Technical Writer',''],
+    ['Senior Conversion-Rate Optimizer','']
+  ]},
+  { id:'growth', name:'Growth &amp; partnerships', note:'', agents:[
+    ['Senior Partnerships / Channel','Attribution, commissions, embeds'],
+    ['Senior Solutions Architect','Pre-sales: triage to scoped SOW'],
+    ['Senior Demand-Gen / Paid Ads','']
+  ]}
+];
+
+var FILTERS = [
+  {id:'all',   label:'All 89'},
+  {id:'core',  label:'Core 8'},
+  {id:'dept',  label:'Department'},
+  {id:'brief', label:'Has a brief'},
+  {id:'eng',   label:'Engineering'},
+  {id:'data',  label:'Data &amp; ML'},
+  {id:'ai',    label:'AI-native'},
+  {id:'trust', label:'Trust'},
+  {id:'sme',   label:'Vertical SMEs'}
+];
+
+var active = 'all', query = '';
+var benchEl  = document.getElementById('bench');
+var chipsEl  = document.getElementById('chips');
+var countEl  = document.getElementById('count');
+var qEl      = document.getElementById('q');
+
+FILTERS.forEach(function(f){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip'; b.innerHTML = f.label;
+  b.setAttribute('aria-pressed', f.id === 'all' ? 'true' : 'false');
+  b.addEventListener('click', function(){ active = f.id; render(); });
+  b.dataset.id = f.id;
+  chipsEl.appendChild(b);
+});
+
+function strip(s){ var d = document.createElement('div'); d.innerHTML = s; return (d.textContent||'').toLowerCase(); }
+
+function render(){
+  Array.prototype.forEach.call(chipsEl.children, function(c){
+    c.setAttribute('aria-pressed', c.dataset.id === active ? 'true' : 'false');
+  });
+
+  var q = query.trim().toLowerCase();
+  var shown = 0, html = '';
+
+  GROUPS.forEach(function(g){
+    if (active !== 'all' && active !== 'brief' && active !== g.id) return;
+
+    var rows = g.agents.filter(function(a){
+      if (active === 'brief' && a[1] !== 'brief') return false;
+      if (!q) return true;
+      return strip(a[0]).indexOf(q) !== -1 || strip(a[1]).indexOf(q) !== -1 || strip(g.name).indexOf(q) !== -1;
+    });
+    if (!rows.length) return;
+    shown += rows.length;
+
+    var cls = g.kind === 'core' ? ' core' : (g.kind === 'dept' ? ' dept' : '');
+    html += '<div class="group"><div class="group-h">' +
+            '<span class="gname">' + g.name + '</span>' +
+            '<span class="gn">' + rows.length + (rows.length !== g.agents.length ? ' / ' + g.agents.length : '') + '</span>' +
+            (g.note ? '<span class="gnote">' + g.note + '</span>' : '') +
+            '</div><div class="grid">';
+
+    rows.forEach(function(a){
+      var isBrief = a[1] === 'brief';
+      html += '<div class="a' + cls + (isBrief ? ' brief' : '') + '">' +
+              '<span class="an">' + a[0] + '</span>' +
+              (isBrief ? '<span class="briefmark">full brief written</span>'
+                       : (a[1] ? '<span class="ad">' + a[1] + '</span>' : '')) +
+              '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  benchEl.innerHTML = html || '<p class="empty">No agent on the bench matches that. Try a capability rather than a job title &mdash; "tenancy", "HIPAA", "token cost".</p>';
+  countEl.textContent = shown + ' of 89';
+}
+
+qEl.addEventListener('input', function(e){ query = e.target.value; render(); });
+render();
+
+/* ── theme toggle: auto → light → dark ───────────────────────────────────── */
+var order = ['auto','light','dark'], ti = 0;
+var tbtn = document.getElementById('theme');
+try { var saved = localStorage.getItem('adb_theme'); if (saved && order.indexOf(saved) > -1) ti = order.indexOf(saved); } catch(e){}
+function applyTheme(){
+  var t = order[ti];
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+  tbtn.textContent = 'Theme: ' + t;
+  try { localStorage.setItem('adb_theme', t); } catch(e){}
+}
+tbtn.addEventListener('click', function(){ ti = (ti + 1) % order.length; applyTheme(); });
+applyTheme();
+</script>

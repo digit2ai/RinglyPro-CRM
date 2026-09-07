@@ -313,6 +313,24 @@ Recordatorios de vencimiento de documentos de tránsito para el Centro de Diagn�
 - `ENRUTA_SEED_DEMO=1` — siembra al arrancar. **Siembra una vez y no vuelve**: la guarda es la marca `[demo]`, así que la variable puede quedarse puesta. `ENRUTA_SEED_RESET=1` borra el tenant antes de sembrar · `ENRUTA_SEED_CLIENTES` (80) · `ENRUTA_SEED_SEMILLA` (20260901) · `ENRUTA_SEED_TENANT`.
 - `ELEVENLABS_ENRUTA_AGENT_ID` — **ya no se lee en ninguna parte.**
 
+## Architect Dispatch Board — the /ringlypro-architect reference, gated
+
+The modes, the seven build phases, the 89-agent bench (live-filterable), the routing table and the five house patterns, as one page. Internal reference, not a customer surface.
+
+**Live:** `/architect` on the app · `architect.digit2ai.com` root once that CNAME exists · health `GET /architect/health` (open by design — it reports whether the gate is configured, never content) · debug `/debug/architect-board-error`.
+
+**`digit2ai.com/architect` CANNOT BE CREATED FROM THIS REPO.** The apex is a GoHighLevel site (`sites.ludicrous.cloud` behind Cloudflare, currently `162.159.140.166`) and the request never reaches this app — the same wall that stopped `digit2ai.com/enruta` and `digit2ai.com/hispanotec`. That path is made in GHL as a redirect or a frame. A subdomain pointed at Render is ours, which is why `architect.digit2ai.com` is handled here instead.
+
+**THE PAGE LIVES IN `src/views/`, NOT `public/`.** `express.static(public)` would serve it to the open internet with no credential at all — the gate would still be mounted, still pass, and the file would still be readable by anyone who guessed the filename. Keeping it outside the static root is what makes it private; the password is the second lock, not the first.
+
+**THE CREDENTIAL HAS NO DEFAULT AND FAILS SHUT.** Either variable unset = the board answers **503**, never open. This estate has been bitten by the other choice: a console shipped with a fallback password read as configured, and anyone who had read the repo could sign in. Compares are constant-time over SHA-256 digests (so the length of the real secret does not leak through `timingSafeEqual`'s length check), and both the username and password compare always run — an early return on a bad username makes "wrong user" measurably faster than "wrong password". The username is matched case-insensitively; the password is not. Responses carry `no-store` + `X-Robots-Tag: noindex`.
+
+An unowned path on `architect.digit2ai.com` redirects to that host's root rather than falling through — falling through serves the entire CRM on a brand subdomain, which is the `jobmd.io/admin` lesson.
+
+**Environment Variables:**
+- `ARCHITECT_USER` — the sign-in address. No default. SET on Render.
+- `ARCHITECT_PASSWORD` — the password. No default. Unset (either one) = the board is CLOSED, not open.
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
