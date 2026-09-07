@@ -136,6 +136,56 @@ td code{font-size:13px; color:var(--accent-ink); background:var(--accent-soft);
 .tag.gate{background:var(--ok-soft); color:var(--ok)}
 .tag.new{background:var(--accent-soft); color:var(--accent-ink)}
 
+/* ── constellation: the Brain and its core 8 ─────────────────────────────── */
+.cstwrap{margin:0 0 26px; padding:0; border:1px solid var(--line); border-radius:12px;
+  overflow:hidden; background:
+    radial-gradient(ellipse 66% 66% at 50% 46%, var(--accent-soft), transparent 68%),
+    var(--surface)}
+.cst{display:block; width:100%; height:auto; font-family:"JetBrains Mono",monospace}
+.cstwrap figcaption{padding:0 18px 16px; text-align:center; color:var(--faint); font-size:12.5px;
+  font-family:Archivo,sans-serif}
+
+.cst .rings circle{fill:none; stroke:var(--line); stroke-width:1; transform-origin:640px 430px;
+  animation:cstspin 90s linear infinite}
+.cst .rings circle:nth-child(even){animation-direction:reverse; animation-duration:130s}
+@keyframes cstspin{to{transform:rotate(360deg)}}
+
+/* Dashes travel out from the brain to each agent: that is the A2A traffic. */
+.cst .lk{stroke:var(--accent); stroke-width:1.4; stroke-dasharray:5 13; opacity:.34;
+  animation:cstflow 2.6s linear infinite}
+@keyframes cstflow{to{stroke-dashoffset:-36}}
+
+.cst .brainbox{fill:var(--sunk); stroke:var(--line); stroke-width:1.4}
+.cst .slot{fill:var(--surface); stroke:var(--line); stroke-width:1.2}
+.cst .core{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.6}
+.cst .slotlbl{fill:var(--faint); font-size:15px; letter-spacing:.10em}
+.cst .coretop{fill:var(--accent); font-size:15px; letter-spacing:.22em; text-anchor:middle}
+.cst .corebig{fill:var(--ink); font-size:38px; font-weight:700; letter-spacing:.16em; text-anchor:middle}
+.cst .coresub{fill:var(--accent-ink); font-size:14px; letter-spacing:.06em; text-anchor:middle}
+.cst .live{fill:var(--ok); animation:cstblink 2s ease-in-out infinite}
+.cst .livelbl{fill:var(--ok); font-size:13px; letter-spacing:.14em}
+@keyframes cstblink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.cst .chip{fill:var(--surface); stroke:var(--accent); stroke-width:1.4; opacity:.9}
+.cst .chipin{fill:none; stroke:var(--line); stroke-width:1.2}
+.cst .dot,.cst .stalk{fill:var(--accent); opacity:.75}
+.cst .bar,.cst .stalkline{stroke:var(--accent); stroke-width:2.4; stroke-linecap:round; opacity:.65}
+.cst .nm{fill:var(--ink); font-size:15px; font-weight:700; letter-spacing:.07em; text-anchor:middle}
+.cst .sb{fill:var(--faint); font-size:13px; text-anchor:middle}
+.cst .cap{fill:var(--faint); font-size:13px; letter-spacing:.20em; text-anchor:middle}
+
+/* Each agent lights in turn, 1.6s apart, so the sweep reads as the brain
+   working through its crew rather than eight things blinking at once. */
+.cst .nd{animation:cstlit 12.8s linear infinite}
+@keyframes cstlit{ 0%,6.2%{opacity:1} 12.5%,100%{opacity:.42} }
+
+@media(prefers-reduced-motion:reduce){
+  .cst .rings circle,.cst .lk,.cst .live,.cst .nd{animation:none}
+  .cst .nd{opacity:1}
+}
+/* Below this the labels are unreadable; the filterable bench carries it. */
+@media(max-width:720px){ .cstwrap{display:none} }
+
 /* ── bench ───────────────────────────────────────────────────────────────── */
 .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px}
 #q{font-family:"JetBrains Mono",monospace; font-size:13.5px; color:var(--ink);
@@ -335,12 +385,50 @@ footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
       <p class="lede">Specialists are dispatched as subagents with a scoped brief and return artifacts,
         not commentary. Filter by name or by what you need done.</p>
 
+      <figure class="cstwrap">
+<svg class="cst" viewBox="0 0 1280 860" role="img"
+     aria-label="The MCP Brain at the centre, wired to the eight always-on core agents: Senior BA, Research, Architect, Minutes, Findings, Voice AI, Inbox Triage and Outreach.">
+  <g class="rings">
+    <circle cx="640" cy="430" r="150"/><circle cx="640" cy="430" r="215"/>
+    <circle cx="640" cy="430" r="285"/><circle cx="640" cy="430" r="352"/>
+  </g>
+  <g class="links"><line class="lk" style="animation-delay:0.00s" x1="640" y1="430" x2="640" y2="144"/><line class="lk" style="animation-delay:0.42s" x1="640" y1="430" x2="944" y2="228"/><line class="lk" style="animation-delay:0.84s" x1="640" y1="430" x2="1070" y2="430"/><line class="lk" style="animation-delay:1.26s" x1="640" y1="430" x2="944" y2="632"/><line class="lk" style="animation-delay:1.68s" x1="640" y1="430" x2="640" y2="716"/><line class="lk" style="animation-delay:2.10s" x1="640" y1="430" x2="336" y2="632"/><line class="lk" style="animation-delay:2.52s" x1="640" y1="430" x2="210" y2="430"/><line class="lk" style="animation-delay:2.94s" x1="640" y1="430" x2="336" y2="228"/></g>
+  <g class="brain">
+    <rect class="brainbox" x="472" y="234" width="336" height="392" rx="26"/>
+    <rect class="slot" x="498" y="260" width="284" height="72" rx="14"/>
+    <text class="slotlbl" x="522" y="302">CORE &#183; CONTEXT</text>
+    <rect class="slot" x="498" y="344" width="284" height="72" rx="14"/>
+    <text class="slotlbl" x="522" y="386">CORE &#183; ROUTING</text>
+    <rect class="core" x="498" y="428" width="284" height="104" rx="14"/>
+    <text class="coretop" x="640" y="458">MCP</text>
+    <text class="corebig" x="640" y="496">BRAIN</text>
+    <text class="coresub" x="640" y="520">8 core &#183; 76 on call &#183; 5 crewed</text>
+    <rect class="slot" x="498" y="544" width="284" height="72" rx="14"/>
+    <circle class="live" cx="752" cy="570" r="5"/>
+    <text class="livelbl" x="764" y="575">LIVE</text>
+    <text class="slotlbl" id="cstNow" x="522" y="602">ORCHESTRATOR</text>
+  </g>
+  <text class="cap" x="640" y="844">89-AGENT WORKFORCE &#183; WIRED VIA OPEN MCP</text>
+  <g class="nodes">
+  <g class="nd" style="animation-delay:0.00s" data-i="0"><circle class="stalk" cx="640" cy="103" r="5"/><line class="stalkline" x1="640" y1="107" x2="640" y2="121"/><rect class="chip" x="578" y="121" width="124" height="46" rx="12"/><rect class="chipin" x="594" y="133" width="92" height="22" rx="8"/><circle class="dot" cx="610" cy="144" r="3.4"/><line class="bar" x1="622" y1="144" x2="658" y2="144"/><circle class="dot" cx="670" cy="144" r="3.4"/><text class="nm" x="640" y="195">01 SENIOR BA</text><text class="sb" x="640" y="215">decks · plans · strategy</text></g>
+  <g class="nd" style="animation-delay:1.60s" data-i="1"><circle class="stalk" cx="944" cy="187" r="5"/><line class="stalkline" x1="944" y1="191" x2="944" y2="205"/><rect class="chip" x="882" y="205" width="124" height="46" rx="12"/><rect class="chipin" x="898" y="217" width="92" height="22" rx="8"/><circle class="dot" cx="914" cy="228" r="3.4"/><line class="bar" x1="926" y1="228" x2="962" y2="228"/><circle class="dot" cx="974" cy="228" r="3.4"/><text class="nm" x="944" y="279">02 RESEARCH</text><text class="sb" x="944" y="299">web search · competitive</text></g>
+  <g class="nd" style="animation-delay:3.20s" data-i="2"><circle class="stalk" cx="1070" cy="389" r="5"/><line class="stalkline" x1="1070" y1="393" x2="1070" y2="407"/><rect class="chip" x="1008" y="407" width="124" height="46" rx="12"/><rect class="chipin" x="1024" y="419" width="92" height="22" rx="8"/><circle class="dot" cx="1040" cy="430" r="3.4"/><line class="bar" x1="1052" y1="430" x2="1088" y2="430"/><circle class="dot" cx="1100" cy="430" r="3.4"/><text class="nm" x="1070" y="481">03 ARCHITECT</text><text class="sb" x="1070" y="501">build · UAT · ship</text></g>
+  <g class="nd" style="animation-delay:4.80s" data-i="3"><circle class="stalk" cx="944" cy="591" r="5"/><line class="stalkline" x1="944" y1="595" x2="944" y2="609"/><rect class="chip" x="882" y="609" width="124" height="46" rx="12"/><rect class="chipin" x="898" y="621" width="92" height="22" rx="8"/><circle class="dot" cx="914" cy="632" r="3.4"/><line class="bar" x1="926" y1="632" x2="962" y2="632"/><circle class="dot" cx="974" cy="632" r="3.4"/><text class="nm" x="944" y="683">04 MINUTES</text><text class="sb" x="944" y="703">summary · action items</text></g>
+  <g class="nd" style="animation-delay:6.40s" data-i="4"><circle class="stalk" cx="640" cy="675" r="5"/><line class="stalkline" x1="640" y1="679" x2="640" y2="693"/><rect class="chip" x="578" y="693" width="124" height="46" rx="12"/><rect class="chipin" x="594" y="705" width="92" height="22" rx="8"/><circle class="dot" cx="610" cy="716" r="3.4"/><line class="bar" x1="622" y1="716" x2="658" y2="716"/><circle class="dot" cx="670" cy="716" r="3.4"/><text class="nm" x="640" y="767">05 FINDINGS</text><text class="sb" x="640" y="787">risks · stalls · owners</text></g>
+  <g class="nd" style="animation-delay:8.00s" data-i="5"><circle class="stalk" cx="336" cy="591" r="5"/><line class="stalkline" x1="336" y1="595" x2="336" y2="609"/><rect class="chip" x="274" y="609" width="124" height="46" rx="12"/><rect class="chipin" x="290" y="621" width="92" height="22" rx="8"/><circle class="dot" cx="306" cy="632" r="3.4"/><line class="bar" x1="318" y1="632" x2="354" y2="632"/><circle class="dot" cx="366" cy="632" r="3.4"/><text class="nm" x="336" y="683">06 VOICE AI</text><text class="sb" x="336" y="703">Rachel · Ana · Lina · 24/7</text></g>
+  <g class="nd" style="animation-delay:9.60s" data-i="6"><circle class="stalk" cx="210" cy="389" r="5"/><line class="stalkline" x1="210" y1="393" x2="210" y2="407"/><rect class="chip" x="148" y="407" width="124" height="46" rx="12"/><rect class="chipin" x="164" y="419" width="92" height="22" rx="8"/><circle class="dot" cx="180" cy="430" r="3.4"/><line class="bar" x1="192" y1="430" x2="228" y2="430"/><circle class="dot" cx="240" cy="430" r="3.4"/><text class="nm" x="210" y="481">07 INBOX TRIAGE</text><text class="sb" x="210" y="501">score · flag · recommend</text></g>
+  <g class="nd" style="animation-delay:11.20s" data-i="7"><circle class="stalk" cx="336" cy="187" r="5"/><line class="stalkline" x1="336" y1="191" x2="336" y2="205"/><rect class="chip" x="274" y="205" width="124" height="46" rx="12"/><rect class="chipin" x="290" y="217" width="92" height="22" rx="8"/><circle class="dot" cx="306" cy="228" r="3.4"/><line class="bar" x1="318" y1="228" x2="354" y2="228"/><circle class="dot" cx="366" cy="228" r="3.4"/><text class="nm" x="336" y="279">08 OUTREACH</text><text class="sb" x="336" y="299">emails · WhatsApp · EN/ES</text></g>
+  </g>
+</svg>
+        <figcaption>The eight that are always on. The other 81 are spun up per project &mdash; filter them below.</figcaption>
+      </figure>
+
       <div class="controls">
         <input id="q" type="search" placeholder="pricing, HIPAA, tenancy, deepfake&hellip;" aria-label="Filter the bench">
         <div class="chips" id="chips"></div>
         <span class="count" id="count"></span>
       </div>
-      <div id="bench"></div>
+      <div id="benchGrid"></div>
 
       <div class="callout">
         <strong>Marketing still says 83.</strong> That was accurate before the AI Readiness Department
@@ -629,7 +717,7 @@ var FILTERS = [
 ];
 
 var active = 'all', query = '';
-var benchEl  = document.getElementById('bench');
+var benchEl  = document.getElementById('benchGrid');
 var chipsEl  = document.getElementById('chips');
 var countEl  = document.getElementById('count');
 var qEl      = document.getElementById('q');
@@ -688,6 +776,24 @@ function render(){
 
 qEl.addEventListener('input', function(e){ query = e.target.value; render(); });
 render();
+
+/* ── the brain's status line names the agent currently lit ───────────────── */
+(function(){
+  var now = document.getElementById('cstNow');
+  if(!now) return;
+  var CORE = ['SENIOR BA','RESEARCH','ARCHITECT','MINUTES','FINDINGS','VOICE AI','INBOX TRIAGE','OUTREACH'];
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    now.textContent = 'ORCHESTRATOR \u00b7 8 CORE LINKED';
+    return;
+  }
+  var i = 0;
+  function tick(){
+    now.textContent = 'ORCHESTRATOR \u00b7 ' + CORE[i] + ' [' + (i+1) + '/8]';
+    i = (i + 1) % CORE.length;
+  }
+  tick();
+  setInterval(tick, 1600);
+})();
 
 /* ── theme toggle: auto → light → dark ───────────────────────────────────── */
 var order = ['auto','light','dark'], ti = 0;
