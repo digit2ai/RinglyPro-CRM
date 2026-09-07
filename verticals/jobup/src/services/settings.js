@@ -288,10 +288,19 @@ function sanitize(s, opts) {
   // setting a user can neither see nor change must not be able to disagree with
   // what the product says it does.
   out.geo = out.geo || {};
-  out.geo.allowed_countries = ['US'];
-  // US-ONLY IS ENFORCED FOR EVERYONE — not a per-profile choice. With this on,
-  // geo.evaluate refuses any posting not positively confirmed in the US
-  // (foreign, or unplaceable), rather than flagging it onto the board.
+  // THE ALLOWED COUNTRIES COME FROM THE BRAND. Every brand is US-only EXCEPT
+  // TornaJobs, whose brand record sets match_countries=['US','PH'] (the Filipino
+  // worker exception). A brand with no list, or a call with no brand in scope,
+  // stays ['US'] — so JobUp/JobMD are unchanged. The set is still enforced
+  // strictly (us_only below): a posting must be positively in one of these
+  // countries or it is blocked, whichever brand it is.
+  out.geo.allowed_countries = (brand && Array.isArray(brand.match_countries) && brand.match_countries.length)
+    ? brand.match_countries.slice()
+    : ['US'];
+  // STRICT-COUNTRY ENFORCEMENT FOR EVERYONE — not a per-profile choice. With
+  // this on, geo.evaluate refuses any posting not positively confirmed in the
+  // allowed set (foreign, or unplaceable), rather than flagging it onto the
+  // board. It works the same whether the set is ['US'] or ['US','PH'].
   out.geo.us_only = true;
   out.geo.flag_unknown = out.geo.flag_unknown !== false;
   // Strict US-only is the BRAND's rule, not the subscriber's, so it is stamped

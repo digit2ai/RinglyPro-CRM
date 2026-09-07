@@ -97,6 +97,52 @@ async function adzuna({ what, where, page = 1, perPage = 50 } = {}) {
   return { ok: true, source: 'adzuna', postings, total: r.body.count || postings.length };
 }
 
+/* ── 1b. PHILIPPINES (JSearch / Google-for-Jobs aggregator) ────────────────
+   The TornaJobs exception: Filipino workers match US AND Philippine postings.
+   Adzuna has no Philippines endpoint, and PhilJobNet/JobStreet/Kalibrr/Bossjob
+   have no usable public API while LinkedIn/Indeed are closed to scraping. The
+   honest, single-key way to reach all of them is Google-for-Jobs, which indexes
+   JobStreet, Kalibrr, Bossjob, Indeed, LinkedIn and employer career sites — this
+   feed queries it via JSearch (RapidAPI), pinned to country=ph so it can only
+   return Philippine postings, the same provider-enforced guarantee the Adzuna
+   feed has for the US. Dormant (contributes nothing) until a key is set; never
+   scrapes, never fabricates. Set JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY). */
+function philippinesKeyed() {
+  return Boolean(process.env.JSEARCH_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY);
+}
+async function philippines({ what, page = 1, perPage = 50 } = {}) {
+  const key = process.env.JSEARCH_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY;
+  if (!key) {
+    return { ok: false, source: 'philippines', dormant: true,
+             note: 'JSEARCH_RAPIDAPI_KEY not set — Philippine coverage (JobStreet/Kalibrr/Bossjob/Indeed/LinkedIn via Google-for-Jobs) contributed nothing.',
+             postings: [] };
+  }
+  if (!what) return { ok: true, source: 'philippines', postings: [] };
+  const p = new URLSearchParams({
+    query: `${what} in Philippines`,
+    page: String(page), num_pages: '1', country: 'ph', date_posted: 'month',
+  });
+  const r = await httpJson(`https://jsearch.p.rapidapi.com/search?${p.toString()}`,
+    { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' });
+  if (!r.ok) return { ok: false, source: 'philippines', error: r.error, postings: [] };
+
+  const postings = (r.body && Array.isArray(r.body.data) ? r.body.data : []).map((j) => ({
+    external_id: String(j.job_id || ''),
+    title: clean(j.job_title, 300),
+    // Force "Philippines" into the location so the geo classifier places it as
+    // PH (and the strict US+PH filter admits it) even when the city is blank.
+    location: clean([j.job_city, j.job_state, 'Philippines'].filter(Boolean).join(', '), 200),
+    url: j.job_apply_link || null,
+    description: clean(j.job_description, 6000),
+    compensation: (j.job_min_salary || j.job_max_salary)
+      ? { min: j.job_min_salary || null, max: j.job_max_salary || null, currency: j.job_salary_currency || 'PHP' }
+      : null,
+    posted_at: j.job_posted_at_datetime_utc || null,
+    employer: clean(j.employer_name, 200) || 'Unknown employer',
+  })).filter((x) => x.title && x.url);
+  return { ok: true, source: 'philippines', postings, total: postings.length };
+}
+
 /* ── 2. USAJOBS ───────────────────────────────────────────────────────────
    The US federal government's own board, and the reason it is here rather
    than a nice-to-have: the Department of Veterans Affairs is one of the
@@ -189,9 +235,13 @@ function status() {
                country: 'US only — federal hiring system',
                why: 'the VA is one of the largest physician and nurse employers in the US' },
     themuse: { live: true, keyed: false, needs: null, country: 'mixed — filtered by the US-only geo policy' },
+    philippines: { live: philippinesKeyed(), keyed: true,
+                   needs: 'JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY)',
+                   country: 'PH (pinned country=ph) — feeds TornaJobs, blocked for US-only brands',
+                   covers: 'JobStreet, Kalibrr, Bossjob, Indeed, LinkedIn and employer career sites, via Google-for-Jobs' },
   };
 }
 
-const FEEDS = { adzuna, usajobs, themuse };
+const FEEDS = { adzuna, philippines, usajobs, themuse };
 
-module.exports = { FEEDS, adzuna, usajobs, themuse, status, adzunaKeyed, usajobsKeyed, clean };
+module.exports = { FEEDS, adzuna, philippines, usajobs, themuse, status, adzunaKeyed, philippinesKeyed, usajobsKeyed, clean };

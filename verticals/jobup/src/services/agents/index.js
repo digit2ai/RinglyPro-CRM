@@ -62,10 +62,15 @@ async function loadContext(tenantId) {
   const t = scoped('profiles', tenantId);
   const profileRow = await t.findOne({});
   const sRow = await scoped('settings', tenantId).findOne({});
+  // The subscriber's brand decides the allowed countries (US, or US+PH for
+  // TornaJobs). sanitize() reads it, so the Hunter scores a TornaJobs profile
+  // against Philippine postings too and a JobUp profile against US only.
+  const sub = await models.subscribers.findOne({ where: { id: tenantId } });
+  const brand = require('../../brand').forSubscriber(sub);
   return {
     profile: (profileRow && profileRow.resume_json) || {},
     sourceText: (profileRow && profileRow.source_text) || '',
-    settings: settingsSvc.sanitize((sRow && sRow.settings) || {}),
+    settings: settingsSvc.sanitize((sRow && sRow.settings) || {}, { brand }),
   };
 }
 

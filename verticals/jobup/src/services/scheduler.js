@@ -201,6 +201,11 @@ async function refreshFeeds() {
   for (const term of terms.slice(0, FEED_TERMS)) {
     jobs.push(['adzuna', () => feeds.adzuna({ what: term, perPage: FEED_PER_TERM })]);
     jobs.push(['usajobs', () => feeds.usajobs({ what: term, perPage: FEED_PER_TERM })]);
+    // Philippine coverage for TornaJobs (dormant until JSEARCH_RAPIDAPI_KEY is
+    // set). PH postings enter the SAME pool through the SAME ingest; the geo
+    // policy then admits them only for TornaJobs and blocks them for US-only
+    // brands, so one pool serves every brand without cross-contamination.
+    jobs.push(['philippines', () => feeds.philippines({ what: term, perPage: FEED_PER_TERM })]);
   }
   // The Muse is searched by CATEGORY, not by role text, so it is pulled once
   // rather than once per term.

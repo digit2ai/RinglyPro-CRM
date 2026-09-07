@@ -131,7 +131,13 @@ const BRANDS = {
     word_head: 'Torna', word_tail: 'Jobs', word_tld: '.com',
     eg_roles_en: 'nurse, driver', eg_roles_es: 'enfermera, conductor',
     phone: '+1 813-212-4888',
-    // US postings only — the strict rule the whole engine now enforces.
+    // THE GEO EXCEPTION. TornaJobs is the Filipino-worker brand, so it matches
+    // BOTH the United States AND the Philippines — every other brand stays
+    // US-only. match_countries is the allowed set the engine enforces (strict:
+    // a posting must be positively in one of these, everything else is blocked).
+    // A brand that omits this field defaults to ['US'], so JobUp/JobMD are
+    // byte-identical.
+    match_countries: ['US', 'PH'],
     us_only_strict: true,
     audience: 'professional',
     audience_one: 'professional',

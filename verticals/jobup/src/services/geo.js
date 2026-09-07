@@ -152,7 +152,11 @@ function classify(raw) {
   if (/\bbrazil\b|\bbrasil\b|\bs[aã]o paulo\b/.test(s)) countries.push('BR');
   if (/\bsingapore\b/.test(s)) countries.push('SG');
   if (/\bjapan\b|\btokyo\b/.test(s)) countries.push('JP');
-  if (/\bphilippines\b|\bmanila\b|\bmakati\b/.test(s)) countries.push('PH');
+  // Philippines — broad city/region coverage so a PH posting is positively
+  // placed (TornaJobs matches PH, and a PH job that classifies as "unknown"
+  // would be blocked by the strict filter). Metro Manila cities, major
+  // provincial cities, the BPO/IT hubs and the common region tokens.
+  if (/\bphilippines\b|\bpilipinas\b|\bmanila\b|\bmakati\b|\bmetro manila\b|\bquezon city\b|\bcebu\b|\bdavao\b|\btaguig\b|\bbgc\b|\bbonifacio global\b|\bpasig\b|\bmandaluyong\b|\bortigas\b|\bpasay\b|\bpara[nñ]aque\b|\bmuntinlupa\b|\balabang\b|\bcaloocan\b|\bmarikina\b|\bantipolo\b|\bbacoor\b|\bd[aá]smari[nñ]as\b|\biloilo\b|\bbacolod\b|\bcagayan de oro\b|\bbaguio\b|\bclark\b|\bpampanga\b|\bangeles city\b|\bsanta rosa, laguna\b|\bcavite\b|\bbatangas\b|\bzamboanga\b|\bgeneral santos\b|\bnaga, camarines\b|\bncr\b|\bcalabarzon\b/.test(s)) countries.push('PH');
   if (/\bvietnam\b|\bha noi\b|\bhanoi\b/.test(s)) countries.push('VN');
   if (/\bchina\b|\bshanghai\b|\bbeijing\b|\bwuxi\b|\bchangzhou\b/.test(s)) countries.push('CN');
   if (/\bspain\b|\bmadrid\b|\bbarcelona\b/.test(s)) countries.push('ES');
