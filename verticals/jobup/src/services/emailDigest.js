@@ -36,8 +36,12 @@ function cadenceFor(plan) {
   return CADENCE.search;                        // legacy => weekly
 }
 
-function baseUrl() {
-  return (process.env.JOBUP_PUBLIC_URL || 'https://jobup.dev').replace(/\/$/, '');
+// Brand-aware: a TornaJobs / JobMD subscriber's digest links must point at
+// their own domain, not jobup.dev. The subscriber row carries the brand, which
+// is what a background sender (the notifier) has in scope.
+function baseUrl(sub) {
+  const BRAND = require('../brand');
+  return BRAND.publicUrl(BRAND.forSubscriber(sub));
 }
 
 // Relative "posted N ago", localized. Never a fake precision.
@@ -67,7 +71,7 @@ function esc(v) {
 function buildData(sub, includedMatches, moreCount) {
   const es = String(sub.language || 'en') === 'es';
   const cad = cadenceFor(sub.plan) || CADENCE.search;
-  const base = baseUrl();
+  const base = baseUrl(sub);
   const profileUrl = sub.address ? `https://${sub.address}` : base;
   const firstName = String(sub.name || '').trim().split(/\s+/)[0] || (es ? 'hola' : 'there');
 

@@ -2508,7 +2508,19 @@ try {
   });
   app.use('/jobup', jobupApp);
 
+  // TornaJobs.com — the same engine under a third brand (see brand.js). The
+  // custom domain is served automatically by the host handler above (byHost
+  // iterates the registry), so this path mount exists only so the full funnel
+  // is testable on aiagent.ringlypro.com/tornajobs BEFORE tornajobs.com DNS is
+  // pointed here. The brand is stamped so signups get <name>.tornajobs.com.
+  app.get('/tornajobs', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/tornajobs/');
+    next();
+  });
+  app.use('/tornajobs', (req, res, next) => { req.jobupBrand = 'tornajobs'; return jobupApp(req, res, next); });
+
   console.log('JobUp mounted at /jobup and on jobup.dev');
+  console.log('TornaJobs (JobUp engine, brand: tornajobs) mounted at /tornajobs; serves tornajobs.com once DNS points here');
   console.log('   - Landing: https://jobup.dev/  |  /jobup/');
   console.log('   - Health:  /jobup/health');
   console.log('   - Subscriber sites: <name>.jobup.dev');

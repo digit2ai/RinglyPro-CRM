@@ -111,6 +111,42 @@ const BRANDS = {
     stripe_resume_product: 'JobMD — one tailored CV',
     footer_by: 'JobMD — a Digit2AI product.',
     built_by: 'Built and maintained by JobMD'
+  },
+
+  /* ── TornaJobs.com — the same engine, a third brand. A replica of JobUp for
+        the Hispanic / bilingual jobseeker (sister brand to Torna Idioma): same
+        landing, dashboard, ecosystem, emails and colours; the name, the domain
+        and who the copy speaks to are the only differences. US-only, like the
+        rest of the engine now is. Subscriber sites live at <name>.tornajobs.com.
+        Add the brand and tornajobs.com routes automatically — see brand.byHost
+        and the host handler in src/app.js, which iterate the registry. ─────── */
+  tornajobs: {
+    id: 'tornajobs',
+    name: 'TornaJobs',
+    domain: 'tornajobs.com',
+    hosts: ['tornajobs.com', 'www.tornajobs.com'],
+    mount: '/tornajobs',
+    tagline: 'Your Personal AI Career Platform',
+    title: 'TornaJobs — Your Personal AI Career Platform',
+    word_head: 'Torna', word_tail: 'Jobs', word_tld: '.com',
+    eg_roles_en: 'nurse, driver', eg_roles_es: 'enfermera, conductor',
+    phone: '+1 813-212-4888',
+    // US postings only — the strict rule the whole engine now enforces.
+    us_only_strict: true,
+    audience: 'professional',
+    audience_one: 'professional',
+    audience_many: 'professionals',
+    site_suffix: 'tornajobs.com',
+    // Shared mark until a TornaJobs icon set ships (public/tornajobs-*.png);
+    // then set this to 'tornajobs-' and it is served with a shared fallback.
+    icon_prefix: '',
+    assistant: 'Eva',
+    from_name_env: 'TORNAJOBS_FROM_NAME',
+    public_url_env: 'TORNAJOBS_PUBLIC_URL',
+    stripe_product: 'TornaJobs — Personal AI Career Platform',
+    stripe_resume_product: 'TornaJobs — one tailored résumé',
+    footer_by: 'TornaJobs — a Digit2AI product.',
+    built_by: 'Built and maintained by TornaJobs'
   }
 };
 
