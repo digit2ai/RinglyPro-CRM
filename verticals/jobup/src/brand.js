@@ -184,8 +184,32 @@ const BRANDS = {
     audience_one: 'professional',
     audience_many: 'professionals',
     site_suffix: 'coljobs.app',
-    // Shared mark until a ColJobs icon set ships (public/coljobs-*.png); then
-    // set this to 'coljobs-' and it is served with a shared fallback.
+    // Spanish IS the default for Colombia. The landing still remembers an
+    // explicit switch and honours a ?lang= link; this only changes the FALLBACK
+    // from browser-detection to Spanish. Brands that omit this default to 'en',
+    // so JobUp/JobMD/TornaJobs are byte-identical.
+    default_lang: 'es',
+    // COLOMBIA FLAG PALETTE. Injected LAST into every shell's <head> via the
+    // {{BRAND_THEME_CSS}} token, so it overrides the base blue/pink/orange (and
+    // the cyan/indigo of the app shells) regardless of which palette a page ships
+    // with. Brands with no theme_css inject nothing — the live products keep
+    // their exact colours. Flag order top-to-bottom is yellow, blue, red; the
+    // gradient and the ambient glow follow it. Hues are brightened just enough to
+    // stay legible on the dark ground.
+    theme_css: [
+      '<style id="brand-theme">',
+      '.d2b,:root{',
+      '  --blue:#1c5fd4;--pink:#e63c48;--orange:#ffd21e;--violet:#1c5fd4;',
+      '  --grad:linear-gradient(120deg,#ffd21e 0%,#1c5fd4 52%,#e63c48 100%);',
+      '  --grad-soft:linear-gradient(135deg,rgba(255,210,30,.16),rgba(230,60,72,.14));',
+      '  --accent-cyan:#ffd21e;--accent-violet:#1c5fd4;--accent-magenta:#e63c48;',
+      '}',
+      '.d2b .ambient::before{background:',
+      '  radial-gradient(58% 34% at 50% 40%, rgba(255,210,30,.55), transparent 68%),',
+      '  radial-gradient(66% 40% at 50% 60%, rgba(28,95,212,.55), transparent 70%),',
+      '  radial-gradient(78% 42% at 50% 82%, rgba(230,60,72,.50), transparent 74%) !important;}',
+      '</style>'
+    ].join('\n'),
     icon_prefix: '',
     assistant: 'Eva',
     from_name_env: 'COLJOBS_FROM_NAME',
@@ -281,6 +305,11 @@ function tokens(brand) {
     BRAND_URL: 'https://' + b.domain,
     BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld,
     BRAND_EG_ROLES: b.eg_roles_en, BRAND_EG_ROLES_ES: b.eg_roles_es,
+    // Default UI language for the landing (the FALLBACK, not a lock). '' → 'en'.
+    BRAND_DEFAULT_LANG: b.default_lang === 'es' ? 'es' : 'en',
+    // Per-brand theme override injected last in <head>. Empty for the live
+    // products, so their colours are byte-identical.
+    BRAND_THEME_CSS: b.theme_css || '',
     BRAND_PHONE: b.phone || '',
     // tel: wants digits and a leading +, nothing else.
     BRAND_PHONE_TEL: b.phone ? String(b.phone).replace(/[^0-9+]/g, '') : '',

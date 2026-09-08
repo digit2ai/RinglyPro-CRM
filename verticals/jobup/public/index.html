@@ -737,6 +737,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
 .d2b .herotel a:hover{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.06)}
 @media(max-width:640px){.d2b .herotel a{font-size:16px}}
 </style>
+{{BRAND_THEME_CSS}}
 </head>
 <body>
 <div class="d2b">
@@ -1275,9 +1276,13 @@ function juApplyLang(l,persist){
 (function(){
   var q=new URLSearchParams(location.search).get('lang');
   var stored=null; try{stored=localStorage.getItem('jobup_lang');}catch(e){}
-  // An explicit link beats a remembered choice, which beats the browser.
+  // An explicit link beats a remembered choice, which beats the per-brand
+  // default. A brand may force Spanish as its fallback (ColJobs); every other
+  // brand ('en') keeps browser-detection, so the live products are unchanged.
+  var brandDefault='{{BRAND_DEFAULT_LANG}}';
   var nav=(navigator.language||'').toLowerCase().indexOf('es')===0?'es':'en';
-  juApplyLang(q||stored||nav,Boolean(q));
+  var fallback=brandDefault==='es'?'es':nav;
+  juApplyLang(q||stored||fallback,Boolean(q));
   Array.prototype.forEach.call(document.querySelectorAll('[data-setlang]'),function(b){
     b.addEventListener('click',function(){ juApplyLang(b.getAttribute('data-setlang'),true); });
   });
