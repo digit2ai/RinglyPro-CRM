@@ -8583,7 +8583,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       // posting that is also on an employer's own board — jobsource.js carries
       // the scar from the last time that happened.
       const feeds = require('./src/services/feeds');
-      assert.deepStrictEqual(Object.keys(feeds.FEEDS).sort(), ['adzuna', 'colombia', 'philippines', 'themuse', 'usajobs']);
+      assert.deepStrictEqual(Object.keys(feeds.FEEDS).sort(), ['adzuna', 'colombia', 'philippines', 'remotive', 'themuse', 'usajobs']);
       const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
       ['external_id', 'title', 'location', 'url', 'description', 'compensation', 'posted_at']
         .forEach((k) => assert.ok(new RegExp('\\b' + k + ':').test(src), 'missing ' + k));
@@ -8654,16 +8654,21 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'and must go through the SHARED ingest, so it shares the dedupe key');
     });
 
-    await t('FEEDS: the remote-tech boards are excluded, and why is recorded', () => {
-      // Measured, not assumed: of the free keyless boards only The Muse
-      // carried US clinical work. Remotive, Jobicy, Himalayas and Arbeitnow
-      // returned zero US medical roles between them.
+    await t('FEEDS: Remotive is wired for Colombia coverage; the rest stay rejected', () => {
+      // Remotive is now WIRED — the one open, keyless, per-posting feed relevant
+      // to ColJobs (remote roles eligible for Colombia/LATAM/worldwide). Its
+      // region string is mapped to concrete country tags so each brand's strict
+      // geo filter admits only what its people may take. Jobicy, Himalayas and
+      // Arbeitnow stay considered-and-rejected (zero measured value for these
+      // brands) and must be NAMED, not silently absent.
       const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
-      ['remotive', 'jobicy', 'himalayas', 'arbeitnow']
+      assert.ok(/https:\/\/remotive\.com\/api\/remote-jobs/.test(src),
+        'Remotive must be actually wired, not just named');
+      ['jobicy', 'himalayas', 'arbeitnow']
         .forEach((n) => assert.ok(new RegExp(n, 'i').test(src),
           n + ' must be named as a considered-and-rejected source, not silently absent'));
-      assert.ok(!/https:\/\/remotive|jobicy\.com|himalayas\.app|arbeitnow\.com\/api/.test(src),
-        'named in the reasoning, but not actually wired');
+      assert.ok(!/jobicy\.com|himalayas\.app|arbeitnow\.com\/api/.test(src),
+        'jobicy/himalayas/arbeitnow are named in the reasoning, but must not be wired');
     });
 
     await t('GEO: the country is enforced, not merely defaulted', () => {

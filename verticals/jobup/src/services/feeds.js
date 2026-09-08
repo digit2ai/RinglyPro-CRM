@@ -188,6 +188,54 @@ async function colombia({ what, page = 1, perPage = 50 } = {}) {
   return { ok: true, source: 'colombia', postings, total: postings.length };
 }
 
+/* ── 1d. REMOTIVE — open, keyless, remote roles eligible for Colombia ───────
+   The Colombian domestic boards (elempleo/Computrabajo/Magneto) and the SPE have
+   no open per-posting API; datos.gov.co carries only aggregate labour statistics,
+   not vacancies with an apply link. Remotive is the one genuinely OPEN, keyless,
+   per-posting feed relevant here: remote jobs, many explicitly open to Colombia/
+   LATAM/worldwide. Its region string is mapped to concrete country tags the geo
+   classifier reads, so each brand's strict filter admits exactly what its people
+   may take — a worldwide-remote role reaches US-only brands AND ColJobs; a
+   LATAM-only role reaches ColJobs and not JobUp. Remotive asks for at most a few
+   calls a day, so this is fetched ONCE per pool refresh (not once per term).
+
+   The other free keyless remote boards were measured and rejected: Jobicy,
+   Himalayas and Arbeitnow returned effectively nothing usable for these brands
+   (Arbeitnow is Europe/UK-only, Jobicy and Himalayas skew to roles our people
+   cannot take), so they are named here and deliberately NOT wired. */
+function remotiveRegionCountries(loc) {
+  const s = String(loc || '').toLowerCase();
+  const out = [];
+  const worldwide = /\bworldwide\b|\banywhere\b|\bglobal\b/.test(s);
+  if (worldwide || /\busa\b|\bunited states\b|\bu\.s\.|\bnorth america\b|\bamericas\b/.test(s)) out.push('United States');
+  if (worldwide || /\bcolombia\b|\blatam\b|\blatin america\b|\bsouth america\b|\bamericas\b/.test(s)) out.push('Colombia');
+  if (worldwide || /\bphilippines\b|\bapac\b/.test(s)) out.push('Philippines');
+  return out;
+}
+async function remotive({ perPage = 100 } = {}) {
+  const r = await httpJson('https://remotive.com/api/remote-jobs?limit=' + Math.min(perPage, 100));
+  if (!r.ok) return { ok: false, source: 'remotive', error: r.error, postings: [] };
+  const postings = (r.body && Array.isArray(r.body.jobs) ? r.body.jobs : []).map((j) => {
+    // Only roles the posting itself says are open somewhere the engine serves.
+    const countries = remotiveRegionCountries(j.candidate_required_location);
+    if (!countries.length) return null;
+    return {
+      external_id: 'remotive-' + String(j.id || ''),
+      title: clean(j.title, 300),
+      // The eligible countries are stamped so the strict geo filter admits this
+      // per brand. The original region is kept in parentheses for the subscriber.
+      location: clean('Remote (' + (j.candidate_required_location || 'Worldwide') + ') · ' + countries.join(', '), 220),
+      url: j.url || null,
+      description: clean(j.description, 6000),
+      // Remotive salary is a freeform string; never parsed into a stated range.
+      compensation: null,
+      posted_at: j.publication_date || null,
+      employer: clean(j.company_name, 200) || 'Unknown employer',
+    };
+  }).filter((x) => x && x.title && x.url);
+  return { ok: true, source: 'remotive', postings, total: postings.length };
+}
+
 /* ── 2. USAJOBS ───────────────────────────────────────────────────────────
    The US federal government's own board, and the reason it is here rather
    than a nice-to-have: the Department of Veterans Affairs is one of the
@@ -283,6 +331,9 @@ function status() {
     colombia: { live: colombiaKeyed(), keyed: true,
                 needs: 'JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY)',
                 country: 'CO (pinned country=co) — feeds ColJobs, blocked for US-only brands' },
+    remotive: { live: true, keyed: false,
+                needs: 'nothing — open, keyless',
+                country: 'Remote roles tagged per posting (US / Colombia / Philippines) — feeds every brand by eligibility' },
     philippines: { live: philippinesKeyed(), keyed: true,
                    needs: 'JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY)',
                    country: 'PH (pinned country=ph) — feeds TornaJobs, blocked for US-only brands',
@@ -290,6 +341,6 @@ function status() {
   };
 }
 
-const FEEDS = { adzuna, philippines, colombia, usajobs, themuse };
+const FEEDS = { adzuna, philippines, colombia, remotive, usajobs, themuse };
 
-module.exports = { FEEDS, adzuna, philippines, colombia, usajobs, themuse, status, adzunaKeyed, philippinesKeyed, colombiaKeyed, usajobsKeyed, clean };
+module.exports = { FEEDS, adzuna, philippines, colombia, remotive, usajobs, themuse, status, adzunaKeyed, philippinesKeyed, colombiaKeyed, usajobsKeyed, clean };

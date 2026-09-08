@@ -217,6 +217,12 @@ async function refreshFeeds() {
   // rather than once per term.
   jobs.push(['themuse', () => feeds.themuse({ category: 'Healthcare' })]);
   jobs.push(['themuse', () => feeds.themuse({ category: null })]);
+  // Remotive is open and keyless but asks for only a few calls a day, so it is
+  // pulled ONCE per refresh (not per term). Remote roles enter the SAME pool;
+  // each is tagged with the countries the posting itself accepts, so the geo
+  // policy admits worldwide roles for every brand and LATAM-only roles for
+  // ColJobs. This is the $0 Colombia coverage that needs no RapidAPI key.
+  jobs.push(['remotive', () => feeds.remotive({ perPage: 100 })]);
 
   for (const [name, run] of jobs) {
     let res;
