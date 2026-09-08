@@ -208,6 +208,13 @@ const BRANDS = {
       '  radial-gradient(58% 34% at 50% 40%, rgba(255,210,30,.55), transparent 68%),',
       '  radial-gradient(66% 40% at 50% 60%, rgba(28,95,212,.55), transparent 70%),',
       '  radial-gradient(78% 42% at 50% 82%, rgba(230,60,72,.50), transparent 74%) !important;}',
+      // Pricing cards carry hardcoded cyan/green (not the --grad vars), so they
+      // are recoloured by selector: amarillo highlight + POPULAR badge, azul→rojo
+      // buttons (white text stays legible across both), azul check bullets.
+      '.d2b .ju-plan.feat{border-color:#ffd21e !important;box-shadow:0 0 0 1px #ffd21e !important;}',
+      '.d2b .ju-plan .pbtn.solid{background:linear-gradient(135deg,#1c5fd4,#e63c48) !important;color:#fff !important;}',
+      '.d2b .ju-plan .rib{background:#ffd21e !important;color:#101015 !important;}',
+      '.d2b .ju-plan li:before{background:rgba(28,95,212,.18) !important;border-color:rgba(28,95,212,.55) !important;}',
       '</style>'
     ].join('\n'),
     icon_prefix: '',
