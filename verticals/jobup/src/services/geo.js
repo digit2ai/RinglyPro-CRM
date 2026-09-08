@@ -165,7 +165,11 @@ function classify(raw) {
   if (/\bindia\b|\bbengaluru\b|\bbangalore\b/.test(s)) countries.push('IN');
   if (/\bgermany\b|\bberlin\b|\bmunich\b/.test(s)) countries.push('DE');
   if (/\bmexico\b|\bméxico\b|\bcdmx\b/.test(s)) countries.push('MX');
-  if (/\bcolombia\b|\bbogot[aá]\b|\bmedell[ií]n\b/.test(s)) countries.push('CO');
+  // Colombia — broad city/region coverage so a CO posting is positively placed
+  // (ColJobs matches CO; a CO job that classifies as "unknown" would be blocked
+  // by the strict filter). Major cities, departmental capitals and common
+  // remote-CO tokens.
+  if (/\bcolombia\b|\bbogot[aá]\b|\bmedell[ií]n\b|\bcali\b|\bbarranquilla\b|\bcartagena\b|\bc[uú]cuta\b|\bbucaramanga\b|\bpereira\b|\bsanta marta\b|\bibagu[eé]\b|\bmanizales\b|\bvillavicencio\b|\bpasto\b|\bmonter[ií]a\b|\bneiva\b|\barmenia\b|\bpopay[aá]n\b|\bvalledupar\b|\bsincelejo\b|\btunja\b|\bfloridablanca\b|\bsoacha\b|\bbello\b|\benvigado\b|\bitag[uü][ií]\b|\bpalmira\b|\bbuenaventura\b|\bcundinamarca\b|\bantioquia\b|\bvalle del cauca\b|\batl[aá]ntico\b/.test(s)) countries.push('CO');
 
   // More country names, added after measuring the live pool: 1,568 of 8,000
   // postings were reaching subscribers as "country not recognized", and the

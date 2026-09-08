@@ -143,6 +143,51 @@ async function philippines({ what, page = 1, perPage = 50 } = {}) {
   return { ok: true, source: 'philippines', postings, total: postings.length };
 }
 
+/* ── 1c. COLOMBIA (ColJobs) ────────────────────────────────────────────────
+   Adzuna has no Colombia endpoint, and elempleo/Computrabajo/Magneto/LinkedIn CO
+   have no usable public API. The honest, single-key way to reach all of them is
+   Google-for-Jobs, which indexes them plus Indeed CO and employer career sites —
+   this feed queries it via JSearch (RapidAPI), pinned to country=co so it can
+   only return Colombian postings, the same provider-enforced guarantee the
+   Adzuna feed has for the US. Shares the SAME key as the Philippine feed, so one
+   JSEARCH_RAPIDAPI_KEY lights up both PH (TornaJobs) and CO (ColJobs). Dormant
+   (contributes nothing) until a key is set; never scrapes, never fabricates. */
+function colombiaKeyed() {
+  return Boolean(process.env.JSEARCH_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY);
+}
+async function colombia({ what, page = 1, perPage = 50 } = {}) {
+  const key = process.env.JSEARCH_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY;
+  if (!key) {
+    return { ok: false, source: 'colombia', dormant: true,
+             note: 'JSEARCH_RAPIDAPI_KEY not set — Colombian coverage (elempleo/Computrabajo/Magneto/Indeed/LinkedIn via Google-for-Jobs) contributed nothing.',
+             postings: [] };
+  }
+  if (!what) return { ok: true, source: 'colombia', postings: [] };
+  const p = new URLSearchParams({
+    query: `${what} in Colombia`,
+    page: String(page), num_pages: '1', country: 'co', date_posted: 'month',
+  });
+  const r = await httpJson(`https://jsearch.p.rapidapi.com/search?${p.toString()}`,
+    { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' });
+  if (!r.ok) return { ok: false, source: 'colombia', error: r.error, postings: [] };
+
+  const postings = (r.body && Array.isArray(r.body.data) ? r.body.data : []).map((j) => ({
+    external_id: String(j.job_id || ''),
+    title: clean(j.job_title, 300),
+    // Force "Colombia" into the location so the geo classifier places it as CO
+    // (and the strict US+CO filter admits it) even when the city is blank.
+    location: clean([j.job_city, j.job_state, 'Colombia'].filter(Boolean).join(', '), 200),
+    url: j.job_apply_link || null,
+    description: clean(j.job_description, 6000),
+    compensation: (j.job_min_salary || j.job_max_salary)
+      ? { min: j.job_min_salary || null, max: j.job_max_salary || null, currency: j.job_salary_currency || 'COP' }
+      : null,
+    posted_at: j.job_posted_at_datetime_utc || null,
+    employer: clean(j.employer_name, 200) || 'Unknown employer',
+  })).filter((x) => x.title && x.url);
+  return { ok: true, source: 'colombia', postings, total: postings.length };
+}
+
 /* ── 2. USAJOBS ───────────────────────────────────────────────────────────
    The US federal government's own board, and the reason it is here rather
    than a nice-to-have: the Department of Veterans Affairs is one of the
@@ -235,6 +280,9 @@ function status() {
                country: 'US only — federal hiring system',
                why: 'the VA is one of the largest physician and nurse employers in the US' },
     themuse: { live: true, keyed: false, needs: null, country: 'mixed — filtered by the US-only geo policy' },
+    colombia: { live: colombiaKeyed(), keyed: true,
+                needs: 'JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY)',
+                country: 'CO (pinned country=co) — feeds ColJobs, blocked for US-only brands' },
     philippines: { live: philippinesKeyed(), keyed: true,
                    needs: 'JSEARCH_RAPIDAPI_KEY (or RAPIDAPI_KEY)',
                    country: 'PH (pinned country=ph) — feeds TornaJobs, blocked for US-only brands',
@@ -242,6 +290,6 @@ function status() {
   };
 }
 
-const FEEDS = { adzuna, philippines, usajobs, themuse };
+const FEEDS = { adzuna, philippines, colombia, usajobs, themuse };
 
-module.exports = { FEEDS, adzuna, philippines, usajobs, themuse, status, adzunaKeyed, philippinesKeyed, usajobsKeyed, clean };
+module.exports = { FEEDS, adzuna, philippines, colombia, usajobs, themuse, status, adzunaKeyed, philippinesKeyed, colombiaKeyed, usajobsKeyed, clean };

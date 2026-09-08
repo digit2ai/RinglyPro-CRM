@@ -153,6 +153,47 @@ const BRANDS = {
     stripe_resume_product: 'TornaJobs — one tailored résumé',
     footer_by: 'TornaJobs — a Digit2AI product.',
     built_by: 'Built and maintained by TornaJobs'
+  },
+
+  /* ── ColJobs.app — the same engine, a fourth brand. A replica of TornaJobs for
+        the Colombian jobseeker: same landing, dashboard, ecosystem, emails and
+        colours; the name, the domain and who the copy speaks to are the only
+        differences. Subscriber sites live at <name>.coljobs.app. The custom
+        domain is served automatically by brand.byHost + the host handler in
+        src/app.js, which iterate the registry. ────────────────────────────── */
+  coljobs: {
+    id: 'coljobs',
+    name: 'ColJobs',
+    domain: 'coljobs.app',
+    hosts: ['coljobs.app', 'www.coljobs.app'],
+    mount: '/coljobs',
+    tagline: 'Your Personal AI Career Platform',
+    title: 'ColJobs — Your Personal AI Career Platform',
+    word_head: 'Col', word_tail: 'Jobs', word_tld: '.app',
+    eg_roles_en: 'nurse, driver', eg_roles_es: 'enfermera, conductor',
+    phone: '+1 813-212-4888',
+    // THE GEO EXCEPTION. ColJobs is the Colombian brand, so it matches BOTH the
+    // United States AND Colombia — every other brand stays US-only (TornaJobs is
+    // the US+PH exception). match_countries is the allowed set the engine
+    // enforces strictly: a posting must be positively placed in one of these,
+    // everything else is blocked. A brand that omits this field defaults to
+    // ['US'], so JobUp/JobMD are byte-identical.
+    match_countries: ['US', 'CO'],
+    us_only_strict: true,
+    audience: 'professional',
+    audience_one: 'professional',
+    audience_many: 'professionals',
+    site_suffix: 'coljobs.app',
+    // Shared mark until a ColJobs icon set ships (public/coljobs-*.png); then
+    // set this to 'coljobs-' and it is served with a shared fallback.
+    icon_prefix: '',
+    assistant: 'Eva',
+    from_name_env: 'COLJOBS_FROM_NAME',
+    public_url_env: 'COLJOBS_PUBLIC_URL',
+    stripe_product: 'ColJobs — Personal AI Career Platform',
+    stripe_resume_product: 'ColJobs — one tailored résumé',
+    footer_by: 'ColJobs — a Digit2AI product.',
+    built_by: 'Built and maintained by ColJobs'
   }
 };
 

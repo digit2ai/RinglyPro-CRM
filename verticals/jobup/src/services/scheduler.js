@@ -206,6 +206,12 @@ async function refreshFeeds() {
     // policy then admits them only for TornaJobs and blocks them for US-only
     // brands, so one pool serves every brand without cross-contamination.
     jobs.push(['philippines', () => feeds.philippines({ what: term, perPage: FEED_PER_TERM })]);
+    // Colombian coverage for ColJobs (dormant until JSEARCH_RAPIDAPI_KEY is set —
+    // the SAME key as the PH feed). CO postings enter the SAME pool through the
+    // SAME ingest; the geo policy then admits them only for ColJobs and blocks
+    // them for US-only brands, so one pool serves every brand without
+    // cross-contamination.
+    jobs.push(['colombia', () => feeds.colombia({ what: term, perPage: FEED_PER_TERM })]);
   }
   // The Muse is searched by CATEGORY, not by role text, so it is pulled once
   // rather than once per term.

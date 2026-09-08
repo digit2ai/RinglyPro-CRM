@@ -8203,10 +8203,15 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     const COPY = require('./src/copy');
     const pwaSvc = require('./src/services/pwa');
 
-    await t('BRAND: the registry knows both products', () => {
-      assert.deepStrictEqual(BRAND.ids().sort(), ['jobmd', 'jobup']);
+    await t('BRAND: the registry knows every product', () => {
+      assert.deepStrictEqual(BRAND.ids().sort(), ['coljobs', 'jobmd', 'jobup', 'tornajobs']);
       assert.strictEqual(BRAND.byId('jobup').domain, 'jobup.dev');
       assert.strictEqual(BRAND.byId('jobmd').domain, 'jobmd.io');
+      assert.strictEqual(BRAND.byId('tornajobs').domain, 'tornajobs.com');
+      assert.strictEqual(BRAND.byId('coljobs').domain, 'coljobs.app');
+      // The two geo-exception brands carry their allowed set; the rest default US.
+      assert.deepStrictEqual(BRAND.byId('tornajobs').match_countries, ['US', 'PH']);
+      assert.deepStrictEqual(BRAND.byId('coljobs').match_countries, ['US', 'CO']);
     });
 
     await t('BRAND: an unknown id falls back to JobUp rather than throwing', () => {
@@ -8578,7 +8583,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       // posting that is also on an employer's own board — jobsource.js carries
       // the scar from the last time that happened.
       const feeds = require('./src/services/feeds');
-      assert.deepStrictEqual(Object.keys(feeds.FEEDS).sort(), ['adzuna', 'themuse', 'usajobs']);
+      assert.deepStrictEqual(Object.keys(feeds.FEEDS).sort(), ['adzuna', 'colombia', 'philippines', 'themuse', 'usajobs']);
       const src = fs.readFileSync(__dirname + '/src/services/feeds.js', 'utf8');
       ['external_id', 'title', 'location', 'url', 'description', 'compensation', 'posted_at']
         .forEach((k) => assert.ok(new RegExp('\\b' + k + ':').test(src), 'missing ' + k));
