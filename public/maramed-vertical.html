@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>MaraMed &mdash; corte vertical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Tomados de maramed.vercel.app — no inventar una segunda paleta. */
+  --bg:#09111e; --panel:#0f172a; --panel2:#141f36; --panel3:#1b2942;
+  --line:#1e2c45; --line2:#2b3d5c;
+  --ink:#e8eef7; --ink2:#b7c4d8; --mut:#8496b0; --faint:#64748b;
+  --teal:#0d9488; --teal2:#2dd4bf; --tealdim:#0b3b38; --tealglow:rgba(13,148,136,.4);
+  --blue:#38bdf8; --bluedim:#0d3350;
+  --amber:#f59e0b; --amberdim:#3a2a08;
+  --red:#f43f5e; --reddim:#3d1220;
+  --violet:#8b5cf6; --violet2:#a78bfa; --violetdim:#2a1d52;
+  --ok:#22c55e; --okdim:#0d3320;
+  --sans:'Urbanist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:focus-visible{outline:2px solid var(--teal2);outline-offset:2px;border-radius:3px}
+
+#viewport{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(13,148,136,.15), transparent 55%),
+    radial-gradient(circle at 88% 82%, rgba(139,92,246,.10), transparent 50%),
+    var(--bg);
+}
+.slide{position:absolute;inset:0;padding:42px 58px 160px;display:none;flex-direction:column}
+.slide.on{display:flex}
+.slide.on > *{animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+.slide.on > *:nth-child(2){animation-delay:.06s}
+.slide.on > *:nth-child(3){animation-delay:.12s}
+.slide.on > *:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.slide.sim{padding:28px 26px 156px}
+/* Las dos láminas que llevan franja bajo los teléfonos tienen menos alto útil,
+   así que su marco es más bajo. Nunca coinciden en pantalla, y forzar una sola
+   altura obligaría a recortar el propio contenido de las pantallas. */
+.slide.sim.tight .phone{height:378px}
+/* La lámina 3 monta la cabecera del paciente sobre la misma pila de triaje. */
+.slide[data-n="s3"] .pbody{gap:4px;padding-top:2px;padding-bottom:8px}
+.slide[data-n="s3"] .ptitle{font-size:11.8px}
+
+/* ---------- chrome ---------- */
+#chrome-top{position:absolute;top:0;left:0;right:0;height:44px;z-index:6;display:flex;align-items:center;justify-content:space-between;padding:0 22px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:9px}
+.bmark{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;color:#04141a;font-family:var(--mono);font-size:9px;font-weight:700}
+.bname{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.simbadge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);background:var(--amberdim);border:1px solid #5a4310;padding:4px 10px;border-radius:4px}
+
+#bar{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:7;display:flex;align-items:center;gap:16px;padding:0 22px;background:linear-gradient(to top,rgba(9,17,30,.97),rgba(9,17,30,.72) 70%,transparent)}
+.ctl{width:34px;height:34px;border-radius:8px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink2);flex:none;transition:.15s}
+.ctl:hover{background:var(--panel2);color:var(--ink);border-color:var(--teal)}
+.ctl svg{width:14px;height:14px;fill:currentColor}
+.ctl.play{width:38px;height:38px;border-color:var(--teal);color:var(--teal2)}
+.ctl.play:hover{background:var(--tealdim)}
+#track{flex:1;height:3px;background:var(--line);border-radius:2px;position:relative;overflow:hidden}
+#fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width .2s linear}
+#count{font-family:var(--mono);font-size:11px;color:var(--mut);flex:none;font-variant-numeric:tabular-nums}
+.togg{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line2);padding:6px 9px;border-radius:5px;flex:none}
+.togg.act{color:var(--teal2);border-color:var(--tealdim);background:var(--tealdim)}
+
+#cap{position:absolute;left:58px;right:58px;bottom:66px;z-index:5;height:88px;font-size:11.8px;line-height:1.45;color:var(--ink2);background:rgba(6,12,22,.9);border:1px solid var(--line);border-left:2px solid var(--teal);padding:10px 14px;border-radius:6px;overflow:auto}
+#cap.off{display:none}
+
+/* ---------- typography ---------- */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.eyebrow.acc{color:var(--teal2)}
+.eyebrow.vi{color:var(--violet2)}
+h1{font-weight:700;font-size:56px;line-height:1.04;letter-spacing:-.025em}
+h2{font-weight:600;font-size:36px;line-height:1.12;letter-spacing:-.02em}
+h2.mini{font-size:25px}
+h3{font-size:15px;font-weight:600}
+.dek{font-size:17px;line-height:1.55;color:var(--ink2);max-width:64ch;font-weight:300}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.small{font-size:12px;color:var(--mut);line-height:1.5;font-weight:300}
+.tiny{font-size:10.5px;color:var(--faint);line-height:1.45}
+.head{margin-bottom:20px}
+.head.mini{margin-bottom:11px}
+.grad{background:linear-gradient(135deg,var(--teal2),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- generic blocks ---------- */
+.row{display:flex;gap:14px}
+.col{display:flex;flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 17px;display:flex;flex-direction:column;gap:8px}
+.card .n{font-family:var(--mono);font-size:10px;color:var(--teal2);letter-spacing:.14em}
+.card h3{font-size:15.5px}
+.card p{font-size:12.5px;line-height:1.5;color:var(--ink2);font-weight:300}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 14px;display:flex;flex-direction:column;gap:3px}
+.tile .td{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.tile .tn{font-size:26px;font-weight:700;letter-spacing:-.02em;font-family:var(--mono)}
+.tile .tl{font-size:11px;color:var(--mut);line-height:1.4;font-weight:300}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:400;padding:9px 12px;border-bottom:1px solid var(--line2)}
+table.t td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink2);line-height:1.45;font-weight:300;vertical-align:top}
+table.t tr:last-child td{border-bottom:none}
+table.t td b{color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--mut)}
+.chip.ok{color:var(--ok);background:var(--okdim);border-color:#1c5c37}
+.chip.warn{color:var(--amber);background:var(--amberdim);border-color:#5a4310}
+.chip.crit{color:var(--red);background:var(--reddim);border-color:#6b2137}
+.chip.acc{color:var(--teal2);background:var(--tealdim);border-color:#155e57}
+.chip.vi{color:var(--violet2);background:var(--violetdim);border-color:#4a35a0}
+.note{border-left:2px solid var(--amber);background:var(--amberdim);border-radius:0 8px 8px 0;padding:12px 15px;font-size:12.5px;line-height:1.55;color:#fbdca0;font-weight:300}
+.note b{color:#fde8bd;font-weight:600}
+.note.crit{border-left-color:var(--red);background:var(--reddim);color:#f9c3ce}
+.note.crit b{color:#fddbe3}
+.strip{margin-top:10px;flex:none;font-size:12px;line-height:1.45;color:var(--ink2);font-weight:300;border-left:2px solid var(--amber);background:rgba(245,158,11,.07);border-radius:0 7px 7px 0;padding:8px 13px}
+.strip b{color:#fbdca0;font-weight:600}
+
+/* ---------- phone simulator ---------- */
+.phones{display:flex;gap:20px;justify-content:center;align-items:flex-start;flex:none}
+.pwrap{display:flex;flex-direction:column;align-items:center;gap:9px;flex:none}
+.pcap{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:center;max-width:224px;line-height:1.45}
+.pcap b{color:var(--teal2);font-weight:500}
+.phone{width:222px;height:430px;border-radius:26px;border:1px solid var(--line2);background:#050b16;padding:7px;flex:none;
+  box-shadow:0 18px 46px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset;position:relative}
+.pscreen{width:100%;height:100%;border-radius:20px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;position:relative}
+.pnotch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:5px;border-radius:3px;background:#0d1626;z-index:9}
+.pbody{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:18px 12px 11px;gap:8px}
+.pbody.ctr{justify-content:center;align-items:center;text-align:center}
+.ptop{display:flex;align-items:center;gap:7px;padding:14px 13px 0;flex:none}
+.pavatar{width:26px;height:26px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:12px;flex:none}
+.pname{font-size:11.5px;font-weight:600;line-height:1.2}
+.ppill{font-family:var(--mono);font-size:7.4px;letter-spacing:.04em;border:1px solid var(--line2);border-radius:5px;padding:2px 5px;color:var(--mut);white-space:nowrap}
+.psp{flex:1}
+.ptitle{font-size:12.5px;font-weight:700;letter-spacing:.02em;line-height:1.22;text-transform:uppercase;text-align:center;color:#cfd9e8}
+.psub{font-size:8.6px;color:var(--mut);text-align:center;font-weight:300;line-height:1.4}
+
+/* orb */
+.orb{width:84px;height:84px;border-radius:50%;margin:4px auto;position:relative;display:grid;place-items:center;flex:none}
+.orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(45,212,191,.28)}
+.orb .oi{font-size:22px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+.orb.idle{background:radial-gradient(circle at 32% 28%,#a78bfa,#6d4bd8 42%,#1e6fa8 100%);box-shadow:0 0 44px rgba(139,92,246,.42)}
+.orb.listen{background:radial-gradient(circle at 32% 28%,#fb7185,#e11d6b 45%,#7f1d3f 100%);box-shadow:0 0 46px rgba(244,63,94,.48)}
+.orb.speak{background:radial-gradient(circle at 32% 28%,#fbbf24,#ea7c0b 45%,#7c3d05 100%);box-shadow:0 0 46px rgba(245,158,11,.45)}
+.orb.think{background:radial-gradient(circle at 32% 28%,#c4b5fd,#7dd3fc 46%,#1e5f8f 100%);box-shadow:0 0 46px rgba(56,189,248,.4)}
+.orbbtns{display:flex;gap:7px;justify-content:center;flex:none}
+.orbbtn{flex:1;border:1px solid var(--line2);border-radius:9px;padding:5px 4px;font-size:8px;font-weight:600;letter-spacing:.06em;color:var(--blue);background:var(--panel);text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
+.orbbtn.t{color:var(--teal2)}
+.vmode{font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2);text-align:center;flex:none}
+.pinput{border:1px solid var(--line2);border-radius:10px;padding:6px 9px;font-size:8.4px;color:var(--faint);display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.6);flex:none}
+.pinput .sd{margin-left:auto;color:var(--ink2);font-size:10px}
+.pcard{border:1px solid var(--line);border-radius:10px;padding:7px 9px;background:var(--panel);display:flex;flex-direction:column;gap:6px;flex:none}
+.pcard .ph{font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2);display:flex;align-items:center;gap:5px}
+.prow{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--ink2);font-weight:300}
+.prow .pv{margin-left:auto;font-size:8.5px;font-family:var(--mono);color:var(--ink)}
+.pfoot{font-size:6.8px;letter-spacing:.08em;color:#4a5a72;text-align:center;line-height:1.5;padding:0 10px 8px;flex:none}
+
+/* mono-styled RayScan screens */
+.mm{font-family:var(--mono)}
+.rbtn{border-radius:12px;padding:12px 10px;font-family:var(--mono);font-size:11px;font-weight:500;text-align:center;flex:none}
+.rbtn.pri{background:rgba(139,92,246,.22);border:1px solid var(--violet);color:#ddd0ff}
+.rbtn.sec{background:var(--panel);border:1px solid var(--line2);color:var(--ink2)}
+.rq{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:none}
+.rqc{border:1px solid var(--line);border-radius:8px;padding:5px 7px;background:var(--panel);display:flex;flex-direction:column;gap:2px}
+.rqc .k{font-family:var(--mono);font-size:6.8px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.rqc .v{font-family:var(--mono);font-size:10px;font-weight:700;line-height:1.25}
+.rsec{border-left:2px solid var(--blue);background:rgba(15,23,42,.7);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px;flex:none}
+.rsec.v{border-left-color:var(--violet)}
+.rsec.a{border-left-color:var(--amber)}
+.rsec .rh{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.04em;display:flex;gap:5px;align-items:center}
+.rsec p{font-size:8px;line-height:1.48;color:var(--ink2);font-weight:300}
+.rlim{border:1px solid #6b2137;background:rgba(244,63,94,.1);border-radius:9px;padding:7px 8px;flex:none}
+.rlim .rh{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.11em;color:var(--red);margin-bottom:4px}
+.rlim p{font-family:var(--mono);font-size:7.1px;line-height:1.55;color:#e9a7b5}
+
+/* vitals */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:none}
+.vc{border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--panel);display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.vc::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal2)}
+.vc.amb::before{background:var(--amber)}
+.vc.bl::before{background:var(--blue)}
+.vc .vk{font-size:8px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.vc .vv{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1.1}
+.vc .vv span{font-size:8px;font-weight:400;color:var(--mut);margin-left:2px}
+.vc .vb{display:flex;gap:3px;margin-top:2px}
+.vtag{font-size:6.5px;letter-spacing:.06em;border-radius:20px;padding:2px 5px;border:1px solid var(--line2);color:var(--mut)}
+.vtag.ok{color:var(--ok);border-color:#1c5c37}
+.vtag.am{color:var(--amber);border-color:#5a4310}
+.vtag.rd{color:var(--red);border-color:#6b2137}
+.vstep{display:flex;gap:8px;align-items:flex-start;flex:none}
+.vstep .vn{width:19px;height:19px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);font-family:var(--mono);font-size:8.5px;display:grid;place-items:center;flex:none}
+.vstep .vt{font-size:9.2px;font-weight:600;line-height:1.3}
+.vstep .vd{font-size:7.6px;color:var(--mut);line-height:1.4;font-weight:300}
+.wave{height:34px;border-radius:7px;background:rgba(6,14,26,.9);border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.wave svg{position:absolute;inset:0;width:100%;height:100%}
+.wave .wl{position:absolute;left:5px;bottom:2px;font-family:var(--mono);font-size:5.6px;letter-spacing:.14em;color:#3d5a52}
+.facebox{border-radius:10px;overflow:hidden;background:#fff;position:relative;flex:none;display:grid;place-items:center}
+.facebox svg{display:block}
+.corner{position:absolute;width:20px;height:20px;border:2px solid var(--ok)}
+.c1{top:7px;left:7px;border-right:none;border-bottom:none}
+.c2{top:7px;right:7px;border-left:none;border-bottom:none}
+.c3{bottom:7px;left:7px;border-right:none;border-top:none}
+.c4{bottom:7px;right:7px;border-left:none;border-top:none}
+.pbarw{height:4px;border-radius:3px;background:var(--panel3);overflow:hidden;flex:none}
+.pbarf{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+
+/* historial */
+.hgroup{display:flex;flex-direction:column;gap:5px;flex:none}
+.hlbl{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2)}
+.hlbl .hc{margin-left:auto;font-size:7px;color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:1px 4px}
+.hitem{border-left:2px solid var(--ok);background:var(--panel);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+.hitem.am{border-left-color:var(--amber)}
+.hitem .hd{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:7.5px;color:var(--faint)}
+.hitem .hb{margin-left:auto;font-size:6.5px;letter-spacing:.06em;border-radius:4px;padding:1px 5px;border:1px solid #1c5c37;color:var(--ok)}
+.hitem.am .hb{border-color:#5a4310;color:var(--amber)}
+.hitem .ht{font-size:9.5px;color:var(--ink2);line-height:1.35;font-weight:300}
+
+/* arch diagram */
+.arch{display:flex;flex-direction:column;gap:9px;align-items:center;flex:1;justify-content:center}
+.alayer{width:100%;max-width:880px;border:1px solid var(--line2);border-radius:12px;padding:13px 16px;background:var(--panel);display:flex;flex-direction:column;gap:9px}
+.alayer.cli{border-color:#155e57;background:linear-gradient(180deg,rgba(13,148,136,.10),rgba(15,23,42,.7))}
+.alayer.srv{border-color:#4a35a0;background:linear-gradient(180deg,rgba(139,92,246,.10),rgba(15,23,42,.7))}
+.altitle{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.anodes{display:flex;gap:9px}
+.anode{flex:1;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:rgba(9,17,30,.6);display:flex;flex-direction:column;gap:3px}
+.anode .an{font-size:12px;font-weight:600;line-height:1.25}
+.anode .ad{font-size:10px;color:var(--mut);line-height:1.4;font-weight:300}
+.apipe{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--teal2)}
+.apipe .ln{width:1px;height:16px;background:linear-gradient(180deg,var(--teal),transparent)}
+
+
+/* ---------- corte vertical 1080x1920 ---------- */
+#vp{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:#04080f}
+#vstage{width:1080px;height:1920px;position:relative;transform-origin:center center;flex:none;overflow:hidden;
+  background:radial-gradient(circle at 50% 16%,rgba(13,148,136,.20),transparent 55%),
+             radial-gradient(circle at 82% 88%,rgba(139,92,246,.14),transparent 50%),var(--bg)}
+.scene{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:86px 56px 290px}
+.scene.on{display:flex}
+.vbrand{position:absolute;top:34px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px;z-index:4}
+.vbrand .bmark{width:32px;height:32px;font-size:14px;border-radius:9px}
+.vbrand .bn{font-family:var(--mono);font-size:17px;letter-spacing:.26em;color:var(--mut)}
+.kick{font-family:var(--mono);font-size:22px;letter-spacing:.3em;text-transform:uppercase;color:var(--teal2);margin-bottom:16px;text-align:center}
+.vhead{font-size:76px;font-weight:700;line-height:1.06;letter-spacing:-.03em;text-align:center;margin-bottom:10px}
+.scene[data-n="v1"] .vhead,.scene[data-n="v9"] .vhead{font-size:104px;margin:auto 0}
+.pstage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;width:100%;margin-top:-10px}
+.pscale{width:222px;height:430px;transform:scale(2.42);transform-origin:center center}
+.vfoot{margin-top:18px;font-size:33px;line-height:1.36;text-align:center;color:var(--ink2);font-weight:300;
+  border-top:1px solid var(--line2);padding-top:22px;width:100%}
+.vfoot b{color:var(--teal2);font-weight:600}
+.scene[data-n="v9"] .vfoot{border:none;font-size:30px;color:var(--mut)}
+#vcap{position:absolute;left:44px;right:44px;bottom:44px;z-index:6;text-align:center;
+  font-size:40px;line-height:1.34;font-weight:500;color:#fff;
+  background:rgba(4,9,17,.86);border:1px solid var(--line2);border-left:5px solid var(--teal);
+  border-radius:16px;padding:26px 30px;overflow:hidden}
+.scene[data-n="v1"] .vfoot{display:none}
+</style>
+</head>
+<body>
+<div id="vp"><div id="vstage">
+<div class="vbrand"><span class="bmark">MM</span><span class="bn">MARAMED</span></div>
+<section class="scene" data-n="v1"><div class="kick">30 SEGUNDOS</div><h1 class="vhead">Un afiliado.<br>Su celular.<br><span class="grad">Treinta segundos.</span></h1></section>
+<section class="scene" data-n="v2"><div class="kick">ACCESO</div><h1 class="vhead">Lo reconoce<br>por su <span class="grad">rostro</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody ctr" style="gap:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2dd4bf,#0d9488 55%,#062e2b);display:grid;place-items:center;font-size:17px;box-shadow:0 0 22px var(--tealglow)">&#9877;</div>
+          <div style="font-size:19px;font-weight:700;letter-spacing:-.01em">MaraMed</div>
+          <div class="psub">Sistema Clínico con Acceso Biométrico</div>
+          <div style="width:100%;height:96px;border-radius:9px;background:#eef2f7;display:grid;place-items:center;position:relative;overflow:hidden;margin-top:2px">
+            <svg width="120" height="86" viewBox="0 0 120 86" aria-hidden="true">
+              <path d="M60 8c-14 0-24 11-24 26 0 12 6 21 12 25v6c-14 3-26 9-26 17v4h76v-4c0-8-12-14-26-17v-6c6-4 12-13 12-25 0-15-10-26-24-26Z" fill="#1e3a8a"/>
+              <g stroke="#4ade80" stroke-width=".7" fill="none" opacity=".95">
+                <path d="M46 28 60 22 74 28 72 44 60 52 48 44Z"/><path d="M60 22V52M46 28l26 16M74 28 48 44"/><path d="M52 36h16M60 30l-8 14M60 30l8 14"/>
+              </g>
+              <g fill="#fff">
+                <circle cx="46" cy="28" r="1.8"/><circle cx="60" cy="22" r="1.8"/><circle cx="74" cy="28" r="1.8"/>
+                <circle cx="48" cy="44" r="1.8"/><circle cx="60" cy="52" r="1.8"/><circle cx="72" cy="44" r="1.8"/>
+                <circle cx="52" cy="36" r="1.6"/><circle cx="68" cy="36" r="1.6"/><circle cx="60" cy="30" r="1.6"/>
+                <circle cx="60" cy="40" r="1.6"/><circle cx="54" cy="47" r="1.4"/><circle cx="66" cy="47" r="1.4"/>
+              </g>
+            </svg>
+            <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+          </div>
+          <div style="width:100%;text-align:left">
+            <div class="tiny mm" style="letter-spacing:.14em;margin-bottom:4px">CÉDULA DE IDENTIDAD</div>
+            <div style="background:#eef2f7;border-radius:9px;padding:9px 10px;font-family:var(--mono);font-size:12px;color:#334155;display:flex;align-items:center;gap:6px">&#128179;<span style="letter-spacing:.04em">10373911</span></div>
+          </div>
+          <div class="tiny" style="color:var(--teal2)">Verificando identidad&hellip;</div>
+        </div>
+      </div></div></div></div><div class="vfoot">Y ese rostro <b>nunca sale del teléfono</b></div></section>
+<section class="scene" data-n="v3"><div class="kick">TRIAJE</div><h1 class="vhead">Le cuenta<br>qué siente,<br><span class="grad">hablando</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:9px;padding-top:26px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb listen"><span class="oi">&#127908;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid var(--line2);border-radius:5px;padding:1px 5px">Pendiente</span></div>
+            <div class="prow">&#128100; Especialista <span class="pv">Análisis en curso</span></div>
+          </div>
+        </div>
+        <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+      </div></div></div></div></section>
+<section class="scene" data-n="v4"><div class="kick">RESULTADO</div><h1 class="vhead">Sale con urgencia<br>y <span class="grad">especialidad</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:9px;padding-top:26px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb speak"><span class="oi">&#128266;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid #5a4310;background:var(--amberdim);color:var(--amber);border-radius:5px;padding:1px 5px">AMARILLO · III</span></div>
+            <div class="prow">&#128100; Especialista <span class="pv" style="color:var(--teal2)">Neurología</span></div>
+          </div>
+        </div>
+        <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+      </div></div></div></div><div class="vfoot">Protocolo Manchester &middot; <b>Amarillo &middot; Neurología</b></div></section>
+<section class="scene" data-n="v5"><div class="kick">SIGNOS VITALES</div><h1 class="vhead">La misma cámara<br>le <span class="grad">mide el pulso</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div style="display:flex;align-items:center;padding:14px 12px 7px;font-size:9px;color:var(--mut)"><span>&#10005; Cancelar</span><span class="psp"></span><span style="color:var(--amber)">&#9679; Ajusta tu rostro al óvalo</span></div>
+        <div class="pbody" style="gap:8px;padding-top:0">
+          <div class="facebox" style="height:158px">
+            <svg width="126" height="146" viewBox="0 0 120 140" aria-hidden="true">
+              <path d="M60 12c-16 0-27 13-27 30 0 14 7 24 14 29v7c-16 3-30 10-30 20v42h86V98c0-10-14-17-30-20v-7c7-5 14-15 14-29 0-17-11-30-27-30Z" fill="#1e3a8a"/>
+              <g stroke="#4ade80" stroke-width=".8" fill="none">
+                <path d="M43 33 60 25 77 33 74 54 60 64 46 54Z"/><path d="M60 25v39M43 33l31 21M77 33 46 54"/>
+                <path d="M50 43h20M60 35l-10 17M60 35l10 17M52 58h16"/>
+              </g>
+              <g fill="#fff">
+                <circle cx="43" cy="33" r="2"/><circle cx="60" cy="25" r="2"/><circle cx="77" cy="33" r="2"/>
+                <circle cx="46" cy="54" r="2"/><circle cx="60" cy="64" r="2"/><circle cx="74" cy="54" r="2"/>
+                <circle cx="50" cy="43" r="1.8"/><circle cx="70" cy="43" r="1.8"/><circle cx="60" cy="35" r="1.8"/>
+                <circle cx="60" cy="46" r="1.8"/><circle cx="52" cy="58" r="1.6"/><circle cx="68" cy="58" r="1.6"/>
+                <circle cx="55" cy="30" r="1.5"/><circle cx="65" cy="30" r="1.5"/><circle cx="60" cy="55" r="1.5"/>
+              </g>
+            </svg>
+            <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+          </div>
+          <div class="wave">
+            <svg viewBox="0 0 220 34" preserveAspectRatio="none"><polyline points="0,26 12,24 20,10 26,28 34,22 46,23 58,21 70,22 84,20 98,21 112,19 126,20 140,18 156,19 172,18 190,17 210,17 220,17" fill="none" stroke="#2dd4bf" stroke-width="1.2"/></svg>
+            <span class="wl">SEÑAL CHROM rPPG</span>
+          </div>
+          <div style="text-align:center;font-family:var(--mono);font-size:17px;font-weight:700;color:var(--teal2)">&#128147; 45 <span style="font-size:9px;color:var(--mut)">BPM</span></div>
+          <div style="display:flex;font-size:8px;color:var(--mut)"><span>Progreso de escaneo</span><span class="psp"></span><span class="mm" style="color:var(--teal2)">25%</span></div>
+          <div class="pbarw"><div class="pbarf" style="width:25%"></div></div>
+          <div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700">19 <span style="font-size:8px;font-weight:400;color:var(--mut)">s restantes</span></div>
+          <div class="tiny" style="text-align:center;color:var(--teal2)">&#128522; Mantente quieto, evita moverte</div>
+        </div>
+      </div></div></div></div></section>
+<section class="scene" data-n="v6"><div class="kick">CINCO SIGNOS</div><h1 class="vhead">Pulso. Respiración.<br>Oxígeno. <span class="grad">Presión.</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:8px;padding-top:22px">
+          <div style="text-align:center"><div style="width:30px;height:30px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);display:grid;place-items:center;margin:0 auto 5px;font-size:13px">&#10003;</div>
+            <div style="font-size:14px;font-weight:700">Escaneo Completado</div>
+            <div class="tiny">1053 muestras | 45 fps | 25s | Piel: 33%</div></div>
+          <div style="display:flex;gap:7px;justify-content:center"><span class="vtag ok">ALTA CONFIANZA</span><span class="vtag am">MEDIA</span><span class="vtag rd">BAJA</span></div>
+          <div class="wave" style="height:26px"><svg viewBox="0 0 220 26" preserveAspectRatio="none"><polyline points="0,14 30,13 60,14 90,12 120,14 150,13 180,14 220,13" fill="none" stroke="#2dd4bf" stroke-width="1"/></svg><span class="wl">SEÑAL rPPG CAPTURADA</span></div>
+          <div class="vgrid">
+            <div class="vc"><span class="vk">&#128147; Ritmo Cardiaco</span><span class="vv">86<span>bpm</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+            <div class="vc amb"><span class="vk">&#129729; Ritmo Respiratorio</span><span class="vv">10<span>rpm</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag ok">ALTA</span></span></div>
+            <div class="vc"><span class="vk">&#128200; Variabilidad Cardiaca</span><span class="vv">42<span>ms</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+            <div class="vc bl"><span class="vk">&#128167; Oxígeno en Sangre</span><span class="vv">98<span>%</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag rd">BAJA</span></span></div>
+          </div>
+          <div class="vc amb" style="width:100%"><span class="vk">&#9201; Presión Arterial Estimada</span><span class="vv">126<span style="margin:0 3px">/</span>79<span>mmHg</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag rd">BAJA</span></span></div>
+        </div>
+      </div></div></div></div><div class="vfoot">Cada uno con <b>su nivel de confianza</b></div></section>
+<section class="scene" data-n="v7"><div class="kick">IMAGEN</div><h1 class="vhead">Lee la imagen<br>y <span class="grad">redacta el informe</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody" style="gap:8px;padding-top:22px">
+          <div class="rsec v"><span class="rh" style="color:var(--violet2)">&#129504; Hallazgos Principales (AI)</span>
+            <p>&bull; Incisión quirúrgica lineal cerrada mediante suturas simples interrumpidas no reabsorbibles.<br>
+            &bull; Presencia de sustancia translúcida-amarillenta sobre la línea de incisión, compatible con adhesivo tisular, pomada tópica o exudado seroso desecado.<br>
+            &bull; Aposición adecuada de bordes en la mayor parte del trayecto, con ligero eritema perilesional y puntos de tracción.<br>
+            &bull; Presencia de pequeñas costras hemáticas/fibrinosas, con mayor prominencia e irregularidad en el polo inferior.<br>
+            &bull; Sin evidencia concluyente de celulitis circundante extensa o colecciones purulentas francas a la inspección visual.</p></div>
+          <div class="rsec v"><span class="rh" style="color:var(--violet2)">&#129504; Detalle Anatómico (AI)</span>
+            <p>Piel y tejido celular subcutáneo de región cervicotorácica o proximal de extremidad superior.</p></div>
+        </div>
+      </div></div></div></div></section>
+<section class="scene" data-n="v8"><div class="kick">LO QUE CASI NADIE ESCRIBE</div><h1 class="vhead">Y avisa cuándo<br><span class="grad">puede equivocarse</span></h1><div class="pstage"><div class="pscale"><div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody" style="gap:7px;padding-top:18px">
+          <div class="rsec"><span class="rh" style="color:var(--blue)">&#128269; Impresión Diagnóstica (AI)</span>
+            <p>Herida quirúrgica suturada en evolución postoperatoria con cicatrización por primera intención; cambios inflamatorios leves y acumulación de material adhesivo/costroso, sin signos concluyentes de infección mayor pero con necesidad de seguimiento.</p></div>
+          <div class="rsec a"><span class="rh" style="color:var(--amber)">&#9888; Sugerencias Clínicas (AI)</span>
+            <p>&rarr; Inspección clínica presencial y palpación para descartar fluctuación, calor local o infección del sitio quirúrgico superficial.<br>
+            &rarr; Valorar la retirada de material adhesivo residual y retiro de suturas conforme a los tiempos quirúrgicos establecidos para la localización anatómica.<br>
+            &rarr; Instruir al paciente sobre datos de alarma: incremento del eritema, dolor progresivo, calor local, dehiscencia o secreción purulenta.</p></div>
+          <div class="rlim"><div class="rh">&#9888; LIMITACIÓN DEL SISTEMA</div>
+            <p>Informe generado por la combinación de un motor heurístico local (píxeles) + IA actuando como Tercer Opositor. La IA puede generar información incorrecta o alucinaciones (hallazgos que no existen). Este informe NO es un diagnóstico médico válido. Requiere validación obligatoria por un médico radiólogo certificado.</p></div>
+        </div>
+      </div></div></div></div><div class="vfoot">Todo informe lo valida <b>un médico certificado</b></div></section>
+<section class="scene" data-n="v9"><h1 class="vhead"><span class="grad">MaraMed</span></h1><div class="vfoot">ISTC &middot; Ingeniería y Servicios Tecnológicos Colón<br>&times;&nbsp; Digit2AI</div></section>
+<div id="vcap"></div>
+<script>
+var VNARR = {
+  "v1": "Un afiliado. Su celular. Treinta segundos.",
+  "v2": "MaraMed lo reconoce por su rostro. Y ese rostro nunca sale del teléfono.",
+  "v3": "Le cuenta qué siente, hablando. Sin llenar un formulario.",
+  "v4": "Y sale con un nivel de urgencia y una especialidad. Amarillo. Neurología.",
+  "v5": "La misma cámara del celular le mide los signos vitales.",
+  "v6": "Pulso, respiración, oxígeno y presión. Y cada uno dice qué tan seguro está.",
+  "v7": "Si hay una imagen, la lee y redacta el informe.",
+  "v8": "Y avisa cuándo puede equivocarse. Todo informe lo valida un médico.",
+  "v9": "MaraMed. De ISTC, Ingeniería y Servicios Tecnológicos Colón, y Digit2AI."
+};
+</script>
+
+</div></div>
+<script>(function(){var st=document.getElementById("vstage");function fit(){var s=Math.min(innerWidth/1080,innerHeight/1920);st.style.transform="scale("+s+")";}addEventListener("resize",fit);fit();document.querySelectorAll(".scene")[0].classList.add("on");})();</script>
+</body>
+</html>
