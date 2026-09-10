@@ -110,8 +110,12 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
     const bytes = fs.statSync(OUT).size;
     mb = bytes / 1024 / 1024;
     console.log(`  intento ${intento}: ${kb}k -> ${mb.toFixed(2)} MB`);
-    if (bytes <= target) break;
-    kb = Math.floor(kb * (target / bytes) * 0.97);
+    // Quedarse muy por debajo del techo es calidad regalada, y la calidad es lo
+    // que sobrevive a la recompresión de WhatsApp: se apunta a la banda alta.
+    if (bytes <= target && bytes >= target * 0.88) break;
+    const next = Math.floor(kb * (target * 0.95 / bytes));
+    if (next === kb) break;
+    kb = next;
   }
   process.chdir(cwd);
 

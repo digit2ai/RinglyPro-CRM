@@ -100,16 +100,33 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
   const videoKbps = Math.floor((totalKbps - AUDIO_KBPS) * 0.94);   // margen para el contenedor
   console.log(`${keys.length} láminas · ${total.toFixed(1)} s · techo ${CAP_MB} MB -> video ${videoKbps}k + audio ${AUDIO_KBPS}k`);
 
-  const common = ['-framerate', String(FPS), '-i', path.join(seq, '%05d.png'), '-vf', 'scale=1280:720:flags=lanczos',
-                  '-c:v', 'libx264', '-preset', 'veryslow', '-b:v', `${videoKbps}k`, '-g', '120', '-pix_fmt', 'yuv420p'];
+  // Un techo de tamaño no se pide, se comprueba: con pocas imágenes distintas el
+  // control de tasa de x264 tiene muy poco que repartir y se pasa. Se codifica,
+  // se mide y se corrige hasta que entra.
+  const vin = ['-framerate', String(FPS), '-i', path.join(seq, '%05d.png'), '-vf', 'scale=1280:720:flags=lanczos'];
   const cwd = process.cwd();
   process.chdir(work);   // los ficheros de estadísticas de las dos pasadas caen aquí
-  ff('ffmpeg', ['-v', 'error', '-y', ...common, '-pass', '1', '-an', '-f', 'mp4', '/dev/null']);
-  ff('ffmpeg', ['-v', 'error', '-y', ...common.slice(0, 4), '-i', voz, ...common.slice(4), '-pass', '2',
-                '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '32000', '-movflags', '+faststart', OUT]);
+  const target = CAP_MB * 1024 * 1024;
+  let kb = videoKbps, mb = 0;
+  for (let intento = 1; intento <= 4; intento++) {
+    const venc = ['-c:v', 'libx264', '-preset', 'veryslow', '-b:v', `${kb}k`,
+                  '-maxrate', `${Math.round(kb * 1.4)}k`, '-bufsize', `${Math.round(kb * 2)}k`,
+                  '-g', '120', '-pix_fmt', 'yuv420p'];
+    ff('ffmpeg', ['-v', 'error', '-y', ...vin, ...venc, '-pass', '1', '-an', '-f', 'mp4', '/dev/null']);
+    ff('ffmpeg', ['-v', 'error', '-y', ...vin.slice(0, 4), '-i', voz, ...vin.slice(4), ...venc, '-pass', '2',
+                  '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '32000', '-movflags', '+faststart', OUT]);
+    const bytes = fs.statSync(OUT).size;
+    mb = bytes / 1024 / 1024;
+    console.log(`  intento ${intento}: ${kb}k -> ${mb.toFixed(2)} MB`);
+    // Quedarse muy por debajo del techo es calidad regalada, y la calidad es lo
+    // que sobrevive a la recompresión de WhatsApp: se apunta a la banda alta.
+    if (bytes <= target && bytes >= target * 0.88) break;
+    const next = Math.floor(kb * (target * 0.95 / bytes));
+    if (next === kb) break;
+    kb = next;
+  }
   process.chdir(cwd);
 
-  const mb = fs.statSync(OUT).size / 1024 / 1024;
   const vd = dur(OUT);
   console.log(`${OUT}\n${mb.toFixed(2)} MB · ${Math.floor(vd / 60)}:${String(Math.round(vd % 60)).padStart(2, '0')} · 1280x720 · ${FPS} fps`);
   fs.rmSync(work, { recursive: true, force: true });
