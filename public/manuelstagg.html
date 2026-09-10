@@ -368,8 +368,29 @@ footer{border-top:1px solid var(--line);padding:34px 0;margin-top:20px}
   h1 .g,.stat .n,.hl .n{background:none!important;-webkit-text-fill-color:#12203a!important;color:#12203a!important}
   a{color:#0a66c2!important}
   section.blk{padding:12px 0}
-  .mcard,.stat,.hl,.tl,.recruit,.skcol,.sec-head{break-inside:avoid}
+  /* These stay whole on a page. Experience entries (.tl) are deliberately NOT
+     here — a long role must be allowed to flow across a page break, otherwise it
+     jumps to a fresh page and leaves a half-empty page behind it. */
+  .mcard,.stat,.hl,.recruit,.skcol,.sec-head{break-inside:avoid}
   .photo-wrap::before{display:none}
+
+  /* ---- professional print polish (screen is untouched) ---- */
+  /* Consistent margins + top breathing room on every continuation page. */
+  @page{margin:0.6in 0.55in}
+  .wrap{padding-left:0;padding-right:0;max-width:none}
+  /* A heading never sits alone at the foot of a page. */
+  .sec-head,.tl h3,.tl .grp,.skcol h4,.mcard-h{break-after:avoid}
+  /* Let roles flow, but never split a single bullet or the role header block. */
+  .tl{break-inside:auto;margin-bottom:20px}
+  .tl li,.tl .metrics{break-inside:avoid}
+  .tl .when,.tl h3,.tl .org,.tl .scope{break-after:avoid}
+  /* The glowing web timeline rail + dots → a clean, flat print line. */
+  .timeline::before{background:#cfd3da!important}
+  .tl::before{box-shadow:none!important;background:#fff!important;border-color:#9aa3b4!important}
+  /* Drop footer web-nav (LinkedIn / Email / Admin) from a printed résumé;
+     the © line and the contact chips up top are what a printed copy needs. */
+  .foot .links{display:none!important}
+  footer{padding:16px 0;margin-top:10px}
 }
 </style>
 <script>/* set theme before paint to avoid flash */
