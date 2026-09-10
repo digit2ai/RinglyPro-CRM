@@ -160,6 +160,93 @@ section('3. Low confidence goes to Needs Review, with the guess preserved');
 }
 
 // ---------------------------------------------------------------------------
+section('3b. The briefing — an order of work, not a sorted list');
+// ---------------------------------------------------------------------------
+{
+  const now = Date.now();
+  const rows = [
+    { id: 'outage',   status: 'critical',           priority: 'critical', action_required: true,  sender_importance: 'critical_partner', received_at: new Date(now - 2 * 864e5).toISOString() },
+    { id: 'late',     status: 'needs_action_week',  priority: 'high',     action_required: true,  deadline: new Date(now - 864e5).toISOString(), sender_importance: 'client', received_at: new Date(now - 5 * 864e5).toISOString() },
+    { id: 'today',    status: 'needs_action_today', priority: 'high',     action_required: true,  sender_importance: 'vendor',  received_at: new Date(now - 864e5).toISOString() },
+    { id: 'askedyou', status: 'needs_action_week',  priority: 'medium',   reply_required: true,   sender_importance: 'client',  received_at: new Date(now - 3600e3).toISOString() },
+    { id: 'week',     status: 'needs_action_week',  priority: 'medium',   action_required: true,  sender_importance: 'unknown', received_at: new Date(now - 7200e3).toISOString() },
+    { id: 'unsure',   status: 'needs_review',       priority: 'high',     action_required: true,  sender_importance: 'unknown', received_at: new Date(now - 4 * 864e5).toISOString() },
+    { id: 'nothing',  status: 'info_only',          priority: 'low',      sender_importance: 'bulk_sender', received_at: new Date(now).toISOString() }
+  ];
+  const groups = E.groupForBriefing(rows);
+  const at = (k) => groups.find(g => g.key === k);
+  const ids = (k) => (at(k) ? at(k).items.map(i => i.id) : []);
+
+  // The order of the headings IS the order of work. Empty groups are dropped
+  // (here 'dated' is empty — its only candidate was already late, so it is in
+  // "Do these first"), so the check is that what IS returned never reorders.
+  const CANON = E.FOCUS_GROUPS.map(g => g.key);
+  eq('the canonical briefing order is the one the product promises',
+    CANON.join(','), 'now,today,reply,week,dated,unsure,rest');
+  const got = groups.map(g => g.key);
+  ok('the returned groups follow that order exactly, with gaps for empties',
+    got.every((k, i) => i === 0 || CANON.indexOf(k) > CANON.indexOf(got[i - 1])), got.join(','));
+  ok('an already-late email is pulled OUT of its status group into "Do these first"',
+    !got.includes('dated') || !ids('dated').includes('late'), ids('dated').join(','));
+
+  ok('an outage is in "Do these first"', ids('now').includes('outage'));
+  ok('so is anything already past its stated deadline', ids('now').includes('late'));
+  ok('today\'s work is its own group', ids('today').includes('today'));
+  ok('a person who asked you something is called out separately', ids('reply').includes('askedyou'));
+  ok('ordinary week work stays in "This week"', ids('week').includes('week'));
+  ok('what the AI could not judge is last, not hidden', ids('unsure').includes('unsure'));
+  ok('and things asking nothing of you fall to the bottom', ids('rest').includes('nothing'));
+
+  // The property that makes a briefing trustworthy.
+  const seen = groups.flatMap(g => g.items.map(i => i.id));
+  eq('every email appears exactly once across all groups', seen.length, rows.length);
+  eq('and none appears twice', new Set(seen).size, seen.length);
+  ok('an empty group is dropped rather than drawn as a blank heading',
+    groups.every(g => g.items.length > 0));
+
+  // A reply_required email that is ALSO due today belongs to today — first
+  // match wins, and "today" is the more urgent framing.
+  const both = E.groupForBriefing([{ id: 'x', status: 'needs_action_today', priority: 'high', reply_required: true }]);
+  eq('due-today outranks waiting-on-your-reply', both[0].key, 'today');
+
+  // Ordering inside a group is by business need, not by arrival.
+  const inNow = E.groupForBriefing([
+    { id: 'old-critical', status: 'critical', priority: 'critical', sender_importance: 'critical_partner', received_at: new Date(now - 9 * 864e5).toISOString() },
+    { id: 'new-high',     status: 'critical', priority: 'high',     sender_importance: 'unknown',          received_at: new Date(now).toISOString() }
+  ])[0].items.map(i => i.id);
+  eq('a week-old critical outranks a brand-new high', inNow[0], 'old-critical');
+
+  const tie = E.groupForBriefing([
+    { id: 'stranger', status: 'needs_action_today', priority: 'high', sender_importance: 'unknown',          received_at: new Date(now).toISOString() },
+    { id: 'partner',  status: 'needs_action_today', priority: 'high', sender_importance: 'critical_partner', received_at: new Date(now - 864e5).toISOString() }
+  ])[0].items.map(i => i.id);
+  eq('on a tie, who it is from breaks it before recency does', tie[0], 'partner');
+
+  const dated = E.groupForBriefing([
+    { id: 'later',  status: 'needs_action_today', priority: 'high', deadline: new Date(now + 5 * 864e5).toISOString() },
+    { id: 'sooner', status: 'needs_action_today', priority: 'high', deadline: new Date(now + 864e5).toISOString() }
+  ])[0].items.map(i => i.id);
+  eq('the nearer deadline comes first', dated[0], 'sooner');
+
+  // The opening sentence is built FROM the groups, so it cannot contradict them.
+  const line = E.briefingLine(groups);
+  ok('the briefing names the owner', line.includes(E.OWNER_NAME), line);
+  ok('it leads with what must be done now', /1 to do now/.test(line) || /2 to do now/.test(line), line);
+  ok('it counts the reply group', /waiting on your reply/.test(line), line);
+  ok('it never mentions the catch-all group', !/need nothing/.test(line), line);
+  for (const g of groups) {
+    if (g.key === 'rest') continue;
+    ok(`the sentence and the "${g.title}" heading agree on the count`,
+      line.includes(String(g.items.length)), line);
+  }
+  eq('an empty inbox says so plainly rather than printing an empty list',
+    E.briefingLine([]), `${E.OWNER_NAME} — nothing in your inbox needs you right now.`);
+
+  ok('the owner name is overridable, not hardcoded into the sentence',
+    /EMAIL_AI_OWNER_NAME/.test(fs.readFileSync(SERVICE, 'utf8')));
+}
+
+// ---------------------------------------------------------------------------
 section('4. Consistency the UI depends on');
 // ---------------------------------------------------------------------------
 {
@@ -468,7 +555,10 @@ section('13. The page — driven in jsdom, not just grepped');
     ['Mark No Action', "aiQuick('status','no_action')"],
     ['Correct AI Classification', 'aiCorrect'],
     ['background job polling', 'function pollJob'],
-    ['job resume after reload', 'resumeActiveJob']
+    ['job resume after reload', 'resumeActiveJob'],
+    ['the briefing sentence', 'class="gline"'],
+    ['numbered group headings', 'class="gnum"'],
+    ['a reason under each heading', 'class="gblurb"']
   ]) ok(`the page carries ${what}`, html.includes(needle));
 
   ok('the page never hardcodes the status list — it reads the taxonomy',
@@ -564,6 +654,9 @@ section('14. Neural Findings + the Home surface');
   ok('it is fetched from the brief endpoint', /email-ai\/brief/.test(a));
   ok('the brief is hidden until something has been triaged', /if \(!b\.total_classified\) \{ panel\.style\.display = 'none'/.test(a));
   ok('the keyless state is surfaced on Home too', /keyword fallback/.test(a));
+  ok('Home renders the same groups, not its own list', /b\.groups \|\| \[\]/.test(a));
+  ok('Home drops the catch-all group', /g\.key !== 'rest'/.test(a));
+  ok('Home leads with the briefing sentence', /b\.briefing/.test(a));
   ok('Lina narrates what the inbox needs', /la triaje encontr/.test(a));
   ok('and says so plainly when it needs nothing', /no encontró nada que necesite acción tuya/.test(a));
 }

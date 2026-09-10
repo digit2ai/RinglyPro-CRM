@@ -114,6 +114,129 @@ const MODEL = process.env.EMAIL_AI_MODEL || 'claude-opus-5';
 const MAX_BODY_CHARS = parseInt(process.env.EMAIL_AI_MAX_BODY_CHARS || '6000', 10);
 const BATCH_CONCURRENCY = Math.max(1, parseInt(process.env.EMAIL_AI_CONCURRENCY || '3', 10));
 
+// ===========================================================================
+// THE BRIEFING — how a good assistant hands you your inbox
+//
+// A list sorted by priority is still a list you have to scan. What an
+// assistant actually does is SPLIT it: "these two you must do now, these
+// three today, these people are waiting on you." So Focus is grouped, in a
+// fixed order, and each group says why it exists.
+//
+// A message belongs to exactly ONE group — first match wins. Showing the same
+// email under two headings is how a briefing stops being trusted.
+// ===========================================================================
+
+// Who the sender is, when priority and deadline have already tied. A named
+// partner outranks a stranger; a bulk sender loses to everyone.
+const SENDER_RANK = {
+  critical_partner: 0, client: 1, strategic_contact: 2,
+  vendor: 3, internal: 4, unknown: 5, bulk_sender: 6
+};
+
+/**
+ * Order inside a group, by business need rather than arrival time:
+ * priority, then already-late before soon before undated, then who it is
+ * from, and only then recency.
+ */
+function businessSort(a, b) {
+  const pr = (x) => (PRIORITY_RANK[x.priority] != null ? PRIORITY_RANK[x.priority] : 4);
+  if (pr(a) !== pr(b)) return pr(a) - pr(b);
+
+  const da = a.deadline ? new Date(a.deadline).getTime() : null;
+  const db = b.deadline ? new Date(b.deadline).getTime() : null;
+  if (da !== null && db !== null && da !== db) return da - db;   // soonest first
+  if (da !== null && db === null) return -1;                     // dated beats undated
+  if (da === null && db !== null) return 1;
+
+  const sr = (x) => (SENDER_RANK[x.sender_importance] != null ? SENDER_RANK[x.sender_importance] : 5);
+  if (sr(a) !== sr(b)) return sr(a) - sr(b);
+
+  return new Date(b.received_at || 0) - new Date(a.received_at || 0);
+}
+
+const FOCUS_GROUPS = [
+  {
+    key: 'now',
+    title: 'Do these first',
+    blurb: 'Something is broken, blocked, or already past its date. Nothing else moves until these do.',
+    phrase: (n) => `${n} to do now`,
+    match: (r) => r.status === 'critical' ||
+      (r.action_required && r.deadline && new Date(r.deadline) < new Date())
+  },
+  {
+    key: 'today',
+    title: 'Today',
+    blurb: 'These cost you something if they slip past today.',
+    phrase: (n) => `${n} today`,
+    match: (r) => r.status === 'needs_action_today'
+  },
+  {
+    key: 'reply',
+    title: 'People waiting on you',
+    blurb: 'A person asked you something directly and has not heard back.',
+    phrase: (n) => `${n} waiting on your reply`,
+    match: (r) => r.reply_required
+  },
+  {
+    key: 'week',
+    title: 'This week',
+    blurb: 'Real work, but it does not have to be today.',
+    phrase: (n) => `${n} this week`,
+    match: (r) => r.status === 'needs_action_week'
+  },
+  {
+    key: 'dated',
+    title: 'Has a date on it',
+    blurb: 'A time or deadline the sender actually stated. Confirm it or it slips.',
+    phrase: (n) => `${n} with a date`,
+    match: (r) => r.status === 'meeting' || !!r.deadline
+  },
+  {
+    key: 'unsure',
+    title: 'I could not judge these',
+    blurb: 'Low confidence, or the message tried to steer the classifier. Your call, not mine.',
+    phrase: (n) => `${n} I could not judge`,
+    match: (r) => r.status === 'needs_review'
+  },
+  {
+    key: 'rest',
+    title: 'Everything else here',
+    blurb: 'Nothing is being asked of you in these.',
+    phrase: (n) => `${n} that need nothing`,
+    match: () => true
+  }
+];
+
+/** Partition rows into the ordered groups. Empty groups are dropped. */
+function groupForBriefing(rows) {
+  const buckets = FOCUS_GROUPS.map(g => ({ key: g.key, title: g.title, blurb: g.blurb, items: [] }));
+  for (const r of rows || []) {
+    const i = FOCUS_GROUPS.findIndex(g => g.match(r));
+    buckets[i === -1 ? buckets.length - 1 : i].items.push(r);
+  }
+  buckets.forEach(b => b.items.sort(businessSort));
+  return buckets.filter(b => b.items.length);
+}
+
+const OWNER_NAME = process.env.EMAIL_AI_OWNER_NAME || 'Mr Stagg';
+
+/**
+ * The one line an assistant opens with. Built from the groups themselves, so
+ * the sentence and the headings below it can never disagree.
+ */
+function briefingLine(groups) {
+  const parts = [];
+  for (const g of groups || []) {
+    if (g.key === 'rest') continue;
+    const def = FOCUS_GROUPS.find(x => x.key === g.key);
+    if (def) parts.push(def.phrase(g.items.length));
+  }
+  if (!parts.length) return `${OWNER_NAME} — nothing in your inbox needs you right now.`;
+  const list = parts.length === 1 ? parts[0]
+    : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1];
+  return `${OWNER_NAME} — in order: ${list}.`;
+}
+
 function taxonomy() {
   return {
     statuses: STATUSES,
@@ -1202,7 +1325,20 @@ async function listInbox(clientId, { tab = 'focus', project = null, limit = 100,
   });
 
   const counts = await tabCounts(clientId, project);
-  return { items, counts, accounts: live.accounts || [], total_unread: live.total_unread || 0, taxonomy: taxonomy() };
+
+  // Focus and All Email mix several statuses, so they are the views a briefing
+  // helps. A single-concept tab (Billing, Meetings) is already one group and
+  // gains nothing from a heading over every card.
+  const grouped = (tab === 'focus' || tab === 'all');
+  const groups = grouped ? groupForBriefing(items) : null;
+
+  return {
+    items, counts, groups,
+    briefing: groups ? briefingLine(groups) : null,
+    accounts: live.accounts || [],
+    total_unread: live.total_unread || 0,
+    taxonomy: taxonomy()
+  };
 }
 
 async function tabCounts(clientId, project = null) {
@@ -1570,6 +1706,17 @@ async function dailyBrief(clientId) {
     model_configured: hasApiKey()
   };
 
+  // The briefing, from the SAME partition the Focus tab renders. Home, the voice
+  // line and the inbox headings are three views of one grouping — they cannot
+  // drift into disagreeing about what comes first.
+  const focusRows = rows.filter(r =>
+    ['critical', 'needs_action_today', 'needs_action_week', 'needs_review'].includes(r.status));
+  out.groups = groupForBriefing(focusRows).map(g => ({
+    key: g.key, title: g.title, blurb: g.blurb, count: g.items.length, items: g.items.map(brief)
+  }));
+  out.briefing = briefingLine(out.groups.map(g => ({ key: g.key, items: { length: g.count } })));
+  out.owner_name = OWNER_NAME;
+
   // A one-paragraph spoken form for the Lina orb. Deterministic — the brief is
   // counted, never narrated by a model that could round a number.
   const n = (a) => a.length;
@@ -1617,6 +1764,8 @@ module.exports = {
   htmlToText, stripQuotedHistory, stripSignature, prepareBody, contentHash, threadKey,
   scanInjection, fence, normalize, heuristicClassify, detectProject, applyRules, extractJson,
   domainOf, hasApiKey, parseDeadline,
+  // briefing
+  FOCUS_GROUPS, SENDER_RANK, businessSort, groupForBriefing, briefingLine, OWNER_NAME,
   // schema
   ensureTables,
   // rules

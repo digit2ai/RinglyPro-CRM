@@ -235,20 +235,27 @@ async function loadEmailBrief() {
     panel.style.display = '';
     const line = document.getElementById('email-brief-line');
     if (line) {
-      line.innerHTML = escapeHtml(b.narrative || '') +
+      line.innerHTML = `<strong style="color:var(--text-primary)">${escapeHtml(b.briefing || '')}</strong><br>` +
+        escapeHtml(b.narrative || '') +
         (b.model_configured ? '' : ' <span style="color:#fbbf24">(keyword fallback — no model key configured)</span>');
     }
     const body = document.getElementById('email-brief-body');
     if (body) {
-      const html = [
-        briefSectionHtml('Critical problems', b.critical, 5),
-        briefSectionHtml('Past their deadline', b.overdue, 5),
-        briefSectionHtml('Do today', b.today, 4),
-        briefSectionHtml('Replies you owe', b.replies_needed, 3),
-        briefSectionHtml('Meetings and deadlines', b.meetings, 3),
-        briefSectionHtml('Waiting on someone else', b.waiting, 3),
-        briefSectionHtml('The AI was not sure', b.needs_review, 3)
-      ].filter(Boolean).join('');
+      // The SAME groups, in the SAME order, as the Email tab. The server does the
+      // partitioning once; Home and the inbox are two renderings of it, so they
+      // can never disagree about what comes first.
+      const groups = (b.groups || []).filter(g => g.key !== 'rest');
+      const html = groups.map((g, i) =>
+        `<div style="margin-bottom:16px">
+           <div style="display:flex;align-items:baseline;gap:9px;margin:0 0 3px 12px">
+             <span style="display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;font-size:11px;font-weight:700;background:${g.key === 'now' ? '#ef4444' : (g.key === 'today' ? '#f59e0b' : 'rgba(148,163,184,.18)')};color:${g.key === 'now' ? '#fff' : (g.key === 'today' ? '#1f1300' : 'var(--text-muted)')}">${i + 1}</span>
+             <strong style="font-size:14px;${g.key === 'now' ? 'color:#fca5a5' : ''}">${escapeHtml(g.title)}</strong>
+             <span style="font-size:12px;color:var(--text-muted)">${g.count} email${g.count === 1 ? '' : 's'}</span>
+           </div>
+           <div style="font-size:12.5px;color:var(--text-muted);margin:0 0 7px 42px">${escapeHtml(g.blurb)}</div>
+           ${g.items.slice(0, 4).map(briefItemHtml).join('')}
+           ${g.count > 4 ? `<div style="font-size:12.5px;color:var(--text-muted);padding:4px 12px">+ ${g.count - 4} more in the Email tab</div>` : ''}
+         </div>`).join('');
       body.innerHTML = html || '<p style="color:var(--text-muted);font-size:13px;padding:8px 12px">Nothing needs you from email right now.</p>';
     }
   } catch (e) { /* the Home page never breaks over the brief */ }
