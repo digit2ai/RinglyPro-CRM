@@ -277,143 +277,284 @@
   el('mark').innerHTML=MARK; el('markBar').innerHTML=MARK;
   var ICON={check:svgl('<path d="M20 6 9 17l-5-5"/>')};
 
+  // ---- SCREEN COPY, IN BOTH LANGUAGES ----
+  //
+  // The narration was already bilingual, but every mock screen was hardcoded
+  // English — so the Spanish walkthrough narrated in Spanish over an English
+  // product. A Spanish-speaking prospect reads the screenshot, not the script.
+  //
+  // WHAT IS DELIBERATELY *NOT* TRANSLATED: the real job titles and companies
+  // (Gusto, Citigroup, Truist), the subscriber's own name and résumé headline,
+  // the web address, and the role-target tags. Those tags are the exact title
+  // strings a sourcer types into a search box — translating them would make the
+  // screen a lie about how being found actually works. US postings are written
+  // in English, and showing them in English is what the product really does.
+  var UI={
+    en:{
+      tabs:['Analytics','Job Matches','Opportunities','Pipeline','Getting found','My CV','Settings','Account'],
+      viewCV:'View public CV', signOut:'Sign out', signIn:'Sign in',
+      nav:['How it works','What you get','Agents','Pricing'],
+      eyebrow:'Career Intelligence',
+      h1a:'Stop Looking for Jobs.', h1b:'Let AI Find Them.',
+      lndP:'Talk to the Orb or upload your resume. In minutes, {{BRAND}} builds your career ecosystem — a personal website, a custom web address, an AI-readable profile, and real-time job matches.',
+      ctaResume:'Attach my resume', ctaSearch:'Job search in your area',
+      bTitle:'Show me my ecosystem',
+      bSub:'Attach your resume and we build a live preview — your site, your web address, and the real jobs that match you right now.',
+      fName:'Full name', fEmail:'Email',
+      fileHint:'1937 KB — click to choose a different file',
+      bGo:'Build my preview',
+      bNote:'Free. No card. We show you real openings or none at all — never invented ones.',
+      pStep:'Understanding your experience…', pEta:'ESTIMATED TIME REMAINING',
+      pOf:'Step 2 of 6', 
+      ecoT:'Your career ecosystem',
+      ecoS:'Everything below was built from your resume. Create your account from here, the middle, or the end.',
+      ecoBtn:'Build my ecosystem', ecoScreen:'SCREEN 1 OF 8',
+      ecoSite:'Your personal site',
+      ecoReal:'This is the real page, rendered from your resume — not a mock-up.',
+      skills:'130 skills', roles:'3 roles',
+      planT:'Choose your plan',
+      planL:'Change, downgrade or pause anytime. Your CV site always stays live.',
+      mo:'/mo', popular:'POPULAR',
+      freeD:'The growth surface', searchD:'For someone actively looking', landedD:'For senior and urgent searches',
+      freeL:['Public CV site','5 matches a week','Eva chat (read-only)'],
+      searchL:['Unlimited matches','40 scorings a day','10 tailored resumes a month','Outreach and pipeline'],
+      landedL:['Unlimited tailoring','Priority scoring','Interview prep','One human review a month'],
+      choose:'Choose ',
+      builtT:'Your account is built, Manny',
+      builtS:'Everything below is live. Bookmark your address and sign in whenever you like.',
+      builtAddr:'YOUR WEB ADDRESS', builtLive:'Your page is live',
+      builtRows:['Account activated','Web address reserved — mannystagg.{{BRAND_DOMAIN}}','Your site published','Your agents switched on'],
+      cvJson:'Résumé JSON', cvManage:'Manage',
+      cvBio:'Senior subject-matter expert joining 25 years in banking — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.',
+      cvTags:['Wesley Chapel, Florida','Résumé (JSON)','Share · QR · Save contact'],
+      cvVoice:'Manuel\'s AI Voice · EN · Ava', cvVoiceS:'A voice walkthrough of this profile.',
+      agT:'Your agents', agL:'Run them now. They find and check — they never act for you.',
+      agFind:'Search for jobs now', agCheck:'Check my presence',
+      kpis:['Profile views (30d)','Unique visitors (30d)','Views (all time)','AI agent reads (30d)'],
+      fSearch:'Search title or company', fLoc:'Location', fScore:'Min score', fStage:'Any stage ▾', fClear:'Clear',
+      missing:'missing: ', newChip:'new', openPost:'Open posting', tailor:'Tailor my resume · $10', remove:'Remove',
+      ex1:'Exceptional fit: current role as Full-Stack AI Solutions Architect directly matches the MCP design, multi-agent orchestration and enterprise integration focus; 25 years banking/compliance aligns with SOX, auditability and regulated workflows.',
+      miss1:'San Francisco Bay Area or willingness to relocate',
+      ex2:'Exceptional alignment: exceeds the 6-year requirement with 25+ years banking tech; mastery of Node.js, Python, PostgreSQL, React, Claude, LLMOps and RAG, with a current role at Citi-adjacent scale; location match Wesley Chapel to Jacksonville.',
+      miss2:'Java/Spring Boot hands-on experience',
+      pipeL:'8 roles tracked. Your agent only ever adds to <b style="color:var(--txt)">new</b> — every move after that is yours.',
+      cols:['New (8)','Saved (0)','Applied (0)','Screening (0)'],
+      stT:'Which state',
+      stL:'Set from your résumé. Remote roles are never filtered out by this — a posting that says "Remote — US" reaches you whatever you pick.',
+      roT:'Roles you are targeting',
+      roL:'The exact title strings a sourcer searches. A title match counts double in the pre-filter, and each one becomes an indexable page on your site.',
+      mapLoc:'Use my location', mapGo:'Search', mapHead:'50 openings · 50 on the map', apply:'Apply →', yr:'/yr',
+      evaT:'Chat with Eva', evaN:'Eva reads your account, so the answer is about you.',
+      evaB:'Hi, I am Eva. Ask me anything about {{BRAND}} — I read your account, so the answer is about you rather than a manual.',
+      evaS:['How can I increase my visibility?','Why am I not getting matches?','What does tailoring do?'],
+      evaSend:'Send',
+      evaF:'Eva explains and points you at the right screen. She never changes a setting and never sends anything.'
+    },
+    es:{
+      tabs:['Analítica','Coincidencias','Oportunidades','Proceso','Que te encuentren','Mi CV','Ajustes','Cuenta'],
+      viewCV:'Ver CV público', signOut:'Cerrar sesión', signIn:'Iniciar sesión',
+      nav:['Cómo funciona','Qué obtienes','Agentes','Planes'],
+      eyebrow:'Inteligencia profesional',
+      h1a:'Deja de buscar empleo.', h1b:'Deja que la IA lo encuentre.',
+      lndP:'Habla con el Orbe o sube tu currículum. En minutos, {{BRAND}} construye tu ecosistema profesional: un sitio personal, una dirección web propia, un perfil legible por IA y coincidencias de empleo en tiempo real.',
+      ctaResume:'Adjuntar mi currículum', ctaSearch:'Busca empleo en tu zona',
+      bTitle:'Muéstrame mi ecosistema',
+      bSub:'Adjunta tu currículum y construimos una vista previa en vivo: tu sitio, tu dirección web y los empleos reales que encajan contigo ahora mismo.',
+      fName:'Nombre completo', fEmail:'Correo',
+      fileHint:'1937 KB — haz clic para elegir otro archivo',
+      bGo:'Construir mi vista previa',
+      bNote:'Gratis. Sin tarjeta. Te mostramos vacantes reales o ninguna, nunca inventadas.',
+      pStep:'Entendiendo tu experiencia…', pEta:'TIEMPO ESTIMADO RESTANTE',
+      pOf:'Paso 2 de 6',
+      ecoT:'Tu ecosistema profesional',
+      ecoS:'Todo lo de abajo se construyó desde tu currículum. Crea tu cuenta desde aquí, desde el medio o desde el final.',
+      ecoBtn:'Construir mi ecosistema', ecoScreen:'PANTALLA 1 DE 8',
+      ecoSite:'Tu sitio personal',
+      ecoReal:'Esta es la página real, generada desde tu currículum, no una maqueta.',
+      skills:'130 habilidades', roles:'3 roles',
+      planT:'Elige tu plan',
+      planL:'Cambia, baja de plan o pausa cuando quieras. Tu sitio de CV siempre queda activo.',
+      mo:'/mes', popular:'POPULAR',
+      freeD:'La superficie de crecimiento', searchD:'Para quien busca activamente', landedD:'Para búsquedas senior y urgentes',
+      freeL:['Sitio de CV público','5 coincidencias por semana','Chat con Eva (solo lectura)'],
+      searchL:['Coincidencias ilimitadas','40 puntuaciones al día','10 currículums adaptados al mes','Contacto y proceso'],
+      landedL:['Adaptación ilimitada','Puntuación prioritaria','Preparación de entrevistas','Una revisión humana al mes'],
+      choose:'Elegir ',
+      builtT:'Tu cuenta está lista, Manny',
+      builtS:'Todo lo de abajo está activo. Guarda tu dirección e inicia sesión cuando quieras.',
+      builtAddr:'TU DIRECCIÓN WEB', builtLive:'Tu página está activa',
+      builtRows:['Cuenta activada','Dirección web reservada — mannystagg.{{BRAND_DOMAIN}}','Tu sitio publicado','Tus agentes activados'],
+      cvJson:'Currículum JSON', cvManage:'Gestionar',
+      cvBio:'Experto senior que une 25 años en banca — cumplimiento, riesgo, KYC/AML y sanciones — con el diseño y la entrega de sistemas de IA en producción construidos sobre el Model Context Protocol.',
+      cvTags:['Wesley Chapel, Florida','Currículum (JSON)','Compartir · QR · Guardar contacto'],
+      cvVoice:'Voz IA de Manuel · ES · Dalia', cvVoiceS:'Un recorrido de voz por este perfil.',
+      agT:'Tus agentes', agL:'Ejecútalos ahora. Encuentran y verifican; nunca actúan por ti.',
+      agFind:'Buscar empleos ahora', agCheck:'Revisar mi presencia',
+      kpis:['Vistas de perfil (30d)','Visitantes únicos (30d)','Vistas (histórico)','Lecturas de agentes IA (30d)'],
+      fSearch:'Buscar título o empresa', fLoc:'Ubicación', fScore:'Puntaje mín.', fStage:'Cualquier etapa ▾', fClear:'Limpiar',
+      missing:'falta: ', newChip:'nuevo', openPost:'Ver vacante', tailor:'Adaptar mi currículum · $10', remove:'Quitar',
+      ex1:'Encaje excepcional: el puesto actual como Full-Stack AI Solutions Architect coincide directamente con el diseño MCP, la orquestación multiagente y el enfoque de integración empresarial; 25 años de banca y cumplimiento se alinean con SOX, auditabilidad y flujos regulados.',
+      miss1:'Área de la Bahía de San Francisco o disposición a mudarse',
+      ex2:'Alineación excepcional: supera el requisito de 6 años con más de 25 en tecnología bancaria; dominio de Node.js, Python, PostgreSQL, React, Claude, LLMOps y RAG, con un puesto actual a escala equivalente a Citi; ubicación compatible de Wesley Chapel a Jacksonville.',
+      miss2:'Experiencia práctica en Java/Spring Boot',
+      pipeL:'8 puestos en seguimiento. Tu agente solo agrega a <b style="color:var(--txt)">nuevo</b>; cada movimiento después es tuyo.',
+      cols:['Nuevo (8)','Guardado (0)','Postulado (0)','Entrevista inicial (0)'],
+      stT:'Qué estado',
+      stL:'Se toma de tu currículum. Los empleos remotos nunca se filtran por esto: una vacante que dice "Remoto — EE. UU." te llega elijas lo que elijas.',
+      roT:'Puestos que buscas',
+      roL:'Los títulos exactos que busca un reclutador. Un título que coincide cuenta doble en el prefiltro, y cada uno se convierte en una página indexable de tu sitio.',
+      mapLoc:'Usar mi ubicación', mapGo:'Buscar', mapHead:'50 vacantes · 50 en el mapa', apply:'Postular →', yr:'/año',
+      evaT:'Chat con Eva', evaN:'Eva lee tu cuenta, así que la respuesta es sobre ti.',
+      evaB:'Hola, soy Eva. Pregúntame lo que quieras sobre {{BRAND}}: leo tu cuenta, así que la respuesta es sobre ti, no un manual.',
+      evaS:['¿Cómo puedo aumentar mi visibilidad?','¿Por qué no recibo coincidencias?','¿Qué hace la adaptación?'],
+      evaSend:'Enviar',
+      evaF:'Eva explica y te lleva a la pantalla correcta. Nunca cambia un ajuste y nunca envía nada.'
+    }
+  };
+  // Falls back to English for a key a translation forgot, so a missing string
+  // is an English word on a Spanish screen and never the literal key.
+  function U(k){ var v=UI[LANG]&&UI[LANG][k]; return v===undefined?UI.en[k]:v; }
+
   // ---- reusable app frame ----
   function appFrame(active, tabsLabels, body){
-    var TABS=['Analytics','Job Matches','Opportunities','Pipeline','Getting found','My CV','Settings','Account'];
-    var tabs=TABS.map(function(t){var on=(t===active)?' on':'';return '<div class="tab'+on+'">'+t+'</div>';}).join('');
+    // `active` is the ENGLISH tab id; the label shown comes from the table, so
+    // a caller never has to know which language is on screen.
+    var ids=UI.en.tabs, labels=U('tabs');
+    var tabs=ids.map(function(t,n){var on=(t===active)?' on':'';return '<div class="tab'+on+'">'+labels[n]+'</div>';}).join('');
+    var es=(LANG==='es');
     return '<div class="app"><div class="app-top"><div class="who"><div class="av">'+MARK+'</div>'
       +'<div><div class="nm">Manny Stagg</div><div class="hd">SME Senior · Full-Stack AI Solutions Architect · mannystagg.{{BRAND_DOMAIN}}</div></div></div>'
-      +'<div class="btn">View public CV</div><span class="langsw"><button class="on">EN</button><button>ES</button></span><div class="btn">Sign out</div></div>'
-      +'<div class="tabs">'+tabs+'</div><div class="app-body">'+body+'</div></div>';
+      +'<div class="btn">'+U('viewCV')+'</div><span class="langsw"><button'+(es?'':' class="on"')+'>EN</button><button'+(es?' class="on"':'')+'>ES</button></span><div class="btn">'+U('signOut')+'</div>'
+      +'</div><div class="tabs">'+tabs+'</div><div class="app-body">'+body+'</div></div>';
   }
 
   // ---- SCREENS ----
   function scrLanding(){
     return '<div class="lnd"><div class="lnd-top"><div class="lg">'+MARK+' Job<span class="gt">Up</span>.dev</div>'
-      +'<div class="sp"></div><div class="nav"><span>How it works</span><span>What you get</span><span>Agents</span><span>Pricing</span></div>'
-      +'<div class="btn" style="margin-left:22px">Sign in</div></div>'
-      +'<div class="lnd-body"><span class="eyebrow"><span class="d"></span> Career Intelligence</span>'
-      +'<h1>Stop Looking for Jobs.<br><span class="gt">Let AI Find Them.</span></h1>'
-      +'<p>Talk to the Orb or upload your resume. In minutes, {{BRAND}} builds your career ecosystem — a personal website, a custom web address, an AI-readable profile, and real-time job matches.</p>'
+      +'<div class="sp"></div><div class="nav">'+U('nav').map(function(n){return '<span>'+n+'</span>';}).join('')+'</div>'
+      +'<div class="btn" style="margin-left:22px">'+U('signIn')+'</div></div>'
+      +'<div class="lnd-body"><span class="eyebrow"><span class="d"></span> '+U('eyebrow')+'</span>'
+      +'<h1>'+U('h1a')+'<br><span class="gt">'+U('h1b')+'</span></h1>'
+      +'<p>'+U('lndP')+'</p>'
       +'<div class="orb"></div>'
-      +'<div class="lnd-cta"><span class="btn-grad">Attach my resume</span><span class="btn-ghost">Job search in your area</span></div></div></div>';
+      +'<div class="lnd-cta"><span class="btn-grad">'+U('ctaResume')+'</span><span class="btn-ghost">'+U('ctaSearch')+'</span></div></div></div>';
   }
   function scrBuild(){
-    return '<div class="center"><div class="modal"><h2>Show me my ecosystem</h2>'
-      +'<div class="sub">Attach your resume and we build a live preview — your site, your web address, and the real jobs that match you right now.</div>'
-      +'<div class="grid2"><div class="fld"><label>Full name</label><div class="inp fill">Manny Stagg</div></div>'
-      +'<div class="fld"><label>Email</label><div class="inp fill">mstagg@digit2ai.com</div></div></div>'
-      +'<div class="dropzone" style="margin-top:16px"><b>Manuel Stagg — Full-Stack AI Solutions Architect.pdf</b><span>1937 KB — click to choose a different file</span></div>'
-      +'<div class="go2">Build my preview</div>'
-      +'<div class="sub" style="text-align:center;margin:14px 0 0;font-family:var(--mono);font-size:11.5px">Free. No card. We show you real openings or none at all — never invented ones.</div></div></div>';
+    return '<div class="center"><div class="modal"><h2>'+U('bTitle')+'</h2>'
+      +'<div class="sub">'+U('bSub')+'</div>'
+      +'<div class="grid2"><div class="fld"><label>'+U('fName')+'</label><div class="inp fill">Manny Stagg</div></div>'
+      +'<div class="fld"><label>'+U('fEmail')+'</label><div class="inp fill">mstagg@digit2ai.com</div></div></div>'
+      +'<div class="dropzone" style="margin-top:16px"><b>Manuel Stagg — Full-Stack AI Solutions Architect.pdf</b><span>'+U('fileHint')+'</span></div>'
+      +'<div class="go2">'+U('bGo')+'</div>'
+      +'<div class="sub" style="text-align:center;margin:14px 0 0;font-family:var(--mono);font-size:11.5px">'+U('bNote')+'</div></div></div>';
   }
   function scrProgress(){
     return '<div class="center"><div class="prg"><div class="prg-head"><div class="orb sm"></div>'
-      +'<div><div class="t">Ava — {{BRAND}}</div><div class="s">Understanding your experience…</div></div></div>'
-      +'<div class="prg-time">1:<span>04</span></div><div class="prg-lbl">ESTIMATED TIME REMAINING</div>'
-      +'<div class="prg-track"><i></i></div><div class="prg-step">Understanding your experience…&nbsp;&nbsp;Step 2 of 6&nbsp;·&nbsp;33%</div></div></div>';
+      +'<div><div class="t">'+(LANG==='es'?'Dalia':'Ava')+' — {{BRAND}}</div><div class="s">'+U('pStep')+'</div></div></div>'
+      +'<div class="prg-time">1:<span>04</span></div><div class="prg-lbl">'+U('pEta')+'</div>'
+      +'<div class="prg-track"><i></i></div><div class="prg-step">'+U('pStep')+'&nbsp;&nbsp;'+U('pOf')+'&nbsp;·&nbsp;33%</div></div></div>';
   }
   function scrEcosystem(){
     return '<div class="center"><div style="width:100%;max-width:820px">'
-      +'<div class="prg-head" style="margin-bottom:16px"><div class="orb sm"></div><div style="flex:1"><div class="t">Your career ecosystem</div><div class="s">Everything below was built from your resume. Create your account from here, the middle, or the end.</div></div><span class="btn-grad">Build my ecosystem</span></div>'
-      +'<div class="panel" style="margin-top:0"><div class="step-pill">SCREEN 1 OF 8</div><div class="pt" style="margin-top:8px;font-size:20px">Your personal site</div><div class="pl">This is the real page, rendered from your resume — not a mock-up.</div>'
+      +'<div class="prg-head" style="margin-bottom:16px"><div class="orb sm"></div><div style="flex:1"><div class="t">'+U('ecoT')+'</div><div class="s">'+U('ecoS')+'</div></div><span class="btn-grad">'+U('ecoBtn')+'</span></div>'
+      +'<div class="panel" style="margin-top:0"><div class="step-pill">'+U('ecoScreen')+'</div><div class="pt" style="margin-top:8px;font-size:20px">'+U('ecoSite')+'</div><div class="pl">'+U('ecoReal')+'</div>'
       +'<div style="display:flex;gap:20px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px">'
       +'<div class="cv-photo" style="width:120px;height:120px;font-size:34px">MS</div>'
-      +'<div><div class="cv-name" style="font-size:34px;margin:0">Manuel Stagg</div><div class="cv-role" style="font-size:17px" class="gt">SME Senior · Full-Stack AI Solutions Architect</div>'
-      +'<div style="display:flex;gap:8px;margin-top:12px"><span class="chip">mannystagg.{{BRAND_DOMAIN}}</span><span class="chip">130 skills</span><span class="chip">3 roles</span></div></div></div></div></div></div>';
+      +'<div><div class="cv-name" style="font-size:34px;margin:0">Manuel Stagg</div><div class="cv-role gt" style="font-size:17px">SME Senior · Full-Stack AI Solutions Architect</div>'
+      +'<div style="display:flex;gap:8px;margin-top:12px"><span class="chip">mannystagg.{{BRAND_DOMAIN}}</span><span class="chip">'+U('skills')+'</span><span class="chip">'+U('roles')+'</span></div></div></div></div></div></div>';
   }
   function scrPricing(){
     function li(t){return '<div class="li"><span class="dt"></span>'+t+'</div>';}
-    return '<div class="center"><div style="text-align:center"><div class="h2" style="font-size:26px">Choose your plan</div><div class="lede">Change, downgrade or pause anytime. Your CV site always stays live.</div></div>'
+    function lis(a){return a.map(li).join('');}
+    return '<div class="center"><div style="text-align:center"><div class="h2" style="font-size:26px">'+U('planT')+'</div><div class="lede">'+U('planL')+'</div></div>'
       +'<div class="plans">'
-      +'<div class="plan"><div class="pn">Free</div><div class="pd">The growth surface</div><div class="pr">$0</div>'+li('Public CV site')+li('5 matches a week')+li('Eva chat (read-only)')+'<div class="pb">Choose Free</div></div>'
-      +'<div class="plan pop"><div class="pn">Search<span class="pop-b">POPULAR</span></div><div class="pd">For someone actively looking</div><div class="pr">$29<small>/mo</small></div>'+li('Unlimited matches')+li('40 scorings a day')+li('10 tailored resumes a month')+li('Outreach and pipeline')+'<div class="pb">Choose Search</div></div>'
-      +'<div class="plan"><div class="pn">Landed</div><div class="pd">For senior and urgent searches</div><div class="pr">$99<small>/mo</small></div>'+li('Unlimited tailoring')+li('Priority scoring')+li('Interview prep')+li('One human review a month')+'<div class="pb">Choose Landed</div></div>'
+      +'<div class="plan"><div class="pn">Free</div><div class="pd">'+U('freeD')+'</div><div class="pr">$0</div>'+lis(U('freeL'))+'<div class="pb">'+U('choose')+'Free</div></div>'
+      +'<div class="plan pop"><div class="pn">Search<span class="pop-b">'+U('popular')+'</span></div><div class="pd">'+U('searchD')+'</div><div class="pr">$29<small>'+U('mo')+'</small></div>'+lis(U('searchL'))+'<div class="pb">'+U('choose')+'Search</div></div>'
+      +'<div class="plan"><div class="pn">Landed</div><div class="pd">'+U('landedD')+'</div><div class="pr">$99<small>'+U('mo')+'</small></div>'+lis(U('landedL'))+'<div class="pb">'+U('choose')+'Landed</div></div>'
       +'</div></div>';
   }
   function scrBuilt(){
     function row(t){return '<div class="row">'+ICON.check+t+'</div>';}
-    return '<div class="center"><div class="built"><div class="ok">'+ICON.check+'</div><h2>Your account is built, Manny</h2>'
-      +'<div class="sub">Everything below is live. Bookmark your address and sign in whenever you like.</div>'
-      +'<div class="addr"><div class="step-pill">YOUR WEB ADDRESS</div><div class="u" style="margin-top:10px">https://mannystagg.{{BRAND_DOMAIN}}</div></div>'
-      +'<div class="panel"><div class="pt gt" style="font-size:20px">Your page is live</div><div class="check">'
-      +row('Account activated')+row('Web address reserved — mannystagg.{{BRAND_DOMAIN}}')+row('Your site published')+row('Your agents switched on')+'</div></div></div></div>';
+    return '<div class="center"><div class="built"><div class="ok">'+ICON.check+'</div><h2>'+U('builtT')+'</h2>'
+      +'<div class="sub">'+U('builtS')+'</div>'
+      +'<div class="addr"><div class="step-pill">'+U('builtAddr')+'</div><div class="u" style="margin-top:10px">https://mannystagg.{{BRAND_DOMAIN}}</div></div>'
+      +'<div class="panel"><div class="pt gt" style="font-size:20px">'+U('builtLive')+'</div><div class="check">'
+      +U('builtRows').map(row).join('')+'</div></div></div></div>';
   }
   function scrCV(){
-    return '<div class="cv"><div class="cv-top"><div class="lg"><span class="d"></span> Manuel Stagg <span style="color:var(--faint);font-size:11px;letter-spacing:.1em;margin-left:4px">CV</span></div><div class="sp"></div><div class="b">Résumé JSON</div><div class="b">Manage</div></div>'
+    return '<div class="cv"><div class="cv-top"><div class="lg"><span class="d"></span> Manuel Stagg <span style="color:var(--faint);font-size:11px;letter-spacing:.1em;margin-left:4px">CV</span></div><div class="sp"></div><div class="b">'+U('cvJson')+'</div><div class="b">'+U('cvManage')+'</div></div>'
       +'<div class="cv-main"><div class="cv-photo">MS</div><div>'
       +'<span class="cv-eye">SME SENIOR · FULL-STACK AI SOLUTIONS ARCHITECT</span>'
       +'<div class="cv-name">Manuel Stagg</div><div class="cv-role gt">SME Senior · Full-Stack AI Solutions Architect</div>'
-      +'<div class="cv-bio">Senior subject-matter expert joining 25 years in banking — compliance, risk, KYC/AML and sanctions — with the design and delivery of production AI systems built on the Model Context Protocol.</div>'
-      +'<div class="cv-tags"><span class="t">Wesley Chapel, Florida</span><span class="t">Résumé (JSON)</span><span class="t">Share · QR · Save contact</span></div>'
-      +'<div style="display:flex;align-items:center;gap:12px;margin-top:20px"><div class="orb sm"></div><div><div style="font-weight:750">Manuel\'s AI Voice · EN · Ava</div><div style="color:var(--mut);font-size:12.5px;font-family:var(--mono)">A voice walkthrough of this profile.</div></div></div>'
+      +'<div class="cv-bio">'+U('cvBio')+'</div>'
+      +'<div class="cv-tags">'+U('cvTags').map(function(t){return '<span class="t">'+t+'</span>';}).join('')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-top:20px"><div class="orb sm"></div><div><div style="font-weight:750">'+U('cvVoice')+'</div><div style="color:var(--mut);font-size:12.5px;font-family:var(--mono)">'+U('cvVoiceS')+'</div></div></div>'
       +'</div></div></div>';
   }
   function scrAnalytics(){
+    var vals=['21','1','21','0'];
     return appFrame('Analytics', null,
-      '<div class="panel" style="margin-top:0"><div class="pt">Your agents</div><div class="pl">Run them now. They find and check — they never act for you.</div>'
-      +'<div class="agentbtns"><span class="btn-grad" style="padding:11px 22px;font-size:14px">Search for jobs now</span><span class="btn-ghost" style="padding:11px 22px;font-size:14px">Check my presence</span></div></div>'
+      '<div class="panel" style="margin-top:0"><div class="pt">'+U('agT')+'</div><div class="pl">'+U('agL')+'</div>'
+      +'<div class="agentbtns"><span class="btn-grad" style="padding:11px 22px;font-size:14px">'+U('agFind')+'</span><span class="btn-ghost" style="padding:11px 22px;font-size:14px">'+U('agCheck')+'</span></div></div>'
       +'<div class="kpis" style="margin-top:16px">'
-      +'<div class="kpi"><div class="k">Profile views (30d)</div><div class="v">21</div></div>'
-      +'<div class="kpi"><div class="k">Unique visitors (30d)</div><div class="v">1</div></div>'
-      +'<div class="kpi"><div class="k">Views (all time)</div><div class="v">21</div></div>'
-      +'<div class="kpi"><div class="k">AI agent reads (30d)</div><div class="v">0</div></div></div>');
+      +U('kpis').map(function(k,n){return '<div class="kpi"><div class="k">'+k+'</div><div class="v">'+vals[n]+'</div></div>';}).join('')
+      +'</div>');
   }
   function scrMatches(){
     function m(title,co,score,ex,miss){
       return '<div class="mcard"><div class="score gt">'+score+'</div><h3>'+title+'</h3><div class="co">'+co+'</div>'
-        +'<div class="ex">'+ex+'</div><span class="chip">missing: '+miss+'</span><span class="chip">new</span>'
-        +'<div class="macts"><span class="b">Open posting</span><span class="b">Tailor my resume · $10</span><span class="sel">new ▾</span><span class="b rm">Remove</span></div></div>';
+        +'<div class="ex">'+ex+'</div><span class="chip">'+U('missing')+miss+'</span><span class="chip">'+U('newChip')+'</span>'
+        +'<div class="macts"><span class="b">'+U('openPost')+'</span><span class="b">'+U('tailor')+'</span><span class="sel">'+U('newChip')+' ▾</span><span class="b rm">'+U('remove')+'</span></div></div>';
     }
     return appFrame('Job Matches', null,
-      '<div class="fbar"><span class="fi" style="flex:2">Search title or company</span><span class="fi">Location</span><span class="fi">Min score</span><span class="fi">Any stage ▾</span><span class="btn-ghost" style="padding:10px 16px;font-size:13px">Clear</span></div>'
-      +m('Enterprise Application AI Engineer','Gusto · San Francisco, CA — Hybrid','92','Exceptional fit: current role as Full-Stack AI Solutions Architect directly matches the MCP design, multi-agent orchestration and enterprise integration focus; 25 years banking/compliance aligns with SOX, auditability and regulated workflows.','San Francisco Bay Area or willingness to relocate')
-      +m('Lead Solutions Architect (AI/ML & Credit Card Technology)','Citigroup · Jacksonville, Florida','92','Exceptional alignment: exceeds the 6-year requirement with 25+ years banking tech; mastery of Node.js, Python, PostgreSQL, React, Claude, LLMOps and RAG, with a current role at Citi-adjacent scale; location match Wesley Chapel to Jacksonville.','Java/Spring Boot hands-on experience'));
+      '<div class="fbar"><span class="fi" style="flex:2">'+U('fSearch')+'</span><span class="fi">'+U('fLoc')+'</span><span class="fi">'+U('fScore')+'</span><span class="fi">'+U('fStage')+'</span><span class="btn-ghost" style="padding:10px 16px;font-size:13px">'+U('fClear')+'</span></div>'
+      +m('Enterprise Application AI Engineer','Gusto · San Francisco, CA — Hybrid','92',U('ex1'),U('miss1'))
+      +m('Lead Solutions Architect (AI/ML & Credit Card Technology)','Citigroup · Jacksonville, Florida','92',U('ex2'),U('miss2')));
   }
   function scrPipeline(){
     function pc(n,c,v){return '<div class="pcard"><span class="pv">'+v+'</span><div class="pn">'+n+'</div><div class="pc">'+c+'</div></div>';}
+    var c=U('cols');
     return appFrame('Pipeline', null,
-      '<div class="lede">8 roles tracked. Your agent only ever adds to <b style="color:var(--txt)">new</b> — every move after that is yours.</div>'
+      '<div class="lede">'+U('pipeL')+'</div>'
       +'<div class="cols">'
-      +'<div class="col"><div class="ct">New (8)</div>'+pc('Enterprise Application AI Engineer','Gusto','92')+pc('Lead Solutions Architect','Citigroup','92')+pc('Senior AI Platform Engineer','Truist','88')+'</div>'
-      +'<div class="col"><div class="ct">Saved (0)</div></div>'
-      +'<div class="col"><div class="ct">Applied (0)</div></div>'
-      +'<div class="col"><div class="ct">Screening (0)</div></div>'
+      +'<div class="col"><div class="ct">'+c[0]+'</div>'+pc('Enterprise Application AI Engineer','Gusto','92')+pc('Lead Solutions Architect','Citigroup','92')+pc('Senior AI Platform Engineer','Truist','88')+'</div>'
+      +'<div class="col"><div class="ct">'+c[1]+'</div></div>'
+      +'<div class="col"><div class="ct">'+c[2]+'</div></div>'
+      +'<div class="col"><div class="ct">'+c[3]+'</div></div>'
       +'</div>');
   }
   function scrTargets(){
-    function tag(t){return '<span class="cv-tags"><span class="t" style="font-family:var(--mono);font-size:12.5px">'+t+' ×</span></span>';}
+    // NOT translated on purpose — these are the literal strings a sourcer types.
     var tags=['SME Senior · AI Solutions Architect','Full-Stack AI Systems Architect','Banking Compliance Systems Architect','Senior Financial Crime Technologist','AI Platform Engineer — Banking','Senior Risk Management Systems Architect']
       .map(function(t){return '<span class="t" style="font-family:var(--mono);font-size:12.5px">'+t+' ×</span>';}).join('');
     return appFrame('Getting found', null,
-      '<div class="panel" style="margin-top:0"><div class="pt">Which state</div><div class="pl">Set from your résumé. Remote roles are never filtered out by this — a posting that says "Remote — US" reaches you whatever you pick.</div>'
+      '<div class="panel" style="margin-top:0"><div class="pt">'+U('stT')+'</div><div class="pl">'+U('stL')+'</div>'
       +'<div class="fld" style="max-width:420px"><div class="inp fill">Florida</div></div></div>'
-      +'<div class="panel"><div class="pt">Roles you are targeting</div><div class="pl">The exact title strings a sourcer searches. A title match counts double in the pre-filter, and each one becomes an indexable page on your site.</div>'
+      +'<div class="panel"><div class="pt">'+U('roT')+'</div><div class="pl">'+U('roL')+'</div>'
       +'<div class="cv-tags" style="margin-top:0">'+tags+'</div></div>');
   }
   function scrMap(){
     var jobs=[
-      ['IT Project Manager','Ascension Federal Services · Tampa','$103,524/yr'],
-      ['IT Project Manager','Fisher Careers · Tampa','$154,631/yr'],
-      ['Senior IT Project Manager','Sunshine Enterprise USA · Tampa','$118,290/yr'],
-      ['Senior IT Project Manager — Cybersecurity','S3 · Tampa','$135,200–$166,400/yr']
-    ].map(function(j){return '<div class="job"><div class="jt">'+j[0]+'</div><div class="jc">'+j[1]+'</div><div class="js">'+j[2]+'</div><div class="ja">Apply →</div></div>';}).join('');
+      ['IT Project Manager','Ascension Federal Services · Tampa','$103,524'],
+      ['IT Project Manager','Fisher Careers · Tampa','$154,631'],
+      ['Senior IT Project Manager','Sunshine Enterprise USA · Tampa','$118,290'],
+      ['Senior IT Project Manager — Cybersecurity','S3 · Tampa','$135,200–$166,400']
+    ].map(function(j){return '<div class="job"><div class="jt">'+j[0]+'</div><div class="jc">'+j[1]+'</div><div class="js">'+j[2]+U('yr')+'</div><div class="ja">'+U('apply')+'</div></div>';}).join('');
     var pins='';var pos=[[38,52],[54,40],[46,60],[62,55],[30,44],[70,64],[50,48],[42,70]];
     pos.forEach(function(p){pins+='<div class="pin" style="left:'+p[0]+'%;top:'+p[1]+'%"></div>';});
     return '<div class="map"><div class="map-top"><div class="lg">'+MARK+' Job<span class="gt">Up</span>.dev</div>'
-      +'<span class="sb q">IT Project Manager</span><span class="sb">Tampa</span><span class="sb">Use my location</span><span class="go">Search</span></div>'
+      +'<span class="sb q">IT Project Manager</span><span class="sb">Tampa</span><span class="sb">'+U('mapLoc')+'</span><span class="go">'+U('mapGo')+'</span></div>'
       +'<div class="map-body"><div class="map-canvas"><div class="grid"></div>'+pins+'<div style="position:absolute;left:44%;top:52%;color:#5a5f6d;font-family:var(--mono);font-size:13px">TAMPA</div></div>'
-      +'<div class="map-list"><div class="mh">50 openings · 50 on the map</div>'+jobs+'</div></div></div>';
+      +'<div class="map-list"><div class="mh">'+U('mapHead')+'</div>'+jobs+'</div></div></div>';
   }
   function scrEva(){
-    return '<div class="center"><div class="eva"><div class="eva-h"><div class="orb sm"></div><div class="t">Chat with Eva</div></div>'
-      +'<div class="note">Eva reads your account, so the answer is about you.</div>'
-      +'<div class="bubble">Hi, I am Eva. Ask me anything about {{BRAND}} — I read your account, so the answer is about you rather than a manual.</div>'
-      +'<div class="sugg"><span class="s">How can I increase my visibility?</span><span class="s">Why am I not getting matches?</span><span class="s">What does tailoring do?</span></div>'
-      +'<div class="evain"><span class="ib">How can I increase my visibility?</span><span class="sd">Send</span></div>'
-      +'<div class="note" style="margin-top:12px">Eva explains and points you at the right screen. She never changes a setting and never sends anything.</div></div></div>';
+    return '<div class="center"><div class="eva"><div class="eva-h"><div class="orb sm"></div><div class="t">'+U('evaT')+'</div></div>'
+      +'<div class="note">'+U('evaN')+'</div>'
+      +'<div class="bubble">'+U('evaB')+'</div>'
+      +'<div class="sugg">'+U('evaS').map(function(s){return '<span class="s">'+s+'</span>';}).join('')+'</div>'
+      +'<div class="evain"><span class="ib">'+U('evaS')[0]+'</span><span class="sd">'+U('evaSend')+'</span></div>'
+      +'<div class="note" style="margin-top:12px">'+U('evaF')+'</div></div></div>';
   }
-
   // ---- SLIDES (bilingual narration) ----
   var SLIDES=[
     {step:['Landing','Inicio'], render:scrLanding,
