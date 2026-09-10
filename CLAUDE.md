@@ -331,6 +331,24 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 - `ARCHITECT_USER` — the sign-in address. No default. SET on Render.
 - `ARCHITECT_PASSWORD` — the password. No default. Unset (either one) = the board is CLOSED, not open.
 
+## MaraMed — presentación narrada (ISTC × Digit2AI)
+
+`public/maramed-presentacion.html` + `public/maramed-audio/s1..s12.mp3` + `scripts/generate-maramed-audio.js`. Doce láminas en español para MaraMed, la plataforma de monitoreo, priorización y gestión proactiva de poblaciones de salud que **ISTC (Ingeniería y Servicios Tecnológicos Colón) desarrolla y opera, con Digit2AI aportando la capa de IA** — la misma estructura de alianza que AgroMercado, y se nombra así en el mazo. Live: `https://aiagent.ringlypro.com/maramed-presentacion.html`.
+
+**Mismo motor de mazo que `ComplianceMind_Demo_BDT.html`**: escenario fijo 1280x720 escalado a la ventana, un `<audio>` pre-renderizado por lámina, subtítulo sincronizado con la barra de progreso, avance automático al terminar la pista, teclado completo (flechas, espacio, Home/End, F, T) y reflujo a columna bajo 820 px. La primera lámina espera un gesto porque el navegador bloquea el audio automático.
+
+**EL TEMA SE LEYÓ DE `maramed.vercel.app`, NO SE INVENTÓ.** Urbanist 300-700, `--bg-dark:#09111e`, `--medical-teal:#0d9488`, `--accent-blue:#38bdf8`, `--accent-amber:#f59e0b`, `--accent-red:#f43f5e`, más el violeta `#8b5cf6` que RayScan usa. Un mazo que no se parece al producto obliga al espectador a creer que son lo mismo.
+
+**LAS PANTALLAS SON HTML, NO CAPTURAS.** Cinco láminas reconstruyen la aplicación en marcos de teléfono: ingreso biométrico, los cuatro estados del orbe de MARA (inactivo / escuchando / razonando / respondiendo), la historia clínica agrupada por especialidad con el color del triaje, VitalScan en sus tres momentos y el informe CAD de RayScan completo. Una captura se proyecta borrosa, no reacomoda en un móvil y envejece el día que cambia el producto.
+
+**LA HONESTIDAD ESTÁ EN EL CONTENIDO, NO EN UN DESCARGO AL PIE.** El recuadro `LIMITACIÓN DEL SISTEMA` del informe se reproduce **entero y legible** dentro del marco — la IA puede alucinar hallazgos, el informe no es un diagnóstico válido y exige validación por un radiólogo certificado. Las dos etiquetas de cada signo vital se comentan una por una (SpO2 dice NORMAL con confianza BAJA, y eso se dice en voz alta). Y la lámina once separa **funciona hoy / es prueba de concepto / lo que NO afirmamos**: no hay cifra de sensibilidad ni de especificidad porque ese estudio no se ha corrido, y no se invoca registro sanitario alguno. No inventar una métrica clínica aquí es la regla que gobierna el mazo.
+
+**EL GUION VIVE UNA SOLA VEZ.** `scripts/generate-maramed-audio.js` **lee el objeto `NARR` del propio HTML** en vez de repetirlo, y aborta si una lámina quedó sin narración o una pista sin lámina. Tener el texto en dos archivos garantiza que un día el subtítulo y la voz digan cosas distintas — el defecto que el espectador nota y nadie más. Voz Dalia (`es-MX-DaliaNeural`) a `-4%` por `src/services/edge-tts.js`: sin API key, cero dólares. `node scripts/generate-maramed-audio.js [--force]` → 12/12 pistas, 3,87 MB.
+
+**El alto se ajustó contra medición, no a ojo.** Chrome mide `scrollHeight` de cada lámina y de cada `.pbody`; el marco es de 430 px salvo en las dos láminas que llevan franja inferior (`.slide.sim.tight`, 378 px), porque forzar una sola altura obligaba a recortar el contenido de las propias pantallas. Cero desbordamiento en 1280x720 y cero desbordamiento horizontal en 390 px.
+
+**Cifras admisibles:** solo las del PDF de arquitectura y de las capturas — 86 bpm, 10 rpm, 42 ms, 98 %, 126/79; luminancia 127,5, desviación 37,8, contraste 125, bordes Sobel 6,3 %; 30 s de captura rPPG; AES-128 en la trama BLE; Manchester I-V. Ninguna otra.
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
