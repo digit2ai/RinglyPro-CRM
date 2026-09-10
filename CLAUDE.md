@@ -1059,6 +1059,39 @@ The Digit2AI Projects Hub doubles as the owner's (client 15) single command cent
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table
 MCP Tool Call → POST /api/oee/tools/call → OEE route handler → PostgreSQL → response
 
+### AI Action Inbox — the Email tab answers "what do I need to do?"
+
+The Unified Inbox above is the plumbing; `src/services/emailIntelligence.js` is the brain bolted onto it — **not a second email system**. IMAP/Gmail, credentials, the reader, the reply composer, the follow-up star and add-account are untouched, and the classic unread list stays one tap away behind a dashed chip in the tab bar.
+
+**THE OLD TRIAGE WAS EPHEMERAL, SUBJECT-ONLY, AND RAN INSIDE THE REQUEST.** All three were the actual problems. It read a subject plus a 200-char snippet, so it could not tell a receipt from a failed payment; it persisted nothing, so every press re-spent the whole model budget and no other surface could see the result; and it made dozens of model calls in one HTTP request behind Cloudflare's ~100s 524 ceiling, which fails while the work is still succeeding. Now: full body (quoted history and signatures stripped first — both a cost and an accuracy win, since a 12-reply tail buries the one new sentence), persisted to `email_classifications`, queued as a background job the UI polls. `POST /email-triage` (the legacy inline route) is deliberately left intact for cached copies of the page.
+
+**HONESTY IS ENFORCED IN CODE, NOT IN THE PROMPT — four places, all asserted by SIT:**
+- **The enum gate.** Every field the model returns is checked against a fixed vocabulary *after* the call. A status the UI has no tab for becomes `needs_review` with the rejection stated, never a row nobody can find. This is also what stops a prompt-injected email inventing a classification, and why the model can never name a project that does not exist (`Unassigned` is the honest answer).
+- **The confidence floor.** Below `EMAIL_AI_MIN_CONFIDENCE` (0.55) the row goes to Needs Review **with the guess preserved in the reason**. A confident-looking wrong tab is worse than an admitted maybe.
+- **Email content is data.** Bodies are fenced inside a delimiter the body itself cannot spell (occurrences stripped), and a message that tries to instruct the classifier is flagged, floored to 0.2, and **told to the owner in plain words** — silently downgrading it would hide an attack.
+- **A human correction is final.** It sets `manual_override`, which every automated path refuses to overwrite, and teaches a deterministic **sender-scoped** rule applied BEFORE the model that the model cannot overrule. Sender-scoped on purpose: a domain rule from one correction would quietly reclassify every colleague at a big company.
+
+**NOTHING SENDS, DELETES OR ARCHIVES.** There is no transport in the engine at all — SIT strips the comments and greps for one. Replies stay drafts in the existing composer until a person presses Send. Every action an email can spawn (to-do, calendar item, project link, contact match) is deduped through `email_action_links`, so a second click returns what already exists; `matchPerson` **never creates** a contact, because a stranger who emailed once is not a person in the CRM.
+
+**12 statuses · 5 priorities · 9 tabs**, served from one taxonomy the page never hardcodes (`GET /email-ai/taxonomy`). Focus is the default and deliberately carries `needs_review`. Statuses: `critical · needs_action_today · needs_action_week · waiting_on_someone · needs_review · meeting · financial · project_update · info_only · newsletter · automated · no_action`.
+
+**Endpoints** (all `requireClient15`, tenant from the verified token, never a body): `GET /email-ai/taxonomy|inbox|counts|message|rules|project-options|brief|triage-active` · `GET /email-ai/triage/:id` (poll) · `POST /email-ai/triage|correct|rules|todo|link-project|calendar` · `DELETE /email-ai/rules/:id`. Full-inbox reanalysis needs `confirm:"reanalyze-all"` plus, when set, an `EMAIL_AI_ADMIN_EMAILS` operator.
+
+**Tables** (main CRM DB, same connection as the `d2_*` tables — that is what lets an email link to a `d2_task` with no cross-DB hop): `email_classifications, email_classification_audit, email_project_rules, email_action_links, email_triage_jobs`. Canonical migration `migrations/20260910_email_action_inbox.sql`; created idempotently on boot. The audit table has **no column that could hold an email body**.
+
+**Home + voice**: an Email Actions KPI, a Daily Executive Brief whose every figure is a count of real rows (hidden entirely until something is triaged), two Neural Findings detectors (`email.critical`, `email.actions.overdue` — silent, not 500ing, if the tables ever move to another database), and Lina narrating in Spanish what the inbox needs from the same counts.
+
+**The zero-key path is real, not a stub.** With no `ANTHROPIC_API_KEY` the keyword classifier runs, labels itself `classified_by:'heuristic'` / `is_simulated:true`, and shows a KEYWORD FALLBACK chip on every surface — never a silent fake. `ANTHROPIC_API_KEY` **is already set on Render**, so production uses the model path from the first deploy.
+
+**SIT:** `node scripts/test-email-action-inbox.js` → **280/280**, zero external keys. It unsets `ANTHROPIC_API_KEY` before requiring the engine and says so, so the suite is free and offline and the keyless fallback is the one under test. DB sections run under a throwaway tenant (990015/990016, never client 15) and delete their own rows. Consequence: the model path is only verifiable against production (`GET /email-ai/taxonomy` → `model_configured`).
+
+**Environment Variables:**
+- `EMAIL_AI_MODEL` — model that classifies. Default **`claude-opus-5`**, deliberately not the Haiku most of the repo uses: a mis-filed production outage is the exact failure this module exists to prevent, and triage is idempotent so only *new* mail costs anything after the first run (~$0.019/email on Opus 5, ~$0.004 on Haiku). Set `claude-haiku-4-5-20251001` to trade judgment for cost with no redeploy. Reuses `ANTHROPIC_API_KEY`.
+- `EMAIL_AI_MIN_CONFIDENCE` (0.55) — below this a classification is filed to Needs Review with its guess recorded. Raising it sends more to review; lowering it lets the model file things it is not sure about.
+- `EMAIL_AI_CONCURRENCY` (3) · `EMAIL_AI_MAX_BODY_CHARS` (6000) — how hard a background run pushes, and how much of a body reaches the model.
+- `EMAIL_AI_ADMIN_EMAILS` — comma-separated allowlist for full-inbox reanalysis. Unset = the confirmation string alone gates it (client 15 is already the owner).
+- `D2AI_WORKSPACE_ID` (1) — the Hub workspace to-dos and calendar events are written into.
+
 ## AgroMercadoDigital — National Agro Marketplace (Venezuela)
 
 **Purpose:** Digital marketplace for Venezuela's agricultural sector (semovientes, maquinaria, insumos, subastas en vivo, divisas BCV). **Developed by ISTC (Ingeniería y Servicios Tecnológicos Colón)** — owns/registered the AgroMercado platform; **AI layer by Digit2AI**. Product for Grupo Agrollano = **AgrollanoDigital** (white-label of AgroMercado, a separate `tenant_id`). The alliance is **ISTC × Digit2AI** (never "AgroMercado × Digit2AI"). See `project_agrollano_istc` memory.
