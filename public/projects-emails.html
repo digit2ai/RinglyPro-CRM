@@ -68,11 +68,89 @@
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
     .form-err { color: #f87171; font-size: 12.5px; min-height: 16px; margin-top: 4px; }
+    /* ---- AI Action Inbox --------------------------------------------- */
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tab { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+      min-height: 34px; }
+    .tab:hover { color: var(--text); border-color: var(--muted); }
+    .tab.on { background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(37,99,235,.22)); color: var(--text); border-color: var(--accent-2); }
+    .tab .n { background: rgba(148,163,184,.18); color: var(--text); border-radius: 999px; padding: 0 7px; font-size: 11px; font-weight: 700; }
+    .tab.on .n { background: var(--accent); color: #fff; }
+    .tab.alert .n { background: var(--red); color: #fff; }
+    .tab.classic { border-style: dashed; }
+
+    .briefbar { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 13px; margin-bottom: 12px; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+    .briefbar b { color: var(--text); }
+    .simchip { display: inline-block; background: rgba(245,158,11,.14); color: #fbbf24; border: 1px solid rgba(245,158,11,.35);
+      border-radius: 999px; padding: 1px 8px; font-size: 10.5px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+
+    /* One action card. The left border is the priority, at a glance. */
+    .acard { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: background .15s; }
+    .acard:hover { background: var(--panel-2); }
+    .acard.p-critical { border-left-color: #ef4444; }
+    .acard.p-high     { border-left-color: #f59e0b; }
+    .acard.p-medium   { border-left-color: #38bdf8; }
+    .acard.p-low      { border-left-color: #64748b; }
+    .acard.p-none     { border-left-color: #334155; }
+    .acard .row1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+    .acard .who { font-weight: 600; font-size: 14px; }
+    .acard .subj { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+    .acard .sum { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+    .acard .rec { font-size: 12.5px; color: #93c5fd; margin-top: 5px; }
+    .acard .row2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chip { font-size: 10.5px; font-weight: 700; letter-spacing: .02em; border-radius: 999px; padding: 2px 9px;
+      background: rgba(148,163,184,.14); color: var(--muted); border: 1px solid transparent; white-space: nowrap; }
+    .chip.st-critical { background: rgba(239,68,68,.16); color: #fca5a5; border-color: rgba(239,68,68,.4); }
+    .chip.st-needs_action_today { background: rgba(245,158,11,.16); color: #fcd34d; border-color: rgba(245,158,11,.35); }
+    .chip.st-needs_action_week { background: rgba(56,189,248,.14); color: #7dd3fc; border-color: rgba(56,189,248,.3); }
+    .chip.st-needs_review { background: rgba(168,85,247,.16); color: #d8b4fe; border-color: rgba(168,85,247,.35); }
+    .chip.st-waiting_on_someone { background: rgba(148,163,184,.16); color: #cbd5e1; }
+    .chip.st-meeting { background: rgba(34,211,238,.14); color: #67e8f9; }
+    .chip.st-financial { background: rgba(16,185,129,.14); color: #6ee7b7; }
+    .chip.proj { background: rgba(124,92,255,.16); color: #c4b5fd; }
+    .chip.due { background: rgba(239,68,68,.14); color: #fca5a5; }
+    .chip.acct { background: rgba(34,211,238,.10); color: var(--cyan); }
+    .chip.mark { background: rgba(245,158,11,.14); color: #fbbf24; border-color: rgba(245,158,11,.35); }
+    .acard .ts { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+    .pick { margin-right: 2px; }
+
+    /* Triage progress */
+    .prog { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .prog .bar { height: 7px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin: 9px 0 6px; }
+    .prog .bar i { display: block; height: 100%; background: linear-gradient(90deg, #7c5cff, #22d3ee); width: 0; transition: width .3s; }
+    .prog .lbl { font-size: 12.5px; color: var(--muted); }
+
+    /* AI panel inside the reader */
+    .ai { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 13px; margin-bottom: 10px; }
+    .ai h4 { margin: 0 0 7px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .ai .line { font-size: 13px; line-height: 1.6; margin-bottom: 5px; }
+    .ai .line span.k { color: var(--muted); }
+    .ai .acts { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px; }
+    .ai .acts .btn { padding: 7px 12px; font-size: 12.5px; }
+    .ai select, .ai input[type="datetime-local"] { background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 7px 9px; font-size: 12.5px; }
+    .ai .status { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+    .warn { background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.35); color: #fcd34d;
+      border-radius: 8px; padding: 9px 11px; font-size: 12.5px; margin-bottom: 10px; line-height: 1.5; }
+
+    @media (max-width: 620px) {
+      body { padding: 10px; }
+      .head { flex-direction: column; align-items: stretch; }
+      .head-btns { flex-wrap: wrap; }
+      .head-btns .btn { flex: 1 1 auto; }
+      .tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+      .tab { flex: 0 0 auto; }
+      .acard .ts { margin-left: 0; width: 100%; }
+      .ai .acts .btn { flex: 1 1 46%; }
+    }
   </style>
 </head>
 <body>
   <div class="head">
-    <h1>Email — Unified Inbox</h1>
+    <h1 id="page-h1">Email — AI Action Inbox</h1>
     <div class="head-btns">
       <button class="btn btn-primary" id="triage-btn" style="background:linear-gradient(135deg,#7c5cff,#2563eb)">&#10024; Triage with AI</button>
       <button class="btn btn-ghost" id="add-btn">+ Add account</button>
@@ -80,6 +158,9 @@
     </div>
   </div>
   <div class="accounts" id="accounts"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="briefbar"></div>
+  <div id="progress"></div>
   <div id="list" class="list"><div class="spinner"></div></div>
 
   <!-- Add account modal -->
@@ -170,6 +251,9 @@
 
     async function load(force){
       if (EMAIL_FOLLOWUPS) return loadFollowups();
+      VIEW_MODE = 'classic';
+      renderTabs();
+      const bb = document.getElementById('briefbar'); if (bb) bb.innerHTML = '';
       const list = document.getElementById('list');
       list.innerHTML = '<div class="spinner"></div>';
       if (!token()){ list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
@@ -260,7 +344,15 @@
         );
         const data = await parseJsonSafe(res);
         if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Could not open message')}</div>`; return; }
-        renderReader(data.message, item);
+        // The AI detail rides alongside the body. It is fetched separately and
+        // never blocks the reader — an unclassified email still opens and reads.
+        let detail = null;
+        try {
+          const dres = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/message?account_id=${encodeURIComponent(item.account_id)}&id=${encodeURIComponent(item.message_id)}`, { headers: authHeaders() });
+          const dd = await parseJsonSafe(dres);
+          if (dd.success) detail = dd;
+        } catch (e) {}
+        renderReader(data.message, item, detail);
         notifyParent(); // opening marks read → refresh the badge
         if (opts && opts.autoReply) { const b = document.getElementById('reply-ai-btn'); if (b) b.click(); }
       } catch (e) {
@@ -269,66 +361,285 @@
     }
     window.openMessageItem = openMessageItem;
 
-    // ---- AI inbox triage ----
-    async function runTriage() {
-      const list = document.getElementById('list');
-      if (!token()) { list.innerHTML = '<div class="err">Please sign in to the Hub first.</div>'; return; }
-      list.innerHTML = '<div class="spinner"></div><div style="text-align:center;color:var(--muted);font-size:13px;margin-top:-30px">Reading your inbox and prioritizing…</div>';
-      try {
-        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-triage`, { method: 'POST', headers: authHeaders() });
-        const data = await parseJsonSafe(res);
-        if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Triage failed')}</div>`; return; }
-        renderTriage(data.items || []);
-      } catch (e) { list.innerHTML = `<div class="err">Failed: ${esc(e.message)}</div>`; }
+    // =====================================================================
+    // AI ACTION INBOX
+    //
+    // The list answers "what do I need to do?" rather than "what arrived?".
+    // Order and filtering come from the persisted classifications on the
+    // server; read-state, the account label and the follow-up star still come
+    // from the live mailbox, so nothing about the old inbox stopped working.
+    //
+    // The classic unread list is still one tap away (the dashed chip) — the
+    // upgrade adds a view, it does not take one away.
+    // =====================================================================
+
+    let AI_TAB = localStorage.getItem('d2ai_email_tab') || 'focus';
+    let AI_ITEMS = [];
+    let AI_COUNTS = {};
+    let AI_TAXONOMY = null;
+    let AI_PROJECT = null;
+    let AI_SELECTED = new Set();     // account:message ids ticked for reanalysis
+    let VIEW_MODE = 'ai';            // 'ai' | 'classic'
+    let POLL_TIMER = null;
+
+    const TAB_ALERT = { critical: true };
+
+    function keyOf(m) { return m.account_id + ':' + m.message_id; }
+
+    function renderTabs() {
+      const el = document.getElementById('tabs');
+      if (!el || EMAIL_FOLLOWUPS) return;
+      const tabs = (AI_TAXONOMY && AI_TAXONOMY.tabs) || [{ key: 'focus', label: 'Focus' }];
+      el.innerHTML = tabs.map(t => {
+        const n = AI_COUNTS[t.key] || 0;
+        const alert = TAB_ALERT[t.key] && n > 0 ? ' alert' : '';
+        const on = (VIEW_MODE === 'ai' && AI_TAB === t.key) ? ' on' : '';
+        return `<button class="tab${on}${alert}" data-tab="${esc(t.key)}">${esc(t.label)}${n ? `<span class="n">${n}</span>` : ''}</button>`;
+      }).join('') +
+      `<button class="tab classic${VIEW_MODE === 'classic' ? ' on' : ''}" data-tab="__classic" title="The original unread list, unchanged">Unread inbox</button>`;
+      el.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+        const t = b.getAttribute('data-tab');
+        if (t === '__classic') { VIEW_MODE = 'classic'; renderTabs(); return load(); }
+        VIEW_MODE = 'ai'; AI_TAB = t;
+        try { localStorage.setItem('d2ai_email_tab', t); } catch (e) {}
+        loadActionInbox();
+      }));
     }
 
-    function renderTriage(items) {
-      const list = document.getElementById('list');
-      TRIAGE_ITEMS = items;
-      const back = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h2 style="margin:0;font-size:17px">AI Triage — ${items.length} unread</h2><button class="btn btn-ghost" onclick="load()">&#8592; Back to inbox</button></div>`;
-      if (!items.length) { list.innerHTML = back + '<div class="empty">Nothing to triage — your inboxes are clear.</div>'; return; }
-      const PRI = { high: '#ef4444', medium: '#f59e0b', low: '#64748b' };
-      const CAT = { needs_reply: ['Needs reply', '#22d3ee'], action: ['Action', '#a78bfa'], fyi: ['FYI', '#94a3b8'], newsletter: ['Newsletter', '#64748b'], spam: ['Spam', '#ef4444'] };
-      list.innerHTML = back + items.map((it, i) => {
-        const pc = PRI[it.priority] || PRI.low;
-        const c = CAT[it.category] || CAT.fyi;
-        const showReply = it.category === 'needs_reply' || it.category === 'action';
-        return `<div class="mail" style="border-left-color:${pc}">
-            <div class="top">
-              <span style="width:9px;height:9px;border-radius:50%;background:${pc};display:inline-block;flex:0 0 auto"></span>
-              <span class="acct" style="background:${c[1]}22;color:${c[1]}">${c[0]}</span>
-              <span class="from">${esc(it.from_name || it.from || 'Unknown')}</span>
-              <span class="acct">${esc(it.account || '')}</span>
-              <span class="ts">${fmtTs(it.ts)}</span>
-            </div>
-            <div class="subject" style="font-weight:600">${esc(it.subject)}</div>
-            ${it.summary ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px">${esc(it.summary)}</div>` : ''}
-            ${it.action ? `<div style="font-size:12.5px;color:#93c5fd;margin-top:3px">&rarr; ${esc(it.action)}</div>` : ''}
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <button class="btn btn-ghost" onclick="triageOpen(${i})">Open</button>
-              ${showReply ? `<button class="btn btn-primary" onclick="triageReply(${i})">&#10024; Reply with AI</button>` : ''}
-              <button class="btn btn-ghost" onclick="triageDismiss(${i}, this)">Mark read</button>
-            </div>
-          </div>`;
-      }).join('');
+    function renderBriefBar(brief) {
+      const el = document.getElementById('briefbar');
+      if (!el) return;
+      if (!brief) { el.innerHTML = ''; return; }
+      const sim = brief.model_configured ? ''
+        : '<span class="simchip" title="ANTHROPIC_API_KEY is not set on the server, so classifications come from the keyword fallback">KEYWORD FALLBACK</span>';
+      el.innerHTML = `<div class="briefbar"><b>Today:</b> ${esc(brief.narrative || '')}${sim}</div>`;
     }
-    window.triageOpen = (i) => openMessageItem(TRIAGE_ITEMS[i]);
-    window.triageReply = (i) => openMessageItem(TRIAGE_ITEMS[i], { autoReply: true });
-    window.triageDismiss = async (i, btn) => {
-      const it = TRIAGE_ITEMS[i]; if (!it) return;
-      if (btn) { btn.disabled = true; btn.textContent = '✓ Read'; }
+
+    function fmtDue(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const days = Math.round((d - new Date()) / 86400000);
+      const when = d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+      if (days < 0) return `Overdue &middot; ${when}`;
+      if (days === 0) return `Due today`;
+      if (days === 1) return `Due tomorrow`;
+      return `Due ${when}`;
+    }
+
+    function actionCard(m, i) {
+      const pri = m.priority || 'none';
+      const chips = [];
+      chips.push(`<span class="chip st-${esc(m.status)}">${esc(m.status_label || m.status)}</span>`);
+      if (pri !== 'none') chips.push(`<span class="chip">${esc(m.priority_label || pri)} priority</span>`);
+      if (m.project && m.project !== 'Unassigned') chips.push(`<span class="chip proj">${esc(m.project)}</span>`);
+      if (m.deadline) chips.push(`<span class="chip due">${fmtDue(m.deadline)}</span>`);
+      if (m.account) chips.push(`<span class="chip acct">${esc(m.account)}</span>`);
+      if (m.manual_override) chips.push(`<span class="chip mark" title="You set this. The AI will not change it.">Yours</span>`);
+      if (m.injection_flagged) chips.push(`<span class="chip mark" title="This message tried to instruct the AI classifier">Suspicious</span>`);
+      if (m.is_simulated) chips.push(`<span class="chip" title="Classified by the keyword fallback, not a model">Keyword</span>`);
+      const picked = AI_SELECTED.has(keyOf(m)) ? 'checked' : '';
+      return `
+        <div class="acard p-${esc(pri)}" data-i="${i}" onclick="aiOpen(${i})">
+          <div class="row1">
+            <input type="checkbox" class="pick" ${picked} title="Select for reanalysis"
+                   onclick="event.stopPropagation();aiPick(${i}, this.checked)">
+            <span class="who">${esc(m.from_name || m.from_address || 'Unknown')}</span>
+            <span class="ts">${fmtTs(m.received_at)}</span>
+          </div>
+          <div class="subj">${esc(m.subject || '(no subject)')}</div>
+          ${m.summary ? `<div class="sum">${esc(m.summary)}</div>` : ''}
+          ${m.recommended_action ? `<div class="rec">&rarr; ${esc(m.recommended_action)}</div>` : ''}
+          <div class="row2">${chips.join('')}</div>
+        </div>`;
+    }
+
+    async function loadActionInbox(opts) {
+      opts = opts || {};
+      VIEW_MODE = 'ai';
+      const list = document.getElementById('list');
+      if (!token()) { list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
+      if (!opts.quiet) list.innerHTML = '<div class="spinner"></div>';
       try {
-        await fetch(`${ORIGIN}/api/projects-bridge/email-read`, {
-          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ account_id: it.account_id, id: it.message_id })
-        });
-      } catch (e) {}
-      notifyParent();
-      const card = btn ? btn.closest('.mail') : null;
-      if (card) { card.style.transition = 'opacity .2s'; card.style.opacity = '.45'; }
+        const url = `${ORIGIN}/api/projects-bridge/email-ai/inbox?tab=${encodeURIComponent(AI_TAB)}` +
+          (AI_PROJECT ? `&project=${encodeURIComponent(AI_PROJECT)}` : '') +
+          (opts.force ? '&force=1' : '');
+        const res = await fetch(url, { headers: authHeaders() });
+        const data = await parseJsonSafe(res);
+        if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Could not load the inbox')}</div>`; return; }
+
+        AI_ITEMS = data.items || [];
+        AI_COUNTS = data.counts || {};
+        AI_TAXONOMY = data.taxonomy || AI_TAXONOMY;
+        renderAccounts(data.accounts);
+        renderTabs();
+        notifyParent();
+
+        const anyClassified = (AI_COUNTS.all || 0) > 0;
+        if (!data.accounts || !data.accounts.length) {
+          list.innerHTML = `<div class="empty">No email accounts connected yet.<br><br><button class="btn btn-primary" onclick="openModal()">+ Connect your first inbox</button></div>`;
+          return;
+        }
+        if (!anyClassified) {
+          list.innerHTML = `<div class="empty">Nothing has been triaged yet.<br><br>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,#7c5cff,#2563eb)" onclick="runTriage()">&#10024; Triage with AI</button>
+            <div style="margin-top:14px;font-size:12.5px">Or browse the raw unread list with <b>Unread inbox</b> above.</div></div>`;
+          return;
+        }
+        if (!AI_ITEMS.length) {
+          const t = (AI_TAXONOMY.tabs || []).find(x => x.key === AI_TAB);
+          list.innerHTML = `<div class="empty">Nothing in <b>${esc(t ? t.label : AI_TAB)}</b>.${AI_TAB === 'focus' ? ' You are clear — nothing needs you right now.' : ''}</div>`;
+          return;
+        }
+        list.innerHTML = AI_ITEMS.map((m, i) => actionCard(m, i)).join('') + selectionBarHtml();
+        loadBrief();
+      } catch (err) {
+        list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`;
+      }
+    }
+    window.loadActionInbox = loadActionInbox;
+
+    function selectionBarHtml() {
+      if (!AI_SELECTED.size) return '';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px">
+        <span style="font-size:12.5px;color:var(--muted)">${AI_SELECTED.size} selected</span>
+        <button class="btn btn-primary" onclick="runTriage('selected')">&#10024; Reanalyze selected</button>
+        <button class="btn btn-ghost" onclick="aiClearPicks()">Clear</button>
+      </div>`;
+    }
+    window.aiPick = (i, on) => {
+      const m = AI_ITEMS[i]; if (!m) return;
+      if (on) AI_SELECTED.add(keyOf(m)); else AI_SELECTED.delete(keyOf(m));
+      loadActionInbox({ quiet: true });
+    };
+    window.aiClearPicks = () => { AI_SELECTED.clear(); loadActionInbox({ quiet: true }); };
+
+    async function loadBrief() {
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/brief`, { headers: authHeaders() });
+        const d = await parseJsonSafe(res);
+        if (d.success) renderBriefBar(d.brief);
+      } catch (e) { /* the brief is a nicety; its absence never blocks the list */ }
+    }
+
+    // Opening an action card opens the real message in the existing reader,
+    // carrying its classification so the AI panel renders with it.
+    window.aiOpen = (i) => {
+      const m = AI_ITEMS[i];
+      if (!m) return;
+      openMessageItem({
+        account_id: m.account_id, message_id: m.message_id,
+        from: m.from_address, from_name: m.from_name, subject: m.subject,
+        ts: m.received_at, account: m.account, open_url: m.open_url,
+        email_flagged: m.email_flagged
+      }, { classification: m });
     };
 
-    function renderReader(m, item) {
+    // ---- Triage: queue a background run and poll it ----------------------
+    //
+    // Never a synchronous request. The page is behind Cloudflare's ~100s
+    // ceiling and a full inbox is dozens of body fetches plus dozens of model
+    // calls — a blocking call would 524 while the work was still succeeding.
+    async function runTriage(scope) {
+      if (!token()) { document.getElementById('list').innerHTML = '<div class="err">Please sign in to the Hub first.</div>'; return; }
+      const body = { scope: scope || 'unclassified' };
+      if (body.scope === 'selected') {
+        body.selected = Array.from(AI_SELECTED).map(k => {
+          const [a, m] = k.split(':');
+          return { account_id: parseInt(a, 10), message_id: m };
+        });
+      }
+      if (body.scope === 'all') body.confirm = 'reanalyze-all';
+      setTriageBusy(true, 'Queuing…');
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/triage`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body)
+        });
+        const data = await parseJsonSafe(res);
+        if (!data.success) { setTriageBusy(false); showProgressError(data.error || 'Triage could not start'); return; }
+        if (!data.model_configured) {
+          showWarn('No model key is configured on the server, so these are keyword classifications — labelled "Keyword" on every card.');
+        }
+        pollJob(data.job.id);
+      } catch (e) { setTriageBusy(false); showProgressError(e.message); }
+    }
+    window.runTriage = runTriage;
+
+    function setTriageBusy(on, label) {
+      const b = document.getElementById('triage-btn');
+      if (!b) return;
+      b.disabled = !!on;
+      b.innerHTML = on ? (label || 'Working…') : '&#10024; Triage with AI';
+    }
+
+    function showWarn(msg) {
+      const el = document.getElementById('progress');
+      if (el) el.insertAdjacentHTML('afterbegin', `<div class="warn">${esc(msg)}</div>`);
+    }
+    function showProgressError(msg) {
+      const el = document.getElementById('progress');
+      if (el) el.innerHTML = `<div class="warn">${esc(msg)}</div>`;
+    }
+
+    function renderProgress(job) {
+      const el = document.getElementById('progress');
+      if (!el) return;
+      if (!job) { el.innerHTML = ''; return; }
+      const pct = job.total ? Math.round((job.processed / job.total) * 100) : 0;
+      let foot;
+      if (job.status === 'done') {
+        const bits = [`${job.succeeded} classified`];
+        if (job.failed) bits.push(`${job.failed} failed`);
+        if (!job.total) bits.length = 0, bits.push('Nothing new to classify — everything already has a classification.');
+        foot = bits.join(' &middot; ');
+      } else if (job.status === 'failed') {
+        foot = `Run failed: ${esc(job.error || 'unknown error')}`;
+      } else {
+        foot = `Reading ${job.processed} of ${job.total || '…'}`;
+      }
+      const errs = (job.errors || []).length
+        ? `<div class="lbl" style="margin-top:7px;color:#fca5a5">${(job.errors || []).slice(0, 5).map(e =>
+            `Could not classify &ldquo;${esc(e.subject)}&rdquo;: ${esc(e.error)}`).join('<br>')}</div>` : '';
+      el.innerHTML = `<div class="prog">
+          <div class="lbl"><b style="color:var(--text)">Triage</b> &middot; ${esc(job.scope)} &middot; ${esc(job.status)}</div>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <div class="lbl">${foot}</div>${errs}
+          ${job.status === 'done' || job.status === 'failed'
+            ? '<button class="btn btn-ghost" style="margin-top:9px" onclick="document.getElementById(\'progress\').innerHTML=\'\'">Dismiss</button>' : ''}
+        </div>`;
+    }
+
+    async function pollJob(id) {
+      if (POLL_TIMER) { clearTimeout(POLL_TIMER); POLL_TIMER = null; }
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/triage/${encodeURIComponent(id)}`, { headers: authHeaders() });
+        const d = await parseJsonSafe(res);
+        if (!d.success) { setTriageBusy(false); showProgressError(d.error || 'Lost track of the run'); return; }
+        renderProgress(d.job);
+        if (d.job.status === 'done' || d.job.status === 'failed') {
+          setTriageBusy(false);
+          AI_SELECTED.clear();
+          loadActionInbox();
+          return;
+        }
+        setTriageBusy(true, `Reading ${d.job.processed}/${d.job.total || '…'}`);
+        POLL_TIMER = setTimeout(() => pollJob(id), 2000);
+      } catch (e) {
+        setTriageBusy(false);
+        showProgressError(e.message);
+      }
+    }
+
+    // A run survives a page reload: pick it back up on load.
+    async function resumeActiveJob() {
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/triage-active`, { headers: authHeaders() });
+        const d = await parseJsonSafe(res);
+        if (d.success && d.job) pollJob(d.job.id);
+      } catch (e) { /* silent */ }
+    }
+
+    function renderReader(m, item, detail) {
       const list = document.getElementById('list');
       const fromName = esc(m.from_name || m.from || item.from_name || item.from || 'Unknown');
       const fromAddr = esc(m.from || item.from || '');
@@ -350,6 +661,7 @@
           </div>
           <h2 class="r-subject">${subject}</h2>
           <div class="r-meta">${fromName}${fromAddr && fromAddr !== fromName ? ' &lt;' + fromAddr + '&gt;' : ''} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${esc(item.account || '')}</div>
+          <div id="ai-panel"></div>
           <iframe class="r-body" id="reader-frame" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
           <div id="reply-panel" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
             <input id="reply-instruction" placeholder="What should the reply say? (optional) — e.g. thank them and confirm Tuesday 2pm" style="${inStyle}">
@@ -367,7 +679,13 @@
           </div>
         </div>`;
 
-      document.getElementById('reader-back').addEventListener('click', () => load());
+      document.getElementById('reader-back').addEventListener('click', () => backToList());
+
+      // Paint the AI panel. AI_DETAIL_ITEM is what the panel's actions address.
+      AI_DETAIL = detail || null;
+      AI_DETAIL_ITEM = { account_id: item.account_id, message_id: item.message_id };
+      const aiHost = document.getElementById('ai-panel');
+      if (aiHost) aiHost.innerHTML = aiPanelHtml(detail, item);
 
       const frame = document.getElementById('reader-frame');
       const inner = (m.html && m.html.trim())
@@ -445,7 +763,7 @@
           if (!data.success) { status.style.color = '#f87171'; status.textContent = data.error || 'Send failed'; btn.disabled = false; btn.textContent = 'Send'; return; }
           status.style.color = '#10b981'; status.textContent = '✓ Sent';
           btn.textContent = 'Sent';
-          setTimeout(() => load(), 1200); // back to inbox
+          setTimeout(() => backToList(), 1200); // back to whichever list you came from
         } catch (e) { status.style.color = '#f87171'; status.textContent = e.message; btn.disabled = false; btn.textContent = 'Send'; }
       });
     }
@@ -496,7 +814,7 @@
         });
         const data = await parseJsonSafe(res);
         if (!data.success){ errEl.textContent = data.error || 'Could not connect.'; return; }
-        closeModal(); load(true);
+        closeModal(); backToList();
       } catch (e){ errEl.textContent = 'Error: ' + e.message; }
       finally { btn.disabled = false; btn.textContent = 'Connect'; }
     }
@@ -513,8 +831,9 @@
     document.getElementById('add-btn').addEventListener('click', openModal);
     document.getElementById('cancel-btn').addEventListener('click', closeModal);
     document.getElementById('save-btn').addEventListener('click', saveAccount);
-    document.getElementById('refresh-btn').addEventListener('click', () => load(true));
-    document.getElementById('triage-btn').addEventListener('click', runTriage);
+    document.getElementById('refresh-btn').addEventListener('click', () =>
+      (VIEW_MODE === 'classic' || EMAIL_FOLLOWUPS) ? load(true) : loadActionInbox({ force: true }));
+    document.getElementById('triage-btn').addEventListener('click', () => runTriage('unclassified'));
     document.getElementById('gmail-oauth-btn').addEventListener('click', () => {
       if (!token()) { document.getElementById('form-err').textContent = 'Please sign in to the Hub first.'; return; }
       window._oauthPending = true;
@@ -524,8 +843,265 @@
     window.addEventListener('focus', () => { if (window._oauthPending) { window._oauthPending = false; closeModal(); load(true); } });
     document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeModal(); });
 
-    renderPresets();
-    load();
+    // =====================================================================
+    // THE AI PANEL INSIDE THE READER
+    //
+    // Everything the classifier concluded, plus the things you can do about it.
+    // Two rules hold here as firmly as on the server: nothing sends (Draft Reply
+    // only fills the existing composer, which still needs a human to press
+    // Send), and correcting the classification is authoritative — it sets the
+    // row to yours and teaches a rule, which the panel says out loud.
+    // =====================================================================
+
+    let AI_DETAIL = null;   // the detail for the message currently open
+
+    function aiPanelHtml(detail, item) {
+      if (!detail || !detail.classification) {
+        return `<div class="ai">
+            <h4>AI triage</h4>
+            <div class="line" style="color:var(--muted)">This email has not been classified yet.</div>
+            <div class="acts">
+              <button class="btn btn-primary" style="background:linear-gradient(135deg,#7c5cff,#2563eb)"
+                      onclick="aiClassifyThis()">&#10024; Classify this email</button>
+            </div>
+            <div class="status" id="ai-msg"></div>
+          </div>`;
+      }
+      const c = detail.classification;
+      const links = detail.links || [];
+      const has = (t) => links.some(l => l.link_type === t);
+      const linkOf = (t) => links.find(l => l.link_type === t);
+
+      const chips = [
+        `<span class="chip st-${esc(c.status)}">${esc(c.status_label || c.status)}</span>`,
+        c.priority && c.priority !== 'none' ? `<span class="chip">${esc(c.priority_label || c.priority)} priority</span>` : '',
+        c.project && c.project !== 'Unassigned' ? `<span class="chip proj">${esc(c.project)}</span>` : '',
+        c.category ? `<span class="chip">${esc(String(c.category).replace(/_/g, ' '))}</span>` : '',
+        c.deadline ? `<span class="chip due">${fmtDue(c.deadline)}</span>` : '',
+        c.manual_override ? `<span class="chip mark">Set by you</span>` : '',
+        c.is_simulated ? `<span class="chip">Keyword fallback</span>` : ''
+      ].filter(Boolean).join('');
+
+      const suspicious = c.injection_flagged
+        ? `<div class="warn">This message contains text aimed at the AI classifier, not at you. Whatever it claimed about its own urgency was ignored, and it was filed for review. Read it yourself before acting on it.</div>` : '';
+
+      const person = detail.person
+        ? `<div class="line"><span class="k">Person:</span> ${esc([detail.person.first_name, detail.person.last_name].filter(Boolean).join(' '))}${detail.person.title ? ' &middot; ' + esc(detail.person.title) : ''} <span style="color:var(--muted)">(in your contacts)</span></div>`
+        : `<div class="line"><span class="k">Person:</span> <span style="color:var(--muted)">no matching contact in the Hub</span></div>`;
+
+      const projOpts = (detail.suggested_projects || []);
+      const projectRow = projOpts.length
+        ? `<select id="ai-proj">${projOpts.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+           <button class="btn btn-ghost" onclick="aiLinkProject()">${has('project') ? 'Re-link project' : 'Link to project'}</button>`
+        : `<span style="font-size:12.5px;color:var(--muted)">No Hub project matches &ldquo;${esc(c.project || 'Unassigned')}&rdquo;.</span>`;
+
+      const threadHtml = (detail.thread || []).length
+        ? `<div class="ai"><h4>Earlier in this thread</h4>${detail.thread.map(t =>
+            `<div class="line"><span class="k">${fmtTs(t.received_at)}</span> &middot; ${esc(t.from_name || t.from_address || '')} &mdash; ${esc(t.summary || t.subject || '')}</div>`).join('')}</div>`
+        : '';
+
+      const statusSel = (AI_TAXONOMY ? AI_TAXONOMY.statuses : [c.status]).map(sv =>
+        `<option value="${esc(sv)}"${sv === c.status ? ' selected' : ''}>${esc((AI_TAXONOMY && AI_TAXONOMY.status_labels[sv]) || sv)}</option>`).join('');
+      const priSel = (AI_TAXONOMY ? AI_TAXONOMY.priorities : [c.priority]).map(pv =>
+        `<option value="${esc(pv)}"${pv === c.priority ? ' selected' : ''}>${esc((AI_TAXONOMY && AI_TAXONOMY.priority_labels[pv]) || pv)}</option>`).join('');
+      const projSel = (AI_TAXONOMY ? AI_TAXONOMY.projects : [c.project]).map(pv =>
+        `<option value="${esc(pv)}"${pv === c.project ? ' selected' : ''}>${esc(pv)}</option>`).join('');
+
+      return `
+        ${suspicious}
+        <div class="ai">
+          <h4>What this is</h4>
+          <div class="row2" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${chips}</div>
+          ${c.summary ? `<div class="line">${esc(c.summary)}</div>` : ''}
+          ${c.reason ? `<div class="line"><span class="k">Why:</span> ${esc(c.reason)}</div>` : ''}
+          ${c.recommended_action ? `<div class="line"><span class="k">Do:</span> ${esc(c.recommended_action)}</div>` : ''}
+          ${c.deadline ? `<div class="line"><span class="k">Deadline:</span> ${esc(new Date(c.deadline).toLocaleString('en-US', { timeZone: 'America/New_York' }))}</div>` : ''}
+          ${person}
+          <div class="line" style="color:var(--muted);font-size:12px">
+            ${c.manual_override ? 'You set this classification. Triage will not change it.'
+              : `Classified by ${esc(c.classified_by || 'the AI')}${c.model ? ' (' + esc(c.model) + ')' : ''} at ${Math.round((c.confidence || 0) * 100)}% confidence.`}
+          </div>
+
+          <div class="acts">
+            <button class="btn btn-primary" onclick="aiCreateTodo()">${has('task') ? 'Open the to-do' : '+ Create To-Do'}</button>
+            <button class="btn btn-ghost" onclick="aiToggleCal()">${has('calendar_event') ? 'Calendar item created' : 'Add to Calendar'}</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('reply-ai-btn').click()">Draft Reply</button>
+            <button class="btn btn-ghost" onclick="aiQuick('status','waiting_on_someone')">Mark Waiting</button>
+            <button class="btn btn-ghost" onclick="aiQuick('status','no_action')">Mark No Action</button>
+          </div>
+          ${has('task') ? `<div class="line" style="margin-top:8px;color:#6ee7b7;font-size:12.5px">To-do #${esc(String(linkOf('task').target_id))} already exists for this email &mdash; a second click will not make another.</div>` : ''}
+
+          <div class="acts" id="ai-cal" style="display:none">
+            <input type="datetime-local" id="ai-cal-start">
+            <button class="btn btn-primary" onclick="aiCreateEvent()">Create event</button>
+            <span style="font-size:12px;color:var(--muted);align-self:center">The email did not always state a time &mdash; confirm it.</span>
+          </div>
+
+          <div class="acts" style="margin-top:11px">${projectRow}</div>
+
+          <div class="acts" style="margin-top:11px;border-top:1px solid var(--border);padding-top:11px">
+            <span style="font-size:12px;color:var(--muted);align-self:center">Correct it:</span>
+            <select id="ai-status">${statusSel}</select>
+            <select id="ai-priority">${priSel}</select>
+            <select id="ai-project">${projSel}</select>
+            <button class="btn btn-primary" onclick="aiCorrect()">Save correction</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">
+            Saving also teaches a rule for <b>${esc(c.from_address || 'this sender')}</b>, so the next one lands here automatically.
+            <label style="margin-left:8px"><input type="checkbox" id="ai-learn" checked> learn the rule</label>
+          </div>
+          <div class="status" id="ai-msg"></div>
+        </div>
+        ${threadHtml}`;
+    }
+
+    function aiSay(msg, ok) {
+      const el = document.getElementById('ai-msg');
+      if (!el) return;
+      el.style.color = ok === false ? '#f87171' : (ok ? '#10b981' : 'var(--muted)');
+      el.textContent = msg;
+    }
+
+    async function aiPost(path, body) {
+      const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/${path}`, {
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(Object.assign({
+          account_id: AI_DETAIL_ITEM.account_id, message_id: AI_DETAIL_ITEM.message_id
+        }, body || {}))
+      });
+      return parseJsonSafe(res);
+    }
+
+    let AI_DETAIL_ITEM = null;
+
+    async function aiRefreshPanel() {
+      if (!AI_DETAIL_ITEM) return;
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/message?account_id=${encodeURIComponent(AI_DETAIL_ITEM.account_id)}&id=${encodeURIComponent(AI_DETAIL_ITEM.message_id)}`, { headers: authHeaders() });
+        const d = await parseJsonSafe(res);
+        if (!d.success) return;
+        AI_DETAIL = d;
+        const host = document.getElementById('ai-panel');
+        if (host) host.innerHTML = aiPanelHtml(d, AI_DETAIL_ITEM);
+      } catch (e) { /* silent */ }
+    }
+
+    window.aiClassifyThis = async () => {
+      aiSay('Reading this email…');
+      const d = await aiPost('triage', {
+        scope: 'selected',
+        selected: [{ account_id: AI_DETAIL_ITEM.account_id, message_id: AI_DETAIL_ITEM.message_id }]
+      });
+      if (!d.success) return aiSay(d.error || 'Could not start', false);
+      const id = d.job.id;
+      const tick = async () => {
+        const r = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/triage/${id}`, { headers: authHeaders() });
+        const j = await parseJsonSafe(r);
+        if (!j.success) return aiSay(j.error || 'Lost the run', false);
+        if (j.job.status === 'done') { aiSay('Classified.', true); return aiRefreshPanel(); }
+        if (j.job.status === 'failed') return aiSay(j.job.error || 'The run failed', false);
+        setTimeout(tick, 1500);
+      };
+      setTimeout(tick, 1200);
+    };
+
+    window.aiCreateTodo = async () => {
+      aiSay('Creating…');
+      const d = await aiPost('todo');
+      if (!d.success) return aiSay(d.error, false);
+      aiSay(d.duplicate
+        ? `That to-do already exists (#${d.task.id}) — nothing new was created.`
+        : `To-do #${d.task.id} created${d.contact ? ' and linked to ' + (d.contact.first_name || d.contact.email) : ''}.`, true);
+      aiRefreshPanel();
+    };
+
+    window.aiToggleCal = () => {
+      const el = document.getElementById('ai-cal');
+      if (!el) return;
+      el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+      const start = document.getElementById('ai-cal-start');
+      if (start && !start.value && AI_DETAIL && AI_DETAIL.classification && AI_DETAIL.classification.deadline) {
+        const d = new Date(AI_DETAIL.classification.deadline);
+        if (!isNaN(d.getTime())) start.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      }
+    };
+
+    window.aiCreateEvent = async () => {
+      const v = (document.getElementById('ai-cal-start') || {}).value;
+      if (!v) return aiSay('Pick a start time — the email did not state one we could trust.', false);
+      aiSay('Adding…');
+      const d = await aiPost('calendar', { start_time: new Date(v).toISOString() });
+      if (!d.success) return aiSay(d.error, false);
+      aiSay(d.duplicate ? 'A calendar item already exists for this email.' : `Added to the calendar (#${d.event.id}).`, true);
+      aiRefreshPanel();
+    };
+
+    window.aiLinkProject = async () => {
+      const sel = document.getElementById('ai-proj');
+      if (!sel || !sel.value) return;
+      aiSay('Linking…');
+      const d = await aiPost('link-project', { project_id: parseInt(sel.value, 10) });
+      if (!d.success) return aiSay(d.error, false);
+      aiSay(d.duplicate ? `Already linked to ${d.project.name}.` : `Linked to ${d.project.name}.`, true);
+      aiRefreshPanel();
+    };
+
+    // A one-tap correction (Mark Waiting / Mark No Action). Same path as the
+    // full editor, so it is equally authoritative and equally audited.
+    window.aiQuick = async (field, value) => {
+      const patch = {}; patch[field] = value;
+      aiSay('Saving…');
+      const d = await aiPost('correct', Object.assign(patch, { learn: false }));
+      if (!d.success) return aiSay(d.error, false);
+      aiSay('Saved. This is yours now — triage will not change it.', true);
+      aiRefreshPanel();
+    };
+
+    window.aiCorrect = async () => {
+      const selStatus = document.getElementById('ai-status');
+      const selPriority = document.getElementById('ai-priority');
+      const selProject = document.getElementById('ai-project');
+      const learn = document.getElementById('ai-learn');
+      const body = { learn: !learn || learn.checked };
+      if (selStatus) body.status = selStatus.value;
+      if (selPriority) body.priority = selPriority.value;
+      if (selProject) body.project = selProject.value;
+      aiSay('Saving…');
+      const d = await aiPost('correct', body);
+      if (!d.success) return aiSay(d.error, false);
+      const rule = (d.rules || [])[0];
+      aiSay(`Saved.${rule ? ` Future mail from ${rule.match_value} will file the same way.` : ''}`, true);
+      aiRefreshPanel();
+      // The card in the list behind the reader is now stale — refresh the counts.
+      loadActionInbox({ quiet: true });
+    };
+
+    // Back from the reader lands on the list you were actually looking at.
+    function backToList() {
+      if (EMAIL_FOLLOWUPS) return loadFollowups();
+      return VIEW_MODE === 'classic' ? load() : loadActionInbox();
+    }
+    window.backToList = backToList;
+
+    // ---- boot -----------------------------------------------------------
+    // The Action Inbox is the default. Follow-ups mode is untouched, and the
+    // taxonomy is fetched first so the tab bar and the correction dropdowns
+    // never hardcode a list that could drift from the server's.
+    async function boot() {
+      renderPresets();
+      if (EMAIL_FOLLOWUPS) return loadFollowups();
+      if (!token()) { document.getElementById('list').innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/taxonomy`, { headers: authHeaders() });
+        const t = await parseJsonSafe(res);
+        if (t.success) AI_TAXONOMY = t;
+      } catch (e) { /* the list still renders; the tabs just come from the response */ }
+      renderTabs();
+      await loadActionInbox();
+      resumeActiveJob();
+    }
+    boot();
+
   </script>
 </body>
 </html>

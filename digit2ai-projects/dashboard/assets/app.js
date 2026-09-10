@@ -170,6 +170,91 @@ async function refreshMessagesBadge() {
   } catch (e) { /* silent */ }
 }
 
+// =====================================================
+// AI ACTION INBOX — the Home surface
+//
+// The Email tab answers "what do I need to do?"; this brings the headline of
+// that answer onto the Home page, so an overdue email action is visible
+// without opening the inbox. Every number is a count of classified rows —
+// nothing here is estimated, and an empty section says so rather than being
+// hidden, because "no critical problems" is the most useful line on a good day.
+// =====================================================
+let EMAIL_BRIEF = null;
+
+function briefItemHtml(it) {
+  const who = escapeHtml(it.from || 'Unknown');
+  const subj = escapeHtml(it.subject || '(no subject)');
+  const sum = it.summary ? `<br><span style="color:var(--text-muted)">${escapeHtml(it.summary)}</span>` : '';
+  const rec = it.recommended_action ? `<br><span style="color:#93c5fd">&rarr; ${escapeHtml(it.recommended_action)}</span>` : '';
+  return `<div class="timeline-item" style="cursor:pointer" onclick="navigateTo('email')">
+      <div class="timeline-dot" style="background:${it.priority === 'critical' ? '#ef4444' : (it.priority === 'high' ? '#f59e0b' : '#38bdf8')}"></div>
+      <div class="timeline-content"><strong>${who}</strong> &mdash; ${subj}${sum}${rec}</div>
+    </div>`;
+}
+
+function briefSectionHtml(title, items, limit) {
+  if (!items || !items.length) return '';
+  const shown = items.slice(0, limit || 3);
+  const more = items.length > shown.length ? `<div style="font-size:12.5px;color:var(--text-muted);padding:4px 12px">+ ${items.length - shown.length} more in the Email tab</div>` : '';
+  return `<div style="margin-bottom:14px">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin:0 0 6px 12px">${escapeHtml(title)}</div>
+      ${shown.map(briefItemHtml).join('')}${more}
+    </div>`;
+}
+
+async function loadEmailBrief() {
+  if (!TOKEN) return;
+  try {
+    const res = await fetch(`${location.origin}/api/projects-bridge/email-ai/brief`, {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const d = await res.json();
+    if (!d || !d.success || !d.brief) return;
+    const b = d.brief;
+    EMAIL_BRIEF = b;
+
+    // The KPI: what actually needs the owner, not how much mail arrived.
+    const needs = b.critical.length + b.today.length + b.overdue.length;
+    const kv = document.getElementById('kpi-email-actions');
+    if (kv) kv.textContent = needs;
+    const sub = document.getElementById('kpi-email-actions-sub');
+    if (sub) {
+      sub.textContent = b.overdue.length
+        ? `${b.overdue.length} already past a stated deadline`
+        : (needs ? 'Critical + due today, from your triaged inbox' : 'Nothing from your inbox needs you right now');
+      sub.className = 'stat-change ' + (b.overdue.length || b.critical.length ? 'stat-down' : 'stat-up');
+    }
+    const card = document.getElementById('kpi-email-action-card');
+    if (card) card.classList.toggle('card-needs-attention', needs > 0);
+
+    // The brief panel. Hidden entirely until something has been triaged —
+    // an empty panel would read as a broken feature rather than a clear inbox.
+    const panel = document.getElementById('email-brief-card');
+    if (!panel) return;
+    if (!b.total_classified) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    const line = document.getElementById('email-brief-line');
+    if (line) {
+      line.innerHTML = escapeHtml(b.narrative || '') +
+        (b.model_configured ? '' : ' <span style="color:#fbbf24">(keyword fallback — no model key configured)</span>');
+    }
+    const body = document.getElementById('email-brief-body');
+    if (body) {
+      const html = [
+        briefSectionHtml('Critical problems', b.critical, 5),
+        briefSectionHtml('Past their deadline', b.overdue, 5),
+        briefSectionHtml('Do today', b.today, 4),
+        briefSectionHtml('Replies you owe', b.replies_needed, 3),
+        briefSectionHtml('Meetings and deadlines', b.meetings, 3),
+        briefSectionHtml('Waiting on someone else', b.waiting, 3),
+        briefSectionHtml('The AI was not sure', b.needs_review, 3)
+      ].filter(Boolean).join('');
+      body.innerHTML = html || '<p style="color:var(--text-muted);font-size:13px;padding:8px 12px">Nothing needs you from email right now.</p>';
+    }
+  } catch (e) { /* the Home page never breaks over the brief */ }
+}
+window.loadEmailBrief = loadEmailBrief;
+
 // Unread email badge on the Email nav item (client 15, across all inboxes).
 function setEmailBadge(unread) {
   const badge = document.getElementById('email-badge');
@@ -742,6 +827,18 @@ async function renderOverview(container) {
         <div class="stat-change stat-neutral">Calls/messages you flagged to follow up</div>
         <div class="kpi-hint">Click to view messages</div>
       </div>
+      <div class="card card-stat card-accent-red card-clickable" id="kpi-email-action-card" onclick="navigateTo('email')" data-tooltip="Open the AI Action Inbox">
+        <div class="stat-label">Email Actions Needed</div>
+        <div class="stat-value" id="kpi-email-actions">&middot;</div>
+        <div class="stat-change stat-neutral" id="kpi-email-actions-sub">Critical + due today, from your triaged inbox</div>
+        <div class="kpi-hint">Click to open Email</div>
+      </div>
+    </div>
+
+    <div class="card card-accent-cyan" id="email-brief-card" style="margin-bottom:24px;display:none">
+      <div class="section-header"><h3>Daily Executive Brief &mdash; Email</h3></div>
+      <p class="section-hint" id="email-brief-line"></p>
+      <div id="email-brief-body"></div>
     </div>
 
     <div id="neural-findings-panel">
@@ -765,6 +862,9 @@ async function renderOverview(container) {
 
   // CRM call/message stats (client 15) — fills the two KPI cards + Messages badge
   loadCrmCallStats();
+
+  // The AI Action Inbox brief — every figure is a count of classified rows.
+  loadEmailBrief();
 
   // Email unread (paints the Email quick-action badge)
   refreshEmailBadge();
@@ -897,7 +997,7 @@ function initLinaOrb(d) {
   // Fetch the LIVE unread email + Intercom detail (senders/names) so Lina can
   // name who wrote. Both reuse the same token the badges use; failures are silent.
   async function fetchLinaExtras() {
-    const out = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] }, messages: { unread: 0, followups: 0 } };
+    const out = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] }, messages: { unread: 0, followups: 0 }, action: null };
     let tok = null;
     try { tok = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : localStorage.getItem('token'); } catch (e) {}
     if (!tok) return out;
@@ -916,6 +1016,23 @@ function initLinaOrb(d) {
         const items = ed.items || [];
         out.email.count = (typeof ed.total_unread === 'number') ? ed.total_unread : items.length;
         out.email.senders = items.map(function (it) { return { name: linaEmailSender(it), subject: (it.subject || '').trim() }; });
+      }
+    } catch (e) {}
+    // The AI Action Inbox brief — counts of classified rows, so Lina can say
+    // what NEEDS Manuel rather than only how much mail arrived.
+    try {
+      const rb = await fetch(location.origin + '/api/projects-bridge/email-ai/brief', { headers: { Authorization: 'Bearer ' + tok } });
+      const bd = await rb.json();
+      if (bd && bd.success && bd.brief && bd.brief.total_classified) {
+        out.action = {
+          critical: bd.brief.critical.length,
+          today: bd.brief.today.length,
+          week: bd.brief.this_week.length,
+          replies: bd.brief.replies_needed.length,
+          overdue: bd.brief.overdue.length,
+          review: bd.brief.needs_review.length,
+          ignored: bd.brief.safely_ignored
+        };
       }
     } catch (e) {}
     try {
@@ -997,6 +1114,27 @@ function initLinaOrb(d) {
       if (names.length) e += ': ' + linaJoinES(names);
       e += (em.count > names.length && names.length) ? ', entre otros.' : '.';
       segs.push(e);
+    }
+
+    // 3b — what the triaged inbox actually needs from you. Deliberately after
+    // the unread count: "cuántos llegaron" is trivia, "qué te toca" is the point.
+    const act = extras.action;
+    if (act) {
+      const parts = [];
+      if (act.critical) parts.push(act.critical === 1 ? 'un problema crítico' : linaNumES(act.critical) + ' problemas críticos');
+      if (act.overdue) parts.push(act.overdue === 1 ? 'un pendiente que ya pasó su fecha' : linaNumES(act.overdue) + ' pendientes que ya pasaron su fecha');
+      if (act.today) parts.push(act.today === 1 ? 'una cosa para hoy' : linaNumES(act.today) + ' cosas para hoy');
+      if (act.replies) parts.push(act.replies === 1 ? 'una respuesta que debes' : linaNumES(act.replies) + ' respuestas que debes');
+      if (act.week) parts.push(act.week === 1 ? 'un pendiente para esta semana' : linaNumES(act.week) + ' pendientes para esta semana');
+      if (parts.length) {
+        let a = 'De ese correo, la triaje encontró ' + linaJoinES(parts) + '.';
+        if (act.review) a += ' Y ' + (act.review === 1 ? 'uno que no pudo clasificar con seguridad' : linaNumES(act.review) + ' que no pudo clasificar con seguridad') + ', esperando que lo revises.';
+        segs.push(a);
+      } else {
+        let a = 'De ese correo, la triaje no encontró nada que necesite acción tuya.';
+        if (act.ignored) a += ' ' + (act.ignored === 1 ? 'Un mensaje' : linaNumES(act.ignored) + ' mensajes') + ' de baja prioridad que puedes ignorar sin problema.';
+        segs.push(a);
+      }
     }
 
     // 4 — Intercom (new messages, by champion)

@@ -16,6 +16,7 @@ const jwt = require('jsonwebtoken');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const emailReconcile = require('../services/emailReconcile');
+const emailIntelligence = require('../services/emailIntelligence');
 
 // Hard-scoped to the Digit2AI / RinglyPro owner tenant. Matches D2AI_CLIENT_ID
 // in routes/elevenlabs-tools.js (Lina's Projects-calendar carve-out).
@@ -41,6 +42,9 @@ function requireClient15(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
     const cid = parseInt(decoded.clientId || decoded.client_id, 10);
     if (cid !== D2AI_CLIENT_ID) return res.status(403).json({ success: false, error: 'forbidden' });
+    // The verified claims — routes read the operator's email from HERE, never
+    // from a request body, so an action can always be attributed truthfully.
+    req.d2aiUser = { email: decoded.email, userId: decoded.userId, clientId: cid };
     next();
   } catch (e) {
     return res.status(401).json({ success: false, error: 'invalid token' });
@@ -55,7 +59,8 @@ router.get('/version', (req, res) => {
     imap_read: true,
     reply_agent: true,
     triage: true,
-    email_followups: true
+    email_followups: true,
+    action_inbox: true
   });
 });
 
@@ -416,6 +421,237 @@ router.post('/email-triage', requireClient15, async (req, res) => {
   } catch (error) {
     console.error('[ProjectsBridge] email-triage error:', error.message);
     res.json({ success: false, items: [], error: error.message });
+  }
+});
+
+// =====================================================================
+// AI ACTION INBOX
+//
+// The upgrade of "Triage with AI" from an ephemeral, subject-only sort into a
+// persisted action inbox. All of it is gated by requireClient15 exactly like
+// every other route in this file, and the tenant is read from the verified
+// token — a client_id in a request body is never honoured.
+//
+// The legacy POST /email-triage above is left in place and untouched: it is a
+// different contract (returns items inline, persists nothing) and old cached
+// copies of the page still call it.
+// =====================================================================
+
+// The taxonomy, so the UI never hardcodes a status list that could drift.
+router.get('/email-ai/taxonomy', requireClient15, (req, res) => {
+  res.json({ success: true, ...emailIntelligence.taxonomy(), model_configured: emailIntelligence.hasApiKey() });
+});
+
+// The action inbox itself: filtered by tab, ordered by priority then deadline.
+router.get('/email-ai/inbox', requireClient15, async (req, res) => {
+  try {
+    const data = await emailIntelligence.listInbox(D2AI_CLIENT_ID, {
+      tab: req.query.tab || 'focus',
+      project: req.query.project || null,
+      limit: req.query.limit,
+      force: req.query.force === '1'
+    });
+    res.json({ success: true, ...data });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-ai/inbox error:', error.message);
+    res.json({ success: false, items: [], error: error.message });
+  }
+});
+
+// Tab counters on their own — cheap enough to poll for a badge.
+router.get('/email-ai/counts', requireClient15, async (req, res) => {
+  try {
+    const counts = await emailIntelligence.tabCounts(D2AI_CLIENT_ID, req.query.project || null);
+    const stats = await emailIntelligence.actionStats(D2AI_CLIENT_ID);
+    res.json({ success: true, counts, stats });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// One email: classification, links, thread siblings, audit history.
+router.get('/email-ai/message', requireClient15, async (req, res) => {
+  try {
+    const { account_id, id } = req.query;
+    if (!account_id || !id) return res.json({ success: false, error: 'account_id and id are required' });
+    const data = await emailIntelligence.getDetail(D2AI_CLIENT_ID, account_id, id);
+    res.json({ success: true, ...data });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// TRIAGE — queued, never synchronous.
+//
+// This endpoint returns a job id in milliseconds. It must: the page sits
+// behind Cloudflare's ~100s 524 ceiling, and a full inbox is dozens of body
+// fetches plus dozens of model calls. The UI polls /email-ai/triage/:id.
+// ---------------------------------------------------------------------
+router.post('/email-ai/triage', requireClient15, async (req, res) => {
+  try {
+    const body = req.body || {};
+    let scope = body.scope || 'unclassified';
+
+    // Full reanalysis re-spends the model budget on mail already classified, so
+    // it needs an explicit confirmation string, and — when the allowlist env is
+    // set — an allowlisted operator. Recorded in the audit either way.
+    if (scope === 'all') {
+      if (body.confirm !== 'reanalyze-all') {
+        return res.json({ success: false, error: 'Full reanalysis needs confirm:"reanalyze-all".' });
+      }
+      const allow = (process.env.EMAIL_AI_ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const who = String((req.d2aiUser && req.d2aiUser.email) || '').toLowerCase();
+      if (allow.length && !allow.includes(who)) {
+        return res.status(403).json({ success: false, error: 'Full reanalysis is limited to an allowlisted operator.' });
+      }
+    }
+
+    const selected = Array.isArray(body.selected) ? body.selected.slice(0, 500) : [];
+    if (scope === 'selected' && !selected.length) {
+      return res.json({ success: false, error: 'Select at least one email to reanalyze.' });
+    }
+
+    const { job, already_running } = await emailIntelligence.startTriage(D2AI_CLIENT_ID, { scope, selected });
+    res.json({ success: true, job, already_running, model_configured: emailIntelligence.hasApiKey() });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-ai/triage error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Progress for a queued run. Also reports per-message failures, so a run that
+// finished with 3 errors says so instead of silently dropping them.
+router.get('/email-ai/triage/:id', requireClient15, async (req, res) => {
+  try {
+    const job = await emailIntelligence.getJob(D2AI_CLIENT_ID, req.params.id);
+    if (!job) return res.json({ success: false, error: 'job not found' });
+    res.json({ success: true, job });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Is anything running right now? Lets the page resume a spinner after a reload.
+router.get('/email-ai/triage-active', requireClient15, async (req, res) => {
+  try {
+    const job = await emailIntelligence.activeJob(D2AI_CLIENT_ID);
+    res.json({ success: true, job: job || null });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// CORRECTIONS — a human's answer is final, and it teaches a rule.
+// ---------------------------------------------------------------------
+router.post('/email-ai/correct', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id, learn, learn_scope, ...patch } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.correct(D2AI_CLIENT_ID, account_id, message_id, patch, {
+      learn: learn !== false,
+      learn_scope,
+      note: `corrected by ${(req.d2aiUser && req.d2aiUser.email) || 'the owner'}`
+    });
+    res.json({ success: true, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// The rules a correction produced. Visible and deletable — a learned rule the
+// owner cannot see or undo is a black box that quietly misfiles mail forever.
+router.get('/email-ai/rules', requireClient15, async (req, res) => {
+  try {
+    const rules = await emailIntelligence.listRules(D2AI_CLIENT_ID);
+    res.json({ success: true, rules });
+  } catch (error) {
+    res.json({ success: false, rules: [], error: error.message });
+  }
+});
+
+router.post('/email-ai/rules', requireClient15, async (req, res) => {
+  try {
+    const rule = await emailIntelligence.upsertRule(D2AI_CLIENT_ID, req.body || {});
+    res.json({ success: true, rule });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/email-ai/rules/:id', requireClient15, async (req, res) => {
+  try {
+    await emailIntelligence.deleteRule(D2AI_CLIENT_ID, req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// PROJECTS HUB ACTIONS — every one deduped, none of them send anything.
+// ---------------------------------------------------------------------
+router.post('/email-ai/todo', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id, title, priority, due_date } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.createTodo(D2AI_CLIENT_ID, account_id, message_id, {
+      title, priority, due_date, user_email: (req.d2aiUser && req.d2aiUser.email) || null
+    });
+    res.json({ success: true, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+router.post('/email-ai/link-project', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id, project_id } = req.body || {};
+    if (!account_id || !message_id || !project_id) {
+      return res.json({ success: false, error: 'account_id, message_id and project_id are required' });
+    }
+    const out = await emailIntelligence.linkProject(D2AI_CLIENT_ID, account_id, message_id, project_id);
+    res.json({ success: true, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// The Hub projects an email might belong to. Read-only — nothing is linked
+// until a person picks one.
+router.get('/email-ai/project-options', requireClient15, async (req, res) => {
+  try {
+    const rows = await emailIntelligence.suggestHubProjects(req.query.q || '', 20);
+    res.json({ success: true, projects: rows });
+  } catch (error) {
+    res.json({ success: false, projects: [], error: error.message });
+  }
+});
+
+router.post('/email-ai/calendar', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id, title, start_time, end_time, event_type } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.createCalendarEvent(D2AI_CLIENT_ID, account_id, message_id, {
+      title, start_time, end_time, event_type, user_email: (req.d2aiUser && req.d2aiUser.email) || null
+    });
+    res.json({ success: true, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// DAILY EXECUTIVE BRIEF — counted rows, never an estimate.
+// ---------------------------------------------------------------------
+router.get('/email-ai/brief', requireClient15, async (req, res) => {
+  try {
+    const brief = await emailIntelligence.dailyBrief(D2AI_CLIENT_ID);
+    res.json({ success: true, brief });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-ai/brief error:', error.message);
+    res.json({ success: false, error: error.message });
   }
 });
 

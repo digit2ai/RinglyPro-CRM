@@ -27,7 +27,9 @@ async function detectAll(ws) {
     detectProjectsPastDue,
     detectStakeholdersMissingPhone,
     detectContractsDraftStale,
-    detectAgentsFailed
+    detectAgentsFailed,
+    detectCriticalEmail,
+    detectOverdueEmailActions
   ];
   const results = await Promise.allSettled(detectors.map(d => d(ws)));
   return results
@@ -279,6 +281,67 @@ async function detectAgentsFailed(ws) {
 // =====================================================
 
 // GET /api/v1/findings — list active (non-dismissed) findings, sorted by severity
+// ---------------------------------------------------------------------------
+// EMAIL DETECTORS
+//
+// email_classifications lives in the MAIN CRM database, which is the same
+// database as the d2_* tables whenever PROJECTS_DATABASE_URL is unset (the
+// production configuration). If someone splits them, these two detectors go
+// quiet rather than throwing — a missing table is not a finding, and a Home
+// page that 500s because the inbox is on another host is worse than one that
+// simply does not mention email.
+// ---------------------------------------------------------------------------
+
+const D2AI_EMAIL_CLIENT_ID = 15;
+
+async function emailCounts() {
+  try {
+    const [rows] = await sequelize.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'critical')::int AS critical,
+        COUNT(*) FILTER (WHERE action_required
+                           AND deadline IS NOT NULL
+                           AND deadline < NOW()
+                           AND status NOT IN ('no_action','newsletter','automated'))::int AS overdue
+      FROM email_classifications
+      WHERE client_id = :cid
+    `, { replacements: { cid: D2AI_EMAIL_CLIENT_ID } });
+    return rows[0] || null;
+  } catch (e) {
+    return null;   // table absent or on another database — stay silent
+  }
+}
+
+async function detectCriticalEmail() {
+  const r = await emailCounts();
+  if (!r || !r.critical) return null;
+  return {
+    key: 'email.critical',
+    severity: 'critical',
+    title: `${r.critical} Critical Email${r.critical === 1 ? '' : 's'} Waiting`,
+    description: `${r.critical} email${r.critical === 1 ? ' was' : 's were'} classified as a live problem — an outage, a blocked account, or something else stopping work until it is fixed. These sit at the top of the Email tab under Critical.`,
+    impact_label: `${r.critical} unresolved problem${r.critical === 1 ? '' : 's'}`,
+    source_label: 'Email',
+    fix_view: 'email',
+    fix_drill: 'finding'
+  };
+}
+
+async function detectOverdueEmailActions() {
+  const r = await emailCounts();
+  if (!r || !r.overdue) return null;
+  return {
+    key: 'email.actions.overdue',
+    severity: r.overdue >= 5 ? 'critical' : 'warning',
+    title: `${r.overdue} Email Action${r.overdue === 1 ? '' : 's'} Past Their Deadline`,
+    description: `${r.overdue} email${r.overdue === 1 ? ' has' : 's have'} a deadline the sender actually stated, and that date has passed. Open them from the Email tab, or turn each into a to-do so it stops living in an inbox.`,
+    impact_label: `${r.overdue} deadline${r.overdue === 1 ? '' : 's'} already missed`,
+    source_label: 'Email',
+    fix_view: 'email',
+    fix_drill: 'finding'
+  };
+}
+
 router.get('/', async (req, res) => {
   try {
     const ws = 1;
