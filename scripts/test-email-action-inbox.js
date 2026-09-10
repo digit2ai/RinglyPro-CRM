@@ -333,6 +333,12 @@ section('10. Business-impact reasoning on the real examples in the brief');
       status: 'newsletter', priority: 'none', action: false
     },
     {
+      name: 'A webinar INVITATION is marketing, not a meeting you agreed to',
+      msg: { from: 'events@shen.ai', subject: '[Webinar invitation] The real barrier to healthcare AI is not the technology' },
+      body: 'Join our webinar. Unsubscribe here.',
+      status: 'newsletter', priority: 'none', action: false
+    },
+    {
       name: 'A calendar invitation is a meeting',
       msg: { from: 'greg@example.com', subject: 'Meeting invitation: Thursday sync' },
       body: 'Sending a calendar invite for Thursday. Please RSVP.',

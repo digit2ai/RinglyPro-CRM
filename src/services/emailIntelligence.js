@@ -533,6 +533,11 @@ function heuristicClassify(msg, body) {
   let recommended_action = '';
   let reason = '';
 
+  // Order matters, and one exclusion is load-bearing: "[Webinar invitation]"
+  // hits the meeting keywords, but a webinar invitation is marketing — you have
+  // not agreed to be anywhere. A mail carrying an unsubscribe footer or the word
+  // webinar is bulk, whatever else it says, so newsletter signals veto the
+  // meeting branch rather than losing a race to it.
   if (any(CRITICAL_PATTERNS, text)) {
     status = 'critical'; priority = 'critical'; category = 'technical_issue'; action_required = true;
     recommended_action = 'Investigate and resolve the reported failure, then confirm service is restored.';
@@ -546,7 +551,7 @@ function heuristicClassify(msg, body) {
     category = any(BILLING_PATTERNS, text) ? 'billing' : 'project'; action_required = true;
     recommended_action = 'Resolve the flagged item before it lapses.';
     reason = 'The message states something is failing, paused, or due, which has a cost if left alone.';
-  } else if (any(MEETING_PATTERNS, text)) {
+  } else if (any(MEETING_PATTERNS, text) && !any(NEWSLETTER_PATTERNS, text)) {
     status = 'meeting'; priority = 'medium'; category = 'meeting'; action_required = true;
     recommended_action = 'Confirm the time and add it to the calendar.';
     reason = 'The message proposes or confirms a time, which has to land on a calendar to be real.';
