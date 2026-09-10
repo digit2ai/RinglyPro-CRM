@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>JobMD.io — dashboard simulator</title>
+<script>(function(){try{var t=localStorage.getItem('jobmd_theme');
+if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+
+<!-- THE PRODUCT'S OWN STYLESHEET AND RENDERER. This page is not a mock of the
+     dashboards; it runs the same code app.html runs. The only difference is
+     where the data comes from — see the transport at the foot of the file. -->
+<link rel="stylesheet" href="dashboard-ui.css">
+<style>
+/* ── Simulator chrome only. Nothing in here touches a dashboard rule. ───── */
+.jmd .simbar{position:sticky;top:0;z-index:60;background:var(--nav-bg,#fff);
+  border-bottom:1px solid var(--nav-line,rgba(12,16,26,.12));padding:10px 0}
+.jmd .simbar .wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.jmd .simbar .logo{display:block;height:38px;width:auto}
+.jmd .roles{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.jmd .roleb{min-height:44px;padding:0 18px;border-radius:999px;font:inherit;font-size:14px;
+  font-weight:700;cursor:pointer;border:1px solid var(--nav-line,rgba(12,16,26,.18));
+  background:transparent;color:var(--nav-ink,#0d1117);display:inline-flex;align-items:center;gap:8px}
+.jmd .roleb:hover{border-color:rgba(34,211,238,.6)}
+.jmd .roleb.on{background:var(--grad);border-color:transparent;color:#07070c}
+.jmd .roleb small{display:block;font-weight:500;font-size:11px;opacity:.75}
+
+.jmd .simnote{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 16px;margin:18px 0 0;font-size:13.5px;color:var(--mut);display:flex;gap:11px}
+.jmd .simnote b{color:var(--ink)}
+.jmd .simnote .dot{flex:0 0 9px;height:9px;margin-top:6px;border-radius:50%;background:var(--teal)}
+
+/* The browser frame. It is what makes this read as software rather than a deck. */
+.jmd .frame{margin:20px 0 44px;border:1px solid var(--line2);border-radius:14px;
+  overflow:hidden;background:var(--bg);box-shadow:var(--shadow)}
+.jmd .fbar{display:flex;align-items:center;gap:9px;padding:11px 15px;background:var(--card2);
+  border-bottom:1px solid var(--line)}
+.jmd .fdot{width:11px;height:11px;border-radius:50%;background:var(--line2)}
+.jmd .furl{flex:1;margin-left:9px;font-family:var(--mono);font-size:12.5px;color:var(--faint);
+  background:var(--bg2);border-radius:7px;padding:6px 12px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.jmd .fbody{padding:26px 24px 34px;min-height:520px}
+.jmd .fbody .wrap{padding:0;max-width:none}
+
+/* The signed-in strip the real app writes into its nav. */
+.jmd .simwho{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--mut);
+  padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.jmd .simwho b{color:var(--ink)}
+
+/* Embedded in the walkthrough: the step already says whose screen this is and
+   already frames it, so the simulator's own bar and note would be said twice. */
+body.embed .simbar,body.embed .simnote{display:none}
+/* The walkthrough draws its own browser bar around the iframe. Leaving this
+   one visible stacked two sets of traffic lights on top of each other. */
+body.embed .fbar{display:none}
+body.embed .frame{margin:0;border-radius:0;border:0;box-shadow:none}
+body.embed main .wrap{padding:0;max-width:none}
+body.embed .fbody{min-height:0}
+
+@media(max-width:720px){
+  .jmd .roles{margin-left:0;width:100%}
+  .jmd .roleb{flex:1;justify-content:center;padding:0 10px;font-size:13px}
+  .jmd .fbody{padding:18px 14px 26px}
+  .jmd .furl{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="jmd">
+
+<div class="simbar"><div class="wrap">
+  <a class="brand" href="./" aria-label="JobMD.io home">
+    <picture><source srcset="jobmd-logo.webp" type="image/webp">
+    <img class="logo" src="jobmd-logo.png" width="845" height="222" alt="JobMD.io"></picture>
+  </a>
+  <div class="roles" role="tablist" aria-label="Whose dashboard">
+    <button class="roleb on" type="button" data-role="physician" role="tab">Physician<small>finds a role</small></button>
+    <button class="roleb" type="button" data-role="hospital" role="tab">Hospital<small>fills a position</small></button>
+    <button class="roleb" type="button" data-role="recruiter" role="tab">Recruiter<small>runs the pipeline</small></button>
+  </div>
+</div></div>
+
+<main><div class="wrap">
+
+  <div class="simnote"><span class="dot"></span><span id="simnote"></span></div>
+
+  <div class="frame">
+    <div class="fbar">
+      <span class="fdot"></span><span class="fdot"></span><span class="fdot"></span>
+      <span class="furl" id="furl">jobmd.io/app</span>
+    </div>
+    <div class="fbody">
+      <div class="simwho" id="simwho"></div>
+      <div class="wrap">
+        <div id="loading" class="sub">Loading your dashboard&hellip;</div>
+        <div id="root" hidden></div>
+      </div>
+    </div>
+  </div>
+
+</div></main>
+</div>
+
+<script src="dashboard-ui.js"></script>
+<script src="simulator-fixtures.js"></script>
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   THE FIXTURE TRANSPORT — the ONLY thing that differs from the real app.
+
+   dashboard-ui.js above is the product's renderer, byte for byte. It is
+   handed captured API responses instead of live ones, so what a prospect sees
+   here is what a subscriber sees, including every score, reason and gap the
+   matching engine produced when the fixtures were built.
+
+   It CANNOT reach the network. Every request is resolved out of FIXTURES, and
+   anything not captured throws with the path named — so a gap in the fixtures
+   shows up as a loud error while we are testing, never as a blank panel in
+   front of someone.
+   ───────────────────────────────────────────────────────────────────────── */
+(function(){
+  var role = 'physician';
+  var WHO = {
+    physician:{ url:'jobmd.io/app', note:
+      '<b>This is the real dashboard.</b> Not a screenshot and not a mock &mdash; it is the ' +
+      'product’s own interface running on captured data, and every score below was produced by ' +
+      'the live matching engine. The people and hospitals are samples.' },
+    hospital:{ url:'jobmd.io/app', note:
+      '<b>The same interface, a different role.</b> A hospital sees only its own positions and the ' +
+      'candidates on them. Role is set at signup and cannot be changed by a request.' },
+    recruiter:{ url:'jobmd.io/app', note:
+      '<b>The recruiter sees the whole pipeline</b> across every client, plus the Copilot and the ' +
+      'agent queue. Every agent output here is a draft awaiting a person; nothing sends.' }
+  };
+
+  // Writes that a real dashboard would persist. The simulator accepts them so
+  // the buttons work, and answers from the fixture that follows the action.
+  function resolve(p, opt){
+    var method = (opt.method || 'GET').toUpperCase();
+
+    if(p === '/auth/logout') return { ok:true };
+
+    // Stage changes, applications and agent-action reviews: acknowledge, so the
+    // UI advances exactly as it does in the product.
+    if(method === 'PATCH' && p.indexOf('/pipeline/') === 0){
+      var st = JSON.parse(opt.body || '{}').stage;
+      return { ok:true, stage: st };
+    }
+    if(method === 'PATCH' && p.indexOf('/agents/actions/') === 0){
+      return { ok:true, action: JSON.parse(opt.body || '{}') };
+    }
+    if(method === 'POST' && p === '/apply') return { ok:true, stage:'Interested' };
+    if(method === 'PUT'  && p === '/profile'){
+      return FIXTURES['physician:/profile'];
+    }
+
+    // The Copilot: match the captured query, else say plainly it was not one of
+    // the recorded ones rather than inventing a result set.
+    if(method === 'POST' && p === '/search'){
+      var q = (JSON.parse(opt.body || '{}').q || '').trim();
+      var hit = FIXTURES['recruiter:POST:/search:' + q];
+      if(hit) return hit;
+      var recorded = Object.keys(FIXTURES)
+        .filter(function(k){ return k.indexOf('recruiter:POST:/search:') === 0; })
+        .map(function(k){ return k.split(':').slice(2).join(':'); });
+      return { items: [], parsed: {}, ignored: [q],
+        note: 'The simulator answers from recorded searches. Try: ' + recorded.join(' / ') };
+    }
+
+    var key = (method === 'GET' ? role + ':' + p : role + ':' + method + ':' + p);
+    if(FIXTURES[key]) return FIXTURES[key];
+    // Agent drafts were captured against one pipeline row; accept any id.
+    if(method === 'POST' && p.indexOf('/agents/outreach/') === 0){
+      var o = firstKey('recruiter:POST:/agents/outreach/'); if(o) return o;
+    }
+    if(method === 'POST' && p.indexOf('/agents/schedule/') === 0){
+      var s = firstKey('recruiter:POST:/agents/schedule/'); if(s) return s;
+    }
+    if(FIXTURES['recruiter:' + p]) return FIXTURES['recruiter:' + p];
+    return null;
+  }
+  function firstKey(prefix){
+    var k = Object.keys(FIXTURES).filter(function(x){ return x.indexOf(prefix) === 0; })[0];
+    return k ? FIXTURES[k] : null;
+  }
+
+  setApiTransport(function(p, opt){
+    var out = resolve(p, opt);
+    if(out == null){
+      return Promise.reject(new Error(
+        'This screen is not part of the simulator (' + ((opt.method||'GET')) + ' ' + p + ').'));
+    }
+    // A short delay, because an interface that answers in zero milliseconds
+    // reads as a static page rather than as software.
+    return new Promise(function(r){ setTimeout(function(){ r(JSON.parse(JSON.stringify(out))); }, 180); });
+  });
+
+  function boot(){
+    var w = WHO[role];
+    document.getElementById('furl').textContent = w.url;
+    document.getElementById('simnote').innerHTML = w.note;
+    document.getElementById('root').hidden = true;
+    document.getElementById('root').innerHTML = '';
+    document.getElementById('loading').hidden = false;
+
+    Promise.all([api('/me'), api('/reference')]).then(function(r){
+      ME = r[0]; REF = r[1];
+      document.getElementById('loading').hidden = true;
+      document.getElementById('root').hidden = false;
+      document.getElementById('simwho').innerHTML =
+        '<b>' + esc(ME.account.name) + '</b>' +
+        '<span class="rolechip">' + esc(ME.account.role) + '</span>' +
+        '<span style="margin-left:auto;font-size:12.5px">Signed in</span>';
+      if(ME.account.role === 'physician') renderPhysician(); else renderEmployer();
+      if(wantTab){
+        var t = document.querySelector('.tab[data-t="'+wantTab+'"]');
+        if(t){
+          // The dashboard loads its DEFAULT pane asynchronously. Clicking the
+          // requested tab immediately lost the race: our pane rendered first
+          // and the default one overwrote it, leaving the Copilot tab lit above
+          // the pipeline table. Re-assert the click until the default has
+          // certainly landed. Clicking a tab is idempotent.
+          t.click();
+          [400, 900, 1500].forEach(function(ms){ setTimeout(function(){ t.click(); }, ms); });
+          if(document.body.classList.contains('embed')){
+            // Scroll the real page, not a faked crop: everything above stays
+            // there and reachable, it just is not what this step is about.
+            setTimeout(function(){
+              var tabs = document.querySelector('.tabs');
+              if(tabs) tabs.scrollIntoView({block:'start'});
+            }, 1700);
+          }
+        }
+      }
+    }).catch(function(e){
+      document.getElementById('loading').textContent = e.message;
+    });
+  }
+
+  [].forEach.call(document.querySelectorAll('.roleb'), function(b){
+    b.addEventListener('click', function(){
+      [].forEach.call(document.querySelectorAll('.roleb'), function(x){ x.classList.remove('on'); });
+      this.classList.add('on');
+      role = this.getAttribute('data-role');
+      try{ history.replaceState(null,'','?role='+role); }catch(e){}
+      boot();
+    });
+  });
+
+  // ?embed=1 strips the chrome so the walkthrough can frame it itself.
+  if(/[?&]embed=1/.test(location.search)) document.body.classList.add('embed');
+
+  // ?tab= deep-links to one pane. Applied after the dashboard renders, by
+  // clicking the real tab button — so it goes through the product's own
+  // handler and can never show a pane the product would not.
+  var wantTab = (location.search.match(/[?&]tab=([a-z]+)/) || [])[1] || null;
+
+  // ?role= lets the walkthrough deep-link straight into one dashboard.
+  var want = (location.search.match(/[?&]role=([a-z]+)/) || [])[1];
+  if(want && WHO[want]){
+    role = want;
+    [].forEach.call(document.querySelectorAll('.roleb'), function(x){
+      x.classList.toggle('on', x.getAttribute('data-role') === want); });
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

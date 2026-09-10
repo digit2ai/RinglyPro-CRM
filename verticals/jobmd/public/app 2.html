@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" id="themeColor">
+<meta name="color-scheme" content="dark light">
+<script>(function(){try{var t=localStorage.getItem('jobmd_theme');
+if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<title>JobMD.io</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="dashboard-ui.css">
+<style>
+/* Page-specific only. Every dashboard rule now lives in dashboard-ui.css,
+   shared with the simulator so the two cannot drift. */
+</style>
+</head>
+<body>
+<div class="jmd">
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="./" aria-label="JobMD.io home">
+    <picture><source srcset="jobmd-logo.webp" type="image/webp">
+    <img class="logo" src="jobmd-logo.png" width="845" height="222" alt="JobMD.io"></picture>
+  </a>
+  <div class="navsp"></div>
+  
+  <button class="themetog" id="themeToggle" type="button" aria-label="Switch theme">
+    <svg class="ti sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/>
+      <path d="M12 2.4v2.6M12 19v2.6M2.4 12h2.6M19 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg>
+    <svg class="ti moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>
+  </button>
+</div></nav>
+<main><div class="wrap">
+
+<div id="loading" class="sub">Loading your dashboard&hellip;</div>
+<div id="root" hidden></div>
+</div></main>
+</div>
+<script src="dashboard-ui.js"></script>
+<script>
+(function(){
+  var tog=document.getElementById('themeToggle');
+  function apply(m){var l=m==='light';
+    if(l)document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');}
+  apply(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
+  tog.addEventListener('click',function(){
+    var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    apply(next); try{localStorage.setItem('jobmd_theme',next);}catch(e){}
+  });
+})();
+
+// THE REAL TRANSPORT. The simulator installs a fixture one instead; the
+// renderer in dashboard-ui.js is identical either way.
+setApiTransport(function(p,opt){
+  return fetch('api/v1'+p,Object.assign({headers:{'Content-Type':'application/json'}},opt))
+    .then(function(r){return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;});});
+});
+
+Promise.all([api('/me'),api('/reference')]).then(function(r){
+  ME=r[0]; REF=r[1];
+  $('loading').hidden=true; $('root').hidden=false;
+  var nav=document.querySelector('.navsp');
+  nav.insertAdjacentHTML('afterend','<div class="who"><b>'+esc(ME.account.name)+'</b>'+
+    '<span class="rolechip">'+esc(ME.account.role)+'</span></div>'+
+    '<button class="btn g s" id="out">Sign out</button>');
+  $('out').addEventListener('click',function(){
+    api('/auth/logout',{method:'POST'}).then(function(){window.location.href='login';});
+  });
+  if(ME.account.role==='physician') renderPhysician(); else renderEmployer();
+}).catch(function(){ window.location.href='login'; });
+
+</script>
+</body>
+</html>

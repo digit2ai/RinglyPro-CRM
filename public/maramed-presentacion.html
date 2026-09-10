@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MaraMed — Plataforma inteligente de monitoreo, priorización y gestión proactiva de poblaciones de salud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Tomados de maramed.vercel.app — no inventar una segunda paleta. */
+  --bg:#09111e; --panel:#0f172a; --panel2:#141f36; --panel3:#1b2942;
+  --line:#1e2c45; --line2:#2b3d5c;
+  --ink:#e8eef7; --ink2:#b7c4d8; --mut:#8496b0; --faint:#64748b;
+  --teal:#0d9488; --teal2:#2dd4bf; --tealdim:#0b3b38; --tealglow:rgba(13,148,136,.4);
+  --blue:#38bdf8; --bluedim:#0d3350;
+  --amber:#f59e0b; --amberdim:#3a2a08;
+  --red:#f43f5e; --reddim:#3d1220;
+  --violet:#8b5cf6; --violet2:#a78bfa; --violetdim:#2a1d52;
+  --ok:#22c55e; --okdim:#0d3320;
+  --sans:'Urbanist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:focus-visible{outline:2px solid var(--teal2);outline-offset:2px;border-radius:3px}
+
+#viewport{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(13,148,136,.15), transparent 55%),
+    radial-gradient(circle at 88% 82%, rgba(139,92,246,.10), transparent 50%),
+    var(--bg);
+}
+.slide{position:absolute;inset:0;padding:42px 58px 160px;display:none;flex-direction:column}
+.slide.on{display:flex}
+.slide.on > *{animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+.slide.on > *:nth-child(2){animation-delay:.06s}
+.slide.on > *:nth-child(3){animation-delay:.12s}
+.slide.on > *:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.slide.sim{padding:28px 26px 156px}
+/* Las dos láminas que llevan franja bajo los teléfonos tienen menos alto útil,
+   así que su marco es más bajo. Nunca coinciden en pantalla, y forzar una sola
+   altura obligaría a recortar el propio contenido de las pantallas. */
+.slide.sim.tight .phone{height:378px}
+/* La lámina 3 monta la cabecera del paciente sobre la misma pila de triaje. */
+.slide[data-n="s3"] .pbody{gap:4px;padding-top:2px;padding-bottom:8px}
+.slide[data-n="s3"] .ptitle{font-size:11.8px}
+
+/* ---------- chrome ---------- */
+#chrome-top{position:absolute;top:0;left:0;right:0;height:44px;z-index:6;display:flex;align-items:center;justify-content:space-between;padding:0 22px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:9px}
+.bmark{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;color:#04141a;font-family:var(--mono);font-size:9px;font-weight:700}
+.bname{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.simbadge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);background:var(--amberdim);border:1px solid #5a4310;padding:4px 10px;border-radius:4px}
+
+#bar{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:7;display:flex;align-items:center;gap:16px;padding:0 22px;background:linear-gradient(to top,rgba(9,17,30,.97),rgba(9,17,30,.72) 70%,transparent)}
+.ctl{width:34px;height:34px;border-radius:8px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink2);flex:none;transition:.15s}
+.ctl:hover{background:var(--panel2);color:var(--ink);border-color:var(--teal)}
+.ctl svg{width:14px;height:14px;fill:currentColor}
+.ctl.play{width:38px;height:38px;border-color:var(--teal);color:var(--teal2)}
+.ctl.play:hover{background:var(--tealdim)}
+#track{flex:1;height:3px;background:var(--line);border-radius:2px;position:relative;overflow:hidden}
+#fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width .2s linear}
+#count{font-family:var(--mono);font-size:11px;color:var(--mut);flex:none;font-variant-numeric:tabular-nums}
+.togg{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line2);padding:6px 9px;border-radius:5px;flex:none}
+.togg.act{color:var(--teal2);border-color:var(--tealdim);background:var(--tealdim)}
+
+#cap{position:absolute;left:58px;right:58px;bottom:66px;z-index:5;height:88px;font-size:11.8px;line-height:1.45;color:var(--ink2);background:rgba(6,12,22,.9);border:1px solid var(--line);border-left:2px solid var(--teal);padding:10px 14px;border-radius:6px;overflow:auto}
+#cap.off{display:none}
+
+/* ---------- typography ---------- */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.eyebrow.acc{color:var(--teal2)}
+.eyebrow.vi{color:var(--violet2)}
+h1{font-weight:700;font-size:56px;line-height:1.04;letter-spacing:-.025em}
+h2{font-weight:600;font-size:36px;line-height:1.12;letter-spacing:-.02em}
+h2.mini{font-size:25px}
+h3{font-size:15px;font-weight:600}
+.dek{font-size:17px;line-height:1.55;color:var(--ink2);max-width:64ch;font-weight:300}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.small{font-size:12px;color:var(--mut);line-height:1.5;font-weight:300}
+.tiny{font-size:10.5px;color:var(--faint);line-height:1.45}
+.head{margin-bottom:20px}
+.head.mini{margin-bottom:11px}
+.grad{background:linear-gradient(135deg,var(--teal2),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- generic blocks ---------- */
+.row{display:flex;gap:14px}
+.col{display:flex;flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 17px;display:flex;flex-direction:column;gap:8px}
+.card .n{font-family:var(--mono);font-size:10px;color:var(--teal2);letter-spacing:.14em}
+.card h3{font-size:15.5px}
+.card p{font-size:12.5px;line-height:1.5;color:var(--ink2);font-weight:300}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 14px;display:flex;flex-direction:column;gap:3px}
+.tile .td{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.tile .tn{font-size:26px;font-weight:700;letter-spacing:-.02em;font-family:var(--mono)}
+.tile .tl{font-size:11px;color:var(--mut);line-height:1.4;font-weight:300}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:400;padding:9px 12px;border-bottom:1px solid var(--line2)}
+table.t td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink2);line-height:1.45;font-weight:300;vertical-align:top}
+table.t tr:last-child td{border-bottom:none}
+table.t td b{color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--mut)}
+.chip.ok{color:var(--ok);background:var(--okdim);border-color:#1c5c37}
+.chip.warn{color:var(--amber);background:var(--amberdim);border-color:#5a4310}
+.chip.crit{color:var(--red);background:var(--reddim);border-color:#6b2137}
+.chip.acc{color:var(--teal2);background:var(--tealdim);border-color:#155e57}
+.chip.vi{color:var(--violet2);background:var(--violetdim);border-color:#4a35a0}
+.note{border-left:2px solid var(--amber);background:var(--amberdim);border-radius:0 8px 8px 0;padding:12px 15px;font-size:12.5px;line-height:1.55;color:#fbdca0;font-weight:300}
+.note b{color:#fde8bd;font-weight:600}
+.note.crit{border-left-color:var(--red);background:var(--reddim);color:#f9c3ce}
+.note.crit b{color:#fddbe3}
+.strip{margin-top:10px;flex:none;font-size:12px;line-height:1.45;color:var(--ink2);font-weight:300;border-left:2px solid var(--amber);background:rgba(245,158,11,.07);border-radius:0 7px 7px 0;padding:8px 13px}
+.strip b{color:#fbdca0;font-weight:600}
+
+/* ---------- phone simulator ---------- */
+.phones{display:flex;gap:20px;justify-content:center;align-items:flex-start;flex:none}
+.pwrap{display:flex;flex-direction:column;align-items:center;gap:9px;flex:none}
+.pcap{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:center;max-width:224px;line-height:1.45}
+.pcap b{color:var(--teal2);font-weight:500}
+.phone{width:222px;height:430px;border-radius:26px;border:1px solid var(--line2);background:#050b16;padding:7px;flex:none;
+  box-shadow:0 18px 46px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset;position:relative}
+.pscreen{width:100%;height:100%;border-radius:20px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;position:relative}
+.pnotch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:5px;border-radius:3px;background:#0d1626;z-index:9}
+.pbody{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:18px 12px 11px;gap:8px}
+.pbody.ctr{justify-content:center;align-items:center;text-align:center}
+.ptop{display:flex;align-items:center;gap:7px;padding:14px 13px 0;flex:none}
+.pavatar{width:26px;height:26px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:12px;flex:none}
+.pname{font-size:11.5px;font-weight:600;line-height:1.2}
+.ppill{font-family:var(--mono);font-size:7.4px;letter-spacing:.04em;border:1px solid var(--line2);border-radius:5px;padding:2px 5px;color:var(--mut);white-space:nowrap}
+.psp{flex:1}
+.ptitle{font-size:12.5px;font-weight:700;letter-spacing:.02em;line-height:1.22;text-transform:uppercase;text-align:center;color:#cfd9e8}
+.psub{font-size:8.6px;color:var(--mut);text-align:center;font-weight:300;line-height:1.4}
+
+/* orb */
+.orb{width:84px;height:84px;border-radius:50%;margin:4px auto;position:relative;display:grid;place-items:center;flex:none}
+.orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(45,212,191,.28)}
+.orb .oi{font-size:22px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+.orb.idle{background:radial-gradient(circle at 32% 28%,#a78bfa,#6d4bd8 42%,#1e6fa8 100%);box-shadow:0 0 44px rgba(139,92,246,.42)}
+.orb.listen{background:radial-gradient(circle at 32% 28%,#fb7185,#e11d6b 45%,#7f1d3f 100%);box-shadow:0 0 46px rgba(244,63,94,.48)}
+.orb.speak{background:radial-gradient(circle at 32% 28%,#fbbf24,#ea7c0b 45%,#7c3d05 100%);box-shadow:0 0 46px rgba(245,158,11,.45)}
+.orb.think{background:radial-gradient(circle at 32% 28%,#c4b5fd,#7dd3fc 46%,#1e5f8f 100%);box-shadow:0 0 46px rgba(56,189,248,.4)}
+.orbbtns{display:flex;gap:7px;justify-content:center;flex:none}
+.orbbtn{flex:1;border:1px solid var(--line2);border-radius:9px;padding:5px 4px;font-size:8px;font-weight:600;letter-spacing:.06em;color:var(--blue);background:var(--panel);text-align:center;display:flex;align-items:center;justify-content:center;gap:4px}
+.orbbtn.t{color:var(--teal2)}
+.vmode{font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2);text-align:center;flex:none}
+.pinput{border:1px solid var(--line2);border-radius:10px;padding:6px 9px;font-size:8.4px;color:var(--faint);display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.6);flex:none}
+.pinput .sd{margin-left:auto;color:var(--ink2);font-size:10px}
+.pcard{border:1px solid var(--line);border-radius:10px;padding:7px 9px;background:var(--panel);display:flex;flex-direction:column;gap:6px;flex:none}
+.pcard .ph{font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2);display:flex;align-items:center;gap:5px}
+.prow{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--ink2);font-weight:300}
+.prow .pv{margin-left:auto;font-size:8.5px;font-family:var(--mono);color:var(--ink)}
+.pfoot{font-size:6.8px;letter-spacing:.08em;color:#4a5a72;text-align:center;line-height:1.5;padding:0 10px 8px;flex:none}
+
+/* mono-styled RayScan screens */
+.mm{font-family:var(--mono)}
+.rbtn{border-radius:12px;padding:12px 10px;font-family:var(--mono);font-size:11px;font-weight:500;text-align:center;flex:none}
+.rbtn.pri{background:rgba(139,92,246,.22);border:1px solid var(--violet);color:#ddd0ff}
+.rbtn.sec{background:var(--panel);border:1px solid var(--line2);color:var(--ink2)}
+.rq{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:none}
+.rqc{border:1px solid var(--line);border-radius:8px;padding:5px 7px;background:var(--panel);display:flex;flex-direction:column;gap:2px}
+.rqc .k{font-family:var(--mono);font-size:6.8px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.rqc .v{font-family:var(--mono);font-size:10px;font-weight:700;line-height:1.25}
+.rsec{border-left:2px solid var(--blue);background:rgba(15,23,42,.7);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px;flex:none}
+.rsec.v{border-left-color:var(--violet)}
+.rsec.a{border-left-color:var(--amber)}
+.rsec .rh{font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.04em;display:flex;gap:5px;align-items:center}
+.rsec p{font-size:8px;line-height:1.48;color:var(--ink2);font-weight:300}
+.rlim{border:1px solid #6b2137;background:rgba(244,63,94,.1);border-radius:9px;padding:7px 8px;flex:none}
+.rlim .rh{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.11em;color:var(--red);margin-bottom:4px}
+.rlim p{font-family:var(--mono);font-size:7.1px;line-height:1.55;color:#e9a7b5}
+
+/* vitals */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:none}
+.vc{border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--panel);display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.vc::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal2)}
+.vc.amb::before{background:var(--amber)}
+.vc.bl::before{background:var(--blue)}
+.vc .vk{font-size:8px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.vc .vv{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1.1}
+.vc .vv span{font-size:8px;font-weight:400;color:var(--mut);margin-left:2px}
+.vc .vb{display:flex;gap:3px;margin-top:2px}
+.vtag{font-size:6.5px;letter-spacing:.06em;border-radius:20px;padding:2px 5px;border:1px solid var(--line2);color:var(--mut)}
+.vtag.ok{color:var(--ok);border-color:#1c5c37}
+.vtag.am{color:var(--amber);border-color:#5a4310}
+.vtag.rd{color:var(--red);border-color:#6b2137}
+.vstep{display:flex;gap:8px;align-items:flex-start;flex:none}
+.vstep .vn{width:19px;height:19px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);font-family:var(--mono);font-size:8.5px;display:grid;place-items:center;flex:none}
+.vstep .vt{font-size:9.2px;font-weight:600;line-height:1.3}
+.vstep .vd{font-size:7.6px;color:var(--mut);line-height:1.4;font-weight:300}
+.wave{height:34px;border-radius:7px;background:rgba(6,14,26,.9);border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.wave svg{position:absolute;inset:0;width:100%;height:100%}
+.wave .wl{position:absolute;left:5px;bottom:2px;font-family:var(--mono);font-size:5.6px;letter-spacing:.14em;color:#3d5a52}
+.facebox{border-radius:10px;overflow:hidden;background:#fff;position:relative;flex:none;display:grid;place-items:center}
+.facebox svg{display:block}
+.corner{position:absolute;width:20px;height:20px;border:2px solid var(--ok)}
+.c1{top:7px;left:7px;border-right:none;border-bottom:none}
+.c2{top:7px;right:7px;border-left:none;border-bottom:none}
+.c3{bottom:7px;left:7px;border-right:none;border-top:none}
+.c4{bottom:7px;right:7px;border-left:none;border-top:none}
+.pbarw{height:4px;border-radius:3px;background:var(--panel3);overflow:hidden;flex:none}
+.pbarf{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+
+/* historial */
+.hgroup{display:flex;flex-direction:column;gap:5px;flex:none}
+.hlbl{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--teal2)}
+.hlbl .hc{margin-left:auto;font-size:7px;color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:1px 4px}
+.hitem{border-left:2px solid var(--ok);background:var(--panel);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+.hitem.am{border-left-color:var(--amber)}
+.hitem .hd{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:7.5px;color:var(--faint)}
+.hitem .hb{margin-left:auto;font-size:6.5px;letter-spacing:.06em;border-radius:4px;padding:1px 5px;border:1px solid #1c5c37;color:var(--ok)}
+.hitem.am .hb{border-color:#5a4310;color:var(--amber)}
+.hitem .ht{font-size:9.5px;color:var(--ink2);line-height:1.35;font-weight:300}
+
+/* arch diagram */
+.arch{display:flex;flex-direction:column;gap:9px;align-items:center;flex:1;justify-content:center}
+.alayer{width:100%;max-width:880px;border:1px solid var(--line2);border-radius:12px;padding:13px 16px;background:var(--panel);display:flex;flex-direction:column;gap:9px}
+.alayer.cli{border-color:#155e57;background:linear-gradient(180deg,rgba(13,148,136,.10),rgba(15,23,42,.7))}
+.alayer.srv{border-color:#4a35a0;background:linear-gradient(180deg,rgba(139,92,246,.10),rgba(15,23,42,.7))}
+.altitle{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.anodes{display:flex;gap:9px}
+.anode{flex:1;border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:rgba(9,17,30,.6);display:flex;flex-direction:column;gap:3px}
+.anode .an{font-size:12px;font-weight:600;line-height:1.25}
+.anode .ad{font-size:10px;color:var(--mut);line-height:1.4;font-weight:300}
+.apipe{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--teal2)}
+.apipe .ln{width:1px;height:16px;background:linear-gradient(180deg,var(--teal),transparent)}
+
+@media (max-width:820px){
+  body{overflow:auto}
+  #viewport{position:static;display:block;min-height:100%}
+  #stage{width:100%;height:auto;min-height:100vh;transform:none!important}
+  .slide{position:static;inset:auto;min-height:auto;padding:16px 14px 100px}
+  .slide.sim{padding:16px 12px 100px}
+  .slide.on{display:flex}
+  h1{font-size:34px}h2{font-size:25px}h2.mini{font-size:21px}
+  .dek{font-size:15px}
+  .phones{flex-wrap:wrap;gap:18px}
+  .row{flex-wrap:wrap}
+  #cap{position:fixed;left:8px;right:8px;bottom:64px;font-size:11.5px;height:auto;max-height:76px}
+  #bar{position:fixed;height:56px;padding:0 8px;gap:7px}
+  .togg{padding:5px 6px;font-size:8.5px}
+  #count{font-size:10px}
+  #chrome-top{position:static;height:auto;padding:10px 14px 0}
+  .anodes{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<div id="chrome-top">
+  <span class="brand"><span class="bmark">MM</span><span class="bname">MaraMed</span></span>
+  <span class="simbadge">Datos simulados · Prueba de concepto</span>
+</div>
+
+<!-- ============ S1 · Portada ============ -->
+<section class="slide" data-n="s1">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+    <span class="eyebrow acc">ISTC · Ingeniería y Servicios Tecnológicos Colón &nbsp;×&nbsp; Digit2AI</span>
+    <h1>MaraMed<br><span class="grad">Monitoreo, priorización y gestión<br>proactiva de poblaciones de salud</span></h1>
+    <p class="dek">Plataforma web y aplicación web progresiva, en modelo be dos be dos ce, para empresas de medicina prepagada, aseguradoras y redes hospitalarias. Cinco módulos, una sola credencial y el procesamiento de los datos sensibles ocurriendo en el dispositivo del afiliado.</p>
+    <div class="row" style="gap:11px;max-width:940px">
+      <div class="tile"><span class="td">Módulos</span><span class="tn">05</span><span class="tl">biometría, triaje, signos vitales, radiología, hardware</span></div>
+      <div class="tile"><span class="td">Instalación</span><span class="tn" style="color:var(--teal2)">0</span><span class="tl">no requiere tienda de aplicaciones</span></div>
+      <div class="tile"><span class="td">Rostros en servidor</span><span class="tn" style="color:var(--teal2)">0</span><span class="tl">el descriptor facial no sale del equipo</span></div>
+      <div class="tile"><span class="td">Estado</span><span class="tn" style="color:var(--amber)">PoC</span><span class="tl">prueba de concepto con fines demostrativos</span></div>
+    </div>
+    <p class="small" style="margin-top:4px">Narración: Dalia · voz neuronal de Digit2AI. Use las flechas para avanzar, la barra espaciadora para pausar.</p>
+  </div>
+</section>
+
+<!-- ============ S2 · Arquitectura ============ -->
+<section class="slide" data-n="s2">
+  <div class="head mini">
+    <span class="eyebrow acc">Uno · Visión general de la arquitectura</span>
+    <h2 class="mini">Cliente-servidor descentralizada: lo sensible se queda en el teléfono</h2>
+  </div>
+  <div class="arch">
+    <div class="alayer cli">
+      <span class="altitle" style="color:var(--teal2)"><span class="chip acc">Dispositivo cliente · PWA</span> procesamiento local</span>
+      <div class="anodes">
+        <div class="anode"><span class="an">Autenticación facial local</span><span class="ad">TensorFlow.js · face-api.js</span></div>
+        <div class="anode"><span class="an">Captura de voz y transcripción</span><span class="ad">Web Speech API</span></div>
+        <div class="anode"><span class="an">Telemetría óptica rPPG</span><span class="ad">Shen.AI Engine</span></div>
+      </div>
+    </div>
+    <div class="apipe"><span class="ln"></span>HTTPS / WSS &nbsp;+&nbsp; JWT &nbsp;+&nbsp; RLS<span class="ln"></span></div>
+    <div class="alayer srv">
+      <span class="altitle" style="color:var(--violet2)"><span class="chip vi">Servidores backend y nube</span> orquestación e inferencia</span>
+      <div class="anodes">
+        <div class="anode"><span class="an">Supabase PostgreSQL</span><span class="ad">autenticación, seguridad a nivel de fila, almacenamiento cifrado</span></div>
+        <div class="anode"><span class="an">Google Apps Script · proxies sin servidor</span><span class="ad">orquestación y saneamiento de instrucciones</span></div>
+        <div class="anode"><span class="an">Gemini LLM API</span><span class="ad">motor de triaje Manchester y reporte clínico</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:14px"><b>La consecuencia de diseño:</b> ninguna imagen del rostro y ninguna trama de video de la cámara viaja a un servidor. Lo que sube es el resultado del cálculo, no el material biométrico que lo produjo.</div>
+</section>
+
+<!-- ============ S3 · Módulo 1 · Biometría ============ -->
+<section class="slide sim" data-n="s3">
+  <div class="head mini">
+    <span class="eyebrow acc">Módulo uno · Autenticación biométrica y control de acceso local</span>
+    <h2 class="mini">La identidad se verifica en el equipo, no en la nube</h2>
+  </div>
+  <div class="phones">
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody ctr" style="gap:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2dd4bf,#0d9488 55%,#062e2b);display:grid;place-items:center;font-size:17px;box-shadow:0 0 22px var(--tealglow)">&#9877;</div>
+          <div style="font-size:19px;font-weight:700;letter-spacing:-.01em">MaraMed</div>
+          <div class="psub">Sistema Clínico con Acceso Biométrico</div>
+          <div style="width:100%;height:96px;border-radius:9px;background:#eef2f7;display:grid;place-items:center;position:relative;overflow:hidden;margin-top:2px">
+            <svg width="120" height="86" viewBox="0 0 120 86" aria-hidden="true">
+              <path d="M60 8c-14 0-24 11-24 26 0 12 6 21 12 25v6c-14 3-26 9-26 17v4h76v-4c0-8-12-14-26-17v-6c6-4 12-13 12-25 0-15-10-26-24-26Z" fill="#1e3a8a"/>
+              <g stroke="#4ade80" stroke-width=".7" fill="none" opacity=".95">
+                <path d="M46 28 60 22 74 28 72 44 60 52 48 44Z"/><path d="M60 22V52M46 28l26 16M74 28 48 44"/><path d="M52 36h16M60 30l-8 14M60 30l8 14"/>
+              </g>
+              <g fill="#fff">
+                <circle cx="46" cy="28" r="1.8"/><circle cx="60" cy="22" r="1.8"/><circle cx="74" cy="28" r="1.8"/>
+                <circle cx="48" cy="44" r="1.8"/><circle cx="60" cy="52" r="1.8"/><circle cx="72" cy="44" r="1.8"/>
+                <circle cx="52" cy="36" r="1.6"/><circle cx="68" cy="36" r="1.6"/><circle cx="60" cy="30" r="1.6"/>
+                <circle cx="60" cy="40" r="1.6"/><circle cx="54" cy="47" r="1.4"/><circle cx="66" cy="47" r="1.4"/>
+              </g>
+            </svg>
+            <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+          </div>
+          <div style="width:100%;text-align:left">
+            <div class="tiny mm" style="letter-spacing:.14em;margin-bottom:4px">CÉDULA DE IDENTIDAD</div>
+            <div style="background:#eef2f7;border-radius:9px;padding:9px 10px;font-family:var(--mono);font-size:12px;color:#334155;display:flex;align-items:center;gap:6px">&#128179;<span style="letter-spacing:.04em">10373911</span></div>
+          </div>
+          <div class="tiny" style="color:var(--teal2)">Verificando identidad&hellip;</div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Ingreso</b> · el descriptor facial se extrae en RAM</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="ptop"><span class="pavatar">&#129302;</span><div><div class="pname">Luisa Pirela</div><div style="display:flex;gap:4px;margin-top:2px"><span class="ppill">NHC: HM-3911</span><span class="ppill">38 Años</span></div></div><span class="psp"></span><span style="width:14px;height:14px;border-radius:50%;background:var(--ok);box-shadow:0 0 9px rgba(34,197,94,.6)"></span></div>
+        <div style="text-align:right;padding:3px 12px 0"><span class="mm" style="font-size:7.5px;letter-spacing:.16em;color:var(--blue)">HISTORIAL</span></div>
+        <div class="pbody" style="gap:6px;padding-top:4px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb idle"><span class="oi">&#128072;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode" style="font-size:7.4px">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación <span style="margin-left:auto;color:var(--teal2)">&#8599;</span></span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid var(--line2);border-radius:5px;padding:1px 5px">Pendiente</span></div>
+            <div class="prow">&#128100; Especialista <span class="pv">Análisis en curso</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Sesión abierta</b> · afiliado identificado, historial a mano</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="ptop" style="padding-top:18px"><div class="pname" style="font-size:15px">Historial Médico</div><span class="psp"></span><span style="width:22px;height:22px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:10px;color:var(--mut)">&#10005;</span></div>
+        <div class="pbody" style="gap:10px;padding-top:12px">
+          <div class="hgroup">
+            <span class="hlbl">&#9679; Otorrinolaringología<span class="hc">1 u.</span></span>
+            <div class="hitem am"><span class="hd">31 ago, 19:04<span class="hb">AMARILLO</span></span><span class="ht">Faringoamigdalitis Aguda</span></div>
+          </div>
+          <div class="hgroup">
+            <span class="hlbl">&#9679; Neurología<span class="hc">9 u.</span></span>
+            <div class="hitem"><span class="hd">28 ago, 10:32<span class="hb">VERDE</span></span><span class="ht">Cefalea tensional episódica</span></div>
+            <div class="hitem"><span class="hd">28 ago, 09:37<span class="hb">VERDE</span></span><span class="ht">Cefalea primaria con componente vascular</span></div>
+            <div class="hitem"><span class="hd">3 ago, 18:04<span class="hb">VERDE</span></span><span class="ht">Cefalea Primaria</span></div>
+            <div class="hitem am"><span class="hd">3 ago, 17:23<span class="hb">AMARILLO</span></span><span class="ht">Cefalea de Inicio Súbito a Estudio</span></div>
+            <div class="hitem" style="opacity:.5"><span class="hd">10 jul, 21:31<span class="hb">VERDE</span></span><span class="ht">Cefalea tensional</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Historia clínica</b> · por especialidad y color de triaje</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S4 · Módulo 2 · Triaje por voz ============ -->
+<section class="slide sim" data-n="s4">
+  <div class="head mini">
+    <span class="eyebrow acc">Módulo dos · Motor de triaje por voz y lenguaje natural</span>
+    <h2 class="mini">MARA escucha, y la severidad sale en un esquema, no en un párrafo</h2>
+  </div>
+  <div class="phones">
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:9px;padding-top:26px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb listen"><span class="oi">&#127908;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid var(--line2);border-radius:5px;padding:1px 5px">Pendiente</span></div>
+            <div class="prow">&#128100; Especialista <span class="pv">Análisis en curso</span></div>
+          </div>
+        </div>
+        <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+      </div></div>
+      <div class="pcap"><b>Escuchando</b> · transcripción en el navegador</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:9px;padding-top:26px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb think"><span class="oi">&#128173;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid var(--line2);border-radius:5px;padding:1px 5px">Pendiente</span></div>
+            <div class="prow" style="color:var(--teal2)">Recopilando información&hellip;</div>
+          </div>
+        </div>
+        <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+      </div></div>
+      <div class="pcap"><b>Razonando</b> · la transcripción se sanea primero</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:9px;padding-top:26px">
+          <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+          <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+          <div class="orb speak"><span class="oi">&#128266;</span></div>
+          <div class="orbbtns"><span class="orbbtn">&#9636; IMAGENOLOGÍA</span><span class="orbbtn t">&#9829; SIGNOS VITALES</span></div>
+          <div class="vmode">&#9887; Modo consulta voz activo</div>
+          <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd">&#10148;</span></div>
+          <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+            <div class="prow">&#128737; Gravedad <span class="pv" style="border:1px solid #5a4310;background:var(--amberdim);color:var(--amber);border-radius:5px;padding:1px 5px">AMARILLO · III</span></div>
+            <div class="prow">&#128100; Especialista <span class="pv" style="color:var(--teal2)">Neurología</span></div>
+          </div>
+        </div>
+        <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+      </div></div>
+      <div class="pcap"><b>Respondiendo</b> · nivel Manchester y especialidad</div>
+    </div>
+    <div class="col" style="flex:1;gap:9px;max-width:300px;justify-content:center">
+      <div class="card" style="gap:6px"><span class="n">PROTOCOLO MANCHESTER</span>
+        <div class="prow" style="font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:var(--red)"></span>I · Emergencia<span class="pv">atención inmediata</span></div>
+        <div class="prow" style="font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:#fb923c"></span>II · Muy urgente<span class="pv">minutos</span></div>
+        <div class="prow" style="font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span>III · Urgente<span class="pv">consulta prioritaria</span></div>
+        <div class="prow" style="font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:var(--ok)"></span>IV · Normal<span class="pv">atención primaria</span></div>
+        <div class="prow" style="font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:#38bdf8"></span>V · No urgente<span class="pv">programable</span></div>
+      </div>
+      <div class="note" style="font-size:11.5px;padding:10px 12px"><b>Esquema JSON forzado.</b> El sistema no acepta prosa libre del modelo: obliga la respuesta a un esquema estructurado con el nivel de severidad y la conducta a seguir. Un triaje que no encaja en el esquema no se guarda como triaje.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S5 · Módulo 3 · VitalScan ============ -->
+<section class="slide sim tight" data-n="s5">
+  <div class="head mini">
+    <span class="eyebrow acc">Módulo tres · Telemetría biomédica óptica · fotopletismografía rPPG</span>
+    <h2 class="mini">Cinco signos vitales con la cámara frontal y nada más</h2>
+  </div>
+  <div class="phones">
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody ctr" style="gap:8px;padding-top:16px">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:grid;place-items:center;font-size:16px">&#128522;</div>
+          <div style="font-size:14px;font-weight:700">MaraMed VitalScan Pro</div>
+          <div class="psub" style="margin-bottom:3px">Escaneo de signos vitales por rPPG facial</div>
+          <div style="width:100%;display:flex;flex-direction:column;gap:7px;text-align:left">
+            <div class="vstep"><span class="vn">1</span><div><div class="vt">Ilumina tu rostro</div><div class="vd">Luz natural o artificial suave, sin sombras fuertes</div></div></div>
+            <div class="vstep"><span class="vn">2</span><div><div class="vt">Mira la cámara frontal</div><div class="vd">Mantén el rostro dentro del óvalo, completamente quieto</div></div></div>
+            <div class="vstep"><span class="vn">3</span><div><div class="vt">Recibe 5 signos vitales</div><div class="vd">Cada resultado incluye su nivel de confianza individual</div></div></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:2px">
+            <div style="text-align:center"><div style="width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:11px">&#128147;</div><div class="tiny" style="margin-top:2px">FC</div></div>
+            <div style="text-align:center"><div style="width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:11px">&#129729;</div><div class="tiny" style="margin-top:2px">FR</div></div>
+            <div style="text-align:center"><div style="width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:11px">&#128200;</div><div class="tiny" style="margin-top:2px">VFC</div></div>
+            <div style="text-align:center"><div style="width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:11px">&#9201;</div><div class="tiny" style="margin-top:2px">PA</div></div>
+            <div style="text-align:center"><div style="width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:11px">&#128167;</div><div class="tiny" style="margin-top:2px">SpO2</div></div>
+          </div>
+          <div class="rbtn" style="width:100%;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04211f;border:none;font-family:var(--sans);font-weight:700;font-size:12px;margin-top:3px">&#128247; Iniciar Escaneo Facial</div>
+          <div class="tiny" style="color:#4a5a72;font-size:7px">Requiere cámara frontal. Optimizado para uso en dispositivos móviles.<br>Proof of Concept con fines demostrativos.</div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Preparación</b> · la señal depende de luz y quietud</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div style="display:flex;align-items:center;padding:14px 12px 7px;font-size:9px;color:var(--mut)"><span>&#10005; Cancelar</span><span class="psp"></span><span style="color:var(--amber)">&#9679; Ajusta tu rostro al óvalo</span></div>
+        <div class="pbody" style="gap:8px;padding-top:0">
+          <div class="facebox" style="height:158px">
+            <svg width="126" height="146" viewBox="0 0 120 140" aria-hidden="true">
+              <path d="M60 12c-16 0-27 13-27 30 0 14 7 24 14 29v7c-16 3-30 10-30 20v42h86V98c0-10-14-17-30-20v-7c7-5 14-15 14-29 0-17-11-30-27-30Z" fill="#1e3a8a"/>
+              <g stroke="#4ade80" stroke-width=".8" fill="none">
+                <path d="M43 33 60 25 77 33 74 54 60 64 46 54Z"/><path d="M60 25v39M43 33l31 21M77 33 46 54"/>
+                <path d="M50 43h20M60 35l-10 17M60 35l10 17M52 58h16"/>
+              </g>
+              <g fill="#fff">
+                <circle cx="43" cy="33" r="2"/><circle cx="60" cy="25" r="2"/><circle cx="77" cy="33" r="2"/>
+                <circle cx="46" cy="54" r="2"/><circle cx="60" cy="64" r="2"/><circle cx="74" cy="54" r="2"/>
+                <circle cx="50" cy="43" r="1.8"/><circle cx="70" cy="43" r="1.8"/><circle cx="60" cy="35" r="1.8"/>
+                <circle cx="60" cy="46" r="1.8"/><circle cx="52" cy="58" r="1.6"/><circle cx="68" cy="58" r="1.6"/>
+                <circle cx="55" cy="30" r="1.5"/><circle cx="65" cy="30" r="1.5"/><circle cx="60" cy="55" r="1.5"/>
+              </g>
+            </svg>
+            <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+          </div>
+          <div class="wave">
+            <svg viewBox="0 0 220 34" preserveAspectRatio="none"><polyline points="0,26 12,24 20,10 26,28 34,22 46,23 58,21 70,22 84,20 98,21 112,19 126,20 140,18 156,19 172,18 190,17 210,17 220,17" fill="none" stroke="#2dd4bf" stroke-width="1.2"/></svg>
+            <span class="wl">SEÑAL CHROM rPPG</span>
+          </div>
+          <div style="text-align:center;font-family:var(--mono);font-size:17px;font-weight:700;color:var(--teal2)">&#128147; 45 <span style="font-size:9px;color:var(--mut)">BPM</span></div>
+          <div style="display:flex;font-size:8px;color:var(--mut)"><span>Progreso de escaneo</span><span class="psp"></span><span class="mm" style="color:var(--teal2)">25%</span></div>
+          <div class="pbarw"><div class="pbarf" style="width:25%"></div></div>
+          <div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700">19 <span style="font-size:8px;font-weight:400;color:var(--mut)">s restantes</span></div>
+          <div class="tiny" style="text-align:center;color:var(--teal2)">&#128522; Mantente quieto, evita moverte</div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Captura</b> · variación cromática de la piel</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+        <div class="pbody" style="gap:8px;padding-top:22px">
+          <div style="text-align:center"><div style="width:30px;height:30px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);display:grid;place-items:center;margin:0 auto 5px;font-size:13px">&#10003;</div>
+            <div style="font-size:14px;font-weight:700">Escaneo Completado</div>
+            <div class="tiny">1053 muestras | 45 fps | 25s | Piel: 33%</div></div>
+          <div style="display:flex;gap:7px;justify-content:center"><span class="vtag ok">ALTA CONFIANZA</span><span class="vtag am">MEDIA</span><span class="vtag rd">BAJA</span></div>
+          <div class="wave" style="height:26px"><svg viewBox="0 0 220 26" preserveAspectRatio="none"><polyline points="0,14 30,13 60,14 90,12 120,14 150,13 180,14 220,13" fill="none" stroke="#2dd4bf" stroke-width="1"/></svg><span class="wl">SEÑAL rPPG CAPTURADA</span></div>
+          <div class="vgrid">
+            <div class="vc"><span class="vk">&#128147; Ritmo Cardiaco</span><span class="vv">86<span>bpm</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+            <div class="vc amb"><span class="vk">&#129729; Ritmo Respiratorio</span><span class="vv">10<span>rpm</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag ok">ALTA</span></span></div>
+            <div class="vc"><span class="vk">&#128200; Variabilidad Cardiaca</span><span class="vv">42<span>ms</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+            <div class="vc bl"><span class="vk">&#128167; Oxígeno en Sangre</span><span class="vv">98<span>%</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag rd">BAJA</span></span></div>
+          </div>
+          <div class="vc amb" style="width:100%"><span class="vk">&#9201; Presión Arterial Estimada</span><span class="vv">126<span style="margin:0 3px">/</span>79<span>mmHg</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag rd">BAJA</span></span></div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Resultado</b> · cada signo con su propia confianza</div>
+    </div>
+  </div>
+  <div class="strip"><b>Lea la segunda etiqueta de cada tarjeta:</b> la plataforma publica su incertidumbre junto al número. Confianza baja es una invitación a medir con el equipo de siempre, no un resultado clínico.</div>
+</section>
+
+<!-- ============ S6 · Módulo 4 · RayScan captura ============ -->
+<section class="slide sim tight" data-n="s6">
+  <div class="head mini">
+    <span class="eyebrow vi">Módulo cuatro · MaraMed RayScan · soporte a la decisión radiológica</span>
+    <h2 class="mini">Un motor heurístico local que mide píxeles, y una IA que opina después</h2>
+  </div>
+  <div class="phones">
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#0a1120"><span class="pnotch"></span>
+        <div class="pbody ctr" style="gap:13px">
+          <div style="display:flex;align-items:center;gap:11px">
+            <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);display:grid;place-items:center;font-size:19px">&#129504;</div>
+            <div style="text-align:left"><div class="mm" style="font-size:15px;font-weight:700;letter-spacing:-.02em">MaraMed RayScan CAD</div><div class="mm" style="font-size:9px;color:var(--violet2)">+AI</div></div>
+          </div>
+          <div class="mm psub" style="font-size:9.5px">Heurístico de Imagen + Pre-diagnóstico</div>
+          <div class="mm" style="font-size:9px;color:var(--mut);line-height:1.5">Motor híbrido: Análisis de píxeles local combinado con inferencia de IA.</div>
+          <div style="width:100%;display:flex;flex-direction:column;gap:9px;margin-top:6px">
+            <div class="rbtn pri">&#128247;&nbsp; Capturar Rx Física</div>
+            <div class="rbtn sec">&#128193;&nbsp; Subir Archivo Digital</div>
+          </div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Entrada</b> · placa física o archivo digital</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody ctr" style="gap:0;padding:0">
+          <div style="margin:auto;width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:17px 15px;display:flex;flex-direction:column;gap:11px">
+            <div style="font-size:22px;text-align:center">&#128161;</div>
+            <div style="font-size:13px;font-weight:700;text-align:center">Consejos para Rx Física</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div class="prow" style="font-size:9px;align-items:flex-start"><span style="color:var(--teal2)">&#10003;</span>Enciende el negatoscopio (caja de luz).</div>
+              <div class="prow" style="font-size:9px;align-items:flex-start"><span style="color:var(--teal2)">&#10003;</span>Apaga el flash del celular si es posible.</div>
+              <div class="prow" style="font-size:9px;align-items:flex-start"><span style="color:var(--teal2)">&#10003;</span>Mantén el celular paralelo a la placa.</div>
+              <div class="prow" style="font-size:9px;align-items:flex-start"><span style="color:var(--teal2)">&#10003;</span>Evita reflejos o sombras de tu cuerpo.</div>
+              <div class="prow" style="font-size:9px;align-items:flex-start"><span style="color:var(--teal2)">&#10003;</span>El sistema comprime la imagen automáticamente.</div>
+            </div>
+            <div class="rbtn" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#f3eeff;border:none;font-size:10.5px;font-weight:700">Entendido, abrir cámara</div>
+          </div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Calidad de captura</b> · el consejo va antes del error</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody" style="gap:8px;padding-top:20px">
+          <div style="height:100px;border-radius:11px;background:linear-gradient(150deg,#f2d7cb,#d9a68f 40%,#8f6a5c);position:relative;overflow:hidden;flex:none">
+            <svg viewBox="0 0 100 120" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+              <path d="M46 4 C50 26 48 52 52 78 C54 96 50 112 48 118" stroke="#7d2f3a" stroke-width="5" fill="none" opacity=".75"/>
+              <path d="M46 4 C50 26 48 52 52 78 C54 96 50 112 48 118" stroke="#c98d90" stroke-width="1.6" fill="none" opacity=".8"/>
+              <g stroke="#14121a" stroke-width="1.1" opacity=".92">
+                <path d="M38 18 L56 26"/><path d="M40 34 L58 42"/><path d="M40 52 L58 60"/><path d="M42 70 L60 78"/><path d="M42 88 L60 96"/>
+              </g>
+              <ellipse cx="49" cy="100" rx="7" ry="9" fill="#8c3b3f" opacity=".55"/>
+            </svg>
+            <span class="mm" style="position:absolute;right:6px;bottom:5px;font-size:7px;background:rgba(5,8,15,.7);border-radius:4px;padding:2px 5px;color:var(--ink2)">2544x3392px</span>
+          </div>
+          <div class="mm" style="font-size:7px;letter-spacing:.15em;color:var(--faint)">HISTOGRAMA LOCAL</div>
+          <div style="height:34px;border-radius:7px;background:#080d17;border:1px solid var(--line);position:relative;overflow:hidden;flex:none">
+            <svg viewBox="0 0 200 34" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+              <g fill="#1d5f6b">
+                <rect x="4" y="26" width="4" height="8"/><rect x="12" y="22" width="4" height="12"/><rect x="20" y="17" width="4" height="17"/><rect x="28" y="12" width="4" height="22"/><rect x="36" y="9" width="4" height="25"/><rect x="44" y="6" width="4" height="28"/><rect x="52" y="4" width="4" height="30"/><rect x="60" y="7" width="4" height="27"/><rect x="68" y="10" width="4" height="24"/><rect x="76" y="8" width="4" height="26"/><rect x="84" y="5" width="4" height="29"/><rect x="92" y="9" width="4" height="25"/><rect x="100" y="13" width="4" height="21"/><rect x="108" y="16" width="4" height="18"/><rect x="116" y="12" width="4" height="22"/><rect x="124" y="18" width="4" height="16"/><rect x="132" y="21" width="4" height="13"/><rect x="140" y="19" width="4" height="15"/><rect x="148" y="24" width="4" height="10"/><rect x="156" y="27" width="4" height="7"/><rect x="164" y="29" width="4" height="5"/><rect x="172" y="30" width="4" height="4"/><rect x="180" y="31" width="4" height="3"/><rect x="188" y="32" width="4" height="2"/>
+              </g>
+            </svg>
+          </div>
+          <div class="rq">
+            <div class="rqc"><span class="k">Mean</span><span class="v">127.5</span></div>
+            <div class="rqc"><span class="k">Std Dev</span><span class="v">37.8</span></div>
+            <div class="rqc"><span class="k">Contraste</span><span class="v">125</span></div>
+            <div class="rqc"><span class="k">Dens. Borde</span><span class="v">6.3%</span></div>
+          </div>
+          <div class="mm" style="font-size:7px;letter-spacing:.15em;color:var(--faint)">MAPA DE BORDES (SOBEL)</div>
+          <div style="height:48px;border-radius:7px;background:#02060c;position:relative;overflow:hidden;flex:none">
+            <svg viewBox="0 0 100 60" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+              <path d="M44 2 C48 14 46 28 50 40 C52 50 48 56 47 59" stroke="#22d3ee" stroke-width="1.4" fill="none" opacity=".95"/>
+              <path d="M41 2 C45 14 43 28 47 40 C49 50 45 56 44 59" stroke="#0e7490" stroke-width=".7" fill="none" opacity=".8"/>
+              <path d="M49 2 C53 14 51 28 55 40 C57 50 53 56 52 59" stroke="#0e7490" stroke-width=".7" fill="none" opacity=".8"/>
+              <g stroke="#67e8f9" stroke-width=".6" opacity=".85"><path d="M37 9 L54 13"/><path d="M38 18 L55 22"/><path d="M39 27 L56 31"/><path d="M40 36 L57 40"/><path d="M41 45 L58 49"/></g>
+            </svg>
+          </div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Heurístico local</b> · píxeles medidos antes de la IA</div>
+    </div>
+  </div>
+  <div class="strip"><b>Las cifras del recuadro son mediciones, no opiniones:</b> salen del análisis directo de la matriz de píxeles. La inferencia del modelo viene después y viaja etiquetada por separado.</div>
+</section>
+
+<!-- ============ S7 · RayScan informe ============ -->
+<section class="slide sim" data-n="s7">
+  <div class="head mini">
+    <span class="eyebrow vi">Módulo cuatro · El informe CAD híbrido</span>
+    <h2 class="mini">Todo lo que dice el modelo va marcado (AI), y el límite se imprime en el informe</h2>
+  </div>
+  <div class="phones" style="gap:18px">
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div style="display:flex;align-items:center;gap:8px;padding:15px 11px 6px;flex:none"><span class="mm" style="font-size:9px;color:var(--mut)">&#8592; Nueva Imagen</span><span class="psp"></span><span class="mm" style="font-size:8.5px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#f3eeff;border-radius:8px;padding:5px 8px;font-weight:700">&#128424; Exportar PDF</span></div>
+        <div class="pbody" style="gap:8px;padding-top:6px">
+          <div class="pcard" style="gap:5px">
+            <div class="mm" style="font-size:13px;font-weight:700">&#128203; INFORME CAD HÍBRIDO</div>
+            <div class="mm" style="font-size:8px;color:var(--mut)">Heurístico de Imagen + AI</div>
+            <div class="mm" style="font-size:7.5px;color:var(--faint);margin-top:3px">9 de septiembre de 2026 a las 19:46</div>
+            <div class="mm" style="font-size:8.5px;color:var(--mut);text-align:right">RID-P4OFGD</div>
+          </div>
+          <div class="rq">
+            <div class="rqc"><span class="k">Tipo de estudio</span><span class="v" style="font-size:8.5px">Fotografía clínica dermatológica / quirúrgica</span></div>
+            <div class="rqc"><span class="k">Calidad técnica</span><span class="v" style="color:var(--amber)">Aceptable</span></div>
+            <div class="rqc"><span class="k">Simetría</span><span class="v" style="color:var(--red);font-size:8.5px">Asimetría Significativa</span></div>
+            <div class="rqc"><span class="k">Urgencia (IA)</span><span class="v" style="color:var(--amber)">Medio</span></div>
+          </div>
+          <div class="rsec"><span class="rh" style="color:var(--blue)">&#128269; Evaluación Técnica por Motor Heurístico (Local)</span>
+            <p>Valores extraídos del análisis directo de píxeles: Luminancia Media = 127.5, Desviación Estándar = 37.8, Contraste Dinámico = 125. Densidad de bordes detectados por convolución Sobel = 6.3%. Diferencia densitométrica lateral = 40.0 unidades.</p></div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Encabezado</b> · lo medido y lo inferido, separados</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody" style="gap:8px;padding-top:22px">
+          <div class="rsec v"><span class="rh" style="color:var(--violet2)">&#129504; Hallazgos Principales (AI)</span>
+            <p>&bull; Incisión quirúrgica lineal cerrada mediante suturas simples interrumpidas no reabsorbibles.<br>
+            &bull; Presencia de sustancia translúcida-amarillenta sobre la línea de incisión, compatible con adhesivo tisular, pomada tópica o exudado seroso desecado.<br>
+            &bull; Aposición adecuada de bordes en la mayor parte del trayecto, con ligero eritema perilesional y puntos de tracción.<br>
+            &bull; Presencia de pequeñas costras hemáticas/fibrinosas, con mayor prominencia e irregularidad en el polo inferior.<br>
+            &bull; Sin evidencia concluyente de celulitis circundante extensa o colecciones purulentas francas a la inspección visual.</p></div>
+          <div class="rsec v"><span class="rh" style="color:var(--violet2)">&#129504; Detalle Anatómico (AI)</span>
+            <p>Piel y tejido celular subcutáneo de región cervicotorácica o proximal de extremidad superior.</p></div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>Hallazgos</b> · describe lo que ve, no diagnostica</div>
+    </div>
+    <div class="pwrap">
+      <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+        <div class="pbody" style="gap:7px;padding-top:18px">
+          <div class="rsec"><span class="rh" style="color:var(--blue)">&#128269; Impresión Diagnóstica (AI)</span>
+            <p>Herida quirúrgica suturada en evolución postoperatoria con cicatrización por primera intención; cambios inflamatorios leves y acumulación de material adhesivo/costroso, sin signos concluyentes de infección mayor pero con necesidad de seguimiento.</p></div>
+          <div class="rsec a"><span class="rh" style="color:var(--amber)">&#9888; Sugerencias Clínicas (AI)</span>
+            <p>&rarr; Inspección clínica presencial y palpación para descartar fluctuación, calor local o infección del sitio quirúrgico superficial.<br>
+            &rarr; Valorar la retirada de material adhesivo residual y retiro de suturas conforme a los tiempos quirúrgicos establecidos para la localización anatómica.<br>
+            &rarr; Instruir al paciente sobre datos de alarma: incremento del eritema, dolor progresivo, calor local, dehiscencia o secreción purulenta.</p></div>
+          <div class="rlim"><div class="rh">&#9888; LIMITACIÓN DEL SISTEMA</div>
+            <p>Informe generado por la combinación de un motor heurístico local (píxeles) + IA actuando como Tercer Opositor. La IA puede generar información incorrecta o alucinaciones (hallazgos que no existen). Este informe NO es un diagnóstico médico válido. Requiere validación obligatoria por un médico radiólogo certificado.</p></div>
+        </div>
+      </div></div>
+      <div class="pcap"><b>El límite</b> · impreso dentro del propio informe</div>
+    </div>
+    <div class="col" style="flex:1;gap:10px;max-width:262px;justify-content:center">
+      <div class="card"><span class="n">TERCER OPOSITOR</span><p>La figura clínica que el módulo adopta: no reemplaza al radiólogo ni firma el informe. Aporta una lectura adicional que el médico acepta o descarta, y acelera el diagnóstico y la autorización.</p></div>
+      <div class="note crit" style="font-size:11.5px;padding:11px 13px"><b>Esta pantalla es la más importante de la demostración.</b> Un sistema de apoyo diagnóstico que no declara su tasa de error se vende mejor y se defiende peor. MaraMed lo declara dentro del propio informe, donde lo lee quien va a tomar la decisión.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S8 · Módulo 5 · BLE ============ -->
+<section class="slide" data-n="s8">
+  <div class="head mini">
+    <span class="eyebrow acc">Módulo cinco · Capa de hardware e ingesta de datos BLE · IoT</span>
+    <h2 class="mini">El electrocardiograma en campo entra por Bluetooth, cifrado en el propio firmware</h2>
+  </div>
+  <div class="row" style="flex:1;gap:16px;min-height:0">
+    <div class="col" style="flex:1.25;gap:12px">
+      <div class="card"><span class="n">FUNCIÓN</span><h3>Dispositivos médicos portátiles conectados a la aplicación web</h3><p>Conexión con equipos portátiles para la toma de electrocardiografía en campo, sin pasar por una aplicación nativa intermedia ni por un cable propietario. El microcontrolador habla directamente con la aplicación web progresiva.</p></div>
+      <div class="card"><span class="n">TECNOLOGÍA</span><h3>C++ embebido sobre Bluetooth de baja energía</h3><p>Microcontroladores programados en C++ embebido, con comunicación Bluetooth Low Energy directa hacia la PWA. El firmware ejecuta temporizadores no bloqueantes, de modo que la adquisición de la señal no se detiene mientras se transmite.</p></div>
+      <div class="card"><span class="n">SEGURIDAD</span><h3>AES ciento veintiocho sobre la trama, no sobre el enlace</h3><p>Las tramas de datos se transmiten cifradas en AES ciento veintiocho para evitar intercepciones en tránsito. El cifrado ocurre en el dispositivo antes de emitir, y no depende de que el emparejamiento Bluetooth se haya hecho bien.</p></div>
+    </div>
+    <div class="col" style="flex:1;gap:12px">
+      <div class="card" style="flex:1;gap:11px">
+        <span class="n">RUTA DE LA SEÑAL</span>
+        <div class="prow" style="font-size:12.5px;gap:9px"><span class="chip acc" style="min-width:74px;justify-content:center">Sensor</span>Electrodos y microcontrolador en campo</div>
+        <div style="width:1px;height:12px;background:var(--line2);margin-left:36px"></div>
+        <div class="prow" style="font-size:12.5px;gap:9px"><span class="chip acc" style="min-width:74px;justify-content:center">Firmware</span>Temporizador no bloqueante · trama cifrada AES-128</div>
+        <div style="width:1px;height:12px;background:var(--line2);margin-left:36px"></div>
+        <div class="prow" style="font-size:12.5px;gap:9px"><span class="chip acc" style="min-width:74px;justify-content:center">BLE</span>Enlace directo, sin aplicación nativa intermedia</div>
+        <div style="width:1px;height:12px;background:var(--line2);margin-left:36px"></div>
+        <div class="prow" style="font-size:12.5px;gap:9px"><span class="chip vi" style="min-width:74px;justify-content:center">PWA</span>El navegador recibe y descifra la trama</div>
+        <div style="width:1px;height:12px;background:var(--line2);margin-left:36px"></div>
+        <div class="prow" style="font-size:12.5px;gap:9px"><span class="chip vi" style="min-width:74px;justify-content:center">Supabase</span>Expediente del afiliado, aislado por seguridad a nivel de fila</div>
+      </div>
+      <div class="note" style="font-size:12px"><b>Por qué importa la ruta corta.</b> Cada salto intermedio es un lugar donde una señal clínica puede quedar en reposo sin cifrar. Aquí la trama se cifra en el microcontrolador y se descifra en el navegador del clínico: entre esos dos puntos no hay copia legible.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S9 · Matriz tecnológica ============ -->
+<section class="slide" data-n="s9">
+  <div class="head mini">
+    <span class="eyebrow acc">Tres · Matriz tecnológica y resguardo de autoría</span>
+    <h2 class="mini">Qué corre cada módulo, y qué protege la propiedad intelectual de cada uno</h2>
+  </div>
+  <div style="flex:1;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden">
+    <table class="t">
+      <thead><tr><th style="width:19%">Módulo de MaraMed</th><th style="width:31%">Stack tecnológico</th><th>Mecanismo de protección / IP</th></tr></thead>
+      <tbody>
+        <tr><td><b>Biometría facial</b></td><td class="mono" style="font-size:11.5px">face-api.js + TensorFlow.js + Supabase RLS</td><td>Algoritmo propietario de validación local de vectores de características sin guardar fotografías.</td></tr>
+        <tr><td><b>Triaje conversacional</b></td><td class="mono" style="font-size:11.5px">Web Speech API + Gemini LLM API + proxies sin servidor</td><td>Middleware intermedio en servidor propio que valida y sanea las instrucciones antes de llamar a la IA.</td></tr>
+        <tr><td><b>Signos vitales rPPG</b></td><td class="mono" style="font-size:11.5px">Shen.AI Engine (Web SDK)</td><td>Integración fluida en entorno web sin fricción de descargas en tiendas de aplicaciones.</td></tr>
+        <tr><td><b>RayScan radiología</b></td><td class="mono" style="font-size:11.5px">WebGL + Canvas + visión AI</td><td>Flujo de análisis asistido bajo arquitectura de soporte a la decisión clínica (CAD).</td></tr>
+        <tr><td><b>Capa de persistencia</b></td><td class="mono" style="font-size:11.5px">Supabase (PostgreSQL) + Row Level Security</td><td>Aislamiento estricto de expedientes de pacientes por empresa de medicina prepagada.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="row" style="margin-top:13px;gap:11px">
+    <div class="tile" style="flex:1"><span class="td">Aislamiento</span><span class="tn" style="font-size:19px;color:var(--teal2)">RLS</span><span class="tl">una aseguradora no puede leer el expediente de otra, y esa regla vive en la base de datos</span></div>
+    <div class="tile" style="flex:1"><span class="td">Saneamiento</span><span class="tn" style="font-size:19px;color:var(--teal2)">Proxy propio</span><span class="tl">ninguna transcripción llega al modelo sin pasar por middleware nuestro</span></div>
+    <div class="tile" style="flex:1"><span class="td">Distribución</span><span class="tn" style="font-size:19px;color:var(--teal2)">Sin tienda</span><span class="tl">se entrega por enlace y se instala desde el navegador</span></div>
+  </div>
+</section>
+
+<!-- ============ S10 · Privacidad ============ -->
+<section class="slide" data-n="s10">
+  <div class="head">
+    <span class="eyebrow acc">La decisión de arquitectura que sostiene todo lo demás</span>
+    <h2>Lo que nunca sale del dispositivo</h2>
+  </div>
+  <div class="row" style="flex:1;gap:14px;min-height:0">
+    <div class="col" style="flex:1;gap:11px">
+      <div class="card" style="border-color:#155e57"><span class="n">SE QUEDA EN EL EQUIPO</span>
+        <div class="prow" style="font-size:13px"><span style="color:var(--teal2)">&#10003;</span>Las imágenes del rostro del afiliado</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--teal2)">&#10003;</span>Los descriptores faciales, extraídos y comparados en memoria RAM</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--teal2)">&#10003;</span>Las tramas de video de la cámara durante el escaneo rPPG</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--teal2)">&#10003;</span>El cálculo de la señal cromática que produce los signos vitales</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--teal2)">&#10003;</span>La primera pasada heurística sobre los píxeles de la imagen radiológica</div>
+      </div>
+      <div class="note" style="font-size:12.5px"><b>El cumplimiento no es una promesa comercial, es una consecuencia del diseño.</b> No se transmiten ni se almacenan imágenes del rostro en servidores externos. Si no hay biométrico almacenado, no hay biométrico que filtrar.</div>
+    </div>
+    <div class="col" style="flex:1;gap:11px">
+      <div class="card" style="border-color:#4a35a0"><span class="n" style="color:var(--violet2)">SÍ VIAJA AL SERVIDOR</span>
+        <div class="prow" style="font-size:13px"><span style="color:var(--violet2)">&#8594;</span>El resultado del cálculo: los cinco signos vitales y su confianza</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--violet2)">&#8594;</span>La transcripción saneada de la consulta por voz</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--violet2)">&#8594;</span>El nivel de triaje Manchester y la especialidad sugerida</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--violet2)">&#8594;</span>El informe CAD y la imagen comprimida que lo originó</div>
+        <div class="prow" style="font-size:13px"><span style="color:var(--violet2)">&#8594;</span>El expediente clínico, aislado por empresa mediante RLS</div>
+      </div>
+      <div class="card" style="gap:6px"><span class="n">TRANSPORTE</span>
+        <div class="prow" style="font-size:12.5px">HTTPS y WSS<span class="pv" style="font-size:11px">cifrado en tránsito</span></div>
+        <div class="prow" style="font-size:12.5px">JWT<span class="pv" style="font-size:11px">sesión firmada por afiliado</span></div>
+        <div class="prow" style="font-size:12.5px">Row Level Security<span class="pv" style="font-size:11px">aislamiento en la base, no en el código</span></div>
+        <div class="prow" style="font-size:12.5px">Storage cifrado<span class="pv" style="font-size:11px">documentos e imágenes en reposo</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ S11 · Estado real ============ -->
+<section class="slide" data-n="s11">
+  <div class="head">
+    <span class="eyebrow" style="color:var(--amber)">Antes de la siguiente conversación</span>
+    <h2>Qué está construido, qué es demostración y qué falta</h2>
+  </div>
+  <div class="row" style="flex:1;gap:12px;min-height:0">
+    <div class="card" style="flex:1;border-color:#155e57"><span class="n">FUNCIONA HOY</span>
+      <p style="line-height:1.65">&bull; Acceso biométrico local con face-api.js sobre TensorFlow.js<br>
+      &bull; Triaje por voz con esquema estructurado y nivel Manchester<br>
+      &bull; Escaneo rPPG de cinco signos vitales con confianza por parámetro<br>
+      &bull; Informe CAD híbrido: heurístico local más inferencia, exportable a PDF<br>
+      &bull; Historia clínica agrupada por especialidad con el color del triaje<br>
+      &bull; Persistencia en Supabase con aislamiento por fila</p></div>
+    <div class="card" style="flex:1;border-color:#5a4310"><span class="n" style="color:var(--amber)">ES PRUEBA DE CONCEPTO</span>
+      <p style="line-height:1.65">&bull; La aplicación se declara a sí misma <span class="mono" style="font-size:11.5px">Versión PoC</span> y limita el número de consultas de demostración<br>
+      &bull; Los afiliados, cédulas e historias que se ven aquí son datos simulados<br>
+      &bull; El módulo BLE de electrocardiografía está especificado en firmware; no se demuestra en esta sesión<br>
+      &bull; RayScan está pensado para radiografía de tórax; el caso mostrado es una fotografía clínica de herida quirúrgica</p></div>
+    <div class="card" style="flex:1;border-color:#6b2137"><span class="n" style="color:var(--red)">LO QUE NO AFIRMAMOS</span>
+      <p style="line-height:1.65">&bull; No hay una cifra de sensibilidad ni de especificidad validada clínicamente en este documento, porque todavía no se ha corrido ese estudio<br>
+      &bull; No hay registro sanitario ni marcado de dispositivo médico invocado aquí<br>
+      &bull; El informe de RayScan no es un diagnóstico válido y exige validación por un radiólogo certificado; así lo dice el propio informe<br>
+      &bull; Los signos vitales por cámara son una estimación, y la plataforma publica su confianza junto al valor</p></div>
+  </div>
+  <div class="note" style="margin-top:13px"><b>Por qué esta lámina está en la presentación.</b> Un comprador institucional de salud descarta un proveedor el día que descubre una capacidad que se dio por hecha y no existía. Es más barato decirlo aquí que descubrirlo en la implantación.</div>
+</section>
+
+<!-- ============ S12 · Cierre ============ -->
+<section class="slide" data-n="s12">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px">
+    <span class="eyebrow acc">Cierre</span>
+    <h2 style="font-size:42px;max-width:22ch">Cinco módulos, un navegador, y la línea de privacidad trazada donde debe estar</h2>
+    <p class="dek" style="max-width:70ch">MaraMed lleva a la empresa de medicina prepagada tres cosas que hoy no tiene juntas: identifica al afiliado sin guardar su rostro, prioriza su consulta con un protocolo reconocido en lugar de por orden de llegada, y le entrega al médico una lectura adicional que dice en voz alta cuándo puede equivocarse.</p>
+    <div class="row" style="gap:11px;max-width:1000px">
+      <div class="card" style="flex:1"><span class="n">SIGUIENTE PASO</span><h3>Piloto con una cartera acotada</h3><p>Un subconjunto de afiliados reales, en ambiente controlado, con las métricas de acierto del triaje medidas contra la conducta final del médico. Es el estudio que hoy falta, y es el que convierte esta prueba de concepto en un producto defendible.</p></div>
+      <div class="card" style="flex:1"><span class="n">ENTIDAD DESARROLLADORA</span><h3>ISTC × Digit2AI</h3><p>ISTC, Ingeniería y Servicios Tecnológicos Colón, desarrolla y opera la plataforma. Digit2AI aporta la capa de inteligencia artificial. Cada parte responde por lo suyo y así queda en el resguardo de autoría.</p></div>
+    </div>
+    <div class="row" style="align-items:center;gap:14px;margin-top:6px">
+      <span class="brand" style="gap:10px"><span class="bmark" style="width:26px;height:26px;font-size:10px">MM</span><div><div style="font-size:15px;font-weight:700">MaraMed</div><div class="tiny">ISTC · Ingeniería y Servicios Tecnológicos Colón &nbsp;×&nbsp; Digit2AI</div></div></span>
+      <span style="flex:1"></span>
+      <span class="chip">maramed.vercel.app</span>
+      <span class="chip">info@digit2ai.com</span>
+      <span class="simbadge">Prueba de concepto</span>
+    </div>
+  </div>
+</section>
+
+<div id="cap"></div>
+
+<div id="bar">
+  <button class="ctl" id="prev" title="Anterior (flecha izquierda)" aria-label="Diapositiva anterior"><svg viewBox="0 0 16 16"><path d="M10.5 2 4 8l6.5 6V2Z"/></svg></button>
+  <button class="ctl play" id="play" title="Reproducir narración (espacio)" aria-label="Reproducir o pausar narración"><svg viewBox="0 0 16 16" id="playicon"><path d="M4 2.5 13 8l-9 5.5v-11Z"/></svg></button>
+  <button class="ctl" id="next" title="Siguiente (flecha derecha)" aria-label="Diapositiva siguiente"><svg viewBox="0 0 16 16"><path d="M5.5 2 12 8l-6.5 6V2Z"/></svg></button>
+  <div id="track"><div id="fill"></div></div>
+  <span id="count" class="mono">01 / 12</span>
+  <button class="togg act" id="tauto" title="Avance automático al terminar la narración">Auto</button>
+  <button class="togg act" id="tcap" title="Mostrar u ocultar el texto de la narración">Texto</button>
+  <button class="togg" id="tfs" title="Pantalla completa">Pantalla</button>
+</div>
+
+</div></div>
+
+<div id="audios" hidden>
+<audio id="a-s1" preload="none" src="/maramed-audio/s1.mp3"></audio>
+<audio id="a-s2" preload="none" src="/maramed-audio/s2.mp3"></audio>
+<audio id="a-s3" preload="none" src="/maramed-audio/s3.mp3"></audio>
+<audio id="a-s4" preload="none" src="/maramed-audio/s4.mp3"></audio>
+<audio id="a-s5" preload="none" src="/maramed-audio/s5.mp3"></audio>
+<audio id="a-s6" preload="none" src="/maramed-audio/s6.mp3"></audio>
+<audio id="a-s7" preload="none" src="/maramed-audio/s7.mp3"></audio>
+<audio id="a-s8" preload="none" src="/maramed-audio/s8.mp3"></audio>
+<audio id="a-s9" preload="none" src="/maramed-audio/s9.mp3"></audio>
+<audio id="a-s10" preload="none" src="/maramed-audio/s10.mp3"></audio>
+<audio id="a-s11" preload="none" src="/maramed-audio/s11.mp3"></audio>
+<audio id="a-s12" preload="none" src="/maramed-audio/s12.mp3"></audio>
+</div>
+
+<script>
+(function(){
+  var NARR = {
+"s1": "Buenos días. Soy Dalia, y les voy a presentar MaraMed, la plataforma inteligente de monitoreo, priorización y gestión proactiva de poblaciones de salud, desarrollada por ISTC, Ingeniería y Servicios Tecnológicos Colón, junto con Digit2AI. Está pensada para empresas de medicina prepagada, aseguradoras y redes hospitalarias. Lo que van a ver en los próximos minutos son las pantallas del producto, operando sobre datos simulados. Y quiero adelantarles la decisión que gobierna todo el diseño: los datos de salud más sensibles se procesan en el teléfono del afiliado y no viajan a ningún servidor.",
+
+"s2": "Empecemos por la arquitectura, porque explica el resto. MaraMed es una arquitectura cliente-servidor descentralizada. Arriba, en el dispositivo del usuario, corre una aplicación web progresiva que hace tres cosas por su cuenta: la autenticación facial, con TensorFlow punto jota ese y face api; la captura y transcripción de voz, con la interfaz de voz del propio navegador; y la telemetría óptica de signos vitales. Abajo, en la nube, están la base de datos Supabase con seguridad a nivel de fila, los proxies de orquestación, y el modelo de lenguaje Gemini que resuelve el triaje. Entre las dos capas viaja tráfico cifrado con sesión firmada. La consecuencia es la que importa: ninguna imagen del rostro y ninguna trama de video de la cámara sube a un servidor. Lo que sube es el resultado del cálculo, no el material biométrico que lo produjo.",
+
+"s3": "Módulo uno: autenticación biométrica y control de acceso local. El afiliado se identifica frente a la cámara antes de iniciar la consulta. La extracción de los descriptores faciales ocurre al cien por ciento en la memoria RAM del teléfono o de la computadora. No se transmiten ni se almacenan imágenes del rostro en servidores externos, y por eso el cumplimiento de la legislación de protección de datos médicos no es una promesa comercial: es una consecuencia de dónde corre el algoritmo. En la pantalla del medio ya tenemos la sesión abierta: la afiliada identificada, su número de historia clínica y su edad. Y en la tercera, su historia médica agrupada por especialidad, donde cada consulta previa conserva el color del triaje que la originó. Un médico no necesita una lista cronológica. Necesita ver de un golpe qué se puso en amarillo y cuántas veces.",
+
+"s4": "Módulo dos: el motor de triaje por voz y lenguaje natural. El paciente explica sus síntomas hablando, con las manos libres. Observen los tres estados del orbe: escuchando, razonando y respondiendo. Lo que ocurre entre el segundo y el tercero es lo verdaderamente importante. El sistema sanea la transcripción y fuerza la respuesta del modelo dentro de un esquema estructurado. No acepta prosa libre. Ese esquema clasifica la severidad bajo el protocolo de triaje Manchester, del nivel uno al nivel cinco, y sugiere la conducta a seguir: emergencia, consulta prioritaria o atención primaria. Aquí el caso salió amarillo, nivel tres, con derivación a neurología. Un triaje que no encaja en el esquema simplemente no se guarda como triaje, y esa es la diferencia entre un asistente conversacional y un instrumento clínico.",
+
+"s5": "Módulo tres: telemetría biomédica óptica, o fotopletismografía remota. La cámara frontal lee, durante treinta segundos, las variaciones imperceptibles de coloración de la piel causadas por el flujo sanguíneo. De ahí salen cinco parámetros: frecuencia cardíaca, ochenta y seis pulsaciones por minuto; frecuencia respiratoria, diez respiraciones por minuto; variabilidad de la frecuencia cardíaca, cuarenta y dos milisegundos; saturación de oxígeno, noventa y ocho por ciento; y presión arterial estimada, ciento veintiséis sobre setenta y nueve. Ahora les pido que miren la segunda etiqueta de cada tarjeta, no la primera. El oxígeno dice normal, pero con confianza baja. La presión dice atención, también con confianza baja. La plataforma publica su propia incertidumbre al lado del número en lugar de esconderla. Un valor de confianza baja es una invitación a medir con el equipo de siempre, no un resultado clínico.",
+
+"s6": "Módulo cuatro: MaraMed RayScan, soporte a la decisión radiológica. Y aquí hay una distinción que vale toda la lámina. El motor es híbrido, y sus dos mitades no se mezclan. La primera mitad es heurística y corre localmente sobre la matriz de píxeles, vía Canvas y WebGL: luminancia media ciento veintisiete coma cinco, desviación estándar treinta y siete coma ocho, contraste dinámico ciento veinticinco, y densidad de bordes detectados por convolución Sobel, seis coma tres por ciento. Eso son mediciones. No son opiniones, no las produjo un modelo de lenguaje, y se pueden reproducir sobre la misma imagen. La inferencia de inteligencia artificial viene después, y viaja etiquetada por separado en el informe. Fíjense también en el orden de la interfaz: el consejo de captura aparece antes de abrir la cámara, no después de una placa mal fotografiada.",
+
+"s7": "Este es el informe, y es la pantalla más importante de la demostración. Todo lo que escribió el modelo va marcado con la sigla AI: los hallazgos principales, el detalle anatómico, la impresión diagnóstica y las sugerencias clínicas. Lo que midió el motor local va aparte, marcado como evaluación técnica. Y al pie, dentro del propio informe, está el recuadro rojo. Léanlo conmigo, porque es una decisión de diseño y no un descargo legal escondido: la inteligencia artificial puede generar información incorrecta o alucinaciones, es decir, hallazgos que no existen. Este informe no es un diagnóstico médico válido. Requiere validación obligatoria por un médico radiólogo certificado. El módulo actúa como tercer opositor: aporta una lectura adicional que el médico acepta o descarta, y acelera el diagnóstico y la autorización. No firma el informe y no reemplaza al radiólogo. Un sistema de apoyo diagnóstico que no declara su tasa de error se vende mejor y se defiende peor.",
+
+"s8": "Módulo cinco: la capa de hardware e ingesta de datos por Bluetooth de baja energía. Conecta dispositivos médicos portátiles para la toma de electrocardiografía en campo. Los microcontroladores están programados en C más más embebido y hablan directamente con la aplicación web, sin una aplicación nativa intermedia. Dos detalles del firmware que conviene retener. El primero: ejecuta temporizadores no bloqueantes, de modo que la adquisición de la señal no se detiene mientras transmite. El segundo: las tramas se transmiten cifradas en AES ciento veintiocho para evitar intercepciones en tránsito, y el cifrado ocurre en el dispositivo antes de emitir. Entre el microcontrolador y el navegador del clínico no queda ninguna copia legible.",
+
+"s9": "Esta es la matriz tecnológica y el resguardo de autoría, tal como está en el documento de arquitectura. Cada módulo con su pila y con el mecanismo que protege la propiedad intelectual. Biometría facial: algoritmo propietario de validación local de vectores de características, sin guardar fotografías. Triaje conversacional: middleware intermedio en servidor propio que valida y sanea las instrucciones antes de llamar a la inteligencia artificial. Signos vitales: integración del motor de visión en entorno web, sin fricción de descargas en tiendas de aplicaciones. RayScan: flujo de análisis asistido bajo arquitectura de soporte a la decisión clínica. Y la capa de persistencia: aislamiento estricto de los expedientes de pacientes por empresa de medicina prepagada, aplicado con seguridad a nivel de fila. Ese aislamiento vive en la base de datos, no en el código de la aplicación, que es donde debe vivir para que un error de programación no lo pueda desactivar.",
+
+"s10": "Resumamos la línea de privacidad, porque es lo que un oficial de cumplimiento va a querer verificar. Se queda en el equipo: las imágenes del rostro, los descriptores faciales, las tramas de video de la cámara durante el escaneo, el cálculo de la señal cromática y la primera pasada heurística sobre la imagen radiológica. Viaja al servidor: el resultado del cálculo con su nivel de confianza, la transcripción saneada, el nivel de triaje y la especialidad sugerida, el informe y la imagen comprimida que lo originó, y el expediente clínico aislado por empresa. El transporte va cifrado, la sesión va firmada, y el aislamiento se aplica en la base. Si no hay material biométrico almacenado, no hay material biométrico que filtrar.",
+
+"s11": "Y ahora la lámina que normalmente no aparece en una presentación comercial. Qué funciona hoy: el acceso biométrico local, el triaje por voz con esquema estructurado, el escaneo de cinco signos vitales con confianza por parámetro, el informe híbrido exportable, la historia clínica por especialidad y la persistencia aislada. Qué es demostración: la aplicación se declara a sí misma versión de prueba de concepto y limita el número de consultas; los afiliados, las cédulas y las historias que vieron son datos simulados; el módulo de electrocardiografía está especificado en firmware pero no se demuestra en esta sesión. Y qué no estamos afirmando: no hay en este documento una cifra de sensibilidad ni de especificidad validada clínicamente, porque ese estudio todavía no se ha corrido; no hay registro sanitario invocado aquí; y el informe de RayScan no es un diagnóstico válido, como lo dice el propio informe. Un comprador institucional de salud descarta un proveedor el día que descubre una capacidad que se dio por hecha y no existía. Es más barato decirlo en esta lámina que descubrirlo en la implantación.",
+
+"s12": "Cerremos. MaraMed le lleva a la empresa de medicina prepagada tres cosas que hoy no tiene juntas: identifica al afiliado sin guardar su rostro, prioriza su consulta con un protocolo reconocido en lugar de por orden de llegada, y le entrega al médico una lectura adicional que dice en voz alta cuándo puede equivocarse. El siguiente paso natural es un piloto con una cartera acotada de afiliados reales, en ambiente controlado, midiendo el acierto del triaje contra la conducta final del médico. Ese es el estudio que hoy falta y el que convierte esta prueba de concepto en un producto defendible. ISTC desarrolla y opera la plataforma; Digit2AI aporta la capa de inteligencia artificial. Quedamos a la orden para llevar esto a sus datos reales cuando ustedes lo indiquen. Gracias por su tiempo."
+  };
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var cap = document.getElementById('cap');
+  var fill = document.getElementById('fill');
+  var count = document.getElementById('count');
+  var playBtn = document.getElementById('play');
+  var playIcon = document.getElementById('playicon');
+  var PLAY = 'M4 2.5 13 8l-9 5.5v-11Z';
+  var PAUSE = 'M4 2.5h3.2v11H4v-11Zm4.8 0H12v11H8.8v-11Z';
+  var i = 0, autoAdvance = true, showCap = true, current = null;
+
+  var MOBILE = '(max-width: 820px)';
+  function isMobile(){ return window.matchMedia && window.matchMedia(MOBILE).matches; }
+  function fit(){
+    // En un teléfono el escenario fijo de 1280x720 se reduce a ~0.30 y queda
+    // ilegible, así que el diseño se reacomoda y el escalador se aparta.
+    if(isMobile()){ stage.style.transform = ''; return; }
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function audioFor(n){ return document.getElementById('a-' + n); }
+  function pad(x){ return (x < 10 ? '0' : '') + x; }
+
+  function stopAudio(){
+    if(current){ current.pause(); current.currentTime = 0; current.ontimeupdate = null; current.onended = null; }
+    current = null;
+    playIcon.setAttribute('d', PLAY);
+  }
+
+  function show(n, autoplay){
+    if(n < 0 || n >= slides.length) return;
+    stopAudio();
+    slides.forEach(function(s){ s.classList.remove('on'); });
+    void slides[n].offsetWidth;   // reflujo para que la animación de entrada se repita
+    slides[n].classList.add('on');
+    i = n;
+    if(isMobile()) window.scrollTo(0, 0);
+    var key = slides[n].getAttribute('data-n');
+    cap.textContent = NARR[key] || '';
+    count.textContent = pad(n + 1) + ' / ' + pad(slides.length);
+    fill.style.width = '0%';
+    if(autoplay !== false) playNarration();
+  }
+
+  function playNarration(){
+    var a = audioFor(slides[i].getAttribute('data-n'));
+    if(!a) return;
+    current = a;
+    a.currentTime = 0;
+    a.ontimeupdate = function(){ if(a.duration) fill.style.width = (a.currentTime / a.duration * 100) + '%'; };
+    a.onended = function(){
+      fill.style.width = '100%';
+      playIcon.setAttribute('d', PLAY);
+      if(autoAdvance && i < slides.length - 1) setTimeout(function(){ show(i + 1); }, 900);
+    };
+    var p = a.play();
+    if(p && p.catch) p.catch(function(){ playIcon.setAttribute('d', PLAY); });
+    playIcon.setAttribute('d', PAUSE);
+  }
+
+  function toggleAudio(){
+    var a = audioFor(slides[i].getAttribute('data-n'));
+    if(!a) return;
+    if(current === a && !a.paused){ a.pause(); playIcon.setAttribute('d', PLAY); }
+    else if(current === a && a.paused && a.currentTime > 0){ a.play(); playIcon.setAttribute('d', PAUSE); }
+    else playNarration();
+  }
+
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  playBtn.onclick = toggleAudio;
+
+  var tauto = document.getElementById('tauto');
+  tauto.onclick = function(){ autoAdvance = !autoAdvance; tauto.classList.toggle('act', autoAdvance); };
+  var tcap = document.getElementById('tcap');
+  tcap.onclick = function(){ showCap = !showCap; tcap.classList.toggle('act', showCap); cap.classList.toggle('off', !showCap); };
+  document.getElementById('tfs').onclick = function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  };
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); show(i - 1); }
+    else if(e.key === ' '){ e.preventDefault(); toggleAudio(); }
+    else if(e.key === 'Home'){ e.preventDefault(); show(0); }
+    else if(e.key === 'End'){ e.preventDefault(); show(slides.length - 1); }
+    else if(e.key.toLowerCase() === 'f'){ document.getElementById('tfs').click(); }
+    else if(e.key.toLowerCase() === 't'){ tcap.click(); }
+  });
+
+  // La primera diapositiva espera un gesto: el navegador bloquea el audio automático.
+  show(0, false);
+})();
+</script>
+</body>
+</html>

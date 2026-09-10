@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vision2Ai — Demostración para el Ministerio de Transporte</title>
+<meta name="description" content="Vision2Ai, división estratégica de Digit2AI. El caso enRuta: prueba de concepto de gestión documental vehicular construida para enRuta, del Valle del Cauca.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#06081a; --panel:#0b0f2b; --panel2:#101538; --panel3:#151b45;
+    --line:rgba(139,148,255,.14); --line2:rgba(139,148,255,.26);
+    --blue:#3b82f6; --violet:#8b5cf6; --magenta:#d946a8; --cyan:#38bdf8;
+    --amber:#f5a94b; --green:#3fc06a; --crit:#f0715f;
+    --text:#e8eaff; --muted:#9aa3d0; --faint:#6b7399;
+    --grad:linear-gradient(100deg,var(--blue),var(--violet) 45%,var(--magenta));
+    --disp:'Comfortaa',system-ui,sans-serif;
+    --sans:'Manrope',system-ui,-apple-system,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);
+    font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+  /* ---------- barra ---------- */
+  header{position:fixed;top:0;left:0;right:0;z-index:70;background:rgba(6,8,26,.9);
+    backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:16px;height:56px}
+  .brand{font-family:var(--disp);font-weight:700;font-size:1.02rem;white-space:nowrap}
+  .brand .t{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand small{display:block;font-family:var(--sans);font-size:.6rem;font-weight:700;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--faint);margin-top:-3px}
+  .prog{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:var(--grad);transition:width .35s ease}
+  .cnt{font-family:var(--mono);font-size:.72rem;color:var(--faint);white-space:nowrap}
+
+  /* ---------- secciones ---------- */
+  main{padding:56px 0 108px}
+  .slide{padding:62px 0;border-bottom:1px solid var(--line);scroll-margin-top:64px}
+  .slide.now .eyebrow{color:var(--cyan)}
+  .head{margin-bottom:28px;max-width:840px}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--faint);display:block;margin-bottom:11px;transition:color .3s}
+  h1{font-family:var(--disp);font-size:clamp(2rem,5.2vw,3.3rem);line-height:1.1;
+    letter-spacing:-.02em;margin:0 0 16px;font-weight:700}
+  h2{font-family:var(--disp);font-size:clamp(1.4rem,3.3vw,2.05rem);line-height:1.22;
+    letter-spacing:-.015em;margin:0 0 10px;font-weight:700}
+  h3{font-size:1rem;margin:0 0 5px;font-weight:750}
+  .lede{color:var(--muted);font-size:1.04rem;max-width:780px}
+  p{margin:0 0 13px}
+  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .row{display:flex;gap:20px;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:280px;flex:1}
+
+  /* ---------- ventana de producto simulada ---------- */
+  .win{background:var(--panel);border:1px solid var(--line2);border-radius:12px;
+    overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .win-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel2);
+    border-bottom:1px solid var(--line)}
+  .win-title{font-size:12.5px;font-weight:700;color:var(--text)}
+  .win-sp{flex:1}
+  .chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 9px;border-radius:99px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+  .chip.ok{color:var(--green);border-color:rgba(63,192,106,.4);background:rgba(63,192,106,.1)}
+  .chip.crit{color:var(--crit);border-color:rgba(240,113,95,.4);background:rgba(240,113,95,.1)}
+  .chip.acc{color:var(--cyan);border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.1)}
+  .win-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+
+  .kv{display:flex;justify-content:space-between;gap:14px;font-size:12.8px;padding:7px 0;
+    border-bottom:1px solid var(--line)}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted)} .kv .v{font-family:var(--mono);color:var(--text)}
+  .kv .v.crit{color:var(--crit)} .kv .v.ok{color:var(--green)} .kv .v.warn{color:var(--amber)}
+
+  .barline{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar-h{height:20px;border-radius:5px;background:var(--panel3);overflow:hidden}
+  .bar-h i{display:block;height:100%}
+  .legendline{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .lg{display:inline-flex;align-items:center;gap:6px}
+  .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+    display:flex;flex-direction:column;gap:3px}
+  .metric .d{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .metric .n{font-family:var(--disp);font-size:1.85rem;font-weight:700;line-height:1.12;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .metric .n.crit{background:none;color:var(--crit)} .metric .n.ok{background:none;color:var(--green)}
+  .metric .l{font-size:12.2px;color:var(--muted);line-height:1.45}
+
+  /* chat de Laura */
+  .msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5}
+  .msg.u{align-self:flex-end;background:var(--panel3);border:1px solid var(--line2);border-bottom-right-radius:4px}
+  .msg.a{align-self:flex-start;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.34);
+    border-bottom-left-radius:4px}
+  .msg .who{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--faint);display:block;margin-bottom:4px}
+
+  .reason{border-left:2px solid var(--violet);padding:3px 0 3px 13px;margin:2px 0;
+    font-size:12.4px;color:var(--muted)}
+  .reason b{color:var(--text);font-weight:700}
+  .note{margin-top:16px;padding:14px 18px;border-radius:11px;font-size:13.5px;
+    background:rgba(245,169,75,.09);border:1px solid rgba(245,169,75,.3);color:#f4d6a8}
+  .win2{margin-top:16px;padding:14px 18px;border-radius:11px;font-size:13.5px;
+    background:rgba(63,192,106,.09);border:1px solid rgba(63,192,106,.3);color:#bce9cb}
+  .quote{margin:20px 0 0;padding:18px 22px;border-left:3px solid;border-image:var(--grad) 1;
+    background:rgba(139,92,246,.07);border-radius:0 11px 11px 0;font-size:1rem}
+
+  ul.list{list-style:none;padding:0;margin:16px 0 0}
+  ul.list li{padding:12px 0;border-bottom:1px solid var(--line);color:var(--muted);display:flex;gap:16px;font-size:13.6px}
+  ul.list li:last-child{border-bottom:0}
+  ul.list b{color:var(--text);flex:none;width:200px;font-size:13px}
+  @media(max-width:680px){ul.list li{flex-direction:column;gap:3px}ul.list b{width:auto}}
+
+  .addr{margin:28px 0 0;padding:20px 24px;border-radius:14px;display:inline-block;
+    background:var(--panel);border:1px solid var(--line2)}
+  .addr .a1{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+  .addr .a2{display:block;font-family:var(--disp);font-size:1.5rem;font-weight:700}
+  .addr .a3{display:block;font-size:.87rem;color:var(--muted);margin-top:2px}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:18px}
+  .step .s{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--cyan);display:block;margin-bottom:8px}
+  .step p{font-size:12.6px;color:var(--muted);margin:0}
+
+  /* ---------- voz ---------- */
+  .voice{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(6,8,26,.94);
+    backdrop-filter:blur(16px);border-top:1px solid var(--line);
+    padding:11px 0 calc(11px + env(safe-area-inset-bottom))}
+  .vrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .orb{width:42px;height:42px;flex:none;border-radius:50%;cursor:pointer;border:0;padding:0;
+    background:radial-gradient(circle at 38% 32%,#a5f3fc,#38bdf8 34%,#8b5cf6 70%,#d946a8);
+    box-shadow:0 0 0 0 rgba(139,92,246,.55)}
+  .orb.on{animation:pulse 1.8s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(139,92,246,.5)}70%{box-shadow:0 0 0 16px rgba(139,92,246,0)}100%{box-shadow:0 0 0 0 rgba(139,92,246,0)}}
+  .vtxt{flex:1;min-width:170px} .vtxt b{display:block;font-size:.85rem} .vtxt span{font-size:.75rem;color:var(--muted)}
+  .btn{border:1px solid var(--line2);background:rgba(255,255,255,.04);color:var(--text);
+    padding:8px 14px;border-radius:99px;font-size:.79rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:rgba(56,189,248,.55)}
+  .btn.pri{background:var(--grad);border:0}
+  .foot{padding:30px 0 6px;color:var(--faint);font-size:12.5px}
+  /* simulador del tablero */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+  .kpi .kn{font-family:var(--disp);font-size:1.45rem;font-weight:700;line-height:1.1;color:var(--text)}
+  .kpi .kn.warn{color:var(--amber)} .kpi .kn.crit{color:var(--crit)} .kpi .kn.ok{color:var(--green)}
+  .kpi .kl{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.3}
+  table.sim{width:100%;border-collapse:collapse;font-size:12px}
+  table.sim th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--faint);padding:7px 8px;border-bottom:1px solid var(--line2);font-weight:500}
+  table.sim td{padding:8px;border-bottom:1px solid var(--line);color:var(--muted)}
+  table.sim td.nm{color:var(--text);font-weight:600}
+  table.sim td.mono{font-family:var(--mono);font-size:11px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;padding:2px 7px;border-radius:99px;white-space:nowrap}
+  .tag.v{background:rgba(63,192,106,.13);color:var(--green);border:1px solid rgba(63,192,106,.34)}
+  .tag.w{background:rgba(245,169,75,.13);color:var(--amber);border:1px solid rgba(245,169,75,.34)}
+  .tag.c{background:rgba(240,113,95,.13);color:var(--crit);border:1px solid rgba(240,113,95,.34)}
+  .tag.n{background:rgba(154,163,208,.12);color:var(--muted);border:1px solid var(--line2)}
+</style>
+</head>
+<body>
+
+<header><div class="wrap bar">
+  <div class="brand">Vision<span class="t">2</span>Ai<small>División de Digit2AI</small></div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="cnt" id="cnt">01 / 13</div>
+</div></header>
+
+<main>
+
+<!-- 00 -->
+<section class="slide" data-narr="Señora Ministra, muy buenos días. Le habla Dalia, la voz de Digit2AI. Vision2Ai es nuestra división estratégica de inteligencia artificial. En los próximos minutos no le voy a mostrar diapositivas: le voy a mostrar, pantalla por pantalla, un sistema que construimos. Lo construimos como prueba de concepto para enRuta, del Valle del Cauca. Es una prueba de concepto terminada, no un sistema en operación, y prefiero decírselo desde el primer minuto.">
+  <div class="wrap">
+    <span class="eyebrow">Demostración institucional</span>
+    <h1>El dato de vencimiento ya existe.<br><span class="grad">Lo que falta es avisarle al ciudadano.</span></h1>
+    <p class="lede">Vision2Ai, división estratégica de Digit2AI. Esta no es una presentación de capacidades: es el recorrido de una prueba de concepto ya construida y desplegada para gestión documental vehicular —hecha para enRuta, del Valle del Cauca— con sus aciertos y sus límites declarados.</p>
+    <div class="addr">
+      <span class="a1">Preparado para</span>
+      <span class="a2">Elsa Noguera</span>
+      <span class="a3">Ministra de Transporte · República de Colombia</span>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="slide" data-narr="Sección uno: el problema. En movilidad casi nunca falta el dato. La fecha de vencimiento del SOAT, de la revisión técnico-mecánica o de la licencia está registrada. Lo que falla es el aviso. El ciudadano se entera el día que lo detienen, no la semana antes. Y ahí un trámite de cinco minutos se convierte en un comparendo, en una inmovilización y en una fila en la ventanilla.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 01 — el problema</span>
+      <h2>El ciudadano no se entera antes. Se entera cuando ya es sanción.</h2>
+    </div>
+    <div class="row">
+      <div class="col" style="flex:1.3">
+        <div class="win">
+          <div class="win-top"><span class="win-title">El recorrido de un documento vencido</span><span class="win-sp"></span><span class="chip">Situación habitual</span></div>
+          <div class="win-body">
+            <div>
+              <div class="barline"><span>Documento con fecha registrada en el sistema</span><span class="mono" style="color:var(--text)">100%</span></div>
+              <div class="bar-h"><i style="width:100%;background:var(--line2)"></i></div>
+            </div>
+            <div>
+              <div class="barline"><span style="color:var(--amber)">Ciudadano avisado antes del vencimiento</span><span class="mono" style="color:var(--amber)">depende de que alguien revise</span></div>
+              <div class="bar-h"><i style="width:22%;background:linear-gradient(90deg,#8a5a1c,var(--amber))"></i></div>
+            </div>
+            <div>
+              <div class="barline"><span style="color:var(--crit)">Se entera al ser detenido</span><span class="mono" style="color:var(--crit)">comparendo + inmovilización</span></div>
+              <div class="bar-h"><i style="width:78%;background:linear-gradient(90deg,#8e3227,var(--crit))"></i></div>
+            </div>
+            <div class="legendline">
+              <span class="lg"><i style="background:var(--amber)"></i>Aviso preventivo — proceso manual</span>
+              <span class="lg"><i style="background:var(--crit)"></i>Sanción — proceso automático</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col" style="flex:.8">
+        <div class="metric"><span class="d">La paradoja</span><span class="n">0</span><span class="l">datos nuevos hacen falta. La fecha ya está registrada desde el día del trámite.</span></div>
+        <div class="metric"><span class="d">Lo que sí falta</span><span class="n">1</span><span class="l">un mecanismo que lea esa fecha todos los días y actúe sin que nadie se acuerde.</span></div>
+      </div>
+    </div>
+    <div class="quote">La sanción está automatizada. El aviso que la habría evitado, no. Esa asimetría es el problema completo.</div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="slide" data-narr="Quiénes somos. Vision2Ai es la división estratégica de inteligencia artificial de Digit2AI. Operamos veintiún plataformas en vivo, en veintidós verticales de industria, con un acuerdo de disponibilidad del noventa y nueve punto nueve por ciento. No entregamos informes ni pruebas de concepto: entregamos sistemas que quedan funcionando y que nosotros mismos operamos.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 02 — quiénes somos</span>
+      <h2>Vision2Ai, división estratégica de Digit2AI.</h2>
+      <p class="lede">Construimos y operamos software en producción para nuestros clientes. Lo que se entrega es un sistema funcionando, no un documento para licitar.</p>
+    </div>
+    <div class="row">
+      <div class="col"><div class="metric"><span class="d">En operación</span><span class="n">21</span><span class="l">plataformas en vivo</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Sectores</span><span class="n">22</span><span class="l">verticales de industria</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Fuerza de trabajo</span><span class="n">83</span><span class="l">roles especializados con IA</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Compromiso</span><span class="n">99.9%</span><span class="l">disponibilidad</span></div></div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <div class="col"><div class="reason"><b>Digit2AI</b> es la casa matriz: plataforma, infraestructura y operación.</div></div>
+      <div class="col"><div class="reason"><b>Vision2Ai</b> es la división que aplica esa plataforma a un sector concreto — en este caso, movilidad.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="slide" data-narr="Cómo trabajamos. Usted describe el problema en palabras corrientes. Nosotros lo dimensionamos, lo construimos sobre una plataforma que ya opera, y lo ponemos en línea. Trabajamos en semanas porque no empezamos de cero cada vez. Y hay una regla que no negociamos: la inteligencia artificial recomienda, la persona decide. Ningún sistema nuestro impone una sanción por su cuenta.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 03 — cómo lo hacemos</span>
+      <h2>En semanas, sobre plataforma propia, con la persona decidiendo.</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="s">01</span><h3>Usted lo describe</h3><p>Qué trámite se atasca, qué dato llega tarde, qué se hace hoy a mano.</p></div>
+      <div class="step"><span class="s">02</span><h3>La fábrica lo construye</h3><p>Ingeniería, datos, cumplimiento y experto del dominio, sobre infraestructura ya probada.</p></div>
+      <div class="step"><span class="s">03</span><h3>Queda en línea</h3><p>Desplegado, monitoreado y soportado por nosotros. No es un archivo para instalar.</p></div>
+    </div>
+    <div class="win2"><strong>La regla que no se negocia:</strong> la IA recomienda, la persona decide. Ningún sistema nuestro ejecuta una sanción, una suspensión ni un cobro por su cuenta.</div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="slide" data-narr="El caso concreto. Construimos esta prueba de concepto para enRuta, el Centro de Diagnóstico Automotor del Valle, en Santiago de Cali. Vigila cuatro tipos de documento con fechas de vencimiento distintas —licencia de conducción, SOAT, revisión técnico-mecánica y tarjeta de propiedad— y contacta al ciudadano antes y no después. Está terminada y desplegada; lo que falta es conectarla a los datos reales de una entidad.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 04 — el caso</span>
+      <h2>enRuta: prueba de concepto terminada y desplegada.</h2>
+      <p class="lede">Cuatro tipos de documento con fechas distintas y un solo sistema que las vigila todas. Construida para enRuta, del Valle del Cauca; corre hoy con datos de demostración, no con ciudadanos reales.</p>
+    </div>
+    <div class="win">
+      <div class="win-top"><span class="win-title">enRuta — documentos bajo vigilancia</span><span class="win-sp"></span><span class="chip acc">Prueba de concepto · datos de demostración</span></div>
+      <div class="win-body">
+        <div class="kv"><span class="k">Licencia de conducción</span><span class="v">renovación · recategorización · duplicado · expedición</span></div>
+        <div class="kv"><span class="k">SOAT</span><span class="v">seguro obligatorio — la fecha dispara el aviso</span></div>
+        <div class="kv"><span class="k">Revisión técnico-mecánica</span><span class="v">RTMyEC</span></div>
+        <div class="kv"><span class="k">Tarjeta de propiedad</span><span class="v">con historial de comparendos asociado</span></div>
+        <div class="kv"><span class="k">Canales de contacto</span><span class="v ok">WhatsApp · mensaje de texto</span></div>
+        <div class="kv"><span class="k">Cada envío queda registrado</span><span class="v ok">a quién · cuándo · por qué canal · con qué respuesta</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 simulador -->
+<section class="slide" data-narr="Esto es el tablero, tal como lo ve un operador de la entidad. Seis cifras arriba: ciudadanos activos, documentos por vencer, documentos vencidos, contactos hechos hoy, renovaciones en curso y campañas activas. Y debajo, la lista de a quién hay que avisarle, ordenada por urgencia, con el canal que cada persona autorizó. Fíjese en la última columna: el sistema no contacta a nadie que no haya dado su consentimiento, y eso no es una política escrita, es una columna en la base de datos.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 05 — el tablero</span>
+      <h2>Lo que ve un operador cuando abre enRuta.</h2>
+      <p class="lede">Las seis cifras del tablero y la lista de a quién hay que avisarle hoy. Las cifras y los nombres de esta pantalla son datos de demostración.</p>
+    </div>
+    <div class="win">
+      <div class="win-top"><span class="win-title">enRuta — Tablero de control · Sede Cali</span><span class="win-sp"></span><span class="chip">Datos de demostración</span></div>
+      <div class="win-body">
+        <div class="kpis">
+          <div class="kpi"><div class="kn">80</div><div class="kl">Ciudadanos activos</div></div>
+          <div class="kpi"><div class="kn warn">37</div><div class="kl">Documentos por vencer</div></div>
+          <div class="kpi"><div class="kn crit">14</div><div class="kl">Documentos vencidos</div></div>
+          <div class="kpi"><div class="kn ok">23</div><div class="kl">Contactos hoy</div></div>
+          <div class="kpi"><div class="kn">9</div><div class="kl">Renovaciones en curso</div></div>
+          <div class="kpi"><div class="kn">2</div><div class="kl">Campañas activas</div></div>
+        </div>
+        <table class="sim">
+          <tr><th>Ciudadano</th><th>Cédula</th><th>Documento</th><th>Vence</th><th>Estado</th><th>Canal autorizado</th></tr>
+          <tr><td class="nm">Carolina Restrepo A.</td><td class="mono">1.0••.•••.412</td><td>Revisión técnico-mecánica</td><td class="mono">en 6 días</td><td><span class="tag c">Por vencer 7</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+          <tr><td class="nm">Jhon Fredy Ocampo</td><td class="mono">94.•••.331</td><td>SOAT</td><td class="mono">en 12 días</td><td><span class="tag w">Por vencer 15</span></td><td><span class="tag v">SMS</span></td></tr>
+          <tr><td class="nm">María Eugenia Caicedo</td><td class="mono">31.•••.907</td><td>Licencia de conducción C1</td><td class="mono">en 27 días</td><td><span class="tag w">Por vencer 30</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+          <tr><td class="nm">Andrés Felipe Loaiza</td><td class="mono">1.1••.•••.058</td><td>Revisión técnico-mecánica</td><td class="mono">hace 41 días</td><td><span class="tag c">Vencido</span></td><td><span class="tag n">Sin consentimiento</span></td></tr>
+          <tr><td class="nm">Luz Marina Grajales</td><td class="mono">66.•••.284</td><td>Tarjeta de propiedad</td><td class="mono">en 4 meses</td><td><span class="tag v">Vigente</span></td><td><span class="tag v">WhatsApp</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <div class="col"><div class="reason"><b>El estado no está escrito, se calcula.</b> Cada vez que se abre esta pantalla, la columna Estado se deriva de la fecha. Nunca puede quedar desactualizada.</div></div>
+      <div class="col"><div class="reason"><b>El consentimiento manda.</b> A quien no autorizó un canal, el sistema no lo contacta por ese canal. Está en la fila cuatro y es una regla del sistema, no del manual.</div></div>
+    </div>
+    <div class="win2"><strong>Habeas data por diseño (Ley 1581).</strong> Cada ciudadano tiene consentimiento independiente para datos, llamada, mensaje de texto y WhatsApp, más las marcas de no contactar y su horario preferido. Una campaña no puede saltarse esas columnas.</div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="slide" data-narr="Ahora quiero mostrarle algo que encontramos en nuestro propio sistema, porque explica cómo trabajamos mejor que cualquier lista de capacidades. El tablero anunciaba doscientos treinta y cuatro documentos por vencer, pero al abrir la lista no aparecía ninguno. Dos cifras del mismo sistema, contradiciéndose. Lo encontramos nosotros, sobre datos de prueba, antes de que ningún ciudadano dependiera de ese número.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 06 — el hallazgo</span>
+      <h2>El tablero decía 234. La lista devolvía cero.</h2>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Tablero de control — datos de prueba</span><span class="win-sp"></span><span class="chip crit">Contradicción</span></div>
+          <div class="win-body">
+            <div class="kv"><span class="k">Documentos por vencer</span><span class="v crit">234</span></div>
+            <div class="kv"><span class="k">Al abrir la lista de “por vencer”</span><span class="v crit">0 resultados</span></div>
+            <div class="kv"><span class="k">Registros marcados “por vencer”<br>que en realidad ya estaban vencidos</span><span class="v crit">83</span></div>
+            <div class="kv"><span class="k">Tiempo que llevaban así</span><span class="v crit">meses</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="reason"><b>La causa.</b> El estado del documento se calculaba una sola vez, el día que se registraba, y se guardaba en una columna. Nada volvía a tocarlo. El tiempo pasaba; la columna no.</div>
+        <div class="reason"><b>Por qué importa aquí.</b> Nadie lo habría notado desde afuera: el tablero se veía perfecto. Simplemente informaba sobre un pasado que ya no existía. Un defecto así, encontrado después de conectar datos reales, se descubre por la queja de un ciudadano.</div>
+        <div class="metric"><span class="d">Si hubiera estado en operación</span><span class="n crit">83</span><span class="l">personas a las que el sistema habría creído estar cuidando mientras llevaban meses vencidas. Se encontró sobre datos de prueba: ese es el momento correcto para encontrarlo.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="slide" data-narr="La corrección. El estado dejó de ser una columna guardada y pasó a derivarse de la fecha de vencimiento en cada consulta, resuelto en la zona horaria de Colombia. Ya no existe un dato que pueda quedar desactualizado, porque ya no se guarda: se calcula. Un tablero que informa mal es peor que no tener tablero, y para una entidad pública esa diferencia es la que separa una decisión correcta de una equivocada.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 07 — la corrección</span>
+      <h2>El estado dejó de guardarse. Ahora se calcula.</h2>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Antes — estado guardado en columna</span><span class="win-sp"></span><span class="chip crit">Envejece</span></div>
+          <div class="win-body">
+            <div class="kv"><span class="k">Se calcula</span><span class="v crit">una vez, al registrar</span></div>
+            <div class="kv"><span class="k">Se actualiza</span><span class="v crit">nunca</span></div>
+            <div class="kv"><span class="k">Resultado</span><span class="v crit">informa sobre un pasado</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Después — estado derivado de la fecha</span><span class="win-sp"></span><span class="chip ok">Siempre vigente</span></div>
+          <div class="win-body">
+            <div class="kv"><span class="k">Vigente</span><span class="v ok">más de 30 días</span></div>
+            <div class="kv"><span class="k">Por vencer</span><span class="v warn">30 · 15 · 7 días</span></div>
+            <div class="kv"><span class="k">Vencido</span><span class="v crit">fecha ya pasada</span></div>
+            <div class="kv"><span class="k">Zona horaria</span><span class="v ok">Colombia</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">Un tablero que informa mal es peor que no tener tablero: el primero produce decisiones equivocadas con toda confianza.</div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="slide" data-narr="Así atiende Laura a una ciudadana. Le escribe ella primero, porque el tablero detectó que a la señora Carolina le quedan seis días de revisión técnico-mecánica. Le ofrece la cita, se la agenda el sábado y le programa el recordatorio. Y fíjese en el momento clave: cuando le preguntan cuánto vale, Laura no inventa una cifra. Dice que no la tiene confirmada y ofrece un asesor. Un dato equivocado sobre una tarifa oficial es exactamente el error que una entidad no se puede permitir.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 08 — la asistente</span>
+      <h2>Laura resuelve el trámite. Y cuando no sabe, lo dice.</h2>
+    </div>
+    <div class="row">
+      <div class="col" style="flex:1.15">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Laura — atención a un ciudadano por WhatsApp</span><span class="win-sp"></span><span class="chip acc">Español colombiano</span></div>
+          <div class="win-body">
+            <div class="msg a"><span class="who">Laura · aviso automático</span>Buenas tardes, señora Carolina. Le habla Laura de enRuta, su asistente de trámites vehiculares. Le escribo porque la revisión técnico-mecánica de su vehículo de placas ABC123 vence el 24 de octubre: le quedan seis días. ¿Desea que le agende la cita?</div>
+            <div class="msg u"><span class="who">Ciudadana</span>Sí señora, pero el sábado que no trabajo</div>
+            <div class="msg a"><span class="who">Laura</span>Con mucho gusto. Tenemos disponibilidad el sábado 19 de octubre a las 8:30 de la mañana o a las 10:00, en la sede de Cali. ¿Cuál le sirve?</div>
+            <div class="msg u"><span class="who">Ciudadana</span>A las 8:30. Y cuánto me vale?</div>
+            <div class="msg a"><span class="who">Laura</span>Le agendé el sábado 19 a las 8:30 en la sede de Cali. Sobre el valor: la tarifa de la revisión la fija la resolución vigente y no la tengo confirmada para su tipo de vehículo, así que prefiero no darle una cifra equivocada. Al llegar se la confirman en caja, o si desea le hago seguir su consulta con un asesor.</div>
+            <div class="msg u"><span class="who">Ciudadana</span>Listo, gracias</div>
+            <div class="msg a"><span class="who">Laura</span>A usted. Le llegará el recordatorio un día antes. Que tenga buena tarde.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col" style="flex:.85">
+        <div class="reason"><b>Trato de usted, siempre.</b> Nunca tutea. Y la terminología es la colombiana: revisión técnico-mecánica, comparendo, cédula de ciudadanía.</div>
+        <div class="reason"><b>No improvisa una cifra.</b> Cuando le preguntan el valor y no lo tiene confirmado, lo dice y ofrece un asesor. Un dato inventado sobre una tarifa oficial es exactamente el error que no se puede cometer.</div>
+        <div class="reason"><b>Resuelve el trámite, no solo informa.</b> Agenda la cita, confirma sede y hora, y deja programado el recordatorio.</div>
+        <div class="reason"><b>Categorías reales.</b> A1, A2, B1, B2, B3, C1, con su definición oficial.</div>
+      </div>
+    </div>
+    <div class="note"><strong>Lo que Laura todavía no hace, dicho por nosotros:</strong> atiende por el tablero, <strong>no por línea telefónica</strong>. La telefonía con IA es el siguiente paso identificado; no está funcionando hoy y no se la vamos a presentar como si lo estuviera.</div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="slide" data-narr="Otro hallazgo, este de seguridad. Las operaciones que modifican la estructura de la base de datos estaban expuestas como enlaces abiertos, sin ninguna autenticación. Un rastreador automático de internet las estaba ejecutando sobre el sistema desplegado, simplemente porque encontró el enlace. Hoy exigen una clave y una confirmación explícita, y una clave equivocada responde como si la ruta no existiera.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 09 — seguridad</span>
+      <h2>Un rastreador automático estaba alterando la base de datos.</h2>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Antes</span><span class="win-sp"></span><span class="chip crit">Abierto</span></div>
+          <div class="win-body">
+            <div class="kv"><span class="k">Acceso</span><span class="v crit">enlace público, sin clave</span></div>
+            <div class="kv"><span class="k">Quién lo ejecutaba</span><span class="v crit">un rastreador automático</span></div>
+            <div class="kv"><span class="k">Sobre qué</span><span class="v crit">la base del sistema desplegado</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="win">
+          <div class="win-top"><span class="win-title">Después</span><span class="win-sp"></span><span class="chip ok">Cerrado</span></div>
+          <div class="win-body">
+            <div class="kv"><span class="k">Acceso</span><span class="v ok">clave de administración</span></div>
+            <div class="kv"><span class="k">Además</span><span class="v ok">confirmación explícita</span></div>
+            <div class="kv"><span class="k">Clave equivocada</span><span class="v ok">responde “no existe”</span></div>
+            <div class="kv"><span class="k">Sin clave configurada</span><span class="v ok">la ruta queda deshabilitada</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="reason">Una clave equivocada no responde “prohibido”: responde “no existe”. Confirmar que algo está ahí ya es información para quien busca.</div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="slide" data-narr="Cómo verificamos que lo que le digo es cierto. La prueba de concepto trae una suite de sesenta y cuatro pruebas automáticas que se ejecuta contra el sistema desplegado, no contra una copia de laboratorio. Las sesenta y cuatro pasan. No requiere ninguna llave externa, así que su propio equipo técnico puede correrla y comprobarlo por su cuenta.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 10 — verificación</span>
+      <h2>64 pruebas contra el sistema real. Las 64 en verde.</h2>
+    </div>
+    <div class="win">
+      <div class="win-top"><span class="win-title">Suite de aceptación — ejecutada contra el sistema desplegado</span><span class="win-sp"></span><span class="chip ok">64 ok · 0 fallas</span></div>
+      <div class="win-body">
+        <div class="kv"><span class="k">El estado se deriva de la fecha, no de la columna</span><span class="v ok">ok</span></div>
+        <div class="kv"><span class="k">Las rutas de administración exigen clave</span><span class="v ok">ok</span></div>
+        <div class="kv"><span class="k">Una clave equivocada responde “no existe”</span><span class="v ok">ok</span></div>
+        <div class="kv"><span class="k">El aviso telefónico declara que Laura no atiende por teléfono</span><span class="v ok">ok</span></div>
+        <div class="kv"><span class="k">Los datos de un tenant no se ven desde otro</span><span class="v ok">ok</span></div>
+      </div>
+    </div>
+    <div class="win2"><strong>Sin llaves externas.</strong> Su equipo técnico puede ejecutar la misma suite y obtener el mismo resultado. La verificación no depende de que nos crea.</div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-narr="Señora Ministra, la aclaración de alcance, y prefiero ser del todo precisa. Lo que le mostré es una prueba de concepto, construida para enRuta del Valle del Cauca. Está terminada y desplegada, pero no opera con ciudadanos reales y no es una integración nacional. No se la voy a presentar como si lo fuera. Es una prueba de concepto esperando su primer despliegue real. Escalarlo después no exige inventar tecnología; exige acuerdos de datos y decisión institucional.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 11 — alcance real</span>
+      <h2>Una prueba de concepto terminada, esperando su primer despliegue real.</h2>
+    </div>
+    <ul class="list">
+      <li><b>Lo que ya existe</b><span>La prueba de concepto completa, construida y desplegada: tablero, campañas por WhatsApp y mensaje de texto, y asistente en español colombiano. Hecha para enRuta, del Valle del Cauca.</span></li>
+      <li><b>Lo que NO existe</b><span>No está operando con ciudadanos reales de ninguna entidad, y no hay integración con sistemas nacionales de información de tránsito. Ninguna de las dos cosas se la presentamos como si existiera.</span></li>
+      <li><b>Lo que exige escalar</b><span>Acuerdos de acceso a datos y decisión institucional. La tecnología ya está probada; el cuello de botella no es técnico.</span></li>
+      <li><b>Nuestro tiempo de entrega</b><span>Un piloto medible en una entidad o un departamento: cuatro semanas, no un ciclo presupuestal.</span></li>
+    </ul>
+    <div class="quote">Preferimos que una entidad pública nos mida por un piloto pequeño y verificable, antes que por una promesa grande.</div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-narr="El beneficio, en el lenguaje que le sirve a usted para defenderlo. Adelantarse a la fecha convierte una sanción en una renovación. Eso es más seguridad vial, porque circulan menos vehículos sin revisión ni SOAT. Es más cumplimiento voluntario. Es recaudo que llega por el trámite hecho a tiempo y no por la multa al ciudadano que no se enteró. Y es menos congestión en las ventanillas.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 12 — el beneficio</span>
+      <h2>Convertir una sanción en una renovación.</h2>
+    </div>
+    <div class="row">
+      <div class="col"><div class="metric"><span class="d">Seguridad vial</span><span class="n ok">↓</span><span class="l">menos vehículos circulando sin revisión técnico-mecánica ni SOAT vigente</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Cumplimiento</span><span class="n ok">↑</span><span class="l">voluntario y a tiempo, en lugar de forzado por la sanción</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Recaudo</span><span class="n ok">↑</span><span class="l">por la vía del trámite hecho a tiempo, no de la multa</span></div></div>
+      <div class="col"><div class="metric"><span class="d">Congestión</span><span class="n ok">↓</span><span class="l">el trámite se resuelve antes de que haya que hacer fila</span></div></div>
+    </div>
+    <div class="reason">Y cada contacto queda registrado —a quién, cuándo, por qué canal, con qué respuesta— de modo que el programa es auditable y defendible ante control interno.</div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-narr="Para cerrar. Lo que le mostré es una prueba de concepto terminada, y con mucho gusto se la presentamos en vivo cuando usted disponga, con el equipo que quiera tener en la sala. Nuestra propuesta es pequeña a propósito: un piloto de cuatro semanas, en la entidad que usted elija, con una métrica acordada de antemano. No le estamos pidiendo que crea en una promesa: le estamos pidiendo el primer despliegue real de una prueba de concepto que ya está construida y que usted acaba de ver. Muchas gracias por su tiempo.">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Sección 13 — la propuesta</span>
+      <h2>Un piloto de cuatro semanas,<br><span class="grad">con la métrica acordada de antemano.</span></h2>
+    </div>
+    <div class="win">
+      <div class="win-top"><span class="win-title">Piloto propuesto</span><span class="win-sp"></span><span class="chip acc">4 semanas</span></div>
+      <div class="win-body">
+        <div class="kv"><span class="k">Semana 1</span><span class="v">acceso a datos reales, definición de la métrica y del universo de ciudadanos</span></div>
+        <div class="kv"><span class="k">Semana 2</span><span class="v">sistema en línea con el tablero y las plantillas de mensaje</span></div>
+        <div class="kv"><span class="k">Semana 3</span><span class="v">primera campaña de avisos, medida contra un grupo de control</span></div>
+        <div class="kv"><span class="k">Semana 4</span><span class="v ok">resultado medido y entregado, con la evidencia auditable</span></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <div class="col"><div class="reason"><b>Demostración en vivo</b><br>La presentamos ante usted y su equipo, cuando disponga.</div></div>
+      <div class="col"><div class="reason"><b>Vision2Ai</b><br>División estratégica de Digit2AI</div></div>
+      <div class="col"><div class="reason"><b>Contacto</b><br>info@digit2ai.com</div></div>
+    </div>
+    <div class="foot">Vision2Ai — división estratégica de Digit2AI LLC · Tampa, Florida · Operación en Colombia: Cali y Barranquilla<br>enRuta: prueba de concepto construida para el Centro de Diagnóstico Automotor del Valle del Cauca.</div>
+  </div>
+</section>
+
+</main>
+
+<div class="voice"><div class="wrap vrow">
+  <button class="orb" id="orb" aria-label="Reproducir narración"></button>
+  <div class="vtxt"><b id="vt">Narración con Dalia</b><span id="vs">Toque el orbe para escuchar esta sección</span></div>
+  <button class="btn" id="prev">Anterior</button>
+  <button class="btn" id="next">Siguiente</button>
+  <button class="btn pri" id="play">Reproducir todo</button>
+</div></div>
+
+<script>
+(function(){
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section[data-narr]'));
+  var i=0, playing=false, auto=false, audio=new Audio(), token=0, cache={};
+  var bar=document.getElementById('bar'), cnt=document.getElementById('cnt');
+  var orb=document.getElementById('orb'), vt=document.getElementById('vt'), vs=document.getElementById('vs');
+  var play=document.getElementById('play');
+  var TTS='/api/tts/edge', VOICE='dalia', RATE='-4%';
+  var pad=function(n){ return (n<10?'0':'')+n; };
+
+  function mark(){
+    secs.forEach(function(s,k){ s.classList.toggle('now',k===i); });
+    bar.style.width=((i+1)/secs.length*100)+'%';
+    cnt.textContent=pad(i+1)+' / '+pad(secs.length);
+  }
+  function show(k){ i=Math.max(0,Math.min(secs.length-1,k)); secs[i].scrollIntoView({behavior:'smooth',block:'start'}); mark(); }
+  function setState(on,label,sub){ playing=on; orb.classList.toggle('on',on);
+    if(label) vt.textContent=label; if(sub!==undefined) vs.textContent=sub;
+    play.textContent=auto?'Detener':'Reproducir todo'; }
+
+  async function speak(k){
+    var my=++token, text=secs[k].getAttribute('data-narr');
+    setState(true,'Preparando la voz…','Sección '+(k+1)+' de '+secs.length);
+    try{
+      var url=cache[k];
+      if(!url){
+        var r=await fetch(TTS,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({text:text,voice:VOICE,rate:RATE})});
+        if(!r.ok) throw new Error('tts '+r.status);
+        url=cache[k]=URL.createObjectURL(await r.blob());
+      }
+      if(my!==token) return;
+      audio.src=url; await audio.play();
+      setState(true,'Dalia narrando','Sección '+(k+1)+' de '+secs.length);
+    }catch(e){
+      if(my!==token) return;
+      try{
+        var u=new SpeechSynthesisUtterance(text); u.lang='es-CO'; u.rate=.96;
+        u.onend=function(){ if(my===token) onEnd(); };
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+        setState(true,'Narrando (voz del navegador)','El motor neuronal no respondió');
+      }catch(e2){ setState(false,'No se pudo reproducir','Puede seguir leyendo'); }
+    }
+  }
+  function onEnd(){
+    if(auto && i<secs.length-1){ show(i+1); speak(i); }
+    else { auto=false; setState(false,'Narración con Dalia','Toque el orbe para escuchar de nuevo'); }
+  }
+  audio.addEventListener('ended',onEnd);
+  function stop(){ token++; auto=false; audio.pause(); try{speechSynthesis.cancel();}catch(e){}
+    setState(false,'Narración con Dalia','Toque el orbe para escuchar esta sección'); }
+
+  orb.addEventListener('click',function(){ playing?stop():speak(i); });
+  play.addEventListener('click',function(){ if(auto){stop();return;} auto=true; show(0); speak(0); play.textContent='Detener'; });
+  document.getElementById('prev').addEventListener('click',function(){ stop(); show(i-1); });
+  document.getElementById('next').addEventListener('click',function(){ stop(); show(i+1); });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'){stop();show(i+1);} if(e.key==='ArrowLeft'){stop();show(i-1);}
+    if(e.key===' '){e.preventDefault(); playing?stop():speak(i);} });
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){ if(en.isIntersecting && !auto){ i=secs.indexOf(en.target); mark(); } });
+  },{threshold:.45});
+  secs.forEach(function(s){ io.observe(s); });
+  mark();
+})();
+</script>
+</body>
+</html>
