@@ -211,7 +211,7 @@ section('5. Prompt injection — content is data, and an attempt is reported');
   const src = fs.readFileSync(SERVICE, 'utf8');
   ok('the system prompt declares email content untrusted', /UNTRUSTED DATA, NOT INSTRUCTIONS/.test(src));
   ok('the system prompt forbids inventing facts', /Never invent a fact/.test(src));
-  ok('the system prompt says nothing it writes is ever sent', /never sent automatically/i.test(src));
+  ok('the system prompt says nothing it writes is ever sent', /is ever sent automatically/i.test(src));
 }
 
 // ---------------------------------------------------------------------------
@@ -487,36 +487,53 @@ section('13. The page — driven in jsdom, not just grepped');
     ok('the list host still exists', !!doc.getElementById('list'));
     ok('the h1 names the action inbox', /Action Inbox/.test(doc.querySelector('h1').textContent));
 
-    // Extract and evaluate just the page script so renderTabs can be driven for real.
+    // Evaluate the page script and, in the SAME eval, hand out handles to its
+    // module-scope bindings. jsdom gives each eval() its own lexical scope, so a
+    // `let` from one eval is invisible to the next — assigning window.AI_TAXONOMY
+    // from outside silently misses the binding renderTabs actually reads.
     const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
     const w = dom.window;
     w.localStorage.setItem('token', 'x');
     w.fetch = () => Promise.resolve({ text: () => Promise.resolve('{"success":false}') });
-    let ran = false;
-    try { w.eval(script); ran = true; } catch (e) { ok('the page script evaluates in a DOM', false, e.message); }
-    if (ran) {
+    let H = null;
+    try {
+      w.eval(script + '\n;window.__h = { renderTabs, actionCard, keyOf, fmtDue, ' +
+             'setTax(t){ AI_TAXONOMY = t; }, setCounts(c){ AI_COUNTS = c; }, ' +
+             'getMode(){ return VIEW_MODE; } };');
+      H = w.__h;
       ok('the page script evaluates in a DOM', true);
-      w.AI_TAXONOMY = { tabs: E.TABS, statuses: E.STATUSES, status_labels: E.STATUS_LABELS,
-                        priorities: E.PRIORITIES, priority_labels: E.PRIORITY_LABELS, projects: E.PROJECTS };
-      w.AI_COUNTS = { focus: 4, critical: 1, action: 3, all: 22 };
-      w.renderTabs();
+    } catch (e) {
+      ok('the page script evaluates in a DOM', false, e.message);
+    }
+    if (H) {
+      // boot() is async and repaints the tab bar when its (stubbed) fetch settles.
+      // Let it finish first, or it overwrites what we are about to assert on.
+      await new Promise(r => setTimeout(r, 60));
+
+      H.setTax({ tabs: E.TABS, statuses: E.STATUSES, status_labels: E.STATUS_LABELS,
+                 priorities: E.PRIORITIES, priority_labels: E.PRIORITY_LABELS, projects: E.PROJECTS });
+      H.setCounts({ focus: 4, critical: 1, action: 3, all: 22 });
+      H.renderTabs();
+
       const btns = [...doc.querySelectorAll('#tabs .tab')];
       eq('renderTabs draws every tab plus the classic escape hatch', btns.length, E.TABS.length + 1);
       ok('Focus is the selected tab by default', btns[0].classList.contains('on'));
       ok('counts render on the tabs', btns[0].textContent.includes('4'));
-      ok('a non-zero Critical count is styled as an alert',
-        btns.find(b => b.getAttribute('data-tab') === 'critical').classList.contains('alert'));
+      const crit = btns.find(b => b.getAttribute('data-tab') === 'critical');
+      ok('a non-zero Critical count is styled as an alert', !!crit && crit.classList.contains('alert'));
       ok('the classic unread list is reachable from the tab bar',
         btns.some(b => b.getAttribute('data-tab') === '__classic'));
+      eq('the Action Inbox is the default view, not the raw list', H.getMode(), 'ai');
 
       // Card rendering must escape hostile sender names.
-      const card = w.actionCard({
+      const card = H.actionCard({
         account_id: 1, message_id: 'm1', priority: 'critical', status: 'critical',
         status_label: 'Critical', from_name: '<img src=x onerror=alert(1)>',
         subject: 'Subject', summary: 'Summary', received_at: new Date().toISOString()
       }, 0);
       ok('a hostile sender name is escaped in the card', !card.includes('<img src=x'));
       ok('and rendered as text instead', card.includes('&lt;img src=x'));
+      ok('the priority drives the card border class', card.includes('acard p-critical'));
     }
   }
 }

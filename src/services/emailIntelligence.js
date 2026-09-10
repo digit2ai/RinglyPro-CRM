@@ -287,8 +287,11 @@ function stripQuotedHistory(text) {
     if (m && m.index < cut) cut = m.index;
   }
   const head = text.slice(0, cut).trim();
-  // If stripping left almost nothing, the markers were part of the real body.
-  return head.length >= 40 ? head : text.trim();
+  // If stripping left almost nothing, the markers WERE the body (a bare "> yes"),
+  // so keep the original. The floor is deliberately low: "Can you confirm?" is a
+  // complete, classifiable ask at 16 characters, and dropping it to protect
+  // against an edge case would throw away the one sentence that matters.
+  return head.length >= 15 ? head : text.trim();
 }
 
 function stripSignature(text) {
