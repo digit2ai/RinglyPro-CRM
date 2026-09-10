@@ -311,6 +311,12 @@ function tokens(brand) {
     BRAND_BUILT_BY: b.built_by,
     BRAND_URL: 'https://' + b.domain,
     BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld,
+    // The domain as a reader sees it written: "JobUp.dev", "JobMD.io".
+    // BRAND_DOMAIN is the lowercase hostname and is right for an address
+    // (mannystagg.jobup.dev); prose that names the product wants this. Writing
+    // "{{BRAND}}.dev" instead reads correctly for JobUp and silently invents
+    // "JobMD.dev" for the other brand.
+    BRAND_WORDMARK: b.word_head + b.word_tail + b.word_tld,
     BRAND_EG_ROLES: b.eg_roles_en, BRAND_EG_ROLES_ES: b.eg_roles_es,
     // Default UI language for the landing (the FALLBACK, not a lock). '' → 'en'.
     BRAND_DEFAULT_LANG: b.default_lang === 'es' ? 'es' : 'en',

@@ -3046,6 +3046,29 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     assert.ok(src.includes("'/index.html', '/app.html', '/welcome.html'"),
       'the .html filenames must redirect to their real routes');
   });
+  await t('the marketing pages are RENDERED, never sent off disk', () => {
+    // /presentation and /radio shipped their raw source for months: they were
+    // the only shells served with res.sendFile, so every brand token reached
+    // the browser intact and the page read "This is {{BRAND}}.dev".
+    const src = require('fs').readFileSync(__dirname + '/src/index.js', 'utf8');
+    const BRAND = require('./src/brand');
+    for (const f of ['radio.html', 'presentation.html']) {
+      assert.ok(!new RegExp('sendFile\\([^)]*' + f.replace('.', '\\.')).test(src),
+        `${f} must go through pwa.page, not sendFile`);
+      assert.ok(src.includes(`'${f}'`), `${f} must redirect its filename to the clean URL`);
+      for (const b of ['jobup', 'jobmd']) {
+        const out = pwaSvc.page(f, '', BRAND.byId(b));
+        assert.deepStrictEqual(out.match(/\{\{[A-Z_]+\}\}/g) || [], [],
+          `${f} leaves tokens unsubstituted for ${b}`);
+      }
+    }
+    // And the prose names the real domain for each brand rather than gluing
+    // ".dev" onto the product name.
+    assert.ok(pwaSvc.page('presentation.html', '', BRAND.byId('jobup')).includes('JobUp.dev'),
+      'the walkthrough must name JobUp.dev');
+    assert.ok(!/JobMD\.dev/.test(pwaSvc.page('presentation.html', '', BRAND.byId('jobmd'))),
+      'and must never invent JobMD.dev');
+  });
   await t('the HTML shells resolve their base server-side, not by sniffing the URL', () => {
     const fs = require('fs');
     for (const f of ['index.html', 'app.html', 'welcome.html']) {

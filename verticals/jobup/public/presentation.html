@@ -238,7 +238,7 @@
 <div class="cover" id="cover">
   <div class="logo"><span id="mark"></span> <span>Job<span class="gt">Up</span></span></div>
   <h1 id="cvH">Let AI find your next job</h1>
-  <p id="cvP">A guided walkthrough of {{BRAND}}.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}'s AI voice.</p>
+  <p id="cvP">A guided walkthrough of {{BRAND_WORDMARK}} — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}'s AI voice.</p>
   <div class="langsw clang"><button id="cvEn" class="on">EN</button><button id="cvEs">ES</button></div>
   <button class="go" id="start">Start the walkthrough</button>
   <div class="note" id="cvNote">Arrows to navigate · space to pause or resume the voice. Pause anytime to take questions.</div>
@@ -417,8 +417,8 @@
   // ---- SLIDES (bilingual narration) ----
   var SLIDES=[
     {step:['Landing','Inicio'], render:scrLanding,
-      en:'This is {{BRAND}}.dev. The promise is simple: stop looking for jobs, and let AI find them for you. A person talks to the Orb or uploads a resume, and in minutes {{BRAND}} builds their entire career presence. Everything you are about to see is real product, in English and Spanish.',
-      es:'Esto es {{BRAND}}.dev. La promesa es simple: deja de buscar empleo y deja que la inteligencia artificial lo encuentre por ti. La persona habla con el Orbe o sube su currículum, y en minutos {{BRAND}} construye toda su presencia profesional. Todo lo que verás es producto real, en inglés y español.'},
+      en:'This is {{BRAND_WORDMARK}}. The promise is simple: stop looking for jobs, and let AI find them for you. A person talks to the Orb or uploads a resume, and in minutes {{BRAND}} builds their entire career presence. Everything you are about to see is real product, in English and Spanish.',
+      es:'Esto es {{BRAND_WORDMARK}}. La promesa es simple: deja de buscar empleo y deja que la inteligencia artificial lo encuentre por ti. La persona habla con el Orbe o sube su currículum, y en minutos {{BRAND}} construye toda su presencia profesional. Todo lo que verás es producto real, en inglés y español.'},
     {step:['Attach resume','Sube tu CV'], render:scrBuild,
       en:'It starts with one thing: your resume. Name, email, and a file — or paste the text. No card, no signup wall. And a promise we keep in code: we show real openings or none at all, never invented ones.',
       es:'Empieza con una sola cosa: tu currículum. Nombre, correo y un archivo, o pegas el texto. Sin tarjeta, sin muro de registro. Y una promesa que cumplimos en el código: mostramos vacantes reales o ninguna, nunca inventadas.'},
@@ -453,8 +453,8 @@
       en:'And anyone can search live openings on a map, by title and city, with the stated salary shown when the posting gives it. Fifty real openings around Tampa here — a free, no-signup way to feel the product before building an account.',
       es:'Y cualquiera puede buscar vacantes en vivo sobre un mapa, por título y ciudad, con el salario indicado cuando la publicación lo da. Aquí, cincuenta vacantes reales alrededor de Tampa: una forma gratuita y sin registro de sentir el producto antes de crear una cuenta.'},
     {step:['Eva · Close','Eva · Cierre'], render:scrEva,
-      en:'And whenever you have a question, Eva is there — she reads your account, so the answer is about you, not a manual. That is {{BRAND}}: a resume in, and out comes a living career presence that helps people find not just a job, but the right one. {{BRAND}}.dev.',
-      es:'Y cuando tengas una pregunta, ahí está Eva: lee tu cuenta, así que la respuesta es sobre ti, no un manual. Eso es {{BRAND}}: entra un currículum, y sale una presencia profesional viva que ayuda a las personas a encontrar no solo un trabajo, sino el correcto. {{BRAND}}.dev.'}
+      en:'And whenever you have a question, Eva is there — she reads your account, so the answer is about you, not a manual. That is {{BRAND}}: a resume in, and out comes a living career presence that helps people find not just a job, but the right one. {{BRAND_WORDMARK}}.',
+      es:'Y cuando tengas una pregunta, ahí está Eva: lee tu cuenta, así que la respuesta es sobre ti, no un manual. Eso es {{BRAND}}: entra un currículum, y sale una presencia profesional viva que ayuda a las personas a encontrar no solo un trabajo, sino el correcto. {{BRAND_WORDMARK}}.'}
   ];
 
   function narrOf(idx){ return LANG==='es'?SLIDES[idx].es:SLIDES[idx].en; }
@@ -540,13 +540,13 @@
   function setCover(){
     if(LANG==='es'){
       el('cvH').textContent='Deja que la IA encuentre tu próximo empleo';
-      el('cvP').textContent='Un recorrido guiado por {{BRAND}}.dev: de un currículum a un sitio personal en vivo, un perfil legible por IA y coincidencias de empleo reales. Narrado por Ava y Dalia, las voces de {{BRAND}}.';
+      el('cvP').textContent='Un recorrido guiado por {{BRAND_WORDMARK}}: de un currículum a un sitio personal en vivo, un perfil legible por IA y coincidencias de empleo reales. Narrado por Ava y Dalia, las voces de {{BRAND}}.';
       el('start').textContent='Iniciar el recorrido';
       el('cvNote').textContent='Flechas para navegar · barra espaciadora para pausar o reanudar la voz. Pausa cuando quieras para responder preguntas.';
       el('cvEs').className='on'; el('cvEn').className='';
     } else {
       el('cvH').textContent='Let AI find your next job';
-      el('cvP').textContent='A guided walkthrough of {{BRAND}}.dev — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}\'s AI voice.';
+      el('cvP').textContent='A guided walkthrough of {{BRAND_WORDMARK}} — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}\'s AI voice.';
       el('start').textContent='Start the walkthrough';
       el('cvNote').textContent='Arrows to navigate · space to pause or resume the voice. Pause anytime to take questions.';
       el('cvEn').className='on'; el('cvEs').className='';

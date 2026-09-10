@@ -501,10 +501,12 @@ router.get(['/terms', '/terms/', '/terms-of-service'], (req, res) =>
 // would ship that token to the browser. Send people to the real routes instead.
 router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.html',
             '/privacy.html', '/terms.html', '/jobsearch.html',
+            '/radio.html', '/presentation.html',
             '/subscribers-admin.html', '/social-admin.html', '/plan.html'], (req, res) => {
   const to = { '/index.html': '/', '/app.html': '/app',
                '/welcome.html': '/welcome', '/build.html': '/build', '/reset.html': '/reset',
                '/privacy.html': '/privacy', '/terms.html': '/terms', '/jobsearch.html': '/jobsearch',
+               '/radio.html': '/radio', '/presentation.html': '/presentation',
                '/subscribers-admin.html': '/subscribers-admin',
                '/social-admin.html': '/social-admin',
                '/plan.html': '/subscribers-admin/plan' }[req.path];
@@ -518,8 +520,14 @@ router.use(express.static(publicDir, { index: false }));
 // (The /radio clean URL regressed once when a merge rewrote the '/' handler —
 //  keep these together, right after the static mount, so a bare '/radio' or
 //  '/presentation' never falls through to a 404 while '/radio.html' works.)
-router.get(['/radio', '/radio/'], (req, res) => res.sendFile(path.join(publicDir, 'radio.html')));
-router.get(['/presentation', '/presentation/'], (req, res) => res.sendFile(path.join(publicDir, 'presentation.html')));
+// They go through pwa.page like every other shell: both carry {{BRAND}} and
+// {{BRAND_DOMAIN}}, and sendFile shipped those tokens to the browser verbatim
+// ("This is {{BRAND}}.dev"). A marketing page is exactly where a placeholder is
+// most expensive, and it is the one page class that was reading itself off disk.
+router.get(['/radio', '/radio/'], (req, res) =>
+  res.type('html').send(pwa.page('radio.html', pwa.basePath(req), BRAND.forRequest(req))));
+router.get(['/presentation', '/presentation/'], (req, res) =>
+  res.type('html').send(pwa.page('presentation.html', pwa.basePath(req), BRAND.forRequest(req))));
 router.get('/', (req, res) => {
   platformAnalytics.record(req, 'page_view', { path: '/' });
   res.type('html').send(pwa.page('index.html', pwa.basePath(req), BRAND.forRequest(req)));
