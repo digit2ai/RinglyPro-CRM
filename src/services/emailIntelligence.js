@@ -348,8 +348,16 @@ async function ensureTables() {
       finished_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`);
+  // Added after the first release: "done with this" is NOT a classification, so
+  // it gets its own column rather than overloading status. See dismiss().
+  await sequelize.query(
+    `ALTER TABLE email_classifications ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMPTZ`).catch(() => {});
+  await sequelize.query(
+    `ALTER TABLE email_classifications ADD COLUMN IF NOT EXISTS dismissed_by VARCHAR(255)`).catch(() => {});
+
   for (const ix of [
     `CREATE INDEX IF NOT EXISTS idx_email_cls_client_status   ON email_classifications (client_id, status)`,
+    `CREATE INDEX IF NOT EXISTS idx_email_cls_open            ON email_classifications (client_id, dismissed_at)`,
     `CREATE INDEX IF NOT EXISTS idx_email_cls_client_priority ON email_classifications (client_id, priority)`,
     `CREATE INDEX IF NOT EXISTS idx_email_cls_client_received ON email_classifications (client_id, received_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_email_cls_client_project  ON email_classifications (client_id, project)`,
@@ -1194,6 +1202,8 @@ async function selectTargets(clientId, scope, selected) {
     return items.filter(it => want.has(`${it.account_id}:${it.message_id}`));
   }
   if (scope === 'all') return items;
+  // Dismissed rows count as classified — finishing with an email must not make
+  // the next triage pay to read it again.
   const existing = await sequelize.query(
     `SELECT account_id, message_id FROM email_classifications WHERE client_id = $1`,
     { bind: [clientId], type: QueryTypes.SELECT }
@@ -1287,13 +1297,16 @@ function decorate(row) {
  * the live inbox supplies read-state and the account label, so a message that
  * has since been read still shows the work it represents.
  */
-async function listInbox(clientId, { tab = 'focus', project = null, limit = 100, force = false } = {}) {
+async function listInbox(clientId, { tab = 'focus', project = null, limit = 100, force = false, dismissed = false } = {}) {
   await ensureTables();
   const t = tabFor(tab);
   const where = ['client_id = $1'];
   const bind = [clientId];
   let i = 2;
-  if (t.statuses) { where.push(`status = ANY($${i++})`); bind.push(t.statuses); }
+  // Done means gone from every view except the Done view itself. This is the
+  // ONLY place the exclusion lives, so a tab cannot forget to apply it.
+  where.push(dismissed ? 'dismissed_at IS NOT NULL' : 'dismissed_at IS NULL');
+  if (t.statuses && !dismissed) { where.push(`status = ANY($${i++})`); bind.push(t.statuses); }
   if (project && PROJECTS.includes(project)) { where.push(`project = $${i++}`); bind.push(project); }
   bind.push(Math.min(500, Math.max(1, parseInt(limit, 10) || 100)));
 
@@ -1329,11 +1342,11 @@ async function listInbox(clientId, { tab = 'focus', project = null, limit = 100,
   // Focus and All Email mix several statuses, so they are the views a briefing
   // helps. A single-concept tab (Billing, Meetings) is already one group and
   // gains nothing from a heading over every card.
-  const grouped = (tab === 'focus' || tab === 'all');
+  const grouped = !dismissed && (tab === 'focus' || tab === 'all');
   const groups = grouped ? groupForBriefing(items) : null;
 
   return {
-    items, counts, groups,
+    items, counts, groups, dismissed,
     briefing: groups ? briefingLine(groups) : null,
     accounts: live.accounts || [],
     total_unread: live.total_unread || 0,
@@ -1348,7 +1361,7 @@ async function tabCounts(clientId, project = null) {
   if (project && PROJECTS.includes(project)) { extra = ' AND project = $2'; bind.push(project); }
   const rows = await sequelize.query(
     `SELECT status, COUNT(*)::int AS n FROM email_classifications
-      WHERE client_id = $1${extra} GROUP BY status`,
+      WHERE client_id = $1${extra} AND dismissed_at IS NULL GROUP BY status`,
     { bind, type: QueryTypes.SELECT }
   );
   const byStatus = {};
@@ -1359,6 +1372,12 @@ async function tabCounts(clientId, project = null) {
       ? t.statuses.reduce((a, s) => a + (byStatus[s] || 0), 0)
       : rows.reduce((a, r) => a + r.n, 0);
   }
+  const [d] = await sequelize.query(
+    `SELECT COUNT(*)::int n FROM email_classifications
+      WHERE client_id = $1${extra} AND dismissed_at IS NOT NULL`,
+    { bind, type: QueryTypes.SELECT }
+  );
+  counts.done = (d && d.n) || 0;
   counts._by_status = byStatus;
   return counts;
 }
@@ -1474,6 +1493,107 @@ async function correct(clientId, accountId, messageId, patch, opts = {}) {
     opts.note || (rules.length ? `learned ${rules[0].match_type} rule for ${rules[0].match_value}` : null));
 
   return { classification: decorate(row), rules };
+}
+
+// ===========================================================================
+// DONE, AND UNDOING A CORRECTION
+//
+// THESE ARE NOT CLASSIFICATIONS, WHICH IS THE WHOLE POINT.
+//
+// The first release shipped "Mark No Action" and no way to say "I have dealt
+// with this". So the owner used Mark No Action as a dismiss button — and on
+// his real inbox that filed a live Twilio outage and a suspended Anthropic
+// subscription as No Action Required, permanently, at confidence 1.0, with the
+// model's own correct reasoning still sitting in the row underneath.
+//
+// That is the failure this module exists to prevent, caused by a missing verb.
+// So "done" is a separate column, not a status:
+//   - dismiss()   hides the row and (optionally) marks it read in the real
+//                 mailbox. The AI's judgment is left EXACTLY as it was, because
+//                 you finishing a task does not mean the task was never there.
+//   - undismiss() puts it back.
+//   - resetJudgment() clears manual_override so triage may re-judge — the undo
+//     that had no button, which is why a wrong correction was unfixable.
+// ===========================================================================
+
+async function dismiss(clientId, accountId, messageId, opts = {}) {
+  await ensureTables();
+  const before = await getExisting(clientId, accountId, messageId);
+  if (!before) throw new Error('That email has not been classified yet.');
+
+  const [row] = await sequelize.query(
+    `UPDATE email_classifications
+        SET dismissed_at = NOW(), dismissed_by = $1, updated_at = NOW()
+      WHERE client_id = $2 AND account_id = $3 AND message_id = $4
+      RETURNING *`,
+    { bind: [clampStr(opts.by, 255), clientId, parseInt(accountId, 10), String(messageId)],
+      type: QueryTypes.SELECT }
+  );
+
+  // Marking it read in the actual mailbox is the default, because "done" that
+  // leaves it bold in Gmail is only half done. It is best-effort: a mail server
+  // that is unreachable must not stop the row from leaving your list.
+  let marked_read = false, read_error = null;
+  if (opts.markRead !== false) {
+    try { await emailReconcile.markEmailRead(clientId, accountId, messageId); marked_read = true; }
+    catch (e) { read_error = String(e.message || e).slice(0, 200); }
+  }
+
+  await audit(clientId, accountId, messageId, 'dismissed', 'user',
+    projectRow(before), { dismissed: true, marked_read },
+    opts.by ? `by ${opts.by}` : null);
+
+  return { classification: decorate(row), marked_read, read_error };
+}
+
+async function undismiss(clientId, accountId, messageId) {
+  await ensureTables();
+  const [row] = await sequelize.query(
+    `UPDATE email_classifications
+        SET dismissed_at = NULL, dismissed_by = NULL, updated_at = NOW()
+      WHERE client_id = $1 AND account_id = $2 AND message_id = $3
+      RETURNING *`,
+    { bind: [clientId, parseInt(accountId, 10), String(messageId)], type: QueryTypes.SELECT }
+  );
+  if (!row) throw new Error('That email has not been classified yet.');
+  await audit(clientId, accountId, messageId, 'undismissed', 'user', null, { dismissed: false }, null);
+  return { classification: decorate(row) };
+}
+
+/** Bulk 'done'. One row failing never abandons the rest of the selection. */
+async function dismissMany(clientId, selected, opts = {}) {
+  const out = { done: 0, failed: 0, marked_read: 0, errors: [] };
+  for (const s of (selected || []).slice(0, 500)) {
+    try {
+      const r = await dismiss(clientId, s.account_id, s.message_id, opts);
+      out.done++;
+      if (r.marked_read) out.marked_read++;
+    } catch (e) {
+      out.failed++;
+      if (out.errors.length < 20) out.errors.push({ message_id: s.message_id, error: String(e.message || e).slice(0, 160) });
+    }
+  }
+  return out;
+}
+
+/**
+ * Hand a row back to the AI. Clears manual_override AND the content hash, so
+ * the next triage genuinely re-reads it instead of skipping it as unchanged.
+ */
+async function resetJudgment(clientId, accountId, messageId) {
+  await ensureTables();
+  const before = await getExisting(clientId, accountId, messageId);
+  if (!before) throw new Error('That email has not been classified yet.');
+  const [row] = await sequelize.query(
+    `UPDATE email_classifications
+        SET manual_override = false, content_hash = 'reset', updated_at = NOW()
+      WHERE client_id = $1 AND account_id = $2 AND message_id = $3
+      RETURNING *`,
+    { bind: [clientId, parseInt(accountId, 10), String(messageId)], type: QueryTypes.SELECT }
+  );
+  await audit(clientId, accountId, messageId, 'reset', 'user', projectRow(before),
+    { manual_override: false }, 'handed back to the classifier');
+  return { classification: decorate(row) };
 }
 
 // ===========================================================================
@@ -1668,7 +1788,7 @@ async function createCalendarEvent(clientId, accountId, messageId, opts = {}) {
 async function dailyBrief(clientId) {
   await ensureTables();
   const rows = await sequelize.query(
-    `SELECT * FROM email_classifications WHERE client_id = $1
+    `SELECT * FROM email_classifications WHERE client_id = $1 AND dismissed_at IS NULL
       ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END,
                received_at DESC`,
     { bind: [clientId], type: QueryTypes.SELECT }
@@ -1751,7 +1871,7 @@ async function actionStats(clientId) {
        COUNT(*) FILTER (WHERE reply_required)::int                   AS replies_needed,
        COUNT(*) FILTER (WHERE action_required AND deadline IS NOT NULL AND deadline < NOW())::int AS overdue,
        COUNT(*)::int                                                 AS total
-     FROM email_classifications WHERE client_id = $1`,
+     FROM email_classifications WHERE client_id = $1 AND dismissed_at IS NULL`,
     { bind: [clientId], type: QueryTypes.SELECT }
   );
   return r || { critical: 0, today: 0, this_week: 0, needs_review: 0, waiting: 0, replies_needed: 0, overdue: 0, total: 0 };
@@ -1777,7 +1897,7 @@ module.exports = {
   // read
   listInbox, tabCounts, getDetail,
   // corrections
-  correct,
+  correct, dismiss, undismiss, dismissMany, resetJudgment,
   // hub actions
   createTodo, linkProject, createCalendarEvent, matchPerson, suggestHubProjects, existingLink,
   // reporting

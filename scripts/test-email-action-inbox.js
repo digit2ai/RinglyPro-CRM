@@ -308,14 +308,26 @@ section('6. Nothing sends, deletes or archives');
   const src = fs.readFileSync(SERVICE, 'utf8');
   // Strip comments so the file may DESCRIBE the policy without tripping its own test.
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-  for (const forbidden of ['sendReply', 'sendMail', 'sendgrid', '@sendgrid', 'nodemailer', 'createTransport', 'markEmailRead']) {
+  for (const forbidden of ['sendReply', 'sendMail', 'sendgrid', '@sendgrid', 'nodemailer', 'createTransport']) {
     ok(`the engine never reaches ${forbidden}`, !code.includes(forbidden));
   }
   ok('the engine has no DELETE against a mailbox', !/messages\.(delete|trash)/.test(code));
+  ok('nor can it drop a connected account', !code.includes('deleteAccount'));
   ok('it does require the read-side email service', code.includes("require('./emailReconcile')"));
-  ok('and it only uses it to READ a body / list a summary',
-    /emailReconcile\.(getMessageBody|getSummary)/.test(code) &&
-    !/emailReconcile\.(sendReply|markEmailRead|deleteAccount)/.test(code));
+
+  // Marking read is the ONE mailbox mutation, and it exists because the owner
+  // asked for it: "mark as read so it doesn't show". It is reversible in the
+  // mailbox, never happens on its own, and is reachable from exactly one
+  // function — if that count ever grows, something started touching mail on a
+  // path nobody chose.
+  const readCalls = (code.match(/emailReconcile\.markEmailRead/g) || []).length;
+  eq('markEmailRead is reachable from exactly ONE place in the engine', readCalls, 1);
+  const dismissBody = code.slice(code.indexOf('async function dismiss('), code.indexOf('async function undismiss('));
+  ok('and that place is dismiss() — the user pressing Done', dismissBody.includes('emailReconcile.markEmailRead'));
+  ok('it is opt-out-able by the caller', /opts\.markRead !== false/.test(dismissBody));
+  ok('and a mailbox that refuses is reported, not swallowed', /read_error/.test(dismissBody));
+  ok('the engine only otherwise READS from the mail service',
+    /emailReconcile\.(getMessageBody|getSummary)/.test(code));
 }
 
 // ---------------------------------------------------------------------------
@@ -491,7 +503,8 @@ section('12. Routes: gated, tenant-injected, background');
 
   for (const p of ['/email-ai/inbox', '/email-ai/counts', '/email-ai/message', '/email-ai/triage',
                    '/email-ai/correct', '/email-ai/rules', '/email-ai/todo', '/email-ai/link-project',
-                   '/email-ai/calendar', '/email-ai/brief', '/email-ai/taxonomy']) {
+                   '/email-ai/calendar', '/email-ai/brief', '/email-ai/taxonomy',
+                   '/email-ai/done', '/email-ai/undone', '/email-ai/reset']) {
     ok(`route ${p} exists`, aiRoutes.some(m => m[2] === p), '');
   }
 
@@ -552,14 +565,23 @@ section('13. The page — driven in jsdom, not just grepped');
     ['Link to Project', 'aiLinkProject'],
     ['Add to Calendar', 'aiCreateEvent'],
     ['Mark Waiting', "aiQuick('status','waiting_on_someone')"],
-    ['Mark No Action', "aiQuick('status','no_action')"],
+    ['Mark No Action, relabelled so it cannot be mistaken for Done', "aiQuick('status','no_action')"],
     ['Correct AI Classification', 'aiCorrect'],
     ['background job polling', 'function pollJob'],
     ['job resume after reload', 'resumeActiveJob'],
     ['the briefing sentence', 'class="gline"'],
     ['numbered group headings', 'class="gnum"'],
-    ['a reason under each heading', 'class="gblurb"']
+    ['a reason under each heading', 'class="gblurb"'],
+    ['a Done button on every card', 'aiDone('],
+    ['bulk Done on the selection bar', 'aiDoneSelected'],
+    ['a Done tab', "data-tab=\"__done\""],
+    ['undo for Done', 'aiUndone'],
+    ['undo for a wrong correction', 'aiResetJudgment']
   ]) ok(`the page carries ${what}`, html.includes(needle));
+
+  ok('Done and "the AI was wrong" are visibly different verbs — conflating them is what broke the live inbox',
+    html.includes('The AI was wrong') && html.includes('Done &mdash; mark read'));
+  ok('and the page explains the difference in words', /keeps the AI's judgment/.test(html));
 
   ok('the page never hardcodes the status list — it reads the taxonomy',
     html.includes('AI_TAXONOMY.statuses') && !/const STATUSES\s*=/.test(html));
@@ -612,7 +634,9 @@ section('13. The page — driven in jsdom, not just grepped');
       H.renderTabs();
 
       const btns = [...doc.querySelectorAll('#tabs .tab')];
-      eq('renderTabs draws every tab plus the classic escape hatch', btns.length, E.TABS.length + 1);
+      eq('renderTabs draws every tab plus Done and the classic escape hatch', btns.length, E.TABS.length + 2);
+      ok('the Done view is reachable from the tab bar',
+        btns.some(b => b.getAttribute('data-tab') === '__done'));
       ok('Focus is the selected tab by default', btns[0].classList.contains('on'));
       ok('counts render on the tabs', btns[0].textContent.includes('4'));
       const crit = btns.find(b => b.getAttribute('data-tab') === 'critical');
@@ -842,20 +866,85 @@ if (!HAS_DB) {
     ok('a to-do cannot be made from an email that was never classified',
       /Classify this email/.test(unclassified), String(unclassified));
 
+    // --- DONE: the verb that was missing ----------------------------------
+    //
+    // The live inbox proved why this matters: with no Done button the owner
+    // used "Mark No Action" to clear things, and a real Twilio outage was
+    // filed No Action Required at confidence 1.0, permanently.
+    const beforeDone = await E.tabCounts(T);
+    const d1 = await E.dismiss(T, 4242, 'sit-inj', { markRead: false, by: 'sit@test' });
+    eq('an email can be marked done', !!d1.classification.dismissed_at, true);
+    eq('done does NOT touch the classification', d1.classification.status, 'needs_review');
+    eq('nor claim a human re-judged it', d1.classification.manual_override, false);
+    eq('nor invent confidence', Number(d1.classification.confidence) <= 0.2, true);
+
+    const afterDone = await E.tabCounts(T);
+    eq('it leaves the tab counts', afterDone.focus, beforeDone.focus - 1);
+    eq('and is counted as done instead', afterDone.done, (beforeDone.done || 0) + 1);
+
+    const openList = await E.listInbox(T, { tab: 'all' });
+    ok('it is gone from the list', !openList.items.some(i => i.message_id === 'sit-inj'));
+    const doneList = await E.listInbox(T, { tab: 'all', dismissed: true });
+    ok('but findable in the Done view — nothing is deleted',
+      doneList.items.some(i => i.message_id === 'sit-inj'));
+
+    const briefAfter = await E.dailyBrief(T);
+    ok('the brief stops counting it', !briefAfter.needs_review.some(x => x.message_id === 'sit-inj'));
+    const statsAfter = await E.actionStats(T);
+    eq('and so do the Home stats', statsAfter.needs_review, briefAfter.needs_review.length);
+
+    const back = await E.undismiss(T, 4242, 'sit-inj');
+    eq('done is reversible', back.classification.dismissed_at, null);
+    const reList = await E.listInbox(T, { tab: 'all' });
+    ok('and the email comes back', reList.items.some(i => i.message_id === 'sit-inj'));
+    await E.dismiss(T, 4242, 'sit-inj', { markRead: false });
+
+    // A dismissed row is still classified, so triage must not pay to re-read it.
+    const stillClassified = await E.getExisting(T, 4242, 'sit-inj');
+    ok('a done email still holds its classification', !!stillClassified.status);
+
+    // Bulk.
+    const bulk = await E.dismissMany(T, [
+      { account_id: 4242, message_id: 'sit-2' },
+      { account_id: 4242, message_id: 'does-not-exist' }
+    ], { markRead: false });
+    eq('bulk done clears what it can', bulk.done, 1);
+    eq('and reports what it could not', bulk.failed, 1);
+    ok('naming the failure rather than swallowing it', bulk.errors.length === 1);
+
+    // --- RESET: the undo for a wrong correction ---------------------------
+    const stuck = await E.getExisting(T, 4242, 'sit-1');
+    eq('the corrected row is locked to the human value', stuck.manual_override, true);
+    const blocked = await E.classifyMessage(T, mk('sit-1', { body_text: 'brand new content' }));
+    eq('triage will not touch it', blocked.skipped, 'manual_override');
+
+    await E.resetJudgment(T, 4242, 'sit-1');
+    const freed = await E.getExisting(T, 4242, 'sit-1');
+    eq('reset clears the override', freed.manual_override, false);
+    ok('and clears the content hash so the next run genuinely re-reads it',
+      freed.content_hash === 'reset');
+    const rejudged = await E.classifyMessage(T, mk('sit-1', { body_text: 'All six numbers are rejecting inbound calls. Production line down.' }));
+    eq('so the classifier can judge it again', rejudged.skipped, null);
+    ok('and it lands on the merits this time', ['critical', 'waiting_on_someone'].includes(rejudged.row.status), rejudged.row.status);
+
     // --- the audit trail --------------------------------------------------
     const audits = await sequelize.query(
       `SELECT action, actor, after_json FROM email_classification_audit
         WHERE client_id = $1 ORDER BY id ASC`, { bind: [T], type: QueryTypes.SELECT });
     ok('classifications are audited', audits.some(a => a.action === 'classified' && a.actor === 'ai'));
     ok('corrections are audited as a human action', audits.some(a => a.action === 'corrected' && a.actor === 'user'));
+    ok('done is audited', audits.some(a => a.action === 'dismissed'));
+    ok('undo-done is audited', audits.some(a => a.action === 'undismissed'));
+    ok('clearing an override is audited', audits.some(a => a.action === 'reset'));
     const blob = JSON.stringify(audits);
     ok('the audit never stores the email body',
       !blob.includes('rejecting inbound calls') && !blob.includes('Ignore all previous instructions'));
 
     // --- the brief counts real rows --------------------------------------
     const brief = await E.dailyBrief(T);
-    eq('the brief counts what exists', brief.total_classified, (await E.tabCounts(T)).all);
-    ok('it names the needs-review pile', brief.needs_review.length >= 1);
+    const openCounts = await E.tabCounts(T);
+    eq('the brief counts what is OPEN, not what was ever classified', brief.total_classified, openCounts.all);
+    eq('its needs-review pile agrees with the tab', brief.needs_review.length, openCounts._by_status.needs_review || 0);
     ok('it produces a spoken narrative', typeof brief.narrative === 'string' && brief.narrative.length > 10);
     eq('and admits no model is configured', brief.model_configured, false);
 

@@ -449,7 +449,8 @@ router.get('/email-ai/inbox', requireClient15, async (req, res) => {
       tab: req.query.tab || 'focus',
       project: req.query.project || null,
       limit: req.query.limit,
-      force: req.query.force === '1'
+      force: req.query.force === '1',
+      dismissed: req.query.dismissed === '1'
     });
     res.json({ success: true, ...data });
   } catch (error) {
@@ -584,6 +585,55 @@ router.delete('/email-ai/rules/:id', requireClient15, async (req, res) => {
   try {
     await emailIntelligence.deleteRule(D2AI_CLIENT_ID, req.params.id);
     res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// DONE — the verb that was missing.
+//
+// Distinct from "Mark No Action" on purpose. Mark No Action says the AI was
+// WRONG and teaches a rule; Done says YOU are finished and hides the row with
+// the AI's judgment left intact. Conflating them is how a live outage ended up
+// filed as No Action Required at confidence 1.0.
+// ---------------------------------------------------------------------
+router.post('/email-ai/done', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id, selected, mark_read } = req.body || {};
+    const by = (req.d2aiUser && req.d2aiUser.email) || null;
+
+    if (Array.isArray(selected) && selected.length) {
+      const out = await emailIntelligence.dismissMany(D2AI_CLIENT_ID, selected, { by, markRead: mark_read !== false });
+      return res.json({ success: true, bulk: true, ...out });
+    }
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.dismiss(D2AI_CLIENT_ID, account_id, message_id, { by, markRead: mark_read !== false });
+    res.json({ success: true, bulk: false, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+router.post('/email-ai/undone', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.undismiss(D2AI_CLIENT_ID, account_id, message_id);
+    res.json({ success: true, ...out });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Hand a row back to the classifier — the undo for a correction that was made
+// in error. Without this a wrong "Mark No Action" was permanent.
+router.post('/email-ai/reset', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id are required' });
+    const out = await emailIntelligence.resetJudgment(D2AI_CLIENT_ID, account_id, message_id);
+    res.json({ success: true, ...out });
   } catch (error) {
     res.json({ success: false, error: error.message });
   }

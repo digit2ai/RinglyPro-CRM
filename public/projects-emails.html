@@ -133,6 +133,11 @@
     .grp > .gblurb { font-size: 12.5px; color: var(--muted); margin: 0 0 9px 31px; line-height: 1.5; }
     .grp > .gitems { display: flex; flex-direction: column; gap: 8px; }
 
+    .doneb { margin-left: auto; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 999px; padding: 3px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; min-height: 26px; }
+    .doneb:hover { color: var(--green); border-color: var(--green); }
+    .acard.leaving { opacity: 0; transform: translateX(14px); transition: opacity .22s, transform .22s; }
+
     /* Triage progress */
     .prog { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
     .prog .bar { height: 7px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin: 9px 0 6px; }
@@ -412,10 +417,12 @@
         const on = (VIEW_MODE === 'ai' && AI_TAB === t.key) ? ' on' : '';
         return `<button class="tab${on}${alert}" data-tab="${esc(t.key)}">${esc(t.label)}${n ? `<span class="n">${n}</span>` : ''}</button>`;
       }).join('') +
+      `<button class="tab${AI_TAB === '__done' && VIEW_MODE === 'ai' ? ' on' : ''}" data-tab="__done" title="Everything you have finished with. Nothing is deleted.">Done${AI_COUNTS.done ? `<span class="n">${AI_COUNTS.done}</span>` : ''}</button>` +
       `<button class="tab classic${VIEW_MODE === 'classic' ? ' on' : ''}" data-tab="__classic" title="The original unread list, unchanged">Unread inbox</button>`;
       el.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
         const t = b.getAttribute('data-tab');
         if (t === '__classic') { VIEW_MODE = 'classic'; renderTabs(); return load(); }
+        if (t === '__done') { VIEW_MODE = 'ai'; AI_TAB = '__done'; return loadActionInbox(); }
         VIEW_MODE = 'ai'; AI_TAB = t;
         try { localStorage.setItem('d2ai_email_tab', t); } catch (e) {}
         loadActionInbox();
@@ -466,7 +473,11 @@
           <div class="subj">${esc(m.subject || '(no subject)')}</div>
           ${m.summary ? `<div class="sum">${esc(m.summary)}</div>` : ''}
           ${m.recommended_action ? `<div class="rec">&rarr; ${esc(m.recommended_action)}</div>` : ''}
-          <div class="row2">${chips.join('')}</div>
+          <div class="row2">${chips.join('')}
+            ${m.dismissed_at
+              ? `<button class="doneb" onclick="event.stopPropagation();aiUndone(${i})" title="Put this back in your list">&#8630; Undo done</button>`
+              : `<button class="doneb" onclick="event.stopPropagation();aiDone(${i})" title="Mark read and hide it. Your classification is kept.">&#10003; Done</button>`}
+          </div>
         </div>`;
     }
 
@@ -477,7 +488,9 @@
       if (!token()) { list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
       if (!opts.quiet) list.innerHTML = '<div class="spinner"></div>';
       try {
-        const url = `${ORIGIN}/api/projects-bridge/email-ai/inbox?tab=${encodeURIComponent(AI_TAB)}` +
+        const doneView = AI_TAB === '__done';
+        const url = `${ORIGIN}/api/projects-bridge/email-ai/inbox?tab=${encodeURIComponent(doneView ? 'all' : AI_TAB)}` +
+          (doneView ? '&dismissed=1' : '') +
           (AI_PROJECT ? `&project=${encodeURIComponent(AI_PROJECT)}` : '') +
           (opts.force ? '&force=1' : '');
         const res = await fetch(url, { headers: authHeaders() });
@@ -500,6 +513,10 @@
           list.innerHTML = `<div class="empty">Nothing has been triaged yet.<br><br>
             <button class="btn btn-primary" style="background:linear-gradient(135deg,#7c5cff,#2563eb)" onclick="runTriage()">&#10024; Triage with AI</button>
             <div style="margin-top:14px;font-size:12.5px">Or browse the raw unread list with <b>Unread inbox</b> above.</div></div>`;
+          return;
+        }
+        if (!AI_ITEMS.length && doneView) {
+          list.innerHTML = '<div class="empty">Nothing marked done yet. Press <b>&#10003; Done</b> on a card when you have finished with it.</div>';
           return;
         }
         if (!AI_ITEMS.length) {
@@ -541,6 +558,7 @@
       if (!AI_SELECTED.size) return '';
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px">
         <span style="font-size:12.5px;color:var(--muted)">${AI_SELECTED.size} selected</span>
+        <button class="btn btn-primary" style="background:var(--green)" onclick="aiDoneSelected()">&#10003; Mark done &amp; read</button>
         <button class="btn btn-primary" onclick="runTriage('selected')">&#10024; Reanalyze selected</button>
         <button class="btn btn-ghost" onclick="aiClearPicks()">Clear</button>
       </div>`;
@@ -551,6 +569,68 @@
       loadActionInbox({ quiet: true });
     };
     window.aiClearPicks = () => { AI_SELECTED.clear(); loadActionInbox({ quiet: true }); };
+
+    // ---- Done ----------------------------------------------------------
+    //
+    // Deliberately NOT the same button as "Mark No Action". Done means you
+    // finished with it: the row is marked read in the real mailbox and hidden
+    // here, and the AI's judgment is left exactly as it was. Mark No Action
+    // means the AI got it WRONG, and permanently overrides it.
+    async function aiDone(i) {
+      const m = AI_ITEMS[i]; if (!m) return;
+      const card = document.querySelector(`.acard[data-i="${i}"]`);
+      if (card) card.classList.add('leaving');
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/done`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ account_id: m.account_id, message_id: m.message_id })
+        });
+        const d = await parseJsonSafe(res);
+        if (!d.success) { if (card) card.classList.remove('leaving'); return showProgressError(d.error || 'Could not mark it done'); }
+        if (d.read_error) showWarn(`Hidden here, but the mailbox would not mark it read: ${d.read_error}`);
+        notifyParent();
+        setTimeout(() => loadActionInbox({ quiet: true }), 220);
+      } catch (e) { if (card) card.classList.remove('leaving'); showProgressError(e.message); }
+    }
+    window.aiDone = aiDone;
+
+    async function aiUndone(i) {
+      const m = AI_ITEMS[i]; if (!m) return;
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/email-ai/undone`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ account_id: m.account_id, message_id: m.message_id })
+        });
+      } catch (e) {}
+      notifyParent();
+      loadActionInbox({ quiet: true });
+    }
+    window.aiUndone = aiUndone;
+
+    // Bulk done — the thing that actually clears an inbox. 23 newsletters in
+    // one press rather than 23 presses.
+    async function aiDoneSelected() {
+      if (!AI_SELECTED.size) return;
+      const selected = Array.from(AI_SELECTED).map(k => {
+        const idx = k.lastIndexOf(':');
+        return { account_id: parseInt(k.slice(0, idx), 10), message_id: k.slice(idx + 1) };
+      });
+      setTriageBusy(true, `Clearing ${selected.length}…`);
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-ai/done`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ selected })
+        });
+        const d = await parseJsonSafe(res);
+        setTriageBusy(false);
+        if (!d.success) return showProgressError(d.error || 'Bulk done failed');
+        if (d.failed) showWarn(`${d.done} cleared, ${d.failed} could not be — they are still in your list.`);
+        AI_SELECTED.clear();
+        notifyParent();
+        loadActionInbox();
+      } catch (e) { setTriageBusy(false); showProgressError(e.message); }
+    }
+    window.aiDoneSelected = aiDoneSelected;
 
     async function loadBrief() {
       try {
@@ -956,16 +1036,22 @@
           ${c.deadline ? `<div class="line"><span class="k">Deadline:</span> ${esc(new Date(c.deadline).toLocaleString('en-US', { timeZone: 'America/New_York' }))}</div>` : ''}
           ${person}
           <div class="line" style="color:var(--muted);font-size:12px">
-            ${c.manual_override ? 'You set this classification. Triage will not change it.'
+            ${c.manual_override
+              ? `You set this classification, so triage will not change it.
+                 <button class="doneb" style="margin-left:8px" onclick="aiResetJudgment()" title="Clear your override so the classifier reads it again">&#8630; Let the AI re-judge this</button>`
               : `Classified by ${esc(c.classified_by || 'the AI')}${c.model ? ' (' + esc(c.model) + ')' : ''} at ${Math.round((c.confidence || 0) * 100)}% confidence.`}
           </div>
 
           <div class="acts">
+            <button class="btn btn-primary" style="background:var(--green)" onclick="aiDoneHere()">&#10003; Done &mdash; mark read &amp; hide</button>
             <button class="btn btn-primary" onclick="aiCreateTodo()">${has('task') ? 'Open the to-do' : '+ Create To-Do'}</button>
             <button class="btn btn-ghost" onclick="aiToggleCal()">${has('calendar_event') ? 'Calendar item created' : 'Add to Calendar'}</button>
             <button class="btn btn-ghost" onclick="document.getElementById('reply-ai-btn').click()">Draft Reply</button>
             <button class="btn btn-ghost" onclick="aiQuick('status','waiting_on_someone')">Mark Waiting</button>
-            <button class="btn btn-ghost" onclick="aiQuick('status','no_action')">Mark No Action</button>
+            <button class="btn btn-ghost" onclick="aiQuick('status','no_action')" title="Says the AI got it WRONG and nothing was ever needed. To just finish with it, use Done.">The AI was wrong &mdash; nothing needed</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:7px">
+            <b>Done</b> hides it and keeps the AI's judgment. <b>The AI was wrong</b> overwrites that judgment for good and teaches a rule.
           </div>
           ${has('task') ? `<div class="line" style="margin-top:8px;color:#6ee7b7;font-size:12.5px">To-do #${esc(String(linkOf('task').target_id))} already exists for this email &mdash; a second click will not make another.</div>` : ''}
 
@@ -1093,6 +1179,27 @@
       if (!d.success) return aiSay(d.error, false);
       aiSay('Saved. This is yours now — triage will not change it.', true);
       aiRefreshPanel();
+    };
+
+    window.aiDoneHere = async () => {
+      aiSay('Marking done…');
+      const d = await aiPost('done');
+      if (!d.success) return aiSay(d.error, false);
+      aiSay(d.read_error
+        ? `Hidden from your list, but the mailbox would not mark it read: ${d.read_error}`
+        : 'Done — marked read and hidden. Your classification is kept.', !d.read_error);
+      notifyParent();
+      setTimeout(() => backToList(), 800);
+    };
+
+    // The undo that did not exist. A wrong "Mark No Action" used to be permanent.
+    window.aiResetJudgment = async () => {
+      aiSay('Handing it back to the classifier…');
+      const d = await aiPost('reset');
+      if (!d.success) return aiSay(d.error, false);
+      aiSay('Your override is cleared. Run Triage and it will be read again.', true);
+      aiRefreshPanel();
+      loadActionInbox({ quiet: true });
     };
 
     window.aiCorrect = async () => {
