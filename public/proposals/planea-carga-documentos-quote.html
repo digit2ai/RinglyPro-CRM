@@ -71,13 +71,15 @@
     <tr><td class="lbl">Moneda:</td><td colspan="3">Dólares estadounidenses (USD). Incluye IVA del 19 % sobre los servicios de Digit2AI.</td></tr>
   </table>
 
-  <h2>1. Lo que se cotiza</h2>
-  <p>Ustedes piden comparar dos alcances y cotizar un tercero por separado. Esta propuesta los presenta como tres escenarios independientes:</p>
-  <ul class="tight">
-    <li><strong>Escenario A — Fase 1:</strong> extracto bancario, desprendible de nómina y RUT. Es la fase que propusimos el 3 de septiembre, sin cambios.</li>
-    <li><strong>Escenario B — Alcance completo:</strong> los once tipos de documento de su sección 4, los cuatro formatos de archivo de su sección 3 y las nueve reglas de lectura de su sección 5.</li>
-    <li><strong>Escenario C — Calendario Planea:</strong> la sección nueva de su propuesta 7, cotizada aparte como ustedes solicitan.</li>
-  </ul>
+  <h2>1. Las tres opciones, de menor a mayor</h2>
+  <table class="fin">
+    <tr><th>Opción</th><th>Qué hace, en una frase</th><th class="num">Inversión</th><th>Entrega</th></tr>
+    <tr><td><strong>1. Calendario Planea</strong></td><td>Planea le avisa al usuario cuándo tiene que pagar algo. <strong>No lee documentos.</strong></td><td class="num">$14.727</td><td>3 semanas</td></tr>
+    <tr><td><strong>2. Fase 1</strong></td><td>Planea lee tres documentos: extracto bancario, desprendible de nómina y RUT.</td><td class="num">$21.808</td><td>4 semanas</td></tr>
+    <tr><td><strong>3. Alcance completo</strong></td><td>Planea lee los once documentos, incluidas las capturas de pantalla de las aplicaciones de los bancos.</td><td class="num">$39.084</td><td>5 semanas</td></tr>
+  </table>
+  <div class="note"><strong>El orden es por precio, no por dependencia.</strong> La Opción 1 no es una versión económica de las otras dos: es otra cosa. Las Opciones 2 y 3 sí son la misma obra en dos tamaños —la 3 contiene a la 2 completa— y por eso se comparan entre sí en la sección 6. La Opción 1 funciona sola, pero rinde mucho más después de que Planea lea documentos, porque de ahí salen las fechas sin que el usuario las escriba.</div>
+  <p class="muted">Cifras con IVA incluido. El detalle sin IVA está en el cuadro de cada opción. Equivalencia con la nomenclatura de nuestra propuesta anterior: Opción 1 = Escenario C · Opción 2 = Escenario A (la Fase 1 propuesta el 3 de septiembre) · Opción 3 = Escenario B.</p>
 
   <h2>2. Antes del precio: lo que Planea ya tiene construido</h2>
   <p>Revisamos el código en producción antes de estimar, y una parte del trabajo que normalmente entraría en esta cotización ya está hecha y pagada. Lo decimos porque explica por qué las cifras son las que son:</p>
@@ -91,49 +93,96 @@
     <tr><td>Librerías de imagen y de render ya instaladas y funcionando en producción</td><td>Cualquier cambio de infraestructura. No hace falta instalar nada nuevo en el servidor.</td></tr>
   </table>
 
-  <h2>3. Escenario A — Fase 1 (extracto bancario, nómina y RUT)</h2>
+  <h2>3. Opción 1 — Calendario Planea · $14.727 USD</h2>
+  <p class="muted">Su propuesta de la sección 7, cotizada por separado como ustedes solicitan. No lee documentos: registra fechas y avisa.</p>
 
-  <div class="card"><h3>A1. Capa de carga, almacenamiento cifrado, auditoría y borrado</h3>
+  <div class="card"><h3>1.1 Modelo de fechas y tabla del calendario</h3>
+    Origen, tipo de compromiso, fecha, estado y vínculo al ítem que la produjo, para que una fecha siempre se pueda rastrear al documento del que salió.
+    <div class="price">10 hrs · $1.190 USD</div></div>
+
+  <div class="card"><h3>1.2 Derivación automática desde los documentos ya cargados</h3>
+    Fecha límite de pago de cada tarjeta y crédito, plazo restante, vencimiento de la vigencia de cada póliza, fecha estimada de pensión y fecha objetivo de cada meta.
+    <div class="price">14 hrs · $1.666 USD</div></div>
+
+  <div class="card"><h3>1.3 Calendario tributario DIAN, parametrizable por año</h3>
+    La lógica por los dos últimos dígitos de la cédula <strong>ya existe</strong> en la sección Impuestos. Se traslada a un servicio compartido y se versiona por año, de modo que actualizar el calendario del año siguiente sea cargar una tabla y no modificar el programa.
+    <div class="price">8 hrs · $952 USD</div></div>
+
+  <div class="card"><h3>1.4 Sección Calendario en el portal</h3>
+    Próximos treinta días, vista de mes, estados y navegación al ítem de origen.
+    <div class="price">18 hrs · $2.142 USD</div></div>
+
+  <div class="card"><h3>1.5 Motor de alertas y preferencias del usuario</h3>
+    Anticipación configurable, silenciar un compromiso, marcar como atendido.
+    <div class="price">12 hrs · $1.428 USD</div></div>
+
+  <div class="card"><h3>1.6 Notificación por correo</h3>
+    Sobre el proveedor de correo ya integrado en Planea.
+    <div class="price">8 hrs · $952 USD</div></div>
+
+  <div class="card"><h3>1.7 Notificación por WhatsApp y SMS</h3>
+    <strong>Sujeto a un tercero:</strong> WhatsApp exige registrar plantillas de mensaje y que Meta las apruebe, en un plazo que no controlamos. Construimos la integración; la fecha de activación depende de esa aprobación y del registro de la marca.
+    <div class="price">14 hrs · $1.666 USD</div></div>
+
+  <div class="card"><h3>1.8 Reglas de Maya para el calendario</h3>
+    Maya recuerda la fecha y lo que conviene tener a la mano; no afirma que el usuario esté obligado a declarar ni calcula topes. Es la misma frontera que ya rige la sección Impuestos.
+    <div class="price">8 hrs · $952 USD</div></div>
+
+  <div class="card"><h3>1.9 Pruebas y validación de aceptación</h3>
+    <div class="price">12 hrs · $1.428 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">USD</th></tr>
+    <tr class="sub"><td>Subtotal de los 9 componentes</td><td class="num">104</td><td class="num">$12.376</td></tr>
+    <tr><td>IVA (19 %)</td><td class="num"></td><td class="num">$2.351</td></tr>
+    <tr class="total"><td>INVERSIÓN TOTAL — OPCIÓN 1 (CALENDARIO PLANEA)</td><td class="num">104</td><td class="num">$14.727 USD</td></tr>
+  </table>
+  <p><span class="pill">Entrega: 3 semanas</span> &nbsp; Puede correr en paralelo con la segunda mitad de la Opción 3, porque solo depende de la forma de los campos ya extraídos.</p>
+
+  <h2>4. Opción 2 — Fase 1: extracto bancario, nómina y RUT · $21.808 USD</h2>
+  <p class="muted">Es la Fase 1 que propusimos el 3 de septiembre, sin cambios. Tres tipos de documento.</p>
+
+  <div class="card"><h3>2.1 Capa de carga, almacenamiento cifrado, auditoría y borrado</h3>
     Subida directa del archivo, verificación del tipo real por firma binaria y no por lo que declara el navegador, topes de tamaño, cifrado en reposo, registro de auditoría y borrado por el usuario.
     <div class="price">18 hrs · $2.142 USD</div></div>
 
-  <div class="card"><h3>A2. Normalización de formatos (PDF, JPG/PNG, HEIC)</h3>
+  <div class="card"><h3>2.2 Normalización de formatos (PDF, JPG/PNG, HEIC)</h3>
     Conversión del formato nativo de foto del iPhone, corrección de rotación, ajuste de resolución y selección de página en documentos de varias páginas.
     <div class="price">10 hrs · $1.190 USD</div></div>
 
-  <div class="card"><h3>A3. Apertura de PDF protegido con clave (su sección 2)</h3>
+  <div class="card"><h3>2.3 Apertura de PDF protegido con clave (su sección 2)</h3>
     Intento automático con la cédula del usuario y con el NIT; si falla, se pide la clave en el momento de la carga. La clave vive solo en memoria durante esa operación y no se almacena en ningún lugar. Incluye la ruta para PDF escaneado sin capa de texto.
     <div class="price">16 hrs · $1.904 USD</div></div>
 
-  <div class="card"><h3>A4. Motor de lectura con contrato de honestidad</h3>
+  <div class="card"><h3>2.4 Motor de lectura con contrato de honestidad</h3>
     Lectura del documento contra un esquema estricto por tipo. Su regla «dato ausente = dato pendiente» queda <strong>verificada en el código después de leer</strong>, no pedida en una instrucción de texto: cualquier valor que no sea rastreable al documento se descarta y el campo queda vacío y marcado como pendiente. Es lo que hace que la regla sea una garantía y no una intención.
     <div class="price">24 hrs · $2.856 USD</div></div>
 
-  <div class="card"><h3>A5. Extracto bancario — totales del período</h3>
+  <div class="card"><h3>2.5 Extracto bancario — totales del período</h3>
     Banco, tipo de cuenta, últimos cuatro dígitos, período, saldo inicial y final, total de abonos y de débitos.
     <div class="price">16 hrs · $1.904 USD</div></div>
 
-  <div class="card"><h3>A6. Desprendible de nómina o certificado de ingresos</h3>
+  <div class="card"><h3>2.6 Desprendible de nómina o certificado de ingresos</h3>
     Empleador, período, salario básico, total devengado, total deducciones y neto pagado. Acepta PDF, foto o captura.
     <div class="price">8 hrs · $952 USD</div></div>
 
-  <div class="card"><h3>A7. RUT (DIAN)</h3>
+  <div class="card"><h3>2.7 RUT (DIAN)</h3>
     Formulario de estructura fija. Se apoya en la sección Impuestos ya construida, por eso es el tipo más económico de los once.
     <div class="price">6 hrs · $714 USD</div></div>
 
-  <div class="card"><h3>A8. Maya: confirmación campo por campo antes de guardar</h3>
+  <div class="card"><h3>2.8 Maya: confirmación campo por campo antes de guardar</h3>
     Maya presenta lo leído, el usuario corrige o confirma, y solo entonces se escribe. Cada registro queda con el nombre del producto, su referencia y la institución.
     <div class="price">18 hrs · $2.142 USD</div></div>
 
-  <div class="card"><h3>A9. Privacidad: enmascarado, últimos cuatro dígitos y retención</h3>
+  <div class="card"><h3>2.9 Privacidad: enmascarado, últimos cuatro dígitos y retención</h3>
     Los números completos de cuenta y de tarjeta se recortan a los últimos cuatro dígitos <strong>antes</strong> de guardar y antes de cualquier registro técnico.
     <div class="price">10 hrs · $1.190 USD</div></div>
 
-  <div class="card"><h3>A10. Interfaz de carga en tres secciones y estados pendientes</h3>
+  <div class="card"><h3>2.10 Interfaz de carga en tres secciones y estados pendientes</h3>
     Carga desde archivo o cámara, progreso, distintivo de campo pendiente y estados de error en español.
     <div class="price">12 hrs · $1.428 USD</div></div>
 
-  <div class="card"><h3>A11. Pruebas adversariales y validación de aceptación con ustedes</h3>
+  <div class="card"><h3>2.11 Pruebas adversariales y validación de aceptación con ustedes</h3>
     Las pruebas no verifican que funcione: verifican que se niegue a inventar. Un extracto sin total debe quedar pendiente y nunca en cero; un número de tarjeta completo no debe llegar jamás a la base de datos; un PDF con clave equivocada debe fallar de forma limpia y explicada.
     <div class="price">16 hrs · $1.904 USD</div></div>
 
@@ -141,65 +190,66 @@
     <tr><th>Concepto</th><th class="num">Horas</th><th class="num">USD</th></tr>
     <tr class="sub"><td>Subtotal de los 11 componentes</td><td class="num">154</td><td class="num">$18.326</td></tr>
     <tr><td>IVA (19 %)</td><td class="num"></td><td class="num">$3.482</td></tr>
-    <tr class="total"><td>INVERSIÓN TOTAL DE DESARROLLO — ESCENARIO A</td><td class="num">154</td><td class="num">$21.808 USD</td></tr>
+    <tr class="total"><td>INVERSIÓN TOTAL — OPCIÓN 2 (FASE 1)</td><td class="num">154</td><td class="num">$21.808 USD</td></tr>
   </table>
   <p><span class="pill">Entrega: 4 semanas</span></p>
 
-  <h2>4. Escenario B — Alcance completo (once tipos de documento)</h2>
+  <h2>5. Opción 3 — Alcance completo: once tipos de documento · $39.084 USD</h2>
+  <p class="muted">Contiene la Opción 2 completa y le suma ocho tipos de documento más, los cuatro formatos de archivo de su sección 3 y las nueve reglas de lectura de su sección 5.</p>
 
-  <div class="card"><h3>B1. Capa de carga, almacenamiento cifrado, auditoría y borrado</h3>
-    Como A1, dimensionada para once tipos y ocho secciones de destino.
+  <div class="card"><h3>3.1 Capa de carga, almacenamiento cifrado, auditoría y borrado</h3>
+    Como 2.1, dimensionada para once tipos y ocho secciones de destino.
     <div class="price">20 hrs · $2.380 USD</div></div>
 
-  <div class="card"><h3>B2. Normalización de formatos: PDF, JPG/PNG y HEIC/HEIF</h3>
+  <div class="card"><h3>3.2 Normalización de formatos: PDF, JPG/PNG y HEIC/HEIF</h3>
     HEIC es el formato con el que el iPhone guarda las fotos, y la librería de imagen que tenemos instalada no lo decodifica en su compilación actual. Se incorpora un decodificador propio. Sin este componente, buena parte de las fotos de sus usuarios no se podría abrir: lo verificamos, no lo supusimos.
     <div class="price">16 hrs · $1.904 USD</div></div>
 
-  <div class="card"><h3>B3. Apertura de PDF protegido con clave (su sección 2)</h3>
-    Como A3, más la ruta de render para extractos escaneados de fiduciarias y aseguradoras, que llegan como imagen y sin capa de texto.
+  <div class="card"><h3>3.3 Apertura de PDF protegido con clave (su sección 2)</h3>
+    Como 2.3, más la ruta de render para extractos escaneados de fiduciarias y aseguradoras, que llegan como imagen y sin capa de texto.
     <div class="price">18 hrs · $2.142 USD</div></div>
 
-  <div class="card"><h3>B4. Motor de lectura con contrato de honestidad (núcleo común)</h3>
-    El motor de A4 ampliado: esquema propio para cada uno de los once tipos, verificación posterior de cada valor contra el documento, nivel de confianza por campo y lista abierta de tipos —su regla 5.5: un tipo no listado se reconoce y se registra, no se rechaza.
+  <div class="card"><h3>3.4 Motor de lectura con contrato de honestidad (núcleo común)</h3>
+    El motor de 2.4 ampliado: esquema propio para cada uno de los once tipos, verificación posterior de cada valor contra el documento, nivel de confianza por campo y lista abierta de tipos —su regla 5.5: un tipo no listado se reconoce y se registra, no se rechaza.
     <div class="price">28 hrs · $3.332 USD</div></div>
 
-  <div class="card"><h3>B5. Extracto bancario (4.1)</h3>
+  <div class="card"><h3>3.5 Extracto bancario (4.1)</h3>
     Totales del período. <em>Pendiente de su lado: el ejemplo real.</em>
     <div class="price">16 hrs · $1.904 USD</div></div>
 
-  <div class="card"><h3>B6. Nómina y certificado de ingresos (4.2) + RUT (4.10)</h3>
+  <div class="card"><h3>3.6 Nómina y certificado de ingresos (4.2) + RUT (4.10)</h3>
     Dos formularios de estructura estable. <em>Pendiente de su lado: el ejemplo real de nómina.</em>
     <div class="price">12 hrs · $1.428 USD</div></div>
 
-  <div class="card"><h3>B7. Capturas de aplicación bancaria: ahorros, tarjeta y crédito de consumo (4.3, 4.4, 4.5)</h3>
+  <div class="card"><h3>3.7 Capturas de aplicación bancaria: ahorros, tarjeta y crédito de consumo (4.3, 4.4, 4.5)</h3>
     Es el componente más exigente de los once, y por una razón que ustedes mismos documentaron: aquí vive la regla 5.2. La pantalla de inicio de Banco de Bogotá muestra a la vez la cuenta de ahorros, la tarjeta y un crédito, y el motor debe reconocer cada producto por separado y dejar que el usuario elija cuál registrar. Incluye la terminología distinta por banco: «Cupo compras» como cupo disponible y no total, el cupo en pestaña aparte en Banco de Occidente, el «$ ---» de una tarjeta bloqueada y el cupo negativo por sobregiro.
     <div class="price">26 hrs · $3.094 USD</div></div>
 
-  <div class="card"><h3>B8. Extractos de inversión y pensión (4.6, 4.7, 4.8, 4.9)</h3>
+  <div class="card"><h3>3.8 Extractos de inversión y pensión (4.6, 4.7, 4.8, 4.9)</h3>
     Fondo de inversión colectiva, cuenta de valores o acciones, fondo voluntario de pensiones y pensión obligatoria. Son cuatro tipos y no dos precisamente por lo que ustedes advierten: Alianza Fiduciaria y Alianza Valores vienen de la misma organización y tienen estructura completamente distinta.
     <div class="price">24 hrs · $2.856 USD</div></div>
 
-  <div class="card"><h3>B9. Carátula de póliza (4.11)</h3>
+  <div class="card"><h3>3.9 Carátula de póliza (4.11)</h3>
     El único tipo donde la información no está en una sola página: tomador y asegurados en la primera, número de póliza, vigencia y valor en la tercera, y la tabla de coberturas de la segunda que no se lee. El motor ubica los bloques donde aparezcan.
     <div class="price">12 hrs · $1.428 USD</div></div>
 
-  <div class="card"><h3>B10. Las nueve reglas transversales de su sección 5</h3>
+  <div class="card"><h3>3.10 Las nueve reglas transversales de su sección 5</h3>
     Lectura contextual por sección, lista abierta de tipos, normalización de la terminología externa a la de Planea, dato ausente igual a dato pendiente y manejo de documentos de varias páginas.
     <div class="price">20 hrs · $2.380 USD</div></div>
 
-  <div class="card"><h3>B11. Maya: confirmación, corrección y escritura en la sección correcta</h3>
-    Como A8, sobre ocho secciones y once tipos, incluido el caso de varios productos en una sola captura.
+  <div class="card"><h3>3.11 Maya: confirmación, corrección y escritura en la sección correcta</h3>
+    Como 2.8, sobre ocho secciones y once tipos, incluido el caso de varios productos en una sola captura.
     <div class="price">24 hrs · $2.856 USD</div></div>
 
-  <div class="card"><h3>B12. Privacidad (su regla 5.9)</h3>
+  <div class="card"><h3>3.12 Privacidad (su regla 5.9)</h3>
     Enmascarado, últimos cuatro dígitos, cifrado en reposo, retención y borrado.
     <div class="price">12 hrs · $1.428 USD</div></div>
 
-  <div class="card"><h3>B13. Interfaz de carga en las ocho secciones</h3>
+  <div class="card"><h3>3.13 Interfaz de carga en las ocho secciones</h3>
     Carga desde archivo o cámara, selección de producto cuando la captura trae varios, campos pendientes y estados de error.
     <div class="price">22 hrs · $2.618 USD</div></div>
 
-  <div class="card"><h3>B14. Pruebas adversariales y validación de aceptación</h3>
+  <div class="card"><h3>3.14 Pruebas adversariales y validación de aceptación</h3>
     Los once tipos y las nueve reglas, cada una con la prueba diseñada para romperla.
     <div class="price">26 hrs · $3.094 USD</div></div>
 
@@ -207,115 +257,70 @@
     <tr><th>Concepto</th><th class="num">Horas</th><th class="num">USD</th></tr>
     <tr class="sub"><td>Subtotal de los 14 componentes</td><td class="num">276</td><td class="num">$32.844</td></tr>
     <tr><td>IVA (19 %)</td><td class="num"></td><td class="num">$6.240</td></tr>
-    <tr class="total"><td>INVERSIÓN TOTAL DE DESARROLLO — ESCENARIO B</td><td class="num">276</td><td class="num">$39.084 USD</td></tr>
+    <tr class="total"><td>INVERSIÓN TOTAL — OPCIÓN 3 (ALCANCE COMPLETO)</td><td class="num">276</td><td class="num">$39.084 USD</td></tr>
   </table>
   <p><span class="pill">Entrega: 5 semanas</span> &nbsp; Con dos frentes de trabajo en paralelo durante las semanas 4 y 5.</p>
 
-  <h2>5. La diferencia entre A y B, que es lo que ustedes preguntan</h2>
+  <h2>6. La diferencia entre la Opción 2 y la Opción 3, que es lo que ustedes preguntan</h2>
   <table class="fin">
-    <tr><th>Escenario</th><th class="num">Tipos de documento</th><th class="num">Subtotal</th><th class="num">Total con IVA</th></tr>
-    <tr><td>A — Fase 1</td><td class="num">3</td><td class="num">$18.326</td><td class="num">$21.808</td></tr>
-    <tr><td>B — Alcance completo</td><td class="num">11</td><td class="num">$32.844</td><td class="num">$39.084</td></tr>
+    <tr><th>Opción</th><th class="num">Tipos de documento</th><th class="num">Subtotal</th><th class="num">Total con IVA</th></tr>
+    <tr><td>2 — Fase 1</td><td class="num">3</td><td class="num">$18.326</td><td class="num">$21.808</td></tr>
+    <tr><td>3 — Alcance completo</td><td class="num">11</td><td class="num">$32.844</td><td class="num">$39.084</td></tr>
     <tr class="sub"><td>Diferencia</td><td class="num">+8</td><td class="num save">+$14.518</td><td class="num save">+$17.276</td></tr>
   </table>
-  <p>El alcance completo cuesta <strong>79 % más y entrega casi cuatro veces más tipos de documento</strong>. La explicación es que lo costoso no son los documentos: es el motor. La capa de carga, la normalización de formatos, la apertura de PDF con clave, el motor de lectura, la confirmación de Maya y la privacidad suman <strong>118 horas —el 43 % del Escenario B— que se pagan una sola vez</strong>, exista un tipo o existan once.</p>
+  <p>El alcance completo cuesta <strong>79 % más y entrega casi cuatro veces más tipos de documento</strong>. La explicación es que lo costoso no son los documentos: es el motor. La capa de carga, la normalización de formatos, la apertura de PDF con clave, el motor de lectura, la confirmación de Maya y la privacidad suman <strong>118 horas —el 43 % de la Opción 3— que se pagan una sola vez</strong>, exista un tipo o existan once.</p>
   <p>De ahí salen las dos cifras con las que conviene tomar la decisión:</p>
   <ul class="tight">
     <li><strong>Enseñarle al motor a leer un tipo más cuesta 7,5 horas, unos $893 USD.</strong></li>
-    <li><strong>Con su parte proporcional de las reglas transversales y de la interfaz, cada tipo adicional cuesta 15,3 horas, unos $1.815 USD.</strong> Es la cifra completa, y reconcilia exactamente con la diferencia de la tabla: ocho tipos por 15,3 horas son las 122 horas que separan un escenario del otro.</li>
+    <li><strong>Con su parte proporcional de las reglas transversales y de la interfaz, cada tipo adicional cuesta 15,3 horas, unos $1.815 USD.</strong> Es la cifra completa, y reconcilia exactamente con la diferencia de la tabla: ocho tipos por 15,3 horas son las 122 horas que separan una opción de la otra.</li>
   </ul>
-  <div class="note"><strong>Su observación sobre la especificación es correcta, y ya está reflejada en estas cifras.</strong> Tener por adelantado, documento por documento, qué campos extraer y a qué sección alimentan elimina el trabajo de descubrimiento, que en un proyecto de lectura de documentos suele pesar entre el 20 % y el 30 % del total. Sin el documento que ustedes prepararon, el Escenario B se habría estimado por encima de las 350 horas. El trabajo que hicieron se tradujo en precio.</div>
-
-  <h2>6. Escenario C — Calendario Planea</h2>
-
-  <div class="card"><h3>C1. Modelo de fechas y tabla del calendario</h3>
-    Origen, tipo de compromiso, fecha, estado y vínculo al ítem que la produjo, para que una fecha siempre se pueda rastrear al documento del que salió.
-    <div class="price">10 hrs · $1.190 USD</div></div>
-
-  <div class="card"><h3>C2. Derivación automática desde los documentos ya cargados</h3>
-    Fecha límite de pago de cada tarjeta y crédito, plazo restante, vencimiento de la vigencia de cada póliza, fecha estimada de pensión y fecha objetivo de cada meta.
-    <div class="price">14 hrs · $1.666 USD</div></div>
-
-  <div class="card"><h3>C3. Calendario tributario DIAN, parametrizable por año</h3>
-    La lógica por los dos últimos dígitos de la cédula <strong>ya existe</strong> en la sección Impuestos. Se traslada a un servicio compartido y se versiona por año, de modo que actualizar el calendario del año siguiente sea cargar una tabla y no modificar el programa.
-    <div class="price">8 hrs · $952 USD</div></div>
-
-  <div class="card"><h3>C4. Sección Calendario en el portal</h3>
-    Próximos treinta días, vista de mes, estados y navegación al ítem de origen.
-    <div class="price">18 hrs · $2.142 USD</div></div>
-
-  <div class="card"><h3>C5. Motor de alertas y preferencias del usuario</h3>
-    Anticipación configurable, silenciar un compromiso, marcar como atendido.
-    <div class="price">12 hrs · $1.428 USD</div></div>
-
-  <div class="card"><h3>C6. Notificación por correo</h3>
-    Sobre el proveedor de correo ya integrado en Planea.
-    <div class="price">8 hrs · $952 USD</div></div>
-
-  <div class="card"><h3>C7. Notificación por WhatsApp y SMS</h3>
-    <strong>Sujeto a un tercero:</strong> WhatsApp exige registrar plantillas de mensaje y que Meta las apruebe, en un plazo que no controlamos. Construimos la integración; la fecha de activación depende de esa aprobación y del registro de la marca.
-    <div class="price">14 hrs · $1.666 USD</div></div>
-
-  <div class="card"><h3>C8. Reglas de Maya para el calendario</h3>
-    Maya recuerda la fecha y lo que conviene tener a la mano; no afirma que el usuario esté obligado a declarar ni calcula topes. Es la misma frontera que ya rige la sección Impuestos.
-    <div class="price">8 hrs · $952 USD</div></div>
-
-  <div class="card"><h3>C9. Pruebas y validación de aceptación</h3>
-    <div class="price">12 hrs · $1.428 USD</div></div>
-
-  <table class="fin">
-    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">USD</th></tr>
-    <tr class="sub"><td>Subtotal de los 9 componentes</td><td class="num">104</td><td class="num">$12.376</td></tr>
-    <tr><td>IVA (19 %)</td><td class="num"></td><td class="num">$2.351</td></tr>
-    <tr class="total"><td>INVERSIÓN TOTAL — ESCENARIO C (CALENDARIO PLANEA)</td><td class="num">104</td><td class="num">$14.727 USD</td></tr>
-  </table>
-  <p><span class="pill">Entrega: 3 semanas</span> &nbsp; Puede correr en paralelo con la segunda mitad del Escenario B, porque solo depende de la forma de los campos ya extraídos.</p>
+  <div class="note"><strong>Su observación sobre la especificación es correcta, y ya está reflejada en estas cifras.</strong> Tener por adelantado, documento por documento, qué campos extraer y a qué sección alimentan elimina el trabajo de descubrimiento, que en un proyecto de lectura de documentos suele pesar entre el 20 % y el 30 % del total. Sin el documento que ustedes prepararon, la Opción 3 se habría estimado por encima de las 350 horas. El trabajo que hicieron se tradujo en precio.</div>
 
   <h2>7. Cronograma de entrega</h2>
 
-  <h3>Escenario A — 4 semanas</h3>
+  <h3>Opción 1 — Calendario Planea · 3 semanas</h3>
   <table class="fin">
     <tr><th>Semana</th><th>Componentes</th><th class="num">Horas</th><th class="num">USD</th></tr>
-    <tr><td>Semana 1 — Carga y formatos</td><td>A1, A2, A3</td><td class="num">44</td><td class="num">$5.236</td></tr>
-    <tr><td>Semana 2 — Motor y privacidad</td><td>A4, A9</td><td class="num">34</td><td class="num">$4.046</td></tr>
-    <tr><td>Semana 3 — Los tres documentos</td><td>A5, A6, A7</td><td class="num">30</td><td class="num">$3.570</td></tr>
-    <tr><td>Semana 4 — Maya, interfaz y validación</td><td>A8, A10, A11</td><td class="num">46</td><td class="num">$5.474</td></tr>
-    <tr class="total"><td>Total Escenario A (sin IVA)</td><td></td><td class="num">154</td><td class="num">$18.326</td></tr>
+    <tr><td>Semana 1 — Modelo de fechas y derivación</td><td>1.1, 1.2, 1.3</td><td class="num">32</td><td class="num">$3.808</td></tr>
+    <tr><td>Semana 2 — Sección, alertas y reglas de Maya</td><td>1.4, 1.5, 1.8</td><td class="num">38</td><td class="num">$4.522</td></tr>
+    <tr><td>Semana 3 — Notificaciones y validación</td><td>1.6, 1.7, 1.9</td><td class="num">34</td><td class="num">$4.046</td></tr>
+    <tr class="total"><td>Total Opción 1 (sin IVA)</td><td></td><td class="num">104</td><td class="num">$12.376</td></tr>
   </table>
 
-  <h3>Escenario B — 5 semanas</h3>
+  <h3>Opción 2 — Fase 1 · 4 semanas</h3>
   <table class="fin">
     <tr><th>Semana</th><th>Componentes</th><th class="num">Horas</th><th class="num">USD</th></tr>
-    <tr><td>Semana 1 — Carga, formatos y PDF con clave</td><td>B1, B2, B3</td><td class="num">54</td><td class="num">$6.426</td></tr>
-    <tr><td>Semana 2 — Motor, privacidad y extracto bancario</td><td>B4, B12, B5</td><td class="num">56</td><td class="num">$6.664</td></tr>
-    <tr><td>Semana 3 — Nómina, RUT, capturas bancarias y póliza</td><td>B6, B7, B9</td><td class="num">50</td><td class="num">$5.950</td></tr>
-    <tr><td>Semana 4 — Inversión, pensión y reglas transversales</td><td>B8, B10</td><td class="num">44</td><td class="num">$5.236</td></tr>
-    <tr><td>Semana 5 — Maya, interfaz y validación (dos frentes)</td><td>B11, B13, B14</td><td class="num">72</td><td class="num">$8.568</td></tr>
-    <tr class="total"><td>Total Escenario B (sin IVA)</td><td></td><td class="num">276</td><td class="num">$32.844</td></tr>
+    <tr><td>Semana 1 — Carga y formatos</td><td>2.1, 2.2, 2.3</td><td class="num">44</td><td class="num">$5.236</td></tr>
+    <tr><td>Semana 2 — Motor y privacidad</td><td>2.4, 2.9</td><td class="num">34</td><td class="num">$4.046</td></tr>
+    <tr><td>Semana 3 — Los tres documentos</td><td>2.5, 2.6, 2.7</td><td class="num">30</td><td class="num">$3.570</td></tr>
+    <tr><td>Semana 4 — Maya, interfaz y validación</td><td>2.8, 2.10, 2.11</td><td class="num">46</td><td class="num">$5.474</td></tr>
+    <tr class="total"><td>Total Opción 2 (sin IVA)</td><td></td><td class="num">154</td><td class="num">$18.326</td></tr>
   </table>
 
-  <h3>Escenario C — 3 semanas</h3>
+  <h3>Opción 3 — Alcance completo · 5 semanas</h3>
   <table class="fin">
     <tr><th>Semana</th><th>Componentes</th><th class="num">Horas</th><th class="num">USD</th></tr>
-    <tr><td>Semana 1 — Modelo de fechas y derivación</td><td>C1, C2, C3</td><td class="num">32</td><td class="num">$3.808</td></tr>
-    <tr><td>Semana 2 — Sección, alertas y reglas de Maya</td><td>C4, C5, C8</td><td class="num">38</td><td class="num">$4.522</td></tr>
-    <tr><td>Semana 3 — Notificaciones y validación</td><td>C6, C7, C9</td><td class="num">34</td><td class="num">$4.046</td></tr>
-    <tr class="total"><td>Total Escenario C (sin IVA)</td><td></td><td class="num">104</td><td class="num">$12.376</td></tr>
+    <tr><td>Semana 1 — Carga, formatos y PDF con clave</td><td>3.1, 3.2, 3.3</td><td class="num">54</td><td class="num">$6.426</td></tr>
+    <tr><td>Semana 2 — Motor, privacidad y extracto bancario</td><td>3.4, 3.12, 3.5</td><td class="num">56</td><td class="num">$6.664</td></tr>
+    <tr><td>Semana 3 — Nómina, RUT, capturas bancarias y póliza</td><td>3.6, 3.7, 3.9</td><td class="num">50</td><td class="num">$5.950</td></tr>
+    <tr><td>Semana 4 — Inversión, pensión y reglas transversales</td><td>3.8, 3.10</td><td class="num">44</td><td class="num">$5.236</td></tr>
+    <tr><td>Semana 5 — Maya, interfaz y validación (dos frentes)</td><td>3.11, 3.13, 3.14</td><td class="num">72</td><td class="num">$8.568</td></tr>
+    <tr class="total"><td>Total Opción 3 (sin IVA)</td><td></td><td class="num">276</td><td class="num">$32.844</td></tr>
   </table>
 
-  <div class="note"><strong>El reloj no arranca con la orden de inicio: arranca con los ejemplos.</strong> El extracto bancario y el desprendible de nómina son los dos tipos de mayor volumen de datos y ustedes los tienen como pendientes. Sin archivos reales no se pueden calibrar: son 28 horas del Escenario B que no pueden comenzar. Todo lo demás sí arranca sin ellos, de modo que si los ejemplos llegan dentro de las dos primeras semanas, el cronograma no se mueve.</div>
+  <div class="note"><strong>El reloj no arranca con la orden de inicio: arranca con los ejemplos.</strong> El extracto bancario y el desprendible de nómina son los dos tipos de mayor volumen de datos y ustedes los tienen como pendientes. Sin archivos reales no se pueden calibrar: son 28 horas de la Opción 3 que no pueden comenzar. Todo lo demás sí arranca sin ellos, de modo que si los ejemplos llegan dentro de las dos primeras semanas, el cronograma no se mueve.</div>
 
   <h2>8. Operación mensual</h2>
   <p>Planea ya tiene contratado el Hypercare mensual de <strong>$397 USD</strong>, que cubre la operación gestionada de la plataforma. Lo siguiente es <strong>lo que este módulo suma encima</strong>, no un costo nuevo total.</p>
   <table class="fin">
-    <tr><th>Concepto</th><th>Base</th><th class="num">Escenario A</th><th class="num">Escenario B</th></tr>
+    <tr><th>Concepto</th><th>Base</th><th class="num">Opción 2</th><th class="num">Opción 3</th></tr>
     <tr><td>Hypercare mensual actual</td><td>Ya contratado, sin cambio</td><td class="num">$397</td><td class="num">$397</td></tr>
     <tr><td>Lectura de documentos con IA (*)</td><td>~$0,011 por documento leído, al consumo real</td><td class="num">$7</td><td class="num">$15</td></tr>
     <tr><td>Almacenamiento cifrado (*)</td><td>Solo si el usuario pide conservar el archivo</td><td class="num">$2</td><td class="num">$2</td></tr>
-    <tr><td>Mantenimiento de los lectores</td><td>Solo Escenario B. Los bancos rediseñan sus aplicaciones y una captura que se leía deja de leerse. No aplica al Escenario A, cuyos tres documentos son estables.</td><td class="num">—</td><td class="num">$476</td></tr>
+    <tr><td>Mantenimiento de los lectores</td><td>Solo Opción 3. Los bancos rediseñan sus aplicaciones y una captura que se leía deja de leerse. No aplica a la Opción 2, cuyos tres documentos son estables.</td><td class="num">—</td><td class="num">$476</td></tr>
     <tr class="total"><td>TOTAL MENSUAL</td><td></td><td class="num">$406</td><td class="num">$890</td></tr>
   </table>
-  <p class="muted">(*) Rubros variables de proveedor, facturados <strong>al consumo real y sin margen</strong>, igual que en la factura de Hypercare vigente. El IVA aplica sobre los servicios de Digit2AI. El Escenario C agrega unos $2 USD/mes de correo; WhatsApp y SMS se facturan por mensaje enviado al costo del operador.</p>
+  <p class="muted">(*) Rubros variables de proveedor, facturados <strong>al consumo real y sin margen</strong>, igual que en la factura de Hypercare vigente. El IVA aplica sobre los servicios de Digit2AI. La Opción 1 agrega unos $2 USD/mes de correo; WhatsApp y SMS se facturan por mensaje enviado al costo del operador.</p>
 
   <h3>De dónde sale el costo de la lectura con IA</h3>
   <table class="fin">
@@ -336,7 +341,7 @@
   <ul class="tight">
     <li><strong>Hoy Planea no guarda la cédula completa</strong>, solo los dos últimos dígitos para el calendario tributario. Para abrir archivos hace falta el número completo: es un campo nuevo y una decisión de ustedes.</li>
     <li><strong>Una parte de los PDF bancarios no tiene clave de apertura</strong> sino clave de permisos: se abren sin pedir nada y el usuario nunca se entera de la diferencia.</li>
-    <li><strong>Un PDF escaneado, sin capa de texto</strong>, se abre igual pero hay que convertirlo a imagen para leerlo. Esa ruta está incluida en A3 y B3, y el componente necesario ya está instalado en la plataforma.</li>
+    <li><strong>Un PDF escaneado, sin capa de texto</strong>, se abre igual pero hay que convertirlo a imagen para leerlo. Esa ruta está incluida en 2.3 y 3.3, y el componente necesario ya está instalado en la plataforma.</li>
   </ul>
 
   <h3>Pregunta 2 — Implicaciones frente al tratamiento de datos personales</h3>
@@ -366,7 +371,7 @@
   <h2>11. Lo que necesitamos de ustedes</h2>
   <table class="fin">
     <tr><th>Insumo</th><th>Para qué</th><th>Si no llega</th></tr>
-    <tr><td>Ejemplo real de extracto bancario</td><td>Calibrar el tipo de mayor volumen</td><td>16 horas del Escenario B no pueden comenzar</td></tr>
+    <tr><td>Ejemplo real de extracto bancario</td><td>Calibrar el tipo de mayor volumen</td><td>16 horas de la Opción 3 no pueden comenzar</td></tr>
     <tr><td>Ejemplo real de desprendible de nómina</td><td>Calibrar el segundo tipo más usado</td><td>12 horas no pueden comenzar</td></tr>
     <tr><td>Documento maestro de lógica de Maya</td><td>Vocabulario institucional y reglas de confirmación</td><td>Se construye el ciclo de confirmación y se carga el vocabulario después, sin retrasar</td></tr>
     <tr><td>Decisión sobre conservar o descartar el archivo original</td><td>Política de retención y cifrado</td><td>Se construye con la opción más conservadora: leer y descartar</td></tr>
@@ -375,14 +380,14 @@
 
   <h2>12. Resumen de la inversión</h2>
   <table class="fin">
-    <tr><th>Escenario</th><th class="num">Desarrollo (con IVA)</th><th class="num">Mensual</th><th>Entrega</th></tr>
-    <tr><td>A — Fase 1 (3 tipos de documento)</td><td class="num">$21.808</td><td class="num">$406</td><td>4 semanas</td></tr>
-    <tr><td>B — Alcance completo (11 tipos)</td><td class="num">$39.084</td><td class="num">$890</td><td>5 semanas</td></tr>
-    <tr><td>C — Calendario Planea</td><td class="num">$14.727</td><td class="num">+$2</td><td>3 semanas</td></tr>
-    <tr class="total"><td>B + C, solapados (recomendado)</td><td class="num">$53.812</td><td class="num">$892</td><td>6 semanas</td></tr>
+    <tr><th>Opción</th><th class="num">Desarrollo (con IVA)</th><th class="num">Mensual</th><th>Entrega</th></tr>
+    <tr><td>1 — Calendario Planea</td><td class="num">$14.727</td><td class="num">+$2</td><td>3 semanas</td></tr>
+    <tr><td>2 — Fase 1 (3 tipos de documento)</td><td class="num">$21.808</td><td class="num">$406</td><td>4 semanas</td></tr>
+    <tr><td>3 — Alcance completo (11 tipos)</td><td class="num">$39.084</td><td class="num">$890</td><td>5 semanas</td></tr>
+    <tr class="total"><td>Opciones 3 + 1, solapadas (recomendado)</td><td class="num">$53.812</td><td class="num">$892</td><td>6 semanas</td></tr>
   </table>
 
-  <div class="note"><strong>Nuestra recomendación: ir directo al Escenario B.</strong> El argumento no es comercial, es de costo. El 43 % del Escenario B son horas de motor que se pagan igual si hacen solo el Escenario A, y volver después a agregar los ocho tipos restantes cuesta más que hacerlos de una vez, porque obliga a reabrir la capa de carga, la interfaz y las pruebas ya cerradas. Si el presupuesto obliga a partir el proyecto, la partición eficiente no es por número de documentos: es <strong>dejar el Calendario Planea para una segunda etapa</strong>, porque es el único frente que no comparte motor con el resto. Y coincide con lo que ustedes plantean en su sección 6: que el usuario entienda desde su primera experiencia que Planea interpreta todo su ecosistema financiero y no una parte.</div>
+  <div class="note"><strong>Nuestra recomendación: ir directo a la Opción 3.</strong> El argumento no es comercial, es de costo. El 43 % de la Opción 3 son horas de motor que se pagan igual si hacen solo la Opción 2, y volver después a agregar los ocho tipos restantes cuesta más que hacerlos de una vez, porque obliga a reabrir la capa de carga, la interfaz y las pruebas ya cerradas. Si el presupuesto obliga a partir el proyecto, la partición eficiente no es por número de documentos: es <strong>dejar el Calendario Planea para una segunda etapa</strong>, porque es el único frente que no comparte motor con el resto. Y coincide con lo que ustedes plantean en su sección 6: que el usuario entienda desde su primera experiencia que Planea interpreta todo su ecosistema financiero y no una parte.</div>
 
   <p class="foot">
     <strong>Condiciones.</strong> Cifras en dólares estadounidenses (USD). Incluye IVA del 19 % (Colombia) sobre los servicios de Digit2AI. Los rubros de proveedor marcados con (*) son pass-through: se facturan al consumo real y sin margen, igual que en la factura de Hypercare vigente. El consumo de IA por documento y el volumen mensual son supuestos declarados como tales y se ajustan con la medición real del primer mes. Los tiempos de entrega cuentan desde la orden de inicio y desde la entrega de los ejemplos de extracto bancario y nómina, lo que ocurra después. La activación de WhatsApp depende de la aprobación de plantillas por parte de Meta, fuera del control de Digit2AI. Propuesta válida por 30 días.<br><br>
