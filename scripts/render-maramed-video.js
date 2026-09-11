@@ -1,27 +1,36 @@
 #!/usr/bin/env node
 /**
- * Convierte public/maramed-presentacion.html en un MP4 para WhatsApp (<12 MB).
+ * Convierte public/maramed-presentacion.html en un MP4 (<10 MB) para enviar.
  *
- * Uso:  node scripts/render-maramed-video.js [--mb=11.5] [--out=/ruta/MaraMed.mp4]
- * Requiere ffmpeg/ffprobe en el PATH (build-time; no es dependencia del servidor).
+ * Uso:  node scripts/render-maramed-video.js [--mb=9.5] [--crf=12] [--out=...]
+ * ffmpeg/ffprobe son dependencia de construcción, no del servidor.
  *
- * TRES DECISIONES QUE NO SON OBVIAS Y QUE NO CONVIENE DESHACER:
+ * CUATRO DECISIONES QUE NO CONVIENE DESHACER:
  *
- * 1. LA SECUENCIA DE FOTOGRAMAS SE CONSTRUYE A MANO, NO CON EL DEMUXER `concat`.
- *    Con `concat` + directivas `duration`, ffmpeg deriva su propio reloj: el
- *    video salía 717 s contra 676 s de voz, de modo que cada lámina se iba
- *    separando de lo que Dalia estaba diciendo. Aquí cada lámina ocupa
- *    round(duración_mp3 * FPS) fotogramas exactos y el desfase total queda en
- *    decenas de milisegundos.
+ * 1. SE CODIFICA POR CALIDAD (CRF), NO POR BITRATE.  Un mazo son doce imágenes
+ *    fijas; entre lámina y lámina el video no cambia y esos cuadros no cuestan
+ *    casi nada. Pedir "ciento veinte kilobits por segundo" reparte el
+ *    presupuesto por igual a lo largo del tiempo y deja a los doce cuadros que
+ *    importan con unas decenas de kilobytes cada uno: texto borroso. Con CRF la
+ *    calidad es la constante y el tamaño sale solo — a 1920x1080 y CRF 12 el
+ *    video ocupa 3,7 MB, contra los 7 MB que ocupaba el 720p borroso.
  *
- * 2. EL BITRATE SE CALCULA DEL TECHO, NO SE ELIGE.  El límite de WhatsApp es de
- *    tamaño, no de calidad: se reparte el presupuesto entre audio y video y se
- *    codifica en dos pasadas para acertarle. Subir la resolución con el mismo
- *    presupuesto empeora la imagen — a 92 kbps, 720p se ve mejor que 1440p.
+ * 2. FOTOGRAMAS CLAVE SÓLO DONDE CAMBIA LA LÁMINA.  Con el `-g` por defecto
+ *    había 53 fotogramas clave para 12 imágenes distintas: cuarenta y un
+ *    cuadros caros que no aportaban nada y le robaban bits a los otros.
  *
- * 3. EL SUBTÍTULO SE ACHICA HASTA QUE ENTRA.  En video no hay barra de
- *    desplazamiento: un subtítulo cortado pierde la última frase sin avisar, y
- *    mucha gente ve WhatsApp en silencio. Se prueba de 13,5 px hacia abajo.
+ * 3. NADA DE -maxrate / -bufsize.  Es un techo por cuadro: con bufsize del
+ *    doble del bitrate, cada fotograma clave quedaba limitado a ~30 KB, cuando
+ *    una lámina llena de texto necesita entre 200 y 400 KB para verse limpia.
+ *    Esa fue la causa directa del borrón.
+ *
+ * 4. 1920x1080, CAPTURADO A 3840x2160.  El mazo se ve en un monitor grande: a
+ *    1280x720 el reproductor lo amplía más de dos veces y se ve suave por mucho
+ *    bitrate que se le eche. Se captura al doble y se reduce con lanczos, que
+ *    es lo que deja limpio el texto pequeño de los teléfonos.
+ *
+ * El reloj sigue atado a la voz: la secuencia de fotogramas se arma a mano
+ * (round(duración × FPS)) porque el demuxer `concat` deriva su propio tiempo.
  */
 
 const { execFileSync } = require('child_process');
@@ -33,14 +42,16 @@ const puppeteer = require('puppeteer');
 const ROOT = path.join(__dirname, '..');
 const DECK = path.join(ROOT, 'public', 'maramed-presentacion.html');
 const AUDIO = path.join(ROOT, 'public', 'maramed-audio');
-const FPS = 12;
-const AUDIO_KBPS = 40;
+const FPS = 12;                 // el mazo no se mueve: 12 basta y sobra
+const AUDIO_KBPS = 64;          // voz holgada; el ahorro del video lo permite
+const W = 1920, H = 1080;
 
 const arg = (k, d) => (process.argv.find(a => a.startsWith(`--${k}=`)) || `=${d}`).split('=').pop();
-const CAP_MB = parseFloat(arg('mb', 11.5));
+const CAP_MB = parseFloat(arg('mb', 9.5));
+let CRF = parseInt(arg('crf', 12), 10);
 const OUT = arg('out', path.join(os.homedir(), 'Desktop', 'MaraMed-presentacion-ES.mp4'));
 
-const ff = (bin, args) => execFileSync(bin, args, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim();
+const ff = (b, a) => execFileSync(b, a, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim();
 const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]));
 
 (async () => {
@@ -48,15 +59,17 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
   const html = fs.readFileSync(DECK, 'utf8');
   const NARR = JSON.parse(html.match(/var NARR = (\{[\s\S]*?\n  \});/)[1]);
 
-  // --- 1. una imagen por lámina, a 2x para que sobreviva la recompresión ------
+  // --- 1. una imagen por lámina, capturada al doble ---------------------------
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 2 });
+  await page.setViewport({ width: W, height: H, deviceScaleFactor: 2 });
   await page.goto('file://' + DECK, { waitUntil: 'networkidle0' });
   await new Promise(r => setTimeout(r, 2500));
   await page.evaluate(() => {
-    document.getElementById('bar').style.display = 'none';       // los controles no van al video
-    document.getElementById('stage').style.transform = 'none';
+    document.getElementById('bar').style.display = 'none';     // los controles no van al video
+    const st = document.getElementById('stage');
+    st.style.transform = 'scale(1.5)';                         // el escenario es 1280x720 fijo
+    st.style.transformOrigin = 'top left';
     document.getElementById('viewport').style.placeItems = 'start';
     const c = document.getElementById('cap');
     c.style.bottom = '14px'; c.style.height = '132px'; c.style.lineHeight = '1.45'; c.style.overflow = 'hidden';
@@ -71,67 +84,55 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
       ss[j].classList.add('on');
       const c = document.getElementById('cap');
       c.textContent = txt;
+      // en video no hay barra de desplazamiento: se achica hasta que la frase entra
       for (let s = 13.5; s >= 9.5; s -= 0.25) { c.style.fontSize = s + 'px'; if (c.scrollHeight <= c.clientHeight) break; }
     }, i, NARR[keys[i]]);
     await new Promise(r => setTimeout(r, 800));
-    await page.screenshot({ path: path.join(work, `f${String(i + 1).padStart(2, '0')}.png`), clip: { x: 0, y: 0, width: 1280, height: 720 } });
+    await page.screenshot({ path: path.join(work, `f${String(i + 1).padStart(2, '0')}.png`), clip: { x: 0, y: 0, width: W, height: H } });
   }
   await browser.close();
 
-  // --- 2. voz continua ------------------------------------------------------
-  const alist = path.join(work, 'alist.txt');
+  // --- 2. voz continua --------------------------------------------------------
+  const alist = path.join(work, 'a.txt');
   fs.writeFileSync(alist, keys.map((_, i) => `file '${path.join(AUDIO, `s${i + 1}.mp3`)}'`).join('\n') + '\n');
   const voz = path.join(work, 'voz.mp3');
-  ff('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', alist, '-c', 'copy', voz]);
+  ff('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', alist, '-c:a', 'libmp3lame', '-b:a', '128k', voz]);
   const total = dur(voz);
 
-  // --- 3. secuencia exacta: cada lámina dura lo que dura su pista ------------
-  const seq = path.join(work, 'seq');
-  fs.mkdirSync(seq);
+  // --- 3. secuencia exacta: cada lámina dura lo que dura su pista --------------
+  const seq = path.join(work, 'seq'); fs.mkdirSync(seq);
   let idx = 0;
   keys.forEach((_, i) => {
-    const frames = Math.round(dur(path.join(AUDIO, `s${i + 1}.mp3`)) * FPS);
+    const n = Math.round(dur(path.join(AUDIO, `s${i + 1}.mp3`)) * FPS);
     const src = path.join(work, `f${String(i + 1).padStart(2, '0')}.png`);
-    for (let k = 0; k < frames; k++) fs.symlinkSync(src, path.join(seq, `${String(++idx).padStart(5, '0')}.png`));
+    for (let f = 0; f < n; f++) fs.symlinkSync(src, path.join(seq, `${String(++idx).padStart(5, '0')}.png`));
   });
 
-  // --- 4. presupuesto de bits, luego dos pasadas -----------------------------
-  const totalKbps = (CAP_MB * 1024 * 1024 * 8) / total / 1000;
-  const videoKbps = Math.floor((totalKbps - AUDIO_KBPS) * 0.94);   // margen para el contenedor
-  console.log(`${keys.length} láminas · ${total.toFixed(1)} s · techo ${CAP_MB} MB -> video ${videoKbps}k + audio ${AUDIO_KBPS}k`);
-
-  // Un techo de tamaño no se pide, se comprueba: con pocas imágenes distintas el
-  // control de tasa de x264 tiene muy poco que repartir y se pasa. Se codifica,
-  // se mide y se corrige hasta que entra.
-  const vin = ['-framerate', String(FPS), '-i', path.join(seq, '%05d.png'), '-vf', 'scale=1280:720:flags=lanczos'];
-  const cwd = process.cwd();
-  process.chdir(work);   // los ficheros de estadísticas de las dos pasadas caen aquí
+  // --- 4. calidad primero; el tamaño se comprueba -----------------------------
+  console.log(`${keys.length} láminas · ${total.toFixed(1)} s · ${W}x${H} · objetivo CRF ${CRF}, techo ${CAP_MB} MB`);
   const target = CAP_MB * 1024 * 1024;
-  let kb = videoKbps, mb = 0;
-  for (let intento = 1; intento <= 4; intento++) {
-    const venc = ['-c:v', 'libx264', '-preset', 'veryslow', '-b:v', `${kb}k`,
-                  '-maxrate', `${Math.round(kb * 1.4)}k`, '-bufsize', `${Math.round(kb * 2)}k`,
-                  '-g', '120', '-pix_fmt', 'yuv420p'];
-    ff('ffmpeg', ['-v', 'error', '-y', ...vin, ...venc, '-pass', '1', '-an', '-f', 'mp4', '/dev/null']);
-    ff('ffmpeg', ['-v', 'error', '-y', ...vin.slice(0, 4), '-i', voz, ...vin.slice(4), ...venc, '-pass', '2',
-                  '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '32000', '-movflags', '+faststart', OUT]);
-    const bytes = fs.statSync(OUT).size;
-    mb = bytes / 1024 / 1024;
-    console.log(`  intento ${intento}: ${kb}k -> ${mb.toFixed(2)} MB`);
-    // Quedarse muy por debajo del techo es calidad regalada, y la calidad es lo
-    // que sobrevive a la recompresión de WhatsApp: se apunta a la banda alta.
-    if (bytes <= target && bytes >= target * 0.88) break;
-    const next = Math.floor(kb * (target * 0.95 / bytes));
-    if (next === kb) break;
-    kb = next;
+  let mb = 0;
+  for (let intento = 1; intento <= 6; intento++) {
+    ff('ffmpeg', ['-v', 'error', '-y',
+      '-framerate', String(FPS), '-i', path.join(seq, '%05d.png'), '-i', voz,
+      '-vf', `scale=${W}:${H}:flags=lanczos`,
+      '-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(CRF), '-pix_fmt', 'yuv420p',
+      // fotogramas clave sólo en los cambios de lámina
+      '-x264-params', 'keyint=99999:min-keyint=25:scenecut=40',
+      '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '44100',
+      '-movflags', '+faststart', OUT]);
+    mb = fs.statSync(OUT).size / 1024 / 1024;
+    console.log(`  CRF ${CRF} -> ${mb.toFixed(2)} MB`);
+    if (fs.statSync(OUT).size <= target) break;
+    CRF += 2;                     // si no entra, se baja calidad de a poco
   }
-  process.chdir(cwd);
 
   const vd = dur(OUT);
-  console.log(`${OUT}\n${mb.toFixed(2)} MB · ${Math.floor(vd / 60)}:${String(Math.round(vd % 60)).padStart(2, '0')} · 1280x720 · ${FPS} fps`);
+  const kf = ff('ffprobe', ['-v', 'error', '-select_streams', 'v', '-show_entries', 'frame=key_frame', '-of', 'csv=p=0', OUT])
+    .split('\n').filter(l => l.trim() === '1').length;
+  console.log(`${OUT}\n${mb.toFixed(2)} MB · ${Math.floor(vd / 60)}:${String(Math.round(vd % 60)).padStart(2, '0')} · ${W}x${H} · ${FPS} fps · ${kf} fotogramas clave`);
   fs.rmSync(work, { recursive: true, force: true });
 
-  // Un archivo por encima del techo no sirve de nada: es mejor fallar aquí.
-  if (mb > CAP_MB + 0.5) { console.error(`EXCEDE el techo de ${CAP_MB} MB.`); process.exit(1); }
+  if (mb > CAP_MB) { console.error(`EXCEDE ${CAP_MB} MB.`); process.exit(1); }
   if (Math.abs(vd - total) > 1) { console.error(`DESFASE: video ${vd.toFixed(2)}s vs voz ${total.toFixed(2)}s.`); process.exit(1); }
 })();

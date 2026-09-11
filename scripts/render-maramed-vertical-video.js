@@ -26,7 +26,8 @@ const AUDIO_KBPS = 64;
 const TAIL = 0.45;           // silencio al final de cada escena
 
 const arg = (k, d) => (process.argv.find(a => a.startsWith(`--${k}=`)) || `=${d}`).split('=').pop();
-const CAP_MB = parseFloat(arg('mb', 10));
+const CAP_MB = parseFloat(arg('mb', 9.5));
+let CRF = parseInt(arg('crf', 14), 10);
 const OUT = arg('out', path.join(os.homedir(), 'Desktop', 'MaraMed-WhatsApp-vertical.mp4'));
 
 const ff = (b, a) => execFileSync(b, a, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim();
@@ -40,7 +41,7 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
   // --- 1. una imagen por escena, a 1080x1920 --------------------------------
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
+  await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
   await page.goto('file://' + DECK, { waitUntil: 'networkidle0' });
   await new Promise(r => setTimeout(r, 2500));
   await page.evaluate(() => {
@@ -88,40 +89,37 @@ const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'form
   });
 
   // --- 4. presupuesto y dos pasadas ----------------------------------------
-  const totalKbps = (CAP_MB * 1024 * 1024 * 8) / total / 1000;
-  const vKbps = Math.floor((totalKbps - AUDIO_KBPS) * 0.94);
-  console.log(`${keys.length} escenas · ${total.toFixed(1)} s · techo ${CAP_MB} MB -> video ${vKbps}k + audio ${AUDIO_KBPS}k`);
+  console.log(`${keys.length} escenas · ${total.toFixed(1)} s · 1080x1920 · objetivo CRF ${CRF}, techo ${CAP_MB} MB`);
 
-  // Con sólo nueve imágenes distintas el control de tasa de x264 tiene muy poco
-  // que repartir y se pasó un 24% en la primera prueba. Un techo de tamaño no se
-  // pide, se comprueba: se codifica, se mide y se corrige hasta que entra.
+  // CALIDAD PRIMERO, EL TAMAÑO SE COMPRUEBA. Pedir un bitrate reparte el
+  // presupuesto por igual a lo largo del tiempo, y en un video de nueve
+  // imágenes fijas eso deja a los nueve cuadros que importan con unas decenas
+  // de kilobytes: texto borroso. Con `-maxrate`/`-bufsize` era peor todavía,
+  // porque son un techo por cuadro. Con CRF la calidad es la constante, los
+  // fotogramas clave van sólo donde cambia la escena, y el archivo sale chico
+  // igual porque entre escena y escena no cambia nada.
   const vin = ['-framerate', String(FPS), '-i', path.join(seq, '%05d.png')];
   const cwd = process.cwd(); process.chdir(work);
   const target = CAP_MB * 1024 * 1024;
-  let kb = vKbps, mb = 0;
-  for (let intento = 1; intento <= 4; intento++) {
-    const venc = ['-c:v', 'libx264', '-preset', 'veryslow', '-b:v', `${kb}k`,
-                  '-maxrate', `${Math.round(kb * 1.4)}k`, '-bufsize', `${Math.round(kb * 2)}k`,
-                  '-g', '50', '-pix_fmt', 'yuv420p', '-profile:v', 'high', '-level', '4.0'];
-    ff('ffmpeg', ['-v', 'error', '-y', ...vin, ...venc, '-pass', '1', '-an', '-f', 'mp4', '/dev/null']);
-    ff('ffmpeg', ['-v', 'error', '-y', ...vin, '-i', voz, ...venc, '-pass', '2',
-                  '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '44100',
-                  '-movflags', '+faststart', OUT]);
-    const bytes = fs.statSync(OUT).size;
-    mb = bytes / 1024 / 1024;
-    console.log(`  intento ${intento}: ${kb}k -> ${mb.toFixed(2)} MB`);
-    // Quedarse muy por debajo del techo es calidad regalada, y la calidad es lo
-    // que sobrevive a la recompresión de WhatsApp: se apunta a la banda alta.
-    if (bytes <= target && bytes >= target * 0.88) break;
-    const next = Math.floor(kb * (target * 0.95 / bytes));
-    if (next === kb) break;
-    kb = next;
+  let mb = 0;
+  for (let intento = 1; intento <= 6; intento++) {
+    ff('ffmpeg', ['-v', 'error', '-y', ...vin, '-i', voz,
+      '-vf', 'scale=1080:1920:flags=lanczos',
+      '-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(CRF), '-pix_fmt', 'yuv420p',
+      '-profile:v', 'high', '-level', '4.0',
+      '-x264-params', 'keyint=99999:min-keyint=25:scenecut=40',
+      '-c:a', 'aac', '-b:a', `${AUDIO_KBPS}k`, '-ac', '1', '-ar', '44100',
+      '-movflags', '+faststart', OUT]);
+    mb = fs.statSync(OUT).size / 1024 / 1024;
+    console.log(`  CRF ${CRF} -> ${mb.toFixed(2)} MB`);
+    if (fs.statSync(OUT).size <= target) break;
+    CRF += 2;
   }
   process.chdir(cwd);
 
   const vd = dur(OUT);
   console.log(`${OUT}\n${mb.toFixed(2)} MB · ${vd.toFixed(1)} s · 1080x1920 · ${FPS} fps`);
   fs.rmSync(work, { recursive: true, force: true });
-  if (mb > CAP_MB + 0.5) { console.error(`EXCEDE ${CAP_MB} MB.`); process.exit(1); }
+  if (mb > CAP_MB) { console.error(`EXCEDE ${CAP_MB} MB.`); process.exit(1); }
   if (Math.abs(vd - total) > 0.5) { console.error(`DESFASE: ${vd.toFixed(2)} vs ${total.toFixed(2)}`); process.exit(1); }
 })();
