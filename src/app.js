@@ -1336,15 +1336,6 @@ app.get('/docs/enterprise-architecture', (req, res) => {
   return res.sendFile(path.join(__dirname, '..', 'private-docs', 'digit2ai-enterprise-architecture.html'));
 });
 
-// PACC-CFL ecosystem deck moved to the GoHighLevel site (digit2ai.com).
-// MUST run BEFORE express.static — public/pacccfl/ecosystem/index.html would
-// otherwise be served and the redirect would never fire. 301 so bookmarks,
-// email links and SEO follow the canonical GHL page.
-app.get(["/pacccfl/ecosystem", "/pacccfl/ecosystem/", "/pacccfl/ecosystem/index.html"], (req, res) => {
-  const search = req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : "";
-  return res.redirect(301, "https://digit2ai.com/pacc-cfl/ecosystem" + search);
-});
-
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
