@@ -15,7 +15,7 @@
 <title>{{BRAND_TITLE}}</title>
 <meta name="description" content="Stop looking for jobs. Let AI find them for you. Your personal website, your web address, your AI-readable profile, and the real jobs that match you right now.">
 <meta property="og:title" content="{{BRAND_TITLE}}">
-<meta property="og:description" content="Talk to the orb or attach your resume. See your own AI career ecosystem in minutes.">
+<meta property="og:description" content="{{BRAND_OG_DESC}}">
 <meta property="og:url" content="https://{{BRAND_DOMAIN}}">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://{{BRAND_DOMAIN}}/">
@@ -217,7 +217,20 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b .hero .lede{font-size:clamp(17px,2.1vw,21px);color:#c9ccd6;max-width:52ch;margin:22px auto 0;font-weight:450}
 
 /* ===== champion-teaser voice orb (ported verbatim) ===== */
-.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:22px 0 14px;--orb-size:min(50vh,470px);position:relative;z-index:3}
+.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:22px 0 14px;--orb-size:min(50vh,470px);--qr-size:min(42vh,330px,88vw);position:relative;z-index:3}
+/* ===== TEMPORARY hero QR (brands declaring hero_qr — see src/brand.js) =====
+   The card is hidden for every brand by default and the orb is untouched; the
+   server stamps ' qr-mode' on .hero-logo only for a brand that asked for it.
+   display:none on the orb (not opacity/visibility) so a hidden orb leaves the
+   tab order and the accessibility tree entirely. */
+.d2b .hero-qr{display:none}
+.d2b .hero-logo.qr-mode .orb-wrap{display:none}
+.d2b .hero-logo.qr-mode .hero-qr{display:flex;flex-direction:column;align-items:center;gap:16px;margin:8px 0 26px}
+.d2b .hero-qr .qr-plate{width:var(--qr-size);height:var(--qr-size);padding:14px;border-radius:22px;background:#fff;box-shadow:0 10px 44px rgba(34,211,238,.22),0 4px 22px rgba(139,92,246,.18);display:block}
+.d2b .hero-qr .qr-plate img{width:100%;height:100%;display:block}
+.d2b .hero-qr .qr-url{font-family:var(--font-mono);font-size:clamp(14px,1.8vw,18px);letter-spacing:.02em;color:#fff;text-decoration:none;font-weight:600}
+.d2b .hero-qr .qr-url:hover{color:var(--accent-cyan)}
+.d2b .hero-qr .qr-cap{font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-mute);text-align:center;line-height:1.5;max-width:min(360px,92vw)}
 .d2b .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 200ms ease;user-select:none;-webkit-tap-highlight-color:transparent;--orb-amp:0;will-change:transform}
 .d2b .orb-wrap:hover{transform:scale(1.02)}
 .d2b .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
@@ -269,8 +282,8 @@ html,body{margin:0;padding:0;background:#0a0a0e;min-height:100%;overflow-x:hidde
 .d2b .orb-fallback[hidden]{display:none!important}
 .d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
 .d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
-@media(max-width:900px){.d2b .hero-logo{--orb-size:min(44vh,380px)}}
-@media(max-width:480px){.d2b .hero-logo{--orb-size:min(38vh,280px)}}
+@media(max-width:900px){.d2b .hero-logo{--orb-size:min(44vh,380px);--qr-size:min(40vh,320px,88vw)}}
+@media(max-width:480px){.d2b .hero-logo{--orb-size:min(38vh,280px);--qr-size:min(38vh,280px,88vw)}}
 @media(prefers-reduced-motion:reduce){
   .d2b .orb-ring-outer,.d2b .orb-ring-mid,.d2b .orb-ring-inner,.d2b .orb-iris-outer,.d2b .orb-iris-segs,.d2b .orb-scan,.d2b .orb-crosshair,.d2b .orb-particle{animation:none!important}
   .d2b .orb-svg animate,.d2b .orb-svg animateTransform{display:none}
@@ -821,7 +834,7 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
   <p class="lede" data-i18n="hero.lede">Talk to the Orb or simply upload your resume. In minutes, {{BRAND}} builds your AI-powered career ecosystem &mdash; your personal website, custom web address, AI-readable professional profile, and real-time job matches tailored to your experience.</p>
 </header>
 
-<div class="hero-logo">
+<div class="hero-logo{{BRAND_HERO_CLASS}}">
   <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
        aria-label="Tap the orb to hear how {{BRAND}} works"
        aria-pressed="false" aria-describedby="orb-caption" data-state="idle">
@@ -913,6 +926,21 @@ border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s
           </g>
         </svg>
     <div class="orb-caption" id="orb-caption" data-i18n-html="orb.caption">Tap the orb and let Ava explain<br>&mdash; or attach your resume &mdash;</div>
+  </div>
+
+  <!-- TEMPORARY: scannable QR in place of the orb, for brands that declare
+       hero_qr. The image is generated server-side from the brand's own domain
+       (GET {{BASE}}/qr/hero.svg) so the code and the link below it can never
+       point at different places. A FAILED LOAD RESTORES THE ORB rather than
+       hiding the plate: hiding it left a hero with no code AND no orb, under a
+       caption still telling the visitor to scan something. -->
+  <div class="hero-qr">
+    <a class="qr-plate" href="{{BRAND_URL}}/">
+      <img data-qr-src="{{BASE}}/qr/hero.svg{{V}}" alt="QR code that opens {{BRAND_WORDMARK}}"
+           onerror="var h=this.closest('.hero-logo');if(h)h.classList.remove('qr-mode')">
+    </a>
+    <a class="qr-url" href="{{BRAND_URL}}/">{{BRAND_WORDMARK}}</a>
+    <div class="qr-cap" data-i18n-html="qr.caption">Scan to open {{BRAND_WORDMARK}}<br>&mdash; or attach your resume below &mdash;</div>
   </div>
 </div>
 
@@ -1199,6 +1227,7 @@ var JU_T={
   'hero.h1':'Deja de buscar empleo.<br><span class="grad-text">Deja que tus agentes de IA lo encuentren mientras duermes.</span>',
   'hero.lede':'Habla con el Orbe o simplemente sube tu currículum. En minutos, {{BRAND}} construye tu ecosistema profesional con IA: tu sitio web personal, tu dirección web propia, tu perfil profesional legible por IA y ofertas reales seleccionadas según tu experiencia.',
   'orb.caption':'Toca el orbe y deja que Dalia te explique<br>&mdash; o sube tu currículum &mdash;',
+  'qr.caption':'Escanea para abrir {{BRAND_WORDMARK}}<br>&mdash; o sube tu currículum abajo &mdash;',
   'cta.attach':'Subir mi currículum','cta.how':'Búsqueda de empleo en tu zona',
   'cta.show':'Muéstrame mi ecosistema',
   'receive.kicker':'Qué recibes',
@@ -1554,6 +1583,15 @@ function juApplyLang(l,persist){
       .catch(function(){fail('We could not reach the server. Please try again.');});
   });
 })();
+
+/* TEMPORARY hero QR (see hero_qr in src/brand.js). The plate carries
+   data-qr-src rather than src because an <img> inside a display:none parent is
+   STILL fetched by every browser — a plain src would cost every brand that
+   shows the orb a request for an image it never renders. The src is set only
+   where the hero is actually in qr-mode. */
+(function(){var h=document.querySelector('.hero-logo.qr-mode');if(!h)return;
+  var i=h.querySelector('.hero-qr img[data-qr-src]');
+  if(i)i.src=i.getAttribute('data-qr-src');})();
 </script>
 <script>
 /* Nav drawer. Kept to the same open/close contract as the rest of the site:

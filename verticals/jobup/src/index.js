@@ -512,6 +512,73 @@ router.get(['/index.html', '/app.html', '/welcome.html', '/build.html', '/reset.
                '/plan.html': '/subscribers-admin/plan' }[req.path];
   res.redirect(301, `${pwa.basePath(req)}${to}`);
 });
+// ── HERO QR (TEMPORARY — see `hero_qr` in src/brand.js) ──────────────────────
+// The encoded URL is built HERE from the RESOLVED BRAND's own canonical domain
+// and NEVER from a query param. An endpoint that encodes caller-supplied text
+// is an open QR generator on our own domain — a scannable link that appears to
+// come from us and goes anywhere the caller chose — which is a phishing
+// surface. Same rule as /api/chamber-qr/:slug.svg in src/app.js, which still
+// hand-rolls its own renderer; this one uses the library's (a quarter of the
+// bytes) and is the version to migrate that route to.
+//
+// Error correction H so a code photographed off a screen, printed, or partly
+// covered still scans. Registered ABOVE express.static.
+const heroQrCache = new Map();
+router.get('/qr/hero.svg', async (req, res) => {
+  const b = BRAND.forRequest(req);
+  // Vary: Host because the BODY DIFFERS PER BRAND and the brand is resolved
+  // from the Host header. Browser and Cloudflare caches already key on the
+  // hostname, so this changes nothing today; behind a shared cache that keys on
+  // path alone it is what stops a coljobs.app visitor being served jobup.dev's
+  // code. nosniff because the response is an SVG served from the brand origin.
+  // ONE HOUR, not a day: this rides on {{V}}, which is ICON_VERSION and is
+  // bumped for icon changes — so a changed target (a brand domain, or the flag
+  // going off and on) would otherwise be invisible to a held copy for 24h.
+  const headers = (r) => {
+    r.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    r.set('Cache-Control', 'public, max-age=3600');
+    r.set('Vary', 'Host');
+    r.set('X-Content-Type-Options', 'nosniff');
+  };
+
+  const hit = heroQrCache.get(b.id);
+  if (hit) { headers(res); return res.send(hit); }
+
+  // THE CODE AND THE LABEL PRINTED UNDER IT READ ONE EXPRESSION.
+  // This deliberately does NOT use BRAND.publicUrl(), which honours a
+  // *_PUBLIC_URL env override: the page renders the link text and href from
+  // tokens().BRAND_URL, so an override would have encoded one origin into the
+  // code while the page still read "TornaJobs.com" underneath — a visitor
+  // scanning a label that says one thing and lands somewhere else. That is the
+  // phishing property this route exists to avoid, arriving through config
+  // instead of through a query param, and it is silent because the page looks
+  // correct. A scannable public code points at the canonical domain, always.
+  const target = BRAND.tokens(b).BRAND_URL + '/';
+
+  let svg;
+  try {
+    // Dark modules on white. A QR on a dark ground is the single most common
+    // reason a scanner refuses one, so the plate is white regardless of theme.
+    svg = await QRCode.toString(target, {
+      type: 'svg', errorCorrectionLevel: 'H', margin: 2,
+      color: { dark: '#07080cff', light: '#ffffffff' }
+    });
+  } catch (e) { return res.status(500).send('QR failed'); }
+
+  // The library emits a bare <svg>; name it for assistive tech. The target is
+  // assembled from code literals, so there is nothing to inject today — this
+  // escapes anyway, because the file is served as image/svg+xml from the
+  // brand's OWN origin, which would make any future unescaped value a stored
+  // XSS there rather than a broken image.
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  svg = svg.replace('<svg ', `<svg role="img" aria-label="QR code that opens ${esc(target)}" `);
+
+  heroQrCache.set(b.id, svg);
+  headers(res);
+  return res.send(svg);
+});
+
 // index:false is load-bearing. express.static serves publicDir/index.html for a
 // request to '/' by default, which would hand out the RAW shell — {{BASE}}
 // tokens and all — before the route below ever ran.

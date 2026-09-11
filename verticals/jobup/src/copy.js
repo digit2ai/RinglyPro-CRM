@@ -67,7 +67,23 @@ const JOBMD = {
   }
 };
 
-const OVERLAYS = { jobmd: JOBMD };
+/* TornaJobs — TEMPORARY, and ONLY because its hero shows a QR instead of the
+   voice orb (see `hero_qr` in brand.js). The shared lede says "Talk to the
+   Orb", which reads as a broken page when there is no orb on screen: the copy
+   is a DEPENDENT of that swap, not a separate editorial decision. Delete this
+   overlay at the same time as the flag. Everything else is JobUp's wording. */
+const TORNAJOBS = {
+  'hero.lede': {
+    en: 'Scan the code or simply upload your resume. In minutes, {{BRAND}} builds your '
+      + 'AI-powered career ecosystem &mdash; your personal website, custom web address, '
+      + 'AI-readable professional profile, and real-time job matches tailored to your experience.',
+    es: 'Escanea el código o simplemente sube tu currículum. En minutos, {{BRAND}} construye '
+      + 'tu ecosistema profesional con IA: tu sitio web personal, tu dirección web propia, tu '
+      + 'perfil profesional legible por IA y ofertas reales seleccionadas según tu experiencia.'
+  }
+};
+
+const OVERLAYS = { jobmd: JOBMD, tornajobs: TORNAJOBS };
 
 /** The overlay for a brand, or null when it uses the engine's own wording. */
 function forBrand(brand) {

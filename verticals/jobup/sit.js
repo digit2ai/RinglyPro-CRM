@@ -8353,14 +8353,21 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
     });
 
     // ── THE COPY OVERLAY ───────────────────────────────────────────
-    await t('COPY: every medical override still matches a key on the page', () => {
-      // An override for a renamed key stops applying IN SILENCE and the
-      // medical page reverts to wording aimed at somebody else.
+    await t('COPY: EVERY brand\u2019s overrides still match a key on the page', () => {
+      // An override for a renamed key stops applying IN SILENCE and the page
+      // reverts to wording aimed at somebody else. This iterates OVERLAYS
+      // rather than naming jobmd: auditing one brand while a second overlay
+      // existed is how the TornaJobs hero copy could have quietly gone back to
+      // "Talk to the Orb" on a page with no orb.
       const raw = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
-      const a = COPY.audit(raw, BRAND.byId('jobmd'));
-      assert.ok(a.checked > 0, 'the overlay must actually cover something');
-      assert.deepStrictEqual(a.missing, [],
-        'overrides that no longer match a key: ' + a.missing.join(', '));
+      const ids = Object.keys(COPY.OVERLAYS);
+      assert.ok(ids.length >= 1, 'there is at least one overlay to audit');
+      for (const id of ids) {
+        const a = COPY.audit(raw, BRAND.byId(id));
+        assert.ok(a.checked > 0, id + ': the overlay must actually cover something');
+        assert.deepStrictEqual(a.missing, [],
+          id + ': overrides that no longer match a key: ' + a.missing.join(', '));
+      }
     });
 
     await t('COPY: JobUp declares no overlay, so its wording is untouched', () => {
@@ -8840,6 +8847,177 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.svg']
         .forEach((f) => assert.ok(fs.existsSync(__dirname + '/public/jobmd-' + f),
           'the JobMD mark must be shipped and ready to switch on: jobmd-' + f));
+    });
+
+    // ── TEMPORARY hero QR (hero_qr on the TornaJobs record) ───────────────
+    // The whole risk of this change is that ONE file serves four brands, so
+    // these assert the swap is confined to the brand that asked for it and
+    // that the code cannot end up pointing somewhere else.
+    await t('HERO QR: only the brand that declares hero_qr loses its orb', () => {
+      const pwa = require('./src/services/pwa');
+      const qr = BRAND.ids().filter((id) => BRAND.byId(id).hero_qr);
+      assert.deepStrictEqual(qr, ['tornajobs'], 'exactly one brand is in QR mode');
+      for (const id of BRAND.ids()) {
+        const html = pwa.page('index.html', '', BRAND.byId(id));
+        const on = /class="hero-logo qr-mode"/.test(html);
+        assert.strictEqual(on, id === 'tornajobs',
+          id + ': qr-mode must be present only for a hero_qr brand');
+        // The live products must render the hero exactly as they did before.
+        if (id !== 'tornajobs') {
+          assert.ok(/class="hero-logo"/.test(html), id + ': the orb hero is untouched');
+        }
+      }
+    });
+
+    await t('HERO QR: the image is never fetched by a brand that hides it', () => {
+      const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      // An <img> inside display:none is STILL fetched, so a plain src would
+      // cost every orb brand a request for an image it never shows.
+      assert.ok(!/<img[^>]*\ssrc="[^"]*qr\/hero\.svg/.test(html),
+        'the QR plate must carry data-qr-src, not src');
+      assert.ok(html.includes('data-qr-src'), 'and the deferred attribute is there');
+      assert.ok(html.includes(".querySelector('.hero-logo.qr-mode')"),
+        'the src is set only where the hero is actually in qr-mode');
+    });
+
+    await t('HERO QR: the encoded URL comes from the brand, never from a caller', () => {
+      const src = fs.readFileSync(__dirname + '/src/index.js', 'utf8');
+      const i = src.indexOf("router.get('/qr/hero.svg'");
+      assert.ok(i > 0, 'the QR route exists');
+      // Strip the comments first: the route EXPLAINS this policy and names
+      // publicUrl() in prose, so a grep over the raw text fails on the very
+      // comment that documents the rule.
+      const body = src.slice(i, src.indexOf('\n});', i))
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      // An endpoint that encodes caller-supplied text is an open QR generator
+      // on our own domain, which is a phishing surface.
+      assert.ok(!/req\.query|req\.params|req\.body|headers\['host'\]|headers\.host/.test(body),
+        'the route must read nothing from the caller');
+      // AND NOT FROM CONFIG EITHER. publicUrl() honours a *_PUBLIC_URL env
+      // override; the page renders its link text and href from
+      // tokens().BRAND_URL, so reading the override here would encode one
+      // origin into the code while the label under it still read
+      // "TornaJobs.com" — the same phishing property, arriving silently
+      // through config instead of through a query param.
+      assert.ok(!/publicUrl/.test(body), 'the QR must NOT read the *_PUBLIC_URL override');
+      assert.ok(/BRAND\.tokens\(b\)\.BRAND_URL/.test(body),
+        'the code reads the SAME expression the printed label does');
+      assert.ok(/errorCorrectionLevel: 'H'/.test(body), 'level H so a printed code still scans');
+    });
+
+    await t('HERO QR: an env override cannot desync the code from its label', async () => {
+      // The regression that a reviewer found: set the override and the QR
+      // pointed at staging while the page still read the canonical domain.
+      const KEY = BRAND.byId('tornajobs').public_url_env;
+      const had = Object.prototype.hasOwnProperty.call(process.env, KEY);
+      const prev = process.env[KEY];
+      process.env[KEY] = 'https://staging.example.net/x';
+      // The route caches per brand for the process lifetime, so drive it in a
+      // child rather than poisoning this one's cache with the override.
+      try {
+        const out = require('child_process').execFileSync(process.execPath, ['-e', `
+          const express=require('express');
+          const jobup=require('${__dirname.replace(/\\/g, '/')}/src/index');
+          const app=express();
+          app.use('/tornajobs',(q,r,n)=>{q.jobupBrand='tornajobs';return jobup(q,r,n);});
+          const srv=app.listen(0,async()=>{
+            const r=await fetch('http://127.0.0.1:'+srv.address().port+'/tornajobs/qr/hero.svg');
+            process.stdout.write((await r.text()).match(/aria-label="([^"]+)"/)[1]);
+            srv.close();process.exit(0);
+          });
+        `], { env: process.env, encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'ignore'] });
+        assert.strictEqual(out.trim(), 'QR code that opens https://tornajobs.com/',
+          'the override must NOT move the encoded URL');
+      } finally {
+        if (had) process.env[KEY] = prev; else delete process.env[KEY];
+      }
+    });
+
+    await t('HERO QR: each brand’s code encodes its own site and nothing else', async () => {
+      const http = require('http');
+      const QR = require('qrcode');
+      const engine = require('./src/index');
+      const app = require('express')();
+      // THE HOST-HEADER ROOT IS THE ONE tornajobs.com ACTUALLY USES, so it is
+      // the one that has to be driven. Mirrors the handler in src/app.js.
+      app.use((q, r, n) => {
+        const h = (q.get('host') || '').toLowerCase().split(':')[0];
+        const br = BRAND.byHost(h);
+        if (!br) return n();
+        q.jobupBrand = br.id;
+        return engine(q, r, n);
+      });
+      app.use('/tornajobs', (q, r, n) => { q.jobupBrand = 'tornajobs'; return engine(q, r, n); });
+      app.use('/jobup', engine);
+      const srv = app.listen(0);
+      // NOT fetch(): undici silently DROPS a Host header, so every custom-domain
+      // probe comes back 404 and reads as a routing bug that is not there.
+      const get = (path, host) => new Promise((rs, rj) => {
+        const rq = http.request({ host: '127.0.0.1', port: srv.address().port, path,
+          headers: host ? { Host: host } : {} }, (r) => {
+          let d = ''; r.on('data', (c) => { d += c; });
+          r.on('end', () => rs({ status: r.statusCode, headers: r.headers, body: d }));
+        });
+        rq.on('error', rj); rq.end();
+      });
+      try {
+        const cases = [
+          ['/tornajobs/qr/hero.svg', null, 'tornajobs', 'https://tornajobs.com/'],
+          ['/jobup/qr/hero.svg', null, 'jobup', 'https://jobup.dev/'],
+          // the real roots
+          ['/qr/hero.svg', 'tornajobs.com', 'tornajobs', 'https://tornajobs.com/'],
+          ['/qr/hero.svg', 'www.tornajobs.com', 'tornajobs', 'https://tornajobs.com/'],
+          ['/qr/hero.svg', 'jobup.dev', 'jobup', 'https://jobup.dev/'],
+          ['/qr/hero.svg', 'coljobs.app', 'coljobs', 'https://coljobs.app/'],
+        ];
+        for (const [path, host, id, want] of cases) {
+          const label = host || path;
+          const r = await get(path, host);
+          assert.strictEqual(r.status, 200, label + ': the QR is served');
+          assert.ok(/image\/svg\+xml/.test(r.headers['content-type'] || ''), label + ': it is an SVG');
+          // The body differs per brand and the brand comes from the Host
+          // header, so a shared cache that keys on path alone would otherwise
+          // hand one brand's visitors another brand's code.
+          assert.strictEqual(r.headers.vary, 'Host', label + ': Vary: Host');
+          assert.strictEqual(r.headers['x-content-type-options'], 'nosniff', label + ': nosniff');
+          // Dark modules on a WHITE plate: a QR on a dark ground is the most
+          // common reason a scanner refuses one.
+          assert.ok(r.body.includes('fill="#ffffff"'), label + ': the plate stays white');
+
+          // THE BARCODE ITSELF, NOT THE LABEL BESIDE IT. Asserting only the
+          // aria-label passes a build whose modules encode somewhere else
+          // entirely — which is the one thing this route exists to prevent.
+          const expect = await QR.toString(want, { type: 'svg', errorCorrectionLevel: 'H',
+            margin: 2, color: { dark: '#07080cff', light: '#ffffffff' } });
+          const got = (r.body.match(/stroke="#07080c" d="([^"]+)"/) || [])[1];
+          const exp = (expect.match(/stroke="#07080c" d="([^"]+)"/) || [])[1];
+          assert.ok(exp, label + ': the expected modules were computed');
+          assert.strictEqual(got, exp, label + ': the MODULES must encode ' + want);
+          assert.ok(r.body.includes('aria-label="QR code that opens ' + want + '"'),
+            label + ': and the label must say so too');
+
+          // THE LABEL AND THE CODE MUST AGREE. A visitor reads the text under
+          // the plate and trusts it describes where the code goes.
+          const base = host ? '' : path.replace('/qr/hero.svg', '');
+          const page = require('./src/services/pwa').page('index.html', base, BRAND.byId(id));
+          const href = (page.match(/<a class="qr-url" href="([^"]+)"/) || [])[1];
+          assert.strictEqual(href, want, label + ': the printed link must be the encoded URL');
+        }
+      } finally { srv.close(); }
+    });
+
+    await t('HERO QR: a failed image restores the orb rather than emptying the hero', () => {
+      const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      // Hiding only the plate left a hero with NO code and NO orb, under a
+      // caption still telling the visitor to scan something.
+      assert.ok(!/onerror="this\.closest\('\.qr-plate'\)\.style\.display/.test(html),
+        'the fallback must not simply hide the plate');
+      assert.ok(/onerror="[^"]*classList\.remove\('qr-mode'\)/.test(html),
+        'a failed load drops qr-mode, which brings the working orb back');
+      // A clipped QR does not scan, and html{overflow-x:hidden} clips silently.
+      assert.ok(/--qr-size:min\([^)]*88vw\)/.test(html), 'the plate is guarded against the viewport');
+      assert.ok(!/image-rendering:pixelated/.test(html),
+        'image-rendering is a raster hint; the payload is a vector');
     });
   }
 

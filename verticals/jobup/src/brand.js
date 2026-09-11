@@ -143,6 +143,20 @@ const BRANDS = {
     audience_one: 'professional',
     audience_many: 'professionals',
     site_suffix: 'tornajobs.com',
+    // TEMPORARY — THE HERO SHOWS A SCANNABLE QR INSTEAD OF THE VOICE ORB.
+    // Put here rather than in the markup because index.html is ONE file serving
+    // four brands: a QR hardcoded in the page would appear on jobup.dev too.
+    // TO RESTORE THE ORB: delete this single line and the four HERO QR tests
+    // in sit.js (the first of them asserts exactly one brand is in QR mode, so
+    // it fails on purpose when the flag goes away rather than letting the
+    // markup rot unnoticed). No other file changes, and every other brand is
+    // already byte-identical because the token it drives resolves to an empty
+    // string for them.
+    hero_qr: true,
+    // Dependent of hero_qr: the link-preview description must not promise an
+    // orb either. Delete with the flag.
+    og_description: 'Scan the code or attach your resume. See your own AI career '
+      + 'ecosystem in minutes.',
     // Shared mark until a TornaJobs icon set ships (public/tornajobs-*.png);
     // then set this to 'tornajobs-' and it is served with a shared fallback.
     icon_prefix: '',
@@ -328,7 +342,19 @@ function tokens(brand) {
     BRAND_PHONE_TEL: b.phone ? String(b.phone).replace(/[^0-9+]/g, '') : '',
     // A brand with no number hides the block outright — an empty <a> would
     // still take vertical space and still be focusable.
-    BRAND_PHONE_CLASS: b.phone ? '' : 'no-phone'
+    BRAND_PHONE_CLASS: b.phone ? '' : 'no-phone',
+    // TEMPORARY hero override (see hero_qr on the TornaJobs record). A brand
+    // that declares it gets ' qr-mode' on .hero-logo, which hides the orb and
+    // reveals the QR card. Every other brand gets '', so the live products are
+    // byte-identical and the orb is untouched.
+    BRAND_HERO_CLASS: b.hero_qr ? ' qr-mode' : '',
+    // The share-card description. It is a <meta> tag, so it carries no
+    // data-i18n key and the copy overlay cannot reach it — a brand whose hero
+    // is a QR would otherwise still promise an orb in every link preview.
+    // The default IS the literal that was in the page, so the live products
+    // render byte-identically.
+    BRAND_OG_DESC: b.og_description
+      || 'Talk to the orb or attach your resume. See your own AI career ecosystem in minutes.'
   };
 }
 
