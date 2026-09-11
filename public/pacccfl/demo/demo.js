@@ -29,7 +29,7 @@
     nav_exchange:   ['Exchange', 'Intercambio', 'Palitan'],
     nav_payments:   ['Payments', 'Pagos', 'Mga Bayad'],
     nav_guide:      ['Member Guide', 'Guía del Miembro', 'Gabay ng Miyembro'],
-    nav_jobup:      ['JobUp — Global Profile', 'JobUp — Perfil Global', 'JobUp — Global na Profile'],
+    nav_jobup:      ['TornaJobs.dev — Global Profile', 'TornaJobs.dev — Perfil Global', 'TornaJobs.dev — Global na Profile'],
     nav_admin:      ['Admin', 'Admin', 'Admin'],
 
     role:           ['SUPERADMIN', 'SUPERADMIN', 'SUPERADMIN'],
@@ -173,10 +173,10 @@
     jobup_h:        ['Your professional profile, beyond the chamber',
                      'Tu perfil profesional, más allá de la cámara',
                      'Ang iyong propesyonal na profile, higit pa sa kamara'],
-    jobup_p:        ['JobUp turns your resume into a living profile: real openings scored against what you have actually done, a public CV site recruiters and their AI can read, and outreach drafted for you to approve.',
-                     'JobUp convierte tu currículum en un perfil vivo: vacantes reales evaluadas contra lo que realmente has hecho, un sitio de CV público que los reclutadores y su IA pueden leer, y mensajes redactados para que los apruebes.',
-                     'Ginagawa ng JobUp na buhay na profile ang iyong resume: tunay na bakante na sinusukat laban sa aktuwal mong nagawa, isang pampublikong CV site na kayang basahin ng recruiter at ng AI nila, at outreach na idinrapt para aprubahan mo.'],
-    jobup_cta:      ['Open JobUp', 'Abrir JobUp', 'Buksan ang JobUp'],
+    jobup_p:        ['TornaJobs turns your resume into a living profile: real openings scored against what you have actually done, a public CV site recruiters and their AI can read, and outreach drafted for you to approve.',
+                     'TornaJobs convierte tu currículum en un perfil vivo: vacantes reales evaluadas contra lo que realmente has hecho, un sitio de CV público que los reclutadores y su IA pueden leer, y mensajes redactados para que los apruebes.',
+                     'Ginagawa ng TornaJobs na buhay na profile ang iyong resume: tunay na bakante na sinusukat laban sa aktuwal mong nagawa, isang pampublikong CV site na kayang basahin ng recruiter at ng AI nila, at outreach na idinrapt para aprubahan mo.'],
+    jobup_cta:      ['Open TornaJobs.dev', 'Abrir TornaJobs.dev', 'Buksan ang TornaJobs.dev'],
 
     adm_members:    ['Member management', 'Gestión de miembros', 'Pamamahala ng miyembro'],
     adm_board:      ['Board of directors', 'Junta directiva', 'Lupon ng mga direktor'],
@@ -638,7 +638,7 @@
   function scJobup() {
     return head('nav_jobup') +
       '<div class="vc-jobup"><h4>' + t('jobup_h') + '</h4><p>' + t('jobup_p') + '</p>' +
-      '<a class="vc-btn" href="https://jobup.dev" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">' +
+      '<a class="vc-btn" href="https://tornajobs.com/" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">' +
       t('jobup_cta') + ' &rarr;</a></div>';
   }
 
