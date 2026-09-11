@@ -29,6 +29,12 @@
   .topbar nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; margin-left: 8px; }
   .topbar nav a.cta { background: var(--accent); color: var(--navy); }
   .topbar nav a:hover:not(.cta) { background: rgba(255,255,255,0.1); }
+  .hero-brandrow { display:flex; align-items:center; justify-content:center; gap:44px; flex-wrap:wrap; margin-bottom:28px; }
+  .hero-brandrow img#heroLogo { margin-bottom:0 !important; }
+  .hero-qr { background:#fff; border-radius:18px; padding:14px 14px 12px; box-shadow:0 12px 40px rgba(0,0,0,0.42); text-align:center; }
+  .hero-qr img { display:block; width:148px; height:148px; }
+  .hero-qr-cap { color:var(--navy,#0b2a5b); font-size:13px; font-weight:800; margin-top:8px; letter-spacing:.2px; }
+  .hero-qr-sub { color:#5a6b85; font-size:11px; margin-top:2px; }
   .hero { background: linear-gradient(135deg, var(--primary) 0%, #2855ab 100%); color: white; padding: 80px 24px 60px; text-align: center; }
   .hero h1 { font-size: 42px; margin-bottom: 16px; line-height: 1.2; }
   .hero p { font-size: 18px; opacity: 0.92; max-width: 700px; margin: 0 auto 24px; }
@@ -89,6 +95,8 @@
     .hero { padding: 48px 18px 40px; }
     .hero h1 { font-size: 26px; line-height: 1.25; }
     .hero p { font-size: 14px; }
+    .hero-brandrow { gap:22px; }
+    .hero-qr img { width:124px; height:124px; }
     .hero img#heroLogo { width:140px !important; height:140px !important; border-radius:20px !important; margin-bottom:18px !important; }
     .hero .actions { flex-direction: column; align-items: stretch; gap: 10px; }
     .hero .btn { width: 100%; padding: 14px 18px; font-size: 15px; }
@@ -119,7 +127,14 @@
 </div>
 
 <section class="hero">
-  <img id="heroLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69ee8f070d66f2a66567d208.png" alt="VirtualChamber" style="width:220px;height:220px;border-radius:28px;object-fit:cover;margin-bottom:28px;box-shadow:0 12px 40px rgba(0,0,0,0.42)" onerror="this.style.display='none'">
+  <div class="hero-brandrow">
+    <img id="heroLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69ee8f070d66f2a66567d208.png" alt="VirtualChamber" style="width:220px;height:220px;border-radius:28px;object-fit:cover;margin-bottom:28px;box-shadow:0 12px 40px rgba(0,0,0,0.42)" onerror="this.style.display='none'">
+    <div class="hero-qr" id="heroQrCard">
+      <img id="heroQr" alt="Scan to join">
+      <div class="hero-qr-cap">Scan to join</div>
+      <div class="hero-qr-sub">Point your phone camera here</div>
+    </div>
+  </div>
   <h1 id="chamberName">Loading chamber...</h1>
   <p id="chamberDescription">Digital platform connecting business members and projects.</p>
   <div class="actions">
@@ -184,6 +199,14 @@
   document.getElementById('loginLink').href = loginUrl;
   document.getElementById('signupLink').href = signupUrl;
   document.getElementById('signupBtn').href = signupUrl;
+  var heroQr = document.getElementById('heroQr');
+  var heroQrCard = document.getElementById('heroQrCard');
+  if (heroQr && heroQrCard) {
+    heroQr.src = '/api/chamber-qr/' + encodeURIComponent(slug) + '.svg';
+    // A broken image next to the logo looks like a rendering fault; hide the
+    // whole card instead, the Join Now button is still right below it.
+    heroQr.onerror = function () { heroQrCard.style.display = 'none'; };
+  }
   document.getElementById('loginBtn').href = loginUrl;
   document.getElementById('ctaSignup').href = signupUrl;
 

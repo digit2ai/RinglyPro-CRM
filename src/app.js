@@ -1336,6 +1336,57 @@ app.get('/docs/enterprise-architecture', (req, res) => {
   return res.sendFile(path.join(__dirname, '..', 'private-docs', 'digit2ai-enterprise-architecture.html'));
 });
 
+// Chamber signup QR — printed on flyers and shown in the hero, so the URL is
+// built HERE from the slug, never taken from a query param. An endpoint that
+// encodes caller-supplied text is an open QR generator on our own domain,
+// which is a phishing surface (a scannable link that looks like it came from
+// the chamber). Registered BEFORE express.static.
+const CHAMBER_QR_HOSTS = new Set([
+  'camaravirtual.app', 'www.camaravirtual.app',
+  'virtualchamber.app', 'www.virtualchamber.app',
+  'aiagent.ringlypro.com'
+]);
+app.get('/api/chamber-qr/:slug.svg', (req, res) => {
+  const slug = String(req.params.slug || '').toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(slug)) return res.status(404).send('Not found');
+
+  const rawHost = String(req.headers['x-forwarded-host'] || req.headers.host || '')
+    .split(',')[0].trim().toLowerCase();
+  // Host header is attacker-controllable; fall back to the canonical domain
+  // rather than encoding whatever was sent.
+  const host = CHAMBER_QR_HOSTS.has(rawHost) ? rawHost : 'www.camaravirtual.app';
+  const target = 'https://' + host + '/' + slug + '/signup-member';
+
+  let QRCode;
+  try { QRCode = require('qrcode'); } catch (e) { return res.status(503).send('QR unavailable'); }
+
+  let qr;
+  try {
+    // Level H so a printed, scuffed or partly-covered code still scans.
+    qr = QRCode.create(target, { errorCorrectionLevel: 'H' });
+  } catch (e) { return res.status(500).send('QR failed'); }
+
+  const margin = 2;
+  const size = qr.modules.size;
+  const data = qr.modules.data;
+  const total = size + margin * 2;
+  let path = '';
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (data[y * size + x]) path += `M${x + margin} ${y + margin}h1v1h-1z`;
+    }
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" `
+    + `width="1024" height="1024" shape-rendering="crispEdges" role="img" `
+    + `aria-label="QR code to join this chamber">`
+    + `<rect width="${total}" height="${total}" fill="#ffffff"/>`
+    + `<path d="${path}" fill="#0b2a5b"/></svg>`;
+
+  res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=86400');
+  return res.send(svg);
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
