@@ -160,6 +160,35 @@ async function t(name, fn) {
       'encoding caller-supplied text would make this an open QR generator');
   });
 
+  // ── the narration transport ─────────────────────────────────────────────
+  await t('NARRATION: prev/next exist, are labelled, and are labelled in all three languages', () => {
+    assert.ok(/id="linaBarPrev"/.test(html) && /id="linaBarNext"/.test(html));
+    // Chevrons carry no text, so the accessible name is the ONLY name.
+    assert.ok(/id="linaBarPrev"[^>]*aria-label=/.test(html), 'prev needs an aria-label');
+    assert.ok(/id="linaBarNext"[^>]*aria-label=/.test(html), 'next needs an aria-label');
+    const ui = html.slice(html.indexOf('var UI = {'), html.indexOf('var orb ='));
+    for (const lg of ['en:', 'es:', 'tl:']) {
+      const line = ui.split('\n').find((l) => l.trim().startsWith(lg));
+      assert.ok(line, 'missing UI language ' + lg);
+      assert.ok(/prev: '/.test(line) && /next: '/.test(line),
+        lg + ' must carry prev/next, or the label stays English for that reader');
+    }
+  });
+
+  await t('NARRATION: the step is clamped, and the ends are synced from one place', () => {
+    // Wrapping from the last section back to the first reads as a bug; the
+    // buttons disable at the ends instead.
+    assert.ok(/Math\.min\(SEGS\.length - 1, Math\.max\(0, idx \+ delta\)\)/.test(html),
+      'step() must clamp rather than wrap');
+    // stop() resets idx to 0, so it must re-sync or Previous stays enabled and
+    // the next click does nothing the user can explain.
+    const stopFn = html.slice(html.indexOf('function stop()'), html.indexOf('function stop()') + 600);
+    assert.ok(/updateBar\(\)/.test(stopFn),
+      'stop() resets idx, so it must reset the label AND the buttons, not just the buttons');
+    assert.ok(/function updateBar\(\)[\s\S]{0,300}syncNav\(\)/.test(html),
+      'every section change refreshes them through updateBar');
+  });
+
   // ── the two traps this build actually hit ───────────────────────────────
   await t('CSS: the simulator overrides come AFTER its stylesheet', () => {
     // Same specificity as demo.css's own rules, so SOURCE ORDER decides and a
@@ -226,6 +255,46 @@ async function t(name, fn) {
           assert.strictEqual(r.overflow, 0, w + 'px: the page scrolls sideways by ' + r.overflow + 'px');
           assert.deepStrictEqual(r.small, [], w + 'px: targets under 44px: ' + r.small.join(', '));
         }
+      });
+
+      await t('LIVE: next and prev walk the tour and stop at both ends', async () => {
+        const pg = await br.newPage();
+        await pg.setViewport({ width: 1280, height: 900 });
+        await pg.goto(base + '/pacccfl/', { waitUntil: 'networkidle2' });
+        const read = () => pg.evaluate(() => ({
+          sec: document.getElementById('linaBarSec').textContent,
+          prev: document.getElementById('linaBarPrev').disabled,
+          next: document.getElementById('linaBarNext').disabled,
+        }));
+        const click = (id) => pg.evaluate((i) => {
+          const b = document.getElementById(i); if (!b.disabled) b.click();
+        }, id);
+
+        const start = await read();
+        assert.ok(/1/.test(start.sec), 'starts at the first section');
+        assert.strictEqual(start.prev, true, 'Previous is disabled at the first section');
+        assert.strictEqual(start.next, false, 'Next is available at the first section');
+
+        await click('linaBarNext'); await new Promise((r) => setTimeout(r, 400));
+        await click('linaBarNext'); await new Promise((r) => setTimeout(r, 400));
+        const fwd = await read();
+        assert.ok(/3/.test(fwd.sec), 'two Next presses reach section 3, got: ' + fwd.sec);
+        assert.strictEqual(fwd.prev, false, 'Previous is available mid-tour');
+
+        await click('linaBarPrev'); await new Promise((r) => setTimeout(r, 400));
+        assert.ok(/2/.test((await read()).sec), 'Previous steps back one');
+
+        for (let i = 0; i < 12; i++) { await click('linaBarNext'); await new Promise((r) => setTimeout(r, 180)); }
+        const end = await read();
+        assert.strictEqual(end.next, true, 'Next is disabled at the last section');
+        assert.ok(/8/.test(end.sec), 'and it stopped at the last section rather than wrapping');
+
+        await pg.evaluate(() => document.getElementById('linaBarStop').click());
+        await new Promise((r) => setTimeout(r, 400));
+        const stopped = await read();
+        assert.ok(/1/.test(stopped.sec), 'Stop returns to the first section');
+        assert.strictEqual(stopped.prev, true, 'and Previous is disabled again');
+        await pg.close();
       });
 
       await t('LIVE: the worker registers, activates and controls the page', async () => {

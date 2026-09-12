@@ -881,6 +881,14 @@
   .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#6f9bff,#f5c63f); border-radius: 3px; }
   .lina-bar-btn { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .2s; }
   .lina-bar-btn:hover { background: rgba(255,255,255,0.18); }
+  /* Chevrons, not words: the bar is one fixed flex row capped at 94vw, and
+     two more word-buttons push Stop off a phone. */
+  .lina-bar-btn.icon { padding: 8px; min-width: 38px; display: inline-flex;
+                       align-items: center; justify-content: center; }
+  .lina-bar-btn.icon svg { width: 16px; height: 16px; display: block; }
+  /* An end-of-tour button must LOOK unavailable, not just refuse the click. */
+  .lina-bar-btn[disabled] { opacity: .35; cursor: default; }
+  .lina-bar-btn[disabled]:hover { background: rgba(255,255,255,0.1); }
   .lina-bar-btn.stop { background: #c0392b; border-color: #c0392b; }
   .lina-bar-btn.stop:hover { background: #a93226; }
   .lina-active { animation: linaHi 1.3s ease; }
@@ -1043,6 +1051,7 @@
      the page a visitor is actually meant to press. */
   .lina-bar-btn { min-height: 44px; padding: 0 18px; font-size: 14px;
                   display: inline-flex; align-items: center; justify-content: center; }
+  .lina-bar-btn.icon { min-width: 44px; padding: 0; }
   /* Sub-12px type is below what a phone renders comfortably; these are the
      simulator's captions and status pills. */
   /* The footer's sitemap links were 24px tall — the densest column of links
@@ -1162,7 +1171,13 @@
     <div class="lina-bar-title" id="linaBarTitle">Welcome</div>
     <div class="lina-bar-prog"><span id="linaBarProg"></span></div>
   </div>
+  <button class="lina-bar-btn icon" id="linaBarPrev" type="button" aria-label="Previous section">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 5 8 12 15 19"/></svg>
+  </button>
   <button class="lina-bar-btn" id="linaBarPause" type="button">Pause</button>
+  <button class="lina-bar-btn icon" id="linaBarNext" type="button" aria-label="Next section">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 5 16 12 9 19"/></svg>
+  </button>
   <button class="lina-bar-btn stop" id="linaBarStop" type="button">Stop</button>
 </div>
 
@@ -1639,9 +1654,9 @@
     ];
     // Player chrome, per language.
     var UI = {
-      en: { of: function (i, n) { return 'Section ' + i + ' of ' + n; }, presenting: 'Lina presenting…', listen: 'Listen to Lina', paused: 'Paused', pause: 'Pause', resume: 'Resume', failed: 'Audio could not play. Please try again.', done: 'Presentation finished. Tap the orb to replay.' },
-      es: { of: function (i, n) { return 'Sección ' + i + ' de ' + n; }, presenting: 'Lina presentando…', listen: 'Escucha a Lina', paused: 'En pausa', pause: 'Pausar', resume: 'Reanudar', failed: 'No se pudo reproducir el audio. Inténtalo de nuevo.', done: 'Presentación finalizada. Toca el orbe para repetirla.' },
-      tl: { of: function (i, n) { return 'Bahagi ' + i + ' ng ' + n; }, presenting: 'Nagpepresenta si Lina…', listen: 'Makinig kay Lina', paused: 'Naka-pause', pause: 'I-pause', resume: 'Ituloy', failed: 'Hindi ma-play ang audio. Subukan muli.', done: 'Tapos na ang presentasyon. I-tap ang orb para ulitin.' }
+      en: { of: function (i, n) { return 'Section ' + i + ' of ' + n; }, presenting: 'Lina presenting…', listen: 'Listen to Lina', paused: 'Paused', pause: 'Pause', resume: 'Resume', failed: 'Audio could not play. Please try again.', done: 'Presentation finished. Tap the orb to replay.', prev: 'Previous section', next: 'Next section' },
+      es: { of: function (i, n) { return 'Sección ' + i + ' de ' + n; }, presenting: 'Lina presentando…', listen: 'Escucha a Lina', paused: 'En pausa', pause: 'Pausar', resume: 'Reanudar', failed: 'No se pudo reproducir el audio. Inténtalo de nuevo.', done: 'Presentación finalizada. Toca el orbe para repetirla.', prev: 'Sección anterior', next: 'Sección siguiente' },
+      tl: { of: function (i, n) { return 'Bahagi ' + i + ' ng ' + n; }, presenting: 'Nagpepresenta si Lina…', listen: 'Makinig kay Lina', paused: 'Naka-pause', pause: 'I-pause', resume: 'Ituloy', failed: 'Hindi ma-play ang audio. Subukan muli.', done: 'Tapos na ang presentasyon. I-tap ang orb para ulitin.', prev: 'Nakaraang bahagi', next: 'Susunod na bahagi' }
     };
     var orb = document.getElementById('orbBtn');
     var stage = document.getElementById('orbStage');
@@ -1654,6 +1669,8 @@
     var barProg = document.getElementById('linaBarProg');
     var barPause = document.getElementById('linaBarPause');
     var barStop = document.getElementById('linaBarStop');
+    var barPrev = document.getElementById('linaBarPrev');
+    var barNext = document.getElementById('linaBarNext');
     if (!orb) return;
     var audio = new Audio(); audio.preload = 'none';
     var idx = 0, started = false, lastActive = null;
@@ -1668,10 +1685,29 @@
       if (lastActive) lastActive.classList.remove('lina-active');
       void el.offsetWidth; el.classList.add('lina-active'); lastActive = el;
     }
+    function syncNav() {
+      if (!barPrev || !barNext) return;
+      barPrev.disabled = (idx <= 0);
+      barNext.disabled = (idx >= SEGS.length - 1);
+      var u = ui();
+      barPrev.setAttribute('aria-label', u.prev);
+      barNext.setAttribute('aria-label', u.next);
+    }
     function updateBar() {
       var s = SEGS[idx], u = ui();
       barSec.textContent = u.of(idx + 1, SEGS.length);
       barTitle.textContent = s[lang()] || s.en;
+      syncNav();
+    }
+    // Jump by one section. Clamped rather than wrapped: a tour that silently
+    // loops from the last section back to the first reads as a bug, and the
+    // buttons are disabled at the ends anyway.
+    function step(delta) {
+      var i = Math.min(SEGS.length - 1, Math.max(0, idx + delta));
+      if (i === idx && started) return;
+      barProg.style.width = '0%';
+      if (!started) { started = true; bar.classList.add('show'); }
+      playIdx(i);
     }
     function playIdx(i) {
       idx = i; updateBar(); scrollToSec(SEGS[i].sec); audio.src = srcFor(i);
@@ -1706,6 +1742,7 @@
       started = false; idx = 0; setOrb('idle'); stage.dataset.active = '0';
       cap.textContent = ui().listen;
       bar.classList.remove('show'); bar.classList.remove('paused'); barProg.style.width = '0%';
+      updateBar();
       if (lastActive) { lastActive.classList.remove('lina-active'); lastActive = null; }
     }
 
@@ -1715,9 +1752,10 @@
       var wasPlaying = started && !audio.paused;
       if (!started) {
         cap.textContent = ui().listen;
+        updateBar();
         return;
       }
-      updateBar();
+      updateBar();   // relabels prev/next too
       barPause.textContent = audio.paused ? ui().resume : ui().pause;
       cap.textContent = audio.paused ? ui().paused : ui().presenting;
       var next = srcFor(idx);
@@ -1732,6 +1770,8 @@
     audio.addEventListener('timeupdate', function () { if (audio.duration) barProg.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(1) + '%'; });
     orb.addEventListener('click', function () { if (!started && audio.paused) start(); else togglePause(); });
     barPause.addEventListener('click', togglePause);
+    if (barPrev) barPrev.addEventListener('click', function () { step(-1); });
+    if (barNext) barNext.addEventListener('click', function () { step(1); });
     barStop.addEventListener('click', stop);
     if (orbStop) orbStop.addEventListener('click', stop);
     updateBar(); // label the (hidden) bar in the language the page loaded in
