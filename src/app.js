@@ -1341,10 +1341,21 @@ app.get('/docs/enterprise-architecture', (req, res) => {
 // encodes caller-supplied text is an open QR generator on our own domain,
 // which is a phishing surface (a scannable link that looks like it came from
 // the chamber). Registered BEFORE express.static.
+// A SCANNED CODE MUST CARRY A PUBLIC, BRANDED ADDRESS. These are the chamber
+// brand domains, and a request arriving on one keeps that one — a member who
+// scans on camaravirtual.app should not be moved to virtualchamber.app.
+//
+// aiagent.ringlypro.com is DELIBERATELY ABSENT. It is the CRM's own host and
+// it serves these pages too (/pacccfl/ embeds this code, and the chamber
+// landing is reachable there), so leaving it in meant the code encoded
+// "aiagent.ringlypro.com/<slug>/signup-member" — the internal host, printed on
+// a flyer and photographed, beside a Join button pointing at the branded
+// domain. Absent, it falls through to the canonical domain below, which is the
+// same rule the TornaJobs hero QR follows: a code that travels never carries
+// the host that happened to serve the page.
 const CHAMBER_QR_HOSTS = new Set([
   'camaravirtual.app', 'www.camaravirtual.app',
-  'virtualchamber.app', 'www.virtualchamber.app',
-  'aiagent.ringlypro.com'
+  'virtualchamber.app', 'www.virtualchamber.app'
 ]);
 app.get('/api/chamber-qr/:slug.svg', (req, res) => {
   const slug = String(req.params.slug || '').toLowerCase();

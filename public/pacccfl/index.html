@@ -1001,6 +1001,18 @@
   }
   @media (prefers-reduced-motion: reduce) { .wf-section *, .wf-section *::before, .wf-section *::after { animation: none !important; } }
 
+/* The signup QR card. Same proportions and treatment as the one on the
+   chamber landing page, so a member meets one card, not two designs. White
+   plate on purpose: a QR on a dark ground is the single commonest reason a
+   scanner refuses one. */
+.join-qr { background:#fff; border-radius:18px; padding:14px 14px 12px; text-align:center;
+           box-shadow:0 12px 40px rgba(0,0,0,.42); width:max-content; margin:32px auto 0; }
+.join-qr a { display:block; }
+.join-qr img { display:block; width:148px; height:148px; }
+.join-qr-cap { color:var(--navy); font-size:13px; font-weight:800; margin-top:8px; letter-spacing:.2px;
+               font-family:'Inter',sans-serif; }
+.join-qr-sub { color:#5a6b85; font-size:12px; margin-top:2px; font-family:'Inter',sans-serif; }
+
 /* ═══════ TOUCH TARGETS + LEGIBILITY ON A PHONE ═══════════════════════════
    Measured with Chrome at 360/390/414px, not guessed: 24 controls came back
    under the 44px minimum — the drawer's nav links were 16px tall, the burger
@@ -1461,6 +1473,27 @@
     <div class="hero-ctas" style="justify-content:center;">
       <a href="https://www.camaravirtual.app/cv-2" target="_blank" rel="noopener" class="btn-gold" data-en="Join PACC-CFL" data-es="Únete a PACC-CFL" data-tl="Sumali sa PACC-CFL">Join PACC-CFL</a>
       <a href="https://www.camaravirtual.app/cv-2/login" target="_blank" rel="noopener" class="btn-outline" data-en="Log In" data-es="Iniciar sesión" data-tl="Mag-log In">Log In</a>
+    </div>
+
+    <!-- The chamber's signup QR — the SAME code the chamber landing shows, from
+         the same endpoint, so the two can never drift apart. The URL is built
+         server-side from the slug and is never taken from a query param: an
+         endpoint that encodes caller-supplied text is an open QR generator on
+         our own domain, i.e. a phishing surface.
+
+         It is a LINK as well as an image, because on the desktop this page is
+         mostly read on there is no camera to point at it.
+
+         The card hides itself if the image fails rather than leaving a broken
+         frame under the buttons. -->
+    <div class="join-qr" id="joinQrCard">
+      <a href="https://www.camaravirtual.app/cv-2/signup-member" target="_blank" rel="noopener">
+        <img src="/api/chamber-qr/cv-2.svg" width="148" height="148"
+             alt="QR code that opens the PACC-CFL member signup form"
+             onerror="var c=document.getElementById('joinQrCard'); if(c) c.style.display='none';">
+      </a>
+      <div class="join-qr-cap" data-en="Scan to join" data-es="Escanea para unirte" data-tl="I-scan para sumali">Scan to join</div>
+      <div class="join-qr-sub" data-en="Point your phone camera here" data-es="Apunta la cámara de tu teléfono aquí" data-tl="Itutok ang camera ng iyong telepono dito">Point your phone camera here</div>
     </div>
   </div>
 </section>

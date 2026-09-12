@@ -124,6 +124,42 @@ async function t(name, fn) {
       'iOS Safari fires no prompt — the page must say how instead of showing a dead button');
   });
 
+  // ── the signup QR in the Access section ─────────────────────────────────
+  await t('QR: the card reuses the shared endpoint rather than a second image', () => {
+    assert.ok(/src="\/api\/chamber-qr\/cv-2\.svg"/.test(html),
+      'one endpoint, so this card and the chamber landing cannot drift apart');
+    assert.ok(/id="joinQrCard"/.test(html));
+    // A code on a page that is mostly read on a desktop needs a clickable
+    // route too — there is no camera to point at the screen it is on.
+    assert.ok(/<a href="https:\/\/www\.camaravirtual\.app\/cv-2\/signup-member"[^>]*>\s*<img src="\/api\/chamber-qr/.test(html),
+      'the image is wrapped in a link to the same destination it encodes');
+    assert.ok(/onerror=/.test(html.slice(html.indexOf('joinQrCard'), html.indexOf('joinQrCard') + 900)),
+      'a failed image hides the card instead of leaving a broken frame');
+  });
+
+  await t('QR: all three languages, or it reads English on the Spanish page', () => {
+    const card = html.slice(html.indexOf('id="joinQrCard"'), html.indexOf('id="joinQrCard"') + 1400);
+    for (const attr of ['data-en', 'data-es', 'data-tl']) {
+      assert.ok(new RegExp(attr + '="[^"]+"').test(card), 'the caption needs ' + attr);
+    }
+  });
+
+  await t('QR: the endpoint never encodes the CRM\u2019s own host', () => {
+    // A scanned or printed code must carry a public, branded address. The
+    // allowlist used to include aiagent.ringlypro.com, which serves this very
+    // page, so the code encoded the internal host beside a Join button
+    // pointing at the branded domain.
+    const appjs = fs.readFileSync(path.join(__dirname, '..', 'src', 'app.js'), 'utf8');
+    const set = appjs.slice(appjs.indexOf('const CHAMBER_QR_HOSTS'), appjs.indexOf('const CHAMBER_QR_HOSTS') + 400);
+    assert.ok(!/aiagent\.ringlypro\.com/.test(set),
+      'the CRM host must not be in the QR host allowlist');
+    assert.ok(/camaravirtual\.app/.test(set), 'the chamber brand domains stay');
+    // And the target is still built from the slug, never from a caller.
+    const route = appjs.slice(appjs.indexOf("app.get('/api/chamber-qr/"), appjs.indexOf("app.get('/api/chamber-qr/") + 1800);
+    assert.ok(!/req\.query/.test(route),
+      'encoding caller-supplied text would make this an open QR generator');
+  });
+
   // ── the two traps this build actually hit ───────────────────────────────
   await t('CSS: the simulator overrides come AFTER its stylesheet', () => {
     // Same specificity as demo.css's own rules, so SOURCE ORDER decides and a
