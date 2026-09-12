@@ -82,6 +82,9 @@ function page(file, base, brand) {
   // no-op for it and the live product is untouched.
   out = /\.js$/.test(file) ? require('../copy').applyI18n(out, b)
                            : require('../copy').applyHtml(out, b);
+  // The walkthrough's per-brand mock data (see src/deck.js). 'null' for a
+  // brand with no entry, so the deck keeps the literals already in the file.
+  out = out.split('{{DECK}}').join(require('../deck').literal(b));
   // Brand tokens LAST, so a price or a base can never be mistaken for one.
   // For JobUp these substitute to the literals that used to be in the file,
   // which is what makes this refactor invisible to the live product.

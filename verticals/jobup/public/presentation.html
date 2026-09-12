@@ -80,6 +80,8 @@
   .eyebrow .d{width:7px;height:7px;border-radius:50%;background:var(--orange)}
   .lnd-body h1{font-size:76px;font-weight:840;letter-spacing:-.045em;line-height:.98;margin:22px 0 0}
   .lnd-body p{font-size:20px;color:#c4c6d0;max-width:680px;line-height:1.45;margin:22px 0 0}
+  .qrp{width:150px;height:150px;margin:30px 0 0;padding:9px;border-radius:14px;background:#fff;box-shadow:0 0 60px rgba(34,211,238,.35);flex-shrink:0}
+  .qrp img{width:100%;height:100%;display:block}
   .orb{width:150px;height:150px;border-radius:50%;margin:30px 0 0;background:radial-gradient(circle at 42% 34%,#dfe6ff,#8b5cf6 42%,#5b21b6 78%,#1a1030);box-shadow:0 0 90px rgba(139,92,246,.55),0 0 40px rgba(230,73,128,.4);position:relative;flex-shrink:0}
   .orb.sm{width:64px;height:64px;margin:0}
   .orb::after{content:"";position:absolute;left:30%;top:22%;width:26%;height:22%;border-radius:50%;background:rgba(255,255,255,.7);filter:blur(3px)}
@@ -236,7 +238,7 @@
 <body>
 
 <div class="cover" id="cover">
-  <div class="logo"><span id="mark"></span> <span>Job<span class="gt">Up</span></span></div>
+  <div class="logo"><span id="mark"></span> <span>{{BRAND_HEAD}}<span class="gt">{{BRAND_TAIL}}</span></span></div>
   <h1 id="cvH">Let AI find your next job</h1>
   <p id="cvP">A guided walkthrough of {{BRAND_WORDMARK}} — from a resume to a live personal site, an AI-readable profile, and real job matches. Narrated by Ava, {{BRAND}}'s AI voice.</p>
   <div class="langsw clang"><button id="cvEn" class="on">EN</button><button id="cvEs">ES</button></div>
@@ -245,7 +247,7 @@
 </div>
 
 <div class="bar hidden" id="bar">
-  <div class="brand"><span id="markBar"></span> <span>Job<span class="gt">Up</span></span></div>
+  <div class="brand"><span id="markBar"></span> <span>{{BRAND_HEAD}}<span class="gt">{{BRAND_TAIL}}</span></span></div>
   <span class="step-pill" id="stepPill">Step 1</span>
   <div class="spacer"></div>
   <span class="langsw"><button id="lgEn" class="on">EN</button><button id="lgEs">ES</button></span>
@@ -271,6 +273,14 @@
 <script>
   var TTS_URL='/api/tts/edge';
   var LANG='en';
+  // Stamped by the server. HERO_QR is which hero this brand actually ships —
+  // the deck DEPICTS the hero, and drawing an orb over a site showing a QR
+  // depicts a different product. BASE is the mount root, because the deck is
+  // served at /presentation on three different roots and nothing user-facing
+  // may hardcode a prefix. DECK is this brand's mock-data override, or null.
+  var HERO_QR={{BRAND_HERO_QR}};
+  var BASE='{{BASE}}';
+  var DECK={{DECK}};
   var el=function(id){return document.getElementById(id);};
   function svgl(inner){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';}
   var MARK='<svg viewBox="0 0 40 40"><defs><linearGradient id="jg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b7bff"/><stop offset=".52" stop-color="#e64980"/><stop offset="1" stop-color="#ff922b"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#jg)"/><path d="M13.5 22.5 L20 15.5 L26.5 22.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15.5 V26.5 a5 5 0 0 1-10 0" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -413,6 +423,13 @@
   };
   // Falls back to English for a key a translation forgot, so a missing string
   // is an English word on a Spanish screen and never the literal key.
+  // The brand's own copy, over the defaults (see src/deck.js). Applied PER
+  // LANGUAGE, so a brand cannot end up English-overridden and Spanish-original
+  // — the failure the landing page's overlay exists to prevent.
+  if(DECK&&DECK.ui){ ['en','es'].forEach(function(L){
+    if(DECK.ui[L]&&UI[L]) Object.keys(DECK.ui[L]).forEach(function(k){ UI[L][k]=DECK.ui[L][k]; });
+  }); }
+
   function U(k){ var v=UI[LANG]&&UI[LANG][k]; return v===undefined?UI.en[k]:v; }
 
   // ---- reusable app frame ----
@@ -430,13 +447,18 @@
 
   // ---- SCREENS ----
   function scrLanding(){
-    return '<div class="lnd"><div class="lnd-top"><div class="lg">'+MARK+' Job<span class="gt">Up</span>.dev</div>'
+    return '<div class="lnd"><div class="lnd-top"><div class="lg">'+MARK+' {{BRAND_HEAD}}<span class="gt">{{BRAND_TAIL}}</span>{{BRAND_TLD}}</div>'
       +'<div class="sp"></div><div class="nav">'+U('nav').map(function(n){return '<span>'+n+'</span>';}).join('')+'</div>'
       +'<div class="btn" style="margin-left:22px">'+U('signIn')+'</div></div>'
       +'<div class="lnd-body"><span class="eyebrow"><span class="d"></span> '+U('eyebrow')+'</span>'
       +'<h1>'+U('h1a')+'<br><span class="gt">'+U('h1b')+'</span></h1>'
       +'<p>'+U('lndP')+'</p>'
-      +'<div class="orb"></div>'
+      // The hero the BRAND actually ships: a QR plate where the live site
+      // shows one, the orb everywhere else. A deck that draws an orb over a
+      // site showing a QR is a deck of a different product.
+      +(HERO_QR
+        ? '<div class="qrp"><img alt="" src="'+BASE+'/qr/hero.svg"></div>'
+        : '<div class="orb"></div>')
       +'<div class="lnd-cta"><span class="btn-grad">'+U('ctaResume')+'</span><span class="btn-ghost">'+U('ctaSearch')+'</span></div></div></div>';
   }
   function scrBuild(){
@@ -534,17 +556,24 @@
       +'<div class="cv-tags" style="margin-top:0">'+tags+'</div></div>');
   }
   function scrMap(){
-    var jobs=[
+    // The deck's one PUBLIC screen — its own narration says "anyone can search
+    // live openings" — so these rows belong to no persona and may vary by
+    // brand. Every row is a REAL posting from this product's own live search,
+    // with the pay the posting stated; the modal two slides earlier promises
+    // exactly that. Read src/deck.js before changing one.
+    var MQ=(DECK&&DECK.query)||'IT Project Manager';
+    var MC=(DECK&&DECK.city)||'Tampa';
+    var jobs=((DECK&&DECK.jobs)||[
       ['IT Project Manager','Ascension Federal Services · Tampa','$103,524'],
       ['IT Project Manager','Fisher Careers · Tampa','$154,631'],
       ['Senior IT Project Manager','Sunshine Enterprise USA · Tampa','$118,290'],
       ['Senior IT Project Manager — Cybersecurity','S3 · Tampa','$135,200–$166,400']
-    ].map(function(j){return '<div class="job"><div class="jt">'+j[0]+'</div><div class="jc">'+j[1]+'</div><div class="js">'+j[2]+U('yr')+'</div><div class="ja">'+U('apply')+'</div></div>';}).join('');
+    ]).map(function(j){return '<div class="job"><div class="jt">'+j[0]+'</div><div class="jc">'+j[1]+'</div><div class="js">'+(j[2]?j[2]+U('yr'):'')+'</div><div class="ja">'+U('apply')+'</div></div>';}).join('');
     var pins='';var pos=[[38,52],[54,40],[46,60],[62,55],[30,44],[70,64],[50,48],[42,70]];
     pos.forEach(function(p){pins+='<div class="pin" style="left:'+p[0]+'%;top:'+p[1]+'%"></div>';});
-    return '<div class="map"><div class="map-top"><div class="lg">'+MARK+' Job<span class="gt">Up</span>.dev</div>'
-      +'<span class="sb q">IT Project Manager</span><span class="sb">Tampa</span><span class="sb">'+U('mapLoc')+'</span><span class="go">'+U('mapGo')+'</span></div>'
-      +'<div class="map-body"><div class="map-canvas"><div class="grid"></div>'+pins+'<div style="position:absolute;left:44%;top:52%;color:#5a5f6d;font-family:var(--mono);font-size:13px">TAMPA</div></div>'
+    return '<div class="map"><div class="map-top"><div class="lg">'+MARK+' {{BRAND_HEAD}}<span class="gt">{{BRAND_TAIL}}</span>{{BRAND_TLD}}</div>'
+      +'<span class="sb q">'+MQ+'</span><span class="sb">'+MC+'</span><span class="sb">'+U('mapLoc')+'</span><span class="go">'+U('mapGo')+'</span></div>'
+      +'<div class="map-body"><div class="map-canvas"><div class="grid"></div>'+pins+'<div style="position:absolute;left:44%;top:52%;color:#5a5f6d;font-family:var(--mono);font-size:13px">'+MC.toUpperCase()+'</div></div>'
       +'<div class="map-list"><div class="mh">'+U('mapHead')+'</div>'+jobs+'</div></div></div>';
   }
   function scrEva(){
@@ -576,8 +605,8 @@
       en:'Seconds later the account is built. The web address is reserved, the site is published, and the agents are switched on. From this moment, recruiters and their AI can find this person while they sleep.',
       es:'Segundos después la cuenta está lista. La dirección web queda reservada, el sitio publicado y los agentes activados. Desde este momento, los reclutadores y su inteligencia artificial pueden encontrar a esta persona mientras duerme.'},
     {step:['Public CV site','CV público'], render:scrCV,
-      en:'This is the public site, at your own address — name dot jobup dot dev. A clean, professional page a recruiter reads, machine-readable so the AI tools they use can read it too, with a QR to share, a contact card to save, and a voice walkthrough by Ava.',
-      es:'Este es el sitio público, en tu propia dirección: nombre punto jobup punto dev. Una página limpia y profesional que un reclutador lee, legible por máquinas para que también la lean las herramientas de inteligencia artificial que ellos usan, con un código QR para compartir, una tarjeta de contacto para guardar, y un recorrido de voz narrado por Ava.'},
+      en:'This is the public site, at your own address — name dot {{BRAND_DOMAIN_SPOKEN}}. A clean, professional page a recruiter reads, machine-readable so the AI tools they use can read it too, with a QR to share, a contact card to save, and a voice walkthrough by Ava.',
+      es:'Este es el sitio público, en tu propia dirección: nombre punto {{BRAND_DOMAIN_SPOKEN}}. Una página limpia y profesional que un reclutador lee, legible por máquinas para que también la lean las herramientas de inteligencia artificial que ellos usan, con un código QR para compartir, una tarjeta de contacto para guardar, y un recorrido de voz narrado por Ava.'},
     {step:['Dashboard','Panel'], render:scrAnalytics,
       en:'Behind the site is the dashboard. Your agents run daily, and you can run them now — they find and check, but they never act for you. And you see who is watching: profile views, unique visitors, and how many AI agents have read your profile.',
       es:'Detrás del sitio está el panel. Tus agentes corren a diario, y puedes ejecutarlos ahora mismo: encuentran y verifican, pero nunca actúan por ti. Y ves quién te observa: vistas de perfil, visitantes únicos, y cuántos agentes de inteligencia artificial han leído tu perfil.'},

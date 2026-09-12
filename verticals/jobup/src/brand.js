@@ -157,6 +157,9 @@ const BRANDS = {
     // orb either. Delete with the flag.
     og_description: 'Scan the code or attach your resume. See your own AI career '
       + 'ecosystem in minutes.',
+    // "tornajobs" as one word is read as a mouthful; the split reads as the
+    // name. Spoken form only — never used as a hostname.
+    domain_spoken: 'torna jobs dot com',
     // Shared mark until a TornaJobs icon set ships (public/tornajobs-*.png);
     // then set this to 'tornajobs-' and it is served with a shared fallback.
     icon_prefix: '',
@@ -354,7 +357,16 @@ function tokens(brand) {
     // The default IS the literal that was in the page, so the live products
     // render byte-identically.
     BRAND_OG_DESC: b.og_description
-      || 'Talk to the orb or attach your resume. See your own AI career ecosystem in minutes.'
+      || 'Talk to the orb or attach your resume. See your own AI career ecosystem in minutes.',
+    // The domain WRITTEN THE WAY IT IS SPOKEN. The walkthrough's narration is
+    // read aloud by Edge TTS, and it was saying "jobup dot dev" on every
+    // brand — a deck naming a site the viewer is not looking at. Derived from
+    // the domain so a new brand needs nothing; overridable because a TTS
+    // engine reads a compound word better when it is split.
+    BRAND_DOMAIN_SPOKEN: b.domain_spoken || String(b.domain || '').replace(/\./g, ' dot '),
+    // Which hero the brand ships, for the deck that DEPICTS the hero. A deck
+    // drawing an orb over a site showing a QR depicts a different product.
+    BRAND_HERO_QR: b.hero_qr ? 'true' : 'false'
   };
 }
 

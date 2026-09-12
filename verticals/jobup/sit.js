@@ -3056,7 +3056,11 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       assert.ok(!new RegExp('sendFile\\([^)]*' + f.replace('.', '\\.')).test(src),
         `${f} must go through pwa.page, not sendFile`);
       assert.ok(src.includes(`'${f}'`), `${f} must redirect its filename to the clean URL`);
-      for (const b of ['jobup', 'jobmd']) {
+      // EVERY brand, not the two that existed when this was written: the
+      // walkthrough carried four hardcoded JobUp wordmarks — the cover, the
+      // bar above every slide, and both product mock-ups — and the brands
+      // added later inherited them silently.
+      for (const b of BRAND.ids()) {
         const out = pwaSvc.page(f, '', BRAND.byId(b));
         assert.deepStrictEqual(out.match(/\{\{[A-Z_]+\}\}/g) || [], [],
           `${f} leaves tokens unsubstituted for ${b}`);
@@ -3068,6 +3072,85 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
       'the walkthrough must name JobUp.dev');
     assert.ok(!/JobMD\.dev/.test(pwaSvc.page('presentation.html', '', BRAND.byId('jobmd'))),
       'and must never invent JobMD.dev');
+  });
+
+  await t('DECK: the walkthrough shows the viewer\u2019s OWN brand, never a sibling', () => {
+    const BRAND = require('./src/brand');
+    for (const id of BRAND.ids()) {
+      const b = BRAND.byId(id);
+      const out = pwaSvc.page('presentation.html', '', b);
+      // Its own wordmark, drawn from the split tokens because the mark is
+      // spans: "Job" + "Up" + ".dev" is invisible to a whole-name replace.
+      assert.ok(out.includes(b.word_head + '<span class="gt">' + b.word_tail + '</span>'),
+        id + ': the deck must draw its own wordmark');
+      // And NO other brand's name anywhere a viewer can read — the cover, the
+      // persistent bar and the two mock-ups all showed "JobUp" on every brand.
+      for (const other of BRAND.ids()) {
+        if (other === id) continue;
+        const o = BRAND.byId(other);
+        assert.ok(!out.includes(o.word_head + '<span class="gt">' + o.word_tail + '</span>'),
+          id + ': the deck leaks ' + o.name);
+        assert.ok(!out.includes(o.domain), id + ': the deck names ' + o.domain);
+      }
+      // The narration is READ ALOUD, so it must say this brand's own site.
+      assert.ok(out.includes('name dot ' + (b.domain_spoken || b.domain.replace(/\./g, ' dot '))),
+        id + ': the spoken address must be its own');
+      // The deck DEPICTS the hero. A deck drawing an orb over a site showing
+      // a QR depicts a different product.
+      assert.strictEqual(/var HERO_QR=true/.test(out), Boolean(b.hero_qr),
+        id + ': the depicted hero must be the one the brand ships');
+    }
+  });
+
+  await t('DECK: a brand with no entry keeps the defaults, so the live decks are untouched', () => {
+    const BRAND = require('./src/brand');
+    const DECK = require('./src/deck');
+    assert.strictEqual(DECK.forBrand(BRAND.byId('jobup')), null, 'JobUp keeps its own deck');
+    for (const id of BRAND.ids()) {
+      const out = pwaSvc.page('presentation.html', '', BRAND.byId(id));
+      const lit = (out.match(/var DECK=(.*?);\n/s) || [])[1];
+      assert.ok(lit, id + ': the DECK token is substituted');
+      if (!DECK.forBrand(BRAND.byId(id))) {
+        assert.strictEqual(lit, 'null', id + ': no entry must render null, not {}');
+      }
+    }
+  });
+
+  await t('DECK: every example posting is a real one, shaped so it cannot be faked silently', () => {
+    const DECK = require('./src/deck');
+    const fs = require('fs');
+    // The deck promises ON SCREEN "real openings or none at all — never
+    // invented ones". A test cannot prove a row is real, so it enforces the
+    // shape that keeps a hand-composed row from passing unnoticed, and that
+    // the file still carries the provenance telling the next person where the
+    // rows came from and how to refresh them.
+    const src = fs.readFileSync(__dirname + '/src/deck.js', 'utf8');
+    assert.ok(/\/api\/v1\/jobs\/search/.test(src),
+      'deck.js must name the live search the rows were pulled from');
+    assert.ok(/never invented/i.test(src), 'and restate the promise it is keeping');
+    for (const [id, d] of Object.entries(DECK.DECKS)) {
+      assert.ok(d.query && d.city, id + ': an example search needs a title and a city');
+      assert.ok(Array.isArray(d.jobs) && d.jobs.length >= 3, id + ': at least three rows');
+      for (const row of d.jobs) {
+        assert.strictEqual(row.length, 3, id + ': a row is [title, employer, pay]');
+        assert.ok(row[0] && row[1], id + ': a row needs a title and an employer');
+        assert.ok(/ · /.test(row[1]), id + ': the employer carries its city');
+        // Pay is copied verbatim or it is empty — never computed, and never a
+        // bare number that could have been typed.
+        assert.ok(row[2] === '' || /^\$[\d,]+(–\$[\d,]+)?$/.test(row[2]),
+          id + ': pay must be the stated figure or absent, got ' + JSON.stringify(row[2]));
+      }
+      // An override must carry BOTH languages or a brand reads English on ES.
+      if (d.ui) {
+        assert.ok(d.ui.en && d.ui.es, id + ': a copy override needs both languages');
+        assert.deepStrictEqual(Object.keys(d.ui.en).sort(), Object.keys(d.ui.es).sort(),
+          id + ': the two languages must override the same keys');
+      }
+    }
+    // And a posting with no stated pay must render nothing, not an orphan /yr.
+    const deck = fs.readFileSync(__dirname + '/public/presentation.html', 'utf8');
+    assert.ok(/j\[2\]\?j\[2\]\+U\('yr'\):''/.test(deck),
+      'an absent salary must render empty rather than "/yr" alone');
   });
   await t('the HTML shells resolve their base server-side, not by sniffing the URL', () => {
     const fs = require('fs');
