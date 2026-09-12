@@ -553,7 +553,9 @@ router.get('/qr/hero.svg', async (req, res) => {
   // phishing property this route exists to avoid, arriving through config
   // instead of through a query param, and it is silent because the page looks
   // correct. A scannable public code points at the canonical domain, always.
-  const target = BRAND.tokens(b).BRAND_URL + '/';
+  // It encodes the SIGNUP FORM: a phone that scans a code should land on the
+  // form, not back on the page it was scanned from.
+  const target = BRAND.tokens(b).BRAND_QR_URL;
 
   let svg;
   try {

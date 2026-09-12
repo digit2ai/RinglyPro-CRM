@@ -8978,12 +8978,12 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         'the route must read nothing from the caller');
       // AND NOT FROM CONFIG EITHER. publicUrl() honours a *_PUBLIC_URL env
       // override; the page renders its link text and href from
-      // tokens().BRAND_URL, so reading the override here would encode one
+      // tokens().BRAND_QR_URL, so reading the override here would encode one
       // origin into the code while the label under it still read
       // "TornaJobs.com" — the same phishing property, arriving silently
       // through config instead of through a query param.
       assert.ok(!/publicUrl/.test(body), 'the QR must NOT read the *_PUBLIC_URL override');
-      assert.ok(/BRAND\.tokens\(b\)\.BRAND_URL/.test(body),
+      assert.ok(/BRAND\.tokens\(b\)\.BRAND_QR_URL/.test(body),
         'the code reads the SAME expression the printed label does');
       assert.ok(/errorCorrectionLevel: 'H'/.test(body), 'level H so a printed code still scans');
     });
@@ -9009,7 +9009,7 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
             srv.close();process.exit(0);
           });
         `], { env: process.env, encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'ignore'] });
-        assert.strictEqual(out.trim(), 'QR code that opens https://tornajobs.com/',
+        assert.strictEqual(out.trim(), 'QR code that opens https://tornajobs.com/build',
           'the override must NOT move the encoded URL');
       } finally {
         if (had) process.env[KEY] = prev; else delete process.env[KEY];
@@ -9044,14 +9044,17 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
         rq.on('error', rj); rq.end();
       });
       try {
+        // The code encodes the SIGNUP FORM, and ALWAYS on the canonical
+        // domain — never the path mount it happened to be served from, which
+        // would put aiagent.ringlypro.com/tornajobs/build on someone's phone.
         const cases = [
-          ['/tornajobs/qr/hero.svg', null, 'tornajobs', 'https://tornajobs.com/'],
-          ['/jobup/qr/hero.svg', null, 'jobup', 'https://jobup.dev/'],
+          ['/tornajobs/qr/hero.svg', null, 'tornajobs', 'https://tornajobs.com/build'],
+          ['/jobup/qr/hero.svg', null, 'jobup', 'https://jobup.dev/build'],
           // the real roots
-          ['/qr/hero.svg', 'tornajobs.com', 'tornajobs', 'https://tornajobs.com/'],
-          ['/qr/hero.svg', 'www.tornajobs.com', 'tornajobs', 'https://tornajobs.com/'],
-          ['/qr/hero.svg', 'jobup.dev', 'jobup', 'https://jobup.dev/'],
-          ['/qr/hero.svg', 'coljobs.app', 'coljobs', 'https://coljobs.app/'],
+          ['/qr/hero.svg', 'tornajobs.com', 'tornajobs', 'https://tornajobs.com/build'],
+          ['/qr/hero.svg', 'www.tornajobs.com', 'tornajobs', 'https://tornajobs.com/build'],
+          ['/qr/hero.svg', 'jobup.dev', 'jobup', 'https://jobup.dev/build'],
+          ['/qr/hero.svg', 'coljobs.app', 'coljobs', 'https://coljobs.app/build'],
         ];
         for (const [path, host, id, want] of cases) {
           const label = host || path;
@@ -9083,10 +9086,36 @@ function section(s) { console.log(`\n── ${s} ${'─'.repeat(Math.max(0, 58 -
           // the plate and trusts it describes where the code goes.
           const base = host ? '' : path.replace('/qr/hero.svg', '');
           const page = require('./src/services/pwa').page('index.html', base, BRAND.byId(id));
+          // BOTH anchors — the plate itself and the address under it.
           const href = (page.match(/<a class="qr-url" href="([^"]+)"/) || [])[1];
           assert.strictEqual(href, want, label + ': the printed link must be the encoded URL');
+          const plate = (page.match(/<a class="qr-plate" href="([^"]+)"/) || [])[1];
+          assert.strictEqual(plate, want, label + ': the plate must open what the code encodes');
         }
       } finally { srv.close(); }
+    });
+
+    await t('WALKTHROUGH: the nav link is opt-in, and one node serves both menus', () => {
+      const html = fs.readFileSync(__dirname + '/public/index.html', 'utf8');
+      // ONE anchor. The burger toggles the same .ju-navlinks container, so a
+      // second copy for mobile is how the two menus start disagreeing.
+      assert.strictEqual((html.match(/class="navwalk/g) || []).length, 1,
+        'exactly one walkthrough link node');
+      assert.ok(/href="\{\{BASE\}\}\/presentation"/.test(html),
+        'it resolves the mount root — the landing serves three of them');
+      // Opt-in: the brands that did not ask keep their nav untouched, and a
+      // hidden link must leave the drawer's flow and its tab order entirely.
+      assert.ok(/\.navwalk\.no-walk\{display:none\}/.test(html), 'display:none, not opacity');
+      for (const id of BRAND.ids()) {
+        const b = BRAND.byId(id);
+        const page = pwaSvc.page('index.html', '', b);
+        const on = /class="navwalk "/.test(page);
+        assert.strictEqual(on, Boolean(b.show_walkthrough),
+          id + ': the link must appear only where the brand opted in');
+        assert.ok(page.includes('href="/presentation"'), id + ': the link target is rendered');
+      }
+      // Both languages, or the link reads English on the Spanish page.
+      assert.ok(/'nav\.walk':'[^']+'/.test(html), 'the link is translated');
     });
 
     await t('HERO QR: a failed image restores the orb rather than emptying the hero', () => {

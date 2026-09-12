@@ -160,6 +160,8 @@ const BRANDS = {
     // "tornajobs" as one word is read as a mouthful; the split reads as the
     // name. Spoken form only — never used as a hostname.
     domain_spoken: 'torna jobs dot com',
+    // Links the narrated product walkthrough from the nav.
+    show_walkthrough: true,
     // Shared mark until a TornaJobs icon set ships (public/tornajobs-*.png);
     // then set this to 'tornajobs-' and it is served with a shared fallback.
     icon_prefix: '',
@@ -327,6 +329,14 @@ function tokens(brand) {
     BRAND_FOOTER: b.footer_by,
     BRAND_BUILT_BY: b.built_by,
     BRAND_URL: 'https://' + b.domain,
+    // WHERE THE HERO QR GOES, and what the link under it points at — one
+    // expression feeding both, so the code and its label can never diverge.
+    // /build is the standalone signup form ("Build my account"); a phone that
+    // scans a code should land on the form, not on the page it just scanned
+    // from. ALWAYS the canonical domain, never req.baseUrl: a scanned or
+    // printed code that resolved to aiagent.ringlypro.com/tornajobs/build
+    // would be a path mount leaking onto a customer's phone.
+    BRAND_QR_URL: 'https://' + b.domain + '/build',
     BRAND_HEAD: b.word_head, BRAND_TAIL: b.word_tail, BRAND_TLD: b.word_tld,
     // The domain as a reader sees it written: "JobUp.dev", "JobMD.io".
     // BRAND_DOMAIN is the lowercase hostname and is right for an address
@@ -366,7 +376,12 @@ function tokens(brand) {
     BRAND_DOMAIN_SPOKEN: b.domain_spoken || String(b.domain || '').replace(/\./g, ' dot '),
     // Which hero the brand ships, for the deck that DEPICTS the hero. A deck
     // drawing an orb over a site showing a QR depicts a different product.
-    BRAND_HERO_QR: b.hero_qr ? 'true' : 'false'
+    BRAND_HERO_QR: b.hero_qr ? 'true' : 'false',
+    // The narrated walkthrough at /presentation is served for every brand but
+    // linked from none. Opt-in per brand rather than added to all four: JobUp
+    // is live with paying subscribers and its marketing nav is not something
+    // to change as a side effect. One line on a brand record turns it on.
+    BRAND_WALK_CLASS: b.show_walkthrough ? '' : 'no-walk'
   };
 }
 
