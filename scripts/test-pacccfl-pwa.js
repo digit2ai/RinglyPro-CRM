@@ -160,6 +160,26 @@ async function t(name, fn) {
       'encoding caller-supplied text would make this an open QR generator');
   });
 
+  // ── the ecosystem deck's closing slide ──────────────────────────────────
+  await t('DECK: the closing slide reuses the shared QR endpoint, in all three languages', () => {
+    const deck = fs.readFileSync(path.join(DIR, 'ecosystem', 'deck.js'), 'utf8');
+    assert.ok(/\/api\/chamber-qr\/cv-2\.svg/.test(deck),
+      'one endpoint for every surface, or the codes drift apart');
+    assert.ok(/id="outroQr"/.test(deck));
+    assert.ok(/camaravirtual\.app\/cv-2\/signup-member/.test(deck),
+      'the card links where the code goes');
+    // The caption and the alt text are per-language like the rest of the deck.
+    const qrBlock = deck.slice(deck.indexOf('var qr = kind'), deck.indexOf('var badge ='));
+    for (const lg of ['en:', 'es:', 'tl:']) {
+      assert.ok(qrBlock.split(lg).length >= 3, 'the QR block needs ' + lg + ' for caption and alt');
+    }
+    // Beside the badge, not below the buttons: the dock is sticky and overlays
+    // the foot of the panel, so anything appended at the bottom is behind it.
+    assert.ok(/outro-top/.test(deck), 'the QR pairs with the badge on one row');
+    const css = fs.readFileSync(path.join(DIR, 'ecosystem', 'index.html'), 'utf8');
+    assert.ok(/\.panel \.outro-top \{[^}]*display: flex/.test(css), 'and that row is a flex row');
+  });
+
   // ── the narration transport ─────────────────────────────────────────────
   await t('NARRATION: prev/next exist, are labelled, and are labelled in all three languages', () => {
     assert.ok(/id="linaBarPrev"/.test(html) && /id="linaBarNext"/.test(html));
@@ -227,6 +247,18 @@ async function t(name, fn) {
   } else {
     const express = require('express');
     const app = express();
+    // The QR endpoint lives in src/app.js, which this harness does not boot.
+    // Without a stub the image 404s, onerror hides the card, and a hidden card
+    // measures 0x0 — so every clearance assertion below passed VACUOUSLY, on
+    // any placement. Encode exactly what the real route encodes.
+    app.get('/api/chamber-qr/:slug.svg', async (req, res) => {
+      try {
+        const QR = require('qrcode');
+        res.type('image/svg+xml').send(await QR.toString(
+          'https://www.camaravirtual.app/' + req.params.slug + '/signup-member',
+          { type: 'svg', errorCorrectionLevel: 'H', margin: 2 }));
+      } catch (e) { res.status(500).end(); }
+    });
     app.use(express.static(path.join(__dirname, '..', 'public')));
     const srv = app.listen(0);
     const base = 'http://127.0.0.1:' + srv.address().port;
@@ -295,6 +327,53 @@ async function t(name, fn) {
         assert.ok(/1/.test(stopped.sec), 'Stop returns to the first section');
         assert.strictEqual(stopped.prev, true, 'and Previous is disabled again');
         await pg.close();
+      });
+
+      await t('LIVE: the closing slide\u2019s QR clears the sticky narration dock', async () => {
+        // The dock is position:sticky;bottom:0, so it OVERLAYS the foot of the
+        // panel. "Inside the viewport" is NOT the test — the first two probes
+        // of this passed while the code sat behind the dock, invisible. The
+        // test is clearance from the dock's own top edge, at the sizes a deck
+        // is actually presented at.
+        for (const [w, h] of [[1920, 1080], [1440, 900], [1280, 720], [390, 844]]) {
+          const pg = await br.newPage();
+          await pg.setViewport({ width: w, height: h, isMobile: w < 500, hasTouch: w < 500 });
+          await pg.goto(base + '/pacccfl/ecosystem/', { waitUntil: 'networkidle2' });
+          await pg.evaluate(() => {
+            const c = document.querySelector('.cover button,.cover .btn-gold,.cover a'); if (c) c.click();
+          });
+          await new Promise((r) => setTimeout(r, 500));
+          for (let i = 0; i < 20; i++) {
+            await pg.evaluate(() => { const b = document.getElementById('next'); if (b && !b.disabled) b.click(); });
+            await new Promise((r) => setTimeout(r, 90));
+          }
+          await new Promise((r) => setTimeout(r, 600));
+          const r = await pg.evaluate(() => {
+            const card = document.getElementById('outroQr');
+            if (!card) return { card: false, count: (document.querySelector('.count') || {}).textContent };
+            const b = card.getBoundingClientRect();
+            const dock = document.querySelector('.dock');
+            const d = dock ? dock.getBoundingClientRect().top : window.innerHeight;
+            const img = card.querySelector('img');
+            return { card: true, count: (document.querySelector('.count') || {}).textContent,
+                     top: Math.round(b.top), bottom: Math.round(b.bottom), dockTop: Math.round(d),
+                     height: Math.round(b.height), loaded: img.naturalWidth > 0,
+                     clear: b.top >= 0 && b.bottom <= d + 1 && b.bottom <= window.innerHeight + 1,
+                     href: card.querySelector('a').getAttribute('href') };
+          });
+          await pg.close();
+          assert.ok(r.card, w + 'x' + h + ': the closing slide has no QR (at ' + r.count + ')');
+          assert.ok(/16/.test(r.count || ''), w + 'x' + h + ': did not reach the last slide');
+          // A HIDDEN CARD CLEARS EVERYTHING. Prove it rendered before believing
+          // where it is — this is the check whose absence made the whole
+          // assertion vacuous.
+          assert.ok(r.loaded, w + 'x' + h + ': the QR image did not load');
+          assert.ok(r.height > 80, w + 'x' + h + ': the card measured ' + r.height + 'px tall');
+          assert.ok(r.clear, w + 'x' + h + ': the QR (' + r.top + '-' + r.bottom
+            + ') is not clear of the dock at ' + r.dockTop);
+          assert.strictEqual(r.href, 'https://www.camaravirtual.app/cv-2/signup-member',
+            w + 'x' + h + ': the card must link where the code goes');
+        }
       });
 
       await t('LIVE: the worker registers, activates and controls the page', async () => {

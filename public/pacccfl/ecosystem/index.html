@@ -77,6 +77,32 @@
   .panel h2 { font-size: 32px; font-weight: 800; letter-spacing: -.5px; }
   .panel p { font-size: 15.5px; color: rgba(255,255,255,.8); max-width: 620px; line-height: 1.65; }
   .panel .cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  /* The signup QR on the closing slide. A deck is shown on a screen other
+     people are looking AT — a projector, a shared tab, a phone held up — so
+     the code is the one control an audience can act on without touching it.
+     White plate: a QR on a dark ground is the commonest reason a scanner
+     refuses one, and this deck is dark throughout. */
+  .panel .qr { background: #fff; border-radius: 14px; padding: 11px 11px 9px; text-align: center;
+               box-shadow: 0 10px 30px rgba(0,0,0,.45); margin-top: 4px; }
+  .panel .qr a { display: block; }
+  .panel .qr img { display: block; width: 124px; height: 124px; }
+  .panel .qr .cap { color: #14245f; font-size: 11.5px; font-weight: 800; margin-top: 6px;
+                    letter-spacing: .2px; }
+  /* Buttons and code on ONE row, and a smaller badge: the closing slide holds
+     everything the others do PLUS the QR, and the narration bar is fixed over
+     the foot of the stage. Stacked, the code ended up behind the player. */
+  /* Badge and code side by side. Vertically this costs nothing over the badge
+     alone, which is the whole point — see the comment in deck.js. */
+  .panel .outro-top { display: flex; align-items: center; justify-content: center;
+                      gap: 26px; flex-wrap: wrap; }
+  .panel.outro img.badge { width: 122px; }
+  .panel.outro h2 { font-size: 28px; }
+  .panel.outro { gap: 12px; min-height: 520px; }
+  @media (max-width: 900px) {
+    .panel .qr img { width: 104px; height: 104px; }
+    .panel.outro img.badge { width: 96px; }
+    .panel .outro-actions { gap: 14px; }
+  }
   .btn-gold {
     background: var(--gold); color: #14245f; font-weight: 700; font-size: 14.5px;
     border: 0; border-radius: 9px; padding: 13px 26px; cursor: pointer;

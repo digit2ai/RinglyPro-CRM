@@ -243,8 +243,35 @@
         '</div></div>';
     }
     var s = SLIDES[idx];
-    return '<div class="panel">' +
-      '<img class="badge" src="/pacccfl/pacc-ai-neural-badge.png" alt="">' +
+    // THE CODE SITS BESIDE THE BADGE, NOT UNDER THE BUTTONS.
+    // The narration dock is position:sticky at the bottom, so it OVERLAYS the
+    // foot of the panel — measured at 1280x720 (a projector), the panel has
+    // about 400px between the slide head and the dock, and the outro's own
+    // content already fills it. Anything appended below the buttons is behind
+    // the dock, which is where this started. Pairing it with the badge on one
+    // row costs no extra height at all, and puts it at the top of the slide
+    // where a room full of phones can see it.
+    var qr = kind !== 'outro' ? '' :
+      // The SAME /api/chamber-qr endpoint the landing page and the chamber
+      // site use — one code, so they cannot drift apart. The URL is built
+      // server-side from the slug and never from a query param: an endpoint
+      // that encodes caller-supplied text is an open QR generator on our own
+      // domain. It is a link too, because whoever is DRIVING the deck has no
+      // camera pointed at their own screen. Hidden on error rather than left
+      // as a broken frame on the closing slide.
+      '<div class="qr" id="outroQr">' +
+      '<a href="https://www.camaravirtual.app/cv-2/signup-member" target="_blank" rel="noopener">' +
+      '<img src="/api/chamber-qr/cv-2.svg" width="124" height="124" alt="' +
+      ({ en: 'QR code that opens the PACC-CFL member signup form',
+         es: 'Código QR que abre el formulario de registro de miembros de PACC-CFL',
+         tl: 'QR code na nagbubukas ng PACC-CFL member signup form' })[lang] +
+      '" onerror="var c=document.getElementById(\'outroQr\'); if(c) c.style.display=\'none\';"></a>' +
+      '<div class="cap">' +
+      ({ en: 'Scan to join', es: 'Escanea para unirte', tl: 'I-scan para sumali' })[lang] +
+      '</div></div>';
+    var badge = '<img class="badge" src="/pacccfl/pacc-ai-neural-badge.png" alt="">';
+    return '<div class="panel' + (kind === 'outro' ? ' outro' : '') + '">' +
+      (kind === 'outro' ? '<div class="outro-top">' + badge + qr + '</div>' : badge) +
       '<h2>' + txt(s.t) + '</h2><p>' + txt(s.n) + '</p>' +
       (kind === 'outro'
         ? '<div class="cta">' +
