@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14245f">
+<title>Offline — PACC-CFL</title>
+<link rel="apple-touch-icon" href="/pacccfl/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/pacccfl/favicon-32.png">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{min-height:100dvh;display:flex;align-items:center;justify-content:center;
+       padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+       background:linear-gradient(180deg,#27398a,#14245f);color:#fff;text-align:center;
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,system-ui,sans-serif;line-height:1.6}
+  .w{max-width:32rem}
+  img{width:96px;height:96px;border-radius:20px;margin:0 auto 22px;display:block}
+  h1{font-size:clamp(22px,5.5vw,30px);font-weight:800;letter-spacing:-.01em}
+  p{margin-top:14px;color:#c9d2ef;font-size:clamp(15px,4vw,17px)}
+  button{margin-top:26px;min-height:48px;padding:0 26px;border:0;border-radius:12px;
+         background:#e3a51c;color:#14245f;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+  button:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+  <div class="w">
+    <img src="/pacccfl/icon-192.png" alt="PACC-CFL">
+    <h1>You are offline</h1>
+    <!-- Says what is true: the app shell is installed, the content is not
+         cached. Promising offline browsing we do not provide is worse than
+         admitting the connection is needed. -->
+    <p>PACC-CFL needs a connection to load the directory and your matches. The app will pick up where you left off as soon as you are back online.</p>
+    <button type="button" onclick="location.replace('/pacccfl/')">Try again</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="PACC-CFL">
+  <!-- THE HOME-SCREEN MARK.
+
+       Deliberately NOT the 1024px chamber seal downscaled. That artwork carries
+       its name around the ring in 11px-equivalent type and sits on a soft
+       red-brown gradient: at 192px the ring text is mush and the gradient reads
+       as a rendering fault. An app icon is judged at 32px in a home-screen
+       grid, so this keeps only what survives that — the chamber's navy, its
+       gold, its three stars, and the four letters everyone actually says.
+
+       FULL-BLEED SQUARE ON PURPOSE: iOS rounds apple-touch-icon itself, and a
+       pre-rounded source gets double-rounded. Every mark sits inside the
+       central 80% so the same file works as a `maskable` icon, where Android
+       may crop to a circle. -->
+  <defs>
+    <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#27398a"/>
+      <stop offset="1" stop-color="#14245f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#pg)"/>
+  <!-- The chamber's red and gold, as a band rather than a ring: a 4px ring
+       disappears at icon size, a band reads at any size. -->
+  <rect x="0" y="0" width="512" height="14" fill="#c8102e"/>
+  <rect x="0" y="498" width="512" height="14" fill="#e3a51c"/>
+  <text x="256" y="268" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-weight="700" font-size="132" letter-spacing="-2" fill="#ffffff">PACC</text>
+  <text x="256" y="340" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-weight="700" font-size="58" letter-spacing="10" fill="#e3a51c">CFL</text>
+  <!-- Three stars, as on the seal. -->
+  <g fill="#ffffff" transform="translate(256 404)">
+    <path d="M-58 0 l6.5 13.2 14.6 2.1 -10.6 10.3 2.5 14.5 -13-6.8 -13 6.8 2.5-14.5 -10.6-10.3 14.6-2.1z"/>
+    <path d="M0 0 l6.5 13.2 14.6 2.1 -10.6 10.3 2.5 14.5 -13-6.8 -13 6.8 2.5-14.5 -10.6-10.3 14.6-2.1z"/>
+    <path d="M58 0 l6.5 13.2 14.6 2.1 -10.6 10.3 2.5 14.5 -13-6.8 -13 6.8 2.5-14.5 -10.6-10.3 14.6-2.1z"/>
+  </g>
+</svg>

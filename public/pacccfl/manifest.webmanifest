@@ -1,0 +1,22 @@
+{
+  "id": "/pacccfl/",
+  "name": "PACC-CFL — Philippine American Chamber of Commerce of Central Florida",
+  "short_name": "PACC-CFL",
+  "description": "The digital ecosystem connecting the Filipino-American business community of Central Florida: verified directory, AI matching, projects and exchange.",
+  "start_url": "/pacccfl/",
+  "scope": "/pacccfl/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#14245f",
+  "theme_color": "#14245f",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/pacccfl/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pacccfl/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/pacccfl/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pacccfl/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

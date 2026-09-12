@@ -2,7 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ── INSTALLABLE PWA ──────────────────────────────────────────────────────
+     Scope is /pacccfl/ and start_url carries the TRAILING SLASH on purpose:
+     scope matches by path prefix, so "/pacccfl?x=1" resolves outside
+     "/pacccfl/" and would open in a browser tab instead of the installed app.
+
+     THIS CANNOT BE INSTALLED FROM digit2ai.com/pacc-cfl. That page is a
+     GoHighLevel document whose body is one full-viewport iframe around this
+     URL, and a browser only ever offers to install the TOP-LEVEL document —
+     which is GHL's, carries no manifest, and is not ours to change. The
+     install affordance at the foot of this page therefore breaks out of the
+     frame to this origin, where installing works. -->
+<link rel="manifest" href="/pacccfl/manifest.webmanifest">
+<meta name="theme-color" content="#14245f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PACC-CFL">
+<link rel="apple-touch-icon" href="/pacccfl/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/pacccfl/favicon-32.png">
 <title>PACC-CFL -- Philippine American Chamber of Commerce of Central Florida</title>
 <meta name="description" content="PACC-CFL runs on CamaraVirtual: the digital ecosystem connecting the Filipino-American business community of Central Florida. AI matching, verified directory, projects, and exchange.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -981,15 +1000,75 @@
     @keyframes wfFlowV { 0% { background-position: 0 200%; } 100% { background-position: 0 0; } }
   }
   @media (prefers-reduced-motion: reduce) { .wf-section *, .wf-section *::before, .wf-section *::after { animation: none !important; } }
+
+/* ═══════ TOUCH TARGETS + LEGIBILITY ON A PHONE ═══════════════════════════
+   Measured with Chrome at 360/390/414px, not guessed: 24 controls came back
+   under the 44px minimum — the drawer's nav links were 16px tall, the burger
+   32x34, the narration Pause/Stop 33px, and the demo's tab strip 36px. The
+   page itself never overflowed horizontally, so the fix is the controls and
+   the smallest type, not the layout.
+
+   Scoped to a narrow viewport so the desktop design is untouched, and NOT
+   gated on (pointer:coarse): a phone reporting a fine pointer still has a
+   finger on it, and getting this wrong silently excludes exactly the visitor
+   the breakpoint is for. ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* One rule for anything tappable inside the drawer, so a nav item added
+     later inherits the target size instead of needing to be remembered. */
+  .header-nav.open a {
+    display: flex; align-items: center;
+    min-height: 44px; font-size: 15px; letter-spacing: .5px;
+  }
+  /* PADDING, NOT FLEX. The three bars are block-level with collapsing 5px
+     margins, and the open state makes an X out of them with
+     rotate(45deg) translate(5px,5px) — values that assume exactly that flow.
+     Centering them with flex stops the margins collapsing, moves each bar, and
+     the two strokes no longer meet: the button renders as a stray chevron.
+     26px of bars + 9px padding each side = 44. */
+  .mobile-menu-btn { padding: 9px; min-width: 44px; }
+  .lang-opt { min-height: 44px; display: inline-flex; align-items: center; }
+  /* The narration controls sit over the hero and were the smallest thing on
+     the page a visitor is actually meant to press. */
+  .lina-bar-btn { min-height: 44px; padding: 0 18px; font-size: 14px;
+                  display: inline-flex; align-items: center; justify-content: center; }
+  /* Sub-12px type is below what a phone renders comfortably; these are the
+     simulator's captions and status pills. */
+  /* The footer's sitemap links were 24px tall — the densest column of links
+     on the page and the one people reach for last, with a thumb. */
+  .footer-col a { display: flex; align-items: center; min-height: 44px; }
+  /* The brand link was 40px: four short of the minimum, and it is the control
+     that takes you home. */
+  .header-logo { min-height: 44px; }
+  /* Sub-12px type. These are the simulator's status pills and KPI captions,
+     which carry the numbers a visitor is being asked to read. Raised only on
+     a phone; the desktop density is deliberate and stays. */
+  .lina-bar-sec, .wf-benefit { font-size: 12px; }
+}
 </style>
 <link rel="stylesheet" href="/pacccfl/demo/demo.css">
+<style>
+/* AFTER demo.css ON PURPOSE. These selectors are the same specificity as the
+   simulator's own, so source order is what decides and a media query adds
+   none: placed above the link they parse fine, apply nothing, and measure as
+   a failure nobody can see in the source. */
+@media (max-width: 768px) {
+  .vc-tab { min-height: 44px; padding: 0 15px; display: inline-flex; align-items: center; }
+  .vc-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .vc-nav button { min-height: 44px; }
+  .vc-tabs { gap: 8px; }
+  /* Sub-12px type in the simulator: status pills, the unread badge and the KPI
+     captions, which carry the numbers a visitor is being asked to read. */
+  .vc-demo-tag, .vc-nav .vc-badge-n, .vc-me span,
+  .vc-kpi small, .vc-kpi u { font-size: 12px; }
+}
+</style>
 </head>
 <body>
 
 <!-- ═══════ HEADER ═══════ -->
 <header class="header" id="header">
   <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:11px;">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e93add38e07b34848b1379.png" alt="PACC-CFL" style="height:40px;width:auto;display:block;border-radius:6px;background:#fff;padding:2px;">
+    <img src="/pacccfl/pacc-seal.png" alt="PACC-CFL" width="160" height="160" style="height:40px;width:40px;display:block;border-radius:6px;background:#fff;padding:2px;">
     <span style="color:#fff;font-weight:800;letter-spacing:2px;font-size:20px;">PACC-CFL</span>
   </a>
   <nav>
@@ -1627,5 +1706,121 @@
 </script>
 <script src="/pacccfl/demo/demo-data.js" defer></script>
 <script src="/pacccfl/demo/demo.js" defer></script>
+
+<!-- ═══════ PWA: INSTALL + OFFLINE SHELL ═══════ -->
+<style>
+  /* A bar rather than a floating pill: this page ends in a CTA, and a pinned
+     pill sits on top of it on a short phone. Hidden until it has something to
+     offer, so it never occupies space it has not earned. */
+  .pwa-bar{display:none;position:sticky;bottom:0;z-index:60;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(20,36,95,.97);border-top:2px solid var(--gold);
+    backdrop-filter:saturate(140%) blur(6px);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+  .pwa-bar.on{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+  .pwa-bar p{margin:0;color:#dfe6ff;font-size:14px;line-height:1.45;flex:1 1 15rem;min-width:0}
+  .pwa-bar b{color:#fff}
+  .pwa-bar .pwa-act{min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+    padding:0 20px;border:0;border-radius:10px;background:var(--gold);color:#14245f;
+    font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .pwa-bar .pwa-x{min-width:44px;min-height:44px;display:inline-flex;align-items:center;
+    justify-content:center;background:none;border:0;color:#9fb0e8;font-size:22px;cursor:pointer;
+    border-radius:10px;line-height:1}
+  @media (max-width:420px){ .pwa-bar p{flex:1 1 100%;text-align:center} }
+</style>
+<div class="pwa-bar" id="pwaBar" role="region" aria-label="Install PACC-CFL">
+  <p id="pwaMsg"></p>
+  <a class="pwa-act" id="pwaAct" href="#"></a>
+  <button class="pwa-x" id="pwaX" type="button" aria-label="Dismiss">&times;</button>
+</div>
+<script>
+(function(){
+  'use strict';
+  var APP = '/pacccfl/';
+  var ORIGIN = location.origin;
+  // WHETHER WE ARE INSIDE SOMEONE ELSE'S PAGE. Cross-origin access to
+  // window.top throws, and that throw is itself the answer.
+  var framed = true;
+  try { framed = window.top !== window.self; } catch (e) { framed = true; }
+
+  var bar = document.getElementById('pwaBar'),
+      msg = document.getElementById('pwaMsg'),
+      act = document.getElementById('pwaAct'),
+      xBtn = document.getElementById('pwaX');
+  var DISMISS = 'pacccfl_install_dismissed';
+
+  function dismissed(){ try { return localStorage.getItem(DISMISS) === '1'; } catch(e){ return false; } }
+  function show(text, label, onClick, href){
+    if (dismissed()) return;
+    msg.innerHTML = text; act.textContent = label;
+    if (href) { act.href = href; act.target = '_blank'; act.rel = 'noopener'; }
+    else { act.removeAttribute('target'); act.href = '#';
+           act.onclick = function(ev){ ev.preventDefault(); onClick(); }; }
+    bar.classList.add('on');
+  }
+  xBtn.addEventListener('click', function(){
+    bar.classList.remove('on');
+    try { localStorage.setItem(DISMISS, '1'); } catch(e){}
+  });
+
+  // ── The service worker.
+  // Registered ONLY at the top level. Inside a third-party frame a browser
+  // either refuses outright or partitions the registration against the
+  // embedding site, so it would buy nothing and could report a worker that
+  // does not control the page anyone actually visits.
+  if (!framed && 'serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register(APP + 'sw.js', { scope: APP }).catch(function(){});
+    });
+  }
+
+  // ── The install affordance, and the honest version of it in a frame.
+  if (framed) {
+    // A browser only offers to install the TOP-LEVEL document. Here that is
+    // the GoHighLevel page, which has no manifest and is not ours. So the
+    // button opens this app on its own origin, where installing works —
+    // rather than a button that silently does nothing.
+    show('Add <b>PACC-CFL</b> to your home screen — opens the full app.',
+         'Open the app', null, ORIGIN + APP);
+    return;
+  }
+
+  var standalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (standalone) return;   // already installed; nothing to offer
+
+  var prompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); prompt = e;
+    show('Install <b>PACC-CFL</b> for one-tap access from your home screen.',
+         'Install', function(){
+           prompt.prompt();
+           prompt.userChoice.then(function(){ prompt = null; bar.classList.remove('on'); });
+         });
+  });
+  window.addEventListener('appinstalled', function(){
+    bar.classList.remove('on');
+    try { localStorage.setItem(DISMISS, '1'); } catch(e){}
+  });
+
+  // iOS/iPadOS Safari fires no beforeinstallprompt and has no programmatic
+  // install — the only route is Share -> Add to Home Screen, so SAY that
+  // instead of showing a button that cannot work.
+  var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var webkit = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(navigator.userAgent);
+  if (iOS && webkit) {
+    setTimeout(function(){
+      if (!prompt && !bar.classList.contains('on')) {
+        show('Add <b>PACC-CFL</b> to your home screen: tap Share, then <b>Add to Home Screen</b>.',
+             'Got it', function(){
+               bar.classList.remove('on');
+               try { localStorage.setItem(DISMISS, '1'); } catch(e){}
+             });
+      }
+    }, 2500);
+  }
+})();
+</script>
 </body>
 </html>
