@@ -268,9 +268,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   });
   await t('the workflow strip is readable with no script and pauses for reduced motion', () => {
     const html = read(path.join(ROOT, 'public', 'index.html'));
-    const flow = html.slice(html.indexOf('id="flow"'), html.indexOf('<!-- How it works -->'));
+    const flow = html.slice(html.indexOf('id="flow"'), html.indexOf('<!-- Buying power') > 0 ? html.indexOf('<!-- Buying power') : html.indexOf('id="estimate"'));
     eq((flow.match(/class="flow-step"/g) || []).length, 7, 'seven steps');
-    assert(html.indexOf('id="flow"') > html.indexOf('class="hero"') && html.indexOf('id="flow"') < html.indexOf('id="how"'), 'strip sits between the hero and How it works');
+    assert(html.indexOf('id="flow"') > html.indexOf('class="hero"') && html.indexOf('id="flow"') < html.indexOf('id="estimate"') && !/id="how"/.test(html), 'strip follows the hero, and the repeated How it works section is gone');
     const js = read(path.join(ROOT, 'public', 'flow.js'));
     assert(/prefers-reduced-motion: reduce/.test(js), 'no reduced-motion guard');
     const css = read(path.join(ROOT, 'public', 'site.css'));

@@ -483,24 +483,6 @@ td.note-cell { color: var(--muted); font-style: italic; }
 .example-pay span { display: block; font-size: .75rem; color: var(--muted); }
 .example-pay strong { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500; }
 
-.steps { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 0; counter-reset: step; }
-@media (min-width: 820px) { .steps { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
-.steps li {
-  counter-increment: step; margin: 0;
-  padding: 18px 0 18px 56px; position: relative; border-top: 1px solid var(--rule);
-}
-@media (min-width: 820px) { .steps li { padding: 64px 0 0; border-top: 3px solid var(--accent); } }
-.steps li::before {
-  content: counter(step);
-  position: absolute; left: 0; top: 18px;
-  width: 40px; height: 40px; border-radius: 50%;
-  display: grid; place-items: center;
-  font: 700 1.1rem/1 var(--font-display);
-  background: var(--accent-soft); color: var(--accent);
-}
-@media (min-width: 820px) { .steps li::before { top: 14px; } }
-.steps h3 { margin-bottom: .3em; }
-.steps p { color: var(--muted); margin: 0; }
 
 .two-col { display: grid; gap: 32px; grid-template-columns: 1fr; }
 @media (min-width: 900px) { .two-col { grid-template-columns: .8fr 1.2fr; gap: 48px; } }
@@ -663,8 +645,6 @@ h1 { line-height: 1.08; }
 .example-label { border-radius: 999px; font-family: var(--font-body); font-weight: 800; }
 main > section.section-rule { border-top: 0; }
 main > section:nth-of-type(even) { background: var(--band); }
-.steps li::before { background: var(--brand); color: var(--brand-ink); font-weight: 900; font-family: var(--font-body); }
-@media (min-width: 820px) { .steps li { border-top-color: var(--brand); } }
 input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
 input[type="password"], input[type="search"], select, textarea { border-radius: 12px; }
 
