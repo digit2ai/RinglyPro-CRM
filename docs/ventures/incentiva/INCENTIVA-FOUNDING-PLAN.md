@@ -149,6 +149,91 @@ Launching below the equivalent is deliberate: Ole carries the risk that a consul
 | R4 | Ole is a founder and a paying customer: how is his equity handled against his fees? | Fees paid at arm's length and invoiced like any agent's, so the model is proven for future agents [LAWYER / accountant] |
 | R5 | Later agents: same market or new markets only? | One agent of record per buyer; exclusivity per market is a pricing decision, not a technical one |
 
+# Revision 2: Incentiva is a partnership between DIGIT2AI and Ole
+
+**Decided by the founders on 2026-09-13. Builds on Revision 1 and wins where they conflict.**
+
+## The structure
+
+```
+        DIGIT2AI ─────┐                    ┌───── Ole (personally)
+   build, AI, hosting │   ownership        │ builder relationships,
+   maintenance        ▼                    ▼ verification, knowledge
+                  ┌──────────────────────────┐
+                  │  Incentiva LLC (Florida) │  technology company, NOT a brokerage
+                  │  owns the platform + data│
+                  └──────────┬───────────────┘
+                             │ per-consult fee (Revision 1), invoiced monthly
+                             ▲
+   Ole as a licensed ────────┘         Ole's broker ◀── builder co-broke at closing
+   sales associate                          │
+   (a customer of the LLC)                  └──▶ Ole's commission split
+```
+
+Ole wears two hats that stay separate: **co-owner** of a technology company, and **licensed sales associate** who buys its service. His commissions never pass through the LLC.
+
+## The line the partnership must not cross [LAWYER]
+
+A partnership is fine. **Sharing Ole's real estate commissions with DIGIT2AI is not**, and several structures do exactly that under another name:
+
+| Structure | Verdict |
+|---|---|
+| LLC earns per-consult fees from agents; profits distributed by ownership | **Acceptable** in principle: LLC revenue is a service fee, not commission |
+| Operating agreement gives DIGIT2AI a percentage of Ole's commissions or closings | **No**: a commission share to an unlicensed party |
+| Per-consult fee secretly adjusted after closings, or rebated to Ole when a deal falls through | **No**: turns the fee into a closing-contingent payment |
+| Ole's fee set far above what other agents would pay, so commission money moves to DIGIT2AI | **No**: a disguised split; price Ole at the same rate every agent pays |
+| Ole does representation work "for" the LLC, or the LLC markets itself as representing buyers | **No**: licensed activity must run through Ole's broker |
+| LLC later becomes or acquires a licensed brokerage, then takes referral fees at closing | **Possible later**, with a licensed broker of record |
+
+## What each partner contributes [DEFAULT, to be agreed]
+
+| DIGIT2AI | Ole |
+|---|---|
+| Builds and owns the Incentiva code on behalf of the LLC | Builder and division relationships; introductions |
+| Hosting, AI model costs, security, maintenance | Daily incentive verification (about 25 min/day) |
+| Compliance engineering (consent, fair-housing checks, audit trail) | Market knowledge encoded as notes; voice for the Advisor |
+| Product and growth (SEO, ads operations, analytics) | First paying agent customer; proof of the model |
+| — | Recruits and vouches for future agents in other markets |
+
+**Ownership [DEFAULT]:** 50/50 membership interests, 4-year vesting with a 1-year cliff for both, a deadlock mechanism (neutral mediator, then buy-sell), and a written value placed on each side's non-cash contribution. The split is the founders' call. The vesting and deadlock terms matter more than the number, because a 50/50 company with neither can freeze on its first disagreement.
+
+## Six terms the operating agreement needs
+
+1. **No commission sharing, stated explicitly.** Ole's real estate compensation is his and his broker's; the LLC has no claim to it.
+2. **Arm's-length pricing.** Ole pays the same per-consult rate and terms that the LLC offers any agent. Any partner discount is fixed in advance, written down, and unrelated to closings.
+3. **IP belongs to the LLC.** Incentiva-specific code, the incentive history database and Ole's encoded knowledge belong to the LLC. DIGIT2AI's pre-existing, shared components (voice orb, TTS, gateway patterns) are **licensed** to the LLC, royalty-free and perpetual for this business, not transferred. Without this, nobody can say who owns what if the partners part ways. **Consequence for the build:** develop Incentiva in its **own repository** from day 1, not as a folder inside DIGIT2AI's monorepo (this replaces the codebase default in deliverable 4).
+4. **Data ownership.** The LLC owns platform data (consent records, criteria, the incentive history). Ole's broker owns the transaction files that the law requires the brokerage to keep. The two are stored separately.
+5. **If Ole leaves, retires or changes brokers.** The platform continues with other agents; a buyer already under agreement stays with Ole and his broker; Ole's vested interest is bought out at a formula price; his non-compete is limited to building a competing platform, not to practicing real estate.
+6. **Broker consent.** A written acknowledgment from Ole's broker that Ole co-owns a lead-generation technology company that sends him clients for a fee, including the broker's split policy on those clients.
+
+## Disclosures that now apply
+
+- **To buyers**, wherever Ole is introduced and in the buyer agreement package: "{agent_name} is a co-owner of Incentiva, the platform that connected you. Incentiva receives a fee when you meet with {agent_name}. You pay nothing." A buyer's agent with a financial interest in the source of the lead should say so up front. **[LAWYER]** on exact wording and timing.
+- **To future agents** who buy the service: one of the platform's owners is a competing agent in Tampa Bay. Their buyer data is never visible to Ole, and that isolation is enforced in code (agent-of-record row ownership, audited admin access).
+- **To Ole's broker:** the consent in term 6.
+
+## What this changes in the design
+
+- **Owner status grants nothing inside agent data.** Platform admin roles are held by LLC staff accounts, never by an agent account. **Ole's agent account cannot see other agents' buyers, even though he is an owner.** SIT asserts it.
+- **Platform role for Ole-as-owner:** aggregate counts, revenue and costs only, the same boundary as the DIGIT2AI platform role in deliverable 4.
+- **Buyer disclosure** added to the Compliance guard's required-disclosure rules for any report or message that names Ole.
+- **Fee invoices** to Ole generated by the same billing path as any agent, with no manual override except a written, logged waiver.
+
+## Economics, stated plainly
+
+With 50/50 ownership, **about half of every per-consult fee Ole pays comes back to him** when profits are distributed. In effect, Ole transfers the other half of the platform's margin on his consults to DIGIT2AI. That is a legitimate way to share the value DIGIT2AI builds, as long as the fee is priced like any agent's and not tied to closings. The partnership's real upside is **other agents' fees** in other markets, where both partners earn on work neither did personally.
+
+## Revised open questions
+
+| # | Question | Default |
+|---|---|---|
+| P1 | Ownership split, vesting and deadlock terms | 50/50, 4-year vesting, 1-year cliff, mediator then buy-sell |
+| P2 | Does Ole pay per consult from day 1, or do fees start after the 90-day launch? | From day 1, at the standard rate, so pricing is proven before other agents are sold |
+| P3 | Who funds build and running costs until fee revenue covers them? | DIGIT2AI contributes the build as capital; running costs split 50/50 as member loans [GUESS; accountant] |
+| P4 | Separate repository and hosting accounts in the LLC's name? | Yes, from week 1 |
+| P5 | Does Ole's broker take a split on platform-sourced clients? | Unknown; must be settled before pricing is final |
+| P6 | Tax treatment of LLC fees paid by a member | Accountant review before the first invoice |
+
 # 1. Concept document
 
 ## Vision
@@ -983,7 +1068,7 @@ Target: **under 25 minutes**, on his phone. The dashboard orders it this way:
 
 | Layer | Choice [DEFAULT] | Why | Alternative |
 |---|---|---|---|
-| Codebase | A self-contained vertical at `verticals/incentiva/` in the existing DIGIT2AI monorepo, following the house pattern (own router, own Sequelize, `nca_` prefix, own domain handler) | Reuses auth, host handling, Twilio, Edge TTS voice orb, ConversationRelay, deploy pipeline, SIT conventions; fastest path to a 4-week MVP | Separate repo from day one (cleaner if the venture is spun out or sold; costs about a week) |
+| Codebase | **Superseded by Revision 2: own repository owned by the LLC, licensing shared DIGIT2AI components.** Originally: a self-contained vertical at `verticals/incentiva/` in the existing DIGIT2AI monorepo, following the house pattern (own router, own Sequelize, `nca_` prefix, own domain handler) | Reuses auth, host handling, Twilio, Edge TTS voice orb, ConversationRelay, deploy pipeline, SIT conventions; fastest path to a 4-week MVP | Separate repo from day one (cleaner if the venture is spun out or sold; costs about a week) |
 | Database | **Its own Render Postgres instance** (`INCENTIVA_DATABASE_URL`), not the shared CRM database | A joint venture with a second founder, buyer PII and signed agreements should be separable for a sale, audit or dissolution without surgery on a shared database | Shared DB with prefix (cheaper; harder to separate) |
 | Web service | Node/Express on Render | Same as every vertical; Ole's dashboard and the public site are one service | — |
 | Frontend | Server-rendered HTML with small vanilla JS modules; installable PWA for the admin | Community and "how it works" pages must be indexable; no build step; the admin needs to work on Ole's phone in a model home with weak signal | React SPA for the admin only, if it grows complex |
