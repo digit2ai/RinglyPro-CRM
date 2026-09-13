@@ -1265,8 +1265,8 @@
       marketErr = e;
     }
     const isAdmin = state.me && state.me.role === 'admin';
-    let theme = 'system';
-    try { theme = localStorage.getItem('incentiva_theme') || 'system'; } catch (_) { /* default */ }
+    let theme = 'dark';
+    try { theme = localStorage.getItem('incentiva_theme') === 'light' ? 'light' : 'dark'; } catch (_) { /* default */ }
 
     let marketHTML;
     if (marketErr) {
@@ -1300,7 +1300,7 @@
       <section class="section"><div class="card">
         <h2>Appearance</h2>
         <label class="field" style="max-width:260px;margin-top:10px"><span class="flabel">Theme</span><select data-change="theme">
-          ${[['system', 'Match device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<option value="${v}"${v === theme ? ' selected' : ''}>${l}</option>`).join('')}
+          ${[['dark', 'Dark (default)'], ['light', 'Light']].map(([v, l]) => `<option value="${v}"${v === theme ? ' selected' : ''}>${l}</option>`).join('')}
         </select></label>
       </div></section>
       <section class="section"><div class="card row" style="justify-content:space-between">
@@ -1710,10 +1710,9 @@
   const changes = {
     buyerStage: (el) => { location.hash = '#/buyers' + (el.value ? `?stage=${encodeURIComponent(el.value)}` : ''); },
     theme: (el) => {
-      const v = el.value;
-      try { if (v === 'system') localStorage.removeItem('incentiva_theme'); else localStorage.setItem('incentiva_theme', v); } catch (_) { /* session only */ }
-      if (v === 'light' || v === 'dark') document.documentElement.setAttribute('data-theme', v);
-      else document.documentElement.removeAttribute('data-theme');
+      const v = el.value === 'light' ? 'light' : 'dark';
+      if (window.IncentivaTheme) window.IncentivaTheme.set(v);
+      else { document.documentElement.setAttribute('data-theme', v); try { localStorage.setItem('incentiva_theme', v); } catch (_) { /* session only */ } }
     },
   };
 

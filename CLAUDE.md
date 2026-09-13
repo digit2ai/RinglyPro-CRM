@@ -389,7 +389,9 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Not built yet (stated, not hidden):** e-signature of the buyer agreement, builder registration packets, calendar booking, outbound messaging and nurture alerts, inbound email parsing, knowledge notes for the Advisor, WhatsApp intake, a custom domain.
 
-**SIT:** `node verticals/incentiva/sit.js` → **78/78**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
+**Theme: DARK IS THE DEFAULT.** Every page ships `<html data-theme="dark">` and a head script that applies a saved `light` before styles paint (no flash); `public/theme.js` wires the sun/moon toggle (`[data-theme-toggle]`, key `incentiva_theme`) on the landing, report, login and console. The OS preference does not override the default.
+
+**SIT:** `node verticals/incentiva/sit.js` → **79/79**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
 
 **Environment Variables:**
 - `INCENTIVA_OWNER_PASSWORD` — admin (LLC) console password. **No default: unset = the console is CLOSED (503).** `INCENTIVA_OWNER_EMAIL` (default `mstagg@digit2ai.com`), `INCENTIVA_OWNER_NAME`.

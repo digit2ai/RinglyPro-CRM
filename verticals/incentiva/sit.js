@@ -255,6 +255,16 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       assert(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s), 'emoji in ' + path.basename(f));
     }
   });
+  await t('dark is the default theme on every page, light is an explicit saved choice with a toggle', () => {
+    for (const f of ['index.html', 'report.html', 'login.html', 'admin.html']) {
+      const html = read(path.join(ROOT, 'public', f));
+      assert(/<html[^>]*data-theme="dark"/.test(html), f + ' does not ship dark');
+      const head = html.slice(0, html.indexOf('</head>'));
+      assert(/t==='light'\?'light':'dark'/.test(head), f + ' head script does not default to dark');
+      assert(head.indexOf('incentiva_theme') < Math.max(head.indexOf('site.css'), head.indexOf('<style>')), f + ' theme applied after styles (flash)');
+      assert(/data-theme-toggle/.test(html), f + ' has no toggle');
+    }
+  });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');
     assert(AGENTS.incentiva, 'persona missing');
