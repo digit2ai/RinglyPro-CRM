@@ -62,6 +62,7 @@ function createApp(opts = {}) {
       model_configured: llm.configured(), monitor_enabled: process.env.INCENTIVA_MONITOR_GO === '1',
       agent_console: auth.configured() ? 'configured' : 'closed', weak_password: auth.configured() ? auth.weakPassword() : null,
       agent_account: !!(process.env.INCENTIVA_AGENT_EMAIL && process.env.INCENTIVA_AGENT_PASSWORD),
+      listings: require('./services/rentcast').configured() ? 'rentcast_connected' : 'not_connected',
       report_review: process.env.INCENTIVA_REPORT_REVIEW === 'auto' ? 'auto_when_compliance_passes' : 'agent_approval_required',
       transports: 'none (nothing auto-sends)'
     });
@@ -69,9 +70,10 @@ function createApp(opts = {}) {
 
   router.get('/', shell('index.html'));
   router.get('/r/:token', shell('report.html'));
+  router.get(['/search', '/buscar'], shell('search.html'));
   router.get('/login', shell('login.html'));
   router.get(['/admin', '/admin/'], shell('admin.html'));
-  router.get(['/index.html', '/report.html', '/login.html', '/admin.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
+  router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 
   router.use('/api/v1/public', require('./routes/public')({ tenantId, allowModel: opts.allowModel, allowGeocode: opts.allowGeocode }));
 

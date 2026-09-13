@@ -26,6 +26,8 @@ delete process.env.INCENTIVA_REPORT_REVIEW;
 delete process.env.INCENTIVA_CONSULT_MONTHLY_CAP;
 delete process.env.INCENTIVA_MONITOR_GO;
 delete process.env.INCENTIVA_SEED_DEMO;
+delete process.env.RENTCAST_API_KEY;
+delete process.env.RENTCAST_MONTHLY_CAP;
 
 const fs = require('fs');
 const path = require('path');
@@ -288,7 +290,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   if (!db.configured) {
     skipped.push('ALL DATABASE SECTIONS (no DATABASE_URL): intake, reports, verification, isolation, billing were NOT exercised');
   } else {
-    const TABLES = ['nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
+    const TABLES = ['nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
       'nca_consents', 'nca_buyer_criteria', 'nca_buyers', 'nca_incentive_versions', 'nca_incentives', 'nca_snapshots', 'nca_sources', 'nca_homes', 'nca_community_fees',
       'nca_communities', 'nca_builders', 'nca_users', 'nca_brokerages', 'nca_markets'];
     const cleanup = async () => { for (const tb of TABLES) await db.exec(`DELETE FROM ${tb} WHERE tenant_id IN (:a, :b)`, { a: SIT_TENANT, b: OTHER_TENANT }); };
@@ -539,6 +541,69 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           await db.exec(`INSERT INTO nca_conversion_events (tenant_id, buyer_id, agent_id, appointment_id, event, billable, fee_usd) VALUES (:t, 1, 1, 999999999, 'closing', true, 3000)`, { t: SIT_TENANT });
         } catch (e) { threw = true; }
         assert(threw, 'closing event inserted');
+      });
+
+      console.log('\nO. Listing search (RentCast, upstream mocked)');
+      const rentcast = require('./src/services/rentcast');
+      const realFetch = global.fetch;
+      const upstreamCalls = [];
+      const FAKE = [
+        { id: 'nc-1', formattedAddress: '1 Sample Way, Riverview, FL 33578', city: 'Riverview', state: 'FL', zipCode: '33578', latitude: 27.86, longitude: -82.32, price: 419990, bedrooms: 4, bathrooms: 2.5, squareFootage: 2210, listingType: 'New Construction', status: 'Active', daysOnMarket: 12,
+          builder: { name: 'Sample Builder', development: 'Sample Preserve', phone: '8135550199', website: 'https://builder.example' }, listingAgent: { name: 'Agent X', phone: '8135550100', email: 'agent@example.test' }, listingOffice: { name: 'Office Y', phone: '8135550101', email: 'office@example.test' }, hoa: { fee: 95 } },
+        { id: 'nc-2', formattedAddress: '2 Sample Way, Riverview, FL 33578', zipCode: '33578', latitude: 27.87, longitude: -82.33, price: 529990, bedrooms: 5, bathrooms: 3, listingType: 'New Construction', status: 'Active' },
+        { id: 'resale-1', formattedAddress: '3 Old Road, Riverview, FL 33578', zipCode: '33578', latitude: 27.85, longitude: -82.31, price: 350000, bedrooms: 3, listingType: 'Standard', status: 'Active' }
+      ];
+      const stubFetch = async (url, init) => {
+        if (String(url).startsWith(rentcast.ENDPOINT)) { upstreamCalls.push({ url: String(url), key: init && init.headers && init.headers['X-Api-Key'] }); return new Response(JSON.stringify(FAKE), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+        return realFetch(url, init);
+      };
+      await t('with no RentCast key the search says it is not connected and never calls upstream', async () => {
+        global.fetch = stubFetch;
+        try {
+          const r = await call('GET', '/api/v1/public/listings?zip=33578&radius=15');
+          eq(r.status, 503); eq(r.data.status, 'not_configured'); eq(r.data.listings.length, 0); eq(upstreamCalls.length, 0);
+        } finally { global.fetch = realFetch; }
+      });
+      await t('only New Construction listings are returned, with builder and agent contact details stripped', async () => {
+        process.env.RENTCAST_API_KEY = 'sit-rentcast-secret-key';
+        global.fetch = stubFetch;
+        try {
+          const r = await call('GET', '/api/v1/public/listings?zip=33578&radius=15');
+          eq(r.status, 200); eq(r.data.status, 'ok');
+          eq(r.data.total_new_construction, 2, 'resale filtered out');
+          eq(upstreamCalls.length, 1); eq(upstreamCalls[0].key, 'sit-rentcast-secret-key');
+          assert(/status=Active/.test(upstreamCalls[0].url) && /limit=500/.test(upstreamCalls[0].url), upstreamCalls[0].url);
+          const json = JSON.stringify(r.data);
+          assert(!/8135550|@example\.test|Agent X|sit-rentcast-secret-key/.test(json), 'contact details or key leaked');
+          eq(r.data.listings.find((l) => l.id === 'nc-1').builder.community, 'Sample Preserve');
+          eq(r.data.area_mode, 'zip_only', 'no geocoder in SIT: says it searched the ZIP only');
+        } finally { global.fetch = realFetch; }
+      });
+      await t('changing filters is served from the cache: no second upstream request', async () => {
+        global.fetch = stubFetch;
+        try {
+          const r = await call('GET', '/api/v1/public/listings?zip=33578&radius=15&max_price=450000&beds_min=4');
+          eq(r.data.matching, 1); eq(r.data.listings[0].id, 'nc-1'); eq(r.data.cached, true); eq(upstreamCalls.length, 1);
+        } finally { global.fetch = realFetch; }
+      });
+      await t('the monthly cap refuses a new upstream request before the plan is exceeded', async () => {
+        process.env.RENTCAST_MONTHLY_CAP = '1';
+        global.fetch = stubFetch;
+        try {
+          const r = await call('GET', '/api/v1/public/listings?zip=33563&radius=15');
+          eq(r.data.status, 'cap_reached'); eq(upstreamCalls.length, 1, 'no call past the cap');
+          const again = await call('GET', '/api/v1/public/listings?zip=33578&radius=15');
+          eq(again.data.status, 'ok', 'a cached area still works at the cap');
+        } finally { global.fetch = realFetch; delete process.env.RENTCAST_MONTHLY_CAP; delete process.env.RENTCAST_API_KEY; }
+      });
+      await t('an invalid ZIP is refused without spending a request', async () => {
+        process.env.RENTCAST_API_KEY = 'sit-rentcast-secret-key';
+        try { eq((await call('GET', '/api/v1/public/listings?zip=abc')).status, 400); } finally { delete process.env.RENTCAST_API_KEY; }
+      });
+      await t('the search page is served with the mount substituted and no RentCast key in it', async () => {
+        const r = await fetch(BASE + '/search'); const html = await r.text();
+        eq(r.status, 200); assert(!html.includes('{{BASE}}') && html.includes('/buyersline/api/v1/public/listings') === false && html.includes('/api/v1/public/listings'), 'shell');
+        assert(!/X-Api-Key|RENTCAST/.test(html), 'key reference in page');
       });
 
       console.log('\nN. Settings and routing');

@@ -12,6 +12,7 @@ const { estimate } = require('../engines/buyingPower');
 const { getMarket } = require('../services/market');
 const { buildReport, publicView, loadAgent, disclosures } = require('../services/report');
 const { TENANT_ID, ipHash, rateLimit, activity, clampStr, numOrNull, audit } = require('../services/util');
+const rentcast = require('../services/rentcast');
 
 const CONSENT_VERSION = 'v2-2026-09-13'; // v2: product renamed BuyersLine
 const MUST_HAVES = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
@@ -143,6 +144,17 @@ module.exports = function publicRoutes(opts = {}) {
       console.error('[incentiva] intake', e);
       res.status(500).json({ error: 'We could not prepare your report right now. Please try again in a few minutes.' });
     }
+  });
+
+  // New-construction listing search (RentCast). Public, rate-limited, cached per area.
+  router.get('/listings', async (req, res) => {
+    if (!rateLimit('listings:' + ipHash(req), Number(process.env.INCENTIVA_LISTINGS_PER_HOUR || 60), 3600e3)) return res.status(429).json({ error: 'Too many searches. Try again later.' });
+    try {
+      const out = await rentcast.search(tenantId, req.query, { allowGeocode });
+      res.setHeader('Cache-Control', 'no-store');
+      const code = out.status === 'invalid' ? 400 : out.status === 'not_configured' ? 503 : out.status === 'upstream_error' ? 502 : out.status === 'cap_reached' ? 503 : 200;
+      res.status(code).json(out);
+    } catch (e) { console.error('[incentiva] listings', e); res.status(500).json({ status: 'error', error: 'Search is unavailable right now.' }); }
   });
 
   router.get('/reports/:token', async (req, res) => {

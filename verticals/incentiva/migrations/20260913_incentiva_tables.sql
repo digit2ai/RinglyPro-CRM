@@ -388,3 +388,30 @@ CREATE TABLE IF NOT EXISTS nca_audit_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS nca_audit_log_tenant_idx ON nca_audit_log (tenant_id, created_at);
+
+-- Listing search (RentCast). The cache is what keeps the paid plan affordable:
+-- one upstream request per area per TTL, every filter applied locally.
+CREATE TABLE IF NOT EXISTS nca_listing_cache (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  provider VARCHAR(20) NOT NULL DEFAULT 'rentcast',
+  cache_key VARCHAR(120) NOT NULL,
+  center_lat DOUBLE PRECISION,
+  center_lng DOUBLE PRECISION,
+  radius_miles NUMERIC(6,2),
+  listings JSONB NOT NULL DEFAULT '[]'::jsonb,
+  upstream_count INTEGER NOT NULL DEFAULT 0,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_listing_cache_key_uq ON nca_listing_cache (tenant_id, provider, cache_key);
+
+-- Upstream request meter, so a monthly cap can refuse before a bill arrives.
+CREATE TABLE IF NOT EXISTS nca_api_usage (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  provider VARCHAR(20) NOT NULL,
+  month VARCHAR(7) NOT NULL,
+  requests INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_api_usage_uq ON nca_api_usage (tenant_id, provider, month);

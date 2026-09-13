@@ -29,6 +29,7 @@
     </a>
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
       <a href="#flow" data-i18n="nav_how">How it works</a>
+      <a href="{{BASE}}/search" data-i18n="nav_search">Search homes</a>
       <a href="#estimate" data-i18n="nav_power">Buying power</a>
       <a href="#about" data-i18n="nav_about">What we are</a>
       <a href="#intake" data-i18n="nav_report">Get my report</a>
@@ -419,6 +420,7 @@
       demo_banner: 'Sample data for demonstration',
       nav_label: 'Primary',
       nav_how: 'How it works',
+      nav_search: 'Search homes',
       nav_power: 'Buying power',
       nav_about: 'What we are',
       nav_report: 'Get my report',
@@ -600,6 +602,7 @@
       demo_banner: 'Datos de muestra para demostración',
       nav_label: 'Principal',
       nav_how: 'Cómo funciona',
+      nav_search: 'Buscar casas',
       nav_power: 'Poder de compra',
       nav_about: 'Qué somos',
       nav_report: 'Obtener mi informe',
@@ -1431,5 +1434,6 @@
 })();
 </script>
 <script src="/embed/voice-orb.js" defer></script>
+<script>(function(){var z=new URLSearchParams(location.search).get('zip');if(/^\d{5}$/.test(z||'')){var f=document.getElementById('f_zips');if(f&&!f.value)f.value=z;}})();</script>
 </body>
 </html>
