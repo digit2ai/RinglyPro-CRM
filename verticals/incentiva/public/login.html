@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Sign in · Incentiva agent console</title>
+<script>try{var t=localStorage.getItem('incentiva_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#F4F7F6;--surface:#FFFFFF;--ink:#13302D;--muted:#587072;--rule:#D5DFDC;
+  --accent:#0A6A64;--accent-soft:#DCEDEA;--accent-ink:#FFFFFF;
+  --crit:#A1262B;--crit-bg:#FAE3E1;--warn:#8A5A00;--warn-bg:#FAEFD6;
+  --f-head:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1719;--surface:#15211F;--ink:#E1ECE9;--muted:#94A8A6;--rule:#29393A;
+    --accent:#5DBDB2;--accent-soft:#163431;--accent-ink:#0E1719;
+    --crit:#F09590;--crit-bg:#3A1A1B;--warn:#E8B75C;--warn-bg:#33270F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1719;--surface:#15211F;--ink:#E1ECE9;--muted:#94A8A6;--rule:#29393A;
+  --accent:#5DBDB2;--accent-soft:#163431;--accent-ink:#0E1719;
+  --crit:#F09590;--crit-bg:#3A1A1B;--warn:#E8B75C;--warn-bg:#33270F;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground);color:var(--ink);font:16px/1.5 var(--f-body);-webkit-text-size-adjust:100%;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.wrap{width:100%;max-width:400px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;font-family:var(--f-head);font-weight:700;font-size:20px;letter-spacing:-.01em}
+.brand svg{width:30px;height:30px;flex:none}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:28px 24px}
+h1{font-family:var(--f-head);font-weight:700;font-size:26px;line-height:1.15;letter-spacing:-.015em;margin:0 0 6px}
+.lede{color:var(--muted);margin:0 0 22px}
+label{display:block;font-weight:600;font-size:15px;margin:0 0 16px}
+input{display:block;width:100%;margin-top:6px;min-height:46px;padding:10px 12px;font:16px var(--f-body);color:var(--ink);background:var(--ground);border:1px solid var(--rule);border-radius:9px}
+input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+button{width:100%;min-height:48px;margin-top:6px;border:0;border-radius:9px;background:var(--accent);color:var(--accent-ink);font:600 16px var(--f-body);cursor:pointer}
+button:hover{filter:brightness(1.06)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button[disabled]{opacity:.6;cursor:progress}
+.err{margin:0 0 16px;padding:10px 12px;border-radius:9px;background:var(--crit-bg);color:var(--crit);font-weight:600;font-size:15px}
+.err.warn{background:var(--warn-bg);color:var(--warn)}
+.fine{color:var(--muted);font-size:14px;margin:18px 2px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" style="fill:var(--accent)"/><path d="M9 21.5V14l7-4.5 7 4.5v7.5" style="fill:none;stroke:var(--accent-ink)" stroke-width="2.2" stroke-linejoin="round"/><path d="M12.5 16.8l2.6 2.6 4.6-4.9" style="fill:none;stroke:var(--accent-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Incentiva</span>
+  </div>
+  <div class="card">
+    <h1>Agent console</h1>
+    <p class="lede">Sign in to verify builder incentives and review buyer reports.</p>
+    <form id="loginForm" novalidate>
+      <div id="loginError" class="err" role="alert" hidden></div>
+      <label for="email">Email
+        <input id="email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required>
+      </label>
+      <label for="password">Password
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button id="submitBtn" type="submit">Sign in</button>
+    </form>
+  </div>
+  <p class="fine">For licensed agents and administrators only. Buyers do not need an account.</p>
+</main>
+<script>window.BASE='{{BASE}}';</script>
+<script>
+(function(){
+  'use strict';
+  var raw = typeof window.BASE === 'string' ? window.BASE : '';
+  var BASE = raw.indexOf('{{') === -1 ? raw.replace(/\/+$/, '') : '';
+  var form = document.getElementById('loginForm');
+  var errBox = document.getElementById('loginError');
+  var btn = document.getElementById('submitBtn');
+
+  function showError(msg, tone){
+    errBox.textContent = msg;
+    errBox.className = 'err' + (tone === 'warn' ? ' warn' : '');
+    errBox.hidden = false;
+  }
+
+  // Already signed in? Go straight to the console.
+  fetch(BASE + '/api/v1/auth/me', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if (d && d.user) location.replace(BASE + '/admin'); })
+    .catch(function(){});
+
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    errBox.hidden = true;
+    var email = form.email.value.trim();
+    var password = form.password.value;
+    if (!email || !password) { showError('Enter your email and password.'); return; }
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    fetch(BASE + '/api/v1/auth/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function(res){
+      return res.text().then(function(text){
+        var data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
+        if (res.ok && data && data.ok) { location.href = BASE + '/admin'; return; }
+        if (res.status === 503) {
+          showError((data && data.error) || 'Agent console is not configured', 'warn');
+        } else if (res.status === 401) {
+          showError((data && data.error) || 'That email and password do not match an agent account.');
+        } else if (res.status === 429) {
+          showError((data && data.error) || 'Too many attempts. Wait a few minutes and try again.');
+        } else {
+          showError((data && data.error) || ('Sign-in failed (HTTP ' + res.status + ').'));
+        }
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      });
+    }).catch(function(){
+      showError('Could not reach the server. Check your connection and try again.');
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    });
+  });
+})();
+</script>
+</body>
+</html>

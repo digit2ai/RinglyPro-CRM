@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Incentiva | New-construction incentives, verified and compared</title>
+<meta name="description" content="See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.">
+<meta name="theme-color" content="#0A6A64">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{BASE}}/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+<div id="demoBanner" class="demo-banner" role="note" hidden data-i18n="demo_banner">Sample data for demonstration</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="{{BASE}}/" aria-label="Incentiva">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect width="64" height="64" rx="12" fill="var(--accent)"/>
+        <path d="M13 30 L32 14 L51 30" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 27 V50 H46 V27" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M24 38.5 L30 44 L40.5 32.5" fill="none" stroke="var(--highlight)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Incentiva</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
+      <a href="#how" data-i18n="nav_how">How it works</a>
+      <a href="#estimate" data-i18n="nav_power">Buying power</a>
+      <a href="#about" data-i18n="nav_about">What we are</a>
+      <a href="#intake" data-i18n="nav_report">Get my report</a>
+    </nav>
+    <div class="lang-toggle" role="group" aria-label="Language" data-i18n-aria="lang_group">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false" lang="es">ES</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow" id="heroEyebrow">New construction · Tampa Bay, Florida</p>
+        <h1 data-i18n="hero_title">Know what every builder is really offering before you visit.</h1>
+        <p class="lede" data-i18n="hero_lede">Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="#intake" data-scroll="intake" data-i18n="hero_cta_primary">See my options</a>
+          <a class="btn btn-secondary" href="#estimate" data-scroll="estimate" data-i18n="hero_cta_secondary">Estimate my buying power</a>
+        </div>
+        <p class="hero-note" data-i18n="hero_note">Free for buyers. No credit check.</p>
+      </div>
+
+      <aside class="card example-card" aria-labelledby="exCaption">
+        <div class="example-head">
+          <span class="small muted" id="exCaption" data-i18n="ex_caption">What a result looks like</span>
+          <span class="example-label" data-i18n="ex_label">Example</span>
+        </div>
+        <div class="example-body">
+          <p class="example-community">Example Preserve · Example Builder</p>
+          <p class="small muted" style="margin:0">Example City, FL</p>
+          <p class="example-value" data-i18n="ex_value">Up to $12,000 toward closing costs</p>
+          <p class="small" style="margin:0 0 10px" data-i18n="ex_cond">With the builder's affiliated lender, under contract by an example date.</p>
+          <span class="stamp">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="exVerified">Verified Sep 11, 2026</span>
+          </span>
+          <div class="example-pay">
+            <div><span data-i18n="ex_year1">Year 1, est. per month</span><strong>$2,480</strong></div>
+            <div><span data-i18n="ex_year3">Year 3+, est. per month</span><strong>$2,790</strong></div>
+          </div>
+          <p class="small muted" style="margin:10px 0 0" data-i18n="ex_fictional">Fictional values for illustration only.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="section-rule">
+    <div class="wrap">
+      <p class="eyebrow" data-i18n="how_eyebrow">How it works</p>
+      <h2 data-i18n="how_title">Three steps, in this order</h2>
+      <ol class="steps">
+        <li>
+          <h3 data-i18n="how_1_t">Tell us what you need</h3>
+          <p data-i18n="how_1_p">Where you want to live, your budget, how many bedrooms and when you want to move. One short form.</p>
+        </li>
+        <li>
+          <h3 data-i18n="how_2_t">Get your verified comparison</h3>
+          <p data-i18n="how_2_p">Active communities near your ZIP, each builder's current incentives with the date a licensed agent last verified them, and estimated monthly payments side by side.</p>
+        </li>
+        <li>
+          <h3 data-i18n="how_3_t">Talk to your agent before you visit</h3>
+          <p data-i18n="how_3_p">Many builders only work with a buyer's agent who registers you before your first visit to a sales office. Your agent represents you, at no cost to you.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Buying power estimator -->
+  <section id="estimate" class="section-rule">
+    <div class="wrap two-col">
+      <div>
+        <p class="eyebrow" data-i18n="est_eyebrow">Buying power</p>
+        <h2 data-i18n="est_title">Estimate your buying power</h2>
+        <p class="lede" data-i18n="est_lede">A few numbers give a rough price range and monthly payment. No credit check, and nothing here is a loan offer.</p>
+        <p class="small muted" data-i18n="est_private">What you type here is used only to calculate this estimate.</p>
+        <p class="small muted" id="refRate" hidden></p>
+      </div>
+      <div>
+        <form id="estForm" class="card" novalidate>
+          <div class="grid-2">
+            <div class="field">
+              <label for="est_income"><span data-i18n="est_income">Gross annual household income</span></label>
+              <div class="input-money"><input id="est_income" name="gross_income_annual" type="text" inputmode="numeric" autocomplete="off" aria-describedby="est_income_hint"></div>
+              <p class="hint" id="est_income_hint" data-i18n="est_income_hint">Before taxes, for everyone on the loan.</p>
+            </div>
+            <div class="field">
+              <label for="est_debts"><span data-i18n="est_debts">Monthly debt payments</span></label>
+              <div class="input-money"><input id="est_debts" name="monthly_debts" type="text" inputmode="numeric" autocomplete="off" aria-describedby="est_debts_hint"></div>
+              <p class="hint" id="est_debts_hint" data-i18n="est_debts_hint">Car, student loans, minimum card payments. Not rent.</p>
+            </div>
+            <div class="field">
+              <label for="est_down"><span data-i18n="est_down">Down payment available</span></label>
+              <div class="input-money"><input id="est_down" name="down_payment" type="text" inputmode="numeric" autocomplete="off"></div>
+            </div>
+            <div class="field">
+              <label for="est_target"><span data-i18n="est_target">Monthly payment you're comfortable with</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <div class="input-money"><input id="est_target" name="target_payment" type="text" inputmode="numeric" autocomplete="off"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="estSubmit" data-i18n="est_submit">Estimate</button>
+          <div id="estStatus" class="status" role="status" aria-live="polite"></div>
+        </form>
+        <div id="estResult" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intake -->
+  <section id="intake" class="section-rule">
+    <div class="wrap wrap-narrow">
+      <p class="eyebrow" data-i18n="intake_eyebrow">Your report</p>
+      <h2 data-i18n="intake_title">Tell us what you need</h2>
+      <p class="lede" data-i18n="intake_lede">One short form. Fields marked * are required.</p>
+
+      <div id="configStatus" class="status" role="status" aria-live="polite"></div>
+
+      <form id="intakeForm" novalidate>
+        <!-- 1 Where -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">01</span><h3 data-i18n="g_where">Where</h3></div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="f_zips"><span data-i18n="f_zips">ZIP codes</span> <span class="req" aria-hidden="true">*</span></label>
+              <input id="f_zips" name="zips" type="text" inputmode="numeric" autocomplete="postal-code" aria-describedby="f_zips_hint">
+              <p class="hint" id="f_zips_hint" data-i18n="f_zips_hint">5 digits each, separated by commas. Example: 33578, 33569</p>
+            </div>
+            <div class="field">
+              <label for="f_place"><span data-i18n="f_place">Or a city or neighborhood</span></label>
+              <input id="f_place" name="place_text" type="text" autocomplete="off" aria-describedby="f_place_hint">
+              <p class="hint" id="f_place_hint" data-i18n="f_place_hint">Use this if you don't know the ZIP code.</p>
+            </div>
+          </div>
+          <div class="field" style="max-width:320px">
+            <label for="f_radius" data-i18n="f_radius">How far from there</label>
+            <select id="f_radius" name="radius_miles">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15" selected>15</option>
+              <option value="25">25</option>
+              <option value="40">40</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2 Home -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">02</span><h3 data-i18n="g_home">Home</h3></div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="f_beds"><span data-i18n="f_beds">Bedrooms, at least</span> <span class="req" aria-hidden="true">*</span></label>
+              <select id="f_beds" name="beds_min" required aria-required="true">
+                <option value="" data-i18n="choose">Choose</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f_baths" data-i18n="f_baths">Bathrooms, at least</label>
+              <select id="f_baths" name="baths_min">
+                <option value="" data-i18n="any">Any</option>
+                <option value="1">1</option>
+                <option value="1.5">1.5</option>
+                <option value="2">2</option>
+                <option value="2.5">2.5</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+          <fieldset class="plain" id="mustSet">
+            <legend data-i18n="f_must">Must-haves</legend>
+            <p class="hint" data-i18n="f_must_hint" style="margin-bottom:8px">Choose any that apply.</p>
+            <div class="choice-grid" id="mustOpts"></div>
+          </fieldset>
+        </div>
+
+        <!-- 3 Money and timing -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">03</span><h3 data-i18n="g_money">Money and timing</h3></div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f_budget"><span data-i18n="f_budget">Maximum home price</span> <span class="req" aria-hidden="true">*</span></label>
+              <div class="input-money"><input id="f_budget" name="budget_max" type="text" inputmode="numeric" autocomplete="off" required aria-required="true"></div>
+            </div>
+            <div class="field">
+              <label for="f_monthly"><span data-i18n="f_monthly">Maximum monthly payment</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <div class="input-money"><input id="f_monthly" name="budget_monthly_max" type="text" inputmode="numeric" autocomplete="off"></div>
+            </div>
+            <div class="field">
+              <label for="f_down"><span data-i18n="f_down">Down payment</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <div class="input-money"><input id="f_down" name="down_payment" type="text" inputmode="numeric" autocomplete="off"></div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <fieldset class="plain" id="timelineSet">
+              <legend><span data-i18n="f_timeline">When do you want to move?</span> <span class="req" aria-hidden="true">*</span></legend>
+              <div class="choice-list" id="timelineOpts"></div>
+            </fieldset>
+            <fieldset class="plain" id="financingSet">
+              <legend><span data-i18n="f_financing">How will you pay?</span> <span class="req" aria-hidden="true">*</span></legend>
+              <div class="choice-list" id="financingOpts"></div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- 4 About you -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">04</span><h3 data-i18n="g_you">About you</h3></div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f_first"><span data-i18n="f_first">First name</span> <span class="req" aria-hidden="true">*</span></label>
+              <input id="f_first" name="first_name" type="text" autocomplete="given-name" required aria-required="true">
+            </div>
+            <div class="field">
+              <label for="f_email"><span data-i18n="f_email">Email</span> <span class="req" aria-hidden="true">*</span></label>
+              <input id="f_email" name="email" type="email" autocomplete="email" inputmode="email" required aria-required="true">
+            </div>
+            <div class="field">
+              <label for="f_phone"><span data-i18n="f_phone">Mobile phone</span> <span class="opt" data-i18n="optional">(optional)</span></label>
+              <input id="f_phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" aria-describedby="f_phone_hint">
+              <p class="hint" id="f_phone_hint" data-i18n="f_phone_hint">Needed only if you agree to text messages.</p>
+            </div>
+          </div>
+          <div class="hp-field" aria-hidden="true">
+            <label for="f_website" data-i18n="f_website">Leave this field empty</label>
+            <input id="f_website" name="website" type="text" tabindex="-1" autocomplete="off" value="">
+          </div>
+        </div>
+
+        <!-- 5 Two questions that protect you -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">05</span><h3 data-i18n="g_protect">Two questions that protect you</h3></div>
+          <p class="muted" data-i18n="g_protect_lede">Builders have registration rules. Honest answers here keep your options open.</p>
+
+          <fieldset class="plain" id="agentSet">
+            <legend><span data-i18n="f_agent">Are you already working with a real estate agent?</span> <span class="req" aria-hidden="true">*</span></legend>
+            <div class="choice-list">
+              <label class="choice"><input type="radio" name="has_other_agent" value="no"><span class="choice-text" data-i18n="agent_no">No</span></label>
+              <label class="choice"><input type="radio" name="has_other_agent" value="yes_under_agreement"><span class="choice-text" data-i18n="agent_yes_agreement">Yes, and I signed an agreement with them</span></label>
+              <label class="choice"><input type="radio" name="has_other_agent" value="yes_informal"><span class="choice-text" data-i18n="agent_yes_informal">Yes, but nothing is signed</span></label>
+            </div>
+            <div id="agentNote" aria-live="polite"></div>
+          </fieldset>
+
+          <fieldset class="plain" id="visitSet" style="margin-top:20px">
+            <legend data-i18n="f_visits">Have you already visited a new-construction sales office?</legend>
+            <p class="hint" data-i18n="f_visits_hint" style="margin-bottom:10px">Add each one. Some builders won't work with a buyer's agent for a buyer who visited or signed a guest card first, so your agent needs to know.</p>
+            <div id="visitsList"></div>
+            <p class="hint" id="visitsNone" data-i18n="visits_none">None added. If you haven't visited any, leave this empty.</p>
+            <button type="button" class="btn btn-secondary btn-small" id="visitAdd" data-i18n="visit_add" style="margin-top:8px">Add a community you visited</button>
+          </fieldset>
+        </div>
+
+        <!-- Consent -->
+        <div class="form-group">
+          <div class="form-group-head"><span class="n" aria-hidden="true">06</span><h3 data-i18n="g_consent">How we may contact you</h3></div>
+          <fieldset class="plain consent" id="consentSet">
+            <legend class="sr-only" data-i18n="g_consent">How we may contact you</legend>
+            <div class="choice-list" id="consentOpts"></div>
+          </fieldset>
+        </div>
+
+        <div class="callout callout-caution">
+          <h4 data-i18n="visit_first_title">Before you visit any sales office</h4>
+          <p data-i18n="visit_first_body">Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to your agent first, so you keep your representation at no cost to you.</p>
+        </div>
+
+        <div id="intakeStatus" class="status" role="alert" aria-live="assertive" tabindex="-1"></div>
+
+        <div class="btn-row" style="margin-top:16px;align-items:center">
+          <button type="submit" class="btn btn-primary" id="intakeSubmit" data-i18n="submit">Get my report</button>
+          <span class="small muted" data-i18n="submit_note">Buyers pay nothing.</span>
+        </div>
+      </form>
+
+      <div id="intakeDone" hidden tabindex="-1"></div>
+    </div>
+  </section>
+
+  <!-- What we are / are not -->
+  <section id="about" class="section-rule">
+    <div class="wrap">
+      <p class="eyebrow" data-i18n="about_eyebrow">Plain terms</p>
+      <h2 data-i18n="about_title">What we are, and what we are not</h2>
+      <div class="are-grid" style="margin-top:20px">
+        <div>
+          <h3 data-i18n="we_are">We are</h3>
+          <ul class="are-list are-yes">
+            <li><strong data-i18n="are_1_t">A technology platform</strong><span data-i18n="are_1_p">We gather active new-construction communities and builder incentives, and lay them out side by side in monthly-payment terms.</span></li>
+            <li><strong data-i18n="are_2_t">Verified, with a date</strong><span data-i18n="are_2_p">We only show incentives a licensed agent verified, each with the date it was last checked. Fees we can't confirm say "not yet confirmed", never $0.</span></li>
+            <li><strong data-i18n="are_3_t">Free for buyers</strong><span data-i18n="are_3_p">You pay nothing to use Incentiva or to be connected with the agent who represents you.</span></li>
+            <li><strong data-i18n="are_4_t">Paid by the agent</strong><span data-i18n="are_4_p">The licensed agent pays Incentiva a fee when you meet with them. That is how the platform is paid.</span></li>
+          </ul>
+        </div>
+        <div>
+          <h3 data-i18n="we_are_not">We are not</h3>
+          <ul class="are-list are-no">
+            <li><strong data-i18n="not_1_t">Not a real estate brokerage</strong><span data-i18n="not_1_p">Representation comes from a licensed Florida real estate sales associate and their brokerage, not from Incentiva.</span></li>
+            <li><strong data-i18n="not_2_t">Not a lender</strong><span data-i18n="not_2_p">Payment figures are estimates. They are not loan offers, pre-qualifications or approvals.</span></li>
+            <li><strong data-i18n="not_3_t">Not a builder's sales office</strong><span data-i18n="not_3_p">We don't sell homes for any builder. Your agent represents you, the buyer.</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout" id="agentBlock" style="margin-top:28px" hidden>
+        <h4 data-i18n="agent_block_title">Your licensed agent</h4>
+        <p id="agentLine"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Voice -->
+  <section class="section-rule orb-section">
+    <div class="wrap">
+      <h2 data-i18n="orb_title">Questions? Ask out loud.</h2>
+      <p class="muted" data-i18n="orb_p">The assistant answers only from what this page says, and you can also type.</p>
+      <div id="voiceOrb" data-voice-orb data-agent="incentiva" data-lang="en" data-label="Ask Incentiva"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <h2 data-i18n="footer_disclosures">Disclosures</h2>
+    <div class="disclosures" id="disclosures"><p data-i18n="footer_loading">Loading disclosures...</p></div>
+    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> Incentiva</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var BASE = '{{BASE}}';
+
+  var I18N = {
+    en: {
+      doc_title: 'Incentiva | New-construction incentives, verified and compared',
+      doc_desc: "See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.",
+      skip: 'Skip to content',
+      demo_banner: 'Sample data for demonstration',
+      nav_label: 'Primary',
+      nav_how: 'How it works',
+      nav_power: 'Buying power',
+      nav_about: 'What we are',
+      nav_report: 'Get my report',
+      lang_group: 'Language',
+      hero_eyebrow: 'New construction · {market}',
+      market_default: 'Tampa Bay, Florida',
+      hero_title: 'Know what every builder is really offering before you visit.',
+      hero_lede: "Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.",
+      hero_cta_primary: 'See my options',
+      hero_cta_secondary: 'Estimate my buying power',
+      hero_note: 'Free for buyers. No credit check.',
+      ex_caption: 'What a result looks like',
+      ex_label: 'Example',
+      ex_value: 'Up to $12,000 toward closing costs',
+      ex_cond: "With the builder's affiliated lender, under contract by an example date.",
+      ex_verified: 'Verified {date}',
+      ex_year1: 'Year 1, est. per month',
+      ex_year3: 'Year 3+, est. per month',
+      ex_fictional: 'Fictional values for illustration only.',
+      how_eyebrow: 'How it works',
+      how_title: 'Three steps, in this order',
+      how_1_t: 'Tell us what you need',
+      how_1_p: 'Where you want to live, your budget, how many bedrooms and when you want to move. One short form.',
+      how_2_t: 'Get your verified comparison',
+      how_2_p: "Active communities near your ZIP, each builder's current incentives with the date a licensed agent last verified them, and estimated monthly payments side by side.",
+      how_3_t: 'Talk to your agent before you visit',
+      how_3_p: "Many builders only work with a buyer's agent who registers you before your first visit to a sales office. Your agent represents you, at no cost to you.",
+      est_eyebrow: 'Buying power',
+      est_title: 'Estimate your buying power',
+      est_lede: 'A few numbers give a rough price range and monthly payment. No credit check, and nothing here is a loan offer.',
+      est_private: 'What you type here is used only to calculate this estimate.',
+      est_ref_rate: 'Reference rate: {rate}% as of {date}. Source: {source}.',
+      est_income: 'Gross annual household income',
+      est_income_hint: 'Before taxes, for everyone on the loan.',
+      est_debts: 'Monthly debt payments',
+      est_debts_hint: 'Car, student loans, minimum card payments. Not rent.',
+      est_down: 'Down payment available',
+      est_target: "Monthly payment you're comfortable with",
+      optional: '(optional)',
+      est_submit: 'Estimate',
+      est_working: 'Calculating your estimate...',
+      est_price: 'Estimated price range',
+      est_payment: 'Estimated monthly payment',
+      per_month: '/mo',
+      est_how: 'How we estimated this',
+      th_assumption: 'Assumption',
+      th_value: 'Value',
+      th_basis: 'Basis',
+      est_disclaimer: 'This is an estimate, not a pre-qualification or loan approval. No credit check.',
+      est_use: 'Use this budget in my search',
+      est_used: 'Budget of {amount} added to your search below.',
+      est_missing_title: "We can't estimate yet. We still need:",
+      est_bad_number: 'Enter amounts as numbers, for example 85000.',
+      missing_gross_income_annual: 'your gross annual household income',
+      missing_monthly_debts: 'your monthly debt payments',
+      missing_down_payment: 'how much you have for a down payment',
+      missing_target_payment: "the monthly payment you're comfortable with",
+      missing_reference_rate: "a current reference interest rate, which isn't available right now. Please try again later.",
+      err_network: "We couldn't reach Incentiva. Check your connection and try again.",
+      err_server: 'Something went wrong on our side. Please try again in a minute.',
+      err_rate: 'Too many requests right now. Please wait a few minutes and try again.',
+      intake_eyebrow: 'Your report',
+      intake_title: 'Tell us what you need',
+      intake_lede: 'One short form. Fields marked * are required.',
+      config_loading: 'Loading the form options...',
+      config_error: "We couldn't load the form options. Check your connection, then try again.",
+      retry: 'Try again',
+      g_where: 'Where',
+      f_zips: 'ZIP codes',
+      f_zips_hint: '5 digits each, separated by commas. Example: 33578, 33569',
+      f_place: 'Or a city or neighborhood',
+      f_place_hint: "Use this if you don't know the ZIP code.",
+      f_radius: 'How far from there',
+      miles: '{n} miles',
+      g_home: 'Home',
+      f_beds: 'Bedrooms, at least',
+      f_baths: 'Bathrooms, at least',
+      choose: 'Choose',
+      any: 'Any',
+      f_must: 'Must-haves',
+      f_must_hint: 'Choose any that apply.',
+      g_money: 'Money and timing',
+      f_budget: 'Maximum home price',
+      f_monthly: 'Maximum monthly payment',
+      f_down: 'Down payment',
+      f_timeline: 'When do you want to move?',
+      f_financing: 'How will you pay?',
+      g_you: 'About you',
+      f_first: 'First name',
+      f_email: 'Email',
+      f_phone: 'Mobile phone',
+      f_phone_hint: 'Needed only if you agree to text messages.',
+      f_website: 'Leave this field empty',
+      g_protect: 'Two questions that protect you',
+      g_protect_lede: 'Builders have registration rules. Honest answers here keep your options open.',
+      f_agent: 'Are you already working with a real estate agent?',
+      agent_no: 'No',
+      agent_yes_agreement: 'Yes, and I signed an agreement with them',
+      agent_yes_informal: 'Yes, but nothing is signed',
+      agent_note_agreement: 'Thanks for being upfront. Please keep working with your agent; we will not contact you.',
+      agent_note_informal: "You are free to choose. We won't interfere with a relationship you value.",
+      f_visits: 'Have you already visited a new-construction sales office?',
+      f_visits_hint: "Add each one. Some builders won't work with a buyer's agent for a buyer who visited or signed a guest card first, so your agent needs to know.",
+      visits_none: "None added. If you haven't visited any, leave this empty.",
+      visit_add: 'Add a community you visited',
+      visit_n: 'Visit {n}',
+      visit_builder: 'Builder',
+      visit_community: 'Community',
+      visit_card: 'I signed a guest card or registration sheet',
+      visit_remove: 'Remove',
+      visit_remove_n: 'Remove visit {n}',
+      g_consent: 'How we may contact you',
+      consent_email_note: 'Optional.',
+      consent_sms_note: 'Optional.',
+      consent_share_note: 'Optional. Without it, you still get your report.',
+      consent_unavailable: 'Contact preferences will appear here once the form options load.',
+      visit_first_title: 'Before you visit any sales office',
+      visit_first_body: "Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to your agent first, so you keep your representation at no cost to you.",
+      submit: 'Get my report',
+      submitting: 'Preparing your report...',
+      submit_note: 'Buyers pay nothing.',
+      err_fix: 'Please check the highlighted fields.',
+      err_required: 'This is required.',
+      err_choose: 'Choose one.',
+      err_where: 'Enter at least one ZIP code, or a city or neighborhood.',
+      err_zip: 'ZIP codes must be 5 digits. Check: {bad}',
+      err_email: 'Enter a valid email address.',
+      err_amount: 'Enter an amount in dollars, for example 450000.',
+      err_phone_sms: 'Add a mobile phone to receive text messages, or uncheck text messages.',
+      err_visit: 'Add the builder or community name, or remove this visit.',
+      err_config_missing: 'The form options have not loaded yet. Use "Try again" above, then submit.',
+      stopped_title: "We won't contact you",
+      opening_report: 'Thanks. Opening your report...',
+      about_eyebrow: 'Plain terms',
+      about_title: 'What we are, and what we are not',
+      we_are: 'We are',
+      we_are_not: 'We are not',
+      are_1_t: 'A technology platform',
+      are_1_p: 'We gather active new-construction communities and builder incentives, and lay them out side by side in monthly-payment terms.',
+      are_2_t: 'Verified, with a date',
+      are_2_p: 'We only show incentives a licensed agent verified, each with the date it was last checked. Fees we can\'t confirm say "not yet confirmed", never $0.',
+      are_3_t: 'Free for buyers',
+      are_3_p: 'You pay nothing to use Incentiva or to be connected with the agent who represents you.',
+      are_4_t: 'Paid by the agent',
+      are_4_p: 'The licensed agent pays Incentiva a fee when you meet with them. That is how the platform is paid.',
+      not_1_t: 'Not a real estate brokerage',
+      not_1_p: 'Representation comes from a licensed Florida real estate sales associate and their brokerage, not from Incentiva.',
+      not_2_t: 'Not a lender',
+      not_2_p: 'Payment figures are estimates. They are not loan offers, pre-qualifications or approvals.',
+      not_3_t: "Not a builder's sales office",
+      not_3_p: "We don't sell homes for any builder. Your agent represents you, the buyer.",
+      agent_block_title: 'Your licensed agent',
+      agent_line: '{name}{title}. License {license}. {brokerage}, brokerage license {blicense}.',
+      agent_none: 'A licensed Florida real estate sales associate will be assigned to you.',
+      orb_title: 'Questions? Ask out loud.',
+      orb_p: 'The assistant answers only from what this page says, and you can also type.',
+      orb_label: 'Ask Incentiva',
+      footer_disclosures: 'Disclosures',
+      footer_loading: 'Loading disclosures...',
+      footer_error: "We couldn't load the disclosures. Refresh the page to try again."
+    },
+    es: {
+      doc_title: 'Incentiva | Incentivos de construcción nueva, verificados y comparados',
+      doc_desc: 'Vea su poder de compra, las comunidades de construcción nueva activas cerca de su código postal y los incentivos vigentes de cada constructor, verificados por un agente con licencia y comparados por pago mensual. Gratis para compradores.',
+      skip: 'Saltar al contenido',
+      demo_banner: 'Datos de muestra para demostración',
+      nav_label: 'Principal',
+      nav_how: 'Cómo funciona',
+      nav_power: 'Poder de compra',
+      nav_about: 'Qué somos',
+      nav_report: 'Obtener mi informe',
+      lang_group: 'Idioma',
+      hero_eyebrow: 'Construcción nueva · {market}',
+      market_default: 'Tampa Bay, Florida',
+      hero_title: 'Sepa lo que cada constructor ofrece de verdad antes de visitar.',
+      hero_lede: 'Díganos dónde y qué busca. Le mostramos su poder de compra, todas las comunidades de construcción nueva activas cerca de su código postal y los incentivos vigentes de cada constructor, verificados por un agente con licencia y comparados lado a lado en pago mensual.',
+      hero_cta_primary: 'Ver mis opciones',
+      hero_cta_secondary: 'Calcular mi poder de compra',
+      hero_note: 'Gratis para compradores. Sin revisión de crédito.',
+      ex_caption: 'Así se ve un resultado',
+      ex_label: 'Ejemplo',
+      ex_value: 'Hasta $12,000 para gastos de cierre',
+      ex_cond: 'Con el prestamista afiliado del constructor, con contrato firmado antes de una fecha de ejemplo.',
+      ex_verified: 'Verificado el {date}',
+      ex_year1: 'Año 1, est. por mes',
+      ex_year3: 'Año 3 en adelante, est. por mes',
+      ex_fictional: 'Valores ficticios, solo para ilustrar.',
+      how_eyebrow: 'Cómo funciona',
+      how_title: 'Tres pasos, en este orden',
+      how_1_t: 'Cuéntenos qué necesita',
+      how_1_p: 'Dónde quiere vivir, su presupuesto, cuántas habitaciones y cuándo quiere mudarse. Un formulario breve.',
+      how_2_t: 'Reciba su comparación verificada',
+      how_2_p: 'Las comunidades activas cerca de su código postal, los incentivos vigentes de cada constructor con la fecha en que un agente con licencia los verificó por última vez, y los pagos mensuales estimados lado a lado.',
+      how_3_t: 'Hable con su agente antes de visitar',
+      how_3_p: 'Muchos constructores solo trabajan con el agente del comprador que lo registra antes de su primera visita a una oficina de ventas. Su agente lo representa a usted, sin costo para usted.',
+      est_eyebrow: 'Poder de compra',
+      est_title: 'Calcule su poder de compra',
+      est_lede: 'Con unas pocas cifras le damos un rango aproximado de precio y de pago mensual. Sin revisión de crédito, y nada de esto es una oferta de préstamo.',
+      est_private: 'Lo que escriba aquí se usa solo para calcular esta estimación.',
+      est_ref_rate: 'Tasa de referencia: {rate} % al {date}. Fuente: {source}.',
+      est_income: 'Ingreso anual bruto del hogar',
+      est_income_hint: 'Antes de impuestos, de todas las personas en el préstamo.',
+      est_debts: 'Pagos mensuales de deudas',
+      est_debts_hint: 'Auto, préstamos estudiantiles, pagos mínimos de tarjetas. No incluya el alquiler.',
+      est_down: 'Dinero disponible para el pago inicial',
+      est_target: 'Pago mensual con el que se siente cómodo',
+      optional: '(opcional)',
+      est_submit: 'Calcular',
+      est_working: 'Calculando su estimación...',
+      est_price: 'Rango de precio estimado',
+      est_payment: 'Pago mensual estimado',
+      per_month: '/mes',
+      est_how: 'Cómo lo calculamos',
+      th_assumption: 'Supuesto',
+      th_value: 'Valor',
+      th_basis: 'Fundamento',
+      est_disclaimer: 'Es una estimación, no una precalificación ni una aprobación de préstamo. No revisamos su crédito.',
+      est_use: 'Usar este presupuesto en mi búsqueda',
+      est_used: 'Presupuesto de {amount} agregado a su búsqueda más abajo.',
+      est_missing_title: 'Aún no podemos calcular. Nos falta:',
+      est_bad_number: 'Escriba las cantidades como números, por ejemplo 85000.',
+      missing_gross_income_annual: 'su ingreso anual bruto del hogar',
+      missing_monthly_debts: 'sus pagos mensuales de deudas',
+      missing_down_payment: 'cuánto tiene para el pago inicial',
+      missing_target_payment: 'el pago mensual con el que se siente cómodo',
+      missing_reference_rate: 'una tasa de interés de referencia actual, que no está disponible en este momento. Intente de nuevo más tarde.',
+      err_network: 'No pudimos conectar con Incentiva. Revise su conexión e intente de nuevo.',
+      err_server: 'Algo falló de nuestro lado. Intente de nuevo en un minuto.',
+      err_rate: 'Hay demasiadas solicitudes en este momento. Espere unos minutos e intente de nuevo.',
+      intake_eyebrow: 'Su informe',
+      intake_title: 'Cuéntenos qué necesita',
+      intake_lede: 'Un formulario breve. Los campos marcados con * son obligatorios.',
+      config_loading: 'Cargando las opciones del formulario...',
+      config_error: 'No pudimos cargar las opciones del formulario. Revise su conexión e intente de nuevo.',
+      retry: 'Intentar de nuevo',
+      g_where: 'Dónde',
+      f_zips: 'Códigos postales',
+      f_zips_hint: '5 dígitos cada uno, separados por comas. Ejemplo: 33578, 33569',
+      f_place: 'O una ciudad o vecindario',
+      f_place_hint: 'Úselo si no conoce el código postal.',
+      f_radius: 'A qué distancia de ahí',
+      miles: '{n} millas',
+      g_home: 'Vivienda',
+      f_beds: 'Habitaciones, como mínimo',
+      f_baths: 'Baños, como mínimo',
+      choose: 'Elija',
+      any: 'Cualquiera',
+      f_must: 'Imprescindibles',
+      f_must_hint: 'Marque los que apliquen.',
+      g_money: 'Dinero y plazos',
+      f_budget: 'Precio máximo de la vivienda',
+      f_monthly: 'Pago mensual máximo',
+      f_down: 'Pago inicial',
+      f_timeline: '¿Cuándo quiere mudarse?',
+      f_financing: '¿Cómo va a pagar?',
+      g_you: 'Sobre usted',
+      f_first: 'Nombre',
+      f_email: 'Correo electrónico',
+      f_phone: 'Teléfono celular',
+      f_phone_hint: 'Solo es necesario si acepta recibir mensajes de texto.',
+      f_website: 'Deje este campo vacío',
+      g_protect: 'Dos preguntas que lo protegen',
+      g_protect_lede: 'Los constructores tienen reglas de registro. Responder con franqueza mantiene abiertas sus opciones.',
+      f_agent: '¿Ya trabaja con un agente de bienes raíces?',
+      agent_no: 'No',
+      agent_yes_agreement: 'Sí, y firmé un acuerdo con mi agente',
+      agent_yes_informal: 'Sí, pero no hay nada firmado',
+      agent_note_agreement: 'Gracias por su franqueza. Siga trabajando con su agente; no nos pondremos en contacto con usted.',
+      agent_note_informal: 'Usted es libre de elegir. No interferiremos en una relación que valora.',
+      f_visits: '¿Ya visitó alguna oficina de ventas de construcción nueva?',
+      f_visits_hint: 'Agregue cada una. Algunos constructores no trabajan con el agente del comprador si el comprador visitó primero o firmó una tarjeta de visitante, así que su agente necesita saberlo.',
+      visits_none: 'No ha agregado ninguna. Si no ha visitado ninguna, déjelo vacío.',
+      visit_add: 'Agregar una comunidad que visitó',
+      visit_n: 'Visita {n}',
+      visit_builder: 'Constructor',
+      visit_community: 'Comunidad',
+      visit_card: 'Firmé una tarjeta de visitante o una hoja de registro',
+      visit_remove: 'Quitar',
+      visit_remove_n: 'Quitar la visita {n}',
+      g_consent: 'Cómo podemos contactarlo',
+      consent_email_note: 'Opcional.',
+      consent_sms_note: 'Opcional.',
+      consent_share_note: 'Opcional. Sin esto, igual recibe su informe.',
+      consent_unavailable: 'Sus preferencias de contacto aparecerán aquí cuando carguen las opciones del formulario.',
+      visit_first_title: 'Antes de visitar cualquier oficina de ventas',
+      visit_first_body: 'Muchos constructores solo trabajan con el agente del comprador que lo registra antes de su primera visita. Obtenga su informe y hable primero con su agente, para conservar su representación sin costo para usted.',
+      submit: 'Obtener mi informe',
+      submitting: 'Preparando su informe...',
+      submit_note: 'Los compradores no pagan nada.',
+      err_fix: 'Revise los campos marcados.',
+      err_required: 'Este dato es obligatorio.',
+      err_choose: 'Elija una opción.',
+      err_where: 'Escriba al menos un código postal, o una ciudad o vecindario.',
+      err_zip: 'Los códigos postales deben tener 5 dígitos. Revise: {bad}',
+      err_email: 'Escriba un correo electrónico válido.',
+      err_amount: 'Escriba una cantidad en dólares, por ejemplo 450000.',
+      err_phone_sms: 'Agregue un teléfono celular para recibir mensajes de texto, o desmarque esa opción.',
+      err_visit: 'Escriba el constructor o la comunidad, o quite esta visita.',
+      err_config_missing: 'Las opciones del formulario aún no han cargado. Use «Intentar de nuevo» arriba y luego envíe.',
+      stopped_title: 'No nos pondremos en contacto con usted',
+      opening_report: 'Gracias. Abriendo su informe...',
+      about_eyebrow: 'En claro',
+      about_title: 'Qué somos y qué no somos',
+      we_are: 'Somos',
+      we_are_not: 'No somos',
+      are_1_t: 'Una plataforma tecnológica',
+      are_1_p: 'Reunimos las comunidades de construcción nueva activas y los incentivos de los constructores, y los presentamos lado a lado en términos de pago mensual.',
+      are_2_t: 'Verificado, con fecha',
+      are_2_p: 'Solo mostramos incentivos que un agente con licencia verificó, cada uno con la fecha de su última revisión. Las cuotas que no podemos confirmar dicen «aún no confirmado», nunca $0.',
+      are_3_t: 'Gratis para compradores',
+      are_3_p: 'Usted no paga nada por usar Incentiva ni por conectarse con el agente que lo representa.',
+      are_4_t: 'Financiados por el agente',
+      are_4_p: 'El agente con licencia le paga una tarifa a Incentiva cuando usted se reúne con esa persona. Así se financia la plataforma.',
+      not_1_t: 'No somos una correduría inmobiliaria',
+      not_1_p: 'La representación viene de un asociado de ventas de bienes raíces con licencia en Florida y de su correduría, no de Incentiva.',
+      not_2_t: 'No somos un prestamista',
+      not_2_p: 'Las cifras de pago son estimaciones. No son ofertas de préstamo, precalificaciones ni aprobaciones.',
+      not_3_t: 'No somos la oficina de ventas de un constructor',
+      not_3_p: 'No vendemos viviendas para ningún constructor. Su agente lo representa a usted, el comprador.',
+      agent_block_title: 'Su agente con licencia',
+      agent_line: '{name}{title}. Licencia {license}. {brokerage}, licencia de correduría {blicense}.',
+      agent_none: 'Se le asignará un asociado de ventas de bienes raíces con licencia en Florida.',
+      orb_title: '¿Preguntas? Hágalas en voz alta.',
+      orb_p: 'El asistente responde solo con lo que dice esta página, y también puede escribirle.',
+      orb_label: 'Pregúntale a Incentiva',
+      footer_disclosures: 'Avisos legales',
+      footer_loading: 'Cargando avisos legales...',
+      footer_error: 'No pudimos cargar los avisos legales. Recargue la página para intentar de nuevo.'
+    }
+  };
+
+  // ---------- helpers ----------
+  function initialLang() {
+    var p = new URLSearchParams(location.search).get('lang');
+    if (p === 'es' || p === 'en') return p;
+    var nav = (navigator.language || '').toLowerCase();
+    return nav.indexOf('es') === 0 ? 'es' : 'en';
+  }
+  var lang = initialLang();
+
+  function t(key, vars) {
+    var s = (I18N[lang] && I18N[lang][key]);
+    if (s == null) s = I18N.en[key];
+    if (s == null) return key;
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : ''; });
+    return s;
+  }
+  function locale() { return lang === 'es' ? 'es-US' : 'en-US'; }
+  function money(v) {
+    if (v == null || v === '' || isNaN(Number(v))) return null;
+    return new Intl.NumberFormat(locale(), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(v));
+  }
+  function parseDate(s) {
+    if (typeof s !== 'string' || !s) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function fmtDate(s) {
+    var d = parseDate(s);
+    return d ? d.toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+  }
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) append(el, arguments[i]);
+    return el;
+  }
+  function append(el, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { append(el, x); }); return; }
+    el.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  function $(id) { return document.getElementById(id); }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+  function parseMoney(str) {
+    var s = String(str == null ? '' : str).trim();
+    if (!s) return null;
+    var cleaned = s.replace(/[$,\s]/g, '');
+    if (!/^\d+(\.\d+)?$/.test(cleaned)) return NaN;
+    return Number(cleaned);
+  }
+  function callout(kind, title, body) {
+    return h('div', { class: 'callout' + (kind ? ' callout-' + kind : '') },
+      title ? h('h4', { text: title }) : null,
+      body ? h('p', { text: body }) : null);
+  }
+  function api(path, opts) {
+    return fetch(BASE + path, opts).then(function (r) {
+      return r.text().then(function (txt) {
+        var data = null;
+        try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+        return { status: r.status, ok: r.ok, data: data };
+      });
+    });
+  }
+
+  // ---------- language ----------
+  function setLang(l, opts) {
+    lang = l === 'es' ? 'es' : 'en';
+    if (!opts || !opts.initial) {
+      var url = new URL(location.href);
+      url.searchParams.set('lang', lang);
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+    applyStatic();
+    if (!opts || !opts.initial) {
+      loadConfig();
+      if (lastEstimateBody) runEstimate(lastEstimateBody, true);
+      if (window.D2AIVoiceOrb && typeof window.D2AIVoiceOrb.setLang === 'function') {
+        try { window.D2AIVoiceOrb.setLang(lang); } catch (e) { /* orb is optional */ }
+      }
+    }
+  }
+
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t('doc_title');
+    var md = document.querySelector('meta[name="description"]');
+    if (md) md.setAttribute('content', t('doc_desc'));
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call($('f_radius').options, function (o) {
+      o.textContent = t('miles', { n: o.value });
+    });
+    $('exVerified').textContent = t('ex_verified', { date: fmtDate('2026-09-11') });
+    $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config && config.market && config.market.name) || t('market_default') });
+    var orb = $('voiceOrb');
+    orb.setAttribute('data-lang', lang);
+    orb.setAttribute('data-label', t('orb_label'));
+    renderAgentNote();
+    renumberVisits();
+    renderRefRate();
+    renderAgent();
+    if (lastEstimate) renderEstimate(lastEstimate);
+  }
+
+  // ---------- config ----------
+  var config = null;
+  var configReq = 0;
+
+  function loadConfig() {
+    var mine = ++configReq;
+    var st = $('configStatus');
+    if (!config) {
+      clear(st);
+      st.appendChild(h('p', { class: 'muted small' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('config_loading')));
+    }
+    api('/api/v1/public/config?lang=' + lang).then(function (res) {
+      if (mine !== configReq) return;
+      if (!res.ok || !res.data) throw new Error('config ' + res.status);
+      config = res.data;
+      clear(st);
+      renderConfig();
+    }).catch(function () {
+      if (mine !== configReq) return;
+      clear(st);
+      var box = callout('critical', null, t('config_error'));
+      box.appendChild(h('button', { type: 'button', class: 'btn btn-secondary btn-small', onclick: loadConfig, text: t('retry') }));
+      st.appendChild(box);
+      if (!config) {
+        var d = $('disclosures'); clear(d); d.appendChild(h('p', { text: t('footer_error') }));
+        var c = $('consentOpts'); clear(c); c.appendChild(h('p', { class: 'hint', text: t('consent_unavailable') }));
+      }
+    });
+  }
+
+  function checkedValues(name) {
+    return Array.prototype.map.call(document.querySelectorAll('input[name="' + name + '"]:checked'), function (i) { return i.value; });
+  }
+
+  function choice(type, name, value, label, checked, extraAttrs) {
+    var input = h('input', Object.assign({ type: type, name: name, value: value }, extraAttrs || {}));
+    input.checked = !!checked;
+    return h('label', { class: 'choice' }, input, h('span', { class: 'choice-text', text: label }));
+  }
+
+  function renderConfig() {
+    $('demoBanner').hidden = !config.is_demo_data;
+    $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config.market && config.market.name) || t('market_default') });
+    var opts = config.options || {};
+
+    var must = checkedValues('must_have');
+    var mo = $('mustOpts'); clear(mo);
+    (opts.must_haves || []).forEach(function (o) {
+      mo.appendChild(choice('checkbox', 'must_have', o.key, o.label, must.indexOf(o.key) !== -1));
+    });
+    $('mustSet').hidden = !(opts.must_haves || []).length;
+
+    var tl = checkedValues('timeline')[0];
+    var to = $('timelineOpts'); clear(to);
+    (opts.timeline || []).forEach(function (o) { to.appendChild(choice('radio', 'timeline', o.key, o.label, tl === o.key)); });
+
+    var fin = checkedValues('financing')[0];
+    var fo = $('financingOpts'); clear(fo);
+    (opts.financing || []).forEach(function (o) { fo.appendChild(choice('radio', 'financing', o.key, o.label, fin === o.key)); });
+
+    var cons = config.consent || {};
+    var prev = {
+      email: !!(document.querySelector('input[name="consent_email"]:checked')),
+      sms: !!(document.querySelector('input[name="consent_sms"]:checked')),
+      share: !!(document.querySelector('input[name="consent_share"]:checked'))
+    };
+    var co = $('consentOpts'); clear(co);
+    [['email', 'consent_email', 'consent_email_note'], ['sms', 'consent_sms', 'consent_sms_note'], ['share', 'consent_share', 'consent_share_note']].forEach(function (row) {
+      if (!cons[row[0]]) return;
+      var noteId = row[1] + '_note';
+      var wrap = h('div', { class: 'field', style: 'margin-bottom:4px' },
+        choice('checkbox', row[1], '1', cons[row[0]], prev[row[0]], { 'aria-describedby': noteId }),
+        h('p', { class: 'hint', id: noteId, text: t(row[2]) }));
+      co.appendChild(wrap);
+    });
+
+    renderDisclosures();
+    renderRefRate();
+    renderAgent();
+  }
+
+  function renderDisclosures() {
+    var d = $('disclosures'); clear(d);
+    var ds = (config && config.disclosures) || {};
+    ['platform', 'compensation', 'incentives', 'estimates'].forEach(function (k) {
+      if (ds[k]) d.appendChild(h('p', { text: ds[k] }));
+    });
+    if (ds.equal_housing) {
+      d.appendChild(h('p', { class: 'eho' }, ehoIcon(), h('span', { text: ds.equal_housing })));
+    }
+  }
+
+  function ehoIcon() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+    var p1 = document.createElementNS(ns, 'path');
+    p1.setAttribute('d', 'M2 11 12 3l10 8M5 9v12h14V9'); p1.setAttribute('fill', 'none'); p1.setAttribute('stroke', 'currentColor'); p1.setAttribute('stroke-width', '2'); p1.setAttribute('stroke-linejoin', 'round');
+    var p2 = document.createElementNS(ns, 'path');
+    p2.setAttribute('d', 'M8.5 13h7M8.5 16.5h7'); p2.setAttribute('stroke', 'currentColor'); p2.setAttribute('stroke-width', '2');
+    svg.appendChild(p1); svg.appendChild(p2);
+    return svg;
+  }
+
+  function renderRefRate() {
+    var el = $('refRate');
+    var rr = config && config.reference_rate;
+    if (!rr || rr.rate == null) { el.hidden = true; return; }
+    var rate = new Intl.NumberFormat(locale(), { maximumFractionDigits: 3 }).format(Number(rr.rate));
+    el.textContent = t('est_ref_rate', { rate: rate, date: fmtDate(rr.as_of) || rr.as_of || '', source: rr.source || '' });
+    el.hidden = false;
+  }
+
+  function renderAgent() {
+    var block = $('agentBlock');
+    if (!config) { block.hidden = true; return; }
+    var a = config.agent;
+    var line = $('agentLine');
+    if (a && a.name) {
+      line.textContent = t('agent_line', {
+        name: a.name,
+        title: a.title ? ', ' + a.title : '',
+        license: a.license_no || '',
+        brokerage: a.brokerage_name || '',
+        blicense: a.brokerage_license_no || ''
+      });
+    } else {
+      line.textContent = t('agent_none');
+    }
+    block.hidden = false;
+  }
+
+  // ---------- estimator ----------
+  var lastEstimate = null;
+  var lastEstimateBody = null;
+
+  function runEstimate(body, silent) {
+    var st = $('estStatus');
+    var btn = $('estSubmit');
+    btn.disabled = true;
+    if (!silent) {
+      clear(st);
+      st.appendChild(h('p', { class: 'muted small' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('est_working')));
+    }
+    api('/api/v1/public/buying-power?lang=' + lang, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      btn.disabled = false;
+      clear(st);
+      if (res.status === 429) { st.appendChild(callout('critical', null, t('err_rate'))); return; }
+      if (!res.ok || !res.data) {
+        st.appendChild(callout('critical', null, (res.data && res.data.error) || t('err_server')));
+        return;
+      }
+      lastEstimate = res.data;
+      lastEstimateBody = body;
+      renderEstimate(res.data);
+    }).catch(function () {
+      btn.disabled = false;
+      clear(st);
+      st.appendChild(callout('critical', null, t('err_network')));
+    });
+  }
+
+  function renderEstimate(data) {
+    var out = $('estResult'); clear(out);
+    var card = h('div', { class: 'card', style: 'margin-top:16px' });
+    var est = data.estimate;
+    if (est) {
+      var lowP = money(est.price_low), highP = money(est.price_high);
+      card.appendChild(h('p', { class: 'result-label', text: t('est_price') }));
+      card.appendChild(h('p', { class: 'result-figure', text: (lowP && highP) ? lowP + ' – ' + highP : (highP || lowP || '') }));
+      var lowM = money(est.payment_low), highM = money(est.payment_high);
+      if (lowM || highM) {
+        card.appendChild(h('p', { class: 'result-label', text: t('est_payment') }));
+        card.appendChild(h('p', { class: 'result-sub', text: ((lowM && highM) ? lowM + ' – ' + highM : (highM || lowM)) + ' ' + t('per_month') }));
+      }
+      card.appendChild(h('p', { class: 'small', style: 'margin-top:12px', text: t('est_disclaimer') }));
+      if (est.price_high != null && !isNaN(Number(est.price_high))) {
+        card.appendChild(h('button', {
+          type: 'button', class: 'btn btn-secondary', text: t('est_use'),
+          onclick: function () { useBudget(Number(est.price_high)); }
+        }));
+      }
+    } else {
+      card.appendChild(h('h3', { text: t('est_missing_title') }));
+      var ul = h('ul');
+      (data.missing || []).forEach(function (k) {
+        var key = 'missing_' + k;
+        var label = (I18N.en[key] != null) ? t(key) : String(k).replace(/_/g, ' ');
+        ul.appendChild(h('li', { text: label }));
+      });
+      if (!(data.missing || []).length) ul.appendChild(h('li', { text: t('missing_gross_income_annual') }));
+      card.appendChild(ul);
+      card.appendChild(h('p', { class: 'small muted', text: t('est_disclaimer') }));
+    }
+    var as = data.assumptions || [];
+    if (as.length) {
+      card.appendChild(h('h4', { style: 'margin-top:18px', text: t('est_how') }));
+      var tbody = h('tbody');
+      as.forEach(function (a) {
+        tbody.appendChild(h('tr', null,
+          h('th', { scope: 'row', text: a.label || a.key || '' }),
+          h('td', { class: 'money', text: a.value_display || '' }),
+          h('td', { class: 'small muted', text: a.basis || '' })));
+      });
+      card.appendChild(h('div', { class: 'table-wrap' },
+        h('table', null,
+          h('thead', null, h('tr', null,
+            h('th', { scope: 'col', text: t('th_assumption') }),
+            h('th', { scope: 'col', class: 'money', text: t('th_value') }),
+            h('th', { scope: 'col', text: t('th_basis') }))),
+          tbody)));
+    }
+    out.appendChild(card);
+  }
+
+  function useBudget(amount) {
+    var input = $('f_budget');
+    input.value = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount);
+    clearFieldError(input);
+    var st = $('estStatus'); clear(st);
+    st.appendChild(h('p', { class: 'small', text: t('est_used', { amount: money(amount) }) }));
+    input.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
+  }
+
+  $('estForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ids = { gross_income_annual: 'est_income', monthly_debts: 'est_debts', down_payment: 'est_down', target_payment: 'est_target' };
+    var body = {}; var bad = false;
+    Object.keys(ids).forEach(function (k) {
+      var el = $(ids[k]);
+      clearFieldError(el);
+      var v = parseMoney(el.value);
+      if (typeof v === 'number' && isNaN(v)) { bad = true; setFieldError(el, t('est_bad_number')); v = null; }
+      body[k] = v;
+    });
+    if (bad) return;
+    runEstimate(body, false);
+  });
+
+  // ---------- field errors ----------
+  function setFieldError(el, msg) {
+    var wrap = el.tagName === 'FIELDSET' ? el : (el.closest('.field') || el.closest('fieldset'));
+    if (!wrap) return;
+    wrap.classList.add('has-error');
+    var errId = (el.id || wrap.id || 'x') + '-err';
+    var p = $(errId);
+    if (!p) {
+      p = h('p', { class: 'field-error', id: errId });
+      wrap.appendChild(p);
+    }
+    p.textContent = msg;
+    if (el.tagName !== 'FIELDSET') el.setAttribute('aria-invalid', 'true');
+    var db = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    if (db.indexOf(errId) === -1) { db.push(errId); el.setAttribute('aria-describedby', db.join(' ')); }
+  }
+  function clearFieldError(el) {
+    var wrap = el.tagName === 'FIELDSET' ? el : (el.closest('.field') || el.closest('fieldset'));
+    var errId = (el.id || (wrap && wrap.id) || 'x') + '-err';
+    var p = $(errId);
+    if (p) p.parentNode.removeChild(p);
+    if (wrap) wrap.classList.remove('has-error');
+    el.removeAttribute('aria-invalid');
+    var db = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (x) { return x && x !== errId; });
+    if (db.length) el.setAttribute('aria-describedby', db.join(' ')); else el.removeAttribute('aria-describedby');
+  }
+  function clearAllErrors(form) {
+    Array.prototype.forEach.call(form.querySelectorAll('.field-error'), function (p) { p.parentNode.removeChild(p); });
+    Array.prototype.forEach.call(form.querySelectorAll('.has-error'), function (w) { w.classList.remove('has-error'); });
+    Array.prototype.forEach.call(form.querySelectorAll('[aria-invalid]'), function (i) { i.removeAttribute('aria-invalid'); });
+    Array.prototype.forEach.call(form.querySelectorAll('[aria-describedby]'), function (i) {
+      var db = i.getAttribute('aria-describedby').split(/\s+/).filter(function (x) { return x && !/-err$/.test(x); });
+      if (db.length) i.setAttribute('aria-describedby', db.join(' ')); else i.removeAttribute('aria-describedby');
+    });
+  }
+
+  // ---------- agent question ----------
+  function renderAgentNote() {
+    var box = $('agentNote'); clear(box);
+    var v = checkedValues('has_other_agent')[0];
+    if (v === 'yes_under_agreement') box.appendChild(h('div', { class: 'callout callout-verified', style: 'margin-top:10px' }, h('p', { text: t('agent_note_agreement') })));
+    else if (v === 'yes_informal') box.appendChild(h('div', { class: 'callout', style: 'margin-top:10px' }, h('p', { text: t('agent_note_informal') })));
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="has_other_agent"]'), function (r) {
+    r.addEventListener('change', function () { renderAgentNote(); clearFieldError($('agentSet')); });
+  });
+
+  // ---------- prior visits repeater ----------
+  var visitSeq = 0;
+  function addVisit(focus) {
+    var n = ++visitSeq;
+    var bId = 'v_builder_' + n, cId = 'v_comm_' + n, gId = 'v_card_' + n;
+    var row = h('div', { class: 'visit-row', 'data-visit': n },
+      h('div', { class: 'row-actions' },
+        h('strong', { class: 'visit-title' }),
+        h('button', { type: 'button', class: 'btn btn-ghost btn-small visit-remove', onclick: function () {
+          row.parentNode.removeChild(row); renumberVisits(); $('visitAdd').focus();
+        } }, h('span', { 'data-i18n': 'visit_remove', text: t('visit_remove') }))),
+      h('div', { class: 'field' },
+        h('label', { for: bId, 'data-i18n': 'visit_builder', text: t('visit_builder') }),
+        h('input', { id: bId, type: 'text', class: 'v-builder', autocomplete: 'off' })),
+      h('div', { class: 'field' },
+        h('label', { for: cId, 'data-i18n': 'visit_community', text: t('visit_community') }),
+        h('input', { id: cId, type: 'text', class: 'v-community', autocomplete: 'off' })),
+      h('label', { class: 'choice', for: gId, style: 'margin-bottom:8px' },
+        h('input', { id: gId, type: 'checkbox', class: 'v-card' }),
+        h('span', { class: 'choice-text', 'data-i18n': 'visit_card', text: t('visit_card') })));
+    $('visitsList').appendChild(row);
+    renumberVisits();
+    if (focus) $(bId).focus();
+  }
+  function renumberVisits() {
+    var rows = document.querySelectorAll('#visitsList .visit-row');
+    Array.prototype.forEach.call(rows, function (row, i) {
+      row.querySelector('.visit-title').textContent = t('visit_n', { n: i + 1 });
+      row.querySelector('.visit-remove').setAttribute('aria-label', t('visit_remove_n', { n: i + 1 }));
+    });
+    $('visitsNone').hidden = rows.length > 0;
+  }
+  $('visitAdd').addEventListener('click', function () { addVisit(true); });
+
+  // ---------- intake submit ----------
+  var FIELD_MAP = {
+    first_name: 'f_first', email: 'f_email', phone: 'f_phone',
+    target_zips: 'f_zips', place_text: 'f_zips', budget_max: 'f_budget',
+    budget_monthly_max: 'f_monthly', down_payment: 'f_down', beds_min: 'f_beds', baths_min: 'f_baths',
+    radius_miles: 'f_radius', timeline: 'timelineSet', financing: 'financingSet',
+    has_other_agent: 'agentSet', must_haves: 'mustSet', prior_builder_visits: 'visitSet'
+  };
+
+  $('intakeForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var form = e.currentTarget;
+    clearAllErrors(form);
+    var status = $('intakeStatus'); clear(status);
+    var errs = [];
+    function err(id, msg) { errs.push(id); setFieldError($(id), msg); }
+
+    if (!config) {
+      status.appendChild(callout('critical', null, t('err_config_missing')));
+      status.focus();
+      return;
+    }
+
+    var zipRaw = $('f_zips').value.trim();
+    var zipParts = zipRaw ? zipRaw.split(/[\s,;]+/).filter(Boolean) : [];
+    var badZips = zipParts.filter(function (z) { return !/^\d{5}$/.test(z); });
+    var place = $('f_place').value.trim();
+    if (badZips.length) err('f_zips', t('err_zip', { bad: badZips.join(', ') }));
+    else if (!zipParts.length && !place) err('f_zips', t('err_where'));
+
+    var beds = $('f_beds').value;
+    if (!beds) err('f_beds', t('err_required'));
+    var baths = $('f_baths').value;
+
+    var budget = parseMoney($('f_budget').value);
+    if (budget == null) err('f_budget', t('err_required'));
+    else if (isNaN(budget) || budget <= 0) err('f_budget', t('err_amount'));
+    var monthly = parseMoney($('f_monthly').value);
+    if (typeof monthly === 'number' && isNaN(monthly)) err('f_monthly', t('err_amount'));
+    var down = parseMoney($('f_down').value);
+    if (typeof down === 'number' && isNaN(down)) err('f_down', t('err_amount'));
+
+    var timeline = checkedValues('timeline')[0];
+    if (!timeline) err('timelineSet', t('err_choose'));
+    var financing = checkedValues('financing')[0];
+    if (!financing) err('financingSet', t('err_choose'));
+
+    var first = $('f_first').value.trim();
+    if (!first) err('f_first', t('err_required'));
+    var email = $('f_email').value.trim();
+    if (!email) err('f_email', t('err_required'));
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) err('f_email', t('err_email'));
+    var phone = $('f_phone').value.trim();
+
+    var agent = checkedValues('has_other_agent')[0];
+    if (!agent) err('agentSet', t('err_choose'));
+
+    var consentSms = !!document.querySelector('input[name="consent_sms"]:checked');
+    if (consentSms && !phone) err('f_phone', t('err_phone_sms'));
+
+    var visits = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#visitsList .visit-row'), function (row) {
+      var b = row.querySelector('.v-builder'), c = row.querySelector('.v-community');
+      var bv = b.value.trim(), cv = c.value.trim();
+      if (!bv && !cv) { errs.push(b.id); setFieldError(b, t('err_visit')); return; }
+      visits.push({ builder: bv, community: cv, signed_guest_card: row.querySelector('.v-card').checked });
+    });
+
+    if (errs.length) {
+      status.appendChild(callout('critical', null, t('err_fix')));
+      var first_el = $(errs[0]);
+      var focusable = first_el.tagName === 'FIELDSET' ? first_el.querySelector('input') : first_el;
+      if (focusable) focusable.focus();
+      return;
+    }
+
+    var payload = {
+      lang: lang,
+      first_name: first,
+      email: email,
+      phone: phone,
+      website: $('f_website').value,
+      criteria: {
+        target_zips: zipParts,
+        place_text: place,
+        radius_miles: Number($('f_radius').value),
+        budget_max: budget,
+        budget_monthly_max: monthly,
+        down_payment: down,
+        beds_min: Number(beds),
+        baths_min: baths ? Number(baths) : null,
+        timeline: timeline,
+        financing: financing,
+        must_haves: checkedValues('must_have')
+      },
+      gates: { has_other_agent: agent, prior_builder_visits: visits },
+      consents: {
+        email: !!document.querySelector('input[name="consent_email"]:checked'),
+        sms: consentSms,
+        share_with_agent: !!document.querySelector('input[name="consent_share"]:checked')
+      },
+      consent_version: (config.consent && config.consent.version) || null
+    };
+
+    var btn = $('intakeSubmit');
+    btn.disabled = true;
+    btn.textContent = t('submitting');
+    var statusLive = h('p', { class: 'muted small' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('submitting'));
+    status.appendChild(statusLive);
+
+    api('/api/v1/public/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      clear(status);
+      var d = res.data || {};
+      if (res.status === 429) { fail(t('err_rate')); return; }
+      if (res.status === 400) {
+        var missing = Array.isArray(d.missing) ? d.missing : [];
+        var mapped = 0;
+        missing.forEach(function (m) {
+          var key = String(m).split('.').pop();
+          var id = FIELD_MAP[key];
+          if (id && $(id)) {
+            mapped++;
+            setFieldError($(id), key === 'target_zips' || key === 'place_text' ? t('err_where') : t('err_required'));
+          }
+        });
+        fail(mapped ? t('err_fix') : (d.error || t('err_fix')));
+        if (mapped) {
+          var firstErr = form.querySelector('.has-error input, .has-error select, fieldset.has-error input');
+          if (firstErr) firstErr.focus();
+        }
+        return;
+      }
+      if (!res.ok) { fail(d.error || t('err_server')); return; }
+
+      if (d.status === 'stopped_other_agent') {
+        form.hidden = true;
+        var done = $('intakeDone');
+        clear(done);
+        done.appendChild(callout('verified', t('stopped_title'), d.message || t('agent_note_agreement')));
+        done.hidden = false;
+        done.focus();
+        return;
+      }
+      if ((d.status === 'report_ready' || d.status === 'pending_review') && d.report_url) {
+        status.appendChild(h('p', { class: 'small', text: t('opening_report') }));
+        var url = d.report_url;
+        url += (url.indexOf('?') === -1 ? '?' : '&') + 'lang=' + lang;
+        location.assign(url);
+        return;
+      }
+      fail(t('err_server'));
+    }).catch(function () {
+      clear(status);
+      fail(t('err_network'));
+    });
+
+    function fail(msg) {
+      btn.disabled = false;
+      btn.textContent = t('submit');
+      clear(status);
+      status.appendChild(callout('critical', null, msg));
+    }
+  });
+
+  // Clear an input's error as soon as the person edits it.
+  $('intakeForm').addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el || !el.closest) return;
+    if (el.type === 'radio' || el.type === 'checkbox') {
+      var fs = el.closest('fieldset.has-error');
+      if (fs && fs.id) clearFieldError(fs);
+      return;
+    }
+    if (el.getAttribute('aria-invalid')) clearFieldError(el);
+  });
+
+  // ---------- smooth scroll for hero actions ----------
+  Array.prototype.forEach.call(document.querySelectorAll('[data-scroll]'), function (a) {
+    a.addEventListener('click', function (e) {
+      var target = $(a.getAttribute('data-scroll'));
+      if (!target) return;
+      e.preventDefault();
+      var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', location.pathname + location.search + '#' + target.id);
+      var focusEl = target.querySelector('input, select');
+      if (focusEl) setTimeout(function () { focusEl.focus({ preventScroll: true }); }, reduce ? 0 : 450);
+    });
+  });
+
+  // ---------- toggle ----------
+  Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
+    b.addEventListener('click', function () {
+      var l = b.getAttribute('data-lang');
+      if (l !== lang) setLang(l);
+    });
+  });
+
+  // ---------- boot ----------
+  $('year').textContent = String(new Date().getFullYear());
+  setLang(lang, { initial: true });
+  loadConfig();
+})();
+</script>
+<script src="/embed/voice-orb.js" defer></script>
+</body>
+</html>

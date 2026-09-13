@@ -2753,6 +2753,35 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
+// INCENTIVA — new-construction buyer platform, DIGIT2AI x Ole (served at /incentiva/)
+// Buying power + verified builder incentives compared in payment terms; agent
+// console at /incentiva/admin. Not a brokerage, not a lender, nothing auto-sends.
+// =====================================================
+
+let incentivaApp = null;
+let incentivaError = null;
+try {
+  incentivaApp = require('../verticals/incentiva/src/index');
+  app.get('/incentiva', (req, res, next) => {
+    if (!req.originalUrl.split('?')[0].endsWith('/')) return res.redirect('/incentiva/' + (req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''));
+    next();
+  });
+  app.use('/incentiva', incentivaApp);
+  console.log('Incentiva mounted at /incentiva (console /incentiva/admin, health /incentiva/health)');
+} catch (error) {
+  incentivaError = error;
+  console.log('⚠️ Incentiva not available:', error.message);
+}
+
+app.get('/debug/incentiva-error', (req, res) => {
+  res.json({
+    service: 'Incentiva — new-construction buyer platform',
+    available: !incentivaError,
+    error: incentivaError ? { message: incentivaError.message } : null
+  });
+});
+
+// =====================================================
 // AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
 // =====================================================
 

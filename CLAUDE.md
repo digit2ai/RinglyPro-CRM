@@ -357,6 +357,51 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Cifras admisibles:** solo las del PDF de arquitectura y de las capturas — 86 bpm, 10 rpm, 42 ms, 98 %, 126/79; luminancia 127,5, desviación 37,8, contraste 125, bordes Sobel 6,3 %; 30 s de captura rPPG; AES-128 en la trama BLE; Manchester I-V. Ninguna otra.
 
+## Incentiva — new-construction buyer platform (folder: incentiva, DIGIT2AI x Ole)
+
+**Purpose:** a consumer front door for new-home buyers in Tampa Bay. A buyer sees their buying power, every active community near their target ZIP, and each builder's incentives **verified by a licensed agent**, compared in monthly-payment terms, then is connected at no cost to Ole, a licensed Florida sales associate who represents them. Mounted at `/incentiva` (console `/incentiva/admin`). Bilingual EN/ES, emoji-free. Founding plan with Revisions 1-2 in `docs/ventures/incentiva/INCENTIVA-FOUNDING-PLAN.md`.
+
+**The business shape is in the code, so read it before changing billing or copy.** Incentiva is a partnership LLC (DIGIT2AI + Ole) and a **technology company, not a brokerage and not a lender**. Ole is a sales associate under his own broker and **pays the platform a flat fee per consult held**; he also co-owns it, and buyers are told so (the co-owner sentence is added to the share consent and the compensation disclosure). **There is no code path, and a DB CHECK, for any charge tied to an agreement, a registration or a closing**: a transaction-contingent fee is a referral fee only a licensed Florida brokerage may receive. SIT fails the build if one appears.
+
+**Location:** `verticals/incentiva/` — own Express Router (`src/index.js`, `createApp()`), raw SQL through `src/db.js` on `INCENTIVA_DATABASE_URL || CRM_DATABASE_URL || DATABASE_URL` (its own instance is the goal; the partnership should be separable). **`src/db.js` executes `migrations/20260913_incentiva_tables.sql` on boot under an advisory lock**, so the migration IS the schema and cannot drift; every statement must stay idempotent. 22 `nca_` tables + one view, all `tenant_id NOT NULL`. `tenant_id` = the operating entity (`INCENTIVA_TENANT_ID`, default 1); `market_id` = the metro (`tampa-bay`).
+
+**ONLY VERIFIED, FRESH, UNEXPIRED INCENTIVES REACH A BUYER, AND ONLY THROUGH `nca_v_incentives_buyer_safe`.** The report builder reads the view, never the version table (SIT greps it). `engines/freshness.js isBuyerSafe()` restates the rule and is re-applied when a report is READ: a pinned incentive that has since been withdrawn, superseded or expired disappears from the page and a notice says so. Expiry is evaluated in `America/New_York`. Freshness: the earlier of the builder's expiry and 21 days after verification; 10 days when no expiry is published.
+
+**ASYMMETRIC SAFETY.** `services/monitor.js processText()` hides a visible incentive the moment it sees a decrease, a removal or narrowed terms (new lender requirement, earlier close-by), then files a card. A new or larger offer waits for the agent. Rejecting a decrease/removal card restores the hidden offer if still fresh.
+
+**ONLY A LICENSED ACCOUNT CAN CONFIRM.** `can_verify` = role `agent` with a `license_no`. The LLC owner account (`admin`) runs the platform but gets 403 on confirm. Confirm derives `audience` from the FINAL type, so retyping a card to `broker_bonus` can never put agent compensation in the buyer view. Broker bonuses are disclosed to the buyer and never ranked.
+
+**THE MODEL WRITES PROSE, NEVER A FIGURE.** Payments, cash to close and buying power are deterministic (`engines/payment.js`, `buyingPower.js`); cash-to-close rounds each component so the total equals the parts printed. **An unknown HOA or CDD is never zero**: the payment is marked "from". A temporary buydown always carries its Year 3+ payment. Extraction (`engines/extractor.js`, model or keyword fallback) passes `verifyExtraction()` on every path: a headline not verbatim in the source is discarded; an amount, rate or date not in the source is nulled and becomes a verifier question. The narrative (`engines/advisor.js`) is templated in both languages; a model rewrite is discarded if it adds any number or proper noun. `services/llm.js` is the only file that reaches Anthropic.
+
+**COMPLIANCE FAILS CLOSED.** `engines/compliance.js` runs on every report in EN and ES: fair-housing lexicon (block/hold), every figure in prose must exist in the data, five required disclosures, no unverified incentive, no temporary buydown without Year 3+, no unknown fee shown as a complete payment. Block = `compliance_hold`, never releasable. Reports default to **agent approval before the buyer sees them** (`INCENTIVA_REPORT_REVIEW=auto` releases passing reports). An agent **Hold** pulls a released report back; releasing the last hold returns it to review, never straight to the buyer.
+
+**Ranking happens before language.** Fit (`engines/fit.js`) uses property and criteria only; incentives do not add to fit. EN and ES reports list the same communities in the same order (SIT). Communities with no verified incentives are **withheld**, listed as "being confirmed", not ranked.
+
+**Gates and consent.** A buyer under agreement with another agent is stopped and stored with no contact data. Consent rows store the SERVER's wording for that version, not client-sent text. Without `share_with_agent` the buyer has no agent of record and no agent can see them. Row ownership: `agent` sees only their buyers, reports, appointments and billing; `admin` sees the tenant.
+
+**THE FETCH GATE EVADES NOTHING.** robots.txt groups honored (RFC 9309), 10 s per host, descriptive UA, ports 80/443 only, redirects followed by hand with every hop re-checked against private/CGNAT/IPv4-mapped addresses, two 403/429/challenge responses = `blocked`. No proxies, no CAPTCHA solving, no login walls. Builder broker emails are pasted via `POST /agent/ingest/text` (no inbound mail parse yet).
+
+**NOTHING SENDS.** There is no mail, SMS or WhatsApp transport in the vertical (SIT greps). Consult requests become appointments; the agent marks them held.
+
+**Demo data** is fictional (`Sample Builder North`, `Sample Homes Co.`, `Sample Preserve/Lakes/Oaks`, `is_demo`), loaded only by an admin (`POST /agent/demo/seed`, `/demo/reset`) or `INCENTIVA_SEED_DEMO=1`, and every public surface shows a "Sample data" banner while it exists. The demo sets a labelled sample reference rate; real settings default to NULL so payments say "not estimated" until the agent enters a rate with its source and date.
+
+**Endpoints:** `GET /health` · pages `/` `/r/:token` `/login` `/admin` · public `GET /api/v1/public/config` · `POST /buying-power` · `POST /intake` · `GET /reports/:token` · `POST /reports/:token/consult-request` · auth `POST /api/v1/auth/login|logout`, `GET /me` · agent `GET /today` · `GET /verifications`, `POST /verifications/:id/confirm|reject`, `POST /incentives/:id/reconfirm`, `GET|POST /incentives` · `GET|POST /builders` · `GET|POST /communities`, `PATCH /communities/:id`, `POST /communities/:id/fees|homes` · `POST /sources`, `POST /sources/:id/fetch` · `POST /ingest/text` · `GET /reports`, `POST /reports/:id/approve|hold` · `GET /compliance`, `POST /compliance/:id/release` · `GET /buyers`, `GET /buyers/:id` · `POST /appointments/:id/held` · `GET /billing` · `GET|PUT /settings/market` · `POST /demo/seed|reset`. Debug: `/debug/incentiva-error`. Voice orb persona `incentiva` in `src/config/voice-agents.js`.
+
+**Not built yet (stated, not hidden):** e-signature of the buyer agreement, builder registration packets, calendar booking, outbound messaging and nurture alerts, inbound email parsing, knowledge notes for the Advisor, WhatsApp intake, a custom domain.
+
+**SIT:** `node verticals/incentiva/sit.js` → **78/78**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
+
+**Environment Variables:**
+- `INCENTIVA_OWNER_PASSWORD` — admin (LLC) console password. **No default: unset = the console is CLOSED (503).** `INCENTIVA_OWNER_EMAIL` (default `mstagg@digit2ai.com`), `INCENTIVA_OWNER_NAME`.
+- `INCENTIVA_AGENT_EMAIL` / `INCENTIVA_AGENT_PASSWORD` / `INCENTIVA_AGENT_NAME` (Ole) / `INCENTIVA_AGENT_LICENSE` / `INCENTIVA_AGENT_TITLE` — the licensed agent account; without a license number it cannot confirm incentives. `INCENTIVA_BROKERAGE_NAME` / `INCENTIVA_BROKERAGE_LICENSE` — shown in consent and reports. `INCENTIVA_AGENT_CO_OWNER` (default on; `0` removes the co-owner disclosure).
+- `INCENTIVA_JWT_SECRET` (falls back to `JWT_SECRET`) — 12 h agent session cookie `incentiva_token`. `/health` flags a weak or published password.
+- `INCENTIVA_DATABASE_URL` — own Postgres; falls back to `CRM_DATABASE_URL`/`DATABASE_URL`. `INCENTIVA_TENANT_ID` (1).
+- `INCENTIVA_REPORT_REVIEW` — unset = agent approves every report; `auto` = compliance-passing reports go straight to the buyer.
+- `INCENTIVA_CONSULT_FEE_USD` (350) · `INCENTIVA_CONSULT_MONTHLY_CAP` (20) — per-consult billing to the agent.
+- `INCENTIVA_MONITOR_GO=1` — scheduled source fetching every 30 min (off by default). `INCENTIVA_GEOCODE=off` disables Nominatim.
+- `INCENTIVA_EXTRACT_MODEL` / `INCENTIVA_ADVISOR_MODEL` (default `claude-sonnet-5`) — reuse `ANTHROPIC_API_KEY`; unset key = labelled keyword/template path.
+- `INCENTIVA_INTAKE_PER_HOUR` (10) · `INCENTIVA_SEED_DEMO=1` (seed fictional demo data once).
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');

@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Your Incentiva report</title>
+<meta name="theme-color" content="#0A6A64">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="{{BASE}}/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+<div id="demoBanner" class="demo-banner" role="note" hidden data-i18n="demo_banner">Sample data for demonstration</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" id="homeLink" href="{{BASE}}/" aria-label="Incentiva">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect width="64" height="64" rx="12" fill="var(--accent)"/>
+        <path d="M13 30 L32 14 L51 30" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 27 V50 H46 V27" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M24 38.5 L30 44 L40.5 32.5" fill="none" stroke="var(--highlight)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Incentiva</span>
+    </a>
+    <div class="lang-toggle" role="group" aria-label="Language" data-i18n-aria="lang_group">
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false" lang="es">ES</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div id="app" class="wrap wrap-narrow" aria-live="polite" aria-busy="true">
+    <div class="pending-state">
+      <p class="muted"><span class="spinner" aria-hidden="true"></span> <span data-i18n="loading">Loading your report...</span></p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" id="footer" hidden>
+  <div class="wrap wrap-narrow">
+    <h2 data-i18n="disclosures">Disclosures</h2>
+    <div class="disclosures" id="disclosures"></div>
+    <p class="note-ai" id="genNote"></p>
+    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> Incentiva</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var BASE = '{{BASE}}';
+
+  var I18N = {
+    en: {
+      doc_title: 'Your Incentiva report',
+      skip: 'Skip to content',
+      demo_banner: 'Sample data for demonstration',
+      lang_group: 'Language',
+      loading: 'Loading your report...',
+      disclosures: 'Disclosures',
+      gen_model: 'Narrative drafted with AI assistance.',
+      gen_heuristic: 'Narrative assembled from verified data.',
+
+      err_notfound_title: "We couldn't find this report",
+      err_notfound_body: 'Check that the link matches the one we sent you. If it still does not open, you can start a new request.',
+      err_network_title: "We couldn't load your report",
+      err_network_body: 'Check your connection and try again.',
+      err_server_body: 'Something went wrong on our side. Please try again in a minute.',
+      err_rate: 'Too many requests right now. Please wait a few minutes and try again.',
+      retry: 'Try again',
+      start_new: 'Start a new request',
+
+      pending_eyebrow: 'Almost ready',
+      pending_title: '{agent} is reviewing your report.',
+      your_agent: 'Your agent',
+      pending_hi: 'Hi {name}.',
+      pending_body: "You'll get it shortly. This page checks for it automatically, so you can leave it open.",
+      pending_checked: 'Last checked at {time}.',
+      pending_timeout: 'Your report is still being reviewed. Refresh this page later to see it.',
+      refresh: 'Refresh now',
+
+      before_title: 'Before you visit any sales office',
+      before_body: "Many builders only work with a buyer's agent who registers you before your first visit. Talk to your agent first, so you keep your representation at no cost to you.",
+
+      report_eyebrow: 'Your new-construction report',
+      prepared_for: 'Prepared for {name}',
+      m_report: 'Report',
+      m_date: 'Date',
+      m_agent: 'Your licensed agent',
+      agent_pending: 'An agent will be assigned',
+      license: 'License {n}',
+      brokerage_license: 'Brokerage license {n}',
+      print: 'Print or save as PDF',
+
+      asked_title: 'What you asked for',
+      up_to: 'Up to {amount}',
+      beds_plus: '{n}+ bedrooms',
+      baths_plus: '{n}+ bathrooms',
+
+      glance_title: 'At a glance',
+      glance_communities_one: '1 community',
+      glance_communities: '{n} communities',
+      glance_verified_range: 'incentives verified {from} to {to}',
+      glance_verified_one: 'incentives verified {date}',
+      glance_no_incentives: 'no verified incentives yet',
+      glance_withheld_one: '1 still being confirmed',
+      glance_withheld: '{n} still being confirmed',
+
+      take_title: "Your agent's take",
+      items_title: 'Communities that fit',
+      rank: 'Rank {n}',
+      website: 'Community website',
+      ready_label: 'Ready: {v}',
+      bd: '{n} bd',
+      ba: '{n} ba',
+      sqft: '{n} sq ft',
+      no_home: 'No specific home selected yet.',
+      fit: 'Fit',
+      fit_reasons: 'Why it fits',
+      fit_gaps: "What doesn't match",
+      none_noted: 'None noted.',
+      incentives_title: 'Verified incentives',
+      no_incentives: 'No verified incentives for this community right now.',
+      verified_on: 'Verified {date}',
+      verified_missing: 'Verification date not recorded',
+      pick_one: 'Pick one',
+      pick_one_body: 'Only one incentive from this group can be used.',
+      contract_by: 'Contract by',
+      close_by: 'Close by',
+      expires_on: 'Expires',
+      lender_required: "Requires the builder's affiliated lender",
+      lender_any: 'Any lender',
+      lender_unknown: 'Lender requirement not yet confirmed',
+      comp_label: 'Buyer-agent compensation from this builder',
+      comp_cobroke: 'Co-broke: {v}',
+      comp_bonus: 'Bonus: {v}',
+      comp_unknown: 'not yet confirmed',
+      fees_label: 'Fees',
+      not_confirmed: 'not yet confirmed',
+      per_mo: '/mo',
+      per_yr: '/yr',
+      per_other: ' per {p}',
+      pay_caption: 'Estimated monthly payment by scenario',
+      th_scenario: 'Scenario',
+      th_y1: 'Year 1',
+      th_y2: 'Year 2',
+      th_y3: 'Year 3+',
+      th_cash: 'Est. cash to close',
+      from: 'from {v}',
+      not_modeled: 'Not modeled.',
+      na: 'n/a',
+      agent_note: "Agent's note",
+
+      compare_title: 'Incentives side by side',
+      th_community: 'Community',
+      th_incentive: 'Incentive',
+      th_value: 'Value',
+      th_lender: 'Lender',
+      th_y3_mo: 'Year 3+ per month',
+      th_verified: 'Verified',
+
+      watch_title: 'What to watch out for',
+      questions_title: 'Questions to ask',
+      withheld_title: 'Still being confirmed',
+      withheld_body: "These communities may fit, but we don't show their incentives until a licensed agent verifies them.",
+
+      consult_title: 'Talk to your agent first',
+      consult_body: "Tell us when works for you and how you'd like to talk. Your agent will confirm a time.",
+      consult_times: 'When works for you?',
+      consult_times_hint: 'For example: weekday evenings after 6, or Saturday morning.',
+      consult_channel: 'How would you like to talk?',
+      ch_call: 'Phone call',
+      ch_video: 'Video call',
+      ch_text: 'Text message',
+      consult_submit: 'Request a conversation',
+      consult_sending: 'Sending...',
+      consult_err_times: 'Tell us when works for you.',
+      consult_err_channel: 'Choose one.',
+      consult_fix: 'Please check the highlighted fields.',
+      consult_done_title: 'Request sent',
+      consult_done_body: "Your agent will contact you to confirm a time. Please hold off on visiting sales offices until you've talked.",
+      err_generic: "We couldn't send your request. Please try again.",
+      err_network: "We couldn't reach Incentiva. Check your connection and try again.",
+
+      assumptions_title: 'How the estimates were made',
+      th_assumption: 'Assumption',
+      th_basis: 'Basis'
+    },
+    es: {
+      doc_title: 'Su informe de Incentiva',
+      skip: 'Saltar al contenido',
+      demo_banner: 'Datos de muestra para demostración',
+      lang_group: 'Idioma',
+      loading: 'Cargando su informe...',
+      disclosures: 'Avisos legales',
+      gen_model: 'Narración redactada con ayuda de IA.',
+      gen_heuristic: 'Narración elaborada a partir de datos verificados.',
+
+      err_notfound_title: 'No encontramos este informe',
+      err_notfound_body: 'Revise que el enlace coincida con el que le enviamos. Si aun así no abre, puede iniciar una nueva solicitud.',
+      err_network_title: 'No pudimos cargar su informe',
+      err_network_body: 'Revise su conexión e intente de nuevo.',
+      err_server_body: 'Algo falló de nuestro lado. Intente de nuevo en un minuto.',
+      err_rate: 'Hay demasiadas solicitudes en este momento. Espere unos minutos e intente de nuevo.',
+      retry: 'Intentar de nuevo',
+      start_new: 'Iniciar una nueva solicitud',
+
+      pending_eyebrow: 'Casi listo',
+      pending_title: '{agent} está revisando su informe.',
+      your_agent: 'Su agente',
+      pending_hi: 'Hola, {name}.',
+      pending_body: 'Lo recibirá en breve. Esta página lo busca automáticamente, así que puede dejarla abierta.',
+      pending_checked: 'Última revisión a las {time}.',
+      pending_timeout: 'Su informe todavía está en revisión. Recargue esta página más tarde para verlo.',
+      refresh: 'Revisar ahora',
+
+      before_title: 'Antes de visitar cualquier oficina de ventas',
+      before_body: 'Muchos constructores solo trabajan con el agente del comprador que lo registra antes de su primera visita. Hable primero con su agente, para conservar su representación sin costo para usted.',
+
+      report_eyebrow: 'Su informe de construcción nueva',
+      prepared_for: 'Preparado para {name}',
+      m_report: 'Informe',
+      m_date: 'Fecha',
+      m_agent: 'Su agente con licencia',
+      agent_pending: 'Se le asignará un agente',
+      license: 'Licencia {n}',
+      brokerage_license: 'Licencia de correduría {n}',
+      print: 'Imprimir o guardar como PDF',
+
+      asked_title: 'Lo que usted pidió',
+      up_to: 'Hasta {amount}',
+      beds_plus: '{n}+ habitaciones',
+      baths_plus: '{n}+ baños',
+
+      glance_title: 'De un vistazo',
+      glance_communities_one: '1 comunidad',
+      glance_communities: '{n} comunidades',
+      glance_verified_range: 'incentivos verificados del {from} al {to}',
+      glance_verified_one: 'incentivos verificados el {date}',
+      glance_no_incentives: 'aún no hay incentivos verificados',
+      glance_withheld_one: '1 todavía en confirmación',
+      glance_withheld: '{n} todavía en confirmación',
+
+      take_title: 'La opinión de su agente',
+      items_title: 'Comunidades que encajan',
+      rank: 'Posición {n}',
+      website: 'Sitio web de la comunidad',
+      ready_label: 'Disponible: {v}',
+      bd: '{n} hab.',
+      ba: '{n} baños',
+      sqft: '{n} pies²',
+      no_home: 'Aún no hay una vivienda específica seleccionada.',
+      fit: 'Afinidad',
+      fit_reasons: 'Por qué encaja',
+      fit_gaps: 'Lo que no coincide',
+      none_noted: 'Nada señalado.',
+      incentives_title: 'Incentivos verificados',
+      no_incentives: 'Por ahora no hay incentivos verificados para esta comunidad.',
+      verified_on: 'Verificado el {date}',
+      verified_missing: 'Fecha de verificación no registrada',
+      pick_one: 'Elija uno',
+      pick_one_body: 'Solo se puede usar un incentivo de este grupo.',
+      contract_by: 'Contrato antes del',
+      close_by: 'Cierre antes del',
+      expires_on: 'Vence',
+      lender_required: 'Requiere el prestamista afiliado del constructor',
+      lender_any: 'Cualquier prestamista',
+      lender_unknown: 'Requisito de prestamista aún no confirmado',
+      comp_label: 'Compensación del constructor al agente del comprador',
+      comp_cobroke: 'Comisión compartida: {v}',
+      comp_bonus: 'Bono: {v}',
+      comp_unknown: 'aún no confirmada',
+      fees_label: 'Cuotas',
+      not_confirmed: 'aún no confirmado',
+      per_mo: '/mes',
+      per_yr: '/año',
+      per_other: ' por {p}',
+      pay_caption: 'Pago mensual estimado por escenario',
+      th_scenario: 'Escenario',
+      th_y1: 'Año 1',
+      th_y2: 'Año 2',
+      th_y3: 'Año 3+',
+      th_cash: 'Efectivo est. al cierre',
+      from: 'desde {v}',
+      not_modeled: 'No calculado.',
+      na: 'n/d',
+      agent_note: 'Nota de su agente',
+
+      compare_title: 'Incentivos lado a lado',
+      th_community: 'Comunidad',
+      th_incentive: 'Incentivo',
+      th_value: 'Valor',
+      th_lender: 'Prestamista',
+      th_y3_mo: 'Año 3+ por mes',
+      th_verified: 'Verificado',
+
+      watch_title: 'A qué prestar atención',
+      questions_title: 'Preguntas para hacer',
+      withheld_title: 'Todavía en confirmación',
+      withheld_body: 'Estas comunidades podrían encajar, pero no mostramos sus incentivos hasta que un agente con licencia los verifique.',
+
+      consult_title: 'Hable primero con su agente',
+      consult_body: 'Díganos cuándo le conviene y cómo prefiere hablar. Su agente confirmará un horario.',
+      consult_times: '¿Cuándo le conviene?',
+      consult_times_hint: 'Por ejemplo: entre semana después de las 6 p. m., o el sábado por la mañana.',
+      consult_channel: '¿Cómo prefiere hablar?',
+      ch_call: 'Llamada telefónica',
+      ch_video: 'Videollamada',
+      ch_text: 'Mensaje de texto',
+      consult_submit: 'Solicitar una conversación',
+      consult_sending: 'Enviando...',
+      consult_err_times: 'Díganos cuándo le conviene.',
+      consult_err_channel: 'Elija una opción.',
+      consult_fix: 'Revise los campos marcados.',
+      consult_done_title: 'Solicitud enviada',
+      consult_done_body: 'Su agente se pondrá en contacto con usted para confirmar un horario. Por favor, espere a hablar con su agente antes de visitar oficinas de ventas.',
+      err_generic: 'No pudimos enviar su solicitud. Intente de nuevo.',
+      err_network: 'No pudimos conectar con Incentiva. Revise su conexión e intente de nuevo.',
+
+      assumptions_title: 'Cómo se hicieron las estimaciones',
+      th_assumption: 'Supuesto',
+      th_basis: 'Fundamento'
+    }
+  };
+
+  // ---------- state ----------
+  var params = new URLSearchParams(location.search);
+  var paramLang = params.get('lang');
+  var lang = (paramLang === 'es' || paramLang === 'en') ? paramLang
+    : ((navigator.language || '').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
+  var langChosen = paramLang === 'es' || paramLang === 'en';
+
+  var segs = location.pathname.split('/').filter(Boolean);
+  var token = segs.length ? decodeURIComponent(segs[segs.length - 1]) : '';
+
+  var view = { kind: 'loading', data: null };
+  var consult = { times: '', channel: '', sent: false, sending: false, error: null, fieldErrors: {} };
+  var poll = { timer: null, count: 0, max: 30, lastChecked: null, timedOut: false };
+  var POLL_MS = 20000;
+
+  // ---------- helpers ----------
+  function t(key, vars) {
+    var s = (I18N[lang] && I18N[lang][key]);
+    if (s == null) s = I18N.en[key];
+    if (s == null) return key;
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : ''; });
+    return s;
+  }
+  function locale() { return lang === 'es' ? 'es-US' : 'en-US'; }
+  function isNum(v) { return v !== null && v !== '' && typeof v !== 'boolean' && !isNaN(Number(v)); }
+  function money(v) {
+    if (!isNum(v)) return null;
+    return new Intl.NumberFormat(locale(), { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(v));
+  }
+  function moneyOrText(v) {
+    if (v == null || v === '') return null;
+    return isNum(v) ? money(v) : String(v);
+  }
+  function numFmt(v, max) {
+    return new Intl.NumberFormat(locale(), { maximumFractionDigits: max == null ? 1 : max }).format(Number(v));
+  }
+  function parseDate(s) {
+    if (typeof s !== 'string' || !s) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function fmtDate(s) {
+    var d = parseDate(s);
+    return d ? d.toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+  }
+  function dayKey(s) {
+    var d = parseDate(s);
+    return d ? d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() : null;
+  }
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) append(el, arguments[i]);
+    return el;
+  }
+  function append(el, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { append(el, x); }); return; }
+    el.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  function $(id) { return document.getElementById(id); }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+  function safeUrl(u) {
+    if (typeof u !== 'string') return null;
+    try { var p = new URL(u, location.href); return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : null; }
+    catch (e) { return null; }
+  }
+  function svgCheck() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 16 16'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+    var p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', 'M3 8.5 6.5 12 13 4.5'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor');
+    p.setAttribute('stroke-width', '2'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(p);
+    return svg;
+  }
+  function stamp(dateStr) {
+    var d = fmtDate(dateStr);
+    if (!d) return h('span', { class: 'chip chip-caution', text: t('verified_missing') });
+    return h('span', { class: 'stamp' }, svgCheck(), h('span', { text: t('verified_on', { date: d }) }));
+  }
+  function list(items, cls) {
+    var ul = h('ul', cls ? { class: cls } : null);
+    (items || []).forEach(function (x) { if (x != null && x !== '') ul.appendChild(h('li', { text: String(x) })); });
+    return ul;
+  }
+  function homeUrl() { return BASE + '/?lang=' + lang; }
+
+  // ---------- language ----------
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t('doc_title');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+    $('homeLink').setAttribute('href', homeUrl());
+  }
+
+  function setLang(l) {
+    lang = l === 'es' ? 'es' : 'en';
+    langChosen = true;
+    var url = new URL(location.href);
+    url.searchParams.set('lang', lang);
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+    applyStatic();
+    render();
+    // The narrative and labels come from the server in the chosen language.
+    if (view.kind === 'ready') load(false);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
+    b.addEventListener('click', function () {
+      var l = b.getAttribute('data-lang');
+      if (l !== lang) setLang(l);
+    });
+  });
+
+  // ---------- fetch ----------
+  function load(isPoll) {
+    if (!token) { view = { kind: 'notfound' }; render(); return; }
+    fetch(BASE + '/api/v1/public/reports/' + encodeURIComponent(token) + (langChosen ? '?lang=' + lang : ''), { headers: { 'Accept': 'application/json' } })
+      .then(function (r) {
+        return r.text().then(function (txt) {
+          var data = null;
+          try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+          return { status: r.status, ok: r.ok, data: data };
+        });
+      })
+      .then(function (res) {
+        poll.lastChecked = new Date();
+        if (res.status === 404) { stopPoll(); view = { kind: 'notfound' }; render(); return; }
+        if (res.status === 429) {
+          if (isPoll && view.kind === 'pending') { schedulePoll(); render(); return; }
+          view = { kind: 'error', message: t('err_rate') }; render(); return;
+        }
+        if (!res.ok || !res.data) {
+          if (isPoll && view.kind === 'pending') { schedulePoll(); return; }
+          view = { kind: 'error', message: (res.data && res.data.error) || t('err_server_body') }; render(); return;
+        }
+        var d = res.data;
+        if (!langChosen && (d.language === 'es' || d.language === 'en') && d.language !== lang) {
+          lang = d.language;
+          applyStatic();
+        }
+        if (d.status === 'ready') {
+          stopPoll();
+          var wasPending = view.kind === 'pending';
+          view = { kind: 'ready', data: d };
+          render();
+          if (wasPending) { var m = $('main'); if (m) m.focus(); }
+          return;
+        }
+        if (d.status === 'pending_review') {
+          view = { kind: 'pending', data: d };
+          schedulePoll();
+          render();
+          return;
+        }
+        view = { kind: 'error', message: t('err_server_body') }; render();
+      })
+      .catch(function () {
+        if (isPoll && view.kind === 'pending') { schedulePoll(); return; }
+        view = { kind: 'error', message: t('err_network_body'), network: true };
+        render();
+      });
+  }
+
+  function schedulePoll() {
+    if (poll.timer) return;
+    if (poll.count >= poll.max) { poll.timedOut = true; return; }
+    poll.timer = setTimeout(function () {
+      poll.timer = null;
+      poll.count++;
+      load(true);
+    }, POLL_MS);
+  }
+  function stopPoll() {
+    if (poll.timer) { clearTimeout(poll.timer); poll.timer = null; }
+  }
+
+  // ---------- render ----------
+  function render() {
+    var app = $('app');
+    app.setAttribute('aria-busy', view.kind === 'loading' ? 'true' : 'false');
+    clear(app);
+    $('demoBanner').hidden = !(view.data && view.data.is_demo_data);
+    $('footer').hidden = view.kind !== 'ready';
+
+    if (view.kind === 'loading') {
+      app.appendChild(h('div', { class: 'pending-state' },
+        h('p', { class: 'muted' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('loading'))));
+      return;
+    }
+    if (view.kind === 'notfound') {
+      app.appendChild(h('div', { class: 'pending-state' },
+        h('h1', { text: t('err_notfound_title') }),
+        h('p', { class: 'lede', text: t('err_notfound_body') }),
+        h('a', { class: 'btn btn-primary', href: homeUrl(), text: t('start_new') })));
+      return;
+    }
+    if (view.kind === 'error') {
+      app.appendChild(h('div', { class: 'pending-state' },
+        h('h1', { text: t('err_network_title') }),
+        h('div', { class: 'callout callout-critical', role: 'alert' }, h('p', { text: view.message })),
+        h('button', { type: 'button', class: 'btn btn-primary', text: t('retry'), onclick: function () {
+          view = { kind: 'loading', data: null }; render(); load(false);
+        } })));
+      return;
+    }
+    if (view.kind === 'pending') { renderPending(app, view.data); return; }
+    if (view.kind === 'ready') { renderReady(app, view.data); return; }
+  }
+
+  function beforeVisitCallout(extra) {
+    return h('div', { class: 'callout callout-caution' },
+      h('h3', { text: t('before_title') }),
+      h('p', { text: t('before_body') }),
+      extra ? h('p', { text: extra }) : null);
+  }
+
+  function renderPending(app, d) {
+    var agentName = (d.agent && d.agent.name) || t('your_agent');
+    var box = h('div', { class: 'pending-state' });
+    box.appendChild(h('p', { class: 'eyebrow', text: t('pending_eyebrow') }));
+    if (d.buyer_first_name) box.appendChild(h('p', { class: 'muted', style: 'margin-bottom:.4em', text: t('pending_hi', { name: d.buyer_first_name }) }));
+    box.appendChild(h('h1', { text: t('pending_title', { agent: agentName }) }));
+    if (poll.timedOut) {
+      box.appendChild(h('div', { class: 'callout', role: 'status' }, h('p', { text: t('pending_timeout') })));
+    } else {
+      box.appendChild(h('p', { class: 'lede' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('pending_body')));
+    }
+    if (poll.lastChecked) {
+      box.appendChild(h('p', { class: 'small muted', text: t('pending_checked', {
+        time: poll.lastChecked.toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })
+      }) }));
+    }
+    box.appendChild(h('button', { type: 'button', class: 'btn btn-secondary btn-small no-print', style: 'margin-bottom:24px', text: t('refresh'), onclick: function () {
+      stopPoll(); poll.count = 0; poll.timedOut = false; load(true);
+    } }));
+    box.appendChild(beforeVisitCallout());
+    app.appendChild(box);
+  }
+
+  function renderReady(app, d) {
+    // Header block
+    var agent = d.agent;
+    var agentDd = h('dd');
+    if (agent && agent.name) {
+      agentDd.appendChild(document.createTextNode(agent.name + (agent.title ? ', ' + agent.title : '')));
+      if (agent.license_no) agentDd.appendChild(h('span', { class: 'muted small', style: 'display:block' }, t('license', { n: agent.license_no })));
+      if (agent.brokerage_name) agentDd.appendChild(h('span', { class: 'muted small', style: 'display:block' },
+        agent.brokerage_name + (agent.brokerage_license_no ? ' · ' + t('brokerage_license', { n: agent.brokerage_license_no }) : '')));
+    } else {
+      agentDd.textContent = t('agent_pending');
+    }
+    app.appendChild(h('section', { class: 'report-head', 'aria-labelledby': 'rpTitle' },
+      h('p', { class: 'eyebrow', text: t('report_eyebrow') }),
+      h('h1', { id: 'rpTitle', text: t('prepared_for', { name: d.buyer_first_name || '' }) }),
+      h('dl', { class: 'report-meta' },
+        h('div', null, h('dt', { text: t('m_report') }), h('dd', { class: 'mono', text: d.report_no != null ? '#' + d.report_no : '' })),
+        h('div', null, h('dt', { text: t('m_date') }), h('dd', { text: fmtDate(d.generated_at) })),
+        h('div', null, h('dt', { text: t('m_agent') }), agentDd)),
+      h('p', { style: 'margin-top:16px' },
+        h('button', { type: 'button', class: 'btn btn-secondary btn-small no-print', text: t('print'), onclick: function () { window.print(); } }))));
+
+    if (d.notice) app.appendChild(h('p', { class: 'callout', role: 'status', text: d.notice }));
+
+    // What you asked for
+    var cs = d.criteria_summary || {};
+    var chips = [];
+    if (cs.area) chips.push(cs.area);
+    if (isNum(cs.budget_max)) chips.push(t('up_to', { amount: money(cs.budget_max) }));
+    if (isNum(cs.beds_min)) chips.push(t('beds_plus', { n: numFmt(cs.beds_min, 0) }));
+    if (isNum(cs.baths_min)) chips.push(t('baths_plus', { n: numFmt(cs.baths_min, 1) }));
+    if (cs.timeline_label) chips.push(cs.timeline_label);
+    if (cs.financing_label) chips.push(cs.financing_label);
+    (cs.must_haves || []).forEach(function (m) { if (m) chips.push(m); });
+    var chipList = h('ul', { class: 'summary-list' });
+    chips.forEach(function (c) { chipList.appendChild(h('li', null, h('span', { class: 'chip', text: String(c) }))); });
+    app.appendChild(h('section', { 'aria-labelledby': 'askedT', style: 'padding-block:24px' },
+      h('h2', { id: 'askedT', text: t('asked_title') }), chipList));
+
+    // At a glance
+    var items = d.items || [];
+    var withheld = d.withheld || [];
+    var minK = null, maxK = null, minS = null, maxS = null;
+    items.forEach(function (it) {
+      (it.incentives || []).forEach(function (inc) {
+        var k = dayKey(inc.last_verified_at);
+        if (k == null) return;
+        if (minK == null || k < minK) { minK = k; minS = inc.last_verified_at; }
+        if (maxK == null || k > maxK) { maxK = k; maxS = inc.last_verified_at; }
+      });
+    });
+    var parts = [];
+    parts.push(items.length === 1 ? t('glance_communities_one') : t('glance_communities', { n: items.length }));
+    if (minK == null) parts.push(t('glance_no_incentives'));
+    else if (minK === maxK) parts.push(t('glance_verified_one', { date: fmtDate(minS) }));
+    else parts.push(t('glance_verified_range', { from: fmtDate(minS), to: fmtDate(maxS) }));
+    if (withheld.length) parts.push(withheld.length === 1 ? t('glance_withheld_one') : t('glance_withheld', { n: withheld.length }));
+    app.appendChild(h('section', { 'aria-label': t('glance_title'), style: 'padding-block:8px 24px' },
+      h('p', { class: 'glance' }, h('strong', { text: t('glance_title') + ': ' }), parts.join(' · '))));
+
+    var nar = d.narrative || {};
+    if (nar.opening) {
+      app.appendChild(h('section', { 'aria-labelledby': 'takeT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'takeT', text: t('take_title') }),
+        h('p', { class: 'opening', text: nar.opening })));
+    }
+
+    // Items
+    if (items.length) {
+      var itemsSec = h('section', { 'aria-labelledby': 'itemsT', class: 'section-rule', style: 'padding-block:32px 0' },
+        h('h2', { id: 'itemsT', text: t('items_title') }));
+      items.forEach(function (it, i) { itemsSec.appendChild(renderItem(it, i)); });
+      app.appendChild(itemsSec);
+    }
+
+    // Comparison
+    var comp = d.comparison || [];
+    if (comp.length) {
+      var tb = h('tbody');
+      comp.forEach(function (r) {
+        var y3 = moneyOrText(r.year3plus);
+        tb.appendChild(h('tr', null,
+          h('th', { scope: 'row', text: r.community || '' }),
+          h('td', { text: r.incentive || '' }),
+          h('td', { class: 'money', text: r.value_display || '' }),
+          h('td', { text: r.lender_required_label || '' }),
+          h('td', { class: 'money', text: y3 ? y3 + (isNum(r.year3plus) ? t('per_mo') : '') : t('na') }),
+          h('td', null, fmtDate(r.last_verified_at) ? h('span', { class: 'mono small', text: fmtDate(r.last_verified_at) }) : t('na'))));
+      });
+      app.appendChild(h('section', { 'aria-labelledby': 'compT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'compT', text: t('compare_title') }),
+        h('div', { class: 'table-wrap' },
+          h('table', { class: 'table-min' },
+            h('thead', null, h('tr', null,
+              h('th', { scope: 'col', text: t('th_community') }),
+              h('th', { scope: 'col', text: t('th_incentive') }),
+              h('th', { scope: 'col', class: 'money', text: t('th_value') }),
+              h('th', { scope: 'col', text: t('th_lender') }),
+              h('th', { scope: 'col', class: 'money', text: t('th_y3_mo') }),
+              h('th', { scope: 'col', text: t('th_verified') }))),
+            tb))));
+    }
+
+    if ((nar.watch_outs || []).length) {
+      app.appendChild(h('section', { 'aria-labelledby': 'watchT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'watchT', text: t('watch_title') }), list(nar.watch_outs)));
+    }
+    if ((nar.questions_to_ask || []).length) {
+      app.appendChild(h('section', { 'aria-labelledby': 'qT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'qT', text: t('questions_title') }), list(nar.questions_to_ask)));
+    }
+
+    if (withheld.length) {
+      var wl = h('ul');
+      withheld.forEach(function (w) {
+        var name = [w.community, w.builder, w.city].filter(Boolean).join(' · ');
+        wl.appendChild(h('li', null, h('strong', { text: name }), w.reason_label ? h('span', { class: 'muted', text: ' · ' + w.reason_label }) : null));
+      });
+      app.appendChild(h('section', { 'aria-labelledby': 'wT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'wT', text: t('withheld_title') }),
+        h('p', { class: 'muted', text: t('withheld_body') }), wl));
+    }
+
+    // Before you visit + consult
+    var consultSec = h('section', { 'aria-labelledby': 'beforeT', class: 'section-rule', style: 'padding-block:32px' });
+    var before = beforeVisitCallout(nar.next_step || null);
+    before.querySelector('h3').id = 'beforeT';
+    consultSec.appendChild(before);
+    consultSec.appendChild(renderConsult(agent));
+    app.appendChild(consultSec);
+
+    // Assumptions
+    var as = d.assumptions || [];
+    if (as.length) {
+      var atb = h('tbody');
+      as.forEach(function (a) {
+        atb.appendChild(h('tr', null,
+          h('th', { scope: 'row', text: a.label || a.key || '' }),
+          h('td', { class: 'money', text: a.value_display || '' }),
+          h('td', { class: 'small muted', text: a.basis || '' })));
+      });
+      app.appendChild(h('section', { 'aria-labelledby': 'asT', class: 'section-rule', style: 'padding-block:32px' },
+        h('h2', { id: 'asT', text: t('assumptions_title') }),
+        h('div', { class: 'table-wrap' },
+          h('table', null,
+            h('thead', null, h('tr', null,
+              h('th', { scope: 'col', text: t('th_assumption') }),
+              h('th', { scope: 'col', class: 'money', text: t('th_value') }),
+              h('th', { scope: 'col', text: t('th_basis') }))),
+            atb))));
+    }
+
+    // Footer disclosures
+    var dis = $('disclosures'); clear(dis);
+    var ds = d.disclosures || {};
+    ['platform', 'compensation', 'incentives', 'estimates', 'equal_housing'].forEach(function (k) {
+      if (ds[k]) dis.appendChild(h('p', { text: ds[k] }));
+    });
+    $('genNote').textContent = d.generated_by === 'model' ? t('gen_model') : (d.generated_by === 'heuristic' ? t('gen_heuristic') : '');
+  }
+
+  function renderItem(it, idx) {
+    var c = it.community || {};
+    var titleId = 'item-' + idx;
+    var sec = h('article', { class: 'item', 'aria-labelledby': titleId });
+
+    var subParts = [c.builder, c.city, c.county, c.zip].filter(Boolean);
+    var url = safeUrl(c.url);
+    sec.appendChild(h('div', { class: 'item-head' },
+      h('div', { class: 'rank', 'aria-label': t('rank', { n: it.rank != null ? it.rank : idx + 1 }), role: 'img' }, String(it.rank != null ? it.rank : idx + 1)),
+      h('div', null,
+        h('h3', { class: 'item-title', id: titleId, text: c.name || '' }),
+        h('p', { class: 'item-sub', text: subParts.join(' · ') }),
+        url ? h('p', { class: 'small', style: 'margin:4px 0 0' }, h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', text: t('website') })) : null)));
+
+    // Home line
+    var hm = it.home;
+    if (hm) {
+      var hp = [];
+      if (hm.label) hp.push(hm.label);
+      if (isNum(hm.beds)) hp.push(t('bd', { n: numFmt(hm.beds, 0) }));
+      if (isNum(hm.baths)) hp.push(t('ba', { n: numFmt(hm.baths, 1) }));
+      if (isNum(hm.sqft)) hp.push(t('sqft', { n: numFmt(hm.sqft, 0) }));
+      if (isNum(hm.price)) hp.push(money(hm.price));
+      if (hm.ready) hp.push(t('ready_label', { v: fmtDate(hm.ready) || String(hm.ready) }));
+      sec.appendChild(h('p', { class: 'home-line', text: hp.join(' · ') }));
+    } else {
+      sec.appendChild(h('p', { class: 'small muted', style: 'margin:12px 0', text: t('no_home') }));
+    }
+
+    // Fit
+    var fit = it.fit || {};
+    sec.appendChild(h('div', { class: 'fit-grid' },
+      isNum(fit.score) ? h('div', null,
+        h('p', { class: 'result-label', text: t('fit') }),
+        h('p', { class: 'fit-score', style: 'margin:0' }, numFmt(fit.score, 0), h('small', { text: '/100' }))) : null,
+      h('div', { class: 'fit-list fit-good' },
+        h('h4', { text: t('fit_reasons') }),
+        (fit.reasons || []).length ? list(fit.reasons) : h('p', { class: 'small muted', text: t('none_noted') })),
+      h('div', { class: 'fit-list fit-gap' },
+        h('h4', { text: t('fit_gaps') }),
+        (fit.gaps || []).length ? list(fit.gaps) : h('p', { class: 'small muted', text: t('none_noted') }))));
+
+    // Incentives, grouped by choice_group (order preserved from first appearance)
+    sec.appendChild(h('h4', { text: t('incentives_title') }));
+    var incs = it.incentives || [];
+    if (!incs.length) {
+      sec.appendChild(h('p', { class: 'muted', text: t('no_incentives') }));
+    } else {
+      var wrap = h('div', { class: 'incentives' });
+      var groups = {};
+      var order = [];
+      incs.forEach(function (inc) {
+        var g = inc.choice_group;
+        if (g == null || g === '') { order.push({ single: inc }); return; }
+        if (!groups[g]) { groups[g] = []; order.push({ group: g }); }
+        groups[g].push(inc);
+      });
+      order.forEach(function (o) {
+        if (o.single) { wrap.appendChild(renderIncentive(o.single)); return; }
+        var list_ = groups[o.group];
+        if (list_.length === 1) { wrap.appendChild(renderIncentive(list_[0])); return; }
+        var pg = h('div', { class: 'pick-group', role: 'group', 'aria-label': t('pick_one') },
+          h('p', { class: 'pick-label', text: t('pick_one') }),
+          h('p', { class: 'small', style: 'margin:0', text: t('pick_one_body') }));
+        list_.forEach(function (inc) { pg.appendChild(renderIncentive(inc)); });
+        wrap.appendChild(pg);
+      });
+      sec.appendChild(wrap);
+    }
+
+    // Broker compensation + fees
+    var bc = it.broker_compensation || {};
+    var compText;
+    if (bc.co_broke_display || bc.broker_bonus_display) {
+      var cp = [];
+      if (bc.co_broke_display) cp.push(t('comp_cobroke', { v: bc.co_broke_display }));
+      if (bc.broker_bonus_display) cp.push(t('comp_bonus', { v: bc.broker_bonus_display }));
+      compText = cp.join(' · ');
+    } else {
+      compText = t('comp_unknown');
+    }
+    var fees = it.fees || {};
+    function feeText(label, f) {
+      if (!f || !isNum(f.amount)) return label + ' ' + t('not_confirmed');
+      var p = String(f.period || '').toLowerCase();
+      var suffix = /^(mo|month|monthly|mensual|mes)$/.test(p) ? t('per_mo')
+        : /^(yr|year|yearly|annual|annually|anual|año)$/.test(p) ? t('per_yr')
+        : (p ? t('per_other', { p: f.period }) : '');
+      return label + ' ' + money(f.amount) + suffix;
+    }
+    sec.appendChild(h('ul', { class: 'line-facts' },
+      h('li', null, h('span', { class: 'k', text: t('comp_label') + ': ' }), compText),
+      h('li', null, h('span', { class: 'k', text: t('fees_label') + ': ' }), feeText('HOA', fees.hoa) + ' · ' + feeText('CDD', fees.cdd))));
+
+    // Scenarios
+    var sc = it.scenarios || [];
+    if (sc.length) {
+      var tb = h('tbody');
+      sc.forEach(function (s) {
+        var row = h('tr', null, h('th', { scope: 'row', text: s.label || s.key || '' }));
+        if (s.modeled === false) {
+          row.appendChild(h('td', { colspan: '4', class: 'note-cell', text: s.reason || t('not_modeled') }));
+        } else {
+          ['year1', 'year2', 'year3plus', 'cash_to_close'].forEach(function (k) {
+            var v = moneyOrText(s[k]);
+            row.appendChild(h('td', { class: 'money', text: v == null ? t('na') : (s.from ? t('from', { v: v }) : v) }));
+          });
+        }
+        tb.appendChild(row);
+      });
+      sec.appendChild(h('div', { class: 'table-wrap' },
+        h('table', { class: 'table-min' },
+          h('caption', { text: t('pay_caption') }),
+          h('thead', null, h('tr', null,
+            h('th', { scope: 'col', text: t('th_scenario') }),
+            h('th', { scope: 'col', class: 'money', text: t('th_y1') }),
+            h('th', { scope: 'col', class: 'money', text: t('th_y2') }),
+            h('th', { scope: 'col', class: 'money', text: t('th_y3') }),
+            h('th', { scope: 'col', class: 'money', text: t('th_cash') }))),
+          tb)));
+    }
+
+    if (it.take) {
+      sec.appendChild(h('p', { class: 'take' }, h('span', { class: 'k', text: t('agent_note') }), it.take));
+    }
+    return sec;
+  }
+
+  function renderIncentive(inc) {
+    var dates = h('ul', { class: 'incentive-dates' });
+    [['contract_by', inc.contract_by], ['close_by', inc.close_by], ['expires_on', inc.expires_on]].forEach(function (p) {
+      var v = fmtDate(p[1]);
+      if (v) dates.appendChild(h('li', null, t(p[0]) + ' ', h('span', { class: 'mono', text: v })));
+    });
+    var lender = inc.requires_affiliated_lender === true ? h('span', { class: 'chip chip-caution', text: t('lender_required') })
+      : inc.requires_affiliated_lender === false ? h('span', { class: 'chip chip-muted', text: t('lender_any') })
+      : h('span', { class: 'chip chip-muted', text: t('lender_unknown') });
+    return h('div', { class: 'incentive' },
+      h('div', { class: 'incentive-top' },
+        inc.type_label ? h('span', { class: 'chip', text: inc.type_label }) : h('span'),
+        stamp(inc.last_verified_at)),
+      inc.headline ? h('p', { class: 'incentive-headline', text: inc.headline }) : null,
+      inc.value_display ? h('p', { class: 'incentive-value', text: inc.value_display }) : null,
+      inc.conditions_text ? h('p', { class: 'small', style: 'margin:0', text: inc.conditions_text }) : null,
+      dates.childNodes.length ? dates : null,
+      h('div', { class: 'incentive-tags' }, lender));
+  }
+
+  function renderConsult(agent) {
+    var box = h('div', { class: 'card consult', style: 'margin-top:8px' });
+    box.appendChild(h('h3', { text: t('consult_title') }));
+
+    if (consult.sent) {
+      var done = h('div', { class: 'callout callout-verified', role: 'status', tabindex: '-1', id: 'consultDone' },
+        h('h4', { text: t('consult_done_title') }),
+        h('p', { text: t('consult_done_body') }));
+      box.appendChild(done);
+      return box;
+    }
+
+    box.appendChild(h('p', { class: 'muted', text: t('consult_body') }));
+    var fe = consult.fieldErrors || {};
+    var ta = h('textarea', { id: 'c_times', name: 'preferred_times', rows: '3', 'aria-describedby': 'c_times_hint' + (fe.times ? ' c_times_err' : ''), 'aria-invalid': fe.times ? 'true' : null });
+    ta.value = consult.times;
+    ta.addEventListener('input', function () { consult.times = ta.value; });
+
+    var channels = [['call', 'ch_call'], ['video', 'ch_video'], ['text', 'ch_text']];
+    var fs = h('fieldset', { class: 'plain' + (fe.channel ? ' has-error' : ''), id: 'c_channel', 'aria-describedby': fe.channel ? 'c_channel_err' : null },
+      h('legend', { text: t('consult_channel') }));
+    var cl = h('div', { class: 'choice-grid' });
+    channels.forEach(function (c) {
+      var input = h('input', { type: 'radio', name: 'channel', value: c[0] });
+      input.checked = consult.channel === c[0];
+      input.addEventListener('change', function () { consult.channel = c[0]; });
+      cl.appendChild(h('label', { class: 'choice' }, input, h('span', { class: 'choice-text', text: t(c[1]) })));
+    });
+    fs.appendChild(cl);
+    if (fe.channel) fs.appendChild(h('p', { class: 'field-error', id: 'c_channel_err', text: t('consult_err_channel') }));
+
+    var status = h('div', { class: 'status', role: 'alert', 'aria-live': 'assertive', id: 'consultStatus' });
+    if (consult.error) status.appendChild(h('div', { class: 'callout callout-critical' }, h('p', { text: consult.error })));
+
+    var btn = h('button', { type: 'submit', class: 'btn btn-primary', text: consult.sending ? t('consult_sending') : t('consult_submit') });
+    if (consult.sending) btn.disabled = true;
+
+    var form = h('form', { novalidate: true },
+      h('div', { class: 'field' + (fe.times ? ' has-error' : '') },
+        h('label', { for: 'c_times', text: t('consult_times') }),
+        ta,
+        h('p', { class: 'hint', id: 'c_times_hint', text: t('consult_times_hint') }),
+        fe.times ? h('p', { class: 'field-error', id: 'c_times_err', text: t('consult_err_times') }) : null),
+      fs,
+      status,
+      h('div', { style: 'margin-top:12px' }, btn));
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (consult.sending) return;
+      consult.times = ta.value;
+      var errs = {};
+      if (!consult.times.trim()) errs.times = true;
+      if (!consult.channel) errs.channel = true;
+      consult.fieldErrors = errs;
+      if (errs.times || errs.channel) {
+        consult.error = t('consult_fix');
+        render();
+        var f = errs.times ? $('c_times') : document.querySelector('#c_channel input');
+        if (f) f.focus();
+        return;
+      }
+      consult.error = null;
+      consult.sending = true;
+      render();
+      fetch(BASE + '/api/v1/public/reports/' + encodeURIComponent(token) + '/consult-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ preferred_times: consult.times.trim(), channel: consult.channel })
+      }).then(function (r) {
+        return r.text().then(function (txt) {
+          var data = null;
+          try { data = txt ? JSON.parse(txt) : null; } catch (e2) { data = null; }
+          return { status: r.status, ok: r.ok, data: data };
+        });
+      }).then(function (res) {
+        consult.sending = false;
+        if (res.ok && res.data && res.data.ok) {
+          consult.sent = true;
+          render();
+          var dn = $('consultDone'); if (dn) dn.focus();
+          return;
+        }
+        consult.error = res.status === 429 ? t('err_rate') : ((res.data && res.data.error) || t('err_generic'));
+        render();
+        var st = $('consultStatus'); if (st) st.scrollIntoView({ block: 'center' });
+      }).catch(function () {
+        consult.sending = false;
+        consult.error = t('err_network');
+        render();
+      });
+    });
+
+    box.appendChild(form);
+    return box;
+  }
+
+  // ---------- boot ----------
+  $('year').textContent = String(new Date().getFullYear());
+  applyStatic();
+  render();
+  load(false);
+})();
+</script>
+</body>
+</html>
