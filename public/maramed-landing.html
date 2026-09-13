@@ -11,8 +11,9 @@
 <meta property="og:title" content="MaraMed · Gestión proactiva de poblaciones de salud" />
 <meta property="og:description" content="Identifica al afiliado sin guardar su rostro, prioriza su consulta con protocolo Manchester y entrega al médico una lectura adicional que declara cuándo puede equivocarse." />
 <link rel="canonical" href="https://maramed.app/" />
-<link rel="icon" type="image/svg+xml" href="/maramed-icon.svg" />
-<link rel="apple-touch-icon" href="/maramed-icon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="/maramed-favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="/maramed-icon-192.png" />
+<link rel="apple-touch-icon" href="/maramed-apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -44,7 +45,10 @@ svg.i.f{fill:currentColor;stroke:none}
 /* ---------- nav ---------- */
 .nav{position:sticky;top:0;z-index:50;height:var(--nav-h);background:rgba(9,17,30,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav .wrap{height:100%;display:flex;align-items:center;gap:18px}
-.nav .logo img{height:34px;width:auto;display:block}
+.brandmark{display:flex;align-items:center;gap:10px}
+.brandmark img{width:44px;height:44px;display:block;border-radius:50%}
+.brandmark .wm{font-weight:700;font-size:20px;letter-spacing:-.01em;line-height:1}
+.brandmark .wm span{color:var(--teal2)}
 .nav .links{display:flex;gap:4px;margin-left:10px}
 .nav .links a{font-size:14.5px;color:var(--mut);padding:10px 12px;border-radius:8px}
 .nav .links a:hover{color:var(--ink);background:var(--panel)}
@@ -244,27 +248,6 @@ section.band.active{background:rgba(13,148,136,.05)}
 .ble{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
 @media (max-width:900px){.ble{grid-template-columns:1fr}}
 
-/* ---------- architecture ---------- */
-.arch{display:flex;flex-direction:column;gap:10px;align-items:stretch}
-.alayer{border:1px solid var(--line2);border-radius:14px;padding:16px 18px;background:var(--panel);display:flex;flex-direction:column;gap:12px}
-.alayer.cli{border-color:#155e57;background:linear-gradient(180deg,rgba(13,148,136,.10),rgba(15,23,42,.7))}
-.alayer.srv{border-color:#4a35a0;background:linear-gradient(180deg,rgba(139,92,246,.10),rgba(15,23,42,.7))}
-.altitle{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--mut)}
-.anodes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.anode{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:rgba(9,17,30,.6);display:flex;flex-direction:column;gap:3px}
-.anode .an{font-size:15px;font-weight:600;line-height:1.3}
-.anode .ad{font-size:13px;color:var(--mut);line-height:1.45}
-.apipe{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--teal2);padding:2px 0}
-.apipe .ln{width:1px;height:18px;background:linear-gradient(180deg,var(--teal),transparent)}
-@media (max-width:760px){.anodes{grid-template-columns:1fr}}
-.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-top:22px}
-table.t{width:100%;min-width:640px;border-collapse:collapse;font-size:14.5px}
-table.t th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:12px 16px;border-bottom:1px solid var(--line2)}
-table.t td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--ink2);line-height:1.5;vertical-align:top}
-table.t tr:last-child td{border-bottom:none}
-table.t td b{color:var(--ink);font-weight:600}
-table.t td.mono{font-size:13px}
-
 /* ---------- privacy / status ---------- */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -323,16 +306,15 @@ table.t td.mono{font-size:13px}
 
 <nav class="nav">
   <div class="wrap">
-    <a class="logo" href="#top" aria-label="MaraMed"><img src="/maramed-logo.svg" alt="MaraMed" width="142" height="34" /></a>
+    <a class="brandmark" href="#top" aria-label="MaraMed"><img src="/maramed-medallion.png" alt="" width="44" height="44" /><span class="wm">Mara<span>Med</span></span></a>
     <div class="links">
       <a href="#modulos" data-en="Modules">Módulos</a>
-      <a href="#arquitectura" data-en="Architecture">Arquitectura</a>
       <a href="#privacidad" data-en="Privacy">Privacidad</a>
       <a href="#estado" data-en="Status">Estado</a>
     </div>
     <span class="sp"></span>
     <button class="langbtn" id="langBtn" type="button" aria-label="Cambiar idioma / Change language">EN</button>
-    <a class="btn pri" href="https://maramed.vercel.app/" rel="noopener"><span data-en="Open">Abrir</span><span class="long">&nbsp;MaraMed</span></a>
+    <a class="btn pri" href="https://maramed.vercel.app/" rel="noopener"><span data-en="Open">Abrir</span><span class="long">MaraMed</span></a>
   </div>
 </nav>
 
@@ -391,24 +373,24 @@ table.t td.mono{font-size:13px}
     </div>
 
     <!-- narración -->
-    <div class="narr" aria-label="Narración de la página">
+    <div class="narr" aria-label="Narración de Mara">
       <div class="norb" id="norb"></div>
       <div class="meta">
-        <div class="who">Dalia <span data-en="· Digit2AI neural voice">· voz neuronal de Digit2AI</span></div>
+        <div class="who">Mara <span data-en="· MaraMed AI voice">· Voz AI de MaraMed</span></div>
         <div class="ctrls">
-          <button class="ctl pri" id="playAll" type="button"><svg class="i f"><use href="#i-play"/></svg><span data-en="Let Dalia explain<span class=&quot;long&quot;> MaraMed</span>">Que Dalia explique<span class="long"> MaraMed</span></span></button>
+          <button class="ctl pri" id="playAll" type="button"><svg class="i f"><use href="#i-play"/></svg><span data-en="Let Mara explain<span class=&quot;long&quot;> MaraMed</span>">Que Mara explique<span class="long"> MaraMed</span></span></button>
           <button class="ctl sq" id="pauseBtn" type="button" disabled aria-label="Pausar"><svg class="i f"><use href="#i-pause"/></svg></button>
           <button class="ctl sq" id="stopBtn" type="button" disabled aria-label="Detener"><svg class="i f"><use href="#i-stop"/></svg></button>
         </div>
-        <div class="nstatus" id="nstatus" aria-live="polite" data-en="Press the button and Dalia will walk you through the page, section by section.">Pulsa el botón y Dalia recorre la página, sección por sección.</div>
+        <div class="nstatus" id="nstatus" aria-live="polite" data-en="Press the button and Mara will walk you through the page, section by section.">Pulsa el botón y Mara recorre la página, sección por sección.</div>
         <div class="nopt">
           <label><input type="checkbox" id="neuralToggle" checked /> <span data-en="Neural HD voice">Voz neuronal HD</span></label>
           <label><span data-en="Accent">Acento</span>
             <select id="voiceSel" aria-label="Acento">
-              <option value="dalia" selected>México (Dalia)</option>
-              <option value="paloma">EE. UU. (Paloma)</option>
-              <option value="salome">Colombia (Salomé)</option>
-              <option value="elvira">España (Elvira)</option>
+              <option value="dalia" selected>México</option>
+              <option value="paloma">EE. UU.</option>
+              <option value="salome">Colombia</option>
+              <option value="elvira">España</option>
             </select>
           </label>
           <span id="voiceMode" class="mono" style="color:var(--teal2)"></span>
@@ -768,49 +750,6 @@ table.t td.mono{font-size:13px}
   </div>
 </section>
 
-<!-- ================= ARQUITECTURA ================= -->
-<section class="band sec" id="arquitectura" data-seg="arch">
-  <div class="wrap">
-    <div class="shead">
-      <span class="eyebrow" data-en="Architecture">Arquitectura</span>
-      <h2 data-en="Decentralized client-server: what is sensitive stays on the phone">Cliente-servidor descentralizada: lo sensible se queda en el teléfono</h2>
-      <p data-en="Artificial intelligence, computer vision and optical telemetry are integrated without installing native applications.">Integra inteligencia artificial distribuida, visión por computadora y telemetría óptica sin necesidad de instalar aplicaciones nativas.</p>
-    </div>
-    <div class="arch">
-      <div class="alayer cli">
-        <span class="altitle"><span class="chip acc" data-en="Client device · PWA">Dispositivo cliente · PWA</span><span data-en="local processing">procesamiento local</span></span>
-        <div class="anodes">
-          <div class="anode"><span class="an" data-en="Local facial authentication">Autenticación facial local</span><span class="ad">TensorFlow.js · face-api.js</span></div>
-          <div class="anode"><span class="an" data-en="Voice capture and transcription">Captura de voz y transcripción</span><span class="ad">Web Speech API</span></div>
-          <div class="anode"><span class="an" data-en="rPPG optical telemetry">Telemetría óptica rPPG</span><span class="ad">Shen.AI Engine</span></div>
-        </div>
-      </div>
-      <div class="apipe"><span class="ln"></span>HTTPS / WSS &nbsp;+&nbsp; JWT &nbsp;+&nbsp; RLS<span class="ln"></span></div>
-      <div class="alayer srv">
-        <span class="altitle"><span class="chip vi" data-en="Backend servers and cloud">Servidores backend y nube</span><span data-en="orchestration and inference">orquestación e inferencia</span></span>
-        <div class="anodes">
-          <div class="anode"><span class="an">Supabase PostgreSQL</span><span class="ad" data-en="authentication, row-level security, encrypted storage">autenticación, seguridad a nivel de fila, almacenamiento cifrado</span></div>
-          <div class="anode"><span class="an" data-en="Google Apps Script · serverless proxies">Google Apps Script · proxies serverless</span><span class="ad" data-en="orchestration">orquestación</span></div>
-          <div class="anode"><span class="an">Gemini LLM API</span><span class="ad" data-en="Manchester triage engine and clinical report">motor de triaje Manchester y reporte clínico</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tscroll">
-      <table class="t">
-        <thead><tr><th style="width:20%" data-en="Module">Módulo</th><th style="width:32%" data-en="Technology stack">Stack tecnológico</th><th data-en="Protection mechanism / IP">Mecanismo de protección / IP</th></tr></thead>
-        <tbody>
-          <tr><td><b data-en="Facial biometrics">Biometría facial</b></td><td class="mono">face-api.js + TensorFlow.js + Supabase RLS</td><td data-en="Proprietary local validation of feature vectors without storing photographs.">Algoritmo propietario de validación local de vectores de características sin guardar fotografías.</td></tr>
-          <tr><td><b data-en="Conversational triage">Triaje conversacional</b></td><td class="mono">Web Speech API + Gemini LLM API + proxies serverless</td><td data-en="Intermediate middleware on our own server that validates and sanitizes prompts before calling the AI.">Middleware intermedio en servidor propio que valida y sanea las instrucciones antes de llamar a la IA.</td></tr>
-          <tr><td><b data-en="rPPG vital signs">Signos vitales rPPG</b></td><td class="mono">Shen.AI Engine (Web SDK)</td><td data-en="Seamless integration in a web app without app-store download friction.">Integración fluida en entorno web sin fricción de descargas en tiendas de aplicaciones.</td></tr>
-          <tr><td><b data-en="RayScan radiology">RayScan radiología</b></td><td class="mono">WebGL + Canvas + visión AI</td><td data-en="Assisted analysis flow under a clinical decision-support (CAD) architecture.">Flujo de análisis asistido bajo arquitectura de soporte a la decisión clínica (CAD).</td></tr>
-          <tr><td><b data-en="Persistence layer">Capa de persistencia</b></td><td class="mono">Supabase (PostgreSQL) + Row Level Security</td><td data-en="Strict isolation of patient records per prepaid-medicine company.">Aislamiento estricto de expedientes de pacientes por empresa de medicina prepagada.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
 <!-- ================= PRIVACIDAD ================= -->
 <section class="band sec" id="privacidad" data-seg="priv">
   <div class="wrap">
@@ -900,7 +839,7 @@ table.t td.mono{font-size:13px}
 <footer class="foot">
   <div class="wrap">
     <div style="display:flex;flex-direction:column;gap:8px">
-      <img src="/maramed-logo.svg" alt="MaraMed" width="126" height="30" style="height:30px;width:auto" />
+      <span class="brandmark"><img src="/maramed-medallion.png" alt="" width="56" height="56" style="width:56px;height:56px" /><span class="wm">Mara<span>Med</span></span></span>
       <span data-en="ISTC · Ingeniería y Servicios Tecnológicos Colón × Digit2AI">ISTC · Ingeniería y Servicios Tecnológicos Colón × Digit2AI</span>
     </div>
     <div class="fl">
@@ -959,27 +898,25 @@ table.t td.mono{font-size:13px}
 (function(){
   var SEG = {
     es: [
-      { sec:'hero',  t:'Hola, soy Dalia, la voz de inteligencia artificial de Digit2AI. Te presento MaraMed, la plataforma de ISTC, Ingeniería y Servicios Tecnológicos Colón, para el monitoreo, la priorización y la gestión proactiva de poblaciones de salud. Digit2AI aporta la capa de inteligencia artificial.' },
+      { sec:'hero',  t:'Hola, soy Mara, la voz de inteligencia artificial de MaraMed. Te presento MaraMed, la plataforma de ISTC, Ingeniería y Servicios Tecnológicos Colón, para el monitoreo, la priorización y la gestión proactiva de poblaciones de salud. Digit2AI aporta la capa de inteligencia artificial.' },
       { sec:'aud',   t:'Se vende a la institución y lo usa el afiliado. Empresas de medicina prepagada, aseguradoras y redes hospitalarias la contratan; el afiliado la recibe como un enlace y la usa desde su teléfono, sin descargar nada.' },
       { sec:'m1',    t:'Módulo uno, acceso biométrico. El afiliado se identifica con su rostro antes de la consulta. Los descriptores faciales se extraen en la memoria del teléfono, y ninguna imagen del rostro se envía ni se guarda en un servidor.' },
       { sec:'m2',    t:'Módulo dos, triaje por voz. El paciente cuenta sus síntomas con las manos libres a MARA. La transcripción se sanea, y la respuesta de la inteligencia artificial se obliga a un esquema estructurado que clasifica la gravedad en el protocolo Manchester, del nivel uno al cinco, con la conducta sugerida.' },
       { sec:'m3',    t:'Módulo tres, signos vitales con la cámara. En unos treinta segundos, la técnica de fotopletismografía remota lee los cambios de color de la piel causados por el flujo sanguíneo, y estima frecuencia cardíaca, variabilidad, respiración y oxígeno. Cada valor lleva su propio nivel de confianza, y cuando la confianza es baja, la plataforma lo dice.' },
       { sec:'m4',    t:'Módulo cuatro, RayScan. Un motor local mide los píxeles de la imagen, y después la inteligencia artificial aporta una lectura adicional, como tercer opositor. Todo lo que dice el modelo va marcado, y el propio informe advierte que la inteligencia artificial puede equivocarse y que requiere validación por un radiólogo certificado.' },
       { sec:'m5',    t:'Módulo cinco, hardware. Dispositivos portátiles de electrocardiografía se conectan por Bluetooth de baja energía, con tramas cifradas en el propio firmware. Este módulo está especificado, pero no forma parte de la demostración pública.' },
-      { sec:'arch',  t:'La arquitectura es cliente servidor descentralizada. En el dispositivo corren la autenticación facial, la voz y la telemetría óptica. En la nube están la base de datos con seguridad a nivel de fila, los proxies de orquestación y el modelo que resuelve el triaje.' },
       { sec:'priv',  t:'La privacidad está en el diseño. Las imágenes del rostro y el video de la cámara se quedan en el equipo. Al servidor sube el resultado del cálculo, no el material biométrico que lo produjo.' },
       { sec:'estado',t:'Y lo decimos claro: MaraMed es una prueba de concepto. No tiene una cifra de desempeño clínico validada ni registro sanitario, y sus lecturas son estimaciones que se publican con su confianza.' },
       { sec:'close', t:'El siguiente paso es un piloto con una cartera acotada de afiliados, midiendo el acierto del triaje contra la decisión final del médico. Si quieres conversarlo, escríbenos desde esta página.' }
     ],
     en: [
-      { sec:'hero',  t:'Hi, I am the Digit2AI neural voice. This is MaraMed, the platform by ISTC for proactive monitoring, prioritization and management of health populations. Digit2AI provides the artificial intelligence layer.' },
+      { sec:'hero',  t:'Hi, I am Mara, the MaraMed AI voice. This is MaraMed, the platform by ISTC for proactive monitoring, prioritization and management of health populations. Digit2AI provides the artificial intelligence layer.' },
       { sec:'aud',   t:'It is sold to the institution and used by the member. Prepaid medicine companies, insurers and hospital networks contract it; the member gets a link and uses it from their phone, with nothing to download.' },
       { sec:'m1',    t:'Module one, biometric access. The member is identified by their face before the consultation. Facial descriptors are extracted in the phone memory, and no face image is sent to or stored on a server.' },
       { sec:'m2',    t:'Module two, voice triage. The patient describes symptoms hands free to MARA. The transcript is sanitized, and the AI answer is forced into a structured schema that classifies severity on the Manchester protocol, levels one to five, with the suggested course of action.' },
       { sec:'m3',    t:'Module three, vital signs from the camera. In about thirty seconds, remote photoplethysmography reads skin color changes caused by blood flow and estimates heart rate, variability, breathing and oxygen. Every value carries its own confidence level, and when confidence is low, the platform says so.' },
       { sec:'m4',    t:'Module four, RayScan. A local engine measures the image pixels, and then the AI adds a further reading, as a third opinion. Everything the model says is labeled, and the report itself warns that the AI can be wrong and requires validation by a certified radiologist.' },
       { sec:'m5',    t:'Module five, hardware. Portable electrocardiography devices connect over Bluetooth Low Energy, with frames encrypted in the firmware itself. This module is specified, but it is not part of the public demonstration.' },
-      { sec:'arch',  t:'The architecture is decentralized client server. Facial authentication, voice and optical telemetry run on the device. The cloud holds the database with row level security, the orchestration proxies and the model that performs triage.' },
       { sec:'priv',  t:'Privacy is in the design. Face images and camera video stay on the device. What reaches the server is the result of the calculation, not the biometric material that produced it.' },
       { sec:'estado',t:'And we say it plainly: MaraMed is a proof of concept. It has no validated clinical performance figure and no health registration, and its readings are estimates published with their confidence.' },
       { sec:'close', t:'The next step is a pilot with a bounded member portfolio, measuring triage accuracy against the physician final decision. If you want to talk about it, write to us from this page.' }
@@ -1026,7 +963,7 @@ table.t td.mono{font-size:13px}
     var el = document.querySelector('[data-seg="' + sec + '"]');
     if (el) { el.classList.add('active'); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }
-  function speaking(){ status.textContent = txt('Dalia está hablando', 'Speaking') + ' · ' + (qi + 1) + ' / ' + segs().length; }
+  function speaking(){ status.textContent = txt('Mara está hablando', 'Mara is speaking') + ' · ' + (qi + 1) + ' / ' + segs().length; }
 
   function run(token){
     if (token !== runToken) return;
