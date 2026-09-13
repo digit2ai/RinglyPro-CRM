@@ -58,7 +58,7 @@ function createApp(opts = {}) {
       try { await db.ensureSchema(); await db.q('SELECT 1 AS ok'); dbOk = true; } catch (e) { dbErr = e.message.slice(0, 120); }
     }
     res.json({
-      ok: dbOk, service: 'incentiva', database: dbOk ? 'connected' : (db.configured ? 'error' : 'not_configured'), database_error: dbErr,
+      ok: dbOk, service: 'buyersline', database: dbOk ? 'connected' : (db.configured ? 'error' : 'not_configured'), database_error: dbErr,
       model_configured: llm.configured(), monitor_enabled: process.env.INCENTIVA_MONITOR_GO === '1',
       agent_console: auth.configured() ? 'configured' : 'closed', weak_password: auth.configured() ? auth.weakPassword() : null,
       agent_account: !!(process.env.INCENTIVA_AGENT_EMAIL && process.env.INCENTIVA_AGENT_PASSWORD),
