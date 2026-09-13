@@ -668,6 +668,38 @@ main > section:nth-of-type(even) { background: var(--band); }
 input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
 input[type="password"], input[type="search"], select, textarea { border-radius: 12px; }
 
+
+/* ---------- Workflow strip (animated by flow.js; fully visible without it) ---------- */
+.flow h2 { margin-bottom: 8px; }
+.flow-scroll { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; margin: 12px calc(-1 * var(--gutter)) 0; padding: 8px var(--gutter) 12px; scrollbar-width: thin; }
+.flow-track { position: relative; min-width: 940px; padding-top: 4px; }
+.flow-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; position: relative; }
+.flow-step { margin: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; scroll-snap-align: center; }
+.flow-line { position: absolute; left: calc(100% / 14); right: calc(100% / 14); top: 36px; height: 4px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+.flow-fill { position: absolute; inset: 0 auto 0 0; width: 100%; background: var(--brand); border-radius: 4px; transition: width 1.1s cubic-bezier(.45, .05, .2, 1); }
+.flow-runner { position: absolute; top: 30px; left: calc(100% / 14); width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand) 22%, transparent); opacity: 0; transition: left 1.1s cubic-bezier(.45, .05, .2, 1), opacity .3s; z-index: 2; pointer-events: none; }
+.flow.is-animated .flow-runner { opacity: 1; }
+.flow.is-animated .flow-fill { width: 0; }
+.flow-node { position: relative; z-index: 1; width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--ink); border: 2px solid var(--rule); box-shadow: var(--shadow); transition: background-color .35s, color .35s, border-color .35s, transform .35s; }
+.flow-node svg { width: 30px; height: 30px; }
+.flow-num { position: absolute; top: -4px; right: -4px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: var(--navy); color: var(--navy-ink); font: 800 .78rem/24px var(--font-body); }
+.flow-step[data-actor="ai"] .flow-node { border-color: color-mix(in srgb, var(--brand) 55%, var(--rule)); }
+.flow-step[data-actor="agent"] .flow-node { border-color: color-mix(in srgb, var(--verified) 60%, var(--rule)); }
+.flow-actor { font: 800 .7rem/1.2 var(--font-body); letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; margin-top: 6px; background: var(--surface-2); color: var(--muted); }
+.flow-step[data-actor="ai"] .flow-actor { background: var(--accent-soft); color: var(--accent); }
+.flow-step[data-actor="agent"] .flow-actor { background: var(--verified-bg); color: var(--verified); }
+.flow-t { font-weight: 800; font-size: 1rem; line-height: 1.25; color: var(--ink); }
+.flow-p { font-size: .88rem; color: var(--muted); line-height: 1.4; max-width: 20ch; }
+.flow.is-animated .flow-step .flow-node { opacity: .55; }
+.flow.is-animated .flow-step .flow-t, .flow.is-animated .flow-step .flow-p, .flow.is-animated .flow-step .flow-actor { opacity: .6; transition: opacity .35s; }
+.flow.is-animated .flow-step.is-done .flow-node, .flow.is-animated .flow-step.is-active .flow-node { opacity: 1; }
+.flow.is-animated .flow-step.is-done .flow-t, .flow.is-animated .flow-step.is-done .flow-p, .flow.is-animated .flow-step.is-done .flow-actor,
+.flow.is-animated .flow-step.is-active .flow-t, .flow.is-animated .flow-step.is-active .flow-p, .flow.is-animated .flow-step.is-active .flow-actor { opacity: 1; }
+.flow-step.is-active .flow-node { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); transform: scale(1.08); }
+.flow-step.is-done .flow-node { border-color: var(--brand); color: var(--brand); }
+@media (min-width: 1000px) { .flow-scroll { overflow: visible; margin: 12px 0 0; padding: 8px 0 0; } .flow-track { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .flow-fill, .flow-runner, .flow-node { transition: none; } }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
@@ -676,7 +708,7 @@ input[type="password"], input[type="search"], select, textarea { border-radius: 
     --caution: #6b4500; --caution-bg: #fff; --critical: #8a1d22; --critical-bg: #fff; --shadow: none;
   }
   body { font-size: 11pt; background: #fff; }
-  .no-print, .site-header, .lang-toggle, .theme-toggle, form, .consult, [data-voice-orb], .skip-link, .btn { display: none !important; }
+  .no-print, .site-header, .lang-toggle, .theme-toggle, .flow-runner, form, .consult, [data-voice-orb], .skip-link, .btn { display: none !important; }
   .table-wrap { overflow: visible; border: 1px solid #bbb; }
   .table-min { min-width: 0; }
   .item { break-inside: auto; page-break-before: auto; }

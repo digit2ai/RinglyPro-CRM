@@ -256,15 +256,25 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       assert(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s), 'emoji in ' + path.basename(f));
     }
   });
-  await t('dark is the default theme on every page, light is an explicit saved choice with a toggle', () => {
+  await t('light is the default theme on every page, dark is an explicit saved choice with a toggle', () => {
     for (const f of ['index.html', 'report.html', 'login.html', 'admin.html']) {
       const html = read(path.join(ROOT, 'public', f));
-      assert(/<html[^>]*data-theme="dark"/.test(html), f + ' does not ship dark');
+      assert(/<html[^>]*data-theme="light"/.test(html), f + ' does not ship light');
       const head = html.slice(0, html.indexOf('</head>'));
-      assert(/t==='light'\?'light':'dark'/.test(head), f + ' head script does not default to dark');
+      assert(/t==='dark'\?'dark':'light'/.test(head), f + ' head script does not default to light');
       assert(head.indexOf('incentiva_theme') < Math.max(head.indexOf('site.css'), head.indexOf('<style>')), f + ' theme applied after styles (flash)');
       assert(/data-theme-toggle/.test(html), f + ' has no toggle');
     }
+  });
+  await t('the workflow strip is readable with no script and pauses for reduced motion', () => {
+    const html = read(path.join(ROOT, 'public', 'index.html'));
+    const flow = html.slice(html.indexOf('id="flow"'), html.indexOf('<!-- How it works -->'));
+    eq((flow.match(/class="flow-step"/g) || []).length, 7, 'seven steps');
+    assert(html.indexOf('id="flow"') > html.indexOf('class="hero"') && html.indexOf('id="flow"') < html.indexOf('id="how"'), 'strip sits between the hero and How it works');
+    const js = read(path.join(ROOT, 'public', 'flow.js'));
+    assert(/prefers-reduced-motion: reduce/.test(js), 'no reduced-motion guard');
+    const css = read(path.join(ROOT, 'public', 'site.css'));
+    assert(/\.flow\.is-animated \.flow-step \.flow-node \{ opacity/.test(css) && !/^\.flow-step \.flow-node \{[^}]*opacity:\s*0/m.test(css), 'steps hidden before the script runs');
   });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');

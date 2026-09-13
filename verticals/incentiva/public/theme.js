@@ -1,6 +1,6 @@
-/* BuyersLine theme toggle. Dark is the default; light is an explicit choice
-   remembered per device. The <html data-theme="dark"> attribute ships in the
-   markup and a tiny inline script in <head> applies a saved "light" before the
+/* BuyersLine theme toggle. Light is the default; dark is an explicit choice
+   remembered per device. The <html data-theme="light"> attribute ships in the
+   markup and a tiny inline script in <head> applies a saved "dark" before the
    stylesheet paints, so there is no flash. This file only wires the buttons. */
 (function () {
   'use strict';
@@ -11,7 +11,7 @@
     es: { toLight: 'Cambiar a modo claro', toDark: 'Cambiar a modo oscuro' }
   };
 
-  function current() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function current() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
 
   function sync() {
     var theme = current();
