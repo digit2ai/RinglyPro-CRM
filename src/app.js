@@ -2753,31 +2753,34 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
-// INCENTIVA — new-construction buyer platform, DIGIT2AI x Ole (served at /incentiva/)
+// BUYERSLINE — new-construction buyer platform, DIGIT2AI x Ole (served at /buyersline/)
+// Code lives in verticals/incentiva (working name); tables nca_, env INCENTIVA_*.
 // Buying power + verified builder incentives compared in payment terms; agent
-// console at /incentiva/admin. Not a brokerage, not a lender, nothing auto-sends.
+// console at /buyersline/admin. Not a brokerage, not a lender, nothing auto-sends.
 // =====================================================
 
-let incentivaApp = null;
-let incentivaError = null;
+let buyerslineApp = null;
+let buyerslineError = null;
 try {
-  incentivaApp = require('../verticals/incentiva/src/index');
-  app.get('/incentiva', (req, res, next) => {
-    if (!req.originalUrl.split('?')[0].endsWith('/')) return res.redirect('/incentiva/' + (req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''));
+  buyerslineApp = require('../verticals/incentiva/src/index');
+  app.get('/buyersline', (req, res, next) => {
+    if (!req.originalUrl.split('?')[0].endsWith('/')) return res.redirect('/buyersline/' + (req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : ''));
     next();
   });
-  app.use('/incentiva', incentivaApp);
-  console.log('Incentiva mounted at /incentiva (console /incentiva/admin, health /incentiva/health)');
+  // Old working-name links keep working.
+  app.use('/incentiva', (req, res) => res.redirect(301, '/buyersline' + (req.url === '/' ? '/' : req.url)));
+  app.use('/buyersline', buyerslineApp);
+  console.log('BuyersLine mounted at /buyersline (console /buyersline/admin, health /buyersline/health)');
 } catch (error) {
-  incentivaError = error;
-  console.log('⚠️ Incentiva not available:', error.message);
+  buyerslineError = error;
+  console.log('⚠️ BuyersLine not available:', error.message);
 }
 
-app.get('/debug/incentiva-error', (req, res) => {
+app.get('/debug/buyersline-error', (req, res) => {
   res.json({
-    service: 'Incentiva — new-construction buyer platform',
-    available: !incentivaError,
-    error: incentivaError ? { message: incentivaError.message } : null
+    service: 'BuyersLine — new-construction buyer platform',
+    available: !buyerslineError,
+    error: buyerslineError ? { message: buyerslineError.message } : null
   });
 });
 

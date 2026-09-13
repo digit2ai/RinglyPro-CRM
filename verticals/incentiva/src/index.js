@@ -7,10 +7,10 @@
  * community near their target area, and each builder's incentives verified by
  * a licensed agent, compared in monthly-payment terms. The platform connects
  * them, at no cost, to a licensed sales associate (Ole) who pays the platform
- * per consult held. A DIGIT2AI x Ole partnership; Incentiva is a technology
+ * per consult held. A DIGIT2AI x Ole partnership; BuyersLine is a technology
  * company, not a brokerage and not a lender.
  *
- * Invariants (see CLAUDE.md "Incentiva"):
+ * Invariants (see CLAUDE.md "BuyersLine"):
  *  - Only verified, fresh, unexpired incentives reach a buyer (nca_v_incentives_buyer_safe).
  *  - A detected decrease or removal hides at once; a new or larger offer waits for an agent.
  *  - Only a licensed agent account can confirm an incentive.
@@ -98,7 +98,7 @@ function createApp(opts = {}) {
   // An unowned path ends here, never in the CRM.
   router.use((req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-    res.status(404).type('html').send(`<!doctype html><meta charset="utf-8"><title>Not found · Incentiva</title><body style="font-family:system-ui;padding:40px;background:#F4F7F6;color:#13302D"><h1>Page not found</h1><p><a href="${req.baseUrl}/" style="color:#0A6A64">Go to Incentiva</a></p>`);
+    res.status(404).type('html').send(`<!doctype html><meta charset="utf-8"><title>Not found · BuyersLine</title><body style="font-family:system-ui;padding:40px;background:#F4F7F6;color:#13302D"><h1>Page not found</h1><p><a href="${req.baseUrl}/" style="color:#0A6A64">Go to BuyersLine</a></p>`);
   });
 
   if (opts.boot !== false && db.configured) {

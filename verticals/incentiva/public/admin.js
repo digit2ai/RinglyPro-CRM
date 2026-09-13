@@ -1,4 +1,4 @@
-/* Incentiva agent console. Vanilla JS, no dependencies, no build.
+/* BuyersLine agent console. Vanilla JS, no dependencies, no build.
  * Every server string passes through esc() before it reaches innerHTML.
  * Every fetch is prefixed with window.BASE (substituted server-side). */
 (() => {
@@ -454,7 +454,7 @@
     state.route = r;
     const seq = ++state.seq;
     setActiveNav(name);
-    document.title = `${TITLES[name] || 'Not found'} · Incentiva agent console`;
+    document.title = `${TITLES[name] || 'Not found'} · BuyersLine agent console`;
 
     const view = VIEWS[name];
     if (!view) {
@@ -1711,7 +1711,7 @@
     buyerStage: (el) => { location.hash = '#/buyers' + (el.value ? `?stage=${encodeURIComponent(el.value)}` : ''); },
     theme: (el) => {
       const v = el.value === 'light' ? 'light' : 'dark';
-      if (window.IncentivaTheme) window.IncentivaTheme.set(v);
+      if (window.BuyersLineTheme) window.BuyersLineTheme.set(v);
       else { document.documentElement.setAttribute('data-theme', v); try { localStorage.setItem('incentiva_theme', v); } catch (_) { /* session only */ } }
     },
   };

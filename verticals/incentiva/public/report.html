@@ -6,9 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<title>Your Incentiva report</title>
+<title>Your BuyersLine report</title>
 <meta name="theme-color" content="#0E1719">
 <link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
@@ -21,14 +23,9 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" id="homeLink" href="{{BASE}}/" aria-label="Incentiva">
-      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <rect width="64" height="64" rx="12" fill="var(--accent)"/>
-        <path d="M13 30 L32 14 L51 30" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M18 27 V50 H46 V27" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M24 38.5 L30 44 L40.5 32.5" fill="none" stroke="var(--highlight)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Incentiva</span>
+    <a class="brand" id="homeLink" href="{{BASE}}/" aria-label="BuyersLine">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#0A6A64"/><path d="M15 29 L32 15 L49 29" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 47 H39 L46 40" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="47" r="4.2" fill="#E7AE5C"/></svg>
+      <span class="wordmark">Buyers<span class="wm-accent">Line</span></span>
     </a>
     <div class="header-tools">
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
@@ -53,7 +50,7 @@
     <h2 data-i18n="disclosures">Disclosures</h2>
     <div class="disclosures" id="disclosures"></div>
     <p class="note-ai" id="genNote"></p>
-    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> Incentiva</p>
+    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> BuyersLine</p>
   </div>
 </footer>
 
@@ -65,7 +62,7 @@
 
   var I18N = {
     en: {
-      doc_title: 'Your Incentiva report',
+      doc_title: 'Your BuyersLine report',
       skip: 'Skip to content',
       demo_banner: 'Sample data for demonstration',
       lang_group: 'Language',
@@ -193,14 +190,14 @@
       consult_done_title: 'Request sent',
       consult_done_body: "Your agent will contact you to confirm a time. Please hold off on visiting sales offices until you've talked.",
       err_generic: "We couldn't send your request. Please try again.",
-      err_network: "We couldn't reach Incentiva. Check your connection and try again.",
+      err_network: "We couldn't reach BuyersLine. Check your connection and try again.",
 
       assumptions_title: 'How the estimates were made',
       th_assumption: 'Assumption',
       th_basis: 'Basis'
     },
     es: {
-      doc_title: 'Su informe de Incentiva',
+      doc_title: 'Su informe de BuyersLine',
       skip: 'Saltar al contenido',
       demo_banner: 'Datos de muestra para demostración',
       lang_group: 'Idioma',
@@ -328,7 +325,7 @@
       consult_done_title: 'Solicitud enviada',
       consult_done_body: 'Su agente se pondrá en contacto con usted para confirmar un horario. Por favor, espere a hablar con su agente antes de visitar oficinas de ventas.',
       err_generic: 'No pudimos enviar su solicitud. Intente de nuevo.',
-      err_network: 'No pudimos conectar con Incentiva. Revise su conexión e intente de nuevo.',
+      err_network: 'No pudimos conectar con BuyersLine. Revise su conexión e intente de nuevo.',
 
       assumptions_title: 'Cómo se hicieron las estimaciones',
       th_assumption: 'Supuesto',

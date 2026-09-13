@@ -50,7 +50,7 @@ async function upsertAccount(tenantId, { email, name, password, role, license_no
 async function ensureAccounts(tenantId) {
   if (!configured()) return { owner: null, agent: null };
   const owner = await upsertAccount(tenantId, {
-    email: process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com', name: process.env.INCENTIVA_OWNER_NAME || 'Incentiva Admin',
+    email: process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com', name: process.env.INCENTIVA_OWNER_NAME || 'BuyersLine Admin',
     password: process.env.INCENTIVA_OWNER_PASSWORD, role: 'admin'
   });
   let agent = null;

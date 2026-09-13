@@ -22,7 +22,7 @@ const { classify, match } = require('../engines/changes');
 const { getMarket } = require('./market');
 const { audit } = require('./util');
 
-const UA = 'IncentivaMonitor/1.0 (+new-home incentive verification; contact info@digit2ai.com)';
+const UA = 'BuyersLineMonitor/1.0 (+new-home incentive verification; contact info@digit2ai.com)';
 const HOST_SPACING_MS = 10000;
 const lastHit = new Map();
 const robotsCache = new Map();
@@ -72,7 +72,7 @@ function robotsAllows(robotsTxt, path) {
       else if (k === 'allow' && v) g.allow.push(v);
     }
   }
-  const mine = groups.filter((x) => x.agents.some((a) => a.includes('incentiva')));
+  const mine = groups.filter((x) => x.agents.some((a) => a.includes('buyersline')));
   const chosen = mine.length ? mine : groups.filter((x) => x.agents.includes('*'));
   const disallow = chosen.flatMap((x) => x.disallow);
   const allow = chosen.flatMap((x) => x.allow);

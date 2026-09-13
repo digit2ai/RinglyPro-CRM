@@ -83,8 +83,8 @@ const L = {
     },
     not_set: 'Not set',
     disclosures: {
-      platform: 'Incentiva is a technology platform, not a real estate brokerage and not a lender.',
-      compensation: 'The licensed agent we connect you with pays Incentiva a fee when you meet with them. You pay nothing. Builders pay the agent\'s brokerage at closing under your buyer agreement.',
+      platform: 'BuyersLine is a technology platform, not a real estate brokerage and not a lender.',
+      compensation: 'The licensed agent we connect you with pays BuyersLine a fee when you meet with them. You pay nothing. Builders pay the agent\'s brokerage at closing under your buyer agreement.',
       estimates: 'Payment figures are estimates for comparison only. They are not a loan approval, offer or commitment. Your lender will provide actual terms.',
       incentives: 'Incentives are set by each builder, can change or end at any time, may apply only to certain homes, and may require the builder\'s lender or title company. We show only incentives a licensed agent confirmed, with the date confirmed. We do not represent any builder.',
       equal_housing: 'Equal Housing Opportunity.'
@@ -93,8 +93,8 @@ const L = {
       email: 'Email me my report and updates about new-home incentives in my area. I can unsubscribe at any time.',
       sms: 'Text me about my report and incentive updates at the number I provided. Message frequency varies; message and data rates may apply. Reply STOP to opt out. Consent is not required to get a report.',
       share_named: 'Share my name, contact details and criteria with {agent}, a licensed real estate sales associate with {brokerage}, who may contact me about my search.',
-      co_owner: '{agent} is a co-owner of Incentiva.',
-      share_unnamed: 'Share my name, contact details and criteria with a licensed real estate agent Incentiva works with, who may contact me about my search. We will tell you who before they reach out.'
+      co_owner: '{agent} is a co-owner of BuyersLine.',
+      share_unnamed: 'Share my name, contact details and criteria with a licensed real estate agent BuyersLine works with, who may contact me about my search. We will tell you who before they reach out.'
     },
     stopped_other_agent: 'Thanks for being upfront. Please keep working with your agent. We will not contact you.',
     area_summary_zips: 'ZIP {zips}', area_summary_place: '{place}', area_radius: 'within {miles} miles'
@@ -176,8 +176,8 @@ const L = {
     },
     not_set: 'Sin fijar',
     disclosures: {
-      platform: 'Incentiva es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista.',
-      compensation: 'El agente con licencia con quien lo conectamos le paga una tarifa a Incentiva cuando se reúne con usted. Usted no paga nada. Las constructoras pagan a la correduría del agente al cierre, según su contrato de representación de comprador.',
+      platform: 'BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista.',
+      compensation: 'El agente con licencia con quien lo conectamos le paga una tarifa a BuyersLine cuando se reúne con usted. Usted no paga nada. Las constructoras pagan a la correduría del agente al cierre, según su contrato de representación de comprador.',
       estimates: 'Los pagos son estimaciones para comparar. No constituyen una aprobación, oferta ni compromiso de préstamo. Su prestamista le dará las condiciones reales.',
       incentives: 'Cada constructora fija sus incentivos, que pueden cambiar o terminar en cualquier momento, aplicarse solo a ciertas casas y exigir el prestamista o la compañía de títulos de la constructora. Solo mostramos incentivos que un agente con licencia confirmó, con la fecha de confirmación. No representamos a ninguna constructora.',
       equal_housing: 'Igualdad de oportunidades en la vivienda.'
@@ -186,8 +186,8 @@ const L = {
       email: 'Envíenme mi informe y novedades sobre incentivos de casas nuevas en mi zona por correo electrónico. Puedo darme de baja cuando quiera.',
       sms: 'Envíenme mensajes de texto sobre mi informe y novedades de incentivos al número que indiqué. La frecuencia varía; pueden aplicarse tarifas de mensajes y datos. Responda STOP para no recibir más. No es necesario aceptar para recibir el informe.',
       share_named: 'Compartir mi nombre, datos de contacto y criterios con {agent}, asociado de ventas de bienes raíces con licencia de {brokerage}, quien podrá contactarme sobre mi búsqueda.',
-      co_owner: '{agent} es copropietario de Incentiva.',
-      share_unnamed: 'Compartir mi nombre, datos de contacto y criterios con un agente de bienes raíces con licencia con quien trabaja Incentiva, quien podrá contactarme sobre mi búsqueda. Le diremos quién es antes de que lo contacte.'
+      co_owner: '{agent} es copropietario de BuyersLine.',
+      share_unnamed: 'Compartir mi nombre, datos de contacto y criterios con un agente de bienes raíces con licencia con quien trabaja BuyersLine, quien podrá contactarme sobre mi búsqueda. Le diremos quién es antes de que lo contacte.'
     },
     stopped_other_agent: 'Gracias por decírnoslo. Siga trabajando con su agente. No lo contactaremos.',
     area_summary_zips: 'Código postal {zips}', area_summary_place: '{place}', area_radius: 'a menos de {miles} millas'

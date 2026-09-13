@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Incentiva SIT. Run: node verticals/incentiva/sit.js
+ * BuyersLine SIT. Run: node verticals/incentiva/sit.js
  *
  * Zero external keys: ANTHROPIC_API_KEY is removed before anything loads, and
  * geocoding is off, so the keyless paths are the ones under test. It attacks
@@ -207,7 +207,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   await t('fetch gate: robots.txt honored, private addresses refused', () => {
     eq(monitorMod.robotsAllows('User-agent: *\nDisallow: /promos', '/promos/fall'), false);
     eq(monitorMod.robotsAllows('User-agent: *\nUser-agent: Googlebot\nDisallow: /promo', '/promo'), false, 'grouped user-agents share rules');
-    eq(monitorMod.robotsAllows('User-agent: *\nDisallow: /\n\nUser-agent: IncentivaMonitor\nAllow: /', '/x'), true, 'a group naming us wins');
+    eq(monitorMod.robotsAllows('User-agent: *\nDisallow: /\n\nUser-agent: BuyersLineMonitor\nAllow: /', '/x'), true, 'a group naming us wins');
     eq(monitorMod.robotsAllows('User-agent: *\nDisallow: /promos\nAllow: /promos/public', '/promos/public/x'), true);
     eq(monitorMod.isPrivateIp('10.1.2.3'), true); eq(monitorMod.isPrivateIp('::ffff:127.0.0.1'), true); eq(monitorMod.isPrivateIp('100.64.1.1'), true); eq(monitorMod.isPrivateIp('192.168.0.1'), true); eq(monitorMod.isPrivateIp('8.8.8.8'), false);
   });
@@ -251,7 +251,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     for (const f of walk(path.join(ROOT, 'public'))) {
       if (!/\.(html|js|css)$/.test(f)) continue;
       const s = read(f);
-      assert(!/["'`(]\/incentiva\b/.test(s), 'hardcoded /incentiva in ' + path.basename(f));
+      assert(!/["'`(]\/(incentiva|buyersline)\b/.test(s), 'hardcoded mount prefix in ' + path.basename(f));
+      if (/\.html$/.test(f)) assert(!/Incentiva/.test(s), 'old product name in ' + path.basename(f));
       assert(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s), 'emoji in ' + path.basename(f));
     }
   });
@@ -267,8 +268,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');
-    assert(AGENTS.incentiva, 'persona missing');
-    assert(/Never state or estimate a builder incentive/.test(AGENTS.incentiva.persona.en), 'persona rule missing');
+    assert(AGENTS.buyersline, 'persona missing');
+    assert(/Never state or estimate a builder incentive/.test(AGENTS.buyersline.persona.en), 'persona rule missing');
+    assert(/data-agent="buyersline"/.test(read(path.join(ROOT, 'public', 'index.html'))), 'orb not wired to the buyersline persona');
   });
 
   // ── Database sections ────────────────────────────────────────────────────
@@ -286,9 +288,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       const express = require('express');
       const incentiva = require('./src/index');
       const app = express();
-      app.use('/incentiva', incentiva);
+      app.use('/buyersline', incentiva);
       const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
-      const BASE = `http://127.0.0.1:${server.address().port}/incentiva`;
+      const BASE = `http://127.0.0.1:${server.address().port}/buyersline`;
       await new Promise((r) => setTimeout(r, 1500)); // let boot ensureAccounts settle
 
       const jar = {};
@@ -534,12 +536,12 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         eq((await call('PUT', '/api/v1/agent/settings/market', { settings: { reference_rate: 6.1, reference_rate_source: null } }, 'agent')).status, 400);
       });
       await t('unowned paths end in an Incentiva 404, never the host app', async () => {
-        const a = await call('GET', '/wp-admin'); eq(a.status, 404); assert(/Incentiva/.test(a.data), 'branded');
+        const a = await call('GET', '/wp-admin'); eq(a.status, 404); assert(/BuyersLine/.test(a.data), 'branded');
         eq((await call('GET', '/api/v1/nope')).status, 404);
       });
       await t('HTML shells are served with the mount substituted', async () => {
         const r = await fetch(BASE + '/'); const html = await r.text();
-        assert(!html.includes('{{BASE}}'), 'token leaked'); assert(html.includes('/incentiva/site.css') || html.includes('/incentiva'), 'base substituted');
+        assert(!html.includes('{{BASE}}'), 'token leaked'); assert(html.includes('/buyersline/site.css'), 'base substituted');
       });
 
       server.close();
@@ -553,7 +555,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   }
 
   console.log('\n────────────────────────────────────────');
-  console.log(`Incentiva SIT: ${pass}/${pass + fail} passed`);
+  console.log(`BuyersLine SIT: ${pass}/${pass + fail} passed`);
   console.log('NOT COVERED (keyless run): the Anthropic extraction and narrative paths' + (HAD_KEY ? ' (a key was present and deliberately removed)' : '') + '; live geocoding; live builder page fetches.');
   skipped.forEach((s) => console.log('SKIPPED: ' + s));
   if (failures.length) { console.log('\nFailures:'); failures.forEach((f) => console.log(' - ' + f)); }

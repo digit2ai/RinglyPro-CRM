@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Incentiva database connection.
+ * BuyersLine database connection.
  *
  * INCENTIVA_DATABASE_URL first: the venture is a DIGIT2AI x Ole partnership and
  * its data should be separable onto its own Postgres instance without a code

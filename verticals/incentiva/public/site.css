@@ -1,4 +1,4 @@
-/* Incentiva shared stylesheet: landing, report, login.
+/* BuyersLine shared stylesheet: landing, report, login.
    Tokens on :root (light). Dark via prefers-color-scheme unless data-theme="light",
    and again under data-theme="dark" so an explicit choice wins both ways. */
 
@@ -187,6 +187,7 @@ section { padding-block: 56px; }
   min-height: 44px;
 }
 .brand svg { width: 30px; height: 30px; flex: none; }
+.wm-accent { color: var(--accent); }
 .site-nav { display: none; gap: 4px; }
 .site-nav a {
   color: var(--ink); text-decoration: none; font-weight: 600;

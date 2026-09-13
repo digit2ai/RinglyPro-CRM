@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <script>(function(){try{var t=localStorage.getItem('incentiva_theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Incentiva | New-construction incentives, verified and compared</title>
+<title>BuyersLine | New-construction incentives, verified and compared</title>
 <meta name="description" content="See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.">
 <meta name="theme-color" content="#0E1719">
 <link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
@@ -20,14 +22,9 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="{{BASE}}/" aria-label="Incentiva">
-      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <rect width="64" height="64" rx="12" fill="var(--accent)"/>
-        <path d="M13 30 L32 14 L51 30" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M18 27 V50 H46 V27" fill="none" stroke="var(--accent-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M24 38.5 L30 44 L40.5 32.5" fill="none" stroke="var(--highlight)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <span>Incentiva</span>
+    <a class="brand" href="{{BASE}}/" aria-label="BuyersLine">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#0A6A64"/><path d="M15 29 L32 15 L49 29" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 47 H39 L46 40" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="47" r="4.2" fill="#E7AE5C"/></svg>
+      <span class="wordmark">Buyers<span class="wm-accent">Line</span></span>
     </a>
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
       <a href="#how" data-i18n="nav_how">How it works</a>
@@ -333,14 +330,14 @@
           <ul class="are-list are-yes">
             <li><strong data-i18n="are_1_t">A technology platform</strong><span data-i18n="are_1_p">We gather active new-construction communities and builder incentives, and lay them out side by side in monthly-payment terms.</span></li>
             <li><strong data-i18n="are_2_t">Verified, with a date</strong><span data-i18n="are_2_p">We only show incentives a licensed agent verified, each with the date it was last checked. Fees we can't confirm say "not yet confirmed", never $0.</span></li>
-            <li><strong data-i18n="are_3_t">Free for buyers</strong><span data-i18n="are_3_p">You pay nothing to use Incentiva or to be connected with the agent who represents you.</span></li>
-            <li><strong data-i18n="are_4_t">Paid by the agent</strong><span data-i18n="are_4_p">The licensed agent pays Incentiva a fee when you meet with them. That is how the platform is paid.</span></li>
+            <li><strong data-i18n="are_3_t">Free for buyers</strong><span data-i18n="are_3_p">You pay nothing to use BuyersLine or to be connected with the agent who represents you.</span></li>
+            <li><strong data-i18n="are_4_t">Paid by the agent</strong><span data-i18n="are_4_p">The licensed agent pays BuyersLine a fee when you meet with them. That is how the platform is paid.</span></li>
           </ul>
         </div>
         <div>
           <h3 data-i18n="we_are_not">We are not</h3>
           <ul class="are-list are-no">
-            <li><strong data-i18n="not_1_t">Not a real estate brokerage</strong><span data-i18n="not_1_p">Representation comes from a licensed Florida real estate sales associate and their brokerage, not from Incentiva.</span></li>
+            <li><strong data-i18n="not_1_t">Not a real estate brokerage</strong><span data-i18n="not_1_p">Representation comes from a licensed Florida real estate sales associate and their brokerage, not from BuyersLine.</span></li>
             <li><strong data-i18n="not_2_t">Not a lender</strong><span data-i18n="not_2_p">Payment figures are estimates. They are not loan offers, pre-qualifications or approvals.</span></li>
             <li><strong data-i18n="not_3_t">Not a builder's sales office</strong><span data-i18n="not_3_p">We don't sell homes for any builder. Your agent represents you, the buyer.</span></li>
           </ul>
@@ -358,7 +355,7 @@
     <div class="wrap">
       <h2 data-i18n="orb_title">Questions? Ask out loud.</h2>
       <p class="muted" data-i18n="orb_p">The assistant answers only from what this page says, and you can also type.</p>
-      <div id="voiceOrb" data-voice-orb data-agent="incentiva" data-lang="en" data-label="Ask Incentiva"></div>
+      <div id="voiceOrb" data-voice-orb data-agent="buyersline" data-lang="en" data-label="Ask BuyersLine"></div>
     </div>
   </section>
 </main>
@@ -367,7 +364,7 @@
   <div class="wrap">
     <h2 data-i18n="footer_disclosures">Disclosures</h2>
     <div class="disclosures" id="disclosures"><p data-i18n="footer_loading">Loading disclosures...</p></div>
-    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> Incentiva</p>
+    <p class="small" style="margin-top:20px">&copy; <span id="year">2026</span> BuyersLine</p>
   </div>
 </footer>
 
@@ -379,7 +376,7 @@
 
   var I18N = {
     en: {
-      doc_title: 'Incentiva | New-construction incentives, verified and compared',
+      doc_title: 'BuyersLine | New-construction incentives, verified and compared',
       doc_desc: "See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.",
       skip: 'Skip to content',
       demo_banner: 'Sample data for demonstration',
@@ -443,7 +440,7 @@
       missing_down_payment: 'how much you have for a down payment',
       missing_target_payment: "the monthly payment you're comfortable with",
       missing_reference_rate: "a current reference interest rate, which isn't available right now. Please try again later.",
-      err_network: "We couldn't reach Incentiva. Check your connection and try again.",
+      err_network: "We couldn't reach BuyersLine. Check your connection and try again.",
       err_server: 'Something went wrong on our side. Please try again in a minute.',
       err_rate: 'Too many requests right now. Please wait a few minutes and try again.',
       intake_eyebrow: 'Your report',
@@ -527,11 +524,11 @@
       are_2_t: 'Verified, with a date',
       are_2_p: 'We only show incentives a licensed agent verified, each with the date it was last checked. Fees we can\'t confirm say "not yet confirmed", never $0.',
       are_3_t: 'Free for buyers',
-      are_3_p: 'You pay nothing to use Incentiva or to be connected with the agent who represents you.',
+      are_3_p: 'You pay nothing to use BuyersLine or to be connected with the agent who represents you.',
       are_4_t: 'Paid by the agent',
-      are_4_p: 'The licensed agent pays Incentiva a fee when you meet with them. That is how the platform is paid.',
+      are_4_p: 'The licensed agent pays BuyersLine a fee when you meet with them. That is how the platform is paid.',
       not_1_t: 'Not a real estate brokerage',
-      not_1_p: 'Representation comes from a licensed Florida real estate sales associate and their brokerage, not from Incentiva.',
+      not_1_p: 'Representation comes from a licensed Florida real estate sales associate and their brokerage, not from BuyersLine.',
       not_2_t: 'Not a lender',
       not_2_p: 'Payment figures are estimates. They are not loan offers, pre-qualifications or approvals.',
       not_3_t: "Not a builder's sales office",
@@ -541,13 +538,13 @@
       agent_none: 'A licensed Florida real estate sales associate will be assigned to you.',
       orb_title: 'Questions? Ask out loud.',
       orb_p: 'The assistant answers only from what this page says, and you can also type.',
-      orb_label: 'Ask Incentiva',
+      orb_label: 'Ask BuyersLine',
       footer_disclosures: 'Disclosures',
       footer_loading: 'Loading disclosures...',
       footer_error: "We couldn't load the disclosures. Refresh the page to try again."
     },
     es: {
-      doc_title: 'Incentiva | Incentivos de construcción nueva, verificados y comparados',
+      doc_title: 'BuyersLine | Incentivos de construcción nueva, verificados y comparados',
       doc_desc: 'Vea su poder de compra, las comunidades de construcción nueva activas cerca de su código postal y los incentivos vigentes de cada constructor, verificados por un agente con licencia y comparados por pago mensual. Gratis para compradores.',
       skip: 'Saltar al contenido',
       demo_banner: 'Datos de muestra para demostración',
@@ -611,7 +608,7 @@
       missing_down_payment: 'cuánto tiene para el pago inicial',
       missing_target_payment: 'el pago mensual con el que se siente cómodo',
       missing_reference_rate: 'una tasa de interés de referencia actual, que no está disponible en este momento. Intente de nuevo más tarde.',
-      err_network: 'No pudimos conectar con Incentiva. Revise su conexión e intente de nuevo.',
+      err_network: 'No pudimos conectar con BuyersLine. Revise su conexión e intente de nuevo.',
       err_server: 'Algo falló de nuestro lado. Intente de nuevo en un minuto.',
       err_rate: 'Hay demasiadas solicitudes en este momento. Espere unos minutos e intente de nuevo.',
       intake_eyebrow: 'Su informe',
@@ -695,11 +692,11 @@
       are_2_t: 'Verificado, con fecha',
       are_2_p: 'Solo mostramos incentivos que un agente con licencia verificó, cada uno con la fecha de su última revisión. Las cuotas que no podemos confirmar dicen «aún no confirmado», nunca $0.',
       are_3_t: 'Gratis para compradores',
-      are_3_p: 'Usted no paga nada por usar Incentiva ni por conectarse con el agente que lo representa.',
+      are_3_p: 'Usted no paga nada por usar BuyersLine ni por conectarse con el agente que lo representa.',
       are_4_t: 'Financiados por el agente',
-      are_4_p: 'El agente con licencia le paga una tarifa a Incentiva cuando usted se reúne con esa persona. Así se financia la plataforma.',
+      are_4_p: 'El agente con licencia le paga una tarifa a BuyersLine cuando usted se reúne con esa persona. Así se financia la plataforma.',
       not_1_t: 'No somos una correduría inmobiliaria',
-      not_1_p: 'La representación viene de un asociado de ventas de bienes raíces con licencia en Florida y de su correduría, no de Incentiva.',
+      not_1_p: 'La representación viene de un asociado de ventas de bienes raíces con licencia en Florida y de su correduría, no de BuyersLine.',
       not_2_t: 'No somos un prestamista',
       not_2_p: 'Las cifras de pago son estimaciones. No son ofertas de préstamo, precalificaciones ni aprobaciones.',
       not_3_t: 'No somos la oficina de ventas de un constructor',
@@ -709,7 +706,7 @@
       agent_none: 'Se le asignará un asociado de ventas de bienes raíces con licencia en Florida.',
       orb_title: '¿Preguntas? Hágalas en voz alta.',
       orb_p: 'El asistente responde solo con lo que dice esta página, y también puede escribirle.',
-      orb_label: 'Pregúntale a Incentiva',
+      orb_label: 'Pregúntale a BuyersLine',
       footer_disclosures: 'Avisos legales',
       footer_loading: 'Cargando avisos legales...',
       footer_error: 'No pudimos cargar los avisos legales. Recargue la página para intentar de nuevo.'

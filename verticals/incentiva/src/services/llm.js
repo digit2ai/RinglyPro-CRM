@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * The only file in Incentiva that reaches a model. Everything that calls it
+ * The only file in BuyersLine that reaches a model. Everything that calls it
  * verifies the output afterwards; nothing here is trusted as fact.
  */
 

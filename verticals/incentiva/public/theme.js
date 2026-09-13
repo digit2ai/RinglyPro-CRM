@@ -1,4 +1,4 @@
-/* Incentiva theme toggle. Dark is the default; light is an explicit choice
+/* BuyersLine theme toggle. Dark is the default; light is an explicit choice
    remembered per device. The <html data-theme="dark"> attribute ships in the
    markup and a tiny inline script in <head> applies a saved "light" before the
    stylesheet paints, so there is no flash. This file only wires the buttons. */
@@ -43,6 +43,6 @@
   if (window.MutationObserver) {
     new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['lang', 'data-theme'] });
   }
-  window.IncentivaTheme = { set: set, current: current };
+  window.BuyersLineTheme = { set: set, current: current };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync); else sync();
 })();

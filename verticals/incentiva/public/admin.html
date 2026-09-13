@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>Incentiva · Agent console</title>
+<title>BuyersLine · Agent console</title>
 <script>(function(){try{var t=localStorage.getItem('incentiva_theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
 <meta name="theme-color" content="#0E1719">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <script src="{{BASE}}/theme.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,6 +70,7 @@ code,.mono{font-family:var(--f-mono);font-size:.92em}
 .topbar{display:flex;align-items:center;gap:12px;min-height:58px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink);font-family:var(--f-head);font-weight:700;font-size:19px;min-height:44px}
 .brand svg{width:28px;height:28px;flex:none}
+.wm-accent{color:var(--accent)}
 .brand small{font-family:var(--f-body);font-weight:600;font-size:13px;color:var(--muted);letter-spacing:0}
 .who{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;min-width:0}
 .who-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
@@ -310,9 +314,9 @@ dialog p{white-space:pre-line;color:var(--ink);margin-bottom:18px}
 
 <div class="chrome" id="chrome">
   <header class="topbar">
-    <a class="brand" href="#/today" aria-label="Incentiva agent console, Today">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" style="fill:var(--accent)"/><path d="M9 21.5V14l7-4.5 7 4.5v7.5" style="fill:none;stroke:var(--accent-ink)" stroke-width="2.2" stroke-linejoin="round"/><path d="M12.5 16.8l2.6 2.6 4.6-4.9" style="fill:none;stroke:var(--accent-ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Incentiva <small class="hide-sm">Agent console</small></span>
+    <a class="brand" href="#/today" aria-label="BuyersLine agent console, Today">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#0A6A64"/><path d="M15 29 L32 15 L49 29" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 47 H39 L46 40" fill="none" stroke="#F4F7F6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="47" r="4.2" fill="#E7AE5C"/></svg>
+      <span><span class="wordmark">Buyers<span class="wm-accent">Line</span></span> <small class="hide-sm">Agent console</small></span>
     </a>
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <div class="who" id="who" aria-live="polite"></div>

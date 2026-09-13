@@ -19,7 +19,7 @@ async function geocode(tenantId, query) {
     const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(qn + ', Florida');
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(url, { headers: { 'User-Agent': 'Incentiva/1.0 (new-home buyer platform; contact info@digit2ai.com)' }, signal: ctrl.signal });
+    const r = await fetch(url, { headers: { 'User-Agent': 'BuyersLine/1.0 (new-home buyer platform; contact info@digit2ai.com)' }, signal: ctrl.signal });
     clearTimeout(timer);
     if (r.ok) {
       const arr = await r.json();
