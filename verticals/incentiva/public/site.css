@@ -1,34 +1,40 @@
-/* BuyersLine shared stylesheet: landing, report, login.
+/* BuyersLine shared stylesheet: landing, report, login. Mulish, navy #26213F + orange #FC4C02.
    Tokens on :root (light). Dark via prefers-color-scheme unless data-theme="light",
    and again under data-theme="dark" so an explicit choice wins both ways. */
 
 :root {
-  --ground: #F4F7F6;
+              --band: #F4F5F9;
+--navy-ink: #FFFFFF;
+--navy: #26213F;
+--brand-strong: #C93D00;
+--brand-ink: #FFFFFF;
+--brand: #FC4C02;
+--ground: #FFFFFF;
   --surface: #FFFFFF;
-  --surface-2: #EEF3F1;
-  --ink: #13302D;
-  --muted: #587072;
-  --rule: #D5DFDC;
-  --accent: #0A6A64;
+  --surface-2: #F4F5F9;
+  --ink: #26213F;
+  --muted: #5C6070;
+  --rule: #E7E8E9;
+  --accent: #C93D00;
   --accent-ink: #FFFFFF;
-  --accent-soft: #DCEDEA;
-  --highlight: #D98E2B;
-  --highlight-ink: #8C5412;
+  --accent-soft: #FFEDE3;
+  --highlight: #FC4C02;
+  --highlight-ink: #FC4C02;
   --verified: #1E7A4C;
   --verified-bg: #E1F2E8;
   --caution: #8A5A00;
   --caution-bg: #FAEFD6;
   --critical: #A1262B;
   --critical-bg: #FAE3E1;
-  --focus: #0A6A64;
-  --shadow: 0 1px 2px rgba(19, 48, 45, .06), 0 4px 16px rgba(19, 48, 45, .05);
+  --focus: #FC4C02;
+  --shadow: 0 1px 2px rgba(38, 33, 63, .04), 0 8px 24px rgba(38, 33, 63, .06);
 
-  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-display: "Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body: "Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
 
-  --radius: 8px;
-  --radius-sm: 6px;
+  --radius: 16px;
+  --radius-sm: 12px;
   --gutter: 20px;
   --maxw: 1120px;
   color-scheme: light;
@@ -36,49 +42,61 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #0E1719;
-    --surface: #15211F;
-    --surface-2: #1A2826;
-    --ink: #E1ECE9;
-    --muted: #94A8A6;
-    --rule: #29393A;
-    --accent: #5DBDB2;
-    --accent-ink: #0E1719;
-    --accent-soft: #163431;
-    --highlight: #E7AE5C;
-    --highlight-ink: #E7AE5C;
+                --band: #221D3A;
+--navy-ink: #26213F;
+--navy: #F4F3F8;
+--brand-strong: #C93D00;
+--brand-ink: #FFFFFF;
+--brand: #FC4C02;
+--ground: #1B1730;
+    --surface: #26213F;
+    --surface-2: #2F2A4D;
+    --ink: #F4F3F8;
+    --muted: #B8B5C9;
+    --rule: #3B3659;
+    --accent: #FF8A4C;
+    --accent-ink: #1B1730;
+    --accent-soft: #3A2635;
+    --highlight: #FF6A26;
+    --highlight-ink: #FF8A4C;
     --verified: #7FD1A2;
     --verified-bg: #173326;
     --caution: #E8B75C;
     --caution-bg: #33270F;
     --critical: #F09590;
     --critical-bg: #3A1A1B;
-    --focus: #5DBDB2;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .2);
+    --focus: #FF8A4C;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --ground: #0E1719;
-  --surface: #15211F;
-  --surface-2: #1A2826;
-  --ink: #E1ECE9;
-  --muted: #94A8A6;
-  --rule: #29393A;
-  --accent: #5DBDB2;
-  --accent-ink: #0E1719;
-  --accent-soft: #163431;
-  --highlight: #E7AE5C;
-  --highlight-ink: #E7AE5C;
+              --band: #221D3A;
+--navy-ink: #26213F;
+--navy: #F4F3F8;
+--brand-strong: #C93D00;
+--brand-ink: #FFFFFF;
+--brand: #FC4C02;
+--ground: #1B1730;
+  --surface: #26213F;
+  --surface-2: #2F2A4D;
+  --ink: #F4F3F8;
+  --muted: #B8B5C9;
+  --rule: #3B3659;
+  --accent: #FF8A4C;
+  --accent-ink: #1B1730;
+  --accent-soft: #3A2635;
+  --highlight: #FF6A26;
+  --highlight-ink: #FF8A4C;
   --verified: #7FD1A2;
   --verified-bg: #173326;
   --caution: #E8B75C;
   --caution-bg: #33270F;
   --critical: #F09590;
   --critical-bg: #3A1A1B;
-  --focus: #5DBDB2;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .2);
+  --focus: #FF8A4C;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
   color-scheme: dark;
 }
 
@@ -613,11 +631,48 @@ td.note-cell { color: var(--muted); font-style: italic; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 
+/* ---------- BuyersLine skin: Mulish, navy + orange, pill buttons, banded sections ---------- */
+body { font-weight: 500; }
+h1, h2, h3, h4 { letter-spacing: -0.02em; }
+h1, h2 { font-weight: 900; }
+h3 { font-weight: 800; }
+h1 { line-height: 1.08; }
+.hl { color: var(--highlight); }
+.lede { color: var(--muted); }
+.eyebrow { font-family: var(--font-body); font-weight: 800; letter-spacing: .08em; color: var(--accent); }
+.site-header { border-bottom: 0; box-shadow: 0 1px 0 var(--rule), 0 6px 18px rgba(38, 33, 63, .05); }
+.brand { font-weight: 900; letter-spacing: -0.03em; }
+.wm-accent { color: var(--highlight); }
+.site-nav a { font-weight: 600; }
+.btn { border-radius: 40px; font-weight: 800; min-height: 52px; padding: 12px 28px; font-size: 1.1875rem; }
+.btn-small { min-height: 44px; padding: 8px 18px; font-size: 1rem; }
+.btn-primary { background: var(--brand); color: var(--brand-ink); }
+.btn-primary:hover { background: color-mix(in srgb, var(--brand) 86%, #000); }
+.btn-small.btn-primary { background: var(--brand-strong); }
+.btn-secondary { background: var(--navy); color: var(--navy-ink); border-color: var(--navy); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--navy) 85%, var(--brand)); color: var(--navy-ink); border-color: transparent; }
+.btn-ghost { color: var(--accent); }
+.lang-toggle, .theme-toggle { border-radius: 40px; }
+.lang-toggle button[aria-pressed="true"] { background: var(--navy); color: var(--navy-ink); }
+.card { background: var(--surface-2); border-color: transparent; box-shadow: none; }
+.example-card { background: var(--surface); border: 1px solid var(--rule); box-shadow: var(--shadow); }
+.example-card .example-head { background: var(--surface-2); border-bottom-style: solid; }
+.example-value, .result-figure { color: var(--highlight); font-weight: 900; }
+.example-pay strong, .result-sub { font-family: var(--font-body); font-weight: 800; }
+.stamp { border-radius: 999px; font-family: var(--font-body); font-weight: 700; padding: 4px 10px; }
+.example-label { border-radius: 999px; font-family: var(--font-body); font-weight: 800; }
+main > section.section-rule { border-top: 0; }
+main > section:nth-of-type(even) { background: var(--band); }
+.steps li::before { background: var(--brand); color: var(--brand-ink); font-weight: 900; font-family: var(--font-body); }
+@media (min-width: 820px) { .steps li { border-top-color: var(--brand); } }
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="password"], input[type="search"], select, textarea { border-radius: 12px; }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
     --ground: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #000; --muted: #444; --rule: #bbb;
-    --accent: #0A6A64; --accent-soft: #eef5f4; --highlight-ink: #6b3f00; --verified: #1E7A4C; --verified-bg: #fff;
+    --accent: #C93D00; --accent-soft: #fff1ea; --highlight: #C93D00; --highlight-ink: #C93D00; --brand: #26213F; --brand-ink: #fff; --navy: #26213F; --navy-ink: #fff; --band: #fff; --verified: #1E7A4C; --verified-bg: #fff;
     --caution: #6b4500; --caution-bg: #fff; --critical: #8a1d22; --critical-bg: #fff; --shadow: none;
   }
   body { font-size: 11pt; background: #fff; }
@@ -629,3 +684,6 @@ td.note-cell { color: var(--muted); font-style: italic; }
   a { color: #000; }
   section { padding-block: 16px; }
 }
+
+/* Dark: the navy logo tile needs an edge against the navy header. */
+:root[data-theme="dark"] .brand svg { border-radius: 22%; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22); }

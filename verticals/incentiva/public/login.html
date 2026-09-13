@@ -6,35 +6,35 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Sign in · BuyersLine agent console</title>
 <script>(function(){try{var t=localStorage.getItem('incentiva_theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
-<meta name="theme-color" content="#0E1719">
+<meta name="theme-color" content="#1B1730">
 <link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <script src="{{BASE}}/theme.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
 <style>
 :root{
-  --ground:#F4F7F6;--surface:#FFFFFF;--ink:#13302D;--muted:#587072;--rule:#D5DFDC;
-  --accent:#0A6A64;--accent-soft:#DCEDEA;--accent-ink:#FFFFFF;
+  --ground:#F4F5F9;--surface:#FFFFFF;--ink:#26213F;--muted:#5C6070;--rule:#E7E8E9;
+  --accent:#C93D00;--accent-soft:#FFEDE3;--accent-ink:#FFFFFF;
   --crit:#A1262B;--crit-bg:#FAE3E1;--warn:#8A5A00;--warn-bg:#FAEFD6;
-  --f-head:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --f-head:"Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-body:"Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --ground:#0E1719;--surface:#15211F;--ink:#E1ECE9;--muted:#94A8A6;--rule:#29393A;
-    --accent:#5DBDB2;--accent-soft:#163431;--accent-ink:#0E1719;
+    --ground:#1B1730;--surface:#26213F;--ink:#F4F3F8;--muted:#B8B5C9;--rule:#3B3659;
+    --accent:#FF8A4C;--accent-soft:#3A2635;--accent-ink:#1B1730;
     --crit:#F09590;--crit-bg:#3A1A1B;--warn:#E8B75C;--warn-bg:#33270F;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --ground:#0E1719;--surface:#15211F;--ink:#E1ECE9;--muted:#94A8A6;--rule:#29393A;
-  --accent:#5DBDB2;--accent-soft:#163431;--accent-ink:#0E1719;
+  --ground:#1B1730;--surface:#26213F;--ink:#F4F3F8;--muted:#B8B5C9;--rule:#3B3659;
+  --accent:#FF8A4C;--accent-soft:#3A2635;--accent-ink:#1B1730;
   --crit:#F09590;--crit-bg:#3A1A1B;--warn:#E8B75C;--warn-bg:#33270F;
   color-scheme:dark;
 }
@@ -67,13 +67,18 @@ button[disabled]{opacity:.6;cursor:progress}
 :root[data-theme="light"] .theme-toggle .icon-sun{display:none}
 :root[data-theme="light"] .theme-toggle .icon-moon{display:block}
 .theme-corner{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
+button{border-radius:40px;font-weight:800}
+.theme-toggle{border-radius:40px}
+.brand{font-weight:900;letter-spacing:-.03em}
+.wm-accent{color:#FC4C02}
+:root[data-theme="dark"] .brand svg{border-radius:22%;box-shadow:0 0 0 1px rgba(255,255,255,.22)}
 </style>
 </head>
 <body>
 <div class="theme-corner"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to light mode" title="Switch to light mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
 <main class="wrap">
   <div class="brand">
-    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#0A6A64"/><path d="M20 13 H44 A9 9 0 0 1 53 22 V35 A9 9 0 0 1 44 44 H29 L18 52 L20 44 A9 9 0 0 1 11 35 V22 A9 9 0 0 1 20 13 Z" fill="#F4F7F6"/><path d="M21 32 L32 22.5 L43 32" fill="none" stroke="#0A6A64" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="36.8" r="3.4" fill="#E7AE5C"/></svg>
+    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#26213F"/><path d="M20 13 H44 A9 9 0 0 1 53 22 V35 A9 9 0 0 1 44 44 H29 L18 52 L20 44 A9 9 0 0 1 11 35 V22 A9 9 0 0 1 20 13 Z" fill="#FFFFFF"/><path d="M21 32 L32 22.5 L43 32" fill="none" stroke="#26213F" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="36.8" r="3.4" fill="#FC4C02"/></svg>
     <span class="wordmark">Buyers<span class="wm-accent">Line</span></span>
   </div>
   <div class="card">

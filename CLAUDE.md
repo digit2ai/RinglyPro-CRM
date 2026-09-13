@@ -391,6 +391,8 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Not built yet (stated, not hidden):** e-signature of the buyer agreement, builder registration packets, calendar booking, outbound messaging and nurture alerts, inbound email parsing, knowledge notes for the Advisor, WhatsApp intake, a custom domain.
 
+**Visual style follows jome.com/for-builders (owner request, 2026-09-13):** Mulish for everything (Jome headlines use its own proprietary "jome" typeface, which is not used here; Mulish Black stands in), ink `#26213F`, orange `#FC4C02`, lavender-gray bands `#F4F5F9`, borders `#E7E8E9`, pill buttons. **Orange text on white is 3.5:1**, so the exact orange only fills large type (headline highlight, big figures) and 19px bold buttons; small text, links and small buttons use `#C93D00` (5.1:1). Dark theme = navy ground `#1B1730` with the same orange. Logo recolored: navy tile, white bubble, navy roof, orange dot. Own logo, copy and layout were kept; do not copy Jome's logo, imagery or wording.
+
 **Theme: DARK IS THE DEFAULT.** Every page ships `<html data-theme="dark">` and a head script that applies a saved `light` before styles paint (no flash); `public/theme.js` wires the sun/moon toggle (`[data-theme-toggle]`, key `incentiva_theme`) on the landing, report, login and console. The OS preference does not override the default.
 
 **SIT:** `node verticals/incentiva/sit.js` → **79/79**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.

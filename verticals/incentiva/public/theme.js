@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   var KEY = 'incentiva_theme';
-  var GROUND = { dark: '#0E1719', light: '#F4F7F6' };
+  var GROUND = { dark: '#1B1730', light: '#FFFFFF' };
   var LABELS = {
     en: { toLight: 'Switch to light mode', toDark: 'Switch to dark mode' },
     es: { toLight: 'Cambiar a modo claro', toDark: 'Cambiar a modo oscuro' }

@@ -98,7 +98,7 @@ function createApp(opts = {}) {
   // An unowned path ends here, never in the CRM.
   router.use((req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-    res.status(404).type('html').send(`<!doctype html><meta charset="utf-8"><title>Not found · BuyersLine</title><body style="font-family:system-ui;padding:40px;background:#F4F7F6;color:#13302D"><h1>Page not found</h1><p><a href="${req.baseUrl}/" style="color:#0A6A64">Go to BuyersLine</a></p>`);
+    res.status(404).type('html').send(`<!doctype html><meta charset="utf-8"><title>Not found · BuyersLine</title><body style="font-family:system-ui;padding:40px;background:#FFFFFF;color:#26213F;font-family:Mulish,system-ui,sans-serif"><h1>Page not found</h1><p><a href="${req.baseUrl}/" style="color:#C93D00">Go to BuyersLine</a></p>`);
   });
 
   if (opts.boot !== false && db.configured) {

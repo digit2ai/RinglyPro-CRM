@@ -6,13 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BuyersLine | New-construction incentives, verified and compared</title>
 <meta name="description" content="See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.">
-<meta name="theme-color" content="#0E1719">
+<meta name="theme-color" content="#1B1730">
 <link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="{{BASE}}/site.css">
 <script src="{{BASE}}/theme.js" defer></script>
 </head>
@@ -23,7 +23,7 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="{{BASE}}/" aria-label="BuyersLine">
-      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#0A6A64"/><path d="M20 13 H44 A9 9 0 0 1 53 22 V35 A9 9 0 0 1 44 44 H29 L18 52 L20 44 A9 9 0 0 1 11 35 V22 A9 9 0 0 1 20 13 Z" fill="#F4F7F6"/><path d="M21 32 L32 22.5 L43 32" fill="none" stroke="#0A6A64" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="36.8" r="3.4" fill="#E7AE5C"/></svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#26213F"/><path d="M20 13 H44 A9 9 0 0 1 53 22 V35 A9 9 0 0 1 44 44 H29 L18 52 L20 44 A9 9 0 0 1 11 35 V22 A9 9 0 0 1 20 13 Z" fill="#FFFFFF"/><path d="M21 32 L32 22.5 L43 32" fill="none" stroke="#26213F" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="36.8" r="3.4" fill="#FC4C02"/></svg>
       <span class="wordmark">Buyers<span class="wm-accent">Line</span></span>
     </a>
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
@@ -49,7 +49,7 @@
     <div class="wrap hero-grid">
       <div>
         <p class="eyebrow" id="heroEyebrow">New construction · Tampa Bay, Florida</p>
-        <h1 data-i18n="hero_title">Know what every builder is really offering before you visit.</h1>
+        <h1><span data-i18n="hero_title_a">Know what every builder is</span> <span class="hl" data-i18n="hero_title_hl">really offering</span> <span data-i18n="hero_title_b">before you visit.</span></h1>
         <p class="lede" data-i18n="hero_lede">Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.</p>
         <div class="btn-row">
           <a class="btn btn-primary" href="#intake" data-scroll="intake" data-i18n="hero_cta_primary">See my options</a>
@@ -388,7 +388,9 @@
       lang_group: 'Language',
       hero_eyebrow: 'New construction · {market}',
       market_default: 'Tampa Bay, Florida',
-      hero_title: 'Know what every builder is really offering before you visit.',
+      hero_title_a: 'Know what every builder is',
+      hero_title_hl: 'really offering',
+      hero_title_b: 'before you visit.',
       hero_lede: "Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.",
       hero_cta_primary: 'See my options',
       hero_cta_secondary: 'Estimate my buying power',
@@ -556,7 +558,9 @@
       lang_group: 'Idioma',
       hero_eyebrow: 'Construcción nueva · {market}',
       market_default: 'Tampa Bay, Florida',
-      hero_title: 'Sepa lo que cada constructor ofrece de verdad antes de visitar.',
+      hero_title_a: 'Sepa lo que cada constructor',
+      hero_title_hl: 'ofrece de verdad',
+      hero_title_b: 'antes de visitar.',
       hero_lede: 'Díganos dónde y qué busca. Le mostramos su poder de compra, todas las comunidades de construcción nueva activas cerca de su código postal y los incentivos vigentes de cada constructor, verificados por un agente con licencia y comparados lado a lado en pago mensual.',
       hero_cta_primary: 'Ver mis opciones',
       hero_cta_secondary: 'Calcular mi poder de compra',
