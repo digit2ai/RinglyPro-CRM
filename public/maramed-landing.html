@@ -1,288 +1,1094 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MaraMed — Signos Vitales con la Cámara · Digit2AI</title>
-  <meta name="description" content="MaraMed mide tus signos vitales usando solo la cámara. Sin aparatos. El video nunca sale de tu navegador." />
-  <link rel="preconnect" href="https://aiagent.ringlypro.com" />
-  <link rel="icon" type="image/svg+xml" href="/maramed-icon.svg" />
-  <link rel="apple-touch-icon" href="/maramed-icon.svg" />
-  <style>
-    :root{--bg:#0b0f19;--bg2:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--green:#4ade80;--cyan:#22d3ee;--violet:#8b7bff}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
-    .wrap{max-width:840px;margin:0 auto;padding:0 20px}
-    a{color:inherit}
-    .top{display:flex;align-items:center;justify-content:space-between;padding:18px 0;font-size:14px;color:var(--mut)}
-    .brand{font-weight:800;color:var(--txt)}
-    .langbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}
-    .hero{text-align:center;padding:44px 0 8px}
-    .hero h1{font-size:2.6rem;line-height:1.1;margin:.2em 0}
-    .hero p{color:var(--mut);font-size:1.15rem;max-width:620px;margin:14px auto 0}
-    .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:26px 0 6px}
-    .btn{display:inline-block;padding:13px 22px;border-radius:14px;font-weight:700;text-decoration:none;font-size:15px}
-    .btn-primary{background:var(--cyan);color:#06222a}
-    .btn-ghost{background:#0e1524;border:1px solid var(--line);color:var(--txt)}
-    .badge{display:inline-block;margin-top:14px;font-size:13px;color:var(--green);background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:999px;padding:6px 12px}
-    .sec{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:24px;margin:16px 0;transition:box-shadow .3s,border-color .3s}
-    .sec.active{border-color:var(--violet);box-shadow:0 0 0 2px rgba(139,123,255,.25)}
-    .sec h2{margin:0 0 8px;font-size:1.35rem}
-    .sec p{margin:0;color:var(--mut)}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
-    .metric{background:#0e1524;border:1px solid var(--line);border-radius:12px;padding:12px}
-    .metric .k{font-size:12px;color:var(--mut)}
-    .metric .v{font-weight:700;margin-top:2px}
-    .tierA{color:var(--cyan)}.tierB{color:var(--violet)}.tierC{color:var(--mut)}
-    .foot{color:var(--mut);font-size:13px;text-align:center;padding:30px 0 50px}
-    .disc{color:#f7c15a;font-size:12.5px;text-align:center;margin-top:10px}
-    @media(max-width:600px){.hero h1{font-size:2rem}.grid{grid-template-columns:1fr}}
-    /* ---- Lina voice orb ---- */
-    .lina{margin:26px auto 6px;max-width:760px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;gap:18px;align-items:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-    .orb{position:relative;width:82px;height:82px;flex:0 0 82px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);box-shadow:0 0 0 0 rgba(155,123,255,.5)}
-    .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(155,123,255,.35)}
-    .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
-    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(155,123,255,.45)}70%{box-shadow:0 0 0 22px rgba(155,123,255,0)}100%{box-shadow:0 0 0 0 rgba(155,123,255,0)}}
-    .lina-meta{flex:1;min-width:0}.lina-name{font-weight:700}.lina-role{color:var(--mut);font-size:13px;margin-bottom:12px}
-    .controls{display:flex;gap:10px;flex-wrap:wrap}
-    .controls button{font:inherit;border-radius:10px;border:1px solid var(--line);background:#0e1524;color:var(--txt);padding:9px 14px;cursor:pointer}
-    .controls button.primary{background:var(--violet);border-color:var(--violet);color:#0b0f19;font-weight:700}
-    .controls button:disabled{opacity:.45;cursor:not-allowed}
-    .status{font-size:13px;color:var(--mut);margin-top:10px;min-height:18px}
-    .voicepick{margin-top:10px;font-size:13px;color:var(--mut)}
-    .voicepick select{font:inherit;background:#1b2536;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-left:6px}
-    @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MaraMed · Monitoreo, priorización y gestión proactiva de poblaciones de salud</title>
+<meta name="description" content="MaraMed: plataforma web progresiva para medicina prepagada, aseguradoras y redes hospitalarias. Acceso biométrico local, triaje por voz con protocolo Manchester, signos vitales por cámara y soporte a la decisión radiológica. Prueba de concepto de ISTC con capa de IA de Digit2AI." />
+<meta name="theme-color" content="#09111e" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://maramed.app/" />
+<meta property="og:title" content="MaraMed · Gestión proactiva de poblaciones de salud" />
+<meta property="og:description" content="Identifica al afiliado sin guardar su rostro, prioriza su consulta con protocolo Manchester y entrega al médico una lectura adicional que declara cuándo puede equivocarse." />
+<link rel="canonical" href="https://maramed.app/" />
+<link rel="icon" type="image/svg+xml" href="/maramed-icon.svg" />
+<link rel="apple-touch-icon" href="/maramed-icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  /* Paleta leída de maramed.vercel.app, la misma del mazo narrado. No inventar una segunda. */
+  --bg:#09111e; --panel:#0f172a; --panel2:#141f36; --panel3:#1b2942;
+  --line:#1e2c45; --line2:#2b3d5c;
+  --ink:#f2f6fc; --ink2:#d3dded; --mut:#a6b6cd; --faint:#8a9ab2;
+  --teal:#0d9488; --teal2:#2dd4bf; --tealdim:#0b3b38; --tealglow:rgba(13,148,136,.4);
+  --blue:#38bdf8; --amber:#f59e0b; --amberdim:#3a2a08; --red:#f43f5e; --reddim:#3d1220;
+  --violet:#8b5cf6; --violet2:#a78bfa; --violetdim:#2a1d52; --ok:#22c55e; --okdim:#0d3320;
+  --sans:'Urbanist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --nav-h:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 12px)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;font-weight:400;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:radial-gradient(circle at 50% 0%,rgba(13,148,136,.16),transparent 46%),radial-gradient(circle at 90% 40%,rgba(139,92,246,.08),transparent 40%)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--teal2);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+svg.i.f{fill:currentColor;stroke:none}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:50;height:var(--nav-h);background:rgba(9,17,30,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .wrap{height:100%;display:flex;align-items:center;gap:18px}
+.nav .logo img{height:34px;width:auto;display:block}
+.nav .links{display:flex;gap:4px;margin-left:10px}
+.nav .links a{font-size:14.5px;color:var(--mut);padding:10px 12px;border-radius:8px}
+.nav .links a:hover{color:var(--ink);background:var(--panel)}
+.nav .sp{flex:1}
+.langbtn{min-width:44px;height:40px;border:1px solid var(--line2);border-radius:9px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--mut)}
+.langbtn:hover{color:var(--ink);border-color:var(--teal)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:0 20px;border-radius:12px;font-weight:700;font-size:15.5px;border:1px solid transparent;transition:transform .15s,box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-1px)}
+.btn.pri{background:linear-gradient(135deg,var(--teal2),var(--teal));color:#03201d;box-shadow:0 8px 28px rgba(13,148,136,.35)}
+.btn.ghost{background:var(--panel);border-color:var(--line2);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--teal)}
+.nav .btn{min-height:40px;padding:0 15px;font-size:14px}
+@media (max-width:900px){.nav .links{display:none}}
+@media (max-width:420px){.nav .btn .long{display:none}}
+
+/* ---------- typography ---------- */
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal2)}
+.eyebrow.vi{color:var(--violet2)} .eyebrow.am{color:var(--amber)}
+h1{font-size:clamp(2.2rem,5.2vw,3.7rem);line-height:1.05;letter-spacing:-.025em;font-weight:700}
+h2{font-size:clamp(1.65rem,3.4vw,2.45rem);line-height:1.12;letter-spacing:-.02em;font-weight:700}
+h3{font-size:1.14rem;line-height:1.3;font-weight:700}
+.grad{background:linear-gradient(135deg,var(--teal2),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.dek{font-size:clamp(1.02rem,1.6vw,1.2rem);color:var(--ink2);max-width:62ch}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+section.band{padding:84px 0;border-top:1px solid rgba(30,44,69,.6);transition:background .4s}
+section.band.active{background:rgba(13,148,136,.05)}
+.shead{max-width:760px;margin-bottom:34px;display:flex;flex-direction:column;gap:12px}
+.shead p{color:var(--ink2)}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 56px}
+.hero .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.hero .copy{display:flex;flex-direction:column;gap:22px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.simbadge{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);background:var(--amberdim);border:1px solid #5a4310;padding:6px 12px;border-radius:6px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 13px;display:flex;flex-direction:column;gap:2px}
+.tile .td{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.tile .tn{font-family:var(--mono);font-size:25px;font-weight:700;letter-spacing:-.02em}
+.tile .tl{font-size:12.5px;color:var(--mut);line-height:1.4}
+.hero .stage{display:flex;justify-content:center}
+@media (max-width:980px){.hero .grid{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- narration ---------- */
+.narr{display:flex;align-items:center;gap:18px;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:18px;padding:18px 20px;margin-top:40px}
+.norb{width:62px;height:62px;border-radius:50%;flex:none;position:relative;background:radial-gradient(circle at 32% 28%,#a78bfa,#6d4bd8 42%,#1e6fa8 100%);box-shadow:0 0 30px rgba(139,92,246,.35)}
+.norb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px dashed rgba(45,212,191,.35)}
+.norb.speaking{animation:npulse 1.3s ease-in-out infinite;background:radial-gradient(circle at 32% 28%,#fbbf24,#ea7c0b 45%,#7c3d05 100%)}
+@keyframes npulse{0%{box-shadow:0 0 0 0 rgba(245,158,11,.45)}70%{box-shadow:0 0 0 20px rgba(245,158,11,0)}100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}}
+.narr .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.narr .who{font-weight:700}
+.narr .who span{font-weight:400;color:var(--mut)}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ctl{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 15px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);font-size:14.5px;font-weight:600}
+.ctl.pri{background:var(--teal);border-color:var(--teal);color:#fff}
+.ctl:disabled{opacity:.42;cursor:not-allowed}
+.ctl.sq{width:44px;padding:0;justify-content:center}
+.nstatus{font-size:13.5px;color:var(--mut);min-height:20px}
+.nopt{font-size:13px;color:var(--mut);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.nopt select{font:inherit;background:var(--panel3);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:6px 8px;min-height:36px}
+.nopt label{display:inline-flex;gap:6px;align-items:center}
+@media (max-width:620px){.narr{flex-direction:column;text-align:center}.ctrls,.nopt{justify-content:center}.ctrls{flex-wrap:nowrap}.ctl .long{display:none}}
+
+/* ---------- audience ---------- */
+.aud{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:9px}
+.card .n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--teal2);text-transform:uppercase}
+.card p{font-size:15px;color:var(--ink2)}
+.card .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--tealdim);color:var(--teal2);font-size:20px}
+@media (max-width:980px){.aud{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.aud{grid-template-columns:1fr}}
+
+/* ---------- modules ---------- */
+.mod{padding:40px 0;border-top:1px dashed var(--line)}
+.mod:first-of-type{border-top:none;padding-top:8px}
+.mod .mh{display:grid;grid-template-columns:.9fr 1.1fr;gap:34px;margin-bottom:26px;align-items:start}
+.mod .mt{display:flex;flex-direction:column;gap:10px}
+.mod .mt .num{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--teal2)}
+.mod.vi .mt .num{color:var(--violet2)}
+.facts{display:flex;flex-direction:column;gap:10px}
+.fact{display:grid;grid-template-columns:118px 1fr;gap:12px;font-size:15px;color:var(--ink2);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.fact:last-child{border-bottom:none;padding-bottom:0}
+.fact b{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:500;padding-top:3px}
+@media (max-width:900px){.mod .mh{grid-template-columns:1fr;gap:18px}.fact{grid-template-columns:1fr;gap:2px}}
+.phrow{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:6px 2px 14px;margin:0 -2px}
+.phones{display:flex;gap:22px;justify-content:center;align-items:flex-start;min-width:min-content}
+.pwrap{display:flex;flex-direction:column;align-items:center;gap:10px;flex:none;scroll-snap-align:center}
+.pcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);text-align:center;max-width:240px;line-height:1.5}
+.pcap b{color:var(--teal2);font-weight:500}
+.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:880px;margin:10px auto 0}
+.note{border-left:2px solid var(--amber);background:var(--amberdim);border-radius:0 10px 10px 0;padding:13px 16px;font-size:14.5px;line-height:1.55;color:#fbdca0}
+.note b{color:#fde8bd}
+.note.crit{border-left-color:var(--red);background:var(--reddim);color:#f9c3ce}
+.note.crit b{color:#fddbe3}
+.note.tl{border-left-color:var(--teal2);background:rgba(13,148,136,.1);color:#bfeee6}
+.note.tl b{color:#dffbf5}
+@media (min-width:1060px){.phones{zoom:1.08}}
+@media (max-width:1060px){.phones{justify-content:flex-start}}
+
+/* ---------- phone simulator (markup shared in spirit with maramed-presentacion.html) ---------- */
+.phone{width:222px;height:430px;border-radius:26px;border:1px solid var(--line2);background:#050b16;padding:7px;flex:none;box-shadow:0 18px 46px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03) inset;position:relative;font-size:10px;line-height:1.4}
+.phone.tall{height:496px}
+.pscreen{width:100%;height:100%;border-radius:20px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;position:relative}
+.pnotch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:5px;border-radius:3px;background:#0d1626;z-index:9}
+.pbody{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:18px 12px 11px;gap:8px}
+.pbody.ctr{justify-content:center;align-items:center;text-align:center}
+.ptop{display:flex;align-items:center;gap:7px;padding:16px 13px 0;flex:none}
+.pavatar{width:26px;height:26px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:12px;flex:none;color:var(--ink2)}
+.pname{font-size:11.5px;font-weight:600;line-height:1.2}
+.ppill{font-family:var(--mono);font-size:7.4px;border:1px solid var(--line2);border-radius:5px;padding:2px 5px;color:var(--mut);white-space:nowrap}
+.psp{flex:1}
+.ptitle{font-size:12.3px;font-weight:700;letter-spacing:.02em;line-height:1.22;text-transform:uppercase;text-align:center;color:#cfd9e8}
+.psub{font-size:8.6px;color:var(--mut);text-align:center;line-height:1.4}
+.tiny{font-size:8px;color:var(--faint);line-height:1.45}
+.mm{font-family:var(--mono)}
+.orb{width:84px;height:84px;border-radius:50%;margin:4px auto;position:relative;display:grid;place-items:center;flex:none;color:#fff;font-size:26px;transition:background .6s,box-shadow .6s}
+.orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px dashed rgba(45,212,191,.28)}
+.orb.idle{background:radial-gradient(circle at 32% 28%,#a78bfa,#6d4bd8 42%,#1e6fa8 100%);box-shadow:0 0 44px rgba(139,92,246,.42)}
+.orb.listen{background:radial-gradient(circle at 32% 28%,#fb7185,#e11d6b 45%,#7f1d3f 100%);box-shadow:0 0 46px rgba(244,63,94,.48)}
+.orb.speak{background:radial-gradient(circle at 32% 28%,#fbbf24,#ea7c0b 45%,#7c3d05 100%);box-shadow:0 0 46px rgba(245,158,11,.45)}
+.orb.think{background:radial-gradient(circle at 32% 28%,#c4b5fd,#7dd3fc 46%,#1e5f8f 100%);box-shadow:0 0 46px rgba(56,189,248,.4)}
+.orb .st{display:none}
+.orb.idle .st-idle,.orb.listen .st-listen,.orb.think .st-think,.orb.speak .st-speak{display:block}
+.orbbtns{display:flex;gap:7px;justify-content:center;flex:none}
+.orbbtn{flex:1;border:1px solid var(--line2);border-radius:9px;padding:5px 4px;font-size:7.8px;font-weight:600;letter-spacing:.05em;color:var(--blue);background:var(--panel);display:flex;align-items:center;justify-content:center;gap:4px}
+.orbbtn.t{color:var(--teal2)}
+.vmode{font-family:var(--mono);font-size:7.6px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal2);text-align:center;flex:none;display:flex;gap:5px;justify-content:center;align-items:center}
+.pinput{border:1px solid var(--line2);border-radius:10px;padding:6px 9px;font-size:8.3px;color:var(--faint);display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.6);flex:none}
+.pinput .sd{margin-left:auto;color:var(--ink2);font-size:10px}
+.pcard{border:1px solid var(--line);border-radius:10px;padding:7px 9px;background:var(--panel);display:flex;flex-direction:column;gap:6px;flex:none}
+.pcard .ph{font-family:var(--mono);font-size:7.8px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal2);display:flex;align-items:center;gap:5px}
+.prow{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--ink2)}
+.prow .pv{margin-left:auto;font-size:8.5px;font-family:var(--mono);color:var(--ink)}
+.pill{border:1px solid var(--line2);border-radius:5px;padding:1px 5px;transition:all .4s}
+.pill.am{border-color:#5a4310;background:var(--amberdim);color:var(--amber)}
+.pfoot{font-size:6.8px;letter-spacing:.08em;color:#56667e;text-align:center;line-height:1.5;padding:0 10px 8px;flex:none}
+.rbtn{border-radius:12px;padding:12px 10px;font-family:var(--mono);font-size:11px;font-weight:500;text-align:center;flex:none;display:flex;gap:7px;justify-content:center;align-items:center}
+.rbtn.pri{background:rgba(139,92,246,.22);border:1px solid var(--violet);color:#ddd0ff}
+.rbtn.sec{background:var(--panel);border:1px solid var(--line2);color:var(--ink2)}
+.rq{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:none}
+.rqc{border:1px solid var(--line);border-radius:8px;padding:5px 7px;background:var(--panel);display:flex;flex-direction:column;gap:2px}
+.rqc .k{font-family:var(--mono);font-size:6.8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.rqc .v{font-family:var(--mono);font-size:10px;font-weight:700;line-height:1.25}
+.rsec{border-left:2px solid var(--blue);background:rgba(15,23,42,.7);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px;flex:none}
+.rsec.v{border-left-color:var(--violet)} .rsec.a{border-left-color:var(--amber)}
+.rsec .rh{font-family:var(--mono);font-size:8.3px;font-weight:700;display:flex;gap:5px;align-items:center}
+.rsec p{font-size:7.9px;line-height:1.48;color:var(--ink2)}
+.rlim{border:1px solid #6b2137;background:rgba(244,63,94,.1);border-radius:9px;padding:7px 8px;flex:none}
+.rlim .rh{font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.1em;color:var(--red);margin-bottom:4px;display:flex;gap:5px;align-items:center}
+.rlim p{font-family:var(--mono);font-size:7.1px;line-height:1.55;color:#eab2be}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:none}
+.vc{border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:var(--panel);display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.vc::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal2)}
+.vc.amb::before{background:var(--amber)} .vc.bl::before{background:var(--blue)}
+.vc .vk{font-size:8px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.vc .vv{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1.1}
+.vc .vv span{font-size:8px;font-weight:400;color:var(--mut);margin-left:2px}
+.vc .vb{display:flex;gap:3px;margin-top:2px}
+.vtag{font-size:6.5px;letter-spacing:.05em;border-radius:20px;padding:2px 5px;border:1px solid var(--line2);color:var(--mut)}
+.vtag.ok{color:var(--ok);border-color:#1c5c37} .vtag.am{color:var(--amber);border-color:#5a4310} .vtag.rd{color:var(--red);border-color:#6b2137}
+.vstep{display:flex;gap:8px;align-items:flex-start;flex:none}
+.vstep .vn{width:19px;height:19px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);font-family:var(--mono);font-size:8.5px;display:grid;place-items:center;flex:none}
+.vstep .vt{font-size:9.2px;font-weight:600;line-height:1.3}
+.vstep .vd{font-size:7.6px;color:var(--mut);line-height:1.4}
+.vico{width:26px;height:26px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-size:12px;color:var(--teal2)}
+.wave{height:34px;border-radius:7px;background:rgba(6,14,26,.9);border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.wave svg{position:absolute;inset:0;width:100%;height:100%}
+.wave .wl{position:absolute;left:5px;bottom:2px;font-family:var(--mono);font-size:5.6px;letter-spacing:.14em;color:#4b6d64}
+.facebox{border-radius:10px;overflow:hidden;background:#fff;position:relative;flex:none;display:grid;place-items:center}
+.corner{position:absolute;width:20px;height:20px;border:2px solid var(--ok)}
+.c1{top:7px;left:7px;border-right:none;border-bottom:none}.c2{top:7px;right:7px;border-left:none;border-bottom:none}
+.c3{bottom:7px;left:7px;border-right:none;border-top:none}.c4{bottom:7px;right:7px;border-left:none;border-top:none}
+.pbarw{height:4px;border-radius:3px;background:var(--panel3);overflow:hidden;flex:none}
+.pbarf{height:100%;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.hgroup{display:flex;flex-direction:column;gap:5px;flex:none}
+.hlbl{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal2)}
+.hlbl .hc{margin-left:auto;font-size:7px;color:var(--faint);border:1px solid var(--line2);border-radius:4px;padding:1px 4px}
+.hitem{border-left:2px solid var(--ok);background:var(--panel);border-radius:0 8px 8px 0;padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+.hitem.am{border-left-color:var(--amber)}
+.hitem .hd{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:7.5px;color:var(--faint)}
+.hitem .hb{margin-left:auto;font-size:6.5px;border-radius:4px;padding:1px 5px;border:1px solid #1c5c37;color:var(--ok)}
+.hitem.am .hb{border-color:#5a4310;color:var(--amber)}
+.hitem .ht{font-size:9.5px;color:var(--ink2);line-height:1.35}
+.mlist{display:flex;flex-direction:column;gap:7px;font-size:14px}
+.mlist .row{display:flex;gap:9px;align-items:center;color:var(--ink2)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.mlist .row .r{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--mut);text-align:right}
+
+/* BLE route */
+.route{display:flex;flex-direction:column;gap:0;max-width:560px}
+.rstep{display:grid;grid-template-columns:104px 1fr;gap:14px;align-items:center;font-size:15px;color:var(--ink2)}
+.rstep .chip{justify-content:center}
+.rline{width:1px;height:14px;background:var(--line2);margin-left:52px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--mut)}
+.chip.acc{color:var(--teal2);background:var(--tealdim);border-color:#155e57}
+.chip.vi{color:var(--violet2);background:var(--violetdim);border-color:#4a35a0}
+.ble{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.ble{grid-template-columns:1fr}}
+
+/* ---------- architecture ---------- */
+.arch{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.alayer{border:1px solid var(--line2);border-radius:14px;padding:16px 18px;background:var(--panel);display:flex;flex-direction:column;gap:12px}
+.alayer.cli{border-color:#155e57;background:linear-gradient(180deg,rgba(13,148,136,.10),rgba(15,23,42,.7))}
+.alayer.srv{border-color:#4a35a0;background:linear-gradient(180deg,rgba(139,92,246,.10),rgba(15,23,42,.7))}
+.altitle{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--mut)}
+.anodes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.anode{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:rgba(9,17,30,.6);display:flex;flex-direction:column;gap:3px}
+.anode .an{font-size:15px;font-weight:600;line-height:1.3}
+.anode .ad{font-size:13px;color:var(--mut);line-height:1.45}
+.apipe{display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--teal2);padding:2px 0}
+.apipe .ln{width:1px;height:18px;background:linear-gradient(180deg,var(--teal),transparent)}
+@media (max-width:760px){.anodes{grid-template-columns:1fr}}
+.tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-top:22px}
+table.t{width:100%;min-width:640px;border-collapse:collapse;font-size:14.5px}
+table.t th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:500;padding:12px 16px;border-bottom:1px solid var(--line2)}
+table.t td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--ink2);line-height:1.5;vertical-align:top}
+table.t tr:last-child td{border-bottom:none}
+table.t td b{color:var(--ink);font-weight:600}
+table.t td.mono{font-size:13px}
+
+/* ---------- privacy / status ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.list{display:flex;flex-direction:column;gap:9px;font-size:15px;color:var(--ink2)}
+.list .li{display:flex;gap:10px;align-items:flex-start}
+.list .li svg{margin-top:4px}
+@media (max-width:900px){.two,.three{grid-template-columns:1fr}}
+
+/* ---------- close / foot ---------- */
+.close{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:22px;padding:clamp(24px,4vw,44px);display:flex;flex-direction:column;gap:20px}
+.close .cta{display:flex;gap:12px;flex-wrap:wrap}
+.foot{padding:40px 0 60px;color:var(--mut);font-size:14px;border-top:1px solid var(--line);margin-top:70px}
+.foot .wrap{display:flex;flex-wrap:wrap;gap:18px 30px;align-items:flex-start;justify-content:space-between}
+.foot .fl{display:flex;flex-wrap:wrap;gap:6px 18px}
+.foot .fl a{color:var(--ink2);padding:12px 0;display:inline-block}
+.foot .fl a:hover{color:var(--teal2)}
+.foot .fine{flex-basis:100%;font-size:12.5px;color:var(--faint);line-height:1.6;max-width:90ch}
+</style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.2a4.2 4.2 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z"/></symbol>
+  <symbol id="i-lungs" viewBox="0 0 24 24"><path d="M12 3v8M12 11l-3 2M12 11l3 2M9 7C6 7 4 12 4 16.5 4 18.5 5 19.5 7 19.5s3-1.2 3-3V9M15 7c3 0 5 5 5 9.5 0 2-1 3-3 3s-3-1.2-3-3V9"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.5-5 4 10 2.5-5H21"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0M12 17l4-5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3.5L9.5 5h5l2 3H20v11H4Z"/><circle cx="12" cy="13" r="3.4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2.5h10V19H3Z"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9.5h4L13 5v14l-5-4.5H4ZM16.5 9a4.2 4.2 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11.5V5.2a1.6 1.6 0 0 1 3.2 0V11M12.2 10V8.6a1.6 1.6 0 0 1 3.2 0V11M15.4 10.6a1.6 1.6 0 0 1 3.2 0v4.2A6.2 6.2 0 0 1 12.4 21h-1a5.4 5.4 0 0 1-4.3-2.2l-3-4.1a1.6 1.6 0 0 1 2.5-2L9 15"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M11 4.5A3 3 0 0 0 6 6.2a3 3 0 0 0-1.6 5A3.2 3.2 0 0 0 6 16.6 3 3 0 0 0 11 19.5ZM13 4.5a3 3 0 0 1 5 1.7 3 3 0 0 1 1.6 5 3.2 3.2 0 0 1-1.6 5.4 3 3 0 0 1-5 2.9Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m20 20-5-5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4ZM12 10v4.2M12 17h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.2 19 6v5.2c0 4.6-3 7.8-7 9.6-4-1.8-7-5-7-9.6V6Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20c1-3.8 3.9-5.6 7.5-5.6s6.5 1.8 7.5 5.6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4Z"/></symbol>
+  <symbol id="i-id" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><circle cx="8.5" cy="12" r="2"/><path d="M13 10.5h5M13 13.5h3.5"/></symbol>
+  <symbol id="i-xray" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 6v12M8.5 9h7M8 12h8M8.5 15h7"/></symbol>
+  <symbol id="i-bt" viewBox="0 0 24 24"><path d="m7 7.5 10 9-5 4.5V3l5 4.5-10 9"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></symbol>
+  <symbol id="i-face" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.6 14.2a4.4 4.4 0 0 0 6.8 0M9.2 9.8h.01M14.8 9.8h.01"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 8h8v13M8 8h.01M8 12h.01M8 16h.01M16 12h.01M16 16h.01M2.5 21h19"/></symbol>
+  <symbol id="i-hospital" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="1.5"/><path d="M12 8v6M9 11h6M9.5 21v-3.5h5V21"/></symbol>
+  <symbol id="i-umbrella" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 18 0ZM12 12v6.5a2 2 0 0 1-4 0"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15L19.5 12Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4.5h3.5v15H7ZM13.5 4.5H17v15h-3.5Z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.5h10V9M7 17H4.5V9.5h15V17H17M7 14h10v6.5H7Z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/></symbol>
+</svg>
+
+<nav class="nav">
   <div class="wrap">
-    <div class="top">
-      <span class="brand" style="display:inline-flex;align-items:center;gap:8px">
-        <img src="/maramed-logo.svg" alt="MaraMed" height="30" style="height:30px;width:auto;display:block" />
-        <span style="color:var(--mut);font-weight:500">· Digit2AI</span>
-      </span>
-      <button class="langbtn" id="langBtn">EN</button>
+    <a class="logo" href="#top" aria-label="MaraMed"><img src="/maramed-logo.svg" alt="MaraMed" width="142" height="34" /></a>
+    <div class="links">
+      <a href="#modulos" data-en="Modules">Módulos</a>
+      <a href="#arquitectura" data-en="Architecture">Arquitectura</a>
+      <a href="#privacidad" data-en="Privacy">Privacidad</a>
+      <a href="#estado" data-en="Status">Estado</a>
     </div>
+    <span class="sp"></span>
+    <button class="langbtn" id="langBtn" type="button" aria-label="Cambiar idioma / Change language">EN</button>
+    <a class="btn pri" href="https://maramed.vercel.app/" rel="noopener"><span data-en="Open">Abrir</span><span class="long">&nbsp;MaraMed</span></a>
+  </div>
+</nav>
 
-    <header class="hero">
-      <h1 data-es="Tus signos vitales, con solo tu cámara" data-en="Your vital signs, from just your camera">Tus signos vitales, con solo tu cámara</h1>
-      <p data-es="MaraMed estima tu ritmo cardíaco, respiración y más usando la cámara de tu teléfono o computadora. Sin aparatos. Sin sensores. El video nunca sale de tu navegador."
-         data-en="MaraMed estimates your heart rate, breathing and more using your phone or computer camera. No devices. No sensors. Video never leaves your browser.">
-        MaraMed estima tu ritmo cardíaco, respiración y más usando la cámara de tu teléfono o computadora. Sin aparatos. Sin sensores. El video nunca sale de tu navegador.</p>
-      <div class="cta">
-        <a class="btn btn-primary" id="ctaStart" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
-        <a class="btn btn-ghost" id="ctaLogin" href="/maramed" data-es="Abrir la app" data-en="Open the app">Abrir la app</a>
-      </div>
-      <div class="badge" data-es="El video NUNCA sale de tu navegador — solo se guardan los resultados." data-en="Video NEVER leaves your browser — only the results are stored.">El video NUNCA sale de tu navegador — solo se guardan los resultados.</div>
-    </header>
+<main id="top">
 
-    <!-- Lina voice orb (Spanish narration) -->
-    <div class="lina">
-      <div class="orb" id="orb"></div>
-      <div class="lina-meta">
-        <div class="lina-name">Lina · Voz AI de Digit2AI</div>
-        <div class="lina-role" data-es="Deja que Lina te explique MaraMed" data-en="Let Lina walk you through MaraMed">Deja que Lina te explique MaraMed</div>
-        <div class="controls">
-          <button class="primary" id="playAll">&#9654; <span data-es="Que Lina lo explique" data-en="Let Lina explain">Que Lina lo explique</span></button>
-          <button id="pause" disabled>&#10074;&#10074; <span data-es="Pausar" data-en="Pause">Pausar</span></button>
-          <button id="stop" disabled>&#9632; <span data-es="Detener" data-en="Stop">Detener</span></button>
+<!-- ================= HERO ================= -->
+<section class="hero sec" data-seg="hero">
+  <div class="wrap">
+    <div class="grid">
+      <div class="copy">
+        <span class="eyebrow" data-en="ISTC · Ingeniería y Servicios Tecnológicos Colón &nbsp;×&nbsp; Digit2AI">ISTC · Ingeniería y Servicios Tecnológicos Colón &nbsp;×&nbsp; Digit2AI</span>
+        <h1 data-en="MaraMed<br><span class=&quot;grad&quot;>Proactive monitoring, prioritization and management of health populations</span>">MaraMed<br><span class="grad">Monitoreo, priorización y gestión proactiva de poblaciones de salud</span></h1>
+        <p class="dek" data-en="A web platform and progressive web app for prepaid-medicine companies, insurers and hospital networks. It identifies the member without storing their face, prioritizes the consultation with the Manchester triage protocol, reads vital signs with the camera and gives the physician an additional reading that states when it can be wrong.">Plataforma web y aplicación web progresiva para empresas de medicina prepagada, aseguradoras y redes hospitalarias. Identifica al afiliado sin guardar su rostro, prioriza su consulta con el protocolo de triaje Manchester, lee signos vitales con la cámara y entrega al médico una lectura adicional que declara cuándo puede equivocarse.</p>
+        <div class="cta">
+          <a class="btn pri" href="https://maramed.vercel.app/" rel="noopener"><span data-en="Open the platform">Abrir la plataforma</span> <svg class="i"><use href="#i-arrow"/></svg></a>
+          <a class="btn ghost" href="/maramed-presentacion.html" data-en="Watch the narrated deck">Ver la presentación narrada</a>
         </div>
-        <div class="status" id="status" data-es="Pulsa el botón para que Lina comience." data-en="Press the button and Lina will begin.">Pulsa el botón para que Lina comience.</div>
-        <div class="voicepick">
-          <label><input type="checkbox" id="neuralToggle" checked> <span data-es="Voz neural HD" data-en="Neural HD voice">Voz neural HD</span></label>
-          &nbsp;·&nbsp; <span data-es="Acento" data-en="Accent">Acento</span>:
-          <select id="voiceSel">
-            <option value="lina" selected>México (Dalia)</option>
-            <option value="paloma">EE. UU. (Paloma)</option>
-            <option value="salome">Colombia (Salomé)</option>
-            <option value="elvira">España (Elvira)</option>
-          </select>
-          <span id="voiceMode" style="margin-left:8px;color:var(--green)"></span>
+        <span class="simbadge"><svg class="i"><use href="#i-warn"/></svg><span data-en="Proof of concept · no clinical validation yet">Prueba de concepto · sin validación clínica todavía</span></span>
+        <div class="tiles">
+          <div class="tile"><span class="td" data-en="Modules">Módulos</span><span class="tn">05</span><span class="tl" data-en="biometrics, triage, vitals, radiology, hardware">biometría, triaje, signos vitales, radiología, hardware</span></div>
+          <div class="tile"><span class="td" data-en="Install">Instalación</span><span class="tn" style="color:var(--teal2)">0</span><span class="tl" data-en="no app store required">no requiere tienda de aplicaciones</span></div>
+          <div class="tile"><span class="td" data-en="Faces on server">Rostros en servidor</span><span class="tn" style="color:var(--teal2)">0</span><span class="tl" data-en="the face descriptor never leaves the device">el descriptor facial no sale del equipo</span></div>
+          <div class="tile"><span class="td" data-en="Status">Estado</span><span class="tn" style="color:var(--amber)">PoC</span><span class="tl" data-en="proof of concept for demonstration">prueba de concepto con fines demostrativos</span></div>
         </div>
       </div>
+
+      <div class="stage">
+        <div class="pwrap">
+          <div class="phone tall"><div class="pscreen"><span class="pnotch"></span>
+            <div class="ptop"><span class="pavatar"><svg class="i"><use href="#i-user"/></svg></span><div><div class="pname">Afiliada de demostración</div><div style="display:flex;gap:4px;margin-top:2px"><span class="ppill">NHC: DEMO-01</span><span class="ppill">38 Años</span></div></div><span class="psp"></span><span style="width:13px;height:13px;border-radius:50%;background:var(--ok);box-shadow:0 0 9px rgba(34,197,94,.6)"></span></div>
+            <div style="text-align:right;padding:3px 12px 0"><span class="mm" style="font-size:7.5px;letter-spacing:.16em;color:var(--blue)">HISTORIAL</span></div>
+            <div class="pbody" style="gap:8px;padding-top:6px">
+              <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+              <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+              <div class="orb idle" id="heroOrb">
+                <svg class="i st st-idle"><use href="#i-hand"/></svg>
+                <svg class="i st st-listen"><use href="#i-mic"/></svg>
+                <svg class="i f st st-think"><use href="#i-dots"/></svg>
+                <svg class="i st st-speak"><use href="#i-speaker"/></svg>
+              </div>
+              <div class="vmode" id="heroOrbState" style="color:var(--violet2)">En espera</div>
+              <div class="orbbtns"><span class="orbbtn"><svg class="i"><use href="#i-xray"/></svg>IMAGENOLOGÍA</span><span class="orbbtn t"><svg class="i"><use href="#i-heart"/></svg>SIGNOS VITALES</span></div>
+              <div class="vmode"><svg class="i"><use href="#i-pulse"/></svg>Modo consulta voz activo</div>
+              <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd"><svg class="i"><use href="#i-send"/></svg></span></div>
+              <div class="pcard"><span class="ph">Persistencia &amp; derivación <span style="margin-left:auto"><svg class="i"><use href="#i-share"/></svg></span></span>
+                <div class="prow"><svg class="i"><use href="#i-shield"/></svg> Gravedad <span class="pv pill" id="heroGrav">Pendiente</span></div>
+                <div class="prow"><svg class="i"><use href="#i-user"/></svg> Especialista <span class="pv" id="heroSpec">Análisis en curso</span></div>
+              </div>
+            </div>
+            <div class="pfoot">DESARROLLADO POR ISTC &middot; &copy; 2026</div>
+          </div></div>
+          <div class="pcap" data-en="<b>Voice consultation</b> · simulated data">
+            <b>Consulta por voz</b> · datos simulados</div>
+        </div>
+      </div>
     </div>
 
-    <section class="sec" data-i="0">
-      <h2 data-es="Qué es MaraMed" data-en="What MaraMed is">Qué es MaraMed</h2>
-      <p data-es="Una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor."
-         data-en="A web app that uses the camera to estimate your vital signs. Everything happens inside your browser; you install nothing and connect no sensor.">
-        Una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor.</p>
-    </section>
-
-    <section class="sec" data-i="1">
-      <h2 data-es="Qué mide" data-en="What it measures">Qué mide</h2>
-      <p data-es="Signos principales confiables, más estimaciones experimentales, con un indicador de calidad de señal para que sepas cuándo confiar en la lectura."
-         data-en="Reliable core signs, plus experimental estimates, with a signal-quality indicator so you know when to trust the reading.">
-        Signos principales confiables, más estimaciones experimentales, con un indicador de calidad de señal para que sepas cuándo confiar en la lectura.</p>
-      <div class="grid">
-        <div class="metric"><div class="k tierA" data-es="Principal" data-en="Primary">Principal</div><div class="v" data-es="Ritmo cardíaco (BPM)" data-en="Heart rate (BPM)">Ritmo cardíaco (BPM)</div></div>
-        <div class="metric"><div class="k tierA" data-es="Principal" data-en="Primary">Principal</div><div class="v" data-es="Ritmo respiratorio" data-en="Respiratory rate">Ritmo respiratorio</div></div>
-        <div class="metric"><div class="k tierA" data-es="Principal (reposo)" data-en="Primary (at rest)">Principal (reposo)</div><div class="v" data-es="Variabilidad (HRV)" data-en="Variability (HRV)">Variabilidad (HRV)</div></div>
-        <div class="metric"><div class="k tierA" data-es="Principal" data-en="Primary">Principal</div><div class="v" data-es="Calidad de señal" data-en="Signal quality">Calidad de señal</div></div>
+    <!-- narración -->
+    <div class="narr" aria-label="Narración de la página">
+      <div class="norb" id="norb"></div>
+      <div class="meta">
+        <div class="who">Dalia <span data-en="· Digit2AI neural voice">· voz neuronal de Digit2AI</span></div>
+        <div class="ctrls">
+          <button class="ctl pri" id="playAll" type="button"><svg class="i f"><use href="#i-play"/></svg><span data-en="Let Dalia explain<span class=&quot;long&quot;> MaraMed</span>">Que Dalia explique<span class="long"> MaraMed</span></span></button>
+          <button class="ctl sq" id="pauseBtn" type="button" disabled aria-label="Pausar"><svg class="i f"><use href="#i-pause"/></svg></button>
+          <button class="ctl sq" id="stopBtn" type="button" disabled aria-label="Detener"><svg class="i f"><use href="#i-stop"/></svg></button>
+        </div>
+        <div class="nstatus" id="nstatus" aria-live="polite" data-en="Press the button and Dalia will walk you through the page, section by section.">Pulsa el botón y Dalia recorre la página, sección por sección.</div>
+        <div class="nopt">
+          <label><input type="checkbox" id="neuralToggle" checked /> <span data-en="Neural HD voice">Voz neuronal HD</span></label>
+          <label><span data-en="Accent">Acento</span>
+            <select id="voiceSel" aria-label="Acento">
+              <option value="dalia" selected>México (Dalia)</option>
+              <option value="paloma">EE. UU. (Paloma)</option>
+              <option value="salome">Colombia (Salomé)</option>
+              <option value="elvira">España (Elvira)</option>
+            </select>
+          </label>
+          <span id="voiceMode" class="mono" style="color:var(--teal2)"></span>
+        </div>
       </div>
-    </section>
-
-    <section class="sec" data-i="2">
-      <h2 data-es="Cómo funciona" data-en="How it works">Cómo funciona</h2>
-      <p data-es="La técnica se llama rPPG. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos POS y CHROM convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel."
-         data-en="The technique is called rPPG. It detects tiny color changes in your skin caused by each heartbeat from the camera frames. POS and CHROM algorithms turn that signal into your vitals, tracking your face to resist motion and different skin tones.">
-        La técnica se llama rPPG. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos POS y CHROM convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel.</p>
-    </section>
-
-    <section class="sec" data-i="3">
-      <h2 data-es="Tu privacidad, por diseño" data-en="Your privacy, by design">Tu privacidad, por diseño</h2>
-      <p data-es="El video se procesa por completo en tu dispositivo y NUNCA se transmite ni se guarda. Solo se almacenan los resultados numéricos y la fecha, nunca imágenes ni la señal biométrica."
-         data-en="Video is processed entirely on your device and is NEVER transmitted or stored. Only the numeric results and a timestamp are saved — never images or the biometric signal.">
-        El video se procesa por completo en tu dispositivo y NUNCA se transmite ni se guarda. Solo se almacenan los resultados numéricos y la fecha, nunca imágenes ni la señal biométrica.</p>
-    </section>
-
-    <section class="sec" data-i="4">
-      <h2 data-es="Próximamente y aviso" data-en="Coming soon &amp; disclaimer">Próximamente y aviso</h2>
-      <p data-es="Estamos trabajando en más indicadores como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico."
-         data-en="We are working on more indicators like blood pressure and blood oxygen. For now, MaraMed is a wellness demo, not a medical or diagnostic device.">
-        Estamos trabajando en más indicadores como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico.</p>
-      <div class="grid">
-        <div class="metric"><div class="k tierC" data-es="Próximamente" data-en="Coming soon">Próximamente</div><div class="v" data-es="Presión arterial" data-en="Blood pressure">Presión arterial</div></div>
-        <div class="metric"><div class="k tierC" data-es="Próximamente" data-en="Coming soon">Próximamente</div><div class="v" data-es="Oxígeno (SpO2)" data-en="Oxygen (SpO2)">Oxígeno (SpO2)</div></div>
-      </div>
-    </section>
-
-    <section class="sec" data-i="5" style="text-align:center">
-      <h2 data-es="Empieza ahora" data-en="Get started now">Empieza ahora</h2>
-      <p data-es="Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador."
-         data-en="Press start and in about thirty seconds you will see your vitals, right in your browser.">
-        Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador.</p>
-      <div class="cta">
-        <a class="btn btn-primary" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
-      </div>
-      <div class="disc" data-es="Demostración de bienestar, NO un dispositivo médico ni de diagnóstico. La precisión varía según la luz, el movimiento y el tono de piel."
-           data-en="Wellness demo, NOT a medical or diagnostic device. Accuracy varies with light, movement and skin tone.">
-        Demostración de bienestar, NO un dispositivo médico ni de diagnóstico. La precisión varía según la luz, el movimiento y el tono de piel.</div>
-    </section>
-
-    <div class="foot">
-      <span data-es="Hecho por Digit2AI" data-en="Made by Digit2AI">Hecho por Digit2AI</span> ·
-      <a class="langbtn" style="text-decoration:none;padding:0;border:0;background:none;color:var(--cyan)" href="/maramed/disclaimer" data-es="Aviso legal" data-en="Disclaimer">Aviso legal</a>
     </div>
   </div>
+</section>
 
-  <script>
-  // ---- bilingual toggle (ES default) ----
-  (function(){
-    var lang = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'es';
-    var btn = document.getElementById('langBtn');
-    function apply(l){
-      lang = l; document.documentElement.lang = l;
-      document.querySelectorAll('[data-es]').forEach(function(el){
-        var v = el.getAttribute('data-' + l); if (v != null) el.textContent = v;
-      });
-      btn.textContent = (l === 'es') ? 'EN' : 'ES';
-      // carry language into app + login links
-      document.getElementById('ctaStart').setAttribute('href', '/maramed/?lang=' + l);
-      document.getElementById('ctaLogin').setAttribute('href', '/maramed/?lang=' + l);
-    }
-    btn.addEventListener('click', function(){ apply(lang === 'es' ? 'en' : 'es'); });
-    apply(lang);
-  })();
-  </script>
+<!-- ================= PARA QUIÉN ================= -->
+<section class="band sec" id="para-quien" data-seg="aud">
+  <div class="wrap">
+    <div class="shead">
+      <span class="eyebrow" data-en="B2B2C model">Modelo B2B2C</span>
+      <h2 data-en="Sold to the institution, used by the member">Se vende a la institución, lo usa el afiliado</h2>
+      <p data-en="The company that carries the health risk contracts the platform; the member receives it as a link and uses it from their own phone, without downloading anything.">La empresa que asume el riesgo de salud contrata la plataforma; el afiliado la recibe como un enlace y la usa desde su propio teléfono, sin descargar nada.</p>
+    </div>
+    <div class="aud">
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-umbrella"/></svg></span><h3 data-en="Prepaid medicine">Medicina prepagada</h3><p data-en="Prioritize consultations by severity instead of order of arrival, with the medical record isolated per company.">Priorizar consultas por gravedad y no por orden de llegada, con el expediente aislado por empresa.</p></div>
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-building"/></svg></span><h3 data-en="Insurers">Aseguradoras</h3><p data-en="Identify the member before the consultation and speed up authorizations with an additional reading of the image.">Identificar al afiliado antes de la consulta y acelerar autorizaciones con una lectura adicional de la imagen.</p></div>
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-hospital"/></svg></span><h3 data-en="Hospital networks">Redes hospitalarias</h3><p data-en="Receive the patient already classified on the Manchester scale, with a suggested specialty and their history at hand.">Recibir al paciente ya clasificado en la escala Manchester, con especialidad sugerida y su historial a mano.</p></div>
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><h3 data-en="The member">El afiliado</h3><p data-en="Explains what is wrong by voice, measures vital signs with the camera and keeps their history ordered by specialty.">Explica por voz qué le pasa, mide sus signos vitales con la cámara y conserva su historia ordenada por especialidad.</p></div>
+    </div>
+  </div>
+</section>
 
-  <!-- ---- Lina voice playback engine (neural-first, browser fallback) ---- -->
-  <script>
-  (function(){
-    var segments = [
-      "Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te voy a explicar MaraMed, la aplicación que mide tus signos vitales usando solo la cámara.",
-      "MaraMed es una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor.",
-      "Mide de forma confiable tu ritmo cardíaco y tu ritmo respiratorio. También estima tu variabilidad cardíaca en reposo, y te muestra la calidad de la señal para que sepas cuándo confiar en la lectura.",
-      "La técnica se llama erre pe pe ge. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos pos y crom convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel.",
-      "Tu privacidad está protegida por diseño. El video se procesa por completo en tu dispositivo y nunca se transmite ni se guarda. Solo se almacenan los resultados numéricos, nunca imágenes.",
-      "Estamos trabajando en más indicadores, como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico.",
-      "¿Listo para probarlo? Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador."
-    ];
-    var synth = window.speechSynthesis;
-    var orb = document.getElementById('orb');
-    var status = document.getElementById('status');
-    var playAll = document.getElementById('playAll');
-    var pauseBtn = document.getElementById('pause');
-    var stopBtn = document.getElementById('stop');
-    var voiceSel = document.getElementById('voiceSel');
-    var neuralToggle = document.getElementById('neuralToggle');
-    var voiceMode = document.getElementById('voiceMode');
-    var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
-    var NEURAL_URL = 'https://aiagent.ringlypro.com/api/tts/edge';
-    var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
-    var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
-    var browserVoice = null, voiceName = 'lina';
+<!-- ================= MÓDULOS ================= -->
+<section class="band" id="modulos">
+  <div class="wrap">
+    <div class="shead">
+      <span class="eyebrow" data-en="Five modules, one browser">Cinco módulos, un navegador</span>
+      <h2 data-en="What the platform does, screen by screen">Qué hace la plataforma, pantalla por pantalla</h2>
+      <p data-en="The screens below are reconstructions of the product in HTML, in Spanish as the application ships. Members, ID numbers and histories are simulated.">Las pantallas son reconstrucciones del producto en HTML, en español como se entrega la aplicación. Afiliados, cédulas e historias son datos simulados.</p>
+    </div>
 
-    function pickBrowserVoice(){ if(!synth) return; var vs = synth.getVoices(); var pref = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;}); browserVoice = pref[0] || vs[0] || null; }
-    if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
-    function useNeural(){ return neuralToggle.checked && neuralOK; }
-    function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
-    setMode();
-    voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
-    neuralToggle.addEventListener('change', setMode);
-    function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
-    function fetchNeural(idx){
-      var key = voiceName + '|' + idx;
-      if(audioCache[key]) return Promise.resolve(audioCache[key]);
-      return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segments[idx],voice:voiceName})})
-        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
-        .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+    <!-- M1 -->
+    <div class="mod sec" id="m1" data-seg="m1">
+      <div class="mh">
+        <div class="mt"><span class="num" data-en="MODULE 01">MÓDULO 01</span><h3 style="font-size:1.55rem" data-en="Biometric authentication and local access control">Autenticación biométrica y control de acceso local</h3></div>
+        <div class="facts">
+          <div class="fact"><b data-en="Function">Función</b><span data-en="Identifies the member through facial recognition before the consultation starts.">Identifica al afiliado mediante reconocimiento facial antes de iniciar la consulta.</span></div>
+          <div class="fact"><b data-en="Technology">Tecnología</b><span data-en="face-api.js on TensorFlow.js, running in the client's web browser.">face-api.js sobre TensorFlow.js, en el navegador web del cliente.</span></div>
+          <div class="fact"><b data-en="Security">Seguridad</b><span data-en="Facial descriptors are extracted entirely in the RAM of the phone or computer. No face images are transmitted to or stored on external servers.">La extracción de descriptores faciales ocurre por completo en la memoria RAM del teléfono o computadora. No se transmiten ni almacenan imágenes del rostro en servidores externos.</span></div>
+        </div>
+      </div>
+      <div class="phrow"><div class="phones">
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody ctr" style="gap:12px">
+              <div style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2dd4bf,#0d9488 55%,#062e2b);display:grid;place-items:center;font-size:20px;color:#e6fffb;box-shadow:0 0 22px var(--tealglow)"><svg class="i"><use href="#i-shield"/></svg></div>
+              <div style="font-size:19px;font-weight:700;letter-spacing:-.01em">MaraMed</div>
+              <div class="psub">Sistema Clínico con Acceso Biométrico</div>
+              <div class="facebox" style="width:100%;height:96px;background:#eef2f7">
+                <svg width="120" height="86" viewBox="0 0 120 86" aria-hidden="true">
+                  <path d="M60 8c-14 0-24 11-24 26 0 12 6 21 12 25v6c-14 3-26 9-26 17v4h76v-4c0-8-12-14-26-17v-6c6-4 12-13 12-25 0-15-10-26-24-26Z" fill="#1e3a8a"/>
+                  <g stroke="#4ade80" stroke-width=".7" fill="none"><path d="M46 28 60 22 74 28 72 44 60 52 48 44Z"/><path d="M60 22V52M46 28l26 16M74 28 48 44"/><path d="M52 36h16M60 30l-8 14M60 30l8 14"/></g>
+                  <g fill="#fff"><circle cx="46" cy="28" r="1.8"/><circle cx="60" cy="22" r="1.8"/><circle cx="74" cy="28" r="1.8"/><circle cx="48" cy="44" r="1.8"/><circle cx="60" cy="52" r="1.8"/><circle cx="72" cy="44" r="1.8"/><circle cx="52" cy="36" r="1.6"/><circle cx="68" cy="36" r="1.6"/><circle cx="60" cy="30" r="1.6"/><circle cx="60" cy="40" r="1.6"/></g>
+                </svg>
+                <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+              </div>
+              <div style="width:100%;text-align:left">
+                <div class="tiny mm" style="letter-spacing:.14em;margin-bottom:4px">CÉDULA DE IDENTIDAD</div>
+                <div style="background:#eef2f7;border-radius:9px;padding:9px 10px;font-family:var(--mono);font-size:12px;color:#334155;display:flex;align-items:center;gap:6px"><svg class="i"><use href="#i-id"/></svg><span>V-00.000.000</span></div>
+              </div>
+              <div class="tiny" style="color:var(--teal2)">Verificando identidad&hellip;</div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Sign-in</b> · descriptor extracted in RAM"><b>Ingreso</b> · descriptor extraído en RAM</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="ptop" style="padding-top:18px"><div class="pname" style="font-size:15px">Historial Médico</div><span class="psp"></span><span style="width:22px;height:22px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-size:11px;color:var(--mut)">&times;</span></div>
+            <div class="pbody" style="gap:10px;padding-top:12px">
+              <div class="hgroup"><span class="hlbl">&#9679; Otorrinolaringología<span class="hc">1 u.</span></span>
+                <div class="hitem am"><span class="hd">31 ago, 19:04<span class="hb">AMARILLO</span></span><span class="ht">Faringoamigdalitis aguda</span></div></div>
+              <div class="hgroup"><span class="hlbl">&#9679; Neurología<span class="hc">9 u.</span></span>
+                <div class="hitem"><span class="hd">28 ago, 10:32<span class="hb">VERDE</span></span><span class="ht">Cefalea tensional episódica</span></div>
+                <div class="hitem"><span class="hd">28 ago, 09:37<span class="hb">VERDE</span></span><span class="ht">Cefalea primaria con componente vascular</span></div>
+                <div class="hitem am"><span class="hd">3 ago, 17:23<span class="hb">AMARILLO</span></span><span class="ht">Cefalea de inicio súbito a estudio</span></div>
+                <div class="hitem" style="opacity:.5"><span class="hd">10 jul, 21:31<span class="hb">VERDE</span></span><span class="ht">Cefalea tensional</span></div></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Medical history</b> · by specialty and triage color"><b>Historia clínica</b> · por especialidad y color de triaje</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- M2 -->
+    <div class="mod sec" id="m2" data-seg="m2">
+      <div class="mh">
+        <div class="mt"><span class="num" data-en="MODULE 02">MÓDULO 02</span><h3 style="font-size:1.55rem" data-en="Voice and natural-language triage engine">Motor de triaje por voz y lenguaje natural</h3></div>
+        <div class="facts">
+          <div class="fact"><b data-en="Function">Función</b><span data-en="The patient explains their symptoms by voice, hands-free, and the system categorizes the level of medical urgency.">El paciente explica sus síntomas por voz, con las manos libres, y el sistema categoriza el nivel de urgencia médica.</span></div>
+          <div class="fact"><b data-en="Technology">Tecnología</b><span data-en="Web Speech API synchronized with the Gemini API through an intermediate cloud proxy.">Web Speech API sincronizada con la API de Gemini a través de un proxy intermedio en la nube.</span></div>
+          <div class="fact"><b data-en="Output">Salida</b><span data-en="The transcription is sanitized and the AI answer is forced into a JSON schema that classifies severity on the Manchester protocol, levels I to V, with the suggested course of action.">La transcripción se sanea y la respuesta de la IA se fuerza a un esquema JSON que clasifica la severidad en el protocolo Manchester, niveles I a V, con la conducta sugerida.</span></div>
+        </div>
+      </div>
+      <div class="phrow"><div class="phones">
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody" style="gap:9px;padding-top:26px">
+              <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+              <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+              <div class="orb listen"><svg class="i"><use href="#i-mic"/></svg></div>
+              <div class="orbbtns"><span class="orbbtn"><svg class="i"><use href="#i-xray"/></svg>IMAGENOLOGÍA</span><span class="orbbtn t"><svg class="i"><use href="#i-heart"/></svg>SIGNOS VITALES</span></div>
+              <div class="vmode"><svg class="i"><use href="#i-pulse"/></svg>Modo consulta voz activo</div>
+              <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd"><svg class="i"><use href="#i-send"/></svg></span></div>
+              <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+                <div class="prow"><svg class="i"><use href="#i-shield"/></svg> Gravedad <span class="pv pill">Pendiente</span></div>
+                <div class="prow"><svg class="i"><use href="#i-user"/></svg> Especialista <span class="pv">Análisis en curso</span></div></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Listening</b> · transcribed in the browser"><b>Escuchando</b> · transcripción en el navegador</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody" style="gap:9px;padding-top:26px">
+              <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+              <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+              <div class="orb think"><svg class="i f"><use href="#i-dots"/></svg></div>
+              <div class="orbbtns"><span class="orbbtn"><svg class="i"><use href="#i-xray"/></svg>IMAGENOLOGÍA</span><span class="orbbtn t"><svg class="i"><use href="#i-heart"/></svg>SIGNOS VITALES</span></div>
+              <div class="vmode"><svg class="i"><use href="#i-pulse"/></svg>Modo consulta voz activo</div>
+              <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd"><svg class="i"><use href="#i-send"/></svg></span></div>
+              <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+                <div class="prow"><svg class="i"><use href="#i-shield"/></svg> Gravedad <span class="pv pill">Pendiente</span></div>
+                <div class="prow" style="color:var(--teal2)">Recopilando información&hellip;</div></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Reasoning</b> · transcript sanitized first"><b>Razonando</b> · la transcripción se sanea primero</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody" style="gap:9px;padding-top:26px">
+              <div class="ptitle">Sistema inteligente de triaje y consulta de emergencia</div>
+              <div class="psub">Consulta con IA y persistencia en tiempo real</div>
+              <div class="orb speak"><svg class="i"><use href="#i-speaker"/></svg></div>
+              <div class="orbbtns"><span class="orbbtn"><svg class="i"><use href="#i-xray"/></svg>IMAGENOLOGÍA</span><span class="orbbtn t"><svg class="i"><use href="#i-heart"/></svg>SIGNOS VITALES</span></div>
+              <div class="vmode"><svg class="i"><use href="#i-pulse"/></svg>Modo consulta voz activo</div>
+              <div class="pinput">Hablar con MARA o escribir sintomatología&hellip;<span class="sd"><svg class="i"><use href="#i-send"/></svg></span></div>
+              <div class="pcard"><span class="ph">Persistencia &amp; derivación</span>
+                <div class="prow"><svg class="i"><use href="#i-shield"/></svg> Gravedad <span class="pv pill am">AMARILLO · III</span></div>
+                <div class="prow"><svg class="i"><use href="#i-user"/></svg> Especialista <span class="pv" style="color:var(--teal2)">Neurología</span></div></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Responding</b> · Manchester level and specialty"><b>Respondiendo</b> · nivel Manchester y especialidad</div>
+        </div>
+      </div></div>
+      <div class="side">
+          <div class="card" style="gap:10px"><span class="n" data-en="Manchester protocol">Protocolo Manchester</span>
+            <div class="mlist">
+              <div class="row"><span class="dot" style="background:var(--red)"></span><span data-en="I · Emergency">I · Emergencia</span><span class="r" data-en="immediate">inmediata</span></div>
+              <div class="row"><span class="dot" style="background:#fb923c"></span><span data-en="II · Very urgent">II · Muy urgente</span><span class="r" data-en="minutes">minutos</span></div>
+              <div class="row"><span class="dot" style="background:var(--amber)"></span><span data-en="III · Urgent">III · Urgente</span><span class="r" data-en="priority visit">prioritaria</span></div>
+              <div class="row"><span class="dot" style="background:var(--ok)"></span><span data-en="IV · Standard">IV · Normal</span><span class="r" data-en="primary care">primaria</span></div>
+              <div class="row"><span class="dot" style="background:var(--blue)"></span><span data-en="V · Non-urgent">V · No urgente</span><span class="r" data-en="scheduled">programable</span></div>
+            </div>
+          </div>
+          <div class="note" data-en="<b>Forced JSON schema.</b> The model's free prose is not accepted: the answer must fit a structure with the severity level and the course of action.">
+            <b>Esquema JSON forzado.</b> No se acepta prosa libre del modelo: la respuesta debe encajar en una estructura con el nivel de severidad y la conducta a seguir.</div>
+      </div>
+    </div>
+
+    <!-- M3 -->
+    <div class="mod sec" id="m3" data-seg="m3">
+      <div class="mh">
+        <div class="mt"><span class="num" data-en="MODULE 03">MÓDULO 03</span><h3 style="font-size:1.55rem" data-en="Optical biomedical telemetry · rPPG photoplethysmography">Telemetría biomédica óptica · fotopletismografía rPPG</h3></div>
+        <div class="facts">
+          <div class="fact"><b data-en="Function">Función</b><span data-en="Measures vital signs directly through the front camera of the phone or laptop.">Mide signos vitales directamente a través de la cámara frontal del teléfono o la laptop.</span></div>
+          <div class="fact"><b data-en="How">Cómo</b><span data-en="In 30 seconds it reads the imperceptible color changes in the skin caused by blood flow.">En 30 segundos lee las variaciones imperceptibles de coloración de la piel causadas por el flujo sanguíneo.</span></div>
+          <div class="fact"><b data-en="Reads">Lee</b><span data-en="Heart rate, heart-rate variability, respiratory rate and estimated oxygen saturation; the app also shows an estimated blood pressure. Each value carries its own confidence level.">Frecuencia cardíaca, variabilidad de la frecuencia cardíaca, frecuencia respiratoria y estimación de saturación de oxígeno; la aplicación muestra además una presión arterial estimada. Cada valor lleva su propio nivel de confianza.</span></div>
+        </div>
+      </div>
+      <div class="phrow"><div class="phones">
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody ctr" style="gap:8px;padding-top:16px">
+              <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:grid;place-items:center;font-size:19px;color:#03201d"><svg class="i"><use href="#i-face"/></svg></div>
+              <div style="font-size:14px;font-weight:700">MaraMed VitalScan Pro</div>
+              <div class="psub" style="margin-bottom:3px">Escaneo de signos vitales por rPPG facial</div>
+              <div style="width:100%;display:flex;flex-direction:column;gap:7px;text-align:left">
+                <div class="vstep"><span class="vn">1</span><div><div class="vt">Ilumina tu rostro</div><div class="vd">Luz natural o artificial suave, sin sombras fuertes</div></div></div>
+                <div class="vstep"><span class="vn">2</span><div><div class="vt">Mira la cámara frontal</div><div class="vd">Mantén el rostro dentro del óvalo, completamente quieto</div></div></div>
+                <div class="vstep"><span class="vn">3</span><div><div class="vt">Recibe 5 signos vitales</div><div class="vd">Cada resultado incluye su nivel de confianza individual</div></div></div>
+              </div>
+              <div style="display:flex;gap:7px;margin-top:2px">
+                <div style="text-align:center"><div class="vico"><svg class="i f"><use href="#i-heart"/></svg></div><div class="tiny" style="margin-top:2px">FC</div></div>
+                <div style="text-align:center"><div class="vico"><svg class="i"><use href="#i-lungs"/></svg></div><div class="tiny" style="margin-top:2px">FR</div></div>
+                <div style="text-align:center"><div class="vico"><svg class="i"><use href="#i-pulse"/></svg></div><div class="tiny" style="margin-top:2px">VFC</div></div>
+                <div style="text-align:center"><div class="vico"><svg class="i"><use href="#i-gauge"/></svg></div><div class="tiny" style="margin-top:2px">PA</div></div>
+                <div style="text-align:center"><div class="vico" style="color:var(--blue)"><svg class="i"><use href="#i-drop"/></svg></div><div class="tiny" style="margin-top:2px">SpO2</div></div>
+              </div>
+              <div class="rbtn" style="width:100%;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04211f;font-family:var(--sans);font-weight:700;font-size:12px;margin-top:3px"><svg class="i"><use href="#i-camera"/></svg>Iniciar Escaneo Facial</div>
+              <div class="tiny" style="color:#56667e;font-size:7px">Requiere cámara frontal. Optimizado para dispositivos móviles.<br>Proof of Concept con fines demostrativos.</div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Preparation</b> · signal depends on light and stillness"><b>Preparación</b> · la señal depende de luz y quietud</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div style="display:flex;align-items:center;padding:15px 12px 7px;font-size:9px;color:var(--mut)"><span>&times; Cancelar</span><span class="psp"></span><span style="color:var(--amber)">&#9679; Ajusta tu rostro al óvalo</span></div>
+            <div class="pbody" style="gap:8px;padding-top:0">
+              <div class="facebox" style="height:158px">
+                <svg width="126" height="146" viewBox="0 0 120 140" aria-hidden="true">
+                  <path d="M60 12c-16 0-27 13-27 30 0 14 7 24 14 29v7c-16 3-30 10-30 20v42h86V98c0-10-14-17-30-20v-7c7-5 14-15 14-29 0-17-11-30-27-30Z" fill="#1e3a8a"/>
+                  <g stroke="#4ade80" stroke-width=".8" fill="none"><path d="M43 33 60 25 77 33 74 54 60 64 46 54Z"/><path d="M60 25v39M43 33l31 21M77 33 46 54"/><path d="M50 43h20M60 35l-10 17M60 35l10 17M52 58h16"/></g>
+                  <g fill="#fff"><circle cx="43" cy="33" r="2"/><circle cx="60" cy="25" r="2"/><circle cx="77" cy="33" r="2"/><circle cx="46" cy="54" r="2"/><circle cx="60" cy="64" r="2"/><circle cx="74" cy="54" r="2"/><circle cx="50" cy="43" r="1.8"/><circle cx="70" cy="43" r="1.8"/><circle cx="60" cy="35" r="1.8"/><circle cx="60" cy="46" r="1.8"/><circle cx="52" cy="58" r="1.6"/><circle cx="68" cy="58" r="1.6"/></g>
+                </svg>
+                <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
+              </div>
+              <div class="wave"><svg viewBox="0 0 220 34" preserveAspectRatio="none"><polyline points="0,26 12,24 20,10 26,28 34,22 46,23 58,21 70,22 84,20 98,21 112,19 126,20 140,18 156,19 172,18 190,17 210,17 220,17" fill="none" stroke="#2dd4bf" stroke-width="1.2"/></svg><span class="wl">SEÑAL CHROM rPPG</span></div>
+              <div style="text-align:center;font-family:var(--mono);font-size:17px;font-weight:700;color:var(--teal2)"><svg class="i f"><use href="#i-heart"/></svg> 45 <span style="font-size:9px;color:var(--mut)">BPM</span></div>
+              <div style="display:flex;font-size:8px;color:var(--mut)"><span>Progreso de escaneo</span><span class="psp"></span><span class="mm" style="color:var(--teal2)">25%</span></div>
+              <div class="pbarw"><div class="pbarf" style="width:25%"></div></div>
+              <div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700">19 <span style="font-size:8px;font-weight:400;color:var(--mut)">s restantes</span></div>
+              <div class="tiny" style="text-align:center;color:var(--teal2)">Mantente lo más quieto posible</div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Capture</b> · skin color variation"><b>Captura</b> · variación cromática de la piel</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen"><span class="pnotch"></span>
+            <div class="pbody" style="gap:8px;padding-top:20px">
+              <div style="text-align:center"><div style="width:30px;height:30px;border-radius:50%;border:1px solid var(--teal);color:var(--teal2);display:grid;place-items:center;margin:0 auto 5px;font-size:14px"><svg class="i"><use href="#i-check"/></svg></div>
+                <div style="font-size:14px;font-weight:700">Escaneo Completado</div>
+                <div class="tiny">1053 muestras | 45 fps | 25s | Piel: 33%</div></div>
+              <div style="display:flex;gap:7px;justify-content:center"><span class="vtag ok">ALTA CONFIANZA</span><span class="vtag am">MEDIA</span><span class="vtag rd">BAJA</span></div>
+              <div class="vgrid">
+                <div class="vc"><span class="vk"><svg class="i f"><use href="#i-heart"/></svg> Ritmo Cardíaco</span><span class="vv">86<span>bpm</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+                <div class="vc amb"><span class="vk"><svg class="i"><use href="#i-lungs"/></svg> Ritmo Respiratorio</span><span class="vv">10<span>rpm</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag ok">ALTA</span></span></div>
+                <div class="vc"><span class="vk"><svg class="i"><use href="#i-pulse"/></svg> Variabilidad</span><span class="vv">42<span>ms</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag am">MEDIA</span></span></div>
+                <div class="vc bl"><span class="vk"><svg class="i"><use href="#i-drop"/></svg> Oxígeno</span><span class="vv">98<span>%</span></span><span class="vb"><span class="vtag ok">NORMAL</span><span class="vtag rd">BAJA</span></span></div>
+              </div>
+              <div class="vc amb"><span class="vk"><svg class="i"><use href="#i-gauge"/></svg> Presión Arterial Estimada</span><span class="vv">126<span style="margin:0 3px">/</span>79<span>mmHg</span></span><span class="vb"><span class="vtag am">ATENCIÓN</span><span class="vtag rd">BAJA</span></span></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Result</b> · each sign with its own confidence"><b>Resultado</b> · cada signo con su propia confianza</div>
+        </div>
+      </div></div>
+      <div class="side">
+          <div class="note" data-en="<b>Read the second label on every card.</b> Oxygen reads NORMAL with LOW confidence. The platform publishes its uncertainty next to the number: low confidence is an invitation to measure with the usual equipment, not a clinical result.">
+            <b>Lea la segunda etiqueta de cada tarjeta.</b> El oxígeno dice NORMAL con confianza BAJA. La plataforma publica su incertidumbre junto al número: confianza baja es una invitación a medir con el equipo de siempre, no un resultado clínico.</div>
+      </div>
+    </div>
+
+    <!-- M4 -->
+    <div class="mod vi sec" id="m4" data-seg="m4">
+      <div class="mh">
+        <div class="mt"><span class="num" data-en="MODULE 04">MÓDULO 04</span><h3 style="font-size:1.55rem" data-en="MaraMed RayScan · radiological decision support">MaraMed RayScan · soporte a la decisión radiológica</h3></div>
+        <div class="facts">
+          <div class="fact"><b data-en="Function">Función</b><span data-en="Assists medical staff in the quick reading of images, designed for chest X-rays.">Asiste al personal médico adscrito en la lectura rápida de imágenes, pensado para radiografía de tórax.</span></div>
+          <div class="fact"><b data-en="Technology">Tecnología</b><span data-en="Pixel-matrix processing through HTML5 Canvas and WebGL, combined with computer-vision models.">Procesamiento de la matriz de píxeles vía Canvas HTML5 y WebGL, combinado con modelos de visión por computadora.</span></div>
+          <div class="fact"><b data-en="Clinical role">Rol clínico</b><span data-en="A computer-aided detection system, a medical &ldquo;third opinion&rdquo; that the physician accepts or discards to speed up diagnoses and authorizations.">Sistema de detección asistida (CAD), un &ldquo;tercer opositor&rdquo; médico que el profesional acepta o descarta para acelerar diagnósticos y autorizaciones.</span></div>
+        </div>
+      </div>
+      <div class="phrow"><div class="phones">
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen" style="background:#0a1120"><span class="pnotch"></span>
+            <div class="pbody ctr" style="gap:13px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);display:grid;place-items:center;font-size:22px;color:#fff"><svg class="i"><use href="#i-brain"/></svg></div>
+                <div style="text-align:left"><div class="mm" style="font-size:14px;font-weight:700;letter-spacing:-.02em">MaraMed RayScan CAD</div><div class="mm" style="font-size:9px;color:var(--violet2)">+AI</div></div>
+              </div>
+              <div class="mm psub" style="font-size:9.5px">Heurístico de Imagen + Pre-diagnóstico</div>
+              <div class="mm" style="font-size:9px;color:var(--mut);line-height:1.5">Motor híbrido: análisis de píxeles local combinado con inferencia de IA.</div>
+              <div style="width:100%;display:flex;flex-direction:column;gap:9px;margin-top:6px">
+                <div class="rbtn pri"><svg class="i"><use href="#i-camera"/></svg>Capturar Rx Física</div>
+                <div class="rbtn sec"><svg class="i"><use href="#i-folder"/></svg>Subir Archivo Digital</div>
+              </div>
+              <div style="width:100%;border:1px solid var(--line2);border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:5px;margin-top:4px">
+                <div style="display:flex;gap:6px;align-items:center;font-size:10px;font-weight:700;color:var(--amber)"><svg class="i"><use href="#i-bulb"/></svg>Consejos para Rx Física</div>
+                <div class="prow" style="font-size:8.3px"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg>Enciende el negatoscopio.</div>
+                <div class="prow" style="font-size:8.3px"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg>Celular paralelo a la placa.</div>
+                <div class="prow" style="font-size:8.3px"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg>Evita reflejos o sombras.</div>
+              </div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Input</b> · physical film or digital file"><b>Entrada</b> · placa física o archivo digital</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+            <div style="display:flex;align-items:center;gap:8px;padding:15px 11px 6px;flex:none"><span class="mm" style="font-size:9px;color:var(--mut)">&larr; Nueva Imagen</span><span class="psp"></span><span class="mm" style="font-size:8.5px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#f3eeff;border-radius:8px;padding:5px 8px;font-weight:700;display:flex;gap:4px;align-items:center"><svg class="i"><use href="#i-print"/></svg>Exportar PDF</span></div>
+            <div class="pbody" style="gap:8px;padding-top:6px">
+              <div class="pcard" style="gap:4px">
+                <div class="mm" style="font-size:12.5px;font-weight:700">INFORME CAD HÍBRIDO</div>
+                <div class="mm" style="font-size:8px;color:var(--mut)">Heurístico de Imagen + AI</div>
+              </div>
+              <div class="rq">
+                <div class="rqc"><span class="k">Mean</span><span class="v">127.5</span></div>
+                <div class="rqc"><span class="k">Std Dev</span><span class="v">37.8</span></div>
+                <div class="rqc"><span class="k">Contraste</span><span class="v">125</span></div>
+                <div class="rqc"><span class="k">Dens. Borde</span><span class="v">6.3%</span></div>
+              </div>
+              <div class="rsec"><span class="rh" style="color:var(--blue)"><svg class="i"><use href="#i-search"/></svg>Evaluación Técnica · Motor Heurístico (Local)</span>
+                <p>Valores extraídos del análisis directo de píxeles: Luminancia Media = 127.5, Desviación Estándar = 37.8, Contraste Dinámico = 125. Densidad de bordes detectados por convolución Sobel = 6.3%.</p></div>
+              <div class="mm" style="font-size:7px;letter-spacing:.15em;color:var(--faint)">MAPA DE BORDES (SOBEL)</div>
+              <div style="height:62px;border-radius:7px;background:#02060c;position:relative;overflow:hidden;flex:none">
+                <svg viewBox="0 0 100 60" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">
+                  <path d="M44 2 C48 14 46 28 50 40 C52 50 48 56 47 59" stroke="#22d3ee" stroke-width="1.4" fill="none"/>
+                  <path d="M41 2 C45 14 43 28 47 40 C49 50 45 56 44 59" stroke="#0e7490" stroke-width=".7" fill="none"/>
+                  <path d="M49 2 C53 14 51 28 55 40 C57 50 53 56 52 59" stroke="#0e7490" stroke-width=".7" fill="none"/>
+                  <g stroke="#67e8f9" stroke-width=".6" opacity=".85"><path d="M37 9 L54 13"/><path d="M38 18 L55 22"/><path d="M39 27 L56 31"/><path d="M40 36 L57 40"/><path d="M41 45 L58 49"/></g>
+                </svg>
+              </div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>Local heuristic</b> · pixels measured before the AI"><b>Heurístico local</b> · píxeles medidos antes de la IA</div>
+        </div>
+        <div class="pwrap">
+          <div class="phone"><div class="pscreen" style="background:#05080f"><span class="pnotch"></span>
+            <div class="pbody" style="gap:7px;padding-top:20px">
+              <div class="rsec v"><span class="rh" style="color:var(--violet2)"><svg class="i"><use href="#i-brain"/></svg>Hallazgos Principales (AI)</span>
+                <p>&bull; Incisión quirúrgica lineal cerrada mediante suturas simples interrumpidas.<br>&bull; Aposición adecuada de bordes en la mayor parte del trayecto, con ligero eritema perilesional.<br>&bull; Sin evidencia concluyente de celulitis circundante extensa a la inspección visual.</p></div>
+              <div class="rsec a"><span class="rh" style="color:var(--amber)"><svg class="i"><use href="#i-warn"/></svg>Sugerencias Clínicas (AI)</span>
+                <p>&rarr; Inspección clínica presencial y palpación.<br>&rarr; Instruir al paciente sobre datos de alarma: eritema, dolor progresivo, calor local o secreción.</p></div>
+              <div class="rlim"><div class="rh"><svg class="i"><use href="#i-warn"/></svg>LIMITACIÓN DEL SISTEMA</div>
+                <p>Informe generado por la combinación de un motor heurístico local (píxeles) + IA actuando como Tercer Opositor. La IA puede generar información incorrecta o alucinaciones (hallazgos que no existen). Este informe NO es un diagnóstico médico válido. Requiere validación obligatoria por un médico radiólogo certificado.</p></div>
+            </div>
+          </div></div>
+          <div class="pcap" data-en="<b>The limit</b> · printed inside the report itself"><b>El límite</b> · impreso dentro del propio informe</div>
+        </div>
+      </div></div>
+      <div class="side">
+          <div class="note crit" data-en="<b>Everything the model says is marked (AI).</b> The measured figures and the inference travel separately, and the system limitation is printed inside the report, where the person making the decision reads it.">
+            <b>Todo lo que dice el modelo va marcado (AI).</b> Las cifras medidas y la inferencia viajan por separado, y la limitación del sistema se imprime dentro del informe, donde la lee quien toma la decisión.</div>
+      </div>
+    </div>
+
+    <!-- M5 -->
+    <div class="mod sec" id="m5" data-seg="m5">
+      <div class="mh">
+        <div class="mt"><span class="num" data-en="MODULE 05">MÓDULO 05</span><h3 style="font-size:1.55rem" data-en="Hardware layer and BLE data ingestion · IoT">Capa de hardware e ingesta de datos BLE · IoT</h3></div>
+        <div class="facts">
+          <div class="fact"><b data-en="Function">Función</b><span data-en="Connects portable medical devices for electrocardiography (ECG) in the field.">Conexión con dispositivos médicos portátiles para la toma de electrocardiografía (ECG) en campo.</span></div>
+          <div class="fact"><b data-en="Technology">Tecnología</b><span data-en="Microcontrollers programmed in embedded C++, talking Bluetooth Low Energy directly to the PWA.">Microcontroladores programados en C++ embebido, con comunicación Bluetooth Low Energy directa hacia la PWA.</span></div>
+          <div class="fact"><b data-en="Security">Seguridad</b><span data-en="The firmware runs non-blocking timers and transmits data frames encrypted with AES-128 to prevent interception in transit.">El firmware ejecuta temporizadores no bloqueantes y transmite tramas de datos cifradas en AES-128 para evitar intercepciones en tránsito.</span></div>
+        </div>
+      </div>
+      <div class="ble">
+        <div class="card">
+          <span class="n" data-en="Signal path">Ruta de la señal</span>
+          <div class="route">
+            <div class="rstep"><span class="chip acc" data-en="Sensor">Sensor</span><span data-en="Electrodes and microcontroller in the field">Electrodos y microcontrolador en campo</span></div>
+            <div class="rline"></div>
+            <div class="rstep"><span class="chip acc">Firmware</span><span data-en="Non-blocking timer · AES-128 encrypted frame">Temporizador no bloqueante · trama cifrada AES-128</span></div>
+            <div class="rline"></div>
+            <div class="rstep"><span class="chip acc"><svg class="i"><use href="#i-bt"/></svg>BLE</span><span data-en="Direct link, no intermediate native app">Enlace directo, sin aplicación nativa intermedia</span></div>
+            <div class="rline"></div>
+            <div class="rstep"><span class="chip vi">PWA</span><span data-en="The browser receives and decrypts the frame">El navegador recibe y descifra la trama</span></div>
+            <div class="rline"></div>
+            <div class="rstep"><span class="chip vi">Supabase</span><span data-en="Member record, isolated by row-level security">Expediente del afiliado, aislado por seguridad a nivel de fila</span></div>
+          </div>
+        </div>
+        <div class="note" data-en="<b>Specified, not shown.</b> The BLE electrocardiography module is specified at the firmware level; it is not part of the public demonstration.">
+          <b>Especificado, no demostrado.</b> El módulo BLE de electrocardiografía está especificado a nivel de firmware; no forma parte de la demostración pública.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARQUITECTURA ================= -->
+<section class="band sec" id="arquitectura" data-seg="arch">
+  <div class="wrap">
+    <div class="shead">
+      <span class="eyebrow" data-en="Architecture">Arquitectura</span>
+      <h2 data-en="Decentralized client-server: what is sensitive stays on the phone">Cliente-servidor descentralizada: lo sensible se queda en el teléfono</h2>
+      <p data-en="Artificial intelligence, computer vision and optical telemetry are integrated without installing native applications.">Integra inteligencia artificial distribuida, visión por computadora y telemetría óptica sin necesidad de instalar aplicaciones nativas.</p>
+    </div>
+    <div class="arch">
+      <div class="alayer cli">
+        <span class="altitle"><span class="chip acc" data-en="Client device · PWA">Dispositivo cliente · PWA</span><span data-en="local processing">procesamiento local</span></span>
+        <div class="anodes">
+          <div class="anode"><span class="an" data-en="Local facial authentication">Autenticación facial local</span><span class="ad">TensorFlow.js · face-api.js</span></div>
+          <div class="anode"><span class="an" data-en="Voice capture and transcription">Captura de voz y transcripción</span><span class="ad">Web Speech API</span></div>
+          <div class="anode"><span class="an" data-en="rPPG optical telemetry">Telemetría óptica rPPG</span><span class="ad">Shen.AI Engine</span></div>
+        </div>
+      </div>
+      <div class="apipe"><span class="ln"></span>HTTPS / WSS &nbsp;+&nbsp; JWT &nbsp;+&nbsp; RLS<span class="ln"></span></div>
+      <div class="alayer srv">
+        <span class="altitle"><span class="chip vi" data-en="Backend servers and cloud">Servidores backend y nube</span><span data-en="orchestration and inference">orquestación e inferencia</span></span>
+        <div class="anodes">
+          <div class="anode"><span class="an">Supabase PostgreSQL</span><span class="ad" data-en="authentication, row-level security, encrypted storage">autenticación, seguridad a nivel de fila, almacenamiento cifrado</span></div>
+          <div class="anode"><span class="an" data-en="Google Apps Script · serverless proxies">Google Apps Script · proxies serverless</span><span class="ad" data-en="orchestration">orquestación</span></div>
+          <div class="anode"><span class="an">Gemini LLM API</span><span class="ad" data-en="Manchester triage engine and clinical report">motor de triaje Manchester y reporte clínico</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th style="width:20%" data-en="Module">Módulo</th><th style="width:32%" data-en="Technology stack">Stack tecnológico</th><th data-en="Protection mechanism / IP">Mecanismo de protección / IP</th></tr></thead>
+        <tbody>
+          <tr><td><b data-en="Facial biometrics">Biometría facial</b></td><td class="mono">face-api.js + TensorFlow.js + Supabase RLS</td><td data-en="Proprietary local validation of feature vectors without storing photographs.">Algoritmo propietario de validación local de vectores de características sin guardar fotografías.</td></tr>
+          <tr><td><b data-en="Conversational triage">Triaje conversacional</b></td><td class="mono">Web Speech API + Gemini LLM API + proxies serverless</td><td data-en="Intermediate middleware on our own server that validates and sanitizes prompts before calling the AI.">Middleware intermedio en servidor propio que valida y sanea las instrucciones antes de llamar a la IA.</td></tr>
+          <tr><td><b data-en="rPPG vital signs">Signos vitales rPPG</b></td><td class="mono">Shen.AI Engine (Web SDK)</td><td data-en="Seamless integration in a web app without app-store download friction.">Integración fluida en entorno web sin fricción de descargas en tiendas de aplicaciones.</td></tr>
+          <tr><td><b data-en="RayScan radiology">RayScan radiología</b></td><td class="mono">WebGL + Canvas + visión AI</td><td data-en="Assisted analysis flow under a clinical decision-support (CAD) architecture.">Flujo de análisis asistido bajo arquitectura de soporte a la decisión clínica (CAD).</td></tr>
+          <tr><td><b data-en="Persistence layer">Capa de persistencia</b></td><td class="mono">Supabase (PostgreSQL) + Row Level Security</td><td data-en="Strict isolation of patient records per prepaid-medicine company.">Aislamiento estricto de expedientes de pacientes por empresa de medicina prepagada.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRIVACIDAD ================= -->
+<section class="band sec" id="privacidad" data-seg="priv">
+  <div class="wrap">
+    <div class="shead">
+      <span class="eyebrow" data-en="Privacy by design">Privacidad por diseño</span>
+      <h2 data-en="What never leaves the device">Lo que nunca sale del dispositivo</h2>
+      <p data-en="If no biometric is stored, there is no biometric to leak. What travels is the result of the calculation, not the material that produced it.">Si no hay biométrico almacenado, no hay biométrico que filtrar. Lo que viaja es el resultado del cálculo, no el material que lo produjo.</p>
+    </div>
+    <div class="two">
+      <div class="card" style="border-color:#155e57"><span class="n" data-en="Stays on the device">Se queda en el equipo</span>
+        <div class="list">
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Images of the member's face">Las imágenes del rostro del afiliado</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Facial descriptors, extracted and compared in RAM">Los descriptores faciales, extraídos y comparados en memoria RAM</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Camera video frames during the rPPG scan">Las tramas de video de la cámara durante el escaneo rPPG</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="The first heuristic pass over the image pixels">La primera pasada heurística sobre los píxeles de la imagen</span></div>
+        </div>
+      </div>
+      <div class="card" style="border-color:#4a35a0"><span class="n" style="color:var(--violet2)" data-en="Travels to the server">Sí viaja al servidor</span>
+        <div class="list">
+          <div class="li"><svg class="i" style="color:var(--violet2)"><use href="#i-arrow"/></svg><span data-en="The vital-sign results and their confidence">Los resultados de los signos vitales y su confianza</span></div>
+          <div class="li"><svg class="i" style="color:var(--violet2)"><use href="#i-arrow"/></svg><span data-en="The sanitized transcript of the voice consultation">La transcripción saneada de la consulta por voz</span></div>
+          <div class="li"><svg class="i" style="color:var(--violet2)"><use href="#i-arrow"/></svg><span data-en="The Manchester level and the suggested specialty">El nivel Manchester y la especialidad sugerida</span></div>
+          <div class="li"><svg class="i" style="color:var(--violet2)"><use href="#i-arrow"/></svg><span data-en="The CAD report and the compressed image behind it, isolated per company with RLS">El informe CAD y la imagen comprimida que lo originó, aislados por empresa con RLS</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ESTADO ================= -->
+<section class="band sec" id="estado" data-seg="estado">
+  <div class="wrap">
+    <div class="shead">
+      <span class="eyebrow am" data-en="Before the next conversation">Antes de la siguiente conversación</span>
+      <h2 data-en="What is built, what is a demonstration, and what we do not claim">Qué está construido, qué es demostración y qué no afirmamos</h2>
+      <p data-en="A health buyer drops a vendor the day they discover a capability that was taken for granted and did not exist. It is cheaper to say it here.">Un comprador institucional de salud descarta a un proveedor el día que descubre una capacidad que se dio por hecha y no existía. Es más barato decirlo aquí.</p>
+    </div>
+    <div class="three">
+      <div class="card" style="border-color:#155e57"><span class="n" data-en="Works today">Funciona hoy</span>
+        <div class="list">
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Local biometric access with face-api.js">Acceso biométrico local con face-api.js</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Voice triage with a structured schema and Manchester level">Triaje por voz con esquema estructurado y nivel Manchester</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="rPPG scan with per-sign confidence">Escaneo rPPG con confianza por signo</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="Hybrid CAD report, exportable to PDF">Informe CAD híbrido, exportable a PDF</span></div>
+          <div class="li"><svg class="i" style="color:var(--teal2)"><use href="#i-check"/></svg><span data-en="History grouped by specialty and triage color">Historia agrupada por especialidad y color de triaje</span></div>
+        </div>
+      </div>
+      <div class="card" style="border-color:#5a4310"><span class="n" style="color:var(--amber)" data-en="Proof of concept">Es prueba de concepto</span>
+        <div class="list">
+          <div class="li"><svg class="i" style="color:var(--amber)"><use href="#i-warn"/></svg><span data-en="The application labels itself a PoC version and limits demonstration consultations">La aplicación se declara versión PoC y limita las consultas de demostración</span></div>
+          <div class="li"><svg class="i" style="color:var(--amber)"><use href="#i-warn"/></svg><span data-en="The BLE ECG module is specified in firmware, not demonstrated">El módulo BLE de ECG está especificado en firmware, no demostrado</span></div>
+          <div class="li"><svg class="i" style="color:var(--amber)"><use href="#i-warn"/></svg><span data-en="RayScan is designed for chest X-rays; the example shown is a clinical photograph of a surgical wound">RayScan está pensado para radiografía de tórax; el ejemplo mostrado es una fotografía clínica de herida quirúrgica</span></div>
+        </div>
+      </div>
+      <div class="card" style="border-color:#6b2137"><span class="n" style="color:var(--red)" data-en="What we do not claim">Lo que no afirmamos</span>
+        <div class="list">
+          <div class="li"><svg class="i" style="color:var(--red)"><use href="#i-warn"/></svg><span data-en="There is no clinically validated sensitivity or specificity figure: that study has not been run yet">No hay cifra de sensibilidad ni de especificidad validada clínicamente: ese estudio aún no se ha corrido</span></div>
+          <div class="li"><svg class="i" style="color:var(--red)"><use href="#i-warn"/></svg><span data-en="No health registration or medical-device marking is invoked">No se invoca registro sanitario ni marcado de dispositivo médico</span></div>
+          <div class="li"><svg class="i" style="color:var(--red)"><use href="#i-warn"/></svg><span data-en="The RayScan report is not a valid diagnosis and requires a certified radiologist">El informe de RayScan no es un diagnóstico válido y exige un radiólogo certificado</span></div>
+          <div class="li"><svg class="i" style="color:var(--red)"><use href="#i-warn"/></svg><span data-en="Camera vital signs are estimates, published with their confidence">Los signos vitales por cámara son estimaciones, publicadas con su confianza</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CIERRE ================= -->
+<section class="band sec" id="piloto" data-seg="close">
+  <div class="wrap">
+    <div class="close">
+      <span class="eyebrow" data-en="Next step">Siguiente paso</span>
+      <h2 style="max-width:24ch" data-en="A pilot with a bounded member portfolio">Un piloto con una cartera acotada de afiliados</h2>
+      <p class="dek" data-en="A subset of real members, in a controlled environment, with triage accuracy measured against the physician's final decision. It is the study that is missing today, and the one that turns this proof of concept into a defensible product.">Un subconjunto de afiliados reales, en ambiente controlado, con el acierto del triaje medido contra la conducta final del médico. Es el estudio que hoy falta, y el que convierte esta prueba de concepto en un producto defendible.</p>
+      <div class="cta">
+        <a class="btn pri" href="mailto:info@digit2ai.com?subject=Piloto%20MaraMed" data-en="Request a pilot">Solicitar un piloto</a>
+        <a class="btn ghost" href="https://maramed.vercel.app/" rel="noopener" data-en="Open the platform">Abrir la plataforma</a>
+        <a class="btn ghost" href="/maramed-presentacion.html" data-en="Narrated deck">Presentación narrada</a>
+      </div>
+      <div class="note tl" data-en="<b>ISTC × Digit2AI.</b> ISTC, Ingeniería y Servicios Tecnológicos Colón, develops and operates the platform. Digit2AI provides the artificial-intelligence layer.">
+        <b>ISTC × Digit2AI.</b> ISTC, Ingeniería y Servicios Tecnológicos Colón, desarrolla y opera la plataforma. Digit2AI aporta la capa de inteligencia artificial.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <img src="/maramed-logo.svg" alt="MaraMed" width="126" height="30" style="height:30px;width:auto" />
+      <span data-en="ISTC · Ingeniería y Servicios Tecnológicos Colón × Digit2AI">ISTC · Ingeniería y Servicios Tecnológicos Colón × Digit2AI</span>
+    </div>
+    <div class="fl">
+      <a href="https://maramed.vercel.app/" rel="noopener" data-en="Platform">Plataforma</a>
+      <a href="/maramed-presentacion.html" data-en="Narrated deck">Presentación narrada</a>
+      <a href="/maramed/" data-en="Digit2AI rPPG technical demo">Demo técnica rPPG de Digit2AI</a>
+      <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
+    </div>
+    <p class="fine" data-en="Proof of concept for demonstration purposes. MaraMed is not a medical or diagnostic device, has no health registration and publishes no clinical performance figures. Vital signs by camera are estimates whose accuracy varies with light, movement and skin tone. Screens on this page are HTML reconstructions with simulated data. &copy; 2026.">Prueba de concepto con fines demostrativos. MaraMed no es un dispositivo médico ni de diagnóstico, no tiene registro sanitario y no publica cifras de desempeño clínico. Los signos vitales por cámara son estimaciones cuya precisión varía con la luz, el movimiento y el tono de piel. Las pantallas de esta página son reconstrucciones en HTML con datos simulados. &copy; 2026.</p>
+  </div>
+</footer>
+
+<script>
+/* ---------- idioma (ES por defecto, ?lang=en) ---------- */
+(function(){
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('[data-en]'));
+  nodes.forEach(function(el){ el.__es = el.innerHTML; });
+  var btn = document.getElementById('langBtn');
+  var lang = 'es';
+  try { if (new URLSearchParams(location.search).get('lang') === 'en') lang = 'en'; } catch(e){}
+  function apply(l){
+    lang = l; document.documentElement.lang = l;
+    nodes.forEach(function(el){ el.innerHTML = (l === 'en') ? el.getAttribute('data-en') : el.__es; });
+    btn.textContent = (l === 'es') ? 'EN' : 'ES';
+    window.dispatchEvent(new CustomEvent('mm:lang', { detail: l }));
+  }
+  btn.addEventListener('click', function(){ apply(lang === 'es' ? 'en' : 'es'); });
+  window.MM_LANG = function(){ return lang; };
+  if (lang === 'en') apply('en');
+})();
+
+/* ---------- el orbe del héroe recorre sus cuatro estados reales ---------- */
+(function(){
+  var orb = document.getElementById('heroOrb'), lbl = document.getElementById('heroOrbState');
+  var grav = document.getElementById('heroGrav'), spec = document.getElementById('heroSpec');
+  var states = [
+    { c:'idle',   es:'En espera',   color:'var(--violet2)', g:'Pendiente', s:'Análisis en curso' },
+    { c:'listen', es:'Escuchando',  color:'#fb7185',        g:'Pendiente', s:'Análisis en curso' },
+    { c:'think',  es:'Razonando',   color:'var(--blue)',    g:'Pendiente', s:'Recopilando información' },
+    { c:'speak',  es:'Respondiendo',color:'var(--amber)',   g:'AMARILLO · III', s:'Neurología' }
+  ];
+  var i = 0;
+  function show(k){
+    var s = states[k];
+    orb.className = 'orb ' + s.c;
+    lbl.textContent = s.es; lbl.style.color = s.color;
+    grav.textContent = s.g; grav.className = 'pv pill' + (s.c === 'speak' ? ' am' : '');
+    spec.textContent = s.s;
+  }
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { show(3); return; }
+  setInterval(function(){ i = (i + 1) % states.length; show(i); }, 2400);
+})();
+
+/* ---------- narración: voz neuronal Edge (/api/tts/edge), respaldo del navegador ---------- */
+(function(){
+  var SEG = {
+    es: [
+      { sec:'hero',  t:'Hola, soy Dalia, la voz de inteligencia artificial de Digit2AI. Te presento MaraMed, la plataforma de ISTC, Ingeniería y Servicios Tecnológicos Colón, para el monitoreo, la priorización y la gestión proactiva de poblaciones de salud. Digit2AI aporta la capa de inteligencia artificial.' },
+      { sec:'aud',   t:'Se vende a la institución y lo usa el afiliado. Empresas de medicina prepagada, aseguradoras y redes hospitalarias la contratan; el afiliado la recibe como un enlace y la usa desde su teléfono, sin descargar nada.' },
+      { sec:'m1',    t:'Módulo uno, acceso biométrico. El afiliado se identifica con su rostro antes de la consulta. Los descriptores faciales se extraen en la memoria del teléfono, y ninguna imagen del rostro se envía ni se guarda en un servidor.' },
+      { sec:'m2',    t:'Módulo dos, triaje por voz. El paciente cuenta sus síntomas con las manos libres a MARA. La transcripción se sanea, y la respuesta de la inteligencia artificial se obliga a un esquema estructurado que clasifica la gravedad en el protocolo Manchester, del nivel uno al cinco, con la conducta sugerida.' },
+      { sec:'m3',    t:'Módulo tres, signos vitales con la cámara. En unos treinta segundos, la técnica de fotopletismografía remota lee los cambios de color de la piel causados por el flujo sanguíneo, y estima frecuencia cardíaca, variabilidad, respiración y oxígeno. Cada valor lleva su propio nivel de confianza, y cuando la confianza es baja, la plataforma lo dice.' },
+      { sec:'m4',    t:'Módulo cuatro, RayScan. Un motor local mide los píxeles de la imagen, y después la inteligencia artificial aporta una lectura adicional, como tercer opositor. Todo lo que dice el modelo va marcado, y el propio informe advierte que la inteligencia artificial puede equivocarse y que requiere validación por un radiólogo certificado.' },
+      { sec:'m5',    t:'Módulo cinco, hardware. Dispositivos portátiles de electrocardiografía se conectan por Bluetooth de baja energía, con tramas cifradas en el propio firmware. Este módulo está especificado, pero no forma parte de la demostración pública.' },
+      { sec:'arch',  t:'La arquitectura es cliente servidor descentralizada. En el dispositivo corren la autenticación facial, la voz y la telemetría óptica. En la nube están la base de datos con seguridad a nivel de fila, los proxies de orquestación y el modelo que resuelve el triaje.' },
+      { sec:'priv',  t:'La privacidad está en el diseño. Las imágenes del rostro y el video de la cámara se quedan en el equipo. Al servidor sube el resultado del cálculo, no el material biométrico que lo produjo.' },
+      { sec:'estado',t:'Y lo decimos claro: MaraMed es una prueba de concepto. No tiene una cifra de desempeño clínico validada ni registro sanitario, y sus lecturas son estimaciones que se publican con su confianza.' },
+      { sec:'close', t:'El siguiente paso es un piloto con una cartera acotada de afiliados, midiendo el acierto del triaje contra la decisión final del médico. Si quieres conversarlo, escríbenos desde esta página.' }
+    ],
+    en: [
+      { sec:'hero',  t:'Hi, I am the Digit2AI neural voice. This is MaraMed, the platform by ISTC for proactive monitoring, prioritization and management of health populations. Digit2AI provides the artificial intelligence layer.' },
+      { sec:'aud',   t:'It is sold to the institution and used by the member. Prepaid medicine companies, insurers and hospital networks contract it; the member gets a link and uses it from their phone, with nothing to download.' },
+      { sec:'m1',    t:'Module one, biometric access. The member is identified by their face before the consultation. Facial descriptors are extracted in the phone memory, and no face image is sent to or stored on a server.' },
+      { sec:'m2',    t:'Module two, voice triage. The patient describes symptoms hands free to MARA. The transcript is sanitized, and the AI answer is forced into a structured schema that classifies severity on the Manchester protocol, levels one to five, with the suggested course of action.' },
+      { sec:'m3',    t:'Module three, vital signs from the camera. In about thirty seconds, remote photoplethysmography reads skin color changes caused by blood flow and estimates heart rate, variability, breathing and oxygen. Every value carries its own confidence level, and when confidence is low, the platform says so.' },
+      { sec:'m4',    t:'Module four, RayScan. A local engine measures the image pixels, and then the AI adds a further reading, as a third opinion. Everything the model says is labeled, and the report itself warns that the AI can be wrong and requires validation by a certified radiologist.' },
+      { sec:'m5',    t:'Module five, hardware. Portable electrocardiography devices connect over Bluetooth Low Energy, with frames encrypted in the firmware itself. This module is specified, but it is not part of the public demonstration.' },
+      { sec:'arch',  t:'The architecture is decentralized client server. Facial authentication, voice and optical telemetry run on the device. The cloud holds the database with row level security, the orchestration proxies and the model that performs triage.' },
+      { sec:'priv',  t:'Privacy is in the design. Face images and camera video stay on the device. What reaches the server is the result of the calculation, not the biometric material that produced it.' },
+      { sec:'estado',t:'And we say it plainly: MaraMed is a proof of concept. It has no validated clinical performance figure and no health registration, and its readings are estimates published with their confidence.' },
+      { sec:'close', t:'The next step is a pilot with a bounded member portfolio, measuring triage accuracy against the physician final decision. If you want to talk about it, write to us from this page.' }
+    ]
+  };
+  var ES_VOICES = { dalia:1, paloma:1, salome:1, elvira:1 };
+  var synth = window.speechSynthesis;
+  var norb = document.getElementById('norb'), status = document.getElementById('nstatus');
+  var playAll = document.getElementById('playAll'), pauseBtn = document.getElementById('pauseBtn'), stopBtn = document.getElementById('stopBtn');
+  var voiceSel = document.getElementById('voiceSel'), neuralToggle = document.getElementById('neuralToggle'), voiceMode = document.getElementById('voiceMode');
+  var NEURAL_URL = '/api/tts/edge';
+  var qi = 0, runToken = 0, paused = false, playing = false, playbackMode = null, currentAudio = null, neuralOK = true, cache = {};
+  var browserVoice = null;
+
+  function L(){ return (window.MM_LANG && window.MM_LANG() === 'en') ? 'en' : 'es'; }
+  function segs(){ return SEG[L()]; }
+  function voice(){ return L() === 'en' ? 'ava' : voiceSel.value; }
+  function txt(es, en){ return L() === 'en' ? en : es; }
+  function pickBrowserVoice(){
+    if (!synth) return;
+    var vs = synth.getVoices(), want = L();
+    browserVoice = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(want) === 0; })[0] || null;
+  }
+  if (synth) { pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? 'HD' : txt('navegador', 'browser'); }
+  setMode();
+  voiceSel.disabled = (L() === 'en');
+  voiceSel.addEventListener('change', clearCache);
+  neuralToggle.addEventListener('change', setMode);
+  window.addEventListener('mm:lang', function(){ finish(true); pickBrowserVoice(); setMode(); voiceSel.disabled = (L() === 'en'); });
+  function clearCache(){ Object.keys(cache).forEach(function(k){ try{ URL.revokeObjectURL(cache[k]); }catch(e){} }); cache = {}; }
+
+  function fetchNeural(idx){
+    var v = voice(), key = L() + '|' + v + '|' + idx;
+    if (cache[key]) return Promise.resolve(cache[key]);
+    return fetch(NEURAL_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: segs()[idx].t, voice: v }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 200) throw new Error('empty'); var u = URL.createObjectURL(b); cache[key] = u; return u; });
+  }
+  function setActive(sec){
+    document.querySelectorAll('.sec.active').forEach(function(s){ s.classList.remove('active'); });
+    if (!sec) return;
+    var el = document.querySelector('[data-seg="' + sec + '"]');
+    if (el) { el.classList.add('active'); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  function speaking(){ status.textContent = txt('Dalia está hablando', 'Speaking') + ' · ' + (qi + 1) + ' / ' + segs().length; }
+
+  function run(token){
+    if (token !== runToken) return;
+    var list = segs();
+    if (qi >= list.length) { finish(false); return; }
+    var idx = qi;
+    setActive(list[idx].sec);
+    function advance(){ if (token !== runToken) return; qi++; run(token); }
+    if (useNeural()) {
+      status.textContent = txt('Preparando voz neuronal…', 'Preparing neural voice…');
+      if (idx + 1 < list.length) fetchNeural(idx + 1).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if (token !== runToken) return;
+        playbackMode = 'neural'; currentAudio = new Audio(url);
+        currentAudio.onended = advance;
+        currentAudio.onerror = function(){ neuralOK = false; setMode(); browserSpeak(idx, advance); };
+        norb.classList.add('speaking'); speaking();
+        currentAudio.play().catch(function(){ neuralOK = false; setMode(); browserSpeak(idx, advance); });
+      }).catch(function(){ if (token !== runToken) return; neuralOK = false; setMode(); browserSpeak(idx, advance); });
+    } else { browserSpeak(idx, advance); }
+  }
+  function browserSpeak(idx, onEnd){
+    if (!synth) { onEnd(); return; }
+    playbackMode = 'browser';
+    var u = new SpeechSynthesisUtterance(segs()[idx].t);
+    if (browserVoice) u.voice = browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : (L() === 'en' ? 'en-US' : 'es-MX');
+    u.rate = 0.98;
+    u.onstart = function(){ norb.classList.add('speaking'); speaking(); };
+    u.onend = onEnd; u.onerror = onEnd;
+    synth.speak(u);
+  }
+  function start(){
+    if (synth) synth.cancel();
+    if (currentAudio) { try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+    qi = 0; paused = false; playing = true; runToken++;
+    pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true;
+    run(runToken);
+  }
+  function finish(silent){
+    runToken++; playing = false; norb.classList.remove('speaking'); setActive(null);
+    if (synth) synth.cancel();
+    if (currentAudio) { try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+    pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+    if (!silent) status.textContent = txt('Recorrido terminado. Pulsa de nuevo para repetir.', 'Walkthrough finished. Press again to replay.');
+  }
+  playAll.addEventListener('click', start);
+  pauseBtn.addEventListener('click', function(){
+    if (!playing) return;
+    if (!paused) {
+      paused = true; norb.classList.remove('speaking'); status.textContent = txt('En pausa.', 'Paused.');
+      pauseBtn.setAttribute('aria-label', txt('Reanudar', 'Resume'));
+      if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause();
+    } else {
+      paused = false; norb.classList.add('speaking'); speaking();
+      pauseBtn.setAttribute('aria-label', txt('Pausar', 'Pause'));
+      if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume();
     }
-    function setActive(i){ secs.forEach(function(s){s.classList.remove('active');}); if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); } }
-    function statusSpeaking(){ status.textContent = (mode==='all') ? ('Lina esta hablando... ('+(qi+1)+' de '+queue.length+')') : 'Reproduciendo...'; }
-    function runQueue(token){
-      if(token!==runToken) return;
-      if(qi>=queue.length){ finish(); return; }
-      var idx = queue[qi];
-      if(mode==='all' || idx>0) setActive(idx);
-      function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
-      if(useNeural()){
-        status.textContent='Preparando voz neural...';
-        if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
-        fetchNeural(idx).then(function(url){
-          if(token!==runToken) return;
-          playbackMode='neural'; currentAudio=new Audio(url);
-          currentAudio.onended=advance;
-          currentAudio.onerror=function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); };
-          orb.classList.add('speaking'); statusSpeaking();
-          currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
-        }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
-      } else { browserSpeak(idx,advance); }
-    }
-    function browserSpeak(idx,onEnd){
-      if(!synth){ onEnd(); return; }
-      playbackMode='browser';
-      var u=new SpeechSynthesisUtterance(segments[idx]);
-      if(browserVoice) u.voice=browserVoice;
-      u.lang = browserVoice ? browserVoice.lang : 'es-MX';
-      u.rate=0.98; u.pitch=1.05;
-      u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
-      u.onend=onEnd; u.onerror=onEnd;
-      synth.speak(u);
-    }
-    function start(q,m){
-      if(synth) synth.cancel();
-      if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
-      queue=q; qi=0; mode=m; paused=false; runToken++;
-      pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true;
-      runQueue(runToken);
-    }
-    function finish(){
-      runToken++; orb.classList.remove('speaking'); setActive(null);
-      if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
-      pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
-      status.textContent='Presentacion terminada. Pulsa de nuevo para repetir.';
-    }
-    playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
-    pauseBtn.addEventListener('click', function(){
-      if(!paused){ paused=true; orb.classList.remove('speaking'); status.textContent='En pausa.';
-        if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
-      else { paused=false; orb.classList.add('speaking'); statusSpeaking();
-        if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
-    });
-    stopBtn.addEventListener('click', finish);
-    window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
-  })();
-  </script>
+  });
+  stopBtn.addEventListener('click', function(){ finish(false); });
+  window.addEventListener('pagehide', function(){ if (synth) synth.cancel(); if (currentAudio) { try{ currentAudio.pause(); }catch(e){} } });
+})();
+</script>
 </body>
 </html>
