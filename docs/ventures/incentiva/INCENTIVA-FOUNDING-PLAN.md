@@ -19,7 +19,7 @@ The brief allowed up to five questions. Each one that would have changed the des
 
 | # | Question I would have asked | Default taken | What changes if you choose differently |
 |---|---|---|---|
-| 1 | Is Ole a Florida broker or a sales associate under someone else's broker, and how is DIGIT2AI paid? | Ole operates under a licensed Florida brokerage; DIGIT2AI is paid a flat monthly technology fee, never a share of any commission | Tenancy model, the agreement form, the ad footer on every page, the revenue split. **[BLOCKER] [LAWYER]** |
+| 1 | Is Ole a Florida broker or a sales associate under someone else's broker, and how is DIGIT2AI paid? | **Superseded by Revision 1:** Ole is a sales associate under a broker; the platform charges Ole a flat fee per consult held, never a share of commission | Tenancy model, the agreement form, the ad footer on every page, the revenue split. **[BLOCKER] [LAWYER]** |
 | 2 | Does Ole work with buyers in Spanish himself? | No. Spanish runs end to end in software; a Spanish-speaking licensed associate or an interpreter joins consults on request | Staffing, the consult booking flow, the Advisor voice in Spanish |
 | 3 | Which brokerage relationship will buyers sign? | Single agent (fiduciary) buyer relationship, so the word "advocate" is true | If it is transaction broker, every "advocate" claim in brand and copy must go |
 | 4 | Is the goal Ole's own book, or a platform licensed to other agents from day one? | Ole's book first; multi-metro tenancy built in but not sold until Tampa closes deals | Nothing structural; only pricing and onboarding work gets pulled forward |
@@ -51,6 +51,104 @@ The document uses **Incentiva** throughout.
 8. **No bot-protection evasion.** No residential proxies, CAPTCHA solving or logged-in scraping of broker portals. If a builder blocks automated access, the fallback is Ole, email ingest or a licensed feed.
 9. **Outbound messages start as drafts Ole approves.** Only templates Ole has approved, carrying only verified facts that have passed compliance, graduate to automatic sending.
 10. **MVP working in 4 weeks; the rest of the 90 days is launch.** Weeks 1 to 4 build the product. Weeks 5 to 13 cover data coverage, soft launch, paid acquisition and the first contracts.
+# Revision 1: the platform serves Ole, and Ole pays per conversion
+
+**Decided by the founders on 2026-09-13. Where anything below conflicts with the original plan, this section wins.**
+
+## What changed
+
+| | Original plan | Revision 1 |
+|---|---|---|
+| What the product is | The brokerage's own buyer-advocate website | A **consumer front door**: one place to see buying power, every new-construction option near a ZIP, and each builder's verified incentives, instead of driving from sales office to sales office |
+| Who operates it | The brokerage | **Incentiva, a technology company** (DIGIT2AI + Ole as founders), separate from any brokerage |
+| Who Ole is | Possibly a broker | A **sales associate licensed under a Florida broker** |
+| Who pays whom | Brokerage pays DIGIT2AI a flat monthly fee | **Ole pays the platform for each client conversion** |
+| Who represents the buyer | Ole | Still Ole, through his broker. The platform triages and hands off; it does not represent anyone |
+
+## The part that decides whether this is legal: what counts as a conversion
+
+A fee that depends on the buyer **transacting** is a referral fee. Florida only lets a licensed brokerage receive one, and only from another brokerage. The federal RESPA exemption for referral fees covers arrangements between real estate brokers. A fee for **delivering a qualified prospect**, owed whether or not the prospect ever buys, is an advertising or lead-generation fee, which is how most consumer real estate sites charge agents. The later the billable event sits in the funnel, the more it looks like a referral fee. **[LAWYER]**
+
+Two mechanics apply however it is priced:
+
+- **A sales associate cannot pay or receive compensation for a transaction except through their employing broker.** Anything tied to a closing is paid by Ole's broker, not Ole. Lead-generation fees are usually paid by the agent, but Ole's broker must approve the arrangement, and many brokers require these contracts to run through them or take a split of platform-sourced deals.
+- **Portals that charge agents a success fee at closing do so through a licensed brokerage affiliate.** As I understand it, Zillow Flex and Realtor.com's referral programs work this way. **[GUESS]** on the specifics of their structures; the pattern is the point.
+
+| Billable "conversion" event | Paid by | Legal risk | Why |
+|---|---|---|---|
+| Completed intake (qualified lead delivered) | Ole | **Low** | Owed regardless of outcome; standard lead generation |
+| Consult booked and held | Ole | **Low to moderate** | Still not contingent on a transaction; needs an objective "held" record |
+| Buyer brokerage agreement signed | Ole | **Moderate [LAWYER]** | Starts to look like a fee for procuring a client for a licensed service |
+| Builder registration | Ole | **Moderate to high [LAWYER]** | Tied to the start of a transaction |
+| Closing, or a percentage of commission | Ole's broker | **High, unless Incentiva holds a Florida brokerage license** | This is a referral fee; only licensees may receive it |
+
+## Recommendation [DEFAULT]
+
+**Phase 1 (launch): a flat fee per consult held**, owed whether or not the buyer signs or buys, with a monthly cap. It charges for what the platform actually produces (a qualified, informed buyer in a real conversation with Ole) without depending on a transaction.
+
+**Phase 2 (optional, once there is traction): a success fee through a licensed brokerage affiliate.** Incentiva forms or partners with a Florida brokerage (a licensed broker of record is required; Manny cannot qualify quickly) that receives a referral fee from Ole's broker at closing, broker to broker, disclosed to the buyer. This aligns incentives best but adds licensing, supervision and escrow obligations.
+
+**What not to do:** a percentage of Ole's commission paid to DIGIT2AI or to Incentiva as an unlicensed company.
+
+## Pricing illustration [GUESS]
+
+These use the base funnel from deliverable 1 (intake → consult 30%, consult → agreement 50%, agreement → closing 30%) and ask one question: what flat fee at each stage costs Ole about the same as a 30% referral fee at closing ($3,225 on a $10,750 co-broke)?
+
+| Billable event | Equivalent fee | Platform's acquisition cost at that stage ($75 per intake) | Margin per event |
+|---|---|---|---|
+| Intake | ~$145 | $75 | ~$70 |
+| **Consult held (recommended)** | **~$480; launch at $300–$400** | $250 | $50–$150 |
+| Agreement signed | ~$970 | $500 | ~$470 |
+
+Launching below the equivalent is deliberate: Ole carries the risk that a consult never closes, so the fee should be cheaper than a success fee for the same expected outcome. The ~$145 and ~$970 figures are rounded for readability.
+
+**Price levers:** a monthly cap (for example, 20 billable consults), no charge for consults Ole marks as clearly unqualified within 24 hours (limit 10%), and no charge for buyers who were already Ole's clients before using the platform.
+
+## Buying power (new consumer feature)
+
+- **What it shows:** an estimated price range and monthly payment the buyer can target, from their own inputs: gross income, monthly debts, down payment, and a comfort-level payment. Standard debt-to-income bands are labeled as assumptions, and results are shown alongside matching communities and incentives.
+- **What it is not:** a pre-qualification or pre-approval. No credit pull, no SSN, no bank data, no loan program recommendations. The platform is not a lender and not a mortgage loan originator. Copy says "estimate", never "you qualify".
+- **Getting pre-approved:** a list of lenders, including builder-affiliated lenders where their incentives require them. **No lender pays the platform** for placement or referrals (RESPA Section 8).
+- Income and debt inputs are optional, never sent to a model, deleted on request, and not shared with Ole unless the buyer opts in.
+
+## What changes in the design
+
+**Tenancy (replaces the tenancy default in deliverable 2).** `tenant` = the platform operator (Incentiva). New `nca_brokerages` (Ole's employing broker, license number, approval document, advertising disclaimer) and `nca_agents` link to a brokerage. The market still has one agent of record per buyer. Agent-facing features are gated by an active, broker-approved agent account.
+
+**Billing (new tables).**
+- `nca_billing_plans`: fee per billable event, monthly cap, free-disqualification allowance, effective dates.
+- `nca_conversion_events`: `buyer_id`, `agent_id`, `event` (`consult_held`), `evidence` (calendar event id, both-party confirmation or call log), `occurred_at`, `billable` (bool), `waiver_reason`, `disputed_at`, `resolution`. Created only from objective evidence; append-only.
+- `nca_invoices` + `nca_invoice_lines`: monthly invoice to Ole (Stripe), each line pointing at one conversion event.
+- **Enforced in code:** no conversion event type exists for agreement signed, registration or closing while the Phase 1 plan is active; SIT asserts it.
+
+**Consent and data hand-off.** The buyer now gives data to a technology company that passes it to an agent. Intake consent must **name Ole and his brokerage** as the party who will contact them, and a separate checkbox authorizes sharing their details with that agent. Without it, the buyer gets the report and nothing is handed off.
+
+**Buyer-facing disclosures (added to site, report and messages).**
+- "Incentiva is a technology platform, not a real estate brokerage. It connects you with {agent_name}, a sales associate with {brokerage_name}. {agent_name} pays Incentiva a fee when you meet with them. You pay nothing."
+- Brokerage name and license, and Equal Housing Opportunity, wherever Ole is presented.
+
+**Who does what.**
+
+| Activity | Platform (unlicensed) | Ole (licensed, through his broker) |
+|---|---|---|
+| Buying-power estimate, search, incentive comparison, payment scenarios | Yes, as general information and estimates | Reviews |
+| Verifying incentives | Collects and drafts | **Confirms** (licensed judgment, logged under his name) |
+| Recommending a specific home or advising on terms | **No** | Yes |
+| Buyer agreement, registration, touring, negotiation | No | Yes |
+| Outbound messages about specific properties | Drafts | Approves; sent under his and his broker's name |
+
+**The platform's own licensing exposure [LAWYER].** Florida's definition of broker activity is broad: it includes advertising or offering to help others buy real property for compensation. A publisher paid flat for advertising is generally outside it. A site that compares specific homes and is paid per consult sits closer to the line than a subscription does. The attorney's review must cover the platform itself, not only the fee.
+
+## Revised open questions
+
+| # | Question | Default |
+|---|---|---|
+| R1 | Does Ole's broker approve a per-consult fee arrangement, and must the contract run through the brokerage? | Contract signed by Ole with written broker approval |
+| R2 | Billable event and price | Consult held; $300–$400; monthly cap |
+| R3 | Pursue a licensed brokerage affiliate for a success fee in phase 2? | Decide after 6 months of closings data |
+| R4 | Ole is a founder and a paying customer: how is his equity handled against his fees? | Fees paid at arm's length and invoiced like any agent's, so the model is proven for future agents [LAWYER / accountant] |
+| R5 | Later agents: same market or new markets only? | One agent of record per buyer; exclusivity per market is a pricing decision, not a technical one |
+
 # 1. Concept document
 
 ## Vision
@@ -104,7 +202,7 @@ These are built around circumstances, not demographics. The same inventory, rank
 
 **Primary revenue: the builder-paid buyer's-agent commission (co-broke) on every closing.** The buyer pays nothing. The commission is paid to Ole's brokerage at closing, under the compensation terms written into the buyer brokerage agreement.
 
-**How DIGIT2AI is paid [DEFAULT] [LAWYER] [BLOCKER].** Florida law generally prohibits a broker or sales associate from paying commission or a share of compensation to an unlicensed person for services that require a license. DIGIT2AI is unlicensed, so a revenue share tied to closings is the structure most likely to be a violation. The default is a **flat monthly technology fee** paid by the brokerage to DIGIT2AI, fixed in advance and not tied to any transaction or referral. Ownership of the venture itself (equity in a technology company that licenses the software to the brokerage) is a separate question for a Florida real estate attorney. Do not set the split until that opinion is in writing.
+**How DIGIT2AI is paid [LAWYER] [BLOCKER].** *Superseded by Revision 1 (per-consult fee paid by Ole); kept for the reasoning.* Florida law generally prohibits a broker or sales associate from paying commission or a share of compensation to an unlicensed person for services that require a license. DIGIT2AI is unlicensed, so a revenue share tied to closings is the structure most likely to be a violation. The default is a **flat monthly technology fee** paid by the brokerage to DIGIT2AI, fixed in advance and not tied to any transaction or referral. Ownership of the venture itself (equity in a technology company that licenses the software to the brokerage) is a separate question for a Florida real estate attorney. Do not set the split until that opinion is in writing.
 
 ### Secondary revenue options
 
@@ -1437,8 +1535,8 @@ Owner key: **O** = Ole or his broker · **M** = Manny/DIGIT2AI · **A** = attorn
 
 | # | Question | Default taken | Needed by |
 |---|---|---|---|
-| 1 | How is DIGIT2AI compensated, and what does each founder own? | Flat technology fee; equity question to attorney | Week 3 (before any revenue agreement) |
-| 2 | Is Ole a broker, or a sales associate under another broker who must approve? | Operates under a licensed brokerage | Week 1 |
+| 1 | How is DIGIT2AI compensated, and what does each founder own? | Per consult held, paid by Ole (Revision 1); equity question to attorney | Week 3 (before any revenue agreement) |
+| 2 | Is Ole a broker, or a sales associate under another broker who must approve? | Sales associate under a broker (Revision 1); broker approval needed | Week 1 |
 | 3 | Single agent or transaction broker relationship? | Single agent | Week 3 (agreement flow) |
 | 4 | Who covers Spanish-language consults? | Spanish-speaking licensed associate or interpreter on request | Week 4 |
 | 5 | Final name, domain and trademark | Incentiva, unchecked | Week 6 (public site in week 7) |
