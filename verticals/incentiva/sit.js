@@ -478,10 +478,17 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         assert(preserve[0].incentives.some((i) => /buydown/i.test(i.headline)), 'verified buydown shown');
       });
       await t('payment figures match the engine and the buydown row carries Year 3+', () => {
-        const oak = viewEn.data.items.find((i) => i.home && i.home.label.includes('Oakmont'));
-        assert(oak, 'Oakmont listed');
-        const b = oak.scenarios[0]; eq(b.year3plus, 3370); eq(b.from, true);
-        const bd = oak.scenarios.find((s) => /Temporary/.test(s.label)); eq(bd.year1, 2876); eq(bd.year3plus, 3370);
+        const birch = viewEn.data.items.find((i) => i.home && i.home.label.includes('Birch'));
+        assert(birch, 'Birch listed');
+        const b = birch.scenarios[0]; eq(b.year3plus, 3184); eq(b.from, true);
+        const bd = birch.scenarios.find((s) => /Temporary/.test(s.label)); eq(bd.year1, 2720); eq(bd.year3plus, 3184);
+      });
+      await t('each community appears once, incentive conditions never repeat the headline, and a month-only completion reads as a month', () => {
+        const ids = viewEn.data.items.map((i) => i.community.id);
+        eq(ids.length, new Set(ids).size);
+        for (const it of viewEn.data.items) for (const inc of it.incentives) assert(!inc.conditions_text || inc.conditions_text.toLowerCase() !== String(inc.headline).toLowerCase(), 'conditions repeat headline');
+        assert(!/Ready \d{4}-\d{2}/.test(JSON.stringify(viewEn.data.items)), 'raw YYYY-MM in the report prose');
+        eq(require('./src/engines/fit').renderFitLine('en', { key: 'timeline_ok', ready: '2026-11' }), 'Ready November 2026, which fits your timeline.');
       });
       await t('a community with no verified incentives is withheld, not ranked', () => {
         assert(viewEn.data.withheld.some((w) => w.community === 'Sample Oaks'), 'Sample Oaks withheld');

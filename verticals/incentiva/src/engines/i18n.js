@@ -55,9 +55,11 @@ const L = {
     },
     ready_now: 'now',
     narrative: {
+      opening_one: 'I found 1 new-home option that matches what you asked for. Every incentive below was confirmed with the builder, and each shows the date it was last verified.',
       opening_some: 'I compared {n} new-home options that match what you asked for. Every incentive below was confirmed with the builder, and each shows the date it was last verified.',
       opening_none: 'No community in your area has verified incentives that match your criteria right now. That can change weekly; I will keep watching.',
       top_pick: 'First, look at {community} by {builder}: {reasons}',
+      also_pick: 'Also consider {community} by {builder}: {reasons}',
       watch_fees: 'Confirm the HOA and CDD fees at {community}; they are not published yet and can change the monthly cost.',
       watch_lender: '{community}: {headline} requires the builder\'s lender. Compare that lender\'s rate and fees with your own.',
       watch_buydown: '{community}: a temporary buydown lowers the payment only for the first years. Plan around the Year 3+ payment of {amount}.',
@@ -148,9 +150,11 @@ const L = {
     },
     ready_now: 'ya',
     narrative: {
+      opening_one: 'Encontré 1 opción de casa nueva que coincide con lo que me pidió. Cada incentivo de este informe se confirmó con la constructora y muestra la fecha de su última verificación.',
       opening_some: 'Comparé {n} opciones de casas nuevas que coinciden con lo que me pidió. Cada incentivo de este informe se confirmó con la constructora y muestra la fecha de su última verificación.',
       opening_none: 'Ahora mismo ninguna comunidad de su zona tiene incentivos verificados que coincidan con lo que busca. Eso cambia cada semana; seguiré atento.',
       top_pick: 'Primero, mire {community} de {builder}: {reasons}',
+      also_pick: 'También considere {community} de {builder}: {reasons}',
       watch_fees: 'Confirme las cuotas de HOA y CDD en {community}; aún no están publicadas y pueden cambiar el costo mensual.',
       watch_lender: '{community}: {headline} exige el prestamista de la constructora. Compare su tasa y sus cargos con los de su propio prestamista.',
       watch_buydown: '{community}: una reducción temporal baja el pago solo los primeros años. Planifique con el pago del Año 3 en adelante, de {amount}.',

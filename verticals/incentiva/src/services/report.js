@@ -105,10 +105,15 @@ async function assemble(tenantId, market, criteria, { allowGeocode = true, now =
     }
   }
   candidates.sort((a, b) => b.fit_raw.score - a.fit_raw.score || a.price - b.price || a.key.localeCompare(b.key));
-  const items = candidates.slice(0, MAX_ITEMS).map((it, i) => Object.assign(it, { rank: i + 1 }));
+  // One card per community: its best-fitting home. Two homes in one community are not two options.
+  const seen = new Set();
+  const perCommunity = candidates.filter((it) => (seen.has(it.community.id) ? false : (seen.add(it.community.id), true)));
+  const items = perCommunity.slice(0, MAX_ITEMS).map((it, i) => Object.assign(it, { rank: i + 1 }));
   const isDemo = items.some((i) => i.community.is_demo) || withheld.some((w) => w.is_demo);
   return { items, withheld, center, versionsById, isDemo };
 }
+
+function sameText(a, b) { const n = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); return n(a) === n(b); }
 
 function feeObj(fees, types) {
   const rows = fees.filter((f) => types.includes(f.fee_type));
@@ -126,7 +131,8 @@ async function renderLanguage(lang, ctx) {
     const c = it.community;
     const incentive_rows = it.incentives.map((v) => ({
       id: v.incentive_id, version_id: v.id, type: v.type, type_label: t(lang, 'incentive_type.' + v.type) || v.type,
-      headline: v.headline, value_display: valueDisplay(lang, v), conditions_text: v.conditions_text,
+      headline: v.headline, value_display: valueDisplay(lang, v),
+      conditions_text: v.conditions_text && sameText(v.conditions_text, v.headline) ? null : v.conditions_text,
       requires_affiliated_lender: v.requires_affiliated_lender, contract_by: v.contract_by ? String(v.contract_by).slice(0, 10) : null,
       close_by: v.close_by ? String(v.close_by).slice(0, 10) : null, expires_on: v.expires_on ? String(v.expires_on).slice(0, 10) : null,
       last_verified_at: v.last_verified_at, choice_group: v.choice_group

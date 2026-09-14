@@ -386,6 +386,15 @@
     var d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
   }
+  // Completion is 'ready', YYYY-MM or YYYY-MM-DD. A bare month must not parse as the last day of the month before.
+  function fmtReady(s) {
+    var v = String(s);
+    if (/^ready$/i.test(v)) return lang === 'es' ? 'ahora' : 'now';
+    var m = v.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+    if (!m) return v;
+    var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1));
+    return d.toLocaleDateString(locale(), m[3] ? { year: 'numeric', month: 'short', day: 'numeric' } : { year: 'numeric', month: 'long' });
+  }
   function fmtDate(s) {
     var d = parseDate(s);
     return d ? d.toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' }) : '';
@@ -740,7 +749,7 @@
 
     // Before you visit + consult
     var consultSec = h('section', { 'aria-labelledby': 'beforeT', class: 'section-rule', style: 'padding-block:32px' });
-    var before = beforeVisitCallout(nar.next_step || null);
+    var before = beforeVisitCallout(null); // next_step says the same thing as the callout body
     before.querySelector('h3').id = 'beforeT';
     consultSec.appendChild(before);
     if (!d.preview) consultSec.appendChild(renderConsult(agent));
@@ -799,7 +808,7 @@
       if (isNum(hm.baths)) hp.push(t('ba', { n: numFmt(hm.baths, 1) }));
       if (isNum(hm.sqft)) hp.push(t('sqft', { n: numFmt(hm.sqft, 0) }));
       if (isNum(hm.price)) hp.push(money(hm.price));
-      if (hm.ready) hp.push(t('ready_label', { v: fmtDate(hm.ready) || String(hm.ready) }));
+      if (hm.ready) hp.push(t('ready_label', { v: fmtReady(hm.ready) }));
       sec.appendChild(h('p', { class: 'home-line', text: hp.join(' · ') }));
     } else {
       sec.appendChild(h('p', { class: 'small muted', style: 'margin:12px 0', text: t('no_home') }));

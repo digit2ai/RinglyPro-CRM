@@ -14,14 +14,14 @@ const { numericTokens } = require('./compliance');
 
 function deterministic(lang, items) {
   const n = {
-    opening: items.length ? t(lang, 'narrative.opening_some', { n: items.length }) : t(lang, 'narrative.opening_none'),
+    opening: items.length === 1 ? t(lang, 'narrative.opening_one') : items.length ? t(lang, 'narrative.opening_some', { n: items.length }) : t(lang, 'narrative.opening_none'),
     watch_outs: [], questions_to_ask: ['q1', 'q2', 'q3', 'q4'].map((k) => t(lang, 'narrative.' + k)),
     next_step: t(lang, 'narrative.next_step')
   };
   const takes = {};
-  items.slice(0, 3).forEach((it) => {
+  items.slice(0, 3).forEach((it, i) => {
     const reasons = it.fit_raw.reasons.slice(0, 2).map((r) => renderFitLine(lang, r)).join(' ');
-    takes[it.key] = t(lang, 'narrative.top_pick', { community: it.community.name, builder: it.community.builder, reasons });
+    takes[it.key] = t(lang, i === 0 ? 'narrative.top_pick' : 'narrative.also_pick', { community: it.community.name, builder: it.community.builder, reasons });
   });
   for (const it of items) {
     if (!it.fees_known) n.watch_outs.push(t(lang, 'narrative.watch_fees', { community: it.community.name }));

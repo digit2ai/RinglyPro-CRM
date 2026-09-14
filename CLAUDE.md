@@ -411,7 +411,7 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Workflow strip** (`#flow`, right after the hero; it REPLACED the three-step "How it works" section, which repeated it, and the nav "How it works" link now points here): seven steps from intake to keys, each tagged with who does it (You / BuyersLine AI / Licensed agent), so the human-in-the-loop is visible. The HTML is fully readable with no script; `public/flow.js` adds the travelling orange line and dot only while the strip is on screen, and does nothing under `prefers-reduced-motion`. On phones the strip scrolls sideways and follows the active step without moving the page. Labels are in the EN/ES dictionaries (`flow_*`).
 
-**SIT:** `node verticals/incentiva/sit.js` → **98/98**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
+**SIT:** `node verticals/incentiva/sit.js` → **99/99**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
 
 **Environment Variables:**
 - `INCENTIVA_OWNER_PASSWORD` — admin (LLC) console password. **No default: unset = the console is CLOSED (503).** `INCENTIVA_OWNER_EMAIL` (default `mstagg@digit2ai.com`), `INCENTIVA_OWNER_NAME`.

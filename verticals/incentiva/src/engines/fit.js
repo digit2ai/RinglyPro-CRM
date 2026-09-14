@@ -114,6 +114,13 @@ function renderFitLine(lang, entry) {
   if (p.budget != null) p.budget = money(lang, p.budget);
   if (p.must) p.label = t(lang, 'must_haves.' + p.must);
   if (p.ready && /^ready$/i.test(p.ready)) p.ready = t(lang, 'ready_now');
+  else if (p.ready) {
+    const m = String(p.ready).match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+    if (m) {
+      const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1), 12));
+      p.ready = d.toLocaleDateString(lang === 'es' ? 'es-US' : 'en-US', m[3] ? { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' } : { year: 'numeric', month: 'long', timeZone: 'UTC' });
+    }
+  }
   return t(lang, 'fit.' + entry.key, p);
 }
 
