@@ -15,7 +15,7 @@
       martha: 'Martha', role: 'BuyersLine assistant',
       stages: ['Where', 'Money and timing', 'Promotions', 'About you', 'Protect you', 'Contact'],
       step_of: 'Stage {n} of 6', back: 'Back', edit: 'Edit', send: 'Send', skip: 'Skip', typing: 'Martha is typing',
-      restart: 'Start a new search', optional: 'Optional',
+      restart: 'Start a new search', optional: 'Optional', start_over: 'Start over', restart_confirm: 'Start over? Your answers so far will be cleared.',
       hello: "Hi, I'm Martha. I'll ask a few quick questions, then pull the current builder promotions for your area.",
       q_area: 'Where are you looking? A ZIP code, city or neighborhood works.', ph_area: 'For example 33578 or Wesley Chapel',
       checking_area: 'Checking that area...',
@@ -80,7 +80,7 @@
       martha: 'Martha', role: 'Asistente de BuyersLine',
       stages: ['Dónde', 'Dinero y plazos', 'Promociones', 'Sobre usted', 'Su protección', 'Contacto'],
       step_of: 'Etapa {n} de 6', back: 'Atrás', edit: 'Editar', send: 'Enviar', skip: 'Omitir', typing: 'Martha está escribiendo',
-      restart: 'Empezar una búsqueda nueva', optional: 'Opcional',
+      restart: 'Empezar una búsqueda nueva', optional: 'Opcional', start_over: 'Empezar de nuevo', restart_confirm: '¿Empezar de nuevo? Se borrarán sus respuestas.',
       hello: 'Hola, soy Martha. Le haré unas preguntas rápidas y luego buscaré las promociones actuales de las constructoras en su zona.',
       q_area: '¿Dónde está buscando? Sirve un código postal, una ciudad o un vecindario.', ph_area: 'Por ejemplo 33578 o Wesley Chapel',
       checking_area: 'Revisando esa zona...',
@@ -212,8 +212,16 @@
     });
   }
   function fresh() { return { v: 1, step: 'area', answers: { visited_offices: [] }, done: {}, research: null, selections: [], consents: { email: false, sms: false, agent_referral: false }, hp: '', lead: null }; }
-  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.v === 1) return s; } catch (e) { /* storage blocked */ } return fresh(); }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* session only */ } }
+  // Progress survives a refresh, but not forever: after 12 idle hours the next visit starts fresh.
+  var IDLE_MS = 12 * 3600e3;
+  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.v === 1 && (!s.savedAt || Date.now() - s.savedAt < IDLE_MS)) return s; } catch (e) { /* storage blocked */ } return fresh(); }
+  function save() { try { state.savedAt = Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* session only */ } }
+  function restart() {
+    stopPoll(); state = fresh(); ui.research = null; ui.error = null; ui.busy = false; save();
+    var url = new URL(location.href); url.searchParams.delete('lead');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+    render(true);
+  }
   function stepIndex(id) { for (var i = 0; i < STEPS.length; i++) if (STEPS[i].id === id) return i; return -1; }
   function gated() { return state.answers.has_agent === 'yes_under_agreement'; }
   function skipped(id) { return (id === 'visits' || id === 'consents') && gated(); }
@@ -283,7 +291,12 @@
   }
   function focusComposer() {
     var el = root && root.querySelector('.mch-composer input:not([type=hidden]), .mch-chips button');
-    if (el && root.getBoundingClientRect().top < window.innerHeight && root.getBoundingClientRect().bottom > 0) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } }
+    if (el && root.getBoundingClientRect().top < window.innerHeight && root.getBoundingClientRect().bottom > 0) {
+      try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+      // Keep the answer box above the floating voice button in the bottom corner.
+      var bottom = el.getBoundingClientRect().bottom;
+      if (bottom > window.innerHeight - 110) window.scrollBy({ top: bottom - window.innerHeight + 120, behavior: reduce ? 'auto' : 'smooth' });
+    }
   }
   function header(stage) {
     var stages = T('stages');
@@ -294,7 +307,8 @@
       h('div', { class: 'mch-id' },
         h('span', { class: 'mch-avatar', 'aria-hidden': 'true' }, avatarSvg()),
         h('span', null, h('strong', { text: T('martha') }), h('span', { class: 'mch-role', text: T('role') })),
-        h('span', { class: 'mch-count', text: T('step_of', { n: stage }) })),
+        h('span', { class: 'mch-count', text: T('step_of', { n: stage }) }),
+        state.step !== 'area' || answered('area') ? h('button', { type: 'button', class: 'mch-restart', onclick: function () { if (window.confirm(T('restart_confirm'))) restart(); } }, T('start_over')) : null),
       bar,
       prev ? h('button', { type: 'button', class: 'mch-back', onclick: function () { go(prev); } }, h('span', { 'aria-hidden': 'true', text: '← ' }), T('back')) : null);
   }
@@ -714,7 +728,7 @@
     box.appendChild(closingCallout());
     box.appendChild(h('div', { class: 'mch-chips no-print' },
       h('button', { type: 'button', class: 'mch-chip', onclick: function () { window.print(); } }, T('print')),
-      h('button', { type: 'button', class: 'mch-chip', onclick: function () { state = fresh(); ui.research = null; save(); history.replaceState(null, '', location.pathname + location.hash); render(false); } }, T('restart'))));
+      h('button', { type: 'button', class: 'mch-chip', onclick: restart }, T('restart'))));
     root.appendChild(box);
     if (state.research && state.research.token) {
       api('GET', '/api/v1/public/research/' + encodeURIComponent(state.research.token) + criteriaQuery()).then(function (r) {

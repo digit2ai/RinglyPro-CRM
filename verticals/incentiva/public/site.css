@@ -946,7 +946,7 @@ body .d2orb-row button { color: #FFFFFF; }
 /* ---------- Martha: conversational intake (public/intake-chat.js) ---------- */
 .wrap-chat { max-width: 980px; }
 .intake-head { max-width: 680px; margin-bottom: 18px; }
-.mch { background: var(--surface); border: 1px solid var(--rule); border-radius: 24px; box-shadow: var(--shadow); padding: 18px clamp(14px, 3vw, 28px) 22px; }
+.mch { margin-bottom: 72px; background: var(--surface); border: 1px solid var(--rule); border-radius: 24px; box-shadow: var(--shadow); padding: 18px clamp(14px, 3vw, 28px) 22px; }
 .mch-head { display: grid; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); margin-bottom: 14px; position: relative; }
 .mch-id { display: flex; align-items: center; gap: 12px; }
 .mch-id strong { display: block; font-size: 1.05rem; color: var(--ink); line-height: 1.2; }
@@ -954,6 +954,8 @@ body .d2orb-row button { color: #FFFFFF; }
 .mch-avatar { flex: none; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #26213F; color: #fff; position: relative; }
 .mch-avatar::after { content: ""; position: absolute; right: 9px; bottom: 11px; width: 7px; height: 7px; border-radius: 50%; background: #FC4C02; }
 .mch-avatar svg { width: 24px; height: 24px; }
+.mch-restart { background: none; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); font: 700 .82rem/1 var(--font-body); min-height: 34px; padding: 0 12px; cursor: pointer; }
+.mch-restart:hover { border-color: var(--brand); }
 .mch-count { margin-left: auto; font: 800 .75rem/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .mch-progress { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .mch-progress li { display: grid; gap: 6px; font-size: .74rem; color: var(--muted); min-width: 0; }
@@ -1064,3 +1066,7 @@ div.mch-deal { cursor: default; }
 }
 @media (prefers-reduced-motion: reduce) { .mch-typing span, .mch-scan-bar span { animation: none; } }
 @media print { .mch-head, .mch-turn button, .mch-chips { display: none !important; } .mch { box-shadow: none; border: 0; } .mch-table { min-width: 0; } }
+
+@media (max-width: 480px) { .mch-count { display: none; } .mch-restart { margin-left: auto; } }
+.mch-composer .btn { width: auto; flex: none; }
+.mch-chips .mch-chip { width: auto; }
