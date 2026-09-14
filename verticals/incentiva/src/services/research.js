@@ -82,6 +82,12 @@ function urlKey(u) {
 function httpUrl(u) {
   try { const x = new URL(String(u)); return /^https?:$/.test(x.protocol) ? x.href.slice(0, 1000) : null; } catch (e) { return null; }
 }
+/** A row that only says a builder is NOT selling here (or names no community and offers nothing) is not a result. */
+function isPlaceholder(r) {
+  const c = String(r.community || '').trim();
+  if (/^(not (confirmed|currently|active|found|selling)|no (active|current|communit)|none\b|n\/a|unknown|sold out)/i.test(c) || /\bnot confirmed (active )?in\b/i.test(c)) return true;
+  return !c && !r.promotion && !r.rate && !r.closing_credit && !r.other_incentives && !r.starting_price;
+}
 function numbersIn(s) { return (String(s || '').match(/\d[\d,.]*/g) || []).map((x) => x.replace(/[,.]+$/, '').replace(/,/g, '')); }
 
 /** Pull the JSON object out of the model's final text. */
@@ -129,6 +135,7 @@ function sanitizeResearch(parsed, seenUrls, today = nyToday()) {
     row.expiration_date = parseDate(row.expiration);
     const claimed = r.verified === true || r.Verified === true || r.verified === 'true';
     if (claimed && row.source_url && seen.has(urlKey(row.source_url))) { row.verified = true; row.verified_basis = 'source_seen_in_search'; }
+    if (isPlaceholder(row)) row.hidden_reason = 'not_selling_in_area';
     if (row.expiration_date && row.expiration_date < today) row.hidden_reason = 'expired';
     const blob = [row.builder, row.community, row.promotion, row.rate, row.closing_credit, row.other_incentives, row.restrictions].filter(Boolean).join(' ');
     if (lexiconFindings(blob).some((f) => f.severity === 'block')) row.hidden_reason = 'compliance';
@@ -211,7 +218,7 @@ Return structured JSON only (no prose, no markdown fences), exactly this shape:
  "top_deals":[{"builder":"","community":"","reason":""}],
  "motivated_inventory":[{"builder":"","community":"","home":"","price":"","note":"","source_url":""}]}
 
-One row per builder/community. top_deals ranks the TOP 5 best current deals in ${where} based on: lowest effective monthly payment, total builder incentive value, cash required at closing, price of home, HOA + CDD, overall value. Each reason must use only facts present in that row. motivated_inventory lists completed or Quick Move-In inventory homes where the builder may be especially motivated to negotiate.`;
+One row per builder/community that is actually selling in the area. Do NOT add rows for builders you could not find selling there. top_deals ranks the TOP 5 best current deals in ${where} based on: lowest effective monthly payment, total builder incentive value, cash required at closing, price of home, HOA + CDD, overall value. Each reason must use only facts present in that row. motivated_inventory lists completed or Quick Move-In inventory homes where the builder may be especially motivated to negotiate.`;
 }
 
 /* ---------- model runner (streams progress) ---------- */
@@ -403,6 +410,7 @@ async function publicRun(tenantId, runToken, criteria = {}, settings = null) {
   let filtered = 0;
   const shown = [];
   for (const r of rows) {
+    if (isPlaceholder(r)) continue; // also cleans runs cached before this rule existed
     const price = r.starting_price_usd != null ? Number(r.starting_price_usd) : null;
     let monthly = null;
     if (price && settings) {
@@ -426,4 +434,4 @@ async function publicRun(tenantId, runToken, criteria = {}, settings = null) {
 
 function _setRunner(fn) { runner = fn; }
 
-module.exports = { startOrGet, publicRun, sanitizeResearch, buildPrompt, cacheKeyFor, parsePrice, parseDate, urlKey, extractJson, registryRows, KNOWN_BUILDERS, _setRunner };
+module.exports = { startOrGet, publicRun, sanitizeResearch, isPlaceholder, buildPrompt, cacheKeyFor, parsePrice, parseDate, urlKey, extractJson, registryRows, KNOWN_BUILDERS, _setRunner };

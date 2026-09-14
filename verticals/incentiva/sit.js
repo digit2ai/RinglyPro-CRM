@@ -344,6 +344,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     eq(out.top_deals.length, 2, 'hidden or unknown rows cannot be top deals');
     eq(out.top_deals[0].reason, null); eq(out.top_deals[1].reason, 'Closing credit of $10,000');
     eq(out.inventory[0].note, null, 'word-list note dropped');
+    const ph = R.sanitizeResearch({ rows: [{ builder: 'GL Homes', community: 'Not confirmed active in 33578' }, { builder: 'DRB Homes', community: null }, { builder: 'Lennar', community: 'Gladesong', starting_price: '$340,990' }] }, new Set(), '2026-09-14').rows;
+    eq(ph.map((r) => r.hidden_reason || 'shown').join(','), 'not_selling_in_area,not_selling_in_area,shown');
     eq(R.extractJson('Here you go: {"rows":[]} thanks').rows.length, 0); eq(R.extractJson('no json'), null);
     eq(R.cacheKeyFor({ zip: '33578' }), 'zip:33578');
     assert(/Unverified|verified to false/.test(R.buildPrompt({ zip: '33578', city: 'Riverview', county: 'Hillsborough' }, '2026-09-14')) && /Lennar/.test(R.buildPrompt({ zip: '33578' }, '2026-09-14')), 'prompt');
