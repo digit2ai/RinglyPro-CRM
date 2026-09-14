@@ -776,6 +776,15 @@ body.has-install-bar { padding-bottom: 120px; }
 :root[data-theme="dark"] .leaflet-control-attribution a { color: #FF8A4C; }
 .home-search h2 { margin-bottom: 6px; }
 
+
+/* ---------- Voice orb (shared /embed/voice-orb.js) in BuyersLine red. site.css loads only on
+   BuyersLine pages, so other products keep their orb colors. `body` outranks the orb's injected styles. ---------- */
+body .d2orb-ball { background: radial-gradient(circle at 34% 30%, #FFE1DE, #E5322D 45%, #8E1512 100%); box-shadow: 0 0 18px rgba(229, 50, 45, .45); }
+body .d2orb-ball::after { border-color: rgba(229, 50, 45, .45); }
+body .d2orb-ball.is-speaking { animation-name: bl-orb-pulse; }
+@keyframes bl-orb-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 18px rgba(229, 50, 45, .45); } 50% { transform: scale(1.1); box-shadow: 0 0 34px rgba(229, 50, 45, .75); } }
+body .d2orb-row button { color: #FFFFFF; }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
