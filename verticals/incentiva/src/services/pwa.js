@@ -17,7 +17,7 @@
  *  - Bump SHELL_VERSION when a shell file changes.
  */
 
-const SHELL_VERSION = 'bl-shell-10';
+const SHELL_VERSION = 'bl-shell-11';
 
 function base(req) { return (req.baseUrl || '').replace(/\/+$/, ''); }
 
@@ -44,7 +44,7 @@ function buyerManifest(req) {
       { src: `${b}/favicon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
     ],
     shortcuts: [
-      { name: 'Search homes', short_name: 'Search', url: `${b}/search?source=pwa`, icons: [{ src: `${b}/icon-192.png`, sizes: '192x192' }] },
+      // Search homes shortcut removed while the landing search section is hidden.
       { name: 'Get my report', short_name: 'Report', url: `${b}/?source=pwa#intake`, icons: [{ src: `${b}/icon-192.png`, sizes: '192x192' }] }
     ]
   };

@@ -649,6 +649,8 @@ input[type="text"], input[type="email"], input[type="tel"], input[type="number"]
 input[type="password"], input[type="search"], select, textarea { border-radius: 12px; }
 
 
+.home-search[hidden] { display: none !important; }
+
 /* ---------- Workflow circuit (animated by flow.js; fully readable without it) ----------
    A deliberately dark "signal" band in both themes, so its colors are local and fixed.
    Three lanes (you / AI / licensed agent); each step's node sits in its lane, its card below.

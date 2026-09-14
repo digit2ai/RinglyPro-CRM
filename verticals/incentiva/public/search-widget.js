@@ -303,7 +303,8 @@
     } else ensureMap();
   }
 
-  function init() { Array.prototype.forEach.call(document.querySelectorAll('[data-bl-search]'), mount); }
+  // A widget inside a hidden section is switched off: no map library, no requests.
+  function init() { Array.prototype.forEach.call(document.querySelectorAll('[data-bl-search]'), function (el) { if (!el.closest('[hidden]')) mount(el); }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   window.BLSearch = { mount: mount };
 })();

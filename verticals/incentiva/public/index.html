@@ -38,7 +38,7 @@
     </a>
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
       <a href="#flow" data-i18n="nav_how">How it works</a>
-      <a href="#homes" data-i18n="nav_search">Search homes</a>
+      <!-- <a href="#homes" data-i18n="nav_search">Search homes</a> (hidden with the #homes section) -->
       <a href="#estimate" data-i18n="nav_power">Buying power</a>
       <a href="#about" data-i18n="nav_about">What we are</a>
       <a href="#intake" data-i18n="nav_report">Get my report</a>
@@ -179,8 +179,8 @@
     </div>
   </section>
 
-  <!-- Home search (shared widget: public/search-widget.js) -->
-  <section id="homes" class="home-search" aria-labelledby="homesTitle">
+  <!-- Home search (shared widget: public/search-widget.js). HIDDEN for now (owner, 2026-09-14): remove the hidden attribute and restore the nav link to bring it back. -->
+  <section id="homes" class="home-search" aria-labelledby="homesTitle" hidden>
     <div class="wrap">
       <p class="eyebrow" data-i18n="homes_eyebrow">Homes for sale</p>
       <h2 id="homesTitle"><span data-i18n="homes_title_a">Search new-construction homes</span> <span class="hl" data-i18n="homes_title_hl">near you</span></h2>
