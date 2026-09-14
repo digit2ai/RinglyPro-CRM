@@ -25,7 +25,7 @@
 <script src="{{BASE}}/nav.js" defer></script>
 <script src="{{BASE}}/install.js" defer></script>
 </head>
-<body>
+<body class="report-page">
 <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 <div id="demoBanner" class="demo-banner" role="note" hidden data-i18n="demo_banner">Sample data for demonstration</div>
 
@@ -109,6 +109,8 @@
       license: 'License {n}',
       brokerage_license: 'Brokerage license {n}',
       print: 'Print or save as PDF',
+      print_hint: 'Save it as a PDF to forward it, for example to your realtor.',
+      print_online: 'View this report online: {url}',
 
       asked_title: 'What you asked for',
       up_to: 'Up to {amount}',
@@ -244,6 +246,8 @@
       license: 'Licencia {n}',
       brokerage_license: 'Licencia de correduría {n}',
       print: 'Imprimir o guardar como PDF',
+      print_hint: 'Guárdelo como PDF para reenviarlo, por ejemplo a su agente inmobiliario.',
+      print_online: 'Vea este informe en línea: {url}',
 
       asked_title: 'Lo que usted pidió',
       up_to: 'Hasta {amount}',
@@ -636,6 +640,8 @@
     } else {
       agentDd.textContent = t('agent_pending');
     }
+    // Printed copies lose the site header (showing it in print stalls Chrome's layout), so they carry a wordmark.
+    app.appendChild(h('p', { class: 'print-only print-brand', 'aria-hidden': 'true' }, 'Buyers', h('span', { text: 'Line' })));
     app.appendChild(h('section', { class: 'report-head', 'aria-labelledby': 'rpTitle' },
       h('p', { class: 'eyebrow', text: t('report_eyebrow') }),
       h('h1', { id: 'rpTitle', text: t('prepared_for', { name: d.buyer_first_name || '' }) }),
@@ -643,8 +649,11 @@
         h('div', null, h('dt', { text: t('m_report') }), h('dd', { class: 'mono', text: d.report_no != null ? '#' + d.report_no : '' })),
         h('div', null, h('dt', { text: t('m_date') }), h('dd', { text: fmtDate(d.generated_at) })),
         h('div', null, h('dt', { text: t('m_agent') }), agentDd)),
-      h('p', { style: 'margin-top:16px' },
-        h('button', { type: 'button', class: 'btn btn-secondary btn-small no-print', text: t('print'), onclick: function () { window.print(); } }))));
+      h('div', { class: 'print-cta no-print', style: 'margin-top:16px' },
+        h('button', { type: 'button', class: 'btn btn-secondary btn-small', text: t('print'), onclick: function () { window.print(); } }),
+        h('span', { class: 'small muted', text: t('print_hint') })),
+      // Printed copies carry the live link, never the agent preview parameter.
+      h('p', { class: 'print-only small', text: t('print_online', { url: location.origin + location.pathname + '?lang=' + lang }) })));
 
     if (d.notice) app.appendChild(h('p', { class: 'callout', role: 'status', text: d.notice }));
 

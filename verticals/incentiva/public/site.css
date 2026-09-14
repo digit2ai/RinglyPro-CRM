@@ -791,6 +791,11 @@ body .d2orb-row button { color: #FFFFFF; }
 @media (prefers-reduced-motion: reduce) { .ava-filled { animation: none; } }
 
 /* ---------- Print ---------- */
+.print-only { display: none; }
+.print-brand { font-weight: 900; font-size: 20pt; color: #26213F; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #bbb; }
+.print-brand span { color: #C93D00; }
+.print-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+
 @media print {
   :root, :root[data-theme="dark"] {
     --ground: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #000; --muted: #444; --rule: #bbb;
@@ -799,7 +804,9 @@ body .d2orb-row button { color: #FFFFFF; }
   }
   body { font-size: 11pt; background: #fff; }
   .no-print, .site-header, .lang-toggle, .theme-toggle, .flow-runner, .install-bar, .nav-burger, .nav-scrim, form, .consult, [data-voice-orb], .skip-link, .btn { display: none !important; }
-  .table-wrap { overflow: visible; border: 1px solid #bbb; }
+  .table-wrap { overflow: visible; border: 1px solid #bbb; break-inside: avoid; }
+  .print-only { display: block !important; }
+  /* The printed report keeps the BuyersLine brand at the top (toggles stay hidden). */
   .table-min { min-width: 0; }
   .item { break-inside: auto; page-break-before: auto; }
   .incentive, tr { break-inside: avoid; }
