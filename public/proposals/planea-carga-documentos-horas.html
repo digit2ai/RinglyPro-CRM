@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carga de documentos: por qué las horas dependen del documento — PLANEA</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--azul-claro);color:#0f3a66;
+    border:1px solid var(--azul-borde);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  td.save{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
+    h2{break-after:avoid}
+    table.fin,.card{break-inside:avoid}
+  }
+</style>
+<style>.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}.tw>table{margin:0}.r1{color:#0f766e;font-weight:700}.r2{color:#b45309;font-weight:700}@media(max-width:640px){.page{padding:26px 16px;margin:0}h1{font-size:22px}table.fin{font-size:12.5px}table.fin th,table.fin td{padding:7px 8px}.meta td{display:block;padding:2px 0}.meta .lbl{width:auto;padding-top:8px}}</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>CARGA DE DOCUMENTOS: HORAS Y MUESTRAS</h1>
+  <p class="sub">PLANEA — Por qué el tipo de documento define el esfuerzo y qué necesitamos para cerrar la cotización</p>
+  <span class="conf">NOTA EXPLICATIVA</span>
+  <hr class="rule">
+
+  <div class="tw"><table class="meta">
+    <tr><td class="lbl">Para:</td><td>Eduardo de Lima · Juan Alberto Bueno<br>Planea Financiera S.A.S.</td><td class="lbl">De:</td><td>Manuel Stagg<br>Digit2AI LLC</td></tr>
+    <tr><td class="lbl">Fecha:</td><td>14 de septiembre de 2026</td><td class="lbl">Referencia:</td><td>«Carga de documentos en Planea», 11 de septiembre de 2026</td></tr>
+  </table></div>
+
+  <h2>1. En resumen</h2>
+  <ul class="tight">
+    <li>El esfuerzo de desarrollo depende sobre todo de <strong>cómo llega cada documento</strong>, no de cuántos documentos son.</li>
+    <li>Cada tipo de documento se lee por una de dos rutas: <span class="r1">Lectura + IA</span>, que es rápida, u <span class="r2">OCR avanzado</span>, que exige más trabajo.</li>
+    <li>Para saber qué ruta aplica a cada uno necesitamos <strong>muestras reales</strong>. Con ellas cerramos las horas y el costo definitivos.</li>
+  </ul>
+
+  <h2>2. Por qué el tipo de documento define el esfuerzo</h2>
+  <p>Según su documento, los 11 tipos llegan a Planea de tres formas distintas, y cada forma se lee de manera diferente:</p>
+  <div class="tw"><table class="fin">
+    <tr><th>Cómo llega</th><th>Qué es</th><th>Lo que implica leerlo</th></tr>
+    <tr><td><strong>PDF de la entidad</strong></td><td>El archivo que el banco, la fiduciaria, la DIAN o la aseguradora genera y envía.</td><td>Normalmente trae el texto dentro del archivo. Pero algunos PDF son en realidad una imagen escaneada, y esos no traen texto.</td></tr>
+    <tr><td><strong>Captura de pantalla</strong></td><td>La imagen de la app del banco tomada desde el celular.</td><td>Es una imagen, pero nítida y ordenada. La IA la lee bien directamente.</td></tr>
+    <tr><td><strong>Foto con el celular</strong></td><td>Un documento en papel fotografiado por el usuario.</td><td>Es la más variable: luz, ángulo, sombras, arrugas y resolución cambian en cada foto.</td></tr>
+  </table></div>
+
+  <h2>3. Las dos rutas de lectura</h2>
+  <div class="tw"><table class="fin">
+    <tr><th>Ruta</th><th>Cuándo aplica</th><th>Qué exige</th><th>Esfuerzo</th></tr>
+    <tr><td><span class="r1">1. Lectura + IA</span></td><td>El archivo trae texto legible: un PDF con capa de texto o una captura nítida.</td><td>La IA extrae los campos directamente, contra la lista de campos que ustedes ya definieron por documento.</td><td>Menor</td></tr>
+    <tr><td><span class="r2">2. OCR avanzado</span></td><td>El archivo es una imagen difícil: PDF escaneado, foto borrosa, inclinada, con sombras o de baja resolución.</td><td>Hay que procesar la imagen antes de leerla (enderezar, limpiar, mejorar contraste) y validar más casos.</td><td>Mayor</td></tr>
+  </table></div>
+  <div class="note"><strong>Por qué no se puede saber de antemano.</strong> Dos documentos del mismo tipo pueden ir por rutas distintas. El extracto de un banco puede traer texto y el de otro banco puede ser una imagen escaneada. A simple vista los dos parecen iguales; la diferencia solo aparece al abrir el archivo.</div>
+
+  <h2>4. Sus 11 documentos</h2>
+  <p>La ruta de esta tabla es la <strong>esperada</strong> según cómo describen ustedes cada documento. Se confirma con las muestras.</p>
+  <div class="tw"><table class="fin">
+    <tr><th>Documento</th><th>Sección de su documento</th><th>Cómo llega</th><th>Ruta esperada (a confirmar)</th></tr>
+    <tr><td>Extracto bancario</td><td>4.1</td><td>PDF de la entidad (puede venir con clave)</td><td><span class="r1">Lectura + IA</span>, si el PDF trae texto</td></tr>
+    <tr><td>Desprendible de nómina o certificado de ingresos</td><td>4.2</td><td>PDF, captura o foto</td><td>PDF o captura: <span class="r1">Lectura + IA</span> · Foto: <span class="r2">puede requerir OCR</span></td></tr>
+    <tr><td>Saldo de cuenta de ahorros</td><td>4.3</td><td>Captura de la app del banco</td><td><span class="r1">Lectura + IA</span></td></tr>
+    <tr><td>Tarjeta de crédito</td><td>4.4</td><td>Captura de la app del banco</td><td><span class="r1">Lectura + IA</span></td></tr>
+    <tr><td>Crédito de consumo</td><td>4.5</td><td>Captura de la app del banco</td><td><span class="r1">Lectura + IA</span></td></tr>
+    <tr><td>Fondo de inversión colectiva</td><td>4.6</td><td>PDF de la fiduciaria o captura</td><td><span class="r1">Lectura + IA</span>, si el PDF trae texto</td></tr>
+    <tr><td>Cuenta de valores o acciones</td><td>4.7</td><td>PDF de la comisionista o captura</td><td><span class="r1">Lectura + IA</span>, si el PDF trae texto</td></tr>
+    <tr><td>Fondo voluntario de pensiones</td><td>4.8</td><td>PDF de la administradora o captura</td><td><span class="r1">Lectura + IA</span>, si el PDF trae texto</td></tr>
+    <tr><td>Pensión obligatoria (Colpensiones o fondo privado)</td><td>4.9</td><td>PDF o imagen</td><td>PDF: <span class="r1">Lectura + IA</span> · Imagen escaneada: <span class="r2">puede requerir OCR</span></td></tr>
+    <tr><td>RUT (DIAN)</td><td>4.10</td><td>PDF generado por la DIAN</td><td><span class="r1">Lectura + IA</span></td></tr>
+    <tr><td>Carátula de póliza</td><td>4.11</td><td>PDF o imagen (puede venir con clave)</td><td>PDF: <span class="r1">Lectura + IA</span> · Imagen escaneada: <span class="r2">puede requerir OCR</span></td></tr>
+  </table></div>
+  <p class="muted">Cualquier documento que el usuario fotografíe en lugar de subir el PDF pasa a la ruta de mayor esfuerzo, sin importar el tipo.</p>
+
+  <h2>5. Horas y costo de referencia</h2>
+  <p>Mientras no tengamos las muestras, estas son las horas de desarrollo de referencia, a la tarifa de <strong>USD 140 por hora</strong>:</p>
+  <div class="tw"><table class="fin">
+    <tr><th>Opción</th><th>Qué incluye</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td><strong>Fase 1</strong></td><td>Extracto bancario, desprendible de nómina y RUT</td><td class="num">31 a 50</td><td class="num">4.275 a 6.975</td></tr>
+    <tr><td><strong>Alcance completo</strong></td><td>Los 11 documentos</td><td class="num">51 a 88</td><td class="num">7.200 a 12.375</td></tr>
+    <tr><td><strong>Calendario Planea</strong></td><td>Fechas y recordatorios (el extremo bajo deja WhatsApp para después)</td><td class="num">16 a 34</td><td class="num">2.250 a 4.725</td></tr>
+  </table></div>
+  <ul class="tight">
+    <li><strong>El extremo bajo</strong> corresponde a documentos que se leen por la ruta de Lectura + IA.</li>
+    <li><strong>El extremo alto</strong> corresponde a documentos que requieren OCR avanzado.</li>
+    <li>Si varios documentos requieren OCR avanzado, las horas pueden superar el extremo alto. Lo sabremos con las muestras, antes de empezar a desarrollar.</li>
+  </ul>
+  <p class="muted">Horas redondeadas. Los valores corresponden exactamente a 30,5 a 49,8 horas (Fase 1), 51,4 a 88,4 horas (Alcance completo), 16,1 a 33,8 horas (Calendario Planea) a USD 140 por hora.</p>
+
+  <h2>6. Qué necesitamos que nos envíen</h2>
+  <div class="tw"><table class="fin">
+    <tr><th>Qué enviar</th><th>Por qué</th></tr>
+    <tr><td><strong>2 o 3 ejemplos de cada tipo de documento</strong>, de entidades distintas (por ejemplo, al menos dos bancos)</td><td>Cada entidad arma sus archivos a su manera. Un solo ejemplo no dice si el resto se comporta igual.</td></tr>
+    <tr><td><strong>En el formato real en que llegan</strong>: el PDF tal como lo envía la entidad, la captura tal como sale del celular y, si aplica, una foto</td><td>La ruta depende justamente del formato. Un archivo convertido o reenviado ya no dice cómo llega de verdad.</td></tr>
+    <tr><td><strong>Sin recortar ni volver a escanear</strong></td><td>Recortar o escanear de nuevo cambia el archivo, y con él la ruta de lectura.</td></tr>
+    <tr><td><strong>Al menos un PDF con clave, sin desbloquear</strong>, con la clave enviada por un canal aparte</td><td>Para probar la apertura automática con la cédula, que es la condición de su sección 2.</td></tr>
+    <tr><td><strong>Pueden tapar</strong> nombre, cédula y números completos de cuenta con un recuadro</td><td>No necesitamos los datos personales. Sí necesitamos la estructura del documento intacta.</td></tr>
+  </table></div>
+  <div class="note"><strong>Por dónde empezar.</strong> El extracto bancario y el desprendible de nómina son los documentos de mayor volumen y ya figuran como pendientes en su documento. Son los que más influyen en las horas, así que conviene enviarlos primero.</div>
+
+  <h2>7. Qué sigue</h2>
+  <div class="tw"><table class="fin">
+    <tr><th>Paso</th><th>Quién</th><th>Resultado</th></tr>
+    <tr><td>1. Enviar las muestras</td><td>Planea</td><td>Documentos reales de cada tipo, en su formato original</td></tr>
+    <tr><td>2. Clasificar cada documento</td><td>Digit2AI</td><td>Una tabla documento por documento con la ruta que aplica: Lectura + IA u OCR avanzado</td></tr>
+    <tr><td>3. Cotización definitiva</td><td>Digit2AI</td><td>Horas y costo ajustados a los documentos reales, dentro de los rangos de referencia o explicando cualquier diferencia</td></tr>
+  </table></div>
+
+  <p class="foot">
+    Nota explicativa de Digit2AI para Planea Financiera S.A.S. Cifras en dólares estadounidenses (USD) a la tarifa de USD 140 por hora. Las horas son de referencia y se confirman con las muestras reales de los documentos. La ruta de lectura de cada documento en la sección 4 es la esperada según la descripción de Planea, y se confirma al revisar los archivos.<br>
+    Digit2AI LLC · digit2ai.com · info@digit2ai.com
+  </p>
+
+</div>
+</body>
+</html>
