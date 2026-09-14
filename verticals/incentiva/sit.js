@@ -278,7 +278,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const css = read(path.join(ROOT, 'public', 'site.css'));
     assert(/\.flow\.is-animated \.flow-step \.flow-node \{ opacity/.test(css) && !/^\.flow-step \.flow-node \{[^}]*opacity:\s*0/m.test(css), 'steps hidden before the script runs');
   });
-  await t('Ava can fill the intake form, but the tool has no consent or submit field and the server keeps only valid values', () => {
+  await t('Martha can fill the intake form, but the tool has no consent or submit field and the server keeps only valid values', () => {
     const { AGENTS, blSanitizeIntake } = require('../../src/config/voice-agents');
     const action = (AGENTS.buyersline.pageActions || []).find((a) => a.name === 'fill_intake_form');
     assert(action && typeof action.sanitize === 'function', 'page action missing');
@@ -291,7 +291,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     eq(JSON.stringify(blSanitizeIntake({ budget_max: 5, beds_min: 9, timeline: 'tomorrow', email: 'nope', phone: '<script>' })), '{}');
     for (const k of Object.keys(AGENTS)) if (k !== 'buyersline') assert(!AGENTS[k].pageActions, k + ' gained page actions');
   });
-  await t('page actions are never executed on the server and the landing never ticks consent or submits for Ava', () => {
+  await t('page actions are never executed on the server and the landing never ticks consent or submits for Martha', () => {
     const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
     assert(/const accion = pageActions\.find/.test(route) && /acciones\.push\(\{ name: accion\.name, input: limpio \}\)/.test(route), 'page action branch');
     assert(/if \(accion\) \{[\s\S]*?\} else if \(excedeLimite\(ip\)\)/.test(route), 'page actions must short-circuit before any HTTP tool call');
