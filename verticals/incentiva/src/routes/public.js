@@ -9,7 +9,7 @@ const express = require('express');
 const db = require('../db');
 const { t } = require('../engines/i18n');
 const { estimate } = require('../engines/buyingPower');
-const { getMarket } = require('../services/market');
+const { getMarket, effectiveSettings } = require('../services/market');
 const { buildReport, publicView, loadAgent, disclosures } = require('../services/report');
 const { TENANT_ID, ipHash, rateLimit, activity, clampStr, numOrNull, audit } = require('../services/util');
 const rentcast = require('../services/rentcast');
@@ -44,7 +44,7 @@ module.exports = function publicRoutes(opts = {}) {
       const lang = langOf(req.query.lang);
       const market = await getMarket(tenantId);
       const agent = await defaultAgent(tenantId, market);
-      const s = market.settings;
+      const s = await effectiveSettings(market.settings);
       const demo = await db.one('SELECT EXISTS (SELECT 1 FROM nca_communities WHERE tenant_id = :t AND is_demo) AS d', { t: tenantId });
       res.json({
         market: { slug: market.slug, name: market.name, counties: market.counties },
@@ -56,7 +56,7 @@ module.exports = function publicRoutes(opts = {}) {
           timeline: TIMELINE.map((k) => ({ key: k, label: t(lang, 'timeline.' + k) }))
         },
         disclosures: disclosures(lang, agent),
-        reference_rate: s.reference_rate != null ? { rate: s.reference_rate, source: s.reference_rate_source, as_of: s.reference_rate_as_of } : null,
+        reference_rate: s.reference_rate != null ? { rate: s.reference_rate, source: s.reference_rate_is_feed ? require('../services/rates').source(lang) : s.reference_rate_source, as_of: s.reference_rate_as_of } : null,
         is_demo_data: !!demo.d
       });
     } catch (e) { console.error('[incentiva] config', e); res.status(500).json({ error: 'Could not load configuration. Try again in a minute.' }); }
@@ -68,7 +68,7 @@ module.exports = function publicRoutes(opts = {}) {
       const market = await getMarket(tenantId);
       const b = req.body || {};
       const out = estimate({ gross_income_annual: numOrNull(b.gross_income_annual), monthly_debts: numOrNull(b.monthly_debts), down_payment: numOrNull(b.down_payment), target_payment: numOrNull(b.target_payment) },
-        market.settings, langOf(req.query.lang || b.lang));
+        await effectiveSettings(market.settings), langOf(req.query.lang || b.lang));
       res.json(out);
     } catch (e) { console.error('[incentiva] buying-power', e); res.status(500).json({ error: 'Could not estimate right now.' }); }
   });

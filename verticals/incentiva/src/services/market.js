@@ -2,9 +2,15 @@
 
 /**
  * Market settings. Every assumption that moves a payment lives here, entered
- * by a person with its source. The defaults are NULL on purpose: until the agent
- * sets a reference rate, tax rate and insurance assumption, payments say
- * "not estimated" rather than borrowing a number from nowhere.
+ * by a person with its source. Stored defaults stay NULL, so the console always
+ * shows what a person actually set.
+ *
+ * effectiveSettings() is what buyers see (owner decision, 2026-09-14: an estimate
+ * with labelled assumptions beats "not estimated"). A field the agent left empty
+ * is filled from a named source: the rate from Freddie Mac's weekly survey
+ * (services/rates.js, source and date shown), and tax, insurance, mortgage
+ * insurance and closing costs from labelled Tampa Bay defaults listed in
+ * `defaulted`, whose basis text says so. Anything the agent sets wins.
  */
 
 const db = require('../db');
@@ -20,6 +26,31 @@ const DEFAULT_SETTINGS = {
   fresh_days_with_expiry: 21, fresh_days_no_expiry: 10,
   co_owner_user_ids: []
 };
+
+// Labelled buyer-facing defaults (env-overridable). Assumptions, not quotes.
+const ASSUMED = {
+  tax_rate_default: Number(process.env.INCENTIVA_DEFAULT_TAX_RATE || 0.018),
+  insurance_monthly: Number(process.env.INCENTIVA_DEFAULT_INSURANCE_MONTHLY || 250),
+  pmi_rate_annual: Number(process.env.INCENTIVA_DEFAULT_PMI_RATE || 0.005),
+  closing_cost_pct: Number(process.env.INCENTIVA_DEFAULT_CLOSING_PCT || 3)
+};
+
+async function effectiveSettings(stored) {
+  const s = Object.assign({}, stored);
+  s.defaulted = [];
+  if (s.reference_rate == null) {
+    const r = await require('./rates').latest();
+    if (r) {
+      s.reference_rate = r.rate; s.reference_rate_as_of = r.as_of; s.reference_rate_is_feed = true;
+      s.reference_rate_source = require('./rates').source('en');
+    }
+  }
+  for (const k of Object.keys(ASSUMED)) {
+    if (k === 'tax_rate_default' && Object.keys(s.tax_rate_by_county || {}).length) continue;
+    if (s[k] == null) { s[k] = ASSUMED[k]; s.defaulted.push(k); }
+  }
+  return s;
+}
 
 const NUMERIC = ['reference_rate', 'tax_rate_default', 'insurance_monthly', 'pmi_rate_annual', 'closing_cost_pct', 'down_payment_pct_default', 'fresh_days_with_expiry', 'fresh_days_no_expiry'];
 const RANGES = {
@@ -70,4 +101,4 @@ function sanitizeSettings(input, current) {
   return errors.length ? { error: errors.join('; ') } : { settings: next };
 }
 
-module.exports = { getMarket, sanitizeSettings, DEFAULT_SETTINGS, DEFAULT_COUNTIES };
+module.exports = { effectiveSettings, ASSUMED, getMarket, sanitizeSettings, DEFAULT_SETTINGS, DEFAULT_COUNTIES };

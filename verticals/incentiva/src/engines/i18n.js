@@ -81,7 +81,8 @@ const L = {
       insurance: 'An assumption, not a quote.',
       pmi: 'Applied when a conventional or FHA loan has less than 20% down. VA funding fee not included.',
       closing: 'Estimated share of price. Your lender provides the real figure.',
-      stacking: 'Each incentive is shown on its own. Combining offers is not estimated.'
+      stacking: 'Each incentive is shown on its own. Combining offers is not estimated.',
+      default_note: 'Default assumption until our agent sets a local figure.'
     },
     not_set: 'Not set',
     disclosures: {
@@ -176,7 +177,8 @@ const L = {
       insurance: 'Un supuesto, no una cotización.',
       pmi: 'Se aplica cuando un préstamo convencional o FHA tiene menos del 20 % de pago inicial. No incluye el cargo de financiamiento VA.',
       closing: 'Proporción estimada del precio. Su prestamista le dará la cifra real.',
-      stacking: 'Cada incentivo se muestra por separado. No se estima la combinación de ofertas.'
+      stacking: 'Cada incentivo se muestra por separado. No se estima la combinación de ofertas.',
+      default_note: 'Supuesto predeterminado hasta que nuestro agente fije una cifra local.'
     },
     not_set: 'Sin fijar',
     disclosures: {

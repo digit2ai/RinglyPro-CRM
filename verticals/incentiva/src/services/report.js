@@ -18,7 +18,7 @@ const { scoreFit, renderFitLine, locationStatus } = require('../engines/fit');
 const { narrate } = require('../engines/advisor');
 const { reviewReport } = require('../engines/compliance');
 const { isBuyerSafe } = require('../engines/freshness');
-const { getMarket } = require('./market');
+const { getMarket, effectiveSettings } = require('./market');
 const { geocode } = require('./geocode');
 const { token, audit, activity } = require('./util');
 
@@ -126,6 +126,7 @@ function feeObj(fees, types) {
 async function renderLanguage(lang, ctx) {
   const { items, withheld, market, criteria, buyer, agent, allowModel, reportNo, now } = ctx;
   const s = market.settings;
+  const dflt = (k) => ((s.defaulted || []).includes(k) ? ' ' + t(lang, 'basis.default_note') : '');
 
   const view = items.map((it) => {
     const c = it.community;
@@ -183,12 +184,12 @@ async function renderLanguage(lang, ctx) {
   const na = t(lang, 'not_set');
   const assumptions = [
     { key: 'rate', label: t(lang, 'assumptions.rate'), value_display: s.reference_rate != null ? s.reference_rate + '%' : na,
-      basis: s.reference_rate != null ? t(lang, 'basis.rate', { source: s.reference_rate_source, date: dateLabel(lang, s.reference_rate_as_of) }) : '' },
+      basis: s.reference_rate != null ? t(lang, 'basis.rate', { source: s.reference_rate_is_feed ? require('./rates').source(lang) : s.reference_rate_source, date: dateLabel(lang, s.reference_rate_as_of) }) : '' },
     { key: 'down', label: t(lang, 'assumptions.down'), value_display: a && a.down_payment_pct != null ? a.down_payment_pct + '%' : (criteria.financing === 'cash' ? '100%' : na), basis: t(lang, 'basis.down') },
-    { key: 'tax', label: t(lang, 'assumptions.tax'), value_display: s.tax_rate_default != null || Object.keys(s.tax_rate_by_county || {}).length ? (lang === 'es' ? 'Por condado' : 'By county') : na, basis: t(lang, 'basis.tax') },
-    { key: 'insurance', label: t(lang, 'assumptions.insurance'), value_display: s.insurance_monthly != null ? money(lang, s.insurance_monthly) + (lang === 'es' ? '/mes' : '/mo') : na, basis: t(lang, 'basis.insurance') },
-    { key: 'pmi', label: t(lang, 'assumptions.pmi'), value_display: s.pmi_rate_annual != null ? (Math.round(s.pmi_rate_annual * 10000) / 100) + '%' : na, basis: t(lang, 'basis.pmi') },
-    { key: 'closing', label: t(lang, 'assumptions.closing'), value_display: s.closing_cost_pct != null ? s.closing_cost_pct + '%' : na, basis: t(lang, 'basis.closing') },
+    { key: 'tax', label: t(lang, 'assumptions.tax'), value_display: s.tax_rate_default != null || Object.keys(s.tax_rate_by_county || {}).length ? (lang === 'es' ? 'Por condado' : 'By county') : na, basis: t(lang, 'basis.tax') + dflt('tax_rate_default') },
+    { key: 'insurance', label: t(lang, 'assumptions.insurance'), value_display: s.insurance_monthly != null ? money(lang, s.insurance_monthly) + (lang === 'es' ? '/mes' : '/mo') : na, basis: t(lang, 'basis.insurance') + dflt('insurance_monthly') },
+    { key: 'pmi', label: t(lang, 'assumptions.pmi'), value_display: s.pmi_rate_annual != null ? (Math.round(s.pmi_rate_annual * 10000) / 100) + '%' : na, basis: t(lang, 'basis.pmi') + dflt('pmi_rate_annual') },
+    { key: 'closing', label: t(lang, 'assumptions.closing'), value_display: s.closing_cost_pct != null ? s.closing_cost_pct + '%' : na, basis: t(lang, 'basis.closing') + dflt('closing_cost_pct') },
     { key: 'stacking', label: t(lang, 'assumptions.stacking'), value_display: '-', basis: t(lang, 'basis.stacking') }
   ];
 
@@ -215,7 +216,8 @@ async function renderLanguage(lang, ctx) {
  * @returns {Promise<{report, verdict, findings}>}
  */
 async function buildReport(tenantId, { buyer, criteria, criteriaId, lang, allowModel = true, allowGeocode = true, now = new Date() }) {
-  const market = await getMarket(tenantId);
+  const stored = await getMarket(tenantId);
+  const market = Object.assign({}, stored, { settings: await effectiveSettings(stored.settings) });
   const agent = await loadAgent(tenantId, buyer.agent_id, market);
   const assembled = await assemble(tenantId, market, criteria, { allowGeocode, now });
   const reportNo = 'R-' + now.toISOString().slice(0, 10).replace(/-/g, '') + '-' + String(buyer.id).padStart(5, '0');

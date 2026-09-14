@@ -8,7 +8,7 @@
  */
 
 const { monthlyPI } = require('./payment');
-const { t, money } = require('./i18n');
+const { t, money, dateLabel } = require('./i18n');
 
 function n(v) { return v === null || v === undefined || v === '' || !isFinite(Number(v)) ? null : Number(v); }
 
@@ -45,13 +45,16 @@ function estimate(input, settings = {}, lang = 'en') {
   if (insurance === null) missing.push('insurance_monthly');
 
   const es = lang === 'es';
+  const dflt = (k) => ((settings.defaulted || []).includes(k) ? ' ' + t(lang, 'basis.default_note') : '');
+  const rateSource = settings.reference_rate_is_feed ? require('../services/rates').source(lang) : (settings.reference_rate_source || '-');
   const assumptions = [
     { key: 'dti', label: es ? 'Proporción deuda-ingreso' : 'Debt-to-income bands',
       value_display: '28/36 – 31/43', basis: es ? 'Convenciones habituales de préstamos; cada prestamista usa las suyas.' : 'Common lending conventions; every lender applies its own.' },
     { key: 'rate', label: t(lang, 'assumptions.rate'), value_display: rate !== null ? rate + '%' : t(lang, 'not_set'),
-      basis: rate !== null ? t(lang, 'basis.rate', { source: settings.reference_rate_source || '-', date: settings.reference_rate_as_of || '-' }) : '' },
-    { key: 'tax', label: t(lang, 'assumptions.tax'), value_display: taxRate !== null ? (Math.round(taxRate * 10000) / 100) + '%' : t(lang, 'not_set'), basis: t(lang, 'basis.tax') },
-    { key: 'insurance', label: t(lang, 'assumptions.insurance'), value_display: insurance !== null ? money(lang, insurance) + (es ? '/mes' : '/mo') : t(lang, 'not_set'), basis: t(lang, 'basis.insurance') },
+      basis: rate !== null ? t(lang, 'basis.rate', { source: rateSource, date: dateLabel(lang, settings.reference_rate_as_of) || '-' }) : '' },
+    { key: 'tax', label: t(lang, 'assumptions.tax'), value_display: taxRate !== null ? (Math.round(taxRate * 10000) / 100) + '%' : t(lang, 'not_set'), basis: t(lang, 'basis.tax') + dflt('tax_rate_default') },
+    { key: 'insurance', label: t(lang, 'assumptions.insurance'), value_display: insurance !== null ? money(lang, insurance) + (es ? '/mes' : '/mo') : t(lang, 'not_set'), basis: t(lang, 'basis.insurance') + dflt('insurance_monthly') },
+    { key: 'pmi', label: t(lang, 'assumptions.pmi'), value_display: pmiRate !== null ? (Math.round(pmiRate * 10000) / 100) + '%' : t(lang, 'not_set'), basis: t(lang, 'basis.pmi') + dflt('pmi_rate_annual') },
     { key: 'fees', label: 'HOA / CDD', value_display: es ? 'No incluidos' : 'Not included', basis: es ? 'Varían por comunidad; su informe los muestra cuando están confirmados.' : 'They vary by community; your report shows them when confirmed.' },
     { key: 'term', label: es ? 'Plazo' : 'Term', value_display: es ? '30 años, tasa fija' : '30-year fixed', basis: '' }
   ];

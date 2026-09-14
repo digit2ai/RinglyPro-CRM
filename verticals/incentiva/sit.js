@@ -27,7 +27,8 @@ delete process.env.INCENTIVA_CONSULT_MONTHLY_CAP;
 delete process.env.INCENTIVA_MONITOR_GO;
 delete process.env.INCENTIVA_SEED_DEMO;
 delete process.env.RENTCAST_API_KEY;
-delete process.env.SENDGRID_API_KEY; // SIT must never send real mail; a fake sender is injected below
+delete process.env.SENDGRID_API_KEY;
+process.env.INCENTIVA_RATE_FEED = 'off'; // no network: the Freddie Mac rate is injected where a test needs it // SIT must never send real mail; a fake sender is injected below
 delete process.env.INCENTIVA_EMAIL;
 delete process.env.RENTCAST_MONTHLY_CAP;
 
@@ -315,6 +316,31 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     assert(send.indexOf('missingRequired()') !== -1 && send.indexOf('missingRequired()') < send.indexOf('requestSubmit'), 'send is not guarded by the required-field check');
     assert(/setInterval/.test(send) && /cancelSend/.test(send) && /Cancel/.test(send), 'send has no cancelable countdown');
     assert((script.match(/requestSubmit\(/g) || []).length === 1, 'exactly one send path');
+  });
+  await t('buying power runs on a sourced rate and labelled defaults when the agent set nothing, and agent figures win', async () => {
+    const rates = require('./src/services/rates');
+    const { effectiveSettings, DEFAULT_SETTINGS } = require('./src/services/market');
+    const bp = require('./src/engines/buyingPower');
+    eq(JSON.stringify(rates.parsePmms('date,pmms30,pmms30p\n9/3/2026,6.71,,6.04\n9/10/2026,6.76,,6.09\n\n')), JSON.stringify({ rate: 6.76, as_of: '2026-09-10' }));
+    eq(rates.parsePmms('date,pmms30\nbad,row\n9/10/2026,abc'), null);
+    rates._inject(null);
+    const noFeed = await effectiveSettings(Object.assign({}, DEFAULT_SETTINGS));
+    eq(noFeed.reference_rate, null); eq(noFeed.tax_rate_default, 0.018); eq(noFeed.insurance_monthly, 250);
+    eq(JSON.stringify(bp.estimate({ gross_income_annual: 120000, monthly_debts: 500, down_payment: 20000 }, noFeed).missing), '["reference_rate"]');
+    rates._inject({ rate: 6.76, as_of: '2026-09-10' });
+    try {
+      const eff = await effectiveSettings(Object.assign({}, DEFAULT_SETTINGS));
+      const out = bp.estimate({ gross_income_annual: 120000, monthly_debts: 500, down_payment: 20000 }, eff, 'en');
+      assert(out.estimate && out.estimate.price_high > out.estimate.price_low && out.estimate.price_low > 100000, JSON.stringify(out.estimate));
+      const by = Object.fromEntries(out.assumptions.map((a) => [a.key, a]));
+      assert(/Freddie Mac/.test(by.rate.basis) && /Sep 10, 2026/.test(by.rate.basis), by.rate.basis);
+      assert(/Default assumption/.test(by.tax.basis) && /Default assumption/.test(by.insurance.basis), 'defaults not labelled');
+      const agentSet = await effectiveSettings(Object.assign({}, DEFAULT_SETTINGS, { reference_rate: 6.1, reference_rate_source: 'Lender sheet', reference_rate_as_of: '2026-09-12', tax_rate_default: 0.012 }));
+      eq(agentSet.reference_rate, 6.1); eq(agentSet.reference_rate_is_feed, undefined); eq(agentSet.tax_rate_default, 0.012);
+      assert(!agentSet.defaulted.includes('tax_rate_default') && agentSet.defaulted.includes('insurance_monthly'), JSON.stringify(agentSet.defaulted));
+      const es = bp.estimate({ gross_income_annual: 120000, monthly_debts: 500, down_payment: 20000 }, eff, 'es');
+      assert(/Freddie Mac/.test(es.assumptions.find((a) => a.key === 'rate').basis) && /predeterminado/.test(es.assumptions.find((a) => a.key === 'tax').basis), 'Spanish labels');
+    } finally { rates._inject(null); }
   });
   await t('Martha sends only after a clear yes, and reads the live form status so she never asks twice', () => {
     const { AGENTS, blConfirmSubmit } = require('../../src/config/voice-agents');
