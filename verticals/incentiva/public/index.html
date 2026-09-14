@@ -377,6 +377,16 @@
       est_use: 'Use this budget in my report',
       est_used: 'Budget of {amount} added to your report form below.',
       est_missing_title: "We can't estimate yet. We still need:",
+      bp_debts_title: 'Your monthly debts leave almost no room for a home payment',
+      bp_debts_body: 'Lenders usually cap all monthly debt payments, including the new home payment, at about 43% of gross income. For you that is {limit} a month. Your debts are {debts} a month, which leaves about {room} for a home payment.',
+      bp_check_debts: 'Check that figure: it should be what you pay each month, not the total you owe.',
+      bp_target_title: "That monthly payment doesn't cover taxes and insurance",
+      bp_target_body: 'A payment of {target} a month is below the estimated property tax and insurance on a home, so no price fits it.',
+      bp_target_price: 'A payment of {target} a month would cover a home of about {price}, but a lender may not approve it while your debts stay this high.',
+      bp_alt_debts: 'If those debts were paid off',
+      bp_alt_target: 'Without that payment limit',
+      bp_alt_line: 'about {low} to {high} a month',
+      bp_use_price: 'Use {price} in my report',
       est_bad_number: 'Enter amounts as numbers, for example 85000.',
       missing_gross_income_annual: 'your gross annual household income',
       missing_monthly_debts: 'your monthly debt payments',
@@ -564,6 +574,16 @@
       est_use: 'Usar este presupuesto en mi informe',
       est_used: 'Presupuesto de {amount} agregado a su formulario de informe más abajo.',
       est_missing_title: 'Aún no podemos calcular. Nos falta:',
+      bp_debts_title: 'Sus deudas mensuales casi no dejan espacio para el pago de una casa',
+      bp_debts_body: 'Los prestamistas suelen limitar todos los pagos mensuales de deudas, incluido el pago de la casa nueva, a cerca del 43 % del ingreso bruto. Para usted son {limit} al mes. Sus deudas suman {debts} al mes, lo que deja unos {room} para el pago de una casa.',
+      bp_check_debts: 'Revise esa cifra: debe ser lo que paga cada mes, no el total que debe.',
+      bp_target_title: 'Ese pago mensual no cubre impuestos ni seguro',
+      bp_target_body: 'Un pago de {target} al mes es menor que el impuesto a la propiedad y el seguro estimados de una casa, así que ningún precio encaja.',
+      bp_target_price: 'Un pago de {target} al mes cubriría una casa de unos {price}, pero es posible que un prestamista no lo apruebe mientras sus deudas sigan así de altas.',
+      bp_alt_debts: 'Si esas deudas estuvieran pagadas',
+      bp_alt_target: 'Sin ese límite de pago',
+      bp_alt_line: 'unos {low} a {high} al mes',
+      bp_use_price: 'Usar {price} en mi informe',
       est_bad_number: 'Escriba las cantidades como números, por ejemplo 85000.',
       missing_gross_income_annual: 'su ingreso anual bruto del hogar',
       missing_monthly_debts: 'sus pagos mensuales de deudas',
@@ -944,6 +964,25 @@
           onclick: function () { useBudget(Number(est.price_high)); }
         }));
       }
+    } else if (data.blocked) {
+      var bl = data.blocked, alt = data.alternative;
+      var debtsCase = bl.reason === 'debts';
+      card.appendChild(h('h3', { text: t(debtsCase ? 'bp_debts_title' : 'bp_target_title') }));
+      if (debtsCase) {
+        card.appendChild(h('p', { text: t('bp_debts_body', { limit: money(bl.debt_limit), debts: money(bl.debts), room: money(bl.room) }) }));
+        card.appendChild(h('p', { class: 'small muted', text: t('bp_check_debts') }));
+        if (bl.target_price) card.appendChild(h('p', { text: t('bp_target_price', { target: money(bl.target), price: money(bl.target_price) }) }));
+      } else {
+        card.appendChild(h('p', { text: t('bp_target_body', { target: money(bl.target) }) }));
+      }
+      if (alt && alt.price_high) {
+        card.appendChild(h('p', { class: 'result-label', style: 'margin-top:12px', text: t(debtsCase ? 'bp_alt_debts' : 'bp_alt_target') }));
+        card.appendChild(h('p', { class: 'result-figure', text: alt.price_low ? money(alt.price_low) + ' – ' + money(alt.price_high) : money(alt.price_high) }));
+        card.appendChild(h('p', { class: 'result-sub', text: t('bp_alt_line', { low: money(alt.payment_low || alt.payment_high), high: money(alt.payment_high) }) }));
+      }
+      card.appendChild(h('p', { class: 'small', style: 'margin-top:12px', text: t('est_disclaimer') }));
+      var usePrice = debtsCase ? bl.target_price : (alt && alt.price_high);
+      if (usePrice) card.appendChild(h('button', { type: 'button', class: 'btn btn-secondary', text: t('bp_use_price', { price: money(usePrice) }), onclick: function () { useBudget(Number(usePrice)); } }));
     } else {
       card.appendChild(h('h3', { text: t('est_missing_title') }));
       var ul = h('ul');

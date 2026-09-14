@@ -360,6 +360,21 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     assert(bad.errors.includes('area') && bad.errors.includes('max_price') && bad.errors.includes('email') && bad.errors.includes('phone'), JSON.stringify(bad));
     eq(validateLead(Object.assign({}, good, { answers: Object.assign({}, good.answers, { phone: '(813) 555-0100' }) })).value.consents.sms, true);
   });
+  await t('buying power with debts that use up the lending limit explains why and still gives the numbers, never a bare refusal', () => {
+    const bp = require('./src/engines/buyingPower');
+    const S = Object.assign({}, DEMO_SETTINGS, { reference_rate: 6.76, tax_rate_default: 0.018, insurance_monthly: 250, pmi_rate_annual: 0.005 });
+    const r = bp.estimate({ gross_income_annual: 140000, monthly_debts: 5000, down_payment: 14000, target_payment: 1500 }, S);
+    eq(r.estimate, null); eq(r.blocked.reason, 'debts'); eq(r.blocked.debt_limit, 5017); eq(r.blocked.room, 17); eq(r.blocked.debts, 5000);
+    assert(r.blocked.target_price > 100000, 'price for the stated payment missing');
+    assert(r.alternative && r.alternative.price_high > r.alternative.price_low, 'debt-free alternative missing');
+    eq(JSON.stringify(r.missing), '[]');
+    const low = bp.estimate({ gross_income_annual: 140000, monthly_debts: 0, down_payment: 14000, target_payment: 200 }, S);
+    eq(low.blocked.reason, 'target_too_low'); assert(low.alternative.price_high > 0, 'alternative without the payment limit');
+    const edge = bp.estimate({ gross_income_annual: 100000, monthly_debts: 3300, down_payment: 10000 }, S);
+    eq(edge.estimate, null, 'a $12,000 home is not an estimate'); eq(edge.blocked.reason, 'debts'); eq(edge.blocked.room, 283);
+    const part = bp.estimate({ gross_income_annual: 100000, monthly_debts: 2000, down_payment: 10000 }, S);
+    assert(part.estimate && part.estimate.price_high >= 50000, 'partial room still estimates: ' + JSON.stringify(part));
+  });
   await t('buying power runs on a sourced rate and labelled defaults when the agent set nothing, and agent figures win', async () => {
     const rates = require('./src/services/rates');
     const { effectiveSettings, DEFAULT_SETTINGS } = require('./src/services/market');

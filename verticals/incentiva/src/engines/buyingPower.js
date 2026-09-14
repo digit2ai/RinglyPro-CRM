@@ -69,14 +69,33 @@ function estimate(input, settings = {}, lang = 'en') {
   const args = { rate, down, taxRate, insurance, pmiRate };
   const pLow = lowPay > insurance ? priceForPayment(lowPay, args) : null;
   const pHigh = high > insurance ? priceForPayment(high, args) : null;
-  if (pLow === null || pHigh === null) {
-    return { ok: true, estimate: null, missing: ['payment_capacity'], assumptions, is_estimate: true };
-  }
   const r1000 = (x) => Math.floor(x / 1000) * 1000;
+  // Under $50,000 is not a realistic new-home price; treat it as no room rather than printing one.
+  if (pHigh !== null && pHigh >= 50000) {
+    return {
+      ok: true,
+      estimate: { price_low: pLow !== null && pLow >= 50000 ? r1000(pLow) : null, price_high: r1000(pHigh), payment_low: pLow !== null && pLow >= 50000 ? Math.round(lowPay) : null, payment_high: Math.round(high) },
+      missing: [], assumptions, is_estimate: true
+    };
+  }
+  // No room for a home payment. Say exactly why, with the arithmetic, instead of a bare "can't estimate".
+  const debtLimit = monthlyIncome * 0.43;
+  const room = debtLimit - debts;
+  const byDebts = !(target !== null && target < Math.min(monthlyIncome * 0.31, room));
+  const frontLow = monthlyIncome * 0.28, frontHigh = monthlyIncome * 0.31;
+  const fl = frontLow > insurance ? priceForPayment(frontLow, args) : null;
+  const fh = frontHigh > insurance ? priceForPayment(frontHigh, args) : null;
+  const atTargetRaw = target !== null && target > insurance ? priceForPayment(target, args) : null;
+  const atTarget = atTargetRaw !== null && atTargetRaw >= 50000 ? atTargetRaw : null;
   return {
-    ok: true,
-    estimate: { price_low: r1000(pLow), price_high: r1000(pHigh), payment_low: Math.round(lowPay), payment_high: Math.round(high) },
-    missing: [], assumptions, is_estimate: true
+    ok: true, estimate: null, missing: [], assumptions, is_estimate: true,
+    blocked: {
+      reason: byDebts ? 'debts' : 'target_too_low',
+      monthly_income: Math.round(monthlyIncome), debt_limit: Math.round(debtLimit), debts: Math.round(debts), room: Math.max(0, Math.round(room)),
+      target: target !== null ? Math.round(target) : null, target_price: atTarget !== null ? r1000(atTarget) : null
+    },
+    // What the same income supports once the debts are gone (debts) or without the payment limit (target).
+    alternative: fh !== null && fh >= 50000 ? { price_low: fl !== null ? r1000(fl) : null, price_high: r1000(fh), payment_low: fl !== null ? Math.round(frontLow) : null, payment_high: Math.round(frontHigh) } : null
   };
 }
 
