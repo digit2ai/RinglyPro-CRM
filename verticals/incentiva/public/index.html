@@ -25,6 +25,7 @@
 <script src="{{BASE}}/install.js" defer></script>
 <script src="{{BASE}}/search-widget.js" defer></script>
 <script src="{{BASE}}/flow.js" defer></script>
+<script src="{{BASE}}/intake-chat.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
@@ -231,176 +232,14 @@
 
   <!-- Intake -->
   <section id="intake" class="section-rule">
-    <div class="wrap wrap-narrow">
-      <p class="eyebrow" data-i18n="intake_eyebrow">Your report</p>
-      <h2 data-i18n="intake_title">Tell us what you need</h2>
-      <p class="lede" data-i18n="intake_lede">One short form. Fields marked * are required.</p>
-
+    <div class="wrap wrap-chat">
+      <div class="intake-head">
+        <p class="eyebrow" data-i18n="intake_eyebrow">Your report</p>
+        <h2 data-i18n="intake_title">Talk to Martha</h2>
+        <p class="lede" data-i18n="intake_lede">One question at a time, about five minutes. She pulls the current builder promotions for your area. Buyers pay nothing.</p>
+      </div>
       <div id="configStatus" class="status" role="status" aria-live="polite"></div>
-
-      <form id="intakeForm" novalidate>
-        <!-- 1 Where -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">01</span><h3 data-i18n="g_where">Where</h3></div>
-          <div class="grid-2">
-            <div class="field">
-              <label for="f_zips"><span data-i18n="f_zips">ZIP codes</span> <span class="req" aria-hidden="true">*</span></label>
-              <input id="f_zips" name="zips" type="text" inputmode="numeric" autocomplete="postal-code" aria-describedby="f_zips_hint">
-              <p class="hint" id="f_zips_hint" data-i18n="f_zips_hint">5 digits each, separated by commas. Example: 33578, 33569</p>
-            </div>
-            <div class="field">
-              <label for="f_place"><span data-i18n="f_place">Or a city or neighborhood</span></label>
-              <input id="f_place" name="place_text" type="text" autocomplete="off" aria-describedby="f_place_hint">
-              <p class="hint" id="f_place_hint" data-i18n="f_place_hint">Use this if you don't know the ZIP code.</p>
-            </div>
-          </div>
-          <div class="field" style="max-width:320px">
-            <label for="f_radius" data-i18n="f_radius">How far from there</label>
-            <select id="f_radius" name="radius_miles">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15" selected>15</option>
-              <option value="25">25</option>
-              <option value="40">40</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 2 Home -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">02</span><h3 data-i18n="g_home">Home</h3></div>
-          <div class="grid-2">
-            <div class="field">
-              <label for="f_beds"><span data-i18n="f_beds">Bedrooms, at least</span> <span class="req" aria-hidden="true">*</span></label>
-              <select id="f_beds" name="beds_min" required aria-required="true">
-                <option value="" data-i18n="choose">Choose</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="f_baths" data-i18n="f_baths">Bathrooms, at least</label>
-              <select id="f_baths" name="baths_min">
-                <option value="" data-i18n="any">Any</option>
-                <option value="1">1</option>
-                <option value="1.5">1.5</option>
-                <option value="2">2</option>
-                <option value="2.5">2.5</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
-          </div>
-          <fieldset class="plain" id="mustSet">
-            <legend data-i18n="f_must">Must-haves</legend>
-            <p class="hint" data-i18n="f_must_hint" style="margin-bottom:8px">Choose any that apply.</p>
-            <div class="choice-grid" id="mustOpts"></div>
-          </fieldset>
-        </div>
-
-        <!-- 3 Money and timing -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">03</span><h3 data-i18n="g_money">Money and timing</h3></div>
-          <div class="grid-3">
-            <div class="field">
-              <label for="f_budget"><span data-i18n="f_budget">Maximum home price</span> <span class="req" aria-hidden="true">*</span></label>
-              <div class="input-money"><input id="f_budget" name="budget_max" type="text" inputmode="numeric" autocomplete="off" required aria-required="true"></div>
-            </div>
-            <div class="field">
-              <label for="f_monthly"><span data-i18n="f_monthly">Maximum monthly payment</span> <span class="opt" data-i18n="optional">(optional)</span></label>
-              <div class="input-money"><input id="f_monthly" name="budget_monthly_max" type="text" inputmode="numeric" autocomplete="off"></div>
-            </div>
-            <div class="field">
-              <label for="f_down"><span data-i18n="f_down">Down payment</span> <span class="opt" data-i18n="optional">(optional)</span></label>
-              <div class="input-money"><input id="f_down" name="down_payment" type="text" inputmode="numeric" autocomplete="off"></div>
-            </div>
-          </div>
-          <div class="grid-2">
-            <fieldset class="plain" id="timelineSet">
-              <legend><span data-i18n="f_timeline">When do you want to move?</span> <span class="req" aria-hidden="true">*</span></legend>
-              <div class="choice-list" id="timelineOpts"></div>
-            </fieldset>
-            <fieldset class="plain" id="financingSet">
-              <legend><span data-i18n="f_financing">How will you pay?</span> <span class="req" aria-hidden="true">*</span></legend>
-              <div class="choice-list" id="financingOpts"></div>
-            </fieldset>
-          </div>
-        </div>
-
-        <!-- 4 About you -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">04</span><h3 data-i18n="g_you">About you</h3></div>
-          <div class="grid-3">
-            <div class="field">
-              <label for="f_first"><span data-i18n="f_first">First name</span> <span class="req" aria-hidden="true">*</span></label>
-              <input id="f_first" name="first_name" type="text" autocomplete="given-name" required aria-required="true">
-            </div>
-            <div class="field">
-              <label for="f_email"><span data-i18n="f_email">Email</span> <span class="req" aria-hidden="true">*</span></label>
-              <input id="f_email" name="email" type="email" autocomplete="email" inputmode="email" required aria-required="true">
-            </div>
-            <div class="field">
-              <label for="f_phone"><span data-i18n="f_phone">Mobile phone</span> <span class="opt" data-i18n="optional">(optional)</span></label>
-              <input id="f_phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" aria-describedby="f_phone_hint">
-              <p class="hint" id="f_phone_hint" data-i18n="f_phone_hint">Needed only if you agree to text messages.</p>
-            </div>
-          </div>
-          <div class="hp-field" aria-hidden="true">
-            <label for="f_website" data-i18n="f_website">Leave this field empty</label>
-            <input id="f_website" name="website" type="text" tabindex="-1" autocomplete="off" value="">
-          </div>
-        </div>
-
-        <!-- 5 Two questions that protect you -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">05</span><h3 data-i18n="g_protect">Two questions that protect you</h3></div>
-          <p class="muted" data-i18n="g_protect_lede">Builders have registration rules. Honest answers here keep your options open.</p>
-
-          <fieldset class="plain" id="agentSet">
-            <legend><span data-i18n="f_agent">Are you already working with a real estate agent?</span> <span class="req" aria-hidden="true">*</span></legend>
-            <div class="choice-list">
-              <label class="choice"><input type="radio" name="has_other_agent" value="no"><span class="choice-text" data-i18n="agent_no">No</span></label>
-              <label class="choice"><input type="radio" name="has_other_agent" value="yes_under_agreement"><span class="choice-text" data-i18n="agent_yes_agreement">Yes, and I signed an agreement with them</span></label>
-              <label class="choice"><input type="radio" name="has_other_agent" value="yes_informal"><span class="choice-text" data-i18n="agent_yes_informal">Yes, but nothing is signed</span></label>
-            </div>
-            <div id="agentNote" aria-live="polite"></div>
-          </fieldset>
-
-          <fieldset class="plain" id="visitSet" style="margin-top:20px">
-            <legend data-i18n="f_visits">Have you already visited a new-construction sales office?</legend>
-            <p class="hint" data-i18n="f_visits_hint" style="margin-bottom:10px">Add each one. Some builders won't work with a buyer's agent for a buyer who visited or signed a guest card first, so your agent needs to know.</p>
-            <div id="visitsList"></div>
-            <p class="hint" id="visitsNone" data-i18n="visits_none">None added. If you haven't visited any, leave this empty.</p>
-            <button type="button" class="btn btn-secondary btn-small" id="visitAdd" data-i18n="visit_add" style="margin-top:8px">Add a community you visited</button>
-          </fieldset>
-        </div>
-
-        <!-- Consent -->
-        <div class="form-group">
-          <div class="form-group-head"><span class="n" aria-hidden="true">06</span><h3 data-i18n="g_consent">How we may contact you</h3></div>
-          <fieldset class="plain consent" id="consentSet">
-            <legend class="sr-only" data-i18n="g_consent">How we may contact you</legend>
-            <div class="choice-list" id="consentOpts"></div>
-          </fieldset>
-        </div>
-
-        <div class="callout callout-caution">
-          <h4 data-i18n="visit_first_title">Before you visit any sales office</h4>
-          <p data-i18n="visit_first_body">Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to our agent first, so you keep your representation at no cost to you.</p>
-        </div>
-
-        <div id="intakeStatus" class="status" role="alert" aria-live="assertive" tabindex="-1"></div>
-
-        <div class="btn-row" style="margin-top:16px;align-items:center">
-          <button type="submit" class="btn btn-primary" id="intakeSubmit" data-i18n="submit">Get my report</button>
-          <span class="small muted" data-i18n="submit_note">Buyers pay nothing.</span>
-        </div>
-      </form>
-
-      <div id="intakeDone" hidden tabindex="-1"></div>
+      <div id="blChat" class="mch"><noscript><p class="mch-b mch-b-m">Martha needs JavaScript turned on. You can also write to info@digit2ai.com.</p></noscript></div>
     </div>
   </section>
 
@@ -548,8 +387,8 @@
       err_server: 'Something went wrong on our side. Please try again in a minute.',
       err_rate: 'Too many requests right now. Please wait a few minutes and try again.',
       intake_eyebrow: 'Your report',
-      intake_title: 'Tell us what you need',
-      intake_lede: 'One short form. Fields marked * are required.',
+      intake_title: 'Talk to Martha',
+      intake_lede: 'One question at a time, about five minutes. She pulls the current builder promotions for your area. Buyers pay nothing.',
       config_loading: 'Loading the form options...',
       config_error: "We couldn't load the form options. Check your connection, then try again.",
       retry: 'Try again',
@@ -735,8 +574,8 @@
       err_server: 'Algo falló de nuestro lado. Intente de nuevo en un minuto.',
       err_rate: 'Hay demasiadas solicitudes en este momento. Espere unos minutos e intente de nuevo.',
       intake_eyebrow: 'Su informe',
-      intake_title: 'Cuéntenos qué necesita',
-      intake_lede: 'Un formulario breve. Los campos marcados con * son obligatorios.',
+      intake_title: 'Hable con Martha',
+      intake_lede: 'Una pregunta a la vez, unos cinco minutos. Ella busca las promociones actuales de las constructoras en su zona. El comprador no paga nada.',
       config_loading: 'Cargando las opciones del formulario...',
       config_error: 'No pudimos cargar las opciones del formulario. Revise su conexión e intente de nuevo.',
       retry: 'Intentar de nuevo',
@@ -922,6 +761,7 @@
     if (!opts || !opts.initial) {
       loadConfig();
       if (lastEstimateBody) runEstimate(lastEstimateBody, true);
+      if (window.BLChat) window.BLChat.setLang(lang);
       if (window.D2AIVoiceOrb && typeof window.D2AIVoiceOrb.setLang === 'function') {
         try { window.D2AIVoiceOrb.setLang(lang); } catch (e) { /* orb is optional */ }
       }
@@ -942,16 +782,11 @@
     Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
     });
-    Array.prototype.forEach.call($('f_radius').options, function (o) {
-      o.textContent = t('miles', { n: o.value });
-    });
     $('exVerified').textContent = t('ex_verified', { date: fmtDate('2026-09-11') });
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config && config.market && config.market.name) || t('market_default') });
     var orb = $('voiceOrb');
     orb.setAttribute('data-lang', lang);
     orb.setAttribute('data-label', t('orb_label'));
-    renderAgentNote();
-    renumberVisits();
     renderRefRate();
     renderAgent();
     if (lastEstimate) renderEstimate(lastEstimate);
@@ -982,7 +817,6 @@
       st.appendChild(box);
       if (!config) {
         var d = $('disclosures'); clear(d); d.appendChild(h('p', { text: t('footer_error') }));
-        var c = $('consentOpts'); clear(c); c.appendChild(h('p', { class: 'hint', text: t('consent_unavailable') }));
       }
     });
   }
@@ -1000,39 +834,6 @@
   function renderConfig() {
     $('demoBanner').hidden = !config.is_demo_data;
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config.market && config.market.name) || t('market_default') });
-    var opts = config.options || {};
-
-    var must = checkedValues('must_have');
-    var mo = $('mustOpts'); clear(mo);
-    (opts.must_haves || []).forEach(function (o) {
-      mo.appendChild(choice('checkbox', 'must_have', o.key, o.label, must.indexOf(o.key) !== -1));
-    });
-    $('mustSet').hidden = !(opts.must_haves || []).length;
-
-    var tl = checkedValues('timeline')[0];
-    var to = $('timelineOpts'); clear(to);
-    (opts.timeline || []).forEach(function (o) { to.appendChild(choice('radio', 'timeline', o.key, o.label, tl === o.key)); });
-
-    var fin = checkedValues('financing')[0];
-    var fo = $('financingOpts'); clear(fo);
-    (opts.financing || []).forEach(function (o) { fo.appendChild(choice('radio', 'financing', o.key, o.label, fin === o.key)); });
-
-    var cons = config.consent || {};
-    var prev = {
-      email: !!(document.querySelector('input[name="consent_email"]:checked')),
-      sms: !!(document.querySelector('input[name="consent_sms"]:checked')),
-      share: !!(document.querySelector('input[name="consent_share"]:checked'))
-    };
-    var co = $('consentOpts'); clear(co);
-    [['email', 'consent_email', 'consent_email_note'], ['sms', 'consent_sms', 'consent_sms_note'], ['share', 'consent_share', 'consent_share_note']].forEach(function (row) {
-      if (!cons[row[0]]) return;
-      var noteId = row[1] + '_note';
-      var wrap = h('div', { class: 'field', style: 'margin-bottom:4px' },
-        choice('checkbox', row[1], '1', cons[row[0]], prev[row[0]], { 'aria-describedby': noteId }),
-        h('p', { class: 'hint', id: noteId, text: t(row[2]) }));
-      co.appendChild(wrap);
-    });
-
     renderDisclosures();
     renderRefRate();
     renderAgent();
@@ -1177,13 +978,11 @@
   }
 
   function useBudget(amount) {
-    var input = $('f_budget');
-    input.value = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(amount);
-    clearFieldError(input);
     var st = $('estStatus'); clear(st);
     st.appendChild(h('p', { class: 'small', text: t('est_used', { amount: money(amount) }) }));
-    input.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-    setTimeout(function () { input.focus({ preventScroll: true }); }, 350);
+    if (window.BLChat) window.BLChat.setAnswer('max_price', Number(amount));
+    var intake = $('intake');
+    if (intake) intake.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 
   $('estForm').addEventListener('submit', function (e) {
@@ -1237,231 +1036,6 @@
     });
   }
 
-  // ---------- agent question ----------
-  function renderAgentNote() {
-    var box = $('agentNote'); clear(box);
-    var v = checkedValues('has_other_agent')[0];
-    if (v === 'yes_under_agreement') box.appendChild(h('div', { class: 'callout callout-verified', style: 'margin-top:10px' }, h('p', { text: t('agent_note_agreement') })));
-    else if (v === 'yes_informal') box.appendChild(h('div', { class: 'callout', style: 'margin-top:10px' }, h('p', { text: t('agent_note_informal') })));
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('input[name="has_other_agent"]'), function (r) {
-    r.addEventListener('change', function () { renderAgentNote(); clearFieldError($('agentSet')); });
-  });
-
-  // ---------- prior visits repeater ----------
-  var visitSeq = 0;
-  function addVisit(focus) {
-    var n = ++visitSeq;
-    var bId = 'v_builder_' + n, cId = 'v_comm_' + n, gId = 'v_card_' + n;
-    var row = h('div', { class: 'visit-row', 'data-visit': n },
-      h('div', { class: 'row-actions' },
-        h('strong', { class: 'visit-title' }),
-        h('button', { type: 'button', class: 'btn btn-ghost btn-small visit-remove', onclick: function () {
-          row.parentNode.removeChild(row); renumberVisits(); $('visitAdd').focus();
-        } }, h('span', { 'data-i18n': 'visit_remove', text: t('visit_remove') }))),
-      h('div', { class: 'field' },
-        h('label', { for: bId, 'data-i18n': 'visit_builder', text: t('visit_builder') }),
-        h('input', { id: bId, type: 'text', class: 'v-builder', autocomplete: 'off' })),
-      h('div', { class: 'field' },
-        h('label', { for: cId, 'data-i18n': 'visit_community', text: t('visit_community') }),
-        h('input', { id: cId, type: 'text', class: 'v-community', autocomplete: 'off' })),
-      h('label', { class: 'choice', for: gId, style: 'margin-bottom:8px' },
-        h('input', { id: gId, type: 'checkbox', class: 'v-card' }),
-        h('span', { class: 'choice-text', 'data-i18n': 'visit_card', text: t('visit_card') })));
-    $('visitsList').appendChild(row);
-    renumberVisits();
-    if (focus) $(bId).focus();
-  }
-  function renumberVisits() {
-    var rows = document.querySelectorAll('#visitsList .visit-row');
-    Array.prototype.forEach.call(rows, function (row, i) {
-      row.querySelector('.visit-title').textContent = t('visit_n', { n: i + 1 });
-      row.querySelector('.visit-remove').setAttribute('aria-label', t('visit_remove_n', { n: i + 1 }));
-    });
-    $('visitsNone').hidden = rows.length > 0;
-  }
-  $('visitAdd').addEventListener('click', function () { addVisit(true); });
-
-  // ---------- intake submit ----------
-  var FIELD_MAP = {
-    first_name: 'f_first', email: 'f_email', phone: 'f_phone',
-    target_zips: 'f_zips', place_text: 'f_zips', budget_max: 'f_budget',
-    budget_monthly_max: 'f_monthly', down_payment: 'f_down', beds_min: 'f_beds', baths_min: 'f_baths',
-    radius_miles: 'f_radius', timeline: 'timelineSet', financing: 'financingSet',
-    has_other_agent: 'agentSet', must_haves: 'mustSet', prior_builder_visits: 'visitSet'
-  };
-
-  $('intakeForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var form = e.currentTarget;
-    clearAllErrors(form);
-    var status = $('intakeStatus'); clear(status);
-    var errs = [];
-    function err(id, msg) { errs.push(id); setFieldError($(id), msg); }
-
-    if (!config) {
-      status.appendChild(callout('critical', null, t('err_config_missing')));
-      status.focus();
-      return;
-    }
-
-    var zipRaw = $('f_zips').value.trim();
-    var zipParts = zipRaw ? zipRaw.split(/[\s,;]+/).filter(Boolean) : [];
-    var badZips = zipParts.filter(function (z) { return !/^\d{5}$/.test(z); });
-    var place = $('f_place').value.trim();
-    if (badZips.length) err('f_zips', t('err_zip', { bad: badZips.join(', ') }));
-    else if (!zipParts.length && !place) err('f_zips', t('err_where'));
-
-    var beds = $('f_beds').value;
-    if (!beds) err('f_beds', t('err_required'));
-    var baths = $('f_baths').value;
-
-    var budget = parseMoney($('f_budget').value);
-    if (budget == null) err('f_budget', t('err_required'));
-    else if (isNaN(budget) || budget <= 0) err('f_budget', t('err_amount'));
-    var monthly = parseMoney($('f_monthly').value);
-    if (typeof monthly === 'number' && isNaN(monthly)) err('f_monthly', t('err_amount'));
-    var down = parseMoney($('f_down').value);
-    if (typeof down === 'number' && isNaN(down)) err('f_down', t('err_amount'));
-
-    var timeline = checkedValues('timeline')[0];
-    if (!timeline) err('timelineSet', t('err_choose'));
-    var financing = checkedValues('financing')[0];
-    if (!financing) err('financingSet', t('err_choose'));
-
-    var first = $('f_first').value.trim();
-    if (!first) err('f_first', t('err_required'));
-    var email = $('f_email').value.trim();
-    if (!email) err('f_email', t('err_required'));
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) err('f_email', t('err_email'));
-    var phone = $('f_phone').value.trim();
-
-    var agent = checkedValues('has_other_agent')[0];
-    if (!agent) err('agentSet', t('err_choose'));
-
-    var consentSms = !!document.querySelector('input[name="consent_sms"]:checked');
-    if (consentSms && !phone) err('f_phone', t('err_phone_sms'));
-
-    var visits = [];
-    Array.prototype.forEach.call(document.querySelectorAll('#visitsList .visit-row'), function (row) {
-      var b = row.querySelector('.v-builder'), c = row.querySelector('.v-community');
-      var bv = b.value.trim(), cv = c.value.trim();
-      if (!bv && !cv) { errs.push(b.id); setFieldError(b, t('err_visit')); return; }
-      visits.push({ builder: bv, community: cv, signed_guest_card: row.querySelector('.v-card').checked });
-    });
-
-    if (errs.length) {
-      status.appendChild(callout('critical', null, t('err_fix')));
-      var first_el = $(errs[0]);
-      var focusable = first_el.tagName === 'FIELDSET' ? first_el.querySelector('input') : first_el;
-      if (focusable) focusable.focus();
-      return;
-    }
-
-    var payload = {
-      lang: lang,
-      first_name: first,
-      email: email,
-      phone: phone,
-      website: $('f_website').value,
-      criteria: {
-        target_zips: zipParts,
-        place_text: place,
-        radius_miles: Number($('f_radius').value),
-        budget_max: budget,
-        budget_monthly_max: monthly,
-        down_payment: down,
-        beds_min: Number(beds),
-        baths_min: baths ? Number(baths) : null,
-        timeline: timeline,
-        financing: financing,
-        must_haves: checkedValues('must_have')
-      },
-      gates: { has_other_agent: agent, prior_builder_visits: visits },
-      consents: {
-        email: !!document.querySelector('input[name="consent_email"]:checked'),
-        sms: consentSms,
-        share_with_agent: !!document.querySelector('input[name="consent_share"]:checked')
-      },
-      consent_version: (config.consent && config.consent.version) || null
-    };
-
-    var btn = $('intakeSubmit');
-    btn.disabled = true;
-    btn.textContent = t('submitting');
-    var statusLive = h('p', { class: 'muted small' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('submitting'));
-    status.appendChild(statusLive);
-
-    api('/api/v1/public/intake', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(function (res) {
-      clear(status);
-      var d = res.data || {};
-      if (res.status === 429) { fail(t('err_rate')); return; }
-      if (res.status === 400) {
-        var missing = Array.isArray(d.missing) ? d.missing : [];
-        var mapped = 0;
-        missing.forEach(function (m) {
-          var key = String(m).split('.').pop();
-          var id = FIELD_MAP[key];
-          if (id && $(id)) {
-            mapped++;
-            setFieldError($(id), key === 'target_zips' || key === 'place_text' ? t('err_where') : t('err_required'));
-          }
-        });
-        fail(mapped ? t('err_fix') : (d.error || t('err_fix')));
-        if (mapped) {
-          var firstErr = form.querySelector('.has-error input, .has-error select, fieldset.has-error input');
-          if (firstErr) firstErr.focus();
-        }
-        return;
-      }
-      if (!res.ok) { fail(d.error || t('err_server')); return; }
-
-      if (d.status === 'stopped_other_agent') {
-        form.hidden = true;
-        var done = $('intakeDone');
-        clear(done);
-        done.appendChild(callout('verified', t('stopped_title'), d.message || t('agent_note_agreement')));
-        done.hidden = false;
-        done.focus();
-        return;
-      }
-      if ((d.status === 'report_ready' || d.status === 'pending_review') && d.report_url) {
-        status.appendChild(h('p', { class: 'small', text: t('opening_report') }));
-        var url = d.report_url;
-        if (!/[?&]lang=/.test(url)) url += (url.indexOf('?') === -1 ? '?' : '&') + 'lang=' + lang;
-        location.assign(url);
-        return;
-      }
-      fail(t('err_server'));
-    }).catch(function () {
-      clear(status);
-      fail(t('err_network'));
-    });
-
-    function fail(msg) {
-      btn.disabled = false;
-      btn.textContent = t('submit');
-      clear(status);
-      status.appendChild(callout('critical', null, msg));
-    }
-  });
-
-  // Clear an input's error as soon as the person edits it.
-  $('intakeForm').addEventListener('input', function (e) {
-    var el = e.target;
-    if (!el || !el.closest) return;
-    if (el.type === 'radio' || el.type === 'checkbox') {
-      var fs = el.closest('fieldset.has-error');
-      if (fs && fs.id) clearFieldError(fs);
-      return;
-    }
-    if (el.getAttribute('aria-invalid')) clearFieldError(el);
-  });
-
   // ---------- smooth scroll for hero actions ----------
   Array.prototype.forEach.call(document.querySelectorAll('[data-scroll]'), function (a) {
     a.addEventListener('click', function (e) {
@@ -1488,91 +1062,29 @@
   $('year').textContent = String(new Date().getFullYear());
   setLang(lang, { initial: true });
   loadConfig();
+  // intake-chat.js is deferred, so it is ready by DOMContentLoaded, not while this inline script runs.
+  document.addEventListener('DOMContentLoaded', function () { if (window.BLChat) window.BLChat.init({ lang: lang }); });
 })();
 </script>
 <script src="/embed/voice-orb.js" defer></script>
-<script>(function(){var z=new URLSearchParams(location.search).get('zip');if(/^\d{5}$/.test(z||'')){var f=document.getElementById('f_zips');if(f&&!f.value)f.value=z;}})();</script>
 <script>
-/* Martha (voice assistant) fills the intake form (voice orb page actions). She never ticks a consent box.
-   Every filled field is highlighted for review. She can send the form only after the server confirmed the
-   buyer said yes, only when no required field is empty, and only after a 5-second countdown the buyer can cancel.
-   D2AIVoiceOrbLiveContext tells her what is filled and what is missing, so she never asks twice. */
+/* Martha (voice assistant) drives the conversational intake through window.BLChat. She fills only
+   answers the buyer said. Choosing communities and every contact choice stay the buyer's own taps: nothing
+   here can tick a consent box or pick a community. A send runs only after the server confirmed a clear yes
+   (submit_intake_form), only at the last step with nothing required missing, and only after a
+   5-second countdown the buyer can cancel. */
 (function () {
   'use strict';
-  function byId(id) { return document.getElementById(id); }
-  function fire(el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
-  function mark(el) { if (!el) return; el.classList.remove('ava-filled'); void el.offsetWidth; el.classList.add('ava-filled'); }
-  function setValue(id, value) { var el = byId(id); if (!el || value == null) return false; el.value = String(value); fire(el); mark(el); return true; }
-  function setSelect(id, value) {
-    var el = byId(id); if (!el || value == null) return false;
-    var ok = Array.prototype.some.call(el.options, function (o) { return o.value === String(value); });
-    if (!ok) return false; el.value = String(value); fire(el); mark(el); return true;
-  }
-  function setRadio(name, value, setId) {
-    var r = document.querySelector('input[name="' + name + '"][value="' + value + '"]'); if (!r) return false;
-    r.checked = true; fire(r); mark(byId(setId)); return true;
-  }
-  function money(n) { return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n); }
-  function val(id) { var el = byId(id); return el && el.value ? String(el.value).trim() : ''; }
-  function picked(name) {
-    var r = document.querySelector('input[name="' + name + '"]:checked'); if (!r) return '';
-    var lab = r.closest('label'); return (lab ? lab.textContent.trim() + ' ' : '') + '(' + r.value + ')';
-  }
-  function ticked(name) { var el = document.querySelector('input[name="' + name + '"]'); return !el ? 'not offered' : (el.checked ? 'ticked' : 'not ticked'); }
-  var REQUIRED = [
-    ['area (ZIP codes or city)', 'f_zips', function () { return val('f_zips') || val('f_place'); }],
-    ['maximum home price', 'f_budget', function () { return val('f_budget'); }],
-    ['bedrooms', 'f_beds', function () { return val('f_beds'); }],
-    ['timing', 'timelineSet', function () { return picked('timeline'); }],
-    ['how they will pay', 'financingSet', function () { return picked('financing'); }],
-    ['working with an agent', 'agentSet', function () { return picked('has_other_agent'); }],
-    ['first name', 'f_first', function () { return val('f_first'); }],
-    ['email', 'f_email', function () { return val('f_email'); }]
-  ];
-  var OPTIONAL = [
-    ['bathrooms', function () { return val('f_baths'); }],
-    ['monthly payment', function () { return val('f_monthly'); }],
-    ['down payment', function () { return val('f_down'); }],
-    ['phone', function () { return val('f_phone'); }],
-    ['must-haves', function () { return Array.prototype.map.call(document.querySelectorAll('input[name="must_have"]:checked'), function (c) { return c.value; }).join(', '); }]
-  ];
-  function missingRequired() { return REQUIRED.filter(function (r) { return !r[2](); }); }
-  var sendState = 'not sent', sendTimer = null, sendBar = null;
-  function sendStateNow() {
-    var b = byId('intakeSubmit');
-    if (sendState === 'sent' && b && !b.disabled) sendState = 'not sent (the last attempt did not go through; check the messages on the form)';
-    return sendState;
-  }
-  window.D2AIVoiceOrbLiveContext = function () {
-    var filled = [], missing = [], opt = [];
-    REQUIRED.forEach(function (r) { var v = r[2](); if (v) filled.push(r[0] + ' = ' + v); else missing.push(r[0]); });
-    OPTIONAL.forEach(function (r) { var v = r[1](); if (v) filled.push(r[0] + ' = ' + v); else opt.push(r[0]); });
-    return 'INTAKE FORM STATUS (live; read this first). ' +
-      'Filled: ' + (filled.join('; ') || 'nothing yet') + '. ' +
-      'Required still missing: ' + (missing.join(', ') || 'none, the form is ready to send') + '. ' +
-      'Optional not filled: ' + (opt.join(', ') || 'none') + '. ' +
-      'Contact boxes, ticked only by the buyer: email updates ' + ticked('consent_email') + '; text messages ' + ticked('consent_sms') + '; share my details with the agent ' + ticked('consent_share') + '. ' +
-      'Form: ' + sendStateNow() + '.';
-  };
+  window.D2AIVoiceOrbLiveContext = function () { return window.BLChat ? window.BLChat.status() : ''; };
+  var sendTimer = null, sendBar = null;
   function es() { return (document.documentElement.lang || '').toLowerCase().indexOf('es') === 0; }
-  function cancelSend() {
-    if (sendTimer) clearInterval(sendTimer);
-    sendTimer = null; sendState = 'not sent (the buyer cancelled the send)';
-    if (sendBar) { sendBar.remove(); sendBar = null; }
-  }
+  function toIntake() { var el = document.getElementById('intake'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function cancelSend() { if (sendTimer) clearInterval(sendTimer); sendTimer = null; if (sendBar) { sendBar.remove(); sendBar = null; } }
   function startSend() {
-    if (sendTimer) return;
-    var form = byId('intakeForm'), btn = byId('intakeSubmit');
-    if (!form || !btn || btn.disabled) return;
-    var miss = missingRequired();
-    if (miss.length) {
-      miss.forEach(function (r) { mark(byId(r[1])); });
-      var first = byId(miss[0][1]); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      sendState = 'not sent, still missing: ' + miss.map(function (r) { return r[0]; }).join(', ');
-      return;
-    }
+    var chat = window.BLChat;
+    if (sendTimer || !chat) return;
+    if (!chat.atFinalStep() || chat.missing().length) { toIntake(); return; }
     var left = 5;
-    sendState = 'being sent after a 5-second countdown the buyer can cancel';
     sendBar = document.createElement('div');
     sendBar.className = 'bl-sendbar'; sendBar.setAttribute('role', 'status');
     var msg = document.createElement('span');
@@ -1581,52 +1093,22 @@
     cancel.addEventListener('click', cancelSend);
     sendBar.appendChild(msg); sendBar.appendChild(cancel);
     document.body.appendChild(sendBar);
-    function paint() { msg.textContent = (es() ? 'Enviando su formulario para crear el informe en ' : 'Sending your form to create your report in ') + left + '…'; }
-    paint();
-    btn.scrollIntoView({ behavior: 'smooth', block: 'center' }); mark(btn);
+    function paint() { msg.textContent = (es() ? 'Enviando sus respuestas para crear el informe en ' : 'Sending your answers to create your report in ') + left + '\u2026'; }
+    paint(); toIntake();
     sendTimer = setInterval(function () {
       left--; if (left > 0) { paint(); return; }
-      clearInterval(sendTimer); sendTimer = null;
-      if (sendBar) { sendBar.remove(); sendBar = null; }
-      if (missingRequired().length) { sendState = 'not sent, a required field was cleared'; return; }
-      sendState = 'sent';
-      if (typeof form.requestSubmit === 'function') form.requestSubmit(btn);
-      else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      cancelSend();
+      if (!chat.missing().length) chat.submit();
     }, 1000);
   }
   window.addEventListener('d2orb:action', function (e) {
     var d = e.detail || {};
+    if (!window.BLChat) return;
     if (d.name === 'submit_intake_form') { startSend(); return; }
     if (d.name !== 'fill_intake_form') return;
-    if (!sendTimer && sendState !== 'sent') sendState = 'not sent';
-    var i = d.input || {}, filled = 0;
-    if (i.zip_codes && i.zip_codes.length) filled += setValue('f_zips', i.zip_codes.join(', ')) ? 1 : 0;
-    if (i.place) filled += setValue('f_place', i.place) ? 1 : 0;
-    if (i.radius_miles) filled += setSelect('f_radius', i.radius_miles) ? 1 : 0;
-    if (i.beds_min) filled += setSelect('f_beds', i.beds_min) ? 1 : 0;
-    if (i.baths_min) filled += setSelect('f_baths', i.baths_min) ? 1 : 0;
-    if (i.budget_max) filled += setValue('f_budget', money(i.budget_max)) ? 1 : 0;
-    if (i.monthly_max) filled += setValue('f_monthly', money(i.monthly_max)) ? 1 : 0;
-    if (i.down_payment != null) filled += setValue('f_down', money(i.down_payment)) ? 1 : 0;
-    if (i.first_name) filled += setValue('f_first', i.first_name) ? 1 : 0;
-    if (i.email) filled += setValue('f_email', i.email) ? 1 : 0;
-    if (i.phone) filled += setValue('f_phone', i.phone) ? 1 : 0;
-    if (i.timeline) filled += setRadio('timeline', i.timeline, 'timelineSet') ? 1 : 0;
-    if (i.financing) filled += setRadio('financing', i.financing, 'financingSet') ? 1 : 0;
-    if (i.working_with_agent) filled += setRadio('has_other_agent', i.working_with_agent, 'agentSet') ? 1 : 0;
-    (i.must_haves || []).forEach(function (m) {
-      var c = document.querySelector('input[name="must_have"][value="' + m + '"]');
-      if (c && !c.checked) { c.checked = true; fire(c); filled++; }
-    });
-    if (i.must_haves && i.must_haves.length) mark(byId('mustSet'));
-    if (filled && !missingRequired().length) {
-      // Everything required is in: bring the contact choices and the button into view.
-      var cs = byId('consentSet'); if (cs) cs.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      mark(byId('intakeSubmit'));
-    } else if (filled) {
-      var intake = byId('intake');
-      var box = intake && intake.getBoundingClientRect();
-      if (box && (box.top > window.innerHeight || box.bottom < 0)) intake.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.BLChat.applyVoice(d.input || {})) {
+      var el = document.getElementById('intake'), box = el && el.getBoundingClientRect();
+      if (box && (box.top > window.innerHeight || box.bottom < 0)) toIntake();
     }
   });
 })();

@@ -507,6 +507,7 @@
     setBadge('verify', v);
     setBadge('reports', num(t.reports_pending));
     setBadge('compliance', num(t.compliance_holds));
+    setBadge('leads', num(t.new_leads));
     setBadge('more', num(t.reports_pending) + num(t.compliance_holds));
   }
   function refreshBadges() { api('GET', '/agent/today').then(updateBadges).catch(() => {}); }
@@ -830,6 +831,121 @@
     if (/gate|hold/.test(s)) return 'warn';
     return 'accent';
   };
+
+  /* ------------------------------------------------------------------ */
+  /* View: Leads (Martha conversational intake)                          */
+  /* ------------------------------------------------------------------ */
+
+  const LEAD_STATUSES = [['new', 'New'], ['contacted', 'Contacted'], ['working', 'Working'], ['closed', 'Closed'], ['lost', 'Lost']];
+  const LEAD_TONE = { new: 'info', contacted: 'warn', working: 'warn', closed: 'ok', lost: 'neutral' };
+  const TL_LABEL = { '0_3m': 'Within 3 months', '3_6m': '3 to 6 months', '6_12m': '6 to 12 months', '12m_plus': 'More than 12 months' };
+  const FIN_LABEL = { preapproved: 'Pre-approved', cash: 'Cash', needs_lender: 'Needs a lender', va: 'VA loan', fha: 'FHA loan', unsure: 'Not sure yet' };
+  const AGENT_LABEL = { no: 'No agent', yes_under_agreement: 'Signed with another agent', yes_informal: 'Has an agent, nothing signed' };
+
+  function leadFlags(l) {
+    const f = [];
+    if (l.agent_agreement_signed || l.has_agent === 'yes_under_agreement') f.push(chip('Under agreement: do not contact', 'crit'));
+    else if (l.has_agent === 'yes_informal') f.push(chip('Has an agent, nothing signed', 'warn'));
+    if (num(l.visited_count) > 0) f.push(chip(`Visited ${num(l.visited_count)} sales office${num(l.visited_count) === 1 ? '' : 's'}`, 'warn'));
+    if (!l.referral_consent) f.push(chip('Report only: no outreach consent', 'outline'));
+    return f;
+  }
+
+  async function viewLeads(r) {
+    if (r.parts[1]) return viewLeadDetail(r.parts[1]);
+    const status = r.params.get('status') || '';
+    const d = await api('GET', '/agent/leads' + (status ? `?status=${encodeURIComponent(status)}` : ''));
+    const leads = Array.isArray(d.leads) ? d.leads : [];
+    const counts = d.counts || {};
+    const filter = `<label class="field" style="min-width:220px"><span class="flabel">Status</span><select data-change="leadFilter">
+      <option value="">All statuses</option>${LEAD_STATUSES.map(([v, l]) => `<option value="${v}"${v === status ? ' selected' : ''}>${esc(l)} (${num(counts[v])})</option>`).join('')}</select></label>`;
+    const table = leads.length ? `<div class="tablewrap card" style="padding:4px 8px"><table class="rtable">
+      <thead><tr><th>Lead</th><th>Status</th><th>Area</th><th class="num">Max price</th><th>Move</th><th>Paying</th><th>Picked</th><th>Assigned</th><th>Created</th><th>Flags</th></tr></thead>
+      <tbody>${leads.map((l) => `<tr>
+        <td data-label="Lead"><a href="#/leads/${encodeURIComponent(l.id)}" style="font-weight:600">${esc(l.first_name || 'Lead')}</a> <span class="mono small muted">${esc(String(l.lang || '').toUpperCase())}</span></td>
+        <td data-label="Status">${chip(humanize(l.status), LEAD_TONE[l.status])}</td>
+        <td data-label="Area">${textCell([l.city, l.zip].filter(Boolean).join(' '))}</td>
+        <td data-label="Max price" class="num">${usdCell(l.max_price)}</td>
+        <td data-label="Move">${textCell(TL_LABEL[l.move_timeline])}</td>
+        <td data-label="Paying">${textCell(FIN_LABEL[l.financing_type])}</td>
+        <td data-label="Picked"><span class="mono">${num(l.selected_count)}</span></td>
+        <td data-label="Assigned">${textCell(l.assigned_agent_name)}</td>
+        <td data-label="Created">${timeTag(l.created_at, true)}</td>
+        <td data-label="Flags"><div class="chips">${leadFlags(l).join('')}</div></td>
+      </tr>`).join('')}</tbody></table></div>`
+      : emptyHTML(status ? `No leads with status "${humanize(status)}".` : 'No leads yet.', 'Leads appear here when a buyer finishes the conversation with Martha on the public site.');
+    return `${pageHead('Leads', `<span class="mono">${leads.length}</span> shown`, filter)}${table}`;
+  }
+
+  async function viewLeadDetail(id) {
+    const d = await api('GET', `/agent/leads/${encodeURIComponent(id)}`);
+    const l = d.lead || {};
+    const isAdmin = state.me && state.me.role === 'admin';
+    const under = l.agent_agreement_signed || l.has_agent === 'yes_under_agreement';
+    const visits = Array.isArray(d.visited_offices) ? d.visited_offices : [];
+    const rows = Array.isArray(d.research_rows) ? d.research_rows : [];
+    const selIds = new Set((Array.isArray(d.selections) ? d.selections : []).map((s) => s.id));
+    const run = d.research_run || null;
+
+    const repBox = under
+      ? `<div class="errbox" role="alert"><strong>Signed with another agent. Do not contact or solicit this buyer.</strong>No email or phone was stored and every consent was recorded as not granted.</div>`
+      : l.has_agent === 'yes_informal'
+        ? `<div class="status status-warn" role="note"><strong>The buyer has an agent but nothing is signed.</strong> Confirm before you register them with any builder.</div>`
+        : `<div class="status status-ok" role="note"><strong>No agent.</strong> The buyer can still be represented, subject to the sales offices below.</div>`;
+    const visitsBox = visits.length
+      ? `<div class="status status-warn" role="alert"><strong>Already visited ${visits.length} sales office${visits.length === 1 ? '' : 's'}.</strong> Check each builder's registration rule before you represent this buyer there.</div>
+        <ul class="plain">${visits.map((v) => `<li><div><div style="font-weight:600">${esc(v.community || 'Community not given')}</div><div class="small muted">${esc(v.builder || 'Builder not given')}</div></div></li>`).join('')}</ul>`
+      : '<p class="muted">The buyer reported no sales office visits.</p>';
+
+    const kv = [['Area', [l.area_input && l.area_input !== l.zip ? l.area_input : null, l.city, l.county ? l.county + ' County' : null, l.zip].filter(Boolean).join(' · ')], ['Max price', fmtUSD(l.max_price)], ['Max monthly', l.max_monthly != null ? fmtUSD(l.max_monthly) : 'Not given'],
+      ['Down payment', l.down_payment != null ? fmtUSD(l.down_payment) : 'Not given'], ['Move', TL_LABEL[l.move_timeline] || l.move_timeline], ['Paying', FIN_LABEL[l.financing_type] || l.financing_type], ['Language', String(l.lang || '').toUpperCase()]];
+    const email = l.email ? `<a href="mailto:${esc(encodeURIComponent(l.email).replace(/%40/g, '@'))}">${esc(l.email)}</a>` : DASH;
+    const phone = l.phone ? `<a class="mono" href="tel:${esc(String(l.phone).replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>` : DASH;
+
+    const consents = Array.isArray(d.consents) ? d.consents : [];
+    const consentHTML = consents.length ? `<ul class="plain">${consents.map((c) => `<li><div class="grow stack" style="min-width:240px">
+      <div class="row">${chip(humanize(c.channel), 'outline')}${c.revoked_at ? chip('REVOKED', 'crit') : c.granted ? chip('GRANTED', 'ok') : chip('NOT GRANTED', 'neutral')}</div>
+      <blockquote class="quote">${esc(c.consent_text)}</blockquote>
+      <p class="small muted">${timeTag(c.granted_at, true)} &middot; version <span class="mono">${esc(c.consent_version)}</span> &middot; IP <span class="mono">${esc(c.ip || 'not recorded')}</span>${c.revoked_at ? ` &middot; revoked ${timeTag(c.revoked_at, true)} via ${esc(humanize(c.revoked_via || ''))}` : ''}</p>
+      ${c.user_agent ? `<p class="small muted">${esc(c.user_agent)}</p>` : ''}</div></li>`).join('')}</ul>` : '<p class="muted">No consent records.</p>';
+
+    const rowCells = (x) => {
+      const src = safeUrl(x.source_url);
+      const badge = x.origin === 'agent_verified' ? chip('Agent verified', 'ok') : x.verified ? chip('Source seen in search', 'info') : chip('Unverified', 'warn');
+      return `<td data-label="Builder / community"><strong>${esc(x.community || '')}</strong><div class="small muted">${esc(x.builder)}</div><div class="chips">${badge}${x.hidden_reason ? chip('Hidden from buyer: ' + humanize(x.hidden_reason), 'crit') : ''}${selIds.has(x.id) ? chip('Buyer picked', 'ok') : ''}</div></td>
+        <td data-label="Starting price">${textCell(x.starting_price)}</td>
+        <td data-label="Promotion">${textCell(x.promotion)}${x.other_incentives ? `<div class="small muted">${esc(x.other_incentives)}</div>` : ''}</td>
+        <td data-label="Rate / closing">${textCell([x.rate, x.closing_credit].filter(Boolean).join(' · '))}</td>
+        <td data-label="Expiration">${textCell(x.expiration)}</td>
+        <td data-label="Restrictions">${textCell(x.restrictions)}</td>
+        <td data-label="HOA / CDD">${textCell([x.hoa, x.cdd].filter(Boolean).join(' · '))}</td>
+        <td data-label="Source">${src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer">${esc(new URL(src).hostname)}</a>` : DASH}<div class="small muted">Checked ${esc(x.date_checked || 'unknown')}</div></td>`;
+    };
+    const tableOf = (list) => list.length ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Builder / community</th><th>Starting price</th><th>Promotion</th><th>Rate / closing</th><th>Expiration</th><th>Restrictions</th><th>HOA / CDD</th><th>Source</th></tr></thead>
+      <tbody>${list.map((x) => `<tr>${rowCells(x)}</tr>`).join('')}</tbody></table></div>` : '<p class="muted">None.</p>';
+    const picked = rows.filter((x) => selIds.has(x.id));
+    const runMeta = run ? `<p class="small muted">Run #${esc(run.id)} for ${esc(run.area_label || run.zip || '')} &middot; ${esc(humanize(run.source))}${run.model ? ' &middot; ' + esc(run.model) : ''} &middot; ${num(run.searches)} searches &middot; finished ${timeTag(run.finished_at, true)}${run.notice ? ' &middot; ' + esc(humanize(run.notice)) : ''}${run.error ? ' &middot; error: ' + esc(run.error) : ''}</p>` : '<p class="muted">No research run is attached to this lead.</p>';
+    const inv = run && Array.isArray(run.inventory) && run.inventory.length ? `<ul class="plain">${run.inventory.map((h) => { const src = safeUrl(h.source_url); return `<li><div><strong>${esc([h.builder, h.community].filter(Boolean).join(' · '))}</strong> ${esc(h.home || '')} ${esc(h.price || '')}<div class="small muted">${esc(h.note || '')}</div></div>${src ? `<a class="small" href="${esc(src)}" target="_blank" rel="noopener noreferrer">Source</a>` : ''}</li>`; }).join('')}</ul>` : '<p class="muted">No motivated inventory listed.</p>';
+
+    const agents = Array.isArray(d.agents) ? d.agents : [];
+    const statusSel = `<label class="field" style="min-width:180px"><span class="flabel">Status</span><select data-change="leadStatus" data-lid="${esc(l.id)}">${LEAD_STATUSES.map(([v, t]) => `<option value="${v}"${v === l.status ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+    const assignSel = isAdmin ? `<label class="field" style="min-width:220px"><span class="flabel">Assigned agent</span><select data-change="leadAssign" data-lid="${esc(l.id)}"><option value="">Unassigned</option>${agents.map((a) => `<option value="${esc(a.id)}"${Number(a.id) === Number(l.assigned_agent_id) ? ' selected' : ''}>${esc(a.name)} (${esc(a.role)})</option>`).join('')}</select></label>` : `<p class="small muted">Assigned to ${esc(l.assigned_agent ? l.assigned_agent.name : 'nobody')}</p>`;
+    const notes = Array.isArray(d.notifications) ? d.notifications : [];
+    const notesHTML = notes.length ? `<ul class="plain">${notes.map((n) => `<li><div><strong>${esc(humanize(n.action))}</strong> <span class="small muted">${timeTag(n.created_at, true)}</span></div></li>`).join('')}</ul>` : `<p class="muted">${l.referral_consent ? 'No notification recorded yet.' : 'No notifications: the buyer did not agree to agent contact.'}</p>`;
+
+    return `
+      <a class="crumb" href="#/leads">Back to all leads</a>
+      ${pageHead(l.first_name || 'Lead', `${chip(humanize(l.status), LEAD_TONE[l.status])} ${l.referral_consent ? chip('Agent contact allowed', 'ok') : chip('Report only: no outreach consent', 'outline')} &middot; since ${timeTag(l.created_at)}`, `<div class="row" data-scope>${statusSel}${assignSel}<p data-status hidden></p></div>`)}
+      <div class="stack">
+        <section class="card"><h4 style="margin-bottom:10px">Representation</h4>${repBox}<h4 style="margin:14px 0 8px">Sales offices already visited</h4>${visitsBox}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Contact</h4><dl class="kv"><div><dt>Email</dt><dd>${email}</dd></div><div><dt>Phone</dt><dd>${phone}</dd></div></dl></section>
+        <section class="card"><h4 style="margin-bottom:10px">Criteria</h4><dl class="kv">${kv.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v || '')}</dd></div>`).join('')}</dl></section>
+        <section class="card"><h4 style="margin-bottom:10px">Communities the buyer picked (${picked.length})</h4>${tableOf(picked)}</section>
+        <section class="card"><h4 style="margin-bottom:6px">Full research snapshot</h4>${runMeta}${tableOf(rows)}<h4 style="margin:14px 0 8px">Motivated inventory</h4>${inv}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Consent records</h4>${consentHTML}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Notifications</h4>${notesHTML}</section>
+      </div>`;
+  }
 
   async function viewBuyers(r) {
     if (r.parts[1]) return viewBuyerDetail(r.parts[1]);
@@ -1315,6 +1431,7 @@
 
   async function viewMore() {
     const items = [
+      ['#/registry', 'Registry', 'Builders, communities and fees', ''],
       ['#/reports', 'Reports', 'Buyer reports awaiting review', 'reports'],
       ['#/compliance', 'Compliance', 'Holds and findings', 'compliance'],
       ['#/incentives', 'Incentives', 'Every incentive and its freshness', ''],
@@ -1330,7 +1447,7 @@
   }
 
   const VIEWS = {
-    today: viewToday, verify: viewVerify, reports: viewReports, compliance: viewCompliance, buyers: viewBuyers,
+    today: viewToday, leads: viewLeads, verify: viewVerify, reports: viewReports, compliance: viewCompliance, buyers: viewBuyers,
     registry: viewRegistry, incentives: viewIncentives, billing: viewBilling, settings: viewSettings, more: viewMore,
   };
 
@@ -1708,6 +1825,15 @@
   /* ------------------------------------------------------------------ */
 
   const changes = {
+    leadFilter: (el) => { location.hash = '#/leads' + (el.value ? `?status=${encodeURIComponent(el.value)}` : ''); },
+    leadStatus: async (el) => {
+      try { await api('PATCH', `/agent/leads/${encodeURIComponent(el.dataset.lid)}`, { status: el.value }); toast(`Status set to ${humanize(el.value)}.`); refreshBadges(); }
+      catch (e) { if (e.status !== 401) toast(`Status change failed: ${e.message}`, 'crit'); }
+    },
+    leadAssign: async (el) => {
+      try { await api('PATCH', `/agent/leads/${encodeURIComponent(el.dataset.lid)}`, { assigned_agent_id: el.value ? Number(el.value) : null }); toast(el.value ? 'Agent assigned.' : 'Lead unassigned.'); refresh(); }
+      catch (e) { if (e.status !== 401) toast(`Assignment failed: ${e.message}`, 'crit'); }
+    },
     buyerStage: (el) => { location.hash = '#/buyers' + (el.value ? `?stage=${encodeURIComponent(el.value)}` : ''); },
     theme: (el) => {
       const v = el.value === 'dark' ? 'dark' : 'light';

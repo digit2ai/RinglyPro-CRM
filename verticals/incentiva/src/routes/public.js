@@ -14,6 +14,10 @@ const { buildReport, publicView, loadAgent, disclosures } = require('../services
 const { TENANT_ID, ipHash, rateLimit, activity, clampStr, numOrNull, audit } = require('../services/util');
 const rentcast = require('../services/rentcast');
 const notify = require('../services/notify');
+const area = require('../services/area');
+const research = require('../services/research');
+const leads = require('../services/leads');
+const sms = require('../services/sms');
 
 const CONSENT_VERSION = 'v2-2026-09-13'; // v2: product renamed BuyersLine
 const MUST_HAVES = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
@@ -50,6 +54,7 @@ module.exports = function publicRoutes(opts = {}) {
         market: { slug: market.slug, name: market.name, counties: market.counties },
         agent: agent ? { name: agent.name, title: agent.title, license_no: agent.license_no, brokerage_name: agent.brokerage_name, brokerage_license_no: agent.brokerage_license_no } : null,
         consent: consentTexts(lang, agent),
+        lead_consent: leads.leadConsentTexts(lang, agent),
         options: {
           must_haves: MUST_HAVES.map((k) => ({ key: k, label: t(lang, 'must_haves.' + k) })),
           financing: FINANCING.map((k) => ({ key: k, label: t(lang, 'financing.' + k) })),
@@ -60,6 +65,98 @@ module.exports = function publicRoutes(opts = {}) {
         is_demo_data: !!demo.d
       });
     } catch (e) { console.error('[incentiva] config', e); res.status(500).json({ error: 'Could not load configuration. Try again in a minute.' }); }
+  });
+
+  // ── Martha: conversational intake ─────────────────────────────────────────
+  router.post('/area', async (req, res) => {
+    if (!rateLimit('area:' + ipHash(req), 60, 3600e3)) return res.status(429).json({ error: 'Too many lookups. Try again later.' });
+    try { res.json(await area.resolveArea(tenantId, req.body && req.body.input)); }
+    catch (e) { console.error('[incentiva] area', e); res.status(500).json({ ok: false, reason: 'error' }); }
+  });
+
+  // Start (or reuse the cached) research for an area. Never waits for the crawl.
+  router.post('/research', async (req, res) => {
+    const b = req.body || {};
+    const a = b.area && typeof b.area === 'object' ? b.area : {};
+    const clean = { input: clampStr(a.input, 120), zip: /^\d{5}$/.test(String(a.zip || '')) ? String(a.zip) : null, city: clampStr(a.city, 120), county: clampStr(a.county, 120), state: 'FL', label: clampStr(a.label, 160) };
+    if (!clean.zip && !clean.input && !clean.city) return res.status(400).json({ error: 'An area is required.' });
+    try {
+      // Resolve on the server: the prompt and the shared cache key come only from the lookup,
+      // never from place text a caller sent (that would let one caller poison an area for everyone).
+      const resolved = await area.resolveArea(tenantId, clean.zip || clean.input || clean.city);
+      if (!resolved.ok) return res.status(400).json({ error: 'That area could not be confirmed.', reason: resolved.reason });
+      const safeArea = { zip: resolved.zip || null, city: resolved.city || null, county: resolved.county || null, state: 'FL',
+        label: resolved.resolved ? resolved.label : (resolved.zip || String(resolved.input || '').replace(/[^A-Za-z .\'-]/g, '').slice(0, 60)) };
+      safeArea.input = safeArea.label;
+      const allowFresh = rateLimit('research:' + ipHash(req), Number(process.env.INCENTIVA_RESEARCH_PER_HOUR || 6), 3600e3);
+      const out = await research.startOrGet(tenantId, safeArea, { allowFresh });
+      if (!out.run) return res.status(429).json({ error: 'Too many new searches from this connection. Try again later.' });
+      res.json({ token: out.run.token, status: out.run.status, fresh: out.fresh });
+    } catch (e) { console.error('[incentiva] research start', e); res.status(500).json({ error: 'Could not start the research. Try again.' }); }
+  });
+
+  router.get('/research/:token', async (req, res) => {
+    if (!rateLimit('rpoll:' + ipHash(req), 900, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const q = req.query || {};
+      const market = await getMarket(tenantId);
+      const settings = await effectiveSettings(market.settings);
+      const view = await research.publicRun(tenantId, String(req.params.token || '').slice(0, 40), {
+        max_price: numOrNull(q.max_price), max_monthly: numOrNull(q.max_monthly), down_payment: numOrNull(q.down_payment), financing: leads.FINANCING.includes(q.financing) ? q.financing : null
+      }, settings);
+      if (!view) return res.status(404).json({ error: 'Not found' });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(view);
+    } catch (e) { console.error('[incentiva] research poll', e); res.status(500).json({ error: 'Could not load the research.' }); }
+  });
+
+  router.post('/leads', async (req, res) => {
+    const ih = ipHash(req);
+    if (!rateLimit('lead:' + ih, Number(process.env.INCENTIVA_INTAKE_PER_HOUR || 10), 3600e3)) return res.status(429).json({ error: 'Too many submissions from this connection. Try again later.' });
+    const b = req.body || {};
+    if (b.website) return res.status(400).json({ error: 'Invalid submission' }); // honeypot
+    const v = leads.validateLead(b);
+    if (!v.value) return res.status(400).json({ error: 'Please complete the required answers.', missing: v.missing || [], invalid: v.errors || [] });
+    try {
+      const val = v.value;
+      if (!val.under_agreement && val.research_token) {
+        const run = await research.publicRun(tenantId, val.research_token, { max_price: val.max_price, max_monthly: val.max_monthly }, null);
+        if (run && run.status === 'done' && run.rows.length && !val.selections.length) return res.status(400).json({ error: 'Choose at least one community.', missing: ['selections'] });
+      }
+      const market = await getMarket(tenantId);
+      const agent = await defaultAgent(tenantId, market);
+      const lead = await leads.createLead(tenantId, val, { req, agent, ipHash: ih });
+      if (lead.email_consent) notify.later(notify.buyerLeadReport, tenantId, lead.id);
+      if (lead.referral && lead.assigned_agent_id) {
+        notify.later(notify.agentNewLead, tenantId, lead.id);
+        notify.later(sms.agentNewLeadSms, tenantId, lead.id);
+        await db.exec('UPDATE nca_leads SET notified_agent_id = :a WHERE id = :id', { a: lead.assigned_agent_id, id: lead.id });
+      }
+      res.json({ ok: true, token: lead.token, gated: lead.gated, referral: lead.referral, emailed: lead.email_consent });
+    } catch (e) { console.error('[incentiva] lead', e); res.status(500).json({ error: 'We could not save your answers right now. Please try again in a few minutes.' }); }
+  });
+
+  router.get('/leads/:token', async (req, res) => {
+    if (!rateLimit('lview:' + ipHash(req), 120, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const tok = String(req.params.token || '');
+      if (!/^[A-Za-z0-9_-]{20,64}$/.test(tok)) return res.status(404).json({ error: 'Not found' });
+      const view = await leads.publicLead(tenantId, tok);
+      if (!view) return res.status(404).json({ error: 'Not found' });
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.json(view);
+    } catch (e) { console.error('[incentiva] lead view', e); res.status(500).json({ error: 'Could not load your report.' }); }
+  });
+
+  // Twilio inbound SMS webhook: STOP / START / HELP. Signature-validated.
+  router.post('/sms/inbound', express.urlencoded({ extended: false }), async (req, res) => {
+    try {
+      const url = process.env.INCENTIVA_SMS_WEBHOOK_URL || ((process.env.INCENTIVA_PUBLIC_URL || 'https://aiagent.ringlypro.com/buyersline').replace(/\/+$/, '') + '/api/v1/public/sms/inbound');
+      const out = await sms.handleInbound(tenantId, req, url);
+      if (out.status !== 200) return res.status(out.status).end();
+      res.type('text/xml').send(out.twiml);
+    } catch (e) { console.error('[incentiva] sms inbound', e); res.status(500).end(); }
   });
 
   router.post('/buying-power', async (req, res) => {

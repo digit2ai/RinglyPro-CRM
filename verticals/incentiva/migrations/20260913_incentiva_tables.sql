@@ -415,3 +415,145 @@ CREATE TABLE IF NOT EXISTS nca_api_usage (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS nca_api_usage_uq ON nca_api_usage (tenant_id, provider, month);
+
+-- ── Conversational intake (Martha) + builder-promotion research (2026-09-14) ──
+-- Spec names map: buyersline_leads -> nca_leads, buyersline_consents -> nca_lead_consents,
+-- buyersline_visited_offices -> nca_lead_visited_offices, buyersline_research_runs ->
+-- nca_research_runs, buyersline_research_rows -> nca_research_rows,
+-- buyersline_lead_selections -> nca_lead_selections. The vertical keeps one prefix.
+
+-- ZIP / place resolution cache (keyless lookups are slow and rate limited).
+CREATE TABLE IF NOT EXISTS nca_area_cache (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  query VARCHAR(200) NOT NULL,
+  result JSONB,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_area_cache_uq ON nca_area_cache (tenant_id, query);
+
+-- One research run per area, cached (expires_at). Runs are public market information,
+-- never buyer data, so a run is shared by every buyer searching the same area.
+CREATE TABLE IF NOT EXISTS nca_research_runs (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  token VARCHAR(40) NOT NULL,
+  cache_key VARCHAR(120) NOT NULL,
+  zip VARCHAR(10),
+  area_label VARCHAR(160),
+  city VARCHAR(120),
+  county VARCHAR(120),
+  state VARCHAR(40),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('running','done','failed')),
+  source VARCHAR(20) NOT NULL DEFAULT 'model' CHECK (source IN ('model','registry')),
+  notice VARCHAR(80),
+  progress JSONB NOT NULL DEFAULT '{}'::jsonb,
+  raw_json JSONB,
+  top_deals JSONB NOT NULL DEFAULT '[]'::jsonb,
+  inventory JSONB NOT NULL DEFAULT '[]'::jsonb,
+  model VARCHAR(60),
+  searches INTEGER NOT NULL DEFAULT 0,
+  error TEXT,
+  ran_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  finished_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_research_runs_token_uq ON nca_research_runs (token);
+CREATE INDEX IF NOT EXISTS nca_research_runs_key_idx ON nca_research_runs (tenant_id, cache_key, ran_at DESC);
+
+CREATE TABLE IF NOT EXISTS nca_research_rows (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  run_id INTEGER NOT NULL REFERENCES nca_research_runs(id) ON DELETE CASCADE,
+  origin VARCHAR(20) NOT NULL CHECK (origin IN ('ai_research','agent_verified')),
+  builder VARCHAR(160) NOT NULL,
+  community VARCHAR(200),
+  starting_price TEXT,
+  starting_price_usd NUMERIC(12,2),
+  promotion TEXT,
+  rate TEXT,
+  closing_credit TEXT,
+  other_incentives TEXT,
+  expiration TEXT,
+  expiration_date DATE,
+  restrictions TEXT,
+  hoa TEXT,
+  cdd TEXT,
+  scope VARCHAR(20),
+  source_url TEXT,
+  date_checked VARCHAR(40),
+  verified BOOLEAN NOT NULL DEFAULT false,
+  verified_basis VARCHAR(40),
+  hidden_reason VARCHAR(40),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS nca_research_rows_run_idx ON nca_research_rows (tenant_id, run_id);
+
+CREATE TABLE IF NOT EXISTS nca_leads (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  token VARCHAR(40) NOT NULL,
+  lang VARCHAR(2) NOT NULL DEFAULT 'en',
+  first_name VARCHAR(120) NOT NULL,
+  email VARCHAR(200),
+  phone VARCHAR(40),
+  area_input VARCHAR(200),
+  zip VARCHAR(10),
+  city VARCHAR(120),
+  county VARCHAR(120),
+  state VARCHAR(40),
+  max_price NUMERIC(12,2) NOT NULL,
+  max_monthly NUMERIC(10,2),
+  down_payment NUMERIC(12,2),
+  move_timeline VARCHAR(20) NOT NULL,
+  financing_type VARCHAR(20) NOT NULL,
+  has_agent VARCHAR(30) NOT NULL CHECK (has_agent IN ('no','yes_under_agreement','yes_informal')),
+  agent_agreement_signed BOOLEAN NOT NULL DEFAULT false,
+  referral_consent BOOLEAN NOT NULL DEFAULT false,
+  research_run_id INTEGER REFERENCES nca_research_runs(id) ON DELETE SET NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'new' CHECK (status IN ('new','contacted','working','closed','lost')),
+  assigned_agent_id INTEGER,
+  notified_agent_id INTEGER,
+  ip_hash VARCHAR(64),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_leads_token_uq ON nca_leads (token);
+CREATE INDEX IF NOT EXISTS nca_leads_tenant_idx ON nca_leads (tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS nca_leads_agent_idx ON nca_leads (tenant_id, assigned_agent_id);
+
+CREATE TABLE IF NOT EXISTS nca_lead_visited_offices (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  lead_id INTEGER NOT NULL REFERENCES nca_leads(id) ON DELETE CASCADE,
+  builder VARCHAR(160),
+  community VARCHAR(200)
+);
+CREATE INDEX IF NOT EXISTS nca_lead_visited_offices_lead_idx ON nca_lead_visited_offices (tenant_id, lead_id);
+
+-- The exact consent text shown, stored per channel. The raw IP is kept here (and only
+-- here) because it is consent evidence; it is shown only in the agent console.
+CREATE TABLE IF NOT EXISTS nca_lead_consents (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  lead_id INTEGER NOT NULL REFERENCES nca_leads(id) ON DELETE CASCADE,
+  channel VARCHAR(20) NOT NULL CHECK (channel IN ('email','sms','agent_referral')),
+  granted BOOLEAN NOT NULL,
+  consent_text TEXT NOT NULL,
+  consent_version VARCHAR(40) NOT NULL,
+  ip VARCHAR(64),
+  user_agent VARCHAR(300),
+  granted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at TIMESTAMPTZ,
+  revoked_via VARCHAR(40)
+);
+CREATE INDEX IF NOT EXISTS nca_lead_consents_lead_idx ON nca_lead_consents (tenant_id, lead_id);
+
+CREATE TABLE IF NOT EXISTS nca_lead_selections (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  lead_id INTEGER NOT NULL REFERENCES nca_leads(id) ON DELETE CASCADE,
+  research_row_id INTEGER NOT NULL REFERENCES nca_research_rows(id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_lead_selections_uq ON nca_lead_selections (lead_id, research_row_id);
+CREATE INDEX IF NOT EXISTS nca_lead_selections_tenant_idx ON nca_lead_selections (tenant_id, lead_id);

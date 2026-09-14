@@ -30,18 +30,18 @@ function weakPassword() {
     .some((p) => p.length < 12 || PUBLISHED_PASSWORDS.includes(p));
 }
 
-async function upsertAccount(tenantId, { email, name, password, role, license_no, title, brokerage_id }) {
+async function upsertAccount(tenantId, { email, name, password, role, license_no, title, brokerage_id, phone }) {
   const e = String(email).trim().toLowerCase();
   const row = await db.one('SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e', { t: tenantId, e });
   if (!row) {
     const hash = await bcrypt.hash(password, 10);
-    await db.exec(`INSERT INTO nca_users (tenant_id, email, name, password_hash, role, license_no, title, brokerage_id)
-      VALUES (:t, :e, :n, :h, :r, :l, :ti, :b)`, { t: tenantId, e, n: name, h: hash, r: role, l: license_no || null, ti: title || null, b: brokerage_id || null });
+    await db.exec(`INSERT INTO nca_users (tenant_id, email, name, password_hash, role, license_no, title, brokerage_id, phone)
+      VALUES (:t, :e, :n, :h, :r, :l, :ti, :b, :ph)`, { t: tenantId, e, n: name, h: hash, r: role, l: license_no || null, ti: title || null, b: brokerage_id || null, ph: phone || null });
   } else {
     const same = await bcrypt.compare(password, row.password_hash);
-    await db.exec(`UPDATE nca_users SET name = :n, role = :r, license_no = :l, title = :ti, brokerage_id = COALESCE(:b, brokerage_id),
+    await db.exec(`UPDATE nca_users SET name = :n, role = :r, license_no = :l, title = :ti, brokerage_id = COALESCE(:b, brokerage_id), phone = COALESCE(:ph, phone),
       password_hash = CASE WHEN :same THEN password_hash ELSE :h END, active = true WHERE id = :id`,
-    { n: name, r: role, l: license_no || null, ti: title || null, b: brokerage_id || null, same, h: same ? '' : await bcrypt.hash(password, 10), id: row.id });
+    { n: name, r: role, l: license_no || null, ti: title || null, b: brokerage_id || null, ph: phone || null, same, h: same ? '' : await bcrypt.hash(password, 10), id: row.id });
   }
   return db.one('SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e', { t: tenantId, e });
 }
@@ -67,7 +67,7 @@ async function ensureAccounts(tenantId) {
     agent = await upsertAccount(tenantId, {
       email: process.env.INCENTIVA_AGENT_EMAIL, name: process.env.INCENTIVA_AGENT_NAME || 'Ole',
       password: process.env.INCENTIVA_AGENT_PASSWORD, role: 'agent', license_no: process.env.INCENTIVA_AGENT_LICENSE || null,
-      title: process.env.INCENTIVA_AGENT_TITLE || 'Real estate sales associate', brokerage_id: brokerageId
+      title: process.env.INCENTIVA_AGENT_TITLE || 'Real estate sales associate', brokerage_id: brokerageId, phone: process.env.INCENTIVA_AGENT_PHONE || null
     });
     const market = await getMarket(tenantId);
     const settings = market.settings;

@@ -19,6 +19,7 @@ const { processText, fetchSource, insertVersion, versionFields } = require('../s
 const { seedDemo, reset } = require('../services/seed');
 const billing = require('../engines/billing');
 const notify = require('../services/notify');
+const sms = require('../services/sms');
 const { publicView } = require('../services/report');
 const { audit, activity, clampStr, numOrNull } = require('../services/util');
 
@@ -57,7 +58,8 @@ module.exports = function agentRoutes() {
     ]);
     const deadlines = await db.one(`SELECT COUNT(*)::int AS n FROM nca_incentives i JOIN nca_incentive_versions v ON v.id = i.current_version_id
       WHERE i.tenant_id = :tt AND v.verification_status = 'verified' AND (v.close_by BETWEEN now()::date AND now()::date + 21 OR v.expires_on BETWEEN now()::date AND now()::date + 21)`, { tt });
-    res.json({ verification: vc, reports_pending: rep.n, compliance_holds: holds.n, gate_stops: gates.n, consult_requests: consults.n, deadlines: deadlines.n, billable_consults_month: billable.n });
+    const newLeads = await db.one(`SELECT COUNT(*)::int AS n FROM nca_leads l WHERE l.tenant_id = :tt AND l.status = 'new'${req.user.role === 'admin' ? '' : ' AND l.assigned_agent_id = :uid'}`, { tt, uid });
+    res.json({ new_leads: newLeads.n, verification: vc, reports_pending: rep.n, compliance_holds: holds.n, gate_stops: gates.n, consult_requests: consults.n, deadlines: deadlines.n, billable_consults_month: billable.n });
   }));
 
   // ── Verification ──────────────────────────────────────────────────────────
@@ -371,6 +373,82 @@ module.exports = function agentRoutes() {
   }));
 
   // ── Buyers ────────────────────────────────────────────────────────────────
+  // ── Leads from Martha's conversational intake ─────────────────────────────
+  // Row ownership: an agent sees only leads assigned to them; the admin sees the tenant.
+  function leadOwner(user, alias = 'l') { return user.role === 'admin' ? '' : ` AND ${alias}.assigned_agent_id = :uid`; }
+  const LEAD_STATUSES = ['new', 'contacted', 'working', 'closed', 'lost'];
+
+  r.get('/leads', wrap(async (req, res) => {
+    const tt = req.user.tenant_id, uid = req.user.id, oc = leadOwner(req.user);
+    const status = LEAD_STATUSES.includes(req.query.status) ? req.query.status : null;
+    const rows = await db.q(`SELECT l.id, l.first_name, l.lang, l.city, l.zip, l.county, l.max_price, l.move_timeline, l.financing_type, l.has_agent, l.agent_agreement_signed,
+      l.referral_consent, l.status, l.assigned_agent_id, l.created_at, u.name AS assigned_agent_name,
+      (SELECT COUNT(*)::int FROM nca_lead_visited_offices v WHERE v.lead_id = l.id AND v.tenant_id = l.tenant_id) AS visited_count,
+      (SELECT COUNT(*)::int FROM nca_lead_selections s WHERE s.lead_id = l.id AND s.tenant_id = l.tenant_id) AS selected_count
+      FROM nca_leads l LEFT JOIN nca_users u ON u.id = l.assigned_agent_id AND u.tenant_id = l.tenant_id
+      WHERE l.tenant_id = :tt${oc}${status ? ' AND l.status = :status' : ''} ORDER BY l.created_at DESC LIMIT 200`, { tt, uid, status });
+    const counts = await db.q(`SELECT l.status, COUNT(*)::int AS n FROM nca_leads l WHERE l.tenant_id = :tt${oc} GROUP BY l.status`, { tt, uid });
+    res.json({ leads: rows, counts: Object.fromEntries(counts.map((c) => [c.status, c.n])) });
+  }));
+
+  async function ownLead(req) {
+    const l = await db.one(`SELECT l.* FROM nca_leads l WHERE l.id = :id AND l.tenant_id = :tt${leadOwner(req.user)}`, { id: Number(req.params.id) || 0, tt: req.user.tenant_id, uid: req.user.id });
+    if (!l) throw new HttpError(404, 'Lead not found');
+    return l;
+  }
+
+  r.get('/leads/:id', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    const tt = req.user.tenant_id;
+    const [visits, consents, selections, agents, notices] = await Promise.all([
+      db.q('SELECT builder, community FROM nca_lead_visited_offices WHERE tenant_id = :tt AND lead_id = :l ORDER BY id', { tt, l: l.id }),
+      db.q('SELECT channel, granted, consent_text, consent_version, ip, user_agent, granted_at, revoked_at, revoked_via FROM nca_lead_consents WHERE tenant_id = :tt AND lead_id = :l ORDER BY id', { tt, l: l.id }),
+      db.q(`SELECT r.* FROM nca_lead_selections s JOIN nca_research_rows r ON r.id = s.research_row_id AND r.tenant_id = s.tenant_id WHERE s.tenant_id = :tt AND s.lead_id = :l ORDER BY r.builder`, { tt, l: l.id }),
+      req.user.role === 'admin' ? db.q(`SELECT id, name, role, license_no FROM nca_users WHERE tenant_id = :tt AND active = true ORDER BY role DESC, name`, { tt }) : Promise.resolve([]),
+      db.q(`SELECT action, detail, created_at FROM nca_audit_log WHERE tenant_id = :tt AND subject_type = 'lead' AND subject_id = :l ORDER BY created_at`, { tt, l: l.id })
+    ]);
+    let researchRun = null, researchRows = [];
+    if (l.research_run_id) {
+      researchRun = await db.one('SELECT id, area_label, city, county, zip, status, source, notice, model, searches, ran_at, finished_at, top_deals, inventory, error FROM nca_research_runs WHERE id = :id AND tenant_id = :tt', { id: l.research_run_id, tt });
+      researchRows = await db.q('SELECT * FROM nca_research_rows WHERE tenant_id = :tt AND run_id = :r ORDER BY (origin = \'agent_verified\') DESC, builder, community', { tt, r: l.research_run_id });
+    }
+    const assigned = l.assigned_agent_id ? await db.one('SELECT id, name FROM nca_users WHERE id = :id AND tenant_id = :tt', { id: l.assigned_agent_id, tt }) : null;
+    await audit(tt, { type: 'agent', id: req.user.id }, 'lead.view', 'lead', l.id, {});
+    res.json({ lead: Object.assign({}, l, { ip_hash: undefined, assigned_agent: assigned }), visited_offices: visits, consents, selections, research_run: researchRun, research_rows: researchRows,
+      agents, notifications: notices.filter((n) => /^(email|sms)\./.test(n.action)), report_only: !l.referral_consent });
+  }));
+
+  r.patch('/leads/:id', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    const b = req.body || {};
+    const tt = req.user.tenant_id;
+    const sets = [], rep2 = { id: l.id, tt };
+    if (b.status !== undefined) {
+      if (!LEAD_STATUSES.includes(b.status)) throw new HttpError(400, 'Unknown status');
+      sets.push('status = :status'); rep2.status = b.status;
+    }
+    let newAgent;
+    if (b.assigned_agent_id !== undefined) {
+      adminOnly(req);
+      newAgent = b.assigned_agent_id === null ? null : Number(b.assigned_agent_id);
+      if (newAgent !== null) {
+        const u = await db.one('SELECT id FROM nca_users WHERE id = :id AND tenant_id = :tt AND active = true', { id: newAgent, tt });
+        if (!u) throw new HttpError(400, 'Unknown agent');
+      }
+      sets.push('assigned_agent_id = :agent'); rep2.agent = newAgent;
+    }
+    if (!sets.length) throw new HttpError(400, 'Nothing to change');
+    await db.exec(`UPDATE nca_leads SET ${sets.join(', ')}, updated_at = now() WHERE id = :id AND tenant_id = :tt`, rep2);
+    await audit(tt, { type: 'agent', id: req.user.id }, 'lead.update', 'lead', l.id, { status: b.status, assigned_agent_id: newAgent });
+    // A newly assigned agent is told about the lead only when the buyer agreed to agent contact.
+    if (newAgent && l.referral_consent && l.notified_agent_id !== newAgent) {
+      notify.later(notify.agentNewLead, tt, l.id);
+      notify.later(sms.agentNewLeadSms, tt, l.id);
+      await db.exec('UPDATE nca_leads SET notified_agent_id = :a WHERE id = :id AND tenant_id = :tt', { a: newAgent, id: l.id, tt });
+    }
+    res.json({ ok: true });
+  }));
+
   r.get('/buyers', wrap(async (req, res) => {
     const tt = req.user.tenant_id, uid = req.user.id;
     const stage = clampStr(req.query.stage, 30);

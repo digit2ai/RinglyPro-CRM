@@ -17,7 +17,7 @@
  *  - Bump SHELL_VERSION when a shell file changes.
  */
 
-const SHELL_VERSION = 'bl-shell-12';
+const SHELL_VERSION = 'bl-shell-13';
 
 function base(req) { return (req.baseUrl || '').replace(/\/+$/, ''); }
 
@@ -79,7 +79,7 @@ function serviceWorker(req) {
 const VERSION = ${JSON.stringify(SHELL_VERSION)};
 const BASE = ${JSON.stringify(b)};
 const SHELL = [BASE + '/', BASE + '/search', BASE + '/offline', BASE + '/admin/', BASE + '/admin/login',
-  BASE + '/site.css', BASE + '/theme.js', BASE + '/flow.js', BASE + '/nav.js', BASE + '/install.js', BASE + '/search-widget.js', BASE + '/admin.js',
+  BASE + '/site.css', BASE + '/theme.js', BASE + '/flow.js', BASE + '/intake-chat.js', BASE + '/nav.js', BASE + '/install.js', BASE + '/search-widget.js', BASE + '/admin.js',
   BASE + '/favicon.svg', BASE + '/favicon-32.png', BASE + '/icon-192.png', BASE + '/icon-512.png', BASE + '/apple-touch-icon.png'];
 const CACHEABLE_PAGES = [BASE + '/', BASE + '/search', BASE + '/offline', BASE + '/admin/', BASE + '/admin/login'];
 
