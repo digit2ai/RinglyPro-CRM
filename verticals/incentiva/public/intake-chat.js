@@ -1,6 +1,7 @@
 /* BuyersLine: Martha, the conversational intake.
-   One question at a time, six stages, answers editable, progress kept in this
-   browser (localStorage) so a refresh does not lose it. Stage 03 runs the builder
+   One question at a time, six stages, answers editable. Every page load starts a
+   new conversation (owner decision 2026-09-14): nothing is kept in the browser, and a
+   finished report comes back only through /?lead=<token>. Stage 03 runs the builder
    promotion research on the server and polls it. The server re-validates every
    answer; nothing here is trusted for consent wording, which always comes from
    /api/v1/public/config (lead_consent). No consent box is ever ticked by script. */
@@ -212,10 +213,10 @@
     });
   }
   function fresh() { return { v: 1, step: 'area', answers: { visited_offices: [] }, done: {}, research: null, selections: [], consents: { email: false, sms: false, agent_referral: false }, hp: '', lead: null }; }
-  // Progress survives a refresh, but not forever: after 12 idle hours the next visit starts fresh.
-  var IDLE_MS = 12 * 3600e3;
-  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.v === 1 && (!s.savedAt || Date.now() - s.savedAt < IDLE_MS)) return s; } catch (e) { /* storage blocked */ } return fresh(); }
-  function save() { try { state.savedAt = Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* session only */ } }
+  // A refresh starts a new conversation. Progress lives in memory only; the key an earlier
+  // version stored is removed so an old conversation cannot come back.
+  function load() { try { localStorage.removeItem(KEY); } catch (e) { /* storage blocked */ } return fresh(); }
+  function save() { /* in memory only */ }
   function restart() {
     stopPoll(); state = fresh(); ui.research = null; ui.error = null; ui.busy = false; save();
     var url = new URL(location.href); url.searchParams.delete('lead');
