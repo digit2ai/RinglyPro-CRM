@@ -15,6 +15,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="{{BASE}}/site.css">
 <script src="{{BASE}}/theme.js" defer></script>
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BuyersLine">
+<script>window.BL_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/nav.js" defer></script>
+<script src="{{BASE}}/install.js" defer></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <style>
@@ -29,9 +37,12 @@
 .results { display: grid; gap: 16px; grid-template-columns: 1fr; padding-bottom: 48px; }
 @media (min-width: 980px) { .results { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; } }
 .map-wrap { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); height: 360px; }
-@media (min-width: 980px) { .map-wrap { position: sticky; top: 76px; height: calc(100vh - 100px); min-height: 480px; order: 2; } }
+.map-wrap { order: 1; }
+.list { order: 2; }
+@media (min-width: 980px) { .map-wrap { position: sticky; top: 76px; height: calc(100vh - 100px); min-height: 480px; order: 2; } .list { order: 1; } }
+@media (max-width: 979px) { .map-wrap { height: 300px; } }
 #map { position: absolute; inset: 0; }
-.list { display: grid; gap: 12px; order: 1; }
+.list { display: grid; gap: 12px; }
 .home-card { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--rule); cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; font: inherit; color: inherit; width: 100%; }
 .home-card:hover, .home-card.is-selected { border-color: var(--brand); box-shadow: var(--shadow); }
 .home-card .price { font-weight: 900; font-size: 1.45rem; color: var(--ink); letter-spacing: -.02em; }
@@ -218,9 +229,10 @@
   function tileUrl() { return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; }
   function ensureMap() {
     if (map || !window.L) return map;
-    map = L.map('map', { scrollWheelZoom: false, zoomControl: true }).setView([27.95, -82.46], 9);
+    // On touch screens a one-finger drag scrolls the page; two fingers or a tap on the map unlock panning.
+    map = L.map('map', { scrollWheelZoom: false, zoomControl: true, dragging: !L.Browser.mobile, tap: false }).setView([27.95, -82.46], 9);
     tiles = L.tileLayer(tileUrl(), { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
-    map.on('click', function () { map.scrollWheelZoom.enable(); });
+    map.on('click', function () { map.scrollWheelZoom.enable(); map.dragging.enable(); });
     return map;
   }
 

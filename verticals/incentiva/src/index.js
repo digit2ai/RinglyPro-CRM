@@ -68,12 +68,19 @@ function createApp(opts = {}) {
     });
   });
 
+  // PWA: manifests and worker are generated per mount (src/services/pwa.js). Registered before static.
+  const pwa = require('./services/pwa');
+  router.get('/manifest.webmanifest', (req, res) => pwa.send(res, 'application/manifest+json', JSON.stringify(pwa.buyerManifest(req), null, 2)));
+  router.get('/admin/manifest.webmanifest', (req, res) => pwa.send(res, 'application/manifest+json', JSON.stringify(pwa.consoleManifest(req), null, 2)));
+  router.get('/sw.js', (req, res) => pwa.send(res, 'application/javascript; charset=utf-8', pwa.serviceWorker(req)));
+  router.get('/offline', shell('offline.html'));
+
   router.get('/', shell('index.html'));
   router.get('/r/:token', shell('report.html'));
   router.get(['/search', '/buscar'], shell('search.html'));
-  router.get('/login', shell('login.html'));
+  router.get(['/login', '/admin/login'], shell('login.html'));
   router.get(['/admin', '/admin/'], shell('admin.html'));
-  router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
+  router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 
   router.use('/api/v1/public', require('./routes/public')({ tenantId, allowModel: opts.allowModel, allowGeocode: opts.allowGeocode }));
 

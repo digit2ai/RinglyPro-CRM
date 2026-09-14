@@ -11,6 +11,13 @@
 <link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <script src="{{BASE}}/theme.js" defer></script>
+<link rel="manifest" href="{{BASE}}/admin/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BL Console">
+<script>window.BL_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/install.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
@@ -74,7 +81,7 @@ button{border-radius:40px;font-weight:800}
 :root[data-theme="dark"] .brand svg{border-radius:22%;box-shadow:0 0 0 1px rgba(255,255,255,.22)}
 </style>
 </head>
-<body>
+<body data-no-install>
 <div class="theme-corner"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
 <main class="wrap">
   <div class="brand">
@@ -116,7 +123,7 @@ button{border-radius:40px;font-weight:800}
   // Already signed in? Go straight to the console.
   fetch(BASE + '/api/v1/auth/me', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
     .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){ if (d && d.user) location.replace(BASE + '/admin'); })
+    .then(function(d){ if (d && d.user) location.replace(BASE + '/admin/'); })
     .catch(function(){});
 
   form.addEventListener('submit', function(ev){
@@ -136,7 +143,7 @@ button{border-radius:40px;font-weight:800}
       return res.text().then(function(text){
         var data = null;
         try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
-        if (res.ok && data && data.ok) { location.href = BASE + '/admin'; return; }
+        if (res.ok && data && data.ok) { location.href = BASE + '/admin/'; return; }
         if (res.status === 503) {
           showError((data && data.error) || 'Agent console is not configured', 'warn');
         } else if (res.status === 401) {

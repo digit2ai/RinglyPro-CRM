@@ -11,6 +11,13 @@
 <link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <script src="{{BASE}}/theme.js" defer></script>
+<link rel="manifest" href="{{BASE}}/admin/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BL Console">
+<script>window.BL_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/install.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
@@ -314,7 +321,7 @@ dialog p{white-space:pre-line;color:var(--ink);margin-bottom:18px}
 :root[data-theme="dark"] .brand svg{border-radius:22%;box-shadow:0 0 0 1px rgba(255,255,255,.22)}
 </style>
 </head>
-<body>
+<body data-no-install>
 <a class="skip" href="#main">Skip to content</a>
 
 <div class="chrome" id="chrome">

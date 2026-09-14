@@ -606,6 +606,44 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         assert(!/X-Api-Key|RENTCAST/.test(html), 'key reference in page');
       });
 
+      console.log('\nP. PWA and mobile');
+      await t('buyer manifest: scope is the mount, start_url sits inside it', async () => {
+        const r = await call('GET', '/manifest.webmanifest');
+        eq(r.status, 200);
+        eq(r.data.scope, '/buyersline/'); eq(r.data.id, '/buyersline/');
+        assert(r.data.start_url.startsWith(r.data.scope), 'start_url outside scope');
+        assert(r.data.icons.some((i) => i.purpose === 'maskable' && i.sizes === '512x512'), 'maskable icon');
+      });
+      await t('console manifest is a separate app whose start_url keeps its trailing slash', async () => {
+        const r = await call('GET', '/admin/manifest.webmanifest');
+        eq(r.data.id, '/buyersline/admin/'); eq(r.data.scope, '/buyersline/admin/'); eq(r.data.start_url, '/buyersline/admin/');
+      });
+      await t('no manifest file on disk (it is generated per mount)', () => {
+        assert(!fs.existsSync(path.join(ROOT, 'public', 'manifest.webmanifest')), 'static manifest found');
+      });
+      await t('service worker: served as JS from the mount, never caches the API or reports, never uses addAll', async () => {
+        const r = await fetch(BASE + '/sw.js'); const js = await r.text();
+        eq(r.status, 200); assert(/javascript/.test(r.headers.get('content-type')), 'content type');
+        assert(!/addAll/.test(js), 'addAll makes install atomic');
+        assert(js.includes("url.pathname.startsWith(BASE + '/api/')"), 'api exclusion');
+        const pages = js.match(/const CACHEABLE_PAGES = \[([^\]]+)\]/);
+        assert(pages && !/\/r\//.test(pages[1]), 'report pages must not be cacheable');
+        assert(js.includes('const BASE = "/buyersline"'), 'base substituted');
+      });
+      await t('offline page and in-scope console login are served', async () => {
+        eq((await fetch(BASE + '/offline')).status, 200);
+        eq((await fetch(BASE + '/admin/login')).status, 200);
+        const adminJs = read(path.join(ROOT, 'public', 'admin.js'));
+        assert(!/BASE \+ '\/login'/.test(adminJs), 'console sends users outside its installed scope');
+      });
+      await t('every page links its manifest; buyer pages carry the mobile menu', () => {
+        for (const p of ['index.html', 'search.html', 'report.html']) {
+          const h = read(path.join(ROOT, 'public', p));
+          assert(h.includes('{{BASE}}/manifest.webmanifest') && h.includes('{{BASE}}/nav.js') && h.includes('{{BASE}}/install.js'), p);
+        }
+        for (const p of ['login.html', 'admin.html']) assert(read(path.join(ROOT, 'public', p)).includes('{{BASE}}/admin/manifest.webmanifest'), p);
+      });
+
       console.log('\nN. Settings and routing');
       await t('a reference rate without its source and date is refused', async () => {
         eq((await call('PUT', '/api/v1/agent/settings/market', { settings: { reference_rate: 6.1, reference_rate_source: null } }, 'agent')).status, 400);

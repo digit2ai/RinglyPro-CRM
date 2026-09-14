@@ -127,7 +127,7 @@
       throw apiError(`Network error calling ${method} ${path}. Check your connection and try again.`, 0, null);
     }
     if (res.status === 401) {
-      location.href = BASE + '/login';
+      location.href = BASE + '/admin/login';
       throw apiError('Your session has ended. Redirecting to sign in.', 401, null);
     }
     const text = await res.text();
@@ -1343,7 +1343,7 @@
 
     signout: async () => {
       try { await api('POST', '/auth/logout'); } catch (_) { /* leave anyway */ }
-      location.href = BASE + '/login';
+      location.href = BASE + '/admin/login';
     },
 
     confirm: async (el) => {
@@ -1758,10 +1758,10 @@
       me = await api('GET', '/auth/me');
     } catch (e) {
       if (e.status === 401) return;
-      $('#main').innerHTML = pageHead('Agent console') + `<div class="errbox" role="alert"><strong>Could not load your account.</strong>${esc(e.message)}<div class="formbar"><a class="btn btn-danger" href="${esc(BASE + '/login')}">Go to sign in</a></div></div>`;
+      $('#main').innerHTML = pageHead('Agent console') + `<div class="errbox" role="alert"><strong>Could not load your account.</strong>${esc(e.message)}<div class="formbar"><a class="btn btn-danger" href="${esc(BASE + '/admin/login')}">Go to sign in</a></div></div>`;
       return;
     }
-    if (!me || !me.user) { location.href = BASE + '/login'; return; }
+    if (!me || !me.user) { location.href = BASE + '/admin/login'; return; }
     state.me = me.user;
     renderWho();
     if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', '#/today');

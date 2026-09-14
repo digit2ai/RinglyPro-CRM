@@ -680,6 +680,55 @@ input[type="password"], input[type="search"], select, textarea { border-radius: 
 @media (min-width: 1000px) { .flow-scroll { overflow: visible; margin: 12px 0 0; padding: 8px 0 0; } .flow-track { min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .flow-fill, .flow-runner, .flow-node { transition: none; } }
 
+
+/* ---------- Mobile menu (nav.js) ---------- */
+.nav-burger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; padding: 0; border: 1px solid var(--rule); border-radius: 40px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.nav-burger-bars { position: relative; width: 18px; height: 12px; display: block; }
+.nav-burger-bars span { position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; transition: transform .2s, opacity .2s, top .2s; }
+.nav-burger-bars span:nth-child(1) { top: 0; }
+.nav-burger-bars span:nth-child(2) { top: 5px; }
+.nav-burger-bars span:nth-child(3) { top: 10px; }
+body.nav-open .nav-burger-bars span:nth-child(1) { top: 5px; transform: rotate(45deg); }
+body.nav-open .nav-burger-bars span:nth-child(2) { opacity: 0; }
+body.nav-open .nav-burger-bars span:nth-child(3) { top: 5px; transform: rotate(-45deg); }
+.nav-scrim { position: fixed; inset: 0; background: rgba(38, 33, 63, .35); z-index: 40; }
+@media (min-width: 820px) { .nav-burger { display: none; } .nav-scrim { display: none; } }
+@media (max-width: 819px) {
+  body.nav-open .site-nav {
+    display: flex; flex-direction: column; gap: 2px;
+    position: absolute; left: 0; right: 0; top: 100%;
+    padding: 10px var(--gutter) 18px; background: var(--ground);
+    border-bottom: 1px solid var(--rule); box-shadow: var(--shadow); z-index: 60;
+  }
+  body.nav-open .site-nav a { min-height: 48px; font-size: 1.1rem; padding-inline: 8px; border-radius: 12px; }
+  .header-tools { gap: 6px; }
+  .brand .wordmark { font-size: 1.15rem; }
+}
+
+/* ---------- Install bar (install.js) ---------- */
+.install-bar {
+  position: fixed; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 70; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: 18px; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule); box-shadow: 0 10px 30px rgba(38, 33, 63, .18); max-width: 560px; margin-inline: auto;
+}
+.install-bar img { border-radius: 10px; flex: none; }
+.install-text { display: grid; gap: 2px; flex: 1 1 180px; min-width: 0; font-size: .95rem; }
+.install-text span { color: var(--muted); }
+.install-actions { display: flex; gap: 6px; margin-left: auto; }
+body.has-install-bar { padding-bottom: 120px; }
+
+/* ---------- Touch and small screens ---------- */
+.flow-actor, .example-label { font-size: .75rem; }
+#map.leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
+@media (display-mode: standalone) { .site-header { padding-top: env(safe-area-inset-top); } }
+@media (max-width: 480px) {
+  section { padding-block: 40px; }
+  .btn { width: 100%; }
+  .btn.btn-small, .install-actions .btn, .home-card .btn { width: auto; }
+  .btn-row { flex-direction: column; }
+}
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
@@ -688,7 +737,7 @@ input[type="password"], input[type="search"], select, textarea { border-radius: 
     --caution: #6b4500; --caution-bg: #fff; --critical: #8a1d22; --critical-bg: #fff; --shadow: none;
   }
   body { font-size: 11pt; background: #fff; }
-  .no-print, .site-header, .lang-toggle, .theme-toggle, .flow-runner, form, .consult, [data-voice-orb], .skip-link, .btn { display: none !important; }
+  .no-print, .site-header, .lang-toggle, .theme-toggle, .flow-runner, .install-bar, .nav-burger, .nav-scrim, form, .consult, [data-voice-orb], .skip-link, .btn { display: none !important; }
   .table-wrap { overflow: visible; border: 1px solid #bbb; }
   .table-min { min-width: 0; }
   .item { break-inside: auto; page-break-before: auto; }

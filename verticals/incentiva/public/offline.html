@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<script>(function(){try{var t=localStorage.getItem('incentiva_theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Offline | BuyersLine</title>
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="{{BASE}}/site.css">
+<style>
+.offline { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px var(--gutter); text-align: center; }
+.offline-card { max-width: 420px; display: grid; gap: 14px; justify-items: center; }
+.offline-card img { width: 72px; height: 72px; border-radius: 18px; }
+</style>
+</head>
+<body>
+<main class="offline">
+  <div class="offline-card">
+    <img src="{{BASE}}/icon-192.png" alt="" width="72" height="72">
+    <h1 id="t" style="font-size:1.8rem;margin:0">You are offline</h1>
+    <p id="p" class="lede" style="margin:0">BuyersLine needs a connection to search homes and load reports. Check your signal and try again.</p>
+    <button id="retry" type="button" class="btn btn-primary">Try again</button>
+  </div>
+</main>
+<script>
+(function () {
+  if ((navigator.language || '').toLowerCase().indexOf('es') === 0) {
+    document.documentElement.lang = 'es';
+    document.getElementById('t').textContent = 'Está sin conexión';
+    document.getElementById('p').textContent = 'BuyersLine necesita conexión para buscar casas y cargar informes. Revise su señal e inténtelo de nuevo.';
+    document.getElementById('retry').textContent = 'Reintentar';
+  }
+  document.getElementById('retry').addEventListener('click', function () { location.reload(); });
+  window.addEventListener('online', function () { location.reload(); });
+})();
+</script>
+</body>
+</html>
