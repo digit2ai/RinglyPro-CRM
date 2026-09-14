@@ -96,54 +96,82 @@
   <!-- Whole workflow, animated -->
   <section id="flow" class="flow" aria-labelledby="flowTitle">
     <div class="wrap">
-      <p class="eyebrow" data-i18n="flow_eyebrow">The whole process</p>
-      <h2 id="flowTitle" data-i18n="flow_title">From your first question to your keys</h2>
+      <div class="flow-head">
+        <p class="eyebrow" data-i18n="flow_eyebrow">The whole process</p>
+        <h2 id="flowTitle" data-i18n="flow_title">From your first question to your keys</h2>
+        <p class="flow-sub" data-i18n="flow_sub">Three lanes, one line. You, our AI and a licensed agent hand your search to each other, and nothing reaches you without passing a person.</p>
+      </div>
       <div class="flow-scroll">
         <div class="flow-track">
-          <span class="flow-line" aria-hidden="true"><span class="flow-fill"></span></span>
-          <span class="flow-runner" aria-hidden="true"></span>
+          <div class="flow-lanes" aria-hidden="true">
+            <div class="flow-lane" data-actor="you"><span data-i18n="flow_actor_you">You</span></div>
+            <div class="flow-lane" data-actor="ai"><span data-i18n="flow_actor_ai">BuyersLine AI</span></div>
+            <div class="flow-lane" data-actor="agent"><span data-i18n="flow_actor_agent">Licensed agent</span></div>
+          </div>
+          <svg class="flow-circuit" aria-hidden="true" focusable="false"></svg>
           <ol class="flow-steps">
           <li class="flow-step" data-actor="you">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 3h8l3 3v15H5V3z"/><path d="M9 11h6M9 15h6M9 7h3"/></svg><span class="flow-num">1</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_you">You</span>
-            <strong class="flow-t" data-i18n="flow_1_t">Tell us what you need</strong>
-            <span class="flow-p" data-i18n="flow_1_p">Area, budget, bedrooms, timing.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_you">You</span>
+              <strong class="flow-t" data-i18n="flow_1_t">Tell us what you need</strong>
+              <span class="flow-p" data-i18n="flow_1_p">Area, budget, bedrooms, timing.</span>
+              <svg class="flow-live lv-form" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><rect class="lv-track" x="4" y="5" width="112" height="9" rx="4.5"/><rect class="lv-track" x="4" y="20" width="112" height="9" rx="4.5"/><rect class="lv-fill f1" x="4" y="5" width="46" height="9" rx="4.5"/><rect class="lv-fill f2" x="54" y="5" width="30" height="9" rx="4.5"/><rect class="lv-fill f3" x="4" y="20" width="62" height="9" rx="4.5"/><rect class="lv-caret" x="70" y="18" width="2.5" height="13" rx="1"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="you">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.4"/></svg><span class="flow-num">2</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_you">You</span>
-            <strong class="flow-t" data-i18n="flow_2_t">See your buying power</strong>
-            <span class="flow-p" data-i18n="flow_2_p">An estimate. No credit check.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_you">You</span>
+              <strong class="flow-t" data-i18n="flow_2_t">See your buying power</strong>
+              <span class="flow-p" data-i18n="flow_2_p">An estimate. No credit check.</span>
+              <svg class="flow-live lv-gauge" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><path class="lv-arc-bg" d="M34 31a26 26 0 0 1 52 0"/><path class="lv-arc" d="M34 31a26 26 0 0 1 52 0" pathLength="100"/><line class="lv-needle" x1="60" y1="31" x2="78" y2="16"/><circle class="lv-hub" cx="60" cy="31" r="3"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="ai">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12l6-4"/></svg><span class="flow-num">3</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_ai">BuyersLine AI</span>
-            <strong class="flow-t" data-i18n="flow_3_t">We watch every builder</strong>
-            <span class="flow-p" data-i18n="flow_3_p">Promotions, move-in-ready homes, builder emails.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_ai">BuyersLine AI</span>
+              <strong class="flow-t" data-i18n="flow_3_t">We watch every builder</strong>
+              <span class="flow-p" data-i18n="flow_3_p">Promotions, move-in-ready homes, builder emails.</span>
+              <svg class="flow-live lv-radar" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><circle class="lv-ring" cx="60" cy="17" r="15"/><circle class="lv-ring" cx="60" cy="17" r="8"/><path class="lv-sweep" d="M60 17L60 2A15 15 0 0 1 73 9.5z"/><circle class="lv-blip b1" cx="68" cy="8" r="2"/><circle class="lv-blip b2" cx="50" cy="23" r="2"/><circle class="lv-blip b3" cx="70" cy="25" r="2"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="agent">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/><path d="M8.8 12.2l2.2 2.2 4.3-4.6"/></svg><span class="flow-num">4</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
-            <strong class="flow-t" data-i18n="flow_4_t">An agent verifies each offer</strong>
-            <span class="flow-p" data-i18n="flow_4_p">Nothing unverified reaches you.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
+              <strong class="flow-t" data-i18n="flow_4_t">An agent verifies each offer</strong>
+              <span class="flow-p" data-i18n="flow_4_p">Nothing unverified reaches you.</span>
+              <svg class="flow-live lv-stamp" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><rect class="lv-doc" x="30" y="4" width="30" height="26" rx="3"/><path class="lv-lines" d="M36 11h18M36 17h18M36 23h10"/><circle class="lv-seal" cx="78" cy="17" r="12"/><path class="lv-check" d="M72 17.5l4 4 8-9" pathLength="100"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="ai">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20V10M10 20V5M15 20v-7M20 20V8"/></svg><span class="flow-num">5</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_ai">BuyersLine AI</span>
-            <strong class="flow-t" data-i18n="flow_5_t">Your payment comparison</strong>
-            <span class="flow-p" data-i18n="flow_5_p">Every incentive as a monthly payment.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_ai">BuyersLine AI</span>
+              <strong class="flow-t" data-i18n="flow_5_t">Your payment comparison</strong>
+              <span class="flow-p" data-i18n="flow_5_p">Every incentive as a monthly payment.</span>
+              <svg class="flow-live lv-bars" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><line class="lv-base" x1="30" y1="30" x2="90" y2="30"/><rect class="lv-bar r1" x="36" y="16" width="12" height="14" rx="2"/><rect class="lv-bar r2" x="54" y="11" width="12" height="19" rx="2"/><rect class="lv-bar r3" x="72" y="5" width="12" height="25" rx="2"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="agent">
             <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><span class="flow-num">6</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
-            <strong class="flow-t" data-i18n="flow_6_t">Talk to our agent</strong>
-            <span class="flow-p" data-i18n="flow_6_p">Before you visit a sales office.</span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
+              <strong class="flow-t" data-i18n="flow_6_t">Talk to our agent</strong>
+              <span class="flow-p" data-i18n="flow_6_p">Before you visit a sales office.</span>
+              <svg class="flow-live lv-chat" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><path class="lv-bubble" d="M38 4h44a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6H56l-8 6v-6h-10a6 6 0 0 1-6-6V10a6 6 0 0 1 6-6z"/><circle class="lv-dot d1" cx="50" cy="15" r="2.6"/><circle class="lv-dot d2" cx="60" cy="15" r="2.6"/><circle class="lv-dot d3" cx="70" cy="15" r="2.6"/></svg>
+            </span>
           </li>
           <li class="flow-step" data-actor="agent">
-            <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M16 6l3 3M14 8l2 2"/></svg><span class="flow-num">7</span></span>
-            <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
-            <strong class="flow-t" data-i18n="flow_7_t">Registered and represented</strong>
-            <span class="flow-p" data-i18n="flow_7_p">Tour, negotiate, close. Free for you.</span>
+            <span class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M10 20v-5h4v5"/></svg><span class="flow-num">7</span></span>
+            <span class="flow-card">
+              <span class="flow-actor" data-i18n="flow_actor_agent">Licensed agent</span>
+              <strong class="flow-t" data-i18n="flow_7_t">Registered and represented</strong>
+              <span class="flow-p" data-i18n="flow_7_p">Tour, negotiate, close. Free for you.</span>
+              <svg class="flow-live lv-home" viewBox="0 0 120 34" aria-hidden="true" focusable="false"><path class="lv-house" d="M42 16L60 3l18 13v15H42z" pathLength="100"/><rect class="lv-door" x="55" y="20" width="10" height="11" rx="1"/><circle class="lv-spark s1" cx="86" cy="8" r="1.8"/><circle class="lv-spark s2" cx="34" cy="10" r="1.6"/><circle class="lv-spark s3" cx="90" cy="22" r="1.4"/></svg>
+            </span>
           </li>
           </ol>
         </div>
@@ -459,6 +487,7 @@
       hero_note: 'Free for buyers. No credit check.',
       flow_eyebrow: 'The whole process',
       flow_title: 'From your first question to your keys',
+      flow_sub: 'Three lanes, one line. You, our AI and a licensed agent hand your search to each other, and nothing reaches you without passing a person.',
       flow_actor_you: 'You',
       flow_actor_ai: 'BuyersLine AI',
       flow_actor_agent: 'Licensed agent',
@@ -645,6 +674,7 @@
       hero_note: 'Gratis para compradores. Sin revisión de crédito.',
       flow_eyebrow: 'Todo el proceso',
       flow_title: 'De su primera pregunta a sus llaves',
+      flow_sub: 'Tres carriles, una sola línea. Usted, nuestra IA y un agente con licencia se pasan su búsqueda, y nada llega a usted sin pasar por una persona.',
       flow_actor_you: 'Usted',
       flow_actor_ai: 'IA de BuyersLine',
       flow_actor_agent: 'Agente con licencia',
