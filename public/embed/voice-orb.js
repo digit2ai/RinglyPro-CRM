@@ -322,6 +322,13 @@
         .then(function (data) {
           var reply = (data && data.reply) || T.trouble;
           history.push({ role: 'assistant', content: reply });
+          // Page actions: the orb stays generic and only announces them; the host page decides.
+          if (data && Array.isArray(data.actions)) {
+            data.actions.forEach(function (a) {
+              try { window.dispatchEvent(new CustomEvent('d2orb:action', { detail: { agent: AGENT, name: a.name, input: a.input || {} } })); } catch (e) { /* old browsers */ }
+            });
+            pageContext = extractPageText();
+          }
           onReply(reply);
         })
         .catch(function () { onReply(T.trouble); });

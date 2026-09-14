@@ -1462,5 +1462,55 @@
 </script>
 <script src="/embed/voice-orb.js" defer></script>
 <script>(function(){var z=new URLSearchParams(location.search).get('zip');if(/^\d{5}$/.test(z||'')){var f=document.getElementById('f_zips');if(f&&!f.value)f.value=z;}})();</script>
+<script>
+/* Ava fills the intake form (voice orb page action). Only the fields below; never
+   consent checkboxes, never submit. Every filled field is highlighted for review. */
+(function () {
+  'use strict';
+  function byId(id) { return document.getElementById(id); }
+  function fire(el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+  function mark(el) { if (!el) return; el.classList.remove('ava-filled'); void el.offsetWidth; el.classList.add('ava-filled'); }
+  function setValue(id, value) { var el = byId(id); if (!el || value == null) return false; el.value = String(value); fire(el); mark(el); return true; }
+  function setSelect(id, value) {
+    var el = byId(id); if (!el || value == null) return false;
+    var ok = Array.prototype.some.call(el.options, function (o) { return o.value === String(value); });
+    if (!ok) return false; el.value = String(value); fire(el); mark(el); return true;
+  }
+  function setRadio(name, value, setId) {
+    var r = document.querySelector('input[name="' + name + '"][value="' + value + '"]'); if (!r) return false;
+    r.checked = true; fire(r); mark(byId(setId)); return true;
+  }
+  function money(n) { return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n); }
+  window.addEventListener('d2orb:action', function (e) {
+    var d = e.detail || {};
+    if (d.name !== 'fill_intake_form') return;
+    var i = d.input || {}, filled = 0;
+    if (i.zip_codes && i.zip_codes.length) filled += setValue('f_zips', i.zip_codes.join(', ')) ? 1 : 0;
+    if (i.place) filled += setValue('f_place', i.place) ? 1 : 0;
+    if (i.radius_miles) filled += setSelect('f_radius', i.radius_miles) ? 1 : 0;
+    if (i.beds_min) filled += setSelect('f_beds', i.beds_min) ? 1 : 0;
+    if (i.baths_min) filled += setSelect('f_baths', i.baths_min) ? 1 : 0;
+    if (i.budget_max) filled += setValue('f_budget', money(i.budget_max)) ? 1 : 0;
+    if (i.monthly_max) filled += setValue('f_monthly', money(i.monthly_max)) ? 1 : 0;
+    if (i.down_payment != null) filled += setValue('f_down', money(i.down_payment)) ? 1 : 0;
+    if (i.first_name) filled += setValue('f_first', i.first_name) ? 1 : 0;
+    if (i.email) filled += setValue('f_email', i.email) ? 1 : 0;
+    if (i.phone) filled += setValue('f_phone', i.phone) ? 1 : 0;
+    if (i.timeline) filled += setRadio('timeline', i.timeline, 'timelineSet') ? 1 : 0;
+    if (i.financing) filled += setRadio('financing', i.financing, 'financingSet') ? 1 : 0;
+    if (i.working_with_agent) filled += setRadio('has_other_agent', i.working_with_agent, 'agentSet') ? 1 : 0;
+    (i.must_haves || []).forEach(function (m) {
+      var c = document.querySelector('input[name="must_have"][value="' + m + '"]');
+      if (c && !c.checked) { c.checked = true; fire(c); filled++; }
+    });
+    if (i.must_haves && i.must_haves.length) mark(byId('mustSet'));
+    if (filled) {
+      var intake = byId('intake');
+      var box = intake && intake.getBoundingClientRect();
+      if (box && (box.top > window.innerHeight || box.bottom < 0)) intake.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+})();
+</script>
 </body>
 </html>

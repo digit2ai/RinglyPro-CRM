@@ -278,6 +278,30 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const css = read(path.join(ROOT, 'public', 'site.css'));
     assert(/\.flow\.is-animated \.flow-step \.flow-node \{ opacity/.test(css) && !/^\.flow-step \.flow-node \{[^}]*opacity:\s*0/m.test(css), 'steps hidden before the script runs');
   });
+  await t('Ava can fill the intake form, but the tool has no consent or submit field and the server keeps only valid values', () => {
+    const { AGENTS, blSanitizeIntake } = require('../../src/config/voice-agents');
+    const action = (AGENTS.buyersline.pageActions || []).find((a) => a.name === 'fill_intake_form');
+    assert(action && typeof action.sanitize === 'function', 'page action missing');
+    const props = Object.keys(action.input_schema.properties);
+    assert(!props.some((p) => /consent|submit|send|terms|agree|sms|share/i.test(p)), 'schema exposes consent or submission: ' + props.join(','));
+    const out = blSanitizeIntake({ first_name: 'Maria', email: 'MARIA@example.com', zip_codes: ['33578', 'x1'], budget_max: '$450,000', beds_min: 3,
+      timeline: '3_6m', financing: 'va', must_haves: ['pool', 'rooftop_helipad'], consents: { sms: true, share_with_agent: true }, submit: true, share_with_agent: true });
+    eq(JSON.stringify(Object.keys(out).sort()), JSON.stringify(['beds_min', 'budget_max', 'email', 'financing', 'first_name', 'must_haves', 'timeline', 'zip_codes']));
+    eq(out.budget_max, 450000); eq(out.email, 'maria@example.com'); eq(JSON.stringify(out.zip_codes), '["33578"]'); eq(JSON.stringify(out.must_haves), '["pool"]');
+    eq(JSON.stringify(blSanitizeIntake({ budget_max: 5, beds_min: 9, timeline: 'tomorrow', email: 'nope', phone: '<script>' })), '{}');
+    for (const k of Object.keys(AGENTS)) if (k !== 'buyersline') assert(!AGENTS[k].pageActions, k + ' gained page actions');
+  });
+  await t('page actions are never executed on the server and the landing never ticks consent or submits for Ava', () => {
+    const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
+    assert(/const accion = pageActions\.find/.test(route) && /acciones\.push\(\{ name: accion\.name, input: limpio \}\)/.test(route), 'page action branch');
+    assert(/if \(accion\) \{[\s\S]*?\} else if \(excedeLimite\(ip\)\)/.test(route), 'page actions must short-circuit before any HTTP tool call');
+    const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
+    assert(/d2orb:action/.test(orb), 'orb does not announce actions');
+    const html = read(path.join(ROOT, 'public', 'index.html'));
+    const listener = html.slice(html.indexOf("window.addEventListener('d2orb:action'"), html.indexOf('</script>', html.indexOf("window.addEventListener('d2orb:action'")));
+    assert(listener.length > 100, 'listener missing');
+    assert(!/consent|requestSubmit|\.submit\(|\.click\(|share_with_agent|sms/i.test(listener), 'listener touches consent or submits');
+  });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');
     assert(AGENTS.buyersline, 'persona missing');

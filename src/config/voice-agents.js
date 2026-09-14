@@ -22,6 +22,40 @@
 // Edge neural voices per language. Aliases resolve in routes/presentation-tts.js.
 const DEFAULT_VOICE = { es: 'lina', en: 'ava' };
 
+// ── Page actions (BuyersLine) ─────────────────────────────────────────────
+// A page action is a tool the server never executes: it validates the model's
+// input against an allow-list and hands the clean values back to the page,
+// which fills its own form. Consent and submission are deliberately absent
+// from the schema, so no model output can tick a consent box or send a form.
+const BL_TIMELINE = ['0_3m', '3_6m', '6_12m', '12m_plus'];
+const BL_FINANCING = ['preapproved', 'cash', 'needs_lender', 'va', 'fha', 'unsure'];
+const BL_MUST = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
+const BL_AGENT = ['no', 'yes_under_agreement', 'yes_informal'];
+function blSanitizeIntake(input) {
+  const i = input && typeof input === 'object' ? input : {};
+  const out = {};
+  const str = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().replace(/[<>]/g, '').slice(0, n) : null);
+  const num = (v, lo, hi) => { const x = Number(String(v).replace(/[$,\s]/g, '')); return isFinite(x) && x >= lo && x <= hi ? x : null; };
+  const first = str(i.first_name, 60); if (first) out.first_name = first;
+  const email = str(i.email, 160); if (email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) out.email = email.toLowerCase();
+  const phone = str(i.phone, 30); if (phone && /^[+()\d\s.-]{7,20}$/.test(phone)) out.phone = phone;
+  const zips = (Array.isArray(i.zip_codes) ? i.zip_codes : String(i.zip_codes || '').split(/[,\s]+/)).map((z) => String(z).trim()).filter((z) => /^\d{5}$/.test(z)).slice(0, 5);
+  if (zips.length) out.zip_codes = zips;
+  const place = str(i.place, 80); if (place && !zips.length) out.place = place;
+  if ([5, 10, 15, 25, 40].includes(Number(i.radius_miles))) out.radius_miles = Number(i.radius_miles);
+  const budget = num(i.budget_max, 50000, 20000000); if (budget !== null) out.budget_max = Math.round(budget);
+  const monthly = num(i.monthly_max, 300, 50000); if (monthly !== null) out.monthly_max = Math.round(monthly);
+  const down = num(i.down_payment, 0, 10000000); if (down !== null) out.down_payment = Math.round(down);
+  const beds = num(i.beds_min, 1, 5); if (beds !== null) out.beds_min = Math.round(beds);
+  const baths = num(i.baths_min, 1, 4); if (baths !== null && [1, 1.5, 2, 2.5, 3, 4].includes(baths)) out.baths_min = baths;
+  if (BL_TIMELINE.includes(i.timeline)) out.timeline = i.timeline;
+  if (BL_FINANCING.includes(i.financing)) out.financing = i.financing;
+  const must = (Array.isArray(i.must_haves) ? i.must_haves : []).filter((m) => BL_MUST.includes(m));
+  if (must.length) out.must_haves = [...new Set(must)];
+  if (BL_AGENT.includes(i.working_with_agent)) out.working_with_agent = i.working_with_agent;
+  return out;
+}
+
 const AGENTS = {
   // ── CamaraVirtual.app (camaravirtual.app landing) ─────────────────────────
   camaravirtual: {
@@ -291,9 +325,36 @@ const AGENTS = {
       es: 'Hola, soy la asistente de BuyersLine. Puedo explicarle cómo funcionan la estimación de poder de compra, la comparación de incentivos verificados y su informe gratuito. ¿Qué le gustaría saber?'
     },
     persona: {
-      en: 'You are the BuyersLine assistant on a website for people buying new-construction homes in Tampa Bay. BuyersLine is a technology platform, not a real estate brokerage and not a lender. Explain only what the page says. Never state or estimate a builder incentive, price, interest rate or payment: those appear only in the buyer\'s personalized report after a licensed agent verifies them. Never describe neighborhoods, schools or communities in terms of who lives there, safety or demographics, and never suggest an area suits a type of person. Never say someone qualifies for a loan. If asked whether they should visit a sales office, explain what the page says about registering with an agent before the first visit. Point people to the intake form on the page to get their report. No emojis.',
-      es: 'Eres la asistente de BuyersLine en un sitio para personas que compran casas nuevas en Tampa Bay. BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista. Explica solo lo que dice la página. Nunca indiques ni estimes un incentivo, precio, tasa de interés o pago: eso aparece solo en el informe personalizado, después de que un agente con licencia lo verifica. Nunca describas barrios, escuelas o comunidades según quién vive allí, la seguridad o la demografía, ni sugieras que una zona es para cierto tipo de persona. Nunca digas que alguien califica para un préstamo. Si preguntan si deben visitar una oficina de ventas, explica lo que la página dice sobre registrarse con un agente antes de la primera visita. Invita a completar el formulario de la página para recibir el informe. Trata de usted. Sin emojis.'
-    }
+      en: 'You are the BuyersLine assistant on a website for people buying new-construction homes in Tampa Bay. BuyersLine is a technology platform, not a real estate brokerage and not a lender. Explain only what the page says. Never state or estimate a builder incentive, price, interest rate or payment: those appear only in the buyer\'s personalized report after a licensed agent verifies them. Never describe neighborhoods, schools or communities in terms of who lives there, safety or demographics, and never suggest an area suits a type of person. Never say someone qualifies for a loan. If asked whether they should visit a sales office, explain what the page says about registering with an agent before the first visit. Point people to the intake form on the page to get their report. YOU CAN FILL THE INTAKE FORM FOR THEM with the fill_intake_form tool: when the buyer tells you their area, budget, bedrooms, timing, how they will pay, must-haves, name, email or phone, call the tool with ONLY what they actually said; never guess a value. Ask for one or two details at a time. Repeat an email address back letter by letter before filling it. You cannot tick the consent boxes or send the form, and you must never say the form was sent: after filling, tell them to review the highlighted fields, choose their contact preferences and press the button themselves. No emojis.',
+      es: 'Eres la asistente de BuyersLine en un sitio para personas que compran casas nuevas en Tampa Bay. BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista. Explica solo lo que dice la página. Nunca indiques ni estimes un incentivo, precio, tasa de interés o pago: eso aparece solo en el informe personalizado, después de que un agente con licencia lo verifica. Nunca describas barrios, escuelas o comunidades según quién vive allí, la seguridad o la demografía, ni sugieras que una zona es para cierto tipo de persona. Nunca digas que alguien califica para un préstamo. Si preguntan si deben visitar una oficina de ventas, explica lo que la página dice sobre registrarse con un agente antes de la primera visita. Invita a completar el formulario de la página para recibir el informe. PUEDES LLENAR EL FORMULARIO POR ELLOS con la herramienta fill_intake_form: cuando la persona te diga su zona, presupuesto, habitaciones, plazos, cómo va a pagar, lo imprescindible, nombre, correo o teléfono, llama la herramienta SOLO con lo que dijo; nunca adivines un valor. Pide uno o dos datos a la vez. Repite el correo letra por letra antes de llenarlo. No puedes marcar las casillas de consentimiento ni enviar el formulario, y nunca digas que se envió: después de llenarlo, pide que revise los campos resaltados, elija cómo quiere que lo contacten y presione el botón. Trata de usted. Sin emojis.'
+    },
+    pageActions: [
+      {
+        name: 'fill_intake_form',
+        description: 'Fill fields of the "Get my report" intake form on the page with details the buyer has told you. Include ONLY values the buyer actually said. You cannot tick consent boxes or submit the form.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            first_name: { type: 'string' },
+            email: { type: 'string', description: 'Only after repeating it back and the buyer confirming.' },
+            phone: { type: 'string' },
+            zip_codes: { type: 'array', items: { type: 'string', pattern: '^\\d{5}$' }, description: '5-digit ZIP codes in Tampa Bay.' },
+            place: { type: 'string', description: 'A city or area name when the buyer does not know a ZIP code.' },
+            radius_miles: { type: 'integer', enum: [5, 10, 15, 25, 40] },
+            budget_max: { type: 'number', description: 'Maximum home price in US dollars.' },
+            monthly_max: { type: 'number', description: 'Maximum monthly payment in US dollars.' },
+            down_payment: { type: 'number' },
+            beds_min: { type: 'integer', minimum: 1, maximum: 5 },
+            baths_min: { type: 'number', enum: [1, 1.5, 2, 2.5, 3, 4] },
+            timeline: { type: 'string', enum: BL_TIMELINE, description: '0_3m within 3 months, 3_6m, 6_12m, 12m_plus more than a year.' },
+            financing: { type: 'string', enum: BL_FINANCING },
+            must_haves: { type: 'array', items: { type: 'string', enum: BL_MUST } },
+            working_with_agent: { type: 'string', enum: BL_AGENT, description: 'Whether they already work with a real estate agent.' }
+          }
+        },
+        sanitize: blSanitizeIntake
+      }
+    ]
   },
 
   // ── Generic fallback: any page can embed the orb with no pack of its own ──
@@ -338,4 +399,4 @@ function agentConfig(id, lang) {
   };
 }
 
-module.exports = { AGENTS, getAgent, agentConfig, pick, DEFAULT_VOICE };
+module.exports = { blSanitizeIntake, AGENTS, getAgent, agentConfig, pick, DEFAULT_VOICE };

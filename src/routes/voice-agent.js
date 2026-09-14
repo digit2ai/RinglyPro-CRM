@@ -257,9 +257,14 @@ router.post('/chat', async (req, res) => {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const conHerramientas = !!(agent.tools && Array.isArray(agent.tools.definiciones) && agent.tools.definiciones.length);
-    const tools = conHerramientas
-      ? agent.tools.definiciones.map(({ name, description, input_schema }) => ({ name, description, input_schema }))
-      : undefined;
+    // Page actions: tools the SERVER never executes. The input is validated by the
+    // pack's sanitize() and returned to the page as `actions`; the page decides what to do.
+    const pageActions = Array.isArray(agent.pageActions) ? agent.pageActions : [];
+    const toolList = []
+      .concat(conHerramientas ? agent.tools.definiciones.map(({ name, description, input_schema }) => ({ name, description, input_schema })) : [])
+      .concat(pageActions.map(({ name, description, input_schema }) => ({ name, description, input_schema })));
+    const tools = toolList.length ? toolList : undefined;
+    const acciones = [];
 
     // El historial crece dentro del bucle: cada resultado de herramienta vuelve
     // como un turno, que es como el modelo lo lee.
@@ -267,7 +272,7 @@ router.post('/chat', async (req, res) => {
     const usadas = [];
     let response = null;
 
-    for (let ronda = 0; ronda < (conHerramientas ? MAX_RONDAS_HERRAMIENTA : 1); ronda++) {
+    for (let ronda = 0; ronda < (tools ? MAX_RONDAS_HERRAMIENTA : 1); ronda++) {
       response = await client.messages.create({
         model: MODEL,
         max_tokens: 400,
@@ -285,7 +290,13 @@ router.post('/chat', async (req, res) => {
       const resultados = [];
       for (const p of pedidos) {
         let salida;
-        if (excedeLimite(ip)) {
+        const accion = pageActions.find((a) => a.name === p.name);
+        if (accion) {
+          const limpio = typeof accion.sanitize === 'function' ? accion.sanitize(p.input) : {};
+          acciones.push({ name: accion.name, input: limpio });
+          salida = { ok: true, filled_fields: Object.keys(limpio), ignored: Object.keys(p.input || {}).filter((k) => !(k in limpio)),
+            note: 'Fields are filled on the page for the buyer to review. Consent and sending are theirs to do; the form has NOT been sent.' };
+        } else if (excedeLimite(ip)) {
           salida = { error: 'límite de consultas alcanzado, intente más tarde' };
         } else {
           salida = await ejecutarHerramienta(agent, p.name, p.input);
@@ -314,12 +325,12 @@ router.post('/chat', async (req, res) => {
           reply: lang === 'es'
             ? 'No logré completar la consulta en este momento. Puede intentarlo de nuevo o llamar a la línea de atención.'
             : "I couldn't complete that lookup right now. Please try again or call the service line.",
-          source: 'model', tools_used: usadas, incomplete: true
+          source: 'model', tools_used: usadas, incomplete: true, ...(acciones.length ? { actions: acciones } : {})
         });
       }
-      return res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic' });
+      return res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic', ...(acciones.length ? { actions: acciones } : {}) });
     }
-    res.json({ reply, source: 'model', ...(usadas.length ? { tools_used: usadas } : {}) });
+    res.json({ reply, source: 'model', ...(usadas.length ? { tools_used: usadas } : {}), ...(acciones.length ? { actions: acciones } : {}) });
   } catch (err) {
     console.error('[voice-agent]', err.message);
     res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic', degraded: true });

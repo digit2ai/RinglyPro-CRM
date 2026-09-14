@@ -785,6 +785,11 @@ body .d2orb-ball.is-speaking { animation-name: bl-orb-pulse; }
 @keyframes bl-orb-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 18px rgba(229, 50, 45, .45); } 50% { transform: scale(1.1); box-shadow: 0 0 34px rgba(229, 50, 45, .75); } }
 body .d2orb-row button { color: #FFFFFF; }
 
+/* ---------- Fields filled by Ava (voice orb page action) ---------- */
+.ava-filled { outline: 3px solid rgba(252, 76, 2, .7); outline-offset: 2px; border-radius: 12px; animation: ava-glow 2.4s ease-out 1; }
+@keyframes ava-glow { 0% { box-shadow: 0 0 0 0 rgba(252, 76, 2, .45); } 100% { box-shadow: 0 0 0 12px rgba(252, 76, 2, 0); } }
+@media (prefers-reduced-motion: reduce) { .ava-filled { animation: none; } }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
