@@ -13,6 +13,7 @@ const { getMarket } = require('../services/market');
 const { buildReport, publicView, loadAgent, disclosures } = require('../services/report');
 const { TENANT_ID, ipHash, rateLimit, activity, clampStr, numOrNull, audit } = require('../services/util');
 const rentcast = require('../services/rentcast');
+const notify = require('../services/notify');
 
 const CONSENT_VERSION = 'v2-2026-09-13'; // v2: product renamed BuyersLine
 const MUST_HAVES = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
@@ -138,6 +139,8 @@ module.exports = function publicRoutes(opts = {}) {
       await activity(tenantId, buyer.id, { type: 'buyer' }, 'intake_complete', { prior_visits: visits.length, has_other_agent: hasOther });
 
       const built = await buildReport(tenantId, { buyer, criteria, criteriaId: cr[0].id, lang, allowModel, allowGeocode });
+      if (built.report.status === 'ready') notify.later(notify.buyerReportReady, tenantId, built.report.id);
+      else notify.later(notify.reviewerReportWaiting, tenantId, built.report.id);
       const base = req.baseUrl.replace(/\/api\/v1\/public$/, '');
       res.json({ status: built.report.status === 'ready' ? 'report_ready' : 'pending_review', token: built.report.token, report_url: `${base}/r/${built.report.token}?lang=${lang}` });
     } catch (e) {

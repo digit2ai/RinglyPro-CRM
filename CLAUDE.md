@@ -385,7 +385,7 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **THE FETCH GATE EVADES NOTHING.** robots.txt groups honored (RFC 9309), 10 s per host, descriptive UA, ports 80/443 only, redirects followed by hand with every hop re-checked against private/CGNAT/IPv4-mapped addresses, two 403/429/challenge responses = `blocked`. No proxies, no CAPTCHA solving, no login walls. Builder broker emails are pasted via `POST /agent/ingest/text` (no inbound mail parse yet).
 
-**NOTHING SENDS.** There is no mail, SMS or WhatsApp transport in the vertical (SIT greps). Consult requests become appointments; the agent marks them held.
+**EMAIL ONLY, TWO MESSAGES, ONE FILE (owner request 2026-09-14).** `services/notify.js` is the only file with a transport (SendGrid; SIT greps every other file). (1) A report waiting for approval or on compliance hold emails the agent of record, or the admin when the buyer has no agent, with the report number and a console link and **no buyer email, phone or criteria**. (2) A released report (auto or approved) emails the buyer their link **only when their stored email consent is granted** (the consent text is "Email me my report..."), once per report (deduped on `nca_audit_log`). Sends are fire-and-forget after the response and audited as `email.*` / `email.*_failed`. **No SMS or WhatsApp transport exists.** SIT deletes `SENDGRID_API_KEY` and injects a fake sender. Consult requests become appointments; the agent marks them held.
 
 **Demo data** is fictional (`Sample Builder North`, `Sample Homes Co.`, `Sample Preserve/Lakes/Oaks`, `is_demo`), loaded only by an admin (`POST /agent/demo/seed`, `/demo/reset`) or `INCENTIVA_SEED_DEMO=1`, and every public surface shows a "Sample data" banner while it exists. The demo sets a labelled sample reference rate; real settings default to NULL so payments say "not estimated" until the agent enters a rate with its source and date.
 
@@ -411,7 +411,7 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Workflow strip** (`#flow`, right after the hero; it REPLACED the three-step "How it works" section, which repeated it, and the nav "How it works" link now points here): seven steps from intake to keys, each tagged with who does it (You / BuyersLine AI / Licensed agent), so the human-in-the-loop is visible. The HTML is fully readable with no script; `public/flow.js` adds the travelling orange line and dot only while the strip is on screen, and does nothing under `prefers-reduced-motion`. On phones the strip scrolls sideways and follows the active step without moving the page. Labels are in the EN/ES dictionaries (`flow_*`).
 
-**SIT:** `node verticals/incentiva/sit.js` → **95/95**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
+**SIT:** `node verticals/incentiva/sit.js` → **97/97**, zero external keys (removes `ANTHROPIC_API_KEY`, geocoding off). DB sections run as tenants 990913/990914 and delete their rows. Not covered: the model extraction/narrative paths, live geocoding, live builder fetches.
 
 **Environment Variables:**
 - `INCENTIVA_OWNER_PASSWORD` — admin (LLC) console password. **No default: unset = the console is CLOSED (503).** `INCENTIVA_OWNER_EMAIL` (default `mstagg@digit2ai.com`), `INCENTIVA_OWNER_NAME`.
@@ -423,6 +423,7 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 - `INCENTIVA_MONITOR_GO=1` — scheduled source fetching every 30 min (off by default). `INCENTIVA_GEOCODE=off` disables Nominatim.
 - `INCENTIVA_EXTRACT_MODEL` / `INCENTIVA_ADVISOR_MODEL` (default `claude-sonnet-5`) — reuse `ANTHROPIC_API_KEY`; unset key = labelled keyword/template path.
 - `INCENTIVA_INTAKE_PER_HOUR` (10) · `INCENTIVA_SEED_DEMO=1` (seed fictional demo data once).
+- `SENDGRID_API_KEY` — enables the two emails (unset = nothing sends). `INCENTIVA_FROM_EMAIL` (falls back to `SENDGRID_FROM_EMAIL`, then `info@digit2ai.com`; must be a verified SendGrid sender) · `INCENTIVA_FROM_NAME` (`BuyersLine`) · `INCENTIVA_PUBLIC_URL` (`https://aiagent.ringlypro.com/buyersline`, used in links) · `INCENTIVA_EMAIL=off` kill switch.
 - `RENTCAST_API_KEY` — enables home search. Unset = search reports not connected. `RENTCAST_MONTHLY_CAP` (45) — hard stop on upstream requests per calendar month; raise it to match the plan (Foundation 1,000 / Growth 5,000 / Scale 25,000). `INCENTIVA_LISTINGS_TTL_HOURS` (24) · `INCENTIVA_LISTINGS_PER_HOUR` (60, per IP) · `RENTCAST_BASE_URL` (override for tests).
 
 ## Database Access

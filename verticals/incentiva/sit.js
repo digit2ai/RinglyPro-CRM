@@ -27,6 +27,8 @@ delete process.env.INCENTIVA_CONSULT_MONTHLY_CAP;
 delete process.env.INCENTIVA_MONITOR_GO;
 delete process.env.INCENTIVA_SEED_DEMO;
 delete process.env.RENTCAST_API_KEY;
+delete process.env.SENDGRID_API_KEY; // SIT must never send real mail; a fake sender is injected below
+delete process.env.INCENTIVA_EMAIL;
 delete process.env.RENTCAST_MONTHLY_CAP;
 
 const fs = require('fs');
@@ -216,11 +218,15 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
 
   console.log('\nG. Structural promises (source greps)');
   const srcFiles = walk(SRC).filter((f) => f.endsWith('.js'));
-  await t('no mail, SMS or WhatsApp transport exists anywhere in the vertical', () => {
+  await t('email lives only in notify.js, it checks email consent, and no SMS or WhatsApp transport exists anywhere', () => {
     for (const f of srcFiles) {
       const s = stripComments(read(f));
-      assert(!/@sendgrid|nodemailer|require\(['"]twilio['"]\)|sgMail|whatsapp|\.messages\.create\(\{[^}]*to:/i.test(s), 'transport found in ' + path.basename(f));
+      assert(!/nodemailer|require\(['"]twilio['"]\)|whatsapp|\.messages\.create\(\{[^}]*to:/i.test(s), 'SMS/WhatsApp/other transport found in ' + path.basename(f));
+      if (path.basename(f) !== 'notify.js') assert(!/@sendgrid|sgMail|\.send\(\{[^}]*\bto:/i.test(s), 'mail transport outside notify.js: ' + path.basename(f));
     }
+    const n = stripComments(read(path.join(SRC, 'services', 'notify.js')));
+    assert(/channel = 'email' ORDER BY id DESC LIMIT 1/.test(n) && /consent\.granted !== true/.test(n), 'buyer email does not check consent');
+    assert(!/\bb\.email\b[\s\S]*reviewerReportWaiting|phone/.test(n.slice(n.indexOf('async function reviewerReportWaiting'))), 'reviewer email reads buyer contact details');
   });
   await t('only llm.js reaches a model', () => {
     const users = srcFiles.filter((f) => /@anthropic-ai\/sdk/.test(read(f)));
@@ -411,6 +417,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         eq(r.status, 400); assert(r.data.missing.includes('email') && r.data.missing.includes('criteria.budget_max'), JSON.stringify(r.data.missing));
       });
 
+      const mail = []; require('./src/services/notify')._setSender(async (m) => { mail.push(m); });
+      const settle = () => new Promise((r) => setTimeout(r, 400));
       const es = await call('POST', '/api/v1/public/intake', intake({ lang: 'es', consent_text: 'I agree to be called at any hour by anyone' }));
       const tokenEs = es.data.token;
       await t('intake produces a report that waits for agent review by default', async () => {
@@ -423,6 +431,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         eq(rows.find((r) => r.channel === 'sms').granted, false);
       });
 
+      await t('a report waiting for review emails the agent of record, with no buyer contact details, and never the buyer', async () => {
+        await settle();
+        const m = mail.filter((x) => x.to === 'sit-agent@example.test');
+        eq(m.length, 1); assert(/waiting for your approval/.test(m[0].subject), m[0].subject);
+        assert(!/sit-buyer@example\.test|8135550100|450,000/.test(m[0].html + m[0].text), 'buyer details leaked into reviewer email');
+        eq(mail.filter((x) => x.to === 'sit-buyer@example.test').length, 0);
+      });
       const repRow = await db.one('SELECT * FROM nca_reports WHERE token = :tok', { tok: tokenEs });
       await t('the generated report passes compliance on its own templates (EN and ES)', () => eq(repRow.compliance_verdict, 'pass'));
       await t('English and Spanish list the same communities in the same order', () => {
@@ -435,6 +450,17 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const list = await call('GET', '/api/v1/agent/reports?status=pending_review', null, 'agent');
         assert(list.data.reports.some((r) => r.id === repRow.id), 'agent of record sees the report');
         eq((await call('POST', `/api/v1/agent/reports/${repRow.id}/approve`, {}, 'agent')).status, 200);
+      });
+      await t('approval emails the consenting buyer their report link once, in their language', async () => {
+        await settle();
+        const m = mail.filter((x) => x.to === 'sit-buyer@example.test');
+        eq(m.length, 1); assert(m[0].html.includes('/r/' + tokenEs + '?lang=es') && /Su informe/.test(m[0].subject), m[0].subject);
+        const nc = await call('POST', '/api/v1/public/intake', intake({ email: 'sit-noconsent@example.test', consents: { email: false, sms: false, share_with_agent: true } }));
+        const ncRow = await db.one('SELECT id FROM nca_reports WHERE token = :tok', { tok: nc.data.token });
+        eq((await call('POST', `/api/v1/agent/reports/${ncRow.id}/approve`, {}, 'agent')).status, 200);
+        await settle();
+        eq(mail.filter((x) => x.to === 'sit-noconsent@example.test').length, 0);
+        eq(await require('./src/services/notify').buyerReportReady(SIT_TENANT, repRow.id).then((r) => r.reason), 'already_sent');
       });
       const viewEn = await call('GET', `/api/v1/public/reports/${tokenEs}?lang=en`);
       await t('a detected decrease is hidden: the withdrawn $12,000 offer is not in the report', () => {

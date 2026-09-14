@@ -18,6 +18,7 @@ const { confirm, reject, reconfirm, cleanEdits, HttpError, METHODS } = require('
 const { processText, fetchSource, insertVersion, versionFields } = require('../services/monitor');
 const { seedDemo, reset } = require('../services/seed');
 const billing = require('../engines/billing');
+const notify = require('../services/notify');
 const { audit, activity, clampStr, numOrNull } = require('../services/util');
 
 const wrap = (fn) => (req, res) => fn(req, res).catch((e) => {
@@ -319,6 +320,7 @@ module.exports = function agentRoutes() {
     await db.exec(`UPDATE nca_buyers SET stage = 'report_sent', stage_changed_at = now() WHERE id = :b AND tenant_id = :tt AND stage = 'intake_complete'`, { b: rep.buyer_id, tt: rep.tenant_id });
     await activity(rep.tenant_id, rep.buyer_id, { type: 'agent', id: req.user.id }, 'report_approved', { report_id: rep.id });
     await audit(rep.tenant_id, { type: 'agent', id: req.user.id }, 'report.approve', 'report', rep.id, {});
+    notify.later(notify.buyerReportReady, rep.tenant_id, rep.id);
     res.json({ ok: true });
   }));
 

@@ -64,7 +64,7 @@ function createApp(opts = {}) {
       agent_account: !!(process.env.INCENTIVA_AGENT_EMAIL && process.env.INCENTIVA_AGENT_PASSWORD),
       listings: require('./services/rentcast').configured() ? 'rentcast_connected' : 'not_connected',
       report_review: process.env.INCENTIVA_REPORT_REVIEW === 'auto' ? 'auto_when_compliance_passes' : 'agent_approval_required',
-      transports: 'none (nothing auto-sends)'
+      transports: require('./services/notify').configured() ? 'email only (SendGrid): report-ready to buyers who consented, approval alerts to the reviewer' : 'none (nothing auto-sends)'
     });
   });
 
