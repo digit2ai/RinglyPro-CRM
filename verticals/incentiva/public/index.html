@@ -361,7 +361,7 @@
 
         <div class="callout callout-caution">
           <h4 data-i18n="visit_first_title">Before you visit any sales office</h4>
-          <p data-i18n="visit_first_body">Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to your agent first, so you keep your representation at no cost to you.</p>
+          <p data-i18n="visit_first_body">Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to our agent first, so you keep your representation at no cost to you.</p>
         </div>
 
         <div id="intakeStatus" class="status" role="alert" aria-live="assertive" tabindex="-1"></div>
@@ -574,7 +574,7 @@
       consent_share_note: 'Optional. Without it, you still get your report.',
       consent_unavailable: 'Contact preferences will appear here once the form options load.',
       visit_first_title: 'Before you visit any sales office',
-      visit_first_body: "Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to your agent first, so you keep your representation at no cost to you.",
+      visit_first_body: "Many builders only work with a buyer's agent who registers you before your first visit. Get your report and talk to our agent first, so you keep your representation at no cost to you.",
       submit: 'Get my report',
       submitting: 'Preparing your report...',
       submit_note: 'Buyers pay nothing.',
@@ -760,7 +760,7 @@
       consent_share_note: 'Opcional. Sin esto, igual recibe su informe.',
       consent_unavailable: 'Sus preferencias de contacto aparecerán aquí cuando carguen las opciones del formulario.',
       visit_first_title: 'Antes de visitar cualquier oficina de ventas',
-      visit_first_body: 'Muchos constructores solo trabajan con el agente del comprador que lo registra antes de su primera visita. Obtenga su informe y hable primero con su agente, para conservar su representación sin costo para usted.',
+      visit_first_body: 'Muchos constructores solo trabajan con el agente del comprador que lo registra antes de su primera visita. Obtenga su informe y hable primero con nuestro agente, para conservar su representación sin costo para usted.',
       submit: 'Obtener mi informe',
       submitting: 'Preparando su informe...',
       submit_note: 'Los compradores no pagan nada.',
@@ -1402,7 +1402,7 @@
       if ((d.status === 'report_ready' || d.status === 'pending_review') && d.report_url) {
         status.appendChild(h('p', { class: 'small', text: t('opening_report') }));
         var url = d.report_url;
-        url += (url.indexOf('?') === -1 ? '?' : '&') + 'lang=' + lang;
+        if (!/[?&]lang=/.test(url)) url += (url.indexOf('?') === -1 ? '?' : '&') + 'lang=' + lang;
         location.assign(url);
         return;
       }
