@@ -600,10 +600,17 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         process.env.RENTCAST_API_KEY = 'sit-rentcast-secret-key';
         try { eq((await call('GET', '/api/v1/public/listings?zip=abc')).status, 400); } finally { delete process.env.RENTCAST_API_KEY; }
       });
-      await t('the search page is served with the mount substituted and no RentCast key in it', async () => {
+      await t('one search widget serves the landing and /search; no page calls the listings API itself', async () => {
         const r = await fetch(BASE + '/search'); const html = await r.text();
-        eq(r.status, 200); assert(!html.includes('{{BASE}}') && html.includes('/buyersline/api/v1/public/listings') === false && html.includes('/api/v1/public/listings'), 'shell');
-        assert(!/X-Api-Key|RENTCAST/.test(html), 'key reference in page');
+        eq(r.status, 200); assert(!html.includes('{{BASE}}'), 'token leaked');
+        const landing = read(path.join(ROOT, 'public', 'index.html'));
+        const widget = read(path.join(ROOT, 'public', 'search-widget.js'));
+        assert(/data-bl-search data-mode="full"/.test(html) && html.includes('/buyersline/search-widget.js'), 'search page uses the widget');
+        assert(/data-bl-search data-mode="compact"/.test(landing) && landing.includes('{{BASE}}/search-widget.js'), 'landing uses the widget');
+        assert(landing.indexOf('id="homes"') > landing.indexOf('id="flow"') && landing.indexOf('id="homes"') < landing.indexOf('id="estimate"'), 'home search sits after the workflow strip');
+        assert(!/api\/v1\/public\/listings/.test(landing + html), 'a page calls the API directly');
+        assert(widget.includes("BASE + '/api/v1/public/listings?'"), 'widget endpoint');
+        assert(!/X-Api-Key|RENTCAST/.test(widget + html + landing), 'key reference in the browser code');
       });
 
       console.log('\nP. PWA and mobile');

@@ -23,6 +23,7 @@
 <script>window.BL_BASE='{{BASE}}';</script>
 <script src="{{BASE}}/nav.js" defer></script>
 <script src="{{BASE}}/install.js" defer></script>
+<script src="{{BASE}}/search-widget.js" defer></script>
 <script src="{{BASE}}/flow.js" defer></script>
 </head>
 <body>
@@ -37,7 +38,7 @@
     </a>
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
       <a href="#flow" data-i18n="nav_how">How it works</a>
-      <a href="{{BASE}}/search" data-i18n="nav_search">Search homes</a>
+      <a href="#homes" data-i18n="nav_search">Search homes</a>
       <a href="#estimate" data-i18n="nav_power">Buying power</a>
       <a href="#about" data-i18n="nav_about">What we are</a>
       <a href="#intake" data-i18n="nav_report">Get my report</a>
@@ -147,6 +148,16 @@
           </ol>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Home search (shared widget: public/search-widget.js) -->
+  <section id="homes" class="home-search" aria-labelledby="homesTitle">
+    <div class="wrap">
+      <p class="eyebrow" data-i18n="homes_eyebrow">Homes for sale</p>
+      <h2 id="homesTitle"><span data-i18n="homes_title_a">Search new-construction homes</span> <span class="hl" data-i18n="homes_title_hl">near you</span></h2>
+      <p class="lede" data-i18n="homes_lede">Enter a ZIP code to see new-construction homes for sale on the map. Found one you like? Ask our agent before you visit the sales office.</p>
+      <div data-bl-search data-mode="compact"></div>
     </div>
   </section>
 
@@ -429,6 +440,10 @@
       nav_label: 'Primary',
       nav_how: 'How it works',
       nav_search: 'Search homes',
+      homes_eyebrow: 'Homes for sale',
+      homes_title_a: 'Search new-construction homes',
+      homes_title_hl: 'near you',
+      homes_lede: 'Enter a ZIP code to see new-construction homes for sale on the map. Found one you like? Ask our agent before you visit the sales office.',
       nav_power: 'Buying power',
       nav_about: 'What we are',
       nav_report: 'Get my report',
@@ -611,6 +626,10 @@
       nav_label: 'Principal',
       nav_how: 'Cómo funciona',
       nav_search: 'Buscar casas',
+      homes_eyebrow: 'Casas en venta',
+      homes_title_a: 'Busque casas de construcción nueva',
+      homes_title_hl: 'cerca de usted',
+      homes_lede: 'Escriba un código postal para ver casas nuevas en venta en el mapa. ¿Encontró una que le gusta? Pregunte a nuestro agente antes de visitar la oficina de ventas.',
       nav_power: 'Poder de compra',
       nav_about: 'Qué somos',
       nav_report: 'Obtener mi informe',

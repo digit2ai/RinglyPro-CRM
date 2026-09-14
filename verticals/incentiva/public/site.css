@@ -720,7 +720,6 @@ body.has-install-bar { padding-bottom: 120px; }
 
 /* ---------- Touch and small screens ---------- */
 .flow-actor, .example-label { font-size: .75rem; }
-#map.leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
 @media (display-mode: standalone) { .site-header { padding-top: env(safe-area-inset-top); } }
 @media (max-width: 480px) {
   section { padding-block: 40px; }
@@ -728,6 +727,54 @@ body.has-install-bar { padding-bottom: 120px; }
   .btn.btn-small, .install-actions .btn, .home-card .btn { width: auto; }
   .btn-row { flex-direction: column; }
 }
+
+
+/* ---------- Home search widget (search-widget.js), shared by the landing and /search ---------- */
+.search-form { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; margin-top: 18px; }
+.search-form .field { margin: 0; }
+.search-form .go { grid-column: 1 / -1; }
+@media (min-width: 900px) {
+  .bls-full .search-form { grid-template-columns: 1fr .75fr .9fr .8fr 1.25fr auto; }
+  .bls-compact .search-form { grid-template-columns: 1.1fr .8fr .9fr .8fr auto; }
+  .search-form .go { grid-column: auto; }
+}
+.search-error { color: var(--critical); margin-top: 8px; }
+.results-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding-block: 14px 10px; }
+.results-count { font-weight: 800; margin: 0; }
+.results { display: grid; gap: 16px; grid-template-columns: 1fr; padding-bottom: 24px; }
+@media (min-width: 980px) { .results { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; } }
+.map-wrap { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); height: 300px; order: 1; }
+.bls .list { display: grid; gap: 12px; order: 2; align-content: start; }
+@media (min-width: 980px) {
+  .map-wrap { position: sticky; top: 76px; order: 2; }
+  .bls .list { order: 1; }
+  .bls-full .map-wrap { height: calc(100vh - 100px); min-height: 480px; }
+  .bls-compact .map-wrap { height: 540px; }
+  .bls-compact .list { max-height: 540px; overflow: auto; padding-right: 4px; }
+}
+.bl-map { position: absolute; inset: 0; }
+.bl-map.leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
+.home-card { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--rule); cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; font: inherit; color: inherit; width: 100%; }
+.home-card:hover, .home-card.is-selected { border-color: var(--brand); box-shadow: var(--shadow); }
+.home-card .price { font-weight: 900; font-size: 1.45rem; color: var(--ink); letter-spacing: -.02em; }
+.home-card .specs { font-weight: 700; color: var(--ink); }
+.home-card .addr { color: var(--muted); }
+.home-card .builder { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.home-card .meta { font-size: .85rem; color: var(--muted); }
+.home-card .cta { justify-self: start; margin-top: 4px; }
+.price-pin { background: var(--brand); color: #fff; font: 800 12px/1 var(--font-body); padding: 6px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(38, 33, 63, .35); border: 2px solid #fff; transform: translate(-50%, -50%); display: inline-block; }
+.price-pin.is-selected { background: var(--navy); color: var(--navy-ink); }
+.leaflet-div-icon.pin-host { background: transparent; border: 0; }
+.state-box { padding: 24px 22px; border-radius: var(--radius); background: var(--surface-2); }
+.state-box h3 { font-size: 1.2rem; margin-bottom: .4em; }
+.source-note { font-size: .82rem; color: var(--muted); }
+.search-more { margin: 4px 0 10px; }
+.search-more:empty { display: none; }
+.leaflet-container { font-family: var(--font-body); }
+:root[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.7); }
+:root[data-theme="dark"] .leaflet-control-attribution { background: rgba(27, 23, 48, .8); color: #ccc; }
+:root[data-theme="dark"] .leaflet-control-attribution a { color: #FF8A4C; }
+.home-search h2 { margin-bottom: 6px; }
 
 /* ---------- Print ---------- */
 @media print {

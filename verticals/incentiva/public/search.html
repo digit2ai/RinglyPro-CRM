@@ -23,44 +23,12 @@
 <script>window.BL_BASE='{{BASE}}';</script>
 <script src="{{BASE}}/nav.js" defer></script>
 <script src="{{BASE}}/install.js" defer></script>
+<script src="{{BASE}}/search-widget.js" defer></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <style>
-.search-hero { padding-block: 32px 16px; }
+.search-hero { padding-block: 32px 8px; }
 .search-hero h1 { font-size: clamp(1.8rem, 4.2vw, 2.6rem); margin-bottom: 8px; }
-.search-form { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; margin-top: 18px; }
-.search-form .field { margin: 0; }
-.search-form .go { grid-column: 1 / -1; }
-@media (min-width: 900px) { .search-form { grid-template-columns: 1fr .75fr .9fr .8fr 1.25fr auto; } .search-form .go { grid-column: auto; } }
-.results-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding-block: 14px 10px; }
-.results-count { font-weight: 800; }
-.results { display: grid; gap: 16px; grid-template-columns: 1fr; padding-bottom: 48px; }
-@media (min-width: 980px) { .results { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; } }
-.map-wrap { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); height: 360px; }
-.map-wrap { order: 1; }
-.list { order: 2; }
-@media (min-width: 980px) { .map-wrap { position: sticky; top: 76px; height: calc(100vh - 100px); min-height: 480px; order: 2; } .list { order: 1; } }
-@media (max-width: 979px) { .map-wrap { height: 300px; } }
-#map { position: absolute; inset: 0; }
-.list { display: grid; gap: 12px; }
-.home-card { display: grid; gap: 6px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--rule); cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; font: inherit; color: inherit; width: 100%; }
-.home-card:hover, .home-card.is-selected { border-color: var(--brand); box-shadow: var(--shadow); }
-.home-card .price { font-weight: 900; font-size: 1.45rem; color: var(--ink); letter-spacing: -.02em; }
-.home-card .specs { font-weight: 700; color: var(--ink); }
-.home-card .addr { color: var(--muted); }
-.home-card .builder { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.home-card .meta { font-size: .85rem; color: var(--muted); }
-.home-card .cta { justify-self: start; margin-top: 4px; }
-.price-pin { background: var(--brand); color: #fff; font: 800 12px/1 var(--font-body); padding: 6px 8px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(38, 33, 63, .35); border: 2px solid #fff; transform: translate(-50%, -50%); display: inline-block; }
-.price-pin.is-selected { background: var(--navy); color: var(--navy-ink); z-index: 1000; }
-.leaflet-div-icon.pin-host { background: transparent; border: 0; }
-.state-box { padding: 28px 22px; border-radius: var(--radius); background: var(--surface-2); }
-.state-box h2 { font-size: 1.3rem; }
-.source-note { font-size: .82rem; color: var(--muted); }
-.leaflet-container { font-family: var(--font-body); }
-:root[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.7); }
-:root[data-theme="dark"] .leaflet-control-attribution { background: rgba(27, 23, 48, .8); color: #ccc; }
-:root[data-theme="dark"] .leaflet-control-attribution a { color: #FF8A4C; }
 </style>
 </head>
 <body>
@@ -93,46 +61,11 @@
       <p class="eyebrow" data-i18n="eyebrow">New construction · Tampa Bay</p>
       <h1><span data-i18n="title_a">Search new-construction homes</span> <span class="hl" data-i18n="title_hl">on the map</span></h1>
       <p class="lede" data-i18n="lede">Active new-construction homes for sale near your ZIP code. When you find something you like, talk to our agent before you visit the sales office.</p>
-      <form id="searchForm" class="search-form" novalidate>
-        <div class="field">
-          <label for="s_zip" data-i18n="f_zip">ZIP code</label>
-          <input id="s_zip" name="zip" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" placeholder="33578" required>
-        </div>
-        <div class="field">
-          <label for="s_radius" data-i18n="f_radius">Distance</label>
-          <select id="s_radius" name="radius"><option value="5">5 mi</option><option value="10">10 mi</option><option value="15" selected>15 mi</option><option value="25">25 mi</option><option value="40">40 mi</option></select>
-        </div>
-        <div class="field">
-          <label for="s_max" data-i18n="f_max">Max price</label>
-          <select id="s_max" name="max_price">
-            <option value="" data-i18n="any">Any</option><option value="300000">$300,000</option><option value="400000">$400,000</option><option value="500000">$500,000</option><option value="650000">$650,000</option><option value="800000">$800,000</option><option value="1000000">$1,000,000</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="s_beds" data-i18n="f_beds">Bedrooms</label>
-          <select id="s_beds" name="beds_min"><option value="" data-i18n="any">Any</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option></select>
-        </div>
-        <div class="field">
-          <label for="s_sort" data-i18n="f_sort">Sort</label>
-          <select id="s_sort" name="sort"><option value="price_asc" data-i18n="sort_low">Price: low to high</option><option value="price_desc" data-i18n="sort_high">Price: high to low</option><option value="newest" data-i18n="sort_new">Newest</option></select>
-        </div>
-        <button class="btn btn-primary go" type="submit" data-i18n="f_go">Search</button>
-      </form>
-      <p id="formError" class="hint" role="alert" style="color:var(--critical);margin-top:8px" hidden></p>
     </div>
   </section>
-
-  <section class="results-section" style="padding-block:0">
+  <section style="padding-block:0 40px">
     <div class="wrap">
-      <div class="results-bar">
-        <p id="resultsCount" class="results-count" aria-live="polite"></p>
-        <p id="freshness" class="source-note" style="margin:0"></p>
-      </div>
-      <div class="results">
-        <div id="list" class="list" aria-label="Results"></div>
-        <div class="map-wrap"><div id="map" role="region" aria-label="Map of results" data-i18n-aria="map_label"></div></div>
-      </div>
-      <p class="source-note" style="padding-bottom:40px" data-i18n="source_note">Listing data from RentCast public sources, refreshed at most once a day. These are homes for sale, not verified incentives. Prices, availability and details can change; our agent confirms them with the builder.</p>
+      <div data-bl-search data-mode="full"></div>
     </div>
   </section>
 </main>
@@ -144,71 +77,23 @@
 <script>
 (function () {
   'use strict';
-  var BASE = '{{BASE}}';
   var I18N = {
-    en: {
-      skip: 'Skip to content', nav_label: 'Primary', nav_how: 'How it works', nav_search: 'Search homes', nav_power: 'Buying power', nav_report: 'Get my report',
-      lang_group: 'Language', demo_banner: 'Sample data for demonstration',
-      eyebrow: 'New construction · Tampa Bay', title_a: 'Search new-construction homes', title_hl: 'on the map',
+    en: { skip: 'Skip to content', nav_label: 'Primary', nav_how: 'How it works', nav_search: 'Search homes', nav_power: 'Buying power', nav_report: 'Get my report',
+      lang_group: 'Language', eyebrow: 'New construction · Tampa Bay', title_a: 'Search new-construction homes', title_hl: 'on the map',
       lede: 'Active new-construction homes for sale near your ZIP code. When you find something you like, talk to our agent before you visit the sales office.',
-      f_zip: 'ZIP code', f_radius: 'Distance', f_max: 'Max price', f_beds: 'Bedrooms', f_sort: 'Sort', f_go: 'Search', any: 'Any',
-      sort_low: 'Price: low to high', sort_high: 'Price: high to low', sort_new: 'Newest',
-      map_label: 'Map of results', err_zip: 'Enter a 5-digit ZIP code.',
-      count: '{n} new-construction homes', count_of: '{n} of {total} new-construction homes match your filters', searching: 'Searching...',
-      fresh: 'Updated {when}', stale: 'Showing saved results from {when}; live search is paused.',
-      beds: '{n} bd', baths: '{n} ba', sqft: '{n} sq ft', hoa: 'HOA {amount}/mo', dom: '{n} days on market', built: 'Built {n}',
-      builder_by: 'by {name}', mls: 'MLS {name} #{num}', cta: 'Ask our agent about this home',
-      empty_t: 'No new-construction homes found here', empty_p: 'Try a larger distance, a nearby ZIP code or remove a filter.',
-      start_t: 'Start with a ZIP code', start_p: 'Enter a ZIP code above to see new-construction homes for sale nearby.',
-      nc_t: 'Home search is not connected yet', nc_p: 'We are connecting our listing data. Meanwhile, tell us what you need and our agent will send you verified options.',
-      cap_t: 'Search is resting for this month', cap_p: 'We have reached our monthly search limit. Tell us what you need and our agent will send you options.',
-      err_t: 'Search is unavailable right now', err_p: 'Please try again in a few minutes.',
-      get_report: 'Get my free report', footer: 'BuyersLine is a technology platform, not a real estate brokerage and not a lender. Equal Housing Opportunity.',
-      source_note: 'Listing data from RentCast public sources, refreshed at most once a day. These are homes for sale, not verified incentives. Prices, availability and details can change; our agent confirms them with the builder.',
-      zip_only: 'Showing homes in ZIP {zip} (distance search unavailable right now).'
-    },
-    es: {
-      skip: 'Saltar al contenido', nav_label: 'Principal', nav_how: 'Cómo funciona', nav_search: 'Buscar casas', nav_power: 'Poder de compra', nav_report: 'Obtener mi informe',
-      lang_group: 'Idioma', demo_banner: 'Datos de muestra para demostración',
-      eyebrow: 'Construcción nueva · Tampa Bay', title_a: 'Busque casas de construcción nueva', title_hl: 'en el mapa',
+      footer: 'BuyersLine is a technology platform, not a real estate brokerage and not a lender. Equal Housing Opportunity.' },
+    es: { skip: 'Saltar al contenido', nav_label: 'Principal', nav_how: 'Cómo funciona', nav_search: 'Buscar casas', nav_power: 'Poder de compra', nav_report: 'Obtener mi informe',
+      lang_group: 'Idioma', eyebrow: 'Construcción nueva · Tampa Bay', title_a: 'Busque casas de construcción nueva', title_hl: 'en el mapa',
       lede: 'Casas nuevas en venta cerca de su código postal. Cuando encuentre algo que le guste, hable con nuestro agente antes de visitar la oficina de ventas.',
-      f_zip: 'Código postal', f_radius: 'Distancia', f_max: 'Precio máximo', f_beds: 'Habitaciones', f_sort: 'Ordenar', f_go: 'Buscar', any: 'Cualquiera',
-      sort_low: 'Precio: menor a mayor', sort_high: 'Precio: mayor a menor', sort_new: 'Más recientes',
-      map_label: 'Mapa de resultados', err_zip: 'Escriba un código postal de 5 dígitos.',
-      count: '{n} casas de construcción nueva', count_of: '{n} de {total} casas de construcción nueva coinciden con sus filtros', searching: 'Buscando...',
-      fresh: 'Actualizado {when}', stale: 'Mostrando resultados guardados del {when}; la búsqueda en vivo está en pausa.',
-      beds: '{n} hab', baths: '{n} baños', sqft: '{n} pies²', hoa: 'HOA {amount}/mes', dom: '{n} días en el mercado', built: 'Construida {n}',
-      builder_by: 'de {name}', mls: 'MLS {name} #{num}', cta: 'Pregunte a nuestro agente por esta casa',
-      empty_t: 'No encontramos casas nuevas aquí', empty_p: 'Pruebe una distancia mayor, un código postal cercano o quite un filtro.',
-      start_t: 'Empiece con un código postal', start_p: 'Escriba un código postal arriba para ver casas nuevas en venta cerca.',
-      nc_t: 'La búsqueda de casas aún no está conectada', nc_p: 'Estamos conectando nuestros datos. Mientras tanto, cuéntenos qué necesita y nuestro agente le enviará opciones verificadas.',
-      cap_t: 'La búsqueda descansa este mes', cap_p: 'Llegamos al límite mensual de búsquedas. Cuéntenos qué necesita y nuestro agente le enviará opciones.',
-      err_t: 'La búsqueda no está disponible ahora', err_p: 'Inténtelo de nuevo en unos minutos.',
-      get_report: 'Obtener mi informe gratis', footer: 'BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista. Igualdad de oportunidades en la vivienda.',
-      source_note: 'Datos de anuncios de fuentes públicas de RentCast, actualizados como máximo una vez al día. Son casas en venta, no incentivos verificados. Precios, disponibilidad y detalles pueden cambiar; nuestro agente los confirma con la constructora.',
-      zip_only: 'Mostrando casas en el código postal {zip} (la búsqueda por distancia no está disponible ahora).'
-    }
+      footer: 'BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista. Igualdad de oportunidades en la vivienda.' }
   };
   var params = new URLSearchParams(location.search);
-  var lang = params.get('lang') === 'es' || params.get('lang') === 'en' ? params.get('lang')
-    : ((navigator.language || '').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
-  var $ = function (id) { return document.getElementById(id); };
-  function t(k, p) { var s = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; return p ? s.replace(/\{(\w+)\}/g, function (m, x) { return p[x] != null ? p[x] : m; }) : s; }
-  function money(n) { return new Intl.NumberFormat(lang === 'es' ? 'es-US' : 'en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n); }
-  function numf(n) { return new Intl.NumberFormat(lang === 'es' ? 'es-US' : 'en-US').format(n); }
-  function shortMoney(n) { return n >= 1e6 ? '$' + (n / 1e6).toFixed(n >= 1e7 ? 0 : 2).replace(/\.?0+$/, '') + 'M' : '$' + Math.round(n / 1000) + 'K'; }
-  function el(tag, attrs, kids) {
-    var e = document.createElement(tag);
-    if (attrs) Object.keys(attrs).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); });
-    (kids || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
-    return e;
-  }
-  function when(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleString(lang === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
-
-  function applyStatic() {
+  var lang = params.get('lang') === 'es' || params.get('lang') === 'en' ? params.get('lang') : ((navigator.language || '').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
+  function t(k) { return (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; }
+  function apply() {
     document.documentElement.lang = lang;
-    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (n) { n.setAttribute('aria-label', t(n.getAttribute('data-i18n-aria'))); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (n) { if (I18N.en[n.getAttribute('data-i18n')]) n.textContent = t(n.getAttribute('data-i18n')); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (n) { if (I18N.en[n.getAttribute('data-i18n-aria')]) n.setAttribute('aria-label', t(n.getAttribute('data-i18n-aria'))); });
     Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false'); });
     Array.prototype.forEach.call(document.querySelectorAll('.site-nav a, #homeLink'), function (a) {
       var u = new URL(a.getAttribute('href'), location.href); u.searchParams.set('lang', lang); a.setAttribute('href', u.pathname + u.search + u.hash);
@@ -218,136 +103,10 @@
     b.addEventListener('click', function () {
       lang = b.getAttribute('data-lang') === 'es' ? 'es' : 'en';
       var u = new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(null, '', u.pathname + u.search);
-      applyStatic(); render();
+      apply();
     });
   });
-
-  // ---------- map ----------
-  var map = null, tiles = null, markers = {}, selectedId = null;
-  // OpenStreetMap standard tiles: keyless, attribution required. (CARTO basemaps now demand a key.)
-  // Dark mode darkens the same tiles with a CSS filter instead of a second provider.
-  function tileUrl() { return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; }
-  function ensureMap() {
-    if (map || !window.L) return map;
-    // On touch screens a one-finger drag scrolls the page; two fingers or a tap on the map unlock panning.
-    map = L.map('map', { scrollWheelZoom: false, zoomControl: true, dragging: !L.Browser.mobile, tap: false }).setView([27.95, -82.46], 9);
-    tiles = L.tileLayer(tileUrl(), { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
-    map.on('click', function () { map.scrollWheelZoom.enable(); map.dragging.enable(); });
-    return map;
-  }
-
-  // ---------- state ----------
-  var state = { kind: 'start', data: null };
-
-  function select(id, fromMap) {
-    selectedId = id;
-    Array.prototype.forEach.call(document.querySelectorAll('.home-card'), function (c) { c.classList.toggle('is-selected', c.getAttribute('data-id') === id); });
-    Object.keys(markers).forEach(function (k) {
-      var node = markers[k].getElement && markers[k].getElement();
-      var pin = node && node.querySelector('.price-pin');
-      if (pin) pin.classList.toggle('is-selected', k === id);
-      if (k === id) markers[k].setZIndexOffset(1000); else markers[k].setZIndexOffset(0);
-    });
-    if (fromMap) { var card = document.querySelector('.home-card[data-id="' + CSS.escape(id) + '"]'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-    else if (markers[id] && map) map.panTo(markers[id].getLatLng());
-  }
-
-  function stateBox(title, body, withCta) {
-    var box = el('div', { class: 'state-box' }, [el('h2', { text: title }), el('p', { class: 'muted', text: body })]);
-    if (withCta) box.appendChild(el('a', { class: 'btn btn-primary btn-small', href: BASE + '/?lang=' + lang + '#intake', text: t('get_report') }));
-    return box;
-  }
-
-  function render() {
-    var list = $('list'); list.textContent = '';
-    $('resultsCount').textContent = ''; $('freshness').textContent = '';
-    if (state.kind === 'loading') { $('resultsCount').textContent = t('searching'); return; }
-    if (state.kind === 'start') { list.appendChild(stateBox(t('start_t'), t('start_p'), false)); return; }
-    if (state.kind === 'not_configured') { list.appendChild(stateBox(t('nc_t'), t('nc_p'), true)); return; }
-    if (state.kind === 'cap_reached') { list.appendChild(stateBox(t('cap_t'), t('cap_p'), true)); return; }
-    if (state.kind === 'error') { list.appendChild(stateBox(t('err_t'), t('err_p'), false)); return; }
-    var d = state.data;
-    var total = d.total_new_construction || 0;
-    $('resultsCount').textContent = d.matching === total ? t('count', { n: numf(total) }) : t('count_of', { n: numf(d.matching), total: numf(total) });
-    $('freshness').textContent = d.stale ? t('stale', { when: when(d.fetched_at) }) : (d.fetched_at ? t('fresh', { when: when(d.fetched_at) }) : '');
-    if (d.area_mode === 'zip_only') list.appendChild(el('p', { class: 'source-note', text: t('zip_only', { zip: d.zip }) }));
-    if (!d.listings.length) { list.appendChild(stateBox(t('empty_t'), t('empty_p'), true)); drawMarkers([]); return; }
-    d.listings.forEach(function (h) {
-      var specs = [h.beds != null ? t('beds', { n: h.beds }) : null, h.baths != null ? t('baths', { n: h.baths }) : null, h.sqft != null ? t('sqft', { n: numf(h.sqft) }) : null].filter(Boolean).join(' · ');
-      var builder = el('div', { class: 'builder' });
-      if (h.builder && h.builder.community) builder.appendChild(el('span', { class: 'chip', text: h.builder.community }));
-      if (h.builder && h.builder.name) builder.appendChild(el('span', { class: 'chip chip-muted', text: t('builder_by', { name: h.builder.name }) }));
-      var meta = [h.hoa_monthly != null ? t('hoa', { amount: money(h.hoa_monthly) }) : null, h.days_on_market != null ? t('dom', { n: h.days_on_market }) : null,
-        h.year_built ? t('built', { n: h.year_built }) : null, h.mls_name && h.mls_number ? t('mls', { name: h.mls_name, num: h.mls_number }) : null].filter(Boolean).join(' · ');
-      var cta = el('a', { class: 'btn btn-secondary btn-small cta', href: BASE + '/?lang=' + lang + '&zip=' + encodeURIComponent(h.zip || d.zip) + '#intake', text: t('cta') });
-      cta.addEventListener('click', function (e) { e.stopPropagation(); });
-      var card = el('article', { class: 'home-card', 'data-id': h.id || '', tabindex: '0' }, [
-        el('div', { class: 'price', text: h.price != null ? money(h.price) : '' }),
-        specs ? el('div', { class: 'specs', text: specs }) : null,
-        el('div', { class: 'addr', text: [h.address].filter(Boolean).join('') }),
-        builder.childNodes.length ? builder : null,
-        meta ? el('div', { class: 'meta', text: meta }) : null,
-        cta
-      ]);
-      card.addEventListener('click', function () { select(h.id); });
-      card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(h.id); } });
-      list.appendChild(card);
-    });
-    drawMarkers(d.listings, d.center);
-  }
-
-  function drawMarkers(listings, center) {
-    if (!ensureMap()) return;
-    Object.keys(markers).forEach(function (k) { map.removeLayer(markers[k]); }); markers = {};
-    var bounds = [];
-    listings.forEach(function (h) {
-      if (h.lat == null || h.lng == null || !h.id) return;
-      var label = h.price != null ? shortMoney(h.price) : '';
-      var pin = document.createElement('span'); pin.className = 'price-pin'; pin.textContent = label;
-      var icon = L.divIcon({ className: 'pin-host', html: pin.outerHTML, iconSize: [0, 0] });
-      var m = L.marker([h.lat, h.lng], { icon: icon, keyboard: true, title: (h.address || '') + (label ? ' · ' + label : '') }).addTo(map);
-      m.on('click', function () { select(h.id, true); });
-      markers[h.id] = m; bounds.push([h.lat, h.lng]);
-    });
-    if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-    else if (center) map.setView([center.lat, center.lng], 11);
-    setTimeout(function () { map.invalidateSize(); }, 50);
-  }
-
-  function run(push) {
-    var form = $('searchForm');
-    var zip = $('s_zip').value.trim();
-    var err = $('formError');
-    if (!/^\d{5}$/.test(zip)) { err.textContent = t('err_zip'); err.hidden = false; $('s_zip').focus(); return; }
-    err.hidden = true;
-    var q = new URLSearchParams();
-    ['zip', 'radius', 'max_price', 'beds_min', 'sort'].forEach(function (k) { var v = form.elements[k].value; if (v) q.set(k, v); });
-    if (push) { var u = new URL(location.href); q.forEach(function (v, k) { u.searchParams.set(k, v); }); ['max_price', 'beds_min'].forEach(function (k) { if (!q.get(k)) u.searchParams.delete(k); }); u.searchParams.set('lang', lang); history.replaceState(null, '', u.pathname + u.search); }
-    state = { kind: 'loading' }; render();
-    fetch(BASE + '/api/v1/public/listings?' + q.toString(), { headers: { Accept: 'application/json' } })
-      .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
-      .then(function (res) {
-        var s = res.body && res.body.status;
-        if (s === 'ok') state = { kind: 'ok', data: res.body };
-        else if (s === 'not_configured') state = { kind: 'not_configured' };
-        else if (s === 'cap_reached') state = { kind: 'cap_reached' };
-        else if (s === 'invalid') { state = { kind: 'start' }; err.textContent = t('err_zip'); err.hidden = false; }
-        else state = { kind: 'error' };
-        render();
-      })
-      .catch(function () { state = { kind: 'error' }; render(); });
-  }
-
-  $('searchForm').addEventListener('submit', function (e) { e.preventDefault(); run(true); });
-  ['s_radius', 's_max', 's_beds', 's_sort'].forEach(function (id) { $(id).addEventListener('change', function () { if (/^\d{5}$/.test($('s_zip').value.trim())) run(true); }); });
-
-  // Restore a shared search from the URL.
-  ['zip', 'radius', 'max_price', 'beds_min', 'sort'].forEach(function (k) {
-    var v = params.get(k); var f = $('searchForm').elements[k]; if (v && f) f.value = v;
-  });
-  applyStatic();
-  render();
-  window.addEventListener('load', function () { ensureMap(); if (/^\d{5}$/.test($('s_zip').value.trim())) run(false); });
+  apply();
 })();
 </script>
 </body>
