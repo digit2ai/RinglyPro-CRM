@@ -300,7 +300,31 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const html = read(path.join(ROOT, 'public', 'index.html'));
     const listener = html.slice(html.indexOf("window.addEventListener('d2orb:action'"), html.indexOf('</script>', html.indexOf("window.addEventListener('d2orb:action'")));
     assert(listener.length > 100, 'listener missing');
-    assert(!/consent|requestSubmit|\.submit\(|\.click\(|share_with_agent|sms/i.test(listener), 'listener touches consent or submits');
+    assert(!/\.click\(|share_with_agent|\.submit\(/.test(listener), 'listener clicks or submits directly');
+    listener.split('\n').filter((l) => /consent/i.test(l)).forEach((l) => assert(!/checked\s*=|click|dispatchEvent/.test(l), 'listener writes a consent box: ' + l.trim()));
+    const script = html.slice(html.indexOf('/* Martha (voice assistant)'), html.indexOf('</script>', html.indexOf('/* Martha (voice assistant)')));
+    assert(!/\.click\(|\.submit\(/.test(script), 'script clicks or submits directly');
+    script.split('\n').filter((l) => /consent/i.test(l)).forEach((l) => assert(!/checked\s*=|click|dispatchEvent/.test(l), 'script writes a consent box: ' + l.trim()));
+    const send = script.slice(script.indexOf('function startSend'), script.indexOf("window.addEventListener('d2orb:action'"));
+    assert(send.indexOf('missingRequired()') !== -1 && send.indexOf('missingRequired()') < send.indexOf('requestSubmit'), 'send is not guarded by the required-field check');
+    assert(/setInterval/.test(send) && /cancelSend/.test(send) && /Cancel/.test(send), 'send has no cancelable countdown');
+    assert((script.match(/requestSubmit\(/g) || []).length === 1, 'exactly one send path');
+  });
+  await t('Martha sends only after a clear yes, and reads the live form status so she never asks twice', () => {
+    const { AGENTS, blConfirmSubmit } = require('../../src/config/voice-agents');
+    const submit = AGENTS.buyersline.pageActions.find((a) => a.name === 'submit_intake_form');
+    assert(submit && submit.sanitize === blConfirmSubmit, 'submit action missing');
+    eq(Object.keys(submit.input_schema.properties).length, 0);
+    for (const yes of ['Yes', 'yes please send it', 'Sure, go ahead.', 'ok', 'Sí', 'sí, envíelo', 'Claro que sí', 'dale']) assert(blConfirmSubmit({}, { lastUserText: yes }) !== null, 'refused a yes: ' + yes);
+    for (const no of ['', 'No', "no, don't send it yet", 'wait', 'what is this?', 'hold on, let me check', 'no todavía', 'espere un momento', 'cómo funciona esto']) eq(blConfirmSubmit({}, { lastUserText: no }), null);
+    eq(blConfirmSubmit({ force: true }, {}), null);
+    for (const lang of ['en', 'es']) assert(/INTAKE FORM STATUS/.test(AGENTS.buyersline.persona[lang]) && /submit_intake_form/.test(AGENTS.buyersline.persona[lang]), 'persona ' + lang);
+    const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
+    assert(/accion\.sanitize\(p\.input, \{ lastUserText: askedText/.test(route) && /if \(limpio === null\)/.test(route), 'route does not gate refused actions');
+    const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
+    assert(/D2AIVoiceOrbLiveContext/.test(orb) && /context: ctx/.test(orb), 'orb does not send live context');
+    const html = read(path.join(ROOT, 'public', 'index.html'));
+    assert(/window\.D2AIVoiceOrbLiveContext = function/.test(html) && /Required still missing/.test(html), 'landing does not report form status');
   });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');

@@ -314,9 +314,17 @@
     function ask(text, onReply) {
       history.push({ role: 'user', content: text });
       setState('thinking');
+      // A host page may expose live state the page text cannot show (form values, what is still missing).
+      var ctx = pageContext;
+      try {
+        if (typeof window.D2AIVoiceOrbLiveContext === 'function') {
+          var liveCtx = window.D2AIVoiceOrbLiveContext();
+          if (liveCtx) ctx = String(liveCtx).slice(0, 4000) + '\n\n' + pageContext;
+        }
+      } catch (e) { /* page hook failed: fall back to page text */ }
       fetch(API + '/api/voice-agent/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: AGENT, lang: cfg.lang, context: pageContext, messages: history.slice(-12) })
+        body: JSON.stringify({ agent: AGENT, lang: cfg.lang, context: ctx, messages: history.slice(-12) })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {

@@ -292,10 +292,15 @@ router.post('/chat', async (req, res) => {
         let salida;
         const accion = pageActions.find((a) => a.name === p.name);
         if (accion) {
-          const limpio = typeof accion.sanitize === 'function' ? accion.sanitize(p.input) : {};
-          acciones.push({ name: accion.name, input: limpio });
-          salida = { ok: true, filled_fields: Object.keys(limpio), ignored: Object.keys(p.input || {}).filter((k) => !(k in limpio)),
-            note: 'Fields are filled on the page for the buyer to review. Consent and sending are theirs to do; the form has NOT been sent.' };
+          // sanitize() returning null refuses the action (e.g. a send without a clear yes): nothing reaches the page.
+          const limpio = typeof accion.sanitize === 'function' ? accion.sanitize(p.input, { lastUserText: askedText, lang }) : {};
+          if (limpio === null) {
+            salida = { ok: false, refused: true, note: accion.refusedNote || 'Not done. Ask the user to confirm clearly first.' };
+          } else {
+            acciones.push({ name: accion.name, input: limpio });
+            salida = { ok: true, filled_fields: Object.keys(limpio), ignored: Object.keys(p.input || {}).filter((k) => !(k in limpio)),
+              note: accion.resultNote || 'Done on the page for the user to review. Nothing has been sent.' };
+          }
         } else if (excedeLimite(ip)) {
           salida = { error: 'límite de consultas alcanzado, intente más tarde' };
         } else {

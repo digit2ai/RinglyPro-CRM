@@ -1463,8 +1463,10 @@
 <script src="/embed/voice-orb.js" defer></script>
 <script>(function(){var z=new URLSearchParams(location.search).get('zip');if(/^\d{5}$/.test(z||'')){var f=document.getElementById('f_zips');if(f&&!f.value)f.value=z;}})();</script>
 <script>
-/* Martha (voice assistant) fills the intake form (voice orb page action). Only the fields below; never
-   consent checkboxes, never submit. Every filled field is highlighted for review. */
+/* Martha (voice assistant) fills the intake form (voice orb page actions). She never ticks a consent box.
+   Every filled field is highlighted for review. She can send the form only after the server confirmed the
+   buyer said yes, only when no required field is empty, and only after a 5-second countdown the buyer can cancel.
+   D2AIVoiceOrbLiveContext tells her what is filled and what is missing, so she never asks twice. */
 (function () {
   'use strict';
   function byId(id) { return document.getElementById(id); }
@@ -1481,9 +1483,92 @@
     r.checked = true; fire(r); mark(byId(setId)); return true;
   }
   function money(n) { return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n); }
+  function val(id) { var el = byId(id); return el && el.value ? String(el.value).trim() : ''; }
+  function picked(name) {
+    var r = document.querySelector('input[name="' + name + '"]:checked'); if (!r) return '';
+    var lab = r.closest('label'); return (lab ? lab.textContent.trim() + ' ' : '') + '(' + r.value + ')';
+  }
+  function ticked(name) { var el = document.querySelector('input[name="' + name + '"]'); return !el ? 'not offered' : (el.checked ? 'ticked' : 'not ticked'); }
+  var REQUIRED = [
+    ['area (ZIP codes or city)', 'f_zips', function () { return val('f_zips') || val('f_place'); }],
+    ['maximum home price', 'f_budget', function () { return val('f_budget'); }],
+    ['bedrooms', 'f_beds', function () { return val('f_beds'); }],
+    ['timing', 'timelineSet', function () { return picked('timeline'); }],
+    ['how they will pay', 'financingSet', function () { return picked('financing'); }],
+    ['working with an agent', 'agentSet', function () { return picked('has_other_agent'); }],
+    ['first name', 'f_first', function () { return val('f_first'); }],
+    ['email', 'f_email', function () { return val('f_email'); }]
+  ];
+  var OPTIONAL = [
+    ['bathrooms', function () { return val('f_baths'); }],
+    ['monthly payment', function () { return val('f_monthly'); }],
+    ['down payment', function () { return val('f_down'); }],
+    ['phone', function () { return val('f_phone'); }],
+    ['must-haves', function () { return Array.prototype.map.call(document.querySelectorAll('input[name="must_have"]:checked'), function (c) { return c.value; }).join(', '); }]
+  ];
+  function missingRequired() { return REQUIRED.filter(function (r) { return !r[2](); }); }
+  var sendState = 'not sent', sendTimer = null, sendBar = null;
+  function sendStateNow() {
+    var b = byId('intakeSubmit');
+    if (sendState === 'sent' && b && !b.disabled) sendState = 'not sent (the last attempt did not go through; check the messages on the form)';
+    return sendState;
+  }
+  window.D2AIVoiceOrbLiveContext = function () {
+    var filled = [], missing = [], opt = [];
+    REQUIRED.forEach(function (r) { var v = r[2](); if (v) filled.push(r[0] + ' = ' + v); else missing.push(r[0]); });
+    OPTIONAL.forEach(function (r) { var v = r[1](); if (v) filled.push(r[0] + ' = ' + v); else opt.push(r[0]); });
+    return 'INTAKE FORM STATUS (live; read this first). ' +
+      'Filled: ' + (filled.join('; ') || 'nothing yet') + '. ' +
+      'Required still missing: ' + (missing.join(', ') || 'none, the form is ready to send') + '. ' +
+      'Optional not filled: ' + (opt.join(', ') || 'none') + '. ' +
+      'Contact boxes, ticked only by the buyer: email updates ' + ticked('consent_email') + '; text messages ' + ticked('consent_sms') + '; share my details with the agent ' + ticked('consent_share') + '. ' +
+      'Form: ' + sendStateNow() + '.';
+  };
+  function es() { return (document.documentElement.lang || '').toLowerCase().indexOf('es') === 0; }
+  function cancelSend() {
+    if (sendTimer) clearInterval(sendTimer);
+    sendTimer = null; sendState = 'not sent (the buyer cancelled the send)';
+    if (sendBar) { sendBar.remove(); sendBar = null; }
+  }
+  function startSend() {
+    if (sendTimer) return;
+    var form = byId('intakeForm'), btn = byId('intakeSubmit');
+    if (!form || !btn || btn.disabled) return;
+    var miss = missingRequired();
+    if (miss.length) {
+      miss.forEach(function (r) { mark(byId(r[1])); });
+      var first = byId(miss[0][1]); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      sendState = 'not sent, still missing: ' + miss.map(function (r) { return r[0]; }).join(', ');
+      return;
+    }
+    var left = 5;
+    sendState = 'being sent after a 5-second countdown the buyer can cancel';
+    sendBar = document.createElement('div');
+    sendBar.className = 'bl-sendbar'; sendBar.setAttribute('role', 'status');
+    var msg = document.createElement('span');
+    var cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'btn btn-secondary'; cancel.textContent = es() ? 'Cancelar' : 'Cancel';
+    cancel.addEventListener('click', cancelSend);
+    sendBar.appendChild(msg); sendBar.appendChild(cancel);
+    document.body.appendChild(sendBar);
+    function paint() { msg.textContent = (es() ? 'Enviando su formulario para crear el informe en ' : 'Sending your form to create your report in ') + left + '…'; }
+    paint();
+    btn.scrollIntoView({ behavior: 'smooth', block: 'center' }); mark(btn);
+    sendTimer = setInterval(function () {
+      left--; if (left > 0) { paint(); return; }
+      clearInterval(sendTimer); sendTimer = null;
+      if (sendBar) { sendBar.remove(); sendBar = null; }
+      if (missingRequired().length) { sendState = 'not sent, a required field was cleared'; return; }
+      sendState = 'sent';
+      if (typeof form.requestSubmit === 'function') form.requestSubmit(btn);
+      else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }, 1000);
+  }
   window.addEventListener('d2orb:action', function (e) {
     var d = e.detail || {};
+    if (d.name === 'submit_intake_form') { startSend(); return; }
     if (d.name !== 'fill_intake_form') return;
+    if (!sendTimer && sendState !== 'sent') sendState = 'not sent';
     var i = d.input || {}, filled = 0;
     if (i.zip_codes && i.zip_codes.length) filled += setValue('f_zips', i.zip_codes.join(', ')) ? 1 : 0;
     if (i.place) filled += setValue('f_place', i.place) ? 1 : 0;
@@ -1504,7 +1589,11 @@
       if (c && !c.checked) { c.checked = true; fire(c); filled++; }
     });
     if (i.must_haves && i.must_haves.length) mark(byId('mustSet'));
-    if (filled) {
+    if (filled && !missingRequired().length) {
+      // Everything required is in: bring the contact choices and the button into view.
+      var cs = byId('consentSet'); if (cs) cs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      mark(byId('intakeSubmit'));
+    } else if (filled) {
       var intake = byId('intake');
       var box = intake && intake.getBoundingClientRect();
       if (box && (box.top > window.innerHeight || box.bottom < 0)) intake.scrollIntoView({ behavior: 'smooth', block: 'start' });
