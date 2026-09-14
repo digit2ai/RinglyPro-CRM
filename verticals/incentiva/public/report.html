@@ -350,6 +350,8 @@
 
   var segs = location.pathname.split('/').filter(Boolean);
   var token = segs.length ? decodeURIComponent(segs[segs.length - 1]) : '';
+  // ?preview=<report id>: an agent signed in to the console reads a report the buyer cannot see yet.
+  var previewId = /^\d+$/.test(params.get('preview') || '') ? params.get('preview') : null;
 
   var view = { kind: 'loading', data: null };
   var consult = { times: '', channel: '', sent: false, sending: false, error: null, fieldErrors: {} };
@@ -477,7 +479,10 @@
   // ---------- fetch ----------
   function load(isPoll) {
     if (!token) { view = { kind: 'notfound' }; render(); return; }
-    fetch(BASE + '/api/v1/public/reports/' + encodeURIComponent(token) + (langChosen ? '?lang=' + lang : ''), { headers: { 'Accept': 'application/json' } })
+    var src = previewId
+      ? BASE + '/api/v1/agent/reports/' + previewId + '/preview' + (langChosen ? '?lang=' + lang : '')
+      : BASE + '/api/v1/public/reports/' + encodeURIComponent(token) + (langChosen ? '?lang=' + lang : '');
+    fetch(src, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
       .then(function (r) {
         return r.text().then(function (txt) {
           var data = null;
@@ -487,6 +492,7 @@
       })
       .then(function (res) {
         poll.lastChecked = new Date();
+        if (previewId && (res.status === 401 || res.status === 403)) { view = { kind: 'error', message: lang === 'es' ? 'Inicie sesión en la consola de agentes para ver esta vista previa.' : 'Sign in to the agent console to preview this report.' }; render(); return; }
         if (res.status === 404) { stopPoll(); view = { kind: 'notfound' }; render(); return; }
         if (res.status === 429) {
           if (isPoll && view.kind === 'pending') { schedulePoll(); render(); return; }
@@ -567,7 +573,16 @@
       return;
     }
     if (view.kind === 'pending') { renderPending(app, view.data); return; }
-    if (view.kind === 'ready') { renderReady(app, view.data); return; }
+    if (view.kind === 'ready') {
+      if (view.data && view.data.preview) {
+        var live = view.data.report_status === 'ready';
+        app.appendChild(h('div', { class: 'callout callout-caution no-print', role: 'status', style: 'margin-top:24px' },
+          h('h3', { text: lang === 'es' ? 'Vista previa para agentes' : 'Agent preview' }),
+          h('p', { text: live ? (lang === 'es' ? 'Este informe ya está publicado para el comprador.' : 'This report is already released to the buyer.')
+            : (lang === 'es' ? 'El comprador todavía no puede ver este informe. Apruébelo en la consola para publicarlo.' : 'The buyer cannot see this report yet. Approve it in the console to release it.') })));
+      }
+      renderReady(app, view.data); return;
+    }
   }
 
   function beforeVisitCallout(extra) {
@@ -728,7 +743,7 @@
     var before = beforeVisitCallout(nar.next_step || null);
     before.querySelector('h3').id = 'beforeT';
     consultSec.appendChild(before);
-    consultSec.appendChild(renderConsult(agent));
+    if (!d.preview) consultSec.appendChild(renderConsult(agent));
     app.appendChild(consultSec);
 
     // Assumptions

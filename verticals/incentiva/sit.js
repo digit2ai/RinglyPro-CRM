@@ -440,6 +440,12 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       });
       const repRow = await db.one('SELECT * FROM nca_reports WHERE token = :tok', { tok: tokenEs });
       await t('the generated report passes compliance on its own templates (EN and ES)', () => eq(repRow.compliance_verdict, 'pass'));
+      await t('an agent can preview a held report; the public link and a signed-out caller still cannot', async () => {
+        const pv = await call('GET', '/api/v1/agent/reports/' + repRow.id + '/preview?lang=en', null, 'agent');
+        eq(pv.status, 200); eq(pv.data.preview, true); eq(pv.data.report_status, 'pending_review'); assert(Array.isArray(pv.data.items), 'no items array');
+        assert([401, 403].includes((await call('GET', '/api/v1/agent/reports/' + repRow.id + '/preview')).status), 'preview open without a session');
+        eq((await call('GET', '/api/v1/public/reports/' + tokenEs)).data.status, 'pending_review');
+      });
       await t('English and Spanish list the same communities in the same order', () => {
         const sig = (p) => p.items.map((i) => i.rank + ':' + i.community.id + ':' + (i.home ? i.home.id : '-')).join('|');
         eq(sig(repRow.payload.en), sig(repRow.payload.es)); assert(repRow.payload.en.items.length > 0, 'no items');

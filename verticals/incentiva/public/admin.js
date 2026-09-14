@@ -763,7 +763,7 @@
   }
   function reportCardHTML(r) {
     const comp = r.compliance || {};
-    const href = r.token ? `${BASE}/r/${encodeURIComponent(r.token)}` : null;
+    const href = r.token ? `${BASE}/r/${encodeURIComponent(r.token)}?preview=${encodeURIComponent(r.id)}` : null;
     return `<article class="card" data-scope data-item data-rid="${esc(r.id)}">
       <div class="qhead" style="flex-wrap:wrap">
         <div><h3>${esc(r.buyer_first_name || 'Buyer')}</h3><p class="small muted">Created ${timeTag(r.created_at, true)} &middot; <span class="mono">${num(r.items_count)}</span> item${num(r.items_count) === 1 ? '' : 's'}</p></div>
@@ -772,7 +772,7 @@
       <div class="section" style="margin-top:12px"><h4 style="margin-bottom:8px">Findings</h4>${findingsHTML(comp.findings)}</div>
       <div data-extra></div>
       <div class="formbar">
-        ${href ? `<a class="btn" href="${esc(href)}" target="_blank" rel="noopener noreferrer">Open report</a>` : '<span class="small muted">No report link available</span>'}
+        ${href ? `<a class="btn" href="${esc(href)}" target="_blank" rel="noopener noreferrer">Preview report</a>` : '<span class="small muted">No report link available</span>'}
         <button type="button" class="btn btn-primary" data-act="approveReport">Approve</button>
         <button type="button" class="btn btn-danger" data-act="holdOpen">Hold</button>
       </div>

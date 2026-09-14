@@ -19,6 +19,7 @@ const { processText, fetchSource, insertVersion, versionFields } = require('../s
 const { seedDemo, reset } = require('../services/seed');
 const billing = require('../engines/billing');
 const notify = require('../services/notify');
+const { publicView } = require('../services/report');
 const { audit, activity, clampStr, numOrNull } = require('../services/util');
 
 const wrap = (fn) => (req, res) => fn(req, res).catch((e) => {
@@ -296,6 +297,14 @@ module.exports = function agentRoutes() {
       FROM nca_reports b JOIN nca_buyers u ON u.id = b.buyer_id WHERE b.tenant_id = :tt AND b.status = :status${ownerClause(req.user)} ORDER BY b.created_at DESC LIMIT 100`, { tt, uid, status });
     res.json({ reports: rows.map((x) => ({ id: x.id, token: x.token, status: x.status, buyer_first_name: x.first_name, created_at: x.created_at,
       items_count: ((x.payload[x.payload.en ? 'en' : 'es'] || {}).items || []).length, compliance: { verdict: x.compliance_verdict, findings: x.findings || [] } })) });
+  }));
+
+  // Agent preview: the same view the buyer will get, for a report the buyer cannot see yet. Read-only.
+  r.get('/reports/:id/preview', wrap(async (req, res) => {
+    const rep = await ownReport(req);
+    const lang = req.query.lang === 'es' || req.query.lang === 'en' ? req.query.lang : rep.language;
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(Object.assign(await publicView(rep.tenant_id, rep, lang), { status: 'ready', preview: true, report_status: rep.status }));
   }));
 
   async function ownReport(req) {
