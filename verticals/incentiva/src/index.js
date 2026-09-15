@@ -146,7 +146,10 @@ function createApp(opts = {}) {
           if (owner) appendCookie(res, consoleCookie(auth.sign(owner), auth.TTL_SECONDS));
           return res.redirect(303, next);
         }
-        // A preview login has no dashboard: send it to the architecture page instead of a dashboard that refuses it.
+        // An approved login has a matching dashboard account (auth.syncFromPreviewLogin): open it too. Without one
+        // (created before this rule), send it to the architecture page instead of a dashboard that refuses it.
+        const cu = auth.configured() ? await db.one(`SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e AND active = true`, { t: tenantId, e: String(out.user.email).toLowerCase() }) : null;
+        if (cu) { appendCookie(res, consoleCookie(auth.sign(cu), auth.TTL_SECONDS)); return res.redirect(303, next); }
         return res.redirect(303, next.startsWith(adminHome) ? req.baseUrl + '/architecture' : next);
       }
       if (auth.configured()) {
@@ -212,6 +215,7 @@ function createApp(opts = {}) {
     const out = await archgate.resetPassword(tenantId, b.t, b.password, b.confirm).catch(() => ({ error: 'expired' }));
     if (out.error === 'expired') return html(res, 400, archgate.resetPage(req.baseUrl, '', null, true));
     if (out.error) return html(res, 400, archgate.resetPage(req.baseUrl, String(b.t || ''), out.error));
+    await auth.syncFromPreviewLogin(tenantId, out.user);
     await audit(tenantId, { type: 'site_user', id: out.user.id }, 'gate.password_reset', 'site_user', out.user.id, {});
     res.redirect(303, req.baseUrl + '/gate/login?reset=1');
   });
@@ -229,6 +233,7 @@ function createApp(opts = {}) {
     if (!sameOrigin(req)) return res.status(403).type('text').send('Not allowed.');
     const row = await archgate.decide(tenantId, req.params.id, (req.body || {}).decision, archgate.ownerEmail());
     if (row) {
+      await auth.syncFromPreviewLogin(tenantId, row);
       await audit(tenantId, { type: 'owner' }, 'gate.login_' + row.status, 'site_user', row.id, {});
       if (row.status === 'approved') notify.later(notify.siteLoginApproved, tenantId, row);
     }

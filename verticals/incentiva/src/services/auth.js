@@ -124,6 +124,38 @@ function requireAgent(tenantId) {
   };
 }
 
+/** The two accounts Render sets (owner, licensed agent): the dashboard never edits them. */
+function envManagedEmails() {
+  return [process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com', process.env.INCENTIVA_AGENT_EMAIL].filter(Boolean).map((e) => String(e).trim().toLowerCase());
+}
+
+/**
+ * An approved preview login gets a dashboard account (owner decision 2026-09-15): role 'agent' (never admin, no license,
+ * so it cannot confirm incentives and sees only leads assigned to it), same email, same bcrypt password hash, so one
+ * password works everywhere. Rejecting or disabling the login deactivates that account. Render-managed accounts and
+ * existing admins are never touched.
+ */
+async function syncFromPreviewLogin(tenantId, siteUser) {
+  if (!siteUser || !siteUser.email) return null;
+  const email = String(siteUser.email).trim().toLowerCase();
+  if (envManagedEmails().includes(email)) return null;
+  const full = await db.one('SELECT id, email, password_hash, status FROM nca_site_users WHERE id = :id AND tenant_id = :t', { id: siteUser.id, t: tenantId });
+  if (!full) return null;
+  const existing = await db.one('SELECT id, role FROM nca_users WHERE tenant_id = :t AND email = :e', { t: tenantId, e: email });
+  if (existing && existing.role === 'admin') return existing;
+  if (full.status === 'approved') {
+    if (existing) {
+      await db.exec('UPDATE nca_users SET active = true, password_hash = :h WHERE id = :id', { h: full.password_hash, id: existing.id });
+      return existing;
+    }
+    const name = email.split('@')[0].replace(/[._+-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 160) || 'Team member';
+    const r = await db.exec(`INSERT INTO nca_users (tenant_id, email, name, password_hash, role) VALUES (:t, :e, :n, :h, 'agent') ON CONFLICT DO NOTHING RETURNING id, role`, { t: tenantId, e: email, n: name, h: full.password_hash });
+    return r[0] || null;
+  }
+  if (existing) await db.exec('UPDATE nca_users SET active = false WHERE id = :id', { id: existing.id });
+  return existing;
+}
+
 /** The active console user behind this request's session cookie, or null. */
 async function userFromRequest(req, tenantId) {
   if (!configured()) return null;
@@ -136,4 +168,4 @@ async function userFromRequest(req, tenantId) {
   } catch (e) { return null; }
 }
 
-module.exports = { userFromRequest, PUBLISHED_PASSWORDS, configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };
+module.exports = { envManagedEmails, syncFromPreviewLogin, userFromRequest, PUBLISHED_PASSWORDS, configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };

@@ -685,6 +685,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         }
         const adminHtml = read(path.join(ROOT, 'public', 'admin.html'));
         assert(/href="#\/users"[^>]*data-admin-only/.test(adminHtml) && /href="#\/architecture"[^>]*data-admin-only/.test(adminHtml) && /href="#\/system"[^>]*data-admin-only/.test(adminHtml), 'left pane admin links');
+        const rail = (adminHtml.match(/<nav class="rail"[\s\S]*?<\/nav>/) || [''])[0];
+        const railLinks = rail.match(/<a [^>]*>/g) || [];
+        assert(/architecture\/sme/.test(railLinks[railLinks.length - 1]) && !/data-admin-only/.test(railLinks[railLinks.length - 1]), 'Expert questionnaire must be the last left-pane link, visible to everyone');
       });
       await t('health reports the console configured and no transports', async () => {
         const r = await call('GET', '/health'); eq(r.data.agent_console, 'configured'); eq(r.data.model_configured, false); assert(/none/.test(r.data.transports));
@@ -1537,7 +1540,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           for (let i = 0; i < 40 && !mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)); i++) await new Promise((r) => setTimeout(r, 50));
           assert(mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)), 'no approval email');
           const login = await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' });
-          eq(login.status, 303); eq(login.headers.get('location'), '/buyersline/architecture', 'a preview login has no dashboard, so it lands on the architecture page');
+          eq(login.status, 303); eq(login.headers.get('location'), '/buyersline/admin/', 'an approved login must land in the dashboard');
+          const dash = await db.one(`SELECT role, active FROM nca_users WHERE tenant_id = :t AND email = 'sit-preview@example.test'`, { t: SIT_TENANT });
+          assert(dash && dash.role === 'agent' && dash.active, 'approval did not create an agent dashboard account');
+          const setc = login.headers.get('set-cookie') || '';
+          const dashCookie = [(setc.match(/incentiva_token=[^;]+/) || [''])[0], (setc.match(/bl_arch=u\.[^;]+/) || [''])[0]].filter(Boolean).join('; ');
+          eq((await fetch(BASE + '/api/v1/auth/me', { headers: { Cookie: dashCookie } })).status, 200, 'the approved login cannot open the dashboard');
+          eq((await fetch(BASE + '/api/v1/agent/admin/users', { headers: { Cookie: dashCookie } })).status, 403, 'an approved login reached admin screens');
           const userCookie = (login.headers.get('set-cookie') || '').split(';')[0];
           eq((await fetch(BASE + '/', { headers: { Cookie: userCookie } })).status, 200, 'approved login refused');
           eq((await fetch(BASE + '/gate/accounts', { headers: { Cookie: userCookie } })).status, 401, 'an approved login reached the checker page');
@@ -1571,6 +1580,10 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq((await form('/gate/reset', { t: tok, password: 'sit-new-password-000009', confirm: 'sit-new-password-000009' })).status, 400, 'a reset link worked twice');
           eq((await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' })).status, 401);
           eq((await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-new-password-000002' })).status, 303);
+          const hashRow = await db.one(`SELECT password_hash FROM nca_users WHERE tenant_id = :t AND email = 'sit-preview@example.test'`, { t: SIT_TENANT });
+          assert(await require('bcryptjs').compare('sit-new-password-000002', hashRow.password_hash), 'a password reset did not reach the dashboard account');
+          eq((await form('/gate/accounts/' + acct.id, { decision: 'disable' }, owner)).status, 303);
+          eq((await db.one(`SELECT active FROM nca_users WHERE tenant_id = :t AND email = 'sit-preview@example.test'`, { t: SIT_TENANT })).active, false, 'disabling a login left its dashboard account active');
           eq((await fetch(BASE + '/', { headers: { Cookie: 'bl_arch=u.' + acct.id + '.9999999999999.forged' } })).status, 401, 'forged account cookie');
           const robots = await fetch(BASE + '/robots.txt'); eq(robots.status, 200); assert(/Sitemap: .*\/sitemap\.xml/.test(await robots.text()), 'robots');
           const sm = await fetch(BASE + '/sitemap.xml'); eq(sm.status, 200); assert(/<urlset[\s\S]*<loc>/.test(await sm.text()), 'sitemap');

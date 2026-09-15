@@ -817,6 +817,7 @@ module.exports = function agentRoutes() {
     const tt = req.user.tenant_id;
     const row = await archgate.decide(tt, req.params.id, (req.body || {}).decision, req.user.email);
     if (!row) throw new HttpError(400, 'Choose approve, reject or disable');
+    await require('../services/auth').syncFromPreviewLogin(tt, row);
     await audit(tt, { type: 'agent', id: req.user.id }, 'gate.login_' + row.status, 'site_user', row.id, { via: 'console' });
     if (row.status === 'approved') notify.later(notify.siteLoginApproved, tt, row);
     res.json({ ok: true, status: row.status });

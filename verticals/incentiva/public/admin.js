@@ -1509,8 +1509,7 @@
       ['#/users', 'Users', 'Console accounts, preview logins and experts', 'users'],
       ['#/system', 'System', 'Connections, research runs and daily jobs', ''],
       ['#/architecture', 'Architecture', 'The ecosystem map and every AI agent', ''],
-      [BASE + '/architecture/sme', 'Expert questionnaire', 'Opens in a new tab', ''],
-    ] : []);
+    ] : []).concat([[BASE + '/architecture/sme', 'Expert questionnaire', 'Opens in a new tab', '']]);
     const html = `${pageHead('More')}
       <ul class="morelist">${items.map(([href, label, desc, badge]) => `<li><a href="${href}"><span>${esc(label)}<span class="desc">${esc(desc)}</span></span>${badge ? `<span class="badge" data-badge="${badge}" hidden></span>` : ''}</a></li>`).join('')}
         <li><button type="button" data-act="signout">Sign out<span class="desc"></span></button></li>
@@ -1782,7 +1781,7 @@
       </tr>`).join('');
     return `${pageHead('Users', 'Everyone who can reach BuyersLine before launch')}
       <section class="card" style="margin-bottom:18px"><div class="qhead"><h2>Private preview logins</h2>${pending ? chip(pending + ' WAITING', 'warn') : ''}</div>
-        <p class="small muted">People create these on the sign-in page. A login works only after an admin approves it; the person gets an email when it is approved.</p>
+        <p class="small muted">People create these on the sign-in page. A login works only after an admin approves it. Approving also opens the dashboard to that person as an agent (their own leads, no admin screens); the person gets an email.</p>
         ${previewRows ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Email</th><th>Status</th><th>Created</th><th>Last sign-in</th><th></th></tr></thead><tbody>${previewRows}</tbody></table></div>` : emptyHTML('No preview logins yet.', 'They appear here when someone uses Create a login.')}
       </section>
       <section class="card" style="margin-bottom:18px"><h2>Console accounts</h2>
