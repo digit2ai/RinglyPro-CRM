@@ -17,9 +17,16 @@ const crypto = require('crypto');
 const COOKIE = 'bl_arch';
 const TTL_MS = 12 * 3600e3;
 
+// A value pasted into Render often carries a stray space, a newline or wrapping quotes; none of those can be
+// part of the intended credential, so they are removed from the stored value and from what is typed.
+function clean(v) {
+  let s = String(v == null ? '' : v).trim();
+  if (s.length >= 2 && ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'"))) s = s.slice(1, -1).trim();
+  return s;
+}
 function creds() {
-  const user = String(process.env.INCENTIVA_ARCHITECTURE_USER || '').trim();
-  const password = String(process.env.INCENTIVA_ARCHITECTURE_PASSWORD || '');
+  const user = clean(process.env.INCENTIVA_ARCHITECTURE_USER);
+  const password = clean(process.env.INCENTIVA_ARCHITECTURE_PASSWORD);
   return user && password ? { user, password } : null;
 }
 function configured() { return !!creds(); }
@@ -36,8 +43,8 @@ function safeEqual(a, b) { return crypto.timingSafeEqual(digest(a), digest(b)); 
 function check(user, password) {
   const c = creds();
   if (!c) return false;
-  const u = safeEqual(String(user || '').trim().toLowerCase(), c.user.toLowerCase());
-  const p = safeEqual(String(password || ''), c.password);
+  const u = safeEqual(clean(user).toLowerCase(), c.user.toLowerCase());
+  const p = safeEqual(clean(password), c.password);
   return u && p;
 }
 
@@ -101,4 +108,4 @@ function closedPage(base) {
 <p class="muted">It opens once its sign-in is configured on the server.</p><p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></div>`);
 }
 
-module.exports = { COOKIE, TTL_MS, configured, weak, check, sign, valid, setCookie, loginPage, closedPage };
+module.exports = { clean, COOKIE, TTL_MS, configured, weak, check, sign, valid, setCookie, loginPage, closedPage };

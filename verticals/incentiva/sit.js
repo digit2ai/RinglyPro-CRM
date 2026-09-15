@@ -1214,6 +1214,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq((await post('arch-owner@example.test', 'wrong-password')).status, 401);
           eq((await post('someone@example.test', 'sit-architecture-password-2026')).status, 401);
           eq((await post('arch-owner@example.test', 'SIT-ARCHITECTURE-PASSWORD-2026')).status, 401, 'password compare must be case-sensitive');
+          process.env.INCENTIVA_ARCHITECTURE_PASSWORD = ' "sit-architecture-password-2026"\n';
+          eq((await post(' arch-owner@example.test ', 'sit-architecture-password-2026 ')).status, 303, 'stray spaces or quotes pasted into Render must not block sign-in');
+          process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-architecture-password-2026';
           const ok = await post('ARCH-OWNER@example.test', 'sit-architecture-password-2026');
           eq(ok.status, 303);
           const cookie = (ok.headers.get('set-cookie') || '').split(';')[0];
