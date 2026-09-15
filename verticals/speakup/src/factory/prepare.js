@@ -40,11 +40,13 @@ async function intelFor(tenant_id, recording, text, lang) {
 
 function collectSpec(intels) {
   const spec = { requirements: [], decisions: [], acceptance_criteria: [], open_questions: [], business_rules: [],
-    technical_considerations: [], held_back: { ideas: 0, suggestions: 0, discussion: 0, unverified: 0 }, sources: [] };
+    technical_considerations: [], held_back: { ideas: 0, suggestions: 0, discussion: 0, unverified: 0 }, sources: [], instruction: null };
   let n = 0;
   for (const { recording, data } of intels) {
     spec.sources.push({ recording_id: recording.id, title: recording.title, created_at: recording.created_at, composed_by: data.composed_by });
-    const tag = (i) => ({ id: 'R' + (++n), kind: i.kind, text: i.text, quote: i.quote, recording_id: recording.id, approved_by_human: !!i.approved_by_human });
+    const direct = data.composed_by === 'direct_instruction';
+    if (direct && data.instruction) spec.instruction = (spec.instruction ? spec.instruction + '\n\n---\n\n' : '') + String(data.instruction).slice(0, 50000);
+    const tag = (i) => ({ id: 'R' + (++n), kind: i.kind, text: i.text, quote: i.quote, recording_id: recording.id, approved_by_human: !!i.approved_by_human, direct });
     for (const k of ['requirements', 'bugs', 'features', 'business_rules']) for (const i of (data[k] || [])) spec.requirements.push(tag(i));
     for (const k of ['decisions', 'acceptance_criteria', 'open_questions', 'technical_considerations']) {
       for (const i of (data[k] || [])) spec[k].push({ text: i.text, classification: i.classification, recording_id: recording.id });
@@ -124,6 +126,7 @@ function planPrompt(spec, project, candidates) {
   const excerpts = candidates.files.slice(0, 6).map(f => `--- ${f.path} (matched: ${f.matched.join(', ')})\n${repo.head(f.path, 30)}`).join('\n');
   return `Project: ${project.name} (repo ${project.repo}, base ${project.default_branch}, path scope ${JSON.stringify(project.path_scope)})\n` +
     `Deployment: ${project.deployment}\n\n` +
+    (spec.instruction ? `OWNER INSTRUCTION, verbatim (this is the request; plan how to carry it out):\n"""${spec.instruction.slice(0, 12000)}"""\n\n` : '') +
     `APPROVED REQUIREMENTS (implement only these):\n${spec.requirements.map(r => `${r.id} [${r.kind}] ${r.text}\n   quote: "${r.quote}"`).join('\n')}\n\n` +
     `Decisions: ${JSON.stringify(spec.decisions.map(d => d.text))}\nAcceptance criteria heard: ${JSON.stringify(spec.acceptance_criteria.map(a => a.text))}\n` +
     `Open questions: ${JSON.stringify(spec.open_questions.map(q => q.text))}\n\n` +

@@ -123,6 +123,40 @@
   .recrow{display:flex;align-items:flex-start}
   .recrow .grow{flex:1;min-width:0}
   .selchip{font-size:13px;color:var(--acc);margin:0 0 10px}
+  /* VS Code-style Architect screen */
+  .composer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(10,14,24,.97);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .composer .inner{max-width:680px;margin:0 auto;background:#0c1320;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .composer textarea{border:0;background:transparent;border-radius:0;min-height:72px;max-height:38vh;font-size:16px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45;resize:none;padding:12px 13px 6px}
+  .composer textarea:focus{outline:none}
+  .cbar{display:flex;align-items:center;gap:8px;padding:6px 8px 8px}
+  .iconbtn{width:44px;height:44px;flex:0 0 44px;border-radius:11px;border:1px solid var(--line);background:#1b2536;color:var(--txt);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .iconbtn.rec{background:#4a1622;border-color:#7a2a3a;color:#ff9fb0;animation:pulse 1.2s ease-in-out infinite}
+  .iconbtn.send{background:linear-gradient(90deg,var(--acc),var(--acc2));border:0;color:#fff;margin-left:auto}
+  .iconbtn:disabled{opacity:.5}
+  .cbar select{width:auto;flex:0 1 auto;min-width:0;padding:8px 10px;font-size:14px;border-radius:10px;min-height:44px}
+  .cstat{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.composing{padding-bottom:230px}
+  /* activity terminal */
+  .term{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;background:#080d16;
+    border:1px solid var(--line);border-radius:12px;padding:10px;max-height:44vh;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .term .ln{display:block;padding:1px 0}
+  .term .k{display:inline-block;min-width:54px;color:var(--acc);font-weight:700}
+  .term .k.err{color:var(--err)}.term .k.ok{color:var(--ok)}.term .k.warn{color:var(--warn)}
+  .term .sayline{color:var(--txt)}
+  .term .path{color:#8fd0ff}
+  .term details{margin:2px 0 4px 54px}
+  .term summary{cursor:pointer;color:var(--mut)}
+  .dl{display:block}.dl.add{color:#8ef0a8}.dl.del{color:#ff9fb0}.dl.hdr{color:var(--mut)}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .step{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .step.on{border-color:var(--acc2);background:var(--acc2);color:#fff}
+  .step.done{border-color:#1f5a33;color:var(--ok)}
+  .bubble{background:#131b2b;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow:auto}
+  .bubble .who{font-family:-apple-system,sans-serif;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
   @media print{header,.hero,.tabs,.row,.actions,.sec-collapse>summary,.importbox,.libcard{display:none!important}
     .card{border:0;background:#fff;color:#000}.transcript,.result{border:0;background:#fff;color:#000}body{background:#fff;color:#000}}
 </style>
@@ -146,8 +180,8 @@
       <button class="mode" data-mode="note">Nota</button>
       <button class="mode" data-mode="architect">Arquitecto</button>
     </div>
-    <div class="agentline" id="agentLine"><span id="agentName">RinglyPro Architect</span><select id="projSel" aria-label="Proyecto"></select></div>
-    <div class="orbwrap">
+    <div class="agentline" id="agentLine"><span id="agentName">RinglyPro Architect</span></div>
+    <div id="orbArea"><div class="orbwrap">
       <button class="orb big" id="orb" aria-label="Grabar"></button>
       <div class="timer" id="timer">00:00</div>
       <div class="listening" id="recstatus" data-i="tapToRec">Pulsa para grabar tu voz</div>
@@ -157,20 +191,45 @@
       <button class="btn sec sm" id="pauseBtn" onclick="togglePause()">Pausar</button>
       <button class="btn danger sm" onclick="stopSession()">Detener</button>
     </div>
-    <div id="cmdBox" style="display:none">
-      <textarea id="cmdText" placeholder="Tu instrucción aparecerá aquí. Puedes corregirla antes de enviarla."></textarea>
-      <div class="grid" style="margin-top:8px">
-        <button class="btn" id="cmdSend">Enviar</button>
-        <button class="btn sec" id="cmdCancel">Borrar</button>
-      </div>
-      <div class="selchip" id="selChip" style="display:none;margin-top:10px"></div>
-    </div>
     <button class="btn sec sm block" id="callBtn" style="margin-top:16px" onclick="startCall()" data-i="recCall">Grabar llamada (tu voz + la llamada)</button>
     <p class="note" id="noBotNote" data-i="noBot">Grabamos tu micrófono y el audio de la llamada juntos. Ningún bot se une: la captura es en tu dispositivo.</p>
+    </div>
+    <div class="selchip" id="selChip" style="display:none;margin-top:10px"></div>
   </section>
 
-  <!-- AI FACTORY: reply, tasks, task detail, memory search -->
-  <section id="factoryReply"></section>
+  <!-- ACTIVITY: what the factory is doing right now, at the top of the screen -->
+  <section class="card" id="activityCard" style="display:none;text-align:left">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="margin:0" id="activityTitle">Actividad</h2>
+      <div class="row"><button class="btn sec sm" id="diffBtn" style="display:none">Ver cambios</button>
+      <button class="btn sec sm" id="activityHide">Ocultar</button></div>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div class="term" id="term"></div>
+    <div id="diffBox"></div>
+  </section>
+
+  <!-- THREAD: prompts and answers -->
+  <section id="thread"></section>
+
+  <!-- COMPOSER: type, paste or dictate; pinned to the bottom like an editor -->
+  <div class="composer" id="cmdBox" style="display:none">
+    <div class="inner">
+      <textarea id="cmdText" rows="3" spellcheck="false" placeholder="Escribe o pega tu instrucción…"></textarea>
+      <div class="cbar">
+        <button class="iconbtn" id="micBtn" aria-label="Dictar" title="Dictar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+        </button>
+        <select id="projSel" aria-label="Proyecto"></select>
+        <span class="cstat" id="capStatus"></span>
+        <button class="iconbtn send" id="cmdSend" aria-label="Enviar" title="Enviar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI FACTORY: tasks, task detail, memory search -->
   <section class="card" id="jobsCard" style="display:none"><h2>Tareas</h2><div id="readiness"></div><div id="jobList"></div></section>
   <section id="jobDetail"></section>
   <section class="card"><h2>Memoria</h2>
@@ -216,7 +275,7 @@
   </div>
 </div>
 
-<script src="/speakup/factory.js?v=2"></script>
+<script src="/speakup/factory.js?v=3"></script>
 <script>
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const I18N = {

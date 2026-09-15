@@ -13,7 +13,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { Job, Recording, Transcript, MeetingIntel, Command, Document, User } = require('../models');
+const { Job, JobEvent, Recording, Transcript, MeetingIntel, Command, Document, User } = require('../models');
 const security = require('../factory/security');
 const jobs = require('../factory/jobs');
 const projects = require('../factory/projects');
@@ -84,6 +84,19 @@ router.post('/callback', wrap(async (req, res) => {
   const out = await jobs.applyCallback(req.body || {}, req.headers['x-speakup-sig'], req.headers['x-speakup-progress'] || null);
   if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
   res.json({ ok: true, status: out.job ? out.job.status : null, ignored: !!out.ignored });
+}));
+
+// Live activity from the build job (narrow progress token, never the factory secret).
+router.post('/progress-log', wrap(async (req, res) => {
+  const b = req.body || {};
+  const jobId = parseInt(b.job_id, 10) || 0;
+  if (!security.verifyWorkflowToken('progress', jobId, req.headers['x-speakup-progress'])) return res.status(401).json({ error: 'unauthorized' });
+  const job = await Job.findByPk(jobId);
+  if (!job) return res.status(404).json({ error: 'job not found' });
+  if (b.plan_hash !== job.plan_hash) return res.status(409).json({ error: 'plan hash mismatch' });
+  if (!['QUEUED', 'CODING', 'TESTING', 'FIXING'].includes(job.status)) return res.status(409).json({ error: 'job is not running' });
+  const added = await jobs.addEvents(job, b.events);
+  res.json({ ok: true, added });
 }));
 
 // ── Every session route: the role and email come from the database, not the token ──
@@ -158,6 +171,23 @@ router.get('/jobs/:id/trace', operator, wrap(async (req, res) => {
     },
     audit: trail.map(a => ({ at: a.created_at, actor: a.actor, action: a.action, from: a.from_status, to: a.to_status, detail: a.detail }))
   });
+}));
+
+router.get('/jobs/:id/events', operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  const after = parseInt(req.query.after, 10) || 0;
+  const events = await JobEvent.findAll({ where: { tenant_id: job.tenant_id, job_id: job.id, id: { [jobs.Op.gt]: after } }, order: [['id', 'ASC']], limit: 400 });
+  res.json({ status: job.status, terminal: jobs.TERMINAL.includes(job.status), pr_number: job.pr_number, pr_url: job.pr_url,
+    events: events.map(e => ({ id: e.id, kind: e.kind, text: e.text, detail: e.detail, at: e.created_at })) });
+}));
+
+// The change itself, once the PR exists: filenames and patches, read live from GitHub.
+router.get('/jobs/:id/diff', operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  if (!job.pr_number) return res.status(409).json({ error: 'No pull request yet' });
+  if (!github.configured()) return res.status(423).json({ error: 'GitHub is not connected' });
+  try { res.json({ pr_number: job.pr_number, pr_url: job.pr_url, files: await github.listPRFiles(job.repo, job.pr_number) }); }
+  catch (e) { res.status(502).json({ error: e.message }); }
 }));
 
 router.post('/jobs/:id/execute', mutation, operator, wrap(async (req, res) => {

@@ -49,7 +49,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use('/speakup', require('./src/index'));
 
 const models = require('./src/models');
-const { User, Recording, Transcript, Summary, Document, MeetingIntel, Command, Job, Audit, Project, sequelize } = models;
+const { User, Recording, Transcript, Summary, Document, MeetingIntel, Command, Job, JobEvent, Audit, Project, sequelize } = models;
 const github = require('./src/factory/github');
 const jobs = require('./src/factory/jobs');
 const llm = require('./src/factory/llm');
@@ -84,6 +84,7 @@ github.__setFetch(async (url, opts) => {
     const pr = gh.prs[m[1]]; pr.merged = true; pr.state = 'closed'; pr.merge_commit_sha = gh.mergeSha;
     return reply(200, { sha: gh.mergeSha, merged: true });
   }
+  if (method === 'GET' && /\/pulls\/\d+\/files$/.test(p)) return reply(200, gh.prFiles || []);
   if (method === 'GET' && /\/compare\//.test(p)) return reply(200, { status: 'identical' });
   return reply(404, { message: 'unexpected ' + method + ' ' + p });
 });
@@ -383,6 +384,51 @@ const server = app.listen(0, async () => {
     const latestCtx = await cmd(A, 'resume mi última reunión');
     ok(latestCtx.d.card.context.recordings[0].mode !== 'architect', 'an architect request is never picked up as "my latest meeting"');
 
+    // ── A pasted prompt goes to Claude word for word ──────────────────────────
+    const longPrompt = '/ringlypro-architect Add a Beta tag next to the SpeakUp title on the login page.\n' +
+      'Keep the existing styles. Then check the status of the deploy and search for other places showing the title. ' +
+      'Do not change the service worker. ' + 'Extra context line for the pasted prompt. '.repeat(30);
+    const arch2 = await call(A, 'POST', '/factory/command', { text: longPrompt, mode: 'architect', lang: 'en', project_key: 'speakup' });
+    ok(arch2.d.intent === 'PREPARE_IMPLEMENTATION' && arch2.d.classified_by === 'mode', 'a long pasted prompt is an instruction, not a status question');
+    let jp = await waitJob(arch2.d.card.job_id, ['WAITING_APPROVAL', 'FAILED']);
+    ok(jp.status === 'WAITING_APPROVAL' && jp.spec.instruction && jp.spec.instruction.length > 600, 'the whole prompt is kept, not truncated to the item label');
+    const jobProgTok0 = security.workflowToken('progress', jp.id, Math.floor(Date.now() / 1000) + 600);
+    const early = await fetch(base + '/api/v1/factory/progress-log', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-speakup-progress': jobProgTok0 },
+      body: JSON.stringify({ job_id: String(jp.id), plan_hash: jp.plan_hash, events: [{ kind: 'say', text: 'too early' }] }) });
+    ok(early.status === 409, 'activity for a job that has not been approved is refused');
+    security.resetRateLimits();
+    await call(A, 'POST', `/factory/jobs/${jp.id}/execute`, { plan_hash: jp.plan_hash, passphrase: PHRASE });
+    const briefTs = Math.floor(Date.now() / 1000);
+    const pbrief = await (await fetch(`${base}/api/v1/factory/brief/${jp.id}`, { headers: { 'x-speakup-ts': String(briefTs), 'x-speakup-sig': security.hmac(SECRET, `brief.${jp.id}.${briefTs}`) } })).json();
+    ok(pbrief.prompt.includes('Add a Beta tag next to the SpeakUp title') && pbrief.prompt.includes('WORD FOR WORD'), 'Claude receives the pasted prompt verbatim');
+    ok(!pbrief.sensitive.phrases.some(p => /Beta tag/.test(p)), 'the owner instruction is not treated as meeting content the push guard would refuse');
+
+    // ── Live activity from the build job ─────────────────────────────────────
+    const jobProgTok = security.workflowToken('progress', jp.id, Math.floor(Date.now() / 1000) + 600);
+    const postLog = (events, tok, planHash) => fetch(base + '/api/v1/factory/progress-log', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-speakup-progress': tok === undefined ? jobProgTok : tok },
+      body: JSON.stringify({ job_id: String(jp.id), plan_hash: planHash === undefined ? jp.plan_hash : planHash, events }) });
+    ok((await postLog([{ kind: 'read', text: 'a.js' }], 'bad-token')).status === 401, 'activity with a bad token is refused');
+    ok((await postLog([{ kind: 'read', text: 'a.js' }], undefined, 'f'.repeat(64))).status === 409, 'activity for another plan is refused');
+    await callback({ job_id: String(jp.id), plan_hash: jp.plan_hash, status: 'CODING' });
+    const okLog = await postLog([{ kind: 'say', text: 'Reading the login page' },
+      { kind: 'edit', text: 'verticals/speakup/public/login.html', detail: { old: 'SpeakUp', new: 'SpeakUp Beta' } },
+      { kind: 'wizardry', text: 'not a real kind' }]);
+    ok(okLog.status === 200, 'the build job can report what Claude is doing');
+    const ev = await call(A, 'GET', `/factory/jobs/${jp.id}/events?after=0`);
+    ok(ev.status === 200 && ev.d.events.some(e => e.kind === 'edit' && /login\.html/.test(e.text) && e.detail.new === 'SpeakUp Beta'), 'the phone sees the edit with both sides of the change');
+    ok(ev.d.events.some(e => e.kind === 'status' && e.text === 'CODING'), 'status changes appear in the activity too');
+    ok(ev.d.events.some(e => e.kind === 'info' && e.text === 'not a real kind'), 'an unknown kind is filed as info, never stored raw');
+    ok((await call(B, 'GET', `/factory/jobs/${jp.id}/events`)).status === 404, 'another tenant cannot read the activity');
+    ok((await call(A, 'GET', `/factory/jobs/${jp.id}/diff`)).status === 409, 'no diff before a PR exists');
+    for (const st of ['TESTING', 'PUSHING']) await callback({ job_id: String(jp.id), plan_hash: jp.plan_hash, status: st });
+    gh.headSha = 'e5'.repeat(20);
+    await callback({ job_id: String(jp.id), plan_hash: jp.plan_hash, event: 'pushed', commit_sha: 'e5'.repeat(20), files_changed: '1',
+      tests_measured: 'true', tests_passed: '4', tests_failed: '0', changed_files: JSON.stringify(['verticals/speakup/public/login.html']), suite_modified: 'false' });
+    gh.prFiles = [{ filename: 'verticals/speakup/public/login.html', status: 'modified', additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-SpeakUp\n+SpeakUp Beta' }];
+    const diff = await call(A, 'GET', `/factory/jobs/${jp.id}/diff`);
+    ok(diff.status === 200 && diff.d.files[0].patch.includes('+SpeakUp Beta'), 'the phone can read the change itself once the PR is open');
+
     // ── Human approval of an idea ─────────────────────────────────────────────
     const intelRow = (await call(A, 'GET', `/factory/recordings/${meetId}/intel`)).d.intel;
     const idea = intelRow.ideas[0];
@@ -423,7 +469,7 @@ const server = app.listen(0, async () => {
       for (const M2 of [Transcript, Summary, Document]) await M2.destroy({ where: { recording_id: recIds.length ? recIds : [0] } });
       await sequelize.query('DELETE FROM su_translations WHERE recording_id IN (:ids)', { replacements: { ids: recIds.length ? recIds : [0] } });
       await sequelize.query('DELETE FROM su_edits WHERE recording_id IN (:ids)', { replacements: { ids: recIds.length ? recIds : [0] } });
-      for (const M2 of [MeetingIntel, Command, Job, Audit, Project, Recording]) await M2.destroy({ where: { tenant_id: tenants } });
+      for (const M2 of [MeetingIntel, Command, JobEvent, Job, Audit, Project, Recording]) await M2.destroy({ where: { tenant_id: tenants } });
       await sequelize.query('DELETE FROM su_usage WHERE tenant_id IN (:t)', { replacements: { t: tenants } });
       await User.destroy({ where: { id: tenants } });
       const left = await Job.count({ where: { tenant_id: tenants } }) + await Recording.count({ where: { tenant_id: tenants } }) + await User.count({ where: { id: tenants } });

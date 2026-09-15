@@ -257,6 +257,30 @@ test('structure', () => {
   ok(/public/.test(prBody) && /sign-in required/.test(prBody), 'PR body points to the private trace and carries no meeting content');
 });
 
+test('claude stream to activity lines', () => {
+  const { summarize } = require(path.join(ROOT, '.github/speakup/stream-events.js'));
+  const say = summarize({ type: 'assistant', message: { content: [{ type: 'text', text: 'Looking at the login page now.' }] } });
+  ok(say.length === 1 && say[0].kind === 'say' && /login page/.test(say[0].text), 'assistant text becomes a CLAUDE line');
+  const edit = summarize({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Edit', input: { file_path: '/home/runner/work/x/x/verticals/speakup/public/login.html', old_string: 'SpeakUp', new_string: 'SpeakUp Beta' } }] } });
+  ok(edit[0].kind === 'edit' && edit[0].text.endsWith('public/login.html') && edit[0].detail.new === 'SpeakUp Beta', 'an edit carries the file and both sides of the change');
+  ok(summarize({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Bash', input: { command: 'node --check x.js' } }] } })[0].kind === 'run', 'a command becomes a RUN line');
+  ok(summarize({ type: 'user', message: { content: [{ type: 'tool_result', is_error: true, content: 'File not found' }] } })[0].kind === 'error', 'a failed tool becomes an ERROR line');
+  const done = summarize({ type: 'result', is_error: false, num_turns: 12, total_cost_usd: 0.42 });
+  ok(done[0].kind === 'done' && /12 turns/.test(done[0].text) && /0\.42/.test(done[0].text), 'the result line carries turns and cost');
+  ok(summarize({ type: 'assistant', message: { content: [{ type: 'text', text: 'x'.repeat(5000) }] } })[0].text.length < 1000, 'long output is clipped before it leaves the runner');
+  const src = stripComments(fs.readFileSync(path.join(ROOT, '.github/speakup/stream-events.js'), 'utf8'));
+  ok(!/console\.log/.test(src), 'the stream summariser prints nothing to the public Actions log');
+});
+
+test('pasted prompts are instructions, not commands', () => {
+  const long = 'Add a Beta tag to the login page. Then update the service worker version and make sure the tests still pass. ' +
+    'Check the status of the deploy afterwards and search for any other place that shows the title.';
+  ok(intents.isPastedPrompt(long) && intents.isPastedPrompt('line one\nline two') && intents.isPastedPrompt('/ringlypro-architect do the thing'), 'long, multi-line or slash-prefixed text is a pasted prompt');
+  ok(!intents.isPastedPrompt('what is the status of my last task?'), 'a short question is not');
+  ok(intents.classifyRules(long) === 'CHECK_DEPLOYMENT', 'the command rules would have misread that prompt');
+  ok(intents.firstLine('/ringlypro-architect Add a Beta tag\nsecond line') === 'Add a Beta tag', 'the slash command is stripped from the label');
+});
+
 test('patch and guard scripts', () => {
   const { execFileSync, spawnSync } = require('child_process');
   const os = require('os');

@@ -19,7 +19,7 @@
  */
 
 const { Op } = require('sequelize');
-const { Job, sequelize } = require('../models');
+const { Job, JobEvent, sequelize } = require('../models');
 const audit = require('./audit');
 const security = require('./security');
 const github = require('./github');
@@ -44,6 +44,26 @@ const NEXT = {
 // The only statuses a GitHub callback may set by itself.
 const CALLBACK_STATUSES = ['CODING', 'TESTING', 'FIXING', 'PUSHING'];
 
+const EVENT_KINDS = ['status', 'say', 'read', 'edit', 'write', 'run', 'search', 'test', 'error', 'info', 'done', 'pr', 'todo', 'tool'];
+const MAX_EVENTS_PER_JOB = Number(process.env.SPEAKUP_FACTORY_MAX_EVENTS || 4000);
+
+// Append activity for the phone to watch. Untrusted text (it comes from the build
+// job): capped, typed against a fixed list of kinds, and escaped by the UI.
+async function addEvents(job, events) {
+  const rows = [];
+  for (const e of (Array.isArray(events) ? events : []).slice(0, 100)) {
+    const kind = EVENT_KINDS.includes(String(e && e.kind || e && e.t)) ? String(e.kind || e.t) : 'info';
+    let detail = {};
+    try { detail = e && typeof e.detail === 'object' && e.detail ? JSON.parse(JSON.stringify(e.detail).slice(0, 6000)) : {}; } catch (x) { detail = {}; }
+    rows.push({ tenant_id: job.tenant_id, job_id: job.id, kind, text: String((e && e.text) || '').slice(0, 2000), detail });
+  }
+  if (!rows.length) return 0;
+  const existing = await JobEvent.count({ where: { job_id: job.id } });
+  if (existing >= MAX_EVENTS_PER_JOB) return 0;
+  await JobEvent.bulkCreate(rows.slice(0, MAX_EVENTS_PER_JOB - existing));
+  return rows.length;
+}
+
 const BASE_URL = (process.env.SPEAKUP_PUBLIC_URL || 'https://aiagent.ringlypro.com/speakup').replace(/\/+$/, '');
 
 function canMove(from, to) { return (NEXT[from] || []).includes(to); }
@@ -57,6 +77,7 @@ async function transition(job, to, { actor, user_id, detail, fields, req } = {})
   if (!count) return null;
   await audit.record({ tenant_id: job.tenant_id, user_id, actor: actor || 'system', action: 'job.transition',
     entity: 'job', entity_id: job.id, from_status: from, to_status: to, detail: detail || {}, req });
+  try { await JobEvent.create({ tenant_id: job.tenant_id, job_id: job.id, kind: 'status', text: to, detail: { from } }); } catch (e) { /* never block a transition */ }
   return rows[0];
 }
 
@@ -440,7 +461,7 @@ async function latestFor(tenant_id, filter) {
 }
 
 module.exports = {
-  STATUSES, TERMINAL, NEXT, CALLBACK_STATUSES, CALLBACK_FIELDS, PROGRESS_TOKEN_STATUSES, changeScope, BASE_URL, branchFor, canMove, transition, fail,
+  STATUSES, TERMINAL, NEXT, CALLBACK_STATUSES, CALLBACK_FIELDS, PROGRESS_TOKEN_STATUSES, EVENT_KINDS, changeScope, addEvents, BASE_URL, branchFor, canMove, transition, fail,
   describe, readiness, approveAndDispatch, cancel, merge, canonical, applyCallback, verifyBriefRequest,
   checkJob, tick, startWatchdog, latestFor, prBody, Op
 };

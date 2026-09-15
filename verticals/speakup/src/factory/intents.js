@@ -30,6 +30,9 @@ const audit = require('./audit');
 const aiEditor = require('../services/ai-editor');
 
 const WAKE = /^(hey |hola |ok )?(ringly ?pro )?(architect|arquitecto|arquitecta)[\s,.:;!-]*/;
+// "/ringlypro-architect" pasted from another tool is a prefix, not part of the request.
+const SLASH = /^\s*\/[a-z0-9-]+[ \t]*/i;
+function firstLine(s) { return String(s || '').replace(SLASH, '').split('\n')[0].trim().slice(0, 300) || String(s || '').slice(0, 300); }
 
 function stripWake(n) { return n.replace(WAKE, '').trim(); }
 const es = (lang) => lang !== 'en';
@@ -161,8 +164,11 @@ const handlers = {
     let ctxRes = null;
     if (ctx.architectRequest) {
       const rec = await saveNote(ctx, 'architect');
-      const data = intel.verify({ summary: ctx.text.slice(0, 400), items: [{ kind: 'requirement', classification: 'APPROVED_REQUIREMENT', text: ctx.text.slice(0, 600),
+      const data = intel.verify({ summary: ctx.text.slice(0, 400), items: [{ kind: 'requirement', classification: 'APPROVED_REQUIREMENT', text: firstLine(ctx.text),
         quote: ctx.text.slice(0, 600), confidence: 1, approved_by_human: true }] }, ctx.text, { project_key: ctx.project.key, composed_by: 'direct_instruction' });
+      // The whole prompt, word for word, is what Claude receives. The item text above is
+      // only a label; truncating the instruction would silently drop half a pasted prompt.
+      data.instruction = ctx.text.slice(0, 50000);
       await MeetingIntel.create({ tenant_id: ctx.tenant_id, recording_id: rec.id, project_key: ctx.project.key, data, composed_by: 'direct_instruction', is_simulated: false });
       recordingIds = [rec.id];
       ctxRes = { recordings: [{ id: rec.id, title: rec.title, created_at: rec.created_at, mode: 'architect', why: T(ctx.lang, 'tu instrucción directa', 'your direct instruction') }] };
@@ -352,8 +358,17 @@ function classifyRules(text) {
   return null;
 }
 
+// A pasted engineering prompt is long or multi-line. In Architect mode it goes to
+// PREPARE verbatim; running it through the command rules would classify a prompt that
+// happens to contain "status" or "deploy" as a status question.
+function isPastedPrompt(text) {
+  const s = String(text || '');
+  return s.length > 160 || /\n/.test(s) || /^\s*\//.test(s);
+}
+
 async function classify(text, mode) {
   if (mode === 'note') return { intent: 'CAPTURE_NOTE', by: 'mode' };
+  if (mode === 'architect' && isPastedPrompt(text)) return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
   const rule = classifyRules(text);
   if (rule) return { intent: rule, by: 'rules' };
   if (mode === 'architect') return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
@@ -429,4 +444,4 @@ async function run(input) {
     card, client_action: result.client_action || null };
 }
 
-module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown };
+module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, firstLine };

@@ -126,7 +126,9 @@ jobs:
         id: t1
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
-        run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
+        run: |
+          node "$RUNNER_TEMP/speakup-bin/run-tests.js"
+          node "$RUNNER_TEMP/speakup-bin/progress.js" tests
       - name: Fix round 1
         if: steps.t1.outputs.failed != '0'
         env:
@@ -140,7 +142,9 @@ jobs:
         if: steps.t1.outputs.failed != '0'
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
-        run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
+        run: |
+          node "$RUNNER_TEMP/speakup-bin/run-tests.js"
+          node "$RUNNER_TEMP/speakup-bin/progress.js" tests
       - name: Fix round 2
         if: steps.t1.outputs.failed != '0' && steps.t2.outputs.failed != '0'
         env:

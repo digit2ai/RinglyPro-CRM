@@ -15,7 +15,8 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { WORK, readJSON, readText } = require('./lib');
+const { WORK, base, jobId, readJSON, readText } = require('./lib');
+const { summarize, Poster } = require('./stream-events');
 
 const MODE = process.argv[2] === 'fix' ? 'fix' : 'build';
 const ROUND = parseInt(process.argv[3] || '0', 10) || 0;
@@ -48,20 +49,37 @@ function prompt(brief) {
     PUPPETEER_SKIP_DOWNLOAD: '1', SPEAKUP_FACTORY_POLLER: 'off', INCENTIVA_AGENTS: 'off'
   };
   if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY secret is not set in GitHub Actions');
-  const args = ['-p', '--model', brief.model, '--max-turns', String(brief.max_turns || 80), '--output-format', 'json',
+  const args = ['-p', '--model', brief.model, '--max-turns', String(brief.max_turns || 80), '--output-format', 'stream-json', '--verbose',
     '--permission-mode', 'acceptEdits', '--add-dir', WORK,
     '--allowedTools', ALLOWED.join(','), '--disallowedTools', DENIED.join(',')];
-  const outFile = path.join(WORK, `claude-${MODE}${ROUND ? '-' + ROUND : ''}.json`);
-  const out = fs.openSync(outFile, 'w');
+  const outFile = path.join(WORK, `claude-${MODE}${ROUND ? '-' + ROUND : ''}.jsonl`);
+  const raw = fs.createWriteStream(outFile);
+  const errFile = fs.openSync(path.join(WORK, 'claude-stderr.log'), 'a');
+  const poster = Poster(base(), jobId(), brief.plan_hash, process.env.PROGRESS_TOKEN);
+  let result = {};
+  let buf = '';
   const code = await new Promise((resolve) => {
-    const child = spawn('claude', args, { env, stdio: ['pipe', out, out] });
+    const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', errFile] });
+    child.stdout.on('data', (chunk) => {
+      raw.write(chunk);
+      buf += chunk.toString();
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let ev = null;
+        try { ev = JSON.parse(line); } catch (e) { continue; }
+        if (ev && ev.type === 'result') result = ev;
+        try { poster.push(summarize(ev)); } catch (e) { /* activity is never load-bearing */ }
+      }
+    });
     child.stdin.end(prompt(brief));
     child.on('close', resolve);
     child.on('error', () => resolve(127));
   });
-  fs.closeSync(out);
-  let result = {};
-  try { result = JSON.parse(fs.readFileSync(outFile, 'utf8')); } catch (e) { result = {}; }
+  raw.end();
+  fs.closeSync(errFile);
+  await poster.done();
   // Only non-private facts reach the public log.
   console.log(`claude ${MODE}${ROUND ? ' round ' + ROUND : ''}: exit ${code}, turns ${result.num_turns == null ? '?' : result.num_turns}, ` +
     `error ${result.is_error ? 'yes' : 'no'}, cost_usd ${result.total_cost_usd == null ? '?' : result.total_cost_usd}`);

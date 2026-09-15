@@ -103,6 +103,18 @@ async function compare(repo, base, head) {
   return data.status;
 }
 
+async function listPRFiles(repo, number) {
+  const { owner, name } = split(repo);
+  const files = await request('GET', `/repos/${owner}/${name}/pulls/${encodeURIComponent(number)}/files?per_page=100`);
+  let budget = 200000;
+  return (files || []).map(f => {
+    const patch = String(f.patch || '');
+    const keep = patch.slice(0, Math.max(0, Math.min(30000, budget)));
+    budget -= keep.length;
+    return { filename: f.filename, status: f.status, additions: f.additions, deletions: f.deletions, patch: keep, truncated: keep.length < patch.length };
+  });
+}
+
 function __setFetch(f) { fetchImpl = f; }
 
-module.exports = { configured, GitHubError, dispatchWorkflow, findRun, cancelRun, findOpenPR, createPR, getPR, mergePR, compare, __setFetch };
+module.exports = { configured, GitHubError, dispatchWorkflow, findRun, cancelRun, findOpenPR, createPR, getPR, mergePR, compare, listPRFiles, __setFetch };

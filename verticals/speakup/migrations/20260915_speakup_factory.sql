@@ -131,3 +131,16 @@ ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS path_scope JSONB DEFAULT '[]';
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS changed_files JSONB DEFAULT '[]';
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS suite_modified BOOLEAN;
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS brief_token_used_at TIMESTAMPTZ;
+
+-- Live factory activity (what Claude is doing), private to SpeakUp.
+CREATE TABLE IF NOT EXISTS su_job_events (
+  id         SERIAL PRIMARY KEY,
+  tenant_id  INTEGER NOT NULL,
+  job_id     INTEGER NOT NULL,
+  kind       VARCHAR(20),
+  text       TEXT,
+  detail     JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS su_job_events_job_idx ON su_job_events(job_id, id);
+CREATE INDEX IF NOT EXISTS su_job_events_tenant_idx ON su_job_events(tenant_id);

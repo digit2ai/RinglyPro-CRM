@@ -268,6 +268,23 @@ const Job = sequelize.define('SpeakJob', {
     { name: 'su_jobs_status_updated_idx', fields: ['status', 'updated_at'] }]
 });
 
+// ─── su_job_events ────────────────────────────────────────────────────────────
+// What the factory is doing, live: statuses plus the steps Claude takes in GitHub
+// Actions (files read, edits, commands, tests). Private to SpeakUp — the public
+// Actions log never carries them.
+const JobEvent = sequelize.define('SpeakJobEvent', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  job_id: { type: DataTypes.INTEGER, allowNull: false },
+  kind: { type: DataTypes.STRING(20) },   // status|say|read|edit|write|run|search|test|error|info|done|pr
+  text: { type: DataTypes.TEXT },
+  detail: { type: DataTypes.JSONB, defaultValue: {} },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'su_job_events', timestamps: false,
+  indexes: [{ name: 'su_job_events_job_idx', fields: ['job_id', 'id'] }, { name: 'su_job_events_tenant_idx', fields: ['tenant_id'] }]
+});
+
 // ─── su_audit ─────────────────────────────────────────────────────────────────
 // Append-only trail. No route updates or deletes a row.
 const Audit = sequelize.define('SpeakAudit', {
@@ -302,4 +319,4 @@ Recording.hasMany(Document, { foreignKey: 'recording_id' });
 Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
-  Project, MeetingIntel, Command, Job, Audit };
+  Project, MeetingIntel, Command, Job, JobEvent, Audit };

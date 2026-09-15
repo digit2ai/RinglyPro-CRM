@@ -39,7 +39,7 @@ function getCookie(req, name) {
 const PUBLIC_EXACT = ['/login', '/health', '/favicon.svg', '/manifest.webmanifest', '/sw.js'];
 // Machine routes for the GitHub workflow. They authenticate themselves with an
 // HMAC over SPEAKUP_FACTORY_SECRET and never accept a session cookie as proof.
-const MACHINE = (p) => p === '/api/v1/factory/callback' || /^\/api\/v1\/factory\/brief\/\d+$/.test(p);
+const MACHINE = (p) => p === '/api/v1/factory/callback' || p === '/api/v1/factory/progress-log' || /^\/api\/v1\/factory\/brief\/\d+$/.test(p);
 const PUBLIC_ASSET = /\.(png|svg|webmanifest|css|js|woff2?|ico)$/i;
 router.use((req, res, next) => {
   const token = getCookie(req, 'speakup_token');
