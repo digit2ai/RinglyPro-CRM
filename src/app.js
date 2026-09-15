@@ -228,6 +228,44 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// BUYERSLINE DOMAIN: buyersline.app serves the BuyersLine vertical at its ROOT
+// (owner request 2026-09-15). www.buyersline.app 301s to the apex.
+//
+// Registered here with the other brand domains because Express matches in
+// registration order. The vertical's router is called directly with baseUrl ''
+// so every {{BASE}} in its pages, manifests and worker resolves to the root.
+// The voice orb's script, brain and voice are served by the main app and pass
+// through untouched; /buyersline/... and /incentiva/... on this host 301 to the
+// root equivalent. Anything else ends in the vertical's own 404, never the CRM
+// (the jobmd.io/admin lesson). The whole site stays behind the BuyersLine sign-in
+// gate until INCENTIVA_SITE_GATE=off.
+// ═════════════════════════════════════════════════════════════════════════
+const BUYERSLINE_HOSTS = new Set(['buyersline.app', 'www.buyersline.app']);
+const BUYERSLINE_PASS_THROUGH = ['/embed/', '/api/voice-agent/', '/api/tts/'];
+let buyerslineRootApp = null;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!BUYERSLINE_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://buyersline.app' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  const query = cut === -1 ? '' : req.url.slice(cut);
+  if (BUYERSLINE_PASS_THROUGH.some((pre) => path.startsWith(pre))) return next();
+  const legacy = /^\/(buyersline|incentiva)(\/.*)?$/.exec(path);
+  if (legacy) return res.redirect(301, (legacy[2] || '/') + query);
+  try {
+    if (!buyerslineRootApp) buyerslineRootApp = require('../verticals/incentiva/src/index');
+  } catch (e) {
+    console.error('[buyersline.app] vertical failed to load:', e.message);
+    return res.status(503).type('text').send('BuyersLine is temporarily unavailable.');
+  }
+  return buyerslineRootApp(req, res, (err) => {
+    if (err) return next(err);
+    res.status(404).type('text').send('Not found');
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // THE ARCHITECT DISPATCH BOARD — /architect, password-gated
 //
 // The /ringlypro-architect reference: its modes, the seven build phases, the
@@ -2768,6 +2806,15 @@ try {
     next();
   });
   // Old working-name links keep working.
+  // buyersline.app is the canonical address (owner request 2026-09-15): browser GETs to the old path move there.
+  // API calls, webhooks and POSTs are never redirected (a redirected POST loses its body), so Twilio and any
+  // cached page keep working. INCENTIVA_CANONICAL_HOST=off keeps serving on this host.
+  const blCanonical = () => { const h = String(process.env.INCENTIVA_CANONICAL_HOST || 'buyersline.app').trim(); return h === 'off' ? null : h; };
+  app.use(['/buyersline', '/incentiva'], (req, res, next) => {
+    const target = blCanonical();
+    if (!target || !['GET', 'HEAD'].includes(req.method) || req.path.startsWith('/api/') || req.path === '/health') return next();
+    return res.redirect(301, 'https://' + target + (req.url === '/' ? '/' : req.url));
+  });
   app.use('/incentiva', (req, res) => res.redirect(301, '/buyersline' + (req.url === '/' ? '/' : req.url)));
   app.use('/buyersline', buyerslineApp);
   console.log('BuyersLine mounted at /buyersline (console /buyersline/admin, health /buyersline/health)');

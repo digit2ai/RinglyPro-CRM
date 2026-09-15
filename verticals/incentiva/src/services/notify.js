@@ -33,7 +33,7 @@ function configured() {
 function fromAddress() {
   return { email: process.env.INCENTIVA_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'info@digit2ai.com', name: process.env.INCENTIVA_FROM_NAME || 'BuyersLine' };
 }
-function publicUrl() { return (process.env.INCENTIVA_PUBLIC_URL || 'https://aiagent.ringlypro.com/buyersline').replace(/\/+$/, ''); }
+function publicUrl() { return (process.env.INCENTIVA_PUBLIC_URL || 'https://buyersline.app').replace(/\/+$/, ''); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function layout(title, paragraphs, cta, footer, unsubscribe) {

@@ -205,7 +205,7 @@ module.exports = function publicRoutes(opts = {}) {
   // Twilio inbound SMS webhook: STOP / START / HELP. Signature-validated.
   router.post('/sms/inbound', express.urlencoded({ extended: false }), async (req, res) => {
     try {
-      const url = process.env.INCENTIVA_SMS_WEBHOOK_URL || ((process.env.INCENTIVA_PUBLIC_URL || 'https://aiagent.ringlypro.com/buyersline').replace(/\/+$/, '') + '/api/v1/public/sms/inbound');
+      const url = process.env.INCENTIVA_SMS_WEBHOOK_URL || ((process.env.INCENTIVA_PUBLIC_URL || 'https://buyersline.app').replace(/\/+$/, '') + '/api/v1/public/sms/inbound');
       const out = await sms.handleInbound(tenantId, req, url);
       if (out.status !== 200) return res.status(out.status).end();
       res.type('text/xml').send(out.twiml);

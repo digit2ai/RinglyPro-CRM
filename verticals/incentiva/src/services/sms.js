@@ -40,7 +40,7 @@ function e164(phone) {
   if (d.length === 11 && d[0] === '1') return '+' + d;
   return null;
 }
-function publicUrl() { return (process.env.INCENTIVA_PUBLIC_URL || 'https://aiagent.ringlypro.com/buyersline').replace(/\/+$/, ''); }
+function publicUrl() { return (process.env.INCENTIVA_PUBLIC_URL || 'https://buyersline.app').replace(/\/+$/, ''); }
 
 async function agentNewLeadSms(tenantId, leadId) {
   const l = await db.one('SELECT id, first_name, city, zip, referral_consent, assigned_agent_id, readiness_score, readiness_tier FROM nca_leads WHERE id = :id AND tenant_id = :t', { id: leadId, t: tenantId });
