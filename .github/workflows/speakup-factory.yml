@@ -18,6 +18,9 @@
 # THIS REPOSITORY IS PUBLIC, SO THESE LOGS ARE PUBLIC. No step prints the brief, the
 # plan, a requirement, a transcript or test output. No artifact is uploaded.
 #
+# Scripts keep private files in $RUNNER_TEMP/speakup (the runner context is not allowed
+# in job-level env, so it is never set there).
+#
 # Repository secrets: ANTHROPIC_API_KEY, SPEAKUP_FACTORY_SECRET.
 # Optional repository variable: SPEAKUP_BASE_URL (default https://aiagent.ringlypro.com/speakup).
 
@@ -52,8 +55,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    env:
-      WORK: ${{ runner.temp }}/speakup
     outputs:
       plan_hash: ${{ steps.p.outputs.plan_hash }}
       base_branch: ${{ steps.p.outputs.base_branch }}
@@ -92,8 +93,6 @@ jobs:
     permissions:
       contents: read
     env:
-      WORK: ${{ runner.temp }}/speakup
-      BIN: ${{ runner.temp }}/speakup-bin
       PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
       PROGRESS_TOKEN: ${{ needs.prepare.outputs.progress_token }}
     outputs:
@@ -107,55 +106,55 @@ jobs:
         with:
           node-version: '20'
       - name: Copy the factory scripts before Claude touches the tree
-        run: mkdir -p "$BIN" && cp .github/speakup/*.js "$BIN/"
+        run: mkdir -p "$RUNNER_TEMP/speakup-bin" "$RUNNER_TEMP/speakup" && cp .github/speakup/*.js "$RUNNER_TEMP/speakup-bin/"
       - name: Fetch the brief (single-use token)
         env:
           BRIEF_TOKEN: ${{ needs.prepare.outputs.brief_token }}
-        run: node "$BIN/fetch-brief.js"
+        run: node "$RUNNER_TEMP/speakup-bin/fetch-brief.js"
       - name: Install dependencies and Claude Code
         run: |
           set -euo pipefail
-          npm ci --ignore-scripts --no-audit --no-fund > "$WORK/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
-          npm install -g --ignore-scripts @anthropic-ai/claude-code@2.1.272 > "$WORK/claude-install.log" 2>&1
+          npm ci --ignore-scripts --no-audit --no-fund > "$RUNNER_TEMP/speakup/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
+          npm install -g --ignore-scripts @anthropic-ai/claude-code@2.1.272 > "$RUNNER_TEMP/speakup/claude-install.log" 2>&1
       - name: Claude builds the approved plan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: node "$BIN/claude.js" build
+        run: node "$RUNNER_TEMP/speakup-bin/claude.js" build
       - name: Report TESTING
-        run: node "$BIN/progress.js" status TESTING
+        run: node "$RUNNER_TEMP/speakup-bin/progress.js" status TESTING
       - name: Run tests (feedback for Claude)
         id: t1
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
-        run: node "$BIN/run-tests.js"
+        run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
       - name: Fix round 1
         if: steps.t1.outputs.failed != '0'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          node "$BIN/progress.js" status FIXING
-          node "$BIN/claude.js" fix 1
-          node "$BIN/progress.js" status TESTING
+          node "$RUNNER_TEMP/speakup-bin/progress.js" status FIXING
+          node "$RUNNER_TEMP/speakup-bin/claude.js" fix 1
+          node "$RUNNER_TEMP/speakup-bin/progress.js" status TESTING
       - name: Re-run tests (round 1)
         id: t2
         if: steps.t1.outputs.failed != '0'
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
-        run: node "$BIN/run-tests.js"
+        run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
       - name: Fix round 2
         if: steps.t1.outputs.failed != '0' && steps.t2.outputs.failed != '0'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          node "$BIN/progress.js" status FIXING
-          node "$BIN/claude.js" fix 2
-          node "$BIN/progress.js" status TESTING
+          node "$RUNNER_TEMP/speakup-bin/progress.js" status FIXING
+          node "$RUNNER_TEMP/speakup-bin/claude.js" fix 2
+          node "$RUNNER_TEMP/speakup-bin/progress.js" status TESTING
       - name: Package the change as a patch
         id: patch
-        run: node "$BIN/make-patch.js"
+        run: node "$RUNNER_TEMP/speakup-bin/make-patch.js"
       - name: Report build failure
         if: failure() || cancelled()
-        run: node "$BIN/progress.js" failed
+        run: node "$RUNNER_TEMP/speakup-bin/progress.js" failed
 
   verify:
     needs: [prepare, build]
@@ -163,9 +162,6 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      WORK: ${{ runner.temp }}/speakup
-      BIN: ${{ runner.temp }}/speakup-bin
     outputs:
       tests: ${{ steps.tests.outputs.tests }}
     steps:
@@ -177,18 +173,18 @@ jobs:
         with:
           node-version: '20'
       - name: Copy the factory scripts from the base branch
-        run: mkdir -p "$BIN" && cp .github/speakup/*.js "$BIN/"
+        run: mkdir -p "$RUNNER_TEMP/speakup-bin" "$RUNNER_TEMP/speakup" && cp .github/speakup/*.js "$RUNNER_TEMP/speakup-bin/"
       - name: Apply the patch on a clean VM
         env:
           PATCH_B64: ${{ needs.build.outputs.patch }}
-        run: node "$BIN/apply-patch.js"
+        run: node "$RUNNER_TEMP/speakup-bin/apply-patch.js"
       - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund > "$WORK/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
+        run: npm ci --ignore-scripts --no-audit --no-fund > "$RUNNER_TEMP/speakup/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
       - name: Run the approved tests
         id: tests
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
-        run: node "$BIN/run-tests.js"
+        run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
 
   push:
     needs: [prepare, build, verify]
@@ -197,7 +193,6 @@ jobs:
     permissions:
       contents: write
     env:
-      WORK: ${{ runner.temp }}/speakup
       PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -229,7 +224,7 @@ jobs:
           BASE_BRANCH: ${{ needs.prepare.outputs.base_branch }}
         run: |
           set -euo pipefail
-          [[ "$BRANCH" == speakup/job-* && "$BRANCH" != "$BASE_BRANCH" ]] || { echo "Refusing to push $BRANCH" > "$WORK/error.txt"; exit 1; }
+          [[ "$BRANCH" == speakup/job-* && "$BRANCH" != "$BASE_BRANCH" ]] || { echo "Refusing to push $BRANCH" > "$RUNNER_TEMP/speakup/error.txt"; exit 1; }
           G="git -c core.hooksPath=/dev/null -c user.name=SpeakUp-AI-Factory -c user.email=speakup-factory@users.noreply.github.com"
           $G switch -c "$BRANCH"
           $G commit -q -m "SpeakUp AI Factory job $JOB_ID" -m "Approved plan and sources are private in SpeakUp: $SPEAKUP_BASE_URL/?job=$JOB_ID"
@@ -254,7 +249,6 @@ jobs:
     permissions:
       contents: read
     env:
-      WORK: ${{ runner.temp }}/speakup
       PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
       FAIL_MESSAGE: >-
         Workflow stopped. prepare=${{ needs.prepare.result }}, build=${{ needs.build.result }},

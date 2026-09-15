@@ -231,6 +231,9 @@ test('structure', () => {
   const onBlock = wf.slice(wf.indexOf('\non:\n'), wf.indexOf('\npermissions:'));
   ok(/^\non:\n  workflow_dispatch:/.test(onBlock) && !/(push|pull_request|pull_request_target|issue_comment|schedule|workflow_run):/.test(onBlock), 'workflow runs only on dispatch');
   ok(/^permissions: \{\}$/m.test(wf), 'workflow default permissions are empty');
+  // GitHub rejects the WHOLE file (0 jobs, dispatch refused) if runner.* is used outside steps.
+  ok(!/^    env:\n(?:      .*\n)*?      [A-Z_]+: .*\$\{\{\s*runner\./m.test(wf) && !/^env:\n(?:  .*\n)*?  [A-Z_]+: .*\$\{\{\s*runner\./m.test(wf), 'no runner context in workflow- or job-level env (GitHub would reject the file)');
+  ok(!/^    env:\n    (outputs|steps):/m.test(wf), 'no empty job-level env block');
   const jobsText = wf.slice(wf.indexOf('\njobs:\n'));
   const jobBlocks = {};
   jobsText.split(/\n(?=  [a-z-]+:\n)/).forEach(b => { const m = b.match(/^  ([a-z-]+):\n/); if (m) jobBlocks[m[1]] = b; });
