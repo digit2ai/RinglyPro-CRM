@@ -120,20 +120,87 @@ async function reviewerReportWaiting(tenantId, reportId) {
  * email consent stored on the lead. agentNewLead: the assigned agent, ONLY when the buyer
  * granted agent-referral consent; carries first name and area, never contact details.
  */
+/** The disclaimer the owner asked for on every report surface (page, email, print). */
+const REPORT_DISCLAIMER = {
+  en: 'Builder promotions change daily and are subject to change without notice. BuyersLine is not a real estate agent or broker.',
+  es: 'Las promociones de las constructoras cambian a diario y pueden cambiar sin previo aviso. BuyersLine no es un agente ni un corredor de bienes raíces.'
+};
+
+/** The full report as email HTML: every section of the page, figures exactly as the report service computed them. */
+function reportEmailHtml(r, l, url) {
+  const es = l.lang === 'es';
+  const usd = (n) => n == null ? '' : '$' + Math.round(Number(n)).toLocaleString('en-US');
+  const T = es
+    ? { hi: 'Hola', intro: 'Aquí está su informe de BuyersLine.', wish: 'Lo que usted pidió', area: 'Zona', price: 'Precio máximo', monthly: 'Pago mensual máximo', down: 'Pago inicial', timeline: 'Plazo', financing: 'Forma de pago', skipped: 'No indicado',
+      pp: 'Poder de compra', builders: 'Promociones de hoy por constructora', builder: 'Constructora', promo: 'Promoción de hoy', best: 'Mejor oferta hoy', lowest: 'Precio más bajo disponible', ppsf: 'Precio por pie cuadrado (mediana)', schools: 'Calificaciones escolares', homes: 'Casas en su rango de precio',
+      none_found: 'No se encontró una promoción actual en esta zona hoy.', not_checked: 'No se pudieron revisar las promociones hoy; lo intentaremos de nuevo mañana temprano.', checking: 'Revisando ahora.', no_promo: 'Comunidades activas sin promoción publicada.',
+      view: 'Ver el informe completo', schools_none: 'Aún no hay calificaciones escolares oficiales para esta zona.', fit: 'Ajuste' }
+    : { hi: 'Hi', intro: 'Here is your BuyersLine report.', wish: 'Your wish list', area: 'Area', price: 'Maximum price', monthly: 'Maximum monthly payment', down: 'Down payment', timeline: 'Timeframe', financing: 'Paying with', skipped: 'Not given',
+      pp: 'Purchasing power', builders: "Today's promotions by builder", builder: 'Builder', promo: "Today's promotion", best: 'Best deal today', lowest: 'Lowest price available', ppsf: 'Price per square foot (median)', schools: 'School ratings', homes: 'Homes at your price point',
+      none_found: 'No current promotion found in this area today.', not_checked: "Promotions could not be checked today; we try again early tomorrow.", checking: 'Checking now.', no_promo: 'Active communities, no promotion published.',
+      view: 'View the full report', schools_none: 'No official school ratings for this area yet.', fit: 'Fit' };
+  const TL = es ? { '0_3m': 'En 3 meses', '3_6m': '3 a 6 meses', '6_12m': '6 a 12 meses', '12m_plus': 'Más de 12 meses' } : { '0_3m': 'Within 3 months', '3_6m': '3 to 6 months', '6_12m': '6 to 12 months', '12m_plus': 'More than 12 months' };
+  const FIN = es ? { preapproved: 'Preaprobado', cash: 'De contado', needs_lender: 'Ninguno todavía', va: 'VA', fha: 'FHA', unsure: 'No sé' } : { preapproved: 'Pre-approved', cash: 'Cash', needs_lender: 'Neither yet', va: 'VA', fha: 'FHA', unsure: 'Not sure' };
+  const h2 = (t) => `<h2 style="margin:22px 0 8px;font-size:17px;color:#26213F">${esc(t)}</h2>`;
+  const p = (t, small) => `<p style="margin:0 0 8px;font-size:${small ? 13 : 15}px;line-height:1.5;color:${small ? '#5b5870' : '#26213F'}">${esc(t)}</p>`;
+  const td = 'style="padding:6px 8px;border-top:1px solid #E7E8E9;font-size:13px;vertical-align:top;color:#26213F"';
+  const w = r.wish;
+  let html = p(`${T.hi} ${safeFirstName(l.first_name)}.`.replace(' .', '.')) + p(T.intro);
+  html += h2(T.wish) + `<table style="border-collapse:collapse;width:100%">${[[T.area, w.area], [T.price, w.max_price ? usd(w.max_price) : T.skipped], [T.monthly, w.max_monthly ? usd(w.max_monthly) : T.skipped], [T.down, w.down_payment != null ? usd(w.down_payment) : T.skipped], [T.timeline, TL[w.move_timeline] || T.skipped], [T.financing, FIN[w.financing_type] || T.skipped]].map(([k, v]) => `<tr><td ${td}>${esc(k)}</td><td ${td}><strong>${esc(v)}</strong></td></tr>`).join('')}</table>`;
+  const pp = r.purchasing_power;
+  html += h2(T.pp);
+  if (pp.basis === 'monthly' && pp.price_supported) html += p(es ? `Un pago de ${usd(pp.monthly)} al mes compra hasta unos ${usd(pp.price_supported)}. Con un límite de ${pp.dti_cap_pct}% del ingreso bruto para todas sus deudas, incluida la casa nueva, ese pago requiere un ingreso anual de al menos ${usd(pp.income_needed_annual)} si no tiene otras deudas.` : `A payment of ${usd(pp.monthly)} a month buys up to about ${usd(pp.price_supported)}. With all monthly debts, including the new home, capped at ${pp.dti_cap_pct}% of gross income, that payment needs a yearly income of at least ${usd(pp.income_needed_annual)} if you have no other debts.`);
+  else if (pp.basis === 'price' && pp.monthly_for_price) html += p(es ? `Una casa de ${usd(w.max_price)} cuesta desde ${usd(pp.monthly_for_price)} al mes (sin HOA ni CDD).` + (pp.income_needed_annual ? ` Con el límite de ${pp.dti_cap_pct}%, requiere un ingreso anual de al menos ${usd(pp.income_needed_annual)} si no tiene otras deudas.` : '') : `A ${usd(w.max_price)} home costs from ${usd(pp.monthly_for_price)} a month (before HOA and CDD).` + (pp.income_needed_annual ? ` With the ${pp.dti_cap_pct}% ceiling, that needs a yearly income of at least ${usd(pp.income_needed_annual)} if you have no other debts.` : ''));
+  else html += p(es ? 'Agregue un precio o un pago mensual en su informe para ver su poder de compra.' : 'Add a price or monthly payment on your report to see your purchasing power.');
+  if (pp.rate != null) html += p((es ? `Tasa de referencia ${pp.rate}%` : `Reference rate ${pp.rate}%`) + (pp.rate_as_of ? ` (${pp.rate_as_of})` : '') + (es ? '. Es una estimación, no una aprobación de préstamo.' : '. An estimate, not a loan approval.'), true);
+  html += h2(T.builders) + `<table style="border-collapse:collapse;width:100%"><tr><th align="left" ${td}>${esc(T.builder)}</th><th align="left" ${td}>${esc(T.promo)}</th></tr>` + r.builders.map((b) => {
+    const promo = b.status === 'found' ? [b.promotion, b.rate, b.closing_credit].filter(Boolean).join(' · ') + (b.community ? ` (${b.community})` : '') : b.status === 'no_promotion' ? T.no_promo : b.status === 'checking' ? T.checking : b.status === 'not_checked' ? T.not_checked : T.none_found;
+    return `<tr><td ${td}><strong>${esc(b.builder)}</strong>${b.lowest_starting_price ? `<br><span style="color:#5b5870">${es ? 'Desde' : 'From'} ${usd(b.lowest_starting_price)}</span>` : ''}</td><td ${td}>${esc(promo)}${(b.notes || []).length ? `<br><span style="color:#5b5870">${esc(b.notes.join(' '))}</span>` : ''}</td></tr>`;
+  }).join('') + '</table>';
+  if (r.best_deal && r.best_deal.row) { const b = r.best_deal.row; html += h2(T.best) + p(`${b.community || b.builder} · ${b.builder}${b.starting_price ? ' · ' + b.starting_price : ''}`) + (b.promotion ? p(b.promotion) : '') + p(`${T.fit}: ${b.fit.score}/100`, true); }
+  const m = r.market || {};
+  if (m.lowest_price || (r.lowest_community && r.lowest_community.starting_price_usd)) {
+    html += h2(T.lowest);
+    if (m.lowest_price) html += p(`${usd(m.lowest_price)}${es ? ' en casas nuevas listadas a menos de ' : ' among new homes listed within '}${m.radius_miles} ${es ? 'millas' : 'miles'}.`);
+    if (r.lowest_community && r.lowest_community.starting_price_usd) html += p(`${r.lowest_community.community || r.lowest_community.builder}: ${r.lowest_community.starting_price}`);
+    if (m.median_price_per_sqft) html += p(`${T.ppsf}: $${m.median_price_per_sqft}`);
+  }
+  html += h2(T.schools) + ((r.schools || []).filter((x) => x.rating).length ? r.schools.filter((x) => x.rating).map((x) => p(`${x.name}: ${x.rating}${x.rating_source ? ' (' + x.rating_source + ')' : ''}`)).join('') : p(T.schools_none, true));
+  if ((r.homes || []).length) {
+    html += h2(`${T.homes} (${r.homes.length})`) + `<table style="border-collapse:collapse;width:100%">` + r.homes.slice(0, 25).map((x) => `<tr><td ${td}>${esc(x.address || '')}<br><span style="color:#5b5870">${[x.beds ? x.beds + (es ? ' hab' : ' bd') : '', x.baths ? x.baths + (es ? ' baños' : ' ba') : '', x.sqft ? x.sqft.toLocaleString('en-US') + ' sqft' : ''].filter(Boolean).join(' · ')}</span></td><td ${td} align="right"><strong>${usd(x.price)}</strong><br><span style="color:#5b5870">${T.fit} ${x.fit.score}</span></td></tr>`).join('') + '</table>';
+    if (r.homes.length > 25) html += p(es ? `Vea las ${r.homes.length} casas en el informe completo.` : `See all ${r.homes.length} homes in the full report.`, true);
+  }
+  html += `<p style="margin:22px 0 4px"><a href="${esc(url)}" style="display:inline-block;background:#26213F;color:#fff;text-decoration:none;font-weight:800;padding:12px 24px;border-radius:40px">${esc(T.view)}</a></p>`;
+  html += `<p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#26213F;background:#FFF4EC;border-radius:10px;padding:10px 12px">${esc(REPORT_DISCLAIMER[es ? 'es' : 'en'])}</p>`;
+  return html;
+}
+
 async function buyerLeadReport(tenantId, leadId) {
-  const l = await db.one('SELECT id, token, lang, first_name, email FROM nca_leads WHERE id = :id AND tenant_id = :t', { id: leadId, t: tenantId });
+  const l = await db.one('SELECT id, token, lang, first_name, email, search_id FROM nca_leads WHERE id = :id AND tenant_id = :t', { id: leadId, t: tenantId });
   if (!l || !l.email) return { sent: false, reason: 'no_email' };
   const c = await db.one(`SELECT granted, revoked_at FROM nca_lead_consents WHERE tenant_id = :t AND lead_id = :l AND channel = 'email' ORDER BY id DESC LIMIT 1`, { t: tenantId, l: leadId });
   if (!c || c.granted !== true || c.revoked_at) return { sent: false, reason: 'no_email_consent' };
   const es = l.lang === 'es';
-  const url = `${publicUrl()}/?lead=${l.token}&lang=${es ? 'es' : 'en'}#intake`;
+  const search = l.search_id ? await db.one('SELECT * FROM nca_searches WHERE id = :id AND tenant_id = :t', { id: l.search_id, t: tenantId }) : null;
   const subject = es ? 'Su informe de BuyersLine' : 'Your BuyersLine report';
-  const paragraphs = es
-    ? [`Hola ${safeFirstName(l.first_name)}.`.replace(' .', '.'), 'Aquí tiene su informe con las comunidades que eligió y las promociones que encontramos para su zona. Al abrirlo también confirma este correo para recibir novedades ocasionales.', 'Antes de visitar cualquier oficina de ventas: muchas constructoras solo trabajan con el agente del comprador que lo registra antes de su primera visita. Hable primero con nuestro agente, para conservar su representación sin costo para usted.']
-    : [`Hi ${safeFirstName(l.first_name)}.`.replace(' .', '.'), 'Here is your report with the communities you chose and the promotions we found for your area. Opening it also confirms this address for occasional updates.', 'Before you visit any sales office: many builders only work with a buyer\'s agent who registers you before your first visit. Talk to our agent first, so you keep your representation at no cost to you.'];
   const footer = es
-    ? 'Recibe este correo porque pidió su informe en BuyersLine y aceptó recibirlo por correo. Puede darse de baja cuando quiera respondiendo a este correo. BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista.'
-    : 'You are receiving this because you asked for your report on BuyersLine and agreed to receive it by email. You can unsubscribe at any time by replying to this email. BuyersLine is a technology platform, not a real estate brokerage or a lender.';
+    ? 'Recibe este correo porque creó su informe en BuyersLine. Puede darse de baja cuando quiera respondiendo a este correo. BuyersLine es una plataforma tecnológica, no una correduría de bienes raíces ni un prestamista.'
+    : 'You are receiving this because you created your report on BuyersLine. You can unsubscribe at any time by replying to this email. BuyersLine is a technology platform, not a real estate brokerage or a lender.';
+  if (search) {
+    const url = `${publicUrl()}/?report=${search.token}&lang=${es ? 'es' : 'en'}#intake`;
+    const report = await require('./searchReport').buildReport(tenantId, search, { lang: l.lang });
+    const inner = reportEmailHtml(report, l, url);
+    const html = `<!doctype html><html><body style="margin:0;background:#F4F5F9;font-family:Mulish,Arial,sans-serif"><div style="max-width:620px;margin:0 auto;padding:28px 16px">
+<div style="font-size:22px;font-weight:900;color:#26213F;margin-bottom:18px">Buyers<span style="color:#FC4C02">Line</span></div>
+<div style="background:#fff;border:1px solid #E7E8E9;border-radius:16px;padding:22px"><h1 style="margin:0 0 12px;font-size:22px;color:#26213F">${esc(subject)}</h1>${inner}</div>
+<p style="font-size:12px;line-height:1.5;color:#5b5870;margin:16px 4px 0">${esc(footer)}</p></div></body></html>`;
+    const text = [`${es ? 'Hola' : 'Hi'} ${safeFirstName(l.first_name)}.`.replace(' .', '.'), es ? 'Su informe de BuyersLine está listo.' : 'Your BuyersLine report is ready.', `${es ? 'Ver el informe' : 'View the report'}: ${url}`, REPORT_DISCLAIMER[es ? 'es' : 'en'], footer].join('\n\n');
+    return deliver(tenantId, 'email.buyer_lead_report', l.id, { to: l.email, subject, html, text }, 'lead');
+  }
+  const url = `${publicUrl()}/?lead=${l.token}&lang=${es ? 'es' : 'en'}#intake`;
+  const paragraphs = es
+    ? [`Hola ${safeFirstName(l.first_name)}.`.replace(' .', '.'), 'Aquí tiene su informe con las promociones que encontramos para su zona.', REPORT_DISCLAIMER.es]
+    : [`Hi ${safeFirstName(l.first_name)}.`.replace(' .', '.'), 'Here is your report with the promotions we found for your area.', REPORT_DISCLAIMER.en];
   const cta = { label: es ? 'Ver mi informe' : 'View my report', url };
   return deliver(tenantId, 'email.buyer_lead_report', l.id, { to: l.email, subject, html: layout(subject, paragraphs, cta, footer), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${url}\n\n${footer}` }, 'lead');
 }
@@ -203,9 +270,35 @@ async function smeMagicLink(tenantId, userId, linkId, url, lang) {
   return deliver(tenantId, 'email.sme_magic_link_' + linkId, u.id, { to: u.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${url}` }, 'sme_user');
 }
 
+/* ---------- Private-preview logins (archgate.js). Sent through the same SendGrid sender. ---------- */
+
+/** To the owner: someone created a login and it is waiting for approval. Carries the email only. */
+async function siteLoginRequested(tenantId, account, ownerEmail) {
+  const to = String(process.env.INCENTIVA_SITE_APPROVER_EMAILS || ownerEmail || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (!to.length) return { sent: false, reason: 'no_approver' };
+  const subject = 'BuyersLine login waiting for approval';
+  const paragraphs = [`${account.email} created a login for the BuyersLine private preview.`, 'It cannot sign in until you approve it.'];
+  const cta = { label: 'Review logins', url: `${publicUrl()}/gate/accounts` };
+  return deliver(tenantId, 'email.site_login_requested', account.id, { to, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+}
+
+async function siteLoginApproved(tenantId, account) {
+  const subject = 'Your BuyersLine login is approved';
+  const paragraphs = ['Your login for the BuyersLine private preview is approved. Sign in with the email and password you chose.'];
+  const cta = { label: 'Sign in', url: `${publicUrl()}/gate/login` };
+  return deliver(tenantId, 'email.site_login_approved', account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+}
+
+async function sitePasswordReset(tenantId, account, token) {
+  const subject = 'Reset your BuyersLine password';
+  const paragraphs = ['Use this link to choose a new password. It works once and expires in one hour.', 'If you did not ask for it, ignore this email; your password stays the same.'];
+  const cta = { label: 'Choose a new password', url: `${publicUrl()}/gate/reset?t=${encodeURIComponent(token)}` };
+  return deliver(tenantId, 'email.site_password_reset_' + Date.now().toString(36), account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+}
+
 /** Fire and forget: never let email delay or fail a buyer or agent request. */
 function later(fn, ...args) { setImmediate(() => { fn(...args).catch((e) => console.error('[incentiva] email', e.message)); }); }
 
 function _setSender(fn) { sender = fn; }
 
-module.exports = { smeMagicLink, configured, buyerReportReady, reviewerReportWaiting, buyerLeadReport, agentNewLead, buyerMessage, staffMessage, leadEmailConsent, publicUrl, later, _setSender };
+module.exports = { siteLoginRequested, siteLoginApproved, sitePasswordReset, REPORT_DISCLAIMER, reportEmailHtml, smeMagicLink, configured, buyerReportReady, reviewerReportWaiting, buyerLeadReport, agentNewLead, buyerMessage, staffMessage, leadEmailConsent, publicUrl, later, _setSender };

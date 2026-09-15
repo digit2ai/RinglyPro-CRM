@@ -7,6 +7,18 @@
 <title>BuyersLine | New-construction incentives, verified and compared</title>
 <meta name="description" content="See your buying power, active new-construction communities near your ZIP, and each builder's current incentives, verified by a licensed agent and compared by monthly payment. Free for buyers.">
 <meta name="theme-color" content="#FFFFFF">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://buyersline.app/">
+<link rel="alternate" hreflang="en" href="https://buyersline.app/?lang=en">
+<link rel="alternate" hreflang="es" href="https://buyersline.app/?lang=es">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BuyersLine">
+<meta property="og:url" content="https://buyersline.app/">
+<meta property="og:title" content="BuyersLine | Today's new-construction promotions in Tampa Bay">
+<meta property="og:description" content="Answer five questions and get a free report: every builder's current promotion near your ZIP, your purchasing power, homes at your price and school ratings.">
+<meta property="og:image" content="https://buyersline.app/icon-512.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"BuyersLine","url":"https://buyersline.app/","logo":"https://buyersline.app/icon-512.png","areaServed":{"@type":"Place","name":"Tampa Bay, Florida"}},{"@type":"WebSite","name":"BuyersLine","url":"https://buyersline.app/","inLanguage":["en","es"]},{"@type":"WebApplication","name":"BuyersLine","url":"https://buyersline.app/","applicationCategory":"RealEstateApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free new-construction report for Tampa Bay home buyers: current builder promotions by ZIP code, purchasing power, listed homes and school ratings."}]}</script>
 <link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="{{BASE}}/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
@@ -27,6 +39,7 @@
 <script src="{{BASE}}/search-widget.js" defer></script>
 <script src="{{BASE}}/flow.js" defer></script>
 <script src="{{BASE}}/ecosystem-map.js" defer></script>
+<script src="{{BASE}}/report-view.js" defer></script>
 <script src="{{BASE}}/intake-chat.js" defer></script>
 </head>
 <body>
@@ -42,7 +55,6 @@
     <nav class="site-nav" aria-label="Primary" data-i18n-aria="nav_label">
       <a href="#flow" data-i18n="nav_how">How it works</a>
       <!-- <a href="#homes" data-i18n="nav_search">Search homes</a> (hidden with the #homes section) -->
-      <a href="#estimate" data-i18n="nav_power">Buying power</a>
       <a href="#about" data-i18n="nav_about">What we are</a>
       <a href="#intake" data-i18n="nav_report">Get my report</a>
       <a href="{{BASE}}/architecture" data-i18n="nav_arch">Architecture</a>
@@ -67,8 +79,7 @@
         <h1><span data-i18n="hero_title_a">Know what every builder is</span> <span class="hl" data-i18n="hero_title_hl">really offering</span> <span data-i18n="hero_title_b">before you visit.</span></h1>
         <p class="lede" data-i18n="hero_lede">Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.</p>
         <div class="btn-row">
-          <a class="btn btn-primary" href="#intake" data-scroll="intake" data-i18n="hero_cta_primary">See my options</a>
-          <a class="btn btn-secondary" href="#estimate" data-scroll="estimate" data-i18n="hero_cta_secondary">Estimate my buying power</a>
+          <a class="btn btn-primary" href="#intake" data-start-anna data-i18n="hero_cta_primary">See my options</a>
         </div>
         <p class="hero-note" data-i18n="hero_note">Free for buyers. No credit check.</p>
       </div>
@@ -193,56 +204,19 @@
     </div>
   </section>
 
-  <!-- Buying power estimator -->
-  <section id="estimate" class="section-rule">
-    <div class="wrap two-col">
-      <div>
-        <p class="eyebrow" data-i18n="est_eyebrow">Buying power</p>
-        <h2 data-i18n="est_title">Estimate your buying power</h2>
-        <p class="lede" data-i18n="est_lede">A few numbers give a rough price range and monthly payment. No credit check, and nothing here is a loan offer.</p>
-        <p class="small muted" data-i18n="est_private">What you type here is used only to calculate this estimate.</p>
-        <p class="small muted" id="refRate" hidden></p>
-      </div>
-      <div>
-        <form id="estForm" class="card" novalidate>
-          <div class="grid-2">
-            <div class="field">
-              <label for="est_income"><span data-i18n="est_income">Gross annual household income</span></label>
-              <div class="input-money"><input id="est_income" name="gross_income_annual" type="text" inputmode="numeric" autocomplete="off" aria-describedby="est_income_hint"></div>
-              <p class="hint" id="est_income_hint" data-i18n="est_income_hint">Before taxes, for everyone on the loan.</p>
-            </div>
-            <div class="field">
-              <label for="est_debts"><span data-i18n="est_debts">Monthly debt payments</span></label>
-              <div class="input-money"><input id="est_debts" name="monthly_debts" type="text" inputmode="numeric" autocomplete="off" aria-describedby="est_debts_hint"></div>
-              <p class="hint" id="est_debts_hint" data-i18n="est_debts_hint">Car, student loans, minimum card payments. Not rent.</p>
-            </div>
-            <div class="field">
-              <label for="est_down"><span data-i18n="est_down">Down payment available</span></label>
-              <div class="input-money"><input id="est_down" name="down_payment" type="text" inputmode="numeric" autocomplete="off"></div>
-            </div>
-            <div class="field">
-              <label for="est_target"><span data-i18n="est_target">Monthly payment you're comfortable with</span> <span class="opt" data-i18n="optional">(optional)</span></label>
-              <div class="input-money"><input id="est_target" name="target_payment" type="text" inputmode="numeric" autocomplete="off"></div>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary" id="estSubmit" data-i18n="est_submit">Estimate</button>
-          <div id="estStatus" class="status" role="status" aria-live="polite"></div>
-        </form>
-        <div id="estResult" aria-live="polite"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- Intake -->
   <section id="intake" class="section-rule">
     <div class="wrap wrap-chat">
       <div class="intake-head">
         <p class="eyebrow" data-i18n="intake_eyebrow">Your report</p>
-        <h2 data-i18n="intake_title">Talk to Ana</h2>
+        <h2 data-i18n="intake_title">Talk to Anna</h2>
         <p class="lede" data-i18n="intake_lede">One question at a time, about five minutes. She pulls the current builder promotions for your area. Buyers pay nothing.</p>
       </div>
       <div id="configStatus" class="status" role="status" aria-live="polite"></div>
-      <div id="blChat" class="mch"><noscript><p class="mch-b mch-b-m">Ana needs JavaScript turned on. You can also write to info@digit2ai.com.</p></noscript></div>
+      <div id="blChat" class="mch"><noscript><p class="mch-b mch-b-m">Anna needs JavaScript turned on. You can also write to info@digit2ai.com.</p></noscript></div>
+    </div>
+    <div class="wrap">
+      <div id="blReport" class="rv" aria-live="polite" hidden></div>
     </div>
   </section>
 
@@ -280,7 +254,7 @@
       <div class="eco-head">
         <p class="eyebrow" data-i18n="eco_eyebrow">System map · new-construction homes</p>
         <h2 id="ecoTitle"><span data-i18n="eco_title">One brain. Seven agents.</span> <em data-i18n="eco_title_em">One licensed human.</em></h2>
-        <p class="eco-sub" data-i18n="eco_sub">Ana guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.</p>
+        <p class="eco-sub" data-i18n="eco_sub">Anna guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.</p>
       </div>
       <div data-ecomap></div>
     </div>
@@ -318,14 +292,13 @@
       nav_label: 'Primary',
       nav_arch: 'Architecture',
       eco_eyebrow: 'System map · new-construction homes', eco_title: 'One brain. Seven agents.', eco_title_em: 'One licensed human.',
-      eco_sub: 'Ana guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.',
+      eco_sub: 'Anna guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.',
       nav_how: 'How it works',
       nav_search: 'Search homes',
       homes_eyebrow: 'Homes for sale',
       homes_title_a: 'Search new-construction homes',
       homes_title_hl: 'near you',
       homes_lede: 'Enter a ZIP code to see new-construction homes for sale on the map. Found one you like? Ask our agent before you visit the sales office.',
-      nav_power: 'Buying power',
       nav_about: 'What we are',
       nav_report: 'Get my report',
       lang_group: 'Language',
@@ -336,7 +309,6 @@
       hero_title_b: 'before you visit.',
       hero_lede: "Tell us where and what you want. We show your buying power, every active new-construction community near your ZIP, and each builder's current incentives, verified by a licensed agent and compared side by side in monthly-payment terms.",
       hero_cta_primary: 'See my options',
-      hero_cta_secondary: 'Estimate my buying power',
       hero_note: 'Free for buyers. No credit check.',
       flow_eyebrow: 'The whole process',
       flow_title: 'From your first question to your keys',
@@ -378,44 +350,11 @@
       rx_year1: 'Year 1, principal and interest',
       rx_year3: 'Year 3+, principal and interest',
       rx_note: "On the builder's own example: $411,000 price, $403,540 FHA loan. Taxes, insurance and mortgage insurance are extra. Not guaranteed until locked; our licensed agent confirms the terms with you.",
-      est_eyebrow: 'Buying power',
-      est_title: 'Estimate your buying power',
-      est_lede: 'A few numbers give a rough price range and monthly payment. No credit check, and nothing here is a loan offer.',
-      est_private: 'What you type here is used only to calculate this estimate.',
-      est_ref_rate: 'Reference rate: {rate}% as of {date}. Source: {source}.',
-      est_income: 'Gross annual household income',
-      est_income_hint: 'Before taxes, for everyone on the loan.',
-      est_debts: 'Monthly debt payments',
-      est_debts_hint: 'Car, student loans, minimum card payments. Not rent.',
-      est_down: 'Down payment available',
-      est_target: "Monthly payment you're comfortable with",
       optional: '(optional)',
-      est_submit: 'Estimate',
-      est_working: 'Calculating your estimate...',
-      est_price: 'Estimated price range',
-      est_payment: 'Estimated monthly payment',
       per_month: '/mo',
-      est_how: 'How we estimated this',
       th_assumption: 'Assumption',
       th_value: 'Value',
       th_basis: 'Basis',
-      est_disclaimer: 'This is an estimate, not a pre-qualification or loan approval. No credit check.',
-      est_use: 'Use this budget in my report',
-      est_used: 'Budget of {amount} added to your report form below.',
-      est_missing_title: "We can't estimate yet. We still need:",
-      bp_debts_title: 'Your monthly debts leave almost no room for a home payment',
-      bp_debts_body: 'Lenders usually cap all monthly debt payments, including the new home payment, at about 50% of gross income. For you that is {limit} a month. Your debts are {debts} a month, which leaves about {room} for a home payment.',
-      bp_limited_title: 'Your other monthly debts are what limit this range',
-      bp_limited_body: 'Lenders usually cap all monthly debts, including the home, at about 50% of gross income: {limit} a month for you. Your other debts are {debts}, which leaves about {room} for the home payment.',
-      bp_check_debts: 'Check that figure: it should be what you pay each month, not the total you owe.',
-      bp_target_title: "That monthly payment doesn't cover taxes and insurance",
-      bp_target_body: 'A payment of {target} a month is below the estimated property tax and insurance on a home, so no price fits it.',
-      bp_target_price: 'A payment of {target} a month would cover a home of about {price}, but a lender may not approve it while your debts stay this high.',
-      bp_alt_debts: 'If those debts were paid off',
-      bp_alt_target: 'Without that payment limit',
-      bp_alt_line: 'about {low} to {high} a month',
-      bp_use_price: 'Use {price} in my report',
-      est_bad_number: 'Enter amounts as numbers, for example 85000.',
       missing_gross_income_annual: 'your gross annual household income',
       missing_monthly_debts: 'your monthly debt payments',
       missing_down_payment: 'how much you have for a down payment',
@@ -425,8 +364,8 @@
       err_server: 'Something went wrong on our side. Please try again in a minute.',
       err_rate: 'Too many requests right now. Please wait a few minutes and try again.',
       intake_eyebrow: 'Your report',
-      intake_title: 'Talk to Ana',
-      intake_lede: 'One question at a time, about five minutes. She pulls the current builder promotions for your area. Buyers pay nothing.',
+      intake_title: 'Talk to Anna',
+      intake_lede: 'Five quick questions, and only the first is required. Your report appears right below with today\'s builder promotions. Free for buyers.',
       config_loading: 'Loading the form options...',
       config_error: "We couldn't load the form options. Check your connection, then try again.",
       retry: 'Try again',
@@ -529,14 +468,13 @@
       nav_label: 'Principal',
       nav_arch: 'Arquitectura',
       eco_eyebrow: 'Mapa del sistema · casas nuevas', eco_title: 'Un cerebro. Siete agentes.', eco_title_em: 'Un humano con licencia.',
-      eco_sub: 'Ana lo guía y coordina seis agentes de IA. Un agente con licencia verifica las promociones y se reúne con usted, y reglas fijas calculan cada precio y pago.',
+      eco_sub: 'Anna lo guía y coordina seis agentes de IA. Un agente con licencia verifica las promociones y se reúne con usted, y reglas fijas calculan cada precio y pago.',
       nav_how: 'Cómo funciona',
       nav_search: 'Buscar casas',
       homes_eyebrow: 'Casas en venta',
       homes_title_a: 'Busque casas de construcción nueva',
       homes_title_hl: 'cerca de usted',
       homes_lede: 'Escriba un código postal para ver casas nuevas en venta en el mapa. ¿Encontró una que le gusta? Pregunte a nuestro agente antes de visitar la oficina de ventas.',
-      nav_power: 'Poder de compra',
       nav_about: 'Qué somos',
       nav_report: 'Obtener mi informe',
       lang_group: 'Idioma',
@@ -547,7 +485,6 @@
       hero_title_b: 'antes de visitar.',
       hero_lede: 'Díganos dónde y qué busca. Le mostramos su poder de compra, todas las comunidades de construcción nueva activas cerca de su código postal y los incentivos vigentes de cada constructor, verificados por un agente con licencia y comparados lado a lado en pago mensual.',
       hero_cta_primary: 'Ver mis opciones',
-      hero_cta_secondary: 'Calcular mi poder de compra',
       hero_note: 'Gratis para compradores. Sin revisión de crédito.',
       flow_eyebrow: 'Todo el proceso',
       flow_title: 'De su primera pregunta a sus llaves',
@@ -589,44 +526,11 @@
       rx_year1: 'Año 1, capital e intereses',
       rx_year3: 'Año 3 en adelante, capital e intereses',
       rx_note: 'Según el ejemplo del propio constructor: precio de $411,000 y préstamo FHA de $403,540. Impuestos, seguro y seguro hipotecario van aparte. No está garantizada hasta fijar la tasa; nuestro agente con licencia confirma los términos con usted.',
-      est_eyebrow: 'Poder de compra',
-      est_title: 'Calcule su poder de compra',
-      est_lede: 'Con unas pocas cifras le damos un rango aproximado de precio y de pago mensual. Sin revisión de crédito, y nada de esto es una oferta de préstamo.',
-      est_private: 'Lo que escriba aquí se usa solo para calcular esta estimación.',
-      est_ref_rate: 'Tasa de referencia: {rate} % al {date}. Fuente: {source}.',
-      est_income: 'Ingreso anual bruto del hogar',
-      est_income_hint: 'Antes de impuestos, de todas las personas en el préstamo.',
-      est_debts: 'Pagos mensuales de deudas',
-      est_debts_hint: 'Auto, préstamos estudiantiles, pagos mínimos de tarjetas. No incluya el alquiler.',
-      est_down: 'Dinero disponible para el pago inicial',
-      est_target: 'Pago mensual con el que se siente cómodo',
       optional: '(opcional)',
-      est_submit: 'Calcular',
-      est_working: 'Calculando su estimación...',
-      est_price: 'Rango de precio estimado',
-      est_payment: 'Pago mensual estimado',
       per_month: '/mes',
-      est_how: 'Cómo lo calculamos',
       th_assumption: 'Supuesto',
       th_value: 'Valor',
       th_basis: 'Fundamento',
-      est_disclaimer: 'Es una estimación, no una precalificación ni una aprobación de préstamo. No revisamos su crédito.',
-      est_use: 'Usar este presupuesto en mi informe',
-      est_used: 'Presupuesto de {amount} agregado a su formulario de informe más abajo.',
-      est_missing_title: 'Aún no podemos calcular. Nos falta:',
-      bp_debts_title: 'Sus deudas mensuales casi no dejan espacio para el pago de una casa',
-      bp_debts_body: 'Los prestamistas suelen limitar todos los pagos mensuales de deudas, incluido el pago de la casa nueva, a cerca del 50 % del ingreso bruto. Para usted son {limit} al mes. Sus deudas suman {debts} al mes, lo que deja unos {room} para el pago de una casa.',
-      bp_limited_title: 'Sus otras deudas mensuales son las que limitan este rango',
-      bp_limited_body: 'Los prestamistas suelen limitar todas las deudas mensuales, incluida la casa, a cerca del 50 % del ingreso bruto: {limit} al mes para usted. Sus otras deudas suman {debts}, lo que deja unos {room} para el pago de la casa.',
-      bp_check_debts: 'Revise esa cifra: debe ser lo que paga cada mes, no el total que debe.',
-      bp_target_title: 'Ese pago mensual no cubre impuestos ni seguro',
-      bp_target_body: 'Un pago de {target} al mes es menor que el impuesto a la propiedad y el seguro estimados de una casa, así que ningún precio encaja.',
-      bp_target_price: 'Un pago de {target} al mes cubriría una casa de unos {price}, pero es posible que un prestamista no lo apruebe mientras sus deudas sigan así de altas.',
-      bp_alt_debts: 'Si esas deudas estuvieran pagadas',
-      bp_alt_target: 'Sin ese límite de pago',
-      bp_alt_line: 'unos {low} a {high} al mes',
-      bp_use_price: 'Usar {price} en mi informe',
-      est_bad_number: 'Escriba las cantidades como números, por ejemplo 85000.',
       missing_gross_income_annual: 'su ingreso anual bruto del hogar',
       missing_monthly_debts: 'sus pagos mensuales de deudas',
       missing_down_payment: 'cuánto tiene para el pago inicial',
@@ -636,8 +540,8 @@
       err_server: 'Algo falló de nuestro lado. Intente de nuevo en un minuto.',
       err_rate: 'Hay demasiadas solicitudes en este momento. Espere unos minutos e intente de nuevo.',
       intake_eyebrow: 'Su informe',
-      intake_title: 'Hable con Ana',
-      intake_lede: 'Una pregunta a la vez, unos cinco minutos. Ella busca las promociones actuales de las constructoras en su zona. El comprador no paga nada.',
+      intake_title: 'Hable con Anna',
+      intake_lede: 'Cinco preguntas rápidas y solo la primera es obligatoria. Su informe aparece aquí abajo con las promociones de hoy. Gratis para compradores.',
       config_loading: 'Cargando las opciones del formulario...',
       config_error: 'No pudimos cargar las opciones del formulario. Revise su conexión e intente de nuevo.',
       retry: 'Intentar de nuevo',
@@ -810,13 +714,6 @@
   }
   function $(id) { return document.getElementById(id); }
   function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
-  function parseMoney(str) {
-    var s = String(str == null ? '' : str).trim();
-    if (!s) return null;
-    var cleaned = s.replace(/[$,\s]/g, '');
-    if (!/^\d+(\.\d+)?$/.test(cleaned)) return NaN;
-    return Number(cleaned);
-  }
   function callout(kind, title, body) {
     return h('div', { class: 'callout' + (kind ? ' callout-' + kind : '') },
       title ? h('h4', { text: title }) : null,
@@ -843,7 +740,6 @@
     applyStatic();
     if (!opts || !opts.initial) {
       loadConfig();
-      if (lastEstimateBody) runEstimate(lastEstimateBody, true);
       if (window.BLChat) window.BLChat.setLang(lang);
       if (window.D2AIVoiceOrb && typeof window.D2AIVoiceOrb.setLang === 'function') {
         try { window.D2AIVoiceOrb.setLang(lang); } catch (e) { /* orb is optional */ }
@@ -871,8 +767,6 @@
     var orb = $('voiceOrb');
     orb.setAttribute('data-lang', lang);
     orb.setAttribute('data-label', t('orb_label'));
-    renderRefRate();
-    if (lastEstimate) renderEstimate(lastEstimate);
   }
 
   // ---------- config ----------
@@ -904,21 +798,10 @@
     });
   }
 
-  function checkedValues(name) {
-    return Array.prototype.map.call(document.querySelectorAll('input[name="' + name + '"]:checked'), function (i) { return i.value; });
-  }
-
-  function choice(type, name, value, label, checked, extraAttrs) {
-    var input = h('input', Object.assign({ type: type, name: name, value: value }, extraAttrs || {}));
-    input.checked = !!checked;
-    return h('label', { class: 'choice' }, input, h('span', { class: 'choice-text', text: label }));
-  }
-
   function renderConfig() {
     $('demoBanner').hidden = !config.is_demo_data;
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config.market && config.market.name) || t('market_default') });
     renderDisclosures();
-    renderRefRate();
   }
 
   function renderDisclosures() {
@@ -944,215 +827,6 @@
     return svg;
   }
 
-  function renderRefRate() {
-    var el = $('refRate');
-    var rr = config && config.reference_rate;
-    if (!rr || rr.rate == null) { el.hidden = true; return; }
-    var rate = new Intl.NumberFormat(locale(), { maximumFractionDigits: 3 }).format(Number(rr.rate));
-    el.textContent = t('est_ref_rate', { rate: rate, date: fmtDate(rr.as_of) || rr.as_of || '', source: rr.source || '' });
-    el.hidden = false;
-  }
-
-  // ---------- estimator ----------
-  var lastEstimate = null;
-  var lastEstimateBody = null;
-
-  function runEstimate(body, silent) {
-    var st = $('estStatus');
-    var btn = $('estSubmit');
-    btn.disabled = true;
-    if (!silent) {
-      clear(st);
-      st.appendChild(h('p', { class: 'muted small' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), ' ', t('est_working')));
-    }
-    api('/api/v1/public/buying-power?lang=' + lang, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(body)
-    }).then(function (res) {
-      btn.disabled = false;
-      clear(st);
-      if (res.status === 429) { st.appendChild(callout('critical', null, t('err_rate'))); return; }
-      if (!res.ok || !res.data) {
-        st.appendChild(callout('critical', null, (res.data && res.data.error) || t('err_server')));
-        return;
-      }
-      lastEstimate = res.data;
-      lastEstimateBody = body;
-      renderEstimate(res.data);
-    }).catch(function () {
-      btn.disabled = false;
-      clear(st);
-      st.appendChild(callout('critical', null, t('err_network')));
-    });
-  }
-
-  function renderEstimate(data) {
-    var out = $('estResult'); clear(out);
-    var card = h('div', { class: 'card', style: 'margin-top:16px' });
-    var est = data.estimate;
-    if (est) {
-      var lowP = money(est.price_low), highP = money(est.price_high);
-      card.appendChild(h('p', { class: 'result-label', text: t('est_price') }));
-      card.appendChild(h('p', { class: 'result-figure', text: (lowP && highP) ? lowP + ' – ' + highP : (highP ? (lang === 'es' ? 'Hasta ' : 'Up to ') + highP : (lowP || '')) }));
-      var lowM = money(est.payment_low), highM = money(est.payment_high);
-      if (lowM || highM) {
-        card.appendChild(h('p', { class: 'result-label', text: t('est_payment') }));
-        card.appendChild(h('p', { class: 'result-sub', text: ((lowM && highM) ? lowM + ' – ' + highM : (highM || lowM)) + ' ' + t('per_month') }));
-      }
-      if (data.limited_by === 'debts' && data.debts_note) {
-        var dn = data.debts_note;
-        var note = h('div', { class: 'callout', style: 'margin-top:14px' },
-          h('h4', { text: t('bp_limited_title') }),
-          h('p', { text: t('bp_limited_body', { limit: money(dn.debt_limit), debts: money(dn.debts), room: money(dn.room) }) }),
-          h('p', { class: 'small muted', text: t('bp_check_debts') }));
-        if (dn.target_price) note.appendChild(h('p', { text: t('bp_target_price', { target: money(dn.target), price: money(dn.target_price) }) }));
-        if (dn.without_debts) {
-          note.appendChild(h('p', { class: 'result-label', text: t('bp_alt_debts') }));
-          note.appendChild(h('p', { class: 'result-sub', text: (dn.without_debts.price_low ? money(dn.without_debts.price_low) + ' – ' : '') + money(dn.without_debts.price_high) + ' · ' + t('bp_alt_line', { low: money(dn.without_debts.payment_low), high: money(dn.without_debts.payment_high) }) }));
-        }
-        card.appendChild(note);
-      }
-      card.appendChild(h('p', { class: 'small', style: 'margin-top:12px', text: t('est_disclaimer') }));
-      if (est.price_high != null && !isNaN(Number(est.price_high))) {
-        card.appendChild(h('button', {
-          type: 'button', class: 'btn btn-secondary', text: t('est_use'),
-          onclick: function () { useBudget(Number(est.price_high)); }
-        }));
-      }
-    } else if (data.blocked) {
-      var bl = data.blocked, alt = data.alternative;
-      var debtsCase = bl.reason === 'debts';
-      card.appendChild(h('h3', { text: t(debtsCase ? 'bp_debts_title' : 'bp_target_title') }));
-      if (debtsCase) {
-        card.appendChild(h('p', { text: t('bp_debts_body', { limit: money(bl.debt_limit), debts: money(bl.debts), room: money(bl.room) }) }));
-        card.appendChild(h('p', { class: 'small muted', text: t('bp_check_debts') }));
-        if (bl.target_price) card.appendChild(h('p', { text: t('bp_target_price', { target: money(bl.target), price: money(bl.target_price) }) }));
-      } else {
-        card.appendChild(h('p', { text: t('bp_target_body', { target: money(bl.target) }) }));
-      }
-      if (alt && alt.price_high) {
-        card.appendChild(h('p', { class: 'result-label', style: 'margin-top:12px', text: t(debtsCase ? 'bp_alt_debts' : 'bp_alt_target') }));
-        card.appendChild(h('p', { class: 'result-figure', text: alt.price_low ? money(alt.price_low) + ' – ' + money(alt.price_high) : money(alt.price_high) }));
-        card.appendChild(h('p', { class: 'result-sub', text: t('bp_alt_line', { low: money(alt.payment_low || alt.payment_high), high: money(alt.payment_high) }) }));
-      }
-      card.appendChild(h('p', { class: 'small', style: 'margin-top:12px', text: t('est_disclaimer') }));
-      var usePrice = debtsCase ? bl.target_price : (alt && alt.price_high);
-      if (usePrice) card.appendChild(h('button', { type: 'button', class: 'btn btn-secondary', text: t('bp_use_price', { price: money(usePrice) }), onclick: function () { useBudget(Number(usePrice)); } }));
-    } else {
-      card.appendChild(h('h3', { text: t('est_missing_title') }));
-      var ul = h('ul');
-      (data.missing || []).forEach(function (k) {
-        var key = 'missing_' + k;
-        var label = (I18N.en[key] != null) ? t(key) : String(k).replace(/_/g, ' ');
-        ul.appendChild(h('li', { text: label }));
-      });
-      if (!(data.missing || []).length) ul.appendChild(h('li', { text: t('missing_gross_income_annual') }));
-      card.appendChild(ul);
-      card.appendChild(h('p', { class: 'small muted', text: t('est_disclaimer') }));
-    }
-    var as = data.assumptions || [];
-    if (as.length) {
-      card.appendChild(h('h4', { style: 'margin-top:18px', text: t('est_how') }));
-      var tbody = h('tbody');
-      as.forEach(function (a) {
-        tbody.appendChild(h('tr', null,
-          h('th', { scope: 'row', text: a.label || a.key || '' }),
-          h('td', { class: 'money', text: a.value_display || '' }),
-          h('td', { class: 'small muted', text: a.basis || '' })));
-      });
-      card.appendChild(h('div', { class: 'table-wrap' },
-        h('table', null,
-          h('thead', null, h('tr', null,
-            h('th', { scope: 'col', text: t('th_assumption') }),
-            h('th', { scope: 'col', class: 'money', text: t('th_value') }),
-            h('th', { scope: 'col', text: t('th_basis') }))),
-          tbody)));
-    }
-    out.appendChild(card);
-  }
-
-  function useBudget(amount) {
-    var st = $('estStatus'); clear(st);
-    st.appendChild(h('p', { class: 'small', text: t('est_used', { amount: money(amount) }) }));
-    if (window.BLChat) window.BLChat.setAnswer('max_price', Number(amount));
-    var intake = $('intake');
-    if (intake) intake.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  }
-
-  /* Ana can run the calculator with numbers the buyer said, and reads what it shows. */
-  window.BLEstimate = function (i) {
-    var map = { annual_income: ['est_income', 'gross_income_annual'], monthly_debts: ['est_debts', 'monthly_debts'], down_payment: ['est_down', 'down_payment'], monthly_payment: ['est_target', 'target_payment'] };
-    var body = { gross_income_annual: parseMoney($('est_income').value), monthly_debts: parseMoney($('est_debts').value), down_payment: parseMoney($('est_down').value), target_payment: parseMoney($('est_target').value) };
-    Object.keys(map).forEach(function (k) {
-      if (i && typeof i[k] === 'number') { $(map[k][0]).value = Math.round(i[k]).toLocaleString('en-US'); body[map[k][1]] = i[k]; }
-    });
-    Object.keys(body).forEach(function (k) { if (typeof body[k] === 'number' && isNaN(body[k])) body[k] = null; });
-    var sec = $('estimate'); if (sec) sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-    runEstimate(body, false);
-  };
-  window.BLEstimateStatus = function () {
-    if (!lastEstimate) return 'BUYING POWER CALCULATOR: not run yet.';
-    var d = lastEstimate, b = lastEstimateBody || {}, e = d.estimate;
-    var inputs = 'income ' + (money(b.gross_income_annual) || 'not given') + ' a year, debts ' + (money(b.monthly_debts) || 'not given') + ' a month, down payment ' + (money(b.down_payment) || 'not given') + (b.target_payment ? ', comfortable payment ' + money(b.target_payment) + ' a month' : '');
-    var result;
-    if (e) result = 'price range shown ' + (e.price_low ? money(e.price_low) + ' to ' : 'up to ') + money(e.price_high) + ', monthly payment about ' + (e.payment_low ? money(e.payment_low) + ' to ' : '') + money(e.payment_high) + (d.limited_by === 'debts' ? '; current debts set the limit' : '') + '. The buyer can use ' + money(e.price_high) + ' as their maximum price.';
-    else if (d.blocked) result = (d.blocked.reason === 'debts' ? 'no range: monthly debts use up the lending limit' : 'no range: the comfortable payment is too low') + (d.alternative && d.alternative.price_high ? '; the page shows ' + money(d.alternative.price_high) + ' as the top price ' + (d.blocked.reason === 'debts' ? 'without those debts' : 'without that payment limit') : '') + '.';
-    else result = 'needs more information: ' + (d.missing || []).join(', ') + '.';
-    return 'BUYING POWER CALCULATOR (an estimate, not a loan approval): ' + inputs + '; ' + result;
-  };
-
-  $('estForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var ids = { gross_income_annual: 'est_income', monthly_debts: 'est_debts', down_payment: 'est_down', target_payment: 'est_target' };
-    var body = {}; var bad = false;
-    Object.keys(ids).forEach(function (k) {
-      var el = $(ids[k]);
-      clearFieldError(el);
-      var v = parseMoney(el.value);
-      if (typeof v === 'number' && isNaN(v)) { bad = true; setFieldError(el, t('est_bad_number')); v = null; }
-      body[k] = v;
-    });
-    if (bad) return;
-    runEstimate(body, false);
-  });
-
-  // ---------- field errors ----------
-  function setFieldError(el, msg) {
-    var wrap = el.tagName === 'FIELDSET' ? el : (el.closest('.field') || el.closest('fieldset'));
-    if (!wrap) return;
-    wrap.classList.add('has-error');
-    var errId = (el.id || wrap.id || 'x') + '-err';
-    var p = $(errId);
-    if (!p) {
-      p = h('p', { class: 'field-error', id: errId });
-      wrap.appendChild(p);
-    }
-    p.textContent = msg;
-    if (el.tagName !== 'FIELDSET') el.setAttribute('aria-invalid', 'true');
-    var db = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
-    if (db.indexOf(errId) === -1) { db.push(errId); el.setAttribute('aria-describedby', db.join(' ')); }
-  }
-  function clearFieldError(el) {
-    var wrap = el.tagName === 'FIELDSET' ? el : (el.closest('.field') || el.closest('fieldset'));
-    var errId = (el.id || (wrap && wrap.id) || 'x') + '-err';
-    var p = $(errId);
-    if (p) p.parentNode.removeChild(p);
-    if (wrap) wrap.classList.remove('has-error');
-    el.removeAttribute('aria-invalid');
-    var db = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(function (x) { return x && x !== errId; });
-    if (db.length) el.setAttribute('aria-describedby', db.join(' ')); else el.removeAttribute('aria-describedby');
-  }
-  function clearAllErrors(form) {
-    Array.prototype.forEach.call(form.querySelectorAll('.field-error'), function (p) { p.parentNode.removeChild(p); });
-    Array.prototype.forEach.call(form.querySelectorAll('.has-error'), function (w) { w.classList.remove('has-error'); });
-    Array.prototype.forEach.call(form.querySelectorAll('[aria-invalid]'), function (i) { i.removeAttribute('aria-invalid'); });
-    Array.prototype.forEach.call(form.querySelectorAll('[aria-describedby]'), function (i) {
-      var db = i.getAttribute('aria-describedby').split(/\s+/).filter(function (x) { return x && !/-err$/.test(x); });
-      if (db.length) i.setAttribute('aria-describedby', db.join(' ')); else i.removeAttribute('aria-describedby');
-    });
-  }
-
   // ---------- smooth scroll for hero actions ----------
   Array.prototype.forEach.call(document.querySelectorAll('[data-scroll]'), function (a) {
     a.addEventListener('click', function (e) {
@@ -1165,6 +839,11 @@
       var focusEl = target.querySelector('input, select');
       if (focusEl) setTimeout(function () { focusEl.focus({ preventScroll: true }); }, reduce ? 0 : 450);
     });
+  });
+
+  // "See my options" starts the conversation with Anna.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-start-anna]'), function (a) {
+    a.addEventListener('click', function (e) { if (!window.BLChat) return; e.preventDefault(); window.BLChat.start(); });
   });
 
   // ---------- toggle ----------
@@ -1185,23 +864,24 @@
 </script>
 <script src="/embed/voice-orb.js" defer></script>
 <script>
-/* Ana (voice assistant) drives the conversational intake through window.BLChat. She fills only
-   answers the buyer said, picks only communities the buyer named that are already on screen, runs the
-   buying power calculator with the buyer's own numbers, and scrolls to a section. Every contact choice
-   stays the buyer's own tap: nothing here can tick a consent box. A send runs only after the server confirmed a clear yes
-   (submit_intake_form), only at the last step with nothing required missing, and only after a
-   5-second countdown the buyer can cancel. */
+/* Anna (voice assistant) drives the conversation through window.BLChat and the report's contact form through
+   window.BLReportView. She fills only what the buyer said. The share-with-agent box stays the buyer's own tap:
+   nothing here can tick it. Creating the report runs only after the server confirmed a clear yes
+   (submit_intake_form), only when nothing required is missing, and only after a 5-second countdown the
+   buyer can cancel. With no model, D2AIVoiceOrbOffline understands the answer on the page itself, so Anna
+   moves on instead of repeating the question. */
 (function () {
   'use strict';
-  window.D2AIVoiceOrbLiveContext = function () { return (window.BLChat ? window.BLChat.status() : '') + (window.BLEstimateStatus ? '\n' + window.BLEstimateStatus() : ''); };
+  window.D2AIVoiceOrbLiveContext = function () { return (window.BLChat ? window.BLChat.status() : '') + (window.BLReportView ? '\n' + window.BLReportView.status() : ''); };
+  window.D2AIVoiceOrbOffline = function (text) { return window.BLChat ? window.BLChat.offlineTurn(text) : null; };
   var sendTimer = null, sendBar = null;
   function es() { return (document.documentElement.lang || '').toLowerCase().indexOf('es') === 0; }
-  function toIntake() { var el = document.getElementById('intake'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function scrollTo(id) { var el = id === 'top' ? document.body : document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   function cancelSend() { if (sendTimer) clearInterval(sendTimer); sendTimer = null; if (sendBar) { sendBar.remove(); sendBar = null; } }
   function startSend() {
-    var chat = window.BLChat;
-    if (sendTimer || !chat) return;
-    if (!chat.atFinalStep() || chat.missing().length) { toIntake(); return; }
+    var rv = window.BLReportView;
+    if (sendTimer || !rv) return;
+    if (!rv.ready()) { scrollTo('rvContact'); return; }
     var left = 5;
     sendBar = document.createElement('div');
     sendBar.className = 'bl-sendbar'; sendBar.setAttribute('role', 'status');
@@ -1211,30 +891,26 @@
     cancel.addEventListener('click', cancelSend);
     sendBar.appendChild(msg); sendBar.appendChild(cancel);
     document.body.appendChild(sendBar);
-    function paint() { msg.textContent = (es() ? 'Enviando sus respuestas para crear el informe en ' : 'Sending your answers to create your report in ') + left + '\u2026'; }
-    paint(); toIntake();
+    function paint() { msg.textContent = (es() ? 'Creando su informe en ' : 'Creating your report in ') + left + '\u2026'; }
+    paint(); scrollTo('rvContact');
     sendTimer = setInterval(function () {
       left--; if (left > 0) { paint(); return; }
       cancelSend();
-      if (!chat.missing().length) chat.submit();
+      if (rv.ready()) rv.submit();
     }, 1000);
   }
   window.addEventListener('d2orb:action', function (e) {
     var d = e.detail || {};
     if (!window.BLChat) return;
     if (d.name === 'submit_intake_form') { startSend(); return; }
-    if (d.name === 'select_communities') { window.BLChat.voiceSelect(d.input || {}); toIntake(); return; }
-    if (d.name === 'estimate_buying_power') { if (window.BLEstimate) window.BLEstimate(d.input || {}); return; }
     if (d.name === 'show_section') {
-      var target = { top: 'top', how_it_works: 'flow', buying_power: 'estimate', report_chat: 'intake', about: 'about' }[(d.input || {}).section];
-      var el = target === 'top' ? document.body : document.getElementById(target);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollTo({ top: 'top', how_it_works: 'flow', report_chat: 'intake', report: 'blReport', contact: 'rvContact', about: 'about' }[(d.input || {}).section]);
       return;
     }
     if (d.name !== 'fill_intake_form') return;
     if (window.BLChat.applyVoice(d.input || {})) {
       var el = document.getElementById('intake'), box = el && el.getBoundingClientRect();
-      if (box && (box.top > window.innerHeight || box.bottom < 0)) toIntake();
+      if (box && (box.top > window.innerHeight || box.bottom < 0) && !document.getElementById('rvContact')) scrollTo('intake');
     }
   });
 })();

@@ -7,6 +7,7 @@
  *       GET /api/questions/:id · PUT /api/answers/:questionId
  *       admin: GET|POST /api/admin/users · PATCH /api/admin/users/:id · POST /api/admin/users/:id/magic-link
  * Every response is noindex and no-store. Not linked from the public site.
+ * A person already signed in to the site gate (owner or approved preview login) is signed in here automatically.
  */
 
 const express = require('express');
@@ -41,6 +42,23 @@ module.exports = function smeRouter(tenantId) {
   });
   r.use(async (req, res, next) => { try { await ensureReady(); next(); } catch (e) { console.error('[incentiva] sme boot', e.message); res.status(503).json({ error: 'Unavailable. Try again shortly.' }); } });
   r.use(express.json({ limit: '120kb' }));
+
+  // Already signed in to the site: open the questionnaire with no second password.
+  const archgate = require('../services/archgate');
+  r.use(async (req, res, next) => {
+    try {
+      if (/^\/magic\//.test(req.path) || await auth.sessionFrom(tenantId, req)) return next();
+      const who = await archgate.identify(req, tenantId);
+      if (!who) return next();
+      const u = await auth.ensureGateUser(tenantId, who);
+      if (!u) return next();
+      const tok = await auth.createSession(tenantId, u, { ipHash: ipHash(req), userAgent: req.headers['user-agent'] });
+      auth.setCookie(req, res, tok, 30 * 86400);
+      req.headers.cookie = (req.headers.cookie ? req.headers.cookie + '; ' : '') + auth.COOKIE + '=' + encodeURIComponent(tok);
+      await audit(tenantId, { type: 'sme', id: u.id }, 'sme.login_site_gate', 'sme_user', u.id, { via: who.kind });
+    } catch (e) { console.error('[incentiva] sme gate sign-in', e.message); }
+    next();
+  });
 
   function sameOrigin(req) {
     const o = req.headers.origin || req.headers.referer;

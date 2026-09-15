@@ -175,4 +175,24 @@ async function setPassword(tenantId, userId, password) {
   return { ok: true };
 }
 
-module.exports = { COOKIE, MIN_PASSWORD, MAGIC_MINUTES, sha256, clean, publicUser, ensureAdmin, isOpen, login, createSession, sessionFrom, requireUser, setCookie, logout, createMagicLink, consumeMagicLink, createUser, setPassword };
+/**
+ * Single sign-on from the site gate (owner request 2026-09-15): the owner sign-in maps to an SME admin and an
+ * approved preview login to an SME account, created on first visit with no password of its own. A disabled
+ * SME account stays disabled.
+ */
+async function ensureGateUser(tenantId, who) {
+  const email = clean(who && who.email).toLowerCase();
+  if (!email || !/@/.test(email)) return null;
+  const role = who.kind === 'owner' ? 'admin' : 'sme';
+  let row = await db.one('SELECT * FROM nca_sme_users WHERE tenant_id = :t AND lower(email) = :e', { t: tenantId, e: email });
+  if (!row) {
+    const name = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 160) || 'Expert';
+    const r = await db.exec(`INSERT INTO nca_sme_users (tenant_id, name, email, role, language) VALUES (:t, :n, :e, :r, 'en') ON CONFLICT DO NOTHING RETURNING *`, { t: tenantId, n: name, e: email, r: role });
+    row = r[0] || await db.one('SELECT * FROM nca_sme_users WHERE tenant_id = :t AND lower(email) = :e', { t: tenantId, e: email });
+  }
+  if (!row || row.status !== 'active') return null;
+  if (role === 'admin' && row.role !== 'admin') { await db.exec(`UPDATE nca_sme_users SET role = 'admin' WHERE id = :id`, { id: row.id }); row.role = 'admin'; }
+  return row;
+}
+
+module.exports = { ensureGateUser, COOKIE, MIN_PASSWORD, MAGIC_MINUTES, sha256, clean, publicUser, ensureAdmin, isOpen, login, createSession, sessionFrom, requireUser, setCookie, logout, createMagicLink, consumeMagicLink, createUser, setPassword };

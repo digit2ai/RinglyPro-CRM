@@ -21,6 +21,7 @@ const sms = require('../services/sms');
 const handoff = require('../services/handoff');
 const followup = require('../services/followup');
 const scheduling = require('../services/scheduling');
+const searchReport = require('../services/searchReport');
 
 const CONSENT_VERSION = 'v2-2026-09-13'; // v2: product renamed BuyersLine
 const MUST_HAVES = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
@@ -113,27 +114,71 @@ module.exports = function publicRoutes(opts = {}) {
     } catch (e) { console.error('[incentiva] research poll', e); res.status(500).json({ error: 'Could not load the research.' }); }
   });
 
+  // ── The five answers become a search, and the report renders before any contact details are asked ──
+  router.post('/searches', async (req, res) => {
+    const ih = ipHash(req);
+    if (!rateLimit('search:' + ih, Number(process.env.INCENTIVA_SEARCH_PER_HOUR || 30), 3600e3)) return res.status(429).json({ error: 'Too many searches from this connection. Try again later.' });
+    const v = searchReport.validateSearch(req.body);
+    if (!v.value) return res.status(400).json({ error: 'Tell us where you are looking.', missing: v.missing || [], invalid: v.errors || [] });
+    try {
+      const allowFresh = rateLimit('research:' + ih, Number(process.env.INCENTIVA_RESEARCH_PER_HOUR || 6), 3600e3);
+      const out = await searchReport.createSearch(tenantId, v.value, { ipHash: ih, allowFresh });
+      if (out.error) return res.status(400).json({ error: 'That area could not be confirmed.', reason: out.reason });
+      res.json({ ok: true, token: out.token, area: out.area });
+    } catch (e) { console.error('[incentiva] search', e); res.status(500).json({ error: 'We could not start your report. Please try again.' }); }
+  });
+
+  router.get('/searches/:token', async (req, res) => {
+    if (!rateLimit('sview:' + ipHash(req), 1200, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const s = await searchReport.loadSearch(tenantId, req.params.token);
+      if (!s) return res.status(404).json({ error: 'Not found' });
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.json(await searchReport.buildReport(tenantId, s, { lang: req.query.lang, allowGeocode }));
+    } catch (e) { console.error('[incentiva] search view', e); res.status(500).json({ error: 'Could not load the report.' }); }
+  });
+
+  // Check promotions again: only starts a new run when the current one fell back and the model is reachable again.
+  router.post('/searches/:token/refresh', async (req, res) => {
+    const ih = ipHash(req);
+    if (!rateLimit('srefresh:' + ih, 6, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const s = await searchReport.loadSearch(tenantId, req.params.token);
+      if (!s) return res.status(404).json({ error: 'Not found' });
+      const cur = s.research_run_id ? await db.one('SELECT id, status, notice, fallback_run_id, source FROM nca_research_runs WHERE id = :id AND tenant_id = :t', { id: s.research_run_id, t: tenantId }) : null;
+      const fellBack = !cur || (cur.status === 'done' && (cur.fallback_run_id || cur.notice)) || cur.status === 'failed';
+      if (!fellBack) return res.json({ ok: true, started: false, reason: cur.status === 'running' ? 'running' : 'current' });
+      if (!research.modelStatus().available) return res.json({ ok: true, started: false, reason: 'unavailable' });
+      const safeArea = { zip: s.zip, city: s.city, county: s.county, state: 'FL', label: s.area_input, input: s.area_input };
+      const out = await research.startOrGet(tenantId, safeArea, { force: true, allowFresh: rateLimit('research:' + ih, Number(process.env.INCENTIVA_RESEARCH_PER_HOUR || 6), 3600e3) });
+      if (!out.run) return res.status(429).json({ error: 'Too many new searches from this connection. Try again later.' });
+      await db.exec('UPDATE nca_searches SET research_run_id = :r WHERE id = :id AND tenant_id = :t', { r: out.run.id, id: s.id, t: tenantId });
+      res.json({ ok: true, started: true });
+    } catch (e) { console.error('[incentiva] search refresh', e); res.status(500).json({ error: 'Could not check again right now.' }); }
+  });
+
+  // The contact form under the report creates the lead and emails the full report.
   router.post('/leads', async (req, res) => {
     const ih = ipHash(req);
     if (!rateLimit('lead:' + ih, Number(process.env.INCENTIVA_INTAKE_PER_HOUR || 10), 3600e3)) return res.status(429).json({ error: 'Too many submissions from this connection. Try again later.' });
     const b = req.body || {};
     if (b.website) return res.status(400).json({ error: 'Invalid submission' }); // honeypot
-    const v = leads.validateLead(b);
+    const v = leads.validateContact(b);
     if (!v.value) return res.status(400).json({ error: 'Please complete the required answers.', missing: v.missing || [], invalid: v.errors || [] });
     try {
-      const val = v.value;
-      if (!val.under_agreement && val.research_token) {
-        const run = await research.publicRun(tenantId, val.research_token, { max_price: val.max_price, max_monthly: val.max_monthly }, null);
-        if (run && run.status === 'done' && run.rows.length && !val.selections.length) return res.status(400).json({ error: 'Choose at least one community.', missing: ['selections'] });
-      }
+      const search = await searchReport.loadSearch(tenantId, v.value.search_token);
+      if (!search) return res.status(400).json({ error: 'Your report was not found. Start a new search.', missing: ['search_token'] });
       const market = await getMarket(tenantId);
       const agent = await defaultAgent(tenantId, market);
-      const lead = await leads.createLead(tenantId, val, { req, agent, ipHash: ih });
-      if (lead.email_consent) notify.later(notify.buyerLeadReport, tenantId, lead.id);
-      // Hand-off agent: readiness score, agent brief + alerts (only with referral consent), then Rachel's plan.
-      notify.later(handoff.afterLead, tenantId, lead.id);
-      res.json({ ok: true, token: lead.token, gated: lead.gated, referral: lead.referral, emailed: lead.email_consent });
-    } catch (e) { console.error('[incentiva] lead', e); res.status(500).json({ error: 'We could not save your answers right now. Please try again in a few minutes.' }); }
+      const lead = await leads.createLeadFromSearch(tenantId, search, v.value, { req, agent, ipHash: ih });
+      if (!lead.existing) {
+        notify.later(notify.buyerLeadReport, tenantId, lead.id);
+        // Hand-off agent: readiness score, agent brief + alerts (only with referral consent), then Rachel's plan.
+        notify.later(handoff.afterLead, tenantId, lead.id);
+      }
+      res.json({ ok: true, token: lead.token, referral: lead.referral, emailed: notify.configured() });
+    } catch (e) { console.error('[incentiva] lead', e); res.status(500).json({ error: 'We could not save your details right now. Please try again in a few minutes.' }); }
   });
 
   router.get('/leads/:token', async (req, res) => {

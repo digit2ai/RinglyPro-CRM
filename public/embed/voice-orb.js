@@ -328,6 +328,18 @@
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
+          // No model (or it failed): a host page may understand the answer itself and say what comes next,
+          // so a degraded turn still moves the visitor forward instead of repeating the same question.
+          if (data && data.source === 'heuristic' && typeof window.D2AIVoiceOrbOffline === 'function') {
+            var local = null;
+            try { local = window.D2AIVoiceOrbOffline(text); } catch (e) { local = null; }
+            if (local) {
+              return Promise.resolve(local).then(function (said) { return Object.assign({}, data, { reply: said || data.reply }); }, function () { return data; });
+            }
+          }
+          return data;
+        })
+        .then(function (data) {
           var reply = (data && data.reply) || T.trouble;
           history.push({ role: 'assistant', content: reply });
           // Page actions: the orb stays generic and only announces them; the host page decides.

@@ -24,6 +24,19 @@ const scheduling = require('../services/scheduling');
 const followup = require('../services/followup');
 const { publicView } = require('../services/report');
 const { audit, activity, clampStr, numOrNull } = require('../services/util');
+const kb = require('../services/console-kb');
+const multer = require('multer');
+
+// Uploads are held in memory and written to Postgres (BYTEA), never to disk: the Render disk is wiped on deploy.
+const uploadOne = multer({ storage: multer.memoryStorage(), limits: { fileSize: kb.MAX_FILE_BYTES, files: 1, fields: 5, parts: 6 } }).single('file');
+function receiveUpload(req, res) {
+  return new Promise((resolve, reject) => uploadOne(req, res, (err) => {
+    if (!err) return resolve(req.file);
+    if (err.code === 'LIMIT_FILE_SIZE') return reject(new HttpError(413, 'Files are limited to 10 MB'));
+    if (err instanceof multer.MulterError) return reject(new HttpError(400, 'Send one file in a field named "file"'));
+    return reject(new HttpError(400, 'The upload could not be read'));
+  }));
+}
 
 const wrap = (fn) => (req, res) => fn(req, res).catch((e) => {
   if (e instanceof HttpError || e.status) return res.status(e.status).json(Object.assign({ error: e.message }, e.extra || {}));
@@ -384,7 +397,7 @@ module.exports = function agentRoutes() {
   r.get('/leads', wrap(async (req, res) => {
     const tt = req.user.tenant_id, uid = req.user.id, oc = leadOwner(req.user);
     const status = LEAD_STATUSES.includes(req.query.status) ? req.query.status : null;
-    const rows = await db.q(`SELECT l.id, l.first_name, l.lang, l.city, l.zip, l.county, l.max_price, l.move_timeline, l.financing_type, l.has_agent, l.agent_agreement_signed,
+    const rows = await db.q(`SELECT l.id, l.first_name, l.lang, l.city, l.zip, l.county, l.max_price, l.move_timeline, l.financing_type, l.has_agent, l.visited_site, l.agent_agreement_signed,
       l.referral_consent, l.status, l.assigned_agent_id, l.created_at, u.name AS assigned_agent_name, l.readiness_score, l.readiness_tier,
       (SELECT MIN(m.starts_at) FROM nca_lead_meetings m WHERE m.lead_id = l.id AND m.tenant_id = l.tenant_id AND m.status = 'booked' AND m.starts_at > now()) AS next_meeting_at,
       (SELECT COUNT(*)::int FROM nca_lead_visited_offices v WHERE v.lead_id = l.id AND v.tenant_id = l.tenant_id) AS visited_count,
@@ -395,8 +408,8 @@ module.exports = function agentRoutes() {
     res.json({ leads: rows, counts: Object.fromEntries(counts.map((c) => [c.status, c.n])) });
   }));
 
-  async function ownLead(req) {
-    const l = await db.one(`SELECT l.* FROM nca_leads l WHERE l.id = :id AND l.tenant_id = :tt${leadOwner(req.user)}`, { id: Number(req.params.id) || 0, tt: req.user.tenant_id, uid: req.user.id });
+  async function ownLead(req, leadId) {
+    const l = await db.one(`SELECT l.* FROM nca_leads l WHERE l.id = :id AND l.tenant_id = :tt${leadOwner(req.user)}`, { id: Number(leadId !== undefined ? leadId : req.params.id) || 0, tt: req.user.tenant_id, uid: req.user.id });
     if (!l) throw new HttpError(404, 'Lead not found');
     return l;
   }
@@ -599,6 +612,133 @@ module.exports = function agentRoutes() {
     await reset(req.user.tenant_id);
     await audit(req.user.tenant_id, { type: 'agent', id: req.user.id }, 'demo.reset', 'market', null, {});
     res.json({ ok: true });
+  }));
+
+  // ── Console notes and documents on a lead ────────────────────────────────
+  // Same row ownership as GET /leads/:id (ownLead): an agent touches only leads assigned to them.
+  const actor = (req) => ({ type: 'agent', id: req.user.id });
+  function assertNoteRights(req, note) {
+    if (!note) throw new HttpError(404, 'Note not found');
+    if (req.user.role !== 'admin' && Number(note.author_user_id) !== Number(req.user.id)) throw new HttpError(403, 'Only the author or an admin can change this note');
+  }
+
+  r.get('/leads/:id/notes', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    res.json({ notes: await kb.listLeadNotes(req.user.tenant_id, l.id) });
+  }));
+  r.post('/leads/:id/notes', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    const note = await kb.addLeadNote(req.user.tenant_id, l.id, req.user.id, (req.body || {}).body);
+    await audit(req.user.tenant_id, actor(req), 'lead.note_add', 'lead', l.id, { note_id: note.id });
+    res.status(201).json({ note });
+  }));
+  r.patch('/leads/:id/notes/:noteId', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    assertNoteRights(req, await kb.getLeadNote(req.user.tenant_id, l.id, req.params.noteId));
+    const note = await kb.updateLeadNote(req.user.tenant_id, l.id, req.params.noteId, (req.body || {}).body);
+    await audit(req.user.tenant_id, actor(req), 'lead.note_edit', 'lead', l.id, { note_id: note.id });
+    res.json({ note });
+  }));
+  r.delete('/leads/:id/notes/:noteId', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    const note = await kb.getLeadNote(req.user.tenant_id, l.id, req.params.noteId);
+    assertNoteRights(req, note);
+    await kb.deleteLeadNote(req.user.tenant_id, l.id, note.id);
+    await audit(req.user.tenant_id, actor(req), 'lead.note_delete', 'lead', l.id, { note_id: note.id });
+    res.json({ ok: true });
+  }));
+
+  r.get('/leads/:id/files', wrap(async (req, res) => {
+    const l = await ownLead(req);
+    res.json({ files: await kb.listFiles(req.user.tenant_id, 'lead', l.id), max_bytes: kb.MAX_FILE_BYTES, allowed: kb.ALLOWED_EXTENSIONS });
+  }));
+  r.post('/leads/:id/files', wrap(async (req, res) => {
+    const l = await ownLead(req); // ownership first, so nobody streams 10 MB at a lead they cannot see
+    const file = await receiveUpload(req, res);
+    const meta = await kb.addFile(req.user.tenant_id, 'lead', l.id, req.user.id, file);
+    await audit(req.user.tenant_id, actor(req), 'lead.file_upload', 'lead', l.id, { file_id: meta.id, filename: meta.filename, size_bytes: meta.size_bytes, sha256: meta.sha256 });
+    res.status(201).json({ file: meta });
+  }));
+
+  // A file is reachable only through its owner: a lead file needs the lead, a knowledge base file the tenant.
+  async function ownFile(req) {
+    const f = await kb.getFileMeta(req.user.tenant_id, req.params.id);
+    if (!f) throw new HttpError(404, 'File not found');
+    if (f.owner_type === 'lead') {
+      try { await ownLead(req, f.owner_id); } catch (e) { throw new HttpError(404, 'File not found'); }
+    }
+    return f;
+  }
+  r.get('/files/:id', wrap(async (req, res) => {
+    const f = await ownFile(req);
+    const data = await kb.getFileData(req.user.tenant_id, f.id);
+    if (!data) throw new HttpError(404, 'File not found');
+    await audit(req.user.tenant_id, actor(req), 'file.download', f.owner_type === 'lead' ? 'lead' : 'kb_entry', f.owner_id, { file_id: f.id });
+    // Always a download, never rendered: attachment + nosniff + a sandboxing CSP, and the stored type is from the allow-list.
+    res.setHeader('Content-Type', f.content_type);
+    res.setHeader('Content-Disposition', kb.contentDisposition(f.filename));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Content-Length', String(data.length));
+    res.end(data);
+  }));
+  r.delete('/files/:id', wrap(async (req, res) => {
+    const f = await ownFile(req);
+    if (f.owner_type === 'lead' && req.user.role !== 'admin' && Number(f.uploaded_by) !== Number(req.user.id)) throw new HttpError(403, 'Only the uploader or an admin can delete this file');
+    await kb.deleteFile(req.user.tenant_id, f.id);
+    if (f.owner_type === 'kb') await kb.touchKb(req.user.tenant_id, f.owner_id, req.user.id);
+    await audit(req.user.tenant_id, actor(req), 'file.delete', f.owner_type === 'lead' ? 'lead' : 'kb_entry', f.owner_id, { file_id: f.id, filename: f.filename });
+    res.json({ ok: true });
+  }));
+
+  // ── Knowledge base: internal research and policy notes, shared across the tenant ─────
+  async function ownKb(req) {
+    const e = await kb.getKb(req.user.tenant_id, req.params.id);
+    if (!e) throw new HttpError(404, 'Entry not found');
+    return e;
+  }
+  r.get('/kb', wrap(async (req, res) => {
+    res.json({ entries: await kb.listKb(req.user.tenant_id, { q: req.query.q, archived: req.query.archived === '1' }) });
+  }));
+  r.post('/kb', wrap(async (req, res) => {
+    const entry = await kb.createKb(req.user.tenant_id, req.user.id, req.body || {});
+    await audit(req.user.tenant_id, actor(req), 'kb.create', 'kb_entry', entry.id, { links: entry.links.length });
+    res.status(201).json({ entry });
+  }));
+  r.get('/kb/:id', wrap(async (req, res) => res.json({ entry: await ownKb(req) })));
+  r.patch('/kb/:id', wrap(async (req, res) => {
+    const cur = await ownKb(req);
+    const b = req.body || {};
+    const entry = await kb.updateKb(req.user.tenant_id, cur.id, req.user.id, { title: b.title, body: b.body, tags: b.tags, archived: typeof b.archived === 'boolean' ? b.archived : undefined });
+    await audit(req.user.tenant_id, actor(req), 'kb.update', 'kb_entry', cur.id, { fields: Object.keys(b).filter((k) => ['title', 'body', 'tags', 'archived'].includes(k)) });
+    res.json({ entry });
+  }));
+  r.delete('/kb/:id', wrap(async (req, res) => {
+    const cur = await ownKb(req);
+    const entry = await kb.archiveKb(req.user.tenant_id, cur.id, req.user.id);
+    await audit(req.user.tenant_id, actor(req), 'kb.archive', 'kb_entry', cur.id, {});
+    res.json({ ok: true, entry });
+  }));
+  r.post('/kb/:id/links', wrap(async (req, res) => {
+    const cur = await ownKb(req);
+    const link = await kb.addKbLink(req.user.tenant_id, cur.id, req.user.id, req.body || {});
+    await audit(req.user.tenant_id, actor(req), 'kb.link_add', 'kb_entry', cur.id, { link_id: link.id });
+    res.status(201).json({ link });
+  }));
+  r.delete('/kb/:id/links/:linkId', wrap(async (req, res) => {
+    const cur = await ownKb(req);
+    if (!(await kb.deleteKbLink(req.user.tenant_id, cur.id, req.params.linkId, req.user.id))) throw new HttpError(404, 'Link not found');
+    await audit(req.user.tenant_id, actor(req), 'kb.link_delete', 'kb_entry', cur.id, { link_id: Number(req.params.linkId) });
+    res.json({ ok: true });
+  }));
+  r.post('/kb/:id/files', wrap(async (req, res) => {
+    const cur = await ownKb(req);
+    const file = await receiveUpload(req, res);
+    const meta = await kb.addFile(req.user.tenant_id, 'kb', cur.id, req.user.id, file);
+    await kb.touchKb(req.user.tenant_id, cur.id, req.user.id);
+    await audit(req.user.tenant_id, actor(req), 'kb.file_upload', 'kb_entry', cur.id, { file_id: meta.id, filename: meta.filename, size_bytes: meta.size_bytes, sha256: meta.sha256 });
+    res.status(201).json({ file: meta });
   }));
 
   return r;

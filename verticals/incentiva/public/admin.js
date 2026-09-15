@@ -434,7 +434,7 @@
 
   const TITLES = {
     today: 'Today', verify: 'Verify', reports: 'Reports', compliance: 'Compliance', buyers: 'Buyers',
-    registry: 'Registry', incentives: 'Incentives', billing: 'Billing', settings: 'Settings', more: 'More',
+    registry: 'Registry', incentives: 'Incentives', billing: 'Billing', settings: 'Settings', more: 'More', kb: 'Knowledge base',
   };
   const TAB_GROUP = { today: 'today', verify: 'verify', buyers: 'buyers', registry: 'registry' };
 
@@ -840,12 +840,14 @@
   const LEAD_TONE = { new: 'info', contacted: 'warn', working: 'warn', closed: 'ok', lost: 'neutral' };
   const TL_LABEL = { '0_3m': 'Within 3 months', '3_6m': '3 to 6 months', '6_12m': '6 to 12 months', '12m_plus': 'More than 12 months' };
   const FIN_LABEL = { preapproved: 'Pre-approved', cash: 'Cash', needs_lender: 'Needs a lender', va: 'VA loan', fha: 'FHA loan', unsure: 'Not sure yet' };
-  const AGENT_LABEL = { no: 'No agent', yes_under_agreement: 'Signed with another agent', yes_informal: 'Has an agent, nothing signed' };
+  const AGENT_LABEL = { no: 'No agent', yes: 'Works with an agent', yes_under_agreement: 'Signed with another agent', yes_informal: 'Has an agent, nothing signed' };
 
   function leadFlags(l) {
     const f = [];
     if (l.agent_agreement_signed || l.has_agent === 'yes_under_agreement') f.push(chip('Under agreement: do not contact', 'crit'));
     else if (l.has_agent === 'yes_informal') f.push(chip('Has an agent, nothing signed', 'warn'));
+    else if (l.has_agent === 'yes') f.push(chip('Works with an agent: not referred', 'warn'));
+    if (l.visited_site === true && !num(l.visited_count)) f.push(chip('Visited a new-construction site', 'warn'));
     if (num(l.visited_count) > 0) f.push(chip(`Visited ${num(l.visited_count)} sales office${num(l.visited_count) === 1 ? '' : 's'}`, 'warn'));
     if (!l.referral_consent) f.push(chip('Report only: no outreach consent', 'outline'));
     return f;
@@ -888,6 +890,7 @@
   async function viewLeadDetail(id) {
     const d = await api('GET', `/agent/leads/${encodeURIComponent(id)}`);
     const l = d.lead || {};
+    const extras = await loadLeadExtras(l.id);
     const isAdmin = state.me && state.me.role === 'admin';
     const under = l.agent_agreement_signed || l.has_agent === 'yes_under_agreement';
     const visits = Array.isArray(d.visited_offices) ? d.visited_offices : [];
@@ -899,14 +902,18 @@
       ? `<div class="errbox" role="alert"><strong>Signed with another agent. Do not contact or solicit this buyer.</strong>No email or phone was stored and every consent was recorded as not granted.</div>`
       : l.has_agent === 'yes_informal'
         ? `<div class="status status-warn" role="note"><strong>The buyer has an agent but nothing is signed.</strong> Confirm before you register them with any builder.</div>`
+        : l.has_agent === 'yes'
+        ? `<div class="status status-warn" role="note"><strong>The buyer said they already work with a real estate agent.</strong> They were not referred and the share box was not offered. Do not solicit them.</div>`
         : `<div class="status status-ok" role="note"><strong>No agent.</strong> The buyer can still be represented, subject to the sales offices below.</div>`;
     const visitsBox = visits.length
       ? `<div class="status status-warn" role="alert"><strong>Already visited ${visits.length} sales office${visits.length === 1 ? '' : 's'}.</strong> Check each builder's registration rule before you represent this buyer there.</div>
         <ul class="plain">${visits.map((v) => `<li><div><div style="font-weight:600">${esc(v.community || 'Community not given')}</div><div class="small muted">${esc(v.builder || 'Builder not given')}</div></div></li>`).join('')}</ul>`
-      : '<p class="muted">The buyer reported no sales office visits.</p>';
+      : l.visited_site === true
+        ? '<div class="status status-warn" role="alert"><strong>The buyer has already visited a new-construction site.</strong> Ask which builders before you register them anywhere.</div>'
+        : l.visited_site === false ? '<p class="muted">The buyer has not visited a new-construction site.</p>' : '<p class="muted">The buyer reported no sales office visits.</p>';
 
     const kv = [['Area', [l.area_input && l.area_input !== l.zip ? l.area_input : null, l.city, l.county ? l.county + ' County' : null, l.zip].filter(Boolean).join(' · ')], ['Max price', fmtUSD(l.max_price)], ['Max monthly', l.max_monthly != null ? fmtUSD(l.max_monthly) : 'Not given'],
-      ['Down payment', l.down_payment != null ? fmtUSD(l.down_payment) : 'Not given'], ['Move', TL_LABEL[l.move_timeline] || l.move_timeline], ['Paying', FIN_LABEL[l.financing_type] || l.financing_type], ['Language', String(l.lang || '').toUpperCase()]];
+      ['Down payment', l.down_payment != null ? fmtUSD(l.down_payment) : 'Not given'], ['Move', TL_LABEL[l.move_timeline] || l.move_timeline || 'Skipped'], ['Paying', FIN_LABEL[l.financing_type] || l.financing_type || 'Skipped'], ['Contact by', l.contact_preference === 'phone' ? 'Phone call' : l.contact_preference === 'email' ? 'Email' : DASH], ['Language', String(l.lang || '').toUpperCase()]];
     const email = l.email ? `<a href="mailto:${esc(encodeURIComponent(l.email).replace(/%40/g, '@'))}">${esc(l.email)}</a>` : DASH;
     const phone = l.phone ? `<a class="mono" href="tel:${esc(String(l.phone).replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>` : DASH;
 
@@ -972,6 +979,8 @@
       ${pageHead(l.first_name || 'Lead', `${chip(humanize(l.status), LEAD_TONE[l.status])} ${l.referral_consent ? chip('Agent contact allowed', 'ok') : chip('Report only: no outreach consent', 'outline')} &middot; since ${timeTag(l.created_at)}`, `<div class="row" data-scope>${statusSel}${assignSel}<p data-status hidden></p></div>`)}
       <div class="stack">
         <section class="card"><h4 style="margin-bottom:10px">Representation</h4>${repBox}<h4 style="margin:14px 0 8px">Sales offices already visited</h4>${visitsBox}</section>
+        <section class="card" id="leadNotesCard">${extras.notesHTML}</section>
+        <section class="card" id="leadFilesCard">${extras.filesHTML}</section>
         <section class="card"><h4 style="margin-bottom:10px">Hand-off agent: readiness</h4>${handoffHTML}</section>
         <section class="card"><h4 style="margin-bottom:10px">Scheduler: consults</h4>${meetingsHTML}</section>
         <section class="card"><h4 style="margin-bottom:10px">Rachel: follow-up plan</h4>${followHTML}</section>
@@ -1491,6 +1500,7 @@
       ['#/reports', 'Reports', 'Buyer reports awaiting review', 'reports'],
       ['#/compliance', 'Compliance', 'Holds and findings', 'compliance'],
       ['#/incentives', 'Incentives', 'Every incentive and its freshness', ''],
+      ['#/kb', 'Knowledge base', 'Internal research and policy notes, links and documents', ''],
       ['#/billing', 'Billing', 'Plan, consult events, invoice preview', ''],
       ['#/settings', 'Settings', 'Market assumptions, theme, account', ''],
     ];
@@ -1502,9 +1512,224 @@
     return html;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Notes and documents (lead detail) + Knowledge base                  */
+  /* ------------------------------------------------------------------ */
+
+  // Must match TYPES in src/services/console-kb.js. The server re-checks every file by its bytes.
+  const UPLOAD_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx'];
+  const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+  const UPLOAD_ACCEPT = UPLOAD_EXTENSIONS.map((x) => '.' + x).join(',');
+
+  function fmtBytes(n) {
+    const b = num(n);
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
+    return `${(b / 1024 / 1024).toFixed(1)} MB`;
+  }
+  const PRE = 'white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0';
+  function isAdminUser() { return !!(state.me && state.me.role === 'admin'); }
+  function isMine(userId) { return !!(state.me && Number(state.me.id) === Number(userId)); }
+
+  async function apiUpload(path, file) {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    let res;
+    try {
+      res = await fetch(API + path, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' }, body: fd });
+    } catch (_) {
+      throw apiError(`Network error uploading ${file.name}. Check your connection and try again.`, 0, null);
+    }
+    if (res.status === 401) {
+      location.href = BASE + '/admin/login';
+      throw apiError('Your session has ended. Redirecting to sign in.', 401, null);
+    }
+    let data = null;
+    try { data = await res.json(); } catch (_) { data = null; }
+    if (!res.ok) throw apiError((data && data.error) || `Upload failed with HTTP ${res.status}`, res.status, data);
+    return data;
+  }
+
+  /* Uploads every chosen file one at a time. Returns { ok, failed: [messages] }. */
+  async function uploadChosen(form, path) {
+    const input = form.elements.namedItem('file');
+    const files = input && input.files ? Array.from(input.files) : [];
+    if (!files.length) { setStatus(form, 'Choose one or more files first.', 'crit'); return null; }
+    let ok = 0;
+    const failed = [];
+    for (const f of files) {
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (!f.name.includes('.') || !UPLOAD_EXTENSIONS.includes(ext)) { failed.push(`${f.name}: that file type is not accepted`); continue; }
+      if (f.size > UPLOAD_MAX_BYTES) { failed.push(`${f.name}: files are limited to 10 MB`); continue; }
+      if (!f.size) { failed.push(`${f.name}: the file is empty`); continue; }
+      setStatus(form, `Uploading ${f.name}`, 'info');
+      try { await apiUpload(path, f); ok++; }
+      catch (e) { if (e.status === 401) return null; failed.push(`${f.name}: ${e.message}`); }
+    }
+    return { ok, failed };
+  }
+
+  function filesListHTML(files, canDelete) {
+    if (!files.length) return '<p class="muted">No documents yet.</p>';
+    return `<ul class="plain">${files.map((f) => `<li data-item>
+      <div class="grow" style="min-width:220px"><div style="font-weight:600;overflow-wrap:anywhere">${esc(f.filename)}</div>
+        <div class="small muted">${esc(fmtBytes(f.size_bytes))} &middot; ${esc(f.uploaded_by_name || 'Unknown')} &middot; ${timeTag(f.created_at, true)}</div></div>
+      <div class="row"><a class="btn btn-sm" href="${esc(API + '/agent/files/' + encodeURIComponent(f.id))}" rel="noopener">Download</a>${
+        canDelete(f) ? `<button type="button" class="btn btn-sm btn-danger" data-act="deleteFile" data-fid="${esc(f.id)}" data-fname="${esc(f.filename)}">Delete</button>` : ''}</div>
+    </li>`).join('')}</ul>`;
+  }
+  function uploadFormHTML(formName, attrs) {
+    const id = `up${++uid}`;
+    return `<form data-form="${formName}" ${attrs} data-scope novalidate>
+      <label class="field" for="${id}"><span class="flabel">Add documents <span class="hint">PDF, images, text, CSV, Word or Excel. Up to 10 MB each.</span></span>
+        <input type="file" id="${id}" name="file" multiple accept="${esc(UPLOAD_ACCEPT)}" style="min-height:44px"></label>
+      <div class="formbar"><button type="submit" class="btn btn-primary">Upload</button></div><p data-status hidden></p></form>`;
+  }
+
+  /* Lead detail: notes */
+  function leadNotesInner(leadId, notes, err) {
+    const add = `<form data-form="addLeadNote" data-lid="${esc(leadId)}" data-scope novalidate>
+      ${fieldHTML({ name: 'body', label: 'Add a note', hint: 'Internal. Never shown to the buyer.', type: 'textarea', rows: 3, full: true })}
+      <div class="formbar"><button type="submit" class="btn btn-primary">Save note</button></div><p data-status hidden></p></form>`;
+    if (err) return `<h4 style="margin-bottom:10px">Notes</h4>${errorHTML('notes', err, false)}`;
+    const list = notes.length ? `<ul class="plain" style="margin-top:12px">${notes.map((n) => {
+      const mine = isAdminUser() || isMine(n.author_user_id);
+      const edited = n.updated_at && n.created_at && Math.abs((parseDate(n.updated_at) || 0) - (parseDate(n.created_at) || 0)) > 1000;
+      return `<li data-item><div class="grow stack" style="min-width:240px">
+        <div class="small muted">${esc(n.author_name || 'Unknown')} &middot; ${timeTag(n.created_at, true)}${edited ? ` &middot; edited ${timeTag(n.updated_at, true)}` : ''}</div>
+        <p style="${PRE}">${esc(n.body)}</p>
+        ${mine ? `<details class="fold" data-key="note-${esc(n.id)}" style="margin-top:8px"><summary>Edit or delete</summary><div class="fold-body">
+          <form data-form="saveLeadNote" data-lid="${esc(leadId)}" data-nid="${esc(n.id)}" data-scope novalidate>
+            ${fieldHTML({ name: 'body', label: 'Note', type: 'textarea', rows: 4, full: true }, n.body)}
+            <div class="formbar"><button type="submit" class="btn btn-primary">Save changes</button><button type="button" class="btn btn-danger" data-act="deleteLeadNote" data-lid="${esc(leadId)}" data-nid="${esc(n.id)}">Delete note</button></div>
+            <p data-status hidden></p></form></div></details>` : ''}
+      </div></li>`;
+    }).join('')}</ul>` : '<p class="muted" style="margin-top:12px">No notes yet.</p>';
+    return `<h4 style="margin-bottom:10px">Notes <span class="count">${notes.length}</span></h4>${add}${list}`;
+  }
+  function leadFilesInner(leadId, files, err) {
+    if (err) return `<h4 style="margin-bottom:10px">Documents</h4>${errorHTML('documents', err, false)}`;
+    return `<h4 style="margin-bottom:10px">Documents <span class="count">${files.length}</span></h4>
+      ${uploadFormHTML('uploadLeadFiles', `data-lid="${esc(leadId)}"`)}
+      <div style="margin-top:12px">${filesListHTML(files, (f) => isAdminUser() || isMine(f.uploaded_by))}</div>`;
+  }
+  async function loadLeadExtras(leadId) {
+    const id = encodeURIComponent(leadId);
+    const [n, f] = await Promise.all([
+      api('GET', `/agent/leads/${id}/notes`).then((x) => ({ list: Array.isArray(x.notes) ? x.notes : [] }), (e) => { if (e.status === 401) throw e; return { list: [], err: e }; }),
+      api('GET', `/agent/leads/${id}/files`).then((x) => ({ list: Array.isArray(x.files) ? x.files : [] }), (e) => { if (e.status === 401) throw e; return { list: [], err: e }; }),
+    ]);
+    return { notesHTML: leadNotesInner(leadId, n.list, n.err), filesHTML: leadFilesInner(leadId, f.list, f.err) };
+  }
+  /* Re-render only the notes and documents cards, so nothing else on the page is lost. */
+  async function refreshLeadExtras(leadId) {
+    const x = await loadLeadExtras(leadId);
+    const nc = $('#leadNotesCard'), fc = $('#leadFilesCard');
+    if (nc) nc.innerHTML = x.notesHTML;
+    if (fc) fc.innerHTML = x.filesHTML;
+  }
+
+  /* Knowledge base */
+  function kbTagsHTML(tags) {
+    return Array.isArray(tags) && tags.length ? `<div class="chips">${tags.map((t) => chip(t, 'outline')).join('')}</div>` : '';
+  }
+
+  async function viewKb(r) {
+    if (r.parts[1]) return viewKbEntry(r.parts[1]);
+    const q = r.params.get('q') || '';
+    const archived = r.params.get('archived') === '1';
+    const d = await api('GET', '/agent/kb?' + new URLSearchParams(Object.assign({}, q ? { q } : {}, archived ? { archived: '1' } : {})).toString());
+    const entries = Array.isArray(d.entries) ? d.entries : [];
+    const search = `<form class="row" data-form="kbSearch" data-scope novalidate style="align-items:flex-end">
+      <label class="field" style="min-width:220px"><span class="flabel">Search</span><input type="text" name="q" value="${esc(q)}" placeholder="Title, notes or tag"></label>
+      <label class="field" style="min-width:160px"><span class="flabel">Show</span><select name="archived" data-change="kbArchived"><option value="">Current entries</option><option value="1"${archived ? ' selected' : ''}>Archived entries</option></select></label>
+      <button type="submit" class="btn">Search</button></form>`;
+    const create = archived ? '' : `<div class="card" style="padding:10px;margin-bottom:14px"><details class="fold" data-key="kb-new"${entries.length || q ? '' : ' open'}>
+      <summary>New entry</summary><div class="fold-body"><form data-form="createKb" data-scope novalidate>
+        ${fieldsHTML([
+          { name: 'title', label: 'Title', type: 'text', required: true, full: true, placeholder: 'e.g. Builder registration rules, Hillsborough' },
+          { name: 'body', label: 'Notes', hint: 'Research and policy notes for internal use.', type: 'textarea', rows: 6, full: true },
+          { name: 'tags', label: 'Tags', hint: 'comma separated', type: 'text', full: true },
+        ])}
+        <div class="formbar"><button type="submit" class="btn btn-primary">Create entry</button><span class="small muted">Add links and documents on the next screen.</span></div>
+        <p data-status hidden></p></form></div></details></div>`;
+    const list = entries.length ? `<ul class="morelist">${entries.map((e) => `<li><a href="#/kb/${encodeURIComponent(e.id)}">
+      <span class="grow" style="min-width:0"><span style="overflow-wrap:anywhere">${esc(e.title)}</span>
+        <span class="desc" style="overflow-wrap:anywhere">${esc(String(e.snippet || '').replace(/\s+/g, ' ').slice(0, 180)) || 'No notes yet.'}</span>
+        <span class="desc">${num(e.link_count)} link${num(e.link_count) === 1 ? '' : 's'} &middot; ${num(e.file_count)} document${num(e.file_count) === 1 ? '' : 's'} &middot; updated ${esc(fmtDateTime(e.updated_at))}${e.updated_by_name ? ' by ' + esc(e.updated_by_name) : ''}</span>
+        ${kbTagsHTML(e.tags)}</span></a></li>`).join('')}</ul>`
+      : emptyHTML(q ? `Nothing matches "${q}".` : archived ? 'No archived entries.' : 'No entries yet.', q ? 'Try another word or clear the search.' : archived ? '' : 'Create the first entry above: a title, your notes, then links and documents.');
+    return `${pageHead('Knowledge base', 'Internal research and policy notes, shared by the admin and the licensed agent. Never shown to buyers.', search)}${create}${list}`;
+  }
+
+  function kbLinksInner(e) {
+    const links = Array.isArray(e.links) ? e.links : [];
+    const list = links.length ? `<ul class="plain">${links.map((l) => {
+      const href = safeUrl(l.url);
+      return `<li data-item><div class="grow" style="min-width:220px">
+        ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" style="font-weight:600;overflow-wrap:anywhere">${esc(l.label || l.url)}</a>` : `<span style="font-weight:600">${esc(l.label || l.url)}</span>`}
+        ${l.label ? `<div class="small muted" style="overflow-wrap:anywhere">${esc(l.url)}</div>` : ''}</div>
+        <button type="button" class="btn btn-sm btn-danger" data-act="removeKbLink" data-kid="${esc(e.id)}" data-link="${esc(l.id)}">Remove</button></li>`;
+    }).join('')}</ul>` : '<p class="muted">No links yet.</p>';
+    return `<h4 style="margin-bottom:10px">Links <span class="count">${links.length}</span></h4>
+      <form data-form="addKbLink" data-kid="${esc(e.id)}" data-scope novalidate>
+        ${fieldsHTML([{ name: 'url', label: 'Link', type: 'url', required: true, placeholder: 'https://' }, { name: 'label', label: 'Label', hint: 'optional', type: 'text' }])}
+        <div class="formbar"><button type="submit" class="btn btn-primary">Add link</button></div><p data-status hidden></p></form>
+      <div style="margin-top:12px">${list}</div>`;
+  }
+  function kbFilesInner(e) {
+    const files = Array.isArray(e.files) ? e.files : [];
+    return `<h4 style="margin-bottom:10px">Documents <span class="count">${files.length}</span></h4>
+      ${uploadFormHTML('uploadKbFiles', `data-kid="${esc(e.id)}"`)}
+      <div style="margin-top:12px">${filesListHTML(files, () => true)}</div>`;
+  }
+  async function refreshKbParts(id) {
+    const d = await api('GET', `/agent/kb/${encodeURIComponent(id)}`);
+    const e = d.entry || {};
+    const lc = $('#kbLinksCard'), fc = $('#kbFilesCard');
+    if (lc) lc.innerHTML = kbLinksInner(e);
+    if (fc) fc.innerHTML = kbFilesInner(e);
+  }
+
+  async function viewKbEntry(id) {
+    const d = await api('GET', `/agent/kb/${encodeURIComponent(id)}`);
+    const e = d.entry || {};
+    const tagsText = Array.isArray(e.tags) ? e.tags.join(', ') : '';
+    const sub = `Created ${timeTag(e.created_at, true)}${e.created_by_name ? ' by ' + esc(e.created_by_name) : ''} &middot; updated ${timeTag(e.updated_at, true)}${e.updated_by_name ? ' by ' + esc(e.updated_by_name) : ''}`;
+    const right = e.archived_at
+      ? `<button type="button" class="btn btn-primary" data-act="restoreKb" data-kid="${esc(e.id)}">Restore entry</button>`
+      : `<button type="button" class="btn btn-danger" data-act="archiveKb" data-kid="${esc(e.id)}">Archive entry</button>`;
+    return `
+      <a class="crumb" href="#/kb">Back to the knowledge base</a>
+      ${pageHead(e.title || 'Entry', sub, right)}
+      ${e.archived_at ? `<div class="status status-warn" role="note" style="margin-bottom:14px"><strong>Archived ${esc(fmtDateTime(e.archived_at))}.</strong> It stays readable and editable; restore it to list it again.</div>` : ''}
+      <div class="stack">
+        <section class="card"><form data-form="saveKb" data-kid="${esc(e.id)}" data-scope novalidate>
+          ${fieldsHTML([
+            { name: 'title', label: 'Title', type: 'text', required: true, full: true },
+            { name: 'body', label: 'Notes', hint: 'Internal research and policy notes.', type: 'textarea', rows: 14, full: true },
+            { name: 'tags', label: 'Tags', hint: 'comma separated', type: 'text', full: true },
+          ], { title: e.title, body: e.body, tags: tagsText })}
+          <div class="formbar"><button type="submit" class="btn btn-primary">Save entry</button></div><p data-status hidden></p></form></section>
+        <section class="card" id="kbLinksCard">${kbLinksInner(e)}</section>
+        <section class="card" id="kbFilesCard">${kbFilesInner(e)}</section>
+      </div>`;
+  }
+
+  function injectKbNav() {
+    const rail = $('.rail');
+    if (!rail || rail.querySelector('[data-nav="kb"]')) return;
+    const a = document.createElement('a');
+    a.href = '#/kb';
+    a.dataset.nav = 'kb';
+    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10M10 8h5M10 11h5"/></svg>Knowledge base';
+    const anchor = rail.querySelector('[data-nav="incentives"]');
+    if (anchor && anchor.nextSibling) rail.insertBefore(a, anchor.nextSibling); else rail.appendChild(a);
+  }
+
   const VIEWS = {
     today: viewToday, leads: viewLeads, verify: viewVerify, reports: viewReports, compliance: viewCompliance, buyers: viewBuyers,
-    registry: viewRegistry, incentives: viewIncentives, billing: viewBilling, settings: viewSettings, more: viewMore,
+    registry: viewRegistry, incentives: viewIncentives, billing: viewBilling, settings: viewSettings, more: viewMore, kb: viewKb,
   };
 
   /* ------------------------------------------------------------------ */
@@ -1513,6 +1738,45 @@
 
   const actions = {
     retry: () => refresh(),
+
+    deleteLeadNote: async (el) => {
+      const ok = await confirmDialog({ title: 'Delete this note?', body: 'The note is removed for everyone. This cannot be undone.', confirmLabel: 'Delete note', danger: true });
+      if (!ok) return;
+      try {
+        await api('DELETE', `/agent/leads/${encodeURIComponent(el.dataset.lid)}/notes/${encodeURIComponent(el.dataset.nid)}`);
+        toast('Note deleted.');
+        await refreshLeadExtras(el.dataset.lid);
+      } catch (e) { if (e.status !== 401) toast(`Delete failed: ${e.message}`, 'crit'); }
+    },
+    deleteFile: async (el) => {
+      const ok = await confirmDialog({ title: 'Delete this document?', body: `${el.dataset.fname || 'The file'} is removed for everyone. This cannot be undone.`, confirmLabel: 'Delete document', danger: true });
+      if (!ok) return;
+      try {
+        await api('DELETE', `/agent/files/${encodeURIComponent(el.dataset.fid)}`);
+        toast('Document deleted.');
+        const r = parseHash();
+        if (r.parts[0] === 'leads' && r.parts[1]) await refreshLeadExtras(r.parts[1]);
+        else if (r.parts[0] === 'kb' && r.parts[1]) await refreshKbParts(r.parts[1]);
+        else refresh();
+      } catch (e) { if (e.status !== 401) toast(`Delete failed: ${e.message}`, 'crit'); }
+    },
+    removeKbLink: async (el) => {
+      try {
+        await api('DELETE', `/agent/kb/${encodeURIComponent(el.dataset.kid)}/links/${encodeURIComponent(el.dataset.link)}`);
+        toast('Link removed.');
+        await refreshKbParts(el.dataset.kid);
+      } catch (e) { if (e.status !== 401) toast(`Remove failed: ${e.message}`, 'crit'); }
+    },
+    archiveKb: async (el) => {
+      const ok = await confirmDialog({ title: 'Archive this entry?', body: 'It leaves the list but keeps its notes, links and documents. You can restore it from Archived entries.', confirmLabel: 'Archive', danger: true });
+      if (!ok) return;
+      try { await api('DELETE', `/agent/kb/${encodeURIComponent(el.dataset.kid)}`); toast('Entry archived.'); location.hash = '#/kb'; }
+      catch (e) { if (e.status !== 401) toast(`Archive failed: ${e.message}`, 'crit'); }
+    },
+    restoreKb: async (el) => {
+      try { await api('PATCH', `/agent/kb/${encodeURIComponent(el.dataset.kid)}`, { archived: false }); toast('Entry restored.'); refresh(); }
+      catch (e) { if (e.status !== 401) toast(`Restore failed: ${e.message}`, 'crit'); }
+    },
 
     signout: async () => {
       try { await api('POST', '/auth/logout'); } catch (_) { /* leave anyway */ }
@@ -1646,6 +1910,74 @@
   /* ------------------------------------------------------------------ */
 
   const forms = {
+    addLeadNote: async (form) => {
+      const body = form.elements.namedItem('body').value.trim();
+      if (!body) { setStatus(form, 'Write the note first.', 'crit'); return; }
+      try {
+        await api('POST', `/agent/leads/${encodeURIComponent(form.dataset.lid)}/notes`, { body });
+        toast('Note saved.');
+        await refreshLeadExtras(form.dataset.lid);
+      } catch (e) { if (e.status !== 401) setStatus(form, `Save failed: ${e.message}`, 'crit'); }
+    },
+    saveLeadNote: async (form) => {
+      const body = form.elements.namedItem('body').value.trim();
+      if (!body) { setStatus(form, 'A note cannot be empty. Use Delete note to remove it.', 'crit'); return; }
+      try {
+        await api('PATCH', `/agent/leads/${encodeURIComponent(form.dataset.lid)}/notes/${encodeURIComponent(form.dataset.nid)}`, { body });
+        toast('Note updated.');
+        await refreshLeadExtras(form.dataset.lid);
+      } catch (e) { if (e.status !== 401) setStatus(form, `Save failed: ${e.message}`, 'crit'); }
+    },
+    uploadLeadFiles: async (form) => {
+      const lid = form.dataset.lid;
+      const out = await uploadChosen(form, `/agent/leads/${encodeURIComponent(lid)}/files`);
+      if (!out) return;
+      if (out.ok) toast(`${out.ok} document${out.ok === 1 ? '' : 's'} uploaded.`);
+      await refreshLeadExtras(lid);
+      if (out.failed.length) setStatus($('#leadFilesCard form'), out.failed.join('; '), 'crit');
+    },
+    kbSearch: (form) => {
+      const q = form.elements.namedItem('q').value.trim();
+      const archived = form.elements.namedItem('archived').value === '1';
+      const p = new URLSearchParams(Object.assign({}, q ? { q } : {}, archived ? { archived: '1' } : {})).toString();
+      location.hash = '#/kb' + (p ? '?' + p : '');
+    },
+    createKb: async (form) => {
+      const title = form.elements.namedItem('title').value.trim();
+      if (!title) { setStatus(form, 'Title is required.', 'crit'); form.elements.namedItem('title').focus(); return; }
+      try {
+        const d = await api('POST', '/agent/kb', { title, body: form.elements.namedItem('body').value, tags: form.elements.namedItem('tags').value });
+        toast('Entry created.');
+        location.hash = `#/kb/${encodeURIComponent(d.entry.id)}`;
+      } catch (e) { if (e.status !== 401) setStatus(form, `Create failed: ${e.message}`, 'crit'); }
+    },
+    saveKb: async (form) => {
+      const title = form.elements.namedItem('title').value.trim();
+      if (!title) { setStatus(form, 'Title is required.', 'crit'); form.elements.namedItem('title').focus(); return; }
+      try {
+        const d = await api('PATCH', `/agent/kb/${encodeURIComponent(form.dataset.kid)}`, { title, body: form.elements.namedItem('body').value, tags: form.elements.namedItem('tags').value });
+        const h = $('#main .phead h1');
+        if (h && d.entry) h.textContent = d.entry.title;
+        setStatus(form, 'Saved.', 'ok');
+      } catch (e) { if (e.status !== 401) setStatus(form, `Save failed: ${e.message}`, 'crit'); }
+    },
+    addKbLink: async (form) => {
+      const url = form.elements.namedItem('url').value.trim();
+      if (!safeUrl(url) || !/^https?:\/\//i.test(url)) { setStatus(form, 'Enter a full link that starts with http:// or https://', 'crit'); return; }
+      try {
+        await api('POST', `/agent/kb/${encodeURIComponent(form.dataset.kid)}/links`, { url, label: form.elements.namedItem('label').value });
+        toast('Link added.');
+        await refreshKbParts(form.dataset.kid);
+      } catch (e) { if (e.status !== 401) setStatus(form, `Add failed: ${e.message}`, 'crit'); }
+    },
+    uploadKbFiles: async (form) => {
+      const kid = form.dataset.kid;
+      const out = await uploadChosen(form, `/agent/kb/${encodeURIComponent(kid)}/files`);
+      if (!out) return;
+      if (out.ok) toast(`${out.ok} document${out.ok === 1 ? '' : 's'} uploaded.`);
+      await refreshKbParts(kid);
+      if (out.failed.length) setStatus($('#kbFilesCard form'), out.failed.join('; '), 'crit');
+    },
     confirmEdits: async (form) => {
       const vid = form.dataset.vid;
       const card = form.closest('[data-vid]');
@@ -1911,6 +2243,7 @@
       try { await api('PATCH', `/agent/meetings/${encodeURIComponent(el.dataset.mid)}`, { agent_outcome: el.value }); toast('Outcome saved.'); }
       catch (e) { if (e.status !== 401) toast(`Update failed: ${e.message}`, 'crit'); }
     },
+    kbArchived: (el) => { const f = el.closest('form'); if (f) forms.kbSearch(f); },
     buyerStage: (el) => { location.hash = '#/buyers' + (el.value ? `?stage=${encodeURIComponent(el.value)}` : ''); },
     theme: (el) => {
       const v = el.value === 'dark' ? 'dark' : 'light';
@@ -1966,6 +2299,7 @@
     }
     if (!me || !me.user) { location.href = BASE + '/admin/login'; return; }
     state.me = me.user;
+    injectKbNav();
     renderWho();
     if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', '#/today');
     await render();

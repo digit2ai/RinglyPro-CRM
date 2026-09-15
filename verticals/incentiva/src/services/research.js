@@ -26,16 +26,37 @@ const db = require('../db');
 const { token, audit } = require('./util');
 const { lexiconFindings } = require('../engines/compliance');
 const { scenarios } = require('../engines/payment');
+const promoCompliance = require('../engines/promoCompliance');
 
 const MODEL = () => process.env.INCENTIVA_RESEARCH_MODEL || 'claude-sonnet-5';
 const TTL_HOURS = () => Number(process.env.INCENTIVA_RESEARCH_TTL_HOURS || 24);
 const MAX_SEARCHES = () => Number(process.env.INCENTIVA_RESEARCH_MAX_SEARCHES || 25);
 const MONTHLY_CAP = () => Number(process.env.INCENTIVA_RESEARCH_MONTHLY_CAP || 150);
+const STALE_DAYS = () => Number(process.env.INCENTIVA_RESEARCH_STALE_DAYS || 14);
 const RUN_TIMEOUT_MS = 9 * 60e3;
 const STALE_MS = 12 * 60e3;
 
-const KNOWN_BUILDERS = ['Lennar', 'D.R. Horton', 'Pulte Homes', 'M/I Homes', 'Taylor Morrison', 'David Weekley Homes', 'Homes by WestBay',
+const KNOWN_BUILDERS = ['Lennar', 'D.R. Horton', 'M/I Homes', 'Taylor Morrison', 'KB Home', 'Pulte Homes', 'David Weekley Homes', 'Homes by WestBay',
   'Casa Fresca Homes', 'ICI Homes', 'GL Homes', 'Dream Finders Homes', 'DRB Homes', 'Stanley Martin Homes', 'Centex'];
+// The report always lists these five, with today's promotion or a plain statement that none was found (owner review 2026-09-15).
+const REPORT_BUILDERS = ['Lennar', 'D.R. Horton', 'M/I Homes', 'Taylor Morrison', 'KB Home'];
+
+/* ---------- model availability ----------
+ * A 400 "credit balance is too low", a 401 or a 403 will not fix itself in seconds: the model is marked
+ * down for INCENTIVA_RESEARCH_DOWN_MIN (30) and new runs go straight to the fallback instead of failing
+ * one after another. A 429, 5xx, overload or network error is transient and is retried twice. */
+let modelDown = { until: 0, reason: null };
+function classifyError(e) {
+  const status = Number(e && (e.status || (e.response && e.response.status))) || 0;
+  const msg = String((e && e.message) || '');
+  if (/credit balance|billing|quota/i.test(msg) || status === 401 || status === 403) return 'unavailable';
+  if (status === 429 || status >= 500 || /overloaded|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|fetch failed|network/i.test(msg)) return 'transient';
+  if (e && e.name === 'AbortError') return 'timeout';
+  return 'other';
+}
+function markModelDown(reason) { modelDown = { until: Date.now() + Number(process.env.INCENTIVA_RESEARCH_DOWN_MIN || 30) * 60e3, reason }; }
+function modelAvailable() { return Date.now() >= modelDown.until; }
+function modelStatus() { return modelAvailable() ? { available: true } : { available: false, reason: modelDown.reason, until: new Date(modelDown.until).toISOString() }; }
 
 let runner = null; // SIT injects a fake model runner
 
@@ -139,6 +160,10 @@ function sanitizeResearch(parsed, seenUrls, today = nyToday()) {
     if (row.expiration_date && row.expiration_date < today) row.hidden_reason = 'expired';
     const blob = [row.builder, row.community, row.promotion, row.rate, row.closing_credit, row.other_incentives, row.restrictions].filter(Boolean).join(' ');
     if (lexiconFindings(blob).some((f) => f.severity === 'block')) row.hidden_reason = 'compliance';
+    const verdict = promoCompliance.review(row, today);
+    row.compliance_status = verdict.status;
+    row.compliance_notes = verdict.notes;
+    if (verdict.status !== 'pass' && !row.hidden_reason) row.hidden_reason = 'compliance';
     out.push(row);
   }
 
@@ -168,7 +193,19 @@ function sanitizeResearch(parsed, seenUrls, today = nyToday()) {
     if (item.note && lexiconFindings(item.note).length) item.note = null;
     inventory.push(item);
   }
-  return { rows: out, top_deals: top, inventory };
+  const schools = [];
+  for (const sc of (Array.isArray(parsed && parsed.schools) ? parsed.schools : []).slice(0, 12)) {
+    if (!sc || typeof sc !== 'object') continue;
+    const name = text(sc.name, 160);
+    if (!name) continue;
+    const url = httpUrl(sc.source_url);
+    // A grade is shown only when its source is a page the web search actually returned in this run.
+    const seenSource = !!(url && seen.has(urlKey(url)));
+    const grade = seenSource ? text(sc.rating || sc.grade, 20) : null;
+    schools.push({ name, level: ['elementary', 'middle', 'high', 'k8', 'other'].includes(sc.level) ? sc.level : 'other', rating: grade && /^([A-F][+-]?|\d{1,2}(\/10)?)$/i.test(grade) ? grade.toUpperCase() : null,
+      rating_source: seenSource ? text(sc.rating_source, 120) : null, source_url: seenSource ? url : null });
+  }
+  return { rows: out, top_deals: top, inventory, schools };
 }
 
 /* ---------- prompt ---------- */
@@ -202,6 +239,7 @@ For EACH builder, research:
 13. Requirements, including use of the builder's preferred lender or title company
 14. Starting home prices
 15. HOA and CDD fees when available
+16. The public schools assigned to ${where} and their most recent Florida Department of Education school grade (A to F), with the source URL
 
 IMPORTANT:
 - Search the live web. Do not rely only on historical knowledge.
@@ -216,9 +254,10 @@ IMPORTANT:
 Return structured JSON only (no prose, no markdown fences), exactly this shape:
 {"rows":[{"builder":"","community":"","starting_price":"","promotion":"","interest_rate":"","closing_cost_credit":"","other_incentives":"","expiration":"","restrictions":"","hoa":"","cdd":"","scope":"zip|metro","source_url":"","date_checked":"YYYY-MM-DD","verified":true}],
  "top_deals":[{"builder":"","community":"","reason":""}],
- "motivated_inventory":[{"builder":"","community":"","home":"","price":"","note":"","source_url":""}]}
+ "motivated_inventory":[{"builder":"","community":"","home":"","price":"","note":"","source_url":""}],
+ "schools":[{"name":"","level":"elementary|middle|high|k8","rating":"A","rating_source":"Florida Department of Education","source_url":""}]}
 
-One row per builder/community that is actually selling in the area. Do NOT add rows for builders you could not find selling there. top_deals ranks the TOP 5 best current deals in ${where} based on: lowest effective monthly payment, total builder incentive value, cash required at closing, price of home, HOA + CDD, overall value. Each reason must use only facts present in that row. motivated_inventory lists completed or Quick Move-In inventory homes where the builder may be especially motivated to negotiate.`;
+One row per builder/community that is actually selling in the area. Do NOT add rows for builders you could not find selling there. top_deals ranks the TOP 5 best current deals in ${where} based on: lowest effective monthly payment, total builder incentive value, cash required at closing, price of home, HOA + CDD, overall value. Each reason must use only facts present in that row. schools: only official grades with a source URL; describe schools by name and grade only, never by who attends them. motivated_inventory lists completed or Quick Move-In inventory homes where the builder may be especially motivated to negotiate.`;
 }
 
 /* ---------- model runner (streams progress) ---------- */
@@ -291,6 +330,7 @@ async function registryRows(tenantId, area) {
       verified: true, verified_basis: 'licensed_agent', hidden_reason: null
     });
   }
+  for (const r of rows) { const v = promoCompliance.review(r, nyToday()); r.compliance_status = v.status; r.compliance_notes = v.notes; if (v.status !== 'pass') r.hidden_reason = 'compliance'; }
   return rows;
 }
 
@@ -300,11 +340,12 @@ async function insertRows(tenantId, runId, rows) {
   const ids = [];
   for (const r of rows) {
     const res = await db.exec(`INSERT INTO nca_research_rows (tenant_id, run_id, origin, builder, community, starting_price, starting_price_usd, promotion, rate, closing_credit,
-      other_incentives, expiration, expiration_date, restrictions, hoa, cdd, scope, source_url, date_checked, verified, verified_basis, hidden_reason)
-      VALUES (:t, :run, :origin, :builder, :community, :sp, :spu, :promo, :rate, :cc, :other, :exp, :expd, :restr, :hoa, :cdd, :scope, :url, :dc, :ver, :vb, :hr) RETURNING id`, {
+      other_incentives, expiration, expiration_date, restrictions, hoa, cdd, scope, source_url, date_checked, verified, verified_basis, hidden_reason, compliance_status, compliance_notes)
+      VALUES (:t, :run, :origin, :builder, :community, :sp, :spu, :promo, :rate, :cc, :other, :exp, :expd, :restr, :hoa, :cdd, :scope, :url, :dc, :ver, :vb, :hr, :cs, :cn) RETURNING id`, {
       t: tenantId, run: runId, origin: r.origin, builder: r.builder, community: r.community, sp: r.starting_price, spu: r.starting_price_usd, promo: r.promotion,
       rate: r.rate, cc: r.closing_credit, other: r.other_incentives, exp: r.expiration, expd: r.expiration_date, restr: r.restrictions, hoa: r.hoa, cdd: r.cdd,
-      scope: r.scope, url: r.source_url, dc: r.date_checked, ver: !!r.verified, vb: r.verified_basis, hr: r.hidden_reason
+      scope: r.scope, url: r.source_url, dc: r.date_checked, ver: !!r.verified, vb: r.verified_basis, hr: r.hidden_reason,
+      cs: r.compliance_status || null, cn: JSON.stringify(r.compliance_notes || [])
     });
     ids.push(res[0].id);
   }
@@ -319,16 +360,31 @@ async function claimMonthly(tenantId) {
   return rows.length > 0;
 }
 
-async function finishRegistryOnly(tenantId, runId, area, notice) {
-  const rows = await registryRows(tenantId, area);
-  await insertRows(tenantId, runId, rows);
-  await db.exec(`UPDATE nca_research_runs SET status = 'done', source = 'registry', notice = :n, finished_at = now(),
-    expires_at = now() + interval '1 hour', progress = :p WHERE id = :id`, { n: notice, p: JSON.stringify({ searches: 0, builders_checked: 0, rows_found: rows.length }), id: runId });
+/**
+ * A run that cannot use the model still finishes as 'done', never 'failed', so the buyer's report always renders:
+ *  1. the most recent successful model run for the same area within INCENTIVA_RESEARCH_STALE_DAYS (14),
+ *     shown with its own check date and notice 'research_stale';
+ *  2. otherwise the rows a licensed agent verified in the registry (notice as given);
+ *  3. otherwise no rows, with the notice, so the report says plainly that promotions could not be checked.
+ * A fallback run expires in 20 minutes, so the next search tries the model again.
+ */
+async function finishFallback(tenantId, runId, area, notice, error) {
+  const prior = await db.one(`SELECT id, finished_at FROM nca_research_runs WHERE tenant_id = :t AND cache_key = :k AND status = 'done' AND source = 'model'
+    AND fallback_run_id IS NULL AND id <> :id AND finished_at > now() - (:days || ' days')::interval ORDER BY finished_at DESC LIMIT 1`, { t: tenantId, k: cacheKeyFor(area), id: runId, days: String(STALE_DAYS()) });
+  if (prior) {
+    await db.exec(`UPDATE nca_research_runs SET status = 'done', fallback_run_id = :p, notice = 'research_stale', error = :e, finished_at = now(), expires_at = now() + interval '20 minutes',
+      progress = :pg WHERE id = :id`, { p: prior.id, e: error ? String(error).slice(0, 500) : null, pg: JSON.stringify({ searches: 0, builders_checked: 0, fallback: 'previous_run' }), id: runId });
+    return 'previous_run';
+  }
+  const rows = await registryRows(tenantId, area).catch(() => []);
+  if (rows.length) await insertRows(tenantId, runId, rows);
+  await db.exec(`UPDATE nca_research_runs SET status = 'done', source = 'registry', notice = :n, error = :e, finished_at = now(),
+    expires_at = now() + interval '20 minutes', progress = :p WHERE id = :id`, { n: notice, e: error ? String(error).slice(0, 500) : null, p: JSON.stringify({ searches: 0, builders_checked: 0, rows_found: rows.length }), id: runId });
+  return rows.length ? 'registry' : 'none';
 }
+async function finishRegistryOnly(tenantId, runId, area, notice) { return finishFallback(tenantId, runId, area, notice, null); }
 
 async function execute(tenantId, run, area) {
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), RUN_TIMEOUT_MS);
   let lastWrite = 0;
   const onProgress = (p) => {
     const now = Date.now();
@@ -336,9 +392,30 @@ async function execute(tenantId, run, area) {
     lastWrite = now;
     db.exec(`UPDATE nca_research_runs SET progress = :p, searches = :s WHERE id = :id AND status = 'running'`, { p: JSON.stringify(p), s: p.searches || 0, id: run.id }).catch(() => {});
   };
+  let result = null, lastErr = null;
+  const delays = [0, 5000, 15000];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt]) await new Promise((r) => setTimeout(r, runner ? 5 : delays[attempt]));
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), RUN_TIMEOUT_MS);
+    try {
+      result = await (runner || modelRunner)(area, { onProgress, signal: ctl.signal });
+      if (!result || !result.parsed) { lastErr = new Error('The research did not return readable results'); result = null; if (attempt === 0) continue; break; }
+      break;
+    } catch (e) {
+      lastErr = e;
+      const kind = classifyError(e);
+      console.error('[incentiva] research run', run.id, 'attempt', attempt + 1, kind, String(e.message).slice(0, 160));
+      if (kind === 'unavailable') { markModelDown(/credit|billing|quota/i.test(e.message) ? 'credit' : 'auth'); break; }
+      if (kind !== 'transient') break;
+    } finally { clearTimeout(timer); }
+  }
   try {
-    const result = await (runner || modelRunner)(area, { onProgress, signal: ctl.signal });
-    if (!result || !result.parsed) throw new Error('The research did not return readable results');
+    if (!result) {
+      const how = await finishFallback(tenantId, run.id, area, modelAvailable() ? 'research_failed' : 'research_unavailable', lastErr && lastErr.message);
+      await audit(tenantId, { type: 'system' }, 'research.fallback', 'research_run', run.id, { fallback: how, error: lastErr ? String(lastErr.message).slice(0, 200) : null });
+      return;
+    }
     const clean = sanitizeResearch(result.parsed, result.seenUrls);
     const reg = await registryRows(tenantId, area);
     const regKeys = new Set(reg.map((r) => norm(r.builder) + '|' + norm(r.community)));
@@ -348,43 +425,39 @@ async function execute(tenantId, run, area) {
     const idOf = new Map(allRows.map((r, i) => [r, ids[i]]));
     const top = clean.top_deals.map((t) => ({ row_id: idOf.get(t.row), reason: t.reason })).filter((t) => t.row_id);
     const visible = allRows.filter((r) => !r.hidden_reason).length;
-    await db.exec(`UPDATE nca_research_runs SET status = 'done', raw_json = :raw, top_deals = :top, inventory = :inv, model = :model, searches = :s,
+    await db.exec(`UPDATE nca_research_runs SET status = 'done', raw_json = :raw, top_deals = :top, inventory = :inv, schools = :sch, model = :model, searches = :s,
       progress = :p, finished_at = now(), expires_at = now() + (:ttl || ' hours')::interval WHERE id = :id`, {
-      raw: JSON.stringify(result.parsed), top: JSON.stringify(top), inv: JSON.stringify(clean.inventory), model: result.model || null, s: result.searches || 0,
+      raw: JSON.stringify(result.parsed), top: JSON.stringify(top), inv: JSON.stringify(clean.inventory), sch: JSON.stringify(clean.schools || []), model: result.model || null, s: result.searches || 0,
       p: JSON.stringify({ searches: result.searches || 0, builders_checked: new Set(allRows.map((r) => norm(r.builder))).size, rows_found: visible }), ttl: String(TTL_HOURS()), id: run.id
     });
-    await audit(tenantId, { type: 'system' }, 'research.done', 'research_run', run.id, { rows: allRows.length, visible, searches: result.searches || 0 });
+    await audit(tenantId, { type: 'system' }, 'research.done', 'research_run', run.id, { rows: allRows.length, visible, searches: result.searches || 0, held_by_compliance: allRows.filter((r) => r.compliance_status === 'hold').length });
   } catch (e) {
-    console.error('[incentiva] research run', run.id, e.message);
-    const reg = await registryRows(tenantId, area).catch(() => []);
-    if (reg.length) {
-      await insertRows(tenantId, run.id, reg).catch(() => {});
-      await db.exec(`UPDATE nca_research_runs SET status = 'done', source = 'registry', notice = 'research_failed', error = :e, finished_at = now(), expires_at = now() + interval '30 minutes',
-        progress = :p WHERE id = :id`, { e: String(e.message).slice(0, 500), p: JSON.stringify({ searches: 0, builders_checked: 0, rows_found: reg.length }), id: run.id }).catch(() => {});
-    } else {
-      await db.exec(`UPDATE nca_research_runs SET status = 'failed', error = :e, finished_at = now(), expires_at = now() WHERE id = :id`, { e: String(e.message).slice(0, 500), id: run.id }).catch(() => {});
-    }
-  } finally { clearTimeout(timer); }
+    console.error('[incentiva] research store', run.id, e.message);
+    await finishFallback(tenantId, run.id, area, 'research_failed', e.message).catch(() => {
+      db.exec(`UPDATE nca_research_runs SET status = 'failed', error = :e, finished_at = now(), expires_at = now() WHERE id = :id`, { e: String(e.message).slice(0, 500), id: run.id }).catch(() => {});
+    });
+  }
 }
 
 /** Return a cached/running run for the area, or start one. Never waits for the crawl. */
-async function startOrGet(tenantId, area, { allowFresh = true } = {}) {
+async function startOrGet(tenantId, area, { allowFresh = true, force = false, trigger = 'buyer', wait = false } = {}) {
   const key = cacheKeyFor(area);
-  const existing = await db.one(`SELECT * FROM nca_research_runs WHERE tenant_id = :t AND cache_key = :k
+  const existing = force ? null : await db.one(`SELECT * FROM nca_research_runs WHERE tenant_id = :t AND cache_key = :k
     AND ((status = 'done' AND expires_at > now()) OR (status = 'running' AND ran_at > now() - (:stale || ' milliseconds')::interval))
     ORDER BY ran_at DESC LIMIT 1`, { t: tenantId, k: key, stale: String(STALE_MS) });
   if (existing) return { run: existing, fresh: false };
   if (!allowFresh) return { run: null, fresh: false, limited: true };
 
   const hasModel = !!(runner || process.env.ANTHROPIC_API_KEY) && process.env.INCENTIVA_RESEARCH !== 'off';
-  const created = await db.exec(`INSERT INTO nca_research_runs (tenant_id, token, cache_key, zip, area_label, city, county, state, status, source, expires_at)
-    VALUES (:t, :tok, :k, :zip, :label, :city, :county, :state, 'running', :src, now() + interval '1 hour') RETURNING *`, {
+  const created = await db.exec(`INSERT INTO nca_research_runs (tenant_id, token, cache_key, zip, area_label, city, county, state, status, source, expires_at, trigger) VALUES (:t, :tok, :k, :zip, :label, :city, :county, :state, 'running', :src, now() + interval '1 hour', :trig) RETURNING *`, {
     t: tenantId, tok: token(18), k: key, zip: area.zip || null, label: area.label || area.input || null, city: area.city || null, county: area.county || null, state: area.state || 'FL',
-    src: hasModel ? 'model' : 'registry'
+    src: hasModel ? 'model' : 'registry', trig: ['buyer', 'daily', 'admin'].includes(trigger) ? trigger : 'buyer'
   });
   const run = created[0];
-  if (!hasModel) { await finishRegistryOnly(tenantId, run.id, area, 'research_not_configured'); }
-  else if (!(await claimMonthly(tenantId))) { await finishRegistryOnly(tenantId, run.id, area, 'research_cap_reached'); }
+  if (!hasModel) { await finishFallback(tenantId, run.id, area, 'research_not_configured'); }
+  else if (!modelAvailable()) { await finishFallback(tenantId, run.id, area, 'research_unavailable', 'model marked unavailable: ' + modelDown.reason); }
+  else if (!(await claimMonthly(tenantId))) { await finishFallback(tenantId, run.id, area, 'research_cap_reached'); }
+  else if (wait) { await execute(tenantId, run, area); }
   else { setImmediate(() => { execute(tenantId, run, area); }); }
   return { run: await db.one('SELECT * FROM nca_research_runs WHERE id = :id', { id: run.id }), fresh: true };
 }
@@ -397,20 +470,27 @@ async function publicRun(tenantId, runToken, criteria = {}, settings = null) {
   const run = await db.one('SELECT * FROM nca_research_runs WHERE tenant_id = :t AND token = :tok', { t: tenantId, tok: runToken });
   if (!run) return null;
   if (run.status === 'running' && new Date(run.ran_at).getTime() < Date.now() - STALE_MS) {
-    await db.exec(`UPDATE nca_research_runs SET status = 'failed', error = 'timed out', finished_at = now(), expires_at = now() WHERE id = :id AND status = 'running'`, { id: run.id });
-    run.status = 'failed';
+    const area = { zip: run.zip, city: run.city, county: run.county, label: run.area_label, input: run.area_label };
+    await finishFallback(tenantId, run.id, area, 'research_failed', 'timed out').catch(() => {});
+    Object.assign(run, await db.one('SELECT * FROM nca_research_runs WHERE id = :id', { id: run.id }));
   }
+  const src = run.fallback_run_id ? (await db.one('SELECT * FROM nca_research_runs WHERE id = :id AND tenant_id = :t', { id: run.fallback_run_id, t: tenantId })) || run : run;
   const base = { token: run.token, status: run.status, source: run.source, notice: run.notice, area: { label: run.area_label, city: run.city, county: run.county, zip: run.zip },
-    progress: run.progress || {}, checked_on: run.finished_at ? new Date(run.finished_at).toISOString().slice(0, 10) : null };
-  if (run.status !== 'done') return Object.assign(base, { rows: [], top_deals: [], inventory: [], filtered_out: 0 });
+    progress: run.progress || {}, checked_on: src.finished_at ? new Date(src.finished_at).toISOString().slice(0, 10) : null, stale: src !== run };
+  if (run.status !== 'done') return Object.assign(base, { rows: [], top_deals: [], inventory: [], schools: [], filtered_out: 0, held: 0 });
 
-  const rows = await db.q(`SELECT * FROM nca_research_rows WHERE tenant_id = :t AND run_id = :r AND hidden_reason IS NULL ORDER BY (origin = 'agent_verified') DESC, verified DESC, builder, community`, { t: tenantId, r: run.id });
+  const rows = await db.q(`SELECT * FROM nca_research_rows WHERE tenant_id = :t AND run_id = :r AND hidden_reason IS NULL ORDER BY (origin = 'agent_verified') DESC, verified DESC, builder, community`, { t: tenantId, r: src.id });
+  const today = nyToday();
+  let held = 0;
   const maxPrice = Number(criteria.max_price) > 0 ? Number(criteria.max_price) : null;
   const maxMonthly = Number(criteria.max_monthly) > 0 ? Number(criteria.max_monthly) : null;
   let filtered = 0;
   const shown = [];
   for (const r of rows) {
     if (isPlaceholder(r)) continue; // also cleans runs cached before this rule existed
+    // The compliance agent reviews again at read time: a promotion that expired overnight is held now.
+    const verdict = promoCompliance.review(r, today);
+    if (verdict.status !== 'pass') { held++; continue; }
     const price = r.starting_price_usd != null ? Number(r.starting_price_usd) : null;
     let monthly = null;
     if (price && settings) {
@@ -422,16 +502,57 @@ async function publicRun(tenantId, runToken, criteria = {}, settings = null) {
     shown.push({
       id: r.id, origin: r.origin, builder: r.builder, community: r.community, starting_price: r.starting_price, promotion: r.promotion, rate: r.rate,
       closing_credit: r.closing_credit, other_incentives: r.other_incentives, expiration: r.expiration, restrictions: r.restrictions, hoa: r.hoa, cdd: r.cdd,
-      scope: r.scope, verified: !!r.verified, verified_basis: r.verified_basis, price_known: price != null, est_monthly_from: monthly != null ? Math.round(monthly) : null
+      scope: r.scope, verified: !!r.verified, verified_basis: r.verified_basis, price_known: price != null, starting_price_usd: price, est_monthly_from: monthly != null ? Math.round(monthly) : null,
+      compliance_notes: promoCompliance.noteLines(verdict.notes, criteria.lang)
     });
   }
   const shownIds = new Set(shown.map((r) => r.id));
-  const top = (run.top_deals || []).filter((t) => shownIds.has(t.row_id)).slice(0, 5);
-  const inventory = (run.inventory || []).filter((h) => !(maxPrice && h.price_usd && h.price_usd > maxPrice))
+  const top = (src.top_deals || []).filter((t) => shownIds.has(t.row_id)).slice(0, 5);
+  const schools = (src.schools || []).map((sc) => ({ name: sc.name, level: sc.level, rating: sc.rating, rating_source: sc.rating_source }));
+  const inventory = (src.inventory || []).filter((h) => !(maxPrice && h.price_usd && h.price_usd > maxPrice))
     .map((h) => ({ builder: h.builder, community: h.community, home: h.home, price: h.price, note: h.note }));
-  return Object.assign(base, { rows: shown, top_deals: top, inventory, filtered_out: filtered });
+  return Object.assign(base, { rows: shown, top_deals: top, inventory, schools, filtered_out: filtered, held });
+}
+
+/**
+ * Morning refresh (the Promotion Researcher and Incentives Reader, every day): between 6 and 10 a.m. Eastern,
+ * once per date across all instances (nca_job_runs), re-run research for the areas buyers searched in the
+ * last 30 days plus INCENTIVA_RESEARCH_DAILY_ZIPS, up to INCENTIVA_RESEARCH_DAILY_MAX (8), one at a time.
+ * Each run goes through the same sanitize and compliance steps as a buyer's run. No manual step.
+ */
+async function dailyRefresh(tenantId, { now = new Date(), force = false } = {}) {
+  if (process.env.INCENTIVA_RESEARCH_DAILY === 'off') return { skipped: 'off' };
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }).format(now)) % 24;
+  if (!force && (hour < 6 || hour >= 10)) return { skipped: 'not_morning' };
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  const claim = await db.exec(`INSERT INTO nca_job_runs (tenant_id, job, run_date) VALUES (:t, 'research_daily', :d) ON CONFLICT DO NOTHING RETURNING id`, { t: tenantId, d: date });
+  if (!claim.length) return { skipped: 'already_ran' };
+  const max = Math.max(1, Number(process.env.INCENTIVA_RESEARCH_DAILY_MAX || 8));
+  const zips = new Set(String(process.env.INCENTIVA_RESEARCH_DAILY_ZIPS || '').split(/[,\s]+/).filter((z) => /^\d{5}$/.test(z)));
+  const recent = await db.q(`SELECT zip, city, county, MAX(created_at) AS last FROM nca_searches WHERE tenant_id = :t AND created_at > now() - interval '30 days'
+    GROUP BY zip, city, county ORDER BY last DESC LIMIT 40`, { t: tenantId });
+  const areas = [];
+  for (const z of zips) areas.push({ zip: z });
+  for (const r of recent) if (r.zip && !zips.has(r.zip)) areas.push({ zip: r.zip, city: r.city, county: r.county });
+  const done = [];
+  const area = require('./area');
+  for (const a of areas.slice(0, max)) {
+    if (!modelAvailable()) { done.push({ zip: a.zip, result: 'model_unavailable' }); continue; }
+    try {
+      const resolved = a.city ? { ok: true, resolved: true, zip: a.zip, city: a.city, county: a.county, label: [a.city, a.zip].filter(Boolean).join(' ') } : await area.resolveArea(tenantId, a.zip);
+      if (!resolved.ok) { done.push({ zip: a.zip, result: 'area_unresolved' }); continue; }
+      const safe = { zip: resolved.zip, city: resolved.city, county: resolved.county, state: 'FL', label: resolved.label || resolved.zip, input: resolved.label || resolved.zip };
+      const out = await startOrGet(tenantId, safe, { force: true, trigger: 'daily', wait: true });
+      const fin = await db.one('SELECT status, notice, fallback_run_id FROM nca_research_runs WHERE id = :id', { id: out.run.id });
+      done.push({ zip: a.zip, result: fin.fallback_run_id || fin.notice ? (fin.notice || 'fallback') : 'refreshed' });
+    } catch (e) { done.push({ zip: a.zip, result: 'error' }); }
+  }
+  await db.exec(`UPDATE nca_job_runs SET finished_at = now(), detail = :d WHERE id = :id`, { d: JSON.stringify({ areas: done }), id: claim[0].id });
+  return { ran: done.length, areas: done };
 }
 
 function _setRunner(fn) { runner = fn; }
+function _resetModel() { modelDown = { until: 0, reason: null }; }
 
-module.exports = { startOrGet, publicRun, sanitizeResearch, isPlaceholder, buildPrompt, cacheKeyFor, parsePrice, parseDate, urlKey, extractJson, registryRows, KNOWN_BUILDERS, _setRunner };
+module.exports = { startOrGet, publicRun, sanitizeResearch, isPlaceholder, buildPrompt, cacheKeyFor, parsePrice, parseDate, urlKey, extractJson, registryRows, dailyRefresh,
+  classifyError, modelStatus, markModelDown, KNOWN_BUILDERS, REPORT_BUILDERS, _setRunner, _resetModel };

@@ -41,10 +41,14 @@ const FINANCING = { preapproved: 'is pre-approved', cash: 'is paying cash', va: 
 function buildBrief(l, score, { chosen, visits }) {
   const place = [l.city, l.zip].filter(Boolean).join(' ') || l.area_input || 'their area';
   const parts = [`${l.first_name} is looking in ${place}, moving ${TIMELINE[l.move_timeline] || 'on an open timeline'}, and ${FINANCING[l.financing_type] || 'has not said how they will pay'}.`];
-  parts.push(`Maximum price ${money(l.max_price)}${l.max_monthly ? `, monthly payment up to ${money(l.max_monthly)}` : ''}${l.down_payment != null ? `, down payment ${money(l.down_payment)}` : ''}.`);
+  const money_parts = [l.max_price != null ? `Maximum price ${money(l.max_price)}` : null, l.max_monthly ? `monthly payment up to ${money(l.max_monthly)}` : null, l.down_payment != null ? `down payment ${money(l.down_payment)}` : null].filter(Boolean);
+  parts.push(money_parts.length ? money_parts.join(', ').replace(/^m/, 'M') + '.' : 'Skipped the budget questions.');
   parts.push(chosen.length ? `Chose ${chosen.map((c) => (c.community || c.builder) + ' by ' + c.builder).slice(0, 5).join('; ')}.` : 'Chose no community.');
-  parts.push(visits.length ? `Already visited: ${visits.map((v) => [v.builder, v.community].filter(Boolean).join(' · ')).join('; ')}. Check registration before contacting the builder.` : 'Has not visited a sales office.');
+  if (visits.length) parts.push(`Already visited: ${visits.map((v) => [v.builder, v.community].filter(Boolean).join(' · ')).join('; ')}. Check registration before contacting the builder.`);
+  else if (l.visited_site === true) parts.push('Has already visited a new-construction site. Check registration before contacting the builder.');
+  else parts.push('Has not visited a sales office.');
   if (l.has_agent === 'yes_informal') parts.push('Talks to another agent without a signed agreement.');
+  if (l.has_agent === 'yes') parts.push('Already works with a real estate agent: not referred.');
   return parts.join(' ');
 }
 
@@ -76,7 +80,7 @@ async function afterLead(tenantId, leadId) {
   const l = await db.one('SELECT * FROM nca_leads WHERE id = :id AND tenant_id = :t', { id: leadId, t: tenantId });
   if (!l) return { ok: false };
   const f = await facts(tenantId, l);
-  const r = readiness.score({ move_timeline: l.move_timeline, financing_type: l.financing_type, selections: f.chosen.length, has_agent: l.has_agent, visits: f.visits.length, phone: !!l.phone });
+  const r = readiness.score({ move_timeline: l.move_timeline, financing_type: l.financing_type, selections: f.chosen.length, has_agent: l.has_agent, visits: f.visits.length || (l.visited_site === true ? 1 : 0), phone: !!l.phone });
   const agent = l.assigned_agent_id ? await db.one('SELECT id, name FROM nca_users WHERE id = :id AND tenant_id = :t', { id: l.assigned_agent_id, t: tenantId }) : null;
   const brief = l.agent_agreement_signed ? null : buildBrief(l, r, f);
   const opening = l.referral_consent && agent ? await suggestedOpening(l, agent.name || 'your agent', f) : null;

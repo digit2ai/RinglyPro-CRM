@@ -24,7 +24,12 @@ const sequelize = url
     })
   : null;
 
-const MIGRATION = path.join(__dirname, '..', 'migrations', '20260913_incentiva_tables.sql');
+// Every .sql file in migrations/ runs on boot, in filename order, under one advisory lock. Each must stay idempotent.
+const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
+const MIGRATION = path.join(MIGRATIONS_DIR, '20260913_incentiva_tables.sql');
+function migrationFiles() {
+  return fs.readdirSync(MIGRATIONS_DIR).filter((f) => /^\d{8}_.*\.sql$/.test(f)).sort().map((f) => path.join(MIGRATIONS_DIR, f));
+}
 const LOCK_KEY = 913_2026_77; // advisory lock so two instances booting together don't race the DDL
 
 let ready = null;
@@ -37,10 +42,9 @@ function ensureSchema() {
   }
   if (!ready) {
     ready = (async () => {
-      const sql = fs.readFileSync(MIGRATION, 'utf8');
       await sequelize.query('SELECT pg_advisory_lock(' + LOCK_KEY + ')');
       try {
-        await sequelize.query(sql);
+        for (const file of migrationFiles()) await sequelize.query(fs.readFileSync(file, 'utf8'));
       } finally {
         await sequelize.query('SELECT pg_advisory_unlock(' + LOCK_KEY + ')');
       }
@@ -67,4 +71,4 @@ async function one(sql, replacements = {}) {
   return rows[0] || null;
 }
 
-module.exports = { sequelize, ensureSchema, q, one, exec, dbError: () => lastError, configured: !!sequelize };
+module.exports = { migrationFiles, sequelize, ensureSchema, q, one, exec, dbError: () => lastError, configured: !!sequelize };

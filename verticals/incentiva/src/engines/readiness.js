@@ -21,10 +21,11 @@ function score({ move_timeline, financing_type, selections = 0, has_agent, visit
   const fin = FINANCING[financing_type] || 0; s += fin; if (REASON.financing[financing_type]) reasons.push(REASON.financing[financing_type]);
   const n = Number(selections) || 0;
   const sel = n >= 3 ? 15 : n === 2 ? 12 : n === 1 ? 8 : 0; s += sel;
-  reasons.push(n ? `Chose ${n} ${n === 1 ? 'community' : 'communities'}` : 'Chose no community');
+  if (n) reasons.push(`Chose ${n} ${n === 1 ? 'community' : 'communities'}`);
   if (phone) { s += 10; reasons.push('Left a mobile number'); }
   if (has_agent === 'no') { s += 10; reasons.push('Not working with an agent'); }
   else if (has_agent === 'yes_informal') { s += 4; reasons.push('Talks to an agent without an agreement'); }
+  else if (has_agent === 'yes') reasons.push('Already works with an agent');
   const v = Number(visits) || 0;
   if (!v) { s += 10; reasons.push('No sales offices visited yet'); }
   else { s += 3; reasons.push(`Visited ${v} sales ${v === 1 ? 'office' : 'offices'}: check registration`); }

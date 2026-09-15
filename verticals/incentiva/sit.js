@@ -317,7 +317,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const html = read(path.join(ROOT, 'public', 'index.html'));
     const flow = html.slice(html.indexOf('id="flow"'), html.indexOf('<!-- Buying power') > 0 ? html.indexOf('<!-- Buying power') : html.indexOf('id="estimate"'));
     eq((flow.match(/class="flow-step"/g) || []).length, 7, 'seven steps');
-    assert(html.indexOf('id="flow"') > html.indexOf('class="hero"') && html.indexOf('id="flow"') < html.indexOf('id="estimate"') && !/id="how"/.test(html), 'strip follows the hero, and the repeated How it works section is gone');
+    assert(html.indexOf('id="flow"') > html.indexOf('class="hero"') && html.indexOf('id="flow"') < html.indexOf('id="intake"') && !/id="estimate"|Estimate my buying power/.test(html) && !/id="how"/.test(html), 'strip follows the hero, and the repeated How it works section is gone');
     const js = read(path.join(ROOT, 'public', 'flow.js'));
     assert(/prefers-reduced-motion: reduce/.test(js), 'no reduced-motion guard');
     const css = read(path.join(ROOT, 'public', 'site.css'));
@@ -343,17 +343,62 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
     assert(/d2orb:action/.test(orb), 'orb does not announce actions');
     const html = read(path.join(ROOT, 'public', 'index.html'));
-    const script = html.slice(html.indexOf('/* Ana (voice assistant)'), html.indexOf('</script>', html.indexOf('/* Ana (voice assistant)')));
+    const script = html.slice(html.indexOf('/* Anna (voice assistant)'), html.indexOf('</script>', html.indexOf('/* Anna (voice assistant)')));
     assert(script.length > 200 && /d2orb:action/.test(script), 'voice bridge missing');
     assert(!/\.click\(|requestSubmit|consent|selections/i.test(script.replace(/\/\*[\s\S]*?\*\//, '')), 'bridge clicks, submits a form, or touches consent or selections');
     const send = script.slice(script.indexOf('function startSend'), script.indexOf("window.addEventListener('d2orb:action'"));
-    assert(send.indexOf('chat.missing().length') !== -1 && send.lastIndexOf('chat.missing().length') < send.indexOf('chat.submit()') && /atFinalStep\(\)/.test(send), 'send not guarded by the final step and required answers');
+    assert(send.indexOf('rv.ready()') !== -1 && send.lastIndexOf('rv.ready()') < send.indexOf('rv.submit()'), 'send not guarded by a complete contact form');
     assert(/setInterval/.test(send) && /cancelSend/.test(send) && /Cancel/.test(send), 'send has no cancelable countdown');
     const chat = stripComments(read(path.join(ROOT, 'public', 'intake-chat.js')));
-    const voice = chat.slice(chat.indexOf('applyVoice: function'), chat.indexOf('status: function'));
-    assert(voice.length > 100 && !/consents|selections/.test(voice), 'voice can reach consents or selections');
-    (chat.match(/state\.consents\[[^\]]+\]\s*=[^;]+/g) || []).forEach((m) => assert(/e\.target\.checked/.test(m), 'consent written by script: ' + m));
+    const voice = chat.slice(chat.indexOf('applyVoice: function'), chat.indexOf('offlineTurn: offlineTurn'));
+    assert(voice.length > 100 && !/consent/.test(voice), 'voice can reach consent');
     assert(!/\.checked\s*=\s*true/.test(chat), 'script ticks a box');
+    const rv = stripComments(read(path.join(ROOT, 'public', 'report-view.js')));
+    (rv.match(/consent_referral\s*=\s*[^;,)]+/g) || []).forEach((m) => assert(/e\.target\.checked|false/.test(m), 'share box written by script: ' + m));
+    const rvVoice = rv.slice(rv.indexOf('applyVoice: function'), rv.lastIndexOf('};'));
+    assert(rvVoice.length > 100 && !/consent_referral\s*=(?!\s*false)/.test(rvVoice), 'voice can tick the share box');
+    assert(!/\.checked\s*=\s*true/.test(rv), 'report view ticks a box');
+  });
+  await t('compliance agent: guarantees, fair-housing words, expired dates and promotions with no source are held; buydowns and lender rules pass with notes', () => {
+    const C = require('./src/engines/promoCompliance');
+    eq(C.review({ builder: 'X', promotion: 'Guaranteed approval', source_url: 'https://x.example' }).status, 'hold');
+    eq(C.review({ builder: 'X', community: 'Family-friendly Oaks', promotion: '$5,000 off', source_url: 'https://x.example' }).status, 'hold');
+    eq(C.review({ builder: 'X', promotion: '$5,000 off', source_url: 'https://x.example', expiration_date: '2020-01-01' }, '2026-09-15').status, 'hold');
+    eq(C.review({ builder: 'X', promotion: '$5,000 off' }).status, 'hold', 'no source');
+    eq(C.review({ builder: 'X', promotion: '$5,000 off', origin: 'agent_verified' }).status, 'pass');
+    eq(C.review(null).status, 'hold'); eq(C.review({ promotion: 'x' }).status, 'hold');
+    const ok = C.review({ builder: 'X', promotion: '2-1 buydown at our lowest rate', restrictions: "Must use the builder's preferred lender", source_url: 'https://x.example', expiration_date: '2099-01-01' }, '2026-09-15');
+    eq(ok.status, 'pass'); eq(ok.notes.map((n) => n.code).sort().join(','), 'builder_claim,lender_requirement,not_agent_confirmed,temporary_buydown');
+    eq(C.noteLines(ok.notes, 'es').length, 4);
+    const R = require('./src/services/research');
+    eq(R.REPORT_BUILDERS.join('|'), 'Lennar|D.R. Horton|M/I Homes|Taylor Morrison|KB Home');
+    const src = stripComments(read(path.join(SRC, 'services', 'research.js')));
+    assert(/promoCompliance\.review\(row, today\)/.test(src) && /promoCompliance\.review\(r, today\)/.test(src), 'compliance not applied when storing AND when reading');
+  });
+  await t('report math: purchasing power keeps all debts under 50% of income, fit never counts incentives, and unchecked builders say so', () => {
+    const S = require('./src/services/searchReport');
+    const settings = { reference_rate: 6.5, tax_rate_default: 0.018, insurance_monthly: 250, pmi_rate_annual: 0.005, closing_cost_pct: 3, defaulted: [] };
+    const pm = S.purchasingPower({ max_monthly: 3000, down_payment: 25000, financing_type: 'needs_lender' }, settings);
+    eq(pm.basis, 'monthly'); eq(pm.income_needed_annual, 72000);
+    assert(pm.price_supported > 300000 && pm.price_supported < 500000 && pm.price_supported % 1000 === 0, 'price ' + pm.price_supported);
+    const { scenarios } = require('./src/engines/payment');
+    const sc = scenarios({ price: pm.price_supported, financing: 'needs_lender', down_payment: 25000, settings, fees: [], incentives: [] });
+    assert(sc.base.year1 <= 3001, 'the supported price costs more than the payment: ' + sc.base.year1);
+    const cash = S.purchasingPower({ max_price: 400000, financing_type: 'cash' }, settings);
+    eq(cash.basis, 'price'); eq(cash.income_needed_annual, null);
+    eq(S.purchasingPower({}, settings).basis, 'none');
+    eq(S.fitScore({ price: 400000, monthly: 2900, scope: 'zip' }, 450000, 3000).score, 100);
+    eq(S.fitScore({ price: 600000, monthly: 4000, scope: 'metro' }, 450000, 3000).score, 10);
+    assert(!/promotion|incentive|closing|credit/.test(S.fitScore.toString()), 'fit reads an incentive');
+    eq(S.builderTable({ status: 'done', notice: 'research_unavailable', rows: [] }).map((b) => b.builder + ':' + b.status).join(','), 'Lennar:not_checked,D.R. Horton:not_checked,M/I Homes:not_checked,Taylor Morrison:not_checked,KB Home:not_checked');
+    const found = S.builderTable({ status: 'done', notice: null, rows: [{ builder: 'DR Horton', community: 'Oaks', promotion: '3% toward closing', verified: true, compliance_notes: [] }, { builder: 'Casa Fresca Homes', community: 'Palms', starting_price_usd: 350000 }] });
+    eq(found[1].status, 'found'); eq(found[0].status, 'none_found'); eq(found[5].builder, 'Casa Fresca Homes'); eq(found[5].status, 'no_promotion');
+    const disclaimer = require('./src/services/notify').REPORT_DISCLAIMER.en;
+    eq(disclaimer, 'Builder promotions change daily and are subject to change without notice. BuyersLine is not a real estate agent or broker.');
+    assert(read(path.join(ROOT, 'public', 'report-view.js')).includes(disclaimer), 'the page and the email disclaimers differ');
+    const html = read(path.join(ROOT, 'public', 'index.html'));
+    assert(/<meta name="robots" content="index, follow">/.test(html) && /<link rel="canonical" href="https:\/\/buyersline\.app\/">/.test(html) && !/content="noindex/.test(html), 'landing not indexable');
+    assert(!/blur|paywall|unlock|upgrade/i.test(read(path.join(ROOT, 'public', 'report-view.js'))), 'the report must stay free: no paywall or blurred unlock');
   });
   await t('research enforcement: verified only with a URL the search returned, expired and fair-housing rows hidden, no links in text, invented reasons dropped', () => {
     const R = require('./src/services/research');
@@ -436,7 +481,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       assert(/Freddie Mac/.test(es.assumptions.find((a) => a.key === 'rate').basis) && /predeterminado/.test(es.assumptions.find((a) => a.key === 'tax').basis), 'Spanish labels');
     } finally { rates._inject(null); }
   });
-  await t('Ana sends only after a clear yes, and reads the live form status so she never asks twice', () => {
+  await t('Anna creates the report only after a clear yes, and reads the live chat and report status so she never asks twice', () => {
     const { AGENTS, blConfirmSubmit } = require('../../src/config/voice-agents');
     const submit = AGENTS.buyersline.pageActions.find((a) => a.name === 'submit_intake_form');
     assert(submit && submit.sanitize === blConfirmSubmit, 'submit action missing');
@@ -444,84 +489,89 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     for (const yes of ['Yes', 'yes please send it', 'Sure, go ahead.', 'ok', 'Sí', 'sí, envíelo', 'Claro que sí', 'dale']) assert(blConfirmSubmit({}, { lastUserText: yes }) !== null, 'refused a yes: ' + yes);
     for (const no of ['', 'No', "no, don't send it yet", 'wait', 'what is this?', 'hold on, let me check', 'no todavía', 'espere un momento', 'cómo funciona esto']) eq(blConfirmSubmit({}, { lastUserText: no }), null);
     eq(blConfirmSubmit({ force: true }, {}), null);
-    for (const lang of ['en', 'es']) assert(/ANA CHAT STATUS/.test(AGENTS.buyersline.persona[lang]) && /submit_intake_form/.test(AGENTS.buyersline.persona[lang]), 'persona ' + lang);
+    for (const lang of ['en', 'es']) assert(/ANNA CHAT STATUS/.test(AGENTS.buyersline.persona[lang]) && /REPORT ON SCREEN/.test(AGENTS.buyersline.persona[lang]) && /submit_intake_form/.test(AGENTS.buyersline.persona[lang]), 'persona ' + lang);
+    eq(AGENTS.buyersline.name.en, 'Anna');
     const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
     assert(/accion\.sanitize\(p\.input, \{ lastUserText: askedText/.test(route) && /if \(limpio === null\)/.test(route), 'route does not gate refused actions');
     const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
     assert(/D2AIVoiceOrbLiveContext/.test(orb) && /context: ctx/.test(orb), 'orb does not send live context');
+    assert(/data\.source === 'heuristic' && typeof window\.D2AIVoiceOrbOffline === 'function'/.test(orb), 'orb has no offline hook');
     const html = read(path.join(ROOT, 'public', 'index.html'));
-    assert(/window\.D2AIVoiceOrbLiveContext = function/.test(html) && /Required still missing/.test(read(path.join(ROOT, 'public', 'intake-chat.js'))), 'landing does not report chat status');
+    assert(/window\.D2AIVoiceOrbLiveContext = function/.test(html) && /window\.D2AIVoiceOrbOffline = function/.test(html) && /ANNA CHAT STATUS/.test(read(path.join(ROOT, 'public', 'intake-chat.js'))), 'landing does not report chat status or handle offline turns');
   });
-  await t('Ana guides the whole process by voice: skips optional questions, chooses only named communities on screen (never an ambiguous one), and never contact boxes', async () => {
-    const { AGENTS, blSanitizeSelect, blSanitizeEstimate, blSanitizeSection, blSanitizeIntake } = require('../../src/config/voice-agents');
+  await t('Anna by voice: a ZIP, a city, amounts, skips and plain phrases move the five questions forward with no model, then the report and contact form; the share box is never ticked', async () => {
+    const { AGENTS, blSanitizeSection, blSanitizeIntake } = require('../../src/config/voice-agents');
     const acts = AGENTS.buyersline.pageActions;
-    eq(acts.map((a) => a.name).join(','), 'fill_intake_form,select_communities,estimate_buying_power,show_section,submit_intake_form');
+    eq(acts.map((a) => a.name).join(','), 'fill_intake_form,show_section,submit_intake_form');
     for (const a of acts) {
       const names = []; (function walk(o) { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'properties') names.push(...Object.keys(v)); walk(v); } })(a.input_schema);
       assert(!names.some((n) => /consent|terms|agree|sms|share|referral|submit|send/i.test(n)), a.name + ' schema exposes a contact choice: ' + names.join(','));
       assert(typeof a.sanitize === 'function', a.name + ' has no sanitizer');
     }
-    eq(blSanitizeSelect({}), null); eq(blSanitizeSelect({ communities: ['ab', 5] }), null);
-    eq(JSON.stringify(blSanitizeSelect({ communities: ['Ventana <b>'], finished: 'yes', consents: true })), '{"communities":["Ventana b"]}');
-    eq(blSanitizeEstimate({ annual_income: 'lots' }), null); eq(JSON.stringify(blSanitizeEstimate({ annual_income: '$140,000', monthly_debts: 0, monthly_payment: 5 })), '{"annual_income":140000,"monthly_debts":0}');
-    eq(blSanitizeSection({ section: 'admin' }), null); eq(blSanitizeSection({ section: 'buying_power' }).section, 'buying_power');
-    eq(JSON.stringify(blSanitizeIntake({ skip: ['phone', 'email', 'consents'], visited_none: 'true' })), '{"skip":["phone"]}');
-    for (const lang of ['en', 'es']) {
-      const p = AGENTS.buyersline.persona[lang];
-      assert(/select_communities/.test(p) && /estimate_buying_power/.test(p) && /show_section/.test(p) && /BUYING POWER CALCULATOR/.test(p), 'persona does not use the new actions: ' + lang);
-      assert(/(never repeat a question|nunca repitas una pregunta)/i.test(p), 'persona allows repeated questions: ' + lang);
-    }
-    const chatSrc = stripComments(read(path.join(ROOT, 'public', 'intake-chat.js')));
-    const pick = chatSrc.slice(chatSrc.indexOf('voiceSelect: function'), chatSrc.indexOf('missing: function'));
-    assert(pick.length > 200 && !/consents/.test(pick), 'voice choosing can reach contact choices');
-    assert(/state\.selections\.push\(hits\[0\]\.id\)/.test(pick) && /r\.rows\.filter/.test(pick) && /hits\.length === 1/.test(pick), 'voice may choose a row that is not on screen or is ambiguous');
+    eq(blSanitizeSection({ section: 'admin' }), null); eq(blSanitizeSection({ section: 'contact' }).section, 'contact');
+    eq(JSON.stringify(blSanitizeIntake({ skip: ['budget', 'email', 'consents'], visited_site: 'maybe', working_with_agent: 'yes_under_agreement', consent_referral: true })), '{"skip":["budget"]}');
+    for (const lang of ['en', 'es']) assert(/(never repeat a question|nunca repitas una pregunta)/i.test(AGENTS.buyersline.persona[lang]) && /(IS the answer|ES la respuesta)/.test(AGENTS.buyersline.persona[lang]), 'persona allows a repeated location question: ' + lang);
 
     const { JSDOM } = require('jsdom');
-    const dom = new JSDOM('<!doctype html><html lang="en"><body><div id="blChat"></div></body></html>', { runScripts: 'outside-only', url: 'http://localhost/buyersline/' });
+    const dom = new JSDOM('<!doctype html><html lang="en"><body><div id="blChat"></div><div id="blReport" hidden></div></body></html>', { runScripts: 'outside-only', url: 'http://localhost/buyersline/' });
     const w = dom.window;
-    const rows = [
-      { id: 11, builder: 'Lennar', community: 'Gladesong', starting_price: '$340,990', verified: false },
-      { id: 12, builder: 'Lennar', community: 'Southshore Bay', verified: false },
-      { id: 13, builder: 'M/I Homes', community: 'Ventana', promotion: 'Rate promotion', verified: true }
-    ];
+    let searchBody = null;
+    const report = { token: 'sit_voice_search_token_000000', lang: 'en', created_at: '2026-09-15', area: { label: 'Zephyrhills, FL 33541', zip: '33541' },
+      wish: { area: 'Zephyrhills, FL 33541', max_price: 450000, max_monthly: null, down_payment: null, move_timeline: '3_6m', financing_type: 'needs_lender' },
+      purchasing_power: { basis: 'price', dti_cap_pct: 50, monthly_for_price: 3100, income_needed_annual: 75000, rate: 6.3 },
+      research: { status: 'done', notice: null }, builders: [{ builder: 'Lennar', status: 'found', promotion: 'Closing cost help', badge: 'source', notes: [] }, { builder: 'KB Home', status: 'none_found' }],
+      communities: [], best_deal: null, market: { status: 'ok', count: 0 }, homes: [], schools: [], lead: null };
     w.fetch = async (url, opts) => {
       const m = (opts && opts.method) || 'GET';
       let body = {};
-      if (/\/public\/config/.test(url)) body = { lead_consent: { version: 'v', email: 'E', sms: 'S', agent_referral: 'A' } };
-      else if (/\/public\/area/.test(url)) body = { ok: true, zip: '33578', city: 'Riverview', county: 'Hillsborough', input: '33578', label: '33578' };
-      else if (/\/public\/research$/.test(url) && m === 'POST') body = { token: 'tok_sit_voice', status: 'done' };
-      else if (/\/public\/research\/tok_sit_voice/.test(url)) body = { status: 'done', rows, top_deals: [], checked_on: '2026-09-14' };
+      if (/\/public\/config/.test(url)) body = { lead_consent: { version: 'v', email: 'E' } };
+      else if (/\/public\/area/.test(url)) { const inp = JSON.parse(opts.body).input; body = /zephyrhills/i.test(inp) ? { ok: true, zip: '33541', city: 'Zephyrhills', county: 'Pasco', input: inp, label: 'Zephyrhills, FL 33541' } : /^33543$/.test(inp) ? { ok: true, zip: '33543', city: 'Wesley Chapel', county: 'Pasco', input: inp, label: 'Wesley Chapel, FL 33543' } : { ok: false, reason: 'not_found' }; }
+      else if (/\/public\/searches$/.test(url) && m === 'POST') { searchBody = JSON.parse(opts.body); body = { ok: true, token: report.token }; }
+      else if (/\/public\/searches\//.test(url)) body = report;
       return { status: 200, ok: true, text: async () => JSON.stringify(body) };
     };
+    w.eval(read(path.join(ROOT, 'public', 'report-view.js')));
     w.eval(read(path.join(ROOT, 'public', 'intake-chat.js')));
     const chat = w.BLChat;
     chat.init({ el: w.document.getElementById('blChat'), lang: 'en' });
-    chat.applyVoice({ zip_codes: ['33578'], budget_max: 400000, timeline: '0_3m', financing: 'fha', skip: ['max_monthly', 'down_payment'] });
-    const until = async (re) => { for (let k = 0; k < 60; k++) { if (re.test(chat.status())) return true; await new Promise((r) => setTimeout(r, 50)); } throw new Error('status never matched ' + re + ': ' + chat.status()); };
-    await until(/3 communities shown, 0 chosen/);
-    assert(/Optional not answered: [^.]*sales offices/.test(chat.status()) && !/maximum monthly payment/.test(chat.status().split('Optional not answered:')[1].split('.')[0]), 'skipped optional still listed as open');
-    let res = chat.voiceSelect({ communities: ['Lennar'] });
-    eq(res.selected.length, 0, 'an ambiguous builder name chose a community'); eq(res.ambiguous.length, 1);
-    res = chat.voiceSelect({ communities: ['ventana', 'Nowhere Estates'] });
-    eq(JSON.stringify(res.selected), '["Ventana by M/I Homes"]'); eq(JSON.stringify(res.unmatched), '["Nowhere Estates"]');
-    assert(/Ventana by M\/I Homes[^;]*CHOSEN/.test(chat.status()), 'status does not show the choice');
-    chat.voiceSelect({ finished: true });
-    await until(/Stage 4 of 6/);
-    chat.applyVoice({ first_name: 'Rosa', email: 'rosa@example.test', working_with_agent: 'no', skip: ['phone'], visited_none: true });
-    await until(/Stage 6 of 6/);
-    const st = chat.status();
-    assert(/Required still missing: none/.test(st), st);
-    assert(/email not ticked; text messages not ticked; share with the agent not ticked/.test(st), 'a contact box was ticked by voice');
-    assert(/Fallback reply \(offline mode only, ignore\): \[[^\]]{5,}\]/.test(st), 'no offline line');
-    eq(w.document.querySelectorAll('#blChat input[type=checkbox]:checked').length, 0, 'a checkbox is checked on screen');
-    dom.window.close();
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    let reply = await chat.offlineTurn("I'm looking in Zephyrhills");
+    assert(/Zephyrhills/.test(reply) && /maximum price, or the most you want to pay each month/.test(reply), 'a city did not advance the location question: ' + reply);
+    assert(!/Where are you looking/.test(reply), 'Anna repeated the location question');
+    reply = await chat.offlineTurn('about 450k'); assert(/\$450,000/.test(reply) && /down payment/.test(reply), reply);
+    reply = await chat.offlineTurn('skip that'); assert(/skipped/.test(reply) && /When do you want to buy/.test(reply), reply);
+    reply = await chat.offlineTurn('in about four months'); assert(/pre-approved, paying cash, or neither/.test(reply), reply);
+    reply = await chat.offlineTurn('neither yet');
+    for (let k = 0; k < 40 && !searchBody; k++) await wait(25);
+    assert(searchBody, 'the fifth answer did not create the report');
+    eq(searchBody.area, '33541'); eq(searchBody.max_price, 450000); eq(searchBody.down_payment, null); eq(searchBody.move_timeline, '3_6m'); eq(searchBody.financing_type, 'needs_lender');
+    for (let k = 0; k < 40 && !w.document.getElementById('rvContact'); k++) await wait(25);
+    assert(w.document.getElementById('rvBuilders') && /KB Home/.test(w.document.getElementById('rvBuilders').textContent), 'report builders table missing');
+    reply = chat.offlineTurn ? await chat.offlineTurn('my name is Rosa') : '';
+    assert(/email/i.test(reply), 'contact prompt after name: ' + reply);
+    await chat.offlineTurn('rosa at example dot com');
+    await chat.offlineTurn('813 555 0142');
+    reply = await chat.offlineTurn('no');
+    assert(/visited a new construction site/.test(reply), reply);
+    reply = await chat.offlineTurn('yes I have');
+    assert(/Tick the box/.test(reply), reply);
+    const st = w.BLReportView.status();
+    assert(/first name = Rosa/.test(st) && /email = rosa@example\.com/.test(st) && /share-with-agent box not ticked/.test(st), st);
+    eq(w.document.querySelectorAll('#blReport input[type=checkbox]:checked').length, 0, 'a checkbox is checked on screen');
+    const fresh = new JSDOM('<!doctype html><html lang="en"><body><div id="blChat"></div></body></html>', { runScripts: 'outside-only', url: 'http://localhost/buyersline/' });
+    fresh.window.fetch = w.fetch;
+    fresh.window.eval(read(path.join(ROOT, 'public', 'intake-chat.js')));
+    fresh.window.BLChat.init({ el: fresh.window.document.getElementById('blChat'), lang: 'en' });
+    reply = await fresh.window.BLChat.offlineTurn('three three five four three');
+    assert(/Wesley Chapel/.test(reply), 'a spoken ZIP did not advance: ' + reply);
+    fresh.window.close(); dom.window.close();
   });
-  await t('offline mode: when the model is unreachable Ana says the question on screen, not internal status text', async () => {
+  await t('offline mode: when the model is unreachable Anna says the question on screen, not internal status text', async () => {
     const express = require('express');
     const app = express(); app.use(express.json()); app.use('/api/voice-agent', require('../../src/routes/voice-agent'));
     const srv = app.listen(0); const port = srv.address().port;
     try {
-      const ctx = 'ANA CHAT STATUS (live; read this first). Fallback reply (offline mode only, ignore): [What is the most you want to pay for the home?]. Stage 2 of 6. Required still missing: maximum home price, move timing.';
+      const ctx = 'ANNA CHAT STATUS (live; read this first). Fallback reply (offline mode only, ignore): [What is the most you want to pay for the home?]. Stage 2 of 6. Required still missing: maximum home price, move timing.';
       const r = await fetch(`http://127.0.0.1:${port}/api/voice-agent/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent: 'buyersline', lang: 'en', context: ctx, messages: [{ role: 'user', content: 'what now' }] }) });
       const d = await r.json();
       eq(d.source, 'heuristic'); eq(d.reply, 'What is the most you want to pay for the home?');
@@ -530,7 +580,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');
     assert(AGENTS.buyersline, 'persona missing');
-    assert(/NEVER: state or estimate a price, rate, payment or promotion that is not written exactly/.test(AGENTS.buyersline.persona.en) && /NUNCA: digas ni estimes un precio/.test(AGENTS.buyersline.persona.es), 'persona rule missing');
+    assert(/NEVER: state a price, rate, payment, score or promotion that is not written exactly/.test(AGENTS.buyersline.persona.en) && /NUNCA: digas un precio, tasa, pago, puntaje o promoción/.test(AGENTS.buyersline.persona.es), 'persona rule missing');
     assert(/data-agent="buyersline"/.test(read(path.join(ROOT, 'public', 'index.html'))), 'orb not wired to the buyersline persona');
   });
 
@@ -539,7 +589,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   if (!db.configured) {
     skipped.push('ALL DATABASE SECTIONS (no DATABASE_URL): intake, reports, verification, isolation, billing were NOT exercised');
   } else {
-    const TABLES = ['nca_rules', 'nca_kb', 'nca_sme_section_status', 'nca_sme_sessions_log', 'nca_sme_attachments', 'nca_sme_answer_versions', 'nca_sme_answers', 'nca_sme_questions', 'nca_sme_sections', 'nca_sme_magic_links', 'nca_sme_auth_sessions', 'nca_sme_users', 'nca_followups', 'nca_lead_meetings', 'nca_agent_hours', 'nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
+    const TABLES = ['nca_files', 'nca_kb_links', 'nca_kb_entries', 'nca_lead_notes', 'nca_site_users', 'nca_job_runs', 'nca_searches', 'nca_rules', 'nca_kb', 'nca_sme_section_status', 'nca_sme_sessions_log', 'nca_sme_attachments', 'nca_sme_answer_versions', 'nca_sme_answers', 'nca_sme_questions', 'nca_sme_sections', 'nca_sme_magic_links', 'nca_sme_auth_sessions', 'nca_sme_users', 'nca_followups', 'nca_lead_meetings', 'nca_agent_hours', 'nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
       'nca_consents', 'nca_buyer_criteria', 'nca_buyers', 'nca_incentive_versions', 'nca_incentives', 'nca_snapshots', 'nca_sources', 'nca_homes', 'nca_community_fees',
       'nca_communities', 'nca_builders', 'nca_users', 'nca_brokerages', 'nca_markets'];
     const cleanup = async () => { for (const tb of TABLES) await db.exec(`DELETE FROM ${tb} WHERE tenant_id IN (:a, :b)`, { a: SIT_TENANT, b: OTHER_TENANT }); };
@@ -889,7 +939,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const widget = read(path.join(ROOT, 'public', 'search-widget.js'));
         assert(/data-bl-search data-mode="full"/.test(html) && html.includes('/buyersline/search-widget.js'), 'search page uses the widget');
         assert(/data-bl-search data-mode="compact"/.test(landing) && landing.includes('{{BASE}}/search-widget.js'), 'landing uses the widget');
-        assert(landing.indexOf('id="homes"') > landing.indexOf('id="flow"') && landing.indexOf('id="homes"') < landing.indexOf('id="estimate"'), 'home search sits after the workflow strip');
+        assert(landing.indexOf('id="homes"') > landing.indexOf('id="flow"') && landing.indexOf('id="homes"') < landing.indexOf('id="intake"'), 'home search sits after the workflow strip');
         assert(!/api\/v1\/public\/listings/.test(landing + html), 'a page calls the API directly');
         assert(widget.includes("BASE + '/api/v1/public/listings?'"), 'widget endpoint');
         assert(!/X-Api-Key|RENTCAST/.test(widget + html + landing), 'key reference in the browser code');
@@ -944,7 +994,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         let runs = 0;
         research._setRunner(async () => { runs++; return { model: 'sit', searches: 2, seenUrls: new Set(['builder.example/a']), parsed: { rows: [
           { builder: 'SIT Homes', community: 'SIT Grove', starting_price: 'From $400,000', promotion: '$8,000 toward closing costs', expiration: '2099-12-31', source_url: 'https://builder.example/a', date_checked: '2026-09-14', verified: true },
-          { builder: 'SIT Luxury', community: 'SIT Heights', starting_price: 'From $900,000', promotion: 'Flex cash', expiration: '2099-12-31', verified: false },
+          { builder: 'SIT Luxury', community: 'SIT Heights', starting_price: 'From $900,000', promotion: 'Flex cash', expiration: '2099-12-31', source_url: 'https://luxury.example/offer', verified: false },
+          { builder: 'SIT Nosource', community: 'SIT Rumor', starting_price: 'From $350,000', promotion: '$20,000 off every home', expiration: '2099-12-31', verified: false },
           { builder: 'SIT Expired', community: 'SIT Past', starting_price: 'From $300,000', promotion: 'Old sale', expiration: '2020-01-01', verified: false }
         ], top_deals: [{ builder: 'SIT Homes', community: 'SIT Grove', reason: 'Closing help of $8,000' }], motivated_inventory: [] } }; });
         const sitMailStart = mail.length;
@@ -961,7 +1012,9 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         await t('research runs in the background, then the buyer view is filtered by price with no source URL or check date', async () => {
           eq(started.status, 200); eq(view.status, 'done');
           const names = view.rows.map((r) => r.builder);
-          assert(names.includes('SIT Homes') && !names.includes('SIT Luxury') && !names.includes('SIT Expired'), JSON.stringify(names));
+          assert(names.includes('SIT Homes') && !names.includes('SIT Luxury') && !names.includes('SIT Expired') && !names.includes('SIT Nosource'), JSON.stringify(names));
+          const held = await db.one(`SELECT compliance_status, hidden_reason FROM nca_research_rows WHERE tenant_id = :t AND builder = 'SIT Nosource'`, { t: SIT_TENANT });
+          eq(held.compliance_status, 'hold'); eq(held.hidden_reason, 'compliance', 'a promotion with no source reached the buyer');
           assert(view.filtered_out >= 1, 'price filter not applied');
           assert(!/source_url|date_checked|builder\.example/.test(JSON.stringify(view)), 'source leaked to the buyer');
           eq(view.rows.find((r) => r.builder === 'SIT Homes').verified, true);
@@ -972,26 +1025,94 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq(again.data.token, started.data.token); eq(again.data.fresh, false); eq(runs, 1);
         });
         const rowId = view.rows.find((r) => r.builder === 'SIT Homes').id;
-        const base = { lang: 'en', research_token: started.data.token, answers: { area, max_price: 450000, down_payment: 20000, move_timeline: '3_6m', financing_type: 'needs_lender', first_name: 'Sitlead', email: 'sit-lead@example.test', phone: '8135550142', has_agent: 'no', visited_offices: [{ builder: 'SIT Homes', community: 'SIT Grove' }] }, consents: { email: true, sms: true, agent_referral: true } };
-        await t('the honeypot and a missing community choice are refused', async () => {
-          eq((await call('POST', '/api/v1/public/leads', Object.assign({}, base, { website: 'http://spam', selections: [rowId] }))).status, 400);
-          const r = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [] }));
-          eq(r.status, 400); eq(r.data.missing[0], 'selections');
+        const leadsSvc = require('./src/services/leads');
+        const handoffSvc = require('./src/services/handoff');
+        const notifySvc = require('./src/services/notify');
+        const { getMarket: sitMarket } = require('./src/services/market');
+        const { loadAgent: sitLoadAgent } = require('./src/services/report');
+        const waitFor = async (fn, n = 60) => { for (let i = 0; i < n; i++) { const v = await fn(); if (v) return v; await new Promise((r) => setTimeout(r, 100)); } return null; };
+
+        const search = await call('POST', '/api/v1/public/searches', { lang: 'en', area: '33578', max_price: 450000, down_payment: 20000, move_timeline: '3_6m', financing_type: 'needs_lender' });
+        let rep = null;
+        for (let i = 0; i < 40; i++) { rep = (await call('GET', '/api/v1/public/searches/' + search.data.token)).data; if (rep.research && rep.research.status !== 'running') break; await new Promise((r) => setTimeout(r, 150)); }
+        await t('the five answers create a search at once; the report names the five builders, today\'s promotion, purchasing power and the best deal, with no source URL', async () => {
+          eq(search.status, 200); eq(runs, 1, 'the report crawled again instead of reusing the cached area');
+          eq(rep.builders.slice(0, 5).map((b) => b.builder).join('|'), 'Lennar|D.R. Horton|M/I Homes|Taylor Morrison|KB Home');
+          assert(rep.builders.slice(0, 5).every((b) => b.status === 'none_found'), 'a named builder with no rows did not say none found');
+          const sit = rep.builders.find((b) => b.builder === 'SIT Homes');
+          assert(sit && sit.status === 'found' && /\$8,000 toward closing costs/.test(sit.promotion), JSON.stringify(sit));
+          eq(rep.best_deal.row.builder, 'SIT Homes'); assert(rep.best_deal.row.fit.score > 0, 'fit score');
+          const pp = rep.purchasing_power;
+          eq(pp.basis, 'price'); eq(pp.dti_cap_pct, 50); eq(pp.income_needed_annual, Math.ceil((pp.monthly_for_price / 0.5) * 12 / 1000) * 1000);
+          assert(!rep.communities.some((c) => c.builder === 'SIT Luxury' || c.builder === 'SIT Nosource'), 'filtered or held rows in the report');
+          assert(!/source_url|date_checked|builder\.example|luxury\.example/.test(JSON.stringify(rep)), 'a source reached the buyer');
+          eq(rep.research.stale, false);
+          eq((await call('POST', '/api/v1/public/searches', {})).data.missing[0], 'area');
+          const only = await call('POST', '/api/v1/public/searches', { area: '33578' });
+          eq(only.status, 200, 'every answer but the area must be skippable');
+          eq((await call('GET', '/api/v1/public/searches/' + only.data.token)).data.purchasing_power.basis, 'none');
+          eq((await call('POST', '/api/v1/public/searches', { area: '33578', max_price: 5 })).status, 400);
+          eq((await call('GET', '/api/v1/public/searches/not-a-real-search-token-000')).status, 404);
         });
+        const contact = { search_token: search.data.token, lang: 'en', first_name: 'Sitform', email: 'sit-form@example.test', phone: '8135550177', has_agent: 'no', visited_site: 'yes', consent_referral: true, contact_preference: 'phone' };
+        await t('the contact form: honeypot refused, every field and both yes/no answers required, and a buyer who works with an agent is never referred even when the box is sent', async () => {
+          eq((await call('POST', '/api/v1/public/leads', Object.assign({}, contact, { website: 'http://spam' }))).status, 400);
+          const miss = await call('POST', '/api/v1/public/leads', Object.assign({}, contact, { has_agent: undefined, visited_site: 'maybe' }));
+          eq(miss.status, 400); assert(miss.data.missing.includes('has_agent') && miss.data.missing.includes('visited_site'), JSON.stringify(miss.data));
+          eq((await call('POST', '/api/v1/public/leads', Object.assign({}, contact, { phone: '123' }))).data.invalid[0], 'phone');
+          const other = await call('POST', '/api/v1/public/searches', { area: '33578', max_monthly: 2800 });
+          const wa = await call('POST', '/api/v1/public/leads', Object.assign({}, contact, { search_token: other.data.token, email: 'sit-withagent@example.test', has_agent: 'yes', consent_referral: true }));
+          eq(wa.status, 200); eq(wa.data.referral, false);
+          const row = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: wa.data.token });
+          eq(row.has_agent, 'yes'); eq(row.referral_consent, false); eq(row.assigned_agent_id, null);
+          eq((await db.one(`SELECT granted FROM nca_lead_consents WHERE lead_id = :l AND channel = 'agent_referral'`, { l: row.id })).granted, false);
+        });
+        const formRes = await call('POST', '/api/v1/public/leads', Object.assign({}, contact, { consent_text: 'I agree to anything' }));
+        const formLead = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: formRes.data.token });
+        await t('a report lead stores the server wording, is referred and assigned, gets the full report by email with the disclaimer, and a second submit returns the same lead', async () => {
+          eq(formRes.status, 200); eq(formLead.referral_consent, true); assert(formLead.assigned_agent_id, 'not assigned');
+          eq(formLead.visited_site, true); eq(formLead.contact_preference, 'phone'); eq(formLead.has_agent, 'no');
+          const cons = await db.q('SELECT channel, granted, consent_text, consent_version, ip FROM nca_lead_consents WHERE lead_id = :l ORDER BY id', { l: formLead.id });
+          eq(cons.map((c) => c.channel + ':' + c.granted).join(','), 'email:true,sms:false,agent_referral:true');
+          assert(cons.every((c) => !/anything/.test(c.consent_text) && c.ip && c.consent_version === 'lead-v2-2026-09-15'), 'client text stored, IP or version missing');
+          eq((await db.one('SELECT lead_id FROM nca_searches WHERE token = :tok', { tok: search.data.token })).lead_id, formLead.id);
+          const m = await waitFor(() => mail.find((x) => x.to === 'sit-form@example.test'));
+          assert(m && /report=/.test(m.html) && /Builder promotions change daily and are subject to change without notice\. BuyersLine is not a real estate agent or broker\./.test(m.html) && /KB Home/.test(m.html) && /SIT Homes/.test(m.html), 'report email incomplete');
+          const am = await waitFor(() => mail.find((x) => x.to === 'sit-agent@example.test' && /Sitform/.test(x.subject)));
+          assert(am && !/sit-form@|8135550177/.test(am.html + am.text), 'agent email missing or leaks contact details');
+          const again = await call('POST', '/api/v1/public/leads', contact);
+          eq(again.data.token, formRes.data.token, 'a second submit created a second lead');
+          const restored = await call('GET', '/api/v1/public/leads/' + formRes.data.token);
+          eq(restored.data.search_token, search.data.token);
+          const shared = (await call('GET', '/api/v1/public/searches/' + search.data.token)).data;
+          eq(shared.lead.created, true); assert(!/Sitform|sit-form@|8135550177/.test(JSON.stringify(shared)), 'the forwardable report link carries the buyer name or contact details');
+        });
+
+        // The public form has no text-message box, but the SMS double opt-in, Rachel and the Scheduler still run on
+        // leads that granted it, so those leads are created through the lead service.
+        const base = { lang: 'en', research_token: started.data.token, answers: { area, max_price: 450000, down_payment: 20000, move_timeline: '3_6m', financing_type: 'needs_lender', first_name: 'Sitlead', email: 'sit-lead@example.test', phone: '8135550142', has_agent: 'no', visited_offices: [{ builder: 'SIT Homes', community: 'SIT Grove' }] }, consents: { email: true, sms: true, agent_referral: true } };
+        async function serviceLead(body) {
+          const v = leadsSvc.validateLead(body).value;
+          const mk = await sitMarket(SIT_TENANT);
+          const ag = await sitLoadAgent(SIT_TENANT, mk.default_agent_id, mk);
+          const L = await leadsSvc.createLead(SIT_TENANT, v, { req: { headers: { 'user-agent': 'sit', 'x-forwarded-for': '127.0.0.1' } }, agent: ag, ipHash: 'sit' });
+          if (L.email_consent) await notifySvc.buyerLeadReport(SIT_TENANT, L.id);
+          await handoffSvc.afterLead(SIT_TENANT, L.id);
+          return { status: 200, data: { token: L.token, gated: L.gated } };
+        }
         const hiddenRow = await db.one(`SELECT id FROM nca_research_rows WHERE tenant_id = :t AND builder = 'SIT Expired'`, { t: SIT_TENANT });
-        const created = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [rowId, hiddenRow.id, 999999999], consent_text: 'I agree to anything', consents: { email: true, sms: true, agent_referral: true, consent_text: 'x' } }));
+        const created = await serviceLead(Object.assign({}, base, { selections: [rowId, hiddenRow.id, 999999999] }));
         const lead = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: created.data.token });
         await t('a lead stores the server consent wording per channel with IP, only visible rows as selections, and the visited offices', async () => {
-          eq(created.status, 200); eq(lead.status, 'new'); eq(lead.referral_consent, true); assert(lead.assigned_agent_id, 'default agent assigned');
+          eq(lead.status, 'new'); eq(lead.referral_consent, true); assert(lead.assigned_agent_id, 'default agent assigned');
           const cons = await db.q('SELECT channel, granted, consent_text, ip FROM nca_lead_consents WHERE lead_id = :l ORDER BY id', { l: lead.id });
           eq(cons.map((c) => c.channel + ':' + c.granted).join(','), 'email:true,sms:true,agent_referral:true');
-          assert(cons.every((c) => !/anything/.test(c.consent_text) && c.ip), 'client text stored or IP missing');
+          assert(cons.every((c) => c.ip), 'IP missing');
           assert(/Reply STOP to opt out/.test(cons[1].consent_text), 'SMS wording');
           const sel = await db.q('SELECT research_row_id FROM nca_lead_selections WHERE lead_id = :l', { l: lead.id });
           eq(JSON.stringify(sel.map((x) => x.research_row_id)), JSON.stringify([rowId]));
           eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_lead_visited_offices WHERE lead_id = :l', { l: lead.id })).n, 1);
         });
-        for (let i = 0; i < 40 && !(await db.one(`SELECT id FROM nca_followups WHERE lead_id = :l LIMIT 1`, { l: lead.id })); i++) await new Promise((r) => setTimeout(r, 150));
         await t('with referral consent the assigned agent gets an email and a text without buyer contact details, and the buyer gets the report email', async () => {
           const newMail = mail.slice(sitMailStart);
           assert(newMail.some((m) => m.to === 'sit-lead@example.test' && /lead=/.test(m.html)), 'buyer report email');
@@ -1001,13 +1122,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           assert(await db.one(`SELECT id FROM nca_audit_log WHERE tenant_id = :t AND action = 'sms.agent_phone_missing' AND subject_id = :l`, { t: SIT_TENANT, l: lead.id }), 'missing phone not audited');
         });
         await t('a buyer under agreement with another agent keeps no contact data, no consent and no agent', async () => {
-          const r = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [rowId], answers: Object.assign({}, base.answers, { has_agent: 'yes_under_agreement', email: 'sit-gated@example.test' }) }));
+          const r = await serviceLead(Object.assign({}, base, { selections: [rowId], answers: Object.assign({}, base.answers, { has_agent: 'yes_under_agreement', email: 'sit-gated@example.test' }) }));
           eq(r.data.gated, true);
           const g = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: r.data.token });
           eq(g.email, null); eq(g.phone, null); eq(g.status, 'lost'); eq(g.assigned_agent_id, null); eq(g.agent_agreement_signed, true);
           eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_lead_consents WHERE lead_id = :l AND granted', { l: g.id })).n, 0);
         });
-        const reportOnly = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [rowId], consents: { email: false, sms: false, agent_referral: false } }));
+        const reportOnly = await serviceLead(Object.assign({}, base, { selections: [rowId], consents: { email: false, sms: false, agent_referral: false } }));
         await t('without referral consent the lead is report-only: unassigned, no notification, and the agent cannot open it', async () => {
           const ro = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: reportOnly.data.token });
           eq(ro.referral_consent, false); eq(ro.assigned_agent_id, null);
@@ -1024,6 +1145,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq((await call('PATCH', '/api/v1/agent/leads/' + lead.id, { status: 'sold' }, 'agent')).status, 400);
           const list = await call('GET', '/api/v1/agent/leads', null, 'agent');
           assert(list.data.leads.every((l) => l.assigned_agent_id === lead.assigned_agent_id), 'agent sees unassigned leads');
+          const fl = await call('GET', '/api/v1/agent/leads/' + formLead.id, null, 'agent');
+          eq(fl.status, 200); eq(fl.data.lead.visited_site, true); eq(fl.data.lead.contact_preference, 'phone');
         });
         await t('the buyer lead view by token carries no source URL, IP or email', async () => {
           const pv = await call('GET', '/api/v1/public/leads/' + created.data.token);
@@ -1082,7 +1205,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const row = await db.one(`SELECT channel, detail FROM nca_followups WHERE lead_id = :l AND kind = 'promo_change' ORDER BY id LIMIT 1`, { l: lead.id });
           eq(row.detail.change, 'changed'); eq(row.channel, 'sms', 'email was unsubscribed, so only the text is planned');
         });
-        const lead3res = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [rowId], answers: Object.assign({}, base.answers, { email: 'sit-lead3@example.test', phone: '8135550199', move_timeline: '0_3m', financing_type: 'preapproved', visited_offices: [] }) }));
+        const lead3res = await serviceLead(Object.assign({}, base, { selections: [rowId], answers: Object.assign({}, base.answers, { email: 'sit-lead3@example.test', phone: '8135550199', move_timeline: '0_3m', financing_type: 'preapproved', visited_offices: [] }) }));
         const lead3 = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: lead3res.data.token });
         for (let i = 0; i < 60 && !(await db.one(`SELECT id FROM nca_followups WHERE lead_id = :id LIMIT 1`, { id: lead3.id })); i++) await new Promise((r) => setTimeout(r, 150));
         await t('double opt-in and injected names: an unopened report email blocks follow-up email, and a name carrying a link never reaches a message', async () => {
@@ -1176,6 +1299,45 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq(r.status, 200);
           const c = await db.one(`SELECT revoked_at, revoked_via FROM nca_lead_consents WHERE lead_id = :l AND channel = 'sms'`, { l: lead.id });
           assert(c.revoked_at, 'not revoked'); eq(c.revoked_via, 'sms_stop');
+        });
+        await t('research never ends on a failure screen: a credit error marks the model down, falls back to the last good run for the area with its date, and stops calling the model; overloads are retried', async () => {
+          const areaFull = { zip: '33578', city: 'Riverview', county: 'Hillsborough', label: 'Riverview, FL 33578', input: 'Riverview, FL 33578' };
+          const original = await db.one('SELECT id FROM nca_research_runs WHERE tenant_id = :t AND token = :tok', { t: SIT_TENANT, tok: started.data.token });
+          research._resetModel();
+          let calls = 0;
+          research._setRunner(async () => { calls++; const e = new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API."}}'); e.status = 400; throw e; });
+          const out = await research.startOrGet(SIT_TENANT, areaFull, { force: true, wait: true });
+          const run = await db.one('SELECT * FROM nca_research_runs WHERE id = :id', { id: out.run.id });
+          eq(run.status, 'done'); eq(run.notice, 'research_stale'); eq(run.fallback_run_id, original.id); eq(calls, 1, 'retried a credit error');
+          const v = await research.publicRun(SIT_TENANT, run.token, { max_price: 450000 }, null);
+          assert(v.status === 'done' && v.stale === true && v.rows.some((r) => r.builder === 'SIT Homes'), 'fallback rows missing');
+          eq(research.modelStatus().available, false);
+          const out2 = await research.startOrGet(SIT_TENANT, { zip: null, city: 'Sitplace', county: 'Nocounty', label: 'Sitplace, FL', input: 'Sitplace, FL' });
+          const run2 = await db.one('SELECT status, notice FROM nca_research_runs WHERE id = :id', { id: out2.run.id });
+          eq(run2.status, 'done'); eq(run2.notice, 'research_unavailable'); eq(calls, 1, 'called the model while it was marked down');
+          eq(research.classifyError(Object.assign(new Error('Overloaded'), { status: 529 })), 'transient');
+          research._resetModel();
+          let tries = 0;
+          research._setRunner(async () => { tries++; if (tries < 3) throw Object.assign(new Error('Overloaded'), { status: 529 }); return { model: 'sit', searches: 1, seenUrls: new Set(['builder.example/a']), parsed: { rows: [{ builder: 'SIT Homes', community: 'SIT Grove', promotion: '$8,000 toward closing costs', expiration: '2099-12-31', source_url: 'https://builder.example/a', verified: true }] } }; });
+          const out3 = await research.startOrGet(SIT_TENANT, areaFull, { force: true, wait: true });
+          const run3 = await db.one('SELECT status, notice, fallback_run_id FROM nca_research_runs WHERE id = :id', { id: out3.run.id });
+          eq(tries, 3); eq(run3.status, 'done'); eq(run3.notice, null); eq(run3.fallback_run_id, null);
+        });
+        await t('the morning refresh runs once per Eastern date for the areas buyers searched, and the compliance agent reviews every row', async () => {
+          research._resetModel();
+          let n = 0;
+          research._setRunner(async () => { n++; return { model: 'sit', searches: 1, seenUrls: new Set(['builder.example/a']), parsed: { rows: [
+            { builder: 'SIT Homes', community: 'SIT Grove', promotion: 'Guaranteed approval for every buyer', expiration: '2099-12-31', source_url: 'https://builder.example/a' },
+            { builder: 'SIT Homes', community: 'SIT Meadow', promotion: '$5,000 flex cash', expiration: '2099-12-31', source_url: 'https://builder.example/a' }] } }; });
+          await db.exec('DELETE FROM nca_job_runs WHERE tenant_id = :t', { t: SIT_TENANT });
+          eq((await research.dailyRefresh(SIT_TENANT, { now: new Date('2026-09-15T20:00:00Z') })).skipped, 'not_morning');
+          const first = await research.dailyRefresh(SIT_TENANT, { force: true });
+          assert(first.ran >= 1 && n >= 1 && first.areas.some((x) => x.zip === '33578' && x.result === 'refreshed'), JSON.stringify(first));
+          eq((await research.dailyRefresh(SIT_TENANT, { force: true })).skipped, 'already_ran');
+          const latest = await db.one(`SELECT id FROM nca_research_runs WHERE tenant_id = :t AND trigger = 'daily' ORDER BY id DESC LIMIT 1`, { t: SIT_TENANT });
+          const rows = await db.q(`SELECT community, compliance_status, hidden_reason FROM nca_research_rows WHERE run_id = :r AND origin = 'ai_research' ORDER BY community`, { r: latest.id });
+          eq(rows.map((r) => r.community + ':' + r.compliance_status).join(','), 'SIT Grove:hold,SIT Meadow:pass');
+          research._resetModel();
         });
         await t('with no model and no runner the research is registry-only and says so', async () => {
           research._setRunner(null);
@@ -1286,6 +1448,69 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           if (save.u === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = save.u;
           if (save.p === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = save.p;
           process.env.INCENTIVA_SITE_GATE = save.g;
+        }
+      });
+      await t('preview logins: created with a password typed twice, pending until the owner approves, an approved login opens the site and the SME tool but cannot approve, and forgot password emails a one-time link', async () => {
+        const save = { u: process.env.INCENTIVA_ARCHITECTURE_USER, p: process.env.INCENTIVA_ARCHITECTURE_PASSWORD, g: process.env.INCENTIVA_SITE_GATE };
+        const IP = { 'CF-Connecting-IP': '203.0.113.77' };
+        const form = (p, body, cookie) => fetch(BASE + p, { method: 'POST', redirect: 'manual', headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, IP, cookie ? { Cookie: cookie } : {}), body: new URLSearchParams(body).toString() });
+        try {
+          process.env.INCENTIVA_SITE_GATE = 'on';
+          process.env.INCENTIVA_ARCHITECTURE_USER = 'gate-owner@example.test'; process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-site-gate-password-2026';
+          const loginHtml = await (await fetch(BASE + '/gate/login')).text();
+          assert(/name="email"/.test(loginHtml) && /Forgot password\?/.test(loginHtml) && /Create a login/.test(loginHtml) && /data-eye="gate_pass"/.test(loginHtml) && !/User ID/.test(loginHtml), 'login page fields');
+          const su = await (await fetch(BASE + '/gate/signup')).text();
+          assert(/name="confirm"/.test(su) && /Verify password/.test(su) && /data-eye="su_pass"/.test(su) && /data-eye="su_pass2"/.test(su), 'signup must ask for the password twice, each with a show button');
+          eq((await form('/gate/signup', { email: 'sit-preview@example.test', password: 'sit-preview-password-01', confirm: 'sit-preview-password-02' })).status, 400, 'mismatched passwords accepted');
+          eq((await form('/gate/signup', { email: 'sit-preview@example.test', password: 'short', confirm: 'short' })).status, 400, 'short password accepted');
+          eq((await form('/gate/signup', { email: 'sit-preview@example.test', password: 'Palindrome@7', confirm: 'Palindrome@7' })).status, 400, 'published password accepted');
+          eq((await form('/gate/signup', { email: 'SIT-Preview@example.test', password: 'sit-preview-password-01', confirm: 'sit-preview-password-01' })).status, 200);
+          const acct = await db.one(`SELECT * FROM nca_site_users WHERE tenant_id = :t AND lower(email) = 'sit-preview@example.test'`, { t: SIT_TENANT });
+          eq(acct.status, 'pending'); assert(/^\$2[aby]\$12\$/.test(acct.password_hash), 'password not hashed with bcrypt 12');
+          const req = await (async () => { for (let i = 0; i < 40; i++) { const m = mail.find((x) => /waiting for approval/.test(x.subject)); if (m) return m; await new Promise((r) => setTimeout(r, 50)); } return null; })();
+          assert(req && [].concat(req.to).includes('gate-owner@example.test') && /sit-preview@example\.test/.test(req.text), 'the owner was not told');
+          eq((await form('/gate/signup', { email: 'sit-preview@example.test', password: 'sit-other-password-99', confirm: 'sit-other-password-99' })).status, 200, 'an existing email must get the same answer');
+          const pend = await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' });
+          eq(pend.status, 403); assert(/waiting for the owner/.test(await pend.text()), 'pending message');
+          const owner = ((await form('/gate/login', { email: 'gate-owner@example.test', password: 'sit-site-gate-password-2026' })).headers.get('set-cookie') || '').split(';')[0];
+          eq((await form('/gate/accounts/' + acct.id, { decision: 'approve' })).status, 401, 'approved without the owner');
+          eq((await fetch(BASE + '/gate/accounts', { headers: Object.assign({ Cookie: owner }, IP) })).status, 200);
+          eq((await form('/gate/accounts/' + acct.id, { decision: 'approve' }, owner)).status, 303);
+          for (let i = 0; i < 40 && !mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)); i++) await new Promise((r) => setTimeout(r, 50));
+          assert(mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)), 'no approval email');
+          const login = await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' });
+          eq(login.status, 303);
+          const userCookie = (login.headers.get('set-cookie') || '').split(';')[0];
+          eq((await fetch(BASE + '/', { headers: { Cookie: userCookie } })).status, 200, 'approved login refused');
+          eq((await fetch(BASE + '/gate/accounts', { headers: { Cookie: userCookie } })).status, 401, 'an approved login reached the checker page');
+          eq((await form('/gate/accounts/' + acct.id, { decision: 'disable' }, userCookie)).status, 401, 'an approved login changed a login');
+          const me = await fetch(BASE + '/architecture/sme/api/me', { headers: { Cookie: userCookie } });
+          eq(me.status, 200, 'SME tool asked for a second password'); eq((await me.json()).user.role, 'sme');
+          eq((await (await fetch(BASE + '/architecture/sme/api/me', { headers: { Cookie: owner } })).json()).user.role, 'admin');
+          const m1 = mail.length;
+          eq((await form('/gate/forgot', { email: 'nobody@example.test' })).status, 200);
+          eq((await form('/gate/forgot', { email: 'sit-preview@example.test' })).status, 200);
+          let link = null;
+          for (let i = 0; i < 40 && !link; i++) { link = mail.slice(m1).find((x) => x.to === 'sit-preview@example.test' && /reset/i.test(x.subject)); if (!link) await new Promise((r) => setTimeout(r, 50)); }
+          assert(link && /\/gate\/reset\?t=/.test(link.text), 'no reset email');
+          eq(mail.slice(m1).filter((x) => x.to === 'nobody@example.test').length, 0);
+          const tok = decodeURIComponent(link.text.match(/[?&]t=([^\s]+)/)[1]);
+          eq((await fetch(BASE + '/gate/reset?t=' + encodeURIComponent(tok))).status, 200);
+          eq((await form('/gate/reset', { t: tok, password: 'sit-new-password-000002', confirm: 'sit-new-password-000003' })).status, 400, 'mismatched reset accepted');
+          eq((await form('/gate/reset', { t: tok, password: 'sit-new-password-000002', confirm: 'sit-new-password-000002' })).status, 303);
+          eq((await fetch(BASE + '/', { headers: { Cookie: userCookie } })).status, 401, 'an old session survived a password reset');
+          eq((await form('/gate/reset', { t: tok, password: 'sit-new-password-000009', confirm: 'sit-new-password-000009' })).status, 400, 'a reset link worked twice');
+          eq((await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' })).status, 401);
+          eq((await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-new-password-000002' })).status, 303);
+          eq((await fetch(BASE + '/', { headers: { Cookie: 'bl_arch=u.' + acct.id + '.9999999999999.forged' } })).status, 401, 'forged account cookie');
+          const robots = await fetch(BASE + '/robots.txt'); eq(robots.status, 200); assert(/Sitemap: .*\/sitemap\.xml/.test(await robots.text()), 'robots');
+          const sm = await fetch(BASE + '/sitemap.xml'); eq(sm.status, 200); assert(/<urlset[\s\S]*<loc>/.test(await sm.text()), 'sitemap');
+        } finally {
+          if (save.u === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = save.u;
+          if (save.p === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = save.p;
+          process.env.INCENTIVA_SITE_GATE = save.g;
+          // The single sign-on created SME accounts; the SME section below starts from an empty tool.
+          for (const tb of ['nca_sme_sessions_log', 'nca_sme_auth_sessions', 'nca_sme_users']) await db.exec(`DELETE FROM ${tb} WHERE tenant_id = :t`, { t: SIT_TENANT });
         }
       });
       await t('the landing page carries the ecosystem map section (shared component, EN/ES) and an Architecture menu link', async () => {
