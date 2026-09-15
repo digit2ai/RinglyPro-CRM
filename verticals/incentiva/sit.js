@@ -532,7 +532,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   if (!db.configured) {
     skipped.push('ALL DATABASE SECTIONS (no DATABASE_URL): intake, reports, verification, isolation, billing were NOT exercised');
   } else {
-    const TABLES = ['nca_followups', 'nca_lead_meetings', 'nca_agent_hours', 'nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
+    const TABLES = ['nca_rules', 'nca_kb', 'nca_sme_section_status', 'nca_sme_sessions_log', 'nca_sme_attachments', 'nca_sme_answer_versions', 'nca_sme_answers', 'nca_sme_questions', 'nca_sme_sections', 'nca_sme_magic_links', 'nca_sme_auth_sessions', 'nca_sme_users', 'nca_followups', 'nca_lead_meetings', 'nca_agent_hours', 'nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
       'nca_consents', 'nca_buyer_criteria', 'nca_buyers', 'nca_incentive_versions', 'nca_incentives', 'nca_snapshots', 'nca_sources', 'nca_homes', 'nca_community_fees',
       'nca_communities', 'nca_builders', 'nca_users', 'nca_brokerages', 'nca_markets'];
     const cleanup = async () => { for (const tb of TABLES) await db.exec(`DELETE FROM ${tb} WHERE tenant_id IN (:a, :b)`, { a: SIT_TENANT, b: OTHER_TENANT }); };
@@ -1252,6 +1252,135 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const css = read(path.join(ROOT, 'public', 'ecosystem-map.css'));
         assert(!/^\s*\.(node|brain|link|ring|dots|legend|chip)\b/m.test(css), 'unprefixed class in the shared map stylesheet');
       });
+      console.log('\nP. SME knowledge capture');
+      {
+        const SME = BASE + '/architecture/sme';
+        const saveAdmin = { e: process.env.INCENTIVA_SME_ADMIN_EMAIL, p: process.env.INCENTIVA_SME_ADMIN_PASSWORD };
+        delete process.env.INCENTIVA_SME_ADMIN_EMAIL; delete process.env.INCENTIVA_SME_ADMIN_PASSWORD;
+        const jarS = {};
+        const smeCall = async (method, p, body, who, extra = {}) => {
+          const headers = Object.assign({ 'Content-Type': 'application/json' }, extra);
+          if (who && jarS[who]) { headers.Cookie = jarS[who].cookie; if (method !== 'GET' && jarS[who].csrf && !('X-CSRF-Token' in extra)) headers['X-CSRF-Token'] = jarS[who].csrf; }
+          const r = await fetch(SME + p, { method, headers, redirect: 'manual', body: body ? JSON.stringify(body) : undefined });
+          const sc = r.headers.get('set-cookie'); if (who && sc && /bl_sme=/.test(sc)) jarS[who] = Object.assign(jarS[who] || {}, { cookie: sc.split(';')[0] });
+          let data = null; try { data = await r.json(); } catch (e) { data = null; }
+          return { status: r.status, data, headers: r.headers };
+        };
+        const smeMe = async (who) => { const r = await smeCall('GET', '/api/me', null, who); if (r.data && r.data.csrf) jarS[who].csrf = r.data.csrf; return r; };
+        try {
+          await t('SME tool: closed with no admin configured and no accounts, and never indexable', async () => {
+            const r = await fetch(SME + '/');
+            eq(r.status, 503); assert(/noindex/.test(r.headers.get('x-robots-tag')), 'closed page indexable');
+            assert(!fs.existsSync(path.join(__dirname, 'public', 'sme.html')), 'the SME page must not live in the public folder');
+          });
+          process.env.INCENTIVA_SME_ADMIN_EMAIL = 'Manny-SIT@example.test'; process.env.INCENTIVA_SME_ADMIN_PASSWORD = 'sit-sme-admin-password-2026';
+          let qids = [];
+          await t('SME tool: 78 questions seeded in EN and ES once; login refused for wrong password, unknown email and a foreign origin', async () => {
+            const page = await fetch(SME + '/');
+            eq(page.status, 200); assert(/noindex/.test(page.headers.get('x-robots-tag')) && /no-store/.test(page.headers.get('cache-control')), 'headers');
+            const html = await page.text(); assert(!html.includes('{{BASE}}') && /\/buyersline\/architecture\/sme/.test(html), 'base');
+            const qs = await db.q('SELECT code, text_en, text_es, help_en, help_es FROM nca_sme_questions WHERE tenant_id = :t ORDER BY sort_order', { t: SIT_TENANT });
+            eq(qs.length, 78); assert(qs.every((q) => q.text_en && q.text_es && q.help_en && q.help_es && q.text_en !== q.text_es), 'every question needs EN and ES text and help');
+            eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_sme_sections WHERE tenant_id = :t', { t: SIT_TENANT })).n, 14);
+            await db.exec(`UPDATE nca_sme_questions SET text_en = 'Edited by admin' WHERE tenant_id = :t AND code = 'Q02'`, { t: SIT_TENANT });
+            eq((await require('./src/sme/store').seed(SIT_TENANT)).questions, 0, 'seed inserted twice');
+            eq((await db.one(`SELECT text_en FROM nca_sme_questions WHERE tenant_id = :t AND code = 'Q02'`, { t: SIT_TENANT })).text_en, 'Edited by admin', 'seed overwrote an admin edit');
+            eq((await smeCall('GET', '/api/me')).status, 401);
+            eq((await smeCall('POST', '/api/login', { email: 'manny-sit@example.test', password: 'wrong-password-123' })).status, 401);
+            eq((await smeCall('POST', '/api/login', { email: 'nobody@example.test', password: 'sit-sme-admin-password-2026' })).status, 401);
+            eq((await smeCall('POST', '/api/login', { email: 'manny-sit@example.test', password: 'sit-sme-admin-password-2026' }, null, { Origin: 'https://evil.example' })).status, 403);
+            const ok = await smeCall('POST', '/api/login', { email: 'MANNY-SIT@example.test', password: 'sit-sme-admin-password-2026' }, 'admin');
+            eq(ok.status, 200);
+            const sc = ok.headers.get('set-cookie');
+            assert(/HttpOnly/i.test(sc) && /SameSite=Lax/i.test(sc) && /Path=\/buyersline\/architecture\/sme/.test(sc), 'cookie flags: ' + sc);
+            const tok = decodeURIComponent(jarS.admin.cookie.split('=')[1]);
+            const stored = await db.one('SELECT token_hash FROM nca_sme_auth_sessions WHERE tenant_id = :t ORDER BY id DESC LIMIT 1', { t: SIT_TENANT });
+            assert(stored.token_hash !== tok && stored.token_hash.length === 64, 'the raw session token is stored');
+            const hashRow = await db.one(`SELECT password_hash FROM nca_sme_users WHERE tenant_id = :t AND role = 'admin'`, { t: SIT_TENANT });
+            assert(/^\$2[aby]\$12\$/.test(hashRow.password_hash), 'password not bcrypt cost 12');
+          });
+          await t('SME tool: answers need the CSRF token, autosave keeps one version per real change, submitting moves progress and resume', async () => {
+            const me = await smeMe('admin');
+            eq(me.status, 200); eq(me.data.progress.total, 78); eq(me.data.progress.answered, 0); eq(me.data.sections.length, 14);
+            const first = me.data.resume_question_id;
+            const q1 = await smeCall('GET', '/api/questions/' + first, null, 'admin');
+            eq(q1.data.question.code, 'Q01'); eq(q1.data.position, 1); eq(q1.data.prev_question_id, null); assert(q1.data.question.help_es && q1.data.question.text_es, 'Spanish');
+            qids = [first, q1.data.next_question_id];
+            eq((await smeCall('PUT', '/api/answers/' + first, { answer_text: 'x' }, 'admin', { 'X-CSRF-Token': 'wrong' })).status, 403, 'CSRF not enforced');
+            eq((await smeCall('PUT', '/api/answers/' + first, { answer_text: 'x' }, 'admin', { 'X-CSRF-Token': 'é'.repeat(me.data.csrf.length) })).status, 403, 'a multi-byte CSRF header must be refused, not crash');
+            const s1 = await smeCall('PUT', '/api/answers/' + first, { answer_text: '30 years, 12 in new construction', language: 'en' }, 'admin');
+            eq(s1.status, 200); eq(s1.data.status, 'draft');
+            await smeCall('PUT', '/api/answers/' + first, { answer_text: '30 years, 12 in new construction', language: 'en' }, 'admin');
+            const aid = s1.data.id;
+            eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_sme_answer_versions WHERE answer_id = :a', { a: aid })).n, 1, 'identical autosave created a version');
+            await smeCall('PUT', '/api/answers/' + first, { answer_text: '30 años, 12 en construcción nueva', language: 'es' }, 'admin');
+            const sub = await smeCall('PUT', '/api/answers/' + first, { answer_text: '30 años, 12 en construcción nueva', language: 'es', status: 'submitted' }, 'admin');
+            eq(sub.data.status, 'submitted');
+            eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_sme_answer_versions WHERE answer_id = :a', { a: aid })).n, 3);
+            await smeCall('PUT', '/api/answers/' + first, { answer_text: '30 años, 12 en construcción nueva', language: 'es' }, 'admin');
+            eq((await db.one('SELECT status FROM nca_sme_answers WHERE id = :a', { a: aid })).status, 'submitted', 'an autosave of the same text un-submitted the answer');
+            eq((await smeCall('PUT', '/api/answers/' + qids[1], { answer_text: '   ', status: 'submitted' }, 'admin')).data.status, 'draft', 'an empty answer counted as submitted');
+            const me2 = await smeMe('admin');
+            eq(me2.data.progress.answered, 1, 'progress answered'); eq(me2.data.resume_question_id, qids[1], 'resume');
+            const logs = await db.q('SELECT l.id, l.auth_session_id, l.questions_answered, u.email FROM nca_sme_sessions_log l JOIN nca_sme_users u ON u.id = l.user_id WHERE l.tenant_id = :t ORDER BY l.id', { t: SIT_TENANT });
+            eq(logs.reduce((n, x) => n + x.questions_answered, 0), 1, 'session log count ' + JSON.stringify(logs));
+            eq((await smeCall('PUT', '/api/answers/99999999', { answer_text: 'x' }, 'admin')).status, 404);
+          });
+          await t('SME tool: an admin creates an SME; the SME sees only their own answers and no admin screens', async () => {
+            eq((await smeCall('POST', '/api/admin/users', { name: 'No Csrf', email: 'x@example.test' }, 'admin', { 'X-CSRF-Token': '' })).status, 403);
+            const c = await smeCall('POST', '/api/admin/users', { name: 'Ole SIT', email: 'ole-sit@example.test', language: 'es' }, 'admin');
+            eq(c.status, 200); assert(c.data.temporary_password && c.data.temporary_password.length >= 12, 'temporary password');
+            eq((await smeCall('POST', '/api/admin/users', { name: 'Dup', email: 'OLE-SIT@example.test' }, 'admin')).status, 400, 'duplicate email');
+            eq((await smeCall('POST', '/api/admin/users', { name: 'Short', email: 's@example.test', password: 'short' }, 'admin')).status, 400);
+            eq((await smeCall('POST', '/api/login', { email: 'ole-sit@example.test', password: c.data.temporary_password }, 'ole')).status, 200);
+            const me = await smeMe('ole');
+            eq(me.data.user.role, 'sme'); eq(me.data.user.language, 'es'); eq(me.data.progress.answered, 0, 'SME sees the admin answer count');
+            eq((await smeCall('GET', '/api/questions/' + qids[0], null, 'ole')).data.answer, null, 'SME read another account\'s answer');
+            eq((await smeCall('GET', '/api/admin/users', null, 'ole')).status, 403);
+            eq((await smeCall('POST', '/api/admin/users', { name: 'Evil', email: 'evil@example.test', role: 'admin' }, 'ole')).status, 403);
+            const list = await smeCall('GET', '/api/admin/users', null, 'admin');
+            assert(list.data.users.every((u) => !('password_hash' in u)), 'password hash exposed');
+          });
+          await t('SME tool: magic links are single use, expire, never reveal an account, and 24 idle hours end a session', async () => {
+            const m0 = mail.length;
+            eq((await smeCall('POST', '/api/magic-link', { email: 'nobody-here@example.test' })).data.ok, true);
+            eq((await smeCall('POST', '/api/magic-link', { email: 'ole-sit@example.test' })).data.ok, true);
+            for (let i = 0; i < 20 && mail.length === m0; i++) await new Promise((r) => setTimeout(r, 100));
+            const sent = mail.slice(m0);
+            eq(sent.length, 1, 'mail for an unknown email or none for a known one'); eq(sent[0].to, 'ole-sit@example.test');
+            const link = (sent[0].text.match(/\/architecture\/sme\/magic\/([A-Za-z0-9_-]+)/) || [])[1];
+            assert(link, 'no link in the email');
+            const stored = await db.one('SELECT token_hash FROM nca_sme_magic_links WHERE tenant_id = :t ORDER BY id DESC LIMIT 1', { t: SIT_TENANT });
+            assert(stored.token_hash !== link, 'magic link token stored raw');
+            const pre = await fetch(SME + '/magic/' + link, { redirect: 'manual' });
+            eq(pre.status, 200, 'opening the link (a mail scanner pre-fetch) must not use it');
+            eq((await db.one('SELECT used_at FROM nca_sme_magic_links WHERE token_hash = :h', { h: stored.token_hash })).used_at, null, 'a GET used the link');
+            const use = await smeCall('POST', '/magic/' + link, null, 'olelink');
+            eq(use.status, 303); assert(/\/architecture\/sme\/$/.test(use.headers.get('location')), 'redirect');
+            eq((await smeMe('olelink')).status, 200, 'magic link did not sign in');
+            const again = await smeCall('POST', '/magic/' + link);
+            eq(again.status, 303); assert(/link=expired/.test(again.headers.get('location')), 'a used link worked twice');
+            const l2 = await require('./src/sme/auth').createMagicLink(SIT_TENANT, 'ole-sit@example.test');
+            await db.exec(`UPDATE nca_sme_magic_links SET expires_at = now() - interval '1 minute' WHERE id = :id`, { id: l2.linkId });
+            assert(/link=expired/.test((await smeCall('POST', '/magic/' + l2.token)).headers.get('location')), 'an expired link worked');
+            await db.exec(`UPDATE nca_sme_auth_sessions SET last_seen_at = now() - interval '25 hours' WHERE tenant_id = :t AND user_id = (SELECT id FROM nca_sme_users WHERE tenant_id = :t AND lower(email) = 'ole-sit@example.test')`, { t: SIT_TENANT });
+            eq((await smeCall('GET', '/api/me', null, 'ole')).status, 401, 'an idle session survived 24 hours');
+            const olelinkSession = await db.one(`SELECT id, last_seen_at FROM nca_sme_auth_sessions WHERE tenant_id = :t ORDER BY id DESC LIMIT 1`, { t: SIT_TENANT });
+            await db.exec(`UPDATE nca_sme_auth_sessions SET last_seen_at = now() - interval '23 hours' WHERE tenant_id = :t`, { t: SIT_TENANT });
+            eq((await smeCall('GET', '/api/me', null, 'olelink')).status, 200);
+            assert(new Date((await db.one('SELECT last_seen_at FROM nca_sme_auth_sessions WHERE id = :id', { id: olelinkSession.id })).last_seen_at) > new Date(Date.now() - 3600e3), 'activity did not slide the idle window of the session in use');
+            const ole = await db.one(`SELECT id FROM nca_sme_users WHERE tenant_id = :t AND lower(email) = 'ole-sit@example.test'`, { t: SIT_TENANT });
+            await smeCall('POST', '/api/login', { email: 'ole-sit@example.test', password: 'wrong-wrong-wrong' });
+            eq((await smeCall('PATCH', '/api/admin/users/' + ole.id, { status: 'disabled' }, 'admin')).status, 200);
+            eq((await smeCall('GET', '/api/me', null, 'olelink')).status, 401, 'a disabled account kept its session');
+            const out = await smeCall('POST', '/api/logout', {}, 'admin');
+            eq(out.status, 200); eq((await smeCall('GET', '/api/me', null, 'admin')).status, 401, 'logout did not end the session');
+          });
+        } finally {
+          if (saveAdmin.e === undefined) delete process.env.INCENTIVA_SME_ADMIN_EMAIL; else process.env.INCENTIVA_SME_ADMIN_EMAIL = saveAdmin.e;
+          if (saveAdmin.p === undefined) delete process.env.INCENTIVA_SME_ADMIN_PASSWORD; else process.env.INCENTIVA_SME_ADMIN_PASSWORD = saveAdmin.p;
+        }
+      }
       await t('HTML shells are served with the mount substituted', async () => {
         const r = await fetch(BASE + '/'); const html = await r.text();
         assert(!html.includes('{{BASE}}'), 'token leaked'); assert(html.includes('/buyersline/site.css'), 'base substituted');

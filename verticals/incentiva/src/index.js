@@ -104,6 +104,8 @@ function createApp(opts = {}) {
     archgate.setCookie(req, res, archgate.sign(Date.now() + archgate.TTL_MS), archgate.TTL_MS);
     res.redirect(303, req.baseUrl + '/architecture');
   });
+  // SME knowledge capture (signed-in questionnaire; its own accounts, not the architecture gate).
+  router.use('/architecture/sme', require('./sme/routes')(tenantId));
   router.post('/architecture/logout', (req, res) => { archgate.setCookie(req, res, '', 0); res.redirect(303, req.baseUrl + '/architecture'); });
   router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html', '/meet.html', '/unsubscribe.html', '/architecture.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 

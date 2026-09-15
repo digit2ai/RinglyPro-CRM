@@ -631,3 +631,169 @@ CREATE INDEX IF NOT EXISTS nca_lead_meetings_lead_idx ON nca_lead_meetings (tena
 -- Double opt-in (security review 2026-09-14): texts start only after the buyer replies YES to one
 -- confirmation text; marketing follow-up emails start only after the buyer opens their emailed report link.
 ALTER TABLE nca_lead_consents ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+
+-- ── SME knowledge capture (2026-09-15) ─────────────────────────────────────────
+-- Spec names map to the vertical prefix: sme_* -> nca_sme_*, buyersline_kb -> nca_kb,
+-- buyersline_rules -> nca_rules. Accounts here are separate from the agent console accounts.
+CREATE TABLE IF NOT EXISTS nca_sme_users (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  name VARCHAR(160) NOT NULL,
+  email VARCHAR(200) NOT NULL,
+  phone VARCHAR(40),
+  password_hash VARCHAR(100),
+  role VARCHAR(10) NOT NULL CHECK (role IN ('admin','sme')),
+  language VARCHAR(2) NOT NULL DEFAULT 'en' CHECK (language IN ('en','es')),
+  status VARCHAR(12) NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_login_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_users_email_uq ON nca_sme_users (tenant_id, lower(email));
+
+-- Server-side sessions: the cookie holds a random token, the database holds only its hash.
+CREATE TABLE IF NOT EXISTS nca_sme_auth_sessions (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES nca_sme_users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(64) NOT NULL,
+  csrf_token VARCHAR(64) NOT NULL,
+  ip_hash VARCHAR(64),
+  user_agent VARCHAR(300),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_auth_sessions_token_uq ON nca_sme_auth_sessions (token_hash);
+CREATE INDEX IF NOT EXISTS nca_sme_auth_sessions_user_idx ON nca_sme_auth_sessions (tenant_id, user_id);
+
+CREATE TABLE IF NOT EXISTS nca_sme_magic_links (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES nca_sme_users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(64) NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_magic_links_token_uq ON nca_sme_magic_links (token_hash);
+
+CREATE TABLE IF NOT EXISTS nca_sme_sections (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  code VARCHAR(20) NOT NULL,
+  title_en TEXT NOT NULL,
+  title_es TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_sections_code_uq ON nca_sme_sections (tenant_id, code);
+
+CREATE TABLE IF NOT EXISTS nca_sme_questions (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  section_id INTEGER NOT NULL REFERENCES nca_sme_sections(id) ON DELETE CASCADE,
+  code VARCHAR(20) NOT NULL,
+  text_en TEXT NOT NULL,
+  text_es TEXT NOT NULL,
+  help_en TEXT,
+  help_es TEXT,
+  answer_type VARCHAR(20) NOT NULL DEFAULT 'long_text' CHECK (answer_type IN ('long_text','short_text','number','choice','multi_choice','table')),
+  options_json JSONB,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT true
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_questions_code_uq ON nca_sme_questions (tenant_id, code);
+CREATE INDEX IF NOT EXISTS nca_sme_questions_section_idx ON nca_sme_questions (tenant_id, section_id, sort_order);
+
+CREATE TABLE IF NOT EXISTS nca_sme_answers (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES nca_sme_users(id) ON DELETE CASCADE,
+  question_id INTEGER NOT NULL REFERENCES nca_sme_questions(id) ON DELETE CASCADE,
+  answer_text TEXT,
+  answer_json JSONB,
+  language VARCHAR(2) NOT NULL DEFAULT 'en' CHECK (language IN ('en','es')),
+  status VARCHAR(12) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','submitted')),
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by INTEGER,
+  admin_note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_answers_uq ON nca_sme_answers (tenant_id, user_id, question_id);
+
+CREATE TABLE IF NOT EXISTS nca_sme_answer_versions (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  answer_id INTEGER NOT NULL REFERENCES nca_sme_answers(id) ON DELETE CASCADE,
+  answer_text TEXT,
+  answer_json JSONB,
+  status VARCHAR(12),
+  saved_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS nca_sme_answer_versions_answer_idx ON nca_sme_answer_versions (tenant_id, answer_id, saved_at DESC);
+
+CREATE TABLE IF NOT EXISTS nca_sme_attachments (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  answer_id INTEGER NOT NULL REFERENCES nca_sme_answers(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  storage_path TEXT NOT NULL,
+  mime_type VARCHAR(100) NOT NULL CHECK (mime_type IN ('application/pdf','image/jpeg','image/png','image/webp','image/heic')),
+  size_bytes INTEGER NOT NULL CHECK (size_bytes <= 10485760),
+  uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS nca_sme_attachments_answer_idx ON nca_sme_attachments (tenant_id, answer_id);
+
+CREATE TABLE IF NOT EXISTS nca_sme_sessions_log (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES nca_sme_users(id) ON DELETE CASCADE,
+  auth_session_id INTEGER,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ended_at TIMESTAMPTZ,
+  questions_answered INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS nca_sme_sessions_log_user_idx ON nca_sme_sessions_log (tenant_id, user_id, started_at DESC);
+
+CREATE TABLE IF NOT EXISTS nca_sme_section_status (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES nca_sme_users(id) ON DELETE CASCADE,
+  section_id INTEGER NOT NULL REFERENCES nca_sme_sections(id) ON DELETE CASCADE,
+  completed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_sme_section_status_uq ON nca_sme_section_status (tenant_id, user_id, section_id);
+
+-- Knowledge base and rules built from submitted SME answers (pipeline in a later phase).
+CREATE TABLE IF NOT EXISTS nca_kb (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('sme')),
+  source_id INTEGER NOT NULL,
+  section VARCHAR(160),
+  topic VARCHAR(300),
+  content_en TEXT,
+  content_es TEXT,
+  en_machine_translated BOOLEAN NOT NULL DEFAULT false,
+  es_machine_translated BOOLEAN NOT NULL DEFAULT false,
+  tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+  confidence NUMERIC(4,3),
+  status VARCHAR(12) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','approved','retired')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS nca_kb_source_idx ON nca_kb (tenant_id, source_type, source_id);
+
+CREATE TABLE IF NOT EXISTS nca_rules (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  rule_text TEXT NOT NULL,
+  applies_to_builder VARCHAR(160),
+  applies_to_community VARCHAR(200),
+  source_answer_id INTEGER REFERENCES nca_sme_answers(id) ON DELETE SET NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','approved','rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by INTEGER
+);
+CREATE INDEX IF NOT EXISTS nca_rules_status_idx ON nca_rules (tenant_id, status);

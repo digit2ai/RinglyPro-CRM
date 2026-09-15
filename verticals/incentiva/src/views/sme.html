@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0E0C1F">
+<title>BuyersLine Knowledge Capture</title>
+<link rel="icon" href="{{BASE}}/../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Mulish:wght@400;600;700;800;900&display=swap">
+<style>
+:root{--bg:#0E0C1F;--card:#1A1636;--card2:#221B3F;--line:rgba(166,163,189,.22);--ink:#ECEAF6;--mut:#A6A3BD;--faint:#8783A3;--or:#FC4C02;--or2:#FF7A3D;--cy:#5CC8E6;--gr:#7FD39A;--am:#F2B84B;--bad:#F09590;
+  --sans:"Mulish",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--sans);-webkit-text-size-adjust:100%}
+body{background:radial-gradient(700px 420px at 50% -10%,rgba(252,76,2,.14),transparent 70%),var(--bg);min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--cy)}
+:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 18px;flex-wrap:wrap}
+.brand{font:900 18px/1 var(--sans);letter-spacing:-.01em}.brand span{color:var(--or)}
+.tools{display:flex;gap:8px;align-items:center}
+.pill{white-space:nowrap;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:14px;font-weight:700}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.eye{font:700 12px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--or2);margin:0}
+h1{font:900 clamp(26px,6vw,34px)/1.15 var(--sans);margin:8px 0 12px;text-wrap:balance}
+h2{font:800 20px/1.25 var(--sans);margin:0 0 10px;text-wrap:balance}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:18px;padding:20px}
+.card.or{border-color:rgba(252,76,2,.45)}
+label{display:block;font:700 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:16px 0 6px}
+input,select{width:100%;min-height:48px;background:var(--bg);border:1px solid rgba(166,163,189,.35);border-radius:12px;padding:10px 12px;font-size:17px}
+textarea{width:100%;min-height:30vh;background:var(--bg);border:1px solid rgba(166,163,189,.35);border-radius:14px;padding:14px;font-size:18px;line-height:1.55;resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 20px;border-radius:999px;border:0;background:var(--or);color:#fff;font:800 17px/1 var(--sans);cursor:pointer;text-decoration:none}
+.btn.sec{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.55;cursor:default}
+.link{background:none;border:0;padding:8px 0;color:var(--cy);cursor:pointer;text-decoration:underline;font-size:15px}
+.muted{color:var(--mut)}.small{font-size:14px}
+.err{color:var(--bad);margin:12px 0 0}.ok{color:var(--gr);margin:12px 0 0}
+.bar{height:10px;border-radius:99px;background:rgba(166,163,189,.18);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--or),var(--or2));border-radius:99px;transition:width .4s}
+.sections{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
+.sections button{width:100%;text-align:left;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer;min-height:64px}
+.sections .st{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:6px 8px;border-radius:8px;border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.st.in_progress{color:var(--am);border-color:rgba(242,184,75,.45)}.st.answered,.st.complete{color:var(--gr);border-color:rgba(127,211,154,.45)}
+.sections .cnt{grid-column:1/-1;font-size:13px;color:var(--faint);font-variant-numeric:tabular-nums}
+.qhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.qtext{font:800 clamp(21px,5.2vw,26px)/1.3 var(--sans);margin:8px 0 10px;text-wrap:pretty}
+.why{display:flex;gap:10px;align-items:flex-start;color:var(--mut);font-size:15px;margin:0 0 14px;padding:10px 12px;border-left:3px solid var(--cy);background:rgba(92,200,230,.06);border-radius:0 10px 10px 0}
+.why b{color:var(--cy);font:700 11px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.dict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.mic{min-height:48px;padding:0 16px;border-radius:999px;border:1px solid rgba(252,76,2,.55);background:rgba(252,76,2,.08);color:var(--ink);font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.mic.on{background:var(--or);color:#fff;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(252,76,2,.18)}}
+.dot{width:10px;height:10px;border-radius:50%;background:currentColor}
+.save{font:600 13px/1.4 var(--mono);color:var(--faint);min-height:20px;margin:6px 0 0}
+.sticky .save{margin:0 0 8px;text-align:center}
+@media (max-width:430px){#brandSub{display:none}}
+.nav{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:14px}
+.nav .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;grid-column:1/-1}
+.sticky{position:sticky;bottom:0;margin-top:12px;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);box-shadow:0 -12px 18px var(--bg)}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:10px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{font:700 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.tablewrap{overflow-x:auto}
+.secret{font:700 16px/1.4 var(--mono);background:var(--bg);border:1px dashed var(--am);border-radius:10px;padding:10px;word-break:break-all;margin:8px 0}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Buyers<span>Line</span> <span class="muted small" style="color:var(--mut);font-weight:600" id="brandSub">Knowledge</span></div>
+    <div class="tools">
+      <div role="group" aria-label="Language" style="display:flex;gap:4px">
+        <button type="button" class="pill" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" class="pill" data-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <button type="button" class="pill" id="menuBtn" hidden></button>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+</div>
+<script>
+(function () {
+  'use strict';
+  var BASE = '{{BASE}}'.indexOf('{{') === 0 ? '' : '{{BASE}}';
+  var L = {
+    en: {
+      sub: 'Knowledge', signin_eye: 'BuyersLine · Knowledge capture', signin: 'Sign in', email: 'Email', password: 'Password', go: 'Sign in',
+      or_link: 'Email me a sign-in link instead', link_sent: 'If that email has an account, a sign-in link is on its way. It works once and expires in 30 minutes.',
+      link_expired: 'That sign-in link has expired or was already used. Request a new one below.', need_email: 'Enter your email first.',
+      bad_login: 'Email or password is incorrect.', welcome: 'Welcome, {name}', welcome_sub: 'Your experience becomes the knowledge BuyersLine uses to guide buyers. Answer at your own pace; everything is saved as you go.',
+      progress: '{a} of {t} answered', continue: 'Continue where you left off', start: 'Start', sections: 'Sections',
+      st_not_started: 'Not started', st_in_progress: 'In progress', st_answered: 'Answered', st_complete: 'Complete', count: '{a} of {t}',
+      question_of: 'Question {n} of {t}', section_of: '{s} · {n} of {t}', why: 'Why we ask', placeholder: 'Type your answer, or tap Dictate and speak.',
+      dictate: 'Dictate', stop: 'Stop', dict_lang: 'Dictation language', no_dictation: 'Voice dictation is not available in this browser. Typing works everywhere.',
+      save_next: 'Save and next', skip: 'Skip for now', back: 'Back', home: 'All sections', saving: 'Saving…', saved: 'Saved {time}', save_failed: 'Not saved yet. Retrying…', offline: 'You appear to be offline. Your text stays on this screen.',
+      section_done: 'You reached the end of this section. Nice work.', all_done: 'You reached the last question. Thank you.',
+      signout: 'Sign out', admin: 'Accounts', back_home: 'Back to questions', users: 'Accounts', add_user: 'Create an SME account', name: 'Name', phone: 'Phone (optional)', language: 'Language', role: 'Role',
+      create: 'Create account', temp_pw: 'Temporary password (shown once, share it privately):', send_link: 'Email sign-in link', link_emailed: 'Sign-in link emailed.', link_not_emailed: 'The link was created but email is not configured: {reason}.',
+      disable: 'Disable', enable: 'Enable', answered_col: 'Answered', last_login: 'Last sign-in', never: 'Never', expired: 'Your session ended. Sign in again.'
+    },
+    es: {
+      sub: 'Conocimiento', signin_eye: 'BuyersLine · Captura de conocimiento', signin: 'Iniciar sesión', email: 'Correo electrónico', password: 'Contraseña', go: 'Entrar',
+      or_link: 'Envíenme un enlace para entrar', link_sent: 'Si ese correo tiene una cuenta, le enviamos un enlace para entrar. Funciona una sola vez y vence en 30 minutos.',
+      link_expired: 'Ese enlace venció o ya se usó. Pida uno nuevo abajo.', need_email: 'Escriba primero su correo.',
+      bad_login: 'El correo o la contraseña no son correctos.', welcome: 'Le damos la bienvenida, {name}', welcome_sub: 'Su experiencia se convierte en el conocimiento que BuyersLine usa para orientar a los compradores. Responda a su ritmo; todo se guarda mientras escribe.',
+      progress: '{a} de {t} respondidas', continue: 'Continuar donde se quedó', start: 'Empezar', sections: 'Secciones',
+      st_not_started: 'Sin empezar', st_in_progress: 'En curso', st_answered: 'Respondida', st_complete: 'Completa', count: '{a} de {t}',
+      question_of: 'Pregunta {n} de {t}', section_of: '{s} · {n} de {t}', why: 'Por qué preguntamos', placeholder: 'Escriba su respuesta o toque Dictar y hable.',
+      dictate: 'Dictar', stop: 'Detener', dict_lang: 'Idioma del dictado', no_dictation: 'El dictado por voz no está disponible en este navegador. Escribir funciona en todos.',
+      save_next: 'Guardar y seguir', skip: 'Omitir por ahora', back: 'Atrás', home: 'Todas las secciones', saving: 'Guardando…', saved: 'Guardado {time}', save_failed: 'Aún no se guardó. Reintentando…', offline: 'Parece que no tiene conexión. Su texto sigue en esta pantalla.',
+      section_done: 'Llegó al final de esta sección. Buen trabajo.', all_done: 'Llegó a la última pregunta. Gracias.',
+      signout: 'Cerrar sesión', admin: 'Cuentas', back_home: 'Volver a las preguntas', users: 'Cuentas', add_user: 'Crear una cuenta de experto', name: 'Nombre', phone: 'Teléfono (opcional)', language: 'Idioma', role: 'Rol',
+      create: 'Crear cuenta', temp_pw: 'Contraseña temporal (se muestra una sola vez, compártala en privado):', send_link: 'Enviar enlace por correo', link_emailed: 'Enlace enviado por correo.', link_not_emailed: 'Se creó el enlace pero el correo no está configurado: {reason}.',
+      disable: 'Desactivar', enable: 'Activar', answered_col: 'Respondidas', last_login: 'Último ingreso', never: 'Nunca', expired: 'Su sesión terminó. Vuelva a entrar.'
+    }
+  };
+  var lang = 'en', me = null, csrf = '';
+  try { var saved = localStorage.getItem('bl_sme_lang'); if (saved === 'es' || saved === 'en') lang = saved; else if ((navigator.language || '').slice(0, 2) === 'es') lang = 'es'; } catch (e) {}
+  function T(k, v) { var s = (L[lang][k] != null ? L[lang][k] : L.en[k]) || k; return v ? s.replace(/\{(\w+)\}/g, function (_, x) { return v[x] != null ? v[x] : ''; }) : s; }
+  var app = document.getElementById('app');
+  function h(tag, attrs) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k]; if (v == null || v === false) return;
+      if (k === 'text') e.textContent = v; else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) { var c = arguments[i]; if (c == null) continue; (Array.isArray(c) ? c : [c]).forEach(function (x) { if (x != null) e.appendChild(typeof x === 'string' ? document.createTextNode(x) : x); }); }
+    return e;
+  }
+  function clear() { while (app.firstChild) app.removeChild(app.firstChild); }
+  function api(method, path, body) {
+    var headers = { Accept: 'application/json' };
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (method !== 'GET' && csrf) headers['X-CSRF-Token'] = csrf;
+    return fetch(BASE + '/api' + path, { method: method, headers: headers, credentials: 'same-origin', body: body !== undefined ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, ok: r.ok, data: d }; }); });
+  }
+  function setLang(l, persist) {
+    lang = l === 'es' ? 'es' : 'en';
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('bl_sme_lang', lang); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false'); });
+    document.getElementById('brandSub').textContent = T('sub');
+    if (persist && me) api('PATCH', '/me', { language: lang });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-lang'), true); route(); }); });
+
+  /* ---------- sign in ---------- */
+  function renderLogin(note) {
+    clear(); me = null; csrf = '';
+    document.getElementById('menuBtn').hidden = true;
+    var err = h('p', { class: 'err', role: 'alert', hidden: !note }, note || '');
+    var info = h('p', { class: 'ok', role: 'status', hidden: true });
+    var email = h('input', { id: 'sme_email', type: 'email', autocomplete: 'username', inputmode: 'email', required: true });
+    var pw = h('input', { id: 'sme_pw', type: 'password', autocomplete: 'current-password', required: true });
+    var btn = h('button', { type: 'submit', class: 'btn block', style: 'margin-top:20px' }, T('go'));
+    var form = h('form', { class: 'card or', novalidate: true, onsubmit: function (e) {
+      e.preventDefault(); err.hidden = true; info.hidden = true; btn.disabled = true;
+      api('POST', '/login', { email: email.value, password: pw.value }).then(function (r) {
+        btn.disabled = false;
+        if (r.ok) { location.hash = ''; boot(); return; }
+        err.textContent = r.status === 429 ? r.data.error : T('bad_login'); err.hidden = false; pw.value = ''; pw.focus();
+      }).catch(function () { btn.disabled = false; err.textContent = T('offline'); err.hidden = false; });
+    } },
+      h('p', { class: 'eye', text: T('signin_eye') }), h('h1', { text: T('signin') }),
+      h('label', { for: 'sme_email', text: T('email') }), email,
+      h('label', { for: 'sme_pw', text: T('password') }), pw, btn, err, info,
+      h('button', { type: 'button', class: 'link', style: 'margin-top:14px', onclick: function () {
+        err.hidden = true; info.hidden = true;
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())) { err.textContent = T('need_email'); err.hidden = false; email.focus(); return; }
+        api('POST', '/magic-link', { email: email.value }).then(function (r) { if (r.status === 429) { err.textContent = r.data.error; err.hidden = false; } else { info.textContent = T('link_sent'); info.hidden = false; } });
+      } }, T('or_link')));
+    app.appendChild(form);
+    setTimeout(function () { email.focus(); }, 30);
+  }
+
+  /* ---------- home ---------- */
+  function renderHome(flash) {
+    api('GET', '/me').then(function (r) {
+      if (r.status === 401) return renderLogin(T('expired'));
+      me = r.data.user; csrf = r.data.csrf;
+      clear(); menu();
+      var p = r.data.progress, pct = p.total ? Math.round(p.answered / p.total * 100) : 0;
+      var card = h('section', { class: 'card or' },
+        h('p', { class: 'eye', text: T('signin_eye') }),
+        h('h1', { text: T('welcome', { name: (me.name || '').split(' ')[0] }) }),
+        h('p', { class: 'muted', text: T('welcome_sub') }),
+        h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(p.total), 'aria-valuenow': String(p.answered), 'aria-label': T('progress', { a: p.answered, t: p.total }) }, h('i', { style: 'width:' + pct + '%' })),
+        h('p', { class: 'small muted', style: 'font-variant-numeric:tabular-nums', text: T('progress', { a: p.answered, t: p.total }) }),
+        r.data.resume_question_id ? h('a', { class: 'btn block', style: 'margin-top:12px', href: '#/q/' + r.data.resume_question_id }, p.answered ? T('continue') : T('start')) : null);
+      if (flash) app.appendChild(h('p', { class: 'ok', role: 'status', text: flash }));
+      app.appendChild(card);
+      app.appendChild(h('h2', { style: 'margin-top:26px', text: T('sections') }));
+      app.appendChild(h('ul', { class: 'sections' }, r.data.sections.map(function (s) {
+        return h('li', null, h('button', { type: 'button', onclick: function () { location.hash = '#/q/' + (s.first_open_question_id || s.first_question_id); } },
+          h('span', { style: 'font-weight:700', text: (lang === 'es' ? s.title_es : s.title_en) }),
+          h('span', { class: 'st ' + s.status, text: T('st_' + s.status) }),
+          h('span', { class: 'cnt', text: T('count', { a: s.answered, t: s.total }) })));
+      })));
+    });
+  }
+
+  function menu() {
+    var b = document.getElementById('menuBtn');
+    b.hidden = false; b.textContent = T('signout');
+    b.onclick = function () { api('POST', '/logout', {}).then(function () { renderLogin(); }); };
+    var old = document.getElementById('adminLink'); if (old) old.remove();
+    if (me && me.role === 'admin') {
+      var a = h('a', { id: 'adminLink', class: 'pill', href: location.hash.indexOf('#/admin') === 0 ? '#/' : '#/admin', style: 'display:inline-flex;align-items:center;text-decoration:none' }, location.hash.indexOf('#/admin') === 0 ? T('back_home') : T('admin'));
+      b.parentNode.insertBefore(a, b);
+    }
+  }
+
+  /* ---------- one question per screen ---------- */
+  var current = null;
+  function stopCurrent() { if (current) { current.stop(); current = null; } }
+
+  function renderQuestion(id) {
+    api('GET', '/questions/' + encodeURIComponent(id)).then(function (r) {
+      if (r.status === 401) return renderLogin(T('expired'));
+      if (!r.ok) { location.hash = '#/'; return; }
+      clear(); menu();
+      var d = r.data, q = d.question;
+      var ta = h('textarea', { id: 'sme_answer', 'aria-labelledby': 'qText', placeholder: T('placeholder') });
+      ta.value = (d.answer && d.answer.answer_text) || '';
+      var lastSaved = ta.value, saving = false, timer = null, answerLang = lang; // dictation and the saved answer follow the screen language unless the SME picks the other one
+      var status = h('p', { class: 'save', role: 'status' }, d.answer && d.answer.updated_at ? T('saved', { time: new Date(d.answer.updated_at).toLocaleTimeString(lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit' }) }) : '');
+      function save(st) {
+        var text = ta.value;
+        if (!st && (text === lastSaved || saving)) return Promise.resolve(true);
+        saving = true; status.textContent = T('saving');
+        return api('PUT', '/answers/' + q.id, { answer_text: text, language: answerLang, status: st || 'draft' }).then(function (res) {
+          saving = false;
+          if (res.status === 401) { renderLogin(T('expired')); return false; }
+          if (!res.ok) { status.textContent = T('save_failed'); return false; }
+          lastSaved = text;
+          status.textContent = T('saved', { time: new Date().toLocaleTimeString(lang === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) });
+          return true;
+        }).catch(function () { saving = false; status.textContent = T('offline'); return false; });
+      }
+      timer = setInterval(function () { save(); }, 10000);
+      ta.addEventListener('blur', function () { save(); });
+
+      // Dictation: on-device browser speech recognition, English or Spanish, appended at the cursor.
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null, listening = false;
+      var dictLang = answerLang;
+      var micBtn = h('button', { type: 'button', class: 'mic', 'aria-pressed': 'false' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), T('dictate'));
+      var dl = h('select', { id: 'sme_dict_lang', 'aria-label': T('dict_lang'), style: 'width:auto;min-height:48px' }, h('option', { value: 'en', text: 'English' }), h('option', { value: 'es', text: 'Español' }));
+      dl.value = dictLang;
+      dl.addEventListener('change', function () { dictLang = dl.value; answerLang = dl.value; if (listening) { rec.stop(); } });
+      function insert(text) {
+        var s = ta.selectionStart != null ? ta.selectionStart : ta.value.length, e = ta.selectionEnd != null ? ta.selectionEnd : ta.value.length;
+        var before = ta.value.slice(0, s), after = ta.value.slice(e);
+        var pad = before && !/\s$/.test(before) ? ' ' : '';
+        ta.value = before + pad + text + after;
+        var pos = (before + pad + text).length; ta.selectionStart = ta.selectionEnd = pos;
+      }
+      function startDictation() {
+        if (!SR) return;
+        rec = new SR(); rec.lang = dictLang === 'es' ? 'es-US' : 'en-US'; rec.continuous = true; rec.interimResults = false;
+        rec.onresult = function (ev) { for (var i = ev.resultIndex; i < ev.results.length; i++) if (ev.results[i].isFinal) insert(ev.results[i][0].transcript.trim()); };
+        rec.onend = function () { if (listening) { try { rec.start(); } catch (e) { setListening(false); } } };
+        rec.onerror = function (ev) { if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') setListening(false); };
+        try { rec.start(); setListening(true); } catch (e) { setListening(false); }
+      }
+      function setListening(on) {
+        listening = on; micBtn.classList.toggle('on', on); micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        micBtn.lastChild.textContent = on ? T('stop') : T('dictate');
+        if (!on) { if (rec) { try { rec.onend = null; rec.stop(); } catch (e) {} } save(); }
+      }
+      micBtn.addEventListener('click', function () { if (listening) setListening(false); else startDictation(); });
+
+      function leave(to, st) {
+        if (listening) setListening(false);
+        var go = function () { clearInterval(timer); current = null; location.hash = to; };
+        (st || ta.value !== lastSaved ? save(st) : Promise.resolve(true)).then(function (ok) { if (ok !== false) go(); });
+      }
+      current = { stop: function () { clearInterval(timer); if (listening) setListening(false); save(); } };
+
+      var sectionTitle = lang === 'es' ? d.section.title_es : d.section.title_en;
+      var nextHash = d.next_question_id ? '#/q/' + d.next_question_id : '#/done';
+      app.appendChild(h('div', { class: 'qhead' },
+        h('p', { class: 'eye', text: T('section_of', { s: sectionTitle, n: d.section.position, t: d.section.total }) }),
+        h('a', { href: '#/', class: 'small', onclick: function (e) { e.preventDefault(); leave('#/'); } }, T('home'))));
+      app.appendChild(h('div', { class: 'bar', 'aria-hidden': 'true' }, h('i', { style: 'width:' + (d.progress.total ? Math.round(d.progress.answered / d.progress.total * 100) : 0) + '%' })));
+      app.appendChild(h('p', { class: 'small muted', style: 'margin:0;font-variant-numeric:tabular-nums', text: T('question_of', { n: d.position, t: d.total }) + ' · ' + T('progress', { a: d.progress.answered, t: d.progress.total }) }));
+      app.appendChild(h('h1', { class: 'qtext', id: 'qText', text: lang === 'es' ? q.text_es : q.text_en }));
+      var help = lang === 'es' ? q.help_es : q.help_en;
+      if (help) app.appendChild(h('p', { class: 'why' }, h('b', { text: T('why') }), h('span', { text: help })));
+      app.appendChild(h('div', { class: 'dict' }, SR ? [micBtn, dl] : h('p', { class: 'small muted', text: T('no_dictation') })));
+      app.appendChild(ta);
+      app.appendChild(h('div', { class: 'sticky' }, status, h('div', { class: 'nav' },
+        h('button', { type: 'button', class: 'btn block', style: 'grid-column:1/-1', onclick: function () { leave(d.section_ends ? '#/?done=' + (d.next_question_id ? 'section' : 'all') : nextHash, ta.value.trim() ? 'submitted' : null); } }, T('save_next')),
+        h('div', { class: 'row2' },
+          h('button', { type: 'button', class: 'btn sec', disabled: !d.prev_question_id, onclick: function () { if (d.prev_question_id) leave('#/q/' + d.prev_question_id); } }, T('back')),
+          h('button', { type: 'button', class: 'btn sec', onclick: function () { leave(nextHash === '#/done' ? '#/' : nextHash); } }, T('skip'))))));
+      setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) {} }, 50);
+    });
+  }
+
+  /* ---------- admin: accounts ---------- */
+  function renderAdmin() {
+    api('GET', '/admin/users').then(function (r) {
+      if (r.status === 401) return renderLogin(T('expired'));
+      if (!r.ok) { location.hash = '#/'; return; }
+      clear(); menu();
+      app.appendChild(h('h1', { text: T('users') }));
+      var rows = r.data.users.map(function (u) {
+        var note = h('p', { class: 'small ok', hidden: true });
+        return h('tr', null,
+          h('td', null, h('strong', { text: u.name }), h('div', { class: 'small muted', text: u.email }), note),
+          h('td', { text: u.role.toUpperCase() + ' · ' + u.language.toUpperCase() + (u.status === 'disabled' ? ' · ' + T('disable') : '') }),
+          h('td', { style: 'font-variant-numeric:tabular-nums', text: String(u.answered) }),
+          h('td', { class: 'small', text: u.last_login_at ? new Date(u.last_login_at).toLocaleString() : T('never') }),
+          h('td', null,
+            u.status === 'active' ? h('button', { type: 'button', class: 'link', onclick: function () {
+              api('POST', '/admin/users/' + u.id + '/magic-link', {}).then(function (x) { note.hidden = false; note.textContent = x.data.emailed ? T('link_emailed') : T('link_not_emailed', { reason: x.data.reason || x.data.error || '' }); });
+            } }, T('send_link')) : null,
+            me.id !== u.id ? h('button', { type: 'button', class: 'link', style: 'margin-left:10px', onclick: function () {
+              api('PATCH', '/admin/users/' + u.id, { status: u.status === 'active' ? 'disabled' : 'active' }).then(renderAdmin);
+            } }, u.status === 'active' ? T('disable') : T('enable')) : null));
+      });
+      app.appendChild(h('div', { class: 'card tablewrap' }, h('table', null, h('thead', null, h('tr', null, h('th', { text: T('name') }), h('th', { text: T('role') }), h('th', { text: T('answered_col') }), h('th', { text: T('last_login') }), h('th'))), h('tbody', null, rows))));
+      var out = h('div');
+      var f = {
+        name: h('input', { id: 'u_name', required: true, autocomplete: 'off' }), email: h('input', { id: 'u_email', type: 'email', required: true, autocomplete: 'off' }), phone: h('input', { id: 'u_phone', type: 'tel', autocomplete: 'off' }),
+        language: h('select', { id: 'u_lang' }, h('option', { value: 'en', text: 'English' }), h('option', { value: 'es', text: 'Español' })),
+        role: h('select', { id: 'u_role' }, h('option', { value: 'sme', text: 'SME' }), h('option', { value: 'admin', text: 'Admin' }))
+      };
+      app.appendChild(h('form', { class: 'card', style: 'margin-top:18px', novalidate: true, onsubmit: function (e) {
+        e.preventDefault(); while (out.firstChild) out.removeChild(out.firstChild);
+        api('POST', '/admin/users', { name: f.name.value, email: f.email.value, phone: f.phone.value, language: f.language.value, role: f.role.value }).then(function (x) {
+          if (!x.ok) { out.appendChild(h('p', { class: 'err', role: 'alert', text: x.data.error })); return; }
+          out.appendChild(h('p', { class: 'ok', text: x.data.user.email }));
+          if (x.data.temporary_password) { out.appendChild(h('p', { class: 'small muted', text: T('temp_pw') })); out.appendChild(h('div', { class: 'secret', text: x.data.temporary_password })); }
+          setTimeout(renderAdmin, 20000);
+        });
+      } },
+        h('h2', { text: T('add_user') }),
+        h('label', { for: 'u_name', text: T('name') }), f.name, h('label', { for: 'u_email', text: T('email') }), f.email, h('label', { for: 'u_phone', text: T('phone') }), f.phone,
+        h('label', { for: 'u_lang', text: T('language') }), f.language, h('label', { for: 'u_role', text: T('role') }), f.role,
+        h('button', { type: 'submit', class: 'btn', style: 'margin-top:18px' }, T('create')), out));
+    });
+  }
+
+  /* ---------- routing ---------- */
+  function route() {
+    stopCurrent();
+    if (!me) return;
+    var hsh = location.hash || '#/';
+    var m = /^#\/q\/(\d+)/.exec(hsh);
+    if (m) return renderQuestion(m[1]);
+    if (hsh.indexOf('#/admin') === 0 && me.role === 'admin') return renderAdmin();
+    var done = /done=(section|all)/.exec(hsh);
+    renderHome(done ? T(done[1] === 'all' ? 'all_done' : 'section_done') : null);
+  }
+  window.addEventListener('hashchange', route);
+  window.addEventListener('beforeunload', function () { stopCurrent(); });
+
+  function boot() {
+    api('GET', '/me').then(function (r) {
+      if (r.status === 401) { setLang(lang); return renderLogin(/link=expired/.test(location.search) ? T('link_expired') : null); }
+      me = r.data.user; csrf = r.data.csrf;
+      setLang(me.language || lang);
+      route();
+    }).catch(function () { renderLogin(T('offline')); });
+  }
+  setLang(lang);
+  boot();
+})();
+</script>
+</body>
+</html>

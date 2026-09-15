@@ -190,9 +190,22 @@ async function staffMessage(tenantId, to, m) {
   return { sent: sent > 0 };
 }
 
+/** SME knowledge capture: a single-use sign-in link (30 minutes) to an SME account's own address. */
+async function smeMagicLink(tenantId, userId, linkId, url, lang) {
+  const u = await db.one(`SELECT id, name, email FROM nca_sme_users WHERE id = :id AND tenant_id = :t AND status = 'active'`, { id: userId, t: tenantId });
+  if (!u) return { sent: false, reason: 'no_account' };
+  const es = lang === 'es';
+  const subject = es ? 'Su enlace para entrar a BuyersLine' : 'Your BuyersLine sign-in link';
+  const paragraphs = es
+    ? ['Use este enlace para entrar a su cuestionario de BuyersLine. Funciona una sola vez y vence en 30 minutos.', 'Si usted no lo pidió, ignore este correo.']
+    : ['Use this link to open your BuyersLine questionnaire. It works once and expires in 30 minutes.', 'If you did not ask for it, ignore this email.'];
+  const cta = { label: es ? 'Entrar' : 'Sign in', url };
+  return deliver(tenantId, 'email.sme_magic_link_' + linkId, u.id, { to: u.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${url}` }, 'sme_user');
+}
+
 /** Fire and forget: never let email delay or fail a buyer or agent request. */
 function later(fn, ...args) { setImmediate(() => { fn(...args).catch((e) => console.error('[incentiva] email', e.message)); }); }
 
 function _setSender(fn) { sender = fn; }
 
-module.exports = { configured, buyerReportReady, reviewerReportWaiting, buyerLeadReport, agentNewLead, buyerMessage, staffMessage, leadEmailConsent, publicUrl, later, _setSender };
+module.exports = { smeMagicLink, configured, buyerReportReady, reviewerReportWaiting, buyerLeadReport, agentNewLead, buyerMessage, staffMessage, leadEmailConsent, publicUrl, later, _setSender };
