@@ -1910,7 +1910,7 @@
 
     signout: async () => {
       try { await api('POST', '/auth/logout'); } catch (_) { /* leave anyway */ }
-      location.href = BASE + '/admin/login';
+      location.href = BASE + '/';
     },
 
     confirm: async (el) => {

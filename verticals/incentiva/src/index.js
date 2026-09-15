@@ -272,7 +272,18 @@ function createApp(opts = {}) {
       res.json({ ok: true, user: auth.publicUser(u) });
     } catch (e) { console.error('[incentiva] login', e); res.status(500).json({ error: 'Sign-in failed. Try again.' }); }
   });
-  router.post('/api/v1/auth/logout', (req, res) => { auth.setCookie(res, '', 0); res.json({ ok: true }); });
+  // Sign out ends BOTH sessions: the console cookie and the private-preview gate cookie. Clearing only the console
+  // cookie sent the owner straight back in, because /admin/login signs the gate owner into the console.
+  router.post('/api/v1/auth/logout', (req, res) => {
+    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    const base = req.baseUrl || '';
+    res.setHeader('Set-Cookie', [
+      `${auth.COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
+      `${archgate.COOKIE}=; Path=${base}/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
+      `${archgate.COOKIE}=; Path=${base}/architecture; HttpOnly; SameSite=Lax; Max-Age=0${secure}`
+    ]);
+    res.json({ ok: true });
+  });
   router.get('/api/v1/auth/me', auth.requireAgent(tenantId), (req, res) => res.json({ user: auth.publicUser(req.user) }));
 
   router.use('/api/v1/agent', auth.requireAgent(tenantId), require('./routes/agent')());

@@ -1526,6 +1526,10 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const sso = await fetch(BASE + '/admin/login', { redirect: 'manual', headers: { Cookie: owner } });
           eq(sso.status, 303, 'the gate owner was not taken into the admin dashboard'); eq(sso.headers.get('location'), '/buyersline/admin/');
           assert(/^incentiva_token=/.test(sso.headers.get('set-cookie') || ''), 'no console session for the gate owner');
+          const consoleCookie = (sso.headers.get('set-cookie') || '').split(';')[0];
+          const out = await fetch(BASE + '/api/v1/auth/logout', { method: 'POST', headers: { Cookie: owner + '; ' + consoleCookie } });
+          const cleared = out.headers.get('set-cookie') || '';
+          assert(/incentiva_token=;[^,]*Max-Age=0/.test(cleared) && /bl_arch=;[^,]*Path=\/buyersline\/;[^,]*Max-Age=0/.test(cleared), 'sign out must end the console AND the preview sign-in, or the owner is signed straight back in: ' + cleared);
           const noSso = await fetch(BASE + '/admin/login', { redirect: 'manual', headers: { Cookie: userCookie } });
           eq(noSso.status, 200, 'an approved preview login was signed in to the console');
           assert(!/incentiva_token=/.test(noSso.headers.get('set-cookie') || ''), 'a preview login received a console session');
