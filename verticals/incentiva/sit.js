@@ -30,6 +30,7 @@ delete process.env.RENTCAST_API_KEY;
 delete process.env.SENDGRID_API_KEY;
 process.env.INCENTIVA_RATE_FEED = 'off';
 process.env.INCENTIVA_AGENTS = 'off'; // never run the send loop from a test process
+process.env.INCENTIVA_SITE_GATE = 'off'; // the site gate is tested on its own below; every other test calls the site directly
 delete process.env.INCENTIVA_RESEARCH_MONTHLY_CAP; delete process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID; delete process.env.INCENTIVA_SMS_FROM; // no network: the Freddie Mac rate is injected where a test needs it // SIT must never send real mail; a fake sender is injected below
 delete process.env.INCENTIVA_EMAIL;
 delete process.env.RENTCAST_MONTHLY_CAP;
@@ -1226,7 +1227,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const ok = await post('ARCH-OWNER@example.test', 'sit-architecture-password-2026');
           eq(ok.status, 303);
           const cookie = (ok.headers.get('set-cookie') || '').split(';')[0];
-          assert(/^bl_arch=/.test(cookie) && /HttpOnly/i.test(ok.headers.get('set-cookie')) && /Path=\/buyersline\/architecture/.test(ok.headers.get('set-cookie')), 'cookie flags');
+          assert(/^bl_arch=/.test(cookie) && /HttpOnly/i.test(ok.headers.get('set-cookie')) && /Path=\/buyersline\/;/.test(ok.headers.get('set-cookie')), 'cookie flags');
           const page = await fetch(BASE + '/architecture', { headers: { Cookie: cookie } });
           eq(page.status, 200);
           const html = await page.text();
@@ -1245,6 +1246,46 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         } finally {
           if (saveU === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = saveU;
           if (saveP === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = saveP;
+        }
+      });
+      await t('site gate: with the gate on, every BuyersLine page and API needs the sign-in; health, the SMS webhook, one-click unsubscribe and the SME tool stay reachable', async () => {
+        const save = { u: process.env.INCENTIVA_ARCHITECTURE_USER, p: process.env.INCENTIVA_ARCHITECTURE_PASSWORD, g: process.env.INCENTIVA_SITE_GATE };
+        try {
+          process.env.INCENTIVA_SITE_GATE = 'on';
+          delete process.env.INCENTIVA_ARCHITECTURE_USER; delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD;
+          eq((await fetch(BASE + '/')).status, 503, 'the site must fail shut without credentials');
+          process.env.INCENTIVA_ARCHITECTURE_USER = 'gate-owner@example.test'; process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-site-gate-password-2026';
+          for (const p of ['/', '/admin/', '/search', '/r/abc', '/site.css', '/intake-chat.js', '/manifest.webmanifest', '/architecture']) {
+            const r = await fetch(BASE + p, { redirect: 'manual' });
+            eq(r.status, 401, 'not gated: ' + p);
+            assert(/noindex/.test(r.headers.get('x-robots-tag') || ''), 'gated response indexable: ' + p);
+          }
+          const home = await (await fetch(BASE + '/')).text();
+          assert(/name="password"/.test(home) && !/Talk to Ana|ecosystem-map|intake-chat/.test(home), 'login page missing or site content leaked');
+          const api = await fetch(BASE + '/api/v1/public/config'); eq(api.status, 401); eq((await api.json()).error, 'Sign in required');
+          eq((await fetch(BASE + '/api/v1/agent/today')).status, 401);
+          eq((await fetch(BASE + '/health')).status, 200, 'health must stay open');
+          assert((await fetch(BASE + '/api/v1/public/sms/inbound', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'From=%2B18135550000&Body=HELP' })).status !== 401, 'Twilio webhook gated');
+          assert((await fetch(BASE + '/api/v1/public/unsubscribe/not-a-real-token-00000', { method: 'POST' })).status !== 401, 'one-click unsubscribe gated');
+          eq((await (await fetch(BASE + '/architecture/sme/api/me')).json()).error, 'Please sign in.', 'the SME tool must answer with its own auth, not the site gate');
+          const post = (next) => fetch(BASE + '/gate/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'user=gate-owner%40example.test&password=sit-site-gate-password-2026&next=' + encodeURIComponent(next) });
+          const bad = await fetch(BASE + '/gate/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'user=gate-owner%40example.test&password=nope' });
+          eq(bad.status, 401);
+          const ok = await post('/buyersline/search?zip=33578');
+          eq(ok.status, 303); eq(ok.headers.get('location'), '/buyersline/search?zip=33578', 'return to the requested page');
+          for (const evil of ['//evil.example/x', 'https://evil.example', '/other-app']) eq((await post(evil)).headers.get('location'), '/buyersline/', 'open redirect via ' + evil);
+          const cookie = (ok.headers.get('set-cookie') || '').split(';')[0];
+          assert(/Path=\/buyersline\/;/.test(ok.headers.get('set-cookie')), 'the cookie must cover the whole site');
+          for (const p of ['/', '/search', '/architecture', '/api/v1/public/config']) eq((await fetch(BASE + p, { headers: { Cookie: cookie } })).status, 200, 'signed in but refused: ' + p);
+          const out = await fetch(BASE + '/gate/logout', { method: 'POST', redirect: 'manual', headers: { Cookie: cookie } });
+          assert(/Max-Age=0/.test(out.headers.get('set-cookie') || ''), 'logout');
+          process.env.INCENTIVA_SITE_GATE = 'off';
+          eq((await fetch(BASE + '/')).status, 200, 'INCENTIVA_SITE_GATE=off must open the site');
+          eq((await fetch(BASE + '/architecture')).status, 401, 'the architecture page must stay gated when the site opens');
+        } finally {
+          if (save.u === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = save.u;
+          if (save.p === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = save.p;
+          process.env.INCENTIVA_SITE_GATE = save.g;
         }
       });
       await t('the landing page carries the ecosystem map section (shared component, EN/ES) and an Architecture menu link', async () => {

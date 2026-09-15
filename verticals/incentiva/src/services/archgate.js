@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Sign-in gate for the architecture page (/architecture).
+ * Sign-in gate for the whole BuyersLine site while it is not public (owner request 2026-09-15), and always
+ * for the architecture page. INCENTIVA_SITE_GATE=off opens the site; the architecture page stays gated.
  *
  * THE CREDENTIAL HAS NO DEFAULT AND FAILS SHUT: with INCENTIVA_ARCHITECTURE_USER or
  * INCENTIVA_ARCHITECTURE_PASSWORD unset the page answers 503, never open. The page file lives in
@@ -73,7 +74,19 @@ function valid(req) {
 }
 function setCookie(req, res, value, maxAgeMs) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${COOKIE}=${encodeURIComponent(value)}; Path=${req.baseUrl || ''}/architecture; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAgeMs / 1000)}${secure}`);
+  const base = req.baseUrl || '';
+  const cookies = [`${COOKIE}=${encodeURIComponent(value)}; Path=${base}/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAgeMs / 1000)}${secure}`];
+  // The first version scoped the cookie to /architecture; clear that one so it cannot shadow the site cookie.
+  cookies.push(`${COOKIE}=; Path=${base}/architecture; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
+  res.setHeader('Set-Cookie', cookies);
+}
+function siteGateOn() { return process.env.INCENTIVA_SITE_GATE !== 'off'; }
+/** A post-login destination: only a path inside this mount, never another host or a protocol-relative URL. */
+function safeNext(base, next) {
+  const n = String(next || '');
+  const root = (base || '') + '/';
+  if (!n.startsWith(root) || n.startsWith('//') || /[\\\r\n]/.test(n) || n.includes('/../') || n.length > 500) return root;
+  return n;
 }
 
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -95,17 +108,18 @@ button{margin-top:20px;width:100%;min-height:46px;font:800 16px/1 Mulish,system-
 </style></head><body><main>${inner}</main></body></html>`;
 }
 
-function loginPage(base, error) {
-  return page(base, 'Architecture sign in', `<form class="card" method="post" action="${esc(base)}/architecture/login" novalidate>
-<p class="eye">BuyersLine · Architecture</p><h1>Sign in</h1>
+function loginPage(base, error, next) {
+  return page(base, 'Sign in', `<form class="card" method="post" action="${esc(base)}/architecture/login" novalidate>
+<p class="eye">BuyersLine · Private preview</p><h1>Sign in</h1>
+<input type="hidden" name="next" value="${esc(safeNext(base, next))}">
 <label for="arch_user">User ID</label><input id="arch_user" name="user" autocomplete="username" required autofocus>
 <label for="arch_pass">Password</label><input id="arch_pass" name="password" type="password" autocomplete="current-password" required>
 ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}<button type="submit">Sign in</button>
 <p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></form>`);
 }
 function closedPage(base) {
-  return page(base, 'Architecture closed', `<div class="card"><p class="eye">BuyersLine · Architecture</p><h1>This page is closed</h1>
+  return page(base, 'Closed', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>This site is closed</h1>
 <p class="muted">It opens once its sign-in is configured on the server.</p><p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></div>`);
 }
 
-module.exports = { clean, COOKIE, TTL_MS, configured, weak, check, sign, valid, setCookie, loginPage, closedPage };
+module.exports = { clean, siteGateOn, safeNext, COOKIE, TTL_MS, configured, weak, check, sign, valid, setCookie, loginPage, closedPage };

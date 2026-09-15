@@ -65,9 +65,40 @@ function createApp(opts = {}) {
       listings: require('./services/rentcast').configured() ? 'rentcast_connected' : 'not_connected',
       report_review: process.env.INCENTIVA_REPORT_REVIEW === 'auto' ? 'auto_when_compliance_passes' : 'agent_approval_required',
       agents: require('./services/agents').status(),
+      site_gate: require('./services/archgate').siteGateOn() ? 'on' : 'off',
       architecture_page: require('./services/archgate').configured() ? (require('./services/archgate').weak() ? 'configured_weak_password' : 'configured') : 'closed',
       transports: require('./services/notify').configured() ? 'email only (SendGrid): report-ready to buyers who consented, approval alerts to the reviewer' : 'none (nothing auto-sends)'
     });
+  });
+
+  // ── Site gate (owner request 2026-09-15): the whole site needs the architecture sign-in until it is public ──
+  // INCENTIVA_ARCHITECTURE_USER / _PASSWORD (no defaults, fails shut). INCENTIVA_SITE_GATE=off opens the site.
+  // Left open on purpose: /health (service state only), the Twilio SMS webhook (signature-checked), the RFC 8058
+  // one-click unsubscribe POST from mail clients, and the SME tool, which has its own accounts and emailed links.
+  const archgate = require('./services/archgate');
+  function gateHeaders(res) { res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Robots-Tag', 'noindex, nofollow'); }
+  router.post(['/gate/login', '/architecture/login'], express.urlencoded({ extended: false, limit: '4kb' }), (req, res) => {
+    gateHeaders(res);
+    const next = archgate.safeNext(req.baseUrl, (req.body || {}).next || req.baseUrl + '/');
+    if (!archgate.configured()) return res.status(503).type('html').send(archgate.closedPage(req.baseUrl));
+    if (!rateLimit('arch:' + ipHash(req), 10, 15 * 60e3)) return res.status(429).type('html').send(archgate.loginPage(req.baseUrl, 'Too many attempts. Wait 15 minutes.', next));
+    const b = req.body || {};
+    if (!archgate.check(b.user, b.password)) return res.status(401).type('html').send(archgate.loginPage(req.baseUrl, 'User ID or password is incorrect.', next));
+    archgate.setCookie(req, res, archgate.sign(Date.now() + archgate.TTL_MS), archgate.TTL_MS);
+    res.redirect(303, next);
+  });
+  router.post(['/gate/logout', '/architecture/logout'], (req, res) => { archgate.setCookie(req, res, '', 0); res.redirect(303, req.baseUrl + '/'); });
+  // SME knowledge capture: its own accounts and single-use emailed links, so it sits outside the site gate.
+  router.use('/architecture/sme', require('./sme/routes')(tenantId));
+  router.use((req, res, next) => {
+    if (!archgate.siteGateOn()) return next();
+    if (req.path === '/api/v1/public/sms/inbound' || (req.method === 'POST' && /^\/api\/v1\/public\/unsubscribe\/[A-Za-z0-9_-]+$/.test(req.path))) return next();
+    gateHeaders(res);
+    if (!archgate.configured()) return req.path.startsWith('/api/') ? res.status(503).json({ error: 'Closed' }) : res.status(503).type('html').send(archgate.closedPage(req.baseUrl));
+    if (archgate.valid(req)) return next();
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Sign in required' });
+    if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(401).type('text').send('Sign in required');
+    res.status(401).type('html').send(archgate.loginPage(req.baseUrl, null, req.originalUrl));
   });
 
   // PWA: manifests and worker are generated per mount (src/services/pwa.js). Registered before static.
@@ -84,29 +115,15 @@ function createApp(opts = {}) {
   router.get(['/admin', '/admin/'], shell('admin.html'));
   router.get('/meet/:token', shell('meet.html'));
   router.get('/unsubscribe/:token', shell('unsubscribe.html'));
-  // Architecture page: signed-in only. The file lives in src/views, never in the public static folder.
-  const archgate = require('./services/archgate');
+  // Architecture page: always signed-in (the site gate below may be off; this page never is).
   const archView = path.join(__dirname, 'views', 'architecture.html');
-  function archHeaders(res) { res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Robots-Tag', 'noindex, nofollow'); res.setHeader('Content-Type', 'text/html; charset=utf-8'); }
   router.get('/architecture', (req, res) => {
-    archHeaders(res);
-    if (!archgate.configured()) return res.status(503).send(archgate.closedPage(req.baseUrl));
-    if (!archgate.valid(req)) return res.status(401).send(archgate.loginPage(req.baseUrl));
-    try { res.send(fs.readFileSync(archView, 'utf8').split('{{BASE}}').join(req.baseUrl)); }
+    gateHeaders(res);
+    if (!archgate.configured()) return res.status(503).type('html').send(archgate.closedPage(req.baseUrl));
+    if (!archgate.valid(req)) return res.status(401).type('html').send(archgate.loginPage(req.baseUrl, null, req.originalUrl));
+    try { res.type('html').send(fs.readFileSync(archView, 'utf8').split('{{BASE}}').join(req.baseUrl)); }
     catch (e) { res.status(500).send('Page unavailable'); }
   });
-  router.post('/architecture/login', express.urlencoded({ extended: false, limit: '4kb' }), (req, res) => {
-    archHeaders(res);
-    if (!archgate.configured()) return res.status(503).send(archgate.closedPage(req.baseUrl));
-    if (!rateLimit('arch:' + ipHash(req), 10, 15 * 60e3)) return res.status(429).send(archgate.loginPage(req.baseUrl, 'Too many attempts. Wait 15 minutes.'));
-    const b = req.body || {};
-    if (!archgate.check(b.user, b.password)) return res.status(401).send(archgate.loginPage(req.baseUrl, 'User ID or password is incorrect.'));
-    archgate.setCookie(req, res, archgate.sign(Date.now() + archgate.TTL_MS), archgate.TTL_MS);
-    res.redirect(303, req.baseUrl + '/architecture');
-  });
-  // SME knowledge capture (signed-in questionnaire; its own accounts, not the architecture gate).
-  router.use('/architecture/sme', require('./sme/routes')(tenantId));
-  router.post('/architecture/logout', (req, res) => { archgate.setCookie(req, res, '', 0); res.redirect(303, req.baseUrl + '/architecture'); });
   router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html', '/meet.html', '/unsubscribe.html', '/architecture.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 
   router.use('/api/v1/public', require('./routes/public')({ tenantId, allowModel: opts.allowModel, allowGeocode: opts.allowGeocode }));
