@@ -277,23 +277,23 @@ async function siteLoginRequested(tenantId, account, ownerEmail) {
   const to = String(process.env.INCENTIVA_SITE_APPROVER_EMAILS || ownerEmail || '').split(',').map((x) => x.trim()).filter(Boolean);
   if (!to.length) return { sent: false, reason: 'no_approver' };
   const subject = 'BuyersLine login waiting for approval';
-  const paragraphs = [`${account.email} created a login for the BuyersLine private preview.`, 'It cannot sign in until you approve it.'];
+  const paragraphs = [`${account.email} created a login for the BuyersLine.`, 'It cannot sign in until you approve it.'];
   const cta = { label: 'Review logins', url: `${publicUrl()}/gate/accounts` };
-  return deliver(tenantId, 'email.site_login_requested', account.id, { to, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+  return deliver(tenantId, 'email.site_login_requested', account.id, { to, subject, html: layout(subject, paragraphs, cta, 'BuyersLine.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
 }
 
 async function siteLoginApproved(tenantId, account) {
   const subject = 'Your BuyersLine login is approved';
-  const paragraphs = ['Your login for the BuyersLine private preview is approved. Sign in with the email and password you chose.'];
+  const paragraphs = ['Your login for BuyersLine is approved. Sign in with the email and password you chose.'];
   const cta = { label: 'Sign in', url: `${publicUrl()}/gate/login` };
-  return deliver(tenantId, 'email.site_login_approved', account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+  return deliver(tenantId, 'email.site_login_approved', account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
 }
 
 async function sitePasswordReset(tenantId, account, token) {
   const subject = 'Reset your BuyersLine password';
   const paragraphs = ['Use this link to choose a new password. It works once and expires in one hour.', 'If you did not ask for it, ignore this email; your password stays the same.'];
   const cta = { label: 'Choose a new password', url: `${publicUrl()}/gate/reset?t=${encodeURIComponent(token)}` };
-  return deliver(tenantId, 'email.site_password_reset_' + Date.now().toString(36), account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine private preview.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
+  return deliver(tenantId, 'email.site_password_reset_' + Date.now().toString(36), account.id, { to: account.email, subject, html: layout(subject, paragraphs, cta, 'BuyersLine.'), text: paragraphs.join('\n\n') + `\n\n${cta.label}: ${cta.url}` }, 'site_user');
 }
 
 /** Fire and forget: never let email delay or fail a buyer or agent request. */

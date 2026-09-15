@@ -254,10 +254,10 @@ ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}${notice ? `<p cl
 <p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></form>`);
 }
 function signupPage(base, error, done) {
-  if (done) return page(base, 'Account created', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>Request received</h1>
+  if (done) return page(base, 'Account created', `<div class="card"><p class="eye">BuyersLine</p><h1>Request received</h1>
 <p>Your login is waiting for approval. The owner reviews every new login, and you'll get an email as soon as yours is approved.</p><p class="muted"><a href="${esc(base)}/gate/login">Back to sign in</a></p></div>`);
   return page(base, 'Create a login', `<form class="card" method="post" action="${esc(base)}/gate/signup" novalidate>
-<p class="eye">BuyersLine · Private preview</p><h1>Create a login</h1>
+<p class="eye">BuyersLine</p><h1>Create a login</h1>
 <label for="su_email">Email</label><input id="su_email" name="email" type="email" autocomplete="email" required autofocus>
 ${pw('su_pass', 'password', 'Password', 'new-password')}
 ${pw('su_pass2', 'confirm', 'Verify password', 'new-password')}
@@ -266,19 +266,19 @@ ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}<button class="go
 <div class="row"><a href="${esc(base)}/gate/login">I already have a login</a></div></form>`);
 }
 function forgotPage(base, error, sent) {
-  if (sent) return page(base, 'Check your email', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>Check your email</h1>
+  if (sent) return page(base, 'Check your email', `<div class="card"><p class="eye">BuyersLine</p><h1>Check your email</h1>
 <p>If that email has an approved login, a reset link is on its way. It works once and expires in one hour.</p><p class="muted"><a href="${esc(base)}/gate/login">Back to sign in</a></p></div>`);
   return page(base, 'Forgot password', `<form class="card" method="post" action="${esc(base)}/gate/forgot" novalidate>
-<p class="eye">BuyersLine · Private preview</p><h1>Forgot password</h1>
+<p class="eye">BuyersLine</p><h1>Forgot password</h1>
 <label for="fg_email">Email</label><input id="fg_email" name="email" type="email" autocomplete="email" required autofocus>
 ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}<button class="go" type="submit">Email me a reset link</button>
 <div class="row"><a href="${esc(base)}/gate/login">Back to sign in</a></div></form>`);
 }
 function resetPage(base, tok, error, expired) {
-  if (expired) return page(base, 'Link expired', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>This link has expired</h1>
+  if (expired) return page(base, 'Link expired', `<div class="card"><p class="eye">BuyersLine</p><h1>This link has expired</h1>
 <p>Reset links work once and expire after one hour.</p><p class="muted"><a href="${esc(base)}/gate/forgot">Request a new link</a></p></div>`);
   return page(base, 'Choose a new password', `<form class="card" method="post" action="${esc(base)}/gate/reset" novalidate>
-<p class="eye">BuyersLine · Private preview</p><h1>Choose a new password</h1>
+<p class="eye">BuyersLine</p><h1>Choose a new password</h1>
 <input type="hidden" name="t" value="${esc(tok)}">
 ${pw('rs_pass', 'password', 'New password', 'new-password')}
 ${pw('rs_pass2', 'confirm', 'Verify password', 'new-password')}
@@ -287,13 +287,13 @@ ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}<button class="go
 function accountsPage(base, rows) {
   const tr = rows.map((r) => `<tr><td>${esc(r.email)}</td><td><span class="st ${esc(r.status)}">${esc(r.status)}</span></td><td>${esc(new Date(r.created_at).toISOString().slice(0, 10))}</td>
 <td><form class="acts" method="post" action="${esc(base)}/gate/accounts/${Number(r.id)}">${r.status !== 'approved' ? '<button class="yes" name="decision" value="approve">Approve</button>' : ''}${r.status === 'pending' ? '<button name="decision" value="reject">Reject</button>' : ''}${r.status === 'approved' ? '<button name="decision" value="disable">Disable</button>' : ''}</form></td></tr>`).join('');
-  return page(base, 'Logins', `<div class="card wide"><p class="eye">BuyersLine · Private preview</p><h1>Logins waiting for you</h1>
+  return page(base, 'Logins', `<div class="card wide"><p class="eye">BuyersLine</p><h1>Logins waiting for you</h1>
 <p class="muted">People create a login; it works only after you approve it here. Only the owner sign-in can see this page.</p>
 <div class="scroll"><table><thead><tr><th>Email</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>${tr || '<tr><td colspan="4" class="muted">No logins yet.</td></tr>'}</tbody></table></div>
 <p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></div>`);
 }
 function closedPage(base) {
-  return page(base, 'Closed', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>This site is closed</h1>
+  return page(base, 'Closed', `<div class="card"><p class="eye">BuyersLine</p><h1>This site is closed</h1>
 <p class="muted">It opens once its sign-in is configured on the server.</p><p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></div>`);
 }
 
