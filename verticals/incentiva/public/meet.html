@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Your consult · BuyersLine</title>
+<script>(function(){try{var t=localStorage.getItem('incentiva_theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){}})();</script>
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="{{BASE}}/site.css">
+<script>window.BL_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/theme.js" defer></script>
+</head>
+<body>
+<main class="meet-wrap" id="meet" aria-live="polite">
+  <p class="eyebrow"><a href="{{BASE}}/" style="text-decoration:none;color:inherit">BuyersLine</a></p>
+  <h1 id="meetTitle">Your consult</h1>
+  <p id="meetBody" class="lede">Loading…</p>
+  <div id="meetActions"></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var BASE = window.BL_BASE && window.BL_BASE.indexOf('{{') === -1 ? window.BL_BASE : '';
+  var tok = location.pathname.split('/').pop();
+  var L = {
+    en: { title: 'Your consult', with: 'Free 30-minute consult with {agent}', when: '{when}', booked: 'Booked', cancelled: 'This consult was cancelled.', held: 'This consult took place.', no_show: 'This consult was missed.',
+      cancel: 'Cancel this consult', cancel_q: 'Cancel this consult?', cancelled_ok: 'Cancelled. Our agent has been told.', rate: 'How was your consult?', comment: 'Anything we should know? (optional)', send: 'Send', thanks: 'Thank you. Your feedback helps us improve.',
+      tip: 'Please do not visit or sign in at a builder sales office before you talk: registering with your agent first keeps your free representation.', missing: 'We could not find this consult.', err: 'Something went wrong. Try again.', license: 'License' },
+    es: { title: 'Su consulta', with: 'Consulta gratuita de 30 minutos con {agent}', when: '{when}', booked: 'Reservada', cancelled: 'Esta consulta se canceló.', held: 'Esta consulta ya se realizó.', no_show: 'Esta consulta no se realizó.',
+      cancel: 'Cancelar esta consulta', cancel_q: '¿Cancelar esta consulta?', cancelled_ok: 'Cancelada. Le avisamos a nuestro agente.', rate: '¿Cómo le fue en su consulta?', comment: '¿Algo que debamos saber? (opcional)', send: 'Enviar', thanks: 'Gracias. Su opinión nos ayuda a mejorar.',
+      tip: 'Por favor, no visite ni se registre en una oficina de ventas de una constructora antes de hablar: registrarse primero con su agente conserva su representación sin costo.', missing: 'No encontramos esta consulta.', err: 'Algo salió mal. Inténtelo de nuevo.', license: 'Licencia' }
+  };
+  var T = L.en;
+  function $(id) { return document.getElementById(id); }
+  function el(tag, attrs, text) { var e = document.createElement(tag); if (attrs) Object.keys(attrs).forEach(function (k) { if (k === 'onclick') e.addEventListener('click', attrs[k]); else e.setAttribute(k, attrs[k]); }); if (text != null) e.textContent = text; return e; }
+  function fill(s, v) { return s.replace(/\{(\w+)\}/g, function (_, k) { return v[k] != null ? v[k] : ''; }); }
+  function call(method, path, body) {
+    return fetch(BASE + path, { method: method, headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, data: d }; }); });
+  }
+  function load() {
+    call('GET', '/api/v1/public/meetings/' + encodeURIComponent(tok)).then(function (r) {
+      var act = $('meetActions'); act.textContent = '';
+      if (!r.ok) { $('meetBody').textContent = L.en.missing + ' / ' + L.es.missing; return; }
+      var m = r.data; T = L[m.lang === 'es' ? 'es' : 'en']; document.documentElement.lang = m.lang === 'es' ? 'es' : 'en';
+      $('meetTitle').textContent = T.title;
+      var agent = m.agent ? m.agent.name + (m.agent.license_no ? ' · ' + T.license + ' ' + m.agent.license_no : '') : '';
+      $('meetBody').textContent = fill(T.with, { agent: agent }) + '. ' + m.label + '.';
+      if (m.status === 'cancelled') act.appendChild(el('p', null, T.cancelled));
+      if (m.status === 'no_show') act.appendChild(el('p', null, T.no_show));
+      if (m.status === 'booked' && m.can_cancel) {
+        act.appendChild(el('p', { class: 'small' }, T.tip));
+        act.appendChild(el('button', { type: 'button', class: 'btn btn-secondary', onclick: function () {
+          if (!window.confirm(T.cancel_q)) return;
+          call('POST', '/api/v1/public/meetings/' + encodeURIComponent(tok) + '/cancel').then(function (c) { if (c.ok) { act.textContent = ''; act.appendChild(el('p', { role: 'status' }, T.cancelled_ok)); } else alert(T.err); });
+        } }, T.cancel));
+      }
+      if (m.can_feedback) {
+        var rating = 0;
+        act.appendChild(el('h2', null, T.rate));
+        var stars = el('div', { class: 'meet-stars', role: 'group', 'aria-label': T.rate });
+        [1, 2, 3, 4, 5].forEach(function (n) {
+          stars.appendChild(el('button', { type: 'button', class: 'btn btn-secondary', 'aria-pressed': 'false', 'aria-label': n + ' / 5', onclick: function () {
+            rating = n; Array.prototype.forEach.call(stars.children, function (b, i) { b.setAttribute('aria-pressed', i + 1 === n ? 'true' : 'false'); });
+          } }, String(n)));
+        });
+        act.appendChild(stars);
+        var lab = el('label', { for: 'meetComment', class: 'small' }, T.comment);
+        var ta = el('textarea', { id: 'meetComment', rows: '3', maxlength: '1000', style: 'width:100%;font:inherit;padding:10px;border-radius:10px' });
+        act.appendChild(lab); act.appendChild(ta);
+        act.appendChild(el('button', { type: 'button', class: 'btn btn-primary', style: 'margin-top:10px', onclick: function () {
+          if (!rating) { stars.firstChild.focus(); return; }
+          call('POST', '/api/v1/public/meetings/' + encodeURIComponent(tok) + '/feedback', { rating: rating, comment: ta.value }).then(function (f) { if (f.ok) { act.textContent = ''; act.appendChild(el('p', { role: 'status' }, T.thanks)); } else alert(T.err); });
+        } }, T.send));
+      } else if (m.feedback_given) act.appendChild(el('p', null, T.thanks));
+    }).catch(function () { $('meetBody').textContent = T.err; });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Unsubscribe · BuyersLine</title>
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="{{BASE}}/site.css">
+<script>window.BL_BASE='{{BASE}}';</script>
+</head>
+<body>
+<main class="meet-wrap" aria-live="polite">
+  <p class="eyebrow"><a href="{{BASE}}/" style="text-decoration:none;color:inherit">BuyersLine</a></p>
+  <h1>Stop BuyersLine updates · Dejar de recibir novedades</h1>
+  <p class="lede">Choose what to stop. Your report stays available. · Elija qué dejar de recibir. Su informe sigue disponible.</p>
+  <div class="mch-chips" id="unsubActions">
+    <button type="button" class="btn btn-primary" data-ch="email">Stop emails · Dejar los correos</button>
+    <button type="button" class="btn btn-secondary" data-ch="email,sms">Stop emails and texts · Correos y mensajes</button>
+  </div>
+  <p id="unsubStatus" role="status"></p>
+</main>
+<script>
+(function () {
+  var BASE = window.BL_BASE && window.BL_BASE.indexOf('{{') === -1 ? window.BL_BASE : '';
+  var tok = location.pathname.split('/').pop();
+  Array.prototype.forEach.call(document.querySelectorAll('#unsubActions button'), function (b) {
+    b.addEventListener('click', function () {
+      b.disabled = true;
+      fetch(BASE + '/api/v1/public/unsubscribe/' + encodeURIComponent(tok), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channels: b.getAttribute('data-ch').split(',') }) })
+        .then(function (r) {
+          document.getElementById('unsubStatus').textContent = r.ok ? 'Done. You will not receive these updates. · Listo. No recibirá estas novedades.' : 'This link is not valid. · Este enlace no es válido.';
+          if (r.ok) document.getElementById('unsubActions').hidden = true; else b.disabled = false;
+        }).catch(function () { b.disabled = false; });
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -557,3 +557,77 @@ CREATE TABLE IF NOT EXISTS nca_lead_selections (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS nca_lead_selections_uq ON nca_lead_selections (lead_id, research_row_id);
 CREATE INDEX IF NOT EXISTS nca_lead_selections_tenant_idx ON nca_lead_selections (tenant_id, lead_id);
+
+-- ── Agents 5-7: Rachel follow-up, Hand-off, Scheduler (2026-09-14) ─────────
+-- Readiness is computed by rules (engines/readiness.js), never by a model.
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS readiness_score INTEGER;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS readiness_tier VARCHAR(10);
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS readiness_reasons JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS agent_brief TEXT;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS agent_opening TEXT;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS first_response_at TIMESTAMPTZ;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS no_response_alerted_at TIMESTAMPTZ;
+ALTER TABLE nca_leads ADD COLUMN IF NOT EXISTS unsubscribe_token VARCHAR(40);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_leads_unsub_uq ON nca_leads (unsubscribe_token) WHERE unsubscribe_token IS NOT NULL;
+
+-- Every follow-up touch Rachel plans, one row per channel. Consent is re-checked at SEND time.
+CREATE TABLE IF NOT EXISTS nca_followups (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  lead_id INTEGER NOT NULL REFERENCES nca_leads(id) ON DELETE CASCADE,
+  kind VARCHAR(20) NOT NULL CHECK (kind IN ('cadence','promo_change')),
+  day_offset INTEGER,
+  channel VARCHAR(10) NOT NULL CHECK (channel IN ('email','sms')),
+  scheduled_for TIMESTAMPTZ NOT NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','sending','sent','skipped','failed')),
+  reason VARCHAR(80),
+  change_key VARCHAR(200),
+  detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS nca_followups_due_idx ON nca_followups (tenant_id, status, scheduled_for);
+CREATE INDEX IF NOT EXISTS nca_followups_lead_idx ON nca_followups (tenant_id, lead_id);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_followups_uq ON nca_followups (lead_id, kind, channel, COALESCE(day_offset, -1), COALESCE(change_key, ''));
+
+-- The licensed agent's weekly booking hours, minutes after midnight Eastern time.
+CREATE TABLE IF NOT EXISTS nca_agent_hours (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  agent_id INTEGER NOT NULL,
+  weekday SMALLINT NOT NULL CHECK (weekday BETWEEN 0 AND 6),
+  start_min SMALLINT NOT NULL CHECK (start_min BETWEEN 0 AND 1440),
+  end_min SMALLINT NOT NULL CHECK (end_min BETWEEN 0 AND 1440),
+  CHECK (end_min > start_min)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_agent_hours_uq ON nca_agent_hours (tenant_id, agent_id, weekday);
+
+CREATE TABLE IF NOT EXISTS nca_lead_meetings (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  lead_id INTEGER NOT NULL REFERENCES nca_leads(id) ON DELETE CASCADE,
+  agent_id INTEGER NOT NULL,
+  token VARCHAR(40) NOT NULL,
+  starts_at TIMESTAMPTZ NOT NULL,
+  duration_min SMALLINT NOT NULL DEFAULT 30,
+  kind VARCHAR(20) NOT NULL DEFAULT 'consult' CHECK (kind IN ('consult','phone')),
+  status VARCHAR(12) NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','cancelled','held','no_show')),
+  reminder_24h_at TIMESTAMPTZ,
+  reminder_2h_at TIMESTAMPTZ,
+  feedback_requested_at TIMESTAMPTZ,
+  buyer_rating SMALLINT CHECK (buyer_rating BETWEEN 1 AND 5),
+  buyer_comment TEXT,
+  buyer_feedback_at TIMESTAMPTZ,
+  agent_outcome VARCHAR(30),
+  agent_note TEXT,
+  agent_feedback_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_lead_meetings_token_uq ON nca_lead_meetings (token);
+CREATE UNIQUE INDEX IF NOT EXISTS nca_lead_meetings_slot_uq ON nca_lead_meetings (tenant_id, agent_id, starts_at) WHERE status = 'booked';
+CREATE INDEX IF NOT EXISTS nca_lead_meetings_lead_idx ON nca_lead_meetings (tenant_id, lead_id);
+
+-- Double opt-in (security review 2026-09-14): texts start only after the buyer replies YES to one
+-- confirmation text; marketing follow-up emails start only after the buyer opens their emailed report link.
+ALTER TABLE nca_lead_consents ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;

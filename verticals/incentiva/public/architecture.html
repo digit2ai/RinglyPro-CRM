@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BuyersLine Architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="How BuyersLine works: one brain (Ana), six AI agents and one licensed Florida sales associate, with every price, payment and score computed by deterministic rules.">
+<meta name="theme-color" content="#0E0C1F">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Mulish:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E0C1F; --bg2:#141130; --card:rgba(24,21,50,.78); --card-solid:#17142F;
+  --line:rgba(166,163,189,.16); --line2:rgba(166,163,189,.28);
+  --ink:#ECEAF6; --mut:#A6A3BD; --faint:#8783A3;
+  --or:#FC4C02; --or-soft:#FF7A3D; --cy:#5CC8E6; --gr:#7FD39A; --am:#F2B84B;
+  --sans:"Mulish",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --gutter:clamp(16px,4vw,40px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;font:400 16px/1.6 var(--sans);color:var(--ink);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(900px 600px at 50% 8%,rgba(252,76,2,.10),transparent 70%),
+    radial-gradient(700px 520px at 85% 40%,rgba(92,200,230,.06),transparent 70%),
+    radial-gradient(1px 1px at 12% 18%,rgba(236,234,246,.45),transparent 60%),
+    radial-gradient(1px 1px at 72% 12%,rgba(236,234,246,.35),transparent 60%),
+    radial-gradient(1px 1px at 38% 62%,rgba(236,234,246,.25),transparent 60%),
+    radial-gradient(1px 1px at 91% 74%,rgba(236,234,246,.35),transparent 60%),
+    radial-gradient(1px 1px at 6% 88%,rgba(236,234,246,.3),transparent 60%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--sans);text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+a{color:var(--cy)}
+:focus-visible{outline:2px solid var(--or);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1240px;margin-inline:auto;padding-inline:var(--gutter)}
+.mono{font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.eyebrow{font:600 12px/1.4 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--or-soft)}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.brand b{font:900 20px/1 var(--sans);letter-spacing:-.01em}
+.brand span{font:600 11px/1 var(--mono);letter-spacing:.2em;color:var(--mut);text-transform:uppercase;padding-left:12px;border-left:1px solid var(--line2)}
+.top-tag{font:600 11px/1.3 var(--mono);letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+
+/* hero */
+.hero{padding-block:28px 12px;text-align:center}
+.hero h1{font-weight:900;font-size:clamp(30px,5vw,56px);letter-spacing:-.02em;margin-top:14px;max-width:24ch;margin-inline:auto}
+.hero h1 em{display:block}
+.hero h1 em{font-style:normal;color:var(--or)}
+.detail{text-align:left}
+.hero .lede{color:var(--mut);max-width:62ch;margin:16px auto 0;font-size:clamp(15px,1.6vw,18px)}
+
+/* diagram */
+.diagram{margin-top:28px}
+.stage{position:relative;width:100%;max-width:1200px;margin-inline:auto;aspect-ratio:1200/760;container-type:inline-size}
+.stage svg.bg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ring{fill:none;stroke:rgba(166,163,189,.13);stroke-width:1}
+.ring.dash{stroke-dasharray:2 7;animation:spin 60s linear infinite}
+.ring.dash.rev{animation-direction:reverse;animation-duration:90s}
+@keyframes spin{to{stroke-dashoffset:-400}}
+.link{stroke:rgba(92,200,230,.34);stroke-width:1.4;stroke-dasharray:5 7;animation:flow 2.4s linear infinite;transition:stroke .3s}
+.link.human{stroke:rgba(252,76,2,.32)}
+.link.on{stroke:var(--or);stroke-width:2;stroke-dasharray:6 5;animation-duration:.9s}
+@keyframes flow{to{stroke-dashoffset:-48}}
+.core-glow{animation:breathe 3.2s ease-in-out infinite;transform-origin:600px 380px}
+@keyframes breathe{50%{opacity:.55;transform:scale(1.06)}}
+
+.node{
+  position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);
+  width:15.2%;font-size:clamp(8.5px,.92cqw,12px);
+  padding:1.35em .85em .95em;border-radius:1em;text-align:center;cursor:pointer;
+  color:var(--ink);font-family:var(--sans);
+  background:linear-gradient(180deg,rgba(32,28,66,.94),rgba(18,16,40,.94));
+  border:1px solid rgba(92,200,230,.30);
+  box-shadow:0 .6em 1.8em rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);
+  transition:border-color .3s,box-shadow .3s,transform .3s;
+}
+.node:hover{border-color:rgba(92,200,230,.7)}
+.node .pin{position:absolute;top:-.62em;left:50%;width:1em;height:1em;margin-left:-.5em;border-radius:50%;background:var(--gr);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(127,211,154,.8)}
+.node .pin.setup{background:linear-gradient(90deg,var(--gr) 50%,var(--am) 50%);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(242,184,75,.7)}
+.node .bar{display:flex;justify-content:center;gap:.3em;margin-bottom:.55em}
+.node .bar i{width:.32em;height:.32em;border-radius:50%;background:rgba(166,163,189,.35)}
+.node .bar i:first-child{width:1.6em;border-radius:.2em}
+.nlabel{display:block;font:700 1em/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--cy)}
+.nsub{display:block;margin-top:.4em;font-size:1.05em;line-height:1.3;color:var(--mut)}
+.node.human{border-color:rgba(252,76,2,.55);border-style:solid;background:linear-gradient(180deg,rgba(52,26,30,.9),rgba(24,16,34,.94))}
+.node.human .nlabel{color:var(--or-soft)}
+.node.human .pin{background:var(--or);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(252,76,2,.8)}
+.node.human .tagh{display:inline-block;margin-bottom:.5em;font:700 .8em/1 var(--mono);letter-spacing:.14em;color:var(--or-soft);border:1px solid rgba(252,76,2,.45);border-radius:99px;padding:.3em .6em}
+.node.on{border-color:var(--cy);box-shadow:0 0 0 1px rgba(92,200,230,.5),0 0 2.2em rgba(92,200,230,.35),0 .6em 1.8em rgba(0,0,0,.35)}
+.node.human.on{border-color:var(--or);box-shadow:0 0 0 1px rgba(252,76,2,.6),0 0 2.2em rgba(252,76,2,.4)}
+.node[aria-pressed="true"]::before,.brain[aria-pressed="true"]::before{content:"";position:absolute;inset:-7px;border-radius:calc(1.2em + 7px);border:1px solid rgba(236,234,246,.38);pointer-events:none}
+.node::after,.brain::after{content:"";position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--or);opacity:0;pointer-events:none}
+.node.ping::after,.brain.ping::after{animation:ping .7s ease-out}
+@keyframes ping{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.14)}}
+
+.brain{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:27%;
+  font-size:clamp(8.5px,.98cqw,12.5px);text-align:left;cursor:pointer;color:var(--ink);font-family:var(--sans);
+  padding:1.3em 1.3em 1.1em;border-radius:1.2em;
+  background:linear-gradient(180deg,#221B3F,#15122D);
+  border:1px solid rgba(252,76,2,.6);
+  box-shadow:0 0 0 1px rgba(252,76,2,.15),0 0 3.5em rgba(252,76,2,.28),0 1.2em 3em rgba(0,0,0,.5);
+}
+.brain .bhead{display:flex;justify-content:space-between;align-items:center;gap:.6em}
+.brain .btitle{font:700 .92em/1 var(--mono);letter-spacing:.16em;color:var(--or-soft)}
+.brain .live{font:700 .8em/1 var(--mono);letter-spacing:.12em;color:var(--gr);display:inline-flex;align-items:center;gap:.45em}
+.brain .live::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--gr);box-shadow:0 0 .7em var(--gr);animation:blink 2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+.brain .bname{display:block;font:900 3.3em/1 var(--sans);letter-spacing:.04em;margin:.28em 0 .2em;color:#fff;text-shadow:0 0 .5em rgba(252,76,2,.55)}
+.brain .bnote{display:block;color:var(--mut);font-size:.98em;margin-bottom:.8em}
+.brow{display:block;border-top:1px solid var(--line2);padding:.7em 0 .6em}
+.brow .rl{display:block;font:700 .82em/1.2 var(--mono);letter-spacing:.13em;color:var(--cy)}
+.brow .rt{display:block;color:var(--ink);font-size:1em;margin-top:.25em;line-height:1.35}
+.brow.orch .rl{color:var(--or-soft)}
+.dots{display:flex;gap:.45em;margin-top:.55em}
+.dots i{flex:1;height:.4em;border-radius:.2em;background:rgba(166,163,189,.2);transition:background .3s,box-shadow .3s}
+.dots i.done{background:rgba(252,76,2,.45)}
+.dots i.now{background:var(--or);box-shadow:0 0 .7em var(--or)}
+.now-label{display:block;font:600 .9em/1.3 var(--mono);letter-spacing:.08em;margin-top:.55em;color:var(--ink);min-height:1.3em}
+.now-label b{color:var(--or-soft);font-weight:700}
+
+.dfoot{margin-top:18px;text-align:center;font:600 12px/1.5 var(--mono);letter-spacing:.2em;color:var(--mut)}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;margin-top:12px;font:500 11.5px/1.4 var(--mono);letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px dashed var(--cy)}
+.legend i.or{border-top-style:solid;border-color:var(--or)}
+.legend i.dot{width:10px;height:10px;border:0;border-radius:50%;background:var(--gr)}
+.legend i.dot.am{background:var(--am)}
+.legend i.hum{width:14px;height:10px;border:1.5px solid var(--or);border-radius:3px}
+
+/* detail panel */
+.detail{margin:26px auto 0;max-width:1200px;border:1px solid var(--line2);border-radius:18px;background:linear-gradient(180deg,rgba(28,24,58,.85),rgba(17,15,36,.85));padding:clamp(18px,3vw,30px);scroll-margin-top:16px}
+.detail-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.detail-top .hint{font:500 11.5px/1.4 var(--mono);letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.detail .agent{border:0;background:none;padding:0;box-shadow:none}
+.detail .agent-body{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:28px}
+@media (max-width:820px){.detail .agent-body{grid-template-columns:1fr;gap:16px}}
+
+/* sections */
+section.block{padding-block:clamp(56px,8vw,96px) 0}
+.shead{max-width:760px;margin-bottom:28px}
+.shead h2{font-weight:900;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.015em;margin-top:10px}
+.shead p{color:var(--mut);margin-top:12px;max-width:66ch}
+.intro{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,4vw,56px);align-items:start}
+.intro .big{font-size:clamp(17px,1.9vw,21px);line-height:1.6;color:var(--ink)}
+.intro .big strong{color:var(--or-soft);font-weight:800}
+.pillars{display:grid;gap:12px}
+.pillar{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.pillar .k{font:700 11px/1 var(--mono);letter-spacing:.14em;color:var(--cy);padding:6px 8px;border:1px solid rgba(92,200,230,.35);border-radius:8px;white-space:nowrap}
+.pillar.h .k{color:var(--or-soft);border-color:rgba(252,76,2,.45)}
+.pillar p{color:var(--mut);font-size:15px}
+.pillar p b{color:var(--ink);font-weight:700}
+@media (max-width:820px){.intro{grid-template-columns:1fr}}
+
+/* roster */
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,350px),1fr));gap:18px}
+.agent{position:relative;border:1px solid var(--line2);border-radius:18px;background:var(--card);padding:22px 22px 20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.roster .agent:first-child{border-color:rgba(252,76,2,.55);background:linear-gradient(180deg,rgba(52,28,40,.55),rgba(24,21,50,.8))}
+.agent-hd{display:flex;flex-direction:column;gap:8px}
+.agent-no{font:700 11px/1 var(--mono);letter-spacing:.16em;color:var(--cy);text-transform:uppercase}
+.agent.brainc .agent-no,.agent.humanc .agent-no{color:var(--or-soft)}
+.agent h3{font-weight:900;font-size:22px;letter-spacing:-.01em}
+.status{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;font:700 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 9px;border-radius:99px;border:1px solid}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.live{color:var(--gr);border-color:rgba(127,211,154,.4);background:rgba(127,211,154,.08)}
+.chip.setup{color:var(--am);border-color:rgba(242,184,75,.45);background:rgba(242,184,75,.08)}
+.chip.none{color:var(--mut);border-color:var(--line2)}
+.fn{color:var(--ink);margin-top:14px;font-size:15.5px}
+.facts{margin:16px 0 0;display:grid;gap:0}
+.facts>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.facts dt{font:700 10.5px/1.6 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.facts dd{margin:0;color:var(--mut);font-size:14.5px;line-height:1.5}
+.facts dd strong{color:var(--ink);font-weight:700}
+.facts ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.facts li{position:relative;padding-left:16px}
+.facts li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:2px;background:var(--or)}
+@media (max-width:420px){.facts>div{grid-template-columns:1fr;gap:4px}}
+.detail .fn{margin-top:12px;font-size:16.5px}
+.detail .agent h3{font-size:clamp(22px,2.6vw,28px)}
+.detail .facts{margin-top:0}
+.detail .facts>div:first-child{border-top:0;padding-top:0}
+
+/* flow */
+.flow{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s;position:relative}
+.flow li{position:relative;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:18px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+.flow li:last-child{border-bottom:1px solid var(--line)}
+.flow .n{font:700 22px/1 var(--mono);color:var(--or);font-variant-numeric:tabular-nums;display:grid;place-items:center;width:48px;height:48px;border-radius:12px;border:1px solid rgba(252,76,2,.4);background:rgba(252,76,2,.06)}
+.flow .t{font-size:16.5px;color:var(--ink)}
+.flow .t span{display:block;color:var(--mut);font-size:14px;margin-top:2px}
+.who{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.w{font:700 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:6px 9px;border-radius:7px;border:1px solid;white-space:nowrap}
+.w.b{color:var(--ink);border-color:var(--line2);background:rgba(236,234,246,.05)}
+.w.a{color:var(--cy);border-color:rgba(92,200,230,.4);background:rgba(92,200,230,.07)}
+.w.h{color:var(--or-soft);border-color:rgba(252,76,2,.45);background:rgba(252,76,2,.07)}
+@media (max-width:720px){.flow li{grid-template-columns:48px minmax(0,1fr);gap:10px 14px}.flow .who{grid-column:2;justify-content:flex-start}}
+
+/* layers */
+.layers{display:grid;gap:10px}
+.layer{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:center;padding:16px 20px;border:1px solid var(--line);border-radius:14px;background:var(--card);position:relative}
+.layer .ln{font:700 12px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--cy)}
+.layer .ln small{display:block;font:500 12px/1.4 var(--sans);letter-spacing:0;text-transform:none;color:var(--faint);margin-top:4px}
+.layer ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.layer li{font-size:14px;color:var(--ink);padding:7px 11px;border-radius:9px;border:1px solid var(--line2);background:rgba(14,12,31,.55);line-height:1.35}
+.layer li b{font-weight:700;color:var(--ink)}
+.layer li span{color:var(--mut)}
+.layer.brainl{border-color:rgba(252,76,2,.45)}
+.layer.brainl .ln,.layer.humanl .ln{color:var(--or-soft)}
+.layer.humanl{border-color:rgba(252,76,2,.45);border-style:dashed}
+.layer.engines .ln{color:var(--gr)}
+@media (max-width:760px){.layer{grid-template-columns:1fr;gap:12px;padding:16px}}
+
+/* guardrails */
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:14px}
+.rule{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.rule .rk{font:700 11px/1 var(--mono);letter-spacing:.14em;color:var(--gr);font-variant-numeric:tabular-nums}
+.rule h3{font-size:17px;font-weight:800;margin-top:10px;line-height:1.3}
+.rule p{color:var(--mut);font-size:14px;margin-top:8px}
+
+/* checklist */
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:10px;max-width:900px}
+.checks li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.box{width:22px;height:22px;border-radius:6px;border:2px solid var(--am)}
+.checks li.nb .box{border-color:var(--faint);border-style:dashed}
+.checks b{display:block;font-weight:800;font-size:16px}
+.checks span.d{display:block;color:var(--mut);font-size:14px;margin-top:2px}
+@media (max-width:560px){.checks li{grid-template-columns:28px minmax(0,1fr)}.checks li .chip{grid-column:2;justify-self:start}}
+
+footer.foot{margin-top:clamp(64px,9vw,110px);border-top:1px solid var(--line);padding-block:28px 40px;color:var(--faint);font-size:13.5px}
+footer.foot .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
+footer.foot .mono{font-size:11px;letter-spacing:.16em}
+
+/* stacked diagram on narrow screens */
+@media (max-width:960px){
+  .stage{aspect-ratio:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px;container-type:normal;padding-top:6px}
+  .stage svg.bg{display:none}
+  .node,.brain{position:relative;left:auto;top:auto;transform:none;width:auto;font-size:12px}
+  .node{order:2}
+  .node[data-node="buyer"]{order:0;grid-column:1/-1}
+  .brain{order:1;grid-column:1/-1;font-size:13px}
+  .node[data-node="licensed"]{order:3;grid-column:1/-1}
+  .node .nsub{font-size:13px}
+}
+@media (max-width:380px){.stage{grid-template-columns:1fr}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="brand" href="./" aria-label="BuyersLine home">
+    <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#26213F" stroke="#FC4C02" stroke-opacity=".6"/><path d="M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-9 8v-8h-7a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z" fill="#fff"/><path d="M22 34l10-8 10 8" fill="none" stroke="#26213F" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="35" r="3" fill="#FC4C02"/></svg>
+    <b>BuyersLine</b><span>Architecture</span>
+  </a>
+  <span class="top-tag">DIGIT2AI + Ole · Tampa Bay</span>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <p class="eyebrow">System map · new-construction homes</p>
+    <h1>One brain. Seven agents. <em>One licensed human.</em></h1>
+    <p class="lede">BuyersLine is a free platform that helps people buy new-construction homes in Tampa Bay. It is a technology platform, not a brokerage and not a lender. This page shows what runs underneath it.</p>
+
+    <div class="diagram" role="group" aria-label="BuyersLine brain and agents diagram">
+      <div class="stage" id="stage">
+        <svg class="bg" viewBox="0 0 1200 760" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="gcore" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#FC4C02" stop-opacity=".38"/>
+              <stop offset="1" stop-color="#FC4C02" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <g id="stars"></g>
+          <ellipse class="ring" cx="600" cy="380" rx="590" ry="372"/>
+          <ellipse class="ring dash rev" cx="600" cy="380" rx="500" ry="290"/>
+          <ellipse class="ring" cx="600" cy="380" rx="380" ry="220"/>
+          <ellipse class="ring dash" cx="600" cy="380" rx="260" ry="160"/>
+          <circle class="core-glow" cx="600" cy="380" r="250" fill="url(#gcore)"/>
+          <g id="links">
+            <line class="link human" data-link="buyer" x1="600" y1="380" x2="100" y2="380"/>
+            <line class="link" data-link="researcher" x1="600" y1="380" x2="246" y2="175"/>
+            <line class="link" data-link="reader" x1="600" y1="380" x2="600" y2="90"/>
+            <line class="link" data-link="writer" x1="600" y1="380" x2="954" y2="175"/>
+            <line class="link human" data-link="licensed" x1="600" y1="380" x2="1100" y2="380"/>
+            <line class="link" data-link="handoff" x1="600" y1="380" x2="954" y2="585"/>
+            <line class="link" data-link="scheduler" x1="600" y1="380" x2="600" y2="670"/>
+            <line class="link" data-link="rachel" x1="600" y1="380" x2="246" y2="585"/>
+          </g>
+          <g id="pulse" opacity="0">
+            <circle r="9" fill="#FC4C02" opacity=".18"/>
+            <circle class="trail2" r="3" fill="#FF7A3D" opacity=".35"/>
+            <circle class="trail1" r="4" fill="#FF7A3D" opacity=".6"/>
+            <circle class="head" r="5.5" fill="#FFB48F" filter="url(#glow)"/>
+          </g>
+        </svg>
+
+        <button class="node human" type="button" data-node="buyer" data-name="Buyer" data-x="100" data-y="380" style="--x:8.333%;--y:50%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="tagh">HUMAN</span>
+          <span class="nlabel">Buyer</span>
+          <span class="nsub">web chat · voice</span>
+        </button>
+
+        <button class="node" type="button" data-node="researcher" data-name="Promotions Researcher" data-x="246" data-y="175" style="--x:20.5%;--y:23.03%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Promotions Researcher</span>
+          <span class="nsub">web search · builders</span>
+        </button>
+
+        <button class="node" type="button" data-node="reader" data-name="Incentive Reader" data-x="600" data-y="90" style="--x:50%;--y:11.84%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Incentive Reader</span>
+          <span class="nsub">builder pages · emails</span>
+        </button>
+
+        <button class="node" type="button" data-node="writer" data-name="Report Writer" data-x="954" data-y="175" style="--x:79.5%;--y:23.03%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Report Writer</span>
+          <span class="nsub">EN/ES · plain language</span>
+        </button>
+
+        <button class="node human" type="button" data-node="licensed" data-name="Licensed Agent" data-x="1100" data-y="380" style="--x:91.667%;--y:50%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="tagh">HUMAN IN THE LOOP</span>
+          <span class="nlabel">Licensed Agent</span>
+          <span class="nsub">verify · approve · meet</span>
+        </button>
+
+        <button class="node" type="button" data-node="handoff" data-name="Hand-off" data-x="954" data-y="585" style="--x:79.5%;--y:76.97%" aria-pressed="false">
+          <span class="pin setup" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Hand-off</span>
+          <span class="nsub">readiness · agent brief</span>
+        </button>
+
+        <button class="node" type="button" data-node="scheduler" data-name="Scheduler" data-x="600" data-y="670" style="--x:50%;--y:88.16%" aria-pressed="false">
+          <span class="pin" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Scheduler</span>
+          <span class="nsub">booking · reminders · feedback</span>
+        </button>
+
+        <button class="node" type="button" data-node="rachel" data-name="Rachel Follow-up" data-x="246" data-y="585" style="--x:20.5%;--y:76.97%" aria-pressed="false">
+          <span class="pin setup" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="nlabel">Rachel Follow-up</span>
+          <span class="nsub">email · SMS · 90 days</span>
+        </button>
+
+        <button class="brain" type="button" data-node="ana" data-name="Ana" aria-pressed="true" aria-label="BuyersLine brain: Ana. Show details">
+          <span class="bhead"><span class="btitle">BUYERSLINE BRAIN</span><span class="live">LIVE</span></span>
+          <span class="bname">ANA</span>
+          <span class="bnote">The buyer's only conversational contact</span>
+          <span class="brow"><span class="rl">CORE · LIVE CONTEXT</span><span class="rt">Reads the page state every turn</span></span>
+          <span class="brow"><span class="rl">CORE · PAGE ACTIONS</span><span class="rt">Fill · choose · estimate · scroll · create report</span></span>
+          <span class="brow orch"><span class="rl">ORCHESTRATOR · 7 AGENTS · 1 HUMAN</span>
+            <span class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="now-label" id="nowLabel" aria-hidden="true"><b>NOW</b> · ONE BRAIN, EVERY AGENT</span>
+          </span>
+        </button>
+      </div>
+
+      <p class="dfoot">7 AI AGENTS · 1 LICENSED HUMAN · RULES DECIDE EVERY NUMBER</p>
+      <div class="legend" aria-hidden="true">
+        <span><i></i>Data link</span>
+        <span><i class="or"></i>Active signal</span>
+        <span><i class="hum"></i>Human</span>
+        <span><i class="dot"></i>Live</span>
+        <span><i class="dot am"></i>Needs setup</span>
+      </div>
+    </div>
+
+    <section class="detail" id="detail" aria-live="polite" aria-labelledby="detailLabel">
+      <div class="detail-top">
+        <span class="eyebrow" id="detailLabel">Selected node</span>
+        <span class="hint">Select any node in the diagram to inspect it</span>
+      </div>
+      <div id="detailBody"></div>
+    </section>
+  </div>
+
+  <!-- 1. Intro -->
+  <section class="block" aria-labelledby="s1">
+    <div class="wrap intro">
+      <div>
+        <p class="eyebrow">01 · The model</p>
+        <div class="shead" style="margin-bottom:18px"><h2 id="s1">One brain, seven agents</h2></div>
+        <p class="big">Buyers talk <strong>only to Ana</strong>. Ana reads the live state of the page and drives the other agents. A <strong>licensed agent</strong> verifies promotions and meets the buyer. Every price, payment and score is computed by <strong>deterministic rules</strong>, never by a model.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar"><span class="k">ONE VOICE</span><p><b>Ana is the single point of contact</b> by chat or voice, in English and Spanish. The other agents work behind her.</p></div>
+        <div class="pillar"><span class="k">LIVE PAGE</span><p><b>She sees what the buyer sees:</b> answers so far, what is missing, the communities on screen and the calculator result.</p></div>
+        <div class="pillar h"><span class="k">HUMAN</span><p><b>A licensed Florida sales associate</b> verifies every promotion before it can reach a report, and meets the buyer.</p></div>
+        <div class="pillar"><span class="k">RULES</span><p><b>Models write words.</b> Buying power, payments, fit ranking and readiness come from fixed engines.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Roster -->
+  <section class="block" aria-labelledby="s2">
+    <div class="wrap">
+      <div class="shead">
+        <p class="eyebrow">02 · Agent roster</p>
+        <h2 id="s2">Who does what</h2>
+        <p>Seven AI agents. Each one has a trigger, a model or rule set, and guardrails written in code.</p>
+      </div>
+      <div class="roster">
+
+        <article class="agent brainc" id="agent-ana">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">01 · Brain</span>
+                <h3>Ana, the guide</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">The buyer's only conversational contact, by voice or chat, in English and Spanish. Knows the whole process, never repeats a question, answers, then returns to the next step.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd><strong>Claude Haiku</strong></dd></div>
+              <div><dt>Trigger</dt><dd>The buyer talks or types</dd></div>
+              <div><dt>Inputs</dt><dd>Live page state: answers, missing items, communities on screen, calculator result</dd></div>
+              <div><dt>Outputs</dt><dd>Record answers · choose communities the buyer named · run the buying power calculator · scroll to a section · create the report after a clear yes</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Cannot tick contact consent boxes</li>
+                <li>Creates the report only after a clear yes plus a 5-second cancel</li>
+                <li>Offline mode speaks the question on screen</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-researcher">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">02 · Agent</span>
+                <h3>Promotions Researcher</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">Searches builder websites for current promotions, rates and closing-cost offers near the buyer's area.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd><strong>Claude Sonnet</strong> with web search</dd></div>
+              <div><dt>Trigger</dt><dd>Stage 3 of the conversation. Results cached 24 hours per area and shared.</dd></div>
+              <div><dt>Inputs</dt><dd>The buyer's area, looked up on the server from ZIP and place</dd></div>
+              <div><dt>Outputs</dt><dd>Promotion rows per community for the buyer to choose from</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>"Source found" only when the search actually returned the source</li>
+                <li>Expired, placeholder and fair-housing-flagged rows hidden</li>
+                <li>No links shown to buyers</li>
+                <li>Monthly cap</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-reader">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">03 · Agent</span>
+                <h3>Incentive Reader</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">Reads builder web pages and pasted broker emails and extracts each incentive.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd><strong>Claude Sonnet</strong>, keyword fallback</dd></div>
+              <div><dt>Trigger</dt><dd>A builder page is checked, or a broker email is pasted into the console</dd></div>
+              <div><dt>Inputs</dt><dd>Builder web pages · pasted broker emails</dd></div>
+              <div><dt>Outputs</dt><dd>One incentive per offer, waiting for the licensed agent to verify</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Any headline not verbatim in the source is discarded</li>
+                <li>Any amount, rate or date not in the source becomes a question for the licensed agent</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-writer">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">04 · Agent</span>
+                <h3>Report Writer</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">Writes the plain-language explanation in the report, in English and Spanish.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd><strong>Claude Sonnet</strong>, template fallback</dd></div>
+              <div><dt>Trigger</dt><dd>A report is created</dd></div>
+              <div><dt>Inputs</dt><dd>Figures already computed by the engines: communities, payments, verified incentives</dd></div>
+              <div><dt>Outputs</dt><dd>The report's explanation in English and Spanish</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>A rewrite that adds any number or proper noun is thrown away</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-rachel">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">05 · Agent</span>
+                <h3>Rachel, follow-up</h3>
+                <div class="status"><span class="chip live">Live for email</span><span class="chip setup">SMS needs sender setup</span></div>
+              </header>
+              <p class="fn">Keeps in touch for 90 days in the buyer's language, and alerts when a promotion in a community they chose changes or disappears.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Runs on</dt><dd>Fixed bilingual messages on days <strong>1, 3, 7, 14, 30, 60, 90</strong> (texts on 1, 7, 30, 90) · Claude Haiku may reword one opening sentence, discarded if it adds a figure or a name</dd></div>
+              <div><dt>Trigger</dt><dd>A lead is saved · a promotion in a chosen community changes or disappears</dd></div>
+              <div><dt>Inputs</dt><dd>The buyer's language, contact choices and chosen communities</dd></div>
+              <div><dt>Channels</dt><dd>Email · SMS when the buyer consented and a sender number is configured · WhatsApp not built yet</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Only channels the buyer ticked, re-checked at send time</li>
+                <li>Double opt-in: texts only after the buyer replies YES, follow-up emails only after they open their report link</li>
+                <li>Quiet hours 8 pm to 9 am Eastern for SMS</li>
+                <li>Promotion alerts compare two AI research runs and say the offer is unconfirmed until the agent checks it</li>
+                <li>One-click unsubscribe</li>
+                <li>STOP honored</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-handoff">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">06 · Agent</span>
+                <h3>Hand-off agent</h3>
+                <div class="status"><span class="chip live">Live (email)</span><span class="chip setup">SMS brief needs sender setup</span></div>
+              </header>
+              <p class="fn">Scores readiness with fixed rules into Hot, Warm or Nurture, sends the licensed agent a buyer brief within a minute, and alerts the owner when a new lead has no agent response after 4 hours.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Runs on</dt><dd>Fixed scoring rules (the score is never a model) · Claude Haiku may reword the suggested opening line, discarded if it adds a figure or a name</dd></div>
+              <div><dt>Trigger</dt><dd>Every saved lead is scored · the agent is alerted only when the buyer agreed to agent contact</dd></div>
+              <div><dt>Inputs</dt><dd>Timing · financing · communities chosen · agent status · visits · phone</dd></div>
+              <div><dt>Outputs</dt><dd>Hot, Warm or Nurture with reasons · buyer brief and suggested opening to the licensed agent · alert to the owner and the agent after 4 hours with no response</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Only leads that agreed to agent contact</li>
+                <li>The brief carries no contact details outside the console</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="agent" id="agent-scheduler">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">07 · Agent</span>
+                <h3>Scheduler</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">Lets the buyer book a 30-minute consult inside the agent's weekly hours, sends reminders, then asks buyer and agent how the meeting went.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Runs on</dt><dd>Rules only, no model: the licensed agent's weekly hours (Monday to Friday, 9 to 5 until set in the console) and existing bookings</dd></div>
+              <div><dt>Trigger</dt><dd>The buyer books a consult</dd></div>
+              <div><dt>Inputs</dt><dd>Open 30-minute slots in Eastern time</dd></div>
+              <div><dt>Outputs</dt><dd>A booked consult · reminders <strong>24 hours</strong> and <strong>2 hours</strong> before · a how-did-it-go question to buyer and agent</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Only leads that agreed to agent contact</li>
+                <li>Times in Eastern time, at least 2 hours ahead</li>
+                <li>No double booking, one active consult per buyer</li>
+                <li>Reminder texts only with text consent</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+      </div>
+
+      <template id="tpl-buyer">
+        <article class="agent humanc">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">Human · Start of every journey</span>
+                <h3>Buyer</h3>
+                <div class="status"><span class="chip live">Live</span></div>
+              </header>
+              <p class="fn">Opens BuyersLine and talks to Ana by web chat or voice, in English or Spanish. The buyer answers, chooses communities, and makes their own contact choices.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd>None: a person</dd></div>
+              <div><dt>Trigger</dt><dd>Opens BuyersLine</dd></div>
+              <div><dt>Inputs</dt><dd>Ana's questions · the buying power estimate · promotions found near their area</dd></div>
+              <div><dt>Outputs</dt><dd>Answers · chosen communities · contact choices · a booked consult</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Contact boxes are always the buyer's own tap</li>
+                <li>Nothing sends without consent</li>
+                <li>A buyer under contract with another agent is not contacted</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+      </template>
+
+      <template id="tpl-licensed">
+        <article class="agent humanc">
+          <div class="agent-body">
+            <div>
+              <header class="agent-hd">
+                <span class="agent-no">Human in the loop</span>
+                <h3>Licensed agent</h3>
+                <div class="status"><span class="chip live">Console live</span><span class="chip setup">Needs real license number and weekly hours</span></div>
+              </header>
+              <p class="fn">Ole, a licensed Florida real estate sales associate. Verifies promotions before they can reach a report, approves reports, manages leads and meets the buyer.</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Model</dt><dd>None: a licensed person</dd></div>
+              <div><dt>Trigger</dt><dd>An incentive to verify · a report to approve · a buyer brief · a booked consult</dd></div>
+              <div><dt>Inputs</dt><dd>Incentives from the Incentive Reader · briefs from Hand-off · meetings from the Scheduler</dd></div>
+              <div><dt>Outputs</dt><dd>Verified incentives · approved or held reports · meetings held</dd></div>
+              <div><dt>Guardrails</dt><dd><ul>
+                <li>Only a licensed account can verify an incentive</li>
+                <li>Sees only the buyers assigned to them</li>
+              </ul></dd></div>
+            </dl>
+          </div>
+        </article>
+      </template>
+    </div>
+  </section>
+
+  <!-- 3. Flow -->
+  <section class="block" aria-labelledby="s3">
+    <div class="wrap">
+      <div class="shead">
+        <p class="eyebrow">03 · Sequence</p>
+        <h2 id="s3">How a buyer moves through it</h2>
+        <p>Eight steps from first question to a met agent and 90 days of follow-up. The chips show who acts.</p>
+      </div>
+      <ol class="flow">
+        <li><span class="n">1</span><p class="t">Buyer opens BuyersLine and talks to Ana<span>Web chat or voice, English or Spanish</span></p><div class="who"><span class="w b">Buyer</span><span class="w a">Ana</span></div></li>
+        <li><span class="n">2</span><p class="t">Where and money questions<span>Optional buying power estimate, computed by rules</span></p><div class="who"><span class="w b">Buyer</span><span class="w a">Ana</span></div></li>
+        <li><span class="n">3</span><p class="t">Promotions Researcher searches the area<span>The buyer chooses communities</span></p><div class="who"><span class="w a">Promotions Researcher</span><span class="w b">Buyer</span></div></li>
+        <li><span class="n">4</span><p class="t">About them, and two protective questions<span>Including whether they already work with another agent</span></p><div class="who"><span class="w b">Buyer</span><span class="w a">Ana</span></div></li>
+        <li><span class="n">5</span><p class="t">Buyer ticks contact choices and Ana creates the report<span>After a clear yes and a 5-second cancel</span></p><div class="who"><span class="w b">Buyer</span><span class="w a">Ana</span><span class="w a">Report Writer</span></div></li>
+        <li><span class="n">6</span><p class="t">Hand-off scores readiness and briefs the licensed agent<span>Hot, Warm or Nurture, brief within a minute</span></p><div class="who"><span class="w a">Hand-off</span><span class="w h">Licensed agent</span></div></li>
+        <li><span class="n">7</span><p class="t">Scheduler books the consult with reminders<span>30 minutes, Eastern time, reminders 24 and 2 hours before</span></p><div class="who"><span class="w a">Scheduler</span><span class="w b">Buyer</span><span class="w h">Licensed agent</span></div></li>
+        <li><span class="n">8</span><p class="t">Rachel follows up for 90 days and flags promotion changes<span>Only on the channels the buyer ticked</span></p><div class="who"><span class="w a">Rachel</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 4. Layers -->
+  <section class="block" aria-labelledby="s4">
+    <div class="wrap">
+      <div class="shead">
+        <p class="eyebrow">04 · Stack</p>
+        <h2 id="s4">Architecture layers</h2>
+        <p>From the buyer's screen down to the database, and the one human layer that signs off.</p>
+      </div>
+      <div class="layers">
+        <div class="layer"><div class="ln">Channels<small>How people reach it</small></div>
+          <ul><li><b>Web chat</b></li><li><b>Voice orb</b> <span>on-device speech recognition · Microsoft Edge neural voice</span></li><li><b>Email</b> <span>SendGrid</span></li><li><b>SMS</b> <span>Twilio</span></li></ul></div>
+        <div class="layer brainl"><div class="ln">Brain<small>One conversational contact</small></div>
+          <ul><li><b>Ana</b></li><li><b>Live page context</b></li><li><b>Page actions</b></li></ul></div>
+        <div class="layer"><div class="ln">AI agents<small>Behind Ana</small></div>
+          <ul><li>Promotions Researcher</li><li>Incentive Reader</li><li>Report Writer</li><li>Rachel follow-up</li><li>Hand-off</li><li>Scheduler</li></ul></div>
+        <div class="layer engines"><div class="ln">Deterministic engines<small>Every number comes from here</small></div>
+          <ul><li>Buying power</li><li>Payments <span>Year 1 and Year 3+</span></li><li>Community fit ranking</li><li>Readiness score</li><li>Compliance check</li><li>Freshness</li><li>Builder page monitor</li></ul></div>
+        <div class="layer"><div class="ln">Data<small>One store</small></div>
+          <ul><li><b>PostgreSQL</b></li><li>Tables prefixed <b>nca_</b></li><li>Every row scoped by tenant</li></ul></div>
+        <div class="layer"><div class="ln">External sources<small>Read, never trusted blindly</small></div>
+          <ul><li>Anthropic Claude</li><li>Freddie Mac mortgage rate survey</li><li>ZIP and place lookup</li><li>Builder websites</li></ul></div>
+        <div class="layer humanl"><div class="ln">Human<small>Licensed agent console</small></div>
+          <ul><li>Verify promotions</li><li>Approve reports</li><li>Manage leads</li><li>Manage meetings</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Guardrails -->
+  <section class="block" aria-labelledby="s5">
+    <div class="wrap">
+      <div class="shead">
+        <p class="eyebrow">05 · Enforcement</p>
+        <h2 id="s5">Guardrails that are code, not promises</h2>
+        <p>These hold because the software refuses the alternative, not because a prompt asks nicely.</p>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rk">RULE 01</span><h3>Only verified, fresh, unexpired incentives in reports</h3><p>An offer that is withdrawn, stale or past its date drops out of the report.</p></div>
+        <div class="rule"><span class="rk">RULE 02</span><h3>Models write words, never figures</h3><p>Payments, buying power and scores come from the deterministic engines.</p></div>
+        <div class="rule"><span class="rk">RULE 03</span><h3>Consent recorded in the server's own wording</h3><p>Stored with a timestamp, per channel, in the buyer's language.</p></div>
+        <div class="rule"><span class="rk">RULE 04</span><h3>A buyer under contract with another agent is not contacted</h3><p>No hand-off, no follow-up, no brief.</p></div>
+        <div class="rule"><span class="rk">RULE 05</span><h3>Contact boxes are always the buyer's own tap</h3><p>Ana can fill answers. She cannot tick a consent box.</p></div>
+        <div class="rule"><span class="rk">RULE 06</span><h3>Nothing sends without consent</h3><p>Email and SMS go only on the channels the buyer chose.</p></div>
+        <div class="rule"><span class="rk">RULE 07</span><h3>Compliance check blocks fair-housing language</h3><p>A report that trips it is held, not released.</p></div>
+        <div class="rule"><span class="rk">RULE 08</span><h3>Only a licensed account can verify an incentive</h3><p>The platform owner's account cannot confirm one.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Switch on -->
+  <section class="block" aria-labelledby="s6">
+    <div class="wrap">
+      <div class="shead">
+        <p class="eyebrow">06 · Setup</p>
+        <h2 id="s6">What is needed to switch everything on</h2>
+      </div>
+      <ul class="checks">
+        <li><span class="box" aria-hidden="true"></span><div><b>Anthropic API credit</b><span class="d">Powers Ana, the Researcher, the Reader and the Writer. Rachel, Hand-off and the Scheduler keep working without it</span></div><span class="chip setup">Needed</span></li>
+        <li><span class="box" aria-hidden="true"></span><div><b>Twilio SMS sender number</b><span class="d">For agent and buyer texts</span></div><span class="chip setup">Needed</span></li>
+        <li><span class="box" aria-hidden="true"></span><div><b>Licensed agent's real license number and weekly hours</b><span class="d">Verification rights and bookable consult times</span></div><span class="chip setup">Needed</span></li>
+        <li class="nb"><span class="box" aria-hidden="true"></span><div><b>WhatsApp sender</b><span class="d">Channel not built yet</span></div><span class="chip none">Not built</span></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>BuyersLine is a technology platform, not a brokerage and not a lender. DIGIT2AI + Ole, a licensed Florida real estate sales associate.</span>
+    <span class="mono">Architecture · 2026</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var stage = document.getElementById("stage");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* stars: seeded so the sky is the same every load */
+  var seed = 20260914;
+  function rnd(){ seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+  var sg = document.getElementById("stars");
+  for (var s = 0; s < 90; s++) {
+    var c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", (rnd() * 1200).toFixed(1));
+    c.setAttribute("cy", (rnd() * 760).toFixed(1));
+    c.setAttribute("r", (0.4 + rnd() * 1.1).toFixed(2));
+    c.setAttribute("fill", "#ECEAF6");
+    c.setAttribute("opacity", (0.08 + rnd() * 0.35).toFixed(2));
+    sg.appendChild(c);
+  }
+
+  /* detail panel */
+  var nodes = Array.prototype.slice.call(stage.querySelectorAll("[data-node]"));
+  var byId = {};
+  nodes.forEach(function(n){ byId[n.getAttribute("data-node")] = n; });
+  var body = document.getElementById("detailBody");
+  var panel = document.getElementById("detail");
+
+  function select(id, fromUser){
+    var src;
+    if (id === "buyer" || id === "licensed") {
+      src = document.getElementById("tpl-" + id).content.cloneNode(true);
+    } else {
+      src = document.getElementById("agent-" + id).cloneNode(true);
+      src.removeAttribute("id");
+    }
+    body.replaceChildren(src);
+    nodes.forEach(function(n){ n.setAttribute("aria-pressed", n.getAttribute("data-node") === id ? "true" : "false"); });
+    if (fromUser) {
+      var r = panel.getBoundingClientRect();
+      if (r.top > window.innerHeight - 120 || r.bottom < 0) {
+        panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      }
+    }
+  }
+  nodes.forEach(function(n){
+    n.addEventListener("click", function(){ select(n.getAttribute("data-node"), true); });
+  });
+  select("ana", false);
+
+  /* signal loop */
+  var SEQ = ["buyer", "researcher", "reader", "writer", "handoff", "licensed", "scheduler", "rachel"];
+  var STEP = 1600, TRAVEL = 900, C = [600, 380];
+  var links = {};
+  Array.prototype.forEach.call(stage.querySelectorAll("[data-link]"), function(l){ links[l.getAttribute("data-link")] = l; });
+  var dots = Array.prototype.slice.call(document.querySelectorAll("#dots i"));
+  var nowLabel = document.getElementById("nowLabel");
+  var pulse = document.getElementById("pulse");
+  var head = pulse.querySelector(".head"), t1 = pulse.querySelector(".trail1"), t2 = pulse.querySelector(".trail2"), halo = pulse.firstElementChild;
+  var brain = byId.ana;
+
+  if (reduce) {
+    nowLabel.innerHTML = "<b>ALL</b> · ONE BRAIN, EVERY AGENT";
+    return;
+  }
+
+  function setStep(i){
+    var id = SEQ[i];
+    SEQ.forEach(function(k){ byId[k].classList.remove("on"); links[k].classList.remove("on"); });
+    byId[id].classList.add("on");
+    links[id].classList.add("on");
+    dots.forEach(function(d, j){ d.className = j < i ? "done" : (j === i ? "now" : ""); });
+    var name = byId[id].getAttribute("data-name").toUpperCase();
+    nowLabel.innerHTML = id === "buyer" ? "<b>NOW</b> · BUYER TO ANA" : "<b>NOW</b> · " + name;
+  }
+  function ping(el){ el.classList.remove("ping"); void el.offsetWidth; el.classList.add("ping"); }
+  function ease(p){ return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+  function put(el, from, to, p){
+    p = Math.max(0, Math.min(1, p));
+    el.setAttribute("cx", (from[0] + (to[0] - from[0]) * p).toFixed(1));
+    el.setAttribute("cy", (from[1] + (to[1] - from[1]) * p).toFixed(1));
+  }
+
+  var cur = -1, hit = false, t0 = null, onScreen = true;
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function(e){ onScreen = e[0].isIntersecting; }).observe(stage);
+  }
+
+  function frame(now){
+    if (t0 === null) t0 = now;
+    if (onScreen) {
+      var t = Math.max(0, now - t0) % (STEP * SEQ.length);
+      var i = Math.floor(t / STEP), local = t - i * STEP, id = SEQ[i];
+      if (i !== cur) { cur = i; hit = false; setStep(i); }
+      var n = byId[id], to = [+n.getAttribute("data-x"), +n.getAttribute("data-y")];
+      var from = C;
+      if (id === "buyer") { from = to; to = C; }
+      var p = local / TRAVEL;
+      put(head, from, to, ease(p));
+      put(halo, from, to, ease(p));
+      put(t1, from, to, ease(p - 0.07));
+      put(t2, from, to, ease(p - 0.14));
+      pulse.setAttribute("opacity", p < 1 ? "1" : Math.max(0, 1 - (local - TRAVEL) / 250).toFixed(2));
+      if (p >= 1 && !hit) { hit = true; ping(id === "buyer" ? brain : n); }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

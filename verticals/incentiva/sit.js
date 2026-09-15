@@ -29,6 +29,7 @@ delete process.env.INCENTIVA_SEED_DEMO;
 delete process.env.RENTCAST_API_KEY;
 delete process.env.SENDGRID_API_KEY;
 process.env.INCENTIVA_RATE_FEED = 'off';
+process.env.INCENTIVA_AGENTS = 'off'; // never run the send loop from a test process
 delete process.env.INCENTIVA_RESEARCH_MONTHLY_CAP; delete process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID; delete process.env.INCENTIVA_SMS_FROM; // no network: the Freddie Mac rate is injected where a test needs it // SIT must never send real mail; a fake sender is injected below
 delete process.env.INCENTIVA_EMAIL;
 delete process.env.RENTCAST_MONTHLY_CAP;
@@ -220,7 +221,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
 
   console.log('\nG. Structural promises (source greps)');
   const srcFiles = walk(SRC).filter((f) => f.endsWith('.js'));
-  await t('email lives only in notify.js, it checks email consent, and no SMS or WhatsApp transport exists anywhere', () => {
+  await t('email lives only in notify.js, texts only in sms.js, both check consent, and no WhatsApp transport exists', () => {
     for (const f of srcFiles) {
       const s = stripComments(read(f));
       assert(!/nodemailer|whatsapp/i.test(s), 'other transport found in ' + path.basename(f));
@@ -231,9 +232,33 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     assert(/channel = 'email' ORDER BY id DESC LIMIT 1/.test(n) && /consent\.granted !== true/.test(n), 'buyer email does not check consent');
     assert(!/\bb\.email\b|phone/.test(n.slice(n.indexOf('async function reviewerReportWaiting'), n.indexOf('async function buyerLeadReport'))), 'reviewer email reads buyer contact details');
     const smsSrc = stripComments(read(path.join(SRC, 'services', 'sms.js')));
-    const out = smsSrc.slice(smsSrc.indexOf('async function agentNewLeadSms'), smsSrc.indexOf('const STOP_WORDS'));
+    const out = smsSrc.slice(smsSrc.indexOf('async function agentNewLeadSms'), smsSrc.indexOf('function quietHours'));
     assert(/FROM nca_users WHERE id = :id/.test(out) && /e164\(agent\.phone\)/.test(out) && !/l\.phone|nca_leads[^']*phone/.test(out), 'SMS must go only to the assigned agent phone');
     assert(/referral_consent !== true/.test(out), 'agent SMS does not require referral consent');
+    const buyer = smsSrc.slice(smsSrc.indexOf('async function buyerSms'), smsSrc.indexOf('const STOP_WORDS'));
+    assert(/channel = 'sms' ORDER BY id DESC LIMIT 1/.test(buyer) && /c\.granted !== true \|\| c\.revoked_at/.test(buyer) && /quietHours\(\)/.test(buyer) && /Reply STOP to opt out/.test(buyer), 'buyer SMS does not check live consent, quiet hours and STOP wording');
+    const bm = n.slice(n.indexOf('async function buyerMessage'), n.indexOf('async function staffMessage'));
+    assert(/m\.marketing !== false && !\(await leadEmailConsent/.test(bm) && /List-Unsubscribe-Post/.test(bm), 'follow-up email does not check live consent or lacks one-click unsubscribe');
+    for (const f of ['followup.js', 'handoff.js', 'scheduling.js', 'agents.js']) {
+      const src = stripComments(read(path.join(SRC, 'services', f)));
+      assert(!/@sendgrid|twilio|messages\.create|nodemailer/i.test(src), f + ' reaches a transport directly');
+    }
+    for (const f of ['followup.js', 'handoff.js']) assert(/acceptRewrite\(/.test(read(path.join(SRC, 'services', f))), f + ' uses a model rewrite without the figure-and-name guard');
+    assert(!/llm|model/i.test(stripComments(read(path.join(SRC, 'engines', 'readiness.js')))), 'readiness score reaches a model');
+  });
+  await t('readiness is rules only, and Eastern time handles daylight saving', () => {
+    const R = require('./src/engines/readiness');
+    const hot = R.score({ move_timeline: '0_3m', financing_type: 'preapproved', selections: 3, has_agent: 'no', visits: 0, phone: true });
+    eq(hot.score, 100); eq(hot.tier, 'hot');
+    eq(R.score({ move_timeline: '3_6m', financing_type: 'needs_lender', selections: 1, has_agent: 'no', visits: 1, phone: true }).score, 63);
+    eq(R.score({ move_timeline: '12m_plus', financing_type: 'unsure', selections: 0, has_agent: 'yes_informal', visits: 2 }).tier, 'nurture');
+    eq(R.score({ move_timeline: '0_3m', financing_type: 'cash', has_agent: 'yes_under_agreement' }).tier, 'none');
+    const E = require('./src/services/eastern');
+    eq(E.toUtc(2026, 9, 15, 540).toISOString(), '2026-09-15T13:00:00.000Z'); eq(E.toUtc(2026, 12, 15, 540).toISOString(), '2026-12-15T14:00:00.000Z');
+    const S = require('./src/services/sms');
+    eq(S.quietHours(new Date('2026-09-15T11:00:00Z')), true); eq(S.quietHours(new Date('2026-09-15T16:00:00Z')), false); eq(S.quietHours(new Date('2026-09-16T00:30:00Z')), true);
+    const F = require('./src/services/followup');
+    eq(JSON.stringify(F.CADENCE), '[1,3,7,14,30,60,90]'); eq(F.similar('$8,000 toward closing costs', '$8,000 toward your closing costs'), true); eq(F.similar('$8,000 toward closing costs', 'Free pool with any home'), false);
   });
   await t('only llm.js reaches a model', () => {
     const users = srcFiles.filter((f) => /@anthropic-ai\/sdk/.test(read(f)));
@@ -507,7 +532,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
   if (!db.configured) {
     skipped.push('ALL DATABASE SECTIONS (no DATABASE_URL): intake, reports, verification, isolation, billing were NOT exercised');
   } else {
-    const TABLES = ['nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
+    const TABLES = ['nca_followups', 'nca_lead_meetings', 'nca_agent_hours', 'nca_lead_selections', 'nca_lead_consents', 'nca_lead_visited_offices', 'nca_leads', 'nca_research_rows', 'nca_research_runs', 'nca_area_cache', 'nca_listing_cache', 'nca_api_usage', 'nca_audit_log', 'nca_geocode_cache', 'nca_compliance_reviews', 'nca_activity', 'nca_conversion_events', 'nca_appointments', 'nca_report_incentives', 'nca_reports',
       'nca_consents', 'nca_buyer_criteria', 'nca_buyers', 'nca_incentive_versions', 'nca_incentives', 'nca_snapshots', 'nca_sources', 'nca_homes', 'nca_community_fees',
       'nca_communities', 'nca_builders', 'nca_users', 'nca_brokerages', 'nca_markets'];
     const cleanup = async () => { for (const tb of TABLES) await db.exec(`DELETE FROM ${tb} WHERE tenant_id IN (:a, :b)`, { a: SIT_TENANT, b: OTHER_TENANT }); };
@@ -959,13 +984,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           eq(JSON.stringify(sel.map((x) => x.research_row_id)), JSON.stringify([rowId]));
           eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_lead_visited_offices WHERE lead_id = :l', { l: lead.id })).n, 1);
         });
-        await new Promise((r) => setTimeout(r, 600));
+        for (let i = 0; i < 40 && !(await db.one(`SELECT id FROM nca_followups WHERE lead_id = :l LIMIT 1`, { l: lead.id })); i++) await new Promise((r) => setTimeout(r, 150));
         await t('with referral consent the assigned agent gets an email and a text without buyer contact details, and the buyer gets the report email', async () => {
           const newMail = mail.slice(sitMailStart);
           assert(newMail.some((m) => m.to === 'sit-lead@example.test' && /lead=/.test(m.html)), 'buyer report email');
-          const agentMail = newMail.find((m) => m.to === 'sit-agent@example.test' && /New BuyersLine lead/.test(m.subject));
+          const agentMail = newMail.find((m) => m.to === 'sit-agent@example.test' && /lead: Sitlead/.test(m.subject));
           assert(agentMail && !/sit-lead@example|8135550142/.test(agentMail.html + agentMail.text), 'agent email missing or leaks contact details');
-          eq(texts.length, 0, 'no agent phone set, so no text is sent');
+          assert(texts.every((m) => m.to === '+18135550142' && /reply YES/.test(m.body) && !/Sitlead/.test(m.body)), 'a text went to the agent (no phone set) or the confirmation text carries buyer-typed text');
           assert(await db.one(`SELECT id FROM nca_audit_log WHERE tenant_id = :t AND action = 'sms.agent_phone_missing' AND subject_id = :l`, { t: SIT_TENANT, l: lead.id }), 'missing phone not audited');
         });
         await t('a buyer under agreement with another agent keeps no contact data, no consent and no agent', async () => {
@@ -997,6 +1022,147 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const pv = await call('GET', '/api/v1/public/leads/' + created.data.token);
           eq(pv.status, 200); assert(!/builder\.example|127\.0|sit-lead@|ip_hash/.test(JSON.stringify(pv.data)), 'buyer lead view leaks');
           eq((await call('GET', '/api/v1/public/leads/not-a-real-token-at-all-000')).status, 404);
+        });
+        const fuSvc = require('./src/services/followup');
+        const roLead = await db.one('SELECT id FROM nca_leads WHERE token = :tok', { tok: reportOnly.data.token });
+        await t('hand-off: rules score, a brief with no contact details, and Rachel planned 7 emails and 4 texts', async () => {
+          const l2 = await db.one('SELECT readiness_score, readiness_tier, agent_brief, agent_opening FROM nca_leads WHERE id = :id', { id: lead.id });
+          eq(l2.readiness_score, 63); eq(l2.readiness_tier, 'warm');
+          assert(l2.agent_brief && /SIT Grove/.test(l2.agent_brief) && !/sit-lead@|8135550142/.test(l2.agent_brief + (l2.agent_opening || '')), 'brief missing facts or leaks contact details');
+          assert(mail.some((m) => m.to === 'sit-agent@example.test' && /Readiness: Warm \(63\)/.test(m.text) && !/sit-lead@|8135550142/.test(m.text)), 'agent email lacks readiness or leaks contact');
+          const fu = await db.q(`SELECT channel, day_offset FROM nca_followups WHERE lead_id = :l AND kind = 'cadence' ORDER BY day_offset, channel`, { l: lead.id });
+          eq(fu.filter((f) => f.channel === 'email').map((f) => f.day_offset).join(','), '1,3,7,14,30,60,90');
+          eq(fu.filter((f) => f.channel === 'sms').length, 0, 'texts planned before the number was confirmed');
+          assert(texts.some((m) => m.to === '+18135550142' && /reply YES/.test(m.body)), 'no confirmation text');
+          eq((await require('./src/services/sms').buyerSms(SIT_TENANT, lead.id, { action: 'sms.sit_unconfirmed', subjectType: 'followup', subjectId: 2, body: 'x' })).reason, 'sms_not_confirmed');
+          const yes = await fetch(BASE + '/api/v1/public/sms/inbound', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'From=%2B18135550142&Body=Yes' });
+          eq(yes.status, 200);
+          const fu2 = await db.q(`SELECT day_offset FROM nca_followups WHERE lead_id = :l AND kind = 'cadence' AND channel = 'sms' ORDER BY day_offset`, { l: lead.id });
+          eq(fu2.map((f) => f.day_offset).join(','), '1,7,30,90', 'texts not planned after YES');
+          eq((await db.one('SELECT COUNT(*)::int AS n FROM nca_followups WHERE lead_id = :l', { l: roLead.id })).n, 0, 'a lead with no email or text consent got a plan');
+          eq((await require('./src/services/sms').buyerSms(SIT_TENANT, roLead.id, { action: 'sms.sit', subjectType: 'followup', subjectId: 1, body: 'x' })).reason, 'no_sms_consent');
+        });
+        await t('Rachel sends a due email with one-click unsubscribe; after unsubscribing nothing more is emailed, even a touch forced back to due', async () => {
+          await db.exec(`UPDATE nca_followups SET scheduled_for = now() - interval '1 minute' WHERE lead_id = :l AND channel = 'email' AND day_offset = 1`, { l: lead.id });
+          const before = mail.length;
+          await fuSvc.sendDue(SIT_TENANT);
+          const m = mail.slice(before).find((x) => x.to === 'sit-lead@example.test');
+          assert(m && m.headers && m.headers['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click' && /unsubscribe\//.test(m.headers['List-Unsubscribe']) && /Unsubscribe/.test(m.html), 'no one-click unsubscribe');
+          eq((await db.one(`SELECT status FROM nca_followups WHERE lead_id = :l AND channel = 'email' AND day_offset = 1`, { l: lead.id })).status, 'sent');
+          const tok = (await db.one('SELECT unsubscribe_token FROM nca_leads WHERE id = :id', { id: lead.id })).unsubscribe_token;
+          eq((await call('POST', '/api/v1/public/unsubscribe/not-a-real-token-00000', { channels: ['email'] })).status, 404);
+          eq((await call('POST', '/api/v1/public/unsubscribe/' + tok, { channels: ['email'] })).status, 200);
+          const c = await db.one(`SELECT revoked_at, revoked_via FROM nca_lead_consents WHERE lead_id = :l AND channel = 'email'`, { l: lead.id });
+          assert(c.revoked_at && c.revoked_via === 'unsubscribe_link', 'email consent not revoked');
+          eq((await db.one(`SELECT COUNT(*)::int AS n FROM nca_followups WHERE lead_id = :l AND channel = 'email' AND status = 'queued'`, { l: lead.id })).n, 0);
+          await db.exec(`UPDATE nca_followups SET status = 'queued', scheduled_for = now() - interval '1 minute' WHERE lead_id = :l AND channel = 'email' AND day_offset = 3`, { l: lead.id });
+          const n0 = mail.length; await fuSvc.sendDue(SIT_TENANT);
+          eq(mail.slice(n0).filter((x) => x.to === 'sit-lead@example.test').length, 0, 'emailed after unsubscribe');
+          eq((await db.one(`SELECT reason FROM nca_followups WHERE lead_id = :l AND channel = 'email' AND day_offset = 3`, { l: lead.id })).reason, 'no_email_consent');
+          const lv = await call('GET', '/api/v1/agent/leads/' + lead.id, null, 'agent');
+          assert(lv.data.followups.length >= 11 && lv.data.lead.unsubscribe_token === undefined, 'console follow-up plan missing or leaks the unsubscribe token');
+        });
+        await t('Rachel alerts on a changed promotion from a newer model run for the same area, once, and ignores registry-only runs', async () => {
+          const oldRun = await db.one('SELECT * FROM nca_research_runs WHERE id = :id', { id: lead.research_run_id });
+          const reg = (await db.exec(`INSERT INTO nca_research_runs (tenant_id, token, cache_key, zip, status, source, expires_at, ran_at) VALUES (:t, 'sitregistry00000000', :k, '33578', 'done', 'registry', now() + interval '1 day', now()) RETURNING id`, { t: SIT_TENANT, k: oldRun.cache_key }))[0];
+          eq(await fuSvc.detectChanges(SIT_TENANT), 0, 'a registry-only run triggered an alert');
+          await db.exec('DELETE FROM nca_research_runs WHERE id = :id', { id: reg.id });
+          const nr = (await db.exec(`INSERT INTO nca_research_runs (tenant_id, token, cache_key, zip, status, source, expires_at, ran_at) VALUES (:t, 'sitnewer00000000000', :k, '33578', 'done', 'model', now() + interval '1 day', now()) RETURNING id`, { t: SIT_TENANT, k: oldRun.cache_key }))[0];
+          await db.exec(`INSERT INTO nca_research_rows (tenant_id, run_id, origin, builder, community, promotion) VALUES (:t, :r, 'ai_research', 'SIT Homes', 'SIT Grove', 'Free pool package with any quick move-in home')`, { t: SIT_TENANT, r: nr.id });
+          const n1 = await fuSvc.detectChanges(SIT_TENANT);
+          assert(n1 >= 1, 'no alert for a changed promotion');
+          eq(await fuSvc.detectChanges(SIT_TENANT), 0, 'the same change alerted twice');
+          const row = await db.one(`SELECT channel, detail FROM nca_followups WHERE lead_id = :l AND kind = 'promo_change' ORDER BY id LIMIT 1`, { l: lead.id });
+          eq(row.detail.change, 'changed'); eq(row.channel, 'sms', 'email was unsubscribed, so only the text is planned');
+        });
+        const lead3res = await call('POST', '/api/v1/public/leads', Object.assign({}, base, { selections: [rowId], answers: Object.assign({}, base.answers, { email: 'sit-lead3@example.test', phone: '8135550199', move_timeline: '0_3m', financing_type: 'preapproved', visited_offices: [] }) }));
+        const lead3 = await db.one('SELECT * FROM nca_leads WHERE token = :tok', { tok: lead3res.data.token });
+        for (let i = 0; i < 60 && !(await db.one(`SELECT id FROM nca_followups WHERE lead_id = :id LIMIT 1`, { id: lead3.id })); i++) await new Promise((r) => setTimeout(r, 150));
+        await t('double opt-in and injected names: an unopened report email blocks follow-up email, and a name carrying a link never reaches a message', async () => {
+          const U = require('./src/services/util');
+          eq(U.safeFirstName('María José'), 'María José'); eq(U.safeFirstName("O'Brien"), "O'Brien"); eq(U.safeFirstName('call 800-555-0199 evil.example/verify'), ''); eq(U.safeFirstName('x@y.co'), '');
+          await db.exec(`UPDATE nca_followups SET scheduled_for = now() - interval '1 minute' WHERE lead_id = :l AND channel = 'email' AND day_offset = 1`, { l: lead3.id });
+          const m0 = mail.length; await fuSvc.sendDue(SIT_TENANT);
+          eq(mail.slice(m0).filter((m) => m.to === 'sit-lead3@example.test').length, 0, 'follow-up email to an unconfirmed address');
+          eq((await db.one(`SELECT reason FROM nca_followups WHERE lead_id = :l AND channel = 'email' AND day_offset = 1`, { l: lead3.id })).reason, 'email_not_confirmed');
+          await db.exec(`UPDATE nca_leads SET first_name = 'Visit evil.example/verify now', area_input = 'call 800-555-0199' WHERE id = :id`, { id: lead3.id });
+          const l3 = await db.one('SELECT * FROM nca_leads WHERE id = :id', { id: lead3.id });
+          const smsBody = (await fuSvc.composeCadence(SIT_TENANT, l3, { channel: 'sms', day_offset: 1 })).body;
+          const email = await fuSvc.composeCadence(SIT_TENANT, l3, { channel: 'email', day_offset: 3 });
+          assert(!/evil|800-555/.test(smsBody + JSON.stringify(email)), 'buyer-typed text reached a message');
+          assert(/^BuyersLine: Hi, /.test(smsBody) && /^Hi\. /.test(email.paragraphs[0]), 'greeting not tidied: ' + smsBody);
+          await db.exec(`UPDATE nca_leads SET first_name = 'Sitlead' WHERE id = :id`, { id: lead3.id });
+        });
+        await t('hand-off: a status change is the agent\'s first response; a lead still new after 4 hours alerts the admin and the agent once', async () => {
+          assert((await db.one('SELECT first_response_at FROM nca_leads WHERE id = :id', { id: lead.id })).first_response_at, 'status change did not record a response');
+          eq((await db.one('SELECT readiness_tier FROM nca_leads WHERE id = :id', { id: lead3.id })).readiness_tier, 'hot');
+          await db.exec(`UPDATE nca_leads SET created_at = now() - interval '5 hours' WHERE id IN (:a, :b)`, { a: lead3.id, b: lead.id });
+          const m0 = mail.length;
+          eq(await require('./src/services/handoff').noResponseTick(SIT_TENANT), 1, 'alert count (the contacted lead must not alert)');
+          const alerts = mail.slice(m0).filter((m) => /No agent response/.test(m.subject));
+          assert(alerts.some((m) => m.to === 'sit-owner@example.test') && alerts.some((m) => m.to === 'sit-agent@example.test'), 'admin and agent not both alerted');
+          assert(alerts.every((m) => !/sit-lead3@|8135550199/.test(m.text)), 'alert leaks contact details');
+          eq(await require('./src/services/handoff').noResponseTick(SIT_TENANT), 0, 'alerted twice');
+        });
+        const eastern = require('./src/services/eastern');
+        let mt = null;
+        await t('scheduler: only referred leads see times, inside default hours and 2+ hours ahead, with no contact details', async () => {
+          eq((await call('GET', `/api/v1/public/leads/${reportOnly.data.token}/slots`)).status, 403);
+          const av = await call('GET', `/api/v1/public/leads/${created.data.token}/slots`);
+          eq(av.status, 200); assert(av.data.slots.length > 10, 'too few slots');
+          assert(!/sit-lead@|8135550142|unsubscribe/.test(JSON.stringify(av.data)), 'availability leaks');
+          for (const x of av.data.slots) {
+            const p = eastern.parts(new Date(x.starts_at));
+            assert(p.weekday >= 1 && p.weekday <= 5 && p.hour >= 9 && p.hour < 17 && p.minute % 30 === 0, 'slot outside default hours: ' + x.starts_at);
+            assert(new Date(x.starts_at).getTime() - Date.now() >= 2 * 3600e3 - 5000, 'slot too soon');
+          }
+          eq((await call('POST', `/api/v1/public/leads/${created.data.token}/meetings`, { starts_at: '2020-01-06T14:00:00.000Z' })).status, 409, 'a past time was booked');
+          const first = av.data.slots[0].starts_at;
+          const b = await call('POST', `/api/v1/public/leads/${created.data.token}/meetings`, { starts_at: first });
+          eq(b.status, 200); mt = b.data.meeting.token;
+          eq((await call('POST', `/api/v1/public/leads/${created.data.token}/meetings`, { starts_at: av.data.slots[1].starts_at })).status, 409, 'a second active booking for one lead');
+          eq((await call('POST', `/api/v1/public/leads/${lead3res.data.token}/meetings`, { starts_at: first })).status, 409, 'a taken time was booked twice');
+          const other = await call('GET', `/api/v1/public/leads/${lead3res.data.token}/slots`);
+          assert(!other.data.slots.some((x) => x.starts_at === first), 'a taken time is still offered');
+          eq((await call('GET', `/api/v1/public/leads/${created.data.token}/slots`)).data.existing.token, mt);
+          eq((await call('POST', `/api/v1/public/meetings/${mt}/feedback`, { rating: 5 })).status, 409, 'feedback before the meeting');
+          for (let i = 0; i < 20 && !mail.some((m) => m.to === 'sit-lead@example.test' && /booked/i.test(m.subject)); i++) await new Promise((r) => setTimeout(r, 150));
+          assert(mail.some((m) => m.to === 'sit-lead@example.test' && /booked/i.test(m.subject)), 'the booking confirmation (transactional) was not sent');
+          eq((await call('POST', `/api/v1/public/meetings/${mt}/cancel`)).status, 200);
+          eq((await call('GET', `/api/v1/public/meetings/${mt}`)).data.status, 'cancelled');
+        });
+        await t('scheduler: the 2-hour reminder and the feedback requests go out once each; the agent records the outcome', async () => {
+          const av = await call('GET', `/api/v1/public/leads/${lead3res.data.token}/slots`);
+          const b = await call('POST', `/api/v1/public/leads/${lead3res.data.token}/meetings`, { starts_at: av.data.slots[0].starts_at });
+          eq(b.status, 200);
+          const sched = require('./src/services/scheduling');
+          await db.exec(`UPDATE nca_lead_meetings SET starts_at = now() + interval '90 minutes' WHERE token = :tok`, { tok: b.data.meeting.token });
+          let m0 = mail.length; await sched.tick(SIT_TENANT);
+          eq(mail.slice(m0).filter((m) => m.to === 'sit-lead3@example.test' && /Reminder/.test(m.subject)).length, 1, '2-hour reminder');
+          m0 = mail.length; await sched.tick(SIT_TENANT);
+          eq(mail.slice(m0).filter((m) => /Reminder/.test(m.subject)).length, 0, 'reminder sent twice');
+          await db.exec(`UPDATE nca_lead_meetings SET starts_at = now() - interval '2 hours' WHERE token = :tok`, { tok: b.data.meeting.token });
+          m0 = mail.length; await sched.tick(SIT_TENANT);
+          const fb = mail.slice(m0);
+          assert(fb.some((m) => m.to === 'sit-lead3@example.test' && /How was your consult/.test(m.subject)) && fb.some((m) => m.to === 'sit-agent@example.test' && /How did the consult/.test(m.subject)), 'feedback requests');
+          m0 = mail.length; await sched.tick(SIT_TENANT); eq(mail.length - m0, 0, 'feedback asked twice');
+          eq((await call('POST', `/api/v1/public/meetings/${b.data.meeting.token}/feedback`, { rating: 9 })).status, 400);
+          eq((await call('POST', `/api/v1/public/meetings/${b.data.meeting.token}/feedback`, { rating: 4, comment: 'Helpful' })).status, 200);
+          eq((await call('POST', `/api/v1/public/meetings/${b.data.meeting.token}/feedback`, { rating: 5 })).status, 409, 'feedback given twice');
+          const mid = (await db.one('SELECT id FROM nca_lead_meetings WHERE token = :tok', { tok: b.data.meeting.token })).id;
+          eq((await call('PATCH', `/api/v1/agent/meetings/${mid}`, { agent_outcome: 'amazing' }, 'agent')).status, 400);
+          eq((await call('PATCH', `/api/v1/agent/meetings/${mid}`, { status: 'held', agent_outcome: 'good_fit' }, 'agent')).status, 200);
+          eq((await db.one('SELECT status FROM nca_leads WHERE id = :id', { id: lead3.id })).status, 'working');
+          eq((await call('PATCH', `/api/v1/agent/meetings/${mid}`, { status: 'held' })).status, 401);
+        });
+        await t('scheduler: the agent sets weekly hours and only those times are offered', async () => {
+          eq((await call('PUT', '/api/v1/agent/hours', { hours: [{ weekday: 6, start_min: 600, end_min: 690 }, { weekday: 9, start_min: 0, end_min: 60 }] }, 'agent')).status, 200);
+          const h = await call('GET', '/api/v1/agent/hours', null, 'agent');
+          eq(h.data.is_default, false); eq(h.data.hours.length, 1);
+          const av = await call('GET', `/api/v1/public/leads/${lead3res.data.token}/slots`);
+          assert(av.data.existing || av.data.slots.every((x) => { const p = eastern.parts(new Date(x.starts_at)); return p.weekday === 6 && p.hour >= 10 && (p.hour * 60 + p.minute) + 30 <= 690; }), 'slots outside the saved hours');
+          eq((await call('PUT', '/api/v1/agent/hours', { hours: [] }, 'agent')).status, 200);
+          eq((await call('GET', '/api/v1/agent/hours', null, 'agent')).data.is_default, true);
         });
         await t('an SMS STOP revokes that number\'s SMS consent', async () => {
           const r = await fetch(BASE + '/api/v1/public/sms/inbound', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'From=%2B18135550142&Body=STOP' });

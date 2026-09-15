@@ -18,6 +18,9 @@ const area = require('../services/area');
 const research = require('../services/research');
 const leads = require('../services/leads');
 const sms = require('../services/sms');
+const handoff = require('../services/handoff');
+const followup = require('../services/followup');
+const scheduling = require('../services/scheduling');
 
 const CONSENT_VERSION = 'v2-2026-09-13'; // v2: product renamed BuyersLine
 const MUST_HAVES = ['single_story', 'pool', 'three_car_garage', 'office', 'no_cdd', 'age_restricted', 'move_in_90_days'];
@@ -127,11 +130,8 @@ module.exports = function publicRoutes(opts = {}) {
       const agent = await defaultAgent(tenantId, market);
       const lead = await leads.createLead(tenantId, val, { req, agent, ipHash: ih });
       if (lead.email_consent) notify.later(notify.buyerLeadReport, tenantId, lead.id);
-      if (lead.referral && lead.assigned_agent_id) {
-        notify.later(notify.agentNewLead, tenantId, lead.id);
-        notify.later(sms.agentNewLeadSms, tenantId, lead.id);
-        await db.exec('UPDATE nca_leads SET notified_agent_id = :a WHERE id = :id', { a: lead.assigned_agent_id, id: lead.id });
-      }
+      // Hand-off agent: readiness score, agent brief + alerts (only with referral consent), then Rachel's plan.
+      notify.later(handoff.afterLead, tenantId, lead.id);
       res.json({ ok: true, token: lead.token, gated: lead.gated, referral: lead.referral, emailed: lead.email_consent });
     } catch (e) { console.error('[incentiva] lead', e); res.status(500).json({ error: 'We could not save your answers right now. Please try again in a few minutes.' }); }
   });
@@ -143,10 +143,63 @@ module.exports = function publicRoutes(opts = {}) {
       if (!/^[A-Za-z0-9_-]{20,64}$/.test(tok)) return res.status(404).json({ error: 'Not found' });
       const view = await leads.publicLead(tenantId, tok);
       if (!view) return res.status(404).json({ error: 'Not found' });
+      // The lead token reaches a buyer only in their report email, so opening it confirms that address
+      // (double opt-in for Rachel's follow-up emails).
+      await db.exec(`UPDATE nca_lead_consents c SET confirmed_at = now() FROM nca_leads l WHERE l.token = :tok AND l.tenant_id = :t AND c.lead_id = l.id AND c.tenant_id = l.tenant_id
+        AND c.channel = 'email' AND c.granted = true AND c.revoked_at IS NULL AND c.confirmed_at IS NULL`, { tok, t: tenantId });
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('X-Robots-Tag', 'noindex');
       res.json(view);
     } catch (e) { console.error('[incentiva] lead view', e); res.status(500).json({ error: 'Could not load your report.' }); }
+  });
+
+  // ── Scheduler agent: book a consult from the report ──────────────────────
+  router.get('/leads/:token/slots', async (req, res) => {
+    if (!rateLimit('slots:' + ipHash(req), 120, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const out = await scheduling.availability(tenantId, String(req.params.token || ''));
+      if (out.error) return res.status(out.error).json({ error: out.error === 404 ? 'Not found' : 'Booking needs agreement to agent contact.', reason: out.reason });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(out);
+    } catch (e) { console.error('[incentiva] slots', e); res.status(500).json({ error: 'Could not load times.' }); }
+  });
+  router.post('/leads/:token/meetings', async (req, res) => {
+    if (!rateLimit('book:' + ipHash(req), 20, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    try {
+      const out = await scheduling.book(tenantId, String(req.params.token || ''), req.body && req.body.starts_at);
+      if (out.error) return res.status(out.error).json({ error: out.reason === 'slot_unavailable' ? 'That time was just taken. Pick another.' : out.reason === 'already_booked' ? 'You already have a consult booked.' : 'Could not book that time.', reason: out.reason });
+      res.json(out);
+    } catch (e) { console.error('[incentiva] book', e); res.status(500).json({ error: 'Could not book right now.' }); }
+  });
+  router.get('/meetings/:token', async (req, res) => {
+    if (!rateLimit('meet:' + ipHash(req), 120, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    const m = await scheduling.publicMeeting(tenantId, String(req.params.token || '')).catch(() => null);
+    if (!m) return res.status(404).json({ error: 'Not found' });
+    res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Robots-Tag', 'noindex');
+    res.json(m);
+  });
+  router.post('/meetings/:token/cancel', async (req, res) => {
+    if (!rateLimit('meetc:' + ipHash(req), 20, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    const out = await scheduling.cancelByBuyer(tenantId, String(req.params.token || '')).catch(() => ({ error: 500 }));
+    if (out.error) return res.status(out.error).json({ error: 'Could not cancel.' });
+    res.json(out);
+  });
+  router.post('/meetings/:token/feedback', async (req, res) => {
+    if (!rateLimit('meetf:' + ipHash(req), 20, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    const b = req.body || {};
+    const out = await scheduling.buyerFeedback(tenantId, String(req.params.token || ''), b.rating, b.comment).catch(() => ({ error: 500 }));
+    if (out.error) return res.status(out.error).json({ error: 'Could not save your feedback.' });
+    res.json(out);
+  });
+
+  // ── Rachel: unsubscribe (page button, or RFC 8058 one-click POST from the mail client) ──
+  router.post('/unsubscribe/:token', express.urlencoded({ extended: false }), async (req, res) => {
+    if (!rateLimit('unsub:' + ipHash(req), 60, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+    const b = req.body || {};
+    const channels = Array.isArray(b.channels) ? b.channels : b.channel ? [b.channel] : ['email', 'sms'];
+    const out = await followup.unsubscribe(tenantId, String(req.params.token || ''), channels).catch(() => ({ ok: false }));
+    if (!out.ok) return res.status(404).json({ error: 'Not found' });
+    res.json(out);
   });
 
   // Twilio inbound SMS webhook: STOP / START / HELP. Signature-validated.

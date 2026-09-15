@@ -38,7 +38,14 @@ async function activity(tenantId, buyerId, actor, event, payload = {}) {
     VALUES (:t, :b, :at, :aid, :e, :p)`, { t: tenantId, b: buyerId, at: actor.type, aid: actor.id || null, e: event, p: JSON.stringify(payload) });
 }
 
+/** A first name safe to put in an outbound message: letters, spaces, hyphens, apostrophes, up to 40.
+ *  Anything else (a link, a number, an address) returns '' so buyer-typed text can never carry one. */
+function safeFirstName(v) {
+  const s = String(v == null ? '' : v).trim().replace(/\s+/g, ' ');
+  return /^[\p{L}][\p{L} '\u2019-]{0,39}$/u.test(s) ? s : '';
+}
+
 function clampStr(v, n) { return v === null || v === undefined ? null : String(v).trim().slice(0, n) || null; }
 function numOrNull(v) { if (v === null || v === undefined || v === '') return null; const x = Number(v); return isFinite(x) ? x : null; }
 
-module.exports = { TENANT_ID, ipHash, token, rateLimit, audit, activity, clampStr, numOrNull };
+module.exports = { TENANT_ID, ipHash, token, rateLimit, audit, activity, clampStr, numOrNull, safeFirstName };

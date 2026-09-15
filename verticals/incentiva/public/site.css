@@ -1070,3 +1070,12 @@ div.mch-deal { cursor: default; }
 @media (max-width: 480px) { .mch-count { display: none; } .mch-restart { margin-left: auto; } }
 .mch-composer .btn { width: auto; flex: none; }
 .mch-chips .mch-chip { width: auto; }
+
+/* Scheduler: booking panel on the finished report */
+.mch-book { margin: 18px 0; padding: 16px; border: 1px solid var(--line, #E7E8E9); border-radius: 14px; }
+.mch-bookday { margin: 12px 0 6px; font-weight: 700; font-size: 14px; }
+.mch-book .mch-chip { min-height: 44px; }
+.meet-wrap { max-width: 560px; margin: 0 auto; padding: 32px 16px 64px; }
+.meet-stars { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.meet-stars button { min-width: 48px; min-height: 44px; }
+.meet-stars button[aria-pressed="true"] { background: var(--ink, #26213F); color: #fff; }

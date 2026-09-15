@@ -851,6 +851,13 @@
     return f;
   }
 
+  const TIER_TONE = { hot: 'ok', warm: 'warn', nurture: 'neutral', none: 'outline' };
+  function readinessChip(l) {
+    if (!l.readiness_tier) return DASH;
+    return chip(`${humanize(l.readiness_tier)}${l.readiness_tier === 'none' ? '' : ' ' + num(l.readiness_score)}`, TIER_TONE[l.readiness_tier] || 'neutral');
+  }
+  const OUTCOME_LABEL = { good_fit: 'Good fit, next step set', needs_time: 'Needs time', touring_scheduled: 'Touring scheduled', under_contract: 'Under contract', not_a_fit: 'Not a fit', no_show: 'No show' };
+
   async function viewLeads(r) {
     if (r.parts[1]) return viewLeadDetail(r.parts[1]);
     const status = r.params.get('status') || '';
@@ -860,10 +867,11 @@
     const filter = `<label class="field" style="min-width:220px"><span class="flabel">Status</span><select data-change="leadFilter">
       <option value="">All statuses</option>${LEAD_STATUSES.map(([v, l]) => `<option value="${v}"${v === status ? ' selected' : ''}>${esc(l)} (${num(counts[v])})</option>`).join('')}</select></label>`;
     const table = leads.length ? `<div class="tablewrap card" style="padding:4px 8px"><table class="rtable">
-      <thead><tr><th>Lead</th><th>Status</th><th>Area</th><th class="num">Max price</th><th>Move</th><th>Paying</th><th>Picked</th><th>Assigned</th><th>Created</th><th>Flags</th></tr></thead>
+      <thead><tr><th>Lead</th><th>Status</th><th>Readiness</th><th>Area</th><th class="num">Max price</th><th>Move</th><th>Paying</th><th>Picked</th><th>Assigned</th><th>Created</th><th>Flags</th></tr></thead>
       <tbody>${leads.map((l) => `<tr>
         <td data-label="Lead"><a href="#/leads/${encodeURIComponent(l.id)}" style="font-weight:600">${esc(l.first_name || 'Lead')}</a> <span class="mono small muted">${esc(String(l.lang || '').toUpperCase())}</span></td>
         <td data-label="Status">${chip(humanize(l.status), LEAD_TONE[l.status])}</td>
+        <td data-label="Readiness">${readinessChip(l)}${l.next_meeting_at ? `<div class="small muted">Consult ${timeTag(l.next_meeting_at, true)}</div>` : ''}</td>
         <td data-label="Area">${textCell([l.city, l.zip].filter(Boolean).join(' '))}</td>
         <td data-label="Max price" class="num">${usdCell(l.max_price)}</td>
         <td data-label="Move">${textCell(TL_LABEL[l.move_timeline])}</td>
@@ -904,7 +912,7 @@
 
     const consents = Array.isArray(d.consents) ? d.consents : [];
     const consentHTML = consents.length ? `<ul class="plain">${consents.map((c) => `<li><div class="grow stack" style="min-width:240px">
-      <div class="row">${chip(humanize(c.channel), 'outline')}${c.revoked_at ? chip('REVOKED', 'crit') : c.granted ? chip('GRANTED', 'ok') : chip('NOT GRANTED', 'neutral')}</div>
+      <div class="row">${chip(humanize(c.channel), 'outline')}${c.revoked_at ? chip('REVOKED', 'crit') : c.granted ? chip('GRANTED', 'ok') : chip('NOT GRANTED', 'neutral')}${c.granted && !c.revoked_at && c.channel !== 'agent_referral' ? (c.confirmed_at ? chip('CONFIRMED', 'ok') : chip(c.channel === 'sms' ? 'WAITING FOR YES REPLY' : 'NOT CONFIRMED: report link not opened', 'warn')) : ''}</div>
       <blockquote class="quote">${esc(c.consent_text)}</blockquote>
       <p class="small muted">${timeTag(c.granted_at, true)} &middot; version <span class="mono">${esc(c.consent_version)}</span> &middot; IP <span class="mono">${esc(c.ip || 'not recorded')}</span>${c.revoked_at ? ` &middot; revoked ${timeTag(c.revoked_at, true)} via ${esc(humanize(c.revoked_via || ''))}` : ''}</p>
       ${c.user_agent ? `<p class="small muted">${esc(c.user_agent)}</p>` : ''}</div></li>`).join('')}</ul>` : '<p class="muted">No consent records.</p>';
@@ -933,11 +941,40 @@
     const notes = Array.isArray(d.notifications) ? d.notifications : [];
     const notesHTML = notes.length ? `<ul class="plain">${notes.map((n) => `<li><div><strong>${esc(humanize(n.action))}</strong> <span class="small muted">${timeTag(n.created_at, true)}</span></div></li>`).join('')}</ul>` : `<p class="muted">${l.referral_consent ? 'No notification recorded yet.' : 'No notifications: the buyer did not agree to agent contact.'}</p>`;
 
+    const reasons = Array.isArray(l.readiness_reasons) ? l.readiness_reasons : [];
+    const handoffHTML = l.readiness_tier ? `<div class="row" style="gap:10px;align-items:center">${readinessChip(l)}<span class="small muted">Score from fixed rules, never a model.</span></div>
+      <ul class="plain" style="margin-top:8px">${reasons.map((x) => `<li><div>${esc(x)}</div></li>`).join('')}</ul>
+      ${l.agent_brief ? `<h4 style="margin:12px 0 6px">Brief</h4><p>${esc(l.agent_brief)}</p>` : ''}
+      ${l.agent_opening ? `<h4 style="margin:12px 0 6px">Suggested opening</h4><blockquote class="quote">${esc(l.agent_opening)}</blockquote>` : ''}
+      ${l.no_response_alerted_at ? `<p class="small muted">No-response alert sent ${timeTag(l.no_response_alerted_at, true)}.</p>` : ''}${l.first_response_at ? `<p class="small muted">First agent response ${timeTag(l.first_response_at, true)}.</p>` : ''}`
+      : '<p class="muted">Not scored yet.</p>';
+    const meetings = Array.isArray(d.meetings) ? d.meetings : [];
+    const outcomes = Array.isArray(d.meeting_outcomes) ? d.meeting_outcomes : Object.keys(OUTCOME_LABEL);
+    const meetingsHTML = meetings.length ? `<ul class="plain">${meetings.map((m) => `<li><div class="grow stack" style="min-width:240px">
+      <div class="row">${chip(humanize(m.status), m.status === 'booked' ? 'info' : m.status === 'held' ? 'ok' : m.status === 'cancelled' ? 'neutral' : 'warn')}<strong>${timeTag(m.starts_at, true)}</strong><span class="small muted">${num(m.duration_min)} min</span></div>
+      <p class="small muted">Reminders: 24 h ${m.reminder_24h_at ? 'sent' : 'not yet'} &middot; 2 h ${m.reminder_2h_at ? 'sent' : 'not yet'}${m.buyer_feedback_at ? ` &middot; buyer rated ${num(m.buyer_rating)} of 5` : ''}</p>
+      ${m.buyer_comment ? `<blockquote class="quote">${esc(m.buyer_comment)}</blockquote>` : ''}
+      <div class="row" data-scope>
+        <label class="field" style="min-width:160px"><span class="flabel">Meeting</span><select data-change="meetingStatus" data-mid="${esc(m.id)}">${['booked', 'held', 'no_show', 'cancelled'].map((v) => `<option value="${v}"${v === m.status ? ' selected' : ''}${v === 'booked' ? ' disabled' : ''}>${esc(humanize(v))}</option>`).join('')}</select></label>
+        <label class="field" style="min-width:220px"><span class="flabel">Outcome</span><select data-change="meetingOutcome" data-mid="${esc(m.id)}"><option value="">Not recorded</option>${outcomes.map((v) => `<option value="${esc(v)}"${v === m.agent_outcome ? ' selected' : ''}>${esc(OUTCOME_LABEL[v] || humanize(v))}</option>`).join('')}</select></label>
+      </div></div></li>`).join('')}</ul>` : `<p class="muted">${l.referral_consent ? 'No consult booked yet. The buyer can book from their report.' : 'Booking needs the buyer\'s agreement to agent contact.'}</p>`;
+    const fu = Array.isArray(d.followups) ? d.followups : [];
+    const FU_TONE = { sent: 'ok', queued: 'info', sending: 'info', skipped: 'neutral', failed: 'crit' };
+    const followHTML = fu.length ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Touch</th><th>Channel</th><th>When</th><th>Status</th></tr></thead><tbody>${fu.map((f) => `<tr>
+      <td data-label="Touch">${f.kind === 'promo_change' ? `Promotion ${esc(f.detail && f.detail.change === 'ended' ? 'no longer found' : 'changed')}: ${esc((f.detail && f.detail.community) || '')}` : `Day ${num(f.day_offset)}`}</td>
+      <td data-label="Channel">${esc(String(f.channel).toUpperCase())}</td>
+      <td data-label="When">${timeTag(f.sent_at || f.scheduled_for, true)}</td>
+      <td data-label="Status">${chip(humanize(f.status), FU_TONE[f.status])}${f.reason ? ` <span class="small muted">${esc(humanize(f.reason))}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : `<p class="muted">${under ? 'No follow-up: the buyer is under agreement with another agent.' : 'No follow-up planned: the buyer did not tick email or texts.'}</p>`;
+
     return `
       <a class="crumb" href="#/leads">Back to all leads</a>
       ${pageHead(l.first_name || 'Lead', `${chip(humanize(l.status), LEAD_TONE[l.status])} ${l.referral_consent ? chip('Agent contact allowed', 'ok') : chip('Report only: no outreach consent', 'outline')} &middot; since ${timeTag(l.created_at)}`, `<div class="row" data-scope>${statusSel}${assignSel}<p data-status hidden></p></div>`)}
       <div class="stack">
         <section class="card"><h4 style="margin-bottom:10px">Representation</h4>${repBox}<h4 style="margin:14px 0 8px">Sales offices already visited</h4>${visitsBox}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Hand-off agent: readiness</h4>${handoffHTML}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Scheduler: consults</h4>${meetingsHTML}</section>
+        <section class="card"><h4 style="margin-bottom:10px">Rachel: follow-up plan</h4>${followHTML}</section>
         <section class="card"><h4 style="margin-bottom:10px">Contact</h4><dl class="kv"><div><dt>Email</dt><dd>${email}</dd></div><div><dt>Phone</dt><dd>${phone}</dd></div></dl></section>
         <section class="card"><h4 style="margin-bottom:10px">Criteria</h4><dl class="kv">${kv.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v || '')}</dd></div>`).join('')}</dl></section>
         <section class="card"><h4 style="margin-bottom:10px">Communities the buyer picked (${picked.length})</h4>${tableOf(picked)}</section>
@@ -1403,9 +1440,28 @@
       </form>`;
     }
 
+    let hoursHTML = '';
+    try {
+      const hd = await api('GET', '/agent/hours');
+      const byDay = {}; (hd.hours || []).forEach((h) => { byDay[h.weekday] = h; });
+      const hm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+      const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      hoursHTML = `<form class="card" data-form="saveHours" data-scope novalidate>
+        <h2>Booking hours</h2>
+        <p class="small muted" style="margin:6px 0 10px">Buyers who agreed to agent contact can book a free 30-minute consult inside these hours (Eastern time).${hd.is_default ? ' These are the default hours until you save your own.' : ''}</p>
+        <div class="stack">${DAYS.map((name, i) => { const h = byDay[i]; return `<div class="row" data-hourrow="${i}" style="gap:10px;align-items:end">
+          <label class="field check" style="min-width:140px"><input type="checkbox" data-hour-on ${h ? 'checked' : ''}><span class="flabel">${name}</span></label>
+          <label class="field" style="max-width:140px"><span class="flabel">From</span><input type="time" data-hour-start step="1800" value="${h ? hm(h.start_min) : '09:00'}"></label>
+          <label class="field" style="max-width:140px"><span class="flabel">To</span><input type="time" data-hour-end step="1800" value="${h ? hm(h.end_min) : '17:00'}"></label></div>`; }).join('')}</div>
+        <div class="formbar"><button type="submit" class="btn btn-primary">Save hours</button></div>
+        <p data-status hidden></p>
+      </form>`;
+    } catch (e) { if (e.status === 401) throw e; hoursHTML = errorHTML('booking hours', e, true); }
+
     return `
       ${pageHead('Settings')}
       <section class="section" style="margin-top:0">${marketHTML}</section>
+      <section class="section">${hoursHTML}</section>
       ${isAdmin ? `<section class="section"><form class="card" data-form="seedDemo" data-scope novalidate>
         <h2>Sample data</h2>
         <p class="muted" style="margin:6px 0 10px">Loads sample builders, communities and incentives so the console can be demonstrated. Admin only.</p>
@@ -1771,6 +1827,18 @@
       }
     },
 
+    saveHours: async (form) => {
+      const hours = [];
+      for (const row of $$('[data-hourrow]', form)) {
+        if (!row.querySelector('[data-hour-on]').checked) continue;
+        const toMin = (v) => { const m = /^(\d{2}):(\d{2})/.exec(v || ''); return m ? Number(m[1]) * 60 + Number(m[2]) : NaN; };
+        const start = toMin(row.querySelector('[data-hour-start]').value), end = toMin(row.querySelector('[data-hour-end]').value);
+        if (!(end - start >= 30)) { setStatus(form, 'Each day needs at least 30 minutes between From and To.', 'crit'); return; }
+        hours.push({ weekday: Number(row.dataset.hourrow), start_min: start, end_min: end });
+      }
+      try { await api('PUT', '/agent/hours', { hours }); setStatus(form, `Saved ${hours.length} day${hours.length === 1 ? '' : 's'}.`, 'ok'); }
+      catch (e) { if (e.status !== 401) setStatus(form, `Could not save: ${e.message}`, 'crit'); }
+    },
     saveMarket: async (form) => {
       let v;
       try { v = readFields(form, MARKET_FIELDS); } catch (e) { setStatus(form, e.message, 'crit'); return; }
@@ -1833,6 +1901,15 @@
     leadAssign: async (el) => {
       try { await api('PATCH', `/agent/leads/${encodeURIComponent(el.dataset.lid)}`, { assigned_agent_id: el.value ? Number(el.value) : null }); toast(el.value ? 'Agent assigned.' : 'Lead unassigned.'); refresh(); }
       catch (e) { if (e.status !== 401) toast(`Assignment failed: ${e.message}`, 'crit'); }
+    },
+    meetingStatus: async (el) => {
+      try { await api('PATCH', `/agent/meetings/${encodeURIComponent(el.dataset.mid)}`, { status: el.value }); toast(`Meeting marked ${humanize(el.value)}.`); refresh(); }
+      catch (e) { if (e.status !== 401) toast(`Update failed: ${e.message}`, 'crit'); }
+    },
+    meetingOutcome: async (el) => {
+      if (!el.value) return;
+      try { await api('PATCH', `/agent/meetings/${encodeURIComponent(el.dataset.mid)}`, { agent_outcome: el.value }); toast('Outcome saved.'); }
+      catch (e) { if (e.status !== 401) toast(`Update failed: ${e.message}`, 'crit'); }
     },
     buyerStage: (el) => { location.hash = '#/buyers' + (el.value ? `?stage=${encodeURIComponent(el.value)}` : ''); },
     theme: (el) => {

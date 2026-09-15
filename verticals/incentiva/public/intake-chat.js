@@ -69,6 +69,7 @@
       closing_title: 'Before you visit any sales office', closing_body: 'Many builders only work with a buyer\'s agent who registers you before your first visit. Get your report and talk to our agent first, so you keep your representation at no cost to you.',
       submit: 'Send and create my report', submitting: 'Creating your report...', err_submit: "I couldn't save your answers. Please try again.",
       err_selections: 'Please choose at least one community first.',
+      book_title: 'Book a free consult', book_intro: '30 minutes with {agent}, a licensed real estate agent, by phone or video. Times are Eastern.', book_loading: 'Loading open times', book_none: 'No open times in the next two weeks. Our agent will reach out.', book_more: 'More days', book_pick: 'Book {time}', book_done: 'Booked: {when}. A confirmation is on its way.', book_existing: 'Your consult is booked for {when}.', book_manage: 'View or cancel', book_err: 'That time could not be booked. Pick another.',
       done_title: 'Your report, {name}', done_referral: 'Our licensed agent will reach out about your search.', done_no_referral: "You didn't ask to be contacted, so nobody will reach out. Your report is below.",
       done_emailed: 'We also emailed it to you.', done_gated: "Because you signed with another agent, we won't contact you. You're welcome to share this report with your agent.",
       done_agent: 'Your agent: {name}', your_criteria: 'What you asked for', your_picks: 'Communities you chose', all_found: 'Everything I found', print: 'Print or save as PDF',
@@ -134,6 +135,7 @@
       closing_title: 'Antes de visitar cualquier oficina de ventas', closing_body: 'Muchas constructoras solo trabajan con el agente del comprador que lo registra antes de su primera visita. Obtenga su informe y hable primero con nuestro agente, para conservar su representación sin costo para usted.',
       submit: 'Enviar y crear mi informe', submitting: 'Creando su informe...', err_submit: 'No pude guardar sus respuestas. Inténtelo de nuevo, por favor.',
       err_selections: 'Primero elija al menos una comunidad, por favor.',
+      book_title: 'Reservar una consulta gratuita', book_intro: '30 minutos con {agent}, agente de bienes raíces con licencia, por teléfono o video. Horario del este.', book_loading: 'Cargando horarios disponibles', book_none: 'No hay horarios en las próximas dos semanas. Nuestro agente se comunicará con usted.', book_more: 'Más días', book_pick: 'Reservar {time}', book_done: 'Reservada: {when}. Le enviamos la confirmación.', book_existing: 'Su consulta está reservada para el {when}.', book_manage: 'Ver o cancelar', book_err: 'No se pudo reservar ese horario. Elija otro.',
       done_title: 'Su informe, {name}', done_referral: 'Nuestro agente con licencia se comunicará con usted sobre su búsqueda.', done_no_referral: 'No pidió que lo contactaran, así que nadie lo hará. Su informe está abajo.',
       done_emailed: 'También se lo enviamos por correo.', done_gated: 'Como firmó con otro agente, no lo contactaremos. Puede compartir este informe con su agente.',
       done_agent: 'Su agente: {name}', your_criteria: 'Lo que usted pidió', your_picks: 'Comunidades que eligió', all_found: 'Todo lo que encontré', print: 'Imprimir o guardar como PDF',
@@ -718,6 +720,7 @@
       var ag = config.agent;
       box.appendChild(h('p', { class: 'mch-agent', text: T('done_agent', { name: ag.name }) + (ag.license_no ? ' · License ' + ag.license_no : '') + (ag.brokerage_name ? ' · ' + ag.brokerage_name : '') }));
     }
+    if (lead.referral && !lead.gated) { box.appendChild(h('div', { id: 'book', class: 'mch-book no-print' })); setTimeout(renderBooking, 0); }
     var dl = h('dl', { class: 'mch-kv' });
     [['lbl_area', placeLabel()], ['lbl_max_price', a.max_price ? money(a.max_price) : null], ['lbl_max_monthly', a.max_monthly ? money(a.max_monthly) : T('none')], ['lbl_down', a.down_payment != null ? money(a.down_payment) : T('none')],
       ['lbl_timeline', a.move_timeline ? T('tl_' + a.move_timeline) : null], ['lbl_financing', a.financing_type ? T('fin_' + a.financing_type) : null]]
@@ -741,6 +744,49 @@
         host.appendChild(resultsView(r.data, false));
       });
     }
+  }
+
+  /* ---------- Scheduler agent: book a consult from the report ---------- */
+  function renderBooking(showAll) {
+    var host = document.getElementById('book');
+    if (!host || !state.lead) return;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    host.appendChild(h('h4', { class: 'mch-h', text: T('book_title') }));
+    host.appendChild(h('p', { class: 'small muted', text: T('book_loading') }));
+    api('GET', '/api/v1/public/leads/' + encodeURIComponent(state.lead.token) + '/slots').then(function (r) {
+      while (host.firstChild) host.removeChild(host.firstChild);
+      host.appendChild(h('h4', { class: 'mch-h', text: T('book_title') }));
+      if (!r.ok || !r.data) { host.remove(); return; }
+      var d = r.data, agentName = (d.agent && d.agent.name) || '';
+      if (d.existing) {
+        host.appendChild(bubble('m', T('book_existing', { when: d.existing.label })));
+        host.appendChild(h('a', { class: 'btn btn-secondary', href: BASE + '/meet/' + encodeURIComponent(d.existing.token) }, T('book_manage')));
+        return;
+      }
+      host.appendChild(h('p', { class: 'small', text: T('book_intro', { agent: agentName }) }));
+      if (!d.slots.length) { host.appendChild(bubble('m', T('book_none'))); return; }
+      var dayFmt = new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric' });
+      var timeFmt = new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+      var days = [], byDay = {};
+      d.slots.forEach(function (s) { var k = dayFmt.format(new Date(s.starts_at)); if (!byDay[k]) { byDay[k] = []; days.push(k); } byDay[k].push(s); });
+      (showAll ? days : days.slice(0, 3)).forEach(function (k) {
+        host.appendChild(h('p', { class: 'mch-bookday', text: k }));
+        host.appendChild(h('div', { class: 'mch-chips' }, byDay[k].map(function (s) {
+          return h('button', { type: 'button', class: 'mch-chip', 'aria-label': T('book_pick', { time: s.label }), onclick: function (e) {
+            e.target.disabled = true;
+            api('POST', '/api/v1/public/leads/' + encodeURIComponent(state.lead.token) + '/meetings', { starts_at: s.starts_at }).then(function (b) {
+              if (!b.ok || !b.data || !b.data.meeting) { renderBooking(showAll); setTimeout(function () { var hh = document.getElementById('book'); if (hh) hh.insertBefore(h('p', { class: 'mch-err', role: 'alert', text: (b.data && b.data.error) || T('book_err') }), hh.children[1] || null); }, 400); return; }
+              while (host.firstChild) host.removeChild(host.firstChild);
+              host.appendChild(h('h4', { class: 'mch-h', text: T('book_title') }));
+              host.appendChild(bubble('m', T('book_done', { when: b.data.meeting.label })));
+              host.appendChild(h('a', { class: 'btn btn-secondary', href: BASE + '/meet/' + encodeURIComponent(b.data.meeting.token) }, T('book_manage')));
+            });
+          } }, timeFmt.format(new Date(s.starts_at)));
+        })));
+      });
+      if (!showAll && days.length > 3) host.appendChild(h('button', { type: 'button', class: 'mch-linkbtn', onclick: function () { renderBooking(true); } }, T('book_more')));
+      if (location.hash === '#book') host.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    });
   }
 
   /* ---------- config + boot ---------- */

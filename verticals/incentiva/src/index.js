@@ -16,7 +16,7 @@
  *  - Only a licensed agent account can confirm an incentive.
  *  - The model writes prose, never a figure; payments are deterministic.
  *  - Billing is per consult held and nothing transaction-contingent.
- *  - Nothing sends: there is no mail or SMS transport in this vertical.
+ *  - Email lives only in services/notify.js and SMS only in services/sms.js; every buyer message checks consent.
  */
 
 const express = require('express');
@@ -64,6 +64,7 @@ function createApp(opts = {}) {
       agent_account: !!(process.env.INCENTIVA_AGENT_EMAIL && process.env.INCENTIVA_AGENT_PASSWORD),
       listings: require('./services/rentcast').configured() ? 'rentcast_connected' : 'not_connected',
       report_review: process.env.INCENTIVA_REPORT_REVIEW === 'auto' ? 'auto_when_compliance_passes' : 'agent_approval_required',
+      agents: require('./services/agents').status(),
       transports: require('./services/notify').configured() ? 'email only (SendGrid): report-ready to buyers who consented, approval alerts to the reviewer' : 'none (nothing auto-sends)'
     });
   });
@@ -80,7 +81,10 @@ function createApp(opts = {}) {
   router.get(['/search', '/buscar'], shell('search.html'));
   router.get(['/login', '/admin/login'], shell('login.html'));
   router.get(['/admin', '/admin/'], shell('admin.html'));
-  router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
+  router.get('/meet/:token', shell('meet.html'));
+  router.get('/unsubscribe/:token', shell('unsubscribe.html'));
+  router.get('/architecture', shell('architecture.html'));
+  router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html', '/meet.html', '/unsubscribe.html', '/architecture.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 
   router.use('/api/v1/public', require('./routes/public')({ tenantId, allowModel: opts.allowModel, allowGeocode: opts.allowGeocode }));
 
@@ -114,6 +118,7 @@ function createApp(opts = {}) {
     db.ensureSchema()
       .then(() => auth.ensureAccounts(tenantId))
       .then(() => { if (startScheduler(tenantId)) console.log('[incentiva] monitor scheduler on'); })
+      .then(() => { if (require('./services/agents').start(tenantId)) console.log('[incentiva] follow-up, hand-off and scheduler agents on'); })
       .then(async () => {
         if (process.env.INCENTIVA_SEED_DEMO === '1') {
           const { seedDemo } = require('./services/seed');
