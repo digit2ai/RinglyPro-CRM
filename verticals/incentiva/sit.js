@@ -1506,6 +1506,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const req = await (async () => { for (let i = 0; i < 40; i++) { const m = mail.find((x) => /waiting for approval/.test(x.subject)); if (m) return m; await new Promise((r) => setTimeout(r, 50)); } return null; })();
           assert(req && [].concat(req.to).includes('gate-owner@example.test') && /sit-preview@example\.test/.test(req.text), 'the owner was not told');
           eq((await form('/gate/signup', { email: 'sit-preview@example.test', password: 'sit-other-password-99', confirm: 'sit-other-password-99' })).status, 200, 'an existing email must get the same answer');
+          const ownerIn = await form('/gate/login', { email: 'gate-owner@example.test', password: 'sit-site-gate-password-2026' });
+          eq(ownerIn.status, 303); eq(ownerIn.headers.get('location'), '/buyersline/admin/', 'the owner must land in the admin dashboard');
+          const ownerCookies = ownerIn.headers.get('set-cookie') || '';
+          assert(/bl_arch=o\./.test(ownerCookies) && /incentiva_token=[^;]{20,}/.test(ownerCookies), 'owner sign-in must open the dashboard too: ' + ownerCookies);
+          const consoleIn = await form('/gate/login', { email: 'sit-agent@example.test', password: process.env.INCENTIVA_AGENT_PASSWORD });
+          eq(consoleIn.status, 303, 'a dashboard account could not sign in on the sign-in page'); eq(consoleIn.headers.get('location'), '/buyersline/admin/');
+          assert(/incentiva_token=[^;]{20,}/.test(consoleIn.headers.get('set-cookie') || '') && !/bl_arch=[ou]\./.test(consoleIn.headers.get('set-cookie') || ''), 'dashboard account cookies');
           const pend = await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' });
           eq(pend.status, 403); assert(/waiting for the owner/.test(await pend.text()), 'pending message');
           const owner = ((await form('/gate/login', { email: 'gate-owner@example.test', password: 'sit-site-gate-password-2026' })).headers.get('set-cookie') || '').split(';')[0];
@@ -1515,7 +1522,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           for (let i = 0; i < 40 && !mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)); i++) await new Promise((r) => setTimeout(r, 50));
           assert(mail.some((x) => x.to === 'sit-preview@example.test' && /approved/.test(x.subject)), 'no approval email');
           const login = await form('/gate/login', { email: 'sit-preview@example.test', password: 'sit-preview-password-01' });
-          eq(login.status, 303);
+          eq(login.status, 303); eq(login.headers.get('location'), '/buyersline/architecture', 'a preview login has no dashboard, so it lands on the architecture page');
           const userCookie = (login.headers.get('set-cookie') || '').split(';')[0];
           eq((await fetch(BASE + '/', { headers: { Cookie: userCookie } })).status, 200, 'approved login refused');
           eq((await fetch(BASE + '/gate/accounts', { headers: { Cookie: userCookie } })).status, 401, 'an approved login reached the checker page');
@@ -1531,7 +1538,8 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const cleared = out.headers.get('set-cookie') || '';
           assert(/incentiva_token=;[^,]*Max-Age=0/.test(cleared) && /bl_arch=;[^,]*Path=\/buyersline\/;[^,]*Max-Age=0/.test(cleared), 'sign out must end the console AND the preview sign-in, or the owner is signed straight back in: ' + cleared);
           const noSso = await fetch(BASE + '/admin/login', { redirect: 'manual', headers: { Cookie: userCookie } });
-          eq(noSso.status, 200, 'an approved preview login was signed in to the console');
+          eq(noSso.status, 303, 'an approved preview login was signed in to the console');
+          assert(/\/gate\/login\?next=/.test(noSso.headers.get('location') || ''), 'the Log in link must land on the sign-in page');
           assert(!/incentiva_token=/.test(noSso.headers.get('set-cookie') || ''), 'a preview login received a console session');
           const m1 = mail.length;
           eq((await form('/gate/forgot', { email: 'nobody@example.test' })).status, 200);
@@ -1557,6 +1565,29 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           process.env.INCENTIVA_SITE_GATE = save.g;
           // The single sign-on created SME accounts; the SME section below starts from an empty tool.
           for (const tb of ['nca_sme_sessions_log', 'nca_sme_auth_sessions', 'nca_sme_users']) await db.exec(`DELETE FROM ${tb} WHERE tenant_id = :t`, { t: SIT_TENANT });
+        }
+      });
+      await t('the website is public by default: the landing, search, reports and public API answer with no sign-in; the dashboard and the architecture page still need one', async () => {
+        const saveG = process.env.INCENTIVA_SITE_GATE; const saveU = process.env.INCENTIVA_ARCHITECTURE_USER, saveP = process.env.INCENTIVA_ARCHITECTURE_PASSWORD;
+        try {
+          delete process.env.INCENTIVA_SITE_GATE;
+          process.env.INCENTIVA_ARCHITECTURE_USER = 'gate-owner@example.test'; process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-site-gate-password-2026';
+          for (const p of ['/', '/search', '/site.css', '/api/v1/public/config']) eq((await fetch(BASE + p)).status, 200, 'not public: ' + p);
+          const html = await (await fetch(BASE + '/')).text();
+          assert(!/name="password"/.test(html) && /id="blChat"/.test(html), 'the landing page is still a sign-in page');
+          eq((await fetch(BASE + '/architecture')).status, 401, 'architecture page opened without a sign-in');
+          eq((await fetch(BASE + '/api/v1/agent/today')).status, 401, 'dashboard API opened without a sign-in');
+          const li = await fetch(BASE + '/admin/login', { redirect: 'manual' });
+          eq(li.status, 303); assert(/\/gate\/login\?next=%2Fbuyersline%2Fadmin%2F/.test(li.headers.get('location') || ''), li.headers.get('location'));
+          const page = await (await fetch(BASE + '/gate/login')).text();
+          assert(/name="email"/.test(page) && /Forgot password\?/.test(page) && /Create a login/.test(page) && /value="\/buyersline\/admin\/"/.test(page), 'sign-in page must default to the dashboard');
+          eq(require('./src/services/archgate').siteGateOn(), false);
+          process.env.INCENTIVA_SITE_GATE = 'on';
+          eq((await fetch(BASE + '/')).status, 401, 'INCENTIVA_SITE_GATE=on must still close the site');
+        } finally {
+          if (saveG === undefined) delete process.env.INCENTIVA_SITE_GATE; else process.env.INCENTIVA_SITE_GATE = saveG;
+          if (saveU === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = saveU;
+          if (saveP === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = saveP;
         }
       });
       await t('the landing page carries the ecosystem map section (shared component, EN/ES) and a Log in link to the admin dashboard, not an Architecture link', async () => {

@@ -108,22 +108,57 @@ function createApp(opts = {}) {
   }
   const gateForm = express.urlencoded({ extended: false, limit: '4kb' });
   const html = (res, code, body) => res.status(code).type('html').send(body);
-  router.get('/gate/login', (req, res) => { gateHeaders(res); html(res, archgate.configured() ? 200 : 503, archgate.configured() ? archgate.loginPage(req.baseUrl, null, req.query.next || req.baseUrl + '/', req.query.reset === '1' ? 'Password saved. Sign in with your new password.' : null) : archgate.closedPage(req.baseUrl)); });
+  router.get('/gate/login', (req, res) => { gateHeaders(res); const open = archgate.configured() || auth.configured(); html(res, open ? 200 : 503, open ? archgate.loginPage(req.baseUrl, null, req.query.next || req.baseUrl + '/admin/', req.query.reset === '1' ? 'Password saved. Sign in with your new password.' : null) : archgate.closedPage(req.baseUrl)); });
+  // One sign-in page for everyone (owner decision 2026-09-15): the Log in link on the public site lands here.
+  //  - the owner credential (INCENTIVA_ARCHITECTURE_*) -> gate session + the owner's dashboard session -> dashboard
+  //  - a dashboard account (nca_users)                  -> dashboard session -> dashboard
+  //  - an approved preview login                        -> gate session -> architecture page (no dashboard access)
+  function consoleCookie(value, maxAgeSeconds) {
+    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    return `${auth.COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure}`;
+  }
+  function appendCookie(res, cookie) {
+    const cur = res.getHeader('Set-Cookie');
+    res.setHeader('Set-Cookie', [].concat(cur || [], cookie));
+  }
+  async function ownerConsoleUser() {
+    if (!auth.configured()) return null;
+    await auth.ensureAccounts(tenantId);
+    return db.one(`SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e AND role = 'admin' AND active = true`, { t: tenantId, e: String(process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com').trim().toLowerCase() });
+  }
   router.post(['/gate/login', '/architecture/login'], gateForm, async (req, res) => {
     gateHeaders(res);
     const b = req.body || {};
-    const next = archgate.safeNext(req.baseUrl, b.next || req.baseUrl + '/');
-    if (!archgate.configured()) return html(res, 503, archgate.closedPage(req.baseUrl));
+    const adminHome = req.baseUrl + '/admin/';
+    const next = archgate.safeNext(req.baseUrl, b.next || adminHome);
     const login = b.email != null ? b.email : b.user;
+    if (!archgate.configured() && !auth.configured()) return html(res, 503, archgate.closedPage(req.baseUrl));
     if (!rateLimit('arch:' + ipHash(req), 10, 15 * 60e3) || !rateLimit('arch-e:' + String(login || '').toLowerCase().slice(0, 200), 10, 60 * 60e3)) return html(res, 429, archgate.loginPage(req.baseUrl, 'Too many attempts. Wait 15 minutes.', next));
     try {
-      const out = await archgate.authenticate(tenantId, login, b.password);
+      const out = archgate.configured() ? await archgate.authenticate(tenantId, login, b.password) : { error: 'invalid' };
       if (out.error === 'pending') return html(res, 403, archgate.loginPage(req.baseUrl, 'Your login is waiting for the owner to approve it. You will get an email when it is approved.', next));
-      if (out.error) { await audit(tenantId, { type: 'anonymous' }, 'gate.login_failed', null, null, {}); return html(res, 401, archgate.loginPage(req.baseUrl, 'Email or password is incorrect.', next)); }
-      const value = out.kind === 'owner' ? archgate.sign(Date.now() + archgate.TTL_MS) : archgate.signAccount(out.user, Date.now() + archgate.TTL_MS);
-      archgate.setCookie(req, res, value, archgate.TTL_MS);
-      await audit(tenantId, { type: out.kind === 'owner' ? 'owner' : 'site_user', id: out.user ? out.user.id : null }, 'gate.login', out.user ? 'site_user' : null, out.user ? out.user.id : null, {});
-      res.redirect(303, next);
+      if (!out.error) {
+        const value = out.kind === 'owner' ? archgate.sign(Date.now() + archgate.TTL_MS) : archgate.signAccount(out.user, Date.now() + archgate.TTL_MS);
+        archgate.setCookie(req, res, value, archgate.TTL_MS);
+        await audit(tenantId, { type: out.kind === 'owner' ? 'owner' : 'site_user', id: out.user ? out.user.id : null }, 'gate.login', out.user ? 'site_user' : null, out.user ? out.user.id : null, {});
+        if (out.kind === 'owner') {
+          const owner = await ownerConsoleUser();
+          if (owner) appendCookie(res, consoleCookie(auth.sign(owner), auth.TTL_SECONDS));
+          return res.redirect(303, next);
+        }
+        // A preview login has no dashboard: send it to the architecture page instead of a dashboard that refuses it.
+        return res.redirect(303, next.startsWith(adminHome) ? req.baseUrl + '/architecture' : next);
+      }
+      if (auth.configured()) {
+        const u = await auth.login(tenantId, login, b.password);
+        if (u) {
+          appendCookie(res, consoleCookie(auth.sign(u), auth.TTL_SECONDS));
+          await audit(tenantId, { type: 'agent', id: u.id }, 'auth.login', 'user', u.id, { via: 'sign_in_page' });
+          return res.redirect(303, next.startsWith(adminHome) || next === req.baseUrl + '/' ? adminHome : next);
+        }
+      }
+      await audit(tenantId, { type: 'anonymous' }, 'gate.login_failed', null, null, {});
+      return html(res, 401, archgate.loginPage(req.baseUrl, 'Email or password is incorrect.', next));
     } catch (e) { console.error('[incentiva] gate login', e.message); html(res, 500, archgate.loginPage(req.baseUrl, 'Sign-in failed. Try again.', next)); }
   });
   router.post(['/gate/logout', '/architecture/logout'], (req, res) => { archgate.setCookie(req, res, '', 0); res.redirect(303, req.baseUrl + '/'); });
@@ -224,24 +259,24 @@ function createApp(opts = {}) {
   router.get(['/search', '/buscar'], shell('search.html'));
   // The owner already signed in at the private-preview gate goes straight into the console as the owner account.
   // Preview logins never do: the console holds buyer contact details.
-  const loginShell = shell('login.html');
+  // The Log in link: signed-in dashboard users go straight in, the owner signed in at the gate is signed in to the
+  // dashboard, and everyone else gets the one sign-in page.
   router.get(['/login', '/admin/login'], async (req, res) => {
     try {
-      if (auth.configured() && !(await auth.userFromRequest(req, tenantId))) {
-        const who = await archgate.identify(req, tenantId);
-        if (who && who.kind === 'owner') {
-          await auth.ensureAccounts(tenantId);
-          const owner = await db.one(`SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e AND role = 'admin' AND active = true`, { t: tenantId, e: String(process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com').trim().toLowerCase() });
-          if (owner) {
-            auth.setCookie(res, auth.sign(owner), auth.TTL_SECONDS);
-            await audit(tenantId, { type: 'agent', id: owner.id }, 'auth.login_gate_owner', 'user', owner.id, {});
-            return res.redirect(303, req.baseUrl + '/admin/');
-          }
+      if (auth.configured() && (await auth.userFromRequest(req, tenantId))) return res.redirect(303, req.baseUrl + '/admin/');
+      const who = await archgate.identify(req, tenantId);
+      if (who && who.kind === 'owner') {
+        const owner = await ownerConsoleUser();
+        if (owner) {
+          res.setHeader('Set-Cookie', consoleCookie(auth.sign(owner), auth.TTL_SECONDS));
+          await audit(tenantId, { type: 'agent', id: owner.id }, 'auth.login_gate_owner', 'user', owner.id, {});
+          return res.redirect(303, req.baseUrl + '/admin/');
         }
-      } else if (auth.configured()) return res.redirect(303, req.baseUrl + '/admin/');
-    } catch (e) { console.error('[incentiva] console gate sign-in', e.message); }
-    loginShell(req, res);
+      }
+    } catch (e) { console.error('[incentiva] console sign-in', e.message); }
+    res.redirect(303, req.baseUrl + '/gate/login?next=' + encodeURIComponent(req.baseUrl + '/admin/'));
   });
+
   router.get(['/admin', '/admin/'], shell('admin.html'));
   router.get('/meet/:token', shell('meet.html'));
   router.get('/unsubscribe/:token', shell('unsubscribe.html'));

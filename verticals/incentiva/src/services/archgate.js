@@ -117,7 +117,9 @@ function setCookie(req, res, value, maxAgeMs) {
   cookies.push(`${COOKIE}=; Path=${base}/architecture; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
   res.setHeader('Set-Cookie', cookies);
 }
-function siteGateOn() { return process.env.INCENTIVA_SITE_GATE !== 'off'; }
+// The website is PUBLIC by default (owner decision 2026-09-15): only the Log in link, the dashboard and the architecture
+// page need a sign-in. INCENTIVA_SITE_GATE=on puts the whole site back behind the sign-in.
+function siteGateOn() { return process.env.INCENTIVA_SITE_GATE === 'on'; }
 /** A post-login destination: only a path inside this mount, never another host or a protocol-relative URL. */
 function safeNext(base, next) {
   const n = String(next || '');
@@ -241,13 +243,15 @@ function pw(id, name, label, auto) {
 }
 
 function loginPage(base, error, next, notice) {
+  next = next || (base || '') + '/admin/';
   return page(base, 'Sign in', `<form class="card" method="post" action="${esc(base)}/gate/login" novalidate>
-<p class="eye">BuyersLine · Private preview</p><h1>Sign in</h1>
+<p class="eye">BuyersLine</p><h1>Sign in</h1>
 <input type="hidden" name="next" value="${esc(safeNext(base, next))}">
 <label for="gate_email">Email</label><input id="gate_email" name="email" type="text" inputmode="email" autocomplete="username" required autofocus>
 ${pw('gate_pass', 'password', 'Password', 'current-password')}
 ${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}${notice ? `<p class="ok" role="status">${esc(notice)}</p>` : ''}<button class="go" type="submit">Sign in</button>
-<div class="row"><a href="${esc(base)}/gate/forgot">Forgot password?</a><a href="${esc(base)}/gate/signup">Create a login</a></div></form>`);
+<div class="row"><a href="${esc(base)}/gate/forgot">Forgot password?</a><a href="${esc(base)}/gate/signup">Create a login</a></div>
+<p class="muted"><a href="${esc(base)}/">Back to BuyersLine</a></p></form>`);
 }
 function signupPage(base, error, done) {
   if (done) return page(base, 'Account created', `<div class="card"><p class="eye">BuyersLine · Private preview</p><h1>Request received</h1>
