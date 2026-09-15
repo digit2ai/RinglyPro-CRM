@@ -190,7 +190,7 @@ async function extract(transcript, { lang, project_key } = {}) {
   if (llm.configured()) {
     try {
       const raw = await llm.callJSON('intel', { system: SYSTEM, user: prompt(text, lang), max_tokens: 6000 });
-      if (raw) return verify(raw, text, { project_key, composed_by: llm.MODELS.intel });
+      if (raw) return verify(raw, text, { project_key, composed_by: llm.activeModel('intel') });
     } catch (e) {
       console.error('SpeakUp intel model error (falling back to heuristic):', e.message);
     }

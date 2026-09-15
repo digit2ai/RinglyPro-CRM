@@ -264,7 +264,7 @@ async function reviewProse(ctx, project, candidates) {
     const allowed = new Set(candidates.files.map(f => f.path));
     const hyps = (Array.isArray(raw && raw.hypotheses) ? raw.hypotheses : []).map(String).slice(0, 6)
       .filter(h => (h.match(/[\w./-]+\.(js|html|sql|md|json|ts)\b/g) || []).every(p => [...allowed].some(a => a.endsWith(p))));
-    return { text: hyps.map(h => '- ' + h).join('\n'), by: llm.MODELS.plan };
+    return { text: hyps.map(h => '- ' + h).join('\n'), by: llm.activeModel('plan') };
   } catch (e) {
     return { text: '', by: 'heuristic' };
   }

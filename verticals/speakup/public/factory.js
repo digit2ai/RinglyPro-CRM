@@ -59,10 +59,11 @@
     $('agentLine').style.display = meeting ? 'none' : '';
     // An editor window shows the work and the input, nothing else. Recording tools
     // (library, import, memory search, the recording detail) belong to Meeting mode.
-    ['memCard', 'libCard', 'importCard', 'mainEmpty', 'detail'].forEach(function (id) {
+    ['memCard', 'libCard', 'importCard', 'mainEmpty', 'detail', 'jobDetail'].forEach(function (id) {
       var el = $(id); if (el) el.style.display = meeting ? (id === 'detail' ? (current ? 'block' : 'none') : '') : 'none';
     });
     if (!meeting) F.showActivity(true);
+    if (F.openJobId) F.openJob(F.openJobId);
     renderModeLabels();
   }
   function renderModeLabels() {
@@ -489,24 +490,37 @@
     clearTimeout(F.pollTimer);
     F.showActivity(true);
     pollEvents(id);
-    var box = $('jobDetail');
+    // In the editor screen the task lives INSIDE the activity pane: a row of actions
+    // and the plan behind a toggle. The full card belongs to Meeting mode.
+    var compact = F.mode !== 'meeting';
+    var box = compact ? $('jobPanel') : $('jobDetail');
+    if (compact) $('jobDetail').innerHTML = ''; else $('jobPanel').innerHTML = '';
     try {
       var d = await api('/factory/jobs/' + id + '?lang=' + lang);
       var j = d.job;
       renderSteps(j.status);
+      $('jobPill').textContent = j.status;
+      $('jobPill').className = 'pill ' + pillFor(j.status);
       var actions = '';
       if (j.status === 'WAITING_APPROVAL') actions += '<button class="btn block" onclick="Factory.askConfirm(\'execute\',' + j.id + ')">' + L('Aprobar y ejecutar', 'Approve and execute') + '</button>';
       if (j.status === 'READY_FOR_REVIEW') actions += '<button class="btn block" onclick="Factory.askConfirm(\'merge\',' + j.id + ')">' + L('Fusionar (despliega)', 'Merge (deploys)') + '</button>';
       if (j.pr_url) actions += '<a class="btn sec block" style="display:block;text-align:center;margin-top:8px;text-decoration:none" href="' + esc(j.pr_url) + '" target="_blank" rel="noopener">' + L('Ver PR', 'View PR') + ' #' + j.pr_number + '</a>';
       if (!j.terminal && j.status !== 'DEPLOYING') actions += '<button class="btn danger sm block" style="margin-top:8px" onclick="Factory.cancelJob(' + j.id + ')">' + L('Cancelar tarea', 'Cancel task') + '</button>';
-      box.innerHTML = '<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">' + L('Tarea', 'Task') + ' #' + j.id + '</h2><span class="pill ' + pillFor(j.status) + '">' + esc(j.status) + '</span></div>' +
-        '<div class="plain" style="margin-top:12px">' + esc(j.plain) + '</div>' +
-        '<div class="row" style="margin-top:8px">' + speakBtn(j.plain) + '<button class="btn sec sm" onclick="Factory.trace(' + j.id + ')">' + L('¿Por qué este cambio?', 'Why this change?') + '</button></div>' +
-        (j.sources.length ? '<div class="muted" style="margin-top:10px">' + L('Fuentes', 'Sources') + ': ' + j.sources.map(function (s) { return '<a href="#" onclick="openRec(' + s.id + ');return false">#' + s.id + ' ' + esc(s.title) + '</a>'; }).join(', ') + '</div>' : '') +
-        '<div style="margin-top:12px">' + actions + '</div>' +
-        (j.plan_md ? '<details class="sec-collapse" style="margin-top:14px"' + (j.status === 'WAITING_APPROVAL' ? ' open' : '') + '><summary>' + L('Plan', 'Plan') + '</summary><div class="mdbody">' + mdToHtml(j.plan_md) + '</div></details>' : '') +
-        '<div id="trace' + j.id + '"></div></div>';
-      if (follow) $('activityCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var plan = j.plan_md ? '<details class="sec-collapse" style="margin-top:12px"><summary>' + L('Plan', 'Plan') +
+        (j.plan_composed_by ? ' · ' + esc(j.plan_composed_by) : '') + '</summary><div class="mdbody">' + mdToHtml(j.plan_md) + '</div></details>' : '';
+      var why = '<button class="btn sec sm" onclick="Factory.trace(' + j.id + ')">' + L('¿Por qué?', 'Why?') + '</button>';
+      if (compact) {
+        box.innerHTML = (j.error ? '<div class="banner" style="margin-top:10px">' + esc(j.error) + '</div>' : '') +
+          '<div style="margin-top:10px">' + actions + '</div>' +
+          '<div class="row" style="margin-top:8px">' + why + speakBtn(j.plain) + '</div>' + plan + '<div id="trace' + j.id + '"></div>';
+      } else {
+        box.innerHTML = '<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">' + L('Tarea', 'Task') + ' #' + j.id + '</h2><span class="pill ' + pillFor(j.status) + '">' + esc(j.status) + '</span></div>' +
+          '<div class="plain" style="margin-top:12px">' + esc(j.plain) + '</div>' +
+          '<div class="row" style="margin-top:8px">' + speakBtn(j.plain) + why + '</div>' +
+          (j.sources.length ? '<div class="muted" style="margin-top:10px">' + L('Fuentes', 'Sources') + ': ' + j.sources.map(function (s) { return '<a href="#" onclick="openRec(' + s.id + ');return false">#' + s.id + ' ' + esc(s.title) + '</a>'; }).join(', ') + '</div>' : '') +
+          '<div style="margin-top:12px">' + actions + '</div>' + plan + '<div id="trace' + j.id + '"></div></div>';
+      }
+      if (follow && !compact) $('activityCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
       if (!j.terminal && document.visibilityState === 'visible') F.pollTimer = setTimeout(function () { if (F.openJobId === id) F.openJob(id); }, 8000);
     } catch (e) { box.innerHTML = '<div class="card" style="color:var(--err)">' + esc(e.message) + '</div>'; }
   };

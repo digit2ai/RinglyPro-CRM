@@ -121,7 +121,7 @@ router.get('/overview', wrap(async (req, res) => {
   res.json({
     operator: isOp,
     readiness: isOp ? jobs.readiness() : null,
-    model: llm.configured() ? llm.MODELS : null,
+    model: llm.status(),
     projects: list.map(p => ({ key: p.key, name: p.name, enabled: p.enabled, repo: p.repo, allowed_actions: p.allowed_actions })),
     jobs: views.map(v => ({ ...v, plan: undefined, spec: undefined, plan_md: undefined }))
   });
@@ -305,7 +305,7 @@ router.patch('/projects/:key', mutation, operator, wrap(async (req, res) => {
 }));
 
 router.get('/health', (req, res) => {
-  res.json({ github: github.configured(), model: llm.configured(), readiness_blockers: jobs.readiness().blockers.map(b => b.code) });
+  res.json({ github: github.configured(), model: llm.status(), readiness_blockers: jobs.readiness().blockers.map(b => b.code) });
 });
 
 module.exports = router;

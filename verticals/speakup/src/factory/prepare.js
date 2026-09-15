@@ -201,7 +201,7 @@ async function runPrepare(jobId, { lang } = {}) {
     if (llm.configured()) {
       try {
         raw = await llm.callJSON('plan', { system: SYSTEM, user: planPrompt(spec, project, candidates), max_tokens: 6000 });
-        composed_by = llm.MODELS.plan;
+        composed_by = llm.activeModel('plan');
       } catch (e) {
         console.error('SpeakUp plan model error (falling back):', e.message);
         raw = null;
