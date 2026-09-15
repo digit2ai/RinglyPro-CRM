@@ -2,7 +2,7 @@
 /**
  * BuyersLine email (SendGrid). THE ONLY FILE IN THE VERTICAL WITH A TRANSPORT (SIT greps).
  *
- * Four messages, nothing else (two for reports, two for Martha leads below):
+ * Four messages, nothing else (two for reports, two for Ana leads below):
  *  - reviewerReportWaiting: a report needs approval -> the agent of record, or the admin when the
  *    buyer has no agent. Carries the report number and a console link, never the buyer's email,
  *    phone or criteria (an inbox is not the console's access control).
@@ -111,7 +111,7 @@ async function reviewerReportWaiting(tenantId, reportId) {
 }
 
 /**
- * Lead flow (Martha). buyerLeadReport: the buyer's on-screen report link, ONLY with the
+ * Lead flow (Ana). buyerLeadReport: the buyer's on-screen report link, ONLY with the
  * email consent stored on the lead. agentNewLead: the assigned agent, ONLY when the buyer
  * granted agent-referral consent; carries first name and area, never contact details.
  */

@@ -291,7 +291,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const css = read(path.join(ROOT, 'public', 'site.css'));
     assert(/\.flow\.is-animated \.flow-step \.flow-node \{ opacity/.test(css) && !/^\.flow-step \.flow-node \{[^}]*opacity:\s*0/m.test(css), 'steps hidden before the script runs');
   });
-  await t('Martha can fill the intake form, but the tool has no consent or submit field and the server keeps only valid values', () => {
+  await t('Ana can fill the intake form, but the tool has no consent or submit field and the server keeps only valid values', () => {
     const { AGENTS, blSanitizeIntake } = require('../../src/config/voice-agents');
     const action = (AGENTS.buyersline.pageActions || []).find((a) => a.name === 'fill_intake_form');
     assert(action && typeof action.sanitize === 'function', 'page action missing');
@@ -304,14 +304,14 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     eq(JSON.stringify(blSanitizeIntake({ budget_max: 5, beds_min: 9, timeline: 'tomorrow', email: 'nope', phone: '<script>' })), '{}');
     for (const k of Object.keys(AGENTS)) if (k !== 'buyersline') assert(!AGENTS[k].pageActions, k + ' gained page actions');
   });
-  await t('page actions are never executed on the server and the landing never ticks consent or submits for Martha', () => {
+  await t('page actions are never executed on the server and the landing never ticks consent or submits for Ana', () => {
     const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
     assert(/const accion = pageActions\.find/.test(route) && /acciones\.push\(\{ name: accion\.name, input: limpio \}\)/.test(route), 'page action branch');
     assert(/if \(accion\) \{[\s\S]*?\} else if \(excedeLimite\(ip\)\)/.test(route), 'page actions must short-circuit before any HTTP tool call');
     const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
     assert(/d2orb:action/.test(orb), 'orb does not announce actions');
     const html = read(path.join(ROOT, 'public', 'index.html'));
-    const script = html.slice(html.indexOf('/* Martha (voice assistant)'), html.indexOf('</script>', html.indexOf('/* Martha (voice assistant)')));
+    const script = html.slice(html.indexOf('/* Ana (voice assistant)'), html.indexOf('</script>', html.indexOf('/* Ana (voice assistant)')));
     assert(script.length > 200 && /d2orb:action/.test(script), 'voice bridge missing');
     assert(!/\.click\(|requestSubmit|consent|selections/i.test(script.replace(/\/\*[\s\S]*?\*\//, '')), 'bridge clicks, submits a form, or touches consent or selections');
     const send = script.slice(script.indexOf('function startSend'), script.indexOf("window.addEventListener('d2orb:action'"));
@@ -404,7 +404,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       assert(/Freddie Mac/.test(es.assumptions.find((a) => a.key === 'rate').basis) && /predeterminado/.test(es.assumptions.find((a) => a.key === 'tax').basis), 'Spanish labels');
     } finally { rates._inject(null); }
   });
-  await t('Martha sends only after a clear yes, and reads the live form status so she never asks twice', () => {
+  await t('Ana sends only after a clear yes, and reads the live form status so she never asks twice', () => {
     const { AGENTS, blConfirmSubmit } = require('../../src/config/voice-agents');
     const submit = AGENTS.buyersline.pageActions.find((a) => a.name === 'submit_intake_form');
     assert(submit && submit.sanitize === blConfirmSubmit, 'submit action missing');
@@ -412,7 +412,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     for (const yes of ['Yes', 'yes please send it', 'Sure, go ahead.', 'ok', 'Sí', 'sí, envíelo', 'Claro que sí', 'dale']) assert(blConfirmSubmit({}, { lastUserText: yes }) !== null, 'refused a yes: ' + yes);
     for (const no of ['', 'No', "no, don't send it yet", 'wait', 'what is this?', 'hold on, let me check', 'no todavía', 'espere un momento', 'cómo funciona esto']) eq(blConfirmSubmit({}, { lastUserText: no }), null);
     eq(blConfirmSubmit({ force: true }, {}), null);
-    for (const lang of ['en', 'es']) assert(/MARTHA CHAT STATUS/.test(AGENTS.buyersline.persona[lang]) && /submit_intake_form/.test(AGENTS.buyersline.persona[lang]), 'persona ' + lang);
+    for (const lang of ['en', 'es']) assert(/ANA CHAT STATUS/.test(AGENTS.buyersline.persona[lang]) && /submit_intake_form/.test(AGENTS.buyersline.persona[lang]), 'persona ' + lang);
     const route = stripComments(read(path.join(ROOT, '..', '..', 'src', 'routes', 'voice-agent.js')));
     assert(/accion\.sanitize\(p\.input, \{ lastUserText: askedText/.test(route) && /if \(limpio === null\)/.test(route), 'route does not gate refused actions');
     const orb = read(path.join(ROOT, '..', '..', 'public', 'embed', 'voice-orb.js'));
@@ -826,7 +826,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         for (const p of ['login.html', 'admin.html']) assert(read(path.join(ROOT, 'public', p)).includes('{{BASE}}/admin/manifest.webmanifest'), p);
       });
 
-      console.log('\nO. Martha leads and research');
+      console.log('\nO. Ana leads and research');
       {
         const research = require('./src/services/research');
         const areaSvc = require('./src/services/area');

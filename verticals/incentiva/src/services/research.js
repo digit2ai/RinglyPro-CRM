@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Builder-promotion research agent (Martha, stage 03).
+ * Builder-promotion research agent (Ana, stage 03).
  *
  * A Sonnet model with Anthropic's server-side web search researches the builders
  * selling in the buyer's area. The run is a background job the page polls

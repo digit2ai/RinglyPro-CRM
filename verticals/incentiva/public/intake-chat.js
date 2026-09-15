@@ -1,4 +1,4 @@
-/* BuyersLine: Martha, the conversational intake.
+/* BuyersLine: Ana, the conversational intake.
    One question at a time, six stages, answers editable. Every page load starts a
    new conversation (owner decision 2026-09-14): nothing is kept in the browser, and a
    finished report comes back only through /?lead=<token>. Stage 03 runs the builder
@@ -13,11 +13,11 @@
 
   var L = {
     en: {
-      martha: 'Martha', role: 'BuyersLine assistant',
+      martha: 'Ana', role: 'BuyersLine assistant',
       stages: ['Where', 'Money and timing', 'Promotions', 'About you', 'Protect you', 'Contact'],
-      step_of: 'Stage {n} of 6', back: 'Back', edit: 'Edit', send: 'Send', skip: 'Skip', typing: 'Martha is typing',
+      step_of: 'Stage {n} of 6', back: 'Back', edit: 'Edit', send: 'Send', skip: 'Skip', typing: 'Ana is typing',
       restart: 'Start a new search', optional: 'Optional', start_over: 'Start over', restart_confirm: 'Start over? Your answers so far will be cleared.',
-      hello: "Hi, I'm Martha. I'll ask a few quick questions, then pull the current builder promotions for your area.",
+      hello: "Hi, I'm Ana. I'll ask a few quick questions, then pull the current builder promotions for your area.",
       q_area: 'Where are you looking? A ZIP code, city or neighborhood works.', ph_area: 'For example 33578 or Wesley Chapel',
       checking_area: 'Checking that area...',
       err_area_invalid_zip: "That ZIP code doesn't exist. Please check the five digits.",
@@ -78,11 +78,11 @@
       countdown: 'Sending your answers in {n}...', cancel: 'Cancel', none: 'None', skipped: 'Skipped'
     },
     es: {
-      martha: 'Martha', role: 'Asistente de BuyersLine',
+      martha: 'Ana', role: 'Asistente de BuyersLine',
       stages: ['Dónde', 'Dinero y plazos', 'Promociones', 'Sobre usted', 'Su protección', 'Contacto'],
-      step_of: 'Etapa {n} de 6', back: 'Atrás', edit: 'Editar', send: 'Enviar', skip: 'Omitir', typing: 'Martha está escribiendo',
+      step_of: 'Etapa {n} de 6', back: 'Atrás', edit: 'Editar', send: 'Enviar', skip: 'Omitir', typing: 'Ana está escribiendo',
       restart: 'Empezar una búsqueda nueva', optional: 'Opcional', start_over: 'Empezar de nuevo', restart_confirm: '¿Empezar de nuevo? Se borrarán sus respuestas.',
-      hello: 'Hola, soy Martha. Le haré unas preguntas rápidas y luego buscaré las promociones actuales de las constructoras en su zona.',
+      hello: 'Hola, soy Ana. Le haré unas preguntas rápidas y luego buscaré las promociones actuales de las constructoras en su zona.',
       q_area: '¿Dónde está buscando? Sirve un código postal, una ciudad o un vecindario.', ph_area: 'Por ejemplo 33578 o Wesley Chapel',
       checking_area: 'Revisando esa zona...',
       err_area_invalid_zip: 'Ese código postal no existe. Revise los cinco dígitos, por favor.',
@@ -787,7 +787,7 @@
       if (!root || state.lead) return;
       if (key === 'max_price' && value > 0) { state.answers.max_price = Math.round(value); state.done.max_price = true; invalidate('max_price'); if (state.step === 'max_price') afterAnswer('max_price'); else { save(); render(false); } }
     },
-    /* Voice (Martha orb) fills answers she heard. Consents and selections are never touched here. */
+    /* Voice (Ana orb) fills answers she heard. Consents and selections are never touched here. */
     applyVoice: function (i) {
       if (!root || state.lead || !i) return 0;
       var a = state.answers, n = 0;
@@ -818,7 +818,7 @@
       STEPS.forEach(function (s) { if (s.id === 'consents' || skipped(s.id)) return; if (answered(s.id)) { if (s.id !== 'research') have.push(labels[s.id] + ' = ' + display(s.id)); } else if (s.required) missing.push(labels[s.id]); });
       var r = ui.research;
       var researchLine = !state.research ? 'not started' : !r ? 'loading' : r.status === 'running' || r.status === 'starting' ? 'running now, the buyer waits on screen' : r.status === 'done' ? (r.rows || []).length + ' communities shown, ' + state.selections.length + ' selected by the buyer' : r.status;
-      return 'MARTHA CHAT STATUS (live; read this first). Current question: ' + (state.lead ? 'finished, report shown' : (labels[state.step] || state.step)) + '. ' +
+      return 'ANA CHAT STATUS (live; read this first). Current question: ' + (state.lead ? 'finished, report shown' : (labels[state.step] || state.step)) + '. ' +
         'Answered: ' + (have.join('; ') || 'nothing yet') + '. Required still missing: ' + (missing.join(', ') || 'none') + '. ' +
         'Promotion research: ' + researchLine + '. ' +
         'Contact choices, ticked only by the buyer: email ' + (state.consents.email ? 'ticked' : 'not ticked') + '; text messages ' + (state.consents.sms ? 'ticked' : 'not ticked') + '; share with the agent ' + (state.consents.agent_referral ? 'ticked' : 'not ticked') + '. ' +

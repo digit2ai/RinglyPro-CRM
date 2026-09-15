@@ -67,7 +67,7 @@ module.exports = function publicRoutes(opts = {}) {
     } catch (e) { console.error('[incentiva] config', e); res.status(500).json({ error: 'Could not load configuration. Try again in a minute.' }); }
   });
 
-  // ── Martha: conversational intake ─────────────────────────────────────────
+  // ── Ana: conversational intake ─────────────────────────────────────────
   router.post('/area', async (req, res) => {
     if (!rateLimit('area:' + ipHash(req), 60, 3600e3)) return res.status(429).json({ error: 'Too many lookups. Try again later.' });
     try { res.json(await area.resolveArea(tenantId, req.body && req.body.input)); }

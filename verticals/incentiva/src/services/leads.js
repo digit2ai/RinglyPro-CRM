@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Martha's conversational intake -> a lead.
+ * Ana's conversational intake -> a lead.
  *
  * Invariants (SIT asserts each):
  *  - The consent text stored is the SERVER's wording for LEAD_CONSENT_VERSION in the

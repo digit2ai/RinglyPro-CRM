@@ -833,7 +833,7 @@
   };
 
   /* ------------------------------------------------------------------ */
-  /* View: Leads (Martha conversational intake)                          */
+  /* View: Leads (Ana conversational intake)                          */
   /* ------------------------------------------------------------------ */
 
   const LEAD_STATUSES = [['new', 'New'], ['contacted', 'Contacted'], ['working', 'Working'], ['closed', 'Closed'], ['lost', 'Lost']];
@@ -873,7 +873,7 @@
         <td data-label="Created">${timeTag(l.created_at, true)}</td>
         <td data-label="Flags"><div class="chips">${leadFlags(l).join('')}</div></td>
       </tr>`).join('')}</tbody></table></div>`
-      : emptyHTML(status ? `No leads with status "${humanize(status)}".` : 'No leads yet.', 'Leads appear here when a buyer finishes the conversation with Martha on the public site.');
+      : emptyHTML(status ? `No leads with status "${humanize(status)}".` : 'No leads yet.', 'Leads appear here when a buyer finishes the conversation with Ana on the public site.');
     return `${pageHead('Leads', `<span class="mono">${leads.length}</span> shown`, filter)}${table}`;
   }
 

@@ -416,7 +416,7 @@ CREATE TABLE IF NOT EXISTS nca_api_usage (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS nca_api_usage_uq ON nca_api_usage (tenant_id, provider, month);
 
--- ── Conversational intake (Martha) + builder-promotion research (2026-09-14) ──
+-- ── Conversational intake (Ana) + builder-promotion research (2026-09-14) ──
 -- Spec names map: buyersline_leads -> nca_leads, buyersline_consents -> nca_lead_consents,
 -- buyersline_visited_offices -> nca_lead_visited_offices, buyersline_research_runs ->
 -- nca_research_runs, buyersline_research_rows -> nca_research_rows,

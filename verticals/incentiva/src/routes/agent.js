@@ -373,7 +373,7 @@ module.exports = function agentRoutes() {
   }));
 
   // ── Buyers ────────────────────────────────────────────────────────────────
-  // ── Leads from Martha's conversational intake ─────────────────────────────
+  // ── Leads from Ana's conversational intake ─────────────────────────────
   // Row ownership: an agent sees only leads assigned to them; the admin sees the tenant.
   function leadOwner(user, alias = 'l') { return user.role === 'admin' ? '' : ` AND ${alias}.assigned_agent_id = :uid`; }
   const LEAD_STATUSES = ['new', 'contacted', 'working', 'closed', 'lost'];
