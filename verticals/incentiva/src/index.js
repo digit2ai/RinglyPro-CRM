@@ -176,6 +176,8 @@ function createApp(opts = {}) {
       if (out.created) {
         await audit(tenantId, { type: 'site_user', id: out.created.id }, 'gate.login_requested', 'site_user', out.created.id, {});
         notify.later(notify.siteLoginRequested, tenantId, out.created, archgate.ownerEmail());
+        notify.later(require('./services/sms').staffAlert, tenantId, { action: 'sms.site_login_requested', subjectType: 'site_user', subjectId: out.created.id,
+          body: `BuyersLine: ${out.created.email} created a login and is waiting for approval. Approve in Users: ${(process.env.INCENTIVA_PUBLIC_URL || 'https://buyersline.app').replace(/\/+$/, '')}/admin/#/users` });
       }
       html(res, 200, archgate.signupPage(req.baseUrl, null, true));
     } catch (e) { console.error('[incentiva] gate signup', e.message); html(res, 500, archgate.signupPage(req.baseUrl, 'That did not work. Try again.')); }

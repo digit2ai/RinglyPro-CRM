@@ -1757,6 +1757,7 @@
         <td data-label="Name"><strong>${esc(u.name)}</strong>${u.is_me ? ' ' + chip('YOU', 'neutral') : ''}<div class="small muted">${esc(u.email)}</div></td>
         <td data-label="Role">${esc(u.role === 'admin' ? 'Admin' : 'Agent')}${u.license_no ? `<div class="small muted">License ${esc(u.license_no)}</div>` : ''}</td>
         <td data-label="Status">${u.active ? chip('ACTIVE', 'ok') : chip('INACTIVE', 'neutral')}${u.managed_on_render ? `<div class="small muted">Set on Render</div>` : ''}</td>
+        <td data-label="Text alerts">${u.is_me ? `<form data-form="alertPhone" data-uid="${esc(u.id)}" novalidate class="formbar" style="margin:0;flex-wrap:nowrap"><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile number" value="${esc(u.phone || '')}" aria-label="Text me alerts at" style="max-width:170px"><button type="submit" class="btn btn-ghost btn-sm">Save</button></form>` : textCell(u.phone)}</td>
         <td data-label="">${u.managed_on_render || u.is_me ? '' : `<div class="formbar" style="margin:0">
           <button type="button" class="btn btn-ghost btn-sm" data-act="consoleUserActive" data-uid="${esc(u.id)}" data-active="${u.active ? '0' : '1'}">${u.active ? 'Deactivate' : 'Activate'}</button>
           <button type="button" class="btn btn-ghost btn-sm" data-act="consoleUserReset" data-uid="${esc(u.id)}">Reset password</button></div>`}</td>
@@ -1785,8 +1786,8 @@
         ${previewRows ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Email</th><th>Status</th><th>Created</th><th>Last sign-in</th><th></th></tr></thead><tbody>${previewRows}</tbody></table></div>` : emptyHTML('No preview logins yet.', 'They appear here when someone uses Create a login.')}
       </section>
       <section class="card" style="margin-bottom:18px"><h2>Console accounts</h2>
-        <p class="small muted">Who can sign in to this dashboard. Accounts set on Render (the owner and the licensed agent) are changed there.</p>
-        <div class="tablewrap"><table class="rtable"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${consoleRows}</tbody></table></div>
+        <p class="small muted">Who can sign in to this dashboard. Accounts set on Render (the owner and the licensed agent) are changed there. Admins with a mobile number get a text when someone creates a login.</p>
+        <div class="tablewrap"><table class="rtable"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Text alerts</th><th></th></tr></thead><tbody>${consoleRows}</tbody></table></div>
         <details style="margin-top:12px"><summary><strong>Add a console account</strong></summary>
           <form data-form="addConsoleUser" novalidate style="margin-top:12px"><div class="userform">
             <label class="field"><span>Name</span><input name="name" required autocomplete="off"></label>
@@ -2040,6 +2041,10 @@
   /* ------------------------------------------------------------------ */
 
   const forms = {
+    alertPhone: async (form) => {
+      try { await api('PATCH', `/agent/admin/users/console/${encodeURIComponent(form.dataset.uid)}`, { phone: form.elements.namedItem('phone').value.trim() }); toast('Alert number saved.'); refresh(); }
+      catch (e) { if (e.status !== 401) toast(`Save failed: ${e.message}`, 'crit'); }
+    },
     addConsoleUser: async (form) => {
       const f = (n) => (form.elements.namedItem(n) || {}).value || '';
       try {

@@ -167,6 +167,81 @@ async function handleInbound(tenantId, req, fullUrl) {
   return { status: 200, twiml: twiml('') };
 }
 
-function _setClient(fake) { client = fake; }
+/**
+ * A short alert to staff, never to a buyer: every active admin with a phone on their console account (nca_users.phone).
+ * Carries an email address at most (a login request), never buyer contact details.
+ *
+ * SENDER (owner decision 2026-09-15): the A2P-registered GoHighLevel number INCENTIVA_ALERT_SMS_FROM (default
+ * +18132124888), sent through the GHL Conversations API with the CRM's existing GHL connection for client
+ * INCENTIVA_ALERT_GHL_CLIENT_ID (default 15). That connection's token is refreshed by the CRM, so it is read at send
+ * time rather than copied into an env var that would expire. If GHL is unreachable the text falls back to Twilio
+ * (the vertical's sender, else the verified toll-free INCENTIVA_ALERT_TWILIO_FROM, default +18886103810).
+ */
+const GHL_BASE = 'https://services.leadconnectorhq.com';
+let ghlSender = null; // SIT injects a fake
+async function ghlCredentials() {
+  const clientId = Number(process.env.INCENTIVA_ALERT_GHL_CLIENT_ID || 15);
+  const r = await db.one(`SELECT c.settings->'integration'->'ghl' AS gs, g.access_token AS tok, g.ghl_location_id AS loc
+    FROM clients c LEFT JOIN ghl_integrations g ON g.client_id = c.id AND g.is_active = true WHERE c.id = :id`, { id: clientId });
+  if (!r) return null;
+  const key = r.gs && r.gs.enabled && r.gs.apiKey ? r.gs.apiKey : r.tok;
+  const loc = r.loc || (r.gs && r.gs.locationId);
+  return key && loc ? { key, loc } : null;
+}
+async function ghlSend(to, body) {
+  if (ghlSender) return ghlSender(to, body);
+  const axios = require('axios');
+  const creds = await ghlCredentials();
+  if (!creds) throw new Error('no GHL connection');
+  const headers = { Authorization: `Bearer ${creds.key}`, Version: '2021-07-28', 'Content-Type': 'application/json' };
+  let contactId = null;
+  try {
+    const found = await axios.get(`${GHL_BASE}/contacts/search/duplicate`, { params: { locationId: creds.loc, number: to }, headers, timeout: 10000 });
+    contactId = found.data && found.data.contact ? found.data.contact.id : null;
+  } catch (e) { contactId = null; }
+  if (!contactId) {
+    const made = await axios.post(`${GHL_BASE}/contacts/`, { locationId: creds.loc, phone: to, firstName: 'BuyersLine', lastName: 'Alerts', tags: ['buyersline-alerts'] }, { headers, timeout: 10000 });
+    contactId = made.data && made.data.contact ? made.data.contact.id : null;
+  }
+  if (!contactId) throw new Error('GHL contact not found or created');
+  const sent = await axios.post(`${GHL_BASE}/conversations/messages`, { type: 'SMS', contactId, message: body, fromNumber: process.env.INCENTIVA_ALERT_SMS_FROM || '+18132124888' }, { headers, timeout: 15000 });
+  return { id: sent.data && (sent.data.messageId || sent.data.id), provider: 'ghl' };
+}
+async function staffAlert(tenantId, { action, subjectType, subjectId, body }) {
+  if (process.env.INCENTIVA_SMS === 'off') return { sent: 0, reason: 'off' };
+  const admins = await db.q(`SELECT id, phone FROM nca_users WHERE tenant_id = :t AND role = 'admin' AND active = true AND phone IS NOT NULL`, { t: tenantId });
+  let sent = 0;
+  for (const a of admins) {
+    const to = e164(a.phone);
+    if (!to) continue;
+    const act = action + '_' + a.id;
+    if (await db.one(`SELECT id FROM nca_audit_log WHERE tenant_id = :t AND action = :a AND subject_type = :st AND subject_id = :s LIMIT 1`, { t: tenantId, a: act, st: subjectType, s: subjectId })) continue;
+    const text = String(body).slice(0, 300);
+    try {
+      const r = await ghlSend(to, text);
+      await audit(tenantId, { type: 'system' }, act, subjectType, subjectId, { provider: 'ghl', id: r && r.id ? r.id : null });
+      sent++;
+      continue;
+    } catch (e) {
+      console.error('[incentiva] staff sms via GHL failed:', (e.response && JSON.stringify(e.response.data).slice(0, 200)) || e.message);
+    }
+    if (!client && !(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) { await audit(tenantId, { type: 'system' }, act + '_failed', subjectType, subjectId, { error: 'GHL failed and Twilio is not configured' }); continue; }
+    const msg = { to, body: text };
+    if (process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID) msg.messagingServiceSid = process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID;
+    else msg.from = process.env.INCENTIVA_SMS_FROM || process.env.INCENTIVA_ALERT_TWILIO_FROM || '+18886103810';
+    try {
+      const r = await twilioClient().messages.create(msg);
+      await audit(tenantId, { type: 'system' }, act, subjectType, subjectId, { provider: 'twilio_fallback', sid: r && r.sid ? r.sid : null });
+      sent++;
+    } catch (e) {
+      console.error('[incentiva] staff sms failed:', e.message);
+      await audit(tenantId, { type: 'system' }, act + '_failed', subjectType, subjectId, { error: String(e.message).slice(0, 300) });
+    }
+  }
+  return { sent };
+}
 
-module.exports = { configured, agentNewLeadSms, buyerSms, smsConfirmRequest, quietHours, handleInbound, e164, STOP_WORDS, _setClient };
+function _setClient(fake) { client = fake; }
+function _setGhlSender(fn) { ghlSender = fn; }
+
+module.exports = { staffAlert, _setGhlSender, configured, agentNewLeadSms, buyerSms, smsConfirmRequest, quietHours, handleInbound, e164, STOP_WORDS, _setClient };

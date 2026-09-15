@@ -645,6 +645,21 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const me = u.data.console.find((x) => x.is_me);
         assert(me && me.managed_on_render, 'the Render owner account must be marked');
         eq((await call('PATCH', '/api/v1/agent/admin/users/console/' + me.id, { active: false }, 'owner')).status, 400, 'an admin deactivated their own account');
+        eq((await call('PATCH', '/api/v1/agent/admin/users/console/' + me.id, { phone: '123' }, 'owner')).status, 400);
+        eq((await call('PATCH', '/api/v1/agent/admin/users/console/' + me.id, { phone: '(813) 555-0190' }, 'owner')).status, 200, 'an admin cannot save their own alert number');
+        eq((await db.one('SELECT phone FROM nca_users WHERE id = :id', { id: me.id })).phone, '+18135550190');
+        const smsMod = require('./src/services/sms'); const alerts = [], viaGhl = [];
+        smsMod._setClient({ messages: { create: async (m) => { alerts.push(m); return { sid: 'SMalert' }; } } });
+        smsMod._setGhlSender(async (to, body) => { viaGhl.push({ to, body }); return { id: 'ghl1' }; });
+        try {
+          const r1 = await smsMod.staffAlert(SIT_TENANT, { action: 'sms.sit_alert', subjectType: 'site_user', subjectId: 1, body: 'BuyersLine: test' });
+          eq(r1.sent, 1); eq(viaGhl[0].to, '+18135550190'); eq(alerts.length, 0, 'texted through Twilio while GHL worked');
+          eq((await smsMod.staffAlert(SIT_TENANT, { action: 'sms.sit_alert', subjectType: 'site_user', subjectId: 1, body: 'BuyersLine: test' })).sent, 0, 'the same alert texted twice');
+          smsMod._setGhlSender(async () => { throw new Error('GHL down'); });
+          const r2 = await smsMod.staffAlert(SIT_TENANT, { action: 'sms.sit_alert', subjectType: 'site_user', subjectId: 2, body: 'BuyersLine: test' });
+          eq(r2.sent, 1); eq(alerts[0].to, '+18135550190', 'no Twilio fallback when GHL failed');
+        } finally { smsMod._setClient(null); smsMod._setGhlSender(null); }
+        await db.exec('UPDATE nca_users SET phone = NULL WHERE id = :id', { id: me.id });
         const made = await call('POST', '/api/v1/agent/admin/users/console', { name: 'SIT Helper', email: 'sit-helper@example.test', role: 'agent' }, 'owner');
         eq(made.status, 200); assert(made.data.temporary_password && made.data.temporary_password.length >= 12, 'temporary password');
         eq((await call('POST', '/api/v1/agent/admin/users/console', { name: 'Dup', email: 'sit-helper@example.test', role: 'agent' }, 'owner')).status, 409);

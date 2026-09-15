@@ -798,7 +798,14 @@ module.exports = function agentRoutes() {
       out.temporary_password = tempPassword();
       await db.exec('UPDATE nca_users SET password_hash = :h WHERE id = :id AND tenant_id = :tt', { h: await bcrypt.hash(out.temporary_password, 10), id, tt });
     }
-    if (b.license_no !== undefined && !managed) await db.exec('UPDATE nca_users SET license_no = :l WHERE id = :id AND tenant_id = :tt', { l: clampStr(b.license_no, 60), id, tt });
+    if (b.phone !== undefined) {
+      if (id !== req.user.id && managed) throw new HttpError(400, 'This phone is set on Render. Change it there.');
+      const raw = String(b.phone || '').trim();
+      const digits = raw.replace(/[^\d]/g, '');
+      if (raw && !(digits.length === 10 || (digits.length === 11 && digits[0] === '1'))) throw new HttpError(400, 'Enter a 10-digit US mobile number');
+      await db.exec('UPDATE nca_users SET phone = :p WHERE id = :id AND tenant_id = :tt', { p: raw ? '+1' + digits.slice(-10) : null, id, tt });
+    }
+        if (b.license_no !== undefined && !managed) await db.exec('UPDATE nca_users SET license_no = :l WHERE id = :id AND tenant_id = :tt', { l: clampStr(b.license_no, 60), id, tt });
     await audit(tt, { type: 'agent', id: req.user.id }, 'console.user_updated', 'user', id, { active: b.active, reset_password: b.reset_password === true });
     res.json(out);
   }));
