@@ -72,23 +72,23 @@
 
       <aside class="card example-card" aria-labelledby="exCaption">
         <div class="example-head">
-          <span class="small muted" id="exCaption" data-i18n="ex_caption">What a result looks like</span>
-          <span class="example-label" data-i18n="ex_label">Example</span>
+          <span class="small muted" id="exCaption">A real promotion we found</span>
+          <span class="example-label" id="exLabel">Real offer</span>
         </div>
         <div class="example-body">
-          <p class="example-community">Example Preserve · Example Builder</p>
-          <p class="small muted" style="margin:0">Example City, FL</p>
-          <p class="example-value" data-i18n="ex_value">Up to $12,000 toward closing costs</p>
-          <p class="small" style="margin:0 0 10px" data-i18n="ex_cond">With the builder's affiliated lender, under contract by an example date.</p>
+          <p class="example-community" id="exCommunity">M/I Homes · Tampa Bay</p>
+          <p class="small muted" style="margin:0" id="exPlace">Select quick move-in homes</p>
+          <p class="example-value" id="exValue">2.875% rate in year 1 with a 2/1 buydown</p>
+          <p class="small" style="margin:0 0 10px" id="exCond">30-year fixed FHA loan through M/I Financial. The rate is 3.875% in year 2 and 4.875% from year 3 (APR 5.6236%). New contracts that close by Nov 30, 2026.</p>
           <span class="stamp">
             <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span id="exVerified">Verified Sep 11, 2026</span>
+            <span id="exVerified">Checked on the builder's website, Sep 14, 2026</span>
           </span>
           <div class="example-pay">
-            <div><span data-i18n="ex_year1">Year 1, est. per month</span><strong>$2,480</strong></div>
-            <div><span data-i18n="ex_year3">Year 3+, est. per month</span><strong>$2,790</strong></div>
+            <div><span id="exY1Label">Year 1, principal and interest</span><strong id="exY1">$1,674</strong></div>
+            <div><span id="exY3Label">Year 3+, principal and interest</span><strong id="exY3">$2,136</strong></div>
           </div>
-          <p class="small muted" style="margin:10px 0 0" data-i18n="ex_fictional">Fictional values for illustration only.</p>
+          <p class="small muted" style="margin:10px 0 0" id="exNote">On the builder's own example: $411,000 price, $403,540 FHA loan. Taxes, insurance and mortgage insurance are extra. Not guaranteed until locked; our licensed agent confirms the terms with you.</p>
         </div>
       </aside>
     </div>
@@ -346,12 +346,24 @@
       flow_7_p: 'Tour, negotiate, close. Free for you.',
       ex_caption: 'What a result looks like',
       ex_label: 'Example',
+      ex_community: 'Example Preserve · Example Builder',
+      ex_place: 'Example City, FL',
       ex_value: 'Up to $12,000 toward closing costs',
       ex_cond: "With the builder's affiliated lender, under contract by an example date.",
       ex_verified: 'Verified {date}',
       ex_year1: 'Year 1, est. per month',
       ex_year3: 'Year 3+, est. per month',
       ex_fictional: 'Fictional values for illustration only.',
+      rx_caption: 'A real promotion we found',
+      rx_label: 'Real offer',
+      rx_community: 'M/I Homes · Tampa Bay',
+      rx_place: 'Select quick move-in homes',
+      rx_value: '2.875% rate in year 1 with a 2/1 buydown',
+      rx_cond: '30-year fixed FHA loan through M/I Financial. The rate is 3.875% in year 2 and 4.875% from year 3 (APR 5.6236%). New contracts that close by {close}.',
+      rx_checked: "Checked on the builder's website, {date}",
+      rx_year1: 'Year 1, principal and interest',
+      rx_year3: 'Year 3+, principal and interest',
+      rx_note: "On the builder's own example: $411,000 price, $403,540 FHA loan. Taxes, insurance and mortgage insurance are extra. Not guaranteed until locked; our licensed agent confirms the terms with you.",
       est_eyebrow: 'Buying power',
       est_title: 'Estimate your buying power',
       est_lede: 'A few numbers give a rough price range and monthly payment. No credit check, and nothing here is a loan offer.',
@@ -545,12 +557,24 @@
       flow_7_p: 'Visite, negocie, cierre. Gratis para usted.',
       ex_caption: 'Así se ve un resultado',
       ex_label: 'Ejemplo',
+      ex_community: 'Example Preserve · Example Builder',
+      ex_place: 'Example City, FL',
       ex_value: 'Hasta $12,000 para gastos de cierre',
       ex_cond: 'Con el prestamista afiliado del constructor, con contrato firmado antes de una fecha de ejemplo.',
       ex_verified: 'Verificado el {date}',
       ex_year1: 'Año 1, est. por mes',
       ex_year3: 'Año 3 en adelante, est. por mes',
       ex_fictional: 'Valores ficticios, solo para ilustrar.',
+      rx_caption: 'Una promoción real que encontramos',
+      rx_label: 'Oferta real',
+      rx_community: 'M/I Homes · Tampa Bay',
+      rx_place: 'Casas selectas listas para mudarse',
+      rx_value: 'Tasa de 2.875% el primer año con reducción temporal 2/1',
+      rx_cond: 'Préstamo FHA a 30 años con tasa fija mediante M/I Financial. La tasa es 3.875% el segundo año y 4.875% desde el tercero (APR 5.6236%). Contratos nuevos que cierren antes del {close}.',
+      rx_checked: 'Revisado en el sitio web del constructor el {date}',
+      rx_year1: 'Año 1, capital e intereses',
+      rx_year3: 'Año 3 en adelante, capital e intereses',
+      rx_note: 'Según el ejemplo del propio constructor: precio de $411,000 y préstamo FHA de $403,540. Impuestos, seguro y seguro hipotecario van aparte. No está garantizada hasta fijar la tasa; nuestro agente con licencia confirma los términos con usted.',
       est_eyebrow: 'Poder de compra',
       est_title: 'Calcule su poder de compra',
       est_lede: 'Con unas pocas cifras le damos un rango aproximado de precio y de pago mensual. Sin revisión de crédito, y nada de esto es una oferta de préstamo.',
@@ -727,6 +751,30 @@
     var d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
   }
+  /* Hero card: a real builder promotion, checked by hand on the builder's own page.
+     The payments are principal and interest on the builder's published example loan
+     ($403,540, 30 years) at 2.875% and 4.875%. After the close-by date the card goes
+     back to the labelled fictional example rather than advertise an expired offer. */
+  var REAL_EXAMPLE = { checked: '2026-09-14', closeBy: '2026-11-30', loan: 403540, y1: 2.875, y3: 4.875 };
+  function renderExample() {
+    var today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    var real = today <= REAL_EXAMPLE.closeBy;
+    function pi(rate) { var i = rate / 1200; return REAL_EXAMPLE.loan * i / (1 - Math.pow(1 + i, -360)); }
+    function usd(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+    var p = real ? 'rx_' : 'ex_';
+    $('exCaption').textContent = t(p + 'caption');
+    $('exLabel').textContent = t(p + 'label');
+    $('exCommunity').textContent = t(p + 'community');
+    $('exPlace').textContent = t(p + 'place');
+    $('exValue').textContent = t(p + 'value');
+    $('exCond').textContent = t(p + 'cond', { close: fmtDate(REAL_EXAMPLE.closeBy) });
+    $('exVerified').textContent = real ? t('rx_checked', { date: fmtDate(REAL_EXAMPLE.checked) }) : t('ex_verified', { date: fmtDate('2026-09-11') });
+    $('exY1Label').textContent = t(p + 'year1');
+    $('exY3Label').textContent = t(p + 'year3');
+    $('exY1').textContent = real ? usd(pi(REAL_EXAMPLE.y1)) : '$2,480';
+    $('exY3').textContent = real ? usd(pi(REAL_EXAMPLE.y3)) : '$2,790';
+    $('exNote').textContent = real ? t('rx_note') : t('ex_fictional');
+  }
   function fmtDate(s) {
     var d = parseDate(s);
     return d ? d.toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' }) : '';
@@ -806,7 +854,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.lang-toggle button'), function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
     });
-    $('exVerified').textContent = t('ex_verified', { date: fmtDate('2026-09-11') });
+    renderExample();
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config && config.market && config.market.name) || t('market_default') });
     var orb = $('voiceOrb');
     orb.setAttribute('data-lang', lang);

@@ -947,6 +947,18 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const a = await call('GET', '/wp-admin'); eq(a.status, 404); assert(/BuyersLine/.test(a.data), 'branded');
         eq((await call('GET', '/api/v1/nope')).status, 404);
       });
+      await t('hero real-offer card: payments match the engine and it expires to the fictional example', async () => {
+        const html = fs.readFileSync(path.join(__dirname, 'public/index.html'), 'utf8');
+        const m = html.match(/REAL_EXAMPLE = \{ checked: '([\d-]+)', closeBy: '([\d-]+)', loan: (\d+), y1: ([\d.]+), y3: ([\d.]+) \}/);
+        assert(m, 'REAL_EXAMPLE block present');
+        const { monthlyPI } = require('./src/engines/payment');
+        const y1 = Math.round(monthlyPI(Number(m[3]), Number(m[4]))), y3 = Math.round(monthlyPI(Number(m[3]), Number(m[5])));
+        assert(html.includes('<strong id="exY1">$' + y1.toLocaleString('en-US') + '</strong>'), 'static year 1 equals engine ' + y1);
+        assert(html.includes('<strong id="exY3">$' + y3.toLocaleString('en-US') + '</strong>'), 'static year 3 equals engine ' + y3);
+        assert(/today <= REAL_EXAMPLE\.closeBy/.test(html), 'expiry guard present');
+        assert(html.includes("ex_fictional: 'Fictional values for illustration only.'"), 'fictional fallback kept');
+        assert(!/rx_checked:[^\n]*[Vv]erified/.test(html), 'real offer is not labelled agent-verified');
+      });
       await t('HTML shells are served with the mount substituted', async () => {
         const r = await fetch(BASE + '/'); const html = await r.text();
         assert(!html.includes('{{BASE}}'), 'token leaked'); assert(html.includes('/buyersline/site.css'), 'base substituted');
