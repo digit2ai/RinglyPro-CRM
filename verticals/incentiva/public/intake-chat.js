@@ -163,7 +163,7 @@
   var FINANCING = ['preapproved', 'cash', 'needs_lender', 'va', 'fha', 'unsure'];
   var AGENT = ['no', 'yes_under_agreement', 'yes_informal'];
 
-  var root = null, lang = 'en', config = null, state = null, ui = { typing: false, research: null, poll: null, pollStart: 0, busy: false, error: null, visitForm: false, countdown: null, reportRun: null };
+  var root = null, lang = 'en', config = null, state = null, ui = { voicePick: null, typing: false, research: null, poll: null, pollStart: 0, busy: false, error: null, visitForm: false, countdown: null, reportRun: null };
 
   /* ---------- utils ---------- */
   function T(key, vars) {
@@ -801,6 +801,17 @@
       if (i.email) { a.email = i.email; mark('email'); }
       if (i.phone) { a.phone = i.phone; mark('phone'); }
       if (AGENT.indexOf(i.working_with_agent) !== -1) { a.has_agent = i.working_with_agent; mark('has_agent'); }
+      // Optional questions the buyer said to skip, and the sales offices they said they visited.
+      (Array.isArray(i.skip) ? i.skip : []).forEach(function (id) {
+        if (['max_monthly', 'down_payment', 'phone', 'visits'].indexOf(id) === -1 || answered(id)) return;
+        if (id === 'visits') { a.visited_offices = []; state.done.visits = true; n++; return; }
+        a[id] = null; mark(id);
+      });
+      if (!gated() && i.visited_none === true) { a.visited_offices = []; state.done.visits = true; n++; }
+      if (!gated() && Array.isArray(i.visited_offices) && i.visited_offices.length) {
+        a.visited_offices = i.visited_offices.slice(0, 10).map(function (v) { return { builder: v.builder || null, community: v.community || null }; }).filter(function (v) { return v.builder || v.community; });
+        state.done.visits = true; n++;
+      }
       var area = (i.zip_codes && i.zip_codes[0]) || i.place;
       if (area && (!a.area || (a.area.zip || a.area.input) !== area)) {
         state.step = 'area'; state.editing = 'voice'; save();
@@ -812,17 +823,66 @@
     },
     status: function () {
       if (!state) return '';
-      var a = state.answers, have = [], missing = [];
-      var labels = { area: 'area', max_price: 'maximum home price', max_monthly: 'maximum monthly payment (optional)', down_payment: 'down payment (optional)', move_timeline: 'move timing', financing_type: 'how they will pay',
-        research: 'choose at least one community on screen (only the buyer can)', first_name: 'first name', email: 'email', phone: 'mobile phone (optional)', has_agent: 'working with an agent', visits: 'sales offices already visited (optional list)' };
-      STEPS.forEach(function (s) { if (s.id === 'consents' || skipped(s.id)) return; if (answered(s.id)) { if (s.id !== 'research') have.push(labels[s.id] + ' = ' + display(s.id)); } else if (s.required) missing.push(labels[s.id]); });
-      var r = ui.research;
-      var researchLine = !state.research ? 'not started' : !r ? 'loading' : r.status === 'running' || r.status === 'starting' ? 'running now, the buyer waits on screen' : r.status === 'done' ? (r.rows || []).length + ' communities shown, ' + state.selections.length + ' selected by the buyer' : r.status;
-      return 'ANA CHAT STATUS (live; read this first). Current question: ' + (state.lead ? 'finished, report shown' : (labels[state.step] || state.step)) + '. ' +
-        'Answered: ' + (have.join('; ') || 'nothing yet') + '. Required still missing: ' + (missing.join(', ') || 'none') + '. ' +
-        'Promotion research: ' + researchLine + '. ' +
+      var a = state.answers, have = [], missing = [], optional = [];
+      var labels = { area: 'area', max_price: 'maximum home price', max_monthly: 'maximum monthly payment (optional, can be skipped)', down_payment: 'down payment (optional, can be skipped)', move_timeline: 'move timing', financing_type: 'how they will pay',
+        research: 'choose at least one community', first_name: 'first name', email: 'email', phone: 'mobile phone (optional, can be skipped)', has_agent: 'working with an agent', visits: 'sales offices already visited (optional)', consents: 'contact choices and create the report', submit: 'create the report' };
+      STEPS.forEach(function (s) {
+        if (s.id === 'consents' || skipped(s.id)) return;
+        if (answered(s.id)) { if (s.id !== 'research') have.push(labels[s.id] + ' = ' + display(s.id)); }
+        else if (s.required) missing.push(labels[s.id]); else optional.push(labels[s.id]);
+      });
+      var cur = STEPS[stepIndex(state.step)] || { stage: 6 };
+      var onScreen = state.lead ? 'the finished report' : state.step === 'research' ? 'builder promotion research for the area' : state.step === 'consents' ? T('q_consent') : state.step === 'submit' ? 'create the report' : question(state.step);
+      var r = ui.research, rows = (r && r.rows) || [];
+      var researchLine;
+      if (!state.research) researchLine = 'not started (starts after the money and timing questions)';
+      else if (!r) researchLine = 'loading';
+      else if (r.status === 'running' || r.status === 'starting') researchLine = 'searching builder websites now; it takes a few minutes and the buyer waits on screen';
+      else if (r.status === 'failed') researchLine = 'failed; the buyer can retry or continue without it';
+      else if (r.status === 'done' && !rows.length) researchLine = 'finished with no communities in their price range; the buyer can continue without one';
+      else if (r.status === 'done') {
+        researchLine = rows.length + ' communities shown, ' + state.selections.length + ' chosen. Communities on screen: ' + rows.slice(0, 10).map(function (x, k) {
+          var badge = x.origin === 'agent_verified' ? 'agent verified' : x.verified ? 'source found, not confirmed by an agent' : 'unverified';
+          var promo = x.promotion ? String(x.promotion).slice(0, 110) : 'no promotion listed';
+          return (k + 1) + ') ' + (x.community || x.builder) + ' by ' + x.builder + (x.starting_price ? ', from ' + x.starting_price : '') + ', ' + promo + ' [' + badge + ']' + (state.selections.indexOf(x.id) !== -1 ? ' CHOSEN' : '');
+        }).join('; ');
+      } else researchLine = r.status;
+      var vp = ui.voicePick ? ' Last voice choice: chosen ' + (ui.voicePick.selected.join(', ') || 'none') + (ui.voicePick.ambiguous.length ? '; matched more than one, ask which: ' + ui.voicePick.ambiguous.join('; ') : '') + (ui.voicePick.unmatched.length ? '; not on screen: ' + ui.voicePick.unmatched.join(', ') : '') + '.' : '';
+      var fallback = state.lead ? T('done_title', { name: a.first_name || '' }) : state.step === 'research' ? (r && r.status === 'done' && rows.length ? T('pick_prompt') : T('research_stay')) : onScreen;
+      return ('ANA CHAT STATUS (live; read this first). Fallback reply (offline mode only, ignore): [' + String(fallback).replace(/[\[\]]/g, '').slice(0, 180) + ']. Stage ' + cur.stage + ' of 6. On screen now: ' + onScreen + '. ' +
+        'Answered: ' + (have.join('; ') || 'nothing yet') + '. Required still missing: ' + (missing.join(', ') || 'none') + '. Optional not answered: ' + (optional.join(', ') || 'none') + '. ' +
+        'Promotion research: ' + researchLine + '.' + vp + ' ' +
         'Contact choices, ticked only by the buyer: email ' + (state.consents.email ? 'ticked' : 'not ticked') + '; text messages ' + (state.consents.sms ? 'ticked' : 'not ticked') + '; share with the agent ' + (state.consents.agent_referral ? 'ticked' : 'not ticked') + '. ' +
-        'Report: ' + (state.lead ? 'created' : ui.busy ? 'being created' : 'not created') + '.';
+        'Report: ' + (state.lead ? 'created and shown on screen; it can be printed' + (state.lead.referral ? ', and the licensed agent will contact them' : ', no agent contact because sharing was not ticked') : ui.busy ? 'being created' : 'not created') + '.').slice(0, 3700);
+    },
+    /* Voice picks communities the buyer NAMED. Only rows already on screen can be chosen, a name that
+       matches more than one row chooses nothing (Ana asks which), and nothing here touches contact choices. */
+    voiceSelect: function (i) {
+      var out = { selected: [], ambiguous: [], unmatched: [] };
+      var r = ui.research;
+      if (!root || state.lead || !r || r.status !== 'done' || !(r.rows || []).length || !i) { ui.voicePick = out; return out; }
+      function norm(v) { return String(v || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+      function label(x) { return (x.community || x.builder) + ' by ' + x.builder; }
+      function find(name) {
+        var q = norm(name); if (q.length < 3) return [];
+        var byCommunity = r.rows.filter(function (x) { var c = norm(x.community); return c && (c === q || (c.length >= 4 && q.indexOf(c) !== -1) || (q.length >= 4 && c.indexOf(q) !== -1)); });
+        if (byCommunity.length) return byCommunity;
+        return r.rows.filter(function (x) { var b = norm(x.builder); return b && (b === q || (b.length >= 3 && q.indexOf(b) !== -1) || (q.length >= 3 && b.indexOf(q) !== -1)); });
+      }
+      (Array.isArray(i.communities) ? i.communities : []).slice(0, 10).forEach(function (name) {
+        var hits = find(name);
+        if (hits.length === 1) { if (state.selections.indexOf(hits[0].id) === -1) state.selections.push(hits[0].id); out.selected.push(label(hits[0])); }
+        else if (hits.length > 1) out.ambiguous.push(name + ' (' + hits.map(label).join(', ') + ')');
+        else out.unmatched.push(String(name));
+      });
+      (Array.isArray(i.remove) ? i.remove : []).slice(0, 10).forEach(function (name) {
+        var hits = find(name);
+        if (hits.length === 1) { var k = state.selections.indexOf(hits[0].id); if (k !== -1) state.selections.splice(k, 1); }
+      });
+      ui.voicePick = out;
+      if (i.finished === true && state.selections.length && state.step === 'research') { state.done.research = true; afterAnswer('research'); }
+      else if (state.step === 'research') paintResearch();
+      return out;
     },
     missing: function () { return state ? missingRequired() : []; },
     atFinalStep: function () { return !!state && !state.lead && (state.step === 'consents' || state.step === 'submit'); },

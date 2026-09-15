@@ -420,10 +420,85 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     const html = read(path.join(ROOT, 'public', 'index.html'));
     assert(/window\.D2AIVoiceOrbLiveContext = function/.test(html) && /Required still missing/.test(read(path.join(ROOT, 'public', 'intake-chat.js'))), 'landing does not report chat status');
   });
+  await t('Ana guides the whole process by voice: skips optional questions, chooses only named communities on screen (never an ambiguous one), and never contact boxes', async () => {
+    const { AGENTS, blSanitizeSelect, blSanitizeEstimate, blSanitizeSection, blSanitizeIntake } = require('../../src/config/voice-agents');
+    const acts = AGENTS.buyersline.pageActions;
+    eq(acts.map((a) => a.name).join(','), 'fill_intake_form,select_communities,estimate_buying_power,show_section,submit_intake_form');
+    for (const a of acts) {
+      const names = []; (function walk(o) { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'properties') names.push(...Object.keys(v)); walk(v); } })(a.input_schema);
+      assert(!names.some((n) => /consent|terms|agree|sms|share|referral|submit|send/i.test(n)), a.name + ' schema exposes a contact choice: ' + names.join(','));
+      assert(typeof a.sanitize === 'function', a.name + ' has no sanitizer');
+    }
+    eq(blSanitizeSelect({}), null); eq(blSanitizeSelect({ communities: ['ab', 5] }), null);
+    eq(JSON.stringify(blSanitizeSelect({ communities: ['Ventana <b>'], finished: 'yes', consents: true })), '{"communities":["Ventana b"]}');
+    eq(blSanitizeEstimate({ annual_income: 'lots' }), null); eq(JSON.stringify(blSanitizeEstimate({ annual_income: '$140,000', monthly_debts: 0, monthly_payment: 5 })), '{"annual_income":140000,"monthly_debts":0}');
+    eq(blSanitizeSection({ section: 'admin' }), null); eq(blSanitizeSection({ section: 'buying_power' }).section, 'buying_power');
+    eq(JSON.stringify(blSanitizeIntake({ skip: ['phone', 'email', 'consents'], visited_none: 'true' })), '{"skip":["phone"]}');
+    for (const lang of ['en', 'es']) {
+      const p = AGENTS.buyersline.persona[lang];
+      assert(/select_communities/.test(p) && /estimate_buying_power/.test(p) && /show_section/.test(p) && /BUYING POWER CALCULATOR/.test(p), 'persona does not use the new actions: ' + lang);
+      assert(/(never repeat a question|nunca repitas una pregunta)/i.test(p), 'persona allows repeated questions: ' + lang);
+    }
+    const chatSrc = stripComments(read(path.join(ROOT, 'public', 'intake-chat.js')));
+    const pick = chatSrc.slice(chatSrc.indexOf('voiceSelect: function'), chatSrc.indexOf('missing: function'));
+    assert(pick.length > 200 && !/consents/.test(pick), 'voice choosing can reach contact choices');
+    assert(/state\.selections\.push\(hits\[0\]\.id\)/.test(pick) && /r\.rows\.filter/.test(pick) && /hits\.length === 1/.test(pick), 'voice may choose a row that is not on screen or is ambiguous');
+
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!doctype html><html lang="en"><body><div id="blChat"></div></body></html>', { runScripts: 'outside-only', url: 'http://localhost/buyersline/' });
+    const w = dom.window;
+    const rows = [
+      { id: 11, builder: 'Lennar', community: 'Gladesong', starting_price: '$340,990', verified: false },
+      { id: 12, builder: 'Lennar', community: 'Southshore Bay', verified: false },
+      { id: 13, builder: 'M/I Homes', community: 'Ventana', promotion: 'Rate promotion', verified: true }
+    ];
+    w.fetch = async (url, opts) => {
+      const m = (opts && opts.method) || 'GET';
+      let body = {};
+      if (/\/public\/config/.test(url)) body = { lead_consent: { version: 'v', email: 'E', sms: 'S', agent_referral: 'A' } };
+      else if (/\/public\/area/.test(url)) body = { ok: true, zip: '33578', city: 'Riverview', county: 'Hillsborough', input: '33578', label: '33578' };
+      else if (/\/public\/research$/.test(url) && m === 'POST') body = { token: 'tok_sit_voice', status: 'done' };
+      else if (/\/public\/research\/tok_sit_voice/.test(url)) body = { status: 'done', rows, top_deals: [], checked_on: '2026-09-14' };
+      return { status: 200, ok: true, text: async () => JSON.stringify(body) };
+    };
+    w.eval(read(path.join(ROOT, 'public', 'intake-chat.js')));
+    const chat = w.BLChat;
+    chat.init({ el: w.document.getElementById('blChat'), lang: 'en' });
+    chat.applyVoice({ zip_codes: ['33578'], budget_max: 400000, timeline: '0_3m', financing: 'fha', skip: ['max_monthly', 'down_payment'] });
+    const until = async (re) => { for (let k = 0; k < 60; k++) { if (re.test(chat.status())) return true; await new Promise((r) => setTimeout(r, 50)); } throw new Error('status never matched ' + re + ': ' + chat.status()); };
+    await until(/3 communities shown, 0 chosen/);
+    assert(/Optional not answered: [^.]*sales offices/.test(chat.status()) && !/maximum monthly payment/.test(chat.status().split('Optional not answered:')[1].split('.')[0]), 'skipped optional still listed as open');
+    let res = chat.voiceSelect({ communities: ['Lennar'] });
+    eq(res.selected.length, 0, 'an ambiguous builder name chose a community'); eq(res.ambiguous.length, 1);
+    res = chat.voiceSelect({ communities: ['ventana', 'Nowhere Estates'] });
+    eq(JSON.stringify(res.selected), '["Ventana by M/I Homes"]'); eq(JSON.stringify(res.unmatched), '["Nowhere Estates"]');
+    assert(/Ventana by M\/I Homes[^;]*CHOSEN/.test(chat.status()), 'status does not show the choice');
+    chat.voiceSelect({ finished: true });
+    await until(/Stage 4 of 6/);
+    chat.applyVoice({ first_name: 'Rosa', email: 'rosa@example.test', working_with_agent: 'no', skip: ['phone'], visited_none: true });
+    await until(/Stage 6 of 6/);
+    const st = chat.status();
+    assert(/Required still missing: none/.test(st), st);
+    assert(/email not ticked; text messages not ticked; share with the agent not ticked/.test(st), 'a contact box was ticked by voice');
+    assert(/Fallback reply \(offline mode only, ignore\): \[[^\]]{5,}\]/.test(st), 'no offline line');
+    eq(w.document.querySelectorAll('#blChat input[type=checkbox]:checked').length, 0, 'a checkbox is checked on screen');
+    dom.window.close();
+  });
+  await t('offline mode: when the model is unreachable Ana says the question on screen, not internal status text', async () => {
+    const express = require('express');
+    const app = express(); app.use(express.json()); app.use('/api/voice-agent', require('../../src/routes/voice-agent'));
+    const srv = app.listen(0); const port = srv.address().port;
+    try {
+      const ctx = 'ANA CHAT STATUS (live; read this first). Fallback reply (offline mode only, ignore): [What is the most you want to pay for the home?]. Stage 2 of 6. Required still missing: maximum home price, move timing.';
+      const r = await fetch(`http://127.0.0.1:${port}/api/voice-agent/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent: 'buyersline', lang: 'en', context: ctx, messages: [{ role: 'user', content: 'what now' }] }) });
+      const d = await r.json();
+      eq(d.source, 'heuristic'); eq(d.reply, 'What is the most you want to pay for the home?');
+    } finally { srv.close(); }
+  });
   await t('the voice orb persona exists and forbids stating incentives or payments', () => {
     const { AGENTS } = require('../../src/config/voice-agents');
     assert(AGENTS.buyersline, 'persona missing');
-    assert(/Never state or estimate a builder incentive/.test(AGENTS.buyersline.persona.en), 'persona rule missing');
+    assert(/NEVER: state or estimate a price, rate, payment or promotion that is not written exactly/.test(AGENTS.buyersline.persona.en) && /NUNCA: digas ni estimes un precio/.test(AGENTS.buyersline.persona.es), 'persona rule missing');
     assert(/data-agent="buyersline"/.test(read(path.join(ROOT, 'public', 'index.html'))), 'orb not wired to the buyersline persona');
   });
 

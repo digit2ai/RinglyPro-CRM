@@ -179,6 +179,11 @@ function heuristicReply(question, context, lang) {
     ? 'En este momento no tengo el detalle a la mano. ¿Puede reformular la pregunta o revisar la página?'
     : "I don't have that detail to hand right now. Could you rephrase, or take a look at the page?";
   if (!ctx) return none;
+  // A host page may hand over the line to say when the model is unreachable (BuyersLine puts
+  // the question on screen there), so a degraded turn still moves the visitor forward instead
+  // of reading internal status text aloud.
+  const fb = ctx.match(/Fallback reply[^:\[]{0,40}: \[([^\]]{3,400})\]/);
+  if (fb) return fb[1].trim();
 
   const stop = new Set(('the a an and or of to in for on with is are what how why who when where '
     + 'que de la el los las un una y o en para por con como cual cuales quien cuando donde es son del al se su sus más mas').split(' '));

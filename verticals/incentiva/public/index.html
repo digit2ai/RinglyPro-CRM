@@ -1089,6 +1089,28 @@
     if (intake) intake.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 
+  /* Ana can run the calculator with numbers the buyer said, and reads what it shows. */
+  window.BLEstimate = function (i) {
+    var map = { annual_income: ['est_income', 'gross_income_annual'], monthly_debts: ['est_debts', 'monthly_debts'], down_payment: ['est_down', 'down_payment'], monthly_payment: ['est_target', 'target_payment'] };
+    var body = { gross_income_annual: parseMoney($('est_income').value), monthly_debts: parseMoney($('est_debts').value), down_payment: parseMoney($('est_down').value), target_payment: parseMoney($('est_target').value) };
+    Object.keys(map).forEach(function (k) {
+      if (i && typeof i[k] === 'number') { $(map[k][0]).value = Math.round(i[k]).toLocaleString('en-US'); body[map[k][1]] = i[k]; }
+    });
+    Object.keys(body).forEach(function (k) { if (typeof body[k] === 'number' && isNaN(body[k])) body[k] = null; });
+    var sec = $('estimate'); if (sec) sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    runEstimate(body, false);
+  };
+  window.BLEstimateStatus = function () {
+    if (!lastEstimate) return 'BUYING POWER CALCULATOR: not run yet.';
+    var d = lastEstimate, b = lastEstimateBody || {}, e = d.estimate;
+    var inputs = 'income ' + (money(b.gross_income_annual) || 'not given') + ' a year, debts ' + (money(b.monthly_debts) || 'not given') + ' a month, down payment ' + (money(b.down_payment) || 'not given') + (b.target_payment ? ', comfortable payment ' + money(b.target_payment) + ' a month' : '');
+    var result;
+    if (e) result = 'price range shown ' + (e.price_low ? money(e.price_low) + ' to ' : 'up to ') + money(e.price_high) + ', monthly payment about ' + (e.payment_low ? money(e.payment_low) + ' to ' : '') + money(e.payment_high) + (d.limited_by === 'debts' ? '; current debts set the limit' : '') + '. The buyer can use ' + money(e.price_high) + ' as their maximum price.';
+    else if (d.blocked) result = (d.blocked.reason === 'debts' ? 'no range: monthly debts use up the lending limit' : 'no range: the comfortable payment is too low') + (d.alternative && d.alternative.price_high ? '; the page shows ' + money(d.alternative.price_high) + ' as the top price ' + (d.blocked.reason === 'debts' ? 'without those debts' : 'without that payment limit') : '') + '.';
+    else result = 'needs more information: ' + (d.missing || []).join(', ') + '.';
+    return 'BUYING POWER CALCULATOR (an estimate, not a loan approval): ' + inputs + '; ' + result;
+  };
+
   $('estForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var ids = { gross_income_annual: 'est_income', monthly_debts: 'est_debts', down_payment: 'est_down', target_payment: 'est_target' };
@@ -1173,13 +1195,14 @@
 <script src="/embed/voice-orb.js" defer></script>
 <script>
 /* Ana (voice assistant) drives the conversational intake through window.BLChat. She fills only
-   answers the buyer said. Choosing communities and every contact choice stay the buyer's own taps: nothing
-   here can tick a consent box or pick a community. A send runs only after the server confirmed a clear yes
+   answers the buyer said, picks only communities the buyer named that are already on screen, runs the
+   buying power calculator with the buyer's own numbers, and scrolls to a section. Every contact choice
+   stays the buyer's own tap: nothing here can tick a consent box. A send runs only after the server confirmed a clear yes
    (submit_intake_form), only at the last step with nothing required missing, and only after a
    5-second countdown the buyer can cancel. */
 (function () {
   'use strict';
-  window.D2AIVoiceOrbLiveContext = function () { return window.BLChat ? window.BLChat.status() : ''; };
+  window.D2AIVoiceOrbLiveContext = function () { return (window.BLChat ? window.BLChat.status() : '') + (window.BLEstimateStatus ? '\n' + window.BLEstimateStatus() : ''); };
   var sendTimer = null, sendBar = null;
   function es() { return (document.documentElement.lang || '').toLowerCase().indexOf('es') === 0; }
   function toIntake() { var el = document.getElementById('intake'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -1209,6 +1232,14 @@
     var d = e.detail || {};
     if (!window.BLChat) return;
     if (d.name === 'submit_intake_form') { startSend(); return; }
+    if (d.name === 'select_communities') { window.BLChat.voiceSelect(d.input || {}); toIntake(); return; }
+    if (d.name === 'estimate_buying_power') { if (window.BLEstimate) window.BLEstimate(d.input || {}); return; }
+    if (d.name === 'show_section') {
+      var target = { top: 'top', how_it_works: 'flow', buying_power: 'estimate', report_chat: 'intake', about: 'about' }[(d.input || {}).section];
+      var el = target === 'top' ? document.body : document.getElementById(target);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     if (d.name !== 'fill_intake_form') return;
     if (window.BLChat.applyVoice(d.input || {})) {
       var el = document.getElementById('intake'), box = el && el.getBoundingClientRect();
