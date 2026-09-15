@@ -225,7 +225,7 @@ test('structure', () => {
   ok(others.every(s => !/factory\//.test(s)), 'recording, transcription and editing code never reach the factory (a meeting cannot trigger execution)');
   const routes = stripComments(fs.readFileSync(path.join(__dirname, 'src/routes/factory.js'), 'utf8'));
   ok((routes.match(/approveAndDispatch\(/g) || []).length === 1 && /\/jobs\/:id\/execute', mutation, operator/.test(routes), 'one execute route, behind the same-origin and operator guards');
-  const ui = fs.readFileSync(path.join(__dirname, 'public/factory.js'), 'utf8') + fs.readFileSync(path.join(__dirname, 'public/app.html'), 'utf8');
+  const ui = ['public/factory.js', 'public/console.js', 'public/app.html', 'public/recorder.html'].map(function (p) { return fs.readFileSync(path.join(__dirname, p), 'utf8'); }).join(' ');
   ok(!/SPEAKUP_EXEC_PHRASE|SPEAKUP_GITHUB_TOKEN|SPEAKUP_FACTORY_SECRET|ANTHROPIC_API_KEY/.test(ui), 'no secret name or value in browser code');
   const wf = read('.github/workflows/speakup-factory.yml');
   const onBlock = wf.slice(wf.indexOf('\non:\n'), wf.indexOf('\npermissions:'));

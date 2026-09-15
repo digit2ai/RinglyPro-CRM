@@ -178,8 +178,12 @@ const handlers = {
       recordingIds = r.res.recordings.map(x => x.id);
     }
     if (!projects.allows(ctx.project, 'prepare')) return { reply: T(ctx.lang, 'Preparar no está permitido para este proyecto.', 'Prepare is not allowed for this project.') };
-    const job = await prepare.createPrepareJob({ tenant_id: ctx.tenant_id, user: ctx.user, project: ctx.project, recordingIds, commandId: ctx.command_id, lang: ctx.lang, req: ctx.req });
+    const job = await prepare.createPrepareJob({ tenant_id: ctx.tenant_id, user: ctx.user, project: ctx.project, recordingIds, commandId: ctx.command_id, lang: ctx.lang, autoRun: ctx.autoRun, req: ctx.req });
     const names = ctxRes.recordings.map(x => `#${x.id} ${x.title}`).join(', ');
+    if (ctx.autoRun && jobs.autoRunEnabled()) {
+      return { job, reply: T(ctx.lang, `Preparando y ejecutando en ${ctx.project.name}. Sigue el progreso arriba.`,
+        `Preparing and running on ${ctx.project.name}. Watch the progress above.`), card: { type: 'job', job_id: job.id, context: ctxRes } };
+    }
     return { job, reply: T(ctx.lang, `Preparando el plan para ${ctx.project.name} a partir de: ${names}. No se modifica código hasta que apruebes.`,
       `Preparing the ${ctx.project.name} plan from: ${names}. No code changes until you approve.`), card: { type: 'job', job_id: job.id, context: ctxRes } };
   },
@@ -422,7 +426,7 @@ async function run(input) {
     intent: cls.intent, classified_by: cls.by, project_key: project ? project.key : null, context_recording_ids: input.recording_ids || [], status: 'done' });
 
   const ctx = { tenant_id, user, text, lang, mode, project, recording_ids: input.recording_ids || [], engine: input.engine, req: input.req,
-    command_id: cmd.id, phraseSpoken, architectRequest: !!cls.architectRequest };
+    command_id: cmd.id, phraseSpoken, architectRequest: !!cls.architectRequest, autoRun: !!input.auto_run && security.isFactoryOperator(user) };
   let result;
   try {
     result = await handlers[cls.intent](ctx);

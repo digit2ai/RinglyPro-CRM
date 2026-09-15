@@ -177,6 +177,35 @@ async function approveAndDispatch({ job, user, passphrase, confirmToken, planHas
   }
 }
 
+// The console runs a prepared plan straight away. It is the SAME door as
+// approveAndDispatch — operator allow-list, readiness, project permission, atomic
+// WAITING_APPROVAL -> QUEUED — with the phrase step dropped, because the owner
+// typed the instruction into their own signed-in console seconds earlier and the
+// result is still only a branch and a PR. SPEAKUP_AUTO_RUN=off restores the tap.
+function autoRunEnabled() { return String(process.env.SPEAKUP_AUTO_RUN || 'on').toLowerCase() !== 'off'; }
+
+async function autoDispatch(job, user) {
+  if (!autoRunEnabled()) return null;
+  if (!security.isFactoryOperator(user)) return null;
+  const r = readiness();
+  if (!r.ready) { await fail(job, 'The AI Factory is not fully configured: ' + r.blockers.map(b => b.code).join(', ')); return null; }
+  const project = await projects.get(job.tenant_id, job.project_key);
+  if (!projects.allows(project, 'execute')) { await fail(job, 'Execution is not allowed for this project in the registry.'); return null; }
+  const branch = branchFor(job.id);
+  const queued = await transition(job, 'QUEUED', { actor: user.email, user_id: user.id,
+    detail: { via: 'console_auto_run', plan_hash: job.plan_hash, branch },
+    fields: { approved_by: user.email, approved_at: new Date(), branch } });
+  if (!queued) return null;
+  try {
+    await github.dispatchWorkflow(job.repo, job.workflow_file || project.workflow_file, job.base_branch, { job_id: String(job.id), branch });
+    await audit.record({ tenant_id: job.tenant_id, user_id: user.id, actor: user.email, action: 'job.auto_dispatched', entity: 'job', entity_id: job.id,
+      detail: { repo: job.repo, branch } });
+    return queued;
+  } catch (e) {
+    return fail(queued, 'Could not start the GitHub workflow: ' + e.message);
+  }
+}
+
 async function cancel({ job, user, req }) {
   if (!security.isFactoryOperator(user)) return { ok: false, status: 403, error: 'Not allowed' };
   if (TERMINAL.includes(job.status) || job.status === 'DEPLOYING') return { ok: false, status: 409, error: 'This job can no longer be cancelled (' + job.status + ').' };
@@ -232,7 +261,8 @@ function changeScope(job) {
   const planned = new Set(((job.plan && job.plan.steps) || []).flatMap(s => (s.files || []).map(f => f.path)));
   const scope = (job.path_scope || []).map(s => String(s).replace(/\/+$/, ''));
   const files = Array.isArray(job.changed_files) ? job.changed_files : [];
-  const inside = (p) => planned.has(p) || scope.some(s => p === s || p.startsWith(s + '/'));
+  // No scope configured = the whole repository is in scope (same rule the planner uses).
+  const inside = (p) => !scope.length || planned.has(p) || scope.some(s => p === s || p.startsWith(s + '/'));
   return { files, outside: files.filter(p => !inside(p)) };
 }
 
@@ -462,6 +492,6 @@ async function latestFor(tenant_id, filter) {
 
 module.exports = {
   STATUSES, TERMINAL, NEXT, CALLBACK_STATUSES, CALLBACK_FIELDS, PROGRESS_TOKEN_STATUSES, EVENT_KINDS, changeScope, addEvents, BASE_URL, branchFor, canMove, transition, fail,
-  describe, readiness, approveAndDispatch, cancel, merge, canonical, applyCallback, verifyBriefRequest,
+  describe, readiness, approveAndDispatch, autoDispatch, autoRunEnabled, cancel, merge, canonical, applyCallback, verifyBriefRequest,
   checkJob, tick, startWatchdog, latestFor, prBody, Op
 };

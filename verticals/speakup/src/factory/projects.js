@@ -18,8 +18,9 @@ const ACTIONS = ['read', 'prepare', 'execute', 'merge'];
 const MONOREPO = process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM';
 
 const DEFAULT_PROJECTS = [
-  { key: 'ringlypro', name: 'RinglyPro', aliases: ['ringlypro', 'ringly pro', 'ringly', 'crm', 'rachel', 'lina'],
-    path_scope: ['src'], knowledge_sources: ['CLAUDE.md', '.claude/commands/ringlypro-architect.md'],
+  // The console's default: the whole RinglyPro-CRM repository.
+  { key: 'ringlypro', name: 'RinglyPro CRM', aliases: ['ringlypro', 'ringly pro', 'ringly', 'crm', 'rachel', 'lina'],
+    path_scope: [], knowledge_sources: ['CLAUDE.md', '.claude/commands/ringlypro-architect.md'],
     deployment: 'Render auto-deploy from main (aiagent.ringlypro.com)' },
   { key: 'speakup', name: 'SpeakUp', aliases: ['speakup', 'speak up'],
     path_scope: ['verticals/speakup'], test_commands: ['node verticals/speakup/test-offline.js'],

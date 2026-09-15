@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>SpeakUp</title>
+<link rel="icon" href="/speakup/favicon.svg">
+<link rel="manifest" href="/speakup/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
+<meta name="theme-color" content="#5a3fe0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{--bg:#0a0e18;--bg2:#0e1522;--card:#131b2b;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
+    --acc:#7b6bff;--acc2:#5a3fe0;--ok:#3fc06a;--warn:#f2b34b;--err:#ff8f8f}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);
+    padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  a{color:var(--acc)}
+  header{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,14,24,.94);backdrop-filter:blur(10px);z-index:20}
+  header img{width:28px;height:28px}
+  header h1{font-size:18px;margin:0;letter-spacing:-.4px;flex:1}
+  .hbtn{background:#1b2536;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 11px;font-size:13px;cursor:pointer;min-height:44px;min-width:44px}
+  .hbtn.on{background:var(--acc2);border-color:var(--acc2)}
+  .app{max-width:680px;margin:0 auto;padding:16px}
+  h2{font-size:13px;margin:0 0 12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  /* RECORD HERO */
+  .hero{text-align:center;padding:26px 18px}
+  .orbwrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .orb{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);
+    box-shadow:0 0 0 0 rgba(123,107,255,.5);cursor:pointer;border:0;position:relative;transition:transform .12s}
+  .orb:active{transform:scale(.95)}
+  .orb.rec{animation:pulse 1.2s ease-in-out infinite}
+  .orb::before{content:"";position:absolute;inset:0;margin:auto;width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.92);
+    transition:all .2s}
+  .orb.rec::before{width:30px;height:30px;border-radius:6px;background:#ff5a6a}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(123,107,255,.5)}70%{box-shadow:0 0 0 30px rgba(123,107,255,0)}100%{box-shadow:0 0 0 0 rgba(123,107,255,0)}}
+  .timer{font-variant-numeric:tabular-nums;font-size:30px;font-weight:700;letter-spacing:1px}
+  .hint{color:var(--mut);font-size:14px;line-height:1.5}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btn{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;border:0;border-radius:12px;
+    padding:13px 15px;font-size:15px;font-weight:600;cursor:pointer;min-height:46px}
+  .btn.sec{background:#1b2536;border:1px solid var(--line);color:var(--txt);font-weight:500}
+  .btn.danger{background:#2a1620;border:1px solid #5a2a3a;color:#ff9fb0;font-weight:500}
+  .btn.block{width:100%}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sm{padding:10px 12px;font-size:14px;min-height:42px}
+  input,select,textarea{background:#0c1320;border:1px solid var(--line);color:var(--txt);border-radius:11px;
+    padding:12px 13px;font-size:16px;font-family:inherit;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+  .muted{color:var(--mut);font-size:13px}
+  .note{font-size:12px;color:var(--mut);margin-top:12px;line-height:1.5}
+  /* LIBRARY */
+  .reclist{display:flex;flex-direction:column;gap:8px}
+  .recitem{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:14px;cursor:pointer}
+  .recitem:active{border-color:var(--acc)}
+  .recitem.active{border-color:var(--acc);background:#161f33}
+  .recitem .t{font-weight:600;font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recitem .m{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .badge{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+  .badge.processing{color:var(--warn);border-color:#4a3a1a}
+  .badge.error{color:var(--err);border-color:#5a2a3a}
+  .badge.sim{color:var(--warn);border-color:#4a3a1a}
+  /* DELIVERABLES */
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tab{background:#1b2536;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:10px 13px;font-size:14px;cursor:pointer}
+  .tab.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+  .result{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:16px;margin-top:12px;line-height:1.6;overflow-x:auto}
+  .result h4{margin:0 0 8px;font-size:14px;color:var(--acc)}
+  .result ul{margin:6px 0;padding-left:20px}
+  .mdbody{margin-top:10px}
+  .mdbody h3{font-size:18px;margin:14px 0 6px}
+  .mdbody h4{font-size:16px;margin:12px 0 6px;color:var(--txt)}
+  .mdbody h5,.mdbody h6{font-size:14px;margin:10px 0 5px;color:var(--acc)}
+  .mdbody p{margin:8px 0}
+  .mdbody ul,.mdbody ol{margin:6px 0;padding-left:22px}
+  .mdbody li{margin:3px 0}
+  .mdbody code{background:#0c1320;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:13px}
+  .mdbody table{border-collapse:collapse;font-size:13px;margin:8px 0}
+  .mdbody th,.mdbody td{border:1px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap}
+  .mdbody th{background:#0c1320}
+  .transcript{white-space:pre-wrap;line-height:1.6;font-size:15px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px}
+  details.sec-collapse>summary{cursor:pointer;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:700;list-style:none;padding:2px 0}
+  details.sec-collapse>summary::-webkit-details-marker{display:none}
+  details.sec-collapse>summary::before{content:"▸ ";color:var(--acc)}
+  details.sec-collapse[open]>summary::before{content:"▾ "}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1b2536;border:1px solid var(--line);padding:12px 20px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  #wOverlay{position:fixed;inset:0;background:rgba(6,9,16,.86);backdrop-filter:blur(4px);z-index:60;
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .wbox{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;text-align:center;max-width:340px;width:100%}
+  .spin.big{width:34px;height:34px;border-width:3px;margin:0 auto}
+  .wbar{height:8px;background:#0c1320;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:16px 0 8px}
+  #wFill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
+  #wFill.indet{width:40%!important;animation:indet 1.2s ease-in-out infinite}
+  @keyframes indet{0%{margin-left:-40%}100%{margin-left:100%}}
+  .empty{color:var(--mut);text-align:center;padding:22px 12px;font-size:14px}
+  /* AI FACTORY */
+  .modes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px}
+  .mode{background:#1b2536;border:1px solid var(--line);color:var(--mut);border-radius:11px;padding:11px 4px;font-size:14px;font-weight:600;min-height:44px;cursor:pointer}
+  .mode.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+  .agentline{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;font-size:13px;color:var(--mut)}
+  .agentline select{width:auto;padding:8px 10px;font-size:16px;border-radius:9px;min-height:44px}
+  .orb.big{width:168px;height:168px}
+  .orb.big::before{width:42px;height:42px;border-radius:10px}
+  .orb.paused{animation:none;opacity:.7}
+  .listening{font-size:17px;font-weight:600;min-height:24px}
+  #cmdBox textarea{min-height:110px;font-size:17px;line-height:1.45;margin-top:12px}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .pill.ok{color:var(--ok);border-color:#1f5a33}.pill.warn{color:var(--warn);border-color:#4a3a1a}.pill.err{color:var(--err);border-color:#5a2a3a}.pill.run{color:var(--acc);border-color:#3a3480}
+  .jobitem{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:13px;cursor:pointer;margin-bottom:8px}
+  .plain{white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:14px;line-height:1.55;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .quote{font-style:italic;color:var(--mut);font-size:13px;margin-top:3px}
+  .item{border-top:1px solid var(--line);padding:10px 0}
+  .item:first-child{border-top:0}
+  .banner{background:#2a2012;border:1px solid #4a3a1a;color:#f5d59a;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;margin-bottom:12px}
+  .selbox{width:22px;height:22px;flex:0 0 22px;margin-right:10px;accent-color:var(--acc)}
+  .recrow{display:flex;align-items:flex-start}
+  .recrow .grow{flex:1;min-width:0}
+  .selchip{font-size:13px;color:var(--acc);margin:0 0 10px}
+  /* VS Code-style Architect screen */
+  .composer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(10,14,24,.97);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .composer .inner{max-width:680px;margin:0 auto;background:#0c1320;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .composer textarea{border:0;background:transparent;border-radius:0;min-height:72px;max-height:38vh;font-size:16px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45;resize:none;padding:12px 13px 6px}
+  .composer textarea:focus{outline:none}
+  .cbar{display:flex;align-items:center;gap:8px;padding:6px 8px 8px}
+  .iconbtn{width:44px;height:44px;flex:0 0 44px;border-radius:11px;border:1px solid var(--line);background:#1b2536;color:var(--txt);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .iconbtn.rec{background:#4a1622;border-color:#7a2a3a;color:#ff9fb0;animation:pulse 1.2s ease-in-out infinite}
+  .iconbtn.send{background:linear-gradient(90deg,var(--acc),var(--acc2));border:0;color:#fff;margin-left:auto}
+  .iconbtn:disabled{opacity:.5}
+  .cbar select{width:auto;flex:0 1 auto;min-width:0;padding:8px 10px;font-size:14px;border-radius:10px;min-height:44px}
+  .cstat{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.composing{padding-bottom:230px}
+  /* activity terminal */
+  .card.sticky{position:sticky;top:calc(56px + env(safe-area-inset-top));z-index:25}
+  .term{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;background:#080d16;
+    border:1px solid var(--line);border-radius:12px;padding:10px;max-height:44vh;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .term .ln{display:block;padding:1px 0}
+  .term .k{display:inline-block;min-width:54px;color:var(--acc);font-weight:700}
+  .term .k.err{color:var(--err)}.term .k.ok{color:var(--ok)}.term .k.warn{color:var(--warn)}
+  .term .sayline{color:var(--txt)}
+  .term .path{color:#8fd0ff}
+  .term details{margin:2px 0 4px 54px}
+  .term summary{cursor:pointer;color:var(--mut)}
+  .dl{display:block}.dl.add{color:#8ef0a8}.dl.del{color:#ff9fb0}.dl.hdr{color:var(--mut)}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .step{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .step.on{border-color:var(--acc2);background:var(--acc2);color:#fff}
+  .step.done{border-color:#1f5a33;color:var(--ok)}
+  .bubble{background:#131b2b;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow:auto}
+  .bubble .who{font-family:-apple-system,sans-serif;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  @media print{header,.hero,.tabs,.row,.actions,.sec-collapse>summary,.importbox,.libcard{display:none!important}
+    .card{border:0;background:#fff;color:#000}.transcript,.result{border:0;background:#fff;color:#000}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header>
+  <img src="/speakup/favicon.svg" alt="">
+  <h1>SpeakUp</h1>
+  <button class="hbtn" id="langEs" onclick="setLang('es')">ES</button>
+  <button class="hbtn" id="langEn" onclick="setLang('en')">EN</button>
+  <button class="hbtn" onclick="logout()" data-i="logout">Salir</button>
+</header>
+
+<div class="app">
+
+  <!-- 1) RECORD — the hero, always at the top -->
+  <section class="card hero">
+    <div class="modes" id="modes" role="tablist">
+      <button class="mode" data-mode="command">Comando</button>
+      <button class="mode" data-mode="meeting">Reunión</button>
+      <button class="mode" data-mode="note">Nota</button>
+      <button class="mode" data-mode="architect">Arquitecto</button>
+    </div>
+    <div class="agentline" id="agentLine"><span id="agentName">RinglyPro Architect</span></div>
+    <div id="orbArea"><div class="orbwrap">
+      <button class="orb big" id="orb" aria-label="Grabar"></button>
+      <div class="timer" id="timer">00:00</div>
+      <div class="listening" id="recstatus" data-i="tapToRec">Pulsa para grabar tu voz</div>
+      <div class="hint" id="modeHint"></div>
+    </div>
+    <div class="row" id="meetCtl" style="display:none;margin-top:14px;justify-content:center">
+      <button class="btn sec sm" id="pauseBtn" onclick="togglePause()">Pausar</button>
+      <button class="btn danger sm" onclick="stopSession()">Detener</button>
+    </div>
+    <button class="btn sec sm block" id="callBtn" style="margin-top:16px" onclick="startCall()" data-i="recCall">Grabar llamada (tu voz + la llamada)</button>
+    <p class="note" id="noBotNote" data-i="noBot">Grabamos tu micrófono y el audio de la llamada juntos. Ningún bot se une: la captura es en tu dispositivo.</p>
+    </div>
+    <div class="selchip" id="selChip" style="display:none;margin-top:10px"></div>
+  </section>
+
+  <!-- ACTIVITY: what the factory is doing right now, at the top of the screen -->
+  <section class="card sticky" id="activityCard" style="display:none;text-align:left">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px">
+      <select id="jobPick" aria-label="Tarea" style="flex:1;min-width:0"></select>
+      <span class="pill run" id="jobPill"></span>
+      <button class="btn sec sm" id="diffBtn" style="display:none">Ver cambios</button>
+    </div>
+    <div id="readiness"></div>
+    <div class="steps" id="steps"></div>
+    <div class="term" id="term"></div>
+    <div id="diffBox"></div>
+    <div id="jobPanel"></div>
+  </section>
+
+  <!-- THREAD: prompts and answers -->
+  <section id="thread"></section>
+
+  <!-- COMPOSER: type, paste or dictate; pinned to the bottom like an editor -->
+  <div class="composer" id="cmdBox" style="display:none">
+    <div class="inner">
+      <textarea id="cmdText" rows="3" spellcheck="false" placeholder="Escribe o pega tu instrucción…"></textarea>
+      <div class="cbar">
+        <button class="iconbtn" id="micBtn" aria-label="Dictar" title="Dictar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+        </button>
+        <select id="projSel" aria-label="Proyecto"></select>
+        <span class="cstat" id="capStatus"></span>
+        <button class="iconbtn send" id="cmdSend" aria-label="Enviar" title="Enviar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI FACTORY: tasks, task detail, memory search -->
+  <section id="jobDetail"></section>
+  <section class="card" id="memCard"><h2>Memoria</h2>
+    <div class="row"><input id="memQ" placeholder="Ej: reunión con Greg, SMS de citas, JobMD" style="flex:1"><button class="btn sm" id="memGo">Buscar</button></div>
+    <div id="memResults"></div>
+  </section>
+
+  <!-- 2) CURRENT RECORDING — results + deliverables (transcript at the bottom) -->
+  <div id="mainEmpty" class="empty" data-i="pickOne">Graba o elige una grabación para trabajar con ella.</div>
+  <section id="detail" style="display:none"></section>
+
+  <!-- 3) LIBRARY -->
+  <section class="card libcard" id="libCard">
+    <h2 data-i="library">Biblioteca</h2>
+    <div class="reclist" id="reclist"><div class="empty" data-i="loading">Cargando…</div></div>
+  </section>
+
+  <!-- 4) IMPORT — secondary, collapsed at the bottom -->
+  <details class="card importbox" id="importCard">
+    <summary style="cursor:pointer;list-style:none"><h2 style="display:inline" data-i="importT">Importar</h2></summary>
+    <div style="margin-top:14px">
+      <label class="muted" data-i="uploadFile">Subir archivo de audio/video</label>
+      <input type="file" id="file" accept="audio/*,video/*" style="margin:8px 0 12px">
+      <button class="btn sm block" onclick="uploadFile()" data-i="upload">Subir y transcribir</button>
+      <label class="muted" style="display:block;margin-top:16px" data-i="pasteUrl">O pega un enlace (YouTube, etc.)</label>
+      <input type="url" id="url" placeholder="https://..." style="margin:8px 0 10px">
+      <button class="btn sec sm block" onclick="importUrl()" data-i="import">Importar enlace</button>
+    </div>
+  </details>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- On-device transcription progress -->
+<div id="wOverlay" style="display:none">
+  <div class="wbox">
+    <div class="spin big"></div>
+    <div id="wMsg" style="font-weight:600;margin-top:6px"></div>
+    <div class="wbar"><div id="wFill"></div></div>
+    <div id="wPct" class="muted"></div>
+    <div class="muted" style="font-size:12px;margin-top:6px" data-i="noBotShort">Se transcribe en tu dispositivo. El audio no sale de tu equipo.</div>
+  </div>
+</div>
+
+<script src="/speakup/factory.js?v=5"></script>
+<script>
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+const I18N = {
+  es:{logout:'Salir',tapToRec:'Pulsa para grabar tu voz',recording:'Grabando… pulsa para detener',
+    recCall:'Grabar llamada (tu voz + la llamada)',recordingCall:'Grabando la llamada… detén al terminar',
+    shareAudio:'Elige la pestaña/pantalla de la llamada y activa "Compartir audio".',
+    recMeeting:'Grabar reunión (audio del sistema)',noBot:'Grabamos tu micrófono y el audio de la llamada juntos. Ningún bot se une: la captura es en tu dispositivo.',
+    importT:'Importar',uploadFile:'Subir archivo de audio/video',upload:'Subir y transcribir',pasteUrl:'O pega un enlace (YouTube, etc.)',
+    import:'Importar enlace',library:'Biblioteca',loading:'Cargando…',pickOne:'Graba o elige una grabación para trabajar con ella.',
+    empty:'Sin grabaciones todavía.',transcript:'Transcripción',translate:'Traducir',rewrite:'Reescribir',export:'Exportar',
+    delete:'Eliminar',summarize:'Resumir',bullets:'Puntos clave',actions:'Acciones',toLang:'Idioma destino',translateBtn:'Traducir',
+    tone:'Tono',custom:'Instrucción personalizada',rewriteBtn:'Reescribir',professional:'Profesional',concise:'Conciso',friendly:'Cercano',
+    email:'Correo',grammar:'Corregir gramática',bulletize:'A viñetas',processing:'Procesando…',noTranscript:'Sin transcripción.',
+    saved:'Guardado',deleted:'Eliminado',confirmDel:'¿Eliminar esta grabación?',micUnsupported:'Tu navegador no soporta grabación en vivo. Usa "Importar" abajo.',
+    simulated:'simulada',copy:'Copiar',copied:'Copiado',pdf:'PDF',uploading:'Subiendo…',generate:'Generar',
+    whatToDo:'¿Qué quieres hacer con esta grabación?',minutes:'Acta de reunión',details:'Detalle completo',nextSteps:'Próximos pasos',
+    presentation:'Presentación',projectPlan:'Plan de proyecto',download:'Descargar',generating:'Generando…',
+    customField:'O escribe tu propia instrucción (lo que quieras hacer con esta nota)',customPh:'Ej: redacta un correo para el cliente con los acuerdos',
+    customLabel:'Personalizado',writeInstr:'Escribe una instrucción',
+    loadingModel:'Descargando el modelo de transcripción (solo la primera vez)…',preparing:'Preparando el audio…',
+    transcribing:'Transcribiendo en tu dispositivo…',transcribeFail:'No se pudo transcribir en el navegador; guardando el audio.',
+    noBotShort:'Se transcribe en tu dispositivo. El audio no sale de tu equipo.',
+    recovered:'Grabación recuperada tras una interrupción.',autosaved:'Guardado automático activo'},
+  en:{logout:'Sign out',tapToRec:'Tap to record your voice',recording:'Recording… tap to stop',
+    recCall:'Record call (your voice + the call)',recordingCall:'Recording the call… stop when done',
+    shareAudio:'Pick the call tab/screen and turn on "Share audio".',
+    recMeeting:'Record meeting (system audio)',noBot:'We record your microphone and the call audio together. No bot joins — capture happens on your device.',
+    importT:'Import',uploadFile:'Upload audio/video file',upload:'Upload & transcribe',pasteUrl:'Or paste a link (YouTube, etc.)',
+    import:'Import link',library:'Library',loading:'Loading…',pickOne:'Record or pick a recording to work with it.',
+    empty:'No recordings yet.',transcript:'Transcript',translate:'Translate',rewrite:'Rewrite',export:'Export',
+    delete:'Delete',summarize:'Summarize',bullets:'Key points',actions:'Action items',toLang:'Target language',translateBtn:'Translate',
+    tone:'Tone',custom:'Custom instruction',rewriteBtn:'Rewrite',professional:'Professional',concise:'Concise',friendly:'Friendly',
+    email:'Email',grammar:'Fix grammar',bulletize:'To bullets',processing:'Processing…',noTranscript:'No transcript.',
+    saved:'Saved',deleted:'Deleted',confirmDel:'Delete this recording?',micUnsupported:'Your browser does not support live recording. Use "Import" below.',
+    simulated:'simulated',copy:'Copy',copied:'Copied',pdf:'PDF',uploading:'Uploading…',generate:'Generate',
+    whatToDo:'What do you want to do with this recording?',minutes:'Meeting minutes',details:'Full details',nextSteps:'Next steps',
+    presentation:'Presentation',projectPlan:'Project plan',download:'Download',generating:'Generating…',
+    customField:'Or write your own instruction (whatever you want to do with this note)',customPh:'e.g. draft an email to the client with the agreements',
+    customLabel:'Custom',writeInstr:'Write an instruction',
+    loadingModel:'Downloading the transcription model (first time only)…',preparing:'Preparing audio…',
+    transcribing:'Transcribing on your device…',transcribeFail:'Could not transcribe in-browser; saving the audio.',
+    noBotShort:'Transcribed on your device. Audio never leaves your machine.',
+    recovered:'Recording recovered after an interruption.',autosaved:'Autosave on'}
+};
+let lang = localStorage.getItem('speakup_lang') || 'es';
+function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
+function setLang(l){
+  lang = l; localStorage.setItem('speakup_lang', l); document.documentElement.lang = l;
+  document.getElementById('langEs').classList.toggle('on', l==='es');
+  document.getElementById('langEn').classList.toggle('on', l==='en');
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.getAttribute('data-i')); });
+  if (current) renderDetail(current);
+  if (window.Factory && Factory.relabel) Factory.relabel();
+}
+
+const LANGS = ['Español','English','Português','Français','Deutsch','Italiano','中文 (Chinese)','日本語 (Japanese)',
+  '한국어 (Korean)','العربية (Arabic)','हिन्दी (Hindi)','Русский (Russian)','Nederlands','Polski','Türkçe','Svenska','Norsk',
+  'Dansk','Suomi','Ελληνικά (Greek)','עברית (Hebrew)','ไทย (Thai)','Tiếng Việt','Bahasa Indonesia','Filipino','Українська',
+  'Čeština','Magyar','Română','Català','Tagalog'];
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+async function api(path, opts){
+  const r = await fetch('/speakup/api/v1'+path, Object.assign({headers:{'Content-Type':'application/json','X-SpeakUp':'1'}}, opts||{}));
+  if (r.status === 401){ location.href='/speakup/login'; throw new Error('401'); }
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok){ const err = new Error(d.error || ('HTTP '+r.status)); err.status = r.status; err.data = d; throw err; }
+  return d;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1900); }
+async function logout(){ await fetch('/speakup/api/v1/auth/logout',{method:'POST'}); location.href='/speakup/login'; }
+
+// ─── on-device speech-to-text (our own Whisper model, runs in the browser) ──────
+// Transcribes recorded calls + uploaded files locally — no vendor, audio never
+// leaves the device. Model (~80MB) downloads once and is cached by the browser.
+function showW(msg,pct){ const o=document.getElementById('wOverlay'); o.style.display='flex';
+  document.getElementById('wMsg').textContent=msg;
+  const fill=document.getElementById('wFill'), p=document.getElementById('wPct');
+  if(pct==null){ fill.classList.add('indet'); p.textContent=''; }
+  else { fill.classList.remove('indet'); fill.style.width=pct+'%'; p.textContent=pct+'%'; }
+}
+function hideW(){ document.getElementById('wOverlay').style.display='none';
+  const f=document.getElementById('wFill'); f.classList.remove('indet'); f.style.width='0'; }
+
+let __whisper=null;
+// Lighter model on phones (memory + speed); larger, more accurate one on desktop.
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+const WHISPER_MODEL = IS_MOBILE ? 'Xenova/whisper-tiny' : 'Xenova/whisper-base';
+async function getWhisper(onProg){
+  if(__whisper) return __whisper;
+  const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/+esm');
+  // IMPORTANT: use the WASM backend (default), NOT WebGPU. WebGPU + q8 Whisper
+  // hallucinates repeating multilingual garbage in transformers.js 3.x — verified.
+  // WASM is slower but produces correct transcripts on every device.
+  __whisper = await mod.pipeline('automatic-speech-recognition', WHISPER_MODEL, { progress_callback:onProg, dtype:'q8' });
+  return __whisper;
+}
+// decode any audio blob -> mono Float32 PCM @ 16kHz (what Whisper expects)
+async function blobToPCM(blob){
+  const arr = await blob.arrayBuffer();
+  const AC = window.AudioContext||window.webkitAudioContext;
+  const tmp = new AC();
+  const decoded = await tmp.decodeAudioData(arr.slice(0));
+  try{ tmp.close(); }catch(e){}
+  const len = Math.max(1, Math.ceil(decoded.duration*16000));
+  const off = new OfflineAudioContext(1, len, 16000);
+  const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start(0);
+  const rendered = await off.startRendering();
+  return rendered.getChannelData(0);
+}
+async function transcribeBlob(blob, uiLang, background){
+  const setMsg=(m,pct)=>{ if(background){ document.getElementById('recstatus').textContent = m + (pct!=null?' '+pct+'%':''); } else { showW(m,pct); } };
+  setMsg(t('loadingModel'),0);
+  const asr = await getWhisper((p)=>{ if(p&&p.status==='progress'&&p.progress!=null) setMsg(t('loadingModel'),Math.round(p.progress)); });
+  setMsg(t('preparing'),null);
+  const pcm = await blobToPCM(blob);
+  setMsg(t('transcribing'),null);
+  // Auto-detect the spoken language (do NOT force it): a faithful transcript of
+  // whatever was actually said. Forcing a language makes Whisper hallucinate
+  // garbage when the audio doesn't match. The UI ES/EN toggle only controls the
+  // language of generated deliverables, not the transcript.
+  const out = await asr(pcm,{ chunk_length_s:30, stride_length_s:5, task:'transcribe', return_timestamps:false });
+  if(!background) hideW();
+  return (out && out.text) ? out.text.trim() : '';
+}
+// fallback: hand the audio to the server (stub engine) so the recording is still saved
+async function uploadBlobFallback(blob,title,source){
+  const fd=new FormData(); fd.append('file',blob,'audio.webm'); fd.append('title',title); fd.append('source',source);
+  toast(t('uploading'));
+  const r=await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
+  const d=await r.json(); await loadLibrary(); if(d.recording) pollAndOpen(d.recording.id);
+}
+
+// ─── live-session state (shared by mic + call; only one active at a time) ───────
+let liveRecId=null, liveMode=null, liveText='';
+
+// ─── recording (mic OR call): real audio + rolling on-device Whisper + autosave ──
+// BOTH the mic orb and Record Call record ACTUAL AUDIO in ~90s segments; each
+// segment is transcribed on-device by Whisper and the growing transcript is saved
+// to the server per chunk. No Web Speech (unreliable on mobile). Flat memory for
+// long meetings; loss-proof if the tab/app/battery dies mid-recording.
+const SEGMENT_MS = 90000; // 90s
+let callRec=null, callChunks=[], callCtx=null, callStreams=[], callTimerInt=null, callStartTs=0;
+let segStopping=false, segRotateTimer=null, pendingTx=Promise.resolve();
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+
+document.getElementById('orb').addEventListener('click', () => {
+  if (window.Factory && Factory.mode !== 'meeting' && !liveMode){ Factory.toggleCapture(); return; }
+  if (liveMode==='call'){ return; }            // a call is recording — use the call button
+  if (liveMode==='mic'){ stopSession(); return; }
+  startMic();
+});
+
+async function startMic(){
+  let mic=null;
+  try{
+    mic = await navigator.mediaDevices.getUserMedia({ audio:true });
+    callStreams=[mic]; callCtx=null;
+    await startSession('mic', mic, (lang==='en'?'Voice note ':'Nota de voz ')+new Date().toLocaleString(), 'mic');
+  }catch(e){ if(mic) mic.getTracks().forEach(x=>x.stop()); toast(e.message||t('micUnsupported')); resetSession(); }
+}
+
+async function startCall(){
+  if (liveMode==='call'){ stopSession(); return; }
+  let mic=null, disp=null;
+  try{
+    mic = await navigator.mediaDevices.getUserMedia({ audio:true });
+    disp = await navigator.mediaDevices.getDisplayMedia({ video:true, audio:true });
+    if (!disp.getAudioTracks().length){
+      toast(t('shareAudio'));
+      mic.getTracks().forEach(x=>x.stop()); disp.getTracks().forEach(x=>x.stop());
+      return;
+    }
+    callStreams=[mic,disp];
+    callCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const dest = callCtx.createMediaStreamDestination();
+    callCtx.createMediaStreamSource(mic).connect(dest);   // your voice
+    callCtx.createMediaStreamSource(disp).connect(dest);  // the call
+    document.getElementById('callBtn').textContent = '■ '+t('recording');
+    const vt = disp.getVideoTracks()[0];
+    if (vt) vt.addEventListener('ended', ()=>stopSession());
+    await startSession('call', dest.stream, (lang==='en'?'Call ':'Llamada ')+new Date().toLocaleString(), 'call');
+  }catch(e){
+    if (mic) mic.getTracks().forEach(x=>x.stop());
+    if (disp) disp.getTracks().forEach(x=>x.stop());
+    toast(e.message); resetSession();
+  }
+}
+
+async function startSession(mode, stream, title, source){
+  liveMode=mode; liveText=''; segStopping=false; pendingTx=Promise.resolve();
+  getWhisper(()=>{}).catch(()=>{});   // warm up the model in the background so it's ready
+  try{
+    const created = await api('/recordings',{method:'POST',body:JSON.stringify({title,source,lang,status:'recording'})});
+    liveRecId = created.recording.id;
+  }catch(e){ liveRecId=null; }
+  localStorage.setItem('speakup_live', JSON.stringify({id:liveRecId,text:'',ts:Date.now(),mode}));
+  callStartTs=Date.now();
+  callTimerInt=setInterval(()=>{ document.getElementById('timer').textContent = fmt(Math.floor((Date.now()-callStartTs)/1000)); },1000);
+  document.getElementById('orb').classList.add('rec');
+  document.getElementById('recstatus').textContent = mode==='call' ? t('recordingCall') : t('recording');
+  document.getElementById('meetCtl').style.display='flex'; acquireWake();
+  startSegment(stream);
+  segRotateTimer=setInterval(()=>{ if (callRec && callRec.state==='recording') callRec.stop(); }, SEGMENT_MS);
+}
+
+function startSegment(stream){
+  callChunks=[];
+  callRec = new MediaRecorder(stream);
+  callRec.ondataavailable = e => { if (e.data && e.data.size) callChunks.push(e.data); };
+  callRec.onstop = () => {
+    const blob = callChunks.length ? new Blob(callChunks) : null;   // let the browser keep its own container (mp4 on Safari, webm on Chrome)
+    if (!segStopping) startSegment(stream);   // resume recording immediately (tiny gap)
+    pendingTx = pendingTx.then(()=>transcribeSegment(blob)).catch(()=>{});
+    if (segStopping) pendingTx.then(()=>finalizeSession());
+  };
+  callRec.start();
+}
+async function transcribeSegment(blob){
+  if (!blob || blob.size < 1200) return;
+  let seg='';
+  try{ seg = await transcribeBlob(blob, lang, true); }catch(e){ /* keep going */ }
+  if (seg){
+    liveText += (liveText? ' ':'') + seg;
+    document.getElementById('recstatus').textContent = (liveMode==='call'? t('recordingCall'): t('recording'));
+    localStorage.setItem('speakup_live', JSON.stringify({id:liveRecId,text:liveText,ts:Date.now(),mode:liveMode}));
+    if (liveRecId){ try{ await api('/recordings/'+liveRecId+'/transcript',{method:'PUT',body:JSON.stringify({text:liveText,lang})}); }catch(e){} }
+  }
+}
+let pausedAt=0, wakeLock=null;
+async function acquireWake(){ try{ if('wakeLock' in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{ wakeLock=null; }); } }catch(e){} }
+function releaseWake(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock=null; }
+function togglePause(){
+  if (!liveMode || !callRec) return;
+  const btn=document.getElementById('pauseBtn');
+  if (callRec.state==='recording' && typeof callRec.pause==='function'){
+    callRec.pause(); clearInterval(segRotateTimer); pausedAt=Date.now();
+    document.getElementById('orb').classList.add('paused');
+    document.getElementById('recstatus').textContent = lang==='en'?'Paused':'En pausa';
+    btn.textContent = lang==='en'?'Resume':'Reanudar';
+  } else if (callRec.state==='paused'){
+    callRec.resume(); callStartTs += Date.now()-pausedAt; pausedAt=0;
+    segRotateTimer=setInterval(()=>{ if (callRec && callRec.state==='recording') callRec.stop(); }, SEGMENT_MS);
+    document.getElementById('orb').classList.remove('paused');
+    document.getElementById('recstatus').textContent = liveMode==='call'? t('recordingCall') : t('recording');
+    btn.textContent = lang==='en'?'Pause':'Pausar';
+  }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if (!liveMode) return;
+  if (document.visibilityState==='hidden'){
+    // Save what we have now: iOS may suspend the page while it is hidden.
+    if (callRec && callRec.state==='recording' && !segStopping) callRec.stop();
+  } else { acquireWake(); }
+});
+function stopSession(){
+  if (!liveMode || segStopping) return;
+  segStopping=true;
+  clearInterval(segRotateTimer); clearInterval(callTimerInt);
+  document.getElementById('orb').classList.remove('rec'); document.getElementById('orb').classList.remove('paused');
+  document.getElementById('meetCtl').style.display='none'; releaseWake();
+  if (callRec && callRec.state==='paused'){ try{ callRec.resume(); }catch(e){} }
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('recstatus').textContent = t('transcribing');
+  document.getElementById('callBtn').textContent = t('recCall');
+  if (callRec && callRec.state==='recording') callRec.stop(); // final onstop -> finalizeSession
+  else pendingTx.then(()=>finalizeSession());
+}
+async function finalizeSession(){
+  if (!liveMode && !liveRecId) return;
+  const id=liveRecId, dur=Math.floor((Date.now()-callStartTs)/1000), hadText=!!liveText.trim();
+  callStreams.forEach(s=>s.getTracks().forEach(x=>x.stop()));
+  try{ callCtx && callCtx.close(); }catch(e){}
+  document.getElementById('recstatus').textContent = t('tapToRec');
+  if (id){
+    if (hadText){
+      const title = liveText.trim().split(/[.!?\n]/)[0].slice(0,60);
+      try{
+        await api('/recordings/'+id+'/transcript',{method:'PUT',body:JSON.stringify({text:liveText,lang})});
+        await api('/recordings/'+id,{method:'PATCH',body:JSON.stringify({status:'done',duration_sec:dur, title: title||undefined})});
+        if (window.Factory) await Factory.onSessionSaved(id);
+      }catch(e){}
+    } else {
+      try{ await api('/recordings/'+id,{method:'DELETE'}); }catch(e){}
+    }
+  }
+  localStorage.removeItem('speakup_live');
+  const openId=id; resetSession();
+  await loadLibrary();
+  if (hadText && openId) openRec(openId); else toast(t('noTranscript'));
+}
+function resetSession(){ liveRecId=null; liveMode=null; liveText=''; segStopping=false; callRec=null; callChunks=[]; callStreams=[]; callCtx=null; }
+
+// ─── upload / import ────────────────────────────────────────────────────────────
+async function uploadFile(){
+  const f = document.getElementById('file').files[0];
+  if (!f){ toast(t('uploadFile')); return; }
+  document.getElementById('file').value='';
+  let text='';
+  try{ text = await transcribeBlob(f, lang); }
+  catch(e){ hideW(); toast(t('transcribeFail')); }
+  if (text){
+    const d = await api('/recordings',{method:'POST',body:JSON.stringify({title:f.name,source:'upload',text,lang})});
+    await loadLibrary(); openRec(d.recording.id);
+  } else {
+    await uploadBlobFallback(f, f.name, 'upload');
+  }
+}
+async function importUrl(){
+  const url = document.getElementById('url').value.trim();
+  if (!url) return;
+  const d = await api('/recordings/import',{method:'POST',body:JSON.stringify({url})});
+  document.getElementById('url').value='';
+  await loadLibrary(); openRec(d.recording.id);
+}
+async function pollAndOpen(id){
+  for (let i=0;i<40;i++){
+    const s = await api('/recordings/'+id+'/status').catch(()=>null);
+    if (!s) break;
+    if (s.status==='done' || s.status==='error'){ await loadLibrary(); openRec(id); return; }
+    await new Promise(r=>setTimeout(r,1500));
+  }
+  await loadLibrary(); openRec(id);
+}
+
+// ─── library ────────────────────────────────────────────────────────────────────
+let current=null;
+async function loadLibrary(){
+  const el = document.getElementById('reclist');
+  try{
+    const d = await api('/recordings');
+    if (!d.recordings.length){ el.innerHTML = '<div class="empty">'+t('empty')+'</div>'; return; }
+    el.innerHTML = d.recordings.map(r=>{
+      let badge='';
+      if (r.status==='processing') badge='<span class="badge processing">'+t('processing')+'</span>';
+      else if (r.status==='error') badge='<span class="badge error">error</span>';
+      else if (r.is_simulated) badge='<span class="badge sim">'+t('simulated')+'</span>';
+      const date = new Date(r.created_at).toLocaleDateString();
+      const sel = window.Factory && Factory.selected.has(r.id);
+      const tag = r.mode ? '<span>·</span><span>'+esc(r.mode)+'</span>' : '';
+      const proj = r.project_key ? '<span>·</span><span>'+esc(r.project_key)+'</span>' : '';
+      return '<div class="recitem'+(current&&current.recording.id===r.id?' active':'')+'" onclick="openRec('+r.id+')"><div class="recrow">'+
+        '<input type="checkbox" class="selbox" aria-label="Seleccionar" '+(sel?'checked':'')+' onclick="event.stopPropagation();Factory.toggleSelect('+r.id+',this.checked)">'+
+        '<div class="grow"><div class="t">#'+r.id+' '+esc(r.title)+'</div>'+
+        '<div class="m"><span>'+date+'</span><span>·</span><span>'+esc(r.source)+'</span>'+tag+proj+badge+'</div></div></div></div>';
+    }).join('');
+  }catch(e){ el.innerHTML='<div class="empty">'+esc(e.message)+'</div>'; }
+}
+
+// ─── detail: results + deliverables (transcript at the bottom) ──────────────────
+async function openRec(id){
+  document.getElementById('mainEmpty').style.display='none';
+  const detail = document.getElementById('detail'); detail.style.display='block';
+  detail.innerHTML = '<div class="card"><span class="spin"></span> '+t('loading')+'</div>';
+  try{
+    const d = await api('/recordings/'+id);
+    current = d; renderDetail(d); loadLibrary();
+    detail.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){ detail.innerHTML='<div class="card">'+esc(e.message)+'</div>'; }
+}
+
+function renderDetail(d){
+  const r = d.recording, tr = d.transcript;
+  const text = tr ? tr.text : '';
+  const sim = tr && tr.is_simulated;
+  const langOpts = LANGS.map(l=>'<option>'+l+'</option>').join('');
+  const el = document.getElementById('detail');
+  el.innerHTML =
+    // header + actions
+    '<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">'+
+      '<div style="min-width:0"><div style="font-size:19px;font-weight:700;overflow:hidden;text-overflow:ellipsis">'+esc(r.title)+'</div>'+
+      '<div class="muted">'+new Date(r.created_at).toLocaleString()+' · '+esc(r.source)+'</div></div></div>'+
+      '<div class="row actions" style="margin-top:12px">'+
+        '<a class="btn sec sm" href="/speakup/api/v1/recordings/'+r.id+'/export?format=txt" download>TXT</a>'+
+        '<a class="btn sec sm" href="/speakup/api/v1/recordings/'+r.id+'/export?format=md" download>MD</a>'+
+        '<button class="btn sec sm" onclick="window.print()">'+t('pdf')+'</button>'+
+        '<button class="btn danger sm" onclick="delRec('+r.id+')">'+t('delete')+'</button>'+
+      '</div>'+
+      (text ? '<div class="row" style="margin-top:10px"><button class="btn sm" onclick="Factory.showIntel('+r.id+')">'+(lang==='en'?'Meeting intelligence':'Inteligencia de reunión')+'</button>'+
+        '<button class="btn sec sm" onclick="Factory.editSession('+r.id+')">'+(lang==='en'?'Project and participants':'Proyecto y participantes')+'</button></div>' : '')+
+      (r.status==='processing' ? '<div class="muted" style="margin-top:10px"><span class="spin"></span> '+t('processing')+'</div>' : '')+
+      (r.status==='error' ? '<div class="muted" style="margin-top:10px;color:var(--err)">'+esc(r.error||'error')+'</div>' : '')+
+    '</div>'+
+
+    (text ?
+    // deliverables (results) — the focus, right under record
+    '<div class="card">'+
+      '<div class="tabs">'+
+        '<div class="tab on" onclick="showTab(this,\'gen\')">'+t('generate')+'</div>'+
+        '<div class="tab" onclick="showTab(this,\'trn\')">'+t('translate')+'</div>'+
+        '<div class="tab" onclick="showTab(this,\'rew\')">'+t('rewrite')+'</div>'+
+      '</div>'+
+      '<div id="pane-gen">'+
+        '<div class="muted" style="margin-bottom:12px">'+t('whatToDo')+'</div>'+
+        '<div class="grid">'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'minutes\')">'+t('minutes')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'details\')">'+t('details')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'next_steps\')">'+t('nextSteps')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'presentation\')">'+t('presentation')+'</button>'+
+        '</div>'+
+        '<button class="btn sm block" style="margin-top:8px" onclick="doGenerate('+r.id+',\'project_plan\')">'+t('projectPlan')+'</button>'+
+        '<label class="muted" style="display:block;margin-top:16px">'+t('customField')+'</label>'+
+        '<textarea id="genCustom" rows="2" placeholder="'+t('customPh')+'" style="margin:8px 0 10px"></textarea>'+
+        '<button class="btn sm block" onclick="doGenerateCustom('+r.id+')">'+t('generate')+'</button>'+
+        '<div id="genResult">'+renderDocuments(d.documents)+'</div>'+
+      '</div>'+
+      '<div id="pane-trn" style="display:none">'+
+        '<label class="muted">'+t('toLang')+'</label>'+
+        '<select id="tlang" style="margin:8px 0 10px">'+langOpts+'</select>'+
+        '<button class="btn sm block" onclick="doTranslate('+r.id+')">'+t('translateBtn')+'</button>'+
+        '<div id="trnResult">'+renderTranslations(d.translations)+'</div>'+
+      '</div>'+
+      '<div id="pane-rew" style="display:none">'+
+        '<select id="rtone">'+
+          '<option value="professional">'+t('professional')+'</option>'+
+          '<option value="concise">'+t('concise')+'</option>'+
+          '<option value="friendly">'+t('friendly')+'</option>'+
+          '<option value="email">'+t('email')+'</option>'+
+          '<option value="grammar">'+t('grammar')+'</option>'+
+          '<option value="bullets">'+t('bulletize')+'</option>'+
+        '</select>'+
+        '<input id="rcustom" placeholder="'+t('custom')+'" style="margin:8px 0 10px">'+
+        '<button class="btn sm block" onclick="doRewrite('+r.id+')">'+t('rewriteBtn')+'</button>'+
+        '<div id="rewResult">'+renderEdits(d.edits)+'</div>'+
+      '</div>'+
+    '</div>'+
+    // transcript — moved to the bottom, collapsed
+    '<div class="card"><details class="sec-collapse">'+
+      '<summary>'+t('transcript')+(sim?' · '+t('simulated'):'')+'</summary>'+
+      '<div style="margin-top:12px"><button class="btn sec sm" onclick="copyText(\'tr'+r.id+'\')">'+t('copy')+'</button></div>'+
+      '<div class="transcript" id="tr'+r.id+'" style="margin-top:10px">'+esc(text)+'</div>'+
+    '</details></div>'
+    : '<div class="card"><div class="muted">'+t('noTranscript')+'</div></div>');
+}
+function showTab(tab,which){
+  tab.parentNode.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); tab.classList.add('on');
+  ['gen','trn','rew'].forEach(p=>{ const el=document.getElementById('pane-'+p); if(el) el.style.display = p===which?'block':'none'; });
+}
+// minimal markdown -> HTML (headings, bold, ul, ol, tables, paragraphs)
+function mdToHtml(md){
+  const lines = String(md||'').split('\n'); let html='', inUl=false, inOl=false, tbl=[];
+  const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>');
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const flushTable=()=>{ if(!tbl.length) return;
+    const rows=tbl.filter(r=>!/^[\s|:\-]+$/.test(r));
+    html+='<div style="overflow-x:auto"><table>';
+    rows.forEach((r,i)=>{ const cells=r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      html+='<tr>'+cells.map(c=>(i===0?'<th>'+inline(c)+'</th>':'<td>'+inline(c)+'</td>')).join('')+'</tr>'; });
+    html+='</table></div>'; tbl=[]; };
+  for(let raw of lines){
+    const l=raw.replace(/\s+$/,''); let m;
+    if(/^\s*\|.*\|\s*$/.test(l)){ closeLists(); tbl.push(l.trim()); continue; }
+    if(tbl.length) flushTable();
+    if((m=l.match(/^(#{1,4})\s+(.+)$/))){ closeLists(); const n=m[1].length; html+='<h'+(n+2)+'>'+inline(m[2])+'</h'+(n+2)+'>'; }
+    else if((m=l.match(/^\s*[-*]\s+(.+)$/))){ if(!inUl){closeLists();html+='<ul>';inUl=true;} html+='<li>'+inline(m[1])+'</li>'; }
+    else if((m=l.match(/^\s*\d+\.\s+(.+)$/))){ if(!inOl){closeLists();html+='<ol>';inOl=true;} html+='<li>'+inline(m[1])+'</li>'; }
+    else if(l.trim()===''){ closeLists(); }
+    else { closeLists(); html+='<p>'+inline(l)+'</p>'; }
+  }
+  flushTable(); closeLists(); return html;
+}
+function docLabel(x){ const map={minutes:'minutes',details:'details',next_steps:'nextSteps',presentation:'presentation',project_plan:'projectPlan'};
+  if(x.kind==='custom') return esc(x.title || x.prompt || t('customLabel'));
+  return t(map[x.kind]||x.kind); }
+window.__docs = {};
+function renderDocuments(list){
+  if(!list||!list.length) return '';
+  return list.map(x=>{ window.__docs[x.id]=x;
+    return '<div class="result"><div class="row" style="justify-content:space-between;align-items:center">'+
+      '<h4 style="margin:0">'+docLabel(x)+'</h4>'+
+      '<div class="row"><button class="btn sec sm" onclick="copyText(\'doc'+x.id+'\')">'+t('copy')+'</button>'+
+      '<button class="btn sec sm" onclick="downloadDoc('+x.id+')">'+t('download')+'</button></div></div>'+
+      '<div id="doc'+x.id+'" class="mdbody">'+mdToHtml(x.content)+'</div></div>';
+  }).join('');
+}
+function downloadDoc(id){ const d=window.__docs[id]; if(!d) return;
+  const blob=new Blob([d.content],{type:'text/markdown'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=(d.title||'speakup').replace(/[^a-z0-9]+/gi,'-').slice(0,50)+'.md';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function renderTranslations(list){ if(!list||!list.length) return '';
+  return list.slice(0,3).map(x=>'<div class="result"><h4>'+esc(x.target_lang)+'</h4>'+esc(x.text)+'</div>').join(''); }
+function renderEdits(list){ if(!list||!list.length) return '';
+  return list.slice(0,4).map(x=>'<div class="result"><h4>'+esc(x.kind)+'</h4>'+esc(x.output_text)+'</div>').join(''); }
+function copyText(id){ const el=document.getElementById(id); navigator.clipboard.writeText(el.innerText).then(()=>toast(t('copied'))); }
+
+async function doGenerate(id,type,instruction){
+  const box=document.getElementById('genResult'); const prev=box.innerHTML;
+  box.innerHTML='<div class="result"><span class="spin"></span> '+t('generating')+'</div>'+prev;
+  try{ await api('/recordings/'+id+'/generate',{method:'POST',body:JSON.stringify({type,lang,instruction:instruction||undefined})});
+    const full=await api('/recordings/'+id); current=full; box.innerHTML=renderDocuments(full.documents);
+    if(instruction){ const f=document.getElementById('genCustom'); if(f) f.value=''; }
+  }catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'+prev; }
+}
+function doGenerateCustom(id){
+  const f=document.getElementById('genCustom'); const instr=(f?f.value:'').trim();
+  if(!instr){ toast(t('writeInstr')); return; }
+  doGenerate(id,'custom',instr);
+}
+async function doTranslate(id){
+  const target=document.getElementById('tlang').value;
+  const box=document.getElementById('trnResult'); box.innerHTML='<div class="result"><span class="spin"></span> '+t('processing')+'</div>';
+  try{ const d=await api('/translate',{method:'POST',body:JSON.stringify({recording_id:id,target_lang:target})}); box.innerHTML=renderTranslations([d.translation]); }
+  catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'; }
+}
+async function doRewrite(id){
+  const tone=document.getElementById('rtone').value, custom=document.getElementById('rcustom').value.trim();
+  const box=document.getElementById('rewResult'); box.innerHTML='<div class="result"><span class="spin"></span> '+t('processing')+'</div>';
+  try{ const d=await api('/rewrite',{method:'POST',body:JSON.stringify({recording_id:id,tone,custom_prompt:custom})}); box.innerHTML=renderEdits([d.edit]); }
+  catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'; }
+}
+async function delRec(id){
+  if (!confirm(t('confirmDel'))) return;
+  await api('/recordings/'+id,{method:'DELETE'});
+  current=null; document.getElementById('detail').style.display='none';
+  document.getElementById('mainEmpty').style.display='block'; toast(t('deleted')); loadLibrary();
+}
+
+// ─── crash recovery: finalize any recording left 'recording' by an interruption ─
+async function recoverSessions(){
+  try{
+    const d = await api('/recordings');
+    const stale = (d.recordings||[]).filter(r=>r.status==='recording');
+    if (!stale.length){ localStorage.removeItem('speakup_live'); return; }
+    let ls=null; try{ ls=JSON.parse(localStorage.getItem('speakup_live')||'null'); }catch(e){}
+    for (const r of stale){
+      // flush any tail saved locally but not yet synced, then finalize
+      if (ls && ls.id===r.id && ls.text){ try{ await api('/recordings/'+r.id+'/transcript',{method:'PUT',body:JSON.stringify({text:ls.text,lang})}); }catch(e){} }
+      try{ await api('/recordings/'+r.id,{method:'PATCH',body:JSON.stringify({status:'done'})}); }catch(e){}
+    }
+    localStorage.removeItem('speakup_live');
+    toast(t('recovered'));
+    await loadLibrary();
+  }catch(e){}
+}
+
+// ─── boot ────────────────────────────────────────────────────────────────────────
+(async function(){
+  setLang(lang);
+  if (!(navigator.mediaDevices && window.MediaRecorder)){ document.getElementById('recstatus').textContent = t('micUnsupported'); }
+  await loadLibrary();
+  recoverSessions();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(()=>{});
+  if (window.Factory) Factory.boot();
+})();
+</script>
+</body>
+</html>

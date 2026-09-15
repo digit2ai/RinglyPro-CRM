@@ -172,7 +172,8 @@ function planHash(job, project, spec, plan) {
     sources: spec.sources.map(s => s.recording_id), requirements: spec.requirements.map(r => [r.id, r.kind, r.text, r.quote]), plan }));
 }
 
-async function runPrepare(jobId, { lang } = {}) {
+async function runPrepare(jobId, opts = {}) {
+  const lang = opts.lang;
   let job = await Job.findByPk(jobId);
   if (!job || job.status !== 'ANALYZING') return job;
   try {
@@ -214,23 +215,25 @@ async function runPrepare(jobId, { lang } = {}) {
     plan.repo_sha = repo.currentSha();
     const plan_md = renderMarkdown(job, project, spec, plan);
     const plan_hash = planHash(job, project, spec, plan);
-    return await jobs.transition(job, 'WAITING_APPROVAL', { detail: { plan_hash, composed_by, steps: plan.steps.length },
+    const ready = await jobs.transition(job, 'WAITING_APPROVAL', { detail: { plan_hash, composed_by, steps: plan.steps.length },
       fields: { plan, plan_md, plan_hash, plan_composed_by: composed_by, repo_sha: plan.repo_sha, title: plan.title,
         repo: project.repo, base_branch: project.default_branch, workflow_file: project.workflow_file,
         test_commands: project.test_commands || [], path_scope: project.path_scope || [] } }) || job;
+    if (ready && ready.auto_run && opts.user) return (await jobs.autoDispatch(ready, opts.user)) || ready;
+    return ready;
   } catch (e) {
     console.error('SpeakUp prepare error job', jobId, e.message);
     return jobs.fail(job, 'Preparation failed: ' + e.message);
   }
 }
 
-async function createPrepareJob({ tenant_id, user, project, recordingIds, commandId, lang, req }) {
+async function createPrepareJob({ tenant_id, user, project, recordingIds, commandId, lang, autoRun, req }) {
   const job = await Job.create({ tenant_id, user_id: user.id, command_id: commandId || null, project_key: project.key,
     repo: project.repo, base_branch: project.default_branch, title: project.name + ' change', status: 'ANALYZING',
-    source_recording_ids: recordingIds });
+    source_recording_ids: recordingIds, auto_run: !!autoRun });
   await audit.record({ tenant_id, user_id: user.id, actor: user.email, action: 'job.created', entity: 'job', entity_id: job.id,
     to_status: 'ANALYZING', detail: { project: project.key, sources: recordingIds, command_id: commandId || null }, req });
-  setImmediate(() => { runPrepare(job.id, { lang }).catch(e => console.error('SpeakUp prepare crash', e.message)); });
+  setImmediate(() => { runPrepare(job.id, { lang, user }).catch(e => console.error('SpeakUp prepare crash', e.message)); });
   return job;
 }
 

@@ -307,6 +307,8 @@ const server = app.listen(0, async () => {
 
     // ── Merge ─────────────────────────────────────────────────────────────────
     security.resetRateLimits(); // the per-user execution-attempt budget is exercised above; start the merge checks fresh
+    await Job.update({ path_scope: ['src'] }, { where: { id: job.id } }); // this job's snapshot is scoped; the console's default project is not
+    job = await Job.findByPk(job.id);
     ok((await call(A, 'POST', `/factory/jobs/${job.id}/merge`, { plan_hash: job.plan_hash, passphrase: PHRASE })).status === 409, 'merge refused when the change edited a test suite');
     await Job.update({ suite_modified: false }, { where: { id: job.id } });
     const outside = await call(A, 'POST', `/factory/jobs/${job.id}/merge`, { plan_hash: job.plan_hash, passphrase: PHRASE });
@@ -402,6 +404,23 @@ const server = app.listen(0, async () => {
     const pbrief = await (await fetch(`${base}/api/v1/factory/brief/${jp.id}`, { headers: { 'x-speakup-ts': String(briefTs), 'x-speakup-sig': security.hmac(SECRET, `brief.${jp.id}.${briefTs}`) } })).json();
     ok(pbrief.prompt.includes('Add a Beta tag next to the SpeakUp title') && pbrief.prompt.includes('WORD FOR WORD'), 'Claude receives the pasted prompt verbatim');
     ok(!pbrief.sensitive.phrases.some(p => /Beta tag/.test(p)), 'the owner instruction is not treated as meeting content the push guard would refuse');
+
+    // ── The console runs without a second tap (SPEAKUP_AUTO_RUN) ─────────────
+    const before = dispatches().length;
+    const autoCmd = await call(A, 'POST', '/factory/command', { text: 'Rename the Send label on the SpeakUp console to Run. ' + 'Keep everything else as it is. '.repeat(8),
+      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true });
+    ok(autoCmd.status === 200 && autoCmd.d.card.job_id, 'console command accepted');
+    let ja2 = await waitJob(autoCmd.d.card.job_id, ['QUEUED', 'CODING', 'FAILED'], 40000);
+    ok(ja2.status === 'QUEUED' && dispatches().length === before + 1, 'the console dispatched the plan itself, with no phrase typed');
+    ok(ja2.approved_by === OP_A && ja2.auto_run === true, 'the run is still recorded as approved by the operator');
+    ok(await Audit.findOne({ where: { tenant_id: opA.id, entity: 'job', entity_id: ja2.id, action: 'job.auto_dispatched' } }), 'auto dispatch is audited');
+    process.env.SPEAKUP_AUTO_RUN = 'off';
+    const manualCmd = await call(A, 'POST', '/factory/command', { text: 'Another console instruction that should wait for approval. ' + 'Details. '.repeat(20),
+      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true });
+    const jm = await waitJob(manualCmd.d.card.job_id, ['WAITING_APPROVAL', 'QUEUED', 'FAILED']);
+    ok(jm.status === 'WAITING_APPROVAL' && dispatches().length === before + 1, 'SPEAKUP_AUTO_RUN=off restores the approval step');
+    delete process.env.SPEAKUP_AUTO_RUN;
+    ok((await call(M, 'POST', '/factory/command', { text: 'x'.repeat(200), mode: 'architect', auto_run: true })).status === 403, 'a non-operator cannot use the console path');
 
     // ── Live activity from the build job ─────────────────────────────────────
     const jobProgTok = security.workflowToken('progress', jp.id, Math.floor(Date.now() / 1000) + 600);

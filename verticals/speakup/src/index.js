@@ -68,6 +68,8 @@ router.use('/api/v1', require('./routes/ai')); // /translate, /rewrite, /:id/sum
 router.use(express.static(publicDir));
 
 router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
+// The original recording screen (meetings, notes, library, import) lives on here.
+router.get('/recorder', (req, res) => res.sendFile(path.join(publicDir, 'recorder.html')));
 
 // ── Init: sync tables + ensure columns + seed team (non-blocking) ────────────────
 (async function initialize() {
@@ -88,8 +90,10 @@ router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
       await sequelize.query("ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS participants JSONB DEFAULT '[]'");
       await sequelize.query('CREATE INDEX IF NOT EXISTS su_recordings_tenant_created_idx ON su_recordings(tenant_id, created_at)');
       await sequelize.query('CREATE INDEX IF NOT EXISTS su_recordings_tenant_project_idx ON su_recordings(tenant_id, project_key)');
+      // The console works on the whole repository; the first seed scoped RinglyPro to src/.
+      await sequelize.query(`UPDATE su_projects SET path_scope = '[]'::jsonb WHERE key = 'ringlypro' AND path_scope = '["src"]'::jsonb`);
       // AI Factory job snapshot + verification fields
-      for (const ddl of ['workflow_file VARCHAR(120)', "test_commands JSONB DEFAULT '[]'", "path_scope JSONB DEFAULT '[]'",
+      for (const ddl of ['auto_run BOOLEAN DEFAULT FALSE', 'workflow_file VARCHAR(120)', "test_commands JSONB DEFAULT '[]'", "path_scope JSONB DEFAULT '[]'",
         "changed_files JSONB DEFAULT '[]'", 'suite_modified BOOLEAN', 'brief_token_used_at TIMESTAMPTZ']) {
         await sequelize.query('ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS ' + ddl);
       }

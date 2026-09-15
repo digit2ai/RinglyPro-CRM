@@ -244,6 +244,7 @@ const Job = sequelize.define('SpeakJob', {
   changed_files: { type: DataTypes.JSONB, defaultValue: [] },
   suite_modified: { type: DataTypes.BOOLEAN },
   brief_token_used_at: { type: DataTypes.DATE },
+  auto_run: { type: DataTypes.BOOLEAN, defaultValue: false }, // console job: dispatch as soon as the plan is ready
   approved_by: { type: DataTypes.STRING(200) },
   approved_at: { type: DataTypes.DATE },
   branch: { type: DataTypes.STRING(120) },

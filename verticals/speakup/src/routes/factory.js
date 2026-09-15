@@ -132,7 +132,7 @@ router.post('/command', mutation, wrap(async (req, res) => {
   if (!security.rateLimit('command', String(req.user.id), 60, 10 * 60 * 1000)) return res.status(429).json({ error: 'Too many commands. Wait a few minutes.' });
   const b = req.body || {};
   const out = await intents.run({ tenant_id: tenantOf(req), user: req.user, text: b.text, mode: b.mode, lang: b.lang,
-    recording_ids: Array.isArray(b.recording_ids) ? b.recording_ids.slice(0, 10) : [], project_key: b.project_key, engine: b.engine, req });
+    recording_ids: Array.isArray(b.recording_ids) ? b.recording_ids.slice(0, 10) : [], project_key: b.project_key, engine: b.engine, auto_run: b.auto_run, req });
   if (out.status !== 200) return res.status(out.status).json(out);
   res.json(out);
 }));

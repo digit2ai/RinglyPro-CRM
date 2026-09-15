@@ -144,3 +144,8 @@ CREATE TABLE IF NOT EXISTS su_job_events (
 );
 CREATE INDEX IF NOT EXISTS su_job_events_job_idx ON su_job_events(job_id, id);
 CREATE INDEX IF NOT EXISTS su_job_events_tenant_idx ON su_job_events(tenant_id);
+
+-- Console jobs run without a second approval tap (SPEAKUP_AUTO_RUN=off restores it).
+ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS auto_run BOOLEAN DEFAULT FALSE;
+-- The console works on the whole repository, not just src/.
+UPDATE su_projects SET path_scope = '[]'::jsonb WHERE key = 'ringlypro' AND path_scope = '["src"]'::jsonb;
