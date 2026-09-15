@@ -1243,6 +1243,7 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       });
       await t('the landing page carries the ecosystem map section (shared component, EN/ES) and an Architecture menu link', async () => {
         const html = await (await fetch(BASE + '/')).text();
+        assert(html.indexOf('<section id="about"') < html.indexOf('<section id="ecosystem"') && html.indexOf('<section id="ecosystem"') < html.indexOf('orb-section'), 'ecosystem section must sit right before Questions? Ask out loud.');
         assert(/<section id="ecosystem"[\s\S]*?data-ecomap/.test(html) && /ecosystem-map\.js/.test(html) && /ecosystem-map\.css/.test(html), 'ecosystem section');
         assert(/<nav class="site-nav"[\s\S]*?href="\/buyersline\/architecture" data-i18n="nav_arch"[\s\S]*?<\/nav>/.test(html), 'Architecture link not in the menu');
         assert(/nav_arch: 'Arquitectura'/.test(html) && /eco_title: 'Un cerebro\. Siete agentes\.'/.test(html) && /EcosystemMap\.setLang\(lang\)/.test(html), 'Spanish or language switch missing');
